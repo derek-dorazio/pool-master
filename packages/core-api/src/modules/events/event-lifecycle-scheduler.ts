@@ -28,6 +28,7 @@ import type { FastifyBaseLogger } from 'fastify';
 import type { SportEventRepository, SportEventRoundRepository } from '@poolmaster/shared/db';
 import { SportEventStatus, type SportEvent, type SportEventRound } from '@poolmaster/shared/domain';
 import type { JobLock } from '../../core/job-lock';
+import { runWithReadMemo } from '../../core/request-read-memo';
 import type { EventLifecycleService } from './event-lifecycle-service';
 
 const SWEEP_INTERVAL_MS = 5 * 60 * 1000;
@@ -100,7 +101,9 @@ export class EventLifecycleScheduler {
     }
     this.sweeping = true;
     try {
-      const ran = await this.jobLock.runExclusive(SWEEP_LOCK_KEY, () => this.sweep());
+      // One read memo per sweep (#1200), as a request has: the contests of one event share its
+      // sport league's read, and a write in the sweep forgets what it touches.
+      const ran = await this.jobLock.runExclusive(SWEEP_LOCK_KEY, () => runWithReadMemo(() => this.sweep()));
       if (!ran) {
         this.logger?.debug('Skipped an event lifecycle sweep because another server task runs it');
       }

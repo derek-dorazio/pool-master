@@ -3,7 +3,7 @@
  */
 import type { PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
-import { PrismaCupRepository, PrismaSportLeagueRepository, PrismaSquadRepository } from '../../adapters';
+import { PrismaCupRepository, PrismaLeagueRepository, PrismaSportLeagueRepository, PrismaSquadRepository } from '../../adapters';
 import { createContestService } from '../contests/wiring';
 import { CupService } from './service';
 import type { PlanEntitlementsService } from '../plans/plan-entitlements-service';
@@ -15,6 +15,7 @@ export function createCupService(
 ): CupService {
   return new CupService({
     cups: new PrismaCupRepository(prisma),
+    leagues: new PrismaLeagueRepository(prisma),
     liveContests: createContestService(prisma, logger, { planEntitlements }),
     squads: new PrismaSquadRepository(prisma),
     sportLeagues: new PrismaSportLeagueRepository(prisma),

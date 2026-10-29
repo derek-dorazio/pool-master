@@ -1,5 +1,5 @@
 /**
- * #1167, #1168, #1177, #1178 — the indexes the migrated database carries, checked against the
+ * #1167, #1168, #1177, #1178, #1180 — the indexes the migrated database carries, checked against the
  * catalog rather than taken on trust.
  *
  * Postgres indexes neither side of a foreign key's referencing column on its own, so a delete of
@@ -88,5 +88,22 @@ describe('database indexes', () => {
     const leading = (await indexColumns(table)).map((index) => index.slice(0, columns.length));
 
     expect(leading).toContainEqual(columns);
+  });
+
+  it.each([
+    ['the root admin user search', 'users', ['email', 'username', 'first_name', 'last_name']],
+    ['the root admin league search', 'leagues', ['name']],
+    ['the participant search', 'participants', ['name', 'first_name', 'last_name', 'short_name', 'team_affiliation']],
+  ])('serves %s, a substring match, from a trigram index on every column it matches', async (_read, table, columns) => {
+    const trigramColumns = await getPrisma().$queryRaw<Array<{ column: string }>>`
+      SELECT a.attname AS column
+      FROM pg_index i
+      JOIN pg_class ic ON ic.oid = i.indexrelid
+      JOIN pg_am am ON am.oid = ic.relam
+      JOIN pg_opclass op ON op.oid = i.indclass[0]
+      JOIN pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = i.indkey[0]
+      WHERE i.indrelid = ${table}::regclass AND am.amname = 'gin' AND op.opcname = 'gin_trgm_ops'`;
+
+    expect(trigramColumns.map((row) => row.column).sort()).toEqual([...columns].sort());
   });
 });

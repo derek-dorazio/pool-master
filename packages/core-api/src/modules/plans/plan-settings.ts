@@ -7,6 +7,7 @@
 import { PlanConfigSchema, type PlanConfig } from '@poolmaster/shared/dto';
 import { LeaguePlan, PlanCap, findFallingPlanLimit } from '@poolmaster/shared/domain';
 import { defineSettingsGroup } from '../platform/settings-group';
+import { PublicReadPath } from '../../core/public-cache';
 
 /** The stored shape, plus what a JSON schema can't say: no cap falls as the plan rises. */
 const PlanSettingsSchema = PlanConfigSchema.superRefine((config, context) => {
@@ -26,6 +27,8 @@ export const PLAN_SETTINGS = defineSettingsGroup<PlanConfig>({
   key: 'PLAN_CONFIG',
   title: 'Plans',
   description: 'What each league plan allows: its caps, and the plan each feature starts at.',
+  // The public Plans page reads this group (`listLeaguePlans`).
+  publicReads: [PublicReadPath.PLANS],
   schema: PlanSettingsSchema,
   // Derek's plan matrix (2026-10-24, plans/payments.md §3): every plan capped, the basics free,
   // the rest from Pro, the all-years summary and record book from Premium.

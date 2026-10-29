@@ -9,7 +9,7 @@ import type { Prisma } from '@prisma/client';
 import { getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
 
 const MIGRATION_SQL = readFileSync(
-  join(__dirname, '../../../packages/core-api/prisma/migrations/20261230100000_split_sync_run_details/migration.sql'),
+  join(__dirname, '../../../packages/core-api/prisma/migrations/20261231200000_split_sync_run_details/migration.sql'),
   'utf8',
 );
 

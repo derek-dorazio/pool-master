@@ -39,8 +39,6 @@ export interface ChampionshipRepository {
   findByLeague(leagueId: string): Promise<LeagueYearFinish[]>;
   /** The league's finishes of one year. */
   findByLeagueYear(leagueId: string, year: number): Promise<LeagueYearFinish[]>;
-  /** The league championship's name, or null when there is no such league. */
-  findCupName(leagueId: string): Promise<string | null>;
   /** Whether the league has a counted finish in the year. */
   hasCountedFinish(leagueId: string, year: number): Promise<boolean>;
   /** The league's open and live contests that will count once final. */

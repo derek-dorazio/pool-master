@@ -26,6 +26,7 @@ import {
 } from '../../mappers/platform-settings.mapper';
 import { requireRootAdmin } from '../../core/root-admin-guard';
 import { requireAuthUser } from '../../plugins/auth-guard';
+import type { CdnInvalidator } from '../../core/cdn-invalidator';
 
 // ---------------------------------------------------------------------------
 // Route registration
@@ -34,6 +35,8 @@ import { requireAuthUser } from '../../plugins/auth-guard';
 export interface PlatformModuleOptions {
   ingestionConfigService: IngestionConfigService;
   platformSettingsService: PlatformSettingsService;
+  /** Clears a group's public reads at the CDN once it is saved or reset (#1181). */
+  cdn: CdnInvalidator;
 }
 
 const SPORT_PARAMS = {
@@ -117,11 +120,13 @@ export function platformModule(fastify: FastifyInstance, opts: PlatformModuleOpt
       request: FastifyRequest<{ Params: { key: string }; Body: SettingsGroupUpdateRequest }>,
     ) => {
       const { body } = request;
-      return toSettingsGroupDto(await platformSettings.save(request.params.key, {
+      const saved = await platformSettings.save(request.params.key, {
         key: body.key,
         value: body.value,
         expectedUpdatedAt: body.expectedUpdatedAt === null ? null : new Date(body.expectedUpdatedAt),
-      }, requireAuthUser(request).userId));
+      }, requireAuthUser(request).userId);
+      opts.cdn.invalidate(saved.group.publicReads ?? []);
+      return toSettingsGroupDto(saved);
     },
   });
 
@@ -139,8 +144,11 @@ export function platformModule(fastify: FastifyInstance, opts: PlatformModuleOpt
         404: schemaRef('ErrorEnvelope'),
       },
     },
-    handler: async (request: FastifyRequest<{ Params: { key: string } }>) =>
-      toSettingsGroupDto(await platformSettings.reset(request.params.key, requireAuthUser(request).userId)),
+    handler: async (request: FastifyRequest<{ Params: { key: string } }>) => {
+      const reset = await platformSettings.reset(request.params.key, requireAuthUser(request).userId);
+      opts.cdn.invalidate(reset.group.publicReads ?? []);
+      return toSettingsGroupDto(reset);
+    },
   });
 
   fastify.get('/settings/:key/history', {

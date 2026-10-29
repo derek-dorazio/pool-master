@@ -9,15 +9,19 @@ import { swaggerPlugin } from './plugins/swagger';
 import { authGuard } from './plugins/auth-guard';
 import { etagPlugin } from './plugins/etag-support';
 import { requestLoggingContext } from './plugins/request-logging-context';
+import { requestReadMemo } from './plugins/request-read-memo';
 import { FASTIFY_AJV_OPTIONS } from './plugins/string-transforms';
 import { FASTIFY_SCHEMA_CONTROLLER } from './plugins/serializer-cache';
 import { globalErrorHandler } from './core/error-handler';
 import { createFastifyLoggerOptions } from './core/logger';
 import { readTrustProxy } from './core/config';
 import { PostgresJobLock } from './core/job-lock';
+import { NightlyCleanupScheduler } from './core/nightly-cleanup';
+import { createCdnInvalidator } from './core/cdn-invalidator';
 
 // Domain modules (core-api)
 import { authModule } from './modules/auth/routes';
+import { RefreshTokenRetention } from './modules/auth/refresh-token-retention';
 import { leaguesModule } from './modules/leagues/routes';
 import { squadsModule } from './modules/squads/routes';
 import { invitationsModule } from './modules/invitations/routes';
@@ -112,7 +116,7 @@ export function buildApp() {
     readConfig: () => appSettings.get(PLAN_SETTINGS),
   });
   // One email outbox for the whole app; EMAIL_CONFIG and the league's plan decide on every email whether it is queued.
-  const { email, sender: emailSender, deliveryEvents, preferences: emailPreferences, test: emailTest } = createEmailOutbox({
+  const { email, sender: emailSender, deliveryEvents, preferences: emailPreferences, test: emailTest, retention: emailRetention } = createEmailOutbox({
     prisma,
     readConfig: () => appSettings.get(EMAIL_SETTINGS),
     planEntitlements,
@@ -130,7 +134,9 @@ export function buildApp() {
     releasedEditionContests: createContestManagementService(prisma, app.log, planEntitlements),
   });
   const memberJoined = createMemberJoinedNotices(prisma, { email, readConfig: () => appSettings.get(EMAIL_SETTINGS), appBaseUrl, logger: app.log });
-  const ingestionPersistence = new IngestionPersistence(prisma, app.log, eventFieldCache);
+  // Admin saves, and provider syncs that load an event's field, clear the public reads CloudFront keeps (#1181).
+  const cdn = createCdnInvalidator(process.env, app.log);
+  const ingestionPersistence = new IngestionPersistence(prisma, app.log, eventFieldCache, cdn);
   const jobLock = new PostgresJobLock(process.env.DATABASE_URL, app.log);
   const eventLifecycleScheduler = new EventLifecycleScheduler({
     sportEvents: new PrismaSportEventRepository(prisma),
@@ -147,6 +153,12 @@ export function buildApp() {
     jobLock,
     logger: app.log,
   });
+  // #1175: tables that grow without end are trimmed to their retention periods once a night.
+  const nightlyCleanupScheduler = new NightlyCleanupScheduler({
+    steps: [new RefreshTokenRetention(prisma), emailRetention],
+    jobLock,
+    logger: app.log,
+  });
   const ingestionConfigService = new IngestionConfigService(appSettings, app.log);
   const platformSettingsService = new PlatformSettingsService({
     settings: appSettings,
@@ -158,6 +170,7 @@ export function buildApp() {
   // =========================================================================
   // Core plugins
   // =========================================================================
+  app.register(requestReadMemo);
   app.register(swaggerPlugin);
   app.register(healthPlugin);
   app.register(versionModule, { prefix: '/version', operationId: 'getRootVersion' });
@@ -249,18 +262,19 @@ export function buildApp() {
   app.register(cupsModule, { prefix: '/api/v1/leagues/:id/cups', planEntitlements });
   app.register(championshipModule, { prefix: '/api/v1/leagues/:id/championship', planEntitlements });
   app.register(historyModule, { prefix: '/api/v1/leagues/:id/history', email, planEntitlements });
-  app.register(contestConfigTemplatesModule, { prefix: '/api/v1/contest-config-templates' });
+  app.register(contestConfigTemplatesModule, { prefix: '/api/v1/contest-config-templates', cdn });
   app.register(eventsModule, {
     prefix: '/api/v1/events',
     eventLifecycleService,
     ingestionService,
     providerRegistry: registry,
+    cdn,
   });
   app.register(sportsModule, { prefix: '/api/v1/sports' });
-  app.register(sportLeaguesModule, { prefix: '/api/v1/sport-leagues' });
+  app.register(sportLeaguesModule, { prefix: '/api/v1/sport-leagues', cdn });
   app.register(eventPagesModule, { prefix: '/api/v1/event-pages' });
   app.register(participantsModule, { prefix: '/api/v1/participants', providerRegistry: registry });
-  app.register(platformModule, { prefix: '/api/v1/platform', ingestionConfigService, platformSettingsService });
+  app.register(platformModule, { prefix: '/api/v1/platform', ingestionConfigService, platformSettingsService, cdn });
   app.register(emailTestModule, { prefix: '/api/v1/platform/email', emailTest });
   app.register(ingestionModule, { prefix: '/api/v1/ingestion', ingestionService, providerRegistry: registry });
   app.register(clientLogsModule, { prefix: '/api/v1/client-logs' });
@@ -304,6 +318,9 @@ export function buildApp() {
 
     // The email outbox's sender always runs: every email waits in the outbox for it.
     emailSender.start();
+
+    // Retention always runs, like the lifecycle sweep: nothing about it depends on a provider.
+    nightlyCleanupScheduler.start();
   });
 
   app.addHook('onClose', async () => {
@@ -311,6 +328,7 @@ export function buildApp() {
     ingestionScheduler.stop();
     eventLifecycleScheduler.stop();
     emailSender.stop();
+    nightlyCleanupScheduler.stop();
     // Closing the lock connection releases this task's job locks for another task to take.
     await jobLock.close();
     await prisma.$disconnect();

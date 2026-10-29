@@ -689,6 +689,8 @@ jobs:
       # #1162 — core-api keeps a contest leaderboard it computed for 30 seconds; the journeys
       # read a board right after the score write they check, so this API keeps none.
       CONTEST_LEADERBOARD_CACHE_TTL_MS: '0'
+      # #1181 — likewise the public reads it keeps 30 seconds (event pages, sport leagues, templates).
+      PUBLIC_READ_CACHE_TTL_MS: '0'
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7

@@ -12,6 +12,7 @@ import type {
   ContestSquaresRepository,
 } from '@poolmaster/shared/db';
 import { ContestEntryStatus, type ContestEntrySquare, type ContestSquaresDraw, type ContestSquaresWinner } from '@poolmaster/shared/domain';
+import { forgettingReads, ReadMemoKey } from '../core/request-read-memo';
 import { lockContestRow } from './contest-row-lock';
 
 export class PrismaSquaresRepository implements ContestSquaresRepository {
@@ -81,7 +82,8 @@ export class PrismaSquaresRepository implements ContestSquaresRepository {
 
   async recordDraw(draw: ContestSquaresDrawWrite): Promise<'drawn' | 'alreadyDrawn'> {
     try {
-      return await this.prisma.$transaction(async (tx) => {
+      // The contest's read carries its draw time, so the request's remembered contests are forgotten.
+      return await forgettingReads(ReadMemoKey.contest, () => this.prisma.$transaction(async (tx) => {
         await lockContestRow(tx, draw.contestId);
         await tx.contestSquaresDraw.create({
           data: {
@@ -104,7 +106,7 @@ export class PrismaSquaresRepository implements ContestSquaresRepository {
           data: { status: ContestEntryStatus.SUBMITTED, submittedAt: draw.drawnAt },
         });
         return 'drawn' as const;
-      });
+      }));
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') return 'alreadyDrawn';
       throw error;

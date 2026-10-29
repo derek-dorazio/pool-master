@@ -6,7 +6,7 @@ import { hasErrorCode } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useLeaguePlansQuery } from '@/features/plans/use-league-plans-query';
 import { Breadcrumbs, Chip, EmptyState, ErrorState, Eyebrow, LinkButton, LoadingState, SectionHeader, Tile, cn, formatDateDisplay, useDisplayPreferences } from '@/features/shared/ui';
-import { upcomingEventPages } from './event-page-offers';
+import { withPrimaryOffer } from './event-page-offers';
 import { EVENT_PAGE_ACTIONS, eventPageCopy, eventPageOfferCopy, type EventPageCopy } from './event-page-copy';
 import { buildHowToPlaySportPath, sportFromPathSegment } from './event-page-paths';
 import { buildStartPath, type StartRequest } from './start-path';
@@ -82,8 +82,8 @@ function EventPageContent({ page }: { page: EventPageDto }) {
   const sportName = getSportDefinition(page.sport).name;
   const primary = page.offers.find((offer) => offer.isPrimary);
   const plansQuery = useLeaguePlansQuery();
-  const sportPagesQuery = useEventPagesQuery(page.sport);
-  const nextUp = upcomingEventPages((sportPagesQuery.data ?? []).filter((other) => other.id !== page.id))
+  const sportPagesQuery = useEventPagesQuery(page.sport, { upcoming: true });
+  const nextUp = withPrimaryOffer((sportPagesQuery.data ?? []).filter((other) => other.id !== page.id))
     .find(({ primary: other }) => primary === undefined || other.edition.startDate > primary.edition.startDate);
   const startRequest: StartRequest = { sport: page.sport, slug: page.slug, templateId: primary?.template.id ?? null };
   const hero = useRef<HTMLDivElement>(null);

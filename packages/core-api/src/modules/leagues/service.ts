@@ -22,6 +22,7 @@ import { lockContestRows } from '../../adapters';
 import { ensureDefaultSquadForLeagueMember } from '../squads/default-squad';
 import { RESERVED_LEAGUE_CODES } from '../email';
 import type { ApiErrorCode } from '@poolmaster/shared/dto';
+import { forgetAllReads } from '../../core/request-read-memo';
 
 /** A league's active member and active contest counts, as the league DTO carries them. */
 export interface LeagueActivityCounts {
@@ -552,6 +553,8 @@ export class LeagueService {
         where: { id: leagueId },
       });
     });
+    // The league and everything in it are gone: a later read in this request must not find them.
+    forgetAllReads();
     this.logger?.info({
       action: 'league.delete.success',
       data: { leagueId },

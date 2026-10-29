@@ -206,7 +206,7 @@ export interface paths {
         };
         /**
          * List users
-         * @description Returns every user, optionally filtered. This is the unscoped read: access rule A1 permits it to root admins only. Not paged — filters narrow the result, nothing slices it.
+         * @description Returns the users matching `search`: a case-insensitive substring of the email, username, first or last name. This is the unscoped read: access rule A1 permits it to root admins only. Not paged — filters narrow the result, nothing slices it. `search` is required, at least 3 characters once trimmed, so the list never reads every user: 400 SEARCH_TERM_REQUIRED otherwise.
          */
         get: operations["listUsers"];
         put?: never;
@@ -496,7 +496,7 @@ export interface paths {
          * List leagues
          * @description Returns leagues together with the viewer's own memberships once as an array. The leagues list is the one inherently multi-league surface, so it is the one place the viewer's relationship travels as a set rather than per row (access rule A8).
          *
-         *     `scope` selects which leagues: `mine` (the default) returns the leagues the caller belongs to and powers the welcome page, header selector and My Leagues overview; `all` returns every league on the platform and powers root-admin league management. `all` is the unscoped read access rule A1 permits to root admins only, and returns 403 otherwise. `search` and `isActive` narrow either scope.
+         *     `scope` selects which leagues: `mine` (the default) returns the leagues the caller belongs to and powers the welcome page, header selector and My Leagues overview; `all` returns every league on the platform and powers root-admin league management. `all` is the unscoped read access rule A1 permits to root admins only, and returns 403 otherwise; it also requires `search` (at least 3 characters once trimmed), so it never reads every league, and returns 400 SEARCH_TERM_REQUIRED without one. `search` and `isActive` narrow either scope.
          *
          *     This replaced `listLeagues` + `adminListLeagues`, which were one operation split by caller role.
          */
@@ -1713,6 +1713,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/leagues/{id}/cups/squads/{squadId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a squad's cup points
+         * @description One squad's points in the league's cup for a season and sports league, counted contest by counted contest, in the order they went final, with the cup's id and name. 404 CUP_NOT_FOUND when the league has no cup for that season and sports league, SQUAD_NOT_FOUND for a squad that is not the league's. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. 403 PLAN_FEATURE_NOT_INCLUDED, its `details.feature` naming what is missing, unless the league's plan has CUP_STANDINGS, PAST_YEARS for a year before the current one (root admins too).
+         */
+        get: operations["getCupSquadPoints"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/leagues/{id}/cups/{cupId}": {
         parameters: {
             query?: never;
@@ -1725,26 +1745,6 @@ export interface paths {
          * @description One cup with its standings and contests: the Points race. 404 CUP_NOT_FOUND for a cup that is not the league's. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. 403 PLAN_FEATURE_NOT_INCLUDED, its `details.feature` naming what is missing, unless the league's plan has CUP_STANDINGS (root admins too).
          */
         get: operations["getCup"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/leagues/{id}/cups/{cupId}/squads/{squadId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get a squad's cup points
-         * @description One squad's points in a cup, counted contest by counted contest, in the order they went final. 404 CUP_NOT_FOUND for a cup that is not the league's, SQUAD_NOT_FOUND for a squad that is not. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. 403 PLAN_FEATURE_NOT_INCLUDED, its `details.feature` naming what is missing, unless the league's plan has CUP_STANDINGS (root admins too).
-         */
-        get: operations["getCupSquadPoints"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2042,7 +2042,7 @@ export interface paths {
         };
         /**
          * List sport events
-         * @description The sport-event catalog, narrowed by sport, status, sport league, event year and name and never paged. Any signed-in user may read it: contest setup picks an event from it, and a root admin browses it. Each event carries its loaded field size, contest-setup readiness, and its tier and contest counts. DRAFT events (not yet released for contests) are listed for a root admin only.
+         * @description The sport-event catalog, narrowed by sport, status, sport league, event year and name and never paged. At least one of `sport`, `sportLeagueId` and `eventYear` is required, so the list never reads every event: 400 SPORT_EVENT_FILTER_REQUIRED otherwise. Any signed-in user may read it: contest setup picks an event from it, and a root admin browses it. Each event carries its loaded field size, contest-setup readiness, and its tier and contest counts. DRAFT events (not yet released for contests) are listed for a root admin only.
          */
         get: operations["listEvents"];
         put?: never;
@@ -2940,7 +2940,7 @@ export interface paths {
         };
         /**
          * List event pages
-         * @description The active event pages, of one sport or every sport, each with its offers and their next editions, for How to Play's and the welcome page's Coming up row. Public: no session is needed, and it holds nothing about any league or user.
+         * @description The active event pages, of one sport or every sport, each with its offers and their next editions; with `upcoming=true`, only the pages with an edition coming, soonest first, for How to Play's and the welcome page's Coming up row. Public: no session is needed, and it holds nothing about any league or user.
          */
         get: operations["listEventPages"];
         put?: never;
@@ -2980,7 +2980,7 @@ export interface paths {
         };
         /**
          * List participants
-         * @description The participant catalog, narrowed by text and filters and never paged. Any signed-in user may read it: contest setup and ingestion mapping browse it, and a root admin maintains it.
+         * @description The participant catalog, narrowed by text and filters and never paged. `sportId` or a `q` of at least 3 characters is required, so the list never reads every sport's catalog: 400 SEARCH_TERM_REQUIRED otherwise. Any signed-in user may read it: contest setup and ingestion mapping browse it, and a root admin maintains it.
          */
         get: operations["listParticipants"];
         put?: never;
@@ -4726,6 +4726,78 @@ export interface components {
              */
             updatedAt: string;
         };
+        /** @description A squad owner: the squad membership with the owner's league role. */
+        SquadOwnerDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            squadId: string;
+            /** Format: uuid */
+            leagueId: string;
+            /** Format: uuid */
+            userId: string;
+            /** @description The member, as the canonical UserDto. */
+            user: {
+                /** @description Stable user identifier. */
+                id: string;
+                /** @description Primary email address for the user account. */
+                email: string;
+                /** @description Unique login identifier for the account. */
+                username: string;
+                /** @description First name shown in account and member-management surfaces. */
+                firstName: string;
+                /** @description Last name shown in account and member-management surfaces. */
+                lastName: string;
+                /** @description Whether the account is currently active for normal sign-in and product usage. */
+                isActive: boolean;
+                /** @description Whether the user has platform-level root-admin access. */
+                isRootAdmin: boolean;
+                /**
+                 * @description Authentication provider used for the account when known.
+                 * @enum {string}
+                 */
+                authProvider?: "email" | "google" | "apple";
+                /** @description IANA time zone the member sees dates and times in, picked at signup. Absent means US Eastern. */
+                timezone?: string;
+                /** @description BCP 47 locale the member's dates are formatted in, e.g. en-US. */
+                locale?: string;
+                /**
+                 * @description 12-hour or 24-hour clock for the times the member sees. Absent means the locale's own.
+                 * @enum {string}
+                 */
+                timeFormat?: "12H" | "24H";
+                /**
+                 * Format: date-time
+                 * @description Account creation timestamp in ISO 8601 format.
+                 */
+                createdAt?: string;
+            };
+            /**
+             * @description Squad membership status.
+             * @enum {string}
+             */
+            status: "ACTIVE" | "INACTIVE";
+            /**
+             * Format: date-time
+             * @description When the user joined the squad.
+             */
+            joinedAt: string;
+            /**
+             * Format: date-time
+             * @description When the squad membership record was created.
+             */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @description When the squad membership record was last updated.
+             */
+            updatedAt: string;
+            /**
+             * @description The owner's role in the squad's league; null only if they hold no membership there.
+             * @enum {string|null}
+             */
+            leagueRole: "COMMISSIONER" | "MEMBER" | null;
+        };
         /** @description A squad within a league. Returned wherever a squad is read. */
         SquadDto: {
             /** Format: uuid */
@@ -4755,7 +4827,7 @@ export interface components {
              * @description When the squad was last updated.
              */
             updatedAt: string;
-            /** @description Every owner membership of the squad, any status, in join order, each with its user. */
+            /** @description Every owner membership of the squad, any status, in join order, each with its user and league role. */
             members: {
                 /** Format: uuid */
                 id: string;
@@ -4821,6 +4893,11 @@ export interface components {
                  * @description When the squad membership record was last updated.
                  */
                 updatedAt: string;
+                /**
+                 * @description The owner's role in the squad's league; null only if they hold no membership there.
+                 * @enum {string|null}
+                 */
+                leagueRole: "COMMISSIONER" | "MEMBER" | null;
             }[];
         };
         /** @description Single-squad response. */
@@ -4854,7 +4931,7 @@ export interface components {
                  * @description When the squad was last updated.
                  */
                 updatedAt: string;
-                /** @description Every owner membership of the squad, any status, in join order, each with its user. */
+                /** @description Every owner membership of the squad, any status, in join order, each with its user and league role. */
                 members: {
                     /** Format: uuid */
                     id: string;
@@ -4920,6 +4997,11 @@ export interface components {
                      * @description When the squad membership record was last updated.
                      */
                     updatedAt: string;
+                    /**
+                     * @description The owner's role in the squad's league; null only if they hold no membership there.
+                     * @enum {string|null}
+                     */
+                    leagueRole: "COMMISSIONER" | "MEMBER" | null;
                 }[];
             };
         };
@@ -4953,7 +5035,7 @@ export interface components {
                  * @description When the squad was last updated.
                  */
                 updatedAt: string;
-                /** @description Every owner membership of the squad, any status, in join order, each with its user. */
+                /** @description Every owner membership of the squad, any status, in join order, each with its user and league role. */
                 members: {
                     /** Format: uuid */
                     id: string;
@@ -5019,6 +5101,11 @@ export interface components {
                      * @description When the squad membership record was last updated.
                      */
                     updatedAt: string;
+                    /**
+                     * @description The owner's role in the squad's league; null only if they hold no membership there.
+                     * @enum {string|null}
+                     */
+                    leagueRole: "COMMISSIONER" | "MEMBER" | null;
                 }[];
             }[];
         };
@@ -5235,7 +5322,7 @@ export interface components {
              * @enum {string}
              */
             scope?: "mine" | "all";
-            /** @description Optional case-insensitive substring matched against the league name. A filter, never a slice — see §16. */
+            /** @description Case-insensitive substring matched against the league name. A filter, never a slice — see §16. Optional for 'mine'; required for 'all', at least 3 characters. */
             search?: string;
             /** @description Optional active/inactive filter. Omitted returns both. */
             isActive?: boolean;
@@ -9924,7 +10011,7 @@ export interface components {
              */
             updatedAt: string;
         };
-        /** @description Filters for the sport-event list. */
+        /** @description Filters for the sport-event list. At least one of sport, sportLeagueId and eventYear is required. */
         SportEventListQuery: {
             /**
              * @description Only events of this sport.
@@ -18018,6 +18105,16 @@ export interface components {
             /** @description The season whose cups to list, such as 2026. */
             seasonYear: number;
         };
+        /** @description Which cup: the league has one per season and sports league. */
+        CupSquadPointsQuery: {
+            /** @description The cup's season, such as 2026. */
+            seasonYear: number;
+            /**
+             * Format: uuid
+             * @description The cup's sports league.
+             */
+            sportLeagueId: string;
+        };
         /** @description The seasons in which a league has cups. */
         CupSeasonListResponse: {
             /** @description Seasons with a cup to show, newest first; empty before the league has a contest. */
@@ -18428,6 +18525,8 @@ export interface components {
         CupSquadPointsDto: {
             /** Format: uuid */
             cupId: string;
+            /** @description The cup's name, from its season and sports league: "2026 PGA Tour Cup". */
+            cupName: string;
             /** Format: uuid */
             squadId: string;
             squadName: string;
@@ -18461,6 +18560,8 @@ export interface components {
             squadPoints: {
                 /** Format: uuid */
                 cupId: string;
+                /** @description The cup's name, from its season and sports league: "2026 PGA Tour Cup". */
+                cupName: string;
                 /** Format: uuid */
                 squadId: string;
                 squadName: string;
@@ -20174,10 +20275,12 @@ export interface components {
              * @enum {string}
              */
             sport?: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+            /** @description true: only the pages with an edition coming, the one their primary offer shows, soonest first (#1202). Omitted or false: every active page, by sport then display order. */
+            upcoming?: boolean;
         };
         /** @description The active event pages. */
         EventPageListResponse: {
-            /** @description The active pages, by sport then display order. A page between seasons has no offers. */
+            /** @description The active pages, by sport then display order, or soonest first when only the upcoming ones are asked for. A page between seasons has no offers. */
             eventPages: {
                 /** Format: uuid */
                 id: string;
@@ -22979,6 +23082,7 @@ export interface operations {
     listUsers: {
         parameters: {
             query?: {
+                /** @description Case-insensitive substring of the email, username, first or last name; at least 3 characters once trimmed. */
                 search?: string;
                 isActive?: boolean;
             };
@@ -23986,7 +24090,7 @@ export interface operations {
             query?: {
                 /** @description Which leagues to return: 'mine' (default) for the leagues the caller belongs to, 'all' for every league on the platform. 'all' requires root-admin access. */
                 scope?: "mine" | "all";
-                /** @description Optional case-insensitive substring matched against the league name. A filter, never a slice — see §16. */
+                /** @description Case-insensitive substring matched against the league name. A filter, never a slice — see §16. Optional for 'mine'; required for 'all', at least 3 characters. */
                 search?: string;
                 /** @description Optional active/inactive filter. Omitted returns both. */
                 isActive?: boolean;
@@ -24004,6 +24108,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["LeagueListResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -27778,25 +27891,39 @@ export interface operations {
             };
         };
     };
-    getCup: {
+    getCupSquadPoints: {
         parameters: {
-            query?: never;
+            query: {
+                /** @description The cup's season, such as 2026. */
+                seasonYear: number;
+                /** @description The cup's sports league. */
+                sportLeagueId: string;
+            };
             header?: never;
             path: {
                 id: string;
-                cupId: string;
+                squadId: string;
             };
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description One cup. */
+            /** @description One squad's cup points. */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CupResponse"];
+                    "application/json": components["schemas"]["CupSquadPointsResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -27828,26 +27955,25 @@ export interface operations {
             };
         };
     };
-    getCupSquadPoints: {
+    getCup: {
         parameters: {
             query?: never;
             header?: never;
             path: {
                 id: string;
                 cupId: string;
-                squadId: string;
             };
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description One squad's cup points. */
+            /** @description One cup. */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CupSquadPointsResponse"];
+                    "application/json": components["schemas"]["CupResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -28621,6 +28747,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SportEventListResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -32147,6 +32282,8 @@ export interface operations {
             query?: {
                 /** @description Only this sport's pages. Omitted: every sport's. */
                 sport?: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+                /** @description true: only the pages with an edition coming, the one their primary offer shows, soonest first (#1202). Omitted or false: every active page, by sport then display order. */
+                upcoming?: boolean;
             };
             header?: never;
             path?: never;
@@ -32222,6 +32359,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ParticipantListResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
         };

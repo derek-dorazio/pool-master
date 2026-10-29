@@ -53,12 +53,13 @@ export function participantsModule(fastify: FastifyInstance, opts: ParticipantsM
       tags: ['Participants'],
       summary: 'List participants',
       description:
-        'The participant catalog, narrowed by text and filters and never paged. Any signed-in user may read it: '
+        'The participant catalog, narrowed by text and filters and never paged. `sportId` or a `q` of at least 3 characters is required, so the list never reads every sport\'s catalog: 400 SEARCH_TERM_REQUIRED otherwise. Any signed-in user may read it: '
         + 'contest setup and ingestion mapping browse it, and a root admin maintains it.',
       operationId: 'listParticipants',
       querystring: schemaRef('ParticipantListQuery'),
       response: {
         200: schemaRef('ParticipantListResponse'),
+        400: schemaRef('ErrorEnvelope'),
       },
     },
     handler: handler.searchParticipants,

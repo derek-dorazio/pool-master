@@ -110,10 +110,21 @@ export function inMemoryEmailMessages(now: () => Date = () => new Date()): InMem
       }
       return Promise.resolve(row ? { ...row } : undefined);
     },
-    clearContentCreatedBefore(cutoff) {
-      const old = rows.filter((row) => row.createdAt < cutoff && row.subject !== undefined);
+    clearContentCreatedBetween(from, before) {
+      const old = rows.filter((row) => row.createdAt >= from && row.createdAt < before && row.subject !== undefined);
       for (const row of old) {
         update(row.id, CLEARED_CONTENT);
+      }
+      return Promise.resolve(old.length);
+    },
+    deleteBatchCreatedBefore(cutoff, limit) {
+      // Oldest first, as the Prisma adapter takes them.
+      const old = rows
+        .filter((row) => row.createdAt < cutoff)
+        .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
+        .slice(0, limit);
+      for (const row of old) {
+        rows.splice(rows.indexOf(row), 1);
       }
       return Promise.resolve(old.length);
     },

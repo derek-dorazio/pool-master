@@ -4,7 +4,7 @@
  * each league's points table, held in plain arrays so a service test can build a season and read
  * it back.
  */
-import type { CupContest, CupContestFinish, CupKey, CupRankedEntry, CupRepository, LeagueCupContest } from '@poolmaster/shared/db';
+import type { CupContest, CupContestFinish, CupKey, CupRankedEntry, CupRepository, LeagueCupContest, LeagueRepository } from '@poolmaster/shared/db';
 import {
   ContestStatus,
   CupPointsScale,
@@ -13,7 +13,9 @@ import {
   type Cup,
   type CupPointsTable,
   type CupStanding,
+  type League,
 } from '@poolmaster/shared/domain';
+import { buildLeague } from '../factories';
 
 /** A contest as the cup reads it, with the cup key it belongs to. */
 export interface InMemoryCupContest extends CupContest, CupKey {}
@@ -24,12 +26,17 @@ export class InMemoryCups implements CupRepository {
   readonly rankedEntries: CupRankedEntry[] = [];
   readonly finishes: CupContestFinish[] = [];
   readonly standings: CupStanding[] = [];
-  readonly pointsTables = new Map<string, CupPointsTable>();
+  private readonly leagueRows = new Map<string, League>();
   private sequence = 0;
 
-  /** A league the repository knows, on the STANDARD table unless told otherwise. */
-  addLeague(leagueId: string, table: CupPointsTable = { scale: CupPointsScale.STANDARD, customPoints: [] }): void {
-    this.pointsTables.set(leagueId, table);
+  /** The leagues `addLeague` made, as the cup and championship services read them (#1176). */
+  readonly leagues: Pick<LeagueRepository, 'findById'> = {
+    findById: (id) => Promise.resolve(this.leagueRows.get(id) ?? null),
+  };
+
+  /** A league the services can read, on the STANDARD table unless told otherwise. */
+  addLeague(leagueId: string, table: CupPointsTable = { scale: CupPointsScale.STANDARD, customPoints: [] }, cupName = 'Pool Cup'): void {
+    this.leagueRows.set(leagueId, buildLeague({ id: leagueId, cupName, cupPointsScale: table.scale, cupCustomPoints: [...table.customPoints] }));
   }
 
   async ensure(key: CupKey): Promise<Cup> {
@@ -52,6 +59,11 @@ export class InMemoryCups implements CupRepository {
 
   async findById(id: string): Promise<Cup | null> {
     return this.cups.find((cup) => cup.id === id) ?? null;
+  }
+
+  async findByKey(key: CupKey): Promise<Cup | null> {
+    return this.cups.find((cup) => cup.leagueId === key.leagueId && cup.seasonYear === key.seasonYear
+      && cup.sportLeagueId === key.sportLeagueId) ?? null;
   }
 
   async findByLeagueSeason(leagueId: string, seasonYear: number): Promise<Cup[]> {
@@ -114,10 +126,6 @@ export class InMemoryCups implements CupRepository {
     this.cups[index] = crowned;
     this.standings.push(...crowning.standings);
     return crowned;
-  }
-
-  async findPointsTable(leagueId: string): Promise<CupPointsTable | null> {
-    return this.pointsTables.get(leagueId) ?? null;
   }
 }
 

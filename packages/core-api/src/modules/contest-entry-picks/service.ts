@@ -24,6 +24,7 @@ import type {
   ContestEntryPickInsertInput,
 } from './types';
 import { lockContestRow } from '../../adapters';
+import { forgettingReads, ReadMemoKey } from '../../core/request-read-memo';
 import { mapContestEntryPickToDto } from '../../mappers/contest-entry-picks.mapper';
 
 export class ContestEntryPickEntryMissingError extends Error {
@@ -163,7 +164,8 @@ export class ContestEntryPickService {
    */
   async recordDraw(input: ContestDrawRecordInput): Promise<{ drawnAt: Date }> {
     const { contestId } = input;
-    const drawnAt = await this.prisma.$transaction(async (tx) => {
+    // The contest's read carries its draw time, so the request's remembered contests are forgotten.
+    const drawnAt = await forgettingReads(ReadMemoKey.contest, () => this.prisma.$transaction(async (tx) => {
       // Entry writes take the same lock, so the entry set read below cannot change before commit (#644).
       await lockContestRow(tx, contestId);
       const contest = await tx.contest.findUnique({ where: { id: contestId }, select: { contestFormat: true } });
@@ -213,7 +215,7 @@ export class ContestEntryPickService {
         data: { status: ContestEntryStatus.SUBMITTED, submittedAt: draw.drawnAt },
       });
       return draw.drawnAt;
-    });
+    }));
 
     this.logger?.info(
       {

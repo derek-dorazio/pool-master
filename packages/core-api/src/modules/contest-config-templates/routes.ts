@@ -8,23 +8,39 @@
  * last route under /admin: the permission, not the place, is what makes it an admin operation.
  */
 import type { FastifyInstance } from 'fastify';
+import type { ContestConfigTemplateDto } from '@poolmaster/shared/dto';
 // Registers the named components this module's routes $ref (#192).
 import '@poolmaster/shared/dto';
 import { schemaRef } from '@poolmaster/shared/dto/schema-registry';
 import { schemaComponentsPlugin } from '../../plugins/schema-components';
 import { requireRootAdmin } from '../../core/root-admin-guard';
+import type { CdnInvalidator } from '../../core/cdn-invalidator';
+import { PublicReadPath, readPublicReadCacheTtlMs } from '../../core/public-cache';
+import { ReadCache } from '../../core/read-cache';
 import { getAppPrisma } from '../../core/prisma-context';
 import { PrismaContestConfigTemplateRepository } from '../../adapters';
 import { createContestConfigTemplateHandlers } from './handler';
 import { ContestConfigTemplateService } from './service';
 
-export function contestConfigTemplatesModule(fastify: FastifyInstance): void {
+export interface ContestConfigTemplatesModuleOptions {
+  cdn: CdnInvalidator;
+}
+
+export function contestConfigTemplatesModule(fastify: FastifyInstance, opts: ContestConfigTemplatesModuleOptions): void {
   void fastify.register(schemaComponentsPlugin);
 
   const handlers = createContestConfigTemplateHandlers(new ContestConfigTemplateService(
     new PrismaContestConfigTemplateRepository(getAppPrisma(fastify)),
     fastify.log,
-  ));
+  ), new ReadCache<ContestConfigTemplateDto[]>(readPublicReadCacheTtlMs(process.env)));
+
+  // A template update that lands changes How to Play and the event pages that offer it (#1181).
+  fastify.addHook('onSend', async (request, reply, payload) => {
+    if (request.method === 'PUT' && reply.statusCode < 400) {
+      opts.cdn.invalidate([PublicReadPath.CONTEST_CONFIG_TEMPLATES, PublicReadPath.EVENT_PAGES]);
+    }
+    return payload;
+  });
 
   fastify.get('/', {
     schema: {

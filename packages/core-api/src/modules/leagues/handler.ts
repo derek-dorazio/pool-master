@@ -19,7 +19,7 @@ import { toSquadMembershipDto } from '../../mappers/squads.mapper';
 import { sendError } from '../../core/error-handler';
 import type { CreateLeagueInput, LeagueActivityCounts, LeagueForViewer, LeagueService, UpdateLeagueCupSettingsInput, UpdateLeagueDetailsInput } from './service';
 import { LeagueNotFoundError, LeagueOperationError } from './service';
-import { LeagueMembershipStatus } from '@poolmaster/shared/domain';
+import { isPlatformSearchTerm, LeagueMembershipStatus, PLATFORM_SEARCH_MIN_LENGTH } from '@poolmaster/shared/domain';
 import type { League, LeagueMembership } from '@poolmaster/shared/domain';
 import type {
   SquadMembershipRepository,
@@ -106,6 +106,20 @@ export function createLeagueHandlers(
         403,
         'LEAGUE_SCOPE_FORBIDDEN',
         'Listing every league requires root-admin access',
+      );
+    }
+    // Every league on the platform is the largest list a root admin reads, and nothing pages it
+    // (§16), so it takes a search term (#1180). A member's own leagues need none.
+    if (scope === 'all' && !isPlatformSearchTerm(request.query.search)) {
+      logger.warn({
+        action: 'leagueRoute.list.searchRequired',
+        data: { userId, scope },
+      }, 'Rejected unscoped league list without a search term');
+      return sendError(
+        reply,
+        400,
+        'SEARCH_TERM_REQUIRED',
+        `Type at least ${PLATFORM_SEARCH_MIN_LENGTH} characters to find a league.`,
       );
     }
 

@@ -251,17 +251,41 @@ describe('email outbox: outcomes', () => {
     });
   });
 
-  it('clears the subject and bodies of emails created before the cutoff, and keeps the rows', async () => {
-    const old = await repository().record(queued());
+  it('clears the subject and bodies of emails created in the window, and keeps the rows and the content outside it', async () => {
+    const before = await repository().record(queued());
+    const inside = await repository().record(queued());
     const recent = await repository().record(queued());
-    await getPrisma().emailMessage.update({ where: { id: old.message.id }, data: { createdAt: DUE } });
+    await getPrisma().emailMessage.update({ where: { id: before.message.id }, data: { createdAt: new Date('1999-12-01T00:00:00.000Z') } });
+    await getPrisma().emailMessage.update({ where: { id: inside.message.id }, data: { createdAt: DUE } });
 
-    const cleared = await repository().clearContentCreatedBefore(new Date('2000-06-01T00:00:00.000Z'));
+    const cleared = await repository().clearContentCreatedBetween(
+      new Date('1999-12-25T00:00:00.000Z'),
+      new Date('2000-06-01T00:00:00.000Z'),
+    );
 
     expect(cleared).toBe(1);
-    const rows = await getPrisma().emailMessage.findMany({ where: { id: { in: [old.message.id, recent.message.id] } } });
-    expect(rows.find((row) => row.id === old.message.id)).toMatchObject({ subject: null, textBody: null, htmlBody: null });
+    const rows = await getPrisma().emailMessage.findMany({ where: { id: { in: [before.message.id, inside.message.id, recent.message.id] } } });
+    expect(rows.find((row) => row.id === inside.message.id)).toMatchObject({ subject: null, textBody: null, htmlBody: null });
+    expect(rows.find((row) => row.id === before.message.id)).toMatchObject({ subject: 'You are invited' });
     expect(rows.find((row) => row.id === recent.message.id)).toMatchObject({ subject: 'You are invited' });
+  });
+
+  it('deletes at most one batch of the emails created before the cutoff, oldest first, and keeps newer ones', async () => {
+    const oldest = await repository().record(queued());
+    const older = await repository().record(queued());
+    const recent = await repository().record(queued());
+    await getPrisma().emailMessage.update({ where: { id: oldest.message.id }, data: { createdAt: new Date('1990-11-01T00:00:00.000Z') } });
+    await getPrisma().emailMessage.update({ where: { id: older.message.id }, data: { createdAt: new Date('1990-12-01T00:00:00.000Z') } });
+    const cutoff = new Date('1991-01-01T00:00:00.000Z');
+    const ids = [oldest.message.id, older.message.id, recent.message.id];
+
+    expect(await repository().deleteBatchCreatedBefore(cutoff, 1)).toBe(1);
+    expect((await getPrisma().emailMessage.findMany({ where: { id: { in: ids } } })).map((row) => row.id).sort())
+      .toEqual([older.message.id, recent.message.id].sort());
+
+    expect(await repository().deleteBatchCreatedBefore(cutoff, 10)).toBe(1);
+    expect(await repository().deleteBatchCreatedBefore(cutoff, 10)).toBe(0);
+    expect((await getPrisma().emailMessage.findMany({ where: { id: { in: ids } } })).map((row) => row.id)).toEqual([recent.message.id]);
   });
 });
 

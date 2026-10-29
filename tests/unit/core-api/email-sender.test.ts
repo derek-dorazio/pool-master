@@ -15,6 +15,7 @@ type QueuedRecord = Extract<EmailMessageRecord, { status: 'QUEUED' }>;
 
 const START = new Date('2026-10-22T12:00:00.000Z').getTime();
 const MINUTE = 60_000;
+const DAY = 24 * 60 * MINUTE;
 
 /** A clock the test moves; `sleep` moves it too, so the rate limit's waits are visible. */
 function clock() {
@@ -352,16 +353,33 @@ describe('email sender', () => {
     expect(sent).toEqual(['member1@gmail.com', 'member2@gmail.com']);
   });
 
+  it('clears the content of emails that turned 30 days old in the last week, and leaves older emails to the sweeps that already cleared them', async () => {
+    const time = clock();
+    const outbox = inMemoryEmailMessages(time.now);
+    // Due long after the test, so the drain sends neither and only the sweep touches them.
+    const later = { dueAt: new Date(START + 365 * DAY) };
+    await outbox.record(queued(1, later));
+    time.advance(8 * DAY);
+    await outbox.record(queued(2, later));
+    time.advance(31 * DAY);
+    const { transport } = recordingTransport();
+
+    await sender({ outbox, transport, time }).drain();
+
+    // The first is 39 days old, past the sweep's 30-to-37-day window; the second is 31 days old.
+    expect(outbox.rows.map((row) => row.subject)).toEqual(['Welcome to Office League', undefined]);
+  });
+
   it('sends an email queued while the drain is clearing old content, rather than leaving it for the next tick', async () => {
     const time = clock();
     const outbox = inMemoryEmailMessages(time.now);
     await outbox.record(queued(1));
-    const clearContent = outbox.clearContentCreatedBefore.bind(outbox);
-    outbox.clearContentCreatedBefore = async (cutoff) => {
+    const clearContent = outbox.clearContentCreatedBetween.bind(outbox);
+    outbox.clearContentCreatedBetween = async (from, before) => {
       // Another request queues an email while the drain sweeps old content.
       await outbox.record(queued(2));
       emailSender.wake();
-      return clearContent(cutoff);
+      return clearContent(from, before);
     };
     const { transport, sent } = recordingTransport();
     const emailSender = sender({ outbox, transport, time });
@@ -375,7 +393,7 @@ describe('email sender', () => {
     const time = clock();
     const outbox = inMemoryEmailMessages(time.now);
     await outbox.record(queued(1));
-    outbox.clearContentCreatedBefore = () => Promise.reject(new Error('sweep timed out'));
+    outbox.clearContentCreatedBetween = () => Promise.reject(new Error('sweep timed out'));
     const { transport, sent } = recordingTransport();
     const logger = fakeLogger();
 

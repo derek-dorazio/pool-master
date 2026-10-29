@@ -148,8 +148,8 @@ describe('PrismaEventPageRepository.findEditionsNotOver', () => {
   });
 });
 
-describe('createContestOpeningReader.hasSquaresGameAhead', () => {
-  it('says a squares contest has a game while one is still to kick off, and none once the last is cancelled', async () => {
+describe('createContestOpeningReader.nextSquaresKickoff', () => {
+  it('gives the kickoff of the next game a squares contest could still be played on, and none once the last is cancelled', async () => {
     const prisma = getPrisma();
     const sportEvent = await prisma.sportEvent.create({
       data: {
@@ -169,8 +169,8 @@ describe('createContestOpeningReader.hasSquaresGameAhead', () => {
     const state = await reader.findById(sportEvent.id);
     if (state === null) throw new Error('The event was not read back.');
 
-    expect(await reader.hasSquaresGameAhead(state, NOW)).toBe(true);
+    expect(await reader.nextSquaresKickoff(state, NOW)).toEqual(new Date('2030-01-24T20:00:00.000Z'));
     await prisma.sportEventMatch.update({ where: { id: ahead.id }, data: { status: 'CANCELLED' } });
-    expect(await reader.hasSquaresGameAhead(state, NOW)).toBe(false);
+    expect(await reader.nextSquaresKickoff(state, NOW)).toBeNull();
   });
 });

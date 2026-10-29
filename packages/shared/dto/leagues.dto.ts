@@ -350,7 +350,7 @@ export const LeagueListQuerySchema = z.object({
     .trim()
     .min(1)
     .optional()
-    .describe('Optional case-insensitive substring matched against the league name. A filter, never a slice — see §16.'),
+    .describe("Case-insensitive substring matched against the league name. A filter, never a slice — see §16. Optional for 'mine'; required for 'all', at least 3 characters."),
   isActive: z
     .boolean()
     .optional()

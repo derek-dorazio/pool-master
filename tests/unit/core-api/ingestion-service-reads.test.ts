@@ -7,6 +7,8 @@ import {
 } from '../../../packages/core-api/src/modules/ingestion/ingestion-service';
 import { IngestionScheduler } from '../../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';
 import { readPayload } from '../../../packages/core-api/src/modules/ingestion/persistence/provider-sync-run-ledger';
+import { memoizedRead, ReadMemoKey, runWithReadMemo } from '../../../packages/core-api/src/core/request-read-memo';
+import type { PrismaClient } from '@prisma/client';
 import type { SportDataProvider } from '../../../packages/core-api/src/modules/ingestion/core/provider-interface';
 import type { ProviderSyncRunRepository } from '../../../packages/shared/db';
 import { Sport, SportEventSyncScope, type SportEvent } from '../../../packages/shared/domain';
@@ -275,5 +277,30 @@ describe('IngestionService manual sync background worker', () => {
     expect(runEventSync).toHaveBeenNthCalledWith(2, expect.objectContaining({ feeds: ['EVENTLIVESCORES'] }));
     expect(runs.update).toHaveBeenCalledWith('run-EVENTPARTICIPANTS', expect.objectContaining({ status: 'FAILED' }));
     expect(runs.update).toHaveBeenCalledWith('run-EVENTLIVESCORES', expect.objectContaining({ status: 'COMPLETED' }));
+  });
+
+  it('runs outside the submitting request\'s read memo, so the background sync reads afresh', async () => {
+    // Stands in for the root Prisma client, the only one whose reads are remembered.
+    const root = { $transaction: jest.fn() } as unknown as PrismaClient;
+    const load = jest.fn(async () => linkedEvent());
+    let finished!: () => void;
+    const done = new Promise<void>((resolve) => { finished = resolve; });
+    const runEventSync = jest.fn(async () => {
+      await memoizedRead(root, `${ReadMemoKey.sportEvent}event-1`, load);
+      await memoizedRead(root, `${ReadMemoKey.sportEvent}event-1`, load);
+      finished();
+      return [];
+    });
+    const scheduler = stubInstance(IngestionScheduler, { runEventSync });
+    const sportEvents = fakeSportEventRepo({ findByProviderRef: jest.fn().mockResolvedValue(linkedEvent()) });
+    const ingestion = service({ registry: registryWith(fakeSportDataProvider()), scheduler, sportEvents });
+
+    await runWithReadMemo(async () => {
+      await memoizedRead(root, `${ReadMemoKey.sportEvent}event-1`, load);
+      await ingestion.syncEventData({ sport: Sport.GOLF, eventId: 'evt-1', feeds: ['EVENTLIVESCORES'] }, 'admin', 'a@x.test');
+    });
+    await done;
+
+    expect(load).toHaveBeenCalledTimes(3);
   });
 });

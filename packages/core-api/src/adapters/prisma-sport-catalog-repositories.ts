@@ -53,6 +53,7 @@ import type {
   SportLeague,
 } from '@poolmaster/shared/domain';
 import { EventPricingConfigSchema, MatchSide, ParticipantInactiveReason, ParticipantStatus, SportEventStatus, ValuationSource } from '@poolmaster/shared/domain';
+import { forgettingReads, memoizedRead, memoizedReadMany, ReadMemoKey } from '../core/request-read-memo';
 import { toGolfRound, toGolfStanding } from './prisma-golf-repositories';
 import { MATCH_INCLUDE, toSportEventMatch } from './prisma-match-repositories';
 import { mapToParticipant } from './prisma-participant-repository';
@@ -84,16 +85,20 @@ export class PrismaSportLeagueRepository implements SportLeagueRepository {
   constructor(private readonly prisma: Db) {}
 
   async findById(id: string): Promise<SportLeague | null> {
-    const row = await this.prisma.sportLeague.findUnique({ where: { id } });
-    return row ? toSportLeague(row) : null;
+    return memoizedRead(this.prisma, `${ReadMemoKey.sportLeague}${id}`, async () => {
+      const row = await this.prisma.sportLeague.findUnique({ where: { id } });
+      return row ? toSportLeague(row) : null;
+    });
   }
 
   async findByIds(ids: readonly string[]): Promise<SportLeague[]> {
     if (ids.length === 0) {
       return [];
     }
-    const rows = await this.prisma.sportLeague.findMany({ where: { id: { in: [...ids] } } });
-    return rows.map(toSportLeague);
+    return memoizedReadMany(this.prisma, ReadMemoKey.sportLeague, ids, async (missing) => {
+      const rows = await this.prisma.sportLeague.findMany({ where: { id: { in: [...missing] } } });
+      return rows.map(toSportLeague);
+    });
   }
 
   async findAll(filters: SportLeagueFilters): Promise<SportLeague[]> {
@@ -119,7 +124,7 @@ export class PrismaSportLeagueRepository implements SportLeagueRepository {
   }
 
   async update(id: string, updates: SportLeagueUpdate): Promise<SportLeague> {
-    return toSportLeague(await this.prisma.sportLeague.update({
+    const write = () => this.prisma.sportLeague.update({
       where: { id },
       data: {
         ...(updates.name !== undefined && { name: updates.name }),
@@ -128,7 +133,9 @@ export class PrismaSportLeagueRepository implements SportLeagueRepository {
         ...(updates.currentEventYear !== undefined && { currentEventYear: updates.currentEventYear }),
         ...(updates.bracketAdvancement !== undefined && { bracketAdvancement: updates.bracketAdvancement }),
       },
-    }));
+    });
+    // A sport event's read carries its sport league's settings, so those are forgotten too.
+    return toSportLeague(await forgettingReads([ReadMemoKey.sportEvent, ReadMemoKey.sportLeague], write));
   }
 }
 
@@ -194,16 +201,20 @@ export class PrismaSportEventRepository implements SportEventRepository {
   constructor(private readonly prisma: Db) {}
 
   async findById(id: string): Promise<SportEvent | null> {
-    const row = await this.prisma.sportEvent.findUnique({ where: { id }, include: SPORT_EVENT_INCLUDE });
-    return row ? toSportEvent(row) : null;
+    return memoizedRead(this.prisma, `${ReadMemoKey.sportEvent}${id}`, async () => {
+      const row = await this.prisma.sportEvent.findUnique({ where: { id }, include: SPORT_EVENT_INCLUDE });
+      return row ? toSportEvent(row) : null;
+    });
   }
 
   async findByIds(ids: readonly string[]): Promise<SportEvent[]> {
     if (!ids.length) {
       return [];
     }
-    const rows = await this.prisma.sportEvent.findMany({ where: { id: { in: [...ids] } }, include: SPORT_EVENT_INCLUDE });
-    return rows.map(toSportEvent);
+    return memoizedReadMany(this.prisma, ReadMemoKey.sportEvent, ids, async (missing) => {
+      const rows = await this.prisma.sportEvent.findMany({ where: { id: { in: [...missing] } }, include: SPORT_EVENT_INCLUDE });
+      return rows.map(toSportEvent);
+    });
   }
 
   async findByProviderRef(providerId: string, externalId: string): Promise<SportEvent | null> {
@@ -254,7 +265,7 @@ export class PrismaSportEventRepository implements SportEventRepository {
   }
 
   async update(id: string, updates: SportEventUpdate): Promise<SportEvent> {
-    return toSportEvent(await this.prisma.sportEvent.update({
+    return toSportEvent(await forgettingReads(ReadMemoKey.sportEvent, () => this.prisma.sportEvent.update({
       where: { id },
       data: {
         ...(updates.name !== undefined && { name: updates.name }),
@@ -271,17 +282,17 @@ export class PrismaSportEventRepository implements SportEventRepository {
         ...(updates.syncScope !== undefined && { syncScope: updates.syncScope }),
       },
       include: SPORT_EVENT_INCLUDE,
-    }));
+    })));
   }
 
   async transitionStatus(id: string, transition: SportEventStatusTransition): Promise<SportEvent | null> {
-    const result = await this.prisma.sportEvent.updateMany({
+    const result = await forgettingReads(ReadMemoKey.sportEvent, () => this.prisma.sportEvent.updateMany({
       where: { id, status: transition.from },
       data: {
         status: transition.to,
         ...(transition.endDate && { endDate: transition.endDate }),
       },
-    });
+    }));
     return result.count > 0 ? this.findById(id) : null;
   }
 
@@ -289,7 +300,7 @@ export class PrismaSportEventRepository implements SportEventRepository {
     // Every child holds a RESTRICT foreign key, so they go first, extension rows before
     // their core rows. Deleting only the event row failed for any event with a round.
     const field = { sportEventParticipant: { sportEventId: id } };
-    await this.prisma.$transaction([
+    await forgettingReads(ReadMemoKey.sportEvent, () => this.prisma.$transaction([
       // The bracket first: its matches name field rows and rounds.
       this.prisma.sportEventMatch.deleteMany({ where: { sportEventId: id } }),
       this.prisma.sportEventParticipantGolfRound.deleteMany({ where: { participantRound: field } }),
@@ -302,7 +313,7 @@ export class PrismaSportEventRepository implements SportEventRepository {
       this.prisma.sportEventRound.deleteMany({ where: { sportEventId: id } }),
       this.prisma.sportEventTier.deleteMany({ where: { sportEventId: id } }),
       this.prisma.sportEvent.delete({ where: { id } }),
-    ]);
+    ]));
   }
 
   async countParticipants(sportEventIds: readonly string[]): Promise<Map<string, number>> {
@@ -829,7 +840,7 @@ export class PrismaSportEventParticipantValuationRepository implements SportEven
     pricingConfig: EventPricingConfig;
     assignments: readonly PriceAssignment[];
   }): Promise<void> {
-    await this.prisma.$transaction([
+    await forgettingReads(ReadMemoKey.sportEvent, () => this.prisma.$transaction([
       ...input.assignments.map((assignment) => {
         const price = { price: assignment.price, priceAssignedSource: assignment.source };
         return this.prisma.sportEventParticipantValuation.upsert({
@@ -842,7 +853,7 @@ export class PrismaSportEventParticipantValuationRepository implements SportEven
         where: { id: input.sportEventId },
         data: { pricingConfig: input.pricingConfig },
       }),
-    ]);
+    ]));
   }
 }
 

@@ -89,6 +89,14 @@ export class PrismaCupRepository implements CupRepository {
     return row === null ? null : toCup(row);
   }
 
+  async findByKey(key: CupKey): Promise<Cup | null> {
+    const row = await this.prisma.cup.findUnique({
+      where: { leagueId_seasonYear_sportLeagueId: key },
+      select: CUP_SELECT,
+    });
+    return row === null ? null : toCup(row);
+  }
+
   async findByLeagueSeason(leagueId: string, seasonYear: number): Promise<Cup[]> {
     const rows = await this.prisma.cup.findMany({
       where: { leagueId, seasonYear },
@@ -211,13 +219,5 @@ export class PrismaCupRepository implements CupRepository {
       await tx.cupStanding.createMany({ data: crowning.standings.map((standing) => ({ ...standing, cupId })) });
       return toCup(await tx.cup.findUniqueOrThrow({ where: { id: cupId }, select: CUP_SELECT }));
     });
-  }
-
-  async findPointsTable(leagueId: string): Promise<CupPointsTable | null> {
-    const row = await this.prisma.league.findUnique({
-      where: { id: leagueId },
-      select: { cupPointsScale: true, cupCustomPoints: true },
-    });
-    return row === null ? null : { scale: row.cupPointsScale, customPoints: row.cupCustomPoints };
   }
 }

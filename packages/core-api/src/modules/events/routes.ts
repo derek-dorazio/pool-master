@@ -29,11 +29,14 @@ import type { EventLifecycleService } from './event-lifecycle-service';
 import { EventScoreSourceService } from './event-score-source-service';
 import { createEventHandlers } from './handler';
 import { createEventLifecycleService, createSportEventServices, eventFieldCache } from './wiring';
+import type { CdnInvalidator } from '../../core/cdn-invalidator';
+import { PublicReadPath } from '../../core/public-cache';
 
 export interface EventsModuleOptions {
   eventLifecycleService?: EventLifecycleService;
   ingestionService: IngestionService;
   providerRegistry?: ProviderRegistry;
+  cdn: CdnInvalidator;
 }
 
 const TAGS = ['Events'];
@@ -67,11 +70,13 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
 
   // A write to an event forgets the field this container last read of it (#1163) before the
   // write answers, so the admin's next read, and every contest's on the event, is current.
-  fastify.addHook('onSend', async (request, _reply, payload) => {
+  // A write that lands can change which edition an event page offers, and whether it opens now
+  // (#1181), so the public event pages are cleared at the CDN too.
+  fastify.addHook('onSend', async (request, reply, payload) => {
+    if (request.method === 'GET' || request.method === 'HEAD') return payload;
     const { eventId } = request.params as { eventId?: string };
-    if (eventId !== undefined && request.method !== 'GET' && request.method !== 'HEAD') {
-      eventFieldCache.forget(eventId);
-    }
+    if (eventId !== undefined) eventFieldCache.forget(eventId);
+    if (reply.statusCode < 400) opts.cdn.invalidate([PublicReadPath.EVENT_PAGES]);
     return payload;
   });
 
@@ -82,12 +87,12 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
       tags: TAGS,
       summary: 'List sport events',
       description:
-        'The sport-event catalog, narrowed by sport, status, sport league, event year and name and never paged. Any signed-in user may read it: '
+        'The sport-event catalog, narrowed by sport, status, sport league, event year and name and never paged. At least one of `sport`, `sportLeagueId` and `eventYear` is required, so the list never reads every event: 400 SPORT_EVENT_FILTER_REQUIRED otherwise. Any signed-in user may read it: '
         + 'contest setup picks an event from it, and a root admin browses it. Each event carries its loaded field '
         + 'size, contest-setup readiness, and its tier and contest counts. DRAFT events (not yet released for contests) are listed for a root admin only.',
       operationId: 'listEvents',
       querystring: schemaRef('SportEventListQuery'),
-      response: { 200: schemaRef('SportEventListResponse'), ...errors(401) },
+      response: { 200: schemaRef('SportEventListResponse'), ...errors(400, 401) },
     },
     handler: handler.listEvents,
   });

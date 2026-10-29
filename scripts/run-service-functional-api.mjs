@@ -61,6 +61,9 @@ const env = {
   // read a board right after the score write they check, so this lane keeps none; the cache
   // itself is covered by the unit and integration suites.
   CONTEST_LEADERBOARD_CACHE_TTL_MS: process.env.CONTEST_LEADERBOARD_CACHE_TTL_MS ?? '0',
+  // #1181 — likewise the public reads (event pages, sport leagues, templates, sports): the tests
+  // read an event page right after the event write that changes it.
+  PUBLIC_READ_CACHE_TTL_MS: process.env.PUBLIC_READ_CACHE_TTL_MS ?? '0',
 };
 
 const buildResult = run('npm', ['run', 'build', '--workspace', '@poolmaster/shared'], env);

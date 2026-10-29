@@ -96,3 +96,4 @@ export type {
   TierDefinition,
   User,
 } from './types';
+export * from './platform-search';
