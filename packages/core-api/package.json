@@ -10,6 +10,7 @@
     "lint": "eslint src/"
   },
   "dependencies": {
+    "@aws-sdk/client-cloudfront": "^3.1156.0",
     "@aws-sdk/client-sesv2": "^3.1156.0",
     "@aws-sdk/client-sns": "^3.1156.0",
     "@aws-sdk/client-sqs": "^3.1156.0",

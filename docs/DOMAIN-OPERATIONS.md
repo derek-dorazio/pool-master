@@ -408,6 +408,31 @@ a gate that keeps granting access to a league the user was removed from.
 
 ---
 
+## A13. Public reads are kept at CloudFront for an hour
+
+The public, anonymous reads (#1181) answer every visitor alike and change only when a root admin
+saves something: `listEventPages`, `getEventPage`, `listSportLeagues`, `listContestConfigTemplates`
+and `listLeaguePlans`. The list is `PUBLIC_CACHED_READS` in `core/public-cache.ts`.
+
+- **Headers.** A 200 from one of them to a request with no session (no Authorization header, no
+  access cookie) is `public, max-age=300, s-maxage=3600, stale-while-revalidate=60`: 5 minutes
+  in the browser, 1 hour at CloudFront. Every other GET answer, including these reads asked for
+  with a session and their 404s, is `private, no-cache`, revalidated by its ETag.
+- **CloudFront.** One cache behavior per `PublicReadPath`, ahead of `/api/*`, keyed on the query
+  string, the Authorization header and the access cookie, so visitors without a session share one
+  copy and a signed-in request never shares one (`infrastructure/terraform/cloudfront.tf`).
+- **Invalidation.** A write that lands clears what it changed: a sport league write (and its
+  affiliations) the sport league list and the event pages; a template update the templates and
+  the event pages; any event write the event pages; a save or reset of `PLAN_CONFIG` or
+  `BILLING_CONFIG` the Plans page. Writes within 5 seconds share one CreateInvalidation, sent
+  again 35 seconds later, once every API task has caught up. A refused write clears nothing.
+- **In each API task.** The same reads, and `listSports`, are kept for
+  `PUBLIC_READ_CACHE_TTL_MS` (30 seconds unless set; the functional API and browser E2E lanes
+  set 0). A write through the sport league or template routes clears that task's copy at once.
+- **What can still be an hour old.** Nothing writes when an event starts, so an event page can
+  show an offer as `OPEN` for up to an hour after its picks closed. The `/start` flow and Create
+  contest make their own checks, so the visitor cannot start a contest that no longer takes picks.
+
 ## Identity and membership
 
 Cluster: `User`, `League`, `LeagueMembership`, `Squad`, `SquadMembership`,

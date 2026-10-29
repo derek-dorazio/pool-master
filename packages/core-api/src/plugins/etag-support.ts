@@ -4,10 +4,14 @@
  * On response: computes MD5 hash of JSON body, sets ETag header.
  * On request: checks If-None-Match header against current ETag.
  * If match -> returns 304 Not Modified (no body, saves bandwidth).
+ *
+ * Sets Cache-Control from `cacheControlFor` (#1181): public for an anonymous read on the named
+ * public list, which CloudFront and the browser keep; private and revalidated for everything else.
  */
 
 import fp from 'fastify-plugin';
 import crypto from 'node:crypto';
+import { cacheControlFor } from '../core/public-cache';
 
 export const etagPlugin = fp((app) => {
   app.addHook('onSend', async (request, reply, payload) => {
@@ -20,7 +24,7 @@ export const etagPlugin = fp((app) => {
     const etag = `"${hash}"`;
 
     reply.header('ETag', etag);
-    reply.header('Cache-Control', 'no-cache'); // must revalidate
+    reply.header('Cache-Control', cacheControlFor(request, reply.statusCode));
 
     // Check If-None-Match
     const ifNoneMatch = request.headers['if-none-match'];

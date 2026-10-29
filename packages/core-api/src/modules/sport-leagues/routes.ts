@@ -7,6 +7,7 @@
  * writes need the root-admin claim (A10).
  */
 import type { FastifyInstance } from 'fastify';
+import type { SportLeagueListResponse } from '@poolmaster/shared/dto/sport-catalog.dto';
 import { schemaRef } from '@poolmaster/shared/dto/schema-registry';
 // Registers ErrorEnvelope, which this module's error responses $ref (#192).
 import '@poolmaster/shared/dto/errors.dto';
@@ -14,6 +15,9 @@ import '@poolmaster/shared/dto/sport-catalog.dto';
 import { schemaComponentsPlugin } from '../../plugins/schema-components';
 import { getAppPrisma } from '../../core/prisma-context';
 import { requireRootAdmin } from '../../core/root-admin-guard';
+import type { CdnInvalidator } from '../../core/cdn-invalidator';
+import { PublicReadPath, readPublicReadCacheTtlMs } from '../../core/public-cache';
+import { ReadCache } from '../../core/read-cache';
 import { createSportEventServices, eventFieldCache } from '../events/wiring';
 import { createSportLeagueHandlers } from './handler';
 
@@ -30,16 +34,27 @@ const SPORT_LEAGUE_PARAMS = {
   properties: { sportLeagueId: { type: 'string', format: 'uuid' } },
 };
 
-export function sportLeaguesModule(fastify: FastifyInstance): void {
+export interface SportLeaguesModuleOptions {
+  cdn: CdnInvalidator;
+}
+
+export function sportLeaguesModule(fastify: FastifyInstance, opts: SportLeaguesModuleOptions): void {
   void fastify.register(schemaComponentsPlugin);
   const services = createSportEventServices(getAppPrisma(fastify), fastify.log);
-  const handler = createSportLeagueHandlers(services.sportLeagues);
+  const lists = new ReadCache<SportLeagueListResponse>(readPublicReadCacheTtlMs(process.env));
+  const handler = createSportLeagueHandlers(services.sportLeagues, lists);
   const write = { onRequest: requireRootAdmin };
 
   // An affiliation write changes which participants every event of the sport league flags as
-  // its own (#1163). Rare enough to forget every event field this container read.
-  fastify.addHook('onSend', async (request, _reply, payload) => {
-    if (request.method !== 'GET' && request.method !== 'HEAD') eventFieldCache.clear();
+  // its own (#1163). Rare enough to forget every event field this container read. A write that
+  // lands also changes the public list, and the event pages that name the sport league (#1181).
+  fastify.addHook('onSend', async (request, reply, payload) => {
+    if (request.method === 'GET' || request.method === 'HEAD') return payload;
+    eventFieldCache.clear();
+    if (reply.statusCode < 400) {
+      lists.clear();
+      opts.cdn.invalidate([PublicReadPath.SPORT_LEAGUES, PublicReadPath.EVENT_PAGES]);
+    }
     return payload;
   });
 

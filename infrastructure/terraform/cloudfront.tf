@@ -134,6 +134,84 @@ resource "aws_cloudfront_origin_access_control" "admin" {
 }
 
 # =============================================================================
+# Public API reads (#1181)
+#
+# The public, anonymous reads (event pages, How to Play's templates and sport
+# leagues, the Plans page) may be kept by CloudFront: core-api sends them with
+# `public, s-maxage=3600` to a visitor with no session, and `private, no-cache`
+# to everything else (packages/core-api/src/core/public-cache.ts). The cache key
+# holds the query string, the Authorization header and the access cookie, so
+# every visitor without a session shares one copy and a signed-in request never
+# shares one. An admin save calls CreateInvalidation (core/cdn-invalidator.ts).
+# =============================================================================
+
+locals {
+  # One behavior per path, ahead of /api/*. Must equal PublicReadPath in
+  # core/public-cache.ts; tests/unit/core-api/public-cache.test.ts checks it.
+  public_api_paths = [
+    "/api/v1/event-pages*",
+    "/api/v1/sport-leagues*",
+    "/api/v1/contest-config-templates*",
+    "/api/v1/plans*",
+  ]
+}
+
+resource "aws_cloudfront_cache_policy" "public_api" {
+  name    = "${local.name_prefix}-public-api"
+  comment = "Public API reads: the origin's Cache-Control decides, up to an hour"
+
+  # Nothing is kept unless the origin says so, and never past an hour.
+  min_ttl     = 0
+  default_ttl = 0
+  max_ttl     = 3600
+
+  parameters_in_cache_key_and_forwarded_to_origin {
+    enable_accept_encoding_brotli = true
+    enable_accept_encoding_gzip   = true
+
+    cookies_config {
+      cookie_behavior = "whitelist"
+      cookies {
+        items = ["poolmaster_access"]
+      }
+    }
+
+    headers_config {
+      header_behavior = "whitelist"
+      headers {
+        items = ["Authorization"]
+      }
+    }
+
+    query_strings_config {
+      query_string_behavior = "all"
+    }
+  }
+}
+
+# What else reaches core-api on these paths, outside the cache key: the session
+# and CSRF cookies and headers a root admin's write under the same paths needs.
+resource "aws_cloudfront_origin_request_policy" "public_api" {
+  name    = "${local.name_prefix}-public-api"
+  comment = "Public API paths: every cookie and the write headers reach core-api"
+
+  cookies_config {
+    cookie_behavior = "all"
+  }
+
+  headers_config {
+    header_behavior = "whitelist"
+    headers {
+      items = ["Content-Type", "X-CSRF-Token", "x-tenant-id", "x-user-id"]
+    }
+  }
+
+  query_strings_config {
+    query_string_behavior = "all"
+  }
+}
+
+# =============================================================================
 # CloudFront Distribution — Webapp
 # =============================================================================
 
@@ -197,6 +275,22 @@ resource "aws_cloudfront_distribution" "webapp" {
     function_association {
       event_type   = "viewer-request"
       function_arn = aws_cloudfront_function.spa_rewrite.arn
+    }
+  }
+
+  # Public API reads, ahead of /api/*: kept as long as core-api's Cache-Control
+  # says, up to an hour (#1181). Writes under these paths pass straight through.
+  dynamic "ordered_cache_behavior" {
+    for_each = local.public_api_paths
+    content {
+      path_pattern             = ordered_cache_behavior.value
+      allowed_methods          = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
+      cached_methods           = ["GET", "HEAD"]
+      target_origin_id         = "alb-api"
+      viewer_protocol_policy   = "redirect-to-https"
+      compress                 = true
+      cache_policy_id          = aws_cloudfront_cache_policy.public_api.id
+      origin_request_policy_id = aws_cloudfront_origin_request_policy.public_api.id
     }
   }
 

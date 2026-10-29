@@ -29,11 +29,14 @@ import type { EventLifecycleService } from './event-lifecycle-service';
 import { EventScoreSourceService } from './event-score-source-service';
 import { createEventHandlers } from './handler';
 import { createEventLifecycleService, createSportEventServices, eventFieldCache } from './wiring';
+import type { CdnInvalidator } from '../../core/cdn-invalidator';
+import { PublicReadPath } from '../../core/public-cache';
 
 export interface EventsModuleOptions {
   eventLifecycleService?: EventLifecycleService;
   ingestionService: IngestionService;
   providerRegistry?: ProviderRegistry;
+  cdn: CdnInvalidator;
 }
 
 const TAGS = ['Events'];
@@ -67,11 +70,13 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
 
   // A write to an event forgets the field this container last read of it (#1163) before the
   // write answers, so the admin's next read, and every contest's on the event, is current.
-  fastify.addHook('onSend', async (request, _reply, payload) => {
+  // A write that lands can change which edition an event page offers, and whether it opens now
+  // (#1181), so the public event pages are cleared at the CDN too.
+  fastify.addHook('onSend', async (request, reply, payload) => {
+    if (request.method === 'GET' || request.method === 'HEAD') return payload;
     const { eventId } = request.params as { eventId?: string };
-    if (eventId !== undefined && request.method !== 'GET' && request.method !== 'HEAD') {
-      eventFieldCache.forget(eventId);
-    }
+    if (eventId !== undefined) eventFieldCache.forget(eventId);
+    if (reply.statusCode < 400) opts.cdn.invalidate([PublicReadPath.EVENT_PAGES]);
     return payload;
   });
 
