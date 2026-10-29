@@ -242,7 +242,8 @@ export class SportEventService {
    * browse-and-create would be. Events PoolMaster already has are skipped rather than refused,
    * so the import can be run again: one already linked to the provider event, or a series that
    * already has an edition that year (an admin-authored one, say, or an earlier event of the
-   * same name in this slate).
+   * same name in this slate). An edition another admin creates while the import runs is not
+   * skipped: it refuses the whole import with 409, and running it again skips that event.
    */
   async importProviderEventYear(input: {
     sportLeagueId: string;
@@ -546,8 +547,12 @@ export class SportEventService {
       events = await this.deps.sportEvents.createMany(editions.map((edition) => edition.event));
     } catch (error) {
       if (isEditionConflict(error)) {
+        // Every caller creates editions of one year.
+        const [first] = editions;
         throw new SportEventError(
-          `${editions.map((edition) => `"${edition.event.name}"`).join(', ')} already has an edition in ${editions.map((edition) => edition.event.eventYear).at(0)}.`,
+          editions.length === 1
+            ? `"${first.event.name}" already has an edition in ${first.event.eventYear}.`
+            : `One of these events already has an edition in ${first.event.eventYear}; none were created.`,
           'EVENT_EDITION_ALREADY_EXISTS',
           409,
         );

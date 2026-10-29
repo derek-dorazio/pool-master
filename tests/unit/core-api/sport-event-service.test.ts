@@ -1,4 +1,4 @@
-import { expect } from '@jest/globals';
+import { expect, jest } from '@jest/globals';
 import { MANUAL_ADMIN_PROVIDER_ID, Sport, SportEventStatus } from '@poolmaster/shared/domain';
 import { EventLifecycleService } from '../../../packages/core-api/src/modules/events/event-lifecycle-service';
 import type { SportEventChangedNotice } from '../../../packages/core-api/src/modules/notifications';
@@ -123,7 +123,7 @@ describe('SportEventService.createEvent', () => {
     await service.createEvent({ sportLeagueId: sportLeague.id, eventYear: 2026, ...MANUAL_INPUT });
 
     await expect(service.createEvent({ sportLeagueId: sportLeague.id, eventYear: 2026, ...MANUAL_INPUT }))
-      .rejects.toMatchObject({ code: 'EVENT_EDITION_ALREADY_EXISTS', statusCode: 409 });
+      .rejects.toMatchObject({ code: 'EVENT_EDITION_ALREADY_EXISTS', statusCode: 409, message: `"${MANUAL_INPUT.name}" already has an edition in 2026.` });
     expect(store.events).toHaveLength(1);
   });
 
@@ -256,6 +256,25 @@ describe('SportEventService.cloneEventYear', () => {
     await expect(service.cloneEventYear({ sportLeagueId: sportLeague.id, eventYear: 2026, targetYear: 2028 }))
       .rejects.toMatchObject({ code: 'EVENT_YEAR_NOT_EMPTY', statusCode: 409 });
     expect(store.events).toHaveLength(2);
+  });
+
+  it('refuses the whole clone with 409 when an edition appears in the target year as it is written, naming no one event and creating none', async () => {
+    const { store, service, sportLeague, sportEvents } = setup();
+    for (const name of ['The Open', 'The Masters']) {
+      await service.createEvent({ sportLeagueId: sportLeague.id, eventYear: 2026, ...MANUAL_INPUT, name });
+    }
+    // Another admin's edition lands between the clone's check and its insert.
+    jest.spyOn(sportEvents, 'createMany').mockRejectedValueOnce(Object.assign(new Error('Unique constraint failed'), {
+      code: 'P2002',
+      meta: { target: ['event_series_id', 'event_year'] },
+    }));
+
+    await expect(service.cloneEventYear({ sportLeagueId: sportLeague.id, eventYear: 2026 })).rejects.toMatchObject({
+      code: 'EVENT_EDITION_ALREADY_EXISTS',
+      statusCode: 409,
+      message: 'One of these events already has an edition in 2027; none were created.',
+    });
+    expect(store.events.filter((event) => event.eventYear === 2027)).toEqual([]);
   });
 
   it('refuses an empty source year with 422 EVENT_YEAR_HAS_NO_EVENTS, and an unknown sport league with 404', async () => {
