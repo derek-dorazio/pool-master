@@ -399,7 +399,7 @@ state, stale actions, and unthemeable markup accumulate.
   tile titles (`title-card`), buttons, and the league menu are uppercase; the wordmark and
   titles are also italic. Page titles and section titles that sit on the page stay normal case.
   Every title is a `Heading`: `level` picks the tag and `variant` the look (`hero`, `display`,
-  `page`, `section`, or `card` with a `size`), so no page types a heading's font, size or
+  `page`, `section`, `subtitle`, `label`, `eyebrow`, or `card` with a `size`), so no page types a heading's font, size or
   `title-card` class string by hand. Small labels over a title are `Eyebrow`, in label blue (`text-label`),
   or `tone="inverse"` on a navy panel. The selected tab is `bg-selected`. Leaderboard totals are
   `score-total` (condensed), and a leaderboard's `DataGrid` takes `headerTone="scoreboard"`

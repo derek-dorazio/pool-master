@@ -69,4 +69,25 @@ describe("Heading", () => {
 
     expect(screen.getByTestId("contest-title")).toHaveAttribute("id", "dialog-title");
   });
+
+  it("draws on-page sub-titles, small group titles and eyebrow-style group names each in one look", () => {
+    render(
+      <>
+        <Heading level={2} variant="subtitle">Owners</Heading>
+        <Heading level={4} variant="label">Round 2</Heading>
+        <Heading level={4} tone="inherit" variant="eyebrow">East region</Heading>
+      </>,
+    );
+
+    expect(screen.getByRole("heading", { name: "Owners" })).toHaveClass("font-display", "text-lg", "font-extrabold");
+    expect(screen.getByRole("heading", { name: "Round 2" })).toHaveClass("text-sm", "font-semibold");
+    expect(screen.getByRole("heading", { name: "East region" })).toHaveClass("uppercase", "tracking-eyebrow", "text-muted-foreground");
+  });
+
+  it("only lets a card title take a size, so the fixed steps of the scale cannot be bent per call", () => {
+    // @ts-expect-error -- size is for card titles only
+    render(<Heading level={1} size="sm" variant="page">Profile</Heading>);
+
+    expect(screen.getByRole("heading")).toHaveClass("text-3xl");
+  });
 });

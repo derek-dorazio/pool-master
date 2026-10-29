@@ -153,7 +153,7 @@ function ReseedRound({
 
   return (
     <section className="mt-4" data-testid={`root-admin-reseed-round-${roundNumber}`}>
-      <h4 className="text-sm font-semibold text-foreground">{roundLabel(roundNumber, roundCount)}</h4>
+      <Heading level={4} variant="label">{roundLabel(roundNumber, roundCount)}</Heading>
       {ready ? null : (
         <p className="mt-1 text-sm text-muted-foreground" data-testid={`root-admin-reseed-waiting-${roundNumber}`}>
           {`Enter the result of every ${before} ${noun.one} first. ${capitalize(unfinishedNoun)} ${listNumbers(unfinished.map((match) => match.matchNumber))} ${unfinished.length === 1 ? 'has' : 'have'} no result yet.`}

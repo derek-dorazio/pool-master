@@ -140,7 +140,7 @@ export function BracketBoard({
           {round.regions.map((region) => (
             <div className="space-y-2" key={region.regionLabel ?? ''}>
               {region.regionLabel ? (
-                <h4 className="text-xs font-semibold uppercase tracking-eyebrow text-muted-foreground">{region.regionLabel}</h4>
+                <Heading level={4} tone="inherit" variant="eyebrow">{region.regionLabel}</Heading>
               ) : null}
               <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 {region.games.map((game) => (

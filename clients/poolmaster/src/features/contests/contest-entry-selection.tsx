@@ -7,12 +7,13 @@ import {
   Button,
   Checkbox,
   Chip,
+  cn,
   FormField,
+  Heading,
   ListStack,
   Select,
   StatusBadge,
   Tile,
-  cn,
 } from "@/features/shared/ui";
 
 type SelectionState = SelectionStateResponse;
@@ -210,9 +211,9 @@ export function EditableSelectionGroup({
         variant="ghost"
       >
         <div>
-          <h4 className="text-lg font-semibold text-foreground">
+          <Heading level={4} variant="subtitle">
             {group.groupName}
-          </h4>
+          </Heading>
           <p className="mt-1 text-sm text-muted-foreground">
             Choose {group.picksFromGroup} {group.picksFromGroup === 1 ? noun.one : noun.many} from this tier.
           </p>
@@ -271,9 +272,9 @@ export function LockedSelectionGroup({
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h4 className="text-lg font-semibold text-foreground">
+          <Heading level={4} variant="subtitle">
             {group.groupName}
-          </h4>
+          </Heading>
           <p className="mt-1 text-sm text-muted-foreground">
             Frozen lineup from Tier {group.groupNumber}.
           </p>

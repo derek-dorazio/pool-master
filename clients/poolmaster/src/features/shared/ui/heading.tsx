@@ -17,6 +17,12 @@ const headingVariants = cva("", {
       page: "text-3xl font-semibold tracking-tight",
       /** A section or dialog title that sits on the page, in normal case. */
       section: "text-xl font-semibold tracking-tight sm:text-2xl",
+      /** A titled block within a page or panel, such as a settings section or "Owners". */
+      subtitle: "font-display text-lg font-extrabold",
+      /** A small title over a group inside a card, such as a round or a form step. */
+      label: "text-sm font-semibold",
+      /** A group name set as a small uppercase line, like an `Eyebrow` that is also a heading. */
+      eyebrow: "text-xs font-semibold uppercase tracking-eyebrow text-muted-foreground",
       /** A card or tile title: the house uppercase italic (`title-card`). */
       card: "title-card",
     },
@@ -42,13 +48,22 @@ const headingVariants = cva("", {
 
 type HeadingLevel = 1 | 2 | 3 | 4 | 5 | 6;
 
+type HeadingVariant = NonNullable<VariantProps<typeof headingVariants>["variant"]>;
+type CardSize = NonNullable<VariantProps<typeof headingVariants>["size"]>;
+
+/** Only a card title takes a size; every other look is a fixed step on the scale. */
+type HeadingLook =
+  | { variant: "card"; size?: CardSize }
+  | { variant: Exclude<HeadingVariant, "card">; size?: never };
+
 export type HeadingProps = Omit<ComponentProps<"h1">, "color"> &
-  Required<Pick<VariantProps<typeof headingVariants>, "variant">> &
-  Pick<VariantProps<typeof headingVariants>, "size" | "tone"> & {
+  Pick<VariantProps<typeof headingVariants>, "tone"> &
+  HeadingLook & {
     level: HeadingLevel;
   };
 
 export function Heading({ className, level, size, tone, variant, ...props }: HeadingProps) {
   const Tag = `h${level}` as const;
-  return <Tag className={cn(headingVariants({ size, tone, variant }), className)} {...props} />;
+  const cardSize = variant === "card" ? size : undefined;
+  return <Tag className={cn(headingVariants({ size: cardSize, tone, variant }), className)} {...props} />;
 }

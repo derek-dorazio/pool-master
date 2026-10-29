@@ -20,7 +20,7 @@ export function PerpetualTrophies({ leagueId }: { leagueId: string }) {
 
   return (
     <section className="space-y-3" data-testid="perpetual-trophies">
-      <h2 className="text-lg font-semibold text-foreground">Perpetual trophies</h2>
+      <Heading level={2} variant="subtitle">Perpetual trophies</Heading>
       {trophies.map((trophy) => (
         <Tile className="space-y-2" data-testid={`perpetual-trophy-${trophy.eventSeriesId}-${trophy.selectionType}`} key={`${trophy.eventSeriesId}-${trophy.selectionType}`} padding="sm" radius="lg">
           <Heading level={3} variant="card" className="flex items-center gap-2">

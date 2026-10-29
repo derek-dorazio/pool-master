@@ -385,10 +385,10 @@ function TierBoardColumn({
       className="w-64 shrink-0 rounded-2xl border border-border bg-muted/20 p-3"
       data-testid={`root-admin-tier-column-${column.key}`}
     >
-      <h4 className="text-sm font-semibold text-foreground">
+      <Heading level={4} variant="label">
         {column.label}{' '}
         <span className="text-muted-foreground">({column.cards.length})</span>
-      </h4>
+      </Heading>
       {column.cards.length === 0 ? (
         <p className="mt-3 text-xs text-muted-foreground">No {participant.many}.</p>
       ) : (

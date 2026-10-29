@@ -60,7 +60,7 @@ export function SquadHistorySection({
     <section className="space-y-6" data-testid="squad-history">
       <div className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-lg font-semibold text-foreground">{historyYearTitle({ year, isOver: year < currentYear })}</h2>
+          <Heading level={2} variant="subtitle">{historyYearTitle({ year, isOver: year < currentYear })}</Heading>
           <Select
             aria-label="Year"
             className="w-auto"
