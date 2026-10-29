@@ -27,6 +27,12 @@ export const ListCupsQuerySchema = z.object({
 }).describe('Which season\'s cups to list.');
 export type ListCupsQuery = z.infer<typeof ListCupsQuerySchema>;
 
+export const CupSquadPointsQuerySchema = z.object({
+  seasonYear: z.number().int().describe('The cup\'s season, such as 2026.'),
+  sportLeagueId: z.uuid().describe('The cup\'s sports league.'),
+}).describe('Which cup: the league has one per season and sports league.');
+export type CupSquadPointsQuery = z.infer<typeof CupSquadPointsQuerySchema>;
+
 export const CupSeasonListResponseSchema = z.object({
   seasonYears: z.array(z.number().int()).describe('Seasons with a cup to show, newest first; empty before the league has a contest.'),
 }).describe('The seasons in which a league has cups.');
@@ -106,6 +112,7 @@ export type CupSquadContestDto = z.infer<typeof CupSquadContestDtoSchema>;
 
 export const CupSquadPointsDtoSchema = z.object({
   cupId: z.uuid(),
+  cupName: z.string().describe('The cup\'s name, from its season and sports league: "2026 PGA Tour Cup".'),
   squadId: z.uuid(),
   squadName: z.string(),
   points: PointsSchema,
@@ -148,6 +155,7 @@ export const CupProjectionResponseSchema = z.object({
 export type CupProjectionResponse = z.infer<typeof CupProjectionResponseSchema>;
 
 registerSchema('ListCupsQuery', ListCupsQuerySchema);
+registerSchema('CupSquadPointsQuery', CupSquadPointsQuerySchema);
 registerSchema('CupSeasonListResponse', CupSeasonListResponseSchema);
 registerSchema('CupStandingRowDto', CupStandingRowDtoSchema);
 registerSchema('CupWinnerDto', CupWinnerDtoSchema);

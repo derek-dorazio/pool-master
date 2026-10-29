@@ -56,11 +56,15 @@ export type EventPageResponse = z.infer<typeof EventPageResponseSchema>;
 
 export const EventPageListQuerySchema = z.object({
   sport: z.enum(Sport).optional().describe('Only this sport\'s pages. Omitted: every sport\'s.'),
+  upcoming: z
+    .boolean()
+    .optional()
+    .describe('true: only the pages with an edition coming, the one their primary offer shows, soonest first (#1202). Omitted or false: every active page, by sport then display order.'),
 }).describe('Filters for the event page list.');
 export type EventPageListQuery = z.infer<typeof EventPageListQuerySchema>;
 
 export const EventPageListResponseSchema = z.object({
-  eventPages: z.array(EventPageDtoSchema).describe('The active pages, by sport then display order. A page between seasons has no offers.'),
+  eventPages: z.array(EventPageDtoSchema).describe('The active pages, by sport then display order, or soonest first when only the upcoming ones are asked for. A page between seasons has no offers.'),
 }).describe('The active event pages.');
 export type EventPageListResponse = z.infer<typeof EventPageListResponseSchema>;
 

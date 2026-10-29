@@ -112,6 +112,12 @@ describe('SDK Functional: event pages (#1007)', () => {
     // --- The list carries the same page --------------------------------------------------------
     const list = EventPageListResponseSchema.parse((await listEventPages({ client: visitor, query: { sport: Sport.AMERICAN_FOOTBALL } })).data);
     expect(list.eventPages.find((page) => page.slug === 'championship-weekend')?.offers.find((offer) => offer.isPrimary)?.state).toBe(EventPageOfferState.OPEN);
+
+    // --- The upcoming list: only pages with a primary edition coming, soonest first (#1202) ------
+    const upcoming = EventPageListResponseSchema.parse((await listEventPages({ client: visitor, query: { sport: Sport.AMERICAN_FOOTBALL, upcoming: true } })).data);
+    expect(upcoming.eventPages.map((page) => page.slug)).toContain('championship-weekend');
+    const starts = upcoming.eventPages.map((page) => expectDefined(page.offers.find((offer) => offer.isPrimary)).edition.startDate);
+    expect(starts).toEqual([...starts].sort());
   });
 
   it('answers 404 EVENT_PAGE_NOT_FOUND for an address no page has', async () => {

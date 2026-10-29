@@ -135,6 +135,7 @@ export interface CupSquadContestView {
 
 export interface CupSquadPointsView {
   cup: Cup;
+  sportLeagueName: string;
   squad: Squad;
   /** Tenths of a point. */
   points: number;
@@ -253,12 +254,24 @@ export class CupService {
     return this.buildCupView(cup, squads, contests);
   }
 
-  /** One squad's points in a cup, counted contest by counted contest. */
-  async getSquadPoints(leagueId: string, cupId: string, squadId: string): Promise<CupSquadPointsView> {
-    const cup = await this.requireLeagueCup(leagueId, cupId);
-    const squad = await this.deps.squads.findById(squadId);
+  /**
+   * One squad's points in the league's cup for a season and sports league, counted contest by
+   * counted contest. The page names the cup by its season and sports league, so this finds it by
+   * them rather than the page reading every cup of the season for its id (#1202).
+   */
+  async getSquadPoints(key: CupKey, squadId: string): Promise<CupSquadPointsView> {
+    const { leagueId } = key;
+    const [cup, squad, sportLeague] = await Promise.all([
+      this.deps.cups.findByKey(key),
+      this.deps.squads.findById(squadId),
+      this.deps.sportLeagues.findById(key.sportLeagueId),
+    ]);
+    if (cup === null || sportLeague === null) {
+      this.deps.logger?.warn({ action: 'cup.squadPoints.cupNotFound', data: { ...key, squadId } }, 'Cup squad points asked for a cup the league does not have');
+      throw new CupNotFoundError(`The league has no ${String(key.seasonYear)} cup for sports league ${key.sportLeagueId}.`);
+    }
     if (squad === null || squad.leagueId !== leagueId) {
-      this.deps.logger?.warn({ action: 'cup.squadPoints.squadNotFound', data: { leagueId, cupId, squadId } }, 'Cup squad points asked for a squad outside the league');
+      this.deps.logger?.warn({ action: 'cup.squadPoints.squadNotFound', data: { leagueId, cupId: cup.id, squadId } }, 'Cup squad points asked for a squad outside the league');
       throw new CupSquadNotFoundError(`Squad ${squadId} is not in this league.`);
     }
     const { table, counted } = await this.loadSeason(cup);
@@ -266,7 +279,7 @@ export class CupService {
       const finish = finishes.find((candidate) => candidate.squadId === squadId) ?? null;
       return { contest, weight, finish, points: finish === null ? 0 : cupFinishPoints(table, finish, weight) };
     });
-    return { cup, squad, points: contests.reduce((sum, row) => sum + row.points, 0), contests };
+    return { cup, sportLeagueName: sportLeague.name, squad, points: contests.reduce((sum, row) => sum + row.points, 0), contests };
   }
 
   /**

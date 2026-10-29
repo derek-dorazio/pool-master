@@ -320,6 +320,29 @@ describe('PrismaSquadRepository squad details', () => {
     expect(details[0]?.members[0]?.user.email).toBe(commissioner.email);
   });
 
+  it('gives each owner their role in the squad\'s own league, not in another league they belong to, by league and by id (#1202)', async () => {
+    const home = await createLeague('Role Home');
+    const away = await createLeague('Role Away');
+    const homeTeam = await createSquad(home.league.id, 'Home Team', home.commissioner.id);
+    const awayTeam = await createSquad(away.league.id, 'Away Team', away.commissioner.id);
+    await addOwner(homeTeam.id, home.league.id, home.commissioner.id, new Date('2026-04-01T00:00:00Z'));
+    // The home commissioner also owns a team in the away league, as a plain member there.
+    await addOwner(awayTeam.id, away.league.id, home.commissioner.id, new Date('2026-04-02T00:00:00Z'));
+    await addOwner(awayTeam.id, away.league.id, away.commissioner.id, new Date('2026-04-01T00:00:00Z'));
+    const repo = new PrismaSquadRepository(getPrisma());
+
+    const [homeDetails] = await repo.findDetailsByLeague(home.league.id);
+    const awayDetails = await repo.findDetailsById(awayTeam.id);
+
+    expect(homeDetails.members.map(({ user, leagueRole }) => [user.id, leagueRole])).toEqual([
+      [home.commissioner.id, LeagueRole.COMMISSIONER],
+    ]);
+    expect(awayDetails?.members.map(({ user, leagueRole }) => [user.id, leagueRole])).toEqual([
+      [away.commissioner.id, LeagueRole.COMMISSIONER],
+      [home.commissioner.id, LeagueRole.MEMBER],
+    ]);
+  });
+
   it('reads one team with its owners by id, and null for an unknown id', async () => {
     const { league, commissioner } = await createLeague('One');
     const squad = await createSquad(league.id, 'Only Team', commissioner.id);

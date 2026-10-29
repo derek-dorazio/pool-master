@@ -112,7 +112,7 @@ describe('How to Play', () => {
     renderPage('/how-to-play?sport=american-football');
 
     expect(await screen.findByTestId('how-to-play-coming-up-championship-weekend')).toHaveAttribute('href', '/play/american-football/championship-weekend');
-    expect(listEventPagesMock).toHaveBeenCalledWith(expect.objectContaining({ query: { sport: 'AMERICAN_FOOTBALL' } }));
+    expect(listEventPagesMock).toHaveBeenCalledWith(expect.objectContaining({ query: { sport: 'AMERICAN_FOOTBALL', upcoming: 'true' } }));
   });
 
   it('shows a signed-out visitor the three steps, one card for each way to play a template offers, and a way to create an account', async () => {
