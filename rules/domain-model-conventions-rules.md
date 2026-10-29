@@ -621,9 +621,12 @@ actually answer. Paging answers "how many at a time", which is a transport conce
 leaks into the contract, forces a second parallel count query, and makes every consumer
 reassemble a result the server already had.
 
-This repo's scale makes it unnecessary: leagues have tens of members, not thousands, and
-the product shows one league at a time (A8). Where a set could genuinely grow without
-bound, the answer is a tighter filter or a retention policy, not a page parameter.
+**A list returns current data by default, and history is reached by a filter.** A league
+keeps every season it has played, so a list that returns everything grows with history while
+the screen only needs what is current. The default answer is what is open and live — the
+current season, the open and in-progress contests — and older rows are one filter away, such
+as a year. Where a set could grow without bound even then, the answer is a tighter filter or
+a retention policy, not a page parameter.
 
 ### What this rules out
 

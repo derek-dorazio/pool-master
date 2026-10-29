@@ -60,6 +60,7 @@ export class PrismaSportEventParticipantGolfRoundRepository implements SportEven
 
   async upsertMany(writes: readonly GolfRoundWrite[]): Promise<GolfRoundResult[]> {
     if (writes.length === 0) return [];
+    // poolmaster-allow-query-in-loop: per-row values in one batched transaction; a set-based write needs raw SQL (held)
     const rows = await this.prisma.$transaction(writes.map((write) => this.golfRoundUpsert(write)));
     return rows.flatMap(toGolfRoundResult);
   }
@@ -117,6 +118,7 @@ export class PrismaSportEventParticipantGolfStandingRepository implements SportE
         currentRoundThru: write.currentRoundThru,
       };
       const core = { currentRound: write.currentRound, status: write.status, asOf: write.asOf };
+      // poolmaster-allow-query-in-loop: per-row values in one batched transaction; a set-based write needs raw SQL (held)
       return this.prisma.sportEventParticipantStanding.upsert({
         where: { sportEventParticipantId: write.sportEventParticipantId },
         create: { sportEventParticipantId: write.sportEventParticipantId, ...core, golf: { create: golf } },
@@ -129,6 +131,7 @@ export class PrismaSportEventParticipantGolfStandingRepository implements SportE
 
   async updateRanks(ranks: ReadonlyArray<StandingRankWrite>): Promise<void> {
     if (ranks.length === 0) return;
+    // poolmaster-allow-query-in-loop: per-row values in one batched transaction; a set-based write needs raw SQL (held)
     await this.prisma.$transaction(ranks.map((rank) => this.prisma.sportEventParticipantStanding.update({
       where: { id: rank.standingId },
       data: { position: rank.position, displayPosition: rank.displayPosition },

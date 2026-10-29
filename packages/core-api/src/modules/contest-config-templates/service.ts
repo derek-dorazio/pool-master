@@ -120,6 +120,7 @@ export class ContestConfigTemplateService {
       await Promise.all(
         scopeTemplates
           .filter((template) => template.id !== templateId && template.isDefault)
+          // poolmaster-allow-query-in-loop: at most one other default in a template's scope
           .map((template) => this.repository.update(template.id, { isDefault: false })),
       );
     }

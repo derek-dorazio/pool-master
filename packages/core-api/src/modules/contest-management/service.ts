@@ -1388,6 +1388,7 @@ async function syncDerivedScoring(
   const existingParticipantRules =
     await participantRuleRepo.findByContestConfiguration(configuration.id);
   await Promise.all(
+    // poolmaster-allow-query-in-loop: a configuration holds one participant scoring rule
     existingParticipantRules.map((rule) => participantRuleRepo.delete(rule.id)),
   );
 

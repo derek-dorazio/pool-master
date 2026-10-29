@@ -65,6 +65,7 @@ export class IngestionPersistence {
     }, 'Persisting sport events from ingestion');
 
     for (const event of events) {
+      // poolmaster-allow-query-in-loop: #1247
       const existingEvent = await this.prisma.sportEvent.findUnique({
         where: {
           providerId_externalId: {
@@ -87,6 +88,7 @@ export class IngestionPersistence {
 
       const disposition = resolveDisposition(before, after);
       if (disposition !== 'UNCHANGED') {
+        // poolmaster-allow-query-in-loop: #1247
         await forgettingReads(ReadMemoKey.sportEvent, () => this.prisma.sportEvent.update({
           where: { id: existingEvent.id },
           data: { participantCount },
@@ -156,6 +158,7 @@ export class IngestionPersistence {
       }
       const values = participantValues(participant);
       if (!participantValuesEqual(mapping.participant, values)) {
+        // poolmaster-allow-query-in-loop: per-row values in one batched transaction; a set-based write needs raw SQL (held)
         updates.push(this.prisma.participant.update({ where: { id: mapping.participantId }, data: values }));
       }
     }
@@ -166,6 +169,7 @@ export class IngestionPersistence {
     if (unmapped.length > 0) {
       const sportBySport = new Map<Sport, { id: string; participantType: ParticipantType }>();
       for (const sport of new Set(unmapped.map((participant) => participant.sport))) {
+        // poolmaster-allow-query-in-loop: once per distinct sport among new participants
         sportBySport.set(sport, await this.prisma.sport.upsert({
           where: { sport },
           create: {
@@ -345,6 +349,7 @@ export class IngestionPersistence {
           data: toCreate.map((plan) => ({ sportEventId, participantId: plan.participantId, ...plan.data })),
           select: { id: true, participantId: true },
         }),
+        // poolmaster-allow-query-in-loop: per-row values in one batched transaction; a set-based write needs raw SQL (held)
         ...toUpdate.map((plan) => this.prisma.sportEventParticipant.update({
           where: { id: (plan.existing as { id: string }).id },
           data: plan.data,
