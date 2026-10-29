@@ -7,7 +7,7 @@ import {
   buildLeagueContestPath,
   buildLeaguePath,
 } from '@/features/leagues/league-routing';
-import { LinkButton, SegmentedControl, Tile } from '@/features/shared/ui';
+import { Heading, LinkButton, SegmentedControl, Tile } from '@/features/shared/ui';
 import type { ContestView } from './contest-page-view';
 import { ContestStatusBadge } from './contest-status-badge';
 
@@ -88,9 +88,9 @@ function ContestHeader({
         <div className="space-y-3">
           <div className="flex flex-wrap gap-2">{badges}</div>
           <div>
-            <h2 className="text-3xl font-semibold tracking-tight" data-testid={titleTestId}>
+            <Heading data-testid={titleTestId} level={2} tone="inherit" variant="page">
               {title}
-            </h2>
+            </Heading>
             {summary}
             {children}
           </div>

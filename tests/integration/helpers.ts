@@ -20,6 +20,7 @@ import bcrypt from 'bcryptjs';
 import { startSmtpSinkServer, type CapturedMail, type SmtpSinkServer } from '../support/smtp-sink';
 import { RecordingCdnInvalidator } from '../support/recording-cdn-invalidator';
 import { statementLog } from './statement-log';
+import { describeUnindexedScans, indexCheck } from './index-check';
 
 // Plugins and modules from core-api
 import { healthPlugin } from '../../packages/core-api/src/plugins/health';
@@ -116,6 +117,8 @@ const INTEGRATION_TEST_LEAGUE_CODE_PREFIXES = [
 
 let app: FastifyInstance;
 let prisma: PrismaClient;
+/** The app's own client: the statements it sends are the ones the index check plans (#1243). */
+let appPrisma: PrismaClient;
 let integrationSmtpServer: SmtpSinkServer | undefined;
 let emailSender: EmailSender | undefined;
 let previousMailEnv: Partial<Record<MailEnvironmentKey, string | undefined>> | undefined;
@@ -161,8 +164,8 @@ export function getPrisma(): PrismaClient {
   return prisma;
 }
 
-/** Build the Fastify app with real plugins and modules (no background jobs). */
-async function buildTestApp(): Promise<FastifyInstance> {
+/** Build the Fastify app with real plugins and modules (no background jobs), on `prisma`. */
+async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
   const testApp = Fastify({ logger: false, ajv: FASTIFY_AJV_OPTIONS, schemaController: FASTIFY_SCHEMA_CONTROLLER });
 
   testApp.decorate('prisma', prisma);
@@ -287,14 +290,20 @@ export async function setupIntegrationTests(): Promise<void> {
   // comes from version-info.json, written by this config's globalSetup (#180).
   process.env.POOLMASTER_ENVIRONMENT ??= 'test';
   process.env.LOG_LEVEL ??= 'warn';
-  // Query events feed statementLog, which the query-scaling tests count (#1242).
-  const client = new PrismaClient({ log: [{ emit: 'event', level: 'query' }] });
-  client.$on('query', (event) => statementLog.receive(event));
-  prisma = client;
-  await prisma.$connect();
+  // Query events feed statementLog, which the query-scaling tests count (#1242), and the app's
+  // also feed the index check (#1243). The tests' own seeds, reads and cleanup go through a client
+  // of their own, so the check plans only what the app sends.
+  const testClient = new PrismaClient({ log: [{ emit: 'event', level: 'query' }] });
+  statementLog.watch(testClient);
+  const appClient = new PrismaClient({ log: [{ emit: 'event', level: 'query' }] });
+  statementLog.watch(appClient);
+  appClient.$on('query', (event) => indexCheck.receive(event));
+  prisma = testClient;
+  appPrisma = appClient;
+  await Promise.all([prisma.$connect(), appPrisma.$connect()]);
   await cleanupTestData();
   await startIntegrationMailSink();
-  app = await buildTestApp();
+  app = await buildTestApp(appPrisma);
 }
 
 /** Signs SNS messages the app's SES events route believes, as SNS would (#844 slice 4). */
@@ -325,9 +334,14 @@ export async function teardownIntegrationTests(): Promise<void> {
   // Setup can fail before assigning these, and teardown must still run.
   const startedApp = app as FastifyInstance | undefined;
   const startedPrisma = prisma as PrismaClient | undefined;
+  const startedAppPrisma = appPrisma as PrismaClient | undefined;
   if (startedApp) await startedApp.close();
+  // Planned before disconnecting, and failed after the rest of teardown has run.
+  const unindexed = startedPrisma ? await describeUnindexedScans(startedPrisma) : null;
   if (startedPrisma) await startedPrisma.$disconnect();
+  if (startedAppPrisma) await startedAppPrisma.$disconnect();
   await stopIntegrationMailSink();
+  if (unindexed !== null) throw new Error(unindexed);
 }
 
 async function startIntegrationMailSink(): Promise<void> {

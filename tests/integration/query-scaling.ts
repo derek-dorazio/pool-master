@@ -9,7 +9,7 @@
  * `npm run rules:check:query-scaling` fails a list route that has none.
  */
 import type { paths } from '@poolmaster/shared/generated/api-types';
-import { deliverQueuedIntegrationEmail, getPrisma } from './helpers';
+import { deliverQueuedIntegrationEmail } from './helpers';
 import { recordStatements, statementShape, type RecordedStatement } from './statement-log';
 
 /** The API paths that answer a GET. */
@@ -42,7 +42,7 @@ export async function measureQueryScaling<Fixture, Result>(scalingCase: QuerySca
     const fixture = await scalingCase.seed(rows);
     // An email the seed queued is sent in the background, and its statements would land in one run's count.
     await deliverQueuedIntegrationEmail();
-    const { result, statements } = await recordStatements(getPrisma(), () => scalingCase.call(fixture));
+    const { result, statements } = await recordStatements(() => scalingCase.call(fixture));
     return { shown: scalingCase.rowsShown(result), statements };
   };
   const small = await run(SMALL_SEED);

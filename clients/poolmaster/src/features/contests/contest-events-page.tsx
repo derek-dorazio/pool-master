@@ -21,6 +21,7 @@ import {
   DateDisplay,
   FormField,
   FormPage,
+  Heading,
   LoadingState,
   Select,
 } from '@/features/shared/ui';
@@ -276,9 +277,9 @@ function ContestEventsForm({
       </ul>
 
       <div className="space-y-2" data-testid="contest-events-chosen">
-        <h3 className="title-card text-base">
+        <Heading level={3} variant="card" size="base" tone="inherit">
           {chosen.length === 1 ? '1 event, in order' : `${chosen.length} events, in order`}
-        </h3>
+        </Heading>
         {chosen.length ? (
           <ol className="list-decimal space-y-1 pl-5 text-sm">
             {chosen.map((event) => (

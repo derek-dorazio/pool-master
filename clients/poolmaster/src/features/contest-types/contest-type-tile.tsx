@@ -1,7 +1,7 @@
 import type { ContestConfigTemplateDto } from '@/lib/api';
 import { formatSelectionTypeName } from '@poolmaster/shared/domain';
 import { SELECTION_TYPE_ICONS } from '@/features/contests/selection-type-icons';
-import { LinkButton, Tile } from '@/features/shared/ui';
+import { Heading, LinkButton, Tile } from '@/features/shared/ui';
 import type { ContestTypeTile } from './contest-catalog';
 
 interface ContestTypeTileCardProps {
@@ -25,7 +25,7 @@ export function ContestTypeTileCard({ tile, createPathFor }: ContestTypeTileCard
         {formatSelectionTypeName(tile.selectionType)}
       </div>
       <div className="space-y-1">
-        <h4 className="font-semibold text-foreground">{featured.name}</h4>
+        <Heading level={4} variant="subtitle">{featured.name}</Heading>
         <p className="text-sm text-muted-foreground">{featured.description}</p>
       </div>
       {variations.length ? (

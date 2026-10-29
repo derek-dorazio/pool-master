@@ -3,6 +3,7 @@ import { X } from "lucide-react";
 import { useEffect, useRef, type ReactNode } from "react";
 import { Button } from "./button";
 import { cn } from "./class-names";
+import { Heading } from "./heading";
 
 type ModalProps = {
   children: ReactNode;
@@ -101,11 +102,10 @@ export function Modal({
         >
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0 space-y-2">
-              <Dialog.Title
-                className="text-xl font-semibold tracking-tight sm:text-2xl"
-                {...(titleId ? { id: titleId } : {})}
-              >
-                {title}
+              <Dialog.Title asChild>
+                <Heading level={2} tone="inherit" variant="section" {...(titleId ? { id: titleId } : {})}>
+                  {title}
+                </Heading>
               </Dialog.Title>
               {description ? (
                 <Dialog.Description

@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
-import { cn } from "./class-names";
 import { Tile } from "./tile";
+import { Heading } from "./heading";
 
 type SettingsSectionProps = {
   action?: ReactNode;
@@ -35,9 +35,9 @@ export function SettingsSectionHeader({
   return (
     <div className="flex flex-wrap items-end justify-between gap-3">
       <div>
-        <h2 className={cn("font-display text-lg font-extrabold", tone === "danger" ? "text-destructive" : "text-foreground")}>
+        <Heading className={tone === "danger" ? "text-destructive" : undefined} level={2} variant="subtitle">
           {title}
-        </h2>
+        </Heading>
         {description ? <p className="mt-0.5 text-sm text-muted-foreground">{description}</p> : null}
       </div>
       {action}
