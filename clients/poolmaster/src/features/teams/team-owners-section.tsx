@@ -1,6 +1,6 @@
 import type { SquadDto } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-context';
-import { Alert } from '@/features/shared/ui';
+import { Alert, Heading } from '@/features/shared/ui';
 import { MyTeamOwnersPanel } from './my-team-owners-panel';
 import { getActiveOwners } from './team-directory';
 import { useTeamOwnerInvitationsQuery } from './use-team-owner-invitations-query';
@@ -38,7 +38,7 @@ export function TeamOwnersSection({
 
   return (
     <section className="space-y-3" data-testid={testId}>
-      <h2 className="text-lg font-semibold text-foreground">Owners</h2>
+      <Heading level={2} variant="subtitle">Owners</Heading>
       {invitationsQuery.isError ? (
         <Alert
           data-testid={`${testId}-invitations-error`}

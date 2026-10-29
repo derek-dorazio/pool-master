@@ -4,6 +4,7 @@ import {
 } from '@/lib/api';
 import {
   BulkUploadPanel,
+  Heading,
   StatusBadge,
   Tile,
 } from '@/features/shared/ui';
@@ -97,9 +98,9 @@ export function SportLeagueRosterUploadCard({ leagueId }: { leagueId: string }) 
 
   return (
     <Tile>
-      <h3 className="title-card text-base text-foreground">
+      <Heading level={3} variant="card" size="base">
         Bulk-update rankings
-      </h3>
+      </Heading>
       <p className="mt-1 text-sm text-muted-foreground">
         {`Paste or upload the current rankings, preview how each row resolves to a ${participant.one}, then apply.`}
       </p>

@@ -8,7 +8,15 @@ import {
 } from '@poolmaster/shared/domain';
 import type { ReactNode } from 'react';
 import type { SportEventDto } from '@/lib/api';
-import { Alert, ChoiceCard, Chip, formatDateTimeDisplay, SegmentedControl, useDisplayPreferences } from '@/features/shared/ui';
+import {
+  Alert,
+  Chip,
+  ChoiceCard,
+  formatDateTimeDisplay,
+  Heading,
+  SegmentedControl,
+  useDisplayPreferences,
+} from '@/features/shared/ui';
 import { formatStartsIn } from './contest-readiness';
 
 /** One numbered part of the form: 1 Event, 2 Format, 3 Rules, 4 Name. */
@@ -32,10 +40,10 @@ export function SetupSection({
       data-testid={testId}
     >
       <div>
-        <h3 className="title-card flex items-baseline gap-2 text-base" id={`${testId}-title`}>
+        <Heading level={3} variant="card" size="base" tone="inherit" className="flex items-baseline gap-2" id={`${testId}-title`}>
           <span className="font-display text-sm text-muted-foreground">{step}</span>
           {title}
-        </h3>
+        </Heading>
         {lead ? <p className="mt-0.5 text-sm text-muted-foreground">{lead}</p> : null}
       </div>
       {children}

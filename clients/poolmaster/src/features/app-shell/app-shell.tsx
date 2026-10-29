@@ -142,9 +142,9 @@ export function AppShell() {
               <span className="hidden rounded-pill border border-inverse-border px-3 py-1 font-display text-xs font-bold uppercase text-primary sm:inline-flex">
                 {PRODUCT_TAGLINE}
               </span>
-              <h1 className="font-display text-xl font-black uppercase italic tracking-normal text-on-inverse sm:text-2xl">
+              <p className="font-display text-xl font-black uppercase italic tracking-normal text-on-inverse sm:text-2xl">
                 {PRODUCT_NAME}
-              </h1>
+              </p>
             </div>
 
             {shouldLoadLeagueShell ? (

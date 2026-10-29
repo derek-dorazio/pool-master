@@ -2,7 +2,7 @@ import { getSportDefinition, type Sport, type SportNoun } from '@poolmaster/shar
 import { useMemo, useState, type ReactNode } from 'react';
 import { GripVertical } from 'lucide-react';
 import { replaceEventTierAssignments, updateEventParticipants } from '@/lib/api';
-import { Alert, Button, Input, Select, SortableList, Tile } from '@/features/shared/ui';
+import { Alert, Button, Heading, Input, Select, SortableList, Tile } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -299,7 +299,7 @@ export function TierBoard({
   return (
     <Tile>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h3 className="title-card text-base text-foreground">Tier assignments</h3>
+        <Heading level={3} variant="card" size="base">Tier assignments</Heading>
         {dirty || priceInvalid ? (
           <div
             className="flex items-center gap-2"
@@ -385,10 +385,10 @@ function TierBoardColumn({
       className="w-64 shrink-0 rounded-2xl border border-border bg-muted/20 p-3"
       data-testid={`root-admin-tier-column-${column.key}`}
     >
-      <h4 className="text-sm font-semibold text-foreground">
+      <Heading level={4} variant="label">
         {column.label}{' '}
         <span className="text-muted-foreground">({column.cards.length})</span>
-      </h4>
+      </Heading>
       {column.cards.length === 0 ? (
         <p className="mt-3 text-xs text-muted-foreground">No {participant.many}.</p>
       ) : (

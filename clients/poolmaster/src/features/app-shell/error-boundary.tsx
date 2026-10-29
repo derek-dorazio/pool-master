@@ -1,6 +1,6 @@
 import type { ErrorInfo, ReactNode } from 'react';
 import { Component } from 'react';
-import { Button } from '@/features/shared/ui';
+import { Button, Heading } from '@/features/shared/ui';
 import { logger } from '@/lib/logger';
 import { PRODUCT_NAME } from '@poolmaster/shared/domain';
 
@@ -49,9 +49,9 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
           </span>
           <div className="mt-4 space-y-4">
             <div className="space-y-3">
-              <h2 className="text-3xl font-semibold tracking-tight">
+              <Heading level={2} tone="inherit" variant="page">
                 {PRODUCT_NAME} hit an unexpected problem.
-              </h2>
+              </Heading>
               <p className="max-w-2xl text-base leading-7 text-muted-foreground">
                 Try reloading the page. If the problem keeps happening, try again later.
               </p>

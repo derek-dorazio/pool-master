@@ -5,7 +5,7 @@ import { extractErrorMessage, hasErrorCode, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import { Alert, Button, LinkButton, Tile } from '@/features/shared/ui';
+import { Alert, Button, Heading, LinkButton, Tile } from '@/features/shared/ui';
 import { EMAIL_CATEGORY_LABELS } from './email-preferences';
 import { SELF_USER_ID } from './user-routing';
 
@@ -40,7 +40,7 @@ export function EmailUnsubscribePage() {
   if (!token || hasErrorCode(unsubscribeMutation.error, 'EMAIL_UNSUBSCRIBE_LINK_INVALID')) {
     return (
       <Tile className="mx-auto max-w-md space-y-4" data-testid="email-unsubscribe-invalid" padding="lg" radius="xl">
-        <h2 className="title-card text-lg text-foreground">This link doesn&apos;t work</h2>
+        <Heading level={2} variant="card" size="lg">This link doesn&apos;t work</Heading>
         <p className="text-sm text-muted-foreground">
           Sign in and open Email notifications on your profile to choose which emails you get.
         </p>
@@ -53,7 +53,7 @@ export function EmailUnsubscribePage() {
     const { label } = EMAIL_CATEGORY_LABELS[unsubscribeMutation.data.category];
     return (
       <Tile className="mx-auto max-w-md space-y-4" data-testid="email-unsubscribe-done" padding="lg" radius="xl">
-        <h2 className="title-card text-lg text-foreground">You&apos;re unsubscribed</h2>
+        <Heading level={2} variant="card" size="lg">You&apos;re unsubscribed</Heading>
         <p className="text-sm text-muted-foreground">
           You won&apos;t get {label.toLowerCase()} emails from any of your leagues. You can turn them
           back on, or change other emails, in Email notifications on your profile.
@@ -65,7 +65,7 @@ export function EmailUnsubscribePage() {
 
   return (
     <Tile className="mx-auto max-w-md space-y-4" padding="lg" radius="xl">
-      <h2 className="title-card text-lg text-foreground">Stop these emails?</h2>
+      <Heading level={2} variant="card" size="lg">Stop these emails?</Heading>
       <p className="text-sm text-muted-foreground">
         This turns off this kind of email from all your leagues. Invitations and account emails are
         always sent.

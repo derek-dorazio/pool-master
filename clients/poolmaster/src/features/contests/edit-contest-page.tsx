@@ -23,6 +23,7 @@ import {
   formatDateDisplay,
   FormField,
   FormPage,
+  Heading,
   Input,
   LoadingState,
   useDisplayPreferences,
@@ -211,7 +212,7 @@ function EditContestForm({
         <FixedValue label="Format">{formatSelectionTypeName(contest.selectionType)}</FixedValue>
       </div>
       <div className="space-y-3">
-        <h3 className="title-card text-base">Rules</h3>
+        <Heading level={3} variant="card" size="base" tone="inherit">Rules</Heading>
         <ContestRulesFields
           bracketStartRounds={bracketStartRounds}
           onChange={(next: Partial<ContestRulesValues>) => {
