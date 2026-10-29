@@ -3,6 +3,7 @@
  * survivor week. The contest world is in memory; the email service is the real one over an
  * in-memory outbox, so the tests assert on the emails recorded.
  */
+import { jest } from '@jest/globals';
 import {
   ContestEntryStatus,
   PickEmMode,
@@ -13,7 +14,7 @@ import {
   type SportLeague,
 } from '@poolmaster/shared/domain';
 import { EMAIL_SETTINGS, EmailService } from '../../../packages/core-api/src/modules/email';
-import { EntryReceipts, type DrawnSquaresBoard } from '../../../packages/core-api/src/modules/notifications';
+import { EntryReceipts, type DrawnSquaresBoard, type EntryReceiptDeps } from '../../../packages/core-api/src/modules/notifications';
 import type { GamePickGame, GamePickTeam, GamePicksView } from '../../../packages/core-api/src/modules/selections/prediction-service';
 import { fakeLogger } from '../../support/fake-logger';
 import { inMemoryEmailMessages, inMemoryEmailOptOuts, inMemoryEmailSuppressions, type InMemoryEmailMessages } from '../../support/in-memory-email-messages';
@@ -84,7 +85,10 @@ describe('EntryReceipts', () => {
     logger = fakeLogger();
   });
 
-  function receipts(): EntryReceipts {
+  function receipts(reads: Pick<EntryReceiptDeps, 'squadMemberships' | 'users'> = {
+    squadMemberships: world.squadMembershipRepo(),
+    users: world.userRepo(),
+  }): EntryReceipts {
     const config = EMAIL_SETTINGS.defaults({ POOLMASTER_ENVIRONMENT: 'prod' });
     const email = new EmailService({
       messages: outbox,
@@ -98,12 +102,8 @@ describe('EntryReceipts', () => {
       logger,
     });
     return new EntryReceipts({
-      contests: world.contestRepo(),
       leagues: world.leagueRepo(),
-      entries: world.entryRepo(),
-      squadMemberships: world.squadMembershipRepo(),
-      users: world.userRepo(),
-      sportEvents: world.sportEventRepo(),
+      ...reads,
       sportLeagues: { findById: async () => ({ name: 'NFL', roundNames } as unknown as SportLeague) },
       email,
       appBaseUrl: 'https://app.example.test/',
@@ -156,6 +156,27 @@ describe('EntryReceipts', () => {
     };
   }
 
+  /** The submitted week as PredictionService hands it over: the contest, entry and event it already loaded. */
+  async function submitted(picks: GamePicksView, sent: EntryReceipts = receipts()): Promise<void> {
+    const [entry, sportEvent] = await Promise.all([
+      world.entryRepo().findByIdWithSquad(picks.entryId),
+      world.sportEventRepo().findById(picks.sportEventId),
+    ]);
+    const contest = world.contests.get(picks.contestId);
+    if (!contest || !entry || !sportEvent) throw new Error('week missing');
+    return sent.gamePicksSubmitted(picks, { contest, entry, sportEvent });
+  }
+
+  /** The drawn board with its contest's entries and event, as SquaresService hands them over. */
+  async function drawn(board: DrawnSquaresBoard, sent: EntryReceipts = receipts()): Promise<void> {
+    const [entries, sportEvent] = await Promise.all([
+      world.entryRepo().findByContestWithSquad(board.contest.id),
+      world.sportEventRepo().findById(board.contest.sportEventIds[0] ?? ''),
+    ]);
+    if (!sportEvent) throw new Error('event missing');
+    return sent.squaresDrawn({ board, entries, sportEvent });
+  }
+
   function textTo(userId: string): string {
     return outbox.rows.find((row) => row.recipientUserId === userId)?.textBody ?? '';
   }
@@ -163,7 +184,7 @@ describe('EntryReceipts', () => {
   it('sends each active owner a pick\'em receipt under the week\'s header with every pick at its spread and confidence and the tiebreaker in points, from the contest\'s league', async () => {
     const { contest, event, entry, owners } = await entryIn(SelectionType.PICK_EM, { name: 'Week 1', sport: Sport.AMERICAN_FOOTBALL, startDate: KICKOFF });
 
-    await receipts().gamePicksSubmitted(view({ contestId: contest.id, entryId: entry.id, sportEventId: event.id }, {
+    await submitted(view({ contestId: contest.id, entryId: entry.id, sportEventId: event.id }, {
       mode: PickEmMode.CONFIDENCE,
       againstTheSpread: true,
       tiebreakerMatchId: 'game-1',
@@ -191,7 +212,7 @@ describe('EntryReceipts', () => {
   it('names a tie pick in the sport\'s word for it: a draw in soccer', async () => {
     const { contest, event, entry, owners } = await entryIn(SelectionType.PICK_EM, { name: 'Matchday 1', sport: Sport.SOCCER, startDate: KICKOFF });
 
-    await receipts().gamePicksSubmitted(view({ contestId: contest.id, entryId: entry.id, sportEventId: event.id }, {
+    await submitted(view({ contestId: contest.id, entryId: entry.id, sportEventId: event.id }, {
       tiePicksOffered: true,
       games: [game({ id: 'game-1', away: 'Arsenal', home: 'Chelsea', picked: null })],
     }));
@@ -204,9 +225,9 @@ describe('EntryReceipts', () => {
     const base = { contestId: contest.id, entryId: entry.id, sportEventId: event.id };
     const games = [game({ id: 'game-1', away: 'Bills', home: 'Chiefs', picked: 'Chiefs' })];
 
-    await receipts().gamePicksSubmitted(view(base, { games }));
-    await receipts().gamePicksSubmitted(view(base, { games }));
-    await receipts().gamePicksSubmitted(view(base, { games, submittedAt: new Date('2026-09-11T12:00:00.000Z') }));
+    await submitted(view(base, { games }));
+    await submitted(view(base, { games }));
+    await submitted(view(base, { games, submittedAt: new Date('2026-09-11T12:00:00.000Z') }));
 
     expect(outbox.rows).toHaveLength(4);
   });
@@ -217,7 +238,7 @@ describe('EntryReceipts', () => {
     });
     roundNames = ['First Round', 'Elite Eight', 'Final Four', 'Championship'];
 
-    await receipts().gamePicksSubmitted(view({ contestId: contest.id, entryId: entry.id, sportEventId: event.id }, {
+    await submitted(view({ contestId: contest.id, entryId: entry.id, sportEventId: event.id }, {
       selectionType: SelectionType.BRACKET,
       picksCloseAt: new Date('2026-03-19T16:15:00.000Z'),
       games: [
@@ -247,7 +268,7 @@ describe('EntryReceipts', () => {
     });
     roundNames = ['Sweet 16', 'Elite Eight', 'Final Four', 'Championship'];
 
-    await receipts().gamePicksSubmitted(view({ contestId: contest.id, entryId: entry.id, sportEventId: event.id }, {
+    await submitted(view({ contestId: contest.id, entryId: entry.id, sportEventId: event.id }, {
       selectionType: SelectionType.BRACKET,
       picksCloseAt: sweetSixteen,
       games: [
@@ -263,7 +284,7 @@ describe('EntryReceipts', () => {
   it('sends a survivor receipt with the team, its game and when the pick locks', async () => {
     const { contest, event, entry, owners } = await entryIn(SelectionType.SURVIVOR, { name: 'Week 3', sport: Sport.AMERICAN_FOOTBALL, startDate: KICKOFF });
 
-    await receipts().gamePicksSubmitted(view({ contestId: contest.id, entryId: entry.id, sportEventId: event.id }, {
+    await submitted(view({ contestId: contest.id, entryId: entry.id, sportEventId: event.id }, {
       selectionType: SelectionType.SURVIVOR,
       games: [
         game({ id: 'game-1', away: 'Bears', home: 'Lions', picked: 'Lions' }),
@@ -283,7 +304,7 @@ describe('EntryReceipts', () => {
     const record = outbox.record.bind(outbox);
     outbox.record = async (input) => (input.recipientUserId === owners[0].id ? Promise.reject(new Error('database unavailable')) : record(input));
 
-    await expect(receipts().gamePicksSubmitted(view({ contestId: contest.id, entryId: entry.id, sportEventId: event.id }, {
+    await expect(submitted(view({ contestId: contest.id, entryId: entry.id, sportEventId: event.id }, {
       games: [game({ id: 'game-1', away: 'Bills', home: 'Chiefs', picked: 'Chiefs' })],
     }))).resolves.toBeUndefined();
 
@@ -292,6 +313,21 @@ describe('EntryReceipts', () => {
       expect.objectContaining({ action: 'email.entryReceipt.failed' }),
       'Failed to queue an entry receipt',
     );
+  });
+
+  it('reads the squad\'s owners in one membership read and one user read, the contest, entry and event coming from the submit', async () => {
+    const { contest, event, entry, owners } = await entryIn(SelectionType.PICK_EM, { name: 'Week 1', sport: Sport.AMERICAN_FOOTBALL, startDate: KICKOFF });
+    const reads = { squadMemberships: world.squadMembershipRepo(), users: world.userRepo() };
+    const membershipReads = jest.spyOn(reads.squadMemberships, 'findBySquads');
+    const userReads = jest.spyOn(reads.users, 'findByIds');
+
+    await submitted(view({ contestId: contest.id, entryId: entry.id, sportEventId: event.id }, {
+      games: [game({ id: 'game-1', away: 'Bills', home: 'Chiefs', picked: 'Chiefs' })],
+    }), receipts(reads));
+
+    expect(outbox.rows).toHaveLength(owners.length);
+    expect(membershipReads.mock.calls).toEqual([[[entry.squadId]]]);
+    expect(userReads).toHaveBeenCalledTimes(1);
   });
 
   describe('squaresDrawn', () => {
@@ -328,8 +364,8 @@ describe('EntryReceipts', () => {
         { rowIndex: 1, columnIndex: 7, contestEntryId: entry.id },
       ]);
 
-      await receipts().squaresDrawn(board);
-      await receipts().squaresDrawn(board);
+      await drawn(board);
+      await drawn(board);
 
       expect(outbox.rows.map((row) => row.recipientUserId ?? '').sort((left, right) => left.localeCompare(right)))
         .toEqual(owners.map((owner) => owner.id).sort((left, right) => left.localeCompare(right)));
@@ -340,11 +376,34 @@ describe('EntryReceipts', () => {
       expect(text).toContain(`Review entry: https://app.example.test/league/OFFICE24/contests/${contest.id}/entries/${entry.id}`);
     });
 
+    it('reads every box holder\'s owners in one membership read and one user read, however many entries hold boxes', async () => {
+      const { contest, entry, owners } = await entryIn(SelectionType.SQUARES, { name: 'Super Bowl', sport: Sport.AMERICAN_FOOTBALL, startDate: KICKOFF });
+      const otherSquad = world.addSquad(contest.leagueId, 'Second Squad');
+      const otherOwner = world.addUser({ firstName: 'Otto', lastName: 'Owner' });
+      world.addMember(contest.leagueId, otherOwner.id);
+      world.addSquadMember(otherSquad.id, otherOwner.id);
+      const other = await world.entryRepo().create({ contestId: contest.id, squadId: otherSquad.id, entryNumber: 1, name: 'Other', tiebreakerValue: null }, { entriesPerContest: () => null });
+      if (other.status !== 'created') throw new Error('entry not created');
+      const reads = { squadMemberships: world.squadMembershipRepo(), users: world.userRepo() };
+      const membershipReads = jest.spyOn(reads.squadMemberships, 'findBySquads');
+      const userReads = jest.spyOn(reads.users, 'findByIds');
+
+      await drawn(drawnBoard(contest.id, [
+        { rowIndex: 0, columnIndex: 0, contestEntryId: entry.id },
+        { rowIndex: 1, columnIndex: 1, contestEntryId: other.entry.id },
+      ]), receipts(reads));
+
+      expect(outbox.rows.map((row) => row.recipientUserId ?? '').sort((left, right) => left.localeCompare(right)))
+        .toEqual([...owners.map((owner) => owner.id), otherOwner.id].sort((left, right) => left.localeCompare(right)));
+      expect(membershipReads).toHaveBeenCalledTimes(1);
+      expect(userReads).toHaveBeenCalledTimes(1);
+    });
+
     it('names the row and column sides Away and Home while the game\'s teams are not known', async () => {
       const { contest, entry, owners } = await entryIn(SelectionType.SQUARES, { name: 'Super Bowl', sport: Sport.AMERICAN_FOOTBALL, startDate: KICKOFF });
       const board = { ...drawnBoard(contest.id, [{ rowIndex: 0, columnIndex: 0, contestEntryId: entry.id }]), homeTeamName: null, awayTeamName: null };
 
-      await receipts().squaresDrawn(board);
+      await drawn(board);
 
       expect(textTo(owners[0].id)).toContain('- Box 1: Away 3, Home 7');
     });
@@ -353,7 +412,7 @@ describe('EntryReceipts', () => {
       const { contest, entry } = await entryIn(SelectionType.SQUARES, { name: 'Super Bowl', sport: Sport.AMERICAN_FOOTBALL, startDate: KICKOFF });
       const board = { ...drawnBoard(contest.id, [{ rowIndex: 0, columnIndex: 0, contestEntryId: entry.id }]), digits: null };
 
-      await expect(receipts().squaresDrawn(board)).resolves.toBeUndefined();
+      await expect(drawn(board)).resolves.toBeUndefined();
 
       expect(outbox.rows).toHaveLength(0);
       expect(logger.warn).toHaveBeenCalledWith(expect.objectContaining({ action: 'email.entryReceipt.skipped' }), expect.any(String));

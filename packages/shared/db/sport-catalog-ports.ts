@@ -259,8 +259,12 @@ export interface SportEventParticipantView {
 
 export interface SportEventParticipantRepository {
   findById(id: string): Promise<SportEventParticipant | null>;
+  /** The rows with these ids, in no set order; an id with no row is left out (#1201). */
+  findByIds(ids: readonly string[]): Promise<SportEventParticipant[]>;
   /** Ordered by seed, unseeded last. */
   findBySportEvent(sportEventId: string): Promise<SportEventParticipant[]>;
+  /** Several events' fields in one read (#1201), each event's ordered by seed, unseeded last. */
+  findBySportEvents(sportEventIds: readonly string[]): Promise<SportEventParticipant[]>;
   /**
    * The event's field as every reader sees it, in one read (#1163): each row with its
    * participant, valuation, standing, rounds, race result and matches, in seed order, unseeded
@@ -310,6 +314,8 @@ export interface ReplacementValuation {
 export interface SportEventTierRepository {
   /** Ordered by tier number. */
   findBySportEvent(sportEventId: string): Promise<SportEventTier[]>;
+  /** Several events' tiers in one read (#1201), each event's ordered by tier number. */
+  findBySportEvents(sportEventIds: readonly string[]): Promise<SportEventTier[]>;
   createMany(sportEventId: string, tiers: readonly SportEventTierDefinition[]): Promise<void>;
   /**
    * Replaces an event's tiers with `tiers`, keyed by tierKey, all or none. Valuations on a
@@ -339,6 +345,8 @@ export interface PriceAssignment {
 export interface SportEventParticipantValuationRepository {
   /** Every valuation on the event's field, with or without a tier. */
   findBySportEvent(sportEventId: string): Promise<SportEventParticipantValuation[]>;
+  /** Every valuation on several events' fields in one read (#1201). */
+  findBySportEvents(sportEventIds: readonly string[]): Promise<SportEventParticipantValuation[]>;
   /** Places field rows in tiers, all or none. Prices are untouched. */
   assignTiers(assignments: readonly TierAssignment[]): Promise<void>;
   /**

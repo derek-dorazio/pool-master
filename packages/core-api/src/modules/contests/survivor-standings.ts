@@ -82,16 +82,27 @@ export function survivorWeekKey(week: { sportEventId: string; roundNumber: numbe
   return `${week.sportEventId}:${week.roundNumber}`;
 }
 
-/** The contest's weeks, in start order, with their games: each event's rounds in round order. */
+/**
+ * The contest's weeks, in start order, with their games: each event's rounds in round order. A
+ * caller that already holds one event and its matches passes them in, and only the other events
+ * are read (#1201).
+ */
 export async function loadSurvivorWeeks(
   deps: Pick<SurvivorStandingsReadDeps, 'sportEvents' | 'matches'>,
   contest: Pick<Contest, 'sportEventIds'>,
   now: Date,
+  loaded?: { sportEvent: SportEvent; matches: readonly SportEventMatch[] },
 ): Promise<SurvivorSeasonWeek[]> {
-  const [events, matches] = await Promise.all([
-    deps.sportEvents.findByIds(contest.sportEventIds),
-    deps.matches.findBySportEvents(contest.sportEventIds),
-  ]);
+  const otherIds = contest.sportEventIds.filter((id) => id !== loaded?.sportEvent.id);
+  const [otherEvents, otherMatches] = otherIds.length === 0
+    ? [[], []]
+    : await Promise.all([
+      deps.sportEvents.findByIds(otherIds),
+      deps.matches.findBySportEvents(otherIds),
+    ]);
+  const own = loaded && contest.sportEventIds.includes(loaded.sportEvent.id) ? loaded : undefined;
+  const events = own ? [...otherEvents, own.sportEvent] : otherEvents;
+  const matches = own ? [...otherMatches, ...own.matches] : otherMatches;
   const ordered = [...events]
     .sort((left, right) => left.startDate.getTime() - right.startDate.getTime() || left.id.localeCompare(right.id));
   const weeks: Omit<SurvivorSeasonWeek, 'weekNumber'>[] = ordered.flatMap((event) => {

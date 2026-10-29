@@ -281,8 +281,8 @@ export type ContestConfigTemplateResponse = z.infer<
  * SportEvent (plans/124 §4.6/§5.3). Tiers are event-owned — never
  * contest-configured — so this is display-only: the commissioner UI shows
  * what the contest inherited without a mode flag to branch on. Resolved
- * through SportEventTierService.getEffectiveTiersForSportEvent, the same
- * resolution the root-admin golf tier routes read.
+ * through SportEventTierService's effective-tier read, the same resolution
+ * the root-admin golf tier routes read, for a tiered contest only.
  */
 export const EffectiveTierAssignmentDtoSchema = z.object({
   sportEventParticipantId: z.string().describe('Field entry the assignment belongs to.'),
@@ -303,7 +303,7 @@ export type EffectiveTierDto = z.infer<typeof EffectiveTierDtoSchema>;
 export const ContestManagementSportEventDtoSchema = z.object({
   sportEventId: z.string().describe('One event the contest covers.'),
   effectiveTiers: z.array(EffectiveTierDtoSchema).describe(
-    "Read-only tier structure the contest inherits from this event (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet. Never contest-configured.",
+    "Read-only tier structure a tiered contest inherits from this event (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet, and always empty for any other format, which does not pick by tier. Never contest-configured.",
   ),
 }).describe('One event of a managed contest, with the tiers it inherits from it (#713).');
 export type ContestManagementSportEventDto = z.infer<typeof ContestManagementSportEventDtoSchema>;

@@ -28,7 +28,7 @@ export function mapContestConfigTemplateDto(
  * ContestManagementDetailDto.effectiveTiers echo (plans/124 §4.6/§5.3).
  * Structurally the same projection the root-admin toAdminSportEventTierGroupDto
  * mapper does — the commissioner surface is read-only where the root-admin
- * one is editable, but both read through getEffectiveTiersForSportEvent.
+ * one is editable, but both read SportEventTierService's effective tiers.
  */
 export function toEffectiveTierDtoList(
   tiers: SportEventTierGroup[],

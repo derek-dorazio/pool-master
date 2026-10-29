@@ -130,18 +130,20 @@ export class InMemoryGamePicks {
     }
   }
 
-  matchRepo(): Pick<SportEventMatchRepository, 'findBySportEvent' | 'findBySportEvents'> {
+  matchRepo(): Pick<SportEventMatchRepository, 'findById' | 'findBySportEvent' | 'findBySportEvents'> {
     const findBySportEvents = async (sportEventIds: readonly string[]) => [...this.matches.values()]
       .filter((match) => sportEventIds.includes(match.sportEventId))
       .sort((left, right) => left.sportEventId.localeCompare(right.sportEventId) || left.matchNumber - right.matchNumber);
     return {
+      findById: async (id) => this.matches.get(id) ?? null,
       findBySportEvent: async (sportEventId) => findBySportEvents([sportEventId]),
       findBySportEvents,
     };
   }
 
-  fieldRepo(): Pick<SportEventParticipantRepository, 'findBySportEvent' | 'countDistinctParticipants'> {
+  fieldRepo(): Pick<SportEventParticipantRepository, 'findByIds' | 'findBySportEvent' | 'countDistinctParticipants'> {
     return {
+      findByIds: async (ids) => ids.flatMap((id) => this.field.get(id) ?? []),
       findBySportEvent: async (sportEventId) =>
         [...this.field.values()].filter((row) => row.sportEventId === sportEventId),
       countDistinctParticipants: async (sportEventIds) => new Set([...this.field.values()]
