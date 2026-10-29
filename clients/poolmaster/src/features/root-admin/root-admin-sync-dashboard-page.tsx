@@ -2,7 +2,7 @@ import { createColumnHelper } from '@tanstack/react-table';
 import { Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { listProviderSyncRuns, listProviders } from '@/lib/api';
+import { getProviderSyncRun, listProviderSyncRuns, listProviders } from '@/lib/api';
 import {
   Alert,
   Button,
@@ -25,12 +25,15 @@ import {
   buildPayloadSummary,
   buildStatsSummary,
   formatRequestedFeed,
+  getDetailsSection,
   getPayloadOutcome,
   getPayloadSection,
   getPayloadWarnings,
   getProviderName,
   type ProviderSummary,
   type ProviderSyncRun,
+  type ProviderSyncRunDetail,
+  type ProviderSyncRunDetails,
   type ProviderSyncRunPayload,
   formatJsonPayload,
 } from './root-admin-sync-utils';
@@ -119,8 +122,8 @@ function getPayloadSeverity(payload: ProviderSyncRunPayload) {
   return getPayloadOutcome(payload)?.severity ?? null;
 }
 
-function buildRunEvidenceRows(run: ProviderSyncRun | null): SyncRunEvidenceRow[] {
-  const writeRows = run?.payload.writeDiagnostics?.rows;
+function buildRunEvidenceRows(details: ProviderSyncRunDetails | null | undefined): SyncRunEvidenceRow[] {
+  const writeRows = details?.writeDiagnostics?.rows;
   if (!writeRows) {
     return [];
   }
@@ -191,6 +194,22 @@ export function RootAdminSyncDashboardPage() {
     retry: false,
   });
 
+  // The list carries each run's summary only; its detailed diagnostics load when it is opened (#1174).
+  const payloadRunId = payloadRun?.id ?? null;
+  const runDetailQuery = useQuery({
+    queryKey: QueryKeys.rootAdmin.providerSyncRun(payloadRunId),
+    queryFn: async (): Promise<ProviderSyncRunDetail> => {
+      const response = await getProviderSyncRun({ path: { syncRunId: payloadRunId ?? '' } });
+      if (!response.data) {
+        throwApiError(response.error, 'Provider sync run response is missing data.');
+      }
+      return response.data;
+    },
+    enabled: payloadRunId !== null,
+    retry: false,
+  });
+  const runDetails = runDetailQuery.data?.details;
+
   const recentRuns = useMemo(() => syncRunsQuery.data ?? [], [syncRunsQuery.data]);
   const summary = useMemo(() => {
     const submitted = recentRuns.filter((run) => run.status === ProviderSyncRunStatus.SUBMITTED).length;
@@ -207,14 +226,18 @@ export function RootAdminSyncDashboardPage() {
   }, [recentRuns]);
   const payloadStats = payloadRun ? buildStatsSummary(payloadRun.payload) : [];
   const payloadWarnings = payloadRun ? getPayloadWarnings(payloadRun.payload) : [];
-  const evidenceRows = useMemo(() => buildRunEvidenceRows(payloadRun), [payloadRun]);
+  const evidenceRows = useMemo(() => buildRunEvidenceRows(runDetails), [runDetails]);
   const requestPayload = payloadRun ? getPayloadSection(payloadRun.payload, 'requestPayload') : null;
-  const providerPayload = payloadRun ? getPayloadSection(payloadRun.payload, 'providerPayload') : null;
-  const jobPayload = payloadRun ? getPayloadSection(payloadRun.payload, 'jobPayload') : null;
-  const evidenceEmptyMessage = [
-    `No normalized ${PRODUCT_NAME} write rows were captured for this sync.`,
-    providerPayload?.rawCaptured === true ? 'Use the Payloads tab to inspect the raw provider payload.' : null,
-  ].filter(Boolean).join(' ');
+  const providerPayload = getDetailsSection(runDetails, 'providerPayload');
+  const jobPayload = getDetailsSection(runDetails, 'jobPayload');
+  const evidenceEmptyMessage = runDetails === null
+    ? payloadRun?.status === ProviderSyncRunStatus.SUBMITTED
+      ? 'This run hasn\'t started yet, so it has no details.'
+      : 'No details are stored for this run.'
+    : [
+        `No ${PRODUCT_NAME} rows changed in this sync.`,
+        providerPayload?.rawCaptured === true ? 'Use the Payloads tab to inspect the raw provider payload.' : null,
+      ].filter(Boolean).join(' ');
 
   const evidenceColumns = useMemo(
     () => [
@@ -499,15 +522,28 @@ export function RootAdminSyncDashboardPage() {
                 )}
               </TabsContent>
               <TabsContent className="mt-4" value="details">
-                <DataGrid
-                  columns={evidenceColumns}
-                  data={evidenceRows}
-                  emptyMessage={evidenceEmptyMessage}
-                  filterTestIdPrefix="root-admin-sync-detail-filter"
-                  getRowId={(row) => row.id}
-                  rowTestId={(row) => `root-admin-sync-detail-row-${row.id}`}
-                  tableTestId="root-admin-sync-detail-grid"
-                />
+                {runDetailQuery.isError ? (
+                  <Alert className="mb-4" tone="danger">
+                    {extractErrorMessage(
+                      runDetailQuery.error,
+                      { fallback: 'We could not load this run\'s details right now.' },
+                    )}
+                  </Alert>
+                ) : null}
+                {runDetailQuery.isPending ? (
+                  <p className="text-sm text-muted-foreground">Loading details…</p>
+                ) : null}
+                {runDetailQuery.isSuccess ? (
+                  <DataGrid
+                    columns={evidenceColumns}
+                    data={evidenceRows}
+                    emptyMessage={evidenceEmptyMessage}
+                    filterTestIdPrefix="root-admin-sync-detail-filter"
+                    getRowId={(row) => row.id}
+                    rowTestId={(row) => `root-admin-sync-detail-row-${row.id}`}
+                    tableTestId="root-admin-sync-detail-grid"
+                  />
+                ) : null}
               </TabsContent>
               <TabsContent className="mt-4 space-y-3" value="payloads">
                 <div className="flex flex-wrap gap-3">
@@ -575,7 +611,7 @@ export function RootAdminSyncDashboardPage() {
         onCancel={() => setPayloadRun(null)}
         onCopy={() => {
           if (payloadRun) {
-            copyText(formatJsonPayload(payloadRun.payload));
+            copyText(formatJsonPayload({ payload: payloadRun.payload, details: runDetails ?? null }));
           }
         }}
         onOpenChange={(open) => {

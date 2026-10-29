@@ -57,12 +57,12 @@ describe('ProviderSyncRunRepository.findAll', () => {
 
   const eventIds = (runs: Array<{ eventId: string | null }>) => runs.map((run) => run.eventId);
 
-  it('keeps only runs created inside the window, most recently started first', async () => {
+  it('keeps only runs created inside the window, most recently submitted first whatever their start', async () => {
     const repo = await seedRuns();
 
     const runs = await repo.findAll({ createdFrom: windowStart, createdTo: windowEnd });
 
-    expect(eventIds(runs)).toEqual(['late', 'other-feed', 'failed', 'early']);
+    expect(eventIds(runs)).toEqual(['failed', 'other-feed', 'late', 'early']);
   });
 
   it('narrows the window to one provider, one sport or one status', async () => {
@@ -70,8 +70,54 @@ describe('ProviderSyncRunRepository.findAll', () => {
     const window = { createdFrom: windowStart, createdTo: windowEnd };
 
     expect(eventIds(await repo.findAll({ ...window, providerId: 'feed-b' }))).toEqual(['other-feed']);
-    expect(eventIds(await repo.findAll({ ...window, sport: Sport.GOLF }))).toEqual(['late', 'other-feed', 'failed', 'early']);
+    expect(eventIds(await repo.findAll({ ...window, sport: Sport.GOLF }))).toEqual(['failed', 'other-feed', 'late', 'early']);
     expect(eventIds(await repo.findAll({ ...window, status: ProviderSyncRunStatus.FAILED }))).toEqual(['failed']);
+  });
+});
+
+describe('ProviderSyncRunRepository details (#1174)', () => {
+  const repo = () => new PrismaProviderSyncRunRepository(getPrisma());
+  const submitted = () => repo().create({
+    providerId: 'feed-a',
+    sport: Sport.GOLF,
+    eventId: 'details-event',
+    status: ProviderSyncRunStatus.SUBMITTED,
+    startedAt: null,
+    completedAt: null,
+    payload: { requestedFeed: 'EVENTPARTICIPANTS' },
+  });
+  const details = { jobPayload: { recordsProcessed: 3 }, writeDiagnostics: { summary: { total: 3 }, rows: [] } };
+
+  it('lists runs without their detailed diagnostics and reads one run with them', async () => {
+    const run = await submitted();
+    await repo().update(run.id, {
+      status: ProviderSyncRunStatus.COMPLETED,
+      payload: { requestedFeed: 'EVENTPARTICIPANTS', detail: 'Done.' },
+      details,
+    });
+
+    const [listed] = await repo().findAll({ createdFrom: new Date(0), createdTo: new Date(Date.now() + 60_000) });
+    const read = await repo().findById(run.id);
+
+    expect(listed).toEqual(expect.objectContaining({ id: run.id, payload: { requestedFeed: 'EVENTPARTICIPANTS', detail: 'Done.' } }));
+    expect(listed).not.toHaveProperty('details');
+    expect(read).toEqual(expect.objectContaining({ id: run.id, status: ProviderSyncRunStatus.COMPLETED, details }));
+  });
+
+  it('reads null details for a run that has none stored, and null for a run that does not exist', async () => {
+    const run = await submitted();
+
+    expect((await repo().findById(run.id))?.details).toBeNull();
+    expect(await repo().findById(randomUUID())).toBeNull();
+  });
+
+  it('keeps the stored details when an update leaves them out', async () => {
+    const run = await submitted();
+    await repo().update(run.id, { status: ProviderSyncRunStatus.IN_PROGRESS, payload: {}, details });
+
+    await repo().update(run.id, { status: ProviderSyncRunStatus.COMPLETED, payload: { detail: 'Done.' } });
+
+    expect((await repo().findById(run.id))?.details).toEqual(details);
   });
 });
 

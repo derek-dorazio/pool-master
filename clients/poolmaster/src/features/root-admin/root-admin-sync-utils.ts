@@ -1,8 +1,14 @@
 import { Sport } from '@poolmaster/shared/domain';
-import type { ProviderManualSyncSubmissionResponse, ProviderSummaryDto, ProviderSyncRunDto } from '@/lib/api';
+import type {
+  ProviderManualSyncSubmissionResponse,
+  ProviderSummaryDto,
+  ProviderSyncRunDetailDto,
+  ProviderSyncRunDto,
+} from '@/lib/api';
 
 // #205 — the canonical named components, not indexes into the response map.
 export type ProviderSyncRun = ProviderSyncRunDto;
+export type ProviderSyncRunDetail = ProviderSyncRunDetailDto;
 export type ProviderSummary = ProviderSummaryDto;
 export type EventSyncSubmission = ProviderManualSyncSubmissionResponse;
 
@@ -147,11 +153,20 @@ export function buildStatsSummary(payload: ProviderSyncRunPayload) {
   }));
 }
 
-export function getPayloadSection<K extends 'requestPayload' | 'providerPayload' | 'jobPayload'>(
+export type ProviderSyncRunDetails = NonNullable<ProviderSyncRunDetail['details']>;
+
+export function getPayloadSection<K extends 'requestPayload'>(
   payload: ProviderSyncRunPayload,
   key: K,
 ): NonNullable<ProviderSyncRunPayload[K]> | null {
   return payload[key] ?? null;
+}
+
+export function getDetailsSection<K extends 'providerPayload' | 'jobPayload'>(
+  details: ProviderSyncRunDetails | null | undefined,
+  key: K,
+): NonNullable<ProviderSyncRunDetails[K]> | null {
+  return details?.[key] ?? null;
 }
 
 export function getEventSyncPreset(presetId: EventSyncPresetId) {

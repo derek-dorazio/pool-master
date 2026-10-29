@@ -2163,7 +2163,11 @@ model ProviderSyncRun {
   status      PrismaProviderSyncRunStatus
   startedAt   DateTime?                   @map("started_at") @db.Timestamptz
   completedAt DateTime?                   @map("completed_at") @db.Timestamptz
+  /// The run's summary: request, feed, outcome and stats. The sync history lists it.
   payloadJson Json                        @default("{}") @map("payload_json")
+  /// The run's detailed diagnostics: the changed rows, the job record and the raw provider
+  /// payload. Read one run at a time; null before the run starts.
+  detailsJson Json?                       @map("details_json")
   createdAt   DateTime                    @default(now()) @map("created_at") @db.Timestamptz
 
   @@index([createdAt(sort: Desc)])

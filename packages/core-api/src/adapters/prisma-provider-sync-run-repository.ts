@@ -10,7 +10,7 @@ import type {
   ProviderSyncRunRepository,
   ProviderSyncRunUpdate,
 } from '@poolmaster/shared/db';
-import type { ProviderSyncRun, Sport } from '@poolmaster/shared/domain';
+import type { ProviderSyncRun, ProviderSyncRunWithDetails, Sport } from '@poolmaster/shared/domain';
 
 export class PrismaProviderSyncRunRepository implements ProviderSyncRunRepository {
   constructor(private readonly prisma: PrismaClient) {}
@@ -38,6 +38,7 @@ export class PrismaProviderSyncRunRepository implements ProviderSyncRunRepositor
         startedAt: update.startedAt,
         completedAt: update.completedAt,
         payloadJson: update.payload as Prisma.InputJsonValue,
+        ...(update.details && { detailsJson: update.details as Prisma.InputJsonValue }),
       },
     });
   }
@@ -51,13 +52,23 @@ export class PrismaProviderSyncRunRepository implements ProviderSyncRunRepositor
         status: filters.status,
         createdAt: { gte: filters.createdFrom, lte: filters.createdTo },
       },
-      orderBy: [{ startedAt: 'desc' }, { createdAt: 'desc' }],
+      omit: { detailsJson: true },
+      orderBy: { createdAt: 'desc' },
     });
     return rows.map(toProviderSyncRun);
   }
+
+  async findById(id: string): Promise<ProviderSyncRunWithDetails | null> {
+    const row = await this.prisma.providerSyncRun.findUnique({ where: { id } });
+    if (!row) return null;
+    return {
+      ...toProviderSyncRun(row),
+      details: row.detailsJson === null ? null : toPayload(row.detailsJson),
+    };
+  }
 }
 
-function toProviderSyncRun(row: ProviderSyncRunRow): ProviderSyncRun {
+function toProviderSyncRun(row: Omit<ProviderSyncRunRow, 'detailsJson'>): ProviderSyncRun {
   return {
     id: row.id,
     providerId: row.providerId,

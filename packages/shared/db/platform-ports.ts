@@ -8,6 +8,7 @@ import type {
   PlatformRuntimeConfigChange,
   ProviderSyncRun,
   ProviderSyncRunStatus,
+  ProviderSyncRunWithDetails,
   Sport,
 } from '../domain';
 
@@ -18,6 +19,8 @@ export interface ProviderSyncRunUpdate {
   startedAt?: Date | null;
   completedAt?: Date | null;
   payload: Record<string, unknown>;
+  /** The run's detailed diagnostics; omitted, the stored ones are kept. */
+  details?: Record<string, unknown>;
 }
 
 /**
@@ -35,8 +38,10 @@ export interface ProviderSyncRunFilters {
 export interface ProviderSyncRunRepository {
   create(input: ProviderSyncRunCreate): Promise<ProviderSyncRun>;
   update(id: string, update: ProviderSyncRunUpdate): Promise<void>;
-  /** Runs not yet started first (a null start sorts first), then newest start, then newest submission. */
+  /** Newest submission first, without the detailed diagnostics. */
   findAll(filters: ProviderSyncRunFilters): Promise<ProviderSyncRun[]>;
+  /** One run with its detailed diagnostics, or null when there is no such run. */
+  findById(id: string): Promise<ProviderSyncRunWithDetails | null>;
 }
 
 /**

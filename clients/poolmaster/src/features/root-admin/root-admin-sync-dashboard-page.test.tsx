@@ -7,6 +7,7 @@ import { bindApiMocks } from '@/test/msw-api';
 import { RootAdminSyncDashboardPage } from './root-admin-sync-dashboard-page';
 
 const {
+  getProviderSyncRunMock,
   listProviderSyncRunsMock,
   listProvidersMock,
   mockLogger,
@@ -22,6 +23,7 @@ const {
   mockLogger.child.mockReturnValue(mockLogger);
 
   return {
+    getProviderSyncRunMock: vi.fn(),
     listProviderSyncRunsMock: vi.fn(),
     listProvidersMock: vi.fn(),
     mockLogger,
@@ -29,6 +31,7 @@ const {
 });
 
 bindApiMocks({
+  getProviderSyncRun: getProviderSyncRunMock,
   listProviderSyncRuns: listProviderSyncRunsMock,
   listProviders: listProvidersMock,
 });
@@ -38,6 +41,24 @@ vi.mock('@/lib/logger', () => ({
   logger: mockLogger,
   getLogger: () => mockLogger,
 }));
+
+/** getProviderSyncRun's answer; the page reads only the run's details from it. */
+function detailResponse(details: Record<string, unknown> | null) {
+  return {
+    data: {
+      id: 'sync-run',
+      providerId: 'mock-contest-feed',
+      sport: 'GOLF',
+      eventId: null,
+      status: 'COMPLETED',
+      startedAt: null,
+      completedAt: null,
+      createdAt: '2026-05-25T11:59:00.000Z',
+      payload: {},
+      details,
+    },
+  };
+}
 
 function renderDashboard() {
   const queryClient = new QueryClient({
@@ -61,6 +82,7 @@ describe('RootAdminSyncDashboardPage', () => {
   beforeEach(() => {
     listProvidersMock.mockReset();
     listProviderSyncRunsMock.mockReset();
+    getProviderSyncRunMock.mockReset();
 
     listProvidersMock.mockResolvedValue({
       data: {
@@ -220,27 +242,29 @@ describe('RootAdminSyncDashboardPage', () => {
                 mockEventState: null,
                 normalizedAt: '2026-04-09T10:00:00.000Z',
               },
-              providerPayload: {
-                operation: 'EVENTLIVESCORES',
-                rawCaptured: true,
-                rawTruncated: false,
-                raw: [
-                  {
-                    path: '/v1/scenarios/golf/events/golf-masters-2026/scores',
-                    raw: { contestants: [] },
-                  },
-                ],
-              },
-              jobPayload: {
-                jobType: 'EVENT_LIVE_SCORES_SYNC',
-                status: 'COMPLETED',
-                recordsProcessed: 0,
-              },
             },
           },
         ],
       },
     });
+    getProviderSyncRunMock.mockResolvedValue(detailResponse({
+      providerPayload: {
+        operation: 'EVENTLIVESCORES',
+        rawCaptured: true,
+        rawTruncated: false,
+        raw: [
+          {
+            path: '/v1/scenarios/golf/events/golf-masters-2026/scores',
+            raw: { contestants: [] },
+          },
+        ],
+      },
+      jobPayload: {
+        jobType: 'EVENT_LIVE_SCORES_SYNC',
+        status: 'COMPLETED',
+        recordsProcessed: 0,
+      },
+    }));
 
     renderDashboard();
 
@@ -266,7 +290,7 @@ describe('RootAdminSyncDashboardPage', () => {
     expect(screen.getByText(/"contestants": \[\]/)).toBeInTheDocument();
   });
 
-  it('pool-master-rop.68.1.4 keeps raw provider payload secondary when no normalized rows were captured', async () => {
+  it('says no rows changed and points to the raw provider payload when a sync changed nothing', async () => {
     const user = userEvent.setup();
     listProviderSyncRunsMock.mockResolvedValue({
       data: {
@@ -289,29 +313,31 @@ describe('RootAdminSyncDashboardPage', () => {
                 warnings: [],
                 errors: 0,
               },
-              providerPayload: {
-                operation: 'EVENTPARTICIPANTS',
-                rawCaptured: true,
-                rawTruncated: false,
-                raw: [
-                  {
-                    path: '/vendor/events/future-open-2026/field',
-                    raw: {
-                      records: [
-                        {
-                          id: 'vendor-player-1',
-                          label: 'Vendor Player',
-                        },
-                      ],
-                    },
-                  },
-                ],
-              },
             },
           },
         ],
       },
     });
+    getProviderSyncRunMock.mockResolvedValue(detailResponse({
+      providerPayload: {
+        operation: 'EVENTPARTICIPANTS',
+        rawCaptured: true,
+        rawTruncated: false,
+        raw: [
+          {
+            path: '/vendor/events/future-open-2026/field',
+            raw: {
+              records: [
+                {
+                  id: 'vendor-player-1',
+                  label: 'Vendor Player',
+                },
+              ],
+            },
+          },
+        ],
+      },
+    }));
 
     renderDashboard();
 
@@ -322,8 +348,8 @@ describe('RootAdminSyncDashboardPage', () => {
     await user.click(screen.getByRole('tab', { name: 'Details' }));
 
     expect(
-      screen.getByText(
-        'No normalized Primetime Commissioner write rows were captured for this sync. Use the Payloads tab to inspect the raw provider payload.',
+      await screen.findByText(
+        'No Primetime Commissioner rows changed in this sync. Use the Payloads tab to inspect the raw provider payload.',
       ),
     ).toBeInTheDocument();
   });
@@ -360,72 +386,6 @@ describe('RootAdminSyncDashboardPage', () => {
                 writeUpdated: 1,
                 writeDeleted: 0,
               },
-              writeDiagnostics: {
-                summary: {
-                  total: 3,
-                  unchanged: 1,
-                  created: 1,
-                  updated: 1,
-                  deleted: 0,
-                },
-                rows: [
-                  {
-                    id: 'sport-event-participant:mock-contest-feed:masters-2026:golfer-3',
-                    entityType: 'SportEventParticipant',
-                    disposition: 'UNCHANGED',
-                    providerId: 'mock-contest-feed',
-                    externalId: 'masters-2026',
-                    participantExternalId: 'golfer-3',
-                    internalId: 'event-participant-3',
-                    name: 'Alex Example',
-                    before: {
-                      seedNumber: 9,
-                      oddsToWin: 32,
-                      ranking: 9,
-                    },
-                    after: {
-                      seedNumber: 9,
-                      oddsToWin: 32,
-                      ranking: 9,
-                    },
-                  },
-                  {
-                    id: 'sport-event-participant:mock-contest-feed:masters-2026:golfer-1',
-                    entityType: 'SportEventParticipant',
-                    disposition: 'UPDATED',
-                    providerId: 'mock-contest-feed',
-                    externalId: 'masters-2026',
-                    participantExternalId: 'golfer-1',
-                    internalId: 'event-participant-1',
-                    name: 'Jordan Example',
-                    before: {
-                      seedNumber: 4,
-                      oddsToWin: 18,
-                      ranking: 6,
-                    },
-                    after: {
-                      seedNumber: 3,
-                      oddsToWin: 12,
-                      ranking: 3,
-                    },
-                  },
-                  {
-                    id: 'sport-event-participant:mock-contest-feed:masters-2026:golfer-2',
-                    entityType: 'SportEventParticipant',
-                    disposition: 'CREATED',
-                    providerId: 'mock-contest-feed',
-                    externalId: 'masters-2026',
-                    participantExternalId: 'golfer-2',
-                    internalId: 'event-participant-2',
-                    name: 'Casey Example',
-                    after: {
-                      seedNumber: 18,
-                      oddsToWin: 24,
-                      ranking: 18,
-                    },
-                  },
-                ],
-              },
               requestPayload: {
                 sport: 'GOLF',
                 eventId: 'masters-2026',
@@ -434,55 +394,103 @@ describe('RootAdminSyncDashboardPage', () => {
                 mockEventState: null,
                 normalizedAt: '2026-04-09T10:00:00.000Z',
               },
-              providerPayload: {
-                operation: 'EVENTPARTICIPANTS',
-                rawCaptured: true,
-                rawTruncated: false,
-                raw: [
-                  {
-                    path: '/v1/scenarios/golf/events/masters-2026/detail',
-                    raw: {
-                      event: {
-                        eventId: 'masters-2026',
-                        name: 'Masters 2026',
-                        status: 'field_announced',
-                        field: {
-                          contestants: [
-                            {
-                              contestantId: 'golfer-1',
-                              name: 'Jordan Example',
-                              ranking: 3,
-                              odds: 1200,
-                            },
-                            {
-                              contestantId: 'golfer-2',
-                              name: 'Casey Example',
-                              ranking: 18,
-                              odds: 2400,
-                            },
-                            {
-                              contestantId: 'golfer-3',
-                              name: 'Alex Example',
-                              ranking: 9,
-                              odds: 3200,
-                            },
-                          ],
-                        },
-                      },
-                    },
-                  },
-                ],
-              },
-              jobPayload: {
-                jobType: 'EVENT_PARTICIPANTS_SYNC',
-                status: 'COMPLETED',
-                recordsProcessed: 3,
-              },
             },
           },
         ],
       },
     });
+    getProviderSyncRunMock.mockResolvedValue(detailResponse({
+      writeDiagnostics: {
+        summary: {
+          total: 3,
+          unchanged: 1,
+          created: 1,
+          updated: 1,
+          deleted: 0,
+        },
+        rows: [
+          {
+            id: 'sport-event-participant:mock-contest-feed:masters-2026:golfer-1',
+            entityType: 'SportEventParticipant',
+            disposition: 'UPDATED',
+            providerId: 'mock-contest-feed',
+            externalId: 'masters-2026',
+            participantExternalId: 'golfer-1',
+            internalId: 'event-participant-1',
+            name: 'Jordan Example',
+            before: {
+              seedNumber: 4,
+              oddsToWin: 18,
+              ranking: 6,
+            },
+            after: {
+              seedNumber: 3,
+              oddsToWin: 12,
+              ranking: 3,
+            },
+          },
+          {
+            id: 'sport-event-participant:mock-contest-feed:masters-2026:golfer-2',
+            entityType: 'SportEventParticipant',
+            disposition: 'CREATED',
+            providerId: 'mock-contest-feed',
+            externalId: 'masters-2026',
+            participantExternalId: 'golfer-2',
+            internalId: 'event-participant-2',
+            name: 'Casey Example',
+            after: {
+              seedNumber: 18,
+              oddsToWin: 24,
+              ranking: 18,
+            },
+          },
+        ],
+      },
+      providerPayload: {
+        operation: 'EVENTPARTICIPANTS',
+        rawCaptured: true,
+        rawTruncated: false,
+        raw: [
+          {
+            path: '/v1/scenarios/golf/events/masters-2026/detail',
+            raw: {
+              event: {
+                eventId: 'masters-2026',
+                name: 'Masters 2026',
+                status: 'field_announced',
+                field: {
+                  contestants: [
+                    {
+                      contestantId: 'golfer-1',
+                      name: 'Jordan Example',
+                      ranking: 3,
+                      odds: 1200,
+                    },
+                    {
+                      contestantId: 'golfer-2',
+                      name: 'Casey Example',
+                      ranking: 18,
+                      odds: 2400,
+                    },
+                    {
+                      contestantId: 'golfer-3',
+                      name: 'Alex Example',
+                      ranking: 9,
+                      odds: 3200,
+                    },
+                  ],
+                },
+              },
+            },
+          },
+        ],
+      },
+      jobPayload: {
+        jobType: 'EVENT_PARTICIPANTS_SYNC',
+        status: 'COMPLETED',
+        recordsProcessed: 3,
+      },
+    }));
 
     renderDashboard();
 
@@ -511,19 +519,85 @@ describe('RootAdminSyncDashboardPage', () => {
     expect(screen.getByText(/"oddsToWin": 12/)).toBeInTheDocument();
 
     await user.click(within(screen.getByTestId('root-admin-sync-json-payload-modal')).getByRole('button', { name: 'Close' }));
-    await user.click(screen.getByRole('button', { name: 'View JSON details for Alex Example' }));
-
-    expect(await screen.findByText('UNCHANGED SportEventParticipant')).toBeInTheDocument();
-    expect(screen.getByText(/"before": \{/)).toBeInTheDocument();
-    expect(screen.getByText(/"after": \{/)).toBeInTheDocument();
-    expect(screen.getByTestId('root-admin-sync-json-payload-modal')).toHaveTextContent(/"oddsToWin": 32/);
-
-    await user.click(within(screen.getByTestId('root-admin-sync-json-payload-modal')).getByRole('button', { name: 'Close' }));
 
     await user.click(screen.getByRole('tab', { name: 'Payloads' }));
     await user.click(screen.getByRole('button', { name: 'Show request payload' }));
 
     expect(await screen.findByText('Request payload')).toBeInTheDocument();
     expect(screen.getByText(/"eventId": "masters-2026"/)).toBeInTheDocument();
+  });
+
+  it('loads a run\'s detailed diagnostics only when the run is opened, by its id', async () => {
+    getProviderSyncRunMock.mockResolvedValue(detailResponse({}));
+    renderDashboard();
+
+    expect(await screen.findByTestId('root-admin-sync-run-sync-run-1')).toBeInTheDocument();
+    expect(getProviderSyncRunMock).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'View details' }));
+
+    expect(await screen.findByText('Sync run details')).toBeInTheDocument();
+    expect(getProviderSyncRunMock).toHaveBeenCalledTimes(1);
+    expect(getProviderSyncRunMock).toHaveBeenCalledWith(
+      expect.objectContaining({ path: { syncRunId: 'sync-run-1' } }),
+    );
+  });
+
+  it('says a run that has not started has no details yet, and offers no provider or job payload', async () => {
+    const user = userEvent.setup();
+    listProviderSyncRunsMock.mockResolvedValue({
+      data: {
+        syncRuns: [
+          {
+            id: 'sync-run-1',
+            providerId: 'mock-contest-feed',
+            sport: 'GOLF',
+            eventId: 'masters-2026',
+            status: 'SUBMITTED',
+            startedAt: null,
+            completedAt: null,
+            createdAt: '2026-04-20T11:59:00.000Z',
+            payload: { requestedFeed: 'EVENTPARTICIPANTS' },
+          },
+        ],
+      },
+    });
+    getProviderSyncRunMock.mockResolvedValue(detailResponse(null));
+    renderDashboard();
+
+    expect(await screen.findByTestId('root-admin-sync-run-sync-run-1')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'View details' }));
+    await user.click(await screen.findByRole('tab', { name: 'Details' }));
+
+    expect(await screen.findByText('This run hasn\'t started yet, so it has no details.')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('tab', { name: 'Payloads' }));
+    expect(screen.queryByRole('button', { name: 'Show provider payload' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Show job payload' })).not.toBeInTheDocument();
+  });
+
+  it('says no details are stored for a finished run that has none', async () => {
+    const user = userEvent.setup();
+    getProviderSyncRunMock.mockResolvedValue(detailResponse(null));
+    renderDashboard();
+
+    expect(await screen.findByTestId('root-admin-sync-run-sync-run-1')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'View details' }));
+    await user.click(await screen.findByRole('tab', { name: 'Details' }));
+
+    expect(await screen.findByText('No details are stored for this run.')).toBeInTheDocument();
+  });
+
+  it('shows an error in the details tab when a run\'s details cannot be loaded', async () => {
+    const user = userEvent.setup();
+    getProviderSyncRunMock.mockResolvedValue({ error: { error: { code: 'SYNC_RUN_NOT_FOUND', message: 'No sync run sync-run-1' } } });
+    renderDashboard();
+
+    expect(await screen.findByTestId('root-admin-sync-run-sync-run-1')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'View details' }));
+    await user.click(await screen.findByRole('tab', { name: 'Details' }));
+
+    expect(await screen.findByText('No sync run sync-run-1')).toBeInTheDocument();
+    expect(screen.queryByTestId('root-admin-sync-detail-grid')).not.toBeInTheDocument();
   });
 });
