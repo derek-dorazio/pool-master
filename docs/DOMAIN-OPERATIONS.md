@@ -900,14 +900,15 @@ event get one; a contest of one event has one per entry, equal to its total.
 
 ### ContestEntryPick
 
-A selection on an entry. **One insert path**, `ContestEntryPickService.createPick`, which
-copies the contest's format onto the pick inside its transaction so the per-format unique
-indexes hold (plans/117 §7.1, deleted with its epic; retrieve via
+A selection on an entry. **One write path**, `ContestEntryPickService`: `changeEntryPick` for a
+select or unselect (#1259), which locks the entry row and decides on its picks under that lock,
+and `recordDraw` for a random draw. Both copy the contest's format onto the pick inside their
+transaction so the per-format unique indexes hold (plans/117 §7.1, deleted with its epic; retrieve via
 `git show c0191969^:plans/117-league-contest-substrate-redesign.md`). Its port, `ContestEntryPickRepository`, is read-only by
 design (#247), so no adapter or fake can become a second way in. The selection operations
 themselves are the selection room's: `SelectionService` is the shared handler (auth, the pick window,
 availability, persistence), and what varies by selection type, including the tiered
-replace-on-full and toggle-off rules, is a `SelectionEngine` looked up by `SelectionType`
+replace-on-full rule, is a `SelectionEngine` looked up by `SelectionType`
 (`selections/selection-engines/`, #198). The registry is exhaustive: every selection type has an engine (#605).
 
 **Entries and picks change in one window**, `areContestEntriesOpen` (contests/entry-window): the
