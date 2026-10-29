@@ -6,7 +6,7 @@
  * either revokes it. Only a conditional update decides which one wins, so these run the real
  * service against the real table.
  */
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import {
   setupIntegrationTests,
   teardownIntegrationTests,
@@ -15,6 +15,7 @@ import {
 } from '../helpers';
 import { PrismaUserRepository } from '../../../packages/core-api/src/adapters';
 import { AuthService } from '../../../packages/core-api/src/modules/auth/auth-service';
+import { hashRefreshToken } from '../../../packages/core-api/src/modules/auth/refresh-token-hash';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(() => teardownIntegrationTests());
@@ -86,6 +87,30 @@ describe('refresh-token storage (#1230)', () => {
     await service.logout(session.refreshToken);
 
     await expect(service.refresh(session.refreshToken)).rejects.toMatchObject({ code: 'INVALID_REFRESH_TOKEN' });
+  });
+
+  // The hash migration rewrote existing rows with Postgres's sha256, so sessions signed in
+  // before it kept working only because Postgres and the service hash alike. Changing either
+  // side (a salt, base64, another encoding) would sign every member out with nothing else failing.
+  it('hashes a token the same way as the SQL the hash migration ran, so sessions from before the migration stay signed in', async () => {
+    const token = randomUUID();
+
+    const [{ hash }] = await getPrisma().$queryRaw<[{ hash: string }]>`
+      SELECT encode(sha256(convert_to(${token}, 'UTF8')), 'hex') AS hash`;
+
+    expect(hash).toBe(hashRefreshToken(token));
+  });
+
+  it('finds the row the service stored by the migration\'s SQL hash of the token the client holds', async () => {
+    const service = buildAuthService();
+    const { user } = await createTestUser();
+    const session = await service.issueSessionForUser(user.id);
+
+    const rows = await getPrisma().$queryRaw<Array<{ session_id: string }>>`
+      SELECT session_id FROM refresh_tokens
+      WHERE token_hash = encode(sha256(convert_to(${session.refreshToken}, 'UTF8')), 'hex')`;
+
+    expect(rows).toEqual([{ session_id: session.sessionId }]);
   });
 });
 

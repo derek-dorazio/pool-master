@@ -26,7 +26,6 @@ import type { UserRepository, UserSearchFilters } from '@poolmaster/shared/db';
 import { isKnownLocale, isKnownTimeZone, isPlatformSearchTerm, PLATFORM_SEARCH_MIN_LENGTH, type TimeFormat, type User } from '@poolmaster/shared/domain';
 import { UserOperationError } from './user-errors';
 import type { PasswordChangedNotifier } from '../auth/password-changed-notifier';
-import { hashRefreshToken } from '../auth/refresh-token-hash';
 import type { EmailChangeUndoService } from '../auth/email-change-undo-service';
 import { EmailChangedBy } from '../email';
 import {
@@ -241,17 +240,8 @@ export class UserService {
     await this.prisma.$transaction(async (tx) => {
       await tx.user.update({ where: { id: targetUserId }, data: { passwordHash } });
 
-      // NOT revokeUserSessions: a password change keeps the caller's own session alive and
-      // revokes every other one. Deliberately different from the blanket revoke, so do not
-      // collapse the two.
-      await tx.refreshToken.updateMany({
-        where: {
-          userId: targetUserId,
-          revokedAt: null,
-          ...(request.currentRefreshToken ? { NOT: { tokenHash: hashRefreshToken(request.currentRefreshToken) } } : {}),
-        },
-        data: { revokedAt: new Date() },
-      });
+      // Every other session ends; the caller's own stays signed in.
+      await revokeUserSessions(tx, targetUserId, request.currentRefreshToken);
       // A reset link sent before the change must not undo it (#847).
       await cancelOpenPasswordResetTokens(tx, targetUserId, changedAt);
     });

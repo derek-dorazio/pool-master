@@ -329,6 +329,31 @@ describe('password reset confirm (#847)', () => {
   });
 });
 
+describe('changing your own password', () => {
+  it('signs out every other session and keeps the one that made the change signed in', async () => {
+    const { user } = await createTestUser({ password: 'OldPass-1234' });
+    const current = await issueRefreshToken(user.id);
+    const other = await issueRefreshToken(user.id);
+
+    await buildUserService(new RecordingMailDelivery()).changeOwnPassword(
+      { userId: user.id, isRootAdmin: false },
+      user.id,
+      {
+        currentPassword: 'OldPass-1234',
+        newPassword: 'Changed-1234',
+        confirmNewPassword: 'Changed-1234',
+        currentRefreshToken: current,
+      },
+    );
+
+    const revokedAt = async (token: string) => (await getPrisma().refreshToken.findUniqueOrThrow({
+      where: { tokenHash: hashRefreshToken(token) },
+    })).revokedAt;
+    expect(await revokedAt(current)).toBeNull();
+    expect(await revokedAt(other)).toBeInstanceOf(Date);
+  });
+});
+
 describe('password changes cancel open reset links (#847)', () => {
   it('kills an open reset link when the user changes their own password', async () => {
     const { service, mail } = buildService();
