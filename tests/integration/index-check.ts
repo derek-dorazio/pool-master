@@ -112,34 +112,45 @@ function constrains(condition: string, column: string): boolean {
   return new RegExp(`\\(\\s*"?${column}"?\\b`).test(condition);
 }
 
-/** Whether `text`, a plan node's condition or filter, names `column` of the node's own table. */
-function namesColumn(text: string, column: string, alias: string | undefined): boolean {
-  const own = alias === undefined ? '' : `|\\b${alias}\\.`;
-  return new RegExp(`(?:(?<![\\w.])${own})"?${column}"?\\b`).test(text);
+/** Whether a node's own condition or filter names `column`: bare, or after the node's alias. */
+function namesOwnColumn(text: string, column: string, alias: string | undefined): boolean {
+  const qualified = alias === undefined ? '' : `|\\b${alias}\\.`;
+  return new RegExp(`(?:(?<![\\w.])${qualified})"?${column}"?\\b`).test(text);
+}
+
+/** Every condition and filter in a plan, where a join names the columns it matches rows by. */
+function planConditions(node: PlanNode): string {
+  const own = [node['Index Cond'], node.Filter, node['Join Filter'], node['Hash Cond'], node['Merge Cond']].filter((text) => text !== undefined);
+  return [...own, ...(node.Plans ?? []).map(planConditions)].join(' ');
 }
 
 /**
  * Whether some index on `table` leads on a column the node filters or is joined by. On a table of
  * a few test rows the planner may walk one index for its order and filter, use a later column of
- * another, or join with a filter instead of looking rows up, rather than use the index that serves
- * the read; that index exists, so nothing is missing.
+ * another, or walk this table and look the joined rows up, rather than use the index that serves
+ * the read; that index exists, so nothing is missing. Elsewhere in the plan a column of this table
+ * is only counted after the node's alias, which every other node prints it with.
  */
-function someIndexLeadsOnFilter(node: PlanNode, table: string, indexes: Map<string, IndexLead>, joins: string): boolean {
-  const text = `${node['Index Cond'] ?? ''} ${node.Filter ?? ''} ${joins}`;
-  return [...indexes.values()].some((index) => index.table === table && index.column !== null && namesColumn(text, index.column, node.Alias));
+function someIndexLeadsOnFilter(node: PlanNode, table: string, indexes: Map<string, IndexLead>, conditions: string): boolean {
+  const own = `${node['Index Cond'] ?? ''} ${node.Filter ?? ''}`;
+  const alias = node.Alias;
+  return [...indexes.values()].some((index) => index.table === table && index.column !== null && (
+    namesOwnColumn(own, index.column, alias)
+    || (alias !== undefined && new RegExp(`\\b${alias}\\."?${index.column}"?\\b`).test(conditions))
+  ));
 }
 
 /**
  * The whole-table reads in a plan. With sequential scans off the planner still reads a table
  * whole when no index serves its filter, in one of three ways: a sequential scan; walking an index
  * by a condition on a column it does not lead on; or walking an index for its order and filtering
- * every row.
+ * every row. `conditions` is every condition in the plan.
  */
-function wholeScans(node: PlanNode, indexes: Map<string, IndexLead>, into: WholeScan[], joins = ''): WholeScan[] {
+function wholeScans(node: PlanNode, indexes: Map<string, IndexLead>, conditions: string, into: WholeScan[]): WholeScan[] {
   const index = node['Index Name'] === undefined ? undefined : indexes.get(node['Index Name']);
   if (node['Node Type'] === 'Seq Scan' && node['Relation Name']) {
     into.push({ table: node['Relation Name'], how: 'a sequential scan' });
-  } else if (INDEX_NODES.has(node['Node Type']) && index && !someIndexLeadsOnFilter(node, index.table, indexes, joins)) {
+  } else if (INDEX_NODES.has(node['Node Type']) && index && !someIndexLeadsOnFilter(node, index.table, indexes, conditions)) {
     const condition = node['Index Cond'];
     if (condition === undefined && node.Filter !== undefined) {
       into.push({ table: index.table, how: `walking every entry of ${String(node['Index Name'])} and filtering` });
@@ -147,9 +158,7 @@ function wholeScans(node: PlanNode, indexes: Map<string, IndexLead>, into: Whole
       into.push({ table: index.table, how: `walking all of ${String(node['Index Name'])}, which leads on ${index.column}` });
     }
   }
-  // A join's conditions name the columns its inner side is looked up by.
-  const childJoins = [joins, node['Join Filter'], node['Hash Cond'], node['Merge Cond']].filter(Boolean).join(' ');
-  for (const child of node.Plans ?? []) wholeScans(child, indexes, into, childJoins);
+  for (const child of node.Plans ?? []) wholeScans(child, indexes, conditions, into);
   return into;
 }
 
@@ -165,7 +174,8 @@ export async function planWholeScans(prisma: PrismaClient, sql: string, indexes:
     await tx.$executeRawUnsafe(`PREPARE ${name} AS ${sql}`);
     const [row] = await tx.$queryRawUnsafe<Array<{ 'QUERY PLAN': Array<{ Plan: PlanNode }> }>>(`EXPLAIN (FORMAT JSON) EXECUTE ${name}${values}`);
     await tx.$executeRawUnsafe(`DEALLOCATE ${name}`);
-    return wholeScans(row['QUERY PLAN'][0].Plan, indexes, []);
+    const plan = row['QUERY PLAN'][0].Plan;
+    return wholeScans(plan, indexes, planConditions(plan), []);
   });
 }
 
