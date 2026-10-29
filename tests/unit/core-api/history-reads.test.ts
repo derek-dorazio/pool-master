@@ -61,9 +61,8 @@ function counted<T extends object>(repository: T, reads: { count: number }): T {
  */
 async function leagueWithSeasons(seasonCount: number) {
   const cups = new InMemoryCups();
-  cups.addLeague(LEAGUE);
+  cups.addLeague(LEAGUE, undefined, 'Pool Cup');
   const finishes = new InMemoryChampionship();
-  finishes.cupNames.set(LEAGUE, 'Pool Cup');
   const squads = fakeSquadRepo({
     findByLeague: jest.fn().mockResolvedValue(SQUADS),
     findById: jest.fn((id: string) => Promise.resolve(SQUADS.find((row) => row.id === id) ?? null)),
@@ -75,12 +74,13 @@ async function leagueWithSeasons(seasonCount: number) {
   const reads = { count: 0 };
   const cupService = new CupService({
     cups: counted(cups, reads),
+    leagues: counted(cups.leagues, reads),
     liveContests: { livePositionsOf: () => Promise.resolve([]) },
     squads: counted(squads, reads),
     sportLeagues: counted(sportLeagues, reads),
     now: () => NOW,
   });
-  const championship = new ChampionshipService({ finishes: counted(finishes, reads), cups: counted(cups, reads), squads: counted(squads, reads), now: () => NOW });
+  const championship = new ChampionshipService({ finishes: counted(finishes, reads), cups: counted(cups, reads), leagues: counted(cups.leagues, reads), squads: counted(squads, reads), now: () => NOW });
   const history = new HistoryService({
     finishes: counted(finishes, reads),
     squads: counted(squads, reads),

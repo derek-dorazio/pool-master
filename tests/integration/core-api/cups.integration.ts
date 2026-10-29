@@ -6,8 +6,8 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import type { Prisma } from '@prisma/client';
-import { CupPointsScale, CupStatus, CupTrophy, CupWeight } from '@poolmaster/shared/domain';
-import { PrismaCupRepository } from '../../../packages/core-api/src/adapters';
+import { CupPointsScale, CupStatus, CupTrophy, CupWeight, leaguePointsTable } from '@poolmaster/shared/domain';
+import { PrismaCupRepository, PrismaLeagueRepository } from '../../../packages/core-api/src/adapters';
 import {
   cleanupTestData,
   createTestUser,
@@ -16,6 +16,7 @@ import {
   teardownIntegrationTests,
 } from '../helpers';
 import { freshEventEdition } from '../../support/event-edition';
+import { expectDefined } from '../../support/expect-defined';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -296,18 +297,18 @@ describe('PrismaCupRepository (#841)', () => {
     await expect(repo.findRankedEntries([])).resolves.toEqual([]);
   });
 
-  it('reads a league\'s points table, STANDARD by default, and refuses custom points on any other table', async () => {
+  it('keeps a league\'s points table on its row, STANDARD by default, and refuses custom points on any other table', async () => {
     const prisma = getPrisma();
-    const repo = new PrismaCupRepository(prisma);
+    const leagues = new PrismaLeagueRepository(prisma);
     const { league } = await seedLeague();
+    const tableOf = async (id: string) => leaguePointsTable(expectDefined(await leagues.findById(id)));
 
-    await expect(repo.findPointsTable(league.id)).resolves.toEqual({ scale: CupPointsScale.STANDARD, customPoints: [] });
+    await expect(tableOf(league.id)).resolves.toEqual({ scale: CupPointsScale.STANDARD, customPoints: [] });
     await expect(prisma.league.update({ where: { id: league.id }, data: { cupCustomPoints: [10, 5] } })).rejects.toThrow();
     await expect(prisma.league.update({ where: { id: league.id }, data: { cupPointsScale: 'CUSTOM' } })).rejects.toThrow();
 
     await prisma.league.update({ where: { id: league.id }, data: { cupPointsScale: 'CUSTOM', cupCustomPoints: [10, 5] } });
-    await expect(repo.findPointsTable(league.id)).resolves.toEqual({ scale: CupPointsScale.CUSTOM, customPoints: [10, 5] });
-    await expect(repo.findPointsTable(randomUUID())).resolves.toBeNull();
+    await expect(tableOf(league.id)).resolves.toEqual({ scale: CupPointsScale.CUSTOM, customPoints: [10, 5] });
   });
 
   it('reads each squad\'s settled finish in the contests, with the weight it was settled at and when it was written', async () => {

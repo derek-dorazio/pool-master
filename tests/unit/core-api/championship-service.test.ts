@@ -37,12 +37,12 @@ const BOGEYS = squad('bogeys', 'Bogeys');
 
 function build(squads: Squad[] = [EAGLES, BIRDIES, BOGEYS]) {
   const cups = new InMemoryCups();
-  cups.addLeague(LEAGUE);
+  cups.addLeague(LEAGUE, undefined, 'Derek\'s Pool Cup');
   const finishes = new InMemoryChampionship();
-  finishes.cupNames.set(LEAGUE, 'Derek\'s Pool Cup');
   const service = new ChampionshipService({
     finishes,
     cups,
+    leagues: cups.leagues,
     squads: fakeSquadRepo({ findByLeague: jest.fn().mockResolvedValue(squads) }),
     now: () => NOW,
   });
