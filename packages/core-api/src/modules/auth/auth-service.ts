@@ -17,7 +17,7 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { randomUUID } from 'node:crypto';
-import type { PrismaClient } from '@prisma/client';
+import type { Prisma, PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 import type { UserRepository } from '@poolmaster/shared/db';
 import { AuthProvider, isKnownLocale, isKnownTimeZone, type User } from '@poolmaster/shared/domain';
@@ -214,28 +214,31 @@ export class AuthService {
 
     // Revoke the old refresh token (rotation). The read above is not enough: two refreshes with
     // the same token can both see it live, so only the one whose conditional update revokes it
-    // may issue the next token (#1175).
-    const rotated = await this.prisma.refreshToken.updateMany({
-      where: { id: stored.id, revokedAt: null },
-      data: { revokedAt: new Date() },
+    // may issue the next token (#1175). One transaction, so a failed insert leaves the old token
+    // live rather than signing the member out.
+    const tokens = await this.prisma.$transaction(async (tx) => {
+      const rotated = await tx.refreshToken.updateMany({
+        where: { id: stored.id, revokedAt: null },
+        data: { revokedAt: new Date() },
+      });
+      if (rotated.count === 0) {
+        this.logger?.warn({
+          action: 'authService.refresh.alreadyRotated',
+          data: {
+            userId: stored.user.id,
+            sessionId: stored.sessionId,
+          },
+        }, 'Rejected refresh for a token another refresh already rotated');
+        throw new AuthError('Invalid or expired refresh token', 'INVALID_REFRESH_TOKEN');
+      }
+      return this.issueTokens(
+        stored.user.id,
+        stored.user.email,
+        stored.user.isRootAdmin,
+        stored.sessionId,
+        tx,
+      );
     });
-    if (rotated.count === 0) {
-      this.logger?.warn({
-        action: 'authService.refresh.alreadyRotated',
-        data: {
-          userId: stored.user.id,
-          sessionId: stored.sessionId,
-        },
-      }, 'Rejected refresh for a token another refresh already rotated');
-      throw new AuthError('Invalid or expired refresh token', 'INVALID_REFRESH_TOKEN');
-    }
-
-    const tokens = await this.issueTokens(
-      stored.user.id,
-      stored.user.email,
-      stored.user.isRootAdmin,
-      stored.sessionId,
-    );
     this.logger?.info({
       action: 'authService.refresh.success',
       data: {
@@ -307,6 +310,7 @@ export class AuthService {
     email: string,
     isRootAdmin: boolean,
     sessionId: string = randomUUID(),
+    db: Pick<Prisma.TransactionClient, 'refreshToken'> = this.prisma,
   ): Promise<TokenPair> {
     this.logger?.debug({
       action: 'authService.issueTokens.start',
@@ -326,7 +330,7 @@ export class AuthService {
     const refreshTokenValue = randomUUID();
     const expiresAt = new Date(Date.now() + REFRESH_TOKEN_EXPIRY_DAYS * 24 * 60 * 60 * 1000);
 
-    await this.prisma.refreshToken.create({
+    await db.refreshToken.create({
       data: {
         token: refreshTokenValue,
         sessionId,
