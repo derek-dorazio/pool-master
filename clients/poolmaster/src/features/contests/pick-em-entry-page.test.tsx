@@ -219,7 +219,8 @@ describe('Pick\'em contest entry page', () => {
     expect(submitGamePicksMock).toHaveBeenCalledWith(expect.objectContaining({
       path: { contestId: 'contest-1', entryId: 'entry-1', sportEventId: 'week-1' },
     }));
-    expect(screen.getByTestId('pick-em-status')).toHaveTextContent('Submitted');
+    // The status beside the entry's name says it is submitted.
+    expect(screen.getByTestId('contest-entry-status')).toHaveAccessibleName('Entry status: Submitted');
     expect(screen.queryByTestId('pick-em-not-submitted-warning')).not.toBeInTheDocument();
   });
 
