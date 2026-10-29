@@ -15,9 +15,11 @@ import { globalErrorHandler } from './core/error-handler';
 import { createFastifyLoggerOptions } from './core/logger';
 import { readTrustProxy } from './core/config';
 import { PostgresJobLock } from './core/job-lock';
+import { NightlyCleanupScheduler } from './core/nightly-cleanup';
 
 // Domain modules (core-api)
 import { authModule } from './modules/auth/routes';
+import { RefreshTokenRetention } from './modules/auth/refresh-token-retention';
 import { leaguesModule } from './modules/leagues/routes';
 import { squadsModule } from './modules/squads/routes';
 import { invitationsModule } from './modules/invitations/routes';
@@ -112,7 +114,7 @@ export function buildApp() {
     readConfig: () => appSettings.get(PLAN_SETTINGS),
   });
   // One email outbox for the whole app; EMAIL_CONFIG and the league's plan decide on every email whether it is queued.
-  const { email, sender: emailSender, deliveryEvents, preferences: emailPreferences, test: emailTest } = createEmailOutbox({
+  const { email, sender: emailSender, deliveryEvents, preferences: emailPreferences, test: emailTest, retention: emailRetention } = createEmailOutbox({
     prisma,
     readConfig: () => appSettings.get(EMAIL_SETTINGS),
     planEntitlements,
@@ -144,6 +146,12 @@ export function buildApp() {
       memberJoined,
       createPlanPreviewNotices(prisma, { email, readConfig: () => appSettings.get(EMAIL_SETTINGS), appBaseUrl, logger: app.log, planEntitlements }),
     ],
+    jobLock,
+    logger: app.log,
+  });
+  // #1175: tables that grow without end are trimmed to their retention periods once a night.
+  const nightlyCleanupScheduler = new NightlyCleanupScheduler({
+    steps: [new RefreshTokenRetention(prisma), emailRetention],
     jobLock,
     logger: app.log,
   });
@@ -304,6 +312,9 @@ export function buildApp() {
 
     // The email outbox's sender always runs: every email waits in the outbox for it.
     emailSender.start();
+
+    // Retention always runs, like the lifecycle sweep: nothing about it depends on a provider.
+    nightlyCleanupScheduler.start();
   });
 
   app.addHook('onClose', async () => {
@@ -311,6 +322,7 @@ export function buildApp() {
     ingestionScheduler.stop();
     eventLifecycleScheduler.stop();
     emailSender.stop();
+    nightlyCleanupScheduler.stop();
     // Closing the lock connection releases this task's job locks for another task to take.
     await jobLock.close();
     await prisma.$disconnect();

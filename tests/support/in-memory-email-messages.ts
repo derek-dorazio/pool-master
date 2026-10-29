@@ -110,10 +110,17 @@ export function inMemoryEmailMessages(now: () => Date = () => new Date()): InMem
       }
       return Promise.resolve(row ? { ...row } : undefined);
     },
-    clearContentCreatedBefore(cutoff) {
-      const old = rows.filter((row) => row.createdAt < cutoff && row.subject !== undefined);
+    clearContentCreatedBetween(from, before) {
+      const old = rows.filter((row) => row.createdAt >= from && row.createdAt < before && row.subject !== undefined);
       for (const row of old) {
         update(row.id, CLEARED_CONTENT);
+      }
+      return Promise.resolve(old.length);
+    },
+    deleteBatchCreatedBefore(cutoff, limit) {
+      const old = rows.filter((row) => row.createdAt < cutoff).slice(0, limit);
+      for (const row of old) {
+        rows.splice(rows.indexOf(row), 1);
       }
       return Promise.resolve(old.length);
     },

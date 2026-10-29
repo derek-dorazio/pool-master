@@ -3,6 +3,7 @@ export * from './system-email-templates';
 export * from './email-settings';
 export * from './email-service';
 export * from './email-sender';
+export * from './email-message-retention';
 export * from './wiring';
 export * from './email-content';
 export * from './email-delivery-events';

@@ -627,6 +627,9 @@ model RefreshToken {
 
   @@index([userId])
   @@index([sessionId])
+  // The nightly cleanup finds the tokens dead for 30 days by either column (#1175).
+  @@index([expiresAt])
+  @@index([revokedAt])
   @@map("refresh_tokens")
 }
 

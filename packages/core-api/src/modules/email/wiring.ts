@@ -16,6 +16,7 @@ import {
 import { readAppEnv, readJwtSecret } from '../../core/config';
 import type { PlanEntitlementsService } from '../plans/plan-entitlements-service';
 import { EmailDeliveryEvents } from './email-delivery-events';
+import { EmailMessageRetention } from './email-message-retention';
 import { EmailPreferencesService } from './email-preferences-service';
 import { EmailSender } from './email-sender';
 import { EmailService } from './email-service';
@@ -32,6 +33,8 @@ export interface EmailOutbox {
   preferences: EmailPreferencesService;
   /** The root admin's test email from the Email settings. */
   test: EmailTestService;
+  /** The nightly cleanup's step that deletes emails past their retention period. */
+  retention: EmailMessageRetention;
 }
 
 export function createEmailOutbox(options: {
@@ -75,5 +78,6 @@ export function createEmailOutbox(options: {
     logger: options.logger,
   });
   const test = new EmailTestService({ email, sender, messages, users, environment: readAppEnv(options.env ?? process.env) });
-  return { email, sender, deliveryEvents, preferences, test };
+  const retention = new EmailMessageRetention(messages);
+  return { email, sender, deliveryEvents, preferences, test, retention };
 }
