@@ -82,8 +82,13 @@ export class PrismaContestEntryRepository implements ContestEntryRepository {
     return rows.map(mapToEntry);
   }
 
-  async findBySquad(squadId: string): Promise<ContestEntry[]> {
-    const rows = await this.prisma.contestEntry.findMany({ where: { squadId }, include: ENTRY_EVENTS });
+  async findByContestAndSquad(contestId: string, squadId: string): Promise<ContestEntry[]> {
+    // The (contest, squad, entry number) unique key serves it: no scan of the squad's other contests.
+    const rows = await this.prisma.contestEntry.findMany({
+      where: { contestId, squadId },
+      orderBy: { entryNumber: 'asc' },
+      include: ENTRY_EVENTS,
+    });
     return rows.map(mapToEntry);
   }
 

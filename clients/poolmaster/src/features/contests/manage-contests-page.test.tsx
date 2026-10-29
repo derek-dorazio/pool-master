@@ -10,9 +10,7 @@ import {
   buildCurrentUser,
   buildLeague,
   buildLeagueMembership,
-  buildLeagueSquad,
   getLeagueByCodeData,
-  listLeagueSquadsData,
 } from '@/features/leagues/test/fixtures';
 import { CommissionerRouteGuard, MemberRouteGuard } from '@/routes/route-guards';
 import { ManageContestsPage } from './manage-contests-page';
@@ -85,13 +83,9 @@ function primeCommonMocks({
   refreshTokenMock.mockResolvedValue({ data: null });
   getLeagueByCodeMock.mockResolvedValue(apiSuccess(getLeagueByCodeData(
     buildLeague({ isActive: leagueActive }),
-    { membership: buildLeagueMembership({ role: leagueRole }) },
+    // Two active teams; a third, inactive one is not counted (#1165).
+    { membership: buildLeagueMembership({ role: leagueRole }), activeTeamCount: 2 },
   )));
-  listLeagueSquadsMock.mockResolvedValue(apiSuccess(listLeagueSquadsData([
-    buildLeagueSquad({ id: 'team-1' }),
-    buildLeagueSquad({ id: 'team-2', name: 'Second Team' }),
-    buildLeagueSquad({ id: 'team-3', name: 'Retired Rockets', isActive: false }),
-  ])));
   listContestFinishedYearsMock.mockResolvedValue(apiSuccess({ years: [] }));
 }
 
@@ -141,8 +135,9 @@ describe('ManageContestsPage', () => {
     const open = within(screen.getByTestId('manage-contests-row-contest-2'));
     expect(open.getByText('Open for entries')).toBeInTheDocument();
     expect(await open.findByText(/^Entries close/)).toBeInTheDocument();
-    // Two of the league's three teams are active.
+    // The league context counts the active teams, so no team list is read.
     expect(await open.findByText('of 2 members')).toBeInTheDocument();
+    expect(listLeagueSquadsMock).not.toHaveBeenCalled();
     expect(open.getByRole('link', { name: 'Manage' })).toHaveAttribute('href', '/league/BIGDAWGS/admin/contests/contest-2');
     expect(screen.queryByText(/TIERED|STROKE_PLAY/)).not.toBeInTheDocument();
   });

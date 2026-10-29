@@ -30,6 +30,7 @@ import type {
   SportEventRepository,
   SportLeagueRepository,
   SquadMembershipRepository,
+  SquadDetails,
   SquadRepository,
   UserRepository,
 } from '@poolmaster/shared/db';
@@ -456,8 +457,10 @@ export class InMemoryContestWorld {
                 event.sportEventId === options.submittedFor && event.status === 'SUBMITTED')))
           .sort((left, right) => this.byEntryOrder(left, right))
           .map((entry) => this.withSquad(entry)),
-      findBySquad: async (squadId) =>
-        [...this.entries.values()].filter((entry) => entry.squadId === squadId),
+      findByContestAndSquad: async (contestId, squadId) =>
+        [...this.entries.values()]
+          .filter((entry) => entry.contestId === contestId && entry.squadId === squadId)
+          .sort((left, right) => left.entryNumber - right.entryNumber),
       countByContests: async (contestIds) => new Map(contestIds.map((contestId) =>
         [contestId, [...this.entries.values()].filter((entry) => entry.contestId === contestId).length])),
       countSubmittedByContests: async (contestIds) => new Map(contestIds.map((contestId) =>
@@ -536,7 +539,8 @@ export class InMemoryContestWorld {
     const ordered = () => [...this.picks.values()].sort((left, right) =>
       left.pickedAt.getTime() - right.pickedAt.getTime() || left.id.localeCompare(right.id));
     return {
-      findByEntries: async (entryIds) => ordered().filter((pick) => entryIds.includes(pick.entryId)),
+      findByEntriesAndEvents: async (entryIds, sportEventIds) =>
+        ordered().filter((pick) => entryIds.includes(pick.entryId) && sportEventIds.includes(pick.sportEventId)),
       findByEntriesWithParticipant: async (entryIds) =>
         ordered().filter((pick) => entryIds.includes(pick.entryId)),
       countByEntries: async (entryIds) => {
@@ -579,11 +583,29 @@ export class InMemoryContestWorld {
   }
 
   squadRepo(): SquadRepository {
+    const details = (squad: Squad): SquadDetails => ({
+      ...squad,
+      members: [...this.squadMemberships.values()]
+        .filter((row) => row.squadId === squad.id)
+        .sort((left, right) => left.joinedAt.getTime() - right.joinedAt.getTime())
+        .flatMap((membership) => {
+          const user = this.users.get(membership.userId);
+          return user ? [{ membership, user }] : [];
+        }),
+    });
     return {
       findById: async (id) => this.squads.get(id) ?? null,
       findByLeague: async (leagueId, includeInactive = false) =>
         [...this.squads.values()].filter((squad) =>
           squad.leagueId === leagueId && (includeInactive || squad.isActive)),
+      findDetailsById: async (id) => {
+        const squad = this.squads.get(id);
+        return squad ? details(squad) : null;
+      },
+      findDetailsByLeague: async (leagueId) =>
+        [...this.squads.values()].filter((squad) => squad.leagueId === leagueId).map(details),
+      countActiveByLeague: async (leagueId) =>
+        [...this.squads.values()].filter((squad) => squad.leagueId === leagueId && squad.isActive).length,
       findByLeagueAndName: async (leagueId, name) =>
         [...this.squads.values()].find((squad) =>
           squad.leagueId === leagueId && squad.name === name) ?? null,
@@ -616,6 +638,13 @@ export class InMemoryContestWorld {
         const rows = [...this.squadMemberships.values()].filter((row) =>
           row.leagueId === leagueId && row.userId === userId);
         return rows.find((row) => row.status === SquadMembershipStatus.ACTIVE) ?? rows.at(0) ?? null;
+      },
+      findByLeagueAndUserWithSquadName: async (leagueId, userId) => {
+        const rows = [...this.squadMemberships.values()].filter((row) =>
+          row.leagueId === leagueId && row.userId === userId);
+        const membership = rows.find((row) => row.status === SquadMembershipStatus.ACTIVE) ?? rows.at(0);
+        const squad = membership ? this.squads.get(membership.squadId) : undefined;
+        return membership && squad ? { ...membership, squadName: squad.name } : null;
       },
       create: async (input) => this.addSquadMember(input.squadId, input.userId, input),
       update: async (id, updates) => {
@@ -668,6 +697,13 @@ export class InMemoryContestWorld {
         .sort((a, b) => a.startDate.getTime() - b.startDate.getTime()),
       countParticipants: async (ids) =>
         new Map(ids.map((id) => [id, this.fieldSizes.get(id) ?? 0])),
+      transitionStatus: async (id, transition) => {
+        const existing = this.sportEvents.get(id);
+        if (!existing || existing.status !== transition.from) return null;
+        const next: SportEvent = { ...existing, status: transition.to, ...(transition.endDate && { endDate: transition.endDate }) };
+        this.sportEvents.set(id, next);
+        return next;
+      },
     });
   }
 

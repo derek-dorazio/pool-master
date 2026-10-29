@@ -155,6 +155,8 @@ export const QueryKeys = {
   leagueTeams: {
     all: ['poolmaster', 'league-teams'] as const,
     byLeague: (leagueId: QueryKeyId) => ['poolmaster', 'league-teams', leagueId] as const,
+    /** One team (#1165). Under `byLeague`, so a write that refreshes the list refreshes it too. */
+    detail: (leagueId: QueryKeyId, squadId: QueryKeyId) => ['poolmaster', 'league-teams', leagueId, squadId] as const,
   },
   /** Every plan's caps and features: the commissioner's comparison table (#945). */
   plans: {

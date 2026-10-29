@@ -159,6 +159,9 @@ export function fakeSquadRepo(overrides: Partial<SquadRepository> = {}): SquadRe
   return {
     findById: one(),
     findByLeague: many(),
+    findDetailsById: one(),
+    findDetailsByLeague: many(),
+    countActiveByLeague: jest.fn().mockResolvedValue(0),
     findByLeagueAndName: one(),
     create: echoCreate('squad'),
     update: echoUpdate(),
@@ -174,6 +177,7 @@ export function fakeSquadMembershipRepo(
     findBySquads: many(),
     findBySquadAndUser: one(),
     findByLeagueAndUser: one(),
+    findByLeagueAndUserWithSquadName: one(),
     create: echoCreate('squad-membership'),
     update: echoUpdate(),
     ...overrides,
@@ -285,6 +289,7 @@ export function fakeSportEventRepo(overrides: Partial<SportEventRepository> = {}
     findAll: many(),
     create: echoCreate('sport-event'),
     update: echoUpdate(),
+    transitionStatus: one(),
     delete: nothing(),
     countParticipants: noCounts(),
     countUntieredActiveParticipants: noCounts(),
@@ -372,7 +377,7 @@ export function fakeContestEntryRepo(
     findByIdWithSquad: one(),
     findByContest: many(),
     findByContestWithSquad: many(),
-    findBySquad: many(),
+    findByContestAndSquad: many(),
     countByContests: jest.fn().mockResolvedValue(new Map()),
     countSubmittedByContests: jest.fn().mockResolvedValue(new Map()),
     create: createdEntry(echoCreate('contest-entry')),
@@ -412,7 +417,7 @@ export function fakeContestEntryPickRepo(
   overrides: Partial<ContestEntryPickRepository> = {},
 ): ContestEntryPickRepository {
   return {
-    findByEntries: many(),
+    findByEntriesAndEvents: many(),
     findByEntriesWithParticipant: many(),
     countByEntries: jest.fn().mockResolvedValue(new Map()),
     countByContest: jest.fn().mockResolvedValue(0),

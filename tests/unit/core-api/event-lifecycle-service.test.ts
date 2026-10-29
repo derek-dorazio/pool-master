@@ -504,3 +504,57 @@ describe('EventLifecycleError', () => {
     expect(error.name).toBe('EventLifecycleError');
   });
 });
+
+describe('EventLifecycleService when another caller changes the status first (#1159)', () => {
+  /** The event's status moves to `movedTo` between this caller's read and its write. */
+  function racedTo(movedTo: SportEventStatus) {
+    const { sportEvents, storedEvent } = seededEvents({ status: SportEventStatus.IN_PROGRESS });
+    const transitionStatus = sportEvents.transitionStatus.bind(sportEvents);
+    sportEvents.transitionStatus = async (id, transition) => {
+      storedEvent().status = movedTo;
+      return transitionStatus(id, transition);
+    };
+    const settlement = { settleFinishedSportEvent: jest.fn().mockResolvedValue(undefined), settleFinishedGame: jest.fn() };
+    const service = new EventLifecycleService(contestDeps(), sportEvents, fakeLogger(), undefined, settlement);
+    return { service, settlement, storedEvent };
+  }
+
+  it('refuses an admin change with 409 when the event ended in another status, and runs no settlement for it', async () => {
+    const { service, settlement, storedEvent } = racedTo(SportEventStatus.COMPLETED);
+
+    await expect(service.applySportEventStatusTransition({
+      sportEventId: 'sport-event-1',
+      toStatus: SportEventStatus.CANCELLED,
+      actor: { type: 'ROOT_ADMIN' },
+    })).rejects.toMatchObject({ code: 'SPORT_EVENT_INVALID_TRANSITION', statusCode: 409 });
+    expect(storedEvent().status).toBe(SportEventStatus.COMPLETED);
+    expect(settlement.settleFinishedSportEvent).not.toHaveBeenCalled();
+  });
+
+  it('answers an admin change with the event when it ended in the status asked for, without settling it a second time', async () => {
+    const { service, settlement } = racedTo(SportEventStatus.COMPLETED);
+
+    const result = await service.applySportEventStatusTransition({
+      sportEventId: 'sport-event-1',
+      toStatus: SportEventStatus.COMPLETED,
+      actor: { type: 'ROOT_ADMIN' },
+    });
+
+    expect(result.sportEvent.status).toBe(SportEventStatus.COMPLETED);
+    expect(settlement.settleFinishedSportEvent).not.toHaveBeenCalled();
+  });
+
+  it('lets the scheduler, which names the status it saw, lose the race quietly', async () => {
+    const { service, settlement } = racedTo(SportEventStatus.CANCELLED);
+
+    const result = await service.applySportEventStatusTransition({
+      sportEventId: 'sport-event-1',
+      toStatus: SportEventStatus.COMPLETED,
+      actor: { type: 'SYSTEM' },
+      fromStatus: SportEventStatus.IN_PROGRESS,
+    });
+
+    expect(result.sportEvent.status).toBe(SportEventStatus.CANCELLED);
+    expect(settlement.settleFinishedSportEvent).not.toHaveBeenCalled();
+  });
+});

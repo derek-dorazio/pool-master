@@ -192,6 +192,24 @@ columns the history had built as `varchar(255)`.
 
 ---
 
+## Indexes Follow The Reads And The Foreign Keys
+
+Postgres does not index a foreign key's referencing column. Without one, deleting the row
+it names, and every read by that column, scans the referencing table (#1177).
+
+- **Every foreign key gets an `@@index` leading on its first column** in the same change
+  that adds the relation. A unique key that already leads with it counts.
+- **A read that filters by a column another table grows by** (a user's memberships, a
+  squad's entries) needs an index leading on that column, filter columns first and the
+  sort column last: `@@index([userId, status])`, `@@index([status, joinedAt])`.
+- **No index whose columns another index on the table already starts with.** Every write
+  maintains it and no read needs it (#1178). The same goes for an index on a column no read
+  filters by.
+- The database-indexes integration suite checks the first and third against the migrated
+  catalog, so a missing or duplicate index fails before review.
+
+---
+
 ## No-Data Clean Reworks
 
 When there is no production deployment with real persistent data — and dev /

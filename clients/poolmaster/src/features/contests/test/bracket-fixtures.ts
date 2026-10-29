@@ -288,5 +288,7 @@ export function bracketLeagueContextFixture(): LeagueContextResponse {
       createdAt: '2026-04-15T00:00:00.000Z',
       updatedAt: '2026-04-15T00:00:00.000Z',
     },
+    squadName: 'Morgan Member',
+    activeTeamCount: 2,
   };
 }

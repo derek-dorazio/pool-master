@@ -246,3 +246,83 @@ describe('PrismaMembershipTransaction', () => {
     });
   });
 });
+
+// #1165 — a squad read with its owners, which the team list and a team page use instead of
+// reading the squad, its memberships and every user in the league per team.
+describe('PrismaSquadRepository squad details', () => {
+  async function createSquad(leagueId: string, name: string, createdBy: string, isActive = true) {
+    return getPrisma().squad.create({ data: { leagueId, name, createdBy, isActive } });
+  }
+
+  async function addOwner(squadId: string, leagueId: string, userId: string, joinedAt: Date, status: SquadMembershipStatus = SquadMembershipStatus.ACTIVE) {
+    await getPrisma().leagueMembership.upsert({
+      where: { leagueId_userId: { leagueId, userId } },
+      create: { leagueId, userId, role: LeagueRole.MEMBER, status: LeagueMembershipStatus.ACTIVE },
+      update: {},
+    });
+    return getPrisma().squadMembership.create({ data: { squadId, leagueId, userId, status, joinedAt } });
+  }
+
+  it('reads every team in the league, active and inactive, oldest first, each with its owners in join order and their users', async () => {
+    const { league, commissioner } = await createLeague('Details');
+    const other = await createLeague('Other');
+    const coOwner = await createTestUser();
+    const leftOwner = await createTestUser();
+    const first = await createSquad(league.id, 'First Team', commissioner.id);
+    const second = await createSquad(league.id, 'Retired Team', commissioner.id, false);
+    await createSquad(other.league.id, 'Other League Team', other.commissioner.id);
+    await addOwner(first.id, league.id, coOwner.user.id, new Date('2026-04-02T00:00:00Z'));
+    await addOwner(first.id, league.id, commissioner.id, new Date('2026-04-01T00:00:00Z'));
+    await addOwner(second.id, league.id, leftOwner.user.id, new Date('2026-04-03T00:00:00Z'), SquadMembershipStatus.INACTIVE);
+
+    const details = await new PrismaSquadRepository(getPrisma()).findDetailsByLeague(league.id);
+
+    expect(details.map((squad) => [squad.name, squad.isActive])).toEqual([['First Team', true], ['Retired Team', false]]);
+    expect(details[0]?.members.map(({ membership, user }) => [membership.userId, user.id])).toEqual([
+      [commissioner.id, commissioner.id],
+      [coOwner.user.id, coOwner.user.id],
+    ]);
+    expect(details[1]?.members.map(({ membership }) => membership.status)).toEqual([SquadMembershipStatus.INACTIVE]);
+    // The embedded user is the domain User, which never carries the password hash.
+    expect(details[0]?.members[0]?.user).not.toHaveProperty('passwordHash');
+    expect(details[0]?.members[0]?.user.email).toBe(commissioner.email);
+  });
+
+  it('reads one team with its owners by id, and null for an unknown id', async () => {
+    const { league, commissioner } = await createLeague('One');
+    const squad = await createSquad(league.id, 'Only Team', commissioner.id);
+    await addOwner(squad.id, league.id, commissioner.id, new Date('2026-04-01T00:00:00Z'));
+    const repo = new PrismaSquadRepository(getPrisma());
+
+    const details = await repo.findDetailsById(squad.id);
+
+    expect(details?.name).toBe('Only Team');
+    expect(details?.members.map(({ user }) => user.id)).toEqual([commissioner.id]);
+    expect(await repo.findDetailsById(randomUUID())).toBeNull();
+  });
+
+  it('reads a user\'s squad membership in a league with its squad\'s name, and null for a member who owns none', async () => {
+    const { league, commissioner } = await createLeague('Mine');
+    const noTeam = await createTestUser();
+    const squad = await createSquad(league.id, 'Commissioner Team', commissioner.id);
+    await addOwner(squad.id, league.id, commissioner.id, new Date('2026-04-01T00:00:00Z'));
+    const repo = new PrismaSquadMembershipRepository(getPrisma());
+
+    const edge = await repo.findByLeagueAndUserWithSquadName(league.id, commissioner.id);
+
+    expect(edge?.squadId).toBe(squad.id);
+    expect(edge?.squadName).toBe('Commissioner Team');
+    expect(await repo.findByLeagueAndUserWithSquadName(league.id, noTeam.user.id)).toBeNull();
+  });
+
+  it('counts only the league\'s active teams', async () => {
+    const { league, commissioner } = await createLeague('Count');
+    const other = await createLeague('Elsewhere');
+    await createSquad(league.id, 'Active One', commissioner.id);
+    await createSquad(league.id, 'Active Two', commissioner.id);
+    await createSquad(league.id, 'Inactive', commissioner.id, false);
+    await createSquad(other.league.id, 'Other League', other.commissioner.id);
+
+    expect(await new PrismaSquadRepository(getPrisma()).countActiveByLeague(league.id)).toBe(2);
+  });
+});

@@ -26,7 +26,6 @@ import {
   UpsetBonusRule,
   contestEntryEventStatus,
   type ContestEntry,
-  type SportEvent,
   type SportEventMatch,
 } from '@poolmaster/shared/domain';
 import type { SportEventRepository } from '@poolmaster/shared/db';
@@ -46,7 +45,6 @@ import { expectDefined } from '../../support/expect-defined';
 import { fakeLogger } from '../../support/fake-logger';
 import { InMemoryContestWorld } from '../../support/in-memory-contest-world';
 import { InMemoryGamePicks } from '../../support/in-memory-game-picks';
-import { mockFn } from '../../support/mock-fn';
 import { fakeParticipantContestScoringRuleRepo } from '../../support/repo-fakes';
 
 const HOUR = 60 * 60 * 1000;
@@ -136,16 +134,8 @@ function setup(options: { startsAtRound?: number } = {}) {
     now: clock,
   });
   const contests = new ContestService(deps);
-  // The lifecycle over the same world; an event's status write lands in it (the only field these tests move).
-  const sportEvents: SportEventRepository = {
-    ...world.sportEventRepo(),
-    update: mockFn<SportEventRepository['update']>(async (id, updates) => {
-      const existing = expectDefined(world.sportEvents.get(id));
-      const next: SportEvent = { ...existing, status: updates.status ?? existing.status };
-      world.sportEvents.set(id, next);
-      return next;
-    }),
-  };
+  // The lifecycle over the same world; an event's status write lands in it.
+  const sportEvents: SportEventRepository = world.sportEventRepo();
   const lifecycle = new EventLifecycleService({
     contests: world.contestRepo(),
     configurations: world.configurationRepo(),

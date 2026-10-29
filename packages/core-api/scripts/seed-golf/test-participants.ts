@@ -276,7 +276,7 @@ class ParticipantLoader {
     const entries = contestId === null ? [] : (await must(listContestEntries({ client, path: { contestId } }), `List entries of ${contestName}`)).entries;
     for (const [index, player] of this.players.entries()) {
       const userId = this.userIds.get(player.username);
-      const squad = squads.find((candidate) => candidate.isActive && candidate.members?.some((member) => member.userId === userId));
+      const squad = squads.find((candidate) => candidate.isActive && candidate.members.some((member) => member.userId === userId));
       const entry = squad ? entries.find((candidate) => candidate.squadId === squad.id) : undefined;
       const rowName = `${contestName}: ${playerName(player)}`;
       if (entry?.events.find((entryEvent) => entryEvent.sportEventId === sportEventId)?.status === ContestEntryStatus.SUBMITTED) {

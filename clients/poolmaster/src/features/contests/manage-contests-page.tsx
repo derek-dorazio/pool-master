@@ -21,7 +21,6 @@ import {
   SegmentedControl,
   Select,
 } from '@/features/shared/ui';
-import { useLeagueSquadsQuery } from '@/features/teams/use-league-squads-query';
 import { firstContestEvent, type ContestSportEvent } from './contest-events';
 import { ContestStatusBadge } from './contest-status-badge';
 import { chooseContestHistoryYear } from './contest-history';
@@ -101,11 +100,10 @@ function EntriesCell({ contest, teamCount }: { contest: ContestDto; teamCount: n
 export function ManageContestsPage() {
   const { leagueCode = '' } = useParams<{ leagueCode: string }>();
   // `CommissionerRouteGuard` has loaded the league and admitted the viewer before this renders.
-  const { league } = useLeagueContext(leagueCode);
+  const { query: leagueQuery, league } = useLeagueContext(leagueCode);
   const leagueId = league?.id ?? '';
   const contestsQuery = useLeagueContestsQuery(leagueId);
   const yearsQuery = useContestFinishedYearsQuery(leagueId);
-  const teamsQuery = useLeagueSquadsQuery(leagueId);
   const [filter, setFilter] = useState<ContestFilter>('active');
   const [searchParams, setSearchParams] = useSearchParams();
   const years = useMemo(() => yearsQuery.data ?? [], [yearsQuery.data]);
@@ -130,7 +128,7 @@ export function ManageContestsPage() {
     return built.sort(filter === 'active' ? compareContestRows : compareHistoryRows);
   }, [filter, shownContests]);
 
-  const teamCount = (teamsQuery.data ?? []).filter((team) => team.isActive).length;
+  const teamCount = leagueQuery.data?.activeTeamCount ?? 0;
 
   const columns = useMemo<ColumnDef<ContestRow, string>[]>(
     () => [

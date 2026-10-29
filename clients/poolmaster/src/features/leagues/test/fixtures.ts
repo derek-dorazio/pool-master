@@ -290,19 +290,24 @@ export function getLeagueByCodeData(
   context: {
     membership?: LeagueMembershipDto | null;
     squadMembership?: LeagueSquadMember | null;
+    squadName?: string | null;
+    activeTeamCount?: number;
   } = {},
 ): LeagueContextResponse {
+  const squadMembership = context.squadMembership ?? null;
   return {
     league,
     membership: context.membership ?? buildLeagueMembership({ leagueId: league.id }),
-    squadMembership: context.squadMembership ?? null,
+    squadMembership,
+    squadName: squadMembership ? context.squadName ?? 'My Team' : null,
+    activeTeamCount: context.activeTeamCount ?? 0,
   };
 }
 
 /**
  * #215 — creating a league returns the league context, not a bare league. Creating a league
  * also creates the creator's COMMISSIONER membership, so the 201 carries the same shape the
- * two league reads carry. `squadMembership` is null by construction.
+ * two league reads carry. A test that needs the creator's default squad passes it in.
  */
 export function createLeagueData(
   league: LeagueDto,
@@ -312,6 +317,8 @@ export function createLeagueData(
     league,
     membership: context.membership ?? buildLeagueMembership({ leagueId: league.id }),
     squadMembership: null,
+    squadName: null,
+    activeTeamCount: 0,
   };
 }
 
@@ -341,6 +348,19 @@ export function listLeagueSquadsData(
   squads: SquadDto[],
 ): SquadListResponse {
   return { squads };
+}
+
+/**
+ * A `getLeagueSquad` mock implementation over a league's squads (#1165): the one asked for, or
+ * the API's 404 when it is not among them.
+ */
+export function getLeagueSquadFrom(squads: SquadDto[]) {
+  return ({ path }: { path: { squadId: string } }) => {
+    const squad = squads.find((candidate) => candidate.id === path.squadId);
+    return squad
+      ? apiSuccess({ squad })
+      : { error: { error: { code: 'SQUAD_NOT_FOUND', message: 'Squad not found' } }, status: 404 };
+  };
 }
 
 export function updateLeagueSquadData(

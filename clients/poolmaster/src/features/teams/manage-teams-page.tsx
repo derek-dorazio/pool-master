@@ -52,7 +52,7 @@ export function ManageTeamsPage() {
   const rows = useMemo<ManagedTeamRow[]>(
     () => buildTeamDirectoryRows(teamsQuery.data ?? []).map((row) => ({
       ...row,
-      hasCommissioner: (row.team.members ?? []).some(
+      hasCommissioner: row.team.members.some(
         (member) => membersByUserId.get(member.userId)?.role === LeagueRole.COMMISSIONER,
       ),
     })),

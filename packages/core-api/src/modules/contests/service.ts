@@ -12,6 +12,7 @@ import type {
   ContestEntryPickRepository,
   ContestEntryPickWithParticipant,
   ContestEntryEventStandingRepository,
+  ContestEntryEventStandingResult,
   ContestEntryStandingRepository,
   ContestRepository,
   ContestEntryRepository,
@@ -70,6 +71,7 @@ import {
 import type { BracketLeaderboardEntryRow, BracketLeaderboardModel } from '../../mappers/bracket-leaderboard.mapper';
 import type { PickEmLeaderboardEntryRow, PickEmLeaderboardModel } from '../../mappers/pick-em-leaderboard.mapper';
 import { BracketScoringUnavailableError, loadBracketStandings, type BracketEntryStanding } from './bracket-standings';
+import { ContestLeaderboardCache } from './contest-leaderboard-cache';
 import { loadPickEmScoring, loadPickEmWeekStandings, pickEmWeekGames } from './pick-em-standings';
 import { loadSurvivorSeason, survivorWeekKey } from './survivor-standings';
 import type { SurvivorLeaderboardModel } from '../../mappers/survivor-leaderboard.mapper';
@@ -88,9 +90,10 @@ import {
   type ParticipantScore,
 } from './contest-leaderboard-calculator';
 import {
-  loadContestLeaderboardEntries,
   loadContestScoringConfiguration,
   loadEventField,
+  loadEventPicks,
+  submittedLeaderboardEntries,
   toLeaderboardEntryInput,
   toParticipantScores,
 } from './contest-leaderboard-reads';
@@ -210,6 +213,11 @@ export interface ContestServiceDeps {
   email?: EmailService;
   appBaseUrl?: string;
   now?: () => Date;
+  /**
+   * The leaderboards computed lately (#1162), shared by every contest service in the container;
+   * a service built without one keeps its own.
+   */
+  leaderboardCache?: ContestLeaderboardCache;
 }
 
 /** A settled contest's final places, as `ContestService.finalStandingsOf` reads them. */
@@ -224,11 +232,13 @@ export class ContestService {
   private readonly logger: LifecycleLogger;
   private readonly appBaseUrl: string;
   private readonly now: () => Date;
+  private readonly leaderboardCache: ContestLeaderboardCache;
 
   constructor(private readonly deps: ContestServiceDeps) {
     this.logger = deps.logger ?? createNoopLogger();
     this.appBaseUrl = deps.appBaseUrl ?? 'http://localhost:5173';
     this.now = deps.now ?? (() => new Date());
+    this.leaderboardCache = deps.leaderboardCache ?? new ContestLeaderboardCache();
   }
 
   /**
@@ -483,7 +493,8 @@ export class ContestService {
    * The contest leaderboard (#713): every entry's contest total and its result in each revealed
    * event, with its picks in one shown event — `sportEventId`, else the latest revealed one. A
    * completed event answers from the standings frozen when it settled; a COMPLETED contest's
-   * totals are the ones frozen at its settlement.
+   * totals are the ones frozen at its settlement. Every viewer polls it, so a board computed in
+   * the last 30 seconds answers for its contest (#1162); the reader is checked each time.
    */
   async getLeaderboard(
     contestId: string,
@@ -491,12 +502,17 @@ export class ContestService {
     requestedSportEventId?: string,
   ): Promise<ContestLeaderboardModel> {
     const { contest } = await this.getEntryContext(contestId, requesterUserId, 'read');
-    return this.leaderboardOf(contest, requestedSportEventId);
+    return this.cachedLeaderboardOf(contest, requestedSportEventId);
+  }
+
+  private cachedLeaderboardOf(contest: Contest, requestedSportEventId?: string): Promise<ContestLeaderboardModel> {
+    return this.leaderboardCache.get(contest.id, requestedSportEventId, this.now(), () => this.leaderboardOf(contest, requestedSportEventId));
   }
 
   /**
    * The same leaderboard for a contest already in hand, with no reader to check: what the live
-   * standings emails read (#877), so an email and the page never disagree.
+   * standings emails read (#877), computed afresh so an email never reports a board older than
+   * the scores that queued it.
    */
   async leaderboardOf(contest: Contest, requestedSportEventId?: string): Promise<ContestLeaderboardModel> {
     const contestId = contest.id;
@@ -555,21 +571,34 @@ export class ContestService {
     }
     const { id: scoringDefinitionId, definition: scoringDefinition } = scoring;
     const { direction } = scoringDefinition;
-    const settledEventStandings = await this.deps.eventStandings.findByContest(contestId);
+    const settledByEvent = new Map<string, ContestEntryEventStandingResult[]>();
+    for (const standing of await this.deps.eventStandings.findByContest(contestId)) {
+      const settled = settledByEvent.get(standing.sportEventId) ?? [];
+      settled.push(standing);
+      settledByEvent.set(standing.sportEventId, settled);
+    }
+
+    // The contest's entries and their picks are read once for every event (#1162), and picks
+    // only in the events scored live here: the shown one, and each other one not settled or
+    // cancelled. A settled event answers from its frozen standings alone.
+    const contestEntries = await this.deps.entries.findByContestWithSquad(contestId);
+    const scoredLive = revealed.filter((event) => event.id === shownEvent.id
+      || (!settledByEvent.has(event.id) && event.status !== SportEventStatus.CANCELLED));
+    const picks = await loadEventPicks(this.deps, contestEntries.map((entry) => entry.id), scoredLive.map((event) => event.id));
 
     // Each revealed event's standings: frozen once it settled, else computed from its field. The
     // shown event is always computed too, for its picks' scores.
     const eventScores: ContestEntryEventScore[] = [];
-    const eventResults: Array<ContestEntryEventResultRow & { entryId: string }> = [];
+    const resultsByEntry = new Map<string, ContestEntryEventResultRow[]>();
     const entriesById = new Map<string, ContestLeaderboardEntryInput>();
     let shown: { field: Awaited<ReturnType<typeof loadEventField>>; rows: ContestEntryStandingRow[]; asOf: Date | null } | null = null;
     for (const event of revealed) {
-      const entries = await loadContestLeaderboardEntries(this.deps, contestId, event.id);
+      const entries = submittedLeaderboardEntries(contestEntries, event.id, picks);
       for (const entry of entries) entriesById.set(entry.id, entry);
-      const settled = settledEventStandings.filter((standing) => standing.sportEventId === event.id);
+      const settled = settledByEvent.get(event.id) ?? [];
       const isShown = event.id === shownEvent.id;
       let rows: ContestEntryStandingRow[] | null = null;
-      if (isShown || settled.length === 0) {
+      if (isShown || (settled.length === 0 && event.status !== SportEventStatus.CANCELLED)) {
         const field = await loadEventField(this.deps, event.id);
         const scores = toParticipantScores(field, event, scoring.scoring);
         rows = rankEventStandings(entries, scores, countingRule, direction);
@@ -596,7 +625,10 @@ export class ContestService {
         }));
       for (const result of results) {
         eventScores.push({ entryId: result.entryId, sportEventId: event.id, score: result.score, scoredPickCount: result.scoredPickCount });
-        eventResults.push({ entryId: result.entryId, sportEventId: event.id, score: result.score, position: result.position, displayPosition: result.displayPosition });
+        // Pushed in the contest's event order, so each entry's results read in that order.
+        const entryResults = resultsByEntry.get(result.entryId) ?? [];
+        entryResults.push({ sportEventId: event.id, score: result.score, position: result.position, displayPosition: result.displayPosition });
+        resultsByEntry.set(result.entryId, entryResults);
       }
     }
     if (!shown) {
@@ -604,12 +636,9 @@ export class ContestService {
     }
     // An entry that missed every revealed event it has a standing for (#714) is on the board by
     // that standing alone, with no picks.
-    const standingOnly = new Set(eventScores.map((score) => score.entryId).filter((entryId) => !entriesById.has(entryId)));
-    if (standingOnly.size > 0) {
-      for (const entry of await this.deps.entries.findByContestWithSquad(contestId)) {
-        if (standingOnly.has(entry.id)) {
-          entriesById.set(entry.id, toLeaderboardEntryInput(entry, []));
-        }
+    for (const entry of contestEntries) {
+      if (!entriesById.has(entry.id) && resultsByEntry.has(entry.id)) {
+        entriesById.set(entry.id, toLeaderboardEntryInput(entry, []));
       }
     }
     const shownRows = new Map(shown.rows.map((row) => [row.entryId, row]));
@@ -651,9 +680,7 @@ export class ContestService {
         countingPickLimit: frozenCountingPickLimits.get(total.entryId) ?? shownRow?.countingPickLimit ?? shownCountingRule.count,
         scoredPickCount: shownRow?.scoredPickCount ?? 0,
         picks: shownRow?.picks ?? [],
-        events: revealed.flatMap((event) =>
-          eventResults.filter((result) => result.entryId === total.entryId && result.sportEventId === event.id)
-            .map(({ entryId: _entryId, ...result }) => result)),
+        events: resultsByEntry.get(total.entryId) ?? [],
       };
     });
 
@@ -776,7 +803,7 @@ export class ContestService {
       case SelectionType.TIERED:
       case SelectionType.BUDGET_PICK:
       case SelectionType.RANDOM_DRAW:
-        return (await this.leaderboardOf(contest)).entries;
+        return (await this.cachedLeaderboardOf(contest)).entries;
       case SelectionType.PICK_EM:
         return (await this.pickEmLeaderboardOf(contest)).entries;
       case SelectionType.SURVIVOR:
@@ -1082,7 +1109,7 @@ export class ContestService {
     // Past the highest number the squad holds in this contest, not its entry count: leaving
     // deletes the first entry and keeps the later ones, so a count would reuse a number still
     // taken, and (contest, squad, entry number) is unique.
-    const nextEntryNumber = (await this.findHighestEntryNumber(contestId, squad.id)) + 1;
+    const nextEntryNumber = existingEntries.reduce((highest, entry) => Math.max(highest, entry.entryNumber), 0) + 1;
     // Checked live against the plan the league is on now (#947): a contest keeps no plan of its
     // own, only its expansion (#980), which the repository reads under the contest's lock.
     const entitlements = await this.deps.planEntitlements.forLeague(context.contest.leagueId);
@@ -1492,19 +1519,8 @@ export class ContestService {
     contestId: string,
     squadId: string,
   ): Promise<ContestEntry[]> {
-    const entries = await this.deps.entries.findBySquad(squadId);
-    return entries
-      // Drafts and submitted entries alike: both hold one of the squad's entry places.
-      .filter((entry) => entry.contestId === contestId)
-      .sort((left, right) => left.entryNumber - right.entryNumber);
-  }
-
-  /** The highest entry number the squad holds in the contest, whatever its status; 0 for none. */
-  private async findHighestEntryNumber(contestId: string, squadId: string): Promise<number> {
-    const entries = await this.deps.entries.findBySquad(squadId);
-    return entries
-      .filter((entry) => entry.contestId === contestId)
-      .reduce((highest, entry) => Math.max(highest, entry.entryNumber), 0);
+    // Drafts and submitted entries alike: both hold one of the squad's entry places.
+    return this.deps.entries.findByContestAndSquad(contestId, squadId);
   }
 
   private async findPrimaryEntryBySquad(

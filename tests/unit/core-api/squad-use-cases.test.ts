@@ -100,7 +100,7 @@ describe('Team use cases', () => {
       const listed = expectDefined(squads.find((squad) => squad.id === ownerSquad.id));
       expect(listed.isActive).toBe(false);
       expect(listed.memberCount).toBe(1);
-      expect((listed.members ?? []).map((member) => member.user.id)).toEqual([owner.id]);
+      expect(listed.members.map((member) => member.user.id)).toEqual([owner.id]);
     });
 
     it('refuses to list a league\'s teams to someone who is not a member of it', async () => {
@@ -129,7 +129,7 @@ describe('Team use cases', () => {
 
       expect(squad.name).toBe(ownerSquad.name);
       expect(squad.memberCount).toBe(1);
-      expect((squad.members ?? []).map((member) => member.user.id).sort()).toEqual([former.id, owner.id].sort());
+      expect(squad.members.map((member) => member.user.id).sort()).toEqual([former.id, owner.id].sort());
     });
 
     it('lets a root admin who is not in the league read one of its teams', async () => {
