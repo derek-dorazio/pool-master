@@ -22,7 +22,7 @@ export function squaresContestFixture(overrides: Partial<ContestDto> = {}): Cont
     contestFormat: 'SQUARES',
     selectionType: 'SQUARES',
     myEntryIds: ['entry-1'],
-    sportEvents: [{ sportEventId: 'event-1', sequence: 1, name: 'NFL Playoffs', startDate: '2099-01-10T18:00:00.000Z', status: 'IN_PROGRESS', participantType: null, scoringFamily: null }],
+    sportEvents: [{ sportEventId: 'event-1', sequence: 1, name: 'NFL Playoffs', startDate: '2099-01-10T18:00:00.000Z', endDate: null, status: 'IN_PROGRESS', participantType: null, scoringFamily: null }],
     ...overrides,
   };
 }

@@ -24,6 +24,7 @@ import {
   GamePicksResponseSchema,
   ErrorEnvelopeSchema,
   SportEventListResponseSchema,
+  SportEventYearListResponseSchema,
   GenerateInviteLinkResponseSchema,
   ListLeagueInvitationsResponseSchema,
   ResendLeagueInvitationResponseSchema,
@@ -335,7 +336,39 @@ describe('Contract verification (web)', () => {
         contestEligible: true,
         readinessStatus: 'CONTEST_ELIGIBLE',
         loadedParticipantCount: 1,
+        // A member's read counts no admin numbers (#1198).
+        adminCounts: null,
       });
+
+      // Several statuses repeat the parameter; one alone still arrives as a list.
+      const offerableRes = await getApp().inject({
+        method: 'GET',
+        url: '/api/v1/events/?sport=GOLF&status=SCHEDULED&status=IN_PROGRESS',
+        headers: viewer.headers,
+      });
+      expect(offerableRes.statusCode).toBe(200);
+      expect(SportEventListResponseSchema.parse(offerableRes.json()).events.map((item) => item.id)).toContain(eventId);
+      const completedRes = await getApp().inject({
+        method: 'GET',
+        url: '/api/v1/events/?sport=GOLF&status=COMPLETED',
+        headers: viewer.headers,
+      });
+      expect(completedRes.statusCode).toBe(200);
+      expect(SportEventListResponseSchema.parse(completedRes.json()).events.map((item) => item.id)).not.toContain(eventId);
+
+      const { eventSeries } = await prisma.sportEvent.findUniqueOrThrow({
+        where: { id: eventId },
+        select: { eventSeries: { select: { sportLeagueId: true } } },
+      });
+      const yearsRes = await getApp().inject({
+        method: 'GET',
+        url: `/api/v1/events/years?sportLeagueId=${eventSeries.sportLeagueId}`,
+        headers: viewer.headers,
+      });
+      expect(yearsRes.statusCode).toBe(200);
+      const years = SportEventYearListResponseSchema.safeParse(yearsRes.json());
+      expect(years.success).toBe(true);
+      expect(years.data?.years).toContain(event?.eventYear);
     } finally {
       await prisma.sportEventParticipantGolfStanding.deleteMany({
         where: {
@@ -544,6 +577,7 @@ describe('Contract verification (web)', () => {
         sport: Sport.GOLF,
         name: 'Contract Event',
         startDate: eventTiming.startDate,
+        endDate: new Date(eventTiming.startDate.getTime() + 3 * 24 * 60 * 60 * 1000),
         status: 'SCHEDULED',
       },
     });
@@ -645,6 +679,8 @@ describe('Contract verification (web)', () => {
       sequence: 1,
       name: sportEvent.name,
       startDate: sportEvent.startDate.toISOString(),
+      // The contest carries each event's end, so its schedule reads no event (#1198).
+      endDate: sportEvent.endDate?.toISOString(),
       status: sportEvent.status,
       participantType: null,
       scoringFamily: null,

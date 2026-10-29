@@ -19,6 +19,7 @@ import { randomUUID } from 'crypto';
 import bcrypt from 'bcryptjs';
 import { startSmtpSinkServer, type CapturedMail, type SmtpSinkServer } from '../support/smtp-sink';
 import { RecordingCdnInvalidator } from '../support/recording-cdn-invalidator';
+import { statementLog } from './statement-log';
 
 // Plugins and modules from core-api
 import { healthPlugin } from '../../packages/core-api/src/plugins/health';
@@ -38,6 +39,9 @@ import { contestsModule, contestsByIdModule } from '../../packages/core-api/src/
 import { billingModule } from '../../packages/core-api/src/modules/billing/routes';
 import { BILLING_SETTINGS } from '../../packages/core-api/src/modules/billing/billing-settings';
 import { contestManagementModule } from '../../packages/core-api/src/modules/contest-management/routes';
+import { cupsModule } from '../../packages/core-api/src/modules/cups/routes';
+import { championshipModule } from '../../packages/core-api/src/modules/championship/routes';
+import { historyModule } from '../../packages/core-api/src/modules/history/routes';
 import { contestConfigTemplatesModule } from '../../packages/core-api/src/modules/contest-config-templates/routes';
 import { participantsModule } from '../../packages/core-api/src/modules/participants/routes';
 import { usersModule } from '../../packages/core-api/src/modules/users/routes';
@@ -231,6 +235,10 @@ async function buildTestApp(): Promise<FastifyInstance> {
     planEntitlements,
   });
   testApp.register(contestsByIdModule, { prefix: '/api/v1/contests', email, planEntitlements });
+  // The trophy room's routes, for the query-scaling tests of its reads (#1242).
+  testApp.register(cupsModule, { prefix: '/api/v1/leagues/:id/cups', planEntitlements });
+  testApp.register(championshipModule, { prefix: '/api/v1/leagues/:id/championship', planEntitlements });
+  testApp.register(historyModule, { prefix: '/api/v1/leagues/:id/history', email, planEntitlements });
   testApp.register(participantsModule, { prefix: '/api/v1/participants', providerRegistry });
   testApp.register(usersModule, { prefix: '/api/v1/users', email, emailPreferences: outbox.preferences });
   testApp.register(eventsModule, { prefix: '/api/v1/events', ingestionService, providerRegistry, cdn });
@@ -273,7 +281,10 @@ export async function setupIntegrationTests(): Promise<void> {
   // comes from version-info.json, written by this config's globalSetup (#180).
   process.env.POOLMASTER_ENVIRONMENT ??= 'test';
   process.env.LOG_LEVEL ??= 'warn';
-  prisma = new PrismaClient();
+  // Query events feed statementLog, which the query-scaling tests count (#1242).
+  const client = new PrismaClient({ log: [{ emit: 'event', level: 'query' }] });
+  client.$on('query', (event) => statementLog.receive(event));
+  prisma = client;
   await prisma.$connect();
   await cleanupTestData();
   await startIntegrationMailSink();
@@ -355,7 +366,7 @@ async function stopIntegrationMailSink(): Promise<void> {
 // Test data helpers
 // ---------------------------------------------------------------------------
 
-interface TestUserResult {
+export interface TestUserResult {
   user: {
     id: string;
     email: string;

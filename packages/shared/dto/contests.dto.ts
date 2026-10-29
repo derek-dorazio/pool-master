@@ -70,6 +70,7 @@ export const ContestSportEventDtoSchema = z.object({
   sequence: z.number().int().min(1).describe('The event\'s place in the contest, 1 first: the contest\'s events in start-date order.'),
   name: z.string().describe('The event\'s name.'),
   startDate: z.iso.datetime().describe('The event\'s scheduled start: when its picks close.'),
+  endDate: z.iso.datetime().nullable().describe('The event\'s scheduled end when known; null otherwise. The last event\'s end is when the contest is expected to finish.'),
   status: z.enum(SportEventStatus).describe('The event\'s own status. Each event of a contest is picked, submitted, played and settled on its own (#713).'),
   participantType: z.enum(ParticipantType).nullable().describe('Who competes, when the event\'s sport league overrides its sport: INDIVIDUAL in a championship stat pool. Null competes as the sport does. The same on every event of a contest, which covers one sport league.'),
   scoringFamily: z.enum(ScoringFamily).nullable().describe('How the event is scored, when its sport league overrides its sport: COMPOSITE in a championship stat pool. Null scores as the sport does. The same on every event of a contest, which covers one sport league.'),
