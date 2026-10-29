@@ -27,7 +27,6 @@ import {
   MetricGrid,
   MetricTile,
   Select,
-  StatusBadge,
   Tile,
   useDisplayPreferences,
 } from '@/features/shared/ui';
@@ -39,15 +38,12 @@ import { parseRouteState } from '@/routes/route-state';
 import { formatPickProgress, formatPoints } from './bracket-layout';
 import { ContestEventSwitcher } from './contest-event-switcher';
 import { currentContestEvent, entryEventStatus } from './contest-events';
-import { ContestEntryBackLinks, ContestPageFrame } from './contest-header';
-import { entryPageView } from './contest-page-view';
+import { ContestEntryFrame } from './contest-header';
 import { useContestLeague } from './use-contest-league';
 import { contestEventStart, contestMatchNoun, contestParticipantNoun, contestScoreUnit, contestTieLabel } from './contest-sport';
 import {
   CONTEST_ENTRY_STATUS_LABELS,
-  CONTEST_ENTRY_STATUS_TONES,
   CONTEST_POLL_INTERVAL_MS,
-  CONTEST_STATUS_TONES,
   contestStatusLabel,
   shouldPollContestEntries,
 } from './contest-status';
@@ -234,7 +230,6 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
   const canChange = canChangeWeek(gamePicks);
   const isSubmitted = gamePicks.status === ContestEntryStatus.SUBMITTED;
   const kickoff = firstKickoff(gamePicks.games);
-  const statusLabel = CONTEST_ENTRY_STATUS_LABELS[gamePicks.status];
   const hint = isSubmitted ? null : weekSubmitHint(gamePicks);
   const isSurvivor = isSurvivorWeek(gamePicks);
   const eliminatedInWeek = gamePicks.survivor?.eliminatedInWeek ?? null;
@@ -268,31 +263,20 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
   const pickError = isTiebreakerSave ? null : errorMessage(saveMutation.error, 'We could not save that pick. Please try again.');
 
   return (
-    <ContestPageFrame
+    <ContestEntryFrame
       contest={contest}
-      current={entryPageView(contest, entryId)}
+      entry={entrySummary}
+      entryId={entryId}
       leagueCode={backLeagueCode}
+      phase={contestStatusLabel(contest.status)}
       picksRevealed={entryQuery.data?.picksRevealed ?? false}
+      rules={[
+        ...(gamePicks.mode ? [formatPickEmRulesName({ mode: gamePicks.mode, againstTheSpread: gamePicks.againstTheSpread })] : []),
+        ...(isSurvivor ? [formatSelectionTypeName(gamePicks.selectionType)] : []),
+      ]}
+      status={gamePicks.status}
       testId="pick-em-entry-page"
-      actions={<ContestEntryBackLinks contestId={contestId} leagueCode={backLeagueCode} />}
-      badges={(
-        <>
-          <StatusBadge tone={CONTEST_STATUS_TONES[contest.status]}>{contestStatusLabel(contest.status)}</StatusBadge>
-          <StatusBadge data-testid="contest-entry-status-badge" tone={CONTEST_ENTRY_STATUS_TONES[gamePicks.status]}>
-            {statusLabel}
-          </StatusBadge>
-        </>
-      )}
-      summary={(
-        <p className="mt-2 text-sm text-muted-foreground" data-testid="contest-entry-summary">
-          {contest.name}
-          {gamePicks.mode ? ` · ${formatPickEmRulesName({ mode: gamePicks.mode, againstTheSpread: gamePicks.againstTheSpread })}` : ''}
-          {isSurvivor ? ` · ${formatSelectionTypeName(gamePicks.selectionType)}` : ''}
-          {entrySummary ? ` · ${entrySummary.squadName} · Entry ${entrySummary.entryNumber}` : ''}
-        </p>
-      )}
       title={gamePicks.entryName}
-      titleTestId="contest-entry-heading"
     >
 
       <ContestEventSwitcher
@@ -340,29 +324,19 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
 
       <Tile>
         {isSurvivor ? (
-          <MetricGrid className="md:grid-cols-2">
+          <MetricGrid>
             <MetricTile
               helperText={canChange ? `Your pick locks when its ${match.one} starts.` : 'No pick can change now.'}
               label="Your pick"
               value={<span data-testid="survivor-pick">{survivorTeam?.name ?? 'None yet'}</span>}
             />
-            <MetricTile
-              helperText={isSubmitted ? `This ${isPlayoff ? 'entry' : 'week'} counts.` : `Submit before the ${eventStart} to stay in.`}
-              label="Status"
-              value={<span data-testid="pick-em-status">{statusLabel}</span>}
-            />
           </MetricGrid>
         ) : (
-        <MetricGrid className="md:grid-cols-4">
+        <MetricGrid className="md:grid-cols-3">
           <MetricTile
             helperText={canChange ? 'Each pick locks at its game\'s kickoff.' : 'No pick can change now.'}
             label="Picked"
             value={<span data-testid="pick-em-picked-count">{formatPickProgress(gamePicks.pickedCount, gamePicks.gameCount)}</span>}
-          />
-          <MetricTile
-            helperText={isSubmitted ? 'This week counts.' : 'Only a submitted week counts.'}
-            label="Status"
-            value={<span data-testid="pick-em-status">{statusLabel}</span>}
           />
           <MetricTile
             helperText={gamePicks.mode === PickEmMode.CONFIDENCE ? 'The values of the correct picks so far.' : 'One point for each correct pick so far.'}
@@ -446,6 +420,6 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
           ) : null}
         </Tile>
       ) : null}
-    </ContestPageFrame>
+    </ContestEntryFrame>
   );
 }

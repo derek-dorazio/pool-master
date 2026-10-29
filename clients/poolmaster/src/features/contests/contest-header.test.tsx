@@ -1,9 +1,9 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
-import { ContestStatus } from '@poolmaster/shared/domain';
+import { ContestEntryStatus, ContestStatus } from '@poolmaster/shared/domain';
 import { describe, expect, it } from 'vitest';
 import type { ContestDto } from '@/lib/api';
-import { ContestEntryBackLinks, ContestPageFrame } from './contest-header';
+import { ContestEntryBackLinks, ContestEntryFrame, ContestPageFrame } from './contest-header';
 import { entryPageView, type ContestView } from './contest-page-view';
 
 const contest = { id: 'contest-1', myEntryIds: ['entry-1'], name: 'Masters Pool', status: ContestStatus.ACTIVE } as ContestDto;
@@ -111,5 +111,51 @@ describe('ContestEntryBackLinks', () => {
 
     expect(screen.getByTestId('contest-entry-back-to-contest')).toHaveAttribute('href', '/contests/contest-1');
     expect(screen.getByTestId('contest-entry-back-to-league')).toHaveAttribute('href', '/welcome');
+  });
+});
+
+describe('ContestEntryFrame', () => {
+  const entry = { createdAt: '2026-10-20T15:00:00.000Z', entryNumber: 2, squadName: 'Birdie Hunters', updatedAt: '2026-10-29T15:00:00.000Z' };
+
+  function drawEntryFrame(status: ContestEntryStatus | null = ContestEntryStatus.DRAFT) {
+    render(
+      <MemoryRouter>
+        <ContestEntryFrame
+          contest={contest}
+          entry={entry}
+          entryId="entry-1"
+          leagueCode="BIGDAWGS"
+          phase="Open until the first game"
+          picksRevealed={false}
+          rules={['Confidence']}
+          status={status}
+          title="Birdie Hunters 2"
+        >
+          <p>The picks</p>
+        </ContestEntryFrame>
+      </MemoryRouter>,
+    );
+  }
+
+  it('heads an entry page with the entry\'s name, its status icon instead of badges, and the contest, rules and squad in one line', () => {
+    drawEntryFrame();
+
+    expect(screen.getByTestId('contest-entry-heading')).toHaveTextContent('Birdie Hunters 2');
+    expect(screen.getByTestId('contest-entry-status')).toHaveAccessibleName('Entry status: Not submitted');
+    expect(screen.queryByText('Live')).not.toBeInTheDocument();
+    expect(screen.getByTestId('contest-entry-summary')).toHaveTextContent('Masters Pool · Confidence · Birdie Hunters · Entry 2');
+    expect(screen.getByText('The picks')).toBeInTheDocument();
+    expect(screen.getByTestId('contest-menu-my-entry')).toBeChecked();
+  });
+
+  it('puts the contest\'s phase and the entry\'s dates in the status callout', () => {
+    drawEntryFrame(ContestEntryStatus.SUBMITTED);
+
+    fireEvent.click(screen.getByTestId('contest-entry-status'));
+
+    expect(screen.getByTestId('contest-entry-status-entry-status')).toHaveTextContent('Submitted');
+    expect(screen.getByTestId('contest-entry-status-contest-phase')).toHaveTextContent('Open until the first game');
+    expect(screen.getByTestId('contest-entry-status-created')).toHaveTextContent('2026');
+    expect(screen.getByTestId('contest-entry-status-last-updated')).toHaveTextContent('2026');
   });
 });

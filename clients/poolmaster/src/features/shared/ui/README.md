@@ -64,6 +64,9 @@ days, hours and minutes as one timer. The event page kit (`StartButton`, `Landin
 `PhotoHero`, `StickyActionBar`, `NextUpCard`, `LandingDisclaimer`) is a product piece, so it
 lives in `features/event-pages/components`.
 
+`InfoPopover` keeps secondary facts out of a page's way: an icon button whose
+callout opens on mouse hover or on a tap, for a phone.
+
 Feature pages should keep route-specific copy and generated-SDK calls local, but
 they should not duplicate header, grid-shell, detail/actions, or
 public-join layout code when a template fits.

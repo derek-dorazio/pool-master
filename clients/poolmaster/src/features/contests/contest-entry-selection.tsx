@@ -329,57 +329,33 @@ export function LockedSelectionGroup({
   );
 }
 
-/**
- * The entry's tiebreaker prediction, when its scoring family asks for one, and the submit action.
- * A family with no tiebreaker (`tiebreaker` null) shows the submit action alone.
- */
-export function TiebreakerSelector({
+/** The entry's tiebreaker prediction, for a scoring family that asks for one. */
+export function TiebreakerField({
   disabled,
-  isSubmitted,
-  isSubmitting,
   onChange,
-  onSubmit,
-  submitDisabled,
   tiebreaker,
   value,
 }: {
   disabled: boolean;
-  /** An entry already submitted is saved again with the same button, which says so. */
-  isSubmitted: boolean;
-  isSubmitting: boolean;
   onChange: (value: string) => void;
-  onSubmit: () => void;
-  submitDisabled: boolean;
-  tiebreaker: EntryTiebreakerUi | null;
+  tiebreaker: EntryTiebreakerUi;
   value: string;
 }) {
   return (
-    <Tile padding="sm" radius="lg" variant="subtle">
-      {tiebreaker ? (
-        <FormField label={tiebreaker.label}>
-          <Select
-            data-testid="contest-entry-tiebreaker-select"
-            disabled={disabled}
-            onChange={(event) => onChange(event.target.value)}
-            value={value}
-          >
-            <option value="">{tiebreaker.placeholder}</option>
-            {tiebreaker.options.map((option) => (
-              <option key={option} value={option}>
-                {tiebreaker.format(option)}
-              </option>
-            ))}
-          </Select>
-        </FormField>
-      ) : null}
-      <Button
-        className={tiebreaker ? "mt-4" : undefined}
-        data-testid="contest-entry-submit"
-        disabled={submitDisabled}
-        onClick={onSubmit}
+    <FormField label={tiebreaker.label}>
+      <Select
+        data-testid="contest-entry-tiebreaker-select"
+        disabled={disabled}
+        onChange={(event) => onChange(event.target.value)}
+        value={value}
       >
-        {isSubmitting ? "Submitting..." : isSubmitted ? "Save entry" : "Submit entry"}
-      </Button>
-    </Tile>
+        <option value="">{tiebreaker.placeholder}</option>
+        {tiebreaker.options.map((option) => (
+          <option key={option} value={option}>
+            {tiebreaker.format(option)}
+          </option>
+        ))}
+      </Select>
+    </FormField>
   );
 }
