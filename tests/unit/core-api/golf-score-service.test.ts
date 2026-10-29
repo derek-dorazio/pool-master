@@ -451,9 +451,18 @@ describe('GolfScoreService — provider sync', () => {
     });
 
     it.each([
-      ['only holes played (thru) changed', { strokes: 34, scoreToPar: -2, thru: 9, status: 'IN_PROGRESS' as const }, { thru: 10 }],
-      ['only the status changed, to a withdrawal (DNF)', { strokes: 34, scoreToPar: -2, thru: 9, status: 'IN_PROGRESS' as const }, { status: 'DNF' as const }],
-    ])('rewrites a round and its standing when %s', async (_label, first, change) => {
+      [
+        'only holes played (thru) changed, so the standing\'s current-round thru moves',
+        { thru: 10 },
+        { golf: { currentRoundThru: 10 }, standing: { status: 'IN_PROGRESS', displayPosition: '1' } },
+      ],
+      [
+        'only the status changed, to a withdrawal (DNF), so the standing is WITHDRAWN and unranked',
+        { status: 'DNF' as const },
+        { standing: { status: 'WITHDRAWN', position: null, displayPosition: null } },
+      ],
+    ])('rewrites a round and its standing when %s', async (_label, change, expectedStanding) => {
+      const first = { strokes: 34, scoreToPar: -2, thru: 9, status: 'IN_PROGRESS' as const };
       const { service, event, anaEntry, golfRounds, golfStandings } = await scheduledSyncSetup();
       const tick = (values: object) => service.persistRoundUpdatesForSportEvent(event.id, [{ participantExternalId: 'ext-ana', round: 1, ...first, ...values }], 'feed', 4);
       await tick({});
@@ -465,6 +474,8 @@ describe('GolfScoreService — provider sync', () => {
       expect(roundWrites.mock.calls[0][0]).toEqual([expect.objectContaining({ sportEventParticipantId: anaEntry.id, ...change })]);
       expect(standingWrites.mock.calls[0][0]).toHaveLength(1);
       expect(result.writeDiagnostics.summary).toMatchObject({ updated: 2, unchanged: 0 });
+      const [standing] = await golfStandings.findBySportEventParticipants([anaEntry.id]);
+      expect(standing).toMatchObject(expectedStanding);
     });
 
     it('when a payload carries the same golfer\'s round twice, stores the later one with a single write', async () => {
