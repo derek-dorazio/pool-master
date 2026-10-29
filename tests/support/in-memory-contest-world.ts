@@ -440,6 +440,8 @@ export class InMemoryContestWorld {
     return {
       findByContest: async (contestId) =>
         [...this.configurations.values()].find((row) => row.contestId === contestId) ?? null,
+      findByContests: async (contestIds) =>
+        [...this.configurations.values()].filter((row) => contestIds.includes(row.contestId)),
       create: async (input) => this.addConfiguration(input.contestId, input),
       update: async (id, updates) => {
         const existing = this.configurations.get(id);
