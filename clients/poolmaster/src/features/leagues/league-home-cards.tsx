@@ -3,7 +3,7 @@ import { ContestStatus, SelectionType, SquadMembershipStatus } from '@poolmaster
 import type { ContestDto, ContestEntryDto, SquadDto } from '@/lib/api';
 import { formatUserName } from '@/features/account/user-name';
 import { ContestStatusBadge } from '@/features/contests/contest-status-badge';
-import { MineMarker } from '@/features/contests/leaderboard-kit';
+import { MineMarker } from '@/features/contests/mine-marker';
 import { useBracketLeaderboardQuery, useContestLeaderboardQuery } from '@/features/contests/use-contest-leaderboard';
 import {
   cn,

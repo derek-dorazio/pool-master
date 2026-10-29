@@ -3,7 +3,7 @@ import { Link } from 'react-router';
 import { Chip, IconAvatar } from '@/features/shared/ui';
 import { getTeamIconOption } from '@/features/teams/team-icon-catalog';
 import { TeamIcon } from '@/features/teams/team-icon';
-import { MineMarker } from '@/features/contests/leaderboard-kit';
+import { MineMarker } from '@/features/contests/mine-marker';
 
 /**
  * A squad in a cup or championship list: its icon and name, linking on when there is somewhere

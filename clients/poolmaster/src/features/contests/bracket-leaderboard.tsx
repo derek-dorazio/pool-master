@@ -2,7 +2,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import type { BracketLeaderboardResponse, ContestDto } from '@/lib/api';
 import { formatPoints } from './bracket-layout';
 import { contestScoreUnit } from './contest-sport';
-import { entryColumn, placeColumn, totalColumn } from './leaderboard-columns';
+import { SETTLED_NOTE, entryColumn, isMySquadsEntry, placeColumn, totalColumn } from './leaderboard-columns';
 import { LeaderboardFrame, ScoreboardGrid } from './leaderboard-kit';
 import { useLeaderboardFallback } from './use-leaderboard-fallback';
 import { useContestLeague } from './use-contest-league';
@@ -17,7 +17,7 @@ const TEST_ID = 'bracket-leaderboard';
 function bracketColumns(contestId: string, leagueCode: string | null, mySquadId: string | null, gameCount: number): ColumnDef<BracketRow>[] {
   return [
     placeColumn(TEST_ID),
-    entryColumn(TEST_ID, { contestId, leagueCode, mySquadId }),
+    entryColumn(TEST_ID, { contestId, isMine: isMySquadsEntry(mySquadId), leagueCode }),
     totalColumn(TEST_ID, { format: formatPoints, header: 'Points', id: 'points', value: (row) => row.points }),
     {
       id: 'max-possible',
@@ -88,7 +88,7 @@ export function BracketLeaderboard({ contest, leagueCode: hintedLeagueCode }: { 
         </>
       )}
       // A cancelled event's note stands in for the settled one: nothing was scored to freeze.
-      settledNote={board.eventCancelled ? null : undefined}
+      settledNote={board.eventCancelled ? null : SETTLED_NOTE}
     >
       <ScoreboardGrid
         columns={bracketColumns(contestId, leagueCode, mySquadId, board.gameCount)}

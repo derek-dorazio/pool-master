@@ -3,7 +3,7 @@ import { Trophy } from 'lucide-react';
 import { SportEventStatus, formatPickEmRulesName } from '@poolmaster/shared/domain';
 import type { ContestDto, PickEmLeaderboardResponse } from '@/lib/api';
 import { formatPoints } from './bracket-layout';
-import { entryColumn, placeColumn, totalColumn } from './leaderboard-columns';
+import { entryColumn, isMySquadsEntry, placeColumn, totalColumn } from './leaderboard-columns';
 import { LeaderboardFrame, ScoreboardGrid } from './leaderboard-kit';
 import { useLeaderboardFallback } from './use-leaderboard-fallback';
 import { useContestLeague } from './use-contest-league';
@@ -48,7 +48,7 @@ function pickEmColumns(
 ): ColumnDef<PickEmRow>[] {
   return [
     placeColumn(TEST_ID),
-    entryColumn(TEST_ID, { contestId, leagueCode, mySquadId }),
+    entryColumn(TEST_ID, { contestId, isMine: isMySquadsEntry(mySquadId), leagueCode }),
     totalColumn(TEST_ID, { format: formatPoints, header: 'Season', id: 'total', value: (row) => row.totalPoints }),
     ...weeks.map((week): ColumnDef<PickEmRow> => ({
       id: `week-${week.sportEventId}`,

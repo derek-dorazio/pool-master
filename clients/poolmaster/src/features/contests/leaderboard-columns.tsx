@@ -1,9 +1,15 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { Link } from 'react-router';
 import { buildLeagueContestEntryPath } from '@/features/leagues/league-routing';
-import { MineMarker } from './leaderboard-kit';
+import { MineMarker } from './mine-marker';
 
 /** The columns every contest leaderboard shares (#1277), each test id under the board's prefix. */
+
+/** Entries per page. A league can have hundreds; one page stays readable on a phone. */
+export const LEADERBOARD_PAGE_SIZE = 25;
+
+/** What a board says once its contest settles, unless it has words of its own. */
+export const SETTLED_NOTE = 'Final result: these standings are frozen at settlement.';
 
 /** A board row: one entry, placed, and the squad it belongs to where the board names one. */
 export type BoardRow = {
@@ -29,13 +35,18 @@ export function placeColumn<Row extends BoardRow>(testIdPrefix: string): ColumnD
   };
 }
 
+/** Whether a row is the viewer's on a board of squads' entries: any entry of the viewer's squad. */
+export function isMySquadsEntry(mySquadId: string | null) {
+  return (row: Pick<BoardRow, 'squadId'>) => mySquadId !== null && row.squadId === mySquadId;
+}
+
 /**
- * The entry: its name, linking to its page when the league is known, the viewer's own marked,
- * and its squad's name underneath. Searched by both names.
+ * The entry: its name, linking to its page when the league is known, the viewer's own marked
+ * (`isMine` says which those are), and its squad's name underneath. Searched by both names.
  */
 export function entryColumn<Row extends BoardRow>(
   testIdPrefix: string,
-  { contestId, leagueCode, mySquadId }: { contestId: string; leagueCode: string | null; mySquadId: string | null },
+  { contestId, isMine, leagueCode }: { contestId: string; isMine: (row: NoInfer<Row>) => boolean; leagueCode: string | null },
 ): ColumnDef<Row> {
   return {
     id: 'entry',
@@ -56,7 +67,7 @@ export function entryColumn<Row extends BoardRow>(
           ) : (
             <span className="font-medium">{row.original.entryName}</span>
           )}
-          {mySquadId !== null && row.original.squadId === mySquadId ? <MineMarker /> : null}
+          {isMine(row.original) ? <MineMarker /> : null}
         </span>
         {row.original.squadName ? <span className="block text-xs text-muted-foreground">{row.original.squadName}</span> : null}
       </span>

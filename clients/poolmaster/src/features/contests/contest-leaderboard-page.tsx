@@ -39,7 +39,9 @@ import { SquaresLeaderboard } from './squares-pages';
 import { SurvivorLeaderboard } from './survivor-leaderboard';
 import { useContestLeaderboardQuery } from './use-contest-leaderboard';
 import { useContestLeague } from './use-contest-league';
-import { LeaderboardFrame, MineMarker } from './leaderboard-kit';
+import { LEADERBOARD_PAGE_SIZE, isMySquadsEntry } from './leaderboard-columns';
+import { LeaderboardFrame } from './leaderboard-kit';
+import { MineMarker } from './mine-marker';
 import { useLeaderboardFallback } from './use-leaderboard-fallback';
 import { ContestEventSwitcher } from './contest-event-switcher';
 import { hasContestEventStarted } from './contest-events';
@@ -82,9 +84,6 @@ function leaderboardKeyFor(contestId: string, selectionType: SelectionType) {
 
 /** An unscored cell. A participant with nothing posted is not a zero. */
 const NO_SCORE = '—';
-
-/** Entries per page. A league can have hundreds; one page stays readable on a phone. */
-const LEADERBOARD_PAGE_SIZE = 25;
 
 function entryBlockId(entryId: string) {
   return `contest-leaderboard-entry-${entryId}`;
@@ -517,7 +516,7 @@ export function ContestLeaderboardPage() {
                 contestEvents={contestEvents}
                 gridTemplateColumns={gridTemplateColumns}
                 isCollapsed={collapsedEntryIds.has(entry.entryId)}
-                isMine={mySquadId !== null && entry.squadId === mySquadId}
+                isMine={isMySquadsEntry(mySquadId)(entry)}
                 key={entry.entryId}
                 onToggle={() => toggleEntry(entry.entryId)}
               />

@@ -2,7 +2,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { SportEventStatus, SurvivorWeekOutcome, describeSurvivorRules, pluralize } from '@poolmaster/shared/domain';
 import type { ContestDto, SurvivorLeaderboardResponse } from '@/lib/api';
 import { Chip, type StatusBadgeProps } from '@/features/shared/ui';
-import { entryColumn, placeColumn, totalColumn } from './leaderboard-columns';
+import { entryColumn, isMySquadsEntry, placeColumn, totalColumn } from './leaderboard-columns';
 import { LeaderboardFrame, ScoreboardGrid } from './leaderboard-kit';
 import { useLeaderboardFallback } from './use-leaderboard-fallback';
 import { useBracketRoundLabel } from './use-bracket-round-label';
@@ -82,7 +82,7 @@ function survivorColumns(
     row.weeks.find((cell) => cell.sportEventId === week.sportEventId && cell.roundNumber === week.roundNumber);
   return [
     placeColumn(TEST_ID),
-    entryColumn(TEST_ID, { contestId, leagueCode, mySquadId }),
+    entryColumn(TEST_ID, { contestId, isMine: isMySquadsEntry(mySquadId), leagueCode }),
     {
       id: 'standing',
       header: 'Status',

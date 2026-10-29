@@ -6,7 +6,7 @@ import { ContestStatus } from '@poolmaster/shared/domain';
 import { describe, expect, it } from 'vitest';
 import type { ContestDto } from '@/lib/api';
 import { ApiError } from '@/lib/errors';
-import { entryColumn, placeColumn, totalColumn } from './leaderboard-columns';
+import { entryColumn, isMySquadsEntry, placeColumn, totalColumn } from './leaderboard-columns';
 import { LeaderboardFrame, ScoreboardGrid } from './leaderboard-kit';
 import { useLeaderboardFallback } from './use-leaderboard-fallback';
 
@@ -36,34 +36,34 @@ describe('placeColumn', () => {
 
 describe('entryColumn', () => {
   it('links each entry to its page in the league and names its squad underneath', () => {
-    renderBoard([entryColumn('board', { contestId: 'contest-1', leagueCode: 'BIGDAWGS', mySquadId: null })]);
+    renderBoard([entryColumn('board', { contestId: 'contest-1', leagueCode: 'BIGDAWGS', isMine: () => false })]);
 
     expect(screen.getByTestId('board-entry-link-entry-1')).toHaveAttribute('href', '/league/BIGDAWGS/contests/contest-1/entries/entry-1');
     expect(screen.getByTestId('board-row-entry-1')).toHaveTextContent('Casey Crushers');
   });
 
   it('names the entry without a link while the league is unknown', () => {
-    renderBoard([entryColumn('board', { contestId: 'contest-1', leagueCode: null, mySquadId: null })]);
+    renderBoard([entryColumn('board', { contestId: 'contest-1', leagueCode: null, isMine: () => false })]);
 
     expect(screen.queryByTestId('board-entry-link-entry-1')).not.toBeInTheDocument();
     expect(screen.getByTestId('board-row-entry-1')).toHaveTextContent('Crushers 1');
   });
 
   it('marks only the viewer\'s squad\'s entries Yours', () => {
-    renderBoard([entryColumn('board', { contestId: 'contest-1', leagueCode: 'BIGDAWGS', mySquadId: 'squad-1' })]);
+    renderBoard([entryColumn('board', { contestId: 'contest-1', leagueCode: 'BIGDAWGS', isMine: isMySquadsEntry('squad-1') })]);
 
     expect(within(screen.getByTestId('board-row-entry-1')).getByText('Yours')).toBeInTheDocument();
     expect(within(screen.getByTestId('board-row-entry-2')).queryByText('Yours')).not.toBeInTheDocument();
   });
 
   it('marks nothing Yours for a viewer without a squad', () => {
-    renderBoard([entryColumn('board', { contestId: 'contest-1', leagueCode: 'BIGDAWGS', mySquadId: null })]);
+    renderBoard([entryColumn('board', { contestId: 'contest-1', leagueCode: 'BIGDAWGS', isMine: isMySquadsEntry(null) })]);
 
     expect(screen.queryByText('Yours')).not.toBeInTheDocument();
   });
 
   it('finds an entry by its squad\'s name in the board\'s search', async () => {
-    renderBoard([entryColumn('board', { contestId: 'contest-1', leagueCode: 'BIGDAWGS', mySquadId: null })]);
+    renderBoard([entryColumn('board', { contestId: 'contest-1', leagueCode: 'BIGDAWGS', isMine: () => false })]);
 
     await userEvent.type(screen.getByTestId('contest-leaderboard-search'), 'Bandits');
 
