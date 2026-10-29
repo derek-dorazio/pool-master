@@ -213,7 +213,8 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
       tags: TAGS,
       summary: 'Move a sport event to its next status',
       description: 'Only to one of the event\'s allowedTransitions. Activates or settles its contests as the new status requires. '
-        + 'A DRAFT event is refused SCHEDULED with 409 SPORT_EVENT_RELEASE_REQUIRED: releasing it is its own action (releaseEvent). Root admin only.',
+        + 'A DRAFT event is refused SCHEDULED with 409 SPORT_EVENT_RELEASE_REQUIRED: releasing it is its own action (releaseEvent). '
+        + '409 SPORT_EVENT_INVALID_TRANSITION when the event\'s status changed elsewhere while this request ran (the lifecycle scheduler, another admin) and it did not end in the status asked for. Root admin only.',
       operationId: 'transitionEvent',
       params: EVENT_PARAMS,
       body: schemaRef('TransitionSportEventRequest'),
