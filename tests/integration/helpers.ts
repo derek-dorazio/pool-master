@@ -134,6 +134,8 @@ const MAIL_ENVIRONMENT_KEYS = [
 ] as const;
 type MailEnvironmentKey = (typeof MAIL_ENVIRONMENT_KEYS)[number];
 
+/** The providers the shared app's ingestion, participant and event routes read; empty until a test registers one. */
+const providerRegistry = new ProviderRegistry();
 /** The shared app's settings cache; `cleanupTestData` refreshes it so deleted rows are not served. */
 let appSettings: AppSettingsService | undefined;
 /** Stands in for CloudFront: what each admin save asked the CDN to clear (#1181). */
@@ -147,12 +149,17 @@ export function getApp(): FastifyInstance {
   return app;
 }
 
-/** Get the shared Prisma client. */
 /** The CDN invalidations the app's admin saves have asked for; `reset` it before the save a test checks. */
 export function getCdnInvalidations(): RecordingCdnInvalidator {
   return cdn;
 }
 
+/** The shared app's provider registry, for a test that registers a provider of its own. */
+export function getProviderRegistry(): ProviderRegistry {
+  return providerRegistry;
+}
+
+/** Get the shared Prisma client. */
 export function getPrisma(): PrismaClient {
   return prisma;
 }
@@ -170,7 +177,6 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
   testApp.setErrorHandler(globalErrorHandler);
 
   // The ingestion, platform and mail services index.ts builds, without the background scheduler.
-  const providerRegistry = new ProviderRegistry();
   const runtimeConfigRepository = new PrismaPlatformRuntimeConfigRepository(prisma);
   const settings = new AppSettingsService({
     repository: runtimeConfigRepository,
