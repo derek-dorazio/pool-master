@@ -217,26 +217,27 @@ describe('PrismaContestEntryMatchPredictionRepository', () => {
   });
 
   it.each([
-    ['that also move the entry\'s week to draft', ContestEntryStatus.DRAFT],
-    ['that leave the entry\'s week as it is', null],
-  ] as const)('runs overlapping saves to one entry\'s same games %s one after the other, each succeeding and one save\'s picks standing (#1254)', async (_, eventStatus) => {
+    ['that all move the entry\'s week to draft', [ContestEntryStatus.DRAFT, ContestEntryStatus.DRAFT, ContestEntryStatus.DRAFT, ContestEntryStatus.DRAFT, ContestEntryStatus.DRAFT]],
+    ['that all leave the entry\'s week as it is', [null, null, null, null, null]],
+    ['of both kinds', [ContestEntryStatus.DRAFT, null, ContestEntryStatus.DRAFT, null, ContestEntryStatus.DRAFT]],
+  ] as const)('runs overlapping saves to one entry\'s same games %s one after the other, each succeeding and one save\'s picks standing (#1254)', async (_, eventStatuses) => {
     const { event, game } = await createWeek('Week 1', AT);
     const { entry } = await createPickEmEntry([event.id]);
-    const saveAll = (confidence: number) => repos().predictions.save({
+    const save = (eventStatus: ContestEntryStatus | null, index: number) => repos().predictions.save({
       contestEntryId: entry.id,
       sportEventId: event.id,
       saves: [1, 2, 3].map((matchNumber) => ({
         sportEventMatchId: game(matchNumber).id,
         predictedResult: PredictedResult.TEAM,
         sportEventParticipantId: expectDefined(game(matchNumber).homeSportEventParticipantId),
-        confidence,
+        confidence: index + 1,
       })),
       clearedMatchIds: [],
       eventStatus,
       at: LATER,
     });
 
-    await Promise.all([1, 2, 3, 4, 5].map(saveAll));
+    await Promise.all(eventStatuses.map(save));
 
     const picks = await repos().predictions.findByEntryAndEvent(entry.id, event.id);
     expect(picks.map((pick) => pick.sportEventMatchId)).toEqual([1, 2, 3].map((matchNumber) => game(matchNumber).id));
