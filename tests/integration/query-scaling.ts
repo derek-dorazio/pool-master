@@ -130,7 +130,7 @@ export interface FixedQueriesCase<Result> {
  */
 export async function expectFixedQueries<Result>(fixedCase: FixedQueriesCase<Result>): Promise<void> {
   await deliverQueuedIntegrationEmail();
-  const recorded = await recordStatements(getPrisma(), () => fixedCase.call());
+  const recorded = await recordStatements(() => fixedCase.call());
   if (recorded.statements.length !== fixedCase.statements) {
     throw new Error(
       `${fixedCase.route}, a list fixed by ${fixedCase.fixedBy}, sent ${recorded.statements.length} statements; `
