@@ -10,6 +10,8 @@ import type {
 
 export interface ContestConfigurationRepository {
   findByContest(contestId: string): Promise<ContestConfiguration | null>;
+  /** Several contests' configurations in one read; a contest with none is left out. */
+  findByContests(contestIds: readonly string[]): Promise<ContestConfiguration[]>;
   create(
     configuration: Omit<ContestConfiguration, 'id' | 'createdAt' | 'updatedAt'>,
   ): Promise<ContestConfiguration>;
@@ -83,7 +85,15 @@ export interface ContestEntryPickRepository {
    * reads only the events it scores, not every pick the entries made across the contest.
    */
   findByEntriesAndEvents(entryIds: readonly string[], sportEventIds: readonly string[]): Promise<ContestEntryEventPick[]>;
-  findByEntriesWithParticipant(entryIds: readonly string[]): Promise<ContestEntryPickWithParticipant[]>;
+  /**
+   * The entries' picks with their field rows. With a `sportEventId`, only the picks in that one
+   * event, filtered in the query (#1196): a lineup is one event's picks (#713), and a season
+   * contest holds every week's.
+   */
+  findByEntriesWithParticipant(
+    entryIds: readonly string[],
+    options?: { sportEventId?: string },
+  ): Promise<ContestEntryPickWithParticipant[]>;
   /** Picks per entry; an entry with none is absent from the map. */
   countByEntries(entryIds: readonly string[]): Promise<Map<string, number>>;
   /** How many picks the whole contest holds — the source of a pick's contest-wide pick number. */

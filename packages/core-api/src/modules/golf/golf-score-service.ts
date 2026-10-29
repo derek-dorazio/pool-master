@@ -170,6 +170,7 @@ export class GolfScoreService {
     );
 
     let skipped = 0;
+    const unmappedExternalIds = new Set<string>();
     const persistable: Array<{ round: GolfRoundUpdate & { strokes: number }; sportEventParticipantId: string; sportEventRoundId: string }> = [];
     for (const round of rounds) {
       if (beyondScheduleRoundNumbers.includes(round.round)) {
@@ -196,10 +197,8 @@ export class GolfScoreService {
       }
       const participantId = participantIdByExternalId.get(round.participantExternalId);
       if (!participantId) {
-        logger?.warn(
-          { action: 'liveScore.golf.unmappedExternalId', data: { providerId, externalId: round.participantExternalId } },
-          'Skipping golf round update — provider participant has no internal mapping',
-        );
+        // Logged once below, with every unmapped golfer.
+        unmappedExternalIds.add(round.participantExternalId);
         skipped += 1;
         continue;
       }
@@ -228,19 +227,27 @@ export class GolfScoreService {
       }
       persistable.push({ round: { ...round, strokes: round.strokes }, sportEventParticipantId, sportEventRoundId });
     }
+    if (unmappedExternalIds.size > 0) {
+      // One line a tick, not one per golfer (#1183): an unmapped golfer stays unmapped tick after tick.
+      logger?.warn(
+        { action: 'liveScore.golf.unmappedExternalId', data: { providerId, sportEventId, externalIds: [...unmappedExternalIds] } },
+        'Skipping golf round updates for provider participants with no internal mapping',
+      );
+    }
 
     const existingByKey = new Map(
       (await this.deps.golfRounds.findBySportEventParticipants([...new Set(persistable.map((entry) => entry.sportEventParticipantId))]))
         .map((result) => [buildGolfRoundKey(result.participantRound.sportEventParticipantId, result.participantRound.sportEventRoundId), result]),
     );
 
-    // Each golfer's round is two rows (core + golf extension), so the writes run
-    // concurrently across golfers. Updates for the same (golfer, round) in one
-    // payload are chained so they still apply in payload order.
-    const chainByKey = new Map<string, Promise<GolfRoundResult>>();
-    const written = await Promise.all(persistable.map(({ round, sportEventParticipantId, sportEventRoundId }) => {
-      const key = buildGolfRoundKey(sportEventParticipantId, sportEventRoundId);
-      const write = (chainByKey.get(key) ?? Promise.resolve(null)).then(() => this.deps.golfRounds.upsert({
+    // A payload can carry the same golfer's round more than once; the last one is what the
+    // provider says now, so it is the one compared and written.
+    const latestByKey = new Map(persistable.map((entry) => [buildGolfRoundKey(entry.sportEventParticipantId, entry.sportEventRoundId), entry]));
+    const plans = [...latestByKey].map(([key, { round, sportEventParticipantId, sportEventRoundId }]) => {
+      const existing = existingByKey.get(key);
+      const before = existing ? normalizeGolfRoundResult(existing) : undefined;
+      const after = normalizeGolfRoundInput(sportEventParticipantId, sportEventRoundId, round);
+      const write: GolfRoundWrite = {
         sportEventParticipantId,
         sportEventRoundId,
         status: round.status,
@@ -248,26 +255,29 @@ export class GolfScoreService {
         strokes: round.strokes,
         scoreToPar: round.scoreToPar,
         thru: round.thru ?? null,
-      }));
-      chainByKey.set(key, write);
-      return write;
-    }));
-
-    const detailRows: SyncWriteDetailRow[] = persistable.map(({ round, sportEventParticipantId, sportEventRoundId }, index) => {
-      const existing = existingByKey.get(buildGolfRoundKey(sportEventParticipantId, sportEventRoundId));
-      const before = existing ? normalizeGolfRoundResult(existing) : undefined;
-      const after = normalizeGolfRoundInput(sportEventParticipantId, sportEventRoundId, round);
-      return {
-        id: `golf-round:${sportEventParticipantId}:${sportEventRoundId}`,
-        entityType: 'SportEventParticipantGolfRound',
-        disposition: resolveDisposition(before, after),
-        participantExternalId: round.participantExternalId,
-        internalId: written[index].participantRound.id,
-        ...(before ? { before } : {}),
-        after,
       };
+      return { key, round, existing, before, after, write, disposition: resolveDisposition(before, after) };
     });
 
+    // Most of a live field has not moved since the last tick: only the rounds that changed are
+    // written, all in one transaction.
+    const changed = plans.filter((plan) => plan.disposition !== 'UNCHANGED');
+    const written = await this.deps.golfRounds.upsertMany(changed.map((plan) => plan.write));
+    const writtenIdByKey = new Map(changed.map((plan, index) => [plan.key, written[index].participantRound.id]));
+
+    const detailRows: SyncWriteDetailRow[] = plans.map((plan) => ({
+      id: `golf-round:${plan.write.sportEventParticipantId}:${plan.write.sportEventRoundId}`,
+      entityType: 'SportEventParticipantGolfRound',
+      disposition: plan.disposition,
+      participantExternalId: plan.round.participantExternalId,
+      internalId: writtenIdByKey.get(plan.key) ?? plan.existing?.participantRound.id,
+      ...(plan.before ? { before: plan.before } : {}),
+      after: plan.after,
+    }));
+
+    // Standings are recomputed for every reported golfer, not only the ones whose rounds
+    // changed: the reads are cheap and an unchanged standing is not written, so a standing a
+    // failed tick left behind is put right on the next one.
     const standingDiagnostics = await this.refreshGolfStandings(
       sportEventId,
       [...new Set(persistable.map((entry) => entry.sportEventParticipantId))],
@@ -276,7 +286,8 @@ export class GolfScoreService {
 
     return {
       updatesReturned: rounds.length,
-      updatesPersisted: persistable.length,
+      // A golfer-round sent twice in one payload counts once: it is compared and written once.
+      updatesPersisted: latestByKey.size,
       updatesSkipped: skipped,
       writeDiagnostics: mergeSyncWriteDiagnostics([summarizeSyncWriteRows(detailRows), standingDiagnostics]),
     };
@@ -361,13 +372,17 @@ export class GolfScoreService {
       }];
     });
 
-    // One standing per golfer, so the writes are independent and run concurrently.
-    const written = await Promise.all(plans.map((plan) => this.deps.golfStandings.upsert(plan.write)));
-    return summarizeSyncWriteRows(plans.map((plan, index) => ({
+    // A standing whose values have not moved is not written, so its `asOf` stays at the tick
+    // that last changed it. The rest are written in one transaction.
+    const planned = plans.map((plan) => ({ ...plan, disposition: resolveDisposition(plan.before, plan.after) }));
+    const changed = planned.filter((plan) => plan.disposition !== 'UNCHANGED');
+    const written = await this.deps.golfStandings.upsertMany(changed.map((plan) => plan.write));
+    const writtenIdByEntry = new Map(changed.map((plan, index) => [plan.write.sportEventParticipantId, written[index].standing.id]));
+    return summarizeSyncWriteRows(planned.map((plan) => ({
       id: `golf-standing:${plan.write.sportEventParticipantId}`,
       entityType: 'SportEventParticipantGolfStanding',
-      disposition: resolveDisposition(plan.before, plan.after),
-      internalId: written[index].standing.id,
+      disposition: plan.disposition,
+      internalId: writtenIdByEntry.get(plan.write.sportEventParticipantId) ?? existingByEntry.get(plan.write.sportEventParticipantId)?.standing.id,
       ...(plan.before ? { before: plan.before } : {}),
       after: plan.after,
     })));
@@ -576,7 +591,8 @@ function normalizeGolfRoundInput(
     scoreToPar: round.scoreToPar,
     thru: round.thru ?? null,
     status: round.status,
-    completedAt: round.completedAt ?? null,
+    // As an instant, so a provider's "…:00Z" compares equal to the stored "…:00.000Z".
+    completedAt: round.completedAt ? new Date(round.completedAt).toISOString() : null,
   };
 }
 

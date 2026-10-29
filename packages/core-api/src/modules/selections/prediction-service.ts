@@ -370,8 +370,10 @@ export class PredictionService {
       { action: 'prediction.submit.submitted', data: { contestId: context.contest.id, entryId: context.entry.id, sportEventId: context.sportEvent.id } },
       'Submitted a contest entry\'s game picks for one event',
     );
-    const view = await this.buildView(await this.reload(context));
-    await this.deps.receipts?.gamePicksSubmitted(view);
+    const submitted = await this.reload(context);
+    const view = await this.buildView(submitted);
+    // The receipt is sent from the week already loaded, not read again (#1201).
+    await this.deps.receipts?.gamePicksSubmitted(view, { contest: submitted.contest, entry: submitted.entry, sportEvent: submitted.sportEvent });
     return view;
   }
 
@@ -575,7 +577,7 @@ export class PredictionService {
       tiebreakerGame: engine.tiebreakerGame({ games, eventStart: sportEvent.startDate }),
       predictions,
       season: engine.readsEarlierWeeks
-        ? await this.loadSeason(contest, entry, sportEventId, field, rules.selectionType !== SelectionType.SURVIVOR || (rules.reuseTeamsOnceAllUsed ?? true), now)
+        ? await this.loadSeason(contest, entry, { sportEvent, matches }, field, rules.selectionType !== SelectionType.SURVIVOR || (rules.reuseTeamsOnceAllUsed ?? true), now)
         : null,
       ownEntry: actorUserId !== undefined && memberships.some((membership) => membership.userId === actorUserId),
       now,
@@ -589,17 +591,19 @@ export class PredictionService {
    * own: a round after the one that put the entry out takes no pick. When teams can be picked
    * again once every team is used (#787), only the week's own cycle counts, and a cycle holds
    * every team in any of the contest's weeks (#836): a week missing a postponed game's teams does
-   * not end a cycle early.
+   * not end a cycle early. The week already loaded is not read again: only the other events are
+   * (#1201).
    */
   private async loadSeason(
     contest: Contest,
     entry: ContestEntry,
-    sportEventId: string,
+    week: { sportEvent: SportEvent; matches: readonly SportEventMatch[] },
     field: readonly SportEventParticipant[],
     reuseTeamsOnceAllUsed: boolean,
     now: Date,
   ): Promise<PredictionSeason> {
-    const weeks = await loadSurvivorWeeks(this.deps, contest, now);
+    const sportEventId = week.sportEvent.id;
+    const weeks = await loadSurvivorWeeks(this.deps, contest, now, week);
     const predictions = await this.deps.predictions.findByEntriesAndEvents([entry.id], contest.sportEventIds);
     const picks = survivorPicksByEntry(predictions, weeks).get(entry.id) ?? new Map<string, never>();
     const entryWeeks = survivorWeeksOf(entry, weeks, picks);

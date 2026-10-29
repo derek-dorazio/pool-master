@@ -10,6 +10,7 @@ import {
   type ContestFinishedYearsResponse,
   type ContestListResponse,
   type ListContestsQuery,
+  type MyContestEntriesResponse,
   type ListSportLeaguesUsedQuery,
   type SportLeaguesUsedResponse,
   type LeaguePlanUsageResponse,
@@ -24,6 +25,7 @@ import {
   toContestEntryResponse,
   toContestResponse,
   toContestLeaderboardResponse,
+  toMyContestEntriesResponse,
 } from '../../mappers/contests.mapper';
 import { toBracketLeaderboardResponse } from '../../mappers/bracket-leaderboard.mapper';
 import { toPickEmLeaderboardResponse } from '../../mappers/pick-em-leaderboard.mapper';
@@ -61,6 +63,7 @@ export function createContestHandlers(contestService: ContestService) {
   return {
     listContests,
     listFinishedYears,
+    listMyEntries,
     getContest,
     listEntries,
     getEntry,
@@ -108,6 +111,18 @@ export function createContestHandlers(contestService: ContestService) {
     return toContestFinishedYearsResponse(years);
   }
 
+  async function listMyEntries(
+    request: FastifyRequest<{ Params: { id: string } }>,
+    _reply: FastifyReply,
+  ): Promise<MyContestEntriesResponse> {
+    const logger = createRequestContextLogger(request);
+    const userId = request.authUser?.userId as string;
+    logger.debug({ leagueId: request.params.id, userId }, 'my contest entries route start');
+    const entries = await contestService.listMyLeagueEntries(request.params.id, userId);
+    logger.info({ leagueId: request.params.id, userId, entryCount: entries.length }, 'my contest entries route completed');
+    return toMyContestEntriesResponse(entries);
+  }
+
   async function getContest(
     request: FastifyRequest<{ Params: { contestId: string } }>,
     reply: FastifyReply,
@@ -119,12 +134,17 @@ export function createContestHandlers(contestService: ContestService) {
       logger.warn({ contestId: request.params.contestId }, 'contest get route missing contest');
       return sendError(reply, 404, 'CONTEST_NOT_FOUND', 'Contest not found');
     }
-    logger.info({ contestId: request.params.contestId }, 'contest get route completed');
-    const [eventsById, entryCaps] = await Promise.all([
+    const [eventsById, entryCaps, entrySummary] = await Promise.all([
       contestService.findEventsForContests([contest]),
       contestService.findEntryCaps([contest]),
+      contestService.getContestEntrySummary(contest, request.authUser?.userId as string),
     ]);
-    return reply.send(toContestResponse(contest, eventsById, entryCaps.get(contest.id) ?? null));
+    logger.info({
+      contestId: request.params.contestId,
+      entryCount: entrySummary.totals.allEntryCount,
+      myEntryCount: entrySummary.myEntryIds.length,
+    }, 'contest get route completed');
+    return reply.send(toContestResponse(contest, eventsById, entryCaps.get(contest.id) ?? null, entrySummary));
   }
 
   async function listEntries(
@@ -140,14 +160,10 @@ export function createContestHandlers(contestService: ContestService) {
         contestId: request.params.contestId,
         userId,
         entryCount: result.entries.length,
-        isJoined: result.isJoined,
       }, 'contest entries list route completed');
       return reply.send(toContestEntryListResponse({
         contestId: request.params.contestId,
         entries: result.entries,
-        isJoined: result.isJoined,
-        myEntryId: result.myEntryId,
-        myEntryIds: result.myEntryIds,
         picksRevealed: result.picksRevealed,
       }));
     } catch (err) {

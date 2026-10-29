@@ -152,6 +152,18 @@ describe('ContestEntryPickService.recordDraw', () => {
     expect(contest?.drawnAt).toEqual(stored.drawnAt);
   });
 
+  it('answers with the stored draw time, which is also every entry\'s submit time, so the room can show the draw without reading it back (#1196)', async () => {
+    const prisma = getPrisma();
+    const fixture = await seedRandomDrawContest();
+
+    const { drawnAt } = await new ContestEntryPickService(prisma).recordDraw(drawOf(fixture));
+
+    const stored = await prisma.contestDraw.findUniqueOrThrow({ where: { contestId: fixture.contestId } });
+    expect(drawnAt).toEqual(stored.drawnAt);
+    const entries = await prisma.contestEntryEvent.findMany({ where: { contestEntry: { contestId: fixture.contestId } } });
+    expect(entries.map((entry) => entry.submittedAt)).toEqual([drawnAt, drawnAt]);
+  });
+
   it('refuses a second draw of the same contest and writes nothing more', async () => {
     const prisma = getPrisma();
     const fixture = await seedRandomDrawContest();

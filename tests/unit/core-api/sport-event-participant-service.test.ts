@@ -33,7 +33,7 @@ describe('SportEventParticipantService.listEventParticipants', () => {
     const entry = store.addToField(event.id, golfer.id, { seedNumber: 1 });
     const [round] = await (async () => { await store.roundRepo().createMany(event.id, [{ roundNumber: 1, scheduledDate: new Date() }]); return store.roundRows; })();
     await store.golfRoundRepo().upsert({ sportEventParticipantId: entry.id, sportEventRoundId: round.id, status: 'COMPLETED', completedAt: null, strokes: 70, scoreToPar: -2, thru: 18 });
-    await store.golfStandingRepo().upsert({ sportEventParticipantId: entry.id, currentRound: 1, status: 'COMPLETE', asOf: new Date(), eventScoreToPar: -2, eventStrokes: 70, currentRoundThru: 18 });
+    await store.golfStandingRepo().upsertMany([{ sportEventParticipantId: entry.id, currentRound: 1, status: 'COMPLETE', asOf: new Date(), eventScoreToPar: -2, eventStrokes: 70, currentRoundThru: 18 }]);
     await store.valuationRepo().assignEventPrices({
       sportEventId: event.id,
       pricingConfig: standardEventPricing(),

@@ -66,6 +66,8 @@ export interface UserUpdate {
 
 export interface UserRepository {
   findById(id: string): Promise<User | null>;
+  /** The users with these ids, in one read (#1196); an id with no user is left out. */
+  findByIds(ids: readonly string[]): Promise<User[]>;
   findByEmail(email: string): Promise<User | null>;
 
   /**
@@ -381,8 +383,11 @@ export interface ParticipantRepository {
   findByIds(ids: readonly string[]): Promise<Participant[]>;
   /** Whole result, narrowed by the query and filters — never paged (§16). Ordered by name. */
   search(query: string, filters: ParticipantSearchFilters): Promise<Participant[]>;
-  /** Candidates for an upload row within one sport; exact match on each identifier given. */
-  findMatching(sportId: string, query: ParticipantMatchQuery): Promise<Participant[]>;
+  /**
+   * Candidates for a whole upload within one sport, in one read (#1183): every participant any
+   * of the queries matches, exactly on each identifier a query gives. Ordered by name.
+   */
+  findMatchingAny(sportId: string, queries: readonly ParticipantMatchQuery[]): Promise<Participant[]>;
   create(participant: Omit<Participant, 'id' | 'createdAt' | 'updatedAt'>): Promise<Participant>;
   update(id: string, updates: Partial<Participant>): Promise<Participant>;
 }
@@ -556,6 +561,15 @@ export interface ContestEntryCreateLimits {
    */
   entriesPerContest: (expandedTo: number | null) => number | null;
 }
+/** A contest's entries counted (#1197). */
+export interface ContestEntryTotals {
+  /** Entries that submitted at least one event: a draft is not an entry until submitted (#481). */
+  submittedEntryCount: number;
+  /** Squads with at least one such entry. */
+  enteredSquadCount: number;
+  /** Every entry, drafts included, as the plan's entry cap counts them (#947). */
+  allEntryCount: number;
+}
 export type ContestEntryDeleteResult = { status: 'deleted' } | { status: 'contestDrawn' };
 
 export interface ContestEntryRepository {
@@ -568,6 +582,15 @@ export interface ContestEntryRepository {
   findByContestWithSquad(contestId: string, options?: { submittedFor?: string }): Promise<ContestEntryWithSquad[]>;
   /** The squad's entries in one contest, drafts included, in entry-number order (#1167). */
   findByContestAndSquad(contestId: string, squadId: string): Promise<ContestEntry[]>;
+  /** The ids alone of the squad's entries in one contest, drafts included, in entry-number order (#1197). */
+  findIdsByContestAndSquad(contestId: string, squadId: string): Promise<string[]>;
+  /**
+   * The squad's entries in the contests, drafts included, in entry-number order within each
+   * contest (#1197): one read for a squad's entries across a league's current contests.
+   */
+  findBySquadAndContests(squadId: string, contestIds: readonly string[]): Promise<ContestEntryWithSquad[]>;
+  /** One contest's entry totals (#1197): what a single-contest read reports. */
+  countForContest(contestId: string): Promise<ContestEntryTotals>;
   /** Every entry each contest holds, drafts included, by contest id (#972); 0 for one with none. */
   countByContests(contestIds: readonly string[]): Promise<Map<string, number>>;
   /**

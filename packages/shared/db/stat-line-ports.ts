@@ -16,6 +16,9 @@ export interface GameStatLineWrite {
 }
 
 export interface SportEventParticipantStatLineRepository {
-  /** Replaces each player's line for the game, all or none. */
+  /**
+   * Replaces each player's line for the game, all or none. A line that already holds exactly
+   * these stats is left as it is, its round's completedAt included.
+   */
   replaceGameLines(writes: readonly GameStatLineWrite[]): Promise<void>;
 }

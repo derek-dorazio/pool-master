@@ -440,6 +440,8 @@ export class InMemoryContestWorld {
     return {
       findByContest: async (contestId) =>
         [...this.configurations.values()].find((row) => row.contestId === contestId) ?? null,
+      findByContests: async (contestIds) =>
+        [...this.configurations.values()].filter((row) => contestIds.includes(row.contestId)),
       create: async (input) => this.addConfiguration(input.contestId, input),
       update: async (id, updates) => {
         const existing = this.configurations.get(id);
@@ -472,6 +474,25 @@ export class InMemoryContestWorld {
         [...this.entries.values()]
           .filter((entry) => entry.contestId === contestId && entry.squadId === squadId)
           .sort((left, right) => left.entryNumber - right.entryNumber),
+      findIdsByContestAndSquad: async (contestId, squadId) =>
+        [...this.entries.values()]
+          .filter((entry) => entry.contestId === contestId && entry.squadId === squadId)
+          .sort((left, right) => left.entryNumber - right.entryNumber)
+          .map((entry) => entry.id),
+      findBySquadAndContests: async (squadId, contestIds) =>
+        [...this.entries.values()]
+          .filter((entry) => entry.squadId === squadId && contestIds.includes(entry.contestId))
+          .sort((left, right) => left.contestId.localeCompare(right.contestId) || left.entryNumber - right.entryNumber)
+          .map((entry) => this.withSquad(entry)),
+      countForContest: async (contestId) => {
+        const all = [...this.entries.values()].filter((entry) => entry.contestId === contestId);
+        const submitted = all.filter((entry) => entry.events.some((event) => event.status === ContestEntryStatus.SUBMITTED));
+        return {
+          submittedEntryCount: submitted.length,
+          enteredSquadCount: new Set(submitted.map((entry) => entry.squadId)).size,
+          allEntryCount: all.length,
+        };
+      },
       countByContests: async (contestIds) => new Map(contestIds.map((contestId) =>
         [contestId, [...this.entries.values()].filter((entry) => entry.contestId === contestId).length])),
       countSubmittedByContests: async (contestIds) => new Map(contestIds.map((contestId) =>
@@ -552,8 +573,9 @@ export class InMemoryContestWorld {
     return {
       findByEntriesAndEvents: async (entryIds, sportEventIds) =>
         ordered().filter((pick) => entryIds.includes(pick.entryId) && sportEventIds.includes(pick.sportEventId)),
-      findByEntriesWithParticipant: async (entryIds) =>
-        ordered().filter((pick) => entryIds.includes(pick.entryId)),
+      findByEntriesWithParticipant: async (entryIds, options) =>
+        ordered().filter((pick) => entryIds.includes(pick.entryId)
+          && (options?.sportEventId === undefined || pick.sportEventId === options.sportEventId)),
       countByEntries: async (entryIds) => {
         const counts = new Map<string, number>();
         for (const pick of this.picks.values()) {
@@ -679,6 +701,7 @@ export class InMemoryContestWorld {
   userRepo(): UserRepository {
     return fakeUserRepo({
       findById: async (id) => this.users.get(id) ?? null,
+      findByIds: async (ids) => [...this.users.values()].filter((user) => ids.includes(user.id)),
       // ACTIVE memberships only, as the port says.
       findActiveByLeague: async (leagueId) => {
         const memberIds = new Set([...this.memberships.values()]
@@ -780,7 +803,6 @@ export class InMemoryContestWorld {
       sportLeagues: this.sportLeagueRepo(),
       eventParticipants: { listEventParticipants: async () => [], listCachedEventParticipants: async () => [] },
       tiers: {
-        getEffectiveValuationsForSportEvent: async () => [],
         listTiers: async (sportEventId: string) => this.eventTiers.get(sportEventId) ?? [],
       },
       planEntitlements: this.planEntitlements(),

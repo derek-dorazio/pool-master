@@ -1,6 +1,6 @@
 import type {
   ContestDto,
-  ContestEntryListResponse,
+  ContestEntryDetailResponse,
   GamePicksResponse,
   PickEmLeaderboardResponse,
   SurvivorLeaderboardResponse,
@@ -129,6 +129,7 @@ export function pickEmContestFixture(overrides: Partial<ContestDto> = {}): Conte
     status: 'OPEN',
     contestFormat: 'PREDICTION',
     selectionType: 'PICK_EM',
+    myEntryIds: ['entry-1'],
     sportEvents: [
       { sportEventId: 'week-1', sequence: 1, name: 'Week 1', startDate: WEEK_1_START, status: 'SCHEDULED', participantType: null, scoringFamily: null },
       { sportEventId: 'week-2', sequence: 2, name: 'Week 2', startDate: WEEK_2_START, status: 'SCHEDULED', participantType: null, scoringFamily: null },
@@ -137,8 +138,11 @@ export function pickEmContestFixture(overrides: Partial<ContestDto> = {}): Conte
   };
 }
 
-/** The contest's entries: the viewer's own (entry-1), which submitted week 2 only, and another member's (entry-2). */
-export function pickEmEntriesFixture(overrides: Partial<ContestEntryListResponse> = {}): ContestEntryListResponse {
+/**
+ * One of the contest's entries as its entry read returns it: the viewer's own (entry-1), which
+ * submitted week 2 only, or another member's (entry-2).
+ */
+export function pickEmEntryFixture(entryId: string, overrides: Partial<ContestEntryDetailResponse> = {}): ContestEntryDetailResponse {
   const entry = (id: string, squadId: string, squadName: string, name: string, week2: 'DRAFT' | 'SUBMITTED') => ({
     id,
     contestId: 'contest-1',
@@ -157,15 +161,10 @@ export function pickEmEntriesFixture(overrides: Partial<ContestEntryListResponse
   });
   return {
     contestId: 'contest-1',
-    total: 2,
-    isJoined: true,
-    myEntryId: 'entry-1',
-    myEntryIds: ['entry-1'],
     picksRevealed: false,
-    entries: [
-      entry('entry-1', 'squad-1', 'Morgan’s Madness', 'Morgan’s Picks', 'SUBMITTED'),
-      entry('entry-2', 'squad-2', 'Derek’s Great Golf Guys', 'Chalk All The Way', 'DRAFT'),
-    ],
+    entry: entryId === 'entry-1'
+      ? entry('entry-1', 'squad-1', 'Morgan’s Madness', 'Morgan’s Picks', 'SUBMITTED')
+      : entry(entryId, 'squad-2', 'Derek’s Great Golf Guys', 'Chalk All The Way', 'DRAFT'),
     ...overrides,
   };
 }

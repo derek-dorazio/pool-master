@@ -1337,6 +1337,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/leagues/{id}/contests/my-entries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the requester's entries in a league's current contests
+         * @description The requester's own squad's entries, drafts included, in each of the league's OPEN and ACTIVE contests, each with its status in every event of its contest and without its picks (#1197): one read for what league home, the Contests page's My entries and My team show, however many contests are current. Empty without an active squad in the league. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.
+         */
+        get: operations["listMyContestEntries"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/leagues/{id}/contests/sports-leagues-used": {
         parameters: {
             query?: never;
@@ -1486,7 +1506,7 @@ export interface paths {
         };
         /**
          * Get a contest by ID
-         * @description Returns detailed contest information by contest ID for league, entry, and history surfaces that already know the contest identifier. Active members of the contest's league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.
+         * @description Returns detailed contest information by contest ID for league, entry, and history surfaces that already know the contest identifier, with its entries counted and the ids of the requester's own entries in it (#1197). Active members of the contest's league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.
          */
         get: operations["getContest"];
         /**
@@ -6833,7 +6853,7 @@ export interface components {
         ContestManagementSportEventDto: {
             /** @description One event the contest covers. */
             sportEventId: string;
-            /** @description Read-only tier structure the contest inherits from this event (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet. Never contest-configured. */
+            /** @description Read-only tier structure a tiered contest inherits from this event (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet, and always empty for any other format, which does not pick by tier. Never contest-configured. */
             effectiveTiers: {
                 /** @description Stable per-event tier key. */
                 tierKey: string;
@@ -6864,7 +6884,7 @@ export interface components {
             sportEvents: {
                 /** @description One event the contest covers. */
                 sportEventId: string;
-                /** @description Read-only tier structure the contest inherits from this event (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet. Never contest-configured. */
+                /** @description Read-only tier structure a tiered contest inherits from this event (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet, and always empty for any other format, which does not pick by tier. Never contest-configured. */
                 effectiveTiers: {
                     /** @description Stable per-event tier key. */
                     tierKey: string;
@@ -7395,7 +7415,7 @@ export interface components {
                 sportEvents: {
                     /** @description One event the contest covers. */
                     sportEventId: string;
-                    /** @description Read-only tier structure the contest inherits from this event (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet. Never contest-configured. */
+                    /** @description Read-only tier structure a tiered contest inherits from this event (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet, and always empty for any other format, which does not pick by tier. Never contest-configured. */
                     effectiveTiers: {
                         /** @description Stable per-event tier key. */
                         tierKey: string;
@@ -11896,8 +11916,14 @@ export interface components {
             }[];
             /** @enum {string|null} */
             sport?: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS" | null;
-            /** @description Number of entries that have submitted at least one event. Present on list reads, which count them; omitted on a single-contest read. */
+            /** @description Number of entries that have submitted at least one event. Present on the list and single-contest reads; omitted on the contest writes. */
             entryCount?: number;
+            /** @description Number of squads with at least one entry that submitted an event (#1197). Single-contest read only. */
+            enteredSquadCount?: number;
+            /** @description Every entry the contest holds, drafts included, as its entry cap counts them (#1197): before a random draw no entry is submitted. Single-contest read only. */
+            allEntryCount?: number;
+            /** @description The requester's own squad's entries in the contest, drafts included, in entry-number order (#1197). Empty without an active squad in the league. Single-contest read only. */
+            myEntryIds?: string[];
             /** @description The most entries the contest takes, every squad's drafts included: its league plan's cap or its expansion (#987), whichever is higher. Null for no limit. */
             entriesPerContest: number | null;
             /** Format: date-time */
@@ -12564,8 +12590,14 @@ export interface components {
                 }[];
                 /** @enum {string|null} */
                 sport?: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS" | null;
-                /** @description Number of entries that have submitted at least one event. Present on list reads, which count them; omitted on a single-contest read. */
+                /** @description Number of entries that have submitted at least one event. Present on the list and single-contest reads; omitted on the contest writes. */
                 entryCount?: number;
+                /** @description Number of squads with at least one entry that submitted an event (#1197). Single-contest read only. */
+                enteredSquadCount?: number;
+                /** @description Every entry the contest holds, drafts included, as its entry cap counts them (#1197): before a random draw no entry is submitted. Single-contest read only. */
+                allEntryCount?: number;
+                /** @description The requester's own squad's entries in the contest, drafts included, in entry-number order (#1197). Empty without an active squad in the league. Single-contest read only. */
+                myEntryIds?: string[];
                 /** @description The most entries the contest takes, every squad's drafts included: its league plan's cap or its expansion (#987), whichever is higher. Null for no limit. */
                 entriesPerContest: number | null;
                 /** Format: date-time */
@@ -12626,8 +12658,14 @@ export interface components {
                 }[];
                 /** @enum {string|null} */
                 sport?: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS" | null;
-                /** @description Number of entries that have submitted at least one event. Present on list reads, which count them; omitted on a single-contest read. */
+                /** @description Number of entries that have submitted at least one event. Present on the list and single-contest reads; omitted on the contest writes. */
                 entryCount?: number;
+                /** @description Number of squads with at least one entry that submitted an event (#1197). Single-contest read only. */
+                enteredSquadCount?: number;
+                /** @description Every entry the contest holds, drafts included, as its entry cap counts them (#1197): before a random draw no entry is submitted. Single-contest read only. */
+                allEntryCount?: number;
+                /** @description The requester's own squad's entries in the contest, drafts included, in entry-number order (#1197). Empty without an active squad in the league. Single-contest read only. */
+                myEntryIds?: string[];
                 /** @description The most entries the contest takes, every squad's drafts included: its league plan's cap or its expansion (#987), whichever is higher. Null for no limit. */
                 entriesPerContest: number | null;
                 /** Format: date-time */
@@ -12777,21 +12815,73 @@ export interface components {
                 }[];
             };
         };
+        /** @description The requester's own entries across a league's current contests (#1197). */
+        MyContestEntriesResponse: {
+            /** @description The requester's own squad's entries, drafts included, in each of the league's OPEN and ACTIVE contests, in entry-number order within a contest. Without `participants`: an entry's picks are on `getContestEntry`. Empty without an active squad in the league. */
+            entries: {
+                id: string;
+                contestId: string;
+                squadId: string;
+                squadName: string;
+                entryNumber: number;
+                name: string;
+                /** @description The entry's status in each event of its contest, in the contest's event order. */
+                events: {
+                    /** @description One event of the entry's contest. */
+                    sportEventId: string;
+                    /**
+                     * @description DRAFT until the owner submits a complete lineup for this event; only a SUBMITTED event counts on the leaderboard, in standings and at settlement (#481, per event since #713).
+                     * @enum {string}
+                     */
+                    status: "DRAFT" | "SUBMITTED";
+                    /**
+                     * Format: date-time
+                     * @description When the event's picks were submitted; null while a draft.
+                     */
+                    submittedAt: string | null;
+                }[];
+                tiebreakerValue?: number | null;
+                /** @description Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners. */
+                picksCount: number;
+                /**
+                 * Format: date-time
+                 * @description When the contest entry was created.
+                 */
+                createdAt: string;
+                /**
+                 * Format: date-time
+                 * @description When the contest entry was last updated.
+                 */
+                updatedAt: string;
+                /** @description The entry's picked participants, each naming its event. To anyone but the owning squad only the picks of events whose picks are revealed are listed. Omitted on the entry writes, which return the entry without them. */
+                participants?: {
+                    pickId: string;
+                    sportEventParticipantId: string;
+                    /** @description The event of the contest the pick is in (#713). */
+                    sportEventId: string;
+                    participantId: string;
+                    participantName: string;
+                    participantStatus?: string | null;
+                    /** @description The participant's playing role, when known. */
+                    role?: string | null;
+                    teamAffiliation?: string | null;
+                    /**
+                     * Format: date-time
+                     * @description When the participant was added to the contest entry.
+                     */
+                    pickedAt: string;
+                }[];
+            }[];
+        };
         /** @description Contest-entry list response. */
         ContestEntryListResponse: {
             /** @description Contest whose entries are being returned. */
             contestId: string;
             /** @description Total number of entries in the contest. */
             total: number;
-            /** @description Whether the current user has at least one active entry in the contest. */
-            isJoined: boolean;
-            /** @description Primary current-user entry when the contest allows a single active entry. */
-            myEntryId: string | null;
-            /** @description All current-user entry identifiers when multiple entries are allowed. */
-            myEntryIds?: string[];
             /** @description Whether any of the contest's events has its picks visible to non-owners: once the contest is live and that event has started, or once a random draw has dealt. */
             picksRevealed: boolean;
-            /** @description Entries for the contest. Each entry lists participants[]: all of them for the requester's own entries, and only the revealed events' picks for everyone else's. */
+            /** @description Entries for the contest, the requester's own squad's first. Each entry lists participants[]: all of them for the requester's own entries, and only the revealed events' picks for everyone else's. The requester's entry ids alone are `myEntryIds` on `getContest`. */
             entries: {
                 id: string;
                 contestId: string;
@@ -26435,6 +26525,46 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ContestFinishedYearsResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    listMyContestEntries: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The requester's own entries across a league's current contests (#1197). */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyContestEntriesResponse"];
                 };
             };
             /** @description Standard API error envelope. */

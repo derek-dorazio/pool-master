@@ -1,9 +1,7 @@
 import { ContestStatus, SelectionType, getSportDefinition, pluralize  } from '@poolmaster/shared/domain';
-import { useQuery } from '@tanstack/react-query';
 import { Check, X } from 'lucide-react';
 import type { ReactNode } from 'react';
 import type { ContestDto, SportEventDto } from '@/lib/api';
-import { QueryKeys } from '@/lib/query-keys';
 import {
   buildLeagueContestLeaderboardPath,
   buildLeagueContestPath,
@@ -13,8 +11,6 @@ import { OpenContestAction } from './open-contest-action';
 import { formatTimeUntil, getContestReadinessChecks } from './contest-readiness';
 import { RunDrawAction } from './run-draw-action';
 import { useContestDrawState } from './use-contest-draw';
-import { hasSubmittedAnyEvent } from './contest-events';
-import { fetchContestEntries } from './use-contest-entries';
 
 function StatusCardFrame({
   children,
@@ -111,35 +107,31 @@ function NotOpenCard({
   );
 }
 
-function useEnteredTeams(contestId: string) {
-  return useQuery({
-    queryKey: QueryKeys.contestEntries.byContest(contestId),
-    queryFn: () => fetchContestEntries(contestId),
-    retry: false,
-    select: (response) => {
-      const submitted = response.entries.filter(hasSubmittedAnyEvent);
-      return {
-        submittedEntryCount: submitted.length,
-        teamCount: new Set(submitted.map((entry) => entry.squadId)).size,
-      };
-    },
-  });
+/**
+ * The entries that submitted an event and the squads they belong to, as the single-contest read
+ * counts them (#1197).
+ */
+function enteredTeams(contest: ContestDto) {
+  return contest.entryCount === undefined || contest.enteredSquadCount === undefined
+    ? null
+    : { submittedEntryCount: contest.entryCount, teamCount: contest.enteredSquadCount };
 }
 
 function OpenCard({
-  contestId,
+  contest,
   event,
   leagueCode,
   secondChanceRoundName,
   teamCount,
 }: {
-  contestId: string;
+  contest: ContestDto;
   event: SportEventDto;
   leagueCode: string;
   secondChanceRoundName: string | null;
   teamCount: number;
 }) {
-  const entered = useEnteredTeams(contestId).data;
+  const contestId = contest.id;
+  const entered = enteredTeams(contest);
 
   return (
     <StatusCardFrame
@@ -169,16 +161,6 @@ function OpenCard({
       <ViewInLeagueLink contestId={contestId} leagueCode={leagueCode} />
     </StatusCardFrame>
   );
-}
-
-/** Every entry, submitted or not: before a draw no entry is submitted, and the draw deals to all. */
-function useEntryCount(contestId: string) {
-  return useQuery({
-    queryKey: QueryKeys.contestEntries.byContest(contestId),
-    queryFn: () => fetchContestEntries(contestId),
-    retry: false,
-    select: (response) => response.entries.length,
-  });
 }
 
 function ViewInLeagueLink({ contestId, leagueCode }: { contestId: string; leagueCode: string }) {
@@ -211,7 +193,8 @@ function DrawOpenCard({
   leagueCode: string;
 }) {
   const displayPreferences = useDisplayPreferences();
-  const entryCount = useEntryCount(contest.id).data;
+  // Every entry, submitted or not: before a draw no entry is submitted, and the draw deals to all.
+  const entryCount = contest.allEntryCount;
   const drawState = useContestDrawState(contest.id);
   const drawnAt = contest.drawnAt;
 
@@ -266,15 +249,16 @@ function DrawOpenCard({
 }
 
 function PlayedCard({
-  contestId,
+  contest,
   isFinal,
   leagueCode,
 }: {
-  contestId: string;
+  contest: ContestDto;
   isFinal: boolean;
   leagueCode: string;
 }) {
-  const entered = useEnteredTeams(contestId).data;
+  const contestId = contest.id;
+  const entered = enteredTeams(contest);
 
   return (
     <StatusCardFrame
@@ -328,7 +312,7 @@ export function ContestStatusCard({
         ? <DrawOpenCard contest={contest} event={event} leagueCode={leagueCode} />
         : (
           <OpenCard
-            contestId={contest.id}
+            contest={contest}
             event={event}
             leagueCode={leagueCode}
             secondChanceRoundName={secondChanceRoundName}
@@ -336,8 +320,8 @@ export function ContestStatusCard({
           />
         );
     case ContestStatus.ACTIVE:
-      return <PlayedCard contestId={contest.id} isFinal={false} leagueCode={leagueCode} />;
+      return <PlayedCard contest={contest} isFinal={false} leagueCode={leagueCode} />;
     case ContestStatus.COMPLETED:
-      return <PlayedCard contestId={contest.id} isFinal leagueCode={leagueCode} />;
+      return <PlayedCard contest={contest} isFinal leagueCode={leagueCode} />;
   }
 }

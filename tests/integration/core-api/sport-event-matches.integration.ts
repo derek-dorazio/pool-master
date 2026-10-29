@@ -154,6 +154,20 @@ describe('PrismaSportEventMatchRepository', () => {
     await expect(repos().matches.findBySportEvents([])).resolves.toEqual([]);
   });
 
+  it('reads one match by id, as the event read reads it with its round number and its period scores in period order, and null for no match', async () => {
+    const { event, entryOf } = await createBracketEvent();
+    await repos().matches.replaceBracket(event.id, fourTeamBracket(entryOf));
+    const final = expectDefined((await repos().matches.findBySportEvent(event.id)).find((match) => match.roundNumber === 2));
+    await repos().matches.savePeriodScore(final.id, { periodNumber: 2, homeScore: 30, awayScore: 28 });
+    await repos().matches.savePeriodScore(final.id, { periodNumber: 1, homeScore: 14, awayScore: 10 });
+
+    const read = await repos().matches.findById(final.id);
+
+    expect(read).toEqual((await repos().matches.findBySportEvent(event.id)).find((match) => match.id === final.id));
+    expect(read?.periodScores.map((score) => score.periodNumber)).toEqual([1, 2]);
+    await expect(repos().matches.findById(randomUUID())).resolves.toBeNull();
+  });
+
   it('edits one match, clearing a value sent as null and keeping the ones left out', async () => {
     const { event, entryOf } = await createBracketEvent();
     await repos().matches.replaceBracket(event.id, fourTeamBracket(entryOf));

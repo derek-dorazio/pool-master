@@ -216,8 +216,9 @@ function buildWorld(options: WorldOptions = {}) {
     }),
     participants: fakeParticipantRepo({ findByIds: async () => participants }),
     picks: fakeContestEntryPickRepo({
-      findByEntriesWithParticipant: async (entryIds: readonly string[]) =>
-        picks.filter((pick) => entryIds.includes(pick.entryId)),
+      findByEntriesWithParticipant: async (entryIds: readonly string[], options?: { sportEventId?: string }) =>
+        picks.filter((pick) => entryIds.includes(pick.entryId)
+          && (options?.sportEventId === undefined || pick.sportEventId === options.sportEventId)),
       countByContest: async () => picks.length,
     }),
     pickWrites: {
@@ -260,8 +261,7 @@ function buildWorld(options: WorldOptions = {}) {
       },
     } as never,
     tiers: {
-      getEffectiveTiersForSportEvent: async () => tierGroups,
-      getEffectiveValuationsForSportEvent: async () => valuations,
+      getEffectiveTiersAndValuations: async () => ({ tiers: tierGroups, valuations }),
     } as unknown as SportEventTierService,
   };
   const service = new SelectionService(deps);

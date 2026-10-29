@@ -146,12 +146,9 @@ export function createEntryReceipts(prisma: PrismaClient, options: {
   logger?: FastifyBaseLogger;
 }): EntryReceipts {
   return new EntryReceipts({
-    contests: new PrismaContestRepository(prisma),
     leagues: new PrismaLeagueRepository(prisma),
-    entries: new PrismaContestEntryRepository(prisma),
     squadMemberships: new PrismaSquadMembershipRepository(prisma),
     users: new PrismaUserRepository(prisma),
-    sportEvents: new PrismaSportEventRepository(prisma),
     sportLeagues: new PrismaSportLeagueRepository(prisma),
     ...options,
   });

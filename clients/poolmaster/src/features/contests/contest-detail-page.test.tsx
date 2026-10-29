@@ -195,6 +195,7 @@ function primeMocks(opts?: {
           startDate: opts?.eventStartDate ?? '2099-04-09T12:40:00.000Z',
           status: 'SCHEDULED',
         }],
+        myEntryIds: myEntries.map((entry) => entry.id),
         ...(opts?.endsAt ? { endsAt: opts.endsAt } : {}),
       },
     },
@@ -204,9 +205,6 @@ function primeMocks(opts?: {
     data: {
       contestId: 'contest-1',
       total: entries.length,
-      isJoined: myEntries.length > 0,
-      myEntryId: myEntries[0]?.id ?? null,
-      myEntryIds: myEntries.map((entry) => entry.id),
       picksRevealed,
       entries,
     },
@@ -517,6 +515,21 @@ describe('ContestDetailPage (Contest Board)', () => {
     fireEvent.click(await screen.findByTestId('contest-board-create-entry'));
 
     expect(await screen.findByTestId('contest-entry-page')).toBeInTheDocument();
+  });
+
+  it('reads the contest again after creating an entry, so its entry ids and counts include the new one', async () => {
+    primeMocks({ contestStatus: 'OPEN', entries: [] });
+    enterContestMock.mockResolvedValue({
+      data: {
+        entry: buildEntry({ id: 'entry-1' }),
+      },
+    });
+
+    renderContestBoard();
+
+    fireEvent.click(await screen.findByTestId('contest-board-create-entry'));
+
+    await waitFor(() => expect(getContestMock).toHaveBeenCalledTimes(2));
   });
 
   // pool-master-08k — existing own entries can be reopened for selection edits while OPEN.
