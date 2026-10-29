@@ -24,7 +24,7 @@ function contestFixture(overrides: Partial<ContestDto> & { id: string }): Contes
 function onEvent(id: string, startDate: string, overrides: Partial<ContestDto> = {}): ContestDto {
   return contestFixture({
     id,
-    sportEvents: [{ sportEventId: `event-${id}`, sequence: 1, name: `Event ${id}`, startDate, status: 'SCHEDULED', participantType: null, scoringFamily: null }],
+    sportEvents: [{ sportEventId: `event-${id}`, sequence: 1, name: `Event ${id}`, startDate, endDate: null, status: 'SCHEDULED', participantType: null, scoringFamily: null }],
     ...overrides,
   });
 }

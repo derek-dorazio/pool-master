@@ -27,6 +27,7 @@ const getEventMock = vi.fn();
 const getLeagueByCodeMock = vi.fn();
 const getContestMock = vi.fn();
 const listEventsMock = vi.fn();
+const listEventYearsMock = vi.fn();
 const refreshTokenMock = vi.fn();
 const setContestSportEventsMock = vi.fn();
 
@@ -36,6 +37,7 @@ bindApiMocks({
   getUser: getCurrentUserMock,
   getContest: getContestMock,
   listEvents: listEventsMock,
+  listEventYears: listEventYearsMock,
   refreshToken: refreshTokenMock,
   setContestSportEvents: setContestSportEventsMock,
 });
@@ -98,7 +100,13 @@ function primeMocks({
   )));
   getContestMock.mockResolvedValue(apiSuccess({ contest }));
   getEventMock.mockResolvedValue(apiSuccess({ event: firstEvent }));
-  listEventsMock.mockResolvedValue(apiSuccess({ events: leagueEvents }));
+  // The server narrows the list to the season asked for, and lists the seasons on their own.
+  listEventsMock.mockImplementation(({ query }: { query: { eventYear: number } }) => apiSuccess({
+    events: leagueEvents.filter((event) => event.eventYear === query.eventYear),
+  }));
+  listEventYearsMock.mockResolvedValue(apiSuccess({
+    years: [...new Set(leagueEvents.map((event) => event.eventYear))].sort((left, right) => left - right),
+  }));
 }
 
 const EVENTS_PATH = '/league/BIGDAWGS/admin/contests/contest-1/events';
@@ -109,7 +117,7 @@ function option(eventId: string) {
 
 afterEach(() => {
   for (const mock of [
-    getCurrentUserMock, getEventMock, getLeagueByCodeMock, getContestMock, listEventsMock,
+    getCurrentUserMock, getEventMock, getLeagueByCodeMock, getContestMock, listEventsMock, listEventYearsMock,
     refreshTokenMock, setContestSportEventsMock,
   ]) {
     mock.mockReset();
@@ -117,18 +125,45 @@ afterEach(() => {
 });
 
 describe('Commissioner tools › Contests › one contest › Events', () => {
+  it('reads the sport league\'s seasons and only the contest\'s season of events, never every season at once', async () => {
+    primeMocks();
+
+    renderAt(EVENTS_PATH);
+
+    await screen.findByTestId('contest-events-options');
+    expect(listEventYearsMock).toHaveBeenCalledWith(expect.objectContaining({ query: { sportLeagueId: SPORT_LEAGUE_ID } }));
+    expect(listEventsMock).toHaveBeenCalledTimes(1);
+    expect(listEventsMock).toHaveBeenCalledWith(expect.objectContaining({ query: { sportLeagueId: SPORT_LEAGUE_ID, eventYear: 2099 } }));
+    expect(within(screen.getByTestId('contest-events-year')).getAllByRole('option').map((year) => year.textContent)).toEqual(['2099', '2100']);
+  });
+
+  it('reads another season\'s events when it is picked, keeping the events chosen in the first season in the order list', async () => {
+    primeMocks();
+
+    renderAt(EVENTS_PATH);
+
+    fireEvent.click(await screen.findByTestId('contest-events-option-event-2'));
+    fireEvent.change(screen.getByTestId('contest-events-year'), { target: { value: '2100' } });
+
+    await waitFor(() => expect(option('event-9')).toBeInTheDocument());
+    expect(listEventsMock).toHaveBeenCalledWith(expect.objectContaining({ query: { sportLeagueId: SPORT_LEAGUE_ID, eventYear: 2100 } }));
+    fireEvent.click(option('event-9'));
+    expect(screen.getByTestId('contest-events-chosen')).toHaveTextContent('3 events, in order');
+    expect(screen.getByTestId('contest-events-chosen')).toHaveTextContent(/The Masters.*PGA Championship.*The Masters 2100/);
+  });
+
   it('lists the first event\'s sport league events for its season in start order, with the contest\'s own event checked', async () => {
     primeMocks();
 
     renderAt(EVENTS_PATH);
 
-    const options = within(await screen.findByTestId('contest-events-options'));
+    await screen.findByTestId('contest-events-option-event-1');
+    const options = within(screen.getByTestId('contest-events-options'));
     expect(options.getAllByRole('checkbox').map((box) => box.getAttribute('aria-label'))).toEqual([
       'The Masters', 'PGA Championship', 'U.S. Open', 'The Open',
     ]);
     expect(screen.queryByText('The Masters 2100')).not.toBeInTheDocument();
     expect(screen.getByTestId('contest-events-year')).toHaveValue('2099');
-    expect(listEventsMock).toHaveBeenCalledWith(expect.objectContaining({ query: { sportLeagueId: SPORT_LEAGUE_ID } }));
     expect(option('event-1')).toBeChecked();
     expect(option('event-2')).not.toBeChecked();
     // An event whose field is not loaded can't be added yet, and says why.
@@ -150,7 +185,8 @@ describe('Commissioner tools › Contests › one contest › Events', () => {
 
     renderAt(EVENTS_PATH);
 
-    const addAll = await screen.findByTestId('contest-events-add-all');
+    await screen.findByTestId('contest-events-option-event-1');
+    const addAll = screen.getByTestId('contest-events-add-all');
     expect(addAll).toHaveTextContent('Add all 2');
     fireEvent.click(addAll);
 

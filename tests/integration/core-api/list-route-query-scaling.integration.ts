@@ -29,6 +29,7 @@ import {
   SportEventParticipantListResponseSchema,
   SquadHistoryResponseSchema,
   SquadListResponseSchema,
+  SportEventYearListResponseSchema,
 } from '@poolmaster/shared/dto';
 import { expectConstantQueries } from '../query-scaling';
 import { PrismaContestRepository } from '../../../packages/core-api/src/adapters';
@@ -187,6 +188,35 @@ async function seedTrophyRoom({ years, contestsPerYear, cupPerContest = false }:
   return seeded;
 }
 
+/** A sport league of its own with one released golf event in each of `years` past years. */
+async function seedSportLeagueWithYears(years: number) {
+  const prisma = getPrisma();
+  const suffix = randomUUID().slice(0, 8);
+  const sport = await prisma.sport.upsert({
+    where: { sport: Sport.GOLF },
+    create: { sport: Sport.GOLF, participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    update: {},
+  });
+  const sportLeague = await prisma.sportLeague.create({ data: { sportId: sport.id, name: `Scaling Years Tour ${suffix}` } });
+  const series = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `Scaling Years Open ${suffix}` } });
+  for (let offset = 0; offset < years; offset += 1) {
+    const year = LAST_SEEDED_YEAR - offset;
+    await prisma.sportEvent.create({
+      data: {
+        eventSeriesId: series.id,
+        eventYear: year,
+        externalId: `scaling-${randomUUID()}`,
+        providerId: 'integration-test',
+        sport: Sport.GOLF,
+        name: `Scaling Years Open ${suffix} ${String(year)}`,
+        startDate: new Date(`${String(year)}-06-11T12:00:00.000Z`),
+        status: 'COMPLETED',
+      },
+    });
+  }
+  return sportLeague;
+}
+
 function get(url: string, viewer: TestUserResult) {
   return getApp().inject({ method: 'GET', url, headers: viewer.headers });
 }
@@ -241,6 +271,15 @@ describe('list routes cost the same statements for 2 rows as for 20', () => {
       seed: async (golfers) => ({ event: await seedEventWithField(golfers), viewer: await createTestUser() }),
       call: ({ event, viewer }) => get(`/api/v1/events/${event.id}/participants`, viewer),
       rowsShown: (response) => okBody(response, SportEventParticipantListResponseSchema).participants.length,
+    });
+  });
+
+  it("GET a sport league's event years: the same statements for 2 years as for 20 (#1198)", async () => {
+    await expectConstantQueries({
+      route: 'GET /api/v1/events/years',
+      seed: async (years) => ({ sportLeague: await seedSportLeagueWithYears(years), viewer: await createTestUser() }),
+      call: ({ sportLeague, viewer }) => get(`/api/v1/events/years?sportLeagueId=${sportLeague.id}`, viewer),
+      rowsShown: (response) => okBody(response, SportEventYearListResponseSchema).years.length,
     });
   });
 
