@@ -25492,7 +25492,7 @@ export type ProviderSyncRunDto = {
      */
     createdAt: string;
     /**
-     * Provider sync diagnostic payload with canonical stats plus raw provider/job drill-downs.
+     * Provider sync run summary with canonical stats and outcome.
      */
     payload: {
         /**
@@ -25546,6 +25546,191 @@ export type ProviderSyncRunDto = {
              */
             normalizedAt: string;
         };
+        /**
+         * Admin-facing outcome and warning summary for the sync run.
+         */
+        outcome?: {
+            /**
+             * Admin-facing severity derived from run status, errors, and warnings.
+             */
+            severity: 'SUCCESS' | 'WARNING' | 'ERROR';
+            /**
+             * Human-readable root-admin summary of the sync outcome.
+             */
+            summary: string;
+            /**
+             * Warnings that did not fail the run but should be visible to an operator.
+             */
+            warnings: Array<{
+                /**
+                 * Stable warning code emitted by the ingestion/sync layer.
+                 */
+                code: string;
+                /**
+                 * Human-readable warning detail for root-admin investigation.
+                 */
+                message: string;
+            }>;
+            /**
+             * Count of errors captured for the run.
+             */
+            errors: number;
+        };
+        /**
+         * Canonical numeric sync stats used by admin diagnostics.
+         */
+        stats?: {
+            [key: string]: number;
+        };
+        /**
+         * Legacy top-level processed-record count retained for summary compatibility.
+         */
+        recordsProcessed?: number;
+        /**
+         * Legacy top-level error count retained for summary compatibility.
+         */
+        errors?: number;
+        /**
+         * Legacy human-readable detail retained for summary compatibility.
+         */
+        detail?: string;
+        [key: string]: unknown;
+    };
+};
+
+/**
+ * One feed's sync against a provider, with its summary and its detailed diagnostics.
+ */
+export type ProviderSyncRunDetailDto = {
+    id: string;
+    providerId: string;
+    sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+    /**
+     * Provider event identifier when the run was narrowed to one event; null for a whole-sport run.
+     */
+    eventId: string | null;
+    status: 'SUBMITTED' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
+    /**
+     * ISO 8601 datetime string.
+     */
+    startedAt: string | null;
+    /**
+     * ISO 8601 datetime string.
+     */
+    completedAt: string | null;
+    /**
+     * When the run was submitted.
+     */
+    createdAt: string;
+    /**
+     * Provider sync run summary with canonical stats and outcome.
+     */
+    payload: {
+        /**
+         * Sync run source: a manual or scheduled event sync.
+         */
+        runType?: string;
+        /**
+         * Feeds represented by the originating manual or scheduled sync request.
+         */
+        requestedFeeds?: Array<'EVENTPARTICIPANTS' | 'EVENTLIVESCORES'>;
+        /**
+         * Single feed represented by this sync run row.
+         */
+        requestedFeed?: 'EVENTPARTICIPANTS' | 'EVENTLIVESCORES';
+        /**
+         * The request that submitted the sync run.
+         */
+        requestPayload?: {
+            sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+            /**
+             * Provider event identifier the sync was asked for.
+             */
+            eventId: string;
+            /**
+             * Whether the scheduler or a root admin asked for the sync.
+             */
+            source: 'SCHEDULED' | 'MANUAL';
+            /**
+             * Who asked for a sync.
+             */
+            actor: {
+                type: 'SYSTEM';
+                name: 'scheduler';
+            } | {
+                type: 'ROOT_ADMIN';
+                /**
+                 * The root admin who asked for the sync.
+                 */
+                userId: string;
+                /**
+                 * Their email at the time, for the audit trail.
+                 */
+                email: string;
+            };
+            /**
+             * The mock feed state a manual QA sync asked for; null otherwise.
+             */
+            mockEventState: 'open' | 'locked' | 'live' | 'completed' | 'golf-pre-live' | 'golf-r1-in-progress' | 'golf-r1-complete' | 'golf-r2-complete' | 'golf-correction' | 'golf-r4-complete-pending-final' | 'golf-playoff' | 'golf-completed' | 'golf-late-correction' | null;
+            /**
+             * When the request was validated and normalized.
+             */
+            normalizedAt: string;
+        };
+        /**
+         * Admin-facing outcome and warning summary for the sync run.
+         */
+        outcome?: {
+            /**
+             * Admin-facing severity derived from run status, errors, and warnings.
+             */
+            severity: 'SUCCESS' | 'WARNING' | 'ERROR';
+            /**
+             * Human-readable root-admin summary of the sync outcome.
+             */
+            summary: string;
+            /**
+             * Warnings that did not fail the run but should be visible to an operator.
+             */
+            warnings: Array<{
+                /**
+                 * Stable warning code emitted by the ingestion/sync layer.
+                 */
+                code: string;
+                /**
+                 * Human-readable warning detail for root-admin investigation.
+                 */
+                message: string;
+            }>;
+            /**
+             * Count of errors captured for the run.
+             */
+            errors: number;
+        };
+        /**
+         * Canonical numeric sync stats used by admin diagnostics.
+         */
+        stats?: {
+            [key: string]: number;
+        };
+        /**
+         * Legacy top-level processed-record count retained for summary compatibility.
+         */
+        recordsProcessed?: number;
+        /**
+         * Legacy top-level error count retained for summary compatibility.
+         */
+        errors?: number;
+        /**
+         * Legacy human-readable detail retained for summary compatibility.
+         */
+        detail?: string;
+        [key: string]: unknown;
+    };
+    /**
+     * The run's detailed diagnostics; null before the run starts.
+     */
+    details: {
         /**
          * Raw/debug provider payload captured for this run.
          */
@@ -25620,7 +25805,7 @@ export type ProviderSyncRunDto = {
             }>;
         };
         /**
-         * Normalized created/updated/deleted/unchanged row diagnostics for PoolMaster writes.
+         * Normalized write-effect diagnostics for PoolMaster writes: every row counted, changed rows kept.
          */
         writeDiagnostics?: {
             /**
@@ -25681,55 +25866,22 @@ export type ProviderSyncRunDto = {
             }>;
         };
         /**
-         * Admin-facing outcome and warning summary for the sync run.
+         * Present when the run failed unexpectedly.
          */
-        outcome?: {
+        failurePayload?: {
             /**
-             * Admin-facing severity derived from run status, errors, and warnings.
+             * The error that failed the run.
              */
-            severity: 'SUCCESS' | 'WARNING' | 'ERROR';
-            /**
-             * Human-readable root-admin summary of the sync outcome.
-             */
-            summary: string;
-            /**
-             * Warnings that did not fail the run but should be visible to an operator.
-             */
-            warnings: Array<{
+            error: {
                 /**
-                 * Stable warning code emitted by the ingestion/sync layer.
+                 * The error's class name, when it was an Error.
                  */
-                code: string;
-                /**
-                 * Human-readable warning detail for root-admin investigation.
-                 */
+                name?: string;
                 message: string;
-            }>;
-            /**
-             * Count of errors captured for the run.
-             */
-            errors: number;
+            };
         };
-        /**
-         * Canonical numeric sync stats used by admin diagnostics.
-         */
-        stats?: {
-            [key: string]: number;
-        };
-        /**
-         * Legacy top-level processed-record count retained for summary compatibility.
-         */
-        recordsProcessed?: number;
-        /**
-         * Legacy top-level error count retained for summary compatibility.
-         */
-        errors?: number;
-        /**
-         * Legacy human-readable detail retained for summary compatibility.
-         */
-        detail?: string;
         [key: string]: unknown;
-    };
+    } | null;
 };
 
 /**
@@ -25750,7 +25902,7 @@ export type ProviderSyncRunListQuery = {
 };
 
 /**
- * Sync runs submitted inside the requested window.
+ * Sync runs submitted inside the requested window, newest submission first, each with its summary only.
  */
 export type ProviderSyncRunListResponse = {
     syncRuns: Array<{
@@ -25775,7 +25927,7 @@ export type ProviderSyncRunListResponse = {
          */
         createdAt: string;
         /**
-         * Provider sync diagnostic payload with canonical stats plus raw provider/job drill-downs.
+         * Provider sync run summary with canonical stats and outcome.
          */
         payload: {
             /**
@@ -25828,140 +25980,6 @@ export type ProviderSyncRunListResponse = {
                  * When the request was validated and normalized.
                  */
                 normalizedAt: string;
-            };
-            /**
-             * Raw/debug provider payload captured for this run.
-             */
-            providerPayload?: {
-                /**
-                 * Provider feed operation represented by this payload.
-                 */
-                operation: 'EVENTPARTICIPANTS' | 'EVENTLIVESCORES';
-                /**
-                 * Whether raw provider response JSON was captured for this run.
-                 */
-                rawCaptured: boolean;
-                /**
-                 * Whether the captured raw provider payload was truncated before storage.
-                 */
-                rawTruncated: boolean;
-                /**
-                 * Raw provider response JSON retained for debugging when capture is available.
-                 */
-                raw?: unknown;
-                [key: string]: unknown;
-            };
-            /**
-             * Serialized ingestion job details after an ingestion job is available.
-             */
-            jobPayload?: {
-                /**
-                 * Internal ingestion job type that executed this sync feed.
-                 */
-                jobType: string;
-                /**
-                 * Provider that executed the ingestion job.
-                 */
-                providerId: string;
-                sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
-                /**
-                 * External event id for event-scoped jobs, when applicable.
-                 */
-                eventExternalId?: string;
-                /**
-                 * Internal ingestion job status.
-                 */
-                status: 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED';
-                /**
-                 * When the ingestion job started.
-                 */
-                startedAt?: string;
-                /**
-                 * When the ingestion job completed.
-                 */
-                completedAt?: string;
-                /**
-                 * Canonical records processed by the ingestion job.
-                 */
-                recordsProcessed: number;
-                /**
-                 * Error count captured by the ingestion job.
-                 */
-                errors: number;
-                /**
-                 * Ingestion error-log entries for root-admin investigation.
-                 */
-                errorLog: Array<{
-                    /**
-                     * Failure message the ingestion job recorded.
-                     */
-                    error: string;
-                    /**
-                     * When the failure was recorded.
-                     */
-                    at: string;
-                }>;
-            };
-            /**
-             * Normalized created/updated/deleted/unchanged row diagnostics for PoolMaster writes.
-             */
-            writeDiagnostics?: {
-                /**
-                 * Aggregate normalized write-effect counts for a provider sync run.
-                 */
-                summary: {
-                    total: number;
-                    unchanged: number;
-                    created: number;
-                    updated: number;
-                    deleted: number;
-                };
-                rows: Array<{
-                    /**
-                     * Stable row id for this normalized write diagnostic row.
-                     */
-                    id: string;
-                    /**
-                     * Normalized PoolMaster entity type represented by this row.
-                     */
-                    entityType: string;
-                    /**
-                     * Write effect for the normalized row.
-                     */
-                    disposition: 'UNCHANGED' | 'CREATED' | 'UPDATED' | 'DELETED';
-                    /**
-                     * Provider id associated with this row, when applicable.
-                     */
-                    providerId?: string;
-                    /**
-                     * Provider external id associated with this row, when applicable.
-                     */
-                    externalId?: string;
-                    /**
-                     * Provider participant id associated with this row, when applicable.
-                     */
-                    participantExternalId?: string;
-                    /**
-                     * PoolMaster internal id associated with this row, when known.
-                     */
-                    internalId?: string;
-                    /**
-                     * Display name for the row, when known.
-                     */
-                    name?: string;
-                    /**
-                     * Normalized before-state of the entity `entityType` names, for UPDATED or DELETED rows; shaped by that entity and shown only as a diff.
-                     */
-                    before?: {
-                        [key: string]: unknown;
-                    };
-                    /**
-                     * Normalized after-state of the entity `entityType` names, for CREATED or UPDATED rows; shaped by that entity and shown only as a diff.
-                     */
-                    after?: {
-                        [key: string]: unknown;
-                    };
-                }>;
             };
             /**
              * Admin-facing outcome and warning summary for the sync run.
@@ -26052,7 +26070,7 @@ export type ProviderManualSyncSubmissionResponse = {
          */
         createdAt: string;
         /**
-         * Provider sync diagnostic payload with canonical stats plus raw provider/job drill-downs.
+         * Provider sync run summary with canonical stats and outcome.
          */
         payload: {
             /**
@@ -26105,140 +26123,6 @@ export type ProviderManualSyncSubmissionResponse = {
                  * When the request was validated and normalized.
                  */
                 normalizedAt: string;
-            };
-            /**
-             * Raw/debug provider payload captured for this run.
-             */
-            providerPayload?: {
-                /**
-                 * Provider feed operation represented by this payload.
-                 */
-                operation: 'EVENTPARTICIPANTS' | 'EVENTLIVESCORES';
-                /**
-                 * Whether raw provider response JSON was captured for this run.
-                 */
-                rawCaptured: boolean;
-                /**
-                 * Whether the captured raw provider payload was truncated before storage.
-                 */
-                rawTruncated: boolean;
-                /**
-                 * Raw provider response JSON retained for debugging when capture is available.
-                 */
-                raw?: unknown;
-                [key: string]: unknown;
-            };
-            /**
-             * Serialized ingestion job details after an ingestion job is available.
-             */
-            jobPayload?: {
-                /**
-                 * Internal ingestion job type that executed this sync feed.
-                 */
-                jobType: string;
-                /**
-                 * Provider that executed the ingestion job.
-                 */
-                providerId: string;
-                sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
-                /**
-                 * External event id for event-scoped jobs, when applicable.
-                 */
-                eventExternalId?: string;
-                /**
-                 * Internal ingestion job status.
-                 */
-                status: 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED';
-                /**
-                 * When the ingestion job started.
-                 */
-                startedAt?: string;
-                /**
-                 * When the ingestion job completed.
-                 */
-                completedAt?: string;
-                /**
-                 * Canonical records processed by the ingestion job.
-                 */
-                recordsProcessed: number;
-                /**
-                 * Error count captured by the ingestion job.
-                 */
-                errors: number;
-                /**
-                 * Ingestion error-log entries for root-admin investigation.
-                 */
-                errorLog: Array<{
-                    /**
-                     * Failure message the ingestion job recorded.
-                     */
-                    error: string;
-                    /**
-                     * When the failure was recorded.
-                     */
-                    at: string;
-                }>;
-            };
-            /**
-             * Normalized created/updated/deleted/unchanged row diagnostics for PoolMaster writes.
-             */
-            writeDiagnostics?: {
-                /**
-                 * Aggregate normalized write-effect counts for a provider sync run.
-                 */
-                summary: {
-                    total: number;
-                    unchanged: number;
-                    created: number;
-                    updated: number;
-                    deleted: number;
-                };
-                rows: Array<{
-                    /**
-                     * Stable row id for this normalized write diagnostic row.
-                     */
-                    id: string;
-                    /**
-                     * Normalized PoolMaster entity type represented by this row.
-                     */
-                    entityType: string;
-                    /**
-                     * Write effect for the normalized row.
-                     */
-                    disposition: 'UNCHANGED' | 'CREATED' | 'UPDATED' | 'DELETED';
-                    /**
-                     * Provider id associated with this row, when applicable.
-                     */
-                    providerId?: string;
-                    /**
-                     * Provider external id associated with this row, when applicable.
-                     */
-                    externalId?: string;
-                    /**
-                     * Provider participant id associated with this row, when applicable.
-                     */
-                    participantExternalId?: string;
-                    /**
-                     * PoolMaster internal id associated with this row, when known.
-                     */
-                    internalId?: string;
-                    /**
-                     * Display name for the row, when known.
-                     */
-                    name?: string;
-                    /**
-                     * Normalized before-state of the entity `entityType` names, for UPDATED or DELETED rows; shaped by that entity and shown only as a diff.
-                     */
-                    before?: {
-                        [key: string]: unknown;
-                    };
-                    /**
-                     * Normalized after-state of the entity `entityType` names, for CREATED or UPDATED rows; shaped by that entity and shown only as a diff.
-                     */
-                    after?: {
-                        [key: string]: unknown;
-                    };
-                }>;
             };
             /**
              * Admin-facing outcome and warning summary for the sync run.
@@ -33581,12 +33465,47 @@ export type ListProviderSyncRunsError = ListProviderSyncRunsErrors[keyof ListPro
 
 export type ListProviderSyncRunsResponses = {
     /**
-     * Sync runs submitted inside the requested window.
+     * Sync runs submitted inside the requested window, newest submission first, each with its summary only.
      */
     200: ProviderSyncRunListResponse;
 };
 
 export type ListProviderSyncRunsResponse = ListProviderSyncRunsResponses[keyof ListProviderSyncRunsResponses];
+
+export type GetProviderSyncRunData = {
+    body?: never;
+    path: {
+        syncRunId: string;
+    };
+    query?: never;
+    url: '/api/v1/ingestion/sync-runs/{syncRunId}';
+};
+
+export type GetProviderSyncRunErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+};
+
+export type GetProviderSyncRunError = GetProviderSyncRunErrors[keyof GetProviderSyncRunErrors];
+
+export type GetProviderSyncRunResponses = {
+    /**
+     * One feed's sync against a provider, with its summary and its detailed diagnostics.
+     */
+    200: ProviderSyncRunDetailDto;
+};
+
+export type GetProviderSyncRunResponse = GetProviderSyncRunResponses[keyof GetProviderSyncRunResponses];
 
 export type SubmitEventSyncData = {
     body: EventSyncRequest;

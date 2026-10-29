@@ -2,6 +2,7 @@ import { expect } from '@jest/globals';
 import {
   DEFAULT_SYNC_RUN_WINDOW_HOURS,
   IngestionService,
+  ProviderSyncRunNotFoundError,
   type IngestionServiceDependencies,
 } from '../../../packages/core-api/src/modules/ingestion/ingestion-service';
 import { IngestionScheduler } from '../../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';
@@ -41,6 +42,7 @@ function syncRuns(overrides: Partial<ProviderSyncRunRepository> = {}): ProviderS
     })),
     update: jest.fn().mockResolvedValue(undefined),
     findAll: jest.fn().mockResolvedValue([]),
+    findById: jest.fn().mockResolvedValue(null),
     ...overrides,
   };
 }
@@ -156,6 +158,27 @@ describe('IngestionService.listSyncRuns', () => {
       providerId: 'mock', sport: Sport.GOLF, status: 'FAILED',
       createdFrom: new Date('2026-01-09T18:00:00.000Z'), createdTo: to,
     });
+  });
+});
+
+describe('IngestionService.getSyncRun', () => {
+  it('returns one run with its detailed diagnostics, read by its id', async () => {
+    const run = {
+      id: 'run-1', providerId: 'mock', sport: Sport.GOLF, eventId: 'event-1', status: 'COMPLETED' as const,
+      startedAt: null, completedAt: null, createdAt: new Date('2026-05-30T12:00:00.000Z'),
+      payload: { requestedFeed: 'EVENTPARTICIPANTS' }, details: { jobPayload: { recordsProcessed: 3 } },
+    };
+    const runs = syncRuns({ findById: jest.fn().mockResolvedValue(run) });
+
+    await expect(service({ registry: registryWith(null), syncRuns: runs }).getSyncRun('run-1')).resolves.toBe(run);
+    expect(runs.findById).toHaveBeenCalledWith('run-1');
+  });
+
+  it('refuses a run that does not exist with ProviderSyncRunNotFoundError', async () => {
+    const runs = syncRuns();
+
+    await expect(service({ registry: registryWith(null), syncRuns: runs }).getSyncRun('missing'))
+      .rejects.toBeInstanceOf(ProviderSyncRunNotFoundError);
   });
 });
 

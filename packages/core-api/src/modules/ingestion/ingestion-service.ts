@@ -13,7 +13,7 @@ import type {
   ProviderSyncRunRepository,
   SportEventRepository,
 } from '@poolmaster/shared/db';
-import { type Sport, SportEventSyncScope, type ProviderSyncRun, type ProviderSyncRunStatus } from '@poolmaster/shared/domain';
+import { type Sport, SportEventSyncScope, type ProviderSyncRun, type ProviderSyncRunStatus, type ProviderSyncRunWithDetails } from '@poolmaster/shared/domain';
 import type { ProviderRegistry } from './core/provider-registry';
 import type { SportDataProvider } from './core/provider-interface';
 import { supportsLiveSimulation, supportsMockEventStateControls } from './core/provider-interface';
@@ -91,6 +91,13 @@ export class SportProviderNotFoundError extends Error {
   constructor(sport: Sport) {
     super(`No provider is registered for sport ${sport}`);
     this.name = 'SportProviderNotFoundError';
+  }
+}
+
+export class ProviderSyncRunNotFoundError extends Error {
+  constructor(syncRunId: string) {
+    super(`No sync run ${syncRunId}`);
+    this.name = 'ProviderSyncRunNotFoundError';
   }
 }
 
@@ -291,6 +298,13 @@ export class IngestionService {
       createdFrom,
       createdTo,
     });
+  }
+
+  /** One run with its detailed diagnostics, which the list leaves out (#1174). */
+  async getSyncRun(syncRunId: string): Promise<ProviderSyncRunWithDetails> {
+    const run = await this.syncRuns.findById(syncRunId);
+    if (!run) throw new ProviderSyncRunNotFoundError(syncRunId);
+    return run;
   }
 
   async syncEventData(

@@ -7,11 +7,13 @@ import type {
   ProviderEventDto,
   ProviderManualSyncSubmissionResponse,
   ProviderSummaryDto,
+  ProviderSyncRunDetailDto,
+  ProviderSyncRunDetailsDto,
   ProviderSyncRunDto,
   UnmappedProviderParticipantDto,
 } from '@poolmaster/shared/dto';
 import { ProviderSyncRequestPayloadDtoSchema } from '@poolmaster/shared/dto';
-import type { ProviderSyncRun } from '@poolmaster/shared/domain';
+import type { ProviderSyncRun, ProviderSyncRunWithDetails } from '@poolmaster/shared/domain';
 import type { FastifyBaseLogger } from 'fastify';
 import type { SportEvent as ProviderEvent } from '../modules/ingestion/core/provider-interface';
 import type {
@@ -65,6 +67,15 @@ export function toProviderSyncRunDto(
     createdAt: run.createdAt.toISOString(),
     payload,
   };
+}
+
+/** One run with its detailed diagnostics; they are stored JSON, passed through as written. */
+export function toProviderSyncRunDetailDto(
+  run: ProviderSyncRunWithDetails,
+  logger?: Pick<FastifyBaseLogger, 'warn'>,
+): ProviderSyncRunDetailDto {
+  const details: ProviderSyncRunDetailsDto | null = run.details;
+  return { ...toProviderSyncRunDto(run, logger), details };
 }
 
 export function toProviderManualSyncSubmissionResponse(

@@ -12,6 +12,7 @@ import {
   LeagueResponseSchema,
   ProviderListResponseSchema,
   ProviderManualSyncSubmissionResponseSchema,
+  ProviderSyncRunDetailDtoSchema,
   ProviderSyncRunListResponseSchema,
   ParticipantProviderMappingResponseSchema,
   UnmappedProviderParticipantListResponseSchema,
@@ -44,6 +45,7 @@ import type {
   ProviderCatalogEventListResponse,
   ProviderListResponse,
   ProviderManualSyncSubmissionResponse,
+  ProviderSyncRunDetailDto,
   ProviderSyncRunListResponse,
   SportEventListResponse,
   SportEventResponse,
@@ -339,11 +341,11 @@ async function buildIngestionApp(provider: SportDataProvider | null): Promise<Fa
 
 async function waitForProviderSyncRun(
   syncRunId: string,
-): Promise<{ status: string; payloadJson: unknown }> {
+): Promise<{ status: string; payloadJson: unknown; detailsJson: unknown }> {
   for (let attempt = 0; attempt < 20; attempt += 1) {
     const row = await getPrisma().providerSyncRun.findUnique({
       where: { id: syncRunId },
-      select: { status: true, payloadJson: true },
+      select: { status: true, payloadJson: true, detailsJson: true },
     });
     if (row && row.status !== 'SUBMITTED' && row.status !== 'IN_PROGRESS') {
       return row;
@@ -390,6 +392,32 @@ describe('Contract verification (root admin)', () => {
     expect(forbidden.json<ErrorEnvelope>().error.code).toBe('ROOT_ADMIN_ACCESS_REQUIRED');
   });
 
+  it('refuses one sync run\'s details, raw provider payload included, to a non-root-admin with 403', async () => {
+    const run = await getPrisma().providerSyncRun.create({
+      data: {
+        providerId: 'forbidden-details-provider',
+        sport: 'GOLF',
+        eventId: 'forbidden-details-event',
+        status: 'COMPLETED',
+        payloadJson: { requestedFeed: 'EVENTPARTICIPANTS' },
+        detailsJson: { providerPayload: { operation: 'EVENTPARTICIPANTS', rawCaptured: true, rawTruncated: false, raw: [] } },
+      },
+    });
+    const ordinaryUser = await createTestUser({ displayName: 'Contract Non Admin Sync Run Reader' });
+
+    const forbidden = await getApp().inject({
+      method: 'GET',
+      url: `/api/v1/ingestion/sync-runs/${run.id}`,
+      headers: ordinaryUser.headers,
+    });
+
+    expect(forbidden.statusCode).toBe(403);
+    expect(ErrorEnvelopeSchema.safeParse(forbidden.json()).success).toBe(true);
+    expect(forbidden.json<ErrorEnvelope>().error.code).toBe('ROOT_ADMIN_ACCESS_REQUIRED');
+    expect(forbidden.body).not.toContain('providerPayload');
+    await getPrisma().providerSyncRun.delete({ where: { id: run.id } });
+  });
+
   // #1180 — no platform list reads every row: users and leagues take a search of at least 3
   // characters, events a sport, sport league or year, and participants a sport or a search.
   it('refuses the platform lists a root admin asks for without a filter, with stable 400 codes', async () => {
@@ -431,6 +459,9 @@ describe('Contract verification (root admin)', () => {
       displayName: 'Root Admin Managed User',
     });
 
+    // The completed run was submitted after the failed one but started before it: the list
+    // orders by submission, newest first (#1174).
+    const submittedAt = Date.now();
     await getPrisma().providerSyncRun.createMany({
       data: [
         {
@@ -441,10 +472,21 @@ describe('Contract verification (root admin)', () => {
           status: 'COMPLETED',
           startedAt: new Date('2026-04-09T10:00:00.000Z'),
           completedAt: new Date('2026-04-09T10:01:00.000Z'),
+          createdAt: new Date(submittedAt - 60_000),
           payloadJson: {
             runType: 'EVENT_SYNC',
             recordsProcessed: 42,
             detail: 'Initial event and field import',
+          },
+          detailsJson: {
+            jobPayload: {
+              jobType: 'EVENT_PARTICIPANTS_SYNC', providerId: 'integration-test', sport: 'GOLF',
+              status: 'COMPLETED', recordsProcessed: 42, errors: 0, errorLog: [],
+            },
+            writeDiagnostics: {
+              summary: { total: 42, unchanged: 41, created: 1, updated: 0, deleted: 0 },
+              rows: [{ id: 'row-1', entityType: 'SportEventParticipant', disposition: 'CREATED' }],
+            },
           },
         },
         {
@@ -453,8 +495,9 @@ describe('Contract verification (root admin)', () => {
           sport: 'GOLF',
           eventId: 'event-2',
           status: 'FAILED',
-          startedAt: new Date('2026-04-08T10:00:00.000Z'),
-          completedAt: new Date('2026-04-08T10:00:30.000Z'),
+          startedAt: new Date('2026-04-10T10:00:00.000Z'),
+          completedAt: new Date('2026-04-10T10:00:30.000Z'),
+          createdAt: new Date(submittedAt - 120_000),
           payloadJson: {
             runType: 'SCHEDULED_EVENT_SYNC',
             errorCount: 1,
@@ -538,6 +581,48 @@ describe('Contract verification (root admin)', () => {
     expect(syncRunsRes.json<ProviderSyncRunListResponse>().syncRuns).toHaveLength(2);
     expect(syncRunsRes.json<ProviderSyncRunListResponse>().syncRuns[0].providerId).toBe('integration-test');
     expect(syncRunsRes.json<ProviderSyncRunListResponse>().syncRuns[0].payload.runType).toBeDefined();
+    expect(syncRunsRes.json<ProviderSyncRunListResponse>().syncRuns.map((run) => run.id)).toEqual([
+      '11111111-1111-1111-1111-111111111111',
+      '22222222-2222-2222-2222-222222222222',
+    ]);
+    // The list carries each run's summary only; its detailed diagnostics are read one run at a time.
+    for (const run of syncRunsRes.json<ProviderSyncRunListResponse>().syncRuns) {
+      expect(run).not.toHaveProperty('details');
+    }
+
+    const syncRunRes = await getApp().inject({
+      method: 'GET',
+      url: '/api/v1/ingestion/sync-runs/11111111-1111-1111-1111-111111111111',
+      headers: rootAdmin.headers,
+    });
+    expect(syncRunRes.statusCode).toBe(200);
+    expect(ProviderSyncRunDetailDtoSchema.safeParse(syncRunRes.json()).success).toBe(true);
+    expect(syncRunRes.json<ProviderSyncRunDetailDto>()).toMatchObject({
+      id: '11111111-1111-1111-1111-111111111111',
+      payload: { runType: 'EVENT_SYNC', recordsProcessed: 42 },
+      details: {
+        jobPayload: { recordsProcessed: 42 },
+        writeDiagnostics: { summary: { total: 42, created: 1 }, rows: [{ id: 'row-1', disposition: 'CREATED' }] },
+      },
+    });
+
+    const noDetailsRes = await getApp().inject({
+      method: 'GET',
+      url: '/api/v1/ingestion/sync-runs/22222222-2222-2222-2222-222222222222',
+      headers: rootAdmin.headers,
+    });
+    expect(noDetailsRes.statusCode).toBe(200);
+    expect(ProviderSyncRunDetailDtoSchema.safeParse(noDetailsRes.json()).success).toBe(true);
+    expect(noDetailsRes.json<ProviderSyncRunDetailDto>().details).toBeNull();
+
+    const missingRunRes = await getApp().inject({
+      method: 'GET',
+      url: '/api/v1/ingestion/sync-runs/ffffffff-ffff-4fff-8fff-ffffffffffff',
+      headers: rootAdmin.headers,
+    });
+    expect(missingRunRes.statusCode).toBe(404);
+    expect(ErrorEnvelopeSchema.safeParse(missingRunRes.json()).success).toBe(true);
+    expect(missingRunRes.json<ErrorEnvelope>().error.code).toBe('SYNC_RUN_NOT_FOUND');
 
     // A window that ends before they were submitted excludes them.
     const earlierRes = await getApp().inject({
@@ -885,7 +970,7 @@ describe('Contract verification (root admin)', () => {
 
       const completedRun = await waitForProviderSyncRun(syncRunId);
       expect(completedRun.status).toBe('COMPLETED');
-      expect(completedRun.payloadJson).toEqual(
+      expect(completedRun.detailsJson).toEqual(
         expect.objectContaining({
           jobPayload: expect.objectContaining({
             recordsProcessed: 0,
@@ -900,6 +985,11 @@ describe('Contract verification (root admin)', () => {
               }),
             ],
           }),
+          writeDiagnostics: { summary: { total: 0, unchanged: 0, created: 0, updated: 0, deleted: 0 }, rows: [] },
+        }),
+      );
+      expect(completedRun.payloadJson).toEqual(
+        expect.objectContaining({
           outcome: expect.objectContaining({
             severity: 'WARNING',
             warnings: [

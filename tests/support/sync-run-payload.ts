@@ -5,14 +5,18 @@ import type {
 import type { ProviderSyncRequestPayloadDto } from '@poolmaster/shared/dto';
 
 /**
- * A provider sync run's payload as the ledger writes it, for tests that read it back from the
- * database or from a repository call. Nothing validates the JSON on the way back, so this is
- * the shape a test expects to find, not a guarantee.
+ * A provider sync run's summary payload as the ledger writes it, for tests that read it back
+ * from the database or from a repository call. Nothing validates the JSON on the way back, so
+ * this is the shape a test expects to find, not a guarantee.
  */
 export interface StoredSyncRunPayload {
   runType?: string;
   requestedFeed?: IngestionFeedType;
   requestPayload?: Partial<ProviderSyncRequestPayloadDto>;
+}
+
+/** A provider sync run's detailed diagnostics as the ledger writes them (#1174). */
+export interface StoredSyncRunDetails {
   providerPayload?: IngestionJobProviderPayload;
   jobPayload?: unknown;
   writeDiagnostics?: unknown;
@@ -22,5 +26,12 @@ export interface StoredSyncRunPayload {
 export function readStoredSyncRunPayload(payloadJson: unknown): StoredSyncRunPayload | null {
   return payloadJson && typeof payloadJson === 'object' && !Array.isArray(payloadJson)
     ? payloadJson as StoredSyncRunPayload
+    : null;
+}
+
+/** The details JSON of a stored sync run, or null when the column holds none. */
+export function readStoredSyncRunDetails(detailsJson: unknown): StoredSyncRunDetails | null {
+  return detailsJson && typeof detailsJson === 'object' && !Array.isArray(detailsJson)
+    ? detailsJson as StoredSyncRunDetails
     : null;
 }

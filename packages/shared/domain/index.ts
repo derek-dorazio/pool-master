@@ -87,6 +87,7 @@ export type {
   PlatformRuntimeConfig,
   PlatformRuntimeConfigChange,
   ProviderSyncRun,
+  ProviderSyncRunWithDetails,
   SportConfig,
   Squad,
   SquadMembership,
