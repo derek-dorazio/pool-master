@@ -1211,6 +1211,8 @@ describe('Contract verification (root admin)', () => {
       expect(tournamentListRes.statusCode).toBe(200);
       expect(SportEventListResponseSchema.safeParse(tournamentListRes.json()).success).toBe(true);
       expect(tournamentListRes.json<SportEventListResponse>().events.map((e) => e.id)).toEqual([eventId]);
+      // A root admin's read carries the admin counts a member's never does (#1198).
+      expect(tournamentListRes.json<SportEventListResponse>().events[0]?.adminCounts).toMatchObject({ contestCount: 0 });
 
       // --- listEventParticipants / listEventTiers / listEventRounds (200) ----
       const fieldRes = await getApp().inject({

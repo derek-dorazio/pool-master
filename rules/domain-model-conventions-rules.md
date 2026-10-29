@@ -544,6 +544,14 @@ Admin-only fields are annotated on the canonical DTO and left exposed for now �
 deliberate, recorded trade in exchange for a single coherent model. Do not build a
 redaction scheme, and do not create a variant DTO to avoid one.
 
+**One recorded exception: counts that cost queries on every read.** `SportEventDto.adminCounts`
+(release readiness and the contest count across every league) is filled for a root admin and
+`null` for everyone else. It is still one object with one shape; the field is nullable and its
+description says who gets it. The reason is cost, not secrecy alone: those counts were five extra
+queries on every member's event read, and the contest count crossed leagues, which are tenants.
+A new exception needs the same two things — a measured per-read cost and a nullable field on the
+canonical DTO — and is recorded here; it is never a second DTO.
+
 ---
 
 ## 14. Gaps Are Requirements

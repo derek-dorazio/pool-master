@@ -87,7 +87,7 @@ function tournament(overrides: Parameters<typeof sportEventFixture>[0] = {}) {
     autoLifecycleEnabled: true,
     loadedParticipantCount: 3,
     tierCount: 2,
-    contestCount: 0,
+    adminCounts: { untieredParticipantCount: 0, unpricedParticipantCount: 0, emptyTierLabels: [], contestCount: 0 },
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
     allowedTransitions: [],

@@ -49,7 +49,7 @@ import {
   refreshOnContestStatusChange,
   shouldPollContestEntries,
 } from './contest-status';
-import { useContestSchedule } from './use-contest-schedule';
+import { contestSchedule } from './use-contest-schedule';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { fetchContestEntries } from './use-contest-entries';
@@ -171,7 +171,7 @@ export function ContestDetailPage() {
   });
 
   const leagueId = contestQuery.data?.leagueId ?? '';
-  const schedule = useContestSchedule(contestQuery.data);
+  const schedule = contestSchedule(contestQuery.data);
 
   /*
    * #202 (A8) — the viewer's own squad comes from their squad membership, which the

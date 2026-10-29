@@ -298,10 +298,31 @@ describe('SportEvent core repositories', () => {
     const events = new PrismaSportEventRepository(getPrisma());
 
     expect((await events.findAll({ sport: Sport.GOLF })).map((row) => row.id)).toEqual([earlier.id, later.id]);
-    expect((await events.findAll({ status: 'IN_PROGRESS' })).map((row) => row.id)).toEqual([earlier.id]);
+    expect((await events.findAll({ statuses: ['IN_PROGRESS'] })).map((row) => row.id)).toEqual([earlier.id]);
+    expect((await events.findAll({ statuses: ['SCHEDULED', 'IN_PROGRESS'] })).map((row) => row.id)).toEqual([earlier.id, later.id]);
+    expect(await events.findAll({ statuses: ['COMPLETED'] })).toEqual([]);
     expect((await events.findAll({ sportLeagueId: pga.id })).map((row) => row.id)).toEqual([later.id]);
     await expect(events.findById(later.id)).resolves.toMatchObject({ sportLeagueId: pga.id, syncScope: 'NONE', autoLifecycleEnabled: true });
     expect(await events.countParticipants([later.id, earlier.id])).toEqual(new Map([[later.id, 1], [earlier.id, 0]]));
+  });
+
+  it('lists a sport league\'s event years once each, earliest first, leaving out a draft-only year for a non-admin read', async () => {
+    const sport = await golfSport();
+    const leagues = new PrismaSportLeagueRepository(getPrisma());
+    const tour = await leagues.create({ sportId: sport.id, name: 'Years Tour', matchKeyword: null, bracketAdvancement: BracketAdvancement.FIXED });
+    const other = await leagues.create({ sportId: sport.id, name: 'Other Tour', matchKeyword: null, bracketAdvancement: BracketAdvancement.FIXED });
+    const seriesRepo = new PrismaEventSeriesRepository(getPrisma());
+    const masters = await seriesRepo.findOrCreate(tour.id, 'Years Masters');
+    const open = await seriesRepo.findOrCreate(tour.id, 'Years Open');
+    await createEvent('masters-2026', { eventSeriesId: masters.id, eventYear: 2026 });
+    await createEvent('open-2026', { eventSeriesId: open.id, eventYear: 2026 });
+    await createEvent('masters-2025', { eventSeriesId: masters.id, eventYear: 2025 });
+    await createEvent('masters-2027', { eventSeriesId: masters.id, eventYear: 2027, status: 'DRAFT' });
+    await createEvent('other-2030', { eventSeriesId: (await seriesRepo.findOrCreate(other.id, 'Elsewhere')).id, eventYear: 2030 });
+    const events = new PrismaSportEventRepository(getPrisma());
+
+    expect(await events.findEventYears(tour.id, { releasedOnly: false })).toEqual([2025, 2026, 2027]);
+    expect(await events.findEventYears(tour.id, { releasedOnly: true })).toEqual([2025, 2026]);
   });
 
   it('reads several events by id in one query, leaving out an unknown id, and reads none for no ids', async () => {

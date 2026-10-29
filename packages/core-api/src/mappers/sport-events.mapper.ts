@@ -18,6 +18,7 @@ import type {
   SportEventLiveSimulationResponse,
   SportEventRoundDto,
   SportEventTierDto,
+  SportEventYearListResponse,
 } from '@poolmaster/shared/dto/events.dto';
 import type { LiveSimulationStatus } from '../modules/ingestion/core/provider-interface';
 import { evaluateEventOperationalState } from '../modules/events/operational-timing';
@@ -36,11 +37,8 @@ function genericTransitionsFrom(status: SportEventStatus): SportEventStatus[] {
 export function mapSportEventToDto({
   event,
   loadedParticipantCount,
-  untieredParticipantCount,
-  unpricedParticipantCount,
   tierCount,
-  emptyTierLabels,
-  contestCount,
+  adminCounts,
 }: SportEventSummary): SportEventDto {
   const operationalState = evaluateEventOperationalState({
     status: event.status,
@@ -63,8 +61,6 @@ export function mapSportEventToDto({
     roundsPar: event.roundsPar ?? null,
     participantCount: event.participantCount ?? null,
     loadedParticipantCount,
-    untieredParticipantCount,
-    unpricedParticipantCount,
     pricing: event.pricingConfig ?? null,
     readinessStatus: operationalState.readinessStatus as EventReadinessStatusDto,
     readinessReasons: operationalState.readinessReasons as EventReadinessReasonDto[],
@@ -77,12 +73,15 @@ export function mapSportEventToDto({
     syncScope: event.syncScope,
     autoLifecycleEnabled: event.autoLifecycleEnabled,
     tierCount,
-    emptyTierLabels,
-    contestCount,
+    adminCounts,
     allowedTransitions: genericTransitionsFrom(event.status),
     createdAt: event.createdAt.toISOString(),
     updatedAt: event.updatedAt.toISOString(),
   };
+}
+
+export function mapSportEventYearsToResponse(years: readonly number[]): SportEventYearListResponse {
+  return { years: [...years] };
 }
 
 export function mapSportEventRoundToDto(round: SportEventRound): SportEventRoundDto {

@@ -52,7 +52,7 @@ import {
 import { ContestHeader, ContestSubMenu } from './contest-header';
 import { contestEntryTiebreaker, contestRosterParticipantNoun } from './contest-sport';
 import { fetchContestEntries } from './use-contest-entries';
-import { useContestSchedule } from './use-contest-schedule';
+import { contestSchedule } from './use-contest-schedule';
 import { ContestEventSwitcher } from './contest-event-switcher';
 import { entryEventStatus, hasContestEventStarted } from './contest-events';
 import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
@@ -206,7 +206,7 @@ function RosterContestEntryPage() {
   const { league: contestLeague } = useLeagueContextById(contestQuery.data?.leagueId);
   // The event's start is the entry cutoff (#431); the contest's status follows the event's own
   // move to in progress, which can lag the start, and the server refuses picks from the start on.
-  const schedule = useContestSchedule(contestQuery.data);
+  const schedule = contestSchedule(contestQuery.data);
   const detailsSeedSource = useMemo(() => {
     if (!selectionStateQuery.data) {
       return null;

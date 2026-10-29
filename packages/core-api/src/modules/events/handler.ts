@@ -22,6 +22,8 @@ import type {
   SportEventResponse,
   SportEventRoundListResponse,
   SportEventTierListResponse,
+  SportEventYearListQuery,
+  SportEventYearListResponse,
   StartSportEventLiveSimulationRequest,
   TransitionSportEventRequest,
   UpdateSportEventParticipantsRequest,
@@ -63,6 +65,7 @@ import {
   mapSportEventRoundToDto,
   mapSportEventTierToDto,
   mapSportEventToDto,
+  mapSportEventYearsToResponse,
   toProviderManualSyncSubmissionResponse,
 } from '../../mappers';
 import type { IngestionService } from '../ingestion/ingestion-service';
@@ -77,6 +80,11 @@ import type { SportEventServices } from './wiring';
 
 type EventParams = { Params: { eventId: string } };
 type RoundParams = { Params: { eventId: string; roundNumber: number } };
+
+/** Only a root admin sees drafts (#431) and reads an event's admin counts (#1198). */
+function isRootAdmin(request: FastifyRequest): boolean {
+  return request.authUser?.isRootAdmin === true;
+}
 
 export interface EventHandlerDeps {
   services: SportEventServices;
@@ -93,13 +101,14 @@ export interface EventHandlerDeps {
 export function createEventHandlers({ services, eventLifecycle, scoreSource, ingestion }: EventHandlerDeps) {
   const { sportEvents, rounds, field, tiers, golfScores, raceResults, statLines, matchResults, bracket } = services;
 
+  /** An admin action's answer: the event with the root admin's counts. */
   async function eventResponse(eventId: string): Promise<SportEventResponse> {
-    return { event: mapSportEventToDto(await sportEvents.requireSummary(eventId)) };
+    return { event: mapSportEventToDto(await sportEvents.requireAdminSummary(eventId)) };
   }
 
-  /** The golf score and race result operations answer 404 EVENT_NOT_FOUND for an unknown event. */
+  /** 404 EVENT_NOT_FOUND for an unknown event, in one read. */
   async function requireEvent(eventId: string): Promise<void> {
-    await sportEvents.requireSummary(eventId);
+    await sportEvents.requireEvent(eventId);
   }
 
   async function fieldResponse(eventId: string): Promise<SportEventParticipantListResponse> {
@@ -109,9 +118,14 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
   return {
     listEvents: async (request: FastifyRequest<{ Querystring: SportEventListQuery }>): Promise<SportEventListResponse> => {
       const logger = request.contextLogger ?? request.log;
-      // A DRAFT event is the admin's work in progress: only a root admin sees it (#431).
-      const releasedOnly = request.authUser?.isRootAdmin !== true;
-      const events = (await sportEvents.listEvents({ ...request.query, releasedOnly })).map(mapSportEventToDto);
+      const { status, ...filters } = request.query;
+      // A DRAFT event is the admin's work in progress: only a root admin sees it (#431), and only
+      // a root admin's list counts its readiness (#1198).
+      const rootAdmin = isRootAdmin(request);
+      const events = (await sportEvents.listEvents(
+        { ...filters, statuses: status, releasedOnly: !rootAdmin },
+        { adminCounts: rootAdmin },
+      )).map(mapSportEventToDto);
       logger.info({
         action: 'events.route.list.success',
         data: { count: events.length, contestEligibleCount: events.filter((event) => event.contestEligible).length },
@@ -119,10 +133,17 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
       return { events };
     },
 
+    listEventYears: async (request: FastifyRequest<{ Querystring: SportEventYearListQuery }>): Promise<SportEventYearListResponse> => {
+      // As in listEvents: a year with only drafts is a root admin's alone.
+      const years = await sportEvents.listEventYears(request.query.sportLeagueId, { releasedOnly: !isRootAdmin(request) });
+      return mapSportEventYearsToResponse(years);
+    },
+
     getEvent: async (request: FastifyRequest<EventParams>): Promise<SportEventResponse> => {
-      // As in listEvents: a draft is a 404 to anyone but a root admin.
-      const releasedOnly = request.authUser?.isRootAdmin !== true;
-      return { event: mapSportEventToDto(await sportEvents.requireSummary(request.params.eventId, { releasedOnly })) };
+      // As in listEvents: a draft is a 404 to anyone but a root admin, whose read alone counts readiness.
+      const rootAdmin = isRootAdmin(request);
+      const summary = await sportEvents.requireSummary(request.params.eventId, { releasedOnly: !rootAdmin, adminCounts: rootAdmin });
+      return { event: mapSportEventToDto(summary) };
     },
 
     createEvent: async (request: FastifyRequest<{ Body: CreateSportEventRequest }>, reply: FastifyReply) => {
@@ -189,7 +210,7 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
 
     /** Status changes go through the lifecycle service, the one path that also activates and settles contests. */
     transitionEvent: async (request: FastifyRequest<EventParams & { Body: TransitionSportEventRequest }>): Promise<SportEventResponse> => {
-      await sportEvents.requireSummary(request.params.eventId);
+      await requireEvent(request.params.eventId);
       await eventLifecycle.applySportEventStatusTransition({
         sportEventId: request.params.eventId,
         toStatus: request.body.toStatus,
@@ -224,7 +245,7 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
 
     /** Queues a provider sync of the event's field. 409 EVENT_NOT_LINKED for an event with no provider link. */
     refreshEventParticipants: async (request: FastifyRequest<EventParams>, reply: FastifyReply) => {
-      const { event } = await sportEvents.requireSummary(request.params.eventId);
+      const event = await sportEvents.requireEvent(request.params.eventId);
       if (event.syncScope === SportEventSyncScope.NONE) {
         return sendError(reply, 409, 'EVENT_NOT_LINKED', `Sport event ${event.id} is not linked to a provider.`);
       }
@@ -244,7 +265,7 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
     },
 
     listEventRounds: async (request: FastifyRequest<EventParams>): Promise<SportEventRoundListResponse> => {
-      await sportEvents.requireSummary(request.params.eventId);
+      await requireEvent(request.params.eventId);
       return { rounds: (await rounds.listRounds(request.params.eventId)).map(mapSportEventRoundToDto) };
     },
 
@@ -304,14 +325,14 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
     },
 
     listEventTiers: async (request: FastifyRequest<EventParams>): Promise<SportEventTierListResponse> => {
-      await sportEvents.requireSummary(request.params.eventId);
+      await requireEvent(request.params.eventId);
       return { tiers: (await tiers.listTiers(request.params.eventId)).map(mapSportEventTierToDto) };
     },
 
     replaceEventTiers: async (
       request: FastifyRequest<EventParams & { Body: ReplaceSportEventTiersRequest }>,
     ): Promise<SportEventTierListResponse> => {
-      await sportEvents.requireSummary(request.params.eventId);
+      await requireEvent(request.params.eventId);
       const groups = await tiers.replaceTiers({ sportEventId: request.params.eventId, ...request.body });
       return { tiers: groups.map(mapSportEventTierToDto) };
     },
@@ -319,7 +340,7 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
     autoAssignEventTiers: async (
       request: FastifyRequest<EventParams & { Body: AutoAssignSportEventTiersRequest }>,
     ): Promise<SportEventParticipantListResponse> => {
-      await sportEvents.requireSummary(request.params.eventId);
+      await requireEvent(request.params.eventId);
       await tiers.autoAssignTiers({ sportEventId: request.params.eventId, ...request.body });
       return fieldResponse(request.params.eventId);
     },
@@ -327,7 +348,7 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
     replaceEventTierAssignments: async (
       request: FastifyRequest<EventParams & { Body: ReplaceSportEventTierAssignmentsRequest }>,
     ): Promise<SportEventParticipantListResponse> => {
-      await sportEvents.requireSummary(request.params.eventId);
+      await requireEvent(request.params.eventId);
       await tiers.replaceTierAssignments({ sportEventId: request.params.eventId, assignments: request.body.assignments });
       return fieldResponse(request.params.eventId);
     },
@@ -335,7 +356,7 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
     autoAssignEventPrices: async (
       request: FastifyRequest<EventParams & { Body: AutoAssignSportEventPricesRequest }>,
     ): Promise<SportEventParticipantListResponse> => {
-      await sportEvents.requireSummary(request.params.eventId);
+      await requireEvent(request.params.eventId);
       await tiers.autoAssignPrices({ sportEventId: request.params.eventId, pricingConfig: request.body });
       return fieldResponse(request.params.eventId);
     },
@@ -391,8 +412,7 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
 
     getEventBracket: async (request: FastifyRequest<EventParams>): Promise<SportEventBracketResponse> => {
       // As in getEvent: a draft's bracket is a 404 to anyone but a root admin.
-      const releasedOnly = request.authUser?.isRootAdmin !== true;
-      await sportEvents.requireSummary(request.params.eventId, { releasedOnly });
+      await sportEvents.requireEvent(request.params.eventId, { releasedOnly: !isRootAdmin(request) });
       return { matches: (await bracket.listBracket(request.params.eventId)).map(mapSportEventMatchToDto) };
     },
 

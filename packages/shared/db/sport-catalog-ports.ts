@@ -68,7 +68,8 @@ export interface ParticipantLeagueAffiliationRepository {
 
 export interface SportEventFilters {
   sport?: Sport;
-  status?: SportEventStatus;
+  /** Only events in one of these statuses. */
+  statuses?: readonly SportEventStatus[];
   /** Only events whose series belongs to this sport league. */
   sportLeagueId?: string;
   eventYear?: number;
@@ -114,6 +115,11 @@ export interface SportEventRepository {
   findByProviderRef(providerId: string, externalId: string): Promise<SportEvent | null>;
   /** Ordered by start date, then name. */
   findAll(filters: SportEventFilters): Promise<SportEvent[]>;
+  /**
+   * The event years the sport league has events in, through their series, earliest first.
+   * `releasedOnly` leaves out years whose only events are DRAFT (#431).
+   */
+  findEventYears(sportLeagueId: string, options: { releasedOnly: boolean }): Promise<number[]>;
   /**
    * Rejects a second edition of a series in one year: the database's unique constraint on
    * (eventSeriesId, eventYear) raises, and the caller maps it (plans/147 decision 5).

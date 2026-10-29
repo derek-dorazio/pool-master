@@ -164,6 +164,8 @@ function primeMocks(opts?: {
   role?: 'MEMBER' | 'COMMISSIONER';
   /** The contest event's scheduled start; far in the future unless given. */
   eventStartDate?: string;
+  /** The contest event's scheduled end, as the contest read carries it; none unless given. */
+  eventEndDate?: string;
   endsAt?: string;
   /** The contest's own entry cap, from its plan and any expansion; no limit unless given. */
   entriesPerContest?: number;
@@ -193,6 +195,7 @@ function primeMocks(opts?: {
           sequence: 1,
           name: 'The Masters',
           startDate: opts?.eventStartDate ?? '2099-04-09T12:40:00.000Z',
+          endDate: opts?.eventEndDate ?? null,
           status: 'SCHEDULED',
         }],
         ...(opts?.endsAt ? { endsAt: opts.endsAt } : {}),
@@ -284,37 +287,27 @@ describe('ContestDetailPage (Contest Board)', () => {
     expect(screen.queryByText('ACTIVE')).not.toBeInTheDocument();
   });
 
-  it('shows when the contest starts and ends, from its sport event\'s schedule', async () => {
-    primeMocks({ eventStartDate: '2026-04-09T12:00:00.000Z' });
-    getEventMock.mockResolvedValue({
-      data: {
-        event: {
-          id: 'event-1',
-          startDate: '2026-04-09T12:00:00.000Z',
-          endDate: '2026-04-12T23:00:00.000Z',
-        },
-      },
-    });
+  it('shows when the contest starts and ends from the events the contest read carries, reading no event', async () => {
+    primeMocks({ eventStartDate: '2026-04-09T12:00:00.000Z', eventEndDate: '2026-04-12T23:00:00.000Z' });
     renderContestBoard();
 
     expect(await screen.findByTestId('contest-detail-starts')).toHaveTextContent(
       // A visitor with no saved zone sees US Eastern, named.
       'Starts Apr 9, 2026, 8:00 AM EDT',
     );
-    // The start is the contest's first event's, which the contest read carries; the end is the
-    // last event's, read from the event itself.
+    // The start is the contest's first event's and the end its last event's, both carried on the
+    // contest read, so the page never reads the event for them (#1198).
     expect(await screen.findByTestId('contest-detail-ends')).toHaveTextContent(
       'Ends Apr 12, 2026, 7:00 PM EDT',
     );
-    expect(getEventMock).toHaveBeenCalledWith(expect.objectContaining({ path: { eventId: 'event-1' } }));
+    expect(getEventMock).not.toHaveBeenCalled();
   });
 
   it('shows the contest\'s own end once it has one, over the event\'s scheduled end', async () => {
-    primeMocks({ eventStartDate: '2026-04-09T12:00:00.000Z', endsAt: '2026-04-14T18:00:00.000Z' });
-    getEventMock.mockResolvedValue({
-      data: {
-        event: { id: 'event-1', startDate: '2026-04-09T12:00:00.000Z', endDate: '2026-04-12T23:00:00.000Z' },
-      },
+    primeMocks({
+      eventStartDate: '2026-04-09T12:00:00.000Z',
+      eventEndDate: '2026-04-12T23:00:00.000Z',
+      endsAt: '2026-04-14T18:00:00.000Z',
     });
     renderContestBoard();
 
@@ -587,16 +580,8 @@ describe('ContestDetailPage (Contest Board)', () => {
       contestStatus: 'OPEN',
       picksRevealed: false,
       eventStartDate: new Date(Date.now() - 60 * 60_000).toISOString(),
+      eventEndDate: new Date(Date.now() + 3 * 24 * 60 * 60_000).toISOString(),
       entries: [buildEntry({ id: 'entry-1', squadId: 'squad-1' })],
-    });
-    getEventMock.mockResolvedValue({
-      data: {
-        event: {
-          id: 'event-1',
-          startDate: new Date(Date.now() - 60 * 60_000).toISOString(),
-          endDate: new Date(Date.now() + 3 * 24 * 60 * 60_000).toISOString(),
-        },
-      },
     });
 
     renderContestBoard();
@@ -613,16 +598,8 @@ describe('ContestDetailPage (Contest Board)', () => {
       contestStatus: 'OPEN',
       picksRevealed: false,
       eventStartDate: new Date(Date.now() + 60 * 60_000).toISOString(),
+      eventEndDate: new Date(Date.now() + 3 * 24 * 60 * 60_000).toISOString(),
       entries: [buildEntry({ id: 'entry-1', squadId: 'squad-1' })],
-    });
-    getEventMock.mockResolvedValue({
-      data: {
-        event: {
-          id: 'event-1',
-          startDate: new Date(Date.now() + 60 * 60_000).toISOString(),
-          endDate: new Date(Date.now() + 3 * 24 * 60 * 60_000).toISOString(),
-        },
-      },
     });
 
     renderContestBoard();

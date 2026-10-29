@@ -6,15 +6,25 @@ describe('pool-master-rop.78.9: PoolMaster query key factory', () => {
   it('pool-master-rop.78.9: preserves representative TanStack Query key shapes', () => {
     expect(QueryKeys.sports.list).toEqual(['poolmaster', 'sports', 'list']);
     expect(QueryKeys.sports.detail('sport-1')).toEqual(['poolmaster', 'sports', 'sport-1']);
-    expect(QueryKeys.sportEvents.list({ sport: 'GOLF' })).toEqual([
+    expect(QueryKeys.sportEvents.offerable('GOLF')).toEqual([
       'poolmaster',
       'sport-events',
+      'offerable',
       'GOLF',
     ]);
-    expect(QueryKeys.sportEvents.list({ sport: 'GOLF', status: 'SCHEDULED' })).toEqual([
+    expect(QueryKeys.sportEvents.bySportLeagueYear('league-1', 2026)).toEqual([
       'poolmaster',
       'sport-events',
-      { sport: 'GOLF', status: 'SCHEDULED' },
+      'sport-league',
+      'league-1',
+      2026,
+    ]);
+    expect(QueryKeys.sportEvents.yearsBySportLeague('league-1')).toEqual([
+      'poolmaster',
+      'sport-events',
+      'sport-league',
+      'league-1',
+      'years',
     ]);
     expect(QueryKeys.sportEvents.detail('event-1')).toEqual([
       'poolmaster',

@@ -2,6 +2,7 @@ import { expect } from '@jest/globals';
 import { ParticipantType, ScoringFamily, Sport, SportEventStatus } from '@poolmaster/shared/domain';
 import { ContestLeaderboardResponseSchema } from '@poolmaster/shared/dto';
 import {
+  type ContestSportEventRow,
   toContestLeaderboardResponse,
   toContestListResponse,
   toContestResponse,
@@ -41,6 +42,17 @@ describe('toContestListResponse', () => {
         status: SportEventStatus.SCHEDULED,
       }],
     });
+  });
+
+  it('carries each event\'s scheduled end, and null for an event with none, so a contest\'s schedule needs no event read (#1198)', () => {
+    const response = toContestListResponse(
+      [buildContest({ id: 'majors', sportEventIds: ['event-1', 'event-2'] })],
+      new Map(),
+      new Map<string, ContestSportEventRow>([['event-1', { ...masters, endDate: new Date('2026-04-12T23:00:00.000Z') }], ['event-2', pga]]),
+      new Map(),
+    );
+
+    expect(response.contests[0]?.sportEvents.map((event) => event.endDate)).toEqual(['2026-04-12T23:00:00.000Z', null]);
   });
 
   it('lists a multi-event contest\'s events in its sequence order, numbered from 1', () => {

@@ -204,7 +204,7 @@ export class PrismaSportEventRepository implements SportEventRepository {
     const rows = await this.prisma.sportEvent.findMany({
       where: {
         ...(filters.sport !== undefined && { sport: filters.sport }),
-        ...(filters.status !== undefined && { status: filters.status }),
+        ...(filters.statuses !== undefined && { status: { in: [...filters.statuses] } }),
         ...(filters.sportLeagueId !== undefined && { eventSeries: { sportLeagueId: filters.sportLeagueId } }),
         ...(filters.eventYear !== undefined && { eventYear: filters.eventYear }),
         ...(filters.q !== undefined && { name: { contains: filters.q, mode: 'insensitive' as const } }),
@@ -217,6 +217,19 @@ export class PrismaSportEventRepository implements SportEventRepository {
       orderBy: [{ startDate: 'asc' }, { name: 'asc' }],
     });
     return rows.map(toSportEvent);
+  }
+
+  async findEventYears(sportLeagueId: string, options: { releasedOnly: boolean }): Promise<number[]> {
+    const rows = await this.prisma.sportEvent.findMany({
+      where: {
+        eventSeries: { sportLeagueId },
+        ...(options.releasedOnly && { NOT: { status: SportEventStatus.DRAFT } }),
+      },
+      distinct: ['eventYear'],
+      select: { eventYear: true },
+      orderBy: { eventYear: 'asc' },
+    });
+    return rows.map((row) => row.eventYear);
   }
 
   async create(input: SportEventCreate): Promise<SportEvent> {

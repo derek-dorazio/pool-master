@@ -76,9 +76,7 @@ describe('sport-admin-utils: describeEventReleaseBlockers', () => {
     status: 'DRAFT' as const,
     startDate: '2026-05-07T12:00:00.000Z',
     loadedParticipantCount: 120,
-    untieredParticipantCount: 0,
-    unpricedParticipantCount: 0,
-    emptyTierLabels: [] as string[],
+    adminCounts: { untieredParticipantCount: 0, unpricedParticipantCount: 0, emptyTierLabels: [] as string[], contestCount: 0 },
     pricing: STANDARD_PRICING,
   };
 
@@ -95,10 +93,10 @@ describe('sport-admin-utils: describeEventReleaseBlockers', () => {
   });
 
   it('counts the active golfers still without a tier', () => {
-    expect(describeEventReleaseBlockers({ ...ready, untieredParticipantCount: 1 }, now)).toEqual([
+    expect(describeEventReleaseBlockers({ ...ready, adminCounts: { ...ready.adminCounts, untieredParticipantCount: 1 } }, now)).toEqual([
       'Put the 1 active golfer without a tier into a tier.',
     ]);
-    expect(describeEventReleaseBlockers({ ...ready, untieredParticipantCount: 3 }, now)).toEqual([
+    expect(describeEventReleaseBlockers({ ...ready, adminCounts: { ...ready.adminCounts, untieredParticipantCount: 3 } }, now)).toEqual([
       'Put the 3 active golfers without a tier into tiers.',
     ]);
   });
@@ -108,19 +106,19 @@ describe('sport-admin-utils: describeEventReleaseBlockers', () => {
   });
 
   it('counts the active golfers still without a price once the draft is priced (#93)', () => {
-    expect(describeEventReleaseBlockers({ ...ready, unpricedParticipantCount: 1 }, now)).toEqual([
+    expect(describeEventReleaseBlockers({ ...ready, adminCounts: { ...ready.adminCounts, unpricedParticipantCount: 1 } }, now)).toEqual([
       'Price the 1 active golfer without a price.',
     ]);
-    expect(describeEventReleaseBlockers({ ...ready, unpricedParticipantCount: 2 }, now)).toEqual([
+    expect(describeEventReleaseBlockers({ ...ready, adminCounts: { ...ready.adminCounts, unpricedParticipantCount: 2 } }, now)).toEqual([
       'Price the 2 active golfers without a price.',
     ]);
   });
 
   it('names each tier no active participant is in, in the sport\'s words, so a race with an empty Tier 4 cannot be released', () => {
-    expect(describeEventReleaseBlockers({ ...ready, sport: 'AUTO_RACING', emptyTierLabels: ['Tier 4'] }, now)).toEqual([
+    expect(describeEventReleaseBlockers({ ...ready, sport: 'AUTO_RACING', adminCounts: { ...ready.adminCounts, emptyTierLabels: ['Tier 4'] } }, now)).toEqual([
       'Tier 4 has no drivers. Move drivers into it or delete it.',
     ]);
-    expect(describeEventReleaseBlockers({ ...ready, emptyTierLabels: ['Tier 5', 'Tier 6'] }, now)).toEqual([
+    expect(describeEventReleaseBlockers({ ...ready, adminCounts: { ...ready.adminCounts, emptyTierLabels: ['Tier 5', 'Tier 6'] } }, now)).toEqual([
       'Tier 5 has no golfers. Move golfers into it or delete it.',
       'Tier 6 has no golfers. Move golfers into it or delete it.',
     ]);
@@ -187,9 +185,7 @@ describe('sport-admin-utils: deriveSportEventReadiness', () => {
     status: 'DRAFT' as const,
     loadedParticipantCount: 120,
     tierCount: 6,
-    untieredParticipantCount: 0,
-    unpricedParticipantCount: 0,
-    emptyTierLabels: [] as string[],
+    adminCounts: { untieredParticipantCount: 0, unpricedParticipantCount: 0, emptyTierLabels: [] as string[], contestCount: 0 },
     pricing: STANDARD_PRICING,
   };
 
@@ -206,7 +202,7 @@ describe('sport-admin-utils: deriveSportEventReadiness', () => {
   });
 
   it('reports Tiers pending, with the count, while golfers in a draft have no tier', () => {
-    expect(deriveSportEventReadiness({ ...base, untieredParticipantCount: 4 })).toEqual({
+    expect(deriveSportEventReadiness({ ...base, adminCounts: { ...base.adminCounts, untieredParticipantCount: 4 } })).toEqual({
       label: 'Tiers pending',
       tone: 'warning',
       reasons: ['4 golfers without a tier'],
@@ -214,7 +210,7 @@ describe('sport-admin-utils: deriveSportEventReadiness', () => {
   });
 
   it('reports Tiers pending, naming the empty tier, while a draft has a tier no active participant is in', () => {
-    expect(deriveSportEventReadiness({ ...base, sport: 'AUTO_RACING', tierCount: 4, emptyTierLabels: ['Tier 4'] })).toEqual({
+    expect(deriveSportEventReadiness({ ...base, sport: 'AUTO_RACING', tierCount: 4, adminCounts: { ...base.adminCounts, emptyTierLabels: ['Tier 4'] } })).toEqual({
       label: 'Tiers pending',
       tone: 'warning',
       reasons: ['Tier 4 has no drivers'],
@@ -227,13 +223,13 @@ describe('sport-admin-utils: deriveSportEventReadiness', () => {
       tone: 'warning',
       reasons: ['No prices assigned'],
     });
-    expect(deriveSportEventReadiness({ ...base, unpricedParticipantCount: 2 }).reasons).toEqual(['2 golfers without a price']);
+    expect(deriveSportEventReadiness({ ...base, adminCounts: { ...base.adminCounts, unpricedParticipantCount: 2 } }).reasons).toEqual(['2 golfers without a price']);
   });
 
   it('counts a horse race\'s untiered and unpriced runners as horses, one horse singular', () => {
     const race = { ...base, sport: 'HORSE_RACING' as const };
-    expect(deriveSportEventReadiness({ ...race, untieredParticipantCount: 1 }).reasons).toEqual(['1 horse without a tier']);
-    expect(deriveSportEventReadiness({ ...race, unpricedParticipantCount: 3 }).reasons).toEqual(['3 horses without a price']);
+    expect(deriveSportEventReadiness({ ...race, adminCounts: { ...race.adminCounts, untieredParticipantCount: 1 } }).reasons).toEqual(['1 horse without a tier']);
+    expect(deriveSportEventReadiness({ ...race, adminCounts: { ...race.adminCounts, unpricedParticipantCount: 3 } }).reasons).toEqual(['3 horses without a price']);
   });
 
   it('reports Ready to release for a fully tiered and priced draft, and Released, Live and Completed after', () => {
