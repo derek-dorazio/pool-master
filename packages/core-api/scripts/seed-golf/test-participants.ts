@@ -38,8 +38,8 @@ import {
   listUsers,
   openContest,
   registerUser,
+  selectContestPick,
   submitContestEntry,
-  submitContestSelection,
 } from '@poolmaster/shared/generated/hey-api';
 import { LoadAction, LoadMode, LoadSubject, type LoadRow } from './load-report';
 import type { SportDataFile } from './sport-data-file';
@@ -289,7 +289,7 @@ class ParticipantLoader {
       const entryId = entry?.id ?? (await must(enterContest({ client: playerClient, path: { contestId } }), `${playerName(player)} enters ${contestName}`)).entry.id;
       const state = await must(getSelectionState({ client: playerClient, path: { contestId }, query: { entryId, sportEventId } }), `Read ${playerName(player)}'s picks in ${contestName}`);
       for (const participantId of choosePicks(state, index)) {
-        await must(submitContestSelection({ client: playerClient, path: { contestId }, body: { entryId, participantId } }), `${playerName(player)} picks in ${contestName}`);
+        await must(selectContestPick({ client: playerClient, path: { contestId, entryId, sportEventParticipantId: participantId } }), `${playerName(player)} picks in ${contestName}`);
       }
       await must(submitContestEntry({ client: playerClient, path: { contestId, entryId, sportEventId } }), `${playerName(player)} submits in ${contestName}`);
     }

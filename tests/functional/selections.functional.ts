@@ -5,8 +5,9 @@ import {
   generateInviteLink,
   getSelectionState,
   openContest,
+  selectContestPick,
   submitContestEntry,
-  submitContestSelection,
+  unselectContestPick,
 } from '@poolmaster/shared/generated/hey-api';
 import { ContestFormat, SelectionType } from '@poolmaster/shared/domain';
 import { attachContestEvent, buildLeagueWithCommissioner, buildRegisteredUser, seedContestFixture } from './builders';
@@ -17,6 +18,8 @@ import {
   getFunctionalPrisma,
 } from './setup';
 import { randomUUID } from 'node:crypto';
+import { SelectionPickResponseSchema } from '@poolmaster/shared/dto';
+import { expectMatchesSchema } from '../support/expect-matches-schema';
 import { cleanupFreshEventEditions, freshEventEdition } from '../support/event-edition';
 import { unlinkContestsFromSportEvents } from '../support/contest-event-links';
 
@@ -549,18 +552,30 @@ describe('SDK Functional: Roster Selection', () => {
   it('#200 rejects a selection for another squad\'s entry and a selection-state read for an unknown contest', async () => {
     const fixture = await seedRoomGuardFixture();
 
-    const wrongEntryResponse = await submitContestSelection({
+    const wrongEntryResponse = await selectContestPick({
       client: fixture.challenger.client,
       path: {
         contestId: fixture.contestId,
-      },
-      body: {
         entryId: fixture.commissionerEntryId,
-        participantId: randomUUID(),
+        sportEventParticipantId: randomUUID(),
       },
     });
 
     expectFunctionalError(wrongEntryResponse, {
+      status: 403,
+      code: 'ENTRY_ACCESS_DENIED',
+    });
+
+    const wrongEntryUnselect = await unselectContestPick({
+      client: fixture.challenger.client,
+      path: {
+        contestId: fixture.contestId,
+        entryId: fixture.commissionerEntryId,
+        sportEventParticipantId: randomUUID(),
+      },
+    });
+
+    expectFunctionalError(wrongEntryUnselect, {
       status: 403,
       code: 'ENTRY_ACCESS_DENIED',
     });
@@ -598,27 +613,26 @@ describe('SDK Functional: Roster Selection', () => {
       expect.arrayContaining([fixture.firstEventParticipantId, fixture.secondEventParticipantId]),
     );
 
-    const firstPickResponse = await submitContestSelection({
+    const firstPickResponse = await selectContestPick({
       client: fixture.commissioner.client,
       path: {
         contestId: fixture.contestId,
-      },
-      body: {
         entryId: fixture.commissionerEntryId,
-        participantId: fixture.firstEventParticipantId,
+        sportEventParticipantId: fixture.firstEventParticipantId,
       },
     });
 
     expect(firstPickResponse.data).toBeDefined();
-    expect(firstPickResponse.data?.pickHistories).toHaveLength(1);
-    expect(firstPickResponse.data?.pickHistories[0]).toEqual(
+    expectMatchesSchema(SelectionPickResponseSchema, firstPickResponse.data);
+    expect(firstPickResponse.data?.picks).toHaveLength(1);
+    expect(firstPickResponse.data?.picks[0]).toEqual(
       expect.objectContaining({
         entryId: fixture.commissionerEntryId,
         participantId: fixture.firstEventParticipantId,
         price: 3200,
       }),
     );
-    expect(firstPickResponse.data?.isComplete).toBe(false);
+    expect(firstPickResponse.data?.lineupSummary).toMatchObject({ spent: 3200, openSlots: 0 });
 
     const afterPickStateResponse = await getSelectionState({
       client: fixture.commissioner.client,
@@ -646,10 +660,9 @@ describe('SDK Functional: Roster Selection', () => {
     { salaryCap: 8300, expectSubmitted: true },
   ])('lets a budget entry pick both golfers ($8,300) under a $$salaryCap cap, and submits it only when it fits', async ({ salaryCap, expectSubmitted }) => {
     const fixture = await seedBudgetPickFixture({ rosterSize: 2, salaryCap });
-    const pickFor = (participantId: string) => submitContestSelection({
+    const pickFor = (sportEventParticipantId: string) => selectContestPick({
       client: fixture.commissioner.client,
-      path: { contestId: fixture.contestId },
-      body: { entryId: fixture.commissionerEntryId, participantId },
+      path: { contestId: fixture.contestId, entryId: fixture.commissionerEntryId, sportEventParticipantId },
     });
 
     expect((await pickFor(fixture.secondEventParticipantId)).response?.status).toBe(200);
@@ -686,10 +699,13 @@ describe('SDK Functional: Roster Selection', () => {
   // the dearer golfer leaves it over the cap, so it cannot count again until it fits.
   it('sends a submitted budget entry back to DRAFT when it swaps to a golfer over the cap, and refuses to resubmit it', async () => {
     const fixture = await seedBudgetPickFixture({ rosterSize: 1, salaryCap: 4000 });
-    const pickFor = (participantId: string) => submitContestSelection({
+    const pickFor = (sportEventParticipantId: string) => selectContestPick({
       client: fixture.commissioner.client,
-      path: { contestId: fixture.contestId },
-      body: { entryId: fixture.commissionerEntryId, participantId },
+      path: { contestId: fixture.contestId, entryId: fixture.commissionerEntryId, sportEventParticipantId },
+    });
+    const unpickFor = (sportEventParticipantId: string) => unselectContestPick({
+      client: fixture.commissioner.client,
+      path: { contestId: fixture.contestId, entryId: fixture.commissionerEntryId, sportEventParticipantId },
     });
     const submit = () => submitContestEntry({
       client: fixture.commissioner.client,
@@ -703,11 +719,13 @@ describe('SDK Functional: Roster Selection', () => {
     expect((await submit()).response?.status).toBe(200);
     expect(await entryStatus()).toBe('SUBMITTED');
 
-    expect((await pickFor(fixture.firstEventParticipantId)).response?.status).toBe(200);
-    const overCapRoom = await pickFor(fixture.secondEventParticipantId);
-    expect(overCapRoom.response?.status).toBe(200);
-    expect(overCapRoom.data?.lineupSummary).toMatchObject({ spent: 5100, isOverBudget: true, openSlots: 0 });
-    expect(overCapRoom.data?.entries.find((entry) => entry.id === fixture.commissionerEntryId)?.status).toBe('DRAFT');
+    const unpicked = await unpickFor(fixture.firstEventParticipantId);
+    expect(unpicked.response?.status).toBe(200);
+    expect(unpicked.data?.entryStatus).toBe('DRAFT');
+    const overCap = await pickFor(fixture.secondEventParticipantId);
+    expect(overCap.response?.status).toBe(200);
+    expect(overCap.data?.lineupSummary).toMatchObject({ spent: 5100, isOverBudget: true, openSlots: 0 });
+    expect(overCap.data?.entryStatus).toBe('DRAFT');
     expect(await entryStatus()).toBe('DRAFT');
 
     expectFunctionalError(await submit(), { status: 409, code: 'ENTRY_OVER_BUDGET' });
@@ -750,22 +768,24 @@ describe('SDK Functional: Roster Selection', () => {
     expect(stateResponse.data?.availableParticipantIds).toContain(fixture.sportEventParticipantId);
     expect(stateResponse.data?.pickHistories).toHaveLength(0);
 
-    const submitResponse = await submitContestSelection({
+    const submitResponse = await selectContestPick({
       client: fixture.commissioner.client,
       path: {
         contestId: fixture.contestId,
-      },
-      body: {
         entryId: fixture.entryId,
-        participantId: fixture.sportEventParticipantId,
+        sportEventParticipantId: fixture.sportEventParticipantId,
       },
     });
 
+    // #1259: the answer is the entry's own change, not the room.
     expect(submitResponse.data).toBeDefined();
+    expectMatchesSchema(SelectionPickResponseSchema, submitResponse.data);
     expect(submitResponse.data?.contestId).toBe(fixture.contestId);
-    expect(submitResponse.data?.selectionType).toBe(SelectionType.TIERED);
-    expect(submitResponse.data?.pickHistories).toHaveLength(1);
-    expect(submitResponse.data?.pickHistories[0]).toEqual(
+    expect(submitResponse.data?.entryId).toBe(fixture.entryId);
+    expect(submitResponse.data?.entryStatus).toBe('DRAFT');
+    expect(submitResponse.data?.lineupSummary).toBeNull();
+    expect(submitResponse.data?.picks).toHaveLength(1);
+    expect(submitResponse.data?.picks[0]).toEqual(
       expect.objectContaining({
         entryId: fixture.entryId,
         participantId: fixture.sportEventParticipantId,
@@ -773,7 +793,18 @@ describe('SDK Functional: Roster Selection', () => {
         tierName: 'Tier 1',
       }),
     );
-    expect(submitResponse.data?.isComplete).toBe(true);
+    expect(submitResponse.data).not.toHaveProperty('selectionGroups');
+
+    // Selecting the held golfer again changes nothing: a repeat never unselects (#1259).
+    const repeatResponse = await selectContestPick({
+      client: fixture.commissioner.client,
+      path: {
+        contestId: fixture.contestId,
+        entryId: fixture.entryId,
+        sportEventParticipantId: fixture.sportEventParticipantId,
+      },
+    });
+    expect(repeatResponse.data?.picks.map((pick) => pick.participantId)).toEqual([fixture.sportEventParticipantId]);
 
     const afterPickStateResponse = await getSelectionState({
       client: fixture.commissioner.client,
@@ -805,44 +836,37 @@ describe('SDK Functional: Roster Selection', () => {
     const fixture = await seedTieredDraftFixture({ participantCount: 3, picksFromTier: 2 });
     const [firstParticipantId, secondParticipantId, replacementParticipantId] = fixture.sportEventParticipantIds;
 
-    await submitContestSelection({
+    const pick = (sportEventParticipantId: string) => selectContestPick({
       client: fixture.commissioner.client,
-      path: { contestId: fixture.contestId },
-      body: { entryId: fixture.entryId, participantId: firstParticipantId },
+      path: { contestId: fixture.contestId, entryId: fixture.entryId, sportEventParticipantId },
     });
-    const secondPickResponse = await submitContestSelection({
-      client: fixture.commissioner.client,
-      path: { contestId: fixture.contestId },
-      body: { entryId: fixture.entryId, participantId: secondParticipantId },
-    });
+    const heldIds = (response: Awaited<ReturnType<typeof pick>>) => response.data?.picks.map((row) => row.participantId);
 
-    expect(secondPickResponse.data?.selectionGroups?.[0]?.selectedParticipantIds).toEqual([
-      firstParticipantId,
-      secondParticipantId,
-    ]);
+    await pick(firstParticipantId);
+    const secondPickResponse = await pick(secondParticipantId);
 
-    const replacementResponse = await submitContestSelection({
+    expect(heldIds(secondPickResponse)).toEqual([firstParticipantId, secondParticipantId]);
+
+    const replacementResponse = await pick(replacementParticipantId);
+
+    expect(heldIds(replacementResponse)).toEqual([firstParticipantId, replacementParticipantId]);
+
+    const unselectResponse = await unselectContestPick({
       client: fixture.commissioner.client,
-      path: { contestId: fixture.contestId },
-      body: { entryId: fixture.entryId, participantId: replacementParticipantId },
+      path: { contestId: fixture.contestId, entryId: fixture.entryId, sportEventParticipantId: firstParticipantId },
     });
 
-    expect(replacementResponse.data?.selectionGroups?.[0]?.selectedParticipantIds).toEqual([
-      firstParticipantId,
-      replacementParticipantId,
-    ]);
-    expect(replacementResponse.data?.pickHistories).toHaveLength(2);
+    expect(heldIds(unselectResponse)).toEqual([replacementParticipantId]);
 
-    const unselectResponse = await submitContestSelection({
+    // Unselecting a golfer the entry no longer holds changes nothing.
+    const repeatUnselect = await unselectContestPick({
       client: fixture.commissioner.client,
-      path: { contestId: fixture.contestId },
-      body: { entryId: fixture.entryId, participantId: firstParticipantId },
+      path: { contestId: fixture.contestId, entryId: fixture.entryId, sportEventParticipantId: firstParticipantId },
     });
+    expect(heldIds(repeatUnselect)).toEqual([replacementParticipantId]);
 
-    expect(unselectResponse.data?.selectionGroups?.[0]?.selectedParticipantIds).toEqual([
-      replacementParticipantId,
-    ]);
-    expect(unselectResponse.data?.pickHistories).toHaveLength(1);
+    const room = await getSelectionState({ client: fixture.commissioner.client, path: { contestId: fixture.contestId }, query: { entryId: fixture.entryId } });
+    expect(room.data?.selectionGroups?.[0]?.selectedParticipantIds).toEqual([replacementParticipantId]);
   });
 
   // #479 — the defect: the selection room took each tier's pick count from the event and ignored
@@ -879,57 +903,41 @@ describe('SDK Functional: Roster Selection', () => {
     expect(room.data?.rosterSize).toBe(6);
     expect(room.data?.selectionGroups?.map((group) => group.picksFromGroup)).toEqual([2, 2, 2]);
 
-    await submitContestSelection({
+    const pick = (sportEventParticipantId: string) => selectContestPick({
       client: commissioner.client,
-      path: { contestId },
-      body: { entryId, participantId: firstId },
+      path: { contestId, entryId, sportEventParticipantId },
     });
-    const secondPick = await submitContestSelection({
-      client: commissioner.client,
-      path: { contestId },
-      body: { entryId, participantId: secondId },
-    });
-    expect(secondPick.data?.selectionGroups?.[0]?.selectedParticipantIds).toEqual([firstId, secondId]);
-    expect(secondPick.data?.isComplete).toBe(false);
+    await pick(firstId);
+    const secondPick = await pick(secondId);
+    expect(secondPick.data?.picks.map((row) => row.participantId)).toEqual([firstId, secondId]);
 
-    const thirdPick = await submitContestSelection({
-      client: commissioner.client,
-      path: { contestId },
-      body: { entryId, participantId: thirdId },
-    });
-    expect(thirdPick.data?.selectionGroups?.[0]?.selectedParticipantIds).toEqual([firstId, thirdId]);
-    expect(thirdPick.data?.pickHistories).toHaveLength(2);
+    const thirdPick = await pick(thirdId);
+    expect(thirdPick.data?.picks.map((row) => row.participantId)).toEqual([firstId, thirdId]);
   });
 
   it('#198 lets two entries in a budget-pick room hold the same participant', async () => {
     const fixture = await seedBudgetPickFixture();
 
-    const firstPickResponse = await submitContestSelection({
+    const firstPickResponse = await selectContestPick({
       client: fixture.commissioner.client,
-      path: { contestId: fixture.contestId },
-      body: { entryId: fixture.commissionerEntryId, participantId: fixture.firstEventParticipantId },
+      path: { contestId: fixture.contestId, entryId: fixture.commissionerEntryId, sportEventParticipantId: fixture.firstEventParticipantId },
     });
 
-    expect(firstPickResponse.data?.pickHistories).toHaveLength(1);
-    expect(firstPickResponse.data?.availableParticipantIds).toEqual(
-      expect.arrayContaining([fixture.firstEventParticipantId, fixture.secondEventParticipantId]),
-    );
+    expect(firstPickResponse.data?.picks).toHaveLength(1);
 
-    const samePickResponse = await submitContestSelection({
+    const samePickResponse = await selectContestPick({
       client: fixture.challenger.client,
-      path: { contestId: fixture.contestId },
-      body: { entryId: fixture.challengerEntryId, participantId: fixture.firstEventParticipantId },
+      path: { contestId: fixture.contestId, entryId: fixture.challengerEntryId, sportEventParticipantId: fixture.firstEventParticipantId },
     });
 
-    // Both entries now hold it, but while the contest is OPEN each team's history carries only
-    // its own picks, so the challenger sees one row, their own.
-    expect(samePickResponse.data?.pickHistories).toEqual([
+    // Both entries now hold it; each answer carries only its own entry's picks, so the challenger
+    // sees one row, their own, and the commissioner's pick never reaches them.
+    expect(samePickResponse.data?.picks).toEqual([
       expect.objectContaining({
         entryId: fixture.challengerEntryId,
         participantId: fixture.firstEventParticipantId,
       }),
     ]);
-    expect(samePickResponse.data?.availableParticipantIds).toContain(fixture.firstEventParticipantId);
-    expect(samePickResponse.data?.isComplete).toBe(true);
+    expect(samePickResponse.data?.lineupSummary).toMatchObject({ openSlots: 0 });
   });
 });

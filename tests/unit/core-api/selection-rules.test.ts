@@ -228,7 +228,7 @@ describe('#324 draft rules — buildSelectionTiers and buildValuationLookup', ()
     const tiers = buildSelectionTiers(groups, 1, 4);
     const participant = { sportEventParticipantId: 'sep-p5', participantId: 'p5', participantName: 'Player 5', tier: 'Tier 5', seedNumber: null, isAvailable: true };
 
-    expect(tieredSelectionEngine.evaluate({ participant, heldPick: null, existingPicks: [], tiers, rosterSize: 4 }))
+    expect(tieredSelectionEngine.evaluate({ participant, existingPicks: [], tiers, rosterSize: 4 }))
       .toEqual({ kind: SelectionOutcomeKind.REJECT, code: SelectionRejectCode.TIER_NOT_FOUND, tierLabel: 'Tier 5' });
   });
 

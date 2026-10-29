@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router';
-import { getContest, getSelectionState, submitContestEntry, submitContestSelection, updateContestEntry, type SelectionStateResponse, type ContestDto } from '@/lib/api';
+import { getContest, getSelectionState, selectContestPick, submitContestEntry, unselectContestPick, updateContestEntry, type SelectionStateResponse, type ContestDto } from '@/lib/api';
 import {
   buildLeagueContestPath,
   buildLeaguePath,
@@ -41,6 +41,7 @@ import {
   CONTEST_ENTRY_CODE_MESSAGES,
   getNextSelectedParticipantIds,
   lineupRulesFor,
+  mergePickChange,
 } from './contest-entry-lineup';
 import {
   areContestEntriesOpen,
@@ -60,6 +61,8 @@ import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
 type SelectionState = SelectionStateResponse;
+/** One tap on a field row: `isSelected` is whether the entry held it before the tap. */
+type PickChange = { participantId: string; isSelected: boolean };
 
 const HIDDEN_PICKS_HELPER = 'Hidden until the event starts';
 
@@ -416,33 +419,34 @@ function RosterContestEntryPage() {
     },
   });
 
-  const submitSelectionMutation = useInvalidatingMutation({
-    mutationFn: async (participantId: string) => {
-      const response = await submitContestSelection({
-        path: { contestId },
-        body: {
-          entryId,
-          participantId,
-        },
-      });
+  // One pick at a time, by the field row's id (#1259): a held golfer is unselected, anyone else
+  // selected. The page shows the change at once, takes the server's answer about that one entry
+  // into what it shows, and reads nothing again; a refusal puts the page back as it was.
+  const pickChangeMutation = useInvalidatingMutation({
+    mutationFn: async ({ participantId, isSelected }: PickChange) => {
+      const path = { contestId, entryId, sportEventParticipantId: participantId };
+      const response = isSelected
+        ? await unselectContestPick({ path })
+        : await selectContestPick({ path });
 
       if (!response.data) {
-        throwApiError(response.error, 'Contest selection response is missing data.');
+        throwApiError(response.error, 'Contest pick response is missing data.');
       }
 
       return response.data;
     },
-    onMutate: async (participantId) => {
+    onMutate: async ({ participantId, isSelected }) => {
       logger.debug(
         {
-          action: 'contestEntry.selection.started',
+          action: 'contestEntry.pickChange.started',
           data: {
             contestId,
             entryId,
             participantId,
+            isSelected,
           },
         },
-        'Starting contest selection submission',
+        'Starting contest pick change',
       );
       await queryClient.cancelQueries({ queryKey: selectionStateQueryKey });
       const previousSelectionState = queryClient.getQueryData<SelectionState>(selectionStateQueryKey);
@@ -457,28 +461,36 @@ function RosterContestEntryPage() {
 
       return { previousSelectionState };
     },
-    onSuccess: (selectionState) => {
+    onSuccess: (change) => {
       logger.info(
         {
-          action: 'contestEntry.selection.succeeded',
+          action: 'contestEntry.pickChange.succeeded',
           data: {
             contestId,
             entryId,
+            entryStatus: change.entryStatus,
           },
         },
-        'Submitted contest selection successfully',
+        'Changed contest pick',
       );
-      queryClient.setQueryData<SelectionState>(selectionStateQueryKey, selectionState);
+      queryClient.setQueryData<SelectionState>(
+        selectionStateQueryKey,
+        (current) => (current ? mergePickChange(current, change) : current),
+      );
+      // A pick can send a submitted entry back to draft, which the contest's entry lists and
+      // counts show. Those reads are marked stale for the next page that shows them, and none is
+      // read again here: this page already shows what changed.
+      for (const queryKey of [...entryWriteKeys(contestId), QueryKeys.contestEntries.detail(contestId, entryId)]) {
+        void queryClient.invalidateQueries({ queryKey, refetchType: 'none' });
+      }
     },
-    invalidates: [
-      ...entryWriteKeys(contestId),
-    ],
-    onError: (error, participantId, context) => {
+    invalidates: [],
+    onError: (error, { participantId }, context) => {
       if (context?.previousSelectionState) {
         queryClient.setQueryData<SelectionState>(selectionStateQueryKey, context.previousSelectionState);
       }
       const payload = {
-        action: 'contestEntry.selection.failed',
+        action: 'contestEntry.pickChange.failed',
         data: {
           contestId,
           entryId,
@@ -488,9 +500,9 @@ function RosterContestEntryPage() {
       };
 
       if (error instanceof ApiError) {
-        logger.warn(payload, 'Contest selection was rejected');
+        logger.warn(payload, 'Contest pick change was rejected');
       } else {
-        logger.error(payload, 'Contest selection failed unexpectedly');
+        logger.error(payload, 'Contest pick change failed unexpectedly');
       }
     },
   });
@@ -615,7 +627,7 @@ function RosterContestEntryPage() {
     || (tiebreaker !== null && detailsEditable && !hasSelectedTiebreaker)
     || saveEntryDetailsMutation.isPending
     || submitEntryMutation.isPending
-    || submitSelectionMutation.isPending;
+    || pickChangeMutation.isPending;
 
   // Saves the tiebreaker, then submits. A failure at either step stays on the page: each
   // mutation's own error state shows the reason.
@@ -844,12 +856,15 @@ function RosterContestEntryPage() {
                 canSelect={isMyEntry}
                 sport={contest.sport ?? null}
                 group={group}
-                isBusy={submitSelectionMutation.isPending}
+                isBusy={pickChangeMutation.isPending}
                 key={group.groupId}
                 noun={participantNoun}
                 onParticipantSelect={(participant) => {
                   // A refused pick is shown by the mutation's error state and rolled back there.
-                  void submitSelectionMutation.mutateAsync(participant.sportEventParticipantId).catch(() => undefined);
+                  void pickChangeMutation.mutateAsync({
+                    participantId: participant.sportEventParticipantId,
+                    isSelected: group.selectedParticipantIds.includes(participant.sportEventParticipantId),
+                  }).catch(() => undefined);
                 }}
                 summary={lineupSummary}
               />
@@ -867,40 +882,31 @@ function RosterContestEntryPage() {
                   canSelect={isMyEntry}
                   sport={contest.sport ?? null}
                   group={group}
-                  isBusy={submitSelectionMutation.isPending}
+                  isBusy={pickChangeMutation.isPending}
                   isExpanded={isExpanded}
                   key={group.groupId}
                   noun={participantNoun}
                   onParticipantSelect={(nextParticipant) => {
-                    void submitSelectionMutation
-                      .mutateAsync(nextParticipant.sportEventParticipantId)
-                      .then(() => {
-                        setExpandedGroupId((current) => {
-                          if (current !== group.groupId) {
-                            return current;
-                          }
-
-                          const currentIndex = selectionGroups.findIndex(
-                            (candidate) => candidate.groupId === group.groupId,
-                          );
-                          const nextSelectedIds = getNextSelectedParticipantIds(
-                            group,
-                            nextParticipant.sportEventParticipantId,
-                            buildPickedAtById(selectionState, entryId),
-                          );
-                          if (nextSelectedIds.length < group.picksFromGroup) {
-                            return group.groupId;
-                          }
-                          const nextGroup = selectionGroups
-                            .slice(currentIndex + 1)
-                            .find((candidate) => candidate.selectedParticipantIds.length < candidate.picksFromGroup);
-
-                          return nextGroup?.groupId ?? null;
-                        });
-                      })
-                      // A refused pick is already shown by the mutation's error state and its
-                      // optimistic change rolled back in onError; nothing is left to handle here.
-                      .catch(() => undefined);
+                    const participantId = nextParticipant.sportEventParticipantId;
+                    // The tier closes, and the next short one opens, as soon as the tap fills it:
+                    // the lineup after the tap decides, not the server's answer.
+                    const nextSelectedIds = getNextSelectedParticipantIds(
+                      group,
+                      participantId,
+                      buildPickedAtById(selectionState, entryId),
+                    );
+                    if (nextSelectedIds.length >= group.picksFromGroup) {
+                      const currentIndex = selectionGroups.findIndex((candidate) => candidate.groupId === group.groupId);
+                      const nextGroup = selectionGroups
+                        .slice(currentIndex + 1)
+                        .find((candidate) => candidate.selectedParticipantIds.length < candidate.picksFromGroup);
+                      setExpandedGroupId(nextGroup?.groupId ?? null);
+                    }
+                    void pickChangeMutation
+                      .mutateAsync({ participantId, isSelected: group.selectedParticipantIds.includes(participantId) })
+                      // A refused pick is shown by the mutation's error state and rolled back in
+                      // onError; the refused tier is opened again so the fix is in view.
+                      .catch(() => setExpandedGroupId(group.groupId));
                   }}
                   onToggle={() => setExpandedGroupId(isExpanded ? null : group.groupId)}
                   setToggleRef={(element) => {
@@ -920,9 +926,9 @@ function RosterContestEntryPage() {
               </Alert>
             ) : null}
 
-            {submitSelectionMutation.isError ? (
+            {pickChangeMutation.isError ? (
               <Alert tone="danger">
-                {extractErrorMessage(submitSelectionMutation.error, {
+                {extractErrorMessage(pickChangeMutation.error, {
                   codeMessages: CONTEST_ENTRY_CODE_MESSAGES,
                   fallback: 'We could not save this entry right now.',
                 })}

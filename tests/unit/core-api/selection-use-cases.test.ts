@@ -12,7 +12,7 @@ import type {
 import type { ContestEntryPickWithParticipant } from '@poolmaster/shared/db';
 import { SelectionService } from '../../../packages/core-api/src/modules/selections/service';
 import type { SportEventTierService } from '../../../packages/core-api/src/modules/events/sport-event-tier-service';
-import { toSelectionStateResponse } from '../../../packages/core-api/src/mappers/selections.mapper';
+import { toSelectionPickResponse, toSelectionStateResponse } from '../../../packages/core-api/src/mappers/selections.mapper';
 import {
   fakeContestConfigurationRepo,
   fakeContestEntryPickRepo,
@@ -275,10 +275,17 @@ function buildWorld(options: WorldOptions = {}) {
     held: (entryId: string) =>
       picks.filter((pick) => pick.entryId === entryId).map((pick) => pick.sportEventParticipantId.replace('sep-', '')),
     pickFor: (entryId: string, golfer: string, actorUserId = entryId === ENTRY_A ? ALICE : BOB) =>
-      service.submitSelection({
+      service.selectPick({
         contestId: CONTEST_ID,
         entryId,
-        participantId: `sep-${golfer}`,
+        sportEventParticipantId: `sep-${golfer}`,
+        actorUserId,
+      }),
+    unpickFor: (entryId: string, golfer: string, actorUserId = entryId === ENTRY_A ? ALICE : BOB) =>
+      service.unselectPick({
+        contestId: CONTEST_ID,
+        entryId,
+        sportEventParticipantId: `sep-${golfer}`,
         actorUserId,
       }),
   };
@@ -294,8 +301,10 @@ describe('Tiered selection — a member building an entry', () => {
     const result = await world.pickFor(ENTRY_A, 'e');
 
     expect(world.held(ENTRY_A)).toEqual(['a', 'b', 'd', 'e']);
-    expect(result.view.rosterSize).toBe(4);
-    expect(result.view.selectionGroups.map((group) =>
+    expect(result.picks.map((pick) => pick.sportEventParticipantId)).toEqual(['sep-a', 'sep-b', 'sep-d', 'sep-e']);
+    const room = await world.service.getSelectionState({ contestId: CONTEST_ID, actorUserId: ALICE });
+    expect(room.rosterSize).toBe(4);
+    expect(room.selectionGroups.map((group) =>
       group.participants.filter((participant) => participant.isSelected).map((p) => p.participantId),
     )).toEqual([['p-a', 'p-b'], ['p-d', 'p-e']]);
   });
@@ -322,8 +331,8 @@ describe('Tiered selection — a member building an entry', () => {
 
     const swapped = await world.pickFor(ENTRY_A, 'c');
 
-    expect(swapped.outcome).toBe('placed');
     expect(world.held(ENTRY_A)).toEqual(['a', 'd', 'c']);
+    expect(swapped.picks.map((pick) => pick.sportEventParticipantId)).toEqual(['sep-a', 'sep-d', 'sep-c']);
     expect(world.picks.find((pick) => pick.sportEventParticipantId === 'sep-c')?.lineupSlot).toBe(2);
   });
 
@@ -339,12 +348,24 @@ describe('Tiered selection — a member building an entry', () => {
     expect(world.held(ENTRY_A)).toEqual(['a', 'b', 'd', 'f']);
   });
 
-  it('unselects a held golfer when it is picked again, and lets the same golfer be picked back', async () => {
+  it('keeps a held golfer when they are picked again, so a repeated request undoes nothing', async () => {
     const world = buildWorld();
     await world.pickFor(ENTRY_A, 'a');
 
-    const off = await world.pickFor(ENTRY_A, 'a');
-    expect(off.outcome).toBe('toggled-off');
+    const again = await world.pickFor(ENTRY_A, 'a');
+
+    expect(world.held(ENTRY_A)).toEqual(['a']);
+    expect(again.picks.map((pick) => pick.sportEventParticipantId)).toEqual(['sep-a']);
+  });
+
+  it('unselects a held golfer, says the entry holds nothing, and lets the same golfer be picked back', async () => {
+    const world = buildWorld();
+    await world.pickFor(ENTRY_A, 'a');
+
+    const off = await world.unpickFor(ENTRY_A, 'a');
+    expect(off.picks).toEqual([]);
+    expect(world.held(ENTRY_A)).toEqual([]);
+    await world.unpickFor(ENTRY_A, 'a');
     expect(world.held(ENTRY_A)).toEqual([]);
 
     await world.pickFor(ENTRY_A, 'a');
@@ -373,7 +394,9 @@ describe('Tiered selection — a member building an entry', () => {
     const result = await world.pickFor(ENTRY_A, 'a', ALICE_CO_OWNER);
 
     expect(world.held(ENTRY_A)).toEqual(['a']);
-    expect(result.view.myEntryId).toBe(ENTRY_A);
+    expect(result.entryId).toBe(ENTRY_A);
+    const room = await world.service.getSelectionState({ contestId: CONTEST_ID, actorUserId: ALICE_CO_OWNER });
+    expect(room.myEntryId).toBe(ENTRY_A);
   });
 
   it('refuses a pick from someone who has left the entry\'s team, leaving the entry unchanged', async () => {
@@ -411,9 +434,9 @@ describe('Tiered selection — withdrawn golfers', () => {
     const later = buildWorld({ withdrawn: ['b'] });
     later.picks.push(...world.picks);
 
-    const result = await later.pickFor(ENTRY_A, 'b');
+    const result = await later.unpickFor(ENTRY_A, 'b');
 
-    expect(result.outcome).toBe('toggled-off');
+    expect(result.picks.map((pick) => pick.sportEventParticipantId)).toEqual(['sep-a']);
     expect(later.held(ENTRY_A)).toEqual(['a']);
   });
 });
@@ -440,7 +463,7 @@ describe('Tiered selection — picks change only while the contest takes them', 
     await world.pickFor(ENTRY_A, 'b');
     world.contest.status = status;
 
-    await expect(world.pickFor(ENTRY_A, 'a')).rejects.toMatchObject({ code: 'CONTEST_ENTRY_LOCKED' });
+    await expect(world.unpickFor(ENTRY_A, 'a')).rejects.toMatchObject({ code: 'CONTEST_ENTRY_LOCKED' });
     await expect(world.pickFor(ENTRY_A, 'c')).rejects.toMatchObject({ code: 'CONTEST_ENTRY_LOCKED' });
     expect(world.held(ENTRY_A)).toEqual(['a', 'b']);
   });
@@ -452,7 +475,7 @@ describe('Tiered selection — an ACTIVE contest still takes picks for an event 
 
     await world.pickFor(ENTRY_A, 'a');
     await world.pickFor(ENTRY_A, 'b');
-    await world.pickFor(ENTRY_A, 'a');
+    await world.unpickFor(ENTRY_A, 'a');
 
     expect(world.held(ENTRY_A)).toEqual(['b']);
   });
@@ -494,7 +517,7 @@ describe('Tiered selection — picks close when the event starts, whatever the c
       return before.picks;
     })()));
 
-    await expect(world.pickFor(ENTRY_A, 'a')).rejects.toMatchObject({ code: 'CONTEST_ENTRY_LOCKED' });
+    await expect(world.unpickFor(ENTRY_A, 'a')).rejects.toMatchObject({ code: 'CONTEST_ENTRY_LOCKED' });
     expect(world.held(ENTRY_A)).toEqual(['a']);
   });
 });
@@ -602,5 +625,25 @@ describe('Selection room response — the published shape', () => {
     ]);
     expect(response.pickHistories.map((pick) => pick.participantName)).toEqual(['Golfer A', 'Golfer D']);
     expect(response.rosterSize).toBe(4);
+  });
+
+  it('maps a pick change into the pick response: the entry\'s own picks by field row id, its status, and no room', async () => {
+    const world = buildWorld();
+    await world.pickFor(ENTRY_B, 'c');
+    await world.pickFor(ENTRY_A, 'a');
+
+    const response = toSelectionPickResponse(await world.pickFor(ENTRY_A, 'd'));
+
+    expect(response).toEqual({
+      contestId: CONTEST_ID,
+      entryId: ENTRY_A,
+      sportEventId: world.sportEvent.id,
+      entryStatus: 'DRAFT',
+      picks: [
+        expect.objectContaining({ entryId: ENTRY_A, participantId: 'sep-a', participantName: 'Golfer A', tierId: 'tier-1' }),
+        expect.objectContaining({ entryId: ENTRY_A, participantId: 'sep-d', participantName: 'Golfer D', tierId: 'tier-2' }),
+      ],
+      lineupSummary: null,
+    });
   });
 });

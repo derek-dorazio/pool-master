@@ -5,7 +5,7 @@ import {
   isRosterSelectionType,
   toCents,
 } from '@poolmaster/shared/domain';
-import type { SelectionStateResponse } from '@/lib/api';
+import type { SelectionPickResponse, SelectionStateResponse } from '@/lib/api';
 import type { SelectionGroup } from './contest-entry-selection';
 import type { ErrorCodeMessages } from '@/lib/errors';
 
@@ -18,7 +18,10 @@ type BudgetLineupSummary = NonNullable<SelectionState['lineupSummary']>;
  * keeps Submit disabled. The page shell (header, tiebreaker, Submit) is shared.
  */
 type LineupRules = {
-  /** The room as it will read once the server applies a tap on `participantId`. */
+  /**
+   * The room as it will read once the server applies a tap on `participantId`: a held golfer is
+   * unselected, anyone else selected.
+   */
   applySelection: (selectionState: SelectionState, participantId: string, entryId: string) => SelectionState;
   /** Why a full lineup still cannot be submitted, in the words the page shows, or null. */
   submitBlockedReason: (selectionState: SelectionState) => string | null;
@@ -68,6 +71,28 @@ function getNextBudgetSelectedParticipantIds(group: SelectionGroup, participantI
     : [...group.selectedParticipantIds, participantId];
 }
 
+/** Whether every group holds its picks, counted as the server counts `isComplete`. */
+function isLineupComplete(selectionGroups: SelectionGroup[]): boolean {
+  const totalSelections = selectionGroups.reduce((sum, group) => sum + group.selectedParticipantIds.length, 0);
+  const requiredSelections = selectionGroups.reduce((sum, group) => sum + group.picksFromGroup, 0);
+  return requiredSelections > 0 && totalSelections >= requiredSelections;
+}
+
+/** A group with exactly `isSelected` picked, listed in the group's own order as the server lists them. */
+function withSelected(group: SelectionGroup, isSelected: (participantId: string) => boolean): SelectionGroup {
+  const participants = group.participants.map((participant) => ({
+    ...participant,
+    isSelected: isSelected(participant.sportEventParticipantId),
+  }));
+  return {
+    ...group,
+    selectedParticipantIds: participants
+      .filter((participant) => participant.isSelected)
+      .map((participant) => participant.sportEventParticipantId),
+    participants,
+  };
+}
+
 /** The room with the group holding `participantId` re-picked, and `isComplete` recounted. */
 function withGroupSelection(
   selectionState: SelectionState,
@@ -78,23 +103,47 @@ function withGroupSelection(
     if (!group.participants.some((participant) => participant.sportEventParticipantId === participantId)) {
       return group;
     }
-    const selectedParticipantIds = nextSelectedIds(group);
-    const selectedIdSet = new Set(selectedParticipantIds);
-    return {
-      ...group,
-      selectedParticipantIds,
-      participants: group.participants.map((participant) => ({
-        ...participant,
-        isSelected: selectedIdSet.has(participant.sportEventParticipantId),
-      })),
-    };
+    const selectedIdSet = new Set(nextSelectedIds(group));
+    return withSelected(group, (candidate) => selectedIdSet.has(candidate));
   });
-  const totalSelections = nextSelectionGroups.reduce((sum, group) => sum + group.selectedParticipantIds.length, 0);
-  const requiredSelections = nextSelectionGroups.reduce((sum, group) => sum + group.picksFromGroup, 0);
   return {
     ...selectionState,
     selectionGroups: nextSelectionGroups,
-    isComplete: requiredSelections > 0 && totalSelections >= requiredSelections,
+    isComplete: isLineupComplete(nextSelectionGroups),
+  };
+}
+
+/**
+ * The room with one pick change's answer merged in (#1259), so the page settles on what the
+ * server kept without reading the room again: the entry's picks replace the ones shown (which
+ * also puts right a full tier's swap guessed differently), with its status and budget summary.
+ * An answer about another entry or event than the room shows changes only that entry's rows.
+ */
+export function mergePickChange(selectionState: SelectionState, change: SelectionPickResponse): SelectionState {
+  if (change.sportEventId !== selectionState.sportEventId) {
+    return selectionState;
+  }
+  const merged: SelectionState = {
+    ...selectionState,
+    entries: selectionState.entries.map((entry) => (entry.id === change.entryId
+      ? { ...entry, status: change.entryStatus }
+      : entry)),
+    pickHistories: [
+      ...selectionState.pickHistories.filter((pick) => pick.entryId !== change.entryId),
+      ...change.picks,
+    ],
+  };
+  if (selectionState.selectedEntryId !== change.entryId) {
+    return merged;
+  }
+  const heldIds = new Set(change.picks.flatMap((pick) => (pick.participantId ? [pick.participantId] : [])));
+  const selectionGroups = (selectionState.selectionGroups ?? []).map((group) =>
+    withSelected(group, (participantId) => heldIds.has(participantId)));
+  return {
+    ...merged,
+    selectionGroups,
+    isComplete: isLineupComplete(selectionGroups),
+    lineupSummary: change.lineupSummary,
   };
 }
 

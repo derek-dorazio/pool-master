@@ -20,7 +20,7 @@ import {
   releaseEvent,
   replaceEventTiers,
   submitContestEntry,
-  submitContestSelection,
+  selectContestPick,
   transitionEvent,
 } from '@poolmaster/shared/generated/hey-api';
 import { ContestFormat, ContestStatus, SelectionType, Sport, findSportRow } from '@poolmaster/shared/domain';
@@ -174,7 +174,7 @@ describe('SDK Functional: Auto racing NASCAR Cup Series points', () => {
     const enterWith = async (client: typeof a, lineup: string[]) => {
       const entryId = expectDefined((await enterContest({ client, path: { contestId } })).data).entry.id;
       for (const driver of lineup) {
-        const pick = await submitContestSelection({ client, path: { contestId }, body: { entryId, participantId: fieldRowOf(driver) } });
+        const pick = await selectContestPick({ client, path: { contestId, entryId, sportEventParticipantId: fieldRowOf(driver) } });
         expect(pick.response?.status).toBe(200);
       }
       expect((await submitContestEntry({ client, path: { contestId, entryId, sportEventId: eventId } })).response?.status).toBe(200);
@@ -314,7 +314,7 @@ describe('SDK Functional: Auto racing Formula 1 points', () => {
     const enterWith = async (client: typeof a, lineup: string[]) => {
       const entryId = expectDefined((await enterContest({ client, path: { contestId } })).data).entry.id;
       for (const driver of lineup) {
-        const pick = await submitContestSelection({ client, path: { contestId }, body: { entryId, participantId: fieldRowOf(driver).id } });
+        const pick = await selectContestPick({ client, path: { contestId, entryId, sportEventParticipantId: fieldRowOf(driver).id } });
         expect(pick.response?.status).toBe(200);
       }
       expect((await submitContestEntry({ client, path: { contestId, entryId, sportEventId: eventId } })).response?.status).toBe(200);

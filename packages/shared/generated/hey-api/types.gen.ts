@@ -12913,20 +12913,6 @@ export type SelectionStateQuery = {
 };
 
 /**
- * Request payload for submitting a pick.
- */
-export type SubmitPickRequest = {
-    /**
-     * Entry making the pick.
-     */
-    entryId: string;
-    /**
-     * Participant being selected.
-     */
-    participantId: string;
-};
-
-/**
  * Budget contest: the viewed entry's spend against the salary cap (#93).
  */
 export type SelectionBudgetLineupSummaryDto = {
@@ -13089,47 +13075,26 @@ export type SelectionStateResponse = {
 };
 
 /**
- * Selection response returned immediately after a pick mutation.
+ * What one pick change left on the entry (#1259): only what changed, for the room to merge into what it shows. Never the whole room.
  */
 export type SelectionPickResponse = {
     contestId: string;
-    contestName: string;
     /**
-     * The contest event the room shows (#713): its field, its picks, and each entry's status in it.
+     * The entry whose pick changed.
+     */
+    entryId: string;
+    /**
+     * The contest event the pick is in: the event of the field row it names (#713).
      */
     sportEventId: string;
     /**
-     * Whether this event's picks can still change: the contest is open or live, it has not been drawn, and the event has not started.
+     * The entry's status in the event after the change: a change that leaves a submitted lineup short, or over a budget contest's cap, sends it back to DRAFT.
      */
-    acceptsPicks: boolean;
-    selectionType: 'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW' | 'PICK_EM' | 'BRACKET' | 'SURVIVOR' | 'SQUARES';
+    entryStatus: 'DRAFT' | 'SUBMITTED';
     /**
-     * When a random-draw contest's draw dealt its picks, closing its entries and revealing every entry's picks. Null until then, and always for other selection types.
+     * Every one of the entry's picks in the event after the change, oldest first: the room replaces the entry's picks with these, which also puts right a full-tier swap it guessed differently.
      */
-    drawnAt: string | null;
-    isCommissioner?: boolean;
-    rosterSize: number;
-    status: 'PENDING' | 'LIVE' | 'PAUSED' | 'COMPLETE';
-    myEntryId: string | null;
-    entries: Array<{
-        /**
-         * Entry identifier.
-         */
-        id: string;
-        /**
-         * User that owns the entry.
-         */
-        userId: string;
-        /**
-         * Entry display name.
-         */
-        name: string;
-        /**
-         * The entry's status in the shown event (#713): DRAFT until the owner submits a complete lineup for it; SUBMITTED once they have. A pick change that leaves the lineup short sends it back to DRAFT (#481).
-         */
-        status: 'DRAFT' | 'SUBMITTED';
-    }>;
-    pickHistories: Array<{
+    picks: Array<{
         pickNumber: number;
         round: number;
         pickInRound: number;
@@ -13149,48 +13114,10 @@ export type SelectionPickResponse = {
          */
         pickedAt: string;
     }>;
-    availableParticipantIds: Array<string>;
-    selectedEntryId?: string | null;
-    selectedEntryName?: string | null;
-    tiebreakerValue?: number | null;
-    selectionGroups?: Array<{
-        groupId: string;
-        groupName: string;
-        groupNumber: number;
-        picksFromGroup: number;
-        /**
-         * Selections currently saved on the selected entry for this group.
-         */
-        selectedParticipantIds: Array<string>;
-        /**
-         * Selectable participants shown inside the group.
-         */
-        participants: Array<{
-            sportEventParticipantId: string;
-            participantId: string;
-            participantName: string;
-            role?: string | null;
-            team?: string | null;
-            status?: string | null;
-            price?: number | null;
-            ranking?: number | null;
-            /**
-             * The bracket seed, 1 the best, shown in the selection room for a knockout event; null where the event seeds nobody.
-             */
-            seedNumber: number | null;
-            orderIndex?: number | null;
-            isAvailable: boolean;
-            /**
-             * Whether the currently selected entry has this participant selected.
-             */
-            isSelected?: boolean;
-        }>;
-    }>;
-    isComplete: boolean;
     /**
-     * The viewed entry's lineup summary, tagged by selection type: only budget contests carry one today. Null when there is no viewed entry or the type has none.
+     * The entry's lineup summary after the change: only budget contests carry one, null otherwise.
      */
-    lineupSummary?: {
+    lineupSummary: {
         selectionType: 'BUDGET_PICK';
         /**
          * Whole dollars the entry's picks may cost at most: its event's cap.
@@ -33882,16 +33809,18 @@ export type GetSelectionStateResponses = {
 
 export type GetSelectionStateResponse = GetSelectionStateResponses[keyof GetSelectionStateResponses];
 
-export type SubmitContestSelectionData = {
-    body: SubmitPickRequest;
+export type UnselectContestPickData = {
+    body?: never;
     path: {
         contestId: string;
+        entryId: string;
+        sportEventParticipantId: string;
     };
     query?: never;
-    url: '/api/v1/selections/{contestId}/pick';
+    url: '/api/v1/selections/{contestId}/entries/{entryId}/picks/{sportEventParticipantId}';
 };
 
-export type SubmitContestSelectionErrors = {
+export type UnselectContestPickErrors = {
     /**
      * Standard API error envelope.
      */
@@ -33914,16 +33843,61 @@ export type SubmitContestSelectionErrors = {
     409: ErrorEnvelope;
 };
 
-export type SubmitContestSelectionError = SubmitContestSelectionErrors[keyof SubmitContestSelectionErrors];
+export type UnselectContestPickError = UnselectContestPickErrors[keyof UnselectContestPickErrors];
 
-export type SubmitContestSelectionResponses = {
+export type UnselectContestPickResponses = {
     /**
-     * Selection response returned immediately after a pick mutation.
+     * What one pick change left on the entry (#1259): only what changed, for the room to merge into what it shows. Never the whole room.
      */
     200: SelectionPickResponse;
 };
 
-export type SubmitContestSelectionResponse = SubmitContestSelectionResponses[keyof SubmitContestSelectionResponses];
+export type UnselectContestPickResponse = UnselectContestPickResponses[keyof UnselectContestPickResponses];
+
+export type SelectContestPickData = {
+    body?: never;
+    path: {
+        contestId: string;
+        entryId: string;
+        sportEventParticipantId: string;
+    };
+    query?: never;
+    url: '/api/v1/selections/{contestId}/entries/{entryId}/picks/{sportEventParticipantId}';
+};
+
+export type SelectContestPickErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    409: ErrorEnvelope;
+};
+
+export type SelectContestPickError = SelectContestPickErrors[keyof SelectContestPickErrors];
+
+export type SelectContestPickResponses = {
+    /**
+     * What one pick change left on the entry (#1259): only what changed, for the room to merge into what it shows. Never the whole room.
+     */
+    200: SelectionPickResponse;
+};
+
+export type SelectContestPickResponse = SelectContestPickResponses[keyof SelectContestPickResponses];
 
 export type SubmitContestEntryData = {
     body?: never;
