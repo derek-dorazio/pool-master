@@ -1,3 +1,4 @@
+import { createServer } from 'node:http';
 import { REQUEST_QUERY_BUDGET } from '../../packages/core-api/src/core/request-query-usage';
 
 /** A request the functional suite fails on (#1244): its route ran more queries than the budget. */
@@ -30,4 +31,56 @@ export function describeQueryBudgetViolations(violations: readonly QueryBudgetVi
     ...lines,
     'Batch the reads, or add the route to tests/functional/query-budget-allow-list.ts with the ticket that fixes it.',
   ].join('\n');
+}
+
+/** The over-budget requests a functional server has recorded, served for the suite to take. */
+export interface QueryBudgetRecorder {
+  url: string;
+  record(violation: QueryBudgetViolation): void;
+  close(): Promise<void>;
+}
+
+/**
+ * Holds recorded violations in memory and hands them over on `POST /take`, which clears them,
+ * the way the mail inbox serves captured mail (#442).
+ */
+export async function startQueryBudgetRecorder(): Promise<QueryBudgetRecorder> {
+  let recorded: QueryBudgetViolation[] = [];
+  const server = createServer((request, response) => {
+    if (request.method === 'POST' && request.url === '/take') {
+      const taken = recorded;
+      recorded = [];
+      response.writeHead(200, { 'content-type': 'application/json' });
+      response.end(JSON.stringify(taken));
+      return;
+    }
+    response.writeHead(404).end();
+  });
+
+  await new Promise<void>((resolve, reject) => {
+    server.once('error', reject);
+    server.listen(0, '127.0.0.1', () => {
+      server.off('error', reject);
+      resolve();
+    });
+  });
+
+  const address = server.address();
+  if (!address || typeof address === 'string') {
+    server.close();
+    throw new Error('Query budget recorder did not bind to a TCP port.');
+  }
+
+  return {
+    url: `http://127.0.0.1:${address.port}`,
+    record: (violation) => {
+      recorded.push(violation);
+    },
+    close: () => new Promise<void>((resolve, reject) => {
+      server.close((err) => {
+        if (err) reject(err);
+        else resolve();
+      });
+    }),
+  };
 }

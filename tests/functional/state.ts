@@ -8,8 +8,8 @@ export interface FunctionalServerState {
   runId: string;
   /** The server's captured-mail endpoint (#442); absent on a daemon started by older code. */
   mailInboxUrl?: string;
-  /** Where the server records requests over the query budget (#1244); absent on an older daemon. */
-  queryBudgetViolationsPath?: string;
+  /** Where the suite takes the requests over the query budget (#1244); absent on an older daemon. */
+  queryBudgetUrl?: string;
 }
 
 /** The `APP_BASE_URL` the functional server runs with, so tests can assert exact email links. */

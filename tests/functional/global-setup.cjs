@@ -158,8 +158,8 @@ function writeRunState(serverState, runId) {
       baseUrl: serverState.baseUrl,
       // #442 — the daemon's captured-mail endpoint, read by tests/functional/mail.ts.
       mailInboxUrl: serverState.mailInboxUrl,
-      // #1244 — the daemon's over-budget requests, read by tests/functional/query-budget-check.ts.
-      queryBudgetViolationsPath: serverState.queryBudgetViolationsPath,
+      // #1244 — where the suite takes the daemon's over-budget requests: tests/functional/query-budget-check.ts.
+      queryBudgetUrl: serverState.queryBudgetUrl,
       runId,
     }),
   );

@@ -11,7 +11,7 @@ import {
   type SmtpSinkServer,
 } from '../support/smtp-sink';
 import { FUNCTIONAL_APP_BASE_URL } from './state';
-import { queryBudgetViolation } from '../support/query-budget';
+import { queryBudgetViolation, startQueryBudgetRecorder, type QueryBudgetRecorder } from '../support/query-budget';
 import { QUERY_BUDGET_ALLOW_LIST } from './query-budget-allow-list';
 
 const stateFilePathEnv = process.env.FUNCTIONAL_SERVER_STATE_FILE;
@@ -25,12 +25,9 @@ if (!stateFilePathEnv) {
 // `const` guard does not narrow inside function bodies.
 const stateFilePath: string = stateFilePathEnv;
 
-// #1244 — each request over the query budget, one JSON line apiece, read and cleared by the
-// suite after every test (tests/functional/query-budget-check.ts).
-const queryBudgetViolationsPath = path.join(path.dirname(stateFilePath), 'query-budget-violations.jsonl');
-
 let smtpSink: SmtpSinkServer | undefined;
 let mailInbox: MailInboxServer | undefined;
+let queryBudgetRecorder: QueryBudgetRecorder | undefined;
 // pool-master-cs8 — the FAPI daemon runs a real mock-contest-feed provider so
 // provider-linked golf scenarios (catalog browse, score-source link, sync-driven
 // live scores) can be driven end to end through the generated SDK, the same way
@@ -100,22 +97,22 @@ function activeRunsExist(): boolean {
 }
 
 /**
- * Records each request over the query budget that is not on the allow-list. Recorded on send,
+ * Records each request over the query budget that is not on the allow-list (#1244), for the
+ * suite to take after every test (tests/functional/query-budget-check.ts). Recorded on send,
  * before the test sees its response, so the check after the test always finds it.
  */
-function recordQueryBudgetViolations(app: FastifyInstance): void {
-  fsSync.rmSync(queryBudgetViolationsPath, { force: true });
+function recordQueryBudgetViolations(app: FastifyInstance, recorder: QueryBudgetRecorder): void {
   app.addHook('onSend', (request, _reply, payload, done) => {
     const queryCount = request.queryUsage?.queryCount ?? 0;
     const violation = queryBudgetViolation(`${request.method} ${request.routeOptions.url ?? request.url}`, queryCount, QUERY_BUDGET_ALLOW_LIST);
     if (violation !== null) {
-      fsSync.appendFileSync(queryBudgetViolationsPath, `${JSON.stringify(violation)}\n`);
+      recorder.record(violation);
     }
     done(null, payload);
   });
 }
 
-async function writeState(port: number, mailInboxUrl: string): Promise<void> {
+async function writeState(port: number, mailInboxUrl: string, queryBudgetUrl: string): Promise<void> {
   await fs.mkdir(path.dirname(stateFilePath), { recursive: true });
   await fs.writeFile(
     stateFilePath,
@@ -127,7 +124,7 @@ async function writeState(port: number, mailInboxUrl: string): Promise<void> {
       // #442 — where tests read the emails the server sent; see tests/functional/mail.ts.
       mailInboxUrl,
       // #1244 — read by tests/functional/query-budget-check.ts.
-      queryBudgetViolationsPath,
+      queryBudgetUrl,
       // #276 — read by global-setup, which adopts this daemon only while its spawner or a run using
       // it is alive: the condition under which the watchdog below keeps it running.
       spawnerPid,
@@ -144,6 +141,7 @@ const spawnerPid = Number(process.env.FUNCTIONAL_SPAWNER_PID) || process.ppid;
 async function main(): Promise<void> {
   smtpSink = await startSmtpSinkServer();
   mailInbox = await startMailInboxServer(smtpSink);
+  queryBudgetRecorder = await startQueryBudgetRecorder();
   process.env.EMAIL_PROVIDER = 'smtp';
   process.env.SMTP_HOST = '127.0.0.1';
   process.env.SMTP_PORT = String(smtpSink.port);
@@ -163,7 +161,7 @@ async function main(): Promise<void> {
   });
 
   const app = buildApp();
-  recordQueryBudgetViolations(app);
+  recordQueryBudgetViolations(app, queryBudgetRecorder);
 
   await app.ready();
   await app.listen({ host: '127.0.0.1', port: 0 });
@@ -173,7 +171,7 @@ async function main(): Promise<void> {
     throw new Error('Functional server failed to bind to a TCP port');
   }
 
-  await writeState(address.port, mailInbox.url);
+  await writeState(address.port, mailInbox.url, queryBudgetRecorder.url);
 
   // Idempotent shutdown — multiple triggers (SIGTERM + watchdog) can fire concurrently
   // when the parent dies abruptly mid-shutdown. Without the guard, app.close() would be
@@ -188,6 +186,7 @@ async function main(): Promise<void> {
     } finally {
       await mockContestFeedProvider?.close().catch(() => undefined);
       await mailInbox?.close().catch(() => undefined);
+      await queryBudgetRecorder?.close().catch(() => undefined);
       await smtpSink?.close().catch(() => undefined);
       process.exit(0);
     }
@@ -249,6 +248,7 @@ main().catch(async (error: unknown) => {
   process.stderr.write(`${error instanceof Error ? error.stack ?? error.message : String(error)}\n`);
   await mockContestFeedProvider?.close().catch(() => undefined);
   await mailInbox?.close().catch(() => undefined);
+  await queryBudgetRecorder?.close().catch(() => undefined);
   await smtpSink?.close().catch(() => undefined);
   if (stateFilePath) {
     await fs.rm(stateFilePath, { force: true }).catch(() => undefined);
