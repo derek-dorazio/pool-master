@@ -26,7 +26,7 @@ function ports(overrides: Partial<IngestionPorts> = {}): IngestionPorts {
   return {
     sportEvents: fakeSportEventRepo(),
     participantMappings: fakeParticipantProviderMappingRepo(),
-    syncRuns: { create: jest.fn(), update: jest.fn(), findAll: jest.fn(), findById: jest.fn() },
+    syncRuns: { create: jest.fn(), update: jest.fn(), findAll: jest.fn(), findById: jest.fn(), clearDetailsBatchSubmittedBetween: jest.fn(), deleteBatchSubmittedBefore: jest.fn() },
     ...overrides,
   };
 }
@@ -120,7 +120,7 @@ describe('IngestionService manual sync submission', () => {
     const service = new IngestionService({
       // pool-master-cgb — no local SportEvent row exists yet for this
       // manual sync target, so the syncScope guard is a permissive no-op.
-      ...ports({ syncRuns: { create: providerSyncRunCreate, update: providerSyncRunUpdate, findAll: jest.fn(), findById: jest.fn() } }),
+      ...ports({ syncRuns: { create: providerSyncRunCreate, update: providerSyncRunUpdate, findAll: jest.fn(), findById: jest.fn(), clearDetailsBatchSubmittedBetween: jest.fn(), deleteBatchSubmittedBefore: jest.fn() } }),
       registry,
       scheduler,
       logger: fakeLogger(),
@@ -192,7 +192,7 @@ describe('IngestionService manual sync submission', () => {
             create: echoSyncRunCreate(),
             update: jest.fn().mockResolvedValue(undefined),
             findAll: jest.fn(),
-            findById: jest.fn(),
+            findById: jest.fn(), clearDetailsBatchSubmittedBetween: jest.fn(), deleteBatchSubmittedBefore: jest.fn(),
           },
         }),
         registry,

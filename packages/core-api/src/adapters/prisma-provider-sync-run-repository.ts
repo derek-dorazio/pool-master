@@ -3,7 +3,7 @@
  * the sync dashboard reads.
  */
 
-import type { Prisma, PrismaClient, ProviderSyncRun as ProviderSyncRunRow } from '@prisma/client';
+import { Prisma, type PrismaClient, type ProviderSyncRun as ProviderSyncRunRow } from '@prisma/client';
 import type {
   ProviderSyncRunCreate,
   ProviderSyncRunFilters,
@@ -65,6 +65,33 @@ export class PrismaProviderSyncRunRepository implements ProviderSyncRunRepositor
       ...toProviderSyncRun(row),
       details: row.detailsJson === null ? null : toPayload(row.detailsJson),
     };
+  }
+
+  async clearDetailsBatchSubmittedBetween(from: Date, before: Date, limit: number): Promise<number> {
+    const batch = await this.prisma.providerSyncRun.findMany({
+      where: { createdAt: { gte: from, lt: before }, detailsJson: { not: Prisma.DbNull } },
+      select: { id: true },
+      take: limit,
+    });
+    if (batch.length === 0) return 0;
+    const { count } = await this.prisma.providerSyncRun.updateMany({
+      where: { id: { in: batch.map((row) => row.id) } },
+      data: { detailsJson: Prisma.DbNull },
+    });
+    return count;
+  }
+
+  async deleteBatchSubmittedBefore(before: Date, limit: number): Promise<number> {
+    const batch = await this.prisma.providerSyncRun.findMany({
+      where: { createdAt: { lt: before } },
+      select: { id: true },
+      take: limit,
+    });
+    if (batch.length === 0) return 0;
+    const { count } = await this.prisma.providerSyncRun.deleteMany({
+      where: { id: { in: batch.map((row) => row.id) } },
+    });
+    return count;
   }
 }
 

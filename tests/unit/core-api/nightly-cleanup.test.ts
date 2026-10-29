@@ -1,10 +1,17 @@
 import {
+  CLEANUP_BATCH_SIZE,
   NightlyCleanupScheduler,
   deleteInBatches,
   type NightlyCleanupStep,
   type NightlyCleanupStepName,
 } from '../../../packages/core-api/src/core/nightly-cleanup';
 import { EmailMessageRetention } from '../../../packages/core-api/src/modules/email';
+import {
+  SYNC_RUNS_KEPT_MONTHS,
+  SYNC_RUN_DETAILS_KEPT_DAYS,
+  SyncRunDetailsRetention,
+  SyncRunRetention,
+} from '../../../packages/core-api/src/modules/ingestion/persistence/sync-run-retention';
 import { fakeLogger } from '../../support/fake-logger';
 import { heldElsewhere, heldHere } from '../../support/job-locks';
 import { inMemoryEmailMessages } from '../../support/in-memory-email-messages';
@@ -155,5 +162,41 @@ describe('email retention', () => {
 
     expect(deleted).toBe(1);
     expect(outbox.rows.map((row) => row.idempotencyKey)).toEqual(['kept']);
+  });
+});
+
+describe('sync-run retention', () => {
+  const NOW = new Date('2026-10-29T08:00:00.000Z');
+
+  it('clears run details in the week of submissions that just passed 30 days, batch by batch', async () => {
+    const batches = [1000, 1000, 12];
+    const clearDetailsBatchSubmittedBetween = jest.fn((_from: Date, _before: Date, _limit: number) =>
+      Promise.resolve(batches.shift() ?? 0));
+
+    const cleared = await new SyncRunDetailsRetention({ clearDetailsBatchSubmittedBetween }).purge(NOW);
+
+    expect(cleared).toBe(2012);
+    expect(clearDetailsBatchSubmittedBetween).toHaveBeenCalledTimes(3);
+    expect(clearDetailsBatchSubmittedBetween).toHaveBeenCalledWith(
+      new Date('2026-09-22T08:00:00.000Z'),
+      new Date('2026-09-29T08:00:00.000Z'),
+      CLEANUP_BATCH_SIZE,
+    );
+  });
+
+  it('deletes runs submitted before the same day a year ago', async () => {
+    const deleteBatchSubmittedBefore = jest.fn((_before: Date, _limit: number) => Promise.resolve(0));
+
+    const deleted = await new SyncRunRetention({ deleteBatchSubmittedBefore }).purge(NOW);
+
+    expect(deleted).toBe(0);
+    expect(deleteBatchSubmittedBefore).toHaveBeenCalledWith(new Date('2025-10-29T08:00:00.000Z'), CLEANUP_BATCH_SIZE);
+  });
+
+  it('keeps details 30 days and runs 12 months, under their own names in the summary line', () => {
+    expect(SYNC_RUN_DETAILS_KEPT_DAYS).toBe(30);
+    expect(SYNC_RUNS_KEPT_MONTHS).toBe(12);
+    expect(new SyncRunDetailsRetention({ clearDetailsBatchSubmittedBetween: jest.fn() }).name).toBe('syncRunDetails');
+    expect(new SyncRunRetention({ deleteBatchSubmittedBefore: jest.fn() }).name).toBe('syncRuns');
   });
 });

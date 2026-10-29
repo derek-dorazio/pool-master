@@ -233,7 +233,7 @@ export function RootAdminSyncDashboardPage() {
   const evidenceEmptyMessage = runDetails === null
     ? payloadRun?.status === ProviderSyncRunStatus.SUBMITTED
       ? 'This run hasn\'t started yet, so it has no details.'
-      : 'No details are stored for this run.'
+      : 'Detailed diagnostics are kept for 30 days. None are stored for this run.'
     : [
         `No ${PRODUCT_NAME} rows changed in this sync.`,
         providerPayload?.rawCaptured === true ? 'Use the Payloads tab to inspect the raw provider payload.' : null,
