@@ -50,6 +50,12 @@ export interface TokenPair {
 const BCRYPT_ROUNDS = 12;
 const ACCESS_TOKEN_EXPIRY = 15 * 60; // 15 minutes in seconds
 const REFRESH_TOKEN_EXPIRY_DAYS = 7;
+/**
+ * How long after a rotation its old token may come back without ending the session (#1229). Two
+ * tabs share the refresh cookie, and a tab can send the old token before the other's refresh has
+ * set the new one; that is a race, not a stolen token, and it is refused without ending anything.
+ */
+const ROTATED_TOKEN_GRACE_MS = 10_000;
 
 // ---------------------------------------------------------------------------
 // Errors
@@ -205,7 +211,26 @@ export class AuthService {
       include: { user: true },
     });
 
-    if (!stored || stored.revokedAt || stored.expiresAt < new Date()) {
+    const now = new Date();
+    if (stored?.rotatedAt && now.getTime() - stored.rotatedAt.getTime() > ROTATED_TOKEN_GRACE_MS) {
+      // A token a refresh replaced has come back after the two-tab grace window: someone holds a
+      // copy of it. Whoever refreshed first may be the thief, so the whole session ends (#1229).
+      const ended = await this.prisma.refreshToken.updateMany({
+        where: { sessionId: stored.sessionId, revokedAt: null },
+        data: { revokedAt: now },
+      });
+      this.logger?.warn({
+        action: 'authService.refresh.reuseDetected',
+        data: {
+          userId: stored.userId,
+          sessionId: stored.sessionId,
+          revokedCount: ended.count,
+        },
+      }, 'Ended a session because a rotated refresh token was used again');
+      throw new AuthError('Invalid or expired refresh token', 'INVALID_REFRESH_TOKEN');
+    }
+
+    if (!stored || stored.revokedAt || stored.expiresAt < now) {
       this.logger?.warn({
         action: 'authService.refresh.invalidToken',
       }, 'Rejected refresh for invalid or expired token');
@@ -220,7 +245,7 @@ export class AuthService {
     const tokens = await this.prisma.$transaction(async (tx) => {
       const rotated = await tx.refreshToken.updateMany({
         where: { id: stored.id, revokedAt: null },
-        data: { revokedAt: new Date() },
+        data: { revokedAt: now, rotatedAt: now },
       });
       if (rotated.count === 0) {
         this.logger?.warn({
