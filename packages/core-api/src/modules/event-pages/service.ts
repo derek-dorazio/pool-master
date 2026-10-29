@@ -13,7 +13,7 @@ import {
   type EventPageOffer,
   type Sport,
 } from '@poolmaster/shared/domain';
-import { ContestOpening, type ContestOpeningSetup } from '../contest-management/contest-opening';
+import { ContestOpening, type ContestOpeningSetup, type ContestOpeningWindow } from '../contest-management/contest-opening';
 
 type EventPageLogger = Pick<FastifyBaseLogger, 'debug' | 'info' | 'warn'>;
 
@@ -32,6 +32,8 @@ export interface EventPageOfferView {
   startsAtRound: number | null;
   state: EventPageOfferState;
   edition: EventPageEdition;
+  /** When the setup's cutoff on the edition falls, after which this offer no longer shows as it does now. */
+  closesAt: Date;
 }
 
 export interface EventPageView {
@@ -42,8 +44,8 @@ export interface EventPageView {
 
 export interface EventPageServiceDeps {
   pages: EventPageRepository;
-  /** Whether Create contest would take the setup on the event now (`contestOpening`). */
-  opening: (sportEventId: string, setup: ContestOpeningSetup) => Promise<ContestOpening>;
+  /** Whether Create contest would take the setup on the event now, and its cutoff (`contestOpening`). */
+  opening: (sportEventId: string, setup: ContestOpeningSetup) => Promise<ContestOpeningWindow>;
   logger?: EventPageLogger;
 }
 
@@ -117,12 +119,21 @@ export class EventPageService {
     const setup: ContestOpeningSetup = { selectionType: offer.template.selectionType, startsAtRound };
     const editions = await this.pages.findEditionsNotOver(offer.sportLeagueId, offer.eventSeriesName);
     for (const edition of editions) {
-      const opening = await this.opening(edition.sportEventId, setup);
-      if (opening !== ContestOpening.CLOSED) {
+      const { opening, closesAt } = await this.opening(edition.sportEventId, setup);
+      if (opening !== ContestOpening.CLOSED && closesAt !== null) {
         const state = opening === ContestOpening.OPEN ? EventPageOfferState.OPEN : EventPageOfferState.NOT_YET;
-        return { offer, startsAtRound, state, edition };
+        return { offer, startsAtRound, state, edition, closesAt };
       }
     }
     return null;
   }
+}
+
+/**
+ * The soonest cutoff among the pages' offers: until then each page shows as it does now, so no
+ * copy of it may be kept past it (#1181). Null when no page has an offer.
+ */
+export function eventPagesChangeAt(views: readonly EventPageView[]): Date | null {
+  const cutoffs = views.flatMap((view) => view.offers.map((offer) => offer.closesAt.getTime()));
+  return cutoffs.length === 0 ? null : new Date(Math.min(...cutoffs));
 }

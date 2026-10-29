@@ -9,6 +9,7 @@ import {
   PUBLIC_CACHE_CONTROL,
   PUBLIC_CACHED_READS,
   PublicReadPath,
+  keepPublicUntil,
   readPublicReadCacheTtlMs,
 } from '../../../packages/core-api/src/core/public-cache';
 
@@ -38,7 +39,11 @@ async function buildApp(): Promise<FastifyInstance> {
     scope.get('/', async () => ({ eventPages: [] }));
     scope.get('/:sport/:pageSlug', async (request, reply) => {
       const { pageSlug } = request.params as { pageSlug: string };
-      return pageSlug === 'missing' ? reply.status(404).send({ code: 'EVENT_PAGE_NOT_FOUND' }) : { pageSlug };
+      if (pageSlug === 'missing') return reply.status(404).send({ code: 'EVENT_PAGE_NOT_FOUND' });
+      // A page whose next offer closes this many seconds from now.
+      const closesIn = { 'closes-in-2-minutes': 120, 'closes-in-20-minutes': 1200, 'closes-in-2-hours': 7200, 'closed-a-second-ago': -1 }[pageSlug];
+      if (closesIn !== undefined) keepPublicUntil(reply, new Date(Date.now() + closesIn * 1000 + 500));
+      return { pageSlug };
     });
   }, { prefix: '/api/v1/event-pages' });
   await app.ready();
@@ -101,6 +106,20 @@ describe('Cache-Control on GET answers (#1181)', () => {
 
     expect(revalidated.statusCode).toBe(304);
     expect(revalidated.headers['cache-control']).toBe(PUBLIC_CACHE_CONTROL);
+  });
+});
+
+describe('an event page is never kept past an offer\'s cutoff (#1181)', () => {
+  it.each([
+    ['closes-in-2-minutes', 'public, max-age=120, s-maxage=120'],
+    ['closes-in-20-minutes', 'public, max-age=300, s-maxage=1200'],
+    ['closes-in-2-hours', PUBLIC_CACHE_CONTROL],
+    ['closed-a-second-ago', PRIVATE_CACHE_CONTROL],
+  ])('a page that is %s gets %s, so neither CloudFront nor the browser shows a closed contest as open', async (slug, expected) => {
+    const response = await app.inject({ method: 'GET', url: `/api/v1/event-pages/AMERICAN_FOOTBALL/${slug}` });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.headers['cache-control']).toBe(expected);
   });
 });
 

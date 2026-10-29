@@ -10,12 +10,16 @@
  * copy and a signed-in request never does. An admin save calls `CdnInvalidator` with the
  * `PublicReadPath` it changed, so its effect shows without waiting out the hour.
  */
-import type { FastifyRequest } from 'fastify';
+import type { FastifyReply, FastifyRequest } from 'fastify';
 import { readCacheTtlMs } from './read-cache';
 import { readAccessCookie } from './session-cookies';
 
 /** 5 minutes in the browser, 1 hour at CloudFront, and a minute more served while it refetches. */
 export const PUBLIC_CACHE_CONTROL = 'public, max-age=300, s-maxage=3600, stale-while-revalidate=60';
+
+/** The seconds `PUBLIC_CACHE_CONTROL` lets a copy be served: an hour, then a minute while it refetches. */
+const PUBLIC_CACHE_SECONDS = 3600 + 60;
+const BROWSER_SECONDS = 300;
 
 /** Anything with user data, or a public read asked for with a session: revalidate, never shared. */
 export const PRIVATE_CACHE_CONTROL = 'private, no-cache';
@@ -51,13 +55,35 @@ function hasSession(request: FastifyRequest): boolean {
   return request.headers.authorization !== undefined || readAccessCookie(request.headers.cookie) !== undefined;
 }
 
-/** The Cache-Control a GET answer with `statusCode` gets. */
-export function cacheControlFor(request: FastifyRequest, statusCode: number): string {
+const changesAt = new WeakMap<FastifyReply, Date>();
+
+/**
+ * Says this public answer shows as it does only until `at` (an event page's offer closes then),
+ * so no copy of it is served past that moment. Null leaves the hour.
+ */
+export function keepPublicUntil(reply: FastifyReply, at: Date | null): void {
+  if (at === null) changesAt.delete(reply);
+  else changesAt.set(reply, at);
+}
+
+/** The public header for an answer that changes in `seconds`: no copy outlives it. */
+function publicFor(seconds: number): string {
+  if (seconds >= PUBLIC_CACHE_SECONDS) return PUBLIC_CACHE_CONTROL;
+  if (seconds <= 0) return PRIVATE_CACHE_CONTROL;
+  return `public, max-age=${Math.min(BROWSER_SECONDS, seconds)}, s-maxage=${seconds}`;
+}
+
+/** The Cache-Control a GET answer gets, as of `now`. */
+export function cacheControlFor(request: FastifyRequest, reply: FastifyReply, now: Date = new Date()): string {
   const route = request.routeOptions.url;
   const isPublicRead = route !== undefined && PUBLIC_CACHED_READS.has(withoutTrailingSlash(route));
-  return isPublicRead && statusCode === 200 && !hasSession(request)
+  if (!isPublicRead || reply.statusCode !== 200 || hasSession(request)) {
+    return PRIVATE_CACHE_CONTROL;
+  }
+  const at = changesAt.get(reply);
+  return at === undefined
     ? PUBLIC_CACHE_CONTROL
-    : PRIVATE_CACHE_CONTROL;
+    : publicFor(Math.floor((at.getTime() - now.getTime()) / 1000));
 }
 
 /**

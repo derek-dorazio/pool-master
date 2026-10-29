@@ -429,9 +429,11 @@ and `listLeaguePlans`. The list is `PUBLIC_CACHED_READS` in `core/public-cache.t
 - **In each API task.** The same reads, and `listSports`, are kept for
   `PUBLIC_READ_CACHE_TTL_MS` (30 seconds unless set; the functional API and browser E2E lanes
   set 0). A write through the sport league or template routes clears that task's copy at once.
-- **What can still be an hour old.** Nothing writes when an event starts, so an event page can
-  show an offer as `OPEN` for up to an hour after its picks closed. The `/start` flow and Create
-  contest make their own checks, so the visitor cannot start a contest that no longer takes picks.
+- **Never past a cutoff.** Nothing writes when an event starts, so an event page answer is kept
+  only until its soonest offer cutoff (the event's start, a later-round bracket's round start, or
+  the next squares kickoff): `s-maxage` is the seconds until then, `max-age` at most 5 minutes of
+  it, and an answer whose cutoff has passed is `private, no-cache`. A task's own copy is read
+  afresh once an offer in it has closed. So no page shows a closed contest as open.
 
 ## Identity and membership
 

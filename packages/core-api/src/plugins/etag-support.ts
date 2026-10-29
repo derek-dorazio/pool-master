@@ -24,7 +24,7 @@ export const etagPlugin = fp((app) => {
     const etag = `"${hash}"`;
 
     reply.header('ETag', etag);
-    reply.header('Cache-Control', cacheControlFor(request, reply.statusCode));
+    reply.header('Cache-Control', cacheControlFor(request, reply));
 
     // Check If-None-Match
     const ifNoneMatch = request.headers['if-none-match'];
