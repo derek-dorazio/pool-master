@@ -23,7 +23,7 @@ function setup({ sport = Sport.BASKETBALL, status = SportEventStatus.DRAFT, pick
   const sportRow = store.addSport(sport);
   const sportLeague = store.addSportLeague(sportRow.id, 'NCAA Division I Men');
   const event = store.addEvent({ sportLeagueId: sportLeague.id, sport, status, rounds: 2 });
-  void store.roundRepo().createMany(event.id, [
+  void store.addRounds(event.id, [
     { roundNumber: 1, scheduledDate: new Date('2027-03-18T16:00:00.000Z') },
     { roundNumber: 2, scheduledDate: new Date('2027-03-20T16:00:00.000Z') },
   ]);
@@ -348,7 +348,7 @@ describe('SportEventBracketService.releaseBlockers (reseeded bracket)', () => {
       roundNames: ['Wild Card', 'Divisional', 'Conference Championship'],
     });
     const event = store.addEvent({ sportLeagueId: sportLeague.id, sport: Sport.AMERICAN_FOOTBALL, status: SportEventStatus.DRAFT, rounds: 3 });
-    await store.roundRepo().createMany(event.id, [1, 2, 3].map((roundNumber) => ({
+    await store.addRounds(event.id, [1, 2, 3].map((roundNumber) => ({
       roundNumber, scheduledDate: new Date(Date.UTC(2027, 0, 7 * roundNumber)),
     })));
     const seeds = Array.from({ length: seedCount }, (_, index) => index + 1).map((seedNumber) => {
@@ -596,7 +596,7 @@ describe('SportEventBracketService.replaceWithdrawn', () => {
     const context = setup();
     await context.service.loadBracket(context.event.id, bracketOf(context));
     if (valued) {
-      await context.store.tierRepo().createMany(context.event.id, [
+      await context.store.addTiers(context.event.id, [
         { tierKey: 'tier-1', label: 'Tier 1', tierNumber: 1 },
         { tierKey: 'tier-2', label: 'Tier 2', tierNumber: 2 },
       ]);

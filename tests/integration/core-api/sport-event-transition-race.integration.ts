@@ -11,6 +11,7 @@ import {
   type FinishedSportEventSettlement,
 } from '../../../packages/core-api/src/modules/events/event-lifecycle-service';
 import { cleanupTestData, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
+import { createSportEventRow } from '../../support/sport-event-rows';
 import { freshEventEdition } from '../../support/event-edition';
 import { fakeLogger } from '../../support/fake-logger';
 
@@ -50,7 +51,7 @@ function lifecycleCountingSettlements() {
 }
 
 async function createInProgressEvent() {
-  return new PrismaSportEventRepository(getPrisma()).create({
+  return createSportEventRow(new PrismaSportEventRepository(getPrisma()), {
     ...(await freshEventEdition(getPrisma())),
     externalId: `race-${randomUUID()}`,
     providerId: 'integration-test',

@@ -282,7 +282,7 @@ describe('SportEventService.releaseEvent (#431)', () => {
     priced: number | null = golfers,
   ) {
     const event = store.addEvent({ status: SportEventStatus.DRAFT, ...overrides });
-    await store.tierRepo().createMany(event.id, [{ tierKey: 'tier-1', label: 'Tier 1', tierNumber: 1 }]);
+    await store.addTiers(event.id, [{ tierKey: 'tier-1', label: 'Tier 1', tierNumber: 1 }]);
     const tierId = store.tierRows[0].id;
     const entries = Array.from({ length: golfers }, (_, index) => store.addToField(event.id, `participant-${index}`));
     await store.valuationRepo().assignTiers(entries.slice(0, tiered).map((entry, index) => ({
@@ -326,7 +326,7 @@ describe('SportEventService.releaseEvent (#431)', () => {
   it('releases a basketball draft once its bracket holds every active team', async () => {
     const { store, service, sportLeague } = setup(Sport.BASKETBALL);
     const event = await draftWithField(store, 2, 2, { sport: Sport.BASKETBALL, sportLeagueId: sportLeague.id });
-    await store.roundRepo().createMany(event.id, [{ roundNumber: 1, scheduledDate: event.startDate }]);
+    await store.addRounds(event.id, [{ roundNumber: 1, scheduledDate: event.startDate }]);
     const [home, away] = store.field;
     await store.matchRepo().replaceBracket(event.id, [{
       id: 'final', roundNumber: 1, matchNumber: 1, homeSportEventParticipantId: home.id, awaySportEventParticipantId: away.id,
@@ -371,7 +371,7 @@ describe('SportEventService.releaseEvent (#431)', () => {
   it('refuses a draft with a tier no active participant is in with 422 SPORT_EVENT_NOT_READY, naming the empty tier in the sport\'s words', async () => {
     const { store, service } = setup(Sport.AUTO_RACING);
     const event = await draftWithField(store, 3, 3, { sport: Sport.AUTO_RACING });
-    await store.tierRepo().createMany(event.id, [{ tierKey: 'tier-2', label: 'Tier 2', tierNumber: 2 }]);
+    await store.addTiers(event.id, [{ tierKey: 'tier-2', label: 'Tier 2', tierNumber: 2 }]);
 
     await expect(service.releaseEvent(event.id)).rejects.toMatchObject({
       code: 'SPORT_EVENT_NOT_READY',
@@ -384,7 +384,7 @@ describe('SportEventService.releaseEvent (#431)', () => {
   it('counts a tier holding only a withdrawn participant as empty, so the draft is not released', async () => {
     const { store, service } = setup();
     const event = await draftWithField(store, 2, 2);
-    await store.tierRepo().createMany(event.id, [{ tierKey: 'tier-2', label: 'Tier 2', tierNumber: 2 }]);
+    await store.addTiers(event.id, [{ tierKey: 'tier-2', label: 'Tier 2', tierNumber: 2 }]);
     const withdrawn = store.addToField(event.id, 'participant-withdrawn');
     withdrawn.isActive = false;
     const tier2Id = store.tierRows.filter((tier) => tier.tierKey === 'tier-2').map((tier) => tier.id)[0];

@@ -32,6 +32,7 @@ import {
   teardownIntegrationTests,
 } from '../helpers';
 import { countingPrisma } from '../../support/counting-prisma';
+import { createRoundRows, createSportEventRow } from '../../support/sport-event-rows';
 import { integrationPlanEntitlements } from '../plan-entitlements';
 import { createContestRow } from '../../support/contest-rows';
 
@@ -65,7 +66,7 @@ async function createWeek(label: string, startDate: Date, status: SportEventStat
     update: {},
   });
   const eventSeries = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `${label} ${randomUUID()}` } });
-  const event = await new PrismaSportEventRepository(prisma).create({
+  const event = await createSportEventRow(new PrismaSportEventRepository(prisma), {
     eventSeriesId: eventSeries.id,
     eventYear: 2026,
     externalId: `pickem-board-${randomUUID()}`,
@@ -78,7 +79,7 @@ async function createWeek(label: string, startDate: Date, status: SportEventStat
     syncScope: 'NONE',
     autoLifecycleEnabled: false,
   });
-  await new PrismaSportEventRoundRepository(prisma).createMany(event.id, [{ roundNumber: 1, scheduledDate: startDate }]);
+  await createRoundRows(new PrismaSportEventRoundRepository(prisma), event.id, [{ roundNumber: 1, scheduledDate: startDate }]);
   const teams = await Promise.all(['Bills', 'Jets', 'Chiefs', 'Raiders', 'Eagles', 'Giants'].map((name) => prisma.participant.create({
     data: { sportId: sport.id, name: `${name} ${randomUUID().slice(0, 6)}`, participantType: 'TEAM' },
   })));
