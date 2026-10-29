@@ -6,7 +6,16 @@ import { buildLeagueChampionshipsPath, buildLeaguePointsRacePath } from '@/featu
 import { useLeagueContext } from '@/features/leagues/use-league-context';
 import { hasPlanFeature } from '@/features/plans/plan-features';
 import { PlanLockedNotice } from '@/features/plans/plan-locked-notice';
-import { Button, ErrorState, LoadingState, MetricGrid, MetricTile, Select, Tile } from '@/features/shared/ui';
+import {
+  Button,
+  ErrorState,
+  Heading,
+  LoadingState,
+  MetricGrid,
+  MetricTile,
+  Select,
+  Tile,
+} from '@/features/shared/ui';
 import { historyYearTitle } from './championship-view';
 import { SquadPerpetualPlates } from './perpetual-trophies';
 import { SquadRecords } from './record-book';
@@ -51,7 +60,7 @@ export function SquadHistorySection({
     <section className="space-y-6" data-testid="squad-history">
       <div className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-lg font-semibold text-foreground">{historyYearTitle({ year, isOver: year < currentYear })}</h2>
+          <Heading level={2} variant="subtitle">{historyYearTitle({ year, isOver: year < currentYear })}</Heading>
           <Select
             aria-label="Year"
             className="w-auto"
@@ -74,7 +83,7 @@ export function SquadHistorySection({
       ) : (
         <>
           <Tile className="space-y-3" padding="sm" radius="lg">
-            <h2 className="title-card text-lg text-foreground">Trophy case</h2>
+            <Heading level={2} variant="card" size="lg">Trophy case</Heading>
             <MetricGrid className="grid-cols-3">
               <div data-testid="squad-history-medal-firsts"><MetricTile label="Contest 1sts" value={historyQuery.data.medals.firsts} /></div>
               <div data-testid="squad-history-medal-seconds"><MetricTile label="Contest 2nds" value={historyQuery.data.medals.seconds} /></div>
@@ -111,7 +120,7 @@ export function SquadHistorySection({
 
           {placedYears.length ? (
             <Tile className="space-y-2" padding="sm" radius="lg">
-              <h2 className="title-card text-lg text-foreground">All years</h2>
+              <Heading level={2} variant="card" size="lg">All years</Heading>
               <ul className="space-y-1 text-sm" data-testid="squad-history-years">
                 {placedYears.map((row) => {
                   const line = describeSquadYearLine(row, currentYear);

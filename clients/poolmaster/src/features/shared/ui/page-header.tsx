@@ -2,6 +2,7 @@ import { Fragment, type ReactNode } from "react";
 import { Link } from "react-router";
 import { Eyebrow } from "./eyebrow";
 import { Tile } from "./tile";
+import { Heading } from "./heading";
 
 type Breadcrumb = {
   href?: string;
@@ -32,9 +33,9 @@ export function PageHeader({
           {eyebrow ? (
             <Eyebrow className="mb-2">{eyebrow}</Eyebrow>
           ) : null}
-          <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+          <Heading level={1} variant="page">
             {title}
-          </h1>
+          </Heading>
           {description ? (
             <p className="mt-3 max-w-3xl text-sm text-muted-foreground">
               {description}

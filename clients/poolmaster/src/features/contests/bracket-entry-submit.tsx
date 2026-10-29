@@ -1,6 +1,6 @@
 import { ContestEntryStatus, type Sport } from '@poolmaster/shared/domain';
 import { GAME_PICKS_TIEBREAKER_MAX } from '@poolmaster/shared/dto';
-import { Alert, Button, FormField, Input, Tile } from '@/features/shared/ui';
+import { Alert, Button, FormField, Heading, Input, Tile } from '@/features/shared/ui';
 import type { GamePicksResponse } from '@/lib/api';
 import { formatPickProgress, parseBracketTiebreaker } from './bracket-layout';
 import { contestMatchNoun, contestParticipantNoun, contestScoreUnit } from './contest-sport';
@@ -58,7 +58,7 @@ export function BracketSubmitPanel({
   return (
     <Tile className="space-y-4" data-testid="bracket-submit-panel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h3 className="title-card text-xl">Tiebreaker and submit</h3>
+        <Heading level={3} variant="card" size="xl" tone="inherit">Tiebreaker and submit</Heading>
         <span className="text-sm text-muted-foreground" data-testid="bracket-progress">
           {formatPickProgress(gamePicks.pickedCount, gamePicks.gameCount)}
         </span>

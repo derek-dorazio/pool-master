@@ -13,6 +13,7 @@ import {
 import {
   Alert,
   ErrorState,
+  Heading,
   LoadingState,
   MetricGrid,
   MetricTile,
@@ -258,9 +259,9 @@ export function BracketEntryPage({ contest }: { contest: ContestDto }) {
           {pickError ? <Alert data-testid="bracket-pick-error" tone="danger">{pickError}</Alert> : null}
 
           <Tile>
-            <h3 className="title-card mb-5 text-xl" data-testid="contest-entry-builder-heading">
+            <Heading level={3} variant="card" size="xl" tone="inherit" className="mb-5" data-testid="contest-entry-builder-heading">
               {canPick ? 'Fill in your bracket' : 'Bracket'}
-            </h3>
+            </Heading>
             {canPick ? (
               <p className="mb-5 text-sm text-muted-foreground">
                 {`Pick the winner of each ${match.one}. A later ${match.one} offers the ${participant.many} you picked to get there, and changing a pick clears the later picks that depended on it.`}

@@ -7,7 +7,17 @@ import {
   buildLeaguePointsRacePath,
 } from '@/features/leagues/league-routing';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
-import { EmptyState, ErrorState, LinkButton, LoadingState, MetricGrid, MetricTile, PageHeader, Tile } from '@/features/shared/ui';
+import {
+  EmptyState,
+  ErrorState,
+  Heading,
+  LinkButton,
+  LoadingState,
+  MetricGrid,
+  MetricTile,
+  PageHeader,
+  Tile,
+} from '@/features/shared/ui';
 import { getLogger } from '@/lib/logger';
 import { hasPlanFeature } from '@/features/plans/plan-features';
 import { PlanLockedNotice } from '@/features/plans/plan-locked-notice';
@@ -98,7 +108,7 @@ export function AllYearsPage() {
                     data-testid={`all-years-year-link-${year.year}`}
                     to={buildLeagueChampionshipsPath(leagueCode, year.year)}
                   >
-                    <h2 className="title-card text-lg text-foreground">{historyYearTitle(year)}</h2>
+                    <Heading level={2} variant="card" size="lg">{historyYearTitle(year)}</Heading>
                     <span className="text-sm text-muted-foreground">{describeHistoryChampions(year)}</span>
                   </Link>
                   {year.cups.length ? (
