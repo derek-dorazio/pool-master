@@ -6,6 +6,7 @@
  * either revokes it. Only a conditional update decides which one wins, so these run the real
  * service against the real table.
  */
+import { createHash } from 'node:crypto';
 import {
   setupIntegrationTests,
   teardownIntegrationTests,
@@ -61,3 +62,33 @@ describe('refresh-token rotation (#1175)', () => {
     });
   });
 });
+
+describe('refresh-token storage (#1230)', () => {
+  it('stores only the SHA-256 of each refresh token, never the token the client holds, so a read of the table hands out no live session', async () => {
+    const service = buildAuthService();
+    const { user } = await createTestUser();
+    const session = await service.issueSessionForUser(user.id);
+    const next = await service.refresh(session.refreshToken);
+
+    const rows = await getPrisma().refreshToken.findMany({ where: { sessionId: session.sessionId } });
+    const stored = rows.map((row) => row.tokenHash);
+    expect(stored).toHaveLength(2);
+    expect(stored).not.toContain(session.refreshToken);
+    expect(stored).not.toContain(next.refreshToken);
+    expect(stored).toEqual(expect.arrayContaining([sha256(session.refreshToken), sha256(next.refreshToken)]));
+  });
+
+  it('signs out by the token the client holds, revoking its stored hash', async () => {
+    const service = buildAuthService();
+    const { user } = await createTestUser();
+    const session = await service.issueSessionForUser(user.id);
+
+    await service.logout(session.refreshToken);
+
+    await expect(service.refresh(session.refreshToken)).rejects.toMatchObject({ code: 'INVALID_REFRESH_TOKEN' });
+  });
+});
+
+function sha256(value: string): string {
+  return createHash('sha256').update(value).digest('hex');
+}

@@ -26,6 +26,7 @@ import type { UserRepository, UserSearchFilters } from '@poolmaster/shared/db';
 import { isKnownLocale, isKnownTimeZone, isPlatformSearchTerm, PLATFORM_SEARCH_MIN_LENGTH, type TimeFormat, type User } from '@poolmaster/shared/domain';
 import { UserOperationError } from './user-errors';
 import type { PasswordChangedNotifier } from '../auth/password-changed-notifier';
+import { hashRefreshToken } from '../auth/refresh-token-hash';
 import type { EmailChangeUndoService } from '../auth/email-change-undo-service';
 import { EmailChangedBy } from '../email';
 import {
@@ -247,7 +248,7 @@ export class UserService {
         where: {
           userId: targetUserId,
           revokedAt: null,
-          ...(request.currentRefreshToken ? { NOT: { token: request.currentRefreshToken } } : {}),
+          ...(request.currentRefreshToken ? { NOT: { tokenHash: hashRefreshToken(request.currentRefreshToken) } } : {}),
         },
         data: { revokedAt: new Date() },
       });

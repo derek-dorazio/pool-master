@@ -13,6 +13,7 @@
 import { expect } from '@jest/globals';
 import bcrypt from 'bcryptjs';
 import { type AuthError, AuthService } from '../../../packages/core-api/src/modules/auth/auth-service';
+import { hashRefreshToken } from '../../../packages/core-api/src/modules/auth/refresh-token-hash';
 import { fakeUserRepo } from '../../support/repo-fakes';
 import { asPrismaClient } from '../../support/prisma-double';
 import { AuthProvider, type User } from '../../../packages/shared/domain';
@@ -248,7 +249,7 @@ describe('AuthService', () => {
       const prisma = createPrismaMock();
       prisma.refreshToken.findUnique.mockResolvedValue({
         id: 'refresh-1',
-        token: 'refresh-token',
+        tokenHash: hashRefreshToken('refresh-token'),
         sessionId: 'session-1',
         revokedAt: null,
         expiresAt: new Date(Date.now() + 60_000),
@@ -267,7 +268,7 @@ describe('AuthService', () => {
       const prisma = createPrismaMock();
       prisma.refreshToken.findUnique.mockResolvedValue({
         id: 'refresh-1',
-        token: 'refresh-token',
+        tokenHash: hashRefreshToken('refresh-token'),
         sessionId: 'session-1',
         revokedAt: null,
         expiresAt: new Date(Date.now() + 60_000),
@@ -282,7 +283,7 @@ describe('AuthService', () => {
         where: { id: 'refresh-1', revokedAt: null },
       }));
       expect(prisma.tx.refreshToken.create).toHaveBeenCalledWith({
-        data: expect.objectContaining({ token: result.refreshToken, sessionId: 'session-1' }),
+        data: expect.objectContaining({ tokenHash: hashRefreshToken(result.refreshToken), sessionId: 'session-1' }),
       });
       expect(prisma.refreshToken.updateMany).not.toHaveBeenCalled();
       expect(prisma.refreshToken.create).not.toHaveBeenCalled();
@@ -292,7 +293,7 @@ describe('AuthService', () => {
       const prisma = createPrismaMock();
       prisma.refreshToken.findUnique.mockResolvedValue({
         id: 'refresh-1',
-        token: 'refresh-token',
+        tokenHash: hashRefreshToken('refresh-token'),
         sessionId: 'session-1',
         revokedAt: null,
         expiresAt: new Date(Date.now() + 60_000),
@@ -309,7 +310,7 @@ describe('AuthService', () => {
         .mockResolvedValueOnce(null)
         .mockResolvedValueOnce({
           id: 'refresh-1',
-          token: 'expired-token',
+          tokenHash: hashRefreshToken('expired-token'),
           sessionId: 'session-1',
           revokedAt: null,
           expiresAt: new Date(Date.now() - 60_000),

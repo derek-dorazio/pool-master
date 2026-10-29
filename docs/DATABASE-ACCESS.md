@@ -67,7 +67,8 @@ client connects to `localhost`.
 
 Each environment has one read-only database user, created once by the master user, with the SQL
 in `infrastructure/terraform/README.md` *Direct QA Database Access*. It can read every table,
-including password hashes and reset and refresh tokens, so guard its password like the master's.
+including password hashes and the hashes of reset links and refresh tokens (#1230: neither is
+stored in a form that signs anyone in), so guard its password like the master's.
 Use the master user only for administrative work.
 
 ## Rotating the master password

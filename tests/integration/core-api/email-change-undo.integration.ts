@@ -24,6 +24,7 @@ import type {
   MailDeliveryProvider,
   MailDeliveryResult,
 } from '../../../packages/core-api/src/modules/email';
+import { hashRefreshToken } from '../../../packages/core-api/src/modules/auth/refresh-token-hash';
 
 const APP_BASE_URL = 'https://app.example.test';
 const DAY_MS = 24 * 60 * 60_000;
@@ -137,7 +138,7 @@ describe('undoing an email change (#903 A5)', () => {
     const { user } = await createTestUser();
     await changeEmail(userService, user.id, freshEmail('taker'));
     await getPrisma().refreshToken.create({
-      data: { token: `undo-it-${randomUUID()}`, userId: user.id, expiresAt: new Date(Date.now() + DAY_MS) },
+      data: { tokenHash: hashRefreshToken(`undo-it-${randomUUID()}`), userId: user.id, expiresAt: new Date(Date.now() + DAY_MS) },
     });
     const token = tokenFrom(mail.to(user.email)[0]);
 
