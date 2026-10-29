@@ -4,7 +4,7 @@
  * each league's points table, held in plain arrays so a service test can build a season and read
  * it back.
  */
-import type { CupContest, CupContestFinish, CupKey, CupRankedEntry, CupRepository } from '@poolmaster/shared/db';
+import type { CupContest, CupContestFinish, CupKey, CupRankedEntry, CupRepository, LeagueCupContest } from '@poolmaster/shared/db';
 import {
   ContestStatus,
   CupPointsScale,
@@ -58,6 +58,10 @@ export class InMemoryCups implements CupRepository {
     return this.cups.filter((cup) => cup.leagueId === leagueId && cup.seasonYear === seasonYear);
   }
 
+  async findByLeague(leagueId: string): Promise<Cup[]> {
+    return this.cups.filter((cup) => cup.leagueId === leagueId);
+  }
+
   async findSeasonYears(leagueId: string): Promise<number[]> {
     const years = this.contests
       .filter((contest) => contest.leagueId === leagueId && contest.status !== ContestStatus.DRAFT)
@@ -66,9 +70,16 @@ export class InMemoryCups implements CupRepository {
   }
 
   async findContests(key: CupKey): Promise<CupContest[]> {
+    return (await this.findLeagueContests(key.leagueId, key.seasonYear))
+      .filter((row) => row.sportLeagueId === key.sportLeagueId)
+      .map((row) => row.contest);
+  }
+
+  async findLeagueContests(leagueId: string, seasonYear?: number): Promise<LeagueCupContest[]> {
     return this.contests
-      .filter((contest) => sameKey(contest, key) && contest.status !== ContestStatus.DRAFT)
-      .sort((left, right) => left.firstEventStartsAt.getTime() - right.firstEventStartsAt.getTime());
+      .filter((contest) => contest.leagueId === leagueId && (seasonYear === undefined || contest.seasonYear === seasonYear) && contest.status !== ContestStatus.DRAFT)
+      .sort((left, right) => left.firstEventStartsAt.getTime() - right.firstEventStartsAt.getTime())
+      .map(({ leagueId: _leagueId, seasonYear: season, sportLeagueId, ...contest }) => ({ seasonYear: season, sportLeagueId, contest }));
   }
 
   async findRankedEntries(contestIds: readonly string[]): Promise<CupRankedEntry[]> {
@@ -89,8 +100,8 @@ export class InMemoryCups implements CupRepository {
     return this.finishes.filter((finish) => contestIds.includes(finish.contestId));
   }
 
-  async findStandings(cupId: string): Promise<CupStanding[]> {
-    return this.standings.filter((standing) => standing.cupId === cupId);
+  async findStandings(cupIds: readonly string[]): Promise<CupStanding[]> {
+    return this.standings.filter((standing) => cupIds.includes(standing.cupId));
   }
 
   async crown(cupId: string, crowning: { crownedAt: Date; pointsTable: CupPointsTable; standings: readonly CupStanding[] }): Promise<Cup | null> {

@@ -250,6 +250,7 @@ export function fakeSportRepo(overrides: Partial<SportRepository> = {}): SportRe
 export function fakeSportLeagueRepo(overrides: Partial<SportLeagueRepository> = {}): SportLeagueRepository {
   return {
     findById: one(),
+    findByIds: many(),
     findAll: many(),
     findBySportAndName: one(),
     create: echoCreate('sport-league'),

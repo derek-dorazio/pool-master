@@ -58,8 +58,8 @@ function build({ hallOfLameVisible = true }: { hallOfLameVisible?: boolean } = {
       findById: jest.fn((id: string) => Promise.resolve([...SQUADS, squad('elsewhere', 'Elsewhere', 'league-2')].find((row) => row.id === id) ?? null)),
       findByLeague: jest.fn().mockResolvedValue(SQUADS),
     }),
-    championship: { getYear: jest.fn(), listYears: jest.fn().mockResolvedValue([]) },
-    cups: { listSeasonYears: jest.fn().mockResolvedValue([]), listSeasonCups: jest.fn().mockResolvedValue([]) },
+    championship: { getAllYears: jest.fn().mockResolvedValue([]), getYear: jest.fn(), listYears: jest.fn().mockResolvedValue([]) },
+    cups: { listLeagueSeasons: jest.fn().mockResolvedValue([]), listSeasonCups: jest.fn().mockResolvedValue([]) },
   });
   const contest = (id: string, completedAt: string | null, overrides: Partial<FinalContest> = {}) => {
     finishes.finalContests.push({
@@ -127,7 +127,7 @@ describe('HistoryService (#837)', () => {
         sportLeagueName: 'PGA Tour',
         eventYear: year,
         completedAt: new Date(`${year}-04-14T00:00:00.000Z`),
-        games: [],
+        games: { count: 0, roundCount: 0, sendingWinnerOn: 0 },
       } });
     }
     finish('masters-2024', 2024, [['eagles', 1, 2], ['bogeys', 1, 2]]);
@@ -153,7 +153,7 @@ describe('HistoryService (#837)', () => {
         sportLeagueName: 'PGA Tour',
         eventYear: year,
         completedAt: new Date(`${year}-04-14T00:00:00.000Z`),
-        games: [],
+        games: { count: 0, roundCount: 0, sendingWinnerOn: 0 },
       } });
       finish(`masters-${year}`, year, [['eagles', 1, 1], ['birdies', 2, 1]]);
     }
@@ -301,10 +301,11 @@ describe('HistoryService summary (#837)', () => {
       finishes: new InMemoryChampionship(),
       leagues: fakeLeagueRepo(),
       squads: fakeSquadRepo(),
-      championship: { getYear: jest.fn(), listYears: jest.fn().mockResolvedValue(years) },
+      championship: { getAllYears: jest.fn(), getYear: jest.fn(), listYears: jest.fn().mockResolvedValue(years) },
       cups: {
-        listSeasonYears: jest.fn().mockResolvedValue(Object.keys(cupsBySeason).map(Number).sort((left, right) => right - left)),
-        listSeasonCups: jest.fn((_leagueId: string, seasonYear: number) => Promise.resolve(cupsBySeason[seasonYear] ?? [])),
+        listLeagueSeasons: jest.fn().mockResolvedValue(Object.keys(cupsBySeason).map(Number).sort((left, right) => right - left)
+          .map((seasonYear) => ({ seasonYear, cups: cupsBySeason[seasonYear] ?? [] }))),
+        listSeasonCups: jest.fn(),
       },
       now: () => NOW,
     });
@@ -406,8 +407,8 @@ describe('HistoryService squad year (#872)', () => {
       squads: fakeSquadRepo({
         findById: jest.fn((id: string) => Promise.resolve([...SQUADS, squad('elsewhere', 'Elsewhere', 'league-2')].find((row) => row.id === id) ?? null)),
       }),
-      championship: { getYear, listYears: jest.fn() },
-      cups: { listSeasonYears: jest.fn(), listSeasonCups },
+      championship: { getAllYears: jest.fn(), getYear, listYears: jest.fn() },
+      cups: { listLeagueSeasons: jest.fn(), listSeasonCups },
     });
     return { service, getYear, listSeasonCups };
   }
@@ -495,23 +496,26 @@ describe('HistoryService squad history (#872)', () => {
         findById: jest.fn((id: string) => Promise.resolve([...SQUADS, squad('elsewhere', 'Elsewhere', 'league-2')].find((row) => row.id === id) ?? null)),
       }),
       championship: {
-        listYears: jest.fn().mockResolvedValue(yearNumbers
-          .filter((year) => (byYear.get(year)?.standings.length ?? 0) > 0)
-          .map((year) => ({ year, isOver: byYear.get(year)?.isOver ?? false, leaders: [] }))),
-        getYear: jest.fn((_leagueId: string, year: number): Promise<ChampionshipYearView> => Promise.resolve({
-          leagueId: LEAGUE,
-          year,
-          cupName: 'Derek\'s Pool Cup',
-          isOver: byYear.get(year)?.isOver ?? false,
-          contestsCounted: 2,
-          contestsToGo: 0,
-          standings: byYear.get(year)?.standings ?? [],
-          tiles: [],
-        })),
+        getAllYears: jest.fn((_leagueId: string, alsoYears: readonly number[]): Promise<ChampionshipYearView[]> => Promise.resolve(yearNumbers
+          .filter((year) => (byYear.get(year)?.standings.length ?? 0) > 0 || alsoYears.includes(year))
+          .map((year) => ({
+            leagueId: LEAGUE,
+            year,
+            cupName: 'Derek\'s Pool Cup',
+            isOver: byYear.get(year)?.isOver ?? false,
+            contestsCounted: 2,
+            contestsToGo: 0,
+            standings: byYear.get(year)?.standings ?? [],
+            tiles: [],
+          })))),
+        getYear: jest.fn(),
+        listYears: jest.fn(),
       },
       cups: {
-        listSeasonYears: jest.fn().mockResolvedValue(yearNumbers.filter((year) => (byYear.get(year)?.cups.length ?? 0) > 0)),
-        listSeasonCups: jest.fn((_leagueId: string, year: number) => Promise.resolve(byYear.get(year)?.cups ?? [])),
+        listLeagueSeasons: jest.fn().mockResolvedValue(yearNumbers
+          .filter((year) => (byYear.get(year)?.cups.length ?? 0) > 0)
+          .map((seasonYear) => ({ seasonYear, cups: byYear.get(seasonYear)?.cups ?? [] }))),
+        listSeasonCups: jest.fn(),
       },
       now: () => NOW,
     });

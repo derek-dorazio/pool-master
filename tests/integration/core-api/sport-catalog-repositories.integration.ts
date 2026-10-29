@@ -104,6 +104,19 @@ describe('Sport and SportLeague repositories', () => {
     await expect(sportLeagues.findBySportAndName(sport.id, 'PGA Tour')).resolves.toMatchObject({ matchKeyword: 'PGA' });
   });
 
+  it('reads the sport leagues with the ids asked for in one read, none for an unknown id or no ids (#1166)', async () => {
+    const sport = await golfSport();
+    const sportLeagues = new PrismaSportLeagueRepository(getPrisma());
+    const pga = await sportLeagues.create({ sportId: sport.id, name: 'PGA Tour', matchKeyword: null, bracketAdvancement: BracketAdvancement.FIXED });
+    const liv = await sportLeagues.create({ sportId: sport.id, name: 'LIV Golf', matchKeyword: null, bracketAdvancement: BracketAdvancement.FIXED });
+    await sportLeagues.create({ sportId: sport.id, name: 'Korn Ferry Tour', matchKeyword: null, bracketAdvancement: BracketAdvancement.FIXED });
+
+    const rows = await sportLeagues.findByIds([pga.id, liv.id, randomUUID()]);
+
+    expect(rows.map((row) => row.name).sort()).toEqual(['LIV Golf', 'PGA Tour']);
+    await expect(sportLeagues.findByIds([])).resolves.toEqual([]);
+  });
+
   it('records the sport league\'s current event year through update (plans/147 decision 6)', async () => {
     const sport = await golfSport();
     const sportLeagues = new PrismaSportLeagueRepository(getPrisma());

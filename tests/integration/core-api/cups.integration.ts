@@ -214,6 +214,49 @@ describe('PrismaCupRepository (#841)', () => {
     ]);
   });
 
+  it('reads every contest of the league\'s cups with its season and sports league by first event start, leaving out drafts, or one season\'s alone (#1166)', async () => {
+    const prisma = getPrisma();
+    const repo = new PrismaCupRepository(prisma);
+    const { league, contest } = await seedLeague();
+    const { sportLeagueId } = await contest('Open', { startDate: '2026-06-18T12:00:00.000Z', status: 'ACTIVE' });
+    await contest('Masters', { startDate: '2026-04-09T12:00:00.000Z' });
+    await contest('Draft', { status: 'DRAFT' });
+    await contest('Last season', { seasonYear: 2025, startDate: '2025-04-10T12:00:00.000Z' });
+    const sport = await prisma.sport.findUniqueOrThrow({ where: { sport: 'GOLF' } });
+    const otherTour = await prisma.sportLeague.upsert({
+      where: { sportId_name: { sportId: sport.id, name: 'Fixture Tour B (cups)' } },
+      create: { sportId: sport.id, name: 'Fixture Tour B (cups)' },
+      update: {},
+    });
+    await contest('Other tour', { sportLeagueId: otherTour.id, startDate: '2026-05-01T12:00:00.000Z' });
+
+    const all = await repo.findLeagueContests(league.id);
+    const season = await repo.findLeagueContests(league.id, 2026);
+
+    expect(all.map((row) => [row.contest.name, row.seasonYear, row.sportLeagueId === sportLeagueId ? 'tour' : 'other', row.contest.completedAt?.toISOString() ?? null])).toEqual([
+      ['Last season', 2025, 'tour', '2026-04-12T23:00:00.000Z'],
+      ['Masters', 2026, 'tour', '2026-04-12T23:00:00.000Z'],
+      ['Other tour', 2026, 'other', '2026-04-12T23:00:00.000Z'],
+      ['Open', 2026, 'tour', null],
+    ]);
+    expect(season.map((row) => row.contest.name)).toEqual(['Masters', 'Other tour', 'Open']);
+    expect(season.find((row) => row.contest.name === 'Masters')?.contest).toEqual(
+      (await repo.findContests({ leagueId: league.id, seasonYear: 2026, sportLeagueId })).find((row) => row.name === 'Masters'),
+    );
+  });
+
+  it('reads every cup of the league, of every season, oldest first, and no other league\'s (#1166)', async () => {
+    const repo = new PrismaCupRepository(getPrisma());
+    const { league, contest } = await seedLeague();
+    const other = await seedLeague();
+    const { sportLeagueId } = await contest('Masters');
+    const first = await repo.ensure({ leagueId: league.id, seasonYear: 2025, sportLeagueId });
+    const second = await repo.ensure({ leagueId: league.id, seasonYear: 2026, sportLeagueId });
+    await repo.ensure({ leagueId: other.league.id, seasonYear: 2026, sportLeagueId });
+
+    await expect(repo.findByLeague(league.id)).resolves.toMatchObject([{ id: first.id, seasonYear: 2025 }, { id: second.id, seasonYear: 2026 }]);
+  });
+
   it('reads the seasons the league has a listed contest in, newest first and each once, leaving out a season with only a draft', async () => {
     const repo = new PrismaCupRepository(getPrisma());
     const { league, contest } = await seedLeague();
@@ -289,7 +332,7 @@ describe('PrismaCupRepository (#841)', () => {
     const table = { scale: CupPointsScale.CUSTOM, customPoints: [10, 5] };
 
     expect(cup).toMatchObject({ status: CupStatus.OPEN, crownedAt: null, crownedPointsTable: null });
-    await expect(repo.findStandings(cup.id)).resolves.toEqual([]);
+    await expect(repo.findStandings([cup.id])).resolves.toEqual([]);
     await expect(prisma.cup.update({ where: { id: cup.id }, data: { status: 'CROWNED' } })).rejects.toThrow();
 
     const crowned = await repo.crown(cup.id, { crownedAt, pointsTable: table, standings });
@@ -298,6 +341,31 @@ describe('PrismaCupRepository (#841)', () => {
     expect(crowned).toMatchObject({ id: cup.id, status: CupStatus.CROWNED, crownedAt, crownedPointsTable: table });
     expect(again).toBeNull();
     await expect(repo.findById(cup.id)).resolves.toMatchObject({ status: CupStatus.CROWNED, crownedPointsTable: table });
-    await expect(repo.findStandings(cup.id)).resolves.toEqual(standings);
+    await expect(repo.findStandings([cup.id])).resolves.toEqual(standings);
+    await expect(repo.findStandings([])).resolves.toEqual([]);
+  });
+
+  it('reads several crowned cups\' frozen standings in one read, by cup and position (#1166)', async () => {
+    const repo = new PrismaCupRepository(getPrisma());
+    const { league, squads, contest } = await seedLeague();
+    const { sportLeagueId } = await contest('Masters');
+    const crownedAt = new Date('2026-09-30T12:00:00.000Z');
+    const table = { scale: CupPointsScale.STANDARD, customPoints: [] };
+    const cups = [
+      await repo.ensure({ leagueId: league.id, seasonYear: 2024, sportLeagueId }),
+      await repo.ensure({ leagueId: league.id, seasonYear: 2025, sportLeagueId }),
+      await repo.ensure({ leagueId: league.id, seasonYear: 2026, sportLeagueId }),
+    ];
+    const standing = (cupId: string, squadId: string, position: number) => ({
+      cupId, squadId, position, displayPosition: String(position), points: 1000 - position * 100, wins: 0, podiums: 1, contestsCounted: 1, trophy: null,
+    });
+    for (const cup of cups.slice(0, 2)) {
+      await repo.crown(cup.id, { crownedAt, pointsTable: table, standings: [standing(cup.id, squads.birdies.id, 2), standing(cup.id, squads.eagles.id, 1)] });
+    }
+
+    const rows = await repo.findStandings(cups.map((cup) => cup.id));
+
+    const expected = cups.slice(0, 2).flatMap((cup) => [[cup.id, squads.eagles.id, 1], [cup.id, squads.birdies.id, 2]]).sort((left, right) => String(left[0]).localeCompare(String(right[0])));
+    expect(rows.map((row) => [row.cupId, row.squadId, row.position])).toEqual(expected);
   });
 });

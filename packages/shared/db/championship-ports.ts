@@ -27,8 +27,8 @@ export interface SeriesContest {
   eventYear: number;
   /** When it went final; null for a contest completed before the time was kept. */
   completedAt: Date | null;
-  /** The event's games, if it has any: each one's round and whether it sends its winner on. */
-  games: Array<{ roundNumber: number; sendsWinnerOn: boolean }>;
+  /** The event's games, counted: how many, over how many rounds, and how many send their winner on. */
+  games: { count: number; roundCount: number; sendingWinnerOn: number };
 }
 
 /** The league championship's finishes, written at settlement and read by year (#863). */
@@ -41,6 +41,8 @@ export interface ChampionshipRepository {
   findByLeagueYear(leagueId: string, year: number): Promise<LeagueYearFinish[]>;
   /** The league championship's name, or null when there is no such league. */
   findCupName(leagueId: string): Promise<string | null>;
+  /** Whether the league has a counted finish in the year. */
+  hasCountedFinish(leagueId: string, year: number): Promise<boolean>;
   /** The league's open and live contests that will count once final. */
   countUnfinishedContests(leagueId: string): Promise<number>;
   /**
