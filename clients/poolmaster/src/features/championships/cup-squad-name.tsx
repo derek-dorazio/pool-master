@@ -3,6 +3,7 @@ import { Link } from 'react-router';
 import { Chip, IconAvatar } from '@/features/shared/ui';
 import { getTeamIconOption } from '@/features/teams/team-icon-catalog';
 import { TeamIcon } from '@/features/teams/team-icon';
+import { MineMarker } from '@/features/contests/leaderboard-kit';
 
 /**
  * A squad in a cup or championship list: its icon and name, linking on when there is somewhere
@@ -35,7 +36,7 @@ export function CupSquadName({
       ) : (
         <span className="truncate font-semibold text-foreground" data-testid={testId}>{name}</span>
       )}
-      {isFocus ? <Chip tone="active">You</Chip> : null}
+      {isFocus ? <MineMarker /> : null}
       {!isActive ? <Chip>Inactive</Chip> : null}
     </div>
   );

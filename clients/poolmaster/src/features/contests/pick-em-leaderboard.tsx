@@ -1,25 +1,19 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { Trophy } from 'lucide-react';
-import { useEffect } from 'react';
-import { Link } from 'react-router';
-import { ContestStatus, SportEventStatus, formatPickEmRulesName  } from '@poolmaster/shared/domain';
+import { SportEventStatus, formatPickEmRulesName } from '@poolmaster/shared/domain';
 import type { ContestDto, PickEmLeaderboardResponse } from '@/lib/api';
-import { buildLeagueContestEntryPath } from '@/features/leagues/league-routing';
-import { useLeagueContextById } from '@/features/leagues/use-league-context';
-import { Chip, DataGrid, ErrorState, LoadingState, Tile } from '@/features/shared/ui';
-import { ApiError, extractErrorMessage } from '@/lib/errors';
-import { getLogger } from '@/lib/logger';
 import { formatPoints } from './bracket-layout';
-import { ContestHeader, ContestSubMenu } from './contest-header';
-import { LEADERBOARD_ERROR_MESSAGES } from './contest-leaderboard';
-import { ContestStatusBadge } from './contest-status-badge';
+import { entryColumn, placeColumn, totalColumn } from './leaderboard-columns';
+import { LeaderboardFrame, ScoreboardGrid } from './leaderboard-kit';
+import { useLeaderboardFallback } from './use-leaderboard-fallback';
+import { useContestLeague } from './use-contest-league';
 import { usePickEmLeaderboardQuery } from './use-contest-leaderboard';
 
 type PickEmRow = PickEmLeaderboardResponse['entries'][number];
 type PickEmWeek = PickEmLeaderboardResponse['weeks'][number];
 
-/** Entries per page. A league can have hundreds; one page stays readable on a phone. */
-const PAGE_SIZE = 25;
+/** The prefix of the board's test ids. */
+const TEST_ID = 'pick-em-leaderboard';
 
 /** A week's column heading: its name, with how it stands once it is under way. */
 function weekHeading(week: PickEmWeek): string {
@@ -53,52 +47,9 @@ function pickEmColumns(
   weeks: readonly PickEmWeek[],
 ): ColumnDef<PickEmRow>[] {
   return [
-    {
-      id: 'place',
-      header: 'Place',
-      accessorFn: (row) => row.position,
-      cell: ({ row }) => (
-        <span className="font-semibold" data-testid={`pick-em-leaderboard-place-${row.original.entryId}`}>
-          {row.original.displayPosition ?? '—'}
-        </span>
-      ),
-    },
-    {
-      id: 'entry',
-      header: 'Entry',
-      // Searched by the entry's name and its group's name.
-      accessorFn: (row) => `${row.entryName} ${row.squadName}`,
-      cell: ({ row }) => (
-        <span className="block min-w-0">
-          <span className="flex flex-wrap items-center gap-2">
-            {leagueCode ? (
-              <Link
-                className="font-medium text-foreground hover:underline"
-                data-testid={`pick-em-leaderboard-entry-link-${row.original.entryId}`}
-                state={{ leagueCode }}
-                to={buildLeagueContestEntryPath(leagueCode, contestId, row.original.entryId)}
-              >
-                {row.original.entryName}
-              </Link>
-            ) : (
-              <span className="font-medium">{row.original.entryName}</span>
-            )}
-            {mySquadId !== null && row.original.squadId === mySquadId ? <Chip tone="active">Yours</Chip> : null}
-          </span>
-          <span className="block text-xs text-muted-foreground">{row.original.squadName}</span>
-        </span>
-      ),
-    },
-    {
-      id: 'total',
-      header: 'Season',
-      accessorFn: (row) => row.totalPoints,
-      cell: ({ row }) => (
-        <span className="score-total" data-testid={`pick-em-leaderboard-total-${row.original.entryId}`}>
-          {formatPoints(row.original.totalPoints)}
-        </span>
-      ),
-    },
+    placeColumn(TEST_ID),
+    entryColumn(TEST_ID, { contestId, leagueCode, mySquadId }),
+    totalColumn(TEST_ID, { format: formatPoints, header: 'Season', id: 'total', value: (row) => row.totalPoints }),
     ...weeks.map((week): ColumnDef<PickEmRow> => ({
       id: `week-${week.sportEventId}`,
       header: weekHeading(week),
@@ -118,36 +69,13 @@ function pickEmColumns(
  * Polled while the contest is live, so places move with the results.
  */
 export function PickEmLeaderboard({ contest, leagueCode: hintedLeagueCode }: { contest: ContestDto; leagueCode: string | null }) {
-  const logger = getLogger().child({ feature: 'pick-em-leaderboard' });
   const contestId = contest.id;
   const leaderboardQuery = usePickEmLeaderboardQuery(contestId, contest.status);
-  const { league, viewer } = useLeagueContextById(contest.leagueId);
-  const leagueCode = hintedLeagueCode ?? league?.leagueCode ?? null;
+  const { leagueCode, viewer } = useContestLeague(contest.leagueId, hintedLeagueCode);
+  const fallback = useLeaderboardFallback(leaderboardQuery, { action: 'pickEmLeaderboard.load.failed', contestId });
 
-  useEffect(() => {
-    if (leaderboardQuery.isError) {
-      logger.warn(
-        { action: 'pickEmLeaderboard.load.failed', data: { contestId }, err: leaderboardQuery.error },
-        'Pick\'em leaderboard failed to load',
-      );
-    }
-  }, [contestId, leaderboardQuery.error, leaderboardQuery.isError, logger]);
-
-  if (leaderboardQuery.isLoading) {
-    return <LoadingState body="Loading contest leaderboard..." />;
-  }
-  if (leaderboardQuery.isError || !leaderboardQuery.data) {
-    const { error } = leaderboardQuery;
-    return (
-      <ErrorState
-        body={extractErrorMessage(error, {
-          codeMessages: LEADERBOARD_ERROR_MESSAGES,
-          fallback: 'Try refreshing, or return to the contest board.',
-        })}
-        testId={error instanceof ApiError && error.code ? `contest-leaderboard-error-${error.code}` : 'contest-leaderboard-error'}
-        title="We couldn't load this leaderboard."
-      />
-    );
+  if (fallback || !leaderboardQuery.data) {
+    return fallback;
   }
 
   const board = leaderboardQuery.data;
@@ -157,53 +85,32 @@ export function PickEmLeaderboard({ contest, leagueCode: hintedLeagueCode }: { c
   const isUnderWay = board.weeks.some((week) => week.started);
 
   return (
-    <section className="space-y-6" data-testid="contest-leaderboard">
-      <ContestHeader
-        badges={<ContestStatusBadge status={contest.status} />}
-        menu={leagueCode ? (
-          <ContestSubMenu
-            contestId={contestId}
-            current="leaderboard"
-            leagueCode={leagueCode}
-            myEntryId={contest.myEntryIds?.[0] ?? null}
-            picksRevealed
-          />
-        ) : null}
-        summary={(
-          <p className="mt-2 text-sm text-muted-foreground" data-testid="pick-em-leaderboard-mode">
-            {formatPickEmRulesName(board)}
-          </p>
-        )}
-        title={contest.name}
-        titleTestId="contest-leaderboard-heading"
-      >
-        <div className="mt-2 space-y-1 text-sm text-muted-foreground">
+    <LeaderboardFrame
+      contest={contest}
+      leagueCode={leagueCode}
+      notes={(
+        <>
           {myBest?.displayPosition ? (
             <p data-testid="pick-em-leaderboard-my-best">{`Your best: ${myBest.displayPosition} · ${myBest.entryName}, ${formatPoints(myBest.totalPoints)}`}</p>
           ) : null}
           {isUnderWay ? null : (
             <p data-testid="pick-em-leaderboard-not-started">Points show from the first kickoff. Entries are listed once they submit a week.</p>
           )}
-          {contest.status === ContestStatus.COMPLETED ? (
-            <p data-testid="contest-leaderboard-settled-note">Final result: these standings are frozen at settlement.</p>
-          ) : null}
-        </div>
-      </ContestHeader>
-
-      <Tile>
-        <DataGrid
-          headerTone="scoreboard"
-          columns={pickEmColumns(contestId, leagueCode, mySquadId, board.weeks)}
-          data={board.entries}
-          emptyMessage="No entry has submitted a week yet."
-          getRowId={(row) => row.entryId}
-          pageSize={PAGE_SIZE}
-          rowTestId={(row) => `pick-em-leaderboard-row-${row.entryId}`}
-          search={{ label: 'Find an entry', placeholder: 'Find an entry', testId: 'contest-leaderboard-search' }}
-          showColumnFilters={false}
-          tableTestId="pick-em-leaderboard-table"
-        />
-      </Tile>
-    </section>
+        </>
+      )}
+      summary={(
+        <p className="mt-2 text-sm text-muted-foreground" data-testid="pick-em-leaderboard-mode">
+          {formatPickEmRulesName(board)}
+        </p>
+      )}
+    >
+      <ScoreboardGrid
+        columns={pickEmColumns(contestId, leagueCode, mySquadId, board.weeks)}
+        data={board.entries}
+        emptyMessage="No entry has submitted a week yet."
+        rowTestIdPrefix="pick-em-leaderboard-row"
+        tableTestId="pick-em-leaderboard-table"
+      />
+    </LeaderboardFrame>
   );
 }

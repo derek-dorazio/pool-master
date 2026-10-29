@@ -10,12 +10,9 @@ import {
   type GamePicksResponse,
   type SaveGamePicksRequest,
 } from '@/lib/api';
-import { buildLeagueContestPath, buildLeaguePath } from '@/features/leagues/league-routing';
-import { useLeagueContextById } from '@/features/leagues/use-league-context';
 import {
   Alert,
   ErrorState,
-  LinkButton,
   LoadingState,
   MetricGrid,
   MetricTile,
@@ -30,7 +27,9 @@ import { parseRouteState } from '@/routes/route-state';
 import { BracketBoard } from './bracket-board';
 import { BracketSubmitPanel } from './bracket-entry-submit';
 import { buildBracketRounds, describeBracketClose, formatPickProgress, formatPoints, type BracketGame, type BracketTeam } from './bracket-layout';
-import { ContestHeader, ContestSubMenu } from './contest-header';
+import { ContestEntryBackLinks, ContestPageFrame } from './contest-header';
+import { entryPageView } from './contest-page-view';
+import { useContestLeague } from './use-contest-league';
 import { contestEventStart, contestMatchNoun, contestParticipantNoun, contestScoreUnit } from './contest-sport';
 import { firstContestEvent } from './contest-events';
 import {
@@ -102,7 +101,7 @@ export function BracketEntryPage({ contest }: { contest: ContestDto }) {
     refetchInterval: shouldPollContestEntries(contest.status) ? CONTEST_POLL_INTERVAL_MS : false,
   });
   const entryQuery = useContestEntryQuery(contestId, entryId);
-  const { league } = useLeagueContextById(contest.leagueId);
+  const { leagueCode: backLeagueCode } = useContestLeague(contest.leagueId, hintedLeagueCode);
 
   const logRefusal = (action: string, error: Error) => {
     const payload = { action, data: { contestId, entryId }, err: error };
@@ -169,10 +168,7 @@ export function BracketEntryPage({ contest }: { contest: ContestDto }) {
   const eventStart = contestEventStart(contest.sport);
   const match = contestMatchNoun(contest.sport);
   const participant = contestParticipantNoun(contest.sport);
-  const backLeagueCode = hintedLeagueCode ?? league?.leagueCode ?? null;
-  const backToContestPath = backLeagueCode ? buildLeagueContestPath(backLeagueCode, contestId) : `/contests/${contestId}`;
   const entrySummary = entryQuery.data?.entry ?? null;
-  const myEntryIds = contest.myEntryIds ?? [];
   const rounds = buildBracketRounds(gamePicks.games, roundLabel);
   // A full bracket closes at the event's start; a second-chance one at its first round's first game.
   const closesAt = describeBracketClose(rounds, eventStart);
@@ -199,54 +195,34 @@ export function BracketEntryPage({ contest }: { contest: ContestDto }) {
     : null;
 
   return (
-    <section className="space-y-6" data-testid="bracket-entry-page">
-      <ContestHeader
-        actions={(
-          <>
-            {backLeagueCode ? null : (
-              <LinkButton data-testid="contest-entry-back-to-contest" to={backToContestPath} variant="secondary">
-                Back to contest
-              </LinkButton>
-            )}
-            <LinkButton
-              data-testid="contest-entry-back-to-league"
-              to={backLeagueCode ? buildLeaguePath(backLeagueCode) : '/welcome'}
-              variant="secondary"
-            >
-              Back to league
-            </LinkButton>
-          </>
-        )}
-        badges={(
-          <>
-            <StatusBadge tone={CONTEST_STATUS_TONES[contest.status]}>
-              {isOpen ? `Open until ${closesAt}` : contestStatusLabel(contest.status)}
+    <ContestPageFrame
+      contest={contest}
+      current={entryPageView(contest, entryId)}
+      leagueCode={backLeagueCode}
+      picksRevealed={entryQuery.data?.picksRevealed ?? false}
+      testId="bracket-entry-page"
+      actions={<ContestEntryBackLinks contestId={contestId} leagueCode={backLeagueCode} />}
+      badges={(
+        <>
+          <StatusBadge tone={CONTEST_STATUS_TONES[contest.status]}>
+            {isOpen ? `Open until ${closesAt}` : contestStatusLabel(contest.status)}
+          </StatusBadge>
+          {picksHidden ? null : (
+            <StatusBadge data-testid="contest-entry-status-badge" tone={CONTEST_ENTRY_STATUS_TONES[gamePicks.status]}>
+              {statusLabel}
             </StatusBadge>
-            {picksHidden ? null : (
-              <StatusBadge data-testid="contest-entry-status-badge" tone={CONTEST_ENTRY_STATUS_TONES[gamePicks.status]}>
-                {statusLabel}
-              </StatusBadge>
-            )}
-          </>
-        )}
-        menu={backLeagueCode ? (
-          <ContestSubMenu
-            contestId={contestId}
-            current={myEntryIds.includes(entryId) ? 'my-entry' : null}
-            leagueCode={backLeagueCode}
-            myEntryId={myEntryIds[0] ?? null}
-            picksRevealed={entryQuery.data?.picksRevealed ?? false}
-          />
-        ) : null}
-        summary={(
-          <p className="mt-2 text-sm text-muted-foreground" data-testid="contest-entry-summary">
-            {contest.name}
-            {entrySummary ? ` · ${entrySummary.squadName} · Entry ${entrySummary.entryNumber}` : ''}
-          </p>
-        )}
-        title={gamePicks.entryName}
-        titleTestId="contest-entry-heading"
-      />
+          )}
+        </>
+      )}
+      summary={(
+        <p className="mt-2 text-sm text-muted-foreground" data-testid="contest-entry-summary">
+          {contest.name}
+          {entrySummary ? ` · ${entrySummary.squadName} · Entry ${entrySummary.entryNumber}` : ''}
+        </p>
+      )}
+      title={gamePicks.entryName}
+      titleTestId="contest-entry-heading"
+    >
 
       {picksHidden ? (
         <Alert data-testid="bracket-picks-hidden">
@@ -323,6 +299,6 @@ export function BracketEntryPage({ contest }: { contest: ContestDto }) {
           )}
         </>
       )}
-    </section>
+    </ContestPageFrame>
   );
 }

@@ -358,7 +358,7 @@ describe('League Home', () => {
     expect(standings.queryByText('Birdie Sanders')).not.toBeInTheDocument();
     const myRow = standings.getByRole('row', { name: /Casey Crushers/ });
     expect(myRow).toHaveTextContent('7');
-    expect(myRow).toHaveTextContent('· you');
+    expect(myRow).toHaveTextContent('Yours');
     expect(standings.getByRole('link', { name: /Full leaderboard/ })).toHaveAttribute(
       'href',
       '/league/BIGDAWGS/contests/live-1/leaderboard',

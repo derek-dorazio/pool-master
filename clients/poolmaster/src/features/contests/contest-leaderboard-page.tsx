@@ -6,9 +6,7 @@ import {
   getContest,
   type ContestDto,
 } from '@/lib/api';
-import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
-import { useLeagueContextById } from '@/features/leagues/use-league-context';
-import { getLogger } from '@/lib/logger';
+import { throwApiError } from '@/lib/errors';
 import { parseRouteState } from '@/routes/route-state';
 import {
   Button,
@@ -28,10 +26,7 @@ import {
   contestRefetchInterval,
   refreshOnContestStatusChange,
 } from './contest-status';
-import { ContestHeader, ContestSubMenu } from './contest-header';
-import { ContestStatusBadge } from './contest-status-badge';
 import {
-  LEADERBOARD_ERROR_MESSAGES,
   buildLeaderboardView,
   type LeaderboardEntryRow,
   type LeaderboardPickRow,
@@ -43,6 +38,9 @@ import { PickEmLeaderboard } from './pick-em-leaderboard';
 import { SquaresLeaderboard } from './squares-pages';
 import { SurvivorLeaderboard } from './survivor-leaderboard';
 import { useContestLeaderboardQuery } from './use-contest-leaderboard';
+import { useContestLeague } from './use-contest-league';
+import { LeaderboardFrame, MineMarker } from './leaderboard-kit';
+import { useLeaderboardFallback } from './use-leaderboard-fallback';
 import { ContestEventSwitcher } from './contest-event-switcher';
 import { hasContestEventStarted } from './contest-events';
 
@@ -227,7 +225,7 @@ function EntryBlock({
               {entry.displayPosition ?? NO_SCORE}
             </span>
             <span className="font-medium text-foreground">{entry.entryName}</span>
-            {isMine ? <Chip tone="active">Yours</Chip> : null}
+            {isMine ? <MineMarker /> : null}
           </span>
           <span className="mt-1 block text-xs text-muted-foreground">
             {entry.squadName} · best {entry.countingPickLimit} of {entry.picks.length} count ·{' '}
@@ -278,7 +276,6 @@ function EntryBlock({
 
 export function ContestLeaderboardPage() {
   const displayPreferences = useDisplayPreferences();
-  const logger = getLogger().child({ feature: 'contest-leaderboard' });
   const { contestId = '', leagueCode: routeLeagueCode } = useParams<{
     contestId: string;
     leagueCode?: string;
@@ -334,8 +331,8 @@ export function ContestLeaderboardPage() {
     enabled: contestQuery.data !== undefined && !isBracket && !isPickEm && !isSurvivor && !isSquares,
     sportEventId: requestedEventId,
   });
-  const { league, viewer } = useLeagueContextById(contestQuery.data?.leagueId);
-  const leagueCode = hintedLeagueCode ?? league?.leagueCode ?? null;
+  const { leagueCode, viewer } = useContestLeague(contestQuery.data?.leagueId, hintedLeagueCode);
+  const leaderboardFallback = useLeaderboardFallback(leaderboardQuery, { action: 'contestLeaderboard.load.failed', contestId });
 
   useEffect(() => {
     if (!jumpTargetId) {
@@ -344,21 +341,6 @@ export function ContestLeaderboardPage() {
     document.getElementById(entryBlockId(jumpTargetId))?.scrollIntoView({ block: 'start', behavior: 'smooth' });
     setJumpTargetId(null);
   }, [jumpTargetId, pageIndex]);
-
-  useEffect(() => {
-    if (!leaderboardQuery.isError) {
-      return;
-    }
-
-    logger.warn(
-      {
-        action: 'contestLeaderboard.load.failed',
-        data: { contestId, leagueCode: hintedLeagueCode ?? null },
-        err: leaderboardQuery.error,
-      },
-      'Contest leaderboard failed to load',
-    );
-  }, [contestId, hintedLeagueCode, leaderboardQuery.error, leaderboardQuery.isError, logger]);
 
   if (contestQuery.isLoading) {
     return <LoadingState body="Loading contest leaderboard..." />;
@@ -377,36 +359,17 @@ export function ContestLeaderboardPage() {
     return <SquaresLeaderboard contest={contestQuery.data} leagueCode={leagueCode} />;
   }
 
-  if (leaderboardQuery.isLoading) {
-    return <LoadingState body="Loading contest leaderboard..." />;
-  }
-
-  if (leaderboardQuery.isError) {
-    return (
-      <ErrorState
-        body={extractErrorMessage(leaderboardQuery.error, {
-          codeMessages: LEADERBOARD_ERROR_MESSAGES,
-          fallback: 'Try refreshing, or return to the contest board.',
-        })}
-        testId={
-          // The refusal's code is in the test id, so a browser test can tell picks-hidden from
-          // a membership refusal or a server failure.
-          leaderboardQuery.error instanceof ApiError && leaderboardQuery.error.code
-            ? `contest-leaderboard-error-${leaderboardQuery.error.code}`
-            : 'contest-leaderboard-error'
-        }
-        title="We couldn't load this leaderboard."
-      />
-    );
-  }
-
-  if (contestQuery.isError || !contestQuery.data || !leaderboardQuery.data) {
+  if (contestQuery.isError || !contestQuery.data) {
     return (
       <ErrorState
         body="Try refreshing or return to League Home."
         title="We couldn't load this contest."
       />
     );
+  }
+
+  if (leaderboardFallback || !leaderboardQuery.data) {
+    return leaderboardFallback;
   }
 
   const contest = contestQuery.data;
@@ -467,38 +430,19 @@ export function ContestLeaderboardPage() {
   };
 
   return (
-    <section className="space-y-6" data-testid="contest-leaderboard">
-      <ContestHeader
-        badges={<ContestStatusBadge status={contest.status} />}
-        menu={leagueCode ? (
-          <ContestSubMenu
-            contestId={contestId}
-            current="leaderboard"
-            leagueCode={leagueCode}
-            myEntryId={contest.myEntryIds?.[0] ?? null}
-            picksRevealed
-          />
-        ) : null}
-        title={contest.name}
-        titleTestId="contest-leaderboard-heading"
-      >
-        <div className="mt-2 space-y-2">
-          {view.currentRoundLabel ? (
-            <Chip data-testid="contest-leaderboard-round-cue" tone="info">
-              {view.currentRoundLabel}
-            </Chip>
-          ) : null}
-          {contest.status === ContestStatus.COMPLETED ? (
-            // #246 — an entry's standing is frozen at settlement while each participant's own
-            // score stays live, so a late correction can make the two disagree on this very
-            // page. Say so rather than let it read as a bug.
-            <p className="text-sm text-muted-foreground" data-testid="contest-leaderboard-settled-note">
-              {`Final result, settled ${formatDateTimeDisplay(contest.endsAt, displayPreferences, 'at the end of the event')}. Entry standings are frozen at settlement; ${participantNoun.one} scores show current event data and can differ after a late score correction.`}
-            </p>
-          ) : null}
-        </div>
-      </ContestHeader>
-
+    <LeaderboardFrame
+      contest={contest}
+      leagueCode={leagueCode}
+      notes={view.currentRoundLabel ? (
+        <Chip data-testid="contest-leaderboard-round-cue" tone="info">
+          {view.currentRoundLabel}
+        </Chip>
+      ) : null}
+      // #246 — an entry's standing is frozen at settlement while each participant's own score
+      // stays live, so a late correction can make the two disagree on this very page. Say so
+      // rather than let it read as a bug.
+      settledNote={`Final result, settled ${formatDateTimeDisplay(contest.endsAt, displayPreferences, 'at the end of the event')}. Entry standings are frozen at settlement; ${participantNoun.one} scores show current event data and can differ after a late score correction.`}
+    >
       <ContestEventSwitcher
         events={revealedEvents}
         onChange={(sportEventId) => {
@@ -596,6 +540,6 @@ export function ContestLeaderboardPage() {
           </p>
         ) : null}
       </Tile>
-    </section>
+    </LeaderboardFrame>
   );
 }
