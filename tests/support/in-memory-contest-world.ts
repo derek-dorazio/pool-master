@@ -30,6 +30,7 @@ import type {
   SportEventRepository,
   SportLeagueRepository,
   SquadMembershipRepository,
+  SquadDetails,
   SquadRepository,
   UserRepository,
 } from '@poolmaster/shared/db';
@@ -37,7 +38,6 @@ import type {
   Contest,
   ContestConfiguration,
   ContestEntry,
-  ContestEntryStatus,
   League,
   LeagueMembership,
   SportEvent,
@@ -48,6 +48,8 @@ import type {
   User,
 } from '@poolmaster/shared/domain';
 import {
+  championshipYear,
+  ContestEntryStatus,
   ContestFormat,
   ContestStatus,
   CupWeight,
@@ -330,8 +332,24 @@ export class InMemoryContestWorld {
   contestRepo(): ContestRepository {
     return {
       findById: async (id) => this.contests.get(id) ?? null,
-      findByLeague: async (leagueId) =>
-        [...this.contests.values()].filter((contest) => contest.leagueId === leagueId),
+      findByLeague: async (leagueId, statuses) =>
+        [...this.contests.values()].filter((contest) => contest.leagueId === leagueId && statuses.includes(contest.status)),
+      findCurrentByLeague: async (leagueId, now) =>
+        [...this.contests.values()].filter((contest) => contest.leagueId === leagueId
+          && contest.status !== ContestStatus.COMPLETED
+          && !(contest.status === ContestStatus.DRAFT
+            && contest.selectionType !== SelectionType.BRACKET && contest.selectionType !== SelectionType.SQUARES
+            && contest.sportEventIds.some((id) => (this.sportEvents.get(id)?.startDate ?? now) <= now))),
+      findFinishedByLeague: async (leagueId, endedFrom, endedBefore) =>
+        [...this.contests.values()].filter((contest) => contest.leagueId === leagueId
+          && contest.status === ContestStatus.COMPLETED
+          && contest.endsAt !== undefined
+          && contest.endsAt >= endedFrom && contest.endsAt < endedBefore),
+      findFinishedYearsByLeague: async (leagueId) =>
+        [...new Set([...this.contests.values()].flatMap((contest) =>
+          contest.leagueId === leagueId && contest.status === ContestStatus.COMPLETED && contest.endsAt
+            ? [championshipYear(contest.endsAt)]
+            : []))].sort((left, right) => right - left),
       findOpenByLeague: async (leagueId) =>
         [...this.contests.values()]
           .filter((contest) => contest.leagueId === leagueId && contest.status === ContestStatus.OPEN)
@@ -342,6 +360,7 @@ export class InMemoryContestWorld {
           contest.sportEventIds.includes(sportEventId)
           && (!filter?.statuses || filter.statuses.includes(contest.status))
           && (!filter?.excludeStatuses || !filter.excludeStatuses.includes(contest.status))),
+      findJoinableByReleasedEdition: async () => [],
       findByStatuses: async (statuses) =>
         [...this.contests.values()].filter((contest) => statuses.includes(contest.status)),
       create: async (input, limits) => this.seasonFull(input.leagueId, input.seasonYear, limits)
@@ -410,7 +429,6 @@ export class InMemoryContestWorld {
     return {
       findByContest: async (contestId) =>
         [...this.configurations.values()].find((row) => row.contestId === contestId) ?? null,
-      findByTemplateEventSeries: async () => [],
       create: async (input) => this.addConfiguration(input.contestId, input),
       update: async (id, updates) => {
         const existing = this.configurations.get(id);
@@ -445,6 +463,9 @@ export class InMemoryContestWorld {
           .sort((left, right) => left.entryNumber - right.entryNumber),
       countByContests: async (contestIds) => new Map(contestIds.map((contestId) =>
         [contestId, [...this.entries.values()].filter((entry) => entry.contestId === contestId).length])),
+      countSubmittedByContests: async (contestIds) => new Map(contestIds.map((contestId) =>
+        [contestId, [...this.entries.values()].filter((entry) => entry.contestId === contestId
+          && entry.events.some((event) => event.status === ContestEntryStatus.SUBMITTED)).length])),
       create: async (input, limits) => {
         // The adapter refuses an entry once the contest is drawn, or holds its plan's entries.
         if (this.contests.get(input.contestId)?.drawnAt !== undefined) return { status: 'contestDrawn' };
@@ -563,11 +584,29 @@ export class InMemoryContestWorld {
   }
 
   squadRepo(): SquadRepository {
+    const details = (squad: Squad): SquadDetails => ({
+      ...squad,
+      members: [...this.squadMemberships.values()]
+        .filter((row) => row.squadId === squad.id)
+        .sort((left, right) => left.joinedAt.getTime() - right.joinedAt.getTime())
+        .flatMap((membership) => {
+          const user = this.users.get(membership.userId);
+          return user ? [{ membership, user }] : [];
+        }),
+    });
     return {
       findById: async (id) => this.squads.get(id) ?? null,
       findByLeague: async (leagueId, includeInactive = false) =>
         [...this.squads.values()].filter((squad) =>
           squad.leagueId === leagueId && (includeInactive || squad.isActive)),
+      findDetailsById: async (id) => {
+        const squad = this.squads.get(id);
+        return squad ? details(squad) : null;
+      },
+      findDetailsByLeague: async (leagueId) =>
+        [...this.squads.values()].filter((squad) => squad.leagueId === leagueId).map(details),
+      countActiveByLeague: async (leagueId) =>
+        [...this.squads.values()].filter((squad) => squad.leagueId === leagueId && squad.isActive).length,
       findByLeagueAndName: async (leagueId, name) =>
         [...this.squads.values()].find((squad) =>
           squad.leagueId === leagueId && squad.name === name) ?? null,
@@ -600,6 +639,13 @@ export class InMemoryContestWorld {
         const rows = [...this.squadMemberships.values()].filter((row) =>
           row.leagueId === leagueId && row.userId === userId);
         return rows.find((row) => row.status === SquadMembershipStatus.ACTIVE) ?? rows.at(0) ?? null;
+      },
+      findByLeagueAndUserWithSquadName: async (leagueId, userId) => {
+        const rows = [...this.squadMemberships.values()].filter((row) =>
+          row.leagueId === leagueId && row.userId === userId);
+        const membership = rows.find((row) => row.status === SquadMembershipStatus.ACTIVE) ?? rows.at(0);
+        const squad = membership ? this.squads.get(membership.squadId) : undefined;
+        return membership && squad ? { ...membership, squadName: squad.name } : null;
       },
       create: async (input) => this.addSquadMember(input.squadId, input.userId, input),
       update: async (id, updates) => {

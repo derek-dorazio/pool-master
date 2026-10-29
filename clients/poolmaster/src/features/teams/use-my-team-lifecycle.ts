@@ -88,7 +88,9 @@ export function useMyTeamLifecycle({
       resetOwnerForms();
       void navigate(afterDeletePath);
     },
+    // The league context counts the league's active teams.
     invalidates: [
+      QueryKeys.leagues.detail(leagueCode),
       QueryKeys.leagueTeamOwnerInvitations.byLeague(leagueId),
       QueryKeys.leagueTeams.byLeague(leagueId),
     ],

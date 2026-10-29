@@ -14,7 +14,7 @@ import { Lock, Trophy } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { deleteContest, type EffectiveTierDto } from '@/lib/api';
-import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
+import { ApiError, extractErrorMessage, hasErrorCode, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
@@ -44,14 +44,13 @@ import {
   SettingsRow,
   SettingsSection,
 } from '@/features/shared/ui';
-import { useLeagueSquadsQuery } from '@/features/teams/use-league-squads-query';
 import { coversOneEvent, firstContestEvent } from './contest-events';
 import { ContestStatusBadge } from './contest-status-badge';
 import { ContestStatusCard } from './contest-status-card';
 import { secondChanceRoundName } from './bracket-start-round';
 import { useEventRoundName } from './use-bracket-round-label';
 import { sportEventQueryOptions } from './use-contest-schedule';
-import { useLeagueContestsQuery } from './use-league-contests-query';
+import { useContestQuery } from './use-contest-query';
 import { useManagedContestQuery } from './use-managed-contest-query';
 
 function FixedNote() {
@@ -111,12 +110,11 @@ export function ManageContestPage() {
   const navigate = useNavigate();
   const { leagueCode = '', contestId = '' } = useParams<{ leagueCode: string; contestId: string }>();
   // `CommissionerRouteGuard` has loaded the league and admitted the viewer before this renders.
-  const { league, viewer } = useLeagueContext(leagueCode);
+  const { query: leagueQuery, league, viewer } = useLeagueContext(leagueCode);
   const leagueId = league?.id ?? '';
-  const contestsQuery = useLeagueContestsQuery(leagueId);
+  const contestQuery = useContestQuery(contestId);
   const managedContestQuery = useManagedContestQuery(league?.id, contestId);
-  const teamsQuery = useLeagueSquadsQuery(leagueId);
-  const contest = contestsQuery.data?.find((candidate) => candidate.id === contestId) ?? null;
+  const contest = contestQuery.data ?? null;
   // The first event: its start is when entries close, and the status card counts down to it.
   const firstEventId = (contest ? firstContestEvent(contest)?.sportEventId : undefined)
     ?? managedContestQuery.data?.sportEvents.at(0)?.sportEventId;
@@ -151,10 +149,13 @@ export function ManageContestPage() {
   if (!league) {
     return null;
   }
-  if (contestsQuery.isLoading || managedContestQuery.isLoading || eventQuery.isLoading) {
+  if (contestQuery.isLoading || managedContestQuery.isLoading || eventQuery.isLoading) {
     return <LoadingState body="Loading contest..." testId="manage-contest-loading" />;
   }
-  if (contestsQuery.isError || managedContestQuery.isError || eventQuery.isError) {
+  // A contest that is gone answers CONTEST_NOT_FOUND; one of another league is not this league's either.
+  const isContestMissing = hasErrorCode(contestQuery.error, 'CONTEST_NOT_FOUND')
+    || (contest !== null && contest.leagueId !== league.id);
+  if ((contestQuery.isError && !isContestMissing) || managedContestQuery.isError || eventQuery.isError) {
     return (
       <ErrorState
         body="Try again in a moment."
@@ -165,7 +166,7 @@ export function ManageContestPage() {
   }
   const managedContest = managedContestQuery.data;
   const event = eventQuery.data;
-  if (!contest || !managedContest || !event) {
+  if (!contest || isContestMissing || !managedContest || !event) {
     return (
       <EmptyState
         action={<LinkButton to={contestsPath} variant="secondary">All contests</LinkButton>}
@@ -178,7 +179,7 @@ export function ManageContestPage() {
 
   const isNotOpen = contest.status === ContestStatus.DRAFT;
   const isTiered = contest.selectionType === SelectionType.TIERED;
-  const activeTeamCount = (teamsQuery.data ?? []).filter((team) => team.isActive).length;
+  const activeTeamCount = leagueQuery.data?.activeTeamCount ?? 0;
   const { configuration } = managedContest;
   const rules = formatContestRules(
     configuration,

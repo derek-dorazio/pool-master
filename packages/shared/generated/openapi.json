@@ -3397,7 +3397,7 @@
             "type": "integer",
             "minimum": -9007199254740991,
             "maximum": 9007199254740991,
-            "description": "Number of memberships attached to the squad."
+            "description": "How many of the squad's owners are ACTIVE."
           },
           "createdAt": {
             "type": "string",
@@ -3410,7 +3410,6 @@
             "description": "When the squad was last updated."
           },
           "members": {
-            "description": "Optional expanded squad membership list.",
             "type": "array",
             "items": {
               "type": "object",
@@ -3542,7 +3541,8 @@
               ],
               "additionalProperties": false,
               "description": "Squad membership summary."
-            }
+            },
+            "description": "Every owner membership of the squad, any status, in join order, each with its user."
           }
         },
         "required": [
@@ -3554,7 +3554,8 @@
           "isActive",
           "memberCount",
           "createdAt",
-          "updatedAt"
+          "updatedAt",
+          "members"
         ],
         "additionalProperties": false,
         "description": "A squad within a league. Returned wherever a squad is read."
@@ -3695,7 +3696,7 @@
                 "type": "integer",
                 "minimum": -9007199254740991,
                 "maximum": 9007199254740991,
-                "description": "Number of memberships attached to the squad."
+                "description": "How many of the squad's owners are ACTIVE."
               },
               "createdAt": {
                 "type": "string",
@@ -3708,7 +3709,6 @@
                 "description": "When the squad was last updated."
               },
               "members": {
-                "description": "Optional expanded squad membership list.",
                 "type": "array",
                 "items": {
                   "type": "object",
@@ -3840,7 +3840,8 @@
                   ],
                   "additionalProperties": false,
                   "description": "Squad membership summary."
-                }
+                },
+                "description": "Every owner membership of the squad, any status, in join order, each with its user."
               }
             },
             "required": [
@@ -3852,7 +3853,8 @@
               "isActive",
               "memberCount",
               "createdAt",
-              "updatedAt"
+              "updatedAt",
+              "members"
             ],
             "additionalProperties": false,
             "description": "A squad within a league. Returned wherever a squad is read."
@@ -4002,7 +4004,7 @@
                   "type": "integer",
                   "minimum": -9007199254740991,
                   "maximum": 9007199254740991,
-                  "description": "Number of memberships attached to the squad."
+                  "description": "How many of the squad's owners are ACTIVE."
                 },
                 "createdAt": {
                   "type": "string",
@@ -4015,7 +4017,6 @@
                   "description": "When the squad was last updated."
                 },
                 "members": {
-                  "description": "Optional expanded squad membership list.",
                   "type": "array",
                   "items": {
                     "type": "object",
@@ -4147,7 +4148,8 @@
                     ],
                     "additionalProperties": false,
                     "description": "Squad membership summary."
-                  }
+                  },
+                  "description": "Every owner membership of the squad, any status, in join order, each with its user."
                 }
               },
               "required": [
@@ -4159,7 +4161,8 @@
                 "isActive",
                 "memberCount",
                 "createdAt",
-                "updatedAt"
+                "updatedAt",
+                "members"
               ],
               "additionalProperties": false,
               "description": "A squad within a league. Returned wherever a squad is read."
@@ -6223,12 +6226,27 @@
               "updatedAt"
             ],
             "additionalProperties": false
+          },
+          "squadName": {
+            "description": "The name of the squad in squadMembership, or null when squadMembership is null. The league menu names the viewer's team from it.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "activeTeamCount": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "How many of the league's teams are active: the most entries an open contest can expect, one per team."
           }
         },
         "required": [
           "league",
           "membership",
-          "squadMembership"
+          "squadMembership",
+          "squadName",
+          "activeTeamCount"
         ],
         "additionalProperties": false,
         "description": "A league together with the viewer's own membership edges in it. Fetched once per league; nothing else repeats this context."
@@ -29219,6 +29237,38 @@
         ],
         "additionalProperties": false,
         "description": "Contest-list response."
+      },
+      "ListContestsQuery": {
+        "type": "object",
+        "properties": {
+          "finishedYear": {
+            "description": "List the COMPLETED contests that went final in this championship year, US Eastern, such as 2025, instead of the current ones. The years with any are `listContestFinishedYears`.",
+            "type": "integer",
+            "minimum": 2000,
+            "maximum": 9999
+          }
+        },
+        "additionalProperties": false,
+        "description": "Which of a league's contests to list: the current ones by default, or one year's finished ones."
+      },
+      "ContestFinishedYearsResponse": {
+        "type": "object",
+        "properties": {
+          "years": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            },
+            "description": "Each championship year, US Eastern, a COMPLETED contest of the league went final in, newest first. Empty when none has finished."
+          }
+        },
+        "required": [
+          "years"
+        ],
+        "additionalProperties": false,
+        "description": "The years a league has finished contests in."
       },
       "ContestEntryResponse": {
         "type": "object",
@@ -66948,7 +66998,7 @@
         "tags": [
           "Leagues"
         ],
-        "description": "Creates a new private league for the authenticated commissioner using the submitted unique `leagueCode`, then returns the new league together with the creator's own membership edges in it.\n\nThe same `LeagueContextResponse` as `getLeague` and `getLeagueByCode`, because creating a league also creates the creator's COMMISSIONER membership: the client navigates straight into the league and seeds its context cache from this response rather than issuing a second read (access rule A8). `squadMembership` is null by construction — a league has no squads the instant it is created.",
+        "description": "Creates a new private league for the authenticated commissioner using the submitted unique `leagueCode`, then returns the new league together with the creator's own membership edges in it.\n\nThe same `LeagueContextResponse` as `getLeague` and `getLeagueByCode`, because creating a league also creates the creator's COMMISSIONER membership: the client navigates straight into the league and seeds its context cache from this response rather than issuing a second read (access rule A8). Creating a league also gives the creator their default squad, so `squadMembership`, `squadName` and `activeTeamCount` describe it.",
         "requestBody": {
           "required": true,
           "content": {
@@ -68732,7 +68782,7 @@
         "tags": [
           "Squads"
         ],
-        "description": "Returns the squads associated with the current league for squad management and contest-entry flows, including requester-scoped teamRelationship plus separate global isRootAdmin flags.",
+        "description": "Returns every squad in the league, active and inactive, each with its owners: the Teams page and Manage teams. A page about one squad reads getLeagueSquad instead.",
         "parameters": [
           {
             "schema": {
@@ -68884,7 +68934,7 @@
         "tags": [
           "Squads"
         ],
-        "description": "Returns the detailed squad payload for the requested squad identifier, including requester-scoped teamRelationship plus separate global isRootAdmin flags.",
+        "description": "Returns one squad with its owners: every membership, any status, each with its user. A team page reads this rather than the whole team list.",
         "parameters": [
           {
             "schema": {
@@ -70018,8 +70068,19 @@
         "tags": [
           "Contests"
         ],
-        "description": "Returns the contests associated with the parent league so league-home and commissioner views can list current and historical contests. Each contest carries its entry count and its sport event's name and start, so a list needs no per-event reads. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.",
+        "description": "Returns the league's current contests: DRAFT, OPEN and ACTIVE, less any DRAFT with an event that has started (it can never open); a DRAFT with no events yet is listed, and so is a bracket or squares DRAFT, which closes at its round or game rather than its event. DRAFT contests are listed for the league's commissioners only. With `finishedYear`, returns instead the COMPLETED contests that went final in that championship year (US Eastern), newest first; `listContestFinishedYears` names the years. A single contest is `getContest`. Each contest carries its count of entries that submitted at least one event and its sport events' names and starts, so a list needs no per-event reads. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.",
         "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 2000,
+              "maximum": 9999
+            },
+            "in": "query",
+            "name": "finishedYear",
+            "required": false,
+            "description": "List the COMPLETED contests that went final in this championship year, US Eastern, such as 2025, instead of the current ones. The years with any are `listContestFinishedYears`."
+          },
           {
             "schema": {
               "type": "string"
@@ -70036,6 +70097,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ContestListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }
@@ -70142,6 +70213,58 @@
           },
           "422": {
             "description": "The event, format or template cannot make this contest. The event: SPORT_EVENT_NOT_FOUND, SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED, SPORT_EVENT_ALREADY_STARTED. The format: CONTEST_FORMAT_NOT_ALLOWED. The games of a pick'em or survivor contest: CONTEST_EVENT_HAS_NO_GAMES, CONTEST_EVENT_GAME_UNDECIDED, or CONTEST_EVENT_SPREAD_MISSING (a pick'em pool against the spread on a week with a game lacking its spread). CONTEST_SPREAD_NOT_OFFERED: a pick'em pool against the spread in a sport whose pools have no spread (#792). The selection type: CONTEST_SELECTION_TYPE_NOT_ALLOWED (the event's sport does not offer it). The configuration: CONTEST_RULES_SELECTION_TYPE_MISMATCH (rules of another selection type than the contest's), CONTEST_TIER_FIELD_OUT_OF_RANGE, CONTEST_BUDGET_FIELD_OUT_OF_RANGE (counted scores above the roster size), CONTEST_CONFIGURATION_INVALID (template missing, inactive, or for another format or selection type), or CONTEST_CONFIG_TEMPLATE_LEAGUE_MISMATCH (the template is one sport league's own preset and the event belongs to another league; a template with no sport league is offered for every league of its sport).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/leagues/{id}/contests/finished-years": {
+      "get": {
+        "operationId": "listContestFinishedYears",
+        "summary": "List the years a league has finished contests in",
+        "tags": [
+          "Contests"
+        ],
+        "description": "Each championship year (US Eastern) a COMPLETED contest of the league went final in, newest first: the years `listContests` takes as `finishedYear`. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The years a league has finished contests in.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContestFinishedYearsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
             "content": {
               "application/json": {
                 "schema": {

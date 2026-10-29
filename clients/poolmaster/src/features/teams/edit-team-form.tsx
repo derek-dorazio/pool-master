@@ -16,12 +16,14 @@ import { teamFormSchema, type TeamFormValues } from './team-form-schema';
  */
 export function EditTeamForm({
   isViewerOwn,
+  leagueCode,
   leagueId,
   returnTo,
   team,
 }: {
   /** Whether the viewer is editing their own squad, which the field labels speak to. */
   isViewerOwn: boolean;
+  leagueCode: string;
   leagueId: string;
   /** Where Cancel and a successful Save go. */
   returnTo: string;
@@ -47,7 +49,8 @@ export function EditTeamForm({
     onSuccess: () => {
       void navigate(returnTo);
     },
-    invalidates: [QueryKeys.leagueTeams.byLeague(leagueId)],
+    // The league context carries the viewer's team name, which the league menu shows.
+    invalidates: [QueryKeys.leagueTeams.byLeague(leagueId), QueryKeys.leagues.detail(leagueCode)],
   });
 
   return (

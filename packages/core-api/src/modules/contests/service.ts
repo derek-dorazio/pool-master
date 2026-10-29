@@ -40,6 +40,7 @@ import type {
   SquadMembership,
 } from '@poolmaster/shared/domain';
 import {
+  championshipYearStart,
   ContestFormat,
   ContestStatus,
   SelectionType,
@@ -248,13 +249,24 @@ export class ContestService {
     return contest;
   }
 
-  /** The league's contests the viewer can see: DRAFT contests only for its commissioners (#117). */
-  async listByLeague(leagueId: string, viewer: ContestViewer): Promise<Contest[]> {
-    const contests = await this.deps.contests.findByLeague(leagueId);
+  /**
+   * The league's contests the viewer can see (#1161): the current ones, or, given
+   * `finishedYear`, the ones that went final in that championship year. DRAFT contests only for
+   * its commissioners (#117).
+   */
+  async listByLeague(leagueId: string, viewer: ContestViewer, finishedYear?: number): Promise<Contest[]> {
+    const contests = finishedYear === undefined
+      ? await this.deps.contests.findCurrentByLeague(leagueId, this.now())
+      : await this.deps.contests.findFinishedByLeague(leagueId, championshipYearStart(finishedYear), championshipYearStart(finishedYear + 1));
     if (await this.canSeeDraftContests(leagueId, viewer)) {
       return contests;
     }
     return contests.filter((contest) => contest.status !== ContestStatus.DRAFT);
+  }
+
+  /** Each championship year a contest of the league went final in, newest first (#1161). */
+  async listFinishedYears(leagueId: string): Promise<number[]> {
+    return this.deps.contests.findFinishedYearsByLeague(leagueId);
   }
 
   /**
@@ -264,8 +276,7 @@ export class ContestService {
    */
   async listOpenContestUsage(leagueId: string): Promise<OpenContestUsageDto[]> {
     this.logger.debug({ leagueId }, 'contest open usage list start');
-    const contests = (await this.deps.contests.findByLeague(leagueId))
-      .filter((contest) => contest.status === ContestStatus.OPEN);
+    const contests = await this.deps.contests.findByLeague(leagueId, [ContestStatus.OPEN]);
     const open = (await Promise.all(contests.map(async (contest) => ((await this.areEntriesOpen(contest)) ? contest : null))))
       .filter((contest) => contest !== null);
     const counts = await this.deps.entries.countByContests(open.map((contest) => contest.id));
@@ -341,26 +352,7 @@ export class ContestService {
    * it (#481), and in a contest of several events one submitted event is enough (#713).
    */
   async countEntriesByContest(contestIds: string[]): Promise<Map<string, number>> {
-    const counts = new Map(contestIds.map((contestId) => [contestId, 0]));
-    if (!contestIds.length) {
-      return counts;
-    }
-
-    const entryLists = await Promise.all(
-      contestIds.map(async (contestId) => ({
-        contestId,
-        entries: await this.deps.entries.findByContest(contestId),
-      })),
-    );
-
-    for (const { contestId, entries } of entryLists) {
-      counts.set(
-        contestId,
-        entries.filter(hasSubmittedAnyEvent).length,
-      );
-    }
-
-    return counts;
+    return this.deps.entries.countSubmittedByContests(contestIds);
   }
 
   /** Updates a contest. Only allowed when status is DRAFT. */

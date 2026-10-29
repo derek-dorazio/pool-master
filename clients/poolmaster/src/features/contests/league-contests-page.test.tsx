@@ -174,7 +174,7 @@ describe('LeagueContestsPage', () => {
     refreshTokenMock.mockReset();
   });
 
-  it('pool-master-9ef shows active contests only on Active Contests', async () => {
+  it('shows the current contests the list returns on Active Contests, with no history section', async () => {
     primeCommonMocks({ leagueRole: 'COMMISSIONER' });
     listContestsMock.mockResolvedValue({
       data: {
@@ -190,17 +190,6 @@ describe('LeagueContestsPage', () => {
             sportEvents: listedEvents(),
             entryCount: 12,
           },
-          {
-            id: 'contest-2',
-            name: 'Players Championship',
-            status: 'COMPLETED',
-            contestType: 'ROSTER',
-            selectionType: 'TIERED',
-            leagueId: 'league-1',
-            sport: 'GOLF',
-            sportEvents: listedEvents(),
-            entryCount: 10,
-          },
         ],
       },
     });
@@ -214,7 +203,8 @@ describe('LeagueContestsPage', () => {
     expect(await screen.findByTestId('league-contests-active')).toHaveTextContent('Masters Pick 6');
     expect(screen.getByTestId('league-contests-active')).toHaveTextContent('12 entries');
     expect(screen.queryByTestId('league-contests-history')).not.toBeInTheDocument();
-    expect(screen.queryByText('Players Championship')).not.toBeInTheDocument();
+    expect(listContestsMock).toHaveBeenCalledWith(expect.objectContaining({ path: { id: 'league-1' } }));
+    expect(listContestsMock.mock.calls[0]?.[0]).not.toHaveProperty('query');
     expect(screen.getByTestId('league-contest-contest-1')).toHaveAttribute(
       'href',
       '/league/BIGDAWGS/contests/contest-1',
@@ -243,11 +233,9 @@ describe('LeagueContestsPage, beyond the default list', () => {
     expect(screen.queryByRole('link', { name: /Create contest/i })).not.toBeInTheDocument();
   });
 
-  it('says the league has no active contests when only finished ones exist', async () => {
+  it('says the league has no active contests when the list returns none current', async () => {
     primeCommonMocks();
-    listContestsMock.mockResolvedValue({
-      data: { contests: [contest('contest-2', 'Players Championship', 'COMPLETED')] },
-    });
+    listContestsMock.mockResolvedValue({ data: { contests: [] } });
 
     renderLeagueContestsPage();
 
@@ -276,7 +264,6 @@ describe('LeagueContestsPage, beyond the default list', () => {
         contests: [
           contest('contest-1', 'Masters Pick 6'),
           contest('contest-3', 'US Open Pick 6', 'ACTIVE'),
-          contest('contest-2', 'Players Championship', 'COMPLETED'),
         ],
       },
     });

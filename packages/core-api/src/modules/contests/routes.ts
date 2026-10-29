@@ -59,16 +59,35 @@ export function contestsModule(fastify: FastifyInstance, opts: MailModuleOptions
       tags: ['Contests'],
       summary: 'List contests for a league',
       description:
-        "Returns the contests associated with the parent league so league-home and commissioner views can list current and historical contests. Each contest carries its entry count and its sport event's name and start, so a list needs no per-event reads. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.",
+        "Returns the league's current contests: DRAFT, OPEN and ACTIVE, less any DRAFT with an event that has started (it can never open); a DRAFT with no events yet is listed, and so is a bracket or squares DRAFT, which closes at its round or game rather than its event. DRAFT contests are listed for the league's commissioners only. With `finishedYear`, returns instead the COMPLETED contests that went final in that championship year (US Eastern), newest first; `listContestFinishedYears` names the years. A single contest is `getContest`. Each contest carries its count of entries that submitted at least one event and its sport events' names and starts, so a list needs no per-event reads. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.",
       operationId: 'listContests',
+      querystring: schemaRef('ListContestsQuery'),
       response: {
         200: schemaRef('ContestListResponse'),
+        400: schemaRef('ErrorEnvelope'),
         401: schemaRef('ErrorEnvelope'),
         403: schemaRef('ErrorEnvelope'),
       },
     },
     preHandler: requireMemberOfLeague(membershipRepo, leagueFromPath),
     handler: handlers.listContests,
+  });
+
+  fastify.get('/finished-years', {
+    schema: {
+      tags: ['Contests'],
+      summary: 'List the years a league has finished contests in',
+      description:
+        'Each championship year (US Eastern) a COMPLETED contest of the league went final in, newest first: the years `listContests` takes as `finishedYear`. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.',
+      operationId: 'listContestFinishedYears',
+      response: {
+        200: schemaRef('ContestFinishedYearsResponse'),
+        401: schemaRef('ErrorEnvelope'),
+        403: schemaRef('ErrorEnvelope'),
+      },
+    },
+    preHandler: requireMemberOfLeague(membershipRepo, leagueFromPath),
+    handler: handlers.listFinishedYears,
   });
 
   fastify.post('/', {

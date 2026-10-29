@@ -13,13 +13,14 @@ import {
   buildLeagueSquad,
   buildLeagueSquadMember,
   getLeagueByCodeData,
-  listLeagueSquadsData,
+  getLeagueSquadFrom,
   updateLeagueSquadData,
 } from '@/features/leagues/test/fixtures';
 import { buildContestResult, buildSquadChampionship, buildSquadCup, buildSquadHistory, buildSquadYear } from '@/features/championships/test/fixtures';
 import { buildPlanEntitlements } from '@/features/plans/test/fixtures';
 import type { LeagueDto, SquadDto } from '@/lib/api';
 import { QueryKeys } from '@/lib/query-keys';
+import { MemberRouteGuard } from '@/routes/route-guards';
 import { MyTeamEditPage } from './my-team-edit-page';
 import { MyTeamPage } from './my-team-page';
 import { TeamPage } from './team-page';
@@ -37,7 +38,7 @@ const listContestEntriesMock = vi.fn();
 const listContestsMock = vi.fn();
 const getLeagueByCodeMock = vi.fn();
 const listLeagueMembersMock = vi.fn();
-const listLeagueSquadsMock = vi.fn();
+const getLeagueSquadMock = vi.fn();
 const listSquadOwnerInvitationsMock = vi.fn();
 const refreshTokenMock = vi.fn();
 const replaceSquadOwnerMock = vi.fn();
@@ -58,7 +59,7 @@ bindApiMocks({
   listRecords: listRecordsMock,
   getLeagueByCode: getLeagueByCodeMock,
   listLeagueMembers: listLeagueMembersMock,
-  listLeagueSquads: listLeagueSquadsMock,
+  getLeagueSquad: getLeagueSquadMock,
   listSquadOwnerInvitations: listSquadOwnerInvitationsMock,
   refreshToken: refreshTokenMock,
   replaceSquadOwner: replaceSquadOwnerMock,
@@ -73,10 +74,13 @@ function renderTeamRoutes(path = '/league/BIGDAWGS/team') {
       <AuthProvider>
         <MemoryRouter initialEntries={[path]}>
           <Routes>
-            <Route element={<MyTeamPage />} path="/league/:leagueCode/team" />
-            <Route element={<MyTeamEditPage />} path="/league/:leagueCode/team/edit" />
-            <Route element={<TeamPage />} path="/league/:leagueCode/teams/:teamId" />
-            <Route element={<div data-testid="league-home-destination" />} path="/league/:leagueCode" />
+            {/* As in the app: league pages render once the signed-in user has loaded. */}
+            <Route element={<MemberRouteGuard />}>
+              <Route element={<MyTeamPage />} path="/league/:leagueCode/team" />
+              <Route element={<MyTeamEditPage />} path="/league/:leagueCode/team/edit" />
+              <Route element={<TeamPage />} path="/league/:leagueCode/teams/:teamId" />
+              <Route element={<div data-testid="league-home-destination" />} path="/league/:leagueCode" />
+            </Route>
           </Routes>
         </MemoryRouter>
       </AuthProvider>
@@ -138,7 +142,7 @@ function primeTeam({
     squadMembership: squadId ? buildLeagueSquadMember({ squadId }) : null,
   });
   getLeagueByCodeMock.mockResolvedValue(apiSuccess(isMember ? context : { ...context, membership: null }));
-  listLeagueSquadsMock.mockResolvedValue(apiSuccess(listLeagueSquadsData(squads)));
+  getLeagueSquadMock.mockImplementation(getLeagueSquadFrom(squads));
   listLeagueMembersMock.mockResolvedValue(apiSuccess({
     members: [
       buildLeagueMembership({ id: 'm-1', userId: 'user-1', role }),
@@ -205,7 +209,7 @@ function primeContests(
 afterEach(() => {
   for (const mock of [
     createLeagueSquadMock, createSquadOwnerInvitationMock, getCurrentUserMock, getLeagueByCodeMock,
-    listLeagueMembersMock, listLeagueSquadsMock, listSquadOwnerInvitationsMock, refreshTokenMock,
+    listLeagueMembersMock, getLeagueSquadMock, listSquadOwnerInvitationsMock, refreshTokenMock,
     replaceSquadOwnerMock, revokeSquadOwnerInvitationMock, updateLeagueSquadMock,
     getContestLeaderboardMock, listContestEntriesMock, listContestsMock, getSquadYearMock, getSquadHistoryMock, listContestResultsMock, listRecordsMock, listPerpetualTrophiesMock,
   ]) {
@@ -242,7 +246,7 @@ describe('My team', () => {
 
   it('does not offer the name-and-icon form while the viewer\'s squad is still loading', async () => {
     primeTeam();
-    listLeagueSquadsMock.mockReturnValue(new Promise(() => undefined));
+    getLeagueSquadMock.mockReturnValue(new Promise(() => undefined));
 
     renderTeamRoutes();
 
@@ -250,9 +254,9 @@ describe('My team', () => {
     expect(screen.queryByTestId('create-team-page')).not.toBeInTheDocument();
   });
 
-  it('shows an error instead of the name-and-icon form when the squad list fails to load', async () => {
+  it('shows an error instead of the name-and-icon form when the viewer\'s squad fails to load', async () => {
     primeTeam();
-    listLeagueSquadsMock.mockResolvedValue({
+    getLeagueSquadMock.mockResolvedValue({
       error: { error: { code: 'INTERNAL_ERROR', message: 'Teams are unavailable right now.' } },
       status: 500,
     });
@@ -592,6 +596,15 @@ describe('My team › Create team', () => {
     expect(await screen.findByTestId('my-team-identity')).toHaveTextContent('Ocean Winkers');
   });
 
+  it('offers the name-and-icon form without reading any team when the viewer has none yet', async () => {
+    primeTeam({ squadId: null, squads: [] });
+
+    renderTeamRoutes();
+
+    expect(await screen.findByTestId('create-team-page')).toBeInTheDocument();
+    expect(getLeagueSquadMock).not.toHaveBeenCalled();
+  });
+
   it('shows the reason and keeps the typed name when saving the chosen name fails', async () => {
     primeTeam({ squadId: null, squads: [] });
     createLeagueSquadMock.mockResolvedValue({
@@ -761,6 +774,22 @@ describe('My team › Edit team', () => {
     }));
   });
 
+  it('re-reads the league context after a rename, so the league menu shows the new name', async () => {
+    primeTeam();
+    updateLeagueSquadMock.mockResolvedValue(apiSuccess(updateLeagueSquadData(buildLeagueSquad({ name: 'Renamed' }))));
+
+    const { queryClient } = renderTeamRoutes('/league/BIGDAWGS/team/edit');
+    const invalidate = vi.spyOn(queryClient, 'invalidateQueries');
+
+    fireEvent.change(await screen.findByTestId('edit-team-name'), { target: { value: 'Renamed' } });
+    fireEvent.click(screen.getByTestId('edit-team-save'));
+
+    await screen.findByTestId('my-team-page');
+    await waitFor(() => expect(invalidate).toHaveBeenCalledWith(
+      expect.objectContaining({ queryKey: QueryKeys.leagues.detail('BIGDAWGS') }),
+    ));
+  });
+
   it('shows the reason and keeps the typed name and chosen icon when saving is rejected', async () => {
     primeTeam();
     updateLeagueSquadMock.mockResolvedValue({
@@ -778,18 +807,18 @@ describe('My team › Edit team', () => {
     expect(screen.getByTestId(`team-icon-${TeamIconKey.HELMET_BOLT_MIDNIGHT}`)).toHaveAttribute('aria-pressed', 'true');
   });
 
-  it('keeps an unsaved name when the team list refetches with new server data', async () => {
+  it('keeps an unsaved name when the team refetches with new server data', async () => {
     primeTeam();
     const { queryClient } = renderTeamRoutes('/league/BIGDAWGS/team/edit');
 
     fireEvent.change(await screen.findByTestId('edit-team-name'), { target: { value: 'My draft name' } });
-    listLeagueSquadsMock.mockResolvedValue(apiSuccess(listLeagueSquadsData([
+    getLeagueSquadMock.mockImplementation(getLeagueSquadFrom([
       buildLeagueSquad({ name: 'Renamed elsewhere' }),
       rivalTeam,
-    ])));
-    await queryClient.refetchQueries({ queryKey: QueryKeys.leagueTeams.byLeague('league-1') });
+    ]));
+    await queryClient.refetchQueries({ queryKey: QueryKeys.leagueTeams.detail('league-1', 'team-1') });
 
-    await waitFor(() => expect(listLeagueSquadsMock).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(getLeagueSquadMock).toHaveBeenCalledTimes(2));
     expect(screen.getByTestId('edit-team-name')).toHaveValue('My draft name');
   });
 
@@ -849,6 +878,29 @@ describe('Another team\'s page', () => {
 
     const notFound = await screen.findByTestId('team-page-not-found');
     expect(within(notFound).getByRole('link', { name: 'All members' })).toHaveAttribute('href', '/league/BIGDAWGS/teams');
+  });
+
+  it('reads only the team it shows, not every team in the league', async () => {
+    primeTeam();
+
+    renderTeamRoutes('/league/BIGDAWGS/teams/team-2');
+
+    await screen.findByTestId('team-page-identity');
+    expect(getLeagueSquadMock).toHaveBeenCalledTimes(1);
+    expect(getLeagueSquadMock).toHaveBeenCalledWith(expect.objectContaining({ path: { id: 'league-1', squadId: 'team-2' } }));
+  });
+
+  it('says the member could not be loaded, not that they left, when reading the team fails', async () => {
+    primeTeam();
+    getLeagueSquadMock.mockResolvedValue({
+      error: { error: { code: 'INTERNAL_ERROR', message: 'Teams are unavailable right now.' } },
+      status: 500,
+    });
+
+    renderTeamRoutes('/league/BIGDAWGS/teams/team-2');
+
+    expect(await screen.findByTestId('team-page-error')).toHaveTextContent("We couldn't load this member.");
+    expect(screen.queryByTestId('team-page-not-found')).not.toBeInTheDocument();
   });
 });
 

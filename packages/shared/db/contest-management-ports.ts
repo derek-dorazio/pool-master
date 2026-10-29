@@ -10,11 +10,6 @@ import type {
 
 export interface ContestConfigurationRepository {
   findByContest(contestId: string): Promise<ContestConfiguration | null>;
-  /**
-   * The configurations of contests made from a template that covers this event series (#714),
-   * matched by the series' name within its sport league; oldest first.
-   */
-  findByTemplateEventSeries(eventSeriesId: string): Promise<ContestConfiguration[]>;
   create(
     configuration: Omit<ContestConfiguration, 'id' | 'createdAt' | 'updatedAt'>,
   ): Promise<ContestConfiguration>;

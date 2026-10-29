@@ -319,6 +319,10 @@ export const LeagueContextResponseSchema = z.object({
     .describe("The viewer's membership in this league, or null when they have none."),
   squadMembership: SquadMembershipDtoSchema.nullable()
     .describe("The viewer's squad membership within this league, or null when they hold none."),
+  squadName: z.string().nullable()
+    .describe("The name of the squad in squadMembership, or null when squadMembership is null. The league menu names the viewer's team from it."),
+  activeTeamCount: z.number().int()
+    .describe('How many of the league\'s teams are active: the most entries an open contest can expect, one per team.'),
 }).describe("A league together with the viewer's own membership edges in it. Fetched once per league; nothing else repeats this context.");
 export type LeagueContextResponse = z.infer<typeof LeagueContextResponseSchema>;
 

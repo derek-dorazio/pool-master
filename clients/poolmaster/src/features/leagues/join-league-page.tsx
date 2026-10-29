@@ -120,7 +120,7 @@ export function JoinLeaguePage() {
       if (leagueId && user?.id && nextTeamName) {
         const squadsResponse = await listLeagueSquads({ path: { id: leagueId } });
         const myTeam = squadsResponse.data?.squads.find((team) =>
-          team.members?.some((member) => member.userId === user.id && member.status === SquadMembershipStatus.ACTIVE),
+          team.members.some((member) => member.userId === user.id && member.status === SquadMembershipStatus.ACTIVE),
         );
 
         if (!myTeam) {

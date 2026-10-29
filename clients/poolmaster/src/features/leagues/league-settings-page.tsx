@@ -64,7 +64,7 @@ export function LeagueSettingsPage() {
         .map((member) => member.userId),
     );
     const names = (squadsQuery.data ?? []).flatMap((squad) =>
-      (squad.members ?? [])
+      squad.members
         .filter((member) => member.status === SquadMembershipStatus.ACTIVE && commissionerUserIds.has(member.user.id))
         .map((member) => formatUserName(member.user.firstName, member.user.lastName)),
     );

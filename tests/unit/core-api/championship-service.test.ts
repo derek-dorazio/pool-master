@@ -178,6 +178,35 @@ describe('ChampionshipService (#863)', () => {
     ]);
   });
 
+  it('reads every year with a counted contest and each year asked for, newest first, each exactly as that year reads alone (#1166)', async () => {
+    const { finishes, service, settle } = build();
+    finishes.unfinishedContests = 2;
+    await settle('2023-open', [['bogeys', 1]], new Date('2023-06-01T22:00:00.000Z'), { cupWeight: CupWeight.NOT_COUNTED });
+    await settle('2024-open', [['bogeys', 1]], new Date('2024-06-01T22:00:00.000Z'), { cupWeight: CupWeight.NOT_COUNTED });
+    await settle('2025-masters', [['eagles', 1], ['birdies', 2]], new Date('2025-04-13T22:00:00.000Z'));
+    await settle('2025-pga', [['birdies', 1], ['eagles', 2]], new Date('2025-05-18T22:00:00.000Z'));
+    await settle('2026-masters', [['bogeys', 1], ['eagles', 2]], new Date('2026-04-13T22:00:00.000Z'));
+    await settle('2026-pga', [['eagles', 1], ['bogeys', 3]], new Date('2026-05-17T22:00:00.000Z'));
+
+    const years = await service.getAllYears(LEAGUE, [2024, 2022]);
+
+    expect(years.map((year) => [year.year, year.isOver, year.contestsCounted, year.contestsToGo])).toEqual([
+      [2026, false, 2, 2],
+      [2025, true, 2, 0],
+      [2024, true, 0, 0],
+      [2022, true, 0, 0],
+    ]);
+    for (const year of years) {
+      expect(year).toEqual(await service.getYear(LEAGUE, year.year));
+    }
+  });
+
+  it('refuses every year of a league that does not exist with LEAGUE_NOT_FOUND (#1166)', async () => {
+    const { service } = build();
+
+    await expect(service.getAllYears('league-2', [2026])).rejects.toMatchObject({ code: 'LEAGUE_NOT_FOUND' });
+  });
+
   it('refuses a league that does not exist with LEAGUE_NOT_FOUND', async () => {
     const { service } = build();
 

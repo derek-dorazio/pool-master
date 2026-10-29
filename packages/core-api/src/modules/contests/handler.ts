@@ -7,6 +7,9 @@ import {
   CONTEST_CONFIGURATION_REQUIRED,
   CreateContestRequestSchema,
   UpdateContestEntryRequestSchema,
+  type ContestFinishedYearsResponse,
+  type ContestListResponse,
+  type ListContestsQuery,
   type ListSportLeaguesUsedQuery,
   type SportLeaguesUsedResponse,
   type LeaguePlanUsageResponse,
@@ -14,6 +17,7 @@ import {
 import type { z } from 'zod';
 import { z as zod } from 'zod';
 import {
+  toContestFinishedYearsResponse,
   toContestListResponse,
   toContestEntryDetailResponse,
   toContestEntryListResponse,
@@ -56,6 +60,7 @@ function readContestViewer(request: FastifyRequest): ContestViewer {
 export function createContestHandlers(contestService: ContestService) {
   return {
     listContests,
+    listFinishedYears,
     getContest,
     listEntries,
     getEntry,
@@ -71,12 +76,13 @@ export function createContestHandlers(contestService: ContestService) {
   };
 
   async function listContests(
-    request: FastifyRequest<{ Params: { id: string } }>,
+    request: FastifyRequest<{ Params: { id: string }; Querystring: ListContestsQuery }>,
     _reply: FastifyReply,
-  ): Promise<{ contests: unknown[] }> {
+  ): Promise<ContestListResponse> {
     const logger = createRequestContextLogger(request);
-    logger.debug({ leagueId: request.params.id }, 'contest list route start');
-    const contests = await contestService.listByLeague(request.params.id, readContestViewer(request));
+    const { finishedYear } = request.query;
+    logger.debug({ leagueId: request.params.id, finishedYear }, 'contest list route start');
+    const contests = await contestService.listByLeague(request.params.id, readContestViewer(request), finishedYear);
     const [entryCounts, eventsById, entryCaps] = await Promise.all([
       contestService.countEntriesByContest(contests.map((contest) => contest.id)),
       contestService.findEventsForContests(contests),
@@ -84,10 +90,22 @@ export function createContestHandlers(contestService: ContestService) {
     ]);
     logger.info({
       leagueId: request.params.id,
+      finishedYear,
       contestCount: contests.length,
       entryCount: Array.from(entryCounts.values()).reduce((sum, count) => sum + count, 0),
     }, 'contest list route completed');
     return toContestListResponse(contests, entryCounts, eventsById, entryCaps);
+  }
+
+  async function listFinishedYears(
+    request: FastifyRequest<{ Params: { id: string } }>,
+    _reply: FastifyReply,
+  ): Promise<ContestFinishedYearsResponse> {
+    const logger = createRequestContextLogger(request);
+    logger.debug({ leagueId: request.params.id }, 'contest finished years route start');
+    const years = await contestService.listFinishedYears(request.params.id);
+    logger.info({ leagueId: request.params.id, yearCount: years.length }, 'contest finished years route completed');
+    return toContestFinishedYearsResponse(years);
   }
 
   async function getContest(

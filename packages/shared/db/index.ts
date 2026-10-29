@@ -18,6 +18,7 @@ export type {
   ContestEntryCreate,
   ContestUpdate,
   ContestStatusFilter,
+  ReleasedEdition,
   ContestStatusTransition,
   ContestCreateResult,
   ContestSeasonFull,
@@ -43,6 +44,9 @@ export type {
   ParticipantProviderMappingRepository,
   ParticipantRepository,
   ParticipantSearchFilters,
+  SquadDetails,
+  SquadMemberDetails,
+  SquadMembershipWithSquadName,
   SquadMembershipRepository,
   SquadOwnerInvitationRepository,
   SquadRepository,
@@ -132,6 +136,7 @@ export type {
 } from './email-ports';
 export type {
   CupContest,
+  LeagueCupContest,
   CupContestFinish,
   CupKey,
   CupRankedEntry,

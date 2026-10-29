@@ -97,7 +97,7 @@ export function leaguesModule(fastify: FastifyInstance, opts: MailModuleOptions 
 
   const leaguePlanService = new LeaguePlanService({ leagues: leagueRepo, planEntitlements: opts.planEntitlements, logger: fastify.log });
   const league = createLeagueHandlers(
-    leagueService, membershipRepo, squadMembershipRepo, userRepo, opts.planEntitlements, leaguePlanService,
+    leagueService, squadRepo, squadMembershipRepo, userRepo, opts.planEntitlements, leaguePlanService,
   );
   const updateLeagueEventEmailSettings = createLeagueEventEmailSettingsHandler(new LeagueEventEmailSettingsService({
     leagues: leagueRepo,
@@ -132,7 +132,7 @@ export function leaguesModule(fastify: FastifyInstance, opts: MailModuleOptions 
       tags: ['Leagues'],
       summary: 'Create a new league',
       description:
-        'Creates a new private league for the authenticated commissioner using the submitted unique `leagueCode`, then returns the new league together with the creator\'s own membership edges in it.\n\nThe same `LeagueContextResponse` as `getLeague` and `getLeagueByCode`, because creating a league also creates the creator\'s COMMISSIONER membership: the client navigates straight into the league and seeds its context cache from this response rather than issuing a second read (access rule A8). `squadMembership` is null by construction — a league has no squads the instant it is created.',
+        'Creates a new private league for the authenticated commissioner using the submitted unique `leagueCode`, then returns the new league together with the creator\'s own membership edges in it.\n\nThe same `LeagueContextResponse` as `getLeague` and `getLeagueByCode`, because creating a league also creates the creator\'s COMMISSIONER membership: the client navigates straight into the league and seeds its context cache from this response rather than issuing a second read (access rule A8). Creating a league also gives the creator their default squad, so `squadMembership`, `squadName` and `activeTeamCount` describe it.',
       operationId: 'createLeague',
       body: schemaRef('CreateLeagueRequest'),
       response: {

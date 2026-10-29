@@ -1,7 +1,6 @@
 import { Settings } from 'lucide-react';
 import { useLocation } from 'react-router';
 import { LeagueMenu, LinkButton } from '@/features/shared/ui';
-import { useLeagueSquadsQuery } from '@/features/teams/use-league-squads-query';
 import { buildLeagueMenuItems } from './league-menu-items';
 import { buildLeagueAdminPath } from './league-routing';
 import { useLeagueContext } from './use-league-context';
@@ -13,10 +12,9 @@ import { useLeagueContext } from './use-league-context';
 export function LeagueMenuBar({ leagueCode }: { leagueCode: string }) {
   const { pathname } = useLocation();
   // The league context every league page reads: one cache entry, so this adds no request.
-  const { league, viewer } = useLeagueContext(leagueCode);
-  // The same squads query the viewer's own page reads, so the menu names the viewer's squad from that cache.
-  const squadsQuery = useLeagueSquadsQuery(league?.id ?? '');
-  const mySquadName = squadsQuery.data?.find((squad) => squad.id === viewer.mySquadId)?.name ?? null;
+  const { query, viewer } = useLeagueContext(leagueCode);
+  // The context names the viewer's squad too (#1165), so the menu reads no team list.
+  const mySquadName = viewer.mySquadId ? query.data?.squadName ?? null : null;
   const canOpenCommissionerTools = viewer.isCommissioner || viewer.isRootAdmin;
 
   return (

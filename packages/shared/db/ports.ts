@@ -260,9 +260,33 @@ export interface LeagueMembershipRepository {
   update(id: string, updates: Partial<LeagueMembership>): Promise<LeagueMembership>;
 }
 
+/** One owner of a squad: the membership, any status, with the member's user. */
+export interface SquadMemberDetails {
+  membership: SquadMembership;
+  user: User;
+}
+
+/**
+ * A squad with its owners (#1165): every membership, any status, in join order, each with its
+ * user. What a team page and the team list show, read in one go rather than squad, then
+ * memberships, then every user in the league.
+ */
+export interface SquadDetails extends Squad {
+  members: SquadMemberDetails[];
+}
+
+/** A squad membership with its squad's name: the league context's squad edge (#1165). */
+export interface SquadMembershipWithSquadName extends SquadMembership {
+  squadName: string;
+}
+
 export interface SquadRepository {
   findById(id: string): Promise<Squad | null>;
   findByLeague(leagueId: string, includeInactive?: boolean): Promise<Squad[]>;
+  findDetailsById(id: string): Promise<SquadDetails | null>;
+  /** Every squad in the league, active and inactive, oldest first, with its owners. */
+  findDetailsByLeague(leagueId: string): Promise<SquadDetails[]>;
+  countActiveByLeague(leagueId: string): Promise<number>;
   /**
    * Resolves a squad by its name within a league. Squad names are unique per league
    * (`@@unique([leagueId, name])`, #202), so this returns at most one row, and it
@@ -286,6 +310,8 @@ export interface SquadMembershipRepository {
   findBySquads(squadIds: readonly string[], includeInactive?: boolean): Promise<SquadMembership[]>;
   findBySquadAndUser(squadId: string, userId: string): Promise<SquadMembership | null>;
   findByLeagueAndUser(leagueId: string, userId: string): Promise<SquadMembership | null>;
+  /** `findByLeagueAndUser` with the squad's name, in the same read. */
+  findByLeagueAndUserWithSquadName(leagueId: string, userId: string): Promise<SquadMembershipWithSquadName | null>;
   create(
     membership: Omit<SquadMembership, 'id' | 'createdAt' | 'updatedAt'>,
   ): Promise<SquadMembership>;
@@ -372,7 +398,18 @@ export interface ParticipantProviderMappingRepository {
  */
 export interface ContestRepository {
   findById(id: string): Promise<Contest | null>;
-  findByLeague(leagueId: string): Promise<Contest[]>;
+  /** The league's contests in one of `statuses`, newest first. */
+  findByLeague(leagueId: string, statuses: readonly Contest['status'][]): Promise<Contest[]>;
+  /**
+   * The league's current contests (#1161), newest first: DRAFT, OPEN and ACTIVE, less any DRAFT
+   * with an event started by `now`, since it can never open. A DRAFT with no events stays, and so
+   * does a bracket or squares draft, which closes at its round or game rather than its event.
+   */
+  findCurrentByLeague(leagueId: string, now: Date): Promise<Contest[]>;
+  /** The league's COMPLETED contests that ended in [`endedFrom`, `endedBefore`), newest first (#1161). */
+  findFinishedByLeague(leagueId: string, endedFrom: Date, endedBefore: Date): Promise<Contest[]>;
+  /** Each championship year, US Eastern, a COMPLETED contest of the league ended in, newest first (#1161). */
+  findFinishedYearsByLeague(leagueId: string): Promise<number[]>;
   /** The league's contests open for entries, oldest first, by id and name only: the welcome email lists them (#903). */
   findOpenByLeague(leagueId: string): Promise<Array<Pick<Contest, 'id' | 'name'>>>;
   /**
@@ -382,6 +419,13 @@ export interface ContestRepository {
   findSportLeagueIdsBySeason(leagueId: string, seasonYear: number): Promise<string[]>;
   /** The event's contests, oldest first, optionally narrowed to or away from some statuses. */
   findBySportEvent(sportEventId: string, filter?: ContestStatusFilter): Promise<Contest[]>;
+  /**
+   * The contests a released edition can join (#714, #1179): made from a template covering the
+   * edition's series (matched by the series' name within its sport league), not COMPLETED, not
+   * drawn, without the edition yet, and every event of the edition's year. All in one query,
+   * oldest configuration first; none when the series is gone.
+   */
+  findJoinableByReleasedEdition(edition: ReleasedEdition): Promise<Contest[]>;
   /** Every contest in one of `statuses`, oldest first, across leagues: the entry reminders' sweep reads it (#845). */
   findByStatuses(statuses: readonly Contest['status'][]): Promise<Contest[]>;
   /**
@@ -416,6 +460,13 @@ export interface ContestRepository {
   setCupWeight(id: string, cupWeight: Contest['cupWeight'], whileIn: readonly Contest['status'][]): Promise<boolean>;
   /** Deletes a contest with its entries, picks, selection state, configuration and rules. */
   delete(id: string): Promise<void>;
+}
+
+/** A sport event just released, as `ContestRepository.findJoinableByReleasedEdition` matches it. */
+export interface ReleasedEdition {
+  id: string;
+  eventSeriesId: string;
+  eventYear: number;
 }
 
 export interface ContestStatusFilter {
@@ -510,6 +561,11 @@ export interface ContestEntryRepository {
   findByContestAndSquad(contestId: string, squadId: string): Promise<ContestEntry[]>;
   /** Every entry each contest holds, drafts included, by contest id (#972); 0 for one with none. */
   countByContests(contestIds: readonly string[]): Promise<Map<string, number>>;
+  /**
+   * The entries of each contest that submitted at least one event, by contest id (#1161); 0 for
+   * one with none. A draft is not an entry until its owner submits it (#481).
+   */
+  countSubmittedByContests(contestIds: readonly string[]): Promise<Map<string, number>>;
   /**
    * Creates the entry with a DRAFT status row for each of its contest's events (#713). The
    * contest's entries are counted under its row lock (#947), so two entries taking the last place

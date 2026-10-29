@@ -168,9 +168,11 @@ function buildUserWhere(filters: UserSearchFilters): Prisma.UserWhereInput {
 /**
  * Row → domain. `passwordHash` and `authId` are the two columns the canonical `User`
  * never carries; `authId` is on the domain type but is provider bookkeeping, so it is
- * mapped, and `passwordHash` is dropped here and nowhere else.
+ * mapped, and `passwordHash` is dropped here and nowhere else. A read that embeds users
+ * through a relation (a squad's owners, #1165) omits `passwordHash` in the query and maps the
+ * rest here, which is why the row type leaves it out.
  */
-function mapToUser(row: PrismaUser): User {
+export function mapToUser(row: Omit<PrismaUser, 'passwordHash'>): User {
   return {
     id: row.id,
     email: row.email,

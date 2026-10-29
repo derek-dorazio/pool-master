@@ -32,18 +32,6 @@ export class PrismaContestConfigurationRepository
     return row ? mapContestConfiguration(row) : null;
   }
 
-  async findByTemplateEventSeries(eventSeriesId: string): Promise<ContestConfiguration[]> {
-    const series = await this.prisma.eventSeries.findUnique({ where: { id: eventSeriesId } });
-    if (!series) {
-      return [];
-    }
-    const rows = await this.prisma.contestConfiguration.findMany({
-      where: { template: { sportLeagueId: series.sportLeagueId, eventSeriesNames: { has: series.name } } },
-      orderBy: { createdAt: 'asc' },
-    });
-    return rows.map(mapContestConfiguration);
-  }
-
   async create(
     configuration: Omit<ContestConfiguration, 'id' | 'createdAt' | 'updatedAt'>,
   ): Promise<ContestConfiguration> {

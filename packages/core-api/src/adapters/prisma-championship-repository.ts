@@ -52,6 +52,14 @@ export class PrismaChampionshipRepository implements ChampionshipRepository {
     return row?.cupName ?? null;
   }
 
+  async hasCountedFinish(leagueId: string, year: number): Promise<boolean> {
+    const row = await this.prisma.leagueYearFinish.findFirst({
+      where: { leagueId, year, weight: { not: CupWeight.NOT_COUNTED } },
+      select: { contestId: true },
+    });
+    return row !== null;
+  }
+
   async countUnfinishedContests(leagueId: string): Promise<number> {
     return this.prisma.contest.count({
       where: {
@@ -103,28 +111,44 @@ export class PrismaChampionshipRepository implements ChampionshipRepository {
           select: {
             sportEvent: {
               select: {
+                id: true,
                 eventYear: true,
                 eventSeries: { select: { id: true, name: true, sportLeague: { select: { name: true } } } },
-                matches: { select: { advancesToMatchId: true, sportEventRound: { select: { roundNumber: true } } } },
               },
             },
           },
         },
       },
     });
-    return rows.flatMap((row) => {
+    const contests = rows.flatMap((row) => {
       const only = row.sportEvents.length === 1 ? row.sportEvents[0]?.sportEvent : undefined;
-      return only === undefined ? [] : [{
-        id: row.id,
-        selectionType: row.selectionType,
-        cupWeight: row.cupWeight,
-        eventSeriesId: only.eventSeries.id,
-        seriesName: only.eventSeries.name,
-        sportLeagueName: only.eventSeries.sportLeague.name,
-        eventYear: only.eventYear,
-        completedAt: row.endsAt,
-        games: only.matches.map((match) => ({ roundNumber: match.sportEventRound.roundNumber, sendsWinnerOn: match.advancesToMatchId !== null })),
-      }];
+      return only === undefined ? [] : [{ row, event: only }];
     });
+    // The games are counted per event and round rather than read game by game.
+    const rounds = contests.length === 0 ? [] : await this.prisma.sportEventMatch.groupBy({
+      by: ['sportEventId', 'sportEventRoundId'],
+      where: { sportEventId: { in: [...new Set(contests.map(({ event }) => event.id))] } },
+      _count: { _all: true, advancesToMatchId: true },
+    });
+    const gamesByEvent = new Map<string, SeriesContest['games']>();
+    for (const round of rounds) {
+      const games = gamesByEvent.get(round.sportEventId) ?? { count: 0, roundCount: 0, sendingWinnerOn: 0 };
+      gamesByEvent.set(round.sportEventId, {
+        count: games.count + round._count._all,
+        roundCount: games.roundCount + 1,
+        sendingWinnerOn: games.sendingWinnerOn + round._count.advancesToMatchId,
+      });
+    }
+    return contests.map(({ row, event }) => ({
+      id: row.id,
+      selectionType: row.selectionType,
+      cupWeight: row.cupWeight,
+      eventSeriesId: event.eventSeries.id,
+      seriesName: event.eventSeries.name,
+      sportLeagueName: event.eventSeries.sportLeague.name,
+      eventYear: event.eventYear,
+      completedAt: row.endsAt,
+      games: gamesByEvent.get(event.id) ?? { count: 0, roundCount: 0, sendingWinnerOn: 0 },
+    }));
   }
 }

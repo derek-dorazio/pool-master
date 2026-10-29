@@ -160,6 +160,9 @@ export function fakeSquadRepo(overrides: Partial<SquadRepository> = {}): SquadRe
   return {
     findById: one(),
     findByLeague: many(),
+    findDetailsById: one(),
+    findDetailsByLeague: many(),
+    countActiveByLeague: jest.fn().mockResolvedValue(0),
     findByLeagueAndName: one(),
     create: echoCreate('squad'),
     update: echoUpdate(),
@@ -175,6 +178,7 @@ export function fakeSquadMembershipRepo(
     findBySquads: many(),
     findBySquadAndUser: one(),
     findByLeagueAndUser: one(),
+    findByLeagueAndUserWithSquadName: one(),
     create: echoCreate('squad-membership'),
     update: echoUpdate(),
     ...overrides,
@@ -247,6 +251,7 @@ export function fakeSportRepo(overrides: Partial<SportRepository> = {}): SportRe
 export function fakeSportLeagueRepo(overrides: Partial<SportLeagueRepository> = {}): SportLeagueRepository {
   return {
     findById: one(),
+    findByIds: many(),
     findAll: many(),
     findBySportAndName: one(),
     create: echoCreate('sport-league'),
@@ -349,9 +354,13 @@ export function fakeContestRepo(overrides: Partial<ContestRepository> = {}): Con
   return {
     findById: one(),
     findByLeague: many(),
+    findCurrentByLeague: many(),
+    findFinishedByLeague: many(),
+    findFinishedYearsByLeague: many(),
     findOpenByLeague: many(),
     findSportLeagueIdsBySeason: many(),
     findBySportEvent: many(),
+    findJoinableByReleasedEdition: many(),
     findByStatuses: many(),
     create: createdContest(echoCreate('contest')),
     update: echoUpdate(),
@@ -373,6 +382,7 @@ export function fakeContestEntryRepo(
     findByContestWithSquad: many(),
     findByContestAndSquad: many(),
     countByContests: jest.fn().mockResolvedValue(new Map()),
+    countSubmittedByContests: jest.fn().mockResolvedValue(new Map()),
     create: createdEntry(echoCreate('contest-entry')),
     update: echoUpdate(),
     setEventStatus: echoEventStatus(),
@@ -443,7 +453,6 @@ export function fakeContestConfigurationRepo(
 ): ContestConfigurationRepository {
   return {
     findByContest: one(),
-    findByTemplateEventSeries: many(),
     create: echoCreate('contest-configuration'),
     update: echoUpdate(),
     ...overrides,
