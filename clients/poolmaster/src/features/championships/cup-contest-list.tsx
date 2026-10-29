@@ -1,7 +1,8 @@
 import { ContestStatus } from '@poolmaster/shared/domain';
 import type { CupContestRowDto } from '@/lib/api';
 import { buildLeagueContestLeaderboardPath, buildLeagueContestPath } from '@/features/leagues/league-routing';
-import { EmptyState, ListCard, ListStack, StatusBadge } from '@/features/shared/ui';
+import { EmptyState, ListStack, StatusBadge } from '@/features/shared/ui';
+import { ContestRow } from '@/features/contests/contest-row';
 import { CUP_WEIGHT_LABELS, describeCupContest } from './cup-view';
 
 /**
@@ -19,20 +20,18 @@ export function CupContestList({ contests, leagueCode }: { contests: CupContestR
         const state = describeCupContest(contest);
         const weight = CUP_WEIGHT_LABELS[contest.cupWeight];
         return (
-          <ListCard
-            data-testid={`cup-contest-${contest.contestId}`}
-            description={state.note}
+          <ContestRow
+            completedAt={contest.completedAt}
             key={contest.contestId}
-            title={contest.name}
+            name={contest.name}
+            note={state.note}
+            startsAt={contest.firstEventStartsAt}
+            status={<StatusBadge tone={state.tone}>{state.label}</StatusBadge>}
+            testId={`cup-contest-${contest.contestId}`}
             to={contest.status === ContestStatus.OPEN
               ? buildLeagueContestPath(leagueCode, contest.contestId)
               : buildLeagueContestLeaderboardPath(leagueCode, contest.contestId)}
-            trailing={(
-              <span className="inline-flex items-center gap-2">
-                {weight ? <span className="font-semibold text-foreground">{weight}</span> : null}
-                <StatusBadge tone={state.tone}>{state.label}</StatusBadge>
-              </span>
-            )}
+            trailing={weight}
           />
         );
       })}

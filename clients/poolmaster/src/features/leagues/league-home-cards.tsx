@@ -2,8 +2,10 @@ import type { ReactNode } from 'react';
 import { ContestStatus, SelectionType, SquadMembershipStatus } from '@poolmaster/shared/domain';
 import type { ContestDto, ContestEntryDto, SquadDto } from '@/lib/api';
 import { formatUserName } from '@/features/account/user-name';
+import { ContestRow } from '@/features/contests/contest-row';
 import { ContestStatusBadge } from '@/features/contests/contest-status-badge';
 import { MineMarker } from '@/features/contests/mine-marker';
+import { listedContestStartsAt } from '@/features/contests/use-contest-schedule';
 import { useBracketLeaderboardQuery, useContestLeaderboardQuery } from '@/features/contests/use-contest-leaderboard';
 import {
   cn,
@@ -159,32 +161,25 @@ export function OtherContestsCard({
       {contests.length ? (
         <ul className="divide-y divide-border">
           {contests.map((contest) => {
-            const isLive = contest.status === ContestStatus.ACTIVE;
             const hasEntry = (entriesByContestId.get(contest.id)?.length ?? 0) > 0;
             return (
-              <li className="flex items-center justify-between gap-3 px-4 py-3" data-testid={`league-home-contest-${contest.id}`} key={contest.id}>
-                <div className="min-w-0">
-                  <div className="truncate font-semibold text-foreground">{contest.name}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {!hasTeam
-                      ? 'Choose your name in this league to enter'
-                      : entriesState !== 'ready'
-                        ? ENTRY_STATE_NOTE[entriesState]
-                        : hasEntry ? 'You have an entry' : 'You haven’t entered'}
-                  </div>
-                </div>
-                <div className="flex flex-none items-center gap-2">
-                  <ContestStatusBadge status={contest.status} />
-                  <LinkButton
-                    size="sm"
-                    to={isLive
-                      ? buildLeagueContestLeaderboardPath(leagueCode, contest.id)
-                      : buildLeagueContestPath(leagueCode, contest.id)}
-                    variant="secondary"
-                  >
-                    {isLive ? 'Leaderboard' : 'View'}
-                  </LinkButton>
-                </div>
+              <li key={contest.id}>
+                <ContestRow
+                  density="compact"
+                  name={contest.name}
+                  note={!hasTeam
+                    ? 'Choose your name in this league to enter'
+                    : entriesState !== 'ready'
+                      ? ENTRY_STATE_NOTE[entriesState]
+                      : hasEntry ? 'You have an entry' : 'You haven’t entered'}
+                  startsAt={listedContestStartsAt(contest)}
+                  state={{ leagueCode }}
+                  status={<ContestStatusBadge status={contest.status} />}
+                  testId={`league-home-contest-${contest.id}`}
+                  to={contest.status === ContestStatus.ACTIVE
+                    ? buildLeagueContestLeaderboardPath(leagueCode, contest.id)
+                    : buildLeagueContestPath(leagueCode, contest.id)}
+                />
               </li>
             );
           })}

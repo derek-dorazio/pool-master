@@ -1,6 +1,7 @@
 import type { ContestResultSummaryDto } from '@/lib/api';
 import { buildLeagueContestLeaderboardPath } from '@/features/leagues/league-routing';
-import { DateDisplay, EmptyState, ListCard, ListStack, StatusBadge } from '@/features/shared/ui';
+import { EmptyState, ListStack, StatusBadge } from '@/features/shared/ui';
+import { ContestRow } from '@/features/contests/contest-row';
 import { formatCupPoints } from './cup-view';
 import { describeContestResult } from './championship-view';
 
@@ -31,28 +32,19 @@ export function ChampionshipContestList({
       {contests.map((contest) => {
         const state = describeContestResult(contest);
         return (
-          <ListCard
-            data-testid={`${testIdPrefix}-${contest.contestId}`}
-            description={state.note}
+          <ContestRow
+            completedAt={contest.completedAt}
+            details={contest.sportLeagueName}
             key={contest.contestId}
-            metadata={(
-              <>
-                <span>{contest.sportLeagueName}</span>
-                <DateDisplay className="text-muted-foreground" timeStyle={null} value={contest.completedAt} />
-              </>
-            )}
-            title={contest.name}
+            name={contest.name}
+            note={state.note}
+            startsAt={null}
+            status={state.badge ? <StatusBadge tone="neutral">{state.badge}</StatusBadge> : null}
+            testId={`${testIdPrefix}-${contest.contestId}`}
             to={contestPath(leagueCode, contest.contestId)}
-            trailing={(
-              <span className="inline-flex items-center gap-2">
-                {contest.squadFinish ? (
-                  <span className="font-semibold tabular-nums text-foreground">
-                    {contest.squadFinish.displayPlace} · {formatCupPoints(contest.squadFinish.points)} pts
-                  </span>
-                ) : null}
-                {state.badge ? <StatusBadge tone="neutral">{state.badge}</StatusBadge> : null}
-              </span>
-            )}
+            trailing={contest.squadFinish
+              ? `${contest.squadFinish.displayPlace} · ${formatCupPoints(contest.squadFinish.points)} pts`
+              : null}
           />
         );
       })}
