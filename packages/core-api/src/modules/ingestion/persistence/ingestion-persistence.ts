@@ -21,6 +21,7 @@ import type {
 } from '../core/provider-interface';
 import type { SyncWriteDetailRow, SyncWriteDiagnostics } from '../core/sync-write-diagnostics';
 import { summarizeSyncWriteRows } from '../core/sync-write-diagnostics';
+import type { EventFieldCache } from '../../events/event-field-cache';
 
 interface PersistenceDiagnosticsResult<T> {
   count: number;
@@ -29,9 +30,11 @@ interface PersistenceDiagnosticsResult<T> {
 }
 
 export class IngestionPersistence {
+  /** `fieldCache`: the event fields this container read lately, an event's forgotten once its field is written (#1163). */
   constructor(
     private readonly prisma: PrismaClient,
     private readonly logger?: FastifyBaseLogger,
+    private readonly fieldCache?: Pick<EventFieldCache, 'forget'>,
   ) {}
 
   async persistEventsWithDiagnostics(
@@ -239,11 +242,46 @@ export class IngestionPersistence {
       };
     }
 
-    let sportEventParticipantsPersisted = 0;
+    let sportEventParticipantsPersisted: number;
     // A released bracket's seeds are locked (#698): the upset bonus reads them as they stood at release.
     const { sportLeague } = persistedEvent.eventSeries;
     const seedsLocked = eventPlaysMatches({ sport: persistedEvent.sport, participantType: sportLeague.participantType, scoringFamily: sportLeague.scoringFamily }) && persistedEvent.status !== SportEventStatus.DRAFT;
 
+    try {
+      sportEventParticipantsPersisted = await this.persistEventField(detail, persistedEvent.id, seedsLocked, detailRows);
+    } finally {
+      this.fieldCache?.forget(persistedEvent.id);
+    }
+
+    this.logger?.info({
+      providerId: detail.providerId,
+      externalId: detail.externalId,
+      sport: detail.sport,
+      eventsPersisted,
+      participantsPersisted,
+      sportEventParticipantsPersisted,
+    }, 'Persisted event detail from ingestion');
+
+    const value = {
+      eventsPersisted,
+      participantsPersisted,
+      sportEventParticipantsPersisted,
+    };
+    return {
+      count: sportEventParticipantsPersisted,
+      value,
+      writeDiagnostics: summarizeSyncWriteRows(detailRows),
+    };
+  }
+
+  /** Writes the provider's field onto the event's rows, one row per mapped participant; returns how many. */
+  private async persistEventField(
+    detail: SportEventDetail,
+    sportEventId: string,
+    seedsLocked: boolean,
+    detailRows: SyncWriteDetailRow[],
+  ): Promise<number> {
+    let sportEventParticipantsPersisted = 0;
     for (const participant of detail.participants) {
       const mapping = await this.prisma.participantProviderMapping.findUnique({
         where: {
@@ -261,7 +299,7 @@ export class IngestionPersistence {
       const existingEventParticipant = await this.prisma.sportEventParticipant.findUnique({
         where: {
           sportEventId_participantId: {
-            sportEventId: persistedEvent.id,
+            sportEventId: sportEventId,
             participantId: mapping.participantId,
           },
         },
@@ -289,12 +327,12 @@ export class IngestionPersistence {
       const persistedEventParticipant = await this.prisma.sportEventParticipant.upsert({
         where: {
           sportEventId_participantId: {
-            sportEventId: persistedEvent.id,
+            sportEventId: sportEventId,
             participantId: mapping.participantId,
           },
         },
         create: {
-          sportEventId: persistedEvent.id,
+          sportEventId: sportEventId,
           participantId: mapping.participantId,
           isActive: participant.active,
           inactiveReason: participant.inactiveReason ?? null,
@@ -327,26 +365,7 @@ export class IngestionPersistence {
 
       sportEventParticipantsPersisted++;
     }
-
-    this.logger?.info({
-      providerId: detail.providerId,
-      externalId: detail.externalId,
-      sport: detail.sport,
-      eventsPersisted,
-      participantsPersisted,
-      sportEventParticipantsPersisted,
-    }, 'Persisted event detail from ingestion');
-
-    const value = {
-      eventsPersisted,
-      participantsPersisted,
-      sportEventParticipantsPersisted,
-    };
-    return {
-      count: sportEventParticipantsPersisted,
-      value,
-      writeDiagnostics: summarizeSyncWriteRows(detailRows),
-    };
+    return sportEventParticipantsPersisted;
   }
 }
 

@@ -9,13 +9,19 @@ import type {
   EventSeries,
   MatchSide,
   ParticipantInactiveReason,
+  Participant,
   ParticipantLeagueAffiliation,
   Sport,
   SportConfig,
   SportEvent,
+  SportEventMatch,
   SportEventParticipant,
+  SportEventParticipantGolfRound,
+  SportEventParticipantGolfStanding,
+  SportEventParticipantRaceResult,
   SportEventParticipantRound,
   SportEventParticipantStanding,
+  SportEventParticipantStatLine,
   SportEventParticipantValuation,
   SportEventRound,
   SportEventStatus,
@@ -219,10 +225,49 @@ export interface SportEventParticipantFieldUpdate {
   price?: number | null;
 }
 
+/** A round row with its sport extension, when the sport has one and it has been scored. */
+export interface ParticipantRoundView {
+  round: SportEventParticipantRound;
+  golf: SportEventParticipantGolfRound | null;
+  /** The composite family's extension (#934): a stat pool player's stats in the game, empty for any other family. */
+  statLines: SportEventParticipantStatLine[];
+}
+
+/** A standing row with its sport extension. */
+export interface ParticipantStandingView {
+  standing: SportEventParticipantStanding;
+  golf: SportEventParticipantGolfStanding | null;
+}
+
+/** One field row, as every reader of an event's participants sees it (#236). */
+export interface SportEventParticipantView {
+  entry: SportEventParticipant;
+  participant: Participant;
+  valuation: SportEventParticipantValuation | null;
+  standing: ParticipantStandingView | null;
+  /** In round number order. */
+  rounds: ParticipantRoundView[];
+  /** The finish-position extension: how the runner's race ended, once a result is entered. */
+  raceResult: SportEventParticipantRaceResult | null;
+  /** The bracket matches naming this row on either side, in match order: head to head scores from them (#699). */
+  matches: SportEventMatch[];
+  /** Whether the participant is affiliated with the event's sport league — false flags an invite from elsewhere. */
+  affiliatedWithSportLeague: boolean;
+}
+
 export interface SportEventParticipantRepository {
   findById(id: string): Promise<SportEventParticipant | null>;
   /** Ordered by seed, unseeded last. */
   findBySportEvent(sportEventId: string): Promise<SportEventParticipant[]>;
+  /**
+   * The event's field as every reader sees it, in one read (#1163): each row with its
+   * participant, valuation, standing, rounds, race result and matches, in seed order, unseeded
+   * last. Every scoring family's rows come along; a family's empty ones cost nothing.
+   * `sportLeagueId` is the event's, against which each participant's affiliation is flagged.
+   */
+  findFieldForEvent(sportEventId: string, sportLeagueId: string): Promise<SportEventParticipantView[]>;
+  /** One field row of the event, read as `findFieldForEvent` reads each, or null when the event has no such row. */
+  findFieldRow(sportEventId: string, sportEventParticipantId: string, sportLeagueId: string): Promise<SportEventParticipantView | null>;
   /** How many different participants the events' fields hold between them: a season's teams (#836). */
   countDistinctParticipants(sportEventIds: readonly string[]): Promise<number>;
   /** Adds participants to an event's field, all or none. */
@@ -303,16 +348,6 @@ export interface SportEventParticipantValuationRepository {
     pricingConfig: EventPricingConfig;
     assignments: readonly PriceAssignment[];
   }): Promise<void>;
-}
-
-export interface SportEventParticipantRoundRepository {
-  /** Every participant's rounds at the event, by participant then round number. */
-  findBySportEvent(sportEventId: string): Promise<SportEventParticipantRound[]>;
-}
-
-export interface SportEventParticipantStandingRepository {
-  /** Best position first, unranked last. Position is direction-free: 1 is best in every sport. */
-  findBySportEvent(sportEventId: string): Promise<SportEventParticipantStanding[]>;
 }
 
 /** Candidate participants for an upload row, within one sport. Exact match on each identifier given. */

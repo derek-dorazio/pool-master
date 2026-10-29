@@ -23,6 +23,8 @@ import { scoringFamilyForEvent, type ScoringFamilyModule } from '../../../packag
 import { strokePlayScoringFamily } from '../../../packages/core-api/src/modules/scoring-families/stroke-play';
 import { fakeLogger } from '../../support/fake-logger';
 import { asPrismaClient } from '../../support/prisma-double';
+import { ReadCache } from '../../../packages/core-api/src/core/read-cache';
+import type { SportEventParticipantView } from '@poolmaster/shared/db';
 
 function buildSportEventStub(internalId = 'evt-1') {
   return {
@@ -213,6 +215,69 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
         expect.any(String),
       );
       expect(prisma.sportEventParticipantRound.upsert).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('the event\'s field this container read lately (#1163)', () => {
+    const NOW = new Date('2026-10-28T20:00:00.000Z');
+    const result: LiveScoreResult = {
+      category: 'GOLF',
+      externalEventId: 'evt-ext-1',
+      rounds: [{ participantExternalId: 'rory', round: 1, strokes: 70, scoreToPar: -2, status: 'COMPLETED' }],
+    };
+    const persisted = { updatesReturned: 1, updatesPersisted: 1, updatesSkipped: 0, writeDiagnostics: { summary: { total: 0, unchanged: 0, created: 0, updated: 0, deleted: 0 }, rows: [] } };
+
+    /** A cache already holding event evt-1's field, as read by a viewer moments ago. */
+    async function cacheHoldingTheField() {
+      const fieldCache = new ReadCache<SportEventParticipantView[]>();
+      await fieldCache.get('evt-1', NOW, async () => []);
+      return fieldCache;
+    }
+
+    /** Whether the cache reads evt-1's field afresh, rather than answering with the one it holds. */
+    async function readsAfresh(fieldCache: ReadCache<SportEventParticipantView[]>): Promise<boolean> {
+      let read = false;
+      await fieldCache.get('evt-1', NOW, async () => { read = true; return []; });
+      return read;
+    }
+
+    function familyWriting(persist: () => Promise<typeof persisted>): ScoringFamilyModule {
+      return { ...strokePlayScoringFamily, liveScores: { category: 'GOLF', persist } };
+    }
+
+    it('forgets the event\'s field once its live scores are written, so the next read of it is current', async () => {
+      const fieldCache = await cacheHoldingTheField();
+
+      await publishLiveScoreUpdate(result, {
+        prisma: asPrismaClient({ sportEvent: buildSportEventStub() }),
+        providerId: 'mock',
+        scoringFamilyForEvent: () => familyWriting(async () => persisted),
+        fieldCache,
+      });
+
+      expect(await readsAfresh(fieldCache)).toBe(true);
+    });
+
+    it('forgets it too when writing the scores fails partway, since some may have been written', async () => {
+      const fieldCache = await cacheHoldingTheField();
+
+      await expect(publishLiveScoreUpdate(result, {
+        prisma: asPrismaClient({ sportEvent: buildSportEventStub() }),
+        providerId: 'mock',
+        scoringFamilyForEvent: () => familyWriting(async () => { throw new Error('connection reset'); }),
+        fieldCache,
+      })).rejects.toThrow('connection reset');
+
+      expect(await readsAfresh(fieldCache)).toBe(true);
+    });
+
+    it('keeps it when the scores are refused unwritten, since the field has not changed', async () => {
+      const fieldCache = await cacheHoldingTheField();
+      const prisma = { sportEvent: { findUnique: jest.fn().mockResolvedValue({ id: 'evt-1', sport: 'GOLF', status: 'COMPLETED', eventSeries: { sportLeague: { scoringFamily: null } } }) } };
+
+      await publishLiveScoreUpdate(result, { prisma: asPrismaClient(prisma), providerId: 'mock', logger: fakeLogger(), scoringFamilyForEvent, fieldCache });
+
+      expect(await readsAfresh(fieldCache)).toBe(false);
     });
   });
 });
