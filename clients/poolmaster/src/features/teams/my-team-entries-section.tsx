@@ -53,7 +53,7 @@ export function MyTeamEntriesSection({
   const currentContests = (contestsQuery.data ?? []).filter(
     (contest) => contest.status === ContestStatus.OPEN || contest.status === ContestStatus.ACTIVE,
   );
-  const myEntries = useMyContestEntries(leagueId, teamId);
+  const myEntries = useMyContestEntries(leagueId, true);
   const entriesState: MyEntriesState = myEntries.isError
     ? 'failed'
     : myEntries.isLoading ? 'loading' : 'ready';

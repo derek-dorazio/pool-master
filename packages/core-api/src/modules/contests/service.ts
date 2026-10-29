@@ -450,12 +450,12 @@ export class ContestService {
     contest: Contest,
     userId: string,
   ): Promise<{ totals: ContestEntryTotals; myEntryIds: string[] }> {
-    const [totals, squadId] = await Promise.all([
+    const [totals, myEntryIds] = await Promise.all([
       this.deps.entries.countForContest(contest.id),
-      this.findActiveSquadId(contest.leagueId, userId),
+      this.findActiveSquadId(contest.leagueId, userId)
+        .then((squadId) => (squadId ? this.deps.entries.findIdsByContestAndSquad(contest.id, squadId) : [])),
     ]);
-    const myEntries = squadId ? await this.deps.entries.findByContestAndSquad(contest.id, squadId) : [];
-    return { totals, myEntryIds: myEntries.map((entry) => entry.id) };
+    return { totals, myEntryIds };
   }
 
   /**
@@ -480,15 +480,14 @@ export class ContestService {
     });
   }
 
-  /** The viewer's squad in the league, when both their league and squad memberships are active. */
+  /**
+   * The viewer's squad in the league, while their squad membership is active. Both callers sit
+   * behind the route's active league membership gate, which has already read the league
+   * membership, and leaving a league ends the squad membership with it.
+   */
   private async findActiveSquadId(leagueId: string, userId: string): Promise<string | null> {
-    const [membership, squadMembership] = await Promise.all([
-      this.deps.memberships.findByLeagueAndUser(leagueId, userId),
-      this.deps.squadMemberships.findByLeagueAndUser(leagueId, userId),
-    ]);
-    return membership?.status === LeagueMembershipStatus.ACTIVE && squadMembership?.status === SquadMembershipStatus.ACTIVE
-      ? squadMembership.squadId
-      : null;
+    const squadMembership = await this.deps.squadMemberships.findByLeagueAndUser(leagueId, userId);
+    return squadMembership?.status === SquadMembershipStatus.ACTIVE ? squadMembership.squadId : null;
   }
 
   async getEntryDetail(

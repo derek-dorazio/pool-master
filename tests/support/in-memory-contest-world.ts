@@ -472,6 +472,11 @@ export class InMemoryContestWorld {
         [...this.entries.values()]
           .filter((entry) => entry.contestId === contestId && entry.squadId === squadId)
           .sort((left, right) => left.entryNumber - right.entryNumber),
+      findIdsByContestAndSquad: async (contestId, squadId) =>
+        [...this.entries.values()]
+          .filter((entry) => entry.contestId === contestId && entry.squadId === squadId)
+          .sort((left, right) => left.entryNumber - right.entryNumber)
+          .map((entry) => entry.id),
       findBySquadAndContests: async (squadId, contestIds) =>
         [...this.entries.values()]
           .filter((entry) => entry.squadId === squadId && contestIds.includes(entry.contestId))

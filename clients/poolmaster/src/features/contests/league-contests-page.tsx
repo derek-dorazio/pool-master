@@ -52,7 +52,7 @@ export function LeagueContestsPage() {
 
   // The list holds the current contests only (#1161); finished ones are on Contest History.
   const activeContests = useMemo(() => contestsQuery.data ?? [], [contestsQuery.data]);
-  const myEntries = useMyContestEntries(isMyEntriesFilter ? leagueId : "", viewer.mySquadId);
+  const myEntries = useMyContestEntries(leagueId, isMyEntriesFilter && viewer.mySquadId !== null);
   useEffect(() => {
     if (!myEntries.isError) {
       return;

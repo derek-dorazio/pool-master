@@ -85,7 +85,7 @@ export function LeagueHomePage() {
     ),
     [contestsQuery.data],
   );
-  const myEntries = useMyContestEntries(leagueId, viewer.mySquadId);
+  const myEntries = useMyContestEntries(leagueId, viewer.mySquadId !== null);
 
   const leagueContext = useLeagueContextGuard(leagueQuery, { loadingBody: 'Loading league...' });
   if (leagueContext.state === 'blocked' || !league) {

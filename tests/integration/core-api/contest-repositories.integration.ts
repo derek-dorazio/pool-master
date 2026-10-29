@@ -1091,6 +1091,9 @@ describe('ContestEntryRepository', () => {
     expect(found.map((entry) => [entry.id, entry.entryNumber])).toEqual([[first.id, 1], [third.id, 3]]);
     expect(found[0].events).toEqual([expect.objectContaining({ sportEventId: event.id, status: 'DRAFT' })]);
     await expect(repos().entries.findByContestAndSquad(otherContest.id, squads[1].id)).resolves.toEqual([]);
+    // The ids-alone read a contest page uses for the viewer's entries finds the same, in the same order (#1197).
+    await expect(repos().entries.findIdsByContestAndSquad(contest.id, squads[0].id)).resolves.toEqual([first.id, third.id]);
+    await expect(repos().entries.findIdsByContestAndSquad(otherContest.id, squads[1].id)).resolves.toEqual([]);
   });
 
   it("counts one contest's submitted entries, the squads that submitted one, and every entry with drafts (#1197)", async () => {

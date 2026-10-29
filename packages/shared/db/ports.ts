@@ -567,6 +567,8 @@ export interface ContestEntryRepository {
   findByContestWithSquad(contestId: string, options?: { submittedFor?: string }): Promise<ContestEntryWithSquad[]>;
   /** The squad's entries in one contest, drafts included, in entry-number order (#1167). */
   findByContestAndSquad(contestId: string, squadId: string): Promise<ContestEntry[]>;
+  /** The ids alone of the squad's entries in one contest, drafts included, in entry-number order (#1197). */
+  findIdsByContestAndSquad(contestId: string, squadId: string): Promise<string[]>;
   /**
    * The squad's entries in the contests, drafts included, in entry-number order within each
    * contest (#1197): one read for a squad's entries across a league's current contests.

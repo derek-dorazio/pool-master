@@ -58,9 +58,10 @@ export type MyContestEntries = {
 
 /**
  * The viewer's team's entries across the league's open and live contests, in one read however
- * many there are (#1197). Without a team there is nothing to read.
+ * many there are (#1197). The server answers for the viewer's own team, never another's: `enabled`
+ * only says whether to read, false for a viewer without a team, who has nothing to read.
  */
-export function useMyContestEntries(leagueId: string, squadId: string | null): MyContestEntries {
+export function useMyContestEntries(leagueId: string, enabled: boolean): MyContestEntries {
   const query = useQuery({
     queryKey: QueryKeys.contestEntries.mine(leagueId),
     queryFn: async (): Promise<ContestEntryDto[]> => {
@@ -70,14 +71,14 @@ export function useMyContestEntries(leagueId: string, squadId: string | null): M
       }
       return response.data.entries;
     },
-    enabled: Boolean(leagueId && squadId),
+    enabled: enabled && Boolean(leagueId),
     retry: false,
     select: groupByContest,
   });
   return {
     entriesByContestId: query.data ?? EMPTY,
     isError: query.isError,
-    isLoading: Boolean(squadId) && query.isLoading,
+    isLoading: query.isLoading,
   };
 }
 
