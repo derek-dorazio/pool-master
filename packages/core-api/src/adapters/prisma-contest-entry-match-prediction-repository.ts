@@ -88,17 +88,19 @@ export class PrismaContestEntryMatchPredictionRepository implements ContestEntry
   async save(change: ContestEntryMatchPredictionSave): Promise<void> {
     const { contestEntryId, sportEventId, saves, clearedMatchIds, eventStatus, tiebreakerValue, at } = change;
     await this.prisma.$transaction(async (tx) => {
-      if (clearedMatchIds.length > 0) {
+      // A saved pick replaces the game's earlier one: both go in one delete, and the saves in one
+      // insert, so the write costs the same for one game as for a full slate (#1254).
+      const replacedMatchIds = [...clearedMatchIds, ...saves.map((save) => save.sportEventMatchId)];
+      if (replacedMatchIds.length > 0) {
         await tx.contestEntryMatchPrediction.deleteMany({
-          where: { contestEntryId, sportEventMatchId: { in: [...clearedMatchIds] } },
+          where: { contestEntryId, sportEventMatchId: { in: replacedMatchIds } },
         });
       }
-      for (const { sportEventMatchId, predictedResult, sportEventParticipantId, confidence } of saves) {
-        // poolmaster-allow-query-in-loop: one entry's picks for one week's games, in one transaction
-        await tx.contestEntryMatchPrediction.upsert({
-          where: { contestEntryId_sportEventMatchId: { contestEntryId, sportEventMatchId } },
-          create: { contestEntryId, sportEventMatchId, predictedResult, sportEventParticipantId, confidence, pickedAt: at },
-          update: { predictedResult, sportEventParticipantId, confidence, pickedAt: at },
+      if (saves.length > 0) {
+        await tx.contestEntryMatchPrediction.createMany({
+          data: saves.map(({ sportEventMatchId, predictedResult, sportEventParticipantId, confidence }) => ({
+            contestEntryId, sportEventMatchId, predictedResult, sportEventParticipantId, confidence, pickedAt: at,
+          })),
         });
       }
       const statusChange = eventStatus === null

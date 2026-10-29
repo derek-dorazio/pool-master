@@ -1,5 +1,6 @@
 import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
+import type { PrismaClient } from '@prisma/client';
 import { ContestEntryStatus, ContestStatus, PredictedResult, Sport, contestEntryEventStatus, contestEntryEventTiebreaker } from '@poolmaster/shared/domain';
 import {
   PrismaContestEntryMatchPredictionRepository,
@@ -125,6 +126,28 @@ async function createPickEmEntry(sportEventIds: string[]) {
   return { contest, entry: result.entry };
 }
 
+/** The Prisma client with every model operation counted as `Model.operation`, those inside a transaction included. */
+function countingPrisma() {
+  const counts = new Map<string, number>();
+  const client = getPrisma().$extends({
+    query: {
+      $allModels: {
+        async $allOperations({ model, operation, args, query }) {
+          const key = `${model}.${operation}`;
+          counts.set(key, (counts.get(key) ?? 0) + 1);
+          return query(args);
+        },
+      },
+    },
+  });
+  // The extended client runs every query the plain one does; the repositories take the plain type.
+  return {
+    prisma: client as unknown as PrismaClient,
+    count: (key: string) => counts.get(key) ?? 0,
+    total: () => [...counts.values()].reduce((sum, count) => sum + count, 0),
+  };
+}
+
 function weekStatus(entry: { events: { sportEventId: string; status: string; submittedAt?: Date }[] }, sportEventId: string) {
   const row = entry.events.find((event) => event.sportEventId === sportEventId);
   return { status: row?.status, submittedAt: row?.submittedAt ?? null };
@@ -157,7 +180,7 @@ describe('PrismaContestEntryMatchPredictionRepository', () => {
     ]);
   });
 
-  it('replaces the entry\'s pick on a game it saves again, keeping the row and stamping the new pickedAt', async () => {
+  it('replaces the entry\'s pick on a game it saves again with the new pick alone, stamping the new pickedAt', async () => {
     const { event, game } = await createWeek('Week 1', AT);
     const { entry } = await createPickEmEntry([event.id]);
     const first = game(1);
@@ -167,17 +190,52 @@ describe('PrismaContestEntryMatchPredictionRepository', () => {
     });
 
     await save(expectDefined(first.homeSportEventParticipantId), 2, AT);
-    const [before] = await repos().predictions.findByEntryAndEvent(entry.id, event.id);
     await save(expectDefined(first.awaySportEventParticipantId), null, LATER);
     const after = await repos().predictions.findByEntryAndEvent(entry.id, event.id);
 
     expect(after).toHaveLength(1);
     expect(after[0]).toMatchObject({
-      id: expectDefined(before).id,
       sportEventParticipantId: first.awaySportEventParticipantId,
       confidence: null,
       pickedAt: LATER,
     });
+  });
+
+  it('saves a full slate of picks, replacing earlier ones, in the same number of queries as one pick (#1254)', async () => {
+    const { event, game } = await createWeek('Week 1', AT);
+    const { entry: oneGame } = await createPickEmEntry([event.id]);
+    const { entry: fullSlate } = await createPickEmEntry([event.id]);
+    const counted = countingPrisma();
+    const predictions = new PrismaContestEntryMatchPredictionRepository(counted.prisma);
+    const saveOn = (contestEntryId: string, matchNumbers: readonly number[], at: Date) => predictions.save({
+      contestEntryId,
+      sportEventId: event.id,
+      saves: matchNumbers.map((matchNumber) => ({
+        sportEventMatchId: game(matchNumber).id,
+        predictedResult: PredictedResult.TEAM,
+        sportEventParticipantId: expectDefined(game(matchNumber).awaySportEventParticipantId),
+        confidence: matchNumber,
+      })),
+      clearedMatchIds: [],
+      eventStatus: ContestEntryStatus.DRAFT,
+      at,
+    });
+    await repos().predictions.save({
+      contestEntryId: fullSlate.id, sportEventId: event.id, clearedMatchIds: [], eventStatus: null, at: AT,
+      saves: [{ sportEventMatchId: game(1).id, predictedResult: PredictedResult.TEAM, sportEventParticipantId: expectDefined(game(1).homeSportEventParticipantId), confidence: 1 }],
+    });
+
+    await saveOn(oneGame.id, [1], LATER);
+    const oneGameQueries = counted.total();
+    await saveOn(fullSlate.id, [1, 2, 3], LATER);
+    const fullSlateQueries = counted.total() - oneGameQueries;
+
+    expect(fullSlateQueries).toBe(oneGameQueries);
+    expect(counted.count('ContestEntryMatchPrediction.upsert')).toBe(0);
+    const picks = await repos().predictions.findByEntryAndEvent(fullSlate.id, event.id);
+    expect(picks.map((pick) => [pick.sportEventMatchId, pick.sportEventParticipantId, pick.confidence, pick.pickedAt])).toEqual(
+      [1, 2, 3].map((matchNumber) => [game(matchNumber).id, game(matchNumber).awaySportEventParticipantId, matchNumber, LATER]),
+    );
   });
 
   it('says whether any entry has picked a game, so a picked game\'s spread stays fixed (#720)', async () => {

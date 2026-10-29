@@ -356,7 +356,9 @@ export class SelectionService {
     const rosterSize = engine.rosterSize({ configuration: context.configuration, tiers: context.tiers });
     if (rosterSize <= 0) throw selectionErrors.selectionConfigInvalid(contestId);
 
-    const { issues, pickCount } = await this.findEntryIssues(context, engine, entryId, rosterSize);
+    // The event's picks are read once: the lineup check, the receipt and the room all use them (#1254).
+    const picks = await this.findEventPicks(context, context.entries.map((candidate) => candidate.id));
+    const { issues, pickCount } = lineupIssues(context, engine, picks.filter((pick) => pick.entryId === entryId), rosterSize);
     // An incomplete lineup is the first thing to fix, so it is reported ahead of the budget.
     const tierShort = issues.find((issue) => issue.kind === LineupIssueKind.TIER_SHORT);
     if (tierShort || issues.some((issue) => issue.kind === LineupIssueKind.ROSTER_SHORT)) {
@@ -384,10 +386,10 @@ export class SelectionService {
         { action: 'selection.submitEntry.submitted', data: { contestId, entryId, sportEventId: context.sportEvent.id } },
         'Submitted a contest entry\'s picks for one event',
       );
-      await this.deps.entryReceipts?.sendEntrySubmittedEmails(receiptInput(submittedContext, [entryId]));
+      await this.deps.entryReceipts?.sendEntrySubmittedEmails(receiptInput(submittedContext, [entryId], picks));
     }
 
-    return this.buildRoomView({ context: submittedContext, engine, selectedEntryId: entryId, actorUserId });
+    return this.buildRoomView({ context: submittedContext, engine, selectedEntryId: entryId, actorUserId, picks });
   }
 
   /**
@@ -460,14 +462,16 @@ export class SelectionService {
       'Ran a random draw',
     );
     // The draw changed only what `recordDraw` wrote: the contest is drawn and every entry
-    // submitted at the draw's time. The dealt picks are read fresh by the room (#1196).
+    // submitted at the draw's time. The dealt picks are read once, for the receipts and the room
+    // (#1196, #1254).
     const drawnContext = withDraw(context, drawnAt, this.now());
+    const entryIds = context.entries.map((entry) => entry.id);
+    const picks = await this.findEventPicks(drawnContext, entryIds);
 
     // Every entry's owners get a receipt of the picks the draw dealt it (#867). The draw is
     // already recorded, so a receipt that fails is logged and never fails it.
-    const entryIds = context.entries.map((entry) => entry.id);
     try {
-      await this.deps.entryReceipts?.sendEntrySubmittedEmails(receiptInput(drawnContext, entryIds));
+      await this.deps.entryReceipts?.sendEntrySubmittedEmails(receiptInput(drawnContext, entryIds, picks));
     } catch (error) {
       this.deps.logger?.error(
         { action: 'selection.runDraw.receiptFailed', data: { contestId, entryIds, error: error instanceof Error ? error.message : String(error) } },
@@ -475,7 +479,7 @@ export class SelectionService {
       );
     }
 
-    return this.buildRoomView({ context: drawnContext, engine, actorUserId });
+    return this.buildRoomView({ context: drawnContext, engine, actorUserId, picks });
   }
 
   /** The entries' picks in the context's event (#713): a lineup is one event's picks. */
@@ -493,20 +497,7 @@ export class SelectionService {
     entryId: string,
     rosterSize: number,
   ): Promise<{ issues: LineupIssue[]; pickCount: number }> {
-    const picks = await this.findEventPicks(context, [entryId]);
-    const priceBySportEventParticipantId = buildPriceLookup(context);
-    return {
-      pickCount: picks.length,
-      issues: engine.findLineupIssues({
-        configuration: context.configuration,
-        rosterSize,
-        tiers: context.tiers,
-        picks: picks.map((pick) => ({
-          participantId: pick.participant.participantId,
-          price: priceBySportEventParticipantId.get(pick.sportEventParticipantId),
-        })),
-      }),
-    };
+    return lineupIssues(context, engine, await this.findEventPicks(context, [entryId]), rosterSize);
   }
 
   /**
@@ -638,13 +629,15 @@ export class SelectionService {
     engine: SelectionEngine;
     selectedEntryId?: string;
     actorUserId?: string;
+    /** Every entry's picks in the event, when the caller already read them after its last write. */
+    picks?: readonly ContestEntryPickWithParticipant[];
   }): Promise<SelectionView> {
     const { context, engine, actorUserId } = input;
     const { contest, configuration, tiers, entries: contestEntries } = context;
     const entryIds = contestEntries.map((entry) => entry.id);
 
     const [picks, actorMembership] = await Promise.all([
-      this.findEventPicks(context, entryIds),
+      input.picks ?? this.findEventPicks(context, entryIds),
       actorUserId
         ? this.deps.memberships.findByLeagueAndUser(contest.leagueId, actorUserId)
         : Promise.resolve(null),
@@ -877,8 +870,35 @@ function takesPicks(status: ContestStatus): boolean {
 }
 
 /** What an entry receipt needs from the room, so the receipt reads none of it again (#1196). */
-function receiptInput(context: SelectionContext, entryIds: readonly string[]): EntrySubmittedReceiptInput {
+/** What stops an entry's lineup, of `picks` (its picks in the context's event), being submitted. */
+function lineupIssues(
+  context: SelectionContext,
+  engine: SelectionEngine,
+  picks: readonly ContestEntryPickWithParticipant[],
+  rosterSize: number,
+): { issues: LineupIssue[]; pickCount: number } {
+  const priceBySportEventParticipantId = buildPriceLookup(context);
   return {
+    pickCount: picks.length,
+    issues: engine.findLineupIssues({
+      configuration: context.configuration,
+      rosterSize,
+      tiers: context.tiers,
+      picks: picks.map((pick) => ({
+        participantId: pick.participant.participantId,
+        price: priceBySportEventParticipantId.get(pick.sportEventParticipantId),
+      })),
+    }),
+  };
+}
+
+function receiptInput(
+  context: SelectionContext,
+  entryIds: readonly string[],
+  picks: readonly ContestEntryPickWithParticipant[],
+): EntrySubmittedReceiptInput {
+  return {
+    picks,
     contest: context.contest,
     sportEvent: context.sportEvent,
     configuration: context.configuration,
