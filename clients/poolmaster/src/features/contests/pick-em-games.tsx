@@ -62,7 +62,8 @@ function TeamChoice({
   return (
     <Button
       aria-pressed={isPicked}
-      className="normal-case tracking-normal w-full justify-between text-left"
+      className="justify-between"
+      layout="row"
       data-testid={`pick-em-game-${game.matchNumber}-team-${team.sportEventParticipantId}`}
       data-used={isUsed || undefined}
       disabled={isBusy || isUsed}
@@ -148,7 +149,8 @@ function TieChoice({
   return (
     <Button
       aria-pressed={isPicked}
-      className="normal-case tracking-normal w-full justify-between text-left"
+      className="justify-between"
+      layout="row"
       data-testid={`pick-em-game-${game.matchNumber}-tie`}
       disabled={isBusy}
       onClick={() => {

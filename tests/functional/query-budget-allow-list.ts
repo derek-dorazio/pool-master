@@ -7,7 +7,6 @@ import type { QueryBudgetAllowList } from '../support/query-budget';
  */
 export const QUERY_BUDGET_ALLOW_LIST: QueryBudgetAllowList = {
   // Root-admin event tools that write one row per participant.
-  'POST /api/v1/events/:eventId/participants': { ticket: 1252 },
   'PATCH /api/v1/events/:eventId/participants': { ticket: 1252 },
   'POST /api/v1/events/:eventId/prices/auto-assign': { ticket: 1252 },
   'POST /api/v1/events/:eventId/tiers/auto-assign': { ticket: 1252 },
@@ -16,11 +15,6 @@ export const QUERY_BUDGET_ALLOW_LIST: QueryBudgetAllowList = {
   'PUT /api/v1/events/:eventId/race-results': { ticket: 1252 },
   'PUT /api/v1/events/:eventId/bracket/matches/:matchNumber/result': { ticket: 1252 },
   'POST /api/v1/sport-leagues/:sportLeagueId/affiliations/upload': { ticket: 1252 },
-  // Creating, cloning and importing events: rounds and tiers written one at a time.
-  'POST /api/v1/events': { ticket: 1253 },
-  'POST /api/v1/events/clone-year': { ticket: 1253 },
-  'POST /api/v1/events/import-year-from-provider': { ticket: 1253 },
-  'PUT /api/v1/events/:eventId/tiers': { ticket: 1253 },
   // A status change or release fans out to every contest on the event, re-reading the event for each.
   'POST /api/v1/events/:eventId/transition': { ticket: 1199 },
   'POST /api/v1/events/:eventId/release': { ticket: 1199 },

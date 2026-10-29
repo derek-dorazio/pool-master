@@ -7,8 +7,8 @@
  * indexes (which can only predicate on local columns) can enforce the
  * per-format pick uniqueness rules. This service is the single insert path
  * that guarantees the denormalized column always matches the parent contest;
- * routes / selection-engine code go through `createPick` instead of touching
- * `prisma.contestEntryPick.create` directly.
+ * the selection room goes through `changeEntryPick` (and a draw through
+ * `recordDraw`) instead of touching `prisma.contestEntryPick.create` directly.
  *
  * Per plans/117 §7.1: "pick-creation always reads Contest.contestFormat from
  * the parent contest and writes it to the pick row. No insert path bypasses
@@ -20,12 +20,11 @@ import { ContestEntryStatus } from '@poolmaster/shared/domain';
 import type { FastifyBaseLogger } from 'fastify';
 import type {
   ContestDrawRecordInput,
-  ContestEntryPickDto,
-  ContestEntryPickInsertInput,
+  EntryPickChangeInput,
+  LockedEntryPick,
 } from './types';
-import { lockContestRow } from '../../adapters';
+import { lockContestEntryRow, lockContestRow } from '../../adapters';
 import { forgettingReads, ReadMemoKey } from '../../core/request-read-memo';
-import { mapContestEntryPickToDto } from '../../mappers/contest-entry-picks.mapper';
 
 export class ContestEntryPickEntryMissingError extends Error {
   constructor(entryId: string) {
@@ -64,88 +63,69 @@ export class ContestEntryPickService {
   ) {}
 
   /**
-   * Insert a ContestEntryPick. Resolves `contestFormat` from the parent
-   * contest in the same transaction so the denormalized column is always
-   * consistent. Callers pass optional metadata (tier / cost / lineupSlot /
-   * pickSequence / isAutoPicked); the service is format-agnostic, and the
-   * ROSTER partial unique index keeps a participant to one pick per entry.
+   * Changes one entry's roster picks in one event (#1259): removes a pick, adds one, or both for
+   * a swap, in one transaction. The entry's row lock is taken first and its picks read under it,
+   * so `decide` sees every change that committed before this one and none can slip in between
+   * the decision and the write. The added pick takes the parent contest's `contestFormat`
+   * (plans/117 §7.1) and the next place in the contest's pick order; the ROSTER partial unique
+   * index keeps a participant to one pick per entry. Answers whether anything was written.
    */
-  async createPick(input: ContestEntryPickInsertInput): Promise<ContestEntryPickDto> {
-    return this.prisma.$transaction(async (tx) => {
+  async changeEntryPick(input: EntryPickChangeInput): Promise<{ changed: boolean }> {
+    const { entryId, sportEventId, decide } = input;
+    const result = await this.prisma.$transaction(async (tx) => {
+      await lockContestEntryRow(tx, entryId);
       const entry = await tx.contestEntry.findUnique({
-        where: { id: input.entryId },
-        select: { contestId: true },
+        where: { id: entryId },
+        select: { contestId: true, contest: { select: { contestFormat: true } } },
       });
-      if (!entry) {
-        this.logger?.warn(
-          { action: 'contestEntryPick.create.missingEntry', data: { entryId: input.entryId } },
-          'Cannot create pick — owning entry not found',
-        );
-        throw new ContestEntryPickEntryMissingError(input.entryId);
-      }
+      if (!entry) throw new ContestEntryPickEntryMissingError(entryId);
 
-      const contest = await tx.contest.findUnique({
-        where: { id: entry.contestId },
-        select: { contestFormat: true },
+      const rows = await tx.contestEntryPick.findMany({
+        where: { entryId, sportEventParticipant: { sportEventId } },
+        select: { id: true, sportEventParticipantId: true, lineupSlot: true, sportEventParticipant: { select: { participantId: true } } },
+        orderBy: [{ pickedAt: 'asc' }, { id: 'asc' }],
       });
-      if (!contest) {
-        this.logger?.error(
-          {
-            action: 'contestEntryPick.create.missingContest',
-            data: { entryId: input.entryId, contestId: entry.contestId },
+      const picks: LockedEntryPick[] = rows.map((row) => ({
+        id: row.id,
+        sportEventParticipantId: row.sportEventParticipantId,
+        participantId: row.sportEventParticipant.participantId,
+        lineupSlot: row.lineupSlot,
+      }));
+      const write = decide(picks);
+      if (!write) return { changed: false, contestId: entry.contestId, write };
+
+      if (write.removePickId) await tx.contestEntryPick.delete({ where: { id: write.removePickId } });
+      if (write.add) {
+        const contestPickCount = await tx.contestEntryPick.count({ where: { entry: { contestId: entry.contestId } } });
+        await tx.contestEntryPick.create({
+          data: {
+            entryId,
+            sportEventParticipantId: write.add.sportEventParticipantId,
+            contestFormat: entry.contest.contestFormat,
+            lineupSlot: write.add.lineupSlot,
+            pickSequence: contestPickCount + 1,
+            isAutoPicked: false,
           },
-          'Cannot create pick — parent contest not found',
-        );
-        throw new ContestEntryPickContestMissingError(entry.contestId);
+        });
       }
+      return { changed: true, contestId: entry.contestId, write };
+    });
 
-      const row = await tx.contestEntryPick.create({
-        data: {
-          entryId: input.entryId,
-          sportEventParticipantId: input.sportEventParticipantId,
-          contestFormat: contest.contestFormat,
-          period: input.period ?? null,
-          slot: input.slot ?? null,
-          tier: input.tier ?? null,
-          cost: input.cost ?? null,
-          isAutoPicked: input.isAutoPicked ?? false,
-          lineupSlot: input.lineupSlot ?? null,
-          pickSequence: input.pickSequence ?? null,
-          ...(input.pickedAt !== undefined ? { pickedAt: input.pickedAt } : {}),
-        },
-      });
-
+    if (result.changed) {
       this.logger?.info(
         {
-          action: 'contestEntryPick.create.success',
+          action: 'contestEntryPick.change.success',
           data: {
-            entryId: input.entryId,
-            contestId: entry.contestId,
-            contestFormat: contest.contestFormat,
-            pickId: row.id,
+            entryId,
+            contestId: result.contestId,
+            removedPickId: result.write?.removePickId ?? null,
+            addedSportEventParticipantId: result.write?.add?.sportEventParticipantId ?? null,
           },
         },
-        'Created contest entry pick with denormalized contestFormat',
+        'Changed a contest entry pick',
       );
-
-      return mapContestEntryPickToDto(row);
-    });
-  }
-
-  /**
-   * Remove a pick. Here rather than on `ContestEntryPickRepository` because that port is
-   * read-only by design (#247): a `create` on it would be a second insert path past the
-   * `contestFormat` resolution above. A delete has no such invariant to maintain, but pick
-   * writes still belong together on one service, so the port stays read-only and both of a
-   * tiered selection's deletes — replacing a pick in a full tier, and toggling one off —
-   * come through here (#324).
-   */
-  async deletePick(pickId: string): Promise<void> {
-    await this.prisma.contestEntryPick.delete({ where: { id: pickId } });
-    this.logger?.info(
-      { action: 'contestEntryPick.delete.success', data: { pickId } },
-      'Deleted contest entry pick',
-    );
+    }
+    return { changed: result.changed };
   }
 
   /**
@@ -156,7 +136,7 @@ export class ContestEntryPickService {
    * insert fails, and nothing of it is written. The entries are re-read inside the
    * transaction, so an entry added or removed after the deal was worked out stops the write
    * instead of leaving an entry with no picks. Picks take the parent contest's
-   * `contestFormat`, as `createPick` does (plans/117 §7.1). Each pick's `lineupSlot` is its
+   * `contestFormat`, as `changeEntryPick` does (plans/117 §7.1). Each pick's `lineupSlot` is its
    * round of the deal, and its `pickSequence` its place in the deal across the contest.
    *
    * Answers with the draw's time, the contest's `drawnAt` and every entry's submit time, so the

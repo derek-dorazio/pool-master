@@ -585,9 +585,6 @@ export class InMemoryContestWorld {
         }
         return counts;
       },
-      countByContest: async (contestId) =>
-        [...this.picks.values()].filter((pick) =>
-          this.entries.get(pick.entryId)?.contestId === contestId).length,
     };
   }
 

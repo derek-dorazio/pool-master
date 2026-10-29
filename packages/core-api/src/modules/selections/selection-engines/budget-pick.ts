@@ -58,8 +58,7 @@ export const budgetPickSelectionEngine: SelectionEngine = {
   rosterSize: ({ configuration }) =>
     configuration?.configJson?.selectionType === SelectionType.BUDGET_PICK ? configuration.configJson.rosterSize : 0,
 
-  evaluate: ({ participant, heldPick, existingPicks, rosterSize }) => {
-    if (heldPick) return { kind: SelectionOutcomeKind.TOGGLE_OFF, pickId: heldPick.id };
+  evaluate: ({ participant, existingPicks, rosterSize }) => {
     if (participant.price === undefined) {
       return { kind: SelectionOutcomeKind.REJECT, code: SelectionRejectCode.PRICE_MISSING };
     }
@@ -68,6 +67,9 @@ export const budgetPickSelectionEngine: SelectionEngine = {
     }
     return { kind: SelectionOutcomeKind.ACCEPT, lineupSlot: firstFreeSlot(existingPicks) };
   },
+
+  /** A held pick can always be unselected while picks are open. */
+  refuseUnselect: () => null,
 
   /** A full roster, judged by count alone (there are no tiers), that costs no more than the cap. */
   findLineupIssues: ({ configuration, rosterSize, picks }) => {

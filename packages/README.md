@@ -52,7 +52,8 @@ Where to look instead, in order of authority:
 
 ### Draft Module (`modules/selections/`)
 
-It publishes four operations, `getSelectionState`, `submitContestSelection`,
+It publishes five operations, `getSelectionState`, `selectContestPick` and `unselectContestPick`
+(#1259: one pick of one entry, answering with only what changed on it),
 `submitContestEntry` (#481: an entry counts only once its owner submits a complete lineup) and
 `runContestDraw` (#601: a random-draw contest's commissioner deals every entry its picks). It was the last
 module holding route plumbing, actor resolution, direct `prisma.` calls, the selection rules

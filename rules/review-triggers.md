@@ -39,6 +39,7 @@ Already enforced mechanically, and therefore **not** triggers:
 | Inline query keys, inline theme styles, bare controls | the corresponding `poolmaster/*` ESLint rules |
 | Generated OpenAPI/SDK staleness | `api:check` |
 | A list route with no query-scaling test (statements counted for 2 rows and 20) | `rules:check:query-scaling` |
+| An app query on a growing table that no index can serve | the integration run's index check (`rules/model-change-rules.md` *Indexes Follow The Reads And The Foreign Keys*) |
 | A route running more than 25 queries per request | the functional suite's query budget check (`rules/testing-rules.md` §6 *Backend Functional API Tests*) |
 
 Triggers cover only what needs **judgement** — things no scanner can infer and a file list
@@ -318,7 +319,7 @@ classes; this is what is specific to *this* codebase.
 ## 7. Reviewing for architectural fit
 
 Apply when the diff touches shared contracts, crosses a module boundary, changes
-infrastructure, or departs from an active plan. Skip it otherwise — most slices sit inside
+infrastructure, builds web app UI, or departs from an active plan. Skip it otherwise — most slices sit inside
 one module and need none of this.
 
 - **Plan alignment** — does the slice implement the decision its plan records, or has it
@@ -333,6 +334,9 @@ one module and need none of this.
 - **Cross-cutting consistency** — error envelope shape, lifecycle naming, list-envelope
   policy, timezone handling. A slice that invents a local variant of an established pattern
   costs more later than it saved.
+- **Second copies** — does this diff build a second copy of an existing component (a card,
+  row, table, leaderboard or section with the same shape)? Name the original. See
+  `react-ui-rules.md` §5 *Component Reuse Threshold*.
 - **Deferred-work hygiene** — does the slice land `TODO` markers or partial implementations
   that should be tracked issues? See `architecture-rules.md` §4.
 

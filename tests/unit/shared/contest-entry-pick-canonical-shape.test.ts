@@ -15,10 +15,6 @@ import { resolve } from 'node:path';
 import * as sharedDto from '@poolmaster/shared/dto';
 
 describe('pool-master-rop.78.6 — ContestEntryPick canonical shape', () => {
-  it('exposes ContestEntryPickDtoSchema as the canonical raw-row DTO', () => {
-    expect(sharedDto).toHaveProperty('ContestEntryPickDtoSchema');
-  });
-
   it('uses pickId (not rosterPickId) on the participant detail shape', () => {
     const shape = sharedDto.ContestEntryParticipantDetailDtoSchema.shape;
     expect(shape).toHaveProperty('pickId');

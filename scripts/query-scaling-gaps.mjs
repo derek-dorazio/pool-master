@@ -13,34 +13,10 @@
  */
 export const QUERY_SCALING_GAPS = [
   // --- Users ---
-  { route: 'GET /api/v1/users/', ticket: 1248 },
   { route: 'GET /api/v1/users/{userId}/email-preferences', ticket: 1248 },
-  { route: 'GET /api/v1/users/{userId}/payments', ticket: 1248 },
 
   // --- Leagues, plans, billing and teams ---
-  { route: 'GET /api/v1/leagues/{id}', ticket: 1248 },
-  { route: 'GET /api/v1/leagues/code/{leagueCode}', ticket: 1248 },
-  { route: 'GET /api/v1/leagues/{id}/invitations', ticket: 1248 },
   { route: 'GET /api/v1/plans/', ticket: 1248 },
-  { route: 'GET /api/v1/leagues/{id}/billing/payments', ticket: 1248 },
-  { route: 'GET /api/v1/leagues/{id}/squads/{squadId}', ticket: 1248 },
-  { route: 'GET /api/v1/leagues/{id}/squads/owner-invitations', ticket: 1248 },
-
-  // --- Contests and leaderboards ---
-  { route: 'GET /api/v1/leagues/{id}/billing/contests/{contestId}/expansion', ticket: 1248 },
-  { route: 'GET /api/v1/leagues/{id}/contests/finished-years', ticket: 1248 },
-  { route: 'GET /api/v1/leagues/{id}/contests/my-entries', ticket: 1248 },
-  { route: 'GET /api/v1/leagues/{id}/contests/sports-leagues-used', ticket: 1248 },
-  { route: 'GET /api/v1/leagues/{id}/contests/plan-usage', ticket: 1248 },
-  { route: 'GET /api/v1/leagues/{id}/contest-management/contests/{contestId}', ticket: 1248 },
-  { route: 'GET /api/v1/contests/{contestId}', ticket: 1248 },
-  { route: 'GET /api/v1/contests/{contestId}/entries', ticket: 1248 },
-  { route: 'GET /api/v1/contests/{contestId}/entries/{entryId}', ticket: 1248 },
-  { route: 'GET /api/v1/contests/{contestId}/leaderboard', ticket: 1248 },
-  { route: 'GET /api/v1/contests/{contestId}/bracket-leaderboard', ticket: 1248 },
-  { route: 'GET /api/v1/contests/{contestId}/pick-em-leaderboard', ticket: 1248 },
-  { route: 'GET /api/v1/contests/{contestId}/survivor-leaderboard', ticket: 1248 },
-  { route: 'GET /api/v1/contest-config-templates/', ticket: 1248 },
 
   // --- Cups, championship and history ---
   { route: 'GET /api/v1/leagues/{id}/cups/seasons', ticket: 1248 },
@@ -66,11 +42,6 @@ export const QUERY_SCALING_GAPS = [
   { route: 'GET /api/v1/sport-leagues/{sportLeagueId}/affiliations', ticket: 1248 },
   { route: 'GET /api/v1/event-pages/', ticket: 1248 },
   { route: 'GET /api/v1/event-pages/{sport}/{pageSlug}', ticket: 1248 },
-
-  // --- Selections ---
-  { route: 'GET /api/v1/selections/{contestId}', ticket: 1248 },
-  { route: 'GET /api/v1/selections/{contestId}/entries/{entryId}/events/{sportEventId}/game-picks', ticket: 1248 },
-  { route: 'GET /api/v1/selections/{contestId}/squares', ticket: 1248 },
 
   // --- Root admin: participants, settings and ingestion ---
   { route: 'GET /api/v1/participants/', ticket: 1248 },

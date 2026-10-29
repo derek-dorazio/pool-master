@@ -1,6 +1,6 @@
 /**
- * Race helpers for the contest row lock (#644, #646). A test holds the lock in a transaction of
- * its own, as another writer would, starts the writer under test, waits until Postgres reports
+ * Race helpers for the contest row lock (#644, #646) and the entry row lock (#1259). A test
+ * holds the lock in a transaction of its own, as another writer would, starts the writer under test, waits until Postgres reports
  * that writer blocked behind the holder, and only then releases. The interleaving is therefore
  * fixed, not left to timing.
  */
@@ -21,6 +21,25 @@ export function holdContestLocks<T = unknown>(
   contestIds: readonly string[],
   work: Work = async () => undefined,
 ): ContestLockHolder<T> {
+  return holdRowLocks<T>(prisma, async (tx) => {
+    for (const contestId of [...contestIds].sort()) {
+      await tx.$queryRaw`SELECT id FROM "contests" WHERE id = ${contestId}::uuid FOR UPDATE`;
+    }
+  }, work);
+}
+
+/** Holds one contest entry's row lock, as a pick change takes it (#1259), then runs `work`. */
+export function holdEntryLock<T = unknown>(
+  prisma: PrismaClient,
+  entryId: string,
+  work: Work = async () => undefined,
+): ContestLockHolder<T> {
+  return holdRowLocks<T>(prisma, async (tx) => {
+    await tx.$queryRaw`SELECT id FROM "contest_entries" WHERE id = ${entryId}::uuid FOR UPDATE`;
+  }, work);
+}
+
+function holdRowLocks<T>(prisma: PrismaClient, lock: Work, work: Work): ContestLockHolder<T> {
   let signalReady!: (pid: number) => void;
   const ready = new Promise<number>((resolve) => { signalReady = resolve; });
   let releaseWith!: (last: ((tx: Prisma.TransactionClient) => Promise<T>) | undefined) => void;
@@ -28,9 +47,7 @@ export function holdContestLocks<T = unknown>(
 
   const holder = prisma.$transaction(async (tx) => {
     const [{ pid }] = await tx.$queryRaw<[{ pid: number }]>`SELECT pg_backend_pid() AS pid`;
-    for (const contestId of [...contestIds].sort()) {
-      await tx.$queryRaw`SELECT id FROM "contests" WHERE id = ${contestId}::uuid FOR UPDATE`;
-    }
+    await lock(tx);
     await work(tx);
     signalReady(pid);
     const last = await released;

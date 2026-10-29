@@ -1,5 +1,5 @@
 /**
- * ContestEntryPick mappers — persistence row → canonical DTO.
+ * ContestEntryPick mappers — persistence row → domain pick.
  *
  * The Prisma row is the pick's raw persistence shape (with Decimal cost,
  * nullable optional columns, Date timestamps). The DTO surface uses ISO
@@ -11,7 +11,6 @@
  */
 
 import type { ContestEntryPick, ContestFormat } from '@poolmaster/shared/domain';
-import type { ContestEntryPickDto } from '@poolmaster/shared/dto';
 
 /**
  * Shape of the Prisma row read by `prisma.contestEntryPick.findUnique` /
@@ -41,25 +40,6 @@ function decimalToNumber(value: { toNumber(): number } | number | null): number 
   if (value === null) return null;
   if (typeof value === 'number') return value;
   return value.toNumber();
-}
-
-export function mapContestEntryPickToDto(row: ContestEntryPickRow): ContestEntryPickDto {
-  return {
-    id: row.id,
-    entryId: row.entryId,
-    sportEventParticipantId: row.sportEventParticipantId,
-    contestFormat: row.contestFormat,
-    period: row.period,
-    slot: row.slot,
-    tier: row.tier,
-    cost: decimalToNumber(row.cost),
-    isAutoPicked: row.isAutoPicked,
-    lineupSlot: row.lineupSlot,
-    pickSequence: row.pickSequence,
-    pickedAt: row.pickedAt.toISOString(),
-    createdAt: row.createdAt.toISOString(),
-    updatedAt: row.updatedAt.toISOString(),
-  };
 }
 
 /** Domain-shape ContestEntryPick (no DTO, used by service-internal code). */

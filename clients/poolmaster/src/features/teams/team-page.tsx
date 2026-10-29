@@ -20,7 +20,7 @@ import {
 } from '@/features/shared/ui';
 import { hasErrorCode } from '@/lib/errors';
 import { formatOwnerCount, getActiveOwners } from './team-directory';
-import { TeamIcon } from './team-icon';
+import { TeamAvatar } from './team-avatar';
 import { useLeagueSquadQuery } from './use-league-squad-query';
 
 /**
@@ -65,7 +65,7 @@ export function TeamPage() {
     <section className="space-y-8" data-testid="team-page">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <IdentityHeading
-          icon={<TeamIcon iconKey={team.iconKey} size="md" />}
+          avatar={<TeamAvatar iconKey={team.iconKey} label={`${team.name} icon`} size="md" />}
           meta={`${formatOwnerCount(team)}${team.isActive ? '' : ' · Inactive'}`}
           name={team.name}
           testId="team-page-identity"

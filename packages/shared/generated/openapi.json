@@ -27378,117 +27378,6 @@
         "additionalProperties": false,
         "description": "A contest entry: the one shape every entry read and write returns (#248 collapsed the summary and detail variants, which differed by `participants`)."
       },
-      "ContestEntryPickDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "description": "Pick identifier."
-          },
-          "entryId": {
-            "type": "string",
-            "description": "Owning contest entry identifier."
-          },
-          "sportEventParticipantId": {
-            "type": "string",
-            "description": "Per-event participant the pick refers to (Sport-event-participant row, not the canonical Participant)."
-          },
-          "contestFormat": {
-            "type": "string",
-            "enum": [
-              "ROSTER",
-              "PREDICTION",
-              "SQUARES"
-            ],
-            "description": "Denormalized from parent Contest.contestFormat. Plans/117 §7.1 — enables per-format partial unique indexes that Postgres cannot predicate on joined parent columns."
-          },
-          "period": {
-            "description": "Unused: no built contest format sets it, so it is always null. Removal is tracked in #632.",
-            "type": [
-              "integer",
-              "null"
-            ],
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991
-          },
-          "slot": {
-            "description": "Unused: no built contest format sets it, so it is always null; a lineup position is `lineupSlot`. Removal is tracked in #632.",
-            "type": [
-              "integer",
-              "null"
-            ],
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991
-          },
-          "tier": {
-            "description": "Selection tier (tiered ROSTER); null otherwise.",
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "cost": {
-            "description": "Budget cost (budget ROSTER); null otherwise.",
-            "type": [
-              "number",
-              "null"
-            ]
-          },
-          "isAutoPicked": {
-            "type": "boolean",
-            "description": "Whether this pick was auto-assigned rather than submitted by the entry. Always false for tiered and budget selection, which have no auto-pick."
-          },
-          "lineupSlot": {
-            "description": "Position of this pick within its entry's roster. Tiered: counted across tier quotas in tier order; budget: the entry's pick ordinal. Null when the pick was not recorded through contest selection.",
-            "type": [
-              "integer",
-              "null"
-            ],
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991
-          },
-          "pickSequence": {
-            "description": "Contest-wide order in which this pick was recorded, across all entries. Null when the pick was not recorded through contest selection.",
-            "type": [
-              "integer",
-              "null"
-            ],
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991
-          },
-          "pickedAt": {
-            "type": "string",
-            "format": "date-time",
-            "description": "When the pick was made (or auto-picked)."
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "updatedAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        },
-        "required": [
-          "id",
-          "entryId",
-          "sportEventParticipantId",
-          "contestFormat",
-          "period",
-          "slot",
-          "tier",
-          "cost",
-          "isAutoPicked",
-          "lineupSlot",
-          "pickSequence",
-          "pickedAt",
-          "createdAt",
-          "updatedAt"
-        ],
-        "additionalProperties": false,
-        "description": "Raw ContestEntryPick row used by persistence-aware surfaces."
-      },
       "ContestEntryParticipantDetailDto": {
         "type": "object",
         "properties": {
@@ -30421,25 +30310,6 @@
         "additionalProperties": false,
         "description": "Optional query parameters for loading selection state."
       },
-      "SubmitPickRequest": {
-        "type": "object",
-        "properties": {
-          "entryId": {
-            "type": "string",
-            "description": "Entry making the pick."
-          },
-          "participantId": {
-            "type": "string",
-            "description": "Participant being selected."
-          }
-        },
-        "required": [
-          "entryId",
-          "participantId"
-        ],
-        "additionalProperties": false,
-        "description": "Request payload for submitting a pick."
-      },
       "SelectionBudgetLineupSummaryDto": {
         "type": "object",
         "properties": {
@@ -30881,95 +30751,23 @@
           "contestId": {
             "type": "string"
           },
-          "contestName": {
-            "type": "string"
+          "entryId": {
+            "type": "string",
+            "description": "The entry whose pick changed."
           },
           "sportEventId": {
             "type": "string",
-            "description": "The contest event the room shows (#713): its field, its picks, and each entry's status in it."
+            "description": "The contest event the pick is in: the event of the field row it names (#713)."
           },
-          "acceptsPicks": {
-            "type": "boolean",
-            "description": "Whether this event's picks can still change: the contest is open or live, it has not been drawn, and the event has not started."
-          },
-          "selectionType": {
+          "entryStatus": {
             "type": "string",
             "enum": [
-              "TIERED",
-              "BUDGET_PICK",
-              "RANDOM_DRAW",
-              "PICK_EM",
-              "BRACKET",
-              "SURVIVOR",
-              "SQUARES"
-            ]
-          },
-          "drawnAt": {
-            "description": "When a random-draw contest's draw dealt its picks, closing its entries and revealing every entry's picks. Null until then, and always for other selection types.",
-            "type": [
-              "string",
-              "null"
+              "DRAFT",
+              "SUBMITTED"
             ],
-            "format": "date-time"
+            "description": "The entry's status in the event after the change: a change that leaves a submitted lineup short, or over a budget contest's cap, sends it back to DRAFT."
           },
-          "isCommissioner": {
-            "type": "boolean"
-          },
-          "rosterSize": {
-            "type": "number"
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "PENDING",
-              "LIVE",
-              "PAUSED",
-              "COMPLETE"
-            ]
-          },
-          "myEntryId": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "entries": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "id": {
-                  "type": "string",
-                  "description": "Entry identifier."
-                },
-                "userId": {
-                  "type": "string",
-                  "description": "User that owns the entry."
-                },
-                "name": {
-                  "type": "string",
-                  "description": "Entry display name."
-                },
-                "status": {
-                  "type": "string",
-                  "enum": [
-                    "DRAFT",
-                    "SUBMITTED"
-                  ],
-                  "description": "The entry's status in the shown event (#713): DRAFT until the owner submits a complete lineup for it; SUBMITTED once they have. A pick change that leaves the lineup short sends it back to DRAFT (#481)."
-                }
-              },
-              "required": [
-                "id",
-                "userId",
-                "name",
-                "status"
-              ],
-              "additionalProperties": false,
-              "description": "Entry summary shown in the selection room."
-            }
-          },
-          "pickHistories": {
+          "picks": {
             "type": "array",
             "items": {
               "type": "object",
@@ -31041,153 +30839,11 @@
               ],
               "additionalProperties": false,
               "description": "Historical pick row shown in selection-room history."
-            }
-          },
-          "availableParticipantIds": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "selectedEntryId": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "selectedEntryName": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "tiebreakerValue": {
-            "type": [
-              "number",
-              "null"
-            ]
-          },
-          "selectionGroups": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "groupId": {
-                  "type": "string"
-                },
-                "groupName": {
-                  "type": "string"
-                },
-                "groupNumber": {
-                  "type": "number"
-                },
-                "picksFromGroup": {
-                  "type": "number"
-                },
-                "selectedParticipantIds": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  },
-                  "description": "Selections currently saved on the selected entry for this group."
-                },
-                "participants": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "sportEventParticipantId": {
-                        "type": "string"
-                      },
-                      "participantId": {
-                        "type": "string"
-                      },
-                      "participantName": {
-                        "type": "string"
-                      },
-                      "role": {
-                        "type": [
-                          "string",
-                          "null"
-                        ]
-                      },
-                      "team": {
-                        "type": [
-                          "string",
-                          "null"
-                        ]
-                      },
-                      "status": {
-                        "type": [
-                          "string",
-                          "null"
-                        ]
-                      },
-                      "price": {
-                        "type": [
-                          "number",
-                          "null"
-                        ]
-                      },
-                      "ranking": {
-                        "type": [
-                          "number",
-                          "null"
-                        ]
-                      },
-                      "seedNumber": {
-                        "description": "The bracket seed, 1 the best, shown in the selection room for a knockout event; null where the event seeds nobody.",
-                        "type": [
-                          "integer",
-                          "null"
-                        ],
-                        "minimum": -9007199254740991,
-                        "maximum": 9007199254740991
-                      },
-                      "orderIndex": {
-                        "type": [
-                          "number",
-                          "null"
-                        ]
-                      },
-                      "isAvailable": {
-                        "type": "boolean"
-                      },
-                      "isSelected": {
-                        "description": "Whether the currently selected entry has this participant selected.",
-                        "type": "boolean"
-                      }
-                    },
-                    "required": [
-                      "sportEventParticipantId",
-                      "participantId",
-                      "participantName",
-                      "seedNumber",
-                      "isAvailable"
-                    ],
-                    "additionalProperties": false,
-                    "description": "Selectable participant row used by roster-based entry builders."
-                  },
-                  "description": "Selectable participants shown inside the group."
-                }
-              },
-              "required": [
-                "groupId",
-                "groupName",
-                "groupNumber",
-                "picksFromGroup",
-                "selectedParticipantIds",
-                "participants"
-              ],
-              "additionalProperties": false,
-              "description": "Contest-specific selection group used by tiered or budget-style entry builders."
-            }
-          },
-          "isComplete": {
-            "type": "boolean"
+            },
+            "description": "Every one of the entry's picks in the event after the change, oldest first: the room replaces the entry's picks with these, which also puts right a full-tier swap it guessed differently."
           },
           "lineupSummary": {
-            "description": "The viewed entry's lineup summary, tagged by selection type: only budget contests carry one today. Null when there is no viewed entry or the type has none.",
+            "description": "The entry's lineup summary after the change: only budget contests carry one, null otherwise.",
             "type": [
               "object",
               "null"
@@ -31243,21 +30899,14 @@
         },
         "required": [
           "contestId",
-          "contestName",
+          "entryId",
           "sportEventId",
-          "acceptsPicks",
-          "selectionType",
-          "drawnAt",
-          "rosterSize",
-          "status",
-          "myEntryId",
-          "entries",
-          "pickHistories",
-          "availableParticipantIds",
-          "isComplete"
+          "entryStatus",
+          "picks",
+          "lineupSummary"
         ],
         "additionalProperties": false,
-        "description": "Selection response returned immediately after a pick mutation."
+        "description": "What one pick change left on the entry (#1259): only what changed, for the room to merge into what it shows. Never the whole room."
       },
       "SaveGamePicksRequest": {
         "type": "object",
@@ -65224,6 +64873,21 @@
         "additionalProperties": false,
         "description": "A competitor a provider reports that no participant is mapped to — their synced data has nowhere to land until one is."
       },
+      "UnmappedProviderParticipantListQuery": {
+        "type": "object",
+        "properties": {
+          "providerId": {
+            "description": "Only this provider's competitors; the other providers are not asked.",
+            "type": "string"
+          },
+          "externalId": {
+            "description": "Only the competitor the provider knows by this identifier. With providerId, the list holds that one competitor while it is unmapped, and is empty once it is mapped.",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Filters for the unmapped-competitor list. With neither, every provider's unmapped competitors."
+      },
       "UnmappedProviderParticipantListResponse": {
         "type": "object",
         "properties": {
@@ -65279,7 +64943,7 @@
           "participants"
         ],
         "additionalProperties": false,
-        "description": "Every unmapped competitor across the scheduled sports of every provider."
+        "description": "The unmapped competitors matching the filters, across the scheduled sports of each provider asked."
       },
       "ProviderEventDto": {
         "type": "object",
@@ -79900,10 +79564,30 @@
         "tags": [
           "Ingestion"
         ],
-        "description": "Every competitor a provider reports, across its scheduled sports, that no participant is mapped to. Their synced data has nowhere to land until one is: bind each with bindParticipantProviderMapping.",
+        "description": "Every competitor a provider reports, across its scheduled sports, that no participant is mapped to. Their synced data has nowhere to land until one is: bind each with bindParticipantProviderMapping. `providerId` asks only that provider, and `externalId` keeps only that competitor, so one competitor's page reads one row (#1251).",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "providerId",
+            "required": false,
+            "description": "Only this provider's competitors; the other providers are not asked."
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "externalId",
+            "required": false,
+            "description": "Only the competitor the provider knows by this identifier. With providerId, the list holds that one competitor while it is unmapped, and is empty once it is mapped."
+          }
+        ],
         "responses": {
           "200": {
-            "description": "Every unmapped competitor across the scheduled sports of every provider.",
+            "description": "The unmapped competitors matching the filters, across the scheduled sports of each provider asked.",
             "content": {
               "application/json": {
                 "schema": {
@@ -80298,24 +79982,14 @@
         }
       }
     },
-    "/api/v1/selections/{contestId}/pick": {
-      "post": {
-        "operationId": "submitContestSelection",
-        "summary": "Submit a pick",
+    "/api/v1/selections/{contestId}/entries/{entryId}/picks/{sportEventParticipantId}": {
+      "put": {
+        "operationId": "selectContestPick",
+        "summary": "Select a pick",
         "tags": [
           "Selections"
         ],
-        "description": "Submits a pick and returns the refreshed selection state for the pick's event: the event of the field row it names (#713). Picks are placed, swapped and unselected only while the contest is OPEN or ACTIVE and that event's start time has not passed: 409 CONTEST_ENTRY_LOCKED otherwise. In a budget contest re-selecting a held golfer unselects it, a golfer with no price is refused with 400 PRICE_MISSING, and the salary cap never refuses a pick: an entry may go over it while it rearranges. A change that leaves a SUBMITTED entry's lineup short, or over a budget contest's cap, sends the entry back to DRAFT; it must be submitted again to count.",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SubmitPickRequest"
-              }
-            }
-          }
-        },
+        "description": "Selects one field row for the entry, in the event the row belongs to (#713, #1259). Selecting a row the entry already holds changes nothing. In a tiered contest a pick in a full tier replaces the tier's newest pick. In a budget contest a golfer with no price is refused with 400 PRICE_MISSING, a full roster with 400 ENTRY_COMPLETE, and the salary cap never refuses a pick: an entry may go over it while it rearranges. A withdrawn or otherwise unavailable row is refused with 400 PARTICIPANT_UNAVAILABLE. Picks are placed, swapped and unselected only while the contest is OPEN or ACTIVE and the pick's event has not started: 409 CONTEST_ENTRY_LOCKED otherwise, and 409 SELECTION_DEALT_BY_DRAW in a random-draw contest, whose picks the draw deals. Only a member of the entry's squad may change its picks: 403 ENTRY_ACCESS_DENIED otherwise. 404 CONTEST_ENTRY_NOT_FOUND for an entry not in the contest; 400 PARTICIPANT_NOT_IN_EVENT or PARTICIPANT_NOT_SELECTABLE for a field row outside the contest's events. A change that leaves a SUBMITTED entry's lineup short, or over a budget contest's cap, sends the entry back to DRAFT for that event; it must be submitted again to count. The answer carries only what changed on the entry (#1259): its picks in the event, its status there and, in a budget contest, its lineup summary.",
         "parameters": [
           {
             "schema": {
@@ -80325,11 +79999,128 @@
             "in": "path",
             "name": "contestId",
             "required": true
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "entryId",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "sportEventParticipantId",
+            "required": true
           }
         ],
         "responses": {
           "200": {
-            "description": "Selection response returned immediately after a pick mutation.",
+            "description": "What one pick change left on the entry (#1259): only what changed, for the room to merge into what it shows. Never the whole room.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SelectionPickResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "unselectContestPick",
+        "summary": "Unselect a pick",
+        "tags": [
+          "Selections"
+        ],
+        "description": "Removes one field row from the entry's picks (#1259). Unselecting a row the entry does not hold changes nothing. A golfer who withdrew after being picked can still be removed. Picks are placed, swapped and unselected only while the contest is OPEN or ACTIVE and the pick's event has not started: 409 CONTEST_ENTRY_LOCKED otherwise, and 409 SELECTION_DEALT_BY_DRAW in a random-draw contest, whose picks the draw deals. Only a member of the entry's squad may change its picks: 403 ENTRY_ACCESS_DENIED otherwise. 404 CONTEST_ENTRY_NOT_FOUND for an entry not in the contest; 400 PARTICIPANT_NOT_IN_EVENT or PARTICIPANT_NOT_SELECTABLE for a field row outside the contest's events. A change that leaves a SUBMITTED entry's lineup short, or over a budget contest's cap, sends the entry back to DRAFT for that event; it must be submitted again to count. The answer carries only what changed on the entry (#1259): its picks in the event, its status there and, in a budget contest, its lineup summary.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "contestId",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "entryId",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "sportEventParticipantId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "What one pick change left on the entry (#1259): only what changed, for the room to merge into what it shows. Never the whole room.",
             "content": {
               "application/json": {
                 "schema": {

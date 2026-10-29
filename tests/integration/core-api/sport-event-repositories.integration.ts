@@ -21,6 +21,7 @@ import {
   setupIntegrationTests,
   teardownIntegrationTests,
 } from '../helpers';
+import { createRoundRows, createSportEventRow, createTierRows, seriesNamed } from '../../support/sport-event-rows';
 import { freshEventEdition } from '../../support/event-edition';
 import { standardEventPricing } from '../../support/budget-pricing';
 import { expectDefined } from '../../support/expect-defined';
@@ -67,7 +68,7 @@ async function golfSportId(): Promise<string> {
 }
 
 async function createEvent(name = 'Repository Open') {
-  return repos().events.create({
+  return createSportEventRow(repos().events, {
     ...(await freshEventEdition(getPrisma())),
     externalId: `repo-${randomUUID()}`,
     providerId: 'integration-test',
@@ -95,11 +96,11 @@ async function createPopulatedEvent() {
   const { rounds, field, tiers, valuations, golfRounds, golfStandings } = repos();
   const event = await createEvent();
   const [golfer] = await createParticipants(['Populated Golfer']);
-  await rounds.createMany(event.id, [
+  await createRoundRows(rounds, event.id, [
     { roundNumber: 1, scheduledDate: new Date('2026-06-04T12:00:00.000Z') },
     { roundNumber: 2, scheduledDate: new Date('2026-06-05T12:00:00.000Z') },
   ]);
-  await tiers.createMany(event.id, TIERS);
+  await createTierRows(tiers, event.id, TIERS);
   await field.createMany(event.id, [{ participantId: golfer.id, seedNumber: 1 }]);
   const [entry] = await field.findBySportEvent(event.id);
   const [tier] = await tiers.findBySportEvent(event.id);
@@ -156,7 +157,7 @@ describe('SportEventRepository — writes', () => {
     const { events, tiers } = repos();
     const withTiers = await createEvent('With Tiers');
     const bare = await createEvent('Bare');
-    await tiers.createMany(withTiers.id, TIERS);
+    await createTierRows(tiers, withTiers.id, TIERS);
     const fixture = await createContestFixture(withTiers.id);
 
     expect(await events.countTiers([withTiers.id, bare.id])).toEqual(new Map([[withTiers.id, 2], [bare.id, 0]]));
@@ -168,7 +169,7 @@ describe('SportEventRepository — writes', () => {
     const { events, tiers, field, valuations } = repos();
     const event = await createEvent('Empty Tiers');
     const bare = await createEvent('No Tiers');
-    await tiers.createMany(event.id, [...TIERS, { tierKey: 'tier-3', label: 'Tier 3', tierNumber: 3 }]);
+    await createTierRows(tiers, event.id, [...TIERS, { tierKey: 'tier-3', label: 'Tier 3', tierNumber: 3 }]);
     const [active, withdrawn] = await createParticipants(['Active Golfer', 'Withdrawn Golfer']);
     await field.createMany(event.id, [{ participantId: active.id }, { participantId: withdrawn.id }]);
     await getPrisma().sportEventParticipant.updateMany({ where: { participantId: withdrawn.id }, data: { isActive: false } });
@@ -209,8 +210,8 @@ describe('EventSeriesRepository', () => {
     const sportLeague = await new PrismaSportLeagueRepository(getPrisma()).create({ sportId, name: 'PGA Tour', matchKeyword: null, bracketAdvancement: BracketAdvancement.FIXED });
     const { eventSeries } = repos();
 
-    const first = await eventSeries.findOrCreate(sportLeague.id, 'The Masters');
-    const again = await eventSeries.findOrCreate(sportLeague.id, 'The Masters');
+    const first = await seriesNamed(eventSeries, sportLeague.id, 'The Masters');
+    const again = await seriesNamed(eventSeries, sportLeague.id, 'The Masters');
 
     expect(again.id).toBe(first.id);
     await expect(getPrisma().eventSeries.count({ where: { sportLeagueId: sportLeague.id } })).resolves.toBe(1);
@@ -221,7 +222,7 @@ describe('EventSeriesRepository', () => {
     const sportId = await golfSportId();
     const sportLeague = await new PrismaSportLeagueRepository(getPrisma()).create({ sportId, name: 'PGA Tour', matchKeyword: null, bracketAdvancement: BracketAdvancement.FIXED });
 
-    const series = await repos().eventSeries.findOrCreate(sportLeague.id, 'The Masters');
+    const series = await seriesNamed(repos().eventSeries, sportLeague.id, 'The Masters');
 
     expect(series.isActive).toBe(true);
   });
@@ -232,9 +233,9 @@ describe('SportEventRoundRepository — writes', () => {
     const { rounds } = repos();
     const event = await createEvent();
 
-    await rounds.createMany(event.id, [
-      { roundNumber: 1, scheduledDate: new Date('2026-06-04T12:00:00.000Z'), scheduledEndAt: new Date('2026-06-04T22:00:00.000Z') },
-      { roundNumber: 2, scheduledDate: new Date('2026-06-05T12:00:00.000Z') },
+    await rounds.createMany([
+      { sportEventId: event.id, roundNumber: 1, scheduledDate: new Date('2026-06-04T12:00:00.000Z'), scheduledEndAt: new Date('2026-06-04T22:00:00.000Z') },
+      { sportEventId: event.id, roundNumber: 2, scheduledDate: new Date('2026-06-05T12:00:00.000Z') },
     ]);
 
     const created = await rounds.findBySportEvent(event.id);
@@ -247,7 +248,7 @@ describe('SportEventRoundRepository — writes', () => {
   it('reschedules all or none: an unknown round number leaves every round where it was', async () => {
     const { rounds } = repos();
     const event = await createEvent();
-    await rounds.createMany(event.id, [{ roundNumber: 1, scheduledDate: new Date('2026-06-04T12:00:00.000Z') }]);
+    await createRoundRows(rounds, event.id, [{ roundNumber: 1, scheduledDate: new Date('2026-06-04T12:00:00.000Z') }]);
 
     await expect(rounds.reschedule(event.id, [
       { roundNumber: 1, scheduledDate: new Date('2026-06-05T12:00:00.000Z') },
@@ -261,7 +262,7 @@ describe('SportEventRoundRepository — writes', () => {
   it('finds or creates a round by number without disturbing an existing one', async () => {
     const { rounds } = repos();
     const event = await createEvent();
-    await rounds.createMany(event.id, [{ roundNumber: 1, scheduledDate: new Date('2026-06-04T12:00:00.000Z') }]);
+    await createRoundRows(rounds, event.id, [{ roundNumber: 1, scheduledDate: new Date('2026-06-04T12:00:00.000Z') }]);
 
     const existing = await rounds.findOrCreate(event.id, 1);
     const created = await rounds.findOrCreate(event.id, 2);
@@ -275,7 +276,7 @@ describe('SportEventRoundRepository — writes', () => {
     const { rounds } = repos();
     const withRounds = await createEvent('With Rounds');
     const without = await createEvent('Without Rounds');
-    await rounds.createMany(withRounds.id, [
+    await createRoundRows(rounds, withRounds.id, [
       { roundNumber: 2, scheduledDate: new Date('2026-06-05T12:00:00.000Z') },
       { roundNumber: 1, scheduledDate: new Date('2026-06-04T12:00:00.000Z') },
     ]);
@@ -418,7 +419,7 @@ describe('SportEventTierRepository and valuations', () => {
     const { tiers, valuations, field } = repos();
     const event = await createEvent();
     const [ana] = await createParticipants(['Ana']);
-    await tiers.createMany(event.id, [...TIERS, { tierKey: 'tier-3', label: 'Tier 3', tierNumber: 3 }]);
+    await createTierRows(tiers, event.id, [...TIERS, { tierKey: 'tier-3', label: 'Tier 3', tierNumber: 3 }]);
     await field.createMany(event.id, [{ participantId: ana.id }]);
     const [entry] = await field.findBySportEvent(event.id);
     const tier3 = (await tiers.findBySportEvent(event.id))[2];
@@ -436,11 +437,28 @@ describe('SportEventTierRepository and valuations', () => {
     expect(await tiers.countValuations(event.id)).toEqual(new Map([[after[0].id, 1], [after[1].id, 0]]));
   });
 
+  it('moves a removed tier\'s valuations to a tier added in the same save', async () => {
+    const { tiers, valuations, field } = repos();
+    const event = await createEvent();
+    const [ana] = await createParticipants(['Ana']);
+    await createTierRows(tiers, event.id, TIERS);
+    await field.createMany(event.id, [{ participantId: ana.id }]);
+    const [entry] = await field.findBySportEvent(event.id);
+    const [, tier2] = await tiers.findBySportEvent(event.id);
+    await valuations.assignTiers([{ sportEventParticipantId: entry.id, sportEventTierId: tier2.id, tierOrderIndex: 1, source: 'MANUAL' }]);
+
+    await tiers.replace(event.id, [TIERS[0], { tierKey: 'tier-late', label: 'Late Adds', tierNumber: 2 }], 'tier-late');
+
+    const after = await tiers.findBySportEvent(event.id);
+    expect(after.map((tier) => [tier.tierKey, tier.tierNumber])).toEqual([['tier-1', 1], ['tier-late', 2]]);
+    await expect(valuations.findBySportEvent(event.id)).resolves.toEqual([expect.objectContaining({ sportEventTierId: after[1].id, tierOrderIndex: null })]);
+  });
+
   it('leaves a removed tier\'s valuations without a tier when no target is named', async () => {
     const { tiers, valuations, field } = repos();
     const event = await createEvent();
     const [ana] = await createParticipants(['Ana']);
-    await tiers.createMany(event.id, TIERS);
+    await createTierRows(tiers, event.id, TIERS);
     await field.createMany(event.id, [{ participantId: ana.id }]);
     const [entry] = await field.findBySportEvent(event.id);
     const [, tier2] = await tiers.findBySportEvent(event.id);
@@ -455,7 +473,7 @@ describe('SportEventTierRepository and valuations', () => {
     const { tiers, valuations, field } = repos();
     const [first, second, other] = [await createEvent('First'), await createEvent('Second'), await createEvent('Other')];
     const [ana, ben, cal] = await createParticipants(['Ana', 'Ben', 'Cal']);
-    for (const event of [first, second, other]) await tiers.createMany(event.id, [TIERS[1], TIERS[0]]);
+    for (const event of [first, second, other]) await createTierRows(tiers, event.id, [TIERS[1], TIERS[0]]);
     await field.createMany(first.id, [{ participantId: ana.id }]);
     await field.createMany(second.id, [{ participantId: ben.id }]);
     await field.createMany(other.id, [{ participantId: cal.id }]);
@@ -483,7 +501,7 @@ describe('SportEventTierRepository and valuations', () => {
     const { tiers, valuations, field } = repos();
     const event = await createEvent();
     const [ana] = await createParticipants(['Ana']);
-    await tiers.createMany(event.id, TIERS);
+    await createTierRows(tiers, event.id, TIERS);
     await field.createMany(event.id, [{ participantId: ana.id }]);
     const [entry] = await field.findBySportEvent(event.id);
     const [tier1] = await tiers.findBySportEvent(event.id);
@@ -510,7 +528,7 @@ describe('The sport league\'s first squares round on the event read', () => {
     const league = await prisma.sportLeague.create({ data: { sportId: await golfSportId(), name: `Squares round league ${randomUUID()}`, squaresFromRound: 3 } });
     const series = await prisma.eventSeries.create({ data: { sportLeagueId: league.id, name: `Squares round series ${randomUUID()}` } });
     try {
-      const withRound = await events.create({
+      const withRound = await createSportEventRow(events, {
         eventSeriesId: series.id, eventYear: 2026, externalId: `repo-${randomUUID()}`, providerId: 'integration-test', sport: Sport.GOLF,
         name: 'Squares Round Open', startDate: new Date('2026-06-04T12:00:00.000Z'), status: 'SCHEDULED', syncScope: 'NONE', autoLifecycleEnabled: true,
       });

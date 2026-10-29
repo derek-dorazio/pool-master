@@ -6,7 +6,12 @@ import { IconAvatar } from "./icon-avatar";
 type IdentityHeadingProps = {
   /** A code people share, such as a league code, shown with a copy button. */
   code?: { label: string; value: string };
-  icon: ReactNode;
+} & (
+  /** An icon, drawn in the standard avatar square. */
+  | { icon: ReactNode; avatar?: never }
+  /** A whole avatar of the caller's own, such as a team's in its icon colours, named `<name> icon`. */
+  | { avatar: ReactNode; icon?: never }
+) & {
   /** Short facts after the code, such as counts. */
   meta?: ReactNode;
   name: string;
@@ -14,12 +19,14 @@ type IdentityHeadingProps = {
 };
 
 /** An entity's identity, once and compactly: icon, name, shareable code and a meta line. */
-export function IdentityHeading({ code, icon, meta, name, testId }: IdentityHeadingProps) {
+export function IdentityHeading({ avatar, code, icon, meta, name, testId }: IdentityHeadingProps) {
   return (
     <div className="flex flex-wrap items-center gap-4" data-testid={testId}>
-      <IconAvatar label={`${name} icon`} size="md">
-        {icon}
-      </IconAvatar>
+      {avatar ?? (
+        <IconAvatar label={`${name} icon`} size="md">
+          {icon}
+        </IconAvatar>
+      )}
       <div className="min-w-0 flex-1">
         <h1
           className="font-display text-2xl font-extrabold text-foreground"

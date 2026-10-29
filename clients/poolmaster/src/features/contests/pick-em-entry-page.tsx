@@ -16,14 +16,11 @@ import {
   type GamePicksResponse,
   type SaveGamePicksRequest,
 } from '@/lib/api';
-import { buildLeagueContestPath, buildLeaguePath } from '@/features/leagues/league-routing';
-import { useLeagueContextById } from '@/features/leagues/use-league-context';
 import {
   Alert,
   Button,
   ErrorState,
   FormField,
-  LinkButton,
   LoadingState,
   MetricGrid,
   MetricTile,
@@ -41,7 +38,9 @@ import { parseRouteState } from '@/routes/route-state';
 import { formatPickProgress, formatPoints } from './bracket-layout';
 import { ContestEventSwitcher } from './contest-event-switcher';
 import { currentContestEvent, entryEventStatus } from './contest-events';
-import { ContestHeader, ContestSubMenu } from './contest-header';
+import { ContestEntryBackLinks, ContestPageFrame } from './contest-header';
+import { entryPageView } from './contest-page-view';
+import { useContestLeague } from './use-contest-league';
 import { contestEventStart, contestMatchNoun, contestParticipantNoun, contestScoreUnit, contestTieLabel } from './contest-sport';
 import {
   CONTEST_ENTRY_STATUS_LABELS,
@@ -147,7 +146,7 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
     refetchInterval: shouldPollContestEntries(contest.status) ? CONTEST_POLL_INTERVAL_MS : false,
   });
   const entryQuery = useContestEntryQuery(contestId, entryId);
-  const { league } = useLeagueContextById(contest.leagueId);
+  const { leagueCode: backLeagueCode } = useContestLeague(contest.leagueId, hintedLeagueCode);
 
   const logRefusal = (action: string, error: Error) => {
     const payload = { action, data: { contestId, entryId, sportEventId }, err: error };
@@ -230,10 +229,7 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
   const gamePicks = isPlayoff ? roundWeek(eventPicks, round) : eventPicks;
   /** What one pick covers: a week, or a playoff's round. */
   const period = isPlayoff ? 'round' : 'week';
-  const backLeagueCode = hintedLeagueCode ?? league?.leagueCode ?? null;
-  const backToContestPath = backLeagueCode ? buildLeagueContestPath(backLeagueCode, contestId) : `/contests/${contestId}`;
   const entrySummary = entryQuery.data?.entry ?? null;
-  const myEntryIds = contest.myEntryIds ?? [];
   const canChange = canChangeWeek(gamePicks);
   const isSubmitted = gamePicks.status === ContestEntryStatus.SUBMITTED;
   const kickoff = firstKickoff(gamePicks.games);
@@ -271,52 +267,32 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
   const pickError = isTiebreakerSave ? null : errorMessage(saveMutation.error, 'We could not save that pick. Please try again.');
 
   return (
-    <section className="space-y-6" data-testid="pick-em-entry-page">
-      <ContestHeader
-        actions={(
-          <>
-            {backLeagueCode ? null : (
-              <LinkButton data-testid="contest-entry-back-to-contest" to={backToContestPath} variant="secondary">
-                Back to contest
-              </LinkButton>
-            )}
-            <LinkButton
-              data-testid="contest-entry-back-to-league"
-              to={backLeagueCode ? buildLeaguePath(backLeagueCode) : '/welcome'}
-              variant="secondary"
-            >
-              Back to league
-            </LinkButton>
-          </>
-        )}
-        badges={(
-          <>
-            <StatusBadge tone={CONTEST_STATUS_TONES[contest.status]}>{contestStatusLabel(contest.status)}</StatusBadge>
-            <StatusBadge data-testid="contest-entry-status-badge" tone={CONTEST_ENTRY_STATUS_TONES[gamePicks.status]}>
-              {statusLabel}
-            </StatusBadge>
-          </>
-        )}
-        menu={backLeagueCode ? (
-          <ContestSubMenu
-            contestId={contestId}
-            current={myEntryIds.includes(entryId) ? 'my-entry' : null}
-            leagueCode={backLeagueCode}
-            myEntryId={myEntryIds[0] ?? null}
-            picksRevealed={entryQuery.data?.picksRevealed ?? false}
-          />
-        ) : null}
-        summary={(
-          <p className="mt-2 text-sm text-muted-foreground" data-testid="contest-entry-summary">
-            {contest.name}
-            {gamePicks.mode ? ` · ${formatPickEmRulesName({ mode: gamePicks.mode, againstTheSpread: gamePicks.againstTheSpread })}` : ''}
-            {isSurvivor ? ` · ${formatSelectionTypeName(gamePicks.selectionType)}` : ''}
-            {entrySummary ? ` · ${entrySummary.squadName} · Entry ${entrySummary.entryNumber}` : ''}
-          </p>
-        )}
-        title={gamePicks.entryName}
-        titleTestId="contest-entry-heading"
-      />
+    <ContestPageFrame
+      contest={contest}
+      current={entryPageView(contest, entryId)}
+      leagueCode={backLeagueCode}
+      picksRevealed={entryQuery.data?.picksRevealed ?? false}
+      testId="pick-em-entry-page"
+      actions={<ContestEntryBackLinks contestId={contestId} leagueCode={backLeagueCode} />}
+      badges={(
+        <>
+          <StatusBadge tone={CONTEST_STATUS_TONES[contest.status]}>{contestStatusLabel(contest.status)}</StatusBadge>
+          <StatusBadge data-testid="contest-entry-status-badge" tone={CONTEST_ENTRY_STATUS_TONES[gamePicks.status]}>
+            {statusLabel}
+          </StatusBadge>
+        </>
+      )}
+      summary={(
+        <p className="mt-2 text-sm text-muted-foreground" data-testid="contest-entry-summary">
+          {contest.name}
+          {gamePicks.mode ? ` · ${formatPickEmRulesName({ mode: gamePicks.mode, againstTheSpread: gamePicks.againstTheSpread })}` : ''}
+          {isSurvivor ? ` · ${formatSelectionTypeName(gamePicks.selectionType)}` : ''}
+          {entrySummary ? ` · ${entrySummary.squadName} · Entry ${entrySummary.entryNumber}` : ''}
+        </p>
+      )}
+      title={gamePicks.entryName}
+      titleTestId="contest-entry-heading"
+    >
 
       <ContestEventSwitcher
         describe={(sportEvent) => (entrySummary ? CONTEST_ENTRY_STATUS_LABELS[entryEventStatus(entrySummary, sportEvent.sportEventId)] : null)}
@@ -469,6 +445,6 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
           ) : null}
         </Tile>
       ) : null}
-    </section>
+    </ContestPageFrame>
   );
 }

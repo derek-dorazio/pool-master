@@ -15,7 +15,7 @@ import {
   openContest,
   updateContestEntry,
   updateContest,
-  submitContestSelection,
+  selectContestPick,
 } from '@poolmaster/shared/generated/hey-api';
 import {
   ContestStatus,
@@ -409,23 +409,21 @@ describe('SDK Functional: Contests and Entries', () => {
     const selectedParticipant = importedEvent.participants[0];
     const outsiderParticipant = outsiderEvent.participants[0];
 
-    const selectionResponse = await submitContestSelection({
+    const selectionResponse = await selectContestPick({
       client: commissioner.client,
       path: {
         contestId,
-      },
-      body: {
         entryId: firstEntryResponse.data?.entry.id as string,
-        participantId: selectedParticipant.sportEventParticipantId,
+        sportEventParticipantId: selectedParticipant.sportEventParticipantId,
       },
     });
 
     expect(selectionResponse.data?.contestId).toBe(contestId);
-    expect(selectionResponse.data?.pickHistories).toHaveLength(1);
-    expect(selectionResponse.data?.pickHistories[0]?.participantId).toBe(
+    expect(selectionResponse.data?.picks).toHaveLength(1);
+    expect(selectionResponse.data?.picks[0]?.participantId).toBe(
       selectedParticipant.sportEventParticipantId,
     );
-    expect(selectionResponse.data?.isComplete).toBe(false);
+    expect(selectionResponse.data?.entryStatus).toBe('DRAFT');
 
     const entryDetailResponse = await getContestEntry({
       client: commissioner.client,
@@ -443,14 +441,12 @@ describe('SDK Functional: Contests and Entries', () => {
       }),
     ]);
 
-    const outsiderSelectionResponse = await submitContestSelection({
+    const outsiderSelectionResponse = await selectContestPick({
       client: commissioner.client,
       path: {
         contestId,
-      },
-      body: {
         entryId: secondEntryResponse.data?.entry.id as string,
-        participantId: outsiderParticipant.sportEventParticipantId,
+        sportEventParticipantId: outsiderParticipant.sportEventParticipantId,
       },
     });
 
@@ -1174,14 +1170,12 @@ describe('SDK Functional: Contests and Entries', () => {
 
     expect(entryResponse.data?.entry.id).toBeTruthy();
 
-    const selectionResponse = await submitContestSelection({
+    const selectionResponse = await selectContestPick({
       client: commissioner.client,
       path: {
         contestId: selectableContestId,
-      },
-      body: {
         entryId: entryResponse.data?.entry.id as string,
-        participantId: sportEventParticipant.id,
+        sportEventParticipantId: sportEventParticipant.id,
       },
     });
 

@@ -1,9 +1,9 @@
 /**
  * Selection room → DTO (#324).
  *
- * `SelectionService` answers with a `SelectionView` in domain terms; the projection onto the
- * published `SelectionStateResponse` / `SelectionPickResponse` shape is here. Both responses have
- * always carried the same fields, so there is one projection, not two.
+ * `SelectionService` answers with a `SelectionView` in domain terms, or a `SelectionPickResult`
+ * after one pick change (#1259); the projections onto the published `SelectionStateResponse` and
+ * `SelectionPickResponse` are here.
  *
  * This file is where the module's DTO shaping lives because `rules:check:route-discipline`
  * scans `routes.ts` and `handler.ts` for it — a `.map(` in either is a finding. The rule is
@@ -16,6 +16,7 @@ import type {
   PickHistoryDto,
   SelectionGroupDto,
   SelectionParticipantDto,
+  SelectionPickResponse,
   SelectionStateResponse,
 } from '@poolmaster/shared/dto';
 import type {
@@ -23,6 +24,7 @@ import type {
   PickHistoryRow,
   SelectionView,
   SelectionGroup,
+  SelectionPickResult,
 } from '../modules/selections/types';
 
 function toSelectionParticipantDto(
@@ -91,10 +93,7 @@ function toSelectionEntryDto(entry: SelectionEntry): SelectionEntryDto {
   };
 }
 
-/**
- * The whole room. Used for both published selection responses: reading the state, and the
- * refreshed state a submission answers with.
- */
+/** The whole room: reading the state, and what submitting an entry or a draw answers with. */
 export function toSelectionStateResponse(view: SelectionView): SelectionStateResponse {
   return {
     contestId: view.contest.id,
@@ -116,5 +115,17 @@ export function toSelectionStateResponse(view: SelectionView): SelectionStateRes
     availableParticipantIds: view.availableSportEventParticipantIds,
     isComplete: view.isComplete,
     lineupSummary: view.lineupSummary,
+  };
+}
+
+/** What one pick change left on the entry (#1259): its picks, its status and its lineup summary. */
+export function toSelectionPickResponse(result: SelectionPickResult): SelectionPickResponse {
+  return {
+    contestId: result.contestId,
+    entryId: result.entryId,
+    sportEventId: result.sportEventId,
+    entryStatus: result.entryStatus,
+    picks: result.picks.map(toPickHistoryDto),
+    lineupSummary: result.lineupSummary,
   };
 }

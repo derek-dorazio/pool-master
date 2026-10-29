@@ -12,7 +12,7 @@ import {
   openContest,
   runContestDraw,
   submitContestEntry,
-  submitContestSelection,
+  selectContestPick,
   transitionEvent,
 } from '@poolmaster/shared/generated/hey-api';
 import {
@@ -278,7 +278,7 @@ describe('SDK Functional: one journey per sport and selection type', () => {
           const lineup = lineupFor(room, index === 0 ? 'FIRST' : 'SECOND');
           lineups.set(entryId, lineup);
           for (const participantId of lineup) {
-            const pick = await submitContestSelection({ client: entrant.client, path: { contestId }, body: { entryId, participantId } });
+            const pick = await selectContestPick({ client: entrant.client, path: { contestId, entryId, sportEventParticipantId: participantId } });
             expect([pick.response?.status, pick.error]).toEqual([200, undefined]);
           }
           const submitted = await submitContestEntry({ client: entrant.client, path: { contestId, entryId, sportEventId: event.id } });
