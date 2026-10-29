@@ -59,6 +59,7 @@ export class EmailTestService {
     let current = message;
     for (let poll = 0; poll < SETTLE_POLLS && awaitingFirstTry(current); poll++) {
       await this.sleep(POLL_MS);
+      // poolmaster-allow-query-in-loop: bounded by SETTLE_POLLS, one test email
       current = await this.options.messages.findById(message.id) ?? current;
     }
     return current;

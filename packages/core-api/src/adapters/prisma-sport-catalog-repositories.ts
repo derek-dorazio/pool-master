@@ -173,7 +173,7 @@ export class PrismaParticipantLeagueAffiliationRepository implements Participant
   }
 
   async updateRankings(sportLeagueId: string, rankings: readonly ParticipantRanking[]): Promise<void> {
-    // poolmaster-allow-query-in-loop: per-row values in one batched transaction; a set-based write needs raw SQL (held)
+    // poolmaster-allow-query-in-loop: one sport league's ranked participants (per-row values, one transaction)
     await this.prisma.$transaction(rankings.map((entry) => this.prisma.participantLeagueAffiliation.update({
       where: { participantId_sportLeagueId: { participantId: entry.participantId, sportLeagueId } },
       data: { ranking: entry.ranking },
@@ -181,7 +181,7 @@ export class PrismaParticipantLeagueAffiliationRepository implements Participant
   }
 
   async upsertRankings(sportLeagueId: string, rankings: readonly ParticipantRanking[]): Promise<void> {
-    // poolmaster-allow-query-in-loop: per-row values in one batched transaction; a set-based write needs raw SQL (held)
+    // poolmaster-allow-query-in-loop: one sport league's ranked participants (per-row values, one transaction)
     await this.prisma.$transaction(rankings.map((entry) => this.prisma.participantLeagueAffiliation.upsert({
       where: { participantId_sportLeagueId: { participantId: entry.participantId, sportLeagueId } },
       create: { participantId: entry.participantId, sportLeagueId, ranking: entry.ranking },
@@ -510,7 +510,7 @@ export class PrismaSportEventRoundRepository implements SportEventRoundRepositor
   }
 
   async reschedule(sportEventId: string, rounds: readonly SportEventRoundSchedule[]): Promise<void> {
-    // poolmaster-allow-query-in-loop: per-row values in one batched transaction; a set-based write needs raw SQL (held)
+    // poolmaster-allow-query-in-loop: one event's handful of rounds (per-row values, one transaction)
     await this.prisma.$transaction(rounds.map((round) => this.prisma.sportEventRound.update({
       where: { sportEventId_roundNumber: { sportEventId, roundNumber: round.roundNumber } },
       data: {
@@ -663,7 +663,7 @@ export class PrismaSportEventParticipantRepository implements SportEventParticip
   }
 
   async updateMany(entries: readonly SportEventParticipantFieldUpdate[]): Promise<void> {
-    // poolmaster-allow-query-in-loop: per-row values in one batched transaction; a set-based write needs raw SQL (held)
+    // poolmaster-allow-query-in-loop: one event's field (per-row values, one transaction)
     await this.prisma.$transaction(entries.map((entry) => this.prisma.sportEventParticipant.update({
       where: { id: entry.id },
       data: {
@@ -833,7 +833,7 @@ export class PrismaSportEventParticipantValuationRepository implements SportEven
         tierOrderIndex: assignment.tierOrderIndex,
         tierAssignedSource: assignment.source,
       };
-      // poolmaster-allow-query-in-loop: per-row values in one batched transaction; a set-based write needs raw SQL (held)
+      // poolmaster-allow-query-in-loop: one event's field (per-row values, one transaction)
       return this.prisma.sportEventParticipantValuation.upsert({
         where: { sportEventParticipantId: assignment.sportEventParticipantId },
         create: { sportEventParticipantId: assignment.sportEventParticipantId, ...tier },
@@ -850,7 +850,7 @@ export class PrismaSportEventParticipantValuationRepository implements SportEven
     await forgettingReads(ReadMemoKey.sportEvent, () => this.prisma.$transaction([
       ...input.assignments.map((assignment) => {
         const price = { price: assignment.price, priceAssignedSource: assignment.source };
-        // poolmaster-allow-query-in-loop: per-row values in one batched transaction; a set-based write needs raw SQL (held)
+        // poolmaster-allow-query-in-loop: one event's field (per-row values, one transaction)
         return this.prisma.sportEventParticipantValuation.upsert({
           where: { sportEventParticipantId: assignment.sportEventParticipantId },
           create: { sportEventParticipantId: assignment.sportEventParticipantId, ...price },

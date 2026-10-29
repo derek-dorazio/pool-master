@@ -154,15 +154,8 @@ export class PlatformSettingsService {
   /** The named admins behind a set of user ids. A deleted user is simply absent. */
   private async actors(ids: ReadonlyArray<string | null>): Promise<Map<string, SettingsActorView>> {
     const distinct = [...new Set(ids.filter((id): id is string => id !== null))];
-    // poolmaster-allow-query-in-loop: the few root admins who last edited a setting
-    const users = await Promise.all(distinct.map((id) => this.deps.users.findById(id)));
-    const actors = new Map<string, SettingsActorView>();
-    for (const user of users) {
-      if (user) {
-        actors.set(user.id, { id: user.id, name: formatUserFullName(user.firstName, user.lastName) });
-      }
-    }
-    return actors;
+    const users = distinct.length === 0 ? [] : await this.deps.users.findByIds(distinct);
+    return new Map(users.map((user) => [user.id, { id: user.id, name: formatUserFullName(user.firstName, user.lastName) }]));
   }
 }
 

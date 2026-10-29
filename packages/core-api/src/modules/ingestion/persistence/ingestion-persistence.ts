@@ -158,7 +158,7 @@ export class IngestionPersistence {
       }
       const values = participantValues(participant);
       if (!participantValuesEqual(mapping.participant, values)) {
-        // poolmaster-allow-query-in-loop: per-row values in one batched transaction; a set-based write needs raw SQL (held)
+        // poolmaster-allow-query-in-loop: the changed participants of one provider feed (per-row values, one transaction)
         updates.push(this.prisma.participant.update({ where: { id: mapping.participantId }, data: values }));
       }
     }
@@ -349,7 +349,7 @@ export class IngestionPersistence {
           data: toCreate.map((plan) => ({ sportEventId, participantId: plan.participantId, ...plan.data })),
           select: { id: true, participantId: true },
         }),
-        // poolmaster-allow-query-in-loop: per-row values in one batched transaction; a set-based write needs raw SQL (held)
+        // poolmaster-allow-query-in-loop: the changed rows of one event's field (per-row values, one transaction)
         ...toUpdate.map((plan) => this.prisma.sportEventParticipant.update({
           where: { id: (plan.existing as { id: string }).id },
           data: plan.data,

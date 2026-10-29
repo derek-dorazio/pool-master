@@ -638,6 +638,9 @@ ruleTester.run('no-query-in-loop', noQueryInLoop, {
     // A function stored inside a loop is a boundary: whoever calls it owns the loop.
     'for (const id of ids) { const load = async () => squadRepo.findById(id); loaders.push(load); }',
     'for (const id of ids) { loaders.push(async function load() { return squadRepo.findById(id); }.bind(null)); }',
+    // A memo inside a loop reads once.
+    'async function f(rows) { let games; for (const row of rows) { games ??= await this.matchRepo.findBySportEvent(id); use(row, games); } }',
+    'async function f(rows) { let leagues; for (const row of rows) { leagues ||= await prisma.league.findMany(); use(row, leagues); } }',
     // Not a repository and not Prisma: other per-row calls are not this rule's business.
     'async function f(rows) { for (const row of rows) { await this.email.send(row); } }',
     'async function f(rows) { await Promise.all(rows.map((row) => this.mapper.toDto(row))); }',
@@ -677,6 +680,11 @@ ruleTester.run('no-query-in-loop', noQueryInLoop, {
     {
       // The fan-out: Promise.all over a map is still one query per row.
       code: 'async function f(ids) { await Promise.all(ids.map((id) => this.prisma.user.findUnique({ where: { id } }))); }',
+      errors: [{ messageId: 'queryInLoop' }],
+    },
+    {
+      // A plain assignment is not a memo: it reads on every pass.
+      code: 'async function f(rows) { let games; for (const row of rows) { games = await this.matchRepo.findBySportEvent(row.id); } }',
       errors: [{ messageId: 'queryInLoop' }],
     },
     {
@@ -746,7 +754,20 @@ const typedDeclarations = `
   interface EventStandingRepository { upsert(row: { id: string }): Promise<void>; }
   interface Mailer { send(row: { id: string }): Promise<void>; }
   interface ContestDelegate { update(args: { where: { id: string } }): Promise<void>; }
-  declare const deps: { eventStandings: EventStandingRepository; mailer: Mailer; store: { contest: ContestDelegate } };
+  interface SquadRepository { findById(id: string): Promise<void>; list(): Promise<void>; }
+  interface PredictionRepository { save(row: { id: string }): Promise<void>; }
+  interface PrismaClient { $queryRaw(query: TemplateStringsArray, ...values: unknown[]): Promise<unknown>; $executeRawUnsafe(query: string): Promise<number>; }
+  type Ports = { predictions: Pick<PredictionRepository, 'save'> };
+  type Extra = { predictions: Readonly<{ count(): number }> };
+  declare const deps: {
+    eventStandings: EventStandingRepository;
+    mailer: Mailer;
+    store: { contest: ContestDelegate };
+    squads: Pick<SquadRepository, 'findById'>;
+    partial: Partial<Omit<SquadRepository, 'list'>>;
+    predictions: Ports['predictions'] & Extra['predictions'];
+    db: PrismaClient;
+  };
   declare const rows: Array<{ id: string }>;
 `;
 
@@ -763,6 +784,24 @@ typedRuleTester.run('no-query-in-loop (typed)', noQueryInLoop, {
       code: `${typedDeclarations} async function f() { for (const row of rows) { await deps.eventStandings.upsert(row); } }`,
       filename: typedFixture,
       errors: [{ messageId: 'queryInLoop' }],
+    },
+    {
+      // A dependency slot declared as `Pick<…Repository, …>`, and one wrapped twice.
+      code: `${typedDeclarations} async function f() { for (const row of rows) { await deps.squads.findById(row.id); await deps.partial.findById?.(row.id); } }`,
+      filename: typedFixture,
+      errors: [{ messageId: 'queryInLoop' }, { messageId: 'queryInLoop' }],
+    },
+    {
+      // An intersection of slots: any member typed as a repository is enough.
+      code: `${typedDeclarations} async function f() { await Promise.all(rows.map((row) => deps.predictions.save(row))); }`,
+      filename: typedFixture,
+      errors: [{ messageId: 'queryInLoop' }],
+    },
+    {
+      // Raw SQL on a client reached under another name, as a tagged template and as a call.
+      code: `${typedDeclarations} async function f() { for (const row of rows) { await deps.db.$queryRaw\`SELECT \${row.id}\`; await deps.db.$executeRawUnsafe(row.id); } }`,
+      filename: typedFixture,
+      errors: [{ messageId: 'queryInLoop' }, { messageId: 'queryInLoop' }],
     },
     {
       // A Prisma model delegate under another name, recognised by its `…Delegate` type.

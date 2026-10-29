@@ -25,7 +25,7 @@ export class PrismaSportEventParticipantRaceResultRepository implements SportEve
     await this.prisma.$transaction([
       ...apply.results.map((result) => {
         const { sportEventParticipantId, ...values } = result;
-        // poolmaster-allow-query-in-loop: per-row values in one batched transaction; a set-based write needs raw SQL (held)
+        // poolmaster-allow-query-in-loop: one race's field (per-row values, one transaction)
         return this.prisma.sportEventParticipantRaceResult.upsert({
           where: { sportEventParticipantId },
           create: { sportEventParticipantId, ...values, isOfficial },
@@ -39,7 +39,7 @@ export class PrismaSportEventParticipantRaceResultRepository implements SportEve
       }),
       ...apply.standings.map((standing) => {
         const { sportEventParticipantId, ...values } = standing;
-        // poolmaster-allow-query-in-loop: per-row values in one batched transaction; a set-based write needs raw SQL (held)
+        // poolmaster-allow-query-in-loop: one race's field (per-row values, one transaction)
         return this.prisma.sportEventParticipantStanding.upsert({
           where: { sportEventParticipantId },
           create: { sportEventParticipantId, ...values },

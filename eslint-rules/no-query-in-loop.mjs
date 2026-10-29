@@ -13,12 +13,15 @@
  *     `input.squadRepo.list`, `this.repository.save`), or whose declared type is named so;
  *   - a Prisma model delegate method on `prisma` / `this.prisma` / `tx`
  *     (`tx.contest.update(...)`), or a raw `$queryRaw` / `$executeRaw` on one of them; with type
- *     information, a delegate method on any object typed as a Prisma `…Delegate`.
+ *     information, a delegate method on any object typed as a Prisma `…Delegate`, and raw SQL on
+ *     any receiver typed as a Prisma client or transaction. Types are read through `Pick`,
+ *     `Omit`, `Partial`, `Readonly`, `Required`, intersections and unions.
  *
  * Only the loop's repeated parts count: the body, and a `for` / `while` test or update. The
  * iterable of `for…of` and a `for` initialiser run once. A callback passed to any other call
  * (a `$transaction(async (tx) => ...)` inside a loop) is treated as running where it is written.
- * A named function is a boundary: the loop that calls it is the caller's business.
+ * A named function is a boundary: the loop that calls it is the caller's business. The right side
+ * of `x ??= …` / `x ||= …` is a memo that reads once, and is not flagged.
  *
  * Escape hatch, for a loop with a small fixed bound or a finding a ticket will fix:
  *   // poolmaster-allow-query-in-loop: <reason>
@@ -51,6 +54,9 @@ const PRISMA_DELEGATE_METHODS = new Set([
 ]);
 const PRISMA_RAW_METHODS = new Set(['$queryRaw', '$executeRaw', '$queryRawUnsafe', '$executeRawUnsafe']);
 const PRISMA_DELEGATE_TYPE = /Delegate$/;
+const PRISMA_CLIENT_TYPES = new Set(['PrismaClient', 'TransactionClient', 'DefaultPrismaClient']);
+const UTILITY_ALIASES = new Set(['Pick', 'Omit', 'Partial', 'Readonly', 'Required']);
+const MEMO_OPERATORS = new Set(['??=', '||=']);
 const ITERATING_METHODS = new Set(['map', 'forEach', 'flatMap', 'reduce']);
 const LOOP_TYPES = new Set(['ForStatement', 'ForInStatement', 'ForOfStatement', 'WhileStatement', 'DoWhileStatement']);
 const FUNCTION_TYPES = new Set(['FunctionExpression', 'ArrowFunctionExpression', 'FunctionDeclaration']);
@@ -73,14 +79,33 @@ function makeIsQueryCallee(context) {
   const services = context.sourceCode.parserServices;
   const checker = services?.program ? services.program.getTypeChecker() : null;
 
-  /** The declared type's name, when type information is available. */
-  function typeName(node) {
-    if (!checker || !services.esTreeNodeToTSNodeMap) return null;
+  /**
+   * The names a receiver's declared type goes by, when type information is available. Services
+   * declare their dependencies as `Pick<ContestRepository, 'findById'>` or as an intersection of
+   * such slots, so utility aliases are unwrapped to the type they wrap and every member of an
+   * intersection or union is named.
+   */
+  function typeNames(node) {
+    const names = new Set();
+    if (!checker || !services.esTreeNodeToTSNodeMap) return names;
     const tsNode = services.esTreeNodeToTSNodeMap.get(node);
-    if (!tsNode) return null;
-    const type = checker.getTypeAtLocation(tsNode);
-    const symbol = type.aliasSymbol ?? type.getSymbol();
-    return symbol ? symbol.getName() : null;
+    if (!tsNode) return names;
+    const seen = new Set();
+    const visit = (type) => {
+      if (!type || seen.has(type)) return;
+      seen.add(type);
+      const alias = type.aliasSymbol?.getName();
+      if (alias && UTILITY_ALIASES.has(alias)) {
+        visit(type.aliasTypeArguments?.[0]);
+        return;
+      }
+      if (alias) names.add(alias);
+      const symbol = type.getSymbol();
+      if (symbol) names.add(symbol.getName());
+      if (type.isUnionOrIntersection()) type.types.forEach(visit);
+    };
+    visit(checker.getTypeAtLocation(tsNode));
+    return names;
   }
 
   /** `callee` is a call's callee or a tagged template's tag (`prisma.$queryRaw\`...\``). */
@@ -97,11 +122,12 @@ function makeIsQueryCallee(context) {
       if (clientName && PRISMA_CLIENT_NAMES.has(clientName) && PRISMA_DELEGATE_METHODS.has(method)) return true;
     }
     if (receiverName && REPOSITORY_NAME.test(receiverName)) return true;
-    const receiverType = typeName(receiver);
-    if (!receiverType) return false;
+    const receiverTypes = [...typeNames(receiver)];
+    // A Prisma client or transaction under another name (`db.$queryRaw`).
+    if (receiverTypes.some((name) => PRISMA_CLIENT_TYPES.has(name))) return PRISMA_RAW_METHODS.has(method);
     // A Prisma model delegate reached under another name (`db.contest`, `this.store.entries`).
-    if (PRISMA_DELEGATE_TYPE.test(receiverType)) return PRISMA_DELEGATE_METHODS.has(method);
-    return REPOSITORY_NAME.test(receiverType);
+    if (receiverTypes.some((name) => PRISMA_DELEGATE_TYPE.test(name))) return PRISMA_DELEGATE_METHODS.has(method);
+    return receiverTypes.some((name) => REPOSITORY_NAME.test(name));
   };
 }
 
@@ -129,6 +155,8 @@ function isRepeatedPart(loop, child) {
 function repeatingAncestor(node) {
   let child = node;
   for (let current = node.parent; current; child = current, current = current.parent) {
+    // `games ??= await repo.find(...)` is a memo: it reads once, however often the loop passes.
+    if (current.type === 'AssignmentExpression' && MEMO_OPERATORS.has(current.operator) && child === current.right) return null;
     if (LOOP_TYPES.has(current.type) && isRepeatedPart(current, child)) return current;
     if (FUNCTION_TYPES.has(current.type)) {
       if (isIteratingCallback(current)) return current;
