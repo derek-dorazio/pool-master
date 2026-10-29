@@ -468,18 +468,45 @@ describe('ContestService', () => {
   });
 
   describe('listByLeague', () => {
-    it('returns contests for the league', async () => {
-      const contests = [buildContest(), buildContest()];
+    it('lists the current contests as of now by default (#1161)', async () => {
+      const now = new Date('2026-06-10T12:00:00.000Z');
       const contestRepo = createMockContestRepo({
-        findByLeague: jest.fn().mockResolvedValue(contests),
+        findCurrentByLeague: jest.fn().mockResolvedValue([buildContest(), buildContest()]),
+      });
+      const service = buildService({
+        contests: contestRepo,
+        configurations: createMockContestConfigurationRepo(),
+        memberships: createMockMembershipRepo(),
+        now: () => now,
+      });
+
+      const result = await service.listByLeague('league-1', { userId: 'user-1', isRootAdmin: true });
+
+      expect(result).toHaveLength(2);
+      expect(contestRepo.findCurrentByLeague).toHaveBeenCalledWith('league-1', now);
+      expect(contestRepo.findFinishedByLeague).not.toHaveBeenCalled();
+    });
+
+    it('lists the contests that went final in a finished year, from midnight 1 January in New York to the next (#1161)', async () => {
+      const finished = buildContest({ id: 'finished', status: ContestStatus.COMPLETED });
+      const contestRepo = createMockContestRepo({
+        findFinishedByLeague: jest.fn().mockResolvedValue([finished]),
       });
       const service = buildService({
         contests: contestRepo,
         configurations: createMockContestConfigurationRepo(),
         memberships: createMockMembershipRepo(),
       });
-      const result = await service.listByLeague('league-1', { userId: 'user-1', isRootAdmin: true });
-      expect(result).toHaveLength(2);
+
+      const result = await service.listByLeague('league-1', { userId: 'user-1', isRootAdmin: false }, 2025);
+
+      expect(result).toEqual([finished]);
+      expect(contestRepo.findFinishedByLeague).toHaveBeenCalledWith(
+        'league-1',
+        new Date('2025-01-01T05:00:00.000Z'),
+        new Date('2026-01-01T05:00:00.000Z'),
+      );
+      expect(contestRepo.findCurrentByLeague).not.toHaveBeenCalled();
     });
 
     it.each([
@@ -488,7 +515,7 @@ describe('ContestService', () => {
       ['a root admin who is not a member', null, true, ['draft', 'open']],
     ] as const)('lists draft contests only to their commissioners: %s sees %j', async (_who, role, isRootAdmin, expected) => {
       const contestRepo = createMockContestRepo({
-        findByLeague: jest.fn().mockResolvedValue([
+        findCurrentByLeague: jest.fn().mockResolvedValue([
           buildContest({ id: 'draft', status: ContestStatus.DRAFT }),
           buildContest({ id: 'open', status: ContestStatus.OPEN }),
         ]),
@@ -508,25 +535,12 @@ describe('ContestService', () => {
       expect(result.map((contest) => contest.id)).toEqual(expected);
     });
 
-    it('counts only submitted entries for league contest summaries, leaving drafts out', async () => {
-      const [firstContest, secondContest] = [
-        buildContest({ id: 'contest-1' }),
-        buildContest({ id: 'contest-2' }),
-      ];
-      const contestRepo = createMockContestRepo({
-        findByLeague: jest.fn().mockResolvedValue([firstContest, secondContest]),
-      });
+    it('counts the listed contests\' submitted entries in one grouped read, never reading entries one contest at a time (#1161)', async () => {
       const entryRepo = createMockEntryRepo({
-        findByContest: jest.fn()
-          .mockResolvedValueOnce([
-            { id: 'entry-1', events: [{ sportEventId: 'event-1', status: 'SUBMITTED' }] },
-            { id: 'entry-2', events: [{ sportEventId: 'event-1', status: 'SUBMITTED' }] },
-            { id: 'entry-draft', events: [{ sportEventId: 'event-1', status: 'DRAFT' }] },
-          ])
-          .mockResolvedValueOnce([{ id: 'entry-3', events: [{ sportEventId: 'event-1', status: 'SUBMITTED' }] }]),
+        countSubmittedByContests: jest.fn().mockResolvedValue(new Map([['contest-1', 2], ['contest-2', 1]])),
       });
       const service = buildService({
-        contests: contestRepo,
+        contests: createMockContestRepo(),
         configurations: createMockContestConfigurationRepo(),
         memberships: createMockMembershipRepo(),
         entries: entryRepo,
@@ -534,12 +548,9 @@ describe('ContestService', () => {
 
       const counts = await service.countEntriesByContest(['contest-1', 'contest-2']);
 
-      expect(counts).toEqual(new Map([
-        ['contest-1', 2],
-        ['contest-2', 1],
-      ]));
-      expect(entryRepo.findByContest).toHaveBeenCalledWith('contest-1');
-      expect(entryRepo.findByContest).toHaveBeenCalledWith('contest-2');
+      expect(counts).toEqual(new Map([['contest-1', 2], ['contest-2', 1]]));
+      expect(entryRepo.countSubmittedByContests).toHaveBeenCalledTimes(1);
+      expect(entryRepo.findByContest).not.toHaveBeenCalled();
     });
   });
 

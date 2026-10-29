@@ -396,7 +396,18 @@ export interface ParticipantProviderMappingRepository {
  */
 export interface ContestRepository {
   findById(id: string): Promise<Contest | null>;
-  findByLeague(leagueId: string): Promise<Contest[]>;
+  /** The league's contests in one of `statuses`, newest first. */
+  findByLeague(leagueId: string, statuses: readonly Contest['status'][]): Promise<Contest[]>;
+  /**
+   * The league's current contests (#1161), newest first: DRAFT, OPEN and ACTIVE, less any DRAFT
+   * with an event started by `now`, since it can never open. A DRAFT with no events stays, and so
+   * does a bracket or squares draft, which closes at its round or game rather than its event.
+   */
+  findCurrentByLeague(leagueId: string, now: Date): Promise<Contest[]>;
+  /** The league's COMPLETED contests that ended in [`endedFrom`, `endedBefore`), newest first (#1161). */
+  findFinishedByLeague(leagueId: string, endedFrom: Date, endedBefore: Date): Promise<Contest[]>;
+  /** Each championship year, US Eastern, a COMPLETED contest of the league ended in, newest first (#1161). */
+  findFinishedYearsByLeague(leagueId: string): Promise<number[]>;
   /** The league's contests open for entries, oldest first, by id and name only: the welcome email lists them (#903). */
   findOpenByLeague(leagueId: string): Promise<Array<Pick<Contest, 'id' | 'name'>>>;
   /**
@@ -548,6 +559,11 @@ export interface ContestEntryRepository {
   findByContestAndSquad(contestId: string, squadId: string): Promise<ContestEntry[]>;
   /** Every entry each contest holds, drafts included, by contest id (#972); 0 for one with none. */
   countByContests(contestIds: readonly string[]): Promise<Map<string, number>>;
+  /**
+   * The entries of each contest that submitted at least one event, by contest id (#1161); 0 for
+   * one with none. A draft is not an entry until its owner submits it (#481).
+   */
+  countSubmittedByContests(contestIds: readonly string[]): Promise<Map<string, number>>;
   /**
    * Creates the entry with a DRAFT status row for each of its contest's events (#713). The
    * contest's entries are counted under its row lock (#947), so two entries taking the last place

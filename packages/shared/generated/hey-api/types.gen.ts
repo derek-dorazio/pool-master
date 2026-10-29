@@ -12352,6 +12352,26 @@ export type ContestListResponse = {
 };
 
 /**
+ * Which of a league's contests to list: the current ones by default, or one year's finished ones.
+ */
+export type ListContestsQuery = {
+    /**
+     * List the COMPLETED contests that went final in this championship year, US Eastern, such as 2025, instead of the current ones. The years with any are `listContestFinishedYears`.
+     */
+    finishedYear?: number;
+};
+
+/**
+ * The years a league has finished contests in.
+ */
+export type ContestFinishedYearsResponse = {
+    /**
+     * Each championship year, US Eastern, a COMPLETED contest of the league went final in, newest first. Empty when none has finished.
+     */
+    years: Array<number>;
+};
+
+/**
  * Single contest-entry response.
  */
 export type ContestEntryResponse = {
@@ -28748,11 +28768,20 @@ export type ListContestsData = {
     path: {
         id: string;
     };
-    query?: never;
+    query?: {
+        /**
+         * List the COMPLETED contests that went final in this championship year, US Eastern, such as 2025, instead of the current ones. The years with any are `listContestFinishedYears`.
+         */
+        finishedYear?: number;
+    };
     url: '/api/v1/leagues/{id}/contests/';
 };
 
 export type ListContestsErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
@@ -28816,6 +28845,37 @@ export type CreateContestResponses = {
 };
 
 export type CreateContestResponse = CreateContestResponses[keyof CreateContestResponses];
+
+export type ListContestFinishedYearsData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/leagues/{id}/contests/finished-years';
+};
+
+export type ListContestFinishedYearsErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+};
+
+export type ListContestFinishedYearsError = ListContestFinishedYearsErrors[keyof ListContestFinishedYearsErrors];
+
+export type ListContestFinishedYearsResponses = {
+    /**
+     * The years a league has finished contests in.
+     */
+    200: ContestFinishedYearsResponse;
+};
+
+export type ListContestFinishedYearsResponse = ListContestFinishedYearsResponses[keyof ListContestFinishedYearsResponses];
 
 export type ListSportLeaguesUsedData = {
     body?: never;

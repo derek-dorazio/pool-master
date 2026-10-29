@@ -13,7 +13,7 @@ import type {
   StandingsEmailPosition,
   StandingsEmailPositionRepository,
 } from '@poolmaster/shared/db';
-import type { ContestEntry, ContestEntryStatus } from '@poolmaster/shared/domain';
+import { ContestEntryStatus, type ContestEntry } from '@poolmaster/shared/domain';
 import { lockContestRow } from './contest-row-lock';
 
 /** Every entry read carries its status in each of its contest's events (#713). */
@@ -53,6 +53,18 @@ export class PrismaContestEntryRepository implements ContestEntryRepository {
     const rows = await this.prisma.contestEntry.groupBy({
       by: ['contestId'],
       where: { contestId: { in: [...contestIds] } },
+      _count: { _all: true },
+    });
+    for (const row of rows) counts.set(row.contestId, row._count._all);
+    return counts;
+  }
+
+  async countSubmittedByContests(contestIds: readonly string[]): Promise<Map<string, number>> {
+    const counts = new Map(contestIds.map((contestId) => [contestId, 0]));
+    if (!contestIds.length) return counts;
+    const rows = await this.prisma.contestEntry.groupBy({
+      by: ['contestId'],
+      where: { contestId: { in: [...contestIds] }, events: { some: { status: ContestEntryStatus.SUBMITTED } } },
       _count: { _all: true },
     });
     for (const row of rows) counts.set(row.contestId, row._count._all);

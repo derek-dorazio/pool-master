@@ -308,6 +308,16 @@ export const ContestListResponseSchema = z.object({
 }).describe('Contest-list response.');
 export type ContestListResponse = z.infer<typeof ContestListResponseSchema>;
 
+export const ListContestsQuerySchema = z.object({
+  finishedYear: z.number().int().min(2000).max(9999).optional().describe('List the COMPLETED contests that went final in this championship year, US Eastern, such as 2025, instead of the current ones. The years with any are `listContestFinishedYears`.'),
+}).describe('Which of a league\'s contests to list: the current ones by default, or one year\'s finished ones.');
+export type ListContestsQuery = z.infer<typeof ListContestsQuerySchema>;
+
+export const ContestFinishedYearsResponseSchema = z.object({
+  years: z.array(z.number().int()).describe('Each championship year, US Eastern, a COMPLETED contest of the league went final in, newest first. Empty when none has finished.'),
+}).describe('The years a league has finished contests in.');
+export type ContestFinishedYearsResponse = z.infer<typeof ContestFinishedYearsResponseSchema>;
+
 export const ContestEntryResponseSchema = z.object({
   contestId: z.string().describe('Contest that owns the entry.'),
   entry: ContestEntryDtoSchema,
@@ -362,6 +372,8 @@ registerSchema('ContestCountingRuleDto', ContestCountingRuleDtoSchema);
 registerSchema('ContestLeaderboardResponse', ContestLeaderboardResponseSchema);
 registerSchema('ContestResponse', ContestResponseSchema);
 registerSchema('ContestListResponse', ContestListResponseSchema);
+registerSchema('ListContestsQuery', ListContestsQuerySchema);
+registerSchema('ContestFinishedYearsResponse', ContestFinishedYearsResponseSchema);
 registerSchema('ContestEntryResponse', ContestEntryResponseSchema);
 registerSchema('ContestEntryDetailResponse', ContestEntryDetailResponseSchema);
 registerSchema('ContestEntryListResponse', ContestEntryListResponseSchema);

@@ -11,7 +11,6 @@ import {
   PageHeader,
   Tile,
 } from "@/features/shared/ui";
-import { isHistoricalContest } from "./contest-status";
 import { ContestListCard } from "./contest-list-card";
 import { useLeagueContext } from '@/features/leagues/use-league-context';
 import { ContestsViewSwitch } from './contests-view-switch';
@@ -51,11 +50,8 @@ export function LeagueContestsPage() {
   const leagueId = league?.id ?? "";
   const contestsQuery = useLeagueContestsQuery(leagueId);
 
-  const contests = useMemo(() => contestsQuery.data ?? [], [contestsQuery.data]);
-  const activeContests = useMemo(
-    () => contests.filter((contest) => !isHistoricalContest(contest.status)),
-    [contests],
-  );
+  // The list holds the current contests only (#1161); finished ones are on Contest History.
+  const activeContests = useMemo(() => contestsQuery.data ?? [], [contestsQuery.data]);
   const activeContestIds = useMemo(
     () => activeContests.map((contest) => contest.id),
     [activeContests],

@@ -38,7 +38,6 @@ import type {
   Contest,
   ContestConfiguration,
   ContestEntry,
-  ContestEntryStatus,
   League,
   LeagueMembership,
   SportEvent,
@@ -49,6 +48,8 @@ import type {
   User,
 } from '@poolmaster/shared/domain';
 import {
+  championshipYear,
+  ContestEntryStatus,
   ContestFormat,
   ContestStatus,
   CupWeight,
@@ -331,8 +332,24 @@ export class InMemoryContestWorld {
   contestRepo(): ContestRepository {
     return {
       findById: async (id) => this.contests.get(id) ?? null,
-      findByLeague: async (leagueId) =>
-        [...this.contests.values()].filter((contest) => contest.leagueId === leagueId),
+      findByLeague: async (leagueId, statuses) =>
+        [...this.contests.values()].filter((contest) => contest.leagueId === leagueId && statuses.includes(contest.status)),
+      findCurrentByLeague: async (leagueId, now) =>
+        [...this.contests.values()].filter((contest) => contest.leagueId === leagueId
+          && contest.status !== ContestStatus.COMPLETED
+          && !(contest.status === ContestStatus.DRAFT
+            && contest.selectionType !== SelectionType.BRACKET && contest.selectionType !== SelectionType.SQUARES
+            && contest.sportEventIds.some((id) => (this.sportEvents.get(id)?.startDate ?? now) <= now))),
+      findFinishedByLeague: async (leagueId, endedFrom, endedBefore) =>
+        [...this.contests.values()].filter((contest) => contest.leagueId === leagueId
+          && contest.status === ContestStatus.COMPLETED
+          && contest.endsAt !== undefined
+          && contest.endsAt >= endedFrom && contest.endsAt < endedBefore),
+      findFinishedYearsByLeague: async (leagueId) =>
+        [...new Set([...this.contests.values()].flatMap((contest) =>
+          contest.leagueId === leagueId && contest.status === ContestStatus.COMPLETED && contest.endsAt
+            ? [championshipYear(contest.endsAt)]
+            : []))].sort((left, right) => right - left),
       findOpenByLeague: async (leagueId) =>
         [...this.contests.values()]
           .filter((contest) => contest.leagueId === leagueId && contest.status === ContestStatus.OPEN)
@@ -446,6 +463,9 @@ export class InMemoryContestWorld {
           .sort((left, right) => left.entryNumber - right.entryNumber),
       countByContests: async (contestIds) => new Map(contestIds.map((contestId) =>
         [contestId, [...this.entries.values()].filter((entry) => entry.contestId === contestId).length])),
+      countSubmittedByContests: async (contestIds) => new Map(contestIds.map((contestId) =>
+        [contestId, [...this.entries.values()].filter((entry) => entry.contestId === contestId
+          && entry.events.some((event) => event.status === ContestEntryStatus.SUBMITTED)).length])),
       create: async (input, limits) => {
         // The adapter refuses an entry once the contest is drawn, or holds its plan's entries.
         if (this.contests.get(input.contestId)?.drawnAt !== undefined) return { status: 'contestDrawn' };

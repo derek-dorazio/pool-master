@@ -57,6 +57,10 @@ export const QueryKeys = {
       filters === undefined
         ? (['poolmaster', 'league-contests'] as const)
         : (['poolmaster', 'league-contests', filters.leagueId] as const),
+    /** One year's finished contests (#1161); under the league's list key, so invalidating it covers them. */
+    finished: (leagueId: QueryKeyId, year: number | null) => ['poolmaster', 'league-contests', leagueId, 'finished', year] as const,
+    /** The years a league has finished contests in (#1161). */
+    finishedYears: (leagueId: QueryKeyId) => ['poolmaster', 'league-contests', leagueId, 'finished-years'] as const,
     detail: (contestId: QueryKeyId) => ['poolmaster', 'contest', contestId] as const,
     /** A contest's leaderboard, opened on one of its events when one is named (#713). */
     leaderboard: (contestId: QueryKeyId, sportEventId?: QueryKeyId) =>
