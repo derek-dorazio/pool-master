@@ -54,7 +54,7 @@ export function RootAdminContentConfigurationDetailPage() {
   });
 
   const template = useMemo(
-    // poolmaster-allow-list-lookup: the fixed set of email templates, listed on the screen before this one
+    // poolmaster-allow-list-lookup: the fixed set of contest config templates, listed on the screen before this one; there is no single read by key
     () => templatesQuery.data?.find((candidate) => candidate.templateKey === templateKey) ?? null,
     [templateKey, templatesQuery.data],
   );

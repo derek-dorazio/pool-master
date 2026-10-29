@@ -48,6 +48,7 @@ export function RootAdminSportEventTiersPage() {
     // A tier's assignments are the participants whose valuation names it (#236).
     const counts: Record<string, number> = {};
     for (const tier of tiers) {
+      // poolmaster-allow-list-lookup: counts the tournament's field, which this page shows in full
       counts[tier.tierKey] = field.filter(
         (entry) => entry.valuation?.sportEventTierId === tier.id,
       ).length;
@@ -87,6 +88,7 @@ export function RootAdminSportEventTiersPage() {
                 sport={tournament.sport}
               />
               <PriceAssignAction
+                // poolmaster-allow-list-lookup: counts the tournament's field, which this page shows in full
                 activeParticipantCount={field.filter((entry) => entry.isActive).length}
                 current={tournament.pricing}
                 disabled={locked || field.length === 0}

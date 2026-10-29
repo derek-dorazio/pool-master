@@ -33,7 +33,7 @@ import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { extractErrorMessage, hasErrorCode, throwApiError } from '@/lib/errors';
 import { ManagePageIntro } from './manage-page-intro';
-import { useSettingsGroupsQuery } from './use-settings-groups';
+import { useSettingsGroupQuery } from './use-settings-groups';
 import {
   PlanSettingsDraftSchema,
   toPlanConfig,
@@ -60,21 +60,14 @@ const FEATURE_STARTS_AT_LABEL: Readonly<Record<LeaguePlan, string>> = {
 
 const tableHeaderClassName = 'bg-[var(--table-header-surface)] text-xs uppercase text-muted-foreground';
 
-function isPlanSettingsGroup(group: SettingsGroup): group is PlanSettingsGroup {
-  return group.key === 'PLAN_CONFIG';
-}
-
 /**
  * /manage/plans (#946): what each league plan allows, saved as the PLAN_CONFIG settings group, so
  * a save lands in the settings history and reaches every server within the settings refresh.
  */
 export function RootAdminPlansPage() {
-  const settingsQuery = useSettingsGroupsQuery();
-  // poolmaster-allow-list-lookup: the handful of settings groups, already loaded for the settings screens
-  const group = settingsQuery.data?.find(isPlanSettingsGroup);
-
-  // A settings list without PLAN_CONFIG is an error, not a page still loading.
-  const pageState = settingsQuery.isError || (settingsQuery.data && !group) ? 'error' : settingsQuery.isLoading ? 'loading' : 'ready';
+  const settingsQuery = useSettingsGroupQuery('PLAN_CONFIG');
+  const group = settingsQuery.data;
+  const pageState = settingsQuery.isError ? 'error' : settingsQuery.isLoading ? 'loading' : 'ready';
 
   return (
     <AsyncPage
@@ -129,10 +122,8 @@ function PlanSettingsForm({ group }: { group: PlanSettingsGroup }) {
   const conflicted = hasErrorCode(saveMutation.error, 'SETTINGS_CONFLICT');
 
   async function loadLatest() {
-    await queryClient.refetchQueries({ queryKey: QueryKeys.rootAdmin.settings, exact: true });
-    const latest = queryClient
-      .getQueryData<SettingsGroup[]>(QueryKeys.rootAdmin.settings)
-      ?.find(isPlanSettingsGroup);
+    await queryClient.refetchQueries({ queryKey: QueryKeys.rootAdmin.settingsGroup('PLAN_CONFIG'), exact: true });
+    const latest = queryClient.getQueryData<PlanSettingsGroup>(QueryKeys.rootAdmin.settingsGroup('PLAN_CONFIG'));
     if (!latest) {
       return;
     }

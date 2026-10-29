@@ -13,15 +13,23 @@
  *   const { data } = useLeaguesQuery();      data?.leagues
  *   const { data: leagues = [] } = useSportLeaguesQuery();
  *   const leagues = leaguesQuery.data?.leagues ?? [];   (an alias carries it on)
- * With type information, only an array is a list, and only the one property of an envelope is:
- * an array inside a detail response (a contest's events) arrived with the screen's own read.
+ *   const leagues = useMemo(() => leaguesQuery.data?.leagues ?? [], [leaguesQuery.data]);
+ * With type information, only an array is a list (an intersection with an array part counts), and
+ * only the one property of an envelope is: an array inside a detail response (a contest's events)
+ * arrived with the screen's own read.
  *
  * Flagged on query data:
- *   - `.find(...)` / `.findIndex(...)` / `.findLast(...)`: one row from a list;
+ *   - `.find(...)` / `.findIndex(...)` / `.findLast(...)`, and `.some(...)` whose test compares one
+ *     of the fields below: one row from a list;
  *   - `.filter(...).length`, and `.length` shown on screen (in JSX, a template literal, or a
  *     `count` / `total` property): a count;
  *   - `.filter(...)` whose test compares an id, status, year, team, squad or user field: a
  *     server filter done in the browser.
+ *
+ * Not seen, so a clean lint is not a clean screen: an envelope with more than one property
+ * (`{ leagues, total }`); a count stored in a variable and rendered later; nested destructuring
+ * (`const { data: { leagues } } = ...`); a list passed to a helper or a child component and looked
+ * up there; and a custom hook whose name does not end in `Query`.
  *
  * Escape hatch, for a list that is on screen anyway (a hover detail, a picker's selected row):
  *   // poolmaster-allow-list-lookup: <reason>
@@ -33,7 +41,9 @@ const MARKER = 'poolmaster-allow-list-lookup';
 const QUERY_HOOK = /^use[A-Za-z0-9]*Query$/;
 const LOOKUP_METHODS = new Set(['find', 'findIndex', 'findLast', 'findLastIndex']);
 const FILTER_FIELD = /^(id|status|year|team|squad|user)$|(Id|Status|Year|Team|Squad|User)$/;
-const COUNT_KEY = /count|total/i;
+/** A property that names a count: `count`, `total`, `entryCount`, `memberTotal`; not `accountId` or `discount`. */
+const COUNT_KEY = /(^|[a-z])(Count|Total)$|^(count|total)$/;
+const MEMO_HOOKS = new Set(['useMemo']);
 
 /** Strips wrappers that keep the same value: `?.`, `!`, casts, `x ?? []`, `x || []`. */
 function unwrap(node) {
@@ -69,8 +79,25 @@ function valueParent(node) {
   return { node: current, parent: current.parent };
 }
 
-/** Whether a filter callback's test compares an id / status / year / team / squad / user field. */
-function filtersByKnownField(callback) {
+/**
+ * What `useMemo(() => value, deps)` (or `React.useMemo`) returns, for an arrow with an expression
+ * body or a body that is a single `return`; null for anything else.
+ */
+function memoValue(node) {
+  const call = unwrap(node);
+  if (call.type !== 'CallExpression') return null;
+  const { callee } = call;
+  const name = callee.type === 'Identifier' ? callee.name : callee.type === 'MemberExpression' ? propertyName(callee) : null;
+  if (!MEMO_HOOKS.has(name)) return null;
+  const factory = call.arguments[0];
+  if (!factory || factory.type !== 'ArrowFunctionExpression') return null;
+  if (factory.body.type !== 'BlockStatement') return factory.body;
+  const [only] = factory.body.body;
+  return factory.body.body.length === 1 && only.type === 'ReturnStatement' && only.argument ? only.argument : null;
+}
+
+/** Whether a filter or `some` callback's test compares an id / status / year / team / squad / user field. */
+function comparesKnownField(callback) {
   if (!callback || (callback.type !== 'ArrowFunctionExpression' && callback.type !== 'FunctionExpression')) return false;
   let found = false;
   const visit = (node) => {
@@ -160,12 +187,16 @@ export default {
       return tsNode ? checker.getNonNullableType(checker.getTypeAtLocation(tsNode)) : null;
     }
 
-    /** Without type information (the syntactic rule tests) the shape alone decides. */
+    /**
+     * Without type information (the syntactic rule tests) the shape alone decides. Union and
+     * intersection members are looked through: `League[] & { … }` is still a list.
+     */
     function isArrayTyped(node) {
       const type = typeOf(node);
       if (!type) return true;
-      const parts = type.isUnion() ? type.types : [type];
-      return parts.some((part) => checker.isArrayType(part) || checker.isTupleType(part));
+      const isArray = (part) => checker.isArrayType(part) || checker.isTupleType(part)
+        || (part.isUnionOrIntersection() && part.types.some(isArray));
+      return isArray(type);
     }
 
     /** An object with one property: a list envelope (`{ leagues: League[] }`), not a detail response. */
@@ -196,9 +227,11 @@ export default {
         if (!node.init) return;
         if (node.id.type === 'Identifier') {
           const variable = variableOf(node.id);
-          if (isQueryHookCall(node.init)) resultVariables.add(variable);
-          else if (isQueryDataRoot(node.init)) dataVariables.add(variable);
-          if (isListData(node.init)) listVariables.add(variable);
+          // `useMemo(() => q.data ?? [], [q.data])` holds what its factory returns.
+          const value = memoValue(node.init) ?? node.init;
+          if (isQueryHookCall(value)) resultVariables.add(variable);
+          else if (isQueryDataRoot(value)) dataVariables.add(variable);
+          if (isListData(value)) listVariables.add(variable);
           return;
         }
         if (node.id.type === 'ObjectPattern' && isQueryHookCall(node.init)) {
@@ -219,11 +252,15 @@ export default {
           report(node, 'lookupInList');
           return;
         }
+        if (method === 'some' && isListData(callee.object) && comparesKnownField(node.arguments[0])) {
+          report(node, 'lookupInList');
+          return;
+        }
         if (method === 'filter' && isListData(callee.object)) {
           const { parent } = valueParent(node);
           const counted = parent?.type === 'MemberExpression' && parent.object === valueParent(node).node && propertyName(parent) === 'length';
           if (counted) report(parent, 'countInBrowser');
-          else if (filtersByKnownField(node.arguments[0])) report(node, 'filterInBrowser');
+          else if (comparesKnownField(node.arguments[0])) report(node, 'filterInBrowser');
         }
       },
       MemberExpression(node) {

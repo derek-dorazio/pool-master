@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import {
   EventPricingConfigSchema,
   findBudgetPricingProblem,
@@ -22,7 +22,7 @@ import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import { useSettingsGroupsQuery } from './use-settings-groups';
+import { useSettingsGroupQuery } from './use-settings-groups';
 
 /** The five values as the dialog's inputs hold them. */
 type PricingDraft = Record<'salaryCap' | 'unit' | 'topSharePercent' | 'floorSharePercent' | 'steepness', string>;
@@ -88,12 +88,8 @@ export function PriceAssignAction({
   const { vocabulary } = getSportDefinition(sport);
   const { event, participant } = vocabulary;
   const logger = getLogger().child({ feature: 'root-admin-sport-event-tiers-page' });
-  const settingsQuery = useSettingsGroupsQuery();
-  const profiles = useMemo(() => {
-    // poolmaster-allow-list-lookup: the handful of settings groups, already loaded for the settings screens
-    const group = settingsQuery.data?.find((candidate) => candidate.key === 'BUDGET_PRICING_CONFIG');
-    return group?.key === 'BUDGET_PRICING_CONFIG' ? group.value.profiles : [];
-  }, [settingsQuery.data]);
+  const pricingQuery = useSettingsGroupQuery('BUDGET_PRICING_CONFIG');
+  const profiles = pricingQuery.data?.value.profiles ?? [];
   const [open, setOpen] = useState(false);
   const [profileName, setProfileName] = useState('');
   const [draft, setDraft] = useState<PricingDraft | null>(null);

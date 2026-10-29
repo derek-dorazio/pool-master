@@ -654,6 +654,13 @@ ruleTester.run('no-query-in-loop', noQueryInLoop, {
         await this.roundRepo.save(round);
       }
     }`,
+    // A block comment works as a marker too.
+    `async function f(rounds) {
+      for (const round of rounds) {
+        /* poolmaster-allow-query-in-loop: a sport's handful of scoring periods */
+        await this.roundRepo.save(round);
+      }
+    }`,
     `async function f(rows) {
       // poolmaster-allow-query-in-loop: #1172
       await Promise.all(rows.map((row) =>
@@ -845,6 +852,10 @@ ruleTester.run('no-list-lookup', noListLookup, {
     'function C() { const data = loadRows(); return data.find((row) => row.id === 1); }',
     // A hook that is not a query (a mutation) has no list data.
     'function C() { const m = useSaveMutation(); return m.data?.find((row) => row.id === 1); }',
+    // `.some` on anything but a known field is not a lookup.
+    'function C() { const q = useLeaguesQuery(); return q.data?.some((league) => league.name === "A"); }',
+    // A property that only ends in "count" letters is not a count: `accountId`, `discount`.
+    'function C() { const q = useLeaguesQuery(); return [{ accountId: q.data?.length }, { discount: q.data?.length }]; }',
     // The escape hatch with a reason, as a line comment or a JSX block comment.
     `function C({ id }) {
       const q = useEventsQuery();
@@ -903,6 +914,44 @@ ruleTester.run('no-list-lookup', noListLookup, {
       errors: [{ messageId: 'filterInBrowser' }],
     },
     {
+      // `.some` with an id compare is a lookup of one row.
+      code: 'function C({ id }) { const q = useLeaguesQuery(); return q.data?.some((league) => league.id === id); }',
+      errors: [{ messageId: 'lookupInList' }],
+    },
+    {
+      // The repo's usual alias: a list memoised off the query data, with or without a block body.
+      code: `function C({ id }) {
+        const q = useFieldQuery();
+        const rows = useMemo(() => q.data ?? [], [q.data]);
+        const field = React.useMemo(() => { return q.data?.participants ?? []; }, [q.data]);
+        return [rows.find((row) => row.id === id), field.filter((entry) => entry.status === 'ACTIVE').length];
+      }`,
+      errors: [{ messageId: 'lookupInList' }, { messageId: 'countInBrowser' }],
+    },
+    {
+      // A count property by its name, `count` or `total` (`entryCount` is above).
+      code: 'function C() { const q = useEntriesQuery(); return { count: q.data?.length, total: q.data?.length }; }',
+      errors: [{ messageId: 'countInBrowser' }, { messageId: 'countInBrowser' }],
+    },
+    {
+      // A marker name with more after it is another word, not a marker: the lookup stays flagged.
+      code: `function C({ id }) {
+        const q = useLeaguesQuery();
+        // poolmaster-allow-list-lookup-foo: not a marker
+        return q.data?.find((league) => league.id === id);
+      }`,
+      errors: [{ messageId: 'lookupInList' }],
+    },
+    {
+      // A marker without the colon has no reason.
+      code: `function C({ id }) {
+        const q = useLeaguesQuery();
+        // poolmaster-allow-list-lookup the list on screen
+        return q.data?.find((league) => league.id === id);
+      }`,
+      errors: [{ messageId: 'missingReason' }],
+    },
+    {
       // A marker without a reason is an error of its own.
       code: `function C({ id }) {
         const q = useLeaguesQuery();
@@ -945,6 +994,23 @@ typedRuleTester.run('no-list-lookup (typed)', noListLookup, {
       code: `
         declare function useLeaguesQuery(): { data?: Array<{ id: string }> };
         function c(id: string) { const q = useLeaguesQuery(); return q.data?.find((league) => league.id === id); }`,
+      filename: typedFixture,
+      errors: [{ messageId: 'lookupInList' }],
+    },
+    {
+      // An intersection with an array part is still a list.
+      code: `
+        declare function useLeaguesQuery(): { data?: Array<{ id: string }> & { fetchedAt: string } };
+        function c(id: string) { const q = useLeaguesQuery(); return q.data?.find((league) => league.id === id); }`,
+      filename: typedFixture,
+      errors: [{ messageId: 'lookupInList' }],
+    },
+    {
+      // A typed envelope list carried through useMemo, looked up with `.some`.
+      code: `
+        declare function useMemo<T>(factory: () => T, deps: unknown[]): T;
+        declare function useLeaguesQuery(): { data?: { leagues: ReadonlyArray<{ id: string }> } };
+        function c(id: string) { const q = useLeaguesQuery(); const leagues = useMemo(() => q.data?.leagues ?? [], [q.data]); return leagues.some((league) => league.id === id); }`,
       filename: typedFixture,
       errors: [{ messageId: 'lookupInList' }],
     },
