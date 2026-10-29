@@ -74,6 +74,7 @@ import { createEventLifecycleService, eventFieldCache } from './modules/events/w
 import { EventLifecycleScheduler } from './modules/events/event-lifecycle-scheduler';
 import { createCommissionerNotices, createContestExpandedNotices, createContestNotices, createDraftEventNotices, createEntryReminders, createLiveStandings, createMemberJoinedNotices, createPlanPreviewNotices } from './modules/notifications';
 import { ProviderSyncRunLedger } from './modules/ingestion/persistence/provider-sync-run-ledger';
+import { SyncRunDetailsRetention, SyncRunRetention } from './modules/ingestion/persistence/sync-run-retention';
 import { registerConfiguredProviders } from './modules/ingestion/core/provider-bindings';
 import { createScheduledEventReader } from './modules/ingestion/core/scheduled-event-reader';
 import { createContestSettlementService } from './modules/contests/wiring';
@@ -153,9 +154,15 @@ export function buildApp() {
     jobLock,
     logger: app.log,
   });
+  const providerSyncRuns = new PrismaProviderSyncRunRepository(prisma);
   // #1175: tables that grow without end are trimmed to their retention periods once a night.
   const nightlyCleanupScheduler = new NightlyCleanupScheduler({
-    steps: [new RefreshTokenRetention(prisma), emailRetention],
+    steps: [
+      new RefreshTokenRetention(prisma),
+      emailRetention,
+      new SyncRunDetailsRetention(providerSyncRuns),
+      new SyncRunRetention(providerSyncRuns),
+    ],
     jobLock,
     logger: app.log,
   });
@@ -215,7 +222,6 @@ export function buildApp() {
     },
   };
 
-  const providerSyncRuns = new PrismaProviderSyncRunRepository(prisma);
   const providerSyncRunLedger = new ProviderSyncRunLedger(providerSyncRuns, app.log);
   const ingestionScheduler = new IngestionScheduler(registry, ingestionCallbacks, app.log, {
     configReader: ingestionConfigService,

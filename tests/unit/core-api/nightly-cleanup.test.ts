@@ -1,10 +1,15 @@
 import {
+  CLEANUP_BATCH_SIZE,
   NightlyCleanupScheduler,
   deleteInBatches,
   type NightlyCleanupStep,
   type NightlyCleanupStepName,
 } from '../../../packages/core-api/src/core/nightly-cleanup';
 import { EmailMessageRetention } from '../../../packages/core-api/src/modules/email';
+import {
+  SyncRunDetailsRetention,
+  SyncRunRetention,
+} from '../../../packages/core-api/src/modules/ingestion/persistence/sync-run-retention';
 import { fakeLogger } from '../../support/fake-logger';
 import { heldElsewhere, heldHere } from '../../support/job-locks';
 import { inMemoryEmailMessages } from '../../support/in-memory-email-messages';
@@ -155,5 +160,30 @@ describe('email retention', () => {
 
     expect(deleted).toBe(1);
     expect(outbox.rows.map((row) => row.idempotencyKey)).toEqual(['kept']);
+  });
+});
+
+describe('sync-run retention', () => {
+  const NOW = new Date('2026-10-29T08:00:00.000Z');
+
+  it('clears the details of every run submitted before 30 days ago, batch by batch', async () => {
+    const batches = [1000, 1000, 12];
+    const clearDetailsBatchSubmittedBefore = jest.fn((_before: Date, _limit: number) =>
+      Promise.resolve(batches.shift() ?? 0));
+
+    const cleared = await new SyncRunDetailsRetention({ clearDetailsBatchSubmittedBefore }).purge(NOW);
+
+    expect(cleared).toBe(2012);
+    expect(clearDetailsBatchSubmittedBefore).toHaveBeenCalledTimes(3);
+    expect(clearDetailsBatchSubmittedBefore).toHaveBeenCalledWith(new Date('2026-09-29T08:00:00.000Z'), CLEANUP_BATCH_SIZE);
+  });
+
+  it('deletes runs submitted before the same day a year ago', async () => {
+    const deleteBatchSubmittedBefore = jest.fn((_before: Date, _limit: number) => Promise.resolve(0));
+
+    const deleted = await new SyncRunRetention({ deleteBatchSubmittedBefore }).purge(NOW);
+
+    expect(deleted).toBe(0);
+    expect(deleteBatchSubmittedBefore).toHaveBeenCalledWith(new Date('2025-10-29T08:00:00.000Z'), CLEANUP_BATCH_SIZE);
   });
 });

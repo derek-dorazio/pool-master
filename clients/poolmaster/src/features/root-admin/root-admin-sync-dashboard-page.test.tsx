@@ -576,7 +576,7 @@ describe('RootAdminSyncDashboardPage', () => {
     expect(screen.queryByRole('button', { name: 'Show job payload' })).not.toBeInTheDocument();
   });
 
-  it('says no details are stored for a finished run that has none', async () => {
+  it('says details are kept for 30 days when a finished run has none left', async () => {
     const user = userEvent.setup();
     getProviderSyncRunMock.mockResolvedValue(detailResponse(null));
     renderDashboard();
@@ -585,7 +585,9 @@ describe('RootAdminSyncDashboardPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'View details' }));
     await user.click(await screen.findByRole('tab', { name: 'Details' }));
 
-    expect(await screen.findByText('No details are stored for this run.')).toBeInTheDocument();
+    expect(
+      await screen.findByText('Detailed diagnostics are kept for 30 days. None are stored for this run.'),
+    ).toBeInTheDocument();
   });
 
   it('shows an error in the details tab when a run\'s details cannot be loaded', async () => {
