@@ -1,5 +1,5 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import type { ListCupsQuery } from '@poolmaster/shared/dto';
+import type { CupSquadPointsQuery, ListCupsQuery } from '@poolmaster/shared/dto';
 import { sendError } from '../../core/error-handler';
 import { toCupDto, toCupProjectionDto, toCupSquadPointsDto } from '../../mappers/cups.mapper';
 import {
@@ -42,11 +42,12 @@ export function createCupHandlers(service: CupService) {
   }
 
   async function getCupSquadPoints(
-    request: FastifyRequest<{ Params: { id: string; cupId: string; squadId: string } }>,
+    request: FastifyRequest<{ Params: { id: string; squadId: string }; Querystring: CupSquadPointsQuery }>,
     reply: FastifyReply,
   ): Promise<void> {
     try {
-      const points = await service.getSquadPoints(request.params.id, request.params.cupId, request.params.squadId);
+      const { seasonYear, sportLeagueId } = request.query;
+      const points = await service.getSquadPoints({ leagueId: request.params.id, seasonYear, sportLeagueId }, request.params.squadId);
       return reply.send({ squadPoints: toCupSquadPointsDto(points) });
     } catch (error) {
       return sendCupError(reply, error);

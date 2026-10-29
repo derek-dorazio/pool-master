@@ -4,7 +4,7 @@
  */
 import type { FastifyInstance } from 'fastify';
 import { PlanFeature } from '@poolmaster/shared/domain';
-import type { ListCupsQuery } from '@poolmaster/shared/dto';
+import type { CupSquadPointsQuery, ListCupsQuery } from '@poolmaster/shared/dto';
 import { schemaRef } from '@poolmaster/shared/dto/schema-registry';
 // Registers the named components these routes $ref (#192).
 import '@poolmaster/shared/dto';
@@ -65,6 +65,27 @@ export function cupsModule(fastify: FastifyInstance, opts: PlanModuleOptions): v
     handler: handlers.listCupSeasons,
   });
 
+  fastify.get('/squads/:squadId', {
+    schema: {
+      tags: ['Cups'],
+      summary: 'Get a squad\'s cup points',
+      description: `One squad's points in the league's cup for a season and sports league, counted contest by counted contest, in the order they went final, with the cup's id and name. 404 CUP_NOT_FOUND when the league has no cup for that season and sports league, SQUAD_NOT_FOUND for a squad that is not the league's. ${MEMBERS_ONLY} ${describePlanFeatureGate([PlanFeature.CUP_STANDINGS], true)}`,
+      operationId: 'getCupSquadPoints',
+      querystring: schemaRef('CupSquadPointsQuery'),
+      response: {
+        200: schemaRef('CupSquadPointsResponse'),
+        400: schemaRef('ErrorEnvelope'),
+        401: schemaRef('ErrorEnvelope'),
+        403: schemaRef('ErrorEnvelope'),
+        404: schemaRef('ErrorEnvelope'),
+      },
+    },
+    preHandler: [membersOnly, requirePlanFeatures(opts.planEntitlements, [PlanFeature.CUP_STANDINGS], {
+      yearOf: (request) => (request.query as CupSquadPointsQuery).seasonYear,
+    })],
+    handler: handlers.getCupSquadPoints,
+  });
+
   fastify.get('/:cupId', {
     schema: {
       tags: ['Cups'],
@@ -80,23 +101,6 @@ export function cupsModule(fastify: FastifyInstance, opts: PlanModuleOptions): v
     },
     preHandler: [membersOnly, withStandings],
     handler: handlers.getCup,
-  });
-
-  fastify.get('/:cupId/squads/:squadId', {
-    schema: {
-      tags: ['Cups'],
-      summary: 'Get a squad\'s cup points',
-      description: `One squad's points in a cup, counted contest by counted contest, in the order they went final. 404 CUP_NOT_FOUND for a cup that is not the league's, SQUAD_NOT_FOUND for a squad that is not. ${MEMBERS_ONLY} ${describePlanFeatureGate([PlanFeature.CUP_STANDINGS])}`,
-      operationId: 'getCupSquadPoints',
-      response: {
-        200: schemaRef('CupSquadPointsResponse'),
-        401: schemaRef('ErrorEnvelope'),
-        403: schemaRef('ErrorEnvelope'),
-        404: schemaRef('ErrorEnvelope'),
-      },
-    },
-    preHandler: [membersOnly, withStandings],
-    handler: handlers.getCupSquadPoints,
   });
 
   fastify.get('/:cupId/projection', {

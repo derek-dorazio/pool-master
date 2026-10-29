@@ -128,7 +128,12 @@ function primeMocks({
   listLeagueMembersMock.mockResolvedValue(apiSuccess({
     members: [
       buildLeagueMembership({ id: 'm-1', userId: 'user-1', role: 'COMMISSIONER' }),
-      buildLeagueMembership({ id: 'm-2', userId: 'user-2', role: 'MEMBER' }),
+      buildLeagueMembership({
+        id: 'm-2',
+        userId: 'user-2',
+        role: 'MEMBER',
+        user: buildCurrentUser({ id: 'user-2', firstName: 'Morgan', lastName: 'Member' }),
+      }),
     ],
   }));
   listLeagueSquadsMock.mockResolvedValue(apiSuccess(listLeagueSquadsData([
@@ -211,6 +216,35 @@ describe('League settings', () => {
     expect(await general.findByText('Casey Commissioner')).toBeInTheDocument();
     expect(general.queryByText('Morgan Member')).not.toBeInTheDocument();
     expect(general.getByRole('link', { name: 'Edit' })).toHaveAttribute('href', '/league/BIGDAWGS/admin/edit');
+  });
+
+  it('names every active commissioner from the league memberships, team or no team, without reading the league\'s teams', async () => {
+    primeMocks();
+    listLeagueMembersMock.mockResolvedValue(apiSuccess({
+      members: [
+        buildLeagueMembership({ id: 'm-1', userId: 'user-1', role: 'COMMISSIONER' }),
+        buildLeagueMembership({
+          id: 'm-3',
+          userId: 'user-3',
+          role: 'COMMISSIONER',
+          user: buildCurrentUser({ id: 'user-3', firstName: 'Avery', lastName: 'Teamless' }),
+        }),
+        buildLeagueMembership({
+          id: 'm-4',
+          userId: 'user-4',
+          role: 'COMMISSIONER',
+          status: 'INACTIVE',
+          user: buildCurrentUser({ id: 'user-4', firstName: 'Former', lastName: 'Commissioner' }),
+        }),
+      ],
+    }));
+
+    renderCommissionerTools();
+
+    const commissioners = await screen.findByTestId('league-settings-commissioners');
+    await waitFor(() => expect(commissioners).toHaveTextContent('Avery Teamless, Casey Commissioner'));
+    expect(commissioners).not.toHaveTextContent('Former Commissioner');
+    expect(listLeagueSquadsMock).not.toHaveBeenCalled();
   });
 
   it('inactivates the league only after the commissioner confirms', async () => {

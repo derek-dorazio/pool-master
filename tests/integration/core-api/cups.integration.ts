@@ -190,6 +190,20 @@ describe('PrismaCupRepository (#841)', () => {
     await expect(repo.findById(first.id)).resolves.toMatchObject(key);
   });
 
+  it('finds the league\'s cup by season and sports league, and null for a season or league with none (#1202)', async () => {
+    const repo = new PrismaCupRepository(getPrisma());
+    const { league, contest } = await seedLeague();
+    const other = await seedLeague();
+    const { sportLeagueId } = await contest('Masters');
+    const key = { leagueId: league.id, seasonYear: 2026, sportLeagueId };
+    const cup = await repo.ensure(key);
+    await repo.ensure({ ...key, seasonYear: 2027 });
+
+    await expect(repo.findByKey(key)).resolves.toMatchObject({ id: cup.id, ...key });
+    await expect(repo.findByKey({ ...key, seasonYear: 2025 })).resolves.toBeNull();
+    await expect(repo.findByKey({ ...key, leagueId: other.league.id })).resolves.toBeNull();
+  });
+
   it('reads the cup\'s season and sports league contests by first event start, leaving out drafts, other seasons and other sports leagues', async () => {
     const prisma = getPrisma();
     const repo = new PrismaCupRepository(prisma);

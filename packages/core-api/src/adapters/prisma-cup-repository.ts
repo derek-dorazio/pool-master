@@ -89,6 +89,14 @@ export class PrismaCupRepository implements CupRepository {
     return row === null ? null : toCup(row);
   }
 
+  async findByKey(key: CupKey): Promise<Cup | null> {
+    const row = await this.prisma.cup.findUnique({
+      where: { leagueId_seasonYear_sportLeagueId: key },
+      select: CUP_SELECT,
+    });
+    return row === null ? null : toCup(row);
+  }
+
   async findByLeagueSeason(leagueId: string, seasonYear: number): Promise<Cup[]> {
     const rows = await this.prisma.cup.findMany({
       where: { leagueId, seasonYear },

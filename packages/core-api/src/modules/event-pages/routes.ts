@@ -33,7 +33,7 @@ export function eventPagesModule(fastify: FastifyInstance): void {
     schema: {
       tags: TAGS,
       summary: 'List event pages',
-      description: `The active event pages, of one sport or every sport, each with its offers and their next editions, for How to Play's and the welcome page's Coming up row. ${PUBLIC}`,
+      description: `The active event pages, of one sport or every sport, each with its offers and their next editions; with \`upcoming=true\`, only the pages with an edition coming, soonest first, for How to Play's and the welcome page's Coming up row. ${PUBLIC}`,
       operationId: 'listEventPages',
       querystring: schemaRef('EventPageListQuery'),
       response: { 200: schemaRef('EventPageListResponse') },

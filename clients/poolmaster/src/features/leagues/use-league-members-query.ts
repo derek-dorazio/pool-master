@@ -5,15 +5,13 @@ import { QueryKeys } from '@/lib/query-keys';
 import { throwApiError } from '@/lib/errors';
 
 /**
- * A league's member roster, indexed by user (#202).
- *
- * Both team surfaces — the teams directory and the team owners panel — had their own copy of this query
- * and their own byte-identical `new Map(members.map(m => [m.userId, m]))`, for the same
- * purpose: labelling a squad owner with their league role. One copy, one cache entry.
+ * A league's member roster, indexed by user (#202): League settings names the commissioners from
+ * it and Invites names who sent each invite. A squad owner's league role comes on the squad read
+ * itself (#1202), so the team pages no longer read this.
  *
  * This is NOT viewer context. `LeagueMembershipDto` here is every member's edge, and the
- * question it answers — "what is *this* person's role in the league?" — is a property of them,
- * not of the requester. The viewer's own standing comes from `useLeagueContext` (A8).
+ * question it answers — "who is *this* person in the league?" — is a property of them, not of
+ * the requester. The viewer's own standing comes from `useLeagueContext` (A8).
  */
 export function useLeagueMembersQuery(leagueId: string) {
   const query = useQuery({

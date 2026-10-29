@@ -21,7 +21,7 @@ import {
 } from '../../support/repo-fakes';
 import { asPrismaClient } from '../../support/prisma-double';
 import { mockFn } from '../../support/mock-fn';
-import type { Squad, SquadMembership, User } from '../../../packages/shared/domain';
+import { LeagueRole, type Squad, type SquadMembership, type User } from '../../../packages/shared/domain';
 
 /**
  * #202 step 3.4 — members come off `UserRepository` now, not a raw `prisma.user` select of
@@ -45,8 +45,9 @@ function buildUser(overrides: Partial<User> & { id: string }): User {
 function squadDetails(
   squad: Squad,
   members: Array<{ membership: SquadMembership; user: User }> = [],
+  leagueRole: LeagueRole | null = LeagueRole.MEMBER,
 ): SquadDetails {
-  return { ...squad, members };
+  return { ...squad, members: members.map((member) => ({ ...member, leagueRole })) };
 }
 
 function createLeagueMembershipRepo(
@@ -315,6 +316,24 @@ describe('SquadService', () => {
         ['squad-3', 0, []],
       ]);
       expect(result[0]?.members[0]?.user.lastName).toBe('user-1');
+    });
+
+    it('carries each owner\'s league role onto the team, null for an owner with no membership in the league (#1202)', async () => {
+      const squadRepo = createSquadRepo({
+        findDetailsByLeague: jest.fn().mockResolvedValue([
+          squadDetails(squadRow('squad-1'), [owner('squad-1', 'user-1')], LeagueRole.COMMISSIONER),
+          squadDetails(squadRow('squad-2'), [owner('squad-2', 'user-2')], LeagueRole.MEMBER),
+          squadDetails(squadRow('squad-3'), [owner('squad-3', 'user-3')], null),
+        ]),
+      });
+
+      const result = await buildService(squadRepo, createSquadMembershipRepo()).listSquads('league-1', 'user-1');
+
+      expect(result.map((squad) => squad.members.map((member) => [member.userId, member.leagueRole]))).toEqual([
+        [['user-1', LeagueRole.COMMISSIONER]],
+        [['user-2', LeagueRole.MEMBER]],
+        [['user-3', null]],
+      ]);
     });
 
     it('returns one team with its owners from a single read', async () => {

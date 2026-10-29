@@ -65,6 +65,7 @@ type LeagueSquadMemberFixture = Pick<
   | 'leagueId'
   | 'userId'
   | 'user'
+  | 'leagueRole'
   | 'status'
   | 'joinedAt'
   | 'createdAt'
@@ -142,6 +143,7 @@ const baseSquadMember: LeagueSquadMemberFixture = {
   leagueId: 'league-1',
   userId: 'user-1',
   user: baseCurrentUser,
+  leagueRole: LeagueRole.MEMBER,
   status: 'ACTIVE',
   joinedAt: '2026-04-15T00:00:00.000Z',
   createdAt: '2026-04-15T00:00:00.000Z',

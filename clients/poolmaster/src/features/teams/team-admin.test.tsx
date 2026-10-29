@@ -79,7 +79,7 @@ function renderAdmin(path: string) {
   return { ...view, queryClient };
 }
 
-const commissionerTeam = buildLeagueSquad();
+const commissionerTeam = buildLeagueSquad({ members: [buildLeagueSquadMember({ leagueRole: 'COMMISSIONER' })] });
 const memberTeam = buildLeagueSquad({
   id: 'team-2',
   name: 'Second Team',
@@ -134,7 +134,7 @@ describe('Commissioner tools › Teams', () => {
     expect(await screen.findByTestId('league-home-destination')).toBeInTheDocument();
   });
 
-  it('lists every member\'s squad with a Manage link, marks the commissioner\'s, and highlights Members in the menu', async () => {
+  it('lists every member\'s squad with a Manage link, marks the commissioner\'s from the owners\' league roles on the team list without reading the roster, and highlights Members in the menu', async () => {
     primeMocks();
 
     renderAdmin('/league/BIGDAWGS/admin/teams');
@@ -146,6 +146,7 @@ describe('Commissioner tools › Teams', () => {
     expect(screen.getByTestId('commissioner-tools-menu-teams')).toHaveAttribute('aria-current', 'page');
     expect(screen.getByTestId('commissioner-tools-menu-teams')).toHaveTextContent('Members');
     expect(screen.getByTestId('admin-teams-invite')).toHaveAttribute('href', '/league/BIGDAWGS/admin/invites');
+    expect(listLeagueMembersMock).not.toHaveBeenCalled();
   });
 
   it('narrows the list to teams with a commissioner, or to inactive teams', async () => {
@@ -197,6 +198,19 @@ describe('Commissioner tools › Manage team', () => {
     expect(screen.getByTestId('manage-team-edit')).toHaveAttribute('aria-disabled', 'false');
     expect(within(screen.getByTestId('manage-team-owners')).getByText('Morgan Member')).toBeInTheDocument();
     expect(screen.getByTestId('commissioner-tools-menu-teams')).toHaveAttribute('aria-current', 'page');
+  });
+
+  it('labels each owner with their league role from the team read, without reading the league roster', async () => {
+    primeMocks();
+
+    renderAdmin('/league/BIGDAWGS/admin/teams/team-1');
+
+    const owner = within(await screen.findByTestId('my-team-member-user-1'));
+    expect(owner.getByText('Commissioner')).toBeInTheDocument();
+    renderAdmin('/league/BIGDAWGS/admin/teams/team-2');
+    const member = within(await screen.findByTestId('my-team-member-user-2'));
+    expect(member.getByText('Member')).toBeInTheDocument();
+    expect(listLeagueMembersMock).not.toHaveBeenCalled();
   });
 
   it('reads only the team it manages, not every team in the league', async () => {

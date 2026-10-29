@@ -307,7 +307,9 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
       .sort((left, right) => left.joinedAt.getTime() - right.joinedAt.getTime())
       .flatMap((membership) => {
         const user = users.get(membership.userId);
-        return user ? [{ membership, user }] : [];
+        const leagueRole = memberships
+          .where((row) => row.leagueId === squad.leagueId && row.userId === membership.userId)[0]?.role ?? null;
+        return user ? [{ membership, user, leagueRole }] : [];
       }),
   });
 

@@ -63,12 +63,15 @@ export function useCupSeasonsQuery(leagueId: string) {
   });
 }
 
-/** One squad's points in a cup, counted contest by counted contest. */
-export function useCupSquadPointsQuery(leagueId: string, cupId: string, squadId: string) {
+/**
+ * One squad's points in the league's cup for a season and sports league, counted contest by
+ * counted contest, with the cup's name: one read, not the season's every cup to find its id (#1202).
+ */
+export function useCupSquadPointsQuery(leagueId: string, seasonYear: number, sportLeagueId: string, squadId: string) {
   return useQuery({
-    queryKey: QueryKeys.cups.squadPoints(leagueId, cupId, squadId),
+    queryKey: QueryKeys.cups.squadPoints(leagueId, seasonYear, sportLeagueId, squadId),
     queryFn: async (): Promise<CupSquadPointsDto> => {
-      const response = await getCupSquadPoints({ path: { id: leagueId, cupId, squadId } });
+      const response = await getCupSquadPoints({ path: { id: leagueId, squadId }, query: { seasonYear, sportLeagueId } });
 
       if (!response.data?.squadPoints) {
         throwApiError(response.error, 'Cup squad points response is missing data.');
@@ -76,7 +79,7 @@ export function useCupSquadPointsQuery(leagueId: string, cupId: string, squadId:
 
       return response.data.squadPoints;
     },
-    enabled: Boolean(leagueId && cupId && squadId),
+    enabled: Boolean(leagueId && sportLeagueId && squadId),
     retry: false,
   });
 }
