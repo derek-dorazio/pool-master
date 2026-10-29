@@ -24,6 +24,7 @@ import {
   fakeContestRepo,
 } from '../../support/repo-fakes';
 import { mockFn } from '../../support/mock-fn';
+import { fakeLogger } from '../../support/fake-logger';
 
 /** Before every event's start in this file, so the release cutoff never depends on today. */
 const NOW = new Date('2026-01-15T12:00:00.000Z');
@@ -73,7 +74,7 @@ function setup(sportName: Sport = Sport.GOLF, sportEventChanged?: SportEventChan
     lifecycle,
     now: () => NOW,
   });
-  return { store, service, sportLeague, lifecycle };
+  return { store, service, sportLeague, lifecycle, sportEvents };
 }
 
 /** An ordinary edit: a moved start of a released event is told to its leagues. */
@@ -443,36 +444,86 @@ describe('SportEventService.releaseEvent (#431)', () => {
 });
 
 describe('SportEventService — read, update, delete', () => {
-  it('lists events with their field, tier and contest counts, zero where there are none', async () => {
+  it('lists events with their field, tier and admin counts for a root admin\'s read, zero where there are none', async () => {
     const { store, service } = setup();
     const event = store.addEvent();
     store.contestsByEvent.set(event.id, 2);
     store.addToField(event.id, 'participant-x');
 
-    const [summary] = await service.listEvents({ eventYear: event.eventYear });
+    const [summary] = await service.listEvents({ eventYear: event.eventYear }, { adminCounts: true });
 
-    expect(summary).toMatchObject({ loadedParticipantCount: 1, untieredParticipantCount: 1, tierCount: 0, emptyTierLabels: [], contestCount: 2 });
-    await expect(service.getEvent('missing')).resolves.toBeNull();
+    expect(summary).toMatchObject({
+      loadedParticipantCount: 1,
+      tierCount: 0,
+      adminCounts: { untieredParticipantCount: 1, unpricedParticipantCount: 1, emptyTierLabels: [], contestCount: 2 },
+    });
+  });
+
+  // #1198 — the admin counts are five more queries per read and count contests across every
+  // league, so a member's read runs only the field and tier counts.
+  it('lists events for a member with only the field and tier counts, never running the admin counts', async () => {
+    const { store, service, sportEvents } = setup();
+    const event = store.addEvent();
+    store.contestsByEvent.set(event.id, 2);
+    store.addToField(event.id, 'participant-x');
+    const adminCounts = [
+      jest.spyOn(sportEvents, 'countUntieredActiveParticipants'),
+      jest.spyOn(sportEvents, 'countUnpricedActiveParticipants'),
+      jest.spyOn(sportEvents, 'findEmptyTierLabels'),
+      jest.spyOn(sportEvents, 'countContests'),
+    ];
+
+    const [summary] = await service.listEvents({ eventYear: event.eventYear }, { adminCounts: false });
+
+    expect(summary).toMatchObject({ loadedParticipantCount: 1, tierCount: 0, adminCounts: null });
+    for (const count of adminCounts) {
+      expect(count).not.toHaveBeenCalled();
+    }
+  });
+
+  it('narrows the list to the statuses asked for', async () => {
+    const { store, service } = setup();
+    const scheduled = store.addEvent({ status: SportEventStatus.SCHEDULED });
+    const live = store.addEvent({ status: SportEventStatus.IN_PROGRESS });
+    store.addEvent({ status: SportEventStatus.COMPLETED });
+
+    const listed = await service.listEvents(
+      { eventYear: 2026, statuses: [SportEventStatus.SCHEDULED, SportEventStatus.IN_PROGRESS] },
+      { adminCounts: false },
+    );
+
+    expect(listed.map(({ event }) => event.id).sort()).toEqual([scheduled.id, live.id].sort());
+  });
+
+  it('reads one event with no counts at all, and 404s a draft for a released-only read or an unknown id', async () => {
+    const { store, service, sportEvents } = setup();
+    const draft = store.addEvent({ status: SportEventStatus.DRAFT });
+    const countParticipants = jest.spyOn(sportEvents, 'countParticipants');
+    const countTiers = jest.spyOn(sportEvents, 'countTiers');
+
+    await expect(service.requireEvent(draft.id)).resolves.toMatchObject({ id: draft.id });
+    await expect(service.requireEvent(draft.id, { releasedOnly: true })).rejects.toMatchObject({ code: 'EVENT_NOT_FOUND', statusCode: 404 });
+    await expect(service.requireEvent('missing')).rejects.toMatchObject({ code: 'EVENT_NOT_FOUND', statusCode: 404 });
+    expect(countParticipants).not.toHaveBeenCalled();
+    expect(countTiers).not.toHaveBeenCalled();
+  });
+
+  it('lists a sport league\'s event years, leaving out a year with only drafts for a released-only read', async () => {
+    const { store, service, sportLeague } = setup();
+    store.addEvent({ sportLeagueId: sportLeague.id, eventYear: 2026 });
+    store.addEvent({ sportLeagueId: sportLeague.id, eventYear: 2025 });
+    store.addEvent({ sportLeagueId: sportLeague.id, eventYear: 2027, status: SportEventStatus.DRAFT });
+
+    await expect(service.listEventYears(sportLeague.id, { releasedOnly: false })).resolves.toEqual([2025, 2026, 2027]);
+    await expect(service.listEventYears(sportLeague.id, { releasedOnly: true })).resolves.toEqual([2025, 2026]);
   });
 
   it('refuses to list every event: a sport, a sport league or a year is required', async () => {
     const { store, service } = setup();
     store.addEvent();
 
-    await expect(service.listEvents({})).rejects.toMatchObject({ code: 'SPORT_EVENT_FILTER_REQUIRED', statusCode: 400 });
-    await expect(service.listEvents({ status: SportEventStatus.DRAFT })).rejects.toMatchObject({ code: 'SPORT_EVENT_FILTER_REQUIRED', statusCode: 400 });
-  });
-
-  it('lists a sport league\'s event years newest first, and hides a DRAFT-only year from a released-only read', async () => {
-    const { store, service } = setup();
-    store.addEvent({ sportLeagueId: 'pga', eventYear: 2025 });
-    store.addEvent({ sportLeagueId: 'pga', eventYear: 2026 });
-    store.addEvent({ sportLeagueId: 'pga', eventYear: 2026 });
-    store.addEvent({ sportLeagueId: 'pga', eventYear: 2027, status: SportEventStatus.DRAFT });
-    store.addEvent({ sportLeagueId: 'lpga', eventYear: 2030 });
-
-    await expect(service.listEventYears('pga', { releasedOnly: false })).resolves.toEqual([2027, 2026, 2025]);
-    await expect(service.listEventYears('pga', { releasedOnly: true })).resolves.toEqual([2026, 2025]);
+    await expect(service.listEvents({}, { adminCounts: true })).rejects.toMatchObject({ code: 'SPORT_EVENT_FILTER_REQUIRED', statusCode: 400 });
+    await expect(service.listEvents({ statuses: [SportEventStatus.DRAFT] }, { adminCounts: true })).rejects.toMatchObject({ code: 'SPORT_EVENT_FILTER_REQUIRED', statusCode: 400 });
   });
 
   it('updates an admin-managed event, clearing a field set to null', async () => {
@@ -662,5 +713,111 @@ describe('PATCH /events/:eventId handler passes tellMembers on to the event serv
       expect.objectContaining({ id: event.id, startDate: new Date('2026-06-04T11:45:00.000Z') }),
       { kind: 'RESCHEDULED', previousStart: MANUAL_INPUT.startDate },
     );
+  });
+});
+
+describe('event read handlers count admin numbers for a root admin only (#1198)', () => {
+  type ListEventsRequest = Parameters<ReturnType<typeof createEventHandlers>['listEvents']>[0];
+  type GetEventRequest = Parameters<ReturnType<typeof createEventHandlers>['getEvent']>[0];
+  type ListEventYearsRequest = Parameters<ReturnType<typeof createEventHandlers>['listEventYears']>[0];
+
+  const MEMBER = { userId: 'member-1', email: 'member-1@unit.test', isRootAdmin: false, sessionId: null };
+  const ROOT_ADMIN = { userId: 'admin-1', email: 'admin-1@unit.test', isRootAdmin: true, sessionId: null };
+  const log = fakeLogger();
+
+  function setupHandlers() {
+    const context = setup();
+    const listBracket = mockFn<SportEventBracketService['listBracket']>(async () => []);
+    const handlers = createEventHandlers({
+      services: {
+        sportEvents: context.service,
+        rounds: stubInstance(SportEventRoundService, {}),
+        bracket: stubInstance(SportEventBracketService, { listBracket }),
+        tiers: stubInstance(SportEventTierService, {}),
+        field: stubInstance(SportEventParticipantService, {}),
+        golfScores: stubInstance(GolfScoreService, {}),
+        raceResults: stubInstance(RaceResultService, {}),
+        statLines: stubInstance(StatLineService, {}),
+        matchResults: stubInstance(MatchResultService, {}),
+        sportLeagues: stubInstance(SportLeagueService, {}),
+      },
+      eventLifecycle: context.lifecycle,
+      scoreSource: stubInstance(EventScoreSourceService, {}),
+      ingestion: stubInstance(IngestionService, {}),
+    });
+    const countContests = jest.spyOn(context.sportEvents, 'countContests');
+    return { ...context, handlers, listBracket, countContests };
+  }
+
+  it('gives a member\'s event list null admin counts, without counting contests across leagues', async () => {
+    const { store, handlers, countContests } = setupHandlers();
+    const event = store.addEvent({ status: SportEventStatus.SCHEDULED });
+    store.contestsByEvent.set(event.id, 3);
+
+    const response = await handlers.listEvents(asFastifyRequest<ListEventsRequest>({ query: { eventYear: 2026 }, authUser: MEMBER, log }));
+
+    expect(response.events).toEqual([expect.objectContaining({ id: event.id, adminCounts: null })]);
+    expect(countContests).not.toHaveBeenCalled();
+  });
+
+  it('gives a root admin\'s event list each event\'s admin counts, drafts included', async () => {
+    const { store, handlers } = setupHandlers();
+    const event = store.addEvent({ status: SportEventStatus.DRAFT });
+    store.contestsByEvent.set(event.id, 3);
+
+    const response = await handlers.listEvents(asFastifyRequest<ListEventsRequest>({ query: { eventYear: 2026 }, authUser: ROOT_ADMIN, log }));
+
+    expect(response.events).toEqual([expect.objectContaining({ id: event.id, adminCounts: expect.objectContaining({ contestCount: 3 }) })]);
+  });
+
+  it('passes the statuses asked for on to the list, so contest setup reads only events it can offer', async () => {
+    const { store, handlers } = setupHandlers();
+    const scheduled = store.addEvent({ status: SportEventStatus.SCHEDULED });
+    store.addEvent({ status: SportEventStatus.COMPLETED });
+
+    const response = await handlers.listEvents(asFastifyRequest<ListEventsRequest>({
+      query: { eventYear: 2026, status: [SportEventStatus.SCHEDULED, SportEventStatus.IN_PROGRESS] },
+      authUser: MEMBER,
+      log,
+    }));
+
+    expect(response.events.map((event) => event.id)).toEqual([scheduled.id]);
+  });
+
+  it('gives a member one event with null admin counts, and a root admin the same event with them', async () => {
+    const { store, handlers } = setupHandlers();
+    const event = store.addEvent({ status: SportEventStatus.SCHEDULED });
+    store.contestsByEvent.set(event.id, 2);
+
+    const member = await handlers.getEvent(asFastifyRequest<GetEventRequest>({ params: { eventId: event.id }, authUser: MEMBER }));
+    const admin = await handlers.getEvent(asFastifyRequest<GetEventRequest>({ params: { eventId: event.id }, authUser: ROOT_ADMIN }));
+
+    expect(member.event.adminCounts).toBeNull();
+    expect(admin.event.adminCounts).toMatchObject({ contestCount: 2 });
+  });
+
+  it('answers a member\'s bracket read on a draft with 404 from one event read, counting nothing', async () => {
+    const { store, handlers, sportEvents, listBracket } = setupHandlers();
+    const draft = store.addEvent({ status: SportEventStatus.DRAFT });
+    const countParticipants = jest.spyOn(sportEvents, 'countParticipants');
+
+    await expect(handlers.getEventBracket(asFastifyRequest<GetEventRequest>({ params: { eventId: draft.id }, authUser: MEMBER })))
+      .rejects.toMatchObject({ code: 'EVENT_NOT_FOUND', statusCode: 404 });
+    await expect(handlers.getEventBracket(asFastifyRequest<GetEventRequest>({ params: { eventId: draft.id }, authUser: ROOT_ADMIN })))
+      .resolves.toEqual({ matches: [] });
+    expect(listBracket).toHaveBeenCalledTimes(1);
+    expect(countParticipants).not.toHaveBeenCalled();
+  });
+
+  it('lists a sport league\'s event years, a draft-only year for a root admin alone', async () => {
+    const { store, handlers, sportLeague } = setupHandlers();
+    store.addEvent({ sportLeagueId: sportLeague.id, eventYear: 2026 });
+    store.addEvent({ sportLeagueId: sportLeague.id, eventYear: 2027, status: SportEventStatus.DRAFT });
+
+    const member = await handlers.listEventYears(asFastifyRequest<ListEventYearsRequest>({ query: { sportLeagueId: sportLeague.id }, authUser: MEMBER }));
+    const admin = await handlers.listEventYears(asFastifyRequest<ListEventYearsRequest>({ query: { sportLeagueId: sportLeague.id }, authUser: ROOT_ADMIN }));
+
+    expect(member).toEqual({ years: [2026] });
+    expect(admin).toEqual({ years: [2026, 2027] });
   });
 });

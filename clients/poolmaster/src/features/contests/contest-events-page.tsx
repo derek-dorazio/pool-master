@@ -6,9 +6,9 @@ import {
 } from '@poolmaster/shared/dto';
 import { useQuery } from '@tanstack/react-query';
 import { Lock } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router';
-import { listEvents, setContestSportEvents, type ContestDto, type SportEventDto } from '@/lib/api';
+import { listEvents, listEventYears, setContestSportEvents, type ContestDto, type SportEventDto } from '@/lib/api';
 import { ApiError, extractErrorMessage, throwApiError, type ErrorCodeMessages } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -54,8 +54,25 @@ function unavailableReason(event: SportEventDto): string | null {
   }
 }
 
+type ChosenEvent = { id: string; name: string; startDate: string };
+
 function byStartDate(left: { startDate: string; id: string }, right: { startDate: string; id: string }) {
   return Date.parse(left.startDate) - Date.parse(right.startDate) || left.id.localeCompare(right.id);
+}
+
+/** One season of a sport league's events, read when it is picked rather than every season at once (#1198). */
+function sportLeagueYearEventsQueryOptions(sportLeagueId: string, eventYear: number) {
+  return {
+    queryKey: QueryKeys.sportEvents.bySportLeagueYear(sportLeagueId, eventYear),
+    queryFn: async (): Promise<SportEventDto[]> => {
+      const response = await listEvents({ query: { sportLeagueId, eventYear } });
+      if (!response.data?.events) {
+        throwApiError(response.error, 'Sport event list response is missing data.');
+      }
+      return response.data.events;
+    },
+    retry: false,
+  };
 }
 
 /**
@@ -67,22 +84,32 @@ function ContestEventsForm({
   contest,
   firstEvent,
   leagueCode,
-  leagueEvents,
+  eventYears,
   leagueId,
 }: {
   contest: ContestDto;
   firstEvent: SportEventDto;
   leagueCode: string;
-  leagueEvents: SportEventDto[];
+  eventYears: number[];
   leagueId: string;
 }) {
-  const logger = getLogger().child({ feature: 'contest-events-page' });
+  const logger = useMemo(() => getLogger().child({ feature: 'contest-events-page' }), []);
   const navigate = useNavigate();
   const contestPath = buildLeagueAdminContestPath(leagueCode, contest.id);
-  const [selectedIds, setSelectedIds] = useState<ReadonlySet<string>>(
-    () => new Set(contest.sportEvents.map((sportEvent) => sportEvent.sportEventId)),
+  // The chosen events by id, each with what the order list shows: a season read later may not hold it.
+  const [selected, setSelected] = useState<ReadonlyMap<string, ChosenEvent>>(
+    () => new Map(contest.sportEvents.map((sportEvent) => [
+      sportEvent.sportEventId,
+      { id: sportEvent.sportEventId, name: sportEvent.name, startDate: sportEvent.startDate },
+    ])),
   );
   const [year, setYear] = useState(firstEvent.eventYear);
+  const yearEventsQuery = useQuery(sportLeagueYearEventsQueryOptions(firstEvent.sportLeagueId, year));
+  useEffect(() => {
+    if (yearEventsQuery.isError) {
+      logger.warn({ action: 'contest.events.year.load.failed', data: { leagueCode, contestId: contest.id, year }, err: yearEventsQuery.error }, 'Contest events page failed to load a season of events');
+    }
+  }, [contest.id, leagueCode, logger, year, yearEventsQuery.error, yearEventsQuery.isError]);
   const contestEventIds = useMemo(
     () => new Set(contest.sportEvents.map((sportEvent) => sportEvent.sportEventId)),
     [contest.sportEvents],
@@ -90,41 +117,35 @@ function ContestEventsForm({
   // Once one of the contest's events has started, its events can be added to but not removed.
   const removalsLocked = contest.sportEvents.some((sportEvent) => hasContestEventStarted(sportEvent));
   const years = useMemo(
-    () => [...new Set([firstEvent.eventYear, ...leagueEvents.map((event) => event.eventYear)])].sort((a, b) => a - b),
-    [firstEvent.eventYear, leagueEvents],
+    () => [...new Set([firstEvent.eventYear, ...eventYears])].sort((a, b) => a - b),
+    [firstEvent.eventYear, eventYears],
   );
   const yearEvents = useMemo(
-    () => leagueEvents.filter((event) => event.eventYear === year).sort(byStartDate),
-    [leagueEvents, year],
+    () => [...(yearEventsQuery.data ?? [])].sort(byStartDate),
+    [yearEventsQuery.data],
   );
-  const addable = yearEvents.filter((event) => !selectedIds.has(event.id) && event.contestEligible);
+  const addable = yearEvents.filter((event) => !selected.has(event.id) && event.contestEligible);
 
   // The chosen events in the order the contest will play them: by start, as the server keeps them.
-  const chosen = useMemo(() => {
-    const known = new Map<string, { id: string; name: string; startDate: string }>();
-    for (const sportEvent of contest.sportEvents) {
-      known.set(sportEvent.sportEventId, { id: sportEvent.sportEventId, name: sportEvent.name, startDate: sportEvent.startDate });
-    }
-    for (const event of leagueEvents) {
-      known.set(event.id, { id: event.id, name: event.name, startDate: event.startDate });
-    }
-    return [...selectedIds].flatMap((id) => known.get(id) ?? []).sort(byStartDate);
-  }, [contest.sportEvents, leagueEvents, selectedIds]);
+  const chosen = useMemo(() => [...selected.values()].sort(byStartDate), [selected]);
 
-  function toggle(eventId: string) {
-    setSelectedIds((current) => {
-      const next = new Set(current);
-      if (next.has(eventId)) {
-        next.delete(eventId);
+  function toggle(event: SportEventDto) {
+    setSelected((current) => {
+      const next = new Map(current);
+      if (next.has(event.id)) {
+        next.delete(event.id);
       } else {
-        next.add(eventId);
+        next.set(event.id, { id: event.id, name: event.name, startDate: event.startDate });
       }
       return next;
     });
   }
 
   function addAll() {
-    setSelectedIds((current) => new Set([...current, ...addable.map((event) => event.id)]));
+    setSelected((current) => new Map([
+      ...current,
+      ...addable.map((event) => [event.id, { id: event.id, name: event.name, startDate: event.startDate }] as const),
+    ]));
   }
 
   const saveMutation = useInvalidatingMutation({
@@ -158,7 +179,7 @@ function ContestEventsForm({
     },
   });
 
-  const removedCount = [...contestEventIds].filter((id) => !selectedIds.has(id)).length;
+  const removedCount = [...contestEventIds].filter((id) => !selected.has(id)).length;
 
   return (
     <FormPage
@@ -208,8 +229,16 @@ function ContestEventsForm({
       </div>
 
       <ul className="divide-y divide-border rounded-xl border border-border" data-testid="contest-events-options">
-        {yearEvents.length ? yearEvents.map((event) => {
-          const isChosen = selectedIds.has(event.id);
+        {yearEventsQuery.isLoading ? (
+          <li className="px-4 py-3 text-sm text-muted-foreground" data-testid="contest-events-year-loading">
+            Loading {year} events...
+          </li>
+        ) : yearEventsQuery.isError ? (
+          <li className="px-4 py-3 text-sm text-destructive" data-testid="contest-events-year-error">
+            We couldn&apos;t load the {year} events. Please try again.
+          </li>
+        ) : yearEvents.length ? yearEvents.map((event) => {
+          const isChosen = selected.has(event.id);
           const inContest = contestEventIds.has(event.id);
           const locked = inContest && removalsLocked;
           const reason = inContest ? null : unavailableReason(event);
@@ -221,7 +250,7 @@ function ContestEventsForm({
                   checked={isChosen}
                   data-testid={`contest-events-option-${event.id}`}
                   disabled={locked || (!isChosen && reason !== null)}
-                  onChange={() => toggle(event.id)}
+                  onChange={() => toggle(event)}
                 />
                 <span className="min-w-0 flex-1">
                   <span className="font-medium">{event.name}</span>
@@ -289,14 +318,15 @@ export function ContestEventsPage() {
   const firstEventQuery = useQuery(sportEventQueryOptions((contest ? firstContestEvent(contest)?.sportEventId : undefined) ?? ''));
   const firstEvent = firstEventQuery.data;
   const sportLeagueId = firstEvent?.sportLeagueId ?? null;
-  const leagueEventsQuery = useQuery({
-    queryKey: QueryKeys.sportEvents.bySportLeague(sportLeagueId),
-    queryFn: async (): Promise<SportEventDto[]> => {
-      const response = await listEvents({ query: { sportLeagueId: sportLeagueId ?? undefined } });
-      if (!response.data?.events) {
-        throwApiError(response.error, 'Sport event list response is missing data.');
+  // The seasons the year picker offers, not every season's events (#1198).
+  const eventYearsQuery = useQuery({
+    queryKey: QueryKeys.sportEvents.yearsBySportLeague(sportLeagueId),
+    queryFn: async (): Promise<number[]> => {
+      const response = await listEventYears({ query: { sportLeagueId: sportLeagueId ?? '' } });
+      if (!response.data?.years) {
+        throwApiError(response.error, 'Sport event year list response is missing data.');
       }
-      return response.data.events;
+      return response.data.years;
     },
     enabled: sportLeagueId !== null,
     retry: false,
@@ -306,7 +336,7 @@ export function ContestEventsPage() {
   if (!league) {
     return null;
   }
-  if (contestQuery.isLoading || firstEventQuery.isLoading || leagueEventsQuery.isLoading) {
+  if (contestQuery.isLoading || firstEventQuery.isLoading || eventYearsQuery.isLoading) {
     return <LoadingState body="Loading events..." testId="contest-events-loading" />;
   }
   // A missing contest or another league's, a final one, one that covers a single event (a draw, a bracket), or a read that failed
@@ -315,7 +345,7 @@ export function ContestEventsPage() {
     !contest
     || contest.leagueId !== league.id
     || !firstEvent
-    || !leagueEventsQuery.data
+    || !eventYearsQuery.data
     || contest.status === ContestStatus.COMPLETED
     || coversOneEvent(contest.selectionType)
     || !league.isActive
@@ -328,7 +358,7 @@ export function ContestEventsPage() {
       firstEvent={firstEvent}
       key={contest.id}
       leagueCode={leagueCode}
-      leagueEvents={leagueEventsQuery.data}
+      eventYears={eventYearsQuery.data}
       leagueId={league.id}
     />
   );

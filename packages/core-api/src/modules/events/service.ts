@@ -44,18 +44,36 @@ import type { SportEventBracketService } from './sport-event-bracket-service';
 import type { SportEventRoundService } from './sport-event-round-service';
 import type { SportEventTierService } from './sport-event-tier-service';
 
-/** An event with the counts its readers derive readiness and deletability from. */
-export interface SportEventSummary {
-  event: SportEvent;
-  loadedParticipantCount: number;
+/**
+ * What only a root admin reads of an event: its release readiness and whether it can be deleted.
+ * Five more queries per read, so they are counted for a root admin only (#1198); the contest
+ * count spans every league, which a commissioner must never see.
+ */
+export interface SportEventAdminCounts {
   /** Active participants with no tier: a DRAFT event can't be released while any remain. */
   untieredParticipantCount: number;
   /** Active participants with no price: a DRAFT event can't be released while any remain (#93). */
   unpricedParticipantCount: number;
-  tierCount: number;
   /** Labels of the tiers no active participant is in, in tier order: a DRAFT event can't be released while any remain. */
   emptyTierLabels: string[];
   contestCount: number;
+}
+
+/** An event with the counts every reader needs, and a root admin's own counts when asked for. */
+export interface SportEventSummary {
+  event: SportEvent;
+  loadedParticipantCount: number;
+  tierCount: number;
+  /** Null unless the read asked for them: see `SportEventAdminCounts`. */
+  adminCounts: SportEventAdminCounts | null;
+}
+
+/** An event summary with the root admin's counts filled in. */
+export type SportEventAdminSummary = SportEventSummary & { adminCounts: SportEventAdminCounts };
+
+/** Whether a read counts the root admin's numbers: only a root admin's read does (#1198). */
+export interface SportEventReadOptions {
+  adminCounts: boolean;
 }
 
 export interface CreateSportEventInput {
@@ -82,7 +100,7 @@ export interface ProviderEventDetail {
 
 /** What a provider event-year import (#385) created, and what it left alone and why. */
 export interface ProviderEventYearImport {
-  created: SportEventSummary[];
+  created: SportEventAdminSummary[];
   skipped: Array<{ externalId: string; name: string; reason: 'ALREADY_LINKED' | 'EDITION_EXISTS' }>;
 }
 
@@ -134,34 +152,25 @@ export class SportEventService {
    * The whole catalog for the filters — narrowed, never paged (§16). A sport, sport league or
    * event year is required (#1180), so the list never reads every event ever with its counts.
    */
-  async listEvents(filters: SportEventFilters): Promise<SportEventSummary[]> {
+  async listEvents(filters: SportEventFilters, options: SportEventReadOptions): Promise<SportEventSummary[]> {
     this.deps.logger?.debug({ action: 'events.list.start', data: { ...filters } }, 'Listing sport events');
     if (filters.sport === undefined && filters.sportLeagueId === undefined && filters.eventYear === undefined) {
       this.deps.logger?.warn({ action: 'events.list.filterRequired', data: { ...filters } }, 'Rejected a sport event list without a sport, sport league or year');
       throw new SportEventError('Choose a sport, a sport league or a year to list events.', 'SPORT_EVENT_FILTER_REQUIRED', 400);
     }
     const events = await this.deps.sportEvents.findAll(filters);
-    const summaries = await this.summarize(events);
+    const summaries = options.adminCounts ? await this.summarizeForAdmin(events) : await this.summarize(events);
     this.deps.logger?.info({ action: 'events.list.success', data: { ...filters, count: events.length } }, 'Listed sport events');
     return summaries;
   }
 
-  /** Each year the sport league has events in, newest first, for a year picker (#1251). */
+  /** The event years a sport league has events in, earliest first: what a year picker offers. */
   async listEventYears(sportLeagueId: string, options: { releasedOnly: boolean }): Promise<number[]> {
-    const years = await this.deps.sportEvents.findEventYears(sportLeagueId, options);
-    this.deps.logger?.debug({ action: 'events.years.success', data: { sportLeagueId, count: years.length } }, 'Listed sport event years');
-    return years;
-  }
-
-  async getEvent(sportEventId: string): Promise<SportEventSummary | null> {
-    const event = await this.deps.sportEvents.findById(sportEventId);
-    if (!event) return null;
-    const [summary] = await this.summarize([event]);
-    return summary;
+    return this.deps.sportEvents.findEventYears(sportLeagueId, options);
   }
 
   /** An admin-authored event: the reserved manual identity, DRAFT, accepting no provider data. */
-  async createEvent(input: CreateSportEventInput): Promise<SportEventSummary> {
+  async createEvent(input: CreateSportEventInput): Promise<SportEventAdminSummary> {
     const { sportLeague, sport } = await this.resolveSportLeague(input.sportLeagueId);
     const rounds = input.rounds ?? sportLeagueDefinitionOf(sport, sportLeague).defaultRounds;
     const eventSeries = await this.deps.eventSeries.findOrCreate(sportLeague.id, input.name);
@@ -190,7 +199,7 @@ export class SportEventService {
       { sportEventId: event.id, sportLeagueId: sportLeague.id, eventSeriesId: eventSeries.id, eventYear: input.eventYear, rounds },
       'Created sport event',
     );
-    return this.requireSummary(event.id);
+    return this.requireAdminSummary(event.id);
   }
 
   /**
@@ -205,7 +214,7 @@ export class SportEventService {
     externalId: string;
     rounds?: number;
     providerEvent: ProviderEventDetail;
-  }): Promise<SportEventSummary> {
+  }): Promise<SportEventAdminSummary> {
     const { sportLeague, sport } = await this.resolveSportLeague(input.sportLeagueId);
     if (await this.deps.sportEvents.findByProviderRef(input.providerId, input.externalId)) {
       throw new SportEventError(
@@ -247,7 +256,7 @@ export class SportEventService {
       { sportEventId: event.id, sportLeagueId: sportLeague.id, eventYear: input.eventYear, providerId: input.providerId, externalId: input.externalId, rounds },
       'Created sport event from provider event',
     );
-    return this.requireSummary(event.id);
+    return this.requireAdminSummary(event.id);
   }
 
   /**
@@ -263,7 +272,7 @@ export class SportEventService {
     providerId: string;
     providerEvents: ReadonlyArray<ProviderEventDetail & { externalId: string }>;
   }): Promise<ProviderEventYearImport> {
-    const created: SportEventSummary[] = [];
+    const created: SportEventAdminSummary[] = [];
     const skipped: ProviderEventYearImport['skipped'] = [];
     for (const providerEvent of input.providerEvents) {
       const { externalId, name } = providerEvent;
@@ -313,7 +322,7 @@ export class SportEventService {
     sportLeagueId: string;
     eventYear: number;
     targetYear?: number;
-  }): Promise<SportEventSummary[]> {
+  }): Promise<SportEventAdminSummary[]> {
     const { sportLeague } = await this.resolveSportLeague(input.sportLeagueId);
     const targetYear = input.targetYear ?? input.eventYear + 1;
     const shift = targetYear - input.eventYear;
@@ -336,7 +345,7 @@ export class SportEventService {
       );
     }
 
-    const cloned: SportEventSummary[] = [];
+    const cloned: SportEventAdminSummary[] = [];
     for (const event of sourceEvents) {
       cloned.push(await this.createEvent({
         sportLeagueId: sportLeague.id,
@@ -372,7 +381,7 @@ export class SportEventService {
     sportEventId: string,
     updates: SportEventUpdate,
     options: { tellMembers: boolean },
-  ): Promise<SportEventSummary> {
+  ): Promise<SportEventAdminSummary> {
     const { startDate: startedAt, rounds: roundCount, status } = await this.requireEvent(sportEventId);
     const movesStart = updates.startDate !== undefined && updates.startDate.getTime() !== startedAt.getTime();
     if (movesStart && !options.tellMembers && !isDateOnlyPlaceholder(startedAt)) {
@@ -402,7 +411,7 @@ export class SportEventService {
     if (shiftMs !== 0 && RESCHEDULE_TOLD.includes(status) && options.tellMembers) {
       await this.deps.lifecycle.sportEventRescheduled(await this.requireEvent(sportEventId), startedAt);
     }
-    return this.requireSummary(sportEventId);
+    return this.requireAdminSummary(sportEventId);
   }
 
   /**
@@ -414,8 +423,8 @@ export class SportEventService {
    * prices are not assigned or miss an active participant (#93), or, for a sport that plays a
    * bracket, its bracket is incomplete (#698).
    */
-  async releaseEvent(sportEventId: string): Promise<SportEventSummary> {
-    const summary = await this.requireSummary(sportEventId);
+  async releaseEvent(sportEventId: string): Promise<SportEventAdminSummary> {
+    const summary = await this.requireAdminSummary(sportEventId);
     const { event } = summary;
     if (event.status !== SportEventStatus.DRAFT) {
       this.deps.logger?.warn({ sportEventId, status: event.status }, 'Refused to release a sport event that is not a draft');
@@ -442,9 +451,9 @@ export class SportEventService {
         {
           sportEventId,
           loadedParticipantCount: summary.loadedParticipantCount,
-          untieredParticipantCount: summary.untieredParticipantCount,
-          unpricedParticipantCount: summary.unpricedParticipantCount,
-          emptyTierLabels: summary.emptyTierLabels,
+          untieredParticipantCount: summary.adminCounts.untieredParticipantCount,
+          unpricedParticipantCount: summary.adminCounts.unpricedParticipantCount,
+          emptyTierLabels: summary.adminCounts.emptyTierLabels,
           isPriced: summary.event.pricingConfig !== undefined,
         },
         'Refused to release a sport event that is not ready',
@@ -463,7 +472,7 @@ export class SportEventService {
       release: true,
     });
     this.deps.logger?.info({ sportEventId }, 'Released sport event for contests');
-    return this.requireSummary(sportEventId);
+    return this.requireAdminSummary(sportEventId);
   }
 
   /** Deletes an event with its rounds, tiers and field. 409 EVENT_HAS_CONTESTS while any contest runs on it. */
@@ -487,25 +496,39 @@ export class SportEventService {
    * lists them.
    */
   async releaseBlockersOf(sportEventId: string): Promise<string[]> {
-    return this.releaseBlockersFor(await this.requireSummary(sportEventId));
+    return this.releaseBlockersFor(await this.requireAdminSummary(sportEventId));
   }
 
-  private async releaseBlockersFor(summary: SportEventSummary): Promise<string[]> {
+  private async releaseBlockersFor(summary: SportEventAdminSummary): Promise<string[]> {
     return [...describeReleaseBlockers(summary), ...await this.deps.bracket.releaseBlockers(summary.event)];
   }
 
-  /** `releasedOnly` hides a DRAFT as if it did not exist: only a root admin sees drafts (#431). */
-  async requireSummary(sportEventId: string, options: { releasedOnly?: boolean } = {}): Promise<SportEventSummary> {
-    const summary = await this.getEvent(sportEventId);
-    if (!summary || (options.releasedOnly && summary.event.status === SportEventStatus.DRAFT)) {
-      throw new SportEventError(`Sport event ${sportEventId} was not found.`, 'EVENT_NOT_FOUND', 404);
-    }
+  /**
+   * The event with the counts a reader of it needs. `releasedOnly` hides a DRAFT as if it did not
+   * exist: only a root admin sees drafts (#431).
+   */
+  async requireSummary(
+    sportEventId: string,
+    options: SportEventReadOptions & { releasedOnly?: boolean },
+  ): Promise<SportEventSummary> {
+    const event = await this.requireEvent(sportEventId, options);
+    const [summary] = options.adminCounts ? await this.summarizeForAdmin([event]) : await this.summarize([event]);
     return summary;
   }
 
-  private async requireEvent(sportEventId: string): Promise<SportEvent> {
+  /** The event with a root admin's counts: what every admin action answers with. */
+  async requireAdminSummary(sportEventId: string): Promise<SportEventAdminSummary> {
+    const [summary] = await this.summarizeForAdmin([await this.requireEvent(sportEventId)]);
+    return summary;
+  }
+
+  /**
+   * The event, one read and no counts: the guard for a read or action that needs only to know the
+   * event exists (#1198). `releasedOnly` hides a DRAFT as if it did not exist (#431).
+   */
+  async requireEvent(sportEventId: string, options: { releasedOnly?: boolean } = {}): Promise<SportEvent> {
     const event = await this.deps.sportEvents.findById(sportEventId);
-    if (!event) {
+    if (!event || (options.releasedOnly && event.status === SportEventStatus.DRAFT)) {
       throw new SportEventError(`Sport event ${sportEventId} was not found.`, 'EVENT_NOT_FOUND', 404);
     }
     return event;
@@ -544,45 +567,61 @@ export class SportEventService {
     return this.deps.now?.() ?? new Date();
   }
 
+  /** The counts every reader of an event needs: two grouped counts for the whole list. */
   private async summarize(events: SportEvent[]): Promise<SportEventSummary[]> {
     const ids = events.map((event) => event.id);
-    const [participants, untiered, unpriced, tiers, emptyTiers, contests] = await Promise.all([
+    const [participants, tiers] = await Promise.all([
       this.deps.sportEvents.countParticipants(ids),
-      this.deps.sportEvents.countUntieredActiveParticipants(ids),
-      this.deps.sportEvents.countUnpricedActiveParticipants(ids),
       this.deps.sportEvents.countTiers(ids),
-      this.deps.sportEvents.findEmptyTierLabels(ids),
-      this.deps.sportEvents.countContests(ids),
     ]);
     return events.map((event) => ({
       event,
       loadedParticipantCount: participants.get(event.id) ?? 0,
-      untieredParticipantCount: untiered.get(event.id) ?? 0,
-      unpricedParticipantCount: unpriced.get(event.id) ?? 0,
       tierCount: tiers.get(event.id) ?? 0,
-      emptyTierLabels: emptyTiers.get(event.id) ?? [],
-      contestCount: contests.get(event.id) ?? 0,
+      adminCounts: null,
+    }));
+  }
+
+  /** Every reader's counts and a root admin's own. */
+  private async summarizeForAdmin(events: SportEvent[]): Promise<SportEventAdminSummary[]> {
+    const ids = events.map((event) => event.id);
+    const [summaries, untiered, unpriced, emptyTiers, contests] = await Promise.all([
+      this.summarize(events),
+      this.deps.sportEvents.countUntieredActiveParticipants(ids),
+      this.deps.sportEvents.countUnpricedActiveParticipants(ids),
+      this.deps.sportEvents.findEmptyTierLabels(ids),
+      this.deps.sportEvents.countContests(ids),
+    ]);
+    return summaries.map((summary) => ({
+      ...summary,
+      adminCounts: {
+        untieredParticipantCount: untiered.get(summary.event.id) ?? 0,
+        unpricedParticipantCount: unpriced.get(summary.event.id) ?? 0,
+        emptyTierLabels: emptyTiers.get(summary.event.id) ?? [],
+        contestCount: contests.get(summary.event.id) ?? 0,
+      },
     }));
   }
 }
 
 /** What still stops a DRAFT event being released, in words an admin can act on. */
-function describeReleaseBlockers(summary: SportEventSummary): string[] {
+function describeReleaseBlockers(summary: SportEventAdminSummary): string[] {
   const blockers: string[] = [];
+  const { untieredParticipantCount, unpricedParticipantCount, emptyTierLabels } = summary.adminCounts;
   if (summary.loadedParticipantCount === 0) {
     blockers.push('its field is not loaded');
   }
-  if (summary.untieredParticipantCount > 0) {
-    blockers.push(`${summary.untieredParticipantCount} active participant(s) have no tier`);
+  if (untieredParticipantCount > 0) {
+    blockers.push(`${untieredParticipantCount} active participant(s) have no tier`);
   }
   const { participant } = eventSportDefinition(summary.event).vocabulary;
-  for (const label of summary.emptyTierLabels) {
+  for (const label of emptyTierLabels) {
     blockers.push(`${label} has no ${participant.many}`);
   }
   if (!summary.event.pricingConfig) {
     blockers.push('its prices have not been assigned');
-  } else if (summary.unpricedParticipantCount > 0) {
-    blockers.push(`${summary.unpricedParticipantCount} active participant(s) have no price`);
+  } else if (unpricedParticipantCount > 0) {
+    blockers.push(`${unpricedParticipantCount} active participant(s) have no price`);
   }
   return blockers;
 }

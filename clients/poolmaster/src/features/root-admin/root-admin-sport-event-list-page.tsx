@@ -110,7 +110,8 @@ export function RootAdminSportEventListPage() {
         header: 'Tiers',
         cell: ({ getValue }) => getValue(),
       }),
-      columnHelper.accessor('contestCount', {
+      columnHelper.accessor((row) => row.adminCounts?.contestCount ?? null, {
+        id: 'contestCount',
         header: 'Contests',
         cell: ({ getValue }) => getValue(),
       }),

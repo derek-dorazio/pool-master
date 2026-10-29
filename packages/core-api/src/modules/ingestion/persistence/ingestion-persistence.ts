@@ -64,16 +64,15 @@ export class IngestionPersistence {
       })),
     }, 'Persisting sport events from ingestion');
 
-    for (const event of events) {
-      // poolmaster-allow-query-in-loop: #1247
-      const existingEvent = await this.prisma.sportEvent.findUnique({
-        where: {
-          providerId_externalId: {
-            providerId: event.providerId,
-            externalId: event.externalId,
-          },
-        },
-      });
+    // #1247: every linked event in one read, and the changed ones in one transaction. A provider
+    // naming the same event twice is taken at its last word, as persistParticipants does.
+    const latestByKey = new Map(events.map((event) => [providerKey(event), event]));
+    const linkedEvents = await this.findLinkedEvents([...latestByKey.values()]);
+    const linkedByKey = new Map(linkedEvents.map((row) => [providerKey(row), row]));
+    const updates: Array<{ id: string; participantCount: number | null }> = [];
+
+    for (const event of latestByKey.values()) {
+      const existingEvent = linkedByKey.get(providerKey(event));
       if (!existingEvent) {
         this.logger?.info({
           providerId: event.providerId,
@@ -88,11 +87,7 @@ export class IngestionPersistence {
 
       const disposition = resolveDisposition(before, after);
       if (disposition !== 'UNCHANGED') {
-        // poolmaster-allow-query-in-loop: #1247
-        await forgettingReads(ReadMemoKey.sportEvent, () => this.prisma.sportEvent.update({
-          where: { id: existingEvent.id },
-          data: { participantCount },
-        }));
+        updates.push({ id: existingEvent.id, participantCount });
       }
       detailRows.push({
         id: `sport-event:${event.providerId}:${event.externalId}`,
@@ -113,6 +108,12 @@ export class IngestionPersistence {
         name: event.name,
         participantCount,
       }, 'Persisted sport event from ingestion');
+    }
+
+    if (updates.length > 0) {
+      await forgettingReads(ReadMemoKey.sportEvent, () => this.prisma.$transaction(updates.map((update) =>
+        // poolmaster-allow-query-in-loop: the changed events of one provider feed (per-row values, one transaction)
+        this.prisma.sportEvent.update({ where: { id: update.id }, data: { participantCount: update.participantCount } }))));
     }
 
     this.logger?.info({ count }, 'Persisted sport events from ingestion');
@@ -208,6 +209,18 @@ export class IngestionPersistence {
   }
 
   /** The provider mappings of these participants, with their participant, in one query per provider. */
+  /** The sport events linked to these provider events, in one query grouped by provider. */
+  private async findLinkedEvents(events: readonly SportEvent[]) {
+    const externalIdsByProvider = new Map<string, string[]>();
+    for (const event of events) {
+      externalIdsByProvider.set(event.providerId, [...(externalIdsByProvider.get(event.providerId) ?? []), event.externalId]);
+    }
+    if (externalIdsByProvider.size === 0) return [];
+    return this.prisma.sportEvent.findMany({
+      where: { OR: [...externalIdsByProvider].map(([providerId, externalIds]) => ({ providerId, externalId: { in: externalIds } })) },
+    });
+  }
+
   private async findMappings(participants: readonly ProviderParticipant[]) {
     const externalIdsByProvider = new Map<string, string[]>();
     for (const participant of participants) {

@@ -20197,6 +20197,44 @@
           "EVENT_STARTED"
         ]
       },
+      "SportEventAdminCountsDto": {
+        "type": "object",
+        "properties": {
+          "untieredParticipantCount": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Active event participants with no tier. A DRAFT event can't be released while any remain."
+          },
+          "unpricedParticipantCount": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Active event participants with no price. A DRAFT event can't be released while any remain."
+          },
+          "emptyTierLabels": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Labels of the event's tiers no active participant is in, in tier order. A DRAFT event can't be released while any remain: no entry could pick from them."
+          },
+          "contestCount": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Contests run on the event, across every league; an event with any cannot be deleted."
+          }
+        },
+        "required": [
+          "untieredParticipantCount",
+          "unpricedParticipantCount",
+          "emptyTierLabels",
+          "contestCount"
+        ],
+        "additionalProperties": false,
+        "description": "What only a root admin reads of an event: what still stops its release, and how many contests run on it."
+      },
       "SportEventDto": {
         "type": "object",
         "properties": {
@@ -20305,18 +20343,6 @@
             "minimum": -9007199254740991,
             "maximum": 9007199254740991,
             "description": "Number of event participants currently persisted for the event."
-          },
-          "untieredParticipantCount": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991,
-            "description": "Active event participants with no tier. A DRAFT event can't be released while any remain. (Admin-only: operational detail no member surface reads.)"
-          },
-          "unpricedParticipantCount": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991,
-            "description": "Active event participants with no price. A DRAFT event can't be released while any remain. (Admin-only: operational detail no member surface reads.)"
           },
           "pricing": {
             "description": "The values the field was last priced with for budget contests, or null until prices are assigned. Locked at release; its salaryCap is the cap of every budget contest on the event.",
@@ -20461,18 +20487,46 @@
             "maximum": 9007199254740991,
             "description": "Pick tiers defined for the event. A tiered contest's entry picks this many tiers times the contest's picksPerTier."
           },
-          "emptyTierLabels": {
-            "type": "array",
-            "items": {
-              "type": "string"
+          "adminCounts": {
+            "description": "The root admin's counts: release readiness and the contest count across every league. Null for anyone but a root admin, whose reads alone count them.",
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "untieredParticipantCount": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "Active event participants with no tier. A DRAFT event can't be released while any remain."
+              },
+              "unpricedParticipantCount": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "Active event participants with no price. A DRAFT event can't be released while any remain."
+              },
+              "emptyTierLabels": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Labels of the event's tiers no active participant is in, in tier order. A DRAFT event can't be released while any remain: no entry could pick from them."
+              },
+              "contestCount": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "Contests run on the event, across every league; an event with any cannot be deleted."
+              }
             },
-            "description": "Labels of the event's tiers no active participant is in, in tier order. A DRAFT event can't be released while any remain: no entry could pick from them. (Admin-only: operational detail no member surface reads.)"
-          },
-          "contestCount": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991,
-            "description": "Contests run on the event, across every league; an event with any cannot be deleted. (Admin-only: operational detail no member surface reads.)"
+            "required": [
+              "untieredParticipantCount",
+              "unpricedParticipantCount",
+              "emptyTierLabels",
+              "contestCount"
+            ],
+            "additionalProperties": false
           },
           "allowedTransitions": {
             "type": "array",
@@ -20515,8 +20569,6 @@
           "roundsPar",
           "participantCount",
           "loadedParticipantCount",
-          "untieredParticipantCount",
-          "unpricedParticipantCount",
           "pricing",
           "readinessStatus",
           "readinessReasons",
@@ -20529,8 +20581,7 @@
           "syncScope",
           "autoLifecycleEnabled",
           "tierCount",
-          "emptyTierLabels",
-          "contestCount",
+          "adminCounts",
           "allowedTransitions",
           "createdAt",
           "updatedAt"
@@ -20559,16 +20610,19 @@
             ]
           },
           "status": {
-            "description": "Only events in this lifecycle status.",
-            "type": "string",
-            "enum": [
-              "DRAFT",
-              "SCHEDULED",
-              "IN_PROGRESS",
-              "COMPLETED",
-              "CANCELLED",
-              "POSTPONED"
-            ]
+            "description": "Only events in one of these lifecycle statuses: repeat the parameter for several. Contest setup asks for the statuses an event can still take a contest in.",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "DRAFT",
+                "SCHEDULED",
+                "IN_PROGRESS",
+                "COMPLETED",
+                "CANCELLED",
+                "POSTPONED"
+              ]
+            }
           },
           "sportLeagueId": {
             "description": "Only events of this sport league's series.",
@@ -20702,18 +20756,6 @@
                   "minimum": -9007199254740991,
                   "maximum": 9007199254740991,
                   "description": "Number of event participants currently persisted for the event."
-                },
-                "untieredParticipantCount": {
-                  "type": "integer",
-                  "minimum": -9007199254740991,
-                  "maximum": 9007199254740991,
-                  "description": "Active event participants with no tier. A DRAFT event can't be released while any remain. (Admin-only: operational detail no member surface reads.)"
-                },
-                "unpricedParticipantCount": {
-                  "type": "integer",
-                  "minimum": -9007199254740991,
-                  "maximum": 9007199254740991,
-                  "description": "Active event participants with no price. A DRAFT event can't be released while any remain. (Admin-only: operational detail no member surface reads.)"
                 },
                 "pricing": {
                   "description": "The values the field was last priced with for budget contests, or null until prices are assigned. Locked at release; its salaryCap is the cap of every budget contest on the event.",
@@ -20858,18 +20900,46 @@
                   "maximum": 9007199254740991,
                   "description": "Pick tiers defined for the event. A tiered contest's entry picks this many tiers times the contest's picksPerTier."
                 },
-                "emptyTierLabels": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
+                "adminCounts": {
+                  "description": "The root admin's counts: release readiness and the contest count across every league. Null for anyone but a root admin, whose reads alone count them.",
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "untieredParticipantCount": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991,
+                      "description": "Active event participants with no tier. A DRAFT event can't be released while any remain."
+                    },
+                    "unpricedParticipantCount": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991,
+                      "description": "Active event participants with no price. A DRAFT event can't be released while any remain."
+                    },
+                    "emptyTierLabels": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "Labels of the event's tiers no active participant is in, in tier order. A DRAFT event can't be released while any remain: no entry could pick from them."
+                    },
+                    "contestCount": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991,
+                      "description": "Contests run on the event, across every league; an event with any cannot be deleted."
+                    }
                   },
-                  "description": "Labels of the event's tiers no active participant is in, in tier order. A DRAFT event can't be released while any remain: no entry could pick from them. (Admin-only: operational detail no member surface reads.)"
-                },
-                "contestCount": {
-                  "type": "integer",
-                  "minimum": -9007199254740991,
-                  "maximum": 9007199254740991,
-                  "description": "Contests run on the event, across every league; an event with any cannot be deleted. (Admin-only: operational detail no member surface reads.)"
+                  "required": [
+                    "untieredParticipantCount",
+                    "unpricedParticipantCount",
+                    "emptyTierLabels",
+                    "contestCount"
+                  ],
+                  "additionalProperties": false
                 },
                 "allowedTransitions": {
                   "type": "array",
@@ -20912,8 +20982,6 @@
                 "roundsPar",
                 "participantCount",
                 "loadedParticipantCount",
-                "untieredParticipantCount",
-                "unpricedParticipantCount",
                 "pricing",
                 "readinessStatus",
                 "readinessReasons",
@@ -20926,8 +20994,7 @@
                 "syncScope",
                 "autoLifecycleEnabled",
                 "tierCount",
-                "emptyTierLabels",
-                "contestCount",
+                "adminCounts",
                 "allowedTransitions",
                 "createdAt",
                 "updatedAt"
@@ -20944,22 +21011,22 @@
         "additionalProperties": false,
         "description": "Sport events matching the filters."
       },
-      "SportEventYearsQuery": {
+      "SportEventYearListQuery": {
         "type": "object",
         "properties": {
           "sportLeagueId": {
             "type": "string",
             "format": "uuid",
-            "description": "The sport league whose event years to list."
+            "description": "The sport league whose event years are listed."
           }
         },
         "required": [
           "sportLeagueId"
         ],
         "additionalProperties": false,
-        "description": "Which sport league's event years to list."
+        "description": "The sport league to list the event years of."
       },
-      "SportEventYearsResponse": {
+      "SportEventYearListResponse": {
         "type": "object",
         "properties": {
           "years": {
@@ -20969,14 +21036,14 @@
               "minimum": -9007199254740991,
               "maximum": 9007199254740991
             },
-            "description": "Each event year the sport league has events in, newest first: the years `listEvents` takes as `eventYear`. Years with only DRAFT events are listed for a root admin only. Empty when the sport league has no events."
+            "description": "Every event year the sport league has events in, earliest first. A year with only DRAFT events is listed for a root admin only."
           }
         },
         "required": [
           "years"
         ],
         "additionalProperties": false,
-        "description": "The years a sport league has events in."
+        "description": "The event years of one sport league: what a year picker offers, without reading every event."
       },
       "SportEventResponse": {
         "type": "object",
@@ -21089,18 +21156,6 @@
                 "minimum": -9007199254740991,
                 "maximum": 9007199254740991,
                 "description": "Number of event participants currently persisted for the event."
-              },
-              "untieredParticipantCount": {
-                "type": "integer",
-                "minimum": -9007199254740991,
-                "maximum": 9007199254740991,
-                "description": "Active event participants with no tier. A DRAFT event can't be released while any remain. (Admin-only: operational detail no member surface reads.)"
-              },
-              "unpricedParticipantCount": {
-                "type": "integer",
-                "minimum": -9007199254740991,
-                "maximum": 9007199254740991,
-                "description": "Active event participants with no price. A DRAFT event can't be released while any remain. (Admin-only: operational detail no member surface reads.)"
               },
               "pricing": {
                 "description": "The values the field was last priced with for budget contests, or null until prices are assigned. Locked at release; its salaryCap is the cap of every budget contest on the event.",
@@ -21245,18 +21300,46 @@
                 "maximum": 9007199254740991,
                 "description": "Pick tiers defined for the event. A tiered contest's entry picks this many tiers times the contest's picksPerTier."
               },
-              "emptyTierLabels": {
-                "type": "array",
-                "items": {
-                  "type": "string"
+              "adminCounts": {
+                "description": "The root admin's counts: release readiness and the contest count across every league. Null for anyone but a root admin, whose reads alone count them.",
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "untieredParticipantCount": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991,
+                    "description": "Active event participants with no tier. A DRAFT event can't be released while any remain."
+                  },
+                  "unpricedParticipantCount": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991,
+                    "description": "Active event participants with no price. A DRAFT event can't be released while any remain."
+                  },
+                  "emptyTierLabels": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Labels of the event's tiers no active participant is in, in tier order. A DRAFT event can't be released while any remain: no entry could pick from them."
+                  },
+                  "contestCount": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991,
+                    "description": "Contests run on the event, across every league; an event with any cannot be deleted."
+                  }
                 },
-                "description": "Labels of the event's tiers no active participant is in, in tier order. A DRAFT event can't be released while any remain: no entry could pick from them. (Admin-only: operational detail no member surface reads.)"
-              },
-              "contestCount": {
-                "type": "integer",
-                "minimum": -9007199254740991,
-                "maximum": 9007199254740991,
-                "description": "Contests run on the event, across every league; an event with any cannot be deleted. (Admin-only: operational detail no member surface reads.)"
+                "required": [
+                  "untieredParticipantCount",
+                  "unpricedParticipantCount",
+                  "emptyTierLabels",
+                  "contestCount"
+                ],
+                "additionalProperties": false
               },
               "allowedTransitions": {
                 "type": "array",
@@ -21299,8 +21382,6 @@
               "roundsPar",
               "participantCount",
               "loadedParticipantCount",
-              "untieredParticipantCount",
-              "unpricedParticipantCount",
               "pricing",
               "readinessStatus",
               "readinessReasons",
@@ -21313,8 +21394,7 @@
               "syncScope",
               "autoLifecycleEnabled",
               "tierCount",
-              "emptyTierLabels",
-              "contestCount",
+              "adminCounts",
               "allowedTransitions",
               "createdAt",
               "updatedAt"
@@ -21598,18 +21678,6 @@
                   "maximum": 9007199254740991,
                   "description": "Number of event participants currently persisted for the event."
                 },
-                "untieredParticipantCount": {
-                  "type": "integer",
-                  "minimum": -9007199254740991,
-                  "maximum": 9007199254740991,
-                  "description": "Active event participants with no tier. A DRAFT event can't be released while any remain. (Admin-only: operational detail no member surface reads.)"
-                },
-                "unpricedParticipantCount": {
-                  "type": "integer",
-                  "minimum": -9007199254740991,
-                  "maximum": 9007199254740991,
-                  "description": "Active event participants with no price. A DRAFT event can't be released while any remain. (Admin-only: operational detail no member surface reads.)"
-                },
                 "pricing": {
                   "description": "The values the field was last priced with for budget contests, or null until prices are assigned. Locked at release; its salaryCap is the cap of every budget contest on the event.",
                   "type": [
@@ -21753,18 +21821,46 @@
                   "maximum": 9007199254740991,
                   "description": "Pick tiers defined for the event. A tiered contest's entry picks this many tiers times the contest's picksPerTier."
                 },
-                "emptyTierLabels": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
+                "adminCounts": {
+                  "description": "The root admin's counts: release readiness and the contest count across every league. Null for anyone but a root admin, whose reads alone count them.",
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "untieredParticipantCount": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991,
+                      "description": "Active event participants with no tier. A DRAFT event can't be released while any remain."
+                    },
+                    "unpricedParticipantCount": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991,
+                      "description": "Active event participants with no price. A DRAFT event can't be released while any remain."
+                    },
+                    "emptyTierLabels": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "Labels of the event's tiers no active participant is in, in tier order. A DRAFT event can't be released while any remain: no entry could pick from them."
+                    },
+                    "contestCount": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991,
+                      "description": "Contests run on the event, across every league; an event with any cannot be deleted."
+                    }
                   },
-                  "description": "Labels of the event's tiers no active participant is in, in tier order. A DRAFT event can't be released while any remain: no entry could pick from them. (Admin-only: operational detail no member surface reads.)"
-                },
-                "contestCount": {
-                  "type": "integer",
-                  "minimum": -9007199254740991,
-                  "maximum": 9007199254740991,
-                  "description": "Contests run on the event, across every league; an event with any cannot be deleted. (Admin-only: operational detail no member surface reads.)"
+                  "required": [
+                    "untieredParticipantCount",
+                    "unpricedParticipantCount",
+                    "emptyTierLabels",
+                    "contestCount"
+                  ],
+                  "additionalProperties": false
                 },
                 "allowedTransitions": {
                   "type": "array",
@@ -21807,8 +21903,6 @@
                 "roundsPar",
                 "participantCount",
                 "loadedParticipantCount",
-                "untieredParticipantCount",
-                "unpricedParticipantCount",
                 "pricing",
                 "readinessStatus",
                 "readinessReasons",
@@ -21821,8 +21915,7 @@
                 "syncScope",
                 "autoLifecycleEnabled",
                 "tierCount",
-                "emptyTierLabels",
-                "contestCount",
+                "adminCounts",
                 "allowedTransitions",
                 "createdAt",
                 "updatedAt"
@@ -26719,6 +26812,14 @@
             "format": "date-time",
             "description": "The event's scheduled start: when its picks close."
           },
+          "endDate": {
+            "description": "The event's scheduled end when known; null otherwise. The last event's end is when the contest is expected to finish.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
           "status": {
             "type": "string",
             "enum": [
@@ -26763,6 +26864,7 @@
           "sequence",
           "name",
           "startDate",
+          "endDate",
           "status",
           "participantType",
           "scoringFamily"
@@ -26960,6 +27062,14 @@
                   "format": "date-time",
                   "description": "The event's scheduled start: when its picks close."
                 },
+                "endDate": {
+                  "description": "The event's scheduled end when known; null otherwise. The last event's end is when the contest is expected to finish.",
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date-time"
+                },
                 "status": {
                   "type": "string",
                   "enum": [
@@ -27004,6 +27114,7 @@
                 "sequence",
                 "name",
                 "startDate",
+                "endDate",
                 "status",
                 "participantType",
                 "scoringFamily"
@@ -29129,6 +29240,14 @@
                       "format": "date-time",
                       "description": "The event's scheduled start: when its picks close."
                     },
+                    "endDate": {
+                      "description": "The event's scheduled end when known; null otherwise. The last event's end is when the contest is expected to finish.",
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
                     "status": {
                       "type": "string",
                       "enum": [
@@ -29173,6 +29292,7 @@
                     "sequence",
                     "name",
                     "startDate",
+                    "endDate",
                     "status",
                     "participantType",
                     "scoringFamily"
@@ -29355,6 +29475,14 @@
                         "format": "date-time",
                         "description": "The event's scheduled start: when its picks close."
                       },
+                      "endDate": {
+                        "description": "The event's scheduled end when known; null otherwise. The last event's end is when the contest is expected to finish.",
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "format": "date-time"
+                      },
                       "status": {
                         "type": "string",
                         "enum": [
@@ -29399,6 +29527,7 @@
                       "sequence",
                       "name",
                       "startDate",
+                      "endDate",
                       "status",
                       "participantType",
                       "scoringFamily"
@@ -73517,7 +73646,7 @@
         "tags": [
           "Events"
         ],
-        "description": "The sport-event catalog, narrowed by sport, status, sport league, event year and name and never paged. At least one of `sport`, `sportLeagueId` and `eventYear` is required, so the list never reads every event: 400 SPORT_EVENT_FILTER_REQUIRED otherwise. Any signed-in user may read it: contest setup picks an event from it, and a root admin browses it. Each event carries its loaded field size, contest-setup readiness, and its tier and contest counts. DRAFT events (not yet released for contests) are listed for a root admin only.",
+        "description": "The sport-event catalog, narrowed by sport, statuses, sport league, event year and name and never paged. At least one of `sport`, `sportLeagueId` and `eventYear` is required, so the list never reads every event: 400 SPORT_EVENT_FILTER_REQUIRED otherwise. Any signed-in user may read it: contest setup picks an event from it, and a root admin browses it. Each event carries its loaded field size, contest-setup readiness and tier count; a root admin's list also carries each event's adminCounts. DRAFT events (not yet released for contests) are listed for a root admin only.",
         "parameters": [
           {
             "schema": {
@@ -73543,20 +73672,23 @@
           },
           {
             "schema": {
-              "type": "string",
-              "enum": [
-                "DRAFT",
-                "SCHEDULED",
-                "IN_PROGRESS",
-                "COMPLETED",
-                "CANCELLED",
-                "POSTPONED"
-              ]
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "DRAFT",
+                  "SCHEDULED",
+                  "IN_PROGRESS",
+                  "COMPLETED",
+                  "CANCELLED",
+                  "POSTPONED"
+                ]
+              }
             },
             "in": "query",
             "name": "status",
             "required": false,
-            "description": "Only events in this lifecycle status."
+            "description": "Only events in one of these lifecycle statuses: repeat the parameter for several. Contest setup asks for the statuses an event can still take a contest in."
           },
           {
             "schema": {
@@ -73706,11 +73838,11 @@
     "/api/v1/events/years": {
       "get": {
         "operationId": "listEventYears",
-        "summary": "List the years a sport league has events in",
+        "summary": "List a sport league's event years",
         "tags": [
           "Events"
         ],
-        "description": "Each event year the sport league has events in, newest first: the years `listEvents` takes as `eventYear`, read without loading the events. Years with only DRAFT events are listed for a root admin only, as in `listEvents`.",
+        "description": "The years a sport league has events in, for a year picker that then lists one year's events. Any signed-in user may read it; a year with only DRAFT events is listed for a root admin only.",
         "parameters": [
           {
             "schema": {
@@ -73720,16 +73852,16 @@
             "in": "query",
             "name": "sportLeagueId",
             "required": true,
-            "description": "The sport league whose event years to list."
+            "description": "The sport league whose event years are listed."
           }
         ],
         "responses": {
           "200": {
-            "description": "The years a sport league has events in.",
+            "description": "The event years of one sport league: what a year picker offers, without reading every event.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SportEventYearsResponse"
+                  "$ref": "#/components/schemas/SportEventYearListResponse"
                 }
               }
             }
@@ -73764,7 +73896,7 @@
         "tags": [
           "Events"
         ],
-        "description": "404 EVENT_NOT_FOUND for a DRAFT event unless the caller is a root admin.",
+        "description": "404 EVENT_NOT_FOUND for a DRAFT event unless the caller is a root admin, whose read alone carries adminCounts.",
         "parameters": [
           {
             "schema": {

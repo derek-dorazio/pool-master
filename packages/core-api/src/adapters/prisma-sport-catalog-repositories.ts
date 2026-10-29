@@ -228,7 +228,7 @@ export class PrismaSportEventRepository implements SportEventRepository {
     const rows = await this.prisma.sportEvent.findMany({
       where: {
         ...(filters.sport !== undefined && { sport: filters.sport }),
-        ...(filters.status !== undefined && { status: filters.status }),
+        ...(filters.statuses !== undefined && { status: { in: [...filters.statuses] } }),
         ...(filters.sportLeagueId !== undefined && { eventSeries: { sportLeagueId: filters.sportLeagueId } }),
         ...(filters.eventYear !== undefined && { eventYear: filters.eventYear }),
         ...(filters.q !== undefined && { name: { contains: filters.q, mode: 'insensitive' as const } }),
@@ -251,7 +251,7 @@ export class PrismaSportEventRepository implements SportEventRepository {
         eventSeries: { sportLeagueId },
         ...(options.releasedOnly && { NOT: { status: SportEventStatus.DRAFT } }),
       },
-      orderBy: { eventYear: 'desc' },
+      orderBy: { eventYear: 'asc' },
     });
     return rows.map((row) => row.eventYear);
   }

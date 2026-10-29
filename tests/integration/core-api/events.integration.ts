@@ -493,7 +493,7 @@ describe('events routes', () => {
 
       const adminRes = await getApp().inject({ method: 'GET', url, headers: admin.headers });
       expect(adminRes.statusCode).toBe(200);
-      expect(adminRes.json()).toEqual({ years: [2099, 2098] });
+      expect(adminRes.json()).toEqual({ years: [2098, 2099] });
     });
   });
 });

@@ -92,7 +92,8 @@ export function useSportLeagueEventYearsQuery(sportLeagueId: string) {
       if (!response.data?.years) {
         throwApiError(response.error, 'Sport league event years response is missing data.');
       }
-      return response.data.years;
+      // The server lists them earliest first; the calendar's picker reads latest first.
+      return [...response.data.years].sort((left, right) => right - left);
     },
     enabled: sportLeagueId !== '',
     retry: false,

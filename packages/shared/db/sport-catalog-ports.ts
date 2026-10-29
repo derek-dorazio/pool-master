@@ -76,7 +76,8 @@ export interface ParticipantLeagueAffiliationRepository {
 
 export interface SportEventFilters {
   sport?: Sport;
-  status?: SportEventStatus;
+  /** Only events in one of these statuses. */
+  statuses?: readonly SportEventStatus[];
   /** Only events whose series belongs to this sport league. */
   sportLeagueId?: string;
   eventYear?: number;
@@ -130,8 +131,8 @@ export interface SportEventRepository {
   /** Ordered by start date, then name. */
   findAll(filters: SportEventFilters): Promise<SportEvent[]>;
   /**
-   * Each event year the sport league has events in, newest first, without reading the events
-   * (#1251). `releasedOnly` leaves out years whose only events are DRAFT.
+   * The event years the sport league has events in, through their series, earliest first.
+   * `releasedOnly` leaves out years whose only events are DRAFT (#431).
    */
   findEventYears(sportLeagueId: string, options: { releasedOnly: boolean }): Promise<number[]>;
   /**

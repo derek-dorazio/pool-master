@@ -1421,7 +1421,7 @@ export const updateContestConfigTemplate = <ThrowOnError extends boolean = false
 /**
  * List sport events
  *
- * The sport-event catalog, narrowed by sport, status, sport league, event year and name and never paged. At least one of `sport`, `sportLeagueId` and `eventYear` is required, so the list never reads every event: 400 SPORT_EVENT_FILTER_REQUIRED otherwise. Any signed-in user may read it: contest setup picks an event from it, and a root admin browses it. Each event carries its loaded field size, contest-setup readiness, and its tier and contest counts. DRAFT events (not yet released for contests) are listed for a root admin only.
+ * The sport-event catalog, narrowed by sport, statuses, sport league, event year and name and never paged. At least one of `sport`, `sportLeagueId` and `eventYear` is required, so the list never reads every event: 400 SPORT_EVENT_FILTER_REQUIRED otherwise. Any signed-in user may read it: contest setup picks an event from it, and a root admin browses it. Each event carries its loaded field size, contest-setup readiness and tier count; a root admin's list also carries each event's adminCounts. DRAFT events (not yet released for contests) are listed for a root admin only.
  */
 export const listEvents = <ThrowOnError extends boolean = false>(options?: Options<ListEventsData, ThrowOnError>): RequestResult<ListEventsResponses, ListEventsErrors, ThrowOnError> => (options?.client ?? client).get<ListEventsResponses, ListEventsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -1445,9 +1445,9 @@ export const createEvent = <ThrowOnError extends boolean = false>(options: Optio
 });
 
 /**
- * List the years a sport league has events in
+ * List a sport league's event years
  *
- * Each event year the sport league has events in, newest first: the years `listEvents` takes as `eventYear`, read without loading the events. Years with only DRAFT events are listed for a root admin only, as in `listEvents`.
+ * The years a sport league has events in, for a year picker that then lists one year's events. Any signed-in user may read it; a year with only DRAFT events is listed for a root admin only.
  */
 export const listEventYears = <ThrowOnError extends boolean = false>(options: Options<ListEventYearsData, ThrowOnError>): RequestResult<ListEventYearsResponses, ListEventYearsErrors, ThrowOnError> => (options.client ?? client).get<ListEventYearsResponses, ListEventYearsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -1469,7 +1469,7 @@ export const deleteEvent = <ThrowOnError extends boolean = false>(options: Optio
 /**
  * Get a sport event
  *
- * 404 EVENT_NOT_FOUND for a DRAFT event unless the caller is a root admin.
+ * 404 EVENT_NOT_FOUND for a DRAFT event unless the caller is a root admin, whose read alone carries adminCounts.
  */
 export const getEvent = <ThrowOnError extends boolean = false>(options: Options<GetEventData, ThrowOnError>): RequestResult<GetEventResponses, GetEventErrors, ThrowOnError> => (options.client ?? client).get<GetEventResponses, GetEventErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

@@ -656,15 +656,6 @@ describe('ContestEntryPage', () => {
   it('shows a read-only saved lineup once the event\'s scheduled start has passed, though the contest still reads OPEN', async () => {
     const startedAt = new Date(Date.now() - 60 * 60_000).toISOString();
     primeCommonMocks({ eventStartDate: startedAt });
-    getEventMock.mockResolvedValue({
-      data: {
-        event: {
-          id: 'event-1',
-          startDate: startedAt,
-          endDate: new Date(Date.now() + 3 * 24 * 60 * 60_000).toISOString(),
-        },
-      },
-    });
     getSelectionStateMock.mockResolvedValue({
       data: buildSelectionState([
         {
@@ -680,7 +671,6 @@ describe('ContestEntryPage', () => {
 
     renderContestEntryPage();
 
-    await waitFor(() => expect(getEventMock).toHaveBeenCalled());
     await waitFor(() =>
       expect(screen.getByTestId('contest-entry-builder-heading')).toHaveTextContent('Saved lineup detail'),
     );
@@ -1039,9 +1029,6 @@ describe('ContestEntryPage — selection rules the server enforces', () => {
 
   it('closes editing once the event has started, even while the contest still says open', async () => {
     primeCommonMocks({ eventStartDate: '2020-04-10T12:00:00.000Z' });
-    getEventMock.mockResolvedValue({
-      data: { event: { id: 'event-1', startDate: '2020-04-10T12:00:00.000Z', endDate: null } },
-    });
     getSelectionStateMock.mockResolvedValue({ data: buildSelectionState([twoPickTier(['sep-1'])]) });
 
     renderContestEntryPage();

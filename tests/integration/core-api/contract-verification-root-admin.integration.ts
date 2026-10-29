@@ -30,7 +30,6 @@ import {
   ImportSportEventYearFromProviderResponseSchema,
   SportEventRoundListResponseSchema,
   SportEventTierListResponseSchema,
-  SportEventYearsResponseSchema,
   SportLeagueListResponseSchema,
   SportLeagueResponseSchema,
 } from '@poolmaster/shared/dto';
@@ -49,7 +48,6 @@ import type {
   ProviderSyncRunDetailDto,
   ProviderSyncRunListResponse,
   SportEventListResponse,
-  SportEventYearsResponse,
   SportEventResponse,
   SportEventRoundListResponse,
   SportEventTierListResponse,
@@ -1362,6 +1360,8 @@ describe('Contract verification (root admin)', () => {
       expect(tournamentListRes.statusCode).toBe(200);
       expect(SportEventListResponseSchema.safeParse(tournamentListRes.json()).success).toBe(true);
       expect(tournamentListRes.json<SportEventListResponse>().events.map((e) => e.id)).toEqual([eventId]);
+      // A root admin's read carries the admin counts a member's never does (#1198).
+      expect(tournamentListRes.json<SportEventListResponse>().events[0]?.adminCounts).toMatchObject({ contestCount: 0 });
 
       // --- listEventParticipants / listEventTiers / listEventRounds (200) ----
       const fieldRes = await getApp().inject({
@@ -1566,15 +1566,6 @@ describe('Contract verification (root admin)', () => {
       });
       expect(leagueAfterRes.json<SportLeagueResponse>().sportLeague.currentEventYear).toBe(2081);
 
-      // --- listEventYears (200): the tour's years, newest first, without its events (#1251) ---
-      const yearsRes = await getApp().inject({
-        method: 'GET',
-        url: `/api/v1/events/years?sportLeagueId=${leagueId}`,
-        headers: rootAdmin.headers,
-      });
-      expect(yearsRes.statusCode).toBe(200);
-      expect(SportEventYearsResponseSchema.safeParse(yearsRes.json()).success).toBe(true);
-      expect(yearsRes.json<SportEventYearsResponse>().years).toEqual([2082, 2081]);
     } finally {
       const prisma = getPrisma();
       if (created.eventIds.length) {
