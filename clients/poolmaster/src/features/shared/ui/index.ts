@@ -26,7 +26,7 @@ export {
 export { DisplayPreferencesContext, useDisplayPreferences } from "./display-preferences";
 export { browserLocale, browserTimeZone } from "./time-zone-options";
 export { TimeZoneSelect } from "./time-zone-select";
-export { Chip, StatusBadge, type StatusBadgeProps } from "./status-badge";
+export { Chip, StatusBadge, type ChipProps, type StatusBadgeProps } from "./status-badge";
 export { Checkbox, FormField, Input, Select, Textarea } from "./form-field";
 export { FormPage } from "./form-page";
 export { IconAvatar } from "./icon-avatar";

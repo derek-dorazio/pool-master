@@ -401,7 +401,7 @@ state, stale actions, and unthemeable markup accumulate.
   Every title is a `Heading`: `level` picks the tag and `variant` the look (`hero`, `display`,
   `page`, `section`, `subtitle`, `label`, `eyebrow`, or `card` with a `size`), so no page types a heading's font, size or
   `title-card` class string by hand. Small labels over a title are `Eyebrow`, in label blue (`text-label`),
-  or `tone="inverse"` on a navy panel (a `Tile` with `variant="inverse"` or `"inverseDeep"`, never hand-built). The gold pill is a `Chip` with `tone="brand"`. The selected tab is `bg-selected`. Leaderboard totals are
+  or `tone="inverse"` on a navy panel (a `Tile` with `variant="inverse"` or `"inverseDeep"`, never hand-built). The gold pill is a `Chip` with `tone="brand"` (`asChild` when it is a link), and the outlined uppercase tagline pill is a `StatusBadge` with `tone="brandOutline"`. The selected tab is `bg-selected`. Leaderboard totals are
   `score-total` (condensed), and a leaderboard's `DataGrid` takes `headerTone="scoreboard"`
   (navy header, gold column names). A `Button` or `LinkButton` used as a row or card, not as a button, takes
   `layout="row"` (sentence case, full width, left aligned, wraps; colour still comes from

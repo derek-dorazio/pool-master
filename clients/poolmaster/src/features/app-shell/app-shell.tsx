@@ -140,7 +140,7 @@ export function AppShell() {
         <div className="mx-auto grid max-w-6xl grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-3 px-4 py-4 sm:px-6 sm:py-5 lg:flex lg:justify-between">
           <div className="flex min-w-0 items-center gap-4 max-lg:contents">
             <div className="min-w-0 space-y-1">
-              <StatusBadge className="hidden text-primary sm:inline-flex" tone="brandOutline">
+              <StatusBadge className="hidden text-primary tracking-normal sm:inline-flex" tone="brandOutline">
                 {PRODUCT_TAGLINE}
               </StatusBadge>
               <p className="font-display text-xl font-black uppercase italic tracking-normal text-on-inverse sm:text-2xl">

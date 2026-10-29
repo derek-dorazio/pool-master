@@ -29,4 +29,28 @@ describe("pool-master-3lo.5: shared StatusBadge and Chip primitives", () => {
     const pill = screen.getByText("The ultimate pool");
     expect(pill).toHaveClass("border-current", "bg-transparent", "font-display", "uppercase", "text-primary");
   });
+
+  it("draws an open round as a gold-tinted pill and a round still to come as a dashed one", () => {
+    render(
+      <>
+        <Chip tone="brandTint">NBA</Chip>
+        <Chip tone="placeholder">WNBA</Chip>
+      </>,
+    );
+
+    expect(screen.getByText("NBA")).toHaveClass("border-primary", "bg-primary/10");
+    expect(screen.getByText("WNBA")).toHaveClass("border-dashed", "text-muted-foreground");
+  });
+
+  it("draws the pill on its child when asked, so a pill that goes somewhere stays one link", () => {
+    render(
+      <Chip asChild tone="brandTint">
+        <a href="/play/nba">NBA</a>
+      </Chip>,
+    );
+
+    const link = screen.getByRole("link", { name: "NBA" });
+    expect(link).toHaveClass("rounded-full", "bg-primary/10");
+    expect(link).toHaveAttribute("href", "/play/nba");
+  });
 });

@@ -199,13 +199,14 @@ function RoundChip({ round }: { round: CalendarRound }) {
     </>
   );
   if (!round.isAvailable) {
-    return <span className="rounded-pill border border-dashed border-border px-3 py-1 text-sm text-muted-foreground" data-testid={testId}>{label}</span>;
+    return <Chip className="text-sm" data-testid={testId} tone="placeholder">{label}</Chip>;
   }
-  const className = 'rounded-pill border border-primary bg-primary/10 px-3 py-1 text-sm font-semibold text-foreground';
   return round.eventPage ? (
-    <Link className={cn(className, 'hover:bg-primary/20')} data-testid={testId} to={buildEventPagePath(round.eventPage.sport, round.eventPage.slug)}>{label}</Link>
+    <Chip asChild className="text-sm hover:bg-primary/20" tone="brandTint">
+      <Link data-testid={testId} to={buildEventPagePath(round.eventPage.sport, round.eventPage.slug)}>{label}</Link>
+    </Chip>
   ) : (
-    <span className={className} data-testid={testId}>{label}</span>
+    <Chip className="text-sm" data-testid={testId} tone="brandTint">{label}</Chip>
   );
 }
 
