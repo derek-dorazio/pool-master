@@ -308,7 +308,7 @@ export default tseslint.config(
       '**/*.spec.tsx',
     ],
     plugins: { poolmaster },
-    rules: { 'poolmaster/no-bare-ui-controls': 'error' },
+    rules: { 'poolmaster/no-bare-ui-controls': 'error', 'poolmaster/no-button-row-override': 'error' },
   },
   {
     // lib/errors.ts is the canonical definition; tests may build local stand-ins.

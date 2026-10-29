@@ -33,7 +33,7 @@ import {
   releaseEvent,
   setContestCupWeight,
   submitContestEntry,
-  submitContestSelection,
+  selectContestPick,
   transitionEvent,
   updateLeagueCupSettings,
 } from '@poolmaster/shared/generated/hey-api';
@@ -161,7 +161,7 @@ describe('SDK Functional: sports league cups and the league championship (#841, 
       for (const [client, lineup] of [[commissioner.client, COMMISSIONER_LINEUP], [member.client, MEMBER_LINEUP]] as const) {
         const entryId = expectDefined((await enterContest({ client, path: { contestId } })).data).entry.id;
         for (const runner of lineup) {
-          await submitContestSelection({ client, path: { contestId }, body: { entryId, participantId: fieldRowOf(runner) } });
+          await selectContestPick({ client, path: { contestId, entryId, sportEventParticipantId: fieldRowOf(runner) } });
         }
         expect((await submitContestEntry({ client, path: { contestId, entryId, sportEventId: eventId } })).response?.status).toBe(200);
       }

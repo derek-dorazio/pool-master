@@ -68,7 +68,6 @@ const ROSTER_SIZE = 3;
 function request(overrides: Partial<SelectionRequest> = {}): SelectionRequest {
   return {
     participant: participant('a', 'Tier 1'),
-    heldPick: null,
     existingPicks: [],
     tiers: TIERS,
     rosterSize: ROSTER_SIZE,
@@ -99,14 +98,8 @@ describe('tiered selection engine — roster size', () => {
 });
 
 describe('tiered selection engine — evaluate', () => {
-  it('toggles off a participant the entry already holds, before looking at tiers at all', () => {
-    expect(
-      tieredSelectionEngine.evaluate(request({
-        participant: participant('a', null),
-        heldPick: { id: 'pick-a', participantId: 'a' },
-        existingPicks: picks('a'),
-      })),
-    ).toEqual({ kind: SelectionOutcomeKind.TOGGLE_OFF, pickId: 'pick-a' });
+  it('lets a held pick be unselected while picks are open, whatever its tier', () => {
+    expect(tieredSelectionEngine.refuseUnselect()).toBeNull();
   });
 
   it('rejects TIER_MISSING for a participant with no tier', () => {
@@ -284,13 +277,8 @@ describe('budget-pick selection engine', () => {
     }))).toEqual({ kind: SelectionOutcomeKind.ACCEPT, lineupSlot: 1 });
   });
 
-  it('toggles off a participant the entry holds, which is how a full budget roster makes room', () => {
-    expect(
-      budgetPickSelectionEngine.evaluate(budgetRequest({
-        heldPick: { id: 'pick-a', participantId: 'a' },
-        existingPicks: picks('a', 'z'),
-      })),
-    ).toEqual({ kind: SelectionOutcomeKind.TOGGLE_OFF, pickId: 'pick-a' });
+  it('lets a held golfer be unselected, which is how a full budget roster makes room', () => {
+    expect(budgetPickSelectionEngine.refuseUnselect()).toBeNull();
   });
 
   it('rejects a golfer with no price as PRICE_MISSING, since a pick must be spent against the cap', () => {
@@ -421,10 +409,9 @@ describe('the random-draw engine (#601)', () => {
     expect(randomDrawSelectionEngine.rosterSize({ configuration: configuration(), tiers: [] })).toBe(0);
   });
 
-  it('refuses every selection as dealt by the draw, a golfer the entry already holds included', () => {
+  it('refuses every selection and every unselect as dealt by the draw, so a dealt golfer stays put', () => {
     const request: SelectionRequest = {
       participant: participant('p-a', null),
-      heldPick: null,
       existingPicks: [],
       tiers: [],
       rosterSize: 3,
@@ -432,7 +419,7 @@ describe('the random-draw engine (#601)', () => {
     const refused = { kind: SelectionOutcomeKind.REJECT, code: SelectionRejectCode.DEALT_BY_DRAW };
 
     expect(randomDrawSelectionEngine.evaluate(request)).toEqual(refused);
-    expect(randomDrawSelectionEngine.evaluate({ ...request, heldPick: { id: 'pick-a', participantId: 'p-a' } })).toEqual(refused);
+    expect(randomDrawSelectionEngine.refuseUnselect()).toEqual(refused);
   });
 
   it('reports a lineup short until the draw has dealt it every pick, then nothing', () => {

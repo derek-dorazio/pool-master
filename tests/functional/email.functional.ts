@@ -11,7 +11,7 @@ import {
   receiveSesEvent,
   sendLeagueInvitations,
   submitContestEntry,
-  submitContestSelection,
+  selectContestPick,
   transitionEvent,
   unsubscribeFromEmail,
   updateContestEntry,
@@ -196,12 +196,13 @@ async function enteredContest() {
   const early = await submitContestEntry({ client: member.client, path: { contestId, entryId, sportEventId: event.sportEventId } });
   expect(early.response?.status).toBe(409);
   expect(early.error?.error.code).toBe('ENTRY_LINEUP_INCOMPLETE');
-  const picked = await submitContestSelection({
+  const picked = await selectContestPick({
     client: member.client,
-    path: { contestId },
-    body: { entryId, participantId: event.sportEventParticipantId },
+    path: { contestId, entryId, sportEventParticipantId: event.sportEventParticipantId },
   });
-  expect(picked.data?.isComplete).toBe(true);
+  // The one-golfer lineup is now full, and still a draft until it is submitted.
+  expect(picked.data?.picks).toHaveLength(1);
+  expect(picked.data?.entryStatus).toBe('DRAFT');
   expect(await sentMailWithSubject(member.email, `Entry submitted: ${contestName}`)).toHaveLength(0);
 
   const completed = await updateContestEntry({

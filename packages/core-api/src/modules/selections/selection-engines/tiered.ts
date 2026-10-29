@@ -77,9 +77,7 @@ export const tieredSelectionEngine: SelectionEngine = {
    */
   rosterSize: ({ tiers }) => tiers.reduce((sum, tier) => sum + tier.picksFromTier, 0),
 
-  evaluate: ({ participant, heldPick, existingPicks, tiers, rosterSize }) => {
-    if (heldPick) return { kind: SelectionOutcomeKind.TOGGLE_OFF, pickId: heldPick.id };
-
+  evaluate: ({ participant, existingPicks, tiers, rosterSize }) => {
     const tierLabel = participant.tier;
     if (!tierLabel) return { kind: SelectionOutcomeKind.REJECT, code: SelectionRejectCode.TIER_MISSING };
 
@@ -90,6 +88,9 @@ export const tieredSelectionEngine: SelectionEngine = {
 
     return resolveTieredPlacement({ tier, tiers, existingPicks, rosterSize });
   },
+
+  /** A held pick can always be unselected while picks are open. */
+  refuseUnselect: () => null,
 
   /**
    * Complete only with exactly `rosterSize` picks and exactly as many from each tier as the

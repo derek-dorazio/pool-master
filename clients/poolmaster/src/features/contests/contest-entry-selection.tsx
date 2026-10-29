@@ -103,13 +103,14 @@ export function SelectionParticipantCard({
   return (
     <Button
       className={cn(
-        "normal-case tracking-normal h-auto w-full items-start justify-start gap-3 px-4 py-3 text-left whitespace-normal",
+        "items-start gap-3 px-4 py-3",
         isSelected
           ? "border-primary bg-primary/5 hover:bg-primary/5"
           : "hover:border-foreground/30",
       )}
       data-testid={`contest-entry-participant-${participant.sportEventParticipantId}`}
       disabled={isDisabled}
+      layout="row"
       onClick={() => onSelect(participant)}
       variant="secondary"
     >
@@ -201,8 +202,9 @@ export function EditableSelectionGroup({
       variant="subtle"
     >
       <Button
-        className="normal-case tracking-normal h-auto w-full flex-wrap items-start justify-between gap-3 p-0 text-left whitespace-normal hover:bg-transparent"
+        className="h-auto min-h-0 flex-wrap items-start justify-between gap-3 p-0 hover:bg-transparent"
         data-testid={`contest-entry-group-toggle-${group.groupId}`}
+        layout="row"
         onClick={onToggle}
         ref={setToggleRef}
         variant="ghost"

@@ -116,44 +116,6 @@ export const ContestDtoSchema = z.object({
 }).describe('A contest: the one shape every contest read returns (#248 collapsed the summary and detail variants, which differed by two fields).');
 export type ContestDto = z.infer<typeof ContestDtoSchema>;
 
-/**
- * Canonical raw-row DTO for ContestEntryPick. The persistence shape of a single
- * pick on a contest entry, unified across contest formats per plans/117 §4.3.
- * Optional metadata (period, slot, tier, cost) is populated based on the
- * parent Contest.contestFormat — see plans/117 §7.1 for the per-format mapping.
- *
- * `ContestEntryParticipantDetailDtoSchema` is the richer read shape used by
- * entry-detail and leaderboard surfaces (joins SportEventParticipant +
- * Participant for display names); this schema is the underlying pick row.
- */
-export const ContestEntryPickDtoSchema = z.object({
-  id: z.string().describe('Pick identifier.'),
-  entryId: z.string().describe('Owning contest entry identifier.'),
-  sportEventParticipantId: z.string().describe(
-    'Per-event participant the pick refers to (Sport-event-participant row, not the canonical Participant).',
-  ),
-  contestFormat: z.enum(Object.values(ContestFormat) as [string, ...string[]]).describe(
-    'Denormalized from parent Contest.contestFormat. Plans/117 §7.1 — enables per-format partial unique indexes that Postgres cannot predicate on joined parent columns.',
-  ),
-  period: z.number().int().nullable().describe(
-    'Unused: no built contest format sets it, so it is always null. Removal is tracked in #632.',
-  ),
-  slot: z.number().int().nullable().describe(
-    'Unused: no built contest format sets it, so it is always null; a lineup position is `lineupSlot`. Removal is tracked in #632.',
-  ),
-  tier: z.string().nullable().describe('Selection tier (tiered ROSTER); null otherwise.'),
-  cost: z.number().nullable().describe('Budget cost (budget ROSTER); null otherwise.'),
-  isAutoPicked: z.boolean().describe(
-    'Whether this pick was auto-assigned rather than submitted by the entry. Always false for tiered and budget selection, which have no auto-pick.',
-  ),
-  lineupSlot: z.number().int().nullable().describe('Position of this pick within its entry\'s roster. Tiered: counted across tier quotas in tier order; budget: the entry\'s pick ordinal. Null when the pick was not recorded through contest selection.'),
-  pickSequence: z.number().int().nullable().describe('Contest-wide order in which this pick was recorded, across all entries. Null when the pick was not recorded through contest selection.'),
-  pickedAt: z.iso.datetime().describe('When the pick was made (or auto-picked).'),
-  createdAt: z.iso.datetime(),
-  updatedAt: z.iso.datetime(),
-}).describe('Raw ContestEntryPick row used by persistence-aware surfaces.');
-export type ContestEntryPickDto = z.infer<typeof ContestEntryPickDtoSchema>;
-
 export const ContestEntryParticipantDetailDtoSchema = z.object({
   pickId: z.string(),
   sportEventParticipantId: z.string(),
@@ -368,7 +330,6 @@ registerSchema('ContestEntryEventResultDto', ContestEntryEventResultDtoSchema);
 registerSchema('ContestLeaderboardQuery', ContestLeaderboardQuerySchema);
 registerSchema('ContestDto', ContestDtoSchema);
 registerSchema('ContestEntryDto', ContestEntryDtoSchema);
-registerSchema('ContestEntryPickDto', ContestEntryPickDtoSchema);
 registerSchema('ContestEntryParticipantDetailDto', ContestEntryParticipantDetailDtoSchema);
 registerSchema('ParticipantScoringDefinitionId', ParticipantScoringDefinitionIdSchema);
 registerSchema('ScoredContestEntryPickGolfDto', ScoredContestEntryPickGolfDtoSchema);

@@ -1,0 +1,285 @@
+{
+  "$comment": "Copies the duplicate check (scripts/check-duplicates.mjs, #1287) allows today, per pair of files, each with the ticket that removes it. Only ever lower a count or delete an entry; a new copy is extracted, never added here.",
+  "pairs": [
+    {
+      "files": [
+        "clients/poolmaster/src/features/account/user-page.tsx",
+        "clients/poolmaster/src/features/teams/team-owner-action-menu.tsx"
+      ],
+      "count": 1,
+      "ticket": "#1290"
+    },
+    {
+      "files": [
+        "clients/poolmaster/src/features/auth/reset-password-page.tsx",
+        "clients/poolmaster/src/features/auth/undo-email-change-page.tsx"
+      ],
+      "count": 1,
+      "ticket": "#1290"
+    },
+    {
+      "files": [
+        "clients/poolmaster/src/features/billing/billing-settings-form.tsx",
+        "clients/poolmaster/src/features/root-admin/root-admin-budget-pricing-settings-form.tsx"
+      ],
+      "count": 1,
+      "ticket": "#1290"
+    },
+    {
+      "files": [
+        "clients/poolmaster/src/features/billing/billing-settings-form.tsx",
+        "clients/poolmaster/src/features/root-admin/root-admin-email-settings-form.tsx"
+      ],
+      "count": 1,
+      "ticket": "#1290"
+    },
+    {
+      "files": [
+        "clients/poolmaster/src/features/billing/billing-settings-form.tsx",
+        "clients/poolmaster/src/features/root-admin/root-admin-plans-page.tsx"
+      ],
+      "count": 1,
+      "ticket": "#1290"
+    },
+    {
+      "files": [
+        "clients/poolmaster/src/features/championships/championship-standings-grid.tsx",
+        "clients/poolmaster/src/features/championships/cup-standings-grid.tsx"
+      ],
+      "count": 3,
+      "ticket": "#1290"
+    },
+    {
+      "files": [
+        "clients/poolmaster/src/features/championships/edit-championship-settings-page.tsx",
+        "clients/poolmaster/src/features/leagues/edit-league-page.tsx"
+      ],
+      "count": 1,
+      "ticket": "#1290"
+    },
+    {
+      "files": [
+        "clients/poolmaster/src/features/contests/bracket-entry-page.tsx",
+        "clients/poolmaster/src/features/contests/contest-entry-page.tsx"
+      ],
+      "count": 1,
+      "ticket": "#1290"
+    },
+    {
+      "files": [
+        "clients/poolmaster/src/features/contests/bracket-entry-page.tsx",
+        "clients/poolmaster/src/features/contests/pick-em-entry-page.tsx"
+      ],
+      "count": 2,
+      "ticket": "#1290"
+    },
+    {
+      "files": [
+        "clients/poolmaster/src/features/contests/bracket-leaderboard.tsx",
+        "clients/poolmaster/src/features/contests/pick-em-leaderboard.tsx"
+      ],
+      "count": 1,
+      "ticket": "#1290"
+    },
+    {
+      "files": [
+        "clients/poolmaster/src/features/contests/contest-detail-page.tsx",
+        "clients/poolmaster/src/features/contests/contest-leaderboard-page.tsx"
+      ],
+      "count": 1,
+      "ticket": "#1290"
+    },
+    {
+      "files": [
+        "clients/poolmaster/src/features/contests/create-contest-page.tsx",
+        "clients/poolmaster/src/features/contests/edit-contest-page.tsx"
+      ],
+      "count": 1,
+      "ticket": "#1290"
+    },
+    {
+      "files": [
+        "clients/poolmaster/src/features/root-admin/bracket-match-row.tsx",
+        "clients/poolmaster/src/features/root-admin/bracket-match-row.tsx"
+      ],
+      "count": 2,
+      "ticket": "#1290"
+    },
+    {
+      "files": [
+        "clients/poolmaster/src/features/root-admin/event-field-add-participants-modal.tsx",
+        "clients/poolmaster/src/features/root-admin/event-field-seed-action.tsx"
+      ],
+      "count": 1,
+      "ticket": "#1290"
+    },
+    {
+      "files": [
+        "clients/poolmaster/src/features/root-admin/event-field-grid-card.tsx",
+        "clients/poolmaster/src/features/root-admin/event-field-seed-action.tsx"
+      ],
+      "count": 1,
+      "ticket": "#1290"
+    },
+    {
+      "files": [
+        "clients/poolmaster/src/features/root-admin/event-field-refresh-action.tsx",
+        "clients/poolmaster/src/features/root-admin/event-field-seed-action.tsx"
+      ],
+      "count": 1,
+      "ticket": "#1290"
+    },
+    {
+      "files": [
+        "clients/poolmaster/src/features/root-admin/event-field-upload-card.tsx",
+        "clients/poolmaster/src/features/root-admin/race-finishing-order-panel.tsx"
+      ],
+      "count": 1,
+      "ticket": "#1290"
+    },
+    {
+      "files": [
+        "clients/poolmaster/src/features/root-admin/golf-round-score-corrections-card.tsx",
+        "clients/poolmaster/src/features/root-admin/stat-lines-panel.tsx"
+      ],
+      "count": 1,
+      "ticket": "#1290"
+    },
+    {
+      "files": [
+        "clients/poolmaster/src/features/root-admin/golf-round-score-upload-card.tsx",
+        "clients/poolmaster/src/features/root-admin/race-finishing-order-panel.tsx"
+      ],
+      "count": 1,
+      "ticket": "#1290"
+    },
+    {
+      "files": [
+        "clients/poolmaster/src/features/root-admin/golf-tournament-live-simulation.tsx",
+        "clients/poolmaster/src/features/root-admin/sport-event-score-source-card.tsx"
+      ],
+      "count": 1,
+      "ticket": "#1290"
+    },
+    {
+      "files": [
+        "clients/poolmaster/src/features/root-admin/root-admin-budget-pricing-settings-form.tsx",
+        "clients/poolmaster/src/features/root-admin/root-admin-email-settings-form.tsx"
+      ],
+      "count": 1,
+      "ticket": "#1290"
+    },
+    {
+      "files": [
+        "clients/poolmaster/src/features/root-admin/root-admin-content-configuration-detail-page.tsx",
+        "clients/poolmaster/src/features/root-admin/root-admin-content-configuration-list-page.tsx"
+      ],
+      "count": 1,
+      "ticket": "#1290"
+    },
+    {
+      "files": [
+        "clients/poolmaster/src/features/root-admin/root-admin-ingestion-schedule-page.tsx",
+        "clients/poolmaster/src/features/root-admin/root-admin-sport-overrides-page.tsx"
+      ],
+      "count": 1,
+      "ticket": "#1290"
+    },
+    {
+      "files": [
+        "clients/poolmaster/src/features/root-admin/root-admin-run-event-sync-page.tsx",
+        "clients/poolmaster/src/features/root-admin/root-admin-sync-dashboard-page.tsx"
+      ],
+      "count": 1,
+      "ticket": "#1290"
+    },
+    {
+      "files": [
+        "clients/poolmaster/src/features/root-admin/root-admin-sport-event-edit-page.tsx",
+        "clients/poolmaster/src/features/root-admin/root-admin-sport-event-schedule-page.tsx"
+      ],
+      "count": 1,
+      "ticket": "#1290"
+    },
+    {
+      "files": [
+        "clients/poolmaster/src/features/root-admin/root-admin-sport-event-list-page.tsx",
+        "clients/poolmaster/src/features/root-admin/sport-league-event-calendar.tsx"
+      ],
+      "count": 2,
+      "ticket": "#1290"
+    },
+    {
+      "files": [
+        "clients/poolmaster/src/features/root-admin/root-admin-sport-league-edit-page.tsx",
+        "clients/poolmaster/src/features/root-admin/root-admin-sport-league-home-page.tsx"
+      ],
+      "count": 1,
+      "ticket": "#1290"
+    },
+    {
+      "files": [
+        "clients/poolmaster/src/features/root-admin/root-admin-sport-league-edit-page.tsx",
+        "clients/poolmaster/src/features/root-admin/sport-league-details-section.tsx"
+      ],
+      "count": 1,
+      "ticket": "#1290"
+    },
+    {
+      "files": [
+        "clients/poolmaster/src/features/root-admin/root-admin-sport-overrides-page.tsx",
+        "clients/poolmaster/src/features/root-admin/root-admin-sport-overrides-page.tsx"
+      ],
+      "count": 1,
+      "ticket": "#1290"
+    },
+    {
+      "files": [
+        "clients/poolmaster/src/features/root-admin/sport-event-manual-create-form.tsx",
+        "clients/poolmaster/src/features/root-admin/sport-event-provider-browse.tsx"
+      ],
+      "count": 1,
+      "ticket": "#1290"
+    },
+    {
+      "files": [
+        "clients/poolmaster/src/features/root-admin/tier-board.tsx",
+        "clients/poolmaster/src/features/root-admin/tier-definitions-panel.tsx"
+      ],
+      "count": 1,
+      "ticket": "#1290"
+    },
+    {
+      "files": [
+        "clients/poolmaster/src/features/shared/ui/confirm-dialog.tsx",
+        "clients/poolmaster/src/features/shared/ui/modal-templates.tsx"
+      ],
+      "count": 1,
+      "ticket": "#1290"
+    },
+    {
+      "files": [
+        "clients/poolmaster/src/features/shared/ui/data-grid.tsx",
+        "clients/poolmaster/src/features/shared/ui/page-templates.tsx"
+      ],
+      "count": 1,
+      "ticket": "#1290"
+    },
+    {
+      "files": [
+        "clients/poolmaster/src/features/teams/manage-teams-page.tsx",
+        "clients/poolmaster/src/features/teams/teams-page.tsx"
+      ],
+      "count": 2,
+      "ticket": "#1290"
+    },
+    {
+      "files": [
+        "clients/poolmaster/src/features/teams/team-owner-action-menu.tsx",
+        "clients/poolmaster/src/features/teams/team-owner-action-menu.tsx"
+      ],
+      "count": 1,
+      "ticket": "#1290"
+    }
+  ]
+}
