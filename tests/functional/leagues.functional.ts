@@ -201,7 +201,7 @@ describe('SDK Functional: Leagues', () => {
     const saved = await updateLeagueDetails({
       client: commissioner.client,
       path: { id: leagueId },
-      body: { name: 'Counted League Renamed', description: null, iconKey: 'TROPHY' },
+      body: { name: 'Counted League Renamed', description: 'Counted', iconKey: 'TROPHY' },
     });
     const inactivated = await inactivateLeague({ client: commissioner.client, path: { id: leagueId } });
     const reactivated = await activateLeague({ client: commissioner.client, path: { id: leagueId } });

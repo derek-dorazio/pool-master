@@ -39,6 +39,9 @@ describe('SDK Functional: choosing a league plan (#945)', () => {
     });
     const memberView = LeagueContextResponseSchema.parse(expectDefined((await getLeague({ client: member.client, path: { id: league.id } })).data));
     expect(memberView.league.planEntitlements.features).not.toContain(PlanFeature.CHAMPIONSHIP);
+    // The plan change answers with the league's real counts, the same as a read of it.
+    expect(LeagueResponseSchema.parse(expectDefined(free.data)).league.memberCount).toBe(memberView.league.memberCount);
+    expect(memberView.league.memberCount).toBe(2);
 
     // --- A member may not change it -----------------------------------------------------------
     const refused = await updateLeaguePlan({ client: member.client, path: { id: league.id }, body: { plan: LeaguePlan.PLATINUM } });
