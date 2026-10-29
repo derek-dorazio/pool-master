@@ -15,10 +15,13 @@ import { fakeLogger } from '../../support/fake-logger';
 class RecordingCloudFront implements CloudFrontClientLike {
   readonly commands: CreateInvalidationCommand[] = [];
   failWith: Error | null = null;
+  /** Errors to answer the next sends with, one each, before succeeding (or `failWith`). */
+  readonly failNext: Error[] = [];
 
   send(command: CreateInvalidationCommand): Promise<unknown> {
     this.commands.push(command);
-    return this.failWith ? Promise.reject(this.failWith) : Promise.resolve({});
+    const error = this.failNext.shift() ?? this.failWith;
+    return error ? Promise.reject(error) : Promise.resolve({});
   }
 
   paths(): string[][] {
@@ -27,7 +30,11 @@ class RecordingCloudFront implements CloudFrontClientLike {
 }
 
 function invalidator(client: RecordingCloudFront, logger = fakeLogger()) {
-  return new CloudFrontInvalidator({ distributionId: 'E2EXAMPLE', client, logger, batchMs: 5_000, settleMs: 35_000 });
+  return new CloudFrontInvalidator({ distributionId: 'E2EXAMPLE', client, logger, batchMs: 5_000, maxWaitMs: 60_000, retryMs: 60_000, settleMs: 35_000 });
+}
+
+function tooManyInProgress(): Error {
+  return Object.assign(new Error('Your request contains too many invalidations.'), { name: 'TooManyInvalidationsInProgress' });
 }
 
 beforeEach(() => jest.useFakeTimers());
@@ -81,6 +88,69 @@ describe('CloudFrontInvalidator', () => {
       [PublicReadPath.CONTEST_CONFIG_TEMPLATES],
       [PublicReadPath.CONTEST_CONFIG_TEMPLATES],
     ]);
+  });
+
+  it('waits for 5 seconds with no further save, so a data load writing every few seconds sends one invalidation, not one per batch', async () => {
+    const client = new RecordingCloudFront();
+    const cdn = invalidator(client);
+
+    for (let save = 0; save < 5; save += 1) {
+      cdn.invalidate([PublicReadPath.EVENT_PAGES]);
+      await jest.advanceTimersByTimeAsync(4_000);
+    }
+    expect(client.commands).toHaveLength(0);
+    await jest.advanceTimersByTimeAsync(1_000);
+
+    expect(client.paths()).toEqual([[PublicReadPath.EVENT_PAGES]]);
+  });
+
+  it('sends at most 60 seconds after the first save while saves keep arriving', async () => {
+    const client = new RecordingCloudFront();
+    const cdn = invalidator(client);
+
+    for (let second = 0; second < 59; second += 1) {
+      cdn.invalidate([PublicReadPath.EVENT_PAGES]);
+      await jest.advanceTimersByTimeAsync(1_000);
+    }
+    expect(client.commands).toHaveLength(0);
+    cdn.invalidate([PublicReadPath.SPORT_LEAGUES]);
+    await jest.advanceTimersByTimeAsync(1_000);
+
+    expect(client.paths()).toEqual([[PublicReadPath.EVENT_PAGES, PublicReadPath.SPORT_LEAGUES]]);
+  });
+
+  it('sends an invalidation CloudFront refused for too many in progress once more, a minute later, rather than dropping it', async () => {
+    const client = new RecordingCloudFront();
+    client.failNext.push(tooManyInProgress());
+    const logger = fakeLogger();
+    const cdn = invalidator(client, logger);
+
+    cdn.invalidate([PublicReadPath.EVENT_PAGES]);
+    await jest.advanceTimersByTimeAsync(5_000);
+    expect(client.commands).toHaveLength(1);
+    await jest.advanceTimersByTimeAsync(30_000);
+    expect(client.commands).toHaveLength(1);
+    await jest.advanceTimersByTimeAsync(30_000);
+
+    // First try refused, the settled send at 35 s, then the retry at 60 s.
+    expect(client.paths()).toEqual([[PublicReadPath.EVENT_PAGES], [PublicReadPath.EVENT_PAGES], [PublicReadPath.EVENT_PAGES]]);
+    expect(logger.error).not.toHaveBeenCalled();
+  });
+
+  it('logs an invalidation refused for too many in progress twice as an error, and tries no more', async () => {
+    const client = new RecordingCloudFront();
+    client.failWith = tooManyInProgress();
+    const logger = fakeLogger();
+    const cdn = invalidator(client, logger);
+
+    cdn.invalidate([PublicReadPath.PLANS]);
+    await jest.advanceTimersByTimeAsync(5_000);
+    await jest.advanceTimersByTimeAsync(60_000);
+    await jest.advanceTimersByTimeAsync(600_000);
+
+    // The first send, the settled one, and one retry of each: four, and no fifth.
+    expect(client.commands).toHaveLength(4);
+    expect(logger.error.mock.calls.map(([entry]) => (entry as { data: { round: string } }).data.round).sort()).toEqual(['first', 'settled']);
   });
 
   it('sends nothing for a save that changed no public read', async () => {

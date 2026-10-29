@@ -422,10 +422,13 @@ and `listLeaguePlans`. The list is `PUBLIC_CACHED_READS` in `core/public-cache.t
   string, the Authorization header and the access cookie, so visitors without a session share one
   copy and a signed-in request never shares one (`infrastructure/terraform/cloudfront.tf`).
 - **Invalidation.** A write that lands clears what it changed: a sport league write (and its
-  affiliations) the sport league list and the event pages; a template update the templates and
-  the event pages; any event write the event pages; a save or reset of `PLAN_CONFIG` or
-  `BILLING_CONFIG` the Plans page. Writes within 5 seconds share one CreateInvalidation, sent
-  again 35 seconds later, once every API task has caught up. A refused write clears nothing.
+  affiliations, but not an upload preview) the sport league list and the event pages; a template
+  update the templates and the event pages; any event write, and a provider sync that writes an
+  event's field, the event pages; a save or reset of `PLAN_CONFIG` or `BILLING_CONFIG` the Plans
+  page. Writes share one CreateInvalidation once 5 seconds pass with no further write (at most 60
+  seconds after the first, as in a data load), sent again 35 seconds later, once every API task
+  has caught up. One refused for too many invalidations in progress is sent once more a minute
+  later. A refused write clears nothing.
 - **In each API task.** The same reads, and `listSports`, are kept for
   `PUBLIC_READ_CACHE_TTL_MS` (30 seconds unless set; the functional API and browser E2E lanes
   set 0). A write through the sport league or template routes clears that task's copy at once.

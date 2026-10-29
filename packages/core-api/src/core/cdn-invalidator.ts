@@ -2,8 +2,11 @@
  * Clears the public reads CloudFront keeps (#1181) after an admin save, so a visitor sees the
  * change without waiting out the hour `PUBLIC_CACHE_CONTROL` gives them.
  *
- * Saves close together share one invalidation: the paths asked for within `batchMs` go out in
- * one CreateInvalidation, so a data load of many writes costs a few, not hundreds. Each one is
+ * Saves close together share one invalidation: the paths asked for go out in one
+ * CreateInvalidation once `batchMs` passes with no further save, or `maxWaitMs` after the first
+ * one, so a data load of many writes over minutes costs a few, not hundreds, and CloudFront's
+ * limit of 15 wildcard invalidations in progress is not reached. One refused for that limit
+ * (TooManyInvalidationsInProgress) is sent once more after `retryMs`. Each one is
  * sent again `settleMs` later, once every API task has caught up with the save (each keeps a
  * public read for `PUBLIC_READ_CACHE_TTL_MS` and reloads settings every 30 seconds); otherwise a
  * refill served by a task that had not caught up would keep the old answer for another hour.
@@ -28,8 +31,17 @@ export interface CloudFrontClientLike {
   send(command: CreateInvalidationCommand): Promise<unknown>;
 }
 
-/** How long saves are gathered into one invalidation. */
+/** How long with no further save before the gathered paths are sent. */
 export const CDN_INVALIDATION_BATCH_MS = 5_000;
+
+/** The longest a save waits while others keep arriving, as in a data load. */
+export const CDN_INVALIDATION_MAX_WAIT_MS = 60_000;
+
+/** How long before an invalidation CloudFront refused for too many in progress is sent again. */
+export const CDN_INVALIDATION_RETRY_MS = 60_000;
+
+/** CloudFront's error for a distribution with too many invalidations in progress. */
+const TOO_MANY_IN_PROGRESS = 'TooManyInvalidationsInProgress';
 
 /** When the invalidation is sent again: after the public read cache and the settings refresh. */
 export const CDN_INVALIDATION_SETTLE_MS = 35_000;
@@ -39,36 +51,49 @@ export interface CloudFrontInvalidatorOptions {
   client: CloudFrontClientLike;
   logger: InvalidatorLogger;
   batchMs?: number;
+  maxWaitMs?: number;
+  retryMs?: number;
   settleMs?: number;
 }
 
 export class CloudFrontInvalidator implements CdnInvalidator {
   private readonly pending = new Set<PublicReadPath>();
   private flushTimer: NodeJS.Timeout | null = null;
+  /** When the first of the pending saves asked, which bounds how long they wait. */
+  private firstAskedAt: number | null = null;
   private readonly batchMs: number;
+  private readonly maxWaitMs: number;
+  private readonly retryMs: number;
   private readonly settleMs: number;
 
   constructor(private readonly options: CloudFrontInvalidatorOptions) {
     this.batchMs = options.batchMs ?? CDN_INVALIDATION_BATCH_MS;
+    this.maxWaitMs = options.maxWaitMs ?? CDN_INVALIDATION_MAX_WAIT_MS;
+    this.retryMs = options.retryMs ?? CDN_INVALIDATION_RETRY_MS;
     this.settleMs = options.settleMs ?? CDN_INVALIDATION_SETTLE_MS;
   }
 
   invalidate(paths: readonly PublicReadPath[]): void {
     for (const path of paths) this.pending.add(path);
-    if (this.pending.size === 0 || this.flushTimer !== null) return;
-    this.flushTimer = setTimeout(() => this.flush(), this.batchMs);
+    if (this.pending.size === 0) return;
+    const now = Date.now();
+    this.firstAskedAt ??= now;
+    if (this.flushTimer !== null) clearTimeout(this.flushTimer);
+    const wait = Math.min(this.batchMs, this.firstAskedAt + this.maxWaitMs - now);
+    this.flushTimer = setTimeout(() => this.flush(), Math.max(0, wait));
     this.flushTimer.unref();
   }
 
   private flush(): void {
     this.flushTimer = null;
+    this.firstAskedAt = null;
     const paths = [...this.pending].sort();
     this.pending.clear();
-    void this.send(paths, 'first');
-    setTimeout(() => void this.send(paths, 'settled'), this.settleMs).unref();
+    void this.send(paths, 'first', true);
+    setTimeout(() => void this.send(paths, 'settled', true), this.settleMs).unref();
   }
 
-  private async send(paths: string[], round: 'first' | 'settled'): Promise<void> {
+  private async send(paths: string[], round: 'first' | 'settled', mayRetry: boolean): Promise<void> {
     const { distributionId, client, logger } = this.options;
     try {
       await client.send(new CreateInvalidationCommand({
@@ -80,6 +105,12 @@ export class CloudFrontInvalidator implements CdnInvalidator {
       }));
       logger.info({ action: 'cdn.invalidate.sent', data: { paths, round } }, 'Invalidated public reads at CloudFront');
     } catch (err) {
+      const tooMany = err instanceof Error && err.name === TOO_MANY_IN_PROGRESS;
+      if (tooMany && mayRetry) {
+        logger.info({ action: 'cdn.invalidate.retrying', data: { paths, round, retryMs: this.retryMs } }, 'CloudFront has too many invalidations in progress; sending this one again later');
+        setTimeout(() => void this.send(paths, round, false), this.retryMs).unref();
+        return;
+      }
       logger.error({
         action: 'cdn.invalidate.failed',
         data: { paths, round, error: err instanceof Error ? err.message : String(err) },

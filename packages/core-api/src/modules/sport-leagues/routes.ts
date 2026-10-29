@@ -49,7 +49,8 @@ export function sportLeaguesModule(fastify: FastifyInstance, opts: SportLeaguesM
   // its own (#1163). Rare enough to forget every event field this container read. A write that
   // lands also changes the public list, and the event pages that name the sport league (#1181).
   fastify.addHook('onSend', async (request, reply, payload) => {
-    if (request.method === 'GET' || request.method === 'HEAD') return payload;
+    // An upload preview resolves rows and writes nothing.
+    if (request.method === 'GET' || request.method === 'HEAD' || request.routeOptions.url?.endsWith('/upload/preview')) return payload;
     eventFieldCache.clear();
     if (reply.statusCode < 400) {
       lists.clear();
