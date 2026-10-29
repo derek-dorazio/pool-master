@@ -136,7 +136,7 @@ export const QueryKeys = {
   /** The public event pages (#1007): one by its address, and the active ones of a sport or all. */
   eventPages: {
     detail: (sport: string, pageSlug: string) => ['poolmaster', 'event-pages', sport, pageSlug] as const,
-    list: (sport: string | null) => ['poolmaster', 'event-pages', 'list', sport] as const,
+    list: (sport: string | null, upcoming: boolean) => ['poolmaster', 'event-pages', 'list', sport, upcoming] as const,
   },
   leagues: {
     all: ['poolmaster', 'leagues'] as const,
@@ -191,8 +191,9 @@ export const QueryKeys = {
     bySeason: (leagueId: QueryKeyId, seasonYear: number) =>
       ['poolmaster', 'cups', leagueId, seasonYear] as const,
     seasons: (leagueId: QueryKeyId) => ['poolmaster', 'cups', leagueId, 'seasons'] as const,
-    squadPoints: (leagueId: QueryKeyId, cupId: QueryKeyId, squadId: QueryKeyId) =>
-      ['poolmaster', 'cups', leagueId, 'squad-points', cupId, squadId] as const,
+    /** One squad's points in the season's cup for a sports league (#1202). Under `bySeason`. */
+    squadPoints: (leagueId: QueryKeyId, seasonYear: number, sportLeagueId: QueryKeyId, squadId: QueryKeyId) =>
+      ['poolmaster', 'cups', leagueId, seasonYear, 'squad-points', sportLeagueId, squadId] as const,
     projection: (leagueId: QueryKeyId, cupId: QueryKeyId) =>
       ['poolmaster', 'cups', leagueId, 'projection', cupId] as const,
   },

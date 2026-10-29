@@ -83,14 +83,28 @@ export class EventPageService {
     return { page, offers: await this.showOffers(offers) };
   }
 
-  async listPages(sport?: Sport): Promise<EventPageView[]> {
-    this.logger?.debug({ action: 'eventPages.list.enter', sport }, 'Listing event pages');
+  /**
+   * The active pages, by sport then display order; with `upcoming`, only those whose primary offer
+   * shows an edition coming, soonest first: what a Coming up row shows (#1202).
+   */
+  async listPages(sport?: Sport, upcoming = false): Promise<EventPageView[]> {
+    this.logger?.debug({ action: 'eventPages.list.enter', sport, upcoming }, 'Listing event pages');
     const pages = await this.pages.findActive(sport);
     const offers = await this.pages.findOffers(pages.map((page) => page.id));
-    return Promise.all(pages.map(async (page) => ({
+    const views = await Promise.all(pages.map(async (page) => ({
       page,
       offers: await this.showOffers(offers.filter((offer) => offer.eventPageId === page.id)),
     })));
+    if (!upcoming) {
+      return views;
+    }
+    return views
+      .flatMap((view) => {
+        const primary = view.offers.find(({ offer }) => offer.isPrimary);
+        return primary === undefined ? [] : [{ view, startDate: primary.edition.startDate.getTime() }];
+      })
+      .sort((left, right) => left.startDate - right.startDate)
+      .map(({ view }) => view);
   }
 
   /**

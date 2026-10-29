@@ -34,7 +34,8 @@ export function createEventPageHandlers(service: EventPageService, caches: Event
     reply: FastifyReply,
   ): Promise<EventPageListResponse> {
     const { sport } = request.query;
-    const pages = await current(caches.lists, sport ?? '', (views) => views, () => service.listPages(sport));
+    const upcoming = request.query.upcoming ?? false;
+    const pages = await current(caches.lists, `${sport ?? ''}/${String(upcoming)}`, (views) => views, () => service.listPages(sport, upcoming));
     keepPublicUntil(reply, eventPagesChangeAt(pages));
     return { eventPages: pages.map(toEventPageDto) };
   }

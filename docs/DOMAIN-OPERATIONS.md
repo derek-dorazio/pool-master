@@ -517,8 +517,8 @@ Never a sports team. Unique on `(leagueId, name)`.
 | Operation | Role | Notes |
 |---|---|---|
 | Create | `member`, `commissioner` | **A7** · creates the subject's squad plus their `SquadMembership`; a commissioner may do this on a member's behalf |
-| Read one | `member`, `commissioner` | **A4** · peers readable |
-| List for a league | `member`, `commissioner` | **A4** · takes a league |
+| Read one | `member`, `commissioner` | **A4** · peers readable. Each owner (`SquadOwnerDto`) carries their `leagueRole` in the squad's league (#1202), so a team page marks a commissioner owner without reading the roster |
+| List for a league | `member`, `commissioner` | **A4** · takes a league; owners carry `leagueRole` as above |
 | Update name, icon | `member:own`, `commissioner` | **A5 + A7** |
 | Inactivate *(soft)* | `commissioner` | `inactivateSquad` · `isActive`. The normal path. Ends every owner's league membership, so it is league administration, not an owner's button (#219). Undone by inviting an owner back |
 | Delete permanently *(hard)* | `rootAdmin` | `deleteInactiveSquad` (#292) — **gated: throws unless already inactive** (400 `SQUAD_DELETE_REQUIRES_INACTIVE`), and refused for a squad with a place in a `COMPLETED` contest (400 `SQUAD_DELETE_HAS_RESULTS`, #841), whose results cups and championships keep; it stays inactive instead. Otherwise cascades to its entries, picks, owner invitations and memberships. QA-residue cleanup. See the note below |
@@ -851,7 +851,7 @@ templates: there is no write operation. A retired page has `isActive` false and 
 
 | Operation | Role | Notes |
 |---|---|---|
-| List | `public` | `listEventPages`, optionally by `sport`: the active pages with their offers, for How to Play's Coming up row |
+| List | `public` | `listEventPages`, optionally by `sport`: the active pages with their offers; with `upcoming=true` only the pages whose primary offer shows an edition coming, soonest first (#1202), for the Coming up rows and an event page's Next up |
 | Read one | `public` | `getEventPage` by sport and slug, active or retired; 404 `EVENT_PAGE_NOT_FOUND` for an address no page has. Each offer carries its series' next edition still able to take the contest (the one under way, else the soonest upcoming) and `OPEN` or `NOT_YET`, from the same checks Create contest makes (`contestOpening`); an offer with no such edition, or whose template is inactive (Create contest refuses one), is left out. A retired page has no offers. An exception to #431: an edition still `DRAFT` shows its name and dates on the public page, as `NOT_YET`, so a fan learns when the event opens before a root admin releases it; nothing else of a draft event is shown |
 
 ### Contest
@@ -1075,7 +1075,7 @@ written before `crownedAt`; any other is `AFTER_CROWNING` and changes nothing.
 | List a season's cups | `member` | `listCups`, `GET /leagues/:id/cups?seasonYear=`: each cup with its standings (every active squad, at 0 until it places; an inactive squad once it has placed; `movement`, places gained since before the latest counted contest went final, null until two have; `pointsAfter`, the running total after each counted contest, which the race chart draws) and its contests (drafts left out, each `COUNTED`, `NOT_COUNTED`, `NO_RESULT`, `NOT_FINAL` or `AFTER_CROWNING`, with its winners); a crowned cup's frozen standings carry their `trophy`. No viewer context (A8): the client finds its own squad's row |
 | List the seasons with cups | `member` | `listCupSeasons`, `GET /leagues/:id/cups/seasons` (#837): the seasons the league has a listed (non-draft) contest in, newest first. With the championship's years, the years the Championships page's year picker offers |
 | Read one cup | `member` | `getCup`, `GET /leagues/:id/cups/:cupId`; 404 `CUP_NOT_FOUND` for another league's cup |
-| Read a squad's cup points | `member` | `getCupSquadPoints`, `GET /leagues/:id/cups/:cupId/squads/:squadId`: the squad's place and points in each counted contest, in the order they went final; 404 `SQUAD_NOT_FOUND` for another league's squad |
+| Read a squad's cup points | `member` | `getCupSquadPoints`, `GET /leagues/:id/cups/squads/:squadId?seasonYear=&sportLeagueId=` (#1202): the cup found by its season and sports league, with its id and name, and the squad's place and points in each counted contest, in the order they went final; PAST_YEARS for an earlier season, as the season list; 404 `CUP_NOT_FOUND` when the league has no cup for that season and sports league, `SQUAD_NOT_FOUND` for another league's squad |
 | Project a cup from its live contests | `member` | `getCupProjection`, `GET /leagues/:id/cups/:cupId/projection` (#841 slice 5): an open cup's standings if every live (`ACTIVE`) contest it counts ended now, each scored from its leaderboard's places as they stand (`ContestService.livePositionsOf`, through the same 30-second leaderboard cache as the contest page), at its own weight, on top of the counted contests; each squad's projected place, points, `gained` and `movement` against the standings as they are. Nothing is stored. A live contest whose picks are not revealed yet, or a squares contest, ranks nobody. 409 `CUP_CROWNED` for a crowned cup |
 | Crown a cup | `commissioner` | `crownCup`, `POST /leagues/:id/cups/:cupId/crown`: freezes the standings and hands out the trophies (above). 409 `CUP_HAS_UNFINISHED_CONTESTS` while a counted contest is `OPEN` or `ACTIVE`, `details.contests` listing each; 409 `CUP_NOTHING_COUNTED` before any contest has counted; 409 `CUP_CROWNED` once crowned, the write guarded on `OPEN` so two crownings never both land. Answers the crowned cup |
 

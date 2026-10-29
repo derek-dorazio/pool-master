@@ -54,6 +54,11 @@ export class InMemoryCups implements CupRepository {
     return this.cups.find((cup) => cup.id === id) ?? null;
   }
 
+  async findByKey(key: CupKey): Promise<Cup | null> {
+    return this.cups.find((cup) => cup.leagueId === key.leagueId && cup.seasonYear === key.seasonYear
+      && cup.sportLeagueId === key.sportLeagueId) ?? null;
+  }
+
   async findByLeagueSeason(leagueId: string, seasonYear: number): Promise<Cup[]> {
     return this.cups.filter((cup) => cup.leagueId === leagueId && cup.seasonYear === seasonYear);
   }

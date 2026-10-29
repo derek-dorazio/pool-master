@@ -860,11 +860,12 @@ describe('Championships › Points race', () => {
 });
 
 describe('Championships › a squad\'s cup points', () => {
-  it('shows the squad\'s total and each counted contest with its place, weight and points, opening its leaderboard', async () => {
+  it('shows the squad\'s total and each counted contest with its place, weight and points, opening its leaderboard, from one read of the cup by season and sports league', async () => {
     primeViewer();
     getCupSquadPointsMock.mockResolvedValue(apiSuccess({
       squadPoints: {
         cupId: 'cup-pga',
+        cupName: '2026 PGA Tour Cup',
         squadId: 'team-1',
         squadName: 'Casey Crushers',
         points: 1650,
@@ -880,8 +881,10 @@ describe('Championships › a squad\'s cup points', () => {
 
     expect(await screen.findByTestId('cup-squad-points-total')).toHaveTextContent('165 pts');
     expect(getCupSquadPointsMock).toHaveBeenCalledWith(expect.objectContaining({
-      path: { id: 'league-1', cupId: 'cup-pga', squadId: 'team-1' },
+      path: { id: 'league-1', squadId: 'team-1' },
+      query: { seasonYear: 2026, sportLeagueId: 'sport-league-pga' },
     }));
+    expect(listCupsMock).not.toHaveBeenCalled();
     expect(screen.getByTestId('cup-squad-contest-contest-2')).toHaveTextContent('T4 of 12 · x1.5');
     expect(screen.getByTestId('cup-squad-contest-contest-2')).toHaveAttribute('href', '/league/BIGDAWGS/contests/contest-2/leaderboard');
     expect(screen.getByTestId('cup-squad-contest-contest-5')).toHaveTextContent('No entry');
@@ -890,6 +893,29 @@ describe('Championships › a squad\'s cup points', () => {
       '/league/BIGDAWGS/championships/2026/race/sport-league-pga',
     );
     expect(screen.getByTestId('championships-tab-race')).toBeChecked();
+  });
+
+  it('says the league has no such cup when the read finds no cup for that season and sports league', async () => {
+    primeViewer();
+    getCupSquadPointsMock.mockResolvedValue({
+      error: { error: { code: 'CUP_NOT_FOUND', message: 'The league has no 2026 cup for that sports league.' } },
+    });
+
+    renderChampionships('/league/BIGDAWGS/championships/2026/race/sport-league-mlb/squads/team-1');
+
+    expect(await screen.findByTestId('cup-squad-points-no-cup')).toHaveTextContent('Cup not found');
+    expect(screen.queryByTestId('cup-squad-points-error')).not.toBeInTheDocument();
+  });
+
+  it('says the points could not load when the read fails for another reason', async () => {
+    primeViewer();
+    getCupSquadPointsMock.mockResolvedValue({
+      error: { error: { code: 'INTERNAL_ERROR', message: 'Something broke.' } },
+    });
+
+    renderChampionships('/league/BIGDAWGS/championships/2026/race/sport-league-pga/squads/team-1');
+
+    expect(await screen.findByTestId('cup-squad-points-error')).toBeInTheDocument();
   });
 });
 

@@ -5,18 +5,30 @@ import { mapToSquadMembership } from './prisma-squad-membership-repository';
 import { mapToUser } from './prisma-user-repository';
 
 /**
- * A squad's owners, in join order, each with their user (#1165). Prisma reads the relation in
- * one statement per level for however many squads match, so a league's whole team list is three
- * statements rather than three per team. `passwordHash` is never read for an embedded user.
+ * A squad's owners, in join order, each with their user and their role in the squad's league
+ * (#1165, #1202). Prisma reads the relation in one statement per level for however many squads
+ * match, so a league's whole team list is four statements rather than four per team.
+ * `passwordHash` is never read for an embedded user.
+ *
+ * `leagueMembership` picks the owner's one membership in the squad's league
+ * (`@@unique([leagueId, userId])`); a team page names a commissioner owner from it rather than
+ * reading the league's whole roster.
  */
-const SQUAD_DETAILS_INCLUDE = {
-  memberships: {
-    orderBy: { joinedAt: 'asc' },
-    include: { user: { omit: { passwordHash: true } } },
-  },
-} satisfies Prisma.SquadInclude;
+function squadDetailsInclude(leagueMembership: Prisma.LeagueMembershipWhereInput) {
+  return {
+    memberships: {
+      orderBy: { joinedAt: 'asc' },
+      include: {
+        user: {
+          omit: { passwordHash: true },
+          include: { memberships: { where: leagueMembership, select: { role: true } } },
+        },
+      },
+    },
+  } satisfies Prisma.SquadInclude;
+}
 
-type SquadDetailsRow = Prisma.SquadGetPayload<{ include: typeof SQUAD_DETAILS_INCLUDE }>;
+type SquadDetailsRow = Prisma.SquadGetPayload<{ include: ReturnType<typeof squadDetailsInclude> }>;
 
 export class PrismaSquadRepository implements SquadRepository {
   constructor(private readonly prisma: PrismaClient | Prisma.TransactionClient) {}
@@ -38,7 +50,10 @@ export class PrismaSquadRepository implements SquadRepository {
   }
 
   async findDetailsById(id: string): Promise<SquadDetails | null> {
-    const row = await this.prisma.squad.findUnique({ where: { id }, include: SQUAD_DETAILS_INCLUDE });
+    const row = await this.prisma.squad.findUnique({
+      where: { id },
+      include: squadDetailsInclude({ league: { squads: { some: { id } } } }),
+    });
     return row ? mapToSquadDetails(row) : null;
   }
 
@@ -46,7 +61,7 @@ export class PrismaSquadRepository implements SquadRepository {
     const rows = await this.prisma.squad.findMany({
       where: { leagueId },
       orderBy: { createdAt: 'asc' },
-      include: SQUAD_DETAILS_INCLUDE,
+      include: squadDetailsInclude({ leagueId }),
     });
     return rows.map(mapToSquadDetails);
   }
@@ -110,6 +125,7 @@ function mapToSquadDetails(row: SquadDetailsRow): SquadDetails {
     members: row.memberships.map((membership) => ({
       membership: mapToSquadMembership(membership),
       user: mapToUser(membership.user),
+      leagueRole: membership.user.memberships[0]?.role ?? null,
     })),
   };
 }

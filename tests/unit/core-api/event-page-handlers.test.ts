@@ -110,4 +110,15 @@ describe('event page routes (#1181)', () => {
     expect(again.headers['cache-control']).toBe(PUBLIC_CACHE_CONTROL);
     await app.close();
   });
+
+  it('keeps the Coming up list apart from the full list, so neither is answered with the other', async () => {
+    const { app, computed } = await appClosingAt([inSeconds(7200)]);
+
+    await app.inject({ method: 'GET', url: '/api/v1/event-pages' });
+    await app.inject({ method: 'GET', url: '/api/v1/event-pages?upcoming=true' });
+    await app.inject({ method: 'GET', url: '/api/v1/event-pages?upcoming=true' });
+
+    expect(computed()).toBe(2);
+    await app.close();
+  });
 });

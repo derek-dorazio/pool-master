@@ -54,6 +54,8 @@ export interface CupRepository {
   /** The league's cup for the season and sports league, made when it has none: a cup is never set up by hand. */
   ensure(key: CupKey): Promise<Cup>;
   findById(id: string): Promise<Cup | null>;
+  /** The league's cup for the season and sports league, or null when it has none (#1202). */
+  findByKey(key: CupKey): Promise<Cup | null>;
   /** The league's cups of one season, oldest first. */
   findByLeagueSeason(leagueId: string, seasonYear: number): Promise<Cup[]>;
   /** Every cup of the league, of every season, oldest first. */

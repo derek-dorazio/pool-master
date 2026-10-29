@@ -1239,6 +1239,17 @@ export const listCupSeasons = <ThrowOnError extends boolean = false>(options: Op
 });
 
 /**
+ * Get a squad's cup points
+ *
+ * One squad's points in the league's cup for a season and sports league, counted contest by counted contest, in the order they went final, with the cup's id and name. 404 CUP_NOT_FOUND when the league has no cup for that season and sports league, SQUAD_NOT_FOUND for a squad that is not the league's. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. 403 PLAN_FEATURE_NOT_INCLUDED, its `details.feature` naming what is missing, unless the league's plan has CUP_STANDINGS, PAST_YEARS for a year before the current one (root admins too).
+ */
+export const getCupSquadPoints = <ThrowOnError extends boolean = false>(options: Options<GetCupSquadPointsData, ThrowOnError>): RequestResult<GetCupSquadPointsResponses, GetCupSquadPointsErrors, ThrowOnError> => (options.client ?? client).get<GetCupSquadPointsResponses, GetCupSquadPointsErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/leagues/{id}/cups/squads/{squadId}',
+    ...options
+});
+
+/**
  * Get a cup
  *
  * One cup with its standings and contests: the Points race. 404 CUP_NOT_FOUND for a cup that is not the league's. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. 403 PLAN_FEATURE_NOT_INCLUDED, its `details.feature` naming what is missing, unless the league's plan has CUP_STANDINGS (root admins too).
@@ -1246,17 +1257,6 @@ export const listCupSeasons = <ThrowOnError extends boolean = false>(options: Op
 export const getCup = <ThrowOnError extends boolean = false>(options: Options<GetCupData, ThrowOnError>): RequestResult<GetCupResponses, GetCupErrors, ThrowOnError> => (options.client ?? client).get<GetCupResponses, GetCupErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/leagues/{id}/cups/{cupId}',
-    ...options
-});
-
-/**
- * Get a squad's cup points
- *
- * One squad's points in a cup, counted contest by counted contest, in the order they went final. 404 CUP_NOT_FOUND for a cup that is not the league's, SQUAD_NOT_FOUND for a squad that is not. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. 403 PLAN_FEATURE_NOT_INCLUDED, its `details.feature` naming what is missing, unless the league's plan has CUP_STANDINGS (root admins too).
- */
-export const getCupSquadPoints = <ThrowOnError extends boolean = false>(options: Options<GetCupSquadPointsData, ThrowOnError>): RequestResult<GetCupSquadPointsResponses, GetCupSquadPointsErrors, ThrowOnError> => (options.client ?? client).get<GetCupSquadPointsResponses, GetCupSquadPointsErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/leagues/{id}/cups/{cupId}/squads/{squadId}',
     ...options
 });
 
@@ -2199,7 +2199,7 @@ export const applyParticipantLeagueAffiliationUpload = <ThrowOnError extends boo
 /**
  * List event pages
  *
- * The active event pages, of one sport or every sport, each with its offers and their next editions, for How to Play's and the welcome page's Coming up row. Public: no session is needed, and it holds nothing about any league or user.
+ * The active event pages, of one sport or every sport, each with its offers and their next editions; with `upcoming=true`, only the pages with an edition coming, soonest first, for How to Play's and the welcome page's Coming up row. Public: no session is needed, and it holds nothing about any league or user.
  */
 export const listEventPages = <ThrowOnError extends boolean = false>(options?: Options<ListEventPagesData, ThrowOnError>): RequestResult<ListEventPagesResponses, unknown, ThrowOnError> => (options?.client ?? client).get<ListEventPagesResponses, unknown, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

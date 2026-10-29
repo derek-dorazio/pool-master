@@ -27,13 +27,13 @@ afterEach(() => {
 });
 
 describe('Coming up row', () => {
-  it('shows a card per page with an edition coming, soonest first, naming its contest types and linking to the page', async () => {
+  it('asks only for the pages with an edition coming and shows a card for each in the order the server sends, soonest first, naming its contest types and linking to the page', async () => {
     const superBowl = championshipWeekendFixture({
       id: 'page-sb',
       slug: 'super-bowl',
       offers: [{ ...championshipWeekendFixture().offers[0], edition: { sportEventId: 'sb', name: 'Super Bowl', eventYear: 2027, startDate: '2027-02-07T23:30:00.000Z', endDate: null } }],
     });
-    listEventPagesMock.mockResolvedValue({ data: { eventPages: [superBowl, championshipWeekendFixture()] } });
+    listEventPagesMock.mockResolvedValue({ data: { eventPages: [championshipWeekendFixture(), superBowl] } });
     renderRow('AMERICAN_FOOTBALL');
 
     const row = await screen.findByTestId('coming-up');
@@ -41,7 +41,21 @@ describe('Coming up row', () => {
     expect(cards.map((card) => card.getAttribute('href'))).toEqual(['/play/american-football/championship-weekend', '/play/american-football/super-bowl']);
     expect(cards[0]).toHaveTextContent('Championship Weekend');
     expect(cards[0]).toHaveTextContent('Clutch Card · Bracket · Squares');
-    expect(listEventPagesMock).toHaveBeenCalledWith(expect.objectContaining({ query: { sport: 'AMERICAN_FOOTBALL' } }));
+    expect(listEventPagesMock).toHaveBeenCalledWith(expect.objectContaining({ query: { sport: 'AMERICAN_FOOTBALL', upcoming: 'true' } }));
+  });
+
+  it('shows every sport\'s next three pages, asking for the upcoming pages of every sport', async () => {
+    const pages = ['one', 'two', 'three', 'four'].map((slug) => championshipWeekendFixture({ id: `page-${slug}`, slug }));
+    listEventPagesMock.mockResolvedValue({ data: { eventPages: pages } });
+    renderRow();
+
+    const row = await screen.findByTestId('coming-up');
+    expect(within(row).getAllByRole('link').map((card) => card.getAttribute('href'))).toEqual([
+      '/play/american-football/one',
+      '/play/american-football/two',
+      '/play/american-football/three',
+    ]);
+    expect(listEventPagesMock).toHaveBeenCalledWith(expect.objectContaining({ query: { upcoming: 'true' } }));
   });
 
   it('leaves out a page between seasons, and shows nothing when no page has an edition coming', async () => {
