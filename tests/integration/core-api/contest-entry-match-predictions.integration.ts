@@ -1,6 +1,5 @@
 import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
-import type { PrismaClient } from '@prisma/client';
 import { ContestEntryStatus, ContestStatus, PredictedResult, Sport, contestEntryEventStatus, contestEntryEventTiebreaker } from '@poolmaster/shared/domain';
 import {
   PrismaContestEntryMatchPredictionRepository,
@@ -19,6 +18,7 @@ import {
   setupIntegrationTests,
   teardownIntegrationTests,
 } from '../helpers';
+import { countingPrisma } from '../../support/counting-prisma';
 import { createContestRow } from '../../support/contest-rows';
 
 // A pick'em entry's game picks against real Postgres (#716): the prediction port's read and its
@@ -126,28 +126,6 @@ async function createPickEmEntry(sportEventIds: string[]) {
   return { contest, entry: result.entry };
 }
 
-/** The Prisma client with every model operation counted as `Model.operation`, those inside a transaction included. */
-function countingPrisma() {
-  const counts = new Map<string, number>();
-  const client = getPrisma().$extends({
-    query: {
-      $allModels: {
-        async $allOperations({ model, operation, args, query }) {
-          const key = `${model}.${operation}`;
-          counts.set(key, (counts.get(key) ?? 0) + 1);
-          return query(args);
-        },
-      },
-    },
-  });
-  // The extended client runs every query the plain one does; the repositories take the plain type.
-  return {
-    prisma: client as unknown as PrismaClient,
-    count: (key: string) => counts.get(key) ?? 0,
-    total: () => [...counts.values()].reduce((sum, count) => sum + count, 0),
-  };
-}
-
 function weekStatus(entry: { events: { sportEventId: string; status: string; submittedAt?: Date }[] }, sportEventId: string) {
   const row = entry.events.find((event) => event.sportEventId === sportEventId);
   return { status: row?.status, submittedAt: row?.submittedAt ?? null };
@@ -205,7 +183,7 @@ describe('PrismaContestEntryMatchPredictionRepository', () => {
     const { event, game } = await createWeek('Week 1', AT);
     const { entry: oneGame } = await createPickEmEntry([event.id]);
     const { entry: fullSlate } = await createPickEmEntry([event.id]);
-    const counted = countingPrisma();
+    const counted = countingPrisma(getPrisma());
     const predictions = new PrismaContestEntryMatchPredictionRepository(counted.prisma);
     const saveOn = (contestEntryId: string, matchNumbers: readonly number[], at: Date) => predictions.save({
       contestEntryId,

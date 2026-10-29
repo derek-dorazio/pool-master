@@ -1,6 +1,5 @@
 import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
-import type { PrismaClient } from '@prisma/client';
 import { Sport, SportEventStatus } from '@poolmaster/shared/domain';
 import type { SportEventParticipantListResponse, SportEventParticipantResponse } from '@poolmaster/shared/dto';
 import {
@@ -16,6 +15,7 @@ import {
   setupIntegrationTests,
   teardownIntegrationTests,
 } from '../helpers';
+import { countingPrisma } from '../../support/counting-prisma';
 import { freshEventEdition } from '../../support/event-edition';
 import { passReadCacheTtl, restoreReadCacheClock } from '../../support/read-cache-clock';
 
@@ -31,33 +31,6 @@ afterAll(async () => {
 });
 beforeEach(() => cleanupTestData());
 afterEach(() => restoreReadCacheClock());
-
-/** The Prisma client with every model operation counted, as `Model.operation`, and the rows each read returned. */
-function countingPrisma() {
-  const counts = new Map<string, number>();
-  const rows = new Map<string, number>();
-  const client = getPrisma().$extends({
-    query: {
-      $allModels: {
-        async $allOperations({ model, operation, args, query }) {
-          const key = `${model}.${operation}`;
-          counts.set(key, (counts.get(key) ?? 0) + 1);
-          const result = await query(args);
-          if (Array.isArray(result)) rows.set(key, (rows.get(key) ?? 0) + result.length);
-          else if (result) rows.set(key, (rows.get(key) ?? 0) + 1);
-          return result;
-        },
-      },
-    },
-  });
-  // The extended client runs every query the plain one does; the services take the plain type.
-  return {
-    prisma: client as unknown as PrismaClient,
-    count: (key: string) => counts.get(key) ?? 0,
-    rows: (key: string) => rows.get(key) ?? 0,
-    operations: () => [...counts.entries()].sort(([left], [right]) => left.localeCompare(right)),
-  };
-}
 
 /**
  * A golf event two rounds in, with a field of three: Ana (seed 1), Bea (seed 2) and Cal
@@ -144,7 +117,7 @@ async function eventWithField(sport: Sport, names: readonly string[]) {
 describe('An event\'s field', () => {
   it('is read in one call on the field table, each row with its participant, affiliation, price, standing and rounds in round order, seeded first', async () => {
     const { event, ana, bea, cal } = await golfEvent();
-    const counting = countingPrisma();
+    const counting = countingPrisma(getPrisma());
 
     const field = await createSportEventParticipantService(counting.prisma).listEventParticipants(event.id);
 
@@ -162,7 +135,7 @@ describe('An event\'s field', () => {
 
   it('is read once for every contest and pick screen on the event within 30 seconds, and again after', async () => {
     const { event } = await golfEvent();
-    const counting = countingPrisma();
+    const counting = countingPrisma(getPrisma());
     const contestReads = createSportEventParticipantService(counting.prisma);
     const pickScreenReads = createSportEventParticipantService(counting.prisma);
 
@@ -309,7 +282,7 @@ describe('An event\'s field, for every scoring family', () => {
 describe('A write to one field row', () => {
   it('reads that row alone to answer, with the values the whole field read gives it', async () => {
     const { event, ana } = await golfEvent();
-    const counting = countingPrisma();
+    const counting = countingPrisma(getPrisma());
     const service = createSportEventParticipantService(counting.prisma);
 
     const row = await service.getEventParticipant(event.id, ana.id);
