@@ -1,5 +1,5 @@
 import type { Prisma, PrismaClient, SquadMembership as PrismaSquadMembership } from '@prisma/client';
-import type { SquadMembershipRepository } from '@poolmaster/shared/db';
+import type { SquadMembershipRepository, SquadMembershipWithSquadName } from '@poolmaster/shared/db';
 import type { SquadMembership, SquadMembershipStatus } from '@poolmaster/shared/domain';
 import { SquadMembershipStatus as SharedSquadMembershipStatus } from '@poolmaster/shared/domain';
 
@@ -43,6 +43,17 @@ export class PrismaSquadMembershipRepository implements SquadMembershipRepositor
     return row ? mapToSquadMembership(row) : null;
   }
 
+  async findByLeagueAndUserWithSquadName(
+    leagueId: string,
+    userId: string,
+  ): Promise<SquadMembershipWithSquadName | null> {
+    const row = await this.prisma.squadMembership.findUnique({
+      where: { leagueId_userId: { leagueId, userId } },
+      include: { squad: { select: { name: true } } },
+    });
+    return row ? { ...mapToSquadMembership(row), squadName: row.squad.name } : null;
+  }
+
   async create(
     membership: Omit<SquadMembership, 'id' | 'createdAt' | 'updatedAt'>,
   ): Promise<SquadMembership> {
@@ -72,7 +83,7 @@ export class PrismaSquadMembershipRepository implements SquadMembershipRepositor
 
 }
 
-function mapToSquadMembership(row: PrismaSquadMembership): SquadMembership {
+export function mapToSquadMembership(row: PrismaSquadMembership): SquadMembership {
   return {
     id: row.id,
     squadId: row.squadId,

@@ -11,7 +11,6 @@ import {
   buildCurrentUser,
   buildLeague,
   buildLeagueMembership,
-  buildLeagueSquad,
   buildLeagueSquadMember,
   getLeagueByCodeData,
 } from './test/fixtures';
@@ -33,13 +32,11 @@ function renderMenu({
   isRootAdmin = false,
   leagueRole = 'MEMBER',
   path = '/league/BIGDAWGS',
-  squads = [buildLeagueSquad({ id: 'team-1', name: "Derek's Great Golf Guys" })],
 }: {
   hasSquad?: boolean;
   isRootAdmin?: boolean;
   leagueRole?: 'COMMISSIONER' | 'MEMBER';
   path?: string;
-  squads?: ReturnType<typeof buildLeagueSquad>[];
 } = {}) {
   getCurrentUserMock.mockResolvedValue(apiSuccess({ user: buildCurrentUser({ isRootAdmin }) }));
   refreshTokenMock.mockResolvedValue({ data: null });
@@ -48,9 +45,10 @@ function renderMenu({
     {
       membership: buildLeagueMembership({ role: leagueRole }),
       squadMembership: hasSquad ? buildLeagueSquadMember({ squadId: 'team-1' }) : null,
+      squadName: "Derek's Great Golf Guys",
     },
   )));
-  listLeagueSquadsMock.mockResolvedValue(apiSuccess({ squads }));
+  listLeagueSquadsMock.mockResolvedValue(apiSuccess({ squads: [] }));
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
     <QueryClientProvider client={queryClient}>
@@ -84,21 +82,30 @@ describe('LeagueMenuBar', () => {
     expect(menu.queryByRole('link', { name: /team/i })).not.toBeInTheDocument();
   });
 
+  it('names the viewer\'s squad from the league context alone, reading no team list', async () => {
+    renderMenu();
+
+    const menu = within(await screen.findByRole('navigation', { name: 'League' }));
+    await menu.findByRole('link', { name: "Derek's Great Golf Guys" });
+    expect(getLeagueByCodeMock).toHaveBeenCalledTimes(1);
+    expect(listLeagueSquadsMock).not.toHaveBeenCalled();
+  });
+
   it('labels the viewer\'s own entry "Yours" when the viewer has no squad in the league', async () => {
     renderMenu({ hasSquad: false });
 
     const menu = within(await screen.findByRole('navigation', { name: 'League' }));
-    await vi.waitFor(() => expect(listLeagueSquadsMock).toHaveBeenCalled());
+    await vi.waitFor(() => expect(getLeagueByCodeMock).toHaveBeenCalled());
     expect(menu.getByTestId('league-menu-my-team')).toHaveTextContent('Yours');
     expect(menu.queryByRole('link', { name: "Derek's Great Golf Guys" })).not.toBeInTheDocument();
   });
 
-  it('labels the viewer\'s own entry "Yours" while their squad\'s name is still loading', async () => {
+  it('labels the viewer\'s own entry "Yours" while the league is still loading', async () => {
     renderMenu();
-    listLeagueSquadsMock.mockReturnValue(new Promise(() => undefined));
+    getLeagueByCodeMock.mockReturnValue(new Promise(() => undefined));
 
     const menu = within(await screen.findByRole('navigation', { name: 'League' }));
-    await vi.waitFor(() => expect(listLeagueSquadsMock).toHaveBeenCalled());
+    await vi.waitFor(() => expect(getLeagueByCodeMock).toHaveBeenCalled());
     expect(menu.getByTestId('league-menu-my-team')).toHaveTextContent('Yours');
   });
 

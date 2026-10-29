@@ -14,7 +14,7 @@ import {
   buildLeagueSquad,
   buildLeagueSquadMember,
   getLeagueByCodeData,
-  listLeagueSquadsData,
+  getLeagueSquadFrom,
 } from './test/fixtures';
 import type { CupDto } from '@/lib/api';
 import { buildRunningCup } from '@/features/championships/test/fixtures';
@@ -27,7 +27,7 @@ const getYearReviewMock = vi.fn();
 const listContestEntriesMock = vi.fn();
 const listContestsMock = vi.fn();
 const listCupsMock = vi.fn();
-const listLeagueSquadsMock = vi.fn();
+const getLeagueSquadMock = vi.fn();
 const refreshTokenMock = vi.fn();
 
 bindApiMocks({
@@ -38,7 +38,7 @@ bindApiMocks({
   listContestEntries: listContestEntriesMock,
   listContests: listContestsMock,
   listCups: listCupsMock,
-  listLeagueSquads: listLeagueSquadsMock,
+  getLeagueSquad: getLeagueSquadMock,
   refreshToken: refreshTokenMock,
 });
 
@@ -181,9 +181,9 @@ function primeMocks({
       })),
     })),
   }));
-  listLeagueSquadsMock.mockResolvedValue(apiSuccess(listLeagueSquadsData(
+  getLeagueSquadMock.mockImplementation(getLeagueSquadFrom(
     hasTeam ? [buildLeagueSquad({ members: [buildLeagueSquadMember()] })] : [],
-  )));
+  ));
   listCupsMock.mockResolvedValue(apiSuccess({ cups }));
   getYearReviewMock.mockResolvedValue(apiSuccess({ yearReview: { year: 2025, status: 'READY', sentAt: null, sentByName: null } }));
   listContestEntriesMock.mockImplementation(({ path }: { path: { contestId: string } }) =>
@@ -200,7 +200,7 @@ afterEach(() => {
   vi.useRealTimers();
   for (const mock of [
     getCurrentUserMock, getContestLeaderboardMock, getLeagueByCodeMock, getYearReviewMock,
-    listContestEntriesMock, listContestsMock, listCupsMock, listLeagueSquadsMock, refreshTokenMock,
+    listContestEntriesMock, listContestsMock, listCupsMock, getLeagueSquadMock, refreshTokenMock,
   ]) {
     mock.mockReset();
   }
@@ -383,6 +383,8 @@ describe('League Home', () => {
     expect(await team.findByText('Casey Crushers')).toBeInTheDocument();
     expect(team.getByText('Casey Commissioner')).toBeInTheDocument();
     expect(team.getByRole('link', { name: /Go to Casey Crushers/ })).toHaveAttribute('href', '/league/BIGDAWGS/team');
+    // One read of the viewer's own team, not the league's whole team list.
+    expect(getLeagueSquadMock).toHaveBeenCalledWith(expect.objectContaining({ path: { id: 'league-1', squadId: 'team-1' } }));
   });
 
   it('shows the year\'s cups with who leads and the viewer\'s place, each opening its Points race', async () => {

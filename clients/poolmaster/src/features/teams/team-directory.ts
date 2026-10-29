@@ -10,7 +10,7 @@ export type TeamDirectoryRow = {
 
 /** The team's owners who are still active in the league. */
 export function getActiveOwners(team: SquadDto) {
-  return (team.members ?? []).filter((member) => member.status === SquadMembershipStatus.ACTIVE);
+  return team.members.filter((member) => member.status === SquadMembershipStatus.ACTIVE);
 }
 
 /** "1 owner", "3 owners". */

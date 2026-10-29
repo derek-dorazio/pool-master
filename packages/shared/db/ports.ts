@@ -258,9 +258,33 @@ export interface LeagueMembershipRepository {
   update(id: string, updates: Partial<LeagueMembership>): Promise<LeagueMembership>;
 }
 
+/** One owner of a squad: the membership, any status, with the member's user. */
+export interface SquadMemberDetails {
+  membership: SquadMembership;
+  user: User;
+}
+
+/**
+ * A squad with its owners (#1165): every membership, any status, in join order, each with its
+ * user. What a team page and the team list show, read in one go rather than squad, then
+ * memberships, then every user in the league.
+ */
+export interface SquadDetails extends Squad {
+  members: SquadMemberDetails[];
+}
+
+/** A squad membership with its squad's name: the league context's squad edge (#1165). */
+export interface SquadMembershipWithSquadName extends SquadMembership {
+  squadName: string;
+}
+
 export interface SquadRepository {
   findById(id: string): Promise<Squad | null>;
   findByLeague(leagueId: string, includeInactive?: boolean): Promise<Squad[]>;
+  findDetailsById(id: string): Promise<SquadDetails | null>;
+  /** Every squad in the league, active and inactive, oldest first, with its owners. */
+  findDetailsByLeague(leagueId: string): Promise<SquadDetails[]>;
+  countActiveByLeague(leagueId: string): Promise<number>;
   /**
    * Resolves a squad by its name within a league. Squad names are unique per league
    * (`@@unique([leagueId, name])`, #202), so this returns at most one row, and it
@@ -284,6 +308,8 @@ export interface SquadMembershipRepository {
   findBySquads(squadIds: readonly string[], includeInactive?: boolean): Promise<SquadMembership[]>;
   findBySquadAndUser(squadId: string, userId: string): Promise<SquadMembership | null>;
   findByLeagueAndUser(leagueId: string, userId: string): Promise<SquadMembership | null>;
+  /** `findByLeagueAndUser` with the squad's name, in the same read. */
+  findByLeagueAndUserWithSquadName(leagueId: string, userId: string): Promise<SquadMembershipWithSquadName | null>;
   create(
     membership: Omit<SquadMembership, 'id' | 'createdAt' | 'updatedAt'>,
   ): Promise<SquadMembership>;
