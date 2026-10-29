@@ -224,7 +224,7 @@ export const QueryKeys = {
       ['poolmaster', 'root-admin', 'events', eventId, 'participants'] as const,
     eventSyncEvents: (sport: QueryKeyId) =>
       ['poolmaster', 'root-admin', 'event-sync-events', sport] as const,
-    events: ['poolmaster', 'root-admin', 'events'] as const,
+    eventsByYear: (eventYear: number) => ['poolmaster', 'root-admin', 'events', 'year', eventYear] as const,
     // The Manage sport screens (golf's first, every sport's since #623). Lists of one sport take
     // the sport; invalidating the bare prefix (`leagues`, `events`, `participants`) refreshes every
     // sport's.
@@ -290,8 +290,10 @@ export const QueryKeys = {
         dateWindow ?? null,
       ] as const,
     ingestionConfig: ['poolmaster', 'root-admin', 'ingestion-config'] as const,
+    // The search term is part of the key (#1180); invalidating the bare prefix refreshes every search.
     manageLeagues: ['poolmaster', 'root-admin', 'manage-leagues'] as const,
-    manageUsers: ['poolmaster', 'root-admin', 'manage-users'] as const,
+    manageLeaguesSearch: (search: string) => ['poolmaster', 'root-admin', 'manage-leagues', search] as const,
+    manageUsersSearch: (search: string) => ['poolmaster', 'root-admin', 'manage-users', search] as const,
     providers: ['poolmaster', 'root-admin', 'providers'] as const,
     // Every settings group (#450). History sits under the same prefix, so invalidating
     // `settings` after any save refreshes each group's recent changes too.

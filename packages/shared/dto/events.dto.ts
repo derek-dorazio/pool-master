@@ -88,14 +88,14 @@ export const SportEventDtoSchema = z.object({
 }).describe('A real-world event a contest can be run on — a golf tournament, a race, a match.');
 export type SportEventDto = z.infer<typeof SportEventDtoSchema>;
 
-/** Filters narrow the list; nothing pages it (§16). */
+/** Filters narrow the list; nothing pages it (§16). One of sport, sportLeagueId and eventYear is required (#1180). */
 export const SportEventListQuerySchema = z.object({
   sport: z.enum(Sport).optional().describe('Only events of this sport.'),
   status: EventStatusDtoSchema.optional().describe('Only events in this lifecycle status.'),
   sportLeagueId: z.uuid().optional().describe('Only events of this sport league\'s series.'),
   eventYear: z.number().int().optional().describe('Only editions branded with this year.'),
   q: z.string().optional().describe('Case-insensitive substring of the event name.'),
-}).describe('Filters for the sport-event list.');
+}).describe('Filters for the sport-event list. At least one of sport, sportLeagueId and eventYear is required.');
 export type SportEventListQuery = z.infer<typeof SportEventListQuerySchema>;
 
 export const SportEventListResponseSchema = z.object({

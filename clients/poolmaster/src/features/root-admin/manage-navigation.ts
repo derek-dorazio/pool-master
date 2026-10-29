@@ -95,6 +95,9 @@ export const MANAGE_LANDING_PATH = '/manage/leagues';
 /** Rows per page on every Manage list (rules/ux-rules.md §12 rule 7). */
 export const MANAGE_LIST_PAGE_SIZE = 25;
 
+/** How long a server-searched Manage list waits after the last key before it asks (#1180). */
+export const SEARCH_DEBOUNCE_MS = 300;
+
 export function buildManageUserPath(userId: string) {
   return `/manage/users/${userId}`;
 }

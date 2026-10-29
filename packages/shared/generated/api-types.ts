@@ -206,7 +206,7 @@ export interface paths {
         };
         /**
          * List users
-         * @description Returns every user, optionally filtered. This is the unscoped read: access rule A1 permits it to root admins only. Not paged — filters narrow the result, nothing slices it.
+         * @description Returns the users matching `search`: a case-insensitive substring of the email, username, first or last name. This is the unscoped read: access rule A1 permits it to root admins only. Not paged — filters narrow the result, nothing slices it. `search` is required, at least 3 characters once trimmed, so the list never reads every user: 400 SEARCH_TERM_REQUIRED otherwise.
          */
         get: operations["listUsers"];
         put?: never;
@@ -496,7 +496,7 @@ export interface paths {
          * List leagues
          * @description Returns leagues together with the viewer's own memberships once as an array. The leagues list is the one inherently multi-league surface, so it is the one place the viewer's relationship travels as a set rather than per row (access rule A8).
          *
-         *     `scope` selects which leagues: `mine` (the default) returns the leagues the caller belongs to and powers the welcome page, header selector and My Leagues overview; `all` returns every league on the platform and powers root-admin league management. `all` is the unscoped read access rule A1 permits to root admins only, and returns 403 otherwise. `search` and `isActive` narrow either scope.
+         *     `scope` selects which leagues: `mine` (the default) returns the leagues the caller belongs to and powers the welcome page, header selector and My Leagues overview; `all` returns every league on the platform and powers root-admin league management. `all` is the unscoped read access rule A1 permits to root admins only, and returns 403 otherwise; it also requires `search` (at least 3 characters once trimmed), so it never reads every league, and returns 400 SEARCH_TERM_REQUIRED without one. `search` and `isActive` narrow either scope.
          *
          *     This replaced `listLeagues` + `adminListLeagues`, which were one operation split by caller role.
          */
@@ -2022,7 +2022,7 @@ export interface paths {
         };
         /**
          * List sport events
-         * @description The sport-event catalog, narrowed by sport, status, sport league, event year and name and never paged. Any signed-in user may read it: contest setup picks an event from it, and a root admin browses it. Each event carries its loaded field size, contest-setup readiness, and its tier and contest counts. DRAFT events (not yet released for contests) are listed for a root admin only.
+         * @description The sport-event catalog, narrowed by sport, status, sport league, event year and name and never paged. At least one of `sport`, `sportLeagueId` and `eventYear` is required, so the list never reads every event: 400 SPORT_EVENT_FILTER_REQUIRED otherwise. Any signed-in user may read it: contest setup picks an event from it, and a root admin browses it. Each event carries its loaded field size, contest-setup readiness, and its tier and contest counts. DRAFT events (not yet released for contests) are listed for a root admin only.
          */
         get: operations["listEvents"];
         put?: never;
@@ -2960,7 +2960,7 @@ export interface paths {
         };
         /**
          * List participants
-         * @description The participant catalog, narrowed by text and filters and never paged. Any signed-in user may read it: contest setup and ingestion mapping browse it, and a root admin maintains it.
+         * @description The participant catalog, narrowed by text and filters and never paged. `sportId` or a `q` of at least 3 characters is required, so the list never reads every sport's catalog: 400 SEARCH_TERM_REQUIRED otherwise. Any signed-in user may read it: contest setup and ingestion mapping browse it, and a root admin maintains it.
          */
         get: operations["listParticipants"];
         put?: never;
@@ -5195,7 +5195,7 @@ export interface components {
              * @enum {string}
              */
             scope?: "mine" | "all";
-            /** @description Optional case-insensitive substring matched against the league name. A filter, never a slice — see §16. */
+            /** @description Case-insensitive substring matched against the league name. A filter, never a slice — see §16. Optional for 'mine'; required for 'all', at least 3 characters. */
             search?: string;
             /** @description Optional active/inactive filter. Omitted returns both. */
             isActive?: boolean;
@@ -9884,7 +9884,7 @@ export interface components {
              */
             updatedAt: string;
         };
-        /** @description Filters for the sport-event list. */
+        /** @description Filters for the sport-event list. At least one of sport, sportLeagueId and eventYear is required. */
         SportEventListQuery: {
             /**
              * @description Only events of this sport.
@@ -22942,6 +22942,7 @@ export interface operations {
     listUsers: {
         parameters: {
             query?: {
+                /** @description Case-insensitive substring of the email, username, first or last name; at least 3 characters once trimmed. */
                 search?: string;
                 isActive?: boolean;
             };
@@ -23949,7 +23950,7 @@ export interface operations {
             query?: {
                 /** @description Which leagues to return: 'mine' (default) for the leagues the caller belongs to, 'all' for every league on the platform. 'all' requires root-admin access. */
                 scope?: "mine" | "all";
-                /** @description Optional case-insensitive substring matched against the league name. A filter, never a slice — see §16. */
+                /** @description Case-insensitive substring matched against the league name. A filter, never a slice — see §16. Optional for 'mine'; required for 'all', at least 3 characters. */
                 search?: string;
                 /** @description Optional active/inactive filter. Omitted returns both. */
                 isActive?: boolean;
@@ -23967,6 +23968,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["LeagueListResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -28547,6 +28557,15 @@ export interface operations {
                 };
             };
             /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
             401: {
                 headers: {
                     [name: string]: unknown;
@@ -32145,6 +32164,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ParticipantListResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
         };

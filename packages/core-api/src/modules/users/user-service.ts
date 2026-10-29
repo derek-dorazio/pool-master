@@ -23,7 +23,7 @@ import bcrypt from 'bcryptjs';
 import { randomBytes } from 'node:crypto';
 import type { FastifyBaseLogger } from 'fastify';
 import type { UserRepository, UserSearchFilters } from '@poolmaster/shared/db';
-import { isKnownLocale, isKnownTimeZone, type TimeFormat, type User } from '@poolmaster/shared/domain';
+import { isKnownLocale, isKnownTimeZone, isPlatformSearchTerm, PLATFORM_SEARCH_MIN_LENGTH, type TimeFormat, type User } from '@poolmaster/shared/domain';
 import { UserOperationError } from './user-errors';
 import type { PasswordChangedNotifier } from '../auth/password-changed-notifier';
 import type { EmailChangeUndoService } from '../auth/email-change-undo-service';
@@ -78,11 +78,22 @@ export class UserService {
 
   /**
    * The unscoped read — access rule A1, root admin only. Not paged (§16): filters narrow the
-   * set, nothing slices it.
+   * set, nothing slices it, and a search term is required so it never reads every user (#1180).
    */
   async listUsers(actor: UserWriteActor, filters: UserSearchFilters): Promise<User[]> {
     this.requireRootAdmin(actor, 'list users');
-    const users = await this.users.findAll(filters);
+    if (!isPlatformSearchTerm(filters.search)) {
+      this.logger?.warn({
+        action: 'userService.list.searchRequired',
+        data: { actorUserId: actor.userId },
+      }, 'Rejected a user list without a search term');
+      throw new UserOperationError(
+        `Type at least ${PLATFORM_SEARCH_MIN_LENGTH} characters to find a user.`,
+        'SEARCH_TERM_REQUIRED',
+        400,
+      );
+    }
+    const users = await this.users.findAll({ ...filters, search: filters.search.trim() });
     this.logger?.info({
       action: 'userService.list.success',
       data: { actorUserId: actor.userId, count: users.length },

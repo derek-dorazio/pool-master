@@ -53,6 +53,13 @@ function renderManageUsersPage() {
   );
 }
 
+/** Types into the page's search box; the page asks the server once the debounce settles. */
+function searchFor(term: string) {
+  fireEvent.change(screen.getByRole('searchbox', { name: 'Find a user' }), {
+    target: { value: term },
+  });
+}
+
 describe('RootAdminManageUsersPage', () => {
   beforeEach(() => {
     adminListUsersMock.mockResolvedValue({
@@ -93,10 +100,45 @@ describe('RootAdminManageUsersPage', () => {
     mockLogger.child.mockClear();
   });
 
+  it('asks for at least 3 characters and reads no users until they are typed', async () => {
+    renderManageUsersPage();
+
+    expect(await screen.findByText('Type at least 3 characters to find a user.')).toBeInTheDocument();
+    searchFor('al');
+    await new Promise((resolve) => setTimeout(resolve, 400));
+
+    expect(screen.getByText('Type at least 3 characters to find a user.')).toBeInTheDocument();
+    expect(adminListUsersMock).not.toHaveBeenCalled();
+  });
+
+  it('sends the typed search to the server once and shows the users it returns', async () => {
+    renderManageUsersPage();
+
+    searchFor('example');
+
+    expect(await screen.findByTestId('root-admin-manage-user-row-user-1')).toBeInTheDocument();
+    expect(adminListUsersMock).toHaveBeenCalledTimes(1);
+    expect(adminListUsersMock).toHaveBeenLastCalledWith({ query: { search: 'example' } });
+  });
+
+  it('keeps the search box and shows the error in the grid when the search fails', async () => {
+    adminListUsersMock.mockResolvedValue({
+      data: null,
+      error: { error: { code: 'INTERNAL_ERROR', message: 'Boom' } },
+    });
+    renderManageUsersPage();
+
+    searchFor('example');
+
+    expect(await screen.findByText('Boom')).toBeInTheDocument();
+    expect(screen.getByRole('searchbox', { name: 'Find a user' })).toHaveValue('example');
+  });
+
   it('pool-master-dxd.35 renders the user grid without duplicate directory helper copy', async () => {
     renderManageUsersPage();
 
     expect(await screen.findByTestId('root-admin-manage-users-page')).toBeInTheDocument();
+    searchFor('example');
     expect(screen.queryByText('User directory')).not.toBeInTheDocument();
     expect(
       screen.queryByText('Filter by the columns below and open a user page from the name column.'),
@@ -114,10 +156,11 @@ describe('RootAdminManageUsersPage', () => {
   it('pool-master-5fr filters users client-side through grid column filters', async () => {
     renderManageUsersPage();
 
+    searchFor('example');
     await screen.findByTestId('root-admin-manage-user-row-user-1');
-    // §16 — the MSW harness rebuilds `options` from the real request, so an empty object
-    // is the assertion that NO query string was sent: no page, no pageSize.
-    expect(adminListUsersMock).toHaveBeenLastCalledWith({});
+    // §16 — the MSW harness rebuilds `options` from the real request: the search and nothing
+    // else was sent, so no page and no pageSize.
+    expect(adminListUsersMock).toHaveBeenLastCalledWith({ query: { search: 'example' } });
 
     fireEvent.change(screen.getByTestId('data-grid-filter-username'), {
       target: {
@@ -130,16 +173,16 @@ describe('RootAdminManageUsersPage', () => {
     expect(adminListUsersMock).toHaveBeenCalledTimes(1);
   });
 
-  it('narrows the user list to matching names or emails from the search box', async () => {
+  it('narrows the returned users to matching names or emails as the search grows', async () => {
     renderManageUsersPage();
 
+    searchFor('example');
     await screen.findByTestId('root-admin-manage-user-row-user-1');
-    fireEvent.change(screen.getByRole('searchbox', { name: 'Find a user' }), {
-      target: { value: 'jamie@' },
-    });
+    searchFor('jamie@');
 
     expect(screen.queryByTestId('root-admin-manage-user-row-user-1')).not.toBeInTheDocument();
     expect(screen.getByTestId('root-admin-manage-user-row-user-2')).toBeInTheDocument();
+    expect(await screen.findByTestId('root-admin-manage-user-row-user-2')).toBeInTheDocument();
   });
 
   it('shows 25 users a page and pages on to the rest', async () => {
@@ -160,6 +203,7 @@ describe('RootAdminManageUsersPage', () => {
 
     renderManageUsersPage();
 
+    searchFor('example');
     await screen.findByTestId('root-admin-manage-user-row-user-1');
     expect(screen.queryByTestId('root-admin-manage-user-row-user-26')).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /next/i }));

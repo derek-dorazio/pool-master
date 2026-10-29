@@ -129,6 +129,7 @@ describe('SDK Functional: Root Admin', () => {
 
     const usersResponse = await listUsers({
       client: user.client,
+      query: { search: user.email },
     });
     expect(usersResponse.data?.users.some((item) => item.id === user.userId)).toBe(true);
 

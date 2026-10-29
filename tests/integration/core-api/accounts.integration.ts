@@ -752,11 +752,11 @@ describe('the root-admin role', () => {
 
     expect((await setRole(true)).statusCode).toBe(200);
     expect(await liveRefreshTokens(session.userId)).toBe(1);
-    const stillOldToken = await getApp().inject({ method: 'GET', url: '/api/v1/users', headers: session.bearer });
+    const stillOldToken = await getApp().inject({ method: 'GET', url: '/api/v1/users?search=root', headers: session.bearer });
     const relogin = (await login(session.identity.email)).json<AuthResponse>();
     const withNewToken = await getApp().inject({
       method: 'GET',
-      url: '/api/v1/users',
+      url: '/api/v1/users?search=root',
       headers: { authorization: `Bearer ${relogin.tokens.accessToken}` },
     });
 

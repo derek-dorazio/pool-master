@@ -60,10 +60,11 @@ describe('pool-master-rop.78.9: PoolMaster query key factory', () => {
       'user-detail',
       'user-1',
     ]);
-    expect(QueryKeys.rootAdmin.manageUsers).toEqual([
+    expect(QueryKeys.rootAdmin.manageUsersSearch('jam')).toEqual([
       'poolmaster',
       'root-admin',
       'manage-users',
+      'jam',
     ]);
   });
 

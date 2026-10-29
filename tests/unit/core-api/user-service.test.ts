@@ -154,9 +154,22 @@ describe('A6 — every User write is by the subject, or by a root admin', () => 
   it('reserves the unscoped list for a root admin (A1)', async () => {
     const { service } = serviceFor(buildUser(), { findAll: jest.fn().mockResolvedValue([buildUser()]) });
 
-    await expect(service.listUsers(self, {}))
+    await expect(service.listUsers(self, { search: 'derek' }))
       .rejects.toMatchObject({ code: 'ROOT_ADMIN_ACCESS_REQUIRED', statusCode: 403 });
-    await expect(service.listUsers(rootAdmin, {})).resolves.toHaveLength(1);
+    await expect(service.listUsers(rootAdmin, { search: 'derek' })).resolves.toHaveLength(1);
+  });
+
+  it('refuses to list every user: a root admin must search with at least 3 characters', async () => {
+    const findAll = jest.fn().mockResolvedValue([buildUser()]);
+    const { service } = serviceFor(buildUser(), { findAll });
+
+    await expect(service.listUsers(rootAdmin, {}))
+      .rejects.toMatchObject({ code: 'SEARCH_TERM_REQUIRED', statusCode: 400 });
+    await expect(service.listUsers(rootAdmin, { search: ' de ' }))
+      .rejects.toMatchObject({ code: 'SEARCH_TERM_REQUIRED', statusCode: 400 });
+    expect(findAll).not.toHaveBeenCalled();
+    await expect(service.listUsers(rootAdmin, { search: 'der' })).resolves.toHaveLength(1);
+    expect(findAll).toHaveBeenCalledWith({ search: 'der' });
   });
 });
 
