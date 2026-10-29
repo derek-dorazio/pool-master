@@ -33,7 +33,7 @@ The **Non-Negotiables** above apply to every slice regardless of what it touches
 
 | If the slice… | Read |
 |---|---|
-| Adds or changes a backend route, service, DTO, or mapper | `service-rules.md` — §4 *DTOs, Mappers, OpenAPI*, §7 *Error Handling*, §11 *Backend Logging*; `architecture-rules.md` §2 *Contract-First API Architecture* |
+| Adds or changes a backend route, service, DTO, or mapper | `service-rules.md` — §4 *DTOs, Mappers, OpenAPI*, §7 *Error Handling*, §11 *Backend Logging*; `architecture-rules.md` §2 *Contract-First API Architecture*; a GET answering with a list, `testing-rules.md` §9B *Query Scaling Tests* |
 | Changes the Prisma schema, a domain type, or an enum | `domain-model-concepts.md`, `model-change-rules.md`, `domain-model-conventions-rules.md`, then the backend row above |
 | Adds a sport, a sport league or a contest template (setup) | the `add-sport` skill (a Clutch Card round: `add-clutch-card-league`); `ux-rules.md` §12 *League Pages and Commissioner Tools* item 12 (setup names, defaults, the How to Play and Contest types pages); `architecture-rules.md` §4 *Sport extension*, §6 *Manual-testing seed data goes through the admin API* (each league's last-season test data file) |
 | Adds or changes an event page (`/play/...`) or its link preview | the `add-event-page` skill; `ux-rules.md` §13 *Event Pages* |
@@ -41,7 +41,7 @@ The **Non-Negotiables** above apply to every slice regardless of what it touches
 | Adds or changes a system email | the `add-email` skill; `ux-rules.md` §14 *System Email*; `docs/EMAIL-DELIVERY.md` |
 | Touches domain entities, or the ask uses domain words (squad, team, entry, pick, field, release, submit, settle) | `domain-model-concepts.md` — what each entity is, what it is called on screen, and what the verb means in the model |
 | Touches `clients/poolmaster` | `react-ui-rules.md` — §3 *API Integration*, §4 *TanStack Query*, §5 *State, Effect, Form*; `ux-rules.md`; `poolmaster-webapp-rules.md` |
-| Adds or changes tests | `testing-rules.md` §1A–§1C and §3 always, plus the section for your layer: §4 contract verification, §5 MSW, §6 functional/browser E2E, §9/§9A integration depth and isolation |
+| Adds or changes tests | `testing-rules.md` §1A–§1C and §3 always, plus the section for your layer: §4 contract verification, §5 MSW, §6 functional/browser E2E, §9/§9A integration depth and isolation, §9B query scaling |
 | Adds a module, port, adapter, mapper, or has one module call another | `architecture-rules.md` §5 *Project Structure and Layer Boundaries*, §4 *Service Topology* (there is no event bus; modules call each other's services) |
 | Defines product behavior, use cases, or screens | `poolmaster-webapp-rules.md`, `ux-rules.md` |
 | Changes process, plans, tracker state, or rules themselves | `workflow-rules.md` — §0 *Document Lifecycle*, §6 *Branching, Review, Merge*; `working-style.md` |

@@ -31,6 +31,10 @@ DB-backed failure means.
   pass"* is never one of them — `rules/testing-rules.md` §1B *Forbidden Application-Code Patterns*.
 - **A rule scanner fails** → read the section it names. The scanner output *is* the routing
   hint.
+- **A query-scaling case fails** → the statement count grew between 2 rows and 20: a read
+  runs once per row. The failure lists the statements whose count changed; batch that read.
+  It is a defect in the route, never a reason to shrink the seed (`rules/testing-rules.md` §9B
+  *Query Scaling Tests*).
 - **A functional test fails on the query budget** → the route it names made more queries
   than the budget. Batch the reads the route makes per row; the allow-list is for routes
   that already have a ticket, never a way past the check — `rules/testing-rules.md` §6
