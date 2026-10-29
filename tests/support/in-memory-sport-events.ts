@@ -599,7 +599,7 @@ export class InMemorySportEvents {
         if (writes.some((write) => !this.field.some((row) => row.id === write.sportEventParticipantId))) {
           throw new Error('unknown field row');
         }
-        for (const write of writes) this.writeGolfRound(write);
+        return writes.map((write) => this.writeGolfRound(write));
       },
     };
   }
@@ -611,21 +611,7 @@ export class InMemorySportEvents {
         return this.golfStandingResults().filter((result) => entryIds.has(result.standing.sportEventParticipantId));
       },
       findBySportEventParticipants: async (ids) => this.golfStandingResults().filter((result) => ids.includes(result.standing.sportEventParticipantId)),
-      upsert: async (write: GolfStandingWrite) => {
-        let standing = this.standingRows.find((row) => row.sportEventParticipantId === write.sportEventParticipantId);
-        if (!standing) {
-          standing = stamp({ id: this.id('standing'), sportEventParticipantId: write.sportEventParticipantId, position: null, displayPosition: null, status: write.status, asOf: write.asOf, currentRound: write.currentRound });
-          this.standingRows.push(standing);
-        }
-        Object.assign(standing, { status: write.status, asOf: write.asOf, currentRound: write.currentRound });
-        let golf = this.golfStandingRows.find((row) => row.standingId === standing.id);
-        if (!golf) {
-          golf = stamp({ id: this.id('golf-standing'), standingId: standing.id, eventScoreToPar: 0, eventStrokes: 0, currentRoundThru: null });
-          this.golfStandingRows.push(golf);
-        }
-        Object.assign(golf, { eventScoreToPar: write.eventScoreToPar, eventStrokes: write.eventStrokes, currentRoundThru: write.currentRoundThru });
-        return { standing: { ...standing }, golf: { ...golf } };
-      },
+      upsertMany: async (writes) => writes.map((write) => this.writeGolfStanding(write)),
       updateRanks: async (ranks) => {
         for (const rank of ranks) {
           const standing = this.standingRows.find((row) => row.id === rank.standingId);
@@ -634,6 +620,22 @@ export class InMemorySportEvents {
         }
       },
     };
+  }
+
+  private writeGolfStanding(write: GolfStandingWrite): GolfStandingResult {
+    let standing = this.standingRows.find((row) => row.sportEventParticipantId === write.sportEventParticipantId);
+    if (!standing) {
+      standing = stamp({ id: this.id('standing'), sportEventParticipantId: write.sportEventParticipantId, position: null, displayPosition: null, status: write.status, asOf: write.asOf, currentRound: write.currentRound });
+      this.standingRows.push(standing);
+    }
+    Object.assign(standing, { status: write.status, asOf: write.asOf, currentRound: write.currentRound });
+    let golf = this.golfStandingRows.find((row) => row.standingId === standing.id);
+    if (!golf) {
+      golf = stamp({ id: this.id('golf-standing'), standingId: standing.id, eventScoreToPar: 0, eventStrokes: 0, currentRoundThru: null });
+      this.golfStandingRows.push(golf);
+    }
+    Object.assign(golf, { eventScoreToPar: write.eventScoreToPar, eventStrokes: write.eventStrokes, currentRoundThru: write.currentRoundThru });
+    return { standing: { ...standing }, golf: { ...golf } };
   }
 
   matchRepo(): SportEventMatchRepository {

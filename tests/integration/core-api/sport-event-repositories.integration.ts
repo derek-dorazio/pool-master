@@ -109,10 +109,10 @@ async function createPopulatedEvent() {
     sportEventParticipantId: entry.id, sportEventRoundId: round.id, status: 'COMPLETED', completedAt: null,
     strokes: 70, scoreToPar: -2, thru: 18,
   });
-  await golfStandings.upsert({
+  await golfStandings.upsertMany([{
     sportEventParticipantId: entry.id, currentRound: 1, status: 'COMPLETE', asOf: new Date(),
     eventScoreToPar: -2, eventStrokes: 70, currentRoundThru: 18,
-  });
+  }]);
   return { event, entry, golfer };
 }
 
@@ -528,19 +528,46 @@ describe('Golf extension repositories', () => {
     await expect(golfRounds.findBySportEventRound(round2.id)).resolves.toEqual([]);
   });
 
+  it('writes many rounds in one call and returns each written round in the order it was given', async () => {
+    const { golfRounds, rounds } = repos();
+    const { event, entry } = await createPopulatedEvent();
+    const [round1, round2] = await rounds.findBySportEvent(event.id);
+
+    const written = await golfRounds.upsertMany([
+      { sportEventParticipantId: entry.id, sportEventRoundId: round2.id, status: 'IN_PROGRESS', completedAt: null, strokes: 33, scoreToPar: -3, thru: 9 },
+      { sportEventParticipantId: entry.id, sportEventRoundId: round1.id, status: 'COMPLETED', completedAt: null, strokes: 69, scoreToPar: -3, thru: 18 },
+    ]);
+
+    expect(written.map((result) => [result.participantRound.roundNumber, result.golf.strokes])).toEqual([[2, 33], [1, 69]]);
+    await expect(golfRounds.upsertMany([])).resolves.toEqual([]);
+  });
+
   it('upserts a standing with its golf totals and reads it back by event and by field row', async () => {
     const { golfStandings } = repos();
     const { event, entry } = await createPopulatedEvent();
 
-    await golfStandings.upsert({
+    await golfStandings.upsertMany([{
       sportEventParticipantId: entry.id, currentRound: 2, status: 'IN_PROGRESS', asOf: new Date(),
       eventScoreToPar: -5, eventStrokes: 139, currentRoundThru: 9,
-    });
+    }]);
 
     const [byEvent] = await golfStandings.findBySportEvent(event.id);
     expect(byEvent).toMatchObject({ standing: { currentRound: 2, status: 'IN_PROGRESS' }, golf: { eventScoreToPar: -5, currentRoundThru: 9 } });
     expect(byEvent.golf.standingId).toBe(byEvent.standing.id);
     await expect(golfStandings.findBySportEventParticipants([entry.id])).resolves.toHaveLength(1);
+  });
+
+  it('writes many standings all or none: one bad field row leaves every standing as it was', async () => {
+    const { golfStandings } = repos();
+    const { entry } = await createPopulatedEvent();
+
+    await expect(golfStandings.upsertMany([
+      { sportEventParticipantId: entry.id, currentRound: 2, status: 'IN_PROGRESS', asOf: new Date(), eventScoreToPar: -9, eventStrokes: 135, currentRoundThru: 9 },
+      { sportEventParticipantId: randomUUID(), currentRound: 2, status: 'IN_PROGRESS', asOf: new Date(), eventScoreToPar: 0, eventStrokes: 144, currentRoundThru: 9 },
+    ])).rejects.toBeDefined();
+
+    const [standing] = await golfStandings.findBySportEventParticipants([entry.id]);
+    expect(standing.golf.eventScoreToPar).toBe(-2);
   });
 });
 
