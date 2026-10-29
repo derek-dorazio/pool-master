@@ -10,12 +10,16 @@
 import { randomUUID } from 'crypto';
 import { ProviderSyncRunStatus, Sport } from '@poolmaster/shared/domain';
 import {
+  IngestionScheduleConfigSchema,
   ParticipantListResponseSchema,
   ParticipantProviderMappingListResponseSchema,
   ProviderCatalogEventListResponseSchema,
+  ProviderListResponseSchema,
   ProviderSyncRunDetailDtoSchema,
   ProviderSyncRunListResponseSchema,
   SettingsChangeListSchema,
+  SettingsGroupListSchema,
+  SettingsGroupSchema,
   UnmappedProviderParticipantListResponseSchema,
 } from '@poolmaster/shared/dto';
 import type { LiveScoreResult } from '@poolmaster/shared/dto';
@@ -26,17 +30,21 @@ import type {
   SportEvent,
   SportEventDetail,
 } from '../../../packages/core-api/src/modules/ingestion/core/provider-interface';
+import { BILLING_SETTINGS } from '../../../packages/core-api/src/modules/billing/billing-settings';
 import { PLAN_SETTINGS } from '../../../packages/core-api/src/modules/plans/plan-settings';
+import { SETTINGS_GROUPS } from '../../../packages/core-api/src/modules/platform/settings-groups';
+import type { SettingsGroup } from '../../../packages/core-api/src/modules/platform/settings-group';
 import {
   cleanupTestData,
   createTestUser,
+  getApp,
   getPrisma,
   getProviderRegistry,
   setupIntegrationTests,
   teardownIntegrationTests,
 } from '../helpers';
 import { DAY, get, okBody } from '../list-route-seeds';
-import { expectConstantQueries } from '../query-scaling';
+import { expectConstantQueries, expectFixedQueries } from '../query-scaling';
 
 // No mocks. The provider below is the test's own catalog, registered on the shared app.
 
@@ -272,6 +280,76 @@ describe('root admin reads cost the same statements for 2 rows as for 20', () =>
         rootAdmin,
       ),
       rowsShown: (response) => okBody(response, ProviderCatalogEventListResponseSchema).events.length,
+    });
+  });
+});
+
+/** Saves the group's defaults as its value, as `admin`, so the group names who last saved it. */
+async function saveSettings<T>(group: SettingsGroup<T>) {
+  const admin = await createTestUser({ isRootAdmin: true });
+  const response = await getApp().inject({
+    method: 'PUT',
+    url: `/api/v1/platform/settings/${group.key}`,
+    headers: admin.headers,
+    payload: { key: group.key, value: group.defaults(process.env), expectedUpdatedAt: null },
+  });
+  expect(response.statusCode).toBe(200);
+}
+
+describe('fixed-length root admin lists cost the same statements every time', () => {
+  it('GET the settings groups: one row per group, with the admins who saved them read in one query', async () => {
+    await saveSettings(PLAN_SETTINGS);
+    await saveSettings(BILLING_SETTINGS);
+    const rootAdmin = await createTestUser({ isRootAdmin: true });
+    await expectFixedQueries({
+      route: 'GET /api/v1/platform/settings',
+      fixedBy: 'the settings groups',
+      call: async () => {
+        const { groups } = okBody(await get('/api/v1/platform/settings', rootAdmin), SettingsGroupListSchema);
+        expect(groups).toHaveLength(SETTINGS_GROUPS.length);
+        expect(groups.filter((group) => group.updatedBy !== null)).toHaveLength(2);
+      },
+      statements: 1,
+    });
+  });
+
+  it('GET one settings group: its value, with the admin who saved it read in one query', async () => {
+    await saveSettings(PLAN_SETTINGS);
+    const rootAdmin = await createTestUser({ isRootAdmin: true });
+    await expectFixedQueries({
+      route: 'GET /api/v1/platform/settings/{key}',
+      fixedBy: 'the group\'s own fields',
+      call: async () => {
+        const group = okBody(await get(`/api/v1/platform/settings/${PLAN_SETTINGS.key}`, rootAdmin), SettingsGroupSchema);
+        expect(group.updatedBy).not.toBeNull();
+      },
+      statements: 1,
+    });
+  });
+
+  it('GET the ingestion schedule: every sport\'s schedule from the settings in memory, with no query', async () => {
+    const rootAdmin = await createTestUser({ isRootAdmin: true });
+    await expectFixedQueries({
+      route: 'GET /api/v1/platform/ingestion-schedule',
+      fixedBy: 'the supported sports',
+      call: async () => {
+        const schedule = okBody(await get('/api/v1/platform/ingestion-schedule', rootAdmin), IngestionScheduleConfigSchema);
+        expect(schedule.scheduledSports.length).toBeGreaterThan(1);
+      },
+      statements: 0,
+    });
+  });
+
+  it('GET the providers: one row per registered provider, with their events counted and dated in one grouped query each', async () => {
+    const rootAdmin = await createTestUser({ isRootAdmin: true });
+    await expectFixedQueries({
+      route: 'GET /api/v1/ingestion/providers',
+      fixedBy: 'the providers registered at startup',
+      call: async () => {
+        const { providers } = okBody(await get('/api/v1/ingestion/providers', rootAdmin), ProviderListResponseSchema);
+        expect(providers.map((summary) => summary.providerId)).toEqual([provider.providerId]);
+      },
+      statements: 2,
     });
   });
 });
