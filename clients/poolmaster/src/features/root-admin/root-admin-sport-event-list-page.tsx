@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { createColumnHelper } from '@tanstack/react-table';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { listEvents } from '@/lib/api';
 import {
   DataGridPage,
@@ -25,6 +25,7 @@ import {
   capitalize,
   MANAGE_LIST_PAGE_SIZE,
 } from './manage-navigation';
+import { EventYearSelect } from './event-year-select';
 import { useManagedSport } from './use-managed-sport';
 import { SportSectionMenu } from './sport-section-menu';
 
@@ -35,10 +36,12 @@ export function RootAdminSportEventListPage() {
   const { sport, definition } = useManagedSport();
   const { event } = definition.vocabulary;
   const sportName = definition.name.toLowerCase();
+  // One year at a time, this year first (#1313): a sport's events grow every season.
+  const [eventYear, setEventYear] = useState(() => new Date().getFullYear());
   const tournamentsQuery = useQuery({
-    queryKey: QueryKeys.rootAdmin.manageSport.sportEvents(sport),
+    queryKey: QueryKeys.rootAdmin.manageSport.sportEvents(sport, eventYear),
     queryFn: async (): Promise<SportEventDto[]> => {
-      const response = await listEvents({ query: { sport } });
+      const response = await listEvents({ query: { sport, eventYear } });
 
       if (!response.data?.events) {
         throwApiError(response.error, `The ${sportName} ${event.one} list response is missing data.`);
@@ -122,7 +125,8 @@ export function RootAdminSportEventListPage() {
   return (
     <div className="space-y-4">
       <SportSectionMenu current="events" />
-      <div className="flex justify-end">
+      <div className="flex items-end justify-between gap-4">
+        <EventYearSelect onChange={setEventYear} testId="root-admin-sport-event-list-year" value={eventYear} />
         <LinkButton
           data-testid="root-admin-sport-event-list-new"
           to={`${buildSportEventListPath(sport)}/new`}
@@ -134,7 +138,7 @@ export function RootAdminSportEventListPage() {
       <DataGridPage
         columns={columns}
         data={tournamentsQuery.data ?? []}
-        emptyMessage={`No ${sportName} ${event.many} have been created yet.`}
+        emptyMessage={`No ${sportName} ${event.many} in ${eventYear}.`}
         errorBody={extractErrorMessage(tournamentsQuery.error, {
           fallback: `We could not load ${sportName} ${event.many} right now.`,
         })}

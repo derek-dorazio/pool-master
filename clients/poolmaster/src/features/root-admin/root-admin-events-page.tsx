@@ -15,9 +15,7 @@ import {
   DataGrid,
   DataGridPage,
   formatDateTimeDisplay,
-  FormField,
   Modal,
-  Select,
   StatusBadge,
   useDisplayPreferences,
 } from '@/features/shared/ui';
@@ -27,6 +25,7 @@ import {
   formatSportEventStatus,
   sportEventStatusTone,
 } from './sport-admin-utils';
+import { EventYearSelect } from './event-year-select';
 import { MANAGE_LIST_PAGE_SIZE } from './manage-navigation';
 
 type AdminEvent = SportEventDto;
@@ -67,23 +66,10 @@ function formatFieldCount(event: AdminEvent) {
   return `${event.loadedParticipantCount} loaded / ${providerCount} provider`;
 }
 
-/** The years the browser offers: a few back for results, one ahead for schedules loaded early. */
-const EVENT_YEARS_BACK = 3;
-const EVENT_YEARS_AHEAD = 1;
-
-function eventYearOptions(currentYear: number): number[] {
-  const years: number[] = [];
-  for (let year = currentYear + EVENT_YEARS_AHEAD; year >= currentYear - EVENT_YEARS_BACK; year -= 1) {
-    years.push(year);
-  }
-  return years;
-}
-
 export function RootAdminEventsPage() {
   const displayPreferences = useDisplayPreferences();
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
-  const currentYear = new Date().getFullYear();
-  const [eventYear, setEventYear] = useState(currentYear);
+  const [eventYear, setEventYear] = useState(() => new Date().getFullYear());
 
   const eventsQuery = useQuery({
     queryKey: QueryKeys.rootAdmin.eventsByYear(eventYear),
@@ -303,19 +289,7 @@ export function RootAdminEventsPage() {
 
   return (
     <div className="space-y-4">
-      <FormField className="max-w-xs" label="Year">
-        <Select
-          data-testid="root-admin-events-year"
-          onChange={(change) => setEventYear(Number(change.target.value))}
-          value={eventYear}
-        >
-          {eventYearOptions(currentYear).map((year) => (
-            <option key={year} value={year}>
-              {year}
-            </option>
-          ))}
-        </Select>
-      </FormField>
+      <EventYearSelect onChange={setEventYear} testId="root-admin-events-year" value={eventYear} />
 
       <DataGridPage
         columns={eventColumns}

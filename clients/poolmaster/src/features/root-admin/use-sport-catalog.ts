@@ -1,5 +1,5 @@
 import { eventRoundLabel, findSportRow, getSportDefinition, matchPeriodsOf, sportLeagueNounOf, type Sport, type SportMatchPeriods, type SportNoun } from '@poolmaster/shared/domain';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getParticipant, listEventYears, listEvents, listParticipantLeagueAffiliations, listParticipants, listSportLeagues, listSports } from '@/lib/api';
 import type { ParticipantDto, ParticipantLeagueAffiliationDto, SportEventDto, SportLeagueDto } from '@/lib/api';
 import { throwApiError } from '@/lib/errors';
@@ -132,6 +132,8 @@ export function useParticipantsQuery(params: {
   status?: ParticipantDto['status'];
   q?: string;
   enabled?: boolean;
+  /** Keep the last rows while the next search loads, so a grid holding the search box stays mounted. */
+  keepPrevious?: boolean;
 }) {
   const queryClient = useQueryClient();
   return useQuery({
@@ -151,6 +153,7 @@ export function useParticipantsQuery(params: {
       return response.data.participants;
     },
     enabled: params.enabled ?? true,
+    ...(params.keepPrevious ? { placeholderData: keepPreviousData } : {}),
     retry: false,
   });
 }
