@@ -103,7 +103,8 @@ function FormatCard({ selectionType, sports, chosen, isOpen, onToggle, onChooseS
     >
       <Button
         aria-expanded={isOpen}
-        className="normal-case tracking-normal h-auto flex-col items-stretch gap-2 rounded-2xl p-2 text-left font-normal"
+        className="flex-col items-stretch gap-2 rounded-2xl p-2 font-normal"
+        layout="row"
         data-testid={`how-to-play-format-${selectionType}-toggle`}
         onClick={onToggle}
         size="auto"
@@ -183,7 +184,8 @@ function ClutchCardTile({ leagues, isOpen, onToggle, createLeagues }: {
     >
       <Button
         aria-expanded={isOpen}
-        className="normal-case tracking-normal h-auto flex-col items-stretch gap-2 rounded-2xl p-2 text-left font-normal"
+        className="flex-col items-stretch gap-2 rounded-2xl p-2 font-normal"
+        layout="row"
         data-testid="how-to-play-clutch-card-toggle"
         onClick={onToggle}
         size="auto"

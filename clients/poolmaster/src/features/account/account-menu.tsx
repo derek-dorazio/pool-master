@@ -21,7 +21,8 @@ export function AccountMenu({
       <Button
         aria-expanded={isOpen}
         aria-haspopup="menu"
-        className="max-w-[11rem] rounded-2xl border normal-case tracking-normal border-border bg-background px-4 py-3 text-sm font-medium text-foreground transition hover:border-primary/40 hover:bg-card sm:max-w-none"
+        className="w-auto max-w-[11rem] rounded-2xl border border-border bg-background px-4 py-3 text-sm font-medium text-foreground transition hover:border-primary/40 hover:bg-card sm:max-w-none"
+        layout="row"
         data-testid="account-menu-trigger"
         onClick={() => setIsOpen((open) => !open)}
         type="button"

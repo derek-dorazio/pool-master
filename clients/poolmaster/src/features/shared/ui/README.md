@@ -7,13 +7,25 @@ The shared UI layer is split into three levels:
    `Eyebrow`. A bordered card box is a `Tile` (`padding="none"` plus your own
    padding when it needs less), and the small uppercase line over a title is an
    `Eyebrow`; letter spacing comes from the theme's `tracking-eyebrow` and
-   `tracking-label`, never a hand-typed `tracking-[…]`.
+   `tracking-label`, never a hand-typed `tracking-[…]`. A button drawn as a line of content
+   (a list row, a card toggle, a pick) is a `Button` or `LinkButton` with
+   `layout="row"`, and a dropdown entry is a `MenuItem`; never hand-type
+   `normal-case tracking-normal` onto a button.
 2. **Templates** compose primitives into repeated page or modal workflows, such
    as `ManagementListPage`, `EntityDetailPage`, `FormModal`, and
    `ConfirmationModal`.
 3. **Feature pages** own product-specific data fetching, mutations, copy, and
    business rules. They should compose primitives and templates instead of
    repeating page chrome or modal footers.
+
+## Where a Reusable Piece Lives
+
+- A **generic** piece, one that knows nothing about the product (a heading, a
+  row button, a table, an inline state), goes in `features/shared/ui`.
+- A **product** piece stays in the feature folder that owns its concept, such
+  as `features/teams` (a team name), `features/contests` (a leaderboard or a
+  contest row), `features/event-pages` or `features/auth`. Other features import
+  it from there rather than copying it or moving it into the shared layer.
 
 ## Page Templates
 
