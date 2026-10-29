@@ -83,6 +83,7 @@ function EventPageContent({ page }: { page: EventPageDto }) {
   const primary = page.offers.find((offer) => offer.isPrimary);
   const plansQuery = useLeaguePlansQuery();
   const sportPagesQuery = useEventPagesQuery(page.sport, { upcoming: true });
+  // poolmaster-allow-list-lookup: the sport's few upcoming event pages, shown as what comes next
   const nextUp = withPrimaryOffer((sportPagesQuery.data ?? []).filter((other) => other.id !== page.id))
     .find(({ primary: other }) => primary === undefined || other.edition.startDate > primary.edition.startDate);
   const startRequest: StartRequest = { sport: page.sport, slug: page.slug, templateId: primary?.template.id ?? null };

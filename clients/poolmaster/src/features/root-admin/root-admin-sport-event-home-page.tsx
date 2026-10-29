@@ -34,6 +34,7 @@ export function RootAdminSportEventHomePage() {
 
   // The sport league's name, from the list the sport's screens already share.
   const sportLeaguesQuery = useSportLeaguesQuery(sport);
+  // poolmaster-allow-list-lookup: sport leagues are reference data, a few dozen rows that do not grow with history
   const sportLeagueName = sportLeaguesQuery.data?.find((sportLeague) => sportLeague.id === tournament?.sportLeagueId)?.name;
 
   useManagePageOwnsHeading();

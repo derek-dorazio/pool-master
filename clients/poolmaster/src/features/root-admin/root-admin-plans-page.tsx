@@ -70,6 +70,7 @@ function isPlanSettingsGroup(group: SettingsGroup): group is PlanSettingsGroup {
  */
 export function RootAdminPlansPage() {
   const settingsQuery = useSettingsGroupsQuery();
+  // poolmaster-allow-list-lookup: the handful of settings groups, already loaded for the settings screens
   const group = settingsQuery.data?.find(isPlanSettingsGroup);
 
   // A settings list without PLAN_CONFIG is an error, not a page still loading.

@@ -39,6 +39,11 @@ DB-backed failure means.
   `// poolmaster-allow-query-in-loop: <reason>` comment is for a small fixed bound or a
   finding with its own ticket, and a fix deletes the comment that names its ticket: a marker
   that covers nothing is an error too.
+- **`poolmaster/no-list-lookup` fails** → a screen keeps one row, a count or an id/status/year
+  slice of a list query. Use the single-item endpoint, a filter parameter, or a count from the
+  server per `rules/react-ui-rules.md` §4 *TanStack Query Rules*. The
+  `// poolmaster-allow-list-lookup: <reason>` comment (a block comment inside JSX) is for a list
+  that is on screen anyway or a finding with its own ticket, under the same rules as above.
 - **Typecheck passes but ts-jest fails** → the package tsconfigs and the ts-jest config
   resolve types differently, so `turbo typecheck` passing is not proof that the backend
   suite compiles. A cast that looks redundant under one can be load-bearing under the

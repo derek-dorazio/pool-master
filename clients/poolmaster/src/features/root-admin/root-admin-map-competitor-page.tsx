@@ -145,6 +145,7 @@ export function RootAdminMapCompetitorPage() {
   const providerId = searchParams.get('provider') ?? '';
   const externalId = searchParams.get('competitor') ?? '';
   const unmappedQuery = useUnmappedCompetitorsQuery();
+  // poolmaster-allow-list-lookup: #1251
   const competitor = unmappedQuery.data?.find(
     (candidate) => candidate.providerId === providerId && candidate.externalId === externalId,
   );

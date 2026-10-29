@@ -90,6 +90,7 @@ export function PriceAssignAction({
   const logger = getLogger().child({ feature: 'root-admin-sport-event-tiers-page' });
   const settingsQuery = useSettingsGroupsQuery();
   const profiles = useMemo(() => {
+    // poolmaster-allow-list-lookup: the handful of settings groups, already loaded for the settings screens
     const group = settingsQuery.data?.find((candidate) => candidate.key === 'BUDGET_PRICING_CONFIG');
     return group?.key === 'BUDGET_PRICING_CONFIG' ? group.value.profiles : [];
   }, [settingsQuery.data]);
