@@ -1,31 +1,33 @@
 /**
- * Internal types for the ContestEntryPick module. The DTO is re-exported
- * from `@poolmaster/shared/dto`; the insert input is service-internal and
- * deliberately omits `contestFormat` (the service resolves it from the
- * parent contest per plans/117 §7.1).
+ * Internal types for the ContestEntryPick module. A pick change names no
+ * `contestFormat`: the service resolves it from the parent contest per
+ * plans/117 §7.1.
  */
 
-export type { ContestEntryPickDto } from '@poolmaster/shared/dto';
-
-export interface ContestEntryPickInsertInput {
-  entryId: string;
+/** One of an entry's picks in an event, as a pick change reads it under the entry's lock (#1259). */
+export interface LockedEntryPick {
+  id: string;
   sportEventParticipantId: string;
-  /** Unused since #605 removed the formats that set it; removal is tracked in #632. */
-  period?: number | null;
-  /** Unused since #605 removed the formats that set it; removal is tracked in #632. */
-  slot?: number | null;
-  /** Selection tier (tiered ROSTER). */
-  tier?: string | null;
-  /** Budget cost (budget ROSTER). */
-  cost?: number | null;
-  /** Selection round (tiered: position across tier quotas; budget: pick ordinal). */
-  lineupSlot?: number | null;
-  /** Contest-wide pick order at insert time. */
-  pickSequence?: number | null;
-  /** Whether the pick was auto-assigned (e.g. a missed-week loss). */
-  isAutoPicked?: boolean;
-  /** Override the default `pickedAt` (now). Used by integration fixtures. */
-  pickedAt?: Date;
+  /** The canonical participant, which is what tiers list. */
+  participantId: string;
+  lineupSlot: number | null;
+}
+
+/** What one pick change writes: a pick to remove, a pick to add, or both, as a swap does. */
+export interface EntryPickWrite {
+  removePickId: string | null;
+  add: { sportEventParticipantId: string; lineupSlot: number } | null;
+}
+
+/**
+ * One roster pick change on one entry in one event (#1259). `decide` is handed the entry's
+ * picks as they stand once the entry is locked, oldest first, and answers with the write, or
+ * null when there is nothing to do. It may throw to refuse the change; nothing is written then.
+ */
+export interface EntryPickChangeInput {
+  entryId: string;
+  sportEventId: string;
+  decide: (picks: readonly LockedEntryPick[]) => EntryPickWrite | null;
 }
 
 /**

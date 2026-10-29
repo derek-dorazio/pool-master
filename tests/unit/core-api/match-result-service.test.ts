@@ -15,7 +15,7 @@ async function setup({ sport = Sport.BASKETBALL, status = SportEventStatus.IN_PR
   const store = new InMemorySportEvents();
   const sportRow = store.addSport(sport);
   const event = store.addEvent({ sport, status: SportEventStatus.DRAFT, rounds: 2 });
-  await store.roundRepo().createMany(event.id, [
+  await store.addRounds(event.id, [
     { roundNumber: 1, scheduledDate: new Date('2027-03-18T16:00:00.000Z') },
     { roundNumber: 2, scheduledDate: new Date('2027-03-20T16:00:00.000Z') },
   ]);
@@ -58,7 +58,7 @@ async function week() {
   const store = new InMemorySportEvents();
   const sportRow = store.addSport(Sport.AMERICAN_FOOTBALL);
   const event = store.addEvent({ sport: Sport.AMERICAN_FOOTBALL, status: SportEventStatus.DRAFT, rounds: 1 });
-  await store.roundRepo().createMany(event.id, [{ roundNumber: 1, scheduledDate: new Date('2027-09-12T17:00:00.000Z') }]);
+  await store.addRounds(event.id, [{ roundNumber: 1, scheduledDate: new Date('2027-09-12T17:00:00.000Z') }]);
   const [bills, jets, chiefs, raiders] = ['Bills', 'Jets', 'Chiefs', 'Raiders'].map((name) =>
     store.addToField(event.id, store.addParticipant(sportRow.id, name, { participantType: 'TEAM' }).id));
   let sequence = 0;

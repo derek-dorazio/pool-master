@@ -93,6 +93,12 @@ function echoCreate(idPrefix: string) {
   });
 }
 
+/** Echoes each input of a batch create back as `echoCreate` does one, in order. */
+function echoCreateMany(idPrefix: string) {
+  const create = echoCreate(idPrefix);
+  return jest.fn().mockImplementation(async (inputs: readonly Record<string, unknown>[]) => Promise.all(inputs.map((input): unknown => create(input))));
+}
+
 /** Echoes an update back as the id plus the patch, which is what callers read. */
 function echoUpdate() {
   return jest.fn().mockImplementation(async (id: string, updates: Record<string, unknown>) => ({
@@ -289,9 +295,10 @@ export function fakeSportEventRepo(overrides: Partial<SportEventRepository> = {}
     findById: one(),
     findByIds: many(),
     findByProviderRef: one(),
+    findByProviderRefs: many(),
     findAll: many(),
     findEventYears: many(),
-    create: echoCreate('sport-event'),
+    createMany: echoCreateMany('sport-event'),
     update: echoUpdate(),
     transitionStatus: one(),
     delete: nothing(),
@@ -432,7 +439,6 @@ export function fakeContestEntryPickRepo(
     findByEntriesAndEvents: many(),
     findByEntriesWithParticipant: many(),
     countByEntries: jest.fn().mockResolvedValue(new Map()),
-    countByContest: jest.fn().mockResolvedValue(0),
     ...overrides,
   };
 }

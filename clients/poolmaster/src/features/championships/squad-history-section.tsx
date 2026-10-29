@@ -62,7 +62,7 @@ export function SquadHistorySection({
             {years.map((option) => <option key={option} value={option}>{option}</option>)}
           </Select>
         </div>
-        <SquadYearSection key={year} leagueCode={leagueCode} leagueId={leagueId} squad={squad} year={year} />
+        <SquadYearSection key={year} leagueCode={leagueCode} leagueId={leagueId} mySquadId={viewer.mySquadId} squad={squad} year={year} />
       </div>
 
       {!hasShelf ? (
@@ -119,7 +119,8 @@ export function SquadHistorySection({
                     <li key={row.year}>
                       <Button
                         aria-pressed={row.year === year}
-                        className="normal-case tracking-normal h-auto w-full flex-wrap justify-between gap-2 px-0 text-left font-normal"
+                        className="min-h-0 flex-wrap justify-between gap-2 px-0 py-0 font-normal"
+                        layout="row"
                         data-testid={`squad-history-year-${row.year}`}
                         onClick={() => chooseYear(row.year)}
                         type="button"

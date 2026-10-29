@@ -697,7 +697,7 @@ Required local pre-push commands:
 5. `npm run test:poolmaster:unit`
 6. `npm run test:coverage:service:merged`
 7. `npm run test:coverage:poolmaster:unit`
-8. `npm run rules:check`
+8. `npm run rules:check` (it includes `rules:check:duplicates`, the web app copy detector)
 9. `npm run api:check`
 10. `npm run api:validate`
 11. `npm run typecheck:tests`: item 1 compiles `packages/` only, and the test suites compile

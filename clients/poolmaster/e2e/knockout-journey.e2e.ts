@@ -472,7 +472,7 @@ test('act 3: a new member joins by the link and submits one team from each tier,
       const fieldEntryId = state.fieldEntryIds[seed - 1];
       const choice = page.getByTestId(`contest-entry-participant-${fieldEntryId}`);
       await expect(choice).toContainText(`(${seed}) ${teamName(run, seed)}`);
-      await submitAndRead(page, `contest-entry-participant-${fieldEntryId}`, 'POST', `/api/v1/selections/${state.contestId}/pick`);
+      await submitAndRead(page, `contest-entry-participant-${fieldEntryId}`, 'PUT', `/api/v1/selections/${state.contestId}/entries/${state.entryId}/picks/${fieldEntryId}`);
       await expect(page.getByTestId(`contest-entry-selected-${fieldEntryId}`)).toBeVisible();
     }
     await expect(page.getByTestId('contest-entry-tiebreaker-select')).toHaveCount(0);

@@ -3,15 +3,17 @@
  *
  * `SelectionService` is the one shared handler. It owns everything every selection type does the
  * same way: auth and entry ownership, the pick window, participant-in-event, availability,
- * exclusivity across entries, persistence through `ContestEntryPickService`, and the room it
+ * exclusivity across entries, persistence through `ContestEntryPickService`, and what it
  * answers with. An engine supplies only the rules that vary by type: how many picks a roster
- * holds, what a selection does to an entry, what stops a lineup being submitted, how the room
- * lists the field, what the room says about the viewed lineup, and which round a pick shows in.
+ * holds, what a selection does to an entry, whether a held pick may be unselected, what stops a
+ * lineup being submitted, how the room lists the field, what the room says about the viewed
+ * lineup, and which round a pick shows in.
  *
  * **`evaluate` returns an outcome, not a verdict.** The first attempt at this abstraction gave
- * `validatePick` a `{ valid, reason }` return; a boolean cannot say *replace* or *toggle off*,
- * so the live tiered rules could never sit behind it, and #323 deleted the engines built on it.
- * The union below is the behaviour, and the handler acts on each kind.
+ * `validatePick` a `{ valid, reason }` return; a boolean cannot say *replace*, so the live
+ * tiered rules could never sit behind it, and #323 deleted the engines built on it. The union
+ * below is the behaviour, and the service acts on each kind. Unselecting is its own call
+ * (#1259), so `evaluate` only ever sees a golfer the entry does not hold.
  */
 
 import type { ContestConfiguration, RosterSelectionType } from '@poolmaster/shared/domain';
@@ -24,8 +26,6 @@ export const SelectionOutcomeKind = {
   ACCEPT: 'accept',
   /** Delete `replacedPickId`, then insert the pick at `lineupSlot`. */
   REPLACE: 'replace',
-  /** Delete `pickId` and insert nothing: the participant is unselected. */
-  TOGGLE_OFF: 'toggleOff',
   /** Change nothing; the handler answers with the error `code` names. */
   REJECT: 'reject',
 } as const;
@@ -63,7 +63,6 @@ export type SelectionRejection =
 export type SelectionOutcome =
   | { kind: typeof SelectionOutcomeKind.ACCEPT; lineupSlot: number }
   | { kind: typeof SelectionOutcomeKind.REPLACE; lineupSlot: number; replacedPickId: string }
-  | { kind: typeof SelectionOutcomeKind.TOGGLE_OFF; pickId: string }
   | SelectionRejection;
 
 /** One of the entry's picks as an engine reasons over it: its id, whom it points at, and its place. */
@@ -84,10 +83,8 @@ export interface LineupPick {
 
 /** Everything an engine needs to decide one selection on one entry. */
 export interface SelectionRequest {
-  /** The participant being selected, with its effective tier already resolved. */
+  /** The participant being selected, with its effective tier already resolved; the entry does not hold them. */
   participant: SelectionParticipant;
-  /** The entry's own pick on this participant, when it already holds them. */
-  heldPick: EntryPick | null;
   /** The entry's picks, oldest first. */
   existingPicks: readonly EntryPick[];
   tiers: readonly SelectionTierConfig[];
@@ -113,12 +110,19 @@ export interface SelectionEngine {
   }): number;
 
   /**
-   * What selecting `participant` does to the entry. Pure: the handler performs the writes.
-   * The handler runs its shared guards around this call — a toggle-off is acted on before the
-   * availability check, so a withdrawn golfer can still be removed, and a rejection is
-   * answered after the availability and exclusivity checks.
+   * What selecting `participant`, whom the entry does not hold, does to the entry. Pure: the
+   * handler performs the writes. The handler runs its shared guards around this call: a
+   * selection the entry already holds changes nothing and never reaches it, and a rejection is
+   * answered after the availability check.
    */
   evaluate(request: SelectionRequest): SelectionOutcome;
+
+  /**
+   * Why the entry may not unselect a pick it holds, or null when it may (#1259). Unselecting
+   * needs no availability check, so a golfer who withdrew after being picked can still be
+   * removed.
+   */
+  refuseUnselect(): SelectionRejection | null;
 
   /**
    * Everything that stops the lineup being submitted, empty when it may be (#481, #93). The

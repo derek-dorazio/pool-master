@@ -2,9 +2,9 @@
  * SportEventRoundService — an event's round schedule (plans/124 §4.10): when each round
  * is played, independent of any participant's result in it.
  *
- * `ensureRounds` is a default, not a requirement: sequential daily dates from the event's
- * start, each editable afterwards, and idempotent — a round that already exists is never
- * overwritten. `extendTo` adds rounds after the last one. `reschedule` and `shiftSchedule` only
+ * A new event's rounds are created with it (`createSchedules`), from a derived schedule or the
+ * default, `dailyRoundSchedule`: sequential daily dates from the event's start, each editable
+ * afterwards. `extendTo` adds rounds after the last one. `reschedule` and `shiftSchedule` only
  * move existing rounds; neither creates one.
  */
 
@@ -27,23 +27,16 @@ export class SportEventRoundService {
     return this.deps.rounds.findBySportEvent(sportEventId);
   }
 
-  /** Creates rounds 1..`rounds` a day apart from `startDate`, skipping any that exist. */
-  async ensureRounds(input: { sportEventId: string; rounds: number; startDate: Date }): Promise<SportEventRound[]> {
-    const existing = new Set((await this.deps.rounds.findBySportEvent(input.sportEventId)).map((round) => round.roundNumber));
-    const missing = Array.from({ length: input.rounds }, (_, index) => index + 1)
-      .filter((roundNumber) => !existing.has(roundNumber))
-      .map((roundNumber) => ({
-        roundNumber,
-        scheduledDate: new Date(input.startDate.getTime() + (roundNumber - 1) * MS_PER_DAY),
-      }));
-    if (missing.length > 0) {
-      await this.deps.rounds.createMany(input.sportEventId, missing);
-      this.deps.logger?.info(
-        { sportEventId: input.sportEventId, createdRoundNumbers: missing.map((round) => round.roundNumber) },
-        'Created default round schedule',
-      );
-    }
-    return this.deps.rounds.findBySportEvent(input.sportEventId);
+  /**
+   * Creates new events' round schedules, every event's in one insert (#1253). The events have no
+   * rounds yet: an event is created with its schedule.
+   */
+  async createSchedules(schedules: ReadonlyArray<{ sportEventId: string; rounds: readonly SportEventRoundSchedule[] }>): Promise<void> {
+    await this.deps.rounds.createMany(schedules.flatMap(({ sportEventId, rounds }) => rounds.map((round) => ({ sportEventId, ...round }))));
+    this.deps.logger?.info(
+      { sportEventIds: schedules.map(({ sportEventId }) => sportEventId), roundCount: schedules.reduce((total, { rounds }) => total + rounds.length, 0) },
+      'Created round schedules for new events',
+    );
   }
 
   /**
@@ -65,23 +58,13 @@ export class SportEventRoundService {
       added.push({ roundNumber, scheduledDate });
     }
     if (added.length > 0) {
-      await this.deps.rounds.createMany(input.sportEventId, added);
+      await this.deps.rounds.createMany(added.map((round) => ({ sportEventId: input.sportEventId, ...round })));
       this.deps.logger?.info(
         { sportEventId: input.sportEventId, createdRoundNumbers: added.map((round) => round.roundNumber) },
         'Added rounds to the schedule',
       );
     }
     return this.deps.rounds.findBySportEvent(input.sportEventId);
-  }
-
-  /** Creates rounds from an already-derived schedule, where the dates come from somewhere other than start + N days. */
-  async createFromSchedule(sportEventId: string, schedule: readonly SportEventRoundSchedule[]): Promise<SportEventRound[]> {
-    await this.deps.rounds.createMany(sportEventId, schedule);
-    this.deps.logger?.info(
-      { sportEventId, createdRoundNumbers: schedule.map((round) => round.roundNumber) },
-      'Created round schedule from a derived schedule',
-    );
-    return this.deps.rounds.findBySportEvent(sportEventId);
   }
 
   /** Moves every round, start and end, by `shiftMs`: the event's start date moved and its schedule moves with it. */
@@ -115,4 +98,12 @@ export class SportEventRoundService {
     );
     return this.deps.rounds.findBySportEvent(sportEventId);
   }
+}
+
+/** The default schedule: rounds 1..`rounds` a day apart from `startDate`. */
+export function dailyRoundSchedule(rounds: number, startDate: Date): SportEventRoundSchedule[] {
+  return Array.from({ length: rounds }, (_, index) => ({
+    roundNumber: index + 1,
+    scheduledDate: new Date(startDate.getTime() + index * MS_PER_DAY),
+  }));
 }

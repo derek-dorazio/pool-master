@@ -4,7 +4,8 @@ import {
   generateInviteLink,
   getSelectionState,
   runContestDraw,
-  submitContestSelection,
+  selectContestPick,
+  unselectContestPick,
 } from '@poolmaster/shared/generated/hey-api';
 import { SelectionType } from '@poolmaster/shared/domain';
 import { attachContestEvent, buildLeagueWithCommissioner, buildRegisteredUser, seedContestFixture } from './builders';
@@ -125,10 +126,9 @@ describe('SDK Functional: Quick pick', () => {
     const fixture = await seedRandomDrawFixture();
     const { contestId } = fixture;
 
-    const memberPick = await submitContestSelection({
+    const memberPick = await selectContestPick({
       client: fixture.member.client,
-      path: { contestId },
-      body: { entryId: fixture.memberEntryId, participantId: fixture.fieldIds[0] ?? '' },
+      path: { contestId, entryId: fixture.memberEntryId, sportEventParticipantId: fixture.fieldIds[0] ?? '' },
     });
     expectFunctionalError(memberPick, { status: 409, code: 'SELECTION_DEALT_BY_DRAW' });
 
@@ -152,6 +152,14 @@ describe('SDK Functional: Quick pick', () => {
     expect(dealt.every((id) => id !== null && fixture.fieldIds.includes(id))).toBe(true);
     expect(memberView.data?.pickHistories.map((pick) => pick.entryId).sort())
       .toEqual([fixture.commissionerEntryId, fixture.memberEntryId].sort());
+
+    // A dealt golfer cannot be unselected either: the draw is final (#1259).
+    const memberDealt = memberView.data?.pickHistories.find((pick) => pick.entryId === fixture.memberEntryId)?.participantId;
+    const memberUnpick = await unselectContestPick({
+      client: fixture.member.client,
+      path: { contestId, entryId: fixture.memberEntryId, sportEventParticipantId: memberDealt ?? '' },
+    });
+    expectFunctionalError(memberUnpick, { status: 409, code: 'SELECTION_DEALT_BY_DRAW' });
   });
 
   it('refuses a second draw, and closes entries once drawn', async () => {
