@@ -434,3 +434,44 @@ describe('a second-chance bracket — going live', () => {
     expect(context.contestNow()).toMatchObject({ status: ContestStatus.ACTIVE, startsAt: ROUND_TWO_FIRST_GAME });
   });
 });
+
+describe('a second-chance bracket — on the plan page', () => {
+  /** Beside it in its league: a full bracket on the same knockout, closed since the event started, and a roster contest on an event next week. */
+  function leagueOfThree() {
+    const context = setup();
+    const { world, contest } = context;
+    const fullBracket = world.addContest(contest.leagueId, {
+      name: 'Full bracket',
+      status: ContestStatus.OPEN,
+      contestFormat: ContestFormat.PREDICTION,
+      selectionType: SelectionType.BRACKET,
+      sportEventIds: [context.sportEvent.id],
+    });
+    world.addConfiguration(fullBracket.id, {
+      selectionType: SelectionType.BRACKET,
+      configJson: { selectionType: SelectionType.BRACKET, startsAtRound: 1 },
+    });
+    const nextWeek = world.addSportEvent({ name: 'Open', startDate: at(24 * 7), status: SportEventStatus.SCHEDULED });
+    world.addContest(contest.leagueId, { name: 'Roster', status: ContestStatus.OPEN, sportEventIds: [nextWeek.id] });
+    return context;
+  }
+
+  it('lists it among the contests still taking entries until its starting round, and never the full bracket whose event has started', async () => {
+    const context = leagueOfThree();
+
+    const usage = await context.contests.listOpenContestUsage(context.contest.leagueId);
+
+    const listed = usage.map((open) => [open.name, open.entryCount]);
+    expect(listed).toHaveLength(2);
+    expect(listed).toEqual(expect.arrayContaining([['Roster', 0], ['Second-chance bracket', 1]]));
+  });
+
+  it('drops it from the contests still taking entries once its starting round\'s first game time passes', async () => {
+    const context = leagueOfThree();
+    context.setNow(at(2.5));
+
+    const usage = await context.contests.listOpenContestUsage(context.contest.leagueId);
+
+    expect(usage.map((open) => open.name)).toEqual(['Roster']);
+  });
+});

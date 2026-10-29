@@ -95,24 +95,29 @@ export class SportEventTierService {
   }
 
   /**
-   * The default tiers for a new event, when it has none: the sport league's tier count where it
-   * sets one (the College Football Playoff: six), else the sport's (golf: six). A default, fully
-   * editable afterwards; the tier count is however many rows exist, not a stored parameter
-   * (plans/124 §4.5a).
+   * New events' default tiers, every event's in one insert (#1253): the sport league's tier count
+   * where it sets one (the College Football Playoff: six), else the sport's (golf: six). A
+   * default, fully editable afterwards; the tier count is however many rows exist, not a stored
+   * parameter (plans/124 §4.5a). The events have no tiers yet: an event is created with them.
+   * Answers each event's tiers as written.
    */
-  async ensureDefaultTiers(sportEventId: string, definition: SportDefinition, leagueTierCount: number | null): Promise<SportEventTier[]> {
-    const existing = await this.deps.tiers.findBySportEvent(sportEventId);
-    if (existing.length > 0) {
-      return existing;
-    }
-    const tierCount = leagueTierCount ?? definition.defaultTierLayout.tierCount;
-    await this.deps.tiers.createMany(sportEventId, Array.from({ length: tierCount }, (_, index) => ({
-      tierKey: `tier-${index + 1}`,
-      label: `Tier ${index + 1}`,
-      tierNumber: index + 1,
-    })));
-    this.deps.logger?.info({ sportEventId, tierCount }, 'Created default tiers');
-    return this.deps.tiers.findBySportEvent(sportEventId);
+  async createDefaultTiers(
+    events: ReadonlyArray<{ sportEventId: string; definition: SportDefinition; leagueTierCount: number | null }>,
+  ): Promise<Map<string, SportEventTierDefinition[]>> {
+    const tiersByEvent = new Map(events.map(({ sportEventId, definition, leagueTierCount }) => [
+      sportEventId,
+      Array.from({ length: leagueTierCount ?? definition.defaultTierLayout.tierCount }, (_, index) => ({
+        tierKey: `tier-${index + 1}`,
+        label: `Tier ${index + 1}`,
+        tierNumber: index + 1,
+      })),
+    ]));
+    await this.deps.tiers.createMany([...tiersByEvent].flatMap(([sportEventId, tiers]) => tiers.map((tier) => ({ sportEventId, ...tier }))));
+    this.deps.logger?.info(
+      { sportEventIds: [...tiersByEvent.keys()], tierCounts: [...tiersByEvent.values()].map((tiers) => tiers.length) },
+      'Created default tiers',
+    );
+    return tiersByEvent;
   }
 
   async getEffectiveTiersForSportEvent(sportEventId: string): Promise<SportEventTierGroup[]> {

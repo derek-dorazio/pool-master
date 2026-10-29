@@ -1,24 +1,19 @@
 import type { ColumnDef } from '@tanstack/react-table';
-import { useEffect } from 'react';
-import { Link } from 'react-router';
-import { ContestStatus, SportEventStatus, SurvivorWeekOutcome, describeSurvivorRules, pluralize  } from '@poolmaster/shared/domain';
+import { SportEventStatus, SurvivorWeekOutcome, describeSurvivorRules, pluralize } from '@poolmaster/shared/domain';
 import type { ContestDto, SurvivorLeaderboardResponse } from '@/lib/api';
-import { buildLeagueContestEntryPath } from '@/features/leagues/league-routing';
-import { useLeagueContextById } from '@/features/leagues/use-league-context';
-import { Chip, DataGrid, ErrorState, LoadingState, Tile, type StatusBadgeProps } from '@/features/shared/ui';
-import { ApiError, extractErrorMessage } from '@/lib/errors';
-import { getLogger } from '@/lib/logger';
-import { ContestHeader, ContestSubMenu } from './contest-header';
-import { LEADERBOARD_ERROR_MESSAGES } from './contest-leaderboard';
-import { ContestStatusBadge } from './contest-status-badge';
+import { Chip, type StatusBadgeProps } from '@/features/shared/ui';
+import { entryColumn, isMySquadsEntry, placeColumn, totalColumn } from './leaderboard-columns';
+import { LeaderboardFrame, ScoreboardGrid } from './leaderboard-kit';
+import { useLeaderboardFallback } from './use-leaderboard-fallback';
 import { useBracketRoundLabel } from './use-bracket-round-label';
+import { useContestLeague } from './use-contest-league';
 import { useSurvivorLeaderboardQuery } from './use-contest-leaderboard';
 
 type SurvivorRow = SurvivorLeaderboardResponse['entries'][number];
 type SurvivorWeek = SurvivorLeaderboardResponse['weeks'][number];
 
-/** Entries per page. A league can have hundreds; one page stays readable on a phone. */
-const PAGE_SIZE = 25;
+/** The prefix of the board's test ids. */
+const TEST_ID = 'survivor-leaderboard';
 
 const OUTCOME_LABELS: Record<SurvivorWeekOutcome, string> = {
   SURVIVED: 'Survived',
@@ -86,42 +81,8 @@ function survivorColumns(
   const cellOf = (row: SurvivorRow, week: SurvivorWeek) =>
     row.weeks.find((cell) => cell.sportEventId === week.sportEventId && cell.roundNumber === week.roundNumber);
   return [
-    {
-      id: 'place',
-      header: 'Place',
-      accessorFn: (row) => row.position,
-      cell: ({ row }) => (
-        <span className="font-semibold" data-testid={`survivor-leaderboard-place-${row.original.entryId}`}>
-          {row.original.displayPosition}
-        </span>
-      ),
-    },
-    {
-      id: 'entry',
-      header: 'Entry',
-      // Searched by the entry's name and its group's name.
-      accessorFn: (row) => `${row.entryName} ${row.squadName}`,
-      cell: ({ row }) => (
-        <span className="block min-w-0">
-          <span className="flex flex-wrap items-center gap-2">
-            {leagueCode ? (
-              <Link
-                className="font-medium text-foreground hover:underline"
-                data-testid={`survivor-leaderboard-entry-link-${row.original.entryId}`}
-                state={{ leagueCode }}
-                to={buildLeagueContestEntryPath(leagueCode, contestId, row.original.entryId)}
-              >
-                {row.original.entryName}
-              </Link>
-            ) : (
-              <span className="font-medium">{row.original.entryName}</span>
-            )}
-            {mySquadId !== null && row.original.squadId === mySquadId ? <Chip tone="active">Yours</Chip> : null}
-          </span>
-          <span className="block text-xs text-muted-foreground">{row.original.squadName}</span>
-        </span>
-      ),
-    },
+    placeColumn(TEST_ID),
+    entryColumn(TEST_ID, { contestId, isMine: isMySquadsEntry(mySquadId), leagueCode }),
     {
       id: 'standing',
       header: 'Status',
@@ -132,16 +93,7 @@ function survivorColumns(
         </Chip>
       ),
     },
-    {
-      id: 'survived',
-      header: 'Weeks survived',
-      accessorFn: (row) => row.weeksSurvived,
-      cell: ({ row }) => (
-        <span className="font-semibold" data-testid={`survivor-leaderboard-survived-${row.original.entryId}`}>
-          {row.original.weeksSurvived}
-        </span>
-      ),
-    },
+    totalColumn(TEST_ID, { header: 'Weeks survived', id: 'survived', value: (row) => row.weeksSurvived }),
     ...weeks.map((week): ColumnDef<SurvivorRow> => ({
       id: `week-${weekKey(week)}`,
       header: weekHeading(week, weekName),
@@ -162,95 +114,50 @@ function survivorColumns(
  * entries drop out as the results come in.
  */
 export function SurvivorLeaderboard({ contest, leagueCode: hintedLeagueCode }: { contest: ContestDto; leagueCode: string | null }) {
-  const logger = getLogger().child({ feature: 'survivor-leaderboard' });
   const contestId = contest.id;
   const leaderboardQuery = useSurvivorLeaderboardQuery(contestId, contest.status);
-  const { league, viewer } = useLeagueContextById(contest.leagueId);
+  const { leagueCode, viewer } = useContestLeague(contest.leagueId, hintedLeagueCode);
   // A playoff's rounds (#785) are named as its bracket names them.
   const playoffEventId = leaderboardQuery.data?.weeks.find((week) => week.roundCount > 1)?.sportEventId ?? '';
   const roundLabel = useBracketRoundLabel(contest.sport, playoffEventId);
   const weekName: WeekName = (week) => (week.roundCount > 1 ? roundLabel(week.roundNumber, week.roundCount) : week.name);
-  const leagueCode = hintedLeagueCode ?? league?.leagueCode ?? null;
+  const fallback = useLeaderboardFallback(leaderboardQuery, { action: 'survivorLeaderboard.load.failed', contestId });
 
-  useEffect(() => {
-    if (leaderboardQuery.isError) {
-      logger.warn(
-        { action: 'survivorLeaderboard.load.failed', data: { contestId }, err: leaderboardQuery.error },
-        'Survivor leaderboard failed to load',
-      );
-    }
-  }, [contestId, leaderboardQuery.error, leaderboardQuery.isError, logger]);
-
-  if (leaderboardQuery.isLoading) {
-    return <LoadingState body="Loading contest leaderboard..." />;
-  }
-  if (leaderboardQuery.isError || !leaderboardQuery.data) {
-    const { error } = leaderboardQuery;
-    return (
-      <ErrorState
-        body={extractErrorMessage(error, {
-          codeMessages: LEADERBOARD_ERROR_MESSAGES,
-          fallback: 'Try refreshing, or return to the contest board.',
-        })}
-        testId={error instanceof ApiError && error.code ? `contest-leaderboard-error-${error.code}` : 'contest-leaderboard-error'}
-        title="We couldn't load this leaderboard."
-      />
-    );
+  if (fallback || !leaderboardQuery.data) {
+    return fallback;
   }
 
   const board = leaderboardQuery.data;
-  const mySquadId = viewer.mySquadId;
   const stillIn = board.entries.filter((entry) => entry.alive).length;
   const isUnderWay = board.weeks.some((week) => week.started);
 
   return (
-    <section className="space-y-6" data-testid="contest-leaderboard">
-      <ContestHeader
-        badges={<ContestStatusBadge status={contest.status} />}
-        menu={leagueCode ? (
-          <ContestSubMenu
-            contestId={contestId}
-            current="leaderboard"
-            leagueCode={leagueCode}
-            myEntryId={contest.myEntryIds?.[0] ?? null}
-            picksRevealed
-          />
-        ) : null}
-        summary={(
-          <p className="mt-2 text-sm text-muted-foreground" data-testid="survivor-leaderboard-rules">
-            {describeSurvivorRules(null)}
-          </p>
-        )}
-        title={contest.name}
-        titleTestId="contest-leaderboard-heading"
-      >
-        <div className="mt-2 space-y-1 text-sm text-muted-foreground">
+    <LeaderboardFrame
+      contest={contest}
+      leagueCode={leagueCode}
+      notes={(
+        <>
           {board.entries.length ? (
             <p data-testid="survivor-leaderboard-still-in">{`${pluralize(stillIn, 'entry', 'entries')} still in.`}</p>
           ) : null}
           {isUnderWay ? null : (
             <p data-testid="survivor-leaderboard-not-started">Picks show from each game&apos;s kickoff. Entries are listed once they submit a week.</p>
           )}
-          {contest.status === ContestStatus.COMPLETED ? (
-            <p data-testid="contest-leaderboard-settled-note">Final result: these standings are frozen at settlement.</p>
-          ) : null}
-        </div>
-      </ContestHeader>
-
-      <Tile>
-        <DataGrid
-          headerTone="scoreboard"
-          columns={survivorColumns(contestId, leagueCode, mySquadId, board.weeks, weekName)}
-          data={board.entries}
-          emptyMessage="No entry has submitted a week yet."
-          getRowId={(row) => row.entryId}
-          pageSize={PAGE_SIZE}
-          rowTestId={(row) => `survivor-leaderboard-row-${row.entryId}`}
-          search={{ label: 'Find an entry', placeholder: 'Find an entry', testId: 'contest-leaderboard-search' }}
-          showColumnFilters={false}
-          tableTestId="survivor-leaderboard-table"
-        />
-      </Tile>
-    </section>
+        </>
+      )}
+      summary={(
+        <p className="mt-2 text-sm text-muted-foreground" data-testid="survivor-leaderboard-rules">
+          {describeSurvivorRules(null)}
+        </p>
+      )}
+    >
+      <ScoreboardGrid
+        columns={survivorColumns(contestId, leagueCode, viewer.mySquadId, board.weeks, weekName)}
+        data={board.entries}
+        emptyMessage="No entry has submitted a week yet."
+        rowTestIdPrefix="survivor-leaderboard-row"
+        tableTestId="survivor-leaderboard-table"
+      />
+    </LeaderboardFrame>
   );
 }

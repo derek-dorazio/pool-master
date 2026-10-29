@@ -28,6 +28,8 @@ import type {
   SportEventMatchRepository,
   SportEventRepository,
   SportEventRoundRepository,
+  SportEventRoundSchedule,
+  SportEventTierDefinition,
   SportEventTierRepository,
   SportEventUpdate,
   SportLeagueRepository,
@@ -142,6 +144,16 @@ export class InMemorySportEvents {
     return event;
   }
 
+  /** Gives an event these rounds, through the round repository's one insert. */
+  addRounds(sportEventId: string, rounds: readonly SportEventRoundSchedule[]): Promise<void> {
+    return this.roundRepo().createMany(rounds.map((round) => ({ sportEventId, ...round })));
+  }
+
+  /** Gives an event these tiers, through the tier repository's one insert. */
+  addTiers(sportEventId: string, tiers: readonly SportEventTierDefinition[]): Promise<void> {
+    return this.tierRepo().createMany(tiers.map((tier) => ({ sportEventId, ...tier })));
+  }
+
   addToField(sportEventId: string, participantId: string, overrides: Partial<SportEventParticipant> = {}): SportEventParticipant {
     const entry = stamp({ id: this.id('sep'), sportEventId, participantId, isActive: true, isPlayInPlace: false, metadata: {}, ...overrides });
     this.field.push(entry);
@@ -242,14 +254,14 @@ export class InMemorySportEvents {
 
   eventSeriesRepo(): EventSeriesRepository {
     return {
-      findOrCreate: async (sportLeagueId, name) => {
+      findOrCreateMany: async (sportLeagueId, names) => names.map((name) => {
         let row = this.eventSeriesRows.find((candidate) => candidate.sportLeagueId === sportLeagueId && candidate.name === name);
         if (!row) {
           row = { id: this.id('event-series'), sportLeagueId, name, isActive: true };
           this.eventSeriesRows.push(row);
         }
         return stamp(row);
-      },
+      }),
     };
   }
 
@@ -259,6 +271,7 @@ export class InMemorySportEvents {
       findById: async (id) => this.events.find((row) => row.id === id) ?? null,
       findByIds: async (ids) => this.events.filter((row) => ids.includes(row.id)),
       findByProviderRef: async (providerId, externalId) => this.events.find((row) => row.providerId === providerId && row.externalId === externalId) ?? null,
+      findByProviderRefs: async (providerId, externalIds) => this.events.filter((row) => row.providerId === providerId && externalIds.includes(row.externalId)),
       // No sport filter: every event is golf while Sport has one member.
       findAll: async (filters) => this.events.filter((row) => (
         (filters.statuses === undefined || filters.statuses.includes(row.status))
@@ -272,16 +285,24 @@ export class InMemorySportEvents {
       findEventYears: async (sportLeagueId, options) => [...new Set(this.events
         .filter((row) => row.sportLeagueId === sportLeagueId && (!options.releasedOnly || row.status !== 'DRAFT'))
         .map((row) => row.eventYear))].sort((left, right) => left - right),
-      create: async (input: SportEventCreate) => {
-        // The database's one-edition-per-year constraint, raised the way Prisma raises it.
-        if (this.events.some((row) => row.eventSeriesId === input.eventSeriesId && row.eventYear === input.eventYear)) {
-          throw Object.assign(new Error('Unique constraint failed'), {
-            code: 'P2002',
-            meta: { target: ['event_series_id', 'event_year'] },
-          });
+      createMany: async (inputs: readonly SportEventCreate[]) => {
+        // The database's one-edition-per-year constraint, raised the way Prisma raises it, and
+        // before any row is written: the insert is all or none.
+        const editions = new Set(this.events.map((row) => `${row.eventSeriesId}|${row.eventYear}`));
+        for (const input of inputs) {
+          const edition = `${input.eventSeriesId}|${input.eventYear}`;
+          if (editions.has(edition)) {
+            throw Object.assign(new Error('Unique constraint failed'), {
+              code: 'P2002',
+              meta: { target: ['event_series_id', 'event_year'] },
+            });
+          }
+          editions.add(edition);
         }
-        const series = this.eventSeriesRows.find((row) => row.id === input.eventSeriesId);
-        return this.addEvent({ ...input, sportLeagueId: series?.sportLeagueId ?? 'sport-league-unplaced', metadata: {} });
+        return inputs.map((input) => {
+          const series = this.eventSeriesRows.find((row) => row.id === input.eventSeriesId);
+          return this.addEvent({ ...input, sportLeagueId: series?.sportLeagueId ?? 'sport-league-unplaced', metadata: {} });
+        });
       },
       update: async (id, updates: SportEventUpdate) => {
         const row = this.events.find((candidate) => candidate.id === id) as SportEvent;
@@ -357,9 +378,9 @@ export class InMemorySportEvents {
           .filter((row) => row.sportEventId === sportEventId)
           .sort((left, right) => left.roundNumber - right.roundNumber),
       ])),
-      createMany: async (sportEventId, rounds) => {
+      createMany: async (rounds) => {
         for (const round of rounds) {
-          this.roundRows.push(stamp({ id: this.id('round'), sportEventId, roundNumber: round.roundNumber, scheduledDate: round.scheduledDate, scheduledEndAt: round.scheduledEndAt ?? null }));
+          this.roundRows.push(stamp({ id: this.id('round'), sportEventId: round.sportEventId, roundNumber: round.roundNumber, scheduledDate: round.scheduledDate, scheduledEndAt: round.scheduledEndAt ?? null }));
         }
       },
       reschedule: async (sportEventId, rounds) => {
@@ -473,8 +494,8 @@ export class InMemorySportEvents {
     return {
       findBySportEvent: async (sportEventId) => findBySportEvents([sportEventId]),
       findBySportEvents,
-      createMany: async (sportEventId, tiers) => {
-        for (const tier of tiers) this.tierRows.push(stamp({ id: this.id('tier'), sportEventId, ...tier }));
+      createMany: async (tiers) => {
+        for (const tier of tiers) this.tierRows.push(stamp({ id: this.id('tier'), ...tier }));
       },
       replace: async (sportEventId, tiers, reassignTo) => {
         const existing = this.tierRows.filter((row) => row.sportEventId === sportEventId);

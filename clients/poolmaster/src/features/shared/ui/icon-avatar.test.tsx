@@ -13,4 +13,15 @@ describe("pool-master-3lo.14: shared IconAvatar primitive", () => {
 
     expect(screen.getByLabelText("League icon")).toHaveClass("h-12");
   });
+
+  it("rule: a custom tone leaves the colours to the caller's class, so a team icon keeps its theme", () => {
+    render(
+      <IconAvatar className="team-icon-theme-ocean" label="Team icon" tone="custom">
+        <Trophy aria-hidden size={18} />
+      </IconAvatar>,
+    );
+
+    expect(screen.getByLabelText("Team icon")).toHaveClass("team-icon-theme-ocean");
+    expect(screen.getByLabelText("Team icon")).not.toHaveClass("bg-primary/10", "text-primary");
+  });
 });

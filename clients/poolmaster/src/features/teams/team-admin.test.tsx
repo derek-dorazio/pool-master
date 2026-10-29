@@ -200,6 +200,16 @@ describe('Commissioner tools › Manage team', () => {
     expect(screen.getByTestId('commissioner-tools-menu-teams')).toHaveAttribute('aria-current', 'page');
   });
 
+  it("draws the managed team's icon in its own colour, not the avatar's default yellow", async () => {
+    primeMocks();
+
+    renderAdmin('/league/BIGDAWGS/admin/teams/team-2');
+
+    const icon = await screen.findByLabelText('Second Team icon');
+    expect(icon).not.toHaveClass('bg-primary/10');
+    expect(icon.className).toMatch(/team-icon-theme-/);
+  });
+
   it('labels each owner with their league role from the team read, without reading the league roster', async () => {
     primeMocks();
 
