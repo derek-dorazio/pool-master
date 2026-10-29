@@ -64,7 +64,6 @@ export function useSportLeagueNoun(sport: Sport, sportLeagueId: string | undefin
   return sportLeagueNounOf(sport, league?.noun ?? null);
 }
 
-/** One golf tour's tournaments, every event year, earliest start first. */
 /**
  * One year of a sport league's events: what the calendar shows, not every year it has had
  * (#1251). Waits while the year is still null.

@@ -244,13 +244,13 @@ export class PrismaSportEventRepository implements SportEventRepository {
   }
 
   async findEventYears(sportLeagueId: string, options: { releasedOnly: boolean }): Promise<number[]> {
-    const rows = await this.prisma.sportEvent.findMany({
+    // groupBy deduplicates in Postgres; findMany's `distinct` would return a row per event.
+    const rows = await this.prisma.sportEvent.groupBy({
+      by: ['eventYear'],
       where: {
         eventSeries: { sportLeagueId },
         ...(options.releasedOnly && { NOT: { status: SportEventStatus.DRAFT } }),
       },
-      select: { eventYear: true },
-      distinct: ['eventYear'],
       orderBy: { eventYear: 'desc' },
     });
     return rows.map((row) => row.eventYear);

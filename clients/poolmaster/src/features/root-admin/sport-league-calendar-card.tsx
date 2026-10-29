@@ -1,6 +1,7 @@
 import { sportLeagueNounOf } from '@poolmaster/shared/domain';
 import { useMemo, useState } from 'react';
-import { FormField, LinkButton, Select, Tile } from '@/features/shared/ui';
+import { Alert, FormField, LinkButton, Select, Tile } from '@/features/shared/ui';
+import { extractErrorMessage } from '@/lib/errors';
 import type { SportLeagueDto } from '@/lib/api';
 import { SportLeagueEventCalendar } from './sport-league-event-calendar';
 import { SportLeagueYearActions } from './sport-league-year-actions';
@@ -25,9 +26,9 @@ export function SportLeagueCalendarCard({ sportLeague }: { sportLeague: SportLea
   const yearsWithEvents = useMemo(() => yearsQuery.data ?? [], [yearsQuery.data]);
   // Default: the tour's current year, else its latest year with tournaments, else this one.
   // Computed during render so a refetch can't clobber an explicit pick. Without a current year
-  // the years read decides, so no year's tournaments load before it answers.
+  // the years read decides, so no year's tournaments load before it answers; a failed one says so.
   const eventYear = selectedYear ?? sportLeague.currentEventYear
-    ?? (yearsQuery.isPending ? null : yearsWithEvents.at(0) ?? new Date().getFullYear());
+    ?? (yearsQuery.isSuccess ? yearsWithEvents.at(0) ?? new Date().getFullYear() : null);
   const tournamentsQuery = useSportLeagueEventsQuery(sportLeague.id, eventYear);
   const yearTournaments = tournamentsQuery.data ?? [];
   const years = useMemo(
@@ -46,7 +47,11 @@ export function SportLeagueCalendarCard({ sportLeague }: { sportLeague: SportLea
             {`${sportLeague.name}’s ${eventNoun.many} in one year, earliest first.`}
           </p>
         </div>
-        {eventYear === null ? (
+        {yearsQuery.isError ? (
+          <Alert data-testid="root-admin-sport-league-calendar-years-error" tone="danger">
+            {extractErrorMessage(yearsQuery.error, { fallback: `We could not load ${sportLeague.name}’s years right now.` })}
+          </Alert>
+        ) : eventYear === null ? (
           <p className="text-sm text-muted-foreground" data-testid="root-admin-sport-league-calendar-loading">Loading years...</p>
         ) : (
           <div className="flex flex-wrap items-end gap-2">

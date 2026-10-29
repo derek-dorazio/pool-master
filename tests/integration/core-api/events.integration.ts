@@ -464,6 +464,37 @@ describe('events routes', () => {
       expect(adminRes.statusCode).toBe(200);
       expect(adminRes.json()).toMatchObject({ event: { id: eventId, status: 'DRAFT' } });
     });
+
+    it('lists a sport league\'s DRAFT-only year to a root admin but not to a signed-in user who is not one', async () => {
+      const prisma = getPrisma();
+      const admin = await createTestUser({ displayName: 'Years Read Admin', isRootAdmin: true });
+      const viewer = await createTestUser({ displayName: 'Years Read Member' });
+      const sport = await prisma.sport.findUniqueOrThrow({ where: { sport: Sport.GOLF } });
+      const sportLeague = await prisma.sportLeague.create({ data: { sportId: sport.id, name: `Years Route Tour ${randomUUID()}` } });
+      const series = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: 'Years Route Classic' } });
+      await prisma.sportEvent.createMany({
+        data: [
+          { eventYear: 2098, status: 'SCHEDULED' as const, startDate: new Date('2098-04-20T15:00:00.000Z') },
+          { eventYear: 2099, status: 'DRAFT' as const, startDate: new Date('2099-04-20T15:00:00.000Z') },
+        ].map((edition) => ({
+          ...edition,
+          eventSeriesId: series.id,
+          providerId: 'integration-test',
+          externalId: `events-years-${randomUUID()}`,
+          sport: Sport.GOLF,
+          name: 'Years Route Classic',
+        })),
+      });
+      const url = `/api/v1/events/years?sportLeagueId=${sportLeague.id}`;
+
+      const viewerRes = await getApp().inject({ method: 'GET', url, headers: viewer.headers });
+      expect(viewerRes.statusCode).toBe(200);
+      expect(viewerRes.json()).toEqual({ years: [2098] });
+
+      const adminRes = await getApp().inject({ method: 'GET', url, headers: admin.headers });
+      expect(adminRes.statusCode).toBe(200);
+      expect(adminRes.json()).toEqual({ years: [2099, 2098] });
+    });
   });
 });
 
