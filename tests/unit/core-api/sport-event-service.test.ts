@@ -522,8 +522,8 @@ describe('SportEventService — read, update, delete', () => {
     const { store, service } = setup();
     store.addEvent();
 
-    await expect(service.listEvents({})).rejects.toMatchObject({ code: 'SPORT_EVENT_FILTER_REQUIRED', statusCode: 400 });
-    await expect(service.listEvents({ status: SportEventStatus.DRAFT })).rejects.toMatchObject({ code: 'SPORT_EVENT_FILTER_REQUIRED', statusCode: 400 });
+    await expect(service.listEvents({}, { adminCounts: true })).rejects.toMatchObject({ code: 'SPORT_EVENT_FILTER_REQUIRED', statusCode: 400 });
+    await expect(service.listEvents({ statuses: [SportEventStatus.DRAFT] }, { adminCounts: true })).rejects.toMatchObject({ code: 'SPORT_EVENT_FILTER_REQUIRED', statusCode: 400 });
   });
 
   it('updates an admin-managed event, clearing a field set to null', async () => {
