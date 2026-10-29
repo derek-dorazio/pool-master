@@ -279,7 +279,7 @@ export class PrismaContestRepository implements ContestRepository {
     // had a rule, a foreign-key failure once #246 gave every golf configuration one. Entry
     // standings cascade from the contest.
     // The contest row lock comes first, the order a random draw takes it in (#646).
-    await forgettingReads(ReadMemoKey.contestConfiguration, () => forgettingReads(ReadMemoKey.contest, () => this.prisma.$transaction(async (tx) => {
+    await forgettingReads([ReadMemoKey.contestConfiguration, ReadMemoKey.contest], () => this.prisma.$transaction(async (tx) => {
       await lockContestRow(tx, id);
       await tx.contestEntryPick.deleteMany({ where: { entry: { contestId: id } } });
       await tx.contestEntry.deleteMany({ where: { contestId: id } });
@@ -287,7 +287,7 @@ export class PrismaContestRepository implements ContestRepository {
       await tx.contestPrizeDefinition.deleteMany({ where: { contestConfiguration: { contestId: id } } });
       await tx.contestConfiguration.deleteMany({ where: { contestId: id } });
       await tx.contest.delete({ where: { id } });
-    })));
+    }));
   }
 }
 

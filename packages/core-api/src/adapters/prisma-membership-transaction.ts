@@ -21,6 +21,6 @@ export class PrismaMembershipTransaction implements MembershipTransaction {
       squadMemberships: new PrismaSquadMembershipRepository(tx),
       squadOwnerInvitations: new PrismaSquadOwnerInvitationRepository(tx),
     }));
-    return forgettingReads(ReadMemoKey.leagueMembership, () => forgettingReads(ReadMemoKey.squadMembership, run));
+    return forgettingReads([ReadMemoKey.leagueMembership, ReadMemoKey.squadMembership], run);
   }
 }

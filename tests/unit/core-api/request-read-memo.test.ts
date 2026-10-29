@@ -6,6 +6,7 @@ import {
   forgettingReads,
   memoizedRead,
   memoizedReadMany,
+  outsideReadMemo,
   ReadMemoKey,
   runWithReadMemo,
 } from '../../../packages/core-api/src/core/request-read-memo';
@@ -114,6 +115,36 @@ describe('request read memo', () => {
 
     expect(result).toEqual({ name: 'second try' });
     expect(load).toHaveBeenCalledTimes(2);
+  });
+
+  it('forgets every prefix a write names, and only those', async () => {
+    const load = counter();
+
+    await runWithReadMemo(async () => {
+      await memoizedRead(ROOT, `${ReadMemoKey.contest}c`, load);
+      await memoizedRead(ROOT, `${ReadMemoKey.contestConfiguration}c`, load);
+      await memoizedRead(ROOT, `${ReadMemoKey.league}a`, load);
+      await forgettingReads([ReadMemoKey.contest, ReadMemoKey.contestConfiguration], () => Promise.resolve('deleted'));
+      await memoizedRead(ROOT, `${ReadMemoKey.contest}c`, load);
+      await memoizedRead(ROOT, `${ReadMemoKey.contestConfiguration}c`, load);
+      await memoizedRead(ROOT, `${ReadMemoKey.league}a`, load);
+    });
+
+    expect(load).toHaveBeenCalledTimes(5);
+  });
+
+  it('remembers nothing for work run outside the memo from inside a request', async () => {
+    const load = counter();
+
+    await runWithReadMemo(async () => {
+      await memoizedRead(ROOT, `${ReadMemoKey.league}a`, load);
+      await outsideReadMemo(async () => {
+        await memoizedRead(ROOT, `${ReadMemoKey.league}a`, load);
+        await memoizedRead(ROOT, `${ReadMemoKey.league}a`, load);
+      });
+    });
+
+    expect(load).toHaveBeenCalledTimes(3);
   });
 
   it('ignores forgetReads outside a scope', () => {

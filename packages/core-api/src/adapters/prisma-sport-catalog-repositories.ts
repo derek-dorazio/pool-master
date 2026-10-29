@@ -135,7 +135,7 @@ export class PrismaSportLeagueRepository implements SportLeagueRepository {
       },
     });
     // A sport event's read carries its sport league's settings, so those are forgotten too.
-    return toSportLeague(await forgettingReads(ReadMemoKey.sportEvent, () => forgettingReads(ReadMemoKey.sportLeague, write)));
+    return toSportLeague(await forgettingReads([ReadMemoKey.sportEvent, ReadMemoKey.sportLeague], write));
   }
 }
 

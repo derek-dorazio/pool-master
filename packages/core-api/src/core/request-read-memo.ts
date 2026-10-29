@@ -64,6 +64,14 @@ export function runWithReadMemo<T>(work: () => T): T {
 }
 
 /**
+ * Runs `work` with no read memo, for work a request starts but does not wait for, such as a
+ * background sync: it may outlive the request, and must not read what the request remembered.
+ */
+export function outsideReadMemo<T>(work: () => T): T {
+  return scope.exit(work);
+}
+
+/**
  * `load`'s result, made once per request under `key`. Pass `client` as the repository's Prisma
  * client: a read through an interactive transaction's client is never remembered, so a
  * transaction always sees its own rows.
@@ -87,7 +95,7 @@ export function memoizedRead<T>(
  */
 export async function memoizedReadMany<T extends { id: string }>(
   client: PrismaClient | Prisma.TransactionClient,
-  prefix: string,
+  prefix: ReadMemoPrefix,
   ids: readonly string[],
   load: (ids: readonly string[]) => Promise<T[]>,
 ): Promise<T[]> {
@@ -103,7 +111,7 @@ export async function memoizedReadMany<T extends { id: string }>(
 }
 
 /** Drops the remembered reads whose keys start with `prefix`: a write calls it for what it changes. */
-export function forgetReads(prefix: string): void {
+export function forgetReads(prefix: ReadMemoPrefix): void {
   scope.getStore()?.forget(prefix);
 }
 
@@ -112,12 +120,14 @@ export function forgetAllReads(): void {
   scope.getStore()?.forget('');
 }
 
-/** Runs a write, then drops the remembered reads under `prefix`, whether or not it succeeded. */
-export async function forgettingReads<T>(prefix: string, write: () => Promise<T>): Promise<T> {
+/** Runs a write, then drops the remembered reads under each prefix, whether or not it succeeded. */
+export async function forgettingReads<T>(prefixes: ReadMemoPrefix | readonly ReadMemoPrefix[], write: () => Promise<T>): Promise<T> {
   try {
     return await write();
   } finally {
-    forgetReads(prefix);
+    for (const prefix of typeof prefixes === 'string' ? [prefixes] : prefixes) {
+      forgetReads(prefix);
+    }
   }
 }
 
@@ -136,3 +146,6 @@ export const ReadMemoKey = {
   sportEvent: 'sport-event:',
   sportLeague: 'sport-league:',
 } as const;
+
+/** One of the `ReadMemoKey` prefixes: what a write names to forget. */
+export type ReadMemoPrefix = (typeof ReadMemoKey)[keyof typeof ReadMemoKey];
