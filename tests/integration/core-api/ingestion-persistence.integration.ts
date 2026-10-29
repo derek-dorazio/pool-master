@@ -297,6 +297,57 @@ describe('IngestionPersistence', () => {
     })).resolves.toBe(0);
   });
 
+  // #1247 — one read for every linked event and one transaction for the changed ones, with the
+  // same rows and dispositions the one-event-at-a-time sync wrote.
+  it('syncs a feed of linked, unlinked, changed and unchanged events into the right rows and dispositions', async () => {
+    const prisma = getPrisma();
+    const persistence = new IngestionPersistence(prisma);
+    const startDate = new Date('2026-06-18T12:00:00.000Z');
+    const link = async (externalId: string, participantCount: number) => {
+      const event = await linkedProviderEvent(prisma, { providerId: 'TEST_PROVIDER', externalId, name: `Batch ${externalId}`, startDate });
+      return prisma.sportEvent.update({ where: { id: event.id }, data: { participantCount } });
+    };
+    const grown = await link('integration-batch-grown', 60);
+    const same = await link('integration-batch-same', 80);
+    const shrunk = await link('integration-batch-shrunk', 90);
+    const providerEvent = (externalId: string, participantCount: number) => ({
+      externalId,
+      providerId: 'TEST_PROVIDER',
+      sport: Sport.GOLF,
+      name: `Provider ${externalId}`,
+      startDate,
+      status: 'SCHEDULED' as const,
+      participantCount,
+      fieldLocked: false,
+      metadata: {},
+    });
+
+    const result = await persistence.persistEventsWithDiagnostics([
+      providerEvent('integration-batch-grown', 80),
+      providerEvent('integration-batch-unlinked', 80),
+      providerEvent('integration-batch-same', 80),
+      providerEvent('integration-batch-shrunk', 70),
+    ]);
+
+    expect(result.count).toBe(3);
+    expect(result.writeDiagnostics.summary).toMatchObject({ total: 3, updated: 2, unchanged: 1, created: 0 });
+    expect(result.writeDiagnostics.rows.map((row) => [row.externalId, row.disposition, row.internalId])).toEqual([
+      ['integration-batch-grown', 'UPDATED', grown.id],
+      ['integration-batch-same', 'UNCHANGED', same.id],
+      ['integration-batch-shrunk', 'UPDATED', shrunk.id],
+    ]);
+    const stored = await prisma.sportEvent.findMany({
+      where: { id: { in: [grown.id, same.id, shrunk.id] } },
+      select: { id: true, participantCount: true, updatedAt: true },
+    });
+    const byId = new Map(stored.map((row) => [row.id, row]));
+    expect([grown.id, same.id, shrunk.id].map((id) => byId.get(id)?.participantCount)).toEqual([80, 80, 70]);
+    expect(byId.get(same.id)?.updatedAt).toEqual(same.updatedAt);
+    await expect(prisma.sportEvent.count({
+      where: { providerId: 'TEST_PROVIDER', externalId: 'integration-batch-unlinked' },
+    })).resolves.toBe(0);
+  });
+
   it('writes each golfer\'s seed, and the odds only when they were quoted for this event, onto the event participant', async () => {
     const prisma = getPrisma();
     const persistence = new IngestionPersistence(prisma);
