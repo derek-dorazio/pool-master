@@ -422,13 +422,38 @@ describe('IngestionPersistence', () => {
 
     expect(prisma.sportEvent.findMany).toHaveBeenCalledTimes(1);
     expect(prisma.sportEvent.findMany).toHaveBeenCalledWith({
-      where: { OR: ['provider-event-1', 'golf-unchanged', 'golf-unlinked'].map((externalId) => ({ providerId: changed.providerId, externalId })) },
+      where: { OR: [{ providerId: changed.providerId, externalId: { in: ['provider-event-1', 'golf-unchanged', 'golf-unlinked'] } }] },
     });
     expect(prisma.sportEvent.findUnique).not.toHaveBeenCalled();
     expect(prisma.$transaction).toHaveBeenCalledTimes(1);
     expect(prisma.sportEvent.update).toHaveBeenCalledTimes(1);
     expect(prisma.sportEvent.update).toHaveBeenCalledWith({ where: { id: 'sport-event-1' }, data: { participantCount: 80 } });
     expect(result.writeDiagnostics.rows.map((row) => row.disposition)).toEqual(['UPDATED', 'UNCHANGED']);
+  });
+
+  it('takes a feed that names the same event twice at its last copy, writing and reporting that event once', async () => {
+    const prisma = {
+      sportEvent: {
+        findMany: jest.fn().mockResolvedValue([linkedRow({ syncScope: 'SCORES_ONLY', participantCount: 60 })]),
+        update: jest.fn().mockResolvedValue({ id: 'sport-event-1' }),
+      },
+      $transaction: jest.fn(async (operations: Array<Promise<unknown>>) => Promise.all(operations)),
+    };
+    const persistence = new IngestionPersistence(asPrismaClient(prisma), fakeLogger());
+    const event = buildInProgressEvent();
+
+    const result = await persistence.persistEventsWithDiagnostics([
+      { ...event, participantCount: 70 },
+      { ...event, participantCount: 90 },
+    ]);
+
+    expect(result.count).toBe(1);
+    expect(prisma.sportEvent.findMany).toHaveBeenCalledWith({
+      where: { OR: [{ providerId: event.providerId, externalId: { in: [event.externalId] } }] },
+    });
+    expect(prisma.sportEvent.update).toHaveBeenCalledTimes(1);
+    expect(prisma.sportEvent.update).toHaveBeenCalledWith({ where: { id: 'sport-event-1' }, data: { participantCount: 90 } });
+    expect(result.writeDiagnostics.rows).toHaveLength(1);
   });
 
   it('reads and writes nothing for an empty feed', async () => {

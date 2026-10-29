@@ -64,14 +64,14 @@ export class IngestionPersistence {
       })),
     }, 'Persisting sport events from ingestion');
 
-    // #1247: every linked event in one read, and the changed ones in one transaction.
-    const linkedEvents = events.length === 0 ? [] : await this.prisma.sportEvent.findMany({
-      where: { OR: events.map((event) => ({ providerId: event.providerId, externalId: event.externalId })) },
-    });
+    // #1247: every linked event in one read, and the changed ones in one transaction. A provider
+    // naming the same event twice is taken at its last word, as persistParticipants does.
+    const latestByKey = new Map(events.map((event) => [providerKey(event), event]));
+    const linkedEvents = await this.findLinkedEvents([...latestByKey.values()]);
     const linkedByKey = new Map(linkedEvents.map((row) => [providerKey(row), row]));
     const updates: Array<{ id: string; participantCount: number | null }> = [];
 
-    for (const event of events) {
+    for (const event of latestByKey.values()) {
       const existingEvent = linkedByKey.get(providerKey(event));
       if (!existingEvent) {
         this.logger?.info({
@@ -209,6 +209,18 @@ export class IngestionPersistence {
   }
 
   /** The provider mappings of these participants, with their participant, in one query per provider. */
+  /** The sport events linked to these provider events, in one query grouped by provider. */
+  private async findLinkedEvents(events: readonly SportEvent[]) {
+    const externalIdsByProvider = new Map<string, string[]>();
+    for (const event of events) {
+      externalIdsByProvider.set(event.providerId, [...(externalIdsByProvider.get(event.providerId) ?? []), event.externalId]);
+    }
+    if (externalIdsByProvider.size === 0) return [];
+    return this.prisma.sportEvent.findMany({
+      where: { OR: [...externalIdsByProvider].map(([providerId, externalIds]) => ({ providerId, externalId: { in: externalIds } })) },
+    });
+  }
+
   private async findMappings(participants: readonly ProviderParticipant[]) {
     const externalIdsByProvider = new Map<string, string[]>();
     for (const participant of participants) {
