@@ -2,7 +2,7 @@ import { getSportDefinition, RaceResultOrderError, RaceResultStatus, type SportV
 import { useState } from 'react';
 import { applyEventRaceResults, previewEventRaceResults } from '@/lib/api';
 import type { SportEventDto, SportEventParticipantDto } from '@/lib/api';
-import { Alert, BulkUploadPanel, Checkbox, Heading, StatusBadge, Tile } from '@/features/shared/ui';
+import { Alert, BulkUploadPanel, Checkbox, PanelCard, StatusBadge } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError, type ErrorCodeMessages } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -101,15 +101,16 @@ function StoredFinishingOrder({ event, field }: { event: SportEventDto; field: r
   const hasResults = field.some((entry) => entry.race !== null);
 
   return (
-    <Tile>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <Heading level={3} variant="card" size="base">Result</Heading>
-        {hasResults ? (
-          <StatusBadge data-testid="root-admin-race-result-official" tone={official ? 'final' : 'warning'}>
-            {official ? 'Official' : 'Provisional'}
-          </StatusBadge>
-        ) : null}
-      </div>
+    <PanelCard
+      headingLevel={3}
+      padded
+      title="Result"
+      trailing={hasResults ? (
+        <StatusBadge data-testid="root-admin-race-result-official" tone={official ? 'final' : 'warning'}>
+          {official ? 'Official' : 'Provisional'}
+        </StatusBadge>
+      ) : null}
+    >
       {!hasResults ? (
         <p className="mt-2 text-sm text-muted-foreground" data-testid="root-admin-race-result-empty">
           {`No results yet. Load the finishing order below once the ${vocabulary.round.one} is run.`}
@@ -155,7 +156,7 @@ function StoredFinishingOrder({ event, field }: { event: SportEventDto; field: r
           </div>
         </>
       )}
-    </Tile>
+    </PanelCard>
   );
 }
 
@@ -206,8 +207,7 @@ function FinishingOrderUploadCard({ event, field }: { event: SportEventDto; fiel
   const orderErrors = previewMutation.data?.orderErrors ?? [];
 
   return (
-    <Tile>
-      <Heading level={3} variant="card" size="base">Finishing order</Heading>
+    <PanelCard headingLevel={3} padded title="Finishing order">
       <p className="mt-1 text-sm text-muted-foreground">
         {`Paste or upload the ${vocabulary.round.one}'s result: a place for each ${vocabulary.participant.one} that finished, or DNF, DQ or DNS. Preview it, then apply. ${capitalize(vocabulary.participant.many)} you leave out keep the result they have.`}
       </p>
@@ -295,7 +295,7 @@ function FinishingOrderUploadCard({ event, field }: { event: SportEventDto; fiel
           unresolvedNotice={() => 'Fix the rows and problems marked below, then preview again before applying.'}
         />
       </div>
-    </Tile>
+    </PanelCard>
   );
 }
 

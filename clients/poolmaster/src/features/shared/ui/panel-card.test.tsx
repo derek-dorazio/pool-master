@@ -17,6 +17,16 @@ describe("PanelCard", () => {
     expect(within(section).getByText("Body")).toBeVisible();
   });
 
+  it("names the section after its title even when the title is more than plain text", () => {
+    render(
+      <PanelCard testId="panel" title={<><span aria-hidden="true">★</span>Champions Cup</>}>
+        <p>Body</p>
+      </PanelCard>,
+    );
+
+    expect(screen.getByRole("region", { name: /Champions Cup/ })).toHaveAttribute("data-testid", "panel");
+  });
+
   it("renders an h3 heading with its test id when asked for heading level 3", () => {
     render(
       <PanelCard headingLevel={3} title="Contests" titleTestId="panel-title">

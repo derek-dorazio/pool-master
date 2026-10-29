@@ -73,4 +73,4 @@ export { Countdown } from "./countdown";
 export { ExpandableTile } from "./expandable-tile";
 export { FaqList, type FaqItem } from "./faq-list";
 export { NumberedSteps, type NumberedStep } from "./numbered-steps";
-export { PanelCard, PanelList, type PanelCardFooter } from "./panel-card";
+export { PanelCard, PanelList } from "./panel-card";

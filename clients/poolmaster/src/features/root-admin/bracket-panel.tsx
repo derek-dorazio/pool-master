@@ -1,6 +1,6 @@
 import { getSportDefinition, SportEventStatus } from '@poolmaster/shared/domain';
 import type { SportEventDto } from '@/lib/api';
-import { Alert, Heading, Tile } from '@/features/shared/ui';
+import { Alert, Heading, PanelCard } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
 import { formsNoBracket, matchNoun } from './bracket-copy';
 import { BracketMatchRow, type BracketContext } from './bracket-match-row';
@@ -57,8 +57,7 @@ export function BracketPanel({ event }: { event: SportEventDto }) {
 
   return (
     <div className="space-y-6">
-      <Tile>
-        <Heading level={3} variant="card" size="base">Bracket</Heading>
+      <PanelCard headingLevel={3} padded title="Bracket">
         {bracket.length > 0 ? (
           <p className="mt-1 text-sm text-muted-foreground" data-testid="root-admin-bracket-help">
             {released
@@ -94,7 +93,7 @@ export function BracketPanel({ event }: { event: SportEventDto }) {
             </div>
           </section>
         ))}
-      </Tile>
+      </PanelCard>
       <ReseedRoundsCard context={context} event={event} roundCount={roundCount} roundLabel={roundLabel} />
       <PlayInPlacesCard event={event} field={fieldQuery.data} vocabulary={vocabulary} />
       <WithdrawalsCard bracket={bracket} event={event} field={fieldQuery.data} vocabulary={vocabulary} />
