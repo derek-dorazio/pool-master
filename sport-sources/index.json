@@ -1,54 +1,96 @@
 {
-  "fetchedAt": "2026-10-27T18:18:15.252Z",
+  "fetchedAt": "2026-10-29T20:32:33.143Z",
   "results": [
     {
-      "url": "https://en.wikipedia.org/wiki/Pauline_Astier",
+      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/scoreboard?dates=20261029",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
-      "file": "01-en.wikipedia.org.txt"
+      "file": "01-site.api.espn.com.txt"
     },
     {
-      "url": "https://en.wikipedia.org/wiki/Marine_Fauthoux",
+      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/summary?event=401918305",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
-      "file": "02-en.wikipedia.org.txt"
+      "file": "02-site.api.espn.com.txt"
     },
     {
-      "url": "https://en.wikipedia.org/wiki/Raquel_Carrera",
+      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/summary?event=401918306",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
-      "file": "03-en.wikipedia.org.txt"
+      "file": "03-site.api.espn.com.txt"
     },
     {
-      "url": "https://en.wikipedia.org/wiki/Janelle_Sala%C3%BCn",
+      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/summary?event=401918307",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
-      "file": "04-en.wikipedia.org.txt"
+      "file": "04-site.api.espn.com.txt"
     },
     {
-      "url": "https://en.wikipedia.org/wiki/Just%C4%97_Jocyt%C4%97",
+      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/summary?event=401918308",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
-      "file": "05-en.wikipedia.org.txt"
+      "file": "05-site.api.espn.com.txt"
     },
     {
-      "url": "https://en.wikipedia.org/wiki/Sika_Kon%C3%A9",
+      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/summary?event=401918309",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
-      "file": "06-en.wikipedia.org.txt"
+      "file": "06-site.api.espn.com.txt"
     },
     {
-      "url": "https://en.wikipedia.org/wiki/Aminata_Gueye",
+      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/summary?event=401918310",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
-      "file": "07-en.wikipedia.org.txt"
+      "file": "07-site.api.espn.com.txt"
+    },
+    {
+      "url": "https://www.basketball-reference.com/wnba/boxscores/202610170GSV.html",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "08-basketball-reference.com.txt"
+    },
+    {
+      "url": "https://www.basketball-reference.com/wnba/boxscores/202610190GSV.html",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "09-basketball-reference.com.txt"
+    },
+    {
+      "url": "https://www.basketball-reference.com/wnba/boxscores/202610210ATL.html",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "10-basketball-reference.com.txt"
+    },
+    {
+      "url": "https://www.basketball-reference.com/wnba/boxscores/202610240ATL.html",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "11-basketball-reference.com.txt"
+    },
+    {
+      "url": "https://www.basketball-reference.com/wnba/boxscores/202610260GSV.html",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "12-basketball-reference.com.txt"
+    },
+    {
+      "url": "https://www.basketball-reference.com/wnba/boxscores/202610290ATL.html",
+      "rendered": false,
+      "status": "HTTP_ERROR",
+      "httpStatus": 404,
+      "file": "13-basketball-reference.com.txt"
     }
   ]
 }
