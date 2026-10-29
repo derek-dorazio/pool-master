@@ -957,7 +957,7 @@ describe('SDK Functional: Leagues', () => {
     });
     expect(memberLeagueResponse.data?.squadName).toBe(memberSquad.data?.squad.name);
     expect(memberLeagueResponse.data?.activeTeamCount).toBe(2);
-    expect(memberSquad.data?.squad.members?.map((owner) => owner.userId)).toEqual([member.userId]);
+    expect(memberSquad.data?.squad.members.map((owner) => owner.userId)).toEqual([member.userId]);
 
     const outsiderLeagueResponse = await getLeagueByCode({
       client: outsider.client,

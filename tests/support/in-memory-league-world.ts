@@ -315,10 +315,6 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
       return squad ? squadDetails(squad) : null;
     },
     findDetailsByLeague: async (leagueId) => squads.where((row) => row.leagueId === leagueId).map(squadDetails),
-    findByLeagueAndMember: async (leagueId, userId) => {
-      const membership = one(squadMemberships.where((row) => row.leagueId === leagueId && row.userId === userId));
-      return membership ? squads.get(membership.squadId) : null;
-    },
     countActiveByLeague: async (leagueId) => squads.where((row) => row.leagueId === leagueId && row.isActive).length,
     findByLeagueAndName: async (leagueId, name) =>
       one(squads.where((row) => row.leagueId === leagueId && row.name === name)),
@@ -335,6 +331,11 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
       one(squadMemberships.where((row) => row.squadId === squadId && row.userId === userId)),
     findByLeagueAndUser: async (leagueId, userId) =>
       one(squadMemberships.where((row) => row.leagueId === leagueId && row.userId === userId)),
+    findByLeagueAndUserWithSquadName: async (leagueId, userId) => {
+      const membership = one(squadMemberships.where((row) => row.leagueId === leagueId && row.userId === userId));
+      const squad = membership ? squads.get(membership.squadId) : null;
+      return membership && squad ? { ...membership, squadName: squad.name } : null;
+    },
     create: async (row) => {
       if (squadMemberships.where((item) => item.leagueId === row.leagueId && item.userId === row.userId).length) {
         throw new Error(`Unique constraint: squad membership for ${row.userId} in ${row.leagueId} exists`);

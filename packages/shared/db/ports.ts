@@ -273,14 +273,17 @@ export interface SquadDetails extends Squad {
   members: SquadMemberDetails[];
 }
 
+/** A squad membership with its squad's name: the league context's squad edge (#1165). */
+export interface SquadMembershipWithSquadName extends SquadMembership {
+  squadName: string;
+}
+
 export interface SquadRepository {
   findById(id: string): Promise<Squad | null>;
   findByLeague(leagueId: string, includeInactive?: boolean): Promise<Squad[]>;
   findDetailsById(id: string): Promise<SquadDetails | null>;
   /** Every squad in the league, active and inactive, oldest first, with its owners. */
   findDetailsByLeague(leagueId: string): Promise<SquadDetails[]>;
-  /** The squad holding the user's membership in the league, any status, or null (#1165). */
-  findByLeagueAndMember(leagueId: string, userId: string): Promise<Squad | null>;
   countActiveByLeague(leagueId: string): Promise<number>;
   /**
    * Resolves a squad by its name within a league. Squad names are unique per league
@@ -305,6 +308,8 @@ export interface SquadMembershipRepository {
   findBySquads(squadIds: readonly string[], includeInactive?: boolean): Promise<SquadMembership[]>;
   findBySquadAndUser(squadId: string, userId: string): Promise<SquadMembership | null>;
   findByLeagueAndUser(leagueId: string, userId: string): Promise<SquadMembership | null>;
+  /** `findByLeagueAndUser` with the squad's name, in the same read. */
+  findByLeagueAndUserWithSquadName(leagueId: string, userId: string): Promise<SquadMembershipWithSquadName | null>;
   create(
     membership: Omit<SquadMembership, 'id' | 'createdAt' | 'updatedAt'>,
   ): Promise<SquadMembership>;

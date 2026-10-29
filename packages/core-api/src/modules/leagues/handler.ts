@@ -200,9 +200,8 @@ export function createLeagueHandlers(
    * team count: the part of `LeagueContextResponse` the league row does not carry.
    */
   async function loadViewerSquadContext(leagueId: string, userId: string) {
-    const [squadMembership, squad, viewer, activeTeamCount] = await Promise.all([
-      squadMembershipRepo.findByLeagueAndUser(leagueId, userId),
-      squadRepo.findByLeagueAndMember(leagueId, userId),
+    const [squadMembership, viewer, activeTeamCount] = await Promise.all([
+      squadMembershipRepo.findByLeagueAndUserWithSquadName(leagueId, userId),
       userRepo.findById(userId),
       squadRepo.countActiveByLeague(leagueId),
     ]);
@@ -211,7 +210,7 @@ export function createLeagueHandlers(
     return {
       viewer,
       squadMembership: hasSquadEdge ? toSquadMembershipDto(squadMembership, viewer) : null,
-      squadName: hasSquadEdge ? squad?.name ?? null : null,
+      squadName: hasSquadEdge ? squadMembership.squadName : null,
       activeTeamCount,
     };
   }

@@ -309,12 +309,12 @@ describe('SquadService', () => {
       expect(squadRepo.findById).not.toHaveBeenCalled();
       expect(squadMembershipRepo.findBySquad).not.toHaveBeenCalled();
       expect(userRepo.findByLeague).not.toHaveBeenCalled();
-      expect(result.map((squad) => [squad.id, squad.memberCount, squad.members?.map((member) => member.userId)])).toEqual([
+      expect(result.map((squad) => [squad.id, squad.memberCount, squad.members.map((member) => member.userId)])).toEqual([
         ['squad-1', 1, ['user-1', 'user-2']],
         ['squad-2', 1, ['user-3']],
         ['squad-3', 0, []],
       ]);
-      expect(result[0]?.members?.[0]?.user.lastName).toBe('user-1');
+      expect(result[0]?.members[0]?.user.lastName).toBe('user-1');
     });
 
     it('returns one team with its owners from a single read', async () => {
@@ -328,7 +328,7 @@ describe('SquadService', () => {
       expect(squadRepo.findById).not.toHaveBeenCalled();
       expect(userRepo.findByLeague).not.toHaveBeenCalled();
       expect(result.id).toBe('squad-2');
-      expect(result.members?.map((member) => member.user.id)).toEqual(['user-3']);
+      expect(result.members.map((member) => member.user.id)).toEqual(['user-3']);
     });
 
     it('answers not found for a team that belongs to another league', async () => {

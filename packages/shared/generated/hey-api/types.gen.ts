@@ -1764,7 +1764,7 @@ export type SquadDto = {
      */
     isActive: boolean;
     /**
-     * Number of memberships attached to the squad.
+     * How many of the squad's owners are ACTIVE.
      */
     memberCount: number;
     /**
@@ -1776,9 +1776,9 @@ export type SquadDto = {
      */
     updatedAt: string;
     /**
-     * Optional expanded squad membership list.
+     * Every owner membership of the squad, any status, in join order, each with its user.
      */
-    members?: Array<{
+    members: Array<{
         id: string;
         squadId: string;
         leagueId: string;
@@ -1879,7 +1879,7 @@ export type SquadResponse = {
          */
         isActive: boolean;
         /**
-         * Number of memberships attached to the squad.
+         * How many of the squad's owners are ACTIVE.
          */
         memberCount: number;
         /**
@@ -1891,9 +1891,9 @@ export type SquadResponse = {
          */
         updatedAt: string;
         /**
-         * Optional expanded squad membership list.
+         * Every owner membership of the squad, any status, in join order, each with its user.
          */
-        members?: Array<{
+        members: Array<{
             id: string;
             squadId: string;
             leagueId: string;
@@ -1992,7 +1992,7 @@ export type SquadListResponse = {
          */
         isActive: boolean;
         /**
-         * Number of memberships attached to the squad.
+         * How many of the squad's owners are ACTIVE.
          */
         memberCount: number;
         /**
@@ -2004,9 +2004,9 @@ export type SquadListResponse = {
          */
         updatedAt: string;
         /**
-         * Optional expanded squad membership list.
+         * Every owner membership of the squad, any status, in join order, each with its user.
          */
-        members?: Array<{
+        members: Array<{
             id: string;
             squadId: string;
             leagueId: string;

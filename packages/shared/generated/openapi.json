@@ -3397,7 +3397,7 @@
             "type": "integer",
             "minimum": -9007199254740991,
             "maximum": 9007199254740991,
-            "description": "Number of memberships attached to the squad."
+            "description": "How many of the squad's owners are ACTIVE."
           },
           "createdAt": {
             "type": "string",
@@ -3410,7 +3410,6 @@
             "description": "When the squad was last updated."
           },
           "members": {
-            "description": "Optional expanded squad membership list.",
             "type": "array",
             "items": {
               "type": "object",
@@ -3542,7 +3541,8 @@
               ],
               "additionalProperties": false,
               "description": "Squad membership summary."
-            }
+            },
+            "description": "Every owner membership of the squad, any status, in join order, each with its user."
           }
         },
         "required": [
@@ -3554,7 +3554,8 @@
           "isActive",
           "memberCount",
           "createdAt",
-          "updatedAt"
+          "updatedAt",
+          "members"
         ],
         "additionalProperties": false,
         "description": "A squad within a league. Returned wherever a squad is read."
@@ -3695,7 +3696,7 @@
                 "type": "integer",
                 "minimum": -9007199254740991,
                 "maximum": 9007199254740991,
-                "description": "Number of memberships attached to the squad."
+                "description": "How many of the squad's owners are ACTIVE."
               },
               "createdAt": {
                 "type": "string",
@@ -3708,7 +3709,6 @@
                 "description": "When the squad was last updated."
               },
               "members": {
-                "description": "Optional expanded squad membership list.",
                 "type": "array",
                 "items": {
                   "type": "object",
@@ -3840,7 +3840,8 @@
                   ],
                   "additionalProperties": false,
                   "description": "Squad membership summary."
-                }
+                },
+                "description": "Every owner membership of the squad, any status, in join order, each with its user."
               }
             },
             "required": [
@@ -3852,7 +3853,8 @@
               "isActive",
               "memberCount",
               "createdAt",
-              "updatedAt"
+              "updatedAt",
+              "members"
             ],
             "additionalProperties": false,
             "description": "A squad within a league. Returned wherever a squad is read."
@@ -4002,7 +4004,7 @@
                   "type": "integer",
                   "minimum": -9007199254740991,
                   "maximum": 9007199254740991,
-                  "description": "Number of memberships attached to the squad."
+                  "description": "How many of the squad's owners are ACTIVE."
                 },
                 "createdAt": {
                   "type": "string",
@@ -4015,7 +4017,6 @@
                   "description": "When the squad was last updated."
                 },
                 "members": {
-                  "description": "Optional expanded squad membership list.",
                   "type": "array",
                   "items": {
                     "type": "object",
@@ -4147,7 +4148,8 @@
                     ],
                     "additionalProperties": false,
                     "description": "Squad membership summary."
-                  }
+                  },
+                  "description": "Every owner membership of the squad, any status, in join order, each with its user."
                 }
               },
               "required": [
@@ -4159,7 +4161,8 @@
                 "isActive",
                 "memberCount",
                 "createdAt",
-                "updatedAt"
+                "updatedAt",
+                "members"
               ],
               "additionalProperties": false,
               "description": "A squad within a league. Returned wherever a squad is read."

@@ -301,15 +301,18 @@ describe('PrismaSquadRepository squad details', () => {
     expect(await repo.findDetailsById(randomUUID())).toBeNull();
   });
 
-  it('finds the team a user owns in a league, and null for a league member who owns none', async () => {
+  it('reads a user\'s squad membership in a league with its squad\'s name, and null for a member who owns none', async () => {
     const { league, commissioner } = await createLeague('Mine');
     const noTeam = await createTestUser();
     const squad = await createSquad(league.id, 'Commissioner Team', commissioner.id);
     await addOwner(squad.id, league.id, commissioner.id, new Date('2026-04-01T00:00:00Z'));
-    const repo = new PrismaSquadRepository(getPrisma());
+    const repo = new PrismaSquadMembershipRepository(getPrisma());
 
-    expect((await repo.findByLeagueAndMember(league.id, commissioner.id))?.id).toBe(squad.id);
-    expect(await repo.findByLeagueAndMember(league.id, noTeam.user.id)).toBeNull();
+    const edge = await repo.findByLeagueAndUserWithSquadName(league.id, commissioner.id);
+
+    expect(edge?.squadId).toBe(squad.id);
+    expect(edge?.squadName).toBe('Commissioner Team');
+    expect(await repo.findByLeagueAndUserWithSquadName(league.id, noTeam.user.id)).toBeNull();
   });
 
   it('counts only the league\'s active teams', async () => {

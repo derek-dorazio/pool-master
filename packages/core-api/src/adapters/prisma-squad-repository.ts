@@ -51,14 +51,6 @@ export class PrismaSquadRepository implements SquadRepository {
     return rows.map(mapToSquadDetails);
   }
 
-  async findByLeagueAndMember(leagueId: string, userId: string): Promise<Squad | null> {
-    // A user holds at most one squad membership per league (@@unique([leagueId, userId])).
-    const row = await this.prisma.squad.findFirst({
-      where: { leagueId, memberships: { some: { userId } } },
-    });
-    return row ? mapToSquad(row) : null;
-  }
-
   async countActiveByLeague(leagueId: string): Promise<number> {
     return this.prisma.squad.count({ where: { leagueId, isActive: true } });
   }

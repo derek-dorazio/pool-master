@@ -581,11 +581,6 @@ export class InMemoryContestWorld {
       },
       findDetailsByLeague: async (leagueId) =>
         [...this.squads.values()].filter((squad) => squad.leagueId === leagueId).map(details),
-      findByLeagueAndMember: async (leagueId, userId) => {
-        const membership = [...this.squadMemberships.values()].find((row) =>
-          row.leagueId === leagueId && row.userId === userId);
-        return membership ? this.squads.get(membership.squadId) ?? null : null;
-      },
       countActiveByLeague: async (leagueId) =>
         [...this.squads.values()].filter((squad) => squad.leagueId === leagueId && squad.isActive).length,
       findByLeagueAndName: async (leagueId, name) =>
@@ -620,6 +615,13 @@ export class InMemoryContestWorld {
         const rows = [...this.squadMemberships.values()].filter((row) =>
           row.leagueId === leagueId && row.userId === userId);
         return rows.find((row) => row.status === SquadMembershipStatus.ACTIVE) ?? rows.at(0) ?? null;
+      },
+      findByLeagueAndUserWithSquadName: async (leagueId, userId) => {
+        const rows = [...this.squadMemberships.values()].filter((row) =>
+          row.leagueId === leagueId && row.userId === userId);
+        const membership = rows.find((row) => row.status === SquadMembershipStatus.ACTIVE) ?? rows.at(0);
+        const squad = membership ? this.squads.get(membership.squadId) : undefined;
+        return membership && squad ? { ...membership, squadName: squad.name } : null;
       },
       create: async (input) => this.addSquadMember(input.squadId, input.userId, input),
       update: async (id, updates) => {

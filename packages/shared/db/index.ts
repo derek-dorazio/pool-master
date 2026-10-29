@@ -44,6 +44,7 @@ export type {
   ParticipantSearchFilters,
   SquadDetails,
   SquadMemberDetails,
+  SquadMembershipWithSquadName,
   SquadMembershipRepository,
   SquadOwnerInvitationRepository,
   SquadRepository,
