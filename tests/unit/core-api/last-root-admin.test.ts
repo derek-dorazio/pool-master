@@ -76,6 +76,8 @@ function createUserWorld(seed: User[]) {
     },
     passwordResetToken: { deleteMany: async () => ({ count: 0 }) },
     leagueInvitation: { deleteMany: async () => ({ count: 0 }) },
+    /** The member's row lock a delete takes first; its ordering is proven against Postgres. */
+    $queryRaw: async () => [],
   };
   const prisma = {
     leagueMembership: { count: async () => 0 },
