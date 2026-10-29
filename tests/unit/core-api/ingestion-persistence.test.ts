@@ -381,7 +381,7 @@ describe('IngestionPersistence', () => {
 
     it('clears the public event pages at the CDN once sync writes a field, since a loaded field can open an offer (#1181)', async () => {
       const cdn = new RecordingCdnInvalidator();
-      const prisma = syncedEvent(jest.fn().mockResolvedValue({ id: 'sport-event-participant-1' }));
+      const prisma = syncedEvent(jest.fn().mockResolvedValue([{ id: 'sport-event-participant-1', participantId: 'participant-1' }]));
 
       await new IngestionPersistence(asPrismaClient(prisma), fakeLogger(), undefined, cdn).persistEventDetailWithDiagnostics(detail);
 
