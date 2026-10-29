@@ -67,7 +67,8 @@ function fieldSyncPrisma(options: {
   return {
     sportEvent: {
       update: jest.fn().mockResolvedValue({ id: 'sport-event-1' }),
-      findUnique: jest.fn().mockResolvedValueOnce(options.eventRow).mockResolvedValueOnce(options.linkedEvent),
+      findMany: jest.fn().mockResolvedValue([options.eventRow]),
+      findUnique: jest.fn().mockResolvedValue(options.linkedEvent),
     },
     participantProviderMapping: {
       findMany: jest.fn().mockResolvedValue([{
@@ -97,8 +98,7 @@ describe('IngestionPersistence', () => {
     const existingFieldLocksAt = new Date('2026-06-03T16:00:00.000Z');
     const prisma = {
       sportEvent: {
-        findUnique: jest.fn()
-          .mockResolvedValueOnce({
+        findMany: jest.fn().mockResolvedValue([{
             id: 'sport-event-1',
             externalId: 'golf-weekend-1',
             providerId: 'mock-contest-feed',
@@ -120,10 +120,10 @@ describe('IngestionPersistence', () => {
               eventType: 'stroke_play',
             },
             syncScope: 'SCORES_ONLY',
-          })
-          .mockResolvedValueOnce(null),
+          }]),
         update: jest.fn().mockResolvedValueOnce({ id: 'sport-event-1' }),
       },
+      $transaction: jest.fn(async (operations: Array<Promise<unknown>>) => Promise.all(operations)),
     };
     const logger = fakeLogger();
     const persistence = new IngestionPersistence(asPrismaClient(prisma), logger);
@@ -399,14 +399,58 @@ describe('IngestionPersistence', () => {
     });
   });
 
+  it('reads every linked event of a feed in one query and writes only the changed ones in one transaction (#1247)', async () => {
+    const prisma = {
+      sportEvent: {
+        findMany: jest.fn().mockResolvedValue([
+          linkedRow({ syncScope: 'SCORES_ONLY', participantCount: 60 }),
+          { ...linkedRow({ syncScope: 'SCORES_ONLY', participantCount: 80 }), id: 'sport-event-2', externalId: 'golf-unchanged' },
+        ]),
+        findUnique: jest.fn(),
+        update: jest.fn().mockResolvedValue({ id: 'sport-event-1' }),
+      },
+      $transaction: jest.fn(async (operations: Array<Promise<unknown>>) => Promise.all(operations)),
+    };
+    const persistence = new IngestionPersistence(asPrismaClient(prisma), fakeLogger());
+    const changed = { ...buildInProgressEvent(), participantCount: 80 };
+
+    const result = await persistence.persistEventsWithDiagnostics([
+      changed,
+      { ...changed, externalId: 'golf-unchanged' },
+      { ...changed, externalId: 'golf-unlinked' },
+    ]);
+
+    expect(prisma.sportEvent.findMany).toHaveBeenCalledTimes(1);
+    expect(prisma.sportEvent.findMany).toHaveBeenCalledWith({
+      where: { OR: ['provider-event-1', 'golf-unchanged', 'golf-unlinked'].map((externalId) => ({ providerId: changed.providerId, externalId })) },
+    });
+    expect(prisma.sportEvent.findUnique).not.toHaveBeenCalled();
+    expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+    expect(prisma.sportEvent.update).toHaveBeenCalledTimes(1);
+    expect(prisma.sportEvent.update).toHaveBeenCalledWith({ where: { id: 'sport-event-1' }, data: { participantCount: 80 } });
+    expect(result.writeDiagnostics.rows.map((row) => row.disposition)).toEqual(['UPDATED', 'UNCHANGED']);
+  });
+
+  it('reads and writes nothing for an empty feed', async () => {
+    const prisma = { sportEvent: { findMany: jest.fn() }, $transaction: jest.fn() };
+    const persistence = new IngestionPersistence(asPrismaClient(prisma), fakeLogger());
+
+    const result = await persistence.persistEventsWithDiagnostics([]);
+
+    expect(result.count).toBe(0);
+    expect(prisma.sportEvent.findMany).not.toHaveBeenCalled();
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+  });
+
   // #118, #435 — an admin owns the header, rounds and status of every event, linked for
   // scores (SCORES_ONLY) or not (NONE). Sync may refresh the field size, and nothing else.
   it.each(['SCORES_ONLY', 'NONE'])('reports a %s event\'s admin-owned header unchanged and only its participantCount updated', async (syncScope) => {
     const prisma = {
       sportEvent: {
-        findUnique: jest.fn().mockResolvedValue(linkedRow({ syncScope, name: 'Admin Open', rounds: 4, participantCount: 60 })),
+        findMany: jest.fn().mockResolvedValue([linkedRow({ syncScope, name: 'Admin Open', rounds: 4, participantCount: 60 })]),
         update: jest.fn().mockResolvedValue({ id: 'sport-event-1' }),
       },
+      $transaction: jest.fn(async (operations: Array<Promise<unknown>>) => Promise.all(operations)),
     };
     const persistence = new IngestionPersistence(asPrismaClient(prisma), fakeLogger());
 

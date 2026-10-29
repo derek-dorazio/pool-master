@@ -64,16 +64,15 @@ export class IngestionPersistence {
       })),
     }, 'Persisting sport events from ingestion');
 
+    // #1247: every linked event in one read, and the changed ones in one transaction.
+    const linkedEvents = events.length === 0 ? [] : await this.prisma.sportEvent.findMany({
+      where: { OR: events.map((event) => ({ providerId: event.providerId, externalId: event.externalId })) },
+    });
+    const linkedByKey = new Map(linkedEvents.map((row) => [providerKey(row), row]));
+    const updates: Array<{ id: string; participantCount: number | null }> = [];
+
     for (const event of events) {
-      // poolmaster-allow-query-in-loop: #1247
-      const existingEvent = await this.prisma.sportEvent.findUnique({
-        where: {
-          providerId_externalId: {
-            providerId: event.providerId,
-            externalId: event.externalId,
-          },
-        },
-      });
+      const existingEvent = linkedByKey.get(providerKey(event));
       if (!existingEvent) {
         this.logger?.info({
           providerId: event.providerId,
@@ -88,11 +87,7 @@ export class IngestionPersistence {
 
       const disposition = resolveDisposition(before, after);
       if (disposition !== 'UNCHANGED') {
-        // poolmaster-allow-query-in-loop: #1247
-        await forgettingReads(ReadMemoKey.sportEvent, () => this.prisma.sportEvent.update({
-          where: { id: existingEvent.id },
-          data: { participantCount },
-        }));
+        updates.push({ id: existingEvent.id, participantCount });
       }
       detailRows.push({
         id: `sport-event:${event.providerId}:${event.externalId}`,
@@ -113,6 +108,12 @@ export class IngestionPersistence {
         name: event.name,
         participantCount,
       }, 'Persisted sport event from ingestion');
+    }
+
+    if (updates.length > 0) {
+      await forgettingReads(ReadMemoKey.sportEvent, () => this.prisma.$transaction(updates.map((update) =>
+        // poolmaster-allow-query-in-loop: the changed events of one provider feed (per-row values, one transaction)
+        this.prisma.sportEvent.update({ where: { id: update.id }, data: { participantCount: update.participantCount } }))));
     }
 
     this.logger?.info({ count }, 'Persisted sport events from ingestion');
