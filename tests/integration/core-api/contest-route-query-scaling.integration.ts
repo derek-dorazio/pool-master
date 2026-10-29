@@ -152,26 +152,37 @@ async function seedMyEntries({ contests, events }: { contests: number; events: n
 /**
  * A league whose commissioner runs `contests` contests of `status`, each on an event of its own in
  * a sports league of its own, `startsInDays` from now, with one entry from the commissioner's team.
+ * With `secondChanceBrackets`, every other contest is a bracket starting at round 2, whose window
+ * reads its rules and its event's games.
  */
-async function seedContestsInSportLeagues(contests: number, { status, startsInDays }: { status: ContestStatus; startsInDays: number }) {
+async function seedContestsInSportLeagues(
+  contests: number,
+  { status, startsInDays, secondChanceBrackets = false }: { status: ContestStatus; startsInDays: number; secondChanceBrackets?: boolean },
+) {
   const prisma = getPrisma();
   const seeded = await seedMyEntries({ contests: 0, events: 0 });
   const squad = await prisma.squad.findFirstOrThrow({ where: { leagueId: seeded.league.id } });
   const events = [];
   for (let index = 0; index < contests; index += 1) {
     const { event } = await seedEventWithField(2, { startsInDays, ownSportLeague: true });
-    await prisma.contest.create({
+    const bracket = secondChanceBrackets && index % 2 === 1;
+    const contest = await prisma.contest.create({
       data: {
         leagueId: seeded.league.id,
         seasonYear: event.startDate.getUTCFullYear(),
         sportEvents: { create: { sportEventId: event.id, sequence: 1 } },
         name: `Contest ${seeded.suffix} ${index}`,
         status,
-        contestFormat: 'ROSTER',
-        selectionType: SelectionType.TIERED,
+        contestFormat: bracket ? 'PREDICTION' : 'ROSTER',
+        selectionType: bracket ? SelectionType.BRACKET : SelectionType.TIERED,
         entries: { create: { squadId: squad.id, entryNumber: 1, name: squad.name, events: { create: { sportEventId: event.id } } } },
       },
     });
+    if (bracket) {
+      await prisma.contestConfiguration.create({
+        data: { contestId: contest.id, selectionType: SelectionType.BRACKET, configJson: { selectionType: SelectionType.BRACKET, startsAtRound: 2 } },
+      });
+    }
     events.push(event);
   }
   return { ...seeded, seasonYear: expectDefined(events[0]).startDate.getUTCFullYear() };
@@ -510,6 +521,19 @@ describe('contest reads cost the same statements for 2 rows as for 20', () => {
       route: 'GET /api/v1/leagues/{id}/contests/plan-usage',
       // Within the hour, so the events start this year however late in it the test runs.
       seed: (contests) => seedContestsInSportLeagues(contests, { status: ContestStatus.OPEN, startsInDays: 1 / 24 }),
+      call: ({ league, viewer }) => get(`/api/v1/leagues/${league.id}/contests/plan-usage`, viewer),
+      rowsShown: (response) => {
+        const usage = okBody(response, LeaguePlanUsageResponseSchema);
+        return Math.min(usage.openContests.length, usage.sportLeagueIds.length);
+      },
+    });
+  });
+
+  it("GET a league's plan usage: the same statements for 2 open contests in 2 sports leagues as for 20 in 20, half of them second-chance brackets", async () => {
+    await expectConstantQueries({
+      route: 'GET /api/v1/leagues/{id}/contests/plan-usage',
+      // Within the hour, so the events start this year however late in it the test runs.
+      seed: (contests) => seedContestsInSportLeagues(contests, { status: ContestStatus.OPEN, startsInDays: 1 / 24, secondChanceBrackets: true }),
       call: ({ league, viewer }) => get(`/api/v1/leagues/${league.id}/contests/plan-usage`, viewer),
       rowsShown: (response) => {
         const usage = okBody(response, LeaguePlanUsageResponseSchema);

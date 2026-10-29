@@ -1555,15 +1555,13 @@ export class ContestService {
 
   /**
    * The contests whose entries are open now, as `areEntriesOpen` judges each, in the same few
-   * reads however many there are (#1248). Only an OPEN contest's events are read: no other takes
-   * entries.
+   * reads however many there are (#1248). Only an OPEN contest's events and rules are read: no
+   * other takes entries.
    */
   private async filterEntriesOpen(contests: readonly Contest[]): Promise<Contest[]> {
     const open = contests.filter((contest) => contest.status === ContestStatus.OPEN);
     const eventsById = open.length === 0 ? new Map<string, SportEvent>() : await this.findEventsForContests(open);
-    const windows = await this.findWindowsOfContests(contests, (contest) => (contest.status === ContestStatus.OPEN
-      ? contest.sportEventIds.flatMap((sportEventId) => eventsById.get(sportEventId) ?? [])
-      : []));
+    const windows = await this.findWindowsOfContests(open, (contest) => contest.sportEventIds.flatMap((sportEventId) => eventsById.get(sportEventId) ?? []));
     const now = this.now();
     return contests.filter((contest) => areContestEntriesOpen(contest, (windows.get(contest.id) ?? []).map(({ window }) => window), now));
   }
