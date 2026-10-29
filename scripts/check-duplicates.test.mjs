@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { compareWithBaseline, countByPair, pairKey } from './check-duplicates.mjs';
+import { checkCeiling, compareWithBaseline, countByPair, pairKey } from './check-duplicates.mjs';
 
 const leaderboards = { fileA: 'src/pick-em-leaderboard.tsx', fileB: 'src/survivor-leaderboard.tsx' };
 
@@ -37,5 +37,17 @@ describe('check-duplicates (#1287)', () => {
     const { added, removed } = compareWithBaseline([leaderboards], baseline);
     assert.deepEqual(added, []);
     assert.deepEqual(removed, [{ key: pairKey(leaderboards.fileA, leaderboards.fileB), count: 1, allowed: 2, ticket: '#1277' }]);
+  });
+
+  it('passes when the baseline allows exactly the ceiling', () => {
+    assert.equal(checkCeiling([{ files: ['a', 'b'], count: 2 }, { files: ['a', 'c'], count: 1 }], 3), null);
+  });
+
+  it('fails when the baseline allows more copies than the ceiling, so a new entry or a raised count cannot slip in', () => {
+    assert.match(checkCeiling([{ files: ['a', 'b'], count: 4 }], 3), /over a ceiling of 3/);
+  });
+
+  it('asks to lower the ceiling when the baseline holds fewer copies than it', () => {
+    assert.match(checkCeiling([{ files: ['a', 'b'], count: 2 }], 3), /Lower BASELINE_CEILING to 2/);
   });
 });
