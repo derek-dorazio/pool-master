@@ -22,8 +22,6 @@ export const CLUTCH_CARD_SECTIONS = [
   { id: 'questions', label: 'Questions' },
 ] as const;
 
-export type ClutchCardSectionId = (typeof CLUTCH_CARD_SECTIONS)[number]['id'];
-
 export const CLUTCH_CARD_PAGE = {
   hero: {
     badge: 'New',
