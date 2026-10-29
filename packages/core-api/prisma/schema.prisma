@@ -632,6 +632,8 @@ model RefreshToken {
 
   @@index([userId])
   @@index([sessionId])
+  // The nightly cleanup finds the tokens expired for 30 days (#1175).
+  @@index([expiresAt])
   @@map("refresh_tokens")
 }
 

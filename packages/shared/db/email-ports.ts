@@ -88,8 +88,17 @@ export interface EmailMessageRepository {
     providerMessageId: string,
     outcome: { status: DeliveryOutcomeStatus; error?: string },
   ): Promise<EmailMessage | undefined>;
-  /** Clears the subject and bodies of emails created before `cutoff`; returns how many. */
-  clearContentCreatedBefore(cutoff: Date): Promise<number>;
+  /**
+   * Clears the subject and bodies of emails created at or after `from` and before `before`;
+   * returns how many. The window keeps each sweep on the `created_at` index: an open-ended
+   * cutoff re-reads every email cleared before, and the planner scans the whole table for it.
+   */
+  clearContentCreatedBetween(from: Date, before: Date): Promise<number>;
+  /**
+   * Deletes up to `limit` emails created before `cutoff`; returns how many. One batch, so a
+   * caller deleting many rows never holds one long-running delete.
+   */
+  deleteBatchCreatedBefore(cutoff: Date, limit: number): Promise<number>;
   /**
    * Whether an email of `templateKey` about the contest is recorded under an idempotency key
    * starting with `keyPrefix`: for anyone, in any state.

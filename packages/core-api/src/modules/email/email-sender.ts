@@ -24,11 +24,17 @@ const SECOND_MS = 1000;
 /** Subjects and bodies are cleared this long after an email is created; the row stays. */
 const CONTENT_KEPT_MS = 30 * 24 * 60 * 60_000;
 const CONTENT_SWEEP_EVERY_MS = 60 * 60_000;
+/**
+ * Each hourly sweep clears the emails that crossed CONTENT_KEPT_MS in the last week, not every
+ * email ever created before it (#1175): the ones older than the window were cleared by earlier
+ * sweeps, and the window keeps the sweep on the `created_at` index. A week covers any outage.
+ */
+const CONTENT_SWEEP_WINDOW_MS = 7 * 24 * 60 * 60_000;
 
 export interface EmailSenderOptions {
   messages: Pick<
     EmailMessageRepository,
-    'claimDue' | 'markSent' | 'markRetry' | 'markThrottled' | 'markFailed' | 'clearContentCreatedBefore'
+    'claimDue' | 'markSent' | 'markRetry' | 'markThrottled' | 'markFailed' | 'clearContentCreatedBetween'
   >;
   transport: MailDeliveryProvider;
   readConfig: () => EmailConfig;
@@ -240,7 +246,8 @@ export class EmailSender {
     this.lastContentSweepAt = now;
     // A failed sweep is logged and left to the next hour; it never holds up this pass's sends.
     try {
-      const cleared = await this.options.messages.clearContentCreatedBefore(new Date(now - CONTENT_KEPT_MS));
+      const before = now - CONTENT_KEPT_MS;
+      const cleared = await this.options.messages.clearContentCreatedBetween(new Date(before - CONTENT_SWEEP_WINDOW_MS), new Date(before));
       if (cleared > 0) {
         this.options.logger?.info({ action: 'email.sender.contentCleared', data: { cleared } }, 'Cleared the content of old emails');
       }
