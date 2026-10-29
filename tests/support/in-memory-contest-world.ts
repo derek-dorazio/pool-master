@@ -439,8 +439,10 @@ export class InMemoryContestWorld {
                 event.sportEventId === options.submittedFor && event.status === 'SUBMITTED')))
           .sort((left, right) => this.byEntryOrder(left, right))
           .map((entry) => this.withSquad(entry)),
-      findBySquad: async (squadId) =>
-        [...this.entries.values()].filter((entry) => entry.squadId === squadId),
+      findByContestAndSquad: async (contestId, squadId) =>
+        [...this.entries.values()]
+          .filter((entry) => entry.contestId === contestId && entry.squadId === squadId)
+          .sort((left, right) => left.entryNumber - right.entryNumber),
       countByContests: async (contestIds) => new Map(contestIds.map((contestId) =>
         [contestId, [...this.entries.values()].filter((entry) => entry.contestId === contestId).length])),
       create: async (input, limits) => {
@@ -516,7 +518,8 @@ export class InMemoryContestWorld {
     const ordered = () => [...this.picks.values()].sort((left, right) =>
       left.pickedAt.getTime() - right.pickedAt.getTime() || left.id.localeCompare(right.id));
     return {
-      findByEntries: async (entryIds) => ordered().filter((pick) => entryIds.includes(pick.entryId)),
+      findByEntriesAndEvents: async (entryIds, sportEventIds) =>
+        ordered().filter((pick) => entryIds.includes(pick.entryId) && sportEventIds.includes(pick.sportEventId)),
       findByEntriesWithParticipant: async (entryIds) =>
         ordered().filter((pick) => entryIds.includes(pick.entryId)),
       countByEntries: async (entryIds) => {
@@ -648,6 +651,13 @@ export class InMemoryContestWorld {
         .sort((a, b) => a.startDate.getTime() - b.startDate.getTime()),
       countParticipants: async (ids) =>
         new Map(ids.map((id) => [id, this.fieldSizes.get(id) ?? 0])),
+      transitionStatus: async (id, transition) => {
+        const existing = this.sportEvents.get(id);
+        if (!existing || existing.status !== transition.from) return null;
+        const next: SportEvent = { ...existing, status: transition.to, ...(transition.endDate && { endDate: transition.endDate }) };
+        this.sportEvents.set(id, next);
+        return next;
+      },
     });
   }
 

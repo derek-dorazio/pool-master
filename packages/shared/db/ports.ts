@@ -518,7 +518,8 @@ export interface ContestEntryRepository {
    * that event alone (#481, per event since #713).
    */
   findByContestWithSquad(contestId: string, options?: { submittedFor?: string }): Promise<ContestEntryWithSquad[]>;
-  findBySquad(squadId: string): Promise<ContestEntry[]>;
+  /** The squad's entries in one contest, drafts included, in entry-number order (#1167). */
+  findByContestAndSquad(contestId: string, squadId: string): Promise<ContestEntry[]>;
   /** Every entry each contest holds, drafts included, by contest id (#972); 0 for one with none. */
   countByContests(contestIds: readonly string[]): Promise<Map<string, number>>;
   /**

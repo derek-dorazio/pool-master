@@ -14,6 +14,7 @@ import { FASTIFY_SCHEMA_CONTROLLER } from './plugins/serializer-cache';
 import { globalErrorHandler } from './core/error-handler';
 import { createFastifyLoggerOptions } from './core/logger';
 import { readTrustProxy } from './core/config';
+import { PostgresJobLock } from './core/job-lock';
 
 // Domain modules (core-api)
 import { authModule } from './modules/auth/routes';
@@ -130,6 +131,7 @@ export function buildApp() {
   });
   const memberJoined = createMemberJoinedNotices(prisma, { email, readConfig: () => appSettings.get(EMAIL_SETTINGS), appBaseUrl, logger: app.log });
   const ingestionPersistence = new IngestionPersistence(prisma, app.log);
+  const jobLock = new PostgresJobLock(process.env.DATABASE_URL, app.log);
   const eventLifecycleScheduler = new EventLifecycleScheduler({
     sportEvents: new PrismaSportEventRepository(prisma),
     rounds: new PrismaSportEventRoundRepository(prisma),
@@ -142,6 +144,7 @@ export function buildApp() {
       memberJoined,
       createPlanPreviewNotices(prisma, { email, readConfig: () => appSettings.get(EMAIL_SETTINGS), appBaseUrl, logger: app.log, planEntitlements }),
     ],
+    jobLock,
     logger: app.log,
   });
   const ingestionConfigService = new IngestionConfigService(appSettings, app.log);
@@ -204,6 +207,7 @@ export function buildApp() {
     configReader: ingestionConfigService,
     eventReader: createScheduledEventReader({ prisma, registry, logger: app.log }),
     syncRunLedger: providerSyncRunLedger,
+    jobLock,
   });
   const ingestionService = new IngestionService({
     registry,
@@ -306,6 +310,8 @@ export function buildApp() {
     ingestionScheduler.stop();
     eventLifecycleScheduler.stop();
     emailSender.stop();
+    // Closing the lock connection releases this task's job locks for another task to take.
+    await jobLock.close();
     await prisma.$disconnect();
   });
 

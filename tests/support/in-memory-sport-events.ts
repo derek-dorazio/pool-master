@@ -288,6 +288,13 @@ export class InMemorySportEvents {
         }
         return row;
       },
+      transitionStatus: async (id, transition) => {
+        const row = this.events.find((candidate) => candidate.id === id);
+        if (!row || row.status !== transition.from) return null;
+        row.status = transition.to;
+        if (transition.endDate) row.endDate = transition.endDate;
+        return row;
+      },
       delete: async (id) => {
         const entryIds = new Set(this.field.filter((row) => row.sportEventId === id).map((row) => row.id));
         this.field = this.field.filter((row) => row.sportEventId !== id);

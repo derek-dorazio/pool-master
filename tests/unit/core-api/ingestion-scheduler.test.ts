@@ -11,6 +11,7 @@ import { ProviderRegistry } from '../../../packages/core-api/src/modules/ingesti
 import type { EventSyncRequest, IngestionCallbacks } from '../../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';
 import { fakeSportDataProvider } from '../../support/fake-sport-data-provider';
 import { fakeLogger } from '../../support/fake-logger';
+import { heldElsewhere, heldHere } from '../../support/job-locks';
 import { SyncOrchestrator } from '../../../packages/core-api/src/modules/ingestion/core/sync-orchestrator';
 import type { SyncOrchestratorRequest } from '../../../packages/core-api/src/modules/ingestion/core/sync-orchestrator';
 import { AsyncLocalStorage } from 'node:async_hooks';
@@ -1296,5 +1297,54 @@ describe('IngestionScheduler scheduled loops', () => {
 
     expect(beforeTenMinutes).toBe(1);
     expect(provider.getLiveScores).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('IngestionScheduler loops across server tasks (#1159)', () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  function golfLoops(jobLock: ReturnType<typeof heldHere>) {
+    const provider = fakeSportDataProvider();
+    const config = createEnabledScheduleConfig();
+    const configReader = { getConfig: jest.fn().mockResolvedValue(config), getPerSportConfig: jest.fn().mockResolvedValue(config) };
+    const eventReader = { listEventIdsForFeed: jest.fn().mockResolvedValue(['evt-1']) };
+    const scheduler = new IngestionScheduler(createMockRegistry(provider, ['GOLF' as Sport]), createMockCallbacks(), undefined, { configReader, eventReader, jobLock });
+    return { provider, scheduler };
+  }
+
+  it('calls no provider when another server task holds the locks of the health check and the sport loops', async () => {
+    const jobLock = heldElsewhere();
+    const { provider, scheduler } = golfLoops(jobLock);
+
+    scheduler.start();
+    await jest.advanceTimersByTimeAsync(1000);
+    scheduler.stop();
+
+    expect(provider.healthCheck).not.toHaveBeenCalled();
+    expect(provider.getEventDetails).not.toHaveBeenCalled();
+    expect(provider.getLiveScores).not.toHaveBeenCalled();
+    expect(new Set(jobLock.keys)).toEqual(new Set([
+      'ingestion:health-checks',
+      'ingestion:GOLF:participants',
+      'ingestion:GOLF:live-scores',
+    ]));
+  });
+
+  it('runs the health check and the sport loops when this task holds their locks', async () => {
+    const { provider, scheduler } = golfLoops(heldHere());
+
+    scheduler.start();
+    await jest.advanceTimersByTimeAsync(1000);
+    scheduler.stop();
+
+    expect(provider.healthCheck).toHaveBeenCalled();
+    expect(provider.getEventDetails).toHaveBeenCalledWith('evt-1');
+    expect(provider.getLiveScores).toHaveBeenCalledWith('evt-1');
   });
 });

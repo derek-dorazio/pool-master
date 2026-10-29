@@ -10,7 +10,7 @@ import type {
   ContestEntryWithSquad,
   ParticipantContestScoringRuleRepository,
 } from '@poolmaster/shared/db';
-import type { Contest, ContestScoringSettings } from '@poolmaster/shared/domain';
+import { ContestEntryStatus, contestEntryEventStatus, type Contest, type ContestScoringSettings } from '@poolmaster/shared/domain';
 import type {
   SportEventParticipantService,
   SportEventParticipantView,
@@ -120,9 +120,8 @@ export function toLeaderboardEntryInput(
 }
 
 /**
- * The contest's entries that SUBMITTED one event, in entry order, each with its picks in pick
- * order (#713). Picks in the contest's other events come along too; scoring the event's field
- * leaves them unscored and out of its standing.
+ * The contest's entries that SUBMITTED one event, in entry order, each with its picks in that
+ * event, in pick order (#713, #1162).
  */
 export async function loadContestLeaderboardEntries(
   deps: Pick<ContestLeaderboardReadDeps, 'entries' | 'picks'>,
@@ -130,17 +129,46 @@ export async function loadContestLeaderboardEntries(
   sportEventId: string,
 ): Promise<ContestLeaderboardEntryInput[]> {
   const entries = await deps.entries.findByContestWithSquad(contestId, { submittedFor: sportEventId });
-  const picks = await deps.picks.findByEntries(entries.map((entry) => entry.id));
-  const picksByEntry = new Map<string, ContestLeaderboardEntryInput['picks']>();
-  for (const pick of picks) {
-    const list = picksByEntry.get(pick.entryId) ?? [];
+  const picks = await loadEventPicks(deps, entries.map((entry) => entry.id), [sportEventId]);
+  return submittedLeaderboardEntries(entries, sportEventId, picks);
+}
+
+/** Each entry's picks in one event, by entry id, in pick order. */
+export type EntryEventPicks = Map<string, ContestLeaderboardEntryInput['picks']>;
+
+/**
+ * The entries' picks in each of the events asked for, by event, in one read however many events
+ * (#1162): an event not asked for loads none.
+ */
+export async function loadEventPicks(
+  deps: Pick<ContestLeaderboardReadDeps, 'picks'>,
+  entryIds: readonly string[],
+  sportEventIds: readonly string[],
+): Promise<Map<string, EntryEventPicks>> {
+  const byEvent = new Map<string, EntryEventPicks>(sportEventIds.map((sportEventId) => [sportEventId, new Map()]));
+  for (const pick of await deps.picks.findByEntriesAndEvents(entryIds, sportEventIds)) {
+    const byEntry = byEvent.get(pick.sportEventId);
+    if (!byEntry) continue;
+    const list = byEntry.get(pick.entryId) ?? [];
     list.push({
       id: pick.id,
       sportEventParticipantId: pick.sportEventParticipantId,
       pickedAt: pick.pickedAt,
       slot: pick.slot ?? null,
     });
-    picksByEntry.set(pick.entryId, list);
+    byEntry.set(pick.entryId, list);
   }
-  return entries.map((entry) => toLeaderboardEntryInput(entry, picksByEntry.get(entry.id) ?? []));
+  return byEvent;
+}
+
+/** Of the contest's entries, those that SUBMITTED the event, in the order given, each with its picks there. */
+export function submittedLeaderboardEntries(
+  entries: readonly ContestEntryWithSquad[],
+  sportEventId: string,
+  picks: ReadonlyMap<string, EntryEventPicks>,
+): ContestLeaderboardEntryInput[] {
+  const eventPicks = picks.get(sportEventId);
+  return entries
+    .filter((entry) => contestEntryEventStatus(entry, sportEventId) === ContestEntryStatus.SUBMITTED)
+    .map((entry) => toLeaderboardEntryInput(entry, eventPicks?.get(entry.id) ?? []));
 }
