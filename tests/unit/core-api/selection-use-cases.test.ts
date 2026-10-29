@@ -1,4 +1,4 @@
-import { ContestStatus, SelectionType } from '@poolmaster/shared/domain';
+import { ContestEntryStatus, ContestStatus, SelectionType } from '@poolmaster/shared/domain';
 import type {
   Contest,
   ContestConfiguration,
@@ -12,7 +12,7 @@ import type {
 import type { ContestEntryPickWithParticipant } from '@poolmaster/shared/db';
 import { SelectionService } from '../../../packages/core-api/src/modules/selections/service';
 import type { SportEventTierService } from '../../../packages/core-api/src/modules/events/sport-event-tier-service';
-import type { ContestEntryPickService, EntryPickChangeInput } from '../../../packages/core-api/src/modules/contest-entry-picks';
+import type { ContestEntryPickService, EntryEventSettleInput, EntryPickChangeInput } from '../../../packages/core-api/src/modules/contest-entry-picks';
 import { toSelectionPickResponse, toSelectionStateResponse } from '../../../packages/core-api/src/mappers/selections.mapper';
 import {
   fakeContestConfigurationRepo,
@@ -197,6 +197,32 @@ function buildWorld(options: WorldOptions = {}) {
     status: 'SCHEDULED',
     startDate: options.eventStartDate ?? new Date(NOW.getTime() + 24 * 60 * 60 * 1000),
   } as unknown as SportEvent;
+  // Each entry's status per event, as the locked writes leave it.
+  const statuses = new Map<string, ContestEntryStatus>();
+  const lockedPicks = (entryId: string, sportEventId: string) => picks
+    .filter((pick) => pick.entryId === entryId && pick.sportEventId === sportEventId)
+    .map((pick) => ({
+      id: pick.id,
+      sportEventParticipantId: pick.sportEventParticipantId,
+      participantId: pick.participant.participantId,
+      lineupSlot: pick.lineupSlot ?? null,
+    }));
+  const settleStatus = (
+    entryId: string,
+    sportEventId: string,
+    at: Date,
+    picksChanged: boolean,
+    settle: (status: ContestEntryStatus) => ContestEntryStatus | null,
+  ) => {
+    const key = `${entryId}:${sportEventId}`;
+    const status = statuses.get(key)
+      ?? entries.find((row) => row.id === entryId)?.events.find((event) => event.sportEventId === sportEventId)?.status
+      ?? ContestEntryStatus.DRAFT;
+    const next = settle(status);
+    if (next === null || next === status) return { picksChanged, status, submittedAt: null, statusChanged: false };
+    statuses.set(key, next);
+    return { picksChanged, status: next, submittedAt: next === ContestEntryStatus.SUBMITTED ? at : null, statusChanged: true };
+  };
   const deps = {
     sportEvents: { findByIds: async (ids: readonly string[]) => (ids.includes(EVENT_ID) ? [sportEvent] : []) },
     now: () => NOW,
@@ -223,21 +249,13 @@ function buildWorld(options: WorldOptions = {}) {
     }),
     pickWrites: {
       // Decides on the entry's picks in the event, then applies the write, as the lock-holding service does.
-      changeEntryPick: async ({ entryId, sportEventId, decide }: EntryPickChangeInput) => {
-        const write = decide(picks
-          .filter((pick) => pick.entryId === entryId && pick.sportEventId === sportEventId)
-          .map((pick) => ({
-            id: pick.id,
-            sportEventParticipantId: pick.sportEventParticipantId,
-            participantId: pick.participant.participantId,
-            lineupSlot: pick.lineupSlot ?? null,
-          })));
-        if (!write) return { changed: false };
-        if (write.removePickId) {
+      changeEntryPick: async ({ entryId, sportEventId, at, decide, settle }: EntryPickChangeInput) => {
+        const write = decide(lockedPicks(entryId, sportEventId));
+        if (write?.removePickId) {
           const index = picks.findIndex((pick) => pick.id === write.removePickId);
           if (index >= 0) picks.splice(index, 1);
         }
-        if (write.add) {
+        if (write?.add) {
           const row = fieldRowById.get(write.add.sportEventParticipantId) as SportEventParticipant;
           const participant = participantById.get(row.participantId) as Participant;
           clock += 1000;
@@ -262,8 +280,11 @@ function buildWorld(options: WorldOptions = {}) {
             },
           } as unknown as ContestEntryPickWithParticipant);
         }
-        return { changed: true };
+        return settleStatus(entryId, sportEventId, at, write !== null, (status) =>
+          settle({ picks: lockedPicks(entryId, sportEventId), status, picksChanged: write !== null }));
       },
+      settleEntryEvent: async ({ entryId, sportEventId, at, settle }: EntryEventSettleInput) =>
+        settleStatus(entryId, sportEventId, at, false, (status) => settle({ picks: lockedPicks(entryId, sportEventId), status })),
     } as unknown as ContestEntryPickService,
     tiers: {
       getEffectiveTiersAndValuations: async () => ({ tiers: tierGroups, valuations }),

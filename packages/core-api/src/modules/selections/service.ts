@@ -54,6 +54,8 @@ import {
   ContestDrawAlreadyRunError,
   ContestDrawEntriesChangedError,
   type ContestEntryPickService,
+  type EntryChangeResult,
+  type LockedEntryEvent,
   type LockedEntryPick,
 } from '../contest-entry-picks';
 import type { ContestService, EntrySubmittedReceiptInput } from '../contests/service';
@@ -212,9 +214,11 @@ export class SelectionService {
     const { contestId, entryId, sportEventParticipantId } = input;
     // What `decide` placed, read after the write; a field, so the closure's assignment is seen.
     const placed: { lineupSlot: number | null; replacedPickId: string | null } = { lineupSlot: null, replacedPickId: null };
-    const { changed } = await this.deps.pickWrites.changeEntryPick({
+    const result = await this.deps.pickWrites.changeEntryPick({
       entryId,
       sportEventId: context.sportEvent.id,
+      at: this.now(),
+      settle: (state) => this.statusAfterPickChange(change, state),
       decide: (picks) => {
         if (picks.some((pick) => pick.sportEventParticipantId === sportEventParticipantId)) return null;
         if (!selectionParticipant.isAvailable) {
@@ -236,7 +240,7 @@ export class SelectionService {
       },
     });
 
-    if (changed) {
+    if (result.picksChanged) {
       this.deps.logger?.info(
         {
           action: 'selection.selectPick.placed',
@@ -245,7 +249,7 @@ export class SelectionService {
         placed.replacedPickId ? 'Replaced a pick in a full tier' : 'Placed a selection',
       );
     }
-    return this.afterPickChange(change, changed);
+    return this.afterPickChange(change, result);
   }
 
   /**
@@ -261,22 +265,24 @@ export class SelectionService {
     if (refusal) throw rejectionError(refusal, { contestId, entryId, participantId: sportEventParticipantId, rosterSize });
 
     let removedPickId: string | null = null;
-    const { changed } = await this.deps.pickWrites.changeEntryPick({
+    const result = await this.deps.pickWrites.changeEntryPick({
       entryId,
       sportEventId: context.sportEvent.id,
+      at: this.now(),
+      settle: (state) => this.statusAfterPickChange(change, state),
       decide: (picks) => {
         removedPickId = picks.find((pick) => pick.sportEventParticipantId === sportEventParticipantId)?.id ?? null;
         return removedPickId ? { removePickId: removedPickId, add: null } : null;
       },
     });
 
-    if (changed) {
+    if (result.picksChanged) {
       this.deps.logger?.info(
         { action: 'selection.unselectPick.removed', data: { contestId, entryId, sportEventParticipantId, pickId: removedPickId } },
         'Unselected a participant on the entry',
       );
     }
-    return this.afterPickChange(change, changed);
+    return this.afterPickChange(change, result);
   }
 
   /**
@@ -332,15 +338,45 @@ export class SelectionService {
   }
 
   /**
-   * After a pick change: the entry's picks read once, a lineup a write left unsubmittable sent
-   * back to draft, and the result.
+   * After a pick change: the entry's status as the locked change left it, and its picks read
+   * once for the answer.
    */
-  private async afterPickChange(change: PickChange, changed: boolean): Promise<SelectionPickResult> {
+  private async afterPickChange(change: PickChange, result: EntryChangeResult): Promise<SelectionPickResult> {
     const picks = await this.findEventPicks(change.context, [change.entry.id]);
-    const context = changed
-      ? await this.returnToDraftIfShort(change.context, change.engine, change.entry, change.rosterSize, picks)
+    const context = result.statusChanged
+      ? withEntry(change.context, withEventStatus(change.entry, change.context.sportEvent.id, result))
       : change.context;
     return this.pickResult({ ...change, context }, picks);
+  }
+
+  /**
+   * Under the entry's lock, after a pick change on a submitted event: a lineup it could no longer
+   * be submitted with goes back to DRAFT (#481), so it stops counting until its owner fixes it
+   * and submits again. That is a lineup left short, or a budget lineup a swap took over the cap
+   * (#93). A swap within a full tier, or one that stays under the cap, keeps the event
+   * submitted. Only the changed event moves (#713). The status is the one read under the lock,
+   * so a submit that committed while the change waited is judged too (#1300).
+   */
+  private statusAfterPickChange(
+    change: PickChange,
+    state: LockedEntryEvent & { picksChanged: boolean },
+  ): ContestEntryStatus | null {
+    if (!state.picksChanged || state.status !== ContestEntryStatus.SUBMITTED) return null;
+    const { issues } = lineupIssues(change.context, change.engine, state.picks, change.rosterSize);
+    if (issues.length === 0) return null;
+    this.deps.logger?.info(
+      {
+        action: 'selection.pickChange.returnedToDraft',
+        data: {
+          contestId: change.context.contest.id,
+          entryId: change.entry.id,
+          sportEventId: change.context.sportEvent.id,
+          issues: issues.map((issue) => issue.kind),
+        },
+      },
+      'A pick change left a submitted lineup unsubmittable; the entry is a draft again',
+    );
+    return ContestEntryStatus.DRAFT;
   }
 
   /** The entry's picks, its status in the event and its lineup summary: what the room merges in. */
@@ -417,32 +453,41 @@ export class SelectionService {
     const rosterSize = engine.rosterSize({ configuration: context.configuration, tiers: context.tiers });
     if (rosterSize <= 0) throw selectionErrors.selectionConfigInvalid(contestId);
 
-    // The event's picks are read once: the lineup check, the receipt and the room all use them (#1254).
-    const picks = await this.findEventPicks(context, context.entries.map((candidate) => candidate.id));
-    const { issues, pickCount } = lineupIssues(context, engine, picks.filter((pick) => pick.entryId === entryId), rosterSize);
-    // An incomplete lineup is the first thing to fix, so it is reported ahead of the budget.
-    const tierShort = issues.find((issue) => issue.kind === LineupIssueKind.TIER_SHORT);
-    if (tierShort || issues.some((issue) => issue.kind === LineupIssueKind.ROSTER_SHORT)) {
-      const shortfall = { pickCount, rosterSize, shortTierNames: tierShort?.tierNames ?? [] };
-      this.deps.logger?.warn(
-        { action: 'selection.submitEntry.incomplete', data: { contestId, entryId, ...shortfall } },
-        'Refused to submit an entry with an incomplete lineup',
-      );
-      throw selectionErrors.lineupIncomplete(entryId, shortfall);
-    }
-    const overBudget = issues.find((issue) => issue.kind === LineupIssueKind.OVER_BUDGET);
-    if (overBudget) {
-      this.deps.logger?.warn(
-        { action: 'selection.submitEntry.overBudget', data: { contestId, entryId, spent: overBudget.spent, salaryCap: overBudget.salaryCap } },
-        'Refused to submit an entry whose picks cost more than the salary cap',
-      );
-      throw selectionErrors.overBudget(entryId, overBudget.spent, overBudget.salaryCap);
-    }
+    // The lineup is judged under the entry's lock, so a pick change in flight finishes first and
+    // the lineup it leaves is the one judged (#1300).
+    const result = await this.deps.pickWrites.settleEntryEvent({
+      entryId,
+      sportEventId: context.sportEvent.id,
+      at: this.now(),
+      settle: ({ picks: lineup, status }) => {
+        const { issues, pickCount } = lineupIssues(context, engine, lineup, rosterSize);
+        // An incomplete lineup is the first thing to fix, so it is reported ahead of the budget.
+        const tierShort = issues.find((issue) => issue.kind === LineupIssueKind.TIER_SHORT);
+        if (tierShort || issues.some((issue) => issue.kind === LineupIssueKind.ROSTER_SHORT)) {
+          const shortfall = { pickCount, rosterSize, shortTierNames: tierShort?.tierNames ?? [] };
+          this.deps.logger?.warn(
+            { action: 'selection.submitEntry.incomplete', data: { contestId, entryId, ...shortfall } },
+            'Refused to submit an entry with an incomplete lineup',
+          );
+          throw selectionErrors.lineupIncomplete(entryId, shortfall);
+        }
+        const overBudget = issues.find((issue) => issue.kind === LineupIssueKind.OVER_BUDGET);
+        if (overBudget) {
+          this.deps.logger?.warn(
+            { action: 'selection.submitEntry.overBudget', data: { contestId, entryId, spent: overBudget.spent, salaryCap: overBudget.salaryCap } },
+            'Refused to submit an entry whose picks cost more than the salary cap',
+          );
+          throw selectionErrors.overBudget(entryId, overBudget.spent, overBudget.salaryCap);
+        }
+        return status === ContestEntryStatus.SUBMITTED ? null : ContestEntryStatus.SUBMITTED;
+      },
+    });
 
+    // The event's picks are read once more, for every entry: the receipt and the room use them (#1254).
+    const picks = await this.findEventPicks(context, context.entries.map((candidate) => candidate.id));
     let submittedContext = context;
-    if (contestEntryEventStatus(entry, context.sportEvent.id) !== ContestEntryStatus.SUBMITTED) {
-      const submitted = await this.deps.entries.setEventStatus(entryId, context.sportEvent.id, ContestEntryStatus.SUBMITTED, this.now());
-      submittedContext = withEntry(context, submitted);
+    if (result.statusChanged) {
+      submittedContext = withEntry(context, withEventStatus(entry, context.sportEvent.id, result));
       this.deps.logger?.info(
         { action: 'selection.submitEntry.submitted', data: { contestId, entryId, sportEventId: context.sportEvent.id } },
         'Submitted a contest entry\'s picks for one event',
@@ -549,35 +594,6 @@ export class SelectionService {
     entryIds: readonly string[],
   ): Promise<ContestEntryPickWithParticipant[]> {
     return this.deps.picks.findByEntriesWithParticipant(entryIds, { sportEventId: context.sportEvent.id });
-  }
-
-  /**
-   * After a pick change on a submitted event: a lineup it could no longer be submitted with goes
-   * back to DRAFT (#481), so it stops counting until its owner fixes it and submits again. That
-   * is a lineup left short, or a budget lineup a swap took over the cap (#93). A swap within a
-   * full tier, or one that stays under the cap, keeps the event submitted. Only the changed
-   * event moves (#713). `picks` are the entry's picks as the change left them.
-   */
-  private async returnToDraftIfShort(
-    context: SelectionContext,
-    engine: SelectionEngine,
-    entry: ContestEntry,
-    rosterSize: number,
-    picks: readonly ContestEntryPickWithParticipant[],
-  ): Promise<SelectionContext> {
-    if (contestEntryEventStatus(entry, context.sportEvent.id) !== ContestEntryStatus.SUBMITTED) return context;
-    const { issues } = lineupIssues(context, engine, picks, rosterSize);
-    if (issues.length === 0) return context;
-
-    const reverted = await this.deps.entries.setEventStatus(entry.id, context.sportEvent.id, ContestEntryStatus.DRAFT, this.now());
-    this.deps.logger?.info(
-      {
-        action: 'selection.pickChange.returnedToDraft',
-        data: { contestId: context.contest.id, entryId: entry.id, sportEventId: context.sportEvent.id, issues: issues.map((issue) => issue.kind) },
-      },
-      'A pick change left a submitted lineup unsubmittable; the entry is a draft again',
-    );
-    return withEntry(context, reverted);
   }
 
   /** A DRAFT contest is its league's active commissioners' alone, and root admins' (#117). */
@@ -925,7 +941,7 @@ function takesPicks(status: ContestStatus): boolean {
 function lineupIssues(
   context: SelectionContext,
   engine: SelectionEngine,
-  picks: readonly ContestEntryPickWithParticipant[],
+  picks: readonly Pick<LockedEntryPick, 'participantId' | 'sportEventParticipantId'>[],
   rosterSize: number,
 ): { issues: LineupIssue[]; pickCount: number } {
   const priceBySportEventParticipantId = buildPriceLookup(context);
@@ -936,7 +952,7 @@ function lineupIssues(
       rosterSize,
       tiers: context.tiers,
       picks: picks.map((pick) => ({
-        participantId: pick.participant.participantId,
+        participantId: pick.participantId,
         price: priceBySportEventParticipantId.get(pick.sportEventParticipantId),
       })),
     }),
@@ -980,6 +996,18 @@ function withDraw(context: SelectionContext, drawnAt: Date, now: Date): Selectio
 }
 
 /** The context with one entry replaced by its freshly written row. */
+/** The entry with its status in one event as a locked change left it. */
+function withEventStatus(entry: ContestEntry, sportEventId: string, result: EntryChangeResult): ContestEntry {
+  const current = entry.events.find((event) => event.sportEventId === sportEventId);
+  const changed = { ...current, sportEventId, status: result.status, submittedAt: result.submittedAt ?? undefined };
+  return {
+    ...entry,
+    events: current
+      ? entry.events.map((event) => (event.sportEventId === sportEventId ? changed : event))
+      : [...entry.events, changed],
+  };
+}
+
 function withEntry(context: SelectionContext, updated: ContestEntry): SelectionContext {
   return {
     ...context,
