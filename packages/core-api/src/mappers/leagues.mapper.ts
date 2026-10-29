@@ -11,16 +11,15 @@
 import type { LeagueDto } from '@poolmaster/shared/dto';
 import type { League } from '@poolmaster/shared/domain';
 import type { PlanEntitlements } from '../modules/plans/plan-entitlements-service';
+import type { LeagueActivityCounts } from '../modules/leagues/service';
 import { toPlanEntitlementsDto } from './plans.mapper';
 
 /** `entitlements` is what the league's plan allows now, from the plan entitlements service (#945). */
 export function toLeagueDto(
   league: League,
   entitlements: PlanEntitlements,
-  counts?: {
-    memberCount?: number;
-    activeContestCount?: number;
-  },
+  /** Required: a response that left them out used to send zeros the client then cached (#1208). */
+  counts: LeagueActivityCounts,
 ): LeagueDto {
   return {
     id: league.id,
@@ -29,8 +28,8 @@ export function toLeagueDto(
     description: league.description ?? null,
     isActive: league.isActive,
     iconKey: league.iconKey,
-    memberCount: counts?.memberCount ?? 0,
-    activeContestCount: counts?.activeContestCount ?? 0,
+    memberCount: counts.memberCount,
+    activeContestCount: counts.activeContestCount,
     createdAt: league.createdAt.toISOString(),
     cupName: league.cupName,
     cupPointsScale: league.cupPointsScale,
