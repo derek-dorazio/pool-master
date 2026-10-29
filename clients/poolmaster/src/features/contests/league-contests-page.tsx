@@ -11,7 +11,11 @@ import {
   PageHeader,
   Tile,
 } from "@/features/shared/ui";
-import { ContestListCard } from "./contest-list-card";
+import { formatSelectionTypeName, pluralize } from '@poolmaster/shared/domain';
+import { buildLeagueContestPath } from '@/features/leagues/league-routing';
+import { ContestRow } from './contest-row';
+import { ContestStatusBadge } from './contest-status-badge';
+import { listedContestStartsAt } from './use-contest-schedule';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
 import { ContestsViewSwitch } from './contests-view-switch';
 import { useMyContestEntries } from './use-contest-entries';
@@ -134,11 +138,16 @@ export function LeagueContestsPage() {
               <ErrorState body="We couldn't load your contests." />
             ) : visibleActiveContests.length ? (
               visibleActiveContests.map((contest) => (
-                <ContestListCard
-                  contest={contest}
+                <ContestRow
+                  details={formatSelectionTypeName(contest.selectionType)}
                   key={contest.id}
-                  leagueCode={league.leagueCode}
+                  name={contest.name}
+                  startsAt={listedContestStartsAt(contest)}
+                  state={{ leagueCode: league.leagueCode }}
+                  status={<ContestStatusBadge status={contest.status} />}
                   testId={`league-contest-${contest.id}`}
+                  to={buildLeagueContestPath(league.leagueCode, contest.id)}
+                  trailing={pluralize(contest.entryCount ?? 0, 'entry', 'entries')}
                 />
               ))
             ) : (

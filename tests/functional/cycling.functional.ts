@@ -19,7 +19,7 @@ import {
   openContest,
   releaseEvent,
   submitContestEntry,
-  submitContestSelection,
+  selectContestPick,
   transitionEvent,
 } from '@poolmaster/shared/generated/hey-api';
 import { ContestFormat, ContestStatus, SelectionType, Sport, findSportRow } from '@poolmaster/shared/domain';
@@ -172,7 +172,7 @@ describe('SDK Functional: Cycling UCI WorldTour Top 10 points', () => {
     const enterWith = async (client: typeof a, lineup: string[]) => {
       const entryId = expectDefined((await enterContest({ client, path: { contestId } })).data).entry.id;
       for (const rider of lineup) {
-        const pick = await submitContestSelection({ client, path: { contestId }, body: { entryId, participantId: fieldRowOf(rider) } });
+        const pick = await selectContestPick({ client, path: { contestId, entryId, sportEventParticipantId: fieldRowOf(rider) } });
         expect(pick.response?.status).toBe(200);
       }
       expect((await submitContestEntry({ client, path: { contestId, entryId, sportEventId: eventId } })).response?.status).toBe(200);

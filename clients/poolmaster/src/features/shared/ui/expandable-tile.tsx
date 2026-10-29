@@ -31,8 +31,9 @@ export function ExpandableTile({
     >
       <Button
         aria-expanded={isOpen}
-        className="normal-case tracking-normal h-auto flex-col items-stretch gap-2 rounded-2xl p-2 text-left font-normal"
+        className="flex-col items-stretch gap-2 rounded-2xl p-2 font-normal"
         data-testid={`${testId}-toggle`}
+        layout="row"
         onClick={onToggle}
         size="auto"
         variant="ghost"

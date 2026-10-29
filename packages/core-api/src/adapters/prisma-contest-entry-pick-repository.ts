@@ -1,6 +1,6 @@
 /**
  * Prisma adapter for the read-only ContestEntryPickRepository port. There is no insert here on
- * purpose: `ContestEntryPickService.createPick` is the single insert path (plans/117 §7.1).
+ * purpose: `ContestEntryPickService` is the single insert path (plans/117 §7.1).
  */
 
 import type { PrismaClient } from '@prisma/client';
@@ -62,10 +62,6 @@ export class PrismaContestEntryPickRepository implements ContestEntryPickReposit
         teamAffiliation: row.sportEventParticipant.participant.teamAffiliation ?? null,
       },
     }));
-  }
-
-  async countByContest(contestId: string): Promise<number> {
-    return this.prisma.contestEntryPick.count({ where: { entry: { contestId } } });
   }
 
   async countByEntries(entryIds: readonly string[]): Promise<Map<string, number>> {

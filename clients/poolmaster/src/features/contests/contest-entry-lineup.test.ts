@@ -1,7 +1,9 @@
 import { SelectionType } from '@poolmaster/shared/domain';
 import { describe, expect, it } from 'vitest';
-import type { SelectionStateResponse } from '@/lib/api';
-import { LINEUP_RULES, lineupRulesFor } from './contest-entry-lineup';
+import type { SelectionPickResponse, SelectionStateResponse } from '@/lib/api';
+
+type PickHistoryDto = SelectionPickResponse['picks'][number];
+import { LINEUP_RULES, lineupRulesFor, mergePickChange } from './contest-entry-lineup';
 
 function golfer(id: string, price: number, isSelected: boolean) {
   return {
@@ -100,5 +102,85 @@ describe('lineup rules by selection type', () => {
     expect(lineupRulesFor(SelectionType.BUDGET_PICK)).toBe(LINEUP_RULES[SelectionType.BUDGET_PICK]);
     expect(lineupRulesFor(SelectionType.RANDOM_DRAW)).toBe(LINEUP_RULES[SelectionType.RANDOM_DRAW]);
     expect(lineupRulesFor(SelectionType.PICK_EM)).toBeNull();
+  });
+});
+
+describe('merging one pick change\'s answer into the room', () => {
+  function pick(entryId: string, participantId: string, pickedAt: string): PickHistoryDto {
+    return {
+      pickNumber: 1,
+      round: 1,
+      pickInRound: 1,
+      entryId,
+      entryName: entryId,
+      participantId,
+      participantName: participantId,
+      autoPicked: false,
+      pickedAt,
+    };
+  }
+
+  /** The budget room above, viewed for entry-1 in event-1, beside another entry with a pick of its own. */
+  function viewedRoom(selected: string[]): SelectionStateResponse {
+    return {
+      ...budgetRoom(selected),
+      sportEventId: 'event-1',
+      selectedEntryId: 'entry-1',
+      entries: [
+        { id: 'entry-1', userId: 'user-1', name: 'Mine', status: 'SUBMITTED' },
+        { id: 'entry-2', userId: 'user-2', name: 'Theirs', status: 'SUBMITTED' },
+      ],
+      pickHistories: [
+        ...selected.map((id) => pick('entry-1', id, '2026-04-15T10:00:00.000Z')),
+        pick('entry-2', 'c', '2026-04-15T09:00:00.000Z'),
+      ],
+    };
+  }
+
+  function answer(picked: string[], overrides: Partial<SelectionPickResponse> = {}): SelectionPickResponse {
+    const summary = budgetRoom(picked).lineupSummary;
+    return {
+      contestId: 'contest-1',
+      entryId: 'entry-1',
+      sportEventId: 'event-1',
+      entryStatus: 'DRAFT',
+      picks: picked.map((id) => pick('entry-1', id, '2026-04-15T11:00:00.000Z')),
+      lineupSummary: summary ? { ...summary, cheapestFill: 40.01 } : null,
+      ...overrides,
+    };
+  }
+
+  it('marks the entry\'s picks as the server kept them, with its status, its summary and a recount of completeness', () => {
+    const merged = mergePickChange(viewedRoom(['a', 'b']), answer(['b']));
+
+    const field = merged.selectionGroups?.[0];
+    expect(field?.selectedParticipantIds).toEqual(['b']);
+    expect(field?.participants.filter((participant) => participant.isSelected).map((participant) => participant.sportEventParticipantId))
+      .toEqual(['b']);
+    expect(merged.isComplete).toBe(false);
+    expect(merged.entries.find((entry) => entry.id === 'entry-1')?.status).toBe('DRAFT');
+    expect(merged.lineupSummary).toMatchObject({ spent: 40.01, openSlots: 1, cheapestFill: 40.01 });
+  });
+
+  it('replaces only the changed entry\'s pick history, leaving another entry\'s picks and status alone', () => {
+    const merged = mergePickChange(viewedRoom(['a']), answer(['a', 'b']));
+
+    expect(merged.pickHistories.filter((row) => row.entryId === 'entry-2').map((row) => row.participantId)).toEqual(['c']);
+    expect(merged.pickHistories.filter((row) => row.entryId === 'entry-1').map((row) => row.participantId)).toEqual(['a', 'b']);
+    expect(merged.entries.find((entry) => entry.id === 'entry-2')?.status).toBe('SUBMITTED');
+  });
+
+  it('leaves the room as it is for an answer about another event than the one shown', () => {
+    const room = viewedRoom(['a']);
+
+    expect(mergePickChange(room, answer(['a', 'b'], { sportEventId: 'event-2' }))).toBe(room);
+  });
+
+  it('keeps the viewed lineup when the answer is about an entry the room is not showing', () => {
+    const merged = mergePickChange(viewedRoom(['a']), answer([], { entryId: 'entry-2' }));
+
+    expect(merged.selectionGroups?.[0]?.selectedParticipantIds).toEqual(['a']);
+    expect(merged.pickHistories.some((row) => row.entryId === 'entry-2')).toBe(false);
+    expect(merged.entries.find((entry) => entry.id === 'entry-2')?.status).toBe('DRAFT');
   });
 });

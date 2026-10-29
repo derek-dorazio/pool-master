@@ -219,12 +219,17 @@ export interface BudgetLineupSummary {
 export type LineupSummary = BudgetLineupSummary;
 
 /**
- * What submitting a selection did. `toggled-off` removed a pick and inserted nothing;
- * `placed` inserted one, having first removed the pick it replaced when there was one. Both
- * answer with the refreshed room, which is why they are one type and not two code paths with
- * two response shapes.
+ * What one pick change left on the entry (#1259): only what changed, for the room to merge into
+ * what it already shows. `picks` are the entry's own picks in the event, every one of them, so a
+ * swap the room guessed differently is put right; `entryStatus` is the entry's status in the
+ * event, as a change can send a submitted lineup back to draft; `lineupSummary` is the viewed
+ * lineup's budget summary, whose cheapest fill only the server can work out.
  */
-export interface SubmitSelectionResult {
-  outcome: 'placed' | 'toggled-off';
-  view: SelectionView;
+export interface SelectionPickResult {
+  contestId: string;
+  entryId: string;
+  sportEventId: string;
+  entryStatus: ContestEntryStatus;
+  picks: PickHistoryRow[];
+  lineupSummary: LineupSummary | null;
 }

@@ -116,11 +116,12 @@ function BudgetParticipantRow({
   return (
     <Button
       className={cn(
-        'normal-case tracking-normal h-auto w-full items-center justify-start gap-3 px-4 py-3 text-left whitespace-normal',
+        'gap-3 px-4 py-3',
         isSelected ? 'border-primary bg-primary/5 hover:bg-primary/5' : 'hover:border-foreground/30',
       )}
       data-testid={`contest-entry-participant-${participant.sportEventParticipantId}`}
       disabled={isDisabled}
+      layout="row"
       onClick={() => onSelect(participant)}
       variant="secondary"
     >

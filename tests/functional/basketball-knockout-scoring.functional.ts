@@ -23,7 +23,7 @@ import {
   recordEventMatchResult,
   releaseEvent,
   submitContestEntry,
-  submitContestSelection,
+  selectContestPick,
   transitionEvent,
 } from '@poolmaster/shared/generated/hey-api';
 import { ContestFormat, ContestStatus, MatchSide, MatchStatus, SelectionType, Sport, findSportRow } from '@poolmaster/shared/domain';
@@ -199,7 +199,7 @@ describe('SDK Functional: Basketball knockout scoring', () => {
     const enterWith = async (client: typeof a, lineup: string[]) => {
       const entryId = expectMatchesSchema(ContestEntryResponseSchema, (await enterContest({ client, path: { contestId } })).data).entry.id;
       for (const team of lineup) {
-        const pick = await submitContestSelection({ client, path: { contestId }, body: { entryId, participantId: rowOf(team) } });
+        const pick = await selectContestPick({ client, path: { contestId, entryId, sportEventParticipantId: rowOf(team) } });
         expect(pick.response?.status).toBe(200);
         expectMatchesSchema(SelectionPickResponseSchema, pick.data);
       }

@@ -16,7 +16,7 @@ import {
   openContest,
   recordEventMatchPeriodScore,
   submitContestEntry,
-  submitContestSelection,
+  selectContestPick,
   transitionEvent,
 } from '@poolmaster/shared/generated/hey-api';
 import { ContestFormat, ContestStatus, SelectionType, Sport } from '@poolmaster/shared/domain';
@@ -152,7 +152,7 @@ describe('SDK Functional: American football', () => {
     const lineup = ['Seattle Seahawks', 'New England Patriots', 'Jacksonville Jaguars', 'Pittsburgh Steelers', 'Los Angeles Rams', 'Buffalo Bills', 'Los Angeles Chargers'];
     const entryId = expectDefined((await enterContest({ client: member.client, path: { contestId } })).data).entry.id;
     for (const team of lineup) {
-      expect((await submitContestSelection({ client: member.client, path: { contestId }, body: { entryId, participantId: rowOf(team) } })).response?.status).toBe(200);
+      expect((await selectContestPick({ client: member.client, path: { contestId, entryId, sportEventParticipantId: rowOf(team) } })).response?.status).toBe(200);
     }
     expect((await submitContestEntry({ client: member.client, path: { contestId, entryId, sportEventId: event.id } })).response?.status).toBe(200);
 
