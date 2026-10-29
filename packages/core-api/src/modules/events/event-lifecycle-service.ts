@@ -275,6 +275,7 @@ export class EventLifecycleService {
       if (!hasSportEventStarted(window, now)) {
         continue;
       }
+      // poolmaster-allow-query-in-loop: #1199
       const started = await this.contestDeps.contests.transitionStatus(contest.id, {
         from: STARTABLE,
         to: ContestStatus.ACTIVE,

@@ -11,6 +11,7 @@ import type { EmailMessageRepository } from '@poolmaster/shared/db';
 import type { EmailMessage, EmailTemplateKey } from '@poolmaster/shared/domain';
 import { MailDeliveryThrottledError, type MailDeliveryProvider } from './mail-delivery';
 import { EMAIL_TEMPLATES } from './system-email-templates';
+import { outsideRequest } from '../../core/request-scope';
 
 /** How long after each failed try the next one is due: 1, 5 and 30 minutes, then FAILED. */
 const RETRY_DELAYS_MS = [60_000, 5 * 60_000, 30 * 60_000];
@@ -81,11 +82,14 @@ export class EmailSender {
    * Sends every due email and resolves once none is left. A wake during a drain makes it look
    * again before it ends, so an email queued meanwhile is not left for the next tick. Never
    * rejects: a failure is logged and the next tick tries again.
+   *
+   * A drain a request wakes runs outside that request: it is shared by every later wake, and
+   * neither the request's read memo nor its query count is its own (#1244).
    */
   drain(): Promise<void> {
     this.wakes++;
     if (this.draining) return this.draining;
-    this.draining = this.run();
+    this.draining = outsideRequest(() => this.run());
     return this.draining;
   }
 
@@ -115,6 +119,7 @@ export class EmailSender {
     for (;;) {
       const rate = this.options.readConfig().sendRatePerSecond;
       const startedAt = this.now().getTime();
+      // poolmaster-allow-query-in-loop: one claim per batch of up to the send rate, not per email
       const batch = await this.options.messages.claimDue({
         now: new Date(startedAt),
         limit: rate,

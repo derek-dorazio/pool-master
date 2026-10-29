@@ -1385,11 +1385,7 @@ async function syncDerivedScoring(
 ): Promise<void> {
   // A configuration without typed rules is refused before its scoring rule is replaced.
   ensureTypedConfiguration(configuration);
-  const existingParticipantRules =
-    await participantRuleRepo.findByContestConfiguration(configuration.id);
-  await Promise.all(
-    existingParticipantRules.map((rule) => participantRuleRepo.delete(rule.id)),
-  );
+  await participantRuleRepo.deleteByContestConfiguration(configuration.id);
 
   await participantRuleRepo.create({
     contestConfigurationId: configuration.id,

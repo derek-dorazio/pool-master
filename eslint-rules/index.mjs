@@ -20,8 +20,10 @@ import noWidenedEnumFields from './no-widened-enum-fields.mjs';
 import noParallelApiTypes from './no-parallel-api-types.mjs';
 import noInlineQueryKeys from './no-inline-query-keys.mjs';
 import noInlineThemeStyles from './no-inline-theme-styles.mjs';
+import noListLookup from './no-list-lookup.mjs';
 import noMockedApi from './no-mocked-api.mjs';
 import noNodeEnvReads from './no-node-env-reads.mjs';
+import noQueryInLoop from './no-query-in-loop.mjs';
 import noPlanBranching from './no-plan-branching.mjs';
 import noSportBranching from './no-sport-branching.mjs';
 import noArbitraryTypeSizes from './no-arbitrary-type-sizes.mjs';
@@ -40,9 +42,11 @@ export default {
     'no-parallel-api-types': noParallelApiTypes,
     'no-widened-enum-fields': noWidenedEnumFields,
     'no-inline-theme-styles': noInlineThemeStyles,
+    'no-list-lookup': noListLookup,
     'no-mocked-api': noMockedApi,
     'no-node-env-reads': noNodeEnvReads,
     'no-plan-branching': noPlanBranching,
+    'no-query-in-loop': noQueryInLoop,
     'no-sport-branching': noSportBranching,
     'no-raw-theme-colors': noRawThemeColors,
     'no-arbitrary-type-sizes': noArbitraryTypeSizes,

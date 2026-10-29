@@ -188,8 +188,8 @@ export class PrismaParticipantContestScoringRuleRepository
     return mapParticipantScoringRule(row);
   }
 
-  async delete(id: string): Promise<void> {
-    await this.prisma.participantContestScoringRule.delete({ where: { id } });
+  async deleteByContestConfiguration(contestConfigurationId: string): Promise<void> {
+    await this.prisma.participantContestScoringRule.deleteMany({ where: { contestConfigurationId } });
   }
 }
 

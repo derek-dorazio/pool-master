@@ -85,6 +85,7 @@ export function SportEventScoreSourceCard({
     },
     retry: false,
   });
+  // poolmaster-allow-list-lookup: the few data providers
   const simulatingProviderId = (providersQuery.data ?? []).find(
     (provider) => provider.sportsCovered.includes(tournament.sport) && provider.supportsLiveSimulation,
   )?.providerId ?? null;

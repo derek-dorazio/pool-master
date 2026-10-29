@@ -93,6 +93,7 @@ export class EmailDeliveryEvents {
     const suppressionReason = SUPPRESSION_REASONS[event.eventType];
     if (suppressionReason) {
       for (const email of reportedAddresses(event)) {
+        // poolmaster-allow-query-in-loop: the few addresses one SES event reports
         await this.options.suppressions.suppress({ email, suppressionReason, emailMessageId: message?.id });
       }
       logger?.warn({

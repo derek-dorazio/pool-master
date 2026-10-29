@@ -10,6 +10,7 @@ import { authGuard } from './plugins/auth-guard';
 import { etagPlugin } from './plugins/etag-support';
 import { requestLoggingContext } from './plugins/request-logging-context';
 import { requestReadMemo } from './plugins/request-read-memo';
+import { requestQueryUsage } from './plugins/request-query-usage';
 import { FASTIFY_AJV_OPTIONS } from './plugins/string-transforms';
 import { FASTIFY_SCHEMA_CONTROLLER } from './plugins/serializer-cache';
 import { globalErrorHandler } from './core/error-handler';
@@ -18,6 +19,7 @@ import { readTrustProxy } from './core/config';
 import { PostgresJobLock } from './core/job-lock';
 import { NightlyCleanupScheduler } from './core/nightly-cleanup';
 import { createCdnInvalidator } from './core/cdn-invalidator';
+import { countingQueries } from './core/request-query-usage';
 
 // Domain modules (core-api)
 import { authModule } from './modules/auth/routes';
@@ -74,6 +76,7 @@ import { createEventLifecycleService, eventFieldCache } from './modules/events/w
 import { EventLifecycleScheduler } from './modules/events/event-lifecycle-scheduler';
 import { createCommissionerNotices, createContestExpandedNotices, createContestNotices, createDraftEventNotices, createEntryReminders, createLiveStandings, createMemberJoinedNotices, createPlanPreviewNotices } from './modules/notifications';
 import { ProviderSyncRunLedger } from './modules/ingestion/persistence/provider-sync-run-ledger';
+import { SyncRunDetailsRetention, SyncRunRetention } from './modules/ingestion/persistence/sync-run-retention';
 import { registerConfiguredProviders } from './modules/ingestion/core/provider-bindings';
 import { createScheduledEventReader } from './modules/ingestion/core/scheduled-event-reader';
 import { createContestSettlementService } from './modules/contests/wiring';
@@ -96,7 +99,8 @@ export function buildApp() {
     ajv: FASTIFY_AJV_OPTIONS,
     schemaController: FASTIFY_SCHEMA_CONTROLLER,
   });
-  const prisma = new PrismaClient();
+  // Counts each request's queries against its budget (#1244).
+  const prisma = countingQueries(new PrismaClient());
   const isOpenApiExport = process.env.OPENAPI_EXPORT === 'true';
 
   app.decorate('prisma', prisma);
@@ -153,9 +157,15 @@ export function buildApp() {
     jobLock,
     logger: app.log,
   });
+  const providerSyncRuns = new PrismaProviderSyncRunRepository(prisma);
   // #1175: tables that grow without end are trimmed to their retention periods once a night.
   const nightlyCleanupScheduler = new NightlyCleanupScheduler({
-    steps: [new RefreshTokenRetention(prisma), emailRetention],
+    steps: [
+      new RefreshTokenRetention(prisma),
+      emailRetention,
+      new SyncRunDetailsRetention(providerSyncRuns),
+      new SyncRunRetention(providerSyncRuns),
+    ],
     jobLock,
     logger: app.log,
   });
@@ -171,6 +181,7 @@ export function buildApp() {
   // Core plugins
   // =========================================================================
   app.register(requestReadMemo);
+  app.register(requestQueryUsage);
   app.register(swaggerPlugin);
   app.register(healthPlugin);
   app.register(versionModule, { prefix: '/version', operationId: 'getRootVersion' });
@@ -215,7 +226,6 @@ export function buildApp() {
     },
   };
 
-  const providerSyncRuns = new PrismaProviderSyncRunRepository(prisma);
   const providerSyncRunLedger = new ProviderSyncRunLedger(providerSyncRuns, app.log);
   const ingestionScheduler = new IngestionScheduler(registry, ingestionCallbacks, app.log, {
     configReader: ingestionConfigService,

@@ -621,7 +621,8 @@ model User {
 
 model RefreshToken {
   id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  token     String    @unique
+  /// The SHA-256 of the token, in hex (#1230). The token itself is only ever in the client's cookie.
+  tokenHash String    @unique @map("token_hash") @db.Char(64)
   sessionId String    @default(uuid()) @map("session_id") @db.Uuid
   userId    String    @map("user_id") @db.Uuid
   expiresAt DateTime  @map("expires_at") @db.Timestamptz
@@ -2165,7 +2166,8 @@ model ProviderSyncRun {
   /// The run's summary: request, feed, outcome and stats. The sync history lists it.
   payloadJson Json                        @default("{}") @map("payload_json")
   /// The run's detailed diagnostics: the changed rows, the job record and the raw provider
-  /// payload. Read one run at a time; null before the run starts.
+  /// payload. Read one run at a time; the nightly cleanup clears it 30 days after submission
+  /// and deletes the run after a year (#1174).
   detailsJson Json?                       @map("details_json")
   createdAt   DateTime                    @default(now()) @map("created_at") @db.Timestamptz
 

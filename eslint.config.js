@@ -347,11 +347,26 @@ export default tseslint.config(
     rules: { 'poolmaster/no-parallel-api-types': 'error' },
   },
   {
+    // Web app source, tests excluded: a list query reduced in the browser to one row, a count
+    // or an id/status filter is a request the server should answer (#1158, #1241).
+    files: ['clients/poolmaster/src/**/*.{ts,tsx}'],
+    ignores: ['**/*.test.{ts,tsx}', '**/*.spec.{ts,tsx}'],
+    plugins: { poolmaster },
+    rules: { 'poolmaster/no-list-lookup': 'error' },
+  },
+  {
     // Backend source: a gate that sends its rejection without awaiting lets Fastify run the
     // handler behind it (#193, #458).
     files: ['packages/core-api/src/**/*.ts'],
     plugins: { poolmaster },
     rules: { 'poolmaster/no-unawaited-send-error': 'error' },
+  },
+  {
+    // Backend source: one database call per loop iteration is the N+1 / fan-out shape most of
+    // the performance audit found (#1158, #1240). Seeds and scripts sit outside src/.
+    files: ['packages/core-api/src/**/*.ts'],
+    plugins: { poolmaster },
+    rules: { 'poolmaster/no-query-in-loop': 'error' },
   },
   {
     // Test files across every workspace, matching the scanner's walk roots

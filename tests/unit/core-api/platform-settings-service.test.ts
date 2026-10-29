@@ -30,10 +30,9 @@ async function buildService() {
     logger: fakeLogger(),
   });
   await settings.load();
-  const users = fakeUserRepo({
-    findById: async (id) => (id === ADMIN.id ? ADMIN : null),
-  });
-  return { logger, runtimeConfigs, service: new PlatformSettingsService({ settings, runtimeConfigs, users, logger }) };
+  const findByIds = jest.fn(async (ids: readonly string[]) => (ids.includes(ADMIN.id) ? [ADMIN] : []));
+  const users = fakeUserRepo({ findByIds });
+  return { logger, runtimeConfigs, findByIds, service: new PlatformSettingsService({ settings, runtimeConfigs, users, logger }) };
 }
 
 describe('PlatformSettingsService', () => {
@@ -94,6 +93,26 @@ describe('PlatformSettingsService', () => {
 
     expect(history.map((view) => [(view.change.newJson as { allowedRecipients: string[] }).allowedRecipients, view.changedBy?.name ?? null]))
       .toEqual([[[], null], [['help@example.test'], 'Ada Admin']]);
+  });
+
+  it('names every author of a group\'s history from one user read, asking for each author once', async () => {
+    const { service, findByIds } = await buildService();
+    const defaults = (await service.get('EMAIL_CONFIG')).state.defaults as object;
+    await service.save('EMAIL_CONFIG', {
+      key: 'EMAIL_CONFIG', value: { ...defaults, allowedRecipients: ['a@example.test'] }, expectedUpdatedAt: null,
+    }, ADMIN.id);
+    const firstSave = (await service.get('EMAIL_CONFIG')).state.updatedAt;
+    await service.save('EMAIL_CONFIG', {
+      key: 'EMAIL_CONFIG', value: { ...defaults, allowedRecipients: ['b@example.test'] }, expectedUpdatedAt: firstSave,
+    }, ADMIN.id);
+    await service.reset('EMAIL_CONFIG', '9a1f3c0e-0000-4000-8000-000000000000');
+    findByIds.mockClear();
+
+    const history = await service.history('EMAIL_CONFIG');
+
+    expect(history.map((view) => view.changedBy?.name ?? null)).toEqual([null, 'Ada Admin', 'Ada Admin']);
+    expect(findByIds).toHaveBeenCalledTimes(1);
+    expect([...findByIds.mock.calls[0][0]].sort()).toEqual([ADMIN.id, '9a1f3c0e-0000-4000-8000-000000000000'].sort());
   });
 
   it('publishes each change with its values typed by the group\'s schema, the first save\'s previous value as null', async () => {

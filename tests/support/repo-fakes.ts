@@ -485,7 +485,7 @@ export function fakeParticipantContestScoringRuleRepo(
   return {
     findByContestConfiguration: many(),
     create: echoCreate('participant-contest-scoring-rule'),
-    delete: nothing(),
+    deleteByContestConfiguration: nothing(),
     ...overrides,
   };
 }
