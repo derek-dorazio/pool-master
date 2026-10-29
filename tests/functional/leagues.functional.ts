@@ -181,6 +181,36 @@ describe('SDK Functional: Leagues', () => {
     });
   });
 
+  it('answers a league settings save, an inactivation and a reactivation with the league\'s real member and contest counts, not zeros', async () => {
+    const commissioner = await buildRegisteredUser({ displayName: 'Counts Commissioner' });
+    const member = await buildRegisteredUser({ displayName: 'Counts Member' });
+    const createResponse = await createLeague({
+      client: commissioner.client,
+      body: buildCreateLeagueBody('Counted Functional League'),
+    });
+    const leagueId = createResponse.data?.league.id as string;
+    const invite = await generateInviteLink({ client: commissioner.client, path: { id: leagueId }, body: { maxUses: 1 } });
+    await acceptInvitation({ client: member.client, body: { inviteCode: invite.data?.invitation.inviteCode as string } });
+    const context = await getLeague({ client: commissioner.client, path: { id: leagueId } });
+    const counts = {
+      memberCount: context.data?.league.memberCount,
+      activeContestCount: context.data?.league.activeContestCount,
+    };
+    expect(counts.memberCount).toBe(2);
+
+    const saved = await updateLeagueDetails({
+      client: commissioner.client,
+      path: { id: leagueId },
+      body: { name: 'Counted League Renamed', description: null, iconKey: 'TROPHY' },
+    });
+    const inactivated = await inactivateLeague({ client: commissioner.client, path: { id: leagueId } });
+    const reactivated = await activateLeague({ client: commissioner.client, path: { id: leagueId } });
+
+    for (const response of [saved, inactivated, reactivated]) {
+      expect(response.data?.league).toMatchObject(counts);
+    }
+  });
+
   it('lists a league\'s pending invites to its commissioner until each is accepted or cancelled, and refuses to cancel one already accepted', async () => {
     const commissioner = await buildRegisteredUser({ displayName: 'Listing Commissioner' });
     const invitee = await buildRegisteredUser({ displayName: 'Accepting Invitee' });
