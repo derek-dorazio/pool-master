@@ -1,5 +1,6 @@
 import {
   acceptInvitation,
+  extendLeaguePlanRenewal,
   generateInviteLink,
   getLeague,
   listLeaguePlans,
@@ -21,7 +22,7 @@ afterAll(async () => {
 });
 
 describe('SDK Functional: choosing a league plan (#945)', () => {
-  it('lets a commissioner and a root admin change the plan at once, refuses a member and a commissioner\'s Platinum, and every read of the league carries the new plan', async () => {
+  it('lets a commissioner and a root admin change the plan at once, refuses a member and a commissioner\'s Platinum, answers a root admin\'s gift extension with the league\'s real member count, and every read of the league carries the new plan', async () => {
     const { commissioner, league } = await buildLeagueWithCommissioner({ displayName: 'Plan Picker', leagueName: 'Plan Pickers' });
     const member = await buildRegisteredUser({ displayName: 'Plan Bystander' });
     const invite = await generateInviteLink({ client: commissioner.client, path: { id: league.id }, body: { maxUses: 1 } });
@@ -30,6 +31,13 @@ describe('SDK Functional: choosing a league plan (#945)', () => {
     // --- The comparison table: four plans, lowest first ------------------------------------
     const plans = LeaguePlanListResponseSchema.parse(expectDefined((await listLeaguePlans({ client: commissioner.client })).data)).plans;
     expect(plans.map((plan) => plan.plan)).toEqual([LeaguePlan.FREE, LeaguePlan.PRO, LeaguePlan.PREMIUM, LeaguePlan.PLATINUM]);
+
+    // --- A root admin extends the gifted plan, and the answer carries the real counts ----------
+    const admin = await buildRegisteredUser({ displayName: 'Plan Director' });
+    await promoteToRootAdmin(admin);
+    const extended = await extendLeaguePlanRenewal({ client: admin.client, path: { id: league.id }, body: { months: 9 } });
+    expect(extended.response?.status).toBe(200);
+    expect(LeagueResponseSchema.parse(expectDefined(extended.data)).league.memberCount).toBe(2);
 
     // --- Down to Free -----------------------------------------------------------------------
     const free = await updateLeaguePlan({ client: commissioner.client, path: { id: league.id }, body: { plan: LeaguePlan.FREE } });
@@ -53,8 +61,6 @@ describe('SDK Functional: choosing a league plan (#945)', () => {
     expect(notYet.error?.error.code).toBe('LEAGUE_PLAN_NOT_AVAILABLE');
 
     // --- A root admin outside the league moves it to Platinum -----------------------------------
-    const admin = await buildRegisteredUser({ displayName: 'Plan Director' });
-    await promoteToRootAdmin(admin);
     const restored = await updateLeaguePlan({ client: admin.client, path: { id: league.id }, body: { plan: LeaguePlan.PLATINUM } });
     expect(LeagueResponseSchema.parse(expectDefined(restored.data)).league.planEntitlements.caps)
       .toEqual({ ENTRIES_PER_CONTEST: 500, SPORTS_LEAGUES_PER_YEAR: 50 });

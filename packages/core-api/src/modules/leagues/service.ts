@@ -248,6 +248,16 @@ export class LeagueService {
     });
   }
 
+  /** `countLeagueActivity` for one league, as the league DTO carries it. */
+  async countActivityFor(leagueId: string): Promise<LeagueActivityCounts> {
+    const counts = await this.countLeagueActivity([leagueId]);
+    // A league with no active contest is absent from its map, which means zero.
+    return {
+      memberCount: counts.memberCounts.get(leagueId) ?? 0,
+      activeContestCount: counts.activeContestCounts.get(leagueId) ?? 0,
+    };
+  }
+
   /**
    * Active member and active contest counts for a set of leagues.
    *
@@ -259,16 +269,6 @@ export class LeagueService {
    * side is the one raw Prisma query left in this service, because `ContestRepository` has
    * no count — that is slice 3, and it is marked so the sweep finds it.
    */
-  /** `countLeagueActivity` for one league, as the league DTO carries it. */
-  async countActivityFor(leagueId: string): Promise<LeagueActivityCounts> {
-    const counts = await this.countLeagueActivity([leagueId]);
-    // A league with no active contest is absent from its map, which means zero.
-    return {
-      memberCount: counts.memberCounts.get(leagueId) ?? 0,
-      activeContestCount: counts.activeContestCounts.get(leagueId) ?? 0,
-    };
-  }
-
   async countLeagueActivity(leagueIds: string[]): Promise<{
     memberCounts: Map<string, number>;
     activeContestCounts: Map<string, number>;

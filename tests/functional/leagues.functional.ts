@@ -18,10 +18,12 @@ import {
   sendLeagueInvitations,
   listLeagueSquads,
   removeMember,
+  updateLeagueCupSettings,
   updateLeagueDetails,
 } from '@poolmaster/shared/generated/hey-api';
+import { CupPointsScale, SelectionType } from '@poolmaster/shared/domain';
 import { randomUUID } from 'node:crypto';
-import { buildRegisteredUser } from './builders';
+import { buildRegisteredUser, seedContestFixture } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -181,7 +183,7 @@ describe('SDK Functional: Leagues', () => {
     });
   });
 
-  it('answers a league settings save, an inactivation and a reactivation with the league\'s real member and contest counts, not zeros', async () => {
+  it('answers a league settings save, a cup settings save, an inactivation and a reactivation with the league\'s real member and open contest counts, not zeros', async () => {
     const commissioner = await buildRegisteredUser({ displayName: 'Counts Commissioner' });
     const member = await buildRegisteredUser({ displayName: 'Counts Member' });
     const createResponse = await createLeague({
@@ -191,22 +193,29 @@ describe('SDK Functional: Leagues', () => {
     const leagueId = createResponse.data?.league.id as string;
     const invite = await generateInviteLink({ client: commissioner.client, path: { id: leagueId }, body: { maxUses: 1 } });
     await acceptInvitation({ client: member.client, body: { inviteCode: invite.data?.invitation.inviteCode as string } });
+    await seedContestFixture(leagueId, { name: 'Counted Open Contest', selectionType: SelectionType.TIERED, status: 'OPEN' });
     const context = await getLeague({ client: commissioner.client, path: { id: leagueId } });
     const counts = {
       memberCount: context.data?.league.memberCount,
       activeContestCount: context.data?.league.activeContestCount,
     };
     expect(counts.memberCount).toBe(2);
+    expect(counts.activeContestCount).toBe(1);
 
     const saved = await updateLeagueDetails({
       client: commissioner.client,
       path: { id: leagueId },
       body: { name: 'Counted League Renamed', description: 'Counted', iconKey: 'TROPHY' },
     });
+    const cupSaved = await updateLeagueCupSettings({
+      client: commissioner.client,
+      path: { id: leagueId },
+      body: { cupName: 'Counted Cup', cupPointsScale: CupPointsScale.CUSTOM, cupCustomPoints: [10, 5], hallOfLameVisible: true },
+    });
     const inactivated = await inactivateLeague({ client: commissioner.client, path: { id: leagueId } });
     const reactivated = await activateLeague({ client: commissioner.client, path: { id: leagueId } });
 
-    for (const response of [saved, inactivated, reactivated]) {
+    for (const response of [saved, cupSaved, inactivated, reactivated]) {
       expect(response.data?.league).toMatchObject(counts);
     }
   });
