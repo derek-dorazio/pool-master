@@ -359,6 +359,10 @@ state, stale actions, and unthemeable markup accumulate.
   extend it. Where the extracted piece lives is the location rule in
   `clients/poolmaster/src/features/shared/ui/README.md`: generic pieces in
   `features/shared/ui`, a product piece in the feature folder that owns it.
+- `npm run rules:check:duplicates` fails CI on a new near-identical block in
+  the web app. `scripts/duplicate-baseline.json` lists today's copies, each with
+  the ticket that removes it; a PR that removes one shrinks its entry, and a new
+  copy never goes on the list.
 - Prefer shared primitives from `clients/poolmaster/src/features/shared/ui/`
   for buttons, inputs, textareas, modals, page templates, tiles, badges, and
   alerts.
