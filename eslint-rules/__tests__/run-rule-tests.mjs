@@ -745,6 +745,9 @@ const typedRuleTester = new RuleTester({
     parser: tseslintParser,
     parserOptions: {
       project: './tsconfig.json',
+      // CI=true otherwise switches typescript-eslint to single-run mode, which builds the program
+      // once from the fixture on disk and never sees each case's code.
+      disallowAutomaticSingleRunInference: true,
       tsconfigRootDir: new URL('./fixtures/', import.meta.url).pathname,
     },
   },
