@@ -24,15 +24,15 @@ import { RESERVED_LEAGUE_CODES } from '../email';
 import type { ApiErrorCode } from '@poolmaster/shared/dto';
 
 /** A league's active member and active contest counts, as the league DTO carries them. */
+export interface LeagueActivityCounts {
+  memberCount: number;
+  activeContestCount: number;
+}
+
 /** A league with the viewer's own membership in it, null when they have none. */
 export interface LeagueForViewer {
   league: League;
   membership: LeagueMembership | null;
-}
-
-export interface LeagueActivityCounts {
-  memberCount: number;
-  activeContestCount: number;
 }
 
 export interface CreateLeagueInput {
