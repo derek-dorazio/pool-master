@@ -151,7 +151,9 @@ export class ChampionshipService {
     ]);
     const byYear = new Map<number, LeagueYearFinish[]>();
     for (const finish of finishes) {
-      byYear.set(finish.year, [...(byYear.get(finish.year) ?? []), finish]);
+      const rows = byYear.get(finish.year);
+      if (rows === undefined) byYear.set(finish.year, [finish]);
+      else rows.push(finish);
     }
     const years = [...new Set([
       ...finishes.filter((finish) => finish.weight !== CupWeight.NOT_COUNTED).map((finish) => finish.year),

@@ -6,6 +6,7 @@
  */
 import {
   ContestStatus,
+  CupContestCount,
   CupWeight,
   SelectionType,
   TeamIconKey,
@@ -22,20 +23,21 @@ const LEAGUE = 'league-1';
 const NOW = new Date('2026-08-01T12:00:00.000Z');
 const SPORT_LEAGUES = new Map([['pga', 'PGA Tour'], ['nfl', 'NFL'], ['nba', 'NBA']]);
 
-function squad(id: string, name: string): Squad {
+function squad(id: string, name: string, isActive = true): Squad {
   return {
     id,
     leagueId: LEAGUE,
     createdBy: 'user-1',
     name,
     iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
-    isActive: true,
+    isActive,
     createdAt: new Date('2020-01-01T00:00:00.000Z'),
     updatedAt: new Date('2020-01-01T00:00:00.000Z'),
   };
 }
 
-const SQUADS = [squad('eagles', 'Eagles'), squad('birdies', 'Birdies'), squad('bogeys', 'Bogeys')];
+/** The Albatross placed in the oldest season and has since left the league. */
+const SQUADS = [squad('eagles', 'Eagles'), squad('birdies', 'Birdies'), squad('bogeys', 'Bogeys'), squad('albatross', 'Albatross', false)];
 
 /** Wraps a repository so every call to it is one read counted, as each is one query against Postgres. */
 function counted<T extends object>(repository: T, reads: { count: number }): T {
@@ -53,7 +55,9 @@ function counted<T extends object>(repository: T, reads: { count: number }): T {
 
 /**
  * A league with a season per year from 2026 back: a cup per sports league each season with two
- * contests settled in it, the PGA Tour cup crowned in every year that is over.
+ * contests settled in it, both won by the Eagles and Birdies tied, the PGA Tour cup crowned
+ * in every year that is over. The Albatross, since inactive, placed only in the oldest of those
+ * seasons, and the season before it has a single PGA Tour contest that is NOT_COUNTED.
  */
 async function leagueWithSeasons(seasonCount: number) {
   const cups = new InMemoryCups();
@@ -90,7 +94,12 @@ async function leagueWithSeasons(seasonCount: number) {
     const seasonYear = 2026 - index;
     for (const sportLeagueId of SPORT_LEAGUES.keys()) {
       await cupService.ensureCup({ leagueId: LEAGUE, seasonYear, sportLeagueId });
-      for (const [day, order] of [[1, ['eagles', 'birdies', 'bogeys']], [2, ['bogeys', 'eagles', 'birdies']]] as const) {
+      const oldest = index === seasonCount - 1;
+      const contests: Array<[day: number, places: Array<[squadId: string, position: number]>]> = [
+        [1, [['eagles', 1], ['birdies', 1], ['bogeys', 3], ...(oldest ? [['albatross', 4] as [string, number]] : [])]],
+        [2, [['birdies', 1], ['eagles', 1], ...(oldest ? [['albatross', 3] as [string, number]] : []), ['bogeys', 4]]],
+      ];
+      for (const [day, places] of contests) {
         const id = `${sportLeagueId}-${seasonYear}-${day}`;
         const completedAt = new Date(Date.UTC(seasonYear, 3, day + [...SPORT_LEAGUES.keys()].indexOf(sportLeagueId) * 3, 20));
         cups.contests.push({
@@ -105,7 +114,7 @@ async function leagueWithSeasons(seasonCount: number) {
           firstEventStartsAt: new Date(completedAt.getTime() - 86_400_000),
           completedAt,
         });
-        cups.rankedEntries.push(...order.map((squadId, position) => ({ contestId: id, squadId, position: position + 1 })));
+        cups.rankedEntries.push(...places.map(([squadId, position]) => ({ contestId: id, squadId, position })));
         cups.settle(id, completedAt);
         await championship.recordContest({ id, leagueId: LEAGUE, cupWeight: CupWeight.NORMAL }, completedAt);
       }
@@ -115,6 +124,24 @@ async function leagueWithSeasons(seasonCount: number) {
       await cupService.crown(LEAGUE, pgaCup.id);
     }
   }
+  const quietYear = 2026 - seasonCount;
+  await cupService.ensureCup({ leagueId: LEAGUE, seasonYear: quietYear, sportLeagueId: 'pga' });
+  const quietAt = new Date(Date.UTC(quietYear, 5, 1, 20));
+  cups.contests.push({
+    leagueId: LEAGUE,
+    seasonYear: quietYear,
+    sportLeagueId: 'pga',
+    id: `fun-${String(quietYear)}`,
+    name: 'Just for fun',
+    status: ContestStatus.COMPLETED,
+    selectionType: SelectionType.TIERED,
+    cupWeight: CupWeight.NOT_COUNTED,
+    firstEventStartsAt: new Date(quietAt.getTime() - 86_400_000),
+    completedAt: quietAt,
+  });
+  cups.rankedEntries.push({ contestId: `fun-${String(quietYear)}`, squadId: 'bogeys', position: 1 });
+  cups.settle(`fun-${String(quietYear)}`, quietAt);
+  await championship.recordContest({ id: `fun-${String(quietYear)}`, leagueId: LEAGUE, cupWeight: CupWeight.NOT_COUNTED }, quietAt);
   reads.count = 0;
   return { history, championship, cupService, reads };
 }
@@ -164,19 +191,40 @@ describe('History reads (#1166)', () => {
       const seasonCups = await cupService.listSeasonCups(LEAGUE, year.year);
       expect(year.cups.map((row) => row.view)).toEqual([...seasonCups].sort((left, right) => left.sportLeagueName.localeCompare(right.sportLeagueName)));
     }
-    expect(summary.years.map((year) => [year.year, year.cups.length])).toEqual([[2026, 3], [2025, 3], [2024, 3]]);
+    expect(summary.years.map((year) => [year.year, year.cups.length, year.champions.map((squad) => squad.name)])).toEqual([
+      [2026, 3, ['Birdies', 'Eagles']],
+      [2025, 3, ['Birdies', 'Eagles']],
+      [2024, 3, ['Birdies', 'Eagles']],
+      [2023, 1, []],
+    ]);
+    expect(summary.years.at(-1)?.cups[0]?.view.contests.map((row) => row.count)).toEqual([CupContestCount.NOT_COUNTED]);
   });
 
-  it('shows every year of a squad\'s history with the same championship row as that year\'s Championship tab', async () => {
-    const { history, championship } = await leagueWithSeasons(3);
+  it('shows every year of a squad\'s history, tied, active or since gone, with the same championship and cup rows as that year\'s Championship tab and Cups page', async () => {
+    const { history, championship, cupService } = await leagueWithSeasons(3);
 
-    const squadHistory = await history.getSquadHistory(LEAGUE, 'eagles');
+    for (const squadId of ['eagles', 'albatross']) {
+      const squadHistory = await history.getSquadHistory(LEAGUE, squadId);
 
-    for (const year of squadHistory.years) {
-      const championshipYear = await championship.getYear(LEAGUE, year.year);
-      expect(year.championship?.standing).toEqual(championshipYear.standings.find((row) => row.squad.id === 'eagles'));
-      expect([year.championship?.isOver, year.championship?.contestsCounted]).toEqual([championshipYear.isOver, championshipYear.contestsCounted]);
+      for (const year of squadHistory.years) {
+        const championshipYear = await championship.getYear(LEAGUE, year.year);
+        const seasonCups = await cupService.listSeasonCups(LEAGUE, year.year);
+        const standing = championshipYear.standings.find((row) => row.squad.id === squadId);
+        expect(year.championship === null ? null : [year.championship.standing, year.championship.isOver, year.championship.contestsCounted])
+          .toEqual(standing === undefined ? null : [standing, championshipYear.isOver, championshipYear.contestsCounted]);
+        expect(year.cups.map((cup) => cup.standing)).toEqual(seasonCups
+          .sort((left, right) => left.sportLeagueName.localeCompare(right.sportLeagueName))
+          .flatMap((view) => view.standings.filter((row) => row.squad.id === squadId)));
+      }
     }
-    expect(squadHistory.years.map((year) => [year.year, year.cups.length])).toEqual([[2026, 3], [2025, 3], [2024, 3]]);
+    const eagles = await history.getSquadHistory(LEAGUE, 'eagles');
+    const albatross = await history.getSquadHistory(LEAGUE, 'albatross');
+    expect(eagles.years.map((year) => [year.year, year.cups.length, year.championship?.standing.displayPosition])).toEqual([
+      [2026, 3, 'T1'], [2025, 3, 'T1'], [2024, 3, 'T1'], [2023, 1, 'T1'],
+    ]);
+    // Gone since 2024: no row in a year it never placed in, its 2024 rows kept.
+    expect(albatross.years.map((year) => [year.year, year.championship?.standing.played ?? null, year.cups.length])).toEqual([
+      [2026, null, 0], [2025, null, 0], [2024, 6, 3], [2023, null, 0],
+    ]);
   });
 });

@@ -413,7 +413,9 @@ export class CupService {
     const sportLeagueNames = new Map(sportLeagues.map((sportLeague) => [sportLeague.id, sportLeague.name]));
     const frozenByCup = new Map<string, CupStanding[]>();
     for (const row of frozen) {
-      frozenByCup.set(row.cupId, [...(frozenByCup.get(row.cupId) ?? []), row]);
+      const rows = frozenByCup.get(row.cupId);
+      if (rows === undefined) frozenByCup.set(row.cupId, [row]);
+      else rows.push(row);
     }
     const squadById = new Map(leagueSquads.map((squad) => [squad.id, squad]));
 
@@ -459,7 +461,9 @@ function listedCups(cups: readonly Cup[], contests: readonly LeagueCupContest[])
   const byKey = new Map<string, CupContest[]>();
   for (const row of contests) {
     const key = cupKeyOf(row);
-    byKey.set(key, [...(byKey.get(key) ?? []), row.contest]);
+    const rows = byKey.get(key);
+    if (rows === undefined) byKey.set(key, [row.contest]);
+    else rows.push(row.contest);
   }
   const listed = cups.filter((cup) => byKey.has(cupKeyOf(cup)));
   return { cups: listed, contestsOf: new Map(listed.map((cup) => [cup.id, byKey.get(cupKeyOf(cup)) ?? []])) };
