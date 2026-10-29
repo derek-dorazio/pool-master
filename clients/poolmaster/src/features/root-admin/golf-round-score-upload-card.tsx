@@ -1,6 +1,6 @@
 import { PARTICIPANT_SCORING_DEFINITIONS } from '@poolmaster/shared/domain';
 import { applyEventGolfRoundScores, previewEventGolfRoundScores } from '@/lib/api';
-import { BulkUploadPanel, StatusBadge, Tile } from '@/features/shared/ui';
+import { BulkUploadPanel, Heading, StatusBadge, Tile } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -120,7 +120,7 @@ export function GolfRoundScoreUploadCard({
 
   return (
     <Tile>
-      <h3 className="title-card text-base text-foreground">Bulk load</h3>
+      <Heading level={3} variant="card" size="base">Bulk load</Heading>
       <p className="mt-1 text-sm text-muted-foreground">
         Paste or upload this round&rsquo;s scores, preview how each row resolves and
         changes, then apply.

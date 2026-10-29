@@ -3,7 +3,7 @@ import { Check } from 'lucide-react';
 import type { LeaguePlan } from '@poolmaster/shared/domain';
 import type { LeaguePlanListResponse } from '@/lib/api';
 import { describeExpansionPrices } from '@/features/billing/billing-format';
-import { Eyebrow, Tile } from '@/features/shared/ui';
+import { Eyebrow, Heading, Tile } from '@/features/shared/ui';
 import type { ComparedPlan } from './plan-comparison';
 import { buildPlanHighlights } from './plan-highlights';
 import { LEAGUE_PLAN_LABEL, LEAGUE_PLAN_TAGLINE } from './plan-labels';
@@ -31,7 +31,7 @@ export function PlanCards({ expansion, plans, renderAction }: PlanCardsProps) {
       {highlights.map((card, index) => (
         <Tile className="flex flex-col gap-4" data-testid={`plan-card-${card.plan}`} key={card.plan} padding="md" radius="md">
           <div className="space-y-1">
-            <h3 className="title-card text-2xl text-foreground">{LEAGUE_PLAN_LABEL[card.plan]}</h3>
+            <Heading level={3} variant="card" size="2xl">{LEAGUE_PLAN_LABEL[card.plan]}</Heading>
             <p className="min-h-10 text-sm text-muted-foreground">{LEAGUE_PLAN_TAGLINE[card.plan]}</p>
           </div>
           <p className="flex items-baseline gap-1.5" data-testid={`plan-card-${card.plan}-price`}>

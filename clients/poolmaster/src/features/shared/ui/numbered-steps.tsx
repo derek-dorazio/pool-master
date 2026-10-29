@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { cn } from "./class-names";
+import { Heading } from "./heading";
 import { Tile } from "./tile";
 
 export type NumberedStep = {
@@ -30,7 +31,7 @@ export function NumberedSteps({
             {step.picture}
             <div className="p-4">
               <p className="font-display text-2xl font-bold text-primary">{index + 1}</p>
-              <h3 className="title-card text-foreground">{step.title}</h3>
+              <Heading level={3} variant="card">{step.title}</Heading>
               <p className="mt-1 text-sm text-muted-foreground">{step.body}</p>
             </div>
           </Tile>

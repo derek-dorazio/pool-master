@@ -6,6 +6,7 @@ import {
   Chip,
   EmptyState,
   ErrorState,
+  Heading,
   ListStack,
   LoadingState,
   PageHeader,
@@ -116,9 +117,9 @@ export function LeagueContestsPage() {
         <Tile data-testid="league-contests-active">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <h2 className="title-card text-xl text-foreground">
+              <Heading level={2} variant="card" size="xl">
                 {isMyEntriesFilter ? "My active contests" : "Active contests"}
-              </h2>
+              </Heading>
               <p className="mt-2 text-sm text-muted-foreground">
                 Open a contest to view its leaderboard, manage entries, and see
                 picks once the event has started.

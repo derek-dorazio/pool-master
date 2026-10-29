@@ -5,7 +5,7 @@ import type { EventPageDto, EventPageOfferDto, SportLeagueDto } from '@/lib/api'
 import { getLogger } from '@/lib/logger';
 import { STAT_POOL_CONTEST_TYPE, STAT_POOL_FORMULAS } from '@/features/contests/scoring-family-ui/stat-pool-copy';
 import { useSportLeaguesQuery } from '@/features/contest-types/use-sport-leagues-query';
-import { ErrorState, Eyebrow, FaqList, LinkButton, LoadingState, NumberedSteps, Tile, cn } from '@/features/shared/ui';
+import { cn, ErrorState, Eyebrow, FaqList, Heading, LinkButton, LoadingState, NumberedSteps, Tile } from '@/features/shared/ui';
 import { LandingDisclaimer } from './components/landing-disclaimer';
 import { LandingSection } from './components/landing-section';
 import { StartButton } from './components/start-button';
@@ -120,11 +120,11 @@ function Hero({ startRequest }: { startRequest: StartRequest | null }) {
           <span className="rounded-pill bg-primary px-2.5 py-0.5 text-xs font-bold text-primary-foreground">{hero.badge}</span>
           <Eyebrow tone="inverse">{hero.eyebrow}</Eyebrow>
         </div>
-        <h1 className="font-display text-3xl font-black italic leading-tight tracking-tight sm:text-4xl lg:text-5xl" data-testid="clutch-card-tagline">
+        <Heading data-testid="clutch-card-tagline" level={1} tone="inherit" variant="hero">
           {hero.tagline[0]}
           <br />
           <span className="text-primary">{hero.tagline[1]}</span>
-        </h1>
+        </Heading>
       </div>
       <div className="space-y-5">
         <p className="max-w-xl text-lg text-on-inverse-muted" data-testid="clutch-card-hook">{hero.hook}</p>
@@ -147,7 +147,7 @@ function CardTypes() {
         {BUILT_STAT_LINE_SPORTS.map((sport) => (
           <div className="rounded-2xl border border-inverse-border bg-surface-inverse p-5 text-on-inverse" data-testid={`clutch-card-type-${sport}`} key={sport}>
             <Eyebrow tone="inverse">{getSportDefinition(sport).name}</Eyebrow>
-            <h3 className="title-card text-xl text-primary">{statLineName(sport)}</h3>
+            <Heading level={3} variant="card" size="xl" tone="primary">{statLineName(sport)}</Heading>
             <p className="mt-2 font-mono text-sm">{STAT_POOL_FORMULAS[sport]}</p>
             <p className="mt-2 text-sm text-on-inverse-muted">{copy.lines[sport]}</p>
           </div>
@@ -215,7 +215,7 @@ function Why() {
       <div className="grid gap-4 md:grid-cols-2">
         {copy.points.map((point) => (
           <Tile key={point.title} padding="md" radius="md">
-            <h3 className="title-card text-foreground">{point.title}</h3>
+            <Heading level={3} variant="card">{point.title}</Heading>
             <p className="mt-1 text-sm text-muted-foreground">{point.body}</p>
           </Tile>
         ))}
@@ -232,7 +232,7 @@ function HowItPlays() {
       <div className="grid gap-4 md:grid-cols-3">
         {copy.modes.map((mode) => (
           <div className="rounded-xl border border-border p-4" key={mode.title}>
-            <h3 className="title-card text-foreground">{mode.title}</h3>
+            <Heading level={3} variant="card">{mode.title}</Heading>
             <p className="mt-1 text-sm text-muted-foreground">{mode.body}</p>
           </div>
         ))}
@@ -309,7 +309,7 @@ export function ClutchCardPage() {
       <HowItPlays />
       <Faq />
       <Tile className="flex flex-col items-start gap-4" data-testid="clutch-card-closing" padding="lg" radius="lg">
-        <h2 className="font-display text-3xl font-bold text-foreground">{CLUTCH_CARD_PAGE.closing.title}</h2>
+        <Heading level={2} variant="display">{CLUTCH_CARD_PAGE.closing.title}</Heading>
         {startRequest ? (
           <StartButton request={startRequest} size="lg" testId="clutch-card-closing-start">{CLUTCH_CARD_PAGE.hero.start}</StartButton>
         ) : (

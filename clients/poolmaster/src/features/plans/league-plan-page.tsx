@@ -11,7 +11,19 @@ import { useAuth } from '@/features/auth/auth-context';
 import { syncLeagueCaches } from '@/features/leagues/league-cache';
 import { buildLeagueAdminPath } from '@/features/leagues/league-routing';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
-import { Alert, Button, Chip, ErrorState, formatDateDisplay, LoadingState, PageHeader, SectionHeader, Tile, useDisplayPreferences } from '@/features/shared/ui';
+import {
+  Alert,
+  Button,
+  Chip,
+  ErrorState,
+  formatDateDisplay,
+  Heading,
+  LoadingState,
+  PageHeader,
+  SectionHeader,
+  Tile,
+  useDisplayPreferences,
+} from '@/features/shared/ui';
 import { PlanCards } from './plan-cards';
 import { buildCapUsage, buildPlanChangeEffects, NAMED_CONTEST_LIMIT } from './plan-change';
 import { PlanComparisonTable } from './plan-comparison-table';
@@ -112,7 +124,7 @@ function LeaguePlanView({ league }: { league: LeagueDto }) {
           {chosen ? (
             <Tile className="space-y-4" data-testid="league-plan-confirm" padding="md" radius="md">
               <div className="space-y-1">
-                <h3 className="title-card text-foreground">{`Move to ${LEAGUE_PLAN_LABEL[chosen.plan]}?`}</h3>
+                <Heading level={3} variant="card">{`Move to ${LEAGUE_PLAN_LABEL[chosen.plan]}?`}</Heading>
                 <p className="text-sm text-muted-foreground">Plan changes are free for now, so this takes effect at once and costs nothing.</p>
               </div>
               {usageQuery.data ? (
@@ -219,7 +231,7 @@ function YourLeagueNow({
   ) ?? null;
   return (
     <Tile className="space-y-3" data-testid="league-plan-now" padding="md" radius="md">
-      <h3 className="title-card text-foreground">Your league now</h3>
+      <Heading level={3} variant="card">Your league now</Heading>
       <dl className="grid gap-3 text-sm sm:grid-cols-3">
         <div>
           <dt className="text-muted-foreground">Plan</dt>

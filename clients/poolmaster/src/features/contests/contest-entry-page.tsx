@@ -14,6 +14,7 @@ import {
   ErrorState,
   formatDateTimeDisplay,
   FormField,
+  Heading,
   Input,
   LoadingState,
   MetricGrid,
@@ -749,9 +750,9 @@ function RosterContestEntryPage() {
       <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
         <div className="space-y-6">
           <Tile>
-            <h3 className="title-card text-xl">
+            <Heading level={3} variant="card" size="xl" tone="inherit">
               {isEditable ? 'Entry details' : 'Entry summary'}
-            </h3>
+            </Heading>
 
             <DefinitionList
               className="mt-5"
@@ -807,11 +808,11 @@ function RosterContestEntryPage() {
         </div>
 
         <Tile>
-          <h3 className="title-card text-xl" data-testid="contest-entry-builder-heading">
+          <Heading level={3} variant="card" size="xl" tone="inherit" data-testid="contest-entry-builder-heading">
             {isRandomDraw
               ? `${selectionState.drawnAt ? 'Dealt ' : ''}${selectionState.drawnAt ? participantNoun.many : participantNoun.many.charAt(0).toUpperCase() + participantNoun.many.slice(1)}`
               : isEditable ? 'Build your lineup' : 'Saved lineup detail'}
-          </h3>
+          </Heading>
           {isRandomDraw ? (
             <div className="mt-5">
               <DrawLineup noun={participantNoun} selectionState={selectionState} />

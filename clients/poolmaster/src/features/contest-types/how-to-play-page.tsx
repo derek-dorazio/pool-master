@@ -4,7 +4,7 @@ import { SelectionType, formatSelectionTypeName, getSportDefinition, type Sport 
 import type { ContestConfigTemplateDto, LeagueDto } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-context';
 import { useActiveContestTemplatesQuery } from '@/features/contests/use-active-contest-templates-query';
-import { Button, ErrorState, ExpandableTile, LinkButton, LoadingState, NumberedSteps, PageHeader, SectionHeader, Tile, cn } from '@/features/shared/ui';
+import { Button, cn, ErrorState, ExpandableTile, Heading, LinkButton, LoadingState, NumberedSteps, PageHeader, SectionHeader, Tile } from '@/features/shared/ui';
 import { getLogger } from '@/lib/logger';
 import { buildPublicContestCatalog, type ContestTypeTile, type PublicCatalogLeague, type PublicCatalogSport } from './contest-catalog';
 import { FORMAT_GUIDES } from './format-guides';
@@ -354,7 +354,7 @@ export function HowToPlayPage() {
             <Tile className="overflow-hidden md:flex" data-testid="how-to-play-sport-banner" padding="none" radius="md">
               <SportIllustration className="aspect-[16/10] w-full md:w-80" sport={chosenSport.sport} />
               <div className="p-4">
-                <h3 className="title-card text-xl text-foreground">{chosenName}</h3>
+                <Heading level={3} variant="card" size="xl">{chosenName}</Heading>
                 <p className="mt-1 text-sm text-muted-foreground">{SPORT_BLURBS[chosenSport.sport]}</p>
               </div>
             </Tile>
@@ -386,7 +386,7 @@ export function HowToPlayPage() {
       {auth.isAuthenticated ? null : (
         <Tile className="flex flex-wrap items-center justify-between gap-4" padding="md" radius="md">
           <div>
-            <h3 className="title-card text-foreground">Ready to run your pool?</h3>
+            <Heading level={3} variant="card">Ready to run your pool?</Heading>
             <p className="text-sm text-muted-foreground">Create an account, start a league, and set up your first contest.</p>
           </div>
           {callToAction}

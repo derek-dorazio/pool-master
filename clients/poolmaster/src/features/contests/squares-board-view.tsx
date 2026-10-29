@@ -16,6 +16,7 @@ import {
   ErrorState,
   Eyebrow,
   FormField,
+  Heading,
   LoadingState,
   Select,
   Tile,
@@ -168,7 +169,7 @@ export function SquaresBoardView({
     <div className="space-y-6" data-testid="squares-board">
       {board.digits ? (
         <Tile data-testid="squares-winners">
-          <h3 className="title-card mb-3 text-lg">{isFinal ? 'Winners' : 'Winners so far'}</h3>
+          <Heading level={3} variant="card" size="lg" tone="inherit" className="mb-3">{isFinal ? 'Winners' : 'Winners so far'}</Heading>
           <ul className="grid gap-2 sm:grid-cols-2 md:grid-cols-4">
             {moments.map((moment) => (
               <li
@@ -196,7 +197,7 @@ export function SquaresBoardView({
       <Tile>
         <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h3 className="title-card text-xl">{board.claimsOpen ? 'Claim your boxes' : 'The grid'}</h3>
+            <Heading level={3} variant="card" size="xl" tone="inherit">{board.claimsOpen ? 'Claim your boxes' : 'The grid'}</Heading>
             <p className="text-sm text-muted-foreground" data-testid="squares-claim-help">
               {board.claimsOpen
                 ? claimingEntryId === null

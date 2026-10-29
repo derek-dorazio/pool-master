@@ -2,7 +2,7 @@ import { getSportDefinition, RaceResultOrderError, RaceResultStatus, type SportV
 import { useState } from 'react';
 import { applyEventRaceResults, previewEventRaceResults } from '@/lib/api';
 import type { SportEventDto, SportEventParticipantDto } from '@/lib/api';
-import { Alert, BulkUploadPanel, Checkbox, StatusBadge, Tile } from '@/features/shared/ui';
+import { Alert, BulkUploadPanel, Checkbox, Heading, StatusBadge, Tile } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError, type ErrorCodeMessages } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -103,7 +103,7 @@ function StoredFinishingOrder({ event, field }: { event: SportEventDto; field: r
   return (
     <Tile>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h3 className="title-card text-base text-foreground">Result</h3>
+        <Heading level={3} variant="card" size="base">Result</Heading>
         {hasResults ? (
           <StatusBadge data-testid="root-admin-race-result-official" tone={official ? 'final' : 'warning'}>
             {official ? 'Official' : 'Provisional'}
@@ -207,7 +207,7 @@ function FinishingOrderUploadCard({ event, field }: { event: SportEventDto; fiel
 
   return (
     <Tile>
-      <h3 className="title-card text-base text-foreground">Finishing order</h3>
+      <Heading level={3} variant="card" size="base">Finishing order</Heading>
       <p className="mt-1 text-sm text-muted-foreground">
         {`Paste or upload the ${vocabulary.round.one}'s result: a place for each ${vocabulary.participant.one} that finished, or DNF, DQ or DNS. Preview it, then apply. ${capitalize(vocabulary.participant.many)} you leave out keep the result they have.`}
       </p>

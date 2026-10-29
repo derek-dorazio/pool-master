@@ -14,6 +14,7 @@ import {
   Chip,
   EmptyState,
   ErrorState,
+  Heading,
   IdentityHeading,
   LinkButton,
   LoadingState,
@@ -83,7 +84,7 @@ export function TeamPage() {
       </div>
 
       <section className="space-y-3" data-testid="team-page-owners">
-        <h2 className="text-lg font-semibold text-foreground">Owners</h2>
+        <Heading level={2} variant="subtitle">Owners</Heading>
         {owners.length ? (
           <ul className="divide-y divide-border rounded-2xl border border-border bg-card">
             {owners.map((owner) => (

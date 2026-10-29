@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router';
 import { buildEventPagePath, type Sport } from '@poolmaster/shared/domain';
-import { Eyebrow, SectionHeader, Tile } from '@/features/shared/ui';
+import { Eyebrow, Heading, SectionHeader, Tile } from '@/features/shared/ui';
 import { eventPageCopy, eventPageOfferCopy, formatStartsIn } from './event-page-copy';
 import { withPrimaryOffer } from './event-page-offers';
 import { useEventPagesQuery } from './use-event-pages-query';
@@ -36,7 +36,7 @@ export function ComingUpRow({ sport, testId = 'coming-up' }: { sport?: Sport; te
             >
               <Tile className={index === 0 ? 'h-full space-y-2 border-primary' : 'h-full space-y-2'} padding="md" radius="md" variant="interactive">
                 <Eyebrow tone="muted">{formatStartsIn(primary.edition.startDate, now)}</Eyebrow>
-                <h3 className="title-card text-xl text-foreground">{copy.name}</h3>
+                <Heading level={3} variant="card" size="xl">{copy.name}</Heading>
                 <p className="text-sm text-muted-foreground">{page.offers.map((offer) => eventPageOfferCopy(copy, offer).contestType).join(' · ')}</p>
                 <p className="text-sm font-semibold text-foreground">See ways to play ›</p>
               </Tile>

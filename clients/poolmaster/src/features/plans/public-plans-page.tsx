@@ -3,7 +3,7 @@ import { PlanFeatureGroup } from '@poolmaster/shared/domain';
 import { useAuth } from '@/features/auth/auth-context';
 import { buildLeagueAdminPlanPath } from '@/features/leagues/league-routing';
 import { useLeaguesQuery } from '@/features/leagues/use-leagues-query';
-import { Chip, ErrorState, FaqList, LinkButton, LoadingState, PageHeader, SectionHeader, Tile } from '@/features/shared/ui';
+import { Chip, ErrorState, FaqList, Heading, LinkButton, LoadingState, PageHeader, SectionHeader, Tile } from '@/features/shared/ui';
 import { getLogger } from '@/lib/logger';
 import { PlanCards } from './plan-cards';
 import { PlanComparisonTable } from './plan-comparison-table';
@@ -102,7 +102,7 @@ export function PublicPlansPage() {
       {auth.isAuthenticated ? null : (
         <Tile className="flex flex-wrap items-center justify-between gap-4" padding="md" radius="md">
           <div>
-            <h3 className="title-card text-foreground">Start your league today</h3>
+            <Heading level={3} variant="card">Start your league today</Heading>
             <p className="text-sm text-muted-foreground">Set up a league, invite your office, and open your first contest in minutes.</p>
           </div>
           {action('public-plans-start-footer')}

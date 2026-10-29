@@ -12,6 +12,7 @@ import {
   Countdown,
   Eyebrow,
   formatDateTimeDisplay,
+  Heading,
   LinkButton,
   LOADING_TEXT,
   useDisplayPreferences,
@@ -55,7 +56,7 @@ function HomeCard({
   return (
     <section aria-label={title} className="overflow-hidden rounded-2xl border border-border bg-card" data-testid={testId}>
       <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
-        <h2 className="title-card text-sm text-foreground">{title}</h2>
+        <Heading level={2} variant="card" size="sm">{title}</Heading>
         {trailing}
       </div>
       {children}
@@ -100,9 +101,9 @@ export function UpNextCard({
       data-testid="league-home-up-next"
     >
       <Eyebrow tone="inverse">Up next · Open for entries</Eyebrow>
-      <h2 className="title-card text-2xl" id="league-home-up-next-title">
+      <Heading level={2} variant="card" size="2xl" tone="inherit" id="league-home-up-next-title">
         {upNext.contest.name}
-      </h2>
+      </Heading>
       <p className="text-sm text-on-inverse-muted">
         Entries close {formatDateTimeDisplay(upNext.closesAt, displayPreferences)}.
       </p>

@@ -5,7 +5,7 @@ import type { EventPageDto, EventPageOfferDto } from '@/lib/api';
 import { hasErrorCode } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useLeaguePlansQuery } from '@/features/plans/use-league-plans-query';
-import { Breadcrumbs, Chip, EmptyState, ErrorState, Eyebrow, LinkButton, LoadingState, NumberedSteps, Tile, cn, formatDateDisplay, useDisplayPreferences } from '@/features/shared/ui';
+import { Breadcrumbs, Chip, cn, EmptyState, ErrorState, Eyebrow, formatDateDisplay, Heading, LinkButton, LoadingState, NumberedSteps, Tile, useDisplayPreferences } from '@/features/shared/ui';
 import { LandingDisclaimer } from './components/landing-disclaimer';
 import { LandingSection } from './components/landing-section';
 import { NextUpCard } from './components/next-up-card';
@@ -32,7 +32,7 @@ function OfferCard({ copy, offer, page, testId }: { copy: EventPageCopy; offer: 
   return (
     <Tile className={cn('flex flex-col gap-3', offer.isPrimary ? 'border-primary' : null)} data-testid={testId} padding="md" radius="md">
       {offerCopy.isNew ? <Chip className="self-start" tone="active">New</Chip> : null}
-      <h3 className="title-card text-xl text-foreground">{offerCopy.contestType}</h3>
+      <Heading level={3} variant="card" size="xl">{offerCopy.contestType}</Heading>
       <p className="text-sm font-semibold text-foreground">{`Starts as: ${offer.template.name}`}</p>
       <p className="text-sm text-muted-foreground">{offerCopy.line}</p>
       {offerCopy.facts.length > 0 ? (
@@ -74,7 +74,7 @@ function EventPageContent({ page }: { page: EventPageDto }) {
       <PhotoHero sport={page.sport}>
         <Breadcrumbs items={[{ label: 'How to Play', href: '/how-to-play' }, { label: sportName, href: buildHowToPlaySportPath(page.sport) }, { label: copy.name }]} />
         {copy.eyebrow ? <Eyebrow>{copy.eyebrow}</Eyebrow> : null}
-        <h1 className="font-display text-4xl font-bold tracking-tight text-foreground sm:text-5xl" data-testid="event-page-name">{copy.name}</h1>
+        <Heading data-testid="event-page-name" level={1} variant="hero">{copy.name}</Heading>
         <p className="max-w-2xl text-base text-muted-foreground" data-testid="event-page-hook">{copy.hook}</p>
         {primary ? (
           <div className="flex flex-wrap gap-2" data-testid="event-page-when">

@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { cn } from "./class-names";
 import { Tile } from "./tile";
+import { Heading } from "./heading";
 
 type DetailsActionsLayoutProps = {
   actions: ReactNode;
@@ -33,7 +34,7 @@ export function DetailsActionsLayout({
       <div className={cn("space-y-6", detailsClassName)}>{details}</div>
       <Tile className={actionsClassName} data-testid={actionsTestId} padding="md" radius="xl">
         {actionsTitle ? (
-          <h3 className="title-card text-xl">{actionsTitle}</h3>
+          <Heading level={3} variant="card" size="xl" tone="inherit">{actionsTitle}</Heading>
         ) : null}
         <div
           className={cn(actionsTitle ? "mt-5 space-y-3" : "space-y-3", actionsListClassName)}
