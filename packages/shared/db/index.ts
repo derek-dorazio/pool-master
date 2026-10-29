@@ -18,6 +18,7 @@ export type {
   ContestEntryCreate,
   ContestUpdate,
   ContestStatusFilter,
+  ReleasedEdition,
   ContestStatusTransition,
   ContestCreateResult,
   ContestSeasonFull,

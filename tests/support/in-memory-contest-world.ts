@@ -343,6 +343,7 @@ export class InMemoryContestWorld {
           contest.sportEventIds.includes(sportEventId)
           && (!filter?.statuses || filter.statuses.includes(contest.status))
           && (!filter?.excludeStatuses || !filter.excludeStatuses.includes(contest.status))),
+      findJoinableByReleasedEdition: async () => [],
       findByStatuses: async (statuses) =>
         [...this.contests.values()].filter((contest) => statuses.includes(contest.status)),
       create: async (input, limits) => this.seasonFull(input.leagueId, input.seasonYear, limits)
@@ -411,7 +412,6 @@ export class InMemoryContestWorld {
     return {
       findByContest: async (contestId) =>
         [...this.configurations.values()].find((row) => row.contestId === contestId) ?? null,
-      findByTemplateEventSeries: async () => [],
       create: async (input) => this.addConfiguration(input.contestId, input),
       update: async (id, updates) => {
         const existing = this.configurations.get(id);

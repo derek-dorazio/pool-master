@@ -406,6 +406,13 @@ export interface ContestRepository {
   findSportLeagueIdsBySeason(leagueId: string, seasonYear: number): Promise<string[]>;
   /** The event's contests, oldest first, optionally narrowed to or away from some statuses. */
   findBySportEvent(sportEventId: string, filter?: ContestStatusFilter): Promise<Contest[]>;
+  /**
+   * The contests a released edition can join (#714, #1179): made from a template covering the
+   * edition's series (matched by the series' name within its sport league), not COMPLETED, not
+   * drawn, without the edition yet, and every event of the edition's year. All in one query,
+   * oldest configuration first; none when the series is gone.
+   */
+  findJoinableByReleasedEdition(edition: ReleasedEdition): Promise<Contest[]>;
   /** Every contest in one of `statuses`, oldest first, across leagues: the entry reminders' sweep reads it (#845). */
   findByStatuses(statuses: readonly Contest['status'][]): Promise<Contest[]>;
   /**
@@ -440,6 +447,13 @@ export interface ContestRepository {
   setCupWeight(id: string, cupWeight: Contest['cupWeight'], whileIn: readonly Contest['status'][]): Promise<boolean>;
   /** Deletes a contest with its entries, picks, selection state, configuration and rules. */
   delete(id: string): Promise<void>;
+}
+
+/** A sport event just released, as `ContestRepository.findJoinableByReleasedEdition` matches it. */
+export interface ReleasedEdition {
+  id: string;
+  eventSeriesId: string;
+  eventYear: number;
 }
 
 export interface ContestStatusFilter {

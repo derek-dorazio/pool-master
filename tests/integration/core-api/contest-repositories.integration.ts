@@ -710,7 +710,7 @@ describe('ContestConfigTemplateRepository', () => {
   });
 });
 
-describe('ContestConfigurationRepository.findByTemplateEventSeries (#714)', () => {
+describe('ContestRepository.findJoinableByReleasedEdition (#714, #1179)', () => {
   const prefix = `itest-series-${randomUUID().slice(0, 8)}-`;
   afterEach(async () => {
     await cleanupTestData();
@@ -735,9 +735,15 @@ describe('ContestConfigurationRepository.findByTemplateEventSeries (#714)', () =
     });
   }
 
-  async function contestFromTemplate(leagueId: string, sportEventId: string, name: string, templateId: string) {
-    const contest = await createContest(leagueId, sportEventId, name, ContestStatus.OPEN);
-    return getPrisma().contestConfiguration.create({
+  async function contestFromTemplate(
+    leagueId: string,
+    sportEventIds: string | readonly string[],
+    name: string,
+    templateId: string,
+    status: ContestStatus = ContestStatus.OPEN,
+  ) {
+    const contest = await createContest(leagueId, sportEventIds, name, status);
+    await getPrisma().contestConfiguration.create({
       data: {
         contestId: contest.id,
         templateId,
@@ -745,26 +751,60 @@ describe('ContestConfigurationRepository.findByTemplateEventSeries (#714)', () =
         configJson: { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 1 },
       },
     });
+    return contest;
   }
 
-  it('finds the configurations of contests made from a template naming the series in the series\' own sport league, and no others', async () => {
+  /** A league and event, a template covering the event's series, and the next edition of that series not yet in any contest. */
+  async function seriesWithTemplate() {
     const prisma = getPrisma();
-    const { league, event } = await createLeagueAndEvent();
-    const series = await prisma.eventSeries.findUniqueOrThrow({ where: { id: event.eventSeriesId } });
+    const fixture = await createLeagueAndEvent();
+    const series = await prisma.eventSeries.findUniqueOrThrow({ where: { id: fixture.event.eventSeriesId } });
+    const covering = await createSeriesTemplate('covering', series.sportLeagueId, ['Some Other Major', series.name]);
+    const edition = { id: randomUUID(), eventSeriesId: series.id, eventYear: fixture.event.eventYear };
+    return { ...fixture, series, covering, edition };
+  }
+
+  it('finds the contests made from a template naming the series in the series\' own sport league, and no others', async () => {
+    const prisma = getPrisma();
+    const { league, event, series, covering, edition } = await seriesWithTemplate();
     const otherTour = await prisma.sportLeague.create({
       data: { sportId: (await prisma.sport.findUniqueOrThrow({ where: { sport: Sport.GOLF } })).id, name: `${prefix}other tour` },
     });
-    const covering = await createSeriesTemplate('covering', series.sportLeagueId, ['Some Other Major', series.name]);
     const otherLeague = await createSeriesTemplate('other-league', otherTour.id, [series.name]);
     const otherSeries = await createSeriesTemplate('other-series', series.sportLeagueId, ['Some Other Major']);
     const expected = await contestFromTemplate(league.id, event.id, 'Covered Pool', covering.id);
     await contestFromTemplate(league.id, event.id, 'Other League Pool', otherLeague.id);
     await contestFromTemplate(league.id, event.id, 'Other Series Pool', otherSeries.id);
 
-    const found = await new PrismaContestConfigurationRepository(prisma).findByTemplateEventSeries(series.id);
+    const found = await repos().contests.findJoinableByReleasedEdition(edition);
 
-    expect(found.map((configuration) => configuration.id)).toEqual([expected.id]);
-    await expect(new PrismaContestConfigurationRepository(prisma).findByTemplateEventSeries(randomUUID())).resolves.toEqual([]);
+    expect(found.map((contest) => contest.id)).toEqual([expected.id]);
+    expect(found[0]?.sportEventIds).toEqual([event.id]);
+    await expect(repos().contests.findJoinableByReleasedEdition({ ...edition, eventSeriesId: randomUUID() })).resolves.toEqual([]);
+  });
+
+  it('leaves out a COMPLETED pool, a drawn pool, a squares-drawn pool, a pool that already has the edition and a pool of another year\'s events, keeping the rest (one with no events yet among them) oldest first', async () => {
+    const prisma = getPrisma();
+    const { league, event, suffix, covering, edition } = await seriesWithTemplate();
+    const first = await contestFromTemplate(league.id, event.id, 'Live Pool', covering.id, ContestStatus.ACTIVE);
+    const second = await contestFromTemplate(league.id, event.id, 'Draft Pool', covering.id, ContestStatus.DRAFT);
+    await contestFromTemplate(league.id, event.id, 'Finished Pool', covering.id, ContestStatus.COMPLETED);
+    const drawn = await contestFromTemplate(league.id, event.id, 'Drawn Pool', covering.id);
+    await prisma.contestDraw.create({ data: { contestId: drawn.id, seed: 'seed', fieldOrder: [], entryOrder: [] } });
+    const squaresDrawn = await contestFromTemplate(league.id, event.id, 'Squares Drawn Pool', covering.id);
+    await prisma.contestSquaresDraw.create({
+      data: { contestId: squaresDrawn.id, seed: 'seed', rowDigits: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], columnDigits: [9, 8, 7, 6, 5, 4, 3, 2, 1, 0] },
+    });
+    const noEvents = await contestFromTemplate(league.id, [], 'No Events Yet Pool', covering.id);
+    const { event: released } = await createLaterEvent(suffix);
+    await contestFromTemplate(league.id, [event.id, released.id], 'Already Has It', covering.id);
+    const { event: lastYear } = await createLaterEvent(suffix, new Date('2025-07-16T12:00:00.000Z'));
+    await prisma.sportEvent.update({ where: { id: lastYear.id }, data: { eventYear: edition.eventYear - 1 } });
+    await contestFromTemplate(league.id, [event.id, lastYear.id], 'Mixed Years Pool', covering.id);
+
+    const found = await repos().contests.findJoinableByReleasedEdition({ ...edition, id: released.id });
+
+    expect(found.map((contest) => contest.name)).toEqual([first.name, second.name, noEvents.name]);
   });
 });
 
