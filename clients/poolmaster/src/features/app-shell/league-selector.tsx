@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { LeagueDto } from '@/lib/api';
 import { getLogger } from "@/lib/logger";
-import { Button, cn, Tile } from "@/features/shared/ui";
+import { Button, cn, MenuItem, Tile } from "@/features/shared/ui";
 import {
   buildLeaguePath,
   getLeagueSelectorOptions,
@@ -69,8 +69,9 @@ export function LeagueSelector({
       <Button
         aria-expanded={isOpen}
         aria-haspopup="menu"
-        className="normal-case tracking-normal flex w-full cursor-pointer items-center justify-start gap-3 rounded-3xl border border-inverse-border bg-on-inverse-subtle px-4 py-3 text-left shadow-sm sm:w-auto sm:max-w-xs lg:max-w-none"
+        className="cursor-pointer gap-3 rounded-3xl border border-inverse-border bg-on-inverse-subtle px-4 py-3 shadow-sm sm:w-auto sm:max-w-xs lg:max-w-none"
         data-testid="league-selector-toggle"
+        layout="row"
         onClick={() => setIsOpen((current) => !current)}
         size="auto"
         type="button"
@@ -96,17 +97,10 @@ export function LeagueSelector({
         >
           <div className="space-y-2">
             {selectorLeagues.map((league) => (
-              <Button
-                className={`normal-case tracking-normal flex w-full items-center gap-3 rounded-2xl border px-3 py-3 text-left transition ${
-                  league.leagueCode === activeLeagueCode
-                    ? league.isActive
-                      ? "border-primary/20 bg-primary/10"
-                      : "border-border bg-muted/40"
-                    : league.isActive
-                      ? "border-transparent hover:bg-muted/50"
-                      : "border-border bg-muted/30 hover:bg-muted/50"
-                }`}
+              <MenuItem
+                className={league.isActive || league.leagueCode === activeLeagueCode ? undefined : "border border-border bg-muted/30"}
                 data-testid={`league-selector-option-${league.leagueCode}`}
+                isSelected={league.leagueCode === activeLeagueCode}
                 key={league.id}
                 onClick={() => {
                   rememberRecentLeagueCode(league.leagueCode);
@@ -122,7 +116,6 @@ export function LeagueSelector({
                   );
                   onNavigate(buildLeaguePath(league.leagueCode));
                 }}
-                size="auto"
                 type="button"
               >
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -138,11 +131,10 @@ export function LeagueSelector({
                       : "Not currently active"}
                   </div>
                 </div>
-              </Button>
+              </MenuItem>
             ))}
 
-            <Button
-              className="normal-case tracking-normal flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left transition hover:bg-muted/50"
+            <MenuItem
               data-testid="league-selector-create"
               onClick={() => {
                 setIsOpen(false);
@@ -160,7 +152,7 @@ export function LeagueSelector({
                 +
               </div>
               <div className="font-medium text-foreground">Create league</div>
-            </Button>
+            </MenuItem>
           </div>
         </Tile>
       ) : null}

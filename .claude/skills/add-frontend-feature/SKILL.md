@@ -21,6 +21,13 @@ If the feature needs a contract change that does not exist yet, **the exported S
 land first.** Building against an intended-but-unexported contract means rewriting when it
 arrives, and it hides whether the contract is actually right.
 
+## Before you build any UI
+
+Search for a component with the same shape before writing a card, row, table or section:
+`features/shared/ui` first, then the feature folder that owns the concept. Reuse it, or
+extend it when it is almost right. A second hand-built copy is what the rule of two in
+`rules/react-ui-rules.md` §5 *Component Reuse Threshold* forbids, and composites count.
+
 ## Self-check before review
 
 Walk the changed surface against these. Each maps to a section of `rules/react-uirules.md`, and

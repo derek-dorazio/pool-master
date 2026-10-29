@@ -11,6 +11,7 @@ import { RuleTester } from 'eslint';
 import tseslintParser from '@typescript-eslint/parser';
 
 import noBareUiControls from '../no-bare-ui-controls.mjs';
+import noButtonRowOverride from '../no-button-row-override.mjs';
 import noDisabledTests from '../no-disabled-tests.mjs';
 import noDuplicateExtractErrorMessage from '../no-duplicate-extract-error-message.mjs';
 import noEnvFallbacks from '../no-env-fallbacks.mjs';
@@ -189,6 +190,32 @@ ruleTester.run('no-raw-theme-colors', noRawThemeColors, {
     { code: "const d = { color: '#1a2b3c' };", errors: [{ messageId: 'rawThemeColor' }] },
     { code: "const e = 'rgba(0, 0, 0, 0.5)';", errors: [{ messageId: 'rawThemeColor' }] },
     { code: 'const f = <span>hsl(10, 20%, 30%)</span>;', errors: [{ messageId: 'rawThemeColor' }] },
+  ],
+});
+
+ruleTester.run('no-button-row-override', noButtonRowOverride, {
+  valid: [
+    // The row layout is what the rule pushes toward.
+    'const a = <Button className="justify-between" layout="row">Alpha</Button>;',
+    // The same classes on something that is not a Button are not this rule's.
+    'const b = <span className="normal-case tracking-normal">Needs review</span>;',
+    // A longer class that merely starts with the name is a different class.
+    'const c = <Button className="tracking-normal-ish">Go</Button>;',
+  ],
+  invalid: [
+    {
+      code: '<Button className="normal-case tracking-normal w-full text-left">Alpha</Button>;',
+      errors: [{ messageId: 'rowOverride' }],
+    },
+    {
+      // Passed through cn() and a conditional, it is still the hand-typed override.
+      code: "<LinkButton className={cn(open ? 'normal-case' : null, base)} to='/x'>Open</LinkButton>;",
+      errors: [{ messageId: 'rowOverride' }],
+    },
+    {
+      code: '<MenuItem className={`sm:tracking-normal ${x}`}>Remove owner</MenuItem>;',
+      errors: [{ messageId: 'rowOverride' }],
+    },
   ],
 });
 

@@ -106,8 +106,9 @@ export function SquaresGrid({
                         ) : (
                           <Button
                             aria-label={label}
-                            className={cn(className, 'normal-case tracking-normal rounded-md font-normal hover:bg-primary/10', isMine && 'font-semibold')}
+                            className={cn(className, 'rounded-md font-normal hover:bg-primary/10', isMine && 'font-semibold')}
                             disabled={isBusy}
+                            layout="row"
                             onClick={() => onBoxAction(rowIndex, columnIndex, action)}
                             size="sm"
                             variant="ghost"

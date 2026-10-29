@@ -135,8 +135,9 @@ function PickRow({ entryId, gridTemplateColumns, pick }: { entryId: string; grid
           <Button
             aria-controls={breakdown.testId}
             aria-expanded={isOpen}
-            className={cn(nameClassName, 'normal-case tracking-normal h-auto justify-start p-0 text-left text-sm font-normal underline-offset-2 hover:underline')}
+            className={cn(nameClassName, 'h-auto p-0 text-sm font-normal underline-offset-2 hover:underline')}
             data-testid={`${breakdown.testId}-toggle`}
+            layout="row"
             onClick={() => setIsOpen((open) => !open)}
             size="auto"
             variant="ghost"
@@ -210,10 +211,11 @@ function EntryBlock({
         aria-controls={picksId}
         aria-expanded={!isCollapsed}
         className={cn(
-          'normal-case tracking-normal flex w-full flex-wrap items-baseline justify-between gap-3 rounded-none bg-muted px-4 py-3 text-left font-normal',
+          'flex-wrap items-baseline justify-between gap-3 rounded-none bg-muted px-4 py-3 font-normal',
           isCollapsed ? 'rounded-[inherit]' : 'rounded-t-[inherit] border-b border-border',
         )}
         data-testid={`contest-leaderboard-entry-toggle-${entry.entryId}`}
+        layout="row"
         onClick={onToggle}
         size="auto"
         variant="ghost"
