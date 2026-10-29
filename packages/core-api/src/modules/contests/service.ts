@@ -1117,7 +1117,7 @@ export class ContestService {
     // Past the highest number the squad holds in this contest, not its entry count: leaving
     // deletes the first entry and keeps the later ones, so a count would reuse a number still
     // taken, and (contest, squad, entry number) is unique.
-    const nextEntryNumber = (await this.findHighestEntryNumber(contestId, squad.id)) + 1;
+    const nextEntryNumber = existingEntries.reduce((highest, entry) => Math.max(highest, entry.entryNumber), 0) + 1;
     // Checked live against the plan the league is on now (#947): a contest keeps no plan of its
     // own, only its expansion (#980), which the repository reads under the contest's lock.
     const entitlements = await this.deps.planEntitlements.forLeague(context.contest.leagueId);
@@ -1527,19 +1527,8 @@ export class ContestService {
     contestId: string,
     squadId: string,
   ): Promise<ContestEntry[]> {
-    const entries = await this.deps.entries.findBySquad(squadId);
-    return entries
-      // Drafts and submitted entries alike: both hold one of the squad's entry places.
-      .filter((entry) => entry.contestId === contestId)
-      .sort((left, right) => left.entryNumber - right.entryNumber);
-  }
-
-  /** The highest entry number the squad holds in the contest, whatever its status; 0 for none. */
-  private async findHighestEntryNumber(contestId: string, squadId: string): Promise<number> {
-    const entries = await this.deps.entries.findBySquad(squadId);
-    return entries
-      .filter((entry) => entry.contestId === contestId)
-      .reduce((highest, entry) => Math.max(highest, entry.entryNumber), 0);
+    // Drafts and submitted entries alike: both hold one of the squad's entry places.
+    return this.deps.entries.findByContestAndSquad(contestId, squadId);
   }
 
   private async findPrimaryEntryBySquad(

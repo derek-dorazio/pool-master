@@ -439,8 +439,10 @@ export class InMemoryContestWorld {
                 event.sportEventId === options.submittedFor && event.status === 'SUBMITTED')))
           .sort((left, right) => this.byEntryOrder(left, right))
           .map((entry) => this.withSquad(entry)),
-      findBySquad: async (squadId) =>
-        [...this.entries.values()].filter((entry) => entry.squadId === squadId),
+      findByContestAndSquad: async (contestId, squadId) =>
+        [...this.entries.values()]
+          .filter((entry) => entry.contestId === contestId && entry.squadId === squadId)
+          .sort((left, right) => left.entryNumber - right.entryNumber),
       countByContests: async (contestIds) => new Map(contestIds.map((contestId) =>
         [contestId, [...this.entries.values()].filter((entry) => entry.contestId === contestId).length])),
       create: async (input, limits) => {
