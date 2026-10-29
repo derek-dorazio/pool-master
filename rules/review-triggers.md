@@ -39,6 +39,7 @@ Already enforced mechanically, and therefore **not** triggers:
 | Inline query keys, inline theme styles, bare controls | the corresponding `poolmaster/*` ESLint rules |
 | Generated OpenAPI/SDK staleness | `api:check` |
 | A list route with no query-scaling test (statements counted for 2 rows and 20) | `rules:check:query-scaling` |
+| An app query on a growing table that no index can serve | the integration run's index check (`rules/model-change-rules.md` *Indexes Follow The Reads And The Foreign Keys*) |
 | A route running more than 25 queries per request | the functional suite's query budget check (`rules/testing-rules.md` §6 *Backend Functional API Tests*) |
 
 Triggers cover only what needs **judgement** — things no scanner can infer and a file list

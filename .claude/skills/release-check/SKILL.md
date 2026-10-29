@@ -35,6 +35,10 @@ DB-backed failure means.
   runs once per row. The failure lists the statements whose count changed; batch that read.
   It is a defect in the route, never a reason to shrink the seed (`rules/testing-rules.md` §9B
   *Query Scaling Tests*).
+- **An integration file fails with "queries read a growing table whole, with no index for their filter"** → a
+  read the app sends filters or sorts by columns no index leads on. Add the index in a
+  migration; an allowance is only for a scan that is right on purpose
+  (`rules/model-change-rules.md` *Indexes Follow The Reads And The Foreign Keys*).
 - **A functional test fails on the query budget** → the route it names made more queries
   than the budget. Batch the reads the route makes per row; the allow-list is for routes
   that already have a ticket, never a way past the check — `rules/testing-rules.md` §6
