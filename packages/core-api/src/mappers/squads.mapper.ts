@@ -43,6 +43,9 @@ export function toSquadDetailsDto(squad: SquadDetails): SquadDto {
     memberCount: squad.members.filter(({ membership }) => membership.status === SquadMembershipStatus.ACTIVE).length,
     createdAt: squad.createdAt.toISOString(),
     updatedAt: squad.updatedAt.toISOString(),
-    members: squad.members.map(({ membership, user }) => toSquadMembershipDto(membership, user)),
+    members: squad.members.map(({ membership, user, leagueRole }) => ({
+      ...toSquadMembershipDto(membership, user),
+      leagueRole,
+    })),
   };
 }

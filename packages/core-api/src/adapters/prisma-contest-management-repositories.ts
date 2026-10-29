@@ -32,6 +32,14 @@ export class PrismaContestConfigurationRepository
     return row ? mapContestConfiguration(row) : null;
   }
 
+  async findByContests(contestIds: readonly string[]): Promise<ContestConfiguration[]> {
+    if (contestIds.length === 0) return [];
+    const rows = await this.prisma.contestConfiguration.findMany({
+      where: { contestId: { in: [...contestIds] } },
+    });
+    return rows.map(mapContestConfiguration);
+  }
+
   async create(
     configuration: Omit<ContestConfiguration, 'id' | 'createdAt' | 'updatedAt'>,
   ): Promise<ContestConfiguration> {

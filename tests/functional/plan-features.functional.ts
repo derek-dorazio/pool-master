@@ -1,6 +1,7 @@
 import {
   getChampionship,
   getCup,
+  getCupSquadPoints,
   getHistorySummary,
   getSquadHistory,
   getSquadYear,
@@ -35,6 +36,7 @@ afterAll(async () => {
 
 const YEAR = championshipYear(new Date());
 const UNKNOWN_CUP = '00000000-0000-4000-8000-000000000948';
+const UNKNOWN_SPORT_LEAGUE = '00000000-0000-4000-8000-000000001202';
 
 /** The status of a response, and the feature a 403 names. */
 function outcome(result: { response?: Response; error?: unknown }) {
@@ -71,6 +73,10 @@ describe('SDK Functional: features hidden by plan (#948)', () => {
       cups: outcome(await listCups({ client: as, path, query: { seasonYear: YEAR } })),
       lastYearsCups: outcome(await listCups({ client: as, path, query: { seasonYear: YEAR - 1 } })),
       cup: outcome(await getCup({ client: as, path: { id: league.id, cupId: UNKNOWN_CUP } })),
+      // A squad's cup points take the season list's gates: CUP_STANDINGS, and PAST_YEARS for an
+      // earlier season (#1202). Past the gates, a sports league with no cup answers 404.
+      squadPoints: outcome(await getCupSquadPoints({ client: as, path: { id: league.id, squadId }, query: { seasonYear: YEAR, sportLeagueId: UNKNOWN_SPORT_LEAGUE } })),
+      lastYearsSquadPoints: outcome(await getCupSquadPoints({ client: as, path: { id: league.id, squadId }, query: { seasonYear: YEAR - 1, sportLeagueId: UNKNOWN_SPORT_LEAGUE } })),
       trophies: outcome(await listPerpetualTrophies({ client: as, path })),
       squadHistory: outcome(await getSquadHistory({ client: as, path: { id: league.id, squadId } })),
       summary: outcome(await getHistorySummary({ client: as, path })),
@@ -89,6 +95,8 @@ describe('SDK Functional: features hidden by plan (#948)', () => {
       cups: locked(PlanFeature.CUP_STANDINGS),
       lastYearsCups: locked(PlanFeature.CUP_STANDINGS),
       cup: locked(PlanFeature.CUP_STANDINGS),
+      squadPoints: locked(PlanFeature.CUP_STANDINGS),
+      lastYearsSquadPoints: locked(PlanFeature.CUP_STANDINGS),
       trophies: locked(PlanFeature.TROPHY_SHELF),
       squadHistory: locked(PlanFeature.TROPHY_SHELF),
       summary: locked(PlanFeature.ALL_TIME_SUMMARY),
@@ -119,6 +127,8 @@ describe('SDK Functional: features hidden by plan (#948)', () => {
       cups: { status: 200 },
       lastYearsCups: { status: 200 },
       cup: { status: 404 },
+      squadPoints: { status: 404 },
+      lastYearsSquadPoints: { status: 404 },
       trophies: { status: 200 },
       squadHistory: { status: 200 },
       summary: locked(PlanFeature.ALL_TIME_SUMMARY),

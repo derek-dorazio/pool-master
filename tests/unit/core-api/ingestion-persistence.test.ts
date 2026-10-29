@@ -50,6 +50,41 @@ function linkedRow(overrides: Record<string, unknown> = {}) {
   };
 }
 
+/**
+ * A Prisma double for one event's field sync: the event's two reads, one provider participant
+ * already mapped to `participant-1`, and that participant's stored field row, or none. Batched
+ * writes run as Prisma runs a `$transaction` of them: all, in order.
+ */
+function fieldSyncPrisma(options: {
+  externalId: string;
+  eventRow: Record<string, unknown>;
+  linkedEvent: Record<string, unknown>;
+  fieldRow: Record<string, unknown> | null;
+  createField?: jest.Mock;
+}) {
+  return {
+    sportEvent: {
+      update: jest.fn().mockResolvedValue({ id: 'sport-event-1' }),
+      findUnique: jest.fn().mockResolvedValueOnce(options.eventRow).mockResolvedValueOnce(options.linkedEvent),
+    },
+    participantProviderMapping: {
+      findMany: jest.fn().mockResolvedValue([{
+        providerId: 'mock-contest-feed',
+        externalId: options.externalId,
+        participantId: 'participant-1',
+        participant: { id: 'participant-1', name: 'Stored Name' },
+      }]),
+    },
+    participant: { update: jest.fn().mockResolvedValue({ id: 'participant-1' }) },
+    sportEventParticipant: {
+      findMany: jest.fn().mockResolvedValue(options.fieldRow ? [{ participantId: 'participant-1', ...options.fieldRow }] : []),
+      update: jest.fn().mockResolvedValue({ id: 'sport-event-participant-1' }),
+      createManyAndReturn: options.createField ?? jest.fn().mockResolvedValue([{ id: 'sport-event-participant-1', participantId: 'participant-1' }]),
+    },
+    $transaction: jest.fn(async (operations: Array<Promise<unknown>>) => Promise.all(operations)),
+  };
+}
+
 describe('IngestionPersistence', () => {
   // plans/147 — sync never creates a SportEvent: a provider event names no series or sport
   // league, so a created row would have to guess its tour. A linked event is updated; an
@@ -187,56 +222,41 @@ describe('IngestionPersistence', () => {
         },
       ],
     };
-    const prisma = {
-      sportEvent: {
-        update: jest.fn().mockResolvedValue({ id: 'sport-event-1' }),
-        findUnique: jest.fn()
-          .mockResolvedValueOnce({
-            id: 'sport-event-1',
-            externalId: 'golf-open-2026',
-            providerId: 'mock-contest-feed',
-            sport: Sport.GOLF,
-            name: 'Manual Test Golf Tournament',
-            venue: null,
-            location: null,
-            startDate: detail.startDate,
-            endDate: null,
-            status: 'SCHEDULED',
-            rounds: null,
-            participantCount: null,
-            releaseAt: new Date('2026-05-01T20:00:00.000Z'),
-            fieldLocksAt: new Date('2026-05-02T19:00:00.000Z'),
-            fieldLocked: true,
-            metadata: detail.metadata,
-          })
-          .mockResolvedValueOnce({ id: 'sport-event-1', sport: Sport.GOLF, status: 'SCHEDULED', eventSeries: { sportLeague: { participantType: null, scoringFamily: null } } }),
+    const prisma = fieldSyncPrisma({
+      externalId: 'golfer-01',
+      eventRow: {
+        id: 'sport-event-1',
+        externalId: 'golf-open-2026',
+        providerId: 'mock-contest-feed',
+        sport: Sport.GOLF,
+        name: 'Manual Test Golf Tournament',
+        venue: null,
+        location: null,
+        startDate: detail.startDate,
+        endDate: null,
+        status: 'SCHEDULED',
+        rounds: null,
+        participantCount: null,
+        releaseAt: new Date('2026-05-01T20:00:00.000Z'),
+        fieldLocksAt: new Date('2026-05-02T19:00:00.000Z'),
+        fieldLocked: true,
+        metadata: detail.metadata,
       },
-      contest: {
-        findMany: jest.fn().mockResolvedValue([]),
+      linkedEvent: { id: 'sport-event-1', sport: Sport.GOLF, status: 'SCHEDULED', eventSeries: { sportLeague: { participantType: null, scoringFamily: null } } },
+      fieldRow: {
+        id: 'sport-event-participant-1',
+        isActive: true,
+        inactiveReason: null,
+        ranking: 12,
+        oddsToWin: 11.25,
+        seedNumber: 3,
+        metadata: {
+          seed: 3,
+          odds: 11.25,
+          oddsSourceEventId: 'golf-open-2026',
+        },
       },
-      participantProviderMapping: {
-        findUnique: jest.fn().mockResolvedValue({ participantId: 'participant-1' }),
-      },
-      participant: {
-        update: jest.fn().mockResolvedValue({ id: 'participant-1' }),
-      },
-      sportEventParticipant: {
-        findUnique: jest.fn().mockResolvedValue({
-          id: 'sport-event-participant-1',
-          isActive: true,
-          inactiveReason: null,
-          ranking: 12,
-          oddsToWin: 11.25,
-          seedNumber: 3,
-          metadata: {
-            seed: 3,
-            odds: 11.25,
-            oddsSourceEventId: 'golf-open-2026',
-          },
-        }),
-        upsert: jest.fn().mockResolvedValue({ id: 'sport-event-participant-1' }),
-      },
-    };
+    });
     const persistence = new IngestionPersistence(asPrismaClient(prisma), fakeLogger());
 
     const result = await persistence.persistEventDetailWithDiagnostics(detail);
@@ -289,41 +309,31 @@ describe('IngestionPersistence', () => {
         metadata: { seed: 1 },
       }],
     };
-    const upsert = jest.fn().mockResolvedValue({ id: 'sport-event-participant-1' });
-    const prisma = {
-      sportEvent: {
-        update: jest.fn().mockResolvedValue({ id: 'sport-event-1' }),
-        findUnique: jest.fn()
-          .mockResolvedValueOnce(linkedRow({ sport: Sport.BASKETBALL, status, rounds: 6 }))
-          .mockResolvedValueOnce({
-            id: 'sport-event-1',
-            sport: Sport.BASKETBALL,
-            status,
-            eventSeries: { sportLeague: { participantType: scoringFamily === null ? null : 'INDIVIDUAL', scoringFamily } },
-          }),
+    const prisma = fieldSyncPrisma({
+      externalId: 'team-01',
+      eventRow: linkedRow({ sport: Sport.BASKETBALL, status, rounds: 6 }),
+      linkedEvent: {
+        id: 'sport-event-1',
+        sport: Sport.BASKETBALL,
+        status,
+        eventSeries: { sportLeague: { participantType: scoringFamily === null ? null : 'INDIVIDUAL', scoringFamily } },
       },
-      contest: { findMany: jest.fn().mockResolvedValue([]) },
-      participantProviderMapping: { findUnique: jest.fn().mockResolvedValue({ participantId: 'participant-1' }) },
-      participant: { update: jest.fn().mockResolvedValue({ id: 'participant-1' }) },
-      sportEventParticipant: {
-        findUnique: jest.fn().mockResolvedValue({
-          id: 'sport-event-participant-1',
-          isActive: true,
-          inactiveReason: null,
-          ranking: null,
-          oddsToWin: null,
-          seedNumber: 3,
-          metadata: { seed: 3 },
-        }),
-        upsert,
+      fieldRow: {
+        id: 'sport-event-participant-1',
+        isActive: true,
+        inactiveReason: null,
+        ranking: null,
+        oddsToWin: null,
+        seedNumber: 3,
+        metadata: { seed: 3 },
       },
-    };
+    });
     const persistence = new IngestionPersistence(asPrismaClient(prisma), fakeLogger());
 
     await persistence.persistEventDetailWithDiagnostics(detail);
 
-    expect(upsert).toHaveBeenCalledWith(expect.objectContaining({
-      update: expect.objectContaining({ seedNumber: expectedSeed }),
+    expect(prisma.sportEventParticipant.update).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({ seedNumber: expectedSeed }),
     }));
   });
 
@@ -336,19 +346,14 @@ describe('IngestionPersistence', () => {
       participants: [{ externalId: 'golfer-01', providerId: 'mock-contest-feed', sport: Sport.GOLF, name: 'Scottie Scheffler', active: true, ranking: 1, metadata: {} }],
     };
 
-    function syncedEvent(upsert: jest.Mock) {
-      return {
-        sportEvent: {
-          update: jest.fn().mockResolvedValue({ id: 'sport-event-1' }),
-          findUnique: jest.fn()
-            .mockResolvedValueOnce(linkedRow())
-            .mockResolvedValueOnce({ id: 'sport-event-1', sport: Sport.GOLF, status: 'SCHEDULED', eventSeries: { sportLeague: { participantType: null, scoringFamily: null } } }),
-        },
-        contest: { findMany: jest.fn().mockResolvedValue([]) },
-        participantProviderMapping: { findUnique: jest.fn().mockResolvedValue({ participantId: 'participant-1' }) },
-        participant: { update: jest.fn().mockResolvedValue({ id: 'participant-1' }) },
-        sportEventParticipant: { findUnique: jest.fn().mockResolvedValue(null), upsert },
-      };
+    function syncedEvent(createField: jest.Mock) {
+      return fieldSyncPrisma({
+        externalId: 'golfer-01',
+        eventRow: linkedRow(),
+        linkedEvent: { id: 'sport-event-1', sport: Sport.GOLF, status: 'SCHEDULED', eventSeries: { sportLeague: { participantType: null, scoringFamily: null } } },
+        fieldRow: null,
+        createField,
+      });
     }
 
     async function cacheHoldingTheField() {
@@ -365,7 +370,7 @@ describe('IngestionPersistence', () => {
 
     it('forgets the event\'s field once sync writes it, so the next read of it is current', async () => {
       const fieldCache = await cacheHoldingTheField();
-      const prisma = syncedEvent(jest.fn().mockResolvedValue({ id: 'sport-event-participant-1' }));
+      const prisma = syncedEvent(jest.fn().mockResolvedValue([{ id: 'sport-event-participant-1', participantId: 'participant-1' }]));
 
       await new IngestionPersistence(asPrismaClient(prisma), fakeLogger(), fieldCache).persistEventDetailWithDiagnostics(detail);
 

@@ -222,15 +222,18 @@ describe('CupService (#841)', () => {
     ]);
   });
 
-  it('breaks one squad\'s points down contest by contest in the order they went final, with no place where it had no entry', async () => {
+  it('breaks one squad\'s points down contest by contest in the order they went final, with no place where it had no entry, finding the cup by its season and sports league', async () => {
     const { cups, service, contest } = build();
     await service.ensureCup(KEY);
+    await service.ensureCup({ ...KEY, sportLeagueId: NFL });
     contest('masters', [['eagles', 2], ['birdies', 2]]);
     contest('open', [['birdies', 1]]);
-    const cupId = cups.cups[0]?.id ?? '';
+    const pgaCup = cups.cups.find((cup) => cup.sportLeagueId === PGA);
 
-    const breakdown = await service.getSquadPoints(LEAGUE, cupId, 'eagles');
+    const breakdown = await service.getSquadPoints(KEY, 'eagles');
 
+    expect(breakdown.cup.id).toBe(pgaCup?.id);
+    expect(breakdown.sportLeagueName).toBe('PGA Tour');
     expect(breakdown.points).toBe(725);
     expect(breakdown.contests.map((row) => [row.contest.id, row.finish?.place ?? null, row.finish?.tiedCount ?? null, row.points])).toEqual([
       ['masters', 2, 2, 725],
@@ -304,7 +307,16 @@ describe('CupService (#841)', () => {
     const cupId = cups.cups[0]?.id ?? '';
 
     await expect(service.getCup('league-2', cupId)).rejects.toMatchObject({ code: 'CUP_NOT_FOUND' });
-    await expect(service.getSquadPoints(LEAGUE, cupId, 'strangers')).rejects.toMatchObject({ code: 'SQUAD_NOT_FOUND' });
+    await expect(service.getSquadPoints(KEY, 'strangers')).rejects.toMatchObject({ code: 'SQUAD_NOT_FOUND' });
+  });
+
+  it('refuses a squad\'s cup points with CUP_NOT_FOUND for a season or sports league the league has no cup in, or another league\'s cup', async () => {
+    const { service } = build();
+    await service.ensureCup(KEY);
+
+    await expect(service.getSquadPoints({ ...KEY, seasonYear: 2025 }, 'eagles')).rejects.toMatchObject({ code: 'CUP_NOT_FOUND' });
+    await expect(service.getSquadPoints({ ...KEY, sportLeagueId: NFL }, 'eagles')).rejects.toMatchObject({ code: 'CUP_NOT_FOUND' });
+    await expect(service.getSquadPoints({ ...KEY, leagueId: 'league-2' }, 'eagles')).rejects.toMatchObject({ code: 'CUP_NOT_FOUND' });
   });
 
   it('scores a final contest at the weight it was settled with, not a weight saved while it settled', async () => {
@@ -318,7 +330,7 @@ describe('CupService (#841)', () => {
     }
 
     const [cup] = await service.listSeasonCups(LEAGUE, 2026);
-    const breakdown = await service.getSquadPoints(LEAGUE, cup.cup.id, 'eagles');
+    const breakdown = await service.getSquadPoints(KEY, 'eagles');
 
     expect(cup.standings.map((row) => row.points)).toEqual([1000, 800, 0]);
     expect(cup.contests.map((row) => row.weight)).toEqual([CupWeight.NORMAL]);

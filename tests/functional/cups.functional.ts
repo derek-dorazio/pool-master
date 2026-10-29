@@ -237,13 +237,24 @@ describe('SDK Functional: sports league cups and the league championship (#841, 
 
     const breakdown = CupSquadPointsResponseSchema.parse(expectDefined((await getCupSquadPoints({
       client: commissioner.client,
-      path: { id: league.id, cupId, squadId: memberSquadId },
+      path: { id: league.id, squadId: memberSquadId },
+      query: { seasonYear: SEASON, sportLeagueId: majorsMen.id },
     })).data)).squadPoints;
+    expect(breakdown.cupId).toBe(cupId);
+    expect(breakdown.cupName).toBe(`${String(SEASON)} World Marathon Majors (men) Cup`);
     expect(breakdown.points).toBe(1800);
     expect(breakdown.contests.map((row) => [row.contestId, row.displayPlace, row.points])).toEqual([
       [harbourContest, '1', 1000],
       [valleyContest, '2', 800],
     ]);
+    // A season the league has no cup in answers CUP_NOT_FOUND rather than an empty breakdown.
+    const noCup = await getCupSquadPoints({
+      client: member.client,
+      path: { id: league.id, squadId: memberSquadId },
+      query: { seasonYear: SEASON + 1, sportLeagueId: majorsMen.id },
+    });
+    expect(noCup.response?.status).toBe(404);
+    expect(noCup.error?.error.code).toBe('CUP_NOT_FOUND');
 
     // --- The league championship: both races went final this year (an event completed by hand ends
     // when it is completed), so the year is level the same way ---

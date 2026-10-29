@@ -246,10 +246,24 @@ describe('ParticipantRepository — search and matching', () => {
     const rory = await createParticipant(sport.id, 'Rory McIlroy', 'owgr-rory');
 
     expect(await participants.search('Search Golfer', { sportId: sport.id })).toHaveLength(60);
-    await expect(participants.findMatching(sport.id, { name: 'rory mcilroy' })).resolves.toEqual([expect.objectContaining({ id: rory.id })]);
-    await expect(participants.findMatching(sport.id, { externalId: 'owgr-rory' })).resolves.toHaveLength(1);
-    await expect(participants.findMatching(sport.id, { name: 'Rory' })).resolves.toEqual([]);
-    await expect(participants.findMatching(randomUUID(), { id: rory.id })).resolves.toEqual([]);
+    await expect(participants.findMatchingAny(sport.id, [{ name: 'rory mcilroy' }])).resolves.toEqual([expect.objectContaining({ id: rory.id })]);
+    await expect(participants.findMatchingAny(sport.id, [{ externalId: 'owgr-rory' }])).resolves.toHaveLength(1);
+    await expect(participants.findMatchingAny(sport.id, [{ name: 'Rory' }])).resolves.toEqual([]);
+    await expect(participants.findMatchingAny(randomUUID(), [{ id: rory.id }])).resolves.toEqual([]);
+    await expect(participants.findMatchingAny(sport.id, [])).resolves.toEqual([]);
+  });
+
+  it('reads the candidates for a whole upload at once: every participant of the sport any row\'s identifier matches, and no other', async () => {
+    const sport = await golfSport();
+    const participants = new PrismaParticipantRepository(getPrisma());
+    const rory = await createParticipant(sport.id, 'Rory McIlroy', 'owgr-rory');
+    const jon = await createParticipant(sport.id, 'Jon Rahm', 'owgr-jon');
+    const scottie = await createParticipant(sport.id, 'Scottie Scheffler', 'owgr-scottie');
+    await createParticipant(sport.id, 'Ludvig Aberg', 'owgr-ludvig');
+
+    const found = await participants.findMatchingAny(sport.id, [{ id: rory.id }, { externalId: 'owgr-jon' }, { name: 'SCOTTIE scheffler' }, { name: 'Nobody' }]);
+
+    expect(found.map((candidate) => candidate.id).sort()).toEqual([rory.id, jon.id, scottie.id].sort());
   });
 
   it('creates a participant, reads it by id, and updates only the fields given', async () => {

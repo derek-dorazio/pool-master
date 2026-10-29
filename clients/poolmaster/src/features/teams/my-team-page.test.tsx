@@ -103,6 +103,7 @@ const rivalTeam = buildLeagueSquad({
     squadId: 'team-2',
     userId: 'user-3',
     user: buildCurrentUser({ id: 'user-3', firstName: 'Riley', lastName: 'Rival' }),
+    leagueRole: 'COMMISSIONER',
   })],
 });
 
@@ -833,7 +834,7 @@ describe('My team › Edit team', () => {
 });
 
 describe('Another team\'s page', () => {
-  it('shows a member another squad and its owners read-only, with no Manage link', async () => {
+  it('shows a member another squad and its owners read-only, marking a commissioner owner from the team read alone, with no Manage link', async () => {
     primeTeam();
 
     renderTeamRoutes('/league/BIGDAWGS/teams/team-2');
@@ -844,6 +845,7 @@ describe('Another team\'s page', () => {
     expect(await owners.findByText('Commissioner')).toBeInTheDocument();
     expect(screen.queryByTestId('team-page-manage')).not.toBeInTheDocument();
     expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+    expect(listLeagueMembersMock).not.toHaveBeenCalled();
   });
 
   it('gives a commissioner a Manage link into Commissioner tools', async () => {

@@ -28,7 +28,7 @@ import {
 } from '@poolmaster/shared/domain';
 import { SportCatalogError } from './errors';
 import { requireSport } from './sport-row';
-import { resolveParticipantRow, type ParticipantRowResolution } from './participant-row-resolver';
+import { matchAmong, participantMatchQuery, resolveParticipantRow, type ParticipantRowResolution } from './participant-row-resolver';
 
 /** A sport league with its sport and the two counts its list is read for. */
 export interface SportLeagueSummary extends SportLeague {
@@ -224,7 +224,17 @@ export class SportLeagueService {
     if (!sportLeague) {
       throw new SportCatalogError(`Sport league ${sportLeagueId} was not found.`, 'SPORT_LEAGUE_NOT_FOUND', 404);
     }
-    return Promise.all(rows.map((row) => this.resolveUploadRow(sportLeague.sportId, row)));
+    // Every row's candidates in one read, then each row matched among them (#1183), as the
+    // golf round-score preview matches among the event's field.
+    const queries = rows.flatMap((row) => {
+      const query = participantMatchQuery(row);
+      return query ? [query] : [];
+    });
+    const findCandidates = matchAmong(await this.deps.participants.findMatchingAny(sportLeague.sportId, queries));
+    return Promise.all(rows.map(async (row) => {
+      const { resolution, participant } = await resolveParticipantRow(row, findCandidates);
+      return { row, resolution, participantId: participant?.id ?? null, participantName: participant?.name ?? null };
+    }));
   }
 
   /** Applies a previewed upload. Throws when any row is unresolved — all or nothing. */
@@ -246,14 +256,6 @@ export class SportLeagueService {
       ranking: resolved.row.ranking ?? null,
     })));
     return this.listAffiliations(sportLeagueId);
-  }
-
-  private async resolveUploadRow(sportId: string, row: AffiliationUploadRow): Promise<AffiliationUploadPreviewRow> {
-    const { resolution, participant } = await resolveParticipantRow(
-      row,
-      (query) => this.deps.participants.findMatching(sportId, query),
-    );
-    return { row, resolution, participantId: participant?.id ?? null, participantName: participant?.name ?? null };
   }
 
   private async requireSportLeague(sportLeagueId: string): Promise<SportLeague> {

@@ -3,7 +3,7 @@ import { Link } from 'react-router';
 import { buildEventPagePath, type Sport } from '@poolmaster/shared/domain';
 import { Eyebrow, SectionHeader, Tile } from '@/features/shared/ui';
 import { eventPageCopy, eventPageOfferCopy, formatStartsIn } from './event-page-copy';
-import { upcomingEventPages } from './event-page-offers';
+import { withPrimaryOffer } from './event-page-offers';
 import { useEventPagesQuery } from './use-event-pages-query';
 
 /** Where a sport's or every sport's Coming up row stops: with every sport, the next three. */
@@ -15,9 +15,9 @@ const ALL_SPORTS_LIMIT = 3;
  * pages load, fail or have nothing coming: the row is a way in, never in the way.
  */
 export function ComingUpRow({ sport, testId = 'coming-up' }: { sport?: Sport; testId?: string }) {
-  const pagesQuery = useEventPagesQuery(sport);
+  const pagesQuery = useEventPagesQuery(sport, { upcoming: true });
   const now = useMemo(() => new Date(), []);
-  const upcoming = upcomingEventPages(pagesQuery.data ?? []).slice(0, sport ? undefined : ALL_SPORTS_LIMIT);
+  const upcoming = withPrimaryOffer(pagesQuery.data ?? []).slice(0, sport ? undefined : ALL_SPORTS_LIMIT);
   if (upcoming.length === 0) {
     return null;
   }

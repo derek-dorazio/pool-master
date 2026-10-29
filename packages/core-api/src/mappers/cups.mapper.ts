@@ -52,6 +52,7 @@ export function toCupDto(view: CupView): CupDto {
 export function toCupSquadPointsDto(view: CupSquadPointsView): CupSquadPointsDto {
   return {
     cupId: view.cup.id,
+    cupName: cupName(view.cup.seasonYear, view.sportLeagueName),
     squadId: view.squad.id,
     squadName: view.squad.name,
     points: view.points,

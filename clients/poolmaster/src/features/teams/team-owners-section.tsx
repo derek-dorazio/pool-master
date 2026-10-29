@@ -1,6 +1,5 @@
 import type { SquadDto } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-context';
-import { useLeagueMembersQuery } from '@/features/leagues/use-league-members-query';
 import { Alert } from '@/features/shared/ui';
 import { MyTeamOwnersPanel } from './my-team-owners-panel';
 import { getActiveOwners } from './team-directory';
@@ -32,7 +31,6 @@ export function TeamOwnersSection({
   testId: string;
 }) {
   const auth = useAuth();
-  const { membersByUserId } = useLeagueMembersQuery(leagueId);
   const invitationsQuery = useTeamOwnerInvitationsQuery(leagueId);
   const activeMembers = getActiveOwners(team);
   const teamOwnerInvitations = (invitationsQuery.data ?? []).filter((invitation) => invitation.squadId === team.id);
@@ -58,7 +56,6 @@ export function TeamOwnersSection({
         isInactiveTeam={!team.isActive}
         leagueCode={leagueCode}
         leagueId={leagueId}
-        leagueMembersByUserId={membersByUserId}
         owners={owners}
         selectedTeam={team}
         teamOwnerInvitations={teamOwnerInvitations}

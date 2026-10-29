@@ -17,6 +17,7 @@ import type {
   LeaguePlanChangeReason,
   LeagueInvitation,
   LeagueMembership,
+  LeagueRole,
   Participant,
   ParticipantProviderMapping,
   Squad,
@@ -264,10 +265,14 @@ export interface LeagueMembershipRepository {
   update(id: string, updates: Partial<LeagueMembership>): Promise<LeagueMembership>;
 }
 
-/** One owner of a squad: the membership, any status, with the member's user. */
+/**
+ * One owner of a squad: the membership, any status, with the member's user and their role in the
+ * squad's league (#1202), null only if they hold no membership there.
+ */
 export interface SquadMemberDetails {
   membership: SquadMembership;
   user: User;
+  leagueRole: LeagueRole | null;
 }
 
 /**
@@ -383,8 +388,11 @@ export interface ParticipantRepository {
   findByIds(ids: readonly string[]): Promise<Participant[]>;
   /** Whole result, narrowed by the query and filters — never paged (§16). Ordered by name. */
   search(query: string, filters: ParticipantSearchFilters): Promise<Participant[]>;
-  /** Candidates for an upload row within one sport; exact match on each identifier given. */
-  findMatching(sportId: string, query: ParticipantMatchQuery): Promise<Participant[]>;
+  /**
+   * Candidates for a whole upload within one sport, in one read (#1183): every participant any
+   * of the queries matches, exactly on each identifier a query gives. Ordered by name.
+   */
+  findMatchingAny(sportId: string, queries: readonly ParticipantMatchQuery[]): Promise<Participant[]>;
   create(participant: Omit<Participant, 'id' | 'createdAt' | 'updatedAt'>): Promise<Participant>;
   update(id: string, updates: Partial<Participant>): Promise<Participant>;
 }

@@ -113,6 +113,7 @@ describe('Event page', () => {
     const nextUp = await screen.findByTestId('event-page-next-up');
     expect(nextUp).toHaveTextContent('Super bowl');
     expect(screen.getByRole('link', { name: 'See ways to play' })).toHaveAttribute('href', '/play/american-football/super-bowl');
+    expect(listEventPagesMock).toHaveBeenCalledWith(expect.objectContaining({ query: { sport: 'AMERICAN_FOOTBALL', upcoming: 'true' } }));
   });
 
   it('says when the next edition is not on the schedule yet for a page between seasons', async () => {

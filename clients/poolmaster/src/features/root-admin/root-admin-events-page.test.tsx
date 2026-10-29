@@ -100,10 +100,29 @@ describe('pool-master-33l.12: RootAdminEventsPage', () => {
     expect(screen.getByText('Provider count 144')).toBeInTheDocument();
     expect(screen.getByText('Pending Field')).toBeInTheDocument();
 
-    // #235 — the canonical list, unpaged: no limit is sent (§16).
+    // #235 — the canonical list, unpaged: no limit is sent (§16). It reads this year (#1180).
     await waitFor(() => expect(listEventsMock).toHaveBeenCalled());
     const [options] = listEventsMock.mock.calls.at(-1) as [{ query?: unknown } | undefined];
-    expect(options?.query).toBeUndefined();
+    expect(options?.query).toEqual({ eventYear: new Date().getFullYear() });
+  });
+
+  it('opens on this year\'s events and reads another year when one is chosen', async () => {
+    const currentYear = new Date().getFullYear();
+    listEventsMock.mockResolvedValue({ data: { events: [] } });
+
+    renderPage();
+
+    expect(await screen.findByText(`No events in ${currentYear}.`)).toBeInTheDocument();
+    expect(screen.getByTestId('root-admin-events-year')).toHaveValue(String(currentYear));
+
+    fireEvent.change(screen.getByTestId('root-admin-events-year'), {
+      target: { value: String(currentYear - 1) },
+    });
+
+    expect(await screen.findByText(`No events in ${currentYear - 1}.`)).toBeInTheDocument();
+    expect(listEventsMock).toHaveBeenCalledTimes(2);
+    const [options] = listEventsMock.mock.calls.at(-1) as [{ query?: unknown } | undefined];
+    expect(options?.query).toEqual({ eventYear: currentYear - 1 });
   });
 
   it('pool-master-33l.12 opens a participant grid modal for the selected current-state event', async () => {

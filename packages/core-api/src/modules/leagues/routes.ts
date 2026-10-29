@@ -115,11 +115,12 @@ export function leaguesModule(fastify: FastifyInstance, opts: MailModuleOptions 
       tags: ['Leagues'],
       summary: 'List leagues',
       description:
-        'Returns leagues together with the viewer\'s own memberships once as an array. The leagues list is the one inherently multi-league surface, so it is the one place the viewer\'s relationship travels as a set rather than per row (access rule A8).\n\n`scope` selects which leagues: `mine` (the default) returns the leagues the caller belongs to and powers the welcome page, header selector and My Leagues overview; `all` returns every league on the platform and powers root-admin league management. `all` is the unscoped read access rule A1 permits to root admins only, and returns 403 otherwise. `search` and `isActive` narrow either scope.\n\nThis replaced `listLeagues` + `adminListLeagues`, which were one operation split by caller role.',
+        'Returns leagues together with the viewer\'s own memberships once as an array. The leagues list is the one inherently multi-league surface, so it is the one place the viewer\'s relationship travels as a set rather than per row (access rule A8).\n\n`scope` selects which leagues: `mine` (the default) returns the leagues the caller belongs to and powers the welcome page, header selector and My Leagues overview; `all` returns every league on the platform and powers root-admin league management. `all` is the unscoped read access rule A1 permits to root admins only, and returns 403 otherwise; it also requires `search` (at least 3 characters once trimmed), so it never reads every league, and returns 400 SEARCH_TERM_REQUIRED without one. `search` and `isActive` narrow either scope.\n\nThis replaced `listLeagues` + `adminListLeagues`, which were one operation split by caller role.',
       operationId: 'listLeagues',
       querystring: schemaRef('LeagueListQuery'),
       response: {
         200: schemaRef('LeagueListResponse'),
+        400: schemaRef('ErrorEnvelope'),
         401: schemaRef('ErrorEnvelope'),
         403: schemaRef('ErrorEnvelope'),
       },

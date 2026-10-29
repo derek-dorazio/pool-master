@@ -136,7 +136,7 @@ export const QueryKeys = {
   /** The public event pages (#1007): one by its address, and the active ones of a sport or all. */
   eventPages: {
     detail: (sport: string, pageSlug: string) => ['poolmaster', 'event-pages', sport, pageSlug] as const,
-    list: (sport: string | null) => ['poolmaster', 'event-pages', 'list', sport] as const,
+    list: (sport: string | null, upcoming: boolean) => ['poolmaster', 'event-pages', 'list', sport, upcoming] as const,
   },
   leagues: {
     all: ['poolmaster', 'leagues'] as const,
@@ -191,8 +191,9 @@ export const QueryKeys = {
     bySeason: (leagueId: QueryKeyId, seasonYear: number) =>
       ['poolmaster', 'cups', leagueId, seasonYear] as const,
     seasons: (leagueId: QueryKeyId) => ['poolmaster', 'cups', leagueId, 'seasons'] as const,
-    squadPoints: (leagueId: QueryKeyId, cupId: QueryKeyId, squadId: QueryKeyId) =>
-      ['poolmaster', 'cups', leagueId, 'squad-points', cupId, squadId] as const,
+    /** One squad's points in the season's cup for a sports league (#1202). Under `bySeason`. */
+    squadPoints: (leagueId: QueryKeyId, seasonYear: number, sportLeagueId: QueryKeyId, squadId: QueryKeyId) =>
+      ['poolmaster', 'cups', leagueId, seasonYear, 'squad-points', sportLeagueId, squadId] as const,
     projection: (leagueId: QueryKeyId, cupId: QueryKeyId) =>
       ['poolmaster', 'cups', leagueId, 'projection', cupId] as const,
   },
@@ -229,7 +230,7 @@ export const QueryKeys = {
       ['poolmaster', 'root-admin', 'events', eventId, 'participants'] as const,
     eventSyncEvents: (sport: QueryKeyId) =>
       ['poolmaster', 'root-admin', 'event-sync-events', sport] as const,
-    events: ['poolmaster', 'root-admin', 'events'] as const,
+    eventsByYear: (eventYear: number) => ['poolmaster', 'root-admin', 'events', 'year', eventYear] as const,
     // The Manage sport screens (golf's first, every sport's since #623). Lists of one sport take
     // the sport; invalidating the bare prefix (`leagues`, `events`, `participants`) refreshes every
     // sport's.
@@ -295,8 +296,10 @@ export const QueryKeys = {
         dateWindow ?? null,
       ] as const,
     ingestionConfig: ['poolmaster', 'root-admin', 'ingestion-config'] as const,
+    // The search term is part of the key (#1180); invalidating the bare prefix refreshes every search.
     manageLeagues: ['poolmaster', 'root-admin', 'manage-leagues'] as const,
-    manageUsers: ['poolmaster', 'root-admin', 'manage-users'] as const,
+    manageLeaguesSearch: (search: string) => ['poolmaster', 'root-admin', 'manage-leagues', search] as const,
+    manageUsersSearch: (search: string) => ['poolmaster', 'root-admin', 'manage-users', search] as const,
     providers: ['poolmaster', 'root-admin', 'providers'] as const,
     // Every settings group (#450). History sits under the same prefix, so invalidating
     // `settings` after any save refreshes each group's recent changes too.

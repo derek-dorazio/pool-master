@@ -12,7 +12,7 @@ export function createEventPageHandlers(service: EventPageService) {
     request: FastifyRequest<{ Querystring: EventPageListQuery }>,
     _reply: FastifyReply,
   ): Promise<EventPageListResponse> {
-    const pages = await service.listPages(request.query.sport);
+    const pages = await service.listPages(request.query.sport, request.query.upcoming ?? false);
     return { eventPages: pages.map(toEventPageDto) };
   }
 

@@ -20,12 +20,15 @@ export function useEventPageQuery(sport: Sport | null, pageSlug: string | undefi
   });
 }
 
-/** The active event pages, of one sport or every sport: the Coming up rows. */
-export function useEventPagesQuery(sport?: Sport) {
+/**
+ * The active event pages, of one sport or every sport. With `upcoming`, only the pages with an
+ * edition coming, soonest first (#1202): the Coming up rows and an event page's next up.
+ */
+export function useEventPagesQuery(sport?: Sport, { upcoming = false }: { upcoming?: boolean } = {}) {
   return useQuery({
-    queryKey: QueryKeys.eventPages.list(sport ?? null),
+    queryKey: QueryKeys.eventPages.list(sport ?? null, upcoming),
     queryFn: async (): Promise<EventPageDto[]> => {
-      const response = await listEventPages({ query: sport ? { sport } : {} });
+      const response = await listEventPages({ query: { ...(sport ? { sport } : {}), ...(upcoming ? { upcoming } : {}) } });
       if (!response.data?.eventPages) {
         throwApiError(response.error, 'Event page list response is missing data.');
       }
