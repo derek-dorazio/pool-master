@@ -27,6 +27,7 @@ import {
   LeagueListResponseSchema,
   LeagueMembersResponseSchema,
   SportEventParticipantListResponseSchema,
+  SportEventYearsResponseSchema,
   SquadHistoryResponseSchema,
   SquadListResponseSchema,
 } from '@poolmaster/shared/dto';
@@ -101,6 +102,32 @@ async function seedEventWithField(golfers: number) {
     await prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: participant.id, isActive: true } });
   }
   return event;
+}
+
+/** A fresh sport league with one event in each of `years` years, so a read per year would scale. */
+async function seedSportLeagueYears(years: number) {
+  const prisma = getPrisma();
+  const suffix = randomUUID().slice(0, 8);
+  const sport = await prisma.sport.upsert({
+    where: { sport: Sport.GOLF },
+    create: { sport: Sport.GOLF, participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    update: {},
+  });
+  const sportLeague = await prisma.sportLeague.create({ data: { sportId: sport.id, name: `Scaling Tour ${suffix}` } });
+  const series = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `Scaling Classic ${suffix}` } });
+  await prisma.sportEvent.createMany({
+    data: Array.from({ length: years }, (_, index) => ({
+      eventSeriesId: series.id,
+      eventYear: 2000 + index,
+      externalId: `scaling-${suffix}-${index}`,
+      providerId: 'integration-test',
+      sport: Sport.GOLF,
+      name: `Scaling Classic ${suffix}`,
+      startDate: new Date(Date.UTC(2000 + index, 5, 4, 12)),
+      status: 'SCHEDULED' as const,
+    })),
+  });
+  return { sportLeague, viewer: await createTestUser() };
 }
 
 /** `contests` open roster contests in one league, each on an upcoming event of its own, so a read per event scales too. */
@@ -241,6 +268,15 @@ describe('list routes cost the same statements for 2 rows as for 20', () => {
       seed: async (golfers) => ({ event: await seedEventWithField(golfers), viewer: await createTestUser() }),
       call: ({ event, viewer }) => get(`/api/v1/events/${event.id}/participants`, viewer),
       rowsShown: (response) => okBody(response, SportEventParticipantListResponseSchema).participants.length,
+    });
+  });
+
+  it("GET a sport league's event years: the same statements for 2 years as for 20 (#1251)", async () => {
+    await expectConstantQueries({
+      route: 'GET /api/v1/events/years',
+      seed: seedSportLeagueYears,
+      call: ({ sportLeague, viewer }) => get(`/api/v1/events/years?sportLeagueId=${sportLeague.id}`, viewer),
+      rowsShown: (response) => okBody(response, SportEventYearsResponseSchema).years.length,
     });
   });
 
