@@ -184,7 +184,7 @@ describe('PrismaContestEntryMatchPredictionRepository', () => {
     const { event, game } = await createWeek('Week 1', AT);
     const { entry: oneGame } = await createPickEmEntry([event.id]);
     const { entry: fullSlate } = await createPickEmEntry([event.id]);
-    const counted = countingPrisma(getPrisma());
+    const counted = countingPrisma(getAppPrisma());
     const predictions = new PrismaContestEntryMatchPredictionRepository(counted.prisma);
     const saveOn = (contestEntryId: string, matchNumbers: readonly number[], at: Date) => predictions.save({
       contestEntryId,

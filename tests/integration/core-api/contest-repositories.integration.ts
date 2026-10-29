@@ -1471,8 +1471,8 @@ describe('EventLifecycleService — starting an event\'s contests on the ports (
     const alphaEntry = await createEntry(open.id, squads[0].id, 1, 'Alpha Entry');
     await repos().entries.setEventStatus(alphaEntry.id, event.id, 'SUBMITTED', new Date());
     const send = mockFn<MailDeliveryProvider['send']>(async () => ({ provider: 'smtp', messageId: 'mail' }));
-    const lifecycle = createEventLifecycleService(prisma, {
-      contestStarted: createContestNotices(prisma, {
+    const lifecycle = createEventLifecycleService(getAppPrisma(), {
+      contestStarted: createContestNotices(getAppPrisma(), {
         email: emailServiceOver({ providerName: 'smtp', send }),
         appBaseUrl: 'https://app.example.test',
         logger: fakeLogger(),
@@ -1532,8 +1532,8 @@ describe('EventLifecycleService — an event cancelled under a contest (#845 C7)
     const entry = await createEntry(open.id, squads[0].id, 1, 'Alpha Entry');
     await repos().entries.setEventStatus(entry.id, event.id, 'SUBMITTED', new Date());
     const send = mockFn<MailDeliveryProvider['send']>(async () => ({ provider: 'smtp', messageId: 'mail' }));
-    const lifecycle = createEventLifecycleService(prisma, {
-      sportEventChanged: createContestNotices(prisma, {
+    const lifecycle = createEventLifecycleService(getAppPrisma(), {
+      sportEventChanged: createContestNotices(getAppPrisma(), {
         email: emailServiceOver({ providerName: 'smtp', send }),
         appBaseUrl: 'https://app.example.test',
         logger: fakeLogger(),
@@ -1582,7 +1582,7 @@ describe('Entry reminders on the Prisma adapters (#845)', () => {
     const bravoEntry = await createEntry(open.id, squads[1].id, 1, 'Bravo Entry');
     await repos().entries.setEventStatus(bravoEntry.id, event.id, 'SUBMITTED', new Date());
     const send = mockFn<MailDeliveryProvider['send']>(async () => ({ provider: 'smtp', messageId: 'mail' }));
-    const reminders = createEntryReminders(prisma, {
+    const reminders = createEntryReminders(getAppPrisma(), {
       email: emailServiceOver({ providerName: 'smtp', send }),
       readConfig: () => EMAIL_SETTINGS.defaults({ POOLMASTER_ENVIRONMENT: 'prod' }),
       appBaseUrl: 'https://app.example.test',

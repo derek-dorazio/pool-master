@@ -183,7 +183,7 @@ async function midSeason() {
 describe('ContestService.getPickEmLeaderboard reads (#762)', () => {
   it('loads the games of all six weeks in one query, and the entries and picks of only the week under way, not a set per week', async () => {
     const season = await midSeason();
-    const { prisma, count } = countingPrisma(getPrisma());
+    const { prisma, count } = countingPrisma(getAppPrisma());
 
     const leaderboard = await createContestService(prisma, getApp().log, { planEntitlements: integrationPlanEntitlements(prisma) }).getPickEmLeaderboard(season.contest.id, season.viewerId);
 
@@ -200,7 +200,7 @@ describe('ContestService.getPickEmLeaderboard reads (#762)', () => {
   it('reports each settled week\'s game count and tiebreaker total from the batched games, and the live week\'s too', async () => {
     const season = await midSeason();
 
-    const leaderboard = await createContestService(getPrisma(), getApp().log, { planEntitlements: integrationPlanEntitlements() }).getPickEmLeaderboard(season.contest.id, season.viewerId);
+    const leaderboard = await createContestService(getAppPrisma(), getApp().log, { planEntitlements: integrationPlanEntitlements() }).getPickEmLeaderboard(season.contest.id, season.viewerId);
 
     expect(leaderboard.weeks.map((week) => [week.gameCount, week.tiebreakerTotalPoints])).toEqual([
       [3, 37], [3, 37], [3, 37], [3, 37],
@@ -212,7 +212,7 @@ describe('ContestService.getPickEmLeaderboard reads (#762)', () => {
   it('scores the week under way live and leaves the weeks the entry did not submit, and the week to come, empty', async () => {
     const season = await midSeason();
 
-    const leaderboard = await createContestService(getPrisma(), getApp().log, { planEntitlements: integrationPlanEntitlements() }).getPickEmLeaderboard(season.contest.id, season.viewerId);
+    const leaderboard = await createContestService(getAppPrisma(), getApp().log, { planEntitlements: integrationPlanEntitlements() }).getPickEmLeaderboard(season.contest.id, season.viewerId);
 
     const row = expectDefined(leaderboard.entries.find((entry) => entry.entryId === season.entry.id));
     expect(row.weeks.map((week) => [week.submitted, week.points])).toEqual([
@@ -228,7 +228,7 @@ describe('ContestService.getPickEmLeaderboard reads (#762)', () => {
   it('counts a cancelled week for nothing: no games, no tiebreaker total, and settled without a live load', async () => {
     const cancelled = await createWeek('Week 1', new Date(Date.now() - 7 * DAY), SportEventStatus.CANCELLED);
     const { contest, viewerId } = await createPickEmContest([cancelled.event.id]);
-    const { prisma, count } = countingPrisma(getPrisma());
+    const { prisma, count } = countingPrisma(getAppPrisma());
 
     const leaderboard = await createContestService(prisma, getApp().log, { planEntitlements: integrationPlanEntitlements(prisma) }).getPickEmLeaderboard(contest.id, viewerId);
 

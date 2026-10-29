@@ -52,7 +52,7 @@ function tokenFrom(message: MailDeliveryMessage | undefined): string {
 }
 
 function build(options: { now?: () => Date } = {}) {
-  const prisma = getPrisma();
+  const prisma = getAppPrisma();
   const users = new PrismaUserRepository(getAppPrisma());
   const mail = new RecordingMailDelivery();
   const outbox = inMemoryEmailMessages();

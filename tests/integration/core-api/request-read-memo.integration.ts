@@ -81,7 +81,7 @@ describe('request read memo with the Prisma repositories (#1176)', () => {
 
   it('never answers a transaction\'s read from the request\'s memo', async () => {
     const { league, user } = await seedLeague();
-    const prisma = getPrisma();
+    const prisma = getAppPrisma();
     const memberships = new PrismaLeagueMembershipRepository(getAppPrisma());
 
     const inside = await runWithReadMemo(async () => {
@@ -113,7 +113,7 @@ describe('request read memo with the Prisma repositories (#1176)', () => {
 
   it('reads no league and no membership after the request deletes the league', async () => {
     const { league, user } = await seedLeague(false);
-    const prisma = getPrisma();
+    const prisma = getAppPrisma();
     const leagues = new PrismaLeagueRepository(getAppPrisma());
     const memberships = new PrismaLeagueMembershipRepository(getAppPrisma());
     const service = new LeagueService({ leagues, memberships, users: new PrismaUserRepository(getAppPrisma()), prisma });

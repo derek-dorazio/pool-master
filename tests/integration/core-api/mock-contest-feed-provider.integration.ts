@@ -737,7 +737,7 @@ describe('mock contest feed provider event-first verification', () => {
     registry.register(Sport.GOLF, provider, 'PRIMARY');
     const persistence = new IngestionPersistence(getAppPrisma());
     const syncRunLedger = new ProviderSyncRunLedger(new PrismaProviderSyncRunRepository(getAppPrisma()));
-    const eventReader = createScheduledEventReader({ prisma, registry });
+    const eventReader = createScheduledEventReader({ prisma: getAppPrisma(), registry });
     const configReader = {
       getConfig: async () => syncVerificationConfig,
       getPerSportConfig: async () => syncVerificationConfig,
@@ -877,13 +877,13 @@ describe('mock contest feed provider event-first verification', () => {
     const provider = new MockContestFeedAdapter(mockProvider.baseUrl);
     const registry = new ProviderRegistry();
     registry.register(Sport.GOLF, provider, 'PRIMARY');
-    const settlement = createContestSettlementService(prisma);
-    const eventLifecycleService = createEventLifecycleService(prisma, {
+    const settlement = createContestSettlementService(getAppPrisma());
+    const eventLifecycleService = createEventLifecycleService(getAppPrisma(), {
       contestSettlement: settlement,
     });
     const persistence = new IngestionPersistence(getAppPrisma());
     const syncRunLedger = new ProviderSyncRunLedger(new PrismaProviderSyncRunRepository(getAppPrisma()));
-    const eventReader = createScheduledEventReader({ prisma, registry });
+    const eventReader = createScheduledEventReader({ prisma: getAppPrisma(), registry });
     const scheduler = new IngestionScheduler(registry, {
       onEventDetail: async (detail) => (await persistence.persistEventDetailWithDiagnostics(detail)).writeDiagnostics,
       onLiveScores: async (result, providerIdForResult) =>

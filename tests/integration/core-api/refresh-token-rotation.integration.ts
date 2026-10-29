@@ -22,7 +22,7 @@ beforeAll(() => setupIntegrationTests());
 afterAll(() => teardownIntegrationTests());
 
 function buildAuthService(): AuthService {
-  return new AuthService(new PrismaUserRepository(getAppPrisma()), getPrisma());
+  return new AuthService(new PrismaUserRepository(getAppPrisma()), getAppPrisma());
 }
 
 describe('refresh-token rotation (#1175)', () => {

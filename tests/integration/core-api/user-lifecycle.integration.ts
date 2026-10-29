@@ -119,17 +119,16 @@ describe('shared user delete cascade (#202)', () => {
       },
     });
 
-    const counts = await countUserDeleteDependencies(prisma, user.id);
+    const counts = await countUserDeleteDependencies(getAppPrisma(), user.id);
 
     expect(counts.leagueCount).toBe(1);
     expect(hasUserDeleteDependencies(counts)).toBe(true);
   });
 
   it('reports no dependencies for an unattached user', async () => {
-    const prisma = getPrisma();
     const { user } = await createTestUser({ lastName: 'Unattached' });
 
-    const counts = await countUserDeleteDependencies(prisma, user.id);
+    const counts = await countUserDeleteDependencies(getAppPrisma(), user.id);
 
     expect(counts).toEqual({ leagueCount: 0, squadMembershipCount: 0, createdSquadCount: 0 });
     expect(hasUserDeleteDependencies(counts)).toBe(false);
@@ -181,11 +180,11 @@ describe('shared user delete cascade (#202)', () => {
     });
 
     // Two live, one already revoked — the already-revoked one must not be counted again.
-    await expect(revokeUserSessions(prisma, user.id)).resolves.toBe(2);
+    await expect(revokeUserSessions(getAppPrisma(), user.id)).resolves.toBe(2);
     await expect(
       prisma.refreshToken.count({ where: { userId: user.id, revokedAt: null } }),
     ).resolves.toBe(0);
     // Idempotent: nothing live left to revoke.
-    await expect(revokeUserSessions(prisma, user.id)).resolves.toBe(0);
+    await expect(revokeUserSessions(getAppPrisma(), user.id)).resolves.toBe(0);
   });
 });

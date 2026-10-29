@@ -166,7 +166,7 @@ describe('createContestOpeningReader.nextSquaresKickoff', () => {
     const ahead = await prisma.sportEventMatch.create({
       data: { sportEventId: sportEvent.id, sportEventRoundId: round.id, matchNumber: 2, isNeutralSite: false, scheduledDate: new Date('2030-01-24T20:00:00.000Z') },
     });
-    const reader = createContestOpeningReader(prisma);
+    const reader = createContestOpeningReader(getAppPrisma());
     const state = await reader.findById(sportEvent.id);
     if (state === null) throw new Error('The event was not read back.');
 

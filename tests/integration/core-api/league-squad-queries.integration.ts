@@ -56,24 +56,22 @@ async function createLeague(label: string) {
 }
 
 function leagueService() {
-  const prisma = getPrisma();
   return new LeagueService({
     leagues: new PrismaLeagueRepository(getAppPrisma()),
     memberships: new PrismaLeagueMembershipRepository(getAppPrisma()),
     users: new PrismaUserRepository(getAppPrisma()),
-    prisma,
+    prisma: getAppPrisma(),
   });
 }
 
 function ownerInvitationService() {
-  const prisma = getPrisma();
   return new SquadOwnerInvitationService({
     squadOwnerInvitations: new PrismaSquadOwnerInvitationRepository(getAppPrisma()),
     leagueMemberships: new PrismaLeagueMembershipRepository(getAppPrisma()),
     squads: new PrismaSquadRepository(getAppPrisma()),
     squadMemberships: new PrismaSquadMembershipRepository(getAppPrisma()),
     users: new PrismaUserRepository(getAppPrisma()),
-    prisma,
+    prisma: getAppPrisma(),
     memberJoined: { tellJoined: async () => undefined },
     membershipTransaction: new PrismaMembershipTransaction(getAppPrisma()),
     email: emailServiceInto(),

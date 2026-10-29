@@ -70,9 +70,9 @@ function buildUserService(mail: MailDeliveryProvider): UserService {
   const email = emailServiceOver(mail);
   return new UserService(
     users,
-    getPrisma(),
+    getAppPrisma(),
     new PasswordChangedNotifier(users, email, APP_BASE_URL),
-    new EmailChangeUndoService({ users, prisma: getPrisma(), email, appBaseUrl: APP_BASE_URL }),
+    new EmailChangeUndoService({ users, prisma: getAppPrisma(), email, appBaseUrl: APP_BASE_URL }),
   );
 }
 
@@ -101,14 +101,13 @@ class DeliveringPasswordResetService extends PasswordResetService {
 }
 
 function buildService(options: { now?: () => Date } = {}) {
-  const prisma = getPrisma();
   const mail = new RecordingMailDelivery();
   const messages = new PrismaEmailMessageRepository(getAppPrisma());
   const readConfig = () => EMAIL_SETTINGS.defaults({ POOLMASTER_ENVIRONMENT: 'prod' });
   const sender = new EmailSender({ messages, transport: mail, readConfig });
   const service = new DeliveringPasswordResetService({
     users: new PrismaUserRepository(getAppPrisma()),
-    prisma,
+    prisma: getAppPrisma(),
     email: new EmailService({
       messages,
       suppressions: new PrismaEmailSuppressionRepository(getAppPrisma()),

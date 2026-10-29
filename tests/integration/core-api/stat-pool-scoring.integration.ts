@@ -333,7 +333,7 @@ describe('World Series stat pool contest — scored from its players\' stat line
       .toEqual([[speedsters.id, '1', 6], [sluggers.id, '2', 5]]);
 
     await prisma.sportEvent.update({ where: { id: event.id }, data: { status: 'COMPLETED' } });
-    await expect(createContestSettlementService(prisma).settleFinishedSportEvent(event.id))
+    await expect(createContestSettlementService(getAppPrisma()).settleFinishedSportEvent(event.id))
       .resolves.toMatchObject({ contestsSettled: 1, contestsCompleted: 1, standingsUpserted: 2 });
     const standings = await prisma.contestEntryStanding.findMany({ where: { contestId: contest.id }, orderBy: { position: 'asc' } });
     expect(standings.map((row) => [row.contestEntryId, row.position, row.totalScore])).toEqual([
