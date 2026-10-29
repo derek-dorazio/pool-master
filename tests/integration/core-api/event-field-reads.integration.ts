@@ -3,6 +3,10 @@ import { randomUUID } from 'node:crypto';
 import type { PrismaClient } from '@prisma/client';
 import { Sport, SportEventStatus } from '@poolmaster/shared/domain';
 import type { SportEventParticipantListResponse, SportEventParticipantResponse } from '@poolmaster/shared/dto';
+import {
+  PrismaSportEventMatchRepository,
+  PrismaSportEventParticipantRaceResultRepository,
+} from '../../../packages/core-api/src/adapters';
 import { createSportEventParticipantService } from '../../../packages/core-api/src/modules/events/wiring';
 import {
   cleanupTestData,
@@ -112,6 +116,31 @@ async function golfEvent() {
   return { event, ana, bea, cal };
 }
 
+/** A draft event of `sport` on a fixture tour of its own, with a field of `names`, each a new participant of the sport. */
+async function eventWithField(sport: Sport, names: readonly string[]) {
+  const prisma = getPrisma();
+  const sportRow = await prisma.sport.findUniqueOrThrow({ where: { sport } });
+  const event = await prisma.sportEvent.create({
+    data: {
+      ...(await freshEventEdition(prisma)),
+      externalId: `field-reads-${randomUUID()}`,
+      providerId: 'integration-test',
+      sport,
+      name: `Field Reads ${sport} ${randomUUID().slice(0, 6)}`,
+      startDate: new Date('2026-05-07T12:00:00.000Z'),
+      status: SportEventStatus.DRAFT,
+    },
+  });
+  const field = [];
+  for (const name of names) {
+    const participant = await prisma.participant.create({
+      data: { sportId: sportRow.id, name: `${name} ${randomUUID().slice(0, 6)}`, participantType: 'TEAM', status: 'ACTIVE' },
+    });
+    field.push(await prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: participant.id } }));
+  }
+  return { event, field };
+}
+
 describe('An event\'s field', () => {
   it('is read in one call on the field table, each row with its participant, affiliation, price, standing and rounds in round order, seeded first', async () => {
     const { event, ana, bea, cal } = await golfEvent();
@@ -167,6 +196,113 @@ describe('An event\'s field', () => {
 
     expect(saved.statusCode).toBe(200);
     expect(polled.find((row) => row.id === bea.id)?.ranking).toBe(3);
+  });
+
+  it('is read afresh once a participant on it is renamed, or the event\'s sport league affiliates another, so the next poll shows it', async () => {
+    const { event, ana, cal } = await golfEvent();
+    const { sportLeagueId } = await getPrisma().eventSeries.findUniqueOrThrow({ where: { id: event.eventSeriesId } });
+    const admin = await createTestUser({ isRootAdmin: true });
+    const readField = async () => (await getApp().inject({
+      method: 'GET',
+      url: `/api/v1/events/${event.id}/participants`,
+      headers: admin.headers,
+    })).json<SportEventParticipantListResponse>().participants;
+
+    await readField();
+    const renamed = await getApp().inject({
+      method: 'PATCH',
+      url: `/api/v1/participants/${ana.participantId}`,
+      headers: admin.headers,
+      payload: { name: 'Ana Renamed' },
+    });
+    const afterRename = await readField();
+    const affiliated = await getApp().inject({
+      method: 'POST',
+      url: `/api/v1/sport-leagues/${sportLeagueId}/affiliations`,
+      headers: admin.headers,
+      payload: { participantId: cal.participantId },
+    });
+    const afterAffiliation = await readField();
+
+    expect([renamed.statusCode, affiliated.statusCode]).toEqual([200, 201]);
+    expect(afterRename.find((row) => row.id === ana.id)?.participant.name).toBe('Ana Renamed');
+    expect(afterAffiliation.find((row) => row.id === cal.id)?.affiliatedWithSportLeague).toBe(true);
+  });
+});
+
+// The relations of the families golf leaves empty, against real Postgres: what the field read
+// gives each row is what the per-table reads it replaced gave (#1163).
+describe('An event\'s field, for every scoring family', () => {
+  it('gives each team the bracket matches naming it on either side, in match order, as the event\'s match read gives them', async () => {
+    const prisma = getPrisma();
+    const { event, field: [duke, unc, kansas, baylor] } = await eventWithField(Sport.BASKETBALL, ['Duke', 'UNC', 'Kansas', 'Baylor']);
+    const [round1, round2] = await Promise.all([1, 2].map((roundNumber) => prisma.sportEventRound.create({
+      data: { sportEventId: event.id, roundNumber, scheduledDate: new Date(`2026-03-${19 + roundNumber}`) },
+    })));
+    // Duke is away in match 1 and home in match 2; written match 2 first.
+    const match2 = await prisma.sportEventMatch.create({
+      data: { sportEventId: event.id, sportEventRoundId: round2.id, matchNumber: 2, homeSportEventParticipantId: duke.id, isNeutralSite: true },
+    });
+    const match1 = await prisma.sportEventMatch.create({
+      data: {
+        sportEventId: event.id,
+        sportEventRoundId: round1.id,
+        matchNumber: 1,
+        homeSportEventParticipantId: unc.id,
+        awaySportEventParticipantId: duke.id,
+        isNeutralSite: true,
+        status: 'COMPLETED',
+        winnerSide: 'AWAY',
+        homeScore: 70,
+        awayScore: 75,
+        homeSpread: '-3.5',
+        advancesToMatchId: match2.id,
+        advancesToSide: 'HOME',
+      },
+    });
+    for (const [periodNumber, homeScore, awayScore] of [[2, 40, 37], [1, 30, 38]]) {
+      await prisma.sportEventMatchPeriodScore.create({ data: { sportEventMatchId: match1.id, periodNumber, homeScore, awayScore } });
+    }
+    await prisma.sportEventMatch.create({
+      data: { sportEventId: event.id, sportEventRoundId: round1.id, matchNumber: 3, homeSportEventParticipantId: kansas.id, awaySportEventParticipantId: baylor.id, isNeutralSite: true },
+    });
+
+    const rows = await createSportEventParticipantService(prisma).listEventParticipants(event.id);
+    const matches = await new PrismaSportEventMatchRepository(prisma).findBySportEvent(event.id);
+
+    const dukeRow = rows.find((row) => row.entry.id === duke.id);
+    expect(dukeRow?.matches.map((match) => [match.matchNumber, match.roundNumber])).toEqual([[1, 1], [2, 2]]);
+    expect(dukeRow?.matches[0]).toMatchObject({ homeSpread: -3.5, periodScores: [
+      { periodNumber: 1, homeScore: 30, awayScore: 38 },
+      { periodNumber: 2, homeScore: 40, awayScore: 37 },
+    ] });
+    for (const row of rows) {
+      expect(row.matches).toEqual(matches.filter((match) => (
+        match.homeSportEventParticipantId === row.entry.id || match.awaySportEventParticipantId === row.entry.id
+      )));
+    }
+  });
+
+  it('gives a runner its race result once one is entered, and none to a runner without one, as the event\'s race result read gives them', async () => {
+    const prisma = getPrisma();
+    const { event, field: [winner, scratched, unplaced] } = await eventWithField(Sport.HORSE_RACING, ['Secretariat', 'Sham', 'Twice A Prince']);
+    await prisma.sportEventParticipantRaceResult.create({
+      data: { sportEventParticipantId: winner.id, finishPosition: 1, startPosition: 2, resultStatus: 'FINISHED', isOfficial: true, riderName: 'Ron Turcotte' },
+    });
+    await prisma.sportEventParticipantRaceResult.create({
+      data: { sportEventParticipantId: scratched.id, resultStatus: 'DID_NOT_START' },
+    });
+
+    const rows = await createSportEventParticipantService(prisma).listEventParticipants(event.id);
+    const results = await new PrismaSportEventParticipantRaceResultRepository(prisma).findBySportEvent(event.id);
+
+    const byRow = new Map(rows.map((row) => [row.entry.id, row.raceResult]));
+    expect(byRow.get(winner.id)).toMatchObject({ finishPosition: 1, startPosition: 2, resultStatus: 'FINISHED', isOfficial: true, riderName: 'Ron Turcotte' });
+    expect(byRow.get(scratched.id)).toMatchObject({ finishPosition: null, resultStatus: 'DID_NOT_START', isOfficial: false });
+    expect(byRow.get(unplaced.id)).toBeNull();
+    for (const row of rows) {
+      expect(row.raceResult).toEqual(results.find((result) => result.sportEventParticipantId === row.entry.id) ?? null);
+    }
   });
 });
 

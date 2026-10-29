@@ -7,6 +7,7 @@
  * being computed waits for it rather than starting another. A computation that fails is not
  * kept, so the next caller asks again. `forget` drops a key at once, for a write this container
  * made: a computation in flight for it is no longer handed out, so the next caller reads afresh.
+ * `clear` drops every key, for a write whose reach spans keys.
  */
 
 /** How long a read is kept, unless the environment sets another. */
@@ -57,6 +58,11 @@ export class ReadCache<T> {
   /** Drops `key`, so the next read of it computes afresh. */
   forget(key: string): void {
     this.reads.delete(key);
+  }
+
+  /** Drops every key, for a write that touches values under many keys at once. */
+  clear(): void {
+    this.reads.clear();
   }
 
   /** Forgets every value past its TTL, so the cache holds only the keys read lately. */

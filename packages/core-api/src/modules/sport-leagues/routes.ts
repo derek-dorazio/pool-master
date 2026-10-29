@@ -14,7 +14,7 @@ import '@poolmaster/shared/dto/sport-catalog.dto';
 import { schemaComponentsPlugin } from '../../plugins/schema-components';
 import { getAppPrisma } from '../../core/prisma-context';
 import { requireRootAdmin } from '../../core/root-admin-guard';
-import { createSportEventServices } from '../events/wiring';
+import { createSportEventServices, eventFieldCache } from '../events/wiring';
 import { createSportLeagueHandlers } from './handler';
 
 const TAGS = ['Sport leagues'];
@@ -35,6 +35,13 @@ export function sportLeaguesModule(fastify: FastifyInstance): void {
   const services = createSportEventServices(getAppPrisma(fastify), fastify.log);
   const handler = createSportLeagueHandlers(services.sportLeagues);
   const write = { onRequest: requireRootAdmin };
+
+  // An affiliation write changes which participants every event of the sport league flags as
+  // its own (#1163). Rare enough to forget every event field this container read.
+  fastify.addHook('onSend', async (request, _reply, payload) => {
+    if (request.method !== 'GET' && request.method !== 'HEAD') eventFieldCache.clear();
+    return payload;
+  });
 
   fastify.get('/', {
     schema: {

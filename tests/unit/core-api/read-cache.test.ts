@@ -1,9 +1,9 @@
 import { ReadCache, readCacheTtlMs } from '../../../packages/core-api/src/core/read-cache';
 
-// What forgetting a read does (#1163): a write this container made drops the key at once, so
-// the next read computes afresh, even while an older computation is still in flight. Keeping
-// a read for its TTL, sharing one in flight and dropping a failed one are covered through the
-// contest leaderboard cache, which keeps its boards in a ReadCache.
+// What forgetting a read does (#1163): a write this container made drops the key, or every
+// key, at once, so the next read computes afresh, even while an older computation is still in
+// flight. Keeping a read for its TTL, sharing one in flight and dropping a failed one are
+// covered through the contest leaderboard cache, which keeps its boards in a ReadCache.
 
 const T0 = new Date('2026-10-28T20:00:00.000Z');
 const at = (ms: number) => new Date(T0.getTime() + ms);
@@ -50,5 +50,18 @@ describe('readCacheTtlMs', () => {
     expect(readCacheTtlMs({ CONTEST_LEADERBOARD_CACHE_TTL_MS: '0' }, 'EVENT_FIELD_CACHE_TTL_MS')).toBe(30_000);
     expect(() => readCacheTtlMs({ EVENT_FIELD_CACHE_TTL_MS: '-5' }, 'EVENT_FIELD_CACHE_TTL_MS'))
       .toThrow('EVENT_FIELD_CACHE_TTL_MS must be a whole number of milliseconds, 0 or more; got "-5"');
+  });
+});
+
+describe('ReadCache.clear', () => {
+  it('drops every kept value at once, for a write that reaches every key', async () => {
+    const cache = new ReadCache<string>();
+    await cache.get('event-1', at(0), async () => 'event 1');
+    await cache.get('event-2', at(0), async () => 'event 2');
+
+    cache.clear();
+
+    await expect(cache.get('event-1', at(1), async () => 'event 1 again')).resolves.toBe('event 1 again');
+    await expect(cache.get('event-2', at(1), async () => 'event 2 again')).resolves.toBe('event 2 again');
   });
 });
