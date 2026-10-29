@@ -24,7 +24,7 @@ import {
   type SportLeague,
 } from '@poolmaster/shared/domain';
 import { ContestCutoffKind, contestCutoff, cutoffTiming } from '../contests/entry-window';
-import { readEventsOnce, readMatchesOnce, readOncePerKey } from '../events/event-reads';
+import { readEventMatchesOnce, readEventsOnce, readOncePerKey } from '../events/event-reads';
 import type { SportEventTierService } from '../events/sport-event-tier-service';
 
 export interface ContestSummaryDeps {
@@ -32,7 +32,7 @@ export interface ContestSummaryDeps {
   sportEvents: Pick<SportEventRepository, 'findByIds'>;
   /** The first event's sport league: its name, and a bracket's round names for a second-chance bracket's starting round. */
   sportLeagues: Pick<SportLeagueRepository, 'findById'>;
-  matches: Pick<SportEventMatchRepository, 'findBySportEvent'>;
+  matches: Pick<SportEventMatchRepository, 'findBySportEvent' | 'findBySportEvents'>;
   tiers: Pick<SportEventTierService, 'getEffectiveTiersForSportEvent'>;
 }
 
@@ -63,7 +63,7 @@ export function shareSummaryReads(
     configurations: deps.configurations,
     sportEvents: readEventsOnce(deps.sportEvents, known),
     sportLeagues: { findById: readOncePerKey((id) => deps.sportLeagues.findById(id)) },
-    matches: readMatchesOnce(deps.matches),
+    matches: readEventMatchesOnce(deps.matches),
     tiers: { getEffectiveTiersForSportEvent: readOncePerKey((id) => deps.tiers.getEffectiveTiersForSportEvent(id)) },
   };
 }
@@ -107,7 +107,7 @@ export async function summarizeContest(deps: ContestSummaryDeps, contest: Contes
  * bracket's starting round or a squares game's kickoff. Never before the event starts.
  */
 export async function contestClosesAt(
-  deps: Pick<ContestSummaryDeps, 'matches'>,
+  deps: { matches: Pick<SportEventMatchRepository, 'findBySportEvent'> },
   contest: Contest,
   rules: ContestSelectionConfig,
   first: SportEvent,
@@ -128,7 +128,7 @@ function roundNameOf(sportLeague: SportLeague | null, sportEvent: SportEvent): R
 
 /** How the event plays, as E1 lists it: "16 games" or "4 rounds"; null when neither is known. */
 export async function describeEventFormat(
-  deps: Pick<ContestSummaryDeps, 'matches'>,
+  deps: { matches: Pick<SportEventMatchRepository, 'findBySportEvent'> },
   sportEvent: SportEvent,
 ): Promise<string | null> {
   const games = await deps.matches.findBySportEvent(sportEvent.id);

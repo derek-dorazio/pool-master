@@ -472,6 +472,12 @@ export interface ContestRepository {
    */
   transitionStatus(id: string, transition: ContestStatusTransition): Promise<boolean>;
   /**
+   * `transitionStatus` for several contests at once (#1199): one guarded write moving every one
+   * of `ids` still in a `from` status. Answers the ids this call moved, so two runs cannot both
+   * move the same contest.
+   */
+  transitionStatuses(ids: readonly string[], transition: ContestStatusTransition): Promise<string[]>;
+  /**
    * Sets how much the contest counts toward its cup and the championship (#841), but only while
    * it is in one of `whileIn`: a guarded single write, so it cannot land after settlement has
    * moved the contest to COMPLETED. Returns whether this call made the change.

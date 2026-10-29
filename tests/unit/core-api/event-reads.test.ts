@@ -6,7 +6,6 @@ import type { SportEvent, SportEventMatch } from '@poolmaster/shared/domain';
 import {
   readEventMatchesOnce,
   readEventsOnce,
-  readMatchesOnce,
   readOncePerKey,
 } from '../../../packages/core-api/src/modules/events/event-reads';
 
@@ -65,20 +64,6 @@ describe('fan-out event reads', () => {
     });
   });
 
-  describe('readMatchesOnce', () => {
-    it('reads each event\'s matches once, and hands each caller its own copy to change', async () => {
-      const findBySportEvent = jest.fn(async (sportEventId: string) => [match(sportEventId, 1), match(sportEventId, 2)]);
-      const matches = readMatchesOnce({ findBySportEvent });
-
-      const first = await matches.findBySportEvent('week-1');
-      first.reverse();
-      const second = await matches.findBySportEvent('week-1');
-
-      expect(second.map((game) => game.matchNumber)).toEqual([1, 2]);
-      expect(findBySportEvent).toHaveBeenCalledTimes(1);
-    });
-  });
-
   describe('readEventMatchesOnce', () => {
     it('reads the events not read yet together, by event or across events, and answers by event then match number', async () => {
       const all = [match('week-1', 1), match('week-1', 2), match('week-2', 1), match('week-3', 1)];
@@ -91,6 +76,16 @@ describe('fan-out event reads', () => {
       ]);
       await expect(matches.findBySportEvent('week-1')).resolves.toEqual([match('week-1', 1), match('week-1', 2)]);
       expect(findBySportEvents.mock.calls).toEqual([[['week-2']], [['week-1', 'week-3']]]);
+    });
+
+    it('hands each caller its own copy of an event\'s matches to change', async () => {
+      const findBySportEvents = jest.fn(async () => [match('week-1', 1), match('week-1', 2)]);
+      const matches = readEventMatchesOnce({ findBySportEvents });
+
+      (await matches.findBySportEvent('week-1')).reverse();
+
+      expect((await matches.findBySportEvent('week-1')).map((game) => game.matchNumber)).toEqual([1, 2]);
+      expect(findBySportEvents).toHaveBeenCalledTimes(1);
     });
 
     it('answers an event with no matches with none, without reading it again', async () => {

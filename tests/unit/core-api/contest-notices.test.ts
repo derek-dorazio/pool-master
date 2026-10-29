@@ -88,6 +88,10 @@ describe('ContestNotices', () => {
           eventReads.push(`matches:${sportEventId}`);
           return matches.filter((match) => match.sportEventId === sportEventId);
         },
+        findBySportEvents: async (sportEventIds) => {
+          eventReads.push(...sportEventIds.map((sportEventId) => `matches:${sportEventId}`));
+          return matches.filter((match) => sportEventIds.includes(match.sportEventId));
+        },
       },
       tiers: {
         getEffectiveTiersForSportEvent: async (sportEventId) => {

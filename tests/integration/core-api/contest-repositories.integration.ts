@@ -390,6 +390,25 @@ describe('ContestRepository', () => {
     expect(completed).toEqual(expect.objectContaining({ status: ContestStatus.COMPLETED, startsAt, endsAt }));
   });
 
+  it('transitions several contests in one write, only those still in the given statuses, and answers the ids it moved', async () => {
+    const { league, event } = await createLeagueAndEvent();
+    const first = await createContest(league.id, event.id, 'First to start', ContestStatus.OPEN);
+    const second = await createContest(league.id, event.id, 'Second to start', ContestStatus.OPEN);
+    const live = await createContest(league.id, event.id, 'Already live', ContestStatus.ACTIVE);
+    const startsAt = new Date('2026-06-04T12:00:00.000Z');
+    const start = { from: [ContestStatus.OPEN], to: ContestStatus.ACTIVE, startsAt };
+
+    const moved = await repos().contests.transitionStatuses([first.id, second.id, live.id], start);
+
+    expect([...moved].sort()).toEqual([first.id, second.id].sort());
+    await expect(repos().contests.transitionStatuses([first.id, second.id], start)).resolves.toEqual([]);
+    await expect(repos().contests.transitionStatuses([], start)).resolves.toEqual([]);
+    for (const id of [first.id, second.id]) {
+      await expect(repos().contests.findById(id)).resolves.toEqual(expect.objectContaining({ status: ContestStatus.ACTIVE, startsAt }));
+    }
+    await expect(repos().contests.findById(live.id)).resolves.toEqual(expect.objectContaining({ status: ContestStatus.ACTIVE, startsAt: undefined }));
+  });
+
   it('sets a cup weight only while the contest is in the given statuses, and says when it changed nothing', async () => {
     const { league, event } = await createLeagueAndEvent();
     const open = await createContest(league.id, event.id, 'Weighted', ContestStatus.OPEN);

@@ -28,6 +28,7 @@ import type {
   ContestConfigurationRepository,
   ContestRepository,
   LeagueRepository,
+  SportEventMatchRepository,
   SportEventRepository,
   SportLeagueRepository,
 } from '@poolmaster/shared/db';
@@ -71,7 +72,7 @@ import {
 } from '../email';
 import type { DueNotifications } from '../events/event-lifecycle-scheduler';
 import type { EmailConfig } from '@poolmaster/shared/dto';
-import { contestClosesAt, type ContestSummaryDeps } from './contest-summary';
+import { contestClosesAt } from './contest-summary';
 import { activeLeagueMembersWithRoles, type LeagueMemberDeps } from './league-members';
 
 const HOUR_MS = 60 * 60_000;
@@ -94,7 +95,9 @@ const DIGEST_TIME_ZONE = 'America/New_York';
 /** The events C1 and C2 are about: not yet started, and not called off or on hold. */
 const UPCOMING_STATUSES: readonly SportEventStatus[] = [SportEventStatus.DRAFT, SportEventStatus.SCHEDULED];
 
-export interface CommissionerNoticeDeps extends LeagueMemberDeps, Pick<ContestSummaryDeps, 'matches'> {
+export interface CommissionerNoticeDeps extends LeagueMemberDeps {
+  /** A cutoff's games, for when picks close. */
+  matches: Pick<SportEventMatchRepository, 'findBySportEvent'>;
   sportEvents: Pick<SportEventRepository, 'findAll' | 'findByIds' | 'countParticipants'>;
   contests: Pick<ContestRepository, 'findBySportEvent' | 'findByStatuses'>;
   /** A draft contest's rules, for when its picks close. */

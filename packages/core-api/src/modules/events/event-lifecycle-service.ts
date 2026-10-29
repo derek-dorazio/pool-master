@@ -265,6 +265,9 @@ export class EventLifecycleService {
         .map((configuration) => [configuration.contestId, configuration.configJson]),
     );
 
+    // Each contest past its cutoff, by the moment it went live: one guarded write per moment
+    // (#1199), since an NFL Sunday can start hundreds of contests on one event.
+    const dueByStart = new Map<number, Array<{ contest: Contest; cutoff: ContestCutoffKind }>>();
     for (const contest of candidates) {
       const cutoff = contest.selectionType === SelectionType.BRACKET || contest.selectionType === SelectionType.SQUARES
         ? contestCutoff(configJsonByContest.get(contest.id), contest.squaresGameMatchId)
@@ -275,42 +278,49 @@ export class EventLifecycleService {
       if (!hasSportEventStarted(window, now)) {
         continue;
       }
-      // poolmaster-allow-query-in-loop: #1199
-      const started = await this.contestDeps.contests.transitionStatus(contest.id, {
-        from: STARTABLE,
-        to: ContestStatus.ACTIVE,
-        startsAt: window.startDate,
-      });
+      const startsAt = window.startDate.getTime();
+      dueByStart.set(startsAt, [...(dueByStart.get(startsAt) ?? []), { contest, cutoff: cutoff.kind }]);
+    }
 
-      if (!started) {
-        this.logger?.debug({
-          contestId: contest.id,
-          sportEventId: sportEvent.id,
-          providerId: sportEvent.providerId,
-          eventExternalId: sportEvent.externalId,
-        }, 'Skipped contest started email because contest was already active');
-        continue;
+    const started: Contest[] = [];
+    try {
+      for (const [startsAt, due] of dueByStart) {
+        // poolmaster-allow-query-in-loop: one write per cutoff moment (the event's start, a bracket round's, a squares game's kickoff), not per contest
+        const activated = new Set(await this.contestDeps.contests.transitionStatuses(due.map(({ contest }) => contest.id), {
+          from: STARTABLE,
+          to: ContestStatus.ACTIVE,
+          startsAt: new Date(startsAt),
+        }));
+        for (const { contest, cutoff } of due) {
+          const logged = {
+            contestId: contest.id,
+            sportEventId: sportEvent.id,
+            providerId: sportEvent.providerId,
+            eventExternalId: sportEvent.externalId,
+          };
+          if (!activated.has(contest.id)) {
+            this.logger?.debug(logged, 'Skipped contest started email because contest was already active');
+            continue;
+          }
+          this.logger?.info({ ...logged, cutoff }, 'Activated contest from in-progress sport event');
+          started.push(contest);
+        }
       }
-
-      this.logger?.info({
-        contestId: contest.id,
-        sportEventId: sportEvent.id,
-        providerId: sportEvent.providerId,
-        eventExternalId: sportEvent.externalId,
-        cutoff: cutoff.kind,
-      }, 'Activated contest from in-progress sport event');
-      await this.tellContestStarted(contest, sportEvent);
+    } finally {
+      // The contests already live are told even when a later write fails: they are no longer
+      // startable, so no later sweep would tell them.
+      if (started.length > 0) await this.tellContestsStarted(started, sportEvent);
     }
   }
 
-  /** E1, "Contest is live": queued for the league, never failing the transition. */
-  private async tellContestStarted(contest: Contest, sportEvent: SportEvent): Promise<void> {
+  /** E1, "Contest is live": queued for each contest's league, never failing the transition. */
+  private async tellContestsStarted(contests: Contest[], sportEvent: SportEvent): Promise<void> {
     try {
-      await this.contestStarted?.contestStarted(contest, sportEvent);
+      await this.contestStarted?.contestsStarted(contests, sportEvent);
     } catch (err) {
       this.logger?.error({
-        contestId: contest.id,
-        leagueId: contest.leagueId,
+        sportEventId: sportEvent.id,
+        contestIds: contests.map((contest) => contest.id),
         error: err instanceof Error ? err.message : String(err),
       }, 'Failed to queue contest started emails');
     }

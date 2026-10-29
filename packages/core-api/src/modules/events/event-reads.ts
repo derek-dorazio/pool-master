@@ -41,14 +41,6 @@ export function readEventsOnce(
   };
 }
 
-/** Each event's matches, read once, however many contests ask for them. */
-export function readMatchesOnce(
-  source: Pick<SportEventMatchRepository, 'findBySportEvent'>,
-): Pick<SportEventMatchRepository, 'findBySportEvent'> {
-  const bySportEvent = readOncePerKey((sportEventId) => source.findBySportEvent(sportEventId));
-  return { findBySportEvent: async (sportEventId) => [...await bySportEvent(sportEventId)] };
-}
-
 /**
  * Each event's matches, read once, by event or across events: the events not read yet are read
  * together. Answers as the repository does, by event and then in match-number order.
