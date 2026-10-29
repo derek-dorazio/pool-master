@@ -224,9 +224,12 @@ export const QueryKeys = {
       events: ['poolmaster', 'root-admin', 'manage-sport', 'events'] as const,
       sportEvents: (sport: QueryKeyId) =>
         ['poolmaster', 'root-admin', 'manage-sport', 'events', 'sport', sport] as const,
-      // Under the `events` prefix, so invalidating the list refreshes each league's too.
-      leagueEvents: (sportLeagueId: QueryKeyId) =>
-        ['poolmaster', 'root-admin', 'manage-sport', 'events', 'league', sportLeagueId] as const,
+      // Under the `events` prefix, so invalidating the list refreshes each league's too: one
+      // year's events, and the years a league has events in (#1251).
+      leagueEvents: (sportLeagueId: QueryKeyId, eventYear: number | null) =>
+        ['poolmaster', 'root-admin', 'manage-sport', 'events', 'league', sportLeagueId, eventYear] as const,
+      leagueEventYears: (sportLeagueId: QueryKeyId) =>
+        ['poolmaster', 'root-admin', 'manage-sport', 'events', 'league', sportLeagueId, 'years'] as const,
       event: (eventId: QueryKeyId) =>
         ['poolmaster', 'root-admin', 'manage-sport', 'event', eventId] as const,
       rounds: (eventId: QueryKeyId) =>
@@ -290,6 +293,9 @@ export const QueryKeys = {
     providerSyncRun: (syncRunId: QueryKeyId) =>
       ['poolmaster', 'root-admin', 'provider-sync-runs', syncRunId] as const,
     unmappedProviderParticipants: ['poolmaster', 'root-admin', 'unmapped-provider-participants'] as const,
+    // One competitor, under the list's prefix, so a mapping that invalidates the list refreshes it (#1251).
+    unmappedProviderParticipant: (providerId: QueryKeyId, externalId: QueryKeyId) =>
+      ['poolmaster', 'root-admin', 'unmapped-provider-participants', providerId, externalId] as const,
     participantCandidates: (sportId: QueryKeyId, search: QueryKeyId) =>
       ['poolmaster', 'root-admin', 'participant-candidates', sportId, search] as const,
     users: ['poolmaster', 'root-admin', 'users'] as const,

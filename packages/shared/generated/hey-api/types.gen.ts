@@ -26273,7 +26273,21 @@ export type UnmappedProviderParticipantDto = {
 };
 
 /**
- * Every unmapped competitor across the scheduled sports of every provider.
+ * Filters for the unmapped-competitor list. With neither, every provider's unmapped competitors.
+ */
+export type UnmappedProviderParticipantListQuery = {
+    /**
+     * Only this provider's competitors; the other providers are not asked.
+     */
+    providerId?: string;
+    /**
+     * Only the competitor the provider knows by this identifier. With providerId, the list holds that one competitor while it is unmapped, and is empty once it is mapped.
+     */
+    externalId?: string;
+};
+
+/**
+ * The unmapped competitors matching the filters, across the scheduled sports of each provider asked.
  */
 export type UnmappedProviderParticipantListResponse = {
     participants: Array<{
@@ -33666,7 +33680,16 @@ export type SubmitEventSyncResponse = SubmitEventSyncResponses[keyof SubmitEvent
 export type ListUnmappedProviderParticipantsData = {
     body?: never;
     path?: never;
-    query?: never;
+    query?: {
+        /**
+         * Only this provider's competitors; the other providers are not asked.
+         */
+        providerId?: string;
+        /**
+         * Only the competitor the provider knows by this identifier. With providerId, the list holds that one competitor while it is unmapped, and is empty once it is mapped.
+         */
+        externalId?: string;
+    };
     url: '/api/v1/ingestion/unmapped-participants';
 };
 
@@ -33685,7 +33708,7 @@ export type ListUnmappedProviderParticipantsError = ListUnmappedProviderParticip
 
 export type ListUnmappedProviderParticipantsResponses = {
     /**
-     * Every unmapped competitor across the scheduled sports of every provider.
+     * The unmapped competitors matching the filters, across the scheduled sports of each provider asked.
      */
     200: UnmappedProviderParticipantListResponse;
 };
