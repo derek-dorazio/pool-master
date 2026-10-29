@@ -902,7 +902,10 @@ event get one; a contest of one event has one per entry, equal to its total.
 
 A selection on an entry. **One write path**, `ContestEntryPickService`: `changeEntryPick` for a
 select or unselect (#1259), which locks the entry row and decides on its picks under that lock,
-and `recordDraw` for a random draw. Both copy the contest's format onto the pick inside their
+and `recordDraw` for a random draw. A submit goes through `settleEntryEvent`, which takes the same
+lock, so a submit and a pick change on one entry judge the lineup and the entry's status one after
+the other (#1300): a pick change that leaves a submitted lineup short sends it back to DRAFT even
+when the submit committed while the change waited. Both copy the contest's format onto the pick inside their
 transaction so the per-format unique indexes hold (plans/117 §7.1, deleted with its epic; retrieve via
 `git show c0191969^:plans/117-league-contest-substrate-redesign.md`). Its port, `ContestEntryPickRepository`, is read-only by
 design (#247), so no adapter or fake can become a second way in. The selection operations

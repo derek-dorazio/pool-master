@@ -5,4 +5,12 @@ export {
   ContestDrawAlreadyRunError,
   ContestDrawEntriesChangedError,
 } from './service';
-export type { ContestDrawRecordInput, EntryPickChangeInput, EntryPickWrite, LockedEntryPick } from './types';
+export type {
+  ContestDrawRecordInput,
+  EntryChangeResult,
+  EntryEventSettleInput,
+  EntryPickChangeInput,
+  EntryPickWrite,
+  LockedEntryEvent,
+  LockedEntryPick,
+} from './types';

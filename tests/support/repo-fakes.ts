@@ -401,7 +401,6 @@ export function fakeContestEntryRepo(
     countSubmittedByContests: jest.fn().mockResolvedValue(new Map()),
     create: createdEntry(echoCreate('contest-entry')),
     update: echoUpdate(),
-    setEventStatus: echoEventStatus(),
     delete: jest.fn().mockResolvedValue({ status: 'deleted' }),
     ...overrides,
   };
@@ -421,14 +420,6 @@ function createdContest(create: jest.Mock): ContestRepository['create'] {
 function createdEntry(create: jest.Mock): ContestEntryRepository['create'] {
   return jest.fn().mockImplementation(async (input: Record<string, unknown>) =>
     ({ status: 'created', entry: { events: [], ...((await create(input)) as Partial<ContestEntry>) } }));
-}
-
-/** Echoes the one event status the call set, as the entry the port answers with. */
-function echoEventStatus(): ContestEntryRepository['setEventStatus'] {
-  return jest.fn().mockImplementation(async (id: string, sportEventId: string, status: ContestEntry['events'][number]['status'], at: Date) => ({
-    id,
-    events: [{ sportEventId, status, ...(status === 'SUBMITTED' && { submittedAt: at }) }],
-  }));
 }
 
 /** Read-only, like the port: a pick is only ever inserted through ContestEntryPickService. */

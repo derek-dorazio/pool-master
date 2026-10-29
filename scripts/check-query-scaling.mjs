@@ -8,7 +8,8 @@
  *
  * THE RULE. A GET route in the OpenAPI spec whose 200 response holds an array, at the top or in
  * any object it contains, must be named in `tests/` as `route: 'GET <path>'`, the path exactly as
- * the spec writes it, in a file that calls `expectConstantQueries(`, or be listed in
+ * the spec writes it, in a file that calls `expectConstantQueries(` (or `expectFixedQueries(`, for
+ * a list whose length code fixes), or be listed in
  * `query-scaling-gaps.mjs`. A listed route that has a test now, or a listed path that is not such a
  * route, fails too, and so does a list whose length is not exactly `GAP_CEILING`, so the list only
  * shrinks and each deletion lowers the ceiling with it.
@@ -31,7 +32,7 @@ const GAPS_FILE = 'scripts/query-scaling-gaps.mjs';
  * An exact count leaves no slack for a later entry, so growing the list means editing this line,
  * which a reviewer sees.
  */
-export const GAP_CEILING = 33;
+export const GAP_CEILING = 20;
 
 /** Whether a schema, following `$ref`s into `components.schemas`, is or contains an array. */
 export function holdsArray(schema, components, seen = new Set()) {
@@ -60,11 +61,11 @@ export function readListRoutes(spec) {
     .map(([path]) => `GET ${path}`);
 }
 
-/** The routes test files name for `expectConstantQueries`. */
+/** The routes test files name for `expectConstantQueries` or `expectFixedQueries`. */
 export function findTestedRoutes(testTexts) {
   const tested = new Set();
   for (const text of testTexts) {
-    if (!text.includes('expectConstantQueries(')) continue;
+    if (!text.includes('expectConstantQueries(') && !text.includes('expectFixedQueries(')) continue;
     for (const match of text.matchAll(/\broute:\s*'(GET \/[^']*)'/g)) tested.add(match[1]);
   }
   return tested;
@@ -90,8 +91,8 @@ export function evaluateQueryScaling({ routes, tested, gaps, ceiling = GAP_CEILI
     if (!tested.has(route) && !listed.has(route)) {
       findings.push({
         location: OPENAPI_SPEC,
-        message: `${route} answers with a list and has no query-scaling test. Add an expectConstantQueries case `
-          + '(rules/testing-rules.md §9B *Query Scaling Tests*).',
+        message: `${route} answers with a list and has no query-scaling test. Add an expectConstantQueries case, or an `
+          + 'expectFixedQueries case when code fixes its length (rules/testing-rules.md §9B *Query Scaling Tests*).',
       });
     }
   }

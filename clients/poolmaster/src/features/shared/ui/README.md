@@ -6,7 +6,11 @@ The shared UI layer is split into three levels:
    `Button`, `Tile`, `Modal`, `DataGrid`, `ActionTile`, `StatusBadge` and
    `Eyebrow`. A bordered card box is a `Tile` (`padding="none"` plus your own
    padding when it needs less), and the small uppercase line over a title is an
-   `Eyebrow`; a title is a `Heading` (`level` is the tag, `variant` the look:
+   `Eyebrow`; a navy panel is a `Tile` with `variant="inverse"` (or
+   `"inverseDeep"`), and the gold pill is a `Chip` with `tone="brand"` (a tinted one
+   is `tone="brandTint"`, a not-yet one `tone="placeholder"`, and `asChild` puts it on a
+   `Link`); the outlined uppercase tagline pill is a `StatusBadge` with
+   `tone="brandOutline"`, not a `Chip`, which is sentence case; a title is a `Heading` (`level` is the tag, `variant` the look:
    `hero`, `display`, `page`, `section`, `subtitle`, `label`, `eyebrow`, or `card` with a `size`); letter spacing comes from the theme's `tracking-eyebrow` and
    `tracking-label`, never a hand-typed `tracking-[…]`. A button drawn as a line of content
    (a list row, a card toggle, a pick) is a `Button` or `LinkButton` with
@@ -54,8 +58,15 @@ League pages and administration areas use the pieces named in
 
 A team's icon and name come from `features/teams`, not this folder, because they
 are a product piece: `TeamAvatar` draws the icon in its coloured square, and
-`TeamName` puts it beside the name, linked or plain, with the You and Inactive
+`TeamName` puts it beside the name, linked or plain, with the Yours and Inactive
 markers and an optional line underneath.
+
+Public and landing pages share four more pieces. `NumberedSteps` shows steps in tiles under one
+gold numeral style, with an optional picture. `FaqList` shows questions that open to their
+answers. `ExpandableTile` is a tile whose face opens it across its grid row. `Countdown` shows
+days, hours and minutes as one timer. The event page kit (`StartButton`, `LandingSection`,
+`PhotoHero`, `StickyActionBar`, `NextUpCard`, `LandingDisclaimer`) is a product piece, so it
+lives in `features/event-pages/components`.
 
 `InfoPopover` keeps secondary facts out of a page's way: an icon button whose
 callout opens on mouse hover or on a tap, for a phone.

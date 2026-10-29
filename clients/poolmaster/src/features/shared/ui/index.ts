@@ -3,7 +3,7 @@ export { Alert, Callout } from "./alert";
 export { AdminAreaLayout, LeagueMenu } from "./nav-menus";
 export type { NavMenuItem } from "./nav-menus";
 export { BulkUploadPanel } from "./bulk-upload-panel";
-export { Button, LinkButton, MenuItem } from "./button";
+export { Button, LinkButton, type LinkButtonProps, MenuItem } from "./button";
 export { Breadcrumbs, PageHeader } from "./page-header";
 export { ChoiceCard } from "./choice-card";
 export { cn } from "./class-names";
@@ -26,7 +26,7 @@ export {
 export { DisplayPreferencesContext, useDisplayPreferences } from "./display-preferences";
 export { browserLocale, browserTimeZone } from "./time-zone-options";
 export { TimeZoneSelect } from "./time-zone-select";
-export { Chip, StatusBadge, type StatusBadgeProps } from "./status-badge";
+export { Chip, StatusBadge, type ChipProps, type StatusBadgeProps } from "./status-badge";
 export { Checkbox, FormField, Input, Select, Textarea } from "./form-field";
 export { FormPage } from "./form-page";
 export { IconAvatar } from "./icon-avatar";
@@ -69,3 +69,7 @@ export {
   PublicInviteJoinPage,
 } from "./page-templates";
 export { Tile } from "./tile";
+export { Countdown } from "./countdown";
+export { ExpandableTile } from "./expandable-tile";
+export { FaqList, type FaqItem } from "./faq-list";
+export { NumberedSteps, type NumberedStep } from "./numbered-steps";

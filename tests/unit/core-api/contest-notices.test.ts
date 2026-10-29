@@ -212,7 +212,7 @@ describe('ContestNotices', () => {
       for (const [owner, submitted] of [[entrant, true], [drafting, false]] as const) {
         const created = await world.entryRepo().create({ contestId: contest.id, squadId: owner.squad.id, entryNumber: 1, name: 'Entry 1', tiebreakerValue: null }, { entriesPerContest: () => null });
         if (created.status !== 'created') throw new Error('entry not created');
-        if (submitted) await world.entryRepo().setEventStatus(created.entry.id, week.id, ContestEntryStatus.SUBMITTED, new Date());
+        if (submitted) world.setEntryEventStatus(created.entry.id, week.id, ContestEntryStatus.SUBMITTED, new Date());
       }
 
       await notices().contestStarted(contest, week);
@@ -332,7 +332,7 @@ describe('ContestNotices', () => {
       for (const [owner, submitted] of [[entrant, true], [drafting, false]] as const) {
         const created = await world.entryRepo().create({ contestId: contest.id, squadId: owner.squad.id, entryNumber: 1, name: 'Entry 1', tiebreakerValue: null }, { entriesPerContest: () => null });
         if (created.status !== 'created') throw new Error('entry not created');
-        if (submitted) await world.entryRepo().setEventStatus(created.entry.id, event.id, ContestEntryStatus.SUBMITTED, new Date());
+        if (submitted) world.setEntryEventStatus(created.entry.id, event.id, ContestEntryStatus.SUBMITTED, new Date());
       }
 
       await notices().contestSettled(contest);
@@ -377,7 +377,7 @@ describe('ContestNotices', () => {
     async function enter(contestId: string, owner: { squad: { id: string } }, sportEventId: string, submitted: boolean) {
       const created = await world.entryRepo().create({ contestId, squadId: owner.squad.id, entryNumber: 1, name: 'Entry 1', tiebreakerValue: null }, { entriesPerContest: () => null });
       if (created.status !== 'created') throw new Error('entry not created');
-      if (submitted) await world.entryRepo().setEventStatus(created.entry.id, sportEventId, ContestEntryStatus.SUBMITTED, new Date());
+      if (submitted) world.setEntryEventStatus(created.entry.id, sportEventId, ContestEntryStatus.SUBMITTED, new Date());
     }
 
     it('sends no event changed email when a cancelled event ends a one-event contest, and the no-scores result names the event to the commissioners and members with a submitted entry, Contest updates turned off or not', async () => {

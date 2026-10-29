@@ -34,6 +34,11 @@ describe('check-query-scaling', () => {
     assert.deepEqual([...findTestedRoutes([scaling, other])], ['GET /api/v1/leagues/{id}/contests/']);
   });
 
+  it('counts a route named in a file that calls expectFixedQueries, for a list whose length code fixes', () => {
+    const fixed = "await expectFixedQueries({\n  route: 'GET /api/v1/plans/',\n  fixedBy: 'the four plans',";
+    assert.deepEqual([...findTestedRoutes([fixed])], ['GET /api/v1/plans/']);
+  });
+
   it('fails a list route that has neither a test nor a gap entry', () => {
     const findings = evaluateQueryScaling({ routes: readListRoutes(spec), tested: new Set(['GET /api/v1/leagues/{id}/contests/']), gaps: [], ceiling: 0 });
     assert.equal(findings.length, 1);

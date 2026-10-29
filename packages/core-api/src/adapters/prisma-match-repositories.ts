@@ -13,6 +13,7 @@ import type {
 } from '@poolmaster/shared/db';
 import { MatchSide } from '@poolmaster/shared/domain';
 import type { SportEventMatch, SportEventMatchPeriodScore } from '@poolmaster/shared/domain';
+import { rewriteStandings } from './prisma-standing-rewrite';
 
 /** What a match is read with: its round's number and its period scores in order. */
 export const MATCH_INCLUDE = {
@@ -84,23 +85,19 @@ export class PrismaSportEventMatchRepository implements SportEventMatchRepositor
 
   async applyResult({ result, sideFill, standings }: MatchResultApply): Promise<void> {
     const { id, ...values } = result;
-    await this.prisma.$transaction([
-      this.prisma.sportEventMatch.update({ where: { id }, data: values }),
-      ...(sideFill
-        ? [this.prisma.sportEventMatch.update({
+    await this.prisma.$transaction(async (tx) => {
+      await tx.sportEventMatch.update({ where: { id }, data: values });
+      if (sideFill) {
+        await tx.sportEventMatch.update({
           where: { id: sideFill.id },
           data: sideFill.side === MatchSide.HOME
             ? { homeSportEventParticipantId: sideFill.sportEventParticipantId }
             : { awaySportEventParticipantId: sideFill.sportEventParticipantId },
-        })]
-        : []),
-      // poolmaster-allow-query-in-loop: one event's field (per-row values, one transaction)
-      ...standings.map(({ sportEventParticipantId, ...standing }) => this.prisma.sportEventParticipantStanding.upsert({
-        where: { sportEventParticipantId },
-        create: { sportEventParticipantId, ...standing },
-        update: standing,
-      })),
-    ]);
+        });
+      }
+      // Every team's standing in a fixed number of statements, however big the bracket (#1252).
+      await rewriteStandings(tx, standings.map(({ sportEventParticipantId, ...standing }) => ({ sportEventParticipantId, standing })));
+    });
   }
 }
 
