@@ -105,7 +105,12 @@ export const QueryKeys = {
   contestEntries: {
     all: ['poolmaster', 'contest-entries'] as const,
     byContest: (contestId: QueryKeyId) => ['poolmaster', 'contest-entries', contestId] as const,
-    detail: (entryId: QueryKeyId) => ['poolmaster', 'contest-entries', entryId] as const,
+    /** One entry (#1197); under its contest's key, so invalidating the contest's entries covers it. */
+    detail: (contestId: QueryKeyId, entryId: QueryKeyId) => ['poolmaster', 'contest-entries', contestId, entryId] as const,
+    /** Every league's "my entries" (#1197): what an entry write invalidates without knowing the league. */
+    allMine: ['poolmaster', 'contest-entries', 'mine'] as const,
+    /** The viewer's entries across one league's current contests (#1197). */
+    mine: (leagueId: QueryKeyId) => ['poolmaster', 'contest-entries', 'mine', leagueId] as const,
   },
   selectionStates: {
     all: ['poolmaster', 'selection-state'] as const,

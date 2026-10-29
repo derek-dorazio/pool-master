@@ -1,7 +1,7 @@
 import type {
   BracketLeaderboardResponse,
   ContestDto,
-  ContestEntryListResponse,
+  ContestEntryDetailResponse,
   GamePicksResponse,
   LeagueContextResponse,
 } from '@/lib/api';
@@ -159,6 +159,7 @@ export function bracketContestFixture(overrides: Partial<ContestDto> = {}): Cont
     status: 'OPEN',
     contestFormat: 'PREDICTION',
     selectionType: 'BRACKET',
+    myEntryIds: ['entry-1'],
     sportEvents: [{ sportEventId: 'event-1', sequence: 1, name: 'March Madness', startDate: BRACKET_START, status: 'SCHEDULED', participantType: null, scoringFamily: null }],
     ...overrides,
   };
@@ -203,8 +204,8 @@ export function bracketLeaderboardFixture(overrides: Partial<BracketLeaderboardR
   };
 }
 
-/** The contest's entries: the viewer's own (entry-1) and another member's (entry-2). */
-export function bracketEntriesFixture(overrides: Partial<ContestEntryListResponse> = {}): ContestEntryListResponse {
+/** One of the contest's entries as its entry read returns it: the viewer's own (entry-1) or another member's (entry-2). */
+export function bracketEntryFixture(entryId: string, overrides: Partial<ContestEntryDetailResponse> = {}): ContestEntryDetailResponse {
   const entry = (id: string, squadId: string, squadName: string, name: string) => ({
     id,
     contestId: 'contest-1',
@@ -220,15 +221,10 @@ export function bracketEntriesFixture(overrides: Partial<ContestEntryListRespons
   });
   return {
     contestId: 'contest-1',
-    total: 2,
-    isJoined: true,
-    myEntryId: 'entry-1',
-    myEntryIds: ['entry-1'],
     picksRevealed: false,
-    entries: [
-      entry('entry-1', 'squad-1', 'Morgan’s Madness', 'Derek’s Bracket'),
-      entry('entry-2', 'squad-2', 'Derek’s Great Golf Guys', 'Chalk All The Way'),
-    ],
+    entry: entryId === 'entry-1'
+      ? entry('entry-1', 'squad-1', 'Morgan’s Madness', 'Derek’s Bracket')
+      : entry(entryId, 'squad-2', 'Derek’s Great Golf Guys', 'Chalk All The Way'),
     ...overrides,
   };
 }

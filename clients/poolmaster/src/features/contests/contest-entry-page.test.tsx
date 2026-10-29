@@ -32,7 +32,7 @@ const {
   getSelectionStateMock,
   getEventMock,
   getLeagueMock,
-  listContestEntriesMock,
+  getContestEntryMock,
   mockLogger,
   submitContestEntryMock,
   submitContestSelectionMock,
@@ -54,7 +54,7 @@ const {
     getSelectionStateMock: vi.fn(),
     getEventMock: vi.fn(),
     getLeagueMock: vi.fn(),
-    listContestEntriesMock: vi.fn(),
+    getContestEntryMock: vi.fn(),
     mockLogger: logger,
     submitContestEntryMock: vi.fn(),
     submitContestSelectionMock: vi.fn(),
@@ -67,7 +67,7 @@ bindApiMocks({
   getSelectionState: getSelectionStateMock,
   getEvent: getEventMock,
   getLeague: getLeagueMock,
-  listContestEntries: listContestEntriesMock,
+  getContestEntry: getContestEntryMock,
   submitContestEntry: submitContestEntryMock,
   submitContestSelection: submitContestSelectionMock,
   updateContestEntry: updateContestEntryMock,
@@ -165,6 +165,7 @@ function contestFixture(overrides: Record<string, unknown> = {}) {
     contestType: 'ROSTER',
     selectionType: 'TIERED',
     sportEvents: [contestEventFixture()],
+    myEntryIds: ['entry-1'],
     ...overrides,
   };
 }
@@ -207,27 +208,22 @@ function primeCommonMocks(overrides?: {
     },
   });
 
-  listContestEntriesMock.mockResolvedValue({
+  getContestEntryMock.mockResolvedValue({
     data: {
       contestId: 'contest-1',
-      total: 1,
-      isJoined: true,
-      myEntryId: 'entry-1',
-      myEntryIds: ['entry-1'],
-      entries: [
-        {
-          id: 'entry-1',
-          contestId: 'contest-1',
-          squadId: 'squad-1',
-          squadName: 'Birdie Hunters',
-          entryNumber: 1,
-          name: 'Birdie Hunters Entry 1',
-          events: entryEvents('DRAFT'),
-          tiebreakerValue: 271,
-          createdAt: '2026-04-15T00:00:00.000Z',
-          updatedAt: '2026-04-16T00:00:00.000Z',
-        },
-      ],
+      picksRevealed: false,
+      entry: {
+        id: 'entry-1',
+        contestId: 'contest-1',
+        squadId: 'squad-1',
+        squadName: 'Birdie Hunters',
+        entryNumber: 1,
+        name: 'Birdie Hunters Entry 1',
+        events: entryEvents('DRAFT'),
+        tiebreakerValue: 271,
+        createdAt: '2026-04-15T00:00:00.000Z',
+        updatedAt: '2026-04-16T00:00:00.000Z',
+      },
     },
   });
 }
@@ -298,7 +294,7 @@ describe('ContestEntryPage', () => {
     getSelectionStateMock.mockReset();
     getEventMock.mockReset();
     getLeagueMock.mockReset();
-    listContestEntriesMock.mockReset();
+    getContestEntryMock.mockReset();
     submitContestEntryMock.mockReset();
     submitContestSelectionMock.mockReset();
     updateContestEntryMock.mockReset();
@@ -896,7 +892,7 @@ describe('ContestEntryPage — selection rules the server enforces', () => {
     getSelectionStateMock.mockReset();
     getEventMock.mockReset();
     getLeagueMock.mockReset();
-    listContestEntriesMock.mockReset();
+    getContestEntryMock.mockReset();
     submitContestSelectionMock.mockReset();
     updateContestEntryMock.mockReset();
   });
@@ -979,6 +975,7 @@ describe('ContestEntryPage — selection rules the server enforces', () => {
 
   function primeHiddenOtherTeamEntry() {
     primeCommonMocks();
+    getContestMock.mockResolvedValue({ data: { contest: contestFixture({ myEntryIds: ['entry-mine'] }) } });
     // The server answers the viewer's own entry when another team's is asked for before lock.
     getSelectionStateMock.mockResolvedValue({
       data: {
@@ -992,27 +989,22 @@ describe('ContestEntryPage — selection rules the server enforces', () => {
         myEntryId: 'entry-mine',
       },
     });
-    listContestEntriesMock.mockResolvedValue({
+    getContestEntryMock.mockResolvedValue({
       data: {
         contestId: 'contest-1',
-        total: 2,
-        isJoined: true,
-        myEntryId: 'entry-mine',
-        myEntryIds: ['entry-mine'],
-        entries: [
-          {
-            id: 'entry-1',
-            contestId: 'contest-1',
-            squadId: 'squad-other',
-            squadName: 'Other Team',
-            entryNumber: 1,
-            name: 'Other Team Entry 1',
-            events: entryEvents('DRAFT'),
-            tiebreakerValue: null,
-            createdAt: '2026-04-15T00:00:00.000Z',
-            updatedAt: '2026-04-16T00:00:00.000Z',
-          },
-        ],
+        picksRevealed: false,
+        entry: {
+          id: 'entry-1',
+          contestId: 'contest-1',
+          squadId: 'squad-other',
+          squadName: 'Other Team',
+          entryNumber: 1,
+          name: 'Other Team Entry 1',
+          events: entryEvents('DRAFT'),
+          tiebreakerValue: null,
+          createdAt: '2026-04-15T00:00:00.000Z',
+          updatedAt: '2026-04-16T00:00:00.000Z',
+        },
       },
     });
   }
@@ -1027,6 +1019,8 @@ describe('ContestEntryPage — selection rules the server enforces', () => {
     );
     expect(screen.getByTestId('contest-entry-heading')).toHaveTextContent('Other Team Entry 1');
     expect(screen.queryByText('Scottie Scheffler')).not.toBeInTheDocument();
+    // The page reads the one entry it shows, not the contest's whole entry list (#1197).
+    expect(getContestEntryMock).toHaveBeenCalledWith(expect.objectContaining({ path: { contestId: 'contest-1', entryId: 'entry-1' } }));
     expect(screen.queryByText('My Own Entry')).not.toBeInTheDocument();
   });
 
@@ -1197,7 +1191,7 @@ describe('ContestEntryPage — a budget entry (#93)', () => {
     getSelectionStateMock.mockReset();
     getEventMock.mockReset();
     getLeagueMock.mockReset();
-    listContestEntriesMock.mockReset();
+    getContestEntryMock.mockReset();
     submitContestEntryMock.mockReset();
     submitContestSelectionMock.mockReset();
     updateContestEntryMock.mockReset();
@@ -1379,7 +1373,7 @@ describe('ContestEntryPage — a random-draw entry', () => {
     getSelectionStateMock.mockReset();
     getEventMock.mockReset();
     getLeagueMock.mockReset();
-    listContestEntriesMock.mockReset();
+    getContestEntryMock.mockReset();
     submitContestEntryMock.mockReset();
     submitContestSelectionMock.mockReset();
     updateContestEntryMock.mockReset();
@@ -1458,7 +1452,7 @@ describe('ContestEntryPage — a contest of two events', () => {
     getSelectionStateMock.mockReset();
     getEventMock.mockReset();
     getLeagueMock.mockReset();
-    listContestEntriesMock.mockReset();
+    getContestEntryMock.mockReset();
     submitContestEntryMock.mockReset();
     submitContestSelectionMock.mockReset();
     updateContestEntryMock.mockReset();
@@ -1494,26 +1488,23 @@ describe('ContestEntryPage — a contest of two events', () => {
   function primeTwoEventMocks() {
     primeCommonMocks();
     getContestMock.mockResolvedValue({ data: { contest: contestFixture({ sportEvents: [WEEK_1, WEEK_2] }) } });
-    listContestEntriesMock.mockResolvedValue({
+    getContestEntryMock.mockResolvedValue({
       data: {
         contestId: 'contest-1',
-        total: 1,
-        isJoined: true,
-        myEntryId: 'entry-1',
-        myEntryIds: ['entry-1'],
-        entries: [{
-          id: 'entry-1',
-          contestId: 'contest-1',
-          squadId: 'squad-1',
-          squadName: 'Birdie Hunters',
-          entryNumber: 1,
-          name: 'Birdie Hunters Entry 1',
-          events: [...entryEvents('SUBMITTED', 'event-1'), ...entryEvents('DRAFT', 'event-2')],
-          tiebreakerValue: null,
-          picksCount: 1,
-          createdAt: '2026-04-15T00:00:00.000Z',
-          updatedAt: '2026-04-16T00:00:00.000Z',
-        }],
+        picksRevealed: false,
+        entry: {
+        id: 'entry-1',
+        contestId: 'contest-1',
+        squadId: 'squad-1',
+        squadName: 'Birdie Hunters',
+        entryNumber: 1,
+        name: 'Birdie Hunters Entry 1',
+        events: [...entryEvents('SUBMITTED', 'event-1'), ...entryEvents('DRAFT', 'event-2')],
+        tiebreakerValue: null,
+        picksCount: 1,
+        createdAt: '2026-04-15T00:00:00.000Z',
+        updatedAt: '2026-04-16T00:00:00.000Z',
+      },
       },
     });
     // With no event named the server opens on the contest's next event, week 1.

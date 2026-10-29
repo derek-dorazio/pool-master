@@ -28,6 +28,7 @@ import { coversOneEvent, firstContestEvent, hasContestEventStarted } from './con
 import { CONTEST_RELEASE_CODE_MESSAGES } from './contest-release-messages';
 import { sportEventQueryOptions } from './use-contest-schedule';
 import { useContestQuery } from './use-contest-query';
+import { entryWriteKeys } from './use-contest-entries';
 
 const CONTEST_EVENTS_CODE_MESSAGES: ErrorCodeMessages = {
   ...CONTEST_RELEASE_CODE_MESSAGES,
@@ -143,9 +144,8 @@ function ContestEventsForm({
     },
     invalidates: [
       QueryKeys.contests.list({ leagueId }),
-      QueryKeys.contests.detail(contest.id),
       QueryKeys.managedContests.all,
-      QueryKeys.contestEntries.byContest(contest.id),
+      ...entryWriteKeys(contest.id),
       QueryKeys.selectionStates.byContest(contest.id),
     ],
     onError: (error) => {

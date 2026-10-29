@@ -1091,6 +1091,55 @@ describe('ContestEntryRepository', () => {
     expect(found.map((entry) => [entry.id, entry.entryNumber])).toEqual([[first.id, 1], [third.id, 3]]);
     expect(found[0].events).toEqual([expect.objectContaining({ sportEventId: event.id, status: 'DRAFT' })]);
     await expect(repos().entries.findByContestAndSquad(otherContest.id, squads[1].id)).resolves.toEqual([]);
+    // The ids-alone read a contest page uses for the viewer's entries finds the same, in the same order (#1197).
+    await expect(repos().entries.findIdsByContestAndSquad(contest.id, squads[0].id)).resolves.toEqual([first.id, third.id]);
+    await expect(repos().entries.findIdsByContestAndSquad(otherContest.id, squads[1].id)).resolves.toEqual([]);
+  });
+
+  it("counts one contest's submitted entries, the squads that submitted one, and every entry with drafts (#1197)", async () => {
+    const { league, squads, event, suffix } = await createLeagueAndEvent();
+    const later = await createLaterEvent(suffix);
+    const contest = await createContest(league.id, [event.id, later.event.id], 'Totals');
+    const other = await createContest(league.id, event.id, 'Other Totals');
+    const first = await createEntry(contest.id, squads[0].id, 1, 'First');
+    const second = await createEntry(contest.id, squads[0].id, 2, 'Second');
+    await createEntry(contest.id, squads[1].id, 1, 'Draft');
+    await createEntry(other.id, squads[1].id, 1, 'Elsewhere');
+    await repos().entries.setEventStatus(first.id, event.id, 'SUBMITTED', new Date());
+    await repos().entries.setEventStatus(first.id, later.event.id, 'SUBMITTED', new Date());
+    await repos().entries.setEventStatus(second.id, later.event.id, 'SUBMITTED', new Date());
+
+    await expect(repos().entries.countForContest(contest.id)).resolves.toEqual({
+      submittedEntryCount: 2,
+      enteredSquadCount: 1,
+      allEntryCount: 3,
+    });
+    await expect(repos().entries.countForContest(randomUUID())).resolves.toEqual({
+      submittedEntryCount: 0,
+      enteredSquadCount: 0,
+      allEntryCount: 0,
+    });
+  });
+
+  it("finds a squad's entries, drafts included and with its name, in the contests asked for only (#1197)", async () => {
+    const { league, squads, event, suffix } = await createLeagueAndEvent();
+    const contest = await createContest(league.id, event.id, 'Asked For');
+    const otherAsked = await createContest(league.id, event.id, 'Also Asked For');
+    const notAsked = await createContest(league.id, event.id, 'Not Asked For');
+    const second = await createEntry(contest.id, squads[0].id, 2, 'Second');
+    const first = await createEntry(contest.id, squads[0].id, 1, 'First');
+    const elsewhere = await createEntry(otherAsked.id, squads[0].id, 1, 'Elsewhere');
+    await createEntry(notAsked.id, squads[0].id, 1, 'Not Asked');
+    await createEntry(contest.id, squads[1].id, 1, 'Other Squad');
+
+    const found = await repos().entries.findBySquadAndContests(squads[0].id, [contest.id, otherAsked.id]);
+
+    expect(found.map((entry) => entry.id).sort()).toEqual([first.id, second.id, elsewhere.id].sort());
+    // Within a contest, in entry-number order.
+    expect(found.filter((entry) => entry.contestId === contest.id).map((entry) => entry.id)).toEqual([first.id, second.id]);
+    expect(found.every((entry) => entry.squadName === `Alpha ${suffix}`)).toBe(true);
+    expect(found[0].events).toEqual([expect.objectContaining({ sportEventId: event.id, status: 'DRAFT' })]);
+    await expect(repos().entries.findBySquadAndContests(squads[0].id, [])).resolves.toEqual([]);
   });
 
   it('updates only the entry fields given, leaving the others and its event statuses as stored', async () => {

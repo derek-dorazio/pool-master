@@ -16,6 +16,7 @@ import type {
   ContestEntryStandingRepository,
   ContestRepository,
   ContestEntryRepository,
+  ContestEntryTotals,
   LeagueMembershipRepository,
   LeagueRepository,
   ParticipantContestScoringRuleRepository,
@@ -397,40 +398,78 @@ export class ContestService {
     this.logger.info({ contestId }, 'contest delete completed');
   }
 
+  /**
+   * Every entry of the contest, the requester's own squad's first. Each lists its picks: all of
+   * the requester's own squad's, and only the revealed events' picks of everyone else's.
+   */
   async listEntries(
     contestId: string,
     userId: string,
-  ): Promise<{
-    entries: ContestEntryDto[];
-    isJoined: boolean;
-    myEntryId: string | null;
-    myEntryIds: string[];
-    picksRevealed: boolean;
-  }> {
+  ): Promise<{ entries: ContestEntryDto[]; picksRevealed: boolean }> {
     const context = await this.getEntryContext(contestId, userId, 'read');
     const squadId = context.squadMembership?.squadId ?? null;
     const revealedEventIds = await this.findRevealedEventIds(context.contest);
-    const picksRevealed = revealedEventIds.size > 0;
     const entries = await this.loadEntryDetailDtos(context.contest, {
       requesterSquadId: squadId,
       revealedEventIds,
     });
-    const myEntries = squadId
-      ? entries.filter((entry) => entry.squadId === squadId)
-      : [];
-    const myEntry = myEntries.at(0) ?? null;
-    const orderedEntries = [
-      ...myEntries,
-      ...entries.filter((entry) => entry.squadId !== squadId),
-    ];
 
     return {
-      entries: orderedEntries,
-      isJoined: myEntry !== null,
-      myEntryId: myEntry?.id ?? null,
-      myEntryIds: myEntries.map((entry) => entry.id),
-      picksRevealed,
+      entries: [
+        ...entries.filter((entry) => entry.squadId === squadId),
+        ...entries.filter((entry) => entry.squadId !== squadId),
+      ],
+      picksRevealed: revealedEventIds.size > 0,
     };
+  }
+
+  /**
+   * What a single-contest read adds to the contest (#1197): its entries counted, and the ids of
+   * the viewer's own squad's entries, drafts included, in entry-number order. A viewer without
+   * an active squad in the league has none.
+   */
+  async getContestEntrySummary(
+    contest: Contest,
+    userId: string,
+  ): Promise<{ totals: ContestEntryTotals; myEntryIds: string[] }> {
+    const [totals, myEntryIds] = await Promise.all([
+      this.deps.entries.countForContest(contest.id),
+      this.findActiveSquadId(contest.leagueId, userId)
+        .then((squadId) => (squadId ? this.deps.entries.findIdsByContestAndSquad(contest.id, squadId) : [])),
+    ]);
+    return { totals, myEntryIds };
+  }
+
+  /**
+   * The viewer's own squad's entries, drafts included, in each of the league's OPEN and ACTIVE
+   * contests (#1197), without their picks: what league home, the Contests page's "My entries"
+   * and My team show, in a fixed number of reads however many contests are current.
+   */
+  async listMyLeagueEntries(leagueId: string, userId: string): Promise<ContestEntryDto[]> {
+    const squadId = await this.findActiveSquadId(leagueId, userId);
+    if (!squadId) {
+      return [];
+    }
+    const contests = await this.deps.contests.findByLeague(leagueId, [ContestStatus.OPEN, ContestStatus.ACTIVE]);
+    const rows = await this.deps.entries.findBySquadAndContests(squadId, contests.map((contest) => contest.id));
+    const pickCounts = await this.deps.picks.countByEntries(rows.map((row) => row.id));
+    const contestsById = new Map(contests.map((contest) => [contest.id, contest]));
+    return rows.flatMap((row) => {
+      const contest = contestsById.get(row.contestId);
+      return contest
+        ? [toContestEntryDto({ ...withContestEventOrder(row, contest), picksCount: pickCounts.get(row.id) ?? 0 }, { name: row.squadName })]
+        : [];
+    });
+  }
+
+  /**
+   * The viewer's squad in the league, while their squad membership is active. Both callers sit
+   * behind the route's active league membership gate, which has already read the league
+   * membership, and leaving a league ends the squad membership with it.
+   */
+  private async findActiveSquadId(leagueId: string, userId: string): Promise<string | null> {
+    const squadMembership = await this.deps.squadMemberships.findByLeagueAndUser(leagueId, userId);
+    return squadMembership?.status === SquadMembershipStatus.ACTIVE ? squadMembership.squadId : null;
   }
 
   async getEntryDetail(

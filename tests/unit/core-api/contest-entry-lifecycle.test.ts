@@ -13,6 +13,7 @@ import {
   type EntrySubmittedReceiptInput,
 } from '../../../packages/core-api/src/modules/contests/service';
 import {
+  ContestEntryStatus,
   ContestStatus,
   type Contest,
   LeagueMembershipStatus,
@@ -462,8 +463,6 @@ describe('ContestService entries — reads', () => {
     const result = await service.listEntries(contest.id, owner.id);
 
     expect(result.picksRevealed).toBe(false);
-    expect(result.isJoined).toBe(true);
-    expect(result.myEntryIds).toEqual([mine.id]);
     expect(result.entries.map((entry) => entry.id)).toEqual([mine.id, theirs.id]);
     expect(result.entries[0].participants).toHaveLength(1);
     expect(result.entries[1].participants ?? []).toEqual([]);
@@ -482,18 +481,19 @@ describe('ContestService entries — reads', () => {
     const result = await service.listEntries(contest.id, owner.id);
 
     expect(result.picksRevealed).toBe(true);
-    expect(result.isJoined).toBe(false);
     expect(result.entries[0].participants?.map((pick) => pick.sportEventParticipantId)).toEqual(['sep-1']);
   });
 
   it('shows a member with no team every entry as someone else\'s', async () => {
-    const { owner, commissioner, contest, service } = setup();
-    await service.createEntry(contest.id, owner.id);
+    const { world, owner, commissioner, contest, service } = setup();
+    const theirs = await service.createEntry(contest.id, owner.id);
+    world.addPick(theirs.id, 'sep-1');
 
     const result = await service.listEntries(contest.id, commissioner.id);
 
-    expect(result).toMatchObject({ isJoined: false, myEntryId: null, myEntryIds: [] });
     expect(result.entries).toHaveLength(1);
+    expect(result.entries[0].participants ?? []).toEqual([]);
+    expect(result.entries[0].picksCount).toBe(1);
   });
 
   it('hides another squad\'s picks in entry detail while open and shows the owner their own', async () => {
@@ -550,6 +550,64 @@ describe('ContestService entries — reads', () => {
     world.contests.set(contest.id, { ...contest, status: ContestStatus.ACTIVE });
 
     await expect(service.getLeaderboard(contest.id, owner.id)).rejects.toBeInstanceOf(ContestOperationError);
+  });
+});
+
+describe('ContestService entries — the viewer\'s own entries and the counts a contest read shows (#1197)', () => {
+  function submit(world: InMemoryContestWorld, entryId: string) {
+    const entry = world.entries.get(entryId);
+    if (!entry) throw new Error(`unknown entry ${entryId}`);
+    world.entries.set(entryId, { ...entry, events: [{ sportEventId: 'event-1', status: ContestEntryStatus.SUBMITTED }] });
+  }
+
+  it('counts a contest\'s submitted entries, the squads that submitted one and every entry with drafts, and names the viewer\'s own entries', async () => {
+    const { world, owner, rival, commissioner, contest, service } = setup();
+    const mine = await service.createEntry(contest.id, owner.id);
+    const theirs = await service.createEntry(contest.id, rival.id);
+    submit(world, theirs.id);
+
+    const forOwner = await service.getContestEntrySummary(contest, owner.id);
+    const forCommissioner = await service.getContestEntrySummary(contest, commissioner.id);
+
+    expect(forOwner.totals).toEqual({ submittedEntryCount: 1, enteredSquadCount: 1, allEntryCount: 2 });
+    expect(forOwner.myEntryIds).toEqual([mine.id]);
+    // The commissioner has no squad in the league, so no entry is theirs.
+    expect(forCommissioner.myEntryIds).toEqual([]);
+  });
+
+  it('names none of the entries as the viewer\'s once their squad membership has ended', async () => {
+    const { world, owner, squad, contest, service } = setup();
+    await service.createEntry(contest.id, owner.id);
+    for (const [id, membership] of world.squadMemberships) {
+      if (membership.squadId === squad.id) world.squadMemberships.set(id, { ...membership, status: SquadMembershipStatus.INACTIVE });
+    }
+
+    const summary = await service.getContestEntrySummary(contest, owner.id);
+
+    expect(summary.myEntryIds).toEqual([]);
+    expect(summary.totals.allEntryCount).toBe(1);
+  });
+
+  it('lists the viewer\'s squad\'s entries across the league\'s open and live contests only, with pick counts and without picks', async () => {
+    const { world, league, owner, rival, commissioner, contest, service } = setup();
+    const live = world.addContest(league.id, { status: ContestStatus.OPEN });
+    world.addConfiguration(live.id);
+    const finished = world.addContest(league.id, { status: ContestStatus.OPEN });
+    world.addConfiguration(finished.id);
+    const mineOpen = await service.createEntry(contest.id, owner.id);
+    const mineLive = await service.createEntry(live.id, owner.id);
+    await service.createEntry(finished.id, owner.id);
+    await service.createEntry(contest.id, rival.id);
+    world.addPick(mineOpen.id, 'sep-1');
+    world.contests.set(live.id, { ...live, status: ContestStatus.ACTIVE });
+    world.contests.set(finished.id, { ...finished, status: ContestStatus.COMPLETED });
+
+    const entries = await service.listMyLeagueEntries(league.id, owner.id);
+
+    expect(entries.map((entry) => entry.id).sort()).toEqual([mineOpen.id, mineLive.id].sort());
+    expect(entries.find((entry) => entry.id === mineOpen.id)).toMatchObject({ contestId: contest.id, squadName: 'Birdie Brigade', picksCount: 1 });
+    expect(entries.every((entry) => entry.participants === undefined)).toBe(true);
+    expect(await service.listMyLeagueEntries(league.id, commissioner.id)).toEqual([]);
   });
 });
 

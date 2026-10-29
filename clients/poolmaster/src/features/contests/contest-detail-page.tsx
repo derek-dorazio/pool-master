@@ -52,7 +52,7 @@ import {
 import { useContestSchedule } from './use-contest-schedule';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
-import { fetchContestEntries } from './use-contest-entries';
+import { entryWriteKeys, fetchContestEntries } from './use-contest-entries';
 
 type ContestEntryParticipant = NonNullable<ContestEntryDto['participants']>[number];
 
@@ -203,7 +203,7 @@ export function ContestDetailPage() {
         },
       );
     },
-    invalidates: [QueryKeys.contestEntries.byContest(contestId)],
+    invalidates: entryWriteKeys(contestId),
   });
 
   const renameEntryMutation = useInvalidatingMutation({
@@ -255,7 +255,7 @@ export function ContestDetailPage() {
           leagueCode: hintedLeagueCode ?? null,
           status: contestQuery.data.status,
           entryCount: contestEntriesQuery.data.entries.length,
-          isJoined: contestEntriesQuery.data.isJoined,
+          myEntryCount: contestQuery.data.myEntryIds?.length ?? 0,
           picksRevealed: contestEntriesQuery.data.picksRevealed,
         },
       },
@@ -335,7 +335,7 @@ export function ContestDetailPage() {
             contestId={contestId}
             current="entries"
             leagueCode={hintedLeagueCode}
-            myEntryId={contestEntriesQuery.data?.myEntryIds?.[0] ?? null}
+            myEntryId={contest.myEntryIds?.[0] ?? null}
             picksRevealed={picksRevealed}
           />
         ) : null}

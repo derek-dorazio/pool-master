@@ -969,7 +969,7 @@ describe('ContestService', () => {
       expect([limits.entriesPerContest(null), limits.entriesPerContest(200), limits.entriesPerContest(1000)]).toEqual([500, 500, 1000]);
     });
 
-    it('returns the joined entry state for pre-draft contest views', async () => {
+    it('lists the reader\'s own squad\'s entry with its squad name for pre-draft contest views', async () => {
       const contest = buildContest({ id: 'contest-1', leagueId: 'league-1', status: ContestStatus.DRAFT });
       const membership = buildMembership({ id: 'membership-1', leagueId: 'league-1', userId: 'user-1' });
       const contestRepo = createMockContestRepo({
@@ -1000,9 +1000,7 @@ describe('ContestService', () => {
 
       const result = await service.listEntries('contest-1', 'user-1');
 
-      expect(result.isJoined).toBe(true);
-      expect(result.myEntryId).toBe('entry-1');
-      expect(result.entries[0].squadName).toBe("Derek's Squad");
+      expect(result.entries[0]).toMatchObject({ id: 'entry-1', squadId: 'squad-1', squadName: "Derek's Squad" });
     });
 
     it('pool-master-eux.4: computes the Golf leaderboard from event standings instead of ContestEntry totals', async () => {

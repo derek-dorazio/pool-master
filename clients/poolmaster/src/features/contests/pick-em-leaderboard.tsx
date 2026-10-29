@@ -1,5 +1,4 @@
 import type { ColumnDef } from '@tanstack/react-table';
-import { useQuery } from '@tanstack/react-query';
 import { Trophy } from 'lucide-react';
 import { useEffect } from 'react';
 import { Link } from 'react-router';
@@ -10,12 +9,10 @@ import { useLeagueContextById } from '@/features/leagues/use-league-context';
 import { Chip, DataGrid, ErrorState, LoadingState, Tile } from '@/features/shared/ui';
 import { ApiError, extractErrorMessage } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
-import { QueryKeys } from '@/lib/query-keys';
 import { formatPoints } from './bracket-layout';
 import { ContestHeader, ContestSubMenu } from './contest-header';
 import { LEADERBOARD_ERROR_MESSAGES } from './contest-leaderboard';
 import { ContestStatusBadge } from './contest-status-badge';
-import { fetchContestEntries } from './use-contest-entries';
 import { usePickEmLeaderboardQuery } from './use-contest-leaderboard';
 
 type PickEmRow = PickEmLeaderboardResponse['entries'][number];
@@ -124,11 +121,6 @@ export function PickEmLeaderboard({ contest, leagueCode: hintedLeagueCode }: { c
   const logger = getLogger().child({ feature: 'pick-em-leaderboard' });
   const contestId = contest.id;
   const leaderboardQuery = usePickEmLeaderboardQuery(contestId, contest.status);
-  const contestEntriesQuery = useQuery({
-    queryKey: QueryKeys.contestEntries.byContest(contestId),
-    queryFn: () => fetchContestEntries(contestId),
-    retry: false,
-  });
   const { league, viewer } = useLeagueContextById(contest.leagueId);
   const leagueCode = hintedLeagueCode ?? league?.leagueCode ?? null;
 
@@ -173,7 +165,7 @@ export function PickEmLeaderboard({ contest, leagueCode: hintedLeagueCode }: { c
             contestId={contestId}
             current="leaderboard"
             leagueCode={leagueCode}
-            myEntryId={contestEntriesQuery.data?.myEntryIds?.[0] ?? null}
+            myEntryId={contest.myEntryIds?.[0] ?? null}
             picksRevealed
           />
         ) : null}

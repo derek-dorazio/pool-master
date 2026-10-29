@@ -558,6 +558,15 @@ export interface ContestEntryCreateLimits {
    */
   entriesPerContest: (expandedTo: number | null) => number | null;
 }
+/** A contest's entries counted (#1197). */
+export interface ContestEntryTotals {
+  /** Entries that submitted at least one event: a draft is not an entry until submitted (#481). */
+  submittedEntryCount: number;
+  /** Squads with at least one such entry. */
+  enteredSquadCount: number;
+  /** Every entry, drafts included, as the plan's entry cap counts them (#947). */
+  allEntryCount: number;
+}
 export type ContestEntryDeleteResult = { status: 'deleted' } | { status: 'contestDrawn' };
 
 export interface ContestEntryRepository {
@@ -570,6 +579,15 @@ export interface ContestEntryRepository {
   findByContestWithSquad(contestId: string, options?: { submittedFor?: string }): Promise<ContestEntryWithSquad[]>;
   /** The squad's entries in one contest, drafts included, in entry-number order (#1167). */
   findByContestAndSquad(contestId: string, squadId: string): Promise<ContestEntry[]>;
+  /** The ids alone of the squad's entries in one contest, drafts included, in entry-number order (#1197). */
+  findIdsByContestAndSquad(contestId: string, squadId: string): Promise<string[]>;
+  /**
+   * The squad's entries in the contests, drafts included, in entry-number order within each
+   * contest (#1197): one read for a squad's entries across a league's current contests.
+   */
+  findBySquadAndContests(squadId: string, contestIds: readonly string[]): Promise<ContestEntryWithSquad[]>;
+  /** One contest's entry totals (#1197): what a single-contest read reports. */
+  countForContest(contestId: string): Promise<ContestEntryTotals>;
   /** Every entry each contest holds, drafts included, by contest id (#972); 0 for one with none. */
   countByContests(contestIds: readonly string[]): Promise<Map<string, number>>;
   /**

@@ -1,12 +1,12 @@
 import { MatchEnding } from '@poolmaster/shared/domain';
 import type {
   ContestDto,
-  ContestEntryListResponse,
+  ContestEntryDetailResponse,
   LeagueContextResponse,
   SportEventMatchDto,
   SquaresBoardResponse,
 } from '@/lib/api';
-import { bracketEntriesFixture, bracketLeagueContextFixture } from './bracket-fixtures';
+import { bracketEntryFixture, bracketLeagueContextFixture } from './bracket-fixtures';
 
 export const SQUARES_KICKOFF = '2099-02-07T23:30:00.000Z';
 
@@ -21,6 +21,7 @@ export function squaresContestFixture(overrides: Partial<ContestDto> = {}): Cont
     status: 'OPEN',
     contestFormat: 'SQUARES',
     selectionType: 'SQUARES',
+    myEntryIds: ['entry-1'],
     sportEvents: [{ sportEventId: 'event-1', sequence: 1, name: 'NFL Playoffs', startDate: '2099-01-10T18:00:00.000Z', status: 'IN_PROGRESS', participantType: null, scoringFamily: null }],
     ...overrides,
   };
@@ -86,8 +87,9 @@ export const DRAWN_DIGITS: NonNullable<SquaresBoardResponse['digits']> = {
   drawnAt: '2099-02-07T20:00:00.000Z',
 };
 
-export function squaresEntriesFixture(overrides: Partial<ContestEntryListResponse> = {}): ContestEntryListResponse {
-  return bracketEntriesFixture(overrides);
+/** One of the contest's entries as its entry read returns it: the viewer's own (entry-1) or another member's. */
+export function squaresEntryFixture(entryId: string): ContestEntryDetailResponse {
+  return bracketEntryFixture(entryId);
 }
 
 /** The league as its context read returns it: the viewer a member owning squad-1, or its commissioner. */

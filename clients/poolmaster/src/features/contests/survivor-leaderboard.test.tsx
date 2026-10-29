@@ -7,7 +7,6 @@ import { ContestLeaderboardPage } from './contest-leaderboard-page';
 import { bracketLeagueContextFixture } from './test/bracket-fixtures';
 import {
   pickEmContestFixture,
-  pickEmEntriesFixture,
   playoffSurvivorContestFixture,
   playoffSurvivorLeaderboardFixture,
   survivorLeaderboardFixture,
@@ -19,7 +18,6 @@ const {
   getContestLeaderboardMock,
   getContestMock,
   getLeagueMock,
-  listContestEntriesMock,
   mockLogger,
 } = vi.hoisted(() => {
   const logger = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), fatal: vi.fn(), child: vi.fn() };
@@ -30,7 +28,6 @@ const {
     getContestLeaderboardMock: vi.fn(),
     getContestMock: vi.fn(),
     getLeagueMock: vi.fn(),
-    listContestEntriesMock: vi.fn(),
     mockLogger: logger,
   };
 });
@@ -41,7 +38,6 @@ bindApiMocks({
   getContest: getContestMock,
   getContestLeaderboard: getContestLeaderboardMock,
   getLeague: getLeagueMock,
-  listContestEntries: listContestEntriesMock,
 });
 
 vi.mock('@/features/auth/auth-context', () => ({
@@ -88,13 +84,12 @@ function primeMocks(
 ) {
   getContestMock.mockResolvedValue({ data: { contest } });
   getSurvivorLeaderboardMock.mockResolvedValue({ data: board });
-  listContestEntriesMock.mockResolvedValue({ data: pickEmEntriesFixture({ picksRevealed: true }) });
   getLeagueMock.mockResolvedValue({ data: bracketLeagueContextFixture() });
 }
 
 describe('Survivor contest leaderboard', () => {
   afterEach(() => {
-    for (const mock of [getSurvivorLeaderboardMock, getPickEmLeaderboardMock, getContestLeaderboardMock, getContestMock, getLeagueMock, listContestEntriesMock]) {
+    for (const mock of [getSurvivorLeaderboardMock, getPickEmLeaderboardMock, getContestLeaderboardMock, getContestMock, getLeagueMock]) {
       mock.mockReset();
     }
   });

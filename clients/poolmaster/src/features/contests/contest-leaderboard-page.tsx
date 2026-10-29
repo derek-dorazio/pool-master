@@ -37,7 +37,6 @@ import {
   type LeaderboardPickRow,
   type LeaderboardView,
 } from './contest-leaderboard';
-import { fetchContestEntries } from './use-contest-entries';
 import { ContestStatus, SelectionType, SportEventStatus, eventSportDefinition } from '@poolmaster/shared/domain';
 import { BracketLeaderboard } from './bracket-leaderboard';
 import { PickEmLeaderboard } from './pick-em-leaderboard';
@@ -335,12 +334,6 @@ export function ContestLeaderboardPage() {
     enabled: contestQuery.data !== undefined && !isBracket && !isPickEm && !isSurvivor && !isSquares,
     sportEventId: requestedEventId,
   });
-  const contestEntriesQuery = useQuery({
-    queryKey: QueryKeys.contestEntries.byContest(contestId),
-    queryFn: () => fetchContestEntries(contestId),
-    enabled: Boolean(contestId),
-    retry: false,
-  });
   const { league, viewer } = useLeagueContextById(contestQuery.data?.leagueId);
   const leagueCode = hintedLeagueCode ?? league?.leagueCode ?? null;
 
@@ -482,7 +475,7 @@ export function ContestLeaderboardPage() {
             contestId={contestId}
             current="leaderboard"
             leagueCode={leagueCode}
-            myEntryId={contestEntriesQuery.data?.myEntryIds?.[0] ?? null}
+            myEntryId={contest.myEntryIds?.[0] ?? null}
             picksRevealed
           />
         ) : null}

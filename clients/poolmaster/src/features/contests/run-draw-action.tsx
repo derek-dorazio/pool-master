@@ -7,6 +7,7 @@ import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import { Alert, Button, ConfirmDialog } from '@/features/shared/ui';
 import { CONTEST_DRAW_CODE_MESSAGES } from './use-contest-draw';
+import { entryWriteKeys } from './use-contest-entries';
 
 /**
  * "Run draw": the commissioner's one-way deal of a random-draw contest. It deals every entry its
@@ -48,8 +49,7 @@ export function RunDrawAction({
     // so every entry's room, the entry list and the standings all change.
     invalidates: [
       QueryKeys.selectionStates.byContest(contestId),
-      QueryKeys.contestEntries.byContest(contestId),
-      QueryKeys.contests.detail(contestId),
+      ...entryWriteKeys(contestId),
       QueryKeys.contests.list({ leagueId }),
       QueryKeys.managedContests.all,
     ],
