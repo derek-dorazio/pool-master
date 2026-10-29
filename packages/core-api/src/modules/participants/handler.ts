@@ -16,6 +16,7 @@ import type {
 import type { ProviderRegistry } from '../ingestion/core/provider-registry';
 import { mapParticipantProviderMappingToDto, mapParticipantToDto, toUpdateParticipantInput } from '../../mappers';
 import { sendError } from '../../core/error-handler';
+import { isPlatformSearchTerm, PLATFORM_SEARCH_MIN_LENGTH } from '@poolmaster/shared/domain';
 
 export function createParticipantHandlers(
   participantService: ParticipantService,
@@ -32,12 +33,23 @@ export function createParticipantHandlers(
 
   async function searchParticipants(
     request: FastifyRequest<{ Querystring: ParticipantListQuery }>,
-    _reply: FastifyReply,
+    reply: FastifyReply,
   ): Promise<ParticipantListResponse> {
     const { q, sportId, status } = request.query;
+    // Every sport's catalog at once is the largest list there is, and nothing pages it (§16), so
+    // it takes a sport or a search term (#1180).
+    if (!sportId && !isPlatformSearchTerm(q)) {
+      request.log.warn({ action: 'participants.search.filterRequired' }, 'Rejected a participant list without a sport or search term');
+      return sendError(
+        reply,
+        400,
+        'SEARCH_TERM_REQUIRED',
+        `Choose a sport, or type at least ${PLATFORM_SEARCH_MIN_LENGTH} characters to find a participant.`,
+      );
+    }
     const filters: ParticipantSearchFilters = { sportId, status };
 
-    const participants = await participantService.search({ query: q, filters });
+    const participants = await participantService.search({ query: q?.trim(), filters });
     return { participants: participants.map(mapParticipantToDto) };
   }
 

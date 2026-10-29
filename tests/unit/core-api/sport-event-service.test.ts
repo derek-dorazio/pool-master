@@ -449,10 +449,18 @@ describe('SportEventService — read, update, delete', () => {
     store.contestsByEvent.set(event.id, 2);
     store.addToField(event.id, 'participant-x');
 
-    const [summary] = await service.listEvents({});
+    const [summary] = await service.listEvents({ eventYear: event.eventYear });
 
     expect(summary).toMatchObject({ loadedParticipantCount: 1, untieredParticipantCount: 1, tierCount: 0, emptyTierLabels: [], contestCount: 2 });
     await expect(service.getEvent('missing')).resolves.toBeNull();
+  });
+
+  it('refuses to list every event: a sport, a sport league or a year is required', async () => {
+    const { store, service } = setup();
+    store.addEvent();
+
+    await expect(service.listEvents({})).rejects.toMatchObject({ code: 'SPORT_EVENT_FILTER_REQUIRED', statusCode: 400 });
+    await expect(service.listEvents({ status: SportEventStatus.DRAFT })).rejects.toMatchObject({ code: 'SPORT_EVENT_FILTER_REQUIRED', statusCode: 400 });
   });
 
   it('updates an admin-managed event, clearing a field set to null', async () => {

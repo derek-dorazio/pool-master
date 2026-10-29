@@ -2489,7 +2489,7 @@ export type LeagueListQuery = {
      */
     scope?: 'mine' | 'all';
     /**
-     * Optional case-insensitive substring matched against the league name. A filter, never a slice — see §16.
+     * Case-insensitive substring matched against the league name. A filter, never a slice — see §16. Optional for 'mine'; required for 'all', at least 3 characters.
      */
     search?: string;
     /**
@@ -8763,7 +8763,7 @@ export type SportEventDto = {
 };
 
 /**
- * Filters for the sport-event list.
+ * Filters for the sport-event list. At least one of sport, sportLeagueId and eventYear is required.
  */
 export type SportEventListQuery = {
     /**
@@ -26703,6 +26703,9 @@ export type ListUsersData = {
     body?: never;
     path?: never;
     query?: {
+        /**
+         * Case-insensitive substring of the email, username, first or last name; at least 3 characters once trimmed.
+         */
         search?: string;
         isActive?: boolean;
     };
@@ -27384,7 +27387,7 @@ export type ListLeaguesData = {
          */
         scope?: 'mine' | 'all';
         /**
-         * Optional case-insensitive substring matched against the league name. A filter, never a slice — see §16.
+         * Case-insensitive substring matched against the league name. A filter, never a slice — see §16. Optional for 'mine'; required for 'all', at least 3 characters.
          */
         search?: string;
         /**
@@ -27396,6 +27399,10 @@ export type ListLeaguesData = {
 };
 
 export type ListLeaguesErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
@@ -30616,6 +30623,10 @@ export type ListEventsErrors = {
     /**
      * Standard API error envelope.
      */
+    400: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
     401: ErrorEnvelope;
 };
 
@@ -32964,6 +32975,15 @@ export type ListParticipantsData = {
     };
     url: '/api/v1/participants/';
 };
+
+export type ListParticipantsErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: ErrorEnvelope;
+};
+
+export type ListParticipantsError = ListParticipantsErrors[keyof ListParticipantsErrors];
 
 export type ListParticipantsResponses = {
     /**

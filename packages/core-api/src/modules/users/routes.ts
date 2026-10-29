@@ -91,12 +91,12 @@ export function usersModule(fastify: FastifyInstance, opts: UsersModuleOptions):
       tags: ['Users'],
       summary: 'List users',
       description:
-        'Returns every user, optionally filtered. This is the unscoped read: access rule A1 permits it to root admins only. Not paged — filters narrow the result, nothing slices it.',
+        'Returns the users matching `search`: a case-insensitive substring of the email, username, first or last name. This is the unscoped read: access rule A1 permits it to root admins only. Not paged — filters narrow the result, nothing slices it. `search` is required, at least 3 characters once trimmed, so the list never reads every user: 400 SEARCH_TERM_REQUIRED otherwise.',
       operationId: 'listUsers',
       querystring: {
         type: 'object',
         properties: {
-          search: { type: 'string' },
+          search: { type: 'string', description: 'Case-insensitive substring of the email, username, first or last name; at least 3 characters once trimmed.' },
           isActive: { type: 'boolean' },
         },
       },

@@ -389,6 +389,38 @@ describe('Contract verification (root admin)', () => {
     expect(forbidden.json<ErrorEnvelope>().error.code).toBe('ROOT_ADMIN_ACCESS_REQUIRED');
   });
 
+  // #1180 — no platform list reads every row: users and leagues take a search of at least 3
+  // characters, events a sport, sport league or year, and participants a sport or a search.
+  it('refuses the platform lists a root admin asks for without a filter, with stable 400 codes', async () => {
+    const rootAdmin = await createTestUser({ displayName: 'Root Admin Filter Required', isRootAdmin: true });
+    const refusals: Array<{ url: string; code: string }> = [
+      { url: '/api/v1/users', code: 'SEARCH_TERM_REQUIRED' },
+      { url: '/api/v1/users?search=ab', code: 'SEARCH_TERM_REQUIRED' },
+      { url: '/api/v1/leagues?scope=all', code: 'SEARCH_TERM_REQUIRED' },
+      { url: '/api/v1/leagues?scope=all&search=ab', code: 'SEARCH_TERM_REQUIRED' },
+      { url: '/api/v1/events', code: 'SPORT_EVENT_FILTER_REQUIRED' },
+      { url: '/api/v1/participants', code: 'SEARCH_TERM_REQUIRED' },
+      { url: '/api/v1/participants?q=ab', code: 'SEARCH_TERM_REQUIRED' },
+    ];
+
+    for (const refusal of refusals) {
+      const response = await getApp().inject({ method: 'GET', url: refusal.url, headers: rootAdmin.headers });
+      expect({ url: refusal.url, status: response.statusCode }).toEqual({ url: refusal.url, status: 400 });
+      expect(ErrorEnvelopeSchema.safeParse(response.json()).success).toBe(true);
+      expect({ url: refusal.url, code: response.json<ErrorEnvelope>().error.code }).toEqual(refusal);
+    }
+  });
+
+  it('refuses every league to a non-root-admin with 403 before it asks for a search, so the 400 never reveals the route', async () => {
+    const member = await createTestUser({ displayName: 'Contract Non Admin League Scope' });
+
+    const response = await getApp().inject({ method: 'GET', url: '/api/v1/leagues?scope=all', headers: member.headers });
+
+    expect(response.statusCode).toBe(403);
+    expect(ErrorEnvelopeSchema.safeParse(response.json()).success).toBe(true);
+    expect(response.json<ErrorEnvelope>().error.code).toBe('LEAGUE_SCOPE_FORBIDDEN');
+  });
+
   it('root-admin user reads match their DTOs on happy paths', async () => {
     const rootAdmin = await createTestUser({
       displayName: 'Root Admin Happy Path User',
@@ -433,11 +465,12 @@ describe('Contract verification (root admin)', () => {
 
     const listRes = await getApp().inject({
       method: 'GET',
-      url: '/api/v1/users',
+      url: `/api/v1/users?search=${encodeURIComponent(targetUser.user.email)}`,
       headers: rootAdmin.headers,
     });
     expect(listRes.statusCode).toBe(200);
     expect(UserListResponseSchema.safeParse(listRes.json()).success).toBe(true);
+    expect(listRes.json<{ users: { id: string }[] }>().users.map((user) => user.id)).toEqual([targetUser.user.id]);
 
     const detailRes = await getApp().inject({
       method: 'GET',
@@ -1164,6 +1197,16 @@ describe('Contract verification (root admin)', () => {
       expect(playerListRes.statusCode).toBe(200);
       expect(ParticipantListResponseSchema.safeParse(playerListRes.json()).success).toBe(true);
       expect(playerListRes.json<ParticipantListResponse>().participants).toHaveLength(3);
+
+      // #1180 — the search is trimmed before it reaches the repository: a leading space still
+      // finds names that start with the term, without a sport.
+      const paddedSearchRes = await getApp().inject({
+        method: 'GET',
+        url: `/api/v1/participants?q=%20Z3L+Contract+Golfer+${stamp}`,
+        headers: rootAdmin.headers,
+      });
+      expect(paddedSearchRes.statusCode).toBe(200);
+      expect(paddedSearchRes.json<ParticipantListResponse>().participants).toHaveLength(3);
 
       // --- createEvent (201: { event }) ---------------------------------------
       const tournamentRes = await getApp().inject({

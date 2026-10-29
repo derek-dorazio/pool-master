@@ -94,6 +94,13 @@ function renderPage() {
   );
 }
 
+/** Types into the page's search box; the page asks the server once the debounce settles. */
+function searchFor(term: string) {
+  fireEvent.change(screen.getByRole('searchbox', { name: 'Find a league' }), {
+    target: { value: term },
+  });
+}
+
 describe('RootAdminManageLeaguesPage', () => {
   afterEach(() => {
     extendRunningPlanRenewalsMock.mockReset();
@@ -105,6 +112,7 @@ describe('RootAdminManageLeaguesPage', () => {
     seedLeagues();
 
     renderPage();
+    searchFor('League');
 
     expect(screen.queryByText('Back to Manage')).not.toBeInTheDocument();
     expect(
@@ -135,9 +143,10 @@ describe('RootAdminManageLeaguesPage', () => {
     seedLeagues();
 
     renderPage();
+    searchFor('League');
 
-    expect(await screen.findByRole('columnheader', { name: 'Plan' })).toBeInTheDocument();
-    expect(screen.getByTestId('root-admin-manage-leagues-link-league-active-1')).toHaveTextContent('Platinum');
+    expect(await screen.findByTestId('root-admin-manage-leagues-link-league-active-1')).toHaveTextContent('Platinum');
+    expect(screen.getByRole('columnheader', { name: 'Plan' })).toBeInTheDocument();
     expect(screen.getByTestId('root-admin-manage-leagues-link-league-inactive-1')).toHaveTextContent('Free');
   });
 
@@ -145,10 +154,11 @@ describe('RootAdminManageLeaguesPage', () => {
     seedLeagues();
 
     renderPage();
+    searchFor('League');
 
-    expect(await screen.findByRole('columnheader', { name: 'Preview ends' })).toBeInTheDocument();
-    expect(screen.getByTestId('root-admin-manage-leagues-link-league-active-1'))
+    expect(await screen.findByTestId('root-admin-manage-leagues-link-league-active-1'))
       .toHaveTextContent(new Date('2027-04-24T12:00:00.000Z').toLocaleDateString());
+    expect(screen.getByRole('columnheader', { name: 'Preview ends' })).toBeInTheDocument();
   });
 
   it('extends every running gift by the chosen months, says how many leagues moved to which date, and reloads the list', async () => {
@@ -156,6 +166,7 @@ describe('RootAdminManageLeaguesPage', () => {
     extendRunningPlanRenewalsMock.mockResolvedValue({ data: { extendedCount: 2, renewsAt: '2027-10-24T12:00:00.000Z' } });
 
     renderPage();
+    searchFor('League');
 
     await screen.findByTestId('root-admin-manage-leagues-link-league-active-1');
     fireEvent.change(screen.getByTestId('root-admin-manage-leagues-extend-months'), { target: { value: '6' } });
@@ -182,6 +193,7 @@ describe('RootAdminManageLeaguesPage', () => {
     seedLeagues();
 
     renderPage();
+    searchFor('League');
 
     await screen.findByTestId('root-admin-manage-leagues-link-league-active-1');
 
@@ -200,11 +212,12 @@ describe('RootAdminManageLeaguesPage', () => {
     seedLeagues();
 
     renderPage();
+    searchFor('League');
 
     // #202 — one league list, scope as a parameter. This page asks for `all`, which access
     // rule A1 permits to root admins only; it used to be a separate `adminListLeagues` route.
     await waitFor(() =>
-      expect(listLeaguesMock).toHaveBeenLastCalledWith({ query: { scope: 'all' } }),
+      expect(listLeaguesMock).toHaveBeenLastCalledWith({ query: { scope: 'all', search: 'League' } }),
     );
     await screen.findByTestId('root-admin-manage-leagues-link-league-active-1');
 
@@ -221,10 +234,11 @@ describe('RootAdminManageLeaguesPage', () => {
     expect(listLeaguesMock).toHaveBeenCalledTimes(1);
   });
 
-  it('narrows the league list to matching names or codes from the search box', async () => {
+  it('narrows the returned leagues to matching names or codes as the search grows', async () => {
     seedLeagues();
 
     renderPage();
+    searchFor('League');
 
     await screen.findByTestId('root-admin-manage-leagues-link-league-active-1');
     fireEvent.change(screen.getByRole('searchbox', { name: 'Find a league' }), {
@@ -243,18 +257,35 @@ describe('RootAdminManageLeaguesPage', () => {
     listLeaguesMock.mockResolvedValue({ data: { leagues: [], memberships: [] } });
 
     renderPage();
+    searchFor('League');
 
     expect(await screen.findByText('No leagues matched the current filters.')).toBeInTheDocument();
   });
 
-  it('renders the error state when the admin list call fails', async () => {
+  it('shows the error in the grid and keeps the search box when the admin list call fails', async () => {
     listLeaguesMock.mockResolvedValue({
       data: null,
       error: { error: { code: 'INTERNAL_ERROR', message: 'Boom' } },
     });
 
     renderPage();
+    searchFor('League');
 
     expect(await screen.findByText('Boom')).toBeInTheDocument();
+    expect(screen.getByRole('searchbox', { name: 'Find a league' })).toHaveValue('League');
+  });
+
+  it('asks for at least 3 characters of a name and reads no leagues until they are typed', async () => {
+    seedLeagues();
+    renderPage();
+
+    expect(
+      await screen.findByText("Type at least 3 characters of a league's name to find it."),
+    ).toBeInTheDocument();
+    searchFor('Al');
+    await new Promise((resolve) => setTimeout(resolve, 400));
+
+    expect(screen.getByText("Type at least 3 characters of a league's name to find it.")).toBeInTheDocument();
+    expect(listLeaguesMock).not.toHaveBeenCalled();
   });
 });
