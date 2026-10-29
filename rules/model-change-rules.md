@@ -207,6 +207,20 @@ it names, and every read by that column, scans the referencing table (#1177).
   filters by.
 - The database-indexes integration suite checks the first and third against the migrated
   catalog, so a missing or duplicate index fails before review.
+- **The integration run checks the second.** When a test file ends, every distinct statement
+  the app sent is planned by Postgres with sequential scans off and no bound values. A plan that
+  still reads a table whole means no index serves the filter: a sequential scan, an index walked
+  by a column it does not lead on, or an index walked for its order with every row filtered. A
+  walk passes only when another index on the table could serve the read: it leads on a column
+  the filter compares by an operator that index serves (`ILIKE` needs a trigram index, and
+  `lower(col)` none can), or on the join column, when another table of the query is filtered by
+  a bound value an index on it could look up. The file fails naming the table, the SQL and the
+  test. Add the index. Every table is checked except the reference tables listed in
+  `REFERENCE_TABLES` (`tests/integration/index-check.ts`); a new table that stays a handful of
+  rows goes on that list. A whole read that is right on purpose goes in
+  `tests/integration/table-scan-allowances.ts` with its reason, or the ticket that adds the
+  index. The tests' own seeds and cleanup run on another client and are not planned; neither are
+  repository suites that call an adapter with the tests' client.
 
 ---
 

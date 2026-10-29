@@ -56,7 +56,7 @@ describe('recordStatements', () => {
   it('records the statements the call sends and none sent before it starts', async () => {
     await getPrisma().user.count();
 
-    const { result, statements } = await recordStatements(getPrisma(), () => getPrisma().user.findMany({ where: { id: randomUUID() } }));
+    const { result, statements } = await recordStatements(() => getPrisma().user.findMany({ where: { id: randomUUID() } }));
 
     expect(result).toEqual([]);
     expect(statements).toHaveLength(1);
