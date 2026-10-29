@@ -1,15 +1,17 @@
 /**
  * #1248 — the sport catalog's list reads cost the same SQL statements for 2 rows as for 20: the
- * sport leagues, and one sport league with its affiliations.
+ * sport leagues, one sport league with its affiliations, and the matchups proposed for a
+ * reseeded bracket round.
  *
  * Each case seeds sport leagues of its own beside the reference data the migrations seed, which
  * the list also shows. `rules/testing-rules.md` §9B *Query Scaling Tests* says when a route
  * needs one.
  */
 import { randomUUID } from 'crypto';
-import { Sport } from '@poolmaster/shared/domain';
+import { BracketAdvancement, MatchSide, MatchStatus, Sport, SportEventStatus } from '@poolmaster/shared/domain';
 import {
   ParticipantLeagueAffiliationListResponseSchema,
+  SportEventRoundMatchupsResponseSchema,
   SportLeagueListResponseSchema,
   SportLeagueResponseSchema,
 } from '@poolmaster/shared/dto';
@@ -78,6 +80,61 @@ async function seedSportLeagues(sportLeagues: number) {
   return createTestUser({ isRootAdmin: true });
 }
 
+/**
+ * A released bracket of a sport league that reseeds, with `matchups` matches to place in round 2:
+ * round 1's 2 x `matchups` games are played, each won by its home team and linking nowhere, so
+ * round 2 is placed by seed; round 3 is the final. Every team has a seed.
+ */
+async function seedReseededRound(matchups: number) {
+  const prisma = getPrisma();
+  const suffix = randomUUID().slice(0, 8);
+  const sport = await prisma.sport.upsert({
+    where: { sport: Sport.AMERICAN_FOOTBALL },
+    create: { sport: Sport.AMERICAN_FOOTBALL, participantType: 'TEAM', tournamentFormat: 'MATCHES' },
+    update: {},
+  });
+  const sportLeague = await prisma.sportLeague.create({
+    data: { sportId: sport.id, name: `Scaling Reseed League ${suffix}`, bracketAdvancement: BracketAdvancement.RESEED_BY_SEED },
+  });
+  const series = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `Scaling Reseed Playoffs ${suffix}` } });
+  const startDate = new Date(Date.now() + 7 * DAY);
+  const event = await prisma.sportEvent.create({
+    data: {
+      eventSeriesId: series.id, eventYear: startDate.getUTCFullYear(), externalId: `scaling-${suffix}`, providerId: 'integration-test',
+      sport: Sport.AMERICAN_FOOTBALL, name: `Scaling Reseed Playoffs ${suffix}`, startDate, status: SportEventStatus.SCHEDULED, rounds: 3,
+    },
+  });
+  const rounds = [];
+  for (let roundNumber = 1; roundNumber <= 3; roundNumber += 1) {
+    rounds.push(await prisma.sportEventRound.create({ data: { sportEventId: event.id, roundNumber, scheduledDate: new Date(startDate.getTime() + (roundNumber - 1) * 7 * DAY) } }));
+  }
+  const [wildCard, divisional, final] = rounds as [typeof rounds[number], typeof rounds[number], typeof rounds[number]];
+  const firstRoundGames = matchups * 2;
+  let matchNumber = 0;
+  for (let game = 0; game < firstRoundGames; game += 1) {
+    const team = async (seedNumber: number) => {
+      const participant = await prisma.participant.create({ data: { sportId: sport.id, name: `Seed ${String(seedNumber)} ${suffix}`, participantType: 'TEAM' } });
+      return prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: participant.id, isActive: true, seedNumber } });
+    };
+    // The better seeds host and win: game N is seed N + 1 against seed 2 x games - N.
+    const [home, away] = await Promise.all([team(game + 1), team(firstRoundGames * 2 - game)]);
+    matchNumber += 1;
+    await prisma.sportEventMatch.create({
+      data: {
+        sportEventId: event.id, sportEventRoundId: wildCard.id, matchNumber, isNeutralSite: false,
+        homeSportEventParticipantId: home.id, awaySportEventParticipantId: away.id,
+        status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME, homeScore: 20, awayScore: 17,
+      },
+    });
+  }
+  for (let game = 0; game < matchups; game += 1) {
+    matchNumber += 1;
+    await prisma.sportEventMatch.create({ data: { sportEventId: event.id, sportEventRoundId: divisional.id, matchNumber, isNeutralSite: false } });
+  }
+  await prisma.sportEventMatch.create({ data: { sportEventId: event.id, sportEventRoundId: final.id, matchNumber: matchNumber + 1, isNeutralSite: true } });
+  return { event, rootAdmin: await createTestUser({ isRootAdmin: true }) };
+}
+
 describe('sport catalog reads cost the same statements for 2 rows as for 20', () => {
   it('GET the sport leagues: the same statements for 2 sport leagues of their own as for 20', async () => {
     await expectConstantQueries({
@@ -103,6 +160,15 @@ describe('sport catalog reads cost the same statements for 2 rows as for 20', ()
       seed: async (affiliations) => ({ sportLeague: await seedSportLeague(affiliations), rootAdmin: await createTestUser({ isRootAdmin: true }) }),
       call: ({ sportLeague, rootAdmin }) => get(`/api/v1/sport-leagues/${sportLeague.id}/affiliations`, rootAdmin),
       rowsShown: (response) => okBody(response, ParticipantLeagueAffiliationListResponseSchema).affiliations.length,
+    });
+  });
+
+  it("GET a reseeded round's proposed matchups: the same statements for 2 matchups as for 20", async () => {
+    await expectConstantQueries({
+      route: 'GET /api/v1/events/{eventId}/bracket/rounds/{roundNumber}/reseed',
+      seed: seedReseededRound,
+      call: ({ event, rootAdmin }) => get(`/api/v1/events/${event.id}/bracket/rounds/2/reseed`, rootAdmin),
+      rowsShown: (response) => okBody(response, SportEventRoundMatchupsResponseSchema).matches.length,
     });
   });
 });
