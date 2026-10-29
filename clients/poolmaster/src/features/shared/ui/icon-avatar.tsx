@@ -7,7 +7,8 @@ type IconAvatarProps = {
   label?: string;
   selected?: boolean;
   size?: "sm" | "md" | "lg";
-  tone?: "default" | "inverse" | "muted";
+  /** `custom` sets no colours, for a caller whose `className` brings its own (a team icon's theme). */
+  tone?: "custom" | "default" | "inverse" | "muted";
 };
 
 const sizeClassNames = {
@@ -17,6 +18,7 @@ const sizeClassNames = {
 };
 
 const toneClassNames = {
+  custom: "",
   default: "bg-primary/10 text-primary",
   inverse: "bg-primary text-primary-foreground",
   muted: "bg-background text-muted-foreground",

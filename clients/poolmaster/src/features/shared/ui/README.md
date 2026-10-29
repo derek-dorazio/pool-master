@@ -39,6 +39,11 @@ League pages and administration areas use the pieces named in
 `DangerZone` / `DangerZoneAction`, and `FormPage` for a full-page edit
 (with `IconPalette` when the form picks an icon).
 
+A team's icon and name come from `features/teams`, not this folder, because they
+are a product piece: `TeamAvatar` draws the icon in its coloured square, and
+`TeamName` puts it beside the name, linked or plain, with the You and Inactive
+markers and an optional line underneath.
+
 Feature pages should keep route-specific copy and generated-SDK calls local, but
 they should not duplicate header, grid-shell, detail/actions, or
 public-join layout code when a template fits.
