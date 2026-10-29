@@ -5,7 +5,9 @@ import {
   ContestNotFoundError,
 
   type ContestServiceDeps,
+  type EntrySubmittedReceiptInput,
 } from '../../../packages/core-api/src/modules/contests/service';
+import type { ParticipantValuationView } from '../../../packages/core-api/src/modules/events/sport-event-tier-service';
 import type {
   ContestConfigurationRepository,
   ContestRepository,
@@ -27,6 +29,8 @@ import {
   SquadMembershipStatus,
   TeamIconKey,
   parseContestScoringSettings,
+  type Contest,
+  type ContestConfiguration,
   type ParticipantContestScoringRule,
   type SportEvent,
 } from '@poolmaster/shared/domain';
@@ -224,10 +228,7 @@ function buildService(deps: Partial<ContestServiceDeps> = {}): ContestService {
     }),
     sportLeagues: { findById: jest.fn().mockResolvedValue({ id: 'pga-tour', name: 'PGA Tour' }) },
     eventParticipants: { listEventParticipants: jest.fn().mockResolvedValue([]), listCachedEventParticipants: jest.fn().mockResolvedValue([]) },
-    tiers: {
-      getEffectiveValuationsForSportEvent: jest.fn().mockResolvedValue([]),
-      listTiers: jest.fn().mockResolvedValue([]),
-    },
+    tiers: { listTiers: jest.fn().mockResolvedValue([]) },
     ...deps,
   });
 }
@@ -299,6 +300,49 @@ function buildReceiptPick(
       role: null,
       teamAffiliation: null,
     },
+  };
+}
+
+/** An effective valuation as `SportEventTierService` resolves one: untiered and unpriced unless given. */
+function receiptValuation(
+  sportEventParticipantId: string,
+  overrides: { tierLabel?: string; price?: number } = {},
+): ParticipantValuationView {
+  return {
+    sportEventParticipantId,
+    participantId: `participant-of-${sportEventParticipantId}`,
+    tierId: null,
+    tierKey: null,
+    tierLabel: overrides.tierLabel ?? null,
+    tierNumber: null,
+    tierOrderIndex: null,
+    price: overrides.price ?? null,
+  };
+}
+
+/** A contest configuration holding the given typed rules. */
+function receiptConfiguration(configJson: NonNullable<ContestConfiguration['configJson']>): ContestConfiguration {
+  return {
+    id: 'configuration-1',
+    contestId: 'contest-1',
+    selectionType: configJson.selectionType,
+    configJson,
+  } as ContestConfiguration;
+}
+
+/**
+ * What the selection room hands the receipt for entry-1 in event-1: the contest, the event, no
+ * configuration, no valuations and the squad's one owner, unless given.
+ */
+function receiptInput(contest: Contest, overrides: Partial<EntrySubmittedReceiptInput> = {}): EntrySubmittedReceiptInput {
+  return {
+    contest,
+    sportEvent: STARTED_EVENT,
+    configuration: null,
+    valuations: [],
+    squadMemberships: [ACTIVE_SQUAD_MEMBERSHIP],
+    entryIds: ['entry-1'],
+    ...overrides,
   };
 }
 
@@ -925,7 +969,7 @@ describe('ContestService', () => {
       expect([limits.entriesPerContest(null), limits.entriesPerContest(200), limits.entriesPerContest(1000)]).toEqual([500, 500, 1000]);
     });
 
-    it('returns the joined entry state for pre-draft contest views', async () => {
+    it('lists the reader\'s own squad\'s entry with its squad name for pre-draft contest views', async () => {
       const contest = buildContest({ id: 'contest-1', leagueId: 'league-1', status: ContestStatus.DRAFT });
       const membership = buildMembership({ id: 'membership-1', leagueId: 'league-1', userId: 'user-1' });
       const contestRepo = createMockContestRepo({
@@ -956,9 +1000,7 @@ describe('ContestService', () => {
 
       const result = await service.listEntries('contest-1', 'user-1');
 
-      expect(result.isJoined).toBe(true);
-      expect(result.myEntryId).toBe('entry-1');
-      expect(result.entries[0].squadName).toBe("Derek's Squad");
+      expect(result.entries[0]).toMatchObject({ id: 'entry-1', squadId: 'squad-1', squadName: "Derek's Squad" });
     });
 
     it('pool-master-eux.4: computes the Golf leaderboard from event standings instead of ContestEntry totals', async () => {
@@ -1385,6 +1427,13 @@ describe('ContestService', () => {
     });
 
     it('sends the Entry submitted confirmation with each tier\'s golfer, the tiebreaker and a link to the entry', async () => {
+      const picks = fakeContestEntryPickRepo({
+        countByEntries: jest.fn().mockResolvedValue(new Map([['entry-1', 2]])),
+        findByEntriesWithParticipant: jest.fn().mockResolvedValue([
+          buildReceiptPick('pick-1', 'sport-event-participant-1', 'participant-1', 'Rory McIlroy', '2026-01-01T12:00:00.000Z'),
+          buildReceiptPick('pick-2', 'sport-event-participant-2', 'participant-2', 'Tommy Fleetwood', '2026-01-01T12:01:00.000Z'),
+        ]),
+      });
       const contest = buildContest({
         id: 'contest-1',
         leagueId: 'league-1',
@@ -1393,14 +1442,6 @@ describe('ContestService', () => {
         status: ContestStatus.OPEN,
       });
       const membership = buildMembership({ id: 'membership-1', leagueId: 'league-1', userId: 'user-1' });
-      // The event's effective tiers, as SportEventTierService resolves them.
-      const tiers = {
-        getEffectiveValuationsForSportEvent: jest.fn().mockResolvedValue([
-          { sportEventParticipantId: 'sport-event-participant-1', tierLabel: 'Tier A' },
-          { sportEventParticipantId: 'sport-event-participant-2', tierLabel: 'Tier B' },
-        ]),
-        listTiers: jest.fn().mockResolvedValue([]),
-      };
       const mailDelivery = {
         providerName: 'smtp' as const,
         send: mockFn<MailDeliveryProvider['send']>(async () => ({ provider: 'smtp', messageId: 'mail-1' })),
@@ -1410,7 +1451,7 @@ describe('ContestService', () => {
         leagues: fakeLeagueRepo({
           findById: jest.fn().mockResolvedValue({ id: 'league-1', name: 'Mathworks', leagueCode: 'MATHWORKS', plan: LeaguePlan.PLATINUM }),
         }),
-        users: fakeUserRepo({ findById: jest.fn().mockResolvedValue(RECEIPT_USER) }),
+        users: fakeUserRepo({ findByIds: jest.fn().mockResolvedValue([RECEIPT_USER]) }),
         memberships: createMockMembershipRepo({ findByLeagueAndUser: jest.fn().mockResolvedValue(membership) }),
         squads: createMockSquadRepo(),
         squadMemberships: createMockSquadMembershipRepo({
@@ -1421,21 +1462,20 @@ describe('ContestService', () => {
           findByContestAndSquad: jest.fn().mockResolvedValue([UNSUBMITTED_ENTRY]),
           findByIdWithSquad: jest.fn().mockResolvedValue(submittedEntry(271)),
         }),
-        picks: fakeContestEntryPickRepo({
-          countByEntries: jest.fn().mockResolvedValue(new Map([['entry-1', 2]])),
-          findByEntriesWithParticipant: jest.fn().mockResolvedValue([
-            buildReceiptPick('pick-1', 'sport-event-participant-1', 'participant-1', 'Rory McIlroy', '2026-01-01T12:00:00.000Z'),
-            buildReceiptPick('pick-2', 'sport-event-participant-2', 'participant-2', 'Tommy Fleetwood', '2026-01-01T12:01:00.000Z'),
-          ]),
-        }),
-        tiers,
+        picks,
         email: emailServiceOver(mailDelivery),
         appBaseUrl: 'https://app.primetimecommissioner.com',
       });
 
-      await service.sendEntrySubmittedEmail('contest-1', 'entry-1', 'event-1');
+      // The event's effective tiers, as the selection room already holds them.
+      await service.sendEntrySubmittedEmails(receiptInput(contest, {
+        valuations: [
+          receiptValuation('sport-event-participant-1', { tierLabel: 'Tier A' }),
+          receiptValuation('sport-event-participant-2', { tierLabel: 'Tier B' }),
+        ],
+      }));
 
-      expect(tiers.getEffectiveValuationsForSportEvent).toHaveBeenCalledWith('event-1');
+      expect(picks.findByEntriesWithParticipant).toHaveBeenCalledWith(['entry-1'], { sportEventId: 'event-1' });
       await deliverQueuedEmail();
       expect(mailDelivery.send).toHaveBeenCalledTimes(1);
       expect(mailDelivery.send).toHaveBeenCalledWith(expect.objectContaining({
@@ -1472,21 +1512,10 @@ describe('ContestService', () => {
       };
       const service = buildService({
         contests: createMockContestRepo({ findById: jest.fn().mockResolvedValue(contest) }),
-        configurations: createMockContestConfigurationRepo({
-          findByContest: jest.fn().mockResolvedValue({
-            id: 'configuration-1',
-            contestId: 'contest-1',
-            selectionType: SharedDomainEnums.SelectionType.BUDGET_PICK,
-            configJson: { selectionType: SharedDomainEnums.SelectionType.BUDGET_PICK, rosterSize: 2, salaryCap: 50_000, countedScores: 2 },
-          }),
-        }),
-        sportEvents: fakeSportEventRepo({
-          findById: jest.fn().mockResolvedValue({ ...STARTED_EVENT, sport: Sport.AUTO_RACING }),
-        }),
         leagues: fakeLeagueRepo({
           findById: jest.fn().mockResolvedValue({ id: 'league-1', name: 'Mathworks', leagueCode: 'MATHWORKS', plan: LeaguePlan.PLATINUM }),
         }),
-        users: fakeUserRepo({ findById: jest.fn().mockResolvedValue(RECEIPT_USER) }),
+        users: fakeUserRepo({ findByIds: jest.fn().mockResolvedValue([RECEIPT_USER]) }),
         squadMemberships: createMockSquadMembershipRepo({
           findBySquad: jest.fn().mockResolvedValue([ACTIVE_SQUAD_MEMBERSHIP]),
         }),
@@ -1497,18 +1526,20 @@ describe('ContestService', () => {
             buildReceiptPick('pick-2', 'sport-event-participant-2', 'participant-2', 'Chase Elliott', '2026-01-01T12:01:00.000Z'),
           ]),
         }),
-        tiers: {
-          getEffectiveValuationsForSportEvent: jest.fn().mockResolvedValue([
-            { sportEventParticipantId: 'sport-event-participant-1', tierLabel: null, price: 26_000 },
-            { sportEventParticipantId: 'sport-event-participant-2', tierLabel: null, price: 22_500 },
-          ]),
-          listTiers: jest.fn().mockResolvedValue([]),
-        },
         email: emailServiceOver(mailDelivery),
         appBaseUrl: 'https://app.primetimecommissioner.com',
       });
 
-      await service.sendEntrySubmittedEmail('contest-1', 'entry-1', 'event-1');
+      await service.sendEntrySubmittedEmails(receiptInput(contest, {
+        sportEvent: { ...STARTED_EVENT, sport: Sport.AUTO_RACING },
+        configuration: receiptConfiguration({
+          selectionType: SharedDomainEnums.SelectionType.BUDGET_PICK, rosterSize: 2, salaryCap: 50_000, countedScores: 2,
+        }),
+        valuations: [
+          receiptValuation('sport-event-participant-1', { price: 26_000 }),
+          receiptValuation('sport-event-participant-2', { price: 22_500 }),
+        ],
+      }));
 
       await deliverQueuedEmail();
       const sentMessage = mailDelivery.send.mock.calls[0][0];
@@ -1530,18 +1561,10 @@ describe('ContestService', () => {
       };
       const service = buildService({
         contests: createMockContestRepo({ findById: jest.fn().mockResolvedValue(contest) }),
-        configurations: createMockContestConfigurationRepo({
-          findByContest: jest.fn().mockResolvedValue({
-            id: 'configuration-1',
-            contestId: 'contest-1',
-            selectionType: SharedDomainEnums.SelectionType.RANDOM_DRAW,
-            configJson: { selectionType: SharedDomainEnums.SelectionType.RANDOM_DRAW, picksPerEntry: 2, countedScores: 2 },
-          }),
-        }),
         leagues: fakeLeagueRepo({
           findById: jest.fn().mockResolvedValue({ id: 'league-1', name: 'Mathworks', leagueCode: 'MATHWORKS', plan: LeaguePlan.PLATINUM }),
         }),
-        users: fakeUserRepo({ findById: jest.fn().mockResolvedValue(RECEIPT_USER) }),
+        users: fakeUserRepo({ findByIds: jest.fn().mockResolvedValue([RECEIPT_USER]) }),
         squadMemberships: createMockSquadMembershipRepo({
           findBySquad: jest.fn().mockResolvedValue([ACTIVE_SQUAD_MEMBERSHIP]),
         }),
@@ -1556,7 +1579,11 @@ describe('ContestService', () => {
         appBaseUrl: 'https://app.primetimecommissioner.com',
       });
 
-      await service.sendEntrySubmittedEmail('contest-1', 'entry-1', 'event-1');
+      await service.sendEntrySubmittedEmails(receiptInput(contest, {
+        configuration: receiptConfiguration({
+          selectionType: SharedDomainEnums.SelectionType.RANDOM_DRAW, picksPerEntry: 2, countedScores: 2,
+        }),
+      }));
 
       await deliverQueuedEmail();
       const sentMessage = mailDelivery.send.mock.calls[0][0];
@@ -1565,6 +1592,68 @@ describe('ContestService', () => {
       expect(sentMessage.text).toContain('- Pick 2: Tommy Fleetwood');
       expect(sentMessage.text).not.toContain('Submitted:');
       expect(sentMessage.text).not.toContain('Tiebreaker');
+    });
+
+    it('sends a draw\'s every entry its own receipt to its own owners, reading the entries, their picks, the league and the owners once for all of them', async () => {
+      const contest = buildContest({
+        id: 'contest-1',
+        leagueId: 'league-1',
+        sportEventIds: ['event-1'],
+        name: 'Masters Quick Pick',
+        status: ContestStatus.OPEN,
+      });
+      const mailDelivery = {
+        providerName: 'smtp' as const,
+        send: mockFn<MailDeliveryProvider['send']>(async () => ({ provider: 'smtp', messageId: 'mail-1' })),
+      };
+      const otherOwner = buildUser({ id: 'user-2', email: 'olive@example.com', firstName: 'Olive', lastName: 'Owner', username: 'olive' });
+      const users = fakeUserRepo({ findByIds: jest.fn().mockResolvedValue([RECEIPT_USER, otherOwner]) });
+      const entries = createMockEntryRepo({
+        findByContestWithSquad: jest.fn().mockResolvedValue([
+          DEFAULT_ENTRY_WITH_SQUAD,
+          { ...DEFAULT_ENTRY_WITH_SQUAD, id: 'entry-2', squadId: 'squad-2', name: "Olive's Entry", squadName: "Olive's Squad" },
+        ]),
+      });
+      const leagues = fakeLeagueRepo({
+        findById: jest.fn().mockResolvedValue({ id: 'league-1', name: 'Mathworks', leagueCode: 'MATHWORKS', plan: LeaguePlan.PLATINUM }),
+      });
+      const picks = fakeContestEntryPickRepo({
+        findByEntriesWithParticipant: jest.fn().mockResolvedValue([
+          buildReceiptPick('pick-1', 'sport-event-participant-1', 'participant-1', 'Rory McIlroy', '2026-01-01T12:00:00.000Z'),
+          { ...buildReceiptPick('pick-2', 'sport-event-participant-2', 'participant-2', 'Tommy Fleetwood', '2026-01-01T12:00:00.000Z'), entryId: 'entry-2' },
+        ]),
+      });
+      const service = buildService({
+        entries,
+        leagues,
+        picks,
+        users,
+        email: emailServiceOver(mailDelivery),
+        appBaseUrl: 'https://app.primetimecommissioner.com',
+      });
+
+      await service.sendEntrySubmittedEmails(receiptInput(contest, {
+        configuration: receiptConfiguration({
+          selectionType: SharedDomainEnums.SelectionType.RANDOM_DRAW, picksPerEntry: 1, countedScores: 1,
+        }),
+        squadMemberships: [ACTIVE_SQUAD_MEMBERSHIP, { ...ACTIVE_SQUAD_MEMBERSHIP, id: 'squad-membership-2', squadId: 'squad-2', userId: 'user-2' }],
+        entryIds: ['entry-1', 'entry-2'],
+      }));
+
+      expect(entries.findByContestWithSquad).toHaveBeenCalledTimes(1);
+      expect(entries.findByIdWithSquad).not.toHaveBeenCalled();
+      expect(leagues.findById).toHaveBeenCalledTimes(1);
+      expect(users.findByIds).toHaveBeenCalledTimes(1);
+      expect(users.findByIds).toHaveBeenCalledWith(['user-1', 'user-2']);
+      expect(users.findById).not.toHaveBeenCalled();
+      expect(picks.findByEntriesWithParticipant).toHaveBeenCalledTimes(1);
+      expect(picks.findByEntriesWithParticipant).toHaveBeenCalledWith(['entry-1', 'entry-2'], { sportEventId: 'event-1' });
+      await deliverQueuedEmail();
+      const sent = mailDelivery.send.mock.calls.map(([message]) => [message.to, message.text.includes('Rory McIlroy'), message.text.includes('Tommy Fleetwood')]);
+      expect(sent).toEqual([
+        ['derek@example.com', true, false],
+        ['olive@example.com', false, true],
+      ]);
     });
 
     it('resolves rather than throwing when confirmation delivery fails, so the submit it follows still succeeds', async () => {
@@ -1589,7 +1678,7 @@ describe('ContestService', () => {
         leagues: fakeLeagueRepo({
           findById: jest.fn().mockResolvedValue({ id: 'league-1', name: 'Mathworks', leagueCode: 'MATHWORKS', plan: LeaguePlan.PLATINUM }),
         }),
-        users: fakeUserRepo({ findById: jest.fn().mockResolvedValue(RECEIPT_USER) }),
+        users: fakeUserRepo({ findByIds: jest.fn().mockResolvedValue([RECEIPT_USER]) }),
         memberships: createMockMembershipRepo({ findByLeagueAndUser: jest.fn().mockResolvedValue(membership) }),
         squads: createMockSquadRepo(),
         squadMemberships: createMockSquadMembershipRepo({
@@ -1606,7 +1695,7 @@ describe('ContestService', () => {
         email: emailServiceOver(mailDelivery),
       });
 
-      await expect(service.sendEntrySubmittedEmail('contest-1', 'entry-1', 'event-1')).resolves.toBeUndefined();
+      await expect(service.sendEntrySubmittedEmails(receiptInput(contest))).resolves.toBeUndefined();
       await deliverQueuedEmail();
       expect(mailDelivery.send).toHaveBeenCalledTimes(1);
       expect(entryRepo.update).not.toHaveBeenCalled();

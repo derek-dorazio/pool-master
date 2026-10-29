@@ -7,7 +7,6 @@ import { ContestLeaderboardPage } from './contest-leaderboard-page';
 import { bracketLeagueContextFixture } from './test/bracket-fixtures';
 import {
   pickEmContestFixture,
-  pickEmEntriesFixture,
   pickEmLeaderboardFixture,
 } from './test/pick-em-fixtures';
 
@@ -16,7 +15,6 @@ const {
   getContestLeaderboardMock,
   getContestMock,
   getLeagueMock,
-  listContestEntriesMock,
   mockLogger,
 } = vi.hoisted(() => {
   const logger = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), fatal: vi.fn(), child: vi.fn() };
@@ -26,7 +24,6 @@ const {
     getContestLeaderboardMock: vi.fn(),
     getContestMock: vi.fn(),
     getLeagueMock: vi.fn(),
-    listContestEntriesMock: vi.fn(),
     mockLogger: logger,
   };
 });
@@ -36,7 +33,6 @@ bindApiMocks({
   getContest: getContestMock,
   getContestLeaderboard: getContestLeaderboardMock,
   getLeague: getLeagueMock,
-  listContestEntries: listContestEntriesMock,
 });
 
 vi.mock('@/features/auth/auth-context', () => ({
@@ -86,13 +82,12 @@ function renderLeaderboard() {
 function primeMocks(board = pickEmLeaderboardFixture()) {
   getContestMock.mockResolvedValue({ data: { contest: pickEmContestFixture({ status: 'ACTIVE' }) } });
   getPickEmLeaderboardMock.mockResolvedValue({ data: board });
-  listContestEntriesMock.mockResolvedValue({ data: pickEmEntriesFixture({ picksRevealed: true }) });
   getLeagueMock.mockResolvedValue({ data: bracketLeagueContextFixture() });
 }
 
 describe('Pick\'em contest leaderboard', () => {
   afterEach(() => {
-    for (const mock of [getPickEmLeaderboardMock, getContestLeaderboardMock, getContestMock, getLeagueMock, listContestEntriesMock]) {
+    for (const mock of [getPickEmLeaderboardMock, getContestLeaderboardMock, getContestMock, getLeagueMock]) {
       mock.mockReset();
     }
   });
@@ -146,7 +141,9 @@ describe('Pick\'em contest leaderboard', () => {
     primeMocks();
     renderLeaderboard();
 
-    fireEvent.click(await screen.findByTestId('pick-em-leaderboard-entry-link-entry-2'));
+    // Once the viewer's league has loaded the board stops re-rendering its rows.
+    await screen.findByTestId('pick-em-leaderboard-my-best');
+    fireEvent.click(screen.getByTestId('pick-em-leaderboard-entry-link-entry-2'));
     expect(await screen.findByTestId('entry-destination')).toHaveTextContent('entry-2');
   });
 });

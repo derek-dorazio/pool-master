@@ -110,9 +110,10 @@ const nothing = () => jest.fn().mockResolvedValue(undefined);
 export function fakeUserRepo(overrides: Partial<UserRepository> = {}): UserRepository {
   return {
     findById: one(),
+    findByIds: many(),
     findByEmail: one(),
     findAll: many(),
-    findByLeague: many(),
+    findActiveByLeague: many(),
     findByIdentifier: one(),
     findHolderOtherThan: one(),
     countActiveRootAdmins: jest.fn().mockResolvedValue(0),
@@ -192,6 +193,7 @@ export function fakeSquadOwnerInvitationRepo(
     findByLeague: many(),
     findByCode: one(),
     findPendingByLeagueAndEmail: one(),
+    revokePendingBySquad: jest.fn().mockResolvedValue(0),
     create: echoCreate('squad-owner-invitation'),
     update: echoUpdate(),
     ...overrides,
@@ -224,7 +226,7 @@ export function fakeLeagueInvitationRepo(
 ): LeagueInvitationRepository {
   return {
     findById: one(),
-    findByLeague: many(),
+    findOutstandingByLeague: many(),
     findByCode: one(),
     // Single row despite the plural-sounding name — the port declares
     // `Promise<LeagueInvitation | null>`. Defaulting this to [] made every email look
@@ -382,6 +384,9 @@ export function fakeContestEntryRepo(
     findByContest: many(),
     findByContestWithSquad: many(),
     findByContestAndSquad: many(),
+    findIdsByContestAndSquad: many(),
+    findBySquadAndContests: many(),
+    countForContest: jest.fn().mockResolvedValue({ submittedEntryCount: 0, enteredSquadCount: 0, allEntryCount: 0 }),
     countByContests: jest.fn().mockResolvedValue(new Map()),
     countSubmittedByContests: jest.fn().mockResolvedValue(new Map()),
     create: createdEntry(echoCreate('contest-entry')),

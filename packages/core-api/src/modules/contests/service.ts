@@ -16,6 +16,7 @@ import type {
   ContestEntryStandingRepository,
   ContestRepository,
   ContestEntryRepository,
+  ContestEntryTotals,
   LeagueMembershipRepository,
   LeagueRepository,
   ParticipantContestScoringRuleRepository,
@@ -30,15 +31,14 @@ import type {
 } from '@poolmaster/shared/db';
 import type {
   Contest,
+  ContestConfiguration,
   ContestEntry,
   LeagueMembership,
-  LeaguePlan,
   ParticipantScoringDefinitionId,
   RankedContestEntry,
   SportEvent,
   SportEventMatch,
   SquadMembership,
-  User,
 } from '@poolmaster/shared/domain';
 import {
   championshipYearStart,
@@ -108,7 +108,7 @@ import {
   type EventTiming,
 } from './entry-window';
 import type { SportEventParticipantService, SportEventParticipantView } from '../events/sport-event-participant-service';
-import type { SportEventTierService } from '../events/sport-event-tier-service';
+import type { ParticipantValuationView, SportEventTierService } from '../events/sport-event-tier-service';
 import { contestEntriesCap, type PlanEntitlementsService } from '../plans/plan-entitlements-service';
 import {
   emailRecipientOf,
@@ -132,37 +132,20 @@ export interface UpdateContestInput {
   endsAt?: Date;
 }
 
-interface ContestEntryReceiptData {
-  id: string;
-  contestId: string;
-  name: string;
-  squadId: string;
-  tiebreakerValue: number | null;
-  updatedAt: Date;
-  squad: {
-    name: string;
-  };
-  contest: {
-    id: string;
-    leagueId: string;
-    name: string;
-    league: {
-      name: string;
-      leagueCode: string;
-      plan: LeaguePlan;
-    };
-  };
-  picks: Array<{
-    pickedAt: Date;
-    sportEventId: string;
-    sportEventParticipant: {
-      id: string;
-      participant: {
-        id: string;
-        name: string;
-      };
-    };
-  }>;
+/**
+ * What the selection room already holds when it sends entry receipts (#1196), so the receipt
+ * reads none of it again.
+ */
+export interface EntrySubmittedReceiptInput {
+  contest: Contest;
+  sportEvent: SportEvent;
+  configuration: ContestConfiguration | null;
+  /** The event's effective valuations: each pick's tier label and price. */
+  valuations: readonly ParticipantValuationView[];
+  /** The active memberships of the entries' squads, in join order: who gets each receipt. */
+  squadMemberships: readonly SquadMembership[];
+  /** The submitted entries, each one sent its own receipt. */
+  entryIds: readonly string[];
 }
 
 type LifecycleLogger = Pick<FastifyBaseLogger, 'debug' | 'info' | 'warn' | 'error' | 'fatal'>;
@@ -204,7 +187,7 @@ export interface ContestServiceDeps {
   /** An event's sport league, named on an entry receipt. */
   sportLeagues: Pick<SportLeagueRepository, 'findById'>;
   eventParticipants: Pick<SportEventParticipantService, 'listEventParticipants' | 'listCachedEventParticipants'>;
-  tiers: Pick<SportEventTierService, 'getEffectiveValuationsForSportEvent' | 'listTiers'>;
+  tiers: Pick<SportEventTierService, 'listTiers'>;
   /** The league's plan caps (#947): how many entries a contest may hold. */
   planEntitlements: Pick<PlanEntitlementsService, 'forLeague'>;
   /** Each contest's expansion (#987), for the cap a contest read shows. */
@@ -415,40 +398,78 @@ export class ContestService {
     this.logger.info({ contestId }, 'contest delete completed');
   }
 
+  /**
+   * Every entry of the contest, the requester's own squad's first. Each lists its picks: all of
+   * the requester's own squad's, and only the revealed events' picks of everyone else's.
+   */
   async listEntries(
     contestId: string,
     userId: string,
-  ): Promise<{
-    entries: ContestEntryDto[];
-    isJoined: boolean;
-    myEntryId: string | null;
-    myEntryIds: string[];
-    picksRevealed: boolean;
-  }> {
+  ): Promise<{ entries: ContestEntryDto[]; picksRevealed: boolean }> {
     const context = await this.getEntryContext(contestId, userId, 'read');
     const squadId = context.squadMembership?.squadId ?? null;
     const revealedEventIds = await this.findRevealedEventIds(context.contest);
-    const picksRevealed = revealedEventIds.size > 0;
     const entries = await this.loadEntryDetailDtos(context.contest, {
       requesterSquadId: squadId,
       revealedEventIds,
     });
-    const myEntries = squadId
-      ? entries.filter((entry) => entry.squadId === squadId)
-      : [];
-    const myEntry = myEntries.at(0) ?? null;
-    const orderedEntries = [
-      ...myEntries,
-      ...entries.filter((entry) => entry.squadId !== squadId),
-    ];
 
     return {
-      entries: orderedEntries,
-      isJoined: myEntry !== null,
-      myEntryId: myEntry?.id ?? null,
-      myEntryIds: myEntries.map((entry) => entry.id),
-      picksRevealed,
+      entries: [
+        ...entries.filter((entry) => entry.squadId === squadId),
+        ...entries.filter((entry) => entry.squadId !== squadId),
+      ],
+      picksRevealed: revealedEventIds.size > 0,
     };
+  }
+
+  /**
+   * What a single-contest read adds to the contest (#1197): its entries counted, and the ids of
+   * the viewer's own squad's entries, drafts included, in entry-number order. A viewer without
+   * an active squad in the league has none.
+   */
+  async getContestEntrySummary(
+    contest: Contest,
+    userId: string,
+  ): Promise<{ totals: ContestEntryTotals; myEntryIds: string[] }> {
+    const [totals, myEntryIds] = await Promise.all([
+      this.deps.entries.countForContest(contest.id),
+      this.findActiveSquadId(contest.leagueId, userId)
+        .then((squadId) => (squadId ? this.deps.entries.findIdsByContestAndSquad(contest.id, squadId) : [])),
+    ]);
+    return { totals, myEntryIds };
+  }
+
+  /**
+   * The viewer's own squad's entries, drafts included, in each of the league's OPEN and ACTIVE
+   * contests (#1197), without their picks: what league home, the Contests page's "My entries"
+   * and My team show, in a fixed number of reads however many contests are current.
+   */
+  async listMyLeagueEntries(leagueId: string, userId: string): Promise<ContestEntryDto[]> {
+    const squadId = await this.findActiveSquadId(leagueId, userId);
+    if (!squadId) {
+      return [];
+    }
+    const contests = await this.deps.contests.findByLeague(leagueId, [ContestStatus.OPEN, ContestStatus.ACTIVE]);
+    const rows = await this.deps.entries.findBySquadAndContests(squadId, contests.map((contest) => contest.id));
+    const pickCounts = await this.deps.picks.countByEntries(rows.map((row) => row.id));
+    const contestsById = new Map(contests.map((contest) => [contest.id, contest]));
+    return rows.flatMap((row) => {
+      const contest = contestsById.get(row.contestId);
+      return contest
+        ? [toContestEntryDto({ ...withContestEventOrder(row, contest), picksCount: pickCounts.get(row.id) ?? 0 }, { name: row.squadName })]
+        : [];
+    });
+  }
+
+  /**
+   * The viewer's squad in the league, while their squad membership is active. Both callers sit
+   * behind the route's active league membership gate, which has already read the league
+   * membership, and leaving a league ends the squad membership with it.
+   */
+  private async findActiveSquadId(leagueId: string, userId: string): Promise<string | null> {
+    const squadMembership = await this.deps.squadMemberships.findByLeagueAndUser(leagueId, userId);
+    return squadMembership?.status === SquadMembershipStatus.ACTIVE ? squadMembership.squadId : null;
   }
 
   async getEntryDetail(
@@ -1286,115 +1307,59 @@ export class ContestService {
    * they know how long it can still change. The selection room only calls it once the lineup has
    * passed the submit check, so it does not judge the lineup again. A quick pick contest's draw
    * sends it for every entry it dealt (#867), listing the dealt picks.
+   *
+   * The room passes what it already read for the pick (#1196): the contest, the event, the
+   * configuration, the event's valuations and the squads' memberships. What is read here is
+   * only what it does not hold: the entries with their squad names, their picks in the event,
+   * the league, the sport league and the owners. One read of each, however many entries a draw
+   * dealt.
    */
-  async sendEntrySubmittedEmail(
-    contestId: string,
-    entryId: string,
-    sportEventId: string,
-  ): Promise<void> {
+  async sendEntrySubmittedEmails(input: EntrySubmittedReceiptInput): Promise<void> {
+    const { contest, sportEvent, entryIds } = input;
+    const contestId = contest.id;
     if (!this.deps.email) {
       this.logger.debug({
         action: 'contestEntry.emailDelivery.skipped',
-        data: { contestId, entryId },
+        data: { contestId, entryIds },
       }, 'Skipped contest entry confirmation email because dependencies are unavailable');
       return;
     }
+    if (entryIds.length === 0) return;
     const email = this.deps.email;
 
-    const [entry, sportEvent] = await Promise.all([
-      this.loadContestEntryReceiptData(entryId),
-      this.deps.sportEvents.findById(sportEventId),
+    // One entry is read by id; a draw's entries are the contest's, read in one go.
+    const [entryRows, league, sportLeague, picks] = await Promise.all([
+      entryIds.length === 1
+        ? this.deps.entries.findByIdWithSquad(entryIds[0]).then((row) => (row ? [row] : []))
+        : this.deps.entries.findByContestWithSquad(contestId),
+      this.deps.leagues.findById(contest.leagueId),
+      this.deps.sportLeagues.findById(sportEvent.sportLeagueId),
+      this.deps.picks.findByEntriesWithParticipant(entryIds, { sportEventId: sportEvent.id }),
     ]);
-    if (!entry || entry.contestId !== contestId || !sportEvent) {
+    const entryById = new Map(entryRows.filter((row) => row.contestId === contestId).map((row) => [row.id, row]));
+    if (!league) {
       this.logger.warn({
         action: 'contestEntry.emailDelivery.entryMissing',
-        data: { contestId, entryId },
+        data: { contestId, entryIds },
       }, 'Skipped contest entry confirmation email because entry data was unavailable');
       return;
     }
 
-    const owners = (await Promise.all((await this.deps.squadMemberships.findBySquad(entry.squadId))
-      .map((membership) => this.deps.users.findById(membership.userId))))
-      .filter((user): user is User => user !== null && user.isActive);
-    const templateKey = 'CONTEST_ENTRY_COMPLETED';
-    const league = entry.contest.league;
-    const [lineup, configuration, sportLeague] = await Promise.all([
-      this.buildEntryLineupForEmail(entry, sportEventId),
-      this.deps.configurations.findByContest(contestId),
-      this.deps.sportLeagues.findById(sportEvent.sportLeagueId),
-    ]);
-    const rules = configuration?.configJson;
-    // A quick pick entry is dealt its picks by the draw (#867): nobody submitted it, and there is
-    // nothing left to change.
-    const quickPick = rules?.selectionType === SelectionType.RANDOM_DRAW;
-    const golf = eventSportDefinition(sportEvent).scoringFamily === ScoringFamily.STROKE_PLAY;
-    const data = {
-      leagueName: league.name,
-      event: buildEmailEventHeader(this.appBaseUrl, sportEvent, sportLeague?.name ?? ''),
-      contestName: entry.contest.name,
-      teamName: entry.squad.name,
-      entryName: entry.name,
-      entryUrl: buildEntryUrl(this.appBaseUrl, league.leagueCode, contestId, entryId),
-      ...(!quickPick && { submittedAt: entry.updatedAt }),
-      // Only golf's roster has a tiebreaker: a predicted winning score relative to par. Submit
-      // does not require one, so a lineup submitted without it says so; a quick pick shows one
-      // only when its entry gave it.
-      ...(golf && (!quickPick || entry.tiebreakerValue !== null) && {
-        tiebreaker: entry.tiebreakerValue === null
-          ? 'None'
-          : PARTICIPANT_SCORING_DEFINITIONS.GOLF_RELATIVE_TO_PAR_TOTAL.format(entry.tiebreakerValue),
-      }),
-      receipt: quickPick
-        ? { kind: EntryReceiptKind.QUICK_PICK, picks: lineup.tiers.flatMap((tier) => tier.participantNames) }
-        : {
-          kind: EntryReceiptKind.LINEUP,
-          tiers: lineup.tiers,
-          ...(rules?.selectionType === SelectionType.BUDGET_PICK && { budget: { spent: lineup.spent, salaryCap: rules.salaryCap } }),
-          // A roster contest's picks close when its event starts.
-          changeUntil: sportEvent.startDate,
-        },
-    } satisfies Omit<ContestEntryCompletedEmailData, 'userName'>;
-    for (const user of owners) {
-      try {
-        await email.send(templateKey, {
-          to: emailRecipientOf(user),
-          // One receipt per submission of the entry in the event.
-          about: `${entryId}:${sportEventId}:${entry.updatedAt.toISOString()}`,
-          league: { id: entry.contest.leagueId, name: league.name, leagueCode: league.leagueCode, plan: league.plan },
-          refs: { contestId, entryId },
-          data: { userName: formatUserName(user), ...data },
-        });
-        this.logger.info({
-          action: 'contestEntry.emailDelivery.success',
-          data: { contestId, entryId, userId: user.id, templateKey },
-        }, 'Queued contest entry confirmation email');
-      } catch (err) {
-        this.logger.error({
-          action: 'contestEntry.emailDelivery.failure',
-          data: {
-            contestId,
-            entryId,
-            userId: user.id,
-            templateKey,
-            error: err instanceof Error ? err.message : String(err),
-          },
-        }, 'Failed to queue contest entry confirmation email');
-      }
+    const ownedSquadIds = new Set([...entryById.values()].map((entry) => entry.squadId));
+    const ownerIds = [...new Set(input.squadMemberships
+      .filter((membership) => ownedSquadIds.has(membership.squadId))
+      .map((membership) => membership.userId))];
+    const userById = new Map((await this.deps.users.findByIds(ownerIds))
+      .filter((user) => user.isActive)
+      .map((user) => [user.id, user]));
+    const picksByEntryId = new Map<string, ContestEntryPickWithParticipant[]>();
+    for (const pick of picks) {
+      picksByEntryId.set(pick.entryId, [...(picksByEntryId.get(pick.entryId) ?? []), pick]);
     }
-  }
 
-  /**
-   * The entry's picks in the submitted event grouped by the tier label SportEventTierService
-   * resolves for each golfer (#713: one event's picks per confirmation), and what they cost.
-   */
-  private async buildEntryLineupForEmail(
-    entry: ContestEntryReceiptData,
-    sportEventId: string,
-  ): Promise<{ tiers: ContestEntryCompletedTierSelection[]; spent: number }> {
     const tierLabelBySportEventParticipantId = new Map<string, string>();
     const priceBySportEventParticipantId = new Map<string, number>();
-    const valuations = await this.deps.tiers.getEffectiveValuationsForSportEvent(sportEventId);
-    for (const valuation of valuations) {
+    for (const valuation of input.valuations) {
       if (valuation.tierLabel !== null) {
         tierLabelBySportEventParticipantId.set(valuation.sportEventParticipantId, valuation.tierLabel);
       }
@@ -1402,54 +1367,85 @@ export class ContestService {
         priceBySportEventParticipantId.set(valuation.sportEventParticipantId, valuation.price);
       }
     }
-    const picks = entry.picks.filter((pick) => pick.sportEventId === sportEventId);
-    return {
-      tiers: buildEntryTierSelections({ ...entry, picks }, tierLabelBySportEventParticipantId),
-      spent: picks.reduce((total, pick) => total + (priceBySportEventParticipantId.get(pick.sportEventParticipant.id) ?? 0), 0),
-    };
-  }
+    const rules = input.configuration?.configJson;
+    // A quick pick entry is dealt its picks by the draw (#867): nobody submitted it, and there is
+    // nothing left to change.
+    const quickPick = rules?.selectionType === SelectionType.RANDOM_DRAW;
+    const golf = eventSportDefinition(sportEvent).scoringFamily === ScoringFamily.STROKE_PLAY;
+    const templateKey = 'CONTEST_ENTRY_COMPLETED';
 
-  private async loadContestEntryReceiptData(
-    entryId: string,
-  ): Promise<ContestEntryReceiptData | null> {
-    const entry = await this.deps.entries.findByIdWithSquad(entryId);
-    if (!entry) {
-      return null;
+    for (const entryId of entryIds) {
+      const entry = entryById.get(entryId);
+      if (!entry) {
+        this.logger.warn({
+          action: 'contestEntry.emailDelivery.entryMissing',
+          data: { contestId, entryId },
+        }, 'Skipped contest entry confirmation email because entry data was unavailable');
+        continue;
+      }
+      const entryPicks = picksByEntryId.get(entryId) ?? [];
+      const lineup = {
+        tiers: buildEntryTierSelections(entryPicks, tierLabelBySportEventParticipantId),
+        spent: entryPicks.reduce((total, pick) => total + (priceBySportEventParticipantId.get(pick.sportEventParticipantId) ?? 0), 0),
+      };
+      const tiebreakerValue = entry.tiebreakerValue ?? null;
+      const data = {
+        leagueName: league.name,
+        event: buildEmailEventHeader(this.appBaseUrl, sportEvent, sportLeague?.name ?? ''),
+        contestName: contest.name,
+        teamName: entry.squadName,
+        entryName: entry.name,
+        entryUrl: buildEntryUrl(this.appBaseUrl, league.leagueCode, contestId, entryId),
+        ...(!quickPick && { submittedAt: entry.updatedAt }),
+        // Only golf's roster has a tiebreaker: a predicted winning score relative to par. Submit
+        // does not require one, so a lineup submitted without it says so; a quick pick shows one
+        // only when its entry gave it.
+        ...(golf && (!quickPick || tiebreakerValue !== null) && {
+          tiebreaker: tiebreakerValue === null
+            ? 'None'
+            : PARTICIPANT_SCORING_DEFINITIONS.GOLF_RELATIVE_TO_PAR_TOTAL.format(tiebreakerValue),
+        }),
+        receipt: quickPick
+          ? { kind: EntryReceiptKind.QUICK_PICK, picks: lineup.tiers.flatMap((tier) => tier.participantNames) }
+          : {
+            kind: EntryReceiptKind.LINEUP,
+            tiers: lineup.tiers,
+            ...(rules?.selectionType === SelectionType.BUDGET_PICK && { budget: { spent: lineup.spent, salaryCap: rules.salaryCap } }),
+            // A roster contest's picks close when its event starts.
+            changeUntil: sportEvent.startDate,
+          },
+      } satisfies Omit<ContestEntryCompletedEmailData, 'userName'>;
+      const owners = input.squadMemberships
+        .filter((membership) => membership.squadId === entry.squadId)
+        .flatMap((membership) => userById.get(membership.userId) ?? []);
+      for (const user of owners) {
+        try {
+          await email.send(templateKey, {
+            to: emailRecipientOf(user),
+            // One receipt per submission of the entry in the event.
+            about: `${entryId}:${sportEvent.id}:${entry.updatedAt.toISOString()}`,
+            league: { id: contest.leagueId, name: league.name, leagueCode: league.leagueCode, plan: league.plan },
+            refs: { contestId, entryId },
+            data: { userName: formatUserName(user), ...data },
+          });
+          this.logger.info({
+            action: 'contestEntry.emailDelivery.success',
+            data: { contestId, entryId, userId: user.id, templateKey },
+          }, 'Queued contest entry confirmation email');
+        } catch (err) {
+          this.logger.error({
+            action: 'contestEntry.emailDelivery.failure',
+            data: {
+              contestId,
+              entryId,
+              userId: user.id,
+              templateKey,
+              error: err instanceof Error ? err.message : String(err),
+            },
+          }, 'Failed to queue contest entry confirmation email');
+        }
+      }
     }
-    const contest = await this.deps.contests.findById(entry.contestId);
-    if (!contest) {
-      return null;
-    }
-    const [league, picks] = await Promise.all([
-      this.deps.leagues.findById(contest.leagueId),
-      this.deps.picks.findByEntriesWithParticipant([entry.id]),
-    ]);
-    if (!league) {
-      return null;
-    }
-    return {
-      id: entry.id,
-      contestId: entry.contestId,
-      name: entry.name,
-      squadId: entry.squadId,
-      tiebreakerValue: entry.tiebreakerValue ?? null,
-      updatedAt: entry.updatedAt,
-      squad: { name: entry.squadName },
-      contest: {
-        id: contest.id,
-        leagueId: contest.leagueId,
-        name: contest.name,
-        league: { name: league.name, leagueCode: league.leagueCode, plan: league.plan },
-      },
-      picks: picks.map((pick) => ({
-        pickedAt: pick.pickedAt,
-        sportEventId: pick.sportEventId,
-        sportEventParticipant: {
-          id: pick.sportEventParticipantId,
-          participant: { id: pick.participant.participantId, name: pick.participant.participantName },
-        },
-      })),
-    };
   }
 
   /**
@@ -1766,14 +1762,14 @@ function toContestEntryParticipantRow(pick: ContestEntryPickWithParticipant): Co
 }
 
 function buildEntryTierSelections(
-  entry: ContestEntryReceiptData,
+  picks: readonly ContestEntryPickWithParticipant[],
   tierLabelBySportEventParticipantId: Map<string, string>,
 ): ContestEntryCompletedTierSelection[] {
   const groups = new Map<string, string[]>();
-  for (const pick of entry.picks) {
-    const tierName = tierLabelBySportEventParticipantId.get(pick.sportEventParticipant.id) ?? 'Selections';
+  for (const pick of picks) {
+    const tierName = tierLabelBySportEventParticipantId.get(pick.sportEventParticipantId) ?? 'Selections';
     const participants = groups.get(tierName) ?? [];
-    participants.push(pick.sportEventParticipant.participant.name);
+    participants.push(pick.participant.participantName);
     groups.set(tierName, participants);
   }
   return Array.from(groups.entries()).map(([tierName, participantNames]) => ({

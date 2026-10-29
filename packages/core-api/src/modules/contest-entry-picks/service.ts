@@ -157,10 +157,13 @@ export class ContestEntryPickService {
    * instead of leaving an entry with no picks. Picks take the parent contest's
    * `contestFormat`, as `createPick` does (plans/117 §7.1). Each pick's `lineupSlot` is its
    * round of the deal, and its `pickSequence` its place in the deal across the contest.
+   *
+   * Answers with the draw's time, the contest's `drawnAt` and every entry's submit time, so the
+   * caller can show the dealt room without reading the contest and its entries again (#1196).
    */
-  async recordDraw(input: ContestDrawRecordInput): Promise<void> {
+  async recordDraw(input: ContestDrawRecordInput): Promise<{ drawnAt: Date }> {
     const { contestId } = input;
-    await this.prisma.$transaction(async (tx) => {
+    const drawnAt = await this.prisma.$transaction(async (tx) => {
       // Entry writes take the same lock, so the entry set read below cannot change before commit (#644).
       await lockContestRow(tx, contestId);
       const contest = await tx.contest.findUnique({ where: { id: contestId }, select: { contestFormat: true } });
@@ -172,8 +175,9 @@ export class ContestEntryPickService {
         throw new ContestDrawEntriesChangedError(contestId);
       }
 
+      let draw: { drawnAt: Date };
       try {
-        await tx.contestDraw.create({
+        draw = await tx.contestDraw.create({
           data: {
             contestId,
             seed: input.seed,
@@ -181,6 +185,7 @@ export class ContestEntryPickService {
             entryOrder: [...input.entryOrder],
             drawnByUserId: input.drawnByUserId,
           },
+          select: { drawnAt: true },
         });
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
@@ -205,8 +210,9 @@ export class ContestEntryPickService {
       // A random draw covers one event (#713), so each entry's one event row is the one submitted.
       await tx.contestEntryEvent.updateMany({
         where: { contestEntryId: { in: [...dealtEntryIds] } },
-        data: { status: ContestEntryStatus.SUBMITTED, submittedAt: new Date() },
+        data: { status: ContestEntryStatus.SUBMITTED, submittedAt: draw.drawnAt },
       });
+      return draw.drawnAt;
     });
 
     this.logger?.info(
@@ -216,5 +222,6 @@ export class ContestEntryPickService {
       },
       'Recorded a random draw and its dealt picks',
     );
+    return { drawnAt };
   }
 }

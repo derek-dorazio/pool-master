@@ -353,6 +353,27 @@ describe('SportEventTierService — prices and the contest-side read', () => {
     ]);
     await expect(service.getEffectiveTiersForSportEvent(event.id)).resolves.toEqual([]);
   });
+
+  it('answers the tiers and the valuations from one read, and reads no field when the caller hands it the field (#1196)', async () => {
+    const { store, event } = setup();
+    await store.tierRepo().createMany(event.id, [TWO_TIERS[0]]);
+    const [tier] = store.tierRows;
+    const entry = store.addToField(event.id, 'p-1');
+    await store.valuationRepo().assignTiers([{ sportEventParticipantId: entry.id, sportEventTierId: tier.id, tierOrderIndex: 1, source: 'MANUAL' }]);
+    const field = store.fieldRepo();
+    const findBySportEvent = jest.spyOn(field, 'findBySportEvent');
+    const tiers = store.tierRepo();
+    const findTiers = jest.spyOn(tiers, 'findBySportEvent');
+    const service = new SportEventTierService({ sportEvents: store.sportEventRepo(), tiers, valuations: store.valuationRepo(), field });
+    const heldField = await store.fieldRepo().findBySportEvent(event.id);
+
+    const both = await service.getEffectiveTiersAndValuations(event.id, heldField);
+
+    expect(both.tiers).toEqual([expect.objectContaining({ id: tier.id, participants: [expect.objectContaining({ participantId: 'p-1' })] })]);
+    expect(both.valuations).toEqual([expect.objectContaining({ participantId: 'p-1', tierId: tier.id, tierLabel: tier.label })]);
+    expect(findTiers).toHaveBeenCalledTimes(1);
+    expect(findBySportEvent).not.toHaveBeenCalled();
+  });
 });
 
 describe('SportEventTierService — locked once the event is released (#431)', () => {

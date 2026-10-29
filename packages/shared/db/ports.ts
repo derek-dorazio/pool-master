@@ -66,6 +66,8 @@ export interface UserUpdate {
 
 export interface UserRepository {
   findById(id: string): Promise<User | null>;
+  /** The users with these ids, in one read (#1196); an id with no user is left out. */
+  findByIds(ids: readonly string[]): Promise<User[]>;
   findByEmail(email: string): Promise<User | null>;
 
   /**
@@ -82,17 +84,17 @@ export interface UserRepository {
   findAll(filters?: UserSearchFilters): Promise<User[]>;
 
   /**
-   * Users holding a `LeagueMembership` in the given league, ordered by name.
+   * Users holding an ACTIVE `LeagueMembership` in the given league, ordered by name.
    *
    * This is the **scoped** peer read that access rules A4 and A6 require: a league member
    * may read other members' user data, but only indirectly, through the league join. The
    * league is the scope, so it is a parameter rather than a filter — there is no way to
    * call this without one.
    *
-   * Returns every membership status. Callers that want active members only filter on the
-   * membership, which they must already load to know the role.
+   * A removed member's INACTIVE row is left out in SQL (#1182): every caller wants the
+   * current members, and a league's removed members only grow over the years.
    */
-  findByLeague(leagueId: string): Promise<User[]>;
+  findActiveByLeague(leagueId: string): Promise<User[]>;
 
   /**
    * Resolves a user by an identifier that may be either their email or their username.
@@ -182,8 +184,11 @@ export interface LeagueRepository {
    * application code: `membershipRepo.findByUser` followed by a `findById` per membership,
    * which is N+1 and had to log and skip memberships whose league had vanished. One query
    * cannot produce that orphan case, because the join only returns rows that exist.
+   *
+   * `filters` narrow it in SQL as they narrow `findAll` (#1182), so a member's search never
+   * reads all their leagues to keep a few.
    */
-  findByUser(userId: string): Promise<League[]>;
+  findByUser(userId: string, filters?: LeagueSearchFilters): Promise<League[]>;
 
   /**
    * The points table starts STANDARD, the plan PREMIUM renewing six months from now, no sport
@@ -235,6 +240,7 @@ export interface LeagueRepository {
 }
 
 export interface LeagueMembershipRepository {
+  /** The league's ACTIVE memberships, earliest joiner first. */
   findByLeague(leagueId: string): Promise<LeagueMembership[]>;
   findByUser(userId: string): Promise<LeagueMembership[]>;
 
@@ -320,6 +326,8 @@ export interface SquadOwnerInvitationRepository {
   findById(id: string): Promise<SquadOwnerInvitation | null>;
   findByLeague(leagueId: string): Promise<SquadOwnerInvitation[]>;
   findByCode(inviteCode: string): Promise<SquadOwnerInvitation | null>;
+  /** Marks the squad's PENDING invitations REVOKED in one write (#1182); answers how many. */
+  revokePendingBySquad(squadId: string): Promise<number>;
   findPendingByLeagueAndEmail(
     leagueId: string,
     email: string,
@@ -352,7 +360,11 @@ export interface MembershipTransaction {
 
 export interface LeagueInvitationRepository {
   findById(id: string): Promise<LeagueInvitation | null>;
-  findByLeague(leagueId: string): Promise<LeagueInvitation[]>;
+  /**
+   * The league's outstanding invitations, newest first (#221, #1182): every PENDING invitation,
+   * plus email invites that went EXPIRED unaccepted, filtered in SQL.
+   */
+  findOutstandingByLeague(leagueId: string): Promise<LeagueInvitation[]>;
   findByCode(inviteCode: string): Promise<LeagueInvitation | null>;
   findByEmail(leagueId: string, email: string): Promise<LeagueInvitation | null>;
   create(invitation: Omit<LeagueInvitation, 'id' | 'createdAt' | 'updatedAt'>): Promise<LeagueInvitation>;
@@ -546,6 +558,15 @@ export interface ContestEntryCreateLimits {
    */
   entriesPerContest: (expandedTo: number | null) => number | null;
 }
+/** A contest's entries counted (#1197). */
+export interface ContestEntryTotals {
+  /** Entries that submitted at least one event: a draft is not an entry until submitted (#481). */
+  submittedEntryCount: number;
+  /** Squads with at least one such entry. */
+  enteredSquadCount: number;
+  /** Every entry, drafts included, as the plan's entry cap counts them (#947). */
+  allEntryCount: number;
+}
 export type ContestEntryDeleteResult = { status: 'deleted' } | { status: 'contestDrawn' };
 
 export interface ContestEntryRepository {
@@ -558,6 +579,15 @@ export interface ContestEntryRepository {
   findByContestWithSquad(contestId: string, options?: { submittedFor?: string }): Promise<ContestEntryWithSquad[]>;
   /** The squad's entries in one contest, drafts included, in entry-number order (#1167). */
   findByContestAndSquad(contestId: string, squadId: string): Promise<ContestEntry[]>;
+  /** The ids alone of the squad's entries in one contest, drafts included, in entry-number order (#1197). */
+  findIdsByContestAndSquad(contestId: string, squadId: string): Promise<string[]>;
+  /**
+   * The squad's entries in the contests, drafts included, in entry-number order within each
+   * contest (#1197): one read for a squad's entries across a league's current contests.
+   */
+  findBySquadAndContests(squadId: string, contestIds: readonly string[]): Promise<ContestEntryWithSquad[]>;
+  /** One contest's entry totals (#1197): what a single-contest read reports. */
+  countForContest(contestId: string): Promise<ContestEntryTotals>;
   /** Every entry each contest holds, drafts included, by contest id (#972); 0 for one with none. */
   countByContests(contestIds: readonly string[]): Promise<Map<string, number>>;
   /**

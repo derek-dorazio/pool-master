@@ -16,7 +16,6 @@ import {
 } from '../../support/repo-fakes';
 import { asPrismaClient } from '../../support/prisma-double';
 import { mockFn } from '../../support/mock-fn';
-import { expectDefined } from '../../support/expect-defined';
 
 function createMockLeagueRepo(overrides: Partial<LeagueRepository> = {}): LeagueRepository {
   return fakeLeagueRepo({
@@ -260,12 +259,10 @@ describe('LeagueService', () => {
       expect(leagueRepo.findAll).toHaveBeenCalledWith({ search: 'Ryder', isActive: true });
     });
 
-    it('applies the same filters to the member-scoped read, which never had them', async () => {
+    it('hands the same filters to the member-scoped read, so the query narrows it rather than the service (#1182)', async () => {
       const leagueRepo = createMockLeagueRepo({
         findByUser: jest.fn().mockResolvedValue([
           buildLeague({ id: 'league-1', name: 'Ryder Cup Pool', isActive: true }),
-          buildLeague({ id: 'league-2', name: 'Masters Pool', isActive: true }),
-          buildLeague({ id: 'league-3', name: 'Ryder Cup Legacy', isActive: false }),
         ]),
       });
 
@@ -275,8 +272,8 @@ describe('LeagueService', () => {
         filters: { search: 'ryder', isActive: true },
       });
 
-      // `search` and `isActive` existed only on the root-admin half. They describe the query,
-      // not the caller, so they narrow either scope — case-insensitively.
+      // `search` and `isActive` describe the query, not the caller, so they narrow either scope.
+      expect(leagueRepo.findByUser).toHaveBeenCalledWith('user-1', { search: 'ryder', isActive: true });
       expect(rows.map((row) => row.league.id)).toEqual(['league-1']);
     });
 
@@ -584,28 +581,35 @@ describe('LeagueService', () => {
     });
   });
 
-  describe('getLeagueWithMembers', () => {
-    it('returns league and members', async () => {
+  describe('getLeagueForViewer', () => {
+    it('reads the league and only the viewer\'s own membership row, never the league\'s member list', async () => {
       const league = buildLeague({ id: 'league-1' });
-      const members = [buildMembership({ leagueId: 'league-1' })];
-      const leagueRepo = createMockLeagueRepo({
-        findById: jest.fn().mockResolvedValue(league),
+      const membership = buildMembership({ leagueId: 'league-1', userId: 'user-1' });
+      const findByLeague = jest.fn();
+      const findByLeagueAndUser = jest.fn().mockResolvedValue(membership);
+      const service = new LeagueService({
+        leagues: createMockLeagueRepo({ findById: jest.fn().mockResolvedValue(league) }),
+        memberships: createMockMembershipRepo({ findByLeague, findByLeagueAndUser }),
+        users: fakeUserRepo(),
       });
-      const membershipRepo = createMockMembershipRepo({
-        findByLeague: jest.fn().mockResolvedValue(members),
-      });
-      const service = new LeagueService({ leagues: leagueRepo, memberships: membershipRepo, users: fakeUserRepo() });
-      const result = await service.getLeagueWithMembers('league-1');
-      expect(result).not.toBeNull();
-      expect(expectDefined(result).league.id).toBe('league-1');
-      expect(expectDefined(result).members).toHaveLength(1);
+
+      const result = await service.getLeagueForViewer('league-1', 'user-1');
+
+      expect(result).toEqual({ league, membership });
+      expect(findByLeagueAndUser).toHaveBeenCalledWith('league-1', 'user-1');
+      expect(findByLeague).not.toHaveBeenCalled();
     });
 
-    it('returns null for missing league', async () => {
-      const leagueRepo = createMockLeagueRepo();
-      const service = new LeagueService({ leagues: leagueRepo, memberships: createMockMembershipRepo(), users: fakeUserRepo() });
-      const result = await service.getLeagueWithMembers('missing');
-      expect(result).toBeNull();
+    it('returns null for a missing league without looking up a membership', async () => {
+      const findByLeagueAndUser = jest.fn();
+      const service = new LeagueService({
+        leagues: createMockLeagueRepo(),
+        memberships: createMockMembershipRepo({ findByLeagueAndUser }),
+        users: fakeUserRepo(),
+      });
+
+      await expect(service.getLeagueForViewer('missing', 'user-1')).resolves.toBeNull();
+      expect(findByLeagueAndUser).not.toHaveBeenCalled();
     });
   });
 });

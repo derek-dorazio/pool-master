@@ -27,10 +27,16 @@ export class PrismaContestEntryPickRepository implements ContestEntryPickReposit
     return rows.map((row) => ({ ...mapContestEntryPickRowToDomain(row), sportEventId: row.sportEventParticipant.sportEventId }));
   }
 
-  async findByEntriesWithParticipant(entryIds: readonly string[]): Promise<ContestEntryPickWithParticipant[]> {
+  async findByEntriesWithParticipant(
+    entryIds: readonly string[],
+    options?: { sportEventId?: string },
+  ): Promise<ContestEntryPickWithParticipant[]> {
     if (entryIds.length === 0) return [];
     const rows = await this.prisma.contestEntryPick.findMany({
-      where: { entryId: { in: [...entryIds] } },
+      where: {
+        entryId: { in: [...entryIds] },
+        ...(options?.sportEventId !== undefined && { sportEventParticipant: { sportEventId: options.sportEventId } }),
+      },
       include: {
         sportEventParticipant: {
           select: {

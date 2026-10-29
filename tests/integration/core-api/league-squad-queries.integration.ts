@@ -156,6 +156,38 @@ describe('Team-owner invitations', () => {
     await expect(repo.findById(randomUUID())).resolves.toBeNull();
   });
 
+  it('revokes only the team\'s pending invitations in one write and answers how many, leaving accepted ones and other teams\' alone (#1182)', async () => {
+    const prisma = getPrisma();
+    const { league, squad, invitation: pending } = await createInvitation();
+    const otherSquad = await prisma.squad.create({
+      data: { leagueId: league.id, createdBy: pending.invitedBy, name: 'Other Invited Team' },
+    });
+    const invite = (squadId: string, status: SquadOwnerInvitationStatus) => prisma.squadOwnerInvitation.create({
+      data: {
+        leagueId: league.id,
+        squadId,
+        email: `owner-${randomUUID().slice(0, 8)}@integration.test`,
+        inviteCode: `LSQ-${randomUUID()}`,
+        invitedBy: pending.invitedBy,
+        status,
+      },
+    });
+    const secondPending = await invite(squad.id, SquadOwnerInvitationStatus.PENDING);
+    const accepted = await invite(squad.id, SquadOwnerInvitationStatus.ACCEPTED);
+    const otherTeams = await invite(otherSquad.id, SquadOwnerInvitationStatus.PENDING);
+
+    await expect(new PrismaSquadOwnerInvitationRepository(prisma).revokePendingBySquad(squad.id)).resolves.toBe(2);
+
+    const statuses = new Map((await prisma.squadOwnerInvitation.findMany({ where: { leagueId: league.id } }))
+      .map((row) => [row.id, row.status]));
+    expect(statuses).toEqual(new Map([
+      [pending.id, SquadOwnerInvitationStatus.REVOKED],
+      [secondPending.id, SquadOwnerInvitationStatus.REVOKED],
+      [accepted.id, SquadOwnerInvitationStatus.ACCEPTED],
+      [otherTeams.id, SquadOwnerInvitationStatus.PENDING],
+    ]));
+  });
+
   it('previews an invitation by code with its league and team, and refuses an unknown code', async () => {
     const { league, squad, invitation } = await createInvitation();
 
@@ -324,5 +356,20 @@ describe('PrismaSquadRepository squad details', () => {
     await createSquad(other.league.id, 'Other League', other.commissioner.id);
 
     expect(await new PrismaSquadRepository(getPrisma()).countActiveByLeague(league.id)).toBe(2);
+  });
+});
+
+describe('PrismaUserRepository.findByIds', () => {
+  it('reads every user named in one call, leaving out an id with no user, and reads nothing for no ids', async () => {
+    const users = new PrismaUserRepository(getPrisma());
+    const [first, second] = await Promise.all([
+      createTestUser({ displayName: `Receipt Owner ${randomUUID().slice(0, 8)}` }),
+      createTestUser({ displayName: `Receipt Co-owner ${randomUUID().slice(0, 8)}` }),
+    ]);
+
+    const found = await users.findByIds([first.user.id, second.user.id, randomUUID()]);
+
+    expect(found.map((user) => user.id).sort()).toEqual([first.user.id, second.user.id].sort());
+    await expect(users.findByIds([])).resolves.toEqual([]);
   });
 });

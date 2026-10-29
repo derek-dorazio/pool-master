@@ -9,6 +9,7 @@ import {
   leaveContest,
   listContestEntries,
   listContestConfigTemplates,
+  listMyContestEntries,
   listContests,
   listSportLeagues,
   openContest,
@@ -667,9 +668,20 @@ describe('SDK Functional: Contests and Entries', () => {
 
     expect(entriesResponse.data).toBeDefined();
     expect(entriesResponse.data?.contestId).toBe(contestId);
-    expect(entriesResponse.data?.isJoined).toBe(true);
-    expect(entriesResponse.data?.myEntryId).toBe(enterResponse.data?.entry.id);
     expect(entriesResponse.data?.entries).toHaveLength(1);
+
+    // The contest read names the viewer's entry and counts it among every entry, drafts
+    // included, but not among submitted ones (#1197).
+    const contestWithEntry = await getContest({ client: commissioner.client, path: { contestId } });
+    expect(contestWithEntry.data?.contest).toMatchObject({
+      myEntryIds: [enterResponse.data?.entry.id],
+      entryCount: 0,
+      enteredSquadCount: 0,
+      allEntryCount: 1,
+    });
+    // The league-wide read lists it among the viewer's entries in current contests (#1197).
+    const myEntriesWithEntry = await listMyContestEntries({ client: commissioner.client, path: { id: league.id } });
+    expect(myEntriesWithEntry.data?.entries.map((entry) => entry.id)).toEqual([enterResponse.data?.entry.id]);
 
     // The league's contest list counts submitted entries only (#481): this one is still an
     // unsubmitted draft with no picks, so it is listed above but not counted.
@@ -698,9 +710,12 @@ describe('SDK Functional: Contests and Entries', () => {
     });
 
     expect(afterLeaveEntries.data).toBeDefined();
-    expect(afterLeaveEntries.data?.isJoined).toBe(false);
     expect(afterLeaveEntries.data?.entries).toHaveLength(0);
-    expect(afterLeaveEntries.data?.myEntryId).toBeNull();
+
+    const contestAfterLeave = await getContest({ client: commissioner.client, path: { contestId } });
+    expect(contestAfterLeave.data?.contest).toMatchObject({ myEntryIds: [], allEntryCount: 0 });
+    const myEntriesAfterLeave = await listMyContestEntries({ client: commissioner.client, path: { id: league.id } });
+    expect(myEntriesAfterLeave.data?.entries).toEqual([]);
 
     const listedAfterLeave = await listContests({
       client: commissioner.client,

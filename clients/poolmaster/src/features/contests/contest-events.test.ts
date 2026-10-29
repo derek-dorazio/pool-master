@@ -6,7 +6,6 @@ import {
   entryEventStatus,
   firstContestEvent,
   hasContestEventStarted,
-  hasSubmittedAnyEvent,
   lastContestEvent,
 } from './contest-events';
 import { buildContestSportEvent } from './test/contest-admin-fixtures';
@@ -96,21 +95,6 @@ describe('entryEventStatus', () => {
   it('defaults to DRAFT when no event is named', () => {
     expect(entryEventStatus(entry, null)).toBe('DRAFT');
     expect(entryEventStatus(entry, undefined)).toBe('DRAFT');
-  });
-});
-
-describe('hasSubmittedAnyEvent', () => {
-  it('is true when the entry submitted at least one event', () => {
-    expect(hasSubmittedAnyEvent({
-      events: [
-        { sportEventId: 'week-1', status: 'DRAFT', submittedAt: null },
-        { sportEventId: 'week-2', status: 'SUBMITTED', submittedAt: '2026-09-19T00:00:00.000Z' },
-      ],
-    })).toBe(true);
-  });
-
-  it('is false when every event is still a draft', () => {
-    expect(hasSubmittedAnyEvent({ events: [{ sportEventId: 'week-1', status: 'DRAFT', submittedAt: null }] })).toBe(false);
   });
 });
 

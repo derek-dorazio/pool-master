@@ -9,7 +9,7 @@ import { LeagueContestsPage } from './league-contests-page';
 
 const getCurrentUserMock = vi.fn();
 const getLeagueByCodeMock = vi.fn();
-const listContestEntriesMock = vi.fn();
+const listMyContestEntriesMock = vi.fn();
 const listContestsMock = vi.fn();
 const logoutUserMock = vi.fn();
 const refreshTokenMock = vi.fn();
@@ -17,7 +17,7 @@ const refreshTokenMock = vi.fn();
 bindApiMocks({
   getUser: getCurrentUserMock,
   getLeagueByCode: getLeagueByCodeMock,
-  listContestEntries: listContestEntriesMock,
+  listMyContestEntries: listMyContestEntriesMock,
   listContests: listContestsMock,
   logoutUser: logoutUserMock,
   refreshToken: refreshTokenMock,
@@ -120,22 +120,17 @@ function primeCommonMocks({
 }
 
 /** A contest's entry list holding one entry for each of `squadIds`. */
-function entryList(contestId: string, squadIds: string[]) {
+/** The viewer's team's entries across the league's current contests, as the my-entries read returns them (#1197). */
+function myEntries(contestIds: string[]) {
   return {
     data: {
-      contestId,
-      total: squadIds.length,
-      isJoined: squadIds.includes('team-1'),
-      myEntryId: null,
-      myEntryIds: [],
-      picksRevealed: false,
-      entries: squadIds.map((squadId, index) => ({
-        id: `${contestId}-entry-${index}`,
+      entries: contestIds.map((contestId) => ({
+        id: `${contestId}-entry-1`,
         contestId,
-        squadId,
-        squadName: `Team ${squadId}`,
+        squadId: 'team-1',
+        squadName: 'Team team-1',
         entryNumber: 1,
-        name: `Team ${squadId} Entry 1`,
+        name: 'Team team-1 Entry 1',
         events: [{ sportEventId: 'event-1', status: 'SUBMITTED', submittedAt: '2026-04-15T00:00:00.000Z' }],
         picksCount: 6,
         createdAt: '2026-04-15T00:00:00.000Z',
@@ -168,7 +163,7 @@ describe('LeagueContestsPage', () => {
   afterEach(() => {
     getCurrentUserMock.mockReset();
     getLeagueByCodeMock.mockReset();
-    listContestEntriesMock.mockReset();
+    listMyContestEntriesMock.mockReset();
     listContestsMock.mockReset();
     logoutUserMock.mockReset();
     refreshTokenMock.mockReset();
@@ -208,7 +203,8 @@ describe('LeagueContestsPage', () => {
     expect(screen.getByTestId('league-contest-contest-1')).toHaveAttribute(
       'href',
       '/league/BIGDAWGS/contests/contest-1',
-    );
+    );    // The team's entries are read only for the My contests filter.
+    expect(listMyContestEntriesMock).not.toHaveBeenCalled();
   });
 });
 
@@ -216,7 +212,7 @@ describe('LeagueContestsPage, beyond the default list', () => {
   afterEach(() => {
     getCurrentUserMock.mockReset();
     getLeagueByCodeMock.mockReset();
-    listContestEntriesMock.mockReset();
+    listMyContestEntriesMock.mockReset();
     listContestsMock.mockReset();
     logoutUserMock.mockReset();
     refreshTokenMock.mockReset();
@@ -267,21 +263,22 @@ describe('LeagueContestsPage, beyond the default list', () => {
         ],
       },
     });
-    listContestEntriesMock.mockImplementation(({ path }: { path: { contestId: string } }) =>
-      entryList(path.contestId, path.contestId === 'contest-3' ? ['team-2', 'team-1'] : ['team-2']),
-    );
+    listMyContestEntriesMock.mockResolvedValue(myEntries(['contest-3']));
 
     renderLeagueContestsPage('/league/BIGDAWGS/contests?filter=my-entries');
 
     expect(await screen.findByRole('radio', { name: 'My contests' })).toBeChecked();
     expect(await screen.findByTestId('league-contest-contest-3')).toBeInTheDocument();
     expect(screen.queryByTestId('league-contest-contest-1')).not.toBeInTheDocument();
+    // One read for the team's entries across the league, not one per contest (#1197).
+    expect(listMyContestEntriesMock).toHaveBeenCalledTimes(1);
+    expect(listMyContestEntriesMock).toHaveBeenCalledWith(expect.objectContaining({ path: { id: 'league-1' } }));
   });
 
   it('says the viewer has no entries under "My Contests" when they have entered none', async () => {
     primeCommonMocks();
     listContestsMock.mockResolvedValue({ data: { contests: [contest('contest-1', 'Masters Pick 6')] } });
-    listContestEntriesMock.mockResolvedValue(entryList('contest-1', ['team-2']));
+    listMyContestEntriesMock.mockResolvedValue(myEntries([]));
 
     renderLeagueContestsPage('/league/BIGDAWGS/contests?filter=my-entries');
 
@@ -291,7 +288,7 @@ describe('LeagueContestsPage, beyond the default list', () => {
   it('shows an error under "My Contests" when reading the team\'s entries fails, rather than claiming it has none', async () => {
     primeCommonMocks();
     listContestsMock.mockResolvedValue({ data: { contests: [contest('contest-1', 'Masters Pick 6')] } });
-    listContestEntriesMock.mockResolvedValue({
+    listMyContestEntriesMock.mockResolvedValue({
       error: { error: { code: 'INTERNAL_ERROR', message: 'Boom' } },
       status: 500,
     });

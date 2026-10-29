@@ -9,7 +9,7 @@ import {
   DRAWN_DIGITS,
   squaresBoardFixture,
   squaresContestFixture,
-  squaresEntriesFixture,
+  squaresEntryFixture,
   squaresLeagueContextFixture,
 } from './test/squares-fixtures';
 
@@ -20,7 +20,7 @@ const {
   getContestMock,
   getLeagueMock,
   getSquaresBoardMock,
-  listContestEntriesMock,
+  getContestEntryMock,
   mockLogger,
 } = vi.hoisted(() => {
   const logger = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), fatal: vi.fn(), child: vi.fn() };
@@ -32,7 +32,7 @@ const {
     getContestMock: vi.fn(),
     getLeagueMock: vi.fn(),
     getSquaresBoardMock: vi.fn(),
-    listContestEntriesMock: vi.fn(),
+    getContestEntryMock: vi.fn(),
     mockLogger: logger,
   };
 });
@@ -44,7 +44,7 @@ bindApiMocks({
   getContest: getContestMock,
   getLeague: getLeagueMock,
   getSquaresBoard: getSquaresBoardMock,
-  listContestEntries: listContestEntriesMock,
+  getContestEntry: getContestEntryMock,
 });
 
 vi.mock('@/features/auth/auth-context', () => ({
@@ -93,7 +93,7 @@ function primeMocks({
 } = {}) {
   getContestMock.mockResolvedValue({ data: { contest } });
   getSquaresBoardMock.mockResolvedValue({ data: board });
-  listContestEntriesMock.mockResolvedValue({ data: squaresEntriesFixture() });
+  getContestEntryMock.mockImplementation(({ path }: { path: { entryId: string } }) => Promise.resolve({ data: squaresEntryFixture(path.entryId) }));
   getLeagueMock.mockResolvedValue({ data: squaresLeagueContextFixture(role) });
 }
 
@@ -103,7 +103,7 @@ describe('Squares contest entry page', () => {
   afterEach(() => {
     for (const mock of [
       claimSquaresBoxMock, clearSquaresBoxMock, drawSquaresNumbersMock, getContestMock,
-      getLeagueMock, getSquaresBoardMock, listContestEntriesMock,
+      getLeagueMock, getSquaresBoardMock, getContestEntryMock,
     ]) {
       mock.mockReset();
     }
@@ -214,7 +214,7 @@ describe('Squares contest entry page', () => {
 
 describe('Squares contest leaderboard', () => {
   afterEach(() => {
-    for (const mock of [getContestMock, getLeagueMock, getSquaresBoardMock, listContestEntriesMock]) {
+    for (const mock of [getContestMock, getLeagueMock, getSquaresBoardMock, getContestEntryMock]) {
       mock.mockReset();
     }
   });

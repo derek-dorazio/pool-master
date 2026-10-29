@@ -384,3 +384,56 @@ describe('Golf round scores — bounded by the event\'s scheduled rounds', () =>
     expect(await getPrisma().sportEventParticipantStanding.count({ where: { sportEventParticipantId: rory.sep.id } })).toBe(0);
   });
 });
+
+// #1164 — a live tick re-sends the whole field every few minutes, and most of it has not moved.
+// Only the golfers whose scores changed are written; the rest keep their rows untouched.
+describe('Golf round scores — a live sync writes only what changed', () => {
+  it('a repeated tick leaves every round and standing row untouched, and a changed golfer\'s rows are rewritten while the rest are only re-ranked', async () => {
+    const { event, rory, jordan } = await createField('unchanged-sync');
+    const prisma = getPrisma();
+    await prisma.sportEvent.update({ where: { id: event.id }, data: { rounds: 4, syncScope: 'SCORES_ONLY' } });
+    await prisma.participantProviderMapping.createMany({
+      data: [
+        { providerId: 'integration-test', externalId: 'ext-rory', participantId: rory.participant.id },
+        { providerId: 'integration-test', externalId: 'ext-jordan', participantId: jordan.participant.id },
+      ],
+    });
+    const tick = (jordanToPar: number) => publishLiveScoreUpdate({
+      category: 'GOLF',
+      externalEventId: event.externalId,
+      rounds: [
+        { participantExternalId: 'ext-rory', round: 1, strokes: 33, scoreToPar: -3, thru: 9, status: 'IN_PROGRESS' as const },
+        { participantExternalId: 'ext-jordan', round: 1, strokes: 36 + jordanToPar, scoreToPar: jordanToPar, thru: 9, status: 'IN_PROGRESS' as const },
+      ],
+    }, { prisma, providerId: 'integration-test', scoringFamilyForEvent });
+    const stamps = async (): Promise<Record<string, Array<string | undefined>>> => {
+      const byEntry: Record<string, Array<string | undefined>> = {};
+      for (const { sep } of [rory, jordan]) {
+        const round = await prisma.sportEventParticipantRound.findFirstOrThrow({ where: { sportEventParticipantId: sep.id }, include: { golf: true } });
+        const standing = await prisma.sportEventParticipantStanding.findUniqueOrThrow({ where: { sportEventParticipantId: sep.id }, include: { golf: true } });
+        byEntry[sep.id] = [round.updatedAt, round.golf?.updatedAt, standing.updatedAt, standing.golf?.updatedAt].map((at) => at?.toISOString());
+      }
+      return byEntry;
+    };
+
+    await tick(1);
+    const afterFirst = await stamps();
+    const repeated = await tick(1);
+
+    expect(repeated.writeDiagnostics.summary).toMatchObject({ unchanged: 4, created: 0, updated: 0 });
+    expect(await stamps()).toEqual(afterFirst);
+
+    await tick(-5);
+    const afterChange = await stamps();
+
+    // Rory's scores did not move, so only his rank (on the core standing, index 2) is rewritten.
+    const [roundAt, golfRoundAt, , golfStandingAt] = afterFirst[rory.sep.id];
+    expect(afterChange[rory.sep.id]).toEqual([roundAt, golfRoundAt, expect.any(String), golfStandingAt]);
+    expect(afterChange[jordan.sep.id].every((at, index) => at !== afterFirst[jordan.sep.id][index])).toBe(true);
+    const standings = await prisma.sportEventParticipantStanding.findMany({ where: { sportEventParticipantId: { in: [rory.sep.id, jordan.sep.id] } } });
+    expect(Object.fromEntries(standings.map((standing) => [standing.sportEventParticipantId, standing.displayPosition]))).toEqual({
+      [jordan.sep.id]: '1',
+      [rory.sep.id]: '2',
+    });
+  });
+});

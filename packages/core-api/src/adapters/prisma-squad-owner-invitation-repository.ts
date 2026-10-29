@@ -28,6 +28,14 @@ export class PrismaSquadOwnerInvitationRepository
     return rows.map(mapToInvitation);
   }
 
+  async revokePendingBySquad(squadId: string): Promise<number> {
+    const { count } = await this.prisma.squadOwnerInvitation.updateMany({
+      where: { squadId, status: SharedSquadOwnerInvitationStatus.PENDING },
+      data: { status: SharedSquadOwnerInvitationStatus.REVOKED },
+    });
+    return count;
+  }
+
   async findByCode(inviteCode: string): Promise<SquadOwnerInvitation | null> {
     const row = await this.prisma.squadOwnerInvitation.findUnique({
       where: { inviteCode },

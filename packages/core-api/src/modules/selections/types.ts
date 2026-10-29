@@ -15,6 +15,7 @@ import type {
   SportEvent,
   SquadMembership,
 } from '@poolmaster/shared/domain';
+import type { ParticipantValuationView } from '../events/sport-event-tier-service';
 
 /**
  * A tier as the selection room uses it: the event owns tiers now (plans/124 §4.6/§4.6b), and
@@ -69,6 +70,8 @@ export interface SelectionContext {
   configuration: ContestConfiguration | null;
   entries: ContestEntry[];
   squadMemberships: SquadMembership[];
+  /** The event's effective tiers and prices per field row, as the entry receipt lists them. */
+  valuations: ParticipantValuationView[];
   selectionParticipants: SelectionParticipant[];
   tiers: SelectionTierConfig[];
   /**
