@@ -890,6 +890,23 @@ describe('ContestEntryRepository', () => {
     await expect(repos().entries.findByIdWithSquad(randomUUID())).resolves.toBeNull();
   });
 
+  it("finds a squad's entries in one contest only, drafts included, by entry number, leaving out its entries in other contests and other squads' (#1167)", async () => {
+    const { league, squads, event } = await createLeagueAndEvent();
+    const contest = await createContest(league.id, event.id, 'Squad Entries');
+    const otherContest = await createContest(league.id, event.id, 'Other Contest');
+    // Created out of order, so the order below is the adapter's, not insertion order.
+    const third = await createEntry(contest.id, squads[0].id, 3, 'Third');
+    const first = await createEntry(contest.id, squads[0].id, 1, 'First');
+    await createEntry(otherContest.id, squads[0].id, 2, 'Elsewhere');
+    await createEntry(contest.id, squads[1].id, 2, 'Other Squad');
+
+    const found = await repos().entries.findByContestAndSquad(contest.id, squads[0].id);
+
+    expect(found.map((entry) => [entry.id, entry.entryNumber])).toEqual([[first.id, 1], [third.id, 3]]);
+    expect(found[0].events).toEqual([expect.objectContaining({ sportEventId: event.id, status: 'DRAFT' })]);
+    await expect(repos().entries.findByContestAndSquad(otherContest.id, squads[1].id)).resolves.toEqual([]);
+  });
+
   it('updates only the entry fields given, leaving the others and its event statuses as stored', async () => {
     const { league, squads, event } = await createLeagueAndEvent();
     const contest = await createContest(league.id, event.id, 'Entry Update');
@@ -1036,7 +1053,7 @@ describe('SportEventRepository.findAll start bounds (#893)', () => {
 });
 
 describe('ContestEntryPickRepository — read-only', () => {
-  it('reads picks in pick order, with their golfer, and counts them per entry', async () => {
+  it('reads picks in pick order, with their golfer and their event, only in the events asked for, and counts them per entry', async () => {
     const prisma = getPrisma();
     const { league, squads, event, field, suffix } = await createLeagueAndEvent();
     const contest = await createContest(league.id, event.id, 'Picks');
@@ -1061,14 +1078,16 @@ describe('ContestEntryPickRepository — read-only', () => {
       },
     });
 
-    const picks = await repos().picks.findByEntries([picked.id, empty.id]);
+    const picks = await repos().picks.findByEntriesAndEvents([picked.id, empty.id], [event.id]);
     const withParticipant = await repos().picks.findByEntriesWithParticipant([picked.id]);
     const counts = await repos().picks.countByEntries([picked.id, empty.id]);
 
-    expect(picks.map((pick) => [pick.id, pick.slot, pick.contestFormat])).toEqual([
-      [earlier.id, 1, 'ROSTER'],
-      [later.id, 2, 'ROSTER'],
+    expect(picks.map((pick) => [pick.id, pick.slot, pick.contestFormat, pick.sportEventId])).toEqual([
+      [earlier.id, 1, 'ROSTER', event.id],
+      [later.id, 2, 'ROSTER', event.id],
     ]);
+    // Only the events asked for (#1162): the entry's picks are all in `event`, so another reads none.
+    await expect(repos().picks.findByEntriesAndEvents([picked.id], [randomUUID()])).resolves.toEqual([]);
     expect(withParticipant.map((pick) => pick.participant)).toEqual([
       {
         participantId: field[0].participantId,
@@ -1091,7 +1110,7 @@ describe('ContestEntryPickRepository — read-only', () => {
     expect(withParticipant.map((pick) => pick.sportEventId)).toEqual([event.id, event.id]);
     // An entry with no picks is absent from the map, not zero.
     expect(counts).toEqual(new Map([[picked.id, 2]]));
-    await expect(repos().picks.findByEntries([])).resolves.toEqual([]);
+    await expect(repos().picks.findByEntriesAndEvents([], [event.id])).resolves.toEqual([]);
     await expect(repos().picks.countByEntries([])).resolves.toEqual(new Map());
   });
 

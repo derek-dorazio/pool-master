@@ -1518,7 +1518,7 @@ export const releaseEvent = <ThrowOnError extends boolean = false>(options: Opti
 /**
  * Move a sport event to its next status
  *
- * Only to one of the event's allowedTransitions. Activates or settles its contests as the new status requires. A DRAFT event is refused SCHEDULED with 409 SPORT_EVENT_RELEASE_REQUIRED: releasing it is its own action (releaseEvent). Root admin only.
+ * Only to one of the event's allowedTransitions. Activates or settles its contests as the new status requires. A DRAFT event is refused SCHEDULED with 409 SPORT_EVENT_RELEASE_REQUIRED: releasing it is its own action (releaseEvent). 409 SPORT_EVENT_INVALID_TRANSITION when the event's status changed elsewhere while this request ran (the lifecycle scheduler, another admin) and it did not end in the status asked for. Root admin only.
  */
 export const transitionEvent = <ThrowOnError extends boolean = false>(options: Options<TransitionEventData, ThrowOnError>): RequestResult<TransitionEventResponses, TransitionEventErrors, ThrowOnError> => (options.client ?? client).post<TransitionEventResponses, TransitionEventErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

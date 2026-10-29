@@ -38,7 +38,9 @@ to fix, never a reason to add a sample payload or a "local mode" branch (`rules/
   background with its output in a log file. Wait for `/health` before loading data.
 - **To run the browser E2E suite:** build with `npm run build:poolmaster` and serve it with
   `npx vite preview` (port 4175), the API proxied behind it, as the CI job does, with its
-  `POOLMASTER_E2E_*` variables pointing at your admin.
+  `POOLMASTER_E2E_*` variables pointing at your admin and the API started with
+  `CONTEST_LEADERBOARD_CACHE_TTL_MS=0`, as the CI job does: the journeys read a leaderboard
+  right after the score write they check.
 
 ## Step 3 — test data
 

@@ -63,6 +63,11 @@ export interface ContestEntryPickParticipant {
   teamAffiliation: string | null;
 }
 
+/** A pick with the event its field row belongs to (#1162). */
+export interface ContestEntryEventPick extends ContestEntryPick {
+  sportEventId: string;
+}
+
 export interface ContestEntryPickWithParticipant extends ContestEntryPick {
   /** The event the picked field row belongs to: which of the contest's events the pick is in (#713). */
   sportEventId: string;
@@ -78,7 +83,11 @@ export interface ContestEntryPickWithParticipant extends ContestEntryPick {
  * means none can. Every order is pick time, then id.
  */
 export interface ContestEntryPickRepository {
-  findByEntries(entryIds: readonly string[]): Promise<ContestEntryPick[]>;
+  /**
+   * The entries' picks in the events asked for alone (#1162), each with its event: a leaderboard
+   * reads only the events it scores, not every pick the entries made across the contest.
+   */
+  findByEntriesAndEvents(entryIds: readonly string[], sportEventIds: readonly string[]): Promise<ContestEntryEventPick[]>;
   /**
    * The entries' picks with their field rows. With a `sportEventId`, only the picks in that one
    * event, filtered in the query (#1196): a lineup is one event's picks (#713), and a season

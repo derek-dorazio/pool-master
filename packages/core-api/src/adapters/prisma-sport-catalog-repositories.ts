@@ -30,6 +30,7 @@ import type {
   SportEventRoundSchedule,
   SportEventTierDefinition,
   SportEventTierRepository,
+  SportEventStatusTransition,
   SportEventUpdate,
   SportLeagueFilters,
   SportLeagueRepository,
@@ -261,6 +262,17 @@ export class PrismaSportEventRepository implements SportEventRepository {
       },
       include: SPORT_EVENT_INCLUDE,
     }));
+  }
+
+  async transitionStatus(id: string, transition: SportEventStatusTransition): Promise<SportEvent | null> {
+    const result = await this.prisma.sportEvent.updateMany({
+      where: { id, status: transition.from },
+      data: {
+        status: transition.to,
+        ...(transition.endDate && { endDate: transition.endDate }),
+      },
+    });
+    return result.count > 0 ? this.findById(id) : null;
   }
 
   async delete(id: string): Promise<void> {
