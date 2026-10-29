@@ -147,6 +147,8 @@ export interface EntrySubmittedReceiptInput {
   squadMemberships: readonly SquadMembership[];
   /** The submitted entries, each one sent its own receipt. */
   entryIds: readonly string[];
+  /** The entries' picks in the event, as the submission already read them (#1254). */
+  picks: readonly ContestEntryPickWithParticipant[];
 }
 
 type LifecycleLogger = Pick<FastifyBaseLogger, 'debug' | 'info' | 'warn' | 'error' | 'fatal'>;
@@ -1358,13 +1360,12 @@ export class ContestService {
     const email = this.deps.email;
 
     // One entry is read by id; a draw's entries are the contest's, read in one go.
-    const [entryRows, league, sportLeague, picks] = await Promise.all([
+    const [entryRows, league, sportLeague] = await Promise.all([
       entryIds.length === 1
         ? this.deps.entries.findByIdWithSquad(entryIds[0]).then((row) => (row ? [row] : []))
         : this.deps.entries.findByContestWithSquad(contestId),
       this.deps.leagues.findById(contest.leagueId),
       this.deps.sportLeagues.findById(sportEvent.sportLeagueId),
-      this.deps.picks.findByEntriesWithParticipant(entryIds, { sportEventId: sportEvent.id }),
     ]);
     const entryById = new Map(entryRows.filter((row) => row.contestId === contestId).map((row) => [row.id, row]));
     if (!league) {
@@ -1383,7 +1384,7 @@ export class ContestService {
       .filter((user) => user.isActive)
       .map((user) => [user.id, user]));
     const picksByEntryId = new Map<string, ContestEntryPickWithParticipant[]>();
-    for (const pick of picks) {
+    for (const pick of input.picks) {
       picksByEntryId.set(pick.entryId, [...(picksByEntryId.get(pick.entryId) ?? []), pick]);
     }
 

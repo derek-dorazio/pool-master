@@ -87,18 +87,25 @@ export class PrismaContestEntryMatchPredictionRepository implements ContestEntry
 
   async save(change: ContestEntryMatchPredictionSave): Promise<void> {
     const { contestEntryId, sportEventId, saves, clearedMatchIds, eventStatus, tiebreakerValue, at } = change;
+    // A saved pick replaces the game's earlier one: both go in one delete, and the saves in one
+    // insert, so the write costs the same for one game as for a full slate (#1254).
+    const replacedMatchIds = [...clearedMatchIds, ...saves.map((save) => save.sportEventMatchId)];
     await this.prisma.$transaction(async (tx) => {
-      if (clearedMatchIds.length > 0) {
+      if (replacedMatchIds.length > 0) {
+        // Touching the entry first takes its row lock, so two saves that write one entry's picks
+        // run one after the other: otherwise both could delete a game's pick before either
+        // inserts, and the second insert would hit the (entry, game) unique index. A save that
+        // only sets the week, as a submit does, writes no pick and needs no lock.
+        await tx.contestEntry.update({ where: { id: contestEntryId }, data: { updatedAt: at } });
         await tx.contestEntryMatchPrediction.deleteMany({
-          where: { contestEntryId, sportEventMatchId: { in: [...clearedMatchIds] } },
+          where: { contestEntryId, sportEventMatchId: { in: replacedMatchIds } },
         });
       }
-      for (const { sportEventMatchId, predictedResult, sportEventParticipantId, confidence } of saves) {
-        // poolmaster-allow-query-in-loop: one entry's picks for one week's games, in one transaction
-        await tx.contestEntryMatchPrediction.upsert({
-          where: { contestEntryId_sportEventMatchId: { contestEntryId, sportEventMatchId } },
-          create: { contestEntryId, sportEventMatchId, predictedResult, sportEventParticipantId, confidence, pickedAt: at },
-          update: { predictedResult, sportEventParticipantId, confidence, pickedAt: at },
+      if (saves.length > 0) {
+        await tx.contestEntryMatchPrediction.createMany({
+          data: saves.map(({ sportEventMatchId, predictedResult, sportEventParticipantId, confidence }) => ({
+            contestEntryId, sportEventMatchId, predictedResult, sportEventParticipantId, confidence, pickedAt: at,
+          })),
         });
       }
       const statusChange = eventStatus === null

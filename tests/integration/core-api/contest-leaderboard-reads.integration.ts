@@ -12,6 +12,7 @@ import {
   setupIntegrationTests,
   teardownIntegrationTests,
 } from '../helpers';
+import { countingPrisma } from '../../support/counting-prisma';
 import { integrationPlanEntitlements } from '../plan-entitlements';
 import { freshEventEdition } from '../../support/event-edition';
 import { expectDefined } from '../../support/expect-defined';
@@ -31,31 +32,6 @@ beforeEach(() => cleanupTestData());
 const DAY = 24 * 60 * 60 * 1000;
 const ENTRIES = 3;
 const PICKS_PER_EVENT = 4;
-
-/** The Prisma client with every model operation counted, as `Model.operation`, and the rows each read returned. */
-function countingPrisma() {
-  const counts = new Map<string, number>();
-  const rows = new Map<string, number>();
-  const client = getPrisma().$extends({
-    query: {
-      $allModels: {
-        async $allOperations({ model, operation, args, query }) {
-          const key = `${model}.${operation}`;
-          counts.set(key, (counts.get(key) ?? 0) + 1);
-          const result = await query(args);
-          if (Array.isArray(result)) rows.set(key, (rows.get(key) ?? 0) + result.length);
-          return result;
-        },
-      },
-    },
-  });
-  // The extended client runs every query the plain one does; the services take the plain type.
-  return {
-    prisma: client as unknown as PrismaClient,
-    count: (key: string) => counts.get(key) ?? 0,
-    rows: (key: string) => rows.get(key) ?? 0,
-  };
-}
 
 /**
  * A golf event that started `daysAgo`, with a field of `PICKS_PER_EVENT` golfers. With
@@ -301,7 +277,7 @@ function serviceOn(prisma: PrismaClient) {
 describe('ContestService.getLeaderboard reads (#1162)', () => {
   it('reads the entries once and only the major under way\'s picks, not every pick once per major', async () => {
     const season = await fourMajors(ContestStatus.ACTIVE, false);
-    const { prisma, count, rows } = countingPrisma();
+    const { prisma, count, rows } = countingPrisma(getPrisma());
 
     const leaderboard = await serviceOn(prisma).getLeaderboard(season.contest.id, season.viewerId);
 
@@ -326,7 +302,7 @@ describe('ContestService.getLeaderboard reads (#1162)', () => {
 
   it('answers a COMPLETED contest from its frozen totals, reading the picks of the shown major alone', async () => {
     const season = await fourMajors(ContestStatus.COMPLETED, true);
-    const { prisma, count, rows } = countingPrisma();
+    const { prisma, count, rows } = countingPrisma(getPrisma());
 
     const leaderboard = await serviceOn(prisma).getLeaderboard(season.contest.id, season.viewerId, season.majors[1]?.event.id);
 
@@ -342,7 +318,7 @@ describe('ContestService.getLeaderboard reads (#1162)', () => {
 
   it('answers a second viewer within 30 seconds from the board already computed, reading no entries or picks again', async () => {
     const season = await fourMajors(ContestStatus.ACTIVE, false);
-    const { prisma, count } = countingPrisma();
+    const { prisma, count } = countingPrisma(getPrisma());
     const service = serviceOn(prisma);
 
     const first = await service.getLeaderboard(season.contest.id, season.viewerId);
@@ -355,7 +331,7 @@ describe('ContestService.getLeaderboard reads (#1162)', () => {
 
   it('computes the live standings email\'s board afresh even when a viewer\'s board is cached, so an email never reports older scores', async () => {
     const season = await fourMajors(ContestStatus.ACTIVE, false);
-    const { prisma, count } = countingPrisma();
+    const { prisma, count } = countingPrisma(getPrisma());
     const service = serviceOn(prisma);
 
     const contest = expectDefined(await new PrismaContestRepository(prisma).findById(season.contest.id));

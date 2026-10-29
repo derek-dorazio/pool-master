@@ -87,9 +87,10 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
       tags: TAGS,
       summary: 'List sport events',
       description:
-        'The sport-event catalog, narrowed by sport, status, sport league, event year and name and never paged. At least one of `sport`, `sportLeagueId` and `eventYear` is required, so the list never reads every event: 400 SPORT_EVENT_FILTER_REQUIRED otherwise. Any signed-in user may read it: '
+        'The sport-event catalog, narrowed by sport, statuses, sport league, event year and name and never paged. At least one of `sport`, `sportLeagueId` and `eventYear` is required, so the list never reads every event: 400 SPORT_EVENT_FILTER_REQUIRED otherwise. Any signed-in user may read it: '
         + 'contest setup picks an event from it, and a root admin browses it. Each event carries its loaded field '
-        + 'size, contest-setup readiness, and its tier and contest counts. DRAFT events (not yet released for contests) are listed for a root admin only.',
+        + 'size, contest-setup readiness and tier count; a root admin\'s list also carries each event\'s adminCounts. '
+        + 'DRAFT events (not yet released for contests) are listed for a root admin only.',
       operationId: 'listEvents',
       querystring: schemaRef('SportEventListQuery'),
       response: { 200: schemaRef('SportEventListResponse'), ...errors(400, 401) },
@@ -97,11 +98,24 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
     handler: handler.listEvents,
   });
 
+  fastify.get('/years', {
+    schema: {
+      tags: TAGS,
+      summary: 'List a sport league\'s event years',
+      description: 'The years a sport league has events in, for a year picker that then lists one year\'s events. '
+        + 'Any signed-in user may read it; a year with only DRAFT events is listed for a root admin only.',
+      operationId: 'listEventYears',
+      querystring: schemaRef('SportEventYearListQuery'),
+      response: { 200: schemaRef('SportEventYearListResponse'), ...errors(400, 401) },
+    },
+    handler: handler.listEventYears,
+  });
+
   fastify.get('/:eventId', {
     schema: {
       tags: TAGS,
       summary: 'Get a sport event',
-      description: '404 EVENT_NOT_FOUND for a DRAFT event unless the caller is a root admin.',
+      description: '404 EVENT_NOT_FOUND for a DRAFT event unless the caller is a root admin, whose read alone carries adminCounts.',
       operationId: 'getEvent',
       params: EVENT_PARAMS,
       response: { 200: schemaRef('SportEventResponse'), ...errors(401, 404) },

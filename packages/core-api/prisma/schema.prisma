@@ -627,6 +627,9 @@ model RefreshToken {
   userId    String    @map("user_id") @db.Uuid
   expiresAt DateTime  @map("expires_at") @db.Timestamptz
   revokedAt DateTime? @map("revoked_at") @db.Timestamptz
+  /// When a refresh replaced this token (#1229). Set with `revokedAt` on rotation only, never on a
+  /// sign-out, so a rotated token that comes back can be told from one that was signed out.
+  rotatedAt DateTime? @map("rotated_at") @db.Timestamptz
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
 
   user User @relation(fields: [userId], references: [id])
