@@ -5,7 +5,9 @@ import {
   ContestNotFoundError,
 
   type ContestServiceDeps,
+  type EntrySubmittedReceiptInput,
 } from '../../../packages/core-api/src/modules/contests/service';
+import type { ParticipantValuationView } from '../../../packages/core-api/src/modules/events/sport-event-tier-service';
 import type {
   ContestConfigurationRepository,
   ContestRepository,
@@ -27,6 +29,8 @@ import {
   SquadMembershipStatus,
   TeamIconKey,
   parseContestScoringSettings,
+  type Contest,
+  type ContestConfiguration,
   type ParticipantContestScoringRule,
   type SportEvent,
 } from '@poolmaster/shared/domain';
@@ -223,11 +227,8 @@ function buildService(deps: Partial<ContestServiceDeps> = {}): ContestService {
       countParticipants: jest.fn().mockImplementation(async (ids: readonly string[]) => new Map(ids.map((id) => [id, 1]))),
     }),
     sportLeagues: { findById: jest.fn().mockResolvedValue({ id: 'pga-tour', name: 'PGA Tour' }) },
-    eventParticipants: { listEventParticipants: jest.fn().mockResolvedValue([]) },
-    tiers: {
-      getEffectiveValuationsForSportEvent: jest.fn().mockResolvedValue([]),
-      listTiers: jest.fn().mockResolvedValue([]),
-    },
+    eventParticipants: { listEventParticipants: jest.fn().mockResolvedValue([]), listCachedEventParticipants: jest.fn().mockResolvedValue([]) },
+    tiers: { listTiers: jest.fn().mockResolvedValue([]) },
     ...deps,
   });
 }
@@ -302,6 +303,49 @@ function buildReceiptPick(
   };
 }
 
+/** An effective valuation as `SportEventTierService` resolves one: untiered and unpriced unless given. */
+function receiptValuation(
+  sportEventParticipantId: string,
+  overrides: { tierLabel?: string; price?: number } = {},
+): ParticipantValuationView {
+  return {
+    sportEventParticipantId,
+    participantId: `participant-of-${sportEventParticipantId}`,
+    tierId: null,
+    tierKey: null,
+    tierLabel: overrides.tierLabel ?? null,
+    tierNumber: null,
+    tierOrderIndex: null,
+    price: overrides.price ?? null,
+  };
+}
+
+/** A contest configuration holding the given typed rules. */
+function receiptConfiguration(configJson: NonNullable<ContestConfiguration['configJson']>): ContestConfiguration {
+  return {
+    id: 'configuration-1',
+    contestId: 'contest-1',
+    selectionType: configJson.selectionType,
+    configJson,
+  } as ContestConfiguration;
+}
+
+/**
+ * What the selection room hands the receipt for entry-1 in event-1: the contest, the event, no
+ * configuration, no valuations and the squad's one owner, unless given.
+ */
+function receiptInput(contest: Contest, overrides: Partial<EntrySubmittedReceiptInput> = {}): EntrySubmittedReceiptInput {
+  return {
+    contest,
+    sportEvent: STARTED_EVENT,
+    configuration: null,
+    valuations: [],
+    squadMemberships: [ACTIVE_SQUAD_MEMBERSHIP],
+    entryIds: ['entry-1'],
+    ...overrides,
+  };
+}
+
 /** One golfer as `SportEventParticipantService.listEventParticipants` returns them. */
 function buildGolfFieldView(input: {
   id: string;
@@ -363,6 +407,7 @@ function buildGolfLeaderboardPick(id: string, entryId: string, sportEventPartici
   return {
     id,
     entryId,
+    sportEventId: 'event-1',
     sportEventParticipantId,
     pickedAt: new Date(`2026-05-30T12:00:0${id.slice(-1)}.000Z`),
     slot: undefined,
@@ -467,18 +512,45 @@ describe('ContestService', () => {
   });
 
   describe('listByLeague', () => {
-    it('returns contests for the league', async () => {
-      const contests = [buildContest(), buildContest()];
+    it('lists the current contests as of now by default (#1161)', async () => {
+      const now = new Date('2026-06-10T12:00:00.000Z');
       const contestRepo = createMockContestRepo({
-        findByLeague: jest.fn().mockResolvedValue(contests),
+        findCurrentByLeague: jest.fn().mockResolvedValue([buildContest(), buildContest()]),
+      });
+      const service = buildService({
+        contests: contestRepo,
+        configurations: createMockContestConfigurationRepo(),
+        memberships: createMockMembershipRepo(),
+        now: () => now,
+      });
+
+      const result = await service.listByLeague('league-1', { userId: 'user-1', isRootAdmin: true });
+
+      expect(result).toHaveLength(2);
+      expect(contestRepo.findCurrentByLeague).toHaveBeenCalledWith('league-1', now);
+      expect(contestRepo.findFinishedByLeague).not.toHaveBeenCalled();
+    });
+
+    it('lists the contests that went final in a finished year, from midnight 1 January in New York to the next (#1161)', async () => {
+      const finished = buildContest({ id: 'finished', status: ContestStatus.COMPLETED });
+      const contestRepo = createMockContestRepo({
+        findFinishedByLeague: jest.fn().mockResolvedValue([finished]),
       });
       const service = buildService({
         contests: contestRepo,
         configurations: createMockContestConfigurationRepo(),
         memberships: createMockMembershipRepo(),
       });
-      const result = await service.listByLeague('league-1', { userId: 'user-1', isRootAdmin: true });
-      expect(result).toHaveLength(2);
+
+      const result = await service.listByLeague('league-1', { userId: 'user-1', isRootAdmin: false }, 2025);
+
+      expect(result).toEqual([finished]);
+      expect(contestRepo.findFinishedByLeague).toHaveBeenCalledWith(
+        'league-1',
+        new Date('2025-01-01T05:00:00.000Z'),
+        new Date('2026-01-01T05:00:00.000Z'),
+      );
+      expect(contestRepo.findCurrentByLeague).not.toHaveBeenCalled();
     });
 
     it.each([
@@ -487,7 +559,7 @@ describe('ContestService', () => {
       ['a root admin who is not a member', null, true, ['draft', 'open']],
     ] as const)('lists draft contests only to their commissioners: %s sees %j', async (_who, role, isRootAdmin, expected) => {
       const contestRepo = createMockContestRepo({
-        findByLeague: jest.fn().mockResolvedValue([
+        findCurrentByLeague: jest.fn().mockResolvedValue([
           buildContest({ id: 'draft', status: ContestStatus.DRAFT }),
           buildContest({ id: 'open', status: ContestStatus.OPEN }),
         ]),
@@ -507,25 +579,12 @@ describe('ContestService', () => {
       expect(result.map((contest) => contest.id)).toEqual(expected);
     });
 
-    it('counts only submitted entries for league contest summaries, leaving drafts out', async () => {
-      const [firstContest, secondContest] = [
-        buildContest({ id: 'contest-1' }),
-        buildContest({ id: 'contest-2' }),
-      ];
-      const contestRepo = createMockContestRepo({
-        findByLeague: jest.fn().mockResolvedValue([firstContest, secondContest]),
-      });
+    it('counts the listed contests\' submitted entries in one grouped read, never reading entries one contest at a time (#1161)', async () => {
       const entryRepo = createMockEntryRepo({
-        findByContest: jest.fn()
-          .mockResolvedValueOnce([
-            { id: 'entry-1', events: [{ sportEventId: 'event-1', status: 'SUBMITTED' }] },
-            { id: 'entry-2', events: [{ sportEventId: 'event-1', status: 'SUBMITTED' }] },
-            { id: 'entry-draft', events: [{ sportEventId: 'event-1', status: 'DRAFT' }] },
-          ])
-          .mockResolvedValueOnce([{ id: 'entry-3', events: [{ sportEventId: 'event-1', status: 'SUBMITTED' }] }]),
+        countSubmittedByContests: jest.fn().mockResolvedValue(new Map([['contest-1', 2], ['contest-2', 1]])),
       });
       const service = buildService({
-        contests: contestRepo,
+        contests: createMockContestRepo(),
         configurations: createMockContestConfigurationRepo(),
         memberships: createMockMembershipRepo(),
         entries: entryRepo,
@@ -533,12 +592,9 @@ describe('ContestService', () => {
 
       const counts = await service.countEntriesByContest(['contest-1', 'contest-2']);
 
-      expect(counts).toEqual(new Map([
-        ['contest-1', 2],
-        ['contest-2', 1],
-      ]));
-      expect(entryRepo.findByContest).toHaveBeenCalledWith('contest-1');
-      expect(entryRepo.findByContest).toHaveBeenCalledWith('contest-2');
+      expect(counts).toEqual(new Map([['contest-1', 2], ['contest-2', 1]]));
+      expect(entryRepo.countSubmittedByContests).toHaveBeenCalledTimes(1);
+      expect(entryRepo.findByContest).not.toHaveBeenCalled();
     });
   });
 
@@ -579,7 +635,7 @@ describe('ContestService', () => {
         findByLeagueAndUser: jest.fn().mockResolvedValue(membership),
       });
       const entryRepo = createMockEntryRepo({
-        findBySquad: jest.fn().mockResolvedValue([]),
+        findByContestAndSquad: jest.fn().mockResolvedValue([]),
       });
       const squadMembershipRepo = createMockSquadMembershipRepo({
         findByLeagueAndUser: jest.fn().mockResolvedValue({
@@ -619,7 +675,7 @@ describe('ContestService', () => {
     it('refuses an entry in a DRAFT contest with CONTEST_ENTRY_LOCKED and writes nothing, until the commissioner opens it', async () => {
       const contest = buildContest({ id: 'contest-1', leagueId: 'league-1', status: ContestStatus.DRAFT });
       const entryRepo = createMockEntryRepo({
-        findBySquad: jest.fn().mockResolvedValue([]),
+        findByContestAndSquad: jest.fn().mockResolvedValue([]),
       });
       const service = buildService({
         contests: createMockContestRepo({
@@ -687,7 +743,7 @@ describe('ContestService', () => {
 
       it('refuses the new entry with CONTEST_ENTRY_LOCKED when the repository finds the contest drawn', async () => {
         const service = serviceWithEntries(createMockEntryRepo({
-          findBySquad: jest.fn().mockResolvedValue([]),
+          findByContestAndSquad: jest.fn().mockResolvedValue([]),
           create: jest.fn().mockResolvedValue({ status: 'contestDrawn' }),
         }));
 
@@ -697,7 +753,7 @@ describe('ContestService', () => {
 
       it('refuses to leave with CONTEST_ENTRY_LOCKED when the repository finds the contest drawn', async () => {
         const service = serviceWithEntries(createMockEntryRepo({
-          findBySquad: jest.fn().mockResolvedValue([{
+          findByContestAndSquad: jest.fn().mockResolvedValue([{
             id: 'entry-1',
             contestId: 'contest-1',
             squadId: 'squad-1',
@@ -762,7 +818,7 @@ describe('ContestService', () => {
         }),
       });
       const entryRepo = createMockEntryRepo({
-        findBySquad: jest.fn().mockResolvedValue([
+        findByContestAndSquad: jest.fn().mockResolvedValue([
           {
             id: 'entry-1',
             contestId: 'contest-1',
@@ -819,7 +875,7 @@ describe('ContestService', () => {
         }),
       });
       const entryRepo = createMockEntryRepo({
-        findBySquad: jest.fn().mockResolvedValue([]),
+        findByContestAndSquad: jest.fn().mockResolvedValue([]),
       });
       const sportEventRepo = fakeSportEventRepo({
         countParticipants: jest.fn().mockResolvedValue(new Map([['sport-event-1', 0]])),
@@ -842,7 +898,7 @@ describe('ContestService', () => {
       expect(entryRepo.create).not.toHaveBeenCalled();
     });
 
-    it('allows additional entry creation when the contest configuration is unlimited', async () => {
+    it("allows additional entry creation when the contest configuration is unlimited, numbering it from one read of the squad's entries in that contest (#1167)", async () => {
       const contest = buildContest({ id: 'contest-1', leagueId: 'league-1', status: ContestStatus.OPEN });
       const membership = buildMembership({ id: 'membership-1', leagueId: 'league-1', userId: 'user-1' });
       const contestRepo = createMockContestRepo({
@@ -864,7 +920,7 @@ describe('ContestService', () => {
         }),
       });
       const entryRepo = createMockEntryRepo({
-        findBySquad: jest.fn().mockResolvedValue([
+        findByContestAndSquad: jest.fn().mockResolvedValue([
           {
             id: 'entry-1',
             contestId: 'contest-1',
@@ -906,12 +962,14 @@ describe('ContestService', () => {
         entryNumber: 2,
         name: "Derek's Squad Entry 2",
       }), expect.anything());
+      expect(entryRepo.findByContestAndSquad).toHaveBeenCalledTimes(1);
+      expect(entryRepo.findByContestAndSquad).toHaveBeenCalledWith('contest-1', 'squad-1');
       // A Platinum league's contest takes 500 entries, or more once expanded past that.
       const limits: ContestEntryCreateLimits = jest.mocked(entryRepo.create).mock.calls[0][1];
       expect([limits.entriesPerContest(null), limits.entriesPerContest(200), limits.entriesPerContest(1000)]).toEqual([500, 500, 1000]);
     });
 
-    it('returns the joined entry state for pre-draft contest views', async () => {
+    it('lists the reader\'s own squad\'s entry with its squad name for pre-draft contest views', async () => {
       const contest = buildContest({ id: 'contest-1', leagueId: 'league-1', status: ContestStatus.DRAFT });
       const membership = buildMembership({ id: 'membership-1', leagueId: 'league-1', userId: 'user-1' });
       const contestRepo = createMockContestRepo({
@@ -942,9 +1000,7 @@ describe('ContestService', () => {
 
       const result = await service.listEntries('contest-1', 'user-1');
 
-      expect(result.isJoined).toBe(true);
-      expect(result.myEntryId).toBe('entry-1');
-      expect(result.entries[0].squadName).toBe("Derek's Squad");
+      expect(result.entries[0]).toMatchObject({ id: 'entry-1', squadId: 'squad-1', squadName: "Derek's Squad" });
     });
 
     it('pool-master-eux.4: computes the Golf leaderboard from event standings instead of ContestEntry totals', async () => {
@@ -976,7 +1032,7 @@ describe('ContestService', () => {
           storedScoringRule({ participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 1, active: true }),
         ]),
       });
-      const listEventParticipants = jest.fn().mockResolvedValue([
+      const listCachedEventParticipants = jest.fn().mockResolvedValue([
         buildGolfFieldView({
           id: 'sep-1',
           participantName: 'Rory McIlroy',
@@ -1032,10 +1088,19 @@ describe('ContestService', () => {
             squadId: 'squad-2',
             squadName: 'Lets Go Cam!',
           },
+          {
+            ...DEFAULT_ENTRY_WITH_SQUAD,
+            id: 'entry-3',
+            entryNumber: 3,
+            name: 'Never Submitted Entry',
+            squadId: 'squad-3',
+            squadName: 'Still Drafting',
+            events: [{ sportEventId: 'event-1', status: 'DRAFT' as const }],
+          },
         ]),
       });
       const pickRepo = fakeContestEntryPickRepo({
-        findByEntries: jest.fn().mockResolvedValue([
+        findByEntriesAndEvents: jest.fn().mockResolvedValue([
           buildGolfLeaderboardPick('pick-1', 'entry-1', 'sep-1'),
           buildGolfLeaderboardPick('pick-2', 'entry-1', 'sep-2'),
           buildGolfLeaderboardPick('pick-3', 'entry-1', 'sep-3'),
@@ -1053,7 +1118,7 @@ describe('ContestService', () => {
         squadMemberships: createMockSquadMembershipRepo(),
         entries: entryRepo,
         picks: pickRepo,
-        eventParticipants: { listEventParticipants },
+        eventParticipants: { listEventParticipants: jest.fn(), listCachedEventParticipants },
       });
 
       const result = await service.getLeaderboard('contest-1', 'user-1');
@@ -1076,14 +1141,13 @@ describe('ContestService', () => {
       // The field is the event's own rows, passed through; the server no longer preformats
       // rounds (#248). Rendered through the definition the leaderboard names, they read as the
       // deleted displayValue did: strokes once complete, to par while in progress.
-      expect(result.participants).toBe(await listEventParticipants.mock.results[0].value);
+      expect(result.participants).toBe(await listCachedEventParticipants.mock.results[0].value);
       const rory = result.participants.find((participant) => participant.entry.id === 'sep-1');
       const formatRound = expectDefined(PARTICIPANT_SCORING_DEFINITIONS[result.scoringDefinitionId].formatRound);
       expect(rory?.rounds.map(({ round, golf }) => formatRound({ status: round.status, ...expectDefined(golf) })))
         .toEqual(['69', '-2']);
-      // Entry order is the port's contract (entryNumber, then createdAt); only the entries that submitted the event count.
-      expect(entryRepo.findByContestWithSquad).toHaveBeenCalledWith('contest-1', { submittedFor: 'event-1' });
-      expect(listEventParticipants).toHaveBeenCalledWith('event-1');
+      // Only the entries that submitted the event count: entry 3 is still a draft, so off the board.
+      expect(listCachedEventParticipants).toHaveBeenCalledWith('event-1');
     });
 
     it('rejects leaving a contest after picks already exist', async () => {
@@ -1096,7 +1160,7 @@ describe('ContestService', () => {
         findByLeagueAndUser: jest.fn().mockResolvedValue(membership),
       });
       const entryRepo = createMockEntryRepo({
-        findBySquad: jest.fn().mockResolvedValue([
+        findByContestAndSquad: jest.fn().mockResolvedValue([
           {
             id: 'entry-1',
             contestId: 'contest-1',
@@ -1149,7 +1213,7 @@ describe('ContestService', () => {
         findByLeagueAndUser: jest.fn().mockResolvedValue(membership),
       });
       const entryRepo = createMockEntryRepo({
-        findBySquad: jest.fn().mockResolvedValue([
+        findByContestAndSquad: jest.fn().mockResolvedValue([
           {
             id: 'entry-1',
             contestId: 'contest-1',
@@ -1225,7 +1289,7 @@ describe('ContestService', () => {
         findByLeagueAndUser: jest.fn().mockResolvedValue(membership),
       });
       const entryRepo = createMockEntryRepo({
-        findBySquad: jest.fn().mockResolvedValue([
+        findByContestAndSquad: jest.fn().mockResolvedValue([
           {
             id: 'entry-1',
             contestId: 'contest-1',
@@ -1324,7 +1388,7 @@ describe('ContestService', () => {
         findByLeagueAndUser: jest.fn().mockResolvedValue(membership),
       });
       const entryRepo = createMockEntryRepo({
-        findBySquad: jest.fn().mockResolvedValue([
+        findByContestAndSquad: jest.fn().mockResolvedValue([
           {
             id: 'entry-1',
             contestId: 'contest-1',
@@ -1363,6 +1427,13 @@ describe('ContestService', () => {
     });
 
     it('sends the Entry submitted confirmation with each tier\'s golfer, the tiebreaker and a link to the entry', async () => {
+      const picks = fakeContestEntryPickRepo({
+        countByEntries: jest.fn().mockResolvedValue(new Map([['entry-1', 2]])),
+        findByEntriesWithParticipant: jest.fn().mockResolvedValue([
+          buildReceiptPick('pick-1', 'sport-event-participant-1', 'participant-1', 'Rory McIlroy', '2026-01-01T12:00:00.000Z'),
+          buildReceiptPick('pick-2', 'sport-event-participant-2', 'participant-2', 'Tommy Fleetwood', '2026-01-01T12:01:00.000Z'),
+        ]),
+      });
       const contest = buildContest({
         id: 'contest-1',
         leagueId: 'league-1',
@@ -1371,14 +1442,6 @@ describe('ContestService', () => {
         status: ContestStatus.OPEN,
       });
       const membership = buildMembership({ id: 'membership-1', leagueId: 'league-1', userId: 'user-1' });
-      // The event's effective tiers, as SportEventTierService resolves them.
-      const tiers = {
-        getEffectiveValuationsForSportEvent: jest.fn().mockResolvedValue([
-          { sportEventParticipantId: 'sport-event-participant-1', tierLabel: 'Tier A' },
-          { sportEventParticipantId: 'sport-event-participant-2', tierLabel: 'Tier B' },
-        ]),
-        listTiers: jest.fn().mockResolvedValue([]),
-      };
       const mailDelivery = {
         providerName: 'smtp' as const,
         send: mockFn<MailDeliveryProvider['send']>(async () => ({ provider: 'smtp', messageId: 'mail-1' })),
@@ -1388,7 +1451,7 @@ describe('ContestService', () => {
         leagues: fakeLeagueRepo({
           findById: jest.fn().mockResolvedValue({ id: 'league-1', name: 'Mathworks', leagueCode: 'MATHWORKS', plan: LeaguePlan.PLATINUM }),
         }),
-        users: fakeUserRepo({ findById: jest.fn().mockResolvedValue(RECEIPT_USER) }),
+        users: fakeUserRepo({ findByIds: jest.fn().mockResolvedValue([RECEIPT_USER]) }),
         memberships: createMockMembershipRepo({ findByLeagueAndUser: jest.fn().mockResolvedValue(membership) }),
         squads: createMockSquadRepo(),
         squadMemberships: createMockSquadMembershipRepo({
@@ -1396,24 +1459,23 @@ describe('ContestService', () => {
           findBySquad: jest.fn().mockResolvedValue([ACTIVE_SQUAD_MEMBERSHIP]),
         }),
         entries: createMockEntryRepo({
-          findBySquad: jest.fn().mockResolvedValue([UNSUBMITTED_ENTRY]),
+          findByContestAndSquad: jest.fn().mockResolvedValue([UNSUBMITTED_ENTRY]),
           findByIdWithSquad: jest.fn().mockResolvedValue(submittedEntry(271)),
         }),
-        picks: fakeContestEntryPickRepo({
-          countByEntries: jest.fn().mockResolvedValue(new Map([['entry-1', 2]])),
-          findByEntriesWithParticipant: jest.fn().mockResolvedValue([
-            buildReceiptPick('pick-1', 'sport-event-participant-1', 'participant-1', 'Rory McIlroy', '2026-01-01T12:00:00.000Z'),
-            buildReceiptPick('pick-2', 'sport-event-participant-2', 'participant-2', 'Tommy Fleetwood', '2026-01-01T12:01:00.000Z'),
-          ]),
-        }),
-        tiers,
+        picks,
         email: emailServiceOver(mailDelivery),
         appBaseUrl: 'https://app.primetimecommissioner.com',
       });
 
-      await service.sendEntrySubmittedEmail('contest-1', 'entry-1', 'event-1');
+      // The event's effective tiers, as the selection room already holds them.
+      await service.sendEntrySubmittedEmails(receiptInput(contest, {
+        valuations: [
+          receiptValuation('sport-event-participant-1', { tierLabel: 'Tier A' }),
+          receiptValuation('sport-event-participant-2', { tierLabel: 'Tier B' }),
+        ],
+      }));
 
-      expect(tiers.getEffectiveValuationsForSportEvent).toHaveBeenCalledWith('event-1');
+      expect(picks.findByEntriesWithParticipant).toHaveBeenCalledWith(['entry-1'], { sportEventId: 'event-1' });
       await deliverQueuedEmail();
       expect(mailDelivery.send).toHaveBeenCalledTimes(1);
       expect(mailDelivery.send).toHaveBeenCalledWith(expect.objectContaining({
@@ -1450,21 +1512,10 @@ describe('ContestService', () => {
       };
       const service = buildService({
         contests: createMockContestRepo({ findById: jest.fn().mockResolvedValue(contest) }),
-        configurations: createMockContestConfigurationRepo({
-          findByContest: jest.fn().mockResolvedValue({
-            id: 'configuration-1',
-            contestId: 'contest-1',
-            selectionType: SharedDomainEnums.SelectionType.BUDGET_PICK,
-            configJson: { selectionType: SharedDomainEnums.SelectionType.BUDGET_PICK, rosterSize: 2, salaryCap: 50_000, countedScores: 2 },
-          }),
-        }),
-        sportEvents: fakeSportEventRepo({
-          findById: jest.fn().mockResolvedValue({ ...STARTED_EVENT, sport: Sport.AUTO_RACING }),
-        }),
         leagues: fakeLeagueRepo({
           findById: jest.fn().mockResolvedValue({ id: 'league-1', name: 'Mathworks', leagueCode: 'MATHWORKS', plan: LeaguePlan.PLATINUM }),
         }),
-        users: fakeUserRepo({ findById: jest.fn().mockResolvedValue(RECEIPT_USER) }),
+        users: fakeUserRepo({ findByIds: jest.fn().mockResolvedValue([RECEIPT_USER]) }),
         squadMemberships: createMockSquadMembershipRepo({
           findBySquad: jest.fn().mockResolvedValue([ACTIVE_SQUAD_MEMBERSHIP]),
         }),
@@ -1475,18 +1526,20 @@ describe('ContestService', () => {
             buildReceiptPick('pick-2', 'sport-event-participant-2', 'participant-2', 'Chase Elliott', '2026-01-01T12:01:00.000Z'),
           ]),
         }),
-        tiers: {
-          getEffectiveValuationsForSportEvent: jest.fn().mockResolvedValue([
-            { sportEventParticipantId: 'sport-event-participant-1', tierLabel: null, price: 26_000 },
-            { sportEventParticipantId: 'sport-event-participant-2', tierLabel: null, price: 22_500 },
-          ]),
-          listTiers: jest.fn().mockResolvedValue([]),
-        },
         email: emailServiceOver(mailDelivery),
         appBaseUrl: 'https://app.primetimecommissioner.com',
       });
 
-      await service.sendEntrySubmittedEmail('contest-1', 'entry-1', 'event-1');
+      await service.sendEntrySubmittedEmails(receiptInput(contest, {
+        sportEvent: { ...STARTED_EVENT, sport: Sport.AUTO_RACING },
+        configuration: receiptConfiguration({
+          selectionType: SharedDomainEnums.SelectionType.BUDGET_PICK, rosterSize: 2, salaryCap: 50_000, countedScores: 2,
+        }),
+        valuations: [
+          receiptValuation('sport-event-participant-1', { price: 26_000 }),
+          receiptValuation('sport-event-participant-2', { price: 22_500 }),
+        ],
+      }));
 
       await deliverQueuedEmail();
       const sentMessage = mailDelivery.send.mock.calls[0][0];
@@ -1508,18 +1561,10 @@ describe('ContestService', () => {
       };
       const service = buildService({
         contests: createMockContestRepo({ findById: jest.fn().mockResolvedValue(contest) }),
-        configurations: createMockContestConfigurationRepo({
-          findByContest: jest.fn().mockResolvedValue({
-            id: 'configuration-1',
-            contestId: 'contest-1',
-            selectionType: SharedDomainEnums.SelectionType.RANDOM_DRAW,
-            configJson: { selectionType: SharedDomainEnums.SelectionType.RANDOM_DRAW, picksPerEntry: 2, countedScores: 2 },
-          }),
-        }),
         leagues: fakeLeagueRepo({
           findById: jest.fn().mockResolvedValue({ id: 'league-1', name: 'Mathworks', leagueCode: 'MATHWORKS', plan: LeaguePlan.PLATINUM }),
         }),
-        users: fakeUserRepo({ findById: jest.fn().mockResolvedValue(RECEIPT_USER) }),
+        users: fakeUserRepo({ findByIds: jest.fn().mockResolvedValue([RECEIPT_USER]) }),
         squadMemberships: createMockSquadMembershipRepo({
           findBySquad: jest.fn().mockResolvedValue([ACTIVE_SQUAD_MEMBERSHIP]),
         }),
@@ -1534,7 +1579,11 @@ describe('ContestService', () => {
         appBaseUrl: 'https://app.primetimecommissioner.com',
       });
 
-      await service.sendEntrySubmittedEmail('contest-1', 'entry-1', 'event-1');
+      await service.sendEntrySubmittedEmails(receiptInput(contest, {
+        configuration: receiptConfiguration({
+          selectionType: SharedDomainEnums.SelectionType.RANDOM_DRAW, picksPerEntry: 2, countedScores: 2,
+        }),
+      }));
 
       await deliverQueuedEmail();
       const sentMessage = mailDelivery.send.mock.calls[0][0];
@@ -1543,6 +1592,68 @@ describe('ContestService', () => {
       expect(sentMessage.text).toContain('- Pick 2: Tommy Fleetwood');
       expect(sentMessage.text).not.toContain('Submitted:');
       expect(sentMessage.text).not.toContain('Tiebreaker');
+    });
+
+    it('sends a draw\'s every entry its own receipt to its own owners, reading the entries, their picks, the league and the owners once for all of them', async () => {
+      const contest = buildContest({
+        id: 'contest-1',
+        leagueId: 'league-1',
+        sportEventIds: ['event-1'],
+        name: 'Masters Quick Pick',
+        status: ContestStatus.OPEN,
+      });
+      const mailDelivery = {
+        providerName: 'smtp' as const,
+        send: mockFn<MailDeliveryProvider['send']>(async () => ({ provider: 'smtp', messageId: 'mail-1' })),
+      };
+      const otherOwner = buildUser({ id: 'user-2', email: 'olive@example.com', firstName: 'Olive', lastName: 'Owner', username: 'olive' });
+      const users = fakeUserRepo({ findByIds: jest.fn().mockResolvedValue([RECEIPT_USER, otherOwner]) });
+      const entries = createMockEntryRepo({
+        findByContestWithSquad: jest.fn().mockResolvedValue([
+          DEFAULT_ENTRY_WITH_SQUAD,
+          { ...DEFAULT_ENTRY_WITH_SQUAD, id: 'entry-2', squadId: 'squad-2', name: "Olive's Entry", squadName: "Olive's Squad" },
+        ]),
+      });
+      const leagues = fakeLeagueRepo({
+        findById: jest.fn().mockResolvedValue({ id: 'league-1', name: 'Mathworks', leagueCode: 'MATHWORKS', plan: LeaguePlan.PLATINUM }),
+      });
+      const picks = fakeContestEntryPickRepo({
+        findByEntriesWithParticipant: jest.fn().mockResolvedValue([
+          buildReceiptPick('pick-1', 'sport-event-participant-1', 'participant-1', 'Rory McIlroy', '2026-01-01T12:00:00.000Z'),
+          { ...buildReceiptPick('pick-2', 'sport-event-participant-2', 'participant-2', 'Tommy Fleetwood', '2026-01-01T12:00:00.000Z'), entryId: 'entry-2' },
+        ]),
+      });
+      const service = buildService({
+        entries,
+        leagues,
+        picks,
+        users,
+        email: emailServiceOver(mailDelivery),
+        appBaseUrl: 'https://app.primetimecommissioner.com',
+      });
+
+      await service.sendEntrySubmittedEmails(receiptInput(contest, {
+        configuration: receiptConfiguration({
+          selectionType: SharedDomainEnums.SelectionType.RANDOM_DRAW, picksPerEntry: 1, countedScores: 1,
+        }),
+        squadMemberships: [ACTIVE_SQUAD_MEMBERSHIP, { ...ACTIVE_SQUAD_MEMBERSHIP, id: 'squad-membership-2', squadId: 'squad-2', userId: 'user-2' }],
+        entryIds: ['entry-1', 'entry-2'],
+      }));
+
+      expect(entries.findByContestWithSquad).toHaveBeenCalledTimes(1);
+      expect(entries.findByIdWithSquad).not.toHaveBeenCalled();
+      expect(leagues.findById).toHaveBeenCalledTimes(1);
+      expect(users.findByIds).toHaveBeenCalledTimes(1);
+      expect(users.findByIds).toHaveBeenCalledWith(['user-1', 'user-2']);
+      expect(users.findById).not.toHaveBeenCalled();
+      expect(picks.findByEntriesWithParticipant).toHaveBeenCalledTimes(1);
+      expect(picks.findByEntriesWithParticipant).toHaveBeenCalledWith(['entry-1', 'entry-2'], { sportEventId: 'event-1' });
+      await deliverQueuedEmail();
+      const sent = mailDelivery.send.mock.calls.map(([message]) => [message.to, message.text.includes('Rory McIlroy'), message.text.includes('Tommy Fleetwood')]);
+      expect(sent).toEqual([
+        ['derek@example.com', true, false],
+        ['olive@example.com', false, true],
+      ]);
     });
 
     it('resolves rather than throwing when confirmation delivery fails, so the submit it follows still succeeds', async () => {
@@ -1554,7 +1665,7 @@ describe('ContestService', () => {
       });
       const membership = buildMembership({ id: 'membership-1', leagueId: 'league-1', userId: 'user-1' });
       const entryRepo = createMockEntryRepo({
-        findBySquad: jest.fn().mockResolvedValue([UNSUBMITTED_ENTRY]),
+        findByContestAndSquad: jest.fn().mockResolvedValue([UNSUBMITTED_ENTRY]),
         findByIdWithSquad: jest.fn().mockResolvedValue(submittedEntry(-12)),
       });
       const mailDelivery = {
@@ -1567,7 +1678,7 @@ describe('ContestService', () => {
         leagues: fakeLeagueRepo({
           findById: jest.fn().mockResolvedValue({ id: 'league-1', name: 'Mathworks', leagueCode: 'MATHWORKS', plan: LeaguePlan.PLATINUM }),
         }),
-        users: fakeUserRepo({ findById: jest.fn().mockResolvedValue(RECEIPT_USER) }),
+        users: fakeUserRepo({ findByIds: jest.fn().mockResolvedValue([RECEIPT_USER]) }),
         memberships: createMockMembershipRepo({ findByLeagueAndUser: jest.fn().mockResolvedValue(membership) }),
         squads: createMockSquadRepo(),
         squadMemberships: createMockSquadMembershipRepo({
@@ -1584,7 +1695,7 @@ describe('ContestService', () => {
         email: emailServiceOver(mailDelivery),
       });
 
-      await expect(service.sendEntrySubmittedEmail('contest-1', 'entry-1', 'event-1')).resolves.toBeUndefined();
+      await expect(service.sendEntrySubmittedEmails(receiptInput(contest))).resolves.toBeUndefined();
       await deliverQueuedEmail();
       expect(mailDelivery.send).toHaveBeenCalledTimes(1);
       expect(entryRepo.update).not.toHaveBeenCalled();
@@ -1599,7 +1710,7 @@ describe('ContestService', () => {
       });
       const membership = buildMembership({ id: 'membership-1', leagueId: 'league-1', userId: 'user-1' });
       const entryRepo = createMockEntryRepo({
-        findBySquad: jest.fn().mockResolvedValue([UNSUBMITTED_ENTRY]),
+        findByContestAndSquad: jest.fn().mockResolvedValue([UNSUBMITTED_ENTRY]),
         findByIdWithSquad: jest.fn().mockResolvedValue(submittedEntry(-12)),
       });
       const mailDelivery = {
@@ -1764,7 +1875,7 @@ describe('ContestService', () => {
           findByLeagueAndUser: jest.fn().mockResolvedValue(options.squad),
         }),
         entries: options.entries ?? createMockEntryRepo({
-          findBySquad: jest.fn().mockResolvedValue([UNSUBMITTED_ENTRY]),
+          findByContestAndSquad: jest.fn().mockResolvedValue([UNSUBMITTED_ENTRY]),
         }),
       });
     }
@@ -1777,7 +1888,7 @@ describe('ContestService', () => {
       ['deleteMyEntry', (service: ContestService) => service.deleteMyEntry('contest-1', 'user-1')],
       ['createEntry', (service: ContestService) => service.createEntry('contest-1', 'user-1')],
     ])('%s refuses a former league member with LEAGUE_MEMBERSHIP_INACTIVE and writes nothing', async (_name, act) => {
-      const entries = createMockEntryRepo({ findBySquad: jest.fn().mockResolvedValue([UNSUBMITTED_ENTRY]) });
+      const entries = createMockEntryRepo({ findByContestAndSquad: jest.fn().mockResolvedValue([UNSUBMITTED_ENTRY]) });
       const service = serviceFor({ league: inactiveLeague, squad: inactiveSquad, entries });
 
       await expect(act(service)).rejects.toMatchObject({
@@ -1797,7 +1908,7 @@ describe('ContestService', () => {
     });
 
     it('refuses an active league member whose squad membership has ended with SQUAD_MEMBERSHIP_INACTIVE', async () => {
-      const entries = createMockEntryRepo({ findBySquad: jest.fn().mockResolvedValue([UNSUBMITTED_ENTRY]) });
+      const entries = createMockEntryRepo({ findByContestAndSquad: jest.fn().mockResolvedValue([UNSUBMITTED_ENTRY]) });
       const service = serviceFor({ league: buildMembership(), squad: inactiveSquad, entries });
 
       await expect(service.updateEntry('contest-1', 'entry-1', 'user-1', { name: 'Renamed' }))

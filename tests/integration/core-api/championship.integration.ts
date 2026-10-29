@@ -217,7 +217,29 @@ describe('PrismaChampionshipRepository (#863)', () => {
     await expect(repo.findByLeague(league.id)).resolves.toHaveLength(2);
   });
 
-  it('reads the league\'s cup name, and counts its open and live contests that will count, not drafts, finals or NOT_COUNTED ones', async () => {
+  it('answers whether the league has a counted finish in a year: not for a year of only NOT_COUNTED finishes, nor another league\'s (#1166)', async () => {
+    const repo = new PrismaChampionshipRepository(getPrisma());
+    const { league, squads, contest } = await seedLeague();
+    const other = await seedLeague();
+    const counted = await contest('Counted');
+    const notCounted = await contest('Not counted', { cupWeight: 'NOT_COUNTED' });
+    const finish = (leagueId: string, squadId: string, contestId: string, year: number, weight: CupWeight) => ({
+      leagueId, year, squadId, contestId, place: 1, tiedCount: 1, rankedEntryCount: 2, weight, points: weight === CupWeight.NOT_COUNTED ? 0 : 1000, settledAt: new Date(`${String(year)}-06-01T00:00:00.000Z`),
+    });
+    await repo.recordFinishes([
+      finish(league.id, squads.eagles.id, counted.id, 2025, CupWeight.NORMAL),
+      finish(league.id, squads.eagles.id, notCounted.id, 2024, CupWeight.NOT_COUNTED),
+    ]);
+
+    await expect(Promise.all([
+      repo.hasCountedFinish(league.id, 2025),
+      repo.hasCountedFinish(league.id, 2024),
+      repo.hasCountedFinish(league.id, 2026),
+      repo.hasCountedFinish(other.league.id, 2025),
+    ])).resolves.toEqual([true, false, false, false]);
+  });
+
+  it('counts the league\'s open and live contests that will count, not drafts, finals or NOT_COUNTED ones', async () => {
     const repo = new PrismaChampionshipRepository(getPrisma());
     const { league, contest } = await seedLeague();
     await contest('Open', { status: 'OPEN' });
@@ -226,8 +248,6 @@ describe('PrismaChampionshipRepository (#863)', () => {
     await contest('Final', { status: 'COMPLETED' });
     await contest('Fun', { status: 'ACTIVE', cupWeight: 'NOT_COUNTED' });
 
-    await expect(repo.findCupName(league.id)).resolves.toBe('Keeper Cup');
-    await expect(repo.findCupName(randomUUID())).resolves.toBeNull();
     await expect(repo.countUnfinishedContests(league.id)).resolves.toBe(2);
   });
 
@@ -255,29 +275,36 @@ describe('PrismaChampionshipRepository (#863)', () => {
     await expect(repo.findFinalContests(randomUUID(), from, to, [undated.id])).resolves.toEqual([]);
   });
 
-  it('reads the completed one-event contests with their series, event year and games, each game\'s round and whether it sends its winner on (#874)', async () => {
+  it('reads the completed one-event contests with their series, event year and games counted: how many, over how many rounds, and how many send their winner on (#874, #1166)', async () => {
     const prisma = getPrisma();
     const repo = new PrismaChampionshipRepository(prisma);
     const { league, contest } = await seedLeague();
     const masters = await contest('Masters', { cupWeight: 'NOT_COUNTED' });
     const final = await contest('Final');
+    const week = await contest('Week');
     await contest('Majors', { events: 2 });
     await contest('Live', { status: 'ACTIVE' });
-    const eventId = expectDefined(final.sportEvents[0]).sportEventId;
-    const round = (roundNumber: number) => prisma.sportEventRound.create({ data: { sportEventId: eventId, roundNumber, scheduledDate: new Date('2026-04-09T12:00:00.000Z') } });
-    const [semis, decider] = [await round(1), await round(2)];
-    const game = (matchNumber: number, roundId: string, advancesToMatchId: string | null = null) => prisma.sportEventMatch.create({
+    const round = (eventId: string, roundNumber: number) => prisma.sportEventRound.create({ data: { sportEventId: eventId, roundNumber, scheduledDate: new Date('2026-04-09T12:00:00.000Z') } });
+    const game = (eventId: string, matchNumber: number, roundId: string, advancesToMatchId: string | null = null) => prisma.sportEventMatch.create({
       data: { sportEventId: eventId, sportEventRoundId: roundId, matchNumber, isNeutralSite: true, advancesToMatchId, advancesToSide: advancesToMatchId === null ? null : 'HOME' },
     });
-    const last = await game(3, decider.id);
-    await game(1, semis.id, last.id);
+    const finalEventId = expectDefined(final.sportEvents[0]).sportEventId;
+    const [semis, decider] = [await round(finalEventId, 1), await round(finalEventId, 2)];
+    const last = await game(finalEventId, 3, decider.id);
+    await game(finalEventId, 1, semis.id, last.id);
+    const weekEventId = expectDefined(week.sportEvents[0]).sportEventId;
+    const slate = await round(weekEventId, 1);
+    for (const matchNumber of [1, 2, 3]) await game(weekEventId, matchNumber, slate.id);
 
     const contests = await repo.findSeriesContests(league.id);
 
     const series = await prisma.eventSeries.findUniqueOrThrow({ where: { id: expectDefined(masters.sportEvents[0]).sportEvent.eventSeriesId }, select: { name: true, sportLeague: { select: { name: true } } } });
-    expect(contests.map((row) => [row.id === masters.id ? 'Masters' : 'Final', row.cupWeight, row.eventYear, row.games.map((one) => [one.roundNumber, one.sendsWinnerOn]).sort((left, right) => Number(left[0]) - Number(right[0]))]).sort((left, right) => String(left[0]).localeCompare(String(right[0])))).toEqual([
-      ['Final', CupWeight.NORMAL, 2026, [[1, true], [2, false]]],
-      ['Masters', CupWeight.NOT_COUNTED, 2026, []],
+    const names = new Map([[masters.id, 'Masters'], [final.id, 'Final'], [week.id, 'Week']]);
+    expect(contests.map((row) => ({ name: names.get(row.id) ?? '', row })).sort((left, right) => left.name.localeCompare(right.name))
+      .map(({ name, row }) => [name, row.cupWeight, row.eventYear, row.games])).toEqual([
+      ['Final', CupWeight.NORMAL, 2026, { count: 2, roundCount: 2, sendingWinnerOn: 1 }],
+      ['Masters', CupWeight.NOT_COUNTED, 2026, { count: 0, roundCount: 0, sendingWinnerOn: 0 }],
+      ['Week', CupWeight.NORMAL, 2026, { count: 3, roundCount: 1, sendingWinnerOn: 0 }],
     ]);
     expect(contests.find((row) => row.id === masters.id)).toMatchObject({
       eventSeriesId: expectDefined(masters.sportEvents[0]).sportEvent.eventSeriesId,

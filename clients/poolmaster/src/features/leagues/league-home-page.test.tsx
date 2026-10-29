@@ -14,7 +14,7 @@ import {
   buildLeagueSquad,
   buildLeagueSquadMember,
   getLeagueByCodeData,
-  listLeagueSquadsData,
+  getLeagueSquadFrom,
 } from './test/fixtures';
 import type { CupDto } from '@/lib/api';
 import { buildRunningCup } from '@/features/championships/test/fixtures';
@@ -24,10 +24,10 @@ const getCurrentUserMock = vi.fn();
 const getContestLeaderboardMock = vi.fn();
 const getLeagueByCodeMock = vi.fn();
 const getYearReviewMock = vi.fn();
-const listContestEntriesMock = vi.fn();
+const listMyContestEntriesMock = vi.fn();
 const listContestsMock = vi.fn();
 const listCupsMock = vi.fn();
-const listLeagueSquadsMock = vi.fn();
+const getLeagueSquadMock = vi.fn();
 const refreshTokenMock = vi.fn();
 
 bindApiMocks({
@@ -35,10 +35,10 @@ bindApiMocks({
   getContestLeaderboard: getContestLeaderboardMock,
   getLeagueByCode: getLeagueByCodeMock,
   getYearReview: getYearReviewMock,
-  listContestEntries: listContestEntriesMock,
+  listMyContestEntries: listMyContestEntriesMock,
   listContests: listContestsMock,
   listCups: listCupsMock,
-  listLeagueSquads: listLeagueSquadsMock,
+  getLeagueSquad: getLeagueSquadMock,
   refreshToken: refreshTokenMock,
 });
 
@@ -114,17 +114,6 @@ function entry(contestId: string, squadId: string, status: 'DRAFT' | 'SUBMITTED'
   };
 }
 
-function entryList(contestId: string, entries: ReturnType<typeof entry>[]) {
-  return apiSuccess({
-    contestId,
-    total: entries.length,
-    isJoined: false,
-    myEntryId: null,
-    myEntryIds: [],
-    picksRevealed: false,
-    entries,
-  });
-}
 
 function standing(position: number, squadId: string, squadName: string, totalScore: number) {
   return {
@@ -181,14 +170,13 @@ function primeMocks({
       })),
     })),
   }));
-  listLeagueSquadsMock.mockResolvedValue(apiSuccess(listLeagueSquadsData(
+  getLeagueSquadMock.mockImplementation(getLeagueSquadFrom(
     hasTeam ? [buildLeagueSquad({ members: [buildLeagueSquadMember()] })] : [],
-  )));
+  ));
   listCupsMock.mockResolvedValue(apiSuccess({ cups }));
   getYearReviewMock.mockResolvedValue(apiSuccess({ yearReview: { year: 2025, status: 'READY', sentAt: null, sentByName: null } }));
-  listContestEntriesMock.mockImplementation(({ path }: { path: { contestId: string } }) =>
-    entryList(path.contestId, entriesByContest[path.contestId] ?? []),
-  );
+  // The viewer's team's entries across the league's current contests, in one read (#1197).
+  listMyContestEntriesMock.mockResolvedValue(apiSuccess({ entries: Object.values(entriesByContest).flat() }));
 }
 
 beforeEach(() => {
@@ -200,7 +188,7 @@ afterEach(() => {
   vi.useRealTimers();
   for (const mock of [
     getCurrentUserMock, getContestLeaderboardMock, getLeagueByCodeMock, getYearReviewMock,
-    listContestEntriesMock, listContestsMock, listCupsMock, listLeagueSquadsMock, refreshTokenMock,
+    listMyContestEntriesMock, listContestsMock, listCupsMock, getLeagueSquadMock, refreshTokenMock,
   ]) {
     mock.mockReset();
   }
@@ -285,9 +273,22 @@ describe('League Home', () => {
     expect(await upNext.findByRole('link', { name: 'Finish your picks' })).toBeInTheDocument();
   });
 
+  it('reads the team\'s entries for every open and live contest in one league-wide request, not one per contest', async () => {
+    primeMocks({
+      contests: [contest('open-1', 'RBC Heritage Tiers', 'OPEN'), contest('open-2', 'US Open Pick 6', 'OPEN'), contest('live-1', 'Masters Pick 6', 'ACTIVE')],
+      entriesByContest: { 'open-1': [entry('open-1', 'team-1', 'DRAFT')] },
+    });
+
+    renderLeagueHome();
+
+    expect(await within(await screen.findByTestId('league-home-up-next')).findByRole('link', { name: 'Finish your picks' })).toBeInTheDocument();
+    expect(listMyContestEntriesMock).toHaveBeenCalledTimes(1);
+    expect(listMyContestEntriesMock).toHaveBeenCalledWith(expect.objectContaining({ path: { id: 'league-1' } }));
+  });
+
   it('does not offer to make picks while it is still checking whether the team has entered', async () => {
     primeMocks({ contests: [contest('open-1', 'RBC Heritage Tiers', 'OPEN'), contest('open-2', 'US Open Pick 6', 'OPEN')] });
-    listContestEntriesMock.mockImplementation(() => new Promise(() => undefined));
+    listMyContestEntriesMock.mockImplementation(() => new Promise(() => undefined));
 
     renderLeagueHome();
 
@@ -300,7 +301,7 @@ describe('League Home', () => {
 
   it('says it could not check the entry, rather than offering picks, when the entries cannot be loaded', async () => {
     primeMocks({ contests: [contest('open-1', 'RBC Heritage Tiers', 'OPEN'), contest('open-2', 'US Open Pick 6', 'OPEN')] });
-    listContestEntriesMock.mockResolvedValue({
+    listMyContestEntriesMock.mockResolvedValue({
       error: { error: { code: 'INTERNAL_ERROR', message: 'Entries unavailable' } },
     });
 
@@ -383,6 +384,8 @@ describe('League Home', () => {
     expect(await team.findByText('Casey Crushers')).toBeInTheDocument();
     expect(team.getByText('Casey Commissioner')).toBeInTheDocument();
     expect(team.getByRole('link', { name: /Go to Casey Crushers/ })).toHaveAttribute('href', '/league/BIGDAWGS/team');
+    // One read of the viewer's own team, not the league's whole team list.
+    expect(getLeagueSquadMock).toHaveBeenCalledWith(expect.objectContaining({ path: { id: 'league-1', squadId: 'team-1' } }));
   });
 
   it('shows the year\'s cups with who leads and the viewer\'s place, each opening its Points race', async () => {
@@ -437,7 +440,7 @@ describe('League Home', () => {
     const upNext = within(await screen.findByTestId('league-home-up-next'));
     expect(upNext.getByRole('link', { name: 'View contest' })).toBeInTheDocument();
     expect(upNext.getByText(/Choose your name in this league to enter/)).toBeInTheDocument();
-    expect(listContestEntriesMock).not.toHaveBeenCalled();
+    expect(listMyContestEntriesMock).not.toHaveBeenCalled();
   });
 
   it('says so when no contest is open or live, and points to all contests', async () => {

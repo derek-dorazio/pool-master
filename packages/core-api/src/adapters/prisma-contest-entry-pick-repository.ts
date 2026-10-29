@@ -5,10 +5,11 @@
 
 import type { PrismaClient } from '@prisma/client';
 import type {
+  ContestEntryEventPick,
   ContestEntryPickRepository,
   ContestEntryPickWithParticipant,
 } from '@poolmaster/shared/db';
-import type { ContestEntryPick, ParticipantInactiveReason } from '@poolmaster/shared/domain';
+import type { ParticipantInactiveReason } from '@poolmaster/shared/domain';
 import { mapContestEntryPickRowToDomain } from '../mappers/contest-entry-picks.mapper';
 
 const PICK_ORDER = [{ pickedAt: 'asc' as const }, { id: 'asc' as const }];
@@ -16,19 +17,26 @@ const PICK_ORDER = [{ pickedAt: 'asc' as const }, { id: 'asc' as const }];
 export class PrismaContestEntryPickRepository implements ContestEntryPickRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
-  async findByEntries(entryIds: readonly string[]): Promise<ContestEntryPick[]> {
-    if (entryIds.length === 0) return [];
+  async findByEntriesAndEvents(entryIds: readonly string[], sportEventIds: readonly string[]): Promise<ContestEntryEventPick[]> {
+    if (entryIds.length === 0 || sportEventIds.length === 0) return [];
     const rows = await this.prisma.contestEntryPick.findMany({
-      where: { entryId: { in: [...entryIds] } },
+      where: { entryId: { in: [...entryIds] }, sportEventParticipant: { sportEventId: { in: [...sportEventIds] } } },
+      include: { sportEventParticipant: { select: { sportEventId: true } } },
       orderBy: PICK_ORDER,
     });
-    return rows.map(mapContestEntryPickRowToDomain);
+    return rows.map((row) => ({ ...mapContestEntryPickRowToDomain(row), sportEventId: row.sportEventParticipant.sportEventId }));
   }
 
-  async findByEntriesWithParticipant(entryIds: readonly string[]): Promise<ContestEntryPickWithParticipant[]> {
+  async findByEntriesWithParticipant(
+    entryIds: readonly string[],
+    options?: { sportEventId?: string },
+  ): Promise<ContestEntryPickWithParticipant[]> {
     if (entryIds.length === 0) return [];
     const rows = await this.prisma.contestEntryPick.findMany({
-      where: { entryId: { in: [...entryIds] } },
+      where: {
+        entryId: { in: [...entryIds] },
+        ...(options?.sportEventId !== undefined && { sportEventParticipant: { sportEventId: options.sportEventId } }),
+      },
       include: {
         sportEventParticipant: {
           select: {

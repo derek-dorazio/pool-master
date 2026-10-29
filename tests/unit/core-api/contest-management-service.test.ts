@@ -138,7 +138,7 @@ function createContestConfigurationRepo(): ContestConfigurationRepository {
 
   return {
     findByContest: jest.fn().mockImplementation(async () => ({ ...state })),
-    findByTemplateEventSeries: jest.fn().mockResolvedValue([]),
+    findByContests: jest.fn().mockImplementation(async () => [{ ...state }]),
     create: jest.fn().mockImplementation(async (configuration) => {
       Object.assign(state, configuration, {
         id: 'config-1',
@@ -227,25 +227,26 @@ function createSportEventTierServiceStub(
   tierCount = 0,
   withParticipants = false,
 ): SportEventTierService {
+  const tiers = Array.from({ length: tierCount }, (_, index) => ({
+    id: `tier-${index + 1}`,
+    tierKey: `tier-${index + 1}`,
+    label: `Tier ${index + 1}`,
+    tierNumber: index + 1,
+    participants: withParticipants
+      ? [
+          {
+            sportEventParticipantId: `sep-${index + 1}`,
+            participantId: `golfer-${index + 1}`,
+            tierOrderIndex: index + 1,
+            price: null,
+          },
+        ]
+      : [],
+  }));
   return {
-    getEffectiveTiersForSportEvent: jest.fn().mockResolvedValue(
-      Array.from({ length: tierCount }, (_, index) => ({
-        id: `tier-${index + 1}`,
-        tierKey: `tier-${index + 1}`,
-        label: `Tier ${index + 1}`,
-        tierNumber: index + 1,
-        participants: withParticipants
-          ? [
-              {
-                sportEventParticipantId: `sep-${index + 1}`,
-                participantId: `golfer-${index + 1}`,
-                tierOrderIndex: index + 1,
-                price: null,
-              },
-            ]
-          : [],
-      })),
-    ),
+    listTiers: jest.fn().mockResolvedValue(tiers.map(({ participants: _participants, ...tier }) => tier)),
+    getEffectiveTiersForSportEvents: jest.fn(async (sportEventIds: readonly string[]) =>
+      new Map(sportEventIds.map((sportEventId) => [sportEventId, tiers]))),
   } as unknown as SportEventTierService;
 }
 
@@ -855,9 +856,7 @@ describe('ContestManagementService', () => {
       configJson: storedConfigJson,
       maxEntriesPerSquad: 2,
     });
-    expect(participantContestScoringRuleRepo.delete).toHaveBeenCalledWith(
-      'rule-old',
-    );
+    expect(participantContestScoringRuleRepo.deleteByContestConfiguration).toHaveBeenCalledWith('config-1');
     expect(result.configuration).toMatchObject({ selectionType: SelectionType.TIERED, picksPerTier: 2, countedScores: 5 });
     // pool-master-41t — the refreshed detail carries the read-only
     // effectiveTiers echo (plans/124 §5.3).
@@ -962,8 +961,9 @@ describe('ContestManagementService', () => {
 
     const result = await service.getContest('contest-1');
 
-    expect(golfTierService.getEffectiveTiersForSportEvent).toHaveBeenCalledWith(
-      '11111111-1111-1111-1111-111111111111',
+    expect(golfTierService.getEffectiveTiersForSportEvents).toHaveBeenCalledTimes(1);
+    expect(golfTierService.getEffectiveTiersForSportEvents).toHaveBeenCalledWith(
+      ['11111111-1111-1111-1111-111111111111'],
     );
     expect(result.sportEvents[0]?.effectiveTiers).toEqual([
       {
@@ -992,6 +992,37 @@ describe('ContestManagementService', () => {
           },
         ],
       },
+    ]);
+  });
+
+  it('reads no tiers for a contest that does not pick by tier, and echoes an empty tier list for each of its events', async () => {
+    const contests = createContestRepo();
+    const contest = await contests.findById('contest-1');
+    (contests.findById as jest.Mock).mockResolvedValue({
+      ...contest,
+      contestFormat: ContestFormat.PREDICTION,
+      selectionType: SelectionType.PICK_EM,
+      sportEventIds: ['week-1', 'week-2', 'week-3'],
+    });
+    const tiers = createSportEventTierServiceStub(2, true);
+    const service = new ContestManagementService({
+      contests,
+      configTemplates: createContestConfigTemplateRepo(),
+      configurations: createContestConfigurationRepo(),
+      scoringRules: createParticipantScoringRuleRepo(),
+      tiers,
+      sportEventReader: createSportEventReader(),
+      cups: createCupKeeper(),
+      planEntitlements: platinumEntitlements(),
+    });
+
+    const result = await service.getContest('contest-1');
+
+    expect(tiers.getEffectiveTiersForSportEvents).not.toHaveBeenCalled();
+    expect(result.sportEvents).toEqual([
+      { sportEventId: 'week-1', effectiveTiers: [] },
+      { sportEventId: 'week-2', effectiveTiers: [] },
+      { sportEventId: 'week-3', effectiveTiers: [] },
     ]);
   });
 
@@ -2020,9 +2051,10 @@ describe('ContestManagementService — a contest of several events', () => {
       cups: createCupKeeper(cupsAsked),
       planEntitlements: options.planEntitlements ?? platinumEntitlements(),
     });
-    jest.mocked(configurationRepo.findByTemplateEventSeries).mockResolvedValue([
-      { id: 'config-1', contestId: 'contest-1', selectionType: SelectionType.TIERED, configJson: { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 }, maxEntriesPerSquad: 1, createdAt: new Date('2026-04-07T12:00:00.000Z'), updatedAt: new Date('2026-04-07T12:00:00.000Z') },
-    ]);
+    jest.mocked(contestRepo.findJoinableByReleasedEdition).mockImplementation(async () => {
+      const contest = await contestRepo.findById('contest-1');
+      return contest ? [contest] : [];
+    });
     return { service, contestRepo, configurationRepo, cupsAsked };
   }
 
@@ -2220,29 +2252,12 @@ describe('ContestManagementService — a contest of several events', () => {
     ]);
 
     it('adds the released major to a live majors pool of its year, after the majors it already has', async () => {
-      const { service, contestRepo, configurationRepo } = build({ reader: startedMasters, contest: { status: ContestStatus.ACTIVE } });
+      const { service, contestRepo } = build({ reader: startedMasters, contest: { status: ContestStatus.ACTIVE } });
 
       await expect(service.addReleasedEditionToTemplateContests(PGA_EDITION)).resolves.toEqual(['contest-1']);
 
-      expect(configurationRepo.findByTemplateEventSeries).toHaveBeenCalledWith('series-pga-championship');
+      expect(contestRepo.findJoinableByReleasedEdition).toHaveBeenCalledWith(PGA_EDITION);
       expect(contestRepo.replaceSportEvents).toHaveBeenCalledWith('contest-1', [MASTERS, PGA]);
-    });
-
-    it('leaves alone a pool that already has the major, a COMPLETED pool, and a pool of another year\'s majors', async () => {
-      for (const contest of [
-        { status: ContestStatus.ACTIVE, sportEventIds: [MASTERS, PGA] },
-        { status: ContestStatus.COMPLETED },
-        { status: ContestStatus.ACTIVE },
-      ]) {
-        const { service, contestRepo } = build({ reader: startedMasters, contest });
-        const edition = contest.status === ContestStatus.ACTIVE && !('sportEventIds' in contest)
-          ? { ...PGA_EDITION, eventYear: 2027 }
-          : PGA_EDITION;
-
-        await expect(service.addReleasedEditionToTemplateContests(edition)).resolves.toEqual([]);
-
-        expect(contestRepo.replaceSportEvents).not.toHaveBeenCalled();
-      }
     });
 
     it('skips a pool whose rules refuse the major (a random draw keeps one event) without failing the release', async () => {
@@ -2254,12 +2269,13 @@ describe('ContestManagementService — a contest of several events', () => {
     });
 
     it('does nothing when no template covers the released event\'s series', async () => {
-      const { service, contestRepo, configurationRepo } = build({ reader: startedMasters, contest: { status: ContestStatus.ACTIVE } });
-      jest.mocked(configurationRepo.findByTemplateEventSeries).mockResolvedValue([]);
+      const { service, contestRepo } = build({ reader: startedMasters, contest: { status: ContestStatus.ACTIVE } });
+      jest.mocked(contestRepo.findJoinableByReleasedEdition).mockResolvedValue([]);
 
       await expect(service.addReleasedEditionToTemplateContests(PGA_EDITION)).resolves.toEqual([]);
 
       expect(contestRepo.findById).not.toHaveBeenCalled();
+      expect(contestRepo.replaceSportEvents).not.toHaveBeenCalled();
     });
   });
 });

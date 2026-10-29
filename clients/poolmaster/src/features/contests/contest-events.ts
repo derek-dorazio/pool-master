@@ -59,7 +59,3 @@ export function entryEventStatus(
   return entry.events.find((event) => event.sportEventId === sportEventId)?.status ?? ContestEntryStatus.DRAFT;
 }
 
-/** Whether an entry has submitted picks for any of its contest's events. */
-export function hasSubmittedAnyEvent(entry: Pick<ContestEntryDto, 'events'>): boolean {
-  return entry.events.some((event) => event.status === ContestEntryStatus.SUBMITTED);
-}

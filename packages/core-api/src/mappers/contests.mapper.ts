@@ -5,6 +5,7 @@ import type {
   ContestDto,
   ContestSportEventDto,
   ContestResponse,
+  ContestFinishedYearsResponse,
   ContestListResponse,
   ContestEntryDto,
   ContestEntryParticipantDetailDto,
@@ -12,7 +13,9 @@ import type {
   ContestEntryDetailResponse,
   ContestEntryResponse,
   ContestLeaderboardResponse,
+  MyContestEntriesResponse,
 } from '@poolmaster/shared/dto';
+import type { ContestEntryTotals } from '@poolmaster/shared/db';
 import {
   ScoringFamily,
   eventSportDefinition,
@@ -166,7 +169,7 @@ function toContestSportEventDto(event: ContestSportEventRow, sequence: number): 
 export function toContestDto(
   contest: ContestRow,
   eventsById: ReadonlyMap<string, ContestSportEventRow>,
-  opts: { entriesPerContest: number | null; entryCount?: number },
+  opts: { entriesPerContest: number | null; entryCount?: number; detail?: ContestEntrySummaryRow },
 ): ContestDto {
   return {
     id: contest.id,
@@ -180,7 +183,10 @@ export function toContestDto(
       return event ? [toContestSportEventDto(event, index + 1)] : [];
     }),
     sport: contest.sport ?? null,
-    entryCount: opts.entryCount,
+    entryCount: opts.detail?.totals.submittedEntryCount ?? opts.entryCount,
+    enteredSquadCount: opts.detail?.totals.enteredSquadCount,
+    allEntryCount: opts.detail?.totals.allEntryCount,
+    myEntryIds: opts.detail?.myEntryIds,
     entriesPerContest: opts.entriesPerContest,
     startsAt: contest.startsAt?.toISOString() ?? null,
     endsAt: contest.endsAt?.toISOString() ?? null,
@@ -190,12 +196,20 @@ export function toContestDto(
   };
 }
 
+/** What the single-contest read adds (#1197): the contest's entry totals and the viewer's entry ids. */
+export interface ContestEntrySummaryRow {
+  totals: ContestEntryTotals;
+  myEntryIds: string[];
+}
+
+/** One contest; the single-contest read passes its entry summary (#1197), the writes do not. */
 export function toContestResponse(
   contest: ContestRow,
   eventsById: ReadonlyMap<string, ContestSportEventRow>,
   entriesPerContest: number | null,
+  detail?: ContestEntrySummaryRow,
 ): ContestResponse {
-  return { contest: toContestDto(contest, eventsById, { entriesPerContest }) };
+  return { contest: toContestDto(contest, eventsById, { entriesPerContest, detail }) };
 }
 
 /** Each listed contest with its entry count, its entry cap (#987) and its events' names and starts (#577). */
@@ -211,6 +225,11 @@ export function toContestListResponse(
       entriesPerContest: entryCaps.get(c.id) ?? null,
     })),
   };
+}
+
+/** The years a league has finished contests in, newest first. */
+export function toContestFinishedYearsResponse(years: readonly number[]): ContestFinishedYearsResponse {
+  return { years: [...years] };
 }
 
 /** An entry, with its picked participants when the viewer may see them (`null` hides them). */
@@ -270,20 +289,19 @@ export function toContestEntryDetailResponse(
 export function toContestEntryListResponse(input: {
   contestId: string;
   entries: ContestEntryDto[];
-  isJoined: boolean;
-  myEntryId: string | null;
-  myEntryIds?: string[];
   picksRevealed: boolean;
 }): ContestEntryListResponse {
   return {
     contestId: input.contestId,
     total: input.entries.length,
-    isJoined: input.isJoined,
-    myEntryId: input.myEntryId,
-    myEntryIds: input.myEntryIds,
     picksRevealed: input.picksRevealed,
     entries: input.entries,
   };
+}
+
+/** The viewer's own squad's entries across a league's current contests (#1197). */
+export function toMyContestEntriesResponse(entries: ContestEntryDto[]): MyContestEntriesResponse {
+  return { entries };
 }
 
 type LeaderboardEntryDto = ContestLeaderboardResponse['entries'][number];

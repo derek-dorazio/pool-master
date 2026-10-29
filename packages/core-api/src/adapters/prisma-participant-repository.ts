@@ -35,13 +35,16 @@ export class PrismaParticipantRepository implements ParticipantRepository {
     return rows.map(mapToParticipant);
   }
 
-  async findMatching(sportId: string, query: ParticipantMatchQuery): Promise<Participant[]> {
+  async findMatchingAny(sportId: string, queries: readonly ParticipantMatchQuery[]): Promise<Participant[]> {
+    if (queries.length === 0) return [];
     const rows = await this.prisma.participant.findMany({
       where: {
         sportId,
-        ...(query.id !== undefined && { id: query.id }),
-        ...(query.externalId !== undefined && { externalId: query.externalId }),
-        ...(query.name !== undefined && { name: { equals: query.name, mode: 'insensitive' } }),
+        OR: queries.map((query) => ({
+          ...(query.id !== undefined && { id: query.id }),
+          ...(query.externalId !== undefined && { externalId: query.externalId }),
+          ...(query.name !== undefined && { name: { equals: query.name, mode: 'insensitive' as const } }),
+        })),
       },
       orderBy: { name: 'asc' },
     });

@@ -28,6 +28,7 @@ import {
   setupIntegrationTests,
   teardownIntegrationTests,
 } from '../helpers';
+import { passReadCacheTtl, restoreReadCacheClock } from '../../support/read-cache-clock';
 
 // The composite family (#934) against real Postgres: a World Series stat pool scored from its
 // players' stat lines (Box Score: total bases + runs + RBI + walks + stolen bases each game),
@@ -39,6 +40,7 @@ afterAll(async () => {
   await teardownIntegrationTests();
 });
 beforeEach(() => cleanupTestData());
+afterEach(() => restoreReadCacheClock());
 
 const PLAYERS = ['Ace', 'Blaze', 'Cruz', 'Dash'];
 
@@ -94,17 +96,19 @@ async function seedSeries(status: 'IN_PROGRESS' | 'COMPLETED' = 'IN_PROGRESS') {
     });
     return round;
   };
-  return { prisma, suffix, event, ace, blaze, cruz, dash, line };
+  return { prisma, suffix, event, games, ace, blaze, cruz, dash, line };
 }
 
 describe('SportEventParticipantStatLineRepository', () => {
-  it('reads back only the event\'s own stat lines, each with its round and stat', async () => {
+  it('reads back only the event\'s own stat lines in its field, each on its round with its stat', async () => {
     const { prisma, event, ace, line } = await seedSeries();
     const other = await seedSeries();
     const round = await line(ace, 1, { TOTAL_BASES: 4, RUNS: 1 });
     await other.line(other.ace, 1, { WALKS: 2 });
 
-    const lines = await new PrismaSportEventParticipantStatLineRepository(prisma).findBySportEvent(event.id);
+    const { sportLeagueId } = await prisma.eventSeries.findUniqueOrThrow({ where: { id: event.eventSeriesId } });
+    const field = await new PrismaSportEventParticipantRepository(prisma).findFieldForEvent(event.id, sportLeagueId);
+    const lines = field.flatMap((row) => row.rounds.flatMap((played) => played.statLines));
 
     expect(lines.map((statLine) => [statLine.participantRoundId, statLine.stat, statLine.value])).toEqual([
       [round.id, SportStat.TOTAL_BASES, 4],
@@ -118,6 +122,57 @@ describe('SportEventParticipantStatLineRepository', () => {
 
     await expect(prisma.sportEventParticipantStatLine.create({ data: { participantRoundId: round.id, stat: SportStat.RUNS, value: 2 } }))
       .rejects.toThrow();
+  });
+});
+
+// #1183 — a box score is replaced in a fixed handful of statements, and a line already stored
+// exactly as sent is not rewritten.
+describe('SportEventParticipantStatLineRepository — replacing a game\'s lines', () => {
+  it('creates a new player\'s line, rewrites a corrected one, clears an emptied one, and leaves an unchanged one\'s rows and completion time alone', async () => {
+    const { prisma, games, ace, blaze, cruz, dash, line } = await seedSeries();
+    const statLines = new PrismaSportEventParticipantStatLineRepository(prisma);
+    const [game1] = games;
+    const firstAt = new Date('2025-10-25T23:00:00.000Z');
+    await statLines.replaceGameLines([
+      { sportEventParticipantId: ace.id, sportEventRoundId: game1.id, stats: [{ stat: SportStat.TOTAL_BASES, value: 2 }], completedAt: firstAt },
+      { sportEventParticipantId: cruz.id, sportEventRoundId: game1.id, stats: [{ stat: SportStat.WALKS, value: 1 }, { stat: SportStat.RUNS, value: 1 }], completedAt: firstAt },
+    ]);
+    await line(blaze, 1, { STOLEN_BASES: 1 });
+    const cruzBefore = await prisma.sportEventParticipantRound.findFirstOrThrow({ where: { sportEventParticipantId: cruz.id }, include: { statLines: { orderBy: { stat: 'asc' } } } });
+    const secondAt = new Date('2025-10-26T01:00:00.000Z');
+
+    await statLines.replaceGameLines([
+      { sportEventParticipantId: ace.id, sportEventRoundId: game1.id, stats: [{ stat: SportStat.TOTAL_BASES, value: 4 }], completedAt: secondAt },
+      { sportEventParticipantId: blaze.id, sportEventRoundId: game1.id, stats: [], completedAt: secondAt },
+      { sportEventParticipantId: cruz.id, sportEventRoundId: game1.id, stats: [{ stat: SportStat.RUNS, value: 1 }, { stat: SportStat.WALKS, value: 1 }], completedAt: secondAt },
+      { sportEventParticipantId: dash.id, sportEventRoundId: game1.id, stats: [{ stat: SportStat.RUNS, value: 2 }], completedAt: secondAt },
+    ]);
+
+    const rounds = await prisma.sportEventParticipantRound.findMany({
+      where: { sportEventRoundId: game1.id },
+      include: { statLines: { orderBy: { stat: 'asc' } } },
+    });
+    const byEntry = new Map(rounds.map((round) => [round.sportEventParticipantId, round]));
+    expect(byEntry.get(ace.id)).toMatchObject({ completedAt: secondAt, statLines: [expect.objectContaining({ stat: SportStat.TOTAL_BASES, value: 4 })] });
+    expect(byEntry.has(blaze.id)).toBe(false);
+    await expect(prisma.sportEventParticipantStatLine.count({ where: { participantRound: { sportEventParticipantId: blaze.id } } })).resolves.toBe(0);
+    expect(byEntry.get(cruz.id)).toEqual(cruzBefore);
+    expect(byEntry.get(dash.id)).toMatchObject({ status: 'COMPLETED', completedAt: secondAt, statLines: [expect.objectContaining({ stat: SportStat.RUNS, value: 2 })] });
+  });
+
+  it('is all or none: a line for a field row that does not exist leaves every stored line as it was', async () => {
+    const { prisma, games, ace } = await seedSeries();
+    const statLines = new PrismaSportEventParticipantStatLineRepository(prisma);
+    const at = new Date('2025-10-25T23:00:00.000Z');
+    await statLines.replaceGameLines([{ sportEventParticipantId: ace.id, sportEventRoundId: games[0].id, stats: [{ stat: SportStat.RUNS, value: 1 }], completedAt: at }]);
+
+    await expect(statLines.replaceGameLines([
+      { sportEventParticipantId: ace.id, sportEventRoundId: games[0].id, stats: [{ stat: SportStat.RUNS, value: 3 }], completedAt: at },
+      { sportEventParticipantId: randomUUID(), sportEventRoundId: games[0].id, stats: [{ stat: SportStat.RUNS, value: 1 }], completedAt: at },
+    ])).rejects.toThrow();
+
+    const lines = await prisma.sportEventParticipantStatLine.findMany({ where: { participantRound: { sportEventParticipantId: ace.id } } });
+    expect(lines.map((statLine) => statLine.value)).toEqual([1]);
   });
 });
 
@@ -202,7 +257,9 @@ describe('World Series stat pool contest — scored from its players\' stat line
     return { ...seeded, owner, contest, sluggers, speedsters };
   }
 
+  /** The board as a viewer's next poll reads it, past the board cached by the last read (#1162). */
   async function board(contestId: string, headers: Record<string, string>) {
+    passReadCacheTtl();
     const response = await getApp().inject({ method: 'GET', url: `/api/v1/contests/${contestId}/leaderboard`, headers });
     expect(response.statusCode).toBe(200);
     return ContestLeaderboardResponseSchema.parse(response.json());

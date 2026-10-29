@@ -70,7 +70,7 @@ import {
   type PickEmTeam,
 } from './pick-em-week';
 import { useBracketRoundLabel } from './use-bracket-round-label';
-import { fetchContestEntries } from './use-contest-entries';
+import { entryWriteKeys, useContestEntryQuery } from './use-contest-entries';
 
 /**
  * Copy for the refusals a week's picks, tiebreaker and submit can meet (#718), in the contest's
@@ -146,11 +146,7 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
     // Once the week is under way each pick's mark moves with the results.
     refetchInterval: shouldPollContestEntries(contest.status) ? CONTEST_POLL_INTERVAL_MS : false,
   });
-  const contestEntriesQuery = useQuery({
-    queryKey: QueryKeys.contestEntries.byContest(contestId),
-    queryFn: () => fetchContestEntries(contestId),
-    retry: false,
-  });
+  const entryQuery = useContestEntryQuery(contestId, entryId);
   const { league } = useLeagueContextById(contest.leagueId);
 
   const logRefusal = (action: string, error: Error) => {
@@ -197,8 +193,7 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
       queryClient.setQueryData<GamePicksResponse>(gamePicksKey, submitted);
     },
     invalidates: [
-      QueryKeys.contestEntries.byContest(contestId),
-      QueryKeys.contests.detail(contestId),
+      ...entryWriteKeys(contestId),
       QueryKeys.contests.pickEmLeaderboard(contestId),
       QueryKeys.contests.survivorLeaderboard(contestId),
     ],
@@ -213,7 +208,7 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
     setRequestedEventId(next);
   };
 
-  if (gamePicksQuery.isLoading || contestEntriesQuery.isLoading) {
+  if (gamePicksQuery.isLoading || entryQuery.isLoading) {
     return <LoadingState body="Loading picks..." />;
   }
   if (gamePicksQuery.isError || !gamePicksQuery.data) {
@@ -237,8 +232,8 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
   const period = isPlayoff ? 'round' : 'week';
   const backLeagueCode = hintedLeagueCode ?? league?.leagueCode ?? null;
   const backToContestPath = backLeagueCode ? buildLeagueContestPath(backLeagueCode, contestId) : `/contests/${contestId}`;
-  const entrySummary = contestEntriesQuery.data?.entries.find((entry) => entry.id === entryId) ?? null;
-  const myEntryIds = contestEntriesQuery.data?.myEntryIds ?? [];
+  const entrySummary = entryQuery.data?.entry ?? null;
+  const myEntryIds = contest.myEntryIds ?? [];
   const canChange = canChangeWeek(gamePicks);
   const isSubmitted = gamePicks.status === ContestEntryStatus.SUBMITTED;
   const kickoff = firstKickoff(gamePicks.games);
@@ -308,7 +303,7 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
             current={myEntryIds.includes(entryId) ? 'my-entry' : null}
             leagueCode={backLeagueCode}
             myEntryId={myEntryIds[0] ?? null}
-            picksRevealed={contestEntriesQuery.data?.picksRevealed ?? false}
+            picksRevealed={entryQuery.data?.picksRevealed ?? false}
           />
         ) : null}
         summary={(

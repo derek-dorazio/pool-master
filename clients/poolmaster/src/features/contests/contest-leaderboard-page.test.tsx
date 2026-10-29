@@ -20,7 +20,6 @@ const {
   getCurrentUserMock,
   getContestLeaderboardMock,
   getLeagueMock,
-  listContestEntriesMock,
   mockLogger,
   refreshTokenMock,
 } = vi.hoisted(() => {
@@ -40,7 +39,6 @@ const {
     getCurrentUserMock: vi.fn(),
     getContestLeaderboardMock: vi.fn(),
     getLeagueMock: vi.fn(),
-    listContestEntriesMock: vi.fn(),
     mockLogger: logger,
     refreshTokenMock: vi.fn(),
   };
@@ -51,7 +49,6 @@ bindApiMocks({
   getUser: getCurrentUserMock,
   getContestLeaderboard: getContestLeaderboardMock,
   getLeague: getLeagueMock,
-  listContestEntries: listContestEntriesMock,
   refreshToken: refreshTokenMock,
 });
 
@@ -165,7 +162,7 @@ function participant(overrides: {
 
 type ContestStatusFixture = 'OPEN' | 'ACTIVE' | 'COMPLETED';
 
-function contestResponse(status: ContestStatusFixture) {
+function contestResponse(status: ContestStatusFixture, myEntryIds: string[] = []) {
   return {
     data: {
       contest: {
@@ -177,6 +174,7 @@ function contestResponse(status: ContestStatusFixture) {
         leagueId: 'league-1',
         sport: 'GOLF',
         entryCount: 1,
+        myEntryIds,
         endsAt: '2026-04-14T23:00:00.000Z',
         sportEvents: [{
           sportEventId: 'event-1',
@@ -327,7 +325,7 @@ function primeMocks(opts?: {
 }) {
   getContestMock.mockReset();
   getContestLeaderboardMock.mockReset();
-  getContestMock.mockResolvedValue(contestResponse(opts?.contestStatus ?? 'ACTIVE'));
+  getContestMock.mockResolvedValue(contestResponse(opts?.contestStatus ?? 'ACTIVE', opts?.myEntryIds));
   getCurrentUserMock.mockResolvedValue(apiSuccess({ user: buildCurrentUser() }));
   refreshTokenMock.mockResolvedValue({ data: null });
   const mySquadId = opts?.mySquadId ?? null;
@@ -335,14 +333,6 @@ function primeMocks(opts?: {
     membership: buildLeagueMembership({ role: 'MEMBER' }),
     squadMembership: mySquadId ? buildLeagueSquadMember({ squadId: mySquadId }) : null,
   })));
-  const myEntryIds = opts?.myEntryIds ?? [];
-  listContestEntriesMock.mockResolvedValue(apiSuccess({
-    isJoined: myEntryIds.length > 0,
-    myEntryId: myEntryIds[0] ?? null,
-    myEntryIds,
-    picksRevealed: true,
-    entries: [],
-  }));
 
   if (opts?.leaderboardError) {
     getContestLeaderboardMock.mockResolvedValue({

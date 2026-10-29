@@ -97,13 +97,13 @@ export function leaguesModule(fastify: FastifyInstance, opts: MailModuleOptions 
 
   const leaguePlanService = new LeaguePlanService({ leagues: leagueRepo, planEntitlements: opts.planEntitlements, logger: fastify.log });
   const league = createLeagueHandlers(
-    leagueService, membershipRepo, squadMembershipRepo, userRepo, opts.planEntitlements, leaguePlanService,
+    leagueService, squadRepo, squadMembershipRepo, userRepo, opts.planEntitlements, leaguePlanService,
   );
   const updateLeagueEventEmailSettings = createLeagueEventEmailSettingsHandler(new LeagueEventEmailSettingsService({
     leagues: leagueRepo,
     sportLeagues: new PrismaSportLeagueRepository(prisma),
     logger: fastify.log,
-  }), opts.planEntitlements);
+  }), opts.planEntitlements, leagueService);
   const invitation = createInvitationHandlers(invitationService, userRepo);
   const member = createMemberHandlers(memberService, memberDirectoryService, userRepo);
   const bulk = createBulkHandlers(bulkService);
@@ -115,11 +115,12 @@ export function leaguesModule(fastify: FastifyInstance, opts: MailModuleOptions 
       tags: ['Leagues'],
       summary: 'List leagues',
       description:
-        'Returns leagues together with the viewer\'s own memberships once as an array. The leagues list is the one inherently multi-league surface, so it is the one place the viewer\'s relationship travels as a set rather than per row (access rule A8).\n\n`scope` selects which leagues: `mine` (the default) returns the leagues the caller belongs to and powers the welcome page, header selector and My Leagues overview; `all` returns every league on the platform and powers root-admin league management. `all` is the unscoped read access rule A1 permits to root admins only, and returns 403 otherwise. `search` and `isActive` narrow either scope.\n\nThis replaced `listLeagues` + `adminListLeagues`, which were one operation split by caller role.',
+        'Returns leagues together with the viewer\'s own memberships once as an array. The leagues list is the one inherently multi-league surface, so it is the one place the viewer\'s relationship travels as a set rather than per row (access rule A8).\n\n`scope` selects which leagues: `mine` (the default) returns the leagues the caller belongs to and powers the welcome page, header selector and My Leagues overview; `all` returns every league on the platform and powers root-admin league management. `all` is the unscoped read access rule A1 permits to root admins only, and returns 403 otherwise; it also requires `search` (at least 3 characters once trimmed), so it never reads every league, and returns 400 SEARCH_TERM_REQUIRED without one. `search` and `isActive` narrow either scope.\n\nThis replaced `listLeagues` + `adminListLeagues`, which were one operation split by caller role.',
       operationId: 'listLeagues',
       querystring: schemaRef('LeagueListQuery'),
       response: {
         200: schemaRef('LeagueListResponse'),
+        400: schemaRef('ErrorEnvelope'),
         401: schemaRef('ErrorEnvelope'),
         403: schemaRef('ErrorEnvelope'),
       },
@@ -132,7 +133,7 @@ export function leaguesModule(fastify: FastifyInstance, opts: MailModuleOptions 
       tags: ['Leagues'],
       summary: 'Create a new league',
       description:
-        'Creates a new private league for the authenticated commissioner using the submitted unique `leagueCode`, then returns the new league together with the creator\'s own membership edges in it.\n\nThe same `LeagueContextResponse` as `getLeague` and `getLeagueByCode`, because creating a league also creates the creator\'s COMMISSIONER membership: the client navigates straight into the league and seeds its context cache from this response rather than issuing a second read (access rule A8). `squadMembership` is null by construction — a league has no squads the instant it is created.',
+        'Creates a new private league for the authenticated commissioner using the submitted unique `leagueCode`, then returns the new league together with the creator\'s own membership edges in it.\n\nThe same `LeagueContextResponse` as `getLeague` and `getLeagueByCode`, because creating a league also creates the creator\'s COMMISSIONER membership: the client navigates straight into the league and seeds its context cache from this response rather than issuing a second read (access rule A8). Creating a league also gives the creator their default squad, so `squadMembership`, `squadName` and `activeTeamCount` describe it.',
       operationId: 'createLeague',
       body: schemaRef('CreateLeagueRequest'),
       response: {

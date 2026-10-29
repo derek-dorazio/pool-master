@@ -206,7 +206,7 @@ export interface paths {
         };
         /**
          * List users
-         * @description Returns every user, optionally filtered. This is the unscoped read: access rule A1 permits it to root admins only. Not paged — filters narrow the result, nothing slices it.
+         * @description Returns the users matching `search`: a case-insensitive substring of the email, username, first or last name. This is the unscoped read: access rule A1 permits it to root admins only. Not paged — filters narrow the result, nothing slices it. `search` is required, at least 3 characters once trimmed, so the list never reads every user: 400 SEARCH_TERM_REQUIRED otherwise.
          */
         get: operations["listUsers"];
         put?: never;
@@ -496,7 +496,7 @@ export interface paths {
          * List leagues
          * @description Returns leagues together with the viewer's own memberships once as an array. The leagues list is the one inherently multi-league surface, so it is the one place the viewer's relationship travels as a set rather than per row (access rule A8).
          *
-         *     `scope` selects which leagues: `mine` (the default) returns the leagues the caller belongs to and powers the welcome page, header selector and My Leagues overview; `all` returns every league on the platform and powers root-admin league management. `all` is the unscoped read access rule A1 permits to root admins only, and returns 403 otherwise. `search` and `isActive` narrow either scope.
+         *     `scope` selects which leagues: `mine` (the default) returns the leagues the caller belongs to and powers the welcome page, header selector and My Leagues overview; `all` returns every league on the platform and powers root-admin league management. `all` is the unscoped read access rule A1 permits to root admins only, and returns 403 otherwise; it also requires `search` (at least 3 characters once trimmed), so it never reads every league, and returns 400 SEARCH_TERM_REQUIRED without one. `search` and `isActive` narrow either scope.
          *
          *     This replaced `listLeagues` + `adminListLeagues`, which were one operation split by caller role.
          */
@@ -506,7 +506,7 @@ export interface paths {
          * Create a new league
          * @description Creates a new private league for the authenticated commissioner using the submitted unique `leagueCode`, then returns the new league together with the creator's own membership edges in it.
          *
-         *     The same `LeagueContextResponse` as `getLeague` and `getLeagueByCode`, because creating a league also creates the creator's COMMISSIONER membership: the client navigates straight into the league and seeds its context cache from this response rather than issuing a second read (access rule A8). `squadMembership` is null by construction — a league has no squads the instant it is created.
+         *     The same `LeagueContextResponse` as `getLeague` and `getLeagueByCode`, because creating a league also creates the creator's COMMISSIONER membership: the client navigates straight into the league and seeds its context cache from this response rather than issuing a second read (access rule A8). Creating a league also gives the creator their default squad, so `squadMembership`, `squadName` and `activeTeamCount` describe it.
          */
         post: operations["createLeague"];
         delete?: never;
@@ -1004,7 +1004,7 @@ export interface paths {
         };
         /**
          * List squads in a league
-         * @description Returns the squads associated with the current league for squad management and contest-entry flows, including requester-scoped teamRelationship plus separate global isRootAdmin flags.
+         * @description Returns every squad in the league, active and inactive, each with its owners: the Teams page and Manage teams. A page about one squad reads getLeagueSquad instead.
          */
         get: operations["listLeagueSquads"];
         put?: never;
@@ -1028,7 +1028,7 @@ export interface paths {
         };
         /**
          * Get squad details
-         * @description Returns the detailed squad payload for the requested squad identifier, including requester-scoped teamRelationship plus separate global isRootAdmin flags.
+         * @description Returns one squad with its owners: every membership, any status, each with its user. A team page reads this rather than the whole team list.
          */
         get: operations["getLeagueSquad"];
         put?: never;
@@ -1302,7 +1302,7 @@ export interface paths {
         };
         /**
          * List contests for a league
-         * @description Returns the contests associated with the parent league so league-home and commissioner views can list current and historical contests. Each contest carries its entry count and its sport event's name and start, so a list needs no per-event reads. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.
+         * @description Returns the league's current contests: DRAFT, OPEN and ACTIVE, less any DRAFT that can never open: one with an event COMPLETED or CANCELLED, and one closing at its event's start once an event has started. A DRAFT with no events yet is listed, and so is a bracket starting after round 1 or a squares DRAFT with its game until its event finishes, since those close at their round or game. DRAFT contests are listed for the league's commissioners only. With `finishedYear`, returns instead the COMPLETED contests that went final in that championship year (US Eastern), newest first; `listContestFinishedYears` names the years. A single contest is `getContest`. Each contest carries its count of entries that submitted at least one event and its sport events' names and starts, so a list needs no per-event reads. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.
          */
         get: operations["listContests"];
         put?: never;
@@ -1311,6 +1311,46 @@ export interface paths {
          * @description The one way a contest is created. Name a template, supply a configuration, or both: the template seeds the configuration and `configuration` replaces it. A request with neither is refused with 400 CONTEST_CONFIGURATION_REQUIRED — there is no platform default. A template that names a sport league (that league's own preset) makes contests only for that league's events: 422 CONTEST_CONFIG_TEMPLATE_LEAGUE_MISMATCH otherwise. Commissioners of the league only.
          */
         post: operations["createContest"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/leagues/{id}/contests/finished-years": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the years a league has finished contests in
+         * @description Each championship year (US Eastern) a COMPLETED contest of the league went final in, newest first: the years `listContests` takes as `finishedYear`. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.
+         */
+        get: operations["listContestFinishedYears"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/leagues/{id}/contests/my-entries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the requester's entries in a league's current contests
+         * @description The requester's own squad's entries, drafts included, in each of the league's OPEN and ACTIVE contests, each with its status in every event of its contest and without its picks (#1197): one read for what league home, the Contests page's My entries and My team show, however many contests are current. Empty without an active squad in the league. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.
+         */
+        get: operations["listMyContestEntries"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1466,7 +1506,7 @@ export interface paths {
         };
         /**
          * Get a contest by ID
-         * @description Returns detailed contest information by contest ID for league, entry, and history surfaces that already know the contest identifier. Active members of the contest's league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.
+         * @description Returns detailed contest information by contest ID for league, entry, and history surfaces that already know the contest identifier, with its entries counted and the ids of the requester's own entries in it (#1197). Active members of the contest's league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.
          */
         get: operations["getContest"];
         /**
@@ -1673,6 +1713,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/leagues/{id}/cups/squads/{squadId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a squad's cup points
+         * @description One squad's points in the league's cup for a season and sports league, counted contest by counted contest, in the order they went final, with the cup's id and name. 404 CUP_NOT_FOUND when the league has no cup for that season and sports league, SQUAD_NOT_FOUND for a squad that is not the league's. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. 403 PLAN_FEATURE_NOT_INCLUDED, its `details.feature` naming what is missing, unless the league's plan has CUP_STANDINGS, PAST_YEARS for a year before the current one (root admins too).
+         */
+        get: operations["getCupSquadPoints"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/leagues/{id}/cups/{cupId}": {
         parameters: {
             query?: never;
@@ -1685,26 +1745,6 @@ export interface paths {
          * @description One cup with its standings and contests: the Points race. 404 CUP_NOT_FOUND for a cup that is not the league's. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. 403 PLAN_FEATURE_NOT_INCLUDED, its `details.feature` naming what is missing, unless the league's plan has CUP_STANDINGS (root admins too).
          */
         get: operations["getCup"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/leagues/{id}/cups/{cupId}/squads/{squadId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get a squad's cup points
-         * @description One squad's points in a cup, counted contest by counted contest, in the order they went final. 404 CUP_NOT_FOUND for a cup that is not the league's, SQUAD_NOT_FOUND for a squad that is not. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. 403 PLAN_FEATURE_NOT_INCLUDED, its `details.feature` naming what is missing, unless the league's plan has CUP_STANDINGS (root admins too).
-         */
-        get: operations["getCupSquadPoints"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2002,7 +2042,7 @@ export interface paths {
         };
         /**
          * List sport events
-         * @description The sport-event catalog, narrowed by sport, statuses, sport league, event year and name and never paged. Any signed-in user may read it: contest setup picks an event from it, and a root admin browses it. Each event carries its loaded field size, contest-setup readiness and tier count; a root admin's list also carries each event's adminCounts. DRAFT events (not yet released for contests) are listed for a root admin only.
+         * @description The sport-event catalog, narrowed by sport, statuses, sport league, event year and name and never paged. At least one of `sport`, `sportLeagueId` and `eventYear` is required, so the list never reads every event: 400 SPORT_EVENT_FILTER_REQUIRED otherwise. Any signed-in user may read it: contest setup picks an event from it, and a root admin browses it. Each event carries its loaded field size, contest-setup readiness and tier count; a root admin's list also carries each event's adminCounts. DRAFT events (not yet released for contests) are listed for a root admin only.
          */
         get: operations["listEvents"];
         put?: never;
@@ -2156,7 +2196,7 @@ export interface paths {
         put?: never;
         /**
          * Move a sport event to its next status
-         * @description Only to one of the event's allowedTransitions. Activates or settles its contests as the new status requires. A DRAFT event is refused SCHEDULED with 409 SPORT_EVENT_RELEASE_REQUIRED: releasing it is its own action (releaseEvent). Root admin only.
+         * @description Only to one of the event's allowedTransitions. Activates or settles its contests as the new status requires. A DRAFT event is refused SCHEDULED with 409 SPORT_EVENT_RELEASE_REQUIRED: releasing it is its own action (releaseEvent). 409 SPORT_EVENT_INVALID_TRANSITION when the event's status changed elsewhere while this request ran (the lifecycle scheduler, another admin) and it did not end in the status asked for. Root admin only.
          */
         post: operations["transitionEvent"];
         delete?: never;
@@ -2920,7 +2960,7 @@ export interface paths {
         };
         /**
          * List event pages
-         * @description The active event pages, of one sport or every sport, each with its offers and their next editions, for How to Play's and the welcome page's Coming up row. Public: no session is needed, and it holds nothing about any league or user.
+         * @description The active event pages, of one sport or every sport, each with its offers and their next editions; with `upcoming=true`, only the pages with an edition coming, soonest first, for How to Play's and the welcome page's Coming up row. Public: no session is needed, and it holds nothing about any league or user.
          */
         get: operations["listEventPages"];
         put?: never;
@@ -2960,7 +3000,7 @@ export interface paths {
         };
         /**
          * List participants
-         * @description The participant catalog, narrowed by text and filters and never paged. Any signed-in user may read it: contest setup and ingestion mapping browse it, and a root admin maintains it.
+         * @description The participant catalog, narrowed by text and filters and never paged. `sportId` or a `q` of at least 3 characters is required, so the list never reads every sport's catalog: 400 SEARCH_TERM_REQUIRED otherwise. Any signed-in user may read it: contest setup and ingestion mapping browse it, and a root admin maintains it.
          */
         get: operations["listParticipants"];
         put?: never;
@@ -3240,9 +3280,29 @@ export interface paths {
         };
         /**
          * List provider sync runs inside a time window
-         * @description The sync-run history, filtered by provider, sport and status and bounded by a submission-time window. `to` defaults to now and `from` to 6 hours before `to`; nothing pages the result. Runs not yet started come first, then newest start.
+         * @description The sync-run history, filtered by provider, sport and status and bounded by a submission-time window. `to` defaults to now and `from` to 6 hours before `to`; nothing pages the result. Newest submission first. Each run carries its summary only; read one run's detailed diagnostics with getProviderSyncRun.
          */
         get: operations["listProviderSyncRuns"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ingestion/sync-runs/{syncRunId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read one provider sync run with its detailed diagnostics
+         * @description One sync run's summary plus its detailed diagnostics: the rows the sync changed, the ingestion job record, and the raw provider payload. The diagnostics are null before the run starts. 404 when there is no such run.
+         */
+        get: operations["getProviderSyncRun"];
         put?: never;
         post?: never;
         delete?: never;
@@ -4686,6 +4746,78 @@ export interface components {
              */
             updatedAt: string;
         };
+        /** @description A squad owner: the squad membership with the owner's league role. */
+        SquadOwnerDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            squadId: string;
+            /** Format: uuid */
+            leagueId: string;
+            /** Format: uuid */
+            userId: string;
+            /** @description The member, as the canonical UserDto. */
+            user: {
+                /** @description Stable user identifier. */
+                id: string;
+                /** @description Primary email address for the user account. */
+                email: string;
+                /** @description Unique login identifier for the account. */
+                username: string;
+                /** @description First name shown in account and member-management surfaces. */
+                firstName: string;
+                /** @description Last name shown in account and member-management surfaces. */
+                lastName: string;
+                /** @description Whether the account is currently active for normal sign-in and product usage. */
+                isActive: boolean;
+                /** @description Whether the user has platform-level root-admin access. */
+                isRootAdmin: boolean;
+                /**
+                 * @description Authentication provider used for the account when known.
+                 * @enum {string}
+                 */
+                authProvider?: "email" | "google" | "apple";
+                /** @description IANA time zone the member sees dates and times in, picked at signup. Absent means US Eastern. */
+                timezone?: string;
+                /** @description BCP 47 locale the member's dates are formatted in, e.g. en-US. */
+                locale?: string;
+                /**
+                 * @description 12-hour or 24-hour clock for the times the member sees. Absent means the locale's own.
+                 * @enum {string}
+                 */
+                timeFormat?: "12H" | "24H";
+                /**
+                 * Format: date-time
+                 * @description Account creation timestamp in ISO 8601 format.
+                 */
+                createdAt?: string;
+            };
+            /**
+             * @description Squad membership status.
+             * @enum {string}
+             */
+            status: "ACTIVE" | "INACTIVE";
+            /**
+             * Format: date-time
+             * @description When the user joined the squad.
+             */
+            joinedAt: string;
+            /**
+             * Format: date-time
+             * @description When the squad membership record was created.
+             */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @description When the squad membership record was last updated.
+             */
+            updatedAt: string;
+            /**
+             * @description The owner's role in the squad's league; null only if they hold no membership there.
+             * @enum {string|null}
+             */
+            leagueRole: "COMMISSIONER" | "MEMBER" | null;
+        };
         /** @description A squad within a league. Returned wherever a squad is read. */
         SquadDto: {
             /** Format: uuid */
@@ -4703,7 +4835,7 @@ export interface components {
             iconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
             /** @description Whether the team is currently active. This lifecycle flag is the source of truth for Team availability and should replace older status-style checks. */
             isActive: boolean;
-            /** @description Number of memberships attached to the squad. */
+            /** @description How many of the squad's owners are ACTIVE. */
             memberCount: number;
             /**
              * Format: date-time
@@ -4715,8 +4847,8 @@ export interface components {
              * @description When the squad was last updated.
              */
             updatedAt: string;
-            /** @description Optional expanded squad membership list. */
-            members?: {
+            /** @description Every owner membership of the squad, any status, in join order, each with its user and league role. */
+            members: {
                 /** Format: uuid */
                 id: string;
                 /** Format: uuid */
@@ -4781,6 +4913,11 @@ export interface components {
                  * @description When the squad membership record was last updated.
                  */
                 updatedAt: string;
+                /**
+                 * @description The owner's role in the squad's league; null only if they hold no membership there.
+                 * @enum {string|null}
+                 */
+                leagueRole: "COMMISSIONER" | "MEMBER" | null;
             }[];
         };
         /** @description Single-squad response. */
@@ -4802,7 +4939,7 @@ export interface components {
                 iconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
                 /** @description Whether the team is currently active. This lifecycle flag is the source of truth for Team availability and should replace older status-style checks. */
                 isActive: boolean;
-                /** @description Number of memberships attached to the squad. */
+                /** @description How many of the squad's owners are ACTIVE. */
                 memberCount: number;
                 /**
                  * Format: date-time
@@ -4814,8 +4951,8 @@ export interface components {
                  * @description When the squad was last updated.
                  */
                 updatedAt: string;
-                /** @description Optional expanded squad membership list. */
-                members?: {
+                /** @description Every owner membership of the squad, any status, in join order, each with its user and league role. */
+                members: {
                     /** Format: uuid */
                     id: string;
                     /** Format: uuid */
@@ -4880,6 +5017,11 @@ export interface components {
                      * @description When the squad membership record was last updated.
                      */
                     updatedAt: string;
+                    /**
+                     * @description The owner's role in the squad's league; null only if they hold no membership there.
+                     * @enum {string|null}
+                     */
+                    leagueRole: "COMMISSIONER" | "MEMBER" | null;
                 }[];
             };
         };
@@ -4901,7 +5043,7 @@ export interface components {
                 iconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
                 /** @description Whether the team is currently active. This lifecycle flag is the source of truth for Team availability and should replace older status-style checks. */
                 isActive: boolean;
-                /** @description Number of memberships attached to the squad. */
+                /** @description How many of the squad's owners are ACTIVE. */
                 memberCount: number;
                 /**
                  * Format: date-time
@@ -4913,8 +5055,8 @@ export interface components {
                  * @description When the squad was last updated.
                  */
                 updatedAt: string;
-                /** @description Optional expanded squad membership list. */
-                members?: {
+                /** @description Every owner membership of the squad, any status, in join order, each with its user and league role. */
+                members: {
                     /** Format: uuid */
                     id: string;
                     /** Format: uuid */
@@ -4979,6 +5121,11 @@ export interface components {
                      * @description When the squad membership record was last updated.
                      */
                     updatedAt: string;
+                    /**
+                     * @description The owner's role in the squad's league; null only if they hold no membership there.
+                     * @enum {string|null}
+                     */
+                    leagueRole: "COMMISSIONER" | "MEMBER" | null;
                 }[];
             }[];
         };
@@ -5195,7 +5342,7 @@ export interface components {
              * @enum {string}
              */
             scope?: "mine" | "all";
-            /** @description Optional case-insensitive substring matched against the league name. A filter, never a slice — see §16. */
+            /** @description Case-insensitive substring matched against the league name. A filter, never a slice — see §16. Optional for 'mine'; required for 'all', at least 3 characters. */
             search?: string;
             /** @description Optional active/inactive filter. Omitted returns both. */
             isActive?: boolean;
@@ -5710,6 +5857,10 @@ export interface components {
                  */
                 updatedAt: string;
             } | null;
+            /** @description The name of the squad in squadMembership, or null when squadMembership is null. The league menu names the viewer's team from it. */
+            squadName: string | null;
+            /** @description How many of the league's teams are active: the most entries an open contest can expect, one per team. */
+            activeTeamCount: number;
         };
         /** @description League-list response, with the viewer's memberships once as an array. */
         LeagueListResponse: {
@@ -6829,7 +6980,7 @@ export interface components {
         ContestManagementSportEventDto: {
             /** @description One event the contest covers. */
             sportEventId: string;
-            /** @description Read-only tier structure the contest inherits from this event (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet. Never contest-configured. */
+            /** @description Read-only tier structure a tiered contest inherits from this event (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet, and always empty for any other format, which does not pick by tier. Never contest-configured. */
             effectiveTiers: {
                 /** @description Stable per-event tier key. */
                 tierKey: string;
@@ -6860,7 +7011,7 @@ export interface components {
             sportEvents: {
                 /** @description One event the contest covers. */
                 sportEventId: string;
-                /** @description Read-only tier structure the contest inherits from this event (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet. Never contest-configured. */
+                /** @description Read-only tier structure a tiered contest inherits from this event (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet, and always empty for any other format, which does not pick by tier. Never contest-configured. */
                 effectiveTiers: {
                     /** @description Stable per-event tier key. */
                     tierKey: string;
@@ -7391,7 +7542,7 @@ export interface components {
                 sportEvents: {
                     /** @description One event the contest covers. */
                     sportEventId: string;
-                    /** @description Read-only tier structure the contest inherits from this event (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet. Never contest-configured. */
+                    /** @description Read-only tier structure a tiered contest inherits from this event (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet, and always empty for any other format, which does not pick by tier. Never contest-configured. */
                     effectiveTiers: {
                         /** @description Stable per-event tier key. */
                         tierKey: string;
@@ -9894,7 +10045,7 @@ export interface components {
              */
             updatedAt: string;
         };
-        /** @description Filters for the sport-event list. */
+        /** @description Filters for the sport-event list. At least one of sport, sportLeagueId and eventYear is required. */
         SportEventListQuery: {
             /**
              * @description Only events of this sport.
@@ -11935,8 +12086,14 @@ export interface components {
             }[];
             /** @enum {string|null} */
             sport?: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS" | null;
-            /** @description Number of entries that have submitted at least one event. Present on list reads, which count them; omitted on a single-contest read. */
+            /** @description Number of entries that have submitted at least one event. Present on the list and single-contest reads; omitted on the contest writes. */
             entryCount?: number;
+            /** @description Number of squads with at least one entry that submitted an event (#1197). Single-contest read only. */
+            enteredSquadCount?: number;
+            /** @description Every entry the contest holds, drafts included, as its entry cap counts them (#1197): before a random draw no entry is submitted. Single-contest read only. */
+            allEntryCount?: number;
+            /** @description The requester's own squad's entries in the contest, drafts included, in entry-number order (#1197). Empty without an active squad in the league. Single-contest read only. */
+            myEntryIds?: string[];
             /** @description The most entries the contest takes, every squad's drafts included: its league plan's cap or its expansion (#987), whichever is higher. Null for no limit. */
             entriesPerContest: number | null;
             /** Format: date-time */
@@ -12608,8 +12765,14 @@ export interface components {
                 }[];
                 /** @enum {string|null} */
                 sport?: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS" | null;
-                /** @description Number of entries that have submitted at least one event. Present on list reads, which count them; omitted on a single-contest read. */
+                /** @description Number of entries that have submitted at least one event. Present on the list and single-contest reads; omitted on the contest writes. */
                 entryCount?: number;
+                /** @description Number of squads with at least one entry that submitted an event (#1197). Single-contest read only. */
+                enteredSquadCount?: number;
+                /** @description Every entry the contest holds, drafts included, as its entry cap counts them (#1197): before a random draw no entry is submitted. Single-contest read only. */
+                allEntryCount?: number;
+                /** @description The requester's own squad's entries in the contest, drafts included, in entry-number order (#1197). Empty without an active squad in the league. Single-contest read only. */
+                myEntryIds?: string[];
                 /** @description The most entries the contest takes, every squad's drafts included: its league plan's cap or its expansion (#987), whichever is higher. Null for no limit. */
                 entriesPerContest: number | null;
                 /** Format: date-time */
@@ -12675,8 +12838,14 @@ export interface components {
                 }[];
                 /** @enum {string|null} */
                 sport?: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS" | null;
-                /** @description Number of entries that have submitted at least one event. Present on list reads, which count them; omitted on a single-contest read. */
+                /** @description Number of entries that have submitted at least one event. Present on the list and single-contest reads; omitted on the contest writes. */
                 entryCount?: number;
+                /** @description Number of squads with at least one entry that submitted an event (#1197). Single-contest read only. */
+                enteredSquadCount?: number;
+                /** @description Every entry the contest holds, drafts included, as its entry cap counts them (#1197): before a random draw no entry is submitted. Single-contest read only. */
+                allEntryCount?: number;
+                /** @description The requester's own squad's entries in the contest, drafts included, in entry-number order (#1197). Empty without an active squad in the league. Single-contest read only. */
+                myEntryIds?: string[];
                 /** @description The most entries the contest takes, every squad's drafts included: its league plan's cap or its expansion (#987), whichever is higher. Null for no limit. */
                 entriesPerContest: number | null;
                 /** Format: date-time */
@@ -12693,6 +12862,16 @@ export interface components {
                 /** Format: date-time */
                 updatedAt?: string;
             }[];
+        };
+        /** @description Which of a league's contests to list: the current ones by default, or one year's finished ones. */
+        ListContestsQuery: {
+            /** @description List the COMPLETED contests that went final in this championship year, US Eastern, such as 2025, instead of the current ones. The years with any are `listContestFinishedYears`. */
+            finishedYear?: number;
+        };
+        /** @description The years a league has finished contests in. */
+        ContestFinishedYearsResponse: {
+            /** @description Each championship year, US Eastern, a COMPLETED contest of the league went final in, newest first. Empty when none has finished. */
+            years: number[];
         };
         /** @description Single contest-entry response. */
         ContestEntryResponse: {
@@ -12816,21 +12995,73 @@ export interface components {
                 }[];
             };
         };
+        /** @description The requester's own entries across a league's current contests (#1197). */
+        MyContestEntriesResponse: {
+            /** @description The requester's own squad's entries, drafts included, in each of the league's OPEN and ACTIVE contests, in entry-number order within a contest. Without `participants`: an entry's picks are on `getContestEntry`. Empty without an active squad in the league. */
+            entries: {
+                id: string;
+                contestId: string;
+                squadId: string;
+                squadName: string;
+                entryNumber: number;
+                name: string;
+                /** @description The entry's status in each event of its contest, in the contest's event order. */
+                events: {
+                    /** @description One event of the entry's contest. */
+                    sportEventId: string;
+                    /**
+                     * @description DRAFT until the owner submits a complete lineup for this event; only a SUBMITTED event counts on the leaderboard, in standings and at settlement (#481, per event since #713).
+                     * @enum {string}
+                     */
+                    status: "DRAFT" | "SUBMITTED";
+                    /**
+                     * Format: date-time
+                     * @description When the event's picks were submitted; null while a draft.
+                     */
+                    submittedAt: string | null;
+                }[];
+                tiebreakerValue?: number | null;
+                /** @description Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners. */
+                picksCount: number;
+                /**
+                 * Format: date-time
+                 * @description When the contest entry was created.
+                 */
+                createdAt: string;
+                /**
+                 * Format: date-time
+                 * @description When the contest entry was last updated.
+                 */
+                updatedAt: string;
+                /** @description The entry's picked participants, each naming its event. To anyone but the owning squad only the picks of events whose picks are revealed are listed. Omitted on the entry writes, which return the entry without them. */
+                participants?: {
+                    pickId: string;
+                    sportEventParticipantId: string;
+                    /** @description The event of the contest the pick is in (#713). */
+                    sportEventId: string;
+                    participantId: string;
+                    participantName: string;
+                    participantStatus?: string | null;
+                    /** @description The participant's playing role, when known. */
+                    role?: string | null;
+                    teamAffiliation?: string | null;
+                    /**
+                     * Format: date-time
+                     * @description When the participant was added to the contest entry.
+                     */
+                    pickedAt: string;
+                }[];
+            }[];
+        };
         /** @description Contest-entry list response. */
         ContestEntryListResponse: {
             /** @description Contest whose entries are being returned. */
             contestId: string;
             /** @description Total number of entries in the contest. */
             total: number;
-            /** @description Whether the current user has at least one active entry in the contest. */
-            isJoined: boolean;
-            /** @description Primary current-user entry when the contest allows a single active entry. */
-            myEntryId: string | null;
-            /** @description All current-user entry identifiers when multiple entries are allowed. */
-            myEntryIds?: string[];
             /** @description Whether any of the contest's events has its picks visible to non-owners: once the contest is live and that event has started, or once a random draw has dealt. */
             picksRevealed: boolean;
-            /** @description Entries for the contest. Each entry lists participants[]: all of them for the requester's own entries, and only the revealed events' picks for everyone else's. */
+            /** @description Entries for the contest, the requester's own squad's first. Each entry lists participants[]: all of them for the requester's own entries, and only the revealed events' picks for everyone else's. The requester's entry ids alone are `myEntryIds` on `getContest`. */
             entries: {
                 id: string;
                 contestId: string;
@@ -17947,6 +18178,16 @@ export interface components {
             /** @description The season whose cups to list, such as 2026. */
             seasonYear: number;
         };
+        /** @description Which cup: the league has one per season and sports league. */
+        CupSquadPointsQuery: {
+            /** @description The cup's season, such as 2026. */
+            seasonYear: number;
+            /**
+             * Format: uuid
+             * @description The cup's sports league.
+             */
+            sportLeagueId: string;
+        };
         /** @description The seasons in which a league has cups. */
         CupSeasonListResponse: {
             /** @description Seasons with a cup to show, newest first; empty before the league has a contest. */
@@ -18357,6 +18598,8 @@ export interface components {
         CupSquadPointsDto: {
             /** Format: uuid */
             cupId: string;
+            /** @description The cup's name, from its season and sports league: "2026 PGA Tour Cup". */
+            cupName: string;
             /** Format: uuid */
             squadId: string;
             squadName: string;
@@ -18390,6 +18633,8 @@ export interface components {
             squadPoints: {
                 /** Format: uuid */
                 cupId: string;
+                /** @description The cup's name, from its season and sports league: "2026 PGA Tour Cup". */
+                cupName: string;
                 /** Format: uuid */
                 squadId: string;
                 squadName: string;
@@ -20103,10 +20348,12 @@ export interface components {
              * @enum {string}
              */
             sport?: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+            /** @description true: only the pages with an edition coming, the one their primary offer shows, soonest first (#1202). Omitted or false: every active page, by sport then display order. */
+            upcoming?: boolean;
         };
         /** @description The active event pages. */
         EventPageListResponse: {
-            /** @description The active pages, by sport then display order. A page between seasons has no offers. */
+            /** @description The active pages, by sport then display order, or soonest first when only the upcoming ones are asked for. A page between seasons has no offers. */
             eventPages: {
                 /** Format: uuid */
                 id: string;
@@ -21920,7 +22167,7 @@ export interface components {
              * @description When the run was submitted.
              */
             createdAt: string;
-            /** @description Provider sync diagnostic payload with canonical stats plus raw provider/job drill-downs. */
+            /** @description Provider sync run summary with canonical stats and outcome. */
             payload: {
                 /** @description Sync run source: a manual or scheduled event sync. */
                 runType?: string;
@@ -21967,6 +22214,145 @@ export interface components {
                      */
                     normalizedAt: string;
                 };
+                /** @description Admin-facing outcome and warning summary for the sync run. */
+                outcome?: {
+                    /**
+                     * @description Admin-facing severity derived from run status, errors, and warnings.
+                     * @enum {string}
+                     */
+                    severity: "SUCCESS" | "WARNING" | "ERROR";
+                    /** @description Human-readable root-admin summary of the sync outcome. */
+                    summary: string;
+                    /** @description Warnings that did not fail the run but should be visible to an operator. */
+                    warnings: {
+                        /** @description Stable warning code emitted by the ingestion/sync layer. */
+                        code: string;
+                        /** @description Human-readable warning detail for root-admin investigation. */
+                        message: string;
+                    }[];
+                    /** @description Count of errors captured for the run. */
+                    errors: number;
+                };
+                /** @description Canonical numeric sync stats used by admin diagnostics. */
+                stats?: {
+                    [key: string]: number;
+                };
+                /** @description Legacy top-level processed-record count retained for summary compatibility. */
+                recordsProcessed?: number;
+                /** @description Legacy top-level error count retained for summary compatibility. */
+                errors?: number;
+                /** @description Legacy human-readable detail retained for summary compatibility. */
+                detail?: string;
+            } & {
+                [key: string]: unknown;
+            };
+        };
+        /** @description One feed's sync against a provider, with its summary and its detailed diagnostics. */
+        ProviderSyncRunDetailDto: {
+            id: string;
+            providerId: string;
+            /** @enum {string} */
+            sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+            /** @description Provider event identifier when the run was narrowed to one event; null for a whole-sport run. */
+            eventId: string | null;
+            /** @enum {string} */
+            status: "SUBMITTED" | "IN_PROGRESS" | "COMPLETED" | "FAILED" | "CANCELLED";
+            /**
+             * Format: date-time
+             * @description ISO 8601 datetime string.
+             */
+            startedAt: string | null;
+            /**
+             * Format: date-time
+             * @description ISO 8601 datetime string.
+             */
+            completedAt: string | null;
+            /**
+             * Format: date-time
+             * @description When the run was submitted.
+             */
+            createdAt: string;
+            /** @description Provider sync run summary with canonical stats and outcome. */
+            payload: {
+                /** @description Sync run source: a manual or scheduled event sync. */
+                runType?: string;
+                /** @description Feeds represented by the originating manual or scheduled sync request. */
+                requestedFeeds?: ("EVENTPARTICIPANTS" | "EVENTLIVESCORES")[];
+                /**
+                 * @description Single feed represented by this sync run row.
+                 * @enum {string}
+                 */
+                requestedFeed?: "EVENTPARTICIPANTS" | "EVENTLIVESCORES";
+                /** @description The request that submitted the sync run. */
+                requestPayload?: {
+                    /** @enum {string} */
+                    sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+                    /** @description Provider event identifier the sync was asked for. */
+                    eventId: string;
+                    /**
+                     * @description Whether the scheduler or a root admin asked for the sync.
+                     * @enum {string}
+                     */
+                    source: "SCHEDULED" | "MANUAL";
+                    /** @description Who asked for a sync. */
+                    actor: {
+                        /** @enum {string} */
+                        type: "SYSTEM";
+                        /** @enum {string} */
+                        name: "scheduler";
+                    } | {
+                        /** @enum {string} */
+                        type: "ROOT_ADMIN";
+                        /** @description The root admin who asked for the sync. */
+                        userId: string;
+                        /** @description Their email at the time, for the audit trail. */
+                        email: string;
+                    };
+                    /**
+                     * @description The mock feed state a manual QA sync asked for; null otherwise.
+                     * @enum {string|null}
+                     */
+                    mockEventState: "open" | "locked" | "live" | "completed" | "golf-pre-live" | "golf-r1-in-progress" | "golf-r1-complete" | "golf-r2-complete" | "golf-correction" | "golf-r4-complete-pending-final" | "golf-playoff" | "golf-completed" | "golf-late-correction" | null;
+                    /**
+                     * Format: date-time
+                     * @description When the request was validated and normalized.
+                     */
+                    normalizedAt: string;
+                };
+                /** @description Admin-facing outcome and warning summary for the sync run. */
+                outcome?: {
+                    /**
+                     * @description Admin-facing severity derived from run status, errors, and warnings.
+                     * @enum {string}
+                     */
+                    severity: "SUCCESS" | "WARNING" | "ERROR";
+                    /** @description Human-readable root-admin summary of the sync outcome. */
+                    summary: string;
+                    /** @description Warnings that did not fail the run but should be visible to an operator. */
+                    warnings: {
+                        /** @description Stable warning code emitted by the ingestion/sync layer. */
+                        code: string;
+                        /** @description Human-readable warning detail for root-admin investigation. */
+                        message: string;
+                    }[];
+                    /** @description Count of errors captured for the run. */
+                    errors: number;
+                };
+                /** @description Canonical numeric sync stats used by admin diagnostics. */
+                stats?: {
+                    [key: string]: number;
+                };
+                /** @description Legacy top-level processed-record count retained for summary compatibility. */
+                recordsProcessed?: number;
+                /** @description Legacy top-level error count retained for summary compatibility. */
+                errors?: number;
+                /** @description Legacy human-readable detail retained for summary compatibility. */
+                detail?: string;
+            } & {
+                [key: string]: unknown;
+            };
+            /** @description The run's detailed diagnostics; null before the run starts. */
+            details: ({
                 /** @description Raw/debug provider payload captured for this run. */
                 providerPayload?: {
                     /**
@@ -22023,7 +22409,7 @@ export interface components {
                         at: string;
                     }[];
                 };
-                /** @description Normalized created/updated/deleted/unchanged row diagnostics for PoolMaster writes. */
+                /** @description Normalized write-effect diagnostics for PoolMaster writes: every row counted, changed rows kept. */
                 writeDiagnostics?: {
                     /** @description Aggregate normalized write-effect counts for a provider sync run. */
                     summary: {
@@ -22063,38 +22449,18 @@ export interface components {
                         };
                     }[];
                 };
-                /** @description Admin-facing outcome and warning summary for the sync run. */
-                outcome?: {
-                    /**
-                     * @description Admin-facing severity derived from run status, errors, and warnings.
-                     * @enum {string}
-                     */
-                    severity: "SUCCESS" | "WARNING" | "ERROR";
-                    /** @description Human-readable root-admin summary of the sync outcome. */
-                    summary: string;
-                    /** @description Warnings that did not fail the run but should be visible to an operator. */
-                    warnings: {
-                        /** @description Stable warning code emitted by the ingestion/sync layer. */
-                        code: string;
-                        /** @description Human-readable warning detail for root-admin investigation. */
+                /** @description Present when the run failed unexpectedly. */
+                failurePayload?: {
+                    /** @description The error that failed the run. */
+                    error: {
+                        /** @description The error's class name, when it was an Error. */
+                        name?: string;
                         message: string;
-                    }[];
-                    /** @description Count of errors captured for the run. */
-                    errors: number;
+                    };
                 };
-                /** @description Canonical numeric sync stats used by admin diagnostics. */
-                stats?: {
-                    [key: string]: number;
-                };
-                /** @description Legacy top-level processed-record count retained for summary compatibility. */
-                recordsProcessed?: number;
-                /** @description Legacy top-level error count retained for summary compatibility. */
-                errors?: number;
-                /** @description Legacy human-readable detail retained for summary compatibility. */
-                detail?: string;
             } & {
                 [key: string]: unknown;
-            };
+            }) | null;
         };
         /** @description Filters over the sync-run history. A submission-time window bounds it; nothing pages it. */
         ProviderSyncRunListQuery: {
@@ -22114,7 +22480,7 @@ export interface components {
              */
             to?: string;
         };
-        /** @description Sync runs submitted inside the requested window. */
+        /** @description Sync runs submitted inside the requested window, newest submission first, each with its summary only. */
         ProviderSyncRunListResponse: {
             syncRuns: {
                 id: string;
@@ -22140,7 +22506,7 @@ export interface components {
                  * @description When the run was submitted.
                  */
                 createdAt: string;
-                /** @description Provider sync diagnostic payload with canonical stats plus raw provider/job drill-downs. */
+                /** @description Provider sync run summary with canonical stats and outcome. */
                 payload: {
                     /** @description Sync run source: a manual or scheduled event sync. */
                     runType?: string;
@@ -22186,102 +22552,6 @@ export interface components {
                          * @description When the request was validated and normalized.
                          */
                         normalizedAt: string;
-                    };
-                    /** @description Raw/debug provider payload captured for this run. */
-                    providerPayload?: {
-                        /**
-                         * @description Provider feed operation represented by this payload.
-                         * @enum {string}
-                         */
-                        operation: "EVENTPARTICIPANTS" | "EVENTLIVESCORES";
-                        /** @description Whether raw provider response JSON was captured for this run. */
-                        rawCaptured: boolean;
-                        /** @description Whether the captured raw provider payload was truncated before storage. */
-                        rawTruncated: boolean;
-                        /** @description Raw provider response JSON retained for debugging when capture is available. */
-                        raw?: unknown;
-                    } & {
-                        [key: string]: unknown;
-                    };
-                    /** @description Serialized ingestion job details after an ingestion job is available. */
-                    jobPayload?: {
-                        /** @description Internal ingestion job type that executed this sync feed. */
-                        jobType: string;
-                        /** @description Provider that executed the ingestion job. */
-                        providerId: string;
-                        /** @enum {string} */
-                        sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
-                        /** @description External event id for event-scoped jobs, when applicable. */
-                        eventExternalId?: string;
-                        /**
-                         * @description Internal ingestion job status.
-                         * @enum {string}
-                         */
-                        status: "PENDING" | "RUNNING" | "COMPLETED" | "FAILED";
-                        /**
-                         * Format: date-time
-                         * @description When the ingestion job started.
-                         */
-                        startedAt?: string;
-                        /**
-                         * Format: date-time
-                         * @description When the ingestion job completed.
-                         */
-                        completedAt?: string;
-                        /** @description Canonical records processed by the ingestion job. */
-                        recordsProcessed: number;
-                        /** @description Error count captured by the ingestion job. */
-                        errors: number;
-                        /** @description Ingestion error-log entries for root-admin investigation. */
-                        errorLog: {
-                            /** @description Failure message the ingestion job recorded. */
-                            error: string;
-                            /**
-                             * Format: date-time
-                             * @description When the failure was recorded.
-                             */
-                            at: string;
-                        }[];
-                    };
-                    /** @description Normalized created/updated/deleted/unchanged row diagnostics for PoolMaster writes. */
-                    writeDiagnostics?: {
-                        /** @description Aggregate normalized write-effect counts for a provider sync run. */
-                        summary: {
-                            total: number;
-                            unchanged: number;
-                            created: number;
-                            updated: number;
-                            deleted: number;
-                        };
-                        rows: {
-                            /** @description Stable row id for this normalized write diagnostic row. */
-                            id: string;
-                            /** @description Normalized PoolMaster entity type represented by this row. */
-                            entityType: string;
-                            /**
-                             * @description Write effect for the normalized row.
-                             * @enum {string}
-                             */
-                            disposition: "UNCHANGED" | "CREATED" | "UPDATED" | "DELETED";
-                            /** @description Provider id associated with this row, when applicable. */
-                            providerId?: string;
-                            /** @description Provider external id associated with this row, when applicable. */
-                            externalId?: string;
-                            /** @description Provider participant id associated with this row, when applicable. */
-                            participantExternalId?: string;
-                            /** @description PoolMaster internal id associated with this row, when known. */
-                            internalId?: string;
-                            /** @description Display name for the row, when known. */
-                            name?: string;
-                            /** @description Normalized before-state of the entity `entityType` names, for UPDATED or DELETED rows; shaped by that entity and shown only as a diff. */
-                            before?: {
-                                [key: string]: unknown;
-                            };
-                            /** @description Normalized after-state of the entity `entityType` names, for CREATED or UPDATED rows; shaped by that entity and shown only as a diff. */
-                            after?: {
-                                [key: string]: unknown;
-                            };
-                        }[];
                     };
                     /** @description Admin-facing outcome and warning summary for the sync run. */
                     outcome?: {
@@ -22353,7 +22623,7 @@ export interface components {
                  * @description When the run was submitted.
                  */
                 createdAt: string;
-                /** @description Provider sync diagnostic payload with canonical stats plus raw provider/job drill-downs. */
+                /** @description Provider sync run summary with canonical stats and outcome. */
                 payload: {
                     /** @description Sync run source: a manual or scheduled event sync. */
                     runType?: string;
@@ -22399,102 +22669,6 @@ export interface components {
                          * @description When the request was validated and normalized.
                          */
                         normalizedAt: string;
-                    };
-                    /** @description Raw/debug provider payload captured for this run. */
-                    providerPayload?: {
-                        /**
-                         * @description Provider feed operation represented by this payload.
-                         * @enum {string}
-                         */
-                        operation: "EVENTPARTICIPANTS" | "EVENTLIVESCORES";
-                        /** @description Whether raw provider response JSON was captured for this run. */
-                        rawCaptured: boolean;
-                        /** @description Whether the captured raw provider payload was truncated before storage. */
-                        rawTruncated: boolean;
-                        /** @description Raw provider response JSON retained for debugging when capture is available. */
-                        raw?: unknown;
-                    } & {
-                        [key: string]: unknown;
-                    };
-                    /** @description Serialized ingestion job details after an ingestion job is available. */
-                    jobPayload?: {
-                        /** @description Internal ingestion job type that executed this sync feed. */
-                        jobType: string;
-                        /** @description Provider that executed the ingestion job. */
-                        providerId: string;
-                        /** @enum {string} */
-                        sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
-                        /** @description External event id for event-scoped jobs, when applicable. */
-                        eventExternalId?: string;
-                        /**
-                         * @description Internal ingestion job status.
-                         * @enum {string}
-                         */
-                        status: "PENDING" | "RUNNING" | "COMPLETED" | "FAILED";
-                        /**
-                         * Format: date-time
-                         * @description When the ingestion job started.
-                         */
-                        startedAt?: string;
-                        /**
-                         * Format: date-time
-                         * @description When the ingestion job completed.
-                         */
-                        completedAt?: string;
-                        /** @description Canonical records processed by the ingestion job. */
-                        recordsProcessed: number;
-                        /** @description Error count captured by the ingestion job. */
-                        errors: number;
-                        /** @description Ingestion error-log entries for root-admin investigation. */
-                        errorLog: {
-                            /** @description Failure message the ingestion job recorded. */
-                            error: string;
-                            /**
-                             * Format: date-time
-                             * @description When the failure was recorded.
-                             */
-                            at: string;
-                        }[];
-                    };
-                    /** @description Normalized created/updated/deleted/unchanged row diagnostics for PoolMaster writes. */
-                    writeDiagnostics?: {
-                        /** @description Aggregate normalized write-effect counts for a provider sync run. */
-                        summary: {
-                            total: number;
-                            unchanged: number;
-                            created: number;
-                            updated: number;
-                            deleted: number;
-                        };
-                        rows: {
-                            /** @description Stable row id for this normalized write diagnostic row. */
-                            id: string;
-                            /** @description Normalized PoolMaster entity type represented by this row. */
-                            entityType: string;
-                            /**
-                             * @description Write effect for the normalized row.
-                             * @enum {string}
-                             */
-                            disposition: "UNCHANGED" | "CREATED" | "UPDATED" | "DELETED";
-                            /** @description Provider id associated with this row, when applicable. */
-                            providerId?: string;
-                            /** @description Provider external id associated with this row, when applicable. */
-                            externalId?: string;
-                            /** @description Provider participant id associated with this row, when applicable. */
-                            participantExternalId?: string;
-                            /** @description PoolMaster internal id associated with this row, when known. */
-                            internalId?: string;
-                            /** @description Display name for the row, when known. */
-                            name?: string;
-                            /** @description Normalized before-state of the entity `entityType` names, for UPDATED or DELETED rows; shaped by that entity and shown only as a diff. */
-                            before?: {
-                                [key: string]: unknown;
-                            };
-                            /** @description Normalized after-state of the entity `entityType` names, for CREATED or UPDATED rows; shaped by that entity and shown only as a diff. */
-                            after?: {
-                                [key: string]: unknown;
-                            };
-                        }[];
                     };
                     /** @description Admin-facing outcome and warning summary for the sync run. */
                     outcome?: {
@@ -22981,6 +23155,7 @@ export interface operations {
     listUsers: {
         parameters: {
             query?: {
+                /** @description Case-insensitive substring of the email, username, first or last name; at least 3 characters once trimmed. */
                 search?: string;
                 isActive?: boolean;
             };
@@ -23988,7 +24163,7 @@ export interface operations {
             query?: {
                 /** @description Which leagues to return: 'mine' (default) for the leagues the caller belongs to, 'all' for every league on the platform. 'all' requires root-admin access. */
                 scope?: "mine" | "all";
-                /** @description Optional case-insensitive substring matched against the league name. A filter, never a slice — see §16. */
+                /** @description Case-insensitive substring matched against the league name. A filter, never a slice — see §16. Optional for 'mine'; required for 'all', at least 3 characters. */
                 search?: string;
                 /** @description Optional active/inactive filter. Omitted returns both. */
                 isActive?: boolean;
@@ -24006,6 +24181,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["LeagueListResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -26325,7 +26509,10 @@ export interface operations {
     };
     listContests: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description List the COMPLETED contests that went final in this championship year, US Eastern, such as 2025, instead of the current ones. The years with any are `listContestFinishedYears`. */
+                finishedYear?: number;
+            };
             header?: never;
             path: {
                 id: string;
@@ -26341,6 +26528,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ContestListResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -26425,6 +26621,86 @@ export interface operations {
             };
             /** @description The event, format or template cannot make this contest. The event: SPORT_EVENT_NOT_FOUND, SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED, SPORT_EVENT_ALREADY_STARTED. The format: CONTEST_FORMAT_NOT_ALLOWED. The games of a pick'em or survivor contest: CONTEST_EVENT_HAS_NO_GAMES, CONTEST_EVENT_GAME_UNDECIDED, or CONTEST_EVENT_SPREAD_MISSING (a pick'em pool against the spread on a week with a game lacking its spread). CONTEST_SPREAD_NOT_OFFERED: a pick'em pool against the spread in a sport whose pools have no spread (#792). The selection type: CONTEST_SELECTION_TYPE_NOT_ALLOWED (the event's sport does not offer it). The configuration: CONTEST_RULES_SELECTION_TYPE_MISMATCH (rules of another selection type than the contest's), CONTEST_TIER_FIELD_OUT_OF_RANGE, CONTEST_BUDGET_FIELD_OUT_OF_RANGE (counted scores above the roster size), CONTEST_CONFIGURATION_INVALID (template missing, inactive, or for another format or selection type), or CONTEST_CONFIG_TEMPLATE_LEAGUE_MISMATCH (the template is one sport league's own preset and the event belongs to another league; a template with no sport league is offered for every league of its sport). */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    listContestFinishedYears: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The years a league has finished contests in. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContestFinishedYearsResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    listMyContestEntries: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The requester's own entries across a league's current contests (#1197). */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyContestEntriesResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -27688,25 +27964,39 @@ export interface operations {
             };
         };
     };
-    getCup: {
+    getCupSquadPoints: {
         parameters: {
-            query?: never;
+            query: {
+                /** @description The cup's season, such as 2026. */
+                seasonYear: number;
+                /** @description The cup's sports league. */
+                sportLeagueId: string;
+            };
             header?: never;
             path: {
                 id: string;
-                cupId: string;
+                squadId: string;
             };
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description One cup. */
+            /** @description One squad's cup points. */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CupResponse"];
+                    "application/json": components["schemas"]["CupSquadPointsResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -27738,26 +28028,25 @@ export interface operations {
             };
         };
     };
-    getCupSquadPoints: {
+    getCup: {
         parameters: {
             query?: never;
             header?: never;
             path: {
                 id: string;
                 cupId: string;
-                squadId: string;
             };
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description One squad's cup points. */
+            /** @description One cup. */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CupSquadPointsResponse"];
+                    "application/json": components["schemas"]["CupResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -28531,6 +28820,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SportEventListResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -32098,6 +32396,8 @@ export interface operations {
             query?: {
                 /** @description Only this sport's pages. Omitted: every sport's. */
                 sport?: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+                /** @description true: only the pages with an edition coming, the one their primary offer shows, soonest first (#1202). Omitted or false: every active page, by sport then display order. */
+                upcoming?: boolean;
             };
             header?: never;
             path?: never;
@@ -32173,6 +32473,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ParticipantListResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
         };
@@ -32955,7 +33264,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Sync runs submitted inside the requested window. */
+            /** @description Sync runs submitted inside the requested window, newest submission first, each with its summary only. */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -32975,6 +33284,55 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    getProviderSyncRun: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                syncRunId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description One feed's sync against a provider, with its summary and its detailed diagnostics. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProviderSyncRunDetailDto"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

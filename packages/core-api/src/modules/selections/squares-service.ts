@@ -57,8 +57,8 @@ export interface SquaresServiceDeps {
   memberships: Pick<LeagueMembershipRepository, 'findByLeagueAndUser'>;
   squadMemberships: Pick<SquadMembershipRepository, 'findBySquads'>;
   sportEvents: Pick<SportEventRepository, 'findById'>;
-  matches: Pick<SportEventMatchRepository, 'findBySportEvent'>;
-  field: Pick<SportEventParticipantRepository, 'findBySportEvent'>;
+  matches: Pick<SportEventMatchRepository, 'findById'>;
+  field: Pick<SportEventParticipantRepository, 'findByIds'>;
   participants: Pick<ParticipantRepository, 'findByIds'>;
   squares: ContestSquaresRepository;
   standings: Pick<ContestEntryStandingRepository, 'findByContest'>;
@@ -190,7 +190,7 @@ export class SquaresService {
       { action: 'squares.claim.claimed', data: { contestId, contestEntryId, rowIndex, columnIndex, userId: actor.userId, forOthers: context.isCommissioner } },
       'Claimed a squares box',
     );
-    return this.getBoard(contestId, actor);
+    return this.buildBoard(await this.withBoxesReread(context));
   }
 
   /** Clears a claimed box: its holder's own, or any box for the commissioner. */
@@ -211,7 +211,7 @@ export class SquaresService {
       { action: 'squares.clear.cleared', data: { contestId, contestEntryId: box.contestEntryId, rowIndex, columnIndex, userId: actor.userId } },
       'Cleared a squares box',
     );
-    return this.getBoard(contestId, actor);
+    return this.buildBoard(await this.withBoxesReread(context));
   }
 
   /**
@@ -225,22 +225,25 @@ export class SquaresService {
     if (!isDrawOpen(context)) throw squaresErrors.drawClosed();
     const seed = this.deps.drawSeed?.() ?? randomBytes(16).toString('hex');
     const digits = Array.from({ length: SQUARES_GRID_SIZE }, (_, digit) => String(digit));
-    const result = await this.deps.squares.recordDraw({
+    const draw: ContestSquaresDraw = {
       contestId,
       seed,
       rowDigits: seededShuffle([...digits], `${seed}:rows`).map(Number),
       columnDigits: seededShuffle([...digits], `${seed}:columns`).map(Number),
       drawnByUserId: actor.userId,
-      sportEventId: context.sportEvent.id,
       drawnAt: this.now(),
-    });
+    };
+    const result = await this.deps.squares.recordDraw({ ...draw, sportEventId: context.sportEvent.id });
     if (result === 'alreadyDrawn') throw squaresErrors.alreadyDrawn();
     this.deps.logger?.info(
       { action: 'squares.draw.drawn', data: { contestId, boxCount: context.squares.length, userId: actor.userId } },
       'Drew a squares contest\'s numbers',
     );
-    const board = await this.getBoard(contestId, actor);
-    await this.deps.receipts?.squaresDrawn(board);
+    // The draw read the boxes under the contest lock, so a box claimed or cleared since the load
+    // is in it: the boxes and entries are read again, the rest is as loaded (#1201).
+    const drawn = { ...(await this.withBoxesReread(context)), draw };
+    const board = await this.buildBoard(drawn);
+    await this.deps.receipts?.squaresDrawn({ board, entries: drawn.entries, sportEvent: context.sportEvent });
     return board;
   }
 
@@ -251,16 +254,17 @@ export class SquaresService {
     const isCommissioner = await this.isCommissioner(contest, actor);
     if (contest.status === ContestStatus.DRAFT && !isCommissioner) throw selectionErrors.contestNotFound(contestId);
     const sportEventId = contest.sportEventIds.at(0);
-    const [configuration, sportEvent, games, entries, squares, draw] = await Promise.all([
+    const [configuration, sportEvent, matched, entries, squares, draw] = await Promise.all([
       this.deps.configurations.findByContest(contestId),
       sportEventId === undefined ? Promise.resolve(null) : this.deps.sportEvents.findById(sportEventId),
-      sportEventId === undefined ? Promise.resolve([]) : this.deps.matches.findBySportEvent(sportEventId),
+      // The grid's one game, not its event's every match (#1201).
+      contest.squaresGameMatchId === undefined ? Promise.resolve(null) : this.deps.matches.findById(contest.squaresGameMatchId),
       this.deps.entries.findByContestWithSquad(contestId),
       this.deps.squares.findSquares(contestId),
       this.deps.squares.findDraw(contestId),
     ]);
     if (!sportEvent) throw selectionErrors.contestHasNoEvent(contestId);
-    const game = games.find((candidate) => candidate.id === contest.squaresGameMatchId);
+    const game = matched?.sportEventId === sportEvent.id ? matched : undefined;
     const rules = configuration?.configJson;
     const periodLayout = matchPeriodLayoutOf(sportEvent.sport, sportEvent.matchPeriodLayout ?? null);
     if (!game || rules?.selectionType !== SelectionType.SQUARES || periodLayout === undefined) {
@@ -279,7 +283,7 @@ export class SquaresService {
         ? this.deps.squares.findWinners(contest.id)
         : Promise.resolve(draw ? squaresWinners(draw, squaresScoringMoments(game, context.periodCount), squares) : []),
       settled ? this.deps.standings.findByContest(contest.id) : Promise.resolve([]),
-      this.findTeamNames(context.sportEvent.id, game),
+      this.findTeamNames(game),
     ]);
     const positionOf = new Map(standings.map((standing) => [standing.contestEntryId, standing]));
     const boardEntries = entries.map((entry) => ({
@@ -320,14 +324,29 @@ export class SquaresService {
     };
   }
 
-  private async findTeamNames(sportEventId: string, game: SportEventMatch): Promise<{ home: string | null; away: string | null }> {
-    const field = await this.deps.field.findBySportEvent(sportEventId);
+  /** The game's two teams' names, from their two field rows alone (#1201). */
+  private async findTeamNames(game: SportEventMatch): Promise<{ home: string | null; away: string | null }> {
+    const field = await this.deps.field.findByIds(
+      [game.homeSportEventParticipantId, game.awaySportEventParticipantId].filter((id): id is string => id !== null),
+    );
     const rowOf = (side: MatchSide) => field.find((row) => row.id === (side === MatchSide.HOME ? game.homeSportEventParticipantId : game.awaySportEventParticipantId));
     const home = rowOf(MatchSide.HOME);
     const away = rowOf(MatchSide.AWAY);
     const participants = await this.deps.participants.findByIds([home, away].flatMap((row) => row ? [row.participantId] : []));
     const nameOf = (participantId?: string) => participants.find((participant) => participant.id === participantId)?.name ?? null;
     return { home: nameOf(home?.participantId), away: nameOf(away?.participantId) };
+  }
+
+  /**
+   * The context after a write to the boxes: the boxes, and the entries that may hold them, read
+   * again; the contest, its rules, event and game as loaded.
+   */
+  private async withBoxesReread(context: SquaresContext): Promise<SquaresContext> {
+    const [squares, entries] = await Promise.all([
+      this.deps.squares.findSquares(context.contest.id),
+      this.deps.entries.findByContestWithSquad(context.contest.id),
+    ]);
+    return { ...context, squares, entries };
   }
 
   private areClaimsOpen(context: SquaresContext): boolean {

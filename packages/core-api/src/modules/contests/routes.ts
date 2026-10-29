@@ -59,16 +59,52 @@ export function contestsModule(fastify: FastifyInstance, opts: MailModuleOptions
       tags: ['Contests'],
       summary: 'List contests for a league',
       description:
-        "Returns the contests associated with the parent league so league-home and commissioner views can list current and historical contests. Each contest carries its entry count and its sport event's name and start, so a list needs no per-event reads. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.",
+        "Returns the league's current contests: DRAFT, OPEN and ACTIVE, less any DRAFT that can never open: one with an event COMPLETED or CANCELLED, and one closing at its event's start once an event has started. A DRAFT with no events yet is listed, and so is a bracket starting after round 1 or a squares DRAFT with its game until its event finishes, since those close at their round or game. DRAFT contests are listed for the league's commissioners only. With `finishedYear`, returns instead the COMPLETED contests that went final in that championship year (US Eastern), newest first; `listContestFinishedYears` names the years. A single contest is `getContest`. Each contest carries its count of entries that submitted at least one event and its sport events' names and starts, so a list needs no per-event reads. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.",
       operationId: 'listContests',
+      querystring: schemaRef('ListContestsQuery'),
       response: {
         200: schemaRef('ContestListResponse'),
+        400: schemaRef('ErrorEnvelope'),
         401: schemaRef('ErrorEnvelope'),
         403: schemaRef('ErrorEnvelope'),
       },
     },
     preHandler: requireMemberOfLeague(membershipRepo, leagueFromPath),
     handler: handlers.listContests,
+  });
+
+  fastify.get('/finished-years', {
+    schema: {
+      tags: ['Contests'],
+      summary: 'List the years a league has finished contests in',
+      description:
+        'Each championship year (US Eastern) a COMPLETED contest of the league went final in, newest first: the years `listContests` takes as `finishedYear`. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.',
+      operationId: 'listContestFinishedYears',
+      response: {
+        200: schemaRef('ContestFinishedYearsResponse'),
+        401: schemaRef('ErrorEnvelope'),
+        403: schemaRef('ErrorEnvelope'),
+      },
+    },
+    preHandler: requireMemberOfLeague(membershipRepo, leagueFromPath),
+    handler: handlers.listFinishedYears,
+  });
+
+  fastify.get('/my-entries', {
+    schema: {
+      tags: ['Contests'],
+      summary: "List the requester's entries in a league's current contests",
+      description:
+        "The requester's own squad's entries, drafts included, in each of the league's OPEN and ACTIVE contests, each with its status in every event of its contest and without its picks (#1197): one read for what league home, the Contests page's My entries and My team show, however many contests are current. Empty without an active squad in the league. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.",
+      operationId: 'listMyContestEntries',
+      response: {
+        200: schemaRef('MyContestEntriesResponse'),
+        401: schemaRef('ErrorEnvelope'),
+        403: schemaRef('ErrorEnvelope'),
+      },
+    },
+    preHandler: requireMemberOfLeague(membershipRepo, leagueFromPath),
+    handler: handlers.listMyEntries,
   });
 
   fastify.post('/', {
@@ -179,7 +215,7 @@ export function contestsByIdModule(fastify: FastifyInstance, opts: MailModuleOpt
       tags: ['Contests'],
       summary: 'Get a contest by ID',
       description:
-        'Returns detailed contest information by contest ID for league, entry, and history surfaces that already know the contest identifier. Active members of the contest\'s league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.',
+        'Returns detailed contest information by contest ID for league, entry, and history surfaces that already know the contest identifier, with its entries counted and the ids of the requester\'s own entries in it (#1197). Active members of the contest\'s league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.',
       operationId: 'getContest',
       response: {
         200: schemaRef('ContestResponse'),

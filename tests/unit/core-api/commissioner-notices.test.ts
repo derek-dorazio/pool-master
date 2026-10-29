@@ -43,6 +43,7 @@ describe('CommissionerNotices', () => {
   let finals: Map<string, ContestFinalStandings>;
   let eventPages: Map<string, EventPage>;
   let eventPageReads: number;
+  let sportLeagueReads: number;
 
   beforeEach(() => {
     world = new InMemoryContestWorld();
@@ -51,6 +52,7 @@ describe('CommissionerNotices', () => {
     finals = new Map();
     eventPages = new Map();
     eventPageReads = 0;
+    sportLeagueReads = 0;
   });
 
   function notices(): CommissionerNotices {
@@ -75,7 +77,13 @@ describe('CommissionerNotices', () => {
       templates: { list: async () => templates },
       leagues: world.leagueRepo(),
       readConfig: () => config,
-      sportLeagues: { findById: async (id) => ({ id, name: SPORT_LEAGUE_NAMES[id] ?? id } as SportLeague) },
+      sportLeagues: {
+        findById: async (id) => ({ id, name: SPORT_LEAGUE_NAMES[id] ?? id } as SportLeague),
+        findByIds: async (ids) => {
+          sportLeagueReads += 1;
+          return ids.map((id) => ({ id, name: SPORT_LEAGUE_NAMES[id] ?? id } as SportLeague));
+        },
+      },
       memberships: world.membershipRepo(),
       users: world.userRepo(),
       eventPages: { pagesByEvent: () => { eventPageReads += 1; return Promise.resolve(eventPages); } },
@@ -307,6 +315,19 @@ describe('CommissionerNotices', () => {
   });
 
   describe('Weekly digest', () => {
+    it('names the sport leagues of every upcoming event from one read', async () => {
+      const office = world.addLeague({ name: 'Office League', eventEmailDelivery: EventEmailDelivery.WEEKLY_DIGEST });
+      person(office.id, 'Casey');
+      event({ name: 'The Masters', startDate: mondayPlus(2) });
+      event({ name: 'RBC Heritage', startDate: mondayPlus(4) });
+      event({ name: 'Valspar Championship', startDate: mondayPlus(6) });
+
+      await notices().queueDue(MONDAY);
+
+      expect(sent('EVENT_WEEKLY_DIGEST')).toHaveLength(1);
+      expect(sportLeagueReads).toBe(1);
+    });
+
     it("sends each commissioner of a league that chose the digest one email on Monday listing the next two weeks' events by week, with where the league stands on each and a link to the event's page when one offers it, instead of the per-event emails", async () => {
       const office = world.addLeague({ name: 'Office League', leagueCode: 'OFFICE24', eventEmailDelivery: EventEmailDelivery.WEEKLY_DIGEST });
       const perEvent = world.addLeague({ name: 'Per Event League' });

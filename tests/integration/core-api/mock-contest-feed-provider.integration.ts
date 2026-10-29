@@ -23,13 +23,14 @@ import {
 } from '../helpers';
 import { startMockContestFeedProvider } from '../mock-contest-feed-provider-helper';
 import { linkedProviderEvent } from '../../support/event-edition';
-import { readStoredSyncRunPayload } from '../../support/sync-run-payload';
+import { readStoredSyncRunDetails, readStoredSyncRunPayload } from '../../support/sync-run-payload';
 import {
   PrismaParticipantProviderMappingRepository,
   PrismaProviderSyncRunRepository,
   PrismaSportEventRepository,
 } from '../../../packages/core-api/src/adapters';
 import { expectDefined } from '../../support/expect-defined';
+import { passReadCacheTtl, restoreReadCacheClock } from '../../support/read-cache-clock';
 
 const providerId = 'mock-contest-feed';
 const eventExternalId = 'golf-masters-2026';
@@ -201,7 +202,7 @@ async function waitForProviderSyncRuns(ids: string[]) {
     if (rows.length === ids.length && terminalRows.length === ids.length) {
       const failedRun = rows.find((row) => row.status === 'FAILED');
       if (failedRun) {
-        throw new Error(`Provider sync run ${failedRun.id} failed: ${JSON.stringify(failedRun.payloadJson)}`);
+        throw new Error(`Provider sync run ${failedRun.id} failed: ${JSON.stringify({ payload: failedRun.payloadJson, details: failedRun.detailsJson })}`);
       }
       return rows.sort((left, right) => (idOrder.get(left.id) ?? 0) - (idOrder.get(right.id) ?? 0));
     }
@@ -226,7 +227,7 @@ async function waitForScheduledProviderSyncRuns(providerIdToFind: string, expect
     if (scheduledRows.length >= expectedRunCount && terminalRows.length >= expectedRunCount) {
       const failedRun = scheduledRows.find((row) => row.status === 'FAILED');
       if (failedRun) {
-        throw new Error(`Scheduled provider sync run ${failedRun.id} failed: ${JSON.stringify(failedRun.payloadJson)}`);
+        throw new Error(`Scheduled provider sync run ${failedRun.id} failed: ${JSON.stringify({ payload: failedRun.payloadJson, details: failedRun.detailsJson })}`);
       }
       return scheduledRows;
     }
@@ -238,8 +239,8 @@ async function waitForScheduledProviderSyncRuns(providerIdToFind: string, expect
   throw new Error(`Timed out waiting for ${expectedRunCount} scheduled provider sync runs for ${providerIdToFind}`);
 }
 
-function providerPayloadPaths(payloadJson: unknown): string[] {
-  const captures = readStoredSyncRunPayload(payloadJson)?.providerPayload?.raw ?? [];
+function providerPayloadPaths(detailsJson: unknown): string[] {
+  const captures = readStoredSyncRunDetails(detailsJson)?.providerPayload?.raw ?? [];
   return captures.flatMap((capture) => (capture.path === undefined ? [] : [capture.path]));
 }
 
@@ -445,7 +446,9 @@ async function createGolfLivePick(entryId: string, sportEventParticipantId: stri
   });
 }
 
+/** The board as a viewer's next poll reads it, past the board cached by the last read (#1162). */
 async function readGolfLeaderboard(contestId: string, headers: Record<string, string>) {
+  passReadCacheTtl();
   const response = await getApp().inject({
     method: 'GET',
     url: `/api/v1/contests/${contestId}/leaderboard`,
@@ -474,6 +477,7 @@ beforeAll(async () => {
 });
 
 afterEach(async () => {
+  restoreReadCacheClock();
   await cleanupTestData();
   await cleanupMockProviderImportData();
 });
@@ -783,7 +787,18 @@ describe('mock contest feed provider event-first verification', () => {
       rootAdmin.user.id,
       rootAdmin.user.email,
     );
-    await waitForProviderSyncRuns(manualField.syncRuns.map((run) => run.id));
+    const firstFieldRuns = await waitForProviderSyncRuns(manualField.syncRuns.map((run) => run.id));
+    expect(firstFieldRuns[0].detailsJson).toEqual(expect.objectContaining({
+      writeDiagnostics: expect.objectContaining({
+        rows: expect.arrayContaining([
+          expect.objectContaining({
+            entityType: 'SportEventParticipant',
+            externalId: eventExternalId,
+            participantExternalId: 'golfer-01',
+          }),
+        ]),
+      }),
+    }));
 
     const manualFieldRefresh = await providerService.syncEventData(
       {
@@ -795,21 +810,14 @@ describe('mock contest feed provider event-first verification', () => {
       rootAdmin.user.email,
     );
     const fieldRuns = await waitForProviderSyncRuns(manualFieldRefresh.syncRuns.map((run) => run.id));
-    expect(fieldRuns[0].payloadJson).toEqual(expect.objectContaining({
-      requestedFeed: 'EVENTPARTICIPANTS',
+    expect(fieldRuns[0].payloadJson).toEqual(expect.objectContaining({ requestedFeed: 'EVENTPARTICIPANTS' }));
+    expect(fieldRuns[0].detailsJson).toEqual(expect.objectContaining({
       jobPayload: expect.objectContaining({ status: 'COMPLETED' }),
-      writeDiagnostics: expect.objectContaining({
-        summary: expect.objectContaining({
-          total: 80,
-        }),
-        rows: expect.arrayContaining([
-          expect.objectContaining({
-            entityType: 'SportEventParticipant',
-            externalId: eventExternalId,
-            participantExternalId: 'golfer-01',
-          }),
-        ]),
-      }),
+      // A refresh of an unchanged field counts all 80 golfers and stores none of their rows (#1174).
+      writeDiagnostics: {
+        summary: { total: 80, unchanged: 80, created: 0, updated: 0, deleted: 0 },
+        rows: [],
+      },
     }));
 
     scheduler.start();
@@ -844,7 +852,7 @@ describe('mock contest feed provider event-first verification', () => {
     ]);
 
     const scheduledPayloadPaths = scheduledRuns
-      .flatMap((run) => providerPayloadPaths(run.payloadJson));
+      .flatMap((run) => providerPayloadPaths(run.detailsJson));
     expect(scheduledPayloadPaths).toEqual(expect.arrayContaining([
       '/v1/scenarios',
       '/v1/scenarios/golf-major-2026/events',
@@ -858,7 +866,7 @@ describe('mock contest feed provider event-first verification', () => {
     });
     expect(persistedProviderSports.map((row) => row.sport)).toEqual(['GOLF']);
     // #205 — each run carries the job it executed (`jobPayload`); the separate job table is gone.
-    expect(scheduledRunPayloads.map((payload) => payload?.jobPayload)).toEqual([
+    expect(scheduledRuns.map((run) => readStoredSyncRunDetails(run.detailsJson)?.jobPayload)).toEqual([
       expect.objectContaining({ jobType: 'EVENT_PARTICIPANTS_SYNC' }),
     ]);
   });

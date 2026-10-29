@@ -4,7 +4,7 @@
  * the whole bracket is written in one insert and its foreign keys are checked once at its end.
  */
 
-import type { PrismaClient } from '@prisma/client';
+import type { Prisma, PrismaClient } from '@prisma/client';
 import type {
   MatchResultApply,
   SportEventMatchPatch,
@@ -14,8 +14,19 @@ import type {
 import { MatchSide } from '@poolmaster/shared/domain';
 import type { SportEventMatch, SportEventMatchPeriodScore } from '@poolmaster/shared/domain';
 
+/** What a match is read with: its round's number and its period scores in order. */
+export const MATCH_INCLUDE = {
+  sportEventRound: { select: { roundNumber: true } },
+  periodScores: { select: { periodNumber: true, homeScore: true, awayScore: true }, orderBy: { periodNumber: 'asc' } },
+} satisfies Prisma.SportEventMatchInclude;
+
 export class PrismaSportEventMatchRepository implements SportEventMatchRepository {
   constructor(private readonly prisma: PrismaClient) {}
+
+  async findById(id: string): Promise<SportEventMatch | null> {
+    const row = await this.prisma.sportEventMatch.findUnique({ where: { id }, include: MATCH_INCLUDE });
+    return row ? toSportEventMatch(row) : null;
+  }
 
   async findBySportEvent(sportEventId: string): Promise<SportEventMatch[]> {
     return this.findBySportEvents([sportEventId]);
@@ -25,17 +36,10 @@ export class PrismaSportEventMatchRepository implements SportEventMatchRepositor
     if (sportEventIds.length === 0) return [];
     const rows = await this.prisma.sportEventMatch.findMany({
       where: { sportEventId: { in: [...sportEventIds] } },
-      include: {
-        sportEventRound: { select: { roundNumber: true } },
-        periodScores: { select: { periodNumber: true, homeScore: true, awayScore: true }, orderBy: { periodNumber: 'asc' } },
-      },
+      include: MATCH_INCLUDE,
       orderBy: [{ sportEventId: 'asc' }, { matchNumber: 'asc' }],
     });
-    return rows.map(({ sportEventRound, sportEventRoundId: _roundId, homeSpread, ...row }) => ({
-      ...row,
-      roundNumber: sportEventRound.roundNumber,
-      homeSpread: homeSpread === null ? null : Number(homeSpread),
-    }));
+    return rows.map(toSportEventMatch);
   }
 
   async replaceBracket(sportEventId: string, matches: readonly SportEventMatchWrite[]): Promise<void> {
@@ -74,6 +78,7 @@ export class PrismaSportEventMatchRepository implements SportEventMatchRepositor
   }
 
   async placeSides(sides: readonly { id: string; homeSportEventParticipantId: string; awaySportEventParticipantId: string }[]): Promise<void> {
+    // poolmaster-allow-query-in-loop: one round's matches (per-row values, one transaction)
     await this.prisma.$transaction(sides.map(({ id, ...values }) => this.prisma.sportEventMatch.update({ where: { id }, data: values })));
   }
 
@@ -89,6 +94,7 @@ export class PrismaSportEventMatchRepository implements SportEventMatchRepositor
             : { awaySportEventParticipantId: sideFill.sportEventParticipantId },
         })]
         : []),
+      // poolmaster-allow-query-in-loop: one event's field (per-row values, one transaction)
       ...standings.map(({ sportEventParticipantId, ...standing }) => this.prisma.sportEventParticipantStanding.upsert({
         where: { sportEventParticipantId },
         create: { sportEventParticipantId, ...standing },
@@ -96,4 +102,14 @@ export class PrismaSportEventMatchRepository implements SportEventMatchRepositor
       })),
     ]);
   }
+}
+
+export function toSportEventMatch(
+  { sportEventRound, sportEventRoundId: _roundId, homeSpread, ...row }: Prisma.SportEventMatchGetPayload<{ include: typeof MATCH_INCLUDE }>,
+): SportEventMatch {
+  return {
+    ...row,
+    roundNumber: sportEventRound.roundNumber,
+    homeSpread: homeSpread === null ? null : Number(homeSpread),
+  };
 }

@@ -17,6 +17,7 @@ import type {
   LeaguePlanChangeReason,
   LeagueInvitation,
   LeagueMembership,
+  LeagueRole,
   Participant,
   ParticipantProviderMapping,
   Squad,
@@ -66,6 +67,8 @@ export interface UserUpdate {
 
 export interface UserRepository {
   findById(id: string): Promise<User | null>;
+  /** The users with these ids, in one read (#1196); an id with no user is left out. */
+  findByIds(ids: readonly string[]): Promise<User[]>;
   findByEmail(email: string): Promise<User | null>;
 
   /**
@@ -82,17 +85,17 @@ export interface UserRepository {
   findAll(filters?: UserSearchFilters): Promise<User[]>;
 
   /**
-   * Users holding a `LeagueMembership` in the given league, ordered by name.
+   * Users holding an ACTIVE `LeagueMembership` in the given league, ordered by name.
    *
    * This is the **scoped** peer read that access rules A4 and A6 require: a league member
    * may read other members' user data, but only indirectly, through the league join. The
    * league is the scope, so it is a parameter rather than a filter — there is no way to
    * call this without one.
    *
-   * Returns every membership status. Callers that want active members only filter on the
-   * membership, which they must already load to know the role.
+   * A removed member's INACTIVE row is left out in SQL (#1182): every caller wants the
+   * current members, and a league's removed members only grow over the years.
    */
-  findByLeague(leagueId: string): Promise<User[]>;
+  findActiveByLeague(leagueId: string): Promise<User[]>;
 
   /**
    * Resolves a user by an identifier that may be either their email or their username.
@@ -182,8 +185,11 @@ export interface LeagueRepository {
    * application code: `membershipRepo.findByUser` followed by a `findById` per membership,
    * which is N+1 and had to log and skip memberships whose league had vanished. One query
    * cannot produce that orphan case, because the join only returns rows that exist.
+   *
+   * `filters` narrow it in SQL as they narrow `findAll` (#1182), so a member's search never
+   * reads all their leagues to keep a few.
    */
-  findByUser(userId: string): Promise<League[]>;
+  findByUser(userId: string, filters?: LeagueSearchFilters): Promise<League[]>;
 
   /**
    * The points table starts STANDARD, the plan PREMIUM renewing six months from now, no sport
@@ -235,6 +241,7 @@ export interface LeagueRepository {
 }
 
 export interface LeagueMembershipRepository {
+  /** The league's ACTIVE memberships, earliest joiner first. */
   findByLeague(leagueId: string): Promise<LeagueMembership[]>;
   findByUser(userId: string): Promise<LeagueMembership[]>;
 
@@ -258,9 +265,37 @@ export interface LeagueMembershipRepository {
   update(id: string, updates: Partial<LeagueMembership>): Promise<LeagueMembership>;
 }
 
+/**
+ * One owner of a squad: the membership, any status, with the member's user and their role in the
+ * squad's league (#1202), null only if they hold no membership there.
+ */
+export interface SquadMemberDetails {
+  membership: SquadMembership;
+  user: User;
+  leagueRole: LeagueRole | null;
+}
+
+/**
+ * A squad with its owners (#1165): every membership, any status, in join order, each with its
+ * user. What a team page and the team list show, read in one go rather than squad, then
+ * memberships, then every user in the league.
+ */
+export interface SquadDetails extends Squad {
+  members: SquadMemberDetails[];
+}
+
+/** A squad membership with its squad's name: the league context's squad edge (#1165). */
+export interface SquadMembershipWithSquadName extends SquadMembership {
+  squadName: string;
+}
+
 export interface SquadRepository {
   findById(id: string): Promise<Squad | null>;
   findByLeague(leagueId: string, includeInactive?: boolean): Promise<Squad[]>;
+  findDetailsById(id: string): Promise<SquadDetails | null>;
+  /** Every squad in the league, active and inactive, oldest first, with its owners. */
+  findDetailsByLeague(leagueId: string): Promise<SquadDetails[]>;
+  countActiveByLeague(leagueId: string): Promise<number>;
   /**
    * Resolves a squad by its name within a league. Squad names are unique per league
    * (`@@unique([leagueId, name])`, #202), so this returns at most one row, and it
@@ -284,6 +319,8 @@ export interface SquadMembershipRepository {
   findBySquads(squadIds: readonly string[], includeInactive?: boolean): Promise<SquadMembership[]>;
   findBySquadAndUser(squadId: string, userId: string): Promise<SquadMembership | null>;
   findByLeagueAndUser(leagueId: string, userId: string): Promise<SquadMembership | null>;
+  /** `findByLeagueAndUser` with the squad's name, in the same read. */
+  findByLeagueAndUserWithSquadName(leagueId: string, userId: string): Promise<SquadMembershipWithSquadName | null>;
   create(
     membership: Omit<SquadMembership, 'id' | 'createdAt' | 'updatedAt'>,
   ): Promise<SquadMembership>;
@@ -294,6 +331,8 @@ export interface SquadOwnerInvitationRepository {
   findById(id: string): Promise<SquadOwnerInvitation | null>;
   findByLeague(leagueId: string): Promise<SquadOwnerInvitation[]>;
   findByCode(inviteCode: string): Promise<SquadOwnerInvitation | null>;
+  /** Marks the squad's PENDING invitations REVOKED in one write (#1182); answers how many. */
+  revokePendingBySquad(squadId: string): Promise<number>;
   findPendingByLeagueAndEmail(
     leagueId: string,
     email: string,
@@ -326,7 +365,11 @@ export interface MembershipTransaction {
 
 export interface LeagueInvitationRepository {
   findById(id: string): Promise<LeagueInvitation | null>;
-  findByLeague(leagueId: string): Promise<LeagueInvitation[]>;
+  /**
+   * The league's outstanding invitations, newest first (#221, #1182): every PENDING invitation,
+   * plus email invites that went EXPIRED unaccepted, filtered in SQL.
+   */
+  findOutstandingByLeague(leagueId: string): Promise<LeagueInvitation[]>;
   findByCode(inviteCode: string): Promise<LeagueInvitation | null>;
   findByEmail(leagueId: string, email: string): Promise<LeagueInvitation | null>;
   create(invitation: Omit<LeagueInvitation, 'id' | 'createdAt' | 'updatedAt'>): Promise<LeagueInvitation>;
@@ -345,8 +388,11 @@ export interface ParticipantRepository {
   findByIds(ids: readonly string[]): Promise<Participant[]>;
   /** Whole result, narrowed by the query and filters — never paged (§16). Ordered by name. */
   search(query: string, filters: ParticipantSearchFilters): Promise<Participant[]>;
-  /** Candidates for an upload row within one sport; exact match on each identifier given. */
-  findMatching(sportId: string, query: ParticipantMatchQuery): Promise<Participant[]>;
+  /**
+   * Candidates for a whole upload within one sport, in one read (#1183): every participant any
+   * of the queries matches, exactly on each identifier a query gives. Ordered by name.
+   */
+  findMatchingAny(sportId: string, queries: readonly ParticipantMatchQuery[]): Promise<Participant[]>;
   create(participant: Omit<Participant, 'id' | 'createdAt' | 'updatedAt'>): Promise<Participant>;
   update(id: string, updates: Partial<Participant>): Promise<Participant>;
 }
@@ -370,7 +416,19 @@ export interface ParticipantProviderMappingRepository {
  */
 export interface ContestRepository {
   findById(id: string): Promise<Contest | null>;
-  findByLeague(leagueId: string): Promise<Contest[]>;
+  /** The league's contests in one of `statuses`, newest first. */
+  findByLeague(leagueId: string, statuses: readonly Contest['status'][]): Promise<Contest[]>;
+  /**
+   * The league's current contests (#1161), newest first: DRAFT, OPEN and ACTIVE, less any DRAFT
+   * that can never open (#1217): one with an event COMPLETED or CANCELLED, and one whose cutoff is
+   * its event's start once an event has started by `now`. A DRAFT with no events stays, and so
+   * does a bracket starting after round 1 or a squares draft with its game, which close later.
+   */
+  findCurrentByLeague(leagueId: string, now: Date): Promise<Contest[]>;
+  /** The league's COMPLETED contests that ended in [`endedFrom`, `endedBefore`), newest first (#1161). */
+  findFinishedByLeague(leagueId: string, endedFrom: Date, endedBefore: Date): Promise<Contest[]>;
+  /** Each championship year, US Eastern, a COMPLETED contest of the league ended in, newest first (#1161). */
+  findFinishedYearsByLeague(leagueId: string): Promise<number[]>;
   /** The league's contests open for entries, oldest first, by id and name only: the welcome email lists them (#903). */
   findOpenByLeague(leagueId: string): Promise<Array<Pick<Contest, 'id' | 'name'>>>;
   /**
@@ -380,6 +438,13 @@ export interface ContestRepository {
   findSportLeagueIdsBySeason(leagueId: string, seasonYear: number): Promise<string[]>;
   /** The event's contests, oldest first, optionally narrowed to or away from some statuses. */
   findBySportEvent(sportEventId: string, filter?: ContestStatusFilter): Promise<Contest[]>;
+  /**
+   * The contests a released edition can join (#714, #1179): made from a template covering the
+   * edition's series (matched by the series' name within its sport league), not COMPLETED, not
+   * drawn, without the edition yet, and every event of the edition's year. All in one query,
+   * oldest configuration first; none when the series is gone.
+   */
+  findJoinableByReleasedEdition(edition: ReleasedEdition): Promise<Contest[]>;
   /** Every contest in one of `statuses`, oldest first, across leagues: the entry reminders' sweep reads it (#845). */
   findByStatuses(statuses: readonly Contest['status'][]): Promise<Contest[]>;
   /**
@@ -414,6 +479,13 @@ export interface ContestRepository {
   setCupWeight(id: string, cupWeight: Contest['cupWeight'], whileIn: readonly Contest['status'][]): Promise<boolean>;
   /** Deletes a contest with its entries, picks, selection state, configuration and rules. */
   delete(id: string): Promise<void>;
+}
+
+/** A sport event just released, as `ContestRepository.findJoinableByReleasedEdition` matches it. */
+export interface ReleasedEdition {
+  id: string;
+  eventSeriesId: string;
+  eventYear: number;
 }
 
 export interface ContestStatusFilter {
@@ -494,6 +566,15 @@ export interface ContestEntryCreateLimits {
    */
   entriesPerContest: (expandedTo: number | null) => number | null;
 }
+/** A contest's entries counted (#1197). */
+export interface ContestEntryTotals {
+  /** Entries that submitted at least one event: a draft is not an entry until submitted (#481). */
+  submittedEntryCount: number;
+  /** Squads with at least one such entry. */
+  enteredSquadCount: number;
+  /** Every entry, drafts included, as the plan's entry cap counts them (#947). */
+  allEntryCount: number;
+}
 export type ContestEntryDeleteResult = { status: 'deleted' } | { status: 'contestDrawn' };
 
 export interface ContestEntryRepository {
@@ -504,9 +585,24 @@ export interface ContestEntryRepository {
    * that event alone (#481, per event since #713).
    */
   findByContestWithSquad(contestId: string, options?: { submittedFor?: string }): Promise<ContestEntryWithSquad[]>;
-  findBySquad(squadId: string): Promise<ContestEntry[]>;
+  /** The squad's entries in one contest, drafts included, in entry-number order (#1167). */
+  findByContestAndSquad(contestId: string, squadId: string): Promise<ContestEntry[]>;
+  /** The ids alone of the squad's entries in one contest, drafts included, in entry-number order (#1197). */
+  findIdsByContestAndSquad(contestId: string, squadId: string): Promise<string[]>;
+  /**
+   * The squad's entries in the contests, drafts included, in entry-number order within each
+   * contest (#1197): one read for a squad's entries across a league's current contests.
+   */
+  findBySquadAndContests(squadId: string, contestIds: readonly string[]): Promise<ContestEntryWithSquad[]>;
+  /** One contest's entry totals (#1197): what a single-contest read reports. */
+  countForContest(contestId: string): Promise<ContestEntryTotals>;
   /** Every entry each contest holds, drafts included, by contest id (#972); 0 for one with none. */
   countByContests(contestIds: readonly string[]): Promise<Map<string, number>>;
+  /**
+   * The entries of each contest that submitted at least one event, by contest id (#1161); 0 for
+   * one with none. A draft is not an entry until its owner submits it (#481).
+   */
+  countSubmittedByContests(contestIds: readonly string[]): Promise<Map<string, number>>;
   /**
    * Creates the entry with a DRAFT status row for each of its contest's events (#713). The
    * contest's entries are counted under its row lock (#947), so two entries taking the last place

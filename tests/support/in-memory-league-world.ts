@@ -7,12 +7,13 @@
  * mirrors its adapter's filter, because a fake that is more forgiving than the database hides
  * exactly the defects these tests are for:
  *
- *   - `memberships.findByLeague` / `findByUser` / `countActiveByLeagues` → ACTIVE rows only
+ *   - `memberships.findByLeague` / `findByUser` / `countActiveByLeagues` → ACTIVE rows only;
+ *     `findByLeague` earliest joiner first
  *   - `memberships.findByLeagueAndUser` → any status (unique on league + user)
  *   - `leagues.findByUser` → leagues where the user holds an ACTIVE membership
  *   - `squads.findByLeague` → active squads unless `includeInactive`
  *   - `squadMemberships.findBySquad(s)` → ACTIVE rows unless `includeInactive`
- *   - `users.findByLeague` → users with a membership of ANY status, as the port documents
+ *   - `users.findActiveByLeague` → users with an ACTIVE membership, as the port documents
  *   - `leagueInvitations.findByEmail` / `ownerInvitations.findPendingByLeagueAndEmail` → PENDING
  *
  * `transaction` stands in for `PrismaMembershipTransaction`: it hands the work views of these
@@ -28,9 +29,11 @@ import type {
   LeagueInvitationRepository,
   LeagueMembershipRepository,
   LeagueRepository,
+  LeagueSearchFilters,
   MembershipTransaction,
   SquadMembershipRepository,
   SquadOwnerInvitationRepository,
+  SquadDetails,
   SquadRepository,
   UserRepository,
 } from '@poolmaster/shared/db';
@@ -50,6 +53,7 @@ import {
   LeaguePlan,
   LeaguePlanChangeReason,
   InvitationStatus,
+  InviteType,
   LeagueIconKey,
   LeagueMembershipStatus,
   LeagueRole,
@@ -168,15 +172,21 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
   const ownerInvitations = new Table<SquadOwnerInvitation>('owner-invitation');
 
   const isActiveMembership = (row: LeagueMembership) => row.status === LeagueMembershipStatus.ACTIVE;
+  const matchesLeagueSearch = (row: League, filters: LeagueSearchFilters) => {
+    const search = filters.search?.trim().toLowerCase();
+    return (filters.isActive === undefined || row.isActive === filters.isActive)
+      && (!search || row.name.toLowerCase().includes(search));
+  };
   const isActiveSquadMembership = (row: SquadMembership) => row.status === SquadMembershipStatus.ACTIVE;
   const one = <T>(rows: T[]): T | null => rows[0] ?? null;
 
   const userRepo: UserRepository = {
     findById: async (id) => users.get(id),
+    findByIds: async (ids) => users.where((row) => ids.includes(row.id)),
     findByEmail: async (email) => one(users.where((row) => row.email === email)),
     findAll: async () => users.where(() => true),
-    findByLeague: async (leagueId) => {
-      const userIds = new Set(memberships.where((row) => row.leagueId === leagueId).map((row) => row.userId));
+    findActiveByLeague: async (leagueId) => {
+      const userIds = new Set(memberships.where((row) => row.leagueId === leagueId && isActiveMembership(row)).map((row) => row.userId));
       return users.where((row) => userIds.has(row.id));
     },
     findByIdentifier: async (identifier) =>
@@ -195,17 +205,12 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
   const leagueRepo: LeagueRepository = {
     findById: async (id) => leagues.get(id),
     findByCode: async (code) => one(leagues.where((row) => row.leagueCode === code)),
-    findAll: async (filters = {}) => {
-      const search = filters.search?.trim().toLowerCase();
-      return leagues.where((row) =>
-        (filters.isActive === undefined || row.isActive === filters.isActive)
-        && (!search || row.name.toLowerCase().includes(search)));
-    },
-    findByUser: async (userId) => {
+    findAll: async (filters = {}) => leagues.where((row) => matchesLeagueSearch(row, filters)),
+    findByUser: async (userId, filters = {}) => {
       const leagueIds = new Set(
         memberships.where((row) => row.userId === userId && isActiveMembership(row)).map((row) => row.leagueId),
       );
-      return leagues.where((row) => leagueIds.has(row.id));
+      return leagues.where((row) => leagueIds.has(row.id) && matchesLeagueSearch(row, filters));
     },
     // The points table starts STANDARD, the Hall of Lame shown, the plan PREMIUM renewing in six
     // months and no sport league muted, as the database defaults have them.
@@ -271,7 +276,8 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
 
   const membershipRepo: LeagueMembershipRepository = {
     findByLeague: async (leagueId) =>
-      memberships.where((row) => row.leagueId === leagueId && isActiveMembership(row)),
+      memberships.where((row) => row.leagueId === leagueId && isActiveMembership(row))
+        .sort((a, b) => a.joinedAt.getTime() - b.joinedAt.getTime()),
     findByUser: async (userId) =>
       memberships.where((row) => row.userId === userId && isActiveMembership(row)),
     countActiveByLeagues: async (leagueIds) => {
@@ -295,10 +301,28 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
     update: async (id, updates) => memberships.patch(id, updates),
   };
 
+  const squadDetails = (squad: Squad): SquadDetails => ({
+    ...squad,
+    members: squadMemberships.where((row) => row.squadId === squad.id)
+      .sort((left, right) => left.joinedAt.getTime() - right.joinedAt.getTime())
+      .flatMap((membership) => {
+        const user = users.get(membership.userId);
+        const leagueRole = memberships
+          .where((row) => row.leagueId === squad.leagueId && row.userId === membership.userId)[0]?.role ?? null;
+        return user ? [{ membership, user, leagueRole }] : [];
+      }),
+  });
+
   const squadRepo: SquadRepository = {
     findById: async (id) => squads.get(id),
     findByLeague: async (leagueId, includeInactive = false) =>
       squads.where((row) => row.leagueId === leagueId && (includeInactive || row.isActive)),
+    findDetailsById: async (id) => {
+      const squad = squads.get(id);
+      return squad ? squadDetails(squad) : null;
+    },
+    findDetailsByLeague: async (leagueId) => squads.where((row) => row.leagueId === leagueId).map(squadDetails),
+    countActiveByLeague: async (leagueId) => squads.where((row) => row.leagueId === leagueId && row.isActive).length,
     findByLeagueAndName: async (leagueId, name) =>
       one(squads.where((row) => row.leagueId === leagueId && row.name === name)),
     create: async (row) => squads.insert(row),
@@ -314,6 +338,11 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
       one(squadMemberships.where((row) => row.squadId === squadId && row.userId === userId)),
     findByLeagueAndUser: async (leagueId, userId) =>
       one(squadMemberships.where((row) => row.leagueId === leagueId && row.userId === userId)),
+    findByLeagueAndUserWithSquadName: async (leagueId, userId) => {
+      const membership = one(squadMemberships.where((row) => row.leagueId === leagueId && row.userId === userId));
+      const squad = membership ? squads.get(membership.squadId) : null;
+      return membership && squad ? { ...membership, squadName: squad.name } : null;
+    },
     create: async (row) => {
       if (squadMemberships.where((item) => item.leagueId === row.leagueId && item.userId === row.userId).length) {
         throw new Error(`Unique constraint: squad membership for ${row.userId} in ${row.leagueId} exists`);
@@ -325,7 +354,10 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
 
   const leagueInvitationRepo: LeagueInvitationRepository = {
     findById: async (id) => leagueInvitations.get(id),
-    findByLeague: async (leagueId) => leagueInvitations.where((row) => row.leagueId === leagueId),
+    findOutstandingByLeague: async (leagueId) => leagueInvitations.where((row) =>
+      row.leagueId === leagueId
+      && (row.status === InvitationStatus.PENDING
+        || (row.status === InvitationStatus.EXPIRED && row.inviteType === InviteType.EMAIL))),
     findByCode: async (code) => one(leagueInvitations.where((row) => row.inviteCode === code)),
     findByEmail: async (leagueId, email) =>
       one(leagueInvitations.where((row) =>
@@ -341,6 +373,13 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
     findPendingByLeagueAndEmail: async (leagueId, email) =>
       one(ownerInvitations.where((row) =>
         row.leagueId === leagueId && row.email === email && row.status === SquadOwnerInvitationStatus.PENDING)),
+    revokePendingBySquad: async (squadId) => {
+      const pending = ownerInvitations.where((row) => row.squadId === squadId && row.status === SquadOwnerInvitationStatus.PENDING);
+      for (const row of pending) {
+        ownerInvitations.patch(row.id, { status: SquadOwnerInvitationStatus.REVOKED });
+      }
+      return pending.length;
+    },
     create: async (row) => ownerInvitations.insert(row),
     update: async (id, updates) => ownerInvitations.patch(id, updates),
   };
@@ -368,6 +407,7 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
   squadMembershipRepo.update = outsideTransactionGuard('squadMemberships.update', squadMembershipRepo.update);
   ownerInvitationRepo.create = outsideTransactionGuard('ownerInvitations.create', ownerInvitationRepo.create);
   ownerInvitationRepo.update = outsideTransactionGuard('ownerInvitations.update', ownerInvitationRepo.update);
+  ownerInvitationRepo.revokePendingBySquad = outsideTransactionGuard('ownerInvitations.revokePendingBySquad', ownerInvitationRepo.revokePendingBySquad);
 
   /**
    * The repository a transaction's work sees. Each call is looked up on the world's repository

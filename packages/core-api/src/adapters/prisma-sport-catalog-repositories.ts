@@ -2,10 +2,11 @@
  * Prisma adapters for the cross-sport catalog and event-core ports (#235, #236):
  * Sport, SportLeague, ParticipantLeagueAffiliation, SportEvent, EventSeries,
  * SportEventRound, SportEventParticipant, SportEventTier,
- * SportEventParticipantValuation, and the core SportEventParticipantRound / Standing rows.
+ * and SportEventParticipantValuation.
  *
- * Sport extension rows (the golf round and standing tables) are not read here —
- * a core row never carries a sport particular.
+ * Sport extension rows (golf rounds and standings, stat lines, race results, matches) have
+ * their own adapters. The one exception is the field read (#1163): a field row comes with
+ * every extension at once, mapped by those adapters' own mappers.
  */
 
 import type { Prisma, PrismaClient } from '@prisma/client';
@@ -21,15 +22,15 @@ import type {
   SportEventParticipantFieldUpdate,
   SportEventParticipantPatch,
   SportEventParticipantRepository,
-  SportEventParticipantRoundRepository,
   SportEventParticipantValuationRepository,
-  SportEventParticipantStandingRepository,
+  SportEventParticipantView,
   SportEventProviderSummary,
   SportEventRepository,
   SportEventRoundRepository,
   SportEventRoundSchedule,
   SportEventTierDefinition,
   SportEventTierRepository,
+  SportEventStatusTransition,
   SportEventUpdate,
   SportLeagueFilters,
   SportLeagueRepository,
@@ -45,8 +46,6 @@ import type {
   SportConfig,
   SportEvent,
   SportEventParticipant,
-  SportEventParticipantRound,
-  SportEventParticipantStanding,
   SportEventParticipantValuation,
   SportEventRound,
   SportEventSyncScope,
@@ -54,7 +53,12 @@ import type {
   SportLeague,
 } from '@poolmaster/shared/domain';
 import { EventPricingConfigSchema, MatchSide, ParticipantInactiveReason, ParticipantStatus, SportEventStatus, ValuationSource } from '@poolmaster/shared/domain';
+import { forgettingReads, memoizedRead, memoizedReadMany, ReadMemoKey } from '../core/request-read-memo';
+import { toGolfRound, toGolfStanding } from './prisma-golf-repositories';
+import { MATCH_INCLUDE, toSportEventMatch } from './prisma-match-repositories';
 import { mapToParticipant } from './prisma-participant-repository';
+import { toRaceResult } from './prisma-race-repositories';
+import { toStatLine } from './prisma-stat-line-repositories';
 
 type Db = PrismaClient;
 
@@ -81,8 +85,20 @@ export class PrismaSportLeagueRepository implements SportLeagueRepository {
   constructor(private readonly prisma: Db) {}
 
   async findById(id: string): Promise<SportLeague | null> {
-    const row = await this.prisma.sportLeague.findUnique({ where: { id } });
-    return row ? toSportLeague(row) : null;
+    return memoizedRead(this.prisma, `${ReadMemoKey.sportLeague}${id}`, async () => {
+      const row = await this.prisma.sportLeague.findUnique({ where: { id } });
+      return row ? toSportLeague(row) : null;
+    });
+  }
+
+  async findByIds(ids: readonly string[]): Promise<SportLeague[]> {
+    if (ids.length === 0) {
+      return [];
+    }
+    return memoizedReadMany(this.prisma, ReadMemoKey.sportLeague, ids, async (missing) => {
+      const rows = await this.prisma.sportLeague.findMany({ where: { id: { in: [...missing] } } });
+      return rows.map(toSportLeague);
+    });
   }
 
   async findAll(filters: SportLeagueFilters): Promise<SportLeague[]> {
@@ -108,7 +124,7 @@ export class PrismaSportLeagueRepository implements SportLeagueRepository {
   }
 
   async update(id: string, updates: SportLeagueUpdate): Promise<SportLeague> {
-    return toSportLeague(await this.prisma.sportLeague.update({
+    const write = () => this.prisma.sportLeague.update({
       where: { id },
       data: {
         ...(updates.name !== undefined && { name: updates.name }),
@@ -117,7 +133,9 @@ export class PrismaSportLeagueRepository implements SportLeagueRepository {
         ...(updates.currentEventYear !== undefined && { currentEventYear: updates.currentEventYear }),
         ...(updates.bracketAdvancement !== undefined && { bracketAdvancement: updates.bracketAdvancement }),
       },
-    }));
+    });
+    // A sport event's read carries its sport league's settings, so those are forgotten too.
+    return toSportLeague(await forgettingReads([ReadMemoKey.sportEvent, ReadMemoKey.sportLeague], write));
   }
 }
 
@@ -155,6 +173,7 @@ export class PrismaParticipantLeagueAffiliationRepository implements Participant
   }
 
   async updateRankings(sportLeagueId: string, rankings: readonly ParticipantRanking[]): Promise<void> {
+    // poolmaster-allow-query-in-loop: one sport league's ranked participants (per-row values, one transaction)
     await this.prisma.$transaction(rankings.map((entry) => this.prisma.participantLeagueAffiliation.update({
       where: { participantId_sportLeagueId: { participantId: entry.participantId, sportLeagueId } },
       data: { ranking: entry.ranking },
@@ -162,6 +181,7 @@ export class PrismaParticipantLeagueAffiliationRepository implements Participant
   }
 
   async upsertRankings(sportLeagueId: string, rankings: readonly ParticipantRanking[]): Promise<void> {
+    // poolmaster-allow-query-in-loop: one sport league's ranked participants (per-row values, one transaction)
     await this.prisma.$transaction(rankings.map((entry) => this.prisma.participantLeagueAffiliation.upsert({
       where: { participantId_sportLeagueId: { participantId: entry.participantId, sportLeagueId } },
       create: { participantId: entry.participantId, sportLeagueId, ranking: entry.ranking },
@@ -183,16 +203,20 @@ export class PrismaSportEventRepository implements SportEventRepository {
   constructor(private readonly prisma: Db) {}
 
   async findById(id: string): Promise<SportEvent | null> {
-    const row = await this.prisma.sportEvent.findUnique({ where: { id }, include: SPORT_EVENT_INCLUDE });
-    return row ? toSportEvent(row) : null;
+    return memoizedRead(this.prisma, `${ReadMemoKey.sportEvent}${id}`, async () => {
+      const row = await this.prisma.sportEvent.findUnique({ where: { id }, include: SPORT_EVENT_INCLUDE });
+      return row ? toSportEvent(row) : null;
+    });
   }
 
   async findByIds(ids: readonly string[]): Promise<SportEvent[]> {
     if (!ids.length) {
       return [];
     }
-    const rows = await this.prisma.sportEvent.findMany({ where: { id: { in: [...ids] } }, include: SPORT_EVENT_INCLUDE });
-    return rows.map(toSportEvent);
+    return memoizedReadMany(this.prisma, ReadMemoKey.sportEvent, ids, async (missing) => {
+      const rows = await this.prisma.sportEvent.findMany({ where: { id: { in: [...missing] } }, include: SPORT_EVENT_INCLUDE });
+      return rows.map(toSportEvent);
+    });
   }
 
   async findByProviderRef(providerId: string, externalId: string): Promise<SportEvent | null> {
@@ -256,7 +280,7 @@ export class PrismaSportEventRepository implements SportEventRepository {
   }
 
   async update(id: string, updates: SportEventUpdate): Promise<SportEvent> {
-    return toSportEvent(await this.prisma.sportEvent.update({
+    return toSportEvent(await forgettingReads(ReadMemoKey.sportEvent, () => this.prisma.sportEvent.update({
       where: { id },
       data: {
         ...(updates.name !== undefined && { name: updates.name }),
@@ -273,14 +297,25 @@ export class PrismaSportEventRepository implements SportEventRepository {
         ...(updates.syncScope !== undefined && { syncScope: updates.syncScope }),
       },
       include: SPORT_EVENT_INCLUDE,
+    })));
+  }
+
+  async transitionStatus(id: string, transition: SportEventStatusTransition): Promise<SportEvent | null> {
+    const result = await forgettingReads(ReadMemoKey.sportEvent, () => this.prisma.sportEvent.updateMany({
+      where: { id, status: transition.from },
+      data: {
+        status: transition.to,
+        ...(transition.endDate && { endDate: transition.endDate }),
+      },
     }));
+    return result.count > 0 ? this.findById(id) : null;
   }
 
   async delete(id: string): Promise<void> {
     // Every child holds a RESTRICT foreign key, so they go first, extension rows before
     // their core rows. Deleting only the event row failed for any event with a round.
     const field = { sportEventParticipant: { sportEventId: id } };
-    await this.prisma.$transaction([
+    await forgettingReads(ReadMemoKey.sportEvent, () => this.prisma.$transaction([
       // The bracket first: its matches name field rows and rounds.
       this.prisma.sportEventMatch.deleteMany({ where: { sportEventId: id } }),
       this.prisma.sportEventParticipantGolfRound.deleteMany({ where: { participantRound: field } }),
@@ -293,7 +328,7 @@ export class PrismaSportEventRepository implements SportEventRepository {
       this.prisma.sportEventRound.deleteMany({ where: { sportEventId: id } }),
       this.prisma.sportEventTier.deleteMany({ where: { sportEventId: id } }),
       this.prisma.sportEvent.delete({ where: { id } }),
-    ]);
+    ]));
   }
 
   async countParticipants(sportEventIds: readonly string[]): Promise<Map<string, number>> {
@@ -477,17 +512,18 @@ export class PrismaSportEventRoundRepository implements SportEventRoundRepositor
   }
 
   async createMany(sportEventId: string, rounds: readonly SportEventRoundSchedule[]): Promise<void> {
-    await this.prisma.$transaction(rounds.map((round) => this.prisma.sportEventRound.create({
-      data: {
+    await this.prisma.sportEventRound.createMany({
+      data: rounds.map((round) => ({
         sportEventId,
         roundNumber: round.roundNumber,
         scheduledDate: round.scheduledDate,
         scheduledEndAt: round.scheduledEndAt ?? null,
-      },
-    })));
+      })),
+    });
   }
 
   async reschedule(sportEventId: string, rounds: readonly SportEventRoundSchedule[]): Promise<void> {
+    // poolmaster-allow-query-in-loop: one event's handful of rounds (per-row values, one transaction)
     await this.prisma.$transaction(rounds.map((round) => this.prisma.sportEventRound.update({
       where: { sportEventId_roundNumber: { sportEventId, roundNumber: round.roundNumber } },
       data: {
@@ -506,6 +542,79 @@ export class PrismaSportEventRoundRepository implements SportEventRoundRepositor
   }
 }
 
+/** A field in seed order, unseeded last, then by name. */
+const FIELD_ORDER = [
+  { seedNumber: { sort: 'asc', nulls: 'last' } },
+  { participant: { name: 'asc' } },
+] satisfies Prisma.SportEventParticipantOrderByWithRelationInput[];
+
+/**
+ * Everything a field row is read with (#1163). Prisma 6 reads each relation with its own
+ * statement on one connection, so the whole field is a handful of sequential queries; empty
+ * relations, such as a golf event's race results, return nothing. Affiliation is read as ids.
+ */
+function fieldRowInclude(sportLeagueId: string) {
+  return {
+    participant: { include: { leagueAffiliations: { where: { sportLeagueId }, select: { id: true } } } },
+    valuation: true,
+    standing: { include: { golf: true } },
+    rounds: {
+      include: { sportEventRound: { select: { roundNumber: true } }, golf: true, statLines: { orderBy: { stat: 'asc' } } },
+      orderBy: { sportEventRound: { roundNumber: 'asc' } },
+    },
+    raceResult: true,
+    homeMatches: { include: MATCH_INCLUDE },
+    awayMatches: { include: MATCH_INCLUDE },
+  } satisfies Prisma.SportEventParticipantInclude;
+}
+
+type FieldRow = Prisma.SportEventParticipantGetPayload<{ include: ReturnType<typeof fieldRowInclude> }>;
+
+function toFieldRow(row: FieldRow): SportEventParticipantView {
+  const { participant, valuation, standing, rounds, raceResult, homeMatches, awayMatches, ...entry } = row;
+  const { leagueAffiliations, ...participantRow } = participant;
+  return {
+    entry: toSportEventParticipant(entry),
+    participant: mapToParticipant(participantRow),
+    valuation: valuation ? toValuation(valuation) : null,
+    standing: standing
+      ? {
+        standing: {
+          id: standing.id,
+          sportEventParticipantId: standing.sportEventParticipantId,
+          position: standing.position,
+          displayPosition: standing.displayPosition,
+          status: standing.status,
+          asOf: standing.asOf,
+          currentRound: standing.currentRound,
+          createdAt: standing.createdAt,
+          updatedAt: standing.updatedAt,
+        },
+        golf: standing.golf ? toGolfStanding(standing.golf) : null,
+      }
+      : null,
+    rounds: rounds.map((round) => ({
+      round: {
+        id: round.id,
+        sportEventParticipantId: round.sportEventParticipantId,
+        sportEventRoundId: round.sportEventRoundId,
+        roundNumber: round.sportEventRound.roundNumber,
+        status: round.status,
+        completedAt: round.completedAt,
+        createdAt: round.createdAt,
+        updatedAt: round.updatedAt,
+      },
+      golf: round.golf ? toGolfRound(round.golf) : null,
+      statLines: round.statLines.map(toStatLine),
+    })),
+    raceResult: raceResult ? toRaceResult(raceResult) : null,
+    matches: [...homeMatches, ...awayMatches]
+      .sort((left, right) => left.matchNumber - right.matchNumber)
+      .map(toSportEventMatch),
+    affiliatedWithSportLeague: leagueAffiliations.length > 0,
+  };
+}
+
 export class PrismaSportEventParticipantRepository implements SportEventParticipantRepository {
   constructor(private readonly prisma: Db) {}
 
@@ -514,12 +623,41 @@ export class PrismaSportEventParticipantRepository implements SportEventParticip
     return row ? toSportEventParticipant(row) : null;
   }
 
+  async findByIds(ids: readonly string[]): Promise<SportEventParticipant[]> {
+    if (ids.length === 0) return [];
+    const rows = await this.prisma.sportEventParticipant.findMany({ where: { id: { in: [...ids] } } });
+    return rows.map(toSportEventParticipant);
+  }
+
   async findBySportEvent(sportEventId: string): Promise<SportEventParticipant[]> {
+    const rows = await this.prisma.sportEventParticipant.findMany({ where: { sportEventId }, orderBy: FIELD_ORDER });
+    return rows.map(toSportEventParticipant);
+  }
+
+  async findBySportEvents(sportEventIds: readonly string[]): Promise<SportEventParticipant[]> {
+    if (sportEventIds.length === 0) return [];
     const rows = await this.prisma.sportEventParticipant.findMany({
-      where: { sportEventId },
-      orderBy: [{ seedNumber: { sort: 'asc', nulls: 'last' } }, { participant: { name: 'asc' } }],
+      where: { sportEventId: { in: [...sportEventIds] } },
+      orderBy: [{ sportEventId: 'asc' }, ...FIELD_ORDER],
     });
     return rows.map(toSportEventParticipant);
+  }
+
+  async findFieldForEvent(sportEventId: string, sportLeagueId: string): Promise<SportEventParticipantView[]> {
+    const rows = await this.prisma.sportEventParticipant.findMany({
+      where: { sportEventId },
+      include: fieldRowInclude(sportLeagueId),
+      orderBy: FIELD_ORDER,
+    });
+    return rows.map(toFieldRow);
+  }
+
+  async findFieldRow(sportEventId: string, sportEventParticipantId: string, sportLeagueId: string): Promise<SportEventParticipantView | null> {
+    const row = await this.prisma.sportEventParticipant.findFirst({
+      where: { id: sportEventParticipantId, sportEventId },
+      include: fieldRowInclude(sportLeagueId),
+    });
+    return row ? toFieldRow(row) : null;
   }
 
   async countDistinctParticipants(sportEventIds: readonly string[]): Promise<number> {
@@ -532,12 +670,13 @@ export class PrismaSportEventParticipantRepository implements SportEventParticip
   }
 
   async createMany(sportEventId: string, rows: readonly SportEventParticipantCreate[]): Promise<void> {
-    await this.prisma.$transaction(rows.map((row) => this.prisma.sportEventParticipant.create({
-      data: { sportEventId, participantId: row.participantId, ...fieldPatch(row) },
-    })));
+    await this.prisma.sportEventParticipant.createMany({
+      data: rows.map((row) => ({ sportEventId, participantId: row.participantId, ...fieldPatch(row) })),
+    });
   }
 
   async updateMany(entries: readonly SportEventParticipantFieldUpdate[]): Promise<void> {
+    // poolmaster-allow-query-in-loop: one event's field (per-row values, one transaction)
     await this.prisma.$transaction(entries.map((entry) => this.prisma.sportEventParticipant.update({
       where: { id: entry.id },
       data: {
@@ -627,10 +766,19 @@ export class PrismaSportEventTierRepository implements SportEventTierRepository 
     return rows.map(toTier);
   }
 
+  async findBySportEvents(sportEventIds: readonly string[]): Promise<SportEventTier[]> {
+    if (sportEventIds.length === 0) return [];
+    const rows = await this.prisma.sportEventTier.findMany({
+      where: { sportEventId: { in: [...sportEventIds] } },
+      orderBy: [{ sportEventId: 'asc' }, { tierNumber: 'asc' }],
+    });
+    return rows.map(toTier);
+  }
+
   async createMany(sportEventId: string, tiers: readonly SportEventTierDefinition[]): Promise<void> {
-    await this.prisma.$transaction(tiers.map((tier) => this.prisma.sportEventTier.create({
-      data: { sportEventId, ...tierColumns(tier) },
-    })));
+    await this.prisma.sportEventTier.createMany({
+      data: tiers.map((tier) => ({ sportEventId, ...tierColumns(tier) })),
+    });
   }
 
   async replace(sportEventId: string, tiers: readonly SportEventTierDefinition[], reassignTo?: string): Promise<void> {
@@ -640,9 +788,11 @@ export class PrismaSportEventTierRepository implements SportEventTierRepository 
       // Park every current tier number out of range first, so two tiers swapping numbers
       // never collide on the (sportEventId, tierNumber) unique index.
       for (const tier of existing) {
+        // poolmaster-allow-query-in-loop: an event's handful of tiers, renumbered in one transaction
         await tx.sportEventTier.update({ where: { id: tier.id }, data: { tierNumber: -(tier.tierNumber + 1) } });
       }
       for (const tier of tiers) {
+        // poolmaster-allow-query-in-loop: an event's handful of tiers, renumbered in one transaction
         await tx.sportEventTier.upsert({
           where: { sportEventId_tierKey: { sportEventId, tierKey: tier.tierKey } },
           create: { sportEventId, ...tierColumns(tier) },
@@ -677,8 +827,13 @@ export class PrismaSportEventParticipantValuationRepository implements SportEven
   constructor(private readonly prisma: Db) {}
 
   async findBySportEvent(sportEventId: string): Promise<SportEventParticipantValuation[]> {
+    return this.findBySportEvents([sportEventId]);
+  }
+
+  async findBySportEvents(sportEventIds: readonly string[]): Promise<SportEventParticipantValuation[]> {
+    if (sportEventIds.length === 0) return [];
     const rows = await this.prisma.sportEventParticipantValuation.findMany({
-      where: { sportEventParticipant: { sportEventId } },
+      where: { sportEventParticipant: { sportEventId: { in: [...sportEventIds] } } },
       orderBy: [{ sportEventTier: { tierNumber: 'asc' } }, { tierOrderIndex: 'asc' }],
     });
     return rows.map(toValuation);
@@ -691,6 +846,7 @@ export class PrismaSportEventParticipantValuationRepository implements SportEven
         tierOrderIndex: assignment.tierOrderIndex,
         tierAssignedSource: assignment.source,
       };
+      // poolmaster-allow-query-in-loop: one event's field (per-row values, one transaction)
       return this.prisma.sportEventParticipantValuation.upsert({
         where: { sportEventParticipantId: assignment.sportEventParticipantId },
         create: { sportEventParticipantId: assignment.sportEventParticipantId, ...tier },
@@ -704,9 +860,10 @@ export class PrismaSportEventParticipantValuationRepository implements SportEven
     pricingConfig: EventPricingConfig;
     assignments: readonly PriceAssignment[];
   }): Promise<void> {
-    await this.prisma.$transaction([
+    await forgettingReads(ReadMemoKey.sportEvent, () => this.prisma.$transaction([
       ...input.assignments.map((assignment) => {
         const price = { price: assignment.price, priceAssignedSource: assignment.source };
+        // poolmaster-allow-query-in-loop: one event's field (per-row values, one transaction)
         return this.prisma.sportEventParticipantValuation.upsert({
           where: { sportEventParticipantId: assignment.sportEventParticipantId },
           create: { sportEventParticipantId: assignment.sportEventParticipantId, ...price },
@@ -717,37 +874,8 @@ export class PrismaSportEventParticipantValuationRepository implements SportEven
         where: { id: input.sportEventId },
         data: { pricingConfig: input.pricingConfig },
       }),
-    ]);
+    ]));
   }
-}
-
-const PARTICIPANT_ROUND_INCLUDE = { sportEventRound: { select: { roundNumber: true } } } as const;
-
-export class PrismaSportEventParticipantRoundRepository implements SportEventParticipantRoundRepository {
-  constructor(private readonly prisma: Db) {}
-
-  async findBySportEvent(sportEventId: string): Promise<SportEventParticipantRound[]> {
-    const rows = await this.prisma.sportEventParticipantRound.findMany({
-      where: { sportEventParticipant: { sportEventId } },
-      include: PARTICIPANT_ROUND_INCLUDE,
-      orderBy: [{ sportEventParticipantId: 'asc' }, { sportEventRound: { roundNumber: 'asc' } }],
-    });
-    return rows.map(toParticipantRound);
-  }
-
-}
-
-export class PrismaSportEventParticipantStandingRepository implements SportEventParticipantStandingRepository {
-  constructor(private readonly prisma: Db) {}
-
-  async findBySportEvent(sportEventId: string): Promise<SportEventParticipantStanding[]> {
-    const rows = await this.prisma.sportEventParticipantStanding.findMany({
-      where: { sportEventParticipant: { sportEventId } },
-      orderBy: [{ position: { sort: 'asc', nulls: 'last' } }, { sportEventParticipantId: 'asc' }],
-    });
-    return rows.map(toStanding);
-  }
-
 }
 
 function countMap(ids: readonly string[], counted: Array<[string, number]>): Map<string, number> {
@@ -846,35 +974,6 @@ function toSportEvent(row: Prisma.SportEventGetPayload<{ include: typeof SPORT_E
     syncScope: row.syncScope as SportEventSyncScope,
     autoLifecycleEnabled: row.autoLifecycleEnabled,
     ...(row.pricingConfig !== null && { pricingConfig: EventPricingConfigSchema.parse(row.pricingConfig) }),
-    createdAt: row.createdAt,
-    updatedAt: row.updatedAt,
-  };
-}
-
-function toParticipantRound(
-  row: Prisma.SportEventParticipantRoundGetPayload<{ include: typeof PARTICIPANT_ROUND_INCLUDE }>,
-): SportEventParticipantRound {
-  return {
-    id: row.id,
-    sportEventParticipantId: row.sportEventParticipantId,
-    sportEventRoundId: row.sportEventRoundId,
-    roundNumber: row.sportEventRound.roundNumber,
-    status: row.status,
-    completedAt: row.completedAt,
-    createdAt: row.createdAt,
-    updatedAt: row.updatedAt,
-  };
-}
-
-function toStanding(row: Prisma.SportEventParticipantStandingGetPayload<object>): SportEventParticipantStanding {
-  return {
-    id: row.id,
-    sportEventParticipantId: row.sportEventParticipantId,
-    position: row.position,
-    displayPosition: row.displayPosition,
-    status: row.status,
-    asOf: row.asOf,
-    currentRound: row.currentRound,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };

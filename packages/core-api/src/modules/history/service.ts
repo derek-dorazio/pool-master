@@ -181,8 +181,8 @@ export interface HistoryServiceDeps {
   finishes: Pick<ChampionshipRepository, 'findByLeague' | 'findByLeagueYear' | 'findFinalContests' | 'findSeriesContests'>;
   squads: Pick<SquadRepository, 'findById' | 'findByLeague'>;
   leagues: Pick<LeagueRepository, 'findById'>;
-  championship: Pick<ChampionshipService, 'getYear' | 'listYears'>;
-  cups: Pick<CupService, 'listSeasonYears' | 'listSeasonCups'>;
+  championship: Pick<ChampionshipService, 'getAllYears' | 'getYear' | 'listYears'>;
+  cups: Pick<CupService, 'listLeagueSeasons' | 'listSeasonCups'>;
   logger?: HistoryLogger;
   now?: () => Date;
 }
@@ -200,12 +200,11 @@ export class HistoryService {
    * leaders while open); and the tiles for most championships and most cups won.
    */
   async getSummary(leagueId: string): Promise<HistorySummaryView> {
-    const [championshipYears, seasonYears] = await Promise.all([
+    const [championshipYears, seasons] = await Promise.all([
       this.deps.championship.listYears(leagueId),
-      this.deps.cups.listSeasonYears(leagueId),
+      this.deps.cups.listLeagueSeasons(leagueId),
     ]);
-    const seasons = await Promise.all(seasonYears.map(async (seasonYear) => [seasonYear, await this.deps.cups.listSeasonCups(leagueId, seasonYear)] as const));
-    const cupsBySeason = new Map(seasons);
+    const cupsBySeason = new Map(seasons.map((season) => [season.seasonYear, season.cups]));
     const championsByYear = new Map(championshipYears.map((row) => [row.year, row.leaders]));
     const currentYear = championshipYear(this.now());
 
@@ -314,12 +313,11 @@ export class HistoryService {
    */
   async getSquadHistory(leagueId: string, squadId: string): Promise<SquadHistoryView> {
     const squad = await this.requireLeagueSquad(leagueId, squadId, 'history.squadHistory.squadNotFound');
-    const [championshipYears, seasonYears] = await Promise.all([
-      this.deps.championship.listYears(leagueId),
-      this.deps.cups.listSeasonYears(leagueId),
-    ]);
-    const yearNumbers = [...new Set([...championshipYears.map((row) => row.year), ...seasonYears])].sort((left, right) => right - left);
-    const years = await Promise.all(yearNumbers.map((year) => this.readSquadYear(leagueId, squad, year)));
+    const seasons = await this.deps.cups.listLeagueSeasons(leagueId);
+    // Every year read at once, each as its own Championship tab and Cups page read it.
+    const championships = await this.deps.championship.getAllYears(leagueId, seasons.map((season) => season.seasonYear));
+    const cupsBySeason = new Map(seasons.map((season) => [season.seasonYear, season.cups]));
+    const years = championships.map((championship) => squadYearFrom(squad, championship.year, championship, cupsBySeason.get(championship.year) ?? []));
     const trophies = years.flatMap(squadYearTrophies);
     this.deps.logger?.debug({ action: 'history.squadHistory', data: { leagueId, squadId, yearCount: years.length, trophyCount: trophies.length } }, 'Read a squad\'s history');
     return {

@@ -1,5 +1,4 @@
 import type { ColumnDef } from '@tanstack/react-table';
-import { useQuery } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { Link } from 'react-router';
 import { ContestStatus, SportEventStatus, SurvivorWeekOutcome, describeSurvivorRules, pluralize  } from '@poolmaster/shared/domain';
@@ -9,12 +8,10 @@ import { useLeagueContextById } from '@/features/leagues/use-league-context';
 import { Chip, DataGrid, ErrorState, LoadingState, Tile, type StatusBadgeProps } from '@/features/shared/ui';
 import { ApiError, extractErrorMessage } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
-import { QueryKeys } from '@/lib/query-keys';
 import { ContestHeader, ContestSubMenu } from './contest-header';
 import { LEADERBOARD_ERROR_MESSAGES } from './contest-leaderboard';
 import { ContestStatusBadge } from './contest-status-badge';
 import { useBracketRoundLabel } from './use-bracket-round-label';
-import { fetchContestEntries } from './use-contest-entries';
 import { useSurvivorLeaderboardQuery } from './use-contest-leaderboard';
 
 type SurvivorRow = SurvivorLeaderboardResponse['entries'][number];
@@ -168,11 +165,6 @@ export function SurvivorLeaderboard({ contest, leagueCode: hintedLeagueCode }: {
   const logger = getLogger().child({ feature: 'survivor-leaderboard' });
   const contestId = contest.id;
   const leaderboardQuery = useSurvivorLeaderboardQuery(contestId, contest.status);
-  const contestEntriesQuery = useQuery({
-    queryKey: QueryKeys.contestEntries.byContest(contestId),
-    queryFn: () => fetchContestEntries(contestId),
-    retry: false,
-  });
   const { league, viewer } = useLeagueContextById(contest.leagueId);
   // A playoff's rounds (#785) are named as its bracket names them.
   const playoffEventId = leaderboardQuery.data?.weeks.find((week) => week.roundCount > 1)?.sportEventId ?? '';
@@ -220,7 +212,7 @@ export function SurvivorLeaderboard({ contest, leagueCode: hintedLeagueCode }: {
             contestId={contestId}
             current="leaderboard"
             leagueCode={leagueCode}
-            myEntryId={contestEntriesQuery.data?.myEntryIds?.[0] ?? null}
+            myEntryId={contest.myEntryIds?.[0] ?? null}
             picksRevealed
           />
         ) : null}

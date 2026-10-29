@@ -7,7 +7,6 @@ import {
   buildLeagueAdminTeamPath,
 } from '@/features/leagues/league-routing';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
-import { useLeagueMembersQuery } from '@/features/leagues/use-league-members-query';
 import {
   Chip,
   DataGrid,
@@ -46,17 +45,14 @@ export function ManageTeamsPage() {
   const { league } = useLeagueContext(leagueCode);
   const leagueId = league?.id ?? '';
   const teamsQuery = useLeagueSquadsQuery(leagueId);
-  const { membersByUserId } = useLeagueMembersQuery(leagueId);
   const [filter, setFilter] = useState<TeamFilter>('all');
 
   const rows = useMemo<ManagedTeamRow[]>(
     () => buildTeamDirectoryRows(teamsQuery.data ?? []).map((row) => ({
       ...row,
-      hasCommissioner: (row.team.members ?? []).some(
-        (member) => membersByUserId.get(member.userId)?.role === LeagueRole.COMMISSIONER,
-      ),
+      hasCommissioner: row.team.members.some((member) => member.leagueRole === LeagueRole.COMMISSIONER),
     })),
-    [membersByUserId, teamsQuery.data],
+    [teamsQuery.data],
   );
   const visibleRows = useMemo(
     () => rows.filter((row) => (

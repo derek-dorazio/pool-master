@@ -12,9 +12,10 @@ import {
 } from '@/features/shared/ui';
 import { hasPlanFeature } from '@/features/plans/plan-features';
 import { PlanLockedNotice } from '@/features/plans/plan-locked-notice';
+import { hasErrorCode } from '@/lib/errors';
 import { CUP_WEIGHT_LABELS, formatCupPoints } from './cup-view';
 import { useChampionshipsRoute } from './use-championships-route';
-import { useCupSquadPointsQuery, useSeasonCupsQuery } from './use-cups-query';
+import { useCupSquadPointsQuery } from './use-cups-query';
 
 /**
  * One squad's points in a cup, counted contest by counted contest, each opening its leaderboard.
@@ -24,20 +25,18 @@ export function CupSquadPointsPage() {
   const { sportLeagueId = '', squadId = '' } = useParams<{ sportLeagueId: string; squadId: string }>();
   const { league, leagueCode, leagueId, viewer, year } = useChampionshipsRoute();
   const isInPlan = hasPlanFeature(league, PlanFeature.CUP_STANDINGS);
-  const cupsQuery = useSeasonCupsQuery(isInPlan ? leagueId : '', year);
-  const cup = cupsQuery.data?.find((candidate) => candidate.sportLeagueId === sportLeagueId);
-  const pointsQuery = useCupSquadPointsQuery(leagueId, cup?.id ?? '', squadId);
+  const pointsQuery = useCupSquadPointsQuery(isInPlan ? leagueId : '', year, sportLeagueId, squadId);
 
   if (!isInPlan) {
     return <PlanLockedNotice feature={PlanFeature.CUP_STANDINGS} isCommissioner={viewer.isCommissioner} leagueCode={leagueCode} />;
   }
-  if (cupsQuery.isLoading || (cup && pointsQuery.isLoading)) {
+  if (pointsQuery.isLoading) {
     return <LoadingState body="Loading cup points..." />;
   }
-  if (cupsQuery.isError || pointsQuery.isError) {
+  if (pointsQuery.isError && !hasErrorCode(pointsQuery.error, 'CUP_NOT_FOUND')) {
     return <ErrorState body="We couldn't load this squad's cup points." testId="cup-squad-points-error" />;
   }
-  if (!cup || !pointsQuery.data) {
+  if (!pointsQuery.data) {
     return <EmptyState body={`This league has no cup for that sports league in ${year}.`} testId="cup-squad-points-no-cup" title="Cup not found" />;
   }
   const squadPoints = pointsQuery.data;
@@ -46,7 +45,7 @@ export function CupSquadPointsPage() {
     <Tile className="space-y-5" data-testid="cup-squad-points" padding="sm" radius="lg">
       <Breadcrumbs
         items={[
-          { href: buildLeaguePointsRacePath(leagueCode, year, sportLeagueId), label: cup.name },
+          { href: buildLeaguePointsRacePath(leagueCode, year, sportLeagueId), label: squadPoints.cupName },
           { label: squadPoints.squadName },
         ]}
       />

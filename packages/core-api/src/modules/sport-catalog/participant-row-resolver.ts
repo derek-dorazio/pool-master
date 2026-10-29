@@ -27,17 +27,22 @@ export interface ResolvedParticipantRow {
   participant: Participant | null;
 }
 
-export async function resolveParticipantRow(
-  row: ParticipantRowIdentifiers,
-  findCandidates: (query: ParticipantMatchQuery) => Promise<Participant[]>,
-): Promise<ResolvedParticipantRow> {
-  const query: ParticipantMatchQuery | null = row.participantId
+/** The one identifier of a row that is matched, by the precedence above; null when it gives none. */
+export function participantMatchQuery(row: ParticipantRowIdentifiers): ParticipantMatchQuery | null {
+  return row.participantId
     ? { id: row.participantId }
     : row.externalId
       ? { externalId: row.externalId }
       : row.playerName
         ? { name: row.playerName }
         : null;
+}
+
+export async function resolveParticipantRow(
+  row: ParticipantRowIdentifiers,
+  findCandidates: (query: ParticipantMatchQuery) => Promise<Participant[]>,
+): Promise<ResolvedParticipantRow> {
+  const query = participantMatchQuery(row);
   if (!query) {
     return { resolution: 'UNRESOLVED', participant: null };
   }
@@ -48,7 +53,7 @@ export async function resolveParticipantRow(
   return { resolution: matches.length > 1 ? 'AMBIGUOUS' : 'UNRESOLVED', participant: null };
 }
 
-/** The same match rule over candidates already in hand — an event's field. */
+/** The same match rule over candidates already in hand: an event's field, or an upload's candidates read at once. */
 export function matchAmong(candidates: readonly Participant[]) {
   return (query: ParticipantMatchQuery): Promise<Participant[]> => Promise.resolve(candidates.filter((candidate) => (
     (query.id === undefined || candidate.id === query.id)

@@ -52,10 +52,17 @@ describe('pool-master-rop.78.9: PoolMaster query key factory', () => {
       'contest-entries',
       'contest-1',
     ]);
-    expect(QueryKeys.contestEntries.detail('entry-1')).toEqual([
+    // One entry sits under its contest's entries, so invalidating those refreshes it (#1197).
+    expect(QueryKeys.contestEntries.detail('contest-1', 'entry-1')).toEqual([
       'poolmaster',
       'contest-entries',
+      'contest-1',
       'entry-1',
+    ]);
+    // Every league's "my entries" sit under one key an entry write can invalidate (#1197).
+    expect(QueryKeys.contestEntries.mine('league-1')).toEqual([
+      ...QueryKeys.contestEntries.allMine,
+      'league-1',
     ]);
     expect(QueryKeys.leagues.detail('league-1')).toEqual(['poolmaster', 'league', 'league-1']);
     expect(QueryKeys.leagues.members('league-1')).toEqual([
@@ -70,11 +77,20 @@ describe('pool-master-rop.78.9: PoolMaster query key factory', () => {
       'user-detail',
       'user-1',
     ]);
-    expect(QueryKeys.rootAdmin.manageUsers).toEqual([
+    expect(QueryKeys.rootAdmin.manageUsersSearch('jam')).toEqual([
       'poolmaster',
       'root-admin',
       'manage-users',
+      'jam',
     ]);
+  });
+
+  it('keeps a league\'s finished contests and finished years under its contest list key, so invalidating the list refreshes them too', () => {
+    const list = QueryKeys.contests.list({ leagueId: 'league-1' });
+
+    expect(QueryKeys.contests.finished('league-1', 2025).slice(0, list.length)).toEqual(list);
+    expect(QueryKeys.contests.finishedYears('league-1').slice(0, list.length)).toEqual(list);
+    expect(QueryKeys.contests.finished('league-1', 2025)).not.toEqual(QueryKeys.contests.finished('league-1', 2024));
   });
 
   it('#134: the inline-queryKey rule is on for feature code and off for the factory itself', () => {

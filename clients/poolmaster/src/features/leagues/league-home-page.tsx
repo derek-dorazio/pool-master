@@ -11,7 +11,7 @@ import {
   LinkButton,
   LoadingState,
 } from '@/features/shared/ui';
-import { useLeagueSquadsQuery } from '@/features/teams/use-league-squads-query';
+import { useLeagueSquadQuery } from '@/features/teams/use-league-squad-query';
 import { getLogger } from '@/lib/logger';
 import { parseRouteState } from '@/routes/route-state';
 import { useLeagueContextGuard } from './league-context-guard';
@@ -67,7 +67,7 @@ export function LeagueHomePage() {
   const { query: leagueQuery, league, viewer } = useLeagueContext(leagueCode);
   const leagueId = league?.id ?? '';
   const contestsQuery = useLeagueContestsQuery(leagueId);
-  const squadsQuery = useLeagueSquadsQuery(leagueId);
+  const myTeamQuery = useLeagueSquadQuery(leagueId, viewer.mySquadId);
 
   useEffect(() => {
     if (leagueQuery.isError) {
@@ -85,10 +85,7 @@ export function LeagueHomePage() {
     ),
     [contestsQuery.data],
   );
-  const myEntries = useMyContestEntries(
-    currentContests.map((contest) => contest.id),
-    viewer.mySquadId,
-  );
+  const myEntries = useMyContestEntries(leagueId, viewer.mySquadId !== null);
 
   const leagueContext = useLeagueContextGuard(leagueQuery, { loadingBody: 'Loading league...' });
   if (leagueContext.state === 'blocked' || !league) {
@@ -101,7 +98,7 @@ export function LeagueHomePage() {
     (contest) => contest.status === ContestStatus.ACTIVE
       && (myEntries.entriesByContestId.get(contest.id)?.length ?? 0) > 0,
   );
-  const myTeam = squadsQuery.data?.find((squad) => squad.id === viewer.mySquadId) ?? null;
+  const myTeam = myTeamQuery.data ?? null;
   const hasTeam = viewer.mySquadId !== null;
   const entriesState: MyEntriesState = myEntries.isError
     ? 'failed'
@@ -194,7 +191,7 @@ export function LeagueHomePage() {
               />
             ) : null}
             {viewer.isMember ? (
-              <YourTeamCard isLoading={squadsQuery.isLoading} leagueCode={leagueCode} team={myTeam} />
+              <YourTeamCard isLoading={myTeamQuery.isLoading} leagueCode={leagueCode} team={myTeam} />
             ) : null}
           </div>
         </div>

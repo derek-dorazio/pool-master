@@ -22,6 +22,19 @@ import { lockContestRows } from '../../adapters';
 import { ensureDefaultSquadForLeagueMember } from '../squads/default-squad';
 import { RESERVED_LEAGUE_CODES } from '../email';
 import type { ApiErrorCode } from '@poolmaster/shared/dto';
+import { forgetAllReads } from '../../core/request-read-memo';
+
+/** A league's active member and active contest counts, as the league DTO carries them. */
+export interface LeagueActivityCounts {
+  memberCount: number;
+  activeContestCount: number;
+}
+
+/** A league with the viewer's own membership in it, null when they have none. */
+export interface LeagueForViewer {
+  league: League;
+  membership: LeagueMembership | null;
+}
 
 export interface CreateLeagueInput {
   createdBy: string;
@@ -200,7 +213,7 @@ export class LeagueService {
     const [leagues, viewerMemberships] = await Promise.all([
       scope === 'all'
         ? this.deps.leagues.findAll(filters)
-        : this.findLeaguesForUser(userId, filters),
+        : this.deps.leagues.findByUser(userId, filters),
       this.deps.memberships.findByUser(userId),
     ]);
 
@@ -223,23 +236,14 @@ export class LeagueService {
     return rows;
   }
 
-  /** `findByUser` narrowed by the same filters the unscoped read accepts. */
-  private async findLeaguesForUser(
-    userId: string,
-    filters?: LeagueSearchFilters,
-  ): Promise<League[]> {
-    const leagues = await this.deps.leagues.findByUser(userId);
-    const search = filters?.search?.trim().toLowerCase();
-
-    return leagues.filter((league) => {
-      if (filters?.isActive !== undefined && league.isActive !== filters.isActive) {
-        return false;
-      }
-      if (search && !league.name.toLowerCase().includes(search)) {
-        return false;
-      }
-      return true;
-    });
+  /** `countLeagueActivity` for one league, as the league DTO carries it. */
+  async countActivityFor(leagueId: string): Promise<LeagueActivityCounts> {
+    const counts = await this.countLeagueActivity([leagueId]);
+    // A league with no active contest is absent from its map, which means zero.
+    return {
+      memberCount: counts.memberCounts.get(leagueId) ?? 0,
+      activeContestCount: counts.activeContestCounts.get(leagueId) ?? 0,
+    };
   }
 
   /**
@@ -549,33 +553,32 @@ export class LeagueService {
         where: { id: leagueId },
       });
     });
+    // The league and everything in it are gone: a later read in this request must not find them.
+    forgetAllReads();
     this.logger?.info({
       action: 'league.delete.success',
       data: { leagueId },
     }, 'Deleted inactive league');
   }
 
-  /** Returns the league together with its member list. */
-  async getLeagueWithMembers(
-    leagueId: string,
-  ): Promise<{ league: League; members: LeagueMembership[] } | null> {
-    const league = await this.deps.leagues.findById(leagueId);
-    if (!league) {
-      return null;
-    }
-    const members = await this.deps.memberships.findByLeague(leagueId);
-    return { league, members };
+  /**
+   * The league and the viewer's own membership in it, of any status, for the league-context read.
+   * One row for the viewer rather than the whole member list (#1219). Null for an unknown league.
+   */
+  async getLeagueForViewer(leagueId: string, userId: string): Promise<LeagueForViewer | null> {
+    return this.withViewerMembership(await this.deps.leagues.findById(leagueId), userId);
   }
 
-  async getLeagueWithMembersByCode(
-    leagueCode: string,
-  ): Promise<{ league: League; members: LeagueMembership[] } | null> {
-    const league = await this.findByCode(leagueCode);
+  async getLeagueByCodeForViewer(leagueCode: string, userId: string): Promise<LeagueForViewer | null> {
+    return this.withViewerMembership(await this.findByCode(leagueCode), userId);
+  }
+
+  private async withViewerMembership(league: League | null, userId: string): Promise<LeagueForViewer | null> {
     if (!league) {
       return null;
     }
-    const members = await this.deps.memberships.findByLeague(league.id);
-    return { league, members };
+    const membership = await this.deps.memberships.findByLeagueAndUser(league.id, userId);
+    return { league, membership };
   }
 
   private async ensureDefaultSquad(leagueId: string, userId: string): Promise<void> {

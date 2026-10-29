@@ -193,11 +193,12 @@ export class EntryReminders implements DueNotifications {
     const cutoff = contestCutoff(rules, contest.squaresGameMatchId);
     // Each event's window closes at the contest's cutoff on it: a second-chance bracket's is its
     // starting round, after the event itself has started, and a squares grid's is its game's kickoff.
-    const windows = await Promise.all(contestEvents.map(async (sportEvent) => {
-      const games: SportEventMatch[] = cutoff.kind === ContestCutoffKind.EVENT_START
-        ? []
-        : await this.deps.matches.findBySportEvent(sportEvent.id);
-      return { sportEvent, window: cutoffTiming(cutoff, sportEvent, games) };
+    const games: SportEventMatch[] = cutoff.kind === ContestCutoffKind.EVENT_START
+      ? []
+      : await this.deps.matches.findBySportEvents(contestEvents.map((sportEvent) => sportEvent.id));
+    const windows = contestEvents.map((sportEvent) => ({
+      sportEvent,
+      window: cutoffTiming(cutoff, sportEvent, games.filter((game) => game.sportEventId === sportEvent.id)),
     }));
     const entriesOpen = areContestEntriesOpen(contest, windows.map(({ window }) => window), now);
     return windows.flatMap(({ sportEvent, window }) => {
@@ -360,7 +361,7 @@ export class EntryReminders implements DueNotifications {
     switch (rules.selectionType) {
       case SelectionType.TIERED:
       case SelectionType.BUDGET_PICK: {
-        const picks = (await this.deps.picks.findByEntriesWithParticipant(ids)).filter((pick) => pick.sportEventId === sportEvent.id);
+        const picks = await this.deps.picks.findByEntriesWithParticipant(ids, { sportEventId: sportEvent.id });
         made = countBy(picks.map((pick) => pick.entryId));
         of = rules.selectionType === SelectionType.TIERED
           ? getTieredRosterSize(

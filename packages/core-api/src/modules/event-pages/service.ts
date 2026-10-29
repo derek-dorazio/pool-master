@@ -13,7 +13,7 @@ import {
   type EventPageOffer,
   type Sport,
 } from '@poolmaster/shared/domain';
-import { ContestOpening, type ContestOpeningSetup } from '../contest-management/contest-opening';
+import { ContestOpening, type ContestOpeningSetup, type ContestOpeningWindow } from '../contest-management/contest-opening';
 
 type EventPageLogger = Pick<FastifyBaseLogger, 'debug' | 'info' | 'warn'>;
 
@@ -32,6 +32,8 @@ export interface EventPageOfferView {
   startsAtRound: number | null;
   state: EventPageOfferState;
   edition: EventPageEdition;
+  /** When the setup's cutoff on the edition falls, after which this offer no longer shows as it does now. */
+  closesAt: Date;
 }
 
 export interface EventPageView {
@@ -42,8 +44,8 @@ export interface EventPageView {
 
 export interface EventPageServiceDeps {
   pages: EventPageRepository;
-  /** Whether Create contest would take the setup on the event now (`contestOpening`). */
-  opening: (sportEventId: string, setup: ContestOpeningSetup) => Promise<ContestOpening>;
+  /** Whether Create contest would take the setup on the event now, and its cutoff (`contestOpening`). */
+  opening: (sportEventId: string, setup: ContestOpeningSetup) => Promise<ContestOpeningWindow>;
   logger?: EventPageLogger;
 }
 
@@ -81,14 +83,28 @@ export class EventPageService {
     return { page, offers: await this.showOffers(offers) };
   }
 
-  async listPages(sport?: Sport): Promise<EventPageView[]> {
-    this.logger?.debug({ action: 'eventPages.list.enter', sport }, 'Listing event pages');
+  /**
+   * The active pages, by sport then display order; with `upcoming`, only those whose primary offer
+   * shows an edition coming, soonest first: what a Coming up row shows (#1202).
+   */
+  async listPages(sport?: Sport, upcoming = false): Promise<EventPageView[]> {
+    this.logger?.debug({ action: 'eventPages.list.enter', sport, upcoming }, 'Listing event pages');
     const pages = await this.pages.findActive(sport);
     const offers = await this.pages.findOffers(pages.map((page) => page.id));
-    return Promise.all(pages.map(async (page) => ({
+    const views = await Promise.all(pages.map(async (page) => ({
       page,
       offers: await this.showOffers(offers.filter((offer) => offer.eventPageId === page.id)),
     })));
+    if (!upcoming) {
+      return views;
+    }
+    return views
+      .flatMap((view) => {
+        const primary = view.offers.find(({ offer }) => offer.isPrimary);
+        return primary === undefined ? [] : [{ view, startDate: primary.edition.startDate.getTime() }];
+      })
+      .sort((left, right) => left.startDate - right.startDate)
+      .map(({ view }) => view);
   }
 
   /**
@@ -117,12 +133,21 @@ export class EventPageService {
     const setup: ContestOpeningSetup = { selectionType: offer.template.selectionType, startsAtRound };
     const editions = await this.pages.findEditionsNotOver(offer.sportLeagueId, offer.eventSeriesName);
     for (const edition of editions) {
-      const opening = await this.opening(edition.sportEventId, setup);
-      if (opening !== ContestOpening.CLOSED) {
+      const { opening, closesAt } = await this.opening(edition.sportEventId, setup);
+      if (opening !== ContestOpening.CLOSED && closesAt !== null) {
         const state = opening === ContestOpening.OPEN ? EventPageOfferState.OPEN : EventPageOfferState.NOT_YET;
-        return { offer, startsAtRound, state, edition };
+        return { offer, startsAtRound, state, edition, closesAt };
       }
     }
     return null;
   }
+}
+
+/**
+ * The soonest cutoff among the pages' offers: until then each page shows as it does now, so no
+ * copy of it may be kept past it (#1181). Null when no page has an offer.
+ */
+export function eventPagesChangeAt(views: readonly EventPageView[]): Date | null {
+  const cutoffs = views.flatMap((view) => view.offers.map((offer) => offer.closesAt.getTime()));
+  return cutoffs.length === 0 ? null : new Date(Math.min(...cutoffs));
 }

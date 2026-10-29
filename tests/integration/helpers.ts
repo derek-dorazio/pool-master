@@ -18,10 +18,12 @@ import jwt from 'jsonwebtoken';
 import { randomUUID } from 'crypto';
 import bcrypt from 'bcryptjs';
 import { startSmtpSinkServer, type CapturedMail, type SmtpSinkServer } from '../support/smtp-sink';
+import { RecordingCdnInvalidator } from '../support/recording-cdn-invalidator';
 
 // Plugins and modules from core-api
 import { healthPlugin } from '../../packages/core-api/src/plugins/health';
 import { authGuard } from '../../packages/core-api/src/plugins/auth-guard';
+import { etagPlugin } from '../../packages/core-api/src/plugins/etag-support';
 import { FASTIFY_AJV_OPTIONS } from '../../packages/core-api/src/plugins/string-transforms';
 import { FASTIFY_SCHEMA_CONTROLLER } from '../../packages/core-api/src/plugins/serializer-cache';
 import { globalErrorHandler } from '../../packages/core-api/src/core/error-handler';
@@ -127,6 +129,8 @@ type MailEnvironmentKey = (typeof MAIL_ENVIRONMENT_KEYS)[number];
 
 /** The shared app's settings cache; `cleanupTestData` refreshes it so deleted rows are not served. */
 let appSettings: AppSettingsService | undefined;
+/** Stands in for CloudFront: what each admin save asked the CDN to clear (#1181). */
+const cdn = new RecordingCdnInvalidator();
 // The SES events route believes messages signed by this key, from TEST_TOPIC_ARN (#844 slice 4).
 const integrationSns = snsSigner();
 const confirmedSnsSubscriptions: string[] = [];
@@ -137,6 +141,11 @@ export function getApp(): FastifyInstance {
 }
 
 /** Get the shared Prisma client. */
+/** The CDN invalidations the app's admin saves have asked for; `reset` it before the save a test checks. */
+export function getCdnInvalidations(): RecordingCdnInvalidator {
+  return cdn;
+}
+
 export function getPrisma(): PrismaClient {
   return prisma;
 }
@@ -149,6 +158,7 @@ async function buildTestApp(): Promise<FastifyInstance> {
 
   // Core plugins
   testApp.register(healthPlugin);
+  testApp.register(etagPlugin);
   testApp.register(authGuard);
   testApp.setErrorHandler(globalErrorHandler);
 
@@ -223,12 +233,12 @@ async function buildTestApp(): Promise<FastifyInstance> {
   testApp.register(contestsByIdModule, { prefix: '/api/v1/contests', email, planEntitlements });
   testApp.register(participantsModule, { prefix: '/api/v1/participants', providerRegistry });
   testApp.register(usersModule, { prefix: '/api/v1/users', email, emailPreferences: outbox.preferences });
-  testApp.register(eventsModule, { prefix: '/api/v1/events', ingestionService, providerRegistry });
+  testApp.register(eventsModule, { prefix: '/api/v1/events', ingestionService, providerRegistry, cdn });
   testApp.register(sportsModule, { prefix: '/api/v1/sports' });
-  testApp.register(contestConfigTemplatesModule, { prefix: '/api/v1/contest-config-templates' });
-  testApp.register(sportLeaguesModule, { prefix: '/api/v1/sport-leagues' });
+  testApp.register(contestConfigTemplatesModule, { prefix: '/api/v1/contest-config-templates', cdn });
+  testApp.register(sportLeaguesModule, { prefix: '/api/v1/sport-leagues', cdn });
   testApp.register(selectionsModule, { prefix: '/api/v1/selections', email, planEntitlements });
-  testApp.register(platformModule, { prefix: '/api/v1/platform', ingestionConfigService, platformSettingsService });
+  testApp.register(platformModule, { prefix: '/api/v1/platform', ingestionConfigService, platformSettingsService, cdn });
   testApp.register(ingestionModule, { prefix: '/api/v1/ingestion', ingestionService, providerRegistry });
   testApp.register(emailEventsModule, {
     prefix: '/api/v1/email',

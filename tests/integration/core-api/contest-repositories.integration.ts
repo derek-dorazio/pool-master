@@ -245,6 +245,132 @@ describe('ContestRepository', () => {
     ]);
   });
 
+  it("lists a league's current contests newest first, leaving out finished ones and drafts with an event already started (#1161)", async () => {
+    const { league, event, suffix } = await createLeagueAndEvent();
+    const other = await createLeagueAndEvent();
+    const later = await createLaterEvent(suffix);
+    // Between the first event's start (June 4) and the later one's (July 16).
+    const now = new Date('2026-06-10T12:00:00.000Z');
+    const live = await createContest(league.id, event.id, 'Live', ContestStatus.ACTIVE);
+    await createContest(league.id, event.id, 'Finished', ContestStatus.COMPLETED);
+    await createContest(league.id, event.id, 'Stale Draft', ContestStatus.DRAFT);
+    // One event under way already: it can no longer open, and the started event cannot be removed.
+    await createContest(league.id, [event.id, later.event.id], 'Partly Started Draft', ContestStatus.DRAFT);
+    const upcomingDraft = await createContest(league.id, later.event.id, 'Draft On An Event To Come', ContestStatus.DRAFT);
+    const emptyDraft = await createContest(league.id, [], 'Draft With No Event', ContestStatus.DRAFT);
+    const open = await createContest(league.id, later.event.id, 'Open', ContestStatus.OPEN);
+    await createContest(other.league.id, other.event.id, 'Elsewhere', ContestStatus.OPEN);
+
+    const current = await repos().contests.findCurrentByLeague(league.id, now);
+
+    expect(current.map((contest) => contest.id)).toEqual([open.id, emptyDraft.id, upcomingDraft.id, live.id]);
+  });
+
+  /** Four drafts on the event: brackets from round 1 and round 2, and squares with no game and with one. */
+  async function createLateCutoffDrafts(leagueId: string, eventId: string) {
+    const prisma = getPrisma();
+    const bracket = async (name: string, startsAtRound: number) => {
+      const contest = await createContestRow(repos().contests, {
+        leagueId, seasonYear: 2026, sportEventIds: [eventId], name,
+        status: ContestStatus.DRAFT, contestFormat: ContestFormat.ROSTER, selectionType: SelectionType.BRACKET,
+      });
+      await prisma.contestConfiguration.create({
+        data: { contestId: contest.id, selectionType: SelectionType.BRACKET, configJson: { selectionType: SelectionType.BRACKET, startsAtRound } },
+      });
+      return contest;
+    };
+    const squares = (name: string, gameMatchId?: string) => createContestRow(repos().contests, {
+      leagueId, seasonYear: 2026, sportEventIds: [eventId], name,
+      status: ContestStatus.DRAFT, contestFormat: ContestFormat.ROSTER, selectionType: SelectionType.SQUARES,
+      ...(gameMatchId !== undefined && { squaresGameMatchId: gameMatchId }),
+    });
+    const round = await prisma.sportEventRound.create({ data: { sportEventId: eventId, roundNumber: 1, scheduledDate: new Date('2026-06-04T12:00:00.000Z') } });
+    const game = await prisma.sportEventMatch.create({
+      data: { sportEventId: eventId, sportEventRoundId: round.id, matchNumber: 1, isNeutralSite: true },
+    });
+    return {
+      roundOne: await bracket('Full Bracket', 1),
+      secondChance: await bracket('Second Chance', 2),
+      noGame: await squares('Squares With No Game'),
+      withGame: await squares('Late Game Squares', game.id),
+    };
+  }
+
+  it('keeps a draft closing after its event starts, a bracket from round 2 on or squares with its game, and leaves out a round-1 bracket and squares with no game once the event has started (#1217)', async () => {
+    const { league, event } = await createLeagueAndEvent();
+    // The event started June 4 and is still under way.
+    const now = new Date('2026-06-05T12:00:00.000Z');
+    await getPrisma().sportEvent.update({ where: { id: event.id }, data: { status: 'IN_PROGRESS' } });
+    const drafts = await createLateCutoffDrafts(league.id, event.id);
+
+    const current = await repos().contests.findCurrentByLeague(league.id, now);
+
+    expect(current.map((contest) => contest.id)).toEqual([drafts.withGame.id, drafts.secondChance.id]);
+  });
+
+  it('counts an event under way before its start date as started, leaving out its round-1 bracket draft and keeping its round-2 one (#1217)', async () => {
+    const { league, event } = await createLeagueAndEvent();
+    // Before the June 4 start date, but the event is already IN_PROGRESS.
+    const now = new Date('2026-06-01T12:00:00.000Z');
+    await getPrisma().sportEvent.update({ where: { id: event.id }, data: { status: 'IN_PROGRESS' } });
+    const drafts = await createLateCutoffDrafts(league.id, event.id);
+
+    const current = await repos().contests.findCurrentByLeague(league.id, now);
+
+    expect(current.map((contest) => contest.id)).toEqual([drafts.withGame.id, drafts.secondChance.id]);
+  });
+
+  it('leaves out every draft with an event finished or cancelled, even a later-round bracket, squares with its game, or a draft whose event has not started (#1217)', async () => {
+    const { league, event, suffix } = await createLeagueAndEvent();
+    const prisma = getPrisma();
+    const now = new Date('2026-06-10T12:00:00.000Z');
+    await prisma.sportEvent.update({ where: { id: event.id }, data: { status: 'COMPLETED' } });
+    await createLateCutoffDrafts(league.id, event.id);
+    const called = await createLaterEvent(suffix);
+    await prisma.sportEvent.update({ where: { id: called.event.id }, data: { status: 'CANCELLED' } });
+    await createContest(league.id, called.event.id, 'Draft On A Cancelled Event', ContestStatus.DRAFT);
+    const upcoming = await createLaterEvent(suffix);
+    const kept = await createContest(league.id, upcoming.event.id, 'Draft On An Event To Come', ContestStatus.DRAFT);
+
+    const current = await repos().contests.findCurrentByLeague(league.id, now);
+
+    expect(current.map((contest) => contest.id)).toEqual([kept.id]);
+  });
+
+  it("lists only a league's contests in the given statuses", async () => {
+    const { league, event } = await createLeagueAndEvent();
+    const open = await createContest(league.id, event.id, 'Open', ContestStatus.OPEN);
+    await createContest(league.id, event.id, 'Draft', ContestStatus.DRAFT);
+    await createContest(league.id, event.id, 'Live', ContestStatus.ACTIVE);
+
+    const found = await repos().contests.findByLeague(league.id, [ContestStatus.OPEN]);
+
+    expect(found.map((contest) => contest.id)).toEqual([open.id]);
+  });
+
+  it("lists a league's contests that finished in a time range, latest finish first, and the US Eastern years they finished in (#1161)", async () => {
+    const { league, event } = await createLeagueAndEvent();
+    const other = await createLeagueAndEvent();
+    const finishAt = async (name: string, endsAt: Date, status: ContestStatus = ContestStatus.COMPLETED) => {
+      const contest = await createContest(league.id, event.id, name, status);
+      await getPrisma().contest.update({ where: { id: contest.id }, data: { endsAt } });
+      return contest;
+    };
+    const spring = await finishAt('Spring', new Date('2025-04-14T00:00:00.000Z'));
+    // 10 p.m. New Year's Eve in New York: still 2025 there.
+    const newYearsEve = await finishAt('New Years Eve', new Date('2026-01-01T03:00:00.000Z'));
+    await finishAt('Summer', new Date('2026-07-01T00:00:00.000Z'));
+    await finishAt('Live, ends later', new Date('2025-06-01T00:00:00.000Z'), ContestStatus.ACTIVE);
+    const elsewhere = await createContest(other.league.id, other.event.id, 'Elsewhere', ContestStatus.COMPLETED);
+    await getPrisma().contest.update({ where: { id: elsewhere.id }, data: { endsAt: new Date('2024-05-01T00:00:00.000Z') } });
+
+    const in2025 = await repos().contests.findFinishedByLeague(
+      league.id, new Date('2025-01-01T05:00:00.000Z'), new Date('2026-01-01T05:00:00.000Z'));
+
+    expect(in2025.map((contest) => contest.id)).toEqual([newYearsEve.id, spring.id]);
+    await expect(repos().contests.findFinishedYearsByLeague(league.id)).resolves.toEqual([2026, 2025]);
+  });
+
   it('transitions a contest only from the given statuses: the second run changes nothing and says so', async () => {
     const { league, event } = await createLeagueAndEvent();
     const contest = await createContest(league.id, event.id, 'To Start', ContestStatus.OPEN);
@@ -579,6 +705,24 @@ describe('ParticipantContestScoringRuleRepository', () => {
     ]);
   });
 
+  it('deletes every rule of one configuration in one call, leaving another configuration\'s rules', async () => {
+    const replaced = await configurationFor('Replaced scoring');
+    const kept = await configurationFor('Kept scoring');
+    await getPrisma().participantContestScoringRule.createMany({
+      data: [
+        { contestConfigurationId: replaced.id, participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 1, config: {} },
+        { contestConfigurationId: replaced.id, participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 2, config: {} },
+        { contestConfigurationId: kept.id, participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 1, config: {} },
+      ],
+    });
+    const repo = new PrismaParticipantContestScoringRuleRepository(getPrisma());
+
+    await repo.deleteByContestConfiguration(replaced.id);
+
+    await expect(repo.findByContestConfiguration(replaced.id)).resolves.toEqual([]);
+    await expect(repo.findByContestConfiguration(kept.id)).resolves.toHaveLength(1);
+  });
+
   it('reads retired keys out of a stored config, and a retired definition or a non-object config as a failed parse, in sort order', async () => {
     const configuration = await configurationFor('Stored settings');
     await getPrisma().participantContestScoringRule.createMany({
@@ -710,7 +854,7 @@ describe('ContestConfigTemplateRepository', () => {
   });
 });
 
-describe('ContestConfigurationRepository.findByTemplateEventSeries (#714)', () => {
+describe('ContestRepository.findJoinableByReleasedEdition (#714, #1179)', () => {
   const prefix = `itest-series-${randomUUID().slice(0, 8)}-`;
   afterEach(async () => {
     await cleanupTestData();
@@ -735,9 +879,15 @@ describe('ContestConfigurationRepository.findByTemplateEventSeries (#714)', () =
     });
   }
 
-  async function contestFromTemplate(leagueId: string, sportEventId: string, name: string, templateId: string) {
-    const contest = await createContest(leagueId, sportEventId, name, ContestStatus.OPEN);
-    return getPrisma().contestConfiguration.create({
+  async function contestFromTemplate(
+    leagueId: string,
+    sportEventIds: string | readonly string[],
+    name: string,
+    templateId: string,
+    status: ContestStatus = ContestStatus.OPEN,
+  ) {
+    const contest = await createContest(leagueId, sportEventIds, name, status);
+    await getPrisma().contestConfiguration.create({
       data: {
         contestId: contest.id,
         templateId,
@@ -745,26 +895,60 @@ describe('ContestConfigurationRepository.findByTemplateEventSeries (#714)', () =
         configJson: { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 1 },
       },
     });
+    return contest;
   }
 
-  it('finds the configurations of contests made from a template naming the series in the series\' own sport league, and no others', async () => {
+  /** A league and event, a template covering the event's series, and the next edition of that series not yet in any contest. */
+  async function seriesWithTemplate() {
     const prisma = getPrisma();
-    const { league, event } = await createLeagueAndEvent();
-    const series = await prisma.eventSeries.findUniqueOrThrow({ where: { id: event.eventSeriesId } });
+    const fixture = await createLeagueAndEvent();
+    const series = await prisma.eventSeries.findUniqueOrThrow({ where: { id: fixture.event.eventSeriesId } });
+    const covering = await createSeriesTemplate('covering', series.sportLeagueId, ['Some Other Major', series.name]);
+    const edition = { id: randomUUID(), eventSeriesId: series.id, eventYear: fixture.event.eventYear };
+    return { ...fixture, series, covering, edition };
+  }
+
+  it('finds the contests made from a template naming the series in the series\' own sport league, and no others', async () => {
+    const prisma = getPrisma();
+    const { league, event, series, covering, edition } = await seriesWithTemplate();
     const otherTour = await prisma.sportLeague.create({
       data: { sportId: (await prisma.sport.findUniqueOrThrow({ where: { sport: Sport.GOLF } })).id, name: `${prefix}other tour` },
     });
-    const covering = await createSeriesTemplate('covering', series.sportLeagueId, ['Some Other Major', series.name]);
     const otherLeague = await createSeriesTemplate('other-league', otherTour.id, [series.name]);
     const otherSeries = await createSeriesTemplate('other-series', series.sportLeagueId, ['Some Other Major']);
     const expected = await contestFromTemplate(league.id, event.id, 'Covered Pool', covering.id);
     await contestFromTemplate(league.id, event.id, 'Other League Pool', otherLeague.id);
     await contestFromTemplate(league.id, event.id, 'Other Series Pool', otherSeries.id);
 
-    const found = await new PrismaContestConfigurationRepository(prisma).findByTemplateEventSeries(series.id);
+    const found = await repos().contests.findJoinableByReleasedEdition(edition);
 
-    expect(found.map((configuration) => configuration.id)).toEqual([expected.id]);
-    await expect(new PrismaContestConfigurationRepository(prisma).findByTemplateEventSeries(randomUUID())).resolves.toEqual([]);
+    expect(found.map((contest) => contest.id)).toEqual([expected.id]);
+    expect(found[0]?.sportEventIds).toEqual([event.id]);
+    await expect(repos().contests.findJoinableByReleasedEdition({ ...edition, eventSeriesId: randomUUID() })).resolves.toEqual([]);
+  });
+
+  it('leaves out a COMPLETED pool, a drawn pool, a squares-drawn pool, a pool that already has the edition and a pool of another year\'s events, keeping the rest (one with no events yet among them) oldest first', async () => {
+    const prisma = getPrisma();
+    const { league, event, suffix, covering, edition } = await seriesWithTemplate();
+    const first = await contestFromTemplate(league.id, event.id, 'Live Pool', covering.id, ContestStatus.ACTIVE);
+    const second = await contestFromTemplate(league.id, event.id, 'Draft Pool', covering.id, ContestStatus.DRAFT);
+    await contestFromTemplate(league.id, event.id, 'Finished Pool', covering.id, ContestStatus.COMPLETED);
+    const drawn = await contestFromTemplate(league.id, event.id, 'Drawn Pool', covering.id);
+    await prisma.contestDraw.create({ data: { contestId: drawn.id, seed: 'seed', fieldOrder: [], entryOrder: [] } });
+    const squaresDrawn = await contestFromTemplate(league.id, event.id, 'Squares Drawn Pool', covering.id);
+    await prisma.contestSquaresDraw.create({
+      data: { contestId: squaresDrawn.id, seed: 'seed', rowDigits: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], columnDigits: [9, 8, 7, 6, 5, 4, 3, 2, 1, 0] },
+    });
+    const noEvents = await contestFromTemplate(league.id, [], 'No Events Yet Pool', covering.id);
+    const { event: released } = await createLaterEvent(suffix);
+    await contestFromTemplate(league.id, [event.id, released.id], 'Already Has It', covering.id);
+    const { event: lastYear } = await createLaterEvent(suffix, new Date('2025-07-16T12:00:00.000Z'));
+    await prisma.sportEvent.update({ where: { id: lastYear.id }, data: { eventYear: edition.eventYear - 1 } });
+    await contestFromTemplate(league.id, [event.id, lastYear.id], 'Mixed Years Pool', covering.id);
+
+    const found = await repos().contests.findJoinableByReleasedEdition({ ...edition, id: released.id });
+
+    expect(found.map((contest) => contest.name)).toEqual([first.name, second.name, noEvents.name]);
   });
 });
 
@@ -888,6 +1072,92 @@ describe('ContestEntryRepository', () => {
     expect(submittedLaterEvent.map((entry) => entry.id)).toEqual([draft.id]);
     expect(one).toEqual(expect.objectContaining({ id: second.id, entryNumber: 2, squadName: `Bravo ${suffix}` }));
     await expect(repos().entries.findByIdWithSquad(randomUUID())).resolves.toBeNull();
+  });
+
+  it('counts each contest\'s entries that submitted at least one event in one read, with zero for a contest with none (#1161)', async () => {
+    const { league, squads, event, suffix } = await createLeagueAndEvent();
+    const later = await createLaterEvent(suffix);
+    const contest = await createContest(league.id, [event.id, later.event.id], 'Counted');
+    const empty = await createContest(league.id, event.id, 'Nobody Submitted');
+    const both = await createEntry(contest.id, squads[0].id, 1, 'Both Events');
+    const one = await createEntry(contest.id, squads[1].id, 1, 'Later Event');
+    await createEntry(contest.id, squads[1].id, 2, 'Draft');
+    await createEntry(empty.id, squads[0].id, 1, 'Draft Elsewhere');
+    await repos().entries.setEventStatus(both.id, event.id, 'SUBMITTED', new Date());
+    await repos().entries.setEventStatus(both.id, later.event.id, 'SUBMITTED', new Date());
+    await repos().entries.setEventStatus(one.id, later.event.id, 'SUBMITTED', new Date());
+
+    await expect(repos().entries.countSubmittedByContests([contest.id, empty.id])).resolves.toEqual(new Map([
+      [contest.id, 2],
+      [empty.id, 0],
+    ]));
+    await expect(repos().entries.countSubmittedByContests([])).resolves.toEqual(new Map());
+  });
+
+  it("finds a squad's entries in one contest only, drafts included, by entry number, leaving out its entries in other contests and other squads' (#1167)", async () => {
+    const { league, squads, event } = await createLeagueAndEvent();
+    const contest = await createContest(league.id, event.id, 'Squad Entries');
+    const otherContest = await createContest(league.id, event.id, 'Other Contest');
+    // Created out of order, so the order below is the adapter's, not insertion order.
+    const third = await createEntry(contest.id, squads[0].id, 3, 'Third');
+    const first = await createEntry(contest.id, squads[0].id, 1, 'First');
+    await createEntry(otherContest.id, squads[0].id, 2, 'Elsewhere');
+    await createEntry(contest.id, squads[1].id, 2, 'Other Squad');
+
+    const found = await repos().entries.findByContestAndSquad(contest.id, squads[0].id);
+
+    expect(found.map((entry) => [entry.id, entry.entryNumber])).toEqual([[first.id, 1], [third.id, 3]]);
+    expect(found[0].events).toEqual([expect.objectContaining({ sportEventId: event.id, status: 'DRAFT' })]);
+    await expect(repos().entries.findByContestAndSquad(otherContest.id, squads[1].id)).resolves.toEqual([]);
+    // The ids-alone read a contest page uses for the viewer's entries finds the same, in the same order (#1197).
+    await expect(repos().entries.findIdsByContestAndSquad(contest.id, squads[0].id)).resolves.toEqual([first.id, third.id]);
+    await expect(repos().entries.findIdsByContestAndSquad(otherContest.id, squads[1].id)).resolves.toEqual([]);
+  });
+
+  it("counts one contest's submitted entries, the squads that submitted one, and every entry with drafts (#1197)", async () => {
+    const { league, squads, event, suffix } = await createLeagueAndEvent();
+    const later = await createLaterEvent(suffix);
+    const contest = await createContest(league.id, [event.id, later.event.id], 'Totals');
+    const other = await createContest(league.id, event.id, 'Other Totals');
+    const first = await createEntry(contest.id, squads[0].id, 1, 'First');
+    const second = await createEntry(contest.id, squads[0].id, 2, 'Second');
+    await createEntry(contest.id, squads[1].id, 1, 'Draft');
+    await createEntry(other.id, squads[1].id, 1, 'Elsewhere');
+    await repos().entries.setEventStatus(first.id, event.id, 'SUBMITTED', new Date());
+    await repos().entries.setEventStatus(first.id, later.event.id, 'SUBMITTED', new Date());
+    await repos().entries.setEventStatus(second.id, later.event.id, 'SUBMITTED', new Date());
+
+    await expect(repos().entries.countForContest(contest.id)).resolves.toEqual({
+      submittedEntryCount: 2,
+      enteredSquadCount: 1,
+      allEntryCount: 3,
+    });
+    await expect(repos().entries.countForContest(randomUUID())).resolves.toEqual({
+      submittedEntryCount: 0,
+      enteredSquadCount: 0,
+      allEntryCount: 0,
+    });
+  });
+
+  it("finds a squad's entries, drafts included and with its name, in the contests asked for only (#1197)", async () => {
+    const { league, squads, event, suffix } = await createLeagueAndEvent();
+    const contest = await createContest(league.id, event.id, 'Asked For');
+    const otherAsked = await createContest(league.id, event.id, 'Also Asked For');
+    const notAsked = await createContest(league.id, event.id, 'Not Asked For');
+    const second = await createEntry(contest.id, squads[0].id, 2, 'Second');
+    const first = await createEntry(contest.id, squads[0].id, 1, 'First');
+    const elsewhere = await createEntry(otherAsked.id, squads[0].id, 1, 'Elsewhere');
+    await createEntry(notAsked.id, squads[0].id, 1, 'Not Asked');
+    await createEntry(contest.id, squads[1].id, 1, 'Other Squad');
+
+    const found = await repos().entries.findBySquadAndContests(squads[0].id, [contest.id, otherAsked.id]);
+
+    expect(found.map((entry) => entry.id).sort()).toEqual([first.id, second.id, elsewhere.id].sort());
+    // Within a contest, in entry-number order.
+    expect(found.filter((entry) => entry.contestId === contest.id).map((entry) => entry.id)).toEqual([first.id, second.id]);
+    expect(found.every((entry) => entry.squadName === `Alpha ${suffix}`)).toBe(true);
+    expect(found[0].events).toEqual([expect.objectContaining({ sportEventId: event.id, status: 'DRAFT' })]);
+    await expect(repos().entries.findBySquadAndContests(squads[0].id, [])).resolves.toEqual([]);
   });
 
   it('updates only the entry fields given, leaving the others and its event statuses as stored', async () => {
@@ -1036,7 +1306,7 @@ describe('SportEventRepository.findAll start bounds (#893)', () => {
 });
 
 describe('ContestEntryPickRepository — read-only', () => {
-  it('reads picks in pick order, with their golfer, and counts them per entry', async () => {
+  it('reads picks in pick order, with their golfer and their event, only in the events asked for, and counts them per entry', async () => {
     const prisma = getPrisma();
     const { league, squads, event, field, suffix } = await createLeagueAndEvent();
     const contest = await createContest(league.id, event.id, 'Picks');
@@ -1061,14 +1331,16 @@ describe('ContestEntryPickRepository — read-only', () => {
       },
     });
 
-    const picks = await repos().picks.findByEntries([picked.id, empty.id]);
+    const picks = await repos().picks.findByEntriesAndEvents([picked.id, empty.id], [event.id]);
     const withParticipant = await repos().picks.findByEntriesWithParticipant([picked.id]);
     const counts = await repos().picks.countByEntries([picked.id, empty.id]);
 
-    expect(picks.map((pick) => [pick.id, pick.slot, pick.contestFormat])).toEqual([
-      [earlier.id, 1, 'ROSTER'],
-      [later.id, 2, 'ROSTER'],
+    expect(picks.map((pick) => [pick.id, pick.slot, pick.contestFormat, pick.sportEventId])).toEqual([
+      [earlier.id, 1, 'ROSTER', event.id],
+      [later.id, 2, 'ROSTER', event.id],
     ]);
+    // Only the events asked for (#1162): the entry's picks are all in `event`, so another reads none.
+    await expect(repos().picks.findByEntriesAndEvents([picked.id], [randomUUID()])).resolves.toEqual([]);
     expect(withParticipant.map((pick) => pick.participant)).toEqual([
       {
         participantId: field[0].participantId,
@@ -1091,8 +1363,30 @@ describe('ContestEntryPickRepository — read-only', () => {
     expect(withParticipant.map((pick) => pick.sportEventId)).toEqual([event.id, event.id]);
     // An entry with no picks is absent from the map, not zero.
     expect(counts).toEqual(new Map([[picked.id, 2]]));
-    await expect(repos().picks.findByEntries([])).resolves.toEqual([]);
+    await expect(repos().picks.findByEntriesAndEvents([], [event.id])).resolves.toEqual([]);
     await expect(repos().picks.countByEntries([])).resolves.toEqual(new Map());
+  });
+
+  it('reads only the named event\'s picks when given one, and every event\'s without (#1196)', async () => {
+    const prisma = getPrisma();
+    const { league, squads, event, field, suffix } = await createLeagueAndEvent();
+    const later = await createLaterEvent(suffix);
+    const contest = await createContest(league.id, [event.id, later.event.id], 'Season Picks');
+    const entry = await prisma.contestEntry.create({ data: { contestId: contest.id, squadId: squads[0].id, entryNumber: 1, name: 'Season' } });
+    const first = await prisma.contestEntryPick.create({
+      data: { entryId: entry.id, sportEventParticipantId: field[0].id, contestFormat: 'ROSTER', pickedAt: new Date('2026-06-01T12:00:00.000Z') },
+    });
+    const second = await prisma.contestEntryPick.create({
+      data: { entryId: entry.id, sportEventParticipantId: later.field[0].id, contestFormat: 'ROSTER', pickedAt: new Date('2026-07-01T12:00:00.000Z') },
+    });
+
+    const inFirst = await repos().picks.findByEntriesWithParticipant([entry.id], { sportEventId: event.id });
+    const inLater = await repos().picks.findByEntriesWithParticipant([entry.id], { sportEventId: later.event.id });
+    const all = await repos().picks.findByEntriesWithParticipant([entry.id]);
+
+    expect(inFirst.map((pick) => [pick.id, pick.sportEventId])).toEqual([[first.id, event.id]]);
+    expect(inLater.map((pick) => [pick.id, pick.sportEventId])).toEqual([[second.id, later.event.id]]);
+    expect(all.map((pick) => pick.id)).toEqual([first.id, second.id]);
   });
 
   it('counts picks across one contest\'s entries, ignoring other contests', async () => {

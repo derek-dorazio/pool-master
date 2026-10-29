@@ -19,14 +19,20 @@
  * rather than on an action, such as entry reminders and live standings, are queued once their
  * time has come. The outbox's idempotency key keeps a second sweep, or a second server task, from
  * sending one twice.
+ *
+ * Every server task runs this scheduler, and the sweep runs on one of them (#1159): the task
+ * holding the sweep's job lock. A sweep still running when the next is due is not overlapped.
  */
 
 import type { FastifyBaseLogger } from 'fastify';
 import type { SportEventRepository, SportEventRoundRepository } from '@poolmaster/shared/db';
 import { SportEventStatus, type SportEvent, type SportEventRound } from '@poolmaster/shared/domain';
+import type { JobLock } from '../../core/job-lock';
+import { runWithReadMemo } from '../../core/request-read-memo';
 import type { EventLifecycleService } from './event-lifecycle-service';
 
 const SWEEP_INTERVAL_MS = 5 * 60 * 1000;
+const SWEEP_LOCK_KEY = 'event-lifecycle-sweep';
 
 /** The emails that come due on the clock (#845): each sweep asks them to queue what is due. */
 export interface DueNotifications {
@@ -39,6 +45,8 @@ export interface EventLifecycleSchedulerOptions {
   eventLifecycleService: Pick<EventLifecycleService, 'applySportEventStatusTransition' | 'activateContestsPastCutoff'>;
   /** The "notifications due" step, one per kind of email; omitted, a sweep only moves events and contests. */
   notificationsDue?: readonly DueNotifications[];
+  /** Keeps the sweep to one server task. */
+  jobLock: JobLock;
   logger?: FastifyBaseLogger;
   now?: () => Date;
 }
@@ -49,14 +57,17 @@ export class EventLifecycleScheduler {
   private readonly rounds: EventLifecycleSchedulerOptions['rounds'];
   private readonly eventLifecycleService: EventLifecycleSchedulerOptions['eventLifecycleService'];
   private readonly notificationsDue: readonly DueNotifications[];
+  private readonly jobLock: JobLock;
   private readonly logger?: FastifyBaseLogger;
   private readonly now: () => Date;
+  private sweeping = false;
 
   constructor(options: EventLifecycleSchedulerOptions) {
     this.sportEvents = options.sportEvents;
     this.rounds = options.rounds;
     this.eventLifecycleService = options.eventLifecycleService;
     this.notificationsDue = options.notificationsDue ?? [];
+    this.jobLock = options.jobLock;
     this.logger = options.logger;
     this.now = options.now ?? (() => new Date());
   }
@@ -79,8 +90,33 @@ export class EventLifecycleScheduler {
     }
   }
 
-  /** One sweep pass. Exposed directly so tests and manual triggers don't need to wait on the timer. */
+  /**
+   * One sweep pass, when this task holds the sweep's lock and no sweep is still running here.
+   * Exposed directly so tests and manual triggers don't need to wait on the timer.
+   */
   async runSweep(): Promise<void> {
+    if (this.sweeping) {
+      this.logger?.warn('Skipped an event lifecycle sweep because the previous one is still running');
+      return;
+    }
+    this.sweeping = true;
+    try {
+      // One read memo per sweep (#1200), as a request has: the contests of one event share its
+      // sport league's read, and a write in the sweep forgets what it touches.
+      const ran = await this.jobLock.runExclusive(SWEEP_LOCK_KEY, () => runWithReadMemo(() => this.sweep()));
+      if (!ran) {
+        this.logger?.debug('Skipped an event lifecycle sweep because another server task runs it');
+      }
+    } catch (error) {
+      this.logger?.error({
+        error: error instanceof Error ? error.message : String(error),
+      }, 'Event lifecycle sweep failed');
+    } finally {
+      this.sweeping = false;
+    }
+  }
+
+  private async sweep(): Promise<void> {
     const now = this.now();
     const candidates = await this.sportEvents.findAutoLifecycleCandidates();
     const roundsByEvent = await this.rounds.findBySportEvents(candidates.map((candidate) => candidate.id));
@@ -117,6 +153,7 @@ export class EventLifecycleScheduler {
           sportEventId: candidate.id,
           toStatus: SportEventStatus.IN_PROGRESS,
           actor: { type: 'SYSTEM' },
+          fromStatus: SportEventStatus.SCHEDULED,
         });
       }
       return;
@@ -134,6 +171,7 @@ export class EventLifecycleScheduler {
           sportEventId: candidate.id,
           toStatus: SportEventStatus.COMPLETED,
           actor: { type: 'SYSTEM' },
+          fromStatus: SportEventStatus.IN_PROGRESS,
         });
       }
     }

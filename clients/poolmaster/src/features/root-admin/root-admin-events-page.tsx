@@ -15,7 +15,9 @@ import {
   DataGrid,
   DataGridPage,
   formatDateTimeDisplay,
+  FormField,
   Modal,
+  Select,
   StatusBadge,
   useDisplayPreferences,
 } from '@/features/shared/ui';
@@ -65,16 +67,30 @@ function formatFieldCount(event: AdminEvent) {
   return `${event.loadedParticipantCount} loaded / ${providerCount} provider`;
 }
 
+/** The years the browser offers: a few back for results, one ahead for schedules loaded early. */
+const EVENT_YEARS_BACK = 3;
+const EVENT_YEARS_AHEAD = 1;
+
+function eventYearOptions(currentYear: number): number[] {
+  const years: number[] = [];
+  for (let year = currentYear + EVENT_YEARS_AHEAD; year >= currentYear - EVENT_YEARS_BACK; year -= 1) {
+    years.push(year);
+  }
+  return years;
+}
+
 export function RootAdminEventsPage() {
   const displayPreferences = useDisplayPreferences();
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const currentYear = new Date().getFullYear();
+  const [eventYear, setEventYear] = useState(currentYear);
 
   const eventsQuery = useQuery({
-    queryKey: QueryKeys.rootAdmin.events,
+    queryKey: QueryKeys.rootAdmin.eventsByYear(eventYear),
     queryFn: async (): Promise<AdminEvent[]> => {
-      // #235 — the canonical event list; the admin copy of it is gone. Nothing pages it (§16),
-      // so the browser now shows every event rather than the first 250.
-      const response = await listEvents();
+      // #235 — the canonical event list; the admin copy of it is gone. Nothing pages it (§16);
+      // the event list needs a filter (#1180), so the browser reads one year at a time.
+      const response = await listEvents({ query: { eventYear } });
 
       if (!response.data?.events) {
         throwApiError(response.error, 'Event browser response is missing data.');
@@ -284,11 +300,25 @@ export function RootAdminEventsPage() {
     : 'Participants in this event.';
 
   return (
-    <>
+    <div className="space-y-4">
+      <FormField className="max-w-xs" label="Year">
+        <Select
+          data-testid="root-admin-events-year"
+          onChange={(change) => setEventYear(Number(change.target.value))}
+          value={eventYear}
+        >
+          {eventYearOptions(currentYear).map((year) => (
+            <option key={year} value={year}>
+              {year}
+            </option>
+          ))}
+        </Select>
+      </FormField>
+
       <DataGridPage
         columns={eventColumns}
         data={eventsQuery.data ?? []}
-        emptyMessage="No events matched the current filters."
+        emptyMessage={`No events in ${eventYear}.`}
         errorBody={extractErrorMessage(
           eventsQuery.error,
           { fallback: 'We could not load events right now.' },
@@ -350,6 +380,6 @@ export function RootAdminEventsPage() {
           />
         )}
       </Modal>
-    </>
+    </div>
   );
 }

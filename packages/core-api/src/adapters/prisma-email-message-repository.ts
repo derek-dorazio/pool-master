@@ -150,10 +150,24 @@ export class PrismaEmailMessageRepository implements EmailMessageRepository {
     return row ? toEmailMessage(row) : undefined;
   }
 
-  async clearContentCreatedBefore(cutoff: Date): Promise<number> {
+  async clearContentCreatedBetween(from: Date, before: Date): Promise<number> {
     const { count } = await this.prisma.emailMessage.updateMany({
-      where: { createdAt: { lt: cutoff }, subject: { not: null } },
+      where: { createdAt: { gte: from, lt: before }, subject: { not: null } },
       data: CLEARED_CONTENT,
+    });
+    return count;
+  }
+
+  async deleteBatchCreatedBefore(cutoff: Date, limit: number): Promise<number> {
+    const batch = await this.prisma.emailMessage.findMany({
+      where: { createdAt: { lt: cutoff } },
+      select: { id: true },
+      orderBy: { createdAt: 'asc' },
+      take: limit,
+    });
+    if (batch.length === 0) return 0;
+    const { count } = await this.prisma.emailMessage.deleteMany({
+      where: { id: { in: batch.map((row) => row.id) } },
     });
     return count;
   }

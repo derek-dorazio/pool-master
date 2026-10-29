@@ -354,6 +354,13 @@ export default tseslint.config(
     rules: { 'poolmaster/no-unawaited-send-error': 'error' },
   },
   {
+    // Backend source: one database call per loop iteration is the N+1 / fan-out shape most of
+    // the performance audit found (#1158, #1240). Seeds and scripts sit outside src/.
+    files: ['packages/core-api/src/**/*.ts'],
+    plugins: { poolmaster },
+    rules: { 'poolmaster/no-query-in-loop': 'error' },
+  },
+  {
     // Test files across every workspace, matching the scanner's walk roots
     // (tests/, packages/, clients/poolmaster/src/), plus the Playwright suites in
     // clients/poolmaster/e2e/ since they joined lint (#616). The rule also fires on the

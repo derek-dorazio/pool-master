@@ -23,9 +23,8 @@ import type {
   SportEventParticipantPatch,
   SportEventParticipantRaceResultRepository,
   SportEventParticipantRepository,
-  SportEventParticipantRoundRepository,
-  SportEventParticipantStandingRepository,
   SportEventParticipantValuationRepository,
+  SportEventParticipantView,
   SportEventMatchRepository,
   SportEventRepository,
   SportEventRoundRepository,
@@ -166,6 +165,7 @@ export class InMemorySportEvents {
   sportLeagueRepo(): SportLeagueRepository {
     return {
       findById: async (id) => this.sportLeagues.find((row) => row.id === id) ?? null,
+      findByIds: async (ids) => this.sportLeagues.filter((row) => ids.includes(row.id)),
       findAll: async (filters) => this.sportLeagues.filter((row) => (
         (filters.sportId === undefined || row.sportId === filters.sportId)
         && (filters.isActive === undefined || row.isActive === filters.isActive)
@@ -189,12 +189,11 @@ export class InMemorySportEvents {
       findById: async (id) => this.participants.find((row) => row.id === id) ?? null,
       findByIds: async (ids) => this.participants.filter((row) => ids.includes(row.id)),
       search: async () => [...this.participants],
-      findMatching: async (sportId, query) => this.participants.filter((row) => (
-        row.sportId === sportId
-        && (query.id === undefined || row.id === query.id)
+      findMatchingAny: async (sportId, queries) => this.participants.filter((row) => row.sportId === sportId && queries.some((query) => (
+        (query.id === undefined || row.id === query.id)
         && (query.externalId === undefined || row.externalId === query.externalId)
         && (query.name === undefined || row.name.toLowerCase() === query.name.toLowerCase())
-      )),
+      ))),
       create: async () => { throw new Error('not used'); },
       update: async () => { throw new Error('not used'); },
     };
@@ -289,6 +288,13 @@ export class InMemorySportEvents {
         for (const [key, value] of Object.entries(updates)) {
           if (value !== undefined) (row as unknown as Record<string, unknown>)[key] = nullable(value);
         }
+        return row;
+      },
+      transitionStatus: async (id, transition) => {
+        const row = this.events.find((candidate) => candidate.id === id);
+        if (!row || row.status !== transition.from) return null;
+        row.status = transition.to;
+        if (transition.endDate) row.endDate = transition.endDate;
         return row;
       },
       delete: async (id) => {
@@ -392,11 +398,19 @@ export class InMemorySportEvents {
       valuation.price = price;
       valuation.priceAssignedSource = 'MANUAL';
     };
+    const bySeed = (sportEventId: string) => this.field
+      .filter((row) => row.sportEventId === sportEventId)
+      .sort((left, right) => (left.seedNumber ?? Infinity) - (right.seedNumber ?? Infinity));
     return {
       findById: async (id) => this.field.find((row) => row.id === id) ?? null,
-      findBySportEvent: async (sportEventId) => this.field
-        .filter((row) => row.sportEventId === sportEventId)
-        .sort((left, right) => (left.seedNumber ?? Infinity) - (right.seedNumber ?? Infinity)),
+      findByIds: async (ids) => this.field.filter((row) => ids.includes(row.id)),
+      findBySportEvent: async (sportEventId) => bySeed(sportEventId),
+      findBySportEvents: async (sportEventIds) => [...sportEventIds].sort().flatMap((sportEventId) => bySeed(sportEventId)),
+      findFieldForEvent: async (sportEventId, sportLeagueId) => bySeed(sportEventId).map((entry) => this.fieldRow(entry, sportLeagueId)),
+      findFieldRow: async (sportEventId, sportEventParticipantId, sportLeagueId) => {
+        const entry = this.field.find((row) => row.id === sportEventParticipantId && row.sportEventId === sportEventId);
+        return entry ? this.fieldRow(entry, sportLeagueId) : null;
+      },
       countDistinctParticipants: async (sportEventIds) => new Set(this.field
         .filter((row) => sportEventIds.includes(row.sportEventId))
         .map((row) => row.participantId)).size,
@@ -453,10 +467,12 @@ export class InMemorySportEvents {
   }
 
   tierRepo(): SportEventTierRepository {
+    const findBySportEvents = async (sportEventIds: readonly string[]) => this.tierRows
+      .filter((row) => sportEventIds.includes(row.sportEventId))
+      .sort((left, right) => left.sportEventId.localeCompare(right.sportEventId) || left.tierNumber - right.tierNumber);
     return {
-      findBySportEvent: async (sportEventId) => this.tierRows
-        .filter((row) => row.sportEventId === sportEventId)
-        .sort((left, right) => left.tierNumber - right.tierNumber),
+      findBySportEvent: async (sportEventId) => findBySportEvents([sportEventId]),
+      findBySportEvents,
       createMany: async (sportEventId, tiers) => {
         for (const tier of tiers) this.tierRows.push(stamp({ id: this.id('tier'), sportEventId, ...tier }));
       },
@@ -498,6 +514,10 @@ export class InMemorySportEvents {
         const entryIds = new Set(this.field.filter((row) => row.sportEventId === sportEventId).map((row) => row.id));
         return this.valuationRows.filter((row) => entryIds.has(row.sportEventParticipantId));
       },
+      findBySportEvents: async (sportEventIds) => {
+        const entryIds = new Set(this.field.filter((row) => sportEventIds.includes(row.sportEventId)).map((row) => row.id));
+        return this.valuationRows.filter((row) => entryIds.has(row.sportEventParticipantId));
+      },
       assignTiers: async (assignments) => {
         for (const assignment of assignments) {
           Object.assign(valuationFor(assignment.sportEventParticipantId), {
@@ -516,23 +536,35 @@ export class InMemorySportEvents {
     };
   }
 
-  participantRoundRepo(): SportEventParticipantRoundRepository {
-    const withNumber = (row: Omit<SportEventParticipantRound, 'roundNumber'>): SportEventParticipantRound => ({ ...row, roundNumber: this.roundNumberOf(row.sportEventRoundId) });
+  /** One field row with everything the field read carries, as copies. */
+  private fieldRow(entry: SportEventParticipant, sportLeagueId: string): SportEventParticipantView {
+    const standing = this.standingRows.find((row) => row.sportEventParticipantId === entry.id);
+    const standingGolf = standing && this.golfStandingRows.find((row) => row.standingId === standing.id);
+    const valuation = this.valuationRows.find((row) => row.sportEventParticipantId === entry.id);
+    const raceResult = this.raceResultRows.find((row) => row.sportEventParticipantId === entry.id);
     return {
-      findBySportEvent: async (sportEventId) => {
-        const entryIds = new Set(this.field.filter((row) => row.sportEventId === sportEventId).map((row) => row.id));
-        return this.participantRoundRows.filter((row) => entryIds.has(row.sportEventParticipantId)).map(withNumber)
-          .sort((left, right) => left.roundNumber - right.roundNumber);
-      },
-    };
-  }
-
-  standingRepo(): SportEventParticipantStandingRepository {
-    return {
-      findBySportEvent: async (sportEventId) => {
-        const entryIds = new Set(this.field.filter((row) => row.sportEventId === sportEventId).map((row) => row.id));
-        return this.standingRows.filter((row) => entryIds.has(row.sportEventParticipantId));
-      },
+      entry: { ...entry },
+      participant: { ...(this.participants.find((participant) => participant.id === entry.participantId) as Participant) },
+      valuation: valuation ? { ...valuation } : null,
+      standing: standing ? { standing: { ...standing }, golf: standingGolf ? { ...standingGolf } : null } : null,
+      rounds: this.participantRoundRows
+        .filter((row) => row.sportEventParticipantId === entry.id)
+        .map((row) => ({ ...row, roundNumber: this.roundNumberOf(row.sportEventRoundId) }))
+        .sort((left, right) => left.roundNumber - right.roundNumber)
+        .map((round) => {
+          const golf = this.golfRoundRows.find((row) => row.participantRoundId === round.id);
+          return {
+            round,
+            golf: golf ? { ...golf } : null,
+            statLines: this.statLineRows.filter((row) => row.participantRoundId === round.id).map((row) => ({ ...row })),
+          };
+        }),
+      raceResult: raceResult ? { ...raceResult } : null,
+      matches: this.matchRows
+        .filter((match) => match.homeSportEventParticipantId === entry.id || match.awaySportEventParticipantId === entry.id)
+        .sort((left, right) => left.matchNumber - right.matchNumber)
+        .map((match) => ({ ...match, periodScores: [...match.periodScores].sort((left, right) => left.periodNumber - right.periodNumber) })),
+      affiliatedWithSportLeague: this.affiliationRows.some((row) => row.sportLeagueId === sportLeagueId && row.participantId === entry.participantId),
     };
   }
 
@@ -570,10 +602,6 @@ export class InMemorySportEvents {
 
   golfRoundRepo(): SportEventParticipantGolfRoundRepository {
     return {
-      findBySportEvent: async (sportEventId) => {
-        const entryIds = new Set(this.field.filter((row) => row.sportEventId === sportEventId).map((row) => row.id));
-        return this.golfRoundResults().filter((result) => entryIds.has(result.participantRound.sportEventParticipantId));
-      },
       findBySportEventRound: async (id) => this.golfRoundResults().filter((result) => result.participantRound.sportEventRoundId === id),
       findBySportEventParticipants: async (ids) => this.golfRoundResults().filter((result) => ids.includes(result.participantRound.sportEventParticipantId)),
       upsert: async (write) => this.writeGolfRound(write),
@@ -581,7 +609,7 @@ export class InMemorySportEvents {
         if (writes.some((write) => !this.field.some((row) => row.id === write.sportEventParticipantId))) {
           throw new Error('unknown field row');
         }
-        for (const write of writes) this.writeGolfRound(write);
+        return writes.map((write) => this.writeGolfRound(write));
       },
     };
   }
@@ -593,21 +621,7 @@ export class InMemorySportEvents {
         return this.golfStandingResults().filter((result) => entryIds.has(result.standing.sportEventParticipantId));
       },
       findBySportEventParticipants: async (ids) => this.golfStandingResults().filter((result) => ids.includes(result.standing.sportEventParticipantId)),
-      upsert: async (write: GolfStandingWrite) => {
-        let standing = this.standingRows.find((row) => row.sportEventParticipantId === write.sportEventParticipantId);
-        if (!standing) {
-          standing = stamp({ id: this.id('standing'), sportEventParticipantId: write.sportEventParticipantId, position: null, displayPosition: null, status: write.status, asOf: write.asOf, currentRound: write.currentRound });
-          this.standingRows.push(standing);
-        }
-        Object.assign(standing, { status: write.status, asOf: write.asOf, currentRound: write.currentRound });
-        let golf = this.golfStandingRows.find((row) => row.standingId === standing.id);
-        if (!golf) {
-          golf = stamp({ id: this.id('golf-standing'), standingId: standing.id, eventScoreToPar: 0, eventStrokes: 0, currentRoundThru: null });
-          this.golfStandingRows.push(golf);
-        }
-        Object.assign(golf, { eventScoreToPar: write.eventScoreToPar, eventStrokes: write.eventStrokes, currentRoundThru: write.currentRoundThru });
-        return { standing: { ...standing }, golf: { ...golf } };
-      },
+      upsertMany: async (writes) => writes.map((write) => this.writeGolfStanding(write)),
       updateRanks: async (ranks) => {
         for (const rank of ranks) {
           const standing = this.standingRows.find((row) => row.id === rank.standingId);
@@ -616,6 +630,22 @@ export class InMemorySportEvents {
         }
       },
     };
+  }
+
+  private writeGolfStanding(write: GolfStandingWrite): GolfStandingResult {
+    let standing = this.standingRows.find((row) => row.sportEventParticipantId === write.sportEventParticipantId);
+    if (!standing) {
+      standing = stamp({ id: this.id('standing'), sportEventParticipantId: write.sportEventParticipantId, position: null, displayPosition: null, status: write.status, asOf: write.asOf, currentRound: write.currentRound });
+      this.standingRows.push(standing);
+    }
+    Object.assign(standing, { status: write.status, asOf: write.asOf, currentRound: write.currentRound });
+    let golf = this.golfStandingRows.find((row) => row.standingId === standing.id);
+    if (!golf) {
+      golf = stamp({ id: this.id('golf-standing'), standingId: standing.id, eventScoreToPar: 0, eventStrokes: 0, currentRoundThru: null });
+      this.golfStandingRows.push(golf);
+    }
+    Object.assign(golf, { eventScoreToPar: write.eventScoreToPar, eventStrokes: write.eventStrokes, currentRoundThru: write.currentRoundThru });
+    return { standing: { ...standing }, golf: { ...golf } };
   }
 
   matchRepo(): SportEventMatchRepository {
@@ -629,6 +659,10 @@ export class InMemorySportEvents {
       return row;
     };
     return {
+      findById: async (id) => {
+        const row = this.matchRows.find((match) => match.id === id);
+        return row ? { ...row, periodScores: [...row.periodScores].sort((left, right) => left.periodNumber - right.periodNumber) } : null;
+      },
       findBySportEvent: async (sportEventId) => findBySportEvents([sportEventId]),
       findBySportEvents,
       replaceBracket: async (sportEventId, matches) => {
@@ -695,14 +729,14 @@ export class InMemorySportEvents {
 
   statLineRepo(): SportEventParticipantStatLineRepository {
     return {
-      findBySportEvent: async (sportEventId) => {
-        const entryIds = new Set(this.field.filter((row) => row.sportEventId === sportEventId).map((row) => row.id));
-        const roundIds = new Set(this.participantRoundRows.filter((row) => entryIds.has(row.sportEventParticipantId)).map((row) => row.id));
-        return this.statLineRows.filter((row) => roundIds.has(row.participantRoundId)).map((row) => ({ ...row }));
-      },
       replaceGameLines: async (writes) => {
         for (const { sportEventParticipantId, sportEventRoundId, stats, completedAt } of writes) {
           let core = this.participantRoundRows.find((row) => row.sportEventParticipantId === sportEventParticipantId && row.sportEventRoundId === sportEventRoundId);
+          const storedLines = core ? this.statLineRows.filter((row) => row.participantRoundId === core?.id) : [];
+          if (core && core.status === 'COMPLETED' && stats.length > 0 && storedLines.length === stats.length
+            && stats.every(({ stat, value }) => storedLines.some((row) => row.stat === stat && row.value === value))) {
+            continue;
+          }
           if (core) {
             const roundId = core.id;
             this.statLineRows = this.statLineRows.filter((row) => row.participantRoundId !== roundId);

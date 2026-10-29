@@ -55,18 +55,21 @@ function createMembershipRepo(
   });
 }
 
+const BEER_BELLIES = {
+  id: 'squad-1',
+  leagueId: 'league-1',
+  createdBy: 'user-1',
+  name: 'Beer Bellies',
+  iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
+  isActive: true,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+};
+
 function createSquadRepo(overrides: Partial<SquadRepository> = {}): SquadRepository {
   return fakeSquadRepo({
-    findById: jest.fn().mockResolvedValue({
-      id: 'squad-1',
-      leagueId: 'league-1',
-      createdBy: 'user-1',
-      name: 'Beer Bellies',
-      iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    }),
+    findById: jest.fn().mockResolvedValue(BEER_BELLIES),
+    findByLeague: jest.fn().mockResolvedValue([BEER_BELLIES]),
     update: jest.fn().mockResolvedValue({
       id: 'squad-1',
       leagueId: 'league-1',
@@ -427,6 +430,58 @@ describe('SquadOwnerInvitationService', () => {
     expect(result).toHaveLength(1);
     expect(result[0]?.status).toBe(SquadOwnerInvitationStatus.PENDING);
     expect(invitationRepo.findByLeague).toHaveBeenCalledWith('league-1');
+  });
+
+  it('lists a league\'s invitations across teams with one read of the league\'s teams, not one per invitation (#1182)', async () => {
+    const invitation = (id: string, squadId: string) => ({
+      id,
+      leagueId: 'league-1',
+      squadId,
+      email: `${id}@example.com`,
+      inviteCode: `${id}-code`,
+      status: SquadOwnerInvitationStatus.PENDING,
+      invitedBy: 'user-2',
+      acceptedBy: null,
+      acceptedAt: null,
+      expiresAt: new Date('2026-04-23T00:00:00Z'),
+      replacementForUserId: null,
+      createdAt: new Date('2026-04-16T00:00:00Z'),
+      updatedAt: new Date('2026-04-16T00:00:00Z'),
+    });
+    const squads = createSquadRepo({
+      findByLeague: jest.fn().mockResolvedValue([
+        BEER_BELLIES,
+        { ...BEER_BELLIES, id: 'squad-2', name: 'Weekend Hackers', isActive: false },
+      ]),
+    });
+    const service = new SquadOwnerInvitationService(passThroughMembershipTransaction({
+      squadOwnerInvitations: createInvitationRepo({
+        findByLeague: jest.fn().mockResolvedValue([
+          invitation('invite-1', 'squad-1'),
+          invitation('invite-2', 'squad-2'),
+          invitation('invite-3', 'squad-1'),
+        ]),
+      }),
+      leagueMemberships: createMembershipRepo({ findByLeagueAndUser: jest.fn().mockResolvedValue(null) }),
+      squads,
+      squadMemberships: createSquadMembershipRepo(),
+      users: fakeUserRepo({ findById: jest.fn().mockResolvedValue(buildUser()) }),
+      prisma: asPrismaClient(createPrisma()),
+      email: emailServiceInto(),
+      memberJoined: NOBODY_TOLD,
+      appBaseUrl: APP_BASE_URL,
+    }));
+
+    const result = await service.listInvitationsForViewer('league-1', 'root-admin-1', true);
+
+    expect(result.map((row) => [row.id, row.team.name])).toEqual([
+      ['invite-1', 'Beer Bellies'],
+      ['invite-2', 'Weekend Hackers'],
+      ['invite-3', 'Beer Bellies'],
+    ]);
+    expect(squads.findByLeague).toHaveBeenCalledTimes(1);
+    expect(squads.findByLeague).toHaveBeenCalledWith('league-1', true);
+    expect(squads.findById).not.toHaveBeenCalled();
   });
 
   it('rejects replacing yourself as an owner', async () => {

@@ -629,9 +629,12 @@ actually answer. Paging answers "how many at a time", which is a transport conce
 leaks into the contract, forces a second parallel count query, and makes every consumer
 reassemble a result the server already had.
 
-This repo's scale makes it unnecessary: leagues have tens of members, not thousands, and
-the product shows one league at a time (A8). Where a set could genuinely grow without
-bound, the answer is a tighter filter or a retention policy, not a page parameter.
+**A list returns current data by default, and history is reached by a filter.** A league
+keeps every season it has played, so a list that returns everything grows with history while
+the screen only needs what is current. The default answer is what is open and live — the
+current season, the open and in-progress contests — and older rows are one filter away, such
+as a year. Where a set could grow without bound even then, the answer is a tighter filter or
+a retention policy, not a page parameter.
 
 ### What this rules out
 
@@ -649,3 +652,13 @@ without bound, so `listProviderSyncRuns` (formerly `adminListProviderSyncRuns`, 
 hours, backed by an index on `created_at`. That is a filter, not a page — the caller asks for
 a time range and gets everything in it. Reach for the same shape for any future log-like
 read.
+
+**A platform-wide list requires its filter.** The lists that cross leagues — every user,
+every league, every sport event, every participant — grow with the platform, not with a
+league, so none of them may be read whole (#1180). Users and leagues (`scope=all`) need a
+search of at least `PLATFORM_SEARCH_MIN_LENGTH` characters, answering 400
+`SEARCH_TERM_REQUIRED`; events need a sport, a sport league or a year
+(`SPORT_EVENT_FILTER_REQUIRED`); participants need a sport or a search. The searches are
+substring matches, so each column they match carries a trigram GIN index. A Manage page over
+one of these lists asks for the filter first — a search box, or a year that defaults to this
+one — rather than loading everything and filtering in the browser.

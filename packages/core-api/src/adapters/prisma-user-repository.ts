@@ -6,7 +6,7 @@ import type {
   UserTimeFormat as PrismaUserTimeFormat,
 } from '@prisma/client';
 import type { UserRepository, UserSearchFilters, UserUpdate } from '@poolmaster/shared/db';
-import { AuthProvider, TimeFormat, type User } from '@poolmaster/shared/domain';
+import { AuthProvider, LeagueMembershipStatus, TimeFormat, type User } from '@poolmaster/shared/domain';
 
 /**
  * Prisma adapter for `UserRepository`.
@@ -32,6 +32,12 @@ export class PrismaUserRepository implements UserRepository {
     return row ? mapToUser(row) : null;
   }
 
+  async findByIds(ids: readonly string[]): Promise<User[]> {
+    if (ids.length === 0) return [];
+    const rows = await this.prisma.user.findMany({ where: { id: { in: [...ids] } } });
+    return rows.map(mapToUser);
+  }
+
   async findByEmail(email: string): Promise<User | null> {
     const row = await this.prisma.user.findUnique({ where: { email } });
     return row ? mapToUser(row) : null;
@@ -46,10 +52,10 @@ export class PrismaUserRepository implements UserRepository {
     return rows.map(mapToUser);
   }
 
-  async findByLeague(leagueId: string): Promise<User[]> {
+  async findActiveByLeague(leagueId: string): Promise<User[]> {
     // The league join IS the scope (A4 + A6) — there is no way to call this unscoped.
     const rows = await this.prisma.user.findMany({
-      where: { memberships: { some: { leagueId } } },
+      where: { memberships: { some: { leagueId, status: LeagueMembershipStatus.ACTIVE } } },
       orderBy: [{ lastName: 'asc' }, { firstName: 'asc' }],
     });
     return rows.map(mapToUser);
@@ -141,17 +147,24 @@ export class PrismaUserRepository implements UserRepository {
 
 }
 
+/**
+ * Every word of the search must match one of the user's text columns, so a full name ("Ali
+ * Smith") finds the user whose first name holds one word and last name the other. Each word is
+ * its own substring match, which the trigram indexes on those columns serve (#1180).
+ */
 function buildUserWhere(filters: UserSearchFilters): Prisma.UserWhereInput {
-  const search = filters.search?.trim();
+  const words = filters.search?.trim().split(/\s+/).filter((word) => word.length > 0) ?? [];
   return {
-    ...(search
+    ...(words.length > 0
       ? {
-        OR: [
-          { email: { contains: search, mode: 'insensitive' as const } },
-          { username: { contains: search, mode: 'insensitive' as const } },
-          { firstName: { contains: search, mode: 'insensitive' as const } },
-          { lastName: { contains: search, mode: 'insensitive' as const } },
-        ],
+        AND: words.map((word) => ({
+          OR: [
+            { email: { contains: word, mode: 'insensitive' as const } },
+            { username: { contains: word, mode: 'insensitive' as const } },
+            { firstName: { contains: word, mode: 'insensitive' as const } },
+            { lastName: { contains: word, mode: 'insensitive' as const } },
+          ],
+        })),
       }
       : {}),
     ...(typeof filters.isActive === 'boolean' ? { isActive: filters.isActive } : {}),
@@ -162,9 +175,11 @@ function buildUserWhere(filters: UserSearchFilters): Prisma.UserWhereInput {
 /**
  * Row → domain. `passwordHash` and `authId` are the two columns the canonical `User`
  * never carries; `authId` is on the domain type but is provider bookkeeping, so it is
- * mapped, and `passwordHash` is dropped here and nowhere else.
+ * mapped, and `passwordHash` is dropped here and nowhere else. A read that embeds users
+ * through a relation (a squad's owners, #1165) omits `passwordHash` in the query and maps the
+ * rest here, which is why the row type leaves it out.
  */
-function mapToUser(row: PrismaUser): User {
+export function mapToUser(row: Omit<PrismaUser, 'passwordHash'>): User {
   return {
     id: row.id,
     email: row.email,

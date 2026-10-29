@@ -1,5 +1,5 @@
 import { useParams, useSearchParams } from 'react-router';
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 import { ChampionshipContestList } from '@/features/championships/championship-contest-list';
 import { useChampionshipContestsQuery } from '@/features/championships/use-championship-query';
 import { buildLeagueContestPath } from '@/features/leagues/league-routing';
@@ -15,10 +15,10 @@ import {
   Tile,
 } from '@/features/shared/ui';
 import { getLogger } from '@/lib/logger';
-import { chooseContestHistoryYear, contestHistoryYears } from './contest-history';
+import { chooseContestHistoryYear } from './contest-history';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
 import { ContestsViewSwitch } from './contests-view-switch';
-import { useLeagueContestsQuery } from './use-league-contests-query';
+import { useContestFinishedYearsQuery } from './use-league-contests-query';
 
 
 /**
@@ -53,10 +53,10 @@ export function LeagueContestHistoryPage() {
   }, [leagueCode, leagueQuery.error, leagueQuery.isError, logger]);
 
   const leagueId = league?.id ?? '';
-  const contestsQuery = useLeagueContestsQuery(leagueId);
+  const yearsQuery = useContestFinishedYearsQuery(leagueId);
 
   const [searchParams, setSearchParams] = useSearchParams();
-  const years = useMemo(() => contestHistoryYears(contestsQuery.data ?? []), [contestsQuery.data]);
+  const years = yearsQuery.data ?? [];
   const year = chooseContestHistoryYear(years, searchParams.get('year'));
   const resultsQuery = useChampionshipContestsQuery(leagueId, year, null);
 
@@ -89,9 +89,9 @@ export function LeagueContestHistoryPage() {
         title="Contests"
       />
 
-      {contestsQuery.isLoading ? (
+      {yearsQuery.isLoading ? (
         <LoadingState body="Loading contest history..." />
-      ) : contestsQuery.isError ? (
+      ) : yearsQuery.isError ? (
         <ErrorState body="We couldn't load contest history for this league." />
       ) : year === null ? (
         <EmptyState body="This league does not have any completed contests yet." />

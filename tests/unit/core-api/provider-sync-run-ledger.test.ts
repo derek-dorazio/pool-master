@@ -18,11 +18,6 @@ function createSyncRun(overrides: Partial<ProviderSyncRun> = {}): ProviderSyncRu
     createdAt: new Date('2026-05-30T12:00:00.000Z'),
     payload: {
       requestedFeed: 'EVENTPARTICIPANTS',
-      providerPayload: {
-        operation: 'EVENTPARTICIPANTS',
-        rawCaptured: false,
-        rawTruncated: false,
-      },
     },
     ...overrides,
   };
@@ -73,6 +68,27 @@ function createJob(overrides: Partial<IngestionJobRecord> = {}): IngestionJobRec
           before: { status: 'SCHEDULED' },
           after: { status: 'IN_PROGRESS' },
         },
+        {
+          id: 'sport-event-participant:mock-provider:event-1:golfer-1',
+          entityType: 'SportEventParticipant',
+          disposition: 'UNCHANGED',
+          providerId: 'mock-provider',
+          externalId: 'event-1',
+          participantExternalId: 'golfer-1',
+          name: 'Golfer 1',
+          before: { seedNumber: 1 },
+          after: { seedNumber: 1 },
+        },
+        {
+          id: 'sport-event-participant:mock-provider:event-1:golfer-2',
+          entityType: 'SportEventParticipant',
+          disposition: 'CREATED',
+          providerId: 'mock-provider',
+          externalId: 'event-1',
+          participantExternalId: 'golfer-2',
+          name: 'Golfer 2',
+          after: { seedNumber: 2 },
+        },
       ],
     },
     warnings: [],
@@ -97,7 +113,7 @@ describe('ProviderSyncRunLedger', () => {
       ...createSyncRun(),
       ...input,
     }));
-    const ledger = new ProviderSyncRunLedger({ create: providerSyncRunCreate, update: jest.fn(), findAll: jest.fn() });
+    const ledger = new ProviderSyncRunLedger({ create: providerSyncRunCreate, update: jest.fn(), findAll: jest.fn(), findById: jest.fn() });
 
     const runs = await ledger.createSubmissions({
       normalizedRequest,
@@ -125,11 +141,6 @@ describe('ProviderSyncRunLedger', () => {
           mockEventState: null,
           normalizedAt: '2026-05-30T12:00:00.000Z',
         },
-        providerPayload: {
-          operation: 'EVENTPARTICIPANTS',
-          rawCaptured: false,
-          rawTruncated: false,
-        },
         outcome: {
           severity: 'SUCCESS',
           summary: 'Submitted event participants sync for event-1.',
@@ -138,11 +149,12 @@ describe('ProviderSyncRunLedger', () => {
         },
       }),
     }));
+    expect(providerSyncRunCreate.mock.calls[0][0].payload).not.toHaveProperty('providerPayload');
   });
 
   it('pool-master-rop.68.2.4 marks a provider sync run completed after a successful ingestion job', async () => {
     const providerSyncRunUpdate = mockFn<ProviderSyncRunRepository['update']>(async () => undefined);
-    const ledger = new ProviderSyncRunLedger({ create: jest.fn(), update: providerSyncRunUpdate, findAll: jest.fn() });
+    const ledger = new ProviderSyncRunLedger({ create: jest.fn(), update: providerSyncRunUpdate, findAll: jest.fn(), findById: jest.fn() });
     const syncRun = createSyncRun();
     const job = createJob();
 
@@ -159,6 +171,9 @@ describe('ProviderSyncRunLedger', () => {
           summary: 'Started event participants sync.',
         }),
       }),
+      details: {
+        providerPayload: { operation: 'EVENTPARTICIPANTS', rawCaptured: false, rawTruncated: false },
+      },
     }));
     expect(providerSyncRunUpdate).toHaveBeenNthCalledWith(2, syncRun.id, expect.objectContaining({
       status: 'COMPLETED',
@@ -166,13 +181,6 @@ describe('ProviderSyncRunLedger', () => {
       completedAt: expect.any(Date),
       payload: expect.objectContaining({
         detail: 'Completed event participants sync for event-1 (3 records).',
-        jobPayload: expect.objectContaining({
-          jobType: 'EVENT_PARTICIPANTS_SYNC',
-          recordsProcessed: 3,
-          errors: 0,
-        }),
-        providerPayload: job.providerPayload,
-        writeDiagnostics: job.writeDiagnostics,
         outcome: expect.objectContaining({
           severity: 'SUCCESS',
           summary: 'Completed event participants sync for event-1 (3 records).',
@@ -188,15 +196,61 @@ describe('ProviderSyncRunLedger', () => {
         recordsProcessed: 3,
         errors: 0,
       }),
+      details: expect.objectContaining({
+        jobPayload: expect.objectContaining({
+          jobType: 'EVENT_PARTICIPANTS_SYNC',
+          recordsProcessed: 3,
+          errors: 0,
+        }),
+        providerPayload: job.providerPayload,
+      }),
     }));
-    const completedPayload = readPayload(providerSyncRunUpdate.mock.calls[1][1]);
-    expect(completedPayload.writeDiagnostics).toBe(job.writeDiagnostics);
-    expect(completedPayload.jobPayload).not.toHaveProperty('writeDiagnostics');
+    const completed = providerSyncRunUpdate.mock.calls[1][1];
+    const completedPayload = readPayload(completed);
+    expect(completedPayload).not.toHaveProperty('writeDiagnostics');
+    expect(completedPayload).not.toHaveProperty('jobPayload');
+    expect(completedPayload).not.toHaveProperty('providerPayload');
+    expect(completed.details?.['jobPayload']).not.toHaveProperty('writeDiagnostics');
+  });
+
+  it('stores only the changed write rows while the summary still counts every row', async () => {
+    const providerSyncRunUpdate = mockFn<ProviderSyncRunRepository['update']>(async () => undefined);
+    const ledger = new ProviderSyncRunLedger({ create: jest.fn(), update: providerSyncRunUpdate, findAll: jest.fn(), findById: jest.fn() });
+    const job = createJob();
+
+    await ledger.executeFeedRun(createSyncRun(), async () => job);
+
+    expect(providerSyncRunUpdate.mock.calls[1][1].details?.['writeDiagnostics']).toEqual({
+      summary: { total: 3, unchanged: 1, created: 1, updated: 1, deleted: 0 },
+      rows: [
+        expect.objectContaining({ entityType: 'SportEvent', disposition: 'UPDATED' }),
+        expect.objectContaining({ participantExternalId: 'golfer-2', disposition: 'CREATED' }),
+      ],
+    });
+  });
+
+  it('stores no write rows, only the summary, when a sync changed nothing', async () => {
+    const providerSyncRunUpdate = mockFn<ProviderSyncRunRepository['update']>(async () => undefined);
+    const ledger = new ProviderSyncRunLedger({ create: jest.fn(), update: providerSyncRunUpdate, findAll: jest.fn(), findById: jest.fn() });
+    const unchangedRow = { id: 'row-1', entityType: 'SportEventParticipant', disposition: 'UNCHANGED' as const };
+    const job = createJob({
+      writeDiagnostics: {
+        summary: { total: 2, unchanged: 2, created: 0, updated: 0, deleted: 0 },
+        rows: [unchangedRow, { ...unchangedRow, id: 'row-2' }],
+      },
+    });
+
+    await ledger.executeFeedRun(createSyncRun(), async () => job);
+
+    expect(providerSyncRunUpdate.mock.calls[1][1].details?.['writeDiagnostics']).toEqual({
+      summary: { total: 2, unchanged: 2, created: 0, updated: 0, deleted: 0 },
+      rows: [],
+    });
   });
 
   it('pool-master-rop.68.2.4 marks a provider sync run failed when the ingestion job returns FAILED', async () => {
     const providerSyncRunUpdate = mockFn<ProviderSyncRunRepository['update']>(async () => undefined);
-    const ledger = new ProviderSyncRunLedger({ create: jest.fn(), update: providerSyncRunUpdate, findAll: jest.fn() });
+    const ledger = new ProviderSyncRunLedger({ create: jest.fn(), update: providerSyncRunUpdate, findAll: jest.fn(), findById: jest.fn() });
     const syncRun = createSyncRun();
     const failedJob = createJob({
       status: 'FAILED',
@@ -227,7 +281,7 @@ describe('ProviderSyncRunLedger', () => {
 
   it('pool-master-rop.68.2.4 marks a provider sync run failed and rethrows when execution throws', async () => {
     const providerSyncRunUpdate = mockFn<ProviderSyncRunRepository['update']>(async () => undefined);
-    const ledger = new ProviderSyncRunLedger({ create: jest.fn(), update: providerSyncRunUpdate, findAll: jest.fn() });
+    const ledger = new ProviderSyncRunLedger({ create: jest.fn(), update: providerSyncRunUpdate, findAll: jest.fn(), findById: jest.fn() });
     const syncRun = createSyncRun();
     const executionError = new Error('provider exploded');
 
@@ -248,19 +302,22 @@ describe('ProviderSyncRunLedger', () => {
           errors: 1,
         }),
         errors: 1,
+      }),
+      details: {
+        providerPayload: { operation: 'EVENTPARTICIPANTS', rawCaptured: false, rawTruncated: false },
         failurePayload: {
           error: {
             name: 'Error',
             message: 'provider exploded',
           },
         },
-      }),
+      },
     }));
   });
 
   it('pool-master-rop.68.2.4 can mark a submitted run failed without executing a job', async () => {
     const providerSyncRunUpdate = mockFn<ProviderSyncRunRepository['update']>(async () => undefined);
-    const ledger = new ProviderSyncRunLedger({ create: jest.fn(), update: providerSyncRunUpdate, findAll: jest.fn() });
+    const ledger = new ProviderSyncRunLedger({ create: jest.fn(), update: providerSyncRunUpdate, findAll: jest.fn(), findById: jest.fn() });
     const syncRun = createSyncRun();
 
     await ledger.failSubmittedRun(syncRun, new Error('unsupported feed'));
@@ -272,13 +329,16 @@ describe('ProviderSyncRunLedger', () => {
       payload: expect.objectContaining({
         detail: 'Failed event participants sync.',
         errors: 1,
+      }),
+      details: {
+        providerPayload: { operation: 'EVENTPARTICIPANTS', rawCaptured: false, rawTruncated: false },
         failurePayload: {
           error: {
             name: 'Error',
             message: 'unsupported feed',
           },
         },
-      }),
+      },
     }));
   });
 });

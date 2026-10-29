@@ -15,9 +15,11 @@ import {
   buildLeagueSquad,
   buildLeagueSquadMember,
   getLeagueByCodeData,
+  getLeagueSquadFrom,
   listLeagueSquadsData,
   updateLeagueSquadData,
 } from '@/features/leagues/test/fixtures';
+import { QueryKeys } from '@/lib/query-keys';
 import { CommissionerRouteGuard, MemberRouteGuard } from '@/routes/route-guards';
 import { AdminEditTeamPage } from './admin-edit-team-page';
 import { InvitesPage } from './invites-page';
@@ -27,6 +29,7 @@ import { ManageTeamsPage } from './manage-teams-page';
 const deleteLeagueSquadMock = vi.fn();
 const getCurrentUserMock = vi.fn();
 const getLeagueByCodeMock = vi.fn();
+const getLeagueSquadMock = vi.fn();
 const inactivateLeagueSquadMock = vi.fn();
 const listLeagueInvitationsMock = vi.fn();
 const listLeagueMembersMock = vi.fn();
@@ -39,6 +42,7 @@ bindApiMocks({
   deleteLeagueSquad: deleteLeagueSquadMock,
   getUser: getCurrentUserMock,
   getLeagueByCode: getLeagueByCodeMock,
+  getLeagueSquad: getLeagueSquadMock,
   inactivateLeagueSquad: inactivateLeagueSquadMock,
   listLeagueInvitations: listLeagueInvitationsMock,
   listLeagueMembers: listLeagueMembersMock,
@@ -50,7 +54,7 @@ bindApiMocks({
 
 function renderAdmin(path: string) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return render(
+  const view = render(
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <MemoryRouter initialEntries={[path]}>
@@ -72,9 +76,10 @@ function renderAdmin(path: string) {
       </AuthProvider>
     </QueryClientProvider>,
   );
+  return { ...view, queryClient };
 }
 
-const commissionerTeam = buildLeagueSquad();
+const commissionerTeam = buildLeagueSquad({ members: [buildLeagueSquadMember({ leagueRole: 'COMMISSIONER' })] });
 const memberTeam = buildLeagueSquad({
   id: 'team-2',
   name: 'Second Team',
@@ -105,13 +110,14 @@ function primeMocks({
     ],
   }));
   listLeagueSquadsMock.mockResolvedValue(apiSuccess(listLeagueSquadsData([commissionerTeam, memberTeam, inactiveTeam])));
+  getLeagueSquadMock.mockImplementation(getLeagueSquadFrom([commissionerTeam, memberTeam, inactiveTeam]));
   listSquadOwnerInvitationsMock.mockResolvedValue(apiSuccess({ invitations: [] }));
   listLeagueInvitationsMock.mockResolvedValue(apiSuccess({ invitations: [] }));
 }
 
 afterEach(() => {
   for (const mock of [
-    deleteLeagueSquadMock, getCurrentUserMock, getLeagueByCodeMock, inactivateLeagueSquadMock,
+    deleteLeagueSquadMock, getCurrentUserMock, getLeagueByCodeMock, getLeagueSquadMock, inactivateLeagueSquadMock,
     listLeagueInvitationsMock, listLeagueMembersMock, listLeagueSquadsMock, listSquadOwnerInvitationsMock,
     refreshTokenMock, updateLeagueSquadMock,
   ]) {
@@ -128,7 +134,7 @@ describe('Commissioner tools › Teams', () => {
     expect(await screen.findByTestId('league-home-destination')).toBeInTheDocument();
   });
 
-  it('lists every member\'s squad with a Manage link, marks the commissioner\'s, and highlights Members in the menu', async () => {
+  it('lists every member\'s squad with a Manage link, marks the commissioner\'s from the owners\' league roles on the team list without reading the roster, and highlights Members in the menu', async () => {
     primeMocks();
 
     renderAdmin('/league/BIGDAWGS/admin/teams');
@@ -140,6 +146,7 @@ describe('Commissioner tools › Teams', () => {
     expect(screen.getByTestId('commissioner-tools-menu-teams')).toHaveAttribute('aria-current', 'page');
     expect(screen.getByTestId('commissioner-tools-menu-teams')).toHaveTextContent('Members');
     expect(screen.getByTestId('admin-teams-invite')).toHaveAttribute('href', '/league/BIGDAWGS/admin/invites');
+    expect(listLeagueMembersMock).not.toHaveBeenCalled();
   });
 
   it('narrows the list to teams with a commissioner, or to inactive teams', async () => {
@@ -191,6 +198,29 @@ describe('Commissioner tools › Manage team', () => {
     expect(screen.getByTestId('manage-team-edit')).toHaveAttribute('aria-disabled', 'false');
     expect(within(screen.getByTestId('manage-team-owners')).getByText('Morgan Member')).toBeInTheDocument();
     expect(screen.getByTestId('commissioner-tools-menu-teams')).toHaveAttribute('aria-current', 'page');
+  });
+
+  it('labels each owner with their league role from the team read, without reading the league roster', async () => {
+    primeMocks();
+
+    renderAdmin('/league/BIGDAWGS/admin/teams/team-1');
+
+    const owner = within(await screen.findByTestId('my-team-member-user-1'));
+    expect(owner.getByText('Commissioner')).toBeInTheDocument();
+    renderAdmin('/league/BIGDAWGS/admin/teams/team-2');
+    const member = within(await screen.findByTestId('my-team-member-user-2'));
+    expect(member.getByText('Member')).toBeInTheDocument();
+    expect(listLeagueMembersMock).not.toHaveBeenCalled();
+  });
+
+  it('reads only the team it manages, not every team in the league', async () => {
+    primeMocks();
+
+    renderAdmin('/league/BIGDAWGS/admin/teams/team-2');
+
+    await screen.findByTestId('manage-team-identity');
+    expect(getLeagueSquadMock).toHaveBeenCalledWith(expect.objectContaining({ path: { id: 'league-1', squadId: 'team-2' } }));
+    expect(listLeagueSquadsMock).not.toHaveBeenCalled();
   });
 
   it('warns that pending owner invitations could not be loaded rather than showing none', async () => {
@@ -245,6 +275,22 @@ describe('Commissioner tools › Manage team', () => {
       expect.objectContaining({ path: { id: 'league-1', squadId: 'team-3' } }),
     ));
     expect(await screen.findByTestId('admin-teams-page')).toBeInTheDocument();
+  });
+
+  it('re-reads the league context after deleting a team, so the active team count is current', async () => {
+    primeMocks({ isRootAdmin: true });
+    deleteLeagueSquadMock.mockResolvedValue(apiSuccess({ success: true }));
+
+    const { queryClient } = renderAdmin('/league/BIGDAWGS/admin/teams/team-3');
+    const invalidate = vi.spyOn(queryClient, 'invalidateQueries');
+
+    fireEvent.click(await screen.findByTestId('manage-team-delete'));
+    fireEvent.click(await screen.findByTestId('my-team-confirm-delete'));
+
+    await screen.findByTestId('admin-teams-page');
+    await waitFor(() => expect(invalidate).toHaveBeenCalledWith(
+      expect.objectContaining({ queryKey: QueryKeys.leagues.detail('BIGDAWGS') }),
+    ));
   });
 
   it('says the member is not in this league when their squad does not exist, linking back to all members', async () => {

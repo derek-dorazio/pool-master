@@ -3264,6 +3264,150 @@
         "additionalProperties": false,
         "description": "Squad membership summary."
       },
+      "SquadOwnerDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "squadId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "leagueId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "user": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Stable user identifier."
+              },
+              "email": {
+                "type": "string",
+                "description": "Primary email address for the user account."
+              },
+              "username": {
+                "type": "string",
+                "description": "Unique login identifier for the account."
+              },
+              "firstName": {
+                "type": "string",
+                "description": "First name shown in account and member-management surfaces."
+              },
+              "lastName": {
+                "type": "string",
+                "description": "Last name shown in account and member-management surfaces."
+              },
+              "isActive": {
+                "type": "boolean",
+                "description": "Whether the account is currently active for normal sign-in and product usage."
+              },
+              "isRootAdmin": {
+                "type": "boolean",
+                "description": "Whether the user has platform-level root-admin access."
+              },
+              "authProvider": {
+                "description": "Authentication provider used for the account when known.",
+                "type": "string",
+                "enum": [
+                  "email",
+                  "google",
+                  "apple"
+                ]
+              },
+              "timezone": {
+                "description": "IANA time zone the member sees dates and times in, picked at signup. Absent means US Eastern.",
+                "type": "string"
+              },
+              "locale": {
+                "description": "BCP 47 locale the member's dates are formatted in, e.g. en-US.",
+                "type": "string"
+              },
+              "timeFormat": {
+                "description": "12-hour or 24-hour clock for the times the member sees. Absent means the locale's own.",
+                "type": "string",
+                "enum": [
+                  "12H",
+                  "24H"
+                ]
+              },
+              "createdAt": {
+                "description": "Account creation timestamp in ISO 8601 format.",
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "required": [
+              "id",
+              "email",
+              "username",
+              "firstName",
+              "lastName",
+              "isActive",
+              "isRootAdmin"
+            ],
+            "additionalProperties": false,
+            "description": "The member, as the canonical UserDto."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "description": "Squad membership status."
+          },
+          "joinedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the user joined the squad."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the squad membership record was created."
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the squad membership record was last updated."
+          },
+          "leagueRole": {
+            "description": "The owner's role in the squad's league; null only if they hold no membership there.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "COMMISSIONER",
+              "MEMBER",
+              null
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "squadId",
+          "leagueId",
+          "userId",
+          "user",
+          "status",
+          "joinedAt",
+          "createdAt",
+          "updatedAt",
+          "leagueRole"
+        ],
+        "additionalProperties": false,
+        "description": "A squad owner: the squad membership with the owner's league role."
+      },
       "SquadDto": {
         "type": "object",
         "properties": {
@@ -3397,7 +3541,7 @@
             "type": "integer",
             "minimum": -9007199254740991,
             "maximum": 9007199254740991,
-            "description": "Number of memberships attached to the squad."
+            "description": "How many of the squad's owners are ACTIVE."
           },
           "createdAt": {
             "type": "string",
@@ -3410,7 +3554,6 @@
             "description": "When the squad was last updated."
           },
           "members": {
-            "description": "Optional expanded squad membership list.",
             "type": "array",
             "items": {
               "type": "object",
@@ -3527,6 +3670,18 @@
                   "type": "string",
                   "format": "date-time",
                   "description": "When the squad membership record was last updated."
+                },
+                "leagueRole": {
+                  "description": "The owner's role in the squad's league; null only if they hold no membership there.",
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "enum": [
+                    "COMMISSIONER",
+                    "MEMBER",
+                    null
+                  ]
                 }
               },
               "required": [
@@ -3538,11 +3693,13 @@
                 "status",
                 "joinedAt",
                 "createdAt",
-                "updatedAt"
+                "updatedAt",
+                "leagueRole"
               ],
               "additionalProperties": false,
-              "description": "Squad membership summary."
-            }
+              "description": "A squad owner: the squad membership with the owner's league role."
+            },
+            "description": "Every owner membership of the squad, any status, in join order, each with its user and league role."
           }
         },
         "required": [
@@ -3554,7 +3711,8 @@
           "isActive",
           "memberCount",
           "createdAt",
-          "updatedAt"
+          "updatedAt",
+          "members"
         ],
         "additionalProperties": false,
         "description": "A squad within a league. Returned wherever a squad is read."
@@ -3695,7 +3853,7 @@
                 "type": "integer",
                 "minimum": -9007199254740991,
                 "maximum": 9007199254740991,
-                "description": "Number of memberships attached to the squad."
+                "description": "How many of the squad's owners are ACTIVE."
               },
               "createdAt": {
                 "type": "string",
@@ -3708,7 +3866,6 @@
                 "description": "When the squad was last updated."
               },
               "members": {
-                "description": "Optional expanded squad membership list.",
                 "type": "array",
                 "items": {
                   "type": "object",
@@ -3825,6 +3982,18 @@
                       "type": "string",
                       "format": "date-time",
                       "description": "When the squad membership record was last updated."
+                    },
+                    "leagueRole": {
+                      "description": "The owner's role in the squad's league; null only if they hold no membership there.",
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "enum": [
+                        "COMMISSIONER",
+                        "MEMBER",
+                        null
+                      ]
                     }
                   },
                   "required": [
@@ -3836,11 +4005,13 @@
                     "status",
                     "joinedAt",
                     "createdAt",
-                    "updatedAt"
+                    "updatedAt",
+                    "leagueRole"
                   ],
                   "additionalProperties": false,
-                  "description": "Squad membership summary."
-                }
+                  "description": "A squad owner: the squad membership with the owner's league role."
+                },
+                "description": "Every owner membership of the squad, any status, in join order, each with its user and league role."
               }
             },
             "required": [
@@ -3852,7 +4023,8 @@
               "isActive",
               "memberCount",
               "createdAt",
-              "updatedAt"
+              "updatedAt",
+              "members"
             ],
             "additionalProperties": false,
             "description": "A squad within a league. Returned wherever a squad is read."
@@ -4002,7 +4174,7 @@
                   "type": "integer",
                   "minimum": -9007199254740991,
                   "maximum": 9007199254740991,
-                  "description": "Number of memberships attached to the squad."
+                  "description": "How many of the squad's owners are ACTIVE."
                 },
                 "createdAt": {
                   "type": "string",
@@ -4015,7 +4187,6 @@
                   "description": "When the squad was last updated."
                 },
                 "members": {
-                  "description": "Optional expanded squad membership list.",
                   "type": "array",
                   "items": {
                     "type": "object",
@@ -4132,6 +4303,18 @@
                         "type": "string",
                         "format": "date-time",
                         "description": "When the squad membership record was last updated."
+                      },
+                      "leagueRole": {
+                        "description": "The owner's role in the squad's league; null only if they hold no membership there.",
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "enum": [
+                          "COMMISSIONER",
+                          "MEMBER",
+                          null
+                        ]
                       }
                     },
                     "required": [
@@ -4143,11 +4326,13 @@
                       "status",
                       "joinedAt",
                       "createdAt",
-                      "updatedAt"
+                      "updatedAt",
+                      "leagueRole"
                     ],
                     "additionalProperties": false,
-                    "description": "Squad membership summary."
-                  }
+                    "description": "A squad owner: the squad membership with the owner's league role."
+                  },
+                  "description": "Every owner membership of the squad, any status, in join order, each with its user and league role."
                 }
               },
               "required": [
@@ -4159,7 +4344,8 @@
                 "isActive",
                 "memberCount",
                 "createdAt",
-                "updatedAt"
+                "updatedAt",
+                "members"
               ],
               "additionalProperties": false,
               "description": "A squad within a league. Returned wherever a squad is read."
@@ -4905,7 +5091,7 @@
             ]
           },
           "search": {
-            "description": "Optional case-insensitive substring matched against the league name. A filter, never a slice — see §16.",
+            "description": "Case-insensitive substring matched against the league name. A filter, never a slice — see §16. Optional for 'mine'; required for 'all', at least 3 characters.",
             "type": "string",
             "minLength": 1,
             "x-transform": [
@@ -6223,12 +6409,27 @@
               "updatedAt"
             ],
             "additionalProperties": false
+          },
+          "squadName": {
+            "description": "The name of the squad in squadMembership, or null when squadMembership is null. The league menu names the viewer's team from it.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "activeTeamCount": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "How many of the league's teams are active: the most entries an open contest can expect, one per team."
           }
         },
         "required": [
           "league",
           "membership",
-          "squadMembership"
+          "squadMembership",
+          "squadName",
+          "activeTeamCount"
         ],
         "additionalProperties": false,
         "description": "A league together with the viewer's own membership edges in it. Fetched once per league; nothing else repeats this context."
@@ -10151,7 +10352,7 @@
               "additionalProperties": false,
               "description": "One inherited event tier and its participant assignments."
             },
-            "description": "Read-only tier structure the contest inherits from this event (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet. Never contest-configured."
+            "description": "Read-only tier structure a tiered contest inherits from this event (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet, and always empty for any other format, which does not pick by tier. Never contest-configured."
           }
         },
         "required": [
@@ -10252,7 +10453,7 @@
                     "additionalProperties": false,
                     "description": "One inherited event tier and its participant assignments."
                   },
-                  "description": "Read-only tier structure the contest inherits from this event (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet. Never contest-configured."
+                  "description": "Read-only tier structure a tiered contest inherits from this event (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet, and always empty for any other format, which does not pick by tier. Never contest-configured."
                 }
               },
               "required": [
@@ -12335,7 +12536,7 @@
                         "additionalProperties": false,
                         "description": "One inherited event tier and its participant assignments."
                       },
-                      "description": "Read-only tier structure the contest inherits from this event (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet. Never contest-configured."
+                      "description": "Read-only tier structure a tiered contest inherits from this event (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet, and always empty for any other format, which does not pick by tier. Never contest-configured."
                     }
                   },
                   "required": [
@@ -20440,7 +20641,7 @@
           }
         },
         "additionalProperties": false,
-        "description": "Filters for the sport-event list."
+        "description": "Filters for the sport-event list. At least one of sport, sportLeagueId and eventYear is required."
       },
       "SportEventListResponse": {
         "type": "object",
@@ -26944,8 +27145,27 @@
             ]
           },
           "entryCount": {
-            "description": "Number of entries that have submitted at least one event. Present on list reads, which count them; omitted on a single-contest read.",
+            "description": "Number of entries that have submitted at least one event. Present on the list and single-contest reads; omitted on the contest writes.",
             "type": "number"
+          },
+          "enteredSquadCount": {
+            "description": "Number of squads with at least one entry that submitted an event (#1197). Single-contest read only.",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "allEntryCount": {
+            "description": "Every entry the contest holds, drafts included, as its entry cap counts them (#1197): before a random draw no entry is submitted. Single-contest read only.",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "myEntryIds": {
+            "description": "The requester's own squad's entries in the contest, drafts included, in entry-number order (#1197). Empty without an active squad in the league. Single-contest read only.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           },
           "entriesPerContest": {
             "description": "The most entries the contest takes, every squad's drafts included: its league plan's cap or its expansion (#987), whichever is higher. Null for no limit.",
@@ -29103,8 +29323,27 @@
                 ]
               },
               "entryCount": {
-                "description": "Number of entries that have submitted at least one event. Present on list reads, which count them; omitted on a single-contest read.",
+                "description": "Number of entries that have submitted at least one event. Present on the list and single-contest reads; omitted on the contest writes.",
                 "type": "number"
+              },
+              "enteredSquadCount": {
+                "description": "Number of squads with at least one entry that submitted an event (#1197). Single-contest read only.",
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "allEntryCount": {
+                "description": "Every entry the contest holds, drafts included, as its entry cap counts them (#1197): before a random draw no entry is submitted. Single-contest read only.",
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "myEntryIds": {
+                "description": "The requester's own squad's entries in the contest, drafts included, in entry-number order (#1197). Empty without an active squad in the league. Single-contest read only.",
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
               },
               "entriesPerContest": {
                 "description": "The most entries the contest takes, every squad's drafts included: its league plan's cap or its expansion (#987), whichever is higher. Null for no limit.",
@@ -29319,8 +29558,27 @@
                   ]
                 },
                 "entryCount": {
-                  "description": "Number of entries that have submitted at least one event. Present on list reads, which count them; omitted on a single-contest read.",
+                  "description": "Number of entries that have submitted at least one event. Present on the list and single-contest reads; omitted on the contest writes.",
                   "type": "number"
+                },
+                "enteredSquadCount": {
+                  "description": "Number of squads with at least one entry that submitted an event (#1197). Single-contest read only.",
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "allEntryCount": {
+                  "description": "Every entry the contest holds, drafts included, as its entry cap counts them (#1197): before a random draw no entry is submitted. Single-contest read only.",
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "myEntryIds": {
+                  "description": "The requester's own squad's entries in the contest, drafts included, in entry-number order (#1197). Empty without an active squad in the league. Single-contest read only.",
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
                 },
                 "entriesPerContest": {
                   "description": "The most entries the contest takes, every squad's drafts included: its league plan's cap or its expansion (#987), whichever is higher. Null for no limit.",
@@ -29382,6 +29640,38 @@
         ],
         "additionalProperties": false,
         "description": "Contest-list response."
+      },
+      "ListContestsQuery": {
+        "type": "object",
+        "properties": {
+          "finishedYear": {
+            "description": "List the COMPLETED contests that went final in this championship year, US Eastern, such as 2025, instead of the current ones. The years with any are `listContestFinishedYears`.",
+            "type": "integer",
+            "minimum": 2000,
+            "maximum": 9999
+          }
+        },
+        "additionalProperties": false,
+        "description": "Which of a league's contests to list: the current ones by default, or one year's finished ones."
+      },
+      "ContestFinishedYearsResponse": {
+        "type": "object",
+        "properties": {
+          "years": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            },
+            "description": "Each championship year, US Eastern, a COMPLETED contest of the league went final in, newest first. Empty when none has finished."
+          }
+        },
+        "required": [
+          "years"
+        ],
+        "additionalProperties": false,
+        "description": "The years a league has finished contests in."
       },
       "ContestEntryResponse": {
         "type": "object",
@@ -29734,6 +30024,178 @@
         "additionalProperties": false,
         "description": "Expanded contest-entry detail response."
       },
+      "MyContestEntriesResponse": {
+        "type": "object",
+        "properties": {
+          "entries": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "contestId": {
+                  "type": "string"
+                },
+                "squadId": {
+                  "type": "string"
+                },
+                "squadName": {
+                  "type": "string"
+                },
+                "entryNumber": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991
+                },
+                "name": {
+                  "type": "string"
+                },
+                "events": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "sportEventId": {
+                        "type": "string",
+                        "description": "One event of the entry's contest."
+                      },
+                      "status": {
+                        "type": "string",
+                        "enum": [
+                          "DRAFT",
+                          "SUBMITTED"
+                        ],
+                        "description": "DRAFT until the owner submits a complete lineup for this event; only a SUBMITTED event counts on the leaderboard, in standings and at settlement (#481, per event since #713)."
+                      },
+                      "submittedAt": {
+                        "description": "When the event's picks were submitted; null while a draft.",
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "format": "date-time"
+                      }
+                    },
+                    "required": [
+                      "sportEventId",
+                      "status",
+                      "submittedAt"
+                    ],
+                    "additionalProperties": false,
+                    "description": "An entry's status in one event of its contest (#713): \"submit week 6\"."
+                  },
+                  "description": "The entry's status in each event of its contest, in the contest's event order."
+                },
+                "tiebreakerValue": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                "picksCount": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991,
+                  "description": "Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners."
+                },
+                "createdAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "When the contest entry was created."
+                },
+                "updatedAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "When the contest entry was last updated."
+                },
+                "participants": {
+                  "description": "The entry's picked participants, each naming its event. To anyone but the owning squad only the picks of events whose picks are revealed are listed. Omitted on the entry writes, which return the entry without them.",
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "pickId": {
+                        "type": "string"
+                      },
+                      "sportEventParticipantId": {
+                        "type": "string"
+                      },
+                      "sportEventId": {
+                        "type": "string",
+                        "description": "The event of the contest the pick is in (#713)."
+                      },
+                      "participantId": {
+                        "type": "string"
+                      },
+                      "participantName": {
+                        "type": "string"
+                      },
+                      "participantStatus": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "role": {
+                        "description": "The participant's playing role, when known.",
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "teamAffiliation": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "pickedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "When the participant was added to the contest entry."
+                      }
+                    },
+                    "required": [
+                      "pickId",
+                      "sportEventParticipantId",
+                      "sportEventId",
+                      "participantId",
+                      "participantName",
+                      "pickedAt"
+                    ],
+                    "additionalProperties": false,
+                    "description": "Contest entry participant detail. Picks remain pointers to event participants; scores are returned by the contest leaderboard endpoint."
+                  }
+                }
+              },
+              "required": [
+                "id",
+                "contestId",
+                "squadId",
+                "squadName",
+                "entryNumber",
+                "name",
+                "events",
+                "picksCount",
+                "createdAt",
+                "updatedAt"
+              ],
+              "additionalProperties": false,
+              "description": "A contest entry: the one shape every entry read and write returns (#248 collapsed the summary and detail variants, which differed by `participants`)."
+            },
+            "description": "The requester's own squad's entries, drafts included, in each of the league's OPEN and ACTIVE contests, in entry-number order within a contest. Without `participants`: an entry's picks are on `getContestEntry`. Empty without an active squad in the league."
+          }
+        },
+        "required": [
+          "entries"
+        ],
+        "additionalProperties": false,
+        "description": "The requester's own entries across a league's current contests (#1197)."
+      },
       "ContestEntryListResponse": {
         "type": "object",
         "properties": {
@@ -29744,24 +30206,6 @@
           "total": {
             "type": "number",
             "description": "Total number of entries in the contest."
-          },
-          "isJoined": {
-            "type": "boolean",
-            "description": "Whether the current user has at least one active entry in the contest."
-          },
-          "myEntryId": {
-            "description": "Primary current-user entry when the contest allows a single active entry.",
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "myEntryIds": {
-            "description": "All current-user entry identifiers when multiple entries are allowed.",
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
           },
           "picksRevealed": {
             "type": "boolean",
@@ -29927,14 +30371,12 @@
               "additionalProperties": false,
               "description": "A contest entry: the one shape every entry read and write returns (#248 collapsed the summary and detail variants, which differed by `participants`)."
             },
-            "description": "Entries for the contest. Each entry lists participants[]: all of them for the requester's own entries, and only the revealed events' picks for everyone else's."
+            "description": "Entries for the contest, the requester's own squad's first. Each entry lists participants[]: all of them for the requester's own entries, and only the revealed events' picks for everyone else's. The requester's entry ids alone are `myEntryIds` on `getContest`."
           }
         },
         "required": [
           "contestId",
           "total",
-          "isJoined",
-          "myEntryId",
           "picksRevealed",
           "entries"
         ],
@@ -45150,6 +45592,28 @@
         "additionalProperties": false,
         "description": "Which season's cups to list."
       },
+      "CupSquadPointsQuery": {
+        "type": "object",
+        "properties": {
+          "seasonYear": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "The cup's season, such as 2026."
+          },
+          "sportLeagueId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The cup's sports league."
+          }
+        },
+        "required": [
+          "seasonYear",
+          "sportLeagueId"
+        ],
+        "additionalProperties": false,
+        "description": "Which cup: the league has one per season and sports league."
+      },
       "CupSeasonListResponse": {
         "type": "object",
         "properties": {
@@ -46727,6 +47191,10 @@
             "type": "string",
             "format": "uuid"
           },
+          "cupName": {
+            "type": "string",
+            "description": "The cup's name, from its season and sports league: \"2026 PGA Tour Cup\"."
+          },
           "squadId": {
             "type": "string",
             "format": "uuid"
@@ -46816,6 +47284,7 @@
         },
         "required": [
           "cupId",
+          "cupName",
           "squadId",
           "squadName",
           "points",
@@ -46833,6 +47302,10 @@
               "cupId": {
                 "type": "string",
                 "format": "uuid"
+              },
+              "cupName": {
+                "type": "string",
+                "description": "The cup's name, from its season and sports league: \"2026 PGA Tour Cup\"."
               },
               "squadId": {
                 "type": "string",
@@ -46923,6 +47396,7 @@
             },
             "required": [
               "cupId",
+              "cupName",
               "squadId",
               "squadName",
               "points",
@@ -54148,6 +54622,10 @@
               "SOCCER",
               "TENNIS"
             ]
+          },
+          "upcoming": {
+            "description": "true: only the pages with an edition coming, the one their primary offer shows, soonest first (#1202). Omitted or false: every active page, by sport then display order.",
+            "type": "boolean"
           }
         },
         "additionalProperties": false,
@@ -55929,7 +56407,7 @@
               "additionalProperties": false,
               "description": "A public event page, such as Championship Weekend: a curated grouping of contest setups on the series a fan would call one event."
             },
-            "description": "The active pages, by sport then display order. A page between seasons has no offers."
+            "description": "The active pages, by sport then display order, or soonest first when only the upcoming ones are asked for. A page between seasons has no offers."
           }
         },
         "required": [
@@ -63291,6 +63769,399 @@
                 ],
                 "additionalProperties": false
               },
+              "outcome": {
+                "description": "Admin-facing outcome and warning summary for the sync run.",
+                "type": "object",
+                "properties": {
+                  "severity": {
+                    "type": "string",
+                    "enum": [
+                      "SUCCESS",
+                      "WARNING",
+                      "ERROR"
+                    ],
+                    "description": "Admin-facing severity derived from run status, errors, and warnings."
+                  },
+                  "summary": {
+                    "type": "string",
+                    "description": "Human-readable root-admin summary of the sync outcome."
+                  },
+                  "warnings": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable warning code emitted by the ingestion/sync layer."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable warning detail for root-admin investigation."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Warning emitted for a provider sync run that completed but needs operator attention."
+                    },
+                    "description": "Warnings that did not fail the run but should be visible to an operator."
+                  },
+                  "errors": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991,
+                    "description": "Count of errors captured for the run."
+                  }
+                },
+                "required": [
+                  "severity",
+                  "summary",
+                  "warnings",
+                  "errors"
+                ],
+                "additionalProperties": false
+              },
+              "stats": {
+                "description": "Canonical numeric sync stats used by admin diagnostics.",
+                "type": "object",
+                "additionalProperties": {
+                  "type": "number"
+                }
+              },
+              "recordsProcessed": {
+                "description": "Legacy top-level processed-record count retained for summary compatibility.",
+                "type": "number"
+              },
+              "errors": {
+                "description": "Legacy top-level error count retained for summary compatibility.",
+                "type": "number"
+              },
+              "detail": {
+                "description": "Legacy human-readable detail retained for summary compatibility.",
+                "type": "string"
+              }
+            },
+            "additionalProperties": {},
+            "description": "Provider sync run summary with canonical stats and outcome."
+          }
+        },
+        "required": [
+          "id",
+          "providerId",
+          "sport",
+          "eventId",
+          "status",
+          "startedAt",
+          "completedAt",
+          "createdAt",
+          "payload"
+        ],
+        "additionalProperties": false,
+        "description": "One feed's sync against a provider, with its diagnostics."
+      },
+      "ProviderSyncRunDetailDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "providerId": {
+            "type": "string"
+          },
+          "sport": {
+            "type": "string",
+            "enum": [
+              "GOLF",
+              "HORSE_RACING",
+              "AUTO_RACING",
+              "CYCLING",
+              "RUNNING",
+              "BASKETBALL",
+              "AMERICAN_FOOTBALL",
+              "HOCKEY",
+              "BASEBALL",
+              "SOCCER",
+              "TENNIS"
+            ]
+          },
+          "eventId": {
+            "description": "Provider event identifier when the run was narrowed to one event; null for a whole-sport run.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "SUBMITTED",
+              "IN_PROGRESS",
+              "COMPLETED",
+              "FAILED",
+              "CANCELLED"
+            ]
+          },
+          "startedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "ISO 8601 datetime string."
+          },
+          "completedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "ISO 8601 datetime string."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the run was submitted."
+          },
+          "payload": {
+            "type": "object",
+            "properties": {
+              "runType": {
+                "description": "Sync run source: a manual or scheduled event sync.",
+                "type": "string"
+              },
+              "requestedFeeds": {
+                "description": "Feeds represented by the originating manual or scheduled sync request.",
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "EVENTPARTICIPANTS",
+                    "EVENTLIVESCORES"
+                  ],
+                  "description": "Explicit ingestion feed type requested by the caller. Every feed is event-scoped."
+                }
+              },
+              "requestedFeed": {
+                "description": "Single feed represented by this sync run row.",
+                "type": "string",
+                "enum": [
+                  "EVENTPARTICIPANTS",
+                  "EVENTLIVESCORES"
+                ]
+              },
+              "requestPayload": {
+                "description": "The request that submitted the sync run.",
+                "type": "object",
+                "properties": {
+                  "sport": {
+                    "type": "string",
+                    "enum": [
+                      "GOLF",
+                      "HORSE_RACING",
+                      "AUTO_RACING",
+                      "CYCLING",
+                      "RUNNING",
+                      "BASKETBALL",
+                      "AMERICAN_FOOTBALL",
+                      "HOCKEY",
+                      "BASEBALL",
+                      "SOCCER",
+                      "TENNIS"
+                    ]
+                  },
+                  "eventId": {
+                    "type": "string",
+                    "description": "Provider event identifier the sync was asked for."
+                  },
+                  "source": {
+                    "type": "string",
+                    "enum": [
+                      "SCHEDULED",
+                      "MANUAL"
+                    ],
+                    "description": "Whether the scheduler or a root admin asked for the sync."
+                  },
+                  "actor": {
+                    "description": "Who asked for a sync.",
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "SYSTEM"
+                            ]
+                          },
+                          "name": {
+                            "type": "string",
+                            "enum": [
+                              "scheduler"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "name"
+                        ],
+                        "additionalProperties": false,
+                        "description": "The scheduler, for a SCHEDULED sync."
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "ROOT_ADMIN"
+                            ]
+                          },
+                          "userId": {
+                            "type": "string",
+                            "description": "The root admin who asked for the sync."
+                          },
+                          "email": {
+                            "type": "string",
+                            "description": "Their email at the time, for the audit trail."
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "userId",
+                          "email"
+                        ],
+                        "additionalProperties": false,
+                        "description": "A root admin, for a MANUAL sync."
+                      }
+                    ]
+                  },
+                  "mockEventState": {
+                    "description": "The mock feed state a manual QA sync asked for; null otherwise.",
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "enum": [
+                      "open",
+                      "locked",
+                      "live",
+                      "completed",
+                      "golf-pre-live",
+                      "golf-r1-in-progress",
+                      "golf-r1-complete",
+                      "golf-r2-complete",
+                      "golf-correction",
+                      "golf-r4-complete-pending-final",
+                      "golf-playoff",
+                      "golf-completed",
+                      "golf-late-correction",
+                      null
+                    ]
+                  },
+                  "normalizedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the request was validated and normalized."
+                  }
+                },
+                "required": [
+                  "sport",
+                  "eventId",
+                  "source",
+                  "actor",
+                  "mockEventState",
+                  "normalizedAt"
+                ],
+                "additionalProperties": false
+              },
+              "outcome": {
+                "description": "Admin-facing outcome and warning summary for the sync run.",
+                "type": "object",
+                "properties": {
+                  "severity": {
+                    "type": "string",
+                    "enum": [
+                      "SUCCESS",
+                      "WARNING",
+                      "ERROR"
+                    ],
+                    "description": "Admin-facing severity derived from run status, errors, and warnings."
+                  },
+                  "summary": {
+                    "type": "string",
+                    "description": "Human-readable root-admin summary of the sync outcome."
+                  },
+                  "warnings": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable warning code emitted by the ingestion/sync layer."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable warning detail for root-admin investigation."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Warning emitted for a provider sync run that completed but needs operator attention."
+                    },
+                    "description": "Warnings that did not fail the run but should be visible to an operator."
+                  },
+                  "errors": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991,
+                    "description": "Count of errors captured for the run."
+                  }
+                },
+                "required": [
+                  "severity",
+                  "summary",
+                  "warnings",
+                  "errors"
+                ],
+                "additionalProperties": false
+              },
+              "stats": {
+                "description": "Canonical numeric sync stats used by admin diagnostics.",
+                "type": "object",
+                "additionalProperties": {
+                  "type": "number"
+                }
+              },
+              "recordsProcessed": {
+                "description": "Legacy top-level processed-record count retained for summary compatibility.",
+                "type": "number"
+              },
+              "errors": {
+                "description": "Legacy top-level error count retained for summary compatibility.",
+                "type": "number"
+              },
+              "detail": {
+                "description": "Legacy human-readable detail retained for summary compatibility.",
+                "type": "string"
+              }
+            },
+            "additionalProperties": {},
+            "description": "Provider sync run summary with canonical stats and outcome."
+          },
+          "details": {
+            "description": "The run's detailed diagnostics; null before the run starts.",
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
               "providerPayload": {
                 "description": "Raw/debug provider payload captured for this run.",
                 "type": "object",
@@ -63423,7 +64294,7 @@
                 "additionalProperties": false
               },
               "writeDiagnostics": {
-                "description": "Normalized created/updated/deleted/unchanged row diagnostics for PoolMaster writes.",
+                "description": "Normalized write-effect diagnostics for PoolMaster writes: every row counted, changed rows kept.",
                 "type": "object",
                 "properties": {
                   "summary": {
@@ -63535,83 +64406,35 @@
                 ],
                 "additionalProperties": false
               },
-              "outcome": {
-                "description": "Admin-facing outcome and warning summary for the sync run.",
+              "failurePayload": {
+                "description": "Present when the run failed unexpectedly.",
                 "type": "object",
                 "properties": {
-                  "severity": {
-                    "type": "string",
-                    "enum": [
-                      "SUCCESS",
-                      "WARNING",
-                      "ERROR"
-                    ],
-                    "description": "Admin-facing severity derived from run status, errors, and warnings."
-                  },
-                  "summary": {
-                    "type": "string",
-                    "description": "Human-readable root-admin summary of the sync outcome."
-                  },
-                  "warnings": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "code": {
-                          "type": "string",
-                          "description": "Stable warning code emitted by the ingestion/sync layer."
-                        },
-                        "message": {
-                          "type": "string",
-                          "description": "Human-readable warning detail for root-admin investigation."
-                        }
+                  "error": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "description": "The error's class name, when it was an Error.",
+                        "type": "string"
                       },
-                      "required": [
-                        "code",
-                        "message"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Warning emitted for a provider sync run that completed but needs operator attention."
+                      "message": {
+                        "type": "string"
+                      }
                     },
-                    "description": "Warnings that did not fail the run but should be visible to an operator."
-                  },
-                  "errors": {
-                    "type": "integer",
-                    "minimum": 0,
-                    "maximum": 9007199254740991,
-                    "description": "Count of errors captured for the run."
+                    "required": [
+                      "message"
+                    ],
+                    "additionalProperties": false,
+                    "description": "The error that failed the run."
                   }
                 },
                 "required": [
-                  "severity",
-                  "summary",
-                  "warnings",
-                  "errors"
+                  "error"
                 ],
                 "additionalProperties": false
-              },
-              "stats": {
-                "description": "Canonical numeric sync stats used by admin diagnostics.",
-                "type": "object",
-                "additionalProperties": {
-                  "type": "number"
-                }
-              },
-              "recordsProcessed": {
-                "description": "Legacy top-level processed-record count retained for summary compatibility.",
-                "type": "number"
-              },
-              "errors": {
-                "description": "Legacy top-level error count retained for summary compatibility.",
-                "type": "number"
-              },
-              "detail": {
-                "description": "Legacy human-readable detail retained for summary compatibility.",
-                "type": "string"
               }
             },
-            "additionalProperties": {},
-            "description": "Provider sync diagnostic payload with canonical stats plus raw provider/job drill-downs."
+            "additionalProperties": {}
           }
         },
         "required": [
@@ -63623,10 +64446,11 @@
           "startedAt",
           "completedAt",
           "createdAt",
-          "payload"
+          "payload",
+          "details"
         ],
         "additionalProperties": false,
-        "description": "One feed's sync against a provider, with its diagnostics."
+        "description": "One feed's sync against a provider, with its summary and its detailed diagnostics."
       },
       "ProviderSyncRunListQuery": {
         "type": "object",
@@ -63894,250 +64718,6 @@
                       ],
                       "additionalProperties": false
                     },
-                    "providerPayload": {
-                      "description": "Raw/debug provider payload captured for this run.",
-                      "type": "object",
-                      "properties": {
-                        "operation": {
-                          "type": "string",
-                          "enum": [
-                            "EVENTPARTICIPANTS",
-                            "EVENTLIVESCORES"
-                          ],
-                          "description": "Provider feed operation represented by this payload."
-                        },
-                        "rawCaptured": {
-                          "type": "boolean",
-                          "description": "Whether raw provider response JSON was captured for this run."
-                        },
-                        "rawTruncated": {
-                          "type": "boolean",
-                          "description": "Whether the captured raw provider payload was truncated before storage."
-                        },
-                        "raw": {
-                          "description": "Raw provider response JSON retained for debugging when capture is available."
-                        }
-                      },
-                      "required": [
-                        "operation",
-                        "rawCaptured",
-                        "rawTruncated"
-                      ],
-                      "additionalProperties": {}
-                    },
-                    "jobPayload": {
-                      "description": "Serialized ingestion job details after an ingestion job is available.",
-                      "type": "object",
-                      "properties": {
-                        "jobType": {
-                          "type": "string",
-                          "description": "Internal ingestion job type that executed this sync feed."
-                        },
-                        "providerId": {
-                          "type": "string",
-                          "description": "Provider that executed the ingestion job."
-                        },
-                        "sport": {
-                          "type": "string",
-                          "enum": [
-                            "GOLF",
-                            "HORSE_RACING",
-                            "AUTO_RACING",
-                            "CYCLING",
-                            "RUNNING",
-                            "BASKETBALL",
-                            "AMERICAN_FOOTBALL",
-                            "HOCKEY",
-                            "BASEBALL",
-                            "SOCCER",
-                            "TENNIS"
-                          ]
-                        },
-                        "eventExternalId": {
-                          "description": "External event id for event-scoped jobs, when applicable.",
-                          "type": "string"
-                        },
-                        "status": {
-                          "type": "string",
-                          "enum": [
-                            "PENDING",
-                            "RUNNING",
-                            "COMPLETED",
-                            "FAILED"
-                          ],
-                          "description": "Internal ingestion job status."
-                        },
-                        "startedAt": {
-                          "description": "When the ingestion job started.",
-                          "type": "string",
-                          "format": "date-time"
-                        },
-                        "completedAt": {
-                          "description": "When the ingestion job completed.",
-                          "type": "string",
-                          "format": "date-time"
-                        },
-                        "recordsProcessed": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "maximum": 9007199254740991,
-                          "description": "Canonical records processed by the ingestion job."
-                        },
-                        "errors": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "maximum": 9007199254740991,
-                          "description": "Error count captured by the ingestion job."
-                        },
-                        "errorLog": {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "properties": {
-                              "error": {
-                                "type": "string",
-                                "description": "Failure message the ingestion job recorded."
-                              },
-                              "at": {
-                                "type": "string",
-                                "format": "date-time",
-                                "description": "When the failure was recorded."
-                              }
-                            },
-                            "required": [
-                              "error",
-                              "at"
-                            ],
-                            "additionalProperties": false,
-                            "description": "One ingestion job error-log entry."
-                          },
-                          "description": "Ingestion error-log entries for root-admin investigation."
-                        }
-                      },
-                      "required": [
-                        "jobType",
-                        "providerId",
-                        "sport",
-                        "status",
-                        "recordsProcessed",
-                        "errors",
-                        "errorLog"
-                      ],
-                      "additionalProperties": false
-                    },
-                    "writeDiagnostics": {
-                      "description": "Normalized created/updated/deleted/unchanged row diagnostics for PoolMaster writes.",
-                      "type": "object",
-                      "properties": {
-                        "summary": {
-                          "type": "object",
-                          "properties": {
-                            "total": {
-                              "type": "integer",
-                              "minimum": 0,
-                              "maximum": 9007199254740991
-                            },
-                            "unchanged": {
-                              "type": "integer",
-                              "minimum": 0,
-                              "maximum": 9007199254740991
-                            },
-                            "created": {
-                              "type": "integer",
-                              "minimum": 0,
-                              "maximum": 9007199254740991
-                            },
-                            "updated": {
-                              "type": "integer",
-                              "minimum": 0,
-                              "maximum": 9007199254740991
-                            },
-                            "deleted": {
-                              "type": "integer",
-                              "minimum": 0,
-                              "maximum": 9007199254740991
-                            }
-                          },
-                          "required": [
-                            "total",
-                            "unchanged",
-                            "created",
-                            "updated",
-                            "deleted"
-                          ],
-                          "additionalProperties": false,
-                          "description": "Aggregate normalized write-effect counts for a provider sync run."
-                        },
-                        "rows": {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "properties": {
-                              "id": {
-                                "type": "string",
-                                "description": "Stable row id for this normalized write diagnostic row."
-                              },
-                              "entityType": {
-                                "type": "string",
-                                "description": "Normalized PoolMaster entity type represented by this row."
-                              },
-                              "disposition": {
-                                "type": "string",
-                                "enum": [
-                                  "UNCHANGED",
-                                  "CREATED",
-                                  "UPDATED",
-                                  "DELETED"
-                                ],
-                                "description": "Write effect for the normalized row."
-                              },
-                              "providerId": {
-                                "description": "Provider id associated with this row, when applicable.",
-                                "type": "string"
-                              },
-                              "externalId": {
-                                "description": "Provider external id associated with this row, when applicable.",
-                                "type": "string"
-                              },
-                              "participantExternalId": {
-                                "description": "Provider participant id associated with this row, when applicable.",
-                                "type": "string"
-                              },
-                              "internalId": {
-                                "description": "PoolMaster internal id associated with this row, when known.",
-                                "type": "string"
-                              },
-                              "name": {
-                                "description": "Display name for the row, when known.",
-                                "type": "string"
-                              },
-                              "before": {
-                                "description": "Normalized before-state of the entity `entityType` names, for UPDATED or DELETED rows; shaped by that entity and shown only as a diff.",
-                                "type": "object",
-                                "additionalProperties": {}
-                              },
-                              "after": {
-                                "description": "Normalized after-state of the entity `entityType` names, for CREATED or UPDATED rows; shaped by that entity and shown only as a diff.",
-                                "type": "object",
-                                "additionalProperties": {}
-                              }
-                            },
-                            "required": [
-                              "id",
-                              "entityType",
-                              "disposition"
-                            ],
-                            "additionalProperties": false,
-                            "description": "Single normalized write diagnostic row for a provider sync run."
-                          }
-                        }
-                      },
-                      "required": [
-                        "summary",
-                        "rows"
-                      ],
-                      "additionalProperties": false
-                    },
                     "outcome": {
                       "description": "Admin-facing outcome and warning summary for the sync run.",
                       "type": "object",
@@ -64214,7 +64794,7 @@
                     }
                   },
                   "additionalProperties": {},
-                  "description": "Provider sync diagnostic payload with canonical stats plus raw provider/job drill-downs."
+                  "description": "Provider sync run summary with canonical stats and outcome."
                 }
               },
               "required": [
@@ -64237,7 +64817,7 @@
           "syncRuns"
         ],
         "additionalProperties": false,
-        "description": "Sync runs submitted inside the requested window."
+        "description": "Sync runs submitted inside the requested window, newest submission first, each with its summary only."
       },
       "ProviderManualSyncSubmissionResponse": {
         "type": "object",
@@ -64495,250 +65075,6 @@
                       ],
                       "additionalProperties": false
                     },
-                    "providerPayload": {
-                      "description": "Raw/debug provider payload captured for this run.",
-                      "type": "object",
-                      "properties": {
-                        "operation": {
-                          "type": "string",
-                          "enum": [
-                            "EVENTPARTICIPANTS",
-                            "EVENTLIVESCORES"
-                          ],
-                          "description": "Provider feed operation represented by this payload."
-                        },
-                        "rawCaptured": {
-                          "type": "boolean",
-                          "description": "Whether raw provider response JSON was captured for this run."
-                        },
-                        "rawTruncated": {
-                          "type": "boolean",
-                          "description": "Whether the captured raw provider payload was truncated before storage."
-                        },
-                        "raw": {
-                          "description": "Raw provider response JSON retained for debugging when capture is available."
-                        }
-                      },
-                      "required": [
-                        "operation",
-                        "rawCaptured",
-                        "rawTruncated"
-                      ],
-                      "additionalProperties": {}
-                    },
-                    "jobPayload": {
-                      "description": "Serialized ingestion job details after an ingestion job is available.",
-                      "type": "object",
-                      "properties": {
-                        "jobType": {
-                          "type": "string",
-                          "description": "Internal ingestion job type that executed this sync feed."
-                        },
-                        "providerId": {
-                          "type": "string",
-                          "description": "Provider that executed the ingestion job."
-                        },
-                        "sport": {
-                          "type": "string",
-                          "enum": [
-                            "GOLF",
-                            "HORSE_RACING",
-                            "AUTO_RACING",
-                            "CYCLING",
-                            "RUNNING",
-                            "BASKETBALL",
-                            "AMERICAN_FOOTBALL",
-                            "HOCKEY",
-                            "BASEBALL",
-                            "SOCCER",
-                            "TENNIS"
-                          ]
-                        },
-                        "eventExternalId": {
-                          "description": "External event id for event-scoped jobs, when applicable.",
-                          "type": "string"
-                        },
-                        "status": {
-                          "type": "string",
-                          "enum": [
-                            "PENDING",
-                            "RUNNING",
-                            "COMPLETED",
-                            "FAILED"
-                          ],
-                          "description": "Internal ingestion job status."
-                        },
-                        "startedAt": {
-                          "description": "When the ingestion job started.",
-                          "type": "string",
-                          "format": "date-time"
-                        },
-                        "completedAt": {
-                          "description": "When the ingestion job completed.",
-                          "type": "string",
-                          "format": "date-time"
-                        },
-                        "recordsProcessed": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "maximum": 9007199254740991,
-                          "description": "Canonical records processed by the ingestion job."
-                        },
-                        "errors": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "maximum": 9007199254740991,
-                          "description": "Error count captured by the ingestion job."
-                        },
-                        "errorLog": {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "properties": {
-                              "error": {
-                                "type": "string",
-                                "description": "Failure message the ingestion job recorded."
-                              },
-                              "at": {
-                                "type": "string",
-                                "format": "date-time",
-                                "description": "When the failure was recorded."
-                              }
-                            },
-                            "required": [
-                              "error",
-                              "at"
-                            ],
-                            "additionalProperties": false,
-                            "description": "One ingestion job error-log entry."
-                          },
-                          "description": "Ingestion error-log entries for root-admin investigation."
-                        }
-                      },
-                      "required": [
-                        "jobType",
-                        "providerId",
-                        "sport",
-                        "status",
-                        "recordsProcessed",
-                        "errors",
-                        "errorLog"
-                      ],
-                      "additionalProperties": false
-                    },
-                    "writeDiagnostics": {
-                      "description": "Normalized created/updated/deleted/unchanged row diagnostics for PoolMaster writes.",
-                      "type": "object",
-                      "properties": {
-                        "summary": {
-                          "type": "object",
-                          "properties": {
-                            "total": {
-                              "type": "integer",
-                              "minimum": 0,
-                              "maximum": 9007199254740991
-                            },
-                            "unchanged": {
-                              "type": "integer",
-                              "minimum": 0,
-                              "maximum": 9007199254740991
-                            },
-                            "created": {
-                              "type": "integer",
-                              "minimum": 0,
-                              "maximum": 9007199254740991
-                            },
-                            "updated": {
-                              "type": "integer",
-                              "minimum": 0,
-                              "maximum": 9007199254740991
-                            },
-                            "deleted": {
-                              "type": "integer",
-                              "minimum": 0,
-                              "maximum": 9007199254740991
-                            }
-                          },
-                          "required": [
-                            "total",
-                            "unchanged",
-                            "created",
-                            "updated",
-                            "deleted"
-                          ],
-                          "additionalProperties": false,
-                          "description": "Aggregate normalized write-effect counts for a provider sync run."
-                        },
-                        "rows": {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "properties": {
-                              "id": {
-                                "type": "string",
-                                "description": "Stable row id for this normalized write diagnostic row."
-                              },
-                              "entityType": {
-                                "type": "string",
-                                "description": "Normalized PoolMaster entity type represented by this row."
-                              },
-                              "disposition": {
-                                "type": "string",
-                                "enum": [
-                                  "UNCHANGED",
-                                  "CREATED",
-                                  "UPDATED",
-                                  "DELETED"
-                                ],
-                                "description": "Write effect for the normalized row."
-                              },
-                              "providerId": {
-                                "description": "Provider id associated with this row, when applicable.",
-                                "type": "string"
-                              },
-                              "externalId": {
-                                "description": "Provider external id associated with this row, when applicable.",
-                                "type": "string"
-                              },
-                              "participantExternalId": {
-                                "description": "Provider participant id associated with this row, when applicable.",
-                                "type": "string"
-                              },
-                              "internalId": {
-                                "description": "PoolMaster internal id associated with this row, when known.",
-                                "type": "string"
-                              },
-                              "name": {
-                                "description": "Display name for the row, when known.",
-                                "type": "string"
-                              },
-                              "before": {
-                                "description": "Normalized before-state of the entity `entityType` names, for UPDATED or DELETED rows; shaped by that entity and shown only as a diff.",
-                                "type": "object",
-                                "additionalProperties": {}
-                              },
-                              "after": {
-                                "description": "Normalized after-state of the entity `entityType` names, for CREATED or UPDATED rows; shaped by that entity and shown only as a diff.",
-                                "type": "object",
-                                "additionalProperties": {}
-                              }
-                            },
-                            "required": [
-                              "id",
-                              "entityType",
-                              "disposition"
-                            ],
-                            "additionalProperties": false,
-                            "description": "Single normalized write diagnostic row for a provider sync run."
-                          }
-                        }
-                      },
-                      "required": [
-                        "summary",
-                        "rows"
-                      ],
-                      "additionalProperties": false
-                    },
                     "outcome": {
                       "description": "Admin-facing outcome and warning summary for the sync run.",
                       "type": "object",
@@ -64815,7 +65151,7 @@
                     }
                   },
                   "additionalProperties": {},
-                  "description": "Provider sync diagnostic payload with canonical stats plus raw provider/job drill-downs."
+                  "description": "Provider sync run summary with canonical stats and outcome."
                 }
               },
               "required": [
@@ -65750,7 +66086,7 @@
         "tags": [
           "Users"
         ],
-        "description": "Returns every user, optionally filtered. This is the unscoped read: access rule A1 permits it to root admins only. Not paged — filters narrow the result, nothing slices it.",
+        "description": "Returns the users matching `search`: a case-insensitive substring of the email, username, first or last name. This is the unscoped read: access rule A1 permits it to root admins only. Not paged — filters narrow the result, nothing slices it. `search` is required, at least 3 characters once trimmed, so the list never reads every user: 400 SEARCH_TERM_REQUIRED otherwise.",
         "parameters": [
           {
             "schema": {
@@ -65758,7 +66094,8 @@
             },
             "in": "query",
             "name": "search",
-            "required": false
+            "required": false,
+            "description": "Case-insensitive substring of the email, username, first or last name; at least 3 characters once trimmed."
           },
           {
             "schema": {
@@ -67034,7 +67371,7 @@
         "tags": [
           "Leagues"
         ],
-        "description": "Returns leagues together with the viewer's own memberships once as an array. The leagues list is the one inherently multi-league surface, so it is the one place the viewer's relationship travels as a set rather than per row (access rule A8).\n\n`scope` selects which leagues: `mine` (the default) returns the leagues the caller belongs to and powers the welcome page, header selector and My Leagues overview; `all` returns every league on the platform and powers root-admin league management. `all` is the unscoped read access rule A1 permits to root admins only, and returns 403 otherwise. `search` and `isActive` narrow either scope.\n\nThis replaced `listLeagues` + `adminListLeagues`, which were one operation split by caller role.",
+        "description": "Returns leagues together with the viewer's own memberships once as an array. The leagues list is the one inherently multi-league surface, so it is the one place the viewer's relationship travels as a set rather than per row (access rule A8).\n\n`scope` selects which leagues: `mine` (the default) returns the leagues the caller belongs to and powers the welcome page, header selector and My Leagues overview; `all` returns every league on the platform and powers root-admin league management. `all` is the unscoped read access rule A1 permits to root admins only, and returns 403 otherwise; it also requires `search` (at least 3 characters once trimmed), so it never reads every league, and returns 400 SEARCH_TERM_REQUIRED without one. `search` and `isActive` narrow either scope.\n\nThis replaced `listLeagues` + `adminListLeagues`, which were one operation split by caller role.",
         "parameters": [
           {
             "schema": {
@@ -67060,7 +67397,7 @@
             "in": "query",
             "name": "search",
             "required": false,
-            "description": "Optional case-insensitive substring matched against the league name. A filter, never a slice — see §16."
+            "description": "Case-insensitive substring matched against the league name. A filter, never a slice — see §16. Optional for 'mine'; required for 'all', at least 3 characters."
           },
           {
             "schema": {
@@ -67079,6 +67416,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/LeagueListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }
@@ -67111,7 +67458,7 @@
         "tags": [
           "Leagues"
         ],
-        "description": "Creates a new private league for the authenticated commissioner using the submitted unique `leagueCode`, then returns the new league together with the creator's own membership edges in it.\n\nThe same `LeagueContextResponse` as `getLeague` and `getLeagueByCode`, because creating a league also creates the creator's COMMISSIONER membership: the client navigates straight into the league and seeds its context cache from this response rather than issuing a second read (access rule A8). `squadMembership` is null by construction — a league has no squads the instant it is created.",
+        "description": "Creates a new private league for the authenticated commissioner using the submitted unique `leagueCode`, then returns the new league together with the creator's own membership edges in it.\n\nThe same `LeagueContextResponse` as `getLeague` and `getLeagueByCode`, because creating a league also creates the creator's COMMISSIONER membership: the client navigates straight into the league and seeds its context cache from this response rather than issuing a second read (access rule A8). Creating a league also gives the creator their default squad, so `squadMembership`, `squadName` and `activeTeamCount` describe it.",
         "requestBody": {
           "required": true,
           "content": {
@@ -68895,7 +69242,7 @@
         "tags": [
           "Squads"
         ],
-        "description": "Returns the squads associated with the current league for squad management and contest-entry flows, including requester-scoped teamRelationship plus separate global isRootAdmin flags.",
+        "description": "Returns every squad in the league, active and inactive, each with its owners: the Teams page and Manage teams. A page about one squad reads getLeagueSquad instead.",
         "parameters": [
           {
             "schema": {
@@ -69047,7 +69394,7 @@
         "tags": [
           "Squads"
         ],
-        "description": "Returns the detailed squad payload for the requested squad identifier, including requester-scoped teamRelationship plus separate global isRootAdmin flags.",
+        "description": "Returns one squad with its owners: every membership, any status, each with its user. A team page reads this rather than the whole team list.",
         "parameters": [
           {
             "schema": {
@@ -70181,8 +70528,19 @@
         "tags": [
           "Contests"
         ],
-        "description": "Returns the contests associated with the parent league so league-home and commissioner views can list current and historical contests. Each contest carries its entry count and its sport event's name and start, so a list needs no per-event reads. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.",
+        "description": "Returns the league's current contests: DRAFT, OPEN and ACTIVE, less any DRAFT that can never open: one with an event COMPLETED or CANCELLED, and one closing at its event's start once an event has started. A DRAFT with no events yet is listed, and so is a bracket starting after round 1 or a squares DRAFT with its game until its event finishes, since those close at their round or game. DRAFT contests are listed for the league's commissioners only. With `finishedYear`, returns instead the COMPLETED contests that went final in that championship year (US Eastern), newest first; `listContestFinishedYears` names the years. A single contest is `getContest`. Each contest carries its count of entries that submitted at least one event and its sport events' names and starts, so a list needs no per-event reads. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.",
         "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 2000,
+              "maximum": 9999
+            },
+            "in": "query",
+            "name": "finishedYear",
+            "required": false,
+            "description": "List the COMPLETED contests that went final in this championship year, US Eastern, such as 2025, instead of the current ones. The years with any are `listContestFinishedYears`."
+          },
           {
             "schema": {
               "type": "string"
@@ -70199,6 +70557,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ContestListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }
@@ -70305,6 +70673,110 @@
           },
           "422": {
             "description": "The event, format or template cannot make this contest. The event: SPORT_EVENT_NOT_FOUND, SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED, SPORT_EVENT_ALREADY_STARTED. The format: CONTEST_FORMAT_NOT_ALLOWED. The games of a pick'em or survivor contest: CONTEST_EVENT_HAS_NO_GAMES, CONTEST_EVENT_GAME_UNDECIDED, or CONTEST_EVENT_SPREAD_MISSING (a pick'em pool against the spread on a week with a game lacking its spread). CONTEST_SPREAD_NOT_OFFERED: a pick'em pool against the spread in a sport whose pools have no spread (#792). The selection type: CONTEST_SELECTION_TYPE_NOT_ALLOWED (the event's sport does not offer it). The configuration: CONTEST_RULES_SELECTION_TYPE_MISMATCH (rules of another selection type than the contest's), CONTEST_TIER_FIELD_OUT_OF_RANGE, CONTEST_BUDGET_FIELD_OUT_OF_RANGE (counted scores above the roster size), CONTEST_CONFIGURATION_INVALID (template missing, inactive, or for another format or selection type), or CONTEST_CONFIG_TEMPLATE_LEAGUE_MISMATCH (the template is one sport league's own preset and the event belongs to another league; a template with no sport league is offered for every league of its sport).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/leagues/{id}/contests/finished-years": {
+      "get": {
+        "operationId": "listContestFinishedYears",
+        "summary": "List the years a league has finished contests in",
+        "tags": [
+          "Contests"
+        ],
+        "description": "Each championship year (US Eastern) a COMPLETED contest of the league went final in, newest first: the years `listContests` takes as `finishedYear`. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The years a league has finished contests in.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContestFinishedYearsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/leagues/{id}/contests/my-entries": {
+      "get": {
+        "operationId": "listMyContestEntries",
+        "summary": "List the requester's entries in a league's current contests",
+        "tags": [
+          "Contests"
+        ],
+        "description": "The requester's own squad's entries, drafts included, in each of the league's OPEN and ACTIVE contests, each with its status in every event of its contest and without its picks (#1197): one read for what league home, the Contests page's My entries and My team show, however many contests are current. Empty without an active squad in the league. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The requester's own entries across a league's current contests (#1197).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyContestEntriesResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
             "content": {
               "application/json": {
                 "schema": {
@@ -70948,7 +71420,7 @@
         "tags": [
           "Contests"
         ],
-        "description": "Returns detailed contest information by contest ID for league, entry, and history surfaces that already know the contest identifier. Active members of the contest's league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.",
+        "description": "Returns detailed contest information by contest ID for league, entry, and history surfaces that already know the contest identifier, with its entries counted and the ids of the requester's own entries in it (#1197). Active members of the contest's league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.",
         "parameters": [
           {
             "schema": {
@@ -71958,15 +72430,36 @@
         }
       }
     },
-    "/api/v1/leagues/{id}/cups/{cupId}": {
+    "/api/v1/leagues/{id}/cups/squads/{squadId}": {
       "get": {
-        "operationId": "getCup",
-        "summary": "Get a cup",
+        "operationId": "getCupSquadPoints",
+        "summary": "Get a squad's cup points",
         "tags": [
           "Cups"
         ],
-        "description": "One cup with its standings and contests: the Points race. 404 CUP_NOT_FOUND for a cup that is not the league's. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. 403 PLAN_FEATURE_NOT_INCLUDED, its `details.feature` naming what is missing, unless the league's plan has CUP_STANDINGS (root admins too).",
+        "description": "One squad's points in the league's cup for a season and sports league, counted contest by counted contest, in the order they went final, with the cup's id and name. 404 CUP_NOT_FOUND when the league has no cup for that season and sports league, SQUAD_NOT_FOUND for a squad that is not the league's. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. 403 PLAN_FEATURE_NOT_INCLUDED, its `details.feature` naming what is missing, unless the league's plan has CUP_STANDINGS, PAST_YEARS for a year before the current one (root admins too).",
         "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            },
+            "in": "query",
+            "name": "seasonYear",
+            "required": true,
+            "description": "The cup's season, such as 2026."
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "query",
+            "name": "sportLeagueId",
+            "required": true,
+            "description": "The cup's sports league."
+          },
           {
             "schema": {
               "type": "string"
@@ -71980,17 +72473,27 @@
               "type": "string"
             },
             "in": "path",
-            "name": "cupId",
+            "name": "squadId",
             "required": true
           }
         ],
         "responses": {
           "200": {
-            "description": "One cup.",
+            "description": "One squad's cup points.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CupResponse"
+                  "$ref": "#/components/schemas/CupSquadPointsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }
@@ -72028,14 +72531,14 @@
         }
       }
     },
-    "/api/v1/leagues/{id}/cups/{cupId}/squads/{squadId}": {
+    "/api/v1/leagues/{id}/cups/{cupId}": {
       "get": {
-        "operationId": "getCupSquadPoints",
-        "summary": "Get a squad's cup points",
+        "operationId": "getCup",
+        "summary": "Get a cup",
         "tags": [
           "Cups"
         ],
-        "description": "One squad's points in a cup, counted contest by counted contest, in the order they went final. 404 CUP_NOT_FOUND for a cup that is not the league's, SQUAD_NOT_FOUND for a squad that is not. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. 403 PLAN_FEATURE_NOT_INCLUDED, its `details.feature` naming what is missing, unless the league's plan has CUP_STANDINGS (root admins too).",
+        "description": "One cup with its standings and contests: the Points race. 404 CUP_NOT_FOUND for a cup that is not the league's. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. 403 PLAN_FEATURE_NOT_INCLUDED, its `details.feature` naming what is missing, unless the league's plan has CUP_STANDINGS (root admins too).",
         "parameters": [
           {
             "schema": {
@@ -72052,23 +72555,15 @@
             "in": "path",
             "name": "cupId",
             "required": true
-          },
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "path",
-            "name": "squadId",
-            "required": true
           }
         ],
         "responses": {
           "200": {
-            "description": "One squad's cup points.",
+            "description": "One cup.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CupSquadPointsResponse"
+                  "$ref": "#/components/schemas/CupResponse"
                 }
               }
             }
@@ -73136,7 +73631,7 @@
         "tags": [
           "Events"
         ],
-        "description": "The sport-event catalog, narrowed by sport, statuses, sport league, event year and name and never paged. Any signed-in user may read it: contest setup picks an event from it, and a root admin browses it. Each event carries its loaded field size, contest-setup readiness and tier count; a root admin's list also carries each event's adminCounts. DRAFT events (not yet released for contests) are listed for a root admin only.",
+        "description": "The sport-event catalog, narrowed by sport, statuses, sport league, event year and name and never paged. At least one of `sport`, `sportLeagueId` and `eventYear` is required, so the list never reads every event: 400 SPORT_EVENT_FILTER_REQUIRED otherwise. Any signed-in user may read it: contest setup picks an event from it, and a root admin browses it. Each event carries its loaded field size, contest-setup readiness and tier count; a root admin's list also carries each event's adminCounts. DRAFT events (not yet released for contests) are listed for a root admin only.",
         "parameters": [
           {
             "schema": {
@@ -73218,6 +73713,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SportEventListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }
@@ -73893,7 +74398,7 @@
         "tags": [
           "Events"
         ],
-        "description": "Only to one of the event's allowedTransitions. Activates or settles its contests as the new status requires. A DRAFT event is refused SCHEDULED with 409 SPORT_EVENT_RELEASE_REQUIRED: releasing it is its own action (releaseEvent). Root admin only.",
+        "description": "Only to one of the event's allowedTransitions. Activates or settles its contests as the new status requires. A DRAFT event is refused SCHEDULED with 409 SPORT_EVENT_RELEASE_REQUIRED: releasing it is its own action (releaseEvent). 409 SPORT_EVENT_INVALID_TRANSITION when the event's status changed elsewhere while this request ran (the lifecycle scheduler, another admin) and it did not end in the status asked for. Root admin only.",
         "requestBody": {
           "required": true,
           "content": {
@@ -77949,7 +78454,7 @@
         "tags": [
           "Event pages"
         ],
-        "description": "The active event pages, of one sport or every sport, each with its offers and their next editions, for How to Play's and the welcome page's Coming up row. Public: no session is needed, and it holds nothing about any league or user.",
+        "description": "The active event pages, of one sport or every sport, each with its offers and their next editions; with `upcoming=true`, only the pages with an edition coming, soonest first, for How to Play's and the welcome page's Coming up row. Public: no session is needed, and it holds nothing about any league or user.",
         "parameters": [
           {
             "schema": {
@@ -77972,6 +78477,15 @@
             "name": "sport",
             "required": false,
             "description": "Only this sport's pages. Omitted: every sport's."
+          },
+          {
+            "schema": {
+              "type": "boolean"
+            },
+            "in": "query",
+            "name": "upcoming",
+            "required": false,
+            "description": "true: only the pages with an edition coming, the one their primary offer shows, soonest first (#1202). Omitted or false: every active page, by sport then display order."
           }
         ],
         "responses": {
@@ -78061,7 +78575,7 @@
         "tags": [
           "Participants"
         ],
-        "description": "The participant catalog, narrowed by text and filters and never paged. Any signed-in user may read it: contest setup and ingestion mapping browse it, and a root admin maintains it.",
+        "description": "The participant catalog, narrowed by text and filters and never paged. `sportId` or a `q` of at least 3 characters is required, so the list never reads every sport's catalog: 400 SEARCH_TERM_REQUIRED otherwise. Any signed-in user may read it: contest setup and ingestion mapping browse it, and a root admin maintains it.",
         "parameters": [
           {
             "schema": {
@@ -78104,6 +78618,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ParticipantListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }
@@ -79092,7 +79616,7 @@
         "tags": [
           "Ingestion"
         ],
-        "description": "The sync-run history, filtered by provider, sport and status and bounded by a submission-time window. `to` defaults to now and `from` to 6 hours before `to`; nothing pages the result. Runs not yet started come first, then newest start.",
+        "description": "The sync-run history, filtered by provider, sport and status and bounded by a submission-time window. `to` defaults to now and `from` to 6 hours before `to`; nothing pages the result. Newest submission first. Each run carries its summary only; read one run's detailed diagnostics with getProviderSyncRun.",
         "parameters": [
           {
             "schema": {
@@ -79161,7 +79685,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Sync runs submitted inside the requested window.",
+            "description": "Sync runs submitted inside the requested window, newest submission first, each with its summary only.",
             "content": {
               "application/json": {
                 "schema": {
@@ -79181,6 +79705,69 @@
             }
           },
           "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ingestion/sync-runs/{syncRunId}": {
+      "get": {
+        "operationId": "getProviderSyncRun",
+        "summary": "Read one provider sync run with its detailed diagnostics",
+        "tags": [
+          "Ingestion"
+        ],
+        "description": "One sync run's summary plus its detailed diagnostics: the rows the sync changed, the ingestion job record, and the raw provider payload. The diagnostics are null before the run starts. 404 when there is no such run.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "syncRunId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "One feed's sync against a provider, with its summary and its detailed diagnostics.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProviderSyncRunDetailDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
             "description": "Standard API error envelope.",
             "content": {
               "application/json": {

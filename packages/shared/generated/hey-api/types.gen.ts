@@ -1745,6 +1745,89 @@ export type SquadMembershipDto = {
 };
 
 /**
+ * A squad owner: the squad membership with the owner's league role.
+ */
+export type SquadOwnerDto = {
+    id: string;
+    squadId: string;
+    leagueId: string;
+    userId: string;
+    /**
+     * The member, as the canonical UserDto.
+     */
+    user: {
+        /**
+         * Stable user identifier.
+         */
+        id: string;
+        /**
+         * Primary email address for the user account.
+         */
+        email: string;
+        /**
+         * Unique login identifier for the account.
+         */
+        username: string;
+        /**
+         * First name shown in account and member-management surfaces.
+         */
+        firstName: string;
+        /**
+         * Last name shown in account and member-management surfaces.
+         */
+        lastName: string;
+        /**
+         * Whether the account is currently active for normal sign-in and product usage.
+         */
+        isActive: boolean;
+        /**
+         * Whether the user has platform-level root-admin access.
+         */
+        isRootAdmin: boolean;
+        /**
+         * Authentication provider used for the account when known.
+         */
+        authProvider?: 'email' | 'google' | 'apple';
+        /**
+         * IANA time zone the member sees dates and times in, picked at signup. Absent means US Eastern.
+         */
+        timezone?: string;
+        /**
+         * BCP 47 locale the member's dates are formatted in, e.g. en-US.
+         */
+        locale?: string;
+        /**
+         * 12-hour or 24-hour clock for the times the member sees. Absent means the locale's own.
+         */
+        timeFormat?: '12H' | '24H';
+        /**
+         * Account creation timestamp in ISO 8601 format.
+         */
+        createdAt?: string;
+    };
+    /**
+     * Squad membership status.
+     */
+    status: 'ACTIVE' | 'INACTIVE';
+    /**
+     * When the user joined the squad.
+     */
+    joinedAt: string;
+    /**
+     * When the squad membership record was created.
+     */
+    createdAt: string;
+    /**
+     * When the squad membership record was last updated.
+     */
+    updatedAt: string;
+    /**
+     * The owner's role in the squad's league; null only if they hold no membership there.
+     */
+    leagueRole: 'COMMISSIONER' | 'MEMBER' | null;
+};
+
+/**
  * A squad within a league. Returned wherever a squad is read.
  */
 export type SquadDto = {
@@ -1764,7 +1847,7 @@ export type SquadDto = {
      */
     isActive: boolean;
     /**
-     * Number of memberships attached to the squad.
+     * How many of the squad's owners are ACTIVE.
      */
     memberCount: number;
     /**
@@ -1776,9 +1859,9 @@ export type SquadDto = {
      */
     updatedAt: string;
     /**
-     * Optional expanded squad membership list.
+     * Every owner membership of the squad, any status, in join order, each with its user and league role.
      */
-    members?: Array<{
+    members: Array<{
         id: string;
         squadId: string;
         leagueId: string;
@@ -1852,6 +1935,10 @@ export type SquadDto = {
          * When the squad membership record was last updated.
          */
         updatedAt: string;
+        /**
+         * The owner's role in the squad's league; null only if they hold no membership there.
+         */
+        leagueRole: 'COMMISSIONER' | 'MEMBER' | null;
     }>;
 };
 
@@ -1879,7 +1966,7 @@ export type SquadResponse = {
          */
         isActive: boolean;
         /**
-         * Number of memberships attached to the squad.
+         * How many of the squad's owners are ACTIVE.
          */
         memberCount: number;
         /**
@@ -1891,9 +1978,9 @@ export type SquadResponse = {
          */
         updatedAt: string;
         /**
-         * Optional expanded squad membership list.
+         * Every owner membership of the squad, any status, in join order, each with its user and league role.
          */
-        members?: Array<{
+        members: Array<{
             id: string;
             squadId: string;
             leagueId: string;
@@ -1967,6 +2054,10 @@ export type SquadResponse = {
              * When the squad membership record was last updated.
              */
             updatedAt: string;
+            /**
+             * The owner's role in the squad's league; null only if they hold no membership there.
+             */
+            leagueRole: 'COMMISSIONER' | 'MEMBER' | null;
         }>;
     };
 };
@@ -1992,7 +2083,7 @@ export type SquadListResponse = {
          */
         isActive: boolean;
         /**
-         * Number of memberships attached to the squad.
+         * How many of the squad's owners are ACTIVE.
          */
         memberCount: number;
         /**
@@ -2004,9 +2095,9 @@ export type SquadListResponse = {
          */
         updatedAt: string;
         /**
-         * Optional expanded squad membership list.
+         * Every owner membership of the squad, any status, in join order, each with its user and league role.
          */
-        members?: Array<{
+        members: Array<{
             id: string;
             squadId: string;
             leagueId: string;
@@ -2080,6 +2171,10 @@ export type SquadListResponse = {
              * When the squad membership record was last updated.
              */
             updatedAt: string;
+            /**
+             * The owner's role in the squad's league; null only if they hold no membership there.
+             */
+            leagueRole: 'COMMISSIONER' | 'MEMBER' | null;
         }>;
     }>;
 };
@@ -2394,7 +2489,7 @@ export type LeagueListQuery = {
      */
     scope?: 'mine' | 'all';
     /**
-     * Optional case-insensitive substring matched against the league name. A filter, never a slice — see §16.
+     * Case-insensitive substring matched against the league name. A filter, never a slice — see §16. Optional for 'mine'; required for 'all', at least 3 characters.
      */
     search?: string;
     /**
@@ -3086,6 +3181,14 @@ export type LeagueContextResponse = {
          */
         updatedAt: string;
     } | null;
+    /**
+     * The name of the squad in squadMembership, or null when squadMembership is null. The league menu names the viewer's team from it.
+     */
+    squadName: string | null;
+    /**
+     * How many of the league's teams are active: the most entries an open contest can expect, one per team.
+     */
+    activeTeamCount: number;
 };
 
 /**
@@ -4518,7 +4621,7 @@ export type ContestManagementSportEventDto = {
      */
     sportEventId: string;
     /**
-     * Read-only tier structure the contest inherits from this event (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet. Never contest-configured.
+     * Read-only tier structure a tiered contest inherits from this event (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet, and always empty for any other format, which does not pick by tier. Never contest-configured.
      */
     effectiveTiers: Array<{
         /**
@@ -4578,7 +4681,7 @@ export type ContestManagementDetailDto = {
          */
         sportEventId: string;
         /**
-         * Read-only tier structure the contest inherits from this event (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet. Never contest-configured.
+         * Read-only tier structure a tiered contest inherits from this event (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet, and always empty for any other format, which does not pick by tier. Never contest-configured.
          */
         effectiveTiers: Array<{
             /**
@@ -5338,7 +5441,7 @@ export type ContestManagementResponse = {
              */
             sportEventId: string;
             /**
-             * Read-only tier structure the contest inherits from this event (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet. Never contest-configured.
+             * Read-only tier structure a tiered contest inherits from this event (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet, and always empty for any other format, which does not pick by tier. Never contest-configured.
              */
             effectiveTiers: Array<{
                 /**
@@ -8687,7 +8790,7 @@ export type SportEventDto = {
 };
 
 /**
- * Filters for the sport-event list.
+ * Filters for the sport-event list. At least one of sport, sportLeagueId and eventYear is required.
  */
 export type SportEventListQuery = {
     /**
@@ -11370,9 +11473,21 @@ export type ContestDto = {
     }>;
     sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS' | null;
     /**
-     * Number of entries that have submitted at least one event. Present on list reads, which count them; omitted on a single-contest read.
+     * Number of entries that have submitted at least one event. Present on the list and single-contest reads; omitted on the contest writes.
      */
     entryCount?: number;
+    /**
+     * Number of squads with at least one entry that submitted an event (#1197). Single-contest read only.
+     */
+    enteredSquadCount?: number;
+    /**
+     * Every entry the contest holds, drafts included, as its entry cap counts them (#1197): before a random draw no entry is submitted. Single-contest read only.
+     */
+    allEntryCount?: number;
+    /**
+     * The requester's own squad's entries in the contest, drafts included, in entry-number order (#1197). Empty without an active squad in the league. Single-contest read only.
+     */
+    myEntryIds?: Array<string>;
     /**
      * The most entries the contest takes, every squad's drafts included: its league plan's cap or its expansion (#987), whichever is higher. Null for no limit.
      */
@@ -12335,9 +12450,21 @@ export type ContestResponse = {
         }>;
         sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS' | null;
         /**
-         * Number of entries that have submitted at least one event. Present on list reads, which count them; omitted on a single-contest read.
+         * Number of entries that have submitted at least one event. Present on the list and single-contest reads; omitted on the contest writes.
          */
         entryCount?: number;
+        /**
+         * Number of squads with at least one entry that submitted an event (#1197). Single-contest read only.
+         */
+        enteredSquadCount?: number;
+        /**
+         * Every entry the contest holds, drafts included, as its entry cap counts them (#1197): before a random draw no entry is submitted. Single-contest read only.
+         */
+        allEntryCount?: number;
+        /**
+         * The requester's own squad's entries in the contest, drafts included, in entry-number order (#1197). Empty without an active squad in the league. Single-contest read only.
+         */
+        myEntryIds?: Array<string>;
         /**
          * The most entries the contest takes, every squad's drafts included: its league plan's cap or its expansion (#987), whichever is higher. Null for no limit.
          */
@@ -12403,9 +12530,21 @@ export type ContestListResponse = {
         }>;
         sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS' | null;
         /**
-         * Number of entries that have submitted at least one event. Present on list reads, which count them; omitted on a single-contest read.
+         * Number of entries that have submitted at least one event. Present on the list and single-contest reads; omitted on the contest writes.
          */
         entryCount?: number;
+        /**
+         * Number of squads with at least one entry that submitted an event (#1197). Single-contest read only.
+         */
+        enteredSquadCount?: number;
+        /**
+         * Every entry the contest holds, drafts included, as its entry cap counts them (#1197): before a random draw no entry is submitted. Single-contest read only.
+         */
+        allEntryCount?: number;
+        /**
+         * The requester's own squad's entries in the contest, drafts included, in entry-number order (#1197). Empty without an active squad in the league. Single-contest read only.
+         */
+        myEntryIds?: Array<string>;
         /**
          * The most entries the contest takes, every squad's drafts included: its league plan's cap or its expansion (#987), whichever is higher. Null for no limit.
          */
@@ -12419,6 +12558,26 @@ export type ContestListResponse = {
         createdAt?: string;
         updatedAt?: string;
     }>;
+};
+
+/**
+ * Which of a league's contests to list: the current ones by default, or one year's finished ones.
+ */
+export type ListContestsQuery = {
+    /**
+     * List the COMPLETED contests that went final in this championship year, US Eastern, such as 2025, instead of the current ones. The years with any are `listContestFinishedYears`.
+     */
+    finishedYear?: number;
+};
+
+/**
+ * The years a league has finished contests in.
+ */
+export type ContestFinishedYearsResponse = {
+    /**
+     * Each championship year, US Eastern, a COMPLETED contest of the league went final in, newest first. Empty when none has finished.
+     */
+    years: Array<number>;
 };
 
 /**
@@ -12574,6 +12733,76 @@ export type ContestEntryDetailResponse = {
 };
 
 /**
+ * The requester's own entries across a league's current contests (#1197).
+ */
+export type MyContestEntriesResponse = {
+    /**
+     * The requester's own squad's entries, drafts included, in each of the league's OPEN and ACTIVE contests, in entry-number order within a contest. Without `participants`: an entry's picks are on `getContestEntry`. Empty without an active squad in the league.
+     */
+    entries: Array<{
+        id: string;
+        contestId: string;
+        squadId: string;
+        squadName: string;
+        entryNumber: number;
+        name: string;
+        /**
+         * The entry's status in each event of its contest, in the contest's event order.
+         */
+        events: Array<{
+            /**
+             * One event of the entry's contest.
+             */
+            sportEventId: string;
+            /**
+             * DRAFT until the owner submits a complete lineup for this event; only a SUBMITTED event counts on the leaderboard, in standings and at settlement (#481, per event since #713).
+             */
+            status: 'DRAFT' | 'SUBMITTED';
+            /**
+             * When the event's picks were submitted; null while a draft.
+             */
+            submittedAt: string | null;
+        }>;
+        tiebreakerValue?: number | null;
+        /**
+         * Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners.
+         */
+        picksCount: number;
+        /**
+         * When the contest entry was created.
+         */
+        createdAt: string;
+        /**
+         * When the contest entry was last updated.
+         */
+        updatedAt: string;
+        /**
+         * The entry's picked participants, each naming its event. To anyone but the owning squad only the picks of events whose picks are revealed are listed. Omitted on the entry writes, which return the entry without them.
+         */
+        participants?: Array<{
+            pickId: string;
+            sportEventParticipantId: string;
+            /**
+             * The event of the contest the pick is in (#713).
+             */
+            sportEventId: string;
+            participantId: string;
+            participantName: string;
+            participantStatus?: string | null;
+            /**
+             * The participant's playing role, when known.
+             */
+            role?: string | null;
+            teamAffiliation?: string | null;
+            /**
+             * When the participant was added to the contest entry.
+             */
+            pickedAt: string;
+        }>;
+    }>;
+};
+
+/**
  * Contest-entry list response.
  */
 export type ContestEntryListResponse = {
@@ -12586,23 +12815,11 @@ export type ContestEntryListResponse = {
      */
     total: number;
     /**
-     * Whether the current user has at least one active entry in the contest.
-     */
-    isJoined: boolean;
-    /**
-     * Primary current-user entry when the contest allows a single active entry.
-     */
-    myEntryId: string | null;
-    /**
-     * All current-user entry identifiers when multiple entries are allowed.
-     */
-    myEntryIds?: Array<string>;
-    /**
      * Whether any of the contest's events has its picks visible to non-owners: once the contest is live and that event has started, or once a random draw has dealt.
      */
     picksRevealed: boolean;
     /**
-     * Entries for the contest. Each entry lists participants[]: all of them for the requester's own entries, and only the revealed events' picks for everyone else's.
+     * Entries for the contest, the requester's own squad's first. Each entry lists participants[]: all of them for the requester's own entries, and only the revealed events' picks for everyone else's. The requester's entry ids alone are `myEntryIds` on `getContest`.
      */
     entries: Array<{
         id: string;
@@ -19766,6 +19983,20 @@ export type ListCupsQuery = {
 };
 
 /**
+ * Which cup: the league has one per season and sports league.
+ */
+export type CupSquadPointsQuery = {
+    /**
+     * The cup's season, such as 2026.
+     */
+    seasonYear: number;
+    /**
+     * The cup's sports league.
+     */
+    sportLeagueId: string;
+};
+
+/**
  * The seasons in which a league has cups.
  */
 export type CupSeasonListResponse = {
@@ -20263,6 +20494,10 @@ export type CupSquadContestDto = {
  */
 export type CupSquadPointsDto = {
     cupId: string;
+    /**
+     * The cup's name, from its season and sports league: "2026 PGA Tour Cup".
+     */
+    cupName: string;
     squadId: string;
     squadName: string;
     /**
@@ -20308,6 +20543,10 @@ export type CupSquadPointsResponse = {
      */
     squadPoints: {
         cupId: string;
+        /**
+         * The cup's name, from its season and sports league: "2026 PGA Tour Cup".
+         */
+        cupName: string;
         squadId: string;
         squadName: string;
         /**
@@ -22708,6 +22947,10 @@ export type EventPageListQuery = {
      * Only this sport's pages. Omitted: every sport's.
      */
     sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+    /**
+     * true: only the pages with an edition coming, the one their primary offer shows, soonest first (#1202). Omitted or false: every active page, by sport then display order.
+     */
+    upcoming?: boolean;
 };
 
 /**
@@ -22715,7 +22958,7 @@ export type EventPageListQuery = {
  */
 export type EventPageListResponse = {
     /**
-     * The active pages, by sport then display order. A page between seasons has no offers.
+     * The active pages, by sport then display order, or soonest first when only the upcoming ones are asked for. A page between seasons has no offers.
      */
     eventPages: Array<{
         id: string;
@@ -25327,7 +25570,7 @@ export type ProviderSyncRunDto = {
      */
     createdAt: string;
     /**
-     * Provider sync diagnostic payload with canonical stats plus raw provider/job drill-downs.
+     * Provider sync run summary with canonical stats and outcome.
      */
     payload: {
         /**
@@ -25381,6 +25624,191 @@ export type ProviderSyncRunDto = {
              */
             normalizedAt: string;
         };
+        /**
+         * Admin-facing outcome and warning summary for the sync run.
+         */
+        outcome?: {
+            /**
+             * Admin-facing severity derived from run status, errors, and warnings.
+             */
+            severity: 'SUCCESS' | 'WARNING' | 'ERROR';
+            /**
+             * Human-readable root-admin summary of the sync outcome.
+             */
+            summary: string;
+            /**
+             * Warnings that did not fail the run but should be visible to an operator.
+             */
+            warnings: Array<{
+                /**
+                 * Stable warning code emitted by the ingestion/sync layer.
+                 */
+                code: string;
+                /**
+                 * Human-readable warning detail for root-admin investigation.
+                 */
+                message: string;
+            }>;
+            /**
+             * Count of errors captured for the run.
+             */
+            errors: number;
+        };
+        /**
+         * Canonical numeric sync stats used by admin diagnostics.
+         */
+        stats?: {
+            [key: string]: number;
+        };
+        /**
+         * Legacy top-level processed-record count retained for summary compatibility.
+         */
+        recordsProcessed?: number;
+        /**
+         * Legacy top-level error count retained for summary compatibility.
+         */
+        errors?: number;
+        /**
+         * Legacy human-readable detail retained for summary compatibility.
+         */
+        detail?: string;
+        [key: string]: unknown;
+    };
+};
+
+/**
+ * One feed's sync against a provider, with its summary and its detailed diagnostics.
+ */
+export type ProviderSyncRunDetailDto = {
+    id: string;
+    providerId: string;
+    sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+    /**
+     * Provider event identifier when the run was narrowed to one event; null for a whole-sport run.
+     */
+    eventId: string | null;
+    status: 'SUBMITTED' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
+    /**
+     * ISO 8601 datetime string.
+     */
+    startedAt: string | null;
+    /**
+     * ISO 8601 datetime string.
+     */
+    completedAt: string | null;
+    /**
+     * When the run was submitted.
+     */
+    createdAt: string;
+    /**
+     * Provider sync run summary with canonical stats and outcome.
+     */
+    payload: {
+        /**
+         * Sync run source: a manual or scheduled event sync.
+         */
+        runType?: string;
+        /**
+         * Feeds represented by the originating manual or scheduled sync request.
+         */
+        requestedFeeds?: Array<'EVENTPARTICIPANTS' | 'EVENTLIVESCORES'>;
+        /**
+         * Single feed represented by this sync run row.
+         */
+        requestedFeed?: 'EVENTPARTICIPANTS' | 'EVENTLIVESCORES';
+        /**
+         * The request that submitted the sync run.
+         */
+        requestPayload?: {
+            sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+            /**
+             * Provider event identifier the sync was asked for.
+             */
+            eventId: string;
+            /**
+             * Whether the scheduler or a root admin asked for the sync.
+             */
+            source: 'SCHEDULED' | 'MANUAL';
+            /**
+             * Who asked for a sync.
+             */
+            actor: {
+                type: 'SYSTEM';
+                name: 'scheduler';
+            } | {
+                type: 'ROOT_ADMIN';
+                /**
+                 * The root admin who asked for the sync.
+                 */
+                userId: string;
+                /**
+                 * Their email at the time, for the audit trail.
+                 */
+                email: string;
+            };
+            /**
+             * The mock feed state a manual QA sync asked for; null otherwise.
+             */
+            mockEventState: 'open' | 'locked' | 'live' | 'completed' | 'golf-pre-live' | 'golf-r1-in-progress' | 'golf-r1-complete' | 'golf-r2-complete' | 'golf-correction' | 'golf-r4-complete-pending-final' | 'golf-playoff' | 'golf-completed' | 'golf-late-correction' | null;
+            /**
+             * When the request was validated and normalized.
+             */
+            normalizedAt: string;
+        };
+        /**
+         * Admin-facing outcome and warning summary for the sync run.
+         */
+        outcome?: {
+            /**
+             * Admin-facing severity derived from run status, errors, and warnings.
+             */
+            severity: 'SUCCESS' | 'WARNING' | 'ERROR';
+            /**
+             * Human-readable root-admin summary of the sync outcome.
+             */
+            summary: string;
+            /**
+             * Warnings that did not fail the run but should be visible to an operator.
+             */
+            warnings: Array<{
+                /**
+                 * Stable warning code emitted by the ingestion/sync layer.
+                 */
+                code: string;
+                /**
+                 * Human-readable warning detail for root-admin investigation.
+                 */
+                message: string;
+            }>;
+            /**
+             * Count of errors captured for the run.
+             */
+            errors: number;
+        };
+        /**
+         * Canonical numeric sync stats used by admin diagnostics.
+         */
+        stats?: {
+            [key: string]: number;
+        };
+        /**
+         * Legacy top-level processed-record count retained for summary compatibility.
+         */
+        recordsProcessed?: number;
+        /**
+         * Legacy top-level error count retained for summary compatibility.
+         */
+        errors?: number;
+        /**
+         * Legacy human-readable detail retained for summary compatibility.
+         */
+        detail?: string;
+        [key: string]: unknown;
+    };
+    /**
+     * The run's detailed diagnostics; null before the run starts.
+     */
+    details: {
         /**
          * Raw/debug provider payload captured for this run.
          */
@@ -25455,7 +25883,7 @@ export type ProviderSyncRunDto = {
             }>;
         };
         /**
-         * Normalized created/updated/deleted/unchanged row diagnostics for PoolMaster writes.
+         * Normalized write-effect diagnostics for PoolMaster writes: every row counted, changed rows kept.
          */
         writeDiagnostics?: {
             /**
@@ -25516,55 +25944,22 @@ export type ProviderSyncRunDto = {
             }>;
         };
         /**
-         * Admin-facing outcome and warning summary for the sync run.
+         * Present when the run failed unexpectedly.
          */
-        outcome?: {
+        failurePayload?: {
             /**
-             * Admin-facing severity derived from run status, errors, and warnings.
+             * The error that failed the run.
              */
-            severity: 'SUCCESS' | 'WARNING' | 'ERROR';
-            /**
-             * Human-readable root-admin summary of the sync outcome.
-             */
-            summary: string;
-            /**
-             * Warnings that did not fail the run but should be visible to an operator.
-             */
-            warnings: Array<{
+            error: {
                 /**
-                 * Stable warning code emitted by the ingestion/sync layer.
+                 * The error's class name, when it was an Error.
                  */
-                code: string;
-                /**
-                 * Human-readable warning detail for root-admin investigation.
-                 */
+                name?: string;
                 message: string;
-            }>;
-            /**
-             * Count of errors captured for the run.
-             */
-            errors: number;
+            };
         };
-        /**
-         * Canonical numeric sync stats used by admin diagnostics.
-         */
-        stats?: {
-            [key: string]: number;
-        };
-        /**
-         * Legacy top-level processed-record count retained for summary compatibility.
-         */
-        recordsProcessed?: number;
-        /**
-         * Legacy top-level error count retained for summary compatibility.
-         */
-        errors?: number;
-        /**
-         * Legacy human-readable detail retained for summary compatibility.
-         */
-        detail?: string;
         [key: string]: unknown;
-    };
+    } | null;
 };
 
 /**
@@ -25585,7 +25980,7 @@ export type ProviderSyncRunListQuery = {
 };
 
 /**
- * Sync runs submitted inside the requested window.
+ * Sync runs submitted inside the requested window, newest submission first, each with its summary only.
  */
 export type ProviderSyncRunListResponse = {
     syncRuns: Array<{
@@ -25610,7 +26005,7 @@ export type ProviderSyncRunListResponse = {
          */
         createdAt: string;
         /**
-         * Provider sync diagnostic payload with canonical stats plus raw provider/job drill-downs.
+         * Provider sync run summary with canonical stats and outcome.
          */
         payload: {
             /**
@@ -25663,140 +26058,6 @@ export type ProviderSyncRunListResponse = {
                  * When the request was validated and normalized.
                  */
                 normalizedAt: string;
-            };
-            /**
-             * Raw/debug provider payload captured for this run.
-             */
-            providerPayload?: {
-                /**
-                 * Provider feed operation represented by this payload.
-                 */
-                operation: 'EVENTPARTICIPANTS' | 'EVENTLIVESCORES';
-                /**
-                 * Whether raw provider response JSON was captured for this run.
-                 */
-                rawCaptured: boolean;
-                /**
-                 * Whether the captured raw provider payload was truncated before storage.
-                 */
-                rawTruncated: boolean;
-                /**
-                 * Raw provider response JSON retained for debugging when capture is available.
-                 */
-                raw?: unknown;
-                [key: string]: unknown;
-            };
-            /**
-             * Serialized ingestion job details after an ingestion job is available.
-             */
-            jobPayload?: {
-                /**
-                 * Internal ingestion job type that executed this sync feed.
-                 */
-                jobType: string;
-                /**
-                 * Provider that executed the ingestion job.
-                 */
-                providerId: string;
-                sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
-                /**
-                 * External event id for event-scoped jobs, when applicable.
-                 */
-                eventExternalId?: string;
-                /**
-                 * Internal ingestion job status.
-                 */
-                status: 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED';
-                /**
-                 * When the ingestion job started.
-                 */
-                startedAt?: string;
-                /**
-                 * When the ingestion job completed.
-                 */
-                completedAt?: string;
-                /**
-                 * Canonical records processed by the ingestion job.
-                 */
-                recordsProcessed: number;
-                /**
-                 * Error count captured by the ingestion job.
-                 */
-                errors: number;
-                /**
-                 * Ingestion error-log entries for root-admin investigation.
-                 */
-                errorLog: Array<{
-                    /**
-                     * Failure message the ingestion job recorded.
-                     */
-                    error: string;
-                    /**
-                     * When the failure was recorded.
-                     */
-                    at: string;
-                }>;
-            };
-            /**
-             * Normalized created/updated/deleted/unchanged row diagnostics for PoolMaster writes.
-             */
-            writeDiagnostics?: {
-                /**
-                 * Aggregate normalized write-effect counts for a provider sync run.
-                 */
-                summary: {
-                    total: number;
-                    unchanged: number;
-                    created: number;
-                    updated: number;
-                    deleted: number;
-                };
-                rows: Array<{
-                    /**
-                     * Stable row id for this normalized write diagnostic row.
-                     */
-                    id: string;
-                    /**
-                     * Normalized PoolMaster entity type represented by this row.
-                     */
-                    entityType: string;
-                    /**
-                     * Write effect for the normalized row.
-                     */
-                    disposition: 'UNCHANGED' | 'CREATED' | 'UPDATED' | 'DELETED';
-                    /**
-                     * Provider id associated with this row, when applicable.
-                     */
-                    providerId?: string;
-                    /**
-                     * Provider external id associated with this row, when applicable.
-                     */
-                    externalId?: string;
-                    /**
-                     * Provider participant id associated with this row, when applicable.
-                     */
-                    participantExternalId?: string;
-                    /**
-                     * PoolMaster internal id associated with this row, when known.
-                     */
-                    internalId?: string;
-                    /**
-                     * Display name for the row, when known.
-                     */
-                    name?: string;
-                    /**
-                     * Normalized before-state of the entity `entityType` names, for UPDATED or DELETED rows; shaped by that entity and shown only as a diff.
-                     */
-                    before?: {
-                        [key: string]: unknown;
-                    };
-                    /**
-                     * Normalized after-state of the entity `entityType` names, for CREATED or UPDATED rows; shaped by that entity and shown only as a diff.
-                     */
-                    after?: {
-                        [key: string]: unknown;
-                    };
-                }>;
             };
             /**
              * Admin-facing outcome and warning summary for the sync run.
@@ -25887,7 +26148,7 @@ export type ProviderManualSyncSubmissionResponse = {
          */
         createdAt: string;
         /**
-         * Provider sync diagnostic payload with canonical stats plus raw provider/job drill-downs.
+         * Provider sync run summary with canonical stats and outcome.
          */
         payload: {
             /**
@@ -25940,140 +26201,6 @@ export type ProviderManualSyncSubmissionResponse = {
                  * When the request was validated and normalized.
                  */
                 normalizedAt: string;
-            };
-            /**
-             * Raw/debug provider payload captured for this run.
-             */
-            providerPayload?: {
-                /**
-                 * Provider feed operation represented by this payload.
-                 */
-                operation: 'EVENTPARTICIPANTS' | 'EVENTLIVESCORES';
-                /**
-                 * Whether raw provider response JSON was captured for this run.
-                 */
-                rawCaptured: boolean;
-                /**
-                 * Whether the captured raw provider payload was truncated before storage.
-                 */
-                rawTruncated: boolean;
-                /**
-                 * Raw provider response JSON retained for debugging when capture is available.
-                 */
-                raw?: unknown;
-                [key: string]: unknown;
-            };
-            /**
-             * Serialized ingestion job details after an ingestion job is available.
-             */
-            jobPayload?: {
-                /**
-                 * Internal ingestion job type that executed this sync feed.
-                 */
-                jobType: string;
-                /**
-                 * Provider that executed the ingestion job.
-                 */
-                providerId: string;
-                sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
-                /**
-                 * External event id for event-scoped jobs, when applicable.
-                 */
-                eventExternalId?: string;
-                /**
-                 * Internal ingestion job status.
-                 */
-                status: 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED';
-                /**
-                 * When the ingestion job started.
-                 */
-                startedAt?: string;
-                /**
-                 * When the ingestion job completed.
-                 */
-                completedAt?: string;
-                /**
-                 * Canonical records processed by the ingestion job.
-                 */
-                recordsProcessed: number;
-                /**
-                 * Error count captured by the ingestion job.
-                 */
-                errors: number;
-                /**
-                 * Ingestion error-log entries for root-admin investigation.
-                 */
-                errorLog: Array<{
-                    /**
-                     * Failure message the ingestion job recorded.
-                     */
-                    error: string;
-                    /**
-                     * When the failure was recorded.
-                     */
-                    at: string;
-                }>;
-            };
-            /**
-             * Normalized created/updated/deleted/unchanged row diagnostics for PoolMaster writes.
-             */
-            writeDiagnostics?: {
-                /**
-                 * Aggregate normalized write-effect counts for a provider sync run.
-                 */
-                summary: {
-                    total: number;
-                    unchanged: number;
-                    created: number;
-                    updated: number;
-                    deleted: number;
-                };
-                rows: Array<{
-                    /**
-                     * Stable row id for this normalized write diagnostic row.
-                     */
-                    id: string;
-                    /**
-                     * Normalized PoolMaster entity type represented by this row.
-                     */
-                    entityType: string;
-                    /**
-                     * Write effect for the normalized row.
-                     */
-                    disposition: 'UNCHANGED' | 'CREATED' | 'UPDATED' | 'DELETED';
-                    /**
-                     * Provider id associated with this row, when applicable.
-                     */
-                    providerId?: string;
-                    /**
-                     * Provider external id associated with this row, when applicable.
-                     */
-                    externalId?: string;
-                    /**
-                     * Provider participant id associated with this row, when applicable.
-                     */
-                    participantExternalId?: string;
-                    /**
-                     * PoolMaster internal id associated with this row, when known.
-                     */
-                    internalId?: string;
-                    /**
-                     * Display name for the row, when known.
-                     */
-                    name?: string;
-                    /**
-                     * Normalized before-state of the entity `entityType` names, for UPDATED or DELETED rows; shaped by that entity and shown only as a diff.
-                     */
-                    before?: {
-                        [key: string]: unknown;
-                    };
-                    /**
-                     * Normalized after-state of the entity `entityType` names, for CREATED or UPDATED rows; shaped by that entity and shown only as a diff.
-                     */
-                    after?: {
-                        [key: string]: unknown;
-                    };
-                }>;
             };
             /**
              * Admin-facing outcome and warning summary for the sync run.
@@ -26538,6 +26665,9 @@ export type ListUsersData = {
     body?: never;
     path?: never;
     query?: {
+        /**
+         * Case-insensitive substring of the email, username, first or last name; at least 3 characters once trimmed.
+         */
         search?: string;
         isActive?: boolean;
     };
@@ -27219,7 +27349,7 @@ export type ListLeaguesData = {
          */
         scope?: 'mine' | 'all';
         /**
-         * Optional case-insensitive substring matched against the league name. A filter, never a slice — see §16.
+         * Case-insensitive substring matched against the league name. A filter, never a slice — see §16. Optional for 'mine'; required for 'all', at least 3 characters.
          */
         search?: string;
         /**
@@ -27231,6 +27361,10 @@ export type ListLeaguesData = {
 };
 
 export type ListLeaguesErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
@@ -28818,11 +28952,20 @@ export type ListContestsData = {
     path: {
         id: string;
     };
-    query?: never;
+    query?: {
+        /**
+         * List the COMPLETED contests that went final in this championship year, US Eastern, such as 2025, instead of the current ones. The years with any are `listContestFinishedYears`.
+         */
+        finishedYear?: number;
+    };
     url: '/api/v1/leagues/{id}/contests/';
 };
 
 export type ListContestsErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
@@ -28886,6 +29029,68 @@ export type CreateContestResponses = {
 };
 
 export type CreateContestResponse = CreateContestResponses[keyof CreateContestResponses];
+
+export type ListContestFinishedYearsData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/leagues/{id}/contests/finished-years';
+};
+
+export type ListContestFinishedYearsErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+};
+
+export type ListContestFinishedYearsError = ListContestFinishedYearsErrors[keyof ListContestFinishedYearsErrors];
+
+export type ListContestFinishedYearsResponses = {
+    /**
+     * The years a league has finished contests in.
+     */
+    200: ContestFinishedYearsResponse;
+};
+
+export type ListContestFinishedYearsResponse = ListContestFinishedYearsResponses[keyof ListContestFinishedYearsResponses];
+
+export type ListMyContestEntriesData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/leagues/{id}/contests/my-entries';
+};
+
+export type ListMyContestEntriesErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+};
+
+export type ListMyContestEntriesError = ListMyContestEntriesErrors[keyof ListMyContestEntriesErrors];
+
+export type ListMyContestEntriesResponses = {
+    /**
+     * The requester's own entries across a league's current contests (#1197).
+     */
+    200: MyContestEntriesResponse;
+};
+
+export type ListMyContestEntriesResponse = ListMyContestEntriesResponses[keyof ListMyContestEntriesResponses];
 
 export type ListSportLeaguesUsedData = {
     body?: never;
@@ -29728,6 +29933,55 @@ export type ListCupSeasonsResponses = {
 
 export type ListCupSeasonsResponse = ListCupSeasonsResponses[keyof ListCupSeasonsResponses];
 
+export type GetCupSquadPointsData = {
+    body?: never;
+    path: {
+        id: string;
+        squadId: string;
+    };
+    query: {
+        /**
+         * The cup's season, such as 2026.
+         */
+        seasonYear: number;
+        /**
+         * The cup's sports league.
+         */
+        sportLeagueId: string;
+    };
+    url: '/api/v1/leagues/{id}/cups/squads/{squadId}';
+};
+
+export type GetCupSquadPointsErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+};
+
+export type GetCupSquadPointsError = GetCupSquadPointsErrors[keyof GetCupSquadPointsErrors];
+
+export type GetCupSquadPointsResponses = {
+    /**
+     * One squad's cup points.
+     */
+    200: CupSquadPointsResponse;
+};
+
+export type GetCupSquadPointsResponse = GetCupSquadPointsResponses[keyof GetCupSquadPointsResponses];
+
 export type GetCupData = {
     body?: never;
     path: {
@@ -29763,43 +30017,6 @@ export type GetCupResponses = {
 };
 
 export type GetCupResponse = GetCupResponses[keyof GetCupResponses];
-
-export type GetCupSquadPointsData = {
-    body?: never;
-    path: {
-        id: string;
-        cupId: string;
-        squadId: string;
-    };
-    query?: never;
-    url: '/api/v1/leagues/{id}/cups/{cupId}/squads/{squadId}';
-};
-
-export type GetCupSquadPointsErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    401: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    403: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    404: ErrorEnvelope;
-};
-
-export type GetCupSquadPointsError = GetCupSquadPointsErrors[keyof GetCupSquadPointsErrors];
-
-export type GetCupSquadPointsResponses = {
-    /**
-     * One squad's cup points.
-     */
-    200: CupSquadPointsResponse;
-};
-
-export type GetCupSquadPointsResponse = GetCupSquadPointsResponses[keyof GetCupSquadPointsResponses];
 
 export type GetCupProjectionData = {
     body?: never;
@@ -30365,6 +30582,10 @@ export type ListEventsData = {
 };
 
 export type ListEventsErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
@@ -32680,6 +32901,10 @@ export type ListEventPagesData = {
          * Only this sport's pages. Omitted: every sport's.
          */
         sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+        /**
+         * true: only the pages with an edition coming, the one their primary offer shows, soonest first (#1202). Omitted or false: every active page, by sport then display order.
+         */
+        upcoming?: boolean;
     };
     url: '/api/v1/event-pages/';
 };
@@ -32746,6 +32971,15 @@ export type ListParticipantsData = {
     };
     url: '/api/v1/participants/';
 };
+
+export type ListParticipantsErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: ErrorEnvelope;
+};
+
+export type ListParticipantsError = ListParticipantsErrors[keyof ListParticipantsErrors];
 
 export type ListParticipantsResponses = {
     /**
@@ -33343,12 +33577,47 @@ export type ListProviderSyncRunsError = ListProviderSyncRunsErrors[keyof ListPro
 
 export type ListProviderSyncRunsResponses = {
     /**
-     * Sync runs submitted inside the requested window.
+     * Sync runs submitted inside the requested window, newest submission first, each with its summary only.
      */
     200: ProviderSyncRunListResponse;
 };
 
 export type ListProviderSyncRunsResponse = ListProviderSyncRunsResponses[keyof ListProviderSyncRunsResponses];
+
+export type GetProviderSyncRunData = {
+    body?: never;
+    path: {
+        syncRunId: string;
+    };
+    query?: never;
+    url: '/api/v1/ingestion/sync-runs/{syncRunId}';
+};
+
+export type GetProviderSyncRunErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+};
+
+export type GetProviderSyncRunError = GetProviderSyncRunErrors[keyof GetProviderSyncRunErrors];
+
+export type GetProviderSyncRunResponses = {
+    /**
+     * One feed's sync against a provider, with its summary and its detailed diagnostics.
+     */
+    200: ProviderSyncRunDetailDto;
+};
+
+export type GetProviderSyncRunResponse = GetProviderSyncRunResponses[keyof GetProviderSyncRunResponses];
 
 export type SubmitEventSyncData = {
     body: EventSyncRequest;

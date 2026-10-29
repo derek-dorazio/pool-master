@@ -30,6 +30,7 @@ import type {
   SportEventRepository,
   SportLeagueRepository,
   SquadMembershipRepository,
+  SquadDetails,
   SquadRepository,
   UserRepository,
 } from '@poolmaster/shared/db';
@@ -37,7 +38,6 @@ import type {
   Contest,
   ContestConfiguration,
   ContestEntry,
-  ContestEntryStatus,
   League,
   LeagueMembership,
   SportEvent,
@@ -48,6 +48,8 @@ import type {
   User,
 } from '@poolmaster/shared/domain';
 import {
+  championshipYear,
+  ContestEntryStatus,
   ContestFormat,
   ContestStatus,
   CupWeight,
@@ -70,6 +72,8 @@ import {
 import type { PlanConfig } from '@poolmaster/shared/dto';
 import type { PlanEntitlementsService } from '../../packages/core-api/src/modules/plans/plan-entitlements-service';
 import { PLAN_SETTINGS } from '../../packages/core-api/src/modules/plans/plan-settings';
+import { contestCutoff, ContestCutoffKind } from '../../packages/core-api/src/modules/contests/entry-window';
+import { hasSportEventStarted } from '../../packages/core-api/src/modules/events/operational-timing';
 import { planEntitlementsOver } from './plan-entitlements';
 
 /** Thrown where Postgres would reject the write with a unique-constraint violation (P2002). */
@@ -327,11 +331,36 @@ export class InMemoryContestWorld {
       .flatMap((contest) => contest.sportEventIds.flatMap((id) => this.sportEvents.get(id)?.sportLeagueId ?? [])))];
   }
 
+  /** A draft past every cutoff, as the current contest list leaves it out (#1217). */
+  private canNeverOpen(contest: Contest, now: Date): boolean {
+    const events = contest.sportEventIds.flatMap((id) => this.sportEvents.get(id) ?? []);
+    if (events.some((event) => event.status === SportEventStatus.COMPLETED || event.status === SportEventStatus.CANCELLED)) {
+      return true;
+    }
+    const configuration = [...this.configurations.values()].find((row) => row.contestId === contest.id);
+    const closesAtEventStart = contestCutoff(configuration?.configJson, contest.squaresGameMatchId).kind === ContestCutoffKind.EVENT_START;
+    return closesAtEventStart && events.some((event) => hasSportEventStarted(event, now));
+  }
+
   contestRepo(): ContestRepository {
     return {
       findById: async (id) => this.contests.get(id) ?? null,
-      findByLeague: async (leagueId) =>
-        [...this.contests.values()].filter((contest) => contest.leagueId === leagueId),
+      findByLeague: async (leagueId, statuses) =>
+        [...this.contests.values()].filter((contest) => contest.leagueId === leagueId && statuses.includes(contest.status)),
+      findCurrentByLeague: async (leagueId, now) =>
+        [...this.contests.values()].filter((contest) => contest.leagueId === leagueId
+          && contest.status !== ContestStatus.COMPLETED
+          && !(contest.status === ContestStatus.DRAFT && this.canNeverOpen(contest, now))),
+      findFinishedByLeague: async (leagueId, endedFrom, endedBefore) =>
+        [...this.contests.values()].filter((contest) => contest.leagueId === leagueId
+          && contest.status === ContestStatus.COMPLETED
+          && contest.endsAt !== undefined
+          && contest.endsAt >= endedFrom && contest.endsAt < endedBefore),
+      findFinishedYearsByLeague: async (leagueId) =>
+        [...new Set([...this.contests.values()].flatMap((contest) =>
+          contest.leagueId === leagueId && contest.status === ContestStatus.COMPLETED && contest.endsAt
+            ? [championshipYear(contest.endsAt)]
+            : []))].sort((left, right) => right - left),
       findOpenByLeague: async (leagueId) =>
         [...this.contests.values()]
           .filter((contest) => contest.leagueId === leagueId && contest.status === ContestStatus.OPEN)
@@ -342,6 +371,7 @@ export class InMemoryContestWorld {
           contest.sportEventIds.includes(sportEventId)
           && (!filter?.statuses || filter.statuses.includes(contest.status))
           && (!filter?.excludeStatuses || !filter.excludeStatuses.includes(contest.status))),
+      findJoinableByReleasedEdition: async () => [],
       findByStatuses: async (statuses) =>
         [...this.contests.values()].filter((contest) => statuses.includes(contest.status)),
       create: async (input, limits) => this.seasonFull(input.leagueId, input.seasonYear, limits)
@@ -410,7 +440,8 @@ export class InMemoryContestWorld {
     return {
       findByContest: async (contestId) =>
         [...this.configurations.values()].find((row) => row.contestId === contestId) ?? null,
-      findByTemplateEventSeries: async () => [],
+      findByContests: async (contestIds) =>
+        [...this.configurations.values()].filter((row) => contestIds.includes(row.contestId)),
       create: async (input) => this.addConfiguration(input.contestId, input),
       update: async (id, updates) => {
         const existing = this.configurations.get(id);
@@ -439,10 +470,34 @@ export class InMemoryContestWorld {
                 event.sportEventId === options.submittedFor && event.status === 'SUBMITTED')))
           .sort((left, right) => this.byEntryOrder(left, right))
           .map((entry) => this.withSquad(entry)),
-      findBySquad: async (squadId) =>
-        [...this.entries.values()].filter((entry) => entry.squadId === squadId),
+      findByContestAndSquad: async (contestId, squadId) =>
+        [...this.entries.values()]
+          .filter((entry) => entry.contestId === contestId && entry.squadId === squadId)
+          .sort((left, right) => left.entryNumber - right.entryNumber),
+      findIdsByContestAndSquad: async (contestId, squadId) =>
+        [...this.entries.values()]
+          .filter((entry) => entry.contestId === contestId && entry.squadId === squadId)
+          .sort((left, right) => left.entryNumber - right.entryNumber)
+          .map((entry) => entry.id),
+      findBySquadAndContests: async (squadId, contestIds) =>
+        [...this.entries.values()]
+          .filter((entry) => entry.squadId === squadId && contestIds.includes(entry.contestId))
+          .sort((left, right) => left.contestId.localeCompare(right.contestId) || left.entryNumber - right.entryNumber)
+          .map((entry) => this.withSquad(entry)),
+      countForContest: async (contestId) => {
+        const all = [...this.entries.values()].filter((entry) => entry.contestId === contestId);
+        const submitted = all.filter((entry) => entry.events.some((event) => event.status === ContestEntryStatus.SUBMITTED));
+        return {
+          submittedEntryCount: submitted.length,
+          enteredSquadCount: new Set(submitted.map((entry) => entry.squadId)).size,
+          allEntryCount: all.length,
+        };
+      },
       countByContests: async (contestIds) => new Map(contestIds.map((contestId) =>
         [contestId, [...this.entries.values()].filter((entry) => entry.contestId === contestId).length])),
+      countSubmittedByContests: async (contestIds) => new Map(contestIds.map((contestId) =>
+        [contestId, [...this.entries.values()].filter((entry) => entry.contestId === contestId
+          && entry.events.some((event) => event.status === ContestEntryStatus.SUBMITTED)).length])),
       create: async (input, limits) => {
         // The adapter refuses an entry once the contest is drawn, or holds its plan's entries.
         if (this.contests.get(input.contestId)?.drawnAt !== undefined) return { status: 'contestDrawn' };
@@ -516,9 +571,11 @@ export class InMemoryContestWorld {
     const ordered = () => [...this.picks.values()].sort((left, right) =>
       left.pickedAt.getTime() - right.pickedAt.getTime() || left.id.localeCompare(right.id));
     return {
-      findByEntries: async (entryIds) => ordered().filter((pick) => entryIds.includes(pick.entryId)),
-      findByEntriesWithParticipant: async (entryIds) =>
-        ordered().filter((pick) => entryIds.includes(pick.entryId)),
+      findByEntriesAndEvents: async (entryIds, sportEventIds) =>
+        ordered().filter((pick) => entryIds.includes(pick.entryId) && sportEventIds.includes(pick.sportEventId)),
+      findByEntriesWithParticipant: async (entryIds, options) =>
+        ordered().filter((pick) => entryIds.includes(pick.entryId)
+          && (options?.sportEventId === undefined || pick.sportEventId === options.sportEventId)),
       countByEntries: async (entryIds) => {
         const counts = new Map<string, number>();
         for (const pick of this.picks.values()) {
@@ -559,11 +616,31 @@ export class InMemoryContestWorld {
   }
 
   squadRepo(): SquadRepository {
+    const details = (squad: Squad): SquadDetails => ({
+      ...squad,
+      members: [...this.squadMemberships.values()]
+        .filter((row) => row.squadId === squad.id)
+        .sort((left, right) => left.joinedAt.getTime() - right.joinedAt.getTime())
+        .flatMap((membership) => {
+          const user = this.users.get(membership.userId);
+          const leagueRole = [...this.memberships.values()]
+            .find((row) => row.leagueId === squad.leagueId && row.userId === membership.userId)?.role ?? null;
+          return user ? [{ membership, user, leagueRole }] : [];
+        }),
+    });
     return {
       findById: async (id) => this.squads.get(id) ?? null,
       findByLeague: async (leagueId, includeInactive = false) =>
         [...this.squads.values()].filter((squad) =>
           squad.leagueId === leagueId && (includeInactive || squad.isActive)),
+      findDetailsById: async (id) => {
+        const squad = this.squads.get(id);
+        return squad ? details(squad) : null;
+      },
+      findDetailsByLeague: async (leagueId) =>
+        [...this.squads.values()].filter((squad) => squad.leagueId === leagueId).map(details),
+      countActiveByLeague: async (leagueId) =>
+        [...this.squads.values()].filter((squad) => squad.leagueId === leagueId && squad.isActive).length,
       findByLeagueAndName: async (leagueId, name) =>
         [...this.squads.values()].find((squad) =>
           squad.leagueId === leagueId && squad.name === name) ?? null,
@@ -597,6 +674,13 @@ export class InMemoryContestWorld {
           row.leagueId === leagueId && row.userId === userId);
         return rows.find((row) => row.status === SquadMembershipStatus.ACTIVE) ?? rows.at(0) ?? null;
       },
+      findByLeagueAndUserWithSquadName: async (leagueId, userId) => {
+        const rows = [...this.squadMemberships.values()].filter((row) =>
+          row.leagueId === leagueId && row.userId === userId);
+        const membership = rows.find((row) => row.status === SquadMembershipStatus.ACTIVE) ?? rows.at(0);
+        const squad = membership ? this.squads.get(membership.squadId) : undefined;
+        return membership && squad ? { ...membership, squadName: squad.name } : null;
+      },
       create: async (input) => this.addSquadMember(input.squadId, input.userId, input),
       update: async (id, updates) => {
         const existing = this.squadMemberships.get(id);
@@ -619,10 +703,11 @@ export class InMemoryContestWorld {
   userRepo(): UserRepository {
     return fakeUserRepo({
       findById: async (id) => this.users.get(id) ?? null,
-      // Every membership status, as the port says.
-      findByLeague: async (leagueId) => {
+      findByIds: async (ids) => [...this.users.values()].filter((user) => ids.includes(user.id)),
+      // ACTIVE memberships only, as the port says.
+      findActiveByLeague: async (leagueId) => {
         const memberIds = new Set([...this.memberships.values()]
-          .filter((membership) => membership.leagueId === leagueId)
+          .filter((membership) => membership.leagueId === leagueId && membership.status === LeagueMembershipStatus.ACTIVE)
           .map((membership) => membership.userId));
         return [...this.users.values()].filter((user) => memberIds.has(user.id));
       },
@@ -648,6 +733,13 @@ export class InMemoryContestWorld {
         .sort((a, b) => a.startDate.getTime() - b.startDate.getTime()),
       countParticipants: async (ids) =>
         new Map(ids.map((id) => [id, this.fieldSizes.get(id) ?? 0])),
+      transitionStatus: async (id, transition) => {
+        const existing = this.sportEvents.get(id);
+        if (!existing || existing.status !== transition.from) return null;
+        const next: SportEvent = { ...existing, status: transition.to, ...(transition.endDate && { endDate: transition.endDate }) };
+        this.sportEvents.set(id, next);
+        return next;
+      },
     });
   }
 
@@ -711,9 +803,8 @@ export class InMemoryContestWorld {
       users: this.userRepo(),
       sportEvents: this.sportEventRepo(),
       sportLeagues: this.sportLeagueRepo(),
-      eventParticipants: { listEventParticipants: async () => [] },
+      eventParticipants: { listEventParticipants: async () => [], listCachedEventParticipants: async () => [] },
       tiers: {
-        getEffectiveValuationsForSportEvent: async () => [],
         listTiers: async (sportEventId: string) => this.eventTiers.get(sportEventId) ?? [],
       },
       planEntitlements: this.planEntitlements(),

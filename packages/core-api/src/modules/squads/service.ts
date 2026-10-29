@@ -16,7 +16,8 @@ import {
 } from '@poolmaster/shared/domain';
 import type { SquadDto, SquadMembershipDto } from '@poolmaster/shared/dto';
 import { lockContestRows } from '../../adapters';
-import { toSquadDto, toSquadMembershipDto } from '../../mappers/squads.mapper';
+import { forgetReads, ReadMemoKey } from '../../core/request-read-memo';
+import { toSquadDetailsDto, toSquadMembershipDto } from '../../mappers/squads.mapper';
 import { SquadNotFoundError, SquadOperationError } from './errors';
 import { assertSquadNameAvailable, resolveAvailableDefaultSquadName } from './squad-name';
 import {
@@ -80,8 +81,7 @@ export class SquadService {
     }, 'Listing squads');
     await this.requireLeagueAccess(leagueId, userId, isRootAdmin);
 
-    const squads = await this.squadRepo.findByLeague(leagueId, true);
-    const result = await Promise.all(squads.map(async (squad) => this.loadSquadDto(squad.id)));
+    const result = (await this.squadRepo.findDetailsByLeague(leagueId)).map(toSquadDetailsDto);
     this.logger?.info({
       action: 'squad.list.success',
       data: { leagueId, userId, squadCount: result.length },
@@ -95,8 +95,7 @@ export class SquadService {
       data: { leagueId, squadId, userId },
     }, 'Loading squad');
     await this.requireLeagueAccess(leagueId, userId, isRootAdmin);
-    await this.requireLeagueScopedSquad(leagueId, squadId);
-    const squad = await this.loadSquadDto(squadId);
+    const squad = await this.getSquadDetails(leagueId, squadId);
     this.logger?.info({
       action: 'squad.get.success',
       data: { leagueId, squadId, userId },
@@ -144,7 +143,7 @@ export class SquadService {
       joinedAt: new Date(),
     });
 
-    const squadDto = await this.loadSquadDto(squad.id);
+    const squadDto = await this.getSquadDetails(leagueId, squad.id);
     this.logger?.info({
       action: 'squad.create.success',
       data: { leagueId, squadId: squad.id, userId },
@@ -191,7 +190,7 @@ export class SquadService {
       ...(nextName !== undefined ? { name: nextName } : {}),
       ...(input.iconKey !== undefined ? { iconKey: input.iconKey } : {}),
     });
-    const squad = await this.loadSquadDto(squadId);
+    const squad = await this.getSquadDetails(leagueId, squadId);
     this.logger?.info({
       action: 'squad.update.success',
       data: { leagueId, squadId, userId },
@@ -227,7 +226,7 @@ export class SquadService {
         action: 'squad.inactivate.alreadyInactive',
         data: { leagueId, squadId, userId },
       }, 'Squad already inactive');
-      return this.loadSquadDto(squadId);
+      return this.getSquadDetails(leagueId, squadId);
     }
 
     const activeMemberships = await this.squadMembershipRepo.findBySquad(squadId);
@@ -261,7 +260,7 @@ export class SquadService {
       });
     });
 
-    const squadDto = await this.loadSquadDto(squadId);
+    const squadDto = await this.getSquadDetails(leagueId, squadId);
     this.logger?.info({
       action: 'squad.inactivate.success',
       data: { leagueId, squadId, userId },
@@ -474,6 +473,7 @@ export class SquadService {
         where: { id: squadId },
       });
     });
+    forgetReads(ReadMemoKey.squadMembership);
 
     this.logger?.info({
       action: 'squad.delete.success',
@@ -518,9 +518,9 @@ export class SquadService {
     ownerUserIds: string[],
   ): Promise<void> {
     const owners = new Set(ownerUserIds);
+    // findByLeague answers ACTIVE memberships only.
     const commissioners = (await this.leagueMembershipRepo.findByLeague(leagueId)).filter(
-      (membership) =>
-        membership.status === LeagueMembershipStatus.ACTIVE && membership.role === LeagueRole.COMMISSIONER,
+      (membership) => membership.role === LeagueRole.COMMISSIONER,
     );
     if (commissioners.length === 0 || commissioners.some((membership) => !owners.has(membership.userId))) {
       return;
@@ -533,26 +533,17 @@ export class SquadService {
     throw new SquadOperationError(lastCommissioner.message, lastCommissioner.code);
   }
 
-  private async loadSquadDto(squadId: Promise<string> | string): Promise<SquadDto> {
-    const resolvedSquadId = await squadId;
-    const squad = await this.squadRepo.findById(resolvedSquadId);
-    if (!squad) {
-      throw new SquadNotFoundError(`Squad not found: ${resolvedSquadId}`);
+  /** The squad with its owners, in one read (#1165), or 404 when it is not this league's. */
+  private async getSquadDetails(leagueId: string, squadId: string): Promise<SquadDto> {
+    const squad = await this.squadRepo.findDetailsById(squadId);
+    if (!squad || squad.leagueId !== leagueId) {
+      this.logger?.warn({
+        action: 'squad.details.notFound',
+        data: { leagueId, squadId },
+      }, 'Requested squad was not found in league scope');
+      throw new SquadNotFoundError(`Squad not found: ${squadId}`);
     }
-    const memberships = await this.squadMembershipRepo.findBySquad(resolvedSquadId, true);
-    // #202 step 3.4 — the squad's members come off `UserRepository.findByLeague`, the scoped
-    // peer read A4 and A6 require, rather than a raw `findMany` selecting three columns. The
-    // edge embeds the whole `UserDto`, so three columns are no longer enough.
-    const leagueUsers = memberships.length === 0 ? [] : await this.users.findByLeague(squad.leagueId);
-    const userByUserId = new Map(leagueUsers.map((user) => [user.id, user]));
-    const memberDtos = memberships.flatMap((membership) => {
-      const user = userByUserId.get(membership.userId);
-      return user ? [toSquadMembershipDto(membership, user)] : [];
-    });
-    const memberCount = memberships.filter(
-      (membership) => membership.status === SquadMembershipStatus.ACTIVE,
-    ).length;
-    return toSquadDto(squad, memberCount, memberDtos);
+    return toSquadDetailsDto(squad);
   }
 
   private async loadSquadMembershipDto(membership: {

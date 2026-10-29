@@ -894,9 +894,13 @@ test('act 4: the root admin scores round 1, starts the event, and reads every ro
   });
 
   await test.step('the new league and both new users are visible to the root admin', async () => {
+    // Both lists are search-first (#1180): every league or user is too many to read.
     await expectListPageLoaded(page, '/manage/leagues', 'root-admin-manage-leagues-page', 'root-admin-manage-leagues-table');
+    await page.getByTestId('root-admin-manage-leagues-search').fill(run.leagueName);
     await expect(page.getByTestId(`root-admin-manage-leagues-link-${state.leagueId}`)).toBeVisible();
     await expectListPageLoaded(page, '/manage/users', 'root-admin-manage-users-page', 'root-admin-manage-users-table');
+    // Both new users' usernames carry the run id.
+    await page.getByTestId('root-admin-manage-users-search').fill(run.runId);
     await expect(page.getByTestId(`root-admin-manage-user-row-${state.commissionerId}`)).toBeVisible();
     await expect(page.getByTestId(`root-admin-manage-user-row-${state.memberId}`)).toBeVisible();
   });

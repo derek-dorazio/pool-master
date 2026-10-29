@@ -206,6 +206,7 @@ export class ContestSettlementService {
         participants.map((participant) => [participant.sportEventParticipantId, participant]),
       );
       const asOf = resolveContestStandingAsOf(participants, completedAt);
+      // poolmaster-allow-query-in-loop: #1172
       const settledEvents = await this.deps.eventStandings.findByContest(contest.id);
       if (!cancelled && !settledEvents.some((standing) => standing.sportEventId === sportEventId)) {
         const entries = await loadContestLeaderboardEntries(this.deps, contest.id, sportEventId);
@@ -226,6 +227,7 @@ export class ContestSettlementService {
         );
         for (const entry of rankedEntries) {
           // The single writer of ContestEntryEventStanding.
+          // poolmaster-allow-query-in-loop: #1172
           await this.deps.eventStandings.upsert({
             contestId: contest.id,
             contestEntryId: entry.entryId,
@@ -346,7 +348,9 @@ export class ContestSettlementService {
           settledAt: completedAt,
           totalScore: score,
         };
+        // poolmaster-allow-query-in-loop: #1172
         await this.deps.eventStandings.upsert({ ...frozen, sportEventId: sportEvent.id });
+        // poolmaster-allow-query-in-loop: #1172
         await this.deps.standings.upsert(frozen);
       }
       standingsUpserted = holders.length;
@@ -403,7 +407,9 @@ export class ContestSettlementService {
         settledAt: completedAt,
         totalScore: standing.score.points,
       };
+      // poolmaster-allow-query-in-loop: #1172
       await this.deps.eventStandings.upsert({ ...frozen, sportEventId });
+      // poolmaster-allow-query-in-loop: #1172
       await this.deps.standings.upsert(frozen);
     }
     const completed = await this.complete(contest, completedAt);
@@ -437,6 +443,7 @@ export class ContestSettlementService {
     if (sportEvent.status !== SportEventStatus.CANCELLED && !settledWeeks.some((standing) => standing.sportEventId === sportEventId)) {
       const week = await loadPickEmWeekStandings(this.deps, contest.id, sportEvent, scoring);
       for (const standing of week.entries) {
+        // poolmaster-allow-query-in-loop: #1172
         await this.deps.eventStandings.upsert({
           contestId: contest.id,
           contestEntryId: standing.entry.id,
@@ -499,6 +506,7 @@ export class ContestSettlementService {
         return { position, displayPosition: sharing > 1 ? `T${position}` : String(position) };
       };
       for (const { entry, survived, decidedCount } of decided) {
+        // poolmaster-allow-query-in-loop: #1172
         await this.deps.eventStandings.upsert({
           contestId: contest.id,
           contestEntryId: entry.id,
@@ -612,6 +620,7 @@ export class ContestSettlementService {
     completedAt: Date,
   ): Promise<number> {
     for (const total of totals) {
+      // poolmaster-allow-query-in-loop: #1172
       await this.deps.standings.upsert({
         contestId: contest.id,
         contestEntryId: total.entryId,

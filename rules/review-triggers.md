@@ -32,6 +32,7 @@ Already enforced mechanically, and therefore **not** triggers:
 | Skipped or disabled tests | `poolmaster/no-disabled-tests` (ESLint) |
 | Env-var fallbacks | `poolmaster/no-env-fallbacks` (ESLint) |
 | A gate sending its refusal without awaiting it | `poolmaster/no-unawaited-send-error` (ESLint) |
+| A repository or Prisma call per loop iteration or `.map` row in the backend | `poolmaster/no-query-in-loop` (ESLint) |
 | Direct `fetch`/`axios` in the webapp | `no-restricted-globals` / `no-restricted-imports` in `eslint.config.js` |
 | Frontend types duplicating generated ones | `poolmaster/no-parallel-api-types` (ESLint) |
 | Inline query keys, inline theme styles, bare controls | the corresponding `poolmaster/*` ESLint rules |
@@ -170,7 +171,7 @@ Ordered roughly by how often they bite here.
 
 | Category | The question to ask the diff |
 |---|---|
-| **N+1** | Does anything run a query per row where a batch or `include` was available? Look for a `.map()` or loop containing an `await` on a repository call, and for `Promise.all(rows.map(...))` (see below). |
+| **N+1** | Does anything run a query per row where a batch or `include` was available? `poolmaster/no-query-in-loop` catches the direct shape; look past it for a helper that queries, called per row (see below). |
 | **INDEX** | Does a new `where` / `orderBy` shape have index support? A new filter column, sort, or composite ordering is the common miss. |
 | **BLOCKING** | Synchronous or slow work on a request path — file, network, crypto, or a large in-memory transform inside a handler. |
 | **PAYLOAD** | Did a list or detail response grow materially? Does a list endpoint have an upper bound on what it returns? |
@@ -188,6 +189,24 @@ every other request behind them until `pool_timeout` fails them. The fix is one 
 `updateMany`, one `UPDATE ... FROM`), or, where per-row calls are unavoidable, a bounded
 concurrency cap with the reason stated beside it. A fan-out over a list with a small fixed
 bound (a sport's handful of scoring periods) is not a finding.
+
+**A generic list reused and post-processed is a finding.** A screen that calls a list
+endpoint and then, in the browser, keeps one row by id (`.find`), filters most rows away by
+status, year, team or user, or counts the rows; or a service that does the same in JS after
+a repository list read. The cost grows with every league's history while the answer stays
+one row or one number. The fix is the single-item endpoint, a filter parameter pushed into
+SQL, or a count returned by the server.
+
+**Shared data read again is a finding.** Reading the same contest, league, membership,
+sport event, field, configuration or sport league more than once in one request, job or
+fan-out, or re-reading event-wide data once per contest inside a loop over contests. The
+multiplier is the number of callers, not the data size. The fix is to pass the loaded object
+down, memoise it for the length of the fan-out, or rely on a request-scoped memo.
+
+**A reused helper is counted, not trusted.** When a diff calls an existing helper inside a
+loop, `.map` or `Promise.all`, open the helper and count its queries. A helper that loads one
+DTO in four queries is four queries per row once it sits in a loop, and the diff does not
+show them.
 
 Backend shapes are governed by `service-rules.md` §5 *Prisma and Persistence*; frontend
 shapes by `react-ui-rules.md` §4 *TanStack Query Rules* and §5 *State, Effect, Form, And
@@ -213,8 +232,12 @@ in which case say that rather than implying a measurement that did not happen.
 
 ### Where it stops
 
-- Do not block on speculative micro-optimizations. A hypothetical cost at hypothetical
-  volume is a Medium at most, usually a Low.
+- Do not block on speculative micro-optimizations: a few saved milliseconds on a cold path
+  are not a finding.
+- **Rate by growth over years, not by today's volume.** Ask how many rows the read touches
+  for a five-year-old league, and whether that number grows with history (past seasons,
+  settled contests, old entries) rather than with what is current. A read that grows with
+  history on a page everyone opens is High, however small today's test data makes it look.
 - Do not demand a benchmark for every change. Ask when the disagreement is genuinely about
   magnitude and the path is hot.
 - **Never propose optimizing by weakening correctness, authorization, validation, or

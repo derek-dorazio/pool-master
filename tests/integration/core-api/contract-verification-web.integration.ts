@@ -15,9 +15,11 @@ import {
   UserResponseSchema,
   AuthResponseSchema,
   ContestConfigTemplateListResponseSchema,
+  ContestFinishedYearsResponseSchema,
   ContestListResponseSchema,
   ContestManagementResponseSchema,
   ContestResponseSchema,
+  MyContestEntriesResponseSchema,
   SelectionStateResponseSchema,
   GamePicksResponseSchema,
   ErrorEnvelopeSchema,
@@ -652,6 +654,15 @@ describe('Contract verification (web)', () => {
     expect(openRes.statusCode).toBe(200);
     const openParsed = ContestManagementResponseSchema.safeParse(openRes.json());
     expect(openParsed.success).toBe(true);
+
+    // The viewer's own entries across the league's open and live contests (#1197).
+    const myEntriesRes = await getApp().inject({
+      method: 'GET',
+      url: `${API_ROUTES.leagues.contests(leagueId)}my-entries`,
+      headers: withoutJsonBodyHeaders(owner.headers),
+    });
+    expect(myEntriesRes.statusCode).toBe(200);
+    expect(MyContestEntriesResponseSchema.safeParse(myEntriesRes.json()).success).toBe(true);
     expect(openParsed.data?.contest.status).toBe('OPEN');
 
     // The league's contest list carries each contest's event name and start (#577).
@@ -674,6 +685,36 @@ describe('Contract verification (web)', () => {
       participantType: null,
       scoringFamily: null,
     }]);
+
+    // Once it is final, it leaves the current list for its finished year's (#1161).
+    await getPrisma().contest.update({
+      where: { id: contestId },
+      data: { status: 'COMPLETED', endsAt: new Date('2025-06-08T23:00:00.000Z') },
+    });
+    const yearsRes = await getApp().inject({
+      method: 'GET',
+      url: `${API_ROUTES.leagues.contests(leagueId)}finished-years`,
+      headers: withoutJsonBodyHeaders(owner.headers),
+    });
+    expect(yearsRes.statusCode).toBe(200);
+    const yearsParsed = ContestFinishedYearsResponseSchema.safeParse(yearsRes.json());
+    expect(yearsParsed.success).toBe(true);
+    expect(yearsParsed.data?.years).toEqual([2025]);
+    const currentRes = await getApp().inject({
+      method: 'GET',
+      url: API_ROUTES.leagues.contests(leagueId),
+      headers: withoutJsonBodyHeaders(owner.headers),
+    });
+    expect(ContestListResponseSchema.parse(currentRes.json()).contests.map((contest) => contest.id)).not.toContain(contestId);
+    const finishedRes = await getApp().inject({
+      method: 'GET',
+      url: `${API_ROUTES.leagues.contests(leagueId)}?finishedYear=2025`,
+      headers: withoutJsonBodyHeaders(owner.headers),
+    });
+    expect(finishedRes.statusCode).toBe(200);
+    const finishedParsed = ContestListResponseSchema.safeParse(finishedRes.json());
+    expect(finishedParsed.success).toBe(true);
+    expect(finishedParsed.data?.contests.map((contest) => contest.id)).toEqual([contestId]);
   });
 
   it('account lifecycle routes match their shared response DTOs', async () => {

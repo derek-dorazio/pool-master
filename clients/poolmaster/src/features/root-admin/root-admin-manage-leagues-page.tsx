@@ -1,6 +1,7 @@
 import { createColumnHelper } from "@tanstack/react-table";
-import { useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { isPlatformSearchTerm, PLATFORM_SEARCH_MIN_LENGTH } from "@poolmaster/shared/domain";
 import { listLeagues, type LeagueDto } from "@/lib/api";
 import { buildLeaguePath } from "@/features/leagues/league-routing";
 import { LEAGUE_PLAN_LABEL } from "@/features/plans/plan-labels";
@@ -14,20 +15,29 @@ import {
 } from "@/features/shared/ui";
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
-import { MANAGE_LIST_PAGE_SIZE } from './manage-navigation';
+import { useDebouncedValue } from '@/lib/use-debounced-value';
+import { MANAGE_LIST_PAGE_SIZE, SEARCH_DEBOUNCE_MS } from './manage-navigation';
 
 const columnHelper = createColumnHelper<LeagueDto>();
 
 export function RootAdminManageLeaguesPage() {
   const displayPreferences = useDisplayPreferences();
+  const [search, setSearch] = useState("");
+  const term = useDebouncedValue(search.trim(), SEARCH_DEBOUNCE_MS);
+  const canSearch = isPlatformSearchTerm(term);
   const leaguesQuery = useQuery({
-    queryKey: QueryKeys.rootAdmin.manageLeagues,
+    queryKey: QueryKeys.rootAdmin.manageLeaguesSearch(term),
+    enabled: canSearch,
+    // The search box sits in the grid: keeping the last rows keeps the grid, and the box, mounted
+    // while the next term loads.
+    placeholderData: keepPreviousData,
     queryFn: async (): Promise<LeagueDto[]> => {
       // #202 — one league list, scope as a parameter. `scope: 'all'` is access rule A1's
       // unscoped read, which the route permits to root admins only; this page was the sole
-      // caller of the `adminListLeagues` half.
+      // caller of the `adminListLeagues` half. It takes a search (#1180): every league is too
+      // many to read.
       const response = await listLeagues({
-        query: { scope: "all" },
+        query: { scope: "all", search: term },
       });
 
       if (!response.data?.leagues) {
@@ -119,25 +129,22 @@ export function RootAdminManageLeaguesPage() {
       </Tile>
       <ManagementListPage
         columns={columns}
-        data={leaguesQuery.data ?? []}
-        emptyMessage="No leagues matched the current filters."
-        errorBody={extractErrorMessage(
-          leaguesQuery.error,
-          { fallback: "We could not load leagues right now." },
-        )}
+        // An error shows in the grid rather than in place of it, so the search box stays to retry.
+        data={canSearch && !leaguesQuery.isError ? (leaguesQuery.data ?? []) : []}
+        emptyMessage={
+          !canSearch
+            ? `Type at least ${PLATFORM_SEARCH_MIN_LENGTH} characters of a league's name to find it.`
+            : leaguesQuery.isError
+              ? extractErrorMessage(leaguesQuery.error, { fallback: "We could not load leagues right now." })
+              : leaguesQuery.isFetching
+                ? "Searching leagues..."
+                : "No leagues matched the current filters."
+        }
         getRowId={(league) => league.id}
         getRowLink={(league) => buildLeaguePath(league.leagueCode)}
-        loadingBody="Loading leagues..."
         pageSize={MANAGE_LIST_PAGE_SIZE}
         rowTestId={(league) => `root-admin-manage-leagues-link-${league.id}`}
-        search={{ label: "Find a league", testId: "root-admin-manage-leagues-search" }}
-        state={
-          leaguesQuery.isLoading
-            ? "loading"
-            : leaguesQuery.isError
-              ? "error"
-              : "ready"
-        }
+        search={{ label: "Find a league", testId: "root-admin-manage-leagues-search", onChange: setSearch }}
         tableTestId="root-admin-manage-leagues-table"
         testId="root-admin-manage-leagues-page"
       />

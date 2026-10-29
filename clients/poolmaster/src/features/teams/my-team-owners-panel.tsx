@@ -5,12 +5,9 @@ import { Alert, Button, Input, StatusBadge, Tile } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
 import { buildUserPath } from '@/features/account/user-routing';
 import { formatUserName } from '@/features/account/user-name';
-import type { useLeagueMembersQuery } from '@/features/leagues/use-league-members-query';
 import { TeamOwnerActionMenu } from './team-owner-action-menu';
 import { type TeamMember, TEAM_PAGE_FALLBACK_ERROR } from './my-team-shared';
 import type { MyTeamOwners } from './use-my-team-owners';
-
-type LeagueMembersByUserId = ReturnType<typeof useLeagueMembersQuery>['membersByUserId'];
 
 const OWNER_INVITATION_STATUS_LABELS: Record<SquadOwnerInvitationStatus, string> = {
   [SquadOwnerInvitationStatus.PENDING]: 'Pending',
@@ -25,7 +22,6 @@ export function MyTeamOwnersPanel({
   selectedTeam,
   activeMembers,
   teamOwnerInvitations,
-  leagueMembersByUserId,
   leagueCode,
   leagueId,
   viewerUserId,
@@ -38,7 +34,6 @@ export function MyTeamOwnersPanel({
   selectedTeam: SquadDto;
   activeMembers: TeamMember[];
   teamOwnerInvitations: TeamOwnerInvitationDto[];
-  leagueMembersByUserId: LeagueMembersByUserId;
   leagueCode: string;
   leagueId: string;
   viewerUserId: string | undefined;
@@ -116,9 +111,9 @@ export function MyTeamOwnersPanel({
                     {formatUserName(member.user.firstName, member.user.lastName)}
                   </Link>
                   <StatusBadge>Active owner</StatusBadge>
-                  {leagueMembersByUserId.get(member.userId) ? (
+                  {member.leagueRole ? (
                     <StatusBadge>
-                      {leagueMembersByUserId.get(member.userId)?.role === LeagueRole.COMMISSIONER ? 'Commissioner' : 'Member'}
+                      {member.leagueRole === LeagueRole.COMMISSIONER ? 'Commissioner' : 'Member'}
                     </StatusBadge>
                   ) : null}
                 </div>
@@ -130,7 +125,7 @@ export function MyTeamOwnersPanel({
                   leagueCode={leagueCode}
                   leagueId={leagueId}
                   ownerName={formatUserName(member.user.firstName, member.user.lastName)}
-                  ownerRole={leagueMembersByUserId.get(member.userId)?.role}
+                  ownerRole={member.leagueRole}
                   ownerUserId={member.userId}
                   teamId={selectedTeam.id}
                 />

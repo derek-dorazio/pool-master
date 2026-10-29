@@ -111,8 +111,14 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
     await sportEvents.requireEvent(eventId);
   }
 
+  /** The field read now: what a write to it answers with. */
   async function fieldResponse(eventId: string): Promise<SportEventParticipantListResponse> {
     return { participants: (await field.listEventParticipants(eventId)).map(mapSportEventParticipantToDto) };
+  }
+
+  /** One field row read now: what a write to that row answers with, rather than the whole field (#1163). */
+  async function fieldRowResponse(eventId: string, sportEventParticipantId: string): Promise<SportEventParticipantResponse> {
+    return { participant: mapSportEventParticipantToDto(await field.getEventParticipant(eventId, sportEventParticipantId)) };
   }
 
   return {
@@ -282,8 +288,9 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
       return { rounds: updated.map(mapSportEventRoundToDto) };
     },
 
+    // Every contest's pick screens poll it: the field read in the last 30 seconds answers (#1163).
     listEventParticipants: async (request: FastifyRequest<EventParams>): Promise<SportEventParticipantListResponse> => {
-      return fieldResponse(request.params.eventId);
+      return { participants: (await field.listCachedEventParticipants(request.params.eventId)).map(mapSportEventParticipantToDto) };
     },
 
     seedEventParticipants: async (request: FastifyRequest<EventParams>): Promise<SeedSportEventParticipantsResponse> => {
@@ -406,8 +413,7 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
       const { eventId, roundNumber, sportEventParticipantId } = request.params;
       await requireEvent(eventId);
       await golfScores.updateRoundScore(eventId, roundNumber, sportEventParticipantId, request.body);
-      const participant = (await field.listEventParticipants(eventId)).find((view) => view.entry.id === sportEventParticipantId);
-      return { participant: mapSportEventParticipantToDto(participant as NonNullable<typeof participant>) };
+      return fieldRowResponse(eventId, sportEventParticipantId);
     },
 
     getEventBracket: async (request: FastifyRequest<EventParams>): Promise<SportEventBracketResponse> => {
@@ -492,8 +498,7 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
     ): Promise<SportEventParticipantResponse> => {
       const { eventId, sportEventParticipantId } = request.params;
       await bracket.fillPlayInSlot(eventId, sportEventParticipantId, request.body.participantId);
-      const participant = (await field.listEventParticipants(eventId)).find((view) => view.entry.id === sportEventParticipantId);
-      return { participant: mapSportEventParticipantToDto(participant as NonNullable<typeof participant>) };
+      return fieldRowResponse(eventId, sportEventParticipantId);
     },
 
     replaceEventParticipant: async (
@@ -501,8 +506,7 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
     ): Promise<SportEventParticipantResponse> => {
       const { eventId, sportEventParticipantId } = request.params;
       const replacementId = await bracket.replaceWithdrawn(eventId, sportEventParticipantId, request.body.participantId);
-      const participant = (await field.listEventParticipants(eventId)).find((view) => view.entry.id === replacementId);
-      return { participant: mapSportEventParticipantToDto(participant as NonNullable<typeof participant>) };
+      return fieldRowResponse(eventId, replacementId);
     },
   };
 }

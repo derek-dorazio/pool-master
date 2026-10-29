@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { registerSchema } from './schema-registry';
-import { TeamIconKey as TeamIconKeyEnum, type TeamIconKey } from '@poolmaster/shared/domain';
+import { LeagueRole, TeamIconKey as TeamIconKeyEnum, type TeamIconKey } from '@poolmaster/shared/domain';
 import { DateTimeSchema } from './common.dto';
 import { UserDtoSchema } from './users.dto';
 
@@ -44,6 +44,19 @@ export const SquadMembershipDtoSchema = z.object({
 export type SquadMembershipDto = z.infer<typeof SquadMembershipDtoSchema>;
 
 /**
+ * One owner of a squad, as a squad read lists them: the edge with the owner's role in the
+ * squad's league (#1202), so a team page can name a commissioner owner without reading the
+ * league's whole roster.
+ */
+export const SquadOwnerDtoSchema = SquadMembershipDtoSchema.extend({
+  leagueRole: z
+    .enum([LeagueRole.COMMISSIONER, LeagueRole.MEMBER])
+    .nullable()
+    .describe('The owner\'s role in the squad\'s league; null only if they hold no membership there.'),
+}).describe('A squad owner: the squad membership with the owner\'s league role.');
+export type SquadOwnerDto = z.infer<typeof SquadOwnerDtoSchema>;
+
+/**
  * A squad. The canonical Squad shape.
  *
  * **It carries no viewer context** (#202 step 3.4, access rule A8). Gone: `teamRelationship`
@@ -64,10 +77,10 @@ export const SquadDtoSchema = z.object({
   isActive: z
     .boolean()
     .describe('Whether the team is currently active. This lifecycle flag is the source of truth for Team availability and should replace older status-style checks.'),
-  memberCount: z.number().int().describe('Number of memberships attached to the squad.'),
+  memberCount: z.number().int().describe('How many of the squad\'s owners are ACTIVE.'),
   createdAt: DateTimeSchema.describe('When the squad was created.'),
   updatedAt: DateTimeSchema.describe('When the squad was last updated.'),
-  members: z.array(SquadMembershipDtoSchema).optional().describe('Optional expanded squad membership list.'),
+  members: z.array(SquadOwnerDtoSchema).describe('Every owner membership of the squad, any status, in join order, each with its user and league role.'),
 }).describe('A squad within a league. Returned wherever a squad is read.');
 export type SquadDto = z.infer<typeof SquadDtoSchema>;
 
@@ -91,6 +104,7 @@ export type SquadMembershipResponse = z.infer<typeof SquadMembershipResponseSche
 // frontend imports it rather than deriving from ListLeagueSquadsResponses. There is no
 // relationship component any more — A8 took the viewer context off the entity.
 registerSchema('SquadMembershipDto', SquadMembershipDtoSchema);
+registerSchema('SquadOwnerDto', SquadOwnerDtoSchema);
 registerSchema('SquadDto', SquadDtoSchema);
 registerSchema('SquadResponse', SquadResponseSchema);
 registerSchema('SquadListResponse', SquadListResponseSchema);

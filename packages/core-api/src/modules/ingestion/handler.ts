@@ -15,6 +15,7 @@ import type { EventSyncRequest } from './core/ingestion-scheduler';
 import { SyncRequestValidationError } from './core/sync-orchestrator';
 import {
   MockEventStateUnsupportedError,
+  ProviderSyncRunNotFoundError,
   SportEventSyncScopeError,
   SportSyncNotConfiguredError,
   SportProviderNotFoundError,
@@ -27,6 +28,7 @@ import {
   toProviderEventDto,
   toProviderManualSyncSubmissionResponse,
   toProviderSummaryDto,
+  toProviderSyncRunDetailDto,
   toProviderSyncRunDto,
   toUnmappedProviderParticipantDto,
 } from '../../mappers';
@@ -38,6 +40,7 @@ export function createIngestionHandlers(
   return {
     listProviders,
     listSyncRuns,
+    getSyncRun,
     submitEventSync,
     listUnmappedParticipants,
     listProviderCatalogEvents,
@@ -67,6 +70,26 @@ export function createIngestionHandlers(
     });
     logger.info({ count: syncRuns.length }, 'Listed provider sync runs');
     return reply.send({ syncRuns: syncRuns.map((run) => toProviderSyncRunDto(run, logger)) });
+  }
+
+  async function getSyncRun(
+    request: FastifyRequest<{ Params: { syncRunId: string } }>,
+    reply: FastifyReply,
+  ) {
+    const logger = request.contextLogger ?? request.log;
+    const { syncRunId } = request.params;
+    logger.debug({ syncRunId }, 'Reading provider sync run');
+    try {
+      const run = await ingestionService.getSyncRun(syncRunId);
+      logger.info({ syncRunId, hasDetails: run.details !== null }, 'Read provider sync run');
+      return reply.send(toProviderSyncRunDetailDto(run, logger));
+    } catch (err) {
+      if (err instanceof ProviderSyncRunNotFoundError) {
+        logger.warn({ syncRunId }, 'Provider sync run not found');
+        return sendError(reply, 404, 'SYNC_RUN_NOT_FOUND', err.message);
+      }
+      throw err;
+    }
   }
 
   async function submitEventSync(

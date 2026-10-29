@@ -6,15 +6,19 @@ import type { League as PrismaLeague, Prisma, PrismaClient } from '@prisma/clien
 import type { LeaguePlanChange, LeagueRepository, LeagueSearchFilters } from '@poolmaster/shared/db';
 import type { League, LeagueIconKey, LeaguePlan } from '@poolmaster/shared/domain';
 import { LeagueMembershipStatus as MembershipStatus, LeaguePlanChangeReason } from '@poolmaster/shared/domain';
+import { forgettingReads, memoizedRead, ReadMemoKey } from '../core/request-read-memo';
 
 export class PrismaLeagueRepository implements LeagueRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
+  /** Remembered for the request (#1176): the gates, the handler and the services all ask for it. */
   async findById(id: string): Promise<League | null> {
-    const row = await this.prisma.league.findFirst({
-      where: { id },
+    return memoizedRead(this.prisma, `${ReadMemoKey.league}${id}`, async () => {
+      const row = await this.prisma.league.findFirst({
+        where: { id },
+      });
+      return row ? mapToLeague(row) : null;
     });
-    return row ? mapToLeague(row) : null;
   }
 
   async findByCode(code: string): Promise<League | null> {
@@ -25,13 +29,8 @@ export class PrismaLeagueRepository implements LeagueRepository {
   }
 
   async findAll(filters: LeagueSearchFilters = {}): Promise<League[]> {
-    const search = filters.search?.trim();
-    const where: Prisma.LeagueWhereInput = {
-      ...(search ? { name: { contains: search, mode: 'insensitive' as const } } : {}),
-      ...(typeof filters.isActive === 'boolean' ? { isActive: filters.isActive } : {}),
-    };
     const rows = await this.prisma.league.findMany({
-      where,
+      where: leagueSearchWhere(filters),
       // updatedAt first so the admin management surface shows recently-touched leagues at
       // the top, which is the ordering it already relied on.
       orderBy: [{ updatedAt: 'desc' }, { createdAt: 'desc' }],
@@ -39,14 +38,14 @@ export class PrismaLeagueRepository implements LeagueRepository {
     return rows.map(mapToLeague);
   }
 
-  async findByUser(userId: string): Promise<League[]> {
+  async findByUser(userId: string, filters: LeagueSearchFilters = {}): Promise<League[]> {
     // One join, replacing the service-level findByUser's membership fetch plus a findById
     // per membership (#202). A join cannot produce the orphaned-membership case that
     // version had to log and skip, because it only returns leagues that exist.
     // ACTIVE only: a removed member keeps an INACTIVE row (so a re-invitation can restore it),
     // and that row must not keep the league in their list.
     const rows = await this.prisma.league.findMany({
-      where: { memberships: { some: { userId, status: MembershipStatus.ACTIVE } } },
+      where: { memberships: { some: { userId, status: MembershipStatus.ACTIVE } }, ...leagueSearchWhere(filters) },
       orderBy: { createdAt: 'desc' },
     });
     return rows.map(mapToLeague);
@@ -70,7 +69,7 @@ export class PrismaLeagueRepository implements LeagueRepository {
     leagueId: string,
     change: { fromPlan: LeaguePlan; toPlan: LeaguePlan; changedById: string },
   ): Promise<League | null> {
-    return this.prisma.$transaction(async (tx) => {
+    return forgettingReads(ReadMemoKey.league, () => this.prisma.$transaction(async (tx) => {
       // Only a league still on the from-plan moves, so the log never records a stale from-plan.
       const moved = await tx.league.updateMany({
         where: { id: leagueId, plan: change.fromPlan },
@@ -83,7 +82,7 @@ export class PrismaLeagueRepository implements LeagueRepository {
         data: { leagueId, fromPlan: change.fromPlan, toPlan: change.toPlan, changeReason: LeaguePlanChangeReason.CHOSEN, changedById: change.changedById },
       });
       return mapToLeague(await tx.league.findUniqueOrThrow({ where: { id: leagueId } }));
-    });
+    }));
   }
 
   async findLastPlanChange(leagueId: string): Promise<LeaguePlanChange | null> {
@@ -97,7 +96,7 @@ export class PrismaLeagueRepository implements LeagueRepository {
   ): Promise<League | null> {
     // The league row is locked first, so a concurrent move waits rather than being logged with a
     // stale from-date. (The stored date has microseconds a JS Date lacks, so it can't be matched by value.)
-    return this.prisma.$transaction(async (tx) => {
+    return forgettingReads(ReadMemoKey.league, () => this.prisma.$transaction(async (tx) => {
       await tx.$queryRaw`SELECT id FROM "leagues" WHERE id = ${leagueId}::uuid FOR UPDATE`;
       const league = await tx.league.findUnique({ where: { id: leagueId } });
       if (!league) {
@@ -123,13 +122,13 @@ export class PrismaLeagueRepository implements LeagueRepository {
         });
       }
       return mapToLeague(moved);
-    });
+    }));
   }
 
   async extendRunningPlanRenewals(change: { renewsAt: Date; now: Date; changedById: string }): Promise<number> {
     // The running leagues' rows are locked first, in id order, so a concurrent move waits rather
     // than being logged with a stale from-date; the lock re-checks each row's date once it is free.
-    return this.prisma.$transaction(async (tx) => {
+    return forgettingReads(ReadMemoKey.league, () => this.prisma.$transaction(async (tx) => {
       const locked = await tx.$queryRaw<{ id: string }[]>`
         SELECT id FROM "leagues"
         WHERE "plan_renews_at" > ${change.now} AND "plan_renews_at" < ${change.renewsAt}
@@ -155,7 +154,7 @@ export class PrismaLeagueRepository implements LeagueRepository {
         })),
       });
       return leagues.length;
-    });
+    }));
   }
 
   async findPlansEndingBetween(after: Date, through: Date): Promise<League[]> {
@@ -169,7 +168,7 @@ export class PrismaLeagueRepository implements LeagueRepository {
   async moveEndedPlansToFree(now: Date): Promise<Array<{ leagueId: string; fromPlan: LeaguePlan }>> {
     // The ended leagues' rows are locked first, in id order, so a concurrent plan change or
     // extension waits; the lock re-checks each row, so one extended meanwhile is left alone.
-    return this.prisma.$transaction(async (tx) => {
+    return forgettingReads(ReadMemoKey.league, () => this.prisma.$transaction(async (tx) => {
       const ended = await tx.$queryRaw<Array<{ id: string; plan: LeaguePlan }>>`
         SELECT id, plan FROM "leagues"
         WHERE "plan_renews_at" <= ${now} AND plan <> 'FREE'
@@ -184,11 +183,11 @@ export class PrismaLeagueRepository implements LeagueRepository {
         data: ended.map((league) => ({ leagueId: league.id, fromPlan: league.plan, toPlan: 'FREE' as const, changeReason: LeaguePlanChangeReason.PREVIEW_ENDED, changedById: null, changedAt: now })),
       });
       return ended.map((league) => ({ leagueId: league.id, fromPlan: league.plan }));
-    });
+    }));
   }
 
   async update(id: string, updates: Partial<League>): Promise<League> {
-    const row = await this.prisma.league.update({
+    const row = await forgettingReads(ReadMemoKey.league, () => this.prisma.league.update({
       where: { id },
       data: {
         ...(updates.leagueCode !== undefined && { leagueCode: updates.leagueCode }),
@@ -203,7 +202,7 @@ export class PrismaLeagueRepository implements LeagueRepository {
         ...(updates.mutedSportLeagueIds !== undefined && { mutedSportLeagueIds: updates.mutedSportLeagueIds }),
         ...(updates.eventEmailDelivery !== undefined && { eventEmailDelivery: updates.eventEmailDelivery }),
       },
-    });
+    }));
     return mapToLeague(row);
   }
 
@@ -227,5 +226,14 @@ function mapToLeague(row: PrismaLeague): League {
     eventEmailDelivery: row.eventEmailDelivery,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
+  };
+}
+
+/** A league search's filters as a `where`: a case-insensitive name substring and the active flag. */
+function leagueSearchWhere(filters: LeagueSearchFilters): Prisma.LeagueWhereInput {
+  const search = filters.search?.trim();
+  return {
+    ...(search ? { name: { contains: search, mode: 'insensitive' as const } } : {}),
+    ...(typeof filters.isActive === 'boolean' ? { isActive: filters.isActive } : {}),
   };
 }

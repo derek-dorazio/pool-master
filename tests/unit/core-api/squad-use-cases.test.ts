@@ -100,7 +100,7 @@ describe('Team use cases', () => {
       const listed = expectDefined(squads.find((squad) => squad.id === ownerSquad.id));
       expect(listed.isActive).toBe(false);
       expect(listed.memberCount).toBe(1);
-      expect((listed.members ?? []).map((member) => member.user.id)).toEqual([owner.id]);
+      expect(listed.members.map((member) => member.user.id)).toEqual([owner.id]);
     });
 
     it('refuses to list a league\'s teams to someone who is not a member of it', async () => {
@@ -129,7 +129,7 @@ describe('Team use cases', () => {
 
       expect(squad.name).toBe(ownerSquad.name);
       expect(squad.memberCount).toBe(1);
-      expect((squad.members ?? []).map((member) => member.user.id).sort()).toEqual([former.id, owner.id].sort());
+      expect(squad.members.map((member) => member.user.id).sort()).toEqual([former.id, owner.id].sort());
     });
 
     it('lets a root admin who is not in the league read one of its teams', async () => {
@@ -372,7 +372,7 @@ describe('Team use cases', () => {
       expect(world.tables.squads.get(ownerSquad.id)?.isActive).toBe(true);
     });
 
-    it('leaves the team, every owner\'s memberships and its pending invitations untouched when revoking the invitations fails part way', async () => {
+    it('leaves the team, every owner\'s memberships and its pending invitations untouched when revoking the invitations fails', async () => {
       const { world, league, commissioner, owner, ownerSquad, service } = leagueWithTwoTeams();
       const coOwner = world.addUser();
       world.addMember({ league, user: coOwner, squadId: ownerSquad.id });
@@ -385,7 +385,7 @@ describe('Team use cases', () => {
         invitedBy: owner.id,
         expiresAt: new Date(Date.now() + 86_400_000),
       });
-      jest.spyOn(world.ownerInvitations, 'update').mockRejectedValue(new Error('database unavailable'));
+      jest.spyOn(world.ownerInvitations, 'revokePendingBySquad').mockRejectedValue(new Error('database unavailable'));
 
       await expect(service.inactivateSquad(league.id, ownerSquad.id, commissioner.id)).rejects.toThrow('database unavailable');
 

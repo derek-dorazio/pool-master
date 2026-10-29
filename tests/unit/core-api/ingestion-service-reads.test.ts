@@ -2,10 +2,13 @@ import { expect } from '@jest/globals';
 import {
   DEFAULT_SYNC_RUN_WINDOW_HOURS,
   IngestionService,
+  ProviderSyncRunNotFoundError,
   type IngestionServiceDependencies,
 } from '../../../packages/core-api/src/modules/ingestion/ingestion-service';
 import { IngestionScheduler } from '../../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';
 import { readPayload } from '../../../packages/core-api/src/modules/ingestion/persistence/provider-sync-run-ledger';
+import { memoizedRead, ReadMemoKey, runWithReadMemo } from '../../../packages/core-api/src/core/request-read-memo';
+import type { PrismaClient } from '@prisma/client';
 import type { SportDataProvider } from '../../../packages/core-api/src/modules/ingestion/core/provider-interface';
 import type { ProviderSyncRunRepository } from '../../../packages/shared/db';
 import { Sport, SportEventSyncScope, type SportEvent } from '../../../packages/shared/domain';
@@ -39,6 +42,7 @@ function syncRuns(overrides: Partial<ProviderSyncRunRepository> = {}): ProviderS
     })),
     update: jest.fn().mockResolvedValue(undefined),
     findAll: jest.fn().mockResolvedValue([]),
+    findById: jest.fn().mockResolvedValue(null),
     ...overrides,
   };
 }
@@ -157,6 +161,27 @@ describe('IngestionService.listSyncRuns', () => {
   });
 });
 
+describe('IngestionService.getSyncRun', () => {
+  it('returns one run with its detailed diagnostics, read by its id', async () => {
+    const run = {
+      id: 'run-1', providerId: 'mock', sport: Sport.GOLF, eventId: 'event-1', status: 'COMPLETED' as const,
+      startedAt: null, completedAt: null, createdAt: new Date('2026-05-30T12:00:00.000Z'),
+      payload: { requestedFeed: 'EVENTPARTICIPANTS' }, details: { jobPayload: { recordsProcessed: 3 } },
+    };
+    const runs = syncRuns({ findById: jest.fn().mockResolvedValue(run) });
+
+    await expect(service({ registry: registryWith(null), syncRuns: runs }).getSyncRun('run-1')).resolves.toBe(run);
+    expect(runs.findById).toHaveBeenCalledWith('run-1');
+  });
+
+  it('refuses a run that does not exist with ProviderSyncRunNotFoundError', async () => {
+    const runs = syncRuns();
+
+    await expect(service({ registry: registryWith(null), syncRuns: runs }).getSyncRun('missing'))
+      .rejects.toBeInstanceOf(ProviderSyncRunNotFoundError);
+  });
+});
+
 describe('IngestionService.getUnmappedParticipants', () => {
   it('lists the competitors each provider reports for its scheduled sports that no participant is mapped to', async () => {
     const provider = fakeSportDataProvider({
@@ -252,5 +277,30 @@ describe('IngestionService manual sync background worker', () => {
     expect(runEventSync).toHaveBeenNthCalledWith(2, expect.objectContaining({ feeds: ['EVENTLIVESCORES'] }));
     expect(runs.update).toHaveBeenCalledWith('run-EVENTPARTICIPANTS', expect.objectContaining({ status: 'FAILED' }));
     expect(runs.update).toHaveBeenCalledWith('run-EVENTLIVESCORES', expect.objectContaining({ status: 'COMPLETED' }));
+  });
+
+  it('runs outside the submitting request\'s read memo, so the background sync reads afresh', async () => {
+    // Stands in for the root Prisma client, the only one whose reads are remembered.
+    const root = { $transaction: jest.fn() } as unknown as PrismaClient;
+    const load = jest.fn(async () => linkedEvent());
+    let finished!: () => void;
+    const done = new Promise<void>((resolve) => { finished = resolve; });
+    const runEventSync = jest.fn(async () => {
+      await memoizedRead(root, `${ReadMemoKey.sportEvent}event-1`, load);
+      await memoizedRead(root, `${ReadMemoKey.sportEvent}event-1`, load);
+      finished();
+      return [];
+    });
+    const scheduler = stubInstance(IngestionScheduler, { runEventSync });
+    const sportEvents = fakeSportEventRepo({ findByProviderRef: jest.fn().mockResolvedValue(linkedEvent()) });
+    const ingestion = service({ registry: registryWith(fakeSportDataProvider()), scheduler, sportEvents });
+
+    await runWithReadMemo(async () => {
+      await memoizedRead(root, `${ReadMemoKey.sportEvent}event-1`, load);
+      await ingestion.syncEventData({ sport: Sport.GOLF, eventId: 'evt-1', feeds: ['EVENTLIVESCORES'] }, 'admin', 'a@x.test');
+    });
+    await done;
+
+    expect(load).toHaveBeenCalledTimes(3);
   });
 });

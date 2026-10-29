@@ -8,6 +8,7 @@ import {
   getInvitationPreview,
   getLeagueByCode,
   getLeague,
+  getLeagueSquad,
   inactivateLeague,
   leaveLeague,
   listLeagueInvitations,
@@ -17,10 +18,12 @@ import {
   sendLeagueInvitations,
   listLeagueSquads,
   removeMember,
+  updateLeagueCupSettings,
   updateLeagueDetails,
 } from '@poolmaster/shared/generated/hey-api';
+import { CupPointsScale, SelectionType } from '@poolmaster/shared/domain';
 import { randomUUID } from 'node:crypto';
-import { buildRegisteredUser } from './builders';
+import { buildRegisteredUser, promoteToRootAdmin, seedContestFixture } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -74,8 +77,12 @@ describe('SDK Functional: Leagues', () => {
     expect(createResponse.data?.membership?.role).toBe('COMMISSIONER');
     expect(createResponse.data?.membership?.status).toBe('ACTIVE');
     expect(createResponse.data?.membership?.user.id).toBe(commissioner.userId);
-    // Null by construction: a league has no squads the instant it is created.
-    expect(createResponse.data?.squadMembership).toBeNull();
+    // Creating the league gives the creator their default squad, so the 201 carries that edge
+    // and its name, as the league reads do; it used to send null.
+    expect(createResponse.data?.squadMembership?.userId).toBe(commissioner.userId);
+    expect(createResponse.data?.squadMembership?.status).toBe('ACTIVE');
+    expect(createResponse.data?.squadName).toBeTruthy();
+    expect(createResponse.data?.activeTeamCount).toBe(1);
 
     const listResponse = await listLeagues({
       client: commissioner.client,
@@ -174,6 +181,43 @@ describe('SDK Functional: Leagues', () => {
       status: 400,
       code: 'LEAGUE_DETAILS_READ_ONLY_WHEN_INACTIVE',
     });
+  });
+
+  it('answers a league settings save, a cup settings save, an inactivation and a reactivation with the league\'s real member and open contest counts, not zeros', async () => {
+    const commissioner = await buildRegisteredUser({ displayName: 'Counts Commissioner' });
+    const member = await buildRegisteredUser({ displayName: 'Counts Member' });
+    const createResponse = await createLeague({
+      client: commissioner.client,
+      body: buildCreateLeagueBody('Counted Functional League'),
+    });
+    const leagueId = createResponse.data?.league.id as string;
+    const invite = await generateInviteLink({ client: commissioner.client, path: { id: leagueId }, body: { maxUses: 1 } });
+    await acceptInvitation({ client: member.client, body: { inviteCode: invite.data?.invitation.inviteCode as string } });
+    await seedContestFixture(leagueId, { name: 'Counted Open Contest', selectionType: SelectionType.TIERED, status: 'OPEN' });
+    const context = await getLeague({ client: commissioner.client, path: { id: leagueId } });
+    const counts = {
+      memberCount: context.data?.league.memberCount,
+      activeContestCount: context.data?.league.activeContestCount,
+    };
+    expect(counts.memberCount).toBe(2);
+    expect(counts.activeContestCount).toBe(1);
+
+    const saved = await updateLeagueDetails({
+      client: commissioner.client,
+      path: { id: leagueId },
+      body: { name: 'Counted League Renamed', description: 'Counted', iconKey: 'TROPHY' },
+    });
+    const cupSaved = await updateLeagueCupSettings({
+      client: commissioner.client,
+      path: { id: leagueId },
+      body: { cupName: 'Counted Cup', cupPointsScale: CupPointsScale.CUSTOM, cupCustomPoints: [10, 5], hallOfLameVisible: true },
+    });
+    const inactivated = await inactivateLeague({ client: commissioner.client, path: { id: leagueId } });
+    const reactivated = await activateLeague({ client: commissioner.client, path: { id: leagueId } });
+
+    for (const response of [saved, cupSaved, inactivated, reactivated]) {
+      expect(response.data?.league).toMatchObject(counts);
+    }
   });
 
   it('lists a league\'s pending invites to its commissioner until each is accepted or cancelled, and refuses to cancel one already accepted', async () => {
@@ -944,6 +988,15 @@ describe('SDK Functional: Leagues', () => {
     // which is what replaced scanning every squad in the league for a per-row `owner` flag.
     expect(memberLeagueResponse.data?.squadMembership?.userId).toBe(member.userId);
     expect(memberLeagueResponse.data?.league).not.toHaveProperty('leagueRelationship');
+    // #1165 — it names that squad and counts the league's active teams (the commissioner's
+    // and the member's), so the league menu and Manage contests read no team list.
+    const memberSquad = await getLeagueSquad({
+      client: member.client,
+      path: { id: leagueId, squadId: memberLeagueResponse.data?.squadMembership?.squadId as string },
+    });
+    expect(memberLeagueResponse.data?.squadName).toBe(memberSquad.data?.squad.name);
+    expect(memberLeagueResponse.data?.activeTeamCount).toBe(2);
+    expect(memberSquad.data?.squad.members.map((owner) => owner.userId)).toEqual([member.userId]);
 
     const outsiderLeagueResponse = await getLeagueByCode({
       client: outsider.client,
@@ -964,5 +1017,38 @@ describe('SDK Functional: Leagues', () => {
       status: 403,
       code: 'LEAGUE_MEMBERSHIP_REQUIRED',
     });
+  });
+
+  it('tells a removed member their membership is inactive on both league reads, and gives a removed root admin the league with no membership edge', async () => {
+    const commissioner = await buildRegisteredUser({ displayName: 'Removing Commissioner' });
+    const removed = await buildRegisteredUser({ displayName: 'Removed Member' });
+    const removedAdmin = await buildRegisteredUser({ displayName: 'Removed Admin' });
+    await promoteToRootAdmin(removedAdmin);
+    const createResponse = await createLeague({
+      client: commissioner.client,
+      body: buildCreateLeagueBody('Removed Members League'),
+    });
+    const leagueId = createResponse.data?.league.id as string;
+    const leagueCode = createResponse.data?.league.leagueCode as string;
+    for (const user of [removed, removedAdmin]) {
+      const invite = await generateInviteLink({ client: commissioner.client, path: { id: leagueId }, body: { maxUses: 1 } });
+      await acceptInvitation({ client: user.client, body: { inviteCode: invite.data?.invitation.inviteCode as string } });
+      await removeMember({ client: commissioner.client, path: { id: leagueId, uid: user.userId } });
+    }
+
+    expectFunctionalError(await getLeagueByCode({ client: removed.client, path: { leagueCode } }), {
+      status: 403,
+      code: 'LEAGUE_MEMBERSHIP_INACTIVE',
+    });
+    expectFunctionalError(await getLeague({ client: removed.client, path: { id: leagueId } }), {
+      status: 403,
+      code: 'LEAGUE_MEMBERSHIP_INACTIVE',
+    });
+
+    const adminView = await getLeagueByCode({ client: removedAdmin.client, path: { leagueCode } });
+    expect(adminView.response?.status).toBe(200);
+    expect(adminView.data?.league.id).toBe(leagueId);
+    expect(adminView.data?.membership).toBeNull();
+    expect(adminView.data?.league.memberCount).toBe(1);
   });
 });

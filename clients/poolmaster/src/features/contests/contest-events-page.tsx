@@ -27,7 +27,8 @@ import {
 import { coversOneEvent, firstContestEvent, hasContestEventStarted } from './contest-events';
 import { CONTEST_RELEASE_CODE_MESSAGES } from './contest-release-messages';
 import { sportEventQueryOptions } from './use-contest-schedule';
-import { useLeagueContestsQuery } from './use-league-contests-query';
+import { useContestQuery } from './use-contest-query';
+import { entryWriteKeys } from './use-contest-entries';
 
 const CONTEST_EVENTS_CODE_MESSAGES: ErrorCodeMessages = {
   ...CONTEST_RELEASE_CODE_MESSAGES,
@@ -164,9 +165,8 @@ function ContestEventsForm({
     },
     invalidates: [
       QueryKeys.contests.list({ leagueId }),
-      QueryKeys.contests.detail(contest.id),
       QueryKeys.managedContests.all,
-      QueryKeys.contestEntries.byContest(contest.id),
+      ...entryWriteKeys(contest.id),
       QueryKeys.selectionStates.byContest(contest.id),
     ],
     onError: (error) => {
@@ -313,8 +313,8 @@ export function ContestEventsPage() {
   const { leagueCode = '', contestId = '' } = useParams<{ leagueCode: string; contestId: string }>();
   // `CommissionerRouteGuard` has loaded the league and admitted the viewer before this renders.
   const { league } = useLeagueContext(leagueCode);
-  const contestsQuery = useLeagueContestsQuery(league?.id ?? '');
-  const contest = contestsQuery.data?.find((candidate) => candidate.id === contestId) ?? null;
+  const contestQuery = useContestQuery(contestId);
+  const contest = contestQuery.data ?? null;
   const firstEventQuery = useQuery(sportEventQueryOptions((contest ? firstContestEvent(contest)?.sportEventId : undefined) ?? ''));
   const firstEvent = firstEventQuery.data;
   const sportLeagueId = firstEvent?.sportLeagueId ?? null;
@@ -336,13 +336,14 @@ export function ContestEventsPage() {
   if (!league) {
     return null;
   }
-  if (contestsQuery.isLoading || firstEventQuery.isLoading || eventYearsQuery.isLoading) {
+  if (contestQuery.isLoading || firstEventQuery.isLoading || eventYearsQuery.isLoading) {
     return <LoadingState body="Loading events..." testId="contest-events-loading" />;
   }
-  // A missing contest, a final one, one that covers a single event (a draw, a bracket), or a read that failed goes back to the contest
-  // page, which says why.
+  // A missing contest or another league's, a final one, one that covers a single event (a draw, a bracket), or a read that failed
+  // goes back to the contest page, which says why.
   if (
     !contest
+    || contest.leagueId !== league.id
     || !firstEvent
     || !eventYearsQuery.data
     || contest.status === ContestStatus.COMPLETED

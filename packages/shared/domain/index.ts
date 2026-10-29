@@ -87,6 +87,7 @@ export type {
   PlatformRuntimeConfig,
   PlatformRuntimeConfigChange,
   ProviderSyncRun,
+  ProviderSyncRunWithDetails,
   SportConfig,
   Squad,
   SquadMembership,
@@ -95,3 +96,4 @@ export type {
   TierDefinition,
   User,
 } from './types';
+export * from './platform-search';

@@ -3,51 +3,98 @@
  * participant round: one row per round and stat, its key a Postgres enum.
  */
 
-import type { PrismaClient } from '@prisma/client';
+import type { Prisma, PrismaClient } from '@prisma/client';
 import type { GameStatLineWrite, SportEventParticipantStatLineRepository } from '@poolmaster/shared/db';
-import type { SportEventParticipantStatLine } from '@poolmaster/shared/domain';
+import { ParticipantRoundStatus, type SportEventParticipantStatLine, type SportStat } from '@poolmaster/shared/domain';
 
 export class PrismaSportEventParticipantStatLineRepository implements SportEventParticipantStatLineRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
-  async findBySportEvent(sportEventId: string): Promise<SportEventParticipantStatLine[]> {
-    const rows = await this.prisma.sportEventParticipantStatLine.findMany({
-      where: { participantRound: { sportEventParticipant: { sportEventId } } },
-      orderBy: [{ participantRoundId: 'asc' }, { stat: 'asc' }],
-    });
-    return rows.map((row) => ({
-      id: row.id,
-      participantRoundId: row.participantRoundId,
-      stat: row.stat,
-      value: row.value,
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
-    }));
-  }
-
+  /**
+   * A fixed handful of statements whatever the box score's size (#1183): the stored rounds
+   * and lines are read at once, an unchanged line is left alone, and the rest are deleted,
+   * updated and created in bulk.
+   */
   async replaceGameLines(writes: readonly GameStatLineWrite[]): Promise<void> {
+    if (writes.length === 0) return;
     await this.prisma.$transaction(async (tx) => {
-      for (const { sportEventParticipantId, sportEventRoundId, stats, completedAt } of writes) {
-        const key = { sportEventParticipantId_sportEventRoundId: { sportEventParticipantId, sportEventRoundId } };
-        const existing = await tx.sportEventParticipantRound.findUnique({ where: key, select: { id: true } });
-        if (existing) {
-          await tx.sportEventParticipantStatLine.deleteMany({ where: { participantRoundId: existing.id } });
-        }
-        if (stats.length === 0) {
+      const stored = await tx.sportEventParticipantRound.findMany({
+        where: {
+          sportEventParticipantId: { in: [...new Set(writes.map((write) => write.sportEventParticipantId))] },
+          sportEventRoundId: { in: [...new Set(writes.map((write) => write.sportEventRoundId))] },
+        },
+        select: { id: true, sportEventParticipantId: true, sportEventRoundId: true, status: true, statLines: { select: { stat: true, value: true } } },
+      });
+      const storedByKey = new Map(stored.map((round) => [roundKey(round), round]));
+
+      const cleared: string[] = [];
+      const rewritten: Array<{ roundId: string; write: GameStatLineWrite }> = [];
+      const added: GameStatLineWrite[] = [];
+      for (const write of writes) {
+        const existing = storedByKey.get(roundKey(write));
+        if (write.stats.length === 0) {
           // No line: the player did not play the game, so they have no round in it either.
-          if (existing) await tx.sportEventParticipantRound.delete({ where: { id: existing.id } });
-          continue;
+          if (existing) cleared.push(existing.id);
+        } else if (!existing) {
+          added.push(write);
+        } else if (existing.status !== ParticipantRoundStatus.COMPLETED || !sameLine(existing.statLines, write.stats)) {
+          rewritten.push({ roundId: existing.id, write });
         }
-        const round = await tx.sportEventParticipantRound.upsert({
-          where: key,
-          create: { sportEventParticipantId, sportEventRoundId, status: 'COMPLETED', completedAt },
-          update: { status: 'COMPLETED', completedAt },
-          select: { id: true },
-        });
-        await tx.sportEventParticipantStatLine.createMany({
-          data: stats.map(({ stat, value }) => ({ participantRoundId: round.id, stat, value })),
-        });
+      }
+
+      const replacedRoundIds = [...cleared, ...rewritten.map(({ roundId }) => roundId)];
+      if (replacedRoundIds.length > 0) {
+        await tx.sportEventParticipantStatLine.deleteMany({ where: { participantRoundId: { in: replacedRoundIds } } });
+      }
+      if (cleared.length > 0) {
+        await tx.sportEventParticipantRound.deleteMany({ where: { id: { in: cleared } } });
+      }
+      // One game's lines are written together, so they share one completedAt; grouping keeps
+      // this one statement either way.
+      const rewrittenByCompletedAt = new Map<number, string[]>();
+      for (const { roundId, write } of rewritten) {
+        const at = write.completedAt.getTime();
+        rewrittenByCompletedAt.set(at, [...(rewrittenByCompletedAt.get(at) ?? []), roundId]);
+      }
+      for (const [at, ids] of rewrittenByCompletedAt) {
+        // poolmaster-allow-query-in-loop: one updateMany per distinct completion time; one game's lines share one
+        await tx.sportEventParticipantRound.updateMany({ where: { id: { in: ids } }, data: { status: ParticipantRoundStatus.COMPLETED, completedAt: new Date(at) } });
+      }
+      const created = added.length === 0 ? [] : await tx.sportEventParticipantRound.createManyAndReturn({
+        data: added.map(({ sportEventParticipantId, sportEventRoundId, completedAt }) => ({ sportEventParticipantId, sportEventRoundId, status: ParticipantRoundStatus.COMPLETED, completedAt })),
+        select: { id: true, sportEventParticipantId: true, sportEventRoundId: true },
+      });
+      const createdIdByKey = new Map(created.map((round) => [roundKey(round), round.id]));
+
+      const lines = [
+        ...rewritten.flatMap(({ roundId, write }) => write.stats.map(({ stat, value }) => ({ participantRoundId: roundId, stat, value }))),
+        ...added.flatMap((write) => write.stats.map(({ stat, value }) => ({ participantRoundId: createdIdByKey.get(roundKey(write)) as string, stat, value }))),
+      ];
+      if (lines.length > 0) {
+        await tx.sportEventParticipantStatLine.createMany({ data: lines });
       }
     });
   }
+}
+
+function roundKey(round: { sportEventParticipantId: string; sportEventRoundId: string }): string {
+  return `${round.sportEventParticipantId}:${round.sportEventRoundId}`;
+}
+
+/** Whether a stored line holds exactly these stats and values. */
+function sameLine(stored: ReadonlyArray<{ stat: SportStat; value: number }>, stats: ReadonlyArray<{ stat: SportStat; value: number }>): boolean {
+  if (stored.length !== stats.length) return false;
+  const storedValues = new Map(stored.map(({ stat, value }) => [stat, value]));
+  return stats.every(({ stat, value }) => storedValues.get(stat) === value);
+}
+
+export function toStatLine(row: Prisma.SportEventParticipantStatLineGetPayload<object>): SportEventParticipantStatLine {
+  return {
+    id: row.id,
+    participantRoundId: row.participantRoundId,
+    stat: row.stat,
+    value: row.value,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+  };
 }

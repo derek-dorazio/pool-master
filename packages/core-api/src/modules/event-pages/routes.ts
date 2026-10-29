@@ -10,7 +10,10 @@ import { schemaRef } from '@poolmaster/shared/dto/schema-registry';
 import '@poolmaster/shared/dto';
 import { schemaComponentsPlugin } from '../../plugins/schema-components';
 import { getAppPrisma } from '../../core/prisma-context';
+import { readPublicReadCacheTtlMs } from '../../core/public-cache';
+import { ReadCache } from '../../core/read-cache';
 import { createEventPageHandlers } from './handler';
+import type { EventPageView } from './service';
 import { createEventPageService } from './wiring';
 
 const TAGS = ['Event pages'];
@@ -27,13 +30,19 @@ const PAGE_PARAMS = {
 
 export function eventPagesModule(fastify: FastifyInstance): void {
   void fastify.register(schemaComponentsPlugin);
-  const handlers = createEventPageHandlers(createEventPageService(getAppPrisma(fastify), fastify.log));
+  // No write reaches these caches: the pages are seeded by migration, and an offer's edition and
+  // whether it opens follow the events, so each task's copy is at most one TTL old (#1181).
+  const ttlMs = readPublicReadCacheTtlMs(process.env);
+  const handlers = createEventPageHandlers(createEventPageService(getAppPrisma(fastify), fastify.log), {
+    lists: new ReadCache<EventPageView[]>(ttlMs),
+    pages: new ReadCache<EventPageView>(ttlMs),
+  });
 
   fastify.get('/', {
     schema: {
       tags: TAGS,
       summary: 'List event pages',
-      description: `The active event pages, of one sport or every sport, each with its offers and their next editions, for How to Play's and the welcome page's Coming up row. ${PUBLIC}`,
+      description: `The active event pages, of one sport or every sport, each with its offers and their next editions; with \`upcoming=true\`, only the pages with an edition coming, soonest first, for How to Play's and the welcome page's Coming up row. ${PUBLIC}`,
       operationId: 'listEventPages',
       querystring: schemaRef('EventPageListQuery'),
       response: { 200: schemaRef('EventPageListResponse') },

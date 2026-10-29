@@ -353,6 +353,63 @@ describe('SportEventTierService — prices and the contest-side read', () => {
     ]);
     await expect(service.getEffectiveTiersForSportEvent(event.id)).resolves.toEqual([]);
   });
+
+  it('answers the tiers and the valuations from one read, and reads no field when the caller hands it the field (#1196)', async () => {
+    const { store, event } = setup();
+    await store.tierRepo().createMany(event.id, [TWO_TIERS[0]]);
+    const [tier] = store.tierRows;
+    const entry = store.addToField(event.id, 'p-1');
+    await store.valuationRepo().assignTiers([{ sportEventParticipantId: entry.id, sportEventTierId: tier.id, tierOrderIndex: 1, source: 'MANUAL' }]);
+    const field = store.fieldRepo();
+    const findBySportEvent = jest.spyOn(field, 'findBySportEvent');
+    const tiers = store.tierRepo();
+    const findTiers = jest.spyOn(tiers, 'findBySportEvent');
+    const service = new SportEventTierService({ sportEvents: store.sportEventRepo(), tiers, valuations: store.valuationRepo(), field });
+    const heldField = await store.fieldRepo().findBySportEvent(event.id);
+
+    const both = await service.getEffectiveTiersAndValuations(event.id, heldField);
+
+    expect(both.tiers).toEqual([expect.objectContaining({ id: tier.id, participants: [expect.objectContaining({ participantId: 'p-1' })] })]);
+    expect(both.valuations).toEqual([expect.objectContaining({ participantId: 'p-1', tierId: tier.id, tierLabel: tier.label })]);
+    expect(findTiers).toHaveBeenCalledTimes(1);
+    expect(findBySportEvent).not.toHaveBeenCalled();
+  });
+
+  it('answers several events\' tiers from one read each of tiers, valuations and fields, each event with its own tiers and an untiered one with none', async () => {
+    const { store, event } = setup();
+    const second = store.addEvent({ status: SportEventStatus.DRAFT });
+    const untiered = store.addEvent({ status: SportEventStatus.DRAFT });
+    await store.tierRepo().createMany(event.id, TWO_TIERS);
+    await store.tierRepo().createMany(second.id, [TWO_TIERS[0]]);
+    const [first1, first2, second1] = store.tierRows;
+    const firstEntry = store.addToField(event.id, 'p-1');
+    const secondEntry = store.addToField(event.id, 'p-2');
+    const otherEntry = store.addToField(second.id, 'p-3');
+    await store.valuationRepo().assignTiers([
+      { sportEventParticipantId: firstEntry.id, sportEventTierId: first2.id, tierOrderIndex: 1, source: 'MANUAL' },
+      { sportEventParticipantId: secondEntry.id, sportEventTierId: first1.id, tierOrderIndex: 1, source: 'MANUAL' },
+      { sportEventParticipantId: otherEntry.id, sportEventTierId: second1.id, tierOrderIndex: 1, source: 'MANUAL' },
+    ]);
+    const tiers = store.tierRepo();
+    const valuations = store.valuationRepo();
+    const field = store.fieldRepo();
+    const reads = [
+      jest.spyOn(tiers, 'findBySportEvents'),
+      jest.spyOn(valuations, 'findBySportEvents'),
+      jest.spyOn(field, 'findBySportEvents'),
+    ];
+    const service = new SportEventTierService({ sportEvents: store.sportEventRepo(), tiers, valuations, field });
+
+    const byEvent = await service.getEffectiveTiersForSportEvents([event.id, second.id, untiered.id]);
+
+    const placed = (sportEventId: string) => (byEvent.get(sportEventId) ?? [])
+      .map((group) => [group.tierKey, group.participants.map((participant) => participant.participantId)]);
+    expect(placed(event.id)).toEqual([['tier-1', ['p-2']], ['tier-2', ['p-1']]]);
+    expect(placed(second.id)).toEqual([['tier-1', ['p-3']]]);
+    expect(byEvent.get(untiered.id)).toEqual([]);
+    expect(await service.getEffectiveTiersForSportEvent(event.id)).toEqual(byEvent.get(event.id));
+    for (const read of reads) expect(read).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe('SportEventTierService — locked once the event is released (#431)', () => {

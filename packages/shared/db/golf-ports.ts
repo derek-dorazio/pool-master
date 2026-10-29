@@ -20,14 +20,12 @@ export interface GolfRoundWrite {
 }
 
 export interface SportEventParticipantGolfRoundRepository {
-  /** Every scored round at the event, by participant then round number. */
-  findBySportEvent(sportEventId: string): Promise<GolfRoundResult[]>;
   findBySportEventRound(sportEventRoundId: string): Promise<GolfRoundResult[]>;
   /** By participant then round number. */
   findBySportEventParticipants(sportEventParticipantIds: readonly string[]): Promise<GolfRoundResult[]>;
   upsert(write: GolfRoundWrite): Promise<GolfRoundResult>;
-  /** All or none. */
-  upsertMany(writes: readonly GolfRoundWrite[]): Promise<void>;
+  /** All or none, in one transaction. Results are in `writes` order. */
+  upsertMany(writes: readonly GolfRoundWrite[]): Promise<GolfRoundResult[]>;
 }
 
 export interface GolfStandingWrite {
@@ -45,11 +43,12 @@ export interface GolfStandingWrite {
 export interface SportEventParticipantGolfStandingRepository {
   findBySportEvent(sportEventId: string): Promise<GolfStandingResult[]>;
   findBySportEventParticipants(sportEventParticipantIds: readonly string[]): Promise<GolfStandingResult[]>;
-  upsert(write: GolfStandingWrite): Promise<GolfStandingResult>;
+  /** All or none, in one transaction. Results are in `writes` order. */
+  upsertMany(writes: readonly GolfStandingWrite[]): Promise<GolfStandingResult[]>;
   /**
    * Writes the event-side rank onto core standing rows (`position`, `displayPosition`). The
-   * ranks are computed from every golfer's score at once, so this is a separate write from
-   * `upsert`, which touches one golfer.
+   * ranks are computed from every golfer's score at once, after the standings are written, so
+   * this is a separate write from `upsertMany`.
    */
   updateRanks(ranks: ReadonlyArray<StandingRankWrite>): Promise<void>;
 }

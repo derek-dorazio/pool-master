@@ -15,10 +15,14 @@ import type {
   IngestionJobRecord,
 } from '../../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';
 import type { NormalizedSyncRequest } from '../../../packages/core-api/src/modules/ingestion/core/sync-orchestrator';
-import type { StoredSyncRunPayload } from '../../support/sync-run-payload';
+import type { StoredSyncRunDetails, StoredSyncRunPayload } from '../../support/sync-run-payload';
+
+/** A run's summary and its detailed diagnostics, read together. */
+type StoredSyncRun = StoredSyncRunPayload & StoredSyncRunDetails;
 
 function createLedgerStore() {
   const rows = new Map<string, ProviderSyncRun>();
+  const details = new Map<string, Record<string, unknown>>();
   let nextId = 1;
 
   const syncRuns: ProviderSyncRunRepository = {
@@ -44,8 +48,10 @@ function createLedgerStore() {
         completedAt: update.completedAt ?? current.completedAt,
         payload: update.payload,
       });
+      if (update.details) details.set(id, update.details);
     }),
     findAll: jest.fn(),
+    findById: jest.fn(),
   };
 
   return {
@@ -56,6 +62,9 @@ function createLedgerStore() {
         throw new Error(`Missing sync run ${syncRun.id}`);
       }
       return row;
+    },
+    detailsFor(syncRun: ProviderSyncRun) {
+      return details.get(syncRun.id) ?? {};
     },
   };
 }
@@ -123,11 +132,11 @@ function createJob(input: {
   };
 }
 
-function clonePayload(payload: unknown): StoredSyncRunPayload {
-  return JSON.parse(JSON.stringify(payload)) as StoredSyncRunPayload;
+function clonePayload(payload: unknown): StoredSyncRun {
+  return JSON.parse(JSON.stringify(payload)) as StoredSyncRun;
 }
 
-function stripAllowedSourceDifferences(payload: unknown): StoredSyncRunPayload {
+function stripAllowedSourceDifferences(payload: unknown): StoredSyncRun {
   const clone = clonePayload(payload);
   delete clone.runType;
   if (clone.requestPayload) {
@@ -142,7 +151,7 @@ async function runAndReadPayload(input: {
   runType: string;
   job: IngestionJobRecord;
 }): Promise<unknown> {
-  const { ledger, rowFor } = createLedgerStore();
+  const { ledger, rowFor, detailsFor } = createLedgerStore();
   const syncRuns = await ledger.createSubmissions({
     normalizedRequest: input.normalizedRequest,
     providerId: 'mock-provider',
@@ -155,7 +164,7 @@ async function runAndReadPayload(input: {
   }
 
   await ledger.executeFeedRun(syncRun, async () => input.job);
-  return rowFor(syncRun).payload;
+  return { ...rowFor(syncRun).payload, ...detailsFor(syncRun) };
 }
 
 describe('sync orchestration equivalence', () => {

@@ -118,21 +118,26 @@ describe('LeagueService — finding leagues', () => {
     await expect(serviceFor(world).findByCode('mixed')).resolves.toMatchObject({ id: league.id });
   });
 
-  it('returns a league with only its ACTIVE members by code, and null for an unknown code', async () => {
+  it('finds a league by code with the viewer\'s own membership of any status, null for a non-member, and null for an unknown code or id', async () => {
     const world = inMemoryLeagueWorld();
     const league = world.addLeague({ leagueCode: 'ROSTER' });
     const active = world.addUser();
     const removed = world.addUser();
+    const outsider = world.addUser();
     world.addMember({ league, user: active, role: LeagueRole.COMMISSIONER });
     const { membership } = world.addMember({ league, user: removed });
     world.tables.memberships.patch(membership.id, { status: LeagueMembershipStatus.INACTIVE });
     const service = serviceFor(world);
 
-    const found = await service.getLeagueWithMembersByCode('roster');
-    expect(found?.league.id).toBe(league.id);
-    expect(found?.members.map((member) => member.userId)).toEqual([active.id]);
-    await expect(service.getLeagueWithMembersByCode('MISSING')).resolves.toBeNull();
-    await expect(service.getLeagueWithMembers('missing')).resolves.toBeNull();
+    const asActive = await service.getLeagueByCodeForViewer('roster', active.id);
+    expect(asActive?.league.id).toBe(league.id);
+    expect(asActive?.membership).toMatchObject({ userId: active.id, status: LeagueMembershipStatus.ACTIVE });
+    const asRemoved = await service.getLeagueByCodeForViewer('ROSTER', removed.id);
+    expect(asRemoved?.membership).toMatchObject({ userId: removed.id, status: LeagueMembershipStatus.INACTIVE });
+    const asOutsider = await service.getLeagueForViewer(league.id, outsider.id);
+    expect(asOutsider).toEqual({ league: expect.objectContaining({ id: league.id }), membership: null });
+    await expect(service.getLeagueByCodeForViewer('MISSING', active.id)).resolves.toBeNull();
+    await expect(service.getLeagueForViewer('missing', active.id)).resolves.toBeNull();
   });
 });
 

@@ -450,7 +450,7 @@ describe('SportEventService — read, update, delete', () => {
     store.contestsByEvent.set(event.id, 2);
     store.addToField(event.id, 'participant-x');
 
-    const [summary] = await service.listEvents({}, { adminCounts: true });
+    const [summary] = await service.listEvents({ eventYear: event.eventYear }, { adminCounts: true });
 
     expect(summary).toMatchObject({
       loadedParticipantCount: 1,
@@ -473,7 +473,7 @@ describe('SportEventService — read, update, delete', () => {
       jest.spyOn(sportEvents, 'countContests'),
     ];
 
-    const [summary] = await service.listEvents({}, { adminCounts: false });
+    const [summary] = await service.listEvents({ eventYear: event.eventYear }, { adminCounts: false });
 
     expect(summary).toMatchObject({ loadedParticipantCount: 1, tierCount: 0, adminCounts: null });
     for (const count of adminCounts) {
@@ -488,7 +488,7 @@ describe('SportEventService — read, update, delete', () => {
     store.addEvent({ status: SportEventStatus.COMPLETED });
 
     const listed = await service.listEvents(
-      { statuses: [SportEventStatus.SCHEDULED, SportEventStatus.IN_PROGRESS] },
+      { eventYear: 2026, statuses: [SportEventStatus.SCHEDULED, SportEventStatus.IN_PROGRESS] },
       { adminCounts: false },
     );
 
@@ -516,6 +516,14 @@ describe('SportEventService — read, update, delete', () => {
 
     await expect(service.listEventYears(sportLeague.id, { releasedOnly: false })).resolves.toEqual([2025, 2026, 2027]);
     await expect(service.listEventYears(sportLeague.id, { releasedOnly: true })).resolves.toEqual([2025, 2026]);
+  });
+
+  it('refuses to list every event: a sport, a sport league or a year is required', async () => {
+    const { store, service } = setup();
+    store.addEvent();
+
+    await expect(service.listEvents({})).rejects.toMatchObject({ code: 'SPORT_EVENT_FILTER_REQUIRED', statusCode: 400 });
+    await expect(service.listEvents({ status: SportEventStatus.DRAFT })).rejects.toMatchObject({ code: 'SPORT_EVENT_FILTER_REQUIRED', statusCode: 400 });
   });
 
   it('updates an admin-managed event, clearing a field set to null', async () => {
@@ -746,7 +754,7 @@ describe('event read handlers count admin numbers for a root admin only (#1198)'
     const event = store.addEvent({ status: SportEventStatus.SCHEDULED });
     store.contestsByEvent.set(event.id, 3);
 
-    const response = await handlers.listEvents(asFastifyRequest<ListEventsRequest>({ query: {}, authUser: MEMBER, log }));
+    const response = await handlers.listEvents(asFastifyRequest<ListEventsRequest>({ query: { eventYear: 2026 }, authUser: MEMBER, log }));
 
     expect(response.events).toEqual([expect.objectContaining({ id: event.id, adminCounts: null })]);
     expect(countContests).not.toHaveBeenCalled();
@@ -757,7 +765,7 @@ describe('event read handlers count admin numbers for a root admin only (#1198)'
     const event = store.addEvent({ status: SportEventStatus.DRAFT });
     store.contestsByEvent.set(event.id, 3);
 
-    const response = await handlers.listEvents(asFastifyRequest<ListEventsRequest>({ query: {}, authUser: ROOT_ADMIN, log }));
+    const response = await handlers.listEvents(asFastifyRequest<ListEventsRequest>({ query: { eventYear: 2026 }, authUser: ROOT_ADMIN, log }));
 
     expect(response.events).toEqual([expect.objectContaining({ id: event.id, adminCounts: expect.objectContaining({ contestCount: 3 }) })]);
   });
@@ -768,7 +776,7 @@ describe('event read handlers count admin numbers for a root admin only (#1198)'
     store.addEvent({ status: SportEventStatus.COMPLETED });
 
     const response = await handlers.listEvents(asFastifyRequest<ListEventsRequest>({
-      query: { status: [SportEventStatus.SCHEDULED, SportEventStatus.IN_PROGRESS] },
+      query: { eventYear: 2026, status: [SportEventStatus.SCHEDULED, SportEventStatus.IN_PROGRESS] },
       authUser: MEMBER,
       log,
     }));

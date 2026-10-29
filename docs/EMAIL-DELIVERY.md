@@ -31,7 +31,10 @@ Every email is a row in `email_messages` (#844 slice 3), one per recipient:
   (`email.sender.expired`). Emails with a window are claimed ahead of the rest, so a reset never
   waits behind a large send.
 - **Content is cleared after 30 days**; the row stays, so "why didn't I get it?" still has an
-  answer.
+  answer. The hourly sweep clears the emails that crossed 30 days in the past week, so it reads
+  the `created_at` index rather than every email it already cleared.
+- **The row is deleted after 13 months**, by the nightly cleanup (`core/nightly-cleanup.ts`, the
+  `emailMessages` count in its `nightlyCleanup.completed` log line).
 - **After it is sent**, SES reports what happened, and the row moves on from `SENT` to
   `DELIVERED`, `BOUNCED` or `COMPLAINED`, or to `FAILED` when SES rejected it (*Bounces and
   Complaints* below).

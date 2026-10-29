@@ -17,6 +17,7 @@ import { ParticipantService } from './service';
 import { createParticipantHandlers } from './handler';
 import { requireRootAdmin } from '../../core/root-admin-guard';
 import { getAppPrisma } from '../../core/prisma-context';
+import { eventFieldCache } from '../events/wiring';
 import type { ProviderRegistry } from '../ingestion/core/provider-registry';
 
 export interface ParticipantsModuleOptions {
@@ -38,6 +39,13 @@ export function participantsModule(fastify: FastifyInstance, opts: ParticipantsM
 
   const handler = createParticipantHandlers(participantService, opts.providerRegistry);
 
+  // A write here changes what every event's field shows of a participant (#1163): its name,
+  // photo or status. Rare enough to forget every event field this container read.
+  fastify.addHook('onSend', async (request, _reply, payload) => {
+    if (request.method !== 'GET' && request.method !== 'HEAD') eventFieldCache.clear();
+    return payload;
+  });
+
   // --- Search / List ---
 
   fastify.get('/', {
@@ -45,12 +53,13 @@ export function participantsModule(fastify: FastifyInstance, opts: ParticipantsM
       tags: ['Participants'],
       summary: 'List participants',
       description:
-        'The participant catalog, narrowed by text and filters and never paged. Any signed-in user may read it: '
+        'The participant catalog, narrowed by text and filters and never paged. `sportId` or a `q` of at least 3 characters is required, so the list never reads every sport\'s catalog: 400 SEARCH_TERM_REQUIRED otherwise. Any signed-in user may read it: '
         + 'contest setup and ingestion mapping browse it, and a root admin maintains it.',
       operationId: 'listParticipants',
       querystring: schemaRef('ParticipantListQuery'),
       response: {
         200: schemaRef('ParticipantListResponse'),
+        400: schemaRef('ErrorEnvelope'),
       },
     },
     handler: handler.searchParticipants,

@@ -319,6 +319,10 @@ export const LeagueContextResponseSchema = z.object({
     .describe("The viewer's membership in this league, or null when they have none."),
   squadMembership: SquadMembershipDtoSchema.nullable()
     .describe("The viewer's squad membership within this league, or null when they hold none."),
+  squadName: z.string().nullable()
+    .describe("The name of the squad in squadMembership, or null when squadMembership is null. The league menu names the viewer's team from it."),
+  activeTeamCount: z.number().int()
+    .describe('How many of the league\'s teams are active: the most entries an open contest can expect, one per team.'),
 }).describe("A league together with the viewer's own membership edges in it. Fetched once per league; nothing else repeats this context.");
 export type LeagueContextResponse = z.infer<typeof LeagueContextResponseSchema>;
 
@@ -346,7 +350,7 @@ export const LeagueListQuerySchema = z.object({
     .trim()
     .min(1)
     .optional()
-    .describe('Optional case-insensitive substring matched against the league name. A filter, never a slice — see §16.'),
+    .describe("Case-insensitive substring matched against the league name. A filter, never a slice — see §16. Optional for 'mine'; required for 'all', at least 3 characters."),
   isActive: z
     .boolean()
     .optional()

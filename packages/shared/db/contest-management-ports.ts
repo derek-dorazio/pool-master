@@ -10,11 +10,8 @@ import type {
 
 export interface ContestConfigurationRepository {
   findByContest(contestId: string): Promise<ContestConfiguration | null>;
-  /**
-   * The configurations of contests made from a template that covers this event series (#714),
-   * matched by the series' name within its sport league; oldest first.
-   */
-  findByTemplateEventSeries(eventSeriesId: string): Promise<ContestConfiguration[]>;
+  /** Several contests' configurations in one read; a contest with none is left out. */
+  findByContests(contestIds: readonly string[]): Promise<ContestConfiguration[]>;
   create(
     configuration: Omit<ContestConfiguration, 'id' | 'createdAt' | 'updatedAt'>,
   ): Promise<ContestConfiguration>;
@@ -50,7 +47,8 @@ export interface ParticipantContestScoringRuleRepository {
   create(
     rule: ParticipantContestScoringRuleCreate,
   ): Promise<ParticipantContestScoringRule>;
-  delete(id: string): Promise<void>;
+  /** Removes every rule of one configuration in one statement, before its scoring is replaced. */
+  deleteByContestConfiguration(contestConfigurationId: string): Promise<void>;
 }
 
 /** The participant a pick points at, as a contest entry shows it. */
@@ -61,6 +59,11 @@ export interface ContestEntryPickParticipant {
   inactiveReason: ParticipantInactiveReason | null;
   role: string | null;
   teamAffiliation: string | null;
+}
+
+/** A pick with the event its field row belongs to (#1162). */
+export interface ContestEntryEventPick extends ContestEntryPick {
+  sportEventId: string;
 }
 
 export interface ContestEntryPickWithParticipant extends ContestEntryPick {
@@ -78,8 +81,20 @@ export interface ContestEntryPickWithParticipant extends ContestEntryPick {
  * means none can. Every order is pick time, then id.
  */
 export interface ContestEntryPickRepository {
-  findByEntries(entryIds: readonly string[]): Promise<ContestEntryPick[]>;
-  findByEntriesWithParticipant(entryIds: readonly string[]): Promise<ContestEntryPickWithParticipant[]>;
+  /**
+   * The entries' picks in the events asked for alone (#1162), each with its event: a leaderboard
+   * reads only the events it scores, not every pick the entries made across the contest.
+   */
+  findByEntriesAndEvents(entryIds: readonly string[], sportEventIds: readonly string[]): Promise<ContestEntryEventPick[]>;
+  /**
+   * The entries' picks with their field rows. With a `sportEventId`, only the picks in that one
+   * event, filtered in the query (#1196): a lineup is one event's picks (#713), and a season
+   * contest holds every week's.
+   */
+  findByEntriesWithParticipant(
+    entryIds: readonly string[],
+    options?: { sportEventId?: string },
+  ): Promise<ContestEntryPickWithParticipant[]>;
   /** Picks per entry; an entry with none is absent from the map. */
   countByEntries(entryIds: readonly string[]): Promise<Map<string, number>>;
   /** How many picks the whole contest holds — the source of a pick's contest-wide pick number. */

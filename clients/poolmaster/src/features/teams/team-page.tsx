@@ -10,7 +10,6 @@ import {
 } from '@/features/leagues/league-routing';
 import { useLeagueContextGuard } from '@/features/leagues/league-context-guard';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
-import { useLeagueMembersQuery } from '@/features/leagues/use-league-members-query';
 import {
   Chip,
   EmptyState,
@@ -19,9 +18,10 @@ import {
   LinkButton,
   LoadingState,
 } from '@/features/shared/ui';
+import { hasErrorCode } from '@/lib/errors';
 import { formatOwnerCount, getActiveOwners } from './team-directory';
 import { TeamIcon } from './team-icon';
-import { useLeagueSquadsQuery } from './use-league-squads-query';
+import { useLeagueSquadQuery } from './use-league-squad-query';
 
 /**
  * Another team's page: read-only for every member, with its owners and its year in the
@@ -32,8 +32,7 @@ export function TeamPage() {
   const { leagueCode = '', teamId = '' } = useParams<{ leagueCode: string; teamId: string }>();
   const { query: leagueQuery, league, viewer } = useLeagueContext(leagueCode);
   const leagueId = league?.id ?? '';
-  const teamsQuery = useLeagueSquadsQuery(leagueId);
-  const { membersByUserId } = useLeagueMembersQuery(leagueId);
+  const teamQuery = useLeagueSquadQuery(leagueId, teamId);
 
   const leagueContext = useLeagueContextGuard(leagueQuery, { loadingBody: 'Loading this member...' });
   if (leagueContext.state === 'blocked' || !league) {
@@ -42,14 +41,13 @@ export function TeamPage() {
   if (teamId === viewer.mySquadId) {
     return <Navigate replace to={buildLeagueTeamPath(leagueCode)} />;
   }
-  if (teamsQuery.isLoading) {
+  if (teamQuery.isLoading) {
     return <LoadingState body="Loading this member..." testId="team-page-loading" />;
   }
-  if (teamsQuery.isError) {
-    return <ErrorState body="We couldn't load this league's members." testId="team-page-error" title="Member unavailable" />;
+  const team = teamQuery.data;
+  if (teamQuery.isError && !hasErrorCode(teamQuery.error, 'SQUAD_NOT_FOUND')) {
+    return <ErrorState body="We couldn't load this member." testId="team-page-error" title="Member unavailable" />;
   }
-
-  const team = teamsQuery.data?.find((candidate) => candidate.id === teamId);
   if (!team) {
     return (
       <EmptyState
@@ -93,7 +91,7 @@ export function TeamPage() {
                 <Link className="font-medium text-foreground hover:underline" to={buildUserPath(owner.userId)}>
                   {formatUserName(owner.user.firstName, owner.user.lastName)}
                 </Link>
-                {membersByUserId.get(owner.userId)?.role === LeagueRole.COMMISSIONER ? <Chip>Commissioner</Chip> : null}
+                {owner.leagueRole === LeagueRole.COMMISSIONER ? <Chip>Commissioner</Chip> : null}
               </li>
             ))}
           </ul>

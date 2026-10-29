@@ -13,7 +13,7 @@ import type {
   ProviderSyncRunRepository,
   SportEventRepository,
 } from '@poolmaster/shared/db';
-import { type Sport, SportEventSyncScope, type ProviderSyncRun, type ProviderSyncRunStatus } from '@poolmaster/shared/domain';
+import { type Sport, SportEventSyncScope, type ProviderSyncRun, type ProviderSyncRunStatus, type ProviderSyncRunWithDetails } from '@poolmaster/shared/domain';
 import type { ProviderRegistry } from './core/provider-registry';
 import type { SportDataProvider } from './core/provider-interface';
 import { supportsLiveSimulation, supportsMockEventStateControls } from './core/provider-interface';
@@ -32,6 +32,7 @@ import {
   isEventSyncFeedType,
   readPayload,
 } from './persistence/provider-sync-run-ledger';
+import { outsideReadMemo } from '../../core/request-read-memo';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -90,6 +91,13 @@ export class SportProviderNotFoundError extends Error {
   constructor(sport: Sport) {
     super(`No provider is registered for sport ${sport}`);
     this.name = 'SportProviderNotFoundError';
+  }
+}
+
+export class ProviderSyncRunNotFoundError extends Error {
+  constructor(syncRunId: string) {
+    super(`No sync run ${syncRunId}`);
+    this.name = 'ProviderSyncRunNotFoundError';
   }
 }
 
@@ -226,6 +234,7 @@ export class IngestionService {
 
     for (const sport of await this.getConfiguredSportsForProvider(provider)) {
       const participants = await provider.getParticipants(sport);
+      // poolmaster-allow-query-in-loop: once per sport the provider is configured for, a handful
       const mapped = await this.participantMappings.findByProviderExternalIds(
         provider.providerId,
         participants.map((participant) => participant.externalId),
@@ -292,6 +301,13 @@ export class IngestionService {
     });
   }
 
+  /** One run with its detailed diagnostics, which the list leaves out (#1174). */
+  async getSyncRun(syncRunId: string): Promise<ProviderSyncRunWithDetails> {
+    const run = await this.syncRuns.findById(syncRunId);
+    if (!run) throw new ProviderSyncRunNotFoundError(syncRunId);
+    return run;
+  }
+
   async syncEventData(
     request: EventSyncRequest,
     rootAdminUserId: string,
@@ -352,13 +368,14 @@ export class IngestionService {
       runType: 'MANUAL_EVENT_SYNC',
     });
 
-    setImmediate(() => {
+    // Outside the request's read memo: the sync runs on after the response and reads afresh.
+    outsideReadMemo(() => setImmediate(() => {
       void this.executeSubmittedEventSync({
         scheduler,
         normalizedScope,
         syncRuns,
       });
-    });
+    }));
 
     this.logger?.info({
       sport: normalizedScope.sport,

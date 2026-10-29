@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useParams } from 'react-router';
-import { LeagueRole, LeagueMembershipStatus, PlanCap, PlanFeature, SquadMembershipStatus } from '@poolmaster/shared/domain';
+import { LeagueRole, LeagueMembershipStatus, PlanCap, PlanFeature } from '@poolmaster/shared/domain';
 import { formatUserName } from '@/features/account/user-name';
 import {
   Alert,
@@ -18,7 +18,6 @@ import { LeaguePaymentsSection } from '@/features/billing/payment-history-sectio
 import { hasPlanFeature } from '@/features/plans/plan-features';
 import { ExtendLeagueGift } from '@/features/plans/extend-league-gift';
 import { useAuth } from '@/features/auth/auth-context';
-import { useLeagueSquadsQuery } from '@/features/teams/use-league-squads-query';
 import { useSportLeaguesQuery } from '@/features/contest-types/use-sport-leagues-query';
 import {
   EVENT_EMAIL_DELIVERY_COPY,
@@ -52,24 +51,16 @@ export function LeagueSettingsPage() {
   const { league } = useLeagueContext(leagueCode);
   const leagueId = league?.id ?? '';
   const { members } = useLeagueMembersQuery(leagueId);
-  const squadsQuery = useLeagueSquadsQuery(leagueId);
   const sportLeaguesQuery = useSportLeaguesQuery();
   const { isRootAdmin } = useAuth();
 
-  // A commissioner is a membership role; their name comes from the team they own.
+  // A commissioner is a membership role, and the membership carries the member (#1202).
   const commissionerNames = useMemo(() => {
-    const commissionerUserIds = new Set(
-      (members ?? [])
-        .filter((member) => member.status === LeagueMembershipStatus.ACTIVE && member.role === LeagueRole.COMMISSIONER)
-        .map((member) => member.userId),
-    );
-    const names = (squadsQuery.data ?? []).flatMap((squad) =>
-      (squad.members ?? [])
-        .filter((member) => member.status === SquadMembershipStatus.ACTIVE && commissionerUserIds.has(member.user.id))
-        .map((member) => formatUserName(member.user.firstName, member.user.lastName)),
-    );
+    const names = (members ?? [])
+      .filter((member) => member.status === LeagueMembershipStatus.ACTIVE && member.role === LeagueRole.COMMISSIONER)
+      .map((member) => formatUserName(member.user.firstName, member.user.lastName));
     return [...new Set(names)].sort((left, right) => left.localeCompare(right));
-  }, [members, squadsQuery.data]);
+  }, [members]);
 
   // The guard above this page has already loaded the league context.
   if (!league) {
@@ -134,7 +125,7 @@ export function LeagueSettingsPage() {
           )}
           label="Commissioners"
           testId="league-settings-commissioners"
-          value={squadsQuery.isLoading || !members
+          value={!members
             ? <span className="text-muted-foreground">{LOADING_TEXT}</span>
             : commissionerNames.join(', ')}
         />

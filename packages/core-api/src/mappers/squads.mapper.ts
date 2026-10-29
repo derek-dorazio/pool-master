@@ -1,4 +1,5 @@
-import type { Squad, SquadMembership, User } from '@poolmaster/shared/domain';
+import type { SquadDetails } from '@poolmaster/shared/db';
+import { SquadMembershipStatus, type SquadMembership, type User } from '@poolmaster/shared/domain';
 import type { SquadDto, SquadMembershipDto } from '@poolmaster/shared/dto';
 import { toUserDto } from './users.mapper';
 
@@ -27,12 +28,11 @@ export function toSquadMembershipDto(
 /**
  * #202 step 3.4 — no viewer options bag. `teamRelationship` and `isRootAdmin` came off
  * `SquadDto` under access rule A8, and they were the only reason this took one.
+ *
+ * #1165 — takes the squad as one read with its owners, so the members and their count come
+ * from the same rows. `memberCount` counts the ACTIVE owners; `members` lists every one.
  */
-export function toSquadDto(
-  squad: Squad,
-  memberCount: number,
-  members?: SquadMembershipDto[],
-): SquadDto {
+export function toSquadDetailsDto(squad: SquadDetails): SquadDto {
   return {
     id: squad.id,
     leagueId: squad.leagueId,
@@ -40,9 +40,12 @@ export function toSquadDto(
     name: squad.name,
     iconKey: squad.iconKey,
     isActive: squad.isActive,
-    memberCount,
+    memberCount: squad.members.filter(({ membership }) => membership.status === SquadMembershipStatus.ACTIVE).length,
     createdAt: squad.createdAt.toISOString(),
     updatedAt: squad.updatedAt.toISOString(),
-    ...(members ? { members } : {}),
+    members: squad.members.map(({ membership, user, leagueRole }) => ({
+      ...toSquadMembershipDto(membership, user),
+      leagueRole,
+    })),
   };
 }

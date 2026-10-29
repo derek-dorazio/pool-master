@@ -3,7 +3,7 @@
  * lines, one per participant round and stat. The loader and the admin stat grid write them (#935).
  */
 
-import type { SportEventParticipantStatLine, SportStat } from '../domain';
+import type { SportStat } from '../domain';
 
 /** One player's whole line for one game, as it is to be stored. */
 export interface GameStatLineWrite {
@@ -16,8 +16,9 @@ export interface GameStatLineWrite {
 }
 
 export interface SportEventParticipantStatLineRepository {
-  /** Every stat line at the event, by participant round then stat. */
-  findBySportEvent(sportEventId: string): Promise<SportEventParticipantStatLine[]>;
-  /** Replaces each player's line for the game, all or none. */
+  /**
+   * Replaces each player's line for the game, all or none. A line that already holds exactly
+   * these stats is left as it is, its round's completedAt included.
+   */
   replaceGameLines(writes: readonly GameStatLineWrite[]): Promise<void>;
 }

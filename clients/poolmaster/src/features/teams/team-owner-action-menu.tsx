@@ -7,8 +7,9 @@ import { buildLeagueAdminTeamPath } from '@/features/leagues/league-routing';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
+import type { TeamMember } from './my-team-shared';
 
-type OwnerRole = 'COMMISSIONER' | 'MEMBER' | undefined;
+type OwnerRole = TeamMember['leagueRole'];
 type ActiveAction = 'promote' | 'demote' | 'remove' | null;
 
 function OwnerActionDialog({

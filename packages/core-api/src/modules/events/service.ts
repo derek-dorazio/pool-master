@@ -148,9 +148,16 @@ function isDateOnlyPlaceholder(start: Date): boolean {
 export class SportEventService {
   constructor(private readonly deps: SportEventServiceDeps) {}
 
-  /** The whole catalog for the filters — narrowed, never paged (§16). */
+  /**
+   * The whole catalog for the filters — narrowed, never paged (§16). A sport, sport league or
+   * event year is required (#1180), so the list never reads every event ever with its counts.
+   */
   async listEvents(filters: SportEventFilters, options: SportEventReadOptions): Promise<SportEventSummary[]> {
     this.deps.logger?.debug({ action: 'events.list.start', data: { ...filters } }, 'Listing sport events');
+    if (filters.sport === undefined && filters.sportLeagueId === undefined && filters.eventYear === undefined) {
+      this.deps.logger?.warn({ action: 'events.list.filterRequired', data: { ...filters } }, 'Rejected a sport event list without a sport, sport league or year');
+      throw new SportEventError('Choose a sport, a sport league or a year to list events.', 'SPORT_EVENT_FILTER_REQUIRED', 400);
+    }
     const events = await this.deps.sportEvents.findAll(filters);
     const summaries = options.adminCounts ? await this.summarizeForAdmin(events) : await this.summarize(events);
     this.deps.logger?.info({ action: 'events.list.success', data: { ...filters, count: events.length } }, 'Listed sport events');
@@ -269,6 +276,7 @@ export class SportEventService {
     const skipped: ProviderEventYearImport['skipped'] = [];
     for (const providerEvent of input.providerEvents) {
       const { externalId, name } = providerEvent;
+      // poolmaster-allow-query-in-loop: root-admin import of one tour's year, run by hand; each event goes through the single-event create
       if (await this.deps.sportEvents.findByProviderRef(input.providerId, externalId)) {
         skipped.push({ externalId, name, reason: 'ALREADY_LINKED' });
         continue;

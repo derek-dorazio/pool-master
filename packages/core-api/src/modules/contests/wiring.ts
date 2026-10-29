@@ -28,9 +28,11 @@ import {
 import type { EmailService } from '../email';
 import type { PlanEntitlementsService } from '../plans/plan-entitlements-service';
 import { createSportEventParticipantService, createSportEventTierService } from '../events/wiring';
+import type { SportEventParticipantService } from '../events/sport-event-participant-service';
 import { ContestSettlementService } from './contest-settlement-service';
 import type { BracketStandingsReadDeps } from './bracket-standings';
 import { ContestService } from './service';
+import { ContestLeaderboardCache, readLeaderboardCacheTtlMs } from './contest-leaderboard-cache';
 import { createChampionshipService } from '../championship/wiring';
 import type { ContestSettledNotice } from '../notifications/contest-notices';
 
@@ -38,7 +40,11 @@ import type { ContestSettledNotice } from '../notifications/contest-notices';
 function createContestLeaderboardReadDeps(
   prisma: PrismaClient,
   logger?: FastifyBaseLogger,
-): BracketStandingsReadDeps & { matches: PrismaSportEventMatchRepository; predictions: PrismaContestEntryMatchPredictionRepository } {
+): BracketStandingsReadDeps & {
+  eventParticipants: SportEventParticipantService;
+  matches: PrismaSportEventMatchRepository;
+  predictions: PrismaContestEntryMatchPredictionRepository;
+} {
   return {
     eventParticipants: createSportEventParticipantService(prisma, logger),
     configurations: new PrismaContestConfigurationRepository(prisma),
@@ -49,6 +55,9 @@ function createContestLeaderboardReadDeps(
     matches: new PrismaSportEventMatchRepository(prisma),
   };
 }
+
+/** One leaderboard cache for the container (#1162): the contest page and a cup's projection share it. */
+const leaderboardCache = new ContestLeaderboardCache(readLeaderboardCacheTtlMs(process.env));
 
 export function createContestService(
   prisma: PrismaClient,
@@ -74,6 +83,7 @@ export function createContestService(
     logger,
     email: options.email,
     appBaseUrl: options.appBaseUrl,
+    leaderboardCache,
   });
 }
 

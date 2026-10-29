@@ -5,11 +5,11 @@ import { IngestionJobStatus, ProviderSyncRunStatus, type ProviderSyncRun } from 
 import type { ProviderSyncRequestPayloadDto, ProviderSyncRunPayloadDto } from '@poolmaster/shared/dto';
 import type { IngestionFeedType, EventSyncRequest, IngestionJobRecord } from '../core/ingestion-scheduler';
 import type { NormalizedSyncRequest } from '../core/sync-orchestrator';
+import type { SyncWriteDiagnostics } from '../core/sync-write-diagnostics';
 
-/** A stored payload the ledger rewrites: every key carries over, and it keeps `providerPayload` when one exists. */
-interface PayloadToRewrite {
+/** Detailed diagnostics already written for a run; a failure keeps their provider payload. */
+interface DetailsToRewrite {
   providerPayload?: unknown;
-  [key: string]: unknown;
 }
 
 type SyncOutcomePayload = Prisma.InputJsonObject & {
@@ -44,11 +44,6 @@ export class ProviderSyncRunLedger {
             eventId,
             ...requestContext,
           } satisfies ProviderSyncRequestPayloadDto,
-          providerPayload: {
-            operation: feed,
-            rawCaptured: false,
-            rawTruncated: false,
-          },
           stats: {},
           outcome: buildSyncOutcome({
             status: 'SUBMITTED',
@@ -56,6 +51,7 @@ export class ProviderSyncRunLedger {
           }),
           detail: buildSubmittedSyncRunDetail(feed, eventId),
         };
+        // poolmaster-allow-query-in-loop: one run per requested feed, a handful per sync request
         return this.syncRuns.create({
           providerId: input.providerId,
           sport,
@@ -82,22 +78,19 @@ export class ProviderSyncRunLedger {
     const startedPayload = {
       ...syncRun.payload,
       detail: `Started ${formatFeedLabel(requestedFeed)} sync.`,
-      providerPayload: {
-        operation: requestedFeed,
-        rawCaptured: false,
-        rawTruncated: false,
-      },
       outcome: buildSyncOutcome({
         status: 'IN_PROGRESS',
         summary: `Started ${formatFeedLabel(requestedFeed)} sync.`,
       }),
     };
+    const startedDetails = { providerPayload: uncapturedProviderPayload(requestedFeed) };
 
     await this.updateSyncRun(syncRun.id, {
       status: 'IN_PROGRESS',
       startedAt,
       completedAt: null,
       payload: startedPayload,
+      details: startedDetails,
     });
     this.logger?.debug({
       syncRunId: syncRun.id,
@@ -120,9 +113,6 @@ export class ProviderSyncRunLedger {
       const payload = {
         ...startedPayload,
         detail,
-        jobPayload: toSerializableJob(job),
-        providerPayload: job.providerPayload ?? startedPayload.providerPayload,
-        writeDiagnostics: job.writeDiagnostics,
         outcome: buildSyncOutcome({
           status,
           summary: detail,
@@ -139,6 +129,11 @@ export class ProviderSyncRunLedger {
         startedAt,
         completedAt,
         payload,
+        details: {
+          providerPayload: job.providerPayload ?? startedDetails.providerPayload,
+          jobPayload: toSerializableJob(job),
+          writeDiagnostics: keepChangedRows(job.writeDiagnostics),
+        },
       });
 
       if (status === 'FAILED') {
@@ -170,7 +165,7 @@ export class ProviderSyncRunLedger {
       // Failed executions do not have a trustworthy completed write set. Keep
       // writeDiagnostics reserved for normalized rows that were actually
       // compared and returned by a completed persistence callback.
-      await this.failSubmittedRun(syncRun, error, startedAt, startedPayload);
+      await this.failSubmittedRun(syncRun, error, startedAt, startedPayload, startedDetails);
       throw error;
     }
   }
@@ -179,27 +174,20 @@ export class ProviderSyncRunLedger {
     syncRun: ProviderSyncRun,
     error: unknown,
     startedAt: Date | null = new Date(),
-    payload: PayloadToRewrite = syncRun.payload,
+    payload: Record<string, unknown> = syncRun.payload,
+    details: DetailsToRewrite = {},
   ): Promise<void> {
     const { requestedFeed } = readPayload(syncRun);
     const completedAt = new Date();
     const updatedPayload = {
       ...payload,
       detail: `Failed ${formatFeedLabel(requestedFeed as IngestionFeedType)} sync.`,
-      providerPayload: payload.providerPayload ?? {
-        operation: requestedFeed,
-        rawCaptured: false,
-        rawTruncated: false,
-      },
       outcome: buildSyncOutcome({
         status: 'FAILED',
         summary: `Failed ${formatFeedLabel(requestedFeed as IngestionFeedType)} sync.`,
         errors: 1,
       }),
       errors: 1,
-      failurePayload: {
-        error: toJsonSafeErrorPayload(error),
-      },
     };
 
     await this.updateSyncRun(syncRun.id, {
@@ -207,6 +195,12 @@ export class ProviderSyncRunLedger {
       startedAt,
       completedAt,
       payload: updatedPayload,
+      details: {
+        providerPayload: details.providerPayload ?? uncapturedProviderPayload(requestedFeed),
+        failurePayload: {
+          error: toJsonSafeErrorPayload(error),
+        },
+      },
     });
 
     this.logger?.error(
@@ -228,6 +222,7 @@ export class ProviderSyncRunLedger {
       startedAt?: Date | null;
       completedAt?: Date | null;
       payload: Record<string, unknown>;
+      details: Record<string, unknown>;
     },
   ): Promise<void> {
     await this.syncRuns.update(syncRunId, update);
@@ -241,6 +236,28 @@ function mapJobTypeToFeed(jobType: IngestionJobRecord['jobType']): IngestionFeed
     case 'EVENT_LIVE_SCORES_SYNC':
       return 'EVENTLIVESCORES';
   }
+}
+
+/** The provider payload a run records until the provider call captures the raw one. */
+function uncapturedProviderPayload(feed: unknown): Record<string, unknown> {
+  return {
+    operation: feed,
+    rawCaptured: false,
+    rawTruncated: false,
+  };
+}
+
+/**
+ * The write diagnostics a run stores (#1174): the summary still counts every row, but only the
+ * rows a sync created, updated or deleted are kept. A live tick over an unchanged field would
+ * otherwise store one row per golfer every few minutes.
+ */
+function keepChangedRows(diagnostics: SyncWriteDiagnostics | undefined): SyncWriteDiagnostics | undefined {
+  if (!diagnostics) return undefined;
+  return {
+    summary: diagnostics.summary,
+    rows: diagnostics.rows.filter((row) => row.disposition !== 'UNCHANGED'),
+  };
 }
 
 function buildSubmittedSyncRunDetail(feed: IngestionFeedType, eventId: string): string {

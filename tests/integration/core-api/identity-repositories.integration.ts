@@ -21,6 +21,8 @@ import {
   PrismaUserRepository,
 } from '../../../packages/core-api/src/adapters';
 import {
+  InvitationStatus,
+  InviteType,
   LeagueIconKey,
   LeaguePlan,
   LeagueRole,
@@ -73,6 +75,20 @@ describe('identity cluster repositories (#202)', () => {
       expect(ids).toContain(byLastName.user.id);
       expect(ids).toContain(byFirstName.user.id);
       expect(ids).toContain(byEmail.user.id);
+    });
+
+    it('finds a user by full name, each word matching a different column, and not when one word matches nothing', async () => {
+      const prisma = getPrisma();
+      const repo = new PrismaUserRepository(prisma);
+      const marker = Date.now().toString(36);
+      const created = await createTestUser({ firstName: `Ali${marker}`, lastName: `Smith${marker}` });
+      await createTestUser({ firstName: `Ali${marker}`, lastName: `Jones${marker}` });
+
+      const fullName = await repo.findAll({ search: `  Ali${marker}   Smith${marker} ` });
+      const wrongSurname = await repo.findAll({ search: `Ali${marker} Brown${marker}` });
+
+      expect(fullName.map((user) => user.id)).toEqual([created.user.id]);
+      expect(wrongSurname).toEqual([]);
     });
 
     it('matches case-insensitively', async () => {
@@ -143,7 +159,7 @@ describe('identity cluster repositories (#202)', () => {
     });
   });
 
-  describe('UserRepository.findByLeague — the scoped peer read (A4 + A6)', () => {
+  describe('UserRepository.findActiveByLeague — the scoped peer read (A4 + A6)', () => {
     it('returns only users sharing the given league', async () => {
       const prisma = getPrisma();
       const repo = new PrismaUserRepository(prisma);
@@ -174,7 +190,7 @@ describe('identity cluster repositories (#202)', () => {
         },
       });
 
-      const users = await repo.findByLeague(league.id);
+      const users = await repo.findActiveByLeague(league.id);
       const ids = users.map((user) => user.id);
 
       expect(ids).toContain(insider.user.id);
@@ -197,7 +213,7 @@ describe('identity cluster repositories (#202)', () => {
         },
       });
 
-      const [user] = await repo.findByLeague(league.id);
+      const [user] = await repo.findActiveByLeague(league.id);
 
       expect(user).toMatchObject({
         id: member.user.id,
@@ -207,23 +223,22 @@ describe('identity cluster repositories (#202)', () => {
       });
     });
 
-    it('includes inactive memberships, leaving the status filter to the caller', async () => {
+    it('leaves out a member removed from the league, whose membership is INACTIVE, keeping the active one (#1182)', async () => {
       const prisma = getPrisma();
       const repo = new PrismaUserRepository(prisma);
       const former = await createTestUser({ lastName: 'Former' });
+      const current = await createTestUser({ lastName: 'Current' });
       const league = await createLeague(prisma, `${LEAGUE_CODE_PREFIX}A4`, 'Inactive Membership League');
-      await prisma.leagueMembership.create({
-        data: {
-          leagueId: league.id,
-          userId: former.user.id,
-          role: LeagueRole.MEMBER,
-          status: LeagueMembershipStatus.INACTIVE,
-        },
-      });
+      for (const [userId, status] of [
+        [former.user.id, LeagueMembershipStatus.INACTIVE],
+        [current.user.id, LeagueMembershipStatus.ACTIVE],
+      ] as const) {
+        await prisma.leagueMembership.create({ data: { leagueId: league.id, userId, role: LeagueRole.MEMBER, status } });
+      }
 
-      const users = await repo.findByLeague(league.id);
+      const users = await repo.findActiveByLeague(league.id);
 
-      expect(users.map((user) => user.id)).toContain(former.user.id);
+      expect(users.map((user) => user.id)).toEqual([current.user.id]);
     });
   });
 
@@ -434,6 +449,27 @@ describe('identity cluster repositories (#202)', () => {
 
       expect(ids).toEqual([current.id]);
     });
+
+    it('narrows a member\'s leagues by a case-insensitive name search and the active flag in the query (#1182)', async () => {
+      const prisma = getPrisma();
+      const repo = new PrismaLeagueRepository(prisma);
+      const member = await createTestUser({ lastName: 'Searcher' });
+      const office = await createLeague(prisma, `${LEAGUE_CODE_PREFIX}B6`, 'Office Majors');
+      const closed = await createLeague(prisma, `${LEAGUE_CODE_PREFIX}B7`, 'Old Office Pool', false);
+      const family = await createLeague(prisma, `${LEAGUE_CODE_PREFIX}B8`, 'Family Pool');
+      for (const leagueId of [office.id, closed.id, family.id]) {
+        await prisma.leagueMembership.create({
+          data: { leagueId, userId: member.user.id, role: LeagueRole.MEMBER, status: LeagueMembershipStatus.ACTIVE },
+        });
+      }
+
+      const ids = async (filters: Parameters<typeof repo.findByUser>[1]) =>
+        (await repo.findByUser(member.user.id, filters)).map((league) => league.id).sort();
+
+      expect(await ids({ search: '  OFFICE ' })).toEqual([office.id, closed.id].sort());
+      expect(await ids({ search: 'office', isActive: true })).toEqual([office.id]);
+      expect(await ids({ isActive: false })).toEqual([closed.id]);
+    });
   });
 
   // #202 — new in step 3.3, backing the admin league list. Asserted against a real
@@ -624,7 +660,38 @@ describe('identity cluster repositories (#202)', () => {
 
       await expect(repo.findById(first.id)).resolves.toEqual(expect.objectContaining({ id: first.id, leagueId: league.id }));
       await expect(repo.findById('00000000-0000-0000-0000-000000000000')).resolves.toBeNull();
-      expect((await repo.findByLeague(league.id)).map((row) => row.id)).toEqual([second.id, first.id]);
+      expect((await repo.findOutstandingByLeague(league.id)).map((row) => row.id)).toEqual([second.id, first.id]);
+    });
+
+    it('lists as outstanding only pending invites and email invites that expired unaccepted, leaving out accepted, revoked and expired join links (#1182)', async () => {
+      const prisma = getPrisma();
+      const repo = new PrismaLeagueInvitationRepository(prisma);
+      const { user } = await createTestUser({ lastName: 'OutstandingInviter' });
+      const league = await createLeague(prisma, `${LEAGUE_CODE_PREFIX}F3`, 'Outstanding');
+      let day = 0;
+      const invite = (inviteType: InviteType, status: InvitationStatus) => {
+        day += 1;
+        return prisma.leagueInvitation.create({
+          data: {
+            leagueId: league.id,
+            inviteCode: `${LEAGUE_CODE_PREFIX}-${inviteType}-${status}-${Date.now()}-${day}`,
+            invitedBy: user.id,
+            inviteType,
+            status,
+            createdAt: new Date(Date.UTC(2026, 0, day)),
+          },
+        });
+      };
+      const pendingEmail = await invite(InviteType.EMAIL, InvitationStatus.PENDING);
+      await invite(InviteType.EMAIL, InvitationStatus.ACCEPTED);
+      const pendingLink = await invite(InviteType.LINK, InvitationStatus.PENDING);
+      await invite(InviteType.EMAIL, InvitationStatus.REVOKED);
+      const expiredEmail = await invite(InviteType.EMAIL, InvitationStatus.EXPIRED);
+      await invite(InviteType.LINK, InvitationStatus.EXPIRED);
+
+      const outstanding = await repo.findOutstandingByLeague(league.id);
+
+      expect(outstanding.map((row) => row.id)).toEqual([expiredEmail.id, pendingLink.id, pendingEmail.id]);
     });
   });
 });

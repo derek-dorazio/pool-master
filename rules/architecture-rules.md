@@ -212,6 +212,26 @@ decides its shape, and write its rules then. The rules that stood here (typed ev
 after commit, at-least-once idempotent subscribers, `allSettled` failure policy) were written
 for subscribers that never existed; they are in git history if that day comes.
 
+### Background jobs run on one server task
+
+Every API task starts the schedulers (the lifecycle sweep, the provider loops, the email
+sender), and prod runs more than one task. So that a job runs once, not once per task (#1159):
+
+- **A recurring job holds a job lock** (`core/job-lock.ts`, a Postgres session advisory lock on
+  a connection of its own). The task that takes a job's lock keeps it from tick to tick and the
+  others skip that job, until the holder stops and its connection closes. A new provider loop
+  passes a lock key; a loop that only changes this process's own state needs none.
+- **A status change that triggers side effects is a guarded write** — `updateMany` where the
+  row is still in the status it was read in — and only the caller whose write landed runs the
+  side effects. `SportEventRepository.transitionStatus` and `ContestRepository.transitionStatus`
+  are the models. The lock makes a race rare; the guarded write makes it harmless.
+- **A queue claims its rows** (`FOR UPDATE SKIP LOCKED`, as the email outbox does) and needs no
+  job lock: each task takes different rows.
+- **A table that grows without end gets a retention period and a nightly cleanup step**
+  (`core/nightly-cleanup.ts`, #1175). The step lives in the module that owns the table, deletes
+  in bounded batches with plain Prisma (`deleteInBatches`), and is added to the one
+  `NightlyCleanupScheduler`, which runs under its own job lock and logs one summary line per run.
+
 ### Provider data reaches only events an admin authored and linked
 
 Every event is created by an admin, and a provider feeds only events an admin has linked

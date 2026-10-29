@@ -4,7 +4,7 @@ import type {
   SquadRepository,
 } from '@poolmaster/shared/db';
 import type { FastifyBaseLogger } from 'fastify';
-import { SquadMembershipStatus, SquadOwnerInvitationStatus } from '@poolmaster/shared/domain';
+import { SquadMembershipStatus } from '@poolmaster/shared/domain';
 
 interface DeactivateSquadMembershipForLeagueMemberInput {
   leagueId: string;
@@ -77,16 +77,9 @@ export async function revokePendingOwnerInvitations(input: {
   ownerInvitationRepo: SquadOwnerInvitationRepository;
   logger?: FastifyBaseLogger;
 }): Promise<void> {
-  const pending = (await input.ownerInvitationRepo.findByLeague(input.leagueId)).filter(
-    (invitation) =>
-      invitation.squadId === input.squadId && invitation.status === SquadOwnerInvitationStatus.PENDING,
-  );
-  // Sequential: callers run this inside a membership transaction, which runs one statement at a time.
-  for (const invitation of pending) {
-    await input.ownerInvitationRepo.update(invitation.id, { status: SquadOwnerInvitationStatus.REVOKED });
-  }
+  const revoked = await input.ownerInvitationRepo.revokePendingBySquad(input.squadId);
   input.logger?.info({
     action: 'squadOwnerInvitation.revokePendingForSquad.success',
-    data: { leagueId: input.leagueId, squadId: input.squadId, revoked: pending.length },
+    data: { leagueId: input.leagueId, squadId: input.squadId, revoked },
   }, 'Revoked pending co-owner invitations for an inactive squad');
 }

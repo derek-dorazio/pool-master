@@ -78,6 +78,9 @@ export function buildContest(overrides: Partial<ContestDto> = {}): ContestDto {
     sportEvents: [buildContestSportEvent()],
     sport: 'GOLF',
     entryCount: 0,
+    enteredSquadCount: 0,
+    allEntryCount: 0,
+    myEntryIds: [],
     ...overrides,
   };
 }

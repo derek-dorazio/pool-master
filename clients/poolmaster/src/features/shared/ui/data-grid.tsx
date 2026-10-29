@@ -23,6 +23,11 @@ export type DataGridSearch = {
   label: string;
   placeholder?: string;
   testId?: string;
+  /**
+   * Hears every change to the box, for a list the server searches (#1180): the caller asks the
+   * server for the term, and the grid still narrows what came back.
+   */
+  onChange?: (term: string) => void;
 };
 
 /**
@@ -208,7 +213,10 @@ export function DataGrid<TData>({
               aria-label={search.label}
               className="max-w-sm"
               data-testid={search.testId}
-              onChange={(event) => table.setGlobalFilter(event.target.value)}
+              onChange={(event) => {
+                table.setGlobalFilter(event.target.value);
+                search.onChange?.(event.target.value);
+              }}
               placeholder={search.placeholder ?? search.label}
               type="search"
               value={globalFilter}

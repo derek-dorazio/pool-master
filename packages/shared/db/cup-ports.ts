@@ -25,6 +25,13 @@ export interface CupContest {
   completedAt: Date | null;
 }
 
+/** One of the league's contests, with the cup it counts toward. */
+export interface LeagueCupContest {
+  seasonYear: number;
+  sportLeagueId: string;
+  contest: CupContest;
+}
+
 /** One entry with a frozen place in a settled contest. */
 export interface CupRankedEntry extends RankedContestEntry {
   contestId: string;
@@ -47,23 +54,30 @@ export interface CupRepository {
   /** The league's cup for the season and sports league, made when it has none: a cup is never set up by hand. */
   ensure(key: CupKey): Promise<Cup>;
   findById(id: string): Promise<Cup | null>;
+  /** The league's cup for the season and sports league, or null when it has none (#1202). */
+  findByKey(key: CupKey): Promise<Cup | null>;
   /** The league's cups of one season, oldest first. */
   findByLeagueSeason(leagueId: string, seasonYear: number): Promise<Cup[]>;
+  /** Every cup of the league, of every season, oldest first. */
+  findByLeague(leagueId: string): Promise<Cup[]>;
   /** The seasons in which the league has a contest a cup lists (drafts left out), newest first. */
   findSeasonYears(leagueId: string): Promise<number[]>;
   /** The league's contests of the cup's season and sports league, drafts left out, by first event start. */
   findContests(key: CupKey): Promise<CupContest[]>;
+  /**
+   * The league's contests of every cup, or of one season's, drafts left out, by first event
+   * start: what `findContests` reads for each cup, in one read.
+   */
+  findLeagueContests(leagueId: string, seasonYear?: number): Promise<LeagueCupContest[]>;
   /** Every entry with a frozen place in the contests. */
   findRankedEntries(contestIds: readonly string[]): Promise<CupRankedEntry[]>;
   /** Each squad's settled finish in the contests, from its best entry. */
   findFinishes(contestIds: readonly string[]): Promise<CupContestFinish[]>;
-  /** A crowned cup's frozen standings; empty for an open one. */
-  findStandings(cupId: string): Promise<CupStanding[]>;
+  /** The crowned cups' frozen standings, by cup and position; none for an open one. */
+  findStandings(cupIds: readonly string[]): Promise<CupStanding[]>;
   /**
    * Crowns an OPEN cup: freezes its standings and the points table they were scored on. Answers
    * the crowned cup, or null when it was already crowned, so two crownings never both write.
    */
   crown(cupId: string, crowning: { crownedAt: Date; pointsTable: CupPointsTable; standings: readonly CupStanding[] }): Promise<Cup | null>;
-  /** The league's points table, or null when there is no such league. */
-  findPointsTable(leagueId: string): Promise<CupPointsTable | null>;
 }

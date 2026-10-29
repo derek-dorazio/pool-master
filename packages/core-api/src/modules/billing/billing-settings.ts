@@ -7,6 +7,7 @@
 import { BillingConfigSchema, type BillingConfig } from '@poolmaster/shared/dto';
 import { LEAGUE_PLANS } from '@poolmaster/shared/domain';
 import { defineSettingsGroup } from '../platform/settings-group';
+import { PublicReadPath } from '../../core/public-cache';
 
 /** The stored shape, plus what a JSON schema can't say: each list's bands and prices rise. */
 const BillingSettingsSchema = BillingConfigSchema.superRefine((config, context) => {
@@ -39,6 +40,8 @@ export const BILLING_SETTINGS = defineSettingsGroup<BillingConfig>({
   key: 'BILLING_CONFIG',
   title: 'Payments',
   description: 'Whether payments are on, and what expanding a contest costs on each plan.',
+  // The public Plans page reads this group (`listLeaguePlans`).
+  publicReads: [PublicReadPath.PLANS],
   schema: BillingSettingsSchema,
   defaults: () => ({
     paymentsEnabled: false,
