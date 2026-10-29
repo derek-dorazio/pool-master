@@ -31,6 +31,7 @@ export { Checkbox, FormField, Input, Select, Textarea } from "./form-field";
 export { FormPage } from "./form-page";
 export { IconAvatar } from "./icon-avatar";
 export { IconPalette } from "./icon-palette";
+export { InfoPopover } from "./info-popover";
 export { IdentityHeading } from "./identity-heading";
 export { ListCard, ListStack } from "./list-card";
 export { SplitContentLayout } from "./layout-presets";

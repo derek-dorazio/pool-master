@@ -353,7 +353,7 @@ test('act 3: a new member joins, picks week 1\'s game, saves the tiebreaker on i
     const submitted = await submitAndRead<{ status: string }>(page, 'pick-em-submit', 'POST', `${gamePicksPath()}/submit`);
     expect(submitted.status).toBe('SUBMITTED');
     await expect(page.getByTestId('pick-em-submitted')).toBeVisible();
-    await expect(page.getByTestId('pick-em-status')).toHaveText('Submitted');
+    await expect(page.getByTestId('contest-entry-status')).toHaveAccessibleName('Entry status: Submitted');
   });
 
   await test.step('the season leaderboard lists the entry, with no points before the first kickoff', async () => {

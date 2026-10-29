@@ -60,14 +60,6 @@
     {
       "files": [
         "clients/poolmaster/src/features/contests/bracket-entry-page.tsx",
-        "clients/poolmaster/src/features/contests/contest-entry-page.tsx"
-      ],
-      "count": 1,
-      "ticket": "#1290"
-    },
-    {
-      "files": [
-        "clients/poolmaster/src/features/contests/bracket-entry-page.tsx",
         "clients/poolmaster/src/features/contests/pick-em-entry-page.tsx"
       ],
       "count": 2,
