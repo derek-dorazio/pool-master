@@ -30,6 +30,7 @@ import {
   type SportEvent as ProviderCatalogSportEvent,
 } from '../ingestion/core/provider-interface';
 import type { ApiErrorCode } from '@poolmaster/shared/dto';
+import { forgettingReads, ReadMemoKey } from '../../core/request-read-memo';
 
 export class EventScoreSourceError extends Error {
   constructor(
@@ -225,14 +226,14 @@ export class EventScoreSourceService {
       );
     }
 
-    await this.prisma.sportEvent.update({
+    await forgettingReads(ReadMemoKey.sportEvent, () => this.prisma.sportEvent.update({
       where: { id: sportEventId },
       data: {
         providerId: input.providerId,
         externalId: input.externalId,
         syncScope: SportEventSyncScope.SCORES_ONLY,
       },
-    });
+    }));
 
     this.logger?.info(
       { sportEventId, providerId: input.providerId, externalId: input.externalId },
@@ -248,14 +249,14 @@ export class EventScoreSourceService {
   async unlinkScoreSource(sportEventId: string): Promise<void> {
     await this.requireSportEvent(sportEventId);
 
-    await this.prisma.sportEvent.update({
+    await forgettingReads(ReadMemoKey.sportEvent, () => this.prisma.sportEvent.update({
       where: { id: sportEventId },
       data: {
         providerId: MANUAL_ADMIN_PROVIDER_ID,
         externalId: `manual-${randomUUID()}`,
         syncScope: SportEventSyncScope.NONE,
       },
-    });
+    }));
 
     this.logger?.info({ sportEventId }, 'Unlinked sport event score source');
   }

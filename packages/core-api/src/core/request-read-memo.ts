@@ -32,6 +32,21 @@ class ReadMemo {
     return loading;
   }
 
+  /**
+   * The values under `keys`, loading the ones not yet known in one `load` call. A key `load`
+   * does not answer is remembered as null, as a point read of a missing row is.
+   */
+  readMany<T>(keys: readonly string[], load: (missing: readonly string[]) => Promise<Map<string, T>>): Promise<Array<T | null>> {
+    const missing = [...new Set(keys.filter((key) => !this.reads.has(key)))];
+    if (missing.length > 0) {
+      const loading = load(missing);
+      for (const key of missing) {
+        void this.read(key, async () => (await loading).get(key) ?? null);
+      }
+    }
+    return Promise.all(keys.map((key) => this.reads.get(key) as Promise<T | null>));
+  }
+
   forget(prefix: string): void {
     for (const key of this.reads.keys()) {
       if (key.startsWith(prefix)) {
@@ -65,9 +80,36 @@ export function memoizedRead<T>(
   return memo.read(key, load);
 }
 
+/**
+ * The rows under `ids`, each remembered under `prefix` + id as `memoizedRead` remembers one, so
+ * a later point read of any of them is answered here. Only the ids not yet read are loaded, in
+ * one `load` call. Rows come back in the order of `ids`, missing ones left out.
+ */
+export async function memoizedReadMany<T extends { id: string }>(
+  client: PrismaClient | Prisma.TransactionClient,
+  prefix: string,
+  ids: readonly string[],
+  load: (ids: readonly string[]) => Promise<T[]>,
+): Promise<T[]> {
+  const memo = scope.getStore();
+  if (memo === undefined || !isRootClient(client)) {
+    return load(ids);
+  }
+  const rows = await memo.readMany<T>(ids.map((id) => `${prefix}${id}`), async (keys) => {
+    const loaded = await load(keys.map((key) => key.slice(prefix.length)));
+    return new Map(loaded.map((row) => [`${prefix}${row.id}`, row]));
+  });
+  return [...new Set(rows)].filter((row): row is T => row !== null);
+}
+
 /** Drops the remembered reads whose keys start with `prefix`: a write calls it for what it changes. */
 export function forgetReads(prefix: string): void {
   scope.getStore()?.forget(prefix);
+}
+
+/** Drops every remembered read: a write whose reach spans kinds, such as deleting a league. */
+export function forgetAllReads(): void {
+  scope.getStore()?.forget('');
 }
 
 /** Runs a write, then drops the remembered reads under `prefix`, whether or not it succeeded. */
@@ -88,4 +130,9 @@ function isRootClient(client: PrismaClient | Prisma.TransactionClient): client i
 export const ReadMemoKey = {
   league: 'league:',
   leagueMembership: 'league-membership:',
+  contest: 'contest:',
+  contestConfiguration: 'contest-configuration:',
+  squadMembership: 'squad-membership:',
+  sportEvent: 'sport-event:',
+  sportLeague: 'sport-league:',
 } as const;

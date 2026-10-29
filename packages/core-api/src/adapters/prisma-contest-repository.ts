@@ -16,6 +16,7 @@ import type {
   ReleasedEdition,
 } from '@poolmaster/shared/db';
 import { championshipYear, ContestStatus, SelectionType, SportEventStatus, type Contest, type ContestFormat, type CupWeight, type Sport } from '@poolmaster/shared/domain';
+import { forgettingReads, memoizedRead, ReadMemoKey } from '../core/request-read-memo';
 import { lockContestRow } from './contest-row-lock';
 
 /**
@@ -36,11 +37,13 @@ export class PrismaContestRepository implements ContestRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
   async findById(id: string): Promise<Contest | null> {
-    const row = await this.prisma.contest.findFirst({
-      where: { id },
-      include: CONTEST_INCLUDE,
+    return memoizedRead(this.prisma, `${ReadMemoKey.contest}${id}`, async () => {
+      const row = await this.prisma.contest.findFirst({
+        where: { id },
+        include: CONTEST_INCLUDE,
+      });
+      return row ? mapToContest(row) : null;
     });
-    return row ? mapToContest(row) : null;
   }
 
   async findByLeague(leagueId: string, statuses: readonly Contest['status'][]): Promise<Contest[]> {
@@ -140,13 +143,13 @@ export class PrismaContestRepository implements ContestRepository {
   }
 
   async moveToSeason(id: string, seasonYear: number, limits: ContestSeasonLimits): Promise<ContestSeasonMoveResult> {
-    return this.prisma.$transaction(async (tx) => {
+    return forgettingReads(ReadMemoKey.contest, () => this.prisma.$transaction(async (tx) => {
       const { leagueId } = await tx.contest.findUniqueOrThrow({ where: { id }, select: { leagueId: true } });
       const full = await seasonWithoutRoom(tx, leagueId, seasonYear, limits);
       if (full) return full;
       await tx.contest.update({ where: { id }, data: { seasonYear } });
       return { status: 'moved' };
-    });
+    }));
   }
 
   async findBySportEvent(
@@ -204,7 +207,7 @@ export class PrismaContestRepository implements ContestRepository {
   }
 
   async transitionStatus(id: string, transition: ContestStatusTransition): Promise<boolean> {
-    const result = await this.prisma.contest.updateMany({
+    const result = await forgettingReads(ReadMemoKey.contest, () => this.prisma.contest.updateMany({
       where: { id, status: { in: [...transition.from] } },
       data: {
         status: transition.to,
@@ -212,20 +215,20 @@ export class PrismaContestRepository implements ContestRepository {
         ...(transition.startsAt && { startsAt: transition.startsAt }),
         ...(transition.endsAt && { endsAt: transition.endsAt }),
       },
-    });
+    }));
     return result.count > 0;
   }
 
   async setCupWeight(id: string, cupWeight: Contest['cupWeight'], whileIn: readonly Contest['status'][]): Promise<boolean> {
-    const result = await this.prisma.contest.updateMany({
+    const result = await forgettingReads(ReadMemoKey.contest, () => this.prisma.contest.updateMany({
       where: { id, status: { in: [...whileIn] } },
       data: { cupWeight },
-    });
+    }));
     return result.count > 0;
   }
 
   async update(id: string, updates: ContestUpdate): Promise<Contest> {
-    const row = await this.prisma.contest.update({
+    const row = await forgettingReads(ReadMemoKey.contest, () => this.prisma.contest.update({
       where: { id },
       data: {
         ...(updates.name !== undefined && { name: updates.name }),
@@ -234,14 +237,14 @@ export class PrismaContestRepository implements ContestRepository {
         ...(updates.endsAt !== undefined && { endsAt: updates.endsAt }),
       },
       include: CONTEST_INCLUDE,
-    });
+    }));
     return mapToContest(row);
   }
 
   async replaceSportEvents(id: string, sportEventIds: readonly string[]): Promise<void> {
     // The contest row lock comes first, as every entry write and the draw take it (#644), so an
     // entry created meanwhile is either seen here or created after with the new events.
-    await this.prisma.$transaction(async (tx) => {
+    await forgettingReads(ReadMemoKey.contest, () => this.prisma.$transaction(async (tx) => {
       await lockContestRow(tx, id);
       const current = await tx.contestSportEvent.findMany({ where: { contestId: id }, select: { sportEventId: true } });
       const removed = current.map((row) => row.sportEventId).filter((eventId) => !sportEventIds.includes(eventId));
@@ -266,7 +269,7 @@ export class PrismaContestRepository implements ContestRepository {
         data: entries.flatMap((entry) => sportEventIds.map((sportEventId) => ({ contestEntryId: entry.id, sportEventId }))),
         skipDuplicates: true,
       });
-    });
+    }));
   }
 
   async delete(id: string): Promise<void> {
@@ -276,7 +279,7 @@ export class PrismaContestRepository implements ContestRepository {
     // had a rule, a foreign-key failure once #246 gave every golf configuration one. Entry
     // standings cascade from the contest.
     // The contest row lock comes first, the order a random draw takes it in (#646).
-    await this.prisma.$transaction(async (tx) => {
+    await forgettingReads(ReadMemoKey.contestConfiguration, () => forgettingReads(ReadMemoKey.contest, () => this.prisma.$transaction(async (tx) => {
       await lockContestRow(tx, id);
       await tx.contestEntryPick.deleteMany({ where: { entry: { contestId: id } } });
       await tx.contestEntry.deleteMany({ where: { contestId: id } });
@@ -284,7 +287,7 @@ export class PrismaContestRepository implements ContestRepository {
       await tx.contestPrizeDefinition.deleteMany({ where: { contestConfiguration: { contestId: id } } });
       await tx.contestConfiguration.deleteMany({ where: { contestId: id } });
       await tx.contest.delete({ where: { id } });
-    });
+    })));
   }
 }
 

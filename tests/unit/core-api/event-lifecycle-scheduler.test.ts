@@ -17,6 +17,8 @@
  *   - One event's failure does not stop the sweep from processing the rest.
  */
 import type { SportEvent } from '@poolmaster/shared/domain';
+import type { PrismaClient } from '@prisma/client';
+import { memoizedRead, ReadMemoKey } from '../../../packages/core-api/src/core/request-read-memo';
 import { EventLifecycleScheduler } from '../../../packages/core-api/src/modules/events/event-lifecycle-scheduler';
 import { InMemorySportEvents } from '../../support/in-memory-sport-events';
 import { fakeLogger } from '../../support/fake-logger';
@@ -402,5 +404,23 @@ describe('EventLifecycleScheduler.runSweep across server tasks (#1159)', () => {
     await expect(scheduler.runSweep()).resolves.toBeUndefined();
 
     expect(logger.error).toHaveBeenCalledWith({ error: 'db down' }, 'Event lifecycle sweep failed');
+  });
+
+  it('gives each sweep its own read memo, so a read its steps share is made once per sweep', async () => {
+    const { sportEvents, rounds } = storeWith([]);
+    const eventLifecycleService = { activateContestsPastCutoff: jest.fn(), applySportEventStatusTransition: jest.fn() };
+    // Stands in for the root Prisma client, the only one whose reads are remembered.
+    const root = { $transaction: jest.fn() } as unknown as PrismaClient;
+    const load = jest.fn(async () => ({ name: 'NFL' }));
+    const readSportLeague = { queueDue: jest.fn(async () => { await memoizedRead(root, `${ReadMemoKey.sportLeague}nfl`, load); }) };
+    const scheduler = new EventLifecycleScheduler({
+      sportEvents, rounds, eventLifecycleService, jobLock: heldHere(), notificationsDue: [readSportLeague, readSportLeague], logger: fakeLogger(),
+    });
+
+    await scheduler.runSweep();
+    expect(load).toHaveBeenCalledTimes(1);
+    await scheduler.runSweep();
+
+    expect(load).toHaveBeenCalledTimes(2);
   });
 });

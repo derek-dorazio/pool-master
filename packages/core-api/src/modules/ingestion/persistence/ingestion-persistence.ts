@@ -26,6 +26,7 @@ import { summarizeSyncWriteRows } from '../core/sync-write-diagnostics';
 import type { EventFieldCache } from '../../events/event-field-cache';
 import type { CdnInvalidator } from '../../../core/cdn-invalidator';
 import { PublicReadPath } from '../../../core/public-cache';
+import { forgettingReads, ReadMemoKey } from '../../../core/request-read-memo';
 
 interface PersistenceDiagnosticsResult<T> {
   count: number;
@@ -86,10 +87,10 @@ export class IngestionPersistence {
 
       const disposition = resolveDisposition(before, after);
       if (disposition !== 'UNCHANGED') {
-        await this.prisma.sportEvent.update({
+        await forgettingReads(ReadMemoKey.sportEvent, () => this.prisma.sportEvent.update({
           where: { id: existingEvent.id },
           data: { participantCount },
-        });
+        }));
       }
       detailRows.push({
         id: `sport-event:${event.providerId}:${event.externalId}`,
