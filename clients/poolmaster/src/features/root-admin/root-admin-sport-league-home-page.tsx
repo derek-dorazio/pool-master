@@ -44,6 +44,7 @@ export function RootAdminSportLeagueHomePage() {
   });
 
   const league = useMemo(
+    // poolmaster-allow-list-lookup: sport leagues are reference data, a few dozen rows that do not grow with history
     () => leaguesQuery.data?.find((candidate) => candidate.id === leagueId),
     [leaguesQuery.data, leagueId],
   );

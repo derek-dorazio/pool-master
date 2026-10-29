@@ -115,6 +115,7 @@ export function PointsRacePage() {
     (squadId: string) => buildLeagueCupSquadPath(leagueCode, year, sportLeagueId ?? '', squadId),
     [leagueCode, sportLeagueId, year],
   );
+  // poolmaster-allow-list-lookup: a league's cups for one year, one per sport league
   const cup = cupsQuery.data?.find((candidate) => candidate.sportLeagueId === sportLeagueId);
   const projectionQuery = useCupProjectionQuery(leagueId, cup?.id ?? '', cup !== undefined && hasLiveContest(cup));
   const projection = projectionQuery.data;

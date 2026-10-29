@@ -33,10 +33,12 @@ Already enforced mechanically, and therefore **not** triggers:
 | Env-var fallbacks | `poolmaster/no-env-fallbacks` (ESLint) |
 | A gate sending its refusal without awaiting it | `poolmaster/no-unawaited-send-error` (ESLint) |
 | A repository or Prisma call per loop iteration or `.map` row in the backend | `poolmaster/no-query-in-loop` (ESLint) |
+| A screen keeping one row, a count or an id/status/year slice of a list query | `poolmaster/no-list-lookup` (ESLint) |
 | Direct `fetch`/`axios` in the webapp | `no-restricted-globals` / `no-restricted-imports` in `eslint.config.js` |
 | Frontend types duplicating generated ones | `poolmaster/no-parallel-api-types` (ESLint) |
 | Inline query keys, inline theme styles, bare controls | the corresponding `poolmaster/*` ESLint rules |
 | Generated OpenAPI/SDK staleness | `api:check` |
+| A route running more than 25 queries per request | the functional suite's query budget check (`rules/testing-rules.md` §6 *Backend Functional API Tests*) |
 
 Triggers cover only what needs **judgement** — things no scanner can infer and a file list
 does not reveal.
@@ -75,6 +77,8 @@ State the trigger and one line of context. If none apply, write `None.`
 - **Blocking work on a request path** — file, network, or crypto operations in a handler.
 - A change to **polling or refetch intervals**, or to cache invalidation behavior.
 - A **new runtime dependency**, with a line on why an existing primitive did not suffice.
+- A **new entry on the query budget allow-list** (`tests/functional/query-budget-allow-list.ts`), with
+  the ticket that brings the route back under budget.
 
 ### Process
 
@@ -195,7 +199,8 @@ endpoint and then, in the browser, keeps one row by id (`.find`), filters most r
 status, year, team or user, or counts the rows; or a service that does the same in JS after
 a repository list read. The cost grows with every league's history while the answer stays
 one row or one number. The fix is the single-item endpoint, a filter parameter pushed into
-SQL, or a count returned by the server.
+SQL, or a count returned by the server. `poolmaster/no-list-lookup` catches the screen shape;
+the service shape is still a reviewer's catch.
 
 **Shared data read again is a finding.** Reading the same contest, league, membership,
 sport event, field, configuration or sport league more than once in one request, job or

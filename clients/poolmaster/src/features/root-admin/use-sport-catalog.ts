@@ -34,6 +34,7 @@ export function useSportLeaguesQuery(sport: Sport) {
  */
 export function useEventRoundLabel(event: Pick<SportEventDto, 'sport' | 'sportLeagueId' | 'participantType' | 'scoringFamily'>): (roundNumber: number, roundCount: number) => string {
   const leaguesQuery = useSportLeaguesQuery(event.sport);
+  // poolmaster-allow-list-lookup: sport leagues are reference data, a few dozen rows that do not grow with history
   const roundNames = leaguesQuery.data?.find((league) => league.id === event.sportLeagueId)?.roundNames ?? [];
   return (roundNumber, roundCount) => eventRoundLabel(event, roundNames, roundNumber, roundCount);
 }
@@ -46,6 +47,7 @@ export function useEventRoundLabel(event: Pick<SportEventDto, 'sport' | 'sportLe
 export function useEventMatchPeriods(event: Pick<SportEventDto, 'sport' | 'sportLeagueId'>): SportMatchPeriods | undefined {
   const leaguesQuery = useSportLeaguesQuery(event.sport);
   if (!leaguesQuery.data) return undefined;
+  // poolmaster-allow-list-lookup: sport leagues are reference data, a few dozen rows that do not grow with history
   const league = leaguesQuery.data.find((candidate) => candidate.id === event.sportLeagueId);
   return matchPeriodsOf(event.sport, league?.matchPeriodLayout ?? null);
 }
@@ -57,6 +59,7 @@ export function useEventMatchPeriods(event: Pick<SportEventDto, 'sport' | 'sport
  */
 export function useSportLeagueNoun(sport: Sport, sportLeagueId: string | undefined): SportNoun {
   const leaguesQuery = useSportLeaguesQuery(sport);
+  // poolmaster-allow-list-lookup: sport leagues are reference data, a few dozen rows that do not grow with history
   const league = leaguesQuery.data?.find((candidate) => candidate.id === sportLeagueId);
   return sportLeagueNounOf(sport, league?.noun ?? null);
 }

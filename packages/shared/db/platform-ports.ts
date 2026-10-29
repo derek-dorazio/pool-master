@@ -42,6 +42,14 @@ export interface ProviderSyncRunRepository {
   findAll(filters: ProviderSyncRunFilters): Promise<ProviderSyncRun[]>;
   /** One run with its detailed diagnostics, or null when there is no such run. */
   findById(id: string): Promise<ProviderSyncRunWithDetails | null>;
+  /**
+   * Clears the detailed diagnostics of up to `limit` runs submitted before `before` that still
+   * have them; returns how many. Open-ended, so a missed night or a backfilled run is still
+   * cleared on the next pass.
+   */
+  clearDetailsBatchSubmittedBefore(before: Date, limit: number): Promise<number>;
+  /** Deletes up to `limit` runs submitted before `before`; returns how many. One batch per call. */
+  deleteBatchSubmittedBefore(before: Date, limit: number): Promise<number>;
 }
 
 /**
