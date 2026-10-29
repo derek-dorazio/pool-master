@@ -1159,6 +1159,19 @@ describe('Contract verification (root admin)', () => {
         sport: 'GOLF',
       });
 
+      // Filtered to one competitor, the page reads that row alone (#1251).
+      const oneUrl = '/api/v1/ingestion/unmapped-participants?providerId=contract-provider&externalId=golfer-1';
+      const oneRes = await app.inject({ method: 'GET', url: oneUrl, headers: rootAdmin.headers });
+      expect(oneRes.statusCode).toBe(200);
+      expect(UnmappedProviderParticipantListResponseSchema.safeParse(oneRes.json()).success).toBe(true);
+      expect(oneRes.json<UnmappedProviderParticipantListResponse>().participants).toEqual([{
+        providerId: 'contract-provider',
+        providerName: 'Contract Provider',
+        externalId: 'golfer-1',
+        externalName: 'Avery Hart',
+        sport: 'GOLF',
+      }]);
+
       const bindRes = await app.inject({
         method: 'POST',
         url: `/api/v1/participants/${participant.id}/provider-mappings`,
@@ -1186,6 +1199,8 @@ describe('Contract verification (root admin)', () => {
             row.providerId === 'contract-provider' && row.externalId === 'golfer-1',
         ),
       ).toBe(false);
+      const oneAfterRes = await app.inject({ method: 'GET', url: oneUrl, headers: rootAdmin.headers });
+      expect(oneAfterRes.json<UnmappedProviderParticipantListResponse>().participants).toEqual([]);
 
       const unknownProviderRes = await app.inject({
         method: 'POST',
@@ -1345,6 +1360,8 @@ describe('Contract verification (root admin)', () => {
       expect(tournamentListRes.statusCode).toBe(200);
       expect(SportEventListResponseSchema.safeParse(tournamentListRes.json()).success).toBe(true);
       expect(tournamentListRes.json<SportEventListResponse>().events.map((e) => e.id)).toEqual([eventId]);
+      // A root admin's read carries the admin counts a member's never does (#1198).
+      expect(tournamentListRes.json<SportEventListResponse>().events[0]?.adminCounts).toMatchObject({ contestCount: 0 });
 
       // --- listEventParticipants / listEventTiers / listEventRounds (200) ----
       const fieldRes = await getApp().inject({

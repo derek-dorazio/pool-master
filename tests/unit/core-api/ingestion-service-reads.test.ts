@@ -207,6 +207,42 @@ describe('IngestionService.getUnmappedParticipants', () => {
     ]);
   });
 
+  it('keeps only the competitor named by provider and id, and reads the mapping of that one id alone', async () => {
+    const provider = fakeSportDataProvider({
+      providerId: 'feed', providerName: 'Feed', sportsCovered: [Sport.GOLF],
+      getParticipants: jest.fn().mockResolvedValue([
+        { externalId: 'p-1', providerId: 'feed', sport: Sport.GOLF, name: 'Other Golfer', active: true, metadata: {} },
+        { externalId: 'p-2', providerId: 'feed', sport: Sport.GOLF, name: 'New Golfer', active: true, metadata: {} },
+      ]),
+    });
+    const participantMappings = fakeParticipantProviderMappingRepo({ findByProviderExternalIds: jest.fn().mockResolvedValue([]) });
+
+    const unmapped = await service({
+      registry: registryWith(provider), participantMappings, ingestionConfigReader: configReader(),
+    }).getUnmappedParticipants({ providerId: 'feed', externalId: 'p-2' });
+
+    expect(participantMappings.findByProviderExternalIds).toHaveBeenCalledWith('feed', ['p-2']);
+    expect(unmapped).toEqual([
+      { providerId: 'feed', providerName: 'Feed', externalId: 'p-2', externalName: 'New Golfer', sport: Sport.GOLF },
+    ]);
+  });
+
+  it('asks no provider but the one named, and reads no mapping when the named competitor is not reported', async () => {
+    const provider = fakeSportDataProvider({
+      providerId: 'feed', sportsCovered: [Sport.GOLF],
+      getParticipants: jest.fn().mockResolvedValue([
+        { externalId: 'p-1', providerId: 'feed', sport: Sport.GOLF, name: 'Golfer', active: true, metadata: {} },
+      ]),
+    });
+    const participantMappings = fakeParticipantProviderMappingRepo({ findByProviderExternalIds: jest.fn().mockResolvedValue([]) });
+    const reads = service({ registry: registryWith(provider), participantMappings, ingestionConfigReader: configReader() });
+
+    await expect(reads.getUnmappedParticipants({ providerId: 'other-feed' })).resolves.toEqual([]);
+    expect(provider.getParticipants).not.toHaveBeenCalled();
+    await expect(reads.getUnmappedParticipants({ providerId: 'feed', externalId: 'gone' })).resolves.toEqual([]);
+    expect(participantMappings.findByProviderExternalIds).not.toHaveBeenCalled();
+  });
+
   it('never asks a provider for the competitors of a sport that is not scheduled', async () => {
     const provider = fakeSportDataProvider({ sportsCovered: [Sport.GOLF], getParticipants: jest.fn().mockResolvedValue([]) });
 

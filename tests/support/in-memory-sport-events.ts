@@ -261,7 +261,7 @@ export class InMemorySportEvents {
       findByProviderRef: async (providerId, externalId) => this.events.find((row) => row.providerId === providerId && row.externalId === externalId) ?? null,
       // No sport filter: every event is golf while Sport has one member.
       findAll: async (filters) => this.events.filter((row) => (
-        (filters.status === undefined || row.status === filters.status)
+        (filters.statuses === undefined || filters.statuses.includes(row.status))
         && (filters.sportLeagueId === undefined || row.sportLeagueId === filters.sportLeagueId)
         && (filters.eventYear === undefined || row.eventYear === filters.eventYear)
         && (filters.q === undefined || row.name.toLowerCase().includes(filters.q.toLowerCase()))
@@ -269,6 +269,9 @@ export class InMemorySportEvents {
         && (filters.startsFrom === undefined || row.startDate >= filters.startsFrom)
         && (filters.startsBefore === undefined || row.startDate < filters.startsBefore)
       )),
+      findEventYears: async (sportLeagueId, options) => [...new Set(this.events
+        .filter((row) => row.sportLeagueId === sportLeagueId && (!options.releasedOnly || row.status !== 'DRAFT'))
+        .map((row) => row.eventYear))].sort((left, right) => left - right),
       create: async (input: SportEventCreate) => {
         // The database's one-edition-per-year constraint, raised the way Prisma raises it.
         if (this.events.some((row) => row.eventSeriesId === input.eventSeriesId && row.eventYear === input.eventYear)) {

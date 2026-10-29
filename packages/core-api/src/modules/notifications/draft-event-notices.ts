@@ -35,7 +35,7 @@ export class DraftEventNotices implements DueNotifications {
 
   async queueDue(now: Date): Promise<void> {
     const drafts = await this.deps.sportEvents.findAll({
-      status: SportEventStatus.DRAFT,
+      statuses: [SportEventStatus.DRAFT],
       startsFrom: new Date(now.getTime() + 1),
       startsBefore: new Date(now.getTime() + WARN_DAYS * DAY_MS + 1),
     });

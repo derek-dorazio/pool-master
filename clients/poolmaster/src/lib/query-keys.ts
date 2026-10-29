@@ -2,11 +2,6 @@ import type { ContestTemplateEventType } from '@poolmaster/shared/domain';
 
 type QueryKeyId = string | null | undefined;
 
-type SportEventListFilters = {
-  readonly sport?: QueryKeyId;
-  readonly status?: QueryKeyId;
-};
-
 type ContestListFilters = {
   readonly leagueId?: QueryKeyId;
 };
@@ -19,37 +14,19 @@ export const QueryKeys = {
   },
   sportEvents: {
     all: ['poolmaster', 'sport-events'] as const,
-    list: (filters?: SportEventListFilters) => {
-      if (!filters) {
-        return ['poolmaster', 'sport-events'] as const;
-      }
-
-      const hasSport = Object.hasOwn(filters, 'sport');
-      const hasStatus = Object.hasOwn(filters, 'status');
-      const { sport, status } = filters;
-
-      if (hasSport && hasStatus) {
-        return ['poolmaster', 'sport-events', { sport, status }] as const;
-      }
-
-      if (hasSport) {
-        return ['poolmaster', 'sport-events', sport] as const;
-      }
-
-      if (hasStatus) {
-        return ['poolmaster', 'sport-events', { status }] as const;
-      }
-
-      return ['poolmaster', 'sport-events'] as const;
-    },
+    /** A sport's events that can still take a contest: what contest setup chooses from. */
+    offerable: (sport: QueryKeyId) => ['poolmaster', 'sport-events', 'offerable', sport] as const,
     detail: (sportEventId: QueryKeyId) => ['poolmaster', 'sport-events', sportEventId] as const,
     /** One event's games: what a squares contest's game picker offers (#711). */
     games: (sportEventId: QueryKeyId) => ['poolmaster', 'sport-events', sportEventId, 'games'] as const,
     /** One event's field: the team names a squares game picker shows (#711). */
     field: (sportEventId: QueryKeyId) => ['poolmaster', 'sport-events', sportEventId, 'field'] as const,
-    /** One sport league's events: what a contest's event picker offers. */
-    bySportLeague: (sportLeagueId: QueryKeyId) =>
-      ['poolmaster', 'sport-events', 'sport-league', sportLeagueId] as const,
+    /** One sport league's events in one event year: what a contest's event picker offers. */
+    bySportLeagueYear: (sportLeagueId: QueryKeyId, eventYear: number) =>
+      ['poolmaster', 'sport-events', 'sport-league', sportLeagueId, eventYear] as const,
+    /** The event years one sport league has events in: the event picker's seasons. */
+    yearsBySportLeague: (sportLeagueId: QueryKeyId) =>
+      ['poolmaster', 'sport-events', 'sport-league', sportLeagueId, 'years'] as const,
   },
   contests: {
     all: ['poolmaster', 'league-contests'] as const,
@@ -247,9 +224,12 @@ export const QueryKeys = {
       events: ['poolmaster', 'root-admin', 'manage-sport', 'events'] as const,
       sportEvents: (sport: QueryKeyId) =>
         ['poolmaster', 'root-admin', 'manage-sport', 'events', 'sport', sport] as const,
-      // Under the `events` prefix, so invalidating the list refreshes each league's too.
-      leagueEvents: (sportLeagueId: QueryKeyId) =>
-        ['poolmaster', 'root-admin', 'manage-sport', 'events', 'league', sportLeagueId] as const,
+      // Under the `events` prefix, so invalidating the list refreshes each league's too: one
+      // year's events, and the years a league has events in (#1251).
+      leagueEvents: (sportLeagueId: QueryKeyId, eventYear: number | null) =>
+        ['poolmaster', 'root-admin', 'manage-sport', 'events', 'league', sportLeagueId, eventYear] as const,
+      leagueEventYears: (sportLeagueId: QueryKeyId) =>
+        ['poolmaster', 'root-admin', 'manage-sport', 'events', 'league', sportLeagueId, 'years'] as const,
       event: (eventId: QueryKeyId) =>
         ['poolmaster', 'root-admin', 'manage-sport', 'event', eventId] as const,
       rounds: (eventId: QueryKeyId) =>
@@ -313,6 +293,9 @@ export const QueryKeys = {
     providerSyncRun: (syncRunId: QueryKeyId) =>
       ['poolmaster', 'root-admin', 'provider-sync-runs', syncRunId] as const,
     unmappedProviderParticipants: ['poolmaster', 'root-admin', 'unmapped-provider-participants'] as const,
+    // One competitor, under the list's prefix, so a mapping that invalidates the list refreshes it (#1251).
+    unmappedProviderParticipant: (providerId: QueryKeyId, externalId: QueryKeyId) =>
+      ['poolmaster', 'root-admin', 'unmapped-provider-participants', providerId, externalId] as const,
     participantCandidates: (sportId: QueryKeyId, search: QueryKeyId) =>
       ['poolmaster', 'root-admin', 'participant-candidates', sportId, search] as const,
     users: ['poolmaster', 'root-admin', 'users'] as const,

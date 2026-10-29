@@ -40,9 +40,19 @@ export type EventReadinessReasonDto = z.infer<typeof EventReadinessReasonDtoSche
 
 /**
  * Admin-only fields are annotated, not enforced (plans/145 rule 4, DOMAIN-OPERATIONS §13):
- * every caller gets the full object.
+ * every caller gets the full object. The one exception is `adminCounts`, which costs queries on
+ * every read and is filled for a root admin only (#1198).
  */
 const ADMIN_ONLY = '(Admin-only: operational detail no member surface reads.)';
+
+/** A root admin's counts on an event: its release readiness and whether it can be deleted (#1198). */
+export const SportEventAdminCountsDtoSchema = z.object({
+  untieredParticipantCount: z.number().int().describe('Active event participants with no tier. A DRAFT event can\'t be released while any remain.'),
+  unpricedParticipantCount: z.number().int().describe('Active event participants with no price. A DRAFT event can\'t be released while any remain.'),
+  emptyTierLabels: z.array(z.string()).describe('Labels of the event\'s tiers no active participant is in, in tier order. A DRAFT event can\'t be released while any remain: no entry could pick from them.'),
+  contestCount: z.number().int().describe('Contests run on the event, across every league; an event with any cannot be deleted.'),
+}).describe('What only a root admin reads of an event: what still stops its release, and how many contests run on it.');
+export type SportEventAdminCountsDto = z.infer<typeof SportEventAdminCountsDtoSchema>;
 
 /**
  * The canonical SportEvent — the row plus the three things every reader of an event
@@ -66,8 +76,6 @@ export const SportEventDtoSchema = z.object({
   roundsPar: z.number().int().nullable().describe('Par for every round, when an admin set it. Null: contest scoring derives each round\'s par from the field\'s finished rounds. Contest scoring uses it to turn an unplayed round\'s 80 strokes into to-par.'),
   participantCount: z.number().int().nullable().describe('Field size the provider reports, when it reports one; null otherwise.'),
   loadedParticipantCount: z.number().int().describe('Number of event participants currently persisted for the event.'),
-  untieredParticipantCount: z.number().int().describe(`Active event participants with no tier. A DRAFT event can't be released while any remain. ${ADMIN_ONLY}`),
-  unpricedParticipantCount: z.number().int().describe(`Active event participants with no price. A DRAFT event can't be released while any remain. ${ADMIN_ONLY}`),
   pricing: EventPricingConfigSchema.nullable().describe('The values the field was last priced with for budget contests, or null until prices are assigned. Locked at release; its salaryCap is the cap of every budget contest on the event.'),
   readinessStatus: EventReadinessStatusDtoSchema.describe('Contest-setup readiness right now.'),
   readinessReasons: z.array(EventReadinessReasonDtoSchema).describe('Why the event is or is not contest-eligible right now: not released yet (DRAFT), no field loaded, or already started.'),
@@ -80,8 +88,7 @@ export const SportEventDtoSchema = z.object({
   syncScope: z.enum(SportEventSyncScope).describe(`How much provider data this event accepts on sync. ${ADMIN_ONLY}`),
   autoLifecycleEnabled: z.boolean().describe(`Whether the lifecycle scheduler may move this event's status. ${ADMIN_ONLY}`),
   tierCount: z.number().int().describe('Pick tiers defined for the event. A tiered contest\'s entry picks this many tiers times the contest\'s picksPerTier.'),
-  emptyTierLabels: z.array(z.string()).describe(`Labels of the event's tiers no active participant is in, in tier order. A DRAFT event can't be released while any remain: no entry could pick from them. ${ADMIN_ONLY}`),
-  contestCount: z.number().int().describe(`Contests run on the event, across every league; an event with any cannot be deleted. ${ADMIN_ONLY}`),
+  adminCounts: SportEventAdminCountsDtoSchema.nullable().describe('The root admin\'s counts: release readiness and the contest count across every league. Null for anyone but a root admin, whose reads alone count them.'),
   allowedTransitions: z.array(EventStatusDtoSchema).describe(`Statuses the event may move to next, from the declared transition map. ${ADMIN_ONLY}`),
   createdAt: DateTimeSchema.describe('When the event row was created.'),
   updatedAt: DateTimeSchema.describe('When the event row was last updated.'),
@@ -91,7 +98,7 @@ export type SportEventDto = z.infer<typeof SportEventDtoSchema>;
 /** Filters narrow the list; nothing pages it (§16). One of sport, sportLeagueId and eventYear is required (#1180). */
 export const SportEventListQuerySchema = z.object({
   sport: z.enum(Sport).optional().describe('Only events of this sport.'),
-  status: EventStatusDtoSchema.optional().describe('Only events in this lifecycle status.'),
+  status: z.array(EventStatusDtoSchema).optional().describe('Only events in one of these lifecycle statuses: repeat the parameter for several. Contest setup asks for the statuses an event can still take a contest in.'),
   sportLeagueId: z.uuid().optional().describe('Only events of this sport league\'s series.'),
   eventYear: z.number().int().optional().describe('Only editions branded with this year.'),
   q: z.string().optional().describe('Case-insensitive substring of the event name.'),
@@ -102,6 +109,16 @@ export const SportEventListResponseSchema = z.object({
   events: z.array(SportEventDtoSchema).describe('Matching events, earliest start first.'),
 }).describe('Sport events matching the filters.');
 export type SportEventListResponse = z.infer<typeof SportEventListResponseSchema>;
+
+export const SportEventYearListQuerySchema = z.object({
+  sportLeagueId: z.uuid().describe('The sport league whose event years are listed.'),
+}).describe('The sport league to list the event years of.');
+export type SportEventYearListQuery = z.infer<typeof SportEventYearListQuerySchema>;
+
+export const SportEventYearListResponseSchema = z.object({
+  years: z.array(z.number().int()).describe('Every event year the sport league has events in, earliest first. A year with only DRAFT events is listed for a root admin only.'),
+}).describe('The event years of one sport league: what a year picker offers, without reading every event.');
+export type SportEventYearListResponse = z.infer<typeof SportEventYearListResponseSchema>;
 
 export const SportEventResponseSchema = z.object({
   event: SportEventDtoSchema,
@@ -490,9 +507,12 @@ export type SportEventParticipantResponse = z.infer<typeof SportEventParticipant
 registerSchema('EventStatusDto', EventStatusDtoSchema);
 registerSchema('EventReadinessStatusDto', EventReadinessStatusDtoSchema);
 registerSchema('EventReadinessReasonDto', EventReadinessReasonDtoSchema);
+registerSchema('SportEventAdminCountsDto', SportEventAdminCountsDtoSchema);
 registerSchema('SportEventDto', SportEventDtoSchema);
 registerSchema('SportEventListQuery', SportEventListQuerySchema);
 registerSchema('SportEventListResponse', SportEventListResponseSchema);
+registerSchema('SportEventYearListQuery', SportEventYearListQuerySchema);
+registerSchema('SportEventYearListResponse', SportEventYearListResponseSchema);
 registerSchema('SportEventResponse', SportEventResponseSchema);
 registerSchema('CreateSportEventRequest', CreateSportEventRequestSchema);
 registerSchema('CreateSportEventFromProviderEventRequest', CreateSportEventFromProviderEventRequestSchema);
