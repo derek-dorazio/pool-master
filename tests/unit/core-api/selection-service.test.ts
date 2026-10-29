@@ -1,17 +1,16 @@
-import { ContestFormat, ContestStatus, CupWeight, SelectionType } from '@poolmaster/shared/domain';
+import { ContestEntryStatus, ContestFormat, ContestStatus, CupWeight, SelectionType } from '@poolmaster/shared/domain';
 import type {
   Contest,
   ContestConfiguration,
   ContestEntry,
   ContestEntryPick,
-  ContestEntryStatus,
   LeagueMembership,
   Participant,
   SportEvent,
   SportEventParticipant,
   SquadMembership,
 } from '@poolmaster/shared/domain';
-import type { ContestEntryPickRepository, ContestEntryPickWithParticipant, ContestEntryRepository } from '@poolmaster/shared/db';
+import type { ContestEntryPickRepository, ContestEntryPickWithParticipant } from '@poolmaster/shared/db';
 import { mockFn } from '../../support/mock-fn';
 import { SelectionService } from '../../../packages/core-api/src/modules/selections/service';
 import { dealRandomDraw } from '../../../packages/core-api/src/modules/selections/selection-engines/random-draw';
@@ -230,7 +229,7 @@ function setup(options: SetupOptions = {}) {
     const index = held.findIndex((row) => row.id === pickId);
     if (index >= 0) held.splice(index, 1);
   });
-  const addPick = jest.fn((input: { entryId: string; sportEventParticipantId: string; lineupSlot: number }) => {
+  const addPick = jest.fn((input: { entryId: string; sportEventParticipantId: string; participantId: string; lineupSlot: number }) => {
     const row = (options.field ?? FIELD).find((candidate) => candidate.id === input.sportEventParticipantId);
     held.push({
       ...pick(`new-pick-${held.length + 1}`, row?.participantId ?? input.sportEventParticipantId, input.sportEventParticipantId, {
@@ -241,22 +240,41 @@ function setup(options: SetupOptions = {}) {
       sportEventId: row?.sportEventId ?? EVENT_ID,
     });
   });
-  // Decides on the entry's held picks in the event, as the service does under the entry's lock.
-  const changeEntryPick = mockFn<ContestEntryPickService['changeEntryPick']>(async ({ entryId, sportEventId, decide }) => {
-    const picks = held
+  // Each entry's status per event, as the pick writes leave it.
+  const statuses = new Map((options.entries ?? [entry(ENTRY_ID, SQUAD_ID)]).flatMap((row) =>
+    row.events.map((event) => [`${row.id}:${event.sportEventId}`, event.status] as const)));
+  const writeStatus = jest.fn((entryId: string, sportEventId: string, status: ContestEntryStatus, _at: Date) => {
+    statuses.set(`${entryId}:${sportEventId}`, status);
+  });
+  const lockedEvent = (entryId: string, sportEventId: string) => ({
+    status: statuses.get(`${entryId}:${sportEventId}`) ?? ContestEntryStatus.DRAFT,
+    picks: held
       .filter((row) => row.entryId === entryId && row.sportEventId === sportEventId)
       .map((row) => ({
         id: row.id,
         sportEventParticipantId: row.sportEventParticipantId,
         participantId: row.participant.participantId,
         lineupSlot: row.lineupSlot ?? null,
-      }));
-    const write = decide(picks);
-    if (!write) return { changed: false };
-    if (write.removePickId) removePick(write.removePickId);
-    if (write.add) addPick({ entryId, ...write.add });
-    return { changed: true };
+      })),
   });
+  const settled = (entryId: string, sportEventId: string, next: ContestEntryStatus | null, at: Date, picksChanged: boolean) => {
+    const { status } = lockedEvent(entryId, sportEventId);
+    if (next === null || next === status) {
+      return { picksChanged, status, submittedAt: null, statusChanged: false };
+    }
+    writeStatus(entryId, sportEventId, next, at);
+    return { picksChanged, status: next, submittedAt: next === ContestEntryStatus.SUBMITTED ? at : null, statusChanged: true };
+  };
+  // Decides and settles on the entry's held picks and status in the event, as the service does under the entry's lock.
+  const changeEntryPick = mockFn<ContestEntryPickService['changeEntryPick']>(async ({ entryId, sportEventId, at, decide, settle }) => {
+    const write = decide(lockedEvent(entryId, sportEventId).picks);
+    if (write?.removePickId) removePick(write.removePickId);
+    if (write?.add) addPick({ entryId, ...write.add });
+    const picksChanged = write !== null;
+    return settled(entryId, sportEventId, settle({ ...lockedEvent(entryId, sportEventId), picksChanged }), at, picksChanged);
+  });
+  const settleEntryEvent = mockFn<ContestEntryPickService['settleEntryEvent']>(async ({ entryId, sportEventId, at, settle }) =>
+    settled(entryId, sportEventId, settle(lockedEvent(entryId, sportEventId)), at, false));
   const recordDraw = jest.fn().mockResolvedValue({ drawnAt: RECORDED_DRAW_AT });
 
   const deps: SelectionServiceDeps = {
@@ -274,17 +292,6 @@ function setup(options: SetupOptions = {}) {
       findByContest: jest
         .fn()
         .mockResolvedValue(options.entries ?? [entry(ENTRY_ID, SQUAD_ID)]),
-      // The adapter answers with the whole row, its one event's status changed.
-      setEventStatus: mockFn<ContestEntryRepository['setEventStatus']>(async (id, sportEventId, status, at) => {
-        const row = (options.entries ?? [entry(ENTRY_ID, SQUAD_ID)]).find((candidate) => candidate.id === id) ?? entry(id, SQUAD_ID);
-        return {
-          ...row,
-          events: [
-            ...row.events.filter((event) => event.sportEventId !== sportEventId),
-            { sportEventId, status, ...(status === 'SUBMITTED' && { submittedAt: at }) },
-          ],
-        };
-      }),
     }),
     memberships: fakeLeagueMembershipRepo({
       findByLeagueAndUser: jest.fn().mockResolvedValue(options.actorMembership ?? null),
@@ -309,7 +316,7 @@ function setup(options: SetupOptions = {}) {
         held.filter((row) => entryIds.includes(row.entryId)
           && (read?.sportEventId === undefined || row.sportEventId === read.sportEventId))),
     }),
-    pickWrites: { changeEntryPick, recordDraw } as unknown as ContestEntryPickService,
+    pickWrites: { changeEntryPick, settleEntryEvent, recordDraw } as unknown as ContestEntryPickService,
     tiers: {
       getEffectiveTiersAndValuations: jest
         .fn()
@@ -322,7 +329,7 @@ function setup(options: SetupOptions = {}) {
     drawSeed: () => 'seed-1',
   };
 
-  return { service: new SelectionService(deps), deps, addPick, removePick, changeEntryPick, recordDraw };
+  return { service: new SelectionService(deps), deps, addPick, removePick, changeEntryPick, writeStatus, statuses, recordDraw };
 }
 
 /** The contest's one golf event, scheduled to start at `startDate`. */
@@ -709,7 +716,7 @@ describe('#324 SelectionService.selectPick — placing, replacing, and nothing t
 
     expect(result.picks.map((row) => row.sportEventParticipantId)).toEqual(['sep-a']);
     expect(removePick).not.toHaveBeenCalled();
-    expect(addPick).toHaveBeenCalledWith({ entryId: ENTRY_ID, sportEventParticipantId: 'sep-a', lineupSlot: 1 });
+    expect(addPick).toHaveBeenCalledWith({ entryId: ENTRY_ID, sportEventParticipantId: 'sep-a', participantId: 'p-a', lineupSlot: 1 });
   });
 
   // The rule the deleted engines had backwards. Given a full tier the engine REJECTED the
@@ -941,13 +948,23 @@ describe('SelectionService.submitEntry — an entry counts only once its owner s
   }
 
   it('submits a draft entry whose lineup fills every tier, and answers with the entry SUBMITTED', async () => {
-    const { service, deps } = setup({ configuration: ONE_PER_TIER, picks: COMPLETE });
+    const { service, writeStatus } = setup({ configuration: ONE_PER_TIER, picks: COMPLETE });
 
     const view = await service.submitEntry(submitEntryInput());
 
-    expect(deps.entries.setEventStatus).toHaveBeenCalledWith(ENTRY_ID, EVENT_ID, 'SUBMITTED', expect.any(Date));
+    expect(writeStatus).toHaveBeenCalledWith(ENTRY_ID, EVENT_ID, 'SUBMITTED', expect.any(Date));
     expect(view.selectedEntryId).toBe(ENTRY_ID);
     expect(view.entries.find((row) => row.id === ENTRY_ID)?.status).toBe('SUBMITTED');
+  });
+
+  it('judges the lineup the entry lock reads, refusing a submit whose lineup an unselect left short after the room loaded it (#1300)', async () => {
+    const { service, deps, writeStatus } = setup({ configuration: ONE_PER_TIER, picks: [COMPLETE[1]] });
+    // The room's read still shows the full lineup; under the lock only one pick is left.
+    (deps.picks.findByEntriesWithParticipant as jest.Mock).mockResolvedValue(COMPLETE);
+
+    await expect(service.submitEntry(submitEntryInput()))
+      .rejects.toMatchObject({ code: 'ENTRY_LINEUP_INCOMPLETE' });
+    expect(writeStatus).not.toHaveBeenCalled();
   });
 
   it('sends the Entry submitted confirmation once, when a draft is submitted, and not on a repeat submit', async () => {
@@ -994,57 +1011,57 @@ describe('SelectionService.submitEntry — an entry counts only once its owner s
   });
 
   it('refuses 409 ENTRY_LINEUP_INCOMPLETE naming the short tier, and leaves the entry a draft', async () => {
-    const { service, deps } = setup({ configuration: ONE_PER_TIER, picks: [pick('pick-a', 'p-a', 'sep-a')] });
+    const { service, writeStatus } = setup({ configuration: ONE_PER_TIER, picks: [pick('pick-a', 'p-a', 'sep-a')] });
 
     await expect(service.submitEntry(submitEntryInput())).rejects.toMatchObject({
       code: 'ENTRY_LINEUP_INCOMPLETE',
       statusCode: 409,
       message: `Entry ${ENTRY_ID} cannot be submitted until every tier is filled: Tier 2 still need picks`,
     });
-    expect(deps.entries.setEventStatus).not.toHaveBeenCalled();
+    expect(writeStatus).not.toHaveBeenCalled();
   });
 
   it('refuses 409 ENTRY_LINEUP_INCOMPLETE for an entry with no picks at all', async () => {
-    const { service, deps } = setup({ configuration: ONE_PER_TIER, picks: [] });
+    const { service, writeStatus } = setup({ configuration: ONE_PER_TIER, picks: [] });
 
     await expect(service.submitEntry(submitEntryInput())).rejects.toMatchObject({
       code: 'ENTRY_LINEUP_INCOMPLETE',
       statusCode: 409,
     });
-    expect(deps.entries.setEventStatus).not.toHaveBeenCalled();
+    expect(writeStatus).not.toHaveBeenCalled();
   });
 
   it('changes nothing when the entry is already submitted, and answers with the room', async () => {
-    const { service, deps } = setup({ configuration: ONE_PER_TIER, picks: COMPLETE, entries: [entry(ENTRY_ID, SQUAD_ID, 'Entry', 'SUBMITTED')] });
+    const { service, writeStatus } = setup({ configuration: ONE_PER_TIER, picks: COMPLETE, entries: [entry(ENTRY_ID, SQUAD_ID, 'Entry', 'SUBMITTED')] });
 
     const view = await service.submitEntry(submitEntryInput());
 
-    expect(deps.entries.setEventStatus).not.toHaveBeenCalled();
+    expect(writeStatus).not.toHaveBeenCalled();
     expect(view.entries.find((row) => row.id === ENTRY_ID)?.status).toBe('SUBMITTED');
   });
 
   it('submits an entry\'s lineup on an ACTIVE contest for an event that has not started yet (#713)', async () => {
-    const { service, deps } = setup({ configuration: ONE_PER_TIER, picks: COMPLETE, contest: { status: ContestStatus.ACTIVE } });
+    const { service, writeStatus } = setup({ configuration: ONE_PER_TIER, picks: COMPLETE, contest: { status: ContestStatus.ACTIVE } });
 
     const view = await service.submitEntry(submitEntryInput());
 
-    expect(deps.entries.setEventStatus).toHaveBeenCalledWith(ENTRY_ID, EVENT_ID, 'SUBMITTED', expect.any(Date));
+    expect(writeStatus).toHaveBeenCalledWith(ENTRY_ID, EVENT_ID, 'SUBMITTED', expect.any(Date));
     expect(view.entries.find((row) => row.id === ENTRY_ID)?.status).toBe('SUBMITTED');
   });
 
   it('refuses 409 CONTEST_ENTRY_LOCKED once the contest is COMPLETED', async () => {
-    const { service, deps } = setup({ configuration: ONE_PER_TIER, picks: COMPLETE, contest: { status: ContestStatus.COMPLETED } });
+    const { service, writeStatus } = setup({ configuration: ONE_PER_TIER, picks: COMPLETE, contest: { status: ContestStatus.COMPLETED } });
 
     await expect(service.submitEntry(submitEntryInput())).rejects.toMatchObject({
       code: 'CONTEST_ENTRY_LOCKED',
       statusCode: 409,
       message: `Contest ${CONTEST_ID} is COMPLETED; entries can only be submitted while it is open`,
     });
-    expect(deps.entries.setEventStatus).not.toHaveBeenCalled();
+    expect(writeStatus).not.toHaveBeenCalled();
   });
 
   it('refuses 409 CONTEST_ENTRY_LOCKED once the event has teed off, even while the contest still says OPEN', async () => {
-    const { service, deps } = setup({ configuration: ONE_PER_TIER, picks: COMPLETE });
+    const { service, deps, writeStatus } = setup({ configuration: ONE_PER_TIER, picks: COMPLETE });
     (deps.sportEvents.findByIds as jest.Mock).mockResolvedValue([eventStarting(new Date('2000-01-01T00:00:00.000Z'))]);
 
     await expect(service.submitEntry(submitEntryInput())).rejects.toMatchObject({
@@ -1052,7 +1069,7 @@ describe('SelectionService.submitEntry — an entry counts only once its owner s
       statusCode: 409,
       message: `Contest ${CONTEST_ID}'s event has started; entries can no longer be submitted`,
     });
-    expect(deps.entries.setEventStatus).not.toHaveBeenCalled();
+    expect(writeStatus).not.toHaveBeenCalled();
   });
 
   it('refuses 404 CONTEST_ENTRY_NOT_FOUND, 401 AUTH_SESSION_REQUIRED and 403 ENTRY_ACCESS_DENIED in that order', async () => {
@@ -1072,7 +1089,7 @@ describe('SelectionService pick changes on a submitted entry (#481)', () => {
   const ONE_PER_TIER = { configJson: { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 1 } };
 
   it('sends a submitted entry back to DRAFT when unselecting a golfer leaves its lineup short', async () => {
-    const { service, deps } = setup({ configuration: ONE_PER_TIER, picks: COMPLETE, entries: [entry(ENTRY_ID, SQUAD_ID, 'Entry', 'SUBMITTED')] });
+    const { service, deps, writeStatus } = setup({ configuration: ONE_PER_TIER, picks: COMPLETE, entries: [entry(ENTRY_ID, SQUAD_ID, 'Entry', 'SUBMITTED')] });
     (deps.entries.update as jest.Mock).mockImplementation(async (id: string, updates: Partial<ContestEntry>) => ({
       ...entry(id, SQUAD_ID, 'Entry', 'SUBMITTED'),
       ...updates,
@@ -1080,26 +1097,37 @@ describe('SelectionService pick changes on a submitted entry (#481)', () => {
 
     const result = await service.unselectPick(pickChange({ sportEventParticipantId: 'sep-a' }));
 
-    expect(deps.entries.setEventStatus).toHaveBeenCalledWith(ENTRY_ID, EVENT_ID, 'DRAFT', expect.any(Date));
+    expect(writeStatus).toHaveBeenCalledWith(ENTRY_ID, EVENT_ID, 'DRAFT', expect.any(Date));
+    expect(result.entryStatus).toBe('DRAFT');
+  });
+
+  it('sends an entry back to DRAFT when a submit committed while the unselect waited, though the room loaded it a draft (#1300)', async () => {
+    const { service, writeStatus, statuses } = setup({ configuration: ONE_PER_TIER, picks: COMPLETE });
+    // The room loaded the entry a draft; under the lock it is SUBMITTED.
+    statuses.set(`${ENTRY_ID}:${EVENT_ID}`, ContestEntryStatus.SUBMITTED);
+
+    const result = await service.unselectPick(pickChange({ sportEventParticipantId: 'sep-a' }));
+
+    expect(writeStatus).toHaveBeenCalledWith(ENTRY_ID, EVENT_ID, 'DRAFT', expect.any(Date));
     expect(result.entryStatus).toBe('DRAFT');
   });
 
   it('keeps a submitted entry SUBMITTED when a swap within a full tier leaves the lineup complete', async () => {
-    const { service, deps, removePick } = setup({ configuration: ONE_PER_TIER, picks: COMPLETE, entries: [entry(ENTRY_ID, SQUAD_ID, 'Entry', 'SUBMITTED')] });
+    const { service, writeStatus, removePick } = setup({ configuration: ONE_PER_TIER, picks: COMPLETE, entries: [entry(ENTRY_ID, SQUAD_ID, 'Entry', 'SUBMITTED')] });
 
     const result = await service.selectPick(pickChange({ sportEventParticipantId: 'sep-c' }));
 
     expect(removePick).toHaveBeenCalledWith('pick-a');
-    expect(deps.entries.setEventStatus).not.toHaveBeenCalled();
+    expect(writeStatus).not.toHaveBeenCalled();
     expect(result.entryStatus).toBe('SUBMITTED');
   });
 
   it('leaves a draft entry a draft without writing its status when a pick changes', async () => {
-    const { service, deps } = setup({ picks: [pick('pick-a', 'p-a', 'sep-a')] });
+    const { service, writeStatus } = setup({ picks: [pick('pick-a', 'p-a', 'sep-a')] });
 
     await service.unselectPick(pickChange({ sportEventParticipantId: 'sep-a' }));
 
-    expect(deps.entries.setEventStatus).not.toHaveBeenCalled();
+    expect(writeStatus).not.toHaveBeenCalled();
   });
 });
 
@@ -1117,22 +1145,22 @@ describe('SelectionService budget rooms (#93): the cap blocks submitting, never 
   const submitEntryInput = { contestId: CONTEST_ID, entryId: ENTRY_ID, sportEventId: EVENT_ID, actorUserId: OWNER_USER_ID };
 
   it('submits a full lineup that costs no more than the cap', async () => {
-    const { service, deps } = setup({ ...BUDGET, picks: UNDER });
+    const { service, writeStatus } = setup({ ...BUDGET, picks: UNDER });
 
     await service.submitEntry(submitEntryInput);
 
-    expect(deps.entries.setEventStatus).toHaveBeenCalledWith(ENTRY_ID, EVENT_ID, 'SUBMITTED', expect.any(Date));
+    expect(writeStatus).toHaveBeenCalledWith(ENTRY_ID, EVENT_ID, 'SUBMITTED', expect.any(Date));
   });
 
   it('refuses 409 ENTRY_OVER_BUDGET for a full lineup over the cap, naming both amounts, and leaves the entry a draft', async () => {
-    const { service, deps } = setup({ ...BUDGET, picks: OVER });
+    const { service, writeStatus } = setup({ ...BUDGET, picks: OVER });
 
     await expect(service.submitEntry(submitEntryInput)).rejects.toMatchObject({
       code: 'ENTRY_OVER_BUDGET',
       statusCode: 409,
       message: `Entry ${ENTRY_ID} cannot be submitted while its picks cost $190, over the $150 salary cap`,
     });
-    expect(deps.entries.setEventStatus).not.toHaveBeenCalled();
+    expect(writeStatus).not.toHaveBeenCalled();
   });
 
   it('reports a short lineup as incomplete ahead of the budget, even when it is already over the cap', async () => {
@@ -1174,7 +1202,7 @@ describe('SelectionService budget rooms (#93): the cap blocks submitting, never 
   });
 
   it('sends a submitted entry back to DRAFT when a swap takes its full lineup over the cap', async () => {
-    const { service, deps } = setup({ ...BUDGET, entries: [entry(ENTRY_ID, SQUAD_ID, 'Entry', 'SUBMITTED')] });
+    const { service, deps, writeStatus } = setup({ ...BUDGET, entries: [entry(ENTRY_ID, SQUAD_ID, 'Entry', 'SUBMITTED')] });
     (deps.picks.findByEntriesWithParticipant as jest.Mock)
       .mockResolvedValueOnce([UNDER[0]])
       .mockResolvedValue(OVER);
@@ -1185,7 +1213,7 @@ describe('SelectionService budget rooms (#93): the cap blocks submitting, never 
 
     const result = await service.selectPick(pickChange({ sportEventParticipantId: 'sep-b' }));
 
-    expect(deps.entries.setEventStatus).toHaveBeenCalledWith(ENTRY_ID, EVENT_ID, 'DRAFT', expect.any(Date));
+    expect(writeStatus).toHaveBeenCalledWith(ENTRY_ID, EVENT_ID, 'DRAFT', expect.any(Date));
     expect(result.entryStatus).toBe('DRAFT');
   });
 

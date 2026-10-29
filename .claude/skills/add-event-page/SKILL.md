@@ -69,6 +69,12 @@ the page then agree. Follow
 `rules/ux-rules.md` §13 *Event Pages* items 4 and 5 for what the words may say. Read the
 page on a local build with the API running to see the cards in order.
 
+Every event page renders through the one event page component, so a new page is copy and seed
+data only. A page that needs a layout of its own, as the Clutch Card page does, is built from
+the kit in `clients/poolmaster/src/features/event-pages/components` (start button, section,
+photo hero, sticky start bar, next-up card, disclaimer) and the shared `NumberedSteps`,
+`FaqList`, `ExpandableTile` and `Countdown`. It is never copied from another page.
+
 ## Step 5 — the preview image
 
 From `clients/poolmaster`, run `node scripts/render-link-preview-images.mjs`. It redraws every

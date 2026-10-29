@@ -527,7 +527,7 @@ describe('ContestService entries — reads', () => {
     const empty = world.addContest(league.id);
     const submitted = await service.createEntry(contest.id, owner.id);
     await service.createEntry(contest.id, rival.id);
-    await world.entryRepo().setEventStatus(submitted.id, event.id, 'SUBMITTED', new Date());
+    world.setEntryEventStatus(submitted.id, event.id, 'SUBMITTED', new Date());
 
     const counts = await service.countEntriesByContest([contest.id, empty.id]);
 

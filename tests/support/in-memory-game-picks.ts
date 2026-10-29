@@ -222,7 +222,7 @@ export class InMemoryGamePicks {
           });
         }
         if (eventStatus !== null) {
-          await this.world.entryRepo().setEventStatus(contestEntryId, sportEventId, eventStatus, when);
+          this.world.setEntryEventStatus(contestEntryId, sportEventId, eventStatus, when);
         }
         if (tiebreakerValue !== undefined) {
           // On the entry's row for the event, created as a draft when it has none.

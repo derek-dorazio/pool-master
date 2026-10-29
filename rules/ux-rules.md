@@ -275,10 +275,15 @@ administration area (root admin included), reusing the same shared components.
    kit in `features/contests` (`LeaderboardFrame`, `ScoreboardGrid`, the Place,
    Entry and total columns) and defines only its own columns and notes; the
    viewer's own rows, here and in cup tables and league home, carry the one
-   `MineMarker` ("Yours"). An event's pages in Manage share
-   `SportEventHeader` whatever its sport: Overview, Field, Tiers, and the
-   results page its scoring family names (Scores for golf, Results for a race,
-   Bracket for a knockout tournament).
+   `MineMarker` ("Yours"). An entry page opens on its picks: the entry's status
+   is an icon beside its name (`ContestEntryFrame` draws it with
+   `EntryStatusCallout`, with the status, the contest's phase and the entry's
+   dates in a callout on hover or tap), not badges and a details panel above
+   the picks, and the entry's name, its
+   tiebreaker and the one Submit for the whole entry come after the picks. An
+   event's pages in Manage share `SportEventHeader` whatever its sport:
+   Overview, Field, Tiers, and the results page its scoring family names
+   (Scores for golf, Results for a race, Bracket for a knockout tournament).
 10. **Actions are named for what they do, never "draft".** "Draft" is a contest
     status and also the snake-draft selection type, so no button or link uses
     it as a verb or noun: **Create contest**, **Save**, **Delete contest**,
