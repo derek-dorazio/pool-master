@@ -16,6 +16,7 @@ import {
   getLeagueSquadFrom,
   updateLeagueSquadData,
 } from '@/features/leagues/test/fixtures';
+import { getTeamIconOption } from './team-icon-catalog';
 import { buildContestResult, buildSquadChampionship, buildSquadCup, buildSquadHistory, buildSquadYear } from '@/features/championships/test/fixtures';
 import { buildPlanEntitlements } from '@/features/plans/test/fixtures';
 import type { LeagueDto, SquadDto } from '@/lib/api';
@@ -437,6 +438,50 @@ describe('My team › This year', () => {
 
     expect(await screen.findByTestId('squad-year-championship-standing')).toHaveTextContent('1st of 3 · 180 points · Leads');
     expect(getSquadYearMock).toHaveBeenCalledWith(expect.objectContaining({ path: { id: 'league-1', squadId: 'team-2' }, query: { year: YEAR } }));
+  });
+});
+
+describe('My team › Team icon in the heading', () => {
+  it("draws the viewer's team icon in its own colour, not the avatar's default yellow", async () => {
+    primeTeam();
+
+    renderTeamRoutes();
+
+    const icon = await screen.findByLabelText('Casey Crushers icon');
+    expect(icon).toHaveClass(getTeamIconOption(buildLeagueSquad().iconKey).themeClass);
+    expect(icon).not.toHaveClass('bg-primary/10');
+  });
+
+  it("draws another team's icon in its own colour on that team's page", async () => {
+    primeTeam();
+
+    renderTeamRoutes('/league/BIGDAWGS/teams/team-2');
+
+    const icon = await screen.findByLabelText('Rival Squad icon');
+    expect(icon).toHaveClass(getTeamIconOption(rivalTeam.iconKey).themeClass);
+    expect(icon).not.toHaveClass('bg-primary/10');
+  });
+});
+
+describe('My team › This year › You marker', () => {
+  it("marks the viewer's own squad with You in its championship row", async () => {
+    primeTeam();
+    getSquadYearMock.mockResolvedValue(apiSuccess({ squadYear: buildSquadYear() }));
+
+    renderTeamRoutes();
+
+    expect(await screen.findByTestId('squad-year-championship-standing')).toBeInTheDocument();
+    expect(screen.getByText('You')).toBeInTheDocument();
+  });
+
+  it("leaves You off another team's championship row on that team's page", async () => {
+    primeTeam();
+    getSquadYearMock.mockResolvedValue(apiSuccess({ squadYear: buildSquadYear({ squadId: 'team-2', championship: buildSquadChampionship({ pointsBehindLeader: 0 }, { squadId: 'team-2', squadName: 'Rival Squad', position: 1, displayPosition: '1' }) }) }));
+
+    renderTeamRoutes('/league/BIGDAWGS/teams/team-2');
+
+    expect(await screen.findByTestId('squad-year-championship-standing')).toBeInTheDocument();
+    expect(screen.queryByText('You')).not.toBeInTheDocument();
   });
 });
 

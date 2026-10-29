@@ -73,4 +73,16 @@ describe("IdentityHeading", () => {
     });
     expect(screen.queryByText("Copied")).not.toBeInTheDocument();
   });
+
+  it("shows the caller's own avatar in place of the standard square, so a team icon keeps its colours", () => {
+    render(
+      <IdentityHeading
+        avatar={<span aria-label="Casey Crushers icon" className="team-icon-theme-ocean" />}
+        name="Casey Crushers"
+      />,
+    );
+
+    expect(screen.getByLabelText("Casey Crushers icon")).toHaveClass("team-icon-theme-ocean");
+    expect(screen.getAllByLabelText("Casey Crushers icon")).toHaveLength(1);
+  });
 });
