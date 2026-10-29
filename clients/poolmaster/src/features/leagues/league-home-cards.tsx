@@ -7,6 +7,7 @@ import { MineMarker } from '@/features/contests/mine-marker';
 import { useBracketLeaderboardQuery, useContestLeaderboardQuery } from '@/features/contests/use-contest-leaderboard';
 import {
   cn,
+  Countdown,
   Eyebrow,
   formatDateTimeDisplay,
   LinkButton,
@@ -17,7 +18,6 @@ import { TeamName } from '@/features/teams/team-name';
 import {
   buildBracketTopStandings,
   buildTopStandings,
-  countdownUntil,
   type StandingRow,
   type UpNextContest,
 } from './league-home';
@@ -88,13 +88,7 @@ export function UpNextCard({
   upNext: UpNextContest;
 }) {
   const displayPreferences = useDisplayPreferences();
-  const countdown = countdownUntil(upNext.closesAt, now);
   const next = describeMyEntry(leagueCode, upNext.contest, myEntries, entriesState, hasTeam);
-  const parts = [
-    { label: 'Days', value: countdown.days },
-    { label: 'Hours', value: countdown.hours },
-    { label: 'Min', value: countdown.minutes },
-  ];
 
   return (
     <section
@@ -109,22 +103,7 @@ export function UpNextCard({
       <p className="text-sm text-on-inverse-muted">
         Entries close {formatDateTimeDisplay(upNext.closesAt, displayPreferences)}.
       </p>
-      <div
-        aria-label={`Entries close in ${countdown.days} days ${countdown.hours} hours ${countdown.minutes} minutes`}
-        className="flex gap-2"
-        data-testid="league-home-countdown"
-        role="timer"
-      >
-        {parts.map((part) => (
-          <div
-            className="min-w-16 rounded-xl border border-inverse-border bg-on-inverse-subtle px-3 py-2 text-center"
-            key={part.label}
-          >
-            <b className="block font-display text-xl tabular-nums">{String(part.value).padStart(2, '0')}</b>
-            <span className="text-xs uppercase tracking-label text-on-inverse-muted">{part.label}</span>
-          </div>
-        ))}
-      </div>
+      <Countdown label="Entries close in" now={now} testId="league-home-countdown" tone="inverse" until={upNext.closesAt} />
       <div className="flex flex-wrap items-center gap-3">
         <LinkButton data-testid="league-home-up-next-action" size="sm" to={next.to}>
           {next.label}

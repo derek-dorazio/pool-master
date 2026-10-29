@@ -1,15 +1,21 @@
-import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { Navigate, useParams } from 'react-router';
-import { buildEventPagePath, EventPageOfferState, getSportDefinition, sportHeaderImagePath } from '@poolmaster/shared/domain';
+import { buildEventPagePath, EventPageOfferState, getSportDefinition } from '@poolmaster/shared/domain';
 import type { EventPageDto, EventPageOfferDto } from '@/lib/api';
 import { hasErrorCode } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useLeaguePlansQuery } from '@/features/plans/use-league-plans-query';
-import { Breadcrumbs, Chip, EmptyState, ErrorState, Eyebrow, LinkButton, LoadingState, SectionHeader, Tile, cn, formatDateDisplay, useDisplayPreferences } from '@/features/shared/ui';
+import { Breadcrumbs, Chip, EmptyState, ErrorState, Eyebrow, LinkButton, LoadingState, NumberedSteps, Tile, cn, formatDateDisplay, useDisplayPreferences } from '@/features/shared/ui';
+import { LandingDisclaimer } from './components/landing-disclaimer';
+import { LandingSection } from './components/landing-section';
+import { NextUpCard } from './components/next-up-card';
+import { PhotoHero } from './components/photo-hero';
+import { StartButton } from './components/start-button';
+import { StickyActionBar } from './components/sticky-action-bar';
 import { withPrimaryOffer } from './event-page-offers';
 import { EVENT_PAGE_ACTIONS, eventPageCopy, eventPageOfferCopy, type EventPageCopy } from './event-page-copy';
 import { buildHowToPlaySportPath, sportFromPathSegment } from './event-page-paths';
-import { buildStartPath, type StartRequest } from './start-path';
+import type { StartRequest } from './start-path';
 import { useEventPageQuery, useEventPagesQuery } from './use-event-pages-query';
 
 /** The page's three steps to a running pool, as How to Play tells them. */
@@ -18,17 +24,6 @@ const READY_STEPS: readonly { title: string; body: string }[] = [
   { title: 'Invite with one link', body: 'Send it to the group chat. Members join and make their picks on their phones.' },
   { title: 'Watch it live', body: 'The leaderboard moves with every score, and the final standings settle themselves.' },
 ];
-
-/** Every button on the page starts the same way (#1008): `/start` decides where the visitor belongs. */
-function StartButton({ request, testId, children, size, variant = 'primary' }: {
-  request: StartRequest;
-  testId: string;
-  children: string;
-  size?: 'sm';
-  variant?: 'primary' | 'secondary' | 'ghost';
-}) {
-  return <LinkButton data-testid={testId} size={size} to={buildStartPath(request)} variant={variant}>{children}</LinkButton>;
-}
 
 function OfferCard({ copy, offer, page, testId }: { copy: EventPageCopy; offer: EventPageOfferDto; page: EventPageDto; testId: string }) {
   const request: StartRequest = { sport: page.sport, slug: page.slug, templateId: offer.template.id };
@@ -61,21 +56,6 @@ function OfferCard({ copy, offer, page, testId }: { copy: EventPageCopy; offer: 
   );
 }
 
-/** The slim bar a phone keeps at the bottom once the hero, and its button, have scrolled away. */
-function useScrolledPast(target: RefObject<HTMLElement | null>): boolean {
-  const [isPast, setIsPast] = useState(false);
-  useEffect(() => {
-    const element = target.current;
-    if (!element || typeof IntersectionObserver === 'undefined') {
-      return undefined;
-    }
-    const observer = new IntersectionObserver(([entry]) => setIsPast(!entry.isIntersecting));
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, [target]);
-  return isPast;
-}
-
 function EventPageContent({ page }: { page: EventPageDto }) {
   const displayPreferences = useDisplayPreferences();
   const copy = eventPageCopy(page);
@@ -88,82 +68,66 @@ function EventPageContent({ page }: { page: EventPageDto }) {
     .find(({ primary: other }) => primary === undefined || other.edition.startDate > primary.edition.startDate);
   const startRequest: StartRequest = { sport: page.sport, slug: page.slug, templateId: primary?.template.id ?? null };
   const hero = useRef<HTMLDivElement>(null);
-  const showBar = useScrolledPast(hero);
 
   return (
     <section className="space-y-10 pb-20 md:pb-0" data-testid="event-page">
-      <Tile className="overflow-hidden" padding="none" radius="lg">
-        {/* The sport's photo, the same file that heads the email about its events. Decorative: the name below says what it shows. */}
-        <img alt="" className="aspect-[5/2] w-full object-cover" data-testid="event-page-photo" height={480} src={sportHeaderImagePath(page.sport)} width={1200} />
-        <div className="space-y-4 p-5 sm:p-8">
-          <Breadcrumbs items={[{ label: 'How to Play', href: '/how-to-play' }, { label: sportName, href: buildHowToPlaySportPath(page.sport) }, { label: copy.name }]} />
-          {copy.eyebrow ? <Eyebrow>{copy.eyebrow}</Eyebrow> : null}
-          <h1 className="font-display text-4xl font-bold tracking-tight text-foreground sm:text-5xl" data-testid="event-page-name">{copy.name}</h1>
-          <p className="max-w-2xl text-base text-muted-foreground" data-testid="event-page-hook">{copy.hook}</p>
-          {primary ? (
-            <div className="flex flex-wrap gap-2" data-testid="event-page-when">
-              <Chip>{formatDateDisplay(primary.edition.startDate, displayPreferences)}</Chip>
-              <Chip>{copy.picksClose}</Chip>
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground" data-testid="event-page-between-seasons">
-              The next one is not on the schedule yet. Start your league now and you&apos;ll be ready when it is.
-            </p>
-          )}
-          <div className="flex flex-wrap items-center gap-3" ref={hero}>
-            <StartButton request={startRequest} testId="event-page-start">{EVENT_PAGE_ACTIONS.start}</StartButton>
+      <PhotoHero sport={page.sport}>
+        <Breadcrumbs items={[{ label: 'How to Play', href: '/how-to-play' }, { label: sportName, href: buildHowToPlaySportPath(page.sport) }, { label: copy.name }]} />
+        {copy.eyebrow ? <Eyebrow>{copy.eyebrow}</Eyebrow> : null}
+        <h1 className="font-display text-4xl font-bold tracking-tight text-foreground sm:text-5xl" data-testid="event-page-name">{copy.name}</h1>
+        <p className="max-w-2xl text-base text-muted-foreground" data-testid="event-page-hook">{copy.hook}</p>
+        {primary ? (
+          <div className="flex flex-wrap gap-2" data-testid="event-page-when">
+            <Chip>{formatDateDisplay(primary.edition.startDate, displayPreferences)}</Chip>
+            <Chip>{copy.picksClose}</Chip>
           </div>
-          {plansQuery.data ? (
-            <Chip data-testid="event-page-gift" tone="active">
-              {`Every new league gets Premium free for a ${plansQuery.data.previewPeriodMonths}-month preview period`}
-            </Chip>
-          ) : null}
+        ) : (
+          <p className="text-sm text-muted-foreground" data-testid="event-page-between-seasons">
+            The next one is not on the schedule yet. Start your league now and you&apos;ll be ready when it is.
+          </p>
+        )}
+        <div className="flex flex-wrap items-center gap-3" ref={hero}>
+          <StartButton request={startRequest} testId="event-page-start">{EVENT_PAGE_ACTIONS.start}</StartButton>
         </div>
-      </Tile>
+        {plansQuery.data ? (
+          <Chip data-testid="event-page-gift" tone="active">
+            {`Every new league gets Premium free for a ${plansQuery.data.previewPeriodMonths}-month preview period`}
+          </Chip>
+        ) : null}
+      </PhotoHero>
 
       {page.offers.length > 0 ? (
-        <section className="space-y-4" data-testid="event-page-offers">
-          <SectionHeader description="Pick one, or run them all. Each starts with the setup below, and you can change any rule." title={`Ways to play ${copy.name}`} />
+        <LandingSection
+          intro="Pick one, or run them all. Each starts with the setup below, and you can change any rule."
+          testId="event-page-offers"
+          title={`Ways to play ${copy.name}`}
+        >
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {page.offers.map((offer) => (
               <OfferCard copy={copy} key={offer.id} offer={offer} page={page} testId={`event-page-offer-${offer.template.templateKey}`} />
             ))}
           </div>
-        </section>
+        </LandingSection>
       ) : null}
 
-      <section className="space-y-4" data-testid="event-page-steps">
-        <SectionHeader title="Ready before kickoff" />
-        <ol className="grid gap-4 md:grid-cols-3">
-          {READY_STEPS.map((step, index) => (
-            <li className="list-none" key={step.title}>
-              <Tile className="h-full" padding="md" radius="md">
-                <p className="font-display text-2xl font-bold text-primary">{index + 1}</p>
-                <h3 className="title-card text-foreground">{step.title}</h3>
-                <p className="mt-1 text-sm text-muted-foreground">{step.body}</p>
-              </Tile>
-            </li>
-          ))}
-        </ol>
-      </section>
+      <LandingSection testId="event-page-steps" title="Ready before kickoff">
+        <NumberedSteps steps={READY_STEPS} />
+      </LandingSection>
 
       {nextUp ? (
-        <Tile className="flex flex-wrap items-center justify-between gap-4" data-testid="event-page-next-up" padding="md" radius="md">
-          <div>
-            <Eyebrow>Next up</Eyebrow>
-            <h2 className="title-card text-xl text-foreground">{eventPageCopy(nextUp.page).name}</h2>
-          </div>
-          <LinkButton to={buildEventPagePath(nextUp.page.sport, nextUp.page.slug)} variant="secondary">See ways to play</LinkButton>
-        </Tile>
+        <NextUpCard
+          actionLabel="See ways to play"
+          name={eventPageCopy(nextUp.page).name}
+          testId="event-page-next-up"
+          to={buildEventPagePath(nextUp.page.sport, nextUp.page.slug)}
+        />
       ) : null}
 
-      <p className="text-xs text-muted-foreground" data-testid="event-page-disclaimer">{`Not affiliated with ${copy.leagueName} or any sports league.`}</p>
+      <LandingDisclaimer testId="event-page-disclaimer">{`Not affiliated with ${copy.leagueName} or any sports league.`}</LandingDisclaimer>
 
-      {showBar ? (
-        <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-card p-3 md:hidden" data-testid="event-page-bar">
-          <StartButton request={startRequest} testId="event-page-bar-start">{EVENT_PAGE_ACTIONS.start}</StartButton>
-        </div>
-      ) : null}
+      <StickyActionBar testId="event-page-bar" watch={hero}>
+        <StartButton request={startRequest} testId="event-page-bar-start">{EVENT_PAGE_ACTIONS.start}</StartButton>
+      </StickyActionBar>
     </section>
   );
 }

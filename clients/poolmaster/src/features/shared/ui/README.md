@@ -41,8 +41,15 @@ League pages and administration areas use the pieces named in
 
 A team's icon and name come from `features/teams`, not this folder, because they
 are a product piece: `TeamAvatar` draws the icon in its coloured square, and
-`TeamName` puts it beside the name, linked or plain, with the You and Inactive
+`TeamName` puts it beside the name, linked or plain, with the Yours and Inactive
 markers and an optional line underneath.
+
+Public and landing pages share four more pieces. `NumberedSteps` shows steps in tiles under one
+gold numeral style, with an optional picture. `FaqList` shows questions that open to their
+answers. `ExpandableTile` is a tile whose face opens it across its grid row. `Countdown` shows
+days, hours and minutes as one timer. The event page kit (`StartButton`, `LandingSection`,
+`PhotoHero`, `StickyActionBar`, `NextUpCard`, `LandingDisclaimer`) is a product piece, so it
+lives in `features/event-pages/components`.
 
 Feature pages should keep route-specific copy and generated-SDK calls local, but
 they should not duplicate header, grid-shell, detail/actions, or

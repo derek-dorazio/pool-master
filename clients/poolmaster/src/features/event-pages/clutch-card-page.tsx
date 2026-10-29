@@ -1,14 +1,17 @@
-import { useEffect, useMemo, type ReactNode } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Link } from 'react-router';
 import { buildEventPagePath, EventPageOfferState, getSportDefinition, ScoringFamily, Sport } from '@poolmaster/shared/domain';
 import type { EventPageDto, EventPageOfferDto, SportLeagueDto } from '@/lib/api';
 import { getLogger } from '@/lib/logger';
 import { STAT_POOL_CONTEST_TYPE, STAT_POOL_FORMULAS } from '@/features/contests/scoring-family-ui/stat-pool-copy';
 import { useSportLeaguesQuery } from '@/features/contest-types/use-sport-leagues-query';
-import { ErrorState, Eyebrow, LinkButton, LoadingState, Tile, cn } from '@/features/shared/ui';
+import { ErrorState, Eyebrow, FaqList, LinkButton, LoadingState, NumberedSteps, Tile, cn } from '@/features/shared/ui';
+import { LandingDisclaimer } from './components/landing-disclaimer';
+import { LandingSection } from './components/landing-section';
+import { StartButton } from './components/start-button';
 import { EVENT_PAGE_ACTIONS } from './event-page-copy';
-import { CLUTCH_CARD_EXAMPLE, CLUTCH_CARD_PAGE, CLUTCH_CARD_SECTIONS, type ClutchCardRound, type ClutchCardSectionId } from './clutch-card-copy';
-import { buildStartPath, type StartRequest } from './start-path';
+import { CLUTCH_CARD_EXAMPLE, CLUTCH_CARD_PAGE, CLUTCH_CARD_SECTIONS, type ClutchCardRound } from './clutch-card-copy';
+import type { StartRequest } from './start-path';
 import { useEventPagesQuery } from './use-event-pages-query';
 
 /** The built stat lines, in the order the copy tells them: each sport's composite name and formula. */
@@ -17,27 +20,6 @@ const BUILT_STAT_LINE_SPORTS: readonly Sport[] = [Sport.BASEBALL, Sport.BASKETBA
 /** A sport's stat line name: its composite's. */
 function statLineName(sport: Sport): string | undefined {
   return getSportDefinition(sport).composite?.name;
-}
-
-/** A section's heading row: its eyebrow, title and intro, and the address its menu link jumps to. */
-function Section({ id, eyebrow, title, intro, testId, children }: {
-  id?: ClutchCardSectionId;
-  eyebrow: string;
-  title: string;
-  intro?: string;
-  testId: string;
-  children: ReactNode;
-}) {
-  return (
-    <section className="scroll-mt-6 space-y-4" data-testid={testId} id={id}>
-      <Eyebrow>{eyebrow}</Eyebrow>
-      <div className="space-y-2">
-        <h2 className="font-display text-3xl font-bold tracking-tight text-foreground">{title}</h2>
-        {intro ? <p className="max-w-2xl text-base text-muted-foreground">{intro}</p> : null}
-      </div>
-      {children}
-    </section>
-  );
 }
 
 /** A title round on the calendar: available while its stat pool sport league is, and its event page when one offers it. */
@@ -80,11 +62,9 @@ function rankOffer(offer: EventPageOfferDto): number {
   return offer.state === EventPageOfferState.OPEN ? 0 : 1;
 }
 
-function StartButton({ request, testId }: { request: StartRequest | null; testId: string }) {
-  if (!request) {
-    return null;
-  }
-  return <LinkButton data-testid={testId} size="lg" to={buildStartPath(request)}>{CLUTCH_CARD_PAGE.hero.start}</LinkButton>;
+/** The page's start button: none while no event page offers a Clutch Card. */
+function ClutchCardStart({ request, testId }: { request: StartRequest | null; testId: string }) {
+  return request ? <StartButton request={request} size="lg" testId={testId}>{CLUTCH_CARD_PAGE.hero.start}</StartButton> : null;
 }
 
 /** The hero's made-up card, mid-series: each star's games, the best ones counted. */
@@ -153,7 +133,7 @@ function Hero({ startRequest }: { startRequest: StartRequest | null }) {
       <div className="space-y-5">
         <p className="max-w-xl text-lg text-on-inverse-muted" data-testid="clutch-card-hook">{hero.hook}</p>
         <div className="flex flex-wrap items-center gap-3">
-          <StartButton request={startRequest} testId="clutch-card-start" />
+          <ClutchCardStart request={startRequest} testId="clutch-card-start" />
           <a className="text-sm font-semibold underline underline-offset-4" data-testid="clutch-card-see-cards" href="#card-types">{hero.seeTheCards}</a>
         </div>
         <p className="text-sm text-on-inverse-muted">{hero.note}</p>
@@ -166,7 +146,7 @@ function Hero({ startRequest }: { startRequest: StartRequest | null }) {
 function CardTypes() {
   const copy = CLUTCH_CARD_PAGE.cardTypes;
   return (
-    <Section eyebrow={copy.eyebrow} id="card-types" intro={copy.intro} testId="clutch-card-types" title={copy.title}>
+    <LandingSection eyebrow={copy.eyebrow} id="card-types" intro={copy.intro} testId="clutch-card-types" title={copy.title}>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {BUILT_STAT_LINE_SPORTS.map((sport) => (
           <div className="rounded-2xl border border-inverse-border bg-surface-inverse p-5 text-on-inverse" data-testid={`clutch-card-type-${sport}`} key={sport}>
@@ -177,7 +157,7 @@ function CardTypes() {
           </div>
         ))}
       </div>
-    </Section>
+    </LandingSection>
   );
 }
 
@@ -203,7 +183,7 @@ function RoundChip({ round }: { round: CalendarRound }) {
 function Calendar({ rounds }: { rounds: ReadonlyMap<string, CalendarRound> | null }) {
   const copy = CLUTCH_CARD_PAGE.calendar;
   return (
-    <Section eyebrow={copy.eyebrow} id="calendar" intro={copy.intro} testId="clutch-card-calendar" title={copy.title}>
+    <LandingSection eyebrow={copy.eyebrow} id="calendar" intro={copy.intro} testId="clutch-card-calendar" title={copy.title}>
       {rounds ? (
         <>
           <ul className="divide-y divide-border rounded-2xl border border-border">
@@ -228,14 +208,14 @@ function Calendar({ rounds }: { rounds: ReadonlyMap<string, CalendarRound> | nul
       ) : (
         <ErrorState body="We couldn't load the championship calendar. Try again in a moment." testId="clutch-card-calendar-error" title="Calendar unavailable" />
       )}
-    </Section>
+    </LandingSection>
   );
 }
 
 function Why() {
   const copy = CLUTCH_CARD_PAGE.why;
   return (
-    <Section eyebrow={copy.eyebrow} testId="clutch-card-why" title={copy.title}>
+    <LandingSection eyebrow={copy.eyebrow} testId="clutch-card-why" title={copy.title}>
       <div className="grid gap-4 md:grid-cols-2">
         {copy.points.map((point) => (
           <Tile key={point.title} padding="md" radius="md">
@@ -244,25 +224,15 @@ function Why() {
           </Tile>
         ))}
       </div>
-    </Section>
+    </LandingSection>
   );
 }
 
 function HowItPlays() {
   const copy = CLUTCH_CARD_PAGE.howItPlays;
   return (
-    <Section eyebrow={copy.eyebrow} id="how-it-plays" intro={copy.intro} testId="clutch-card-how-it-plays" title={copy.title}>
-      <ol className="grid gap-4 md:grid-cols-3">
-        {copy.steps.map((step, index) => (
-          <li className="list-none" key={step.title}>
-            <Tile className="h-full" padding="md" radius="md">
-              <p className="font-display text-2xl font-bold text-muted-foreground">{index + 1}</p>
-              <h3 className="title-card text-foreground">{step.title}</h3>
-              <p className="mt-1 text-sm text-muted-foreground">{step.body}</p>
-            </Tile>
-          </li>
-        ))}
-      </ol>
+    <LandingSection eyebrow={copy.eyebrow} id="how-it-plays" intro={copy.intro} testId="clutch-card-how-it-plays" title={copy.title}>
+      <NumberedSteps steps={copy.steps} />
       <div className="grid gap-4 md:grid-cols-3">
         {copy.modes.map((mode) => (
           <div className="rounded-xl border border-border p-4" key={mode.title}>
@@ -271,23 +241,16 @@ function HowItPlays() {
           </div>
         ))}
       </div>
-    </Section>
+    </LandingSection>
   );
 }
 
 function Faq() {
   const copy = CLUTCH_CARD_PAGE.faq;
   return (
-    <Section eyebrow={copy.eyebrow} id="questions" testId="clutch-card-faq" title={copy.title}>
-      <div className="divide-y divide-border rounded-2xl border border-border">
-        {copy.items.map((item) => (
-          <details className="p-4" key={item.question}>
-            <summary className="cursor-pointer font-semibold text-foreground">{item.question}</summary>
-            <p className="mt-2 text-sm text-muted-foreground">{item.answer}</p>
-          </details>
-        ))}
-      </div>
-    </Section>
+    <LandingSection eyebrow={copy.eyebrow} id="questions" testId="clutch-card-faq" title={copy.title}>
+      <FaqList items={copy.items} />
+    </LandingSection>
   );
 }
 
@@ -352,12 +315,12 @@ export function ClutchCardPage() {
       <Tile className="flex flex-col items-start gap-4" data-testid="clutch-card-closing" padding="lg" radius="lg">
         <h2 className="font-display text-3xl font-bold text-foreground">{CLUTCH_CARD_PAGE.closing.title}</h2>
         {startRequest ? (
-          <StartButton request={startRequest} testId="clutch-card-closing-start" />
+          <ClutchCardStart request={startRequest} testId="clutch-card-closing-start" />
         ) : (
           <LinkButton data-testid="clutch-card-closing-how-to-play" to="/how-to-play" variant="secondary">{EVENT_PAGE_ACTIONS.seeEveryWayToPlay}</LinkButton>
         )}
       </Tile>
-      <p className="text-xs text-muted-foreground" data-testid="clutch-card-disclaimer">{CLUTCH_CARD_PAGE.footer}</p>
+      <LandingDisclaimer testId="clutch-card-disclaimer">{CLUTCH_CARD_PAGE.footer}</LandingDisclaimer>
     </section>
   );
 }

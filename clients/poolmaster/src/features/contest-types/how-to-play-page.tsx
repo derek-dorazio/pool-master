@@ -4,7 +4,7 @@ import { SelectionType, formatSelectionTypeName, getSportDefinition, type Sport 
 import type { ContestConfigTemplateDto, LeagueDto } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-context';
 import { useActiveContestTemplatesQuery } from '@/features/contests/use-active-contest-templates-query';
-import { Button, ErrorState, LinkButton, LoadingState, PageHeader, SectionHeader, Tile, cn } from '@/features/shared/ui';
+import { Button, ErrorState, ExpandableTile, LinkButton, LoadingState, NumberedSteps, PageHeader, SectionHeader, Tile, cn } from '@/features/shared/ui';
 import { getLogger } from '@/lib/logger';
 import { buildPublicContestCatalog, type ContestTypeTile, type PublicCatalogLeague, type PublicCatalogSport } from './contest-catalog';
 import { FORMAT_GUIDES } from './format-guides';
@@ -95,60 +95,50 @@ function FormatCard({ selectionType, sports, chosen, isOpen, onToggle, onChooseS
     .flatMap((league) => league.groups.filter((tile) => tile.selectionType === selectionType))
     .at(0)?.featured;
   return (
-    <Tile
-      className={cn('flex flex-col gap-3', isOpen ? 'col-span-full border-primary' : null)}
-      data-testid={`how-to-play-format-${selectionType}`}
-      padding="none"
-      radius="md"
-    >
-      <Button
-        aria-expanded={isOpen}
-        className="normal-case tracking-normal h-auto flex-col items-stretch gap-2 rounded-2xl p-2 text-left font-normal"
-        data-testid={`how-to-play-format-${selectionType}-toggle`}
-        onClick={onToggle}
-        size="auto"
-        variant="ghost"
-      >
-        <FormatIllustration className={cn('aspect-[16/10] w-full rounded-xl', isOpen ? 'max-h-48' : null)} selectionType={selectionType} />
-        <span className="px-1 font-display text-base font-bold text-foreground">{formatSelectionTypeName(selectionType)}</span>
-        <span className="px-1 text-sm text-muted-foreground">{guide.summary}</span>
-        {isOpen || chosen ? null : (
-          <span aria-label={`On ${sports.map((sport) => sport.name).join(', ')}`} className="flex flex-wrap gap-1 px-1" role="img">
-            {sports.map((sport) => <SportThumb className="h-5 w-5" key={sport.sport} sport={sport.sport} />)}
-          </span>
-        )}
-      </Button>
-      {isOpen ? (
-        <div className="space-y-3 border-t border-border px-3 pb-3 pt-3 text-sm" data-testid={`how-to-play-format-${selectionType}-details`}>
-          <ol className="list-decimal space-y-1 pl-5 text-foreground">
-            {guide.steps.map((step) => <li key={step}>{step}</li>)}
-          </ol>
-          {featured ? (
-            <p className="text-muted-foreground">
-              <span className="font-semibold text-foreground">{featured.name}.</span> {featured.description}
-            </p>
-          ) : (
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-muted-foreground">Play it on</span>
-              {sports.map((sport) => (
-                <Button
-                  className="gap-1.5 rounded-full pl-1"
-                  data-testid={`how-to-play-format-${selectionType}-sport-${sport.sport}`}
-                  key={sport.sport}
-                  onClick={() => onChooseSport(sport.sport)}
-                  size="sm"
-                  variant="secondary"
-                >
-                  <SportThumb className="h-6 w-6" sport={sport.sport} />
-                  {sport.name}
-                </Button>
-              ))}
-            </div>
+    <ExpandableTile
+      face={(
+        <>
+          <FormatIllustration className={cn('aspect-[16/10] w-full rounded-xl', isOpen ? 'max-h-48' : null)} selectionType={selectionType} />
+          <span className="px-1 font-display text-base font-bold text-foreground">{formatSelectionTypeName(selectionType)}</span>
+          <span className="px-1 text-sm text-muted-foreground">{guide.summary}</span>
+          {isOpen || chosen ? null : (
+            <span aria-label={`On ${sports.map((sport) => sport.name).join(', ')}`} className="flex flex-wrap gap-1 px-1" role="img">
+              {sports.map((sport) => <SportThumb className="h-5 w-5" key={sport.sport} sport={sport.sport} />)}
+            </span>
           )}
-          <CreateContestAction leagues={createLeagues} template={createTemplate} testId={`how-to-play-format-${selectionType}`} />
+        </>
+      )}
+      isOpen={isOpen}
+      onToggle={onToggle}
+      testId={`how-to-play-format-${selectionType}`}
+    >
+      <ol className="list-decimal space-y-1 pl-5 text-foreground">
+        {guide.steps.map((step) => <li key={step}>{step}</li>)}
+      </ol>
+      {featured ? (
+        <p className="text-muted-foreground">
+          <span className="font-semibold text-foreground">{featured.name}.</span> {featured.description}
+        </p>
+      ) : (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-muted-foreground">Play it on</span>
+          {sports.map((sport) => (
+            <Button
+              className="gap-1.5 rounded-full pl-1"
+              data-testid={`how-to-play-format-${selectionType}-sport-${sport.sport}`}
+              key={sport.sport}
+              onClick={() => onChooseSport(sport.sport)}
+              size="sm"
+              variant="secondary"
+            >
+              <SportThumb className="h-6 w-6" sport={sport.sport} />
+              {sport.name}
+            </Button>
+          ))}
         </div>
-      ) : null}
-    </Tile>
+      )}
+      <CreateContestAction leagues={createLeagues} template={createTemplate} testId={`how-to-play-format-${selectionType}`} />
+    </ExpandableTile>
   );
 }
 
@@ -175,48 +165,38 @@ function ClutchCardTile({ leagues, isOpen, onToggle, createLeagues }: {
   // One tile a sport: its stat line is the same in every one of its stat pool leagues.
   const statLines = [...new Map(statPoolLeagues.map(({ league, name }) => [league.definition.sport, { sport: league.definition.sport, name }] as const)).values()];
   return (
-    <Tile
-      className={cn('flex flex-col gap-3', isOpen ? 'col-span-full border-primary' : null)}
-      data-testid="how-to-play-clutch-card"
-      padding="none"
-      radius="md"
+    <ExpandableTile
+      face={(
+        <>
+          {/* The card fills its whole picture, so an open tile keeps its shape rather than cropping it. */}
+          <ClutchCardIllustration className={cn('aspect-[16/10] w-full rounded-xl', isOpen ? 'max-h-48 w-auto self-center' : null)} />
+          <span className="px-1 font-display text-base font-bold text-foreground">{STAT_POOL_CONTEST_TYPE}</span>
+          <span className="px-1 text-sm text-muted-foreground">{STAT_POOL_GUIDE.summary}</span>
+        </>
+      )}
+      isOpen={isOpen}
+      onToggle={onToggle}
+      testId="how-to-play-clutch-card"
     >
-      <Button
-        aria-expanded={isOpen}
-        className="normal-case tracking-normal h-auto flex-col items-stretch gap-2 rounded-2xl p-2 text-left font-normal"
-        data-testid="how-to-play-clutch-card-toggle"
-        onClick={onToggle}
-        size="auto"
-        variant="ghost"
-      >
-        {/* The card fills its whole picture, so an open tile keeps its shape rather than cropping it. */}
-        <ClutchCardIllustration className={cn('aspect-[16/10] w-full rounded-xl', isOpen ? 'max-h-48 w-auto self-center' : null)} />
-        <span className="px-1 font-display text-base font-bold text-foreground">{STAT_POOL_CONTEST_TYPE}</span>
-        <span className="px-1 text-sm text-muted-foreground">{STAT_POOL_GUIDE.summary}</span>
-      </Button>
-      {isOpen ? (
-        <div className="space-y-3 border-t border-border px-3 pb-3 pt-3 text-sm" data-testid="how-to-play-clutch-card-details">
-          <ol className="list-decimal space-y-1 pl-5 text-foreground">
-            {STAT_POOL_GUIDE.steps.map((step) => <li key={step}>{step}</li>)}
-          </ol>
-          <ul aria-label="Stat lines" className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
-            {statLines.map(({ sport, name }) => (
-              <li className="flex items-center gap-2 rounded-lg border border-border bg-background p-2" data-testid={`how-to-play-clutch-card-stat-${sport}`} key={sport}>
-                <SportThumb className="h-7 w-7" sport={sport} />
-                <span className="min-w-0">
-                  <span className="block font-semibold text-foreground">{name}</span>
-                  <span className="block text-xs text-muted-foreground">{getSportDefinition(sport).name}</span>
-                </span>
-              </li>
-            ))}
-          </ul>
-          <LinkButton data-testid="how-to-play-clutch-card-more" size="sm" to={CLUTCH_CARD_PAGE_PATH} variant="secondary">
-            {`More about the ${STAT_POOL_CONTEST_TYPE}`}
-          </LinkButton>
-          <CreateContestAction leagues={createLeagues} template={statPoolLeagues[0]?.league.groups[0]?.featured} testId="how-to-play-clutch-card" />
-        </div>
-      ) : null}
-    </Tile>
+      <ol className="list-decimal space-y-1 pl-5 text-foreground">
+        {STAT_POOL_GUIDE.steps.map((step) => <li key={step}>{step}</li>)}
+      </ol>
+      <ul aria-label="Stat lines" className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+        {statLines.map(({ sport, name }) => (
+          <li className="flex items-center gap-2 rounded-lg border border-border bg-background p-2" data-testid={`how-to-play-clutch-card-stat-${sport}`} key={sport}>
+            <SportThumb className="h-7 w-7" sport={sport} />
+            <span className="min-w-0">
+              <span className="block font-semibold text-foreground">{name}</span>
+              <span className="block text-xs text-muted-foreground">{getSportDefinition(sport).name}</span>
+            </span>
+          </li>
+        ))}
+      </ul>
+      <LinkButton data-testid="how-to-play-clutch-card-more" size="sm" to={CLUTCH_CARD_PAGE_PATH} variant="secondary">
+        {`More about the ${STAT_POOL_CONTEST_TYPE}`}
+      </LinkButton>
+      <CreateContestAction leagues={createLeagues} template={statPoolLeagues[0]?.league.groups[0]?.featured} testId="how-to-play-clutch-card" />
+    </ExpandableTile>
   );
 }
 
@@ -345,19 +325,14 @@ export function HowToPlayPage() {
         title="How to Play"
       />
 
-      <ol className="-mx-1 grid auto-cols-[78%] grid-flow-col gap-3 overflow-x-auto px-1 pb-1 sm:auto-cols-[45%] md:grid-flow-row md:grid-cols-3 md:overflow-visible" data-testid="how-to-play-steps">
-        {HOW_IT_WORKS.map((step, index) => (
-          <li className="list-none" key={step.title}>
-            <Tile className="h-full" padding="none" radius="md">
-              <StepIllustration className="aspect-[16/10] w-full rounded-t-2xl" step={step.picture} />
-              <div className="p-3">
-                <h3 className="title-card text-foreground"><span className="mr-1 font-display font-bold text-primary">{index + 1}</span>{step.title}</h3>
-                <p className="mt-1 text-sm text-muted-foreground">{step.body}</p>
-              </div>
-            </Tile>
-          </li>
-        ))}
-      </ol>
+      <NumberedSteps
+        className="-mx-1 auto-cols-[78%] grid-flow-col gap-3 overflow-x-auto px-1 pb-1 sm:auto-cols-[45%] md:grid-flow-row md:overflow-visible"
+        steps={HOW_IT_WORKS.map((step) => ({
+          ...step,
+          picture: <StepIllustration className="aspect-[16/10] w-full rounded-t-2xl" step={step.picture} />,
+        }))}
+        testId="how-to-play-steps"
+      />
 
       <ComingUpRow key={chosenSport?.sport ?? 'all'} sport={chosenSport?.sport} testId="how-to-play-coming-up" />
 

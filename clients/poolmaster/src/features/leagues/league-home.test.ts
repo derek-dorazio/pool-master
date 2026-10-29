@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ContestDto, ContestLeaderboardResponse } from '@/lib/api';
-import { buildBracketTopStandings, buildTopStandings, countdownUntil, pickUpNextContest } from './league-home';
+import { buildBracketTopStandings, buildTopStandings, pickUpNextContest } from './league-home';
 import { bracketLeaderboardFixture } from '@/features/contests/test/bracket-fixtures';
 
 type LeaderboardEntry = ContestLeaderboardResponse['entries'][number];
@@ -132,21 +132,6 @@ describe('pickUpNextContest', () => {
 
   it('returns null when there are no contests', () => {
     expect(pickUpNextContest([], NOW)).toBeNull();
-  });
-});
-
-describe('countdownUntil', () => {
-  it('splits the time remaining into whole days, hours and minutes', () => {
-    // 2 days, 3 hours, 4 minutes and 59 seconds after NOW: the partial minute is dropped.
-    expect(countdownUntil('2026-05-03T15:04:59.000Z', NOW)).toEqual({ days: 2, hours: 3, minutes: 4 });
-  });
-
-  it('reads zero days when less than a day remains', () => {
-    expect(countdownUntil('2026-05-01T13:30:00.000Z', NOW)).toEqual({ days: 0, hours: 1, minutes: 30 });
-  });
-
-  it('never goes negative once the moment has passed', () => {
-    expect(countdownUntil('2026-04-29T08:00:00.000Z', NOW)).toEqual({ days: 0, hours: 0, minutes: 0 });
   });
 });
 
