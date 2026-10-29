@@ -17,7 +17,7 @@ import { toLeagueDto } from '../../mappers/leagues.mapper';
 import { mapLeagueMembershipToDto } from '../../mappers/leagues-extra.mapper';
 import { toSquadMembershipDto } from '../../mappers/squads.mapper';
 import { sendError } from '../../core/error-handler';
-import type { CreateLeagueInput, LeagueActivityCounts, LeagueService, UpdateLeagueCupSettingsInput, UpdateLeagueDetailsInput } from './service';
+import type { CreateLeagueInput, LeagueActivityCounts, LeagueForViewer, LeagueService, UpdateLeagueCupSettingsInput, UpdateLeagueDetailsInput } from './service';
 import { LeagueNotFoundError, LeagueOperationError } from './service';
 import { LeagueMembershipStatus } from '@poolmaster/shared/domain';
 import type { League, LeagueMembership } from '@poolmaster/shared/domain';
@@ -240,7 +240,7 @@ export function createLeagueHandlers(
     }, 'Handling get league request');
     return sendLeagueContext(request, reply, {
       action: 'get',
-      load: () => leagueService.getLeagueWithMembers(request.params.id),
+      load: (userId) => leagueService.getLeagueForViewer(request.params.id, userId),
       logData: { leagueId: request.params.id },
     });
   }
@@ -256,7 +256,7 @@ export function createLeagueHandlers(
     }, 'Handling get league by code request');
     return sendLeagueContext(request, reply, {
       action: 'getByCode',
-      load: () => leagueService.getLeagueWithMembersByCode(request.params.leagueCode),
+      load: (userId) => leagueService.getLeagueByCodeForViewer(request.params.leagueCode, userId),
       logData: { leagueCode: request.params.leagueCode },
     });
   }
@@ -281,7 +281,7 @@ export function createLeagueHandlers(
     reply: FastifyReply,
     options: {
       action: 'get' | 'getByCode';
-      load: () => Promise<{ league: League; members: LeagueMembership[] } | null>;
+      load: (userId: string) => Promise<LeagueForViewer | null>;
       logData: Record<string, unknown>;
     },
   ): Promise<void> {
@@ -296,7 +296,7 @@ export function createLeagueHandlers(
       return sendError(reply, 401, 'AUTH_SESSION_REQUIRED', 'Authenticated session required');
     }
 
-    const result = await load();
+    const result = await load(userId);
     if (!result) {
       logger.warn({
         action: `leagueRoute.${action}.notFound`,
@@ -305,7 +305,7 @@ export function createLeagueHandlers(
       return sendError(reply, 404, 'LEAGUE_NOT_FOUND', 'League not found');
     }
 
-    const membership = result.members.find((member) => member.userId === userId);
+    const { membership } = result;
     const rootAdminViewer = request.authUser?.isRootAdmin === true;
     if (!membership && !rootAdminViewer) {
       logger.warn({
@@ -339,12 +339,15 @@ export function createLeagueHandlers(
 
     logger.info({
       action: `leagueRoute.${action}.success`,
-      data: { ...logData, leagueId: result.league.id, memberCount: result.members.length },
+      data: { ...logData, leagueId: result.league.id, memberCount: counts.memberCount },
     }, 'Loaded league context');
     return reply.send({
       league: leagueDto(result.league, counts),
-      // Both edges are the viewer's own, so the embedded member is the viewer.
-      membership: membership && squadContext.viewer ? mapLeagueMembershipToDto(membership, squadContext.viewer) : null,
+      // Both edges are the viewer's own, so the embedded member is the viewer. A root admin past
+      // the inactive check above gets no edge for a membership that has ended.
+      membership: membership?.status === LeagueMembershipStatus.ACTIVE && squadContext.viewer
+        ? mapLeagueMembershipToDto(membership, squadContext.viewer)
+        : null,
       squadMembership: squadContext.squadMembership,
       squadName: squadContext.squadName,
       activeTeamCount: squadContext.activeTeamCount,
