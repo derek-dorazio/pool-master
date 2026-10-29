@@ -33,7 +33,6 @@ export const QUERY_BUDGET_ALLOW_LIST: QueryBudgetAllowList = {
   // A draw sends every entry's receipt inside the request.
   'POST /api/v1/selections/:contestId/draw': { ticket: 1171 },
   'POST /api/v1/selections/:contestId/squares/draw': { ticket: 1171 },
-  // Saving picks costs a query per pick; submitting reads the picks three times.
-  'POST /api/v1/selections/:contestId/entries/:entryId/events/:sportEventId/submit': { ticket: 1254 },
+  // Saving game picks costs a query per pick.
   'PUT /api/v1/selections/:contestId/entries/:entryId/events/:sportEventId/game-picks': { ticket: 1254 },
 };

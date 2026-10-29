@@ -33,25 +33,65 @@ export function describeQueryBudgetViolations(violations: readonly QueryBudgetVi
   ].join('\n');
 }
 
-/** The over-budget requests a functional server has recorded, served for the suite to take. */
+/** An allow-list entry the run never saw over budget: its fix has landed, or its route is gone. */
+export interface StaleAllowListEntry {
+  route: string;
+  ticket: number;
+  /** The most queries the route ran in the run, or null when no test called it. */
+  mostQueries: number | null;
+}
+
+/** The allow-list entries whose route never went over budget in a run, given the most each ran. */
+export function staleAllowListEntries(
+  allowList: QueryBudgetAllowList,
+  mostQueriesSeen: ReadonlyMap<string, number>,
+): StaleAllowListEntry[] {
+  return Object.entries(allowList)
+    .map(([route, { ticket }]) => ({ route, ticket, mostQueries: mostQueriesSeen.get(route) ?? null }))
+    .filter(({ mostQueries }) => mostQueries === null || mostQueries <= REQUEST_QUERY_BUDGET);
+}
+
+/** The failure message for `stale` entries, one route per line. */
+export function describeStaleAllowListEntries(stale: readonly StaleAllowListEntry[]): string {
+  const lines = stale.map(({ route, ticket, mostQueries }) => (mostQueries === null
+    ? `  ${route} (#${ticket}) was not called`
+    : `  ${route} (#${ticket}) ran at most ${mostQueries} queries`));
+  return [
+    `Query budget allow-list entries no route went over ${REQUEST_QUERY_BUDGET} for in this run:`,
+    ...lines,
+    'Remove them from tests/functional/query-budget-allow-list.ts.',
+  ].join('\n');
+}
+
+/** What a functional server saw of the query budget, served for the suite to read. */
 export interface QueryBudgetRecorder {
   url: string;
-  record(violation: QueryBudgetViolation): void;
+  /** Notes one request: a violation when it is over budget and not allowed. */
+  observe(route: string, queryCount: number): void;
   close(): Promise<void>;
 }
 
 /**
- * Holds recorded violations in memory and hands them over on `POST /take`, which clears them,
- * the way the mail inbox serves captured mail (#442).
+ * Holds what the server saw in memory, the way the mail inbox serves captured mail (#442).
+ * `POST /take` hands over the violations recorded since the last take and clears them;
+ * `GET /stale` lists the allow-list entries no request has gone over budget for, with the
+ * message the suite's teardown fails with.
  */
-export async function startQueryBudgetRecorder(): Promise<QueryBudgetRecorder> {
+export async function startQueryBudgetRecorder(allowList: QueryBudgetAllowList): Promise<QueryBudgetRecorder> {
   let recorded: QueryBudgetViolation[] = [];
+  const mostQueriesSeen = new Map<string, number>();
   const server = createServer((request, response) => {
     if (request.method === 'POST' && request.url === '/take') {
       const taken = recorded;
       recorded = [];
       response.writeHead(200, { 'content-type': 'application/json' });
       response.end(JSON.stringify(taken));
+      return;
+    }
+    if (request.method === 'GET' && request.url === '/stale') {
+      const stale = staleAllowListEntries(allowList, mostQueriesSeen);
+      response.writeHead(200, { 'content-type': 'application/json' });
+      response.end(JSON.stringify({ stale, message: describeStaleAllowListEntries(stale) }));
       return;
     }
     response.writeHead(404).end();
@@ -73,8 +113,15 @@ export async function startQueryBudgetRecorder(): Promise<QueryBudgetRecorder> {
 
   return {
     url: `http://127.0.0.1:${address.port}`,
-    record: (violation) => {
-      recorded.push(violation);
+    observe: (route, queryCount) => {
+      if (route in allowList) {
+        mostQueriesSeen.set(route, Math.max(queryCount, mostQueriesSeen.get(route) ?? 0));
+        return;
+      }
+      const violation = queryBudgetViolation(route, queryCount, allowList);
+      if (violation !== null) {
+        recorded.push(violation);
+      }
     },
     close: () => new Promise<void>((resolve, reject) => {
       server.close((err) => {

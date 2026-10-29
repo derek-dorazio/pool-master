@@ -7,6 +7,8 @@ import { memoizedRead } from '../../../packages/core-api/src/core/request-read-m
 import { requestLoggingContext } from '../../../packages/core-api/src/plugins/request-logging-context';
 import { requestQueryUsage } from '../../../packages/core-api/src/plugins/request-query-usage';
 import { requestReadMemo } from '../../../packages/core-api/src/plugins/request-read-memo';
+import { PrismaEmailMessageRepository } from '../../../packages/core-api/src/adapters';
+import { EMAIL_SETTINGS, EmailSender } from '../../../packages/core-api/src/modules/email';
 import { queryBudgetViolation } from '../../support/query-budget';
 
 // The per-request query budget against Postgres (#1244): each request counts the Prisma queries
@@ -26,7 +28,14 @@ const prisma = countingQueries(new PrismaClient());
 let app: FastifyInstance;
 let lines: LogLine[];
 let lastUsage: RequestQueryUsage | undefined;
+const usageByUrl = new Map<string, RequestQueryUsage | undefined>();
 let backgroundDone: Promise<void>;
+// The app's email sender over the counted client: a request that queues an email wakes it.
+const emailSender = new EmailSender({
+  messages: new PrismaEmailMessageRepository(prisma),
+  transport: { providerName: 'smtp', send: () => Promise.resolve({ provider: 'smtp' }) },
+  readConfig: () => EMAIL_SETTINGS.defaults({ POOLMASTER_ENVIRONMENT: 'prod' }),
+});
 
 beforeAll(async () => {
   // Required by the logger with no fallback (core/config.ts); setupIntegrationTests sets it the same way.
@@ -44,6 +53,7 @@ beforeAll(async () => {
   await app.register(requestLoggingContext);
   app.addHook('onResponse', (request, _reply, done) => {
     lastUsage = request.queryUsage;
+    usageByUrl.set(request.url, request.queryUsage);
     done();
   });
   app.get<{ Params: { count: string } }>('/queries/:count', async (request) => {
@@ -62,6 +72,15 @@ beforeAll(async () => {
       await tx.user.count();
       await tx.league.count();
     });
+    return { ok: true };
+  });
+  app.get('/batch', async () => {
+    await prisma.$transaction([prisma.user.count(), prisma.league.count(), prisma.sport.count()]);
+    return { ok: true };
+  });
+  app.get('/queues-email', async () => {
+    await prisma.user.count();
+    emailSender.wake();
     return { ok: true };
   });
   app.get('/background', async () => {
@@ -84,6 +103,7 @@ afterAll(async () => {
 beforeEach(() => {
   lines.length = 0;
   lastUsage = undefined;
+  usageByUrl.clear();
 });
 
 function completedLine(): LogLine {
@@ -155,6 +175,29 @@ describe('per-request query budget (#1244)', () => {
   it('does not count work the request starts but does not wait for', async () => {
     await app.inject({ method: 'GET', url: '/background' });
     await backgroundDone;
+
+    expect(lastUsage?.queryCount).toBe(1);
+  });
+
+  it('counts each statement of a batch transaction', async () => {
+    await app.inject({ method: 'GET', url: '/batch' });
+
+    expect(lastUsage?.queryCount).toBe(3);
+  });
+
+  it('keeps a separate count for each of two requests running at the same time', async () => {
+    await Promise.all([
+      app.inject({ method: 'GET', url: '/queries/3' }),
+      app.inject({ method: 'GET', url: '/queries/7' }),
+    ]);
+
+    expect(usageByUrl.get('/queries/3')?.queryCount).toBe(3);
+    expect(usageByUrl.get('/queries/7')?.queryCount).toBe(7);
+  });
+
+  it('does not count the email sender\'s drain that a request wakes by queueing an email', async () => {
+    await app.inject({ method: 'GET', url: '/queues-email' });
+    await emailSender.drain();
 
     expect(lastUsage?.queryCount).toBe(1);
   });

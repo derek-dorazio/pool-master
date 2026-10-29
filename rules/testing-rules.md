@@ -815,6 +815,8 @@ lower layers, stop expanding E2E and strengthen the lower-layer tests first.
 - Every request the functional suite makes must run at most 25 Prisma queries (`REQUEST_QUERY_BUDGET` in `packages/core-api/src/core/request-query-usage.ts`). The server records each request over it, and the test that made it fails after it runs, naming the route and the count.
 - A read answered by the request read memo is not a query; each statement of a `$transaction([...])` batch is one.
 - An over-budget route is fixed by batching its reads, not by splitting the test. The routes over budget when the check arrived are on `tests/functional/query-budget-allow-list.ts`, each with the ticket that fixes it; the fix PR removes its entry. A new entry needs a ticket and is a review trigger.
+- A full functional run (unsharded, no file or name filter, as `rules/workflow-rules.md` §3 runs it) fails in teardown on any allow-list entry whose route never went over budget, or was never called: its fix has landed, so the entry goes. CI runs the suite in shards and skips this check, so the local full run is where it bites.
+- Work a request starts but does not wait for (the email sender's drain, a manual event sync) runs in `outsideRequest` (`packages/core-api/src/core/request-scope.ts`), so its queries are not the request's and it does not share the request's read memo.
 - The same count is on every `request completed` log line as `res.queryCount` and `res.dbMs`, and a request over budget logs `request.queryBudget.exceeded` at `warn` in every environment.
 
 Functional suites should prioritize durable critical-path journeys covering:

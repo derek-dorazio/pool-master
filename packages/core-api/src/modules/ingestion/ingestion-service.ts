@@ -32,8 +32,7 @@ import {
   isEventSyncFeedType,
   readPayload,
 } from './persistence/provider-sync-run-ledger';
-import { outsideReadMemo } from '../../core/request-read-memo';
-import { outsideQueryUsage } from '../../core/request-query-usage';
+import { outsideRequest } from '../../core/request-scope';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -368,15 +367,14 @@ export class IngestionService {
       runType: 'MANUAL_EVENT_SYNC',
     });
 
-    // Outside the request's read memo and query count: the sync runs on after the response,
-    // reads afresh, and its queries are not the request's.
-    outsideReadMemo(() => outsideQueryUsage(() => setImmediate(() => {
+    // Outside the request: the sync runs on after the response and reads afresh.
+    outsideRequest(() => setImmediate(() => {
       void this.executeSubmittedEventSync({
         scheduler,
         normalizedScope,
         syncRuns,
       });
-    })));
+    }));
 
     this.logger?.info({
       sport: normalizedScope.sport,

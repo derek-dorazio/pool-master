@@ -11,7 +11,7 @@ import {
   type SmtpSinkServer,
 } from '../support/smtp-sink';
 import { FUNCTIONAL_APP_BASE_URL } from './state';
-import { queryBudgetViolation, startQueryBudgetRecorder, type QueryBudgetRecorder } from '../support/query-budget';
+import { startQueryBudgetRecorder, type QueryBudgetRecorder } from '../support/query-budget';
 import { QUERY_BUDGET_ALLOW_LIST } from './query-budget-allow-list';
 
 const stateFilePathEnv = process.env.FUNCTIONAL_SERVER_STATE_FILE;
@@ -97,17 +97,13 @@ function activeRunsExist(): boolean {
 }
 
 /**
- * Records each request over the query budget that is not on the allow-list (#1244), for the
- * suite to take after every test (tests/functional/query-budget-check.ts). Recorded on send,
- * before the test sees its response, so the check after the test always finds it.
+ * Shows the recorder every request's query count (#1244): one over budget and not on the
+ * allow-list is a violation the suite takes after every test (tests/functional/query-budget-check.ts).
+ * Observed on send, before the test sees its response, so the check after the test always finds it.
  */
-function recordQueryBudgetViolations(app: FastifyInstance, recorder: QueryBudgetRecorder): void {
+function observeQueryBudget(app: FastifyInstance, recorder: QueryBudgetRecorder): void {
   app.addHook('onSend', (request, _reply, payload, done) => {
-    const queryCount = request.queryUsage?.queryCount ?? 0;
-    const violation = queryBudgetViolation(`${request.method} ${request.routeOptions.url ?? request.url}`, queryCount, QUERY_BUDGET_ALLOW_LIST);
-    if (violation !== null) {
-      recorder.record(violation);
-    }
+    recorder.observe(`${request.method} ${request.routeOptions.url ?? request.url}`, request.queryUsage?.queryCount ?? 0);
     done(null, payload);
   });
 }
@@ -141,7 +137,7 @@ const spawnerPid = Number(process.env.FUNCTIONAL_SPAWNER_PID) || process.ppid;
 async function main(): Promise<void> {
   smtpSink = await startSmtpSinkServer();
   mailInbox = await startMailInboxServer(smtpSink);
-  queryBudgetRecorder = await startQueryBudgetRecorder();
+  queryBudgetRecorder = await startQueryBudgetRecorder(QUERY_BUDGET_ALLOW_LIST);
   process.env.EMAIL_PROVIDER = 'smtp';
   process.env.SMTP_HOST = '127.0.0.1';
   process.env.SMTP_PORT = String(smtpSink.port);
@@ -161,7 +157,7 @@ async function main(): Promise<void> {
   });
 
   const app = buildApp();
-  recordQueryBudgetViolations(app, queryBudgetRecorder);
+  observeQueryBudget(app, queryBudgetRecorder);
 
   await app.ready();
   await app.listen({ host: '127.0.0.1', port: 0 });
