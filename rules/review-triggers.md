@@ -36,6 +36,7 @@ Already enforced mechanically, and therefore **not** triggers:
 | Frontend types duplicating generated ones | `poolmaster/no-parallel-api-types` (ESLint) |
 | Inline query keys, inline theme styles, bare controls | the corresponding `poolmaster/*` ESLint rules |
 | Generated OpenAPI/SDK staleness | `api:check` |
+| A list route with no query-scaling test (statements counted for 2 rows and 20) | `rules:check:query-scaling` |
 
 Triggers cover only what needs **judgement** — things no scanner can infer and a file list
 does not reveal.

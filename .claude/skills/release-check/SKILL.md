@@ -31,6 +31,10 @@ DB-backed failure means.
   pass"* is never one of them — `rules/testing-rules.md` §1B *Forbidden Application-Code Patterns*.
 - **A rule scanner fails** → read the section it names. The scanner output *is* the routing
   hint.
+- **A query-scaling case fails** → the statement count grew between 2 rows and 20: a read
+  runs once per row. The failure lists the statements whose count changed; batch that read.
+  It is a defect in the route, never a reason to shrink the seed (`rules/testing-rules.md` §9B
+  *Query Scaling Tests*).
 - **Lint fails** → no warn tier exists, so there is no "I'll fix it later" state. A rule at
   0 findings stays at 0.
 - **Typecheck passes but ts-jest fails** → the package tsconfigs and the ts-jest config

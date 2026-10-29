@@ -1072,6 +1072,33 @@ when you need a clean migrated schema.
 
 ---
 
+## 9B. Query Scaling Tests
+
+A read that queries once per row passes every other test, because tests seed a handful of rows and
+a handful of extra queries costs nothing measurable. A scaling test counts SQL statements instead of
+timing them, so it catches the per-row read at any data size.
+
+- **Required for** every GET route whose response holds an array, at the top or anywhere inside:
+  lists, and detail reads that embed one (a contest with its events, a setting with its history).
+  It lands in the slice that adds the route.
+- **How:** `expectConstantQueries` from `tests/integration/query-scaling.ts`, in
+  `tests/integration/core-api/list-route-query-scaling.integration.ts` or the route's own suite.
+  `route` names the route exactly as the OpenAPI spec does (`'GET /api/v1/leagues/{id}/contests/'`),
+  `seed(rows)` builds a fresh parent with that many child rows, `call` reads it through
+  `app.inject`, and `rowsShown` says how many of them the response shows. The helper reads a seed of
+  2 and one of 20 and fails if the statement count differs, listing the statements whose count
+  changed.
+- **Seed the rows that could each cost a query:** the teams of a team list, the years of a history,
+  the contests of a cup. The helper refuses a case whose larger seed the response does not show,
+  since its count would prove nothing.
+- **Enforced by** `npm run rules:check:query-scaling`, which reads the list routes from the OpenAPI
+  spec. Routes that shipped before it are listed in `scripts/query-scaling-gaps.mjs`, each with the
+  ticket that will add its test; that list only shrinks, and a new route never goes on it.
+- A count that grows is a defect: fix the read (§3 *Defect Verification Protocol*), never loosen the
+  case.
+
+---
+
 ## 10. What Must Be Tested
 
 ### Backend
