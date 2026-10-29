@@ -72,6 +72,8 @@ import {
 import type { PlanConfig } from '@poolmaster/shared/dto';
 import type { PlanEntitlementsService } from '../../packages/core-api/src/modules/plans/plan-entitlements-service';
 import { PLAN_SETTINGS } from '../../packages/core-api/src/modules/plans/plan-settings';
+import { contestCutoff, ContestCutoffKind } from '../../packages/core-api/src/modules/contests/entry-window';
+import { hasSportEventStarted } from '../../packages/core-api/src/modules/events/operational-timing';
 import { planEntitlementsOver } from './plan-entitlements';
 
 /** Thrown where Postgres would reject the write with a unique-constraint violation (P2002). */
@@ -329,6 +331,17 @@ export class InMemoryContestWorld {
       .flatMap((contest) => contest.sportEventIds.flatMap((id) => this.sportEvents.get(id)?.sportLeagueId ?? [])))];
   }
 
+  /** A draft past every cutoff, as the current contest list leaves it out (#1217). */
+  private canNeverOpen(contest: Contest, now: Date): boolean {
+    const events = contest.sportEventIds.flatMap((id) => this.sportEvents.get(id) ?? []);
+    if (events.some((event) => event.status === SportEventStatus.COMPLETED || event.status === SportEventStatus.CANCELLED)) {
+      return true;
+    }
+    const configuration = [...this.configurations.values()].find((row) => row.contestId === contest.id);
+    const closesAtEventStart = contestCutoff(configuration?.configJson, contest.squaresGameMatchId).kind === ContestCutoffKind.EVENT_START;
+    return closesAtEventStart && events.some((event) => hasSportEventStarted(event, now));
+  }
+
   contestRepo(): ContestRepository {
     return {
       findById: async (id) => this.contests.get(id) ?? null,
@@ -337,9 +350,7 @@ export class InMemoryContestWorld {
       findCurrentByLeague: async (leagueId, now) =>
         [...this.contests.values()].filter((contest) => contest.leagueId === leagueId
           && contest.status !== ContestStatus.COMPLETED
-          && !(contest.status === ContestStatus.DRAFT
-            && contest.selectionType !== SelectionType.BRACKET && contest.selectionType !== SelectionType.SQUARES
-            && contest.sportEventIds.some((id) => (this.sportEvents.get(id)?.startDate ?? now) <= now))),
+          && !(contest.status === ContestStatus.DRAFT && this.canNeverOpen(contest, now))),
       findFinishedByLeague: async (leagueId, endedFrom, endedBefore) =>
         [...this.contests.values()].filter((contest) => contest.leagueId === leagueId
           && contest.status === ContestStatus.COMPLETED
@@ -670,10 +681,10 @@ export class InMemoryContestWorld {
     return fakeUserRepo({
       findById: async (id) => this.users.get(id) ?? null,
       findByIds: async (ids) => [...this.users.values()].filter((user) => ids.includes(user.id)),
-      // Every membership status, as the port says.
-      findByLeague: async (leagueId) => {
+      // ACTIVE memberships only, as the port says.
+      findActiveByLeague: async (leagueId) => {
         const memberIds = new Set([...this.memberships.values()]
-          .filter((membership) => membership.leagueId === leagueId)
+          .filter((membership) => membership.leagueId === leagueId && membership.status === LeagueMembershipStatus.ACTIVE)
           .map((membership) => membership.userId));
         return [...this.users.values()].filter((user) => memberIds.has(user.id));
       },

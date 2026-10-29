@@ -25,13 +25,8 @@ export class PrismaLeagueRepository implements LeagueRepository {
   }
 
   async findAll(filters: LeagueSearchFilters = {}): Promise<League[]> {
-    const search = filters.search?.trim();
-    const where: Prisma.LeagueWhereInput = {
-      ...(search ? { name: { contains: search, mode: 'insensitive' as const } } : {}),
-      ...(typeof filters.isActive === 'boolean' ? { isActive: filters.isActive } : {}),
-    };
     const rows = await this.prisma.league.findMany({
-      where,
+      where: leagueSearchWhere(filters),
       // updatedAt first so the admin management surface shows recently-touched leagues at
       // the top, which is the ordering it already relied on.
       orderBy: [{ updatedAt: 'desc' }, { createdAt: 'desc' }],
@@ -39,14 +34,14 @@ export class PrismaLeagueRepository implements LeagueRepository {
     return rows.map(mapToLeague);
   }
 
-  async findByUser(userId: string): Promise<League[]> {
+  async findByUser(userId: string, filters: LeagueSearchFilters = {}): Promise<League[]> {
     // One join, replacing the service-level findByUser's membership fetch plus a findById
     // per membership (#202). A join cannot produce the orphaned-membership case that
     // version had to log and skip, because it only returns leagues that exist.
     // ACTIVE only: a removed member keeps an INACTIVE row (so a re-invitation can restore it),
     // and that row must not keep the league in their list.
     const rows = await this.prisma.league.findMany({
-      where: { memberships: { some: { userId, status: MembershipStatus.ACTIVE } } },
+      where: { memberships: { some: { userId, status: MembershipStatus.ACTIVE } }, ...leagueSearchWhere(filters) },
       orderBy: { createdAt: 'desc' },
     });
     return rows.map(mapToLeague);
@@ -227,5 +222,14 @@ function mapToLeague(row: PrismaLeague): League {
     eventEmailDelivery: row.eventEmailDelivery,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
+  };
+}
+
+/** A league search's filters as a `where`: a case-insensitive name substring and the active flag. */
+function leagueSearchWhere(filters: LeagueSearchFilters): Prisma.LeagueWhereInput {
+  const search = filters.search?.trim();
+  return {
+    ...(search ? { name: { contains: search, mode: 'insensitive' as const } } : {}),
+    ...(typeof filters.isActive === 'boolean' ? { isActive: filters.isActive } : {}),
   };
 }

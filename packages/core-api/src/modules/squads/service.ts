@@ -516,9 +516,9 @@ export class SquadService {
     ownerUserIds: string[],
   ): Promise<void> {
     const owners = new Set(ownerUserIds);
+    // findByLeague answers ACTIVE memberships only.
     const commissioners = (await this.leagueMembershipRepo.findByLeague(leagueId)).filter(
-      (membership) =>
-        membership.status === LeagueMembershipStatus.ACTIVE && membership.role === LeagueRole.COMMISSIONER,
+      (membership) => membership.role === LeagueRole.COMMISSIONER,
     );
     if (commissioners.length === 0 || commissioners.some((membership) => !owners.has(membership.userId))) {
       return;

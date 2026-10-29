@@ -5,7 +5,7 @@
 import type { LeagueInvitation as PrismaLeagueInvitation, PrismaClient } from '@prisma/client';
 import type { LeagueInvitationRepository } from '@poolmaster/shared/db';
 import type { InviteType, InvitationStatus, LeagueInvitation } from '@poolmaster/shared/domain';
-import { InvitationStatus as SharedInvitationStatus } from '@poolmaster/shared/domain';
+import { InvitationStatus as SharedInvitationStatus, InviteType as SharedInviteType } from '@poolmaster/shared/domain';
 
 export class PrismaLeagueInvitationRepository implements LeagueInvitationRepository {
   constructor(private readonly prisma: PrismaClient) {}
@@ -15,9 +15,15 @@ export class PrismaLeagueInvitationRepository implements LeagueInvitationReposit
     return row ? mapToInvitation(row) : null;
   }
 
-  async findByLeague(leagueId: string): Promise<LeagueInvitation[]> {
+  async findOutstandingByLeague(leagueId: string): Promise<LeagueInvitation[]> {
     const rows = await this.prisma.leagueInvitation.findMany({
-      where: { leagueId },
+      where: {
+        leagueId,
+        OR: [
+          { status: SharedInvitationStatus.PENDING },
+          { status: SharedInvitationStatus.EXPIRED, inviteType: SharedInviteType.EMAIL },
+        ],
+      },
       orderBy: { createdAt: 'desc' },
     });
     return rows.map(mapToInvitation);

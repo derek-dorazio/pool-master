@@ -260,12 +260,10 @@ describe('LeagueService', () => {
       expect(leagueRepo.findAll).toHaveBeenCalledWith({ search: 'Ryder', isActive: true });
     });
 
-    it('applies the same filters to the member-scoped read, which never had them', async () => {
+    it('hands the same filters to the member-scoped read, so the query narrows it rather than the service (#1182)', async () => {
       const leagueRepo = createMockLeagueRepo({
         findByUser: jest.fn().mockResolvedValue([
           buildLeague({ id: 'league-1', name: 'Ryder Cup Pool', isActive: true }),
-          buildLeague({ id: 'league-2', name: 'Masters Pool', isActive: true }),
-          buildLeague({ id: 'league-3', name: 'Ryder Cup Legacy', isActive: false }),
         ]),
       });
 
@@ -275,8 +273,8 @@ describe('LeagueService', () => {
         filters: { search: 'ryder', isActive: true },
       });
 
-      // `search` and `isActive` existed only on the root-admin half. They describe the query,
-      // not the caller, so they narrow either scope — case-insensitively.
+      // `search` and `isActive` describe the query, not the caller, so they narrow either scope.
+      expect(leagueRepo.findByUser).toHaveBeenCalledWith('user-1', { search: 'ryder', isActive: true });
       expect(rows.map((row) => row.league.id)).toEqual(['league-1']);
     });
 

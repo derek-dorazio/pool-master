@@ -359,20 +359,13 @@ describe('InvitationService', () => {
   });
 
   describe('listOutstandingInvitations', () => {
-    it('lists pending invites and email invites that expired unaccepted, leaving out accepted, cancelled and expired join links', async () => {
+    it('lists the outstanding invitations the repository answers, in its order', async () => {
       const pendingEmail = buildInvitation({ status: InvitationStatus.PENDING });
       const pendingLink = buildInvitation({ inviteType: InviteType.LINK, email: undefined, maxUses: 0 });
       const expiredEmail = buildInvitation({ status: InvitationStatus.EXPIRED });
       const service = new InvitationService({
         invitations: createMockInvitationRepo({
-          findByLeague: jest.fn().mockResolvedValue([
-            pendingEmail,
-            buildInvitation({ status: InvitationStatus.ACCEPTED }),
-            pendingLink,
-            buildInvitation({ status: InvitationStatus.REVOKED }),
-            expiredEmail,
-            buildInvitation({ inviteType: InviteType.LINK, status: InvitationStatus.EXPIRED }),
-          ]),
+          findOutstandingByLeague: jest.fn().mockResolvedValue([pendingEmail, pendingLink, expiredEmail]),
         }),
         memberships: createMockMembershipRepo(),
         leagues: createMockLeagueRepo(),
