@@ -3,7 +3,7 @@ export { Alert, Callout } from "./alert";
 export { AdminAreaLayout, LeagueMenu } from "./nav-menus";
 export type { NavMenuItem } from "./nav-menus";
 export { BulkUploadPanel } from "./bulk-upload-panel";
-export { Button, LinkButton } from "./button";
+export { Button, LinkButton, type LinkButtonProps } from "./button";
 export { Breadcrumbs, PageHeader } from "./page-header";
 export { ChoiceCard } from "./choice-card";
 export { cn } from "./class-names";

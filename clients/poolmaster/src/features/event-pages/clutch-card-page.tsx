@@ -63,10 +63,6 @@ function rankOffer(offer: EventPageOfferDto): number {
 }
 
 /** The page's start button: none while no event page offers a Clutch Card. */
-function ClutchCardStart({ request, testId }: { request: StartRequest | null; testId: string }) {
-  return request ? <StartButton request={request} size="lg" testId={testId}>{CLUTCH_CARD_PAGE.hero.start}</StartButton> : null;
-}
-
 /** The hero's made-up card, mid-series: each star's games, the best ones counted. */
 function ExampleCard() {
   const example = CLUTCH_CARD_EXAMPLE;
@@ -133,7 +129,7 @@ function Hero({ startRequest }: { startRequest: StartRequest | null }) {
       <div className="space-y-5">
         <p className="max-w-xl text-lg text-on-inverse-muted" data-testid="clutch-card-hook">{hero.hook}</p>
         <div className="flex flex-wrap items-center gap-3">
-          <ClutchCardStart request={startRequest} testId="clutch-card-start" />
+          {startRequest ? <StartButton request={startRequest} size="lg" testId="clutch-card-start">{hero.start}</StartButton> : null}
           <a className="text-sm font-semibold underline underline-offset-4" data-testid="clutch-card-see-cards" href="#card-types">{hero.seeTheCards}</a>
         </div>
         <p className="text-sm text-on-inverse-muted">{hero.note}</p>
@@ -315,7 +311,7 @@ export function ClutchCardPage() {
       <Tile className="flex flex-col items-start gap-4" data-testid="clutch-card-closing" padding="lg" radius="lg">
         <h2 className="font-display text-3xl font-bold text-foreground">{CLUTCH_CARD_PAGE.closing.title}</h2>
         {startRequest ? (
-          <ClutchCardStart request={startRequest} testId="clutch-card-closing-start" />
+          <StartButton request={startRequest} size="lg" testId="clutch-card-closing-start">{CLUTCH_CARD_PAGE.hero.start}</StartButton>
         ) : (
           <LinkButton data-testid="clutch-card-closing-how-to-play" to="/how-to-play" variant="secondary">{EVENT_PAGE_ACTIONS.seeEveryWayToPlay}</LinkButton>
         )}

@@ -6,6 +6,8 @@ const toneClassNames = {
   inverse: { box: "border-inverse-border bg-on-inverse-subtle", label: "text-on-inverse-muted" },
 };
 
+type CountdownTone = keyof typeof toneClassNames;
+
 /**
  * Days, hours and minutes to `until`, each in its own box. Screen readers hear it as one timer,
  * `label` first ("Entries close in 2 days 3 hours 4 minutes").
@@ -20,7 +22,7 @@ export function Countdown({
   label: string;
   now: Date;
   testId?: string;
-  tone?: "default" | "inverse";
+  tone?: CountdownTone;
   until: string;
 }) {
   const countdown = countdownUntil(until, now);
