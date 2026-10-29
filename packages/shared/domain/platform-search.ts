@@ -13,3 +13,11 @@ export const PLATFORM_SEARCH_MIN_LENGTH = 3;
 export function isPlatformSearchTerm(term: string | undefined): boolean {
   return (term?.trim().length ?? 0) >= PLATFORM_SEARCH_MIN_LENGTH;
 }
+
+/**
+ * `term` trimmed, when it is long enough to search a platform-wide list, else null. For the
+ * server, which searches with the term it checks (#1313).
+ */
+export function platformSearchTerm(term: string | undefined): string | null {
+  return isPlatformSearchTerm(term) ? (term as string).trim() : null;
+}

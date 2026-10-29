@@ -7,6 +7,7 @@ import type { FastifyBaseLogger } from 'fastify';
 import type {
   LeagueMembershipRepository,
   LeagueRepository,
+  LeagueSearch,
   LeagueSearchFilters,
   SquadMembershipRepository,
   SquadRepository,
@@ -76,6 +77,14 @@ export interface LeagueListRow {
 }
 
 export type LeagueListScope = 'mine' | 'all';
+
+/**
+ * What `listLeagues` reads: the caller's own leagues, optionally narrowed, or every league
+ * matching a search term, which `all` requires (#1313).
+ */
+export type LeagueListQuery =
+  | { scope: 'mine'; userId: string; filters?: LeagueSearchFilters }
+  | { scope: 'all'; userId: string; filters: LeagueSearch };
 
 /**
  * Statuses that make a contest count as active for a league's `activeContestCount`. DRAFT is
@@ -191,11 +200,7 @@ export class LeagueService {
    * responsible for having established root-admin authority, because a service cannot see
    * the request. The route does that.
    */
-  async listLeagues(options: {
-    scope: LeagueListScope;
-    userId: string;
-    filters?: LeagueSearchFilters;
-  }): Promise<LeagueListRow[]> {
+  async listLeagues(options: LeagueListQuery): Promise<LeagueListRow[]> {
     const { scope, userId, filters } = options;
     this.logger?.debug({
       action: 'league.list.enter',
@@ -211,9 +216,9 @@ export class LeagueService {
     // is needed to pair them. Under 'all' the memberships are looked up separately, because
     // most of the returned leagues will have none for this viewer.
     const [leagues, viewerMemberships] = await Promise.all([
-      scope === 'all'
-        ? this.deps.leagues.findAll(filters)
-        : this.deps.leagues.findByUser(userId, filters),
+      options.scope === 'all'
+        ? this.deps.leagues.search(options.filters)
+        : this.deps.leagues.findByUser(userId, options.filters),
       this.deps.memberships.findByUser(userId),
     ]);
 

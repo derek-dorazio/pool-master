@@ -5,7 +5,7 @@ import type {
   UserAuthProvider as PrismaUserAuthProvider,
   UserTimeFormat as PrismaUserTimeFormat,
 } from '@prisma/client';
-import type { UserRepository, UserSearchFilters, UserUpdate } from '@poolmaster/shared/db';
+import type { UserRepository, UserSearch, UserSearchFilters, UserUpdate } from '@poolmaster/shared/db';
 import { AuthProvider, LeagueMembershipStatus, TimeFormat, type User } from '@poolmaster/shared/domain';
 
 /**
@@ -43,10 +43,18 @@ export class PrismaUserRepository implements UserRepository {
     return row ? mapToUser(row) : null;
   }
 
-  async findAll(filters: UserSearchFilters = {}): Promise<User[]> {
+  async search(filters: UserSearch): Promise<User[]> {
     // Not paged — §16. Narrowing is the filter's job; the caller gets the whole result.
     const rows = await this.prisma.user.findMany({
       where: buildUserWhere(filters),
+      orderBy: { createdAt: 'desc' },
+    });
+    return rows.map(mapToUser);
+  }
+
+  async findActiveRootAdmins(): Promise<User[]> {
+    const rows = await this.prisma.user.findMany({
+      where: { isRootAdmin: true, isActive: true },
       orderBy: { createdAt: 'desc' },
     });
     return rows.map(mapToUser);

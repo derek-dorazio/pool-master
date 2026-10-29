@@ -44,6 +44,14 @@ export interface UserSearchFilters {
 }
 
 /**
+ * A user search with its term, which `UserRepository.search` requires (#1313): no read lists
+ * every user. The caller checks the term is long enough (`isPlatformSearchTerm`) and trims it.
+ */
+export interface UserSearch extends UserSearchFilters {
+  search: string;
+}
+
+/**
  * The writable fields of a `User`, as an update.
  *
  * `passwordHash` is absent by design — it is a secret, set through `create`'s separate
@@ -73,17 +81,21 @@ export interface UserRepository {
   findByEmail(email: string): Promise<User | null>;
 
   /**
-   * Every user, optionally filtered, newest first.
+   * The users matching a search term, further narrowed by the other filters, newest first.
    *
    * **This is the unscoped read — access rule A1 permits it to rootAdmin only.** The port
    * does not enforce that; the route does. Added in #202 because its absence is what sent
    * `admin/user-service.ts` straight to `prisma.user.findMany`, and from there to a
-   * hand-rolled result shape (§2y).
+   * hand-rolled result shape (§2y). The term is required (#1313), so there is no read of
+   * every user.
    *
    * Not paged, by product decision — see §16, "No paging in the API". Filter to narrow a
    * result set; do not slice it.
    */
-  findAll(filters?: UserSearchFilters): Promise<User[]>;
+  search(filters: UserSearch): Promise<User[]>;
+
+  /** The active root admins, who get the platform's own notices (#1313). */
+  findActiveRootAdmins(): Promise<User[]>;
 
   /**
    * Users holding an ACTIVE `LeagueMembership` in the given league, ordered by name.
@@ -158,6 +170,14 @@ export interface LeagueSearchFilters {
   isActive?: boolean;
 }
 
+/**
+ * A league search with its term, which `LeagueRepository.search` requires (#1313): no read
+ * lists every league for a screen. The caller checks the term is long enough and trims it.
+ */
+export interface LeagueSearch extends LeagueSearchFilters {
+  search: string;
+}
+
 /** One logged move of a league to another plan (#945), with why it moved (#1032). */
 export interface LeaguePlanChange {
   fromPlan: LeaguePlan;
@@ -170,12 +190,17 @@ export interface LeagueRepository {
   findByCode(code: string): Promise<League | null>;
 
   /**
-   * Every league, optionally filtered. **Unscoped — A1 permits it to rootAdmin only.**
-   *
-   * Not paged, unlike `UserRepository.findAll`: the admin league surface does not page,
-   * and adding an unused page parameter would be a shape nobody asked for.
+   * The leagues whose name matches a search term, further narrowed by the active flag, most
+   * recently updated first. **Unscoped — A1 permits it to rootAdmin only.** The term is
+   * required (#1313), so the admin list never reads every league. Not paged (§16).
    */
-  findAll(filters?: LeagueSearchFilters): Promise<League[]>;
+  search(filters: LeagueSearch): Promise<League[]>;
+
+  /**
+   * Every active league, for the commissioner notices that go to each league. The one read of
+   * all leagues, and no screen calls it.
+   */
+  findActive(): Promise<League[]>;
 
   /**
    * Leagues the user holds an ACTIVE `LeagueMembership` in — the scoped read access rule A2

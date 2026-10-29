@@ -60,7 +60,7 @@ async function createLeague(prisma: ReturnType<typeof getPrisma>, code: string, 
 }
 
 describe('identity cluster repositories (#202)', () => {
-  describe('UserRepository.findAll — the unscoped read (A1)', () => {
+  describe('UserRepository.search — the unscoped read (A1)', () => {
     it('matches the search term across email, username, firstName and lastName', async () => {
       const repo = new PrismaUserRepository(getAppPrisma());
       const marker = `zzq${Date.now().toString(36)}`;
@@ -69,7 +69,7 @@ describe('identity cluster repositories (#202)', () => {
       const byFirstName = await createTestUser({ firstName: `Fore${marker}` });
       const byEmail = await createTestUser({ email: `mail${marker}@integration.test` });
 
-      const users = await repo.findAll({ search: marker });
+      const users = await repo.search({ search: marker });
 
       const ids = users.map((user) => user.id);
       expect(ids).toContain(byLastName.user.id);
@@ -83,8 +83,8 @@ describe('identity cluster repositories (#202)', () => {
       const created = await createTestUser({ firstName: `Ali${marker}`, lastName: `Smith${marker}` });
       await createTestUser({ firstName: `Ali${marker}`, lastName: `Jones${marker}` });
 
-      const fullName = await repo.findAll({ search: `  Ali${marker}   Smith${marker} ` });
-      const wrongSurname = await repo.findAll({ search: `Ali${marker} Brown${marker}` });
+      const fullName = await repo.search({ search: `  Ali${marker}   Smith${marker} ` });
+      const wrongSurname = await repo.search({ search: `Ali${marker} Brown${marker}` });
 
       expect(fullName.map((user) => user.id)).toEqual([created.user.id]);
       expect(wrongSurname).toEqual([]);
@@ -95,7 +95,7 @@ describe('identity cluster repositories (#202)', () => {
       const marker = `Mixed${Date.now().toString(36)}`;
       const created = await createTestUser({ lastName: marker });
 
-      const users = await repo.findAll({ search: marker.toUpperCase() });
+      const users = await repo.search({ search: marker.toUpperCase() });
 
       expect(users.map((user) => user.id)).toContain(created.user.id);
     });
@@ -108,7 +108,7 @@ describe('identity cluster repositories (#202)', () => {
       await createTestUser({ lastName: marker });
       await createTestUser({ lastName: marker });
 
-      const users = await repo.findAll({ search: marker });
+      const users = await repo.search({ search: marker });
 
       expect(users).toHaveLength(3);
     });
@@ -121,8 +121,8 @@ describe('identity cluster repositories (#202)', () => {
       const inactive = await createTestUser({ lastName: marker });
       await prisma.user.update({ where: { id: inactive.user.id }, data: { isActive: false } });
 
-      const activeOnly = await repo.findAll({ search: marker, isActive: true });
-      const inactiveOnly = await repo.findAll({ search: marker, isActive: false });
+      const activeOnly = await repo.search({ search: marker, isActive: true });
+      const inactiveOnly = await repo.search({ search: marker, isActive: false });
 
       expect(activeOnly.map((user) => user.id)).toEqual([active.user.id]);
       expect(inactiveOnly.map((user) => user.id)).toEqual([inactive.user.id]);
@@ -136,8 +136,8 @@ describe('identity cluster repositories (#202)', () => {
       const member = await createTestUser({ lastName: marker });
       await prisma.user.update({ where: { id: rootAdmin.user.id }, data: { isRootAdmin: true } });
 
-      const rootAdmins = await repo.findAll({ search: marker, isRootAdmin: true });
-      const others = await repo.findAll({ search: marker, isRootAdmin: false });
+      const rootAdmins = await repo.search({ search: marker, isRootAdmin: true });
+      const others = await repo.search({ search: marker, isRootAdmin: false });
 
       expect(rootAdmins.map((user) => user.id)).toEqual([rootAdmin.user.id]);
       expect(others.map((user) => user.id)).toEqual([member.user.id]);
@@ -148,10 +148,29 @@ describe('identity cluster repositories (#202)', () => {
       const marker = `secret${Date.now().toString(36)}`;
       await createTestUser({ lastName: marker, password: 'TestPass123' });
 
-      const users = await repo.findAll({ search: marker });
+      const users = await repo.search({ search: marker });
 
       expect(users).toHaveLength(1);
       expect(users[0]).not.toHaveProperty('passwordHash');
+    });
+  });
+
+  describe('UserRepository.findActiveRootAdmins (#1313)', () => {
+    it('finds the active root admins, leaving out a disabled root admin and everyone else', async () => {
+      const prisma = getPrisma();
+      const repo = new PrismaUserRepository(getAppPrisma());
+      const marker = `admins${Date.now().toString(36)}`;
+      const active = await createTestUser({ lastName: marker });
+      const disabled = await createTestUser({ lastName: marker });
+      const member = await createTestUser({ lastName: marker });
+      await prisma.user.update({ where: { id: active.user.id }, data: { isRootAdmin: true } });
+      await prisma.user.update({ where: { id: disabled.user.id }, data: { isRootAdmin: true, isActive: false } });
+
+      const ids = (await repo.findActiveRootAdmins()).map((user) => user.id);
+
+      expect(ids).toContain(active.user.id);
+      expect(ids).not.toContain(disabled.user.id);
+      expect(ids).not.toContain(member.user.id);
     });
   });
 
@@ -564,8 +583,8 @@ describe('identity cluster repositories (#202)', () => {
     });
   });
 
-  describe('LeagueRepository.findAll — the unscoped read (A1)', () => {
-    it('filters by name search and isActive, and returns everything when unfiltered', async () => {
+  describe('LeagueRepository.search — the unscoped read (A1)', () => {
+    it('finds the leagues whose name holds the search term, narrowed by isActive', async () => {
       const prisma = getPrisma();
       const repo = new PrismaLeagueRepository(getAppPrisma());
       const marker = `Findable${Date.now().toString(36)}`;
@@ -573,16 +592,12 @@ describe('identity cluster repositories (#202)', () => {
       const activeLeague = await createLeague(prisma, `${LEAGUE_CODE_PREFIX}C1`, `${marker} Active`, true);
       const inactiveLeague = await createLeague(prisma, `${LEAGUE_CODE_PREFIX}C2`, `${marker} Inactive`, false);
 
-      const searched = await repo.findAll({ search: marker });
+      const searched = await repo.search({ search: marker });
       expect(searched.map((league) => league.id).sort())
         .toEqual([activeLeague.id, inactiveLeague.id].sort());
 
-      const activeOnly = await repo.findAll({ search: marker, isActive: true });
+      const activeOnly = await repo.search({ search: marker, isActive: true });
       expect(activeOnly.map((league) => league.id)).toEqual([activeLeague.id]);
-
-      // Unfiltered is the unscoped read A1 reserves for rootAdmin.
-      const all = await repo.findAll();
-      expect(all.length).toBeGreaterThanOrEqual(2);
     });
 
     it('matches the league name case-insensitively', async () => {
@@ -591,9 +606,24 @@ describe('identity cluster repositories (#202)', () => {
       const marker = `CaseLeague${Date.now().toString(36)}`;
       const league = await createLeague(prisma, `${LEAGUE_CODE_PREFIX}C3`, marker);
 
-      const found = await repo.findAll({ search: marker.toLowerCase() });
+      const found = await repo.search({ search: marker.toLowerCase() });
 
       expect(found.map((row) => row.id)).toContain(league.id);
+    });
+  });
+
+  describe('LeagueRepository.findActive (#1313)', () => {
+    it('finds every active league and leaves out an inactive one', async () => {
+      const prisma = getPrisma();
+      const repo = new PrismaLeagueRepository(getAppPrisma());
+      const marker = `Sweep${Date.now().toString(36)}`;
+      const active = await createLeague(prisma, `${LEAGUE_CODE_PREFIX}C4`, `${marker} Active`, true);
+      const inactive = await createLeague(prisma, `${LEAGUE_CODE_PREFIX}C5`, `${marker} Inactive`, false);
+
+      const ids = (await repo.findActive()).map((league) => league.id);
+
+      expect(ids).toContain(active.id);
+      expect(ids).not.toContain(inactive.id);
     });
   });
 

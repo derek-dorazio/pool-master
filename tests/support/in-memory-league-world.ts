@@ -184,7 +184,8 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
     findById: async (id) => users.get(id),
     findByIds: async (ids) => users.where((row) => ids.includes(row.id)),
     findByEmail: async (email) => one(users.where((row) => row.email === email)),
-    findAll: async () => users.where(() => true),
+    search: async () => users.where(() => true),
+    findActiveRootAdmins: async () => users.where((row) => row.isRootAdmin === true && row.isActive),
     findActiveByLeague: async (leagueId) => {
       const userIds = new Set(memberships.where((row) => row.leagueId === leagueId && isActiveMembership(row)).map((row) => row.userId));
       return users.where((row) => userIds.has(row.id));
@@ -205,7 +206,8 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
   const leagueRepo: LeagueRepository = {
     findById: async (id) => leagues.get(id),
     findByCode: async (code) => one(leagues.where((row) => row.leagueCode === code)),
-    findAll: async (filters = {}) => leagues.where((row) => matchesLeagueSearch(row, filters)),
+    search: async (filters) => leagues.where((row) => matchesLeagueSearch(row, filters)),
+    findActive: async () => leagues.where((row) => row.isActive),
     findByUser: async (userId, filters = {}) => {
       const leagueIds = new Set(
         memberships.where((row) => row.userId === userId && isActiveMembership(row)).map((row) => row.leagueId),
