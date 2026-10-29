@@ -13,18 +13,10 @@
  */
 export const QUERY_SCALING_GAPS = [
   // --- Users ---
-  { route: 'GET /api/v1/users/', ticket: 1248 },
   { route: 'GET /api/v1/users/{userId}/email-preferences', ticket: 1248 },
-  { route: 'GET /api/v1/users/{userId}/payments', ticket: 1248 },
 
   // --- Leagues, plans, billing and teams ---
-  { route: 'GET /api/v1/leagues/{id}', ticket: 1248 },
-  { route: 'GET /api/v1/leagues/code/{leagueCode}', ticket: 1248 },
-  { route: 'GET /api/v1/leagues/{id}/invitations', ticket: 1248 },
   { route: 'GET /api/v1/plans/', ticket: 1248 },
-  { route: 'GET /api/v1/leagues/{id}/billing/payments', ticket: 1248 },
-  { route: 'GET /api/v1/leagues/{id}/squads/{squadId}', ticket: 1248 },
-  { route: 'GET /api/v1/leagues/{id}/squads/owner-invitations', ticket: 1248 },
 
   // --- Cups, championship and history ---
   { route: 'GET /api/v1/leagues/{id}/cups/seasons', ticket: 1248 },
