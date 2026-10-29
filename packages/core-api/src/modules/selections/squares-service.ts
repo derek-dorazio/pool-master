@@ -190,7 +190,7 @@ export class SquaresService {
       { action: 'squares.claim.claimed', data: { contestId, contestEntryId, rowIndex, columnIndex, userId: actor.userId, forOthers: context.isCommissioner } },
       'Claimed a squares box',
     );
-    return this.withSquaresReread(context);
+    return this.buildBoard(await this.withBoxesReread(context));
   }
 
   /** Clears a claimed box: its holder's own, or any box for the commissioner. */
@@ -211,7 +211,7 @@ export class SquaresService {
       { action: 'squares.clear.cleared', data: { contestId, contestEntryId: box.contestEntryId, rowIndex, columnIndex, userId: actor.userId } },
       'Cleared a squares box',
     );
-    return this.withSquaresReread(context);
+    return this.buildBoard(await this.withBoxesReread(context));
   }
 
   /**
@@ -239,9 +239,11 @@ export class SquaresService {
       { action: 'squares.draw.drawn', data: { contestId, boxCount: context.squares.length, userId: actor.userId } },
       'Drew a squares contest\'s numbers',
     );
-    // The draw changes nothing else the board shows, so it is built from what was loaded (#1201).
-    const board = await this.buildBoard({ ...context, draw });
-    await this.deps.receipts?.squaresDrawn({ board, entries: context.entries, sportEvent: context.sportEvent });
+    // The draw read the boxes under the contest lock, so a box claimed or cleared since the load
+    // is in it: the boxes and entries are read again, the rest is as loaded (#1201).
+    const drawn = { ...(await this.withBoxesReread(context)), draw };
+    const board = await this.buildBoard(drawn);
+    await this.deps.receipts?.squaresDrawn({ board, entries: drawn.entries, sportEvent: context.sportEvent });
     return board;
   }
 
@@ -335,9 +337,16 @@ export class SquaresService {
     return { home: nameOf(home?.participantId), away: nameOf(away?.participantId) };
   }
 
-  /** The board after a box is claimed or cleared: only the boxes are read again. */
-  private async withSquaresReread(context: SquaresContext): Promise<SquaresBoard> {
-    return this.buildBoard({ ...context, squares: await this.deps.squares.findSquares(context.contest.id) });
+  /**
+   * The context after a write to the boxes: the boxes, and the entries that may hold them, read
+   * again; the contest, its rules, event and game as loaded.
+   */
+  private async withBoxesReread(context: SquaresContext): Promise<SquaresContext> {
+    const [squares, entries] = await Promise.all([
+      this.deps.squares.findSquares(context.contest.id),
+      this.deps.entries.findByContestWithSquad(context.contest.id),
+    ]);
+    return { ...context, squares, entries };
   }
 
   private areClaimsOpen(context: SquaresContext): boolean {

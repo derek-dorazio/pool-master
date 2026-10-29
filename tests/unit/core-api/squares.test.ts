@@ -239,6 +239,21 @@ describe('SquaresService claiming boxes', () => {
     expect(boxReads).toHaveBeenCalledTimes(4);
   });
 
+  it('names a box claimed for an entry made after the claim\'s load, as the entries are read again with the boxes', async () => {
+    const context = setup();
+    const claim = context.repos.squares.claim.bind(context.repos.squares);
+    jest.spyOn(context.repos.squares, 'claim').mockImplementation(async (input) => {
+      context.world.entries.set('entry-erin', { ...context.alice, id: 'entry-erin', entryNumber: 2, name: 'Erin' });
+      context.squares.addBox(context.contest.id, 'entry-erin', 9, 9);
+      return claim(input);
+    });
+
+    const board = await context.service.claim(context.contest.id, 2, 3, context.alice.id, context.actor('Alice'));
+
+    expect(board.boxes.find((box) => box.contestEntryId === 'entry-erin')?.entryName).toBe('Erin');
+    expect(board.entries.map((entry) => entry.entryName)).toContain('Erin');
+  });
+
   it('hides a draft contest from members, as if it did not exist, but shows it to the commissioner', async () => {
     const context = setup({ status: ContestStatus.DRAFT });
     await expectRefused(context.service.getBoard(context.contest.id, context.actor('Alice')), 'CONTEST_NOT_FOUND', 404);
@@ -319,18 +334,43 @@ describe('SquaresService drawing the numbers', () => {
     expect(drawn.sportEvent.id).toBe(context.superBowl.id);
   });
 
-  it('answers a draw with the board built from the one load before it, its drawn digits those the draw stored', async () => {
+  it('answers a draw reading the contest once and only the boxes and entries again after it, its drawn digits those the draw stored', async () => {
     const context = setup();
     context.squares.addBox(context.contest.id, context.alice.id, 0, 0);
     const contestReads = jest.spyOn(context.repos.contests, 'findById');
     const entryReads = jest.spyOn(context.repos.entries, 'findByContestWithSquad');
+    const boxReads = jest.spyOn(context.repos.squares, 'findSquares');
     const board = await context.service.draw(context.contest.id, context.actor('Carol'));
 
     expect(contestReads).toHaveBeenCalledTimes(1);
-    expect(entryReads).toHaveBeenCalledTimes(1);
+    expect(entryReads).toHaveBeenCalledTimes(2);
+    expect(boxReads).toHaveBeenCalledTimes(2);
     const stored = expectDefined(context.squares.draws.get(context.contest.id));
     expect(board.digits).toMatchObject({ seed: stored.seed, rowDigits: stored.rowDigits, columnDigits: stored.columnDigits, drawnAt: stored.drawnAt });
     expect(board.boxes).toEqual([{ rowIndex: 0, columnIndex: 0, contestEntryId: context.alice.id, entryName: 'Alice' }]);
+  });
+
+  it('shows on the board and sends a receipt for a box a new entry claimed between the draw\'s load and the draw itself, and none for a box cleared then', async () => {
+    const context = setup();
+    context.squares.addBox(context.contest.id, context.alice.id, 0, 0);
+    context.squares.addBox(context.contest.id, context.bob.id, 1, 1);
+    const recordDraw = context.repos.squares.recordDraw.bind(context.repos.squares);
+    jest.spyOn(context.repos.squares, 'recordDraw').mockImplementation(async (write) => {
+      // Between the load and the draw's lock: Dana's new entry claims a box and Bob clears his.
+      const dana: ContestEntry = { ...context.alice, id: 'entry-dana', squadId: expectDefined(context.world.entries.get(context.bob.id)).squadId, entryNumber: 2, name: 'Dana' };
+      context.world.entries.set(dana.id, dana);
+      context.squares.addBox(context.contest.id, dana.id, 2, 2);
+      await context.repos.squares.clear({ contestId: context.contest.id, contestEntryId: context.bob.id, rowIndex: 1, columnIndex: 1 });
+      return recordDraw(write);
+    });
+
+    const board = await context.service.draw(context.contest.id, context.actor('Carol'));
+
+    expect(board.boxes.map((box) => [box.entryName, box.rowIndex])).toEqual([['Alice', 0], ['Dana', 2]]);
+    expect(board.entries.map((entry) => entry.entryName)).toContain('Dana');
+    const [drawn] = context.receipts;
+    expect(drawn.board.boxes.map((box) => box.contestEntryId)).toEqual([context.alice.id, 'entry-dana']);
+    expect(drawn.entries.map((entry) => entry.id)).toContain('entry-dana');
   });
 
   it('still draws once the game is under way, until the first quarter\'s score is in', async () => {

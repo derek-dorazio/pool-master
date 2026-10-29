@@ -100,8 +100,9 @@ export async function loadSurvivorWeeks(
       deps.sportEvents.findByIds(otherIds),
       deps.matches.findBySportEvents(otherIds),
     ]);
-  const events = loaded && contest.sportEventIds.includes(loaded.sportEvent.id) ? [...otherEvents, loaded.sportEvent] : otherEvents;
-  const matches = loaded ? [...otherMatches, ...loaded.matches] : otherMatches;
+  const own = loaded && contest.sportEventIds.includes(loaded.sportEvent.id) ? loaded : undefined;
+  const events = own ? [...otherEvents, own.sportEvent] : otherEvents;
+  const matches = own ? [...otherMatches, ...own.matches] : otherMatches;
   const ordered = [...events]
     .sort((left, right) => left.startDate.getTime() - right.startDate.getTime() || left.id.localeCompare(right.id));
   const weeks: Omit<SurvivorSeasonWeek, 'weekNumber'>[] = ordered.flatMap((event) => {
