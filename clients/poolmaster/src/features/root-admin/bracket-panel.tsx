@@ -59,14 +59,14 @@ export function BracketPanel({ event }: { event: SportEventDto }) {
     <div className="space-y-6">
       <PanelCard headingLevel={3} padded title="Bracket">
         {bracket.length > 0 ? (
-          <p className="mt-1 text-sm text-muted-foreground" data-testid="root-admin-bracket-help">
+          <p className="text-sm text-muted-foreground" data-testid="root-admin-bracket-help">
             {released
               ? `Choose the ${vocabulary.participant.one} that won each ${noun.one}. The winner moves on to its next ${noun.one}.`
               : `Pairings can change until the ${vocabulary.event.one} is released. Results are entered after that.`}
           </p>
         ) : null}
         {bracket.length === 0 ? (
-          <p className="mt-2 text-sm text-muted-foreground" data-testid="root-admin-bracket-empty">
+          <p className="text-sm text-muted-foreground" data-testid="root-admin-bracket-empty">
             {`No bracket yet. Its ${noun.many} are loaded before the ${vocabulary.event.one} is released.`}
           </p>
         ) : roundNumbers.map((roundNumber) => (

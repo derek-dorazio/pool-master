@@ -135,7 +135,7 @@ export function SportEventScoreSourceCard({
 
   return (
     <PanelCard padded title="Score source">
-      <div className="mt-3 flex flex-wrap items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <StatusBadge tone={syncScopeTone(tournament.syncScope)}>
           {syncScopeLabel(tournament.syncScope)}
         </StatusBadge>

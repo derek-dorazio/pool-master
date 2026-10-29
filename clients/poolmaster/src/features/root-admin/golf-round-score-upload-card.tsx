@@ -120,7 +120,7 @@ export function GolfRoundScoreUploadCard({
 
   return (
     <PanelCard headingLevel={3} padded title="Bulk load">
-      <p className="mt-1 text-sm text-muted-foreground">
+      <p className="text-sm text-muted-foreground">
         Paste or upload this round&rsquo;s scores, preview how each row resolves and
         changes, then apply.
       </p>

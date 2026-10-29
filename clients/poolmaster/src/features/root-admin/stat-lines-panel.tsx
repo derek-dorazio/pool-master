@@ -197,7 +197,7 @@ export function StatLinesPanel({ event }: { event: SportEventDto }) {
 
       {gameOptions.length > 0 ? (
         <PanelCard headingLevel={3} padded title="Box score">
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             Each game&rsquo;s box score is loaded with the event&rsquo;s sport data file. Fix one player&rsquo;s line at a time: saving replaces their whole line for the game, and clearing every stat removes it. Leave a stat blank for zero.
           </p>
 

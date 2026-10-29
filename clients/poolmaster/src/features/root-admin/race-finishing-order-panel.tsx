@@ -112,7 +112,7 @@ function StoredFinishingOrder({ event, field }: { event: SportEventDto; field: r
       ) : null}
     >
       {!hasResults ? (
-        <p className="mt-2 text-sm text-muted-foreground" data-testid="root-admin-race-result-empty">
+        <p className="text-sm text-muted-foreground" data-testid="root-admin-race-result-empty">
           {`No results yet. Load the finishing order below once the ${vocabulary.round.one} is run.`}
         </p>
       ) : (
@@ -208,7 +208,7 @@ function FinishingOrderUploadCard({ event, field }: { event: SportEventDto; fiel
 
   return (
     <PanelCard headingLevel={3} padded title="Finishing order">
-      <p className="mt-1 text-sm text-muted-foreground">
+      <p className="text-sm text-muted-foreground">
         {`Paste or upload the ${vocabulary.round.one}'s result: a place for each ${vocabulary.participant.one} that finished, or DNF, DQ or DNS. Preview it, then apply. ${capitalize(vocabulary.participant.many)} you leave out keep the result they have.`}
       </p>
       <label className="mt-4 flex items-center gap-2 text-sm text-foreground">
