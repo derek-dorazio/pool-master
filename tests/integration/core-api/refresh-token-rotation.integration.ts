@@ -7,7 +7,6 @@
  * service against the real table.
  */
 import { createHash, randomUUID } from 'node:crypto';
-import type { Prisma } from '@prisma/client';
 import {
   setupIntegrationTests,
   teardownIntegrationTests,
@@ -18,6 +17,7 @@ import { PrismaUserRepository } from '../../../packages/core-api/src/adapters';
 import { AuthService } from '../../../packages/core-api/src/modules/auth/auth-service';
 import { hashRefreshToken } from '../../../packages/core-api/src/modules/auth/refresh-token-hash';
 import { waitUntilBlockedBy } from '../contest-lock';
+import { holdMemberLock } from '../member-lock';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(() => teardownIntegrationTests());
@@ -182,33 +182,6 @@ describe('refresh-token reuse (#1229)', () => {
   });
 });
 
-type Work = (tx: Prisma.TransactionClient) => Promise<unknown>;
-
-/**
- * Another writer's transaction on the member's account: it takes the member's row lock, as a
- * rotation or a reuse revoke does, runs `work`, and on `release` runs `last` and commits.
- */
-function holdMemberLock(userId: string, work: Work = async () => undefined) {
-  let signalReady!: (pid: number) => void;
-  const ready = new Promise<number>((resolve) => { signalReady = resolve; });
-  let releaseWith!: (last: Work) => void;
-  const released = new Promise<Work>((resolve) => { releaseWith = resolve; });
-  const committed = getPrisma().$transaction(async (tx) => {
-    const [{ pid }] = await tx.$queryRaw<[{ pid: number }]>`SELECT pg_backend_pid() AS pid`;
-    await tx.$queryRaw`SELECT id FROM "users" WHERE id = ${userId}::uuid FOR NO KEY UPDATE`;
-    await work(tx);
-    signalReady(pid);
-    await (await released)(tx);
-  }, { timeout: 20_000 });
-  return {
-    ready,
-    release: async (last: Work = async () => undefined) => {
-      releaseWith(last);
-      await committed;
-    },
-  };
-}
-
 describe('refresh-token reuse racing a rotation (#1264)', () => {
   it('also ends the token a rotation still in flight is inserting, so a replay that lands mid-refresh leaves the session with no live token', async () => {
     const service = buildAuthService();
@@ -221,7 +194,7 @@ describe('refresh-token reuse racing a rotation (#1264)', () => {
     });
     // A refresh of the current token, part way through: the token is rotated and its successor
     // inserted, but the transaction has not committed.
-    const rotation = holdMemberLock(user.id, async (tx) => {
+    const rotation = holdMemberLock(getPrisma(), user.id, async (tx) => {
       const now = new Date();
       await tx.refreshToken.updateMany({
         where: { tokenHash: sha256(current.refreshToken), revokedAt: null },
@@ -252,7 +225,7 @@ describe('refresh-token reuse racing a rotation (#1264)', () => {
     const { user } = await createTestUser();
     const session = await service.issueSessionForUser(user.id);
     // A reuse revoke of this session holds the member's lock and has not yet revoked anything.
-    const reuse = holdMemberLock(user.id);
+    const reuse = holdMemberLock(getPrisma(), user.id);
     const holderPid = await reuse.ready;
 
     const refresh = service.refresh(session.refreshToken);
