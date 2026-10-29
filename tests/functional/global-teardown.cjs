@@ -70,7 +70,38 @@ function hasActiveRunStateFiles() {
   return active;
 }
 
-module.exports = async () => {
+/**
+ * #1244 — the allow-list entries no request went over the query budget for, as an Error, when
+ * this run called every functional test: unsharded, and with no file or name filter. A sharded or
+ * filtered run sees only part of the routes, so an entry it saw under budget may be over in the
+ * part it skipped.
+ */
+async function staleQueryBudgetEntries(globalConfig) {
+  const fullRun = !globalConfig.shard
+    && globalConfig.nonFlagArgs.length === 0
+    && !globalConfig.testNamePattern;
+  const queryBudgetUrl = readState(stateFilePath)?.queryBudgetUrl;
+  if (!fullRun || !queryBudgetUrl) {
+    return null;
+  }
+  const response = await fetch(`${queryBudgetUrl}/stale`);
+  if (!response.ok) {
+    return new Error(`Query budget recorder returned ${response.status}`);
+  }
+  const { stale, message } = await response.json();
+  return stale.length > 0 ? new Error(message) : null;
+}
+
+module.exports = async (globalConfig) => {
+  // Read before the run's state file goes, and thrown after the daemon is dealt with.
+  const staleEntries = await staleQueryBudgetEntries(globalConfig);
+  await stopServer();
+  if (staleEntries) {
+    throw staleEntries;
+  }
+};
+
+async function stopServer() {
   if (fs.existsSync(stateFilePath)) {
     fs.rmSync(stateFilePath, { force: true });
   }
@@ -95,4 +126,4 @@ module.exports = async () => {
   if (fs.existsSync(daemonDir)) {
     fs.rmSync(daemonDir, { recursive: true, force: true });
   }
-};
+}

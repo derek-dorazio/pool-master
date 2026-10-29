@@ -100,6 +100,7 @@ export function RootAdminRunEventSyncPage() {
   );
   const supportsMockEventState = useMemo(
     () =>
+      // poolmaster-allow-list-lookup: the handful of data providers, fixed reference data
       (providersQuery.data ?? []).some((provider) =>
         provider.providerId === 'mock-contest-feed'
         && provider.sportsCovered.includes(eventSyncSport)),

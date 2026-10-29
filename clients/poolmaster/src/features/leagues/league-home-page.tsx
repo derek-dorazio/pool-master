@@ -80,6 +80,7 @@ export function LeagueHomePage() {
 
   // Members never see a draft; what is open or live is what Home is about.
   const currentContests = useMemo(
+    // poolmaster-allow-list-lookup: the league's current contests (#1161), dropping the drafts members never see
     () => (contestsQuery.data ?? []).filter(
       (contest) => contest.status === ContestStatus.OPEN || contest.status === ContestStatus.ACTIVE,
     ),

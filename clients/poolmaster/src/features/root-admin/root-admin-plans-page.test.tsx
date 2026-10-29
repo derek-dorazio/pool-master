@@ -7,12 +7,14 @@ import { bindApiMocks } from '@/test/msw-api';
 import { planGroupFixture } from './sport-test-fixtures';
 import { RootAdminPlansPage } from './root-admin-plans-page';
 
-const { listSettingsGroupsMock, updateSettingsGroupMock } = vi.hoisted(() => ({
+const { getSettingsGroupMock, listSettingsGroupsMock, updateSettingsGroupMock } = vi.hoisted(() => ({
+  getSettingsGroupMock: vi.fn(),
   listSettingsGroupsMock: vi.fn(),
   updateSettingsGroupMock: vi.fn(),
 }));
 
 bindApiMocks({
+  getSettingsGroup: getSettingsGroupMock,
   listSettingsGroups: listSettingsGroupsMock,
   updateSettingsGroup: updateSettingsGroupMock,
 });
@@ -45,9 +47,20 @@ function setLimit(testId: string, limit: string) {
 
 describe('RootAdminPlansPage', () => {
   beforeEach(() => {
+    getSettingsGroupMock.mockReset();
     listSettingsGroupsMock.mockReset();
     updateSettingsGroupMock.mockReset();
-    listSettingsGroupsMock.mockResolvedValue({ data: { groups: [planGroupFixture()] } });
+    getSettingsGroupMock.mockResolvedValue({ data: planGroupFixture() });
+  });
+
+  it('reads only the plans settings group, never the list of every settings group', async () => {
+    renderPage();
+
+    await screen.findByTestId('root-admin-plans-form');
+    expect(getSettingsGroupMock).toHaveBeenCalledTimes(1);
+    const [request] = getSettingsGroupMock.mock.calls[0] as [{ path: { key: string } }];
+    expect(request.path.key).toBe('PLAN_CONFIG');
+    expect(listSettingsGroupsMock).not.toHaveBeenCalled();
   });
 
   it('shows each cap\'s limit on every plan, Platinum\'s editable like the rest', async () => {
@@ -63,11 +76,11 @@ describe('RootAdminPlansPage', () => {
     expect(screen.getByTestId('root-admin-plans-last-change')).toHaveTextContent('Never changed: using the starting values.');
   });
 
-  it('shows an error, not an endless loading state, when the settings list has no plans group', async () => {
-    listSettingsGroupsMock.mockResolvedValue({ data: { groups: [] } });
+  it('shows an error, not an endless loading state, when the plans group cannot be read', async () => {
+    getSettingsGroupMock.mockResolvedValue({ status: 404, error: { error: { code: 'NOT_FOUND', message: 'Settings group PLAN_CONFIG was not found.' } } });
     renderPage();
 
-    expect(await screen.findByText('We could not load the plans right now.')).toBeInTheDocument();
+    expect(await screen.findByTestId('shared-error-state')).toHaveTextContent('Settings group PLAN_CONFIG was not found.');
     expect(screen.queryByText('Loading plans...')).not.toBeInTheDocument();
   });
 
@@ -167,7 +180,7 @@ describe('RootAdminPlansPage', () => {
 
     const error = await screen.findByTestId('root-admin-plans-error');
     expect(error).toHaveTextContent('changed by someone else');
-    listSettingsGroupsMock.mockResolvedValue({ data: { groups: [theirs] } });
+    getSettingsGroupMock.mockResolvedValue({ data: theirs });
     fireEvent.click(within(error).getByRole('button', { name: 'Load the latest plans' }));
 
     await waitFor(() => expect(screen.getByTestId('root-admin-plans-ENTRIES_PER_CONTEST-FREE-limit')).toHaveValue('30'));

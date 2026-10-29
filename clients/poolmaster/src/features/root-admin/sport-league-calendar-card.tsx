@@ -33,6 +33,7 @@ export function SportLeagueCalendarCard({ sportLeague }: { sportLeague: SportLea
     [yearsWithEvents, eventYear],
   );
   const yearTournaments = useMemo(
+    // poolmaster-allow-list-lookup: #1251
     () => (tournamentsQuery.data ?? []).filter((event) => event.eventYear === eventYear),
     [tournamentsQuery.data, eventYear],
   );
