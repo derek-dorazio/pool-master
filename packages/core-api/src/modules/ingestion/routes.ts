@@ -104,8 +104,10 @@ export function ingestionModule(fastify: FastifyInstance, opts: IngestionModuleO
     schema: {
       tags: ['Ingestion'],
       summary: 'List competitors a provider could not match',
-      description: 'Every competitor a provider reports, across its scheduled sports, that no participant is mapped to. Their synced data has nowhere to land until one is: bind each with bindParticipantProviderMapping.',
+      description: 'Every competitor a provider reports, across its scheduled sports, that no participant is mapped to. Their synced data has nowhere to land until one is: bind each with bindParticipantProviderMapping. '
+        + '`providerId` asks only that provider, and `externalId` keeps only that competitor, so one competitor\'s page reads one row (#1251).',
       operationId: 'listUnmappedProviderParticipants',
+      querystring: schemaRef('UnmappedProviderParticipantListQuery'),
       response: { 200: schemaRef('UnmappedProviderParticipantListResponse'), ...errors() },
     },
     handler: handler.listUnmappedParticipants,

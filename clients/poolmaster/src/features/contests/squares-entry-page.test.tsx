@@ -255,4 +255,14 @@ describe('Squares contest leaderboard', () => {
     expect(screen.getByTestId('squares-standing-won-entry-1')).toHaveTextContent('2');
     expect(screen.getByTestId('contest-leaderboard-settled-note')).toBeInTheDocument();
   });
+  it('marks the viewer\'s own entry Yours in the standings, and no one else\'s', async () => {
+    primeMocks({
+      contest: squaresContestFixture({ myEntryIds: ['entry-1'] }),
+      board: squaresBoardFixture(),
+    });
+    renderPage('/league/BIGDAWGS/contests/contest-1/leaderboard');
+
+    expect(within(await screen.findByTestId('squares-standing-row-entry-1')).getByText('Yours')).toBeInTheDocument();
+    expect(within(screen.getByTestId('squares-standing-row-entry-2')).queryByText('Yours')).not.toBeInTheDocument();
+  });
 });

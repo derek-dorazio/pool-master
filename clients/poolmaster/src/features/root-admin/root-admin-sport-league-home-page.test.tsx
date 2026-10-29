@@ -30,6 +30,7 @@ const {
   previewParticipantLeagueAffiliationUploadMock,
   applyParticipantLeagueAffiliationUploadMock,
   listEventsMock,
+  listEventYearsMock,
   mockLogger,
 } = vi.hoisted(() => {
   const logger = {
@@ -53,6 +54,7 @@ const {
     previewParticipantLeagueAffiliationUploadMock: vi.fn(),
     applyParticipantLeagueAffiliationUploadMock: vi.fn(),
     listEventsMock: vi.fn(),
+    listEventYearsMock: vi.fn(),
     mockLogger: logger,
   };
 });
@@ -69,6 +71,7 @@ bindApiMocks({
   previewParticipantLeagueAffiliationUpload: previewParticipantLeagueAffiliationUploadMock,
   applyParticipantLeagueAffiliationUpload: applyParticipantLeagueAffiliationUploadMock,
   listEvents: listEventsMock,
+  listEventYears: listEventYearsMock,
 });
 
 vi.mock('@/lib/logger', () => ({
@@ -107,6 +110,7 @@ function seed() {
   listEventsMock.mockResolvedValue({
     data: { events: [sportEventFixture({ id: 'masters-2026', eventYear: 2026, sportLeagueId: 'pga' })] },
   });
+  listEventYearsMock.mockResolvedValue({ data: { years: [2026] } });
   listParticipantLeagueAffiliationsMock.mockResolvedValue({
     data: {
       affiliations: [
@@ -151,7 +155,7 @@ describe('pool-master-qqs RootAdminSportLeagueHomePage', () => {
 
     expect(await screen.findByRole('heading', { name: 'PGA Tour', level: 1 })).toBeInTheDocument();
     expect(await screen.findByTestId('root-admin-sport-league-event-row-masters-2026')).toBeInTheDocument();
-    expect(listEventsMock).toHaveBeenCalledWith(expect.objectContaining({ query: { sportLeagueId: 'pga' } }));
+    expect(listEventsMock).toHaveBeenCalledWith(expect.objectContaining({ query: { sportLeagueId: 'pga', eventYear: 2026 } }));
     expect(screen.getByText('Rory McIlroy')).toBeInTheDocument();
     expect(screen.getByText('Scottie Scheffler')).toBeInTheDocument();
   });

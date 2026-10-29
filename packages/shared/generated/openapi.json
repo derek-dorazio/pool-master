@@ -64873,6 +64873,21 @@
         "additionalProperties": false,
         "description": "A competitor a provider reports that no participant is mapped to — their synced data has nowhere to land until one is."
       },
+      "UnmappedProviderParticipantListQuery": {
+        "type": "object",
+        "properties": {
+          "providerId": {
+            "description": "Only this provider's competitors; the other providers are not asked.",
+            "type": "string"
+          },
+          "externalId": {
+            "description": "Only the competitor the provider knows by this identifier. With providerId, the list holds that one competitor while it is unmapped, and is empty once it is mapped.",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Filters for the unmapped-competitor list. With neither, every provider's unmapped competitors."
+      },
       "UnmappedProviderParticipantListResponse": {
         "type": "object",
         "properties": {
@@ -64928,7 +64943,7 @@
           "participants"
         ],
         "additionalProperties": false,
-        "description": "Every unmapped competitor across the scheduled sports of every provider."
+        "description": "The unmapped competitors matching the filters, across the scheduled sports of each provider asked."
       },
       "ProviderEventDto": {
         "type": "object",
@@ -79549,10 +79564,30 @@
         "tags": [
           "Ingestion"
         ],
-        "description": "Every competitor a provider reports, across its scheduled sports, that no participant is mapped to. Their synced data has nowhere to land until one is: bind each with bindParticipantProviderMapping.",
+        "description": "Every competitor a provider reports, across its scheduled sports, that no participant is mapped to. Their synced data has nowhere to land until one is: bind each with bindParticipantProviderMapping. `providerId` asks only that provider, and `externalId` keeps only that competitor, so one competitor's page reads one row (#1251).",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "providerId",
+            "required": false,
+            "description": "Only this provider's competitors; the other providers are not asked."
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "externalId",
+            "required": false,
+            "description": "Only the competitor the provider knows by this identifier. With providerId, the list holds that one competitor while it is unmapped, and is empty once it is mapped."
+          }
+        ],
         "responses": {
           "200": {
-            "description": "Every unmapped competitor across the scheduled sports of every provider.",
+            "description": "The unmapped competitors matching the filters, across the scheduled sports of each provider asked.",
             "content": {
               "application/json": {
                 "schema": {

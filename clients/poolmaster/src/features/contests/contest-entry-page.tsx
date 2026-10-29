@@ -4,10 +4,8 @@ import { useLocation, useNavigate, useParams } from 'react-router';
 import { getContest, getSelectionState, selectContestPick, submitContestEntry, unselectContestPick, updateContestEntry, type SelectionStateResponse, type ContestDto } from '@/lib/api';
 import {
   buildLeagueContestPath,
-  buildLeaguePath,
 } from '@/features/leagues/league-routing';
 import { ContestEntryStatus, ContestStatus, SelectionType, formatDollars, type SportNoun } from '@poolmaster/shared/domain';
-import { useLeagueContextById } from '@/features/leagues/use-league-context';
 import { getLogger } from '@/lib/logger';
 import { parseRouteState } from '@/routes/route-state';
 import {
@@ -17,7 +15,6 @@ import {
   formatDateTimeDisplay,
   FormField,
   Input,
-  LinkButton,
   LoadingState,
   MetricGrid,
   MetricTile,
@@ -50,7 +47,9 @@ import {
   CONTEST_STATUS_TONES,
   contestStatusLabel,
 } from './contest-status';
-import { ContestHeader, ContestSubMenu } from './contest-header';
+import { ContestEntryBackLinks, ContestPageFrame } from './contest-header';
+import { entryPageView } from './contest-page-view';
+import { useContestLeague } from './use-contest-league';
 import { contestEntryTiebreaker, contestRosterParticipantNoun } from './contest-sport';
 import { entryWriteKeys, useContestEntryQuery } from './use-contest-entries';
 import { contestSchedule } from './use-contest-schedule';
@@ -201,7 +200,7 @@ function RosterContestEntryPage() {
    * its code) and the viewer's edges, cached under the league rather than under a
    * contest-shaped key that nothing else could reuse.
    */
-  const { league: contestLeague } = useLeagueContextById(contestQuery.data?.leagueId);
+  const { leagueCode: backLeagueCode } = useContestLeague(contestQuery.data?.leagueId, hintedLeagueCode);
   // The event's start is the entry cutoff (#431); the contest's status follows the event's own
   // move to in progress, which can lag the start, and the server refuses picks from the start on.
   const schedule = contestSchedule(contestQuery.data);
@@ -570,11 +569,9 @@ function RosterContestEntryPage() {
   // The prediction the contest's scoring family asks for: a golf entry's winning score, none
   // for a race, whose entries submit without one.
   const tiebreaker = contestEntryTiebreaker(contest);
-  const backLeagueCode = hintedLeagueCode ?? contestLeague?.leagueCode ?? null;
   const backToContestPath = backLeagueCode
     ? buildLeagueContestPath(backLeagueCode, contestId)
     : `/contests/${contestId}`;
-  const backToLeaguePath = backLeagueCode ? buildLeaguePath(backLeagueCode) : '/welcome';
   const entrySummary = entryQuery.data?.entry ?? null;
   const myEntryIds = contest.myEntryIds ?? [];
   const isMyEntry = myEntryIds.includes(entryId);
@@ -644,58 +641,33 @@ function RosterContestEntryPage() {
   }
 
   return (
-    <section className="space-y-6">
-      <ContestHeader
-        actions={(
-          <>
-            {backLeagueCode ? null : (
-              <LinkButton
-                data-testid="contest-entry-back-to-contest"
-                to={backToContestPath}
-                variant="secondary"
-              >
-                Back to contest
-              </LinkButton>
-            )}
-            <LinkButton
-              data-testid="contest-entry-back-to-league"
-              to={backToLeaguePath}
-              variant="secondary"
-            >
-              Back to league
-            </LinkButton>
-          </>
-        )}
-        badges={(
-          <>
-            <StatusBadge tone={CONTEST_STATUS_TONES[contest.status]}>
-              {getContestPhaseLabel(contest, isEditable)}
+    <ContestPageFrame
+      contest={contest}
+      current={entryPageView(contest, entryId)}
+      leagueCode={backLeagueCode}
+      picksRevealed={entryQuery.data?.picksRevealed ?? false}
+      actions={<ContestEntryBackLinks contestId={contestId} leagueCode={backLeagueCode} />}
+      badges={(
+        <>
+          <StatusBadge tone={CONTEST_STATUS_TONES[contest.status]}>
+            {getContestPhaseLabel(contest, isEditable)}
+          </StatusBadge>
+          {picksHidden ? null : (
+            <StatusBadge data-testid="contest-entry-status-badge" tone={CONTEST_ENTRY_STATUS_TONES[entryStatus]}>
+              {CONTEST_ENTRY_STATUS_LABELS[entryStatus]}
             </StatusBadge>
-            {picksHidden ? null : (
-              <StatusBadge data-testid="contest-entry-status-badge" tone={CONTEST_ENTRY_STATUS_TONES[entryStatus]}>
-                {CONTEST_ENTRY_STATUS_LABELS[entryStatus]}
-              </StatusBadge>
-            )}
-          </>
-        )}
-        menu={backLeagueCode ? (
-          <ContestSubMenu
-            contestId={contestId}
-            current={isMyEntry ? 'my-entry' : null}
-            leagueCode={backLeagueCode}
-            myEntryId={myEntryIds[0] ?? null}
-            picksRevealed={entryQuery.data?.picksRevealed ?? false}
-          />
-        ) : null}
-        summary={(
-          <p className="mt-2 text-sm text-muted-foreground" data-testid="contest-entry-summary">
-            {contest.name}
-            {entrySummary ? ` · ${entrySummary.squadName} · Entry ${entrySummary.entryNumber}` : ''}
-          </p>
-        )}
-        title={selectedEntry?.name ?? entrySummary?.name ?? 'Contest entry'}
-        titleTestId="contest-entry-heading"
-      />
+          )}
+        </>
+      )}
+      summary={(
+        <p className="mt-2 text-sm text-muted-foreground" data-testid="contest-entry-summary">
+          {contest.name}
+          {entrySummary ? ` · ${entrySummary.squadName} · Entry ${entrySummary.entryNumber}` : ''}
+        </p>
+      )}
+      title={selectedEntry?.name ?? entrySummary?.name ?? 'Contest entry'}
+      titleTestId="contest-entry-heading"
+    >
 
       <ContestEventSwitcher
         describe={(sportEvent) => (
@@ -966,6 +938,6 @@ function RosterContestEntryPage() {
           )}
         </Tile>
       </div>
-    </section>
+    </ContestPageFrame>
   );
 }

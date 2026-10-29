@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import type { ContestStatus } from '@poolmaster/shared/domain';
 import {
   getContestEntry,
   listContestEntries,
@@ -9,9 +10,10 @@ import {
 } from '@/lib/api';
 import { throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
+import { CONTEST_POLL_INTERVAL_MS, shouldPollContestEntries } from './contest-status';
 
 /** One contest's entries, read through the key every page shares for them. */
-export async function fetchContestEntries(contestId: string): Promise<ContestEntryListResponse> {
+async function fetchContestEntries(contestId: string): Promise<ContestEntryListResponse> {
   const response = await listContestEntries({ path: { contestId } });
 
   if (!response.data) {
@@ -19,6 +21,20 @@ export async function fetchContestEntries(contestId: string): Promise<ContestEnt
   }
 
   return response.data;
+}
+
+/**
+ * One contest's entries and whether its picks are revealed, polled while the contest is live so
+ * the board follows play.
+ */
+export function useContestEntriesQuery(contestId: string, contestStatus: ContestStatus | undefined) {
+  return useQuery({
+    queryKey: QueryKeys.contestEntries.byContest(contestId),
+    queryFn: () => fetchContestEntries(contestId),
+    enabled: Boolean(contestId),
+    retry: false,
+    refetchInterval: shouldPollContestEntries(contestStatus) ? CONTEST_POLL_INTERVAL_MS : false,
+  });
 }
 
 /**

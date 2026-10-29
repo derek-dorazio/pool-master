@@ -270,8 +270,12 @@ administration area (root admin included), reusing the same shared components.
 9. **One header per entity's pages.** Pages that show one entity from
    different angles share one header and a segmented sub-menu between them,
    not "Back to" and "View" links on each page. A contest's pages share
-   `ContestHeader`: Entries, Leaderboard once picks are revealed, and My entry
-   once the viewer has one. An event's pages in Manage share
+   `ContestPageFrame`: Entries, Leaderboard once picks are revealed, and My entry
+   once the viewer has one. A contest leaderboard is built from the leaderboard
+   kit in `features/contests` (`LeaderboardFrame`, `ScoreboardGrid`, the Place,
+   Entry and total columns) and defines only its own columns and notes; the
+   viewer's own rows, here and in cup tables and league home, carry the one
+   `MineMarker` ("Yours"). An event's pages in Manage share
    `SportEventHeader` whatever its sport: Overview, Field, Tiers, and the
    results page its scoring family names (Scores for golf, Results for a race,
    Bracket for a knockout tournament).

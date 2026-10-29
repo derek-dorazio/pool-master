@@ -2495,7 +2495,7 @@ export const submitEventSync = <ThrowOnError extends boolean = false>(options: O
 /**
  * List competitors a provider could not match
  *
- * Every competitor a provider reports, across its scheduled sports, that no participant is mapped to. Their synced data has nowhere to land until one is: bind each with bindParticipantProviderMapping.
+ * Every competitor a provider reports, across its scheduled sports, that no participant is mapped to. Their synced data has nowhere to land until one is: bind each with bindParticipantProviderMapping. `providerId` asks only that provider, and `externalId` keeps only that competitor, so one competitor's page reads one row (#1251).
  */
 export const listUnmappedProviderParticipants = <ThrowOnError extends boolean = false>(options?: Options<ListUnmappedProviderParticipantsData, ThrowOnError>): RequestResult<ListUnmappedProviderParticipantsResponses, ListUnmappedProviderParticipantsErrors, ThrowOnError> => (options?.client ?? client).get<ListUnmappedProviderParticipantsResponses, ListUnmappedProviderParticipantsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
