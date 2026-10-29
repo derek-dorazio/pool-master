@@ -103,6 +103,16 @@ export const SportEventListResponseSchema = z.object({
 }).describe('Sport events matching the filters.');
 export type SportEventListResponse = z.infer<typeof SportEventListResponseSchema>;
 
+export const SportEventYearsQuerySchema = z.object({
+  sportLeagueId: z.uuid().describe('The sport league whose event years to list.'),
+}).describe('Which sport league\'s event years to list.');
+export type SportEventYearsQuery = z.infer<typeof SportEventYearsQuerySchema>;
+
+export const SportEventYearsResponseSchema = z.object({
+  years: z.array(z.number().int()).describe('Each event year the sport league has events in, newest first: the years `listEvents` takes as `eventYear`. Years with only DRAFT events are listed for a root admin only. Empty when the sport league has no events.'),
+}).describe('The years a sport league has events in.');
+export type SportEventYearsResponse = z.infer<typeof SportEventYearsResponseSchema>;
+
 export const SportEventResponseSchema = z.object({
   event: SportEventDtoSchema,
 }).describe('One sport event.');
@@ -493,6 +503,8 @@ registerSchema('EventReadinessReasonDto', EventReadinessReasonDtoSchema);
 registerSchema('SportEventDto', SportEventDtoSchema);
 registerSchema('SportEventListQuery', SportEventListQuerySchema);
 registerSchema('SportEventListResponse', SportEventListResponseSchema);
+registerSchema('SportEventYearsQuery', SportEventYearsQuerySchema);
+registerSchema('SportEventYearsResponse', SportEventYearsResponseSchema);
 registerSchema('SportEventResponse', SportEventResponseSchema);
 registerSchema('CreateSportEventRequest', CreateSportEventRequestSchema);
 registerSchema('CreateSportEventFromProviderEventRequest', CreateSportEventFromProviderEventRequestSchema);

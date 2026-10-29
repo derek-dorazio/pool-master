@@ -20944,6 +20944,40 @@
         "additionalProperties": false,
         "description": "Sport events matching the filters."
       },
+      "SportEventYearsQuery": {
+        "type": "object",
+        "properties": {
+          "sportLeagueId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The sport league whose event years to list."
+          }
+        },
+        "required": [
+          "sportLeagueId"
+        ],
+        "additionalProperties": false,
+        "description": "Which sport league's event years to list."
+      },
+      "SportEventYearsResponse": {
+        "type": "object",
+        "properties": {
+          "years": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            },
+            "description": "Each event year the sport league has events in, newest first: the years `listEvents` takes as `eventYear`. Years with only DRAFT events are listed for a root admin only. Empty when the sport league has no events."
+          }
+        },
+        "required": [
+          "years"
+        ],
+        "additionalProperties": false,
+        "description": "The years a sport league has events in."
+      },
       "SportEventResponse": {
         "type": "object",
         "properties": {
@@ -65061,6 +65095,21 @@
         "additionalProperties": false,
         "description": "A competitor a provider reports that no participant is mapped to — their synced data has nowhere to land until one is."
       },
+      "UnmappedProviderParticipantListQuery": {
+        "type": "object",
+        "properties": {
+          "providerId": {
+            "description": "Only this provider's competitors; the other providers are not asked.",
+            "type": "string"
+          },
+          "externalId": {
+            "description": "Only the competitor the provider knows by this identifier. With providerId, the list holds that one competitor while it is unmapped, and is empty once it is mapped.",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Filters for the unmapped-competitor list. With neither, every provider's unmapped competitors."
+      },
       "UnmappedProviderParticipantListResponse": {
         "type": "object",
         "properties": {
@@ -65116,7 +65165,7 @@
           "participants"
         ],
         "additionalProperties": false,
-        "description": "Every unmapped competitor across the scheduled sports of every provider."
+        "description": "The unmapped competitors matching the filters, across the scheduled sports of each provider asked."
       },
       "ProviderEventDto": {
         "type": "object",
@@ -73654,6 +73703,60 @@
         }
       }
     },
+    "/api/v1/events/years": {
+      "get": {
+        "operationId": "listEventYears",
+        "summary": "List the years a sport league has events in",
+        "tags": [
+          "Events"
+        ],
+        "description": "Each event year the sport league has events in, newest first: the years `listEvents` takes as `eventYear`, read without loading the events. Years with only DRAFT events are listed for a root admin only, as in `listEvents`.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "query",
+            "name": "sportLeagueId",
+            "required": true,
+            "description": "The sport league whose event years to list."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The years a sport league has events in.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SportEventYearsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/events/{eventId}": {
       "get": {
         "operationId": "getEvent",
@@ -79680,10 +79783,30 @@
         "tags": [
           "Ingestion"
         ],
-        "description": "Every competitor a provider reports, across its scheduled sports, that no participant is mapped to. Their synced data has nowhere to land until one is: bind each with bindParticipantProviderMapping.",
+        "description": "Every competitor a provider reports, across its scheduled sports, that no participant is mapped to. Their synced data has nowhere to land until one is: bind each with bindParticipantProviderMapping. `providerId` asks only that provider, and `externalId` keeps only that competitor, so one competitor's page reads one row (#1251).",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "providerId",
+            "required": false,
+            "description": "Only this provider's competitors; the other providers are not asked."
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "externalId",
+            "required": false,
+            "description": "Only the competitor the provider knows by this identifier. With providerId, the list holds that one competitor while it is unmapped, and is empty once it is mapped."
+          }
+        ],
         "responses": {
           "200": {
-            "description": "Every unmapped competitor across the scheduled sports of every provider.",
+            "description": "The unmapped competitors matching the filters, across the scheduled sports of each provider asked.",
             "content": {
               "application/json": {
                 "schema": {

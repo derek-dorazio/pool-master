@@ -18,6 +18,7 @@ import type {
   SportEventLiveSimulationResponse,
   SportEventRoundDto,
   SportEventTierDto,
+  SportEventYearsResponse,
 } from '@poolmaster/shared/dto/events.dto';
 import type { LiveSimulationStatus } from '../modules/ingestion/core/provider-interface';
 import { evaluateEventOperationalState } from '../modules/events/operational-timing';
@@ -124,4 +125,8 @@ export function mapProviderEventYearImportToResponse(result: ProviderEventYearIm
     created: result.created.map(mapSportEventToDto),
     skipped: result.skipped.map(({ externalId, name, reason }) => ({ externalId, name, reason })),
   };
+}
+
+export function toSportEventYearsResponse(years: readonly number[]): SportEventYearsResponse {
+  return { years: [...years] };
 }

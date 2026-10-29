@@ -130,6 +130,11 @@ export interface SportEventRepository {
   /** Ordered by start date, then name. */
   findAll(filters: SportEventFilters): Promise<SportEvent[]>;
   /**
+   * Each event year the sport league has events in, newest first, without reading the events
+   * (#1251). `releasedOnly` leaves out years whose only events are DRAFT.
+   */
+  findEventYears(sportLeagueId: string, options: { releasedOnly: boolean }): Promise<number[]>;
+  /**
    * Rejects a second edition of a series in one year: the database's unique constraint on
    * (eventSeriesId, eventYear) raises, and the caller maps it (plans/147 decision 5).
    */

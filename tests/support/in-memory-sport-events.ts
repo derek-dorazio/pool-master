@@ -269,6 +269,9 @@ export class InMemorySportEvents {
         && (filters.startsFrom === undefined || row.startDate >= filters.startsFrom)
         && (filters.startsBefore === undefined || row.startDate < filters.startsBefore)
       )),
+      findEventYears: async (sportLeagueId, options) => [...new Set(this.events
+        .filter((row) => row.sportLeagueId === sportLeagueId && (!options.releasedOnly || row.status !== 'DRAFT'))
+        .map((row) => row.eventYear))].sort((a, b) => b - a),
       create: async (input: SportEventCreate) => {
         // The database's one-edition-per-year constraint, raised the way Prisma raises it.
         if (this.events.some((row) => row.eventSeriesId === input.eventSeriesId && row.eventYear === input.eventYear)) {

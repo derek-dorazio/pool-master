@@ -17,3 +17,23 @@ export function useUnmappedCompetitorsQuery() {
     retry: false,
   });
 }
+
+/**
+ * One competitor, while no participant is mapped to it: the list filtered on the server by
+ * provider and the provider's id, so only that provider is asked (#1251). Null once mapped, or
+ * when the provider no longer reports it.
+ */
+export function useUnmappedCompetitorQuery(providerId: string, externalId: string) {
+  return useQuery({
+    queryKey: QueryKeys.rootAdmin.unmappedProviderParticipant(providerId, externalId),
+    queryFn: async (): Promise<UnmappedProviderParticipantDto | null> => {
+      const response = await listUnmappedProviderParticipants({ query: { providerId, externalId } });
+      if (!response.data?.participants) {
+        throwApiError(response.error, 'Unmapped competitor response is missing data.');
+      }
+      return response.data.participants.at(0) ?? null;
+    },
+    enabled: providerId !== '' && externalId !== '',
+    retry: false,
+  });
+}

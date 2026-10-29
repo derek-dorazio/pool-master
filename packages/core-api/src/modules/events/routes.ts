@@ -97,6 +97,20 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
     handler: handler.listEvents,
   });
 
+  fastify.get('/years', {
+    schema: {
+      tags: TAGS,
+      summary: 'List the years a sport league has events in',
+      description:
+        'Each event year the sport league has events in, newest first: the years `listEvents` takes as `eventYear`, read without loading the events. '
+        + 'Years with only DRAFT events are listed for a root admin only, as in `listEvents`.',
+      operationId: 'listEventYears',
+      querystring: schemaRef('SportEventYearsQuery'),
+      response: { 200: schemaRef('SportEventYearsResponse'), ...errors(400, 401) },
+    },
+    handler: handler.listEventYears,
+  });
+
   fastify.get('/:eventId', {
     schema: {
       tags: TAGS,

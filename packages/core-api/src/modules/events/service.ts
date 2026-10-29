@@ -146,6 +146,13 @@ export class SportEventService {
     return summaries;
   }
 
+  /** Each year the sport league has events in, newest first, for a year picker (#1251). */
+  async listEventYears(sportLeagueId: string, options: { releasedOnly: boolean }): Promise<number[]> {
+    const years = await this.deps.sportEvents.findEventYears(sportLeagueId, options);
+    this.deps.logger?.debug({ action: 'events.years.success', data: { sportLeagueId, count: years.length } }, 'Listed sport event years');
+    return years;
+  }
+
   async getEvent(sportEventId: string): Promise<SportEventSummary | null> {
     const event = await this.deps.sportEvents.findById(sportEventId);
     if (!event) return null;

@@ -22,6 +22,8 @@ import type {
   SportEventResponse,
   SportEventRoundListResponse,
   SportEventTierListResponse,
+  SportEventYearsQuery,
+  SportEventYearsResponse,
   StartSportEventLiveSimulationRequest,
   TransitionSportEventRequest,
   UpdateSportEventParticipantsRequest,
@@ -64,6 +66,7 @@ import {
   mapSportEventTierToDto,
   mapSportEventToDto,
   toProviderManualSyncSubmissionResponse,
+  toSportEventYearsResponse,
 } from '../../mappers';
 import type { IngestionService } from '../ingestion/ingestion-service';
 import {
@@ -123,6 +126,12 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
         data: { count: events.length, contestEligibleCount: events.filter((event) => event.contestEligible).length },
       }, 'Listed sport events');
       return { events };
+    },
+
+    listEventYears: async (request: FastifyRequest<{ Querystring: SportEventYearsQuery }>): Promise<SportEventYearsResponse> => {
+      // As in listEvents: a year with only DRAFT events is a root admin's to see.
+      const releasedOnly = request.authUser?.isRootAdmin !== true;
+      return toSportEventYearsResponse(await sportEvents.listEventYears(request.query.sportLeagueId, { releasedOnly }));
     },
 
     getEvent: async (request: FastifyRequest<EventParams>): Promise<SportEventResponse> => {

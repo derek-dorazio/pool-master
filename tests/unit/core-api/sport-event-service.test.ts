@@ -463,6 +463,18 @@ describe('SportEventService — read, update, delete', () => {
     await expect(service.listEvents({ status: SportEventStatus.DRAFT })).rejects.toMatchObject({ code: 'SPORT_EVENT_FILTER_REQUIRED', statusCode: 400 });
   });
 
+  it('lists a sport league\'s event years newest first, and hides a DRAFT-only year from a released-only read', async () => {
+    const { store, service } = setup();
+    store.addEvent({ sportLeagueId: 'pga', eventYear: 2025 });
+    store.addEvent({ sportLeagueId: 'pga', eventYear: 2026 });
+    store.addEvent({ sportLeagueId: 'pga', eventYear: 2026 });
+    store.addEvent({ sportLeagueId: 'pga', eventYear: 2027, status: SportEventStatus.DRAFT });
+    store.addEvent({ sportLeagueId: 'lpga', eventYear: 2030 });
+
+    await expect(service.listEventYears('pga', { releasedOnly: false })).resolves.toEqual([2027, 2026, 2025]);
+    await expect(service.listEventYears('pga', { releasedOnly: true })).resolves.toEqual([2026, 2025]);
+  });
+
   it('updates an admin-managed event, clearing a field set to null', async () => {
     const { store, service } = setup();
     const event = store.addEvent({ venue: 'Old Course' });

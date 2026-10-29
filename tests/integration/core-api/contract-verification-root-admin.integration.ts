@@ -30,6 +30,7 @@ import {
   ImportSportEventYearFromProviderResponseSchema,
   SportEventRoundListResponseSchema,
   SportEventTierListResponseSchema,
+  SportEventYearsResponseSchema,
   SportLeagueListResponseSchema,
   SportLeagueResponseSchema,
 } from '@poolmaster/shared/dto';
@@ -48,6 +49,7 @@ import type {
   ProviderSyncRunDetailDto,
   ProviderSyncRunListResponse,
   SportEventListResponse,
+  SportEventYearsResponse,
   SportEventResponse,
   SportEventRoundListResponse,
   SportEventTierListResponse,
@@ -1159,6 +1161,19 @@ describe('Contract verification (root admin)', () => {
         sport: 'GOLF',
       });
 
+      // Filtered to one competitor, the page reads that row alone (#1251).
+      const oneUrl = '/api/v1/ingestion/unmapped-participants?providerId=contract-provider&externalId=golfer-1';
+      const oneRes = await app.inject({ method: 'GET', url: oneUrl, headers: rootAdmin.headers });
+      expect(oneRes.statusCode).toBe(200);
+      expect(UnmappedProviderParticipantListResponseSchema.safeParse(oneRes.json()).success).toBe(true);
+      expect(oneRes.json<UnmappedProviderParticipantListResponse>().participants).toEqual([{
+        providerId: 'contract-provider',
+        providerName: 'Contract Provider',
+        externalId: 'golfer-1',
+        externalName: 'Avery Hart',
+        sport: 'GOLF',
+      }]);
+
       const bindRes = await app.inject({
         method: 'POST',
         url: `/api/v1/participants/${participant.id}/provider-mappings`,
@@ -1186,6 +1201,8 @@ describe('Contract verification (root admin)', () => {
             row.providerId === 'contract-provider' && row.externalId === 'golfer-1',
         ),
       ).toBe(false);
+      const oneAfterRes = await app.inject({ method: 'GET', url: oneUrl, headers: rootAdmin.headers });
+      expect(oneAfterRes.json<UnmappedProviderParticipantListResponse>().participants).toEqual([]);
 
       const unknownProviderRes = await app.inject({
         method: 'POST',
@@ -1548,6 +1565,16 @@ describe('Contract verification (root admin)', () => {
         headers: rootAdmin.headers,
       });
       expect(leagueAfterRes.json<SportLeagueResponse>().sportLeague.currentEventYear).toBe(2081);
+
+      // --- listEventYears (200): the tour's years, newest first, without its events (#1251) ---
+      const yearsRes = await getApp().inject({
+        method: 'GET',
+        url: `/api/v1/events/years?sportLeagueId=${leagueId}`,
+        headers: rootAdmin.headers,
+      });
+      expect(yearsRes.statusCode).toBe(200);
+      expect(SportEventYearsResponseSchema.safeParse(yearsRes.json()).success).toBe(true);
+      expect(yearsRes.json<SportEventYearsResponse>().years).toEqual([2082, 2081]);
     } finally {
       const prisma = getPrisma();
       if (created.eventIds.length) {

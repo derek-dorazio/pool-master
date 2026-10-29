@@ -243,6 +243,19 @@ export class PrismaSportEventRepository implements SportEventRepository {
     return rows.map(toSportEvent);
   }
 
+  async findEventYears(sportLeagueId: string, options: { releasedOnly: boolean }): Promise<number[]> {
+    const rows = await this.prisma.sportEvent.findMany({
+      where: {
+        eventSeries: { sportLeagueId },
+        ...(options.releasedOnly && { NOT: { status: SportEventStatus.DRAFT } }),
+      },
+      select: { eventYear: true },
+      distinct: ['eventYear'],
+      orderBy: { eventYear: 'desc' },
+    });
+    return rows.map((row) => row.eventYear);
+  }
+
   async create(input: SportEventCreate): Promise<SportEvent> {
     return toSportEvent(await this.prisma.sportEvent.create({
       data: {

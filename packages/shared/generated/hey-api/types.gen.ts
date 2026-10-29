@@ -8957,6 +8957,26 @@ export type SportEventListResponse = {
 };
 
 /**
+ * Which sport league's event years to list.
+ */
+export type SportEventYearsQuery = {
+    /**
+     * The sport league whose event years to list.
+     */
+    sportLeagueId: string;
+};
+
+/**
+ * The years a sport league has events in.
+ */
+export type SportEventYearsResponse = {
+    /**
+     * Each event year the sport league has events in, newest first: the years `listEvents` takes as `eventYear`. Years with only DRAFT events are listed for a root admin only. Empty when the sport league has no events.
+     */
+    years: Array<number>;
+};
+
+/**
  * One sport event.
  */
 export type SportEventResponse = {
@@ -26195,7 +26215,21 @@ export type UnmappedProviderParticipantDto = {
 };
 
 /**
- * Every unmapped competitor across the scheduled sports of every provider.
+ * Filters for the unmapped-competitor list. With neither, every provider's unmapped competitors.
+ */
+export type UnmappedProviderParticipantListQuery = {
+    /**
+     * Only this provider's competitors; the other providers are not asked.
+     */
+    providerId?: string;
+    /**
+     * Only the competitor the provider knows by this identifier. With providerId, the list holds that one competitor while it is unmapped, and is empty once it is mapped.
+     */
+    externalId?: string;
+};
+
+/**
+ * The unmapped competitors matching the filters, across the scheduled sports of each provider asked.
  */
 export type UnmappedProviderParticipantListResponse = {
     participants: Array<{
@@ -30566,6 +30600,40 @@ export type CreateEventResponses = {
 
 export type CreateEventResponse = CreateEventResponses[keyof CreateEventResponses];
 
+export type ListEventYearsData = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * The sport league whose event years to list.
+         */
+        sportLeagueId: string;
+    };
+    url: '/api/v1/events/years';
+};
+
+export type ListEventYearsErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+};
+
+export type ListEventYearsError = ListEventYearsErrors[keyof ListEventYearsErrors];
+
+export type ListEventYearsResponses = {
+    /**
+     * The years a sport league has events in.
+     */
+    200: SportEventYearsResponse;
+};
+
+export type ListEventYearsResponse = ListEventYearsResponses[keyof ListEventYearsResponses];
+
 export type DeleteEventData = {
     body?: never;
     path: {
@@ -33554,7 +33622,16 @@ export type SubmitEventSyncResponse = SubmitEventSyncResponses[keyof SubmitEvent
 export type ListUnmappedProviderParticipantsData = {
     body?: never;
     path?: never;
-    query?: never;
+    query?: {
+        /**
+         * Only this provider's competitors; the other providers are not asked.
+         */
+        providerId?: string;
+        /**
+         * Only the competitor the provider knows by this identifier. With providerId, the list holds that one competitor while it is unmapped, and is empty once it is mapped.
+         */
+        externalId?: string;
+    };
     url: '/api/v1/ingestion/unmapped-participants';
 };
 
@@ -33573,7 +33650,7 @@ export type ListUnmappedProviderParticipantsError = ListUnmappedProviderParticip
 
 export type ListUnmappedProviderParticipantsResponses = {
     /**
-     * Every unmapped competitor across the scheduled sports of every provider.
+     * The unmapped competitors matching the filters, across the scheduled sports of each provider asked.
      */
     200: UnmappedProviderParticipantListResponse;
 };

@@ -2057,6 +2057,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/events/years": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the years a sport league has events in
+         * @description Each event year the sport league has events in, newest first: the years `listEvents` takes as `eventYear`, read without loading the events. Years with only DRAFT events are listed for a root admin only, as in `listEvents`.
+         */
+        get: operations["listEventYears"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/events/{eventId}": {
         parameters: {
             query?: never;
@@ -3320,7 +3340,7 @@ export interface paths {
         };
         /**
          * List competitors a provider could not match
-         * @description Every competitor a provider reports, across its scheduled sports, that no participant is mapped to. Their synced data has nowhere to land until one is: bind each with bindParticipantProviderMapping.
+         * @description Every competitor a provider reports, across its scheduled sports, that no participant is mapped to. Their synced data has nowhere to land until one is: bind each with bindParticipantProviderMapping. `providerId` asks only that provider, and `externalId` keeps only that competitor, so one competitor's page reads one row (#1251).
          */
         get: operations["listUnmappedProviderParticipants"];
         put?: never;
@@ -10156,6 +10176,19 @@ export interface components {
                  */
                 updatedAt: string;
             }[];
+        };
+        /** @description Which sport league's event years to list. */
+        SportEventYearsQuery: {
+            /**
+             * Format: uuid
+             * @description The sport league whose event years to list.
+             */
+            sportLeagueId: string;
+        };
+        /** @description The years a sport league has events in. */
+        SportEventYearsResponse: {
+            /** @description Each event year the sport league has events in, newest first: the years `listEvents` takes as `eventYear`. Years with only DRAFT events are listed for a root admin only. Empty when the sport league has no events. */
+            years: number[];
         };
         /** @description One sport event. */
         SportEventResponse: {
@@ -22642,7 +22675,14 @@ export interface components {
             /** @enum {string} */
             sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
         };
-        /** @description Every unmapped competitor across the scheduled sports of every provider. */
+        /** @description Filters for the unmapped-competitor list. With neither, every provider's unmapped competitors. */
+        UnmappedProviderParticipantListQuery: {
+            /** @description Only this provider's competitors; the other providers are not asked. */
+            providerId?: string;
+            /** @description Only the competitor the provider knows by this identifier. With providerId, the list holds that one competitor while it is unmapped, and is empty once it is mapped. */
+            externalId?: string;
+        };
+        /** @description The unmapped competitors matching the filters, across the scheduled sports of each provider asked. */
         UnmappedProviderParticipantListResponse: {
             participants: {
                 providerId: string;
@@ -28838,6 +28878,47 @@ export interface operations {
             };
         };
     };
+    listEventYears: {
+        parameters: {
+            query: {
+                /** @description The sport league whose event years to list. */
+                sportLeagueId: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The years a sport league has events in. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SportEventYearsResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
     getEvent: {
         parameters: {
             query?: never;
@@ -33302,14 +33383,19 @@ export interface operations {
     };
     listUnmappedProviderParticipants: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Only this provider's competitors; the other providers are not asked. */
+                providerId?: string;
+                /** @description Only the competitor the provider knows by this identifier. With providerId, the list holds that one competitor while it is unmapped, and is empty once it is mapped. */
+                externalId?: string;
+            };
             header?: never;
             path?: never;
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description Every unmapped competitor across the scheduled sports of every provider. */
+            /** @description The unmapped competitors matching the filters, across the scheduled sports of each provider asked. */
             200: {
                 headers: {
                     [name: string]: unknown;

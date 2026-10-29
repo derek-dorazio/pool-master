@@ -137,6 +137,35 @@ describe('SportEventRepository — writes', () => {
     expect((await events.findAll({ q: 'harbour' })).map((row) => row.name)).toEqual(['Harbour Classic']);
   });
 
+  it('lists the sport league\'s event years once each, newest first, leaving out a DRAFT-only year for a released-only read', async () => {
+    const { events } = repos();
+    const prisma = getPrisma();
+    const editions = await Promise.all([
+      { eventYear: 2024, status: 'COMPLETED' as const },
+      { eventYear: 2026, status: 'SCHEDULED' as const },
+      { eventYear: 2026, status: 'DRAFT' as const },
+      { eventYear: 2027, status: 'DRAFT' as const },
+    ].map(async ({ eventYear, status }) => {
+      const edition = await freshEventEdition(prisma, { eventYear });
+      return events.create({
+        ...edition,
+        externalId: `repo-${randomUUID()}`,
+        providerId: 'integration-test',
+        sport: Sport.GOLF,
+        name: `Year ${eventYear} ${status}`,
+        startDate: new Date(`${eventYear}-06-04T12:00:00.000Z`),
+        status,
+        syncScope: 'NONE',
+        autoLifecycleEnabled: false,
+      });
+    }));
+    const { sportLeagueId } = editions[0];
+
+    await expect(events.findEventYears(sportLeagueId, { releasedOnly: false })).resolves.toEqual([2027, 2026, 2024]);
+    await expect(events.findEventYears(sportLeagueId, { releasedOnly: true })).resolves.toEqual([2026, 2024]);
+    await expect(events.findEventYears(randomUUID(), { releasedOnly: false })).resolves.toEqual([]);
+  });
+
   it('deletes an event that has rounds, tiers and a scored, valued field — which a bare event delete could not', async () => {
     const { events } = repos();
     const { event } = await createPopulatedEvent();
