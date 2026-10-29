@@ -92,13 +92,19 @@ type QueryLike<T> = {
   isError: boolean;
 };
 
-type QueryStateProps<T> = {
+/** An empty state needs both its words and its test; without them, data is never empty. */
+type QueryStateEmpty<T> =
+  | {
+      /** What to say when the data is there but holds nothing to show. */
+      empty: ReactNode;
+      /** Whether the data counts as empty. */
+      isEmpty: (data: T) => boolean;
+    }
+  | { empty?: never; isEmpty?: never };
+
+type QueryStateProps<T> = QueryStateEmpty<T> & {
   children: (data: T) => ReactNode;
-  /** What to say when the data is there but holds nothing to show. */
-  empty?: ReactNode;
   error?: ReactNode;
-  /** Whether the data counts as empty. Without it, data is never empty. */
-  isEmpty?: (data: T) => boolean;
   loading?: ReactNode;
   query: QueryLike<T>;
   size?: StateSize;
@@ -107,7 +113,9 @@ type QueryStateProps<T> = {
 
 /**
  * One query's loading, error and empty states in place, and its data once it is there: the
- * in-card sibling of a page template's async state.
+ * in-card sibling of a page template's async state. Loading is "no data and no error", so a
+ * disabled query (`enabled: false`) shows the loading line until it runs; render nothing in
+ * its place when the query may never run.
  */
 export function QueryState<T>({
   children,

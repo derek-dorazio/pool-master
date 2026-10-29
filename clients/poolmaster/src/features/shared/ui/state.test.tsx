@@ -89,7 +89,7 @@ describe("QueryState", () => {
   });
 
   it("renders its children with the data once it is there", () => {
-    render(<QueryState isEmpty={(rows) => rows.length === 0} query={{ data: ["Avery", "Blake"], isError: false }}>{renderRows}</QueryState>);
+    render(<QueryState empty="Nobody yet." isEmpty={(rows) => rows.length === 0} query={{ data: ["Avery", "Blake"], isError: false }}>{renderRows}</QueryState>);
 
     expect(screen.getAllByRole("listitem").map((item) => item.textContent)).toEqual(["Avery", "Blake"]);
   });
@@ -98,5 +98,18 @@ describe("QueryState", () => {
     render(<QueryState query={{ data: undefined, isError: false }} size="tile">{renderRows}</QueryState>);
 
     expect(screen.getByRole("status").tagName).toBe("DIV");
+  });
+
+  it("takes the empty words and the empty test only together, so an empty state never draws blank", () => {
+    render(
+      <>
+        {/* @ts-expect-error -- empty words without a test of emptiness */}
+        <QueryState empty="Nobody yet." query={{ data: ["Avery"], isError: false }}>{renderRows}</QueryState>
+        {/* @ts-expect-error -- a test of emptiness with nothing to say */}
+        <QueryState isEmpty={(rows: string[]) => rows.length === 0} query={{ data: ["Blake"], isError: false }}>{renderRows}</QueryState>
+      </>,
+    );
+
+    expect(screen.getAllByRole("listitem")).toHaveLength(2);
   });
 });

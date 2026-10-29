@@ -23,6 +23,7 @@ import {
   FormField,
   InlineError,
   Input,
+  LoadingState,
   SegmentedControl,
   SettingsSection,
   SettingsSectionHeader,
@@ -566,7 +567,7 @@ function WaitingInvites({
         title="Waiting on an answer"
       />
       {isLoading ? (
-        <p className="text-sm text-muted-foreground">Loading invites...</p>
+        <LoadingState body="Loading invites..." size="inline" />
       ) : isError ? (
         <InlineError testId="league-invitations-error">
           We couldn&apos;t load pending invites right now.
