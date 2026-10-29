@@ -197,6 +197,16 @@ describe('RootAdminUnmappedParticipantsPage', () => {
     expect(bindParticipantProviderMappingMock).not.toHaveBeenCalled();
   });
 
+  it('asks the server for only the competitor named in the address, by provider and id, not every unmapped competitor', async () => {
+    renderPage(MAP_PATH);
+
+    expect(await screen.findByTestId('root-admin-unmapped-participant-map-page')).toBeInTheDocument();
+    expect(listUnmappedProviderParticipantsMock).toHaveBeenCalledTimes(1);
+    expect(listUnmappedProviderParticipantsMock).toHaveBeenCalledWith(
+      expect.objectContaining({ query: { providerId: 'mock-contest-feed', externalId: 'golfer-77' } }),
+    );
+  });
+
   it('says there is nothing to map when the competitor is no longer unmapped', async () => {
     listUnmappedProviderParticipantsMock.mockResolvedValue({ data: { participants: [] } });
     renderPage(MAP_PATH);

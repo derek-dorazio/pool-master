@@ -260,9 +260,15 @@ export const UnmappedProviderParticipantDtoSchema = z.object({
 }).describe('A competitor a provider reports that no participant is mapped to — their synced data has nowhere to land until one is.');
 export type UnmappedProviderParticipantDto = z.infer<typeof UnmappedProviderParticipantDtoSchema>;
 
+export const UnmappedProviderParticipantListQuerySchema = z.object({
+  providerId: z.string().optional().describe('Only this provider\'s competitors; the other providers are not asked.'),
+  externalId: z.string().optional().describe('Only the competitor the provider knows by this identifier. With providerId, the list holds that one competitor while it is unmapped, and is empty once it is mapped.'),
+}).describe('Filters for the unmapped-competitor list. With neither, every provider\'s unmapped competitors.');
+export type UnmappedProviderParticipantListQuery = z.infer<typeof UnmappedProviderParticipantListQuerySchema>;
+
 export const UnmappedProviderParticipantListResponseSchema = z.object({
   participants: z.array(UnmappedProviderParticipantDtoSchema),
-}).describe('Every unmapped competitor across the scheduled sports of every provider.');
+}).describe('The unmapped competitors matching the filters, across the scheduled sports of each provider asked.');
 export type UnmappedProviderParticipantListResponse = z.infer<typeof UnmappedProviderParticipantListResponseSchema>;
 
 // --- Provider catalog browse (plans/124 §3.4/§4.4/§5.1) ---
@@ -311,6 +317,7 @@ registerSchema('ProviderSyncRunListQuery', ProviderSyncRunListQuerySchema);
 registerSchema('ProviderSyncRunListResponse', ProviderSyncRunListResponseSchema);
 registerSchema('ProviderManualSyncSubmissionResponse', ProviderManualSyncSubmissionResponseSchema);
 registerSchema('UnmappedProviderParticipantDto', UnmappedProviderParticipantDtoSchema);
+registerSchema('UnmappedProviderParticipantListQuery', UnmappedProviderParticipantListQuerySchema);
 registerSchema('UnmappedProviderParticipantListResponse', UnmappedProviderParticipantListResponseSchema);
 registerSchema('ProviderEventDto', ProviderEventDtoSchema);
 registerSchema('ProviderCatalogEventListQuery', ProviderCatalogEventListQuerySchema);
