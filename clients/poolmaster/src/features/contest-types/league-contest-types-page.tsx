@@ -11,7 +11,7 @@ import { useLeagueContext } from '@/features/leagues/use-league-context';
 import { contestEventsForTemplate } from '@/features/contests/contest-template-events';
 import { sportEventsQueryOptions } from '@/features/contests/sport-events-query';
 import { useActiveContestTemplatesQuery } from '@/features/contests/use-active-contest-templates-query';
-import { ErrorState, LoadingState, PageHeader, SectionHeader } from '@/features/shared/ui';
+import { ErrorState, Heading, LoadingState, PageHeader, SectionHeader } from '@/features/shared/ui';
 import { getLogger } from '@/lib/logger';
 import { buildLeagueContestCatalog } from './contest-catalog';
 import { ContestTypeTileCard } from './contest-type-tile';
@@ -92,7 +92,7 @@ export function LeagueContestTypesPage() {
               <SectionHeader description={SPORT_BLURBS[sport.sport]} title={sport.name} />
               {sport.groups.map((group) => (
                 <div className="space-y-3" key={group.sportLeagueId ?? 'every-event'}>
-                  <h4 className="text-sm font-semibold uppercase text-muted-foreground">{group.name}</h4>
+                  <Heading level={4} variant="eyebrow">{group.name}</Heading>
                   {group.sportLeagueId !== null && statPoolLines.has(group.sportLeagueId) ? (
                     <p className="text-sm text-muted-foreground" data-testid={`contest-types-stat-pool-${group.sportLeagueId}`}>
                       {statPoolLines.get(group.sportLeagueId)}

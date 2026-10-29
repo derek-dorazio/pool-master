@@ -2,6 +2,7 @@ import { Check, Copy } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { Button } from "./button";
 import { IconAvatar } from "./icon-avatar";
+import { Heading } from "./heading";
 
 type IdentityHeadingProps = {
   /** A code people share, such as a league code, shown with a copy button. */
@@ -28,12 +29,9 @@ export function IdentityHeading({ avatar, code, icon, meta, name, testId }: Iden
         </IconAvatar>
       )}
       <div className="min-w-0 flex-1">
-        <h1
-          className="font-display text-2xl font-extrabold text-foreground"
-          data-testid={testId ? `${testId}-name` : undefined}
-        >
+        <Heading data-testid={testId ? `${testId}-name` : undefined} level={1} variant="display">
           {name}
-        </h1>
+        </Heading>
         <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
           {code ? <CodeChip label={code.label} value={code.value} /> : null}
           {meta}

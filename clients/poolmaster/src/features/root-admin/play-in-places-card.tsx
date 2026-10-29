@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { SportEventStatus, type SportVocabulary } from '@poolmaster/shared/domain';
 import { setEventPlayInWinner, updateEventParticipants } from '@/lib/api';
 import type { SportEventDto, SportEventParticipantDto } from '@/lib/api';
-import { Button, LOADING_TEXT, Select, Tile } from '@/features/shared/ui';
+import { Button, Heading, LOADING_TEXT, Select, Tile } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -47,7 +47,7 @@ export function PlayInPlacesCard({
 
   return (
     <Tile data-testid="root-admin-play-in-places">
-      <h3 className="title-card text-base text-foreground">{`${word.charAt(0).toUpperCase()}${word.slice(1)} places`}</h3>
+      <Heading level={3} variant="card" size="base">{`${word.charAt(0).toUpperCase()}${word.slice(1)} places`}</Heading>
       <p className="mt-1 text-sm text-muted-foreground">
         {released
           ? `Name the ${team.one} in each ${word} place. It takes over the place's seed, picks and bracket spot.`

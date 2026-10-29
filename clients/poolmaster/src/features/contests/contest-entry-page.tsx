@@ -13,6 +13,7 @@ import {
   Button,
   ErrorState,
   FormField,
+  Heading,
   Input,
   LoadingState,
   Tile,
@@ -675,11 +676,11 @@ function RosterContestEntryPage() {
       {isRandomDraw ? <DrawEntryMetrics isEditable={isEditable} noun={participantNoun} selectionState={selectionState} /> : null}
 
       <Tile>
-        <h3 className="title-card text-xl" data-testid="contest-entry-builder-heading">
+        <Heading level={3} variant="card" size="xl" tone="inherit" data-testid="contest-entry-builder-heading">
           {isRandomDraw
             ? `${selectionState.drawnAt ? 'Dealt ' : ''}${selectionState.drawnAt ? participantNoun.many : participantNoun.many.charAt(0).toUpperCase() + participantNoun.many.slice(1)}`
             : isEditable ? 'Build your lineup' : 'Saved lineup detail'}
-        </h3>
+        </Heading>
         {progressNote ? (
           <p className="mt-1 text-sm text-muted-foreground" data-testid="contest-entry-progress">{progressNote}</p>
         ) : null}
@@ -779,7 +780,9 @@ function RosterContestEntryPage() {
 
       {showFinish ? (
         <Tile className="space-y-4" data-testid="contest-entry-finish">
-          <h3 className="title-card text-xl">{detailsEditable ? 'Name and submit' : isEditable ? 'Submit' : 'Your entry'}</h3>
+          <Heading level={3} variant="card" size="xl" tone="inherit">
+            {detailsEditable ? 'Name and submit' : isEditable ? 'Submit' : 'Your entry'}
+          </Heading>
 
           {detailsEditable ? (
             <FormField label="Entry name">

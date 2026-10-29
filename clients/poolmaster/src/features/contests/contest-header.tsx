@@ -8,7 +8,7 @@ import {
   buildLeagueContestPath,
   buildLeaguePath,
 } from '@/features/leagues/league-routing';
-import { LinkButton, SegmentedControl, Tile } from '@/features/shared/ui';
+import { Heading, LinkButton, SegmentedControl, Tile } from '@/features/shared/ui';
 import { entryPageView, type ContestView } from './contest-page-view';
 import { ContestStatusBadge } from './contest-status-badge';
 import { EntryStatusCallout, type EntryStatusFact } from './entry-status-callout';
@@ -93,9 +93,9 @@ function ContestHeader({
           {badges ? <div className="flex flex-wrap gap-2">{badges}</div> : null}
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-3xl font-semibold tracking-tight" data-testid={titleTestId}>
+              <Heading data-testid={titleTestId} level={2} tone="inherit" variant="page">
                 {title}
-              </h2>
+              </Heading>
               {titleAside}
             </div>
             {summary}
