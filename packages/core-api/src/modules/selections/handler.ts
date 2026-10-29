@@ -15,19 +15,19 @@ import type { FastifyRequest } from 'fastify';
 import type {
   GamePicksResponse,
   SaveGamePicksRequest,
+  SelectionPickParams,
   SelectionPickResponse,
   SelectionStateQuery,
   SelectionStateResponse,
-  SubmitPickRequest,
 } from '@poolmaster/shared/dto';
 import { toGamePickWrites, toGamePicksResponse } from '../../mappers/game-picks.mapper';
-import { toSelectionStateResponse } from '../../mappers/selections.mapper';
+import { toSelectionPickResponse, toSelectionStateResponse } from '../../mappers/selections.mapper';
 import type { PredictionService } from './prediction-service';
 import type { SelectionService } from './service';
 
 type ContestParams = { contestId: string };
 type SelectionStateRequest = FastifyRequest<{ Params: ContestParams; Querystring: SelectionStateQuery }>;
-type SubmitSelectionRequest = FastifyRequest<{ Params: ContestParams; Body: SubmitPickRequest }>;
+type SelectionPickRequest = FastifyRequest<{ Params: SelectionPickParams }>;
 type SubmitEntryRequest = FastifyRequest<{ Params: ContestParams & { entryId: string; sportEventId: string } }>;
 type RunDrawRequest = FastifyRequest<{ Params: ContestParams }>;
 type EntryEventParams = ContestParams & { entryId: string; sportEventId: string };
@@ -42,7 +42,8 @@ type ClearGamePickRequest = FastifyRequest<{ Params: EntryEventParams & { sportE
  */
 export interface SelectionHandlers {
   getSelectionState: (request: SelectionStateRequest) => Promise<SelectionStateResponse>;
-  submitContestSelection: (request: SubmitSelectionRequest) => Promise<SelectionPickResponse>;
+  selectContestPick: (request: SelectionPickRequest) => Promise<SelectionPickResponse>;
+  unselectContestPick: (request: SelectionPickRequest) => Promise<SelectionPickResponse>;
   submitContestEntry: (request: SubmitEntryRequest) => Promise<SelectionStateResponse>;
   runContestDraw: (request: RunDrawRequest) => Promise<SelectionStateResponse>;
   getGamePicks: (request: GamePicksRequest) => Promise<GamePicksResponse>;
@@ -63,23 +64,22 @@ export function createSelectionHandlers(service: SelectionService, predictions: 
     return toSelectionStateResponse(view);
   }
 
-  /**
-   * Both of a submission's outcomes — a pick placed (displacing one when the tier it goes in
-   * is already full) and a pick toggled off — answer 200 with the refreshed room. They are
-   * distinct in the service because they are distinct behaviour; they are one response here
-   * because the client's next render is the same either way.
-   */
-  async function submitContestSelection(
-    request: SubmitSelectionRequest,
-  ): Promise<SelectionPickResponse> {
-    const { entryId, participantId } = request.body;
-    const result = await service.submitSelection({
+  /** A pick change answers with only what it changed on the entry, never the whole room (#1259). */
+  function pickChangeInput(request: SelectionPickRequest) {
+    return {
       contestId: request.params.contestId,
-      entryId,
-      participantId,
+      entryId: request.params.entryId,
+      sportEventParticipantId: request.params.sportEventParticipantId,
       actorUserId: request.authUser?.userId,
-    });
-    return toSelectionStateResponse(result.view);
+    };
+  }
+
+  async function selectContestPick(request: SelectionPickRequest): Promise<SelectionPickResponse> {
+    return toSelectionPickResponse(await service.selectPick(pickChangeInput(request)));
+  }
+
+  async function unselectContestPick(request: SelectionPickRequest): Promise<SelectionPickResponse> {
+    return toSelectionPickResponse(await service.unselectPick(pickChangeInput(request)));
   }
 
   /** Submitting an entry's picks for one event answers with the refreshed room, as a pick does (#481, #713). */
@@ -139,7 +139,8 @@ export function createSelectionHandlers(service: SelectionService, predictions: 
 
   return {
     getSelectionState,
-    submitContestSelection,
+    selectContestPick,
+    unselectContestPick,
     submitContestEntry,
     runContestDraw,
     getGamePicks,

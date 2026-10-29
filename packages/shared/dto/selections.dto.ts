@@ -13,11 +13,12 @@ export const SelectionStateQuerySchema = z.object({
 }).describe('Optional query parameters for loading selection state.');
 export type SelectionStateQuery = z.infer<typeof SelectionStateQuerySchema>;
 
-export const SubmitPickRequestSchema = z.object({
-  entryId: z.string().describe('Entry making the pick.'),
-  participantId: z.string().describe('Participant being selected.'),
-}).describe('Request payload for submitting a pick.');
-export type SubmitPickRequest = z.infer<typeof SubmitPickRequestSchema>;
+export const SelectionPickParamsSchema = z.object({
+  contestId: z.string().describe('The contest.'),
+  entryId: z.string().describe('The entry whose pick changes.'),
+  sportEventParticipantId: z.string().describe('The field row picked or unpicked: the event\'s participant, not the canonical one.'),
+}).describe('One pick of one entry (#1259).');
+export type SelectionPickParams = z.infer<typeof SelectionPickParamsSchema>;
 
 // --- Response Sub-schemas ---
 
@@ -117,34 +118,15 @@ export type SelectionStateResponse = z.infer<typeof SelectionStateResponseSchema
 
 export const SelectionPickResponseSchema = z.object({
   contestId: z.string(),
-  contestName: z.string(),
-  sportEventId: z.string().describe('The contest event the room shows (#713): its field, its picks, and each entry\'s status in it.'),
-  acceptsPicks: z.boolean().describe('Whether this event\'s picks can still change: the contest is open or live, it has not been drawn, and the event has not started.'),
-  selectionType: z.enum(SelectionType),
-  drawnAt: z.iso.datetime().nullable().describe('When a random-draw contest\'s draw dealt its picks, closing its entries and revealing every entry\'s picks. Null until then, and always for other selection types.'),
-  isCommissioner: z.boolean().optional(),
-  rosterSize: z.number(),
-  status: z.enum([
-    SelectionStatus.PENDING,
-    SelectionStatus.LIVE,
-    SelectionStatus.PAUSED,
-    SelectionStatus.COMPLETE,
-  ]),
-  myEntryId: z.string().nullable(),
-  entries: z.array(SelectionEntryDtoSchema),
-  pickHistories: z.array(PickHistoryDtoSchema),
-  availableParticipantIds: z.array(z.string()),
-  selectedEntryId: z.string().nullable().optional(),
-  selectedEntryName: z.string().nullable().optional(),
-  tiebreakerValue: z.number().nullable().optional(),
-  selectionGroups: z.array(SelectionGroupDtoSchema).optional(),
-  isComplete: z.boolean(),
-  lineupSummary: SelectionBudgetLineupSummaryDtoSchema.nullable().optional().describe('The viewed entry\'s lineup summary, tagged by selection type: only budget contests carry one today. Null when there is no viewed entry or the type has none.'),
-}).describe('Selection response returned immediately after a pick mutation.');
+  entryId: z.string().describe('The entry whose pick changed.'),
+  sportEventId: z.string().describe('The contest event the pick is in: the event of the field row it names (#713).'),
+  entryStatus: z.enum(ContestEntryStatus).describe('The entry\'s status in the event after the change: a change that leaves a submitted lineup short, or over a budget contest\'s cap, sends it back to DRAFT.'),
+  picks: z.array(PickHistoryDtoSchema).describe('Every one of the entry\'s picks in the event after the change, oldest first: the room replaces the entry\'s picks with these, which also puts right a full-tier swap it guessed differently.'),
+  lineupSummary: SelectionBudgetLineupSummaryDtoSchema.nullable().describe('The entry\'s lineup summary after the change: only budget contests carry one, null otherwise.'),
+}).describe('What one pick change left on the entry (#1259): only what changed, for the room to merge into what it shows. Never the whole room.');
 export type SelectionPickResponse = z.infer<typeof SelectionPickResponseSchema>;
 
 registerSchema('SelectionStateQuery', SelectionStateQuerySchema);
-registerSchema('SubmitPickRequest', SubmitPickRequestSchema);
 registerSchema('SelectionBudgetLineupSummaryDto', SelectionBudgetLineupSummaryDtoSchema);
 registerSchema('SelectionStateResponse', SelectionStateResponseSchema);
 registerSchema('SelectionPickResponse', SelectionPickResponseSchema);

@@ -19,7 +19,7 @@ import {
   openContest,
   releaseEvent,
   submitContestEntry,
-  submitContestSelection,
+  selectContestPick,
   transitionEvent,
 } from '@poolmaster/shared/generated/hey-api';
 import { ContestFormat, ContestStatus, SelectionType, Sport, findSportRow } from '@poolmaster/shared/domain';
@@ -186,7 +186,7 @@ describe('SDK Functional: Running World Marathon Majors Top 10 points', () => {
     const enterWith = async (client: typeof a, lineup: string[]) => {
       const entryId = expectDefined((await enterContest({ client, path: { contestId } })).data).entry.id;
       for (const runner of lineup) {
-        const pick = await submitContestSelection({ client, path: { contestId }, body: { entryId, participantId: fieldRowOf(runner) } });
+        const pick = await selectContestPick({ client, path: { contestId, entryId, sportEventParticipantId: fieldRowOf(runner) } });
         expect(pick.response?.status).toBe(200);
       }
       expect((await submitContestEntry({ client, path: { contestId, entryId, sportEventId: eventId } })).response?.status).toBe(200);
