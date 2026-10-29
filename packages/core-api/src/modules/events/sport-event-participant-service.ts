@@ -121,6 +121,19 @@ function fieldUploadValues(entry: SportEventParticipant): FieldUploadValues {
   };
 }
 
+/** The values of `patch` that differ from the field row's, so a value sent unchanged is not written again. */
+function changedValues(entry: SportEventParticipant, patch: SportEventParticipantPatch): SportEventParticipantPatch {
+  const before = fieldUploadValues(entry);
+  const changed: SportEventParticipantPatch = {};
+  if (patch.isActive !== undefined && patch.isActive !== before.isActive) changed.isActive = patch.isActive;
+  if (patch.inactiveReason !== undefined && patch.inactiveReason !== before.inactiveReason) changed.inactiveReason = patch.inactiveReason;
+  if (patch.ranking !== undefined && patch.ranking !== before.ranking) changed.ranking = patch.ranking;
+  if (patch.oddsToWin !== undefined && patch.oddsToWin !== before.oddsToWin) changed.oddsToWin = patch.oddsToWin;
+  if (patch.seedNumber !== undefined && patch.seedNumber !== before.seedNumber) changed.seedNumber = patch.seedNumber;
+  if (patch.isPlayInPlace !== undefined && patch.isPlayInPlace !== entry.isPlayInPlace) changed.isPlayInPlace = patch.isPlayInPlace;
+  return changed;
+}
+
 /** The patch a row carries: only the values it names, each exactly as sent. */
 function fieldUploadPatch(row: FieldUploadRowInput): SportEventParticipantPatch {
   const patch: SportEventParticipantPatch = {};
@@ -325,9 +338,12 @@ export class SportEventParticipantService {
         404,
       );
     }
+    // Only the values that change are written, so a grid saved with most rows untouched writes
+    // little: the adapter writes one statement per distinct new value (#1252).
+    const entryById = new Map(field.map((entry) => [entry.id, entry]));
     await this.deps.field.updateMany(updates.map(({ sportEventParticipantId, price, ...patch }) => ({
       id: sportEventParticipantId,
-      updates: patch,
+      updates: changedValues(entryById.get(sportEventParticipantId) as SportEventParticipant, patch),
       price,
     })));
     return this.listEventParticipants(sportEventId);
