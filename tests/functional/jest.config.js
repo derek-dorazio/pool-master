@@ -12,7 +12,8 @@ module.exports = {
   },
   globalSetup: '<rootDir>/tests/functional/global-setup.cjs',
   globalTeardown: '<rootDir>/tests/functional/global-teardown.cjs',
-  setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
+  // #1244 — the query budget check runs after every functional test.
+  setupFilesAfterEnv: ['<rootDir>/tests/setup.ts', '<rootDir>/tests/functional/query-budget-check.ts'],
   testTimeout: 30000,
   maxWorkers: 1,
   coverageDirectory: '<rootDir>/coverage/service-functional-api',

@@ -31,6 +31,10 @@ DB-backed failure means.
   pass"* is never one of them — `rules/testing-rules.md` §1B *Forbidden Application-Code Patterns*.
 - **A rule scanner fails** → read the section it names. The scanner output *is* the routing
   hint.
+- **A functional test fails on the query budget** → the route it names made more queries
+  than the budget. Batch the reads the route makes per row; the allow-list is for routes
+  that already have a ticket, never a way past the check — `rules/testing-rules.md` §6
+  *Backend Functional API Tests*.
 - **Lint fails** → no warn tier exists, so there is no "I'll fix it later" state. A rule at
   0 findings stays at 0.
 - **`poolmaster/no-query-in-loop` fails** → a repository or Prisma call runs once per row.
