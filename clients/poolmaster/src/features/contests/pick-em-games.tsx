@@ -247,6 +247,7 @@ function GameCard({
           }
           const isPicked = !isHidden && team.sportEventParticipantId === pickedId;
           const spread = teamSpread(gamePicks, game, team);
+          const testId = `pick-em-game-${game.matchNumber}-team-${team.sportEventParticipantId}`;
           return [...tieChoice, choosable ? (
             <PickOption
               isBusy={isBusy}
@@ -254,12 +255,12 @@ function GameCard({
               isUsed={isTeamUsed(gamePicks, team)}
               key={team.sportEventParticipantId}
               onPick={() => onPick(game, team)}
-              testId={`pick-em-game-${game.matchNumber}-team-${team.sportEventParticipantId}`}
+              testId={testId}
             >
               <TeamName game={game} spread={spread} team={team} />
             </PickOption>
           ) : (
-            <PickedLine isPicked={isPicked} key={team.sportEventParticipantId} testId={`pick-em-game-${game.matchNumber}-team-${team.sportEventParticipantId}`}>
+            <PickedLine isPicked={isPicked} key={team.sportEventParticipantId} testId={testId}>
               <TeamName game={game} spread={spread} team={team} />
             </PickedLine>
           )];

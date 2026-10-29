@@ -21,6 +21,7 @@ export function PickOption({
   /** A pick is saving, so no other can start. */
   isBusy: boolean;
   isPicked: boolean;
+  /** A survivor entry picked the team in another week, so cannot pick it again. */
   isUsed?: boolean;
   onPick: () => void;
   testId: string;

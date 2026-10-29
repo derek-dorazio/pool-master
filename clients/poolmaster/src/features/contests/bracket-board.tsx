@@ -51,18 +51,19 @@ function GameCard({
           );
         }
         const isPicked = team.sportEventParticipantId === pickedId;
+        const testId = `bracket-game-${game.matchNumber}-team-${team.sportEventParticipantId}`;
         return choosable ? (
           <PickOption
             isBusy={isBusy}
             isPicked={isPicked}
             key={team.sportEventParticipantId}
             onPick={() => onPick(game, team)}
-            testId={`bracket-game-${game.matchNumber}-team-${team.sportEventParticipantId}`}
+            testId={testId}
           >
             <span className="truncate">{team.name}</span>
           </PickOption>
         ) : (
-          <PickedLine isPicked={isPicked} key={team.sportEventParticipantId} testId={`bracket-game-${game.matchNumber}-team-${team.sportEventParticipantId}`}>
+          <PickedLine isPicked={isPicked} key={team.sportEventParticipantId} testId={testId}>
             <span className="truncate">{team.name}</span>
           </PickedLine>
         );
