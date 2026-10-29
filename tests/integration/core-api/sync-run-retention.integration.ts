@@ -9,7 +9,7 @@ import {
   SyncRunDetailsRetention,
   SyncRunRetention,
 } from '../../../packages/core-api/src/modules/ingestion/persistence/sync-run-retention';
-import { cleanupTestData, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
+import { cleanupTestData, getAppPrisma, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -27,7 +27,7 @@ function daysAgo(days: number): Date {
 }
 
 async function seedRun(label: string, createdAt: Date, details: object | null = DETAILS) {
-  const repo = new PrismaProviderSyncRunRepository(getPrisma());
+  const repo = new PrismaProviderSyncRunRepository(getAppPrisma());
   const run = await repo.create({
     providerId: 'retention-feed',
     sport: Sport.GOLF,
@@ -59,7 +59,7 @@ describe('sync-run details retention (#1174)', () => {
     await seedRun('submitted-36-days-ago', daysAgo(36));
     await seedRun('submitted-29-days-ago', daysAgo(29));
 
-    const cleared = await new SyncRunDetailsRetention(new PrismaProviderSyncRunRepository(getPrisma())).purge(NOW);
+    const cleared = await new SyncRunDetailsRetention(new PrismaProviderSyncRunRepository(getAppPrisma())).purge(NOW);
 
     expect(cleared).toBe(2);
     expect(await detailsByLabel()).toEqual({
@@ -72,7 +72,7 @@ describe('sync-run details retention (#1174)', () => {
   it('still clears runs long past 30 days, so a missed night or a backfilled run is not left holding details', async () => {
     await seedRun('submitted-60-days-ago', daysAgo(60));
 
-    const cleared = await new SyncRunDetailsRetention(new PrismaProviderSyncRunRepository(getPrisma())).purge(NOW);
+    const cleared = await new SyncRunDetailsRetention(new PrismaProviderSyncRunRepository(getAppPrisma())).purge(NOW);
 
     expect(cleared).toBe(1);
     expect(await detailsByLabel()).toEqual({
@@ -84,7 +84,7 @@ describe('sync-run details retention (#1174)', () => {
     await seedRun('already-cleared', daysAgo(32), null);
     await seedRun('still-holding-details', daysAgo(32));
 
-    const repo = new PrismaProviderSyncRunRepository(getPrisma());
+    const repo = new PrismaProviderSyncRunRepository(getAppPrisma());
     expect(await new SyncRunDetailsRetention(repo).purge(NOW)).toBe(1);
     expect(await new SyncRunDetailsRetention(repo).purge(NOW)).toBe(0);
   });
@@ -93,7 +93,7 @@ describe('sync-run details retention (#1174)', () => {
     for (let index = 0; index < 5; index += 1) {
       await seedRun(`batched-${index}`, daysAgo(31 + index / 10));
     }
-    const repo = new PrismaProviderSyncRunRepository(getPrisma());
+    const repo = new PrismaProviderSyncRunRepository(getAppPrisma());
 
     expect(await repo.clearDetailsBatchSubmittedBefore(daysAgo(30), 2)).toBe(2);
     expect(await repo.clearDetailsBatchSubmittedBefore(daysAgo(30), 2)).toBe(2);
@@ -108,7 +108,7 @@ describe('sync-run retention (#1174)', () => {
     await seedRun('submitted-a-year-and-a-day-ago', new Date('2025-10-28T08:00:00.000Z'), null);
     await seedRun('submitted-11-months-ago', new Date('2025-11-29T08:00:00.000Z'), null);
 
-    const deleted = await new SyncRunRetention(new PrismaProviderSyncRunRepository(getPrisma())).purge(NOW);
+    const deleted = await new SyncRunRetention(new PrismaProviderSyncRunRepository(getAppPrisma())).purge(NOW);
 
     expect(deleted).toBe(2);
     expect(Object.keys(await detailsByLabel())).toEqual(['submitted-11-months-ago']);

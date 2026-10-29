@@ -8,6 +8,7 @@
 import { randomUUID } from 'node:crypto';
 import {
   cleanupTestData,
+  getAppPrisma,
   getPrisma,
   setupIntegrationTests,
   teardownIntegrationTests,
@@ -135,7 +136,7 @@ const add = (sportEventParticipantId: string, lineupSlot = 1) => ({ removePickId
 describe('ContestEntryPick.contestFormat denormalization', () => {
   it('copies the parent contest\'s format onto the pick row a pick change adds', async () => {
     const prisma = getPrisma();
-    const service = new ContestEntryPickService(prisma);
+    const service = new ContestEntryPickService(getAppPrisma());
     const fixture = await seedFixtureForFormat('ROSTER');
 
     const result = await service.changeEntryPick({
@@ -158,7 +159,7 @@ describe('ContestEntryPick.contestFormat denormalization', () => {
 describe('ContestEntryPickService.changeEntryPick', () => {
   it('numbers an added pick after every pick the whole contest holds, not just the entry\'s', async () => {
     const prisma = getPrisma();
-    const service = new ContestEntryPickService(prisma);
+    const service = new ContestEntryPickService(getAppPrisma());
     const fixture = await seedFixtureForFormat('ROSTER');
     const squad = await prisma.contestEntry.findUniqueOrThrow({ where: { id: fixture.entryId }, select: { squadId: true } });
     const rival = await prisma.contestEntry.create({
@@ -174,7 +175,7 @@ describe('ContestEntryPickService.changeEntryPick', () => {
 
   it('hands decide the entry\'s picks in the event, and swaps one out for another in one change', async () => {
     const prisma = getPrisma();
-    const service = new ContestEntryPickService(prisma);
+    const service = new ContestEntryPickService(getAppPrisma());
     const fixture = await seedFixtureForFormat('ROSTER');
     await service.changeEntryPick({ entryId: fixture.entryId, sportEventId: fixture.sportEventId, decide: () => add(fixture.fieldIds[0]) });
     const first = await prisma.contestEntryPick.findFirstOrThrow({ where: { entryId: fixture.entryId } });
@@ -198,7 +199,7 @@ describe('ContestEntryPickService.changeEntryPick', () => {
 
   it('removes only the pick named, leaving the entry and its other picks in place', async () => {
     const prisma = getPrisma();
-    const service = new ContestEntryPickService(prisma);
+    const service = new ContestEntryPickService(getAppPrisma());
     const fixture = await seedFixtureForFormat('ROSTER');
     await service.changeEntryPick({ entryId: fixture.entryId, sportEventId: fixture.sportEventId, decide: () => add(fixture.fieldIds[0], 1) });
     await service.changeEntryPick({ entryId: fixture.entryId, sportEventId: fixture.sportEventId, decide: () => add(fixture.fieldIds[1], 2) });
@@ -217,7 +218,7 @@ describe('ContestEntryPickService.changeEntryPick', () => {
 
   it('writes nothing and answers unchanged when decide declines the change', async () => {
     const prisma = getPrisma();
-    const service = new ContestEntryPickService(prisma);
+    const service = new ContestEntryPickService(getAppPrisma());
     const fixture = await seedFixtureForFormat('ROSTER');
 
     const result = await service.changeEntryPick({ entryId: fixture.entryId, sportEventId: fixture.sportEventId, decide: () => null });
@@ -228,7 +229,7 @@ describe('ContestEntryPickService.changeEntryPick', () => {
 
   it('waits on the entry\'s row lock and decides on the pick the holder committed, so two changes never decide on the same picks', async () => {
     const prisma = getPrisma();
-    const service = new ContestEntryPickService(prisma);
+    const service = new ContestEntryPickService(getAppPrisma());
     const fixture = await seedFixtureForFormat('ROSTER');
     // The holder adds the first golfer under the entry's lock, as a concurrent pick change would.
     const holder = holdEntryLock(prisma, fixture.entryId, async (tx) => {

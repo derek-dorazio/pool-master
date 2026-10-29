@@ -11,6 +11,7 @@ import { runWithReadMemo } from '../../../packages/core-api/src/core/request-rea
 import {
   cleanupTestData,
   createTestUser,
+  getAppPrisma,
   getPrisma,
   setupIntegrationTests,
   teardownIntegrationTests,
@@ -43,8 +44,8 @@ async function seedLeague(isActive = true) {
 describe('request read memo with the Prisma repositories (#1176)', () => {
   it('reads the league and the membership once per request, and afresh in the next request', async () => {
     const { league, user } = await seedLeague();
-    const leagues = new PrismaLeagueRepository(getPrisma());
-    const memberships = new PrismaLeagueMembershipRepository(getPrisma());
+    const leagues = new PrismaLeagueRepository(getAppPrisma());
+    const memberships = new PrismaLeagueMembershipRepository(getAppPrisma());
 
     const first = await runWithReadMemo(async () => ({
       league: [await leagues.findById(league.id), await leagues.findById(league.id)],
@@ -60,8 +61,8 @@ describe('request read memo with the Prisma repositories (#1176)', () => {
 
   it('sees a write made earlier in the same request through the repository', async () => {
     const { league, user, membership } = await seedLeague();
-    const leagues = new PrismaLeagueRepository(getPrisma());
-    const memberships = new PrismaLeagueMembershipRepository(getPrisma());
+    const leagues = new PrismaLeagueRepository(getAppPrisma());
+    const memberships = new PrismaLeagueMembershipRepository(getAppPrisma());
 
     const after = await runWithReadMemo(async () => {
       await leagues.findById(league.id);
@@ -81,7 +82,7 @@ describe('request read memo with the Prisma repositories (#1176)', () => {
   it('never answers a transaction\'s read from the request\'s memo', async () => {
     const { league, user } = await seedLeague();
     const prisma = getPrisma();
-    const memberships = new PrismaLeagueMembershipRepository(prisma);
+    const memberships = new PrismaLeagueMembershipRepository(getAppPrisma());
 
     const inside = await runWithReadMemo(async () => {
       const before = await memberships.findByLeagueAndUser(league.id, user.id);
@@ -98,7 +99,7 @@ describe('request read memo with the Prisma repositories (#1176)', () => {
 
   it('sees a plan change made earlier in the same request', async () => {
     const { league, user } = await seedLeague();
-    const leagues = new PrismaLeagueRepository(getPrisma());
+    const leagues = new PrismaLeagueRepository(getAppPrisma());
 
     const after = await runWithReadMemo(async () => {
       const before = await leagues.findById(league.id);
@@ -113,9 +114,9 @@ describe('request read memo with the Prisma repositories (#1176)', () => {
   it('reads no league and no membership after the request deletes the league', async () => {
     const { league, user } = await seedLeague(false);
     const prisma = getPrisma();
-    const leagues = new PrismaLeagueRepository(prisma);
-    const memberships = new PrismaLeagueMembershipRepository(prisma);
-    const service = new LeagueService({ leagues, memberships, users: new PrismaUserRepository(prisma), prisma });
+    const leagues = new PrismaLeagueRepository(getAppPrisma());
+    const memberships = new PrismaLeagueMembershipRepository(getAppPrisma());
+    const service = new LeagueService({ leagues, memberships, users: new PrismaUserRepository(getAppPrisma()), prisma });
 
     const after = await runWithReadMemo(async () => {
       await leagues.findById(league.id);
@@ -132,11 +133,10 @@ describe('request read memo with the Prisma repositories (#1176)', () => {
 
   it('forgets a membership read during a membership transaction once the transaction commits', async () => {
     const { league, user, membership } = await seedLeague();
-    const prisma = getPrisma();
-    const memberships = new PrismaLeagueMembershipRepository(prisma);
+    const memberships = new PrismaLeagueMembershipRepository(getAppPrisma());
 
     const after = await runWithReadMemo(async () => {
-      await new PrismaMembershipTransaction(prisma).run(async (repos) => {
+      await new PrismaMembershipTransaction(getAppPrisma()).run(async (repos) => {
         await repos.leagueMemberships.update(membership.id, { status: LeagueMembershipStatus.INACTIVE });
         // Outside the transaction, so it sees the row as it was before the write.
         await memberships.findByLeagueAndUser(league.id, user.id);

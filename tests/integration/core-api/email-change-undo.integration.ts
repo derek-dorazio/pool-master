@@ -9,7 +9,7 @@
  */
 import bcrypt from 'bcryptjs';
 import { randomUUID } from 'node:crypto';
-import { setupIntegrationTests, teardownIntegrationTests, getPrisma, createTestUser } from '../helpers';
+import { getAppPrisma, setupIntegrationTests, teardownIntegrationTests, getPrisma, createTestUser } from '../helpers';
 import { expectDefined } from '../../support/expect-defined';
 import { deliverQueuedEmail, emailServiceOver } from '../../support/email-service';
 import { inMemoryEmailMessages } from '../../support/in-memory-email-messages';
@@ -53,7 +53,7 @@ function tokenFrom(message: MailDeliveryMessage | undefined): string {
 
 function build(options: { now?: () => Date } = {}) {
   const prisma = getPrisma();
-  const users = new PrismaUserRepository(prisma);
+  const users = new PrismaUserRepository(getAppPrisma());
   const mail = new RecordingMailDelivery();
   const outbox = inMemoryEmailMessages();
   const email = emailServiceOver(mail, outbox);

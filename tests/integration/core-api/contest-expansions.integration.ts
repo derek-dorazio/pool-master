@@ -10,6 +10,7 @@ import { PrismaContestExpansionRepository } from '../../../packages/core-api/src
 import {
   cleanupTestData,
   createTestUser,
+  getAppPrisma,
   getPrisma,
   setupIntegrationTests,
   teardownIntegrationTests,
@@ -112,7 +113,7 @@ describe('contest_expansions and league_payments', () => {
 });
 
 describe('PrismaContestExpansionRepository (#987)', () => {
-  const repo = () => new PrismaContestExpansionRepository(getPrisma());
+  const repo = () => new PrismaContestExpansionRepository(getAppPrisma());
   const write = (leagueId: string, contestId: string, payerId: string, entriesPerContest: number): ContestExpansionWrite => ({
     contestId,
     leagueId,

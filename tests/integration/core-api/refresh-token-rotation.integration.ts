@@ -8,6 +8,7 @@
  */
 import { createHash, randomUUID } from 'node:crypto';
 import {
+  getAppPrisma,
   setupIntegrationTests,
   teardownIntegrationTests,
   getPrisma,
@@ -21,7 +22,7 @@ beforeAll(() => setupIntegrationTests());
 afterAll(() => teardownIntegrationTests());
 
 function buildAuthService(): AuthService {
-  return new AuthService(new PrismaUserRepository(getPrisma()), getPrisma());
+  return new AuthService(new PrismaUserRepository(getAppPrisma()), getPrisma());
 }
 
 describe('refresh-token rotation (#1175)', () => {

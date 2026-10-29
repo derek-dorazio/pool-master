@@ -9,6 +9,7 @@ import {
   cleanupTestData,
   createTestUser,
   getApp,
+  getAppPrisma,
   getPrisma,
   setupIntegrationTests,
   teardownIntegrationTests,
@@ -80,7 +81,7 @@ describe('SportEventParticipantRaceResultRepository', () => {
   it('stores the results and each runner\'s standing, and reads back only the event\'s own results', async () => {
     const { prisma, event, arrow, bolt } = await seedRace();
     const other = await seedRace();
-    const repo = new PrismaSportEventParticipantRaceResultRepository(prisma);
+    const repo = new PrismaSportEventParticipantRaceResultRepository(getAppPrisma());
 
     await repo.applyResults(event.id, {
       results: [write(arrow.id, 1), { ...write(bolt.id, 2), startPosition: 5, riderName: 'J. Velez' }],
@@ -102,8 +103,8 @@ describe('SportEventParticipantRaceResultRepository', () => {
   });
 
   it('sets the official flag on every result of the race, including runners the write does not name', async () => {
-    const { prisma, event, arrow, bolt } = await seedRace();
-    const repo = new PrismaSportEventParticipantRaceResultRepository(prisma);
+    const { event, arrow, bolt } = await seedRace();
+    const repo = new PrismaSportEventParticipantRaceResultRepository(getAppPrisma());
     await repo.applyResults(event.id, { results: [write(arrow.id, 1), write(bolt.id, 2)], isOfficial: false, standings: [] });
 
     await repo.applyResults(event.id, { results: [write(arrow.id, 1)], isOfficial: true, standings: [] });
@@ -113,7 +114,7 @@ describe('SportEventParticipantRaceResultRepository', () => {
 
   it('writes nothing when one result names a field row that does not exist', async () => {
     const { prisma, event, arrow } = await seedRace();
-    const repo = new PrismaSportEventParticipantRaceResultRepository(prisma);
+    const repo = new PrismaSportEventParticipantRaceResultRepository(getAppPrisma());
 
     await expect(repo.applyResults(event.id, {
       results: [write(arrow.id, 1), write(randomUUID(), 2)],
@@ -139,7 +140,7 @@ describe('SportEventParticipantRaceResultRepository', () => {
 
   it('removes a runner\'s result with its field row', async () => {
     const { prisma, event, arrow } = await seedRace();
-    const repo = new PrismaSportEventParticipantRaceResultRepository(prisma);
+    const repo = new PrismaSportEventParticipantRaceResultRepository(getAppPrisma());
     await repo.applyResults(event.id, { results: [write(arrow.id, 1)], isOfficial: false, standings: [] });
 
     await prisma.sportEventParticipant.delete({ where: { id: arrow.id } });

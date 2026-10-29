@@ -39,6 +39,7 @@ import { expectDefined } from '../../support/expect-defined';
 import {
   cleanupTestData,
   createTestUser,
+  getAppPrisma,
   getPrisma,
   setupIntegrationTests,
   teardownIntegrationTests,
@@ -271,7 +272,7 @@ async function seedPredictionContest(selectionType: PredictionType, { entries, w
     },
   });
   await prisma.contestConfiguration.create({ data: { contestId: contest.id, selectionType, configJson: RULES_OF[selectionType] } });
-  const predictions = new PrismaContestEntryMatchPredictionRepository(prisma);
+  const predictions = new PrismaContestEntryMatchPredictionRepository(getAppPrisma());
   const settledAt = new Date();
   const contestEntries = [];
   for (const squad of seeded.squads) {
@@ -353,7 +354,7 @@ async function seedBracketContest(entries: number) {
       },
     },
   });
-  const predictions = new PrismaContestEntryMatchPredictionRepository(prisma);
+  const predictions = new PrismaContestEntryMatchPredictionRepository(getAppPrisma());
   for (const squad of seeded.squads) {
     const entry = await prisma.contestEntry.create({
       data: { contestId: contest.id, squadId: squad.id, entryNumber: 1, name: squad.name, events: { create: { sportEventId: event.id } } },

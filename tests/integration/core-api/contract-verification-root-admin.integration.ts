@@ -78,6 +78,7 @@ import {
   cleanupTestData,
   createTestUser,
   getApp,
+  getAppPrisma,
   getPrisma,
   setupIntegrationTests,
   teardownIntegrationTests,
@@ -318,9 +319,9 @@ async function buildIngestionApp(provider: SportDataProvider | null): Promise<Fa
   const prisma = getPrisma();
   const ingestionService = new IngestionService({
     registry,
-    sportEvents: new PrismaSportEventRepository(prisma),
-    participantMappings: new PrismaParticipantProviderMappingRepository(prisma),
-    syncRuns: new PrismaProviderSyncRunRepository(prisma),
+    sportEvents: new PrismaSportEventRepository(getAppPrisma()),
+    participantMappings: new PrismaParticipantProviderMappingRepository(getAppPrisma()),
+    syncRuns: new PrismaProviderSyncRunRepository(getAppPrisma()),
     scheduler,
   });
 

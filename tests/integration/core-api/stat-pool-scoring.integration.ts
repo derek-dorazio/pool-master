@@ -24,6 +24,7 @@ import {
   cleanupTestData,
   createTestUser,
   getApp,
+  getAppPrisma,
   getPrisma,
   setupIntegrationTests,
   teardownIntegrationTests,
@@ -107,7 +108,7 @@ describe('SportEventParticipantStatLineRepository', () => {
     await other.line(other.ace, 1, { WALKS: 2 });
 
     const { sportLeagueId } = await prisma.eventSeries.findUniqueOrThrow({ where: { id: event.eventSeriesId } });
-    const field = await new PrismaSportEventParticipantRepository(prisma).findFieldForEvent(event.id, sportLeagueId);
+    const field = await new PrismaSportEventParticipantRepository(getAppPrisma()).findFieldForEvent(event.id, sportLeagueId);
     const lines = field.flatMap((row) => row.rounds.flatMap((played) => played.statLines));
 
     expect(lines.map((statLine) => [statLine.participantRoundId, statLine.stat, statLine.value])).toEqual([
@@ -130,7 +131,7 @@ describe('SportEventParticipantStatLineRepository', () => {
 describe('SportEventParticipantStatLineRepository — replacing a game\'s lines', () => {
   it('creates a new player\'s line, rewrites a corrected one, clears an emptied one, and leaves an unchanged one\'s rows and completion time alone', async () => {
     const { prisma, games, ace, blaze, cruz, dash, line } = await seedSeries();
-    const statLines = new PrismaSportEventParticipantStatLineRepository(prisma);
+    const statLines = new PrismaSportEventParticipantStatLineRepository(getAppPrisma());
     const [game1] = games;
     const firstAt = new Date('2025-10-25T23:00:00.000Z');
     await statLines.replaceGameLines([
@@ -162,7 +163,7 @@ describe('SportEventParticipantStatLineRepository — replacing a game\'s lines'
 
   it('is all or none: a line for a field row that does not exist leaves every stored line as it was', async () => {
     const { prisma, games, ace } = await seedSeries();
-    const statLines = new PrismaSportEventParticipantStatLineRepository(prisma);
+    const statLines = new PrismaSportEventParticipantStatLineRepository(getAppPrisma());
     const at = new Date('2025-10-25T23:00:00.000Z');
     await statLines.replaceGameLines([{ sportEventParticipantId: ace.id, sportEventRoundId: games[0].id, stats: [{ stat: SportStat.RUNS, value: 1 }], completedAt: at }]);
 
@@ -179,7 +180,7 @@ describe('SportEventParticipantStatLineRepository — replacing a game\'s lines'
 describe('A stat pool sport league', () => {
   it('reads back as a league of players scored by the composite family, where its sport\'s own leagues keep its teams and bracket', async () => {
     const { prisma, event } = await seedSeries();
-    const repository = new PrismaSportLeagueRepository(prisma);
+    const repository = new PrismaSportLeagueRepository(getAppPrisma());
     const baseball = await prisma.sport.findUniqueOrThrow({ where: { sport: Sport.BASEBALL } });
     const mlb = await prisma.sportLeague.create({ data: { sportId: baseball.id, name: `MLB ${randomUUID().slice(0, 8)}` } });
 
@@ -190,21 +191,21 @@ describe('A stat pool sport league', () => {
   });
 
   it('puts its overrides on every event read, so the event resolves to the composite family', async () => {
-    const { prisma, event } = await seedSeries();
+    const { event } = await seedSeries();
 
-    const read = await new PrismaSportEventRepository(prisma).findById(event.id);
+    const read = await new PrismaSportEventRepository(getAppPrisma()).findById(event.id);
 
     expect([read?.participantType, read?.scoringFamily]).toEqual(['INDIVIDUAL', ScoringFamily.COMPOSITE]);
   });
 
   it('gives contest setup golf\'s tournament format for its event, not its team sport\'s matches', async () => {
-    const { prisma, event } = await seedSeries();
+    const { event } = await seedSeries();
     const reader = createContestSportEventReader({
-      sportEvents: new PrismaSportEventRepository(prisma),
-      sports: new PrismaSportRepository(prisma),
-      field: new PrismaSportEventParticipantRepository(prisma),
-      valuations: new PrismaSportEventParticipantValuationRepository(prisma),
-      matches: new PrismaSportEventMatchRepository(prisma),
+      sportEvents: new PrismaSportEventRepository(getAppPrisma()),
+      sports: new PrismaSportRepository(getAppPrisma()),
+      field: new PrismaSportEventParticipantRepository(getAppPrisma()),
+      valuations: new PrismaSportEventParticipantValuationRepository(getAppPrisma()),
+      matches: new PrismaSportEventMatchRepository(getAppPrisma()),
     });
 
     expect(await reader.findById(event.id)).toMatchObject({

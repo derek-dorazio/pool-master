@@ -11,6 +11,7 @@ import { PrismaCupRepository, PrismaLeagueRepository } from '../../../packages/c
 import {
   cleanupTestData,
   createTestUser,
+  getAppPrisma,
   getPrisma,
   setupIntegrationTests,
   teardownIntegrationTests,
@@ -177,7 +178,7 @@ async function seedLeague() {
 
 describe('PrismaCupRepository (#841)', () => {
   it('makes one cup per league, season and sports league, returning the same cup when asked again', async () => {
-    const repo = new PrismaCupRepository(getPrisma());
+    const repo = new PrismaCupRepository(getAppPrisma());
     const { league, contest } = await seedLeague();
     const { sportLeagueId } = await contest('Masters');
     const key = { leagueId: league.id, seasonYear: 2026, sportLeagueId };
@@ -192,7 +193,7 @@ describe('PrismaCupRepository (#841)', () => {
   });
 
   it('finds the league\'s cup by season and sports league, and null for a season or league with none (#1202)', async () => {
-    const repo = new PrismaCupRepository(getPrisma());
+    const repo = new PrismaCupRepository(getAppPrisma());
     const { league, contest } = await seedLeague();
     const other = await seedLeague();
     const { sportLeagueId } = await contest('Masters');
@@ -207,7 +208,7 @@ describe('PrismaCupRepository (#841)', () => {
 
   it('reads the cup\'s season and sports league contests by first event start, leaving out drafts, other seasons and other sports leagues', async () => {
     const prisma = getPrisma();
-    const repo = new PrismaCupRepository(prisma);
+    const repo = new PrismaCupRepository(getAppPrisma());
     const { league, contest } = await seedLeague();
     const { sportLeagueId } = await contest('Open', { startDate: '2026-06-18T12:00:00.000Z', status: 'ACTIVE' });
     await contest('Masters', { startDate: '2026-04-09T12:00:00.000Z' });
@@ -231,7 +232,7 @@ describe('PrismaCupRepository (#841)', () => {
 
   it('reads every contest of the league\'s cups with its season and sports league by first event start, leaving out drafts, or one season\'s alone (#1166)', async () => {
     const prisma = getPrisma();
-    const repo = new PrismaCupRepository(prisma);
+    const repo = new PrismaCupRepository(getAppPrisma());
     const { league, contest } = await seedLeague();
     const { sportLeagueId } = await contest('Open', { startDate: '2026-06-18T12:00:00.000Z', status: 'ACTIVE' });
     await contest('Masters', { startDate: '2026-04-09T12:00:00.000Z' });
@@ -261,7 +262,7 @@ describe('PrismaCupRepository (#841)', () => {
   });
 
   it('reads every cup of the league, of every season, oldest first, and no other league\'s (#1166)', async () => {
-    const repo = new PrismaCupRepository(getPrisma());
+    const repo = new PrismaCupRepository(getAppPrisma());
     const { league, contest } = await seedLeague();
     const other = await seedLeague();
     const { sportLeagueId } = await contest('Masters');
@@ -273,7 +274,7 @@ describe('PrismaCupRepository (#841)', () => {
   });
 
   it('reads the seasons the league has a listed contest in, newest first and each once, leaving out a season with only a draft', async () => {
-    const repo = new PrismaCupRepository(getPrisma());
+    const repo = new PrismaCupRepository(getAppPrisma());
     const { league, contest } = await seedLeague();
     await contest('Masters');
     await contest('Open', { status: 'ACTIVE' });
@@ -284,7 +285,7 @@ describe('PrismaCupRepository (#841)', () => {
   });
 
   it('reads every entry with a frozen place, with its squad, and none without one', async () => {
-    const repo = new PrismaCupRepository(getPrisma());
+    const repo = new PrismaCupRepository(getAppPrisma());
     const { squads, contest } = await seedLeague();
     const { contest: masters } = await contest('Masters', { places: [[squads.eagles.id, 1], [squads.birdies.id, 2], [squads.birdies.id, null]] });
 
@@ -299,7 +300,7 @@ describe('PrismaCupRepository (#841)', () => {
 
   it('keeps a league\'s points table on its row, STANDARD by default, and refuses custom points on any other table', async () => {
     const prisma = getPrisma();
-    const leagues = new PrismaLeagueRepository(prisma);
+    const leagues = new PrismaLeagueRepository(getAppPrisma());
     const { league } = await seedLeague();
     const tableOf = async (id: string) => leaguePointsTable(expectDefined(await leagues.findById(id)));
 
@@ -313,7 +314,7 @@ describe('PrismaCupRepository (#841)', () => {
 
   it('reads each squad\'s settled finish in the contests, with the weight it was settled at and when it was written', async () => {
     const prisma = getPrisma();
-    const repo = new PrismaCupRepository(prisma);
+    const repo = new PrismaCupRepository(getAppPrisma());
     const { league, squads, contest } = await seedLeague();
     const { contest: masters } = await contest('Masters');
     const settledAt = new Date('2026-04-12T23:00:00.000Z');
@@ -335,7 +336,7 @@ describe('PrismaCupRepository (#841)', () => {
 
   it('crowns an open cup once, freezing its standings and points table, and refuses a crowned cup without a crowning date', async () => {
     const prisma = getPrisma();
-    const repo = new PrismaCupRepository(prisma);
+    const repo = new PrismaCupRepository(getAppPrisma());
     const { league, squads, contest } = await seedLeague();
     const { sportLeagueId } = await contest('Masters');
     const cup = await repo.ensure({ leagueId: league.id, seasonYear: 2026, sportLeagueId });
@@ -361,7 +362,7 @@ describe('PrismaCupRepository (#841)', () => {
   });
 
   it('reads several crowned cups\' frozen standings in one read, by cup and position (#1166)', async () => {
-    const repo = new PrismaCupRepository(getPrisma());
+    const repo = new PrismaCupRepository(getAppPrisma());
     const { league, squads, contest } = await seedLeague();
     const { sportLeagueId } = await contest('Masters');
     const crownedAt = new Date('2026-09-30T12:00:00.000Z');

@@ -8,6 +8,7 @@ import {
   cleanupTestData,
   createTestUser,
   getApp,
+  getAppPrisma,
   getPrisma,
   setupIntegrationTests,
   teardownIntegrationTests,
@@ -334,7 +335,7 @@ describe('ContestService.getLeaderboard reads (#1162)', () => {
     const { prisma, count } = countingPrisma(getPrisma());
     const service = serviceOn(prisma);
 
-    const contest = expectDefined(await new PrismaContestRepository(prisma).findById(season.contest.id));
+    const contest = expectDefined(await new PrismaContestRepository(getAppPrisma()).findById(season.contest.id));
 
     await service.getLeaderboard(season.contest.id, season.viewerId);
     await service.leaderboardOf(contest);

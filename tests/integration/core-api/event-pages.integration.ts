@@ -13,6 +13,7 @@ import { PrismaEventPageRepository } from '../../../packages/core-api/src/adapte
 import { createContestOpeningReader } from '../../../packages/core-api/src/modules/contest-management/wiring';
 import {
   cleanupTestData,
+  getAppPrisma,
   getPrisma,
   setupIntegrationTests,
   teardownIntegrationTests,
@@ -30,7 +31,7 @@ const NOW = new Date('2030-01-10T12:00:00.000Z');
 
 describe('Seeded event pages', () => {
   it('seeds Championship Weekend with the Clutch Card first and primary, the NFL bracket from the conference round, then NFL Squares', async () => {
-    const pages = new PrismaEventPageRepository(getPrisma());
+    const pages = new PrismaEventPageRepository(getAppPrisma());
 
     const page = await pages.findBySportSlug(Sport.AMERICAN_FOOTBALL, 'championship-weekend');
     const offers = await pages.findOffers([page?.id ?? '']);
@@ -118,7 +119,7 @@ describe('Event page offers', () => {
     try {
       await offer(1, true);
 
-      expect(await new PrismaEventPageRepository(getPrisma()).findOffers([page.id])).toEqual([]);
+      expect(await new PrismaEventPageRepository(getAppPrisma()).findOffers([page.id])).toEqual([]);
     } finally {
       await remove();
     }
@@ -142,7 +143,7 @@ describe('PrismaEventPageRepository.findEditionsNotOver', () => {
     await make(2026, SportEventStatus.IN_PROGRESS, '2026-04-10T12:00:00.000Z');
     await make(2029, SportEventStatus.CANCELLED, '2029-04-10T12:00:00.000Z');
 
-    const editions = await new PrismaEventPageRepository(prisma).findEditionsNotOver(series.sportLeagueId, series.name);
+    const editions = await new PrismaEventPageRepository(getAppPrisma()).findEditionsNotOver(series.sportLeagueId, series.name);
 
     expect(editions.map((each) => each.eventYear)).toEqual([2026, 2027, 2028]);
   });

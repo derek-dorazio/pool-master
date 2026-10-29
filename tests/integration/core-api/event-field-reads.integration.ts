@@ -11,6 +11,7 @@ import {
   cleanupTestData,
   createTestUser,
   getApp,
+  getAppPrisma,
   getPrisma,
   setupIntegrationTests,
   teardownIntegrationTests,
@@ -241,7 +242,7 @@ describe('An event\'s field, for every scoring family', () => {
     });
 
     const rows = await createSportEventParticipantService(prisma).listEventParticipants(event.id);
-    const matches = await new PrismaSportEventMatchRepository(prisma).findBySportEvent(event.id);
+    const matches = await new PrismaSportEventMatchRepository(getAppPrisma()).findBySportEvent(event.id);
 
     const dukeRow = rows.find((row) => row.entry.id === duke.id);
     expect(dukeRow?.matches.map((match) => [match.matchNumber, match.roundNumber])).toEqual([[1, 1], [2, 2]]);
@@ -267,7 +268,7 @@ describe('An event\'s field, for every scoring family', () => {
     });
 
     const rows = await createSportEventParticipantService(prisma).listEventParticipants(event.id);
-    const results = await new PrismaSportEventParticipantRaceResultRepository(prisma).findBySportEvent(event.id);
+    const results = await new PrismaSportEventParticipantRaceResultRepository(getAppPrisma()).findBySportEvent(event.id);
 
     const byRow = new Map(rows.map((row) => [row.entry.id, row.raceResult]));
     expect(byRow.get(winner.id)).toMatchObject({ finishPosition: 1, startPosition: 2, resultStatus: 'FINISHED', isOfficial: true, riderName: 'Ron Turcotte' });

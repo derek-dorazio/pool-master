@@ -10,6 +10,7 @@ import { ContestFormat, ContestStatus, CupWeight, SelectionType, Sport } from '@
 import {
   cleanupTestData,
   createTestUser,
+  getAppPrisma,
   getPrisma,
   setupIntegrationTests,
   teardownIntegrationTests,
@@ -45,7 +46,7 @@ beforeEach(() => cleanupTestData());
 /** `contests` open roster contests in one league, each on an upcoming event of its own, so a read per event scales too. */
 async function seedLeagueWithContests(contests: number) {
   const seeded = await seedLeagueWithTeams(1);
-  const contestRows = new PrismaContestRepository(getPrisma());
+  const contestRows = new PrismaContestRepository(getAppPrisma());
   for (let index = 0; index < contests; index += 1) {
     const { event } = await seedEventWithField(2);
     await createContestRow(contestRows, {

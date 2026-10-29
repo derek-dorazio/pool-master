@@ -20,6 +20,7 @@ import {
   createTestUser,
   deliverQueuedIntegrationEmail,
   getApp,
+  getAppPrisma,
   getConfirmedSnsSubscriptions,
   getPrisma,
   getSnsSigner,
@@ -172,8 +173,8 @@ describe('SES delivery events route', () => {
 });
 
 describe('email suppression and delivery outcome queries', () => {
-  const suppressions = () => new PrismaEmailSuppressionRepository(getPrisma());
-  const messages = () => new PrismaEmailMessageRepository(getPrisma());
+  const suppressions = () => new PrismaEmailSuppressionRepository(getAppPrisma());
+  const messages = () => new PrismaEmailMessageRepository(getAppPrisma());
 
   it('suppresses an address once, lower-cased, keeps the first reason, and finds it whatever its case', async () => {
     const address = `Suppressed-${String(Date.now())}@Integration.Test`;

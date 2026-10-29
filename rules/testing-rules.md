@@ -1055,6 +1055,10 @@ Integration tests share a single Postgres database and run serially (`maxWorkers
 - **No test depends on today's date.** Build events with start dates relative to the clock the
   test runs on (or a clock it controls), never fixed calendar dates that a later run outlives.
   A seeded season is moved relative to the run day for the same reason.
+- **Two clients.** `getPrisma()` is the tests' own: seeds, reads that check what was written,
+  cleanup. A repository, adapter or service the test builds takes `getAppPrisma()`, the client
+  the app runs on, so the missing-index check plans its statements (`model-change-rules.md`
+  *Indexes Follow The Reads And The Foreign Keys*).
 
 ### Cleanup Pattern
 

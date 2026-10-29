@@ -10,7 +10,7 @@ import {
   EventLifecycleService,
   type FinishedSportEventSettlement,
 } from '../../../packages/core-api/src/modules/events/event-lifecycle-service';
-import { cleanupTestData, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
+import { cleanupTestData, getAppPrisma, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
 import { createSportEventRow } from '../../support/sport-event-rows';
 import { freshEventEdition } from '../../support/event-edition';
 import { fakeLogger } from '../../support/fake-logger';
@@ -28,7 +28,6 @@ beforeEach(() => cleanupTestData());
 
 /** A lifecycle service over the real event table, its settlement counted rather than run. */
 function lifecycleCountingSettlements() {
-  const prisma = getPrisma();
   const settled: string[] = [];
   const settlement: FinishedSportEventSettlement = {
     settleFinishedSportEvent: async (sportEventId) => {
@@ -38,11 +37,11 @@ function lifecycleCountingSettlements() {
   };
   const service = new EventLifecycleService(
     {
-      contests: new PrismaContestRepository(prisma),
-      configurations: new PrismaContestConfigurationRepository(prisma),
-      matches: new PrismaSportEventMatchRepository(prisma),
+      contests: new PrismaContestRepository(getAppPrisma()),
+      configurations: new PrismaContestConfigurationRepository(getAppPrisma()),
+      matches: new PrismaSportEventMatchRepository(getAppPrisma()),
     },
-    new PrismaSportEventRepository(prisma),
+    new PrismaSportEventRepository(getAppPrisma()),
     fakeLogger(),
     undefined,
     settlement,
@@ -51,7 +50,7 @@ function lifecycleCountingSettlements() {
 }
 
 async function createInProgressEvent() {
-  return createSportEventRow(new PrismaSportEventRepository(getPrisma()), {
+  return createSportEventRow(new PrismaSportEventRepository(getAppPrisma()), {
     ...(await freshEventEdition(getPrisma())),
     externalId: `race-${randomUUID()}`,
     providerId: 'integration-test',

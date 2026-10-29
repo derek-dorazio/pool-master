@@ -11,7 +11,7 @@
  * cleared — so that is what this does, directly against the shared function. De-duplicating
  * destructive code without a test that watches it delete is not worth the saving.
  */
-import { setupIntegrationTests, teardownIntegrationTests, getPrisma, createTestUser } from '../helpers';
+import { getAppPrisma, setupIntegrationTests, teardownIntegrationTests, getPrisma, createTestUser } from '../helpers';
 import {
   countUserDeleteDependencies,
   deleteUserCascade,
@@ -145,20 +145,18 @@ describe('shared user delete cascade (#202)', () => {
     // fixtures. The count logic is unit-tested against a mocked client where it can be
     // controlled; what this covers is the branch that holds regardless of the count.
     it('never reports a non-root-admin as the last root admin', async () => {
-      const prisma = getPrisma();
       const plainUser = await createTestUser({ lastName: 'Plain' });
 
       await expect(
-        isLastRootAdmin(new PrismaUserRepository(prisma), { ...plainUser.user, isActive: true }),
+        isLastRootAdmin(new PrismaUserRepository(getAppPrisma()), { ...plainUser.user, isActive: true }),
       ).resolves.toBe(false);
     });
 
     it('does not report a root admin as the last one while others exist', async () => {
-      const prisma = getPrisma();
       const first = await createTestUser({ lastName: 'AdminOne', isRootAdmin: true });
       const second = await createTestUser({ lastName: 'AdminTwo', isRootAdmin: true });
 
-      const users = new PrismaUserRepository(prisma);
+      const users = new PrismaUserRepository(getAppPrisma());
 
       await expect(isLastRootAdmin(users, { ...first.user, isActive: true })).resolves.toBe(false);
       await expect(isLastRootAdmin(users, { ...second.user, isActive: true })).resolves.toBe(false);
