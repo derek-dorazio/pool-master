@@ -32,7 +32,7 @@ const GAPS_FILE = 'scripts/query-scaling-gaps.mjs';
  * An exact count leaves no slack for a later entry, so growing the list means editing this line,
  * which a reviewer sees.
  */
-export const GAP_CEILING = 20;
+export const GAP_CEILING = 8;
 
 /** Whether a schema, following `$ref`s into `components.schemas`, is or contains an array. */
 export function holdsArray(schema, components, seen = new Set()) {

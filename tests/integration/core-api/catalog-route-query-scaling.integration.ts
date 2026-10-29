@@ -1,7 +1,7 @@
 /**
  * #1248 — the sport catalog's list reads cost the same SQL statements for 2 rows as for 20: the
  * sport leagues, one sport league with its affiliations, and the matchups proposed for a
- * reseeded bracket round.
+ * reseeded bracket round. The sports, a list the platform fixes, cost the same pinned count.
  *
  * Each case seeds sport leagues of its own beside the reference data the migrations seed, which
  * the list also shows. `rules/testing-rules.md` §9B *Query Scaling Tests* says when a route
@@ -13,6 +13,7 @@ import {
   ParticipantLeagueAffiliationListResponseSchema,
   SportEventRoundMatchupsResponseSchema,
   SportLeagueListResponseSchema,
+  SportListResponseSchema,
   SportLeagueResponseSchema,
 } from '@poolmaster/shared/dto';
 import {
@@ -23,7 +24,7 @@ import {
   teardownIntegrationTests,
 } from '../helpers';
 import { DAY, get, okBody } from '../list-route-seeds';
-import { expectConstantQueries } from '../query-scaling';
+import { expectConstantQueries, expectFixedQueries } from '../query-scaling';
 
 // No mocks.
 
@@ -169,6 +170,17 @@ describe('sport catalog reads cost the same statements for 2 rows as for 20', ()
       seed: seedReseededRound,
       call: ({ event, rootAdmin }) => get(`/api/v1/events/${event.id}/bracket/rounds/2/reseed`, rootAdmin),
       rowsShown: (response) => okBody(response, SportEventRoundMatchupsResponseSchema).matches.length,
+    });
+  });
+
+  it('GET the sports: one row per sport the platform runs, read in one query', async () => {
+    const viewer = await createTestUser();
+    await expectFixedQueries({
+      route: 'GET /api/v1/sports/',
+      fixedBy: 'the sports the platform runs',
+      call: () => get('/api/v1/sports/', viewer),
+      rowsShown: (response) => okBody(response, SportListResponseSchema).sports.length,
+      statements: 1,
     });
   });
 });
