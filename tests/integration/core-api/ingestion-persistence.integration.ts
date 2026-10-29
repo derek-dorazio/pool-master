@@ -5,7 +5,7 @@ import {
 } from '../helpers';
 import { IngestionPersistence } from '../../../packages/core-api/src/modules/ingestion/persistence/ingestion-persistence';
 import type { SportEventDetail } from '../../../packages/core-api/src/modules/ingestion/core/provider-interface';
-import { Sport } from '@poolmaster/shared/domain';
+import { ParticipantInactiveReason, Sport } from '@poolmaster/shared/domain';
 import { linkedProviderEvent } from '../../support/event-edition';
 
 const rankedEventIds = [
@@ -397,10 +397,11 @@ describe('IngestionPersistence', () => {
   it('creates a new field with its participants and mappings, then on a repeat sync writes nothing, and on a change writes only the changed golfer', async () => {
     const prisma = getPrisma();
     const persistence = new IngestionPersistence(prisma);
-    const field = (secondRanking: number) => rankedFieldDetail('integration-batched-sync', [
-      rankedGolfer('ingestion-batch-1', 1),
-      rankedGolfer('ingestion-batch-2', secondRanking),
-      rankedGolfer('ingestion-batch-3', 3),
+    type Golfer = ReturnType<typeof rankedGolfer> & Partial<SportEventDetail['participants'][number]>;
+    const field = (secondRanking: number, changes: Record<string, Partial<Golfer>> = {}) => rankedFieldDetail('integration-batched-sync', [
+      { ...rankedGolfer('ingestion-batch-1', 1), ...changes['ingestion-batch-1'] },
+      { ...rankedGolfer('ingestion-batch-2', secondRanking), ...changes['ingestion-batch-2'] },
+      { ...rankedGolfer('ingestion-batch-3', 3), ...changes['ingestion-batch-3'] },
     ]);
     const event = await linkedProviderEvent(prisma, {
       providerId: 'TEST_PROVIDER',
@@ -435,6 +436,32 @@ describe('IngestionPersistence', () => {
     expect(afterChange.get('ingestion-batch-2')?.[0]).not.toBe(afterCreate.get('ingestion-batch-2')?.[0]);
     const row = await prisma.sportEventParticipant.findFirstOrThrow({ where: { sportEventId: event.id, participant: { externalId: 'ingestion-batch-2' } } });
     expect(row.ranking).toBe(9);
+
+    // A withdrawal: the field row records it, and the rest of the field is not touched.
+    const withdrawn = await persistence.persistEventDetailWithDiagnostics(field(9, {
+      'ingestion-batch-3': { active: false, inactiveReason: ParticipantInactiveReason.WITHDRAWN },
+    }));
+
+    expect(withdrawn.writeDiagnostics.rows.filter((diagnostic) => diagnostic.disposition === 'UPDATED').map((diagnostic) => diagnostic.participantExternalId)).toEqual(['ingestion-batch-3']);
+    const afterWithdrawal = await stamps();
+    expect(afterWithdrawal.get('ingestion-batch-1')).toEqual(afterChange.get('ingestion-batch-1'));
+    expect(afterWithdrawal.get('ingestion-batch-2')).toEqual(afterChange.get('ingestion-batch-2'));
+    await expect(prisma.sportEventParticipant.findFirstOrThrow({ where: { sportEventId: event.id, participant: { externalId: 'ingestion-batch-3' } } }))
+      .resolves.toMatchObject({ isActive: false, inactiveReason: ParticipantInactiveReason.WITHDRAWN });
+
+    // A participant-only change: the participant row is rewritten, the field row is not.
+    const reaffiliated = await persistence.persistEventDetailWithDiagnostics(field(9, {
+      'ingestion-batch-1': { teamAffiliation: 'Team Europe' },
+      'ingestion-batch-3': { active: false, inactiveReason: ParticipantInactiveReason.WITHDRAWN },
+    }));
+
+    expect(reaffiliated.writeDiagnostics.summary).toMatchObject({ unchanged: 3, updated: 0, created: 0 });
+    const afterReaffiliation = await stamps();
+    const [fieldRowAt, participantAt] = afterReaffiliation.get('ingestion-batch-1') ?? [];
+    expect(fieldRowAt).toBe(afterWithdrawal.get('ingestion-batch-1')?.[0]);
+    expect(participantAt).not.toBe(afterWithdrawal.get('ingestion-batch-1')?.[1]);
+    expect(afterReaffiliation.get('ingestion-batch-2')).toEqual(afterWithdrawal.get('ingestion-batch-2'));
+    await expect(prisma.participant.findFirstOrThrow({ where: { externalId: 'ingestion-batch-1' } })).resolves.toMatchObject({ teamAffiliation: 'Team Europe' });
   });
 
   // #205 — the `pool-master-8yh` job-completion case went with `persistIngestionJob` and the
