@@ -46,15 +46,17 @@ import {
 import { DAY, get, okBody } from '../list-route-seeds';
 import { expectConstantQueries, expectFixedQueries } from '../query-scaling';
 
-// No mocks. The provider below is the test's own catalog, registered on the shared app.
+// No mocks. The providers below are the test's own catalogs, registered on the shared app.
 
-/** A golf provider whose participants and events are whatever the current seed set. */
+/** A provider of one sport whose participants and events are whatever the current seed set. */
 class ScalingProvider implements SportDataProvider {
-  readonly providerId = 'scaling-provider';
-  readonly providerName = 'Scaling Provider';
-  readonly sportsCovered: Sport[] = [Sport.GOLF];
+  readonly sportsCovered: Sport[];
   participants: ProviderParticipant[] = [];
   events: SportEvent[] = [];
+
+  constructor(readonly providerId: string, readonly providerName: string, sport: Sport) {
+    this.sportsCovered = [sport];
+  }
 
   async getUpcomingEvents(): Promise<SportEvent[]> {
     return this.events;
@@ -77,11 +79,14 @@ class ScalingProvider implements SportDataProvider {
   }
 }
 
-const provider = new ScalingProvider();
+const provider = new ScalingProvider('scaling-provider', 'Scaling Provider', Sport.GOLF);
+/** A second provider, so the provider list shows two and a read per provider would show. */
+const tennisProvider = new ScalingProvider('scaling-tennis-provider', 'Scaling Tennis Provider', Sport.TENNIS);
 
 beforeAll(async () => {
   await setupIntegrationTests();
   getProviderRegistry().register(Sport.GOLF, provider, 'PRIMARY');
+  getProviderRegistry().register(Sport.TENNIS, tennisProvider, 'PRIMARY');
 });
 afterAll(async () => {
   await cleanupTestData();
@@ -304,10 +309,12 @@ describe('fixed-length root admin lists cost the same statements every time', ()
     await expectFixedQueries({
       route: 'GET /api/v1/platform/settings',
       fixedBy: 'the settings groups',
-      call: async () => {
-        const { groups } = okBody(await get('/api/v1/platform/settings', rootAdmin), SettingsGroupListSchema);
+      call: () => get('/api/v1/platform/settings', rootAdmin),
+      rowsShown: (response) => {
+        const { groups } = okBody(response, SettingsGroupListSchema);
         expect(groups).toHaveLength(SETTINGS_GROUPS.length);
         expect(groups.filter((group) => group.updatedBy !== null)).toHaveLength(2);
+        return groups.length;
       },
       statements: 1,
     });
@@ -318,10 +325,13 @@ describe('fixed-length root admin lists cost the same statements every time', ()
     const rootAdmin = await createTestUser({ isRootAdmin: true });
     await expectFixedQueries({
       route: 'GET /api/v1/platform/settings/{key}',
-      fixedBy: 'the group\'s own fields',
-      call: async () => {
-        const group = okBody(await get(`/api/v1/platform/settings/${PLAN_SETTINGS.key}`, rootAdmin), SettingsGroupSchema);
+      fixedBy: 'the plan caps its value lists',
+      call: () => get(`/api/v1/platform/settings/${PLAN_SETTINGS.key}`, rootAdmin),
+      rowsShown: (response) => {
+        const group = okBody(response, SettingsGroupSchema);
         expect(group.updatedBy).not.toBeNull();
+        if (group.key !== 'PLAN_CONFIG') throw new Error(`Read ${group.key} instead of the plan settings.`);
+        return Object.keys(group.value.caps).length;
       },
       statements: 1,
     });
@@ -332,10 +342,8 @@ describe('fixed-length root admin lists cost the same statements every time', ()
     await expectFixedQueries({
       route: 'GET /api/v1/platform/ingestion-schedule',
       fixedBy: 'the supported sports',
-      call: async () => {
-        const schedule = okBody(await get('/api/v1/platform/ingestion-schedule', rootAdmin), IngestionScheduleConfigSchema);
-        expect(schedule.scheduledSports.length).toBeGreaterThan(1);
-      },
+      call: () => get('/api/v1/platform/ingestion-schedule', rootAdmin),
+      rowsShown: (response) => okBody(response, IngestionScheduleConfigSchema).scheduledSports.length,
       statements: 0,
     });
   });
@@ -345,9 +353,11 @@ describe('fixed-length root admin lists cost the same statements every time', ()
     await expectFixedQueries({
       route: 'GET /api/v1/ingestion/providers',
       fixedBy: 'the providers registered at startup',
-      call: async () => {
-        const { providers } = okBody(await get('/api/v1/ingestion/providers', rootAdmin), ProviderListResponseSchema);
-        expect(providers.map((summary) => summary.providerId)).toEqual([provider.providerId]);
+      call: () => get('/api/v1/ingestion/providers', rootAdmin),
+      rowsShown: (response) => {
+        const { providers } = okBody(response, ProviderListResponseSchema);
+        expect(providers.map((summary) => summary.providerId)).toEqual([provider.providerId, tennisProvider.providerId]);
+        return providers.length;
       },
       statements: 2,
     });

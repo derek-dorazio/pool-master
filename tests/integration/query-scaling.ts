@@ -118,9 +118,14 @@ export interface FixedQueriesCase<Result> {
   /** What fixes the list's length, named in the failure. */
   fixedBy: string;
   call: () => Promise<Result>;
+  /** How many of the items that could each cost a query the result shows; at least 2, or a per-item read sends no more. */
+  rowsShown: (result: Result) => number;
   /** How many statements the read sends, whatever the fixed list holds. */
   statements: number;
 }
+
+/** The fewest items a fixed list must show for its pin to tell a per-item read from a batched one. */
+export const FIXED_LIST_MIN_ROWS = 2;
 
 /**
  * The test for a list route whose length code fixes (one row per plan, per email category, per
@@ -130,12 +135,19 @@ export interface FixedQueriesCase<Result> {
  */
 export async function expectFixedQueries<Result>(fixedCase: FixedQueriesCase<Result>): Promise<void> {
   await deliverQueuedIntegrationEmail();
-  const recorded = await recordStatements(() => fixedCase.call());
-  if (recorded.statements.length !== fixedCase.statements) {
+  const { result, statements } = await recordStatements(() => fixedCase.call());
+  const shown = fixedCase.rowsShown(result);
+  if (shown < FIXED_LIST_MIN_ROWS) {
     throw new Error(
-      `${fixedCase.route}, a list fixed by ${fixedCase.fixedBy}, sent ${recorded.statements.length} statements; `
+      `${fixedCase.route} showed ${shown} of ${fixedCase.fixedBy}: with fewer than ${FIXED_LIST_MIN_ROWS}, a read per item `
+        + 'sends no more statements than one read for all of them, so the pin proves nothing. Show at least two.',
+    );
+  }
+  if (statements.length !== fixedCase.statements) {
+    throw new Error(
+      `${fixedCase.route}, a list fixed by ${fixedCase.fixedBy}, sent ${statements.length} statements; `
         + `it is pinned at ${fixedCase.statements}.\n`
-        + recorded.statements.map(({ sql }, index) => `  ${index + 1}. ${sql}`).join('\n'),
+        + statements.map(({ sql }, index) => `  ${index + 1}. ${sql}`).join('\n'),
     );
   }
 }

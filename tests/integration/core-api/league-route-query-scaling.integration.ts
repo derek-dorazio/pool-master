@@ -237,9 +237,11 @@ describe('fixed-length lists cost the same statements every time', () => {
     await expectFixedQueries({
       route: 'GET /api/v1/plans/',
       fixedBy: 'the plans',
-      call: async () => {
-        const response = await get('/api/v1/plans/', viewer);
-        expect(okBody(response, LeaguePlanListResponseSchema).plans).toHaveLength(LEAGUE_PLANS.length);
+      call: () => get('/api/v1/plans/', viewer),
+      rowsShown: (response) => {
+        const { plans } = okBody(response, LeaguePlanListResponseSchema);
+        expect(plans).toHaveLength(LEAGUE_PLANS.length);
+        return plans.length;
       },
       statements: 0,
     });
@@ -253,11 +255,12 @@ describe('fixed-length lists cost the same statements every time', () => {
     await expectFixedQueries({
       route: 'GET /api/v1/users/{userId}/email-preferences',
       fixedBy: 'the optional email categories',
-      call: async () => {
-        const response = await get(`/api/v1/users/${user.user.id}/email-preferences`, user);
+      call: () => get(`/api/v1/users/${user.user.id}/email-preferences`, user),
+      rowsShown: (response) => {
         const { preferences } = okBody(response, EmailPreferencesResponseSchema);
         expect(preferences).toHaveLength(Object.values(OptionalEmailCategory).length);
         expect(preferences.filter((preference) => !preference.enabled)).toHaveLength(2);
+        return preferences.length;
       },
       statements: 3,
     });

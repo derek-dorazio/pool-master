@@ -1099,8 +1099,10 @@ timing them, so it catches the per-row read at any data size.
 - **A list whose length code fixes** (one row per plan, per email category, per settings group)
   cannot grow from 2 to 20, and must still cost the same few statements however many rows it
   has. It takes `expectFixedQueries` instead: `route`, `call`, `fixedBy` naming what fixes the
-  length, and `statements`, the exact count the read sends. A per-row read added later breaks the
-  pin. Never use it for a list a user or a sync can grow.
+  length, `rowsShown`, and `statements`, the exact count the read sends. A per-row read added later
+  breaks the pin. The helper refuses a response showing fewer than two of the items that could each
+  cost a query, since one item costs the same either way. Never use it for a list a user or a sync
+  can grow.
 - **Seed the rows that could each cost a query:** the teams of a team list, the years of a history,
   the contests of a cup, and each parent of the row (give each contest its own event, so a read per
   event shows too). The helper refuses a case whose larger seed the response does not show, or whose
