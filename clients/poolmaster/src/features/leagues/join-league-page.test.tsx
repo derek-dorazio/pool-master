@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { TeamIconKey } from '@poolmaster/shared/domain';
+import { SquadMembershipStatus, TeamIconKey } from '@poolmaster/shared/domain';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -13,10 +13,12 @@ import {
   buildAcceptedLeagueMembership,
   buildCurrentUser,
   buildInvitationPreview,
+  buildLeague,
   buildLeagueSquad,
   buildLeagueSquadMember,
   getInvitationPreviewData,
-  listLeagueSquadsData,
+  getLeagueByCodeData,
+  getLeagueSquadFrom,
   updateLeagueSquadData,
 } from './test/fixtures';
 
@@ -24,6 +26,8 @@ const {
   acceptInvitationMock,
   getCurrentUserMock,
   getInvitationPreviewMock,
+  getLeagueMock,
+  getLeagueSquadMock,
   listLeagueSquadsMock,
   logoutUserMock,
   mockLogger,
@@ -45,6 +49,8 @@ const {
     acceptInvitationMock: vi.fn(),
     getCurrentUserMock: vi.fn(),
     getInvitationPreviewMock: vi.fn(),
+    getLeagueMock: vi.fn(),
+    getLeagueSquadMock: vi.fn(),
     listLeagueSquadsMock: vi.fn(),
     logoutUserMock: vi.fn(),
     mockLogger: logger,
@@ -63,11 +69,22 @@ bindApiMocks({
   acceptInvitation: acceptInvitationMock,
   getUser: getCurrentUserMock,
   getInvitationPreview: getInvitationPreviewMock,
+  getLeague: getLeagueMock,
+  getLeagueSquad: getLeagueSquadMock,
   listLeagueSquads: listLeagueSquadsMock,
   logoutUser: logoutUserMock,
   refreshToken: refreshTokenMock,
   updateLeagueSquad: updateLeagueSquadMock,
 });
+
+/** The viewer has joined: the league context names their new team, and that team reads by id. */
+function viewerJoinedWith(squads: ReturnType<typeof buildLeagueSquad>[]) {
+  getLeagueMock.mockResolvedValue(apiSuccess(getLeagueByCodeData(buildLeague(), {
+    squadMembership: buildLeagueSquadMember(),
+    squadName: 'Derek Dorazio',
+  })));
+  getLeagueSquadMock.mockImplementation(getLeagueSquadFrom(squads));
+}
 
 /** Stands in for League Home and shows whether the join page asked it to report a failed team setup. */
 function LeagueDestination() {
@@ -103,6 +120,8 @@ describe('pool-master-rop.23: JoinLeaguePage generated DTO fixtures', () => {
     acceptInvitationMock.mockReset();
     getCurrentUserMock.mockReset();
     getInvitationPreviewMock.mockReset();
+    getLeagueMock.mockReset();
+    getLeagueSquadMock.mockReset();
     listLeagueSquadsMock.mockReset();
     logoutUserMock.mockReset();
     refreshTokenMock.mockReset();
@@ -152,7 +171,7 @@ describe('pool-master-rop.23: JoinLeaguePage generated DTO fixtures', () => {
     acceptInvitationMock.mockResolvedValue(apiSuccess(acceptInvitationData(
       buildAcceptedLeagueMembership(),
     )));
-    listLeagueSquadsMock.mockResolvedValue(apiSuccess(listLeagueSquadsData([
+    viewerJoinedWith([
       buildLeagueSquad({
         name: "Derek Dorazio",
         createdAt: '2026-04-16T00:00:00.000Z',
@@ -166,7 +185,7 @@ describe('pool-master-rop.23: JoinLeaguePage generated DTO fixtures', () => {
           }),
         ],
       }),
-    ])));
+    ]);
     updateLeagueSquadMock.mockResolvedValue(apiSuccess(updateLeagueSquadData(buildLeagueSquad({
       name: 'Beer Bellies',
       iconKey: TeamIconKey.TURBO_TURTLE_MIDNIGHT,
@@ -244,7 +263,7 @@ describe('pool-master-rop.23: JoinLeaguePage generated DTO fixtures', () => {
 describe('Joining a league from an invite link', () => {
   afterEach(() => {
     for (const mock of [
-      acceptInvitationMock, getCurrentUserMock, getInvitationPreviewMock, listLeagueSquadsMock,
+      acceptInvitationMock, getCurrentUserMock, getInvitationPreviewMock, getLeagueMock, getLeagueSquadMock, listLeagueSquadsMock,
       logoutUserMock, refreshTokenMock, updateLeagueSquadMock,
     ]) {
       mock.mockReset();
@@ -320,7 +339,7 @@ describe('Joining a league from an invite link', () => {
     signIn();
     getInvitationPreviewMock.mockResolvedValue(apiSuccess(getInvitationPreviewData(buildInvitationPreview())));
     acceptInvitationMock.mockResolvedValue(apiSuccess(acceptInvitationData(buildAcceptedLeagueMembership())));
-    listLeagueSquadsMock.mockResolvedValue(apiSuccess(listLeagueSquadsData([viewersNewTeam()])));
+    viewerJoinedWith([viewersNewTeam()]);
 
     renderJoinLeaguePage();
 
@@ -337,7 +356,7 @@ describe('Joining a league from an invite link', () => {
     signIn();
     getInvitationPreviewMock.mockResolvedValue(apiSuccess(getInvitationPreviewData(buildInvitationPreview())));
     acceptInvitationMock.mockResolvedValue(apiSuccess(acceptInvitationData(buildAcceptedLeagueMembership())));
-    listLeagueSquadsMock.mockResolvedValue(apiSuccess(listLeagueSquadsData([viewersNewTeam()])));
+    viewerJoinedWith([viewersNewTeam()]);
     updateLeagueSquadMock.mockResolvedValue({
       error: { error: { code: 'SQUAD_NAME_TAKEN', message: 'That team name is already taken in this league.' } },
     });
@@ -355,7 +374,7 @@ describe('Joining a league from an invite link', () => {
     signIn();
     getInvitationPreviewMock.mockResolvedValue(apiSuccess(getInvitationPreviewData(buildInvitationPreview())));
     acceptInvitationMock.mockResolvedValue(apiSuccess(acceptInvitationData(buildAcceptedLeagueMembership())));
-    listLeagueSquadsMock.mockResolvedValue(apiSuccess(listLeagueSquadsData([viewersNewTeam()])));
+    viewerJoinedWith([viewersNewTeam()]);
     updateLeagueSquadMock.mockResolvedValue({
       error: { code: 'SQUAD_NAME_TAKEN', message: 'That team name is already taken in this league.' },
     });
@@ -368,11 +387,11 @@ describe('Joining a league from an invite link', () => {
     expect(await screen.findByTestId('league-destination')).toHaveAttribute('data-team-setup-failed', 'true');
   });
 
-  it('tells League Home the chosen team name and icon did not save when the new team cannot be looked up', async () => {
+  it('tells League Home the chosen team name and icon did not save when the joined league cannot be read', async () => {
     signIn();
     getInvitationPreviewMock.mockResolvedValue(apiSuccess(getInvitationPreviewData(buildInvitationPreview())));
     acceptInvitationMock.mockResolvedValue(apiSuccess(acceptInvitationData(buildAcceptedLeagueMembership())));
-    listLeagueSquadsMock.mockResolvedValue({ error: { code: 'INTERNAL_ERROR', message: 'Try again.' }, status: 500 });
+    getLeagueMock.mockResolvedValue({ error: { error: { code: 'INTERNAL_ERROR', message: 'Try again.' } }, status: 500 });
 
     renderJoinLeaguePage();
 
@@ -383,11 +402,11 @@ describe('Joining a league from an invite link', () => {
     expect(updateLeagueSquadMock).not.toHaveBeenCalled();
   });
 
-  it('tells League Home the chosen team name and icon did not save when the viewer\'s new team is not in the league list', async () => {
+  it('tells League Home the chosen team name and icon did not save when the viewer\'s new team is not found by id', async () => {
     signIn();
     getInvitationPreviewMock.mockResolvedValue(apiSuccess(getInvitationPreviewData(buildInvitationPreview())));
     acceptInvitationMock.mockResolvedValue(apiSuccess(acceptInvitationData(buildAcceptedLeagueMembership())));
-    listLeagueSquadsMock.mockResolvedValue(apiSuccess(listLeagueSquadsData([])));
+    viewerJoinedWith([]);
 
     renderJoinLeaguePage();
 
@@ -397,12 +416,49 @@ describe('Joining a league from an invite link', () => {
     expect(await screen.findByTestId('league-destination')).toHaveAttribute('data-team-setup-failed', 'true');
   });
 
+  it('tells League Home the chosen team name and icon did not save when the joined league names no active team for the viewer', async () => {
+    signIn();
+    getInvitationPreviewMock.mockResolvedValue(apiSuccess(getInvitationPreviewData(buildInvitationPreview())));
+    acceptInvitationMock.mockResolvedValue(apiSuccess(acceptInvitationData(buildAcceptedLeagueMembership())));
+    getLeagueMock.mockResolvedValue(apiSuccess(getLeagueByCodeData(buildLeague(), {
+      squadMembership: buildLeagueSquadMember({ status: SquadMembershipStatus.INACTIVE }),
+    })));
+
+    renderJoinLeaguePage();
+
+    fireEvent.change(await screen.findByRole('textbox', { name: 'Your name in this league' }), { target: { value: 'Fresh Name' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Join league' }));
+
+    expect(await screen.findByTestId('league-destination')).toHaveAttribute('data-team-setup-failed', 'true');
+    expect(getLeagueSquadMock).not.toHaveBeenCalled();
+    expect(updateLeagueSquadMock).not.toHaveBeenCalled();
+  });
+
+  it('finds the viewer\'s new team from their own team in the joined league and reads that one team, never the league\'s team list', async () => {
+    signIn();
+    getInvitationPreviewMock.mockResolvedValue(apiSuccess(getInvitationPreviewData(buildInvitationPreview())));
+    acceptInvitationMock.mockResolvedValue(apiSuccess(acceptInvitationData(buildAcceptedLeagueMembership())));
+    const team = viewersNewTeam();
+    viewerJoinedWith([team]);
+    updateLeagueSquadMock.mockResolvedValue(apiSuccess(updateLeagueSquadData({ ...team, name: 'Fresh Name' })));
+
+    renderJoinLeaguePage();
+
+    fireEvent.change(await screen.findByRole('textbox', { name: 'Your name in this league' }), { target: { value: 'Fresh Name' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Join league' }));
+
+    expect(await screen.findByTestId('league-destination')).toHaveAttribute('data-team-setup-failed', 'false');
+    expect(getLeagueMock).toHaveBeenCalledWith(expect.objectContaining({ path: { id: 'league-1' } }));
+    expect(getLeagueSquadMock).toHaveBeenCalledWith(expect.objectContaining({ path: { id: 'league-1', squadId: 'team-1' } }));
+    expect(listLeagueSquadsMock).not.toHaveBeenCalled();
+  });
+
   it('does not report a failed team setup when the chosen team name and icon save', async () => {
     signIn();
     getInvitationPreviewMock.mockResolvedValue(apiSuccess(getInvitationPreviewData(buildInvitationPreview())));
     acceptInvitationMock.mockResolvedValue(apiSuccess(acceptInvitationData(buildAcceptedLeagueMembership())));
     const team = viewersNewTeam();
-    listLeagueSquadsMock.mockResolvedValue(apiSuccess(listLeagueSquadsData([team])));
+    viewerJoinedWith([team]);
     updateLeagueSquadMock.mockResolvedValue(apiSuccess(updateLeagueSquadData({ ...team, name: 'Fresh Name' })));
 
     renderJoinLeaguePage();

@@ -20,8 +20,6 @@ import {
   PrismaSportEventMatchRepository,
   PrismaSportEventParticipantRaceResultRepository,
   PrismaSportEventParticipantRepository,
-  PrismaSportEventParticipantRoundRepository,
-  PrismaSportEventParticipantStandingRepository,
   PrismaSportEventParticipantValuationRepository,
   PrismaSportEventRepository,
   PrismaSportEventRoundRepository,
@@ -40,6 +38,8 @@ import type { ContestStartedNotice, SportEventChangedNotice } from '../notificat
 import { EventLifecycleService, type FinishedSportEventSettlement, type ReleasedEditionContests } from './event-lifecycle-service';
 import { SportEventService } from './service';
 import { SportEventBracketService } from './sport-event-bracket-service';
+import { ReadCache } from '../../core/read-cache';
+import { readEventFieldCacheTtlMs, type EventFieldCache } from './event-field-cache';
 import { SportEventParticipantService } from './sport-event-participant-service';
 import { SportEventRoundService } from './sport-event-round-service';
 import { SportEventTierService } from './sport-event-tier-service';
@@ -134,6 +134,13 @@ export function createMatchResultService(
   });
 }
 
+/**
+ * The fields this container read lately (#1163), one cache for every field service built here,
+ * so every contest on an event shares its field. The events routes and ingestion forget an
+ * event's field when they write to it.
+ */
+export const eventFieldCache: EventFieldCache = new ReadCache(readEventFieldCacheTtlMs(process.env));
+
 /** The event's field as every reader sees it — the event admin screens and the contest golf reads alike. */
 export function createSportEventParticipantService(prisma: PrismaClient, logger?: FastifyBaseLogger): SportEventParticipantService {
   return new SportEventParticipantService({
@@ -141,14 +148,8 @@ export function createSportEventParticipantService(prisma: PrismaClient, logger?
     field: new PrismaSportEventParticipantRepository(prisma),
     participants: new PrismaParticipantRepository(prisma),
     affiliations: new PrismaParticipantLeagueAffiliationRepository(prisma),
-    valuations: new PrismaSportEventParticipantValuationRepository(prisma),
-    standings: new PrismaSportEventParticipantStandingRepository(prisma),
-    participantRounds: new PrismaSportEventParticipantRoundRepository(prisma),
-    golfStandings: new PrismaSportEventParticipantGolfStandingRepository(prisma),
-    golfRounds: new PrismaSportEventParticipantGolfRoundRepository(prisma),
-    statLines: new PrismaSportEventParticipantStatLineRepository(prisma),
-    raceResults: new PrismaSportEventParticipantRaceResultRepository(prisma),
     matches: new PrismaSportEventMatchRepository(prisma),
+    fieldCache: eventFieldCache,
     logger,
   });
 }

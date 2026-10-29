@@ -107,7 +107,7 @@ import {
   cutoffTiming,
   type EventTiming,
 } from './entry-window';
-import type { SportEventParticipantService } from '../events/sport-event-participant-service';
+import type { SportEventParticipantService, SportEventParticipantView } from '../events/sport-event-participant-service';
 import type { SportEventTierService } from '../events/sport-event-tier-service';
 import { contestEntriesCap, type PlanEntitlementsService } from '../plans/plan-entitlements-service';
 import {
@@ -203,7 +203,7 @@ export interface ContestServiceDeps {
   sportEvents: SportEventRepository;
   /** An event's sport league, named on an entry receipt. */
   sportLeagues: Pick<SportLeagueRepository, 'findById'>;
-  eventParticipants: Pick<SportEventParticipantService, 'listEventParticipants'>;
+  eventParticipants: Pick<SportEventParticipantService, 'listEventParticipants' | 'listCachedEventParticipants'>;
   tiers: Pick<SportEventTierService, 'getEffectiveValuationsForSportEvent' | 'listTiers'>;
   /** The league's plan caps (#947): how many entries a contest may hold. */
   planEntitlements: Pick<PlanEntitlementsService, 'forLeague'>;
@@ -505,16 +505,29 @@ export class ContestService {
     return this.cachedLeaderboardOf(contest, requestedSportEventId);
   }
 
+  /** A viewer's board: computed from the event fields every contest on the event shares (#1163). */
   private cachedLeaderboardOf(contest: Contest, requestedSportEventId?: string): Promise<ContestLeaderboardModel> {
-    return this.leaderboardCache.get(contest.id, requestedSportEventId, this.now(), () => this.leaderboardOf(contest, requestedSportEventId));
+    return this.leaderboardCache.get(contest.id, requestedSportEventId, this.now(), () => this.boardOf(
+      contest,
+      requestedSportEventId,
+      (sportEventId) => this.deps.eventParticipants.listCachedEventParticipants(sportEventId),
+    ));
   }
 
   /**
    * The same leaderboard for a contest already in hand, with no reader to check: what the live
-   * standings emails read (#877), computed afresh so an email never reports a board older than
-   * the scores that queued it.
+   * standings emails read (#877), computed afresh from fields read now, so an email never
+   * reports a board older than the scores that queued it.
    */
-  async leaderboardOf(contest: Contest, requestedSportEventId?: string): Promise<ContestLeaderboardModel> {
+  leaderboardOf(contest: Contest, requestedSportEventId?: string): Promise<ContestLeaderboardModel> {
+    return this.boardOf(contest, requestedSportEventId, (sportEventId) => loadEventField(this.deps, sportEventId));
+  }
+
+  private async boardOf(
+    contest: Contest,
+    requestedSportEventId: string | undefined,
+    readField: (sportEventId: string) => Promise<SportEventParticipantView[]>,
+  ): Promise<ContestLeaderboardModel> {
     const contestId = contest.id;
     const now = this.now();
     // No event's picks are revealed while the contest takes entries, unless a draw dealt them.
@@ -591,7 +604,7 @@ export class ContestService {
     const eventScores: ContestEntryEventScore[] = [];
     const resultsByEntry = new Map<string, ContestEntryEventResultRow[]>();
     const entriesById = new Map<string, ContestLeaderboardEntryInput>();
-    let shown: { field: Awaited<ReturnType<typeof loadEventField>>; rows: ContestEntryStandingRow[]; asOf: Date | null } | null = null;
+    let shown: { field: SportEventParticipantView[]; rows: ContestEntryStandingRow[]; asOf: Date | null } | null = null;
     for (const event of revealed) {
       const entries = submittedLeaderboardEntries(contestEntries, event.id, picks);
       for (const entry of entries) entriesById.set(entry.id, entry);
@@ -599,7 +612,7 @@ export class ContestService {
       const isShown = event.id === shownEvent.id;
       let rows: ContestEntryStandingRow[] | null = null;
       if (isShown || (settled.length === 0 && event.status !== SportEventStatus.CANCELLED)) {
-        const field = await loadEventField(this.deps, event.id);
+        const field = await readField(event.id);
         const scores = toParticipantScores(field, event, scoring.scoring);
         rows = rankEventStandings(entries, scores, countingRule, direction);
         if (settled.length > 0) {

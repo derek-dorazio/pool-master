@@ -497,9 +497,9 @@ describe('Budget pricing on the event (#93)', () => {
 describe('Golf extension repositories', () => {
   it('writes a scored round as its core row and golf row under one id link, and updates both in place', async () => {
     const { golfRounds } = repos();
-    const { event, entry } = await createPopulatedEvent();
+    const { entry } = await createPopulatedEvent();
 
-    const [round1] = await golfRounds.findBySportEvent(event.id);
+    const [round1] = await golfRounds.findBySportEventParticipants([entry.id]);
     expect(round1.golf.participantRoundId).toBe(round1.participantRound.id);
     expect(round1).toMatchObject({ participantRound: { roundNumber: 1, status: 'COMPLETED' }, golf: { strokes: 70, scoreToPar: -2 } });
 
