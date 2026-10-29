@@ -9,6 +9,8 @@ import type { Prisma, PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 import {
   getDefaultTournamentFormatForSport,
+  ParticipantStatus,
+  type ParticipantType,
   type Sport,
   SportEventStatus,
   eventPlaysMatches,
@@ -82,17 +84,20 @@ export class IngestionPersistence {
       const participantCount = event.participantCount ?? existingEvent.participantCount;
       const after = { ...before, participantCount };
 
-      const persistedEvent = await this.prisma.sportEvent.update({
-        where: { id: existingEvent.id },
-        data: { participantCount },
-      });
+      const disposition = resolveDisposition(before, after);
+      if (disposition !== 'UNCHANGED') {
+        await this.prisma.sportEvent.update({
+          where: { id: existingEvent.id },
+          data: { participantCount },
+        });
+      }
       detailRows.push({
         id: `sport-event:${event.providerId}:${event.externalId}`,
         entityType: 'SportEvent',
-        disposition: resolveDisposition(before, after),
+        disposition,
         providerId: event.providerId,
         externalId: event.externalId,
-        internalId: persistedEvent.id,
+        internalId: existingEvent.id,
         name: event.name,
         before,
         after,
@@ -116,17 +121,12 @@ export class IngestionPersistence {
   }
 
   /**
-   * Upsert participants by external ID via the provider mapping table.
-   *
-   * For each provider participant:
-   * 1. Look up ParticipantProviderMapping by (providerId, externalId)
-   * 2. If found — update the linked Participant record
-   * 3. If not found — resolve the Sport, create a new Participant + mapping
-   *
-   * Returns the number of participants persisted.
+   * Upserts participants by external ID through the provider mapping table, and returns each
+   * one's internal id by provider identity (#1183). The mappings are read in one query; a
+   * mapped participant is updated only when a value changed, all in one transaction; an
+   * unmapped one is created with its mapping, both sets in one transaction.
    */
-  async persistParticipants(participants: ProviderParticipant[]): Promise<number> {
-    let count = 0;
+  private async persistParticipants(participants: readonly ProviderParticipant[]): Promise<{ count: number; participantIdByKey: Map<string, string> }> {
     this.logger?.debug({
       count: participants.length,
       participants: participants.slice(0, 10).map((participant) => ({
@@ -138,79 +138,81 @@ export class IngestionPersistence {
       })),
     }, 'Persisting participants from ingestion');
 
-    for (const p of participants) {
-      const mapping = await this.prisma.participantProviderMapping.findUnique({
-        where: {
-          providerId_externalId: {
-            providerId: p.providerId,
-            externalId: p.externalId,
-          },
-        },
-        include: { participant: true },
-      });
+    // A provider naming the same participant twice is taken at its last word, as it was when
+    // each was written in turn.
+    const latestByKey = new Map(participants.map((participant) => [providerKey(participant), participant]));
+    const mappings = await this.findMappings([...latestByKey.values()]);
+    const mappingByKey = new Map(mappings.map((mapping) => [providerKey(mapping), mapping]));
+    const participantIdByKey = new Map(mappings.map((mapping) => [providerKey(mapping), mapping.participantId]));
 
-      if (mapping) {
-        // Update existing participant
-        await this.prisma.participant.update({
-          where: { id: mapping.participantId },
-          data: {
-            name: p.name,
-            firstName: p.firstName ?? null,
-            lastName: p.lastName ?? null,
-            nationality: p.nationality ?? null,
-            role: p.role ?? null,
-            teamAffiliation: p.teamAffiliation ?? null,
-            photoUrl: p.photoUrl ?? null,
-            status: p.active ? 'ACTIVE' : 'INACTIVE',
-          },
-        });
-      } else {
-        // Resolve the Sport row — find or create by sport
-        const sport = await this.prisma.sport.upsert({
-          where: { sport: p.sport },
-          create: {
-            sport: p.sport,
-            participantType: 'INDIVIDUAL',
-            // No schema default (#236): a new sport row must not become golf by omission.
-            tournamentFormat: getDefaultTournamentFormatForSport(p.sport),
-          },
-          update: {},
-        });
-
-        // Create participant + provider mapping in a transaction
-        await this.prisma.$transaction(async (tx) => {
-          const participant = await tx.participant.create({
-            data: {
-              sportId: sport.id,
-              name: p.name,
-              participantType: sport.participantType,
-              externalId: p.externalId,
-              firstName: p.firstName ?? null,
-              lastName: p.lastName ?? null,
-              nationality: p.nationality ?? null,
-              role: p.role ?? null,
-              teamAffiliation: p.teamAffiliation ?? null,
-              photoUrl: p.photoUrl ?? null,
-              status: p.active ? 'ACTIVE' : 'INACTIVE',
-            },
-          });
-
-          await tx.participantProviderMapping.create({
-            data: {
-              participantId: participant.id,
-              providerId: p.providerId,
-              externalId: p.externalId,
-              confidence: 'EXACT',
-            },
-          });
-        });
+    const updates: Prisma.PrismaPromise<unknown>[] = [];
+    const unmapped: ProviderParticipant[] = [];
+    for (const [key, participant] of latestByKey) {
+      const mapping = mappingByKey.get(key);
+      if (!mapping) {
+        unmapped.push(participant);
+        continue;
       }
-
-      count++;
+      const values = participantValues(participant);
+      if (!participantValuesEqual(mapping.participant, values)) {
+        updates.push(this.prisma.participant.update({ where: { id: mapping.participantId }, data: values }));
+      }
+    }
+    if (updates.length > 0) {
+      await this.prisma.$transaction(updates);
     }
 
-    this.logger?.info({ count }, 'Persisted participants from ingestion');
-    return count;
+    if (unmapped.length > 0) {
+      const sportBySport = new Map<Sport, { id: string; participantType: ParticipantType }>();
+      for (const sport of new Set(unmapped.map((participant) => participant.sport))) {
+        sportBySport.set(sport, await this.prisma.sport.upsert({
+          where: { sport },
+          create: {
+            sport,
+            participantType: 'INDIVIDUAL',
+            // No schema default (#236): a new sport row must not become golf by omission.
+            tournamentFormat: getDefaultTournamentFormatForSport(sport),
+          },
+          update: {},
+          select: { id: true, participantType: true },
+        }));
+      }
+      const created = await this.prisma.$transaction(async (tx) => {
+        const rows = await tx.participant.createManyAndReturn({
+          data: unmapped.map((participant) => {
+            const sport = sportBySport.get(participant.sport) as { id: string; participantType: ParticipantType };
+            return { sportId: sport.id, participantType: sport.participantType, externalId: participant.externalId, ...participantValues(participant) };
+          }),
+          select: { id: true, sportId: true, externalId: true },
+        });
+        const idBySportAndExternalId = new Map(rows.map((row) => [`${row.sportId}:${row.externalId}`, row.id]));
+        const createdMappings = unmapped.map((participant) => ({
+          participantId: idBySportAndExternalId.get(`${sportBySport.get(participant.sport)?.id}:${participant.externalId}`) as string,
+          providerId: participant.providerId,
+          externalId: participant.externalId,
+          confidence: 'EXACT' as const,
+        }));
+        await tx.participantProviderMapping.createMany({ data: createdMappings });
+        return createdMappings;
+      });
+      for (const mapping of created) participantIdByKey.set(providerKey(mapping), mapping.participantId);
+    }
+
+    this.logger?.info({ count: latestByKey.size, updated: updates.length, created: unmapped.length }, 'Persisted participants from ingestion');
+    return { count: latestByKey.size, participantIdByKey };
+  }
+
+  /** The provider mappings of these participants, with their participant, in one query per provider. */
+  private async findMappings(participants: readonly ProviderParticipant[]) {
+    const externalIdsByProvider = new Map<string, string[]>();
+    for (const participant of participants) {
+      externalIdsByProvider.set(participant.providerId, [...(externalIdsByProvider.get(participant.providerId) ?? []), participant.externalId]);
+    }
+    if (externalIdsByProvider.size === 0) return [];
+    return this.prisma.participantProviderMapping.findMany({
+      where: { OR: [...externalIdsByProvider].map(([providerId, externalIds]) => ({ providerId, externalId: { in: externalIds } })) },
+      include: { participant: true },
+    });
   }
 
   async persistEventDetailWithDiagnostics(detail: SportEventDetail): Promise<PersistenceDiagnosticsResult<{
@@ -227,7 +229,7 @@ export class IngestionPersistence {
     }, 'Persisting event detail from ingestion');
     const eventResult = await this.persistEventsWithDiagnostics([detail]);
     const eventsPersisted = eventResult.count;
-    const participantsPersisted = await this.persistParticipants(detail.participants);
+    const { count: participantsPersisted, participantIdByKey } = await this.persistParticipants(detail.participants);
     const detailRows: SyncWriteDetailRow[] = [];
 
     const persistedEvent = await this.prisma.sportEvent.findUnique({
@@ -255,7 +257,7 @@ export class IngestionPersistence {
     const seedsLocked = eventPlaysMatches({ sport: persistedEvent.sport, participantType: sportLeague.participantType, scoringFamily: sportLeague.scoringFamily }) && persistedEvent.status !== SportEventStatus.DRAFT;
 
     try {
-      sportEventParticipantsPersisted = await this.persistEventField(detail, persistedEvent.id, seedsLocked, detailRows);
+      sportEventParticipantsPersisted = await this.persistEventField(detail, persistedEvent.id, seedsLocked, participantIdByKey, detailRows);
     } finally {
       this.fieldCache?.forget(persistedEvent.id);
       this.cdn?.invalidate([PublicReadPath.EVENT_PAGES]);
@@ -282,99 +284,115 @@ export class IngestionPersistence {
     };
   }
 
-  /** Writes the provider's field onto the event's rows, one row per mapped participant; returns how many. */
+  /**
+   * Writes the provider's field onto the event's rows, one row per mapped participant, and
+   * returns how many (#1183). The rows are read in one query; an unchanged row is not
+   * written, and the new and changed ones are written in one transaction.
+   */
   private async persistEventField(
     detail: SportEventDetail,
     sportEventId: string,
     seedsLocked: boolean,
+    participantIdByKey: ReadonlyMap<string, string>,
     detailRows: SyncWriteDetailRow[],
   ): Promise<number> {
-    let sportEventParticipantsPersisted = 0;
+    const mapped = new Map<string, ProviderParticipant>();
     for (const participant of detail.participants) {
-      const mapping = await this.prisma.participantProviderMapping.findUnique({
-        where: {
-          providerId_externalId: {
-            providerId: participant.providerId,
-            externalId: participant.externalId,
-          },
-        },
-      });
-      if (!mapping) {
-        continue;
-      }
+      const participantId = participantIdByKey.get(providerKey(participant));
+      if (participantId) mapped.set(participantId, participant);
+    }
+    const existingByParticipantId = new Map(
+      (mapped.size === 0 ? [] : await this.prisma.sportEventParticipant.findMany({
+        where: { sportEventId, participantId: { in: [...mapped.keys()] } },
+      })).map((row) => [row.participantId, row]),
+    );
 
-      const oddsToWin = readEventScopedOddsToWin(participant, detail.externalId);
-      const existingEventParticipant = await this.prisma.sportEventParticipant.findUnique({
-        where: {
-          sportEventId_participantId: {
-            sportEventId: sportEventId,
-            participantId: mapping.participantId,
-          },
-        },
-      });
-      const seedNumber = seedsLocked && existingEventParticipant
-        ? existingEventParticipant.seedNumber
+    const plans = [...mapped].map(([participantId, participant]) => {
+      const existing = existingByParticipantId.get(participantId);
+      const seedNumber = seedsLocked && existing
+        ? existing.seedNumber
         : readIntegerMetadata(participant.metadata, 'seed');
       // #384 — the field's own ranking wins. When the field gives none, the rank already on
       // the row stays rather than being blanked.
-      const ranking = participant.ranking
-        ?? existingEventParticipant?.ranking
-        ?? null;
-      const before = existingEventParticipant
-        ? normalizeSportEventParticipantRow(existingEventParticipant)
-        : undefined;
-      const after = normalizeSportEventParticipantInput({
+      const ranking = participant.ranking ?? existing?.ranking ?? null;
+      const values = {
         isActive: participant.active,
         inactiveReason: participant.inactiveReason ?? null,
         ranking,
-        oddsToWin,
+        oddsToWin: readEventScopedOddsToWin(participant, detail.externalId),
         seedNumber,
-        metadata: participant.metadata,
-      });
-
-      const persistedEventParticipant = await this.prisma.sportEventParticipant.upsert({
-        where: {
-          sportEventId_participantId: {
-            sportEventId: sportEventId,
-            participantId: mapping.participantId,
-          },
-        },
-        create: {
-          sportEventId: sportEventId,
-          participantId: mapping.participantId,
-          isActive: participant.active,
-          inactiveReason: participant.inactiveReason ?? null,
-          ranking,
-          oddsToWin,
-          seedNumber,
-          metadata: toPrismaJson(participant.metadata),
-        },
-        update: {
-          isActive: participant.active,
-          inactiveReason: participant.inactiveReason ?? null,
-          ranking,
-          oddsToWin,
-          seedNumber,
-          metadata: toPrismaJson(participant.metadata),
-        },
-      });
-      detailRows.push({
-        id: `sport-event-participant:${detail.providerId}:${detail.externalId}:${participant.externalId}`,
-        entityType: 'SportEventParticipant',
-        disposition: resolveDisposition(before, after),
-        providerId: participant.providerId,
-        externalId: detail.externalId,
-        participantExternalId: participant.externalId,
-        internalId: persistedEventParticipant.id,
-        name: participant.name,
-        ...(before ? { before } : {}),
+      };
+      const before = existing ? normalizeSportEventParticipantRow(existing) : undefined;
+      const after = normalizeSportEventParticipantInput({ ...values, metadata: participant.metadata });
+      return {
+        participantId,
+        participant,
+        existing,
+        data: { ...values, metadata: toPrismaJson(participant.metadata) },
+        before,
         after,
-      });
+        disposition: resolveDisposition(before, after),
+      };
+    });
 
-      sportEventParticipantsPersisted++;
+    const toCreate = plans.filter((plan) => !plan.existing);
+    const toUpdate = plans.filter((plan) => plan.existing && plan.disposition !== 'UNCHANGED');
+    let createdIdByParticipantId = new Map<string, string>();
+    if (toCreate.length > 0 || toUpdate.length > 0) {
+      const [created] = await this.prisma.$transaction([
+        this.prisma.sportEventParticipant.createManyAndReturn({
+          data: toCreate.map((plan) => ({ sportEventId, participantId: plan.participantId, ...plan.data })),
+          select: { id: true, participantId: true },
+        }),
+        ...toUpdate.map((plan) => this.prisma.sportEventParticipant.update({
+          where: { id: (plan.existing as { id: string }).id },
+          data: plan.data,
+        })),
+      ]);
+      createdIdByParticipantId = new Map(created.map((row) => [row.participantId, row.id]));
     }
-    return sportEventParticipantsPersisted;
+
+    for (const plan of plans) {
+      detailRows.push({
+        id: `sport-event-participant:${detail.providerId}:${detail.externalId}:${plan.participant.externalId}`,
+        entityType: 'SportEventParticipant',
+        disposition: plan.disposition,
+        providerId: plan.participant.providerId,
+        externalId: detail.externalId,
+        participantExternalId: plan.participant.externalId,
+        internalId: plan.existing?.id ?? createdIdByParticipantId.get(plan.participantId),
+        name: plan.participant.name,
+        ...(plan.before ? { before: plan.before } : {}),
+        after: plan.after,
+      });
+    }
+    return plans.length;
   }
+}
+
+/** A participant's provider identity. */
+function providerKey(identity: { providerId: string; externalId: string }): string {
+  return `${identity.providerId}:${identity.externalId}`;
+}
+
+/** The participant columns a provider's participant sets. */
+function participantValues(participant: ProviderParticipant) {
+  return {
+    name: participant.name,
+    firstName: participant.firstName ?? null,
+    lastName: participant.lastName ?? null,
+    nationality: participant.nationality ?? null,
+    role: participant.role ?? null,
+    teamAffiliation: participant.teamAffiliation ?? null,
+    photoUrl: participant.photoUrl ?? null,
+    status: participant.active ? ParticipantStatus.ACTIVE : ParticipantStatus.INACTIVE,
+  };
+}
+
+type ParticipantValues = ReturnType<typeof participantValues>;
+
+function participantValuesEqual(stored: { [K in keyof ParticipantValues]: unknown }, values: ParticipantValues): boolean {
+  return (Object.keys(values) as Array<keyof ParticipantValues>).every((key) => stored[key] === values[key]);
 }
 
 function readEventScopedOddsToWin(

@@ -10,6 +10,8 @@ import type {
 
 export interface ContestConfigurationRepository {
   findByContest(contestId: string): Promise<ContestConfiguration | null>;
+  /** Several contests' configurations in one read; a contest with none is left out. */
+  findByContests(contestIds: readonly string[]): Promise<ContestConfiguration[]>;
   create(
     configuration: Omit<ContestConfiguration, 'id' | 'createdAt' | 'updatedAt'>,
   ): Promise<ContestConfiguration>;

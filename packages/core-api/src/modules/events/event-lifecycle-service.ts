@@ -98,7 +98,7 @@ export class EventLifecycleError extends Error {
 export interface EventLifecycleContestDeps {
   contests: ContestRepository;
   /** A second-chance bracket's rules and games: it goes live at its starting round, not the event's start (#721). */
-  configurations: Pick<ContestConfigurationRepository, 'findByContest'>;
+  configurations: Pick<ContestConfigurationRepository, 'findByContests'>;
   matches: Pick<SportEventMatchRepository, 'findBySportEvent'>;
 }
 
@@ -258,10 +258,16 @@ export class EventLifecycleService {
   ): Promise<void> {
     const candidates = await this.contestDeps.contests.findBySportEvent(sportEvent.id, { statuses: STARTABLE });
     let games: SportEventMatch[] | undefined;
+    // A bracket's or squares contest's cutoff is in its configuration: all of them read at once (#1183).
+    const cutoffConfigured = candidates.filter((contest) => contest.selectionType === SelectionType.BRACKET || contest.selectionType === SelectionType.SQUARES);
+    const configJsonByContest = new Map(
+      (cutoffConfigured.length === 0 ? [] : await this.contestDeps.configurations.findByContests(cutoffConfigured.map((contest) => contest.id)))
+        .map((configuration) => [configuration.contestId, configuration.configJson]),
+    );
 
     for (const contest of candidates) {
       const cutoff = contest.selectionType === SelectionType.BRACKET || contest.selectionType === SelectionType.SQUARES
-        ? contestCutoff((await this.contestDeps.configurations.findByContest(contest.id))?.configJson, contest.squaresGameMatchId)
+        ? contestCutoff(configJsonByContest.get(contest.id), contest.squaresGameMatchId)
         : { kind: ContestCutoffKind.EVENT_START } as const;
       const window: EventTiming = cutoff.kind === ContestCutoffKind.EVENT_START
         ? sportEvent

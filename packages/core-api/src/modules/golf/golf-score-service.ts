@@ -170,6 +170,7 @@ export class GolfScoreService {
     );
 
     let skipped = 0;
+    const unmappedExternalIds = new Set<string>();
     const persistable: Array<{ round: GolfRoundUpdate & { strokes: number }; sportEventParticipantId: string; sportEventRoundId: string }> = [];
     for (const round of rounds) {
       if (beyondScheduleRoundNumbers.includes(round.round)) {
@@ -196,10 +197,8 @@ export class GolfScoreService {
       }
       const participantId = participantIdByExternalId.get(round.participantExternalId);
       if (!participantId) {
-        logger?.warn(
-          { action: 'liveScore.golf.unmappedExternalId', data: { providerId, externalId: round.participantExternalId } },
-          'Skipping golf round update — provider participant has no internal mapping',
-        );
+        // Logged once below, with every unmapped golfer.
+        unmappedExternalIds.add(round.participantExternalId);
         skipped += 1;
         continue;
       }
@@ -227,6 +226,13 @@ export class GolfScoreService {
         continue;
       }
       persistable.push({ round: { ...round, strokes: round.strokes }, sportEventParticipantId, sportEventRoundId });
+    }
+    if (unmappedExternalIds.size > 0) {
+      // One line a tick, not one per golfer (#1183): an unmapped golfer stays unmapped tick after tick.
+      logger?.warn(
+        { action: 'liveScore.golf.unmappedExternalId', data: { providerId, sportEventId, externalIds: [...unmappedExternalIds] } },
+        'Skipping golf round updates for provider participants with no internal mapping',
+      );
     }
 
     const existingByKey = new Map(

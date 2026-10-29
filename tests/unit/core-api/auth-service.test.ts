@@ -35,14 +35,23 @@ function buildUser(overrides: Partial<User> = {}): User {
 
 /** The refresh-token side, plus the credentials read the port does not serve. */
 function createPrismaMock(passwordHash: string | null = null) {
-  return {
+  const prisma = {
     user: { findUnique: jest.fn().mockResolvedValue({ passwordHash }) },
     refreshToken: {
       create: jest.fn().mockResolvedValue({}),
-      update: jest.fn().mockResolvedValue(undefined),
+      updateMany: jest.fn().mockResolvedValue({ count: 1 }),
       findUnique: jest.fn(),
     },
+    /** A refresh's writes, on a client of their own so a test can tell them from the rest. */
+    tx: {
+      refreshToken: {
+        create: jest.fn().mockResolvedValue({}),
+        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+      },
+    },
+    $transaction: jest.fn(<T>(work: (tx: unknown) => Promise<T>): Promise<T> => work(prisma.tx)),
   };
+  return prisma;
 }
 
 describe('AuthService', () => {
@@ -252,6 +261,31 @@ describe('AuthService', () => {
       expect(result.sessionId).toBe('session-1');
       expect(result.refreshToken).toBeTruthy();
       expect(result.accessToken).toBeTruthy();
+    });
+
+    it('revokes the old token and stores the new one in one transaction, so a failed insert leaves the old token live', async () => {
+      const prisma = createPrismaMock();
+      prisma.refreshToken.findUnique.mockResolvedValue({
+        id: 'refresh-1',
+        token: 'refresh-token',
+        sessionId: 'session-1',
+        revokedAt: null,
+        expiresAt: new Date(Date.now() + 60_000),
+        user: { id: 'user-1', email: 'user@example.com', isRootAdmin: false, isActive: true },
+      });
+      const service = new AuthService(fakeUserRepo(), asPrismaClient(prisma));
+
+      const result = await service.refresh('refresh-token');
+
+      expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+      expect(prisma.tx.refreshToken.updateMany).toHaveBeenCalledWith(expect.objectContaining({
+        where: { id: 'refresh-1', revokedAt: null },
+      }));
+      expect(prisma.tx.refreshToken.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({ token: result.refreshToken, sessionId: 'session-1' }),
+      });
+      expect(prisma.refreshToken.updateMany).not.toHaveBeenCalled();
+      expect(prisma.refreshToken.create).not.toHaveBeenCalled();
     });
 
     it('refreshes the session of an inactive account, which stays signed in to reactivate (A9)', async () => {
