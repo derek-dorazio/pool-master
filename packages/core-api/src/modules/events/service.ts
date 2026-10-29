@@ -20,6 +20,7 @@ import type { FastifyBaseLogger } from 'fastify';
 import type {
   EventSeriesRepository,
   SportEventCreate,
+  SportEventRoundSchedule,
   SportEventFilters,
   SportEventRepository,
   SportEventUpdate,
@@ -41,7 +42,7 @@ import { SportEventError } from './errors';
 import { hasSportEventStarted } from './operational-timing';
 import type { EventLifecycleService } from './event-lifecycle-service';
 import type { SportEventBracketService } from './sport-event-bracket-service';
-import type { SportEventRoundService } from './sport-event-round-service';
+import { dailyRoundSchedule, type SportEventRoundService } from './sport-event-round-service';
 import type { SportEventTierService } from './sport-event-tier-service';
 
 /**
@@ -173,33 +174,34 @@ export class SportEventService {
   async createEvent(input: CreateSportEventInput): Promise<SportEventAdminSummary> {
     const { sportLeague, sport } = await this.resolveSportLeague(input.sportLeagueId);
     const rounds = input.rounds ?? sportLeagueDefinitionOf(sport, sportLeague).defaultRounds;
-    const eventSeries = await this.deps.eventSeries.findOrCreate(sportLeague.id, input.name);
+    const seriesIdByName = await this.resolveSeries(sportLeague, [input.name]);
 
-    const event = await this.createEdition({
-      externalId: `manual-${randomUUID()}`,
-      providerId: MANUAL_ADMIN_PROVIDER_ID,
-      sport,
-      name: input.name,
-      venue: input.venue,
-      location: input.location,
-      startDate: input.startDate,
-      endDate: input.endDate,
-      status: SportEventStatus.DRAFT,
-      rounds,
-      roundsPar: input.roundsPar,
-      eventSeriesId: eventSeries.id,
-      eventYear: input.eventYear,
-      syncScope: SportEventSyncScope.NONE,
-      autoLifecycleEnabled: input.autoLifecycleEnabled ?? true,
-    });
-    await this.deps.rounds.ensureRounds({ sportEventId: event.id, rounds, startDate: input.startDate });
-    await this.deps.tiers.ensureDefaultTiers(event.id, eventSportDefinition(event), sportLeague.tierCount);
+    const summary = onlyOne(await this.createEditions(sportLeague, [{
+      event: {
+        externalId: `manual-${randomUUID()}`,
+        providerId: MANUAL_ADMIN_PROVIDER_ID,
+        sport,
+        name: input.name,
+        venue: input.venue,
+        location: input.location,
+        startDate: input.startDate,
+        endDate: input.endDate,
+        status: SportEventStatus.DRAFT,
+        rounds,
+        roundsPar: input.roundsPar,
+        eventSeriesId: seriesIdOf(seriesIdByName, input.name),
+        eventYear: input.eventYear,
+        syncScope: SportEventSyncScope.NONE,
+        autoLifecycleEnabled: input.autoLifecycleEnabled ?? true,
+      },
+      rounds: dailyRoundSchedule(rounds, input.startDate),
+    }]));
 
     this.deps.logger?.info(
-      { sportEventId: event.id, sportLeagueId: sportLeague.id, eventSeriesId: eventSeries.id, eventYear: input.eventYear, rounds },
+      { sportEventId: summary.event.id, sportLeagueId: sportLeague.id, eventSeriesId: summary.event.eventSeriesId, eventYear: input.eventYear, rounds },
       'Created sport event',
     );
-    return this.requireAdminSummary(event.id);
+    return summary;
   }
 
   /**
@@ -223,48 +225,25 @@ export class SportEventService {
         409,
       );
     }
-    const { providerEvent } = input;
-    const eventSeries = await this.deps.eventSeries.findOrCreate(sportLeague.id, providerEvent.name);
-    // The derived schedule applies only when no round count was given; an explicit count
-    // falls back to sequential days, so `rounds` always matches the rounds created.
-    const derived = deriveGolfTournamentRounds(providerEvent.startDate, providerEvent.endDate);
-    const rounds = input.rounds ?? derived.length;
-
-    const event = await this.createEdition({
-      externalId: input.externalId,
-      providerId: input.providerId,
-      sport,
-      name: providerEvent.name,
-      venue: providerEvent.venue ?? undefined,
-      startDate: providerEvent.startDate,
-      endDate: providerEvent.endDate ?? undefined,
-      status: SportEventStatus.DRAFT,
-      rounds,
-      eventSeriesId: eventSeries.id,
-      eventYear: input.eventYear,
-      syncScope: SportEventSyncScope.SCORES_ONLY,
-      autoLifecycleEnabled: true,
-    });
-    if (input.rounds === undefined) {
-      await this.deps.rounds.createFromSchedule(event.id, derived);
-    } else {
-      await this.deps.rounds.ensureRounds({ sportEventId: event.id, rounds, startDate: providerEvent.startDate });
-    }
-    await this.deps.tiers.ensureDefaultTiers(event.id, eventSportDefinition(event), sportLeague.tierCount);
+    const seriesIdByName = await this.resolveSeries(sportLeague, [input.providerEvent.name]);
+    const edition = providerEdition(sport, seriesIdByName, { ...input, ...input.providerEvent, externalId: input.externalId });
+    const summary = onlyOne(await this.createEditions(sportLeague, [edition]));
 
     this.deps.logger?.info(
-      { sportEventId: event.id, sportLeagueId: sportLeague.id, eventYear: input.eventYear, providerId: input.providerId, externalId: input.externalId, rounds },
+      { sportEventId: summary.event.id, sportLeagueId: sportLeague.id, eventYear: input.eventYear, providerId: input.providerId, externalId: input.externalId, rounds: edition.rounds.length },
       'Created sport event from provider event',
     );
-    return this.requireAdminSummary(event.id);
+    return summary;
   }
 
   /**
-   * #385 — a tour's provider slate for one year, created in one action. Each event goes
-   * through `createEventFromProviderEvent`, so it is created and linked exactly as a single
-   * browse-and-create would be. Events PoolMaster already has are skipped rather than
-   * refused, so the import can be run again: one already linked to the provider event, or
-   * a series that already has an edition that year (an admin-authored one, say).
+   * #385 — a tour's provider slate for one year, created in one action, in a fixed number of
+   * queries however long the slate (#1253). Each event is created and linked exactly as a single
+   * browse-and-create would be. Events PoolMaster already has are skipped rather than refused,
+   * so the import can be run again: one already linked to the provider event, or a series that
+   * already has an edition that year (an admin-authored one, say, or an earlier event of the
+   * same name in this slate). An edition another admin creates while the import runs is not
+   * skipped: it refuses the whole import with 409, and running it again skips that event.
    */
   async importProviderEventYear(input: {
     sportLeagueId: string;
@@ -272,31 +251,34 @@ export class SportEventService {
     providerId: string;
     providerEvents: ReadonlyArray<ProviderEventDetail & { externalId: string }>;
   }): Promise<ProviderEventYearImport> {
-    const created: SportEventAdminSummary[] = [];
+    const { sportLeague, sport } = await this.resolveSportLeague(input.sportLeagueId);
+    const linked = new Set((await this.deps.sportEvents.findByProviderRefs(
+      input.providerId,
+      input.providerEvents.map((providerEvent) => providerEvent.externalId),
+    )).map((event) => event.externalId));
+    const unlinked = input.providerEvents.filter((providerEvent) => !linked.has(providerEvent.externalId));
+    const seriesIdByName = await this.resolveSeries(sportLeague, unlinked.map((providerEvent) => providerEvent.name));
+    const seriesWithEdition = new Set(unlinked.length === 0
+      ? []
+      : (await this.deps.sportEvents.findAll({ sportLeagueId: sportLeague.id, eventYear: input.eventYear })).map((event) => event.eventSeriesId));
+
+    const editions: NewEdition[] = [];
     const skipped: ProviderEventYearImport['skipped'] = [];
     for (const providerEvent of input.providerEvents) {
       const { externalId, name } = providerEvent;
-      // poolmaster-allow-query-in-loop: root-admin import of one tour's year, run by hand; each event goes through the single-event create
-      if (await this.deps.sportEvents.findByProviderRef(input.providerId, externalId)) {
+      if (linked.has(externalId)) {
         skipped.push({ externalId, name, reason: 'ALREADY_LINKED' });
         continue;
       }
-      try {
-        created.push(await this.createEventFromProviderEvent({
-          sportLeagueId: input.sportLeagueId,
-          eventYear: input.eventYear,
-          providerId: input.providerId,
-          externalId,
-          providerEvent,
-        }));
-      } catch (error) {
-        if (error instanceof SportEventError && error.code === 'EVENT_EDITION_ALREADY_EXISTS') {
-          skipped.push({ externalId, name, reason: 'EDITION_EXISTS' });
-          continue;
-        }
-        throw error;
+      const eventSeriesId = seriesIdOf(seriesIdByName, name);
+      if (seriesWithEdition.has(eventSeriesId)) {
+        skipped.push({ externalId, name, reason: 'EDITION_EXISTS' });
+        continue;
       }
+      seriesWithEdition.add(eventSeriesId);
+      editions.push(providerEdition(sport, seriesIdByName, { ...providerEvent, eventYear: input.eventYear, providerId: input.providerId }));
     }
+    const created = await this.createEditions(sportLeague, editions);
 
     this.deps.logger?.info(
       { sportLeagueId: input.sportLeagueId, eventYear: input.eventYear, providerId: input.providerId, createdCount: created.length, skippedCount: skipped.length },
@@ -323,7 +305,7 @@ export class SportEventService {
     eventYear: number;
     targetYear?: number;
   }): Promise<SportEventAdminSummary[]> {
-    const { sportLeague } = await this.resolveSportLeague(input.sportLeagueId);
+    const { sportLeague, sport } = await this.resolveSportLeague(input.sportLeagueId);
     const targetYear = input.targetYear ?? input.eventYear + 1;
     const shift = targetYear - input.eventYear;
 
@@ -345,21 +327,32 @@ export class SportEventService {
       );
     }
 
-    const cloned: SportEventAdminSummary[] = [];
-    for (const event of sourceEvents) {
-      cloned.push(await this.createEvent({
-        sportLeagueId: sportLeague.id,
-        eventYear: targetYear,
-        name: event.name,
-        venue: event.venue,
-        location: event.location,
-        startDate: shiftYears(event.startDate, shift),
-        endDate: event.endDate ? shiftYears(event.endDate, shift) : undefined,
-        rounds: event.rounds,
-        roundsPar: event.roundsPar,
-        autoLifecycleEnabled: event.autoLifecycleEnabled,
-      }));
-    }
+    const seriesIdByName = await this.resolveSeries(sportLeague, sourceEvents.map((event) => event.name));
+    const defaultRounds = sportLeagueDefinitionOf(sport, sportLeague).defaultRounds;
+    const cloned = await this.createEditions(sportLeague, sourceEvents.map((event) => {
+      const startDate = shiftYears(event.startDate, shift);
+      const rounds = event.rounds ?? defaultRounds;
+      return {
+        event: {
+          externalId: `manual-${randomUUID()}`,
+          providerId: MANUAL_ADMIN_PROVIDER_ID,
+          sport,
+          name: event.name,
+          venue: event.venue,
+          location: event.location,
+          startDate,
+          endDate: event.endDate ? shiftYears(event.endDate, shift) : undefined,
+          status: SportEventStatus.DRAFT,
+          rounds,
+          roundsPar: event.roundsPar,
+          eventSeriesId: seriesIdOf(seriesIdByName, event.name),
+          eventYear: targetYear,
+          syncScope: SportEventSyncScope.NONE,
+          autoLifecycleEnabled: event.autoLifecycleEnabled,
+        },
+        rounds: dailyRoundSchedule(rounds, startDate),
+      };
+    }));
     this.deps.logger?.info(
       { sportLeagueId: sportLeague.id, eventYear: input.eventYear, targetYear, clonedEventCount: cloned.length },
       'Cloned event year calendar',
@@ -534,20 +527,58 @@ export class SportEventService {
     return event;
   }
 
-  /** One edition of its series per year: the database decides, and a conflict is a 409. */
-  private async createEdition(input: SportEventCreate): Promise<SportEvent> {
+  /** The sport league's series of these names, each created on first use, by name. */
+  private async resolveSeries(sportLeague: SportLeague, names: readonly string[]): Promise<Map<string, string>> {
+    const series = await this.deps.eventSeries.findOrCreateMany(sportLeague.id, [...new Set(names)]);
+    return new Map(series.map((row) => [row.name, row.id]));
+  }
+
+  /**
+   * Creates new editions in a fixed number of queries, however many (#1253): the events in one
+   * insert, then every event's rounds and default tiers in one insert each. A new event has no
+   * field, no contests and every tier empty, so its summary is built from what was written
+   * rather than read back. 409 EVENT_EDITION_ALREADY_EXISTS when a series already has an
+   * edition in the year; then none of the events is created.
+   */
+  private async createEditions(sportLeague: SportLeague, editions: readonly NewEdition[]): Promise<SportEventAdminSummary[]> {
+    if (editions.length === 0) return [];
+    let events: SportEvent[];
     try {
-      return await this.deps.sportEvents.create(input);
+      events = await this.deps.sportEvents.createMany(editions.map((edition) => edition.event));
     } catch (error) {
       if (isEditionConflict(error)) {
+        // Every caller creates editions of one year.
+        const [first] = editions;
         throw new SportEventError(
-          `"${input.name}" already has an edition in ${input.eventYear}.`,
+          editions.length === 1
+            ? `"${first.event.name}" already has an edition in ${first.event.eventYear}.`
+            : `One of these events already has an edition in ${first.event.eventYear}; none were created.`,
           'EVENT_EDITION_ALREADY_EXISTS',
           409,
         );
       }
       throw error;
     }
+    await this.deps.rounds.createSchedules(events.map((event, index) => ({ sportEventId: event.id, rounds: editions[index]?.rounds ?? [] })));
+    const tiersByEvent = await this.deps.tiers.createDefaultTiers(events.map((event) => ({
+      sportEventId: event.id,
+      definition: eventSportDefinition(event),
+      leagueTierCount: sportLeague.tierCount,
+    })));
+    return events.map((event): SportEventAdminSummary => {
+      const tiers = tiersByEvent.get(event.id) ?? [];
+      return {
+        event,
+        loadedParticipantCount: 0,
+        tierCount: tiers.length,
+        adminCounts: {
+          untieredParticipantCount: 0,
+          unpricedParticipantCount: 0,
+          emptyTierLabels: tiers.map((tier) => tier.label),
+          contestCount: 0,
+        },
+      };
+    });
   }
 
   /** The sport league and the sport it belongs to. */
@@ -624,4 +655,57 @@ function describeReleaseBlockers(summary: SportEventAdminSummary): string[] {
     blockers.push(`${unpricedParticipantCount} active participant(s) have no price`);
   }
   return blockers;
+}
+
+/** One new edition to create: the event, and its round schedule. */
+interface NewEdition {
+  event: SportEventCreate;
+  rounds: readonly SportEventRoundSchedule[];
+}
+
+/** The id of the series of this name, which `resolveSeries` found or created. */
+function seriesIdOf(seriesIdByName: ReadonlyMap<string, string>, name: string): string {
+  const id = seriesIdByName.get(name);
+  if (id === undefined) throw new Error(`No event series "${name}" was found or created.`);
+  return id;
+}
+
+/** The one summary of a single-edition create. */
+function onlyOne(summaries: readonly SportEventAdminSummary[]): SportEventAdminSummary {
+  const summary = summaries.at(0);
+  if (summary === undefined || summaries.length !== 1) throw new Error(`Expected one created event, got ${summaries.length}.`);
+  return summary;
+}
+
+/**
+ * A provider event as a new edition, pre-linked to its provider for scores (SCORES_ONLY). The
+ * rounds follow its dates unless a round count is given, which falls back to sequential days, so
+ * `rounds` always matches the rounds created.
+ */
+function providerEdition(
+  sport: Sport,
+  seriesIdByName: ReadonlyMap<string, string>,
+  input: ProviderEventDetail & { externalId: string; eventYear: number; providerId: string; rounds?: number },
+): NewEdition {
+  const schedule = input.rounds === undefined
+    ? deriveGolfTournamentRounds(input.startDate, input.endDate)
+    : dailyRoundSchedule(input.rounds, input.startDate);
+  return {
+    event: {
+      externalId: input.externalId,
+      providerId: input.providerId,
+      sport,
+      name: input.name,
+      venue: input.venue ?? undefined,
+      startDate: input.startDate,
+      endDate: input.endDate ?? undefined,
+      status: SportEventStatus.DRAFT,
+      rounds: schedule.length,
+      eventSeriesId: seriesIdOf(seriesIdByName, input.name),
+      eventYear: input.eventYear,
+      syncScope: SportEventSyncScope.SCORES_ONLY,
+      autoLifecycleEnabled: true,
+    },
+    rounds: schedule,
+  };
 }
