@@ -141,17 +141,24 @@ export class PrismaUserRepository implements UserRepository {
 
 }
 
+/**
+ * Every word of the search must match one of the user's text columns, so a full name ("Ali
+ * Smith") finds the user whose first name holds one word and last name the other. Each word is
+ * its own substring match, which the trigram indexes on those columns serve (#1180).
+ */
 function buildUserWhere(filters: UserSearchFilters): Prisma.UserWhereInput {
-  const search = filters.search?.trim();
+  const words = filters.search?.trim().split(/\s+/).filter((word) => word.length > 0) ?? [];
   return {
-    ...(search
+    ...(words.length > 0
       ? {
-        OR: [
-          { email: { contains: search, mode: 'insensitive' as const } },
-          { username: { contains: search, mode: 'insensitive' as const } },
-          { firstName: { contains: search, mode: 'insensitive' as const } },
-          { lastName: { contains: search, mode: 'insensitive' as const } },
-        ],
+        AND: words.map((word) => ({
+          OR: [
+            { email: { contains: word, mode: 'insensitive' as const } },
+            { username: { contains: word, mode: 'insensitive' as const } },
+            { firstName: { contains: word, mode: 'insensitive' as const } },
+            { lastName: { contains: word, mode: 'insensitive' as const } },
+          ],
+        })),
       }
       : {}),
     ...(typeof filters.isActive === 'boolean' ? { isActive: filters.isActive } : {}),

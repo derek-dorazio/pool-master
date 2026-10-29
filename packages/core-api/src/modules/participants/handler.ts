@@ -49,7 +49,7 @@ export function createParticipantHandlers(
     }
     const filters: ParticipantSearchFilters = { sportId, status };
 
-    const participants = await participantService.search({ query: q, filters });
+    const participants = await participantService.search({ query: q?.trim(), filters });
     return { participants: participants.map(mapParticipantToDto) };
   }
 

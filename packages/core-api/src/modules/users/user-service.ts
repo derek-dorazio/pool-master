@@ -93,7 +93,7 @@ export class UserService {
         400,
       );
     }
-    const users = await this.users.findAll({ ...filters, search: filters.search.trim() });
+    const users = await this.users.findAll({ ...filters, search: filters.search?.trim() });
     this.logger?.info({
       action: 'userService.list.success',
       data: { actorUserId: actor.userId, count: users.length },

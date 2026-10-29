@@ -411,6 +411,16 @@ describe('Contract verification (root admin)', () => {
     }
   });
 
+  it('refuses every league to a non-root-admin with 403 before it asks for a search, so the 400 never reveals the route', async () => {
+    const member = await createTestUser({ displayName: 'Contract Non Admin League Scope' });
+
+    const response = await getApp().inject({ method: 'GET', url: '/api/v1/leagues?scope=all', headers: member.headers });
+
+    expect(response.statusCode).toBe(403);
+    expect(ErrorEnvelopeSchema.safeParse(response.json()).success).toBe(true);
+    expect(response.json<ErrorEnvelope>().error.code).toBe('LEAGUE_SCOPE_FORBIDDEN');
+  });
+
   it('root-admin user reads match their DTOs on happy paths', async () => {
     const rootAdmin = await createTestUser({
       displayName: 'Root Admin Happy Path User',
@@ -1187,6 +1197,16 @@ describe('Contract verification (root admin)', () => {
       expect(playerListRes.statusCode).toBe(200);
       expect(ParticipantListResponseSchema.safeParse(playerListRes.json()).success).toBe(true);
       expect(playerListRes.json<ParticipantListResponse>().participants).toHaveLength(3);
+
+      // #1180 — the search is trimmed before it reaches the repository: a leading space still
+      // finds names that start with the term, without a sport.
+      const paddedSearchRes = await getApp().inject({
+        method: 'GET',
+        url: `/api/v1/participants?q=%20Z3L+Contract+Golfer+${stamp}`,
+        headers: rootAdmin.headers,
+      });
+      expect(paddedSearchRes.statusCode).toBe(200);
+      expect(paddedSearchRes.json<ParticipantListResponse>().participants).toHaveLength(3);
 
       // --- createEvent (201: { event }) ---------------------------------------
       const tournamentRes = await getApp().inject({

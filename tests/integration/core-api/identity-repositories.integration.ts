@@ -77,6 +77,20 @@ describe('identity cluster repositories (#202)', () => {
       expect(ids).toContain(byEmail.user.id);
     });
 
+    it('finds a user by full name, each word matching a different column, and not when one word matches nothing', async () => {
+      const prisma = getPrisma();
+      const repo = new PrismaUserRepository(prisma);
+      const marker = Date.now().toString(36);
+      const created = await createTestUser({ firstName: `Ali${marker}`, lastName: `Smith${marker}` });
+      await createTestUser({ firstName: `Ali${marker}`, lastName: `Jones${marker}` });
+
+      const fullName = await repo.findAll({ search: `  Ali${marker}   Smith${marker} ` });
+      const wrongSurname = await repo.findAll({ search: `Ali${marker} Brown${marker}` });
+
+      expect(fullName.map((user) => user.id)).toEqual([created.user.id]);
+      expect(wrongSurname).toEqual([]);
+    });
+
     it('matches case-insensitively', async () => {
       const prisma = getPrisma();
       const repo = new PrismaUserRepository(prisma);
