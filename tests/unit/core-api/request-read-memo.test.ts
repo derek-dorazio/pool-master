@@ -139,4 +139,21 @@ describe('request read memo plugin', () => {
     expect(load).toHaveBeenCalledTimes(2);
     await app.close();
   });
+
+  it('keeps the request\'s memo after its JSON body is parsed', async () => {
+    const load = counter();
+    const app = Fastify();
+    await app.register(requestReadMemo);
+    app.post('/league', {
+      preHandler: async () => {
+        await memoizedRead(ROOT, `${ReadMemoKey.league}a`, load);
+      },
+    }, async () => memoizedRead(ROOT, `${ReadMemoKey.league}a`, load));
+
+    const response = await app.inject({ method: 'POST', url: '/league', payload: { name: 'Renamed' } });
+
+    expect(response.json()).toEqual({ name: 'read 1' });
+    expect(load).toHaveBeenCalledTimes(1);
+    await app.close();
+  });
 });
