@@ -41,6 +41,7 @@ export function ReseedRoundsCard({
   roundCount: number;
 }) {
   const leaguesQuery = useSportLeaguesQuery(event.sport);
+  // poolmaster-allow-list-lookup: sport leagues are reference data, a few dozen rows that do not grow with history
   const league = leaguesQuery.data?.find((candidate) => candidate.id === event.sportLeagueId);
   // Only a released event still being played places rounds: not a draft, a cancelled or a finished one.
   const underWay = event.status === SportEventStatus.SCHEDULED || event.status === SportEventStatus.IN_PROGRESS;

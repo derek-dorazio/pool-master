@@ -20,6 +20,7 @@ import noWidenedEnumFields from './no-widened-enum-fields.mjs';
 import noParallelApiTypes from './no-parallel-api-types.mjs';
 import noInlineQueryKeys from './no-inline-query-keys.mjs';
 import noInlineThemeStyles from './no-inline-theme-styles.mjs';
+import noListLookup from './no-list-lookup.mjs';
 import noMockedApi from './no-mocked-api.mjs';
 import noNodeEnvReads from './no-node-env-reads.mjs';
 import noQueryInLoop from './no-query-in-loop.mjs';
@@ -41,6 +42,7 @@ export default {
     'no-parallel-api-types': noParallelApiTypes,
     'no-widened-enum-fields': noWidenedEnumFields,
     'no-inline-theme-styles': noInlineThemeStyles,
+    'no-list-lookup': noListLookup,
     'no-mocked-api': noMockedApi,
     'no-node-env-reads': noNodeEnvReads,
     'no-plan-branching': noPlanBranching,

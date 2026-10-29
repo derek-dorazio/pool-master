@@ -212,15 +212,13 @@ export function RootAdminSyncDashboardPage() {
 
   const recentRuns = useMemo(() => syncRunsQuery.data ?? [], [syncRunsQuery.data]);
   const summary = useMemo(() => {
-    const submitted = recentRuns.filter((run) => run.status === ProviderSyncRunStatus.SUBMITTED).length;
-    const running = recentRuns.filter((run) => run.status === ProviderSyncRunStatus.IN_PROGRESS).length;
-    const failed = recentRuns.filter((run) => run.status === ProviderSyncRunStatus.FAILED).length;
-    const completed = recentRuns.filter((run) => run.status === ProviderSyncRunStatus.COMPLETED).length;
+    // poolmaster-allow-list-lookup: the runs listed on this screen, capped by the server's six-hour window
+    const runsWith = (status: ProviderSyncRunStatus) => recentRuns.filter((run) => run.status === status).length;
     return {
-      submitted,
-      running,
-      failed,
-      completed,
+      submitted: runsWith(ProviderSyncRunStatus.SUBMITTED),
+      running: runsWith(ProviderSyncRunStatus.IN_PROGRESS),
+      failed: runsWith(ProviderSyncRunStatus.FAILED),
+      completed: runsWith(ProviderSyncRunStatus.COMPLETED),
       lastStartedAt: recentRuns.at(0)?.startedAt ?? recentRuns.at(0)?.createdAt ?? null,
     };
   }, [recentRuns]);
@@ -233,7 +231,7 @@ export function RootAdminSyncDashboardPage() {
   const evidenceEmptyMessage = runDetails === null
     ? payloadRun?.status === ProviderSyncRunStatus.SUBMITTED
       ? 'This run hasn\'t started yet, so it has no details.'
-      : 'No details are stored for this run.'
+      : 'Detailed diagnostics are kept for 30 days. None are stored for this run.'
     : [
         `No ${PRODUCT_NAME} rows changed in this sync.`,
         providerPayload?.rawCaptured === true ? 'Use the Payloads tab to inspect the raw provider payload.' : null,
@@ -427,6 +425,7 @@ export function RootAdminSyncDashboardPage() {
           </div>
         </div>
         <MetricGrid className="mt-6 md:grid-cols-5">
+          {/* poolmaster-allow-list-lookup: the runs listed on this screen, capped by the server's six-hour window */}
           <MetricTile label="Recent runs" value={recentRuns.length} />
           <MetricTile label="Submitted" value={summary.submitted} />
           <MetricTile label="Completed" value={summary.completed} />

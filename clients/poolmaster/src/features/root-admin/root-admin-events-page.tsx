@@ -128,6 +128,7 @@ export function RootAdminEventsPage() {
     retry: false,
   });
 
+  // poolmaster-allow-list-lookup: the selected row of the list on screen
   const selectedSport = eventsQuery.data?.find((event) => event.id === selectedEventId)?.sport;
 
   const tierLabelById = useMemo(
@@ -293,6 +294,7 @@ export function RootAdminEventsPage() {
     [displayPreferences, selectedSport, tierLabelById],
   );
 
+  // poolmaster-allow-list-lookup: the selected row of the list on screen
   const selectedEvent = eventsQuery.data?.find((event) => event.id === selectedEventId);
   const participantModalTitle = selectedEvent?.name ?? 'Event participants';
   const participantModalDescription = selectedEvent

@@ -105,6 +105,7 @@ export function LeagueContestHistoryPage() {
               </p>
             </div>
             <div className="flex items-center gap-3">
+              {/* poolmaster-allow-list-lookup: counts the results listed right below it */}
               {resultsQuery.data ? <Chip tone="info">{resultsQuery.data.length}</Chip> : null}
               <Select
                 aria-label="Year"

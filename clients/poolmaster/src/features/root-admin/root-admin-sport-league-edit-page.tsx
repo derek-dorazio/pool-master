@@ -94,6 +94,7 @@ export function RootAdminSportLeagueEditPage() {
   const sportLeagueNoun = useSportLeagueNoun(sport, leagueId);
   const leaguesQuery = useSportLeaguesQuery(sport);
   const sportLeague = useMemo(
+    // poolmaster-allow-list-lookup: sport leagues are reference data, a few dozen rows that do not grow with history
     () => leaguesQuery.data?.find((candidate) => candidate.id === leagueId),
     [leaguesQuery.data, leagueId],
   );
