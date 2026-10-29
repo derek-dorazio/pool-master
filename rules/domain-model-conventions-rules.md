@@ -641,3 +641,13 @@ without bound, so `listProviderSyncRuns` (formerly `adminListProviderSyncRuns`, 
 hours, backed by an index on `created_at`. That is a filter, not a page — the caller asks for
 a time range and gets everything in it. Reach for the same shape for any future log-like
 read.
+
+**A platform-wide list requires its filter.** The lists that cross leagues — every user,
+every league, every sport event, every participant — grow with the platform, not with a
+league, so none of them may be read whole (#1180). Users and leagues (`scope=all`) need a
+search of at least `PLATFORM_SEARCH_MIN_LENGTH` characters, answering 400
+`SEARCH_TERM_REQUIRED`; events need a sport, a sport league or a year
+(`SPORT_EVENT_FILTER_REQUIRED`); participants need a sport or a search. The searches are
+substring matches, so each column they match carries a trigram GIN index. A Manage page over
+one of these lists asks for the filter first — a search box, or a year that defaults to this
+one — rather than loading everything and filtering in the browser.

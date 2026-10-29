@@ -611,6 +611,11 @@ model User {
   leaguePayments           LeaguePayment[]           @relation("LeaguePaymentPayer")
 
   @@index([isRootAdmin, isActive])
+  /// Trigram indexes serve the root admin user search, a substring match on each column (#1180).
+  @@index([email(ops: raw("gin_trgm_ops"))], type: Gin, map: "users_email_trgm_idx")
+  @@index([username(ops: raw("gin_trgm_ops"))], type: Gin, map: "users_username_trgm_idx")
+  @@index([firstName(ops: raw("gin_trgm_ops"))], type: Gin, map: "users_first_name_trgm_idx")
+  @@index([lastName(ops: raw("gin_trgm_ops"))], type: Gin, map: "users_last_name_trgm_idx")
   @@map("users")
 }
 
@@ -714,6 +719,8 @@ model League {
   payments              LeaguePayment[]
 
   @@index([planRenewsAt])
+  /// Serves the root admin league search, a substring match on the name (#1180).
+  @@index([name(ops: raw("gin_trgm_ops"))], type: Gin, map: "leagues_name_trgm_idx")
   @@map("leagues")
 }
 
@@ -1152,6 +1159,12 @@ model Participant {
   leagueAffiliations     ParticipantLeagueAffiliation[]
 
   @@index([sportId, status])
+  /// Trigram indexes serve the participant search across sports, a substring match on each column (#1180).
+  @@index([name(ops: raw("gin_trgm_ops"))], type: Gin, map: "participants_name_trgm_idx")
+  @@index([firstName(ops: raw("gin_trgm_ops"))], type: Gin, map: "participants_first_name_trgm_idx")
+  @@index([lastName(ops: raw("gin_trgm_ops"))], type: Gin, map: "participants_last_name_trgm_idx")
+  @@index([shortName(ops: raw("gin_trgm_ops"))], type: Gin, map: "participants_short_name_trgm_idx")
+  @@index([teamAffiliation(ops: raw("gin_trgm_ops"))], type: Gin, map: "participants_team_affiliation_trgm_idx")
   @@map("participants")
 }
 
