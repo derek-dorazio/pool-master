@@ -1565,7 +1565,6 @@ describe('Contract verification (root admin)', () => {
         headers: rootAdmin.headers,
       });
       expect(leagueAfterRes.json<SportLeagueResponse>().sportLeague.currentEventYear).toBe(2081);
-
     } finally {
       const prisma = getPrisma();
       if (created.eventIds.length) {
