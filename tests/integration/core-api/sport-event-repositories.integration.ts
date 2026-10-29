@@ -1,6 +1,6 @@
 import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
-import { BracketAdvancement, Sport } from '@poolmaster/shared/domain';
+import { BracketAdvancement, ParticipantInactiveReason, Sport } from '@poolmaster/shared/domain';
 import {
   PrismaEventSeriesRepository,
   PrismaParticipantProviderMappingRepository,
@@ -228,6 +228,22 @@ describe('EventSeriesRepository', () => {
 });
 
 describe('SportEventRoundRepository — writes', () => {
+  it('creates every round in one write, keeping each round\'s own end time or none', async () => {
+    const { rounds } = repos();
+    const event = await createEvent();
+
+    await rounds.createMany(event.id, [
+      { roundNumber: 1, scheduledDate: new Date('2026-06-04T12:00:00.000Z'), scheduledEndAt: new Date('2026-06-04T22:00:00.000Z') },
+      { roundNumber: 2, scheduledDate: new Date('2026-06-05T12:00:00.000Z') },
+    ]);
+
+    const created = await rounds.findBySportEvent(event.id);
+    expect(created.map((round) => [round.roundNumber, round.scheduledEndAt ?? null])).toEqual([
+      [1, new Date('2026-06-04T22:00:00.000Z')],
+      [2, null],
+    ]);
+  });
+
   it('reschedules all or none: an unknown round number leaves every round where it was', async () => {
     const { rounds } = repos();
     const event = await createEvent();
@@ -273,6 +289,37 @@ describe('SportEventRoundRepository — writes', () => {
 });
 
 describe('SportEventParticipantRepository — the field', () => {
+  it('adds a field in one write, all or none: a participant named twice leaves the field empty', async () => {
+    const { field } = repos();
+    const event = await createEvent();
+    const [ana, ben] = await createParticipants(['Ana', 'Ben']);
+
+    await expect(field.createMany(event.id, [
+      { participantId: ana.id },
+      { participantId: ben.id },
+      { participantId: ana.id },
+    ])).rejects.toBeDefined();
+
+    expect(await field.findBySportEvent(event.id)).toEqual([]);
+  });
+
+  it('adds rows that set different optional columns in one write, defaulting the ones a row leaves out', async () => {
+    const { field } = repos();
+    const event = await createEvent();
+    const [ana, ben] = await createParticipants(['Ana', 'Ben']);
+
+    await field.createMany(event.id, [
+      { participantId: ana.id, seedNumber: 1, isActive: false, inactiveReason: ParticipantInactiveReason.WITHDRAWN },
+      { participantId: ben.id },
+    ]);
+
+    const rows = await field.findBySportEvent(event.id);
+    expect(rows.map((row) => [row.participantId, row.seedNumber, row.isActive])).toEqual([
+      [ana.id, 1, false],
+      [ben.id, undefined, true],
+    ]);
+  });
+
   it('orders the field by seed with unseeded participants last', async () => {
     const { field } = repos();
     const event = await createEvent();

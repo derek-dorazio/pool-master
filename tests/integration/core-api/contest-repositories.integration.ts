@@ -705,6 +705,24 @@ describe('ParticipantContestScoringRuleRepository', () => {
     ]);
   });
 
+  it('deletes every rule of one configuration in one call, leaving another configuration\'s rules', async () => {
+    const replaced = await configurationFor('Replaced scoring');
+    const kept = await configurationFor('Kept scoring');
+    await getPrisma().participantContestScoringRule.createMany({
+      data: [
+        { contestConfigurationId: replaced.id, participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 1, config: {} },
+        { contestConfigurationId: replaced.id, participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 2, config: {} },
+        { contestConfigurationId: kept.id, participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 1, config: {} },
+      ],
+    });
+    const repo = new PrismaParticipantContestScoringRuleRepository(getPrisma());
+
+    await repo.deleteByContestConfiguration(replaced.id);
+
+    await expect(repo.findByContestConfiguration(replaced.id)).resolves.toEqual([]);
+    await expect(repo.findByContestConfiguration(kept.id)).resolves.toHaveLength(1);
+  });
+
   it('reads retired keys out of a stored config, and a retired definition or a non-object config as a failed parse, in sort order', async () => {
     const configuration = await configurationFor('Stored settings');
     await getPrisma().participantContestScoringRule.createMany({

@@ -67,6 +67,7 @@ export async function resolveAvailableDefaultSquadName(
 
   for (let attempt = 1; attempt <= MAX_DEFAULT_NAME_ATTEMPTS; attempt += 1) {
     const candidate = attempt === 1 ? base : `${base} ${attempt}`;
+    // poolmaster-allow-query-in-loop: bounded by MAX_DEFAULT_NAME_ATTEMPTS
     const existing = await squadRepo.findByLeagueAndName(leagueId, candidate);
     if (!existing) {
       return candidate;

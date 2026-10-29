@@ -140,6 +140,7 @@ export class InvitationService {
         skippedMembers.push(normalised);
         continue;
       }
+      // poolmaster-allow-query-in-loop: #1173
       const existing = await this.deps.invitations.findByEmail(input.leagueId, normalised);
       if (existing) {
         this.logger?.warn({
@@ -151,6 +152,7 @@ export class InvitationService {
       }
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + DEFAULT_INVITE_EXPIRY_DAYS);
+      // poolmaster-allow-query-in-loop: #1173
       const invitation = await this.deps.invitations.create({
         leagueId: input.leagueId,
         email: normalised,

@@ -320,8 +320,11 @@ export class ContestService {
     if (cutoff.kind === ContestCutoffKind.EVENT_START) {
       return events.map((event) => ({ event, window: event }));
     }
-    return Promise.all(events.map(async (event) =>
-      ({ event, window: cutoffTiming(cutoff, event, await this.deps.matches.findBySportEvent(event.id)) })));
+    const matches = await this.deps.matches.findBySportEvents(events.map((event) => event.id));
+    return events.map((event) => ({
+      event,
+      window: cutoffTiming(cutoff, event, matches.filter((match) => match.sportEventId === event.id)),
+    }));
   }
 
   /** The ids of the contest's events whose picks everyone may see as of now (#713). */

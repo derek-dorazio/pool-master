@@ -265,6 +265,7 @@ export class ContestNotices implements ContestOpenedNotice, ContestStartedNotice
     const event = buildEmailEventHeader(this.deps.appBaseUrl, sportEvent, sportLeagueName);
     await Promise.all(contests.map(async (contest) => {
       const [league, members, entrants] = await Promise.all([
+        // poolmaster-allow-query-in-loop: #1255
         this.deps.leagues.findById(contest.leagueId),
         activeLeagueMembersWithRoles(this.deps, contest.leagueId),
         this.entrantsOf(contest),

@@ -173,6 +173,7 @@ export class PrismaParticipantLeagueAffiliationRepository implements Participant
   }
 
   async updateRankings(sportLeagueId: string, rankings: readonly ParticipantRanking[]): Promise<void> {
+    // poolmaster-allow-query-in-loop: one sport league's ranked participants (per-row values, one transaction)
     await this.prisma.$transaction(rankings.map((entry) => this.prisma.participantLeagueAffiliation.update({
       where: { participantId_sportLeagueId: { participantId: entry.participantId, sportLeagueId } },
       data: { ranking: entry.ranking },
@@ -180,6 +181,7 @@ export class PrismaParticipantLeagueAffiliationRepository implements Participant
   }
 
   async upsertRankings(sportLeagueId: string, rankings: readonly ParticipantRanking[]): Promise<void> {
+    // poolmaster-allow-query-in-loop: one sport league's ranked participants (per-row values, one transaction)
     await this.prisma.$transaction(rankings.map((entry) => this.prisma.participantLeagueAffiliation.upsert({
       where: { participantId_sportLeagueId: { participantId: entry.participantId, sportLeagueId } },
       create: { participantId: entry.participantId, sportLeagueId, ranking: entry.ranking },
@@ -497,17 +499,18 @@ export class PrismaSportEventRoundRepository implements SportEventRoundRepositor
   }
 
   async createMany(sportEventId: string, rounds: readonly SportEventRoundSchedule[]): Promise<void> {
-    await this.prisma.$transaction(rounds.map((round) => this.prisma.sportEventRound.create({
-      data: {
+    await this.prisma.sportEventRound.createMany({
+      data: rounds.map((round) => ({
         sportEventId,
         roundNumber: round.roundNumber,
         scheduledDate: round.scheduledDate,
         scheduledEndAt: round.scheduledEndAt ?? null,
-      },
-    })));
+      })),
+    });
   }
 
   async reschedule(sportEventId: string, rounds: readonly SportEventRoundSchedule[]): Promise<void> {
+    // poolmaster-allow-query-in-loop: one event's handful of rounds (per-row values, one transaction)
     await this.prisma.$transaction(rounds.map((round) => this.prisma.sportEventRound.update({
       where: { sportEventId_roundNumber: { sportEventId, roundNumber: round.roundNumber } },
       data: {
@@ -654,12 +657,13 @@ export class PrismaSportEventParticipantRepository implements SportEventParticip
   }
 
   async createMany(sportEventId: string, rows: readonly SportEventParticipantCreate[]): Promise<void> {
-    await this.prisma.$transaction(rows.map((row) => this.prisma.sportEventParticipant.create({
-      data: { sportEventId, participantId: row.participantId, ...fieldPatch(row) },
-    })));
+    await this.prisma.sportEventParticipant.createMany({
+      data: rows.map((row) => ({ sportEventId, participantId: row.participantId, ...fieldPatch(row) })),
+    });
   }
 
   async updateMany(entries: readonly SportEventParticipantFieldUpdate[]): Promise<void> {
+    // poolmaster-allow-query-in-loop: one event's field (per-row values, one transaction)
     await this.prisma.$transaction(entries.map((entry) => this.prisma.sportEventParticipant.update({
       where: { id: entry.id },
       data: {
@@ -759,9 +763,9 @@ export class PrismaSportEventTierRepository implements SportEventTierRepository 
   }
 
   async createMany(sportEventId: string, tiers: readonly SportEventTierDefinition[]): Promise<void> {
-    await this.prisma.$transaction(tiers.map((tier) => this.prisma.sportEventTier.create({
-      data: { sportEventId, ...tierColumns(tier) },
-    })));
+    await this.prisma.sportEventTier.createMany({
+      data: tiers.map((tier) => ({ sportEventId, ...tierColumns(tier) })),
+    });
   }
 
   async replace(sportEventId: string, tiers: readonly SportEventTierDefinition[], reassignTo?: string): Promise<void> {
@@ -771,9 +775,11 @@ export class PrismaSportEventTierRepository implements SportEventTierRepository 
       // Park every current tier number out of range first, so two tiers swapping numbers
       // never collide on the (sportEventId, tierNumber) unique index.
       for (const tier of existing) {
+        // poolmaster-allow-query-in-loop: an event's handful of tiers, renumbered in one transaction
         await tx.sportEventTier.update({ where: { id: tier.id }, data: { tierNumber: -(tier.tierNumber + 1) } });
       }
       for (const tier of tiers) {
+        // poolmaster-allow-query-in-loop: an event's handful of tiers, renumbered in one transaction
         await tx.sportEventTier.upsert({
           where: { sportEventId_tierKey: { sportEventId, tierKey: tier.tierKey } },
           create: { sportEventId, ...tierColumns(tier) },
@@ -827,6 +833,7 @@ export class PrismaSportEventParticipantValuationRepository implements SportEven
         tierOrderIndex: assignment.tierOrderIndex,
         tierAssignedSource: assignment.source,
       };
+      // poolmaster-allow-query-in-loop: one event's field (per-row values, one transaction)
       return this.prisma.sportEventParticipantValuation.upsert({
         where: { sportEventParticipantId: assignment.sportEventParticipantId },
         create: { sportEventParticipantId: assignment.sportEventParticipantId, ...tier },
@@ -843,6 +850,7 @@ export class PrismaSportEventParticipantValuationRepository implements SportEven
     await forgettingReads(ReadMemoKey.sportEvent, () => this.prisma.$transaction([
       ...input.assignments.map((assignment) => {
         const price = { price: assignment.price, priceAssignedSource: assignment.source };
+        // poolmaster-allow-query-in-loop: one event's field (per-row values, one transaction)
         return this.prisma.sportEventParticipantValuation.upsert({
           where: { sportEventParticipantId: assignment.sportEventParticipantId },
           create: { sportEventParticipantId: assignment.sportEventParticipantId, ...price },

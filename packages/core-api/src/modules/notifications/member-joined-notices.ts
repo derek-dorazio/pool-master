@@ -121,6 +121,7 @@ export class MemberJoinedNotices implements DueNotifications {
           if (!(await this.deps.email.leaguesRecorded('LEAGUE_MEMBER_JOINED', atOnceAbout(join))).has(leagueId)) untold.push(join);
         }
         if (untold.length === 0) continue;
+        // poolmaster-allow-query-in-loop: #1255
         const league = await this.deps.leagues.findById(leagueId);
         if (!league?.isActive) continue;
         await this.send(league, MemberJoinedTiming.NEXT_DAY, untold, `${yesterday}:${leagueId}`);
