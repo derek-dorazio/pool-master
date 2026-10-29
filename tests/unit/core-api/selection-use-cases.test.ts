@@ -12,6 +12,7 @@ import type {
 import type { ContestEntryPickWithParticipant } from '@poolmaster/shared/db';
 import { SelectionService } from '../../../packages/core-api/src/modules/selections/service';
 import type { SportEventTierService } from '../../../packages/core-api/src/modules/events/sport-event-tier-service';
+import type { ContestEntryPickService, EntryPickChangeInput } from '../../../packages/core-api/src/modules/contest-entry-picks';
 import { toSelectionPickResponse, toSelectionStateResponse } from '../../../packages/core-api/src/mappers/selections.mapper';
 import {
   fakeContestConfigurationRepo,
@@ -219,47 +220,51 @@ function buildWorld(options: WorldOptions = {}) {
       findByEntriesWithParticipant: async (entryIds: readonly string[], options?: { sportEventId?: string }) =>
         picks.filter((pick) => entryIds.includes(pick.entryId)
           && (options?.sportEventId === undefined || pick.sportEventId === options.sportEventId)),
-      countByContest: async () => picks.length,
     }),
     pickWrites: {
-      createPick: async (input: {
-        entryId: string;
-        sportEventParticipantId: string;
-        lineupSlot?: number;
-        pickSequence?: number;
-        isAutoPicked?: boolean;
-      }) => {
-        const row = fieldRowById.get(input.sportEventParticipantId) as SportEventParticipant;
-        const participant = participantById.get(row.participantId) as Participant;
-        clock += 1000;
-        const created = {
-          id: `pick-${nextId++}`,
-          entryId: input.entryId,
-          sportEventId: row.sportEventId,
-          sportEventParticipantId: input.sportEventParticipantId,
-          contestFormat: 'ROSTER_SELECTION',
-          lineupSlot: input.lineupSlot ?? null,
-          pickSequence: input.pickSequence ?? null,
-          isAutoPicked: input.isAutoPicked ?? false,
-          pickedAt: new Date(clock),
-          ...TIMESTAMPS,
-          participant: {
-            participantId: participant.id,
-            participantName: participant.name,
-            isActive: row.isActive,
-            inactiveReason: row.inactiveReason ?? null,
-            role: 'GOLFER',
-            teamAffiliation: null,
-          },
-        } as unknown as ContestEntryPickWithParticipant;
-        picks.push(created);
-        return created;
+      // Decides on the entry's picks in the event, then applies the write, as the lock-holding service does.
+      changeEntryPick: async ({ entryId, sportEventId, decide }: EntryPickChangeInput) => {
+        const write = decide(picks
+          .filter((pick) => pick.entryId === entryId && pick.sportEventId === sportEventId)
+          .map((pick) => ({
+            id: pick.id,
+            sportEventParticipantId: pick.sportEventParticipantId,
+            participantId: pick.participant.participantId,
+            lineupSlot: pick.lineupSlot ?? null,
+          })));
+        if (!write) return { changed: false };
+        if (write.removePickId) {
+          const index = picks.findIndex((pick) => pick.id === write.removePickId);
+          if (index >= 0) picks.splice(index, 1);
+        }
+        if (write.add) {
+          const row = fieldRowById.get(write.add.sportEventParticipantId) as SportEventParticipant;
+          const participant = participantById.get(row.participantId) as Participant;
+          clock += 1000;
+          picks.push({
+            id: `pick-${nextId++}`,
+            entryId,
+            sportEventId: row.sportEventId,
+            sportEventParticipantId: write.add.sportEventParticipantId,
+            contestFormat: 'ROSTER_SELECTION',
+            lineupSlot: write.add.lineupSlot,
+            pickSequence: picks.length + 1,
+            isAutoPicked: false,
+            pickedAt: new Date(clock),
+            ...TIMESTAMPS,
+            participant: {
+              participantId: participant.id,
+              participantName: participant.name,
+              isActive: row.isActive,
+              inactiveReason: row.inactiveReason ?? null,
+              role: 'GOLFER',
+              teamAffiliation: null,
+            },
+          } as unknown as ContestEntryPickWithParticipant);
+        }
+        return { changed: true };
       },
-      deletePick: async (pickId: string) => {
-        const index = picks.findIndex((pick) => pick.id === pickId);
-        if (index >= 0) picks.splice(index, 1);
-      },
-    } as never,
+    } as unknown as ContestEntryPickService,
     tiers: {
       getEffectiveTiersAndValuations: async () => ({ tiers: tierGroups, valuations }),
     } as unknown as SportEventTierService,

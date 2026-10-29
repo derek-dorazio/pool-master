@@ -732,6 +732,40 @@ describe('SDK Functional: Roster Selection', () => {
     expect(await entryStatus()).toBe('DRAFT');
   });
 
+  // #1259: a pick change locks the entry row before it reads the entry's picks, so two changes
+  // racing on one entry decide one after the other, never on the same picks.
+  it('lets only one of two simultaneous selections onto a one-golfer roster, refusing the other as complete', async () => {
+    const fixture = await seedBudgetPickFixture({ rosterSize: 1 });
+    const pickFor = (sportEventParticipantId: string) => selectContestPick({
+      client: fixture.commissioner.client,
+      path: { contestId: fixture.contestId, entryId: fixture.commissionerEntryId, sportEventParticipantId },
+    });
+
+    const answers = await Promise.all([pickFor(fixture.firstEventParticipantId), pickFor(fixture.secondEventParticipantId)]);
+
+    expect(answers.map((answer) => answer.response?.status).sort((a, b) => (a ?? 0) - (b ?? 0))).toEqual([200, 400]);
+    expectFunctionalError(answers.find((answer) => answer.response?.status === 400) ?? {}, { status: 400, code: 'ENTRY_COMPLETE' });
+    const rows = await getFunctionalPrisma().contestEntryPick.findMany({ where: { entryId: fixture.commissionerEntryId } });
+    expect(rows).toHaveLength(1);
+  });
+
+  it('answers both of two simultaneous selections of the same golfer with the one pick they hold', async () => {
+    const fixture = await seedBudgetPickFixture({ rosterSize: 2 });
+    const pickFirst = () => selectContestPick({
+      client: fixture.commissioner.client,
+      path: { contestId: fixture.contestId, entryId: fixture.commissionerEntryId, sportEventParticipantId: fixture.firstEventParticipantId },
+    });
+
+    const answers = await Promise.all([pickFirst(), pickFirst()]);
+
+    expect(answers.map((answer) => answer.response?.status)).toEqual([200, 200]);
+    // Both answers show the entry holding the one golfer.
+    expect(answers.map((answer) => answer.data?.picks.length)).toEqual([1, 1]);
+    expect(answers[0].data?.picks[0]?.participantId).toEqual(answers[1].data?.picks[0]?.participantId);
+    const rows = await getFunctionalPrisma().contestEntryPick.findMany({ where: { entryId: fixture.commissionerEntryId } });
+    expect(rows).toHaveLength(1);
+  });
+
   it('reads a tiered room, submits a selection, and returns updated tiered state', async () => {
     const fixture = await seedTieredDraftFixture();
 

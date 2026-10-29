@@ -12169,43 +12169,6 @@ export interface components {
                 pickedAt: string;
             }[];
         };
-        /** @description Raw ContestEntryPick row used by persistence-aware surfaces. */
-        ContestEntryPickDto: {
-            /** @description Pick identifier. */
-            id: string;
-            /** @description Owning contest entry identifier. */
-            entryId: string;
-            /** @description Per-event participant the pick refers to (Sport-event-participant row, not the canonical Participant). */
-            sportEventParticipantId: string;
-            /**
-             * @description Denormalized from parent Contest.contestFormat. Plans/117 §7.1 — enables per-format partial unique indexes that Postgres cannot predicate on joined parent columns.
-             * @enum {string}
-             */
-            contestFormat: "ROSTER" | "PREDICTION" | "SQUARES";
-            /** @description Unused: no built contest format sets it, so it is always null. Removal is tracked in #632. */
-            period: number | null;
-            /** @description Unused: no built contest format sets it, so it is always null; a lineup position is `lineupSlot`. Removal is tracked in #632. */
-            slot: number | null;
-            /** @description Selection tier (tiered ROSTER); null otherwise. */
-            tier: string | null;
-            /** @description Budget cost (budget ROSTER); null otherwise. */
-            cost: number | null;
-            /** @description Whether this pick was auto-assigned rather than submitted by the entry. Always false for tiered and budget selection, which have no auto-pick. */
-            isAutoPicked: boolean;
-            /** @description Position of this pick within its entry's roster. Tiered: counted across tier quotas in tier order; budget: the entry's pick ordinal. Null when the pick was not recorded through contest selection. */
-            lineupSlot: number | null;
-            /** @description Contest-wide order in which this pick was recorded, across all entries. Null when the pick was not recorded through contest selection. */
-            pickSequence: number | null;
-            /**
-             * Format: date-time
-             * @description When the pick was made (or auto-picked).
-             */
-            pickedAt: string;
-            /** Format: date-time */
-            createdAt: string;
-            /** Format: date-time */
-            updatedAt: string;
-        };
         /** @description Contest entry participant detail. Picks remain pointers to event participants; scores are returned by the contest leaderboard endpoint. */
         ContestEntryParticipantDetailDto: {
             pickId: string;

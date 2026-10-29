@@ -11568,62 +11568,6 @@ export type ContestEntryDto = {
 };
 
 /**
- * Raw ContestEntryPick row used by persistence-aware surfaces.
- */
-export type ContestEntryPickDto = {
-    /**
-     * Pick identifier.
-     */
-    id: string;
-    /**
-     * Owning contest entry identifier.
-     */
-    entryId: string;
-    /**
-     * Per-event participant the pick refers to (Sport-event-participant row, not the canonical Participant).
-     */
-    sportEventParticipantId: string;
-    /**
-     * Denormalized from parent Contest.contestFormat. Plans/117 §7.1 — enables per-format partial unique indexes that Postgres cannot predicate on joined parent columns.
-     */
-    contestFormat: 'ROSTER' | 'PREDICTION' | 'SQUARES';
-    /**
-     * Unused: no built contest format sets it, so it is always null. Removal is tracked in #632.
-     */
-    period: number | null;
-    /**
-     * Unused: no built contest format sets it, so it is always null; a lineup position is `lineupSlot`. Removal is tracked in #632.
-     */
-    slot: number | null;
-    /**
-     * Selection tier (tiered ROSTER); null otherwise.
-     */
-    tier: string | null;
-    /**
-     * Budget cost (budget ROSTER); null otherwise.
-     */
-    cost: number | null;
-    /**
-     * Whether this pick was auto-assigned rather than submitted by the entry. Always false for tiered and budget selection, which have no auto-pick.
-     */
-    isAutoPicked: boolean;
-    /**
-     * Position of this pick within its entry's roster. Tiered: counted across tier quotas in tier order; budget: the entry's pick ordinal. Null when the pick was not recorded through contest selection.
-     */
-    lineupSlot: number | null;
-    /**
-     * Contest-wide order in which this pick was recorded, across all entries. Null when the pick was not recorded through contest selection.
-     */
-    pickSequence: number | null;
-    /**
-     * When the pick was made (or auto-picked).
-     */
-    pickedAt: string;
-    createdAt: string;
-    updatedAt: string;
-};
-
-/**
  * Contest entry participant detail. Picks remain pointers to event participants; scores are returned by the contest leaderboard endpoint.
  */
 export type ContestEntryParticipantDetailDto = {

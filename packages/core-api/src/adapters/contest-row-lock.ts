@@ -19,3 +19,13 @@ export async function lockContestRows(tx: Prisma.TransactionClient, contestIds: 
     await lockContestRow(tx, contestId);
   }
 }
+
+/**
+ * Takes one entry's row lock for the rest of the transaction (#1259). A roster pick change takes
+ * it before it reads the entry's picks, so two changes to one entry run one after the other and
+ * the second decides on what the first wrote: a full roster is never overfilled, and a repeated
+ * pick of one golfer finds the first instead of tripping the one-pick-per-golfer index.
+ */
+export async function lockContestEntryRow(tx: Prisma.TransactionClient, entryId: string): Promise<void> {
+  await tx.$queryRaw`SELECT id FROM "contest_entries" WHERE id = ${entryId}::uuid FOR UPDATE`;
+}

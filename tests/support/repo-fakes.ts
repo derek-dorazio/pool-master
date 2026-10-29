@@ -432,7 +432,6 @@ export function fakeContestEntryPickRepo(
     findByEntriesAndEvents: many(),
     findByEntriesWithParticipant: many(),
     countByEntries: jest.fn().mockResolvedValue(new Map()),
-    countByContest: jest.fn().mockResolvedValue(0),
     ...overrides,
   };
 }
