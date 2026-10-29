@@ -354,8 +354,13 @@ Rules:
 - A point read that the gates, the handler and the service each repeat within one request goes
   through `memoizedRead` (`packages/core-api/src/core/request-read-memo.ts`), keyed by a
   `ReadMemoKey` prefix, and every repository write to that row wraps itself in
-  `forgettingReads` with the same prefix. Remembered values are shared, so callers never mutate
-  them. Reads through a transaction's client and reads outside a request are never remembered.
+  `forgettingReads` with the same prefix, as does any write outside the repository, such as a
+  draw that changes what the contest read carries. A batch read by ids goes through
+  `memoizedReadMany`, so its rows answer later point reads. Remembered values are shared, so
+  callers never mutate them. Reads through a transaction's client are never remembered, and
+  outside a request only a scope opened with `runWithReadMemo` remembers (the event lifecycle
+  sweep opens one per sweep). Work a request starts but does not wait for, such as a background
+  sync, runs in `outsideReadMemo`, so it never reads what the request remembered.
 
 ---
 

@@ -16,6 +16,7 @@ import {
 } from '@poolmaster/shared/domain';
 import type { SquadDto, SquadMembershipDto } from '@poolmaster/shared/dto';
 import { lockContestRows } from '../../adapters';
+import { forgetReads, ReadMemoKey } from '../../core/request-read-memo';
 import { toSquadDetailsDto, toSquadMembershipDto } from '../../mappers/squads.mapper';
 import { SquadNotFoundError, SquadOperationError } from './errors';
 import { assertSquadNameAvailable, resolveAvailableDefaultSquadName } from './squad-name';
@@ -472,6 +473,7 @@ export class SquadService {
         where: { id: squadId },
       });
     });
+    forgetReads(ReadMemoKey.squadMembership);
 
     this.logger?.info({
       action: 'squad.delete.success',

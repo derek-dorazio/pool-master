@@ -1,9 +1,12 @@
 import Fastify from 'fastify';
 import type { PrismaClient } from '@prisma/client';
 import {
+  forgetAllReads,
   forgetReads,
   forgettingReads,
   memoizedRead,
+  memoizedReadMany,
+  outsideReadMemo,
   ReadMemoKey,
   runWithReadMemo,
 } from '../../../packages/core-api/src/core/request-read-memo';
@@ -114,8 +117,114 @@ describe('request read memo', () => {
     expect(load).toHaveBeenCalledTimes(2);
   });
 
+  it('forgets every prefix a write names, and only those', async () => {
+    const load = counter();
+
+    await runWithReadMemo(async () => {
+      await memoizedRead(ROOT, `${ReadMemoKey.contest}c`, load);
+      await memoizedRead(ROOT, `${ReadMemoKey.contestConfiguration}c`, load);
+      await memoizedRead(ROOT, `${ReadMemoKey.league}a`, load);
+      await forgettingReads([ReadMemoKey.contest, ReadMemoKey.contestConfiguration], () => Promise.resolve('deleted'));
+      await memoizedRead(ROOT, `${ReadMemoKey.contest}c`, load);
+      await memoizedRead(ROOT, `${ReadMemoKey.contestConfiguration}c`, load);
+      await memoizedRead(ROOT, `${ReadMemoKey.league}a`, load);
+    });
+
+    expect(load).toHaveBeenCalledTimes(5);
+  });
+
+  it('remembers nothing for work run outside the memo from inside a request', async () => {
+    const load = counter();
+
+    await runWithReadMemo(async () => {
+      await memoizedRead(ROOT, `${ReadMemoKey.league}a`, load);
+      await outsideReadMemo(async () => {
+        await memoizedRead(ROOT, `${ReadMemoKey.league}a`, load);
+        await memoizedRead(ROOT, `${ReadMemoKey.league}a`, load);
+      });
+    });
+
+    expect(load).toHaveBeenCalledTimes(3);
+  });
+
   it('ignores forgetReads outside a scope', () => {
     expect(() => forgetReads(ReadMemoKey.league)).not.toThrow();
+  });
+});
+
+describe('request read memo, many rows at once', () => {
+  function rowsLoader() {
+    return jest.fn((ids: readonly string[]) => Promise.resolve(ids.filter((id) => id !== 'gone').map((id) => ({ id, name: `event ${id}` }))));
+  }
+
+  it('loads only the rows not read yet, in one call, and answers later point reads from them', async () => {
+    const loadMany = rowsLoader();
+    const loadOne = counter();
+
+    const result = await runWithReadMemo(async () => {
+      await memoizedRead(ROOT, `${ReadMemoKey.sportEvent}a`, () => Promise.resolve({ id: 'a', name: 'event a' }));
+      const rows = await memoizedReadMany(ROOT, ReadMemoKey.sportEvent, ['a', 'b', 'c'], loadMany);
+      const b = await memoizedRead(ROOT, `${ReadMemoKey.sportEvent}b`, loadOne);
+      return { rows, b };
+    });
+
+    expect(loadMany).toHaveBeenCalledTimes(1);
+    expect(loadMany).toHaveBeenCalledWith(['b', 'c']);
+    expect(loadOne).not.toHaveBeenCalled();
+    expect(result.rows.map((row) => row.id)).toEqual(['a', 'b', 'c']);
+    expect(result.b).toBe(result.rows[1]);
+  });
+
+  it('leaves out a missing row and remembers it as missing, and returns a repeated id once', async () => {
+    const loadMany = rowsLoader();
+
+    const [first, again] = await runWithReadMemo(async () => [
+      await memoizedReadMany(ROOT, ReadMemoKey.sportEvent, ['a', 'gone', 'a'], loadMany),
+      await memoizedRead(ROOT, `${ReadMemoKey.sportEvent}gone`, counter()),
+    ]);
+
+    expect(first).toEqual([{ id: 'a', name: 'event a' }]);
+    expect(again).toBeNull();
+    expect(loadMany).toHaveBeenCalledWith(['a', 'gone']);
+  });
+
+  it('reads every time outside a scope or through a transaction\'s client', async () => {
+    const loadMany = rowsLoader();
+
+    await memoizedReadMany(ROOT, ReadMemoKey.sportEvent, ['a'], loadMany);
+    await runWithReadMemo(async () => {
+      await memoizedReadMany(TX, ReadMemoKey.sportEvent, ['a'], loadMany);
+      await memoizedReadMany(TX, ReadMemoKey.sportEvent, ['a'], loadMany);
+    });
+
+    expect(loadMany).toHaveBeenCalledTimes(3);
+  });
+
+  it('does not remember rows whose load failed, so the next asker loads them again', async () => {
+    const loadMany = jest.fn()
+      .mockRejectedValueOnce(new Error('connection reset'))
+      .mockResolvedValueOnce([{ id: 'a', name: 'event a' }]);
+
+    const rows = await runWithReadMemo(async () => {
+      await expect(memoizedReadMany(ROOT, ReadMemoKey.sportEvent, ['a'], loadMany)).rejects.toThrow('connection reset');
+      return memoizedReadMany(ROOT, ReadMemoKey.sportEvent, ['a'], loadMany);
+    });
+
+    expect(rows).toEqual([{ id: 'a', name: 'event a' }]);
+  });
+
+  it('forgets every kind of read at once for a write whose reach spans kinds', async () => {
+    const load = counter();
+
+    await runWithReadMemo(async () => {
+      await memoizedRead(ROOT, `${ReadMemoKey.league}a`, load);
+      await memoizedRead(ROOT, `${ReadMemoKey.contest}c`, load);
+      forgetAllReads();
+      await memoizedRead(ROOT, `${ReadMemoKey.league}a`, load);
+      await memoizedRead(ROOT, `${ReadMemoKey.contest}c`, load);
+    });
+
+    expect(load).toHaveBeenCalledTimes(4);
   });
 });
 

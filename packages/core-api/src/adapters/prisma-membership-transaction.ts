@@ -8,18 +8,19 @@ import { PrismaSquadRepository } from './prisma-squad-repository';
 
 /**
  * Binds the membership repositories to one Prisma interactive transaction per `run`. The
- * request's remembered memberships are forgotten again once it has committed (#1176): a read
- * made during the transaction, outside it, saw the rows before the write.
+ * request's remembered league and team memberships are forgotten again once it has committed
+ * (#1176, #1200): a read made during the transaction, outside it, saw the rows before the write.
  */
 export class PrismaMembershipTransaction implements MembershipTransaction {
   constructor(private readonly prisma: PrismaClient) {}
 
   async run<T>(work: (repos: MembershipRepositories) => Promise<T>): Promise<T> {
-    return forgettingReads(ReadMemoKey.leagueMembership, () => this.prisma.$transaction(async (tx) => work({
+    const run = () => this.prisma.$transaction(async (tx) => work({
       leagueMemberships: new PrismaLeagueMembershipRepository(tx),
       squads: new PrismaSquadRepository(tx),
       squadMemberships: new PrismaSquadMembershipRepository(tx),
       squadOwnerInvitations: new PrismaSquadOwnerInvitationRepository(tx),
-    })));
+    }));
+    return forgettingReads([ReadMemoKey.leagueMembership, ReadMemoKey.squadMembership], run);
   }
 }
