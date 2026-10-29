@@ -392,6 +392,32 @@ describe('Contract verification (root admin)', () => {
     expect(forbidden.json<ErrorEnvelope>().error.code).toBe('ROOT_ADMIN_ACCESS_REQUIRED');
   });
 
+  it('refuses one sync run\'s details, raw provider payload included, to a non-root-admin with 403', async () => {
+    const run = await getPrisma().providerSyncRun.create({
+      data: {
+        providerId: 'forbidden-details-provider',
+        sport: 'GOLF',
+        eventId: 'forbidden-details-event',
+        status: 'COMPLETED',
+        payloadJson: { requestedFeed: 'EVENTPARTICIPANTS' },
+        detailsJson: { providerPayload: { operation: 'EVENTPARTICIPANTS', rawCaptured: true, rawTruncated: false, raw: [] } },
+      },
+    });
+    const ordinaryUser = await createTestUser({ displayName: 'Contract Non Admin Sync Run Reader' });
+
+    const forbidden = await getApp().inject({
+      method: 'GET',
+      url: `/api/v1/ingestion/sync-runs/${run.id}`,
+      headers: ordinaryUser.headers,
+    });
+
+    expect(forbidden.statusCode).toBe(403);
+    expect(ErrorEnvelopeSchema.safeParse(forbidden.json()).success).toBe(true);
+    expect(forbidden.json<ErrorEnvelope>().error.code).toBe('ROOT_ADMIN_ACCESS_REQUIRED');
+    expect(forbidden.body).not.toContain('providerPayload');
+    await getPrisma().providerSyncRun.delete({ where: { id: run.id } });
+  });
+
   // #1180 — no platform list reads every row: users and leagues take a search of at least 3
   // characters, events a sport, sport league or year, and participants a sport or a search.
   it('refuses the platform lists a root admin asks for without a filter, with stable 400 codes', async () => {

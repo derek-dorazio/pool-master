@@ -222,7 +222,7 @@ export const ProviderSyncRunDtoSchema = z.object({
 export type ProviderSyncRunDto = z.infer<typeof ProviderSyncRunDtoSchema>;
 
 export const ProviderSyncRunDetailDtoSchema = ProviderSyncRunDtoSchema.extend({
-  details: ProviderSyncRunDetailsDtoSchema.nullable().describe('The run\'s detailed diagnostics; null before the run starts and once they are cleared, 30 days after submission.'),
+  details: ProviderSyncRunDetailsDtoSchema.nullable().describe('The run\'s detailed diagnostics; null before the run starts.'),
 }).describe('One feed\'s sync against a provider, with its summary and its detailed diagnostics.');
 export type ProviderSyncRunDetailDto = z.infer<typeof ProviderSyncRunDetailDtoSchema>;
 

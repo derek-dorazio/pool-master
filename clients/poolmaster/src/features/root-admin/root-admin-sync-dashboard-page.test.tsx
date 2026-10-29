@@ -543,7 +543,40 @@ describe('RootAdminSyncDashboardPage', () => {
     );
   });
 
-  it('says the details were cleared after 30 days when a run has none stored', async () => {
+  it('says a run that has not started has no details yet, and offers no provider or job payload', async () => {
+    const user = userEvent.setup();
+    listProviderSyncRunsMock.mockResolvedValue({
+      data: {
+        syncRuns: [
+          {
+            id: 'sync-run-1',
+            providerId: 'mock-contest-feed',
+            sport: 'GOLF',
+            eventId: 'masters-2026',
+            status: 'SUBMITTED',
+            startedAt: null,
+            completedAt: null,
+            createdAt: '2026-04-20T11:59:00.000Z',
+            payload: { requestedFeed: 'EVENTPARTICIPANTS' },
+          },
+        ],
+      },
+    });
+    getProviderSyncRunMock.mockResolvedValue(detailResponse(null));
+    renderDashboard();
+
+    expect(await screen.findByTestId('root-admin-sync-run-sync-run-1')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'View details' }));
+    await user.click(await screen.findByRole('tab', { name: 'Details' }));
+
+    expect(await screen.findByText('This run hasn\'t started yet, so it has no details.')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('tab', { name: 'Payloads' }));
+    expect(screen.queryByRole('button', { name: 'Show provider payload' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Show job payload' })).not.toBeInTheDocument();
+  });
+
+  it('says no details are stored for a finished run that has none', async () => {
     const user = userEvent.setup();
     getProviderSyncRunMock.mockResolvedValue(detailResponse(null));
     renderDashboard();
@@ -552,13 +585,7 @@ describe('RootAdminSyncDashboardPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'View details' }));
     await user.click(await screen.findByRole('tab', { name: 'Details' }));
 
-    expect(
-      await screen.findByText('Detailed diagnostics are kept for 30 days. None are stored for this run.'),
-    ).toBeInTheDocument();
-
-    await user.click(screen.getByRole('tab', { name: 'Payloads' }));
-    expect(screen.queryByRole('button', { name: 'Show provider payload' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Show job payload' })).not.toBeInTheDocument();
+    expect(await screen.findByText('No details are stored for this run.')).toBeInTheDocument();
   });
 
   it('shows an error in the details tab when a run\'s details cannot be loaded', async () => {

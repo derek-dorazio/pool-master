@@ -2458,7 +2458,7 @@ export const listProviderSyncRuns = <ThrowOnError extends boolean = false>(optio
 /**
  * Read one provider sync run with its detailed diagnostics
  *
- * One sync run's summary plus its detailed diagnostics: the rows the sync changed, the ingestion job record, and the raw provider payload. The diagnostics are null before the run starts and once they are cleared, 30 days after submission. 404 when there is no such run.
+ * One sync run's summary plus its detailed diagnostics: the rows the sync changed, the ingestion job record, and the raw provider payload. The diagnostics are null before the run starts. 404 when there is no such run.
  */
 export const getProviderSyncRun = <ThrowOnError extends boolean = false>(options: Options<GetProviderSyncRunData, ThrowOnError>): RequestResult<GetProviderSyncRunResponses, GetProviderSyncRunErrors, ThrowOnError> => (options.client ?? client).get<GetProviderSyncRunResponses, GetProviderSyncRunErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

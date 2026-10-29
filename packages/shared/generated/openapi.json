@@ -63993,7 +63993,7 @@
             "description": "Provider sync run summary with canonical stats and outcome."
           },
           "details": {
-            "description": "The run's detailed diagnostics; null before the run starts and once they are cleared, 30 days after submission.",
+            "description": "The run's detailed diagnostics; null before the run starts.",
             "type": [
               "object",
               "null"
@@ -79504,7 +79504,7 @@
         "tags": [
           "Ingestion"
         ],
-        "description": "One sync run's summary plus its detailed diagnostics: the rows the sync changed, the ingestion job record, and the raw provider payload. The diagnostics are null before the run starts and once they are cleared, 30 days after submission. 404 when there is no such run.",
+        "description": "One sync run's summary plus its detailed diagnostics: the rows the sync changed, the ingestion job record, and the raw provider payload. The diagnostics are null before the run starts. 404 when there is no such run.",
         "parameters": [
           {
             "schema": {
