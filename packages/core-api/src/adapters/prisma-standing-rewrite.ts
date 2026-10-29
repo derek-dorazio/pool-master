@@ -90,11 +90,13 @@ async function writeStandings(
     await tx.sportEventParticipantStanding.deleteMany({ where: { id: { in: existing.map((row) => row.id) } } });
   }
 
+  const standingIds: string[] = [];
   const standings: Prisma.SportEventParticipantStandingCreateManyInput[] = [];
   const golfStandings: Prisma.SportEventParticipantGolfStandingCreateManyInput[] = [];
   for (const rewrite of rewrites) {
     const before = existingById.get(rewrite.sportEventParticipantId);
     const id = before?.id ?? randomUUID();
+    standingIds.push(id);
     standings.push({
       ...(before && {
         createdAt: before.createdAt,
@@ -126,8 +128,9 @@ async function writeStandings(
     : [];
   const writtenById = new Map(written.map((row) => [row.id, row]));
   const golfByStandingId = new Map(writtenGolf.map((row) => [row.standingId, row]));
-  return standings.map((standing) => {
-    const row = writtenById.get(standing.id as string) as (typeof written)[number];
-    return { ...row, golf: golfByStandingId.get(row.id) ?? null };
+  return standingIds.map((id) => {
+    const row = writtenById.get(id);
+    if (!row) throw new Error(`Standing ${id} was not written.`);
+    return { ...row, golf: golfByStandingId.get(id) ?? null };
   });
 }

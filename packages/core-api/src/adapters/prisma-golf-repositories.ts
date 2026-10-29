@@ -71,13 +71,16 @@ export class PrismaSportEventParticipantGolfRoundRepository implements SportEven
     const latest = [...new Map(writes.map((write) => [roundKey(write), write])).values()];
     if (latest.length === 0) return [];
     const ids = await this.prisma.$transaction(async (tx) => {
-      const existing = await tx.sportEventParticipantRound.findMany({
+      // The read is every named golfer's rows in every named round, which can take in pairs the
+      // write does not name; only the pairs it names are kept, so no other round is touched.
+      const writtenKeys = new Set(latest.map(roundKey));
+      const existing = (await tx.sportEventParticipantRound.findMany({
         where: {
           sportEventParticipantId: { in: latest.map((write) => write.sportEventParticipantId) },
           sportEventRoundId: { in: latest.map((write) => write.sportEventRoundId) },
         },
         include: { golf: true },
-      });
+      })).filter((row) => writtenKeys.has(roundKey(row)));
       const existingByKey = new Map(existing.map((row) => [roundKey(row), row]));
       const created: Prisma.SportEventParticipantRoundCreateManyInput[] = [];
       const idsByProgress = new Map<string, { status: GolfRoundWrite['status']; completedAt: Date | null; ids: string[] }>();

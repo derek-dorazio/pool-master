@@ -115,6 +115,20 @@ describe('Adding players to an event\'s field (#1252)', () => {
 });
 
 describe('Saving the field grid (#1252)', () => {
+  it('refuses the whole save when one row it gives the same change does not exist, leaving the real row as it was', async () => {
+    const { field } = await eventWithField(1);
+    const row = expectDefined(field[0]);
+    const repository = new PrismaSportEventParticipantRepository(getPrisma());
+
+    await expect(repository.updateMany([
+      { id: row.id, updates: { ranking: 3 }, price: 12 },
+      { id: randomUUID(), updates: { ranking: 3 } },
+    ])).rejects.toThrow('A field row to update does not exist.');
+
+    const after = await getPrisma().sportEventParticipant.findUniqueOrThrow({ where: { id: row.id }, include: { valuation: true } });
+    expect([after.ranking, after.valuation]).toEqual([row.ranking, null]);
+  });
+
   it('gives rows the same change in one update, and writes every manual price in a fixed number of queries', async () => {
     const counts = await queriesFor(async (prisma, size) => {
       const { field } = await eventWithField(size);
@@ -334,6 +348,33 @@ describe('Entering a golf round\'s scores (#1252)', () => {
     });
 
     expect(counts[1]).toBe(counts[0]);
+  });
+
+  it('leaves alone the scored rounds a write does not name, when it names different rounds for different golfers', async () => {
+    const prisma = getPrisma();
+    const { event, round, field } = await eventWithField(2);
+    const [golferA, golferB] = [expectDefined(field[0]), expectDefined(field[1])];
+    const round2 = await prisma.sportEventRound.create({ data: { sportEventId: event.id, roundNumber: 2, scheduledDate: new Date('2026-05-08') } });
+    for (const golfer of [golferA, golferB]) {
+      for (const [scheduled, strokes] of [[round, 70], [round2, 71]] as const) {
+        await prisma.sportEventParticipantRound.create({
+          data: { sportEventParticipantId: golfer.id, sportEventRoundId: scheduled.id, status: 'COMPLETED', golf: { create: { strokes, scoreToPar: strokes - 72, thru: 18 } } },
+        });
+      }
+    }
+
+    await new PrismaSportEventParticipantGolfRoundRepository(prisma).upsertMany([
+      { sportEventParticipantId: golferA.id, sportEventRoundId: round2.id, status: ParticipantRoundStatus.COMPLETED, completedAt: AS_OF, strokes: 68, scoreToPar: -4, thru: 18 },
+      { sportEventParticipantId: golferB.id, sportEventRoundId: round.id, status: ParticipantRoundStatus.COMPLETED, completedAt: AS_OF, strokes: 69, scoreToPar: -3, thru: 18 },
+    ]);
+
+    const rounds = await prisma.sportEventParticipantRound.findMany({
+      where: { sportEventParticipantId: { in: [golferA.id, golferB.id] } },
+      include: { golf: true, sportEventRound: true },
+    });
+    const strokesOf = (golferId: string, roundNumber: number) => rounds
+      .find((row) => row.sportEventParticipantId === golferId && row.sportEventRound.roundNumber === roundNumber)?.golf?.strokes ?? null;
+    expect([strokesOf(golferA.id, 1), strokesOf(golferA.id, 2), strokesOf(golferB.id, 1), strokesOf(golferB.id, 2)]).toEqual([70, 68, 69, 71]);
   });
 
   it('writes every golfer\'s standing, answered in the order given, and then every rank in a fixed number of queries each, keeping the standing\'s id and totals', async () => {

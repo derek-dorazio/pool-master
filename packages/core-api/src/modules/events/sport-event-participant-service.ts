@@ -341,11 +341,10 @@ export class SportEventParticipantService {
     // Only the values that change are written, so a grid saved with most rows untouched writes
     // little: the adapter writes one statement per distinct new value (#1252).
     const entryById = new Map(field.map((entry) => [entry.id, entry]));
-    await this.deps.field.updateMany(updates.map(({ sportEventParticipantId, price, ...patch }) => ({
-      id: sportEventParticipantId,
-      updates: changedValues(entryById.get(sportEventParticipantId) as SportEventParticipant, patch),
-      price,
-    })));
+    await this.deps.field.updateMany(updates.map(({ sportEventParticipantId, price, ...patch }) => {
+      const entry = entryById.get(sportEventParticipantId);
+      return { id: sportEventParticipantId, updates: entry ? changedValues(entry, patch) : patch, price };
+    }));
     return this.listEventParticipants(sportEventId);
   }
 
