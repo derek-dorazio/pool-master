@@ -244,6 +244,7 @@ export function ManageContestsPage() {
             aria-label="Contests to show"
             onChange={(value) => setFilter(value === 'history' ? 'history' : 'active')}
             options={[
+              // poolmaster-allow-list-lookup: counts the league's current contests, listed right below it
               { label: `Active · ${activeContests.length}`, testId: 'manage-contests-filter-active', value: 'active' },
               { label: 'History', testId: 'manage-contests-filter-history', value: 'history' },
             ]}

@@ -33,6 +33,7 @@ export function TeamOwnersSection({
   const auth = useAuth();
   const invitationsQuery = useTeamOwnerInvitationsQuery(leagueId);
   const activeMembers = getActiveOwners(team);
+  // poolmaster-allow-list-lookup: one league's co-owner invitations, one cached read shared by every team on the page
   const teamOwnerInvitations = (invitationsQuery.data ?? []).filter((invitation) => invitation.squadId === team.id);
 
   return (

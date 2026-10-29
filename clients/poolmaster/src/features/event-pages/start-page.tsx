@@ -40,6 +40,7 @@ function PickerRow({ league, offer, page, request }: { league: LeagueDto; offer:
   }, [checkError, league.id, logger]);
 
   const existing = offer
+    // poolmaster-allow-list-lookup: the league's current contests (#1161), checked for one already made
     ? (contestsQuery.data ?? []).find((contest) => contest.selectionType === offer.template.selectionType
       && contest.sportEvents.some((event) => event.sportEventId === offer.edition.sportEventId))
     : undefined;

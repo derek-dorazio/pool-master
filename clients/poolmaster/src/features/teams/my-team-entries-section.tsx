@@ -50,6 +50,7 @@ export function MyTeamEntriesSection({
   teamId: string;
 }) {
   const contestsQuery = useLeagueContestsQuery(leagueId);
+  // poolmaster-allow-list-lookup: the league's current contests (#1161), dropping drafts
   const currentContests = (contestsQuery.data ?? []).filter(
     (contest) => contest.status === ContestStatus.OPEN || contest.status === ContestStatus.ACTIVE,
   );

@@ -252,6 +252,7 @@ export function CreateContestPage() {
   const [searchParams] = useSearchParams();
   const requestedTemplateId = searchParams.get('template');
   const requestedTemplateQuery = useActiveContestTemplatesQuery({ enabled: auth.isAuthenticated && requestedTemplateId !== null });
+  // poolmaster-allow-list-lookup: the active contest templates, reference data the picker lists anyway
   const requestedTemplate = requestedTemplateQuery.data?.find((template) => template.id === requestedTemplateId
     && isCreatableSelectionType(template.selectionType)) ?? null;
   const requestedTemplateProgress = useRef<'sport' | 'event' | 'settled'>('sport');
