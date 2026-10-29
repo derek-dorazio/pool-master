@@ -1,16 +1,19 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { useLocation, useParams } from 'react-router';
-import { ContestStatus, describeSquaresRules  } from '@poolmaster/shared/domain';
+import { describeSquaresRules } from '@poolmaster/shared/domain';
 import type { ContestDto, SquaresBoardResponse, SquaresEntryDto } from '@/lib/api';
-import { buildLeagueContestPath, buildLeaguePath } from '@/features/leagues/league-routing';
-import { useLeagueContextById } from '@/features/leagues/use-league-context';
-import { DataGrid, LinkButton, Tile } from '@/features/shared/ui';
 import { parseRouteState } from '@/routes/route-state';
-import { ContestHeader, ContestSubMenu } from './contest-header';
-import { ContestStatusBadge } from './contest-status-badge';
+import { ContestEntryBackLinks, ContestPageFrame } from './contest-header';
+import { entryPageView } from './contest-page-view';
+import { entryColumn, placeColumn, totalColumn } from './leaderboard-columns';
+import { LeaderboardFrame, ScoreboardGrid } from './leaderboard-kit';
 import { SquaresBoardView } from './squares-board-view';
 import { useSquaresBoardQuery } from './use-squares-board';
 import { useContestEntryQuery } from './use-contest-entries';
+import { useContestLeague } from './use-contest-league';
+
+/** The prefix of the standings' test ids. */
+const TEST_ID = 'squares-standing';
 
 /** A squares contest's rules sentence, once its board has loaded with the box limit. */
 function squaresRules(board: SquaresBoardResponse | undefined) {
@@ -28,133 +31,76 @@ export function SquaresEntryPage({ contest }: { contest: ContestDto }) {
   const hintedLeagueCode = routeLeagueCode ?? parseRouteState(location.state).leagueCode ?? null;
   const boardQuery = useSquaresBoardQuery(contest);
   const entryQuery = useContestEntryQuery(contestId, entryId);
-  const { league, viewer } = useLeagueContextById(contest.leagueId);
-  const backLeagueCode = hintedLeagueCode ?? league?.leagueCode ?? null;
-  const myEntryIds = contest.myEntryIds ?? [];
+  const { leagueCode, viewer } = useContestLeague(contest.leagueId, hintedLeagueCode);
   const entry = entryQuery.data?.entry ?? null;
-  const backToContestPath = backLeagueCode ? buildLeagueContestPath(backLeagueCode, contestId) : `/contests/${contestId}`;
 
   return (
-    <section className="space-y-6" data-testid="squares-entry-page">
-      <ContestHeader
-        actions={(
-          <>
-            {backLeagueCode ? null : (
-              <LinkButton data-testid="contest-entry-back-to-contest" to={backToContestPath} variant="secondary">
-                Back to contest
-              </LinkButton>
-            )}
-            <LinkButton
-              data-testid="contest-entry-back-to-league"
-              to={backLeagueCode ? buildLeaguePath(backLeagueCode) : '/welcome'}
-              variant="secondary"
-            >
-              Back to league
-            </LinkButton>
-          </>
-        )}
-        badges={<ContestStatusBadge status={contest.status} />}
-        menu={backLeagueCode ? (
-          <ContestSubMenu
-            contestId={contestId}
-            current={myEntryIds.includes(entryId) ? 'my-entry' : null}
-            leagueCode={backLeagueCode}
-            myEntryId={myEntryIds[0] ?? null}
-            picksRevealed={entryQuery.data?.picksRevealed ?? false}
-          />
-        ) : null}
-        summary={(
-          <p className="mt-2 text-sm text-muted-foreground" data-testid="contest-entry-summary">
-            {[contest.name, squaresRules(boardQuery.data)].filter((part) => part !== null).join(' · ')}
-          </p>
-        )}
-        title={entry?.name ?? contest.name}
-        titleTestId="contest-entry-heading"
-      />
+    <ContestPageFrame
+      actions={<ContestEntryBackLinks contestId={contestId} leagueCode={leagueCode} />}
+      contest={contest}
+      current={entryPageView(contest, entryId)}
+      leagueCode={leagueCode}
+      picksRevealed={entryQuery.data?.picksRevealed ?? false}
+      summary={(
+        <p className="mt-2 text-sm text-muted-foreground" data-testid="contest-entry-summary">
+          {[contest.name, squaresRules(boardQuery.data)].filter((part) => part !== null).join(' · ')}
+        </p>
+      )}
+      testId="squares-entry-page"
+      title={entry?.name ?? contest.name}
+      titleTestId="contest-entry-heading"
+    >
       <SquaresBoardView
         canManage={viewer.isCommissioner || viewer.isRootAdmin}
         contest={contest}
-        myEntryIds={myEntryIds}
+        myEntryIds={contest.myEntryIds ?? []}
         shownEntryId={entryId}
       />
-    </section>
+    </ContestPageFrame>
   );
 }
 
-const STANDINGS_COLUMNS: ColumnDef<SquaresEntryDto>[] = [
-  {
-    id: 'place',
-    header: 'Place',
-    accessorFn: (row) => row.displayPosition ?? '—',
-    cell: ({ row }) => (
-      <span className="font-semibold" data-testid={`squares-standing-place-${row.original.contestEntryId}`}>
-        {row.original.displayPosition ?? '—'}
-      </span>
-    ),
-  },
-  { id: 'entry', header: 'Entry', accessorFn: (row) => row.entryName },
-  { id: 'boxes', header: 'Boxes', accessorFn: (row) => row.boxCount },
-  {
-    id: 'won',
-    header: 'Quarters won',
-    accessorFn: (row) => row.periodsWon,
-    cell: ({ row }) => (
-      <span className="font-semibold" data-testid={`squares-standing-won-${row.original.contestEntryId}`}>{row.original.periodsWon}</span>
-    ),
-  },
-];
+/** A standings row: a squares entry, by the id every board names its entry with. */
+type StandingRow = SquaresEntryDto & { entryId: string };
+
+/** The standings' columns: place once Final, the entry, its boxes and the quarters it won. */
+function standingsColumns(contestId: string, leagueCode: string | null, myEntryIds: readonly string[]): ColumnDef<StandingRow>[] {
+  return [
+    placeColumn(TEST_ID),
+    // A squares entry names no squad, so the viewer's own are the entries the contest says are theirs.
+    entryColumn(TEST_ID, { contestId, isMine: (row) => myEntryIds.includes(row.entryId), leagueCode }),
+    { id: 'boxes', header: 'Boxes', accessorFn: (row) => row.boxCount },
+    totalColumn(TEST_ID, { header: 'Quarters won', id: 'won', value: (row) => row.periodsWon }),
+  ];
+}
 
 /**
  * A squares contest's leaderboard (#711): each quarter's winner and the grid with the winning
  * boxes outlined, then every entry with its boxes and the quarters it won, placed once Final.
  */
 export function SquaresLeaderboard({ contest, leagueCode: hintedLeagueCode }: { contest: ContestDto; leagueCode: string | null }) {
-  const contestId = contest.id;
   const boardQuery = useSquaresBoardQuery(contest);
-  const { league, viewer } = useLeagueContextById(contest.leagueId);
-  const leagueCode = hintedLeagueCode ?? league?.leagueCode ?? null;
-  const myEntryIds = contest.myEntryIds ?? [];
+  const { leagueCode, viewer } = useContestLeague(contest.leagueId, hintedLeagueCode);
 
   return (
-    <section className="space-y-6" data-testid="contest-leaderboard">
-      <ContestHeader
-        badges={<ContestStatusBadge status={contest.status} />}
-        menu={leagueCode ? (
-          <ContestSubMenu
-            contestId={contestId}
-            current="leaderboard"
-            leagueCode={leagueCode}
-            myEntryId={myEntryIds[0] ?? null}
-            picksRevealed
-          />
-        ) : null}
-        summary={(
-          <p className="mt-2 text-sm text-muted-foreground" data-testid="squares-leaderboard-rules">{squaresRules(boardQuery.data)}</p>
-        )}
-        title={contest.name}
-        titleTestId="contest-leaderboard-heading"
-      >
-        {contest.status === ContestStatus.COMPLETED ? (
-          <p className="mt-2 text-sm text-muted-foreground" data-testid="contest-leaderboard-settled-note">
-            Final result: the winners are frozen at settlement.
-          </p>
-        ) : null}
-      </ContestHeader>
-      <SquaresBoardView canManage={viewer.isCommissioner || viewer.isRootAdmin} contest={contest} myEntryIds={myEntryIds} />
+    <LeaderboardFrame
+      contest={contest}
+      leagueCode={leagueCode}
+      settledNote="Final result: the winners are frozen at settlement."
+      summary={(
+        <p className="mt-2 text-sm text-muted-foreground" data-testid="squares-leaderboard-rules">{squaresRules(boardQuery.data)}</p>
+      )}
+    >
+      <SquaresBoardView canManage={viewer.isCommissioner || viewer.isRootAdmin} contest={contest} myEntryIds={contest.myEntryIds ?? []} />
       {boardQuery.data ? (
-        <Tile>
-          <DataGrid
-            columns={STANDINGS_COLUMNS}
-            data={boardQuery.data.entries}
-            emptyMessage="No entry holds a box yet."
-            getRowId={(row) => row.contestEntryId}
-            pageSize={25}
-            rowTestId={(row) => `squares-standing-row-${row.contestEntryId}`}
-            showColumnFilters={false}
-            tableTestId="squares-standings-table"
-          />
-        </Tile>
+        <ScoreboardGrid
+          columns={standingsColumns(contest.id, leagueCode, contest.myEntryIds ?? [])}
+          data={boardQuery.data.entries.map((row) => ({ ...row, entryId: row.contestEntryId }))}
+          emptyMessage="No entry holds a box yet."
+          rowTestIdPrefix="squares-standing-row"
+          tableTestId="squares-standings-table"
+        />
       ) : null}
-    </section>
+    </LeaderboardFrame>
   );
 }

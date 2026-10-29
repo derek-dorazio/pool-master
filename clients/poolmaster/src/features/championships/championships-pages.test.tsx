@@ -317,7 +317,7 @@ describe('Championships › Championship', () => {
 
     const row = within(await screen.findByTestId('championship-standing-team-1'));
     expect(row.getByText('230')).toBeInTheDocument();
-    expect(row.getByText('You')).toBeInTheDocument();
+    expect(row.getByText('Yours')).toBeInTheDocument();
     expect(screen.getByTestId('championship-progress')).toHaveTextContent('3 contests final');
     expect(screen.getByText(/Points table: Standard\./)).toBeInTheDocument();
   });
@@ -714,7 +714,7 @@ describe('Championships › Points race', () => {
     expect(leader).toHaveTextContent('180');
     const mine = screen.getByTestId('cup-standing-team-1');
     expect(within(mine).getByLabelText('Down 1 place')).toBeInTheDocument();
-    expect(within(mine).getByText('You')).toBeInTheDocument();
+    expect(within(mine).getByText('Yours')).toBeInTheDocument();
     expect(within(mine).getByRole('link', { name: 'Casey Crushers' })).toHaveAttribute(
       'href',
       '/league/BIGDAWGS/championships/2026/race/sport-league-pga/squads/team-1',
