@@ -5,7 +5,7 @@ import type { EventPageDto, EventPageOfferDto, SportLeagueDto } from '@/lib/api'
 import { getLogger } from '@/lib/logger';
 import { STAT_POOL_CONTEST_TYPE, STAT_POOL_FORMULAS } from '@/features/contests/scoring-family-ui/stat-pool-copy';
 import { useSportLeaguesQuery } from '@/features/contest-types/use-sport-leagues-query';
-import { cn, ErrorState, Eyebrow, FaqList, Heading, LinkButton, LoadingState, NumberedSteps, Tile } from '@/features/shared/ui';
+import { Chip, cn, ErrorState, Eyebrow, FaqList, Heading, LinkButton, LoadingState, NumberedSteps, Tile } from '@/features/shared/ui';
 import { LandingDisclaimer } from './components/landing-disclaimer';
 import { LandingSection } from './components/landing-section';
 import { StartButton } from './components/start-button';
@@ -70,10 +70,10 @@ function ExampleCard() {
   const counted = new Set([...stars].sort((a, b) => b.total - a.total).slice(0, example.counted).map((star) => star.tier));
   const cardTotal = stars.filter((star) => counted.has(star.tier)).reduce((sum, star) => sum + star.total, 0);
   return (
-    <div className="rounded-2xl border border-inverse-border bg-surface-inverse-deep p-4" data-testid="clutch-card-example">
+    <Tile data-testid="clutch-card-example" padding="sm" radius="md" variant="inverseDeep">
       <div className="flex items-center justify-between gap-2">
         <p className="font-display font-bold">{example.name}</p>
-        <span className="rounded-pill bg-primary px-2.5 py-0.5 text-xs font-semibold text-primary-foreground">{example.status}</span>
+        <Chip tone="brand">{example.status}</Chip>
       </div>
       <p className="mt-1 text-xs text-on-inverse-muted">{statLineName(example.sport)}</p>
       <table className="mt-3 w-full text-sm">
@@ -107,17 +107,17 @@ function ExampleCard() {
       <p className="mt-2 text-xs text-on-inverse-muted" data-testid="clutch-card-example-note">
         {`${example.note} ${statLineName(example.sport) ?? ''} = ${STAT_POOL_FORMULAS[example.sport] ?? ''}, each game.`}
       </p>
-    </div>
+    </Tile>
   );
 }
 
 function Hero({ startRequest }: { startRequest: StartRequest | null }) {
   const hero = CLUTCH_CARD_PAGE.hero;
   return (
-    <section className="grid gap-x-12 gap-y-8 rounded-2xl border border-inverse-border bg-surface-inverse p-6 text-on-inverse sm:p-10 lg:grid-cols-2 lg:items-center" data-testid="clutch-card-hero">
+    <Tile as="section" className="grid gap-x-12 gap-y-8 p-6 sm:p-10 lg:grid-cols-2 lg:items-center" data-testid="clutch-card-hero" padding="none" radius="md" variant="inverse">
       <div className="space-y-3 lg:col-span-2">
         <div className="flex items-center gap-2">
-          <span className="rounded-pill bg-primary px-2.5 py-0.5 text-xs font-bold text-primary-foreground">{hero.badge}</span>
+          <Chip tone="brand">{hero.badge}</Chip>
           <Eyebrow tone="inverse">{hero.eyebrow}</Eyebrow>
         </div>
         <Heading data-testid="clutch-card-tagline" level={1} tone="inherit" variant="hero">
@@ -135,7 +135,7 @@ function Hero({ startRequest }: { startRequest: StartRequest | null }) {
         <p className="text-sm text-on-inverse-muted">{hero.note}</p>
       </div>
       <ExampleCard />
-    </section>
+    </Tile>
   );
 }
 
@@ -145,12 +145,12 @@ function CardTypes() {
     <LandingSection eyebrow={copy.eyebrow} id="card-types" intro={copy.intro} testId="clutch-card-types" title={copy.title}>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {BUILT_STAT_LINE_SPORTS.map((sport) => (
-          <div className="rounded-2xl border border-inverse-border bg-surface-inverse p-5 text-on-inverse" data-testid={`clutch-card-type-${sport}`} key={sport}>
+          <Tile data-testid={`clutch-card-type-${sport}`} key={sport} padding="none" radius="md" className="p-5" variant="inverse">
             <Eyebrow tone="inverse">{getSportDefinition(sport).name}</Eyebrow>
             <Heading level={3} variant="card" size="xl" tone="primary">{statLineName(sport)}</Heading>
             <p className="mt-2 font-mono text-sm">{STAT_POOL_FORMULAS[sport]}</p>
             <p className="mt-2 text-sm text-on-inverse-muted">{copy.lines[sport]}</p>
-          </div>
+          </Tile>
         ))}
       </div>
     </LandingSection>
@@ -166,13 +166,14 @@ function RoundChip({ round }: { round: CalendarRound }) {
     </>
   );
   if (!round.isAvailable) {
-    return <span className="rounded-pill border border-dashed border-border px-3 py-1 text-sm text-muted-foreground" data-testid={testId}>{label}</span>;
+    return <Chip className="text-sm" data-testid={testId} tone="placeholder">{label}</Chip>;
   }
-  const className = 'rounded-pill border border-primary bg-primary/10 px-3 py-1 text-sm font-semibold text-foreground';
   return round.eventPage ? (
-    <Link className={cn(className, 'hover:bg-primary/20')} data-testid={testId} to={buildEventPagePath(round.eventPage.sport, round.eventPage.slug)}>{label}</Link>
+    <Chip asChild className="text-sm hover:bg-primary/20" tone="brandTint">
+      <Link data-testid={testId} to={buildEventPagePath(round.eventPage.sport, round.eventPage.slug)}>{label}</Link>
+    </Chip>
   ) : (
-    <span className={className} data-testid={testId}>{label}</span>
+    <Chip className="text-sm" data-testid={testId} tone="brandTint">{label}</Chip>
   );
 }
 

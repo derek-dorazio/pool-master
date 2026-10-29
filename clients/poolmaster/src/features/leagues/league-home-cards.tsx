@@ -15,6 +15,7 @@ import {
   Heading,
   LinkButton,
   LOADING_TEXT,
+  Tile,
   useDisplayPreferences,
 } from '@/features/shared/ui';
 import { TeamName } from '@/features/teams/team-name';
@@ -95,10 +96,14 @@ export function UpNextCard({
   const next = describeMyEntry(leagueCode, upNext.contest, myEntries, entriesState, hasTeam);
 
   return (
-    <section
+    <Tile
       aria-labelledby="league-home-up-next-title"
-      className="grid gap-4 rounded-2xl border border-inverse-border bg-surface-inverse p-6 text-on-inverse"
+      as="section"
+      className="grid gap-4 p-6"
       data-testid="league-home-up-next"
+      padding="none"
+      radius="md"
+      variant="inverse"
     >
       <Eyebrow tone="inverse">Up next · Open for entries</Eyebrow>
       <Heading level={2} variant="card" size="2xl" tone="inherit" id="league-home-up-next-title">
@@ -114,7 +119,7 @@ export function UpNextCard({
         </LinkButton>
         <span className="text-sm text-on-inverse-muted">{next.note}</span>
       </div>
-    </section>
+    </Tile>
   );
 }
 

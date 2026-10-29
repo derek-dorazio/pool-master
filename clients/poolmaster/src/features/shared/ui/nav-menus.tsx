@@ -2,6 +2,7 @@ import { Fragment, type ReactNode } from "react";
 import { Link } from "react-router";
 import { cn } from "./class-names";
 import { Eyebrow } from "./eyebrow";
+import { Tile } from "./tile";
 
 export type NavMenuItem = {
   /** A side-menu heading this item sits under; consecutive items share one heading. */
@@ -80,7 +81,7 @@ export function AdminAreaLayout({
 }: AdminAreaLayoutProps) {
   return (
     <div className="space-y-6" data-testid={testId}>
-      <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-inverse-border bg-surface-inverse-deep px-5 py-3 text-on-inverse">
+      <Tile className="flex flex-wrap items-center gap-3 px-5 py-3" padding="none" radius="md" variant="inverseDeep">
         {icon ? <span className="text-primary">{icon}</span> : null}
         <div className="min-w-0">
           <Eyebrow tone="inverse">{eyebrow}</Eyebrow>
@@ -93,7 +94,7 @@ export function AdminAreaLayout({
         >
           {back.label}
         </Link>
-      </div>
+      </Tile>
 
       <div className="grid items-start gap-6 md:grid-cols-[13rem_minmax(0,1fr)]">
         <nav aria-label={menuLabel} className="flex gap-1 overflow-x-auto md:sticky md:top-4 md:flex-col">

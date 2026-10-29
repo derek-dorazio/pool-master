@@ -14,6 +14,10 @@ const tileVariants = cva("border", {
           "border-[color:var(--status-danger-border)] bg-[var(--status-danger-surface)] [color:var(--status-danger-text)]",
         interactive:
           "border-border bg-[var(--workflow-default-surface)] transition hover:border-[color:var(--status-active-border)] hover:bg-[var(--workflow-default-hover-surface)]",
+        /** The navy panel: a hero, a featured card, the next thing to do. */
+        inverse: "border-inverse-border bg-surface-inverse text-on-inverse",
+        /** The darker navy, for a panel inside a navy panel or a strip that sits apart. */
+        inverseDeep: "border-inverse-border bg-surface-inverse-deep text-on-inverse",
       },
     padding: {
       none: "p-0",
@@ -37,11 +41,14 @@ const tileVariants = cva("border", {
 });
 
 export type TileProps = ComponentProps<"div"> &
-  VariantProps<typeof tileVariants>;
+  VariantProps<typeof tileVariants> & {
+    /** `section` when the tile is a labelled region of the page, such as a hero. */
+    as?: "div" | "section";
+  };
 
-export function Tile({ className, padding, radius, variant, ...props }: TileProps) {
+export function Tile({ as: Tag = "div", className, padding, radius, variant, ...props }: TileProps) {
   return (
-    <div
+    <Tag
       className={cn(tileVariants({ className, padding, radius, variant }))}
       {...props}
     />
