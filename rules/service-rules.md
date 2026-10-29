@@ -351,6 +351,11 @@ Rules:
 - Prefer explicit mapping from persistence models to domain/DTO models.
 - Repository list reads take the filters their callers need (status, year, squad, event) and
   apply them in SQL, instead of returning every row for the caller to filter in JS.
+- A point read that the gates, the handler and the service each repeat within one request goes
+  through `memoizedRead` (`packages/core-api/src/core/request-read-memo.ts`), keyed by a
+  `ReadMemoKey` prefix, and every repository write to that row wraps itself in
+  `forgettingReads` with the same prefix. Remembered values are shared, so callers never mutate
+  them. Reads through a transaction's client and reads outside a request are never remembered.
 
 ---
 

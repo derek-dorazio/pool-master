@@ -5,11 +5,12 @@
  * shifts a past year. A year freezes itself: once it is over, no contest can go final in it.
  */
 import type { FastifyBaseLogger } from 'fastify';
-import type { ChampionshipRepository, CupRepository, SquadRepository } from '@poolmaster/shared/db';
+import type { ChampionshipRepository, CupRepository, LeagueRepository, SquadRepository } from '@poolmaster/shared/db';
 import {
   type ChampionshipTile,
   CupWeight,
   championshipTiles,
+  leaguePointsTable,
   championshipYear,
   cupFinishPoints,
   rankChampionshipTallies,
@@ -76,7 +77,9 @@ export interface ChampionshipYearSummaryView {
 
 export interface ChampionshipServiceDeps {
   finishes: ChampionshipRepository;
-  cups: Pick<CupRepository, 'findRankedEntries' | 'findPointsTable'>;
+  cups: Pick<CupRepository, 'findRankedEntries'>;
+  /** The league's points table and championship name come from its row, read once per request (#1176). */
+  leagues: Pick<LeagueRepository, 'findById'>;
   squads: SquadRepository;
   logger?: ChampionshipLogger;
   now?: () => Date;
@@ -96,8 +99,8 @@ export class ChampionshipService {
    * settled again. A second call for the contest writes nothing. Answers how many it wrote.
    */
   async recordContest(contest: Pick<Contest, 'id' | 'leagueId' | 'cupWeight'>, settledAt: Date): Promise<number> {
-    const table = await this.deps.cups.findPointsTable(contest.leagueId);
-    if (table === null) {
+    const league = await this.deps.leagues.findById(contest.leagueId);
+    if (league === null) {
       this.deps.logger?.warn({ action: 'championship.record.leagueMissing', data: { contestId: contest.id, leagueId: contest.leagueId } }, 'Championship finishes not written: the contest\'s league is gone');
       return 0;
     }
@@ -116,7 +119,7 @@ export class ChampionshipService {
       tiedCount: finish.tiedCount,
       rankedEntryCount: finish.rankedEntryCount,
       weight: contest.cupWeight,
-      points: cupFinishPoints(table, finish, contest.cupWeight),
+      points: cupFinishPoints(leaguePointsTable(league), finish, contest.cupWeight),
       settledAt,
     })));
     this.deps.logger?.info({ action: 'championship.record', data: { contestId: contest.id, leagueId: contest.leagueId, year, written } }, 'Wrote a settled contest\'s championship finishes');
@@ -164,12 +167,12 @@ export class ChampionshipService {
   }
 
   private async requireCupName(leagueId: string, year: number | null): Promise<string> {
-    const cupName = await this.deps.finishes.findCupName(leagueId);
-    if (cupName === null) {
+    const league = await this.deps.leagues.findById(leagueId);
+    if (league === null) {
       this.deps.logger?.warn({ action: 'championship.year.leagueNotFound', data: { leagueId, year } }, 'Championship asked for a league that does not exist');
       throw new ChampionshipLeagueNotFoundError(`League ${leagueId} was not found.`);
     }
-    return cupName;
+    return league.cupName;
   }
 
   /** Every year the league has a counted finish in, newest first, with who leads or won it. */

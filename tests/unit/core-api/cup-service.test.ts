@@ -50,6 +50,7 @@ function build(squads: Squad[] = [EAGLES, BIRDIES, BOGEYS]) {
   const live = new Map<string, RankedContestEntry[]>();
   const service = new CupService({
     cups,
+    leagues: cups.leagues,
     liveContests: { livePositionsOf: async (contestId: string) => live.get(contestId) ?? [] },
     squads: fakeSquadRepo({
       findByLeague: jest.fn().mockResolvedValue(squads),

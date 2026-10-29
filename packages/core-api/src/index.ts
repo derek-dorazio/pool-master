@@ -9,6 +9,7 @@ import { swaggerPlugin } from './plugins/swagger';
 import { authGuard } from './plugins/auth-guard';
 import { etagPlugin } from './plugins/etag-support';
 import { requestLoggingContext } from './plugins/request-logging-context';
+import { requestReadMemo } from './plugins/request-read-memo';
 import { FASTIFY_AJV_OPTIONS } from './plugins/string-transforms';
 import { FASTIFY_SCHEMA_CONTROLLER } from './plugins/serializer-cache';
 import { globalErrorHandler } from './core/error-handler';
@@ -161,6 +162,7 @@ export function buildApp() {
   // =========================================================================
   // Core plugins
   // =========================================================================
+  app.register(requestReadMemo);
   app.register(swaggerPlugin);
   app.register(healthPlugin);
   app.register(versionModule, { prefix: '/version', operationId: 'getRootVersion' });

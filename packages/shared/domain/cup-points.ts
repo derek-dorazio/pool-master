@@ -29,6 +29,11 @@ export interface CupPointsTable {
   customPoints: readonly number[];
 }
 
+/** A league's own points table, from its row (#1176). */
+export function leaguePointsTable(league: { cupPointsScale: CupPointsScale; cupCustomPoints: readonly number[] }): CupPointsTable {
+  return { scale: league.cupPointsScale, customPoints: league.cupCustomPoints };
+}
+
 /** Whole points one place earns on a table, untied and unweighted; `rankedEntryCount` serves FIELD_BEATEN. */
 export function cupPlacePoints(table: CupPointsTable, place: number, rankedEntryCount: number): number {
   switch (table.scale) {

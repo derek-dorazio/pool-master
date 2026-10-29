@@ -8,7 +8,6 @@ import { CupWeight, type LeagueYearFinish } from '@poolmaster/shared/domain';
 
 export class InMemoryChampionship implements ChampionshipRepository {
   readonly finishes: LeagueYearFinish[] = [];
-  readonly cupNames = new Map<string, string>();
   unfinishedContests = 0;
   readonly finalContests: Array<{ leagueId: string; contest: FinalContest }> = [];
   readonly seriesContests: Array<{ leagueId: string; contest: SeriesContest }> = [];
@@ -30,10 +29,6 @@ export class InMemoryChampionship implements ChampionshipRepository {
 
   async hasCountedFinish(leagueId: string, year: number): Promise<boolean> {
     return this.finishes.some((finish) => finish.leagueId === leagueId && finish.year === year && finish.weight !== CupWeight.NOT_COUNTED);
-  }
-
-  async findCupName(leagueId: string): Promise<string | null> {
-    return this.cupNames.get(leagueId) ?? null;
   }
 
   async countUnfinishedContests(): Promise<number> {

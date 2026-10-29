@@ -239,7 +239,7 @@ describe('PrismaChampionshipRepository (#863)', () => {
     ])).resolves.toEqual([true, false, false, false]);
   });
 
-  it('reads the league\'s cup name, and counts its open and live contests that will count, not drafts, finals or NOT_COUNTED ones', async () => {
+  it('counts the league\'s open and live contests that will count, not drafts, finals or NOT_COUNTED ones', async () => {
     const repo = new PrismaChampionshipRepository(getPrisma());
     const { league, contest } = await seedLeague();
     await contest('Open', { status: 'OPEN' });
@@ -248,8 +248,6 @@ describe('PrismaChampionshipRepository (#863)', () => {
     await contest('Final', { status: 'COMPLETED' });
     await contest('Fun', { status: 'ACTIVE', cupWeight: 'NOT_COUNTED' });
 
-    await expect(repo.findCupName(league.id)).resolves.toBe('Keeper Cup');
-    await expect(repo.findCupName(randomUUID())).resolves.toBeNull();
     await expect(repo.countUnfinishedContests(league.id)).resolves.toBe(2);
   });
 
