@@ -33,6 +33,12 @@ DB-backed failure means.
   hint.
 - **Lint fails** → no warn tier exists, so there is no "I'll fix it later" state. A rule at
   0 findings stays at 0.
+- **`poolmaster/no-query-in-loop` fails** → a repository or Prisma call runs once per row.
+  Batch it (one `IN` read and a map, `createMany` / `updateMany`, or pass the loaded row
+  down) per `rules/review-triggers.md` §5 *Reviewing for performance cost*. The
+  `// poolmaster-allow-query-in-loop: <reason>` comment is for a small fixed bound or a
+  finding with its own ticket, and a fix deletes the comment that names its ticket: a marker
+  that covers nothing is an error too.
 - **Typecheck passes but ts-jest fails** → the package tsconfigs and the ts-jest config
   resolve types differently, so `turbo typecheck` passing is not proof that the backend
   suite compiles. A cast that looks redundant under one can be load-bearing under the

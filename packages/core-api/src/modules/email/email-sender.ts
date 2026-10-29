@@ -115,6 +115,7 @@ export class EmailSender {
     for (;;) {
       const rate = this.options.readConfig().sendRatePerSecond;
       const startedAt = this.now().getTime();
+      // poolmaster-allow-query-in-loop: one claim per batch of up to the send rate, not per email
       const batch = await this.options.messages.claimDue({
         now: new Date(startedAt),
         limit: rate,

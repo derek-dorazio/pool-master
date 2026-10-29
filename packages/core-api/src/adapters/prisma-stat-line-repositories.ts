@@ -57,6 +57,7 @@ export class PrismaSportEventParticipantStatLineRepository implements SportEvent
         rewrittenByCompletedAt.set(at, [...(rewrittenByCompletedAt.get(at) ?? []), roundId]);
       }
       for (const [at, ids] of rewrittenByCompletedAt) {
+        // poolmaster-allow-query-in-loop: one updateMany per distinct completion time; one game's lines share one
         await tx.sportEventParticipantRound.updateMany({ where: { id: { in: ids } }, data: { status: ParticipantRoundStatus.COMPLETED, completedAt: new Date(at) } });
       }
       const created = added.length === 0 ? [] : await tx.sportEventParticipantRound.createManyAndReturn({

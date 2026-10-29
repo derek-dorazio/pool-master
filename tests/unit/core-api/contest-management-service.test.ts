@@ -856,9 +856,7 @@ describe('ContestManagementService', () => {
       configJson: storedConfigJson,
       maxEntriesPerSquad: 2,
     });
-    expect(participantContestScoringRuleRepo.delete).toHaveBeenCalledWith(
-      'rule-old',
-    );
+    expect(participantContestScoringRuleRepo.deleteByContestConfiguration).toHaveBeenCalledWith('config-1');
     expect(result.configuration).toMatchObject({ selectionType: SelectionType.TIERED, picksPerTier: 2, countedScores: 5 });
     // pool-master-41t — the refreshed detail carries the read-only
     // effectiveTiers echo (plans/124 §5.3).

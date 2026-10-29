@@ -51,6 +51,7 @@ export class ProviderSyncRunLedger {
           }),
           detail: buildSubmittedSyncRunDetail(feed, eventId),
         };
+        // poolmaster-allow-query-in-loop: one run per requested feed, a handful per sync request
         return this.syncRuns.create({
           providerId: input.providerId,
           sport,

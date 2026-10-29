@@ -62,6 +62,8 @@ describe('EntryReminders.queueDue', () => {
   let world: InMemoryContestWorld;
   let outbox: InMemoryEmailMessages;
   let matches: SportEventMatch[];
+  /** Batched match reads: the cutoff windows of a contest's events come from one. */
+  let matchReads: number;
   let predictions: ContestEntrySeasonPrediction[];
   let boxes: ContestEntrySquare[];
   let logger: ReturnType<typeof fakeLogger>;
@@ -70,6 +72,7 @@ describe('EntryReminders.queueDue', () => {
     world = new InMemoryContestWorld();
     outbox = inMemoryEmailMessages();
     matches = [];
+    matchReads = 0;
     predictions = [];
     boxes = [];
     logger = fakeLogger();
@@ -93,7 +96,10 @@ describe('EntryReminders.queueDue', () => {
       configurations: world.configurationRepo(),
       matches: {
         findBySportEvent: async (sportEventId) => matches.filter((match) => match.sportEventId === sportEventId),
-        findBySportEvents: async (sportEventIds) => matches.filter((match) => sportEventIds.includes(match.sportEventId)),
+        findBySportEvents: async (sportEventIds) => {
+          matchReads += 1;
+          return matches.filter((match) => sportEventIds.includes(match.sportEventId));
+        },
       },
       entries: world.entryRepo(),
       picks: world.pickRepo(),
@@ -247,6 +253,34 @@ describe('EntryReminders.queueDue', () => {
 
     expect(remindedUserIds()).toEqual([drafting.user.id]);
     expect(outbox.rows[0]?.textBody).toContain('Your Week 7 entry is saved as a draft.');
+  });
+
+  it('reads the games of every event of a bracket contest in one read, each event closing at its own starting round', async () => {
+    const league = world.addLeague();
+    const events = ['East', 'West'].map((name) => world.addSportEvent({
+      name,
+      status: SportEventStatus.IN_PROGRESS,
+      startDate: new Date('2026-03-19T16:00:00.000Z'),
+    }));
+    const contest = world.addContest(league.id, { selectionType: SelectionType.BRACKET, sportEventIds: events.map((event) => event.id) });
+    world.addConfiguration(contest.id, {
+      selectionType: SelectionType.BRACKET,
+      configJson: { selectionType: SelectionType.BRACKET, startsAtRound: 3 },
+    });
+    matches = events.map((event, index) => ({
+      id: `game-${String(index)}`,
+      sportEventId: event.id,
+      roundNumber: 3,
+      status: MatchStatus.SCHEDULED,
+      scheduledDate: index === 0 ? CLOSES_AT : new Date(CLOSES_AT.getTime() + 72 * HOUR),
+    }) as SportEventMatch);
+    const nora = member(league.id, 'Nora');
+    matchReads = 0;
+
+    await reminders().queueDue(before(CLOSES_AT, 24, 1));
+
+    expect(remindedUserIds()).toEqual([nora.user.id]);
+    expect(matchReads).toBe(1);
   });
 
   it('reminds members of a second-chance bracket before its starting round, after the event itself has started', async () => {

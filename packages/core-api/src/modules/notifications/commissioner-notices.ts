@@ -103,7 +103,7 @@ export interface CommissionerNoticeDeps extends LeagueMemberDeps, Pick<ContestSu
   templates: Pick<ContestConfigTemplateRepository, 'list'>;
   leagues: Pick<LeagueRepository, 'findById' | 'findAll'>;
   /** C1, C2 and the digest name each event's sport league. */
-  sportLeagues: Pick<SportLeagueRepository, 'findById'>;
+  sportLeagues: Pick<SportLeagueRepository, 'findById' | 'findByIds'>;
   readConfig: () => Pick<EmailConfig, 'weeklyDigestHour'>;
   /** The event page offering each event, which C1, C2 and the digest link to. */
   eventPages: Pick<EventPageService, 'pagesByEvent'>;
@@ -186,6 +186,7 @@ export class CommissionerNotices implements DueNotifications {
           .filter((league) => league.eventEmailDelivery === EventEmailDelivery.PER_EVENT);
         let untold = leagues.filter((league) => !told.has(league.id) && !league.mutedSportLeagueIds.includes(sportEvent.sportLeagueId));
         if (templateKey === 'EVENT_READY_FOR_CONTESTS') {
+          // poolmaster-allow-query-in-loop: #1255
           const withContest = new Set((await this.deps.contests.findBySportEvent(sportEvent.id)).map((contest) => contest.leagueId));
           untold = untold.filter((league) => !withContest.has(league.id));
         }
@@ -235,13 +236,13 @@ export class CommissionerNotices implements DueNotifications {
     }
     upcoming.sort((left, right) => left.startDate.getTime() - right.startDate.getTime());
     const contestLeagues = new Map<string, Set<string>>();
-    const sportLeagueNames = new Map<string, string>();
     for (const sportEvent of upcoming) {
+      // poolmaster-allow-query-in-loop: #1255
       contestLeagues.set(sportEvent.id, new Set((await this.deps.contests.findBySportEvent(sportEvent.id)).map((contest) => contest.leagueId)));
-      if (!sportLeagueNames.has(sportEvent.sportLeagueId)) {
-        sportLeagueNames.set(sportEvent.sportLeagueId, (await this.deps.sportLeagues.findById(sportEvent.sportLeagueId))?.name ?? '');
-      }
     }
+    const sportLeagueIds = [...new Set(upcoming.map((sportEvent) => sportEvent.sportLeagueId))];
+    const sportLeagueNames = new Map((sportLeagueIds.length === 0 ? [] : await this.deps.sportLeagues.findByIds(sportLeagueIds))
+      .map((sportLeague) => [sportLeague.id, sportLeague.name]));
 
     const pages = await eventPages();
     const nextWeekFrom = now.getTime() + DIGEST_WEEK_MS;
