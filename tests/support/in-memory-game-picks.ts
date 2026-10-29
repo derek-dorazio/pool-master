@@ -150,22 +150,24 @@ export class InMemoryGamePicks {
     };
   }
 
-  /** The event's field as the field service publishes it: only the rows, their teams and their seeds matter here. */
-  fieldService(): Pick<SportEventParticipantService, 'listEventParticipants'> {
-    return {
-      listEventParticipants: async (sportEventId) => [...this.field.values()]
-        .filter((row) => row.sportEventId === sportEventId)
-        .map((row) => ({
-          entry: row,
-          participant: expectDefined(this.participants.get(row.participantId)),
-          valuation: null,
-          standing: null,
-          rounds: [],
-          raceResult: null,
-          matches: [],
-          affiliatedWithSportLeague: true,
-        })),
-    };
+  /**
+   * The event's field as the field service publishes it: only the rows, their teams and their
+   * seeds matter here. Nothing is kept, so the shared read is the current one too.
+   */
+  fieldService(): Pick<SportEventParticipantService, 'listEventParticipants' | 'listCachedEventParticipants'> {
+    const listEventParticipants = async (sportEventId: string) => [...this.field.values()]
+      .filter((row) => row.sportEventId === sportEventId)
+      .map((row) => ({
+        entry: row,
+        participant: expectDefined(this.participants.get(row.participantId)),
+        valuation: null,
+        standing: null,
+        rounds: [],
+        raceResult: null,
+        matches: [],
+        affiliatedWithSportLeague: true,
+      }));
+    return { listEventParticipants, listCachedEventParticipants: listEventParticipants };
   }
 
   participantRepo(): Pick<ParticipantRepository, 'findByIds'> {

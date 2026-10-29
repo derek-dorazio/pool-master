@@ -27,6 +27,7 @@ import type { SyncWriteDiagnostics } from './sync-write-diagnostics';
 import { emptySyncWriteDiagnostics } from './sync-write-diagnostics';
 import type { ScoringFamilyEvent, ScoringFamilyModule } from '../../scoring-families';
 import { countLiveScoreUpdates } from './live-score-count';
+import type { EventFieldCache } from '../../events/event-field-cache';
 
 export class LiveScoreValidationError extends Error {
   constructor(reason: string, public readonly issues: unknown) {
@@ -41,6 +42,8 @@ export interface LiveScorePublisherDeps {
   logger?: FastifyBaseLogger;
   /** Which scoring family scores an event, by its sport league's definition: the composition root passes the registry's. */
   scoringFamilyForEvent: (event: ScoringFamilyEvent) => ScoringFamilyModule;
+  /** The event fields this container read lately: an event's is forgotten once its scores are written (#1163). */
+  fieldCache?: Pick<EventFieldCache, 'forget'>;
 }
 
 export interface LiveScorePersistenceResult {
@@ -144,7 +147,11 @@ export async function publishLiveScoreUpdate(
       writeDiagnostics: emptySyncWriteDiagnostics(),
     };
   }
-  return writer.persist(deps, sportEvent, validated);
+  try {
+    return await writer.persist(deps, sportEvent, validated);
+  } finally {
+    deps.fieldCache?.forget(sportEvent.id);
+  }
 }
 
 

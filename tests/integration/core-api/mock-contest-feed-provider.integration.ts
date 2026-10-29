@@ -30,7 +30,7 @@ import {
   PrismaSportEventRepository,
 } from '../../../packages/core-api/src/adapters';
 import { expectDefined } from '../../support/expect-defined';
-import { passLeaderboardCacheTtl, restoreLeaderboardCacheClock } from '../../support/leaderboard-cache-clock';
+import { passReadCacheTtl, restoreReadCacheClock } from '../../support/read-cache-clock';
 
 const providerId = 'mock-contest-feed';
 const eventExternalId = 'golf-masters-2026';
@@ -448,7 +448,7 @@ async function createGolfLivePick(entryId: string, sportEventParticipantId: stri
 
 /** The board as a viewer's next poll reads it, past the board cached by the last read (#1162). */
 async function readGolfLeaderboard(contestId: string, headers: Record<string, string>) {
-  passLeaderboardCacheTtl();
+  passReadCacheTtl();
   const response = await getApp().inject({
     method: 'GET',
     url: `/api/v1/contests/${contestId}/leaderboard`,
@@ -477,7 +477,7 @@ beforeAll(async () => {
 });
 
 afterEach(async () => {
-  restoreLeaderboardCacheClock();
+  restoreReadCacheClock();
   await cleanupTestData();
   await cleanupMockProviderImportData();
 });

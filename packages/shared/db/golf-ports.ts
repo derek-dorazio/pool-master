@@ -20,8 +20,6 @@ export interface GolfRoundWrite {
 }
 
 export interface SportEventParticipantGolfRoundRepository {
-  /** Every scored round at the event, by participant then round number. */
-  findBySportEvent(sportEventId: string): Promise<GolfRoundResult[]>;
   findBySportEventRound(sportEventRoundId: string): Promise<GolfRoundResult[]>;
   /** By participant then round number. */
   findBySportEventParticipants(sportEventParticipantIds: readonly string[]): Promise<GolfRoundResult[]>;

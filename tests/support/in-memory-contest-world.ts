@@ -767,7 +767,7 @@ export class InMemoryContestWorld {
       users: this.userRepo(),
       sportEvents: this.sportEventRepo(),
       sportLeagues: this.sportLeagueRepo(),
-      eventParticipants: { listEventParticipants: async () => [] },
+      eventParticipants: { listEventParticipants: async () => [], listCachedEventParticipants: async () => [] },
       tiers: {
         getEffectiveValuationsForSportEvent: async () => [],
         listTiers: async (sportEventId: string) => this.eventTiers.get(sportEventId) ?? [],

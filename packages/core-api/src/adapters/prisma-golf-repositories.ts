@@ -11,7 +11,12 @@ import type {
   SportEventParticipantGolfRoundRepository,
   SportEventParticipantGolfStandingRepository,
 } from '@poolmaster/shared/db';
-import type { GolfRoundResult, GolfStandingResult } from '@poolmaster/shared/domain';
+import type {
+  GolfRoundResult,
+  GolfStandingResult,
+  SportEventParticipantGolfRound,
+  SportEventParticipantGolfStanding,
+} from '@poolmaster/shared/domain';
 
 const GOLF_ROUND_INCLUDE = {
   golf: true,
@@ -28,15 +33,6 @@ const BY_PARTICIPANT_THEN_ROUND = [
 
 export class PrismaSportEventParticipantGolfRoundRepository implements SportEventParticipantGolfRoundRepository {
   constructor(private readonly prisma: PrismaClient) {}
-
-  async findBySportEvent(sportEventId: string): Promise<GolfRoundResult[]> {
-    const rows = await this.prisma.sportEventParticipantRound.findMany({
-      where: { sportEventParticipant: { sportEventId }, golf: { isNot: null } },
-      include: GOLF_ROUND_INCLUDE,
-      orderBy: BY_PARTICIPANT_THEN_ROUND,
-    });
-    return rows.flatMap(toGolfRoundResult);
-  }
 
   async findBySportEventRound(sportEventRoundId: string): Promise<GolfRoundResult[]> {
     const rows = await this.prisma.sportEventParticipantRound.findMany({
@@ -150,15 +146,7 @@ function toGolfRoundResult(row: GolfRoundRow): GolfRoundResult[] {
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
     },
-    golf: {
-      id: row.golf.id,
-      participantRoundId: row.golf.participantRoundId,
-      strokes: row.golf.strokes,
-      scoreToPar: row.golf.scoreToPar,
-      thru: row.golf.thru,
-      createdAt: row.golf.createdAt,
-      updatedAt: row.golf.updatedAt,
-    },
+    golf: toGolfRound(row.golf),
   }];
 }
 
@@ -176,14 +164,30 @@ function toGolfStandingResult(row: GolfStandingRow): GolfStandingResult[] {
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
     },
-    golf: {
-      id: row.golf.id,
-      standingId: row.golf.standingId,
-      eventScoreToPar: row.golf.eventScoreToPar,
-      eventStrokes: row.golf.eventStrokes,
-      currentRoundThru: row.golf.currentRoundThru,
-      createdAt: row.golf.createdAt,
-      updatedAt: row.golf.updatedAt,
-    },
+    golf: toGolfStanding(row.golf),
   }];
+}
+
+export function toGolfRound(row: Prisma.SportEventParticipantGolfRoundGetPayload<object>): SportEventParticipantGolfRound {
+  return {
+    id: row.id,
+    participantRoundId: row.participantRoundId,
+    strokes: row.strokes,
+    scoreToPar: row.scoreToPar,
+    thru: row.thru,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+  };
+}
+
+export function toGolfStanding(row: Prisma.SportEventParticipantGolfStandingGetPayload<object>): SportEventParticipantGolfStanding {
+  return {
+    id: row.id,
+    standingId: row.standingId,
+    eventScoreToPar: row.eventScoreToPar,
+    eventStrokes: row.eventStrokes,
+    currentRoundThru: row.currentRoundThru,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+  };
 }

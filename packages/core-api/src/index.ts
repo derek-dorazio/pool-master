@@ -66,7 +66,7 @@ import { ProviderRegistry, IngestionScheduler, publishLiveScoreUpdate } from './
 import type { IngestionCallbacks, SportEventDetail } from './modules/ingestion/core';
 import type { LiveScoreResult } from '@poolmaster/shared/dto';
 import { IngestionPersistence } from './modules/ingestion/persistence/ingestion-persistence';
-import { createEventLifecycleService } from './modules/events/wiring';
+import { createEventLifecycleService, eventFieldCache } from './modules/events/wiring';
 import { EventLifecycleScheduler } from './modules/events/event-lifecycle-scheduler';
 import { createCommissionerNotices, createContestExpandedNotices, createContestNotices, createDraftEventNotices, createEntryReminders, createLiveStandings, createMemberJoinedNotices, createPlanPreviewNotices } from './modules/notifications';
 import { ProviderSyncRunLedger } from './modules/ingestion/persistence/provider-sync-run-ledger';
@@ -130,7 +130,7 @@ export function buildApp() {
     releasedEditionContests: createContestManagementService(prisma, app.log, planEntitlements),
   });
   const memberJoined = createMemberJoinedNotices(prisma, { email, readConfig: () => appSettings.get(EMAIL_SETTINGS), appBaseUrl, logger: app.log });
-  const ingestionPersistence = new IngestionPersistence(prisma, app.log);
+  const ingestionPersistence = new IngestionPersistence(prisma, app.log, eventFieldCache);
   const jobLock = new PostgresJobLock(process.env.DATABASE_URL, app.log);
   const eventLifecycleScheduler = new EventLifecycleScheduler({
     sportEvents: new PrismaSportEventRepository(prisma),
@@ -197,6 +197,7 @@ export function buildApp() {
         providerId,
         logger: app.log,
         scoringFamilyForEvent,
+        fieldCache: eventFieldCache,
       });
     },
   };
