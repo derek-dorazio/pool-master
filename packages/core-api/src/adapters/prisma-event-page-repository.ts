@@ -110,5 +110,4 @@ export class PrismaEventPageRepository implements EventPageRepository {
       }));
     });
   }
-
 }
