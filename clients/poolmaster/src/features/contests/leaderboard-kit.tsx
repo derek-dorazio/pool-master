@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { ContestStatus } from '@poolmaster/shared/domain';
 import type { ContestDto } from '@/lib/api';
 import { DataGrid, Tile } from '@/features/shared/ui';
+import { formatPoints } from './bracket-layout';
 import { ContestPageFrame } from './contest-header';
 import { LEADERBOARD_PAGE_SIZE, SETTLED_NOTE, type BoardRow } from './leaderboard-columns';
 
@@ -90,3 +91,28 @@ export function LeaderboardFrame({
   );
 }
 
+
+/**
+ * The note naming the viewer's best placed entry: the first of their squad's placed rows, since
+ * the server ranks best first. Nothing when the viewer has no placed entry on the board.
+ */
+export function YourBestNote<Row extends BoardRow>({
+  entries,
+  mySquadId,
+  points,
+  testId,
+}: {
+  entries: Row[];
+  mySquadId: string | null;
+  /** The points the board ranks by. */
+  points: (row: Row) => number;
+  testId: string;
+}) {
+  const myBest = mySquadId === null
+    ? undefined
+    : entries.find((entry) => entry.squadId === mySquadId && entry.displayPosition !== null);
+  if (!myBest) {
+    return null;
+  }
+  return <p data-testid={testId}>{`Your best: ${myBest.displayPosition} · ${myBest.entryName}, ${formatPoints(points(myBest))}`}</p>;
+}
