@@ -371,11 +371,8 @@ export class InMemoryContestWorld {
           contest.sportEventIds.includes(sportEventId)
           && (!filter?.statuses || filter.statuses.includes(contest.status))
           && (!filter?.excludeStatuses || !filter.excludeStatuses.includes(contest.status))),
-      findBySportEvents: async (sportEventIds, filter) =>
-        [...this.contests.values()].filter((contest) =>
-          contest.sportEventIds.some((sportEventId) => sportEventIds.includes(sportEventId))
-          && (!filter?.statuses || filter.statuses.includes(contest.status))
-          && (!filter?.excludeStatuses || !filter.excludeStatuses.includes(contest.status))),
+      findBySportEvents: async (sportEventIds) =>
+        [...this.contests.values()].filter((contest) => contest.sportEventIds.some((sportEventId) => sportEventIds.includes(sportEventId))),
       findJoinableByReleasedEdition: async () => [],
       findByStatuses: async (statuses) =>
         [...this.contests.values()].filter((contest) => statuses.includes(contest.status)),

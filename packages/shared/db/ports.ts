@@ -445,8 +445,8 @@ export interface ContestRepository {
   findSportLeagueIdsBySeason(leagueId: string, seasonYear: number): Promise<string[]>;
   /** The event's contests, oldest first, optionally narrowed to or away from some statuses. */
   findBySportEvent(sportEventId: string, filter?: ContestStatusFilter): Promise<Contest[]>;
-  /** The contests on any of the events, each once, oldest first, as `findBySportEvent` filters them (#1255). */
-  findBySportEvents(sportEventIds: readonly string[], filter?: ContestStatusFilter): Promise<Contest[]>;
+  /** The contests on any of the events, each once, oldest first (#1255). */
+  findBySportEvents(sportEventIds: readonly string[]): Promise<Contest[]>;
   /**
    * The contests a released edition can join (#714, #1179): made from a template covering the
    * edition's series (matched by the series' name within its sport league), not COMPLETED, not

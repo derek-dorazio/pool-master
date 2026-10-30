@@ -172,18 +172,10 @@ export class PrismaContestRepository implements ContestRepository {
     return rows.map(mapToContest);
   }
 
-  async findBySportEvents(sportEventIds: readonly string[], filter?: ContestStatusFilter): Promise<Contest[]> {
+  async findBySportEvents(sportEventIds: readonly string[]): Promise<Contest[]> {
     if (sportEventIds.length === 0) return [];
     const rows = await this.prisma.contest.findMany({
-      where: {
-        sportEvents: { some: { sportEventId: { in: [...new Set(sportEventIds)] } } },
-        ...((filter?.statuses || filter?.excludeStatuses?.length) && {
-          status: {
-            ...(filter.statuses && { in: [...filter.statuses] }),
-            ...(filter.excludeStatuses?.length && { notIn: [...filter.excludeStatuses] }),
-          },
-        }),
-      },
+      where: { sportEvents: { some: { sportEventId: { in: [...new Set(sportEventIds)] } } } },
       orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
       include: CONTEST_INCLUDE,
     });

@@ -42,7 +42,7 @@ async function contestOn(leagueId: string, sportEventIds: readonly string[], sta
 }
 
 describe('notification batch reads (#1255)', () => {
-  it('reads the contests on several events once each, oldest first, with the status filter the one-event read takes', async () => {
+  it('reads the contests on several events once each, oldest first, leaving out other events\' contests', async () => {
     const { league } = await seedLeagueWithTeams(0);
     const [first, second, other] = await Promise.all([nextMonth(), nextMonth(), nextMonth()]);
     const onFirst = await contestOn(league.id, [first.event.id]);
@@ -52,10 +52,8 @@ describe('notification batch reads (#1255)', () => {
     const contests = new PrismaContestRepository(getPrisma());
 
     const all = await contests.findBySportEvents([first.event.id, second.event.id]);
-    const open = await contests.findBySportEvents([first.event.id, second.event.id], { statuses: [ContestStatus.OPEN] });
 
     expect(all.map((contest) => contest.id)).toEqual([onFirst.id, season.id, draft.id]);
-    expect(open.map((contest) => contest.id)).toEqual([onFirst.id, season.id]);
     expect(expectDefined(all.find((contest) => contest.id === season.id)).sportEventIds).toEqual([first.event.id, second.event.id]);
     await expect(contests.findBySportEvents([])).resolves.toEqual([]);
   });

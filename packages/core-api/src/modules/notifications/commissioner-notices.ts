@@ -216,11 +216,9 @@ export class CommissionerNotices implements DueNotifications {
     const leagues = (await this.deps.leagues.findAll({ isActive: true }))
       .filter((league) => league.eventEmailDelivery === EventEmailDelivery.PER_EVENT);
     if (leagues.length === 0) return;
-    // Each event tells nearly every one of these leagues, so their commissioners are read once for
-    // the run rather than for each event's leagues (#1255).
-    await commissioners.load(leagues.map((league) => league.id));
     // Read at the first ready event a league is still to be told of, for every ready event.
     let leagueIdsWithContest: Promise<Map<string, Set<string>>> | undefined;
+    const sends: Array<{ sportEvent: SportEvent; templateKey: EventNoticeKey; untold: League[] }> = [];
     for (const { sportEvent, templateKey } of due) {
       try {
         if (!await this.isToldOf(sportEvent, firstWeeks)) continue;
@@ -231,19 +229,33 @@ export class CommissionerNotices implements DueNotifications {
           const withContest = (await leagueIdsWithContest).get(sportEvent.id);
           untold = untold.filter((league) => !withContest?.has(league.id));
         }
-        if (untold.length === 0) continue;
+        if (untold.length > 0) sends.push({ sportEvent, templateKey, untold });
+      } catch (error) {
+        this.failedEventNotices(sportEvent, templateKey, error);
+      }
+    }
+    if (sends.length === 0) return;
+    // The commissioners of every league still to be told of any event are read once for the run,
+    // and not at all once every league has been told (#1255).
+    await commissioners.load(sends.flatMap(({ untold }) => untold.map((league) => league.id)));
+    for (const { sportEvent, templateKey, untold } of sends) {
+      try {
         if (templateKey === 'EVENT_COMING_UP') {
           await this.sendComingUp(sportEvent, untold, commissioners, await eventPages());
         } else {
           await this.sendReadyForContests(sportEvent, untold, commissioners, await eventPages());
         }
       } catch (error) {
-        this.deps.logger?.error({
-          action: 'email.commissionerEventNotices.failed',
-          data: { sportEventId: sportEvent.id, templateKey, error: error instanceof Error ? error.message : String(error) },
-        }, 'Failed to queue commissioner emails for an event');
+        this.failedEventNotices(sportEvent, templateKey, error);
       }
     }
+  }
+
+  private failedEventNotices(sportEvent: SportEvent, templateKey: EventNoticeKey, error: unknown): void {
+    this.deps.logger?.error({
+      action: 'email.commissionerEventNotices.failed',
+      data: { sportEventId: sportEvent.id, templateKey, error: error instanceof Error ? error.message : String(error) },
+    }, 'Failed to queue commissioner emails for an event');
   }
 
   /** False for a later week of a season whose events are weeks: only its first week is told of. */

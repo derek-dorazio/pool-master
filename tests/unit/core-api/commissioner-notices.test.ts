@@ -247,6 +247,21 @@ describe('CommissionerNotices', () => {
       expect(new Set(sent('EVENT_COMING_UP').map(({ userId }) => userId))).toEqual(new Set(commissioners.map((user) => user.id)));
     });
 
+    it('reads no members on a sweep where every league has already been told of every due event (#1255)', async () => {
+      const office = world.addLeague({ name: 'Office League' });
+      person(office.id, 'Casey');
+      event({ name: 'The Masters', startDate: inDays(5) });
+      event({ name: 'Valspar Championship', startDate: inDays(9), status: SportEventStatus.DRAFT });
+      await notices().queueDue(NOW);
+      const toldBefore = outbox.rows.length;
+      const { deps, counts } = spiedReads();
+
+      await notices(deps).queueDue(new Date(NOW.getTime() + HOUR));
+
+      expect(outbox.rows).toHaveLength(toldBefore);
+      expect(counts()).toMatchObject({ memberships: 0, users: 0 });
+    });
+
     it('tells commissioners of leagues with no contest on a released event within 7 days, with its field and the default setups offered on it in their order, each opening Create contest with the setup and the event chosen', async () => {
       const office = world.addLeague({ name: 'Office League', leagueCode: 'OFFICE24' });
       const busy = world.addLeague({ name: 'Busy League' });
