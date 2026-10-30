@@ -109,8 +109,11 @@ export async function readIndexLeads(prisma: PrismaClient): Promise<Map<string, 
 const BTREE_COMPARISON = String.raw`(?:<=|>=|=|<(?![>=])|>|IS NULL\b)`;
 /** `LIKE` and `ILIKE`, which only a trigram index serves. */
 const PATTERN_MATCH = String.raw`~~\*?`;
-/** One bound value, possibly cast: `$1`, `($1)::text`, `($1)::"SomeEnum"`. */
-const BOUND_ELEMENT = String.raw`\(*\$\d+\)*(?:::[\w"]+(?:\[\])?)?`;
+/**
+ * One bound value in an IN list, possibly cast: `$1`, `($1)::text`, `($1)::"SomeEnum"`,
+ * `($1)::character varying`. The cast runs to the next `,` or `]`, as Postgres prints multi-word types in full.
+ */
+const BOUND_ELEMENT = String.raw`\(*\$\d+\)*(?:::[^,\]]+?)?`;
 /**
  * A bound value on the right of a comparison: `$1`, `ANY ($1)`, `($1)::"SomeEnum"`, or
  * `ANY (ARRAY[$1, $2])` for an IN list, where every element must be bound.
@@ -326,8 +329,10 @@ function streamedFrom(limit: PlanNode): PlanNode[] {
  * `OFFSET` that has no `LIMIT`, or with more Limits than `LIMIT`s, counts as unlimited.
  */
 export function stopsEarly(sql: string, limitNodes: number): boolean {
-  const limitClauses = [...sql.matchAll(/\bLIMIT\b/gi)].length;
-  const offsetsAlone = [...sql.matchAll(/\bOFFSET\b/gi)].length - [...sql.matchAll(/\bLIMIT\s+\S+\s+OFFSET\b/gi)].length;
+  // A quoted identifier or string literal such as "limit" is not a clause.
+  const clauses = sql.replace(/"(?:[^"]|"")*"|'(?:[^']|'')*'/g, '');
+  const limitClauses = [...clauses.matchAll(/\bLIMIT\b/gi)].length;
+  const offsetsAlone = [...clauses.matchAll(/\bOFFSET\b/gi)].length - [...clauses.matchAll(/\bLIMIT\s+\S+\s+OFFSET\b/gi)].length;
   return limitClauses > 0 && offsetsAlone === 0 && limitNodes <= limitClauses;
 }
 

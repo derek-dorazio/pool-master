@@ -228,13 +228,14 @@ describe('missing-index check on fixed plans: whether another index could serve 
     expect(findWholeScans({ 'Node Type': 'Aggregate', Plans: [{ 'Node Type': 'Limit', Plans: [walk] }] }, INDEXES)).toEqual(EVERY_USER_ROW);
   });
 
-  it('reports a walk under a Limit when the statement also has an OFFSET with no LIMIT, since the plan does not say which clause each Limit is', () => {
+  it('reports a walk under a Limit when the statement also has an OFFSET with no LIMIT, since the plan does not say which clause each Limit is, and ignores LIMIT inside a quoted name or a string', () => {
     const walk: PlanNode = { 'Node Type': 'Index Only Scan', 'Index Name': 'users_pkey', 'Relation Name': 'users', Alias: 'users' };
     const offsetOverLimited = 'SELECT "sub"."id" FROM (SELECT "public"."users"."id" FROM "public"."users" LIMIT $1) AS "sub" ORDER BY "sub"."id" OFFSET $2';
     expect(findWholeScans({ 'Node Type': 'Limit', Plans: [{ 'Node Type': 'Limit', Plans: [walk] }] }, INDEXES, { sql: offsetOverLimited })).toEqual(EVERY_USER_ROW);
     expect(stopsEarly(offsetOverLimited, 2)).toBe(false);
     expect(stopsEarly(FIRST_USER_IN_ID_ORDER, 2)).toBe(false);
     expect(stopsEarly(FIRST_USER_IN_ID_ORDER, 1)).toBe(true);
+    expect(stopsEarly('SELECT "public"."t"."limit" FROM "public"."t" WHERE "public"."t"."note" = \'LIMIT 1\' OFFSET $1', 1)).toBe(false);
   });
 
   it('reports the inner side of a Nested Loop under a LIMIT, which is walked again for every outer row, and passes its streamed outer side', () => {
@@ -272,13 +273,14 @@ describe('missing-index check on fixed plans: whether another index could serve 
     expect(findWholeScans({ 'Node Type': 'Limit', Plans: [{ 'Node Type': 'Sort', Plans: [plan] }] }, INDEXES)).toEqual([]);
   });
 
-  it('passes the same join when the IN list casts each bound value, and reports the walked side when one element of the list is not a bound value', () => {
+  it('passes the same join when the IN list casts each bound value, to a one-word or multi-word type, and reports the walked side when one element of the list is not a bound value', () => {
     const joined = (inList: string): PlanNode => nestedLoop(
       indexScan('league_memberships_user_id_status_idx', 'm', { 'Index Cond': `(user_id = ANY (ARRAY[${inList}]))` }),
       { 'Node Type': 'Materialize', Plans: [indexScan('users_pkey', 'u', {})] },
       '(u.id = m.user_id)',
     );
     expect(findWholeScans(joined('($1)::uuid, ($2)::uuid'), INDEXES)).toEqual([]);
+    expect(findWholeScans(joined('($1)::character varying, ($2)::character varying'), INDEXES)).toEqual([]);
     expect(findWholeScans(joined("$1, '00000000-0000-0000-0000-000000000000'::uuid"), INDEXES)).toEqual(EVERY_USER_ROW);
   });
 
