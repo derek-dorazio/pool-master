@@ -7,17 +7,15 @@
 export const PLATFORM_SEARCH_MIN_LENGTH = 3;
 
 /**
- * Whether `term`, trimmed, is long enough to search a platform-wide list. A plain boolean, not a
- * type guard: a short term is still a string. Callers trim the term they search with.
- */
-export function isPlatformSearchTerm(term: string | undefined): boolean {
-  return (term?.trim().length ?? 0) >= PLATFORM_SEARCH_MIN_LENGTH;
-}
-
-/**
- * `term` trimmed, when it is long enough to search a platform-wide list, else null. For the
- * server, which searches with the term it checks (#1313).
+ * `term` trimmed, when it is long enough to search a platform-wide list, else null. The server
+ * searches with the term it checks (#1313).
  */
 export function platformSearchTerm(term: string | undefined): string | null {
-  return isPlatformSearchTerm(term) ? (term as string).trim() : null;
+  const trimmed = term?.trim() ?? '';
+  return trimmed.length >= PLATFORM_SEARCH_MIN_LENGTH ? trimmed : null;
+}
+
+/** Whether `term`, trimmed, is long enough to search a platform-wide list. */
+export function isPlatformSearchTerm(term: string | undefined): boolean {
+  return platformSearchTerm(term) !== null;
 }

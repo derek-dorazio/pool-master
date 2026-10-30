@@ -45,7 +45,7 @@ export interface UserSearchFilters {
 
 /**
  * A user search with its term, which `UserRepository.search` requires (#1313): no read lists
- * every user. The caller checks the term is long enough (`isPlatformSearchTerm`) and trims it.
+ * every user. The caller checks and trims the term with `platformSearchTerm`.
  */
 export interface UserSearch extends UserSearchFilters {
   search: string;
@@ -172,7 +172,7 @@ export interface LeagueSearchFilters {
 
 /**
  * A league search with its term, which `LeagueRepository.search` requires (#1313): no read
- * lists every league for a screen. The caller checks the term is long enough and trims it.
+ * lists every league for a screen. The caller checks and trims the term with `platformSearchTerm`.
  */
 export interface LeagueSearch extends LeagueSearchFilters {
   search: string;
