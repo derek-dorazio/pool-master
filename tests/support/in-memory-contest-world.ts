@@ -704,8 +704,7 @@ export class InMemoryContestWorld {
   leagueRepo(): LeagueRepository {
     return fakeLeagueRepo({
       findById: async (id) => this.leagues.get(id) ?? null,
-      findAll: async (filters = {}) => [...this.leagues.values()]
-        .filter((league) => filters.isActive === undefined || league.isActive === filters.isActive),
+      findActive: async () => [...this.leagues.values()].filter((league) => league.isActive),
     });
   }
 

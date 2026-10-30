@@ -23,7 +23,7 @@ import bcrypt from 'bcryptjs';
 import { randomBytes } from 'node:crypto';
 import type { FastifyBaseLogger } from 'fastify';
 import type { UserRepository, UserSearchFilters } from '@poolmaster/shared/db';
-import { isKnownLocale, isKnownTimeZone, isPlatformSearchTerm, PLATFORM_SEARCH_MIN_LENGTH, type TimeFormat, type User } from '@poolmaster/shared/domain';
+import { isKnownLocale, isKnownTimeZone, PLATFORM_SEARCH_MIN_LENGTH, platformSearchTerm, type TimeFormat, type User } from '@poolmaster/shared/domain';
 import { UserOperationError } from './user-errors';
 import { lockMemberRow } from '../../adapters';
 import type { PasswordChangedNotifier } from '../auth/password-changed-notifier';
@@ -83,7 +83,8 @@ export class UserService {
    */
   async listUsers(actor: UserWriteActor, filters: UserSearchFilters): Promise<User[]> {
     this.requireRootAdmin(actor, 'list users');
-    if (!isPlatformSearchTerm(filters.search)) {
+    const search = platformSearchTerm(filters.search);
+    if (search === null) {
       this.logger?.warn({
         action: 'userService.list.searchRequired',
         data: { actorUserId: actor.userId },
@@ -94,7 +95,7 @@ export class UserService {
         400,
       );
     }
-    const users = await this.users.findAll({ ...filters, search: filters.search?.trim() });
+    const users = await this.users.search({ ...filters, search });
     this.logger?.info({
       action: 'userService.list.success',
       data: { actorUserId: actor.userId, count: users.length },

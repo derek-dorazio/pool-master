@@ -15,7 +15,7 @@ export interface TableScanAllowance {
 export const TABLE_SCAN_ALLOWANCES: readonly TableScanAllowance[] = [
   {
     table: 'leagues',
-    sqlIncludes: 'FROM "public"."leagues" WHERE 1=1 ORDER BY "public"."leagues"."updated_at" DESC',
-    reason: "The root admin's all-leagues list with no search reads every league; #1313 decides whether it requires a search.",
+    sqlIncludes: 'FROM "public"."leagues" WHERE "public"."leagues"."is_active" = $? ORDER BY',
+    reason: 'The commissioner notices email every active league, so they read every active league; no screen calls it (#1313). #1303 covers the sweep.',
   },
 ];

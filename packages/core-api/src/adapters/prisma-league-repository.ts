@@ -3,7 +3,7 @@
  */
 
 import type { League as PrismaLeague, Prisma, PrismaClient } from '@prisma/client';
-import type { LeaguePlanChange, LeagueRepository, LeagueSearchFilters } from '@poolmaster/shared/db';
+import type { LeaguePlanChange, LeagueRepository, LeagueSearch, LeagueSearchFilters } from '@poolmaster/shared/db';
 import type { League, LeagueIconKey, LeaguePlan } from '@poolmaster/shared/domain';
 import { LeagueMembershipStatus as MembershipStatus, LeaguePlanChangeReason } from '@poolmaster/shared/domain';
 import { forgettingReads, memoizedRead, ReadMemoKey } from '../core/request-read-memo';
@@ -28,12 +28,20 @@ export class PrismaLeagueRepository implements LeagueRepository {
     return row ? mapToLeague(row) : null;
   }
 
-  async findAll(filters: LeagueSearchFilters = {}): Promise<League[]> {
+  async search(filters: LeagueSearch): Promise<League[]> {
     const rows = await this.prisma.league.findMany({
       where: leagueSearchWhere(filters),
       // updatedAt first so the admin management surface shows recently-touched leagues at
       // the top, which is the ordering it already relied on.
       orderBy: [{ updatedAt: 'desc' }, { createdAt: 'desc' }],
+    });
+    return rows.map(mapToLeague);
+  }
+
+  async findActive(): Promise<League[]> {
+    const rows = await this.prisma.league.findMany({
+      where: { isActive: true },
+      orderBy: { createdAt: 'asc' },
     });
     return rows.map(mapToLeague);
   }
