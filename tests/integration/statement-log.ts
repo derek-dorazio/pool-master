@@ -112,7 +112,9 @@ const TRANSACTION_CONTROL = /^(?:BEGIN|COMMIT|ROLLBACK|SAVEPOINT|RELEASE)\b/i;
  * The verb and table of a statement, as `SELECT sport_events`, or null for transaction control.
  * Any other statement throws, so a statement no count can place never drops out of one unseen.
  */
-export function statementTarget({ sql }: RecordedStatement): string | null {
+export function statementTarget(statement: RecordedStatement): string | null {
+  // Multi-line raw SQL starts with a newline and indentation.
+  const sql = statement.sql.trimStart();
   for (const [verb, pattern] of STATEMENT_TARGETS) {
     const table = pattern.exec(sql)?.[1];
     if (table !== undefined) return `${verb} ${table}`;
