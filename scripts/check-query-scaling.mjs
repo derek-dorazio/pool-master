@@ -9,10 +9,8 @@
  * THE RULE. A GET route in the OpenAPI spec whose 200 response holds an array, at the top or in
  * any object it contains, must be named in `tests/` as `route: 'GET <path>'`, the path exactly as
  * the spec writes it, in a file that calls `expectConstantQueries(` (or `expectFixedQueries(`, for
- * a list whose length code fixes), or be listed in
- * `query-scaling-gaps.mjs`. A listed route that has a test now, or a listed path that is not such a
- * route, fails too, and so does a list whose length is not exactly `GAP_CEILING`, so the list only
- * shrinks and each deletion lowers the ceiling with it.
+ * a list whose length code fixes). There are no exemptions: the routes that shipped before the
+ * check got their tests with their fixes (#1315, #1316).
  *
  * WHAT IT DOES NOT PROVE. That the test seeds the rows that could cost a query each. The helper
  * refuses a seed the response does not show; the reviewer judges whether it is the right one.
@@ -21,18 +19,9 @@ import { readFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 
 import { parseRuleCheckArgs, readTextFile, reportFindings, walkFiles } from './rule-check-utils.mjs';
-import { QUERY_SCALING_GAPS } from './query-scaling-gaps.mjs';
 
 export const OPENAPI_SPEC = 'packages/shared/generated/openapi.json';
 export const TEST_ROOTS = ['tests'];
-const GAPS_FILE = 'scripts/query-scaling-gaps.mjs';
-
-/**
- * How many entries the gap list holds, exactly. Lower it with each entry deleted; never raise it.
- * An exact count leaves no slack for a later entry, so growing the list means editing this line,
- * which a reviewer sees.
- */
-export const GAP_CEILING = 2;
 
 /** Whether a schema, following `$ref`s into `components.schemas`, is or contains an array. */
 export function holdsArray(schema, components, seen = new Set()) {
@@ -71,39 +60,14 @@ export function findTestedRoutes(testTexts) {
   return tested;
 }
 
-export function evaluateQueryScaling({ routes, tested, gaps, ceiling = GAP_CEILING }) {
-  const findings = [];
-  if (gaps.length > ceiling) {
-    findings.push({
-      location: GAPS_FILE,
-      message: `${gaps.length} gaps are listed, over the ceiling of ${ceiling}. A new list route gets its scaling test, `
-        + 'not a gap entry.',
-    });
-  } else if (gaps.length < ceiling) {
-    findings.push({
-      location: 'scripts/check-query-scaling.mjs',
-      message: `${gaps.length} gaps are listed under a ceiling of ${ceiling}. Lower GAP_CEILING to ${gaps.length}.`,
-    });
-  }
-  const listed = new Set(gaps.map((gap) => gap.route));
-  const known = new Set(routes);
-  for (const route of routes) {
-    if (!tested.has(route) && !listed.has(route)) {
-      findings.push({
-        location: OPENAPI_SPEC,
-        message: `${route} answers with a list and has no query-scaling test. Add an expectConstantQueries case, or an `
-          + 'expectFixedQueries case when code fixes its length (rules/testing-rules.md §9B *Query Scaling Tests*).',
-      });
-    }
-  }
-  for (const gap of gaps) {
-    if (!known.has(gap.route)) {
-      findings.push({ location: GAPS_FILE, message: `${gap.route} is listed but is not a GET route that answers with a list; delete its entry.` });
-    } else if (tested.has(gap.route)) {
-      findings.push({ location: GAPS_FILE, message: `${gap.route} has a scaling test now; delete its entry.` });
-    }
-  }
-  return findings;
+export function evaluateQueryScaling({ routes, tested }) {
+  return routes
+    .filter((route) => !tested.has(route))
+    .map((route) => ({
+      location: OPENAPI_SPEC,
+      message: `${route} answers with a list and has no query-scaling test. Add an expectConstantQueries case, or an `
+        + 'expectFixedQueries case when code fixes its length (rules/testing-rules.md §9B *Query Scaling Tests*).',
+    }));
 }
 
 function main() {
@@ -113,10 +77,9 @@ function main() {
 
   reportFindings({
     title: 'Query scaling',
-    findings: evaluateQueryScaling({ routes, tested, gaps: QUERY_SCALING_GAPS }),
+    findings: evaluateQueryScaling({ routes, tested }),
     warnOnly,
-    emptyMessage: `Query scaling: ${routes.filter((route) => tested.has(route)).length} of ${routes.length} list routes tested; `
-      + `${QUERY_SCALING_GAPS.length} listed gaps.`,
+    emptyMessage: `Query scaling: all ${routes.length} list routes tested.`,
   });
 }
 

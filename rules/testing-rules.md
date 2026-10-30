@@ -1113,8 +1113,7 @@ timing them, so it catches the per-row read at any data size.
   read sends no recorded statement, since its count would prove nothing. It sends any email the
   seed queued before it starts counting.
 - **Enforced by** `npm run rules:check:query-scaling`, which reads the list routes from the OpenAPI
-  spec. Routes that shipped before it are listed in `scripts/query-scaling-gaps.mjs`, each with the
-  ticket that will add its test; that list only shrinks, and a new route never goes on it.
+  spec. It has no exemption list: every list route has its case.
 - A count that grows is a defect: fix the read (§3 *Defect Verification Protocol*), never loosen the
   case.
 
