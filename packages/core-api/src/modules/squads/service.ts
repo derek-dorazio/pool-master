@@ -473,6 +473,7 @@ export class SquadService {
         where: { id: squadId },
       });
     });
+    forgetReads(ReadMemoKey.squad);
     forgetReads(ReadMemoKey.squadMembership);
 
     this.logger?.info({

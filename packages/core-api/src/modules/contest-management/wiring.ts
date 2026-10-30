@@ -34,7 +34,7 @@ import { knockoutSeeds } from '../scoring-families/head-to-head/score-team';
 import { hasSportEventStarted } from '../events/operational-timing';
 import { BatchedRead, batchedByIds, batchedByKey, withReads } from '../../core/batched-read';
 import type { ContestOpeningReader } from './contest-opening';
-import { ContestManagementService, type ContestCreateSportEventReader } from './service';
+import { ContestManagementService, type ContestCreateSportEventReader, type ContestCreateSportEventState } from './service';
 
 export function createContestManagementService(
   prisma: PrismaClient,
@@ -77,37 +77,44 @@ export function createContestSportEventReader({ sportEvents, sports, field, valu
   valuations: SportEventParticipantValuationRepository;
   matches: SportEventMatchRepository;
 }): ContestCreateSportEventReader {
+  /**
+   * The events' states from one read each of the events, their sports and their loaded field
+   * counts, however many events (#1355): a contest's events are all asked about at once.
+   */
+  const findByIds = async (sportEventIds: readonly string[]): Promise<ContestCreateSportEventState[]> => {
+    const events = await sportEvents.findByIds(sportEventIds);
+    if (events.length === 0) {
+      return [];
+    }
+    // A contest's events share one sport league, so one sport; any other caller has one event.
+    const [sport, loaded] = await Promise.all([
+      sports.findBySport(events[0].sport),
+      sportEvents.countParticipants(events.map((event) => event.id)),
+    ]);
+    return events.map((event) => ({
+      id: event.id,
+      status: event.status,
+      startDate: event.startDate,
+      sport: event.sport,
+      sportLeagueId: event.sportLeagueId,
+      eventYear: event.eventYear,
+      // A sport league scored by its own family plays its own format (#934: a stat pool plays
+      // golf's, not its team sport's matches); any other plays its sport's.
+      tournamentFormat: (event.scoringFamily ?? null) === null
+        ? (sport?.sport === event.sport ? sport.tournamentFormat : undefined) ?? getDefaultTournamentFormatForSport(event.sport)
+        : eventSportDefinition(event).tournamentFormat,
+      participantCount: event.participantCount ?? null,
+      loadedParticipantCount: loaded.get(event.id) ?? 0,
+      rounds: event.rounds ?? null,
+      salaryCap: event.pricingConfig?.salaryCap ?? null,
+      squaresFromRound: event.squaresFromRound ?? null,
+      participantType: event.participantType ?? null,
+      scoringFamily: event.scoringFamily ?? null,
+    }));
+  };
   return {
-    findById: async (sportEventId) => {
-      const event = await sportEvents.findById(sportEventId);
-      if (!event) {
-        return null;
-      }
-      const [sport, loaded] = await Promise.all([
-        sports.findBySport(event.sport),
-        sportEvents.countParticipants([sportEventId]),
-      ]);
-      return {
-        id: event.id,
-        status: event.status,
-        startDate: event.startDate,
-        sport: event.sport,
-        sportLeagueId: event.sportLeagueId,
-        eventYear: event.eventYear,
-        // A sport league scored by its own family plays its own format (#934: a stat pool plays
-        // golf's, not its team sport's matches); any other plays its sport's.
-        tournamentFormat: (event.scoringFamily ?? null) === null
-          ? sport?.tournamentFormat ?? getDefaultTournamentFormatForSport(event.sport)
-          : eventSportDefinition(event).tournamentFormat,
-        participantCount: event.participantCount ?? null,
-        loadedParticipantCount: loaded.get(sportEventId) ?? 0,
-        rounds: event.rounds ?? null,
-        salaryCap: event.pricingConfig?.salaryCap ?? null,
-        squaresFromRound: event.squaresFromRound ?? null,
-        participantType: event.participantType ?? null,
-        scoringFamily: event.scoringFamily ?? null,
-      };
-    },
+    findById: async (sportEventId) => (await findByIds([sportEventId])).at(0) ?? null,
+    findByIds,
     findActiveFieldPrices: async (sportEventId) => {
       const [entries, eventValuations] = await Promise.all([
         field.findBySportEvent(sportEventId),
@@ -165,6 +172,7 @@ export function createContestOpeningReader(prisma: PrismaClient): ContestOpening
   const reader = createContestSportEventReader({
     sportEvents: withReads(sportEvents, {
       findById: async (id) => (await eventsById.load([id])).at(0) ?? null,
+      findByIds: (ids) => eventsById.load(ids),
       countParticipants: async (sportEventIds) => new Map(await Promise.all(sportEventIds.map(async (sportEventId) => [sportEventId, await participantCounts.load(sportEventId)] as const))),
     }),
     sports: withReads(sports, { findBySport: async (sport) => (await sportRows.load(sport)).at(0) ?? null }),

@@ -1,6 +1,7 @@
 import type { Prisma, PrismaClient, Squad as PrismaSquad } from '@prisma/client';
 import type { SquadDetails, SquadRepository } from '@poolmaster/shared/db';
 import type { Squad, TeamIconKey } from '@poolmaster/shared/domain';
+import { forgettingReads, memoizedRead, ReadMemoKey } from '../core/request-read-memo';
 import { mapToSquadMembership } from './prisma-squad-membership-repository';
 import { mapToUser } from './prisma-user-repository';
 
@@ -33,9 +34,12 @@ type SquadDetailsRow = Prisma.SquadGetPayload<{ include: ReturnType<typeof squad
 export class PrismaSquadRepository implements SquadRepository {
   constructor(private readonly prisma: PrismaClient | Prisma.TransactionClient) {}
 
+  /** Remembered for the request (#1355): the gate, the service and the reply each ask for the team. */
   async findById(id: string): Promise<Squad | null> {
-    const row = await this.prisma.squad.findUnique({ where: { id } });
-    return row ? mapToSquad(row) : null;
+    return memoizedRead(this.prisma, `${ReadMemoKey.squad}${id}`, async () => {
+      const row = await this.prisma.squad.findUnique({ where: { id } });
+      return row ? mapToSquad(row) : null;
+    });
   }
 
   async findByLeague(leagueId: string, includeInactive = false): Promise<Squad[]> {
@@ -93,14 +97,14 @@ export class PrismaSquadRepository implements SquadRepository {
   }
 
   async update(id: string, updates: Partial<Squad>): Promise<Squad> {
-    const row = await this.prisma.squad.update({
+    const row = await forgettingReads(ReadMemoKey.squad, () => this.prisma.squad.update({
       where: { id },
       data: {
         ...(updates.name !== undefined && { name: updates.name }),
         ...(updates.iconKey !== undefined && { iconKey: updates.iconKey }),
         ...(updates.isActive !== undefined && { isActive: updates.isActive }),
       },
-    });
+    }));
     return mapToSquad(row);
   }
 

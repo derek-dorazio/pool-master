@@ -244,7 +244,8 @@ function createSportEventTierServiceStub(
       : [],
   }));
   return {
-    listTiers: jest.fn().mockResolvedValue(tiers.map(({ participants: _participants, ...tier }) => tier)),
+    listTiersOfEvents: jest.fn(async (sportEventIds: readonly string[]) => sportEventIds.flatMap((sportEventId) =>
+      tiers.map(({ participants: _participants, ...tier }) => ({ ...tier, sportEventId })))),
     getEffectiveTiersForSportEvents: jest.fn(async (sportEventIds: readonly string[]) =>
       new Map(sportEventIds.map((sportEventId) => [sportEventId, tiers]))),
   } as unknown as SportEventTierService;
@@ -274,6 +275,7 @@ function createSportEventReader(overrides?: Partial<{
   scoringFamily: ScoringFamily;
 }>): {
   findById: jest.Mock;
+  findByIds: jest.Mock;
   findActiveFieldPrices: jest.Mock;
   countGames: jest.Mock;
   countUndecidedGames: jest.Mock;
@@ -282,7 +284,7 @@ function createSportEventReader(overrides?: Partial<{
   findCutoffTiming: jest.Mock;
   findGame: jest.Mock;
 } {
-  return {
+  const reader = {
     findActiveFieldPrices: jest.fn().mockResolvedValue(overrides?.activeFieldPrices ?? []),
     countGames: jest.fn().mockResolvedValue(overrides?.gameCount ?? 0),
     countUndecidedGames: jest.fn().mockResolvedValue(overrides?.undecidedGameCount ?? 0),
@@ -308,7 +310,10 @@ function createSportEventReader(overrides?: Partial<{
       ...(overrides?.participantType !== undefined && { participantType: overrides.participantType }),
       ...(overrides?.scoringFamily !== undefined && { scoringFamily: overrides.scoringFamily }),
     }),
+    // Each event as `findById` answers it, so a test that changes that answer changes both.
+    findByIds: jest.fn(async (ids: readonly string[]): Promise<unknown[]> => (await Promise.all(ids.map((id): Promise<unknown> => (reader.findById as jest.Mock<Promise<unknown>, [string]>)(id)))).filter((state) => state !== null)),
   };
+  return reader;
 }
 
 describe('ContestManagementService', () => {
@@ -685,12 +690,13 @@ describe('ContestManagementService', () => {
       reader?: ReturnType<typeof createSportEventReader>;
       transitioned?: boolean;
       contestOpened?: ContestOpenedNotice;
+      sportEventIds?: string[];
     }) {
       const contestCoreRepo = createContestRepo();
       const draft = {
         id: 'contest-1',
         leagueId: options?.leagueId ?? 'league-1',
-        sportEventIds: ['11111111-1111-1111-1111-111111111111'],
+        sportEventIds: options?.sportEventIds ?? ['11111111-1111-1111-1111-111111111111'],
         name: 'Contest 1',
         status: options?.status ?? ContestStatus.DRAFT,
         contestFormat: ContestFormat.ROSTER,
@@ -706,20 +712,38 @@ describe('ContestManagementService', () => {
         draft.status = ContestStatus.OPEN;
         return true;
       });
+      const tiers = createSportEventTierServiceStub(options?.tierCount ?? 0);
       const service = new ContestManagementService({
         contests: contestCoreRepo,
         configTemplates: createContestConfigTemplateRepo(),
         configurations: createContestConfigurationRepo(),
         scoringRules: createParticipantScoringRuleRepo(),
-        tiers: createSportEventTierServiceStub(options?.tierCount ?? 0),
+        tiers,
         sportEventReader: options?.reader ?? createSportEventReader(),
         contestOpened: options?.contestOpened,
         now: () => CONTEST_MANAGEMENT_TEST_NOW,
         cups: createCupKeeper(),
         planEntitlements: platinumEntitlements(),
       });
-      return { service, contestCoreRepo };
+      return { service, contestCoreRepo, tiers };
     }
+
+    it('reads a two-event contest\'s events together and their tiers in one read when opening it, not once per event (#1355)', async () => {
+      const masters = '11111111-1111-1111-1111-111111111111';
+      const pga = '22222222-2222-2222-2222-222222222222';
+      const reader = createSportEventReader();
+      const event = await (reader.findById as jest.Mock<Promise<object>, [string]>)(masters);
+      reader.findById.mockImplementation(async (id: string) => ({ ...event, id }));
+      const { service, tiers } = buildService({ reader, sportEventIds: [masters, pga], tierCount: 6 });
+
+      const opened = await service.openContest('league-1', 'contest-1');
+
+      expect(opened.status).toBe(ContestStatus.OPEN);
+      expect(reader.findByIds).toHaveBeenCalledTimes(1);
+      expect(reader.findByIds).toHaveBeenCalledWith([masters, pga]);
+      expect(tiers.listTiersOfEvents).toHaveBeenCalledTimes(1);
+      expect(tiers.listTiersOfEvents).toHaveBeenCalledWith([masters, pga]);
+    });
 
     it('moves a DRAFT contest to OPEN with a compare-and-set from DRAFT, records when it opened, has the reminder sweep look at it next (#1170), and returns it open', async () => {
       const { service, contestCoreRepo } = buildService();
@@ -1988,6 +2012,7 @@ describe('ContestManagementService — a contest of several events', () => {
     }]));
     return {
       findById: jest.fn().mockImplementation(async (id: string) => byId.get(id) ?? null),
+      findByIds: jest.fn().mockImplementation(async (ids: readonly string[]) => ids.flatMap((id) => byId.get(id) ?? [])),
       findActiveFieldPrices: jest.fn().mockResolvedValue([10, 10, 10]),
       countGames: jest.fn().mockResolvedValue(0),
       countUndecidedGames: jest.fn().mockResolvedValue(0),

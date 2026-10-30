@@ -21,6 +21,7 @@ import { PASSWORD_RESET_LINK_MINUTES, type ApiErrorCode } from '@poolmaster/shar
 import { EmailMessageStatus, EmailTemplateKey } from '@poolmaster/shared/domain';
 import { emailRecipientOf, type EmailService } from '../email';
 import { cancelOpenPasswordResetTokens, revokeUserSessions } from '../users/user-lifecycle';
+import { forgettingReads, ReadMemoKey } from '../../core/request-read-memo';
 import { SlidingWindowRateLimiter } from '../../core/sliding-window-rate-limiter';
 import { PasswordChangedNotifier } from './password-changed-notifier';
 
@@ -222,7 +223,7 @@ export class PasswordResetService {
     if (!live) this.rejectDeadLink();
     const passwordHash = await bcrypt.hash(newPassword, BCRYPT_ROUNDS);
 
-    const userId = await this.deps.prisma.$transaction(async (tx) => {
+    const userId = await forgettingReads(ReadMemoKey.user, () => this.deps.prisma.$transaction(async (tx) => {
       // The claim and the check are one statement, so two clicks at once cannot both win.
       const claimed = await tx.passwordResetToken.updateMany({
         where: { tokenHash, usedAt: null, cancelledAt: null, expiresAt: { gt: now } },
@@ -237,7 +238,7 @@ export class PasswordResetService {
       await cancelOpenPasswordResetTokens(tx, claimedUserId, now);
       await revokeUserSessions(tx, claimedUserId);
       return claimedUserId;
-    });
+    }));
 
     if (!userId) this.rejectDeadLink();
     this.deps.logger?.info({
