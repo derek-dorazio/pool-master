@@ -1,10 +1,11 @@
 import type { Sport } from '@poolmaster/shared/domain';
 import { useQuery } from '@tanstack/react-query';
-import { listProviderCatalogEvents, listProviders } from '@/lib/api';
+import { listProviderCatalogEvents } from '@/lib/api';
 import { QueryKeys } from '@/lib/query-keys';
 import type { ProviderEventDto } from '@/lib/api';
 import { resolveSportProviderId } from './sport-admin-utils';
 import { throwApiError } from '@/lib/errors';
+import { useProvidersQuery } from './use-providers-query';
 
 export type ProviderCatalogEvent = ProviderEventDto;
 
@@ -14,18 +15,7 @@ export type ProviderCatalogEvent = ProviderEventDto;
  * and the sport league year import (#385).
  */
 export function useSportProviderId(enabled: boolean, sport: Sport) {
-  const providersQuery = useQuery({
-    enabled,
-    queryKey: QueryKeys.rootAdmin.providers,
-    queryFn: async () => {
-      const response = await listProviders();
-      if (!response.data?.providers) {
-        throwApiError(response.error, 'Provider list response is missing data.');
-      }
-      return response.data.providers;
-    },
-    retry: false,
-  });
+  const providersQuery = useProvidersQuery({ enabled });
   return {
     providerId: resolveSportProviderId(providersQuery.data, sport),
     isSuccess: providersQuery.isSuccess,

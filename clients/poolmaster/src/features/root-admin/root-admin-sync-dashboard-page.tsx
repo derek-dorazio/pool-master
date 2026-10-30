@@ -2,7 +2,7 @@ import { createColumnHelper } from '@tanstack/react-table';
 import { Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { getProviderSyncRun, listProviderSyncRuns, listProviders } from '@/lib/api';
+import { getProviderSyncRun, listProviderSyncRuns } from '@/lib/api';
 import {
   Alert,
   Button,
@@ -30,7 +30,6 @@ import {
   getPayloadSection,
   getPayloadWarnings,
   getProviderName,
-  type ProviderSummary,
   type ProviderSyncRun,
   type ProviderSyncRunDetail,
   type ProviderSyncRunDetails,
@@ -41,6 +40,7 @@ import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import { PRODUCT_NAME, ProviderSyncRunStatus } from '@poolmaster/shared/domain';
 import { MANAGE_LIST_PAGE_SIZE, SYNC_PATH, UNMAPPED_COMPETITORS_PATH } from './manage-navigation';
+import { useProvidersQuery } from './use-providers-query';
 
 const syncRunColumnHelper = createColumnHelper<ProviderSyncRun>();
 type SyncRunEvidenceRow = {
@@ -167,17 +167,7 @@ export function RootAdminSyncDashboardPage() {
     title: string;
     payload: unknown;
   } | null>(null);
-  const providersQuery = useQuery({
-    queryKey: QueryKeys.rootAdmin.providers,
-    queryFn: async (): Promise<ProviderSummary[]> => {
-      const response = await listProviders();
-      if (!response.data?.providers) {
-        throwApiError(response.error, 'Provider list response is missing data.');
-      }
-      return response.data.providers;
-    },
-    retry: false,
-  });
+  const providersQuery = useProvidersQuery();
 
   const syncRunsQuery = useQuery({
     queryKey: QueryKeys.rootAdmin.providerSyncRuns,
