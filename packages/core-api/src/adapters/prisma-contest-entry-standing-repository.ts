@@ -53,11 +53,13 @@ export class PrismaContestEntryStandingRepository implements ContestEntryStandin
       .map((row) => [row.contestEntryId, row]));
     const { creates, updates } = planStandingWrites(writes, (write) => stored.get(write.contestEntryId));
     if (creates.length === 0 && updates.length === 0) return;
+    // Skipping duplicates keeps two settlements of the event at once safe, as the per-row upsert's
+    // ON CONFLICT was: both read no row, and both would create the same frozen standing.
     await this.prisma.$transaction([
       ...updates.map(({ id, write: { contestEntryId: _entry, ...standing } }) =>
         // poolmaster-allow-query-in-loop: only the changed rows, sent together in one transaction (#1172); a batch of different values per row needs raw SQL, which Derek ruled out
         this.prisma.contestEntryStanding.update({ where: { id }, data: standing })),
-      ...(creates.length > 0 ? [this.prisma.contestEntryStanding.createMany({ data: creates })] : []),
+      ...(creates.length > 0 ? [this.prisma.contestEntryStanding.createMany({ data: creates, skipDuplicates: true })] : []),
     ]);
   }
 }
@@ -114,7 +116,7 @@ export class PrismaContestEntryEventStandingRepository implements ContestEntryEv
       ...updates.map(({ id, write: { contestEntryId: _entry, sportEventId: _event, ...standing } }) =>
         // poolmaster-allow-query-in-loop: only the changed rows, sent together in one transaction (#1172); a batch of different values per row needs raw SQL, which Derek ruled out
         this.prisma.contestEntryEventStanding.update({ where: { id }, data: standing })),
-      ...(creates.length > 0 ? [this.prisma.contestEntryEventStanding.createMany({ data: creates })] : []),
+      ...(creates.length > 0 ? [this.prisma.contestEntryEventStanding.createMany({ data: creates, skipDuplicates: true })] : []),
     ]);
   }
 }

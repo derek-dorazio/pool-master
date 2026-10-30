@@ -14,6 +14,7 @@ import {
   PrismaSportEventRepository,
   PrismaStandingsEmailPositionRepository,
 } from '../../../packages/core-api/src/adapters';
+import { recordStatements, statementShape } from '../statement-log';
 import { createEventLifecycleService } from '../../../packages/core-api/src/modules/events/wiring';
 import {
   cleanupTestData,
@@ -1517,6 +1518,77 @@ describe('ContestEntryStandingRepository', () => {
     expect(rows.map((row) => [row.contestEntryId, row.position, row.totalScore])).toEqual([[ranked.id, 1, -4]]);
   });
 
+  it('costs the same statements to settle 2 entries as 5, and only the one read to re-settle them unchanged', async () => {
+    const prisma = getPrisma();
+    const { league, squads, event } = await createLeagueAndEvent();
+    const settle = async (entries: number) => {
+      const contest = await createContest(league.id, event.id, `Statements ${String(entries)}`);
+      const rows = await Promise.all(Array.from({ length: entries }, (_, index) => prisma.contestEntry.create({
+        data: { contestId: contest.id, squadId: squads[0].id, entryNumber: index + 1, name: `Entry ${String(index + 1)}` },
+      })));
+      const writes = rows.map((entry, index) => ({
+        contestId: contest.id,
+        contestEntryId: entry.id,
+        position: index + 1,
+        displayPosition: String(index + 1),
+        countingPickLimit: 2,
+        scoredPickCount: 2,
+        asOf: new Date('2026-06-07T21:00:00.000Z'),
+        settledAt: new Date('2026-06-07T22:00:00.000Z'),
+        totalScore: index,
+      }));
+      const first = await recordStatements(() => repos().standings.upsertMany(contest.id, writes));
+      const again = await recordStatements(() => repos().standings.upsertMany(contest.id, writes));
+      // An insert's VALUES list grows with its rows, so a statement is compared by its kind and table.
+      const kinds = (statements: readonly { sql: string }[]) => statements.map(({ sql }) => statementShape(sql).split(' (')[0].split(' WHERE')[0]
+        .replace(/^SELECT .* FROM /, 'SELECT FROM '));
+      return { first: kinds(first.statements), again: kinds(again.statements) };
+    };
+
+    const two = await settle(2);
+    const five = await settle(5);
+
+    const read = 'SELECT FROM "public"."contest_entry_standings"';
+    expect(two.first).toEqual([read, 'BEGIN', 'INSERT INTO "public"."contest_entry_standings"', 'COMMIT']);
+    expect(five.first).toEqual(two.first);
+    expect(two.again).toEqual([read]);
+    expect(five.again).toEqual([read]);
+  });
+
+  it('lets two settlements of the same contest at once both finish, the second finding the first one\'s standings', async () => {
+    const { contest, ranked, unranked, base } = await twoEntries('At once');
+    const writes = [
+      { ...base, contestEntryId: ranked.id, position: 1, displayPosition: '1', scoredPickCount: 2, totalScore: -4 },
+      { ...base, contestEntryId: unranked.id, position: 2, displayPosition: '2', scoredPickCount: 2, totalScore: 1 },
+    ];
+
+    // Both settlements read the stored standings before either writes: each waits for the other's read.
+    const prisma = getAppPrisma();
+    let arrived = 0;
+    let bothRead: () => void = () => undefined;
+    const barrier = new Promise<void>((resolve) => { bothRead = resolve; });
+    const racing = new Proxy(prisma, {
+      get: (target, key, receiver) => key !== 'contestEntryStanding' ? Reflect.get(target, key, receiver) as unknown : {
+        ...target.contestEntryStanding,
+        findMany: async (args: Parameters<typeof target.contestEntryStanding.findMany>[0]) => {
+          const rows = await target.contestEntryStanding.findMany(args);
+          arrived += 1;
+          if (arrived === 2) bothRead();
+          await barrier;
+          return rows;
+        },
+        update: target.contestEntryStanding.update.bind(target.contestEntryStanding),
+        createMany: target.contestEntryStanding.createMany.bind(target.contestEntryStanding),
+      },
+    });
+    const settlement = new PrismaContestEntryStandingRepository(racing);
+
+    await Promise.all([settlement.upsertMany(contest.id, writes), settlement.upsertMany(contest.id, writes)]);
+
+    const standings = await repos().standings.findByContest(contest.id);
+    expect(standings.map((standing) => [standing.contestEntryId, standing.position])).toEqual([[ranked.id, 1], [unranked.id, 2]]);
+  });
+
   it('refuses a standing of another contest, writing nothing', async () => {
     const { contest, ranked, base } = await twoEntries('Wrong contest');
 
@@ -1554,6 +1626,38 @@ describe('ContestEntryEventStandingRepository', () => {
     expect(rows.map((row) => [row.sportEventId, row.position, row.totalScore]).sort((left, right) => String(left[0]).localeCompare(String(right[0]))))
       .toEqual([[event.id, 1, 12], [second.id, 2, 11]].sort((left, right) => String(left[0]).localeCompare(String(right[0]))));
     expect(rows.find((row) => row.sportEventId === event.id)?.id).toBe(first.id);
+  });
+
+  it('names the contests holding standings for the event, once each however many entries, leaving out other events and contests not asked about', async () => {
+    const prisma = getPrisma();
+    const { league, squads, event, suffix } = await createLeagueAndEvent();
+    const { event: other } = await createLaterEvent(suffix);
+    const settledHere = await createContest(league.id, event.id, 'Settled here');
+    const settledElsewhere = await createContest(league.id, [event.id, other.id], 'Settled elsewhere');
+    const notAsked = await createContest(league.id, event.id, 'Not asked');
+    const write = {
+      position: 1,
+      displayPosition: '1',
+      countingPickLimit: 2,
+      scoredPickCount: 2,
+      asOf: new Date('2026-06-07T21:00:00.000Z'),
+      settledAt: new Date('2026-06-07T22:00:00.000Z'),
+      totalScore: 3,
+    };
+    const settleOn = async (contestId: string, sportEventId: string, entries: number) => {
+      const rows = await Promise.all(Array.from({ length: entries }, (_, index) => prisma.contestEntry.create({
+        data: { contestId, squadId: squads[index % 2].id, entryNumber: index + 1, name: `Entry ${String(index + 1)}` },
+      })));
+      await repos().eventStandings.upsertMany(contestId, rows.map((entry) => ({ ...write, contestId, contestEntryId: entry.id, sportEventId })));
+    };
+    await settleOn(settledHere.id, event.id, 3);
+    await settleOn(settledElsewhere.id, other.id, 1);
+    await settleOn(notAsked.id, event.id, 1);
+
+    const settled = await repos().eventStandings.findContestsSettledFor(event.id, [settledHere.id, settledElsewhere.id]);
+
+    expect([...settled]).toEqual([settledHere.id]);
+    await expect(repos().eventStandings.findContestsSettledFor(event.id, [])).resolves.toEqual(new Set());
   });
 });
 
