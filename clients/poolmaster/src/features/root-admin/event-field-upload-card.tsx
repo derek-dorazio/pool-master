@@ -1,6 +1,6 @@
 import { getSportDefinition, sportPathSegment, type Sport } from '@poolmaster/shared/domain';
 import { applyEventParticipantUpload, previewEventParticipantUpload } from '@/lib/api';
-import { BulkUploadPanel, Button, Heading, StatusBadge, Tile } from '@/features/shared/ui';
+import { BulkUploadPanel, Button, PanelCard, StatusBadge } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -90,19 +90,21 @@ export function EventFieldUploadCard({
   const rollup = previewMutation.data?.rollup;
 
   return (
-    <Tile data-testid="root-admin-event-field-upload-card">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <Heading level={3} variant="card" size="base">Bulk upload</Heading>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Adjust rankings, odds, seeds and withdrawals for {participant.many} already on this
-            field. {capitalize(participant.many)} must be on the field first — add them to the field to adjust them.
-          </p>
-        </div>
+    <PanelCard
+      headingLevel={3}
+      padded
+      testId="root-admin-event-field-upload-card"
+      title="Bulk upload"
+      trailing={(
         <Button data-testid="root-admin-event-field-upload-close" onClick={onClose} size="sm" variant="secondary">
           Close
         </Button>
-      </div>
+      )}
+    >
+      <p className="text-sm text-muted-foreground">
+        Adjust rankings, odds, seeds and withdrawals for {participant.many} already on this
+        field. {capitalize(participant.many)} must be on the field first — add them to the field to adjust them.
+      </p>
       <div className="mt-4">
         <BulkUploadPanel<EventFieldUploadRow, EventFieldUploadPreviewRow>
           apply={(rows) => applyMutation.mutateAsync(rows).then(() => undefined)}
@@ -190,6 +192,6 @@ export function EventFieldUploadCard({
           }
         />
       </div>
-    </Tile>
+    </PanelCard>
   );
 }

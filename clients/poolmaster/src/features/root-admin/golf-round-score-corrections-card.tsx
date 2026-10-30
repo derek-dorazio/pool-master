@@ -5,10 +5,9 @@ import {
   Alert,
   Button,
   DataGrid,
-  Heading,
   Input,
+  PanelCard,
   Select,
-  Tile,
   timeZoneGenericName,
   toDateTimeLocalValue,
   useDisplayPreferences,
@@ -338,9 +337,8 @@ export function GolfRoundScoreCorrectionsCard({
   );
 
   return (
-    <Tile>
-      <Heading level={3} variant="card" size="base">Corrections</Heading>
-      <p className="mt-1 text-sm text-muted-foreground">
+    <PanelCard headingLevel={3} padded title="Corrections">
+      <p className="text-sm text-muted-foreground">
         Fix one golfer&rsquo;s round result at a time. Enter every value yourself: changing strokes does not change to par, and completing a round does not set its time.
       </p>
 
@@ -373,6 +371,6 @@ export function GolfRoundScoreCorrectionsCard({
           tableTestId="root-admin-golf-scores-corrections-table"
         />
       </div>
-    </Tile>
+    </PanelCard>
   );
 }

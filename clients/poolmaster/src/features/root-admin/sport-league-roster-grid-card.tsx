@@ -9,12 +9,11 @@ import {
   Button,
   ConfirmationModal,
   DataGrid,
-  Heading,
   InlineError,
   Input,
+  PanelCard,
   PickerModal,
   StatusBadge,
-  Tile,
 } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
@@ -280,14 +279,11 @@ export function SportLeagueRosterGridCard({
   );
 
   return (
-    <Tile>
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <Heading level={3} variant="card" size="base">Roster</Heading>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {`${entries.length} ${entries.length === 1 ? participant.one : participant.many} on this ${sportLeague.one}.`}
-          </p>
-        </div>
+    <PanelCard
+      headingLevel={3}
+      padded
+      title="Roster"
+      trailing={(
         <Button
           data-testid="root-admin-sport-league-roster-add"
           onClick={() => {
@@ -299,7 +295,11 @@ export function SportLeagueRosterGridCard({
         >
           {`Add ${participant.one}`}
         </Button>
-      </div>
+      )}
+    >
+      <p className="text-sm text-muted-foreground">
+        {`${entries.length} ${entries.length === 1 ? participant.one : participant.many} on this ${sportLeague.one}.`}
+      </p>
 
       {rosterError ? (
         <InlineError className="mt-3">{rosterError}</InlineError>
@@ -423,6 +423,6 @@ export function SportLeagueRosterGridCard({
         title={`Remove ${participant.one}`}
         tone="danger"
       />
-    </Tile>
+    </PanelCard>
   );
 }

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { SportEventStatus, type SportVocabulary } from '@poolmaster/shared/domain';
 import { setEventPlayInWinner, updateEventParticipants } from '@/lib/api';
 import type { SportEventDto, SportEventParticipantDto } from '@/lib/api';
-import { Button, Heading, InlineError, LOADING_TEXT, Select, Tile } from '@/features/shared/ui';
+import { Button, InlineError, LOADING_TEXT, PanelCard, Select } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -46,9 +46,8 @@ export function PlayInPlacesCard({
   }
 
   return (
-    <Tile data-testid="root-admin-play-in-places">
-      <Heading level={3} variant="card" size="base">{`${word.charAt(0).toUpperCase()}${word.slice(1)} places`}</Heading>
-      <p className="mt-1 text-sm text-muted-foreground">
+    <PanelCard headingLevel={3} padded testId="root-admin-play-in-places" title={`${word.charAt(0).toUpperCase()}${word.slice(1)} places`}>
+      <p className="text-sm text-muted-foreground">
         {released
           ? `Name the ${team.one} in each ${word} place. It takes over the place's seed, picks and bracket spot.`
           : `Mark each place a ${word} fills later. Its ${team.one} is named after the ${vocabulary.event.one} is released.`}
@@ -68,7 +67,7 @@ export function PlayInPlacesCard({
         </ul>
       )}
       {released ? null : <PlayInMarker eventId={event.id} field={field} vocabulary={vocabulary} />}
-    </Tile>
+    </PanelCard>
   );
 }
 

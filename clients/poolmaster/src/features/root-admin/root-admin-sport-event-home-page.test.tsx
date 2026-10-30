@@ -253,6 +253,16 @@ describe('pool-master-3dg RootAdminSportEventHomePage', () => {
     });
   });
 
+  it('titles the workflow card Workflow and shows the tournament\'s status badge on it', async () => {
+    seedDefaults();
+    renderPage();
+
+    const card = await screen.findByRole('region', { name: /^Workflow/ });
+    expect(within(card).getByRole('heading', { level: 2, name: 'Workflow' })).toBeVisible();
+    expect(within(card).getByText('Scheduled')).toBeVisible();
+    expect(card).toContainElement(screen.getByTestId('root-admin-sport-event-workflow-rail'));
+  });
+
   it('pool-master-3dg confirms and applies an allowed lifecycle transition', async () => {
     seedDefaults();
     transitionEventMock.mockResolvedValue({

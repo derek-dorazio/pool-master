@@ -2,7 +2,7 @@ import { getSportDefinition, type Sport, type SportNoun } from '@poolmaster/shar
 import { useMemo, useState, type ReactNode } from 'react';
 import { GripVertical } from 'lucide-react';
 import { replaceEventTierAssignments, updateEventParticipants } from '@/lib/api';
-import { Alert, Button, Heading, Input, Select, SortableList, Tile } from '@/features/shared/ui';
+import { Alert, Button, Heading, Input, PanelCard, Select, SortableList, Tile } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -297,48 +297,49 @@ export function TierBoard({
   }
 
   return (
-    <Tile>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <Heading level={3} variant="card" size="base">Tier assignments</Heading>
-        {dirty || priceInvalid ? (
-          <div
-            className="flex items-center gap-2"
-            data-testid="root-admin-tier-board-dirty-bar"
+    <PanelCard
+      headingLevel={3}
+      padded
+      title="Tier assignments"
+      trailing={dirty || priceInvalid ? (
+        <div
+          className="flex items-center gap-2"
+          data-testid="root-admin-tier-board-dirty-bar"
+        >
+          <span className="text-sm text-muted-foreground">
+            {assignmentsDirty ? 'Tier changes' : ''}
+            {assignmentsDirty && priceEdits.length > 0 ? ' · ' : ''}
+            {priceEdits.length > 0
+              ? `${priceEdits.length} price edit${priceEdits.length === 1 ? '' : 's'}`
+              : ''}
+            {priceInvalid ? ' · invalid price' : ''}
+          </span>
+          <Button
+            data-testid="root-admin-tier-board-discard"
+            onClick={() => {
+              setBoard(serverBoard);
+              setPriceDraft({});
+            }}
+            size="sm"
+            variant="secondary"
           >
-            <span className="text-sm text-muted-foreground">
-              {assignmentsDirty ? 'Tier changes' : ''}
-              {assignmentsDirty && priceEdits.length > 0 ? ' · ' : ''}
-              {priceEdits.length > 0
-                ? `${priceEdits.length} price edit${priceEdits.length === 1 ? '' : 's'}`
-                : ''}
-              {priceInvalid ? ' · invalid price' : ''}
-            </span>
-            <Button
-              data-testid="root-admin-tier-board-discard"
-              onClick={() => {
-                setBoard(serverBoard);
-                setPriceDraft({});
-              }}
-              size="sm"
-              variant="secondary"
-            >
-              Discard
-            </Button>
-            <Button
-              data-testid="root-admin-tier-board-save"
-              disabled={!dirty || priceInvalid || saving}
-              isLoading={saving}
-              onClick={() => void handleSave()}
-              size="sm"
-            >
-              Save changes
-            </Button>
-          </div>
-        ) : null}
-      </div>
+            Discard
+          </Button>
+          <Button
+            data-testid="root-admin-tier-board-save"
+            disabled={!dirty || priceInvalid || saving}
+            isLoading={saving}
+            onClick={() => void handleSave()}
+            size="sm"
+          >
+            Save changes
+          </Button>
+        </div>
+      ) : null}
+    >
 
       {saveError ? (
-        <Alert className="mt-3" data-testid="root-admin-tier-board-error" tone="danger">
+        <Alert data-testid="root-admin-tier-board-error" tone="danger">
           {saveError}
         </Alert>
       ) : null}
@@ -357,7 +358,7 @@ export function TierBoard({
           />
         ))}
       </div>
-    </Tile>
+    </PanelCard>
   );
 }
 

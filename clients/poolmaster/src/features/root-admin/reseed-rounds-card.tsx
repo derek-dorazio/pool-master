@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { BracketAdvancement, MatchSide, SportEventStatus } from '@poolmaster/shared/domain';
 import { proposeEventRoundMatchups, setEventRoundMatchups } from '@/lib/api';
 import type { RoundMatchupDto, SportEventDto } from '@/lib/api';
-import { Button, Heading, InlineError, Select, Tile } from '@/features/shared/ui';
+import { Button, Heading, InlineError, PanelCard, Select } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -55,15 +55,14 @@ export function ReseedRoundsCard({
   const team = context.vocabulary.participant;
 
   return (
-    <Tile data-testid="root-admin-reseed">
-      <Heading level={3} variant="card" size="base">Reseeded rounds</Heading>
-      <p className="mt-1 text-sm text-muted-foreground">
+    <PanelCard headingLevel={3} padded testId="root-admin-reseed" title="Reseeded rounds">
+      <p className="text-sm text-muted-foreground">
         {`The ${team.many} left are paired by seed: the best seed left hosts the worst. Suggest the ${matchNoun(context.vocabulary).many}, change any that need it, then save them.`}
       </p>
       {rounds.map((roundNumber) => (
         <ReseedRound context={context} key={roundNumber} roundCount={roundCount} roundLabel={roundLabel} roundNumber={roundNumber} />
       ))}
-    </Tile>
+    </PanelCard>
   );
 }
 

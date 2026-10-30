@@ -4,9 +4,8 @@ import {
 } from '@/lib/api';
 import {
   BulkUploadPanel,
-  Heading,
+  PanelCard,
   StatusBadge,
-  Tile,
 } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
@@ -97,11 +96,8 @@ export function SportLeagueRosterUploadCard({ leagueId }: { leagueId: string }) 
   });
 
   return (
-    <Tile>
-      <Heading level={3} variant="card" size="base">
-        Bulk-update rankings
-      </Heading>
-      <p className="mt-1 text-sm text-muted-foreground">
+    <PanelCard headingLevel={3} padded title="Bulk-update rankings">
+      <p className="text-sm text-muted-foreground">
         {`Paste or upload the current rankings, preview how each row resolves to a ${participant.one}, then apply.`}
       </p>
       <div className="mt-4">
@@ -171,6 +167,6 @@ export function SportLeagueRosterUploadCard({ leagueId }: { leagueId: string }) 
           }
         />
       </div>
-    </Tile>
+    </PanelCard>
   );
 }

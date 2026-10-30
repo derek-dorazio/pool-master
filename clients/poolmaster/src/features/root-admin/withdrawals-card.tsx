@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { SportVocabulary } from '@poolmaster/shared/domain';
 import { replaceEventParticipant } from '@/lib/api';
 import type { SportEventDto, SportEventMatchDto, SportEventParticipantDto } from '@/lib/api';
-import { Button, Heading, InlineError, LOADING_TEXT, Select, Tile } from '@/features/shared/ui';
+import { Button, InlineError, LOADING_TEXT, PanelCard, Select } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -70,9 +70,8 @@ export function WithdrawalsCard({
   }
 
   return (
-    <Tile data-testid="root-admin-withdrawals">
-      <Heading level={3} variant="card" size="base">Withdrawals</Heading>
-      <p className="mt-1 text-sm text-muted-foreground">
+    <PanelCard headingLevel={3} padded testId="root-admin-withdrawals" title="Withdrawals">
+      <p className="text-sm text-muted-foreground">
         {`If a ${participant.one} withdraws before playing, name who takes the place. Picks of the withdrawn ${participant.one} stay, and score as a first-round loss. Once their ${noun.one} starts, enter the withdrawal as a walkover instead.`}
       </p>
       {candidatesQuery.isError ? (
@@ -120,6 +119,6 @@ export function WithdrawalsCard({
         </div>
       )}
       <p className="mt-3 text-xs text-muted-foreground">The replacement joins unseeded, last in the last tier, at the lowest price.</p>
-    </Tile>
+    </PanelCard>
   );
 }
