@@ -1,8 +1,9 @@
 /**
  * #1268 — a week of game picks is judged under the entry's lock, against real Postgres. A submit
  * and a change to the same week can both load it before either writes; whichever writes second
- * must judge the week the first one left, not the week it loaded. Each case holds one request at
- * its write until the other has committed, so the interleaving is the same on every run.
+ * must judge the week the first one left, not the week it loaded. Each case pins both sides: the
+ * second request reaches its write, having loaded the week, before the first may write, and then
+ * waits until the first has committed, so the interleaving is the same on every run.
  */
 import { expect } from '@jest/globals';
 import {
@@ -39,7 +40,7 @@ afterAll(async () => {
 });
 beforeEach(() => cleanupTestData());
 
-/** Resolves once `open` is called: a request waits on it before its write. */
+/** Resolves once `open` is called. */
 function gate() {
   let open = () => {};
   const opened = new Promise<void>((resolve) => {
@@ -74,6 +75,24 @@ function predictionService(before: () => Promise<void> = async () => {}) {
     participants: new PrismaParticipantRepository(prisma),
     predictions,
   });
+}
+
+/**
+ * Two services for one race. `second`'s request loads the week, says it has reached its write,
+ * and waits there until `first`'s request has committed; `first` writes only once `second` has
+ * reached its write. Call `firstDone` when `first`'s request settles.
+ */
+function race() {
+  const reachedWrite = gate();
+  const firstCommitted = gate();
+  return {
+    first: predictionService(() => reachedWrite.opened),
+    second: predictionService(async () => {
+      reachedWrite.open();
+      await firstCommitted.opened;
+    }),
+    firstDone: firstCommitted.open,
+  };
 }
 
 /** An OPEN straight-up pick'em pool over a three-game week next month, one entry with every game picked and its tiebreaker given, still a draft. */
@@ -128,12 +147,11 @@ async function seedPickedWeek() {
 describe('a week of game picks judged under the entry\'s lock (#1268)', () => {
   it('refuses a submit whose week lost a pick to a clear that committed while the submit waited to write, leaving the week a draft', async () => {
     const { week, games, stored } = await seedPickedWeek();
-    const cleared = gate();
-    const submitting = predictionService(() => cleared.opened);
+    const { first, second, firstDone } = race();
 
     const [submit, clear] = await Promise.allSettled([
-      submitting.submitGamePicks(week),
-      predictionService().clearGamePick({ ...week, sportEventMatchId: expectDefined(games[0]).id }).finally(cleared.open),
+      second.submitGamePicks(week),
+      first.clearGamePick({ ...week, sportEventMatchId: expectDefined(games[0]).id }).finally(firstDone),
     ]);
 
     expect(clear.status).toBe('fulfilled');
@@ -143,12 +161,11 @@ describe('a week of game picks judged under the entry\'s lock (#1268)', () => {
 
   it('sends a week back to draft when a clear that loaded it as a draft writes after a submit committed', async () => {
     const { week, games, stored } = await seedPickedWeek();
-    const submitted = gate();
-    const clearing = predictionService(() => submitted.opened);
+    const { first, second, firstDone } = race();
 
     const [clear, submit] = await Promise.allSettled([
-      clearing.clearGamePick({ ...week, sportEventMatchId: expectDefined(games[0]).id }),
-      predictionService().submitGamePicks(week).finally(submitted.open),
+      second.clearGamePick({ ...week, sportEventMatchId: expectDefined(games[0]).id }),
+      first.submitGamePicks(week).finally(firstDone),
     ]);
 
     expect(submit.status).toBe('fulfilled');
@@ -158,12 +175,11 @@ describe('a week of game picks judged under the entry\'s lock (#1268)', () => {
 
   it('refuses a submit whose week lost its tiebreaker to a save that committed while the submit waited to write', async () => {
     const { week, stored } = await seedPickedWeek();
-    const saved = gate();
-    const submitting = predictionService(() => saved.opened);
+    const { first, second, firstDone } = race();
 
     const [submit, save] = await Promise.allSettled([
-      submitting.submitGamePicks(week),
-      predictionService().saveGamePicks({ ...week, picks: [], tiebreakerValue: null }).finally(saved.open),
+      second.submitGamePicks(week),
+      first.saveGamePicks({ ...week, picks: [], tiebreakerValue: null }).finally(firstDone),
     ]);
 
     expect(save.status).toBe('fulfilled');

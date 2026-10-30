@@ -428,14 +428,16 @@ export class PredictionService {
             throw this.weekIssueError(current, issue);
           }
           eventStatus = ContestEntryStatus.DRAFT;
-          this.deps.logger?.info(
-            { action: 'prediction.returnedToDraft', data: { entryId: current.entry.id, sportEventId: current.sportEvent.id } },
-            'Sent a submitted week back to draft after a change it no longer passes',
-          );
         }
         return { saves: change.saves, clearedMatchIds: change.clearedMatchIds, eventStatus, tiebreakerValue: change.tiebreakerValue };
       },
     });
+    if (written?.eventStatus === ContestEntryStatus.DRAFT) {
+      this.deps.logger?.info(
+        { action: 'prediction.returnedToDraft', data: { entryId: context.entry.id, sportEventId: context.sportEvent.id } },
+        'Sent a submitted week back to draft after a change it no longer passes',
+      );
+    }
     return { after: this.withLockedWeek(context, week), written };
   }
 

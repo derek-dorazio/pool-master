@@ -9,10 +9,10 @@ import type {
 import {
   ContestEntryStatus,
   PredictedResult,
-  type ContestEntryEventStatus,
   type ContestEntryMatchPrediction,
   type PredictedChoice,
 } from '@poolmaster/shared/domain';
+import { toEntryEventStatus } from './prisma-contest-entry-repository';
 
 type PredictionRow = Awaited<ReturnType<PrismaClient['contestEntryMatchPrediction']['findMany']>>[number];
 
@@ -34,15 +34,6 @@ function toChoice(row: PredictionRow): PredictedChoice {
 const WEEK_EVENT = { sportEventId: true, status: true, submittedAt: true, tiebreakerValue: true } as const;
 /** A pick with its game's number, so a week's picks can be put in game order without another read. */
 const WITH_MATCH_NUMBER = { sportEventMatch: { select: { matchNumber: true } } } as const;
-
-function toWeekEvent(row: { sportEventId: string; status: ContestEntryStatus; submittedAt: Date | null; tiebreakerValue: number | null }): ContestEntryEventStatus {
-  return {
-    sportEventId: row.sportEventId,
-    status: row.status,
-    submittedAt: row.submittedAt ?? undefined,
-    tiebreakerValue: row.tiebreakerValue ?? undefined,
-  };
-}
 
 function inGameOrder(rows: readonly (PredictionRow & { sportEventMatch: { matchNumber: number } })[]): ContestEntryMatchPrediction[] {
   return [...rows]
@@ -130,7 +121,7 @@ export class PrismaContestEntryMatchPredictionRepository implements ContestEntry
       const lockedEvent = locked.events.at(0);
       const before: LockedPredictionWeek = {
         predictions: inGameOrder(locked.predictions),
-        event: lockedEvent === undefined ? null : toWeekEvent(lockedEvent),
+        event: lockedEvent === undefined ? null : toEntryEventStatus(lockedEvent),
       };
       const change = decide(before);
       if (change === null) return { written: null, week: before };
@@ -158,7 +149,7 @@ export class PrismaContestEntryMatchPredictionRepository implements ContestEntry
       // The event's tiebreaker rides on the entry's row for the event (#717).
       const tiebreakerChange = tiebreakerValue === undefined ? {} : { tiebreakerValue };
       const event = eventStatus !== null || tiebreakerValue !== undefined
-        ? toWeekEvent(await tx.contestEntryEvent.upsert({
+        ? toEntryEventStatus(await tx.contestEntryEvent.upsert({
           where: { contestEntryId_sportEventId: { contestEntryId, sportEventId } },
           create: { contestEntryId, sportEventId, ...statusChange, ...tiebreakerChange },
           update: { ...statusChange, ...tiebreakerChange },
