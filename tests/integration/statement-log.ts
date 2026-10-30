@@ -94,21 +94,31 @@ export enum StatementVerb {
   DELETE = 'DELETE',
 }
 
-/** Each verb with how Prisma's SQL names the table it acts on; a count's subquery names its table first too. */
+/**
+ * Each verb with how SQL names the table it acts on: Prisma's own statements qualify it with
+ * `"public".`, a raw statement (a row lock) may not, and a count's subquery names its table first.
+ */
 const STATEMENT_TARGETS: ReadonlyArray<readonly [StatementVerb, RegExp]> = [
-  [StatementVerb.SELECT, /^SELECT\b.*?\bFROM "public"\."(\w+)"/s],
-  [StatementVerb.INSERT, /^INSERT INTO "public"\."(\w+)"/],
-  [StatementVerb.UPDATE, /^UPDATE "public"\."(\w+)"/],
-  [StatementVerb.DELETE, /^DELETE FROM "public"\."(\w+)"/],
+  [StatementVerb.SELECT, /^SELECT\b.*?\bFROM (?:"public"\.)?"(\w+)"/s],
+  [StatementVerb.INSERT, /^INSERT INTO (?:"public"\.)?"(\w+)"/],
+  [StatementVerb.UPDATE, /^UPDATE (?:"public"\.)?"(\w+)"/],
+  [StatementVerb.DELETE, /^DELETE FROM (?:"public"\.)?"(\w+)"/],
 ];
 
-/** The verb and table of a statement, as `SELECT sport_events`, or null for one on no table (a transaction's BEGIN or COMMIT). */
+/** A transaction's control statements, which act on no table. */
+const TRANSACTION_CONTROL = /^(?:BEGIN|COMMIT|ROLLBACK|SAVEPOINT|RELEASE)\b/i;
+
+/**
+ * The verb and table of a statement, as `SELECT sport_events`, or null for transaction control.
+ * Any other statement throws, so a statement no count can place never drops out of one unseen.
+ */
 export function statementTarget({ sql }: RecordedStatement): string | null {
   for (const [verb, pattern] of STATEMENT_TARGETS) {
     const table = pattern.exec(sql)?.[1];
     if (table !== undefined) return `${verb} ${table}`;
   }
-  return null;
+  if (TRANSACTION_CONTROL.test(sql)) return null;
+  throw new Error(`No table found in a recorded statement; teach statementTarget its form: ${sql.slice(0, 200)}`);
 }
 
 /** The statements that do `verb` to `table`. */

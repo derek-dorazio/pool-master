@@ -122,11 +122,25 @@ describe('An event\'s field', () => {
 
     const { result: field, statements } = await recordStatements(() => createSportEventParticipantService(getAppPrisma()).listEventParticipants(event.id));
 
-    // The event's own row, then the field and each of its relations in one statement: no read per row.
-    const counts = new Map(statementCounts(statements));
-    expect([counts.get('SELECT sport_events'), counts.get('SELECT sport_event_participants')]).toEqual([1, 1]);
-    // A field row's games are read twice, once as the home side and once as the away side.
-    expect([...counts].filter(([, count]) => count !== 1)).toEqual([['SELECT sport_event_matches', 2]]);
+    // The event's own row, then the field and each of its relations in one statement: no read per
+    // row, and nothing else. A field row's games are read twice, as the home side and as the away side.
+    expect(statementCounts(statements)).toEqual([
+      ['SELECT event_series', 1],
+      ['SELECT participant_league_affiliations', 1],
+      ['SELECT participants', 1],
+      ['SELECT sport_event_matches', 2],
+      ['SELECT sport_event_participant_golf_rounds', 1],
+      ['SELECT sport_event_participant_golf_standings', 1],
+      ['SELECT sport_event_participant_race_results', 1],
+      ['SELECT sport_event_participant_rounds', 1],
+      ['SELECT sport_event_participant_standings', 1],
+      ['SELECT sport_event_participant_stat_lines', 1],
+      ['SELECT sport_event_participant_valuations', 1],
+      ['SELECT sport_event_participants', 1],
+      ['SELECT sport_event_rounds', 1],
+      ['SELECT sport_events', 1],
+      ['SELECT sport_leagues', 1],
+    ]);
     expect(field.map((row) => [row.entry.id, row.affiliatedWithSportLeague])).toEqual([[ana.id, true], [bea.id, true], [cal.id, false]]);
     const [anaRow, beaRow] = field;
     expect(anaRow.valuation).toMatchObject({ price: 12 });

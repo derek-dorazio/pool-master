@@ -135,9 +135,11 @@ describe('Creating one event (#1253)', () => {
       () => sportEvents.createEvent({ sportLeagueId: tour.id, eventYear: 2027, name: 'The Batch Classic', startDate: new Date('2027-05-06T12:00:00.000Z') }),
     );
 
-    // One insert per table: the default rounds and tiers go in together, not one at a time.
-    expect(statementCounts(statements).filter(([target]) => !target.startsWith('SELECT '))).toEqual([
+    // One insert per table: the default rounds and tiers go in together, not one at a time; and
+    // every read is pinned too, so an added read shows.
+    expect(statementCounts(statements)).toEqual([
       ['INSERT event_series', 1], ['INSERT sport_event_rounds', 1], ['INSERT sport_event_tiers', 1], ['INSERT sport_events', 1],
+      ['SELECT event_series', 2], ['SELECT sport_leagues', 2], ['SELECT sports', 1],
     ]);
     expect(created).toEqual(await sportEvents.requireAdminSummary(created.event.id));
     expect(await getPrisma().sportEventRound.count({ where: { sportEventId: created.event.id } })).toBe(4);

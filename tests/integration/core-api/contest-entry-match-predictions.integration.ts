@@ -200,7 +200,9 @@ describe('PrismaContestEntryMatchPredictionRepository', () => {
       eventStatus: ContestEntryStatus.DRAFT,
       at,
     });
-    // Both entries start with one earlier pick, so each save also replaces one.
+    // Both entries start with one earlier pick. The save's locked read of the week reads its picks'
+    // game numbers in a statement of its own only when it has picks, so an entry with none would
+    // cost one statement fewer for a reason that has nothing to do with the write being measured.
     for (const contestEntryId of [oneGameEntry.id, fullSlateEntry.id]) {
       await writePicks(repos().predictions, {
         contestEntryId, sportEventId: event.id, clearedMatchIds: [], eventStatus: null, at: AT,
