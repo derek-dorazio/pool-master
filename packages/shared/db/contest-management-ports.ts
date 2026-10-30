@@ -120,13 +120,13 @@ export interface ContestEntryStandingResult {
 
 export type ContestEntryStandingWrite = Omit<ContestEntryStandingResult, 'id'>;
 
-/** The frozen contest-entry standing (#246): written by settlement, read by a settled contest. */
 /** An entry that finished first in its contest, named as the contest's standings name it. */
 export interface ContestWinner {
   contestId: string;
   entryName: string;
 }
 
+/** The frozen contest-entry standing (#246): written by settlement, read by a settled contest. */
 export interface ContestEntryStandingRepository {
   findByContest(contestId: string): Promise<ContestEntryStandingResult[]>;
   /**

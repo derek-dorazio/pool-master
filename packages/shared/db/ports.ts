@@ -322,13 +322,13 @@ export interface SquadDetails extends Squad {
   members: SquadMemberDetails[];
 }
 
-/** A squad membership with its squad's name: the league context's squad edge (#1165). */
 /** A person in a league. */
 export interface LeagueUser {
   leagueId: string;
   userId: string;
 }
 
+/** A squad membership with its squad's name: the league context's squad edge (#1165). */
 export interface SquadMembershipWithSquadName extends SquadMembership {
   squadName: string;
 }
