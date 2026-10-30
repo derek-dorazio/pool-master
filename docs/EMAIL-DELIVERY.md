@@ -477,6 +477,14 @@ hour late, so a contest opened after a reminder's time skips it, and none within
 contest opening. The idempotency key (contest, event, offset, person) keeps a second sweep or
 task from sending one twice.
 
+A sweep reads only the contests whose `next_reminder_at` has come (#1170), never every open and
+live contest. A contest is looked at as it opens, when its events change, when an event's start
+or a game's time moves, and when its quiet hours after opening end; each look sends what is due
+and sets the contest's next reminder time, or clears it when none is left. A contest no longer
+open or live is cleared the next time it comes up. A look that fails keeps its time, so the next
+sweep tries again. A saved change to `entryReminderHours` reaches each contest at its next look:
+a contest already waiting for a later reminder misses an earlier one the change adds.
+
 Who is told depends on the format:
 
 - **Tiered, budget, pick'em, bracket and survivor:** while a contest takes entries, every active

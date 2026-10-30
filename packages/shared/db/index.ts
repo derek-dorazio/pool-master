@@ -22,6 +22,7 @@ export type {
   PendingDrawReceipts,
   ReleasedEdition,
   ContestStatusTransition,
+  ReminderCheck,
   ContestCreateResult,
   ContestSeasonFull,
   ContestSeasonLimits,

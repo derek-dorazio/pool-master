@@ -721,7 +721,7 @@ describe('ContestManagementService', () => {
       return { service, contestCoreRepo };
     }
 
-    it('moves a DRAFT contest to OPEN with a compare-and-set from DRAFT, records when it opened, and returns it open', async () => {
+    it('moves a DRAFT contest to OPEN with a compare-and-set from DRAFT, records when it opened, has the reminder sweep look at it next (#1170), and returns it open', async () => {
       const { service, contestCoreRepo } = buildService();
 
       const opened = await service.openContest('league-1', 'contest-1');
@@ -730,6 +730,7 @@ describe('ContestManagementService', () => {
         from: [ContestStatus.DRAFT],
         to: ContestStatus.OPEN,
         openedAt: CONTEST_MANAGEMENT_TEST_NOW,
+        nextReminderAt: CONTEST_MANAGEMENT_TEST_NOW,
       });
       expect(opened.status).toBe(ContestStatus.OPEN);
     });
@@ -2113,7 +2114,7 @@ describe('ContestManagementService — a contest of several events', () => {
     expect(contestRepo.create).not.toHaveBeenCalled();
   });
 
-  it('adds a later event to a live contest, keeping the events in start-date order', async () => {
+  it('adds a later event to a live contest, keeping the events in start-date order, and has the reminder sweep look at it next (#1170)', async () => {
     const { service, contestRepo } = build({
       reader: multiEventReader([
         { id: MASTERS, startDate: '2026-04-20T12:00:00.000Z', status: SportEventStatus.IN_PROGRESS },
@@ -2125,6 +2126,7 @@ describe('ContestManagementService — a contest of several events', () => {
     await service.setContestSportEvents('league-1', 'contest-1', [PGA, MASTERS]);
 
     expect(contestRepo.replaceSportEvents).toHaveBeenCalledWith('contest-1', [MASTERS, PGA]);
+    expect(contestRepo.recheckReminders).toHaveBeenCalledWith({ contestIds: ['contest-1'] }, CONTEST_MANAGEMENT_TEST_NOW);
   });
 
   it('refuses removing an event once one of the contest\'s events has started with 409 CONTEST_EVENTS_LOCKED, changing nothing', async () => {

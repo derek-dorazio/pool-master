@@ -18,6 +18,7 @@
 import { randomUUID } from 'node:crypto';
 import type { FastifyBaseLogger } from 'fastify';
 import type {
+  ContestRepository,
   EventSeriesRepository,
   SportEventCreate,
   SportEventRoundSchedule,
@@ -134,6 +135,8 @@ export interface SportEventServiceDeps {
   tiers: SportEventTierService;
   bracket: Pick<SportEventBracketService, 'releaseBlockers'>;
   lifecycle: Pick<EventLifecycleService, 'applySportEventStatusTransition' | 'sportEventRescheduled'>;
+  /** A new start moves the event's contests' entry reminders (#1170). */
+  contests: Pick<ContestRepository, 'recheckReminders'>;
   logger?: FastifyBaseLogger;
   now?: () => Date;
 }
@@ -396,6 +399,7 @@ export class SportEventService {
     const shiftMs = startDate.getTime() - startedAt.getTime();
     if (shiftMs !== 0) {
       await this.deps.rounds.shiftSchedule(sportEventId, shiftMs);
+      await this.deps.contests.recheckReminders({ sportEventId }, this.now());
     }
     if (updates.rounds && updates.rounds > (roundCount ?? 0)) {
       await this.deps.rounds.extendTo({ sportEventId, rounds: updates.rounds, startDate });

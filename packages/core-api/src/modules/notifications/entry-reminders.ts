@@ -3,9 +3,12 @@
  * an event (the offsets are EMAIL_CONFIG.entryReminderHours), every league member with nothing
  * submitted for that event is told, all at the same moment, with no per-person time zone shift.
  *
- * The lifecycle scheduler's "notifications due" step calls `queueDue` on every sweep. A reminder
- * is queued once: its outbox idempotency key is the contest, the event, the offset and the
- * person, so the next sweep, or the other server task, finds it recorded and skips.
+ * The lifecycle scheduler's "notifications due" step calls `queueDue` on every sweep. A sweep
+ * reads only the contests whose next reminder check has come (#1170): a contest is checked as it
+ * opens, when its events or their times change, and at each reminder time; after a check it
+ * waits for its next reminder time, so it is not looked at again in between. A reminder is queued
+ * once: its outbox idempotency key is the contest, the event, the offset and the person, so a
+ * check repeated after a failure, or the other server task, finds it recorded and skips.
  *
  * Who is told, per contest and event, in a format whose members pick (tiered, budget, pick'em,
  * bracket, survivor):
@@ -32,6 +35,7 @@ import type {
   ContestRepository,
   ContestSquaresRepository,
   LeagueRepository,
+  ReminderCheck,
   SportEventMatchRepository,
   SportEventRepository,
   SportLeagueRepository,
@@ -112,7 +116,7 @@ export function dueReminderHours(closesAt: Date, reminderHours: readonly number[
 }
 
 export interface EntryReminderDeps extends LeagueMemberDeps {
-  contests: Pick<ContestRepository, 'findByStatuses'>;
+  contests: Pick<ContestRepository, 'findReminderChecksDue' | 'scheduleReminderChecks'>;
   sportEvents: Pick<SportEventRepository, 'findByIds'>;
   /** The contest's rules: its cutoff, and a draft's roster size. A sweep reads them together. */
   configurations: Pick<ContestConfigurationRepository, 'findByContest' | 'findByContests'>;
@@ -160,34 +164,42 @@ export class EntryReminders implements DueNotifications {
   async queueDue(now: Date): Promise<void> {
     const reminderHours = this.deps.readConfig().entryReminderHours;
     if (reminderHours.length === 0) return;
-    const contests = (await this.deps.contests.findByStatuses([ContestStatus.OPEN, ContestStatus.ACTIVE]))
-      .filter((contest) => mayRemindNow(contest, now));
-    if (contests.length === 0) return;
-    const sportEvents = new Map((await this.deps.sportEvents.findByIds(
-      [...new Set(contests.flatMap((contest) => contest.sportEventIds))],
-    )).map((sportEvent) => [sportEvent.id, sportEvent]));
-    // Picks never close before an event starts, so a contest none of whose events starts within
-    // the earliest reminder's reach has nothing due, and its rules are not read.
-    const reach = new Date(now.getTime() + Math.max(...reminderHours) * HOUR_MS);
-    const eventsOf = (contest: Contest): SportEvent[] => contest.sportEventIds
-      .map((id) => sportEvents.get(id))
-      .filter((sportEvent): sportEvent is SportEvent => sportEvent !== undefined);
-    const inReach = contests.filter((contest) => eventsOf(contest).some((sportEvent) => sportEvent.startDate <= reach));
-    if (inReach.length === 0) return;
-    const deps = await this.sweepReads(inReach, [...sportEvents.values()]);
+    // Only the contests whose check has come are read (#1170), not every open and live contest.
+    const checked = await this.deps.contests.findReminderChecksDue(now);
+    if (checked.length === 0) return;
+    const schedule: ReminderCheck[] = [];
+    const ready: Contest[] = [];
+    for (const contest of checked) {
+      const at = checkAgainAt(contest, now);
+      if (at === undefined) ready.push(contest);
+      else schedule.push({ contestId: contest.id, at });
+    }
+    if (ready.length > 0) {
+      const sportEvents = new Map((await this.deps.sportEvents.findByIds(
+        [...new Set(ready.flatMap((contest) => contest.sportEventIds))],
+      )).map((sportEvent) => [sportEvent.id, sportEvent]));
+      const eventsOf = (contest: Contest): SportEvent[] => contest.sportEventIds
+        .map((id) => sportEvents.get(id))
+        .filter((sportEvent): sportEvent is SportEvent => sportEvent !== undefined);
+      const deps = await this.sweepReads(ready, [...sportEvents.values()]);
 
-    for (const contest of inReach) {
-      try {
-        for (const due of await this.dueReminders(deps, contest, eventsOf(contest), reminderHours, now)) {
-          await this.queueReminder(deps, due);
+      for (const contest of ready) {
+        try {
+          const { due, next } = await this.remindersOf(deps, contest, eventsOf(contest), reminderHours, now);
+          for (const reminder of due) {
+            await this.queueReminder(deps, reminder);
+          }
+          schedule.push({ contestId: contest.id, at: next });
+        } catch (error) {
+          // The contest keeps its check, so the next sweep tries again.
+          this.deps.logger?.error({
+            action: 'email.entryReminders.failed',
+            data: { contestId: contest.id, leagueId: contest.leagueId, error: error instanceof Error ? error.message : String(error) },
+          }, 'Failed to queue entry reminders for a contest');
         }
-      } catch (error) {
-        this.deps.logger?.error({
-          action: 'email.entryReminders.failed',
-          data: { contestId: contest.id, leagueId: contest.leagueId, error: error instanceof Error ? error.message : String(error) },
-        }, 'Failed to queue entry reminders for a contest');
       }
     }
+    await this.deps.contests.scheduleReminderChecks(schedule);
   }
 
   /**
@@ -213,13 +225,17 @@ export class EntryReminders implements DueNotifications {
     };
   }
 
-  private async dueReminders(
+  /**
+   * The contest's reminders due now, and when its next one comes: the earliest reminder time
+   * still ahead on an event whose picks are still open, or null when none is left.
+   */
+  private async remindersOf(
     deps: EntryReminderDeps,
     contest: Contest,
     contestEvents: SportEvent[],
     reminderHours: readonly number[],
     now: Date,
-  ): Promise<DueReminder[]> {
+  ): Promise<{ due: DueReminder[]; next: Date | null }> {
     const rules = (await deps.configurations.findByContest(contest.id))?.configJson;
     const cutoff = contestCutoff(rules, contest.squaresGameMatchId);
     // Each event's window closes at the contest's cutoff on it: a second-chance bracket's is its
@@ -232,10 +248,15 @@ export class EntryReminders implements DueNotifications {
       window: cutoffTiming(cutoff, sportEvent, games.filter((game) => game.sportEventId === sportEvent.id)),
     }));
     const entriesOpen = areContestEntriesOpen(contest, windows.map(({ window }) => window), now);
-    return windows.flatMap(({ sportEvent, window }) => {
-      const hours = hasSportEventStarted(window, now) ? null : dueReminderHours(window.startDate, reminderHours, now);
+    const open = windows.filter(({ window }) => !hasSportEventStarted(window, now));
+    const due = open.flatMap(({ sportEvent, window }) => {
+      const hours = dueReminderHours(window.startDate, reminderHours, now);
       return hours === null ? [] : [{ contest, rules, sportEvent, closesAt: window.startDate, hours, entriesOpen, now }];
     });
+    const ahead = open.flatMap(({ window }) => reminderHours
+      .map((hours) => window.startDate.getTime() - hours * HOUR_MS)
+      .filter((at) => at > now.getTime()));
+    return { due, next: ahead.length === 0 ? null : new Date(Math.min(...ahead)) };
   }
 
   private async queueReminder(deps: EntryReminderDeps, due: DueReminder): Promise<void> {
@@ -279,8 +300,8 @@ export class EntryReminders implements DueNotifications {
         },
       });
     }
-    // Debug: the reminder stays due for its grace hour, so every sweep in it gets here; each email
-    // newly queued is logged once, at info, as email.send.queued.
+    // Debug: a check repeated after a failure gets here again; each email newly queued is logged
+    // once, at info, as email.send.queued.
     this.deps.logger?.debug({
       action: 'email.entryReminders.due',
       data: { contestId: contest.id, leagueId: league.id, sportEventId: sportEvent.id, hours: due.hours, recipients: recipients.length },
@@ -427,12 +448,16 @@ export class EntryReminders implements DueNotifications {
 }
 
 /**
- * Whether the contest may be reminded at all now: a random draw already dealt has nothing to
- * pick, and nothing goes within 6 hours of the contest opening.
+ * When to look at the contest again instead of now, or undefined to look now (#1170): never
+ * (null) for a contest no longer taking picks or a random draw already dealt, which has nothing
+ * to pick, and the end of the quiet hours for one opened less than 6 hours ago.
  */
-function mayRemindNow(contest: Contest, now: Date): boolean {
-  if (contest.drawnAt !== undefined) return false;
-  return contest.openedAt === undefined || now.getTime() - contest.openedAt.getTime() >= AFTER_OPENED_QUIET_MS;
+function checkAgainAt(contest: Contest, now: Date): Date | null | undefined {
+  if (contest.status !== ContestStatus.OPEN && contest.status !== ContestStatus.ACTIVE) return null;
+  if (contest.drawnAt !== undefined) return null;
+  if (contest.openedAt === undefined) return undefined;
+  const quietUntil = contest.openedAt.getTime() + AFTER_OPENED_QUIET_MS;
+  return now.getTime() < quietUntil ? new Date(quietUntil) : undefined;
 }
 
 function countBy(keys: readonly string[]): Map<string, number> {

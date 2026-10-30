@@ -507,8 +507,26 @@ export interface ContestRepository {
    * oldest configuration first; none when the series is gone.
    */
   findJoinableByReleasedEdition(edition: ReleasedEdition): Promise<Contest[]>;
-  /** Every contest in one of `statuses`, oldest first, across leagues: the entry reminders' sweep reads it (#845). */
+  /** Every contest in one of `statuses`, oldest first, across leagues: the live standings sweep reads it (#877). */
   findByStatuses(statuses: readonly Contest['status'][]): Promise<Contest[]>;
+  /**
+   * The draft contests created by `createdBy` whose first event starts by `firstStartsBy` (#1170),
+   * oldest first, across leagues: the "contest not open" sweep reads them, never every draft.
+   */
+  findDraftsStartingBy(query: { firstStartsBy: Date; createdBy: Date }): Promise<Contest[]>;
+  /**
+   * The contests whose next reminder check has come (#1170), any status, oldest check first: the
+   * entry reminder sweep reads only these. A contest no longer OPEN or ACTIVE is answered once, so
+   * the sweep clears its check.
+   */
+  findReminderChecksDue(now: Date): Promise<Contest[]>;
+  /** Sets when each contest's reminders are next checked, or clears it with null (#1170). */
+  scheduleReminderChecks(schedule: readonly ReminderCheck[]): Promise<void>;
+  /**
+   * Has the entry reminder sweep look again at `at` at the OPEN and ACTIVE contests named, or on
+   * the event, because their events or their times changed (#1170). One write.
+   */
+  recheckReminders(scope: { contestIds: readonly string[] } | { sportEventId: string }, at: Date): Promise<void>;
   /** The drawn quick pick contests whose entries' receipts are still to send (#1171), with the event dealt, oldest draw first. */
   findDrawReceiptsPending(): Promise<PendingDrawReceipts[]>;
   /** Marks the contests' draws as having sent their receipts (#1171), in one write. */
@@ -565,10 +583,18 @@ export interface ContestStatusFilter {
   excludeStatuses?: readonly Contest['status'][];
 }
 
+/** When the entry reminder sweep next looks at a contest (#1170); null when no reminder is left. */
+export interface ReminderCheck {
+  contestId: string;
+  at: Date | null;
+}
+
 export interface ContestStatusTransition {
   from: readonly Contest['status'][];
   to: Contest['status'];
   openedAt?: Date;
+  /** When the entry reminder sweep first looks at the contest (#1170): set as it opens. */
+  nextReminderAt?: Date;
   startsAt?: Date;
   endsAt?: Date;
 }

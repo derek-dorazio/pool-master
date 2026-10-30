@@ -104,6 +104,7 @@ export function createSportEventBracketService(prisma: PrismaClient, logger?: Fa
     tiers: new PrismaSportEventTierRepository(prisma),
     valuations: new PrismaSportEventParticipantValuationRepository(prisma),
     predictions: new PrismaContestEntryMatchPredictionRepository(prisma),
+    contests: new PrismaContestRepository(prisma),
     logger,
   });
 }
@@ -186,6 +187,7 @@ export function createSportEventServices(
       tiers,
       bracket,
       lifecycle,
+      contests: new PrismaContestRepository(prisma),
       logger,
     }),
     field: createSportEventParticipantService(prisma, logger),

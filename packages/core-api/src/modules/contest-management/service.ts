@@ -502,10 +502,13 @@ export class ContestManagementService {
     });
 
     // Compare-and-set: of two presses racing, only one moves the contest.
+    const openedAt = this.now();
     const opened = await this.contestRepo.transitionStatus(contestId, {
       from: [ContestStatus.DRAFT],
       to: ContestStatus.OPEN,
-      openedAt: this.now(),
+      openedAt,
+      // The entry reminder sweep works out the first reminder on its next pass (#1170).
+      nextReminderAt: openedAt,
     });
     if (!opened) {
       this.logger.warn({ contestId }, 'contest management open contest lost the race to another transition');
@@ -623,6 +626,8 @@ export class ContestManagementService {
       }
     }
     await this.contestRepo.replaceSportEvents(contestId, orderedIds);
+    // New events move the reminders of a contest already open (#1170).
+    await this.contestRepo.recheckReminders({ contestIds: [contestId] }, this.now());
     if (movesSeason) {
       await this.cups.ensureCup({ leagueId, seasonYear: newFirst.eventYear, sportLeagueId: newFirst.sportLeagueId });
       this.logger.info({ contestId, fromSeasonYear: contest.seasonYear, seasonYear: newFirst.eventYear }, 'contest management set sport events moved the contest to another season');

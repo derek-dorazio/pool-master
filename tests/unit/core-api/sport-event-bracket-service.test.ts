@@ -1,4 +1,5 @@
-import { expect } from '@jest/globals';
+import { expect, jest } from '@jest/globals';
+import type { ContestRepository } from '@poolmaster/shared/db';
 import { MatchEnding, BracketAdvancement, MatchSide, MatchStatus, ParticipantInactiveReason, ParticipantStatus, Sport, SportEventStatus, ValuationSource } from '@poolmaster/shared/domain';
 import {
   findBracketProblems,
@@ -12,6 +13,7 @@ import { InMemorySportEvents, NO_PICKS_ON_EVENT } from '../../support/in-memory-
 // change before and after release, what release still needs, and the First Four's play-in places.
 // The Prisma adapter and the database checks are covered in sport-event-matches.integration.
 
+const NOW = new Date('2027-03-01T12:00:00.000Z');
 const TEAMS = ['Duke', 'Vermont', 'Houston', 'Texas'] as const;
 
 function setup({ sport = Sport.BASKETBALL, status = SportEventStatus.DRAFT, picks = NO_PICKS_ON_EVENT }: {
@@ -32,6 +34,7 @@ function setup({ sport = Sport.BASKETBALL, status = SportEventStatus.DRAFT, pick
     return store.addToField(event.id, team.id, { seedNumber: index + 1 });
   });
   let sequence = 0;
+  const reminderRechecks = jest.fn<ContestRepository['recheckReminders']>().mockResolvedValue(undefined);
   const service = new SportEventBracketService({
     sportEvents: store.sportEventRepo(),
     sportLeagues: store.sportLeagueRepo(),
@@ -42,13 +45,15 @@ function setup({ sport = Sport.BASKETBALL, status = SportEventStatus.DRAFT, pick
     matches: store.matchRepo(),
     tiers: store.tierRepo(),
     valuations: store.valuationRepo(),
+    contests: { recheckReminders: reminderRechecks },
     ...picks,
+    now: () => NOW,
     newId: () => {
       sequence += 1;
       return `match-${sequence}`;
     },
   });
-  return { store, service, event, sportRow, sportLeague, duke, vermont, houston, texas };
+  return { store, service, event, sportRow, sportLeague, duke, vermont, houston, texas, reminderRechecks };
 }
 
 /**
@@ -210,6 +215,19 @@ describe('SportEventBracketService.updateMatch', () => {
     expect(match).toMatchObject({ scheduledDate: tipOff, isNeutralSite: false, homeSportEventParticipantId: context.duke.id });
   });
 
+  it('has the reminder sweep look again at the event\'s contests when a game\'s time moves, but not when the time stays (#1170)', async () => {
+    const context = setup();
+    await context.service.loadBracket(context.event.id, bracketOf(context));
+    context.store.events[0].status = SportEventStatus.SCHEDULED;
+    const tipOff = new Date('2027-03-18T19:10:00.000Z');
+
+    await context.service.updateMatch(context.event.id, 1, { isNeutralSite: false });
+    await context.service.updateMatch(context.event.id, 1, { scheduledDate: tipOff });
+    await context.service.updateMatch(context.event.id, 1, { scheduledDate: tipOff });
+
+    expect(context.reminderRechecks.mock.calls).toEqual([[{ sportEventId: context.event.id }, NOW]]);
+  });
+
   it('refuses (409 SPORT_EVENT_BRACKET_LOCKED) a change of sides once the event is released', async () => {
     const context = setup();
     await context.service.loadBracket(context.event.id, bracketOf(context));
@@ -366,6 +384,7 @@ describe('SportEventBracketService.releaseBlockers (reseeded bracket)', () => {
       matches: store.matchRepo(),
       tiers: store.tierRepo(),
       valuations: store.valuationRepo(),
+      contests: { recheckReminders: async () => undefined },
       ...NO_PICKS_ON_EVENT,
     });
     const game = (matchNumber: number, roundNumber: number, home: string | null, away: string | null): BracketMatchInput => ({
