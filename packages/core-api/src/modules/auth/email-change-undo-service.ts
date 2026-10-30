@@ -26,6 +26,7 @@ import { EMAIL_CHANGE_UNDO_LINK_DAYS, type ApiErrorCode } from '@poolmaster/shar
 import { EmailMessageStatus, EmailTemplateKey, type User } from '@poolmaster/shared/domain';
 import { emailRecipientOf, type EmailChangedBy, type EmailService } from '../email';
 import { cancelOpenPasswordResetTokens, revokeUserSessions } from '../users/user-lifecycle';
+import { forgettingReads, ReadMemoKey } from '../../core/request-read-memo';
 import { SlidingWindowRateLimiter } from '../../core/sliding-window-rate-limiter';
 import { BCRYPT_ROUNDS, hashResetToken, readPerMinuteLimit } from './password-reset-service';
 
@@ -166,7 +167,7 @@ export class EmailChangeUndoService {
 
     let undone: boolean;
     try {
-      undone = await this.deps.prisma.$transaction(async (tx) => {
+      undone = await forgettingReads(ReadMemoKey.user, () => this.deps.prisma.$transaction(async (tx) => {
         // The claim and the check are one statement, so two clicks at once cannot both win.
         const claimed = await tx.emailChangeUndoToken.updateMany({ where: live, data: { usedAt: now } });
         if (claimed.count !== 1) return false;
@@ -181,7 +182,7 @@ export class EmailChangeUndoService {
         await cancelOpenPasswordResetTokens(tx, link.userId, now);
         await revokeUserSessions(tx, link.userId);
         return true;
-      });
+      }));
     } catch (err) {
       // Another account took the address between the check above and this write.
       if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') this.rejectTakenAddress(link.userId);

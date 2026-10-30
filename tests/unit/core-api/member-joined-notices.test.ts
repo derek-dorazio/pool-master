@@ -35,11 +35,11 @@ describe('MemberJoinedNotices', () => {
     world.addMember({ league, user: commissioner, role: LeagueRole.COMMISSIONER });
   });
 
-  function notices(overrides: { findByLeagueFails?: boolean } = {}) {
+  function notices(overrides: { membersReadFails?: boolean } = {}) {
     const logger = fakeLogger();
     const service = new MemberJoinedNotices({
-      memberships: overrides.findByLeagueFails
-        ? { ...world.memberships, findByLeague: async () => { throw new Error('connection reset'); } }
+      memberships: overrides.membersReadFails
+        ? { ...world.memberships, findByLeagues: async () => { throw new Error('connection reset'); } }
         : world.memberships,
       leagues: world.leagues,
       squadMemberships: world.squadMemberships,
@@ -267,7 +267,7 @@ describe('MemberJoinedNotices', () => {
   });
 
   it('logs and swallows a failure to tell the commissioners, as the member has already joined', async () => {
-    const { service, logger } = notices({ findByLeagueFails: true });
+    const { service, logger } = notices({ membersReadFails: true });
     const { membership } = await join('Ann', THURSDAY_MORNING, { tell: false });
 
     await expect(service.tellJoined(membership)).resolves.toBeUndefined();

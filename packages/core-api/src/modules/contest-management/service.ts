@@ -123,6 +123,8 @@ export interface ContestCreateSportEventReader {
   findById(
     sportEventId: string,
   ): Promise<ContestCreateSportEventState | null>;
+  /** The states of the events found among `sportEventIds`, read together whatever their number (#1355). */
+  findByIds(sportEventIds: readonly string[]): Promise<ContestCreateSportEventState[]>;
   /** The prices of the event's active golfers, in whole dollars; unpriced golfers are left out. */
   findActiveFieldPrices(sportEventId: string): Promise<number[]>;
   /** How many games the event has to pick, cancelled games left out (#716). */
@@ -678,9 +680,11 @@ export class ContestManagementService {
   }
 
   /** The contest's events, in its sequence order; each must still exist. */
+  /** The contest's events in its order, read together (#1355). */
   private async findContestSportEvents(contest: Contest): Promise<ContestCreateSportEventState[]> {
-    return Promise.all(contest.sportEventIds.map(async (sportEventId) => {
-      const sportEvent = await this.sportEventReader.findById(sportEventId);
+    const byId = new Map((await this.sportEventReader.findByIds(contest.sportEventIds)).map((sportEvent) => [sportEvent.id, sportEvent]));
+    return contest.sportEventIds.map((sportEventId) => {
+      const sportEvent = byId.get(sportEventId);
       if (!sportEvent) {
         this.logger.warn({ contestId: contest.id, sportEventId }, 'contest management contest event missing');
         throw new ContestManagementError(
@@ -690,7 +694,7 @@ export class ContestManagementService {
         );
       }
       return sportEvent;
-    }));
+    });
   }
 
   /**
@@ -1010,9 +1014,7 @@ export class ContestManagementService {
     }
     switch (rules.selectionType) {
       case SelectionType.TIERED:
-        for (const each of sportEvents) {
-          await this.assertTieredRulesFitTierCount(each.id, rules);
-        }
+        await this.assertTieredRulesFitTierCount(sportEvents.map((each) => each.id), rules);
         return {
           configJson: {
             selectionType: rules.selectionType,
@@ -1254,18 +1256,21 @@ export class ContestManagementService {
    * Tiers are event-owned data now (plans/124 §4.6) — there's no per-contest
    * custom list to validate against, only the event's own tier count. Skips validation when the event has no tiers yet (e.g. a legacy
    * event never run through admin tier setup) — same "nothing to validate
-   * against" behavior the old participantCount-based check had.
+   * against" behavior the old participantCount-based check had. Every event of the contest is
+   * checked from one read of their tiers (#1355).
    */
   private async assertTieredRulesFitTierCount(
-    sportEventId: string,
+    sportEventIds: readonly string[],
     rules: TieredContestRules,
   ): Promise<void> {
     // Only the tier count matters here, so the tiers alone are read, not who is placed in them.
-    const tiers = await this.sportEventTierService.listTiers(sportEventId);
-    if (tiers.length === 0) {
-      return;
+    const tierCounts = new Map<string, number>();
+    for (const tier of await this.sportEventTierService.listTiersOfEvents(sportEventIds)) {
+      tierCounts.set(tier.sportEventId, (tierCounts.get(tier.sportEventId) ?? 0) + 1);
     }
-    assertCountedScoresFitRoster(rules, tiers.length);
+    for (const tierCount of tierCounts.values()) {
+      assertCountedScoresFitRoster(rules, tierCount);
+    }
   }
 
   /**
