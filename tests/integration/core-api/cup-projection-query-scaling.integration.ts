@@ -17,6 +17,7 @@ import type { Response } from 'light-my-request';
 import { PrismaContestEntryMatchPredictionRepository } from '../../../packages/core-api/src/adapters';
 import { createContestService } from '../../../packages/core-api/src/modules/contests/wiring';
 import { expectDefined } from '../../support/expect-defined';
+import { writePicks } from '../../support/prediction-writes';
 import { cleanupTestData, getApp, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
 import { DAY, HOUR, get, okBody, seedEventWithField, seedFootballWeek, seedLeagueWithTeams, seedTiers } from '../list-route-seeds';
 import { integrationPlanEntitlements } from '../plan-entitlements';
@@ -232,7 +233,7 @@ const liveBracketContest: LiveContestSeed = async (seeded, index) => {
 
 /** The entry's submitted picks: each `team` to win its `game`. */
 async function savePicks(contestEntryId: string, event: { id: string; startDate: Date }, picks: readonly { game: { id: string }; team: string | null }[]) {
-  await new PrismaContestEntryMatchPredictionRepository(getPrisma()).save({
+  await writePicks(new PrismaContestEntryMatchPredictionRepository(getPrisma()), {
     contestEntryId,
     sportEventId: event.id,
     saves: picks.map(({ game, team }) => ({

@@ -1,6 +1,6 @@
 import { PARTICIPANT_SCORING_DEFINITIONS } from '@poolmaster/shared/domain';
 import { applyEventGolfRoundScores, previewEventGolfRoundScores } from '@/lib/api';
-import { BulkUploadPanel, Heading, StatusBadge, Tile } from '@/features/shared/ui';
+import { BulkUploadPanel, PanelCard, StatusBadge } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -119,9 +119,8 @@ export function GolfRoundScoreUploadCard({
   const templateSampleRow = ['ext-123', 'Rory McIlroy', 70, -2, 18, 'COMPLETED'];
 
   return (
-    <Tile>
-      <Heading level={3} variant="card" size="base">Bulk load</Heading>
-      <p className="mt-1 text-sm text-muted-foreground">
+    <PanelCard headingLevel={3} padded title="Bulk load">
+      <p className="text-sm text-muted-foreground">
         Paste or upload this round&rsquo;s scores, preview how each row resolves and
         changes, then apply.
       </p>
@@ -207,6 +206,6 @@ export function GolfRoundScoreUploadCard({
           }
         />
       </div>
-    </Tile>
+    </PanelCard>
   );
 }

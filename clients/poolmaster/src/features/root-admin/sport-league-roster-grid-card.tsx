@@ -10,6 +10,7 @@ import {
   ConfirmationModal,
   DataGrid,
   Heading,
+  InlineError,
   Input,
   PickerModal,
   StatusBadge,
@@ -301,7 +302,7 @@ export function SportLeagueRosterGridCard({
       </div>
 
       {rosterError ? (
-        <p className="mt-3 text-sm font-medium text-destructive">{rosterError}</p>
+        <InlineError className="mt-3">{rosterError}</InlineError>
       ) : null}
 
       <div className="mt-4">
@@ -354,11 +355,11 @@ export function SportLeagueRosterGridCard({
       ) : null}
 
       {saveMutation.isError ? (
-        <p className="mt-3 text-sm font-medium text-destructive">
+        <InlineError className="mt-3">
           {extractErrorMessage(saveMutation.error, {
             fallback: 'We could not save these rankings.',
           })}
-        </p>
+        </InlineError>
       ) : null}
 
       <PickerModal

@@ -4,16 +4,7 @@ import { Trophy } from 'lucide-react';
 import { PlanFeature } from '@poolmaster/shared/domain';
 import { hasPlanFeature } from '@/features/plans/plan-features';
 import { PlanLockedNotice } from '@/features/plans/plan-locked-notice';
-import {
-  Button,
-  ErrorState,
-  Eyebrow,
-  Heading,
-  LoadingState,
-  MetricGrid,
-  MetricTile,
-  Tile,
-} from '@/features/shared/ui';
+import { Button, ErrorState, Eyebrow, Heading, LoadingState, MetricGrid, MetricTile, PanelCard, Tile } from '@/features/shared/ui';
 import { describePointsTable } from './cup-settings-view';
 import { joinNames } from './cup-view';
 import { ChampionshipContestList } from './championship-contest-list';
@@ -96,13 +87,15 @@ export function ChampionshipPage() {
         ))}
       </MetricGrid>
 
-      <Tile className="space-y-3" padding="sm" radius="lg">
-        <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <Heading level={2} variant="card" size="lg">Finishes in {year}</Heading>
+      <PanelCard
+        padded
+        title={`Finishes in ${year}`}
+        trailing={(
           <span className="text-xs text-muted-foreground" data-testid="championship-progress">
             {championship.contestsCounted} {championship.contestsCounted === 1 ? 'contest' : 'contests'} final
           </span>
-        </div>
+        )}
+      >
         <ChampionshipStandingsGrid filter={filter} focusSquadId={viewer.mySquadId} onFilter={chooseFilter} rows={championship.standings} />
         {league ? (
           <p className="text-xs text-muted-foreground">
@@ -110,21 +103,20 @@ export function ChampionshipPage() {
             Each contest&apos;s weight multiplies it, and a contest keeps the points it earned when it went final.
           </p>
         ) : null}
-      </Tile>
+      </PanelCard>
 
-      <Tile className="space-y-3" padding="sm" radius="lg">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <Heading level={2} variant="card" size="lg" data-testid="championship-contests-heading">
-            {describeContestResultFilter(filter, filteredSquadName, year)}
-          </Heading>
-          {filter ? (
-            <Button data-testid="championship-contests-clear" onClick={() => chooseFilter(null)} size="sm" type="button" variant="subtle">
-              Show every contest
-            </Button>
-          ) : (
-            <span className="text-xs text-muted-foreground">Tap a count in the table to see its contests.</span>
-          )}
-        </div>
+      <PanelCard
+        padded
+        title={describeContestResultFilter(filter, filteredSquadName, year)}
+        titleTestId="championship-contests-heading"
+        trailing={filter ? (
+          <Button data-testid="championship-contests-clear" onClick={() => chooseFilter(null)} size="sm" type="button" variant="subtle">
+            Show every contest
+          </Button>
+        ) : (
+          <span className="text-xs text-muted-foreground">Tap a count in the table to see its contests.</span>
+        )}
+      >
         {contestsQuery.isError ? (
           <ErrorState body="We couldn't load this year's contests." testId="championship-contests-error" />
         ) : !contestsQuery.data ? (
@@ -136,7 +128,7 @@ export function ChampionshipPage() {
             leagueCode={leagueCode}
           />
         )}
-      </Tile>
+      </PanelCard>
     </div>
   );
 }

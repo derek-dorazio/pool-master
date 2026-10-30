@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { SportVocabulary } from '@poolmaster/shared/domain';
 import { replaceEventParticipant } from '@/lib/api';
 import type { SportEventDto, SportEventMatchDto, SportEventParticipantDto } from '@/lib/api';
-import { Button, Heading, LOADING_TEXT, Select, Tile } from '@/features/shared/ui';
+import { Button, Heading, InlineError, LOADING_TEXT, Select, Tile } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -76,9 +76,9 @@ export function WithdrawalsCard({
         {`If a ${participant.one} withdraws before playing, name who takes the place. Picks of the withdrawn ${participant.one} stay, and score as a first-round loss. Once their ${noun.one} starts, enter the withdrawal as a walkover instead.`}
       </p>
       {candidatesQuery.isError ? (
-        <p className="mt-3 text-sm text-destructive" role="alert">
+        <InlineError className="mt-3">
           {extractErrorMessage(candidatesQuery.error, { fallback: `Couldn't load the ${participant.many}. Try again in a moment.` })}
-        </p>
+        </InlineError>
       ) : (
         <div className="mt-4 flex flex-wrap items-end gap-3">
           <label className="flex flex-col gap-1 text-xs text-muted-foreground">
@@ -113,9 +113,9 @@ export function WithdrawalsCard({
             {`Replace ${participant.one}`}
           </Button>
           {mutation.isError ? (
-            <p className="w-full text-sm text-destructive" role="alert">
+            <InlineError className="w-full">
               {extractErrorMessage(mutation.error, { codeMessages: { ...bracketErrorMessages(vocabulary), ...offLeagueRosterMessages(vocabulary, sportLeague) }, fallback: `The ${participant.one} could not be replaced. Try again.` })}
-            </p>
+            </InlineError>
           ) : null}
         </div>
       )}

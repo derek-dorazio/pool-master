@@ -2,7 +2,7 @@ import * as Dialog from '@radix-ui/react-dialog';
 import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router';
 import { changeMemberRole, removeSquadOwner } from '@/lib/api';
-import { Button, Heading, MenuItem } from '@/features/shared/ui';
+import { Button, Heading, InlineError, MenuItem } from '@/features/shared/ui';
 import { buildLeagueAdminTeamPath } from '@/features/leagues/league-routing';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -236,7 +236,7 @@ export function TeamOwnerActionMenu({
             <p className="text-sm text-muted-foreground">
               This change is league-scoped and does not alter the user&apos;s account-level permissions.
             </p>
-            {roleError ? <p className="text-sm text-destructive">{roleError}</p> : null}
+            {roleError ? <InlineError>{roleError}</InlineError> : null}
             <Button
               className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
               data-testid={`${testPrefix}-confirm-promote-${teamId}-${ownerUserId}`}
@@ -254,7 +254,7 @@ export function TeamOwnerActionMenu({
             <p className="text-sm text-muted-foreground">
               A league must keep at least one active commissioner.
             </p>
-            {roleError ? <p className="text-sm text-destructive">{roleError}</p> : null}
+            {roleError ? <InlineError>{roleError}</InlineError> : null}
             <Button
               className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
               data-testid={`${testPrefix}-confirm-demote-${teamId}-${ownerUserId}`}
@@ -299,7 +299,7 @@ export function TeamOwnerActionMenu({
                   This removes them as an owner and from the league. Contest history stays intact,
                   and a commissioner can invite them back — rejoining restores everything they had.
                 </p>
-                {removeError ? <p className="text-sm text-destructive">{removeError}</p> : null}
+                {removeError ? <InlineError>{removeError}</InlineError> : null}
                 <Button
                   className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
                   data-testid={`${testPrefix}-confirm-remove-${teamId}-${ownerUserId}`}
