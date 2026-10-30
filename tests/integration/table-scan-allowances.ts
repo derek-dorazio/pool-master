@@ -12,4 +12,10 @@ export interface TableScanAllowance {
   reason: string;
 }
 
-export const TABLE_SCAN_ALLOWANCES: readonly TableScanAllowance[] = [];
+export const TABLE_SCAN_ALLOWANCES: readonly TableScanAllowance[] = [
+  {
+    table: 'leagues',
+    sqlIncludes: 'FROM "public"."leagues" WHERE "public"."leagues"."is_active" = $? ORDER BY',
+    reason: 'The commissioner notices email every active league, so they read every active league; no screen calls it (#1313). #1303 covers the sweep.',
+  },
+];

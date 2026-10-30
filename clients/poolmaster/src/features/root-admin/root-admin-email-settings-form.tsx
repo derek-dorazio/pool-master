@@ -1,16 +1,12 @@
-import { useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { EmailConfigSchema, EmailRecipientPatternSchema } from '@poolmaster/shared/dto';
-import { updateSettingsGroup, type EmailConfig, type SettingsGroup } from '@/lib/api';
+import type { EmailConfig, SettingsGroup } from '@/lib/api';
 import { Alert, Button, Checkbox, FormField, Input, Textarea } from '@/features/shared/ui';
-import { QueryKeys } from '@/lib/query-keys';
-import { useInvalidatingMutation } from '@/lib/mutation-hooks';
-import { hasErrorCode, throwApiError, extractErrorMessage } from '@/lib/errors';
 import { numberFieldErrors } from '@/lib/number-field-errors';
 import { EMAIL_TEMPLATE_LABELS } from './root-admin-settings-utils';
+import { SettingsSaveError } from './settings-save-error';
+import { useSettingsGroupForm } from './use-settings-group-form';
 
 type EmailSettingsGroup = Extract<SettingsGroup, { key: 'EMAIL_CONFIG' }>;
 
@@ -94,51 +90,13 @@ function toConfig(values: EmailSettingsFormValues): EmailConfig {
  * `updatedAt` the draft was taken from, and a 409 offers to fetch and load the newer value.
  */
 export function EmailSettingsForm({ group }: { group: EmailSettingsGroup }) {
-  const queryClient = useQueryClient();
-  const [baseUpdatedAt, setBaseUpdatedAt] = useState(group.updatedAt);
-  const form = useForm<EmailSettingsFormValues>({
+  const { conflicted, form, loadLatest, saveMutation, submit } = useSettingsGroupForm({
+    group,
     resolver: zodResolver(EmailSettingsFormSchema, { error: emailErrors }),
-    defaultValues: toFormValues(group.value),
+    subject: 'Email settings',
+    toForm: toFormValues,
+    toValue: toConfig,
   });
-
-  const saveMutation = useInvalidatingMutation({
-    mutationFn: async (values: EmailSettingsFormValues) => {
-      const response = await updateSettingsGroup({
-        path: { key: 'EMAIL_CONFIG' },
-        body: {
-          key: 'EMAIL_CONFIG',
-          value: toConfig(values),
-          expectedUpdatedAt: baseUpdatedAt,
-        },
-      });
-      if (response.data?.key !== 'EMAIL_CONFIG') {
-        throwApiError(response.error, 'Email settings response is missing data.');
-      }
-      return response.data;
-    },
-    onSuccess: (saved) => {
-      setBaseUpdatedAt(saved.updatedAt);
-      form.reset(toFormValues(saved.value));
-    },
-    invalidates: [QueryKeys.rootAdmin.settings],
-  });
-
-  const conflicted = hasErrorCode(saveMutation.error, 'SETTINGS_CONFLICT');
-
-  // A 409 refetches nothing (invalidation runs on success only), so the `group` prop is still
-  // the version that conflicted: fetch the settings again and start the draft from that.
-  async function loadLatest() {
-    await queryClient.refetchQueries({ queryKey: QueryKeys.rootAdmin.settings, exact: true });
-    const latest = queryClient
-      .getQueryData<SettingsGroup[]>(QueryKeys.rootAdmin.settings)
-      ?.find((candidate): candidate is EmailSettingsGroup => candidate.key === 'EMAIL_CONFIG');
-    if (!latest) {
-      return;
-    }
-    setBaseUpdatedAt(latest.updatedAt);
-    form.reset(toFormValues(latest.value));
-    saveMutation.reset();
-  }
 
   const enabled = form.watch('enabled');
 
@@ -147,7 +105,7 @@ export function EmailSettingsForm({ group }: { group: EmailSettingsGroup }) {
       className="space-y-4"
       data-testid="root-admin-email-settings-form"
       noValidate
-      onSubmit={(event) => void form.handleSubmit((values) => saveMutation.mutate(values))(event)}
+      onSubmit={(event) => void submit(event)}
     >
       {enabled ? null : (
         <Alert data-testid="root-admin-email-settings-off-warning" title="Email is off" tone="warning">
@@ -223,19 +181,13 @@ export function EmailSettingsForm({ group }: { group: EmailSettingsGroup }) {
           {...form.register('weeklyDigestHour', { valueAsNumber: true })}
         />
       </FormField>
-      {saveMutation.isError ? (
-        <Alert
-          action={conflicted ? (
-            <Button onClick={() => void loadLatest()} type="button" variant="secondary">
-              Load the latest settings
-            </Button>
-          ) : undefined}
-          data-testid="root-admin-email-settings-error"
-          tone="danger"
-        >
-          {extractErrorMessage(saveMutation.error, { fallback: 'We could not save the email settings.' })}
-        </Alert>
-      ) : null}
+      <SettingsSaveError
+        conflicted={conflicted}
+        error={saveMutation.error}
+        fallback="We could not save the email settings."
+        onLoadLatest={loadLatest}
+        testId="root-admin-email-settings-error"
+      />
       <Button data-testid="root-admin-email-settings-save" disabled={saveMutation.isPending} type="submit">
         {saveMutation.isPending ? 'Saving...' : 'Save email settings'}
       </Button>

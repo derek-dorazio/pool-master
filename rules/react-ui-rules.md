@@ -219,8 +219,10 @@ Rules:
 
 - Use shared primitives for buttons, inputs, textareas, modals, tiles, page
   headers, status badges, action tiles, error banners, and grid/table shells.
-- Do not use bare `<button>`, `<input>`, or `<textarea>` in feature code when a
-  shared primitive exists. New shared primitives belong under
+- Do not use bare `<button>`, `<input>`, `<textarea>` or `<table>` in feature code when a
+  shared primitive exists. A small table is built from `SimpleTable` and its parts
+  (`TableHead`, `TableBody`, `TableRow`, `TableHeaderCell`, `TableCell`), a table that needs
+  search or sorting is a `DataGrid`, and an upload preview is an `UploadPreviewTable`. New shared primitives belong under
   `clients/poolmaster/src/features/shared/ui/`.
 - If the existing shared primitive is missing a needed variant, extend the
   primitive rather than creating a page-local near-duplicate.
@@ -519,7 +521,7 @@ UI surfaces that participate in automation must expose stable machine-oriented s
 - Reusable features should use consistent selector prefixes by domain, for example:
   - `league-create-submit`
   - `contest-create-hero`
-  - `auth-register-email`
+  - `sign-up-email`
   - `selection-room-available-panel`
 - New web/admin UI code should add these stable selectors as part of implementation, not later as test-only cleanup.
 - If a DOM element may need to be addressed from browser automation or app-side JavaScript, give it a stable selector when the component is created.

@@ -131,6 +131,7 @@ const INDEXES = new Map<string, IndexLead>([
   ['users_pkey', { table: 'users', column: 'id', operatorClass: 'uuid_ops' }],
   ['users_email_key', { table: 'users', column: 'email', operatorClass: 'text_ops' }],
   ['users_email_trgm_idx', { table: 'users', column: 'email', operatorClass: 'gin_trgm_ops' }],
+  ['users_is_root_admin_is_active_idx', { table: 'users', column: 'is_root_admin', operatorClass: 'bool_ops' }],
   ['contest_entries_id_contest_id_key', { table: 'contest_entries', column: 'id', operatorClass: 'uuid_ops' }],
   ['contest_entries_contest_id_squad_id_entry_number_key', { table: 'contest_entries', column: 'contest_id', operatorClass: 'uuid_ops' }],
   ['league_memberships_user_id_status_idx', { table: 'league_memberships', column: 'user_id', operatorClass: 'uuid_ops' }],
@@ -162,6 +163,20 @@ describe('missing-index check on fixed plans: whether another index could serve 
 
   it('passes an ILIKE filter on a column a trigram index leads on', () => {
     expect(findWholeScans(indexScan('users_pkey', 'users', { Filter: '((email)::text ~~* $1)' }), INDEXES)).toEqual([]);
+  });
+
+  it("reads a bitmap index walk's filter from the heap scan above it: passed when it is served, reported when not", () => {
+    const bitmapWalk = (filter: string): PlanNode => ({
+      'Node Type': 'Bitmap Heap Scan',
+      'Relation Name': 'users',
+      Alias: 'users',
+      'Recheck Cond': '(is_active = $2)',
+      Filter: filter,
+      Plans: [{ 'Node Type': 'Bitmap Index Scan', 'Index Name': 'users_is_root_admin_is_active_idx', 'Index Cond': '(is_active = $2)' }],
+    });
+    expect(findWholeScans(bitmapWalk('((email ~~* $1) OR ((username)::text ~~* $3))'), INDEXES)).toEqual([]);
+    expect(findWholeScans(bitmapWalk('((timezone)::text = $1)'), INDEXES))
+      .toEqual([{ table: 'users', how: 'walking all of users_is_root_admin_is_active_idx, which leads on is_root_admin' }]);
   });
 
   it('passes a walked side of a join looked up by its indexed join key from a side a bound value could enter by index', () => {

@@ -159,9 +159,17 @@ export function getProviderRegistry(): ProviderRegistry {
   return providerRegistry;
 }
 
-/** Get the shared Prisma client. */
+/** The tests' own client, for seeds, reads that check what was written, and cleanup. Its statements are not planned. */
 export function getPrisma(): PrismaClient {
   return prisma;
+}
+
+/**
+ * The app's client, for repositories, adapters and services a test builds itself: its statements
+ * are planned by the missing-index check, as the app's own are (#1301).
+ */
+export function getAppPrisma(): PrismaClient {
+  return appPrisma;
 }
 
 /** Build the Fastify app with real plugins and modules (no background jobs), on `prisma`. */

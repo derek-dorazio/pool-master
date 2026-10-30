@@ -16,7 +16,7 @@ import type {
   ReleasedEdition,
 } from '@poolmaster/shared/db';
 import { championshipYear, ContestStatus, SelectionType, SportEventStatus, type Contest, type ContestFormat, type CupWeight, type Sport } from '@poolmaster/shared/domain';
-import { forgettingReads, memoizedRead, ReadMemoKey } from '../core/request-read-memo';
+import { forgettingReads, memoizedRead, memoizedReadMany, ReadMemoKey } from '../core/request-read-memo';
 import { lockContestRow } from './contest-row-lock';
 
 /**
@@ -43,6 +43,14 @@ export class PrismaContestRepository implements ContestRepository {
         include: CONTEST_INCLUDE,
       });
       return row ? mapToContest(row) : null;
+    });
+  }
+
+  async findByIds(ids: readonly string[]): Promise<Contest[]> {
+    if (ids.length === 0) return [];
+    return memoizedReadMany(this.prisma, ReadMemoKey.contest, ids, async (missing) => {
+      const rows = await this.prisma.contest.findMany({ where: { id: { in: [...missing] } }, include: CONTEST_INCLUDE });
+      return rows.map(mapToContest);
     });
   }
 

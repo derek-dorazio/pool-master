@@ -5,7 +5,8 @@ import { Navigate, useNavigate, useParams } from 'react-router';
 import { z } from 'zod';
 import { CupPointsScale, PlanFeature, championshipYear } from '@poolmaster/shared/domain';
 import { updateLeagueCupSettings, type LeagueDto } from '@/lib/api';
-import { extractErrorMessage, throwApiError } from '@/lib/errors';
+import { throwApiError } from '@/lib/errors';
+import { formPageSave } from '@/lib/form-page-save';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import { syncLeagueCaches } from '@/features/leagues/league-cache';
@@ -139,11 +140,7 @@ function ChampionshipSettingsForm({ league }: { league: LeagueDto }) {
     <FormPage
       cancelTo={settingsPath}
       description="The championship every contest counts toward, and what each finishing place earns in it and in every sports league cup."
-      errorMessage={saveMutation.isError
-        ? extractErrorMessage(saveMutation.error, { fallback: 'We could not save the championship settings.' })
-        : null}
-      isPending={saveMutation.isPending}
-      onSubmit={(event) => void form.handleSubmit((values) => saveMutation.mutate(values))(event)}
+      {...formPageSave(form, saveMutation, 'We could not save the championship settings.')}
       pendingLabel="Saving..."
       submitLabel="Save settings"
       submitTestId="edit-championships-save"

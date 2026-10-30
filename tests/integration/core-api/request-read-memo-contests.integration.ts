@@ -20,6 +20,7 @@ import { runWithReadMemo } from '../../../packages/core-api/src/core/request-rea
 import {
   cleanupTestData,
   createTestUser,
+  getAppPrisma,
   getPrisma,
   setupIntegrationTests,
   teardownIntegrationTests,
@@ -43,13 +44,12 @@ beforeEach(async () => {
 });
 
 function repos() {
-  const prisma = getPrisma();
   return {
-    contests: new PrismaContestRepository(prisma),
-    configurations: new PrismaContestConfigurationRepository(prisma),
-    squadMemberships: new PrismaSquadMembershipRepository(prisma),
-    sportEvents: new PrismaSportEventRepository(prisma),
-    sportLeagues: new PrismaSportLeagueRepository(prisma),
+    contests: new PrismaContestRepository(getAppPrisma()),
+    configurations: new PrismaContestConfigurationRepository(getAppPrisma()),
+    squadMemberships: new PrismaSquadMembershipRepository(getAppPrisma()),
+    sportEvents: new PrismaSportEventRepository(getAppPrisma()),
+    sportLeagues: new PrismaSportLeagueRepository(getAppPrisma()),
   };
 }
 
@@ -193,14 +193,13 @@ describe('request read memo over contests, teams and events (#1200)', () => {
 
   it('forgets a team membership read during a membership transaction once the transaction commits', async () => {
     const { user, league, squad } = await seed();
-    const prisma = getPrisma();
     const { squadMemberships } = repos();
     const membership = await squadMemberships.create({
       squadId: squad.id, leagueId: league.id, userId: user.id, status: SquadMembershipStatus.ACTIVE, joinedAt: new Date(),
     });
 
     const after = await runWithReadMemo(async () => {
-      await new PrismaMembershipTransaction(prisma).run(async (txRepos) => {
+      await new PrismaMembershipTransaction(getAppPrisma()).run(async (txRepos) => {
         await txRepos.squadMemberships.update(membership.id, { status: SquadMembershipStatus.INACTIVE });
         // Outside the transaction, so it sees the row as it was before the write.
         await squadMemberships.findByLeagueAndUser(league.id, user.id);

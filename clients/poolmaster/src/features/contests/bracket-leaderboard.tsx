@@ -3,7 +3,7 @@ import type { BracketLeaderboardResponse, ContestDto } from '@/lib/api';
 import { formatPoints } from './bracket-layout';
 import { contestScoreUnit } from './contest-sport';
 import { SETTLED_NOTE, entryColumn, isMySquadsEntry, placeColumn, totalColumn } from './leaderboard-columns';
-import { LeaderboardFrame, ScoreboardGrid } from './leaderboard-kit';
+import { LeaderboardFrame, ScoreboardGrid, YourBestNote } from './leaderboard-kit';
 import { useLeaderboardFallback } from './use-leaderboard-fallback';
 import { useContestLeague } from './use-contest-league';
 import { useBracketLeaderboardQuery } from './use-contest-leaderboard';
@@ -65,8 +65,6 @@ export function BracketLeaderboard({ contest, leagueCode: hintedLeagueCode }: { 
 
   const board = leaderboardQuery.data;
   const mySquadId = viewer.mySquadId;
-  // The server ranks best first, so the viewer's first row is their best placed entry.
-  const myBest = mySquadId === null ? undefined : board.entries.find((entry) => entry.squadId === mySquadId);
 
   return (
     <LeaderboardFrame
@@ -74,9 +72,7 @@ export function BracketLeaderboard({ contest, leagueCode: hintedLeagueCode }: { 
       leagueCode={leagueCode}
       notes={(
         <>
-          {myBest ? (
-            <p data-testid="bracket-leaderboard-my-best">{`Your best: ${myBest.displayPosition} · ${myBest.entryName}, ${formatPoints(myBest.points)}`}</p>
-          ) : null}
+          <YourBestNote entries={board.entries} mySquadId={mySquadId} points={(entry) => entry.points} testId="bracket-leaderboard-my-best" />
           {board.finalTotalPoints !== null ? (
             <p data-testid="bracket-leaderboard-final-total">
               {`The final scored ${board.finalTotalPoints} total ${contestScoreUnit(contest.sport)}: tiebreakers are measured against it.`}

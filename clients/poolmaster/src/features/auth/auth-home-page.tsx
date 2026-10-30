@@ -1,18 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Controller, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Link, Navigate, useLocation, useNavigate } from "react-router";
-import {
-  LoginRequestSchema,
-  RegisterRequestSchema,
-} from "@poolmaster/shared/dto";
-import { loginUser, registerUser } from "@/lib/api";
+import { LoginRequestSchema } from "@poolmaster/shared/dto";
+import { loginUser } from "@/lib/api";
 import { InvitationContextCard } from "@/features/leagues/invitation-context-card";
 import {
   Alert,
-  browserTimeZone,
   Button,
   FormField,
   Heading,
@@ -20,7 +16,6 @@ import {
   SegmentedControl,
   StatusBadge,
   Tile,
-  TimeZoneSelect,
 } from "@/features/shared/ui";
 import {
   fetchInvitationPreview,
@@ -34,10 +29,10 @@ import { parseRouteState } from "@/routes/route-state";
 import { resolvePostAuthDestination } from "./post-auth-destination";
 import { ApiError, extractErrorMessage, throwApiError } from "@/lib/errors";
 import { getLogger } from "@/lib/logger";
-import { setAuthSessionUser } from "./auth-session-cache";
+import { setAuthSessionUser, type AuthSessionUser } from "./auth-session-cache";
 import { useAuth } from "./auth-context";
 import { FORGOT_PASSWORD_PATH } from "./auth-paths";
-import { signUpWithDisplayPreferences } from "./signup-display-preferences";
+import { SignUpForm } from "./sign-up-form";
 import { eventPageCopy } from "@/features/event-pages/event-page-copy";
 import { parseStartReturnPath } from "@/features/event-pages/start-path";
 import { PRODUCT_NAME, PRODUCT_TAGLINE } from "@poolmaster/shared/domain";
@@ -46,31 +41,7 @@ const loginFormSchema = LoginRequestSchema.extend({
   password: z.string().min(1, "Password is required"),
 });
 
-const registerFormSchema = z
-  .object({
-    firstName: z
-      .string()
-      .trim()
-      .min(1, "First name is required")
-      .max(50, "First name is too long"),
-    lastName: z
-      .string()
-      .trim()
-      .min(1, "Last name is required")
-      .max(50, "Last name is too long"),
-    username: RegisterRequestSchema.shape.username,
-    email: RegisterRequestSchema.shape.email,
-    password: RegisterRequestSchema.shape.password,
-    confirmPassword: z.string().min(8, "Please confirm your password"),
-    timezone: z.string().min(1, "Time zone is required"),
-  })
-  .refine((values) => values.password === values.confirmPassword, {
-    path: ["confirmPassword"],
-    message: "Passwords must match",
-  });
-
 type LoginFormValues = z.infer<typeof loginFormSchema>;
-type RegisterFormValues = z.infer<typeof registerFormSchema>;
 
 function parseInviteCode(path: string | undefined) {
   if (!path) {
@@ -146,33 +117,7 @@ export function AuthHomePage() {
     },
   });
 
-  const registerForm = useForm<RegisterFormValues>({
-    resolver: zodResolver(registerFormSchema),
-    defaultValues: {
-      email: "",
-      username: "",
-      password: "",
-      firstName: "",
-      lastName: "",
-      confirmPassword: "",
-      timezone: browserTimeZone(),
-    },
-  });
-  const isSubmitting =
-    loginForm.formState.isSubmitting || registerForm.formState.isSubmitting;
-  const [hasEditedUsername, setHasEditedUsername] = useState(false);
-  const watchedEmail = registerForm.watch("email");
-
-  useEffect(() => {
-    if (hasEditedUsername) {
-      return;
-    }
-
-    registerForm.setValue("username", watchedEmail.trim().toLowerCase(), {
-      shouldDirty: false,
-      shouldValidate: false,
-    });
-  }, [hasEditedUsername, registerForm, watchedEmail]);
+  const isSubmitting = loginForm.formState.isSubmitting;
 
   useEffect(() => {
     if (!inviteCode || !invitePreviewQuery.isError) {
@@ -281,71 +226,8 @@ export function AuthHomePage() {
     }
   }
 
-  async function handleRegister(values: RegisterFormValues) {
-    setServerError(null);
-    logger.debug(
-      {
-        action: "auth.register.started",
-        data: {
-          destination,
-          hasInvitation: Boolean(inviteCode || teamInviteCode),
-        },
-      },
-      "Submitting registration request",
-    );
-
-    try {
-      const response = await signUpWithDisplayPreferences(values.timezone, (preferences) =>
-        registerUser({
-          body: {
-            username: values.username.trim().toLowerCase(),
-            email: values.email,
-            password: values.password,
-            firstName: values.firstName.trim(),
-            lastName: values.lastName.trim(),
-            ...preferences,
-          },
-        }));
-
-      if (!response.data) {
-        throwApiError(response.error, "Registration response is missing data.");
-      }
-
-      setAuthSessionUser(queryClient, response.data.user);
-      const registerDestination = resolvePostAuthDestination(
-        response.data.user,
-        routeState,
-      );
-      logger.info(
-        {
-          action: "auth.register.succeeded",
-          data: {
-            destination: registerDestination,
-            userId: response.data.user.id,
-            isRootAdmin: response.data.user.isRootAdmin,
-            hasInvitation: Boolean(inviteCode || teamInviteCode),
-          },
-        },
-        "Completed registration flow",
-      );
-      void navigate(registerDestination, { replace: true });
-    } catch (error) {
-      const logPayload = {
-        action: "auth.register.failed",
-        data: {
-          destination,
-          hasInvitation: Boolean(inviteCode || teamInviteCode),
-        },
-        err: error,
-      };
-
-      if (isUnexpectedAuthError(error)) {
-        logger.error(logPayload, "Registration failed unexpectedly");
-      } else {
-        logger.warn(logPayload, "Registration request was rejected");
-      }
-      setServerError(extractErrorMessage(error instanceof Error ? error : null));
-    }
+  function handleRegistered(user: AuthSessionUser) {
+    void navigate(resolvePostAuthDestination(user, routeState), { replace: true });
   }
 
   if (user) {
@@ -426,7 +308,7 @@ export function AuthHomePage() {
             value={mode}
           />
 
-          {serverError ? (
+          {mode === "login" && serverError ? (
             <Alert className="mt-4" data-testid="auth-server-error" tone="danger">
               {serverError}
             </Alert>
@@ -478,118 +360,9 @@ export function AuthHomePage() {
               </Button>
             </form>
           ) : (
-            <form
-              className="mt-6 space-y-4"
-              onSubmit={(e) => void registerForm.handleSubmit(handleRegister)(e)}
-            >
-              <div className="grid gap-4 sm:grid-cols-2">
-                <FormField
-                  error={registerForm.formState.errors.firstName?.message}
-                  label="First name"
-                >
-                  <Input
-                    {...registerForm.register("firstName")}
-                    data-testid="auth-register-first-name"
-                    placeholder="Taylor"
-                    type="text"
-                  />
-                </FormField>
-
-                <FormField
-                  error={registerForm.formState.errors.lastName?.message}
-                  label="Last name"
-                >
-                  <Input
-                    {...registerForm.register("lastName")}
-                    data-testid="auth-register-last-name"
-                    placeholder="Commissioner"
-                    type="text"
-                  />
-                </FormField>
-              </div>
-
-              <FormField
-                error={registerForm.formState.errors.email?.message}
-                label="Email"
-              >
-                <Input
-                  {...registerForm.register("email")}
-                  data-testid="auth-register-email"
-                  placeholder="you@example.com"
-                  type="email"
-                />
-              </FormField>
-
-              <FormField
-                error={registerForm.formState.errors.username?.message}
-                label="Username"
-              >
-                <Input
-                  {...registerForm.register("username", {
-                    onChange: () => setHasEditedUsername(true),
-                  })}
-                  data-testid="auth-register-username"
-                  placeholder="yourname"
-                  type="text"
-                />
-              </FormField>
-
-              <FormField
-                error={registerForm.formState.errors.password?.message}
-                label="Create password"
-              >
-                <Input
-                  {...registerForm.register("password")}
-                  data-testid="auth-register-password"
-                  placeholder="Create a password"
-                  type="password"
-                />
-              </FormField>
-
-              <FormField
-                error={registerForm.formState.errors.confirmPassword?.message}
-                label="Confirm password"
-              >
-                <Input
-                  {...registerForm.register("confirmPassword")}
-                  data-testid="auth-register-confirm-password"
-                  placeholder="Re-enter your password"
-                  type="password"
-                />
-              </FormField>
-
-              <FormField
-                error={registerForm.formState.errors.timezone?.message}
-                helperText="Dates and times are shown in this zone. You can change it later in your account."
-                id="auth-register-time-zone"
-                label="Time zone"
-              >
-                <Controller
-                  control={registerForm.control}
-                  name="timezone"
-                  render={({ field }) => (
-                    <TimeZoneSelect
-                      data-testid="auth-register-time-zone"
-                      id="auth-register-time-zone"
-                      name={field.name}
-                      onBlur={field.onBlur}
-                      onChange={(event) => field.onChange(event.target.value)}
-                      ref={field.ref}
-                      value={field.value}
-                    />
-                  )}
-                />
-              </FormField>
-
-              <Button
-                className="w-full"
-                data-testid="auth-register-submit"
-                disabled={isSubmitting}
-                type="submit"
-              >
-                {isSubmitting ? "Creating account..." : "Register and continue"}
-              </Button>
-            </form>
+            <div className="mt-6">
+              <SignUpForm onRegistered={handleRegistered} />
+            </div>
           )}
 
           <p className="mt-5 text-sm text-muted-foreground">

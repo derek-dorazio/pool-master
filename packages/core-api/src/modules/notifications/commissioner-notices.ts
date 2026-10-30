@@ -101,7 +101,7 @@ export interface CommissionerNoticeDeps extends LeagueMemberDeps, Pick<ContestSu
   configurations: Pick<ContestConfigurationRepository, 'findByContest'>;
   /** The default contest setups offered on an event. */
   templates: Pick<ContestConfigTemplateRepository, 'list'>;
-  leagues: Pick<LeagueRepository, 'findById' | 'findAll'>;
+  leagues: Pick<LeagueRepository, 'findById' | 'findActive'>;
   /** C1, C2 and the digest name each event's sport league. */
   sportLeagues: Pick<SportLeagueRepository, 'findById' | 'findByIds'>;
   readConfig: () => Pick<EmailConfig, 'weeklyDigestHour'>;
@@ -213,7 +213,7 @@ export class CommissionerNotices implements DueNotifications {
       this.deps.email.leaguesRecordedAbout('EVENT_COMING_UP', due.filter(({ templateKey }) => templateKey === 'EVENT_COMING_UP').map(({ sportEvent }) => sportEvent.id)),
       this.deps.email.leaguesRecordedAbout('EVENT_READY_FOR_CONTESTS', readyIds),
     ]);
-    const leagues = (await this.deps.leagues.findAll({ isActive: true }))
+    const leagues = (await this.deps.leagues.findActive())
       .filter((league) => league.eventEmailDelivery === EventEmailDelivery.PER_EVENT);
     if (leagues.length === 0) return;
     // Read at the first ready event a league is still to be told of, for every ready event.
@@ -277,7 +277,7 @@ export class CommissionerNotices implements DueNotifications {
     const monday = digestMondayOf(now, this.deps.readConfig().weeklyDigestHour);
     if (monday === null) return;
     const told = await this.deps.email.leaguesRecorded('EVENT_WEEKLY_DIGEST', monday);
-    const due = (await this.deps.leagues.findAll({ isActive: true }))
+    const due = (await this.deps.leagues.findActive())
       .filter((league) => league.eventEmailDelivery === EventEmailDelivery.WEEKLY_DIGEST && !told.has(league.id));
     if (due.length === 0) return;
 

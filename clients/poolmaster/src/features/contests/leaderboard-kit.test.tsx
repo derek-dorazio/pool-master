@@ -7,7 +7,7 @@ import { describe, expect, it } from 'vitest';
 import type { ContestDto } from '@/lib/api';
 import { ApiError } from '@/lib/errors';
 import { entryColumn, isMySquadsEntry, placeColumn, totalColumn } from './leaderboard-columns';
-import { LeaderboardFrame, ScoreboardGrid } from './leaderboard-kit';
+import { LeaderboardFrame, ScoreboardGrid, YourBestNote } from './leaderboard-kit';
 import { useLeaderboardFallback } from './use-leaderboard-fallback';
 
 type Row = { entryId: string; entryName: string; displayPosition: string | null; position: number | null; points: number; squadId: string; squadName: string };
@@ -173,5 +173,32 @@ describe('useLeaderboardFallback', () => {
 
   it('steps aside once the board is there', () => {
     expect(fallbackFor({ ...settled, data: { entries: [] } })).toBeNull();
+  });
+});
+
+describe('YourBestNote', () => {
+  const ranked: Row[] = [
+    { entryId: 'entry-unplaced', entryName: 'Crushers 2', displayPosition: null, position: null, points: 0, squadId: 'squad-1', squadName: 'Casey Crushers' },
+    { entryId: 'entry-3', entryName: 'Bandits 1', displayPosition: '1', position: 1, points: 50, squadId: 'squad-2', squadName: 'Birdie Bandits' },
+    { entryId: 'entry-4', entryName: 'Crushers 1', displayPosition: 'T2', position: 2, points: 42.5, squadId: 'squad-1', squadName: 'Casey Crushers' },
+    { entryId: 'entry-5', entryName: 'Crushers 3', displayPosition: '4', position: 4, points: 10, squadId: 'squad-1', squadName: 'Casey Crushers' },
+  ];
+
+  it('names the viewer\'s best placed entry, skipping one not yet placed, with its place and points', () => {
+    render(<YourBestNote entries={ranked} mySquadId="squad-1" points={(row) => row.points} testId="my-best" />);
+
+    expect(screen.getByTestId('my-best')).toHaveTextContent('Your best: T2 · Crushers 1, 42.5');
+  });
+
+  it('says nothing for a viewer without a squad or without a placed entry', () => {
+    render(
+      <>
+        <YourBestNote entries={ranked} mySquadId={null} points={(row) => row.points} testId="no-squad" />
+        <YourBestNote entries={ranked} mySquadId="squad-9" points={(row) => row.points} testId="no-entry" />
+      </>,
+    );
+
+    expect(screen.queryByTestId('no-squad')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('no-entry')).not.toBeInTheDocument();
   });
 });

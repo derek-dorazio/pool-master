@@ -8,6 +8,7 @@ import {
   cleanupTestData,
   createTestUser,
   getApp,
+  getAppPrisma,
   getPrisma,
   setupIntegrationTests,
   teardownIntegrationTests,
@@ -277,7 +278,7 @@ function serviceOn(prisma: PrismaClient) {
 describe('ContestService.getLeaderboard reads (#1162)', () => {
   it('reads the entries once and only the major under way\'s picks, not every pick once per major', async () => {
     const season = await fourMajors(ContestStatus.ACTIVE, false);
-    const { prisma, count, rows } = countingPrisma(getPrisma());
+    const { prisma, count, rows } = countingPrisma(getAppPrisma());
 
     const leaderboard = await serviceOn(prisma).getLeaderboard(season.contest.id, season.viewerId);
 
@@ -302,7 +303,7 @@ describe('ContestService.getLeaderboard reads (#1162)', () => {
 
   it('answers a COMPLETED contest from its frozen totals, reading the picks of the shown major alone', async () => {
     const season = await fourMajors(ContestStatus.COMPLETED, true);
-    const { prisma, count, rows } = countingPrisma(getPrisma());
+    const { prisma, count, rows } = countingPrisma(getAppPrisma());
 
     const leaderboard = await serviceOn(prisma).getLeaderboard(season.contest.id, season.viewerId, season.majors[1]?.event.id);
 
@@ -318,7 +319,7 @@ describe('ContestService.getLeaderboard reads (#1162)', () => {
 
   it('answers a second viewer within 30 seconds from the board already computed, reading no entries or picks again', async () => {
     const season = await fourMajors(ContestStatus.ACTIVE, false);
-    const { prisma, count } = countingPrisma(getPrisma());
+    const { prisma, count } = countingPrisma(getAppPrisma());
     const service = serviceOn(prisma);
 
     const first = await service.getLeaderboard(season.contest.id, season.viewerId);
@@ -331,10 +332,10 @@ describe('ContestService.getLeaderboard reads (#1162)', () => {
 
   it('computes the live standings email\'s board afresh even when a viewer\'s board is cached, so an email never reports older scores', async () => {
     const season = await fourMajors(ContestStatus.ACTIVE, false);
-    const { prisma, count } = countingPrisma(getPrisma());
+    const { prisma, count } = countingPrisma(getAppPrisma());
     const service = serviceOn(prisma);
 
-    const contest = expectDefined(await new PrismaContestRepository(prisma).findById(season.contest.id));
+    const contest = expectDefined(await new PrismaContestRepository(getAppPrisma()).findById(season.contest.id));
 
     await service.getLeaderboard(season.contest.id, season.viewerId);
     await service.leaderboardOf(contest);
@@ -358,7 +359,7 @@ describe('ContestService.getLeaderboard reads (#1162)', () => {
     await freeze(two.id, settled.event.id, 2, -2);
     await freeze(three.id, settled.event.id, 3, -1);
 
-    const leaderboard = await serviceOn(getPrisma()).getLeaderboard(contest.id, viewerId);
+    const leaderboard = await serviceOn(getAppPrisma()).getLeaderboard(contest.id, viewerId);
 
     // Entry 3: -1 + (-5 - 2) = -8. Entries 1 and 2: -3 + (-2 + 0) and -2 + (-3 + 0), both -5.
     expect(leaderboard.entries.map((entry) => [entry.entryName, entry.score, entry.position, entry.displayPosition])).toEqual([

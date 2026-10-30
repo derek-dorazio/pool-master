@@ -11,6 +11,7 @@ import {
 } from '../../../packages/core-api/src/adapters';
 import {
   cleanupTestData,
+  getAppPrisma,
   getPrisma,
   setupIntegrationTests,
   teardownIntegrationTests,
@@ -32,12 +33,11 @@ beforeEach(() => cleanupTestData());
 const NO_SHOOTOUT = { homeShootoutScore: null, awayShootoutScore: null, ending: MatchEnding.PLAYED };
 
 function repos() {
-  const prisma = getPrisma();
   return {
-    events: new PrismaSportEventRepository(prisma),
-    rounds: new PrismaSportEventRoundRepository(prisma),
-    field: new PrismaSportEventParticipantRepository(prisma),
-    matches: new PrismaSportEventMatchRepository(prisma),
+    events: new PrismaSportEventRepository(getAppPrisma()),
+    rounds: new PrismaSportEventRoundRepository(getAppPrisma()),
+    field: new PrismaSportEventParticipantRepository(getAppPrisma()),
+    matches: new PrismaSportEventMatchRepository(getAppPrisma()),
   };
 }
 

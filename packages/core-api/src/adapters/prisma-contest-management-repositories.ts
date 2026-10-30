@@ -163,12 +163,19 @@ export class PrismaParticipantContestScoringRuleRepository
 {
   constructor(private readonly prisma: PrismaClient) {}
 
-  async findByContestConfiguration(
+  findByContestConfiguration(
     contestConfigurationId: string,
   ): Promise<ParticipantContestScoringRule[]> {
+    return this.findByContestConfigurations([contestConfigurationId]);
+  }
+
+  async findByContestConfigurations(
+    contestConfigurationIds: readonly string[],
+  ): Promise<ParticipantContestScoringRule[]> {
+    if (contestConfigurationIds.length === 0) return [];
     const rows = await this.prisma.participantContestScoringRule.findMany({
-      where: { contestConfigurationId },
-      orderBy: { sortOrder: 'asc' },
+      where: { contestConfigurationId: { in: [...contestConfigurationIds] } },
+      orderBy: [{ contestConfigurationId: 'asc' }, { sortOrder: 'asc' }],
     });
     return rows.map(mapParticipantScoringRule);
   }

@@ -16,7 +16,7 @@ import {
   cleanupTestData,
   createTestUser,
   getApp,
-  getPrisma,
+  getAppPrisma,
   setupIntegrationTests,
   teardownIntegrationTests,
 } from '../helpers';
@@ -65,7 +65,7 @@ describe('email preferences on the account', () => {
 
   it('says the address gets no email at all once it bounced for good', async () => {
     const member = await createTestUser();
-    await new PrismaEmailSuppressionRepository(getPrisma()).suppress({ email: member.user.email, suppressionReason: 'BOUNCE' });
+    await new PrismaEmailSuppressionRepository(getAppPrisma()).suppress({ email: member.user.email, suppressionReason: 'BOUNCE' });
 
     const response = await getApp().inject({ method: 'GET', url: '/api/v1/users/me/email-preferences', headers: member.headers });
 
@@ -125,7 +125,7 @@ describe('one-click unsubscribe', () => {
 
     expect(response.statusCode).toBe(200);
     expect(expectMatchesSchema(EmailUnsubscribeResponseSchema, response.json())).toEqual({ category: 'LIVE_STANDINGS' });
-    await expect(new PrismaEmailOptOutRepository(getPrisma()).isOptedOut(member.user.id, 'LIVE_STANDINGS')).resolves.toBe(true);
+    await expect(new PrismaEmailOptOutRepository(getAppPrisma()).isOptedOut(member.user.id, 'LIVE_STANDINGS')).resolves.toBe(true);
   });
 
   it('turns the category off from the "Stop these emails" page\'s post with no body, and repeating it changes nothing', async () => {
@@ -137,7 +137,7 @@ describe('one-click unsubscribe', () => {
 
     expect(first.statusCode).toBe(200);
     expect(again.statusCode).toBe(200);
-    await expect(new PrismaEmailOptOutRepository(getPrisma()).findByUser(member.user.id)).resolves.toEqual(['RECEIPTS']);
+    await expect(new PrismaEmailOptOutRepository(getAppPrisma()).findByUser(member.user.id)).resolves.toEqual(['RECEIPTS']);
   });
 
   it('refuses a link this app did not issue with 400 EMAIL_UNSUBSCRIBE_LINK_INVALID and changes nothing', async () => {
@@ -148,6 +148,6 @@ describe('one-click unsubscribe', () => {
 
     expect(response.statusCode).toBe(400);
     expect(response.json<{ error: { code: string } }>().error.code).toBe('EMAIL_UNSUBSCRIBE_LINK_INVALID');
-    await expect(new PrismaEmailOptOutRepository(getPrisma()).findByUser(member.user.id)).resolves.toEqual([]);
+    await expect(new PrismaEmailOptOutRepository(getAppPrisma()).findByUser(member.user.id)).resolves.toEqual([]);
   });
 });

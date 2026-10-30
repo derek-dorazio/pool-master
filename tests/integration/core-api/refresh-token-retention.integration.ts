@@ -4,6 +4,7 @@
  */
 import { randomUUID } from 'node:crypto';
 import {
+  getAppPrisma,
   setupIntegrationTests,
   teardownIntegrationTests,
   getPrisma,
@@ -41,7 +42,7 @@ describe('refresh-token retention (#1175)', () => {
       ids.set(name, row.id);
     }
 
-    const deleted = await new RefreshTokenRetention(getPrisma()).purge(NOW);
+    const deleted = await new RefreshTokenRetention(getAppPrisma()).purge(NOW);
 
     expect(deleted).toBeGreaterThanOrEqual(2);
     const remaining = await getPrisma().refreshToken.findMany({ where: { userId: user.id }, select: { id: true } });
