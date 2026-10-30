@@ -35,9 +35,7 @@ describe('DraftEventNotices', () => {
       sportEvents: world.sportEventRepo(),
       releaseReadiness: { releaseBlockersOf: async (sportEventId) => blockers.get(sportEventId) ?? [] },
       users: {
-        findAll: async (filters = {}) => users().filter((user) =>
-          (filters.isActive === undefined || user.isActive === filters.isActive)
-          && (filters.isRootAdmin === undefined || (user.isRootAdmin ?? false) === filters.isRootAdmin)),
+        findActiveRootAdmins: async () => users().filter((user) => user.isActive && user.isRootAdmin === true),
       },
       email: new EmailService({
         messages: outbox,
