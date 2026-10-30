@@ -152,7 +152,7 @@ export type {
   CupRepository,
 } from './cup-ports';
 export type { ChampionshipRepository, FinalContest, LeagueYearReviewRepository, SeriesContest } from './championship-ports';
-export type { EventPageRepository } from './event-page-ports';
+export type { EventPageRepository, EventPageSeries } from './event-page-ports';
 export type {
   ContestExpansionRepository,
   ContestExpansionState,

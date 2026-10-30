@@ -42,10 +42,16 @@ export interface EventPageView {
   offers: EventPageOfferView[];
 }
 
+/** Whether Create contest would take the setup on the event now, and its cutoff (`contestOpening`). */
+export type ContestOpeningAsk = (sportEventId: string, setup: ContestOpeningSetup) => Promise<ContestOpeningWindow>;
+
 export interface EventPageServiceDeps {
   pages: EventPageRepository;
-  /** Whether Create contest would take the setup on the event now, and its cutoff (`contestOpening`). */
-  opening: (sportEventId: string, setup: ContestOpeningSetup) => Promise<ContestOpeningWindow>;
+  /**
+   * The opening question for one page read (#1316): the events it is asked about together are
+   * read together, so a page costs the same statements for 2 offers as for 20.
+   */
+  openings: () => ContestOpeningAsk;
   logger?: EventPageLogger;
 }
 
@@ -60,12 +66,12 @@ function offerStartsAtRound(offer: EventPageOffer): number | null {
 
 export class EventPageService {
   private readonly pages: EventPageRepository;
-  private readonly opening: EventPageServiceDeps['opening'];
+  private readonly openings: EventPageServiceDeps['openings'];
   private readonly logger: EventPageLogger | undefined;
 
   constructor(deps: EventPageServiceDeps) {
     this.pages = deps.pages;
-    this.opening = deps.opening;
+    this.openings = deps.openings;
     this.logger = deps.logger;
   }
 
@@ -90,11 +96,8 @@ export class EventPageService {
   async listPages(sport?: Sport, upcoming = false): Promise<EventPageView[]> {
     this.logger?.debug({ action: 'eventPages.list.enter', sport, upcoming }, 'Listing event pages');
     const pages = await this.pages.findActive(sport);
-    const offers = await this.pages.findOffers(pages.map((page) => page.id));
-    const views = await Promise.all(pages.map(async (page) => ({
-      page,
-      offers: await this.showOffers(offers.filter((offer) => offer.eventPageId === page.id)),
-    })));
+    const shown = await this.showOffers(await this.pages.findOffers(pages.map((page) => page.id)));
+    const views = pages.map((page) => ({ page, offers: shown.filter(({ offer }) => offer.eventPageId === page.id) }));
     if (!upcoming) {
       return views;
     }
@@ -122,25 +125,31 @@ export class EventPageService {
     return byEvent;
   }
 
+  /**
+   * The offers that have an edition left, in order, each with it. Every offer's series is read
+   * at once and every edition's opening asked side by side, so the reads are the same for any
+   * number of offers (#1316).
+   */
   private async showOffers(offers: readonly EventPageOffer[]): Promise<EventPageOfferView[]> {
-    const shown = await Promise.all(offers.map((offer) => this.showOffer(offer)));
+    const editions = await this.pages.findEditionsNotOver(offers);
+    const askOpening = this.openings();
+    const shown = await Promise.all(offers.map((offer, index) => showOffer(offer, editions[index] ?? [], askOpening)));
     return shown.filter((view): view is EventPageOfferView => view !== null);
   }
+}
 
-  /** The offer with its series' first edition not past the contest's cutoff, or null when none is left. */
-  private async showOffer(offer: EventPageOffer): Promise<EventPageOfferView | null> {
-    const startsAtRound = offerStartsAtRound(offer);
-    const setup: ContestOpeningSetup = { selectionType: offer.template.selectionType, startsAtRound };
-    const editions = await this.pages.findEditionsNotOver(offer.sportLeagueId, offer.eventSeriesName);
-    for (const edition of editions) {
-      const { opening, closesAt } = await this.opening(edition.sportEventId, setup);
-      if (opening !== ContestOpening.CLOSED && closesAt !== null) {
-        const state = opening === ContestOpening.OPEN ? EventPageOfferState.OPEN : EventPageOfferState.NOT_YET;
-        return { offer, startsAtRound, state, edition, closesAt };
-      }
+/** The offer with its series' first edition not past the contest's cutoff, or null when none is left. */
+async function showOffer(offer: EventPageOffer, editions: readonly EventPageEdition[], askOpening: ContestOpeningAsk): Promise<EventPageOfferView | null> {
+  const startsAtRound = offerStartsAtRound(offer);
+  const setup: ContestOpeningSetup = { selectionType: offer.template.selectionType, startsAtRound };
+  for (const edition of editions) {
+    const { opening, closesAt } = await askOpening(edition.sportEventId, setup);
+    if (opening !== ContestOpening.CLOSED && closesAt !== null) {
+      const state = opening === ContestOpening.OPEN ? EventPageOfferState.OPEN : EventPageOfferState.NOT_YET;
+      return { offer, startsAtRound, state, edition, closesAt };
     }
-    return null;
   }
+  return null;
 }
 
 /**

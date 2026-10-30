@@ -2,7 +2,7 @@
  * Prisma adapter for the EventPageRepository port (#1007).
  */
 import type { PrismaClient } from '@prisma/client';
-import type { EventPageRepository } from '@poolmaster/shared/db';
+import type { EventPageRepository, EventPageSeries } from '@poolmaster/shared/db';
 import {
   SportEventStatus,
   type EventPage,
@@ -83,24 +83,31 @@ export class PrismaEventPageRepository implements EventPageRepository {
     }));
   }
 
-  async findEditionsNotOver(sportLeagueId: string, eventSeriesName: string): Promise<EventPageEdition[]> {
+  async findEditionsNotOver(series: readonly EventPageSeries[]): Promise<EventPageEdition[][]> {
+    if (series.length === 0) return [];
     const rows = await this.prisma.sportEvent.findMany({
       where: {
-        eventSeries: { sportLeagueId, name: eventSeriesName },
+        eventSeries: { OR: series.map(({ sportLeagueId, eventSeriesName }) => ({ sportLeagueId, name: eventSeriesName })) },
         status: { in: NOT_OVER_STATUSES },
       },
-      select: { id: true, name: true, eventYear: true, startDate: true, endDate: true, status: true },
+      select: {
+        id: true, name: true, eventYear: true, startDate: true, endDate: true, status: true,
+        eventSeries: { select: { sportLeagueId: true, name: true } },
+      },
       orderBy: [{ startDate: 'asc' }, { eventYear: 'asc' }],
     });
-    // The edition under way comes first, then the rest soonest first.
-    const underWay = rows.filter((row) => row.status === SportEventStatus.IN_PROGRESS);
-    const rest = rows.filter((row) => row.status !== SportEventStatus.IN_PROGRESS);
-    return [...underWay, ...rest].map((row) => ({
-      sportEventId: row.id,
-      name: row.name,
-      eventYear: row.eventYear,
-      startDate: row.startDate,
-      endDate: row.endDate,
-    }));
+    return series.map(({ sportLeagueId, eventSeriesName }) => {
+      const editions = rows.filter((row) => row.eventSeries.sportLeagueId === sportLeagueId && row.eventSeries.name === eventSeriesName);
+      // The edition under way comes first, then the rest soonest first.
+      const underWay = editions.filter((row) => row.status === SportEventStatus.IN_PROGRESS);
+      const rest = editions.filter((row) => row.status !== SportEventStatus.IN_PROGRESS);
+      return [...underWay, ...rest].map((row) => ({
+        sportEventId: row.id,
+        name: row.name,
+        eventYear: row.eventYear,
+        startDate: row.startDate,
+        endDate: row.endDate,
+      }));
+    });
   }
 }
