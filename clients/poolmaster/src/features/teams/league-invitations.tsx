@@ -21,7 +21,9 @@ import {
   DataGrid,
   DateDisplay,
   FormField,
+  InlineError,
   Input,
+  LoadingState,
   SegmentedControl,
   SettingsSection,
   SettingsSectionHeader,
@@ -565,11 +567,11 @@ function WaitingInvites({
         title="Waiting on an answer"
       />
       {isLoading ? (
-        <p className="text-sm text-muted-foreground">Loading invites...</p>
+        <LoadingState body="Loading invites..." size="inline" />
       ) : isError ? (
-        <p className="text-sm text-destructive" data-testid="league-invitations-error">
+        <InlineError testId="league-invitations-error">
           We couldn&apos;t load pending invites right now.
-        </p>
+        </InlineError>
       ) : (
         <div className="grid gap-3">
           <SegmentedControl
@@ -606,18 +608,18 @@ function WaitingInvites({
         </p>
       ) : null}
       {resendMutation.isError ? (
-        <p className="text-sm text-destructive" data-testid="league-invitation-resend-error">
+        <InlineError testId="league-invitation-resend-error">
           {extractErrorMessage(resendMutation.error, {
             fallback: 'We could not resend that invite. Please try again.',
           })}
-        </p>
+        </InlineError>
       ) : null}
       {cancelMutation.isError ? (
-        <p className="text-sm text-destructive" data-testid="league-invitation-cancel-error">
+        <InlineError testId="league-invitation-cancel-error">
           {extractErrorMessage(cancelMutation.error, {
             fallback: 'We could not cancel that invite. Please try again.',
           })}
-        </p>
+        </InlineError>
       ) : null}
     </section>
   );

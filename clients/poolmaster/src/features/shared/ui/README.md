@@ -15,7 +15,11 @@ The shared UI layer is split into three levels:
    `tracking-label`, never a hand-typed `tracking-[…]`. A button drawn as a line of content
    (a list row, a card toggle, a pick) is a `Button` or `LinkButton` with
    `layout="row"`, and a dropdown entry is a `MenuItem`; never hand-type
-   `normal-case tracking-normal` onto a button.
+   `normal-case tracking-normal` onto a button. A loading, empty or error state
+   is `LoadingState`, `EmptyState` or `ErrorState` (`size="inline"` for one line
+   inside a card), a one-line failure beside what failed is an `InlineError`, and
+   a query's loading, error, empty and data branches are one `QueryState`; never
+   hand-type a `text-destructive` or "Loading..." paragraph.
 2. **Templates** compose primitives into repeated page or modal workflows, such
    as `ManagementListPage`, `EntityDetailPage`, `FormModal`, and
    `ConfirmationModal`.
@@ -55,6 +59,12 @@ League pages and administration areas use the pieces named in
 (`SettingsSectionHeader` alone titles a section whose body is a `DataGrid`),
 `DangerZone` / `DangerZoneAction`, and `FormPage` for a full-page edit
 (with `IconPalette` when the form picks an icon).
+
+A titled card is a `PanelCard`: its title in a ruled bar, with an optional
+slot on the right such as a badge or a clear button, then its body and an
+optional footer link under a rule. Its body is unpadded for a `PanelList` of
+divided rows, and `padded` gives prose, forms or metric grids the card's own
+padding. Don't hand-build a heading inside a `Tile` for this.
 
 A team's icon and name come from `features/teams`, not this folder, because they
 are a product piece: `TeamAvatar` draws the icon in its coloured square, and

@@ -8,7 +8,7 @@ import { confirmPasswordReset } from "@/lib/api";
 import { extractErrorMessage, hasErrorCode, throwApiError } from "@/lib/errors";
 import { getLogger } from "@/lib/logger";
 import { useInvalidatingMutation } from "@/lib/mutation-hooks";
-import { FormField, FormPage, Heading, Input, LinkButton, Tile } from "@/features/shared/ui";
+import { FormField, FormPage, Input, LinkButton, PanelCard } from "@/features/shared/ui";
 import { useAuth } from "./auth-context";
 import { FORGOT_PASSWORD_PATH } from "./auth-paths";
 
@@ -35,15 +35,14 @@ function readTokenFromHash(hash: string): string | null {
 
 function DeadLinkState() {
   return (
-    <Tile className="mx-auto max-w-md space-y-4" padding="lg" radius="xl">
-      <Heading level={2} variant="card" size="lg">Choose a new password</Heading>
+    <PanelCard className="mx-auto max-w-md" padded title="Choose a new password">
       <p className="text-sm text-muted-foreground" data-testid="reset-password-link-invalid">
         This reset link has expired or has already been used.
       </p>
       <LinkButton data-testid="reset-password-send-new-link" to={FORGOT_PASSWORD_PATH}>
         Send a new link
       </LinkButton>
-    </Tile>
+    </PanelCard>
   );
 }
 
@@ -99,15 +98,14 @@ export function ResetPasswordPage() {
 
   if (confirmMutation.isSuccess) {
     return (
-      <Tile className="mx-auto max-w-md space-y-4" padding="lg" radius="xl">
-        <Heading level={2} variant="card" size="lg">Password reset</Heading>
+      <PanelCard className="mx-auto max-w-md" padded title="Password reset">
         <p className="text-sm text-muted-foreground" data-testid="reset-password-done">
           Your password is reset. Sign in with your new password.
         </p>
         <LinkButton data-testid="reset-password-sign-in" to="/">
           Sign in
         </LinkButton>
-      </Tile>
+      </PanelCard>
     );
   }
 

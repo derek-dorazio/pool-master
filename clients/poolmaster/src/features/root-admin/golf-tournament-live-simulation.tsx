@@ -1,6 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
 import { getEventLiveSimulation, listProviders, startEventLiveSimulation } from '@/lib/api';
-import { Button, formatDateTimeDisplay, useDisplayPreferences, type DisplayPreferences } from '@/features/shared/ui';
+import {
+  Button,
+  type DisplayPreferences,
+  formatDateTimeDisplay,
+  InlineError,
+  useDisplayPreferences,
+} from '@/features/shared/ui';
 import { extractErrorMessage, hasErrorCode, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -108,14 +114,14 @@ export function GolfTournamentLiveSimulation({ tournament }: { tournament: Sport
         </p>
       ) : null}
       {statusQuery.isError ? (
-        <p className="mt-2 text-sm text-destructive" data-testid="root-admin-golf-tournament-live-simulation-status-error" role="alert">
+        <InlineError className="mt-2" testId="root-admin-golf-tournament-live-simulation-status-error">
           {extractErrorMessage(statusQuery.error, { fallback: 'The live simulation status could not be read.' })}
-        </p>
+        </InlineError>
       ) : null}
       {startMutation.isError ? (
-        <p className="mt-2 text-sm text-destructive" data-testid="root-admin-golf-tournament-live-simulation-error" role="alert">
+        <InlineError className="mt-2" testId="root-admin-golf-tournament-live-simulation-error">
           {extractErrorMessage(startMutation.error, { fallback: 'The live simulation could not be started.' })}
-        </p>
+        </InlineError>
       ) : null}
     </div>
   );

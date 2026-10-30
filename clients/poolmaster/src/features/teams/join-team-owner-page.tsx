@@ -17,6 +17,7 @@ import {
   Chip,
   FormField,
   Heading,
+  InlineError,
   Input,
   LinkButton,
   PublicInviteJoinPage,
@@ -347,7 +348,7 @@ export function JoinTeamOwnerPage() {
               />
             </FormField>
             {registerMutation.isError ? (
-              <p className="text-sm text-destructive" data-testid="team-invite-register-error">
+              <InlineError testId="team-invite-register-error">
                 {extractErrorMessage(registerMutation.error, {
                   fallback: 'We could not create your account. Please try again.',
                   codeMessages: {
@@ -359,7 +360,7 @@ export function JoinTeamOwnerPage() {
                       'This invitation has already been accepted. Sign in to reach the league.',
                   },
                 })}
-              </p>
+              </InlineError>
             ) : null}
             <Button
               data-testid="team-invite-register-submit"

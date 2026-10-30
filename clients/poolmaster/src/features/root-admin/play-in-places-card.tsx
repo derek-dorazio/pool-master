@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { SportEventStatus, type SportVocabulary } from '@poolmaster/shared/domain';
 import { setEventPlayInWinner, updateEventParticipants } from '@/lib/api';
 import type { SportEventDto, SportEventParticipantDto } from '@/lib/api';
-import { Button, Heading, LOADING_TEXT, Select, Tile } from '@/features/shared/ui';
+import { Button, Heading, InlineError, LOADING_TEXT, Select, Tile } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -105,9 +105,9 @@ function PlayInUnmarkButton({ eventId, row, vocabulary }: { eventId: string; row
         {`Remove ${playInWord(vocabulary)} mark`}
       </Button>
       {mutation.isError ? (
-        <p className="text-sm text-destructive" role="alert">
+        <InlineError>
           {extractErrorMessage(mutation.error, { codeMessages: bracketErrorMessages(vocabulary), fallback: 'That change could not be saved. Try again.' })}
-        </p>
+        </InlineError>
       ) : null}
     </>
   );
@@ -140,9 +140,9 @@ function PlayInMarker({ eventId, field, vocabulary }: { eventId: string; field: 
         {`Mark as ${playInWord(vocabulary)} place`}
       </Button>
       {mutation.isError ? (
-        <p className="w-full text-sm text-destructive" role="alert">
+        <InlineError className="w-full">
           {extractErrorMessage(mutation.error, { codeMessages: bracketErrorMessages(vocabulary), fallback: 'That change could not be saved. Try again.' })}
-        </p>
+        </InlineError>
       ) : null}
     </div>
   );
@@ -190,9 +190,9 @@ function PlayInWinnerPicker({
 
   if (teamsQuery.isError) {
     return (
-      <p className="text-sm text-destructive" role="alert">
+      <InlineError>
         {extractErrorMessage(teamsQuery.error, { fallback: `Couldn't load the ${vocabulary.participant.many}. Try again in a moment.` })}
-      </p>
+      </InlineError>
     );
   }
 
@@ -219,9 +219,9 @@ function PlayInWinnerPicker({
         Set winner
       </Button>
       {mutation.isError ? (
-        <p className="w-full text-sm text-destructive" role="alert">
+        <InlineError className="w-full">
           {extractErrorMessage(mutation.error, { codeMessages: { ...bracketErrorMessages(vocabulary), ...offLeagueRosterMessages(vocabulary, sportLeague) }, fallback: 'The winner could not be saved. Try again.' })}
-        </p>
+        </InlineError>
       ) : null}
     </>
   );

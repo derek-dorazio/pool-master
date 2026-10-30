@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { Button, Select } from '@/features/shared/ui';
+import { Button, InlineError, Select } from '@/features/shared/ui';
 
 /** How far a root admin can extend a gifted plan, in months from today (#986). */
 const EXTEND_MONTHS = [1, 3, 6, 12] as const;
@@ -55,7 +55,7 @@ export function ExtendGiftForm({
           {isPending ? 'Extending...' : 'Extend'}
         </Button>
       </div>
-      {errorMessage ? <p className="text-sm text-destructive" role="alert">{errorMessage}</p> : null}
+      {errorMessage ? <InlineError>{errorMessage}</InlineError> : null}
       {result ? <p className="text-sm text-muted-foreground" data-testid={`${testId}-result`} role="status">{result}</p> : null}
     </form>
   );

@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { BracketAdvancement, MatchSide, SportEventStatus } from '@poolmaster/shared/domain';
 import { proposeEventRoundMatchups, setEventRoundMatchups } from '@/lib/api';
 import type { RoundMatchupDto, SportEventDto } from '@/lib/api';
-import { Button, Heading, Select, Tile } from '@/features/shared/ui';
+import { Button, Heading, InlineError, Select, Tile } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -184,12 +184,12 @@ function ReseedRound({
       ) : null}
       {requested && ready && proposalQuery.isError ? (
         <div className="mt-2 flex flex-wrap items-center gap-3">
-          <p className="text-sm text-destructive" data-testid={`root-admin-reseed-error-${roundNumber}`} role="alert">
+          <InlineError testId={`root-admin-reseed-error-${roundNumber}`}>
             {extractErrorMessage(proposalQuery.error, {
               codeMessages: reseedErrorMessages(vocabulary, ReseedAction.SUGGEST),
               fallback: `The ${noun.many} could not be suggested. Try again.`,
             })}
-          </p>
+          </InlineError>
           <Button onClick={() => void proposalQuery.refetch()} size="sm" variant="ghost">Try again</Button>
         </div>
       ) : null}
@@ -222,9 +222,9 @@ function ReseedRound({
             ))}
           </ul>
           {repeated ? (
-            <p className="text-sm text-destructive" data-testid={`root-admin-reseed-repeated-${roundNumber}`}>
+            <InlineError testId={`root-admin-reseed-repeated-${roundNumber}`}>
               {`Each ${team.one} plays once. Pick a different ${team.one} where one appears twice.`}
-            </p>
+            </InlineError>
           ) : null}
           <div className="flex flex-wrap items-center gap-3">
             <Button
@@ -249,12 +249,12 @@ function ReseedRound({
             </Button>
           </div>
           {mutation.isError ? (
-            <p className="text-sm text-destructive" data-testid={`root-admin-reseed-save-error-${roundNumber}`} role="alert">
+            <InlineError testId={`root-admin-reseed-save-error-${roundNumber}`}>
               {extractErrorMessage(mutation.error, {
                 codeMessages: reseedErrorMessages(vocabulary, ReseedAction.SAVE),
                 fallback: `The ${noun.many} could not be saved. Try again.`,
               })}
-            </p>
+            </InlineError>
           ) : null}
         </div>
       ) : null}

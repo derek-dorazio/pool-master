@@ -1,7 +1,17 @@
 import { Lock } from 'lucide-react';
 import { PickEmMode, type PickOutcome } from '@poolmaster/shared/domain';
 import { GAME_PICKS_TIEBREAKER_MAX } from '@poolmaster/shared/dto';
-import { Button, Chip, FormField, Input, Select, cn, formatDateTimeDisplay, useDisplayPreferences } from '@/features/shared/ui';
+import {
+  Button,
+  Chip,
+  cn,
+  formatDateTimeDisplay,
+  FormField,
+  InlineError,
+  Input,
+  Select,
+  useDisplayPreferences,
+} from '@/features/shared/ui';
 import type { GamePicksResponse } from '@/lib/api';
 import { describePickOutcome, parseBracketTiebreaker } from './bracket-layout';
 import { PickedLine, PickOption } from './pick-option';
@@ -175,7 +185,7 @@ function TiebreakerField({ game, gamePicks, tiebreaker }: { game: PickEmGame; ga
         </p>
       ) : null}
       {tiebreaker.saveError ? (
-        <p className="text-sm text-destructive" data-testid="pick-em-tiebreaker-error">{tiebreaker.saveError}</p>
+        <InlineError testId="pick-em-tiebreaker-error">{tiebreaker.saveError}</InlineError>
       ) : null}
     </form>
   );

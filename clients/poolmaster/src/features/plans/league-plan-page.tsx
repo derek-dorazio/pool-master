@@ -11,19 +11,7 @@ import { useAuth } from '@/features/auth/auth-context';
 import { syncLeagueCaches } from '@/features/leagues/league-cache';
 import { buildLeagueAdminPath } from '@/features/leagues/league-routing';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
-import {
-  Alert,
-  Button,
-  Chip,
-  ErrorState,
-  formatDateDisplay,
-  Heading,
-  LoadingState,
-  PageHeader,
-  SectionHeader,
-  Tile,
-  useDisplayPreferences,
-} from '@/features/shared/ui';
+import { Alert, Button, Chip, ErrorState, formatDateDisplay, Heading, LoadingState, PageHeader, PanelCard, SectionHeader, Tile, useDisplayPreferences } from '@/features/shared/ui';
 import { PlanCards } from './plan-cards';
 import { buildCapUsage, buildPlanChangeEffects, NAMED_CONTEST_LIMIT } from './plan-change';
 import { PlanComparisonTable } from './plan-comparison-table';
@@ -230,8 +218,7 @@ function YourLeagueNow({
     null,
   ) ?? null;
   return (
-    <Tile className="space-y-3" data-testid="league-plan-now" padding="md" radius="md">
-      <Heading level={3} variant="card">Your league now</Heading>
+    <PanelCard headingLevel={3} padded testId="league-plan-now" title="Your league now">
       <dl className="grid gap-3 text-sm sm:grid-cols-3">
         <div>
           <dt className="text-muted-foreground">Plan</dt>
@@ -268,7 +255,7 @@ function YourLeagueNow({
           <p className="text-sm text-muted-foreground sm:col-span-2">Loading what the league uses...</p>
         )}
       </dl>
-    </Tile>
+    </PanelCard>
   );
 }
 
