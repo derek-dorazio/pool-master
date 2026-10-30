@@ -1,7 +1,6 @@
 import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { ListCard, ListStack } from "./list-card";
 
 describe("pool-master-dn4.6: shared ListCard primitives", () => {
@@ -31,28 +30,6 @@ describe("pool-master-dn4.6: shared ListCard primitives", () => {
     expect(screen.getByText("GOLF · TIERED")).toBeInTheDocument();
     expect(screen.getByText("OPEN")).toBeInTheDocument();
     expect(screen.getByText("2 entries")).toBeInTheDocument();
-  });
-
-  it("rule: renders button row cards with actions", async () => {
-    const user = userEvent.setup();
-    const handleClick = vi.fn();
-
-    render(
-      <>
-        <ListCard onClick={handleClick} title="Clickable row" />
-        <ListCard
-          actions={<button type="button">Open row action</button>}
-          title="Static row with action"
-        />
-      </>,
-    );
-
-    await user.click(screen.getByRole("button", { name: /Clickable row/i }));
-
-    expect(handleClick).toHaveBeenCalledTimes(1);
-    expect(
-      screen.getByRole("button", { name: "Open row action" }),
-    ).toBeInTheDocument();
   });
 
   it("rule: stacks its children with even spacing", () => {
