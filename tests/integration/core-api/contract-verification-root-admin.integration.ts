@@ -463,6 +463,14 @@ describe('Contract verification (root admin)', () => {
         .toEqual({ url, status: 403, code: 'ROOT_ADMIN_ACCESS_REQUIRED' });
     }
 
+    // The same event lists stay open to a root admin: the catalog screens ask for them.
+    const rootAdmin = await createTestUser({ displayName: 'Contract Root Admin Catalog Reader', isRootAdmin: true });
+    for (const url of refused.filter((refusedUrl) => refusedUrl.startsWith('/api/v1/events'))) {
+      const response = await getApp().inject({ method: 'GET', url, headers: rootAdmin.headers });
+      expect({ url, status: response.statusCode }).toEqual({ url, status: 200 });
+      expect(SportEventListResponseSchema.safeParse(response.json()).success).toBe(true);
+    }
+
     const answered = [
       '/api/v1/events?sport=GOLF&status=SCHEDULED&status=POSTPONED&status=IN_PROGRESS',
       `/api/v1/events?sportLeagueId=${sportLeagueId}&eventYear=2026`,
