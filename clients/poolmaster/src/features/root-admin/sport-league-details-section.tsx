@@ -1,7 +1,6 @@
 import { sportLeagueNounOf } from '@poolmaster/shared/domain';
 import { Route } from 'lucide-react';
 import { useState } from 'react';
-import { updateSportLeague } from '@/lib/api';
 import type { SportLeagueDto } from '@/lib/api';
 import {
   Button,
@@ -15,12 +14,10 @@ import {
   SettingsSection,
   StatusBadge,
 } from '@/features/shared/ui';
-import { extractErrorMessage, throwApiError } from '@/lib/errors';
-import { getLogger } from '@/lib/logger';
-import { useInvalidatingMutation } from '@/lib/mutation-hooks';
-import { QueryKeys } from '@/lib/query-keys';
+import { extractErrorMessage } from '@/lib/errors';
 import { buildSportLeaguePath, capitalize } from './manage-navigation';
 import { useManagedSport } from './use-managed-sport';
+import { useUpdateSportLeague } from './use-update-sport-league';
 
 /** The sport league's identity heading: name, active state, roster size and event count. */
 export function SportLeagueHeading({ sportLeague }: { sportLeague: SportLeagueDto }) {
@@ -72,34 +69,18 @@ export function SportLeagueDetailsSection({ sportLeague }: { sportLeague: SportL
 
 /** Deactivating or reactivating the sport league, confirmed first, at the bottom of its page. */
 export function SportLeagueDangerZone({ sportLeague }: { sportLeague: SportLeagueDto }) {
-  const logger = getLogger().child({
-    feature: 'root-admin-sport-league-home-page',
-  });
   const { sport, definition } = useManagedSport();
   const { event } = definition.vocabulary;
   const sportLeagueNoun = sportLeagueNounOf(sport, sportLeague.noun);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const actionLabel = sportLeague.isActive ? `Deactivate ${sportLeagueNoun.one}` : `Activate ${sportLeagueNoun.one}`;
 
-  const toggleActiveMutation = useInvalidatingMutation({
-    mutationFn: async () => {
-      const response = await updateSportLeague({
-        path: { sportLeagueId: sportLeague.id },
-        body: { isActive: !sportLeague.isActive },
-      });
-      if (!response.data?.sportLeague) {
-        throwApiError(response.error, 'Sport league update response is missing data.');
-      }
-      return response.data.sportLeague;
-    },
-    invalidates: [QueryKeys.rootAdmin.manageSport.leagues],
+  const toggleActiveMutation = useUpdateSportLeague({
+    failedAction: 'sportLeague.toggleActive.failed',
     onSuccess: () => setConfirmOpen(false),
-    onError: (error) => {
-      logger.warn(
-        { action: 'sportLeague.toggleActive.failed', err: error },
-        'Sport league active toggle was rejected',
-      );
-    },
+    refusedMessage: 'Sport league active toggle was rejected',
+    sportLeagueId: sportLeague.id,
+    toBody: () => ({ isActive: !sportLeague.isActive }),
   });
 
   const closeDialog = () => {

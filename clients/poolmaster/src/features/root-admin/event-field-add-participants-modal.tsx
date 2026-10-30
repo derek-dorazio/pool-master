@@ -20,6 +20,7 @@ import { QueryKeys } from '@/lib/query-keys';
 import type { AddSportEventParticipantsResponse, ParticipantLeagueAffiliationDto } from '@/lib/api';
 import { useLeagueRosterQuery, useParticipantsQuery, useSportLeaguesQuery } from './use-sport-catalog';
 import { capitalize } from './manage-navigation';
+import { fieldWriteKeys } from './use-sport-event';
 
 type BulkAddResult = AddSportEventParticipantsResponse;
 
@@ -87,12 +88,7 @@ export function EventFieldAddParticipantsModal({
       }
       return response.data;
     },
-    invalidates: [
-      QueryKeys.rootAdmin.manageSport.field(eventId),
-      QueryKeys.rootAdmin.manageSport.event(eventId),
-      QueryKeys.rootAdmin.manageSport.events,
-      QueryKeys.rootAdmin.manageSport.tiers(eventId),
-    ],
+    invalidates: fieldWriteKeys(eventId),
     onSuccess: (data) => {
       setResult(data);
       setSelected(new Set());
