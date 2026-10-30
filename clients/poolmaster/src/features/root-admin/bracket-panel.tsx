@@ -1,6 +1,6 @@
 import { getSportDefinition, SportEventStatus } from '@poolmaster/shared/domain';
 import type { SportEventDto } from '@/lib/api';
-import { Alert, Heading, Tile } from '@/features/shared/ui';
+import { Alert, Heading, PanelCard } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
 import { formsNoBracket, matchNoun } from './bracket-copy';
 import { BracketMatchRow, type BracketContext } from './bracket-match-row';
@@ -57,17 +57,16 @@ export function BracketPanel({ event }: { event: SportEventDto }) {
 
   return (
     <div className="space-y-6">
-      <Tile>
-        <Heading level={3} variant="card" size="base">Bracket</Heading>
+      <PanelCard headingLevel={3} padded title="Bracket">
         {bracket.length > 0 ? (
-          <p className="mt-1 text-sm text-muted-foreground" data-testid="root-admin-bracket-help">
+          <p className="text-sm text-muted-foreground" data-testid="root-admin-bracket-help">
             {released
               ? `Choose the ${vocabulary.participant.one} that won each ${noun.one}. The winner moves on to its next ${noun.one}.`
               : `Pairings can change until the ${vocabulary.event.one} is released. Results are entered after that.`}
           </p>
         ) : null}
         {bracket.length === 0 ? (
-          <p className="mt-2 text-sm text-muted-foreground" data-testid="root-admin-bracket-empty">
+          <p className="text-sm text-muted-foreground" data-testid="root-admin-bracket-empty">
             {`No bracket yet. Its ${noun.many} are loaded before the ${vocabulary.event.one} is released.`}
           </p>
         ) : roundNumbers.map((roundNumber) => (
@@ -94,7 +93,7 @@ export function BracketPanel({ event }: { event: SportEventDto }) {
             </div>
           </section>
         ))}
-      </Tile>
+      </PanelCard>
       <ReseedRoundsCard context={context} event={event} roundCount={roundCount} roundLabel={roundLabel} />
       <PlayInPlacesCard event={event} field={fieldQuery.data} vocabulary={vocabulary} />
       <WithdrawalsCard bracket={bracket} event={event} field={fieldQuery.data} vocabulary={vocabulary} />

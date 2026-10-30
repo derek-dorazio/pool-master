@@ -70,6 +70,7 @@ export type {
   LeagueYearFinish,
   LeagueYearReview,
   ContestEntry,
+  ContestEntryEventStatus,
   DomainEntity,
   InjuryStatus,
   IntermediatePrize,

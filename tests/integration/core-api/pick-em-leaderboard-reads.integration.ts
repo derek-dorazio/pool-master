@@ -23,6 +23,7 @@ import {
 } from '../../../packages/core-api/src/adapters';
 import { createContestService } from '../../../packages/core-api/src/modules/contests/wiring';
 import { expectDefined } from '../../support/expect-defined';
+import { writePicks } from '../../support/prediction-writes';
 import {
   cleanupTestData,
   createTestUser,
@@ -146,7 +147,7 @@ async function createPickEmContest(sportEventIds: string[]) {
 
 /** The entry's week submitted, picking the home team in every game. */
 async function submitHomePicks(entryId: string, sportEventId: string, games: readonly { id: string; homeSportEventParticipantId: string | null }[], at: Date) {
-  await new PrismaContestEntryMatchPredictionRepository(getAppPrisma()).save({
+  await writePicks(new PrismaContestEntryMatchPredictionRepository(getAppPrisma()), {
     contestEntryId: entryId,
     sportEventId,
     saves: games.map((game) => ({

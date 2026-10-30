@@ -1,0 +1,284 @@
+/**
+ * #1248 — the sport catalog's list reads cost the same SQL statements for 2 rows as for 20: the
+ * sport leagues, one sport league with its affiliations, the events and one event's field, rounds,
+ * tiers and bracket, and the matchups proposed for a reseeded bracket round. The sports, a list
+ * the platform fixes, cost the same pinned count.
+ *
+ * Each case seeds sport leagues of its own beside the reference data the migrations seed, which
+ * the list also shows. `rules/testing-rules.md` §9B *Query Scaling Tests* says when a route
+ * needs one.
+ */
+import { randomUUID } from 'crypto';
+import { BracketAdvancement, MatchSide, MatchStatus, Sport, SportEventStatus } from '@poolmaster/shared/domain';
+import {
+  ParticipantLeagueAffiliationListResponseSchema,
+  SportEventBracketResponseSchema,
+  SportEventListResponseSchema,
+  SportEventResponseSchema,
+  SportEventRoundListResponseSchema,
+  SportEventRoundMatchupsResponseSchema,
+  SportEventTierListResponseSchema,
+  SportLeagueListResponseSchema,
+  SportListResponseSchema,
+  SportLeagueResponseSchema,
+} from '@poolmaster/shared/dto';
+import {
+  cleanupTestData,
+  createTestUser,
+  getPrisma,
+  setupIntegrationTests,
+  teardownIntegrationTests,
+} from '../helpers';
+import { DAY, get, okBody, seedEventWithField, seedFootballWeek, seedTiers } from '../list-route-seeds';
+import { expectConstantQueries, expectFixedQueries } from '../query-scaling';
+
+// No mocks.
+
+// The public reads keep what they computed for a TTL; at 0 each read is its own, so the second
+// run counts its read instead of being served the first run's.
+const publicReadCacheTtl = process.env['PUBLIC_READ_CACHE_TTL_MS'];
+beforeAll(async () => {
+  process.env['PUBLIC_READ_CACHE_TTL_MS'] = '0';
+  await setupIntegrationTests();
+});
+afterAll(async () => {
+  await cleanupTestData();
+  await teardownIntegrationTests();
+  if (publicReadCacheTtl === undefined) delete process.env['PUBLIC_READ_CACHE_TTL_MS'];
+  else process.env['PUBLIC_READ_CACHE_TTL_MS'] = publicReadCacheTtl;
+});
+beforeEach(() => cleanupTestData());
+
+async function golf() {
+  return getPrisma().sport.upsert({
+    where: { sport: Sport.GOLF },
+    create: { sport: Sport.GOLF, participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    update: {},
+  });
+}
+
+/** A golf sport league of its own, with `affiliations` golfers affiliated and ranked, and one event. */
+async function seedSportLeague(affiliations: number) {
+  const prisma = getPrisma();
+  const sport = await golf();
+  const suffix = randomUUID().slice(0, 8);
+  const sportLeague = await prisma.sportLeague.create({ data: { sportId: sport.id, name: `Scaling Catalog Tour ${suffix}` } });
+  const series = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `Scaling Catalog Open ${suffix}` } });
+  await prisma.sportEvent.create({
+    data: {
+      eventSeriesId: series.id, eventYear: new Date().getUTCFullYear(), externalId: `scaling-${suffix}`, providerId: 'integration-test',
+      sport: Sport.GOLF, name: `Scaling Catalog Open ${suffix}`, startDate: new Date(Date.now() + 30 * DAY),
+    },
+  });
+  for (let index = 0; index < affiliations; index += 1) {
+    const participant = await prisma.participant.create({
+      data: { sportId: sport.id, name: `Affiliated Golfer ${suffix} ${String(index)}`, participantType: 'INDIVIDUAL', status: 'ACTIVE' },
+    });
+    await prisma.participantLeagueAffiliation.create({ data: { participantId: participant.id, sportLeagueId: sportLeague.id, ranking: index + 1 } });
+  }
+  return sportLeague;
+}
+
+/** A root admin, and `sportLeagues` golf sport leagues of their own, each with an affiliation and an event. */
+async function seedSportLeagues(sportLeagues: number) {
+  for (let index = 0; index < sportLeagues; index += 1) {
+    await seedSportLeague(1);
+  }
+  return createTestUser({ isRootAdmin: true });
+}
+
+/**
+ * A root admin, and a golf sport league of its own with `events` upcoming events, each in a series
+ * of its own with a field of two and a tier, so the per-event field and tier counts scale too.
+ */
+async function seedSportLeagueEvents(events: number) {
+  const prisma = getPrisma();
+  const sportLeague = await seedSportLeague(0);
+  for (let index = 0; index < events; index += 1) {
+    const series = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `${sportLeague.name} Event ${String(index)}` } });
+    const startDate = new Date(Date.now() + (31 + index) * DAY);
+    const event = await prisma.sportEvent.create({
+      data: {
+        eventSeriesId: series.id, eventYear: startDate.getUTCFullYear(), externalId: `scaling-${randomUUID()}`, providerId: 'integration-test',
+        sport: Sport.GOLF, name: `${sportLeague.name} Event ${String(index)}`, startDate,
+      },
+    });
+    const field = [];
+    for (let golfer = 0; golfer < 2; golfer += 1) {
+      const participant = await prisma.participant.create({
+        data: { sportId: sportLeague.sportId, name: `Event Golfer ${randomUUID().slice(0, 8)}`, participantType: 'INDIVIDUAL', status: 'ACTIVE' },
+      });
+      field.push(await prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: participant.id, isActive: true } }));
+    }
+    await seedTiers(event.id, field, 1);
+  }
+  return { sportLeague, rootAdmin: await createTestUser({ isRootAdmin: true }) };
+}
+
+/** A root admin, and a golf event with `rounds` scheduled rounds a day apart. */
+async function seedEventRounds(rounds: number) {
+  const prisma = getPrisma();
+  const { event } = await seedEventWithField(2);
+  for (let roundNumber = 1; roundNumber <= rounds; roundNumber += 1) {
+    await prisma.sportEventRound.create({
+      data: { sportEventId: event.id, roundNumber, scheduledDate: new Date(event.startDate.getTime() + (roundNumber - 1) * DAY) },
+    });
+  }
+  return { event, rootAdmin: await createTestUser({ isRootAdmin: true }) };
+}
+
+/**
+ * A released bracket of a sport league that reseeds, with `matchups` matches to place in round 2:
+ * round 1's 2 x `matchups` games are played, each won by its home team and linking nowhere, so
+ * round 2 is placed by seed; round 3 is the final. Every team has a seed.
+ */
+async function seedReseededRound(matchups: number) {
+  const prisma = getPrisma();
+  const suffix = randomUUID().slice(0, 8);
+  const sport = await prisma.sport.upsert({
+    where: { sport: Sport.AMERICAN_FOOTBALL },
+    create: { sport: Sport.AMERICAN_FOOTBALL, participantType: 'TEAM', tournamentFormat: 'MATCHES' },
+    update: {},
+  });
+  const sportLeague = await prisma.sportLeague.create({
+    data: { sportId: sport.id, name: `Scaling Reseed League ${suffix}`, bracketAdvancement: BracketAdvancement.RESEED_BY_SEED },
+  });
+  const series = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `Scaling Reseed Playoffs ${suffix}` } });
+  const startDate = new Date(Date.now() + 7 * DAY);
+  const event = await prisma.sportEvent.create({
+    data: {
+      eventSeriesId: series.id, eventYear: startDate.getUTCFullYear(), externalId: `scaling-${suffix}`, providerId: 'integration-test',
+      sport: Sport.AMERICAN_FOOTBALL, name: `Scaling Reseed Playoffs ${suffix}`, startDate, status: SportEventStatus.SCHEDULED, rounds: 3,
+    },
+  });
+  const rounds = [];
+  for (let roundNumber = 1; roundNumber <= 3; roundNumber += 1) {
+    rounds.push(await prisma.sportEventRound.create({ data: { sportEventId: event.id, roundNumber, scheduledDate: new Date(startDate.getTime() + (roundNumber - 1) * 7 * DAY) } }));
+  }
+  const [wildCard, divisional, final] = rounds as [typeof rounds[number], typeof rounds[number], typeof rounds[number]];
+  const firstRoundGames = matchups * 2;
+  let matchNumber = 0;
+  for (let game = 0; game < firstRoundGames; game += 1) {
+    const team = async (seedNumber: number) => {
+      const participant = await prisma.participant.create({ data: { sportId: sport.id, name: `Seed ${String(seedNumber)} ${suffix}`, participantType: 'TEAM' } });
+      return prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: participant.id, isActive: true, seedNumber } });
+    };
+    // The better seeds host and win: game N is seed N + 1 against seed 2 x games - N.
+    const [home, away] = await Promise.all([team(game + 1), team(firstRoundGames * 2 - game)]);
+    matchNumber += 1;
+    await prisma.sportEventMatch.create({
+      data: {
+        sportEventId: event.id, sportEventRoundId: wildCard.id, matchNumber, isNeutralSite: false,
+        homeSportEventParticipantId: home.id, awaySportEventParticipantId: away.id,
+        status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME, homeScore: 20, awayScore: 17,
+      },
+    });
+  }
+  for (let game = 0; game < matchups; game += 1) {
+    matchNumber += 1;
+    await prisma.sportEventMatch.create({ data: { sportEventId: event.id, sportEventRoundId: divisional.id, matchNumber, isNeutralSite: false } });
+  }
+  await prisma.sportEventMatch.create({ data: { sportEventId: event.id, sportEventRoundId: final.id, matchNumber: matchNumber + 1, isNeutralSite: true } });
+  return { event, rootAdmin: await createTestUser({ isRootAdmin: true }) };
+}
+
+describe('sport catalog reads cost the same statements for 2 rows as for 20', () => {
+  it('GET the sport leagues: the same statements for 2 sport leagues of their own as for 20', async () => {
+    await expectConstantQueries({
+      route: 'GET /api/v1/sport-leagues/',
+      seed: seedSportLeagues,
+      call: (rootAdmin) => get(`/api/v1/sport-leagues/?sport=${Sport.GOLF}`, rootAdmin),
+      rowsShown: (response) => okBody(response, SportLeagueListResponseSchema).sportLeagues.length,
+    });
+  });
+
+  it('GET a sport league: the same statements for 2 affiliated golfers as for 20', async () => {
+    await expectConstantQueries({
+      route: 'GET /api/v1/sport-leagues/{sportLeagueId}',
+      seed: async (affiliations) => ({ sportLeague: await seedSportLeague(affiliations), rootAdmin: await createTestUser({ isRootAdmin: true }) }),
+      call: ({ sportLeague, rootAdmin }) => get(`/api/v1/sport-leagues/${sportLeague.id}`, rootAdmin),
+      rowsShown: (response) => okBody(response, SportLeagueResponseSchema).sportLeague.affiliationCount,
+    });
+  });
+
+  it("GET a sport league's affiliations: the same statements for 2 affiliated golfers as for 20", async () => {
+    await expectConstantQueries({
+      route: 'GET /api/v1/sport-leagues/{sportLeagueId}/affiliations',
+      seed: async (affiliations) => ({ sportLeague: await seedSportLeague(affiliations), rootAdmin: await createTestUser({ isRootAdmin: true }) }),
+      call: ({ sportLeague, rootAdmin }) => get(`/api/v1/sport-leagues/${sportLeague.id}/affiliations`, rootAdmin),
+      rowsShown: (response) => okBody(response, ParticipantLeagueAffiliationListResponseSchema).affiliations.length,
+    });
+  });
+
+  it("GET a reseeded round's proposed matchups: the same statements for 2 matchups as for 20", async () => {
+    await expectConstantQueries({
+      route: 'GET /api/v1/events/{eventId}/bracket/rounds/{roundNumber}/reseed',
+      seed: seedReseededRound,
+      call: ({ event, rootAdmin }) => get(`/api/v1/events/${event.id}/bracket/rounds/2/reseed`, rootAdmin),
+      rowsShown: (response) => okBody(response, SportEventRoundMatchupsResponseSchema).matches.length,
+    });
+  });
+
+  it('GET the sports: one row per sport the platform runs, read in one query', async () => {
+    const viewer = await createTestUser();
+    await expectFixedQueries({
+      route: 'GET /api/v1/sports/',
+      fixedBy: 'the sports the platform runs',
+      call: () => get('/api/v1/sports/', viewer),
+      rowsShown: (response) => okBody(response, SportListResponseSchema).sports.length,
+      statements: 1,
+    });
+  });
+
+  it("GET a sport league's events: the same statements for 2 events as for 20", async () => {
+    await expectConstantQueries({
+      route: 'GET /api/v1/events/',
+      seed: seedSportLeagueEvents,
+      call: ({ sportLeague, rootAdmin }) => get(`/api/v1/events/?sportLeagueId=${sportLeague.id}`, rootAdmin),
+      rowsShown: (response) => okBody(response, SportEventListResponseSchema).events.length,
+    });
+  });
+
+  it('GET an event: the same statements for a field of 2 as for 20', async () => {
+    await expectConstantQueries({
+      route: 'GET /api/v1/events/{eventId}',
+      seed: async (golfers) => ({ ...(await seedEventWithField(golfers)), rootAdmin: await createTestUser({ isRootAdmin: true }) }),
+      call: ({ event, rootAdmin }) => get(`/api/v1/events/${event.id}`, rootAdmin),
+      rowsShown: (response) => okBody(response, SportEventResponseSchema).event.loadedParticipantCount,
+    });
+  });
+
+  it("GET an event's rounds: the same statements for 2 rounds as for 20", async () => {
+    await expectConstantQueries({
+      route: 'GET /api/v1/events/{eventId}/rounds',
+      seed: seedEventRounds,
+      call: ({ event, rootAdmin }) => get(`/api/v1/events/${event.id}/rounds`, rootAdmin),
+      rowsShown: (response) => okBody(response, SportEventRoundListResponseSchema).rounds.length,
+    });
+  });
+
+  it("GET an event's tiers: the same statements for 2 tiers as for 20", async () => {
+    await expectConstantQueries({
+      route: 'GET /api/v1/events/{eventId}/tiers',
+      seed: async (tiers) => {
+        const { event, field } = await seedEventWithField(tiers);
+        await seedTiers(event.id, field, tiers);
+        return { event, rootAdmin: await createTestUser({ isRootAdmin: true }) };
+      },
+      call: ({ event, rootAdmin }) => get(`/api/v1/events/${event.id}/tiers`, rootAdmin),
+      rowsShown: (response) => okBody(response, SportEventTierListResponseSchema).tiers.length,
+    });
+  });
+
+  it("GET an event's bracket: the same statements for 2 games as for 20", async () => {
+    await expectConstantQueries({
+      route: 'GET /api/v1/events/{eventId}/bracket',
+      seed: async (games) => ({
+        ...(await seedFootballWeek({ games, startDate: new Date(Date.now() + 7 * DAY), status: SportEventStatus.SCHEDULED })),
+        rootAdmin: await createTestUser({ isRootAdmin: true }),
+      }),
+      call: ({ event, rootAdmin }) => get(`/api/v1/events/${event.id}/bracket`, rootAdmin),
+      rowsShown: (response) => okBody(response, SportEventBracketResponseSchema).matches.length,
+    });
+  });
+});

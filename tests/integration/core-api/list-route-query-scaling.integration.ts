@@ -6,7 +6,7 @@
  * real route. `rules/testing-rules.md` §9B *Query Scaling Tests* says when a route needs one.
  */
 import { randomUUID } from 'crypto';
-import { ContestFormat, ContestStatus, CupWeight, SelectionType, Sport } from '@poolmaster/shared/domain';
+import { ContestFormat, ContestStatus, CupWeight, RecordType, SelectionType, Sport } from '@poolmaster/shared/domain';
 import {
   cleanupTestData,
   createTestUser,
@@ -16,16 +16,23 @@ import {
   teardownIntegrationTests,
 } from '../helpers';
 import {
+  ChampionshipResponseSchema,
   ChampionshipYearListResponseSchema,
   ContestListResponseSchema,
   ContestResultListResponseSchema,
   CupListResponseSchema,
+  CupResponseSchema,
+  CupSeasonListResponseSchema,
+  CupSquadPointsResponseSchema,
   HistorySummaryResponseSchema,
   LeagueListResponseSchema,
   LeagueMembersResponseSchema,
+  PerpetualTrophyListResponseSchema,
+  RecordListResponseSchema,
   SportEventParticipantListResponseSchema,
   SquadHistoryResponseSchema,
   SquadListResponseSchema,
+  SquadYearResponseSchema,
   SportEventYearListResponseSchema,
 } from '@poolmaster/shared/dto';
 import { expectConstantQueries } from '../query-scaling';
@@ -33,6 +40,7 @@ import { get, okBody, seedEventWithField, seedLeagueWithTeams } from '../list-ro
 import { PrismaContestRepository } from '../../../packages/core-api/src/adapters';
 import { createContestRow } from '../../support/contest-rows';
 import { freshEventEdition } from '../../support/event-edition';
+import { expectDefined } from '../../support/expect-defined';
 
 // No mocks.
 
@@ -66,21 +74,33 @@ async function seedLeagueWithContests(contests: number) {
 const LAST_SEEDED_YEAR = new Date().getUTCFullYear() - 1;
 
 /**
- * A league's trophy room: two teams, and `years` years each with `contestsPerYear` final
- * contests, the first team 1st and the second 2nd in each, and each year's cups. The contests
- * share the fixture tour and the year's one cup, or with `cupPerContest` each has a sports league
- * and a cup of its own. Finishes are written as settlement leaves them.
+ * A league's trophy room: `teams` teams (two by default), and `years` years each with
+ * `contestsPerYear` final contests, the teams placing in order in each, and each year's cups. The
+ * contests share the fixture tour and the year's one cup, or with `cupPerContest` each has a
+ * sports league and a cup of its own. With `recurring` the year's Nth contest is on the same
+ * event series every year, so each earns a perpetual trophy. Finishes are written as settlement
+ * leaves them.
  */
-async function seedTrophyRoom({ years, contestsPerYear, cupPerContest = false }: { years: number; contestsPerYear: number; cupPerContest?: boolean }) {
+async function seedTrophyRoom({ years, contestsPerYear, cupPerContest = false, recurring = false, teams = 2 }: {
+  years: number;
+  contestsPerYear: number;
+  cupPerContest?: boolean;
+  recurring?: boolean;
+  teams?: number;
+}) {
   const prisma = getPrisma();
-  const seeded = await seedLeagueWithTeams(2);
-  const [first, second] = seeded.squads;
+  const seeded = await seedLeagueWithTeams(teams);
+  const seriesByIndex = new Map<number, string>();
   for (let offset = 0; offset < years; offset += 1) {
     const year = LAST_SEEDED_YEAR - offset;
     const endsAt = new Date(`${String(year)}-06-15T12:00:00.000Z`);
     for (let index = 0; index < contestsPerYear; index += 1) {
-      const edition = await freshEventEdition(prisma, { eventYear: year });
-      if (cupPerContest) {
+      const recurringSeriesId = recurring ? seriesByIndex.get(index) : undefined;
+      const edition = recurringSeriesId === undefined
+        ? await freshEventEdition(prisma, { eventYear: year })
+        : { eventSeriesId: recurringSeriesId, eventYear: year };
+      seriesByIndex.set(index, edition.eventSeriesId);
+      if (cupPerContest && recurringSeriesId === undefined) {
         const { sportId } = await prisma.sportLeague.findFirstOrThrow({ where: { eventSeries: { some: { id: edition.eventSeriesId } } } });
         const tour = await prisma.sportLeague.create({ data: { sportId, name: `Scaling Tour ${seeded.suffix} ${String(year)} ${String(index)}` } });
         await prisma.eventSeries.update({ where: { id: edition.eventSeriesId }, data: { sportLeagueId: tour.id } });
@@ -106,7 +126,7 @@ async function seedTrophyRoom({ years, contestsPerYear, cupPerContest = false }:
           sportEvents: { create: { sportEventId: event.id, sequence: 1 } },
         },
       });
-      for (const [position, squad] of [first, second].entries()) {
+      for (const [position, squad] of seeded.squads.entries()) {
         const entry = await prisma.contestEntry.create({ data: { contestId: contest.id, squadId: squad.id, name: squad.name } });
         await prisma.contestEntryStanding.create({
           data: { contestId: contest.id, contestEntryId: entry.id, position: position + 1, countingPickLimit: 4, scoredPickCount: 4, settledAt: endsAt },
@@ -114,7 +134,7 @@ async function seedTrophyRoom({ years, contestsPerYear, cupPerContest = false }:
         await prisma.leagueYearFinish.create({
           data: {
             leagueId: seeded.league.id, year, squadId: squad.id, contestId: contest.id, place: position + 1, tiedCount: 1,
-            rankedEntryCount: 2, weight: CupWeight.NORMAL, points: position === 0 ? 1000 : 500, settledAt: endsAt,
+            rankedEntryCount: seeded.squads.length, weight: CupWeight.NORMAL, points: Math.max(1000 - position * 50, 0), settledAt: endsAt,
           },
         });
       }
@@ -154,6 +174,11 @@ async function seedSportLeagueWithYears(years: number) {
     });
   }
   return sportLeague;
+}
+
+/** The league's one cup of the last seeded year: the trophy room's cup when its contests share one. */
+async function onlyCup(leagueId: string) {
+  return getPrisma().cup.findFirstOrThrow({ where: { leagueId, seasonYear: LAST_SEEDED_YEAR } });
 }
 
 describe('list routes cost the same statements for 2 rows as for 20', () => {
@@ -269,6 +294,113 @@ describe('list routes cost the same statements for 2 rows as for 20', () => {
       seed: (contestsPerYear) => seedTrophyRoom({ years: 1, contestsPerYear }),
       call: ({ league, commissioner }) => get(`/api/v1/leagues/${league.id}/cups/?seasonYear=${String(LAST_SEEDED_YEAR)}`, commissioner),
       rowsShown: (response) => okBody(response, CupListResponseSchema).cups.reduce((total, cup) => total + cup.contests.length, 0),
+    });
+  });
+
+  it('GET the seasons with cups: the same statements for 2 seasons as for 20', async () => {
+    await expectConstantQueries({
+      route: 'GET /api/v1/leagues/{id}/cups/seasons',
+      seed: (years) => seedTrophyRoom({ years, contestsPerYear: 1 }),
+      call: ({ league, commissioner }) => get(`/api/v1/leagues/${league.id}/cups/seasons`, commissioner),
+      rowsShown: (response) => okBody(response, CupSeasonListResponseSchema).seasonYears.length,
+    });
+  });
+
+  it("GET a team's points in a cup: the same statements for 2 counted contests as for 20", async () => {
+    await expectConstantQueries({
+      route: 'GET /api/v1/leagues/{id}/cups/squads/{squadId}',
+      seed: async (contestsPerYear) => {
+        const seeded = await seedTrophyRoom({ years: 1, contestsPerYear });
+        return { ...seeded, cup: await onlyCup(seeded.league.id) };
+      },
+      call: ({ league, squads, cup, commissioner }) => get(
+        `/api/v1/leagues/${league.id}/cups/squads/${expectDefined(squads[0]).id}?seasonYear=${String(cup.seasonYear)}&sportLeagueId=${cup.sportLeagueId}`,
+        commissioner,
+      ),
+      rowsShown: (response) => okBody(response, CupSquadPointsResponseSchema).squadPoints.contests.length,
+    });
+  });
+
+  it('GET a cup: the same statements for 2 contests as for 20', async () => {
+    await expectConstantQueries({
+      route: 'GET /api/v1/leagues/{id}/cups/{cupId}',
+      seed: async (contestsPerYear) => {
+        const seeded = await seedTrophyRoom({ years: 1, contestsPerYear });
+        return { ...seeded, cup: await onlyCup(seeded.league.id) };
+      },
+      call: ({ league, cup, commissioner }) => get(`/api/v1/leagues/${league.id}/cups/${cup.id}`, commissioner),
+      rowsShown: (response) => okBody(response, CupResponseSchema).cup.contests.length,
+    });
+  });
+
+  it('GET a cup: the same statements for 2 teams as for 20', async () => {
+    await expectConstantQueries({
+      route: 'GET /api/v1/leagues/{id}/cups/{cupId}',
+      seed: async (teams) => {
+        const seeded = await seedTrophyRoom({ years: 1, contestsPerYear: 2, teams });
+        return { ...seeded, cup: await onlyCup(seeded.league.id) };
+      },
+      call: ({ league, cup, commissioner }) => get(`/api/v1/leagues/${league.id}/cups/${cup.id}`, commissioner),
+      rowsShown: (response) => okBody(response, CupResponseSchema).cup.standings.length,
+    });
+  });
+
+  it("GET a championship year: the same statements for 2 counted contests as for 20", async () => {
+    await expectConstantQueries({
+      route: 'GET /api/v1/leagues/{id}/championship/{year}',
+      seed: (contestsPerYear) => seedTrophyRoom({ years: 1, contestsPerYear }),
+      call: ({ league, commissioner }) => get(`/api/v1/leagues/${league.id}/championship/${String(LAST_SEEDED_YEAR)}`, commissioner),
+      rowsShown: (response) => expectDefined(okBody(response, ChampionshipResponseSchema).championship.standings[0]).played,
+    });
+  });
+
+  it('GET a championship year: the same statements for 2 teams as for 20', async () => {
+    await expectConstantQueries({
+      route: 'GET /api/v1/leagues/{id}/championship/{year}',
+      seed: (teams) => seedTrophyRoom({ years: 1, contestsPerYear: 2, teams }),
+      call: ({ league, commissioner }) => get(`/api/v1/leagues/${league.id}/championship/${String(LAST_SEEDED_YEAR)}`, commissioner),
+      rowsShown: (response) => okBody(response, ChampionshipResponseSchema).championship.standings.length,
+    });
+  });
+
+  it("GET a league's perpetual trophies: the same statements for 2 trophies as for 20", async () => {
+    await expectConstantQueries({
+      route: 'GET /api/v1/leagues/{id}/history/trophies',
+      seed: (contestsPerYear) => seedTrophyRoom({ years: 2, contestsPerYear, cupPerContest: true, recurring: true }),
+      call: ({ league, commissioner }) => get(`/api/v1/leagues/${league.id}/history/trophies`, commissioner),
+      rowsShown: (response) => okBody(response, PerpetualTrophyListResponseSchema).trophies.length,
+    });
+  });
+
+  it("GET a league's perpetual trophies: the same statements for 2 years' plates as for 20", async () => {
+    await expectConstantQueries({
+      route: 'GET /api/v1/leagues/{id}/history/trophies',
+      seed: (years) => seedTrophyRoom({ years, contestsPerYear: 1, recurring: true }),
+      call: ({ league, commissioner }) => get(`/api/v1/leagues/${league.id}/history/trophies`, commissioner),
+      rowsShown: (response) => okBody(response, PerpetualTrophyListResponseSchema).trophies.reduce((total, trophy) => total + trophy.plates.length, 0),
+    });
+  });
+
+  it("GET a league's record book: the same statements for 2 years' wins as for 20", async () => {
+    await expectConstantQueries({
+      route: 'GET /api/v1/leagues/{id}/history/records',
+      seed: (years) => seedTrophyRoom({ years, contestsPerYear: 1 }),
+      call: ({ league, commissioner }) => get(`/api/v1/leagues/${league.id}/history/records`, commissioner),
+      rowsShown: (response) => expectDefined(
+        okBody(response, RecordListResponseSchema).records.find((record) => record.type === RecordType.MOST_WINS_ALL_TIME),
+      ).best.value,
+    });
+  });
+
+  it("GET a team's year: the same statements for 2 cups as for 20", async () => {
+    await expectConstantQueries({
+      route: 'GET /api/v1/leagues/{id}/history/squads/{squadId}',
+      seed: (cups) => seedTrophyRoom({ years: 1, contestsPerYear: cups, cupPerContest: true }),
+      call: ({ league, squads, commissioner }) => get(
+        `/api/v1/leagues/${league.id}/history/squads/${expectDefined(squads[0]).id}?year=${String(LAST_SEEDED_YEAR)}`,
+        commissioner,
+      ),
+      rowsShown: (response) => okBody(response, SquadYearResponseSchema).squadYear.cups.length,
     });
   });
 });

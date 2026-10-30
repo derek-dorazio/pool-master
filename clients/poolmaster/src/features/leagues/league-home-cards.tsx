@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react';
 import { ContestStatus, SelectionType, SquadMembershipStatus } from '@poolmaster/shared/domain';
 import type { ContestDto, ContestEntryDto, SquadDto } from '@/lib/api';
 import { formatUserName } from '@/features/account/user-name';
@@ -10,11 +9,15 @@ import { useBracketLeaderboardQuery, useContestLeaderboardQuery } from '@/featur
 import {
   cn,
   Countdown,
+  EmptyState,
   Eyebrow,
   formatDateTimeDisplay,
   Heading,
   LinkButton,
-  LOADING_TEXT,
+  LoadingState,
+  PanelCard,
+  PanelList,
+  QueryState,
   Tile,
   useDisplayPreferences,
 } from '@/features/shared/ui';
@@ -40,42 +43,6 @@ import {
   buildLeagueTeamPath,
   buildLeagueTrophyCasePath,
 } from './league-routing';
-
-function HomeCard({
-  children,
-  footer,
-  testId,
-  title,
-  trailing,
-}: {
-  children: ReactNode;
-  footer?: { label: string; testId: string; to: string };
-  testId: string;
-  title: string;
-  trailing?: ReactNode;
-}) {
-  return (
-    <section aria-label={title} className="overflow-hidden rounded-2xl border border-border bg-card" data-testid={testId}>
-      <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
-        <Heading level={2} variant="card" size="sm">{title}</Heading>
-        {trailing}
-      </div>
-      {children}
-      {footer ? (
-        <LinkButton
-          className="rounded-none border-t border-border"
-          layout="row"
-          data-testid={footer.testId}
-          size="sm"
-          to={footer.to}
-          variant="ghost"
-        >
-          {footer.label} →
-        </LinkButton>
-      ) : null}
-    </section>
-  );
-}
 
 export function UpNextCard({
   entriesState,
@@ -137,13 +104,13 @@ export function OtherContestsCard({
   leagueCode: string;
 }) {
   return (
-    <HomeCard
+    <PanelCard
       footer={{ label: 'All contests', testId: 'league-home-all-contests', to: buildLeagueContestsPath(leagueCode) }}
       testId="league-home-other-contests"
       title="Other contests"
     >
       {contests.length ? (
-        <ul className="divide-y divide-border">
+        <PanelList>
           {contests.map((contest) => {
             const hasEntry = (entriesByContestId.get(contest.id)?.length ?? 0) > 0;
             return (
@@ -167,11 +134,11 @@ export function OtherContestsCard({
               </li>
             );
           })}
-        </ul>
+        </PanelList>
       ) : (
-        <p className="px-4 py-4 text-sm text-muted-foreground">No other contests are open or live right now.</p>
+        <EmptyState body="No other contests are open or live right now." size="inline" />
       )}
-    </HomeCard>
+    </PanelCard>
   );
 }
 
@@ -208,7 +175,7 @@ export function LiveStandingsCard({
     : rosterQuery.data ? buildTopStandings(rosterQuery.data, mySquadId) : null;
 
   return (
-    <HomeCard
+    <PanelCard
       footer={{
         label: 'Full leaderboard',
         testId: 'league-home-full-leaderboard',
@@ -218,21 +185,23 @@ export function LiveStandingsCard({
       title={`${contest.name} · Top 5`}
       trailing={<ContestStatusBadge status={contest.status} />}
     >
-      {leaderboardQuery.isLoading ? (
-        <p className="px-4 py-4 text-sm text-muted-foreground" role="status">Loading standings...</p>
-      ) : leaderboardQuery.isError || !standings ? (
-        <p className="px-4 py-4 text-sm text-muted-foreground" role="alert">We couldn&apos;t load the standings.</p>
-      ) : standings.rows.length ? (
-        <table className="w-full text-sm tabular-nums">
-          <tbody>
-            {standings.rows.map((row) => <StandingsRow key={row.entryId} row={row} />)}
-            {standings.myRowBelow ? <StandingsRow row={standings.myRowBelow} /> : null}
-          </tbody>
-        </table>
-      ) : (
-        <p className="px-4 py-4 text-sm text-muted-foreground">No submitted entries yet.</p>
-      )}
-    </HomeCard>
+      <QueryState
+        empty="No submitted entries yet."
+        error="We couldn't load the standings."
+        isEmpty={(top) => !top.rows.length}
+        loading="Loading standings..."
+        query={{ data: standings ?? undefined, isError: leaderboardQuery.isError }}
+      >
+        {(top) => (
+          <table className="w-full text-sm tabular-nums">
+            <tbody>
+              {top.rows.map((row) => <StandingsRow key={row.entryId} row={row} />)}
+              {top.myRowBelow ? <StandingsRow row={top.myRowBelow} /> : null}
+            </tbody>
+          </table>
+        )}
+      </QueryState>
+    </PanelCard>
   );
 }
 
@@ -253,21 +222,21 @@ export function YourTeamCard({
     : [];
 
   return (
-    <HomeCard
+    <PanelCard
       footer={{ label: team ? `Go to ${team.name}` : 'Choose your name', testId: 'league-home-my-team', to: buildLeagueTeamPath(leagueCode) }}
       testId="league-home-your-team"
       title="Yours"
     >
       {isLoading ? (
-        <p className="px-4 py-4 text-sm text-muted-foreground" role="status">{LOADING_TEXT}</p>
+        <LoadingState size="inline" />
       ) : team ? (
         <div className="px-4 py-4">
           <TeamName iconKey={team.iconKey} name={team.name} subtitle={owners.join(', ')} />
         </div>
       ) : (
-        <p className="px-4 py-4 text-sm text-muted-foreground">You haven&apos;t chosen your name in this league yet.</p>
+        <EmptyState body="You haven't chosen your name in this league yet." size="inline" />
       )}
-    </HomeCard>
+    </PanelCard>
   );
 }
 
@@ -295,16 +264,16 @@ export function CupsCard({
   }
 
   return (
-    <HomeCard
+    <PanelCard
       footer={{ label: 'Trophy case', testId: 'league-home-trophy-case', to: buildLeagueTrophyCasePath(leagueCode, year) }}
       testId="league-home-cups"
       title={`${year} cups`}
     >
-      <ul>
+      <PanelList>
         {cups.slice(0, HOME_CUPS).map((cup) => {
           const progress = cupProgress(cup);
           return (
-            <li className="border-t border-border first:border-t-0" key={cup.id}>
+            <li key={cup.id}>
               <LinkButton
                 className="flex-col items-start gap-0.5 rounded-none px-4 py-3"
                 layout="row"
@@ -320,7 +289,7 @@ export function CupsCard({
             </li>
           );
         })}
-      </ul>
-    </HomeCard>
+      </PanelList>
+    </PanelCard>
   );
 }
