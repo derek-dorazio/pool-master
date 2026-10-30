@@ -11,6 +11,7 @@ import type {
   SquadMembership,
 } from '@poolmaster/shared/domain';
 import type { ContestEntryPickRepository, ContestEntryPickWithParticipant } from '@poolmaster/shared/db';
+import { fakeLogger } from '../../support/fake-logger';
 import { mockFn } from '../../support/mock-fn';
 import { SelectionService } from '../../../packages/core-api/src/modules/selections/service';
 import { dealRandomDraw } from '../../../packages/core-api/src/modules/selections/selection-engines/random-draw';
@@ -1010,6 +1011,22 @@ describe('SelectionService.submitEntry — an entry counts only once its owner s
     expect(view.entries.find((row) => row.id === ENTRY_ID)?.pickCount).toBe(COMPLETE.length);
   });
 
+  it('still answers with the submitted room when the confirmation cannot be queued, logging it, because the picks are already submitted (#1171)', async () => {
+    const { service, deps, writeStatus } = setup({ configuration: ONE_PER_TIER, picks: COMPLETE });
+    const logger = fakeLogger();
+    deps.logger = logger;
+    deps.entryReceipts = { sendEntrySubmittedEmails: jest.fn().mockRejectedValue(new Error('database unavailable')) };
+
+    const view = await service.submitEntry(submitEntryInput());
+
+    expect(writeStatus).toHaveBeenCalledTimes(1);
+    expect(view.entries.find((row) => row.id === ENTRY_ID)?.pickCount).toBe(COMPLETE.length);
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'selection.submitEntry.receiptFailed' }),
+      expect.any(String),
+    );
+  });
+
   it('refuses 409 ENTRY_LINEUP_INCOMPLETE naming the short tier, and leaves the entry a draft', async () => {
     const { service, writeStatus } = setup({ configuration: ONE_PER_TIER, picks: [pick('pick-a', 'p-a', 'sep-a')] });
 
@@ -1309,21 +1326,7 @@ describe('SelectionService.runDraw — the random draw deals every entry its pic
     expect(new Set(dealt).size).toBe(4);
   });
 
-  it('sends every dealt entry its quick pick receipt in one batch once the draw is recorded, from the drawn contest', async () => {
-    const context = setup({ ...DRAW, entries: [...DRAW.entries] });
-    const sendEntrySubmittedEmails = jest.fn().mockResolvedValue(undefined);
-    context.deps.entryReceipts = { sendEntrySubmittedEmails };
-
-    await context.service.runDraw(runDraw);
-
-    expect(sendEntrySubmittedEmails).toHaveBeenCalledTimes(1);
-    const [[receipt]] = sendEntrySubmittedEmails.mock.calls as Array<[EntrySubmittedReceiptInput]>;
-    expect(receipt.contest.id).toBe(CONTEST_ID);
-    expect(receipt.contest.drawnAt).toEqual(RECORDED_DRAW_AT);
-    expect(receipt.entryIds).toEqual([ENTRY_ID, OTHER_ENTRY_ID]);
-  });
-
-  it('reads the dealt picks once, for both the receipts and the room (#1254)', async () => {
+  it('answers with the dealt room without sending any receipt, reading the dealt picks once: the next lifecycle sweep sends the receipts (#1171)', async () => {
     const dealt = [
       pick('pick-1', 'p-a', 'sep-a', { lineupSlot: 1 }),
       pick('pick-2', 'p-b', 'sep-b', { entryId: OTHER_ENTRY_ID, lineupSlot: 1 }),
@@ -1334,20 +1337,9 @@ describe('SelectionService.runDraw — the random draw deals every entry its pic
 
     const view = await context.service.runDraw(runDraw);
 
+    expect(sendEntrySubmittedEmails).not.toHaveBeenCalled();
     expect(context.deps.picks.findByEntriesWithParticipant).toHaveBeenCalledTimes(1);
-    const [[receipt]] = sendEntrySubmittedEmails.mock.calls as Array<[EntrySubmittedReceiptInput]>;
-    expect(receipt.picks.map((row) => row.id)).toEqual(['pick-1', 'pick-2']);
     expect(view.entries.map((row) => row.pickCount)).toEqual([1, 1]);
-  });
-
-  it('still answers with the dealt room when sending the receipts fails, because the draw is already recorded', async () => {
-    const context = setup({ ...DRAW, entries: [...DRAW.entries] });
-    context.deps.entryReceipts = { sendEntrySubmittedEmails: jest.fn().mockRejectedValue(new Error('database unavailable')) };
-
-    const view = await context.service.runDraw(runDraw);
-
-    expect(context.recordDraw).toHaveBeenCalledTimes(1);
-    expect(view.contest.drawnAt).toEqual(RECORDED_DRAW_AT);
   });
 
   it('answers with the room as dealt without reloading the contest: drawn at the recorded time, every entry submitted, picks closed and revealed', async () => {
@@ -1461,6 +1453,48 @@ describe('SelectionService.runDraw — the random draw deals every entry its pic
   });
 });
 
+
+describe('SelectionService.sendDrawReceipts — the lifecycle sweep sends a drawn contest\'s receipts (#1171)', () => {
+  const DRAWN = {
+    contest: { selectionType: SelectionType.RANDOM_DRAW, drawnAt: RECORDED_DRAW_AT },
+    configuration: {
+      selectionType: SelectionType.RANDOM_DRAW,
+      configJson: { selectionType: SelectionType.RANDOM_DRAW, picksPerEntry: 1, countedScores: 1 },
+    },
+    entries: [entry(ENTRY_ID, SQUAD_ID, 'Entry', 'SUBMITTED'), entry(OTHER_ENTRY_ID, 'squad-2', 'Entry', 'SUBMITTED')],
+    squadMemberships: [squadMembership(SQUAD_ID, OWNER_USER_ID), squadMembership('squad-2', 'user-2')],
+    picks: [
+      pick('pick-1', 'p-a', 'sep-a', { lineupSlot: 1 }),
+      pick('pick-2', 'p-b', 'sep-b', { entryId: OTHER_ENTRY_ID, lineupSlot: 1 }),
+    ],
+  };
+
+  it('hands every entry of the drawn contest to one receipt batch, with the drawn contest, the rules, the owners and the dealt picks read once', async () => {
+    const { service, deps } = setup(DRAWN);
+    const sendEntrySubmittedEmails = jest.fn().mockResolvedValue(undefined);
+    deps.entryReceipts = { sendEntrySubmittedEmails };
+
+    await service.sendDrawReceipts(CONTEST_ID);
+
+    expect(sendEntrySubmittedEmails).toHaveBeenCalledTimes(1);
+    const [[receipt]] = sendEntrySubmittedEmails.mock.calls as Array<[EntrySubmittedReceiptInput]>;
+    expect(receipt.contest).toMatchObject({ id: CONTEST_ID, drawnAt: RECORDED_DRAW_AT });
+    expect(receipt.sportEvent.id).toBe(EVENT_ID);
+    expect(receipt.configuration?.configJson).toEqual(DRAWN.configuration.configJson);
+    expect(receipt.entryIds).toEqual([ENTRY_ID, OTHER_ENTRY_ID]);
+    expect(receipt.squadMemberships).toEqual(DRAWN.squadMemberships);
+    expect(receipt.picks.map((row) => row.id)).toEqual(['pick-1', 'pick-2']);
+    expect(deps.picks.findByEntriesWithParticipant).toHaveBeenCalledTimes(1);
+    expect(deps.squadMemberships.findBySquads).toHaveBeenCalledTimes(1);
+  });
+
+  it('throws when the receipts cannot be queued, so the sweep keeps the draw marked and tries again', async () => {
+    const { service, deps } = setup(DRAWN);
+    deps.entryReceipts = { sendEntrySubmittedEmails: jest.fn().mockRejectedValue(new Error('database unavailable')) };
+
+    await expect(service.sendDrawReceipts(CONTEST_ID)).rejects.toThrow('database unavailable');
+  });
+});
 describe('SelectionService — what one pick reads (#1196)', () => {
   it('reads the event\'s field once per pick, and hands it to the one read of the tiers and valuations', async () => {
     const { service, deps } = setup();

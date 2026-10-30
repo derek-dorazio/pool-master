@@ -224,6 +224,23 @@ export class PrismaContestRepository implements ContestRepository {
     return rows.map(mapToContest);
   }
 
+  async findDrawReceiptsPending(): Promise<string[]> {
+    const rows = await this.prisma.contestDraw.findMany({
+      where: { receiptsPending: true },
+      orderBy: [{ drawnAt: 'asc' }, { contestId: 'asc' }],
+      select: { contestId: true },
+    });
+    return rows.map((row) => row.contestId);
+  }
+
+  async clearDrawReceiptsPending(contestIds: readonly string[]): Promise<void> {
+    if (contestIds.length === 0) return;
+    await this.prisma.contestDraw.updateMany({
+      where: { contestId: { in: [...contestIds] }, receiptsPending: true },
+      data: { receiptsPending: false },
+    });
+  }
+
   async transitionStatus(id: string, transition: ContestStatusTransition): Promise<boolean> {
     const result = await forgettingReads(ReadMemoKey.contest, () => this.prisma.contest.updateMany({
       where: { id, status: { in: [...transition.from] } },

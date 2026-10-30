@@ -14,6 +14,7 @@ import { createEmailOutbox, EMAIL_SETTINGS } from '../../../packages/core-api/sr
 import { EventLifecycleScheduler } from '../../../packages/core-api/src/modules/events/event-lifecycle-scheduler';
 import { createEventLifecycleService } from '../../../packages/core-api/src/modules/events/wiring';
 import { createContestNotices, createDueNotifications, createMemberJoinedNotices } from '../../../packages/core-api/src/modules/notifications';
+import { createDrawReceipts } from '../../../packages/core-api/src/modules/selections/wiring';
 import { fakeLogger } from '../../support/fake-logger';
 import { cleanupTestData, createTestUser, getAppPrisma, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
 import { DAY, HOUR, seedEventWithField, seedFootballWeek, seedLeagueWithTeams } from '../list-route-seeds';
@@ -63,14 +64,17 @@ function lifecycleSweep(now: Date) {
       contestSettlement: createContestSettlementService(prisma, logger, { contestSettled: contestNotices }),
       releasedEditionContests: createContestManagementService(prisma, logger, planEntitlements),
     }),
-    notificationsDue: createDueNotifications(prisma, {
-      email,
-      readConfig,
-      appBaseUrl,
-      logger,
-      planEntitlements,
-      memberJoined: createMemberJoinedNotices(prisma, { email, readConfig, appBaseUrl, logger }),
-    }),
+    notificationsDue: [
+      ...createDueNotifications(prisma, {
+        email,
+        readConfig,
+        appBaseUrl,
+        logger,
+        planEntitlements,
+        memberJoined: createMemberJoinedNotices(prisma, { email, readConfig, appBaseUrl, logger }),
+      }),
+      createDrawReceipts(prisma, logger, { email, appBaseUrl, planEntitlements }),
+    ],
     jobLock,
     logger,
     now: () => now,

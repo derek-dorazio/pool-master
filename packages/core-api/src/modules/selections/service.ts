@@ -492,7 +492,15 @@ export class SelectionService {
         { action: 'selection.submitEntry.submitted', data: { contestId, entryId, sportEventId: context.sportEvent.id } },
         'Submitted a contest entry\'s picks for one event',
       );
-      await this.deps.entryReceipts?.sendEntrySubmittedEmails(receiptInput(submittedContext, [entryId], picks));
+      // The picks are already submitted, so a receipt that cannot be queued is logged and never fails the submit.
+      try {
+        await this.deps.entryReceipts?.sendEntrySubmittedEmails(receiptInput(submittedContext, [entryId], picks));
+      } catch (error) {
+        this.deps.logger?.error(
+          { action: 'selection.submitEntry.receiptFailed', data: { contestId, entryId, error: error instanceof Error ? error.message : String(error) } },
+          'Failed to queue a submitted entry\'s receipt',
+        );
+      }
     }
 
     return this.buildRoomView({ context: submittedContext, engine, selectedEntryId: entryId, actorUserId, picks });
@@ -568,24 +576,25 @@ export class SelectionService {
       'Ran a random draw',
     );
     // The draw changed only what `recordDraw` wrote: the contest is drawn and every entry
-    // submitted at the draw's time. The dealt picks are read once, for the receipts and the room
-    // (#1196, #1254).
+    // submitted at the draw's time (#1196). The receipts are not sent here: the draw is marked as
+    // owing them, and the next lifecycle sweep sends them (#1171, `sendDrawReceipts`).
     const drawnContext = withDraw(context, drawnAt, this.now());
-    const entryIds = context.entries.map((entry) => entry.id);
-    const picks = await this.findEventPicks(drawnContext, entryIds);
-
-    // Every entry's owners get a receipt of the picks the draw dealt it (#867). The draw is
-    // already recorded, so a receipt that fails is logged and never fails it.
-    try {
-      await this.deps.entryReceipts?.sendEntrySubmittedEmails(receiptInput(drawnContext, entryIds, picks));
-    } catch (error) {
-      this.deps.logger?.error(
-        { action: 'selection.runDraw.receiptFailed', data: { contestId, entryIds, error: error instanceof Error ? error.message : String(error) } },
-        'Failed to send the quick pick entries their receipts',
-      );
-    }
+    const picks = await this.findEventPicks(drawnContext, context.entries.map((entry) => entry.id));
 
     return this.buildRoomView({ context: drawnContext, engine, actorUserId, picks });
+  }
+
+  /**
+   * Queues every entry of a drawn quick pick contest its receipt of the dealt picks (#867), for
+   * the lifecycle sweep once the draw has marked them owed (#1171). The contest's room context is
+   * read once, the entries' picks in one read, and the receipts go to the outbox in one batch, so
+   * the reads do not grow with the entries. A failure is thrown, so the sweep tries again.
+   */
+  async sendDrawReceipts(contestId: string): Promise<void> {
+    const context = await this.loadContext(contestId);
+    const entryIds = context.entries.map((entry) => entry.id);
+    const picks = await this.findEventPicks(context, entryIds);
+    await this.deps.entryReceipts?.sendEntrySubmittedEmails(receiptInput(context, entryIds, picks));
   }
 
   /** The entries' picks in the context's event (#713): a lineup is one event's picks. */

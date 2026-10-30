@@ -503,6 +503,10 @@ export interface ContestRepository {
   findJoinableByReleasedEdition(edition: ReleasedEdition): Promise<Contest[]>;
   /** Every contest in one of `statuses`, oldest first, across leagues: the entry reminders' sweep reads it (#845). */
   findByStatuses(statuses: readonly Contest['status'][]): Promise<Contest[]>;
+  /** The ids of the drawn quick pick contests whose entries' receipts are still to send (#1171), oldest draw first. */
+  findDrawReceiptsPending(): Promise<string[]>;
+  /** Marks the contests' draws as having sent their receipts (#1171), in one write. */
+  clearDrawReceiptsPending(contestIds: readonly string[]): Promise<void>;
   /**
    * Creates the contest unless the league's plan has no room for its sports league in its season
    * (#947): under the league's row lock, the season's sports leagues are counted as

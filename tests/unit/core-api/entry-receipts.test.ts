@@ -299,16 +299,15 @@ describe('EntryReceipts', () => {
     expect(text).not.toContain('Bills at Chiefs');
   });
 
-  it('still sends the other owners their receipt, and resolves, when one owner\'s cannot be queued, so the submit it follows stands', async () => {
-    const { contest, event, entry, owners } = await entryIn(SelectionType.PICK_EM, { name: 'Week 1', sport: Sport.AMERICAN_FOOTBALL, startDate: KICKOFF });
-    const record = outbox.record.bind(outbox);
-    outbox.record = async (input) => (input.recipientUserId === owners[0].id ? Promise.reject(new Error('database unavailable')) : record(input));
+  it('logs and resolves, so the submit it follows stands, when the owners\' receipts cannot be queued', async () => {
+    const { contest, event, entry } = await entryIn(SelectionType.PICK_EM, { name: 'Week 1', sport: Sport.AMERICAN_FOOTBALL, startDate: KICKOFF });
+    outbox.recordMany = () => Promise.reject(new Error('database unavailable'));
 
     await expect(submitted(view({ contestId: contest.id, entryId: entry.id, sportEventId: event.id }, {
       games: [game({ id: 'game-1', away: 'Bills', home: 'Chiefs', picked: 'Chiefs' })],
     }))).resolves.toBeUndefined();
 
-    expect(outbox.rows.map((row) => row.recipientUserId)).toEqual([owners[1].id]);
+    expect(outbox.rows).toEqual([]);
     expect(logger.error).toHaveBeenCalledWith(
       expect.objectContaining({ action: 'email.entryReceipt.failed' }),
       'Failed to queue an entry receipt',
@@ -397,6 +396,25 @@ describe('EntryReceipts', () => {
         .toEqual([...owners.map((owner) => owner.id), otherOwner.id].sort((left, right) => left.localeCompare(right)));
       expect(membershipReads).toHaveBeenCalledTimes(1);
       expect(userReads).toHaveBeenCalledTimes(1);
+    });
+
+    it('queues every box holder\'s receipts in one outbox write, however many entries hold boxes (#1171)', async () => {
+      const { contest, entry, owners } = await entryIn(SelectionType.SQUARES, { name: 'Super Bowl', sport: Sport.AMERICAN_FOOTBALL, startDate: KICKOFF });
+      const otherSquad = world.addSquad(contest.leagueId, 'Second Squad');
+      const otherOwner = world.addUser({ firstName: 'Otto', lastName: 'Owner' });
+      world.addMember(contest.leagueId, otherOwner.id);
+      world.addSquadMember(otherSquad.id, otherOwner.id);
+      const other = await world.entryRepo().create({ contestId: contest.id, squadId: otherSquad.id, entryNumber: 1, name: 'Other', tiebreakerValue: null }, { entriesPerContest: () => null });
+      if (other.status !== 'created') throw new Error('entry not created');
+      const writes = jest.spyOn(outbox, 'recordMany');
+
+      await drawn(drawnBoard(contest.id, [
+        { rowIndex: 0, columnIndex: 0, contestEntryId: entry.id },
+        { rowIndex: 1, columnIndex: 1, contestEntryId: other.entry.id },
+      ]));
+
+      expect(writes).toHaveBeenCalledTimes(1);
+      expect(writes.mock.calls[0][0]).toHaveLength(owners.length + 1);
     });
 
     it('names the row and column sides Away and Home while the game\'s teams are not known', async () => {

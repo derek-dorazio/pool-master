@@ -1,6 +1,7 @@
 /**
- * Builds `SelectionService` (#324) and `PredictionService` (#716) from their Prisma adapters — the module's composition root, the
- * one place that knows both a port and its implementation.
+ * Builds `SelectionService` (#324), its draw receipts step (#1171) and `PredictionService` (#716)
+ * from their Prisma adapters — the module's composition root, the one place that knows both a
+ * port and its implementation.
  */
 
 import type { PrismaClient } from '@prisma/client';
@@ -26,6 +27,7 @@ import { createContestService } from '../contests/wiring';
 import type { EmailService } from '../email';
 import { createSportEventTierService } from '../events/wiring';
 import { createEntryReceipts } from '../notifications/wiring';
+import { DrawReceipts } from './draw-receipts';
 import { PredictionService } from './prediction-service';
 import { SelectionService } from './service';
 import type { PlanEntitlementsService } from '../plans/plan-entitlements-service';
@@ -51,6 +53,19 @@ export function createSelectionService(
     tiers: createSportEventTierService(prisma, logger),
     sportEvents: new PrismaSportEventRepository(prisma),
     entryReceipts: createContestService(prisma, logger, options),
+    logger,
+  });
+}
+
+/** The lifecycle sweep's step that sends quick pick draws' receipts (#1171). */
+export function createDrawReceipts(
+  prisma: PrismaClient,
+  logger: FastifyBaseLogger,
+  options: { planEntitlements: PlanEntitlementsService; email: EmailService; appBaseUrl: string },
+): DrawReceipts {
+  return new DrawReceipts({
+    contests: new PrismaContestRepository(prisma),
+    selections: createSelectionService(prisma, logger, options),
     logger,
   });
 }

@@ -12,14 +12,18 @@ import {
   teardownIntegrationTests,
 } from '../helpers';
 import { holdContestLocks, waitUntilBlockedBy } from '../contest-lock';
-import { ParticipantType, Sport } from '@poolmaster/shared/domain';
+import { ParticipantType, SelectionType, Sport } from '@poolmaster/shared/domain';
 import {
   ContestDrawAlreadyRunError,
   ContestDrawEntriesChangedError,
   ContestEntryPickService,
 } from '../../../packages/core-api/src/modules/contest-entry-picks';
 import { PrismaContestEntryRepository, PrismaContestRepository } from '../../../packages/core-api/src/adapters';
+import { createEmailOutbox, EMAIL_SETTINGS } from '../../../packages/core-api/src/modules/email';
+import { createDrawReceipts, createSelectionService } from '../../../packages/core-api/src/modules/selections/wiring';
 import { freshEventEdition } from '../../support/event-edition';
+import { fakeLogger } from '../../support/fake-logger';
+import { integrationPlanEntitlements } from '../plan-entitlements';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -264,5 +268,100 @@ describe('a draw racing an entry write', () => {
 
     expect(await deleted).toEqual({ status: 'contestDrawn' });
     expect(await prisma.contestEntry.count({ where: { contestId: fixture.contestId } })).toBe(2);
+  });
+});
+
+describe('quick pick receipts, queued by the draw for the lifecycle sweep (#1171)', () => {
+  /** The fixture's contest dealing one golfer each, with an owner on each squad, so each entry has someone to send to. */
+  async function seedOwnedDraw() {
+    const prisma = getPrisma();
+    const fixture = await seedRandomDrawContest();
+    await prisma.contestConfiguration.create({
+      data: {
+        contestId: fixture.contestId,
+        selectionType: 'RANDOM_DRAW',
+        configJson: { selectionType: SelectionType.RANDOM_DRAW, picksPerEntry: 1, countedScores: 1 },
+      },
+    });
+    const entries = await prisma.contestEntry.findMany({ where: { contestId: fixture.contestId }, select: { squadId: true } });
+    const { leagueId } = await prisma.contest.findUniqueOrThrow({ where: { id: fixture.contestId }, select: { leagueId: true } });
+    const owners = await Promise.all(entries.map(async ({ squadId }, index) => {
+      const suffix = randomUUID().slice(0, 8);
+      const owner = await prisma.user.create({
+        data: { email: `draw-owner-${suffix}@integration.test`, username: `draw-owner-${suffix}`, firstName: 'Owner', lastName: `${index}`, isActive: true },
+      });
+      await prisma.leagueMembership.create({ data: { leagueId, userId: owner.id, role: 'MEMBER', status: 'ACTIVE', joinedAt: new Date() } });
+      await prisma.squadMembership.create({ data: { leagueId, squadId, userId: owner.id, status: 'ACTIVE', joinedAt: new Date() } });
+      return owner.id;
+    }));
+    return { ...fixture, ownerIds: owners };
+  }
+
+  function wiring() {
+    const prisma = getAppPrisma();
+    const logger = fakeLogger();
+    const planEntitlements = integrationPlanEntitlements(prisma);
+    const readConfig = () => EMAIL_SETTINGS.defaults({ POOLMASTER_ENVIRONMENT: 'prod' });
+    const { email } = createEmailOutbox({ prisma, readConfig, planEntitlements, env: process.env, logger });
+    const options = { email, appBaseUrl: 'https://app.example.test', planEntitlements };
+    return {
+      selections: createSelectionService(prisma, logger, options),
+      drawReceipts: createDrawReceipts(prisma, logger, options),
+    };
+  }
+
+  function receiptsOf(contestId: string) {
+    return getPrisma().emailMessage.findMany({
+      where: { contestId, templateKey: 'CONTEST_ENTRY_COMPLETED' },
+      select: { recipientUserId: true },
+    });
+  }
+
+  it('marks a recorded draw as owing its receipts, listed as pending until cleared', async () => {
+    const fixture = await seedRandomDrawContest();
+    const undrawn = await seedRandomDrawContest();
+    const contests = new PrismaContestRepository(getAppPrisma());
+
+    await new ContestEntryPickService(getAppPrisma()).recordDraw(drawOf(fixture));
+
+    const pending = await contests.findDrawReceiptsPending();
+    expect(pending).toContain(fixture.contestId);
+    expect(pending).not.toContain(undrawn.contestId);
+
+    await contests.clearDrawReceiptsPending([fixture.contestId]);
+
+    expect(await contests.findDrawReceiptsPending()).not.toContain(fixture.contestId);
+    expect((await getPrisma().contestDraw.findUniqueOrThrow({ where: { contestId: fixture.contestId } })).receiptsPending).toBe(false);
+  });
+
+  it('answers the draw without queuing any receipt, then the sweep queues each entry owner one receipt, and a second sweep queues none', async () => {
+    const fixture = await seedOwnedDraw();
+    const { selections, drawReceipts } = wiring();
+
+    await selections.runDraw({ contestId: fixture.contestId, actorUserId: fixture.userId });
+
+    expect(await receiptsOf(fixture.contestId)).toEqual([]);
+
+    await drawReceipts.queueDue();
+
+    const sent = (await receiptsOf(fixture.contestId)).map((row) => row.recipientUserId ?? '');
+    expect(sent.sort((left, right) => left.localeCompare(right)))
+      .toEqual([...fixture.ownerIds].sort((left, right) => left.localeCompare(right)));
+    expect(await new PrismaContestRepository(getAppPrisma()).findDrawReceiptsPending()).not.toContain(fixture.contestId);
+
+    await drawReceipts.queueDue();
+
+    expect(await receiptsOf(fixture.contestId)).toHaveLength(fixture.ownerIds.length);
+  });
+
+  it('queues each receipt once even when a sweep queued them but did not clear the mark, so the next sweep sends none again', async () => {
+    const fixture = await seedOwnedDraw();
+    const { selections, drawReceipts } = wiring();
+    await selections.runDraw({ contestId: fixture.contestId, actorUserId: fixture.userId });
+
+    await selections.sendDrawReceipts(fixture.contestId);
+    await drawReceipts.queueDue();
+
+    expect(await receiptsOf(fixture.contestId)).toHaveLength(fixture.ownerIds.length);
   });
 });

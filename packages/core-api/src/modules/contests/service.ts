@@ -120,6 +120,7 @@ import {
   formatUserName,
   type ContestEntryCompletedEmailData,
   type ContestEntryCompletedTierSelection,
+  type EmailSendInput,
   type EmailService,
 } from '../email';
 /** Who is reading contests, for what they may see: DRAFT contests are commissioner-only (#117). */
@@ -1349,13 +1350,14 @@ export class ContestService {
    * (#481), to every owner of the entry's squad (#845, catalog row D3), with when picks close so
    * they know how long it can still change. The selection room only calls it once the lineup has
    * passed the submit check, so it does not judge the lineup again. A quick pick contest's draw
-   * sends it for every entry it dealt (#867), listing the dealt picks.
+   * has it sent for every entry it dealt (#867), listing the dealt picks, by the lifecycle sweep
+   * after the draw (#1171).
    *
    * The room passes what it already read for the pick (#1196): the contest, the event, the
    * configuration, the event's valuations and the squads' memberships. What is read here is
-   * only what it does not hold: the entries with their squad names, their picks in the event,
-   * the league, the sport league and the owners. One read of each, however many entries a draw
-   * dealt.
+   * only what it does not hold: the entries with their squad names, the league, the sport league
+   * and the owners. One read of each, however many entries a draw dealt, and the receipts are
+   * queued in one batch (#1171). A batch that cannot be queued is thrown.
    */
   async sendEntrySubmittedEmails(input: EntrySubmittedReceiptInput): Promise<void> {
     const { contest, sportEvent, entryIds } = input;
@@ -1415,6 +1417,7 @@ export class ContestService {
     const quickPick = rules?.selectionType === SelectionType.RANDOM_DRAW;
     const golf = eventSportDefinition(sportEvent).scoringFamily === ScoringFamily.STROKE_PLAY;
     const templateKey = 'CONTEST_ENTRY_COMPLETED';
+    const sends: Array<{ userId: string; input: EmailSendInput<typeof templateKey> }> = [];
 
     for (const entryId of entryIds) {
       const entry = entryById.get(entryId);
@@ -1461,33 +1464,35 @@ export class ContestService {
         .filter((membership) => membership.squadId === entry.squadId)
         .flatMap((membership) => userById.get(membership.userId) ?? []);
       for (const user of owners) {
-        try {
-          await email.send(templateKey, {
+        sends.push({
+          userId: user.id,
+          input: {
             to: emailRecipientOf(user),
             // One receipt per submission of the entry in the event.
             about: `${entryId}:${sportEvent.id}:${entry.updatedAt.toISOString()}`,
             league: { id: contest.leagueId, name: league.name, leagueCode: league.leagueCode, plan: league.plan },
             refs: { contestId, entryId },
             data: { userName: formatUserName(user), ...data },
-          });
-          this.logger.info({
-            action: 'contestEntry.emailDelivery.success',
-            data: { contestId, entryId, userId: user.id, templateKey },
-          }, 'Queued contest entry confirmation email');
-        } catch (err) {
-          this.logger.error({
-            action: 'contestEntry.emailDelivery.failure',
-            data: {
-              contestId,
-              entryId,
-              userId: user.id,
-              templateKey,
-              error: err instanceof Error ? err.message : String(err),
-            },
-          }, 'Failed to queue contest entry confirmation email');
-        }
+          },
+        });
       }
     }
+
+    // Every receipt goes to the outbox in one batch (#1173): a failure is the whole batch's, and
+    // is thrown for the caller, who decides whether it fails anything.
+    try {
+      await email.sendMany(templateKey, sends.map((send) => send.input));
+    } catch (err) {
+      this.logger.error({
+        action: 'contestEntry.emailDelivery.failure',
+        data: { contestId, entryIds, recipientCount: sends.length, templateKey, error: err instanceof Error ? err.message : String(err) },
+      }, 'Failed to queue contest entry confirmation emails');
+      throw err;
+    }
+    this.logger.info({
+      action: 'contestEntry.emailDelivery.success',
+      data: { contestId, entryIds, userIds: sends.map((send) => send.userId), templateKey },
+    }, 'Queued contest entry confirmation emails');
   }
 
   /**
