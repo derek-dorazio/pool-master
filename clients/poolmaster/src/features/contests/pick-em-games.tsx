@@ -1,9 +1,10 @@
-import { Check, Lock } from 'lucide-react';
+import { Lock } from 'lucide-react';
 import { PickEmMode, type PickOutcome } from '@poolmaster/shared/domain';
 import { GAME_PICKS_TIEBREAKER_MAX } from '@poolmaster/shared/dto';
 import { Button, Chip, FormField, Input, Select, cn, formatDateTimeDisplay, useDisplayPreferences } from '@/features/shared/ui';
 import type { GamePicksResponse } from '@/lib/api';
 import { describePickOutcome, parseBracketTiebreaker } from './bracket-layout';
+import { PickedLine, PickOption } from './pick-option';
 import { confidenceOptions, describeMatchup, gameTeams, isSurvivorWeek, isTeamUsed, isTiePicked, teamSpread, type PickEmGame, type PickEmTeam } from './pick-em-week';
 
 /** A survivor pick's mark (#719): its team won, or the entry is out. */
@@ -40,48 +41,6 @@ export interface PickEmTiebreaker {
   text: string;
 }
 
-function TeamChoice({
-  game,
-  isBusy,
-  isPicked,
-  isUsed,
-  onPick,
-  spread,
-  team,
-}: {
-  game: PickEmGame;
-  isBusy: boolean;
-  isPicked: boolean;
-  /** The team's spread, when the pool is scored against it (#720). */
-  spread: string | null;
-  /** A survivor entry picked the team in another week, so cannot pick it again. */
-  isUsed: boolean;
-  onPick: (game: PickEmGame, team: PickEmTeam) => void;
-  team: PickEmTeam;
-}) {
-  return (
-    <Button
-      aria-pressed={isPicked}
-      className="justify-between"
-      layout="row"
-      data-testid={`pick-em-game-${game.matchNumber}-team-${team.sportEventParticipantId}`}
-      data-used={isUsed || undefined}
-      disabled={isBusy || isUsed}
-      onClick={() => {
-        if (!isPicked) {
-          onPick(game, team);
-        }
-      }}
-      size="sm"
-      variant={isPicked ? 'subtle' : 'secondary'}
-    >
-      <TeamName game={game} spread={spread} team={team} />
-      {isPicked ? <Check aria-label="Your pick" size={16} /> : null}
-      {isUsed && !isPicked ? <span className="text-xs text-muted-foreground">Used</span> : null}
-    </Button>
-  );
-}
-
 /** The team's name, with its spread beside it when the pool is scored against the spread (#720). */
 function TeamName({ game, spread, team }: { game: PickEmGame; spread: string | null; team: PickEmTeam }) {
   return (
@@ -93,22 +52,6 @@ function TeamName({ game, spread, team }: { game: PickEmGame; spread: string | n
         </span>
       )}
     </span>
-  );
-}
-
-function TeamLine({ game, isPicked, spread, team }: { game: PickEmGame; isPicked: boolean; spread: string | null; team: PickEmTeam }) {
-  return (
-    <div
-      className={cn(
-        'flex h-9 items-center justify-between gap-2 rounded-2xl border px-3 text-sm',
-        isPicked ? 'border-primary/30 bg-primary/10 font-semibold' : 'border-border text-muted-foreground',
-      )}
-      data-picked={isPicked || undefined}
-      data-testid={`pick-em-game-${game.matchNumber}-team-${team.sportEventParticipantId}`}
-    >
-      <TeamName game={game} spread={spread} team={team} />
-      {isPicked ? <Check aria-label="Picked" size={16} /> : null}
-    </div>
   );
 }
 
@@ -131,39 +74,15 @@ function TieChoice({
   label: string;
   onPick: (game: PickEmGame) => void;
 }) {
-  if (!choosable) {
-    return (
-      <div
-        className={cn(
-          'flex h-9 items-center justify-between gap-2 rounded-2xl border px-3 text-sm',
-          isPicked ? 'border-primary/30 bg-primary/10 font-semibold' : 'border-border text-muted-foreground',
-        )}
-        data-picked={isPicked || undefined}
-        data-testid={`pick-em-game-${game.matchNumber}-tie`}
-      >
-        <span>{label}</span>
-        {isPicked ? <Check aria-label="Picked" size={16} /> : null}
-      </div>
-    );
-  }
-  return (
-    <Button
-      aria-pressed={isPicked}
-      className="justify-between"
-      layout="row"
-      data-testid={`pick-em-game-${game.matchNumber}-tie`}
-      disabled={isBusy}
-      onClick={() => {
-        if (!isPicked) {
-          onPick(game);
-        }
-      }}
-      size="sm"
-      variant={isPicked ? 'subtle' : 'secondary'}
-    >
+  const testId = `pick-em-game-${game.matchNumber}-tie`;
+  return choosable ? (
+    <PickOption isBusy={isBusy} isPicked={isPicked} onPick={() => onPick(game)} testId={testId}>
       <span>{label}</span>
-      {isPicked ? <Check aria-label="Your pick" size={16} /> : null}
-    </Button>
+    </PickOption>
+  ) : (
+    <PickedLine isPicked={isPicked} testId={testId}>
+      <span>{label}</span>
+    </PickedLine>
   );
 }
 
@@ -328,19 +247,22 @@ function GameCard({
           }
           const isPicked = !isHidden && team.sportEventParticipantId === pickedId;
           const spread = teamSpread(gamePicks, game, team);
+          const testId = `pick-em-game-${game.matchNumber}-team-${team.sportEventParticipantId}`;
           return [...tieChoice, choosable ? (
-            <TeamChoice
-              game={game}
+            <PickOption
               isBusy={isBusy}
               isPicked={isPicked}
               isUsed={isTeamUsed(gamePicks, team)}
               key={team.sportEventParticipantId}
-              onPick={onPick}
-              spread={spread}
-              team={team}
-            />
+              onPick={() => onPick(game, team)}
+              testId={testId}
+            >
+              <TeamName game={game} spread={spread} team={team} />
+            </PickOption>
           ) : (
-            <TeamLine game={game} isPicked={isPicked} key={team.sportEventParticipantId} spread={spread} team={team} />
+            <PickedLine isPicked={isPicked} key={team.sportEventParticipantId} testId={testId}>
+              <TeamName game={game} spread={spread} team={team} />
+            </PickedLine>
           )];
         })}
       </div>
