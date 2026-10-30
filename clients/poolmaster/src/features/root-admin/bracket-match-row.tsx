@@ -11,6 +11,8 @@ import {
   Input,
   Select,
   StatusBadge,
+  TableCell,
+  TableRow,
   useDisplayPreferences,
 } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
@@ -178,23 +180,23 @@ export function BracketMatchRow({ match, released, context }: { match: SportEven
 
   return (
     <>
-      <tr className="border-t border-border align-top" data-testid={`root-admin-bracket-match-${match.matchNumber}`}>
-        <td className="px-4 py-2 font-medium">{match.matchNumber}</td>
-        <td className="px-4 py-2" data-testid={`root-admin-bracket-pairing-${match.matchNumber}`}>
+      <TableRow className="align-top" data-testid={`root-admin-bracket-match-${match.matchNumber}`}>
+        <TableCell className="font-medium">{match.matchNumber}</TableCell>
+        <TableCell data-testid={`root-admin-bracket-pairing-${match.matchNumber}`}>
           {editing ? (
             <PairingEditor context={context} homeFed={homeFed} awayFed={awayFed} match={match} onDone={() => setEditing(false)} />
           ) : describePairing(match, context)}
-        </td>
+        </TableCell>
         {context.spreads ? (
-          <td className="px-4 py-2" data-testid={`root-admin-bracket-spread-${match.matchNumber}`}>
+          <TableCell data-testid={`root-admin-bracket-spread-${match.matchNumber}`}>
             <SpreadCell context={context} match={match} released={released} />
-          </td>
+          </TableCell>
         ) : null}
-        <td className="px-4 py-2 text-muted-foreground">{formatDateTimeDisplay(match.scheduledDate, displayPreferences, 'To be announced')}</td>
-        <td className="px-4 py-2">
+        <TableCell className="text-muted-foreground">{formatDateTimeDisplay(match.scheduledDate, displayPreferences, 'To be announced')}</TableCell>
+        <TableCell>
           <StatusBadge tone={MATCH_STATUS_TONE[match.status]}>{MATCH_STATUS_LABEL[match.status]}</StatusBadge>
-        </td>
-        <td className="px-4 py-2">
+        </TableCell>
+        <TableCell>
           {pairingEditable && !editing ? (
             <Button data-testid={`root-admin-bracket-edit-${match.matchNumber}`} onClick={() => setEditing(true)} size="sm" variant="secondary">
               Edit pairing
@@ -273,8 +275,8 @@ export function BracketMatchRow({ match, released, context }: { match: SportEven
               {extractErrorMessage(result.error, { codeMessages: errorCopy, fallback: `This ${noun.one}'s result could not be saved. Try again.` })}
             </InlineError>
           ) : null}
-        </td>
-      </tr>
+        </TableCell>
+      </TableRow>
       {periods ? <MatchScoresRow columns={context.spreads ? 6 : 5} context={context} match={match} periods={periods} /> : null}
     </>
   );

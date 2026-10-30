@@ -5,7 +5,23 @@ import type { EventPageDto, EventPageOfferDto, SportLeagueDto } from '@/lib/api'
 import { getLogger } from '@/lib/logger';
 import { STAT_POOL_CONTEST_TYPE, STAT_POOL_FORMULAS } from '@/features/contests/scoring-family-ui/stat-pool-copy';
 import { useSportLeaguesQuery } from '@/features/contest-types/use-sport-leagues-query';
-import { Chip, cn, ErrorState, Eyebrow, FaqList, Heading, LinkButton, LoadingState, NumberedSteps, Tile } from '@/features/shared/ui';
+import {
+  Chip,
+  ErrorState,
+  Eyebrow,
+  FaqList,
+  Heading,
+  LinkButton,
+  LoadingState,
+  NumberedSteps,
+  SimpleTable,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeaderCell,
+  TableRow,
+  Tile,
+} from '@/features/shared/ui';
 import { LandingDisclaimer } from './components/landing-disclaimer';
 import { LandingSection } from './components/landing-section';
 import { StartButton } from './components/start-button';
@@ -76,27 +92,27 @@ function ExampleCard() {
         <Chip tone="brand">{example.status}</Chip>
       </div>
       <p className="mt-1 text-xs text-on-inverse-muted">{statLineName(example.sport)}</p>
-      <table className="mt-3 w-full text-sm">
-        <thead>
-          <tr className="text-xs text-on-inverse-muted">
-            <th className="py-1 text-left font-medium">Star</th>
-            {example.games.map((game) => <th className="py-1 text-right font-medium" key={game}>{game}</th>)}
-            <th className="py-1 text-right font-medium">Total</th>
+      <SimpleTable className="mt-3" density="compact" surface="inverse">
+        <TableHead className="normal-case">
+          <tr>
+            <TableHeaderCell>Star</TableHeaderCell>
+            {example.games.map((game) => <TableHeaderCell align="right" key={game}>{game}</TableHeaderCell>)}
+            <TableHeaderCell align="right">Total</TableHeaderCell>
           </tr>
-        </thead>
-        <tbody>
+        </TableHead>
+        <TableBody>
           {stars.map((star) => (
-            <tr className={cn('border-t border-inverse-border', counted.has(star.tier) ? null : 'text-on-inverse-muted')} key={star.tier}>
-              <td className="py-1.5">
+            <TableRow className={counted.has(star.tier) ? undefined : 'text-on-inverse-muted'} key={star.tier}>
+              <TableCell className="whitespace-nowrap">
                 <span className="mr-2 font-mono text-xs text-primary">{star.tier}</span>
                 {`${star.position}, ${star.team}`}
-              </td>
-              {star.scores.map((score, index) => <td className="py-1.5 text-right font-mono" key={example.games[index]}>{score}</td>)}
-              <td className="py-1.5 text-right font-mono font-semibold">{star.total}</td>
-            </tr>
+              </TableCell>
+              {star.scores.map((score, index) => <TableCell className="font-mono" key={example.games[index]} numeric>{score}</TableCell>)}
+              <TableCell className="font-mono font-semibold" numeric>{star.total}</TableCell>
+            </TableRow>
           ))}
-        </tbody>
-      </table>
+        </TableBody>
+      </SimpleTable>
       <div className="mt-3 flex items-center justify-between border-t border-inverse-border pt-3">
         <p className="text-sm text-on-inverse-muted">{example.rank}</p>
         <div className="text-right">

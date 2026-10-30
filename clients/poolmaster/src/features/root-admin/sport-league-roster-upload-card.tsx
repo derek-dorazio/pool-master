@@ -2,12 +2,7 @@ import {
   applyParticipantLeagueAffiliationUpload,
   previewParticipantLeagueAffiliationUpload,
 } from '@/lib/api';
-import {
-  BulkUploadPanel,
-  Heading,
-  StatusBadge,
-  Tile,
-} from '@/features/shared/ui';
+import { BulkUploadPanel, Heading, StatusBadge, Tile, UploadPreviewTable } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -128,35 +123,14 @@ export function SportLeagueRosterUploadCard({ leagueId }: { leagueId: string }) 
               : null
           }
           renderPreview={(rows) => (
-            <div className="overflow-x-auto rounded-2xl border border-border">
-              <table
-                className="min-w-full text-left text-sm"
-                data-testid="root-admin-sport-league-roster-upload-preview-table"
-              >
-                <thead className="bg-[var(--table-header-surface)] text-xs uppercase text-muted-foreground">
-                  <tr>
-                    <th className="px-4 py-2">Row</th>
-                    <th className="px-4 py-2">Resolution</th>
-                    <th className="px-4 py-2">{capitalize(participant.one)}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map((row, index) => (
-                    <tr className="border-t border-border" key={`${describeRow(row.row)}-${index}`}>
-                      <td className="px-4 py-2">{describeRow(row.row)}</td>
-                      <td className="px-4 py-2">
-                        <StatusBadge tone={RESOLUTION_TONE[row.resolution]}>
-                          {row.resolution}
-                        </StatusBadge>
-                      </td>
-                      <td className="px-4 py-2">
-                        {row.participantName || '—'}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <UploadPreviewTable
+              describeRow={(row) => describeRow(row.row)}
+              match={(row) => row.participantName || '—'}
+              matchHeader={capitalize(participant.one)}
+              resolution={(row) => <StatusBadge tone={RESOLUTION_TONE[row.resolution]}>{row.resolution}</StatusBadge>}
+              rows={rows}
+              testId="root-admin-sport-league-roster-upload-preview-table"
+            />
           )}
           templateFilename={`${sportPathSegment(sport)}-${sportLeague.one}-roster-template.csv`}
           templateHeaders={ROSTER_UPLOAD_HEADERS}

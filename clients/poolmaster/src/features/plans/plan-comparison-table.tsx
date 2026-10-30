@@ -1,7 +1,17 @@
 import { useState } from 'react';
 import { Check, ChevronRight, Minus } from 'lucide-react';
 import type { LeaguePlan, PlanCap, PlanFeatureGroup } from '@poolmaster/shared/domain';
-import { Button, Tile, cn } from '@/features/shared/ui';
+import {
+  Button,
+  cn,
+  SimpleTable,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeaderCell,
+  TableRow,
+  Tile,
+} from '@/features/shared/ui';
 import { LEAGUE_PLAN_LABEL } from './plan-labels';
 import { buildPlanComparison, type ComparedPlan, type PlanComparisonSection } from './plan-comparison';
 
@@ -45,26 +55,26 @@ export function PlanComparisonTable({ plans, initiallyFolded = [], currentPlan, 
 
   return (
     <Tile className="overflow-x-auto" data-testid="plan-comparison-table" padding="none" radius="md">
-      <table className="w-full text-xs sm:text-sm">
-        <thead>
-          <tr className="border-b border-border text-left">
-            <th className="sticky left-0 bg-card px-3 py-2 font-medium text-muted-foreground" scope="col">
+      <SimpleTable className="text-xs sm:text-sm">
+        <TableHead tone="plain">
+          <tr>
+            <TableHeaderCell className="sticky left-0 bg-card px-3 text-muted-foreground">
               <span className="sr-only">What the plan includes</span>
-            </th>
+            </TableHeaderCell>
             {plans.map((plan, index) => (
-              <th className={cn('px-1 py-2 text-center font-display font-bold sm:px-2', shade(index))} key={plan.plan} scope="col">
+              <TableHeaderCell align="center" className={cn('px-1 font-display font-bold sm:px-2', shade(index))} key={plan.plan}>
                 {LEAGUE_PLAN_LABEL[plan.plan]}
-              </th>
+              </TableHeaderCell>
             ))}
           </tr>
-        </thead>
+        </TableHead>
         {sections.map((section) => {
           const group = section.group;
           const isFolded = group !== null && folded.has(group);
           return (
-            <tbody data-testid={`plan-comparison-section-${section.key}`} key={section.key}>
-              <tr className="bg-muted">
-                <th className="sticky left-0 bg-muted px-3 py-2 text-left text-xs font-semibold uppercase tracking-eyebrow text-muted-foreground" colSpan={isFolded ? 1 : plans.length + 1} scope="colgroup">
+            <TableBody data-testid={`plan-comparison-section-${section.key}`} key={section.key}>
+              <TableRow className="bg-muted">
+                <TableHeaderCell className="sticky left-0 bg-muted px-3 text-xs font-semibold uppercase tracking-eyebrow text-muted-foreground" colSpan={isFolded ? 1 : plans.length + 1} scope="rowgroup">
                   {group === null ? section.title : (
                     <Button
                       aria-expanded={!isFolded}
@@ -78,22 +88,22 @@ export function PlanComparisonTable({ plans, initiallyFolded = [], currentPlan, 
                       {section.title}
                     </Button>
                   )}
-                </th>
+                </TableHeaderCell>
                 {isFolded ? foldedCounts(section, plans.length).map((count, index) => (
-                  <td className={cn('px-1 py-2 text-center text-xs font-semibold text-muted-foreground tabular-nums sm:px-2', shade(index))} key={plans[index]?.plan ?? index}>{count}</td>
+                  <TableCell align="center" className={cn('px-1 text-xs font-semibold text-muted-foreground sm:px-2', shade(index))} key={plans[index]?.plan ?? index} numeric>{count}</TableCell>
                 )) : null}
-              </tr>
+              </TableRow>
               {isFolded ? null : section.rows.map((row) => (
-                <tr className="border-t border-border" data-testid={`plan-comparison-row-${row.key}`} key={row.key}>
-                  <th className="sticky left-0 bg-card px-2 py-2 text-left font-normal sm:px-3" scope="row">
+                <TableRow data-testid={`plan-comparison-row-${row.key}`} key={row.key}>
+                  <TableHeaderCell className="sticky left-0 bg-card px-2 font-normal sm:px-3" scope="row">
                     {row.label}
                     <span className="hidden text-xs text-muted-foreground sm:block">{row.description}</span>
-                  </th>
+                  </TableHeaderCell>
                   {row.cells.map((cell, index) => {
                     const used = row.cap === null ? undefined : capUsage?.[row.cap];
                     const limit = row.cap === null ? null : plans[index]?.caps[row.cap] ?? null;
                     return (
-                      <td className={cn('px-1 py-2 text-center tabular-nums sm:px-2', shade(index))} key={plans[index]?.plan ?? index}>
+                      <TableCell align="center" className={cn('px-1 sm:px-2', shade(index))} key={plans[index]?.plan ?? index} numeric>
                         {typeof cell === 'string' ? cell : cell
                           ? <Check aria-label="Included" className="mx-auto text-primary" size={16} />
                           : <Minus aria-label="Not included" className="mx-auto text-muted-foreground" size={16} />}
@@ -102,15 +112,15 @@ export function PlanComparisonTable({ plans, initiallyFolded = [], currentPlan, 
                             You use {used.toLocaleString('en-US')}
                           </span>
                         ) : null}
-                      </td>
+                      </TableCell>
                     );
                   })}
-                </tr>
+                </TableRow>
               ))}
-            </tbody>
+            </TableBody>
           );
         })}
-      </table>
+      </SimpleTable>
     </Tile>
   );
 }

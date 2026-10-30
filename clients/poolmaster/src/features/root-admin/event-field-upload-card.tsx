@@ -1,6 +1,6 @@
 import { getSportDefinition, sportPathSegment, type Sport } from '@poolmaster/shared/domain';
 import { applyEventParticipantUpload, previewEventParticipantUpload } from '@/lib/api';
-import { BulkUploadPanel, Button, Heading, StatusBadge, Tile } from '@/features/shared/ui';
+import { BulkUploadPanel, Button, Heading, StatusBadge, Tile, UploadPreviewTable } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -127,50 +127,31 @@ export function EventFieldUploadCard({
                   {rollup.unchanged} unchanged
                 </p>
               ) : null}
-              <div className="overflow-x-auto rounded-2xl border border-border">
-                <table className="min-w-full text-left text-sm" data-testid="root-admin-event-field-upload-preview-table">
-                  <thead className="bg-[var(--table-header-surface)] text-xs uppercase text-muted-foreground">
-                    <tr>
-                      <th className="px-4 py-2">Row</th>
-                      <th className="px-4 py-2">Resolution</th>
-                      <th className="px-4 py-2">{capitalize(participant.one)}</th>
-                      <th className="px-4 py-2">Before → After</th>
-                      <th className="px-4 py-2">Change</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {rows.map((entry, index) => (
-                      <tr
-                        className="border-t border-border"
-                        data-testid={`root-admin-event-field-upload-row-${index}`}
-                        key={`${describeRow(entry.row)}-${index}`}
-                      >
-                        <td className="px-4 py-2">{describeRow(entry.row)}</td>
-                        <td className="px-4 py-2">
-                          <StatusBadge tone={RESOLUTION_TONE[entry.resolution]}>{entry.resolution}</StatusBadge>
-                        </td>
-                        <td className="px-4 py-2">
-                          {entry.participantName || '—'}
-                          {entry.message ? (
-                            <span className="mt-1 block text-xs text-muted-foreground">{entry.message}</span>
-                          ) : null}
-                        </td>
-                        <td className="px-4 py-2 text-muted-foreground">
-                          {formatEventFieldUploadValues(entry.before)} →{' '}
-                          <span className="text-foreground">{formatEventFieldUploadValues(entry.after)}</span>
-                        </td>
-                        <td className="px-4 py-2">
-                          {entry.change ? (
-                            <StatusBadge tone={CHANGE_TONE[entry.change]}>{entry.change}</StatusBadge>
-                          ) : (
-                            <StatusBadge tone="danger">{entry.rowError === 'DUPLICATE_PARTICIPANT' ? 'DUPLICATE' : 'BLOCKED'}</StatusBadge>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <UploadPreviewTable
+                change={{
+                  before: (entry) => formatEventFieldUploadValues(entry.before),
+                  after: (entry) => formatEventFieldUploadValues(entry.after),
+                  badge: (entry) => entry.change ? (
+                    <StatusBadge tone={CHANGE_TONE[entry.change]}>{entry.change}</StatusBadge>
+                  ) : (
+                    <StatusBadge tone="danger">{entry.rowError === 'DUPLICATE_PARTICIPANT' ? 'DUPLICATE' : 'BLOCKED'}</StatusBadge>
+                  ),
+                }}
+                describeRow={(entry) => describeRow(entry.row)}
+                match={(entry) => (
+                  <>
+                    {entry.participantName || '—'}
+                    {entry.message ? (
+                      <span className="mt-1 block text-xs text-muted-foreground">{entry.message}</span>
+                    ) : null}
+                  </>
+                )}
+                matchHeader={capitalize(participant.one)}
+                resolution={(entry) => <StatusBadge tone={RESOLUTION_TONE[entry.resolution]}>{entry.resolution}</StatusBadge>}
+                rowTestId={(index) => `root-admin-event-field-upload-row-${index}`}
+                rows={rows}
+                testId="root-admin-event-field-upload-preview-table"
+              />
             </div>
           )}
           templateFilename={`${sportPathSegment(sport)}-field-upload-template.csv`}

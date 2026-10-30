@@ -1,5 +1,5 @@
 import type { SquaresBoardResponse, SquaresBoxDto } from '@/lib/api';
-import { Button, cn } from '@/features/shared/ui';
+import { Button, cn, SimpleTable, TableBody, TableCell, TableHead, TableHeaderCell } from '@/features/shared/ui';
 import {
   SQUARES_POSITIONS,
   boxesByPlace,
@@ -47,35 +47,36 @@ export function SquaresGrid({
           {awayTeam}
         </div>
         <div className="min-w-0 flex-1 overflow-x-auto" data-testid="squares-grid-scroll">
-          <table className="border-separate border-spacing-0.5 text-xs">
+          <SimpleTable className="w-auto border-separate border-spacing-0.5 text-xs">
             <caption className="sr-only">{`${awayTeam} rows, ${homeTeam} columns`}</caption>
-            <thead>
+            <TableHead tone="plain">
               <tr>
-                <th className="sticky left-0 top-0 z-20 h-8 w-8 bg-card" scope="col">
+                <TableHeaderCell className="sticky left-0 top-0 z-20 h-8 w-8 bg-card p-0">
                   <span className="sr-only">Digits</span>
-                </th>
+                </TableHeaderCell>
                 {SQUARES_POSITIONS.map((columnIndex) => (
-                  <th
-                    className="sticky top-0 z-10 h-8 min-w-16 rounded-md bg-muted text-center text-sm font-semibold"
+                  <TableHeaderCell
+                    align="center"
+                    className="sticky top-0 z-10 h-8 min-w-16 rounded-md bg-muted p-0 text-sm font-semibold"
                     data-testid={`squares-column-digit-${columnIndex}`}
                     key={columnIndex}
-                    scope="col"
                   >
                     {digit(board.digits?.columnDigits, columnIndex)}
-                  </th>
+                  </TableHeaderCell>
                 ))}
               </tr>
-            </thead>
-            <tbody>
+            </TableHead>
+            <TableBody>
               {SQUARES_POSITIONS.map((rowIndex) => (
                 <tr key={rowIndex}>
-                  <th
-                    className="sticky left-0 z-10 w-8 rounded-md bg-muted text-center text-sm font-semibold"
+                  <TableHeaderCell
+                    align="center"
+                    className="sticky left-0 z-10 w-8 rounded-md bg-muted p-0 text-sm font-semibold"
                     data-testid={`squares-row-digit-${rowIndex}`}
                     scope="row"
                   >
                     {digit(board.digits?.rowDigits, rowIndex)}
-                  </th>
+                  </TableHeaderCell>
                   {SQUARES_POSITIONS.map((columnIndex) => {
                     const key = squaresBoxKey(rowIndex, columnIndex);
                     const box = boxes.get(key) ?? null;
@@ -100,7 +101,7 @@ export function SquaresGrid({
                       title: box?.entryName,
                     };
                     return (
-                      <td className="p-0" key={columnIndex}>
+                      <TableCell className="p-0" key={columnIndex}>
                         {action === null ? (
                           <div aria-label={label} className={className} role="img" {...marks}>{content}</div>
                         ) : (
@@ -117,13 +118,13 @@ export function SquaresGrid({
                             {content}
                           </Button>
                         )}
-                      </td>
+                      </TableCell>
                     );
                   })}
                 </tr>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </SimpleTable>
         </div>
       </div>
     </div>
