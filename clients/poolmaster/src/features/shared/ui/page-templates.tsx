@@ -1,7 +1,6 @@
-import type { ColumnDef } from "@tanstack/react-table";
-import type { AnchorHTMLAttributes, ReactNode } from "react";
+import type { ReactNode } from "react";
 import { cn } from "./class-names";
-import { DataGrid, type DataGridSearch } from "./data-grid";
+import { DataGrid, type DataGridProps } from "./data-grid";
 import { DetailsActionsLayout } from "./details-actions-layout";
 import { PageHeader } from "./page-header";
 import { ServerErrorBar } from "./server-error";
@@ -153,29 +152,24 @@ export function AsyncPage(props: AsyncPageProps) {
   return <TemplatePageShell {...props} />;
 }
 
-export type ManagementListPageProps<TData> = AsyncPageStateProps & {
+/** A page of one grid: the grid's own props, plus the page around it. */
+export type ManagementListPageProps<TData> = AsyncPageStateProps & Pick<
+  DataGridProps<TData>,
+  | "columns"
+  | "data"
+  | "emptyMessage"
+  | "filterTestIdPrefix"
+  | "getRowId"
+  | "getRowLink"
+  | "getRowLinkProps"
+  | "pageSize"
+  | "rowTestId"
+  | "search"
+  | "tableTestId"
+> & {
   className?: string;
-  // TanStack's ColumnDef<TData, TValue> is invariant in TValue, so a heterogeneous column
-  // array cannot name a single TValue -- `unknown` rejects ColumnDef<Row, string>. `any` is
-  // TanStack's own documented shape for this position.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  columns: ColumnDef<TData, any>[];
   contentClassName?: string;
-  data: TData[];
-  emptyMessage: string;
-  filterTestIdPrefix?: string;
-  getRowId?: (row: TData, index: number) => string;
-  getRowLink?: (row: TData) => string;
-  getRowLinkProps?: (
-    row: TData,
-  ) => Omit<AnchorHTMLAttributes<HTMLAnchorElement>, "href">;
   header?: HeaderConfig;
-  /** Rows per page; omitted, every row shows on one page. */
-  pageSize?: number;
-  rowTestId?: (row: TData, index: number) => string;
-  /** A search box above the grid matching any text column. */
-  search?: DataGridSearch;
-  tableTestId?: string;
   testId?: string;
 };
 

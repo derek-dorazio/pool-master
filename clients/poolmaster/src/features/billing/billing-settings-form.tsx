@@ -1,15 +1,13 @@
 import { useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
-import { useFieldArray, useForm, type Control, type UseFormRegister, type FieldErrors } from 'react-hook-form';
+import { useFieldArray, type Control, type UseFormRegister, type FieldErrors } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { LEAGUE_PLANS, type LeaguePlan } from '@poolmaster/shared/domain';
-import { updateSettingsGroup, type BillingConfig, type SettingsGroup } from '@/lib/api';
-import { Alert, Button, FormField, Input } from '@/features/shared/ui';
+import type { BillingConfig, SettingsGroup } from '@/lib/api';
+import { Button, FormField, Input } from '@/features/shared/ui';
 import { LEAGUE_PLAN_LABEL } from '@/features/plans/plan-labels';
-import { QueryKeys } from '@/lib/query-keys';
-import { useInvalidatingMutation } from '@/lib/mutation-hooks';
-import { hasErrorCode, throwApiError, extractErrorMessage } from '@/lib/errors';
+import { SettingsSaveError } from '@/features/root-admin/settings-save-error';
+import { useSettingsGroupForm } from '@/features/root-admin/use-settings-group-form';
 
 type BillingSettingsGroup = Extract<SettingsGroup, { key: 'BILLING_CONFIG' }>;
 
@@ -105,55 +103,22 @@ function PlanBands({
  * settings forms, and a 409 offers to load the newer value.
  */
 export function BillingSettingsForm({ group }: { group: BillingSettingsGroup }) {
-  const queryClient = useQueryClient();
-  const [baseUpdatedAt, setBaseUpdatedAt] = useState(group.updatedAt);
   const [paymentsEnabled, setPaymentsEnabled] = useState(group.value.paymentsEnabled);
-  const form = useForm<BillingForm>({
+  const { conflicted, form, loadLatest, saveMutation, submit } = useSettingsGroupForm({
+    group,
+    onTaken: (taken) => setPaymentsEnabled(taken.value.paymentsEnabled),
     resolver: zodResolver(BillingFormSchema),
-    defaultValues: toForm(group.value),
+    subject: 'Payments settings',
+    toForm,
+    toValue: (values: BillingForm) => toConfig(values, paymentsEnabled),
   });
-
-  const saveMutation = useInvalidatingMutation({
-    mutationFn: async (values: BillingForm) => {
-      const response = await updateSettingsGroup({
-        path: { key: 'BILLING_CONFIG' },
-        body: { key: 'BILLING_CONFIG', value: toConfig(values, paymentsEnabled), expectedUpdatedAt: baseUpdatedAt },
-      });
-      if (response.data?.key !== 'BILLING_CONFIG') {
-        throwApiError(response.error, 'Payments settings response is missing data.');
-      }
-      return response.data;
-    },
-    onSuccess: (saved) => {
-      setBaseUpdatedAt(saved.updatedAt);
-      setPaymentsEnabled(saved.value.paymentsEnabled);
-      form.reset(toForm(saved.value));
-    },
-    invalidates: [QueryKeys.rootAdmin.settings],
-  });
-
-  const conflicted = hasErrorCode(saveMutation.error, 'SETTINGS_CONFLICT');
-
-  async function loadLatest() {
-    await queryClient.refetchQueries({ queryKey: QueryKeys.rootAdmin.settings, exact: true });
-    const latest = queryClient
-      .getQueryData<SettingsGroup[]>(QueryKeys.rootAdmin.settings)
-      ?.find((candidate): candidate is BillingSettingsGroup => candidate.key === 'BILLING_CONFIG');
-    if (!latest) {
-      return;
-    }
-    setBaseUpdatedAt(latest.updatedAt);
-    setPaymentsEnabled(latest.value.paymentsEnabled);
-    form.reset(toForm(latest.value));
-    saveMutation.reset();
-  }
 
   return (
     <form
       className="space-y-5"
       data-testid="root-admin-billing-settings-form"
       noValidate
-      onSubmit={(event) => void form.handleSubmit((values) => saveMutation.mutate(values))(event)}
+      onSubmit={(event) => void submit(event)}
     >
       <p className="text-sm text-muted-foreground">
         What expanding one contest costs on each plan. A contest is offered the sizes above its cap,
@@ -162,19 +127,13 @@ export function BillingSettingsForm({ group }: { group: BillingSettingsGroup }) 
       {LEAGUE_PLANS.map((plan) => (
         <PlanBands control={form.control} errors={form.formState.errors} key={plan} plan={plan} register={form.register} />
       ))}
-      {saveMutation.isError ? (
-        <Alert
-          action={conflicted ? (
-            <Button onClick={() => void loadLatest()} type="button" variant="secondary">
-              Load the latest settings
-            </Button>
-          ) : undefined}
-          data-testid="root-admin-billing-settings-error"
-          tone="danger"
-        >
-          {extractErrorMessage(saveMutation.error, { fallback: 'We could not save the payments settings.' })}
-        </Alert>
-      ) : null}
+      <SettingsSaveError
+        conflicted={conflicted}
+        error={saveMutation.error}
+        fallback="We could not save the payments settings."
+        onLoadLatest={loadLatest}
+        testId="root-admin-billing-settings-error"
+      />
       <Button data-testid="root-admin-billing-settings-save" disabled={saveMutation.isPending} type="submit">
         {saveMutation.isPending ? 'Saving...' : 'Save prices'}
       </Button>
