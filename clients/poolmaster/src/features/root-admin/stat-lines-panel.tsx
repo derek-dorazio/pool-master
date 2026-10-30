@@ -6,7 +6,6 @@ import { Alert, Button, DataGrid, Input, PanelCard, SegmentedControl } from '@/f
 import { SPORT_STAT_LABELS } from '@/features/contests/scoring-family-ui/stat-labels';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
-import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import {
   buildStatLineRow,
@@ -17,12 +16,13 @@ import {
   type StatLineDraft,
   type StatLineGridRow,
 } from './stat-line-grid';
+import { useRowCorrections, type RowDrafts } from './use-row-corrections';
 import { useSportEventFieldQuery } from './use-sport-event';
 
 type GridMeta = {
   composite: SportComposite;
-  draft: Partial<Record<string, StatLineDraft>>;
-  setDraft: Dispatch<SetStateAction<Partial<Record<string, StatLineDraft>>>>;
+  draft: RowDrafts<StatLineDraft>;
+  setDraft: Dispatch<SetStateAction<RowDrafts<StatLineDraft>>>;
   savingId: string | null;
   onSave: (row: StatLineGridRow) => void;
 };
@@ -122,12 +122,10 @@ export function StatLinesPanel({ event }: { event: SportEventDto }) {
   const composite = definition.composite;
   const logger = getLogger().child({ feature: 'root-admin-stat-lines' });
   const [game, setGame] = useState(1);
-  const [draft, setDraft] = useState<Partial<Record<string, StatLineDraft>>>({});
-  const [draftScope, setDraftScope] = useState(`${eventId}:${game}`);
   const fieldQuery = useSportEventFieldQuery(eventId);
-
-  const saveMutation = useInvalidatingMutation({
-    mutationFn: async ({ row }: { sportEventParticipantId: string; row: GameStatLineUploadRequest['rows'][number] }) => {
+  const { draft, setDraft, savingId, save, saveError } = useRowCorrections<StatLineDraft, GameStatLineUploadRequest['rows'][number]>({
+    scope: `${eventId}:${game}`,
+    saveRow: async (_sportEventParticipantId, row) => {
       const response = await applyEventGameStatLines({ path: { eventId, roundNumber: game }, body: { rows: [row] } });
       if (response.error) {
         throwApiError(response.error);
@@ -135,26 +133,10 @@ export function StatLinesPanel({ event }: { event: SportEventDto }) {
       return response.data;
     },
     invalidates: [QueryKeys.rootAdmin.manageSport.field(eventId)],
-    onSuccess: (_data, variables) =>
-      setDraft((current) => {
-        const next = { ...current };
-        delete next[variables.sportEventParticipantId];
-        return next;
-      }),
-    onError: (error) => {
+    onSaveError: (error) => {
       logger.warn({ action: 'statLines.correction.failed', err: error }, 'Stat line correction was rejected');
     },
   });
-
-  // A new game (or event) starts with no draft and no stale save error, reset in the render phase.
-  const scope = `${eventId}:${game}`;
-  if (draftScope !== scope) {
-    setDraftScope(scope);
-    setDraft({});
-    if (saveMutation.isError) {
-      saveMutation.reset();
-    }
-  }
 
   const games = event.rounds ?? 0;
   const gameOptions = useMemo(
@@ -169,16 +151,16 @@ export function StatLinesPanel({ event }: { event: SportEventDto }) {
           composite,
           draft,
           setDraft,
-          savingId: saveMutation.isPending ? saveMutation.variables.sportEventParticipantId : null,
+          savingId,
           onSave: (row) => {
             const body = buildStatLineRow(row, draft[row.sportEventParticipantId], composite);
             if (body) {
-              saveMutation.mutate({ sportEventParticipantId: row.sportEventParticipantId, row: body });
+              save(row.sportEventParticipantId, body);
             }
           },
         }
       : null),
-    [composite, draft, saveMutation],
+    [composite, draft, setDraft, savingId, save],
   );
 
   if (!composite || !meta) {
@@ -206,9 +188,9 @@ export function StatLinesPanel({ event }: { event: SportEventDto }) {
               {extractErrorMessage(fieldQuery.error, { fallback: 'We could not load the players and their stats.' })}
             </Alert>
           ) : null}
-          {saveMutation.isError ? (
+          {saveError ? (
             <Alert className="mt-3" data-testid="root-admin-stat-lines-save-error" tone="danger">
-              {extractErrorMessage(saveMutation.error, { fallback: 'We could not save that line.' })}
+              {extractErrorMessage(saveError, { fallback: 'We could not save that line.' })}
             </Alert>
           ) : null}
 
