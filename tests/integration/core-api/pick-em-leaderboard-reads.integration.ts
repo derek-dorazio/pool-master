@@ -28,6 +28,7 @@ import {
   cleanupTestData,
   createTestUser,
   getApp,
+  getAppPrisma,
   getPrisma,
   setupIntegrationTests,
   teardownIntegrationTests,
@@ -67,7 +68,7 @@ async function createWeek(label: string, startDate: Date, status: SportEventStat
     update: {},
   });
   const eventSeries = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `${label} ${randomUUID()}` } });
-  const event = await createSportEventRow(new PrismaSportEventRepository(prisma), {
+  const event = await createSportEventRow(new PrismaSportEventRepository(getAppPrisma()), {
     eventSeriesId: eventSeries.id,
     eventYear: 2026,
     externalId: `pickem-board-${randomUUID()}`,
@@ -80,15 +81,15 @@ async function createWeek(label: string, startDate: Date, status: SportEventStat
     syncScope: 'NONE',
     autoLifecycleEnabled: false,
   });
-  await createRoundRows(new PrismaSportEventRoundRepository(prisma), event.id, [{ roundNumber: 1, scheduledDate: startDate }]);
+  await createRoundRows(new PrismaSportEventRoundRepository(getAppPrisma()), event.id, [{ roundNumber: 1, scheduledDate: startDate }]);
   const teams = await Promise.all(['Bills', 'Jets', 'Chiefs', 'Raiders', 'Eagles', 'Giants'].map((name) => prisma.participant.create({
     data: { sportId: sport.id, name: `${name} ${randomUUID().slice(0, 6)}`, participantType: 'TEAM' },
   })));
-  const field = new PrismaSportEventParticipantRepository(prisma);
+  const field = new PrismaSportEventParticipantRepository(getAppPrisma());
   await field.createMany(event.id, teams.map((team) => ({ participantId: team.id })));
   const rows = await field.findBySportEvent(event.id);
   const rowOf = (index: number) => expectDefined(rows.find((row) => row.participantId === teams[index]?.id));
-  const matchRepo = new PrismaSportEventMatchRepository(prisma);
+  const matchRepo = new PrismaSportEventMatchRepository(getAppPrisma());
   await matchRepo.replaceBracket(event.id, [1, 2, 3].map((matchNumber) => ({
     id: randomUUID(),
     roundNumber: 1,
@@ -125,7 +126,7 @@ async function createPickEmContest(sportEventIds: string[]) {
     data: { leagueId: league.id, userId: owner.user.id, role: 'COMMISSIONER', status: 'ACTIVE', joinedAt: new Date() },
   });
   const squad = await prisma.squad.create({ data: { leagueId: league.id, createdBy: owner.user.id, name: `Pickers ${suffix}` } });
-  const contest = await createContestRow(new PrismaContestRepository(prisma), {
+  const contest = await createContestRow(new PrismaContestRepository(getAppPrisma()), {
     leagueId: league.id,
     seasonYear: 2026,
     sportEventIds,
@@ -134,19 +135,19 @@ async function createPickEmContest(sportEventIds: string[]) {
     contestFormat: 'PREDICTION',
     selectionType: SelectionType.PICK_EM,
   });
-  await new PrismaContestConfigurationRepository(prisma).create({
+  await new PrismaContestConfigurationRepository(getAppPrisma()).create({
     contestId: contest.id,
     selectionType: SelectionType.PICK_EM,
     configJson: { selectionType: SelectionType.PICK_EM, mode: PickEmMode.STRAIGHT_UP, againstTheSpread: false },
   });
-  const result = await new PrismaContestEntryRepository(prisma).create({ contestId: contest.id, squadId: squad.id, entryNumber: 1, name: 'Pickers', tiebreakerValue: null }, { entriesPerContest: () => null });
+  const result = await new PrismaContestEntryRepository(getAppPrisma()).create({ contestId: contest.id, squadId: squad.id, entryNumber: 1, name: 'Pickers', tiebreakerValue: null }, { entriesPerContest: () => null });
   if (result.status !== 'created') throw new Error(`seed: entry refused (${result.status})`);
   return { contest, entry: result.entry, viewerId: owner.user.id };
 }
 
 /** The entry's week submitted, picking the home team in every game. */
 async function submitHomePicks(entryId: string, sportEventId: string, games: readonly { id: string; homeSportEventParticipantId: string | null }[], at: Date) {
-  await writePicks(new PrismaContestEntryMatchPredictionRepository(getPrisma()), {
+  await writePicks(new PrismaContestEntryMatchPredictionRepository(getAppPrisma()), {
     contestEntryId: entryId,
     sportEventId,
     saves: games.map((game) => ({
@@ -183,7 +184,7 @@ async function midSeason() {
 describe('ContestService.getPickEmLeaderboard reads (#762)', () => {
   it('loads the games of all six weeks in one query, and the entries and picks of only the week under way, not a set per week', async () => {
     const season = await midSeason();
-    const { prisma, count } = countingPrisma(getPrisma());
+    const { prisma, count } = countingPrisma(getAppPrisma());
 
     const leaderboard = await createContestService(prisma, getApp().log, { planEntitlements: integrationPlanEntitlements(prisma) }).getPickEmLeaderboard(season.contest.id, season.viewerId);
 
@@ -200,7 +201,7 @@ describe('ContestService.getPickEmLeaderboard reads (#762)', () => {
   it('reports each settled week\'s game count and tiebreaker total from the batched games, and the live week\'s too', async () => {
     const season = await midSeason();
 
-    const leaderboard = await createContestService(getPrisma(), getApp().log, { planEntitlements: integrationPlanEntitlements() }).getPickEmLeaderboard(season.contest.id, season.viewerId);
+    const leaderboard = await createContestService(getAppPrisma(), getApp().log, { planEntitlements: integrationPlanEntitlements() }).getPickEmLeaderboard(season.contest.id, season.viewerId);
 
     expect(leaderboard.weeks.map((week) => [week.gameCount, week.tiebreakerTotalPoints])).toEqual([
       [3, 37], [3, 37], [3, 37], [3, 37],
@@ -212,7 +213,7 @@ describe('ContestService.getPickEmLeaderboard reads (#762)', () => {
   it('scores the week under way live and leaves the weeks the entry did not submit, and the week to come, empty', async () => {
     const season = await midSeason();
 
-    const leaderboard = await createContestService(getPrisma(), getApp().log, { planEntitlements: integrationPlanEntitlements() }).getPickEmLeaderboard(season.contest.id, season.viewerId);
+    const leaderboard = await createContestService(getAppPrisma(), getApp().log, { planEntitlements: integrationPlanEntitlements() }).getPickEmLeaderboard(season.contest.id, season.viewerId);
 
     const row = expectDefined(leaderboard.entries.find((entry) => entry.entryId === season.entry.id));
     expect(row.weeks.map((week) => [week.submitted, week.points])).toEqual([
@@ -228,7 +229,7 @@ describe('ContestService.getPickEmLeaderboard reads (#762)', () => {
   it('counts a cancelled week for nothing: no games, no tiebreaker total, and settled without a live load', async () => {
     const cancelled = await createWeek('Week 1', new Date(Date.now() - 7 * DAY), SportEventStatus.CANCELLED);
     const { contest, viewerId } = await createPickEmContest([cancelled.event.id]);
-    const { prisma, count } = countingPrisma(getPrisma());
+    const { prisma, count } = countingPrisma(getAppPrisma());
 
     const leaderboard = await createContestService(prisma, getApp().log, { planEntitlements: integrationPlanEntitlements(prisma) }).getPickEmLeaderboard(contest.id, viewerId);
 

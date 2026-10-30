@@ -9,7 +9,7 @@ import { randomUUID } from 'node:crypto';
 import type { Prisma } from '@prisma/client';
 import { Sport } from '@poolmaster/shared/domain';
 import { createScheduledEventReader } from '../../../packages/core-api/src/modules/ingestion/core/scheduled-event-reader';
-import { cleanupTestData, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
+import { cleanupTestData, getAppPrisma, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
 import { freshEventEdition } from '../../support/event-edition';
 import { fakeSportDataProvider, registryWith } from '../../support/fake-sport-data-provider';
 
@@ -25,7 +25,7 @@ afterAll(async () => {
 beforeEach(() => cleanupTestData());
 
 function reader(provider = fakeSportDataProvider({ providerId: PROVIDER })) {
-  return createScheduledEventReader({ prisma: getPrisma(), registry: registryWith(provider) });
+  return createScheduledEventReader({ prisma: getAppPrisma(), registry: registryWith(provider) });
 }
 
 async function createEvent(
@@ -82,7 +82,7 @@ describe('ScheduledEventReader — live scores', () => {
   it('polls nothing when no provider is registered for the sport', async () => {
     await createEvent('orphan', { status: 'IN_PROGRESS', withField: true });
 
-    const eventIds = await createScheduledEventReader({ prisma: getPrisma(), registry: registryWith(null) })
+    const eventIds = await createScheduledEventReader({ prisma: getAppPrisma(), registry: registryWith(null) })
       .listEventIdsForFeed({ sport: Sport.GOLF, feed: 'EVENTLIVESCORES', now });
 
     expect(eventIds).toEqual([]);

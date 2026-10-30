@@ -16,6 +16,7 @@ import { writePicks } from '../../support/prediction-writes';
 import {
   cleanupTestData,
   createTestUser,
+  getAppPrisma,
   getPrisma,
   setupIntegrationTests,
   teardownIntegrationTests,
@@ -37,11 +38,10 @@ afterAll(async () => {
 beforeEach(() => cleanupTestData());
 
 function repos() {
-  const prisma = getPrisma();
   return {
-    contests: new PrismaContestRepository(prisma),
-    entries: new PrismaContestEntryRepository(prisma),
-    predictions: new PrismaContestEntryMatchPredictionRepository(prisma),
+    contests: new PrismaContestRepository(getAppPrisma()),
+    entries: new PrismaContestEntryRepository(getAppPrisma()),
+    predictions: new PrismaContestEntryMatchPredictionRepository(getAppPrisma()),
   };
 }
 
@@ -63,7 +63,7 @@ async function createWeek(label: string, startDate: Date) {
     update: {},
   });
   const eventSeries = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `${label} ${randomUUID()}` } });
-  const event = await createSportEventRow(new PrismaSportEventRepository(prisma), {
+  const event = await createSportEventRow(new PrismaSportEventRepository(getAppPrisma()), {
     eventSeriesId: eventSeries.id,
     eventYear: 2026,
     externalId: `pickem-${randomUUID()}`,
@@ -76,15 +76,15 @@ async function createWeek(label: string, startDate: Date) {
     syncScope: 'NONE',
     autoLifecycleEnabled: true,
   });
-  await createRoundRows(new PrismaSportEventRoundRepository(prisma), event.id, [{ roundNumber: 1, scheduledDate: startDate }]);
+  await createRoundRows(new PrismaSportEventRoundRepository(getAppPrisma()), event.id, [{ roundNumber: 1, scheduledDate: startDate }]);
   const teams = await Promise.all(['Bills', 'Jets', 'Chiefs', 'Raiders', 'Eagles', 'Giants'].map((name) => prisma.participant.create({
     data: { sportId: sport.id, name: `${name} ${randomUUID().slice(0, 6)}`, participantType: 'TEAM' },
   })));
-  const field = new PrismaSportEventParticipantRepository(prisma);
+  const field = new PrismaSportEventParticipantRepository(getAppPrisma());
   await field.createMany(event.id, teams.map((team) => ({ participantId: team.id })));
   const rows = await field.findBySportEvent(event.id);
   const rowOf = (index: number) => expectDefined(rows.find((row) => row.participantId === teams[index]?.id));
-  const matchRepo = new PrismaSportEventMatchRepository(prisma);
+  const matchRepo = new PrismaSportEventMatchRepository(getAppPrisma());
   // Written out of order so the read's match-number order is the repository's, not insertion's.
   await matchRepo.replaceBracket(event.id, [3, 1, 2].map((matchNumber) => ({
     id: randomUUID(),
@@ -186,7 +186,7 @@ describe('PrismaContestEntryMatchPredictionRepository', () => {
     const { event, game } = await createWeek('Week 1', AT);
     const { entry: oneGame } = await createPickEmEntry([event.id]);
     const { entry: fullSlate } = await createPickEmEntry([event.id]);
-    const counted = countingPrisma(getPrisma());
+    const counted = countingPrisma(getAppPrisma());
     const predictions = new PrismaContestEntryMatchPredictionRepository(counted.prisma);
     const saveOn = (contestEntryId: string, matchNumbers: readonly number[], at: Date) => writePicks(predictions, {
       contestEntryId,
@@ -453,7 +453,7 @@ describe('PrismaContestEntryMatchPredictionRepository — several entries and th
 
     const picks = await repos().predictions.findByEntriesAndEvents([first.id, second.id], [week1.event.id, week2.event.id]);
 
-    const field = await new PrismaSportEventParticipantRepository(getPrisma()).findBySportEvent(week1.event.id);
+    const field = await new PrismaSportEventParticipantRepository(getAppPrisma()).findBySportEvent(week1.event.id);
     const participantOf = (fieldRowId: string | null) => expectDefined(field.find((row) => row.id === fieldRowId)).participantId;
     const key = (row: readonly string[]) => row.join(':');
     expect(picks.map((pick) => key([pick.contestEntryId, pick.sportEventId, pick.sportEventMatchId])).sort((left, right) => left.localeCompare(right))).toEqual([

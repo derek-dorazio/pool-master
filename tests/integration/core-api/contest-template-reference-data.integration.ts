@@ -17,6 +17,7 @@ import {
 } from '@poolmaster/shared/domain';
 import {
   cleanupTestData,
+  getAppPrisma,
   getPrisma,
   setupIntegrationTests,
   teardownIntegrationTests,
@@ -502,7 +503,7 @@ describe('Seeded soccer competitions and their knockout templates', () => {
   it('seeds the nine competitions as fixed brackets, the international ones reading the sport\'s round names, and the Premier League, played in weeks, read back through the sport league repository', async () => {
     const soccer = await getPrisma().sport.findUniqueOrThrow({ where: { sport: Sport.SOCCER } });
     // The Clutch Card leagues of players (#994) are the stat pool block's below.
-    const leagues = (await new PrismaSportLeagueRepository(getPrisma()).findAll({ sportId: soccer.id })).filter((league) => league.scoringFamily === null);
+    const leagues = (await new PrismaSportLeagueRepository(getAppPrisma()).findAll({ sportId: soccer.id })).filter((league) => league.scoringFamily === null);
     const ncaaRounds = ['First Round', 'Second Round', 'Round of 16', 'Quarterfinals', 'Semifinals', 'Final'];
 
     expect(leagues.map((league) => [league.name, league.bracketAdvancement, league.roundNames])).toEqual([
@@ -521,7 +522,7 @@ describe('Seeded soccer competitions and their knockout templates', () => {
 
   it('starts squares at the Champions League final and the MLS conference semifinals, past their two-legged ties and best-of-three series, and every other soccer league at its first round', async () => {
     const soccer = await getPrisma().sport.findUniqueOrThrow({ where: { sport: Sport.SOCCER } });
-    const leagues = await new PrismaSportLeagueRepository(getPrisma()).findAll({ sportId: soccer.id });
+    const leagues = await new PrismaSportLeagueRepository(getAppPrisma()).findAll({ sportId: soccer.id });
 
     expect(leagues.filter((league) => league.squaresFromRound !== null).map((league) => [league.name, league.squaresFromRound]))
       .toEqual([['MLS', 3], ['UEFA Champions League', 5]]);
@@ -602,7 +603,7 @@ const TENNIS_ROUND_VALUES = [1, 2, 4, 8, 16, 32, 64];
 describe('Seeded tennis tours and their knockout templates', () => {
   it('seeds the ATP and the WTA as fixed brackets on the sport\'s own round names and tiers, and the NCAA singles championships on the NCAA\'s round names, read back through the sport league repository', async () => {
     const tennis = await getPrisma().sport.findUniqueOrThrow({ where: { sport: Sport.TENNIS } });
-    const leagues = await new PrismaSportLeagueRepository(getPrisma()).findAll({ sportId: tennis.id });
+    const leagues = await new PrismaSportLeagueRepository(getAppPrisma()).findAll({ sportId: tennis.id });
     const ncaaRounds = ['First Round', 'Second Round', 'Round of 16', 'Quarterfinals', 'Semifinals', 'Final'];
 
     expect(tennis.participantType).toBe('INDIVIDUAL');
@@ -937,7 +938,7 @@ describe('Every seeded contest template, whatever its sport', () => {
 describe('The seeded NBA and WNBA leagues and their knockout templates', () => {
   it('seeds the NBA and WNBA as fixed brackets that name their own rounds, read back through the sport league repository', async () => {
     const basketball = await getPrisma().sport.findUniqueOrThrow({ where: { sport: Sport.BASKETBALL } });
-    const sportLeagues = new PrismaSportLeagueRepository(getPrisma());
+    const sportLeagues = new PrismaSportLeagueRepository(getAppPrisma());
 
     const [nba, wnba] = await Promise.all([sportLeagues.findBySportAndName(basketball.id, 'NBA'), sportLeagues.findBySportAndName(basketball.id, 'WNBA')]);
 
@@ -983,7 +984,7 @@ describe('The seeded NBA and WNBA leagues and their knockout templates', () => {
 describe('The seeded College Football Playoff league and its knockout templates', () => {
   it('seeds the College Football Playoff as a fixed bracket that names its own rounds and starts its events on six tiers, read back through the sport league repository', async () => {
     const football = await getPrisma().sport.findUniqueOrThrow({ where: { sport: Sport.AMERICAN_FOOTBALL } });
-    const sportLeagues = new PrismaSportLeagueRepository(getPrisma());
+    const sportLeagues = new PrismaSportLeagueRepository(getAppPrisma());
 
     const [cfp, nfl] = await Promise.all([
       sportLeagues.findBySportAndName(football.id, 'College Football Playoff'),

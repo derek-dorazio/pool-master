@@ -11,6 +11,7 @@ import {
   cleanupTestData,
   createTestUser,
   getApp,
+  getAppPrisma,
   getPrisma,
   setupIntegrationTests,
   teardownIntegrationTests,
@@ -117,7 +118,7 @@ async function eventWithField(sport: Sport, names: readonly string[]) {
 describe('An event\'s field', () => {
   it('is read in one call on the field table, each row with its participant, affiliation, price, standing and rounds in round order, seeded first', async () => {
     const { event, ana, bea, cal } = await golfEvent();
-    const counting = countingPrisma(getPrisma());
+    const counting = countingPrisma(getAppPrisma());
 
     const field = await createSportEventParticipantService(counting.prisma).listEventParticipants(event.id);
 
@@ -135,7 +136,7 @@ describe('An event\'s field', () => {
 
   it('is read once for every contest and pick screen on the event within 30 seconds, and again after', async () => {
     const { event } = await golfEvent();
-    const counting = countingPrisma(getPrisma());
+    const counting = countingPrisma(getAppPrisma());
     const contestReads = createSportEventParticipantService(counting.prisma);
     const pickScreenReads = createSportEventParticipantService(counting.prisma);
 
@@ -240,8 +241,8 @@ describe('An event\'s field, for every scoring family', () => {
       data: { sportEventId: event.id, sportEventRoundId: round1.id, matchNumber: 3, homeSportEventParticipantId: kansas.id, awaySportEventParticipantId: baylor.id, isNeutralSite: true },
     });
 
-    const rows = await createSportEventParticipantService(prisma).listEventParticipants(event.id);
-    const matches = await new PrismaSportEventMatchRepository(prisma).findBySportEvent(event.id);
+    const rows = await createSportEventParticipantService(getAppPrisma()).listEventParticipants(event.id);
+    const matches = await new PrismaSportEventMatchRepository(getAppPrisma()).findBySportEvent(event.id);
 
     const dukeRow = rows.find((row) => row.entry.id === duke.id);
     expect(dukeRow?.matches.map((match) => [match.matchNumber, match.roundNumber])).toEqual([[1, 1], [2, 2]]);
@@ -266,8 +267,8 @@ describe('An event\'s field, for every scoring family', () => {
       data: { sportEventParticipantId: scratched.id, resultStatus: 'DID_NOT_START' },
     });
 
-    const rows = await createSportEventParticipantService(prisma).listEventParticipants(event.id);
-    const results = await new PrismaSportEventParticipantRaceResultRepository(prisma).findBySportEvent(event.id);
+    const rows = await createSportEventParticipantService(getAppPrisma()).listEventParticipants(event.id);
+    const results = await new PrismaSportEventParticipantRaceResultRepository(getAppPrisma()).findBySportEvent(event.id);
 
     const byRow = new Map(rows.map((row) => [row.entry.id, row.raceResult]));
     expect(byRow.get(winner.id)).toMatchObject({ finishPosition: 1, startPosition: 2, resultStatus: 'FINISHED', isOfficial: true, riderName: 'Ron Turcotte' });
@@ -282,14 +283,14 @@ describe('An event\'s field, for every scoring family', () => {
 describe('A write to one field row', () => {
   it('reads that row alone to answer, with the values the whole field read gives it', async () => {
     const { event, ana } = await golfEvent();
-    const counting = countingPrisma(getPrisma());
+    const counting = countingPrisma(getAppPrisma());
     const service = createSportEventParticipantService(counting.prisma);
 
     const row = await service.getEventParticipant(event.id, ana.id);
 
     expect(counting.rows('SportEventParticipant.findFirst')).toBe(1);
     expect(counting.count('SportEventParticipant.findMany')).toBe(0);
-    const [fromField] = await createSportEventParticipantService(getPrisma()).listEventParticipants(event.id);
+    const [fromField] = await createSportEventParticipantService(getAppPrisma()).listEventParticipants(event.id);
     expect(row).toEqual(fromField);
   });
 

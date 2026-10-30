@@ -166,11 +166,12 @@ function enteredByBoundValue(walked: PlanNode, nodes: PlanNode[], indexes: Map<s
  * - the plan joins the table by a column some index on it leads on, and another table of the plan
  *   is filtered by a bound value an index on it could look up, so the read could start there.
  */
-function anotherIndexServes(node: PlanNode, table: string, nodes: PlanNode[], indexes: Map<string, IndexLead>): boolean {
-  const own = ownConditions(node);
+function anotherIndexServes(node: PlanNode, table: string, nodes: PlanNode[], indexes: Map<string, IndexLead>, heap: PlanNode | undefined): boolean {
+  // A Bitmap Index Scan's rows are filtered by the Bitmap Heap Scan above it, which names the table.
+  const own = heap === undefined ? ownConditions(node) : `${ownConditions(node)} ${ownConditions(heap)}`;
+  const alias = node.Alias ?? heap?.Alias;
   const leads = indexesOn(table, indexes);
-  if (leads.some((index) => comparesColumn(own, index.column, index.operatorClass, node.Alias, false))) return true;
-  const alias = node.Alias;
+  if (leads.some((index) => comparesColumn(own, index.column, index.operatorClass, alias, false))) return true;
   if (alias === undefined) return false;
   const conditions = nodes.filter((other) => other !== node).map((other) => [ownConditions(other), other['Join Filter'], other['Hash Cond'], other['Merge Cond']].join(' ')).join(' ');
   return leads.some((index) => joinsOn(conditions, index.column, alias)) && enteredByBoundValue(node, nodes, indexes);
@@ -184,12 +185,16 @@ function anotherIndexServes(node: PlanNode, table: string, nodes: PlanNode[], in
  */
 export function findWholeScans(plan: PlanNode, indexes: Map<string, IndexLead>): WholeScan[] {
   const nodes = flatten(plan);
+  const heapOf = new Map<PlanNode, PlanNode>();
+  for (const heap of nodes.filter((node) => node['Node Type'] === 'Bitmap Heap Scan')) {
+    for (const child of flatten(heap).slice(1)) heapOf.set(child, heap);
+  }
   const scans: WholeScan[] = [];
   for (const node of nodes) {
     const index = node['Index Name'] === undefined ? undefined : indexes.get(node['Index Name']);
     if (node['Node Type'] === 'Seq Scan' && node['Relation Name']) {
       scans.push({ table: node['Relation Name'], how: 'a sequential scan' });
-    } else if (INDEX_NODES.has(node['Node Type']) && index && !anotherIndexServes(node, index.table, nodes, indexes)) {
+    } else if (INDEX_NODES.has(node['Node Type']) && index && !anotherIndexServes(node, index.table, nodes, indexes, heapOf.get(node))) {
       const condition = node['Index Cond'];
       if (condition === undefined && node.Filter !== undefined) {
         scans.push({ table: index.table, how: `walking every entry of ${String(node['Index Name'])} and filtering` });
