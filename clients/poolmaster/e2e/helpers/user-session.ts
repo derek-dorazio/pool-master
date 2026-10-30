@@ -35,19 +35,19 @@ export async function registerFreshUser(
   user: FreshUser,
   password: string = generatePassword(),
 ): Promise<string> {
-  await page.getByTestId('auth-register-first-name').fill(user.firstName);
-  await page.getByTestId('auth-register-last-name').fill(user.lastName);
-  await page.getByTestId('auth-register-email').fill(user.email);
-  await page.getByTestId('auth-register-username').fill(user.username);
-  await page.getByTestId('auth-register-password').fill(password);
-  await page.getByTestId('auth-register-confirm-password').fill(password);
+  await page.getByTestId('sign-up-first-name').fill(user.firstName);
+  await page.getByTestId('sign-up-last-name').fill(user.lastName);
+  await page.getByTestId('sign-up-email').fill(user.email);
+  await page.getByTestId('sign-up-username').fill(user.username);
+  await page.getByTestId('sign-up-password').fill(password);
+  await page.getByTestId('sign-up-confirm-password').fill(password);
 
   const registered = page.waitForResponse(
     (response) =>
       response.request().method() === 'POST' && new URL(response.url()).pathname === '/api/v1/auth/register',
     { timeout: 20_000 },
   );
-  await page.getByTestId('auth-register-submit').click();
+  await page.getByTestId('sign-up-submit').click();
   const response = await registered;
   expect(response.ok(), `POST /api/v1/auth/register answered ${response.status()}`).toBe(true);
   const body = (await response.json()) as { user: { id: string; username: string } };
