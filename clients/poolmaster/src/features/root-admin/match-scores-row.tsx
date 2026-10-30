@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { MatchEnding, MatchSide, MatchStatus, type SportMatchPeriods } from '@poolmaster/shared/domain';
 import { clearEventMatchPeriodScore, recordEventMatchPeriodScore, recordEventMatchResult } from '@/lib/api';
 import type { SportEventMatchDto } from '@/lib/api';
-import { Button, InlineError, Input } from '@/features/shared/ui';
+import { Button, InlineError, Input, TableCell } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -52,7 +52,7 @@ export function MatchScoresRow({
 
   return (
     <tr className="align-top" data-testid={`root-admin-bracket-scores-${match.matchNumber}`}>
-      <td className="px-4 pb-3" colSpan={columns}>
+      <TableCell className="pt-0 pb-3" colSpan={columns}>
         <div className="flex flex-wrap gap-3">
           {periodNumbers.map((periodNumber) => {
             const saved = match.periodScores.find((score) => score.periodNumber === periodNumber);
@@ -83,7 +83,7 @@ export function MatchScoresRow({
             savedShootout={shootout}
           />
         </div>
-      </td>
+      </TableCell>
     </tr>
   );
 }
