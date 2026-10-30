@@ -7,7 +7,7 @@
         "clients/poolmaster/src/features/root-admin/stat-lines-panel.tsx"
       ],
       "count": 1,
-      "ticket": "#1323"
+      "reason": "Only look alike: the tail of two correction mutations on different endpoints with their own log lines; a helper for the shared onSuccess would hide more than it saves."
     },
     {
       "files": [
@@ -23,7 +23,7 @@
         "clients/poolmaster/src/features/root-admin/tier-definitions-panel.tsx"
       ],
       "count": 1,
-      "ticket": "#1323"
+      "reason": "Only look alike: the props tail and the vocabulary and logger lines that open two different components."
     }
   ]
 }

@@ -75,9 +75,36 @@ export function compareWithBaseline(clones, baseline) {
   }
   for (const [key, entry] of allowed) {
     const count = found.get(key) ?? 0;
-    if (count < entry.count) removed.push({ key, count, allowed: entry.count, ticket: entry.ticket });
+    if (count < entry.count) {
+      removed.push({ key, count, allowed: entry.count, ...(entry.reason ? { reason: entry.reason } : { ticket: entry.ticket }) });
+    }
   }
   return { added, removed };
+}
+
+/**
+ * A message naming the entries that do not say why they are there, else null. Each entry has
+ * exactly one of a non-empty `ticket`, the ticket that removes the copy, or `reason`, why two
+ * blocks that only look alike stay.
+ */
+export function checkEntries(baseline) {
+  const unexplained = baseline.filter((entry) => {
+    const hasTicket = typeof entry.ticket === 'string' && entry.ticket.trim() !== '';
+    const hasReason = typeof entry.reason === 'string' && entry.reason.trim() !== '';
+    return hasTicket === hasReason;
+  });
+  if (unexplained.length === 0) return null;
+  const keys = unexplained.map((entry) => pairKey(...entry.files)).join('; ');
+  return `${BASELINE_FILE}: each entry names exactly one of a ticket that removes the copy or the reason it stays. Fix: ${keys}.`;
+}
+
+/** The line for a pair that now holds fewer copies than its entry allows. */
+export function describeRemoved({ key, count, allowed, ticket, reason }) {
+  const owner = reason ? 'kept as a look-alike' : ticket;
+  return (
+    `Copy removed: ${key} now holds ${count} (baseline ${allowed}, ${owner}). ` +
+    `Lower its count in ${BASELINE_FILE} (delete the entry at 0) and BASELINE_CEILING with it.`
+  );
 }
 
 async function main() {
@@ -99,6 +126,7 @@ async function main() {
   const baseline = JSON.parse(readFileSync(join(repoRoot, BASELINE_FILE), 'utf8')).pairs;
   const { added, removed } = compareWithBaseline(clones, baseline);
   const ceilingProblem = checkCeiling(baseline);
+  const entriesProblem = checkEntries(baseline);
   const seconds = ((Date.now() - started) / 1000).toFixed(1);
 
   for (const { key, count, allowed } of added) {
@@ -107,19 +135,15 @@ async function main() {
       console.error(`  ${clone.fileA}:${clone.lineA}  ~  ${clone.fileB}:${clone.lineB}`);
     }
   }
-  for (const { key, count, allowed, ticket } of removed) {
-    console.error(
-      `Copy removed: ${key} now holds ${count} (baseline ${allowed}, ${ticket ?? 'kept as look-alike'}). ` +
-        `Lower its count in ${BASELINE_FILE} (delete the entry at 0) and BASELINE_CEILING with it.`,
-    );
-  }
+  for (const entry of removed) console.error(describeRemoved(entry));
   if (added.length > 0) {
     console.error(
       'Extract the shared piece instead of copying it: rules/react-ui-rules.md §5 *Component Reuse Threshold*.',
     );
   }
   if (ceilingProblem) console.error(ceilingProblem);
-  if (added.length > 0 || removed.length > 0 || ceilingProblem) process.exit(1);
+  if (entriesProblem) console.error(entriesProblem);
+  if (added.length > 0 || removed.length > 0 || ceilingProblem || entriesProblem) process.exit(1);
   console.log(`Duplicate check OK: ${clones.length} known copies, none new (${seconds}s).`);
 }
 
