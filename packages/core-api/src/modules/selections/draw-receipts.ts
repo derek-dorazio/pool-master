@@ -24,26 +24,26 @@ export class DrawReceipts implements DueNotifications {
   constructor(private readonly deps: DrawReceiptsDeps) {}
 
   async queueDue(): Promise<void> {
-    const contestIds = await this.deps.contests.findDrawReceiptsPending();
-    if (contestIds.length === 0) return;
+    const pending = await this.deps.contests.findDrawReceiptsPending();
+    if (pending.length === 0) return;
     const sent: string[] = [];
     // A draw is one contest's: its context is the contest's own, read once for all its entries.
     // Draws are a commissioner's press, so a sweep finds few.
-    for (const contestId of contestIds) {
+    for (const draw of pending) {
       try {
-        await this.deps.selections.sendDrawReceipts(contestId);
-        sent.push(contestId);
+        await this.deps.selections.sendDrawReceipts(draw);
+        sent.push(draw.contestId);
       } catch (error) {
         this.deps.logger?.error({
           action: 'email.drawReceipts.failed',
-          data: { contestId, error: error instanceof Error ? error.message : String(error) },
+          data: { ...draw, error: error instanceof Error ? error.message : String(error) },
         }, 'Failed to queue a quick pick draw\'s receipts; the next sweep tries again');
       }
     }
     await this.deps.contests.clearDrawReceiptsPending(sent);
     this.deps.logger?.info({
       action: 'email.drawReceipts.sent',
-      data: { contestIds: sent, failedCount: contestIds.length - sent.length },
+      data: { contestIds: sent, failedCount: pending.length - sent.length },
     }, 'Queued quick pick draws\' receipts');
   }
 }

@@ -19,6 +19,7 @@ export type {
   ContestEntryCreate,
   ContestUpdate,
   ContestStatusFilter,
+  PendingDrawReceipts,
   ReleasedEdition,
   ContestStatusTransition,
   ContestCreateResult,

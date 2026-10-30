@@ -31,4 +31,10 @@ export const TABLE_SCAN_ALLOWANCES: readonly TableScanAllowance[] = [
     reason: "A standings email records each placed entry's position by id. On the tests' near-empty table the plan hashes the ids against every entry; "
       + 'the real plan looks up each id through contest_entries_pkey, so Postgres keeps it (checked on 200k entries, #1302).',
   },
+  {
+    table: 'contest_draws',
+    sqlIncludes: 'WHERE "public"."contest_draws"."receipts_pending_sport_event_id" IS NOT NULL ORDER BY',
+    reason: 'The lifecycle sweep reads the draws still owing quick pick receipts (#1171). Its index is partial on that same filter, '
+      + 'so walking the whole index reads only the pending draws, never the table.',
+  },
 ];

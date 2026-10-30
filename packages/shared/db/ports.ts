@@ -466,6 +466,12 @@ export interface ParticipantProviderMappingRepository {
  * The one port for `Contest` (#247 merged the contest-management copy into it). `create` is
  * called by the one creation path, `ContestManagementService.createContest` (#245).
  */
+/** A quick pick draw whose entries' receipts are still to send (#1171): its contest and the event it dealt. */
+export interface PendingDrawReceipts {
+  contestId: string;
+  sportEventId: string;
+}
+
 export interface ContestRepository {
   findById(id: string): Promise<Contest | null>;
   /** The contests under `ids`, in one read, missing ones left out (#1315). */
@@ -503,8 +509,8 @@ export interface ContestRepository {
   findJoinableByReleasedEdition(edition: ReleasedEdition): Promise<Contest[]>;
   /** Every contest in one of `statuses`, oldest first, across leagues: the entry reminders' sweep reads it (#845). */
   findByStatuses(statuses: readonly Contest['status'][]): Promise<Contest[]>;
-  /** The ids of the drawn quick pick contests whose entries' receipts are still to send (#1171), oldest draw first. */
-  findDrawReceiptsPending(): Promise<string[]>;
+  /** The drawn quick pick contests whose entries' receipts are still to send (#1171), with the event dealt, oldest draw first. */
+  findDrawReceiptsPending(): Promise<PendingDrawReceipts[]>;
   /** Marks the contests' draws as having sent their receipts (#1171), in one write. */
   clearDrawReceiptsPending(contestIds: readonly string[]): Promise<void>;
   /**

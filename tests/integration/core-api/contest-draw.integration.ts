@@ -116,6 +116,7 @@ function drawOf(fixture: DrawFixture) {
     fieldOrder: [c, a, d, b] as string[],
     entryOrder: [second, first],
     drawnByUserId: fixture.userId,
+    sportEventId: fixture.sportEventId,
     entries: [
       { entryId: second, sportEventParticipantIds: [c, d] as string[] },
       { entryId: first, sportEventParticipantIds: [a, b] as string[] },
@@ -317,7 +318,7 @@ describe('quick pick receipts, queued by the draw for the lifecycle sweep (#1171
     });
   }
 
-  it('marks a recorded draw as owing its receipts, listed as pending until cleared', async () => {
+  it('marks a recorded draw as owing its receipts for the event it dealt, listed as pending until cleared', async () => {
     const fixture = await seedRandomDrawContest();
     const undrawn = await seedRandomDrawContest();
     const contests = new PrismaContestRepository(getAppPrisma());
@@ -325,13 +326,13 @@ describe('quick pick receipts, queued by the draw for the lifecycle sweep (#1171
     await new ContestEntryPickService(getAppPrisma()).recordDraw(drawOf(fixture));
 
     const pending = await contests.findDrawReceiptsPending();
-    expect(pending).toContain(fixture.contestId);
-    expect(pending).not.toContain(undrawn.contestId);
+    expect(pending).toContainEqual({ contestId: fixture.contestId, sportEventId: fixture.sportEventId });
+    expect(pending.map((draw) => draw.contestId)).not.toContain(undrawn.contestId);
 
     await contests.clearDrawReceiptsPending([fixture.contestId]);
 
-    expect(await contests.findDrawReceiptsPending()).not.toContain(fixture.contestId);
-    expect((await getPrisma().contestDraw.findUniqueOrThrow({ where: { contestId: fixture.contestId } })).receiptsPending).toBe(false);
+    expect((await contests.findDrawReceiptsPending()).map((draw) => draw.contestId)).not.toContain(fixture.contestId);
+    expect((await getPrisma().contestDraw.findUniqueOrThrow({ where: { contestId: fixture.contestId } })).receiptsPendingSportEventId).toBeNull();
   });
 
   it('answers the draw without queuing any receipt, then the sweep queues each entry owner one receipt, and a second sweep queues none', async () => {
@@ -347,11 +348,42 @@ describe('quick pick receipts, queued by the draw for the lifecycle sweep (#1171
     const sent = (await receiptsOf(fixture.contestId)).map((row) => row.recipientUserId ?? '');
     expect(sent.sort((left, right) => left.localeCompare(right)))
       .toEqual([...fixture.ownerIds].sort((left, right) => left.localeCompare(right)));
-    expect(await new PrismaContestRepository(getAppPrisma()).findDrawReceiptsPending()).not.toContain(fixture.contestId);
+    expect((await new PrismaContestRepository(getAppPrisma()).findDrawReceiptsPending()).map((draw) => draw.contestId)).not.toContain(fixture.contestId);
 
     await drawReceipts.queueDue();
 
     expect(await receiptsOf(fixture.contestId)).toHaveLength(fixture.ownerIds.length);
+  });
+
+  it('queues the receipts of the event the draw dealt, listing its picks, when the sweep runs after that event started and the contest\'s next event is still to come', async () => {
+    const prisma = getPrisma();
+    const fixture = await seedOwnedDraw();
+    const later = await prisma.sportEvent.create({
+      data: {
+        ...(await freshEventEdition(prisma)),
+        externalId: `draw-later-${randomUUID().slice(0, 8)}`,
+        providerId: 'integration-test',
+        sport: Sport.GOLF,
+        name: 'Draw Later Event',
+        startDate: new Date('2031-01-01T12:00:00.000Z'),
+        status: 'SCHEDULED',
+      },
+    });
+    await prisma.contestSportEvent.create({ data: { contestId: fixture.contestId, sportEventId: later.id, sequence: 2 } });
+    const { selections, drawReceipts } = wiring();
+    await selections.runDraw({ contestId: fixture.contestId, actorUserId: fixture.userId });
+    // The drawn event starts before the sweep runs.
+    await prisma.sportEvent.update({ where: { id: fixture.sportEventId }, data: { status: 'IN_PROGRESS', startDate: new Date(Date.now() - 60_000) } });
+
+    await drawReceipts.queueDue();
+
+    const receipts = await prisma.emailMessage.findMany({
+      where: { contestId: fixture.contestId, templateKey: 'CONTEST_ENTRY_COMPLETED' },
+      select: { idempotencyKey: true, textBody: true },
+    });
+    expect(receipts).toHaveLength(fixture.ownerIds.length);
+    expect(receipts.every((receipt) => receipt.idempotencyKey.includes(fixture.sportEventId))).toBe(true);
+    expect(receipts.every((receipt) => (receipt.textBody ?? '').includes('Pick 1: Draw Golfer'))).toBe(true);
   });
 
   it('queues each receipt once even when a sweep queued them but did not clear the mark, so the next sweep sends none again', async () => {
@@ -359,7 +391,7 @@ describe('quick pick receipts, queued by the draw for the lifecycle sweep (#1171
     const { selections, drawReceipts } = wiring();
     await selections.runDraw({ contestId: fixture.contestId, actorUserId: fixture.userId });
 
-    await selections.sendDrawReceipts(fixture.contestId);
+    await selections.sendDrawReceipts({ contestId: fixture.contestId, sportEventId: fixture.sportEventId });
     await drawReceipts.queueDue();
 
     expect(await receiptsOf(fixture.contestId)).toHaveLength(fixture.ownerIds.length);

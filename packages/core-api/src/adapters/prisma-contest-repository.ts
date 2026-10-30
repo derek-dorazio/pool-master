@@ -13,6 +13,7 @@ import type {
   ContestStatusFilter,
   ContestStatusTransition,
   ContestUpdate,
+  PendingDrawReceipts,
   ReleasedEdition,
 } from '@poolmaster/shared/db';
 import { championshipYear, ContestStatus, SelectionType, SportEventStatus, type Contest, type ContestFormat, type CupWeight, type Sport } from '@poolmaster/shared/domain';
@@ -224,20 +225,22 @@ export class PrismaContestRepository implements ContestRepository {
     return rows.map(mapToContest);
   }
 
-  async findDrawReceiptsPending(): Promise<string[]> {
+  async findDrawReceiptsPending(): Promise<PendingDrawReceipts[]> {
     const rows = await this.prisma.contestDraw.findMany({
-      where: { receiptsPending: true },
+      where: { receiptsPendingSportEventId: { not: null } },
       orderBy: [{ drawnAt: 'asc' }, { contestId: 'asc' }],
-      select: { contestId: true },
+      select: { contestId: true, receiptsPendingSportEventId: true },
     });
-    return rows.map((row) => row.contestId);
+    return rows.flatMap((row) => (row.receiptsPendingSportEventId === null
+      ? []
+      : [{ contestId: row.contestId, sportEventId: row.receiptsPendingSportEventId }]));
   }
 
   async clearDrawReceiptsPending(contestIds: readonly string[]): Promise<void> {
     if (contestIds.length === 0) return;
     await this.prisma.contestDraw.updateMany({
-      where: { contestId: { in: [...contestIds] }, receiptsPending: true },
-      data: { receiptsPending: false },
+      where: { contestId: { in: [...contestIds] }, receiptsPendingSportEventId: { not: null } },
+      data: { receiptsPendingSportEventId: null },
     });
   }
 

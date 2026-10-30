@@ -181,7 +181,7 @@ export class ContestEntryPickService {
             entryOrder: [...input.entryOrder],
             drawnByUserId: input.drawnByUserId,
             // The dealt entries' receipts go out on the next lifecycle sweep (#1171).
-            receiptsPending: true,
+            receiptsPendingSportEventId: input.sportEventId,
           },
           select: { drawnAt: true },
         });

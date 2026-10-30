@@ -1319,6 +1319,7 @@ describe('SelectionService.runDraw — the random draw deals every entry its pic
       fieldOrder: expected.fieldOrder,
       entryOrder: expected.entryOrder,
       drawnByUserId: 'user-commissioner',
+      sportEventId: EVENT_ID,
       entries: expected.entries,
     });
     const dealt = expected.entries.flatMap((drawn) => drawn.sportEventParticipantIds);
@@ -1474,7 +1475,7 @@ describe('SelectionService.sendDrawReceipts — the lifecycle sweep sends a draw
     const sendEntrySubmittedEmails = jest.fn().mockResolvedValue(undefined);
     deps.entryReceipts = { sendEntrySubmittedEmails };
 
-    await service.sendDrawReceipts(CONTEST_ID);
+    await service.sendDrawReceipts({ contestId: CONTEST_ID, sportEventId: EVENT_ID });
 
     expect(sendEntrySubmittedEmails).toHaveBeenCalledTimes(1);
     const [[receipt]] = sendEntrySubmittedEmails.mock.calls as Array<[EntrySubmittedReceiptInput]>;
@@ -1488,11 +1489,28 @@ describe('SelectionService.sendDrawReceipts — the lifecycle sweep sends a draw
     expect(deps.squadMemberships.findBySquads).toHaveBeenCalledTimes(1);
   });
 
+  it('sends the receipts of the event the draw recorded, with its picks, when the sweep runs after that event started and a later event is next', async () => {
+    const { service, deps } = setup({ ...DRAWN, contest: { ...DRAWN.contest, sportEventIds: [EVENT_ID, 'event-2'] } });
+    deps.sportEvents.findByIds = jest.fn().mockResolvedValue([
+      // The drawn event started just after the draw, before the sweep's clock.
+      { ...eventStarting(new Date('2026-04-01T12:01:00.000Z')), status: 'IN_PROGRESS' },
+      { ...eventStarting(new Date('2099-01-01T00:00:00.000Z')), id: 'event-2' },
+    ]);
+    const sendEntrySubmittedEmails = jest.fn().mockResolvedValue(undefined);
+    deps.entryReceipts = { sendEntrySubmittedEmails };
+
+    await service.sendDrawReceipts({ contestId: CONTEST_ID, sportEventId: EVENT_ID });
+
+    const [[receipt]] = sendEntrySubmittedEmails.mock.calls as Array<[EntrySubmittedReceiptInput]>;
+    expect(receipt.sportEvent.id).toBe(EVENT_ID);
+    expect(receipt.picks.map((row) => row.id)).toEqual(['pick-1', 'pick-2']);
+  });
+
   it('throws when the receipts cannot be queued, so the sweep keeps the draw marked and tries again', async () => {
     const { service, deps } = setup(DRAWN);
     deps.entryReceipts = { sendEntrySubmittedEmails: jest.fn().mockRejectedValue(new Error('database unavailable')) };
 
-    await expect(service.sendDrawReceipts(CONTEST_ID)).rejects.toThrow('database unavailable');
+    await expect(service.sendDrawReceipts({ contestId: CONTEST_ID, sportEventId: EVENT_ID })).rejects.toThrow('database unavailable');
   });
 });
 describe('SelectionService — what one pick reads (#1196)', () => {
