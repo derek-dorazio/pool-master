@@ -36,32 +36,33 @@ export class PrismaLeagueInvitationRepository implements LeagueInvitationReposit
     return row ? mapToInvitation(row) : null;
   }
 
-  async findByEmail(leagueId: string, email: string): Promise<LeagueInvitation | null> {
-    const row = await this.prisma.leagueInvitation.findFirst({
-      where: { leagueId, email, status: SharedInvitationStatus.PENDING },
+  async findPendingByEmails(leagueId: string, emails: readonly string[]): Promise<LeagueInvitation[]> {
+    if (emails.length === 0) return [];
+    const rows = await this.prisma.leagueInvitation.findMany({
+      where: { leagueId, email: { in: [...new Set(emails)] }, status: SharedInvitationStatus.PENDING },
     });
-    return row ? mapToInvitation(row) : null;
+    return rows.map(mapToInvitation);
   }
 
   async create(
     invitation: Omit<LeagueInvitation, 'id' | 'createdAt' | 'updatedAt'>,
   ): Promise<LeagueInvitation> {
-    const row = await this.prisma.leagueInvitation.create({
-      data: {
-        leagueId: invitation.leagueId,
-        email: invitation.email,
-        inviteCode: invitation.inviteCode,
-        inviteType: invitation.inviteType,
-        status: invitation.status,
-        maxUses: invitation.maxUses,
-        currentUses: invitation.currentUses,
-        invitedBy: invitation.invitedBy,
-        expiresAt: invitation.expiresAt,
-        acceptedAt: invitation.acceptedAt,
-        acceptedBy: invitation.acceptedBy,
-      },
-    });
+    const row = await this.prisma.leagueInvitation.create({ data: toCreateData(invitation) });
     return mapToInvitation(row);
+  }
+
+  async createMany(
+    invitations: readonly Omit<LeagueInvitation, 'id' | 'createdAt' | 'updatedAt'>[],
+  ): Promise<LeagueInvitation[]> {
+    if (invitations.length === 0) return [];
+    const rows = await this.prisma.leagueInvitation.createManyAndReturn({ data: invitations.map(toCreateData) });
+    // Each invite code is unique, so it names the row written for each invitation given.
+    const byCode = new Map(rows.map((row) => [row.inviteCode, mapToInvitation(row)]));
+    return invitations.map((invitation) => {
+      const written = byCode.get(invitation.inviteCode);
+      if (!written) throw new Error(`Invitation ${invitation.inviteCode} was not written`);
+      return written;
+    });
   }
 
   async update(id: string, updates: Partial<LeagueInvitation>): Promise<LeagueInvitation> {
@@ -97,5 +98,21 @@ function mapToInvitation(row: PrismaLeagueInvitation): LeagueInvitation {
     acceptedBy: row.acceptedBy ?? undefined,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
+  };
+}
+
+function toCreateData(invitation: Omit<LeagueInvitation, 'id' | 'createdAt' | 'updatedAt'>) {
+  return {
+    leagueId: invitation.leagueId,
+    email: invitation.email,
+    inviteCode: invitation.inviteCode,
+    inviteType: invitation.inviteType,
+    status: invitation.status,
+    maxUses: invitation.maxUses,
+    currentUses: invitation.currentUses,
+    invitedBy: invitation.invitedBy,
+    expiresAt: invitation.expiresAt,
+    acceptedAt: invitation.acceptedAt,
+    acceptedBy: invitation.acceptedBy,
   };
 }

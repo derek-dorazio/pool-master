@@ -9,7 +9,12 @@
 import { randomUUID } from 'node:crypto';
 import type { EmailMessageRecord } from '@poolmaster/shared/db';
 import type { LeagueResponse } from '@poolmaster/shared/dto';
-import { PrismaEmailMessageRepository } from '../../../packages/core-api/src/adapters';
+import {
+  PrismaEmailMessageRepository,
+  PrismaEmailOptOutRepository,
+  PrismaEmailSuppressionRepository,
+} from '../../../packages/core-api/src/adapters';
+import { recordStatements, statementShape } from '../statement-log';
 import {
   buildCreateLeaguePayload,
   cleanupTestData,
@@ -105,6 +110,84 @@ describe('email outbox: recording', () => {
     await expect(getPrisma().emailMessage.create({
       data: { ...base, idempotencyKey: `outbox-test:${RUN}:refused-3`, status: 'QUEUED' },
     })).rejects.toThrow(/email_messages_due_when_queued/);
+  });
+});
+
+describe('email outbox: recording many at once (#1173)', () => {
+  it('records each new email and answers an already recorded one as it stands, in the order given, without its content', async () => {
+    const before = queued();
+    const { message: stored } = await repository().record(before);
+    const fresh = queued();
+    const skipped = { ...queued(), status: 'SKIPPED' as const, skipReason: 'SUPPRESSED' as const };
+
+    const states = await repository().recordMany([fresh, { ...before, subject: 'Something else' }, skipped]);
+
+    expect(states.map(({ status, skipReason, created }) => [status, skipReason, created])).toEqual([
+      ['QUEUED', undefined, true],
+      ['QUEUED', undefined, false],
+      ['SKIPPED', 'SUPPRESSED', true],
+    ]);
+    expect(states[1].id).toBe(stored.id);
+    expect(states[0]).not.toHaveProperty('subject');
+    const rows = await getPrisma().emailMessage.findMany({ where: { id: { in: states.map((state) => state.id) } } });
+    expect(new Map(rows.map((row) => [row.id, row.subject]))).toEqual(new Map([
+      [states[0].id, 'You are invited'], [stored.id, 'You are invited'], [states[2].id, null],
+    ]));
+  });
+
+  it('costs one write for 2 new emails and for 5, and one more read only for emails already recorded', async () => {
+    const shapes = async (records: EmailMessageRecord[]) => (await recordStatements(() => repository().recordMany(records)))
+      .statements.map(({ sql }) => statementShape(sql).split(' (')[0].split(' VALUES')[0].replace(/^SELECT .* FROM /, 'SELECT FROM ').split(' WHERE')[0]);
+    const two = [queued(), queued()];
+    const five = [queued(), queued(), queued(), queued(), queued()];
+
+    // Prisma wraps a write that returns its rows in a transaction of its own.
+    const write = ['BEGIN', 'INSERT INTO "public"."email_messages"', 'COMMIT'];
+    expect(await shapes(two)).toEqual(write);
+    expect(await shapes(five)).toEqual(write);
+    expect(await shapes([...five, queued()])).toEqual([...write, 'SELECT FROM "public"."email_messages"']);
+  });
+
+  it('records one email once when the batch names it twice', async () => {
+    const email = queued();
+
+    const states = await repository().recordMany([email, { ...email }]);
+
+    expect(states[0].id).toBe(states[1].id);
+    expect(states.map((state) => state.created)).toEqual([true, false]);
+    expect(await getPrisma().emailMessage.count({ where: { idempotencyKey: email.idempotencyKey } })).toBe(1);
+  });
+});
+
+describe('email outbox: who may be emailed, for many at once (#1173)', () => {
+  it('names the suppressed addresses among those asked about, lower-cased, in one read', async () => {
+    const suppressions = new PrismaEmailSuppressionRepository(getAppPrisma());
+    const gone = `gone-${RUN}@integration.test`;
+    await suppressions.suppress({ email: gone.toUpperCase(), suppressionReason: 'BOUNCE' });
+
+    const { result, statements } = await recordStatements(() =>
+      suppressions.findSuppressedEmails([gone.toUpperCase(), `fine-${RUN}@integration.test`]));
+
+    expect(result).toEqual(new Set([gone]));
+    expect(statements).toHaveLength(1);
+    await expect(suppressions.findSuppressedEmails([])).resolves.toEqual(new Set());
+    await getPrisma().emailSuppression.deleteMany({ where: { email: gone } });
+  });
+
+  it('names the users who turned the category off, leaving out those who turned off another and those not asked about', async () => {
+    const optOuts = new PrismaEmailOptOutRepository(getAppPrisma());
+    const [quiet, other, notAsked, keen] = (await Promise.all(['quiet', 'other', 'not-asked', 'keen'].map((name) =>
+      createTestUser({ displayName: `Opt out ${name} ${RUN}` })))).map(({ user }) => user);
+    await optOuts.setOptedOut(quiet.id, 'RECEIPTS', true);
+    await optOuts.setOptedOut(other.id, 'RESULTS', true);
+    await optOuts.setOptedOut(notAsked.id, 'RECEIPTS', true);
+
+    const { result, statements } = await recordStatements(() =>
+      optOuts.findOptedOutUsers([quiet.id, other.id, keen.id], 'RECEIPTS'));
+
+    expect(result).toEqual(new Set([quiet.id]));
+    expect(statements).toHaveLength(1);
+    await expect(optOuts.findOptedOutUsers([], 'RECEIPTS')).resolves.toEqual(new Set());
   });
 });
 

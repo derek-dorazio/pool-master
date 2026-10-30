@@ -386,10 +386,10 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
       && (row.status === InvitationStatus.PENDING
         || (row.status === InvitationStatus.EXPIRED && row.inviteType === InviteType.EMAIL))),
     findByCode: async (code) => one(leagueInvitations.where((row) => row.inviteCode === code)),
-    findByEmail: async (leagueId, email) =>
-      one(leagueInvitations.where((row) =>
-        row.leagueId === leagueId && row.email === email && row.status === InvitationStatus.PENDING)),
+    findPendingByEmails: async (leagueId, emails) => leagueInvitations.where((row) =>
+      row.leagueId === leagueId && row.email !== undefined && emails.includes(row.email) && row.status === InvitationStatus.PENDING),
     create: async (row) => leagueInvitations.insert(row),
+    createMany: async (rows) => rows.map((row) => leagueInvitations.insert(row)),
     update: async (id, updates) => leagueInvitations.patch(id, updates),
   };
 

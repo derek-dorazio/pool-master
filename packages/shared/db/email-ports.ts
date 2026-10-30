@@ -45,6 +45,13 @@ export type EmailMessageRecord =
     skipReason: EmailSkipReason;
   });
 
+/** Where one recorded email stands (#1173): its id and status, without its content. */
+export interface EmailMessageRecordState extends EmailMessageState {
+  id: string;
+  /** False when the idempotency key was already recorded: nothing was written. */
+  created: boolean;
+}
+
 export interface EmailMessageRecordResult {
   message: EmailMessage;
   /** False when the idempotency key was already recorded: nothing was written. */
@@ -56,6 +63,11 @@ export interface EmailMessageRepository {
   findById(id: string): Promise<EmailMessage | undefined>;
   /** Records one email, unless its idempotency key is already recorded; then returns that row. */
   record(input: EmailMessageRecord): Promise<EmailMessageRecordResult>;
+  /**
+   * `record` for many emails in one write (#1173): each is written unless its idempotency key is
+   * already recorded. Answers where each stands, in the order given, without reading its content.
+   */
+  recordMany(inputs: readonly EmailMessageRecord[]): Promise<EmailMessageRecordState[]>;
   /**
    * Claims up to `limit` due emails, oldest due first: queued ones whose time has come, and
    * claimed ones whose claim lapsed (a sender stopped mid-send). Emails of `firstTemplateKeys`
@@ -127,12 +139,16 @@ export interface EmailSuppressionRepository {
   suppress(input: { email: string; suppressionReason: EmailSuppressionReason; emailMessageId?: string }): Promise<void>;
   /** The address's suppression, if it has one. */
   findByEmail(email: string): Promise<EmailSuppression | undefined>;
+  /** Which of the addresses are suppressed, lower-cased, in one read (#1173). */
+  findSuppressedEmails(emails: readonly string[]): Promise<Set<string>>;
 }
 
 /** The categories of email each user turned off (#844 slice 5); a category not listed is on. */
 export interface EmailOptOutRepository {
   findByUser(userId: string): Promise<OptionalEmailCategory[]>;
   isOptedOut(userId: string, category: OptionalEmailCategory): Promise<boolean>;
+  /** Which of the users turned the category off, in one read (#1173). */
+  findOptedOutUsers(userIds: readonly string[], category: OptionalEmailCategory): Promise<Set<string>>;
   /** Turns the category off (`optedOut` true) or back on; repeating either changes nothing. */
   setOptedOut(userId: string, category: OptionalEmailCategory, optedOut: boolean): Promise<void>;
 }

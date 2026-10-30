@@ -26,7 +26,7 @@ export interface ContestExpansionNotice {
 
 export interface ContestExpandedNoticeDeps extends LeagueMemberDeps {
   leagues: Pick<LeagueRepository, 'findById'>;
-  email: Pick<EmailService, 'send'>;
+  email: Pick<EmailService, 'sendMany'>;
   appBaseUrl: string;
   logger?: FastifyBaseLogger;
 }
@@ -46,21 +46,19 @@ export class ContestExpandedNotices {
       const expandedBy = !granted && expander ? formatUserName(expander) : null;
       const contestUrl = buildContestAdminUrl(this.deps.appBaseUrl, league.leagueCode, contest.id);
       const commissioners = members.filter(({ user, role }) => role === LeagueRole.COMMISSIONER && user.id !== expandedById);
-      for (const { user } of commissioners) {
-        await this.deps.email.send('CONTEST_EXPANDED', {
-          to: emailRecipientOf(user),
-          about: `${contest.id}:${String(entriesPerContest)}`,
-          league: { id: league.id, name: league.name, leagueCode: league.leagueCode, plan: league.plan },
-          data: {
-            userName: formatUserName(user),
-            leagueName: league.name,
-            contestName: contest.name,
-            entriesPerContest,
-            expandedBy,
-            contestUrl,
-          },
-        });
-      }
+      await this.deps.email.sendMany('CONTEST_EXPANDED', commissioners.map(({ user }) => ({
+        to: emailRecipientOf(user),
+        about: `${contest.id}:${String(entriesPerContest)}`,
+        league: { id: league.id, name: league.name, leagueCode: league.leagueCode, plan: league.plan },
+        data: {
+          userName: formatUserName(user),
+          leagueName: league.name,
+          contestName: contest.name,
+          entriesPerContest,
+          expandedBy,
+          contestUrl,
+        },
+      })));
     } catch (error) {
       this.deps.logger?.error({
         action: 'email.contestExpanded.failed',

@@ -20,7 +20,6 @@ import {
   SportEventStatus,
   contestEntryEventStatus,
   type Contest,
-  type EmailTemplateKey,
   type League,
   type SportEvent,
   type User,
@@ -39,8 +38,10 @@ import {
   type ContestEmailEvent,
   type ContestEventChange,
   type ContestResultsOutcome,
+  type EmailSendInput,
   type EmailService,
   type StandingsLine,
+  type SystemEmailTemplateKey,
 } from '../email';
 import { describeEventFormat, shareSummaryReads, summarizeContest, type ContestSummaryDeps } from './contest-summary';
 import { activeLeagueMembers, activeLeagueMembersByLeague, activeLeagueMembersWithRoles, type LeagueMemberDeps } from './league-members';
@@ -53,7 +54,7 @@ export interface ContestNoticeDeps extends ContestSummaryDeps, LeagueMemberDeps 
   squadMemberships: Pick<SquadMembershipRepository, 'findBySquads'>;
   /** A settled contest's frozen places, for its final results. */
   finalStandings: Pick<ContestService, 'finalStandingsOf'>;
-  email: Pick<EmailService, 'send'>;
+  email: Pick<EmailService, 'sendMany'>;
   appBaseUrl: string;
   logger?: FastifyBaseLogger;
   /** The clock that says whether an event's picks are still open; the real one by default. */
@@ -109,7 +110,7 @@ export class ContestNotices implements ContestOpenedNotice, ContestStartedNotice
       return;
     }
     const contestUrl = buildContestUrl(this.deps.appBaseUrl, league.leagueCode, contest.id);
-    await this.sendEach('CONTEST_OPENED', contest, league, await activeLeagueMembers(this.deps, league.id), (user) => this.deps.email.send('CONTEST_OPENED', {
+    await this.sendEach('CONTEST_OPENED', contest, league, await activeLeagueMembers(this.deps, league.id), (user) => ({
       to: emailRecipientOf(user),
       about: contest.id,
       league: { id: league.id, name: league.name, leagueCode: league.leagueCode, plan: league.plan },
@@ -167,7 +168,7 @@ export class ContestNotices implements ContestOpenedNotice, ContestStartedNotice
       .map((owner) => owner.userId));
     const eventFormat = await describeEventFormat(shared, sportEvent);
     const leaderboardUrl = buildLeaderboardUrl(this.deps.appBaseUrl, league.leagueCode, contest.id);
-    await this.sendEach('CONTEST_STARTED_SUMMARY', contest, league, await activeLeagueMembers(this.deps, league.id), (user) => this.deps.email.send('CONTEST_STARTED_SUMMARY', {
+    await this.sendEach('CONTEST_STARTED_SUMMARY', contest, league, await activeLeagueMembers(this.deps, league.id), (user) => ({
       to: emailRecipientOf(user),
       about: `${contest.id}:${sportEvent.id}`,
       league: { id: league.id, name: league.name, leagueCode: league.leagueCode, plan: league.plan },
@@ -205,7 +206,7 @@ export class ContestNotices implements ContestOpenedNotice, ContestStartedNotice
     }
     const leaderboardUrl = buildLeaderboardUrl(this.deps.appBaseUrl, league.leagueCode, contest.id);
     const contestUrl = buildContestUrl(this.deps.appBaseUrl, league.leagueCode, contest.id);
-    const send = (user: User, outcome: ContestResultsOutcome) => this.deps.email.send('CONTEST_RESULTS', {
+    const resultsFor = (user: User, outcome: ContestResultsOutcome): EmailSendInput<'CONTEST_RESULTS'> => ({
       to: emailRecipientOf(user),
       about: contest.id,
       league: { id: league.id, name: league.name, leagueCode: league.leagueCode, plan: league.plan },
@@ -226,7 +227,7 @@ export class ContestNotices implements ContestOpenedNotice, ContestStartedNotice
       const recipients = members
         .filter(({ user, role }) => role === LeagueRole.COMMISSIONER || entrants.has(user.id))
         .map(({ user }) => user);
-      await this.sendEach('CONTEST_RESULTS', contest, league, recipients, (user) => send(user, outcome));
+      await this.sendEach('CONTEST_RESULTS', contest, league, recipients, (user) => resultsFor(user, outcome));
       return;
     }
 
@@ -247,7 +248,7 @@ export class ContestNotices implements ContestOpenedNotice, ContestStartedNotice
         movement: null,
         isYours: squadIds.has(entry.squadId),
       }));
-      return send(user, {
+      return resultsFor(user, {
         kind: ContestResultsKind.SCORED,
         winners: winners.map((entry) => ({ entryName: entry.entryName, squadName: entry.squadName })),
         top: lines.slice(0, leaders),
@@ -309,7 +310,7 @@ export class ContestNotices implements ContestOpenedNotice, ContestStartedNotice
       const recipients = members
         .filter(({ user, role }) => role === LeagueRole.COMMISSIONER || entrants.has(user.id))
         .map(({ user }) => user);
-      await this.sendEach('CONTEST_EVENT_CHANGED', contest, league, recipients, (user) => this.deps.email.send('CONTEST_EVENT_CHANGED', {
+      await this.sendEach('CONTEST_EVENT_CHANGED', contest, league, recipients, (user) => ({
         to: emailRecipientOf(user),
         about: `${contest.id}:${about}`,
         league: { id: league.id, name: league.name, leagueCode: league.leagueCode, plan: league.plan },
@@ -350,27 +351,26 @@ export class ContestNotices implements ContestOpenedNotice, ContestStartedNotice
   }
 
   /**
-   * Queues one email per recipient, all at once rather than one after another, so a large league
-   * doesn't hold the request that opened the contest. A failure for one person is logged and the
-   * rest still go: the contest has already moved, and the email must not undo it.
+   * Queues the email to every recipient in one batch (#1173), a few queries however large the
+   * league. A failure is logged and not thrown: the contest has already moved, and the email
+   * must not undo it.
    */
-  private async sendEach(
-    templateKey: EmailTemplateKey,
+  private async sendEach<Key extends SystemEmailTemplateKey>(
+    templateKey: Key,
     contest: Contest,
     league: League,
     recipients: User[],
-    send: (user: User) => Promise<unknown>,
+    inputFor: (user: User) => EmailSendInput<Key>,
   ): Promise<void> {
-    await Promise.all(recipients.map(async (user) => {
-      try {
-        await send(user);
-      } catch (error) {
-        this.deps.logger?.error({
-          action: 'email.contestNotice.failed',
-          data: { templateKey, contestId: contest.id, leagueId: league.id, userId: user.id, error: error instanceof Error ? error.message : String(error) },
-        }, 'Failed to queue a contest email');
-      }
-    }));
+    if (recipients.length === 0) return;
+    try {
+      await this.deps.email.sendMany(templateKey, recipients.map(inputFor));
+    } catch (error) {
+      this.deps.logger?.error({
+        action: 'email.contestNotice.failed',
+        data: { templateKey, contestId: contest.id, leagueId: league.id, recipients: recipients.length, error: error instanceof Error ? error.message : String(error) },
+      }, 'Failed to queue a contest email');
+    }
   }
 
   private skipped(action: string, contest: Contest, message: string): void {

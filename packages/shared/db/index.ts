@@ -140,6 +140,7 @@ export type {
 export type {
   EmailMessageRecord,
   EmailMessageRecordResult,
+  EmailMessageRecordState,
   EmailMessageRepository,
   EmailMessageState,
   EmailOptOutRepository,

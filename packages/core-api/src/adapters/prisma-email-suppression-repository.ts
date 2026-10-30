@@ -22,6 +22,15 @@ export class PrismaEmailSuppressionRepository implements EmailSuppressionReposit
     const row = await this.prisma.emailSuppression.findUnique({ where: { email: email.toLowerCase() } });
     return row ? toEmailSuppression(row) : undefined;
   }
+
+  async findSuppressedEmails(emails: readonly string[]): Promise<Set<string>> {
+    if (emails.length === 0) return new Set();
+    const rows = await this.prisma.emailSuppression.findMany({
+      where: { email: { in: [...new Set(emails.map((email) => email.toLowerCase()))] } },
+      select: { email: true },
+    });
+    return new Set(rows.map((row) => row.email));
+  }
 }
 
 function toEmailSuppression(row: EmailSuppressionRow): EmailSuppression {

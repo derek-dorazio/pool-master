@@ -50,37 +50,37 @@ export class BulkService {
     if (!league) {
       throw new BulkOperationError('League not found', 'LEAGUE_NOT_FOUND');
     }
-    let sent = 0;
     const failed: { email: string; reason: string }[] = [];
     const duplicates: string[] = [];
-    for (const row of rows) {
-      const email = row.email.toLowerCase().trim();
+    const emails = rows.map((row) => row.email.toLowerCase().trim());
+    const valid = emails.filter((email) => email && email.includes('@'));
+    // One read of the pending invitations and one write of the new ones (#1173), not one each per row.
+    const pending = new Set((await this.invitationRepo.findPendingByEmails(leagueId, [...new Set(valid)]))
+      .map((invitation) => invitation.email));
+    const toInvite = new Set<string>();
+    for (const email of emails) {
       if (!email || !email.includes('@')) {
         failed.push({ email, reason: 'Invalid email format' });
-        continue;
-      }
-      // poolmaster-allow-query-in-loop: #1173
-      const existing = await this.invitationRepo.findByEmail(leagueId, email);
-      if (existing) {
+      } else if (pending.has(email) || toInvite.has(email)) {
         duplicates.push(email);
-        continue;
+      } else {
+        toInvite.add(email);
       }
-      const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + 7);
-      // poolmaster-allow-query-in-loop: #1173
-      await this.invitationRepo.create({
-        leagueId,
-        email,
-        inviteCode: randomUUID().replace(/-/g, '').slice(0, 12),
-        inviteType: InviteType.EMAIL,
-        status: InvitationStatus.PENDING,
-        maxUses: 1,
-        currentUses: 0,
-        invitedBy,
-        expiresAt,
-      });
-      sent++;
     }
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 7);
+    const created = await this.invitationRepo.createMany([...toInvite].map((email) => ({
+      leagueId,
+      email,
+      inviteCode: randomUUID().replace(/-/g, '').slice(0, 12),
+      inviteType: InviteType.EMAIL,
+      status: InvitationStatus.PENDING,
+      maxUses: 1,
+      currentUses: 0,
+      invitedBy,
+      expiresAt,
+    })));
+    const sent = created.length;
     return { total: rows.length, sent, failed, duplicates };
   }
 }
