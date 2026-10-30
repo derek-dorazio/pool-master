@@ -109,8 +109,13 @@ export async function readIndexLeads(prisma: PrismaClient): Promise<Map<string, 
 const BTREE_COMPARISON = String.raw`(?:<=|>=|=|<(?![>=])|>|IS NULL\b)`;
 /** `LIKE` and `ILIKE`, which only a trigram index serves. */
 const PATTERN_MATCH = String.raw`~~\*?`;
-/** A bound value on the right of a comparison: `$1`, `ANY ($1)`, `ANY (ARRAY[$1, $2])` for an IN list, `($1)::"SomeEnum"`. */
-const BOUND_VALUE = String.raw`\s*(?:ANY\s*)?\(*(?:ARRAY\[)?\$\d+`;
+/** One bound value, possibly cast: `$1`, `($1)::text`, `($1)::"SomeEnum"`. */
+const BOUND_ELEMENT = String.raw`\(*\$\d+\)*(?:::[\w"]+(?:\[\])?)?`;
+/**
+ * A bound value on the right of a comparison: `$1`, `ANY ($1)`, `($1)::"SomeEnum"`, or
+ * `ANY (ARRAY[$1, $2])` for an IN list, where every element must be bound.
+ */
+const BOUND_VALUE = String.raw`\s*(?:ANY\s*\(\s*ARRAY\[\s*${BOUND_ELEMENT}(?:\s*,\s*${BOUND_ELEMENT})*\s*\]|(?:ANY\s*)?\(*\$\d+)`;
 
 /**
  * Whether `text`, a condition or filter, compares `column` in a way an index leading on it with
@@ -267,17 +272,19 @@ function anotherIndexServes(node: PlanNode, table: string, nodes: PlanNode[], in
  * whole when no index serves its filter, in one of four ways: a sequential scan; walking an index
  * by a condition on a column it does not lead on; walking an index for its order and filtering
  * every row; or walking an index with no condition at all, which reads every row unless a `Limit`
- * above it stops the walk early. Only a statement with a `LIMIT` (`limited`) stops early: Prisma
- * ends every `findMany` and `count()` with an `OFFSET`, which plans as a `Limit` too and stops
- * nothing.
+ * above it stops the walk early. Only a `LIMIT` of `sql` stops early: Prisma ends every
+ * `findMany` and `count()` with an `OFFSET`, which plans as a `Limit` too and stops nothing. The
+ * plan does not say which clause a `Limit` came from, so its Limits are trusted only when every
+ * one of them can stand for a `LIMIT` (`stopsEarly`).
  */
-export function findWholeScans(plan: PlanNode, indexes: Map<string, IndexLead>, { limited = false }: { limited?: boolean } = {}): WholeScan[] {
+export function findWholeScans(plan: PlanNode, indexes: Map<string, IndexLead>, { sql = '' }: { sql?: string } = {}): WholeScan[] {
   const nodes = flatten(plan);
   const heapOf = new Map<PlanNode, PlanNode>();
   for (const heap of nodes.filter((node) => node['Node Type'] === 'Bitmap Heap Scan')) {
     for (const child of flatten(heap).slice(1)) heapOf.set(child, heap);
   }
-  const underLimit = new Set(limited ? nodes.filter((node) => node['Node Type'] === 'Limit').flatMap(streamedFrom) : []);
+  const limits = nodes.filter((node) => node['Node Type'] === 'Limit');
+  const underLimit = new Set(stopsEarly(sql, limits.length) ? limits.flatMap(streamedFrom) : []);
   const scans: WholeScan[] = [];
   for (const node of nodes) {
     const index = node['Index Name'] === undefined ? undefined : indexes.get(node['Index Name']);
@@ -303,9 +310,25 @@ export function findWholeScans(plan: PlanNode, indexes: Map<string, IndexLead>, 
  */
 const DRAINING_NODES = new Set(['Sort', 'Incremental Sort', 'Aggregate', 'Hash', 'Materialize', 'SetOp', 'WindowAgg', 'Bitmap Heap Scan']);
 
-/** The nodes under `limit` that it can stop early: those reached without passing a draining node. */
+/**
+ * The nodes under `limit` that it can stop early: those reached without passing a draining node,
+ * nor the inner side of a Nested Loop, which is read again for every outer row. The outer side
+ * still streams.
+ */
 function streamedFrom(limit: PlanNode): PlanNode[] {
-  return (limit.Plans ?? []).flatMap((child) => (DRAINING_NODES.has(child['Node Type']) ? [] : [child, ...streamedFrom(child)]));
+  const children = limit['Node Type'] === 'Nested Loop' ? (limit.Plans ?? []).slice(0, 1) : limit.Plans ?? [];
+  return children.flatMap((child) => (DRAINING_NODES.has(child['Node Type']) ? [] : [child, ...streamedFrom(child)]));
+}
+
+/**
+ * Whether each of a plan's `limitNodes` Limits can stand for a `LIMIT` of `sql`. Postgres plans a
+ * Limit for a `LIMIT` and for an `OFFSET` alone and does not say which, so a statement with an
+ * `OFFSET` that has no `LIMIT`, or with more Limits than `LIMIT`s, counts as unlimited.
+ */
+export function stopsEarly(sql: string, limitNodes: number): boolean {
+  const limitClauses = [...sql.matchAll(/\bLIMIT\b/gi)].length;
+  const offsetsAlone = [...sql.matchAll(/\bOFFSET\b/gi)].length - [...sql.matchAll(/\bLIMIT\s+\S+\s+OFFSET\b/gi)].length;
+  return limitClauses > 0 && offsetsAlone === 0 && limitNodes <= limitClauses;
 }
 
 /** Whether an index condition constrains the index's first column: Postgres prints it first in its clause. */
@@ -325,7 +348,7 @@ export async function planWholeScans(prisma: PrismaClient, sql: string, indexes:
     await tx.$executeRawUnsafe(`PREPARE ${name} AS ${sql}`);
     const [row] = await tx.$queryRawUnsafe<Array<{ 'QUERY PLAN': Array<{ Plan: PlanNode }> }>>(`EXPLAIN (FORMAT JSON) EXECUTE ${name}${values}`);
     await tx.$executeRawUnsafe(`DEALLOCATE ${name}`);
-    return findWholeScans(row['QUERY PLAN'][0].Plan, indexes, { limited: /\bLIMIT\b/i.test(sql) });
+    return findWholeScans(row['QUERY PLAN'][0].Plan, indexes, { sql });
   });
 }
 
