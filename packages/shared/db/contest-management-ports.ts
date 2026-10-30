@@ -44,6 +44,10 @@ export interface ParticipantContestScoringRuleRepository {
   findByContestConfiguration(
     contestConfigurationId: string,
   ): Promise<ParticipantContestScoringRule[]>;
+  /** Every rule of each configuration, in one read (#1315), in sort order within each. */
+  findByContestConfigurations(
+    contestConfigurationIds: readonly string[],
+  ): Promise<ParticipantContestScoringRule[]>;
   create(
     rule: ParticipantContestScoringRuleCreate,
   ): Promise<ParticipantContestScoringRule>;
@@ -134,6 +138,8 @@ export type ContestEntryEventStandingWrite = Omit<ContestEntryEventStandingResul
 export interface ContestEntryEventStandingRepository {
   /** Every event's standings of the contest, best first within each event. */
   findByContest(contestId: string): Promise<ContestEntryEventStandingResult[]>;
+  /** `findByContest` for several contests in one read (#1315): by contest, then in its order. */
+  findByContests(contestIds: readonly string[]): Promise<ContestEntryEventStandingResult[]>;
   /** One per entry and event: creates or overwrites it. */
   upsert(write: ContestEntryEventStandingWrite): Promise<void>;
 }

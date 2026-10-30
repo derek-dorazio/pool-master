@@ -409,7 +409,7 @@ describe('PrismaContestEntryMatchPredictionRepository — several entries and th
   const homePick = (game: { id: string; homeSportEventParticipantId: string | null }) =>
     ({ sportEventMatchId: game.id, predictedResult: PredictedResult.TEAM, sportEventParticipantId: expectDefined(game.homeSportEventParticipantId), confidence: null });
 
-  it('reads several entries\' picks on one event in game order, then entry order, leaving out other entries and other events', async () => {
+  it('reads several entries\' picks on one event by entry, each in game order, leaving out other entries and other events (#1315)', async () => {
     const week1 = await createWeek('Week 1', AT);
     const week2 = await createWeek('Week 2', LATER);
     const { contest, entry: first } = await createPickEmEntry([week1.event.id, week2.event.id]);
@@ -430,8 +430,8 @@ describe('PrismaContestEntryMatchPredictionRepository — several entries and th
     const [lower, higher] = [first.id, second.id].sort();
     expect(picks.map((pick) => [pick.sportEventMatchId, pick.contestEntryId])).toEqual([
       [week1.game(1).id, lower],
-      [week1.game(1).id, higher],
       [week1.game(2).id, lower],
+      [week1.game(1).id, higher],
       [week1.game(2).id, higher],
     ]);
   });

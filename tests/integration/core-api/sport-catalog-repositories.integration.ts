@@ -415,4 +415,36 @@ describe('SportEvent core repositories', () => {
       ['Unranked', null, []],
     ]);
   });
+
+  it("reads several events' fields in one read, in the order asked, each row's tour membership checked against its own event's tour (#1315)", async () => {
+    const sport = await golfSport();
+    const tours = new PrismaSportLeagueRepository(getPrisma());
+    const series = new PrismaEventSeriesRepository(getPrisma());
+    const [pga, lpga] = [
+      await tours.create({ sportId: sport.id, name: 'Field PGA', matchKeyword: null, bracketAdvancement: BracketAdvancement.FIXED }),
+      await tours.create({ sportId: sport.id, name: 'Field LPGA', matchKeyword: null, bracketAdvancement: BracketAdvancement.FIXED }),
+    ];
+    const pgaEvent = await createEvent('pga-field', { eventSeriesId: (await seriesNamed(series, pga.id, 'Field Open')).id, eventYear: 2026 });
+    const lpgaEvent = await createEvent('lpga-field', { eventSeriesId: (await seriesNamed(series, lpga.id, 'Field Classic')).id, eventYear: 2026 });
+    const unasked = await createEvent('unasked-field');
+    const member = await createParticipant(sport.id, 'PGA Member');
+    const guest = await createParticipant(sport.id, 'Guest');
+    await getPrisma().participantLeagueAffiliation.create({ data: { participantId: member.id, sportLeagueId: pga.id } });
+    for (const event of [pgaEvent, lpgaEvent, unasked]) {
+      await getPrisma().sportEventParticipant.createMany({ data: [member, guest].map((golfer) => ({ sportEventId: event.id, participantId: golfer.id })) });
+    }
+
+    const fields = await new PrismaSportEventParticipantRepository(getPrisma()).findFieldsForEvents([
+      { sportEventId: lpgaEvent.id, sportLeagueId: lpga.id },
+      { sportEventId: pgaEvent.id, sportLeagueId: pga.id },
+    ]);
+
+    expect(fields.map((row) => [row.entry.sportEventId, row.participant.name, row.affiliatedWithSportLeague])).toEqual([
+      [lpgaEvent.id, 'Guest', false],
+      [lpgaEvent.id, 'PGA Member', false],
+      [pgaEvent.id, 'Guest', false],
+      [pgaEvent.id, 'PGA Member', true],
+    ]);
+    await expect(new PrismaSportEventParticipantRepository(getPrisma()).findFieldsForEvents([])).resolves.toEqual([]);
+  });
 });

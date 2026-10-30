@@ -13,9 +13,6 @@
  * its scaling test lands with it.
  */
 export const QUERY_SCALING_GAPS = [
-  // --- Cups ---
-  { route: 'GET /api/v1/leagues/{id}/cups/{cupId}/projection', ticket: 1315 },
-
   // --- Event pages ---
   { route: 'GET /api/v1/event-pages/', ticket: 1316 },
   { route: 'GET /api/v1/event-pages/{sport}/{pageSlug}', ticket: 1316 },
