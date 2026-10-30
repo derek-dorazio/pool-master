@@ -867,6 +867,16 @@ describe('Overview blocks: empty values, refusals and closing dialogs', () => {
     expect(updateEventMock).not.toHaveBeenCalled();
   });
 
+  it('titles the rounds box Rounds inside the workflow card, with Edit schedule beside it', async () => {
+    seedDefaults();
+    renderPage();
+
+    const rounds = await screen.findByRole('region', { name: 'Rounds' });
+    expect(screen.getByRole('region', { name: /^Workflow/ })).toContainElement(rounds);
+    expect(within(rounds).getByRole('heading', { level: 3, name: 'Rounds' })).toBeVisible();
+    expect(rounds).toContainElement(screen.getByTestId('root-admin-sport-event-rounds-edit'));
+  });
+
   it('shows the server\'s reason in the Rounds card when the round schedule cannot be loaded', async () => {
     seedDefaults();
     listEventRoundsMock.mockResolvedValue(refusal('INTERNAL_ERROR', 'The round store is unavailable.', 500));

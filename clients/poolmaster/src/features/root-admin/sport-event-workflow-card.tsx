@@ -6,7 +6,6 @@ import {
   ConfirmationModal,
   formatDateTimeDisplay,
   LinkButton,
-  ListCard,
   PanelCard,
   StatusBadge,
   useDisplayPreferences,
@@ -156,8 +155,11 @@ export function SportEventWorkflowCard({
         </span>
       </div>
 
-      <ListCard
-        actions={
+      <PanelCard
+        headingLevel={3}
+        padded
+        title={capitalize(roundNoun.many)}
+        trailing={(
           <LinkButton
             data-testid="root-admin-sport-event-rounds-edit"
             size="sm"
@@ -166,9 +168,10 @@ export function SportEventWorkflowCard({
           >
             Edit schedule
           </LinkButton>
-        }
-        description={
-          roundsError
+        )}
+      >
+        <p className="text-sm text-muted-foreground">
+          {roundsError
             ? extractErrorMessage(roundsError, {
                 fallback: `${capitalize(roundNoun.one)} schedule is unavailable.`,
               })
@@ -179,10 +182,9 @@ export function SportEventWorkflowCard({
                     (round) =>
                       `${roundLabel(round.roundNumber, rounds.length)} ${formatDateTimeDisplay(round.scheduledDate, displayPreferences)}`,
                   )
-                  .join(' · ')
-        }
-        title={capitalize(roundNoun.many)}
-      />
+                  .join(' · ')}
+        </p>
+      </PanelCard>
 
       <ConfirmationModal
         confirmLabel={
