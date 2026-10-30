@@ -9,6 +9,8 @@
  * behind, so the batched boards are checked against the places each contest gives.
  * `rules/testing-rules.md` §9B *Query Scaling Tests* says when a route needs one.
  */
+// First, before the app is built: no leaderboard is kept, so each board below is computed afresh.
+import '../leaderboard-cache-off';
 import { ContestEntryStatus, ContestStatus, PickEmMode, PredictedResult, SelectionType, SportEventStatus } from '@poolmaster/shared/domain';
 import { CupProjectionResponseSchema } from '@poolmaster/shared/dto';
 import type { Response } from 'light-my-request';
@@ -58,13 +60,22 @@ async function cupOf(event: { eventSeriesId: string; startDate: Date }): Promise
   return { sportLeagueId, seasonYear: event.startDate.getUTCFullYear() };
 }
 
+type RosterType = typeof SelectionType.TIERED | typeof SelectionType.BUDGET_PICK | typeof SelectionType.RANDOM_DRAW;
+
+/** Each roster type's rules: two golfers an entry, both counting. */
+const ROSTER_RULES = {
+  [SelectionType.TIERED]: { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 2 },
+  [SelectionType.BUDGET_PICK]: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 2, salaryCap: 100, countedScores: 2 },
+  [SelectionType.RANDOM_DRAW]: { selectionType: SelectionType.RANDOM_DRAW, picksPerEntry: 2, countedScores: 2 },
+} as const;
+
 /**
  * An ACTIVE golf roster contest of `selectionType` on a major that started yesterday, its four
- * golfers each a stroke behind the last, dealt into two tiers. Each team submitted a lineup: the
- * first team the leading two golfers, the second the trailing two. Nothing has settled, so it
- * scores live.
+ * golfers each a stroke behind the last (with `tied`, all level), dealt into two tiers. Each team
+ * has a lineup: the first team the leading two golfers, the second the trailing two, submitted or,
+ * in a quick pick, dealt by its draw. Nothing has settled, so it scores live.
  */
-function liveRosterContest(selectionType: typeof SelectionType.TIERED | typeof SelectionType.BUDGET_PICK): LiveContestSeed {
+function liveRosterContest(selectionType: RosterType, { tied = false }: { tied?: boolean } = {}): LiveContestSeed {
   return async (seeded, index) => {
     const prisma = getPrisma();
     const { event, field } = await seedEventWithField(4, { startsInDays: -1, status: SportEventStatus.IN_PROGRESS });
@@ -75,7 +86,7 @@ function liveRosterContest(selectionType: typeof SelectionType.TIERED | typeof S
           sportEventParticipantId: row.id,
           currentRound: 1,
           asOf: new Date(),
-          golf: { create: { eventScoreToPar: scoreToPar, eventStrokes: 72 + scoreToPar, currentRoundThru: 9 } },
+          golf: { create: { eventScoreToPar: tied ? 0 : scoreToPar, eventStrokes: 72 + (tied ? 0 : scoreToPar), currentRoundThru: 9 } },
         },
       });
     }
@@ -94,12 +105,11 @@ function liveRosterContest(selectionType: typeof SelectionType.TIERED | typeof S
       data: {
         contestId: contest.id,
         selectionType,
-        configJson: selectionType === SelectionType.TIERED
-          ? { selectionType, picksPerTier: 1, countedScores: 2 }
-          : { selectionType, rosterSize: 2, salaryCap: 100, countedScores: 2 },
+        configJson: ROSTER_RULES[selectionType],
         participantScoringRules: { create: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 1 } },
       },
     });
+    const entryIds: string[] = [];
     for (const [team, squad] of seeded.squads.entries()) {
       const entry = await prisma.contestEntry.create({
         data: {
@@ -110,10 +120,17 @@ function liveRosterContest(selectionType: typeof SelectionType.TIERED | typeof S
           events: { create: { sportEventId: event.id, status: 'SUBMITTED', submittedAt: new Date(event.startDate.getTime() - DAY) } },
         },
       });
+      entryIds.push(entry.id);
       await prisma.contestEntryPick.createMany({
         data: field.slice(2 * team, 2 * team + 2).map((row, slot) => ({
           entryId: entry.id, sportEventParticipantId: row.id, contestFormat: 'ROSTER' as const, slot: slot + 1, pickedAt: new Date(),
+          isAutoPicked: selectionType === SelectionType.RANDOM_DRAW,
         })),
+      });
+    }
+    if (selectionType === SelectionType.RANDOM_DRAW) {
+      await prisma.contestDraw.create({
+        data: { contestId: contest.id, seed: `scaling-${seeded.suffix}`, fieldOrder: field.map((row) => row.id), entryOrder: entryIds, drawnAt: new Date(event.startDate.getTime() - DAY) },
       });
     }
     return { contestId: contest.id, ...(await cupOf(event)) };
@@ -254,6 +271,10 @@ describe("a cup's projection costs the same statements for 2 live contests as fo
     await expectConstantQueries(projectionCase(liveRosterContest(SelectionType.BUDGET_PICK)));
   });
 
+  it('GET a cup projection over live quick pick roster contests: the same statements for 2 contests as for 20 (#1315)', async () => {
+    await expectConstantQueries(projectionCase(liveRosterContest(SelectionType.RANDOM_DRAW)));
+  });
+
   it("GET a cup projection over live pick'em pools: the same statements for 2 contests as for 20 (#1315)", async () => {
     await expectConstantQueries(projectionCase(livePredictionContest(SelectionType.PICK_EM)));
   });
@@ -268,24 +289,33 @@ describe("a cup's projection costs the same statements for 2 live contests as fo
 });
 
 describe('live positions read together (#1315)', () => {
-  it('ranks each contest of a mixed cup by its own leaderboard: the first team 1st and the second 2nd in every one', async () => {
+  it("gives each contest of a mixed cup the places its own leaderboard gives, a tie included", async () => {
     const seeds = [
       liveRosterContest(SelectionType.TIERED),
+      liveRosterContest(SelectionType.TIERED, { tied: true }),
       liveRosterContest(SelectionType.BUDGET_PICK),
+      liveRosterContest(SelectionType.RANDOM_DRAW),
+      livePredictionContest(SelectionType.PICK_EM),
       livePredictionContest(SelectionType.PICK_EM),
       livePredictionContest(SelectionType.SURVIVOR),
+      liveBracketContest,
       liveBracketContest,
     ];
     const seeded = await seedLeagueWithTeams(2);
     const contestIds: string[] = [];
     for (const [index, seed] of seeds.entries()) contestIds.push((await seed(seeded, index)).contestId);
     const [leader, trailer] = seeded.squads.map((squad) => squad.id);
+    const contests = createContestService(getPrisma(), getApp().log, { planEntitlements: integrationPlanEntitlements() });
 
-    const positions = await createContestService(getPrisma(), getApp().log, { planEntitlements: integrationPlanEntitlements() }).livePositionsOfMany(contestIds);
+    const batched = await contests.livePositionsOfMany(contestIds);
+    const each = [];
+    for (const contestId of contestIds) each.push(await contests.livePositionsOf(contestId));
 
-    expect(contestIds.map((contestId) => positions.get(contestId))).toEqual(contestIds.map(() => [
+    expect(contestIds.map((contestId) => batched.get(contestId))).toEqual(each);
+    // Not vacuous: the tied contest has both teams 1st, every other the first team 1st and the second 2nd.
+    expect(each).toEqual(contestIds.map((_, index) => [
       { squadId: leader, position: 1 },
-      { squadId: trailer, position: 2 },
+      { squadId: trailer, position: index === 1 ? 1 : 2 },
     ]));
   });
 });
