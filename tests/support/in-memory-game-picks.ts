@@ -11,6 +11,7 @@
 import type {
   ContestEntryMatchPredictionRepository,
   ContestEntrySeasonPrediction,
+  LockedPredictionWeek,
   ParticipantRepository,
   SportEventMatchRepository,
   SportEventParticipantRepository,
@@ -205,7 +206,16 @@ export class InMemoryGamePicks {
             : { ...row, sportEventId, participantId: expectDefined(this.field.get(row.sportEventParticipantId)).participantId };
         }),
       hasAnyOnMatch: async (sportEventMatchId) => [...this.predictions.values()].some((row) => row.sportEventMatchId === sportEventMatchId),
-      save: async ({ contestEntryId, sportEventId, saves, clearedMatchIds, eventStatus, tiebreakerValue, at: when }) => {
+      save: async ({ contestEntryId, sportEventId, at: when, decide }) => {
+        const week = (): LockedPredictionWeek => ({
+          predictions: [...this.predictions.values()]
+            .filter((row) => row.contestEntryId === contestEntryId && this.inEvent(row, sportEventId))
+            .sort((left, right) => this.matchNumberOf(left) - this.matchNumberOf(right)),
+          event: expectDefined(this.world.entries.get(contestEntryId)).events.find((event) => event.sportEventId === sportEventId) ?? null,
+        });
+        const change = decide(week());
+        if (change === null) return { written: null, week: week() };
+        const { saves, clearedMatchIds, eventStatus, tiebreakerValue } = change;
         if (saves.some((save) => save.confidence !== null && save.confidence < 1)) {
           throw new Error('violates check constraint contest_entry_match_predictions_confidence_check');
         }
@@ -236,6 +246,7 @@ export class InMemoryGamePicks {
             ],
           });
         }
+        return { written: change, week: week() };
       },
     };
   }
