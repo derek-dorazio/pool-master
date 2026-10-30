@@ -4,8 +4,10 @@
  * entry's total the sum of its frozen event scores.
  */
 import type {
+  ContestEntryEventStandingRepository,
   ContestEntryEventStandingResult,
   ContestEntryRepository,
+  ContestEntryStandingRepository,
   ContestEntryStandingResult,
   ContestEntryWithSquad,
   ContestRepository,
@@ -120,6 +122,29 @@ function world({
     },
   };
 
+  const settledReads = mockFn<ContestEntryEventStandingRepository['findContestsSettledFor']>(async (sportEventId, contestIds) =>
+    new Set(eventStandings
+      .filter((row) => row.sportEventId === sportEventId && contestIds.includes(row.contestId))
+      .map((row) => row.contestId)));
+
+  const eventStandingWrites = mockFn<ContestEntryEventStandingRepository['upsertMany']>(async (_contestId, writes) => {
+    for (const write of writes) {
+      const at = eventStandings.findIndex((row) =>
+        row.contestEntryId === write.contestEntryId && row.sportEventId === write.sportEventId);
+      const row = { id: `event-standing-${write.contestEntryId}-${write.sportEventId}`, ...write };
+      if (at >= 0) eventStandings[at] = row;
+      else eventStandings.push(row);
+    }
+  });
+  const standingWrites = mockFn<ContestEntryStandingRepository['upsertMany']>(async (_contestId, writes) => {
+    for (const write of writes) {
+      const at = standings.findIndex((row) => row.contestEntryId === write.contestEntryId);
+      const row = { id: `standing-${write.contestEntryId}`, ...write };
+      if (at >= 0) standings[at] = row;
+      else standings.push(row);
+    }
+  });
+
   const service = new ContestSettlementService({
     squares: fakeSquaresRepo(),
     championship,
@@ -175,27 +200,20 @@ function world({
     eventStandings: {
       findByContest: async (contestId) => eventStandings.filter((row) => row.contestId === contestId),
       findByContests: async (contestIds) => eventStandings.filter((row) => contestIds.includes(row.contestId)),
-      upsert: async (write) => {
-        const at = eventStandings.findIndex((row) =>
-          row.contestEntryId === write.contestEntryId && row.sportEventId === write.sportEventId);
-        const row = { id: `event-standing-${write.contestEntryId}-${write.sportEventId}`, ...write };
-        if (at >= 0) eventStandings[at] = row;
-        else eventStandings.push(row);
-      },
+      findContestsSettledFor: settledReads,
+      upsertMany: eventStandingWrites,
     },
     standings: fakeContestEntryStandingRepo({
       findByContest: async (contestId) => standings.filter((row) => row.contestId === contestId),
-      upsert: async (write) => {
-        const at = standings.findIndex((row) => row.contestEntryId === write.contestEntryId);
-        const row = { id: `standing-${write.contestEntryId}`, ...write };
-        if (at >= 0) standings[at] = row;
-        else standings.push(row);
-      },
+      upsertMany: standingWrites,
     }),
   });
 
   return {
     service,
+    settledReads,
+    eventStandingWrites,
+    standingWrites,
     fields,
     eventStandings,
     standings,
@@ -273,6 +291,22 @@ describe('ContestSettlementService — a contest of two events (#713)', () => {
     await w.service.settleFinishedSportEvent(PGA, { completedAt: T });
     expect(w.contest().status).toBe(ContestStatus.COMPLETED);
     expect(w.recorded.map((row) => row.contestId)).toEqual(['majors']);
+  });
+
+  it('writes the last event\'s standings and the contest totals as one write each for the whole contest, after one read of whether the event had settled', async () => {
+    const w = world();
+    w.complete(MASTERS);
+    await w.service.settleFinishedSportEvent(MASTERS, { completedAt: T });
+    w.complete(PGA);
+    w.settledReads.mockClear();
+    w.eventStandingWrites.mockClear();
+
+    await w.service.settleFinishedSportEvent(PGA, { completedAt: T });
+
+    expect(w.settledReads.mock.calls).toEqual([[PGA, ['majors']]]);
+    expect(w.eventStandingWrites.mock.calls.map(([contestId, writes]) => [contestId, writes.length])).toEqual([['majors', 2]]);
+    expect(w.standingWrites.mock.calls.map(([contestId, writes]) => [contestId, writes.map((write) => write.contestEntryId)]))
+      .toEqual([['majors', ['entry-b', 'entry-a']]]);
   });
 
   it('does not rewrite an event\'s frozen standings when that event is settled again while the contest is still live', async () => {
