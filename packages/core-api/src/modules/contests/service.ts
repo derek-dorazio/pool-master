@@ -108,7 +108,8 @@ import {
   type ContestCutoff,
   type EventTiming,
 } from './entry-window';
-import type { SportEventParticipantService, SportEventParticipantView } from '../events/sport-event-participant-service';
+import type { EventFieldReads, SportEventParticipantView } from '../events/sport-event-participant-service';
+import { batchedLeaderboardDeps } from './batched-leaderboard-reads';
 import type { ParticipantValuationView, SportEventTierService } from '../events/sport-event-tier-service';
 import { contestEntriesCap, type PlanEntitlementsService } from '../plans/plan-entitlements-service';
 import {
@@ -189,7 +190,7 @@ export interface ContestServiceDeps {
   sportEvents: SportEventRepository;
   /** An event's sport league, named on an entry receipt. */
   sportLeagues: Pick<SportLeagueRepository, 'findById'>;
-  eventParticipants: Pick<SportEventParticipantService, 'listEventParticipants' | 'listCachedEventParticipants'>;
+  eventParticipants: EventFieldReads;
   tiers: Pick<SportEventTierService, 'listTiers'>;
   /** The league's plan caps (#947): how many entries a contest may hold. */
   planEntitlements: Pick<PlanEntitlementsService, 'forLeague'>;
@@ -862,6 +863,16 @@ export class ContestService {
       return [];
     }
     return entries.flatMap(({ squadId, position }) => (position === null ? [] : [{ squadId, position }]));
+  }
+
+  /**
+   * `livePositionsOf` for several contests, by contest id, in the same statements however many
+   * (#1315): their boards are built side by side on reads batched across them, and a board this
+   * container computed lately is still answered from its cache.
+   */
+  async livePositionsOfMany(contestIds: readonly string[]): Promise<Map<string, RankedContestEntry[]>> {
+    const batched = new ContestService({ ...batchedLeaderboardDeps(this.deps), logger: this.logger, now: this.now, leaderboardCache: this.leaderboardCache });
+    return new Map(await Promise.all(contestIds.map(async (contestId) => [contestId, await batched.livePositionsOf(contestId)] as const)));
   }
 
   private async liveBoardOf(contest: Contest): Promise<readonly { squadId: string; position: number | null }[]> {

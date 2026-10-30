@@ -33,6 +33,7 @@ import {
   cleanupTestData,
   createTestUser,
   getApp,
+  getAppPrisma,
   getPrisma,
   setupIntegrationTests,
   teardownIntegrationTests,
@@ -52,7 +53,7 @@ async function waitForBlockedBackend(): Promise<void> {
 
 function coreApiTask(): AppSettingsService {
   return new AppSettingsService({
-    repository: new PrismaPlatformRuntimeConfigRepository(getPrisma()),
+    repository: new PrismaPlatformRuntimeConfigRepository(getAppPrisma()),
     groups: SETTINGS_GROUPS,
     env: process.env,
   });
@@ -153,7 +154,7 @@ describe('settings registry on Postgres', () => {
 
   it('a first save that loses the race to another first save answers with a conflict naming the winner, and writes nothing', async () => {
     const admin = await createTestUser({ displayName: 'Settings Race Admin', isRootAdmin: true });
-    const repository = new PrismaPlatformRuntimeConfigRepository(getPrisma());
+    const repository = new PrismaPlatformRuntimeConfigRepository(getAppPrisma());
     // The other task's first save inserts the row and holds its transaction open, so this
     // save finds no row to lock and meets that insert at the unique key once it commits.
     let release!: () => void;

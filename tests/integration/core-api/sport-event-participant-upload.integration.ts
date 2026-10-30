@@ -2,6 +2,7 @@ import { expect } from '@jest/globals';
 import { ParticipantInactiveReason, Sport } from '@poolmaster/shared/domain';
 import {
   cleanupTestData,
+  getAppPrisma,
   getPrisma,
   setupIntegrationTests,
   teardownIntegrationTests,
@@ -66,7 +67,7 @@ async function fieldRows(sportEventId: string) {
 describe('Field upload — adjusting golfers already on the field', () => {
   it('applies a mixed upload in one go: an update by each identifier, a withdrawal, a cleared value and an unchanged row', async () => {
     const { event, rory, jordan, tommy } = await createField('mixed');
-    const service = createSportEventParticipantService(getPrisma());
+    const service = createSportEventParticipantService(getAppPrisma());
     const rows = [
       { participantId: rory.participant.id, ranking: 1, oddsToWin: 6.5 },
       { externalId: jordan.participant.externalId as string, isActive: false, inactiveReason: ParticipantInactiveReason.WITHDRAWN, oddsToWin: null },
@@ -94,7 +95,7 @@ describe('Field upload — adjusting golfers already on the field', () => {
 
   it('refuses an upload naming a golfer not on the field with 422, leaving the field and the participants unchanged', async () => {
     const { event, rory, offField } = await createField('unresolved');
-    const service = createSportEventParticipantService(getPrisma());
+    const service = createSportEventParticipantService(getAppPrisma());
     const before = await fieldRows(event.id);
     const participantCount = await getPrisma().participant.count();
 
@@ -111,7 +112,7 @@ describe('Field upload — adjusting golfers already on the field', () => {
 
   it('writes no row when the database rejects one of them: the patch is one transaction, all or none', async () => {
     const { event, rory, jordan } = await createField('atomic');
-    const service = createSportEventParticipantService(getPrisma());
+    const service = createSportEventParticipantService(getAppPrisma());
     const before = await fieldRows(event.id);
 
     // 2^31 is a valid integer to the contract but overflows the ranking column.

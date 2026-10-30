@@ -8,6 +8,7 @@
  */
 import { createHash, randomUUID } from 'node:crypto';
 import {
+  getAppPrisma,
   setupIntegrationTests,
   teardownIntegrationTests,
   getPrisma,
@@ -27,18 +28,18 @@ beforeAll(() => setupIntegrationTests());
 afterAll(() => teardownIntegrationTests());
 
 function buildAuthService(): AuthService {
-  return new AuthService(new PrismaUserRepository(getPrisma()), getPrisma());
+  return new AuthService(new PrismaUserRepository(getAppPrisma()), getAppPrisma());
 }
 
 function buildUserService(): UserService {
-  const users = new PrismaUserRepository(getPrisma());
+  const users = new PrismaUserRepository(getAppPrisma());
   const email = emailServiceInto();
   const appBaseUrl = 'https://app.example.test';
   return new UserService(
     users,
-    getPrisma(),
+    getAppPrisma(),
     new PasswordChangedNotifier(users, email, appBaseUrl),
-    new EmailChangeUndoService({ users, prisma: getPrisma(), email, appBaseUrl }),
+    new EmailChangeUndoService({ users, prisma: getAppPrisma(), email, appBaseUrl }),
   );
 }
 

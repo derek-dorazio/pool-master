@@ -49,10 +49,15 @@ export class PrismaContestEntryStandingRepository implements ContestEntryStandin
 export class PrismaContestEntryEventStandingRepository implements ContestEntryEventStandingRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
-  async findByContest(contestId: string): Promise<ContestEntryEventStandingResult[]> {
+  findByContest(contestId: string): Promise<ContestEntryEventStandingResult[]> {
+    return this.findByContests([contestId]);
+  }
+
+  async findByContests(contestIds: readonly string[]): Promise<ContestEntryEventStandingResult[]> {
+    if (contestIds.length === 0) return [];
     const rows = await this.prisma.contestEntryEventStanding.findMany({
-      where: { contestId },
-      orderBy: [{ sportEventId: 'asc' }, { position: { sort: 'asc', nulls: 'last' } }, { contestEntryId: 'asc' }],
+      where: { contestId: { in: [...contestIds] } },
+      orderBy: [{ contestId: 'asc' }, { sportEventId: 'asc' }, { position: { sort: 'asc', nulls: 'last' } }, { contestEntryId: 'asc' }],
     });
     return rows.map((row) => ({
       id: row.id,

@@ -10,6 +10,7 @@ import {
 import { ProviderRegistry } from '../../../packages/core-api/src/modules/ingestion/core/provider-registry';
 import {
   cleanupTestData,
+  getAppPrisma,
   getPrisma,
   setupIntegrationTests,
   teardownIntegrationTests,
@@ -33,7 +34,7 @@ describe('ProviderSyncRunRepository.findAll', () => {
   const windowEnd = new Date('2026-05-02T00:00:00.000Z');
 
   async function seedRuns() {
-    const repo = new PrismaProviderSyncRunRepository(getPrisma());
+    const repo = new PrismaProviderSyncRunRepository(getAppPrisma());
     const run = (
       label: string,
       overrides: { providerId?: string; sport?: Sport; status?: ProviderSyncRunStatus; createdAt: Date; startedAt: Date | null },
@@ -77,7 +78,7 @@ describe('ProviderSyncRunRepository.findAll', () => {
 });
 
 describe('ProviderSyncRunRepository details (#1174)', () => {
-  const repo = () => new PrismaProviderSyncRunRepository(getPrisma());
+  const repo = () => new PrismaProviderSyncRunRepository(getAppPrisma());
   const submitted = () => repo().create({
     providerId: 'feed-a',
     sport: Sport.GOLF,
@@ -126,11 +127,11 @@ describe('EventScoreSourceService links', () => {
   const provider = fakeSportDataProvider({ providerId: 'integration-feed' });
 
   function service() {
-    return new EventScoreSourceService(getPrisma(), registryWith(provider));
+    return new EventScoreSourceService(getAppPrisma(), registryWith(provider));
   }
 
   async function createEvent(name: string) {
-    return createSportEventRow(new PrismaSportEventRepository(getPrisma()), {
+    return createSportEventRow(new PrismaSportEventRepository(getAppPrisma()), {
       ...(await freshEventEdition(getPrisma())),
       externalId: `manual-${randomUUID()}`,
       providerId: 'integration-test',
@@ -191,7 +192,7 @@ describe('EventScoreSourceService links', () => {
     const registry = new ProviderRegistry();
     registry.register(Sport.GOLF, uncovering, 'PRIMARY');
 
-    await expect(new EventScoreSourceService(getPrisma(), registry).linkScoreSource(event.id, { providerId: 'uncovering-feed', externalId: 'uncovered-2026' }))
+    await expect(new EventScoreSourceService(getAppPrisma(), registry).linkScoreSource(event.id, { providerId: 'uncovering-feed', externalId: 'uncovered-2026' }))
       .rejects.toMatchObject({ code: 'PROVIDER_SPORT_MISMATCH', statusCode: 422 });
     const unchanged = await getPrisma().sportEvent.findUniqueOrThrow({ where: { id: event.id } });
     expect(unchanged).toEqual(expect.objectContaining({ providerId: 'integration-test', syncScope: 'NONE' }));
@@ -227,7 +228,7 @@ describe('EventScoreSourceService tour reads', () => {
   });
 
   function service() {
-    return new EventScoreSourceService(getPrisma(), registryWith(provider));
+    return new EventScoreSourceService(getAppPrisma(), registryWith(provider));
   }
 
   async function createTourLeague(matchKeyword: string | null) {

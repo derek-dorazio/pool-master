@@ -13,6 +13,7 @@ import {
   cleanupTestData,
   createTestUser,
   getApp,
+  getAppPrisma,
   getPrisma,
   setupIntegrationTests,
   teardownIntegrationTests,
@@ -101,7 +102,7 @@ describe('deleting entries while a draw holds the contest', () => {
 
     const holder = holdContestLocks<boolean>(prisma, [seeded.contest.id]);
     const holderPid = await holder.ready;
-    const deleted = new PrismaContestRepository(prisma).delete(seeded.contest.id);
+    const deleted = new PrismaContestRepository(getAppPrisma()).delete(seeded.contest.id);
     let entriesFree: boolean | undefined;
     await waitUntilBlockedBy(prisma, holderPid).finally(async () => {
       entriesFree = await holder.release((tx) => contestEntriesFree(tx, seeded.contest.id));

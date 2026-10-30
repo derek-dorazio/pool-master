@@ -72,7 +72,7 @@ export class PrismaContestEntryMatchPredictionRepository implements ContestEntry
     }
     const rows = await this.prisma.contestEntryMatchPrediction.findMany({
       where: { contestEntryId: { in: [...contestEntryIds] }, sportEventMatch: { sportEventId } },
-      orderBy: [{ sportEventMatch: { matchNumber: 'asc' } }, { contestEntryId: 'asc' }],
+      orderBy: [{ contestEntryId: 'asc' }, { sportEventMatch: { matchNumber: 'asc' } }],
     });
     return rows.map(toPrediction);
   }
