@@ -1,15 +1,12 @@
-import { useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
-import { useFieldArray, useForm } from 'react-hook-form';
+import { useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { BudgetPricingProfileSchema, findBudgetPricingProblem, formatDollars } from '@poolmaster/shared/domain';
-import { updateSettingsGroup, type BudgetPricingConfig, type SettingsGroup } from '@/lib/api';
-import { Alert, Button, FormField, Input } from '@/features/shared/ui';
-import { QueryKeys } from '@/lib/query-keys';
-import { useInvalidatingMutation } from '@/lib/mutation-hooks';
-import { hasErrorCode, throwApiError, extractErrorMessage } from '@/lib/errors';
+import type { BudgetPricingConfig, SettingsGroup } from '@/lib/api';
+import { Button, FormField, Input } from '@/features/shared/ui';
 import { numberFieldErrors } from '@/lib/number-field-errors';
+import { SettingsSaveError } from './settings-save-error';
+import { useSettingsGroupForm } from './use-settings-group-form';
 
 type BudgetPricingSettingsGroup = Extract<SettingsGroup, { key: 'BUDGET_PRICING_CONFIG' }>;
 
@@ -61,46 +58,14 @@ const pricingErrors = numberFieldErrors({
  * taken from the group once, like the Email form, and a 409 offers to load the newer value.
  */
 export function BudgetPricingSettingsForm({ group }: { group: BudgetPricingSettingsGroup }) {
-  const queryClient = useQueryClient();
-  const [baseUpdatedAt, setBaseUpdatedAt] = useState(group.updatedAt);
-  const form = useForm<BudgetPricingConfig>({
+  const { conflicted, form, loadLatest, saveMutation, submit } = useSettingsGroupForm({
+    group,
     resolver: zodResolver(BudgetPricingFormSchema, { error: pricingErrors }),
-    defaultValues: group.value,
+    subject: 'Budget pricing settings',
+    toForm: (value: BudgetPricingConfig) => value,
+    toValue: (values: BudgetPricingConfig) => values,
   });
   const profiles = useFieldArray({ control: form.control, name: 'profiles' });
-
-  const saveMutation = useInvalidatingMutation({
-    mutationFn: async (values: BudgetPricingConfig) => {
-      const response = await updateSettingsGroup({
-        path: { key: 'BUDGET_PRICING_CONFIG' },
-        body: { key: 'BUDGET_PRICING_CONFIG', value: values, expectedUpdatedAt: baseUpdatedAt },
-      });
-      if (response.data?.key !== 'BUDGET_PRICING_CONFIG') {
-        throwApiError(response.error, 'Budget pricing settings response is missing data.');
-      }
-      return response.data;
-    },
-    onSuccess: (saved) => {
-      setBaseUpdatedAt(saved.updatedAt);
-      form.reset(saved.value);
-    },
-    invalidates: [QueryKeys.rootAdmin.settings],
-  });
-
-  const conflicted = hasErrorCode(saveMutation.error, 'SETTINGS_CONFLICT');
-
-  async function loadLatest() {
-    await queryClient.refetchQueries({ queryKey: QueryKeys.rootAdmin.settings, exact: true });
-    const latest = queryClient
-      .getQueryData<SettingsGroup[]>(QueryKeys.rootAdmin.settings)
-      ?.find((candidate): candidate is BudgetPricingSettingsGroup => candidate.key === 'BUDGET_PRICING_CONFIG');
-    if (!latest) {
-      return;
-    }
-    setBaseUpdatedAt(latest.updatedAt);
-    form.reset(latest.value);
-    saveMutation.reset();
-  }
 
   const { errors } = form.formState;
 
@@ -109,7 +74,7 @@ export function BudgetPricingSettingsForm({ group }: { group: BudgetPricingSetti
       className="space-y-5"
       data-testid="root-admin-budget-pricing-settings-form"
       noValidate
-      onSubmit={(event) => void form.handleSubmit((values) => saveMutation.mutate(values))(event)}
+      onSubmit={(event) => void submit(event)}
     >
       <p className="text-sm text-muted-foreground">
         Prices fall from the best participant&apos;s share of the cap to the worst&apos;s, in seed order.
@@ -150,19 +115,13 @@ export function BudgetPricingSettingsForm({ group }: { group: BudgetPricingSetti
           </fieldset>
         );
       })}
-      {saveMutation.isError ? (
-        <Alert
-          action={conflicted ? (
-            <Button onClick={() => void loadLatest()} type="button" variant="secondary">
-              Load the latest settings
-            </Button>
-          ) : undefined}
-          data-testid="root-admin-budget-pricing-settings-error"
-          tone="danger"
-        >
-          {extractErrorMessage(saveMutation.error, { fallback: 'We could not save the budget pricing settings.' })}
-        </Alert>
-      ) : null}
+      <SettingsSaveError
+        conflicted={conflicted}
+        error={saveMutation.error}
+        fallback="We could not save the budget pricing settings."
+        onLoadLatest={loadLatest}
+        testId="root-admin-budget-pricing-settings-error"
+      />
       <div className="flex flex-wrap gap-3">
         <Button data-testid="root-admin-budget-pricing-settings-save" disabled={saveMutation.isPending} type="submit">
           {saveMutation.isPending ? 'Saving...' : 'Save budget pricing'}

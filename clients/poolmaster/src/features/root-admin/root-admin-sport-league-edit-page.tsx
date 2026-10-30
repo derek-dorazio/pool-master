@@ -9,6 +9,7 @@ import type { SportLeagueDto } from '@/lib/api';
 import { AsyncPage, FormField, FormPage, Input } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
+import { formPageSave } from '@/lib/form-page-save';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import { useManageBreadcrumbOverride } from './manage-breadcrumb-context';
@@ -62,12 +63,8 @@ function SportLeagueEditForm({ sportLeague }: { sportLeague: SportLeagueDto }) {
   return (
     <FormPage
       cancelTo={homePath}
-      errorMessage={updateMutation.isError
-        ? extractErrorMessage(updateMutation.error, { fallback: `We could not save this ${sportLeagueNoun.one}.` })
-        : undefined}
-      isPending={updateMutation.isPending}
+      {...formPageSave(form, updateMutation, `We could not save this ${sportLeagueNoun.one}.`)}
       isSubmitDisabled={!form.formState.isValid}
-      onSubmit={(event) => void form.handleSubmit((values) => updateMutation.mutate(values))(event)}
       pendingLabel="Saving..."
       submitLabel={`Save ${sportLeagueNoun.one}`}
       submitTestId="root-admin-sport-league-edit-save"
