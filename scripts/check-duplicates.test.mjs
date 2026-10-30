@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { checkCeiling, compareWithBaseline, countByPair, pairKey } from './check-duplicates.mjs';
+import { checkCeiling, checkEntries, compareWithBaseline, countByPair, describeRemoved, pairKey } from './check-duplicates.mjs';
 
 const leaderboards = { fileA: 'src/pick-em-leaderboard.tsx', fileB: 'src/survivor-leaderboard.tsx' };
 
@@ -49,5 +49,40 @@ describe('check-duplicates (#1287)', () => {
 
   it('asks to lower the ceiling when the baseline holds fewer copies than it', () => {
     assert.match(checkCeiling([{ files: ['a', 'b'], count: 2 }], 3), /Lower BASELINE_CEILING to 2/);
+  });
+
+  it('passes entries that each name either the ticket that removes the copy or the reason it stays', () => {
+    const baseline = [
+      { files: ['a', 'b'], count: 1, ticket: '#1277' },
+      { files: ['a', 'c'], count: 1, reason: 'Only look alike: two import lists.' },
+    ];
+    assert.equal(checkEntries(baseline), null);
+  });
+
+  it('fails an entry with neither a ticket nor a reason, or only blank ones, so no copy is left unexplained', () => {
+    const message = checkEntries([
+      { files: ['a', 'b'], count: 1 },
+      { files: ['a', 'c'], count: 1, ticket: ' ', reason: '' },
+    ]);
+    assert.match(message, /exactly one of a ticket/);
+    assert.match(message, /a <> b; a <> c/);
+  });
+
+  it('fails an entry with both a ticket and a reason, since a kept look-alike has no ticket to remove it', () => {
+    assert.match(checkEntries([{ files: ['b', 'a'], count: 1, ticket: '#1277', reason: 'Only look alike.' }]), /Fix: a <> b\./);
+  });
+
+  it('says a removed copy of a kept look-alike was kept as one, and still asks for its entry to shrink', () => {
+    const baseline = [{ files: [leaderboards.fileA, leaderboards.fileB], count: 1, reason: 'Only look alike.' }];
+    const { removed } = compareWithBaseline([], baseline);
+    assert.deepEqual(removed, [{ key: pairKey(leaderboards.fileA, leaderboards.fileB), count: 0, allowed: 1, reason: 'Only look alike.' }]);
+    const line = describeRemoved(removed[0]);
+    assert.match(line, /now holds 0 \(baseline 1, kept as a look-alike\)/);
+    assert.match(line, /delete the entry at 0/);
+  });
+
+  it('names the ticket on a removed copy that a ticket owns', () => {
+    const line = describeRemoved({ key: 'a <> b', count: 1, allowed: 2, ticket: '#1277' });
+    assert.match(line, /\(baseline 2, #1277\)/);
   });
 });

@@ -1,29 +1,13 @@
 {
-  "$comment": "Copies the duplicate check (scripts/check-duplicates.mjs, #1287) allows today, per pair of files, each with the ticket that removes it. Only ever lower a count or delete an entry; a new copy is extracted, never added here.",
+  "$comment": "Copies the duplicate check (scripts/check-duplicates.mjs, #1287) allows today, per pair of files. Each entry has either the ticket that removes it or, when the two blocks only look alike, the reason it stays. Only ever lower a count or delete an entry; a new copy is extracted, never added here.",
   "pairs": [
-    {
-      "files": [
-        "clients/poolmaster/src/features/account/user-page.tsx",
-        "clients/poolmaster/src/features/teams/team-owner-action-menu.tsx"
-      ],
-      "count": 1,
-      "ticket": "#1290"
-    },
-    {
-      "files": [
-        "clients/poolmaster/src/features/auth/reset-password-page.tsx",
-        "clients/poolmaster/src/features/auth/undo-email-change-page.tsx"
-      ],
-      "count": 1,
-      "ticket": "#1290"
-    },
     {
       "files": [
         "clients/poolmaster/src/features/root-admin/golf-round-score-corrections-card.tsx",
         "clients/poolmaster/src/features/root-admin/stat-lines-panel.tsx"
       ],
       "count": 1,
-      "ticket": "#1290"
+      "reason": "Only look alike: the tail of two correction mutations on different endpoints with their own log lines; a helper for the shared onSuccess would hide more than it saves."
     },
     {
       "files": [
@@ -31,7 +15,7 @@
         "clients/poolmaster/src/features/root-admin/sport-event-provider-browse.tsx"
       ],
       "count": 1,
-      "ticket": "#1290"
+      "reason": "Only look alike: both import blocks name the same shared form pieces, which each file uses differently; there is nothing between them to extract."
     },
     {
       "files": [
@@ -39,7 +23,7 @@
         "clients/poolmaster/src/features/root-admin/tier-definitions-panel.tsx"
       ],
       "count": 1,
-      "ticket": "#1290"
+      "reason": "Only look alike: the props tail and the vocabulary and logger lines that open two different components."
     }
   ]
 }

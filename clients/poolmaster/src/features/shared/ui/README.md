@@ -71,6 +71,8 @@ mutation takes its submit, pending state and error from `formPageSave` in
 `useSettingsGroupForm` and `SettingsSaveError` in `features/root-admin`, which
 send the version the draft came from and offer the newer one on a conflict.
 `ConfirmDialog` and `FormModal` share one footer, `DialogActions`.
+A dialog that is neither a form nor a confirmation, such as a menu action
+with its own buttons, is a plain `Modal`.
 
 A titled card is a `PanelCard`: its title in a ruled bar, with an optional
 slot on the right such as a badge or a clear button, then its body and an

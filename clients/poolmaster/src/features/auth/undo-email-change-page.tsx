@@ -1,5 +1,4 @@
-import { type ReactNode, useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router";
+import { type ReactNode } from "react";
 import { undoEmailChange } from "@/lib/api";
 import { extractErrorMessage, hasErrorCode, throwApiError } from "@/lib/errors";
 import { getLogger } from "@/lib/logger";
@@ -7,15 +6,7 @@ import { useInvalidatingMutation } from "@/lib/mutation-hooks";
 import { Alert, Button, LinkButton, PanelCard } from "@/features/shared/ui";
 import { useAuth } from "./auth-context";
 import { FORGOT_PASSWORD_PATH } from "./auth-paths";
-
-/**
- * The token rides in the link's fragment (`#token=...`), which the browser never sends to a
- * server. Read once on arrival; the page then clears it from the address bar.
- */
-function readTokenFromHash(hash: string): string | null {
-  const token = new URLSearchParams(hash.replace(/^#/, "")).get("token");
-  return token?.trim() ? token : null;
-}
+import { useLinkToken } from "./use-link-token";
 
 function UndoTile({ children, title }: { children: ReactNode; title: string }) {
   return (
@@ -35,17 +26,7 @@ function UndoTile({ children, title }: { children: ReactNode; title: string }) {
 export function UndoEmailChangePage() {
   const logger = getLogger().child({ feature: "undo-email-change-page" });
   const auth = useAuth();
-  const location = useLocation();
-  const navigate = useNavigate();
-  const [token] = useState(() => readTokenFromHash(location.hash));
-
-  // Clears the token from the address bar, so it is not left in history or shared by copying
-  // the URL. Synchronises with the browser's location, an external system.
-  useEffect(() => {
-    if (location.hash) {
-      void navigate({ pathname: location.pathname, search: location.search }, { replace: true });
-    }
-  }, [location.hash, location.pathname, location.search, navigate]);
+  const token = useLinkToken();
 
   const undoMutation = useInvalidatingMutation({
     mutationFn: async (linkToken: string) => {
