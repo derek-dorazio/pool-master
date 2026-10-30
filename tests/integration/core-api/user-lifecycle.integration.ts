@@ -22,6 +22,8 @@ import {
 import { PrismaUserRepository } from '../../../packages/core-api/src/adapters';
 import { LeagueIconKey, LeaguePlan, LeaguePlanChangeReason, LeagueRole, LeagueMembershipStatus } from '@poolmaster/shared/domain';
 import { hashRefreshToken } from '../../../packages/core-api/src/modules/auth/refresh-token-hash';
+import { waitUntilBlockedBy } from '../contest-lock';
+import { holdMemberLock } from '../member-lock';
 
 const LEAGUE_CODE_PREFIX = 'ULIFE';
 
@@ -80,6 +82,27 @@ describe('shared user delete cascade (#202)', () => {
     await expect(
       prisma.leagueInvitation.count({ where: { invitedBy: user.id } }),
     ).resolves.toBe(0);
+  });
+
+  it('waits for a refresh under way on the account before deleting its tokens, so the two cannot deadlock', async () => {
+    const prisma = getPrisma();
+    const { user } = await createTestUser({ lastName: 'MidRefresh' });
+    const token = await prisma.refreshToken.create({
+      data: { tokenHash: hashRefreshToken(`mid-refresh-${user.id}`), userId: user.id, expiresAt: new Date(Date.now() + 60 * 60_000) },
+    });
+    // A refresh holding the member's lock, about to rotate the account's token.
+    const refresh = holdMemberLock(prisma, user.id);
+    const holderPid = await refresh.ready;
+
+    const deleting = prisma.$transaction((tx) => deleteUserCascade(tx, user.id));
+    await waitUntilBlockedBy(prisma, holderPid);
+    await refresh.release((tx) => tx.refreshToken.updateMany({
+      where: { id: token.id, revokedAt: null },
+      data: { revokedAt: new Date() },
+    }));
+
+    await expect(deleting).resolves.toBeUndefined();
+    await expect(prisma.user.findUnique({ where: { id: user.id } })).resolves.toBeNull();
   });
 
   it('deletes a user who changed a league\'s plan, keeping the plan change with nobody named as who made it', async () => {

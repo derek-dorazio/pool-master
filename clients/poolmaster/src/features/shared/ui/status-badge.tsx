@@ -1,3 +1,4 @@
+import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
 import { type HTMLAttributes } from "react";
 import { cn } from "./class-names";
@@ -29,6 +30,14 @@ const statusBadgeVariants = cva(
           "border-[color:var(--status-active-border)] bg-[var(--status-active-surface)] [color:var(--status-active-text)]",
         warning:
           "border-[color:var(--status-warning-border)] bg-[var(--status-warning-surface)] [color:var(--status-warning-text)]",
+        /** The filled gold pill, such as "New". */
+        brand: "border-primary bg-primary font-semibold text-primary-foreground",
+        /** An outlined pill in the display face, in the colour of the text around it or the caller's. */
+        brandOutline: "border-current bg-transparent font-display font-bold",
+        /** A gold-tinted pill for something open or on offer, such as a playable round. */
+        brandTint: "border-primary bg-primary/10 font-semibold text-foreground",
+        /** A dashed pill for something not here yet, such as a round still to come. */
+        placeholder: "border-dashed border-border bg-transparent font-normal text-muted-foreground",
       },
     },
     defaultVariants: {
@@ -46,9 +55,15 @@ export function StatusBadge({ className, tone, ...props }: StatusBadgeProps) {
   );
 }
 
-export function Chip({ className, tone, ...props }: StatusBadgeProps) {
+export type ChipProps = StatusBadgeProps & {
+  /** Draw the pill on the one child instead, such as a router `Link` when the pill goes somewhere. */
+  asChild?: boolean;
+};
+
+export function Chip({ asChild = false, className, tone, ...props }: ChipProps) {
+  const Component = asChild ? Slot : "span";
   return (
-    <span
+    <Component
       className={cn(
         statusBadgeVariants({
           className: cn("normal-case tracking-normal", className),

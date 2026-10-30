@@ -9,18 +9,19 @@ import { listedContestStartsAt } from '@/features/contests/use-contest-schedule'
 import { useBracketLeaderboardQuery, useContestLeaderboardQuery } from '@/features/contests/use-contest-leaderboard';
 import {
   cn,
+  Countdown,
   Eyebrow,
   formatDateTimeDisplay,
   Heading,
   LinkButton,
   LOADING_TEXT,
+  Tile,
   useDisplayPreferences,
 } from '@/features/shared/ui';
 import { TeamName } from '@/features/teams/team-name';
 import {
   buildBracketTopStandings,
   buildTopStandings,
-  countdownUntil,
   type StandingRow,
   type UpNextContest,
 } from './league-home';
@@ -92,19 +93,17 @@ export function UpNextCard({
   upNext: UpNextContest;
 }) {
   const displayPreferences = useDisplayPreferences();
-  const countdown = countdownUntil(upNext.closesAt, now);
   const next = describeMyEntry(leagueCode, upNext.contest, myEntries, entriesState, hasTeam);
-  const parts = [
-    { label: 'Days', value: countdown.days },
-    { label: 'Hours', value: countdown.hours },
-    { label: 'Min', value: countdown.minutes },
-  ];
 
   return (
-    <section
+    <Tile
       aria-labelledby="league-home-up-next-title"
-      className="grid gap-4 rounded-2xl border border-inverse-border bg-surface-inverse p-6 text-on-inverse"
+      as="section"
+      className="grid gap-4 p-6"
       data-testid="league-home-up-next"
+      padding="none"
+      radius="md"
+      variant="inverse"
     >
       <Eyebrow tone="inverse">Up next · Open for entries</Eyebrow>
       <Heading level={2} variant="card" size="2xl" tone="inherit" id="league-home-up-next-title">
@@ -113,29 +112,14 @@ export function UpNextCard({
       <p className="text-sm text-on-inverse-muted">
         Entries close {formatDateTimeDisplay(upNext.closesAt, displayPreferences)}.
       </p>
-      <div
-        aria-label={`Entries close in ${countdown.days} days ${countdown.hours} hours ${countdown.minutes} minutes`}
-        className="flex gap-2"
-        data-testid="league-home-countdown"
-        role="timer"
-      >
-        {parts.map((part) => (
-          <div
-            className="min-w-16 rounded-xl border border-inverse-border bg-on-inverse-subtle px-3 py-2 text-center"
-            key={part.label}
-          >
-            <b className="block font-display text-xl tabular-nums">{String(part.value).padStart(2, '0')}</b>
-            <span className="text-xs uppercase tracking-label text-on-inverse-muted">{part.label}</span>
-          </div>
-        ))}
-      </div>
+      <Countdown label="Entries close in" now={now} testId="league-home-countdown" tone="inverse" until={upNext.closesAt} />
       <div className="flex flex-wrap items-center gap-3">
         <LinkButton data-testid="league-home-up-next-action" size="sm" to={next.to}>
           {next.label}
         </LinkButton>
         <span className="text-sm text-on-inverse-muted">{next.note}</span>
       </div>
-    </section>
+    </Tile>
   );
 }
 

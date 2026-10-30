@@ -176,20 +176,48 @@ export class PrismaParticipantLeagueAffiliationRepository implements Participant
   }
 
   async updateRankings(sportLeagueId: string, rankings: readonly ParticipantRanking[]): Promise<void> {
-    // poolmaster-allow-query-in-loop: one sport league's ranked participants (per-row values, one transaction)
-    await this.prisma.$transaction(rankings.map((entry) => this.prisma.participantLeagueAffiliation.update({
-      where: { participantId_sportLeagueId: { participantId: entry.participantId, sportLeagueId } },
-      data: { ranking: entry.ranking },
-    })));
+    await this.rewriteRankings(sportLeagueId, rankings, { createMissing: false });
   }
 
   async upsertRankings(sportLeagueId: string, rankings: readonly ParticipantRanking[]): Promise<void> {
-    // poolmaster-allow-query-in-loop: one sport league's ranked participants (per-row values, one transaction)
-    await this.prisma.$transaction(rankings.map((entry) => this.prisma.participantLeagueAffiliation.upsert({
-      where: { participantId_sportLeagueId: { participantId: entry.participantId, sportLeagueId } },
-      create: { participantId: entry.participantId, sportLeagueId, ranking: entry.ranking },
-      update: { ranking: entry.ranking },
-    })));
+    await this.rewriteRankings(sportLeagueId, rankings, { createMissing: true });
+  }
+
+  /**
+   * Each ranking written in a fixed number of statements, whatever the list's length (#1252):
+   * Prisma has no update of many rows to different values, and nothing points at an
+   * affiliation row, so the rows named are deleted and inserted again, each keeping its id and
+   * creation time. A ranking for a participant with no affiliation is added when
+   * `createMissing`, and is an error otherwise, as an update of a missing row is.
+   */
+  private async rewriteRankings(
+    sportLeagueId: string,
+    rankings: readonly ParticipantRanking[],
+    { createMissing }: { createMissing: boolean },
+  ): Promise<void> {
+    // A participant ranked twice keeps the later ranking, as two updates in a row would leave it.
+    const latest = [...new Map(rankings.map((entry) => [entry.participantId, entry])).values()];
+    if (latest.length === 0) return;
+    await this.prisma.$transaction(async (tx) => {
+      const existing = await tx.participantLeagueAffiliation.findMany({
+        where: { sportLeagueId, participantId: { in: latest.map((entry) => entry.participantId) } },
+        select: { id: true, participantId: true, createdAt: true },
+      });
+      const existingByParticipantId = new Map(existing.map((row) => [row.participantId, row]));
+      const missing = latest.filter((entry) => !existingByParticipantId.has(entry.participantId));
+      if (!createMissing && missing.length > 0) {
+        throw new Error(`No ${sportLeagueId} affiliation to rank for participant(s) ${missing.map((entry) => entry.participantId).join(', ')}.`);
+      }
+      await tx.participantLeagueAffiliation.deleteMany({ where: { id: { in: existing.map((row) => row.id) } } });
+      await tx.participantLeagueAffiliation.createMany({
+        data: latest.map((entry) => ({
+          ...existingByParticipantId.get(entry.participantId),
+          participantId: entry.participantId,
+          sportLeagueId,
+          ranking: entry.ranking,
+        })),
+      });
+    });
   }
 
   async countBySportLeagues(sportLeagueIds: readonly string[]): Promise<Map<string, number>> {
@@ -700,22 +728,34 @@ export class PrismaSportEventParticipantRepository implements SportEventParticip
     });
   }
 
+  /**
+   * One save of the field grid (#1252): rows given the same change share one update, and every
+   * manual price is written with the valuations' fixed-count rewrite. A row whose patch is empty
+   * writes nothing.
+   */
   async updateMany(entries: readonly SportEventParticipantFieldUpdate[]): Promise<void> {
-    // poolmaster-allow-query-in-loop: one event's field (per-row values, one transaction)
-    await this.prisma.$transaction(entries.map((entry) => this.prisma.sportEventParticipant.update({
-      where: { id: entry.id },
-      data: {
-        ...fieldPatch(entry.updates),
-        ...(entry.price !== undefined && {
-          valuation: {
-            upsert: {
-              create: { price: entry.price, priceAssignedSource: 'MANUAL' },
-              update: { price: entry.price, priceAssignedSource: 'MANUAL' },
-            },
-          },
-        }),
-      },
-    })));
+    const idsByPatch = new Map<string, { data: ReturnType<typeof fieldPatch>; ids: string[] }>();
+    for (const entry of entries) {
+      const data = fieldPatch(entry.updates);
+      if (Object.keys(data).length === 0) continue;
+      const key = JSON.stringify(data);
+      const group = idsByPatch.get(key) ?? { data, ids: [] };
+      group.ids.push(entry.id);
+      idsByPatch.set(key, group);
+    }
+    const prices = entries.flatMap((entry) => (entry.price === undefined
+      ? []
+      : [{ sportEventParticipantId: entry.id, price: entry.price, priceAssignedSource: ValuationSource.MANUAL }]));
+    await this.prisma.$transaction(async (tx) => {
+      const groups = [...idsByPatch.values()];
+      // poolmaster-allow-query-in-loop: one updateMany per distinct patch; rows given the same values share one
+      const results = await Promise.all(groups.map(({ data, ids }) => tx.sportEventParticipant.updateMany({ where: { id: { in: ids } }, data })));
+      // An update of a missing row fails, as one update per row would, so none of the save stands.
+      if (results.some((result, index) => result.count !== new Set(groups[index].ids).size)) {
+        throw new Error('A field row to update does not exist.');
+      }
+      await rewriteValuations(tx, prices);
+    });
   }
 
   async delete(id: string): Promise<void> {
@@ -876,19 +916,12 @@ export class PrismaSportEventParticipantValuationRepository implements SportEven
   }
 
   async assignTiers(assignments: readonly TierAssignment[]): Promise<void> {
-    await this.prisma.$transaction(assignments.map((assignment) => {
-      const tier = {
-        sportEventTierId: assignment.sportEventTierId,
-        tierOrderIndex: assignment.tierOrderIndex,
-        tierAssignedSource: assignment.source,
-      };
-      // poolmaster-allow-query-in-loop: one event's field (per-row values, one transaction)
-      return this.prisma.sportEventParticipantValuation.upsert({
-        where: { sportEventParticipantId: assignment.sportEventParticipantId },
-        create: { sportEventParticipantId: assignment.sportEventParticipantId, ...tier },
-        update: tier,
-      });
-    }));
+    await this.prisma.$transaction((tx) => rewriteValuations(tx, assignments.map((assignment) => ({
+      sportEventParticipantId: assignment.sportEventParticipantId,
+      sportEventTierId: assignment.sportEventTierId,
+      tierOrderIndex: assignment.tierOrderIndex,
+      tierAssignedSource: assignment.source,
+    }))));
   }
 
   async assignEventPrices(input: {
@@ -896,22 +929,50 @@ export class PrismaSportEventParticipantValuationRepository implements SportEven
     pricingConfig: EventPricingConfig;
     assignments: readonly PriceAssignment[];
   }): Promise<void> {
-    await forgettingReads(ReadMemoKey.sportEvent, () => this.prisma.$transaction([
-      ...input.assignments.map((assignment) => {
-        const price = { price: assignment.price, priceAssignedSource: assignment.source };
-        // poolmaster-allow-query-in-loop: one event's field (per-row values, one transaction)
-        return this.prisma.sportEventParticipantValuation.upsert({
-          where: { sportEventParticipantId: assignment.sportEventParticipantId },
-          create: { sportEventParticipantId: assignment.sportEventParticipantId, ...price },
-          update: price,
-        });
-      }),
-      this.prisma.sportEvent.update({
+    await forgettingReads(ReadMemoKey.sportEvent, () => this.prisma.$transaction(async (tx) => {
+      await rewriteValuations(tx, input.assignments.map((assignment) => ({
+        sportEventParticipantId: assignment.sportEventParticipantId,
+        price: assignment.price,
+        priceAssignedSource: assignment.source,
+      })));
+      await tx.sportEvent.update({
         where: { id: input.sportEventId },
         data: { pricingConfig: input.pricingConfig },
-      }),
-    ]));
+      });
+    }));
   }
+}
+
+/** A change to one field row's valuation: its tier columns, its price columns, or both. */
+type ValuationChange = { sportEventParticipantId: string } & Partial<Pick<
+  Prisma.SportEventParticipantValuationUncheckedCreateInput,
+  'sportEventTierId' | 'tierOrderIndex' | 'tierAssignedSource' | 'price' | 'priceAssignedSource'
+>>;
+
+/**
+ * Writes each field row's valuation change in three statements, however many rows change
+ * (#1252). Prisma has no update of many rows to different values, and nothing points at a
+ * valuation row, so the changed rows are read, deleted and inserted again with the change
+ * applied, each keeping its id, its creation time and the columns the change leaves alone. A
+ * row with no valuation yet gets one. Runs inside the caller's transaction.
+ */
+async function rewriteValuations(tx: Prisma.TransactionClient, changes: readonly ValuationChange[]): Promise<void> {
+  // A row changed twice keeps the later change, as two upserts in a row would leave it.
+  const changeById = new Map<string, ValuationChange>();
+  for (const change of changes) {
+    changeById.set(change.sportEventParticipantId, { ...changeById.get(change.sportEventParticipantId), ...change });
+  }
+  if (changeById.size === 0) return;
+  const existing = await tx.sportEventParticipantValuation.findMany({
+    where: { sportEventParticipantId: { in: [...changeById.keys()] } },
+  });
+  const existingById = new Map(existing.map(({ updatedAt: _updatedAt, ...row }) => [row.sportEventParticipantId, row]));
+  if (existing.length > 0) {
+    await tx.sportEventParticipantValuation.deleteMany({ where: { id: { in: existing.map((row) => row.id) } } });
+  }
+  await tx.sportEventParticipantValuation.createMany({
+    data: [...changeById.values()].map((change) => ({ ...existingById.get(change.sportEventParticipantId), ...change })),
+  });
 }
 
 function countMap(ids: readonly string[], counted: Array<[string, number]>): Map<string, number> {

@@ -196,6 +196,31 @@ describe('SportEventParticipantService — changing the field', () => {
     expect(view.valuation).toMatchObject({ price: 11, priceAssignedSource: 'MANUAL' });
   });
 
+  it('writes only the values a grid save changes, leaving out values sent as they already are (#1252)', async () => {
+    const store = new InMemorySportEvents();
+    const sport = store.addSport(Sport.GOLF);
+    const event = store.addEvent({ sportLeagueId: store.addSportLeague(sport.id).id, sport: Sport.GOLF, status: SportEventStatus.DRAFT });
+    const field = store.fieldRepo();
+    const updateMany = jest.spyOn(field, 'updateMany');
+    const service = new SportEventParticipantService({
+      sportEvents: store.sportEventRepo(), field, participants: store.participantRepo(),
+      affiliations: store.affiliationRepo(), matches: store.matchRepo(), random: () => 0.5,
+    });
+    const same = store.addToField(event.id, store.addParticipant(sport.id, 'Same').id, { ranking: 4, oddsToWin: 20 });
+    const moved = store.addToField(event.id, store.addParticipant(sport.id, 'Moved').id, { ranking: 5, oddsToWin: 30 });
+
+    await service.updateParticipants(event.id, [
+      { sportEventParticipantId: same.id, ranking: 4, oddsToWin: 20, isActive: true },
+      { sportEventParticipantId: moved.id, ranking: 2, oddsToWin: 30, seedNumber: null },
+    ]);
+
+    expect(updateMany).toHaveBeenCalledWith([
+      { id: same.id, updates: {}, price: undefined },
+      { id: moved.id, updates: { ranking: 2 }, price: undefined },
+    ]);
+    expect([same.ranking, moved.ranking]).toEqual([4, 2]);
+  });
+
   it('refuses a price in the grid save once the event is released (409 SPORT_EVENT_TIERS_LOCKED), writing nothing', async () => {
     const { store, service, sport, event } = setup(Sport.GOLF, SportEventStatus.SCHEDULED);
     const entry = store.addToField(event.id, store.addParticipant(sport.id, 'A').id, { ranking: 4 });

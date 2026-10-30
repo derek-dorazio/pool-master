@@ -610,11 +610,6 @@ export interface ContestEntryRepository {
    */
   create(entry: ContestEntryCreate, limits: ContestEntryCreateLimits): Promise<ContestEntryCreateResult>;
   update(id: string, updates: Partial<Pick<ContestEntry, 'name' | 'tiebreakerValue'>>): Promise<ContestEntry>;
-  /**
-   * Sets the entry's status for one event of its contest (#713), stamping `submittedAt` when it
-   * becomes SUBMITTED and clearing it when it returns to DRAFT. Answers with the entry.
-   */
-  setEventStatus(id: string, sportEventId: string, status: ContestEntryStatus, at: Date): Promise<ContestEntry>;
   delete(id: string): Promise<ContestEntryDeleteResult>;
 }
 
@@ -647,7 +642,7 @@ export interface ContestEntryMatchPredictionSave {
   saves: readonly ContestEntryMatchPredictionWrite[];
   /** Games whose pick is removed. */
   clearedMatchIds: readonly string[];
-  /** The entry's status for the event after the change, when it changes; stamped as `setEventStatus` does. */
+  /** The entry's status for the event after the change, when it changes: `submittedAt` is `at` for SUBMITTED, cleared for DRAFT. */
   eventStatus: ContestEntryStatus | null;
   /** The entry's tiebreaker guess for the event after the change, when it changes (#717): kept on its row for the event. */
   tiebreakerValue?: number | null;

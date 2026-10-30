@@ -12,6 +12,7 @@ import {
   formatDateTimeDisplay,
   Heading,
   LinkButton,
+  Tile,
   useDisplayPreferences,
 } from '@/features/shared/ui';
 import { OpenContestAction } from './open-contest-action';
@@ -29,16 +30,20 @@ function StatusCardFrame({
   title: ReactNode;
 }) {
   return (
-    <section
-      className="grid gap-3 rounded-2xl border border-inverse-border bg-surface-inverse px-5 py-5 text-on-inverse"
+    <Tile
+      as="section"
+      className="grid gap-3 px-5 py-5"
       data-testid="contest-status-card"
+      padding="none"
+      radius="md"
+      variant="inverse"
     >
       <Eyebrow tone="inverse">{eyebrow}</Eyebrow>
       <Heading level={2} variant="card" size="xl" tone="inherit" data-testid="contest-status-card-title">
         {title}
       </Heading>
       {children}
-    </section>
+    </Tile>
   );
 }
 
