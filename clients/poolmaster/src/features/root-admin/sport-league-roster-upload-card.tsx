@@ -2,7 +2,7 @@ import {
   applyParticipantLeagueAffiliationUpload,
   previewParticipantLeagueAffiliationUpload,
 } from '@/lib/api';
-import { BulkUploadPanel, Heading, StatusBadge, Tile, UploadPreviewTable } from '@/features/shared/ui';
+import { BulkUploadPanel, PanelCard, StatusBadge, UploadPreviewTable } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -92,59 +92,54 @@ export function SportLeagueRosterUploadCard({ leagueId }: { leagueId: string }) 
   });
 
   return (
-    <Tile>
-      <Heading level={3} variant="card" size="base">
-        Bulk-update rankings
-      </Heading>
-      <p className="mt-1 text-sm text-muted-foreground">
+    <PanelCard headingLevel={3} padded title="Bulk-update rankings">
+      <p className="text-sm text-muted-foreground">
         {`Paste or upload the current rankings, preview how each row resolves to a ${participant.one}, then apply.`}
       </p>
-      <div className="mt-4">
-        <BulkUploadPanel<RosterUploadRow, RosterPreviewRow>
-          apply={(rows) => applyMutation.mutateAsync(rows).then(() => undefined)}
-          applyError={
-            applyMutation.isError
-              ? extractErrorMessage(applyMutation.error, {
-                  fallback: 'We could not apply this roster upload.',
-                })
-              : null
-          }
-          applyLabel="Apply rankings"
-          formatNote="Columns: externalId or playerName (one is required), plus ranking."
-          isApplyPending={applyMutation.isPending}
-          isPreviewPending={previewMutation.isPending}
-          parse={parseRosterUpload}
-          preview={(rows) => previewMutation.mutateAsync(rows)}
-          previewError={
-            previewMutation.isError
-              ? extractErrorMessage(previewMutation.error, {
-                  fallback: 'We could not preview this roster upload.',
-                })
-              : null
-          }
-          renderPreview={(rows) => (
-            <UploadPreviewTable
-              describeRow={(row) => describeRow(row.row)}
-              match={(row) => row.participantName || '—'}
-              matchHeader={capitalize(participant.one)}
-              resolution={(row) => <StatusBadge tone={RESOLUTION_TONE[row.resolution]}>{row.resolution}</StatusBadge>}
-              rows={rows}
-              testId="root-admin-sport-league-roster-upload-preview-table"
-            />
-          )}
-          templateFilename={`${sportPathSegment(sport)}-${sportLeague.one}-roster-template.csv`}
-          templateHeaders={ROSTER_UPLOAD_HEADERS}
-          testId="root-admin-sport-league-roster-upload"
-          unresolvedCount={(rows) =>
-            rows.filter((row) => row.resolution !== 'MATCHED').length
-          }
-          unresolvedNotice={(count) =>
-            `${count} row${count === 1 ? '' : 's'} could not be matched to a ${participant.one}. Fix or remove ${
-              count === 1 ? 'it' : 'them'
-            } before applying.`
-          }
-        />
-      </div>
-    </Tile>
+      <BulkUploadPanel<RosterUploadRow, RosterPreviewRow>
+        apply={(rows) => applyMutation.mutateAsync(rows).then(() => undefined)}
+        applyError={
+          applyMutation.isError
+            ? extractErrorMessage(applyMutation.error, {
+                fallback: 'We could not apply this roster upload.',
+              })
+            : null
+        }
+        applyLabel="Apply rankings"
+        formatNote="Columns: externalId or playerName (one is required), plus ranking."
+        isApplyPending={applyMutation.isPending}
+        isPreviewPending={previewMutation.isPending}
+        parse={parseRosterUpload}
+        preview={(rows) => previewMutation.mutateAsync(rows)}
+        previewError={
+          previewMutation.isError
+            ? extractErrorMessage(previewMutation.error, {
+                fallback: 'We could not preview this roster upload.',
+              })
+            : null
+        }
+        renderPreview={(rows) => (
+          <UploadPreviewTable
+            describeRow={(row) => describeRow(row.row)}
+            match={(row) => row.participantName || '—'}
+            matchHeader={capitalize(participant.one)}
+            resolution={(row) => <StatusBadge tone={RESOLUTION_TONE[row.resolution]}>{row.resolution}</StatusBadge>}
+            rows={rows}
+            testId="root-admin-sport-league-roster-upload-preview-table"
+          />
+        )}
+        templateFilename={`${sportPathSegment(sport)}-${sportLeague.one}-roster-template.csv`}
+        templateHeaders={ROSTER_UPLOAD_HEADERS}
+        testId="root-admin-sport-league-roster-upload"
+        unresolvedCount={(rows) =>
+          rows.filter((row) => row.resolution !== 'MATCHED').length
+        }
+        unresolvedNotice={(count) =>
+          `${count} row${count === 1 ? '' : 's'} could not be matched to a ${participant.one}. Fix or remove ${
+            count === 1 ? 'it' : 'them'
+          } before applying.`
+        }
+      />
+    </PanelCard>
   );
 }

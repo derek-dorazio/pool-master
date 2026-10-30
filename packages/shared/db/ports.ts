@@ -109,6 +109,8 @@ export interface UserRepository {
    * current members, and a league's removed members only grow over the years.
    */
   findActiveByLeague(leagueId: string): Promise<User[]>;
+  /** `findActiveByLeague` for several leagues in one read (#1255): each user once, in the same order. */
+  findActiveByLeagues(leagueIds: readonly string[]): Promise<User[]>;
 
   /**
    * Resolves a user by an identifier that may be either their email or their username.
@@ -187,6 +189,8 @@ export interface LeaguePlanChange {
 
 export interface LeagueRepository {
   findById(id: string): Promise<League | null>;
+  /** The leagues named, in no particular order; an id with no league is left out (#1255). */
+  findByIds(ids: readonly string[]): Promise<League[]>;
   findByCode(code: string): Promise<League | null>;
 
   /**
@@ -269,6 +273,8 @@ export interface LeagueRepository {
 export interface LeagueMembershipRepository {
   /** The league's ACTIVE memberships, earliest joiner first. */
   findByLeague(leagueId: string): Promise<LeagueMembership[]>;
+  /** Several leagues' ACTIVE memberships in one read, earliest joiner first (#1255). */
+  findByLeagues(leagueIds: readonly string[]): Promise<LeagueMembership[]>;
   findByUser(userId: string): Promise<LeagueMembership[]>;
 
   /**
@@ -466,6 +472,8 @@ export interface ContestRepository {
   findSportLeagueIdsBySeason(leagueId: string, seasonYear: number): Promise<string[]>;
   /** The event's contests, oldest first, optionally narrowed to or away from some statuses. */
   findBySportEvent(sportEventId: string, filter?: ContestStatusFilter): Promise<Contest[]>;
+  /** The contests on any of the events, each once, oldest first (#1255). */
+  findBySportEvents(sportEventIds: readonly string[]): Promise<Contest[]>;
   /**
    * The contests a released edition can join (#714, #1179): made from a template covering the
    * edition's series (matched by the series' name within its sport league), not COMPLETED, not
@@ -608,6 +616,8 @@ export type ContestEntryDeleteResult = { status: 'deleted' } | { status: 'contes
 export interface ContestEntryRepository {
   findByIdWithSquad(id: string): Promise<ContestEntryWithSquad | null>;
   findByContest(contestId: string): Promise<ContestEntry[]>;
+  /** Several contests' entries in one read, in creation order as `findByContest` lists them (#1255). */
+  findByContests(contestIds: readonly string[]): Promise<ContestEntry[]>;
   /**
    * In entry-number order, then creation order. `submittedFor` keeps the entries that submitted
    * that event alone (#481, per event since #713).

@@ -184,6 +184,15 @@ describe('Reseeded rounds on the NFL playoffs results page', () => {
     expect(screen.queryByTestId('root-admin-reseed-round-3')).not.toBeInTheDocument();
   });
 
+  it('titles the card Reseeded rounds, with each round named in its own heading inside', async () => {
+    seed(bracket());
+    renderPage();
+
+    const card = await screen.findByRole('region', { name: 'Reseeded rounds' });
+    expect(card).toHaveAttribute('data-testid', 'root-admin-reseed');
+    expect(within(card).getByTestId('root-admin-reseed-round-2')).toHaveTextContent('Divisional Round');
+  });
+
   it('shows no reseed card for a league whose bracket is fixed by its links', async () => {
     seed(bracket(), { bracketAdvancement: 'FIXED' });
     renderPage();

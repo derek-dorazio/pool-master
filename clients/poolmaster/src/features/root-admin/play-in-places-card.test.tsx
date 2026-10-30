@@ -31,6 +31,12 @@ describe('PlayInPlacesCard wording', () => {
     expect(card).not.toHaveTextContent(/play-in/i);
   });
 
+  it('titles the card with the sport\'s word for its places, as Qualifier places for a tennis draw', () => {
+    renderCard(Sport.TENNIS);
+
+    expect(screen.getByRole('region', { name: 'Qualifier places' })).toHaveAttribute('data-testid', 'root-admin-play-in-places');
+  });
+
   it('keeps play-in places for a sport with no word of its own, as basketball\'s First Four places', () => {
     renderCard(Sport.BASKETBALL);
 

@@ -19,7 +19,7 @@ import {
 } from '@poolmaster/shared/domain';
 import type { ContestFinalStandings } from '../../../packages/core-api/src/modules/contests/service';
 import { ContestEventChangeKind, EMAIL_SETTINGS, EmailService } from '../../../packages/core-api/src/modules/email';
-import { ContestNotices } from '../../../packages/core-api/src/modules/notifications';
+import { ContestNotices, type ContestNoticeDeps } from '../../../packages/core-api/src/modules/notifications';
 import { fakeLogger } from '../../support/fake-logger';
 import { inMemoryEmailMessages, inMemoryEmailOptOuts, inMemoryEmailSuppressions, type InMemoryEmailMessages } from '../../support/in-memory-email-messages';
 import { TEST_UNSUBSCRIBE, TEST_PLAN_ENTITLEMENTS } from '../../support/email-service';
@@ -51,7 +51,7 @@ describe('ContestNotices', () => {
     logger = fakeLogger();
   });
 
-  function notices(): ContestNotices {
+  function notices(overrides: Partial<ContestNoticeDeps> = {}): ContestNotices {
     const config = EMAIL_SETTINGS.defaults({ POOLMASTER_ENVIRONMENT: 'prod' });
     const email = new EmailService({
       messages: outbox,
@@ -84,6 +84,7 @@ describe('ContestNotices', () => {
       appBaseUrl: 'https://app.example.test/',
       logger,
       now: () => NOW,
+      ...overrides,
     });
   }
 
@@ -439,6 +440,42 @@ describe('ContestNotices', () => {
         ['CONTEST_EVENT_CHANGED', entrant.user.id, majors.id],
         ['CONTEST_EVENT_CHANGED', entrant.user.id, season.id],
       ]));
+    });
+
+    it('reads the leagues, members and entrants of every contest on the event once each, however many contests and leagues it has (#1255)', async () => {
+      const masters = world.addSportEvent({ name: 'The Masters', startDate: STARTS_AT, status: SportEventStatus.POSTPONED });
+      const office = world.addLeague();
+      const club = world.addLeague();
+      const first = world.addContest(office.id, { sportEventIds: [masters.id] });
+      const second = world.addContest(office.id, { sportEventIds: [masters.id] });
+      const third = world.addContest(club.id, { sportEventIds: [masters.id] });
+      const officeCommissioner = member(office.id, 'Casey', { role: LeagueRole.COMMISSIONER });
+      const clubCommissioner = member(club.id, 'Robin', { role: LeagueRole.COMMISSIONER });
+      const entrant = member(office.id, 'Nora');
+      const clubEntrant = member(club.id, 'Jules');
+      await enter(second.id, entrant, masters.id, true);
+      await enter(third.id, clubEntrant, masters.id, true);
+      const leagues = world.leagueRepo();
+      const memberships = world.membershipRepo();
+      const users = world.userRepo();
+      const entries = world.entryRepo();
+      const reads = [
+        jest.spyOn(leagues, 'findByIds'), jest.spyOn(leagues, 'findById'),
+        jest.spyOn(memberships, 'findByLeagues'), jest.spyOn(users, 'findActiveByLeagues'),
+        jest.spyOn(entries, 'findByContests'), jest.spyOn(entries, 'findByContest'),
+      ];
+
+      await notices({ leagues, memberships, users, entries }).sportEventChanged(masters, { kind: ContestEventChangeKind.POSTPONED });
+
+      expect(reads.map((read) => read.mock.calls.length)).toEqual([1, 0, 1, 1, 1, 0]);
+      expect(new Set(outbox.rows.map((row) => `${row.recipientUserId ?? ''}:${row.contestId ?? ''}`))).toEqual(new Set([
+        `${officeCommissioner.user.id}:${first.id}`,
+        `${officeCommissioner.user.id}:${second.id}`,
+        `${entrant.user.id}:${second.id}`,
+        `${clubCommissioner.user.id}:${third.id}`,
+        `${clubEntrant.user.id}:${third.id}`,
+      ]));
+      expect(outbox.rows).toHaveLength(5);
     });
 
     it('tells no commissioner of a draft contest that its event was postponed', async () => {
