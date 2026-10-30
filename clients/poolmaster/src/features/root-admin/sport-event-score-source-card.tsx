@@ -2,7 +2,16 @@ import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { SportEventSyncScope, getSportDefinition } from '@poolmaster/shared/domain';
 import { linkEventScoreSource, listProviders, unlinkEventScoreSource } from '@/lib/api';
-import { Button, ConfirmationModal, formatDateTimeDisplay, PanelCard, PickerModal, StatusBadge, useDisplayPreferences } from '@/features/shared/ui';
+import {
+  Button,
+  ConfirmationModal,
+  formatDateTimeDisplay,
+  InlineError,
+  PanelCard,
+  PickerModal,
+  StatusBadge,
+  useDisplayPreferences,
+} from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -195,9 +204,9 @@ export function SportEventScoreSourceCard({
         </p>
       ) : null}
       {linkMutation.isError && !linkOpen ? (
-        <p className="mt-2 text-sm text-destructive" data-testid="root-admin-sport-event-link-error" role="alert">
+        <InlineError className="mt-2" testId="root-admin-sport-event-link-error">
           {extractErrorMessage(linkMutation.error, { fallback: 'The link was rejected.' })}
-        </p>
+        </InlineError>
       ) : null}
       {tournament.syncScope === SportEventSyncScope.NONE ? null : (
         <GolfTournamentLiveSimulation tournament={tournament} />

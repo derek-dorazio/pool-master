@@ -11,6 +11,7 @@
 import type {
   ContestEntryMatchPredictionRepository,
   ContestEntrySeasonPrediction,
+  LockedPredictionWeek,
   ParticipantRepository,
   SportEventMatchRepository,
   SportEventParticipantRepository,
@@ -27,7 +28,8 @@ import {
   type SportEventParticipant,
 } from '@poolmaster/shared/domain';
 import { expectDefined } from './expect-defined';
-import type { SportEventParticipantService } from '../../packages/core-api/src/modules/events/sport-event-participant-service';
+import type { EventFieldReads } from '../../packages/core-api/src/modules/events/sport-event-participant-service';
+import { fieldReads } from './field-reads';
 import type { InMemoryContestWorld } from './in-memory-contest-world';
 
 const T0 = new Date('2026-09-01T00:00:00.000Z');
@@ -156,7 +158,7 @@ export class InMemoryGamePicks {
    * The event's field as the field service publishes it: only the rows, their teams and their
    * seeds matter here. Nothing is kept, so the shared read is the current one too.
    */
-  fieldService(): Pick<SportEventParticipantService, 'listEventParticipants' | 'listCachedEventParticipants'> {
+  fieldService(): EventFieldReads {
     const listEventParticipants = async (sportEventId: string) => [...this.field.values()]
       .filter((row) => row.sportEventId === sportEventId)
       .map((row) => ({
@@ -169,7 +171,7 @@ export class InMemoryGamePicks {
         matches: [],
         affiliatedWithSportLeague: true,
       }));
-    return { listEventParticipants, listCachedEventParticipants: listEventParticipants };
+    return fieldReads(listEventParticipants);
   }
 
   participantRepo(): Pick<ParticipantRepository, 'findByIds'> {
@@ -205,7 +207,16 @@ export class InMemoryGamePicks {
             : { ...row, sportEventId, participantId: expectDefined(this.field.get(row.sportEventParticipantId)).participantId };
         }),
       hasAnyOnMatch: async (sportEventMatchId) => [...this.predictions.values()].some((row) => row.sportEventMatchId === sportEventMatchId),
-      save: async ({ contestEntryId, sportEventId, saves, clearedMatchIds, eventStatus, tiebreakerValue, at: when }) => {
+      save: async ({ contestEntryId, sportEventId, at: when, decide }) => {
+        const week = (): LockedPredictionWeek => ({
+          predictions: [...this.predictions.values()]
+            .filter((row) => row.contestEntryId === contestEntryId && this.inEvent(row, sportEventId))
+            .sort((left, right) => this.matchNumberOf(left) - this.matchNumberOf(right)),
+          event: expectDefined(this.world.entries.get(contestEntryId)).events.find((event) => event.sportEventId === sportEventId) ?? null,
+        });
+        const change = decide(week());
+        if (change === null) return { written: null, week: week() };
+        const { saves, clearedMatchIds, eventStatus, tiebreakerValue } = change;
         if (saves.some((save) => save.confidence !== null && save.confidence < 1)) {
           throw new Error('violates check constraint contest_entry_match_predictions_confidence_check');
         }
@@ -236,6 +247,7 @@ export class InMemoryGamePicks {
             ],
           });
         }
+        return { written: change, week: week() };
       },
     };
   }

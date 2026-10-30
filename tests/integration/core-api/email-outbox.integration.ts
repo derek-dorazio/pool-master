@@ -15,6 +15,7 @@ import {
   cleanupTestData,
   createTestUser,
   getApp,
+  getAppPrisma,
   getPrisma,
   setupIntegrationTests,
   teardownIntegrationTests,
@@ -45,7 +46,7 @@ function queued(overrides: Partial<QueuedRecord> = {}): QueuedRecord {
 }
 
 function repository() {
-  return new PrismaEmailMessageRepository(getPrisma());
+  return new PrismaEmailMessageRepository(getAppPrisma());
 }
 
 beforeAll(async () => {

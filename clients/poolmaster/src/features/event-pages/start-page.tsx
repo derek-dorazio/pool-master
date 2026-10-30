@@ -18,6 +18,7 @@ import {
   ErrorState,
   Eyebrow,
   Heading,
+  InlineError,
   LinkButton,
   LoadingState,
   Tile,
@@ -104,9 +105,9 @@ function ShareWithCommissionerButton({ page }: { page: EventPageDto }) {
         {copyState === 'copied' ? 'Link copied' : 'Share with your commissioner'}
       </Button>
       {copyState === 'failed' ? (
-        <p className="text-sm text-destructive" data-testid="start-share-failed" role="alert">
+        <InlineError testId="start-share-failed">
           {'Couldn\'t copy the link. Copy this page\'s address from your browser instead.'}
-        </p>
+        </InlineError>
       ) : null}
     </div>
   );

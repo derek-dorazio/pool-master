@@ -6,6 +6,7 @@
 import { randomUUID } from 'node:crypto';
 import {
   cleanupTestData,
+  getAppPrisma,
   getPrisma,
   setupIntegrationTests,
   teardownIntegrationTests,
@@ -110,14 +111,13 @@ const drawOf = (fixture: SquaresFixture) => ({
 
 describe('PrismaContestRepository on a squares contest', () => {
   it('reads the contest\'s game, and reads it as drawn once its digits are drawn', async () => {
-    const prisma = getPrisma();
     const fixture = await seedSquaresContest();
-    const contests = new PrismaContestRepository(prisma);
+    const contests = new PrismaContestRepository(getAppPrisma());
 
     expect(await contests.findById(fixture.contestId)).toMatchObject({ squaresGameMatchId: fixture.gameId });
     expect((await contests.findById(fixture.contestId))?.drawnAt).toBeUndefined();
 
-    await new PrismaSquaresRepository(prisma).recordDraw(drawOf(fixture));
+    await new PrismaSquaresRepository(getAppPrisma()).recordDraw(drawOf(fixture));
 
     expect((await contests.findById(fixture.contestId))?.drawnAt).toEqual(DRAWN_AT);
   });
@@ -126,7 +126,7 @@ describe('PrismaContestRepository on a squares contest', () => {
 describe('PrismaSquaresRepository claiming and clearing', () => {
   it('claims empty boxes and reads them by row then column', async () => {
     const fixture = await seedSquaresContest();
-    const squares = new PrismaSquaresRepository(getPrisma());
+    const squares = new PrismaSquaresRepository(getAppPrisma());
     const [first, second] = fixture.entryIds;
 
     expect(await squares.claim(claimOf(fixture, second, 3, 1))).toBe('claimed');
@@ -138,7 +138,7 @@ describe('PrismaSquaresRepository claiming and clearing', () => {
 
   it('refuses a box already held, keeping its holder', async () => {
     const fixture = await seedSquaresContest();
-    const squares = new PrismaSquaresRepository(getPrisma());
+    const squares = new PrismaSquaresRepository(getAppPrisma());
     const [first, second] = fixture.entryIds;
     await squares.claim(claimOf(fixture, first, 5, 5));
 
@@ -148,7 +148,7 @@ describe('PrismaSquaresRepository claiming and clearing', () => {
 
   it('refuses a claim past the entry\'s box limit', async () => {
     const fixture = await seedSquaresContest();
-    const squares = new PrismaSquaresRepository(getPrisma());
+    const squares = new PrismaSquaresRepository(getAppPrisma());
     const [first] = fixture.entryIds;
     await squares.claim(claimOf(fixture, first, 0, 0, 2));
     await squares.claim(claimOf(fixture, first, 0, 1, 2));
@@ -159,7 +159,7 @@ describe('PrismaSquaresRepository claiming and clearing', () => {
 
   it('clears a held box only for its holder, and answers empty for a box nobody holds', async () => {
     const fixture = await seedSquaresContest();
-    const squares = new PrismaSquaresRepository(getPrisma());
+    const squares = new PrismaSquaresRepository(getAppPrisma());
     const [holder, other] = fixture.entryIds;
     await squares.claim(claimOf(fixture, holder, 2, 2));
     const box = { contestId: fixture.contestId, rowIndex: 2, columnIndex: 2 };
@@ -190,7 +190,7 @@ describe('PrismaSquaresRepository recording the draw', () => {
   it('writes the digits and submits every entry holding a box, leaving an entry without a box in draft', async () => {
     const prisma = getPrisma();
     const fixture = await seedSquaresContest();
-    const squares = new PrismaSquaresRepository(prisma);
+    const squares = new PrismaSquaresRepository(getAppPrisma());
     const [first, second] = fixture.entryIds;
     await squares.claim(claimOf(fixture, first, 4, 4));
 
@@ -207,7 +207,7 @@ describe('PrismaSquaresRepository recording the draw', () => {
 
   it('refuses a second draw, keeping the first draw\'s digits', async () => {
     const fixture = await seedSquaresContest();
-    const squares = new PrismaSquaresRepository(getPrisma());
+    const squares = new PrismaSquaresRepository(getAppPrisma());
     await squares.recordDraw(drawOf(fixture));
 
     expect(await squares.recordDraw({ ...drawOf(fixture), seed: 'second-seed', rowDigits: [...IN_ORDER].reverse() })).toBe('alreadyDrawn');
@@ -223,7 +223,7 @@ describe('PrismaSquaresRepository recording the draw', () => {
 
   it('refuses claiming and clearing once the digits are drawn', async () => {
     const fixture = await seedSquaresContest();
-    const squares = new PrismaSquaresRepository(getPrisma());
+    const squares = new PrismaSquaresRepository(getAppPrisma());
     await squares.claim(claimOf(fixture, fixture.entryIds[0], 1, 1));
     await squares.recordDraw(drawOf(fixture));
 
@@ -235,10 +235,10 @@ describe('PrismaSquaresRepository recording the draw', () => {
   it('refuses an entry joining once the digits are drawn', async () => {
     const prisma = getPrisma();
     const fixture = await seedSquaresContest();
-    await new PrismaSquaresRepository(prisma).recordDraw(drawOf(fixture));
+    await new PrismaSquaresRepository(getAppPrisma()).recordDraw(drawOf(fixture));
     const entry = await prisma.contestEntry.findUniqueOrThrow({ where: { id: fixture.entryIds[0] } });
 
-    expect(await new PrismaContestEntryRepository(prisma).create({
+    expect(await new PrismaContestEntryRepository(getAppPrisma()).create({
       contestId: fixture.contestId, squadId: entry.squadId, entryNumber: 2, name: 'Late Entry', tiebreakerValue: null,
     }, { entriesPerContest: () => null })).toEqual({ status: 'contestDrawn' });
   });
@@ -253,7 +253,7 @@ describe('a claim racing the draw', () => {
       data: { contestId: fixture.contestId, seed: 'held-seed', rowDigits: IN_ORDER, columnDigits: IN_ORDER, drawnByUserId: fixture.userId },
     }));
     const holderPid = await holder.ready;
-    const claimed = new PrismaSquaresRepository(prisma).claim(claimOf(fixture, fixture.entryIds[0], 0, 0));
+    const claimed = new PrismaSquaresRepository(getAppPrisma()).claim(claimOf(fixture, fixture.entryIds[0], 0, 0));
     await waitUntilBlockedBy(prisma, holderPid).finally(() => holder.release());
 
     expect(await claimed).toBe('drawn');
@@ -269,7 +269,7 @@ describe('a claim racing the draw', () => {
       data: { contestId: fixture.contestId, contestEntryId: first, rowIndex: 0, columnIndex: 0 },
     }));
     const holderPid = await holder.ready;
-    const drawn = new PrismaSquaresRepository(prisma).recordDraw(drawOf(fixture));
+    const drawn = new PrismaSquaresRepository(getAppPrisma()).recordDraw(drawOf(fixture));
     await waitUntilBlockedBy(prisma, holderPid).finally(() => holder.release());
 
     expect(await drawn).toBe('drawn');
@@ -280,7 +280,7 @@ describe('a claim racing the draw', () => {
 describe('PrismaSquaresRepository frozen winners', () => {
   it('replaces the contest\'s winners and reads them by period, an unclaimed box with no entry', async () => {
     const fixture = await seedSquaresContest();
-    const squares = new PrismaSquaresRepository(getPrisma());
+    const squares = new PrismaSquaresRepository(getAppPrisma());
     const [first, second] = fixture.entryIds;
     const winner = (periodNumber: number, contestEntryId: string | null) => ({
       contestId: fixture.contestId, periodNumber, homeScore: periodNumber * 7, awayScore: 3, rowIndex: 3, columnIndex: periodNumber, contestEntryId, settledAt: DRAWN_AT,

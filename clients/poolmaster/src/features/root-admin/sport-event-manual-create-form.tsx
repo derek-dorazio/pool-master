@@ -10,6 +10,7 @@ import {
   DateTimeField,
   dateTimeLocalValueToIso,
   FormField,
+  InlineError,
   Input,
   Tile,
   useDisplayPreferences,
@@ -187,14 +188,14 @@ export function SportEventManualCreateForm({
         </div>
 
         {createMutation.isError ? (
-          <p className="text-sm font-medium text-destructive">
+          <InlineError>
             {extractErrorMessage(createMutation.error, {
               codeMessages: {
                 EVENT_EDITION_ALREADY_EXISTS: `This ${sportLeagueNoun.one} already has a ${edition.eventYear} edition of this ${event.one}.`,
               },
               fallback: `We could not create this ${event.one}.`,
             })}
-          </p>
+          </InlineError>
         ) : null}
       </form>
     </Tile>

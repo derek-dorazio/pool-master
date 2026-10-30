@@ -3,7 +3,16 @@ import { MatchEnding, MatchSide, MatchStatus, formatSpread, type SportMatchPerio
 import { cancelEventMatch, clearEventMatchResult, recordEventMatchResult, updateEventBracketMatch } from '@/lib/api';
 import type { SportEventMatchDto, SportEventParticipantDto } from '@/lib/api';
 import { tieWord } from '@/features/contests/contest-sport';
-import { Button, ConfirmDialog, formatDateTimeDisplay, Input, Select, StatusBadge, useDisplayPreferences } from '@/features/shared/ui';
+import {
+  Button,
+  ConfirmDialog,
+  formatDateTimeDisplay,
+  InlineError,
+  Input,
+  Select,
+  StatusBadge,
+  useDisplayPreferences,
+} from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -224,18 +233,18 @@ export function BracketMatchRow({ match, released, context }: { match: SportEven
             tone="danger"
           >
             {cancel.isError ? (
-              <p className="text-sm text-destructive" data-testid={`root-admin-bracket-cancel-error-${match.matchNumber}`} role="alert">
+              <InlineError testId={`root-admin-bracket-cancel-error-${match.matchNumber}`}>
                 {extractErrorMessage(cancel.error, { codeMessages: errorCopy, fallback: `This ${noun.one} could not be cancelled. Try again.` })}
-              </p>
+              </InlineError>
             ) : null}
           </ConfirmDialog>
           {released && (!home || !away) ? (
             <p className="text-sm text-muted-foreground">{`Waiting on both ${context.vocabulary.participant.many}`}</p>
           ) : null}
           {result.isError ? (
-            <p className="mt-2 text-sm text-destructive" data-testid={`root-admin-bracket-error-${match.matchNumber}`} role="alert">
+            <InlineError className="mt-2" testId={`root-admin-bracket-error-${match.matchNumber}`}>
               {extractErrorMessage(result.error, { codeMessages: errorCopy, fallback: `This ${noun.one}'s result could not be saved. Try again.` })}
-            </p>
+            </InlineError>
           ) : null}
         </td>
       </tr>
@@ -317,12 +326,12 @@ function TieResult({ match, context }: { match: SportEventMatchDto; context: Bra
       </Button>
       <Button disabled={save.isPending} onClick={() => setEditing(false)} size="sm" variant="ghost">Cancel</Button>
       {save.isError ? (
-        <p className="w-full text-sm text-destructive" data-testid={`${testId}-error`} role="alert">
+        <InlineError className="w-full" testId={`${testId}-error`}>
           {extractErrorMessage(save.error, {
             codeMessages: bracketErrorMessages(context.vocabulary, match, context.bracket),
             fallback: `This ${word.toLowerCase()} could not be saved. Try again.`,
           })}
-        </p>
+        </InlineError>
       ) : null}
     </div>
   );
@@ -406,12 +415,12 @@ function EarlyEndingResult({
       </Button>
       <Button disabled={save.isPending} onClick={() => setEditing(false)} size="sm" variant="ghost">Cancel</Button>
       {save.isError ? (
-        <p className="w-full text-sm text-destructive" data-testid={`${testId}-error`} role="alert">
+        <InlineError className="w-full" testId={`${testId}-error`}>
           {extractErrorMessage(save.error, {
             codeMessages: bracketErrorMessages(context.vocabulary, match, context.bracket),
             fallback: `This ${matchNoun(context.vocabulary).one}'s result could not be saved. Try again.`,
           })}
-        </p>
+        </InlineError>
       ) : null}
     </div>
   );
@@ -504,15 +513,15 @@ function PairingEditor({
         <Button disabled={save.isPending} onClick={onDone} size="sm" variant="ghost">Cancel</Button>
       </div>
       {homeId !== NO_TEAM && homeId === awayId ? (
-        <p className="text-sm text-destructive">{`A ${team.one} can't play itself. Pick two different ${team.many}.`}</p>
+        <InlineError>{`A ${team.one} can't play itself. Pick two different ${team.many}.`}</InlineError>
       ) : null}
       {save.isError ? (
-        <p className="text-sm text-destructive" data-testid={`root-admin-bracket-pairing-error-${match.matchNumber}`} role="alert">
+        <InlineError testId={`root-admin-bracket-pairing-error-${match.matchNumber}`}>
           {extractErrorMessage(save.error, {
             codeMessages: bracketErrorMessages(context.vocabulary, match, context.bracket),
             fallback: `This ${noun.one}'s pairing could not be saved. Try again.`,
           })}
-        </p>
+        </InlineError>
       ) : null}
     </div>
   );
@@ -597,11 +606,11 @@ function SpreadCell({ match, released, context }: { match: SportEventMatchDto; r
         />
       </label>
       {valid ? null : (
-        <p className="text-sm text-destructive">
+        <InlineError>
           {clearing
             ? `The ${context.vocabulary.event.one} has been released, so this spread can be changed but not cleared.`
             : 'Enter a spread in half points, such as -3.5 or 7, between -99.5 and 99.5.'}
-        </p>
+        </InlineError>
       )}
       <div className="flex gap-2">
         <Button
@@ -615,12 +624,12 @@ function SpreadCell({ match, released, context }: { match: SportEventMatchDto; r
         <Button disabled={save.isPending} onClick={() => setEditing(false)} size="sm" variant="ghost">Cancel</Button>
       </div>
       {save.isError ? (
-        <p className="text-sm text-destructive" data-testid={`root-admin-bracket-spread-error-${match.matchNumber}`} role="alert">
+        <InlineError testId={`root-admin-bracket-spread-error-${match.matchNumber}`}>
           {extractErrorMessage(save.error, {
             codeMessages: bracketErrorMessages(context.vocabulary, match, context.bracket),
             fallback: 'This spread could not be saved. Try again.',
           })}
-        </p>
+        </InlineError>
       ) : null}
     </div>
   );

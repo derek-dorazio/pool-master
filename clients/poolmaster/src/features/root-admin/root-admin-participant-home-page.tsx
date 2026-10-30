@@ -6,6 +6,7 @@ import {
   AsyncPage,
   IdentityHeading,
   LinkButton,
+  QueryState,
   SettingsRow,
   SettingsSection,
   StatusBadge,
@@ -41,27 +42,28 @@ function ParticipantMappingsSection({ participantId }: { participantId: string }
       // poolmaster-allow-list-lookup: counts the mappings listed right below it
       title={`Provider mappings (${providerMappings.length})`}
     >
-      {mappingsQuery.isError ? (
-        <p className="px-5 py-4 text-sm text-destructive" data-testid="root-admin-participant-home-mappings-error">
-          {extractErrorMessage(mappingsQuery.error, {
-            fallback: `We could not load this ${participant.one}’s provider mappings.`,
-          })}
-        </p>
-      ) : mappingsQuery.isLoading ? (
-        <p className="px-5 py-4 text-sm text-muted-foreground">Loading provider mappings...</p>
-      ) : providerMappings.length === 0 ? (
-        <p className="px-5 py-4 text-sm text-muted-foreground">No provider mappings recorded.</p>
-      ) : (
-        <ul className="divide-y divide-border" data-testid="root-admin-participant-home-mappings">
-          {providerMappings.map((mapping) => (
-            <li className="flex flex-wrap items-center gap-3 px-5 py-3 text-sm" key={mapping.id}>
-              <span className="font-medium text-foreground">{mapping.providerId}</span>
-              <span className="text-muted-foreground">{mapping.externalId}</span>
-              <StatusBadge tone="neutral">{mapping.confidence}</StatusBadge>
-            </li>
-          ))}
-        </ul>
-      )}
+      <QueryState
+        empty="No provider mappings recorded."
+        error={extractErrorMessage(mappingsQuery.error, {
+          fallback: `We could not load this ${participant.one}’s provider mappings.`,
+        })}
+        isEmpty={(mappings) => mappings.length === 0}
+        loading="Loading provider mappings..."
+        query={mappingsQuery}
+        testId="root-admin-participant-home-mappings-state"
+      >
+        {(mappings) => (
+          <ul className="divide-y divide-border" data-testid="root-admin-participant-home-mappings">
+            {mappings.map((mapping) => (
+              <li className="flex flex-wrap items-center gap-3 px-5 py-3 text-sm" key={mapping.id}>
+                <span className="font-medium text-foreground">{mapping.providerId}</span>
+                <span className="text-muted-foreground">{mapping.externalId}</span>
+                <StatusBadge tone="neutral">{mapping.confidence}</StatusBadge>
+              </li>
+            ))}
+          </ul>
+        )}
+      </QueryState>
     </SettingsSection>
   );
 }

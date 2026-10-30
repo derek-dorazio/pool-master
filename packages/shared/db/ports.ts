@@ -8,6 +8,7 @@
 import type {
   Contest,
   ContestEntry,
+  ContestEntryEventStatus,
   ContestEntryMatchPrediction,
   ContestEntryStatus,
   PredictedChoice,
@@ -416,6 +417,8 @@ export interface ParticipantProviderMappingRepository {
  */
 export interface ContestRepository {
   findById(id: string): Promise<Contest | null>;
+  /** The contests under `ids`, in one read, missing ones left out (#1315). */
+  findByIds(ids: readonly string[]): Promise<Contest[]>;
   /** The league's contests in one of `statuses`, newest first. */
   findByLeague(leagueId: string, statuses: readonly Contest['status'][]): Promise<Contest[]>;
   /**
@@ -585,6 +588,8 @@ export interface ContestEntryRepository {
    * that event alone (#481, per event since #713).
    */
   findByContestWithSquad(contestId: string, options?: { submittedFor?: string }): Promise<ContestEntryWithSquad[]>;
+  /** Every entry of each contest, in one read (#1315): by contest, then in `findByContestWithSquad`'s order. */
+  findByContestsWithSquad(contestIds: readonly string[]): Promise<ContestEntryWithSquad[]>;
   /** The squad's entries in one contest, drafts included, in entry-number order (#1167). */
   findByContestAndSquad(contestId: string, squadId: string): Promise<ContestEntry[]>;
   /** The ids alone of the squad's entries in one contest, drafts included, in entry-number order (#1197). */
@@ -635,10 +640,16 @@ export type ContestEntryMatchPredictionWrite = PredictedChoice & {
   confidence: number | null;
 };
 
-/** A change to an entry's picks for one event's games, written all or none. */
-export interface ContestEntryMatchPredictionSave {
-  contestEntryId: string;
-  sportEventId: string;
+/** An entry's picks and its row for one event, as a change reads them under the entry's lock (#1268). */
+export interface LockedPredictionWeek {
+  /** Its picks on the event's games, in game order. */
+  predictions: readonly ContestEntryMatchPrediction[];
+  /** Its status and tiebreaker for the event; null while it has no row for the event. */
+  event: ContestEntryEventStatus | null;
+}
+
+/** What one change writes to an entry's picks for one event's games. */
+export interface ContestEntryMatchPredictionChange {
   saves: readonly ContestEntryMatchPredictionWrite[];
   /** Games whose pick is removed. */
   clearedMatchIds: readonly string[];
@@ -646,7 +657,25 @@ export interface ContestEntryMatchPredictionSave {
   eventStatus: ContestEntryStatus | null;
   /** The entry's tiebreaker guess for the event after the change, when it changes (#717): kept on its row for the event. */
   tiebreakerValue?: number | null;
+}
+
+/**
+ * A change to an entry's picks for one event's games, written all or none. `decide` is handed
+ * the week as it stands once the entry is locked, and answers with the change, or null when
+ * there is nothing to write, so a change that committed while this one waited is judged too
+ * (#1268). It may throw to refuse; nothing is written then.
+ */
+export interface ContestEntryMatchPredictionSave {
+  contestEntryId: string;
+  sportEventId: string;
   at: Date;
+  decide: (week: LockedPredictionWeek) => ContestEntryMatchPredictionChange | null;
+}
+
+/** What a save did: the change `decide` answered with, null when none, and the week it left. */
+export interface ContestEntryMatchPredictionSaveResult {
+  written: ContestEntryMatchPredictionChange | null;
+  week: LockedPredictionWeek;
 }
 
 /** A pick read across several events (#719): which event its game is in, and the participant its field row stands for (null for a tie pick, #792). */
@@ -658,12 +687,12 @@ export type ContestEntrySeasonPrediction = ContestEntryMatchPrediction & { sport
 export interface ContestEntryMatchPredictionRepository {
   /** The entry's picks on the event's games. */
   findByEntryAndEvent(contestEntryId: string, sportEventId: string): Promise<ContestEntryMatchPrediction[]>;
-  /** Several entries' picks on the event's games, in game order: a leaderboard's or settlement's read. */
+  /** Several entries' picks on the event's games, by entry, each in game order: a leaderboard's or settlement's read. */
   findByEntriesAndEvent(contestEntryIds: readonly string[], sportEventId: string): Promise<ContestEntryMatchPrediction[]>;
   /** Several entries' picks on several events' games, each with its event and team: a survivor season's read (#719). */
   findByEntriesAndEvents(contestEntryIds: readonly string[], sportEventIds: readonly string[]): Promise<ContestEntrySeasonPrediction[]>;
   /** Whether any entry, in any contest, has a pick on the game: its spread is then fixed (#720). */
   hasAnyOnMatch(sportEventMatchId: string): Promise<boolean>;
-  save(change: ContestEntryMatchPredictionSave): Promise<void>;
+  save(change: ContestEntryMatchPredictionSave): Promise<ContestEntryMatchPredictionSaveResult>;
 }
 

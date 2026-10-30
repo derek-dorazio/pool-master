@@ -43,40 +43,8 @@
     },
     {
       "files": [
-        "clients/poolmaster/src/features/championships/championship-standings-grid.tsx",
-        "clients/poolmaster/src/features/championships/cup-standings-grid.tsx"
-      ],
-      "count": 3,
-      "ticket": "#1290"
-    },
-    {
-      "files": [
         "clients/poolmaster/src/features/championships/edit-championship-settings-page.tsx",
         "clients/poolmaster/src/features/leagues/edit-league-page.tsx"
-      ],
-      "count": 1,
-      "ticket": "#1290"
-    },
-    {
-      "files": [
-        "clients/poolmaster/src/features/contests/bracket-entry-page.tsx",
-        "clients/poolmaster/src/features/contests/pick-em-entry-page.tsx"
-      ],
-      "count": 2,
-      "ticket": "#1290"
-    },
-    {
-      "files": [
-        "clients/poolmaster/src/features/contests/bracket-leaderboard.tsx",
-        "clients/poolmaster/src/features/contests/pick-em-leaderboard.tsx"
-      ],
-      "count": 1,
-      "ticket": "#1290"
-    },
-    {
-      "files": [
-        "clients/poolmaster/src/features/contests/contest-detail-page.tsx",
-        "clients/poolmaster/src/features/contests/contest-leaderboard-page.tsx"
       ],
       "count": 1,
       "ticket": "#1290"
@@ -253,14 +221,6 @@
       "files": [
         "clients/poolmaster/src/features/shared/ui/data-grid.tsx",
         "clients/poolmaster/src/features/shared/ui/page-templates.tsx"
-      ],
-      "count": 1,
-      "ticket": "#1290"
-    },
-    {
-      "files": [
-        "clients/poolmaster/src/features/teams/team-owner-action-menu.tsx",
-        "clients/poolmaster/src/features/teams/team-owner-action-menu.tsx"
       ],
       "count": 1,
       "ticket": "#1290"

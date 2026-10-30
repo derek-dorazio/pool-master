@@ -4,6 +4,7 @@ import {
   cleanupTestData,
   createTestUser,
   getApp,
+  getAppPrisma,
   getPrisma,
   setupIntegrationTests,
   teardownIntegrationTests,
@@ -89,7 +90,7 @@ describe('Golf round scores — admin correction surface', () => {
 
     // #236 — the per-round score read is the field read now: every field row with its
     // rounds and standing, each carrying its golf extension.
-    const views = await createSportEventServices(getPrisma()).field.listEventParticipants(event.id);
+    const views = await createSportEventServices(getAppPrisma()).field.listEventParticipants(event.id);
     const byName = new Map(views.map((view) => [view.participant.name, view]));
 
     expect(byName.get('Jordan Spieth')).toMatchObject({ rounds: [], standing: null });
@@ -112,7 +113,7 @@ describe('Golf round scores — admin correction surface', () => {
         golf: { create: { strokes: 68, scoreToPar: -4, thru: 18 } },
       },
     });
-    const service = createGolfScoreService(getPrisma());
+    const service = createGolfScoreService(getAppPrisma());
 
     const preview = await service.previewRoundScores(event.id, 1, [
       row(rory.participant.id),
@@ -136,7 +137,7 @@ describe('Golf round scores — admin correction surface', () => {
 
   it('refuses an upload with any unresolved row with 422 ROUND_SCORE_ROWS_UNRESOLVED, and writes nothing', async () => {
     const { event, rory } = await createField('unresolved');
-    const service = createGolfScoreService(getPrisma());
+    const service = createGolfScoreService(getAppPrisma());
 
     const attempt = service.applyRoundScores(event.id, 1, [
       row(rory.participant.id),
@@ -151,7 +152,7 @@ describe('Golf round scores — admin correction surface', () => {
 
   it('applies an upload: core round and golf extension written together, standing recomputed', async () => {
     const { event, rory } = await createField('apply');
-    const service = createGolfScoreService(getPrisma());
+    const service = createGolfScoreService(getAppPrisma());
 
     await service.applyRoundScores(event.id, 1, [row(rory.participant.id)]);
 
@@ -175,7 +176,7 @@ describe('Golf round scores — admin correction surface', () => {
 
   it('skips a row with no strokes, as the sync path does, persisting neither a round nor a standing', async () => {
     const { event, rory } = await createField('null-strokes');
-    const service = createGolfScoreService(getPrisma());
+    const service = createGolfScoreService(getAppPrisma());
 
     await service.applyRoundScores(event.id, 1, [row(rory.participant.id, { strokes: null })]);
 
@@ -194,7 +195,7 @@ describe('Golf round scores — admin correction surface', () => {
       },
     });
 
-    await createGolfScoreService(getPrisma()).updateRoundScore(event.id, 1, rory.sep.id, { strokes: 70, scoreToPar: -2 });
+    await createGolfScoreService(getAppPrisma()).updateRoundScore(event.id, 1, rory.sep.id, { strokes: 70, scoreToPar: -2 });
 
     const round = await getPrisma().sportEventParticipantRound.findFirstOrThrow({
       where: { sportEventParticipantId: rory.sep.id },
@@ -210,7 +211,7 @@ describe('Golf round scores — admin correction surface', () => {
 
   it('a PATCH correcting strokes and to par stores both as sent, and the standing and rank follow the corrected to par', async () => {
     const { event, rory, jordan } = await createField('patch-route');
-    const service = createGolfScoreService(getPrisma());
+    const service = createGolfScoreService(getAppPrisma());
     await service.applyRoundScores(event.id, 1, [
       row(rory.participant.id, { strokes: 68, scoreToPar: -4 }),
       row(jordan.participant.id, { strokes: 70, scoreToPar: -2 }),
@@ -243,7 +244,7 @@ describe('Golf round scores — admin correction surface', () => {
 
   it('a PATCH with completedAt null clears the stored completion time', async () => {
     const { event, rory } = await createField('patch-clear');
-    await createGolfScoreService(getPrisma()).applyRoundScores(event.id, 1, [
+    await createGolfScoreService(getAppPrisma()).applyRoundScores(event.id, 1, [
       row(rory.participant.id, { completedAt: '2026-05-07T22:15:00.000Z' }),
     ]);
     const admin = await createTestUser({ isRootAdmin: true });
@@ -261,7 +262,7 @@ describe('Golf round scores — admin correction surface', () => {
 
   it('a PATCH with thru null clears the stored thru, so the golfer no longer shows as mid-round', async () => {
     const { event, rory } = await createField('patch-clear-thru');
-    await createGolfScoreService(getPrisma()).applyRoundScores(event.id, 1, [
+    await createGolfScoreService(getAppPrisma()).applyRoundScores(event.id, 1, [
       row(rory.participant.id, { thru: 12, status: 'IN_PROGRESS' }),
     ]);
     const admin = await createTestUser({ isRootAdmin: true });
@@ -287,7 +288,7 @@ describe('Golf round scores — admin correction surface', () => {
     ['a thru above 18', { thru: 19 }],
   ])('a PATCH with %s is refused with 400 and leaves the stored round as it was', async (_label, payload) => {
     const { event, rory } = await createField(`patch-bounds-${Object.keys(payload)[0]}-${Object.values(payload)[0]}`);
-    await createGolfScoreService(getPrisma()).applyRoundScores(event.id, 1, [row(rory.participant.id)]);
+    await createGolfScoreService(getAppPrisma()).applyRoundScores(event.id, 1, [row(rory.participant.id)]);
     const admin = await createTestUser({ isRootAdmin: true });
 
     const res = await getApp().inject({
@@ -366,7 +367,7 @@ describe('Golf round scores — bounded by the event\'s scheduled rounds', () =>
   it('refuses an admin upload for round 5 of a 4-round event with 422 ROUND_BEYOND_SCHEDULE, creating no round', async () => {
     const { event, rory } = await createField('beyond-schedule-admin');
     await getPrisma().sportEvent.update({ where: { id: event.id }, data: { rounds: 4 } });
-    const service = createGolfScoreService(getPrisma());
+    const service = createGolfScoreService(getAppPrisma());
 
     await expect(service.applyRoundScores(event.id, 5, [row(rory.participant.id)]))
       .rejects.toMatchObject({ code: 'ROUND_BEYOND_SCHEDULE', statusCode: 422 });
@@ -375,7 +376,7 @@ describe('Golf round scores — bounded by the event\'s scheduled rounds', () =>
 
   it('refuses a thru-only correction for a golfer with no stored round with 422 ROUND_VALUES_REQUIRED, writing no round and no standing', async () => {
     const { event, rory } = await createField('thru-only-no-round');
-    const service = createGolfScoreService(getPrisma());
+    const service = createGolfScoreService(getAppPrisma());
 
     await expect(service.updateRoundScore(event.id, 2, rory.sep.id, { thru: 9 }))
       .rejects.toMatchObject({ code: 'ROUND_VALUES_REQUIRED', statusCode: 422 });

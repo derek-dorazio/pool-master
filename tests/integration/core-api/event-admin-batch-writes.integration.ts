@@ -20,7 +20,7 @@ import {
   PrismaSportEventParticipantRepository,
   PrismaSportEventParticipantValuationRepository,
 } from '../../../packages/core-api/src/adapters';
-import { cleanupTestData, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
+import { cleanupTestData, getAppPrisma, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
 import { countingPrisma } from '../../support/counting-prisma';
 import { expectDefined } from '../../support/expect-defined';
 import { freshEventEdition } from '../../support/event-edition';
@@ -90,7 +90,7 @@ async function eventWithField(size: number) {
 async function queriesFor(write: (prisma: ReturnType<typeof countingPrisma>['prisma'], fieldSize: number) => Promise<unknown>) {
   const counts = [];
   for (const fieldSize of [SMALL_FIELD, BIG_FIELD]) {
-    const counted = countingPrisma(getPrisma());
+    const counted = countingPrisma(getAppPrisma());
     await write(counted.prisma, fieldSize);
     counts.push(counted.total());
   }
@@ -118,7 +118,7 @@ describe('Saving the field grid (#1252)', () => {
   it('refuses the whole save when one row it gives the same change does not exist, leaving the real row as it was', async () => {
     const { field } = await eventWithField(1);
     const row = expectDefined(field[0]);
-    const repository = new PrismaSportEventParticipantRepository(getPrisma());
+    const repository = new PrismaSportEventParticipantRepository(getAppPrisma());
 
     await expect(repository.updateMany([
       { id: row.id, updates: { ranking: 3 }, price: 12 },
@@ -250,7 +250,7 @@ describe('Uploading a sport league\'s rankings (#1252)', () => {
     const [ranked, stranger] = await participants(sport.id, 2);
     await getPrisma().participantLeagueAffiliation.create({ data: { participantId: expectDefined(ranked).id, sportLeagueId, ranking: 5 } });
 
-    await expect(new PrismaParticipantLeagueAffiliationRepository(getPrisma()).updateRankings(sportLeagueId, [
+    await expect(new PrismaParticipantLeagueAffiliationRepository(getAppPrisma()).updateRankings(sportLeagueId, [
       { participantId: expectDefined(ranked).id, ranking: 1 },
       { participantId: expectDefined(stranger).id, ranking: 2 },
     ])).rejects.toThrow(expectDefined(stranger).id);

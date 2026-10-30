@@ -165,9 +165,9 @@ export interface CupProjectionView {
   standings: CupProjectedStandingView[];
 }
 
-/** A live contest's places as they stand, by entry: the contest's own leaderboard. */
+/** Live contests' places as they stand, by entry and by contest id: each contest's own leaderboard, read together (#1315). */
 export interface CupLivePositions {
-  livePositionsOf(contestId: string): Promise<RankedContestEntry[]>;
+  livePositionsOfMany(contestIds: readonly string[]): Promise<Map<string, RankedContestEntry[]>>;
 }
 
 export interface CupServiceDeps {
@@ -300,12 +300,13 @@ export class CupService {
     }
     const [leagueSquads, season] = await Promise.all([this.deps.squads.findByLeague(leagueId, true), this.loadSeason(cup)]);
     const live = season.contests.filter((contest) => contest.status === ContestStatus.ACTIVE && contest.cupWeight !== CupWeight.NOT_COUNTED);
-    const projected = await Promise.all(live.map(async (contest): Promise<SettledContest> => ({
+    const positions = await this.deps.liveContests.livePositionsOfMany(live.map((contest) => contest.id));
+    const projected = live.map((contest): SettledContest => ({
       contest,
       weight: contest.cupWeight,
-      finishes: squadContestFinishes(await this.deps.liveContests.livePositionsOf(contest.id)),
+      finishes: squadContestFinishes(positions.get(contest.id) ?? []),
       recordedAt: null,
-    })));
+    }));
     const all = [...season.counted, ...projected];
     const squads = cupSquads(leagueSquads, all);
     const standingNow = new Map(rankCupTallies(tallyCup(season.table, squads, season.counted)).map((row) => [row.squadId, row]));

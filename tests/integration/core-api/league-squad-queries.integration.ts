@@ -24,6 +24,7 @@ import {
 import {
   cleanupTestData,
   createTestUser,
+  getAppPrisma,
   getPrisma,
   setupIntegrationTests,
   teardownIntegrationTests,
@@ -55,26 +56,24 @@ async function createLeague(label: string) {
 }
 
 function leagueService() {
-  const prisma = getPrisma();
   return new LeagueService({
-    leagues: new PrismaLeagueRepository(prisma),
-    memberships: new PrismaLeagueMembershipRepository(prisma),
-    users: new PrismaUserRepository(prisma),
-    prisma,
+    leagues: new PrismaLeagueRepository(getAppPrisma()),
+    memberships: new PrismaLeagueMembershipRepository(getAppPrisma()),
+    users: new PrismaUserRepository(getAppPrisma()),
+    prisma: getAppPrisma(),
   });
 }
 
 function ownerInvitationService() {
-  const prisma = getPrisma();
   return new SquadOwnerInvitationService({
-    squadOwnerInvitations: new PrismaSquadOwnerInvitationRepository(prisma),
-    leagueMemberships: new PrismaLeagueMembershipRepository(prisma),
-    squads: new PrismaSquadRepository(prisma),
-    squadMemberships: new PrismaSquadMembershipRepository(prisma),
-    users: new PrismaUserRepository(prisma),
-    prisma,
+    squadOwnerInvitations: new PrismaSquadOwnerInvitationRepository(getAppPrisma()),
+    leagueMemberships: new PrismaLeagueMembershipRepository(getAppPrisma()),
+    squads: new PrismaSquadRepository(getAppPrisma()),
+    squadMemberships: new PrismaSquadMembershipRepository(getAppPrisma()),
+    users: new PrismaUserRepository(getAppPrisma()),
+    prisma: getAppPrisma(),
     memberJoined: { tellJoined: async () => undefined },
-    membershipTransaction: new PrismaMembershipTransaction(prisma),
+    membershipTransaction: new PrismaMembershipTransaction(getAppPrisma()),
     email: emailServiceInto(),
     appBaseUrl: 'https://app.example.test',
   });
@@ -146,7 +145,7 @@ describe('Team-owner invitations', () => {
 
   it('reads an invitation by id, and null for an unknown id', async () => {
     const { invitation, squad } = await createInvitation();
-    const repo = new PrismaSquadOwnerInvitationRepository(getPrisma());
+    const repo = new PrismaSquadOwnerInvitationRepository(getAppPrisma());
 
     await expect(repo.findById(invitation.id)).resolves.toEqual(expect.objectContaining({
       id: invitation.id,
@@ -176,7 +175,7 @@ describe('Team-owner invitations', () => {
     const accepted = await invite(squad.id, SquadOwnerInvitationStatus.ACCEPTED);
     const otherTeams = await invite(otherSquad.id, SquadOwnerInvitationStatus.PENDING);
 
-    await expect(new PrismaSquadOwnerInvitationRepository(prisma).revokePendingBySquad(squad.id)).resolves.toBe(2);
+    await expect(new PrismaSquadOwnerInvitationRepository(getAppPrisma()).revokePendingBySquad(squad.id)).resolves.toBe(2);
 
     const statuses = new Map((await prisma.squadOwnerInvitation.findMany({ where: { leagueId: league.id } }))
       .map((row) => [row.id, row.status]));
@@ -252,7 +251,7 @@ describe('PrismaMembershipTransaction', () => {
   it('commits writes to all four membership tables when the work resolves', async () => {
     const seeded = await memberWithTeamAndInvitation();
 
-    await new PrismaMembershipTransaction(getPrisma()).run((repos) => endEverything(repos, seeded));
+    await new PrismaMembershipTransaction(getAppPrisma()).run((repos) => endEverything(repos, seeded));
 
     expect(await stored(seeded)).toEqual({
       membership: LeagueMembershipStatus.INACTIVE,
@@ -265,7 +264,7 @@ describe('PrismaMembershipTransaction', () => {
   it('rolls back every write in all four tables when the work throws after making them', async () => {
     const seeded = await memberWithTeamAndInvitation();
 
-    await expect(new PrismaMembershipTransaction(getPrisma()).run(async (repos) => {
+    await expect(new PrismaMembershipTransaction(getAppPrisma()).run(async (repos) => {
       await endEverything(repos, seeded);
       throw new Error('fails after the last write');
     })).rejects.toThrow('fails after the last write');
@@ -307,7 +306,7 @@ describe('PrismaSquadRepository squad details', () => {
     await addOwner(first.id, league.id, commissioner.id, new Date('2026-04-01T00:00:00Z'));
     await addOwner(second.id, league.id, leftOwner.user.id, new Date('2026-04-03T00:00:00Z'), SquadMembershipStatus.INACTIVE);
 
-    const details = await new PrismaSquadRepository(getPrisma()).findDetailsByLeague(league.id);
+    const details = await new PrismaSquadRepository(getAppPrisma()).findDetailsByLeague(league.id);
 
     expect(details.map((squad) => [squad.name, squad.isActive])).toEqual([['First Team', true], ['Retired Team', false]]);
     expect(details[0]?.members.map(({ membership, user }) => [membership.userId, user.id])).toEqual([
@@ -329,7 +328,7 @@ describe('PrismaSquadRepository squad details', () => {
     // The home commissioner also owns a team in the away league, as a plain member there.
     await addOwner(awayTeam.id, away.league.id, home.commissioner.id, new Date('2026-04-02T00:00:00Z'));
     await addOwner(awayTeam.id, away.league.id, away.commissioner.id, new Date('2026-04-01T00:00:00Z'));
-    const repo = new PrismaSquadRepository(getPrisma());
+    const repo = new PrismaSquadRepository(getAppPrisma());
 
     const [homeDetails] = await repo.findDetailsByLeague(home.league.id);
     const awayDetails = await repo.findDetailsById(awayTeam.id);
@@ -347,7 +346,7 @@ describe('PrismaSquadRepository squad details', () => {
     const { league, commissioner } = await createLeague('One');
     const squad = await createSquad(league.id, 'Only Team', commissioner.id);
     await addOwner(squad.id, league.id, commissioner.id, new Date('2026-04-01T00:00:00Z'));
-    const repo = new PrismaSquadRepository(getPrisma());
+    const repo = new PrismaSquadRepository(getAppPrisma());
 
     const details = await repo.findDetailsById(squad.id);
 
@@ -361,7 +360,7 @@ describe('PrismaSquadRepository squad details', () => {
     const noTeam = await createTestUser();
     const squad = await createSquad(league.id, 'Commissioner Team', commissioner.id);
     await addOwner(squad.id, league.id, commissioner.id, new Date('2026-04-01T00:00:00Z'));
-    const repo = new PrismaSquadMembershipRepository(getPrisma());
+    const repo = new PrismaSquadMembershipRepository(getAppPrisma());
 
     const edge = await repo.findByLeagueAndUserWithSquadName(league.id, commissioner.id);
 
@@ -378,13 +377,13 @@ describe('PrismaSquadRepository squad details', () => {
     await createSquad(league.id, 'Inactive', commissioner.id, false);
     await createSquad(other.league.id, 'Other League', other.commissioner.id);
 
-    expect(await new PrismaSquadRepository(getPrisma()).countActiveByLeague(league.id)).toBe(2);
+    expect(await new PrismaSquadRepository(getAppPrisma()).countActiveByLeague(league.id)).toBe(2);
   });
 });
 
 describe('PrismaUserRepository.findByIds', () => {
   it('reads every user named in one call, leaving out an id with no user, and reads nothing for no ids', async () => {
-    const users = new PrismaUserRepository(getPrisma());
+    const users = new PrismaUserRepository(getAppPrisma());
     const [first, second] = await Promise.all([
       createTestUser({ displayName: `Receipt Owner ${randomUUID().slice(0, 8)}` }),
       createTestUser({ displayName: `Receipt Co-owner ${randomUUID().slice(0, 8)}` }),

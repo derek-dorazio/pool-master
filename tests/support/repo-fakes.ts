@@ -325,6 +325,7 @@ export function fakeSportEventParticipantRepo(
     findBySportEvent: many(),
     findBySportEvents: many(),
     findFieldForEvent: many(),
+    findFieldsForEvents: many(),
     findFieldRow: one(),
     countDistinctParticipants: jest.fn().mockResolvedValue(0),
     createMany: nothing(),
@@ -366,6 +367,7 @@ export function fakeParticipantProviderMappingRepo(
 export function fakeContestRepo(overrides: Partial<ContestRepository> = {}): ContestRepository {
   return {
     findById: one(),
+    findByIds: many(),
     findByLeague: many(),
     findCurrentByLeague: many(),
     findFinishedByLeague: many(),
@@ -393,6 +395,7 @@ export function fakeContestEntryRepo(
     findByIdWithSquad: one(),
     findByContest: many(),
     findByContestWithSquad: many(),
+    findByContestsWithSquad: many(),
     findByContestAndSquad: many(),
     findIdsByContestAndSquad: many(),
     findBySquadAndContests: many(),
@@ -449,6 +452,7 @@ export function fakeContestEntryEventStandingRepo(
 ): ContestEntryEventStandingRepository {
   return {
     findByContest: many(),
+    findByContests: many(),
     upsert: nothing(),
     ...overrides,
   };
@@ -482,6 +486,7 @@ export function fakeParticipantContestScoringRuleRepo(
 ): ParticipantContestScoringRuleRepository {
   return {
     findByContestConfiguration: many(),
+    findByContestConfigurations: many(),
     create: echoCreate('participant-contest-scoring-rule'),
     deleteByContestConfiguration: nothing(),
     ...overrides,

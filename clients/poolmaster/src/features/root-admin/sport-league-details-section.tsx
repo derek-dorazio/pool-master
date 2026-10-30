@@ -9,6 +9,7 @@ import {
   DangerZone,
   DangerZoneAction,
   IdentityHeading,
+  InlineError,
   LinkButton,
   SettingsRow,
   SettingsSection,
@@ -144,11 +145,11 @@ export function SportLeagueDangerZone({ sportLeague }: { sportLeague: SportLeagu
         tone={sportLeague.isActive ? 'danger' : 'default'}
       >
         {toggleActiveMutation.isError ? (
-          <p className="text-sm font-medium text-destructive">
+          <InlineError>
             {extractErrorMessage(toggleActiveMutation.error, {
               fallback: `We could not change this ${sportLeagueNoun.one}’s active state.`,
             })}
-          </p>
+          </InlineError>
         ) : null}
       </ConfirmDialog>
     </>

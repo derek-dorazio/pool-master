@@ -51,7 +51,7 @@ function build(squads: Squad[] = [EAGLES, BIRDIES, BOGEYS]) {
   const service = new CupService({
     cups,
     leagues: cups.leagues,
-    liveContests: { livePositionsOf: async (contestId: string) => live.get(contestId) ?? [] },
+    liveContests: { livePositionsOfMany: async (contestIds) => new Map(contestIds.map((contestId) => [contestId, live.get(contestId) ?? []])) },
     squads: fakeSquadRepo({
       findByLeague: jest.fn().mockResolvedValue(squads),
       findById: jest.fn().mockImplementation(async (id: string) => squads.find((candidate) => candidate.id === id) ?? null),

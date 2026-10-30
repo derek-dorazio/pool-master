@@ -23,7 +23,7 @@ export const SCANNED_ROOT = 'clients/poolmaster/src';
 export const BASELINE_FILE = 'scripts/duplicate-baseline.json';
 
 /** The total of `count` across the baseline. Only ever lowered, with the entries that removed it. */
-export const BASELINE_CEILING = 38;
+export const BASELINE_CEILING = 30;
 
 /**
  * Big enough to skip short idioms (an import block, a `useMutation` call), small enough to catch

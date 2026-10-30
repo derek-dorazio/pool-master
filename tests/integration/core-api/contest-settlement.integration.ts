@@ -5,6 +5,7 @@ import { createContestService, createContestSettlementService } from '../../../p
 import {
   cleanupTestData,
   createTestUser,
+  getAppPrisma,
   getPrisma,
   setupIntegrationTests,
   teardownIntegrationTests,
@@ -24,10 +25,10 @@ afterAll(async () => {
 describe('pool-master-eux.6: schedule-driven Golf contest settlement', () => {
   it('pool-master-eux.6: freezes final standings, completes the sport event\'s contests, tells the league its final places once per completion, and is idempotent', async () => {
     const prisma = getPrisma();
-    const contests = createContestService(prisma, fakeLogger(), { planEntitlements: integrationPlanEntitlements() });
+    const contests = createContestService(getAppPrisma(), fakeLogger(), { planEntitlements: integrationPlanEntitlements() });
     // What the final results email reads, read when settlement tells it the contest completed.
     const told: Array<{ contestId: string; final: ContestFinalStandings }> = [];
-    const service = createContestSettlementService(prisma, undefined, {
+    const service = createContestSettlementService(getAppPrisma(), undefined, {
       contestSettled: { contestSettled: async (contest: Contest) => { told.push({ contestId: contest.id, final: await contests.finalStandingsOf(contest) }); } },
     });
     const suffix = randomUUID().slice(0, 8);
@@ -285,7 +286,7 @@ describe('golf contest settlement — which contests settle', () => {
 
   it('leaves a never-opened DRAFT contest a draft with no standings when its event completes', async () => {
     const prisma = getPrisma();
-    const service = createContestSettlementService(prisma);
+    const service = createContestSettlementService(getAppPrisma());
     const { league, event, suffix } = await seedCompletedEvent();
     const draft = await createSettlementContest({
       leagueId: league.id,
@@ -307,7 +308,7 @@ describe('golf contest settlement — which contests settle', () => {
 
   it('scores each contest under its own scoring settings: one whose settings are not a settings object stays unsettled, while one beside it with retired keys settles', async () => {
     const prisma = getPrisma();
-    const service = createContestSettlementService(prisma);
+    const service = createContestSettlementService(getAppPrisma());
     const { league, event, suffix } = await seedCompletedEvent();
     const invalidSettings = await createSettlementContest({
       leagueId: league.id,
@@ -335,7 +336,7 @@ describe('golf contest settlement — which contests settle', () => {
   it('still completes a contest whose final results email cannot be queued, and logs the failure', async () => {
     const prisma = getPrisma();
     const logger = fakeLogger();
-    const service = createContestSettlementService(prisma, logger, {
+    const service = createContestSettlementService(getAppPrisma(), logger, {
       contestSettled: { contestSettled: async () => Promise.reject(new Error('outbox unavailable')) },
     });
     const { league, event, suffix } = await seedCompletedEvent();
@@ -354,7 +355,7 @@ describe('golf contest settlement — which contests settle', () => {
 
   it('settles nothing while the event is not yet COMPLETED', async () => {
     const prisma = getPrisma();
-    const service = createContestSettlementService(prisma);
+    const service = createContestSettlementService(getAppPrisma());
     const { league, event, suffix } = await seedCompletedEvent('IN_PROGRESS');
     const active = await createSettlementContest({ leagueId: league.id, sportEventId: event.id, name: `Still Playing ${suffix}` });
 
@@ -369,7 +370,7 @@ describe('golf contest settlement — which contests settle', () => {
   });
 
   it('settles nothing for an event that does not exist', async () => {
-    const service = createContestSettlementService(getPrisma());
+    const service = createContestSettlementService(getAppPrisma());
     const missingId = randomUUID();
 
     await expect(service.settleFinishedSportEvent(missingId)).resolves.toEqual({
@@ -384,7 +385,7 @@ describe('golf contest settlement — which contests settle', () => {
 describe('golf contest settlement — unplayed rounds score 80 strokes', () => {
   it('freezes +8 for each of rounds 3 and 4 on par-72 rounds for a cut golfer and for one the feed never flagged, and scores no draft entry', async () => {
     const prisma = getPrisma();
-    const service = createContestSettlementService(prisma);
+    const service = createContestSettlementService(getAppPrisma());
     const suffix = randomUUID().slice(0, 8);
     const owner = await createTestUser({ displayName: `Golf Unplayed ${suffix}` });
     const sport = await prisma.sport.upsert({
