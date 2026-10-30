@@ -1,8 +1,21 @@
 import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { SimpleTable, TableBody, TableCell, TableHead, TableHeaderCell, TableRow } from "./simple-table";
+import {
+  SimpleTable,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeaderCell,
+  TableRow,
+  type SimpleTableProps,
+  type TableHeadProps,
+} from "./simple-table";
 
-function renderTable(props: { surface?: "default" | "inverse"; tone?: "default" | "scoreboard" | "inverse" | "plain"; density?: "default" | "compact" }) {
+function renderTable(props: {
+  density?: SimpleTableProps["density"];
+  surface?: SimpleTableProps["surface"];
+  tone?: TableHeadProps["tone"];
+}) {
   return render(
     <SimpleTable density={props.density} surface={props.surface}>
       <TableHead data-testid="head" tone={props.tone}>

@@ -103,7 +103,7 @@ function ExampleCard() {
         <TableBody>
           {stars.map((star) => (
             <TableRow className={counted.has(star.tier) ? undefined : 'text-on-inverse-muted'} key={star.tier}>
-              <TableCell>
+              <TableCell className="whitespace-nowrap">
                 <span className="mr-2 font-mono text-xs text-primary">{star.tier}</span>
                 {`${star.position}, ${star.team}`}
               </TableCell>

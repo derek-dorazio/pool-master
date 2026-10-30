@@ -74,7 +74,7 @@ export function PlanComparisonTable({ plans, initiallyFolded = [], currentPlan, 
           return (
             <TableBody data-testid={`plan-comparison-section-${section.key}`} key={section.key}>
               <TableRow className="bg-muted">
-                <TableHeaderCell className="sticky left-0 bg-muted px-3 text-xs font-semibold uppercase tracking-eyebrow text-muted-foreground" colSpan={isFolded ? 1 : plans.length + 1} scope="colgroup">
+                <TableHeaderCell className="sticky left-0 bg-muted px-3 text-xs font-semibold uppercase tracking-eyebrow text-muted-foreground" colSpan={isFolded ? 1 : plans.length + 1} scope="rowgroup">
                   {group === null ? section.title : (
                     <Button
                       aria-expanded={!isFolded}
