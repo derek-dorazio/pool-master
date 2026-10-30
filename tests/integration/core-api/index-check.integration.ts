@@ -18,6 +18,7 @@ import {
   planWholeScans,
   readIndexLeads,
   REFERENCE_TABLES,
+  stopsEarly,
   type IndexLead,
   type PlanNode,
   type Statement,
@@ -149,6 +150,8 @@ function indexScan(index: string, alias: string, conditions: Pick<PlanNode, 'Ind
   return { 'Node Type': 'Index Scan', 'Index Name': index, 'Relation Name': INDEXES.get(index)?.table, Alias: alias, ...conditions };
 }
 
+const EVERY_USER_ROW = [{ table: 'users', how: 'walking every entry of users_pkey, with no filter' }];
+
 function nestedLoop(outer: PlanNode, inner: PlanNode, joinFilter?: string): PlanNode {
   return { 'Node Type': 'Nested Loop', ...(joinFilter === undefined ? {} : { 'Join Filter': joinFilter }), Plans: [outer, inner] };
 }
@@ -215,22 +218,38 @@ describe('missing-index check on fixed plans: whether another index could serve 
 
   it('reports an index walk with no condition or filter, which reads every row, and passes it under the Limit of a LIMIT that stops it early', () => {
     const walk: PlanNode = { 'Node Type': 'Index Only Scan', 'Index Name': 'users_pkey', 'Relation Name': 'users', Alias: 'users' };
-    expect(findWholeScans(walk, INDEXES)).toEqual([{ table: 'users', how: 'walking every entry of users_pkey, with no filter' }]);
-    expect(findWholeScans({ 'Node Type': 'Limit', Plans: [walk] }, INDEXES, { limited: true })).toEqual([]);
+    expect(findWholeScans(walk, INDEXES)).toEqual(EVERY_USER_ROW);
+    expect(findWholeScans({ 'Node Type': 'Limit', Plans: [walk] }, INDEXES, { sql: FIRST_USER_IN_ID_ORDER })).toEqual([]);
   });
 
   it('reports a walk under the Limit of an OFFSET alone, as Prisma ends every findMany and count, since an OFFSET stops nothing', () => {
     const walk: PlanNode = { 'Node Type': 'Index Only Scan', 'Index Name': 'users_pkey', 'Relation Name': 'users', Alias: 'users' };
-    const everyRow = [{ table: 'users', how: 'walking every entry of users_pkey, with no filter' }];
-    expect(findWholeScans({ 'Node Type': 'Limit', Plans: [walk] }, INDEXES)).toEqual(everyRow);
-    expect(findWholeScans({ 'Node Type': 'Aggregate', Plans: [{ 'Node Type': 'Limit', Plans: [walk] }] }, INDEXES)).toEqual(everyRow);
+    expect(findWholeScans({ 'Node Type': 'Limit', Plans: [walk] }, INDEXES)).toEqual(EVERY_USER_ROW);
+    expect(findWholeScans({ 'Node Type': 'Aggregate', Plans: [{ 'Node Type': 'Limit', Plans: [walk] }] }, INDEXES)).toEqual(EVERY_USER_ROW);
+  });
+
+  it('reports a walk under a Limit when the statement also has an OFFSET with no LIMIT, since the plan does not say which clause each Limit is, and ignores LIMIT inside a quoted name or a string', () => {
+    const walk: PlanNode = { 'Node Type': 'Index Only Scan', 'Index Name': 'users_pkey', 'Relation Name': 'users', Alias: 'users' };
+    const offsetOverLimited = 'SELECT "sub"."id" FROM (SELECT "public"."users"."id" FROM "public"."users" LIMIT $1) AS "sub" ORDER BY "sub"."id" OFFSET $2';
+    expect(findWholeScans({ 'Node Type': 'Limit', Plans: [{ 'Node Type': 'Limit', Plans: [walk] }] }, INDEXES, { sql: offsetOverLimited })).toEqual(EVERY_USER_ROW);
+    expect(stopsEarly(offsetOverLimited, 2)).toBe(false);
+    expect(stopsEarly(FIRST_USER_IN_ID_ORDER, 2)).toBe(false);
+    expect(stopsEarly(FIRST_USER_IN_ID_ORDER, 1)).toBe(true);
+    expect(stopsEarly('SELECT "public"."t"."limit" FROM "public"."t" WHERE "public"."t"."note" = \'LIMIT 1\' OFFSET $1', 1)).toBe(false);
+  });
+
+  it('reports the inner side of a Nested Loop under a LIMIT, which is walked again for every outer row, and passes its streamed outer side', () => {
+    const outer: PlanNode = { 'Node Type': 'Index Only Scan', 'Index Name': 'users_pkey', 'Relation Name': 'users', Alias: 'u' };
+    const inner = indexScan('league_memberships_user_id_status_idx', 'm', {});
+    expect(findWholeScans({ 'Node Type': 'Limit', Plans: [nestedLoop(outer, inner)] }, INDEXES, { sql: FIRST_USER_IN_ID_ORDER }))
+      .toEqual([{ table: 'league_memberships', how: 'walking every entry of league_memberships_user_id_status_idx, with no filter' }]);
   });
 
   it('reports a walk a LIMIT cannot stop because a Sort, Aggregate or bitmap between them reads every row first', () => {
     const walk: PlanNode = { 'Node Type': 'Index Only Scan', 'Index Name': 'users_pkey', 'Relation Name': 'users', Alias: 'users' };
     const bitmap: PlanNode = { 'Node Type': 'Bitmap Heap Scan', 'Relation Name': 'users', Alias: 'users', Plans: [{ 'Node Type': 'Bitmap Index Scan', 'Index Name': 'users_pkey' }] };
     for (const drained of [{ 'Node Type': 'Sort', Plans: [walk] }, { 'Node Type': 'Aggregate', Plans: [walk] }, { 'Node Type': 'Sort', Plans: [bitmap] }]) {
-      expect(findWholeScans({ 'Node Type': 'Limit', Plans: [drained] }, INDEXES, { limited: true })).toEqual([{ table: 'users', how: 'walking every entry of users_pkey, with no filter' }]);
+      expect(findWholeScans({ 'Node Type': 'Limit', Plans: [drained] }, INDEXES, { sql: FIRST_USER_IN_ID_ORDER })).toEqual(EVERY_USER_ROW);
     }
   });
 
@@ -252,6 +271,17 @@ describe('missing-index check on fixed plans: whether another index could serve 
       '(u.id = m.user_id)',
     );
     expect(findWholeScans({ 'Node Type': 'Limit', Plans: [{ 'Node Type': 'Sort', Plans: [plan] }] }, INDEXES)).toEqual([]);
+  });
+
+  it('passes the same join when the IN list casts each bound value, to a one-word or multi-word type, and reports the walked side when one element of the list is not a bound value', () => {
+    const joined = (inList: string): PlanNode => nestedLoop(
+      indexScan('league_memberships_user_id_status_idx', 'm', { 'Index Cond': `(user_id = ANY (ARRAY[${inList}]))` }),
+      { 'Node Type': 'Materialize', Plans: [indexScan('users_pkey', 'u', {})] },
+      '(u.id = m.user_id)',
+    );
+    expect(findWholeScans(joined('($1)::uuid, ($2)::uuid'), INDEXES)).toEqual([]);
+    expect(findWholeScans(joined('($1)::character varying, ($2)::character varying'), INDEXES)).toEqual([]);
+    expect(findWholeScans(joined("$1, '00000000-0000-0000-0000-000000000000'::uuid"), INDEXES)).toEqual(EVERY_USER_ROW);
   });
 
   it('passes an OR filter only when an index serves every branch', () => {

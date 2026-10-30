@@ -1,5 +1,5 @@
 import { createColumnHelper } from '@tanstack/react-table';
-import { useMemo, useState, type Dispatch, type SetStateAction } from 'react';
+import { useMemo, type Dispatch, type SetStateAction } from 'react';
 import { updateEventParticipantGolfRoundScore } from '@/lib/api';
 import {
   Alert,
@@ -14,7 +14,6 @@ import {
 } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
-import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import type { UpdateGolfRoundScoreRequest } from '@/lib/api';
 import {
@@ -31,13 +30,14 @@ import {
   rowHasInvalid,
   type RowDraft,
 } from './golf-round-score-patch';
+import { useRowCorrections, type RowDrafts } from './use-row-corrections';
 
 type ScoreRow = GolfRoundScoreRow;
 type ScorePatch = UpdateGolfRoundScoreRequest;
 
 type CorrectionsMeta = {
-  draft: Partial<Record<string, RowDraft>>;
-  setDraft: Dispatch<SetStateAction<Partial<Record<string, RowDraft>>>>;
+  draft: RowDrafts<RowDraft>;
+  setDraft: Dispatch<SetStateAction<RowDrafts<RowDraft>>>;
   savingId: string | null;
   onSave: (row: ScoreRow) => void;
   /** The member's zone: the Completed at box holds its wall clock (#1061). */
@@ -270,17 +270,9 @@ export function GolfRoundScoreCorrectionsCard({
     feature: 'root-admin-golf-tournament-scores-page',
   });
   const displayPreferences = useDisplayPreferences();
-  const [draft, setDraft] = useState<Partial<Record<string, RowDraft>>>({});
-  const [draftScope, setDraftScope] = useState(`${eventId}:${round}`);
-
-  const saveMutation = useInvalidatingMutation({
-    mutationFn: async ({
-      sportEventParticipantId,
-      body,
-    }: {
-      sportEventParticipantId: string;
-      body: ScorePatch;
-    }) => {
+  const { draft, setDraft, savingId, save, saveError } = useRowCorrections<RowDraft, ScorePatch>({
+    scope: `${eventId}:${round}`,
+    saveRow: async (sportEventParticipantId, body) => {
       const response = await updateEventParticipantGolfRoundScore({
         path: { eventId, roundNumber: round, sportEventParticipantId },
         body,
@@ -292,13 +284,7 @@ export function GolfRoundScoreCorrectionsCard({
     },
     // Round scores are read from the field (#236).
     invalidates: [QueryKeys.rootAdmin.manageSport.field(eventId)],
-    onSuccess: (_data, variables) =>
-      setDraft((current) => {
-        const next = { ...current };
-        delete next[variables.sportEventParticipantId];
-        return next;
-      }),
-    onError: (error) => {
+    onSaveError: (error) => {
       logger.warn(
         { action: 'golf.roundScore.correction.failed', err: error },
         'Golf round-score correction was rejected',
@@ -306,34 +292,21 @@ export function GolfRoundScoreCorrectionsCard({
     },
   });
 
-  // Reset the per-round draft + stale save error when the round (or tournament)
-  // changes, keyed on a stable scope string, in the render phase (not an effect).
-  const scope = `${eventId}:${round}`;
-  if (draftScope !== scope) {
-    setDraftScope(scope);
-    setDraft({});
-    if (saveMutation.isError) {
-      saveMutation.reset();
-    }
-  }
-
   const meta = useMemo<CorrectionsMeta>(
     () => ({
       draft,
       setDraft,
-      savingId: saveMutation.isPending
-        ? saveMutation.variables.sportEventParticipantId
-        : null,
+      savingId,
       onSave: (row) => {
         const body = buildRoundScorePatch(row, draft[row.sportEventParticipantId], displayPreferences.timeZone);
         if (body) {
-          saveMutation.mutate({ sportEventParticipantId: row.sportEventParticipantId, body });
+          save(row.sportEventParticipantId, body);
         }
       },
       timeZone: displayPreferences.timeZone,
       timeZoneName: timeZoneGenericName(displayPreferences),
     }),
-    [draft, saveMutation, displayPreferences],
+    [draft, setDraft, savingId, save, displayPreferences],
   );
 
   return (
@@ -348,9 +321,9 @@ export function GolfRoundScoreCorrectionsCard({
         </Alert>
       ) : null}
 
-      {saveMutation.isError ? (
+      {saveError ? (
         <Alert data-testid="root-admin-golf-scores-correction-save-error" tone="danger">
-          {extractErrorMessage(saveMutation.error, {
+          {extractErrorMessage(saveError, {
             fallback: 'We could not save that correction.',
           })}
         </Alert>
