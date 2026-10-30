@@ -75,6 +75,7 @@ import { PLAN_SETTINGS } from '../../packages/core-api/src/modules/plans/plan-se
 import { contestCutoff, ContestCutoffKind } from '../../packages/core-api/src/modules/contests/entry-window';
 import { hasSportEventStarted } from '../../packages/core-api/src/modules/events/operational-timing';
 import { planEntitlementsOver } from './plan-entitlements';
+import { fieldReads } from './field-reads';
 
 /** Thrown where Postgres would reject the write with a unique-constraint violation (P2002). */
 export class UniqueConstraintViolation extends Error {
@@ -345,6 +346,7 @@ export class InMemoryContestWorld {
   contestRepo(): ContestRepository {
     return {
       findById: async (id) => this.contests.get(id) ?? null,
+      findByIds: async (ids) => ids.flatMap((id) => this.contests.get(id) ?? []),
       findByLeague: async (leagueId, statuses) =>
         [...this.contests.values()].filter((contest) => contest.leagueId === leagueId && statuses.includes(contest.status)),
       findCurrentByLeague: async (leagueId, now) =>
@@ -492,6 +494,11 @@ export class InMemoryContestWorld {
               || entry.events.some((event) =>
                 event.sportEventId === options.submittedFor && event.status === 'SUBMITTED')))
           .sort((left, right) => this.byEntryOrder(left, right))
+          .map((entry) => this.withSquad(entry)),
+      findByContestsWithSquad: async (contestIds) =>
+        [...this.entries.values()]
+          .filter((entry) => contestIds.includes(entry.contestId))
+          .sort((left, right) => left.contestId.localeCompare(right.contestId) || this.byEntryOrder(left, right))
           .map((entry) => this.withSquad(entry)),
       findByContestAndSquad: async (contestId, squadId) =>
         [...this.entries.values()]
@@ -764,6 +771,8 @@ export class InMemoryContestWorld {
     return {
       findByContest: async (contestId) =>
         [...this.eventStandings.values()].filter((row) => row.contestId === contestId),
+      findByContests: async (contestIds) =>
+        [...this.eventStandings.values()].filter((row) => contestIds.includes(row.contestId)),
       upsert: async (write) => {
         const key = `${write.contestEntryId}:${write.sportEventId}`;
         this.eventStandings.set(key, { id: this.eventStandings.get(key)?.id ?? this.nextId('event-standing'), ...write });
@@ -805,7 +814,7 @@ export class InMemoryContestWorld {
       users: this.userRepo(),
       sportEvents: this.sportEventRepo(),
       sportLeagues: this.sportLeagueRepo(),
-      eventParticipants: { listEventParticipants: async () => [], listCachedEventParticipants: async () => [] },
+      eventParticipants: fieldReads(async () => []),
       tiers: {
         listTiers: async (sportEventId: string) => this.eventTiers.get(sportEventId) ?? [],
       },

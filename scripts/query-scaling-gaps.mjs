@@ -16,7 +16,6 @@ export const QUERY_SCALING_GAPS = [
   { route: 'GET /api/v1/leagues/{id}/cups/seasons', ticket: 1248 },
   { route: 'GET /api/v1/leagues/{id}/cups/squads/{squadId}', ticket: 1248 },
   { route: 'GET /api/v1/leagues/{id}/cups/{cupId}', ticket: 1248 },
-  { route: 'GET /api/v1/leagues/{id}/cups/{cupId}/projection', ticket: 1248 },
   { route: 'GET /api/v1/leagues/{id}/championship/{year}', ticket: 1248 },
   { route: 'GET /api/v1/leagues/{id}/history/trophies', ticket: 1248 },
   { route: 'GET /api/v1/leagues/{id}/history/records', ticket: 1248 },

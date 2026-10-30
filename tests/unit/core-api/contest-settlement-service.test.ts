@@ -173,6 +173,7 @@ function world({
     matches: { findBySportEvent: jest.fn().mockResolvedValue([]), findBySportEvents: jest.fn().mockResolvedValue([]) },
     eventStandings: {
       findByContest: async (contestId) => eventStandings.filter((row) => row.contestId === contestId),
+      findByContests: async (contestIds) => eventStandings.filter((row) => contestIds.includes(row.contestId)),
       upsert: async (write) => {
         const at = eventStandings.findIndex((row) =>
           row.contestEntryId === write.contestEntryId && row.sportEventId === write.sportEventId);

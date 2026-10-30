@@ -416,6 +416,8 @@ export interface ParticipantProviderMappingRepository {
  */
 export interface ContestRepository {
   findById(id: string): Promise<Contest | null>;
+  /** The contests under `ids`, in one read, missing ones left out (#1315). */
+  findByIds(ids: readonly string[]): Promise<Contest[]>;
   /** The league's contests in one of `statuses`, newest first. */
   findByLeague(leagueId: string, statuses: readonly Contest['status'][]): Promise<Contest[]>;
   /**
@@ -585,6 +587,8 @@ export interface ContestEntryRepository {
    * that event alone (#481, per event since #713).
    */
   findByContestWithSquad(contestId: string, options?: { submittedFor?: string }): Promise<ContestEntryWithSquad[]>;
+  /** Every entry of each contest, in one read (#1315): by contest, then in `findByContestWithSquad`'s order. */
+  findByContestsWithSquad(contestIds: readonly string[]): Promise<ContestEntryWithSquad[]>;
   /** The squad's entries in one contest, drafts included, in entry-number order (#1167). */
   findByContestAndSquad(contestId: string, squadId: string): Promise<ContestEntry[]>;
   /** The ids alone of the squad's entries in one contest, drafts included, in entry-number order (#1197). */
@@ -658,7 +662,7 @@ export type ContestEntrySeasonPrediction = ContestEntryMatchPrediction & { sport
 export interface ContestEntryMatchPredictionRepository {
   /** The entry's picks on the event's games. */
   findByEntryAndEvent(contestEntryId: string, sportEventId: string): Promise<ContestEntryMatchPrediction[]>;
-  /** Several entries' picks on the event's games, in game order: a leaderboard's or settlement's read. */
+  /** Several entries' picks on the event's games, by entry, each in game order: a leaderboard's or settlement's read. */
   findByEntriesAndEvent(contestEntryIds: readonly string[], sportEventId: string): Promise<ContestEntryMatchPrediction[]>;
   /** Several entries' picks on several events' games, each with its event and team: a survivor season's read (#719). */
   findByEntriesAndEvents(contestEntryIds: readonly string[], sportEventIds: readonly string[]): Promise<ContestEntrySeasonPrediction[]>;

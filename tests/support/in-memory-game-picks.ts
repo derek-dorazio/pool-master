@@ -27,7 +27,8 @@ import {
   type SportEventParticipant,
 } from '@poolmaster/shared/domain';
 import { expectDefined } from './expect-defined';
-import type { SportEventParticipantService } from '../../packages/core-api/src/modules/events/sport-event-participant-service';
+import type { EventFieldReads } from '../../packages/core-api/src/modules/events/sport-event-participant-service';
+import { fieldReads } from './field-reads';
 import type { InMemoryContestWorld } from './in-memory-contest-world';
 
 const T0 = new Date('2026-09-01T00:00:00.000Z');
@@ -156,7 +157,7 @@ export class InMemoryGamePicks {
    * The event's field as the field service publishes it: only the rows, their teams and their
    * seeds matter here. Nothing is kept, so the shared read is the current one too.
    */
-  fieldService(): Pick<SportEventParticipantService, 'listEventParticipants' | 'listCachedEventParticipants'> {
+  fieldService(): EventFieldReads {
     const listEventParticipants = async (sportEventId: string) => [...this.field.values()]
       .filter((row) => row.sportEventId === sportEventId)
       .map((row) => ({
@@ -169,7 +170,7 @@ export class InMemoryGamePicks {
         matches: [],
         affiliatedWithSportLeague: true,
       }));
-    return { listEventParticipants, listCachedEventParticipants: listEventParticipants };
+    return fieldReads(listEventParticipants);
   }
 
   participantRepo(): Pick<ParticipantRepository, 'findByIds'> {
