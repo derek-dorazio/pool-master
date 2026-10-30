@@ -1,6 +1,6 @@
 import { sportLeagueNounOf } from '@poolmaster/shared/domain';
 import { useMemo, useState } from 'react';
-import { Alert, FormField, Heading, LinkButton, Select, Tile } from '@/features/shared/ui';
+import { Alert, FormField, LinkButton, PanelCard, Select } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
 import type { SportLeagueDto } from '@/lib/api';
 import { SportLeagueEventCalendar } from './sport-league-event-calendar';
@@ -39,58 +39,56 @@ export function SportLeagueCalendarCard({ sportLeague }: { sportLeague: SportLea
   );
 
   return (
-    <Tile data-testid="root-admin-sport-league-calendar">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <Heading level={3} variant="card" size="base">{`${capitalize(eventNoun.one)} calendar`}</Heading>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {`${sportLeague.name}’s ${eventNoun.many} in one year, earliest first.`}
-          </p>
-        </div>
-        {yearsQuery.isError ? (
-          <Alert data-testid="root-admin-sport-league-calendar-years-error" tone="danger">
-            {extractErrorMessage(yearsQuery.error, { fallback: `We could not load ${sportLeague.name}’s years right now.` })}
-          </Alert>
-        ) : eventYear === null ? (
-          <p className="text-sm text-muted-foreground" data-testid="root-admin-sport-league-calendar-loading">Loading years...</p>
-        ) : (
-          <div className="flex flex-wrap items-end gap-2">
-            <FormField label="Year">
-              <Select
-                data-testid="root-admin-sport-league-calendar-year"
-                onChange={(event) => setSelectedYear(Number.parseInt(event.target.value, 10))}
-                value={String(eventYear)}
-              >
-                {years.map((year) => (
-                  <option key={year} value={year}>
-                    {year}
-                  </option>
-                ))}
-              </Select>
-            </FormField>
-            <SportLeagueYearActions
-              // poolmaster-allow-list-lookup: counts the year's tournaments, every one shown in the calendar below
-              eventCount={yearTournaments.length}
-              eventYear={eventYear}
-              onCloned={setSelectedYear}
-              sportLeague={sportLeague}
-            />
-            <SportLeagueYearImport eventYear={eventYear} sportLeague={sportLeague} />
-            <LinkButton
-              data-testid="root-admin-sport-league-calendar-new-tournament"
-              size="sm"
-              to={`${buildSportEventListPath(sport)}/new?sportLeagueId=${sportLeague.id}&eventYear=${eventYear}`}
+    <PanelCard
+      headingLevel={3}
+      padded
+      testId="root-admin-sport-league-calendar"
+      title={`${capitalize(eventNoun.one)} calendar`}
+    >
+      <p className="text-sm text-muted-foreground">
+        {`${sportLeague.name}’s ${eventNoun.many} in one year, earliest first.`}
+      </p>
+      {yearsQuery.isError ? (
+        <Alert data-testid="root-admin-sport-league-calendar-years-error" tone="danger">
+          {extractErrorMessage(yearsQuery.error, { fallback: `We could not load ${sportLeague.name}’s years right now.` })}
+        </Alert>
+      ) : eventYear === null ? (
+        <p className="text-sm text-muted-foreground" data-testid="root-admin-sport-league-calendar-loading">Loading years...</p>
+      ) : (
+        <div className="flex flex-wrap items-end gap-2">
+          <FormField label="Year">
+            <Select
+              data-testid="root-admin-sport-league-calendar-year"
+              onChange={(event) => setSelectedYear(Number.parseInt(event.target.value, 10))}
+              value={String(eventYear)}
             >
-              {`New ${eventNoun.one}`}
-            </LinkButton>
-          </div>
-        )}
-      </div>
-      {eventYear === null ? null : (
-        <div className="mt-4">
-          <SportLeagueEventCalendar isError={tournamentsQuery.isError} sportLeague={sportLeagueNounOf(sport, sportLeague.noun)} tournaments={yearTournaments} />
+              {years.map((year) => (
+                <option key={year} value={year}>
+                  {year}
+                </option>
+              ))}
+            </Select>
+          </FormField>
+          <SportLeagueYearActions
+            // poolmaster-allow-list-lookup: counts the year's tournaments, every one shown in the calendar below
+            eventCount={yearTournaments.length}
+            eventYear={eventYear}
+            onCloned={setSelectedYear}
+            sportLeague={sportLeague}
+          />
+          <SportLeagueYearImport eventYear={eventYear} sportLeague={sportLeague} />
+          <LinkButton
+            data-testid="root-admin-sport-league-calendar-new-tournament"
+            size="sm"
+            to={`${buildSportEventListPath(sport)}/new?sportLeagueId=${sportLeague.id}&eventYear=${eventYear}`}
+          >
+            {`New ${eventNoun.one}`}
+          </LinkButton>
         </div>
       )}
-    </Tile>
+      {eventYear === null ? null : (
+        <SportLeagueEventCalendar isError={tournamentsQuery.isError} sportLeague={sportLeagueNounOf(sport, sportLeague.noun)} tournaments={yearTournaments} />
+      )}
+    </PanelCard>
   );
 }

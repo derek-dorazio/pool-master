@@ -67,6 +67,13 @@ describe('pool-master-r11 GolfRoundScoreCorrectionsCard', () => {
     mockLogger.child.mockReturnValue(mockLogger);
   });
 
+  it('titles the card Corrections in a level 3 heading', () => {
+    renderCard();
+
+    expect(screen.getByRole('region', { name: 'Corrections' })).toBeVisible();
+    expect(screen.getByRole('heading', { level: 3, name: 'Corrections' })).toBeVisible();
+  });
+
   it('pool-master-r11 saves a single row correction with only the changed fields', async () => {
     updateEventParticipantGolfRoundScoreMock.mockResolvedValue({ data: {} });
     renderCard();

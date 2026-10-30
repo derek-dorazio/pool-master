@@ -91,6 +91,12 @@ describe('plans/147 SportLeagueCalendarCard', () => {
     );
   });
 
+  it('titles the card after the tour\'s word for its events, as Tournament calendar for golf', async () => {
+    renderCard();
+
+    expect(await screen.findByRole('region', { name: 'Tournament calendar' })).toBeVisible();
+  });
+
   it('reads the years from their own small read and asks for one year\'s tournaments at a time, never every year', async () => {
     renderCard();
     await screen.findByTestId('root-admin-sport-league-event-row-masters-2026');

@@ -91,6 +91,14 @@ describe('EventFieldUploadCard', () => {
     mockLogger.child.mockReturnValue(mockLogger);
   });
 
+  it('titles the card Bulk upload with its Close button beside the title', async () => {
+    renderCard();
+
+    const card = await screen.findByRole('region', { name: 'Bulk upload' });
+    expect(within(card).getByRole('heading', { level: 3, name: 'Bulk upload' })).toBeVisible();
+    expect(within(card).getByRole('button', { name: 'Close' })).toBeVisible();
+  });
+
   it('sends the pasted rows with blank cells omitted and "null" as a clear, then shows each row\'s resolution, before → after and the rollup', async () => {
     previewMock.mockResolvedValue({
       data: {
