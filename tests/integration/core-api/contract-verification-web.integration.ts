@@ -323,7 +323,7 @@ describe('Contract verification (web)', () => {
     try {
       const res = await getApp().inject({
         method: 'GET',
-        url: '/api/v1/events/?sport=GOLF',
+        url: '/api/v1/events/?sport=GOLF&status=SCHEDULED&status=POSTPONED&status=IN_PROGRESS',
         headers: viewer.headers,
       });
 
@@ -348,13 +348,13 @@ describe('Contract verification (web)', () => {
       });
       expect(offerableRes.statusCode).toBe(200);
       expect(SportEventListResponseSchema.parse(offerableRes.json()).events.map((item) => item.id)).toContain(eventId);
-      const completedRes = await getApp().inject({
+      const inProgressRes = await getApp().inject({
         method: 'GET',
-        url: '/api/v1/events/?sport=GOLF&status=COMPLETED',
+        url: '/api/v1/events/?sport=GOLF&status=IN_PROGRESS',
         headers: viewer.headers,
       });
-      expect(completedRes.statusCode).toBe(200);
-      expect(SportEventListResponseSchema.parse(completedRes.json()).events.map((item) => item.id)).not.toContain(eventId);
+      expect(inProgressRes.statusCode).toBe(200);
+      expect(SportEventListResponseSchema.parse(inProgressRes.json()).events.map((item) => item.id)).not.toContain(eventId);
 
       const { eventSeries } = await prisma.sportEvent.findUniqueOrThrow({
         where: { id: eventId },
@@ -413,7 +413,7 @@ describe('Contract verification (web)', () => {
     try {
       const res = await getApp().inject({
         method: 'GET',
-        url: '/api/v1/events/?sport=GOLF',
+        url: '/api/v1/events/?sport=GOLF&status=SCHEDULED&status=POSTPONED&status=IN_PROGRESS',
         headers: viewer.headers,
       });
 
