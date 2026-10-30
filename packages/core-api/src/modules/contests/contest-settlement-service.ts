@@ -148,6 +148,9 @@ export class ContestSettlementService {
       excludeStatuses: NOT_SETTLED,
     });
 
+    // A contest whose standings for this event are already frozen keeps them: read for all at once.
+    const settledForEvent = await this.deps.eventStandings.findContestsSettledFor(sportEventId, contests.map((contest) => contest.id));
+
     let standingsUpserted = 0;
     let contestsCompleted = 0;
     let contestsSettled = 0;
@@ -162,7 +165,7 @@ export class ContestSettlementService {
         continue;
       }
       if (contest.selectionType === SelectionType.SURVIVOR) {
-        const settled = await this.settleSurvivorWeek(reads, contest, sportEvent, completedAt);
+        const settled = await this.settleSurvivorWeek(reads, contest, sportEvent, completedAt, settledForEvent.has(contest.id));
         contestsSettled++;
         standingsUpserted += settled.standingsUpserted;
         if (settled.completed) contestsCompleted++;
@@ -178,7 +181,7 @@ export class ContestSettlementService {
         continue;
       }
       if (contest.selectionType === SelectionType.PICK_EM) {
-        const settled = await this.settlePickEmWeek(reads, contest, sportEvent, completedAt);
+        const settled = await this.settlePickEmWeek(reads, contest, sportEvent, completedAt, settledForEvent.has(contest.id));
         if (settled) {
           contestsSettled++;
           standingsUpserted += settled.standingsUpserted;
@@ -216,9 +219,7 @@ export class ContestSettlementService {
         participants.map((participant) => [participant.sportEventParticipantId, participant]),
       );
       const asOf = resolveContestStandingAsOf(participants, completedAt);
-      // poolmaster-allow-query-in-loop: #1172
-      const settledEvents = await this.deps.eventStandings.findByContest(contest.id);
-      if (!cancelled && !settledEvents.some((standing) => standing.sportEventId === sportEventId)) {
+      if (!cancelled && !settledForEvent.has(contest.id)) {
         const entries = await loadContestLeaderboardEntries(this.deps, contest.id, sportEventId);
         // In a contest of several events, an entry that missed this one is scored as a missed
         // lineup (#714) and ranked with the rest, so skipping an event never helps its total.
@@ -235,22 +236,20 @@ export class ContestSettlementService {
           ],
           scoringDefinition.direction,
         );
-        for (const entry of rankedEntries) {
-          // The single writer of ContestEntryEventStanding.
-          // poolmaster-allow-query-in-loop: #1172
-          await this.deps.eventStandings.upsert({
-            contestId: contest.id,
-            contestEntryId: entry.entryId,
-            sportEventId,
-            position: entry.position,
-            displayPosition: entry.displayPosition,
-            countingPickLimit: entry.countingPickLimit,
-            scoredPickCount: entry.scoredPickCount,
-            asOf,
-            settledAt: completedAt,
-            totalScore: entry.score,
-          });
-        }
+        // The single writer of ContestEntryEventStanding: one transaction per contest settled.
+        // poolmaster-allow-query-in-loop: one write per contest on the event, each its own all-or-none standings (#1172)
+        await this.deps.eventStandings.upsertMany(contest.id, rankedEntries.map((entry) => ({
+          contestId: contest.id,
+          contestEntryId: entry.entryId,
+          sportEventId,
+          position: entry.position,
+          displayPosition: entry.displayPosition,
+          countingPickLimit: entry.countingPickLimit,
+          scoredPickCount: entry.scoredPickCount,
+          asOf,
+          settledAt: completedAt,
+          totalScore: entry.score,
+        })));
       }
       contestsSettled++;
 
@@ -343,12 +342,12 @@ export class ContestSettlementService {
       await this.deps.squares.replaceWinners(contest.id, winners.map((winner) => ({ ...winner, contestId: contest.id, settledAt: completedAt })));
       const holders = [...new Set(boxes.map((box) => box.contestEntryId))];
       const won = (entryId: string) => winners.filter((winner) => winner.contestEntryId === entryId).length;
-      for (const entryId of holders) {
+      const frozen = holders.map((entryId) => {
         const score = won(entryId);
         const position = 1 + holders.filter((other) => won(other) > score).length;
         const sharing = holders.filter((other) => won(other) === score).length;
         const boxCount = boxes.filter((box) => box.contestEntryId === entryId).length;
-        const frozen = {
+        return {
           contestId: contest.id,
           contestEntryId: entryId,
           position,
@@ -360,11 +359,9 @@ export class ContestSettlementService {
           settledAt: completedAt,
           totalScore: score,
         };
-        // poolmaster-allow-query-in-loop: #1172
-        await this.deps.eventStandings.upsert({ ...frozen, sportEventId: sportEvent.id });
-        // poolmaster-allow-query-in-loop: #1172
-        await this.deps.standings.upsert(frozen);
-      }
+      });
+      await this.deps.eventStandings.upsertMany(contest.id, frozen.map((standing) => ({ ...standing, sportEventId: sportEvent.id })));
+      await this.deps.standings.upsertMany(contest.id, frozen);
       standingsUpserted = holders.length;
     }
     const completed = await this.complete(contest, completedAt);
@@ -407,24 +404,20 @@ export class ContestSettlementService {
       this.logger.error({ contestId: contest.id, sportEventId, reason: error.reason }, 'Skipped bracket contest settlement because it cannot be scored');
       return null;
     }
-    for (const standing of standings.entries) {
-      const frozen = {
-        contestId: contest.id,
-        contestEntryId: standing.entry.id,
-        position: standing.position,
-        displayPosition: standing.displayPosition,
-        // A bracket counts every pick: the limit is its game count, and a pick is scored once decided.
-        countingPickLimit: standings.gameCount,
-        scoredPickCount: standing.score.decidedPickCount,
-        asOf: completedAt,
-        settledAt: completedAt,
-        totalScore: standing.score.points,
-      };
-      // poolmaster-allow-query-in-loop: #1172
-      await this.deps.eventStandings.upsert({ ...frozen, sportEventId });
-      // poolmaster-allow-query-in-loop: #1172
-      await this.deps.standings.upsert(frozen);
-    }
+    const frozen = standings.entries.map((standing) => ({
+      contestId: contest.id,
+      contestEntryId: standing.entry.id,
+      position: standing.position,
+      displayPosition: standing.displayPosition,
+      // A bracket counts every pick: the limit is its game count, and a pick is scored once decided.
+      countingPickLimit: standings.gameCount,
+      scoredPickCount: standing.score.decidedPickCount,
+      asOf: completedAt,
+      settledAt: completedAt,
+      totalScore: standing.score.points,
+    }));
+    await this.deps.eventStandings.upsertMany(contest.id, frozen.map((standing) => ({ ...standing, sportEventId })));
+    await this.deps.standings.upsertMany(contest.id, frozen);
     const completed = await this.complete(contest, completedAt);
     this.logger.info({ contestId: contest.id, sportEventId, entryCount: standings.entries.length, completed }, 'Settled a bracket contest');
     return { standingsUpserted: standings.entries.length, completed };
@@ -443,6 +436,8 @@ export class ContestSettlementService {
     contest: Contest,
     sportEvent: SportEvent,
     completedAt: Date,
+    /** Whether the week's standings are already frozen: a week settles once. */
+    weekSettled: boolean,
   ): Promise<{ standingsUpserted: number; completed: boolean } | null> {
     const sportEventId = sportEvent.id;
     let scoring: GamePickScoring;
@@ -453,25 +448,21 @@ export class ContestSettlementService {
       this.logger.error({ contestId: contest.id, sportEventId }, 'Skipped pick\'em settlement because the contest carries no pick\'em rules');
       return null;
     }
-    const settledWeeks = await this.deps.eventStandings.findByContest(contest.id);
-    if (sportEvent.status !== SportEventStatus.CANCELLED && !settledWeeks.some((standing) => standing.sportEventId === sportEventId)) {
+    if (sportEvent.status !== SportEventStatus.CANCELLED && !weekSettled) {
       const week = await loadPickEmWeekStandings(reads, contest.id, sportEvent, scoring);
-      for (const standing of week.entries) {
-        // poolmaster-allow-query-in-loop: #1172
-        await this.deps.eventStandings.upsert({
-          contestId: contest.id,
-          contestEntryId: standing.entry.id,
-          sportEventId,
-          position: standing.position,
-          displayPosition: standing.displayPosition,
-          // Every pick of the week counts: the limit is its game count, and a pick is scored once decided.
-          countingPickLimit: week.gameCount,
-          scoredPickCount: standing.score.decidedPickCount,
-          asOf: completedAt,
-          settledAt: completedAt,
-          totalScore: standing.score.points,
-        });
-      }
+      await this.deps.eventStandings.upsertMany(contest.id, week.entries.map((standing) => ({
+        contestId: contest.id,
+        contestEntryId: standing.entry.id,
+        sportEventId,
+        position: standing.position,
+        displayPosition: standing.displayPosition,
+        // Every pick of the week counts: the limit is its game count, and a pick is scored once decided.
+        countingPickLimit: week.gameCount,
+        scoredPickCount: standing.score.decidedPickCount,
+        asOf: completedAt,
+        settledAt: completedAt,
+        totalScore: standing.score.points,
+      })));
       this.logger.info({ contestId: contest.id, sportEventId, entryCount: week.entries.length }, 'Settled one week of a pick\'em contest');
     }
     if (!(await this.allEventsFinished(reads, contest))) {
@@ -501,10 +492,11 @@ export class ContestSettlementService {
     contest: Contest,
     sportEvent: SportEvent,
     completedAt: Date,
+    /** Whether the week's standings are already frozen: a week settles once. */
+    weekSettled: boolean,
   ): Promise<{ standingsUpserted: number; completed: boolean }> {
     const sportEventId = sportEvent.id;
-    const settledWeeks = await this.deps.eventStandings.findByContest(contest.id);
-    if (sportEvent.status !== SportEventStatus.CANCELLED && !settledWeeks.some((standing) => standing.sportEventId === sportEventId)) {
+    if (sportEvent.status !== SportEventStatus.CANCELLED && !weekSettled) {
       const season = await loadSurvivorSeason(reads, contest, completedAt);
       // A playoff event is several weeks, one per round (#785): its standing counts the rounds survived in it.
       const weekIndexes = season.weeks.flatMap((week, index) => (week.event.id === sportEventId ? [index] : []));
@@ -520,21 +512,18 @@ export class ContestSettlementService {
         const sharing = decided.filter((other) => other.survived === survived).length;
         return { position, displayPosition: sharing > 1 ? `T${position}` : String(position) };
       };
-      for (const { entry, survived, decidedCount } of decided) {
-        // poolmaster-allow-query-in-loop: #1172
-        await this.deps.eventStandings.upsert({
-          contestId: contest.id,
-          contestEntryId: entry.id,
-          sportEventId,
-          ...placeOf(survived),
-          // One pick a week (a round, in a playoff), decided once its game is played.
-          countingPickLimit: weekIndexes.length,
-          scoredPickCount: decidedCount,
-          asOf: completedAt,
-          settledAt: completedAt,
-          totalScore: survived,
-        });
-      }
+      await this.deps.eventStandings.upsertMany(contest.id, decided.map(({ entry, survived, decidedCount }) => ({
+        contestId: contest.id,
+        contestEntryId: entry.id,
+        sportEventId,
+        ...placeOf(survived),
+        // One pick a week (a round, in a playoff), decided once its game is played.
+        countingPickLimit: weekIndexes.length,
+        scoredPickCount: decidedCount,
+        asOf: completedAt,
+        settledAt: completedAt,
+        totalScore: survived,
+      })));
       const survivorCount = decided.filter(({ survived, decidedCount }) => survived === decidedCount).length;
       this.logger.info({ contestId: contest.id, sportEventId, entryCount: decided.length, survivorCount }, 'Settled one week of a survivor contest');
     }
@@ -647,20 +636,17 @@ export class ContestSettlementService {
     asOf: Date,
     completedAt: Date,
   ): Promise<number> {
-    for (const total of totals) {
-      // poolmaster-allow-query-in-loop: #1172
-      await this.deps.standings.upsert({
-        contestId: contest.id,
-        contestEntryId: total.entryId,
-        position: total.position,
-        displayPosition: total.displayPosition,
-        countingPickLimit,
-        scoredPickCount: total.scoredPickCount,
-        asOf,
-        settledAt: completedAt,
-        totalScore: total.score,
-      });
-    }
+    await this.deps.standings.upsertMany(contest.id, totals.map((total) => ({
+      contestId: contest.id,
+      contestEntryId: total.entryId,
+      position: total.position,
+      displayPosition: total.displayPosition,
+      countingPickLimit,
+      scoredPickCount: total.scoredPickCount,
+      asOf,
+      settledAt: completedAt,
+      totalScore: total.score,
+    })));
     return totals.length;
   }
 }

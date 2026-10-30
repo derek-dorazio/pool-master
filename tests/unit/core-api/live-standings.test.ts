@@ -462,7 +462,7 @@ describe('LiveStandings.queueDue', () => {
     });
     const ana = member(league.id, 'Ana');
     const settledAt = new Date('2026-04-13T00:00:00.000Z');
-    await world.eventStandingRepo().upsert({
+    await world.eventStandingRepo().upsertMany(contest.id, [{
       contestId: contest.id,
       contestEntryId: 'e1',
       sportEventId: masters.id,
@@ -473,7 +473,7 @@ describe('LiveStandings.queueDue', () => {
       totalScore: -9,
       asOf: settledAt,
       settledAt,
-    });
+    }]);
     boards.set(contest.id, [row('e1', ana.squad, 1, -9, { events: [{ sportEventId: masters.id, score: -9, position: 2, displayPosition: 'T2' }] })]);
 
     await standings().queueDue(after(settledAt, 31));
@@ -488,7 +488,7 @@ describe('LiveStandings.queueDue', () => {
     outbox.rows.length = 0;
     world.sportEvents.set(pga.id, { ...pga, status: SportEventStatus.COMPLETED });
     const pgaSettledAt = new Date('2026-05-18T00:00:00.000Z');
-    await world.eventStandingRepo().upsert({
+    await world.eventStandingRepo().upsertMany(contest.id, [{
       contestId: contest.id,
       contestEntryId: 'e1',
       sportEventId: pga.id,
@@ -499,7 +499,7 @@ describe('LiveStandings.queueDue', () => {
       totalScore: -5,
       asOf: pgaSettledAt,
       settledAt: pgaSettledAt,
-    });
+    }]);
     await standings().queueDue(after(pgaSettledAt, 31));
     expect(outbox.rows).toHaveLength(0);
   });
@@ -522,7 +522,7 @@ describe('LiveStandings.queueDue', () => {
   }
 
   async function settle(contestId: string, sportEventId: string, contestEntryId: string, settledAt: Date) {
-    await world.eventStandingRepo().upsert({
+    await world.eventStandingRepo().upsertMany(contestId, [{
       contestId,
       contestEntryId,
       sportEventId,
@@ -533,7 +533,7 @@ describe('LiveStandings.queueDue', () => {
       totalScore: 1,
       asOf: settledAt,
       settledAt,
-    });
+    }]);
   }
 
   function pickEmBoard(contestId: string, weekIds: string[], entries: Array<{ entryId: string; squad: { id: string; name: string }; position: number; total: number; week1: { position: number; points: number; display?: string } | null }>): PickEmLeaderboardModel {

@@ -134,8 +134,12 @@ export interface ContestEntryStandingRepository {
    * the order the contest's final standings list them, entry number then name.
    */
   findWinnersByContests(contestIds: readonly string[]): Promise<ContestWinner[]>;
-  /** One per entry: creates or overwrites the entry's standing. */
-  upsert(write: ContestEntryStandingWrite): Promise<void>;
+  /**
+   * The contest's standings, one per entry, written all or none (#1172): an entry's standing is
+   * created, or updated in place when it differs from the stored one, and an unchanged one is
+   * not written. Every write is of `contestId`.
+   */
+  upsertMany(contestId: string, writes: readonly ContestEntryStandingWrite[]): Promise<void>;
 }
 
 /** An entry's settled result in one event of its contest (#713): the contest standing, narrowed to the event. */
@@ -151,6 +155,11 @@ export interface ContestEntryEventStandingRepository {
   findByContest(contestId: string): Promise<ContestEntryEventStandingResult[]>;
   /** `findByContest` for several contests in one read (#1315): by contest, then in its order. */
   findByContests(contestIds: readonly string[]): Promise<ContestEntryEventStandingResult[]>;
-  /** One per entry and event: creates or overwrites it. */
-  upsert(write: ContestEntryEventStandingWrite): Promise<void>;
+  /** Which of the contests already hold standings for the event, in one read (#1172): their event settled. */
+  findContestsSettledFor(sportEventId: string, contestIds: readonly string[]): Promise<Set<string>>;
+  /**
+   * The contest's event standings, one per entry and event, written all or none (#1172), as
+   * `ContestEntryStandingRepository.upsertMany` writes.
+   */
+  upsertMany(contestId: string, writes: readonly ContestEntryEventStandingWrite[]): Promise<void>;
 }

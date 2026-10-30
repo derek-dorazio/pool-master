@@ -452,7 +452,7 @@ export function fakeContestEntryStandingRepo(
   return {
     findByContest: many(),
     findWinnersByContests: many(),
-    upsert: nothing(),
+    upsertMany: nothing(),
     ...overrides,
   };
 }
@@ -463,7 +463,8 @@ export function fakeContestEntryEventStandingRepo(
   return {
     findByContest: many(),
     findByContests: many(),
-    upsert: nothing(),
+    findContestsSettledFor: jest.fn().mockResolvedValue(new Set<string>()),
+    upsertMany: nothing(),
     ...overrides,
   };
 }

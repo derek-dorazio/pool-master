@@ -794,9 +794,11 @@ export class InMemoryContestWorld {
           || left.entryNumber - right.entryNumber
           || left.entryName.localeCompare(right.entryName))
         .map(({ contestId, entryName }) => ({ contestId, entryName })),
-      // One per entry, as the adapter's upsert on contest_entry_id.
-      upsert: async (write) => {
-        this.standings.set(write.contestEntryId, { id: this.standings.get(write.contestEntryId)?.id ?? this.nextId('standing'), ...write });
+      // One per entry, keeping an entry's row id, as the adapter's update in place.
+      upsertMany: async (_contestId, writes) => {
+        for (const write of writes) {
+          this.standings.set(write.contestEntryId, { id: this.standings.get(write.contestEntryId)?.id ?? this.nextId('standing'), ...write });
+        }
       },
     };
   }
@@ -807,9 +809,14 @@ export class InMemoryContestWorld {
         [...this.eventStandings.values()].filter((row) => row.contestId === contestId),
       findByContests: async (contestIds) =>
         [...this.eventStandings.values()].filter((row) => contestIds.includes(row.contestId)),
-      upsert: async (write) => {
-        const key = `${write.contestEntryId}:${write.sportEventId}`;
-        this.eventStandings.set(key, { id: this.eventStandings.get(key)?.id ?? this.nextId('event-standing'), ...write });
+      findContestsSettledFor: async (sportEventId, contestIds) => new Set([...this.eventStandings.values()]
+        .filter((row) => row.sportEventId === sportEventId && contestIds.includes(row.contestId))
+        .map((row) => row.contestId)),
+      upsertMany: async (_contestId, writes) => {
+        for (const write of writes) {
+          const key = `${write.contestEntryId}:${write.sportEventId}`;
+          this.eventStandings.set(key, { id: this.eventStandings.get(key)?.id ?? this.nextId('event-standing'), ...write });
+        }
       },
     };
   }
