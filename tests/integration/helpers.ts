@@ -43,6 +43,7 @@ import { contestManagementModule } from '../../packages/core-api/src/modules/con
 import { cupsModule } from '../../packages/core-api/src/modules/cups/routes';
 import { championshipModule } from '../../packages/core-api/src/modules/championship/routes';
 import { historyModule } from '../../packages/core-api/src/modules/history/routes';
+import { eventPagesModule } from '../../packages/core-api/src/modules/event-pages/routes';
 import { contestConfigTemplatesModule } from '../../packages/core-api/src/modules/contest-config-templates/routes';
 import { participantsModule } from '../../packages/core-api/src/modules/participants/routes';
 import { usersModule } from '../../packages/core-api/src/modules/users/routes';
@@ -260,6 +261,7 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
   testApp.register(usersModule, { prefix: '/api/v1/users', email, emailPreferences: outbox.preferences });
   testApp.register(eventsModule, { prefix: '/api/v1/events', ingestionService, providerRegistry, cdn });
   testApp.register(sportsModule, { prefix: '/api/v1/sports' });
+  testApp.register(eventPagesModule, { prefix: '/api/v1/event-pages' });
   testApp.register(contestConfigTemplatesModule, { prefix: '/api/v1/contest-config-templates', cdn });
   testApp.register(sportLeaguesModule, { prefix: '/api/v1/sport-leagues', cdn });
   testApp.register(selectionsModule, { prefix: '/api/v1/selections', email, planEntitlements });

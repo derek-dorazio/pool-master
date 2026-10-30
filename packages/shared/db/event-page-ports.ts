@@ -9,8 +9,15 @@ export interface EventPageRepository {
   /** The pages' offers whose setup is active, each page's in sort order. */
   findOffers(eventPageIds: readonly string[]): Promise<EventPageOffer[]>;
   /**
-   * The editions of a sport league's series, by name, that are not over: DRAFT, SCHEDULED,
-   * POSTPONED or IN_PROGRESS. The one under way first, then the soonest to start.
+   * Each series' editions that are not over, in one read however many series (#1316): DRAFT,
+   * SCHEDULED, POSTPONED or IN_PROGRESS, the one under way first, then the soonest to start. One
+   * list per series asked for, in the order asked; a series is a sport league's, by name.
    */
-  findEditionsNotOver(sportLeagueId: string, eventSeriesName: string): Promise<EventPageEdition[]>;
+  findEditionsNotOver(series: readonly EventPageSeries[]): Promise<EventPageEdition[][]>;
+}
+
+/** A sport league's series, by name, as an offer names it. */
+export interface EventPageSeries {
+  sportLeagueId: string;
+  eventSeriesName: string;
 }
