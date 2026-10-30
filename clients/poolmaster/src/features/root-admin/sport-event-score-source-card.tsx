@@ -6,11 +6,10 @@ import {
   Button,
   ConfirmationModal,
   formatDateTimeDisplay,
-  Heading,
   InlineError,
+  PanelCard,
   PickerModal,
   StatusBadge,
-  Tile,
   useDisplayPreferences,
 } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
@@ -144,9 +143,8 @@ export function SportEventScoreSourceCard({
   });
 
   return (
-    <Tile>
-      <Heading level={2} variant="card" size="lg">Score source</Heading>
-      <div className="mt-3 flex flex-wrap items-center gap-3">
+    <PanelCard padded title="Score source">
+      <div className="flex flex-wrap items-center gap-3">
         <StatusBadge tone={syncScopeTone(tournament.syncScope)}>
           {syncScopeLabel(tournament.syncScope)}
         </StatusBadge>
@@ -284,6 +282,6 @@ export function SportEventScoreSourceCard({
         testId="root-admin-sport-event-unlink-modal"
         title="Unlink score source"
       />
-    </Tile>
+    </PanelCard>
   );
 }

@@ -6,16 +6,7 @@ import { buildLeagueChampionshipsPath, buildLeaguePointsRacePath } from '@/featu
 import { useLeagueContext } from '@/features/leagues/use-league-context';
 import { hasPlanFeature } from '@/features/plans/plan-features';
 import { PlanLockedNotice } from '@/features/plans/plan-locked-notice';
-import {
-  Button,
-  ErrorState,
-  Heading,
-  LoadingState,
-  MetricGrid,
-  MetricTile,
-  Select,
-  Tile,
-} from '@/features/shared/ui';
+import { Button, ErrorState, Heading, LoadingState, MetricGrid, MetricTile, PanelCard, Select } from '@/features/shared/ui';
 import { historyYearTitle } from './championship-view';
 import { SquadPerpetualPlates } from './perpetual-trophies';
 import { SquadRecords } from './record-book';
@@ -82,8 +73,7 @@ export function SquadHistorySection({
         <LoadingState body="Loading this squad's trophies..." />
       ) : (
         <>
-          <Tile className="space-y-3" padding="sm" radius="lg">
-            <Heading level={2} variant="card" size="lg">Trophy case</Heading>
+          <PanelCard padded title="Trophy case">
             <MetricGrid className="grid-cols-3">
               <div data-testid="squad-history-medal-firsts"><MetricTile label="Contest 1sts" value={historyQuery.data.medals.firsts} /></div>
               <div data-testid="squad-history-medal-seconds"><MetricTile label="Contest 2nds" value={historyQuery.data.medals.seconds} /></div>
@@ -114,13 +104,12 @@ export function SquadHistorySection({
                 contest the league runs every year, puts one here.
               </p>
             ) : null}
-          </Tile>
+          </PanelCard>
 
           {hasPlanFeature(league, PlanFeature.RECORD_BOOK) ? <SquadRecords leagueId={leagueId} squadId={squad.id} /> : null}
 
           {placedYears.length ? (
-            <Tile className="space-y-2" padding="sm" radius="lg">
-              <Heading level={2} variant="card" size="lg">All years</Heading>
+            <PanelCard padded title="All years">
               <ul className="space-y-1 text-sm" data-testid="squad-history-years">
                 {placedYears.map((row) => {
                   const line = describeSquadYearLine(row, currentYear);
@@ -142,7 +131,7 @@ export function SquadHistorySection({
                   );
                 })}
               </ul>
-            </Tile>
+            </PanelCard>
           ) : null}
         </>
       )}

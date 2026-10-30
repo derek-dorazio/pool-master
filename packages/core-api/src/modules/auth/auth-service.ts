@@ -22,6 +22,7 @@ import type { FastifyBaseLogger } from 'fastify';
 import type { UserRepository } from '@poolmaster/shared/db';
 import { AuthProvider, isKnownLocale, isKnownTimeZone, type User } from '@poolmaster/shared/domain';
 import { readJwtSecret } from '../../core/config';
+import { lockMemberRow } from '../../adapters';
 import { hashRefreshToken } from './refresh-token-hash';
 import type { ApiErrorCode } from '@poolmaster/shared/dto';
 
@@ -215,9 +216,14 @@ export class AuthService {
     if (stored?.rotatedAt && now.getTime() - stored.rotatedAt.getTime() > ROTATED_TOKEN_GRACE_MS) {
       // A token a refresh replaced has come back after the two-tab grace window: someone holds a
       // copy of it. Whoever refreshed first may be the thief, so the whole session ends (#1229).
-      const ended = await this.prisma.refreshToken.updateMany({
-        where: { userId: stored.userId, sessionId: stored.sessionId, revokedAt: null },
-        data: { revokedAt: now },
+      // Behind the member's lock, so a rotation in flight commits its new token first and the
+      // revoke sees it (#1264).
+      const ended = await this.prisma.$transaction(async (tx) => {
+        await lockMemberRow(tx, stored.userId);
+        return tx.refreshToken.updateMany({
+          where: { userId: stored.userId, sessionId: stored.sessionId, revokedAt: null },
+          data: { revokedAt: now },
+        });
       });
       this.logger?.warn({
         action: 'authService.refresh.reuseDetected',
@@ -241,8 +247,10 @@ export class AuthService {
     // Revoke the old refresh token (rotation). The read above is not enough: two refreshes with
     // the same token can both see it live, so only the one whose conditional update revokes it
     // may issue the next token (#1175). One transaction, so a failed insert leaves the old token
-    // live rather than signing the member out.
+    // live rather than signing the member out. The member's lock comes first, so a reuse revoke
+    // under way finishes before this rotation reads the token (#1264).
     const tokens = await this.prisma.$transaction(async (tx) => {
+      await lockMemberRow(tx, stored.userId);
       const rotated = await tx.refreshToken.updateMany({
         where: { id: stored.id, revokedAt: null },
         data: { revokedAt: now, rotatedAt: now },

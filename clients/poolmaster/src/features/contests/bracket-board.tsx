@@ -1,5 +1,4 @@
-import { Check } from 'lucide-react';
-import { Button, Chip, cn, Heading } from '@/features/shared/ui';
+import { Chip, Heading } from '@/features/shared/ui';
 import {
   describeOpenSide,
   describePickOutcome,
@@ -8,58 +7,7 @@ import {
   type BracketRound,
   type BracketTeam,
 } from './bracket-layout';
-
-/** One side of a game the entry can pick: its team, as a choice. */
-function TeamChoice({
-  game,
-  isBusy,
-  isPicked,
-  onPick,
-  team,
-}: {
-  game: BracketGame;
-  isBusy: boolean;
-  isPicked: boolean;
-  onPick: (game: BracketGame, team: BracketTeam) => void;
-  team: BracketTeam;
-}) {
-  return (
-    <Button
-      aria-pressed={isPicked}
-      className="justify-between"
-      layout="row"
-      data-testid={`bracket-game-${game.matchNumber}-team-${team.sportEventParticipantId}`}
-      disabled={isBusy}
-      onClick={() => {
-        if (!isPicked) {
-          onPick(game, team);
-        }
-      }}
-      size="sm"
-      variant={isPicked ? 'subtle' : 'secondary'}
-    >
-      <span className="truncate">{team.name}</span>
-      {isPicked ? <Check aria-label="Your pick" size={16} /> : null}
-    </Button>
-  );
-}
-
-/** One side of a game as it was filled in: the team, marked when it is the entry's pick. */
-function TeamLine({ game, isPicked, team }: { game: BracketGame; isPicked: boolean; team: BracketTeam }) {
-  return (
-    <div
-      className={cn(
-        'flex h-9 items-center justify-between gap-2 rounded-2xl border px-3 text-sm',
-        isPicked ? 'border-primary/30 bg-primary/10 font-semibold' : 'border-border text-muted-foreground',
-      )}
-      data-picked={isPicked || undefined}
-      data-testid={`bracket-game-${game.matchNumber}-team-${team.sportEventParticipantId}`}
-    >
-      <span className="truncate">{team.name}</span>
-      {isPicked ? <Check aria-label="Picked" size={16} /> : null}
-    </div>
-  );
-}
+import { PickedLine, PickOption } from './pick-option';
 
 function GameCard({
   canPick,
@@ -103,10 +51,21 @@ function GameCard({
           );
         }
         const isPicked = team.sportEventParticipantId === pickedId;
+        const testId = `bracket-game-${game.matchNumber}-team-${team.sportEventParticipantId}`;
         return choosable ? (
-          <TeamChoice game={game} isBusy={isBusy} isPicked={isPicked} key={team.sportEventParticipantId} onPick={onPick} team={team} />
+          <PickOption
+            isBusy={isBusy}
+            isPicked={isPicked}
+            key={team.sportEventParticipantId}
+            onPick={() => onPick(game, team)}
+            testId={testId}
+          >
+            <span className="truncate">{team.name}</span>
+          </PickOption>
         ) : (
-          <TeamLine game={game} isPicked={isPicked} key={team.sportEventParticipantId} team={team} />
+          <PickedLine isPicked={isPicked} key={team.sportEventParticipantId} testId={testId}>
+            <span className="truncate">{team.name}</span>
+          </PickedLine>
         );
       })}
     </li>

@@ -60,6 +60,12 @@ League pages and administration areas use the pieces named in
 `DangerZone` / `DangerZoneAction`, and `FormPage` for a full-page edit
 (with `IconPalette` when the form picks an icon).
 
+A titled card is a `PanelCard`: its title in a ruled bar, with an optional
+slot on the right such as a badge or a clear button, then its body and an
+optional footer link under a rule. Its body is unpadded for a `PanelList` of
+divided rows, and `padded` gives prose, forms or metric grids the card's own
+padding. Don't hand-build a heading inside a `Tile` for this.
+
 A team's icon and name come from `features/teams`, not this folder, because they
 are a product piece: `TeamAvatar` draws the icon in its coloured square, and
 `TeamName` puts it beside the name, linked or plain, with the Yours and Inactive

@@ -25,6 +25,7 @@ import type { Prisma, PrismaClient } from '@prisma/client';
 import type { UserRepository } from '@poolmaster/shared/db';
 import type { User } from '@poolmaster/shared/domain';
 import { hashRefreshToken } from '../auth/refresh-token-hash';
+import { lockMemberRow } from '../../adapters';
 
 /** The subset of Prisma usable inside or outside a transaction. */
 type PrismaLike = PrismaClient | Prisma.TransactionClient;
@@ -108,6 +109,9 @@ export async function cancelOpenPasswordResetTokens(
  * dependency guard above must run first and block.
  */
 export async function deleteUserCascade(tx: Prisma.TransactionClient, userId: string): Promise<void> {
+  // The member's lock before their tokens, in the order a refresh takes them (#1264): the other
+  // order deadlocks with a refresh under way.
+  await lockMemberRow(tx, userId);
   await tx.refreshToken.deleteMany({ where: { userId } });
   await tx.passwordResetToken.deleteMany({ where: { userId } });
   await tx.leagueInvitation.deleteMany({
