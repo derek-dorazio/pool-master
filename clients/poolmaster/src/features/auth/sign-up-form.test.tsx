@@ -52,6 +52,17 @@ afterEach(() => {
 });
 
 describe('SignUpForm', () => {
+  it("lets the browser fill the member's name, email and username and offer a new password in both password fields", () => {
+    renderForm();
+
+    expect(screen.getByTestId('sign-up-first-name')).toHaveAttribute('autocomplete', 'given-name');
+    expect(screen.getByTestId('sign-up-last-name')).toHaveAttribute('autocomplete', 'family-name');
+    expect(screen.getByTestId('sign-up-email')).toHaveAttribute('autocomplete', 'email');
+    expect(screen.getByTestId('sign-up-username')).toHaveAttribute('autocomplete', 'username');
+    expect(screen.getByTestId('sign-up-password')).toHaveAttribute('autocomplete', 'new-password');
+    expect(screen.getByTestId('sign-up-confirm-password')).toHaveAttribute('autocomplete', 'new-password');
+  });
+
   it('names every empty required field and sends nothing', async () => {
     renderForm();
 
@@ -113,7 +124,7 @@ describe('SignUpForm', () => {
     registerWithTeamOwnerInvitationMock.mockResolvedValue({
       error: { error: { code: 'SQUAD_OWNER_INVITATION_ALREADY_ACCEPTED', message: 'accepted' } },
     });
-    renderForm({ errorMessages: { SQUAD_OWNER_INVITATION_ALREADY_ACCEPTED: 'Already accepted. Sign in.' }, teamInviteCode: 'TEAM123' });
+    renderForm({ errorMessages: { SQUAD_OWNER_INVITATION_ALREADY_ACCEPTED: 'Already accepted. Sign in.' }, mode: { kind: 'teamInvite', inviteCode: 'TEAM123' } });
     fillAccount({ email: null });
 
     fireEvent.click(screen.getByTestId('sign-up-submit'));
@@ -124,7 +135,7 @@ describe('SignUpForm', () => {
   it('on a co-owner invitation asks no email and signs up against the invitation', async () => {
     const user = buildCurrentUser({ id: 'user-invited' });
     registerWithTeamOwnerInvitationMock.mockResolvedValue({ data: { user } });
-    const { onRegistered } = renderForm({ submitLabel: 'Create account and join', teamInviteCode: 'TEAM123' });
+    const { onRegistered } = renderForm({ submitLabel: 'Create account and join', mode: { kind: 'teamInvite', inviteCode: 'TEAM123' } });
 
     expect(screen.queryByTestId('sign-up-email')).not.toBeInTheDocument();
     fillAccount({ email: null });

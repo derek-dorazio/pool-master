@@ -55,17 +55,19 @@ const invitedSignUpSchema = z
 
 type SignUpFormValues = z.infer<typeof accountSignUpSchema>;
 
+/**
+ * Whom the account is for. A co-owner invitation (#217) asks no email, because the account takes
+ * the address the commissioner invited, and the same request joins the league and the team; a
+ * forwarded invite link must not admit whoever typed a different address.
+ */
+export type SignUpMode = { kind: "account" } | { kind: "teamInvite"; inviteCode: string };
+
 export type SignUpFormProps = {
   /** Called with the new account once it exists and its session is cached; the page decides where to go. */
   onRegistered: (user: AuthSessionUser) => void;
   submitLabel?: string;
   pendingLabel?: string;
-  /**
-   * Signs up against this co-owner invitation (#217): no email field, because the account takes
-   * the address the commissioner invited, and the same request joins the league and the team.
-   * A forwarded invite link must not admit whoever typed a different address.
-   */
-  teamInviteCode?: string;
+  mode?: SignUpMode;
   /** Words for particular server refusals on this page, such as an invitation already accepted. */
   errorMessages?: ExtractErrorMessageOptions["codeMessages"];
 };
@@ -76,14 +78,14 @@ export type SignUpFormProps = {
  */
 export function SignUpForm({
   errorMessages,
+  mode = { kind: "account" },
   onRegistered,
   pendingLabel = "Creating account...",
   submitLabel = "Register and continue",
-  teamInviteCode,
 }: SignUpFormProps) {
   const logger = useMemo(() => getLogger().child({ feature: "sign-up-form" }), []);
   const queryClient = useQueryClient();
-  const asksForEmail = teamInviteCode === undefined;
+  const asksForEmail = mode.kind === "account";
   const form = useForm<SignUpFormValues>({
     resolver: zodResolver(asksForEmail ? accountSignUpSchema : invitedSignUpSchema),
     defaultValues: {
@@ -119,9 +121,9 @@ export function SignUpForm({
         lastName: values.lastName.trim(),
       };
       const response = await signUpWithDisplayPreferences(values.timezone, (preferences) =>
-        teamInviteCode === undefined
+        mode.kind === "account"
           ? registerUser({ body: { ...account, email: values.email, ...preferences } })
-          : registerWithTeamOwnerInvitation({ body: { ...account, inviteCode: teamInviteCode, ...preferences } }));
+          : registerWithTeamOwnerInvitation({ body: { ...account, inviteCode: mode.inviteCode, ...preferences } }));
       if (!response.data?.user) {
         throwApiError(response.error, "Registration response is missing data.");
       }
@@ -175,22 +177,23 @@ export function SignUpForm({
 
       <div className="grid gap-4 sm:grid-cols-2">
         <FormField error={form.formState.errors.firstName?.message} label="First name">
-          <Input {...form.register("firstName")} data-testid="sign-up-first-name" placeholder="Taylor" type="text" />
+          <Input {...form.register("firstName")} autoComplete="given-name" data-testid="sign-up-first-name" placeholder="Taylor" type="text" />
         </FormField>
         <FormField error={form.formState.errors.lastName?.message} label="Last name">
-          <Input {...form.register("lastName")} data-testid="sign-up-last-name" placeholder="Commissioner" type="text" />
+          <Input {...form.register("lastName")} autoComplete="family-name" data-testid="sign-up-last-name" placeholder="Commissioner" type="text" />
         </FormField>
       </div>
 
       {asksForEmail ? (
         <FormField error={form.formState.errors.email?.message} label="Email">
-          <Input {...form.register("email")} data-testid="sign-up-email" placeholder="you@example.com" type="email" />
+          <Input {...form.register("email")} autoComplete="email" data-testid="sign-up-email" placeholder="you@example.com" type="email" />
         </FormField>
       ) : null}
 
       <FormField error={form.formState.errors.username?.message} label="Username">
         <Input
           {...form.register("username", { onChange: () => setHasEditedUsername(true) })}
+          autoComplete="username"
           data-testid="sign-up-username"
           placeholder="yourname"
           type="text"
@@ -198,12 +201,13 @@ export function SignUpForm({
       </FormField>
 
       <FormField error={form.formState.errors.password?.message} label="Create password">
-        <Input {...form.register("password")} data-testid="sign-up-password" placeholder="Create a password" type="password" />
+        <Input {...form.register("password")} autoComplete="new-password" data-testid="sign-up-password" placeholder="Create a password" type="password" />
       </FormField>
 
       <FormField error={form.formState.errors.confirmPassword?.message} label="Confirm password">
         <Input
           {...form.register("confirmPassword")}
+          autoComplete="new-password"
           data-testid="sign-up-confirm-password"
           placeholder="Re-enter your password"
           type="password"

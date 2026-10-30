@@ -222,7 +222,7 @@ export function JoinTeamOwnerPage() {
               onRegistered={handleRegistered}
               pendingLabel="Creating your account..."
               submitLabel="Create account and join"
-              teamInviteCode={inviteCode}
+              mode={{ kind: 'teamInvite', inviteCode }}
             />
           </div>
         ) : null}
