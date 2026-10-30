@@ -16,7 +16,8 @@ export const TABLE_SCAN_ALLOWANCES: readonly TableScanAllowance[] = [
   {
     table: 'leagues',
     sqlIncludes: 'FROM "public"."leagues" WHERE "public"."leagues"."is_active" = $? ORDER BY',
-    reason: 'The commissioner notices email every active league, so they read every active league; no screen calls it (#1313). #1303 covers the sweep.',
+    reason: 'The commissioner notices tell every active league of a due event, so they read every active league, and only when an event email is due; '
+      + 'no screen calls it (#1313). The lifecycle sweep test sends it (#1303).',
   },
   {
     table: 'contest_sport_events',
