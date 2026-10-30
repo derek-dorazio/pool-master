@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { CopyButton } from "./copy-button";
 
@@ -10,27 +10,36 @@ function stubClipboard(writeText: (text: string) => Promise<void>) {
 }
 
 describe("CopyButton", () => {
-  it("puts the text on the clipboard and swaps its label for the copied label", async () => {
+  it("puts the text on the clipboard, swaps its label for the copied label and announces it to screen readers", async () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
     stubClipboard(writeText);
     render(<CopyButton copiedLabel="Link copied" label="Share" testId="share" text="https://example.com/x" />);
 
     fireEvent.click(screen.getByRole("button", { name: "Share" }));
 
-    expect(await screen.findByText("Link copied")).toBeInTheDocument();
+    expect(await screen.findByRole("status")).toHaveTextContent("Link copied");
+    expect(screen.getByTestId("share")).toHaveTextContent("Link copied");
     expect(writeText).toHaveBeenCalledWith("https://example.com/x");
   });
 
   it("goes back to its label a moment after copying, so a second copy reads the same as the first", async () => {
-    stubClipboard(vi.fn().mockResolvedValue(undefined));
-    render(<CopyButton label="Share" testId="share" text="x" />);
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      stubClipboard(vi.fn().mockResolvedValue(undefined));
+      render(<CopyButton label="Share" testId="share" text="x" />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Share" }));
-    expect(await screen.findByText("Copied")).toBeInTheDocument();
+      fireEvent.click(screen.getByRole("button", { name: "Share" }));
+      expect(await screen.findByRole("status")).toHaveTextContent("Copied");
 
-    await waitFor(() => expect(screen.getByTestId("share")).toHaveTextContent("Share"), {
-      timeout: COPIED_RESET_MS + 1000,
-    });
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(COPIED_RESET_MS);
+      });
+
+      expect(screen.getByTestId("share")).toHaveTextContent("Share");
+      expect(screen.getByRole("status")).toHaveTextContent("");
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("says the copy failed, under the button, when the browser refuses the clipboard", async () => {
@@ -60,6 +69,6 @@ describe("CopyButton", () => {
     expect(button).not.toHaveTextContent("Copy league code");
     fireEvent.click(button);
 
-    expect(await screen.findByText("Copied")).toHaveAttribute("role", "status");
+    expect(await screen.findByRole("status")).toHaveTextContent("Copied");
   });
 });

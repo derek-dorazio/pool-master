@@ -68,7 +68,6 @@ type InviteRow = {
   sentBy: string;
 };
 
-
 function buildInviteUrl(inviteCode: string): string {
   return `${window.location.origin}${buildInvitePath(inviteCode)}`;
 }

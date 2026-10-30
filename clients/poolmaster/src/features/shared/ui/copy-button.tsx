@@ -69,11 +69,12 @@ export function CopyButton({
   const Icon = isCopied ? Check : Copy;
 
   return (
+    // `relative` keeps the sr-only status, which is absolutely positioned, anchored here instead of
+    // on a far ancestor, where it once widened the invite rows past a phone's width.
     <span className="relative inline-flex flex-col gap-1">
       <Button
         aria-label={iconOnly ? label : undefined}
         className={className}
-        data-copied={isCopied || undefined}
         data-testid={testId}
         disabled={disabled}
         onClick={() => void handleCopy()}
@@ -84,13 +85,12 @@ export function CopyButton({
       >
         {iconOnly ? <Icon aria-hidden size={16} /> : isCopied ? copiedLabel : label}
       </Button>
-      {iconOnly ? (
-        <span className="sr-only" role="status">
-          {isCopied ? copiedLabel : ""}
-        </span>
-      ) : null}
+      {/* A focused button's own text change is not reliably announced, so both kinds say it here. */}
+      <span className="sr-only" role="status">
+        {isCopied ? copiedLabel : ""}
+      </span>
       {copyState === "failed" ? (
-        <InlineError className="max-w-xs whitespace-normal" testId={testId ? `${testId}-failed` : undefined}>
+        <InlineError className="min-w-40 max-w-xs whitespace-normal" testId={testId ? `${testId}-failed` : undefined}>
           {failedMessage}
         </InlineError>
       ) : null}

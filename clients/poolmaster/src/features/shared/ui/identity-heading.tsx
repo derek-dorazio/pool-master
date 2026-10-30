@@ -42,9 +42,19 @@ export function IdentityHeading({ avatar, code, icon, meta, name, testId }: Iden
 
 function CodeChip({ label, value }: { label: string; value: string }) {
   return (
-    <span className="inline-flex items-center gap-1 rounded-md border border-dashed border-border pl-2 font-mono text-xs text-foreground">
-      {value}
-      <CopyButton className="h-7 w-7" iconOnly label={`Copy ${label}`} text={value} variant="ghost" />
+    // The code and the button each draw their half of the dashed border, so a refused copy's
+    // message shows under the chip instead of stretching it.
+    <span className="inline-flex items-start text-xs">
+      <span className="h-7 rounded-l-md border border-r-0 border-dashed border-border pl-2 pr-1 font-mono leading-[26px] text-foreground">
+        {value}
+      </span>
+      <CopyButton
+        className="h-7 w-7 rounded-l-none border border-l-0 border-dashed border-border"
+        iconOnly
+        label={`Copy ${label}`}
+        text={value}
+        variant="ghost"
+      />
     </span>
   );
 }
