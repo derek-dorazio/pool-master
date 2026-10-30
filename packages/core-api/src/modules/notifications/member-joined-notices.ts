@@ -42,12 +42,12 @@ export interface MemberJoinedModuleOptions {
 }
 
 export interface MemberJoinedNoticeDeps extends LeagueMemberDeps {
-  memberships: Pick<LeagueMembershipRepository, 'findByLeague' | 'findActiveJoinedSince' | 'countActiveByLeagues'>;
-  leagues: Pick<LeagueRepository, 'findById'>;
+  memberships: Pick<LeagueMembershipRepository, 'findByLeague' | 'findByLeagues' | 'findActiveJoinedSince' | 'countActiveByLeagues'>;
+  leagues: Pick<LeagueRepository, 'findById' | 'findByIds'>;
   /** Each joiner's squad, by name. */
   squadMemberships: Pick<SquadMembershipRepository, 'findByLeagueAndUser'>;
   squads: Pick<SquadRepository, 'findById'>;
-  email: Pick<EmailService, 'send' | 'leaguesRecorded'>;
+  email: Pick<EmailService, 'send' | 'leaguesRecorded' | 'leaguesRecordedAbout'>;
   /** The next day's email goes at the overnight hour every scheduled league email uses. */
   readConfig: () => Pick<EmailConfig, 'weeklyDigestHour'>;
   appBaseUrl: string;
@@ -113,16 +113,19 @@ export class MemberJoinedNotices implements DueNotifications {
       .filter(({ joins }) => joins.length > 0);
     if (busy.length === 0) return;
     const told = await this.deps.email.leaguesRecorded('LEAGUE_MEMBER_JOINED', yesterday);
-    for (const { leagueId, joins } of busy) {
-      if (told.has(leagueId)) continue;
+    const due = busy.filter(({ leagueId }) => !told.has(leagueId));
+    if (due.length === 0) return;
+    // Every due league's joins and leagues are read once for the sweep, not once per league (#1255).
+    const [toldAtOnce, leagues] = await Promise.all([
+      this.deps.email.leaguesRecordedAbout('LEAGUE_MEMBER_JOINED', due.flatMap(({ joins }) => joins.map(atOnceAbout))),
+      this.deps.leagues.findByIds(due.map(({ leagueId }) => leagueId)),
+    ]);
+    const leagueById = new Map(leagues.map((league) => [league.id, league]));
+    for (const { leagueId, joins } of due) {
       try {
-        const untold: LeagueMembership[] = [];
-        for (const join of joins) {
-          if (!(await this.deps.email.leaguesRecorded('LEAGUE_MEMBER_JOINED', atOnceAbout(join))).has(leagueId)) untold.push(join);
-        }
+        const untold = joins.filter((join) => !toldAtOnce.get(atOnceAbout(join))?.has(leagueId));
         if (untold.length === 0) continue;
-        // poolmaster-allow-query-in-loop: #1255
-        const league = await this.deps.leagues.findById(leagueId);
+        const league = leagueById.get(leagueId);
         if (!league?.isActive) continue;
         await this.send(league, MemberJoinedTiming.NEXT_DAY, untold, `${yesterday}:${leagueId}`);
       } catch (error) {

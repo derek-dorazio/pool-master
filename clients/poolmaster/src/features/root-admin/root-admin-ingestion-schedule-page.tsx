@@ -1,6 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { getIngestionSchedule, resetIngestionSchedule, updateIngestionSchedule } from '@/lib/api';
+import { useEffect, useState } from 'react';
+import { resetIngestionSchedule, updateIngestionSchedule } from '@/lib/api';
 import {
   Alert,
   AsyncPage,
@@ -22,6 +21,7 @@ import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { ManagePageIntro } from './manage-page-intro';
+import { useIngestionScheduleQuery } from './use-ingestion-schedule-query';
 
 type IngestionEditableField =
   | 'enabled'
@@ -32,21 +32,8 @@ type IngestionEditableField =
 export function RootAdminIngestionSchedulePage() {
   const [draft, setDraft] = useState<IngestionScheduleConfig | null>(null);
 
-  const ingestionConfigQuery = useQuery({
-    queryKey: QueryKeys.rootAdmin.ingestionConfig,
-    queryFn: async (): Promise<IngestionScheduleConfig> => {
-      const response = await getIngestionSchedule();
-      if (!response.data) {
-        throwApiError(response.error, 'Ingestion schedule response is missing data.');
-      }
-      return response.data;
-    },
-    retry: false,
-  });
-  const configSource = useMemo(
-    () => ingestionConfigQuery.data ? cloneIngestionConfig(ingestionConfigQuery.data) : null,
-    [ingestionConfigQuery.data],
-  );
+  const ingestionConfigQuery = useIngestionScheduleQuery();
+  const configSource = ingestionConfigQuery.data ?? null;
 
   useEffect(() => {
     if (!configSource || draft) {

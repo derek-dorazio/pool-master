@@ -4,8 +4,8 @@ import { Alert, Button, ConfirmationModal } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
-import { QueryKeys } from '@/lib/query-keys';
 import { participantFieldActionLabel } from './sport-admin-utils';
+import { fieldWriteKeys } from './use-sport-event';
 
 /**
  * plans/124 §6.3 / §4.4a Field editor header — "Load Participant Field" while the
@@ -38,12 +38,7 @@ export function EventFieldRefreshAction({
       }
       return response.data.syncRuns;
     },
-    invalidates: [
-      QueryKeys.rootAdmin.manageSport.field(eventId),
-      QueryKeys.rootAdmin.manageSport.event(eventId),
-      QueryKeys.rootAdmin.manageSport.events,
-      QueryKeys.rootAdmin.manageSport.tiers(eventId),
-    ],
+    invalidates: fieldWriteKeys(eventId),
     onSuccess: () => {
       setStarted(true);
       setConfirmOpen(false);

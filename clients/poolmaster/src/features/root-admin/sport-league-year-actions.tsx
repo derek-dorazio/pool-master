@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { cloneEventYear, updateSportLeague } from '@/lib/api';
+import { cloneEventYear } from '@/lib/api';
 import { Button, ConfirmationModal, StatusBadge } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
@@ -7,6 +7,7 @@ import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import type { SportLeagueDto } from '@/lib/api';
 import { useManagedSport } from './use-managed-sport';
+import { useUpdateSportLeague } from './use-update-sport-league';
 
 /**
  * plans/147 — what used to be done to a season is done to a tour's event year: make it
@@ -33,22 +34,12 @@ export function SportLeagueYearActions({
   const targetYear = eventYear + 1;
   const isCurrent = sportLeague.currentEventYear === eventYear;
 
-  const setCurrentMutation = useInvalidatingMutation({
-    mutationFn: async () => {
-      const response = await updateSportLeague({
-        path: { sportLeagueId: sportLeague.id },
-        body: { currentEventYear: eventYear },
-      });
-      if (!response.data?.sportLeague) {
-        throwApiError(response.error, 'Set-current response is missing data.');
-      }
-      return response.data.sportLeague;
-    },
-    invalidates: [QueryKeys.rootAdmin.manageSport.leagues],
+  const setCurrentMutation = useUpdateSportLeague({
+    failedAction: 'sportLeague.setCurrentYear.failed',
     onSuccess: () => setSetCurrentOpen(false),
-    onError: (error) => {
-      logger.warn({ action: 'sportLeague.setCurrentYear.failed', err: error }, 'Set-current event year was rejected');
-    },
+    refusedMessage: 'Set-current event year was rejected',
+    sportLeagueId: sportLeague.id,
+    toBody: () => ({ currentEventYear: eventYear }),
   });
 
   const cloneMutation = useInvalidatingMutation({

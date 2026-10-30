@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'react-router';
-import { listContestConfigTemplates, updateContestConfigTemplate, type ContestConfigTemplateDto } from '@/lib/api';
+import { updateContestConfigTemplate, type ContestConfigTemplateDto } from '@/lib/api';
 import { getLogger } from '@/lib/logger';
 import { LayoutTemplate } from 'lucide-react';
 import { SelectionType, getSportDefinition, describeBracketRules, describePickEmRules  } from '@poolmaster/shared/domain';
@@ -27,6 +26,7 @@ import {
 } from './content-configuration-utils';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
+import { useContestConfigTemplatesQuery } from './use-contest-config-templates-query';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { useManageBreadcrumbOverride, useManagePageOwnsHeading } from './manage-breadcrumb-context';
 
@@ -39,19 +39,7 @@ export function RootAdminContentConfigurationDetailPage() {
   });
   const [draft, setDraft] = useState<ContestConfigTemplate | null>(null);
 
-  const templatesQuery = useQuery({
-    queryKey: QueryKeys.contestConfigTemplates.list({}),
-    queryFn: async (): Promise<ContestConfigTemplate[]> => {
-      const response = await listContestConfigTemplates();
-
-      if (!response.data?.templates) {
-        throwApiError(response.error, 'Contest template response is missing data.');
-      }
-
-      return response.data.templates;
-    },
-    retry: false,
-  });
+  const templatesQuery = useContestConfigTemplatesQuery();
 
   const template = useMemo(
     // poolmaster-allow-list-lookup: the fixed set of contest config templates, listed on the screen before this one; there is no single read by key

@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { SportEventSyncScope, getSportDefinition } from '@poolmaster/shared/domain';
-import { linkEventScoreSource, listProviders, unlinkEventScoreSource } from '@/lib/api';
+import { linkEventScoreSource, unlinkEventScoreSource } from '@/lib/api';
 import {
   Button,
   ConfirmationModal,
@@ -27,6 +26,7 @@ import {
 } from './use-provider-catalog';
 import type { SportEventDto } from '@/lib/api';
 import { getScoringFamilyAdminUi } from './scoring-family-admin';
+import { useProvidersQuery } from './use-providers-query';
 
 type PickerCatalogEvent = ProviderCatalogEvent & { id: string };
 
@@ -74,18 +74,7 @@ export function SportEventScoreSourceCard({
     [catalog.events],
   );
 
-  const providersQuery = useQuery({
-    enabled: tournament.syncScope === SportEventSyncScope.NONE,
-    queryKey: QueryKeys.rootAdmin.providers,
-    queryFn: async () => {
-      const response = await listProviders();
-      if (!response.data?.providers) {
-        throwApiError(response.error, 'Provider list response is missing data.');
-      }
-      return response.data.providers;
-    },
-    retry: false,
-  });
+  const providersQuery = useProvidersQuery({ enabled: tournament.syncScope === SportEventSyncScope.NONE });
   // poolmaster-allow-list-lookup: the few data providers
   const simulatingProviderId = (providersQuery.data ?? []).find(
     (provider) => provider.sportsCovered.includes(tournament.sport) && provider.supportsLiveSimulation,

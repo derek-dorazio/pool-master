@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { getEventLiveSimulation, listProviders, startEventLiveSimulation } from '@/lib/api';
+import { getEventLiveSimulation, startEventLiveSimulation } from '@/lib/api';
 import {
   Button,
   type DisplayPreferences,
@@ -12,6 +12,7 @@ import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import type { SportEventDto, SportEventLiveSimulationResponse } from '@/lib/api';
+import { useProvidersQuery } from './use-providers-query';
 
 function describeSimulation(simulation: SportEventLiveSimulationResponse, displayPreferences: DisplayPreferences): string {
   const finish = formatDateTimeDisplay(simulation.endsAt, displayPreferences);
@@ -34,17 +35,7 @@ const statusRefreshMs = 30_000;
 export function GolfTournamentLiveSimulation({ tournament }: { tournament: SportEventDto }) {
   const displayPreferences = useDisplayPreferences();
   const logger = getLogger().child({ feature: 'root-admin-sport-event-home-page' });
-  const providersQuery = useQuery({
-    queryKey: QueryKeys.rootAdmin.providers,
-    queryFn: async () => {
-      const response = await listProviders();
-      if (!response.data?.providers) {
-        throwApiError(response.error, 'Provider list response is missing data.');
-      }
-      return response.data.providers;
-    },
-    retry: false,
-  });
+  const providersQuery = useProvidersQuery();
   // poolmaster-allow-list-lookup: the handful of data providers, fixed reference data
   const supported = (providersQuery.data ?? []).some(
     (provider) => provider.providerId === tournament.providerId && provider.supportsLiveSimulation,
