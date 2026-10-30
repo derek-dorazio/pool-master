@@ -1,10 +1,23 @@
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useForm, type DefaultValues, type FieldValues, type Resolver } from 'react-hook-form';
-import { updateSettingsGroup, type SettingsGroup } from '@/lib/api';
+import { updateSettingsGroup, type SettingsGroup, type UpdateSettingsGroupData } from '@/lib/api';
 import { hasErrorCode, throwApiError } from '@/lib/errors';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
+
+/**
+ * A save's body for one group. TypeScript cannot tie a generic group's key to its value across
+ * the union of groups, so this is the one place the pair is asserted to match; `G` keeps every
+ * caller's value checked against its own key.
+ */
+function saveBody<G extends SettingsGroup>(
+  key: G['key'],
+  value: G['value'],
+  expectedUpdatedAt: string | null,
+): UpdateSettingsGroupData['body'] {
+  return { key, value, expectedUpdatedAt } as UpdateSettingsGroupData['body'];
+}
 
 /**
  * The form for one settings group (#450): the draft is taken from the group once, when the form
@@ -44,8 +57,7 @@ export function useSettingsGroupForm<G extends SettingsGroup, V extends FieldVal
 
   const saveMutation = useInvalidatingMutation({
     mutationFn: async (values: V) => {
-      const body = { key, value: toValue(values), expectedUpdatedAt: baseUpdatedAt } as Parameters<typeof updateSettingsGroup>[0]['body'];
-      const response = await updateSettingsGroup({ path: { key }, body });
+      const response = await updateSettingsGroup({ path: { key }, body: saveBody<G>(key, toValue(values), baseUpdatedAt) });
       if (!response.data || !isThisGroup(response.data)) {
         throwApiError(response.error, `${subject} response is missing data.`);
       }
@@ -57,13 +69,14 @@ export function useSettingsGroupForm<G extends SettingsGroup, V extends FieldVal
 
   // A 409 refetches nothing (invalidation runs on success only), so `group` is still the version
   // that conflicted. The screen read it either alone or in the list of every group: read again
-  // whichever it holds and start the draft from that.
+  // whichever it holds, and only that, and start the draft from it.
   async function loadLatest() {
     const groupKey = QueryKeys.rootAdmin.settingsGroup(key);
-    await queryClient.refetchQueries({ queryKey: groupKey, exact: true });
-    await queryClient.refetchQueries({ queryKey: QueryKeys.rootAdmin.settings, exact: true });
-    const latest = queryClient.getQueryData<G>(groupKey)
-      ?? queryClient.getQueryData<SettingsGroup[]>(QueryKeys.rootAdmin.settings)?.find(isThisGroup);
+    const readsGroupAlone = queryClient.getQueryState(groupKey) !== undefined;
+    await queryClient.refetchQueries({ queryKey: readsGroupAlone ? groupKey : QueryKeys.rootAdmin.settings, exact: true });
+    const latest = readsGroupAlone
+      ? queryClient.getQueryData<G>(groupKey)
+      : queryClient.getQueryData<SettingsGroup[]>(QueryKeys.rootAdmin.settings)?.find(isThisGroup);
     if (!latest) {
       return;
     }
