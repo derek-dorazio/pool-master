@@ -22,6 +22,8 @@ import {
   setupIntegrationTests,
   teardownIntegrationTests,
 } from '../helpers';
+import { findUnindexedScans } from '../index-check';
+import { recordStatements, statementShape } from '../statement-log';
 import { createRoundRows, createSportEventRow, createTierRows, seriesNamed } from '../../support/sport-event-rows';
 import { freshEventEdition } from '../../support/event-edition';
 import { standardEventPricing } from '../../support/budget-pricing';
@@ -434,7 +436,7 @@ describe('SportEventTierRepository and valuations', () => {
     expect(after.map((tier) => [tier.tierKey, tier.tierNumber, tier.label])).toEqual([['tier-2', 1, 'Top'], ['tier-1', 2, 'Tier 1']]);
     const [valuation] = await valuations.findBySportEvent(event.id);
     expect(valuation).toMatchObject({ sportEventTierId: after[0].id, tierOrderIndex: null });
-    expect(await tiers.countValuations(event.id)).toEqual(new Map([[after[0].id, 1], [after[1].id, 0]]));
+    expect(await tiers.countValuations(event.id)).toEqual(new Map([[after[0].id, 1]]));
   });
 
   it('moves a removed tier\'s valuations to a tier added in the same save', async () => {
@@ -467,6 +469,32 @@ describe('SportEventTierRepository and valuations', () => {
     await tiers.replace(event.id, [TIERS[0]]);
 
     await expect(valuations.findBySportEvent(event.id)).resolves.toEqual([expect.objectContaining({ sportEventTierId: null })]);
+  });
+
+  it('counts the valuations in each of one event\'s tiers by reading only that event\'s valuations, not every valuation of every event', async () => {
+    const { tiers, valuations, field } = repos();
+    const [event, other] = [await createEvent('Counted'), await createEvent('Other')];
+    const [ana, ben, cal] = await createParticipants(['Ana', 'Ben', 'Cal']);
+    for (const created of [event, other]) await createTierRows(tiers, created.id, TIERS);
+    await field.createMany(event.id, [{ participantId: ana.id }, { participantId: ben.id }]);
+    await field.createMany(other.id, [{ participantId: cal.id }]);
+    const [tier1] = await tiers.findBySportEvent(event.id);
+    const [otherTier1] = await tiers.findBySportEvent(other.id);
+    const [anaRow, benRow] = await field.findBySportEvent(event.id);
+    const [calRow] = await field.findBySportEvent(other.id);
+    await valuations.assignTiers([
+      { sportEventParticipantId: anaRow.id, sportEventTierId: tier1.id, tierOrderIndex: 1, source: 'MANUAL' },
+      { sportEventParticipantId: benRow.id, sportEventTierId: tier1.id, tierOrderIndex: 2, source: 'MANUAL' },
+      { sportEventParticipantId: calRow.id, sportEventTierId: otherTier1.id, tierOrderIndex: 1, source: 'MANUAL' },
+    ]);
+
+    const { result, statements } = await recordStatements(() => tiers.countValuations(event.id));
+
+    expect(result).toEqual(new Map([[tier1.id, 2]]));
+    expect(statements).toHaveLength(1);
+    expect(statements.map((statement) => statementShape(statement.sql)).join('\n'))
+      .not.toContain('FROM "public"."sport_event_participant_valuations" WHERE 1=1');
+    await expect(findUnindexedScans(getPrisma(), statements.map(({ sql }) => ({ sql, test: 'countValuations' })))).resolves.toEqual([]);
   });
 
   it('reads several events\' tiers, each in tier order, and their valuations at once, leaving out events not asked for', async () => {
