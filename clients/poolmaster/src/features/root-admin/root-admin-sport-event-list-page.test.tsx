@@ -72,7 +72,7 @@ describe('pool-master-3dg RootAdminSportEventListPage', () => {
     expect(await screen.findByText('Rolling Weekend Invitational')).toBeInTheDocument();
     // #236: the golf list is the shared event list, scoped to golf.
     expect(listEventsMock).toHaveBeenCalledWith(
-      expect.objectContaining({ query: { sport: 'GOLF' } }),
+      expect.objectContaining({ query: { sport: 'GOLF', eventYear: new Date().getFullYear() } }),
     );
     expect(screen.getByText('Manual')).toBeInTheDocument();
     expect(screen.getByText('Scores synced')).toBeInTheDocument();
@@ -105,14 +105,33 @@ describe('pool-master-3dg RootAdminSportEventListPage', () => {
     ).toBeInTheDocument();
   });
 
-  it('pool-master-3dg shows the empty state when no tournaments exist', async () => {
+  it('pool-master-3dg shows the empty state when no tournaments are in the year', async () => {
     listEventsMock.mockResolvedValue({ data: { events: [] } });
 
     renderPage();
 
     expect(
-      await screen.findByText('No golf tournaments have been created yet.'),
+      await screen.findByText(`No golf tournaments in ${new Date().getFullYear()}.`),
     ).toBeInTheDocument();
+  });
+
+  it('opens on this year\'s tournaments rather than every year\'s, and reads another year when one is chosen', async () => {
+    const currentYear = new Date().getFullYear();
+    listEventsMock.mockResolvedValue({ data: { events: [] } });
+
+    renderPage();
+
+    expect(await screen.findByText(`No golf tournaments in ${currentYear}.`)).toBeInTheDocument();
+    expect(screen.getByTestId('root-admin-sport-event-list-year')).toHaveValue(String(currentYear));
+
+    fireEvent.change(screen.getByTestId('root-admin-sport-event-list-year'), {
+      target: { value: String(currentYear - 1) },
+    });
+
+    expect(await screen.findByText(`No golf tournaments in ${currentYear - 1}.`)).toBeInTheDocument();
+    expect(listEventsMock).toHaveBeenCalledTimes(2);
+    const [options] = listEventsMock.mock.calls.at(-1) as [{ query?: unknown } | undefined];
+    expect(options?.query).toEqual({ sport: 'GOLF', eventYear: currentYear - 1 });
   });
 
   it('narrows the tournament list to matching names from the search box', async () => {

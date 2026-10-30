@@ -1,5 +1,6 @@
 import { createColumnHelper } from '@tanstack/react-table';
 import { useMemo, useState } from 'react';
+import { isPlatformSearchTerm, PLATFORM_SEARCH_MIN_LENGTH } from '@poolmaster/shared/domain';
 import {
   DataGridPage,
   FormField,
@@ -9,6 +10,7 @@ import {
 } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
+import { useDebouncedValue } from '@/lib/use-debounced-value';
 import type { ParticipantDto } from '@/lib/api';
 import {
   PARTICIPANT_STATUSES,
@@ -18,6 +20,7 @@ import {
 } from './sport-admin-utils';
 import {
   MANAGE_LIST_PAGE_SIZE,
+  SEARCH_DEBOUNCE_MS,
   buildSportParticipantListPath,
   buildSportParticipantPath,
 } from './manage-navigation';
@@ -28,8 +31,9 @@ import { SportSectionMenu } from './sport-section-menu';
 const columnHelper = createColumnHelper<ParticipantDto>();
 
 /**
- * /manage/sports/:sport/participants. A sport's master roster (golfers, horses): a searchable,
- * paged grid of one status at a time, with Add opening its own page and rows linking to each.
+ * /manage/sports/:sport/participants. A sport's master roster (golfers, horses): a grid of one
+ * status at a time that reads nothing until a search is typed (#1313), as the user and league
+ * lists do, with Add opening its own page and rows linking to each.
  */
 export function RootAdminParticipantListPage() {
   const { sport, definition } = useManagedSport();
@@ -39,10 +43,16 @@ export function RootAdminParticipantListPage() {
   // keeps the page's behaviour.
   const [status, setStatus] = useState<ManagedParticipantStatus>('ACTIVE');
 
+  const [search, setSearch] = useState('');
+  const term = useDebouncedValue(search.trim(), SEARCH_DEBOUNCE_MS);
+  const canSearch = isPlatformSearchTerm(term);
   const playersQuery = useParticipantsQuery({
     sport,
-    queryKey: QueryKeys.rootAdmin.manageSport.participantList(sport, status),
+    queryKey: QueryKeys.rootAdmin.manageSport.participantSearch(sport, term, status),
     status,
+    q: term,
+    enabled: canSearch,
+    keepPrevious: true,
   });
   const columns = useMemo(
     () => [
@@ -104,25 +114,23 @@ export function RootAdminParticipantListPage() {
 
       <DataGridPage
         columns={columns}
-        data={playersQuery.data ?? []}
-        emptyMessage={`No ${participantStatusLabel(status).toLowerCase()} ${participant.many}.`}
-        errorBody={extractErrorMessage(playersQuery.error, {
-          fallback: `We could not load ${participant.many} right now.`,
-        })}
+        // An error shows in the grid rather than in place of it, so the search box stays to retry.
+        data={canSearch && !playersQuery.isError ? (playersQuery.data ?? []) : []}
+        emptyMessage={
+          !canSearch
+            ? `Type at least ${PLATFORM_SEARCH_MIN_LENGTH} characters to find a ${participant.one}.`
+            : playersQuery.isError
+              ? extractErrorMessage(playersQuery.error, { fallback: `We could not load ${participant.many} right now.` })
+              : playersQuery.isFetching
+                ? `Searching ${participant.many}...`
+                : `No ${participantStatusLabel(status).toLowerCase()} ${participant.many} matched the search.`
+        }
         filterTestIdPrefix="root-admin-participant-list-filter"
         getRowId={(player) => player.id}
         getRowLink={(player) => buildSportParticipantPath(sport, player.id)}
-        loadingBody={`Loading ${participant.many}...`}
         pageSize={MANAGE_LIST_PAGE_SIZE}
         rowTestId={(player) => `root-admin-participant-row-${player.id}`}
-        search={{ label: `Find a ${participant.one}`, testId: 'root-admin-participant-list-search' }}
-        state={
-          playersQuery.isLoading
-            ? 'loading'
-            : playersQuery.isError
-              ? 'error'
-              : 'ready'
-        }
+        search={{ label: `Find a ${participant.one}`, testId: 'root-admin-participant-list-search', onChange: setSearch }}
         tableTestId="root-admin-participant-list-table"
         testId="root-admin-participant-list-page"
       />

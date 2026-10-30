@@ -2,13 +2,13 @@ import { useState } from 'react';
 import { SportEventStatus, type SportVocabulary } from '@poolmaster/shared/domain';
 import { setEventPlayInWinner, updateEventParticipants } from '@/lib/api';
 import type { SportEventDto, SportEventParticipantDto } from '@/lib/api';
-import { Button, InlineError, LOADING_TEXT, PanelCard, Select } from '@/features/shared/ui';
+import { Button, InlineError, Input, PanelCard, Select } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import { bracketErrorMessages, describeEntry, offLeagueRosterMessages } from './bracket-copy';
-import { useEventLeagueCandidatesQuery, useSportLeagueNoun } from './use-sport-catalog';
+import { candidatePrompt, useEventLeagueCandidatesQuery, useSportLeagueNoun } from './use-sport-catalog';
 
 const logger = getLogger().child({ feature: 'root-admin-play-in' });
 
@@ -160,7 +160,8 @@ function PlayInWinnerPicker({
   vocabulary: SportVocabulary;
 }) {
   const [participantId, setParticipantId] = useState(NONE);
-  const teamsQuery = useEventLeagueCandidatesQuery(event);
+  const [search, setSearch] = useState('');
+  const teamsQuery = useEventLeagueCandidatesQuery(event, search);
   const sportLeague = useSportLeagueNoun(event.sport, event.sportLeagueId);
   const inEvent = new Set(field.map((entry) => entry.participantId));
   const candidates = (teamsQuery.data ?? []).filter((participant) => !inEvent.has(participant.id));
@@ -187,16 +188,17 @@ function PlayInWinnerPicker({
     },
   });
 
-  if (teamsQuery.isError) {
-    return (
-      <InlineError>
-        {extractErrorMessage(teamsQuery.error, { fallback: `Couldn't load the ${vocabulary.participant.many}. Try again in a moment.` })}
-      </InlineError>
-    );
-  }
-
   return (
     <>
+      {teamsQuery.needsSearch ? (
+        <Input
+          aria-label={`Find a ${vocabulary.participant.one}`}
+          data-testid={`root-admin-play-in-winner-search-${place.id}`}
+          onChange={(change) => { setSearch(change.target.value); setParticipantId(NONE); }}
+          type="search"
+          value={search}
+        />
+      ) : null}
       <Select
         aria-label={`Who fills ${place.participant.name}'s ${playInWord(vocabulary)} place`}
         data-testid={`root-admin-play-in-winner-select-${place.id}`}
@@ -204,7 +206,7 @@ function PlayInWinnerPicker({
         onChange={(change) => setParticipantId(change.target.value)}
         value={participantId}
       >
-        <option value={NONE}>{teamsQuery.data ? `Choose the winning ${vocabulary.participant.one}` : LOADING_TEXT}</option>
+        <option value={NONE}>{candidatePrompt(teamsQuery, `Choose the winning ${vocabulary.participant.one}`, vocabulary.participant.one)}</option>
         {candidates.map((participant) => (
           <option key={participant.id} value={participant.id}>{participant.name}</option>
         ))}
@@ -220,6 +222,11 @@ function PlayInWinnerPicker({
       {mutation.isError ? (
         <InlineError className="w-full">
           {extractErrorMessage(mutation.error, { codeMessages: { ...bracketErrorMessages(vocabulary), ...offLeagueRosterMessages(vocabulary, sportLeague) }, fallback: 'The winner could not be saved. Try again.' })}
+        </InlineError>
+      ) : null}
+      {teamsQuery.isError ? (
+        <InlineError className="w-full">
+          {extractErrorMessage(teamsQuery.error, { fallback: `Couldn't load the ${vocabulary.participant.many}. Try again in a moment.` })}
         </InlineError>
       ) : null}
     </>

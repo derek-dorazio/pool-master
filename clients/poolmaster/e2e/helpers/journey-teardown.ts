@@ -77,7 +77,7 @@ export async function removeJourneyRun(
   // references the tournament: the league goes first.
   await attempt(log, `league ${run.leagueCode}`, () => removeLeague(api, headers, run.leagueCode, log));
   for (const tournamentName of [run.tournamentName, ...(run.moreTournamentNames ?? [])]) {
-    await attempt(log, `tournament "${tournamentName}"`, () => removeTournament(api, headers, tournamentName, log));
+    await attempt(log, `tournament "${tournamentName}"`, () => removeTournament(api, headers, run.sport, tournamentName, log));
   }
   const tourId = await findTourId(api, headers, run).catch((error: unknown) => {
     log(`could not look up tour "${run.tourName}": ${error instanceof Error ? error.message : String(error)}`);
@@ -122,9 +122,10 @@ export async function removeLeague(api: APIRequestContext, headers: AuthHeaders,
     : `league ${leagueCode} STILL PRESENT after delete (re-read ${reread.status()})`);
 }
 
-async function removeTournament(api: APIRequestContext, headers: AuthHeaders, tournamentName: string, log: Log) {
+async function removeTournament(api: APIRequestContext, headers: AuthHeaders, sport: JourneySport, tournamentName: string, log: Log) {
   const list = await expectOk(
-    api.get('/api/v1/events', { headers, params: { q: tournamentName } }),
+    // The event list needs a sport, a sport league or a year (#1180).
+    api.get('/api/v1/events', { headers, params: { sport, q: tournamentName } }),
     'list tournaments',
   );
   const { events } = (await list.json()) as { events: { id: string; name: string }[] };

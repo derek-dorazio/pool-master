@@ -358,7 +358,7 @@ describe('pool-master-qqs RootAdminSportLeagueHomePage', () => {
     expect(screen.getByTestId('root-admin-sport-league-roster-save')).toBeDisabled();
   });
 
-  it('pool-master-qqs adds a golfer via the picker, excluding roster members', async () => {
+  it('pool-master-qqs searches the golf sport for a golfer to add only once 3 characters are typed, leaving out roster members', async () => {
     seed();
     listParticipantsMock.mockResolvedValue({
       data: {
@@ -375,19 +375,23 @@ describe('pool-master-qqs RootAdminSportLeagueHomePage', () => {
 
     await userEvent.click(await screen.findByTestId('root-admin-sport-league-roster-add'));
     const modal = await screen.findByTestId('root-admin-sport-league-roster-add-modal');
-    // Roster member Rory is filtered out; only Jon Rahm is offered.
+    expect(within(modal).getByText('Type at least 3 characters to find a golfer.')).toBeInTheDocument();
+    expect(listParticipantsMock).not.toHaveBeenCalled();
+
+    await userEvent.type(within(modal).getByRole('searchbox'), 'Rahm');
+    // Roster member Rory is left out of what the search returns; only Jon Rahm is offered.
     await waitFor(() =>
       expect(within(modal).getByText('Jon Rahm')).toBeInTheDocument(),
     );
     expect(within(modal).queryByText('Rory McIlroy')).not.toBeInTheDocument();
+    expect(listParticipantsMock).toHaveBeenCalledTimes(1);
+    expect(listParticipantsMock).toHaveBeenCalledWith(
+      expect.objectContaining({ query: { sportId: 'sport-golf', status: 'ACTIVE', q: 'Rahm' } }),
+    );
 
     await userEvent.click(within(modal).getByText('Jon Rahm'));
     await userEvent.click(screen.getByTestId('root-admin-sport-league-roster-add-modal-apply'));
 
-    // The picker lists the golf sport's active participants.
-    expect(listParticipantsMock).toHaveBeenCalledWith(
-      expect.objectContaining({ query: { sportId: 'sport-golf', status: 'ACTIVE' } }),
-    );
     await waitFor(() =>
       expect(createParticipantLeagueAffiliationMock).toHaveBeenCalledWith(
         expect.objectContaining({ path: { sportLeagueId: 'pga' }, body: { participantId: 'p-jon' } }),

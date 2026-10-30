@@ -26,6 +26,7 @@ import {
 import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
+import { EventYearSelect } from './event-year-select';
 import { ManagePageIntro } from './manage-page-intro';
 import { useProvidersQuery } from './use-providers-query';
 
@@ -79,6 +80,7 @@ export function RootAdminRunEventSyncPage() {
   const [eventSyncPresetId, setEventSyncPresetId] = useState<EventSyncPresetId>(
     'EVENTPARTICIPANTS',
   );
+  const [eventYear, setEventYear] = useState(() => new Date().getFullYear());
   const [selectedEventExternalId, setSelectedEventExternalId] = useState('');
   const [mockEventState, setMockEventState] = useState<MockEventState | ''>('');
 
@@ -113,11 +115,12 @@ export function RootAdminRunEventSyncPage() {
   }, [mockEventState, supportsMockEventState]);
 
   const eventsQuery = useQuery({
-    queryKey: QueryKeys.rootAdmin.eventSyncEvents(eventSyncSport),
+    queryKey: QueryKeys.rootAdmin.eventSyncEvents(eventSyncSport, eventYear),
     queryFn: async (): Promise<SportEventDto[]> => {
       const response = await listEvents({
         query: {
           sport: eventSyncSport,
+          eventYear,
         },
       });
 
@@ -287,6 +290,8 @@ export function RootAdminRunEventSyncPage() {
               ))}
             </Select>
           </FormField>
+
+          <EventYearSelect onChange={setEventYear} testId="root-admin-event-sync-year" value={eventYear} />
 
           <FormField label="Event">
             <Select
