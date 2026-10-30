@@ -116,7 +116,7 @@ function setup(options: { status?: ContestStatus; maxSquaresPerEntry?: number } 
     squares.draws.set(contest.id, { contestId: contest.id, seed: 'seed', rowDigits: IN_ORDER, columnDigits: IN_ORDER, drawnByUserId: null, drawnAt: T0 });
   };
   return {
-    world, games, squares, contest, superBowl, game, alice, bob, service, settlement, actor, updateGame, drawInOrder, receipts, repos,
+    world, games, squares, contest, superBowl, game, alice, bob, service, deps, settlement, actor, updateGame, drawInOrder, receipts, repos,
     setNow: (when: Date) => { now = when; },
     contestStatus: () => expectDefined(world.contests.get(contest.id)).status,
     entryStatus: (entry: ContestEntry) => expectDefined(world.entries.get(entry.id)).events[0]?.status,
@@ -437,6 +437,53 @@ describe('ContestSettlementService settling a squares contest with its game', ()
 
     expect(context.contestStatus()).toBe(ContestStatus.COMPLETED);
     expect((context.squares.winners.get(context.contest.id) ?? []).map((winner) => winner.periodNumber)).toEqual([1, 2, 3, 4]);
+  });
+
+  it('reads the game\'s event once for every squares contest on the game, and settles each of them', async () => {
+    const context = setup({ status: ContestStatus.ACTIVE });
+    const second = context.world.addContest(context.world.addLeague().id, {
+      name: 'Second squares',
+      status: ContestStatus.ACTIVE,
+      contestFormat: ContestFormat.SQUARES,
+      selectionType: SelectionType.SQUARES,
+      sportEventIds: [context.superBowl.id],
+      squaresGameMatchId: context.game.id,
+    });
+    context.world.addConfiguration(second.id, {
+      selectionType: SelectionType.SQUARES,
+      configJson: { selectionType: SelectionType.SQUARES, maxSquaresPerEntry: 10 },
+    });
+    context.squares.addBox(context.contest.id, context.alice.id, 0, 7);
+    context.drawInOrder();
+    context.updateGame({
+      status: MatchStatus.COMPLETED, homeScore: 27, awayScore: 20,
+      periodScores: [period(1, 7, 0), period(2, 14, 3), period(3, 21, 13), period(4, 24, 20)],
+    });
+    const reads: string[] = [];
+    const matches = context.games.matchRepo();
+    const settlement = new ContestSettlementService({
+      ...context.deps,
+      matches: {
+        findBySportEvent: async (sportEventId) => {
+          reads.push(sportEventId);
+          return matches.findBySportEvent(sportEventId);
+        },
+        findBySportEvents: async (sportEventIds) => {
+          reads.push(...sportEventIds);
+          return matches.findBySportEvents(sportEventIds);
+        },
+      },
+      contests: context.world.contestRepo(),
+      sportEvents: context.world.sportEventRepo(),
+      squares: context.squares.repo(),
+      championship: { recordContest: async () => 0 },
+    });
+
+    await expect(settlement.settleFinishedGame(context.superBowl.id, context.game.id, { completedAt: later(KICKOFF, 4) })).resolves.toBe(2);
+
+    expect(reads).toEqual([context.superBowl.id]);
+    expect(context.contestStatus()).toBe(ContestStatus.COMPLETED);
+    expect(expectDefined(context.world.contests.get(second.id)).status).toBe(ContestStatus.COMPLETED);
   });
 
   it('shares a place between entries that won the same number of quarters', async () => {

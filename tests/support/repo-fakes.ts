@@ -389,6 +389,7 @@ export function fakeContestRepo(overrides: Partial<ContestRepository> = {}): Con
     moveToSeason: jest.fn().mockResolvedValue({ status: 'moved' }),
     replaceSportEvents: nothing(),
     transitionStatus: jest.fn().mockResolvedValue(true),
+    transitionStatuses: jest.fn().mockImplementation(async (ids: readonly string[]) => [...ids]),
     setCupWeight: jest.fn().mockResolvedValue(true),
     delete: nothing(),
     ...overrides,

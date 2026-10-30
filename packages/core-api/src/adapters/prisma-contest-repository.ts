@@ -237,6 +237,21 @@ export class PrismaContestRepository implements ContestRepository {
     return result.count > 0;
   }
 
+  async transitionStatuses(ids: readonly string[], transition: ContestStatusTransition): Promise<string[]> {
+    if (ids.length === 0) return [];
+    const rows = await forgettingReads(ReadMemoKey.contest, () => this.prisma.contest.updateManyAndReturn({
+      where: { id: { in: [...ids] }, status: { in: [...transition.from] } },
+      data: {
+        status: transition.to,
+        ...(transition.openedAt && { openedAt: transition.openedAt }),
+        ...(transition.startsAt && { startsAt: transition.startsAt }),
+        ...(transition.endsAt && { endsAt: transition.endsAt }),
+      },
+      select: { id: true },
+    }));
+    return rows.map((row) => row.id);
+  }
+
   async setCupWeight(id: string, cupWeight: Contest['cupWeight'], whileIn: readonly Contest['status'][]): Promise<boolean> {
     const result = await forgettingReads(ReadMemoKey.contest, () => this.prisma.contest.updateMany({
       where: { id, status: { in: [...whileIn] } },

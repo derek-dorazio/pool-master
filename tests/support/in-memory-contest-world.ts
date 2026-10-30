@@ -24,6 +24,7 @@ import type {
   ContestRepository,
   ContestSeasonFull,
   ContestSeasonLimits,
+  ContestStatusTransition,
   LeagueMembershipRepository,
   LeagueRepository,
   ParticipantContestScoringRuleRepository,
@@ -422,18 +423,8 @@ export class InMemoryContestWorld {
         this.contests.set(id, { ...existing, cupWeight });
         return true;
       },
-      transitionStatus: async (id, transition) => {
-        const existing = this.contests.get(id);
-        if (!existing || !transition.from.includes(existing.status)) return false;
-        this.contests.set(id, {
-          ...existing,
-          status: transition.to,
-          ...(transition.openedAt && { openedAt: transition.openedAt }),
-          ...(transition.startsAt && { startsAt: transition.startsAt }),
-          ...(transition.endsAt && { endsAt: transition.endsAt }),
-        });
-        return true;
-      },
+      transitionStatus: async (id, transition) => this.transitionContest(id, transition),
+      transitionStatuses: async (ids, transition) => ids.filter((id) => this.transitionContest(id, transition)),
       delete: async (id) => {
         this.contests.delete(id);
       },
@@ -773,6 +764,20 @@ export class InMemoryContestWorld {
 
   scoringRuleRepo(): ParticipantContestScoringRuleRepository {
     return fakeParticipantContestScoringRuleRepo();
+  }
+
+  /** The guarded status write `transitionStatus` makes: whether the contest moved. */
+  private transitionContest(id: string, transition: ContestStatusTransition): boolean {
+    const existing = this.contests.get(id);
+    if (!existing || !transition.from.includes(existing.status)) return false;
+    this.contests.set(id, {
+      ...existing,
+      status: transition.to,
+      ...(transition.openedAt && { openedAt: transition.openedAt }),
+      ...(transition.startsAt && { startsAt: transition.startsAt }),
+      ...(transition.endsAt && { endsAt: transition.endsAt }),
+    });
+    return true;
   }
 
   standingRepo(): ContestEntryStandingRepository {

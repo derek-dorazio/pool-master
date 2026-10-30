@@ -78,6 +78,7 @@ import type { DueNotifications } from '../events/event-lifecycle-scheduler';
 import type { SportEventTierService } from '../events/sport-event-tier-service';
 import { contestBracketGames } from '../scoring-families/head-to-head/bracket-picks';
 import { survivorRun } from '../scoring-families/head-to-head/survivor';
+import { readEventMatchesOnce, readEventsOnce, readOncePerKey } from '../events/event-reads';
 import { summarizeContest } from './contest-summary';
 import { activeLeagueMembers, type LeagueMemberDeps } from './league-members';
 
@@ -113,8 +114,8 @@ export function dueReminderHours(closesAt: Date, reminderHours: readonly number[
 export interface EntryReminderDeps extends LeagueMemberDeps {
   contests: Pick<ContestRepository, 'findByStatuses'>;
   sportEvents: Pick<SportEventRepository, 'findByIds'>;
-  /** The contest's rules: its cutoff, and a draft's roster size. */
-  configurations: Pick<ContestConfigurationRepository, 'findByContest'>;
+  /** The contest's rules: its cutoff, and a draft's roster size. A sweep reads them together. */
+  configurations: Pick<ContestConfigurationRepository, 'findByContest' | 'findByContests'>;
   /** By event for cutoffs and a week's games; across events for a survivor season. */
   matches: Pick<SportEventMatchRepository, 'findBySportEvent' | 'findBySportEvents'>;
   entries: Pick<ContestEntryRepository, 'findByContest'>;
@@ -158,19 +159,27 @@ export class EntryReminders implements DueNotifications {
 
   async queueDue(now: Date): Promise<void> {
     const reminderHours = this.deps.readConfig().entryReminderHours;
-    const contests = await this.deps.contests.findByStatuses([ContestStatus.OPEN, ContestStatus.ACTIVE]);
+    if (reminderHours.length === 0) return;
+    const contests = (await this.deps.contests.findByStatuses([ContestStatus.OPEN, ContestStatus.ACTIVE]))
+      .filter((contest) => mayRemindNow(contest, now));
     if (contests.length === 0) return;
     const sportEvents = new Map((await this.deps.sportEvents.findByIds(
       [...new Set(contests.flatMap((contest) => contest.sportEventIds))],
     )).map((sportEvent) => [sportEvent.id, sportEvent]));
+    // Picks never close before an event starts, so a contest none of whose events starts within
+    // the earliest reminder's reach has nothing due, and its rules are not read.
+    const reach = new Date(now.getTime() + Math.max(...reminderHours) * HOUR_MS);
+    const eventsOf = (contest: Contest): SportEvent[] => contest.sportEventIds
+      .map((id) => sportEvents.get(id))
+      .filter((sportEvent): sportEvent is SportEvent => sportEvent !== undefined);
+    const inReach = contests.filter((contest) => eventsOf(contest).some((sportEvent) => sportEvent.startDate <= reach));
+    if (inReach.length === 0) return;
+    const deps = await this.sweepReads(inReach, [...sportEvents.values()]);
 
-    for (const contest of contests) {
+    for (const contest of inReach) {
       try {
-        const contestEvents = contest.sportEventIds
-          .map((id) => sportEvents.get(id))
-          .filter((sportEvent): sportEvent is SportEvent => sportEvent !== undefined);
-        for (const due of await this.dueReminders(contest, contestEvents, reminderHours, now)) {
-          await this.queueReminder(due);
+        for (const due of await this.dueReminders(deps, contest, eventsOf(contest), reminderHours, now)) {
+          await this.queueReminder(deps, due);
         }
       } catch (error) {
         this.deps.logger?.error({
@@ -181,21 +190,43 @@ export class EntryReminders implements DueNotifications {
     }
   }
 
+  /**
+   * The sweep's reads, shared by its contests (#1199): their rules in one read, the events it
+   * already holds, and each event's matches, sport league and tiers read once.
+   */
+  private async sweepReads(contests: Contest[], sportEvents: SportEvent[]): Promise<EntryReminderDeps> {
+    const swept = new Set(contests.map((contest) => contest.id));
+    const configurations = new Map((await this.deps.configurations.findByContests([...swept]))
+      .map((configuration) => [configuration.contestId, configuration]));
+    return {
+      ...this.deps,
+      configurations: {
+        findByContest: async (contestId) => (swept.has(contestId)
+          ? configurations.get(contestId) ?? null
+          : this.deps.configurations.findByContest(contestId)),
+        findByContests: (contestIds) => this.deps.configurations.findByContests(contestIds),
+      },
+      sportEvents: readEventsOnce(this.deps.sportEvents, sportEvents),
+      matches: readEventMatchesOnce(this.deps.matches),
+      sportLeagues: { findById: readOncePerKey((id) => this.deps.sportLeagues.findById(id)) },
+      tiers: { getEffectiveTiersForSportEvent: readOncePerKey((id) => this.deps.tiers.getEffectiveTiersForSportEvent(id)) },
+    };
+  }
+
   private async dueReminders(
+    deps: EntryReminderDeps,
     contest: Contest,
     contestEvents: SportEvent[],
     reminderHours: readonly number[],
     now: Date,
   ): Promise<DueReminder[]> {
-    if (contest.drawnAt !== undefined) return [];
-    if (contest.openedAt !== undefined && now.getTime() - contest.openedAt.getTime() < AFTER_OPENED_QUIET_MS) return [];
-    const rules = (await this.deps.configurations.findByContest(contest.id))?.configJson;
+    const rules = (await deps.configurations.findByContest(contest.id))?.configJson;
     const cutoff = contestCutoff(rules, contest.squaresGameMatchId);
     // Each event's window closes at the contest's cutoff on it: a second-chance bracket's is its
     // starting round, after the event itself has started, and a squares grid's is its game's kickoff.
     const games: SportEventMatch[] = cutoff.kind === ContestCutoffKind.EVENT_START
       ? []
-      : await this.deps.matches.findBySportEvents(contestEvents.map((sportEvent) => sportEvent.id));
+      : await deps.matches.findBySportEvents(contestEvents.map((sportEvent) => sportEvent.id));
     const windows = contestEvents.map((sportEvent) => ({
       sportEvent,
       window: cutoffTiming(cutoff, sportEvent, games.filter((game) => game.sportEventId === sportEvent.id)),
@@ -207,11 +238,11 @@ export class EntryReminders implements DueNotifications {
     });
   }
 
-  private async queueReminder(due: DueReminder): Promise<void> {
+  private async queueReminder(deps: EntryReminderDeps, due: DueReminder): Promise<void> {
     const { contest, sportEvent } = due;
     const [league, summary, entries] = await Promise.all([
       this.deps.leagues.findById(contest.leagueId),
-      summarizeContest(this.deps, contest),
+      summarizeContest(deps, contest),
       this.deps.entries.findByContest(contest.id),
     ]);
     if (!league) return;
@@ -222,7 +253,7 @@ export class EntryReminders implements DueNotifications {
       }, 'Skipped an entry reminder because the contest\'s rules or events are gone');
       return;
     }
-    const recipients = await this.recipients(due, league, entries);
+    const recipients = await this.recipients(deps, due, league, entries);
     const contestUrl = buildContestUrl(this.deps.appBaseUrl, league.leagueCode, contest.id);
     const event = buildEmailEventHeader(this.deps.appBaseUrl, sportEvent, summary.sportLeagueName);
     const format = buildEmailContestFormat(this.deps.appBaseUrl, contest.selectionType);
@@ -257,7 +288,7 @@ export class EntryReminders implements DueNotifications {
   }
 
   /** The active members to remind, each once, with why they are told. */
-  private async recipients(due: DueReminder, league: League, entries: ContestEntry[]): Promise<Recipient[]> {
+  private async recipients(deps: EntryReminderDeps, due: DueReminder, league: League, entries: ContestEntry[]): Promise<Recipient[]> {
     const members = await activeLeagueMembers(this.deps, league.id);
     const owners = await this.deps.squadMemberships.findBySquads([...new Set(entries.map((entry) => entry.squadId))]);
     const ownersBySquad = new Map<string, string[]>();
@@ -290,7 +321,7 @@ export class EntryReminders implements DueNotifications {
       case SelectionType.PICK_EM:
       case SelectionType.BRACKET:
       case SelectionType.SURVIVOR:
-        return this.pickingRecipients(due, members, entries, ownersOf);
+        return this.pickingRecipients(deps, due, members, entries, ownersOf);
     }
   }
 
@@ -299,13 +330,14 @@ export class EntryReminders implements DueNotifications {
    * still in play, less anyone with a submitted entry for the event.
    */
   private async pickingRecipients(
+    deps: EntryReminderDeps,
     due: DueReminder,
     members: User[],
     entries: ContestEntry[],
     ownersOf: (entry: ContestEntry) => string[],
   ): Promise<Recipient[]> {
     const out = due.contest.selectionType === SelectionType.SURVIVOR
-      ? await this.survivorEntriesOut(due, entries)
+      ? await this.survivorEntriesOut(deps, due, entries)
       : new Set<string>();
     const submitted = new Set<string>();
     const drafts = new Map<string, ContestEntry[]>();
@@ -320,7 +352,7 @@ export class EntryReminders implements DueNotifications {
     const told = members
       .filter((user) => !submitted.has(user.id))
       .filter((user) => due.entriesOpen || drafts.has(user.id));
-    const progress = await this.draftProgress(due, told.flatMap((user) => {
+    const progress = await this.draftProgress(deps, due, told.flatMap((user) => {
       const own = drafts.get(user.id) ?? [];
       return own.length === 1 ? own : [];
     }));
@@ -338,8 +370,8 @@ export class EntryReminders implements DueNotifications {
   }
 
   /** The survivor entries already out: a loss, a tie, a week started with no pick, or no team left. */
-  private async survivorEntriesOut(due: DueReminder, entries: ContestEntry[]): Promise<Set<string>> {
-    const weeks = await loadSurvivorWeeks(this.deps, due.contest, due.now);
+  private async survivorEntriesOut(deps: EntryReminderDeps, due: DueReminder, entries: ContestEntry[]): Promise<Set<string>> {
+    const weeks = await loadSurvivorWeeks(deps, due.contest, due.now);
     const predictions = await this.deps.predictions.findByEntriesAndEvents(entries.map((entry) => entry.id), due.contest.sportEventIds);
     const picksByEntry = survivorPicksByEntry(predictions, weeks);
     return new Set(entries
@@ -352,7 +384,7 @@ export class EntryReminders implements DueNotifications {
    * roster's picks of its size, or a pick'em week's or a bracket's picks of its games. A survivor
    * week is one pick, so it has none.
    */
-  private async draftProgress(due: DueReminder, drafts: ContestEntry[]): Promise<Map<string, DraftProgress>> {
+  private async draftProgress(deps: EntryReminderDeps, due: DueReminder, drafts: ContestEntry[]): Promise<Map<string, DraftProgress>> {
     const { rules, sportEvent } = due;
     if (drafts.length === 0 || rules === undefined) return new Map();
     const ids = drafts.map((entry) => entry.id);
@@ -365,7 +397,7 @@ export class EntryReminders implements DueNotifications {
         made = countBy(picks.map((pick) => pick.entryId));
         of = rules.selectionType === SelectionType.TIERED
           ? getTieredRosterSize(
-            getTiersInPlay((await this.deps.tiers.getEffectiveTiersForSportEvent(sportEvent.id)).length, rules.tiersUsed),
+            getTiersInPlay((await deps.tiers.getEffectiveTiersForSportEvent(sportEvent.id)).length, rules.tiersUsed),
             rules.picksPerTier,
           )
           : rules.rosterSize;
@@ -373,7 +405,7 @@ export class EntryReminders implements DueNotifications {
       }
       case SelectionType.PICK_EM:
       case SelectionType.BRACKET: {
-        const allGames = await this.deps.matches.findBySportEvent(sportEvent.id);
+        const allGames = await deps.matches.findBySportEvent(sportEvent.id);
         const games = rules.selectionType === SelectionType.BRACKET
           ? contestBracketGames(allGames, rules.startsAtRound)
           : allGames.filter((game) => game.status !== MatchStatus.CANCELLED);
@@ -392,6 +424,15 @@ export class EntryReminders implements DueNotifications {
     if (of === 0) return new Map();
     return new Map(ids.map((id) => [id, { made: made.get(id) ?? 0, of }]));
   }
+}
+
+/**
+ * Whether the contest may be reminded at all now: a random draw already dealt has nothing to
+ * pick, and nothing goes within 6 hours of the contest opening.
+ */
+function mayRemindNow(contest: Contest, now: Date): boolean {
+  if (contest.drawnAt !== undefined) return false;
+  return contest.openedAt === undefined || now.getTime() - contest.openedAt.getTime() >= AFTER_OPENED_QUIET_MS;
 }
 
 function countBy(keys: readonly string[]): Map<string, number> {

@@ -369,6 +369,15 @@ Rules:
   them, so the fan-out costs the same statements for 2 rows as for 20. The batched reads are
   built for one fan-out and dropped with it; `ContestService.livePositionsOfMany` (a cup's
   projection) and the event pages' `createContestOpeningReader` are the worked examples.
+- A loop over an event's contests (starting, settling or reminding them) reads the event's own
+  data once, not once per contest: wrap the repositories with `modules/events/event-reads.ts`
+  before the loop and hand the wrappers to each contest's reads. A wrapper lives for one loop
+  only, which writes none of what it holds; a scheduler sweep builds new ones each time. Which
+  tool fits: the read memo covers point and id reads that a `ReadMemoKey` names (contests,
+  events, sport leagues), within a request or a `runWithReadMemo` scope; the loop wrappers
+  cover what the memo does not, such as an event's matches, tiers and field, and keep the
+  event and sport league reads to one per loop where no memo scope is open, as in an ingestion
+  sync that runs in `outsideReadMemo`.
 
 ---
 

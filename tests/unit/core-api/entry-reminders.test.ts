@@ -67,8 +67,11 @@ describe('EntryReminders.queueDue', () => {
   let predictions: ContestEntrySeasonPrediction[];
   let boxes: ContestEntrySquare[];
   let logger: ReturnType<typeof fakeLogger>;
+  /** The sweeps' reads of rules and shared event data, as "<read>:<ids>". */
+  let reads: string[];
 
   beforeEach(() => {
+    reads = [];
     world = new InMemoryContestWorld();
     outbox = inMemoryEmailMessages();
     matches = [];
@@ -92,12 +95,30 @@ describe('EntryReminders.queueDue', () => {
     });
     return new EntryReminders({
       contests: world.contestRepo(),
-      sportEvents: world.sportEventRepo(),
-      configurations: world.configurationRepo(),
+      sportEvents: {
+        findByIds: async (ids) => {
+          reads.push(`events:${ids.join(',')}`);
+          return world.sportEventRepo().findByIds(ids);
+        },
+      },
+      configurations: {
+        findByContest: async (contestId) => {
+          reads.push(`rules:${contestId}`);
+          return world.configurationRepo().findByContest(contestId);
+        },
+        findByContests: async (contestIds) => {
+          reads.push(`rules:${contestIds.join(',')}`);
+          return world.configurationRepo().findByContests(contestIds);
+        },
+      },
       matches: {
-        findBySportEvent: async (sportEventId) => matches.filter((match) => match.sportEventId === sportEventId),
+        findBySportEvent: async (sportEventId) => {
+          reads.push(`matches:${sportEventId}`);
+          return matches.filter((match) => match.sportEventId === sportEventId);
+        },
         findBySportEvents: async (sportEventIds) => {
           matchReads += 1;
+          reads.push(`matches:${sportEventIds.join(',')}`);
           return matches.filter((match) => sportEventIds.includes(match.sportEventId));
         },
       },
@@ -113,7 +134,12 @@ describe('EntryReminders.queueDue', () => {
         getEffectiveTiersForSportEvent: async (sportEventId) =>
           (world.eventTiers.get(sportEventId) ?? []).map((tier) => ({ ...tier, participants: [] })),
       },
-      sportLeagues: world.sportLeagueRepo(),
+      sportLeagues: {
+        findById: async (id) => {
+          reads.push(`sportLeague:${id}`);
+          return world.sportLeagueRepo().findById(id);
+        },
+      },
       squares: { findSquares: async (contestId) => boxes.filter((box) => box.contestId === contestId) },
       leagues: world.leagueRepo(),
       memberships: world.membershipRepo(),
@@ -532,6 +558,61 @@ describe('EntryReminders.queueDue', () => {
     await reminders().queueDue(before(CLOSES_AT, 3, 1));
 
     expect(outbox.rows).toHaveLength(0);
+  });
+
+  it('reads every due contest\'s rules in one read a sweep, and the event\'s games and sport league once, however many contests on it are reminded', async () => {
+    const tournament = world.addSportEvent({
+      name: 'March Madness',
+      sportLeagueId: 'NCAA',
+      status: SportEventStatus.IN_PROGRESS,
+      startDate: new Date('2026-03-19T16:00:00.000Z'),
+    });
+    matches = [2, 3].map((roundNumber) => ({
+      id: `game-${String(roundNumber)}`,
+      sportEventId: tournament.id,
+      roundNumber,
+      status: roundNumber === 2 ? MatchStatus.COMPLETED : MatchStatus.SCHEDULED,
+      scheduledDate: roundNumber === 2 ? new Date('2026-03-21T16:00:00.000Z') : CLOSES_AT,
+    }) as SportEventMatch);
+    const contests = [1, 2, 3].map((index) => {
+      const league = world.addLeague();
+      member(league.id, `Member${String(index)}`);
+      const contest = world.addContest(league.id, { selectionType: SelectionType.BRACKET, sportEventIds: [tournament.id] });
+      world.addConfiguration(contest.id, {
+        selectionType: SelectionType.BRACKET,
+        configJson: { selectionType: SelectionType.BRACKET, startsAtRound: 3 },
+      });
+      return contest;
+    });
+
+    await reminders().queueDue(before(CLOSES_AT, 24, 1));
+
+    expect(outbox.rows).toHaveLength(3);
+    expect(reads).toEqual([
+      `events:${tournament.id}`,
+      `rules:${contests.map((contest) => contest.id).join(',')}`,
+      `matches:${tournament.id}`,
+      'sportLeague:NCAA',
+    ]);
+  });
+
+  it('reads no rules for a contest none of whose events starts within the earliest reminder\'s reach, and none at all when no contest is in reach', async () => {
+    const league = world.addLeague();
+    const soon = world.addSportEvent({ startDate: CLOSES_AT });
+    const later = world.addSportEvent({ startDate: new Date(CLOSES_AT.getTime() + 72 * HOUR) });
+    const due = contestWithRules(league.id, { sportEventIds: [soon.id] });
+    contestWithRules(league.id, { sportEventIds: [later.id] });
+    member(league.id, 'Nora');
+
+    await reminders().queueDue(before(CLOSES_AT, 48, 1));
+
+    expect(outbox.rows).toHaveLength(1);
+    expect(reads.filter((read) => read.startsWith('rules:'))).toEqual([`rules:${due.id}`]);
+
+    reads = [];
+    await reminders().queueDue(before(CLOSES_AT, 96));
+
+    expect(reads.filter((read) => read.startsWith('rules:'))).toEqual([]);
   });
 
   it('follows the offsets a root admin saved in EMAIL_CONFIG', async () => {

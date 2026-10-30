@@ -399,6 +399,25 @@ describe('ContestRepository', () => {
     expect(completed).toEqual(expect.objectContaining({ status: ContestStatus.COMPLETED, startsAt, endsAt }));
   });
 
+  it('transitions several contests in one write, only those still in the given statuses, and answers the ids it moved', async () => {
+    const { league, event } = await createLeagueAndEvent();
+    const first = await createContest(league.id, event.id, 'First to start', ContestStatus.OPEN);
+    const second = await createContest(league.id, event.id, 'Second to start', ContestStatus.OPEN);
+    const live = await createContest(league.id, event.id, 'Already live', ContestStatus.ACTIVE);
+    const startsAt = new Date('2026-06-04T12:00:00.000Z');
+    const start = { from: [ContestStatus.OPEN], to: ContestStatus.ACTIVE, startsAt };
+
+    const moved = await repos().contests.transitionStatuses([first.id, second.id, live.id], start);
+
+    expect([...moved].sort()).toEqual([first.id, second.id].sort());
+    await expect(repos().contests.transitionStatuses([first.id, second.id], start)).resolves.toEqual([]);
+    await expect(repos().contests.transitionStatuses([], start)).resolves.toEqual([]);
+    for (const id of [first.id, second.id]) {
+      await expect(repos().contests.findById(id)).resolves.toEqual(expect.objectContaining({ status: ContestStatus.ACTIVE, startsAt }));
+    }
+    await expect(repos().contests.findById(live.id)).resolves.toEqual(expect.objectContaining({ status: ContestStatus.ACTIVE, startsAt: undefined }));
+  });
+
   it('sets a cup weight only while the contest is in the given statuses, and says when it changed nothing', async () => {
     const { league, event } = await createLeagueAndEvent();
     const open = await createContest(league.id, event.id, 'Weighted', ContestStatus.OPEN);
@@ -682,6 +701,30 @@ describe('ContestConfigurationRepository', () => {
       countedScores: 4,
       salaryCap: 50_000,
     });
+  });
+
+  it('reads several contests\' rules in one read, leaving out a contest with none and contests not asked for', async () => {
+    const { league, event } = await createLeagueAndEvent();
+    const tiered = await createContest(league.id, event.id, 'Tiered rules', ContestStatus.OPEN);
+    const pickEm = await createContest(league.id, event.id, 'Pick\'em rules', ContestStatus.OPEN);
+    const noRules = await createContest(league.id, event.id, 'No rules', ContestStatus.OPEN);
+    const notAsked = await createContest(league.id, event.id, 'Not asked', ContestStatus.OPEN);
+    for (const [contest, configJson] of [
+      [tiered, { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 }],
+      [pickEm, { selectionType: SelectionType.PICK_EM, mode: 'STRAIGHT_UP', againstTheSpread: false }],
+      [notAsked, { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 }],
+    ] as const) {
+      await getPrisma().contestConfiguration.create({
+        data: { contestId: contest.id, selectionType: configJson.selectionType, configJson },
+      });
+    }
+    const repository = new PrismaContestConfigurationRepository(getPrisma());
+
+    const found = await repository.findByContests([tiered.id, pickEm.id, noRules.id]);
+
+    expect(new Map(found.map((configuration) => [configuration.contestId, configuration.configJson?.selectionType])))
+      .toEqual(new Map([[pickEm.id, SelectionType.PICK_EM], [tiered.id, SelectionType.TIERED]]));
+    await expect(repository.findByContests([])).resolves.toEqual([]);
   });
 });
 

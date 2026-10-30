@@ -8,9 +8,10 @@ import type { QueryBudgetAllowList } from '../support/query-budget';
 export const QUERY_BUDGET_ALLOW_LIST: QueryBudgetAllowList = {
   // The field grid save: a whole field of new rankings or odds is one update per row without raw SQL.
   'PATCH /api/v1/events/:eventId/participants': { ticket: 1308 },
-  // A status change or release fans out to every contest on the event, re-reading the event for each.
-  'POST /api/v1/events/:eventId/transition': { ticket: 1199 },
-  'POST /api/v1/events/:eventId/release': { ticket: 1199 },
+  // A status change settles every contest on the event, writing its standings one row at a time.
+  'POST /api/v1/events/:eventId/transition': { ticket: 1172 },
+  // A release adds the edition to each template contest in its own write.
+  'POST /api/v1/events/:eventId/release': { ticket: 1318 },
   // Email costs four round trips per recipient.
   'POST /api/v1/invitations/accept': { ticket: 1173 },
   'POST /api/v1/team-invitations/register': { ticket: 1173 },

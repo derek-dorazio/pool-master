@@ -39,6 +39,8 @@ describe('ContestNotices', () => {
   let final: ContestFinalStandings;
   let logger: ReturnType<typeof fakeLogger>;
   let optOuts: ReturnType<typeof inMemoryEmailOptOuts>;
+  /** Each shared event read the notices made, as "<read>:<id>". */
+  let eventReads: string[];
 
   beforeEach(() => {
     world = new InMemoryContestWorld();
@@ -49,6 +51,7 @@ describe('ContestNotices', () => {
     tierCount = 6;
     final = { scoringDefinitionId: null, entries: [] };
     logger = fakeLogger();
+    eventReads = [];
   });
 
   function notices(overrides: Partial<ContestNoticeDeps> = {}): ContestNotices {
@@ -67,12 +70,34 @@ describe('ContestNotices', () => {
     return new ContestNotices({
       contests: world.contestRepo(),
       configurations: world.configurationRepo(),
-      sportEvents: world.sportEventRepo(),
-      sportLeagues: { findById: async () => ({ name: 'PGA Tour', roundNames } as unknown as SportLeague) },
-      matches: { findBySportEvent: async (sportEventId) => matches.filter((match) => match.sportEventId === sportEventId) },
+      sportEvents: {
+        ...world.sportEventRepo(),
+        findByIds: async (ids) => {
+          eventReads.push(...ids.map((id) => `event:${id}`));
+          return world.sportEventRepo().findByIds(ids);
+        },
+      },
+      sportLeagues: {
+        findById: async (id) => {
+          eventReads.push(`sportLeague:${id}`);
+          return { name: 'PGA Tour', roundNames } as unknown as SportLeague;
+        },
+      },
+      matches: {
+        findBySportEvent: async (sportEventId) => {
+          eventReads.push(`matches:${sportEventId}`);
+          return matches.filter((match) => match.sportEventId === sportEventId);
+        },
+        findBySportEvents: async (sportEventIds) => {
+          eventReads.push(...sportEventIds.map((sportEventId) => `matches:${sportEventId}`));
+          return matches.filter((match) => sportEventIds.includes(match.sportEventId));
+        },
+      },
       tiers: {
-        getEffectiveTiersForSportEvent: async (sportEventId) => world.addEventTiers(sportEventId, tierCount)
-          .map((tier) => ({ ...tier, participants: [] })),
+        getEffectiveTiersForSportEvent: async (sportEventId) => {
+          eventReads.push(`tiers:${sportEventId}`);
+          return world.addEventTiers(sportEventId, tierCount).map((tier) => ({ ...tier, participants: [] }));
+        },
       },
       entries: world.entryRepo(),
       leagues: world.leagueRepo(),
@@ -216,7 +241,7 @@ describe('ContestNotices', () => {
         if (submitted) world.setEntryEventStatus(created.entry.id, week.id, ContestEntryStatus.SUBMITTED, new Date());
       }
 
-      await notices().contestStarted(contest, week);
+      await notices().contestsStarted([contest], week);
 
       expect(recipientIds()).toEqual([entrant.user.id, drafting.user.id, onlooker.user.id].sort());
       expect(outbox.rows.every((row) => row.templateKey === 'CONTEST_STARTED_SUMMARY')).toBe(true);
@@ -237,8 +262,8 @@ describe('ContestNotices', () => {
       world.addConfiguration(contest.id);
       member(league.id, 'Nora');
 
-      await notices().contestStarted(contest, event);
-      await notices().contestStarted(contest, event);
+      await notices().contestsStarted([contest], event);
+      await notices().contestsStarted([contest], event);
 
       expect(outbox.rows).toHaveLength(1);
       expect(outbox.rows[0]?.textBody).toContain('Event: 4 rounds');
@@ -249,9 +274,54 @@ describe('ContestNotices', () => {
       const contest = world.addContest('no-such-league', { sportEventIds: [event.id] });
       world.addConfiguration(contest.id);
 
-      await notices().contestStarted(contest, event);
+      await notices().contestsStarted([contest], event);
 
       expect(outbox.rows).toHaveLength(0);
+    });
+
+    it('reads the event\'s matches, sport league and tiers once, and never the event it was handed, however many contests on it go live', async () => {
+      const event = world.addSportEvent({ startDate: STARTS_AT });
+      matches = [1, 2].map((matchNumber) => ({ id: `game-${String(matchNumber)}`, sportEventId: event.id, matchNumber }) as SportEventMatch);
+      const contests = [1, 2, 3].map((index) => {
+        const league = world.addLeague();
+        member(league.id, `Member${String(index)}`);
+        const contest = world.addContest(league.id, { sportEventIds: [event.id] });
+        world.addConfiguration(contest.id);
+        return contest;
+      });
+
+      await notices().contestsStarted(contests, event);
+
+      expect(outbox.rows).toHaveLength(3);
+      expect(outbox.rows.every((row) => row.textBody?.includes('Event: 2 games') === true)).toBe(true);
+      expect(eventReads.sort()).toEqual([`matches:${event.id}`, `sportLeague:${event.sportLeagueId}`, `tiers:${event.id}`]);
+    });
+
+    it('still tells the other contests\' leagues, and logs it, when one contest\'s good luck email cannot be queued', async () => {
+      const event = world.addSportEvent({ startDate: STARTS_AT });
+      const broken = world.addContest(world.addLeague().id, { sportEventIds: [event.id] });
+      world.addConfiguration(broken.id);
+      const league = world.addLeague();
+      const nora = member(league.id, 'Nora');
+      const contest = world.addContest(league.id, { sportEventIds: [event.id] });
+      world.addConfiguration(contest.id);
+      const service = notices({
+        entries: {
+          findByContest: async (contestId) => {
+            if (contestId === broken.id) throw new Error('database unavailable');
+            return world.entryRepo().findByContest(contestId);
+          },
+          findByContests: (contestIds) => world.entryRepo().findByContests(contestIds),
+        },
+      });
+
+      await service.contestsStarted([broken, contest], event);
+
+      expect(recipientIds()).toEqual([nora.user.id]);
+      expect(logger.error).toHaveBeenCalledWith(
+        expect.objectContaining({ action: 'email.contestStarted.failed', data: { contestId: broken.id, leagueId: broken.leagueId, error: 'database unavailable' } }),
+        'Failed to queue contest started emails',
+      );
     });
   });
 
