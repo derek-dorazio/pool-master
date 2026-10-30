@@ -246,8 +246,6 @@ export const QueryKeys = {
       liveSimulation: (eventId: QueryKeyId) =>
         ['poolmaster', 'root-admin', 'manage-sport', 'event', eventId, 'live-simulation'] as const,
       participants: ['poolmaster', 'root-admin', 'manage-sport', 'participants'] as const,
-      participantList: (sport: QueryKeyId, status?: string) =>
-        ['poolmaster', 'root-admin', 'manage-sport', 'participants', sport, 'list', status ?? 'ACTIVE'] as const,
       participantSearch: (sport: QueryKeyId, search: string, status = 'ACTIVE') =>
         ['poolmaster', 'root-admin', 'manage-sport', 'participants', sport, 'search', search, status] as const,
       participant: (participantId: QueryKeyId) =>
