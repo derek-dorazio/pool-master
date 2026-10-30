@@ -1,4 +1,3 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useLocation, useParams } from 'react-router';
 import {
@@ -8,14 +7,7 @@ import {
   formatPickEmRulesName,
   formatSelectionTypeName,
 } from '@poolmaster/shared/domain';
-import {
-  getGamePicks,
-  saveGamePicks,
-  submitGamePicks,
-  type ContestDto,
-  type GamePicksResponse,
-  type SaveGamePicksRequest,
-} from '@/lib/api';
+import type { ContestDto, SaveGamePicksRequest } from '@/lib/api';
 import {
   Alert,
   Button,
@@ -30,9 +22,7 @@ import {
   Tile,
   useDisplayPreferences,
 } from '@/features/shared/ui';
-import { ApiError, extractErrorMessage, throwApiError, type ErrorCodeMessages } from '@/lib/errors';
-import { getLogger } from '@/lib/logger';
-import { useInvalidatingMutation } from '@/lib/mutation-hooks';
+import { extractErrorMessage, type ErrorCodeMessages } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import { parseRouteState } from '@/routes/route-state';
 import { formatPickProgress, formatPoints } from './bracket-layout';
@@ -43,9 +33,7 @@ import { useContestLeague } from './use-contest-league';
 import { contestEventStart, contestMatchNoun, contestParticipantNoun, contestScoreUnit, contestTieLabel } from './contest-sport';
 import {
   CONTEST_ENTRY_STATUS_LABELS,
-  CONTEST_POLL_INTERVAL_MS,
   contestStatusLabel,
-  shouldPollContestEntries,
 } from './contest-status';
 import { PickEmGames } from './pick-em-games';
 import {
@@ -66,7 +54,8 @@ import {
   type PickEmTeam,
 } from './pick-em-week';
 import { useBracketRoundLabel } from './use-bracket-round-label';
-import { entryWriteKeys, useContestEntryQuery } from './use-contest-entries';
+import { useContestEntryQuery } from './use-contest-entries';
+import { useGamePicks } from './use-game-picks';
 
 /**
  * Copy for the refusals a week's picks, tiebreaker and submit can meet (#718), in the contest's
@@ -107,19 +96,13 @@ function formatScore(points: number | null) {
  */
 export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
   const displayPreferences = useDisplayPreferences();
-  const logger = getLogger().child({ feature: 'pick-em-entry-page' });
   const { entryId = '', leagueCode: routeLeagueCode } = useParams<{ entryId: string; leagueCode?: string }>();
   const location = useLocation();
-  const queryClient = useQueryClient();
   const contestId = contest.id;
   const hintedLeagueCode = routeLeagueCode ?? parseRouteState(location.state).leagueCode ?? null;
   // The week being picked, else the latest played, until the member switches.
   const [requestedEventId, setRequestedEventId] = useState<string | null>(null);
   const sportEventId = requestedEventId ?? currentContestEvent(contest)?.sportEventId ?? '';
-  const gamePicksKey = QueryKeys.gamePicks.detail(contestId, entryId, sportEventId);
-  // Null until the member types: the field shows the saved tiebreaker until then, so a refetch
-  // never overwrites what is being typed (rules/react-ui-rules.md §5 Server Data Form-State Hazard).
-  const [tiebreakerDraft, setTiebreakerDraft] = useState<string | null>(null);
   // A playoff survivor pool's round on screen (#785), until the member switches: the one being picked.
   const [requestedRound, setRequestedRound] = useState<number | null>(null);
   const roundLabel = useBracketRoundLabel(contest.sport, sportEventId);
@@ -128,73 +111,19 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
   const participant = contestParticipantNoun(contest.sport);
   const eventStart = contestEventStart(contest.sport);
 
-  const gamePicksQuery = useQuery({
-    queryKey: gamePicksKey,
-    queryFn: async (): Promise<GamePicksResponse> => {
-      const response = await getGamePicks({ path: { contestId, entryId, sportEventId } });
-      if (!response.data) {
-        throwApiError(response.error, 'Pick\'em week response is missing data.');
-      }
-      return response.data;
-    },
-    enabled: Boolean(entryId && sportEventId),
-    retry: false,
-    // Once the week is under way each pick's mark moves with the results.
-    refetchInterval: shouldPollContestEntries(contest.status) ? CONTEST_POLL_INTERVAL_MS : false,
-  });
-  const entryQuery = useContestEntryQuery(contestId, entryId);
-  const { leagueCode: backLeagueCode } = useContestLeague(contest.leagueId, hintedLeagueCode);
-
-  const logRefusal = (action: string, error: Error) => {
-    const payload = { action, data: { contestId, entryId, sportEventId }, err: error };
-    if (error instanceof ApiError) {
-      logger.warn(payload, 'Pick\'em write was rejected');
-    } else {
-      logger.error(payload, 'Pick\'em write failed unexpectedly');
-    }
-  };
-
-  // A save answers with the whole week, which replaces the cache. The entry list carries each
-  // week's status, which a change can move.
-  const saveMutation = useInvalidatingMutation({
-    mutationFn: async (body: SaveGamePicksRequest) => {
-      const response = await saveGamePicks({ path: { contestId, entryId, sportEventId }, body });
-      if (!response.data) {
-        throwApiError(response.error, 'Pick\'em save response is missing data.');
-      }
-      return response.data;
-    },
-    onSuccess: (saved) => {
-      queryClient.setQueryData<GamePicksResponse>(gamePicksKey, saved);
-      setTiebreakerDraft(null);
-    },
-    invalidates: [QueryKeys.contestEntries.byContest(contestId)],
-    onError: (error) => {
-      logRefusal('pickEm.save.failed', error);
-      // A refused pick means the week on screen is not the server's: read it again.
-      void queryClient.invalidateQueries({ queryKey: gamePicksKey });
-    },
-  });
-
-  const submitMutation = useInvalidatingMutation({
-    mutationFn: async () => {
-      const response = await submitGamePicks({ path: { contestId, entryId, sportEventId } });
-      if (!response.data) {
-        throwApiError(response.error, 'Pick\'em submit response is missing data.');
-      }
-      return response.data;
-    },
-    onSuccess: (submitted) => {
-      logger.info({ action: 'pickEm.submit.succeeded', data: { contestId, entryId, sportEventId } }, 'Submitted pick\'em week');
-      queryClient.setQueryData<GamePicksResponse>(gamePicksKey, submitted);
-    },
-    invalidates: [
-      ...entryWriteKeys(contestId),
+  const { gamePicksQuery, saveMutation, setTiebreakerDraft, submitMutation, tiebreakerDraft } = useGamePicks({
+    action: 'pickEm',
+    contest,
+    entryId,
+    feature: 'pick-em-entry-page',
+    sportEventId,
+    submitInvalidates: [
       QueryKeys.contests.pickEmLeaderboard(contestId),
       QueryKeys.contests.survivorLeaderboard(contestId),
     ],
-    onError: (error) => logRefusal('pickEm.submit.failed', error),
   });
+  const entryQuery = useContestEntryQuery(contestId, entryId);
+  const { leagueCode: backLeagueCode } = useContestLeague(contest.leagueId, hintedLeagueCode);
 
   const switchWeek = (next: string) => {
     saveMutation.reset();

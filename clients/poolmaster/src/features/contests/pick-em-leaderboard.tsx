@@ -4,7 +4,7 @@ import { SportEventStatus, formatPickEmRulesName } from '@poolmaster/shared/doma
 import type { ContestDto, PickEmLeaderboardResponse } from '@/lib/api';
 import { formatPoints } from './bracket-layout';
 import { entryColumn, isMySquadsEntry, placeColumn, totalColumn } from './leaderboard-columns';
-import { LeaderboardFrame, ScoreboardGrid } from './leaderboard-kit';
+import { LeaderboardFrame, ScoreboardGrid, YourBestNote } from './leaderboard-kit';
 import { useLeaderboardFallback } from './use-leaderboard-fallback';
 import { useContestLeague } from './use-contest-league';
 import { usePickEmLeaderboardQuery } from './use-contest-leaderboard';
@@ -80,8 +80,6 @@ export function PickEmLeaderboard({ contest, leagueCode: hintedLeagueCode }: { c
 
   const board = leaderboardQuery.data;
   const mySquadId = viewer.mySquadId;
-  // The server ranks best first, so the viewer's first row is their best placed entry.
-  const myBest = mySquadId === null ? undefined : board.entries.find((entry) => entry.squadId === mySquadId && entry.displayPosition !== null);
   const isUnderWay = board.weeks.some((week) => week.started);
 
   return (
@@ -90,9 +88,7 @@ export function PickEmLeaderboard({ contest, leagueCode: hintedLeagueCode }: { c
       leagueCode={leagueCode}
       notes={(
         <>
-          {myBest?.displayPosition ? (
-            <p data-testid="pick-em-leaderboard-my-best">{`Your best: ${myBest.displayPosition} · ${myBest.entryName}, ${formatPoints(myBest.totalPoints)}`}</p>
-          ) : null}
+          <YourBestNote entries={board.entries} mySquadId={mySquadId} points={(entry) => entry.totalPoints} testId="pick-em-leaderboard-my-best" />
           {isUnderWay ? null : (
             <p data-testid="pick-em-leaderboard-not-started">Points show from the first kickoff. Entries are listed once they submit a week.</p>
           )}

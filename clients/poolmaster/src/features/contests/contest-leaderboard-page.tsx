@@ -1,12 +1,7 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Trophy } from 'lucide-react';
 import { Fragment, useEffect, useState } from 'react';
 import { useLocation, useParams } from 'react-router';
-import {
-  getContest,
-  type ContestDto,
-} from '@/lib/api';
-import { throwApiError } from '@/lib/errors';
+import type { ContestDto } from '@/lib/api';
 import { parseRouteState } from '@/routes/route-state';
 import {
   Button,
@@ -23,10 +18,6 @@ import {
 } from '@/features/shared/ui';
 import { QueryKeys } from '@/lib/query-keys';
 import {
-  contestRefetchInterval,
-  refreshOnContestStatusChange,
-} from './contest-status';
-import {
   buildLeaderboardView,
   type LeaderboardEntryRow,
   type LeaderboardPickRow,
@@ -39,6 +30,7 @@ import { SquaresLeaderboard } from './squares-pages';
 import { SurvivorLeaderboard } from './survivor-leaderboard';
 import { useContestLeaderboardQuery } from './use-contest-leaderboard';
 import { useContestLeague } from './use-contest-league';
+import { useLiveContestQuery } from './use-contest-query';
 import { LEADERBOARD_PAGE_SIZE, isMySquadsEntry } from './leaderboard-columns';
 import { LeaderboardFrame } from './leaderboard-kit';
 import { MineMarker } from './mine-marker';
@@ -294,28 +286,7 @@ export function ContestLeaderboardPage() {
   // Which event's picks the board shows (#713); null is the server's choice, its latest revealed.
   const [requestedEventId, setRequestedEventId] = useState<string | null>(null);
 
-  const queryClient = useQueryClient();
-  const contestQuery = useQuery({
-    queryKey: QueryKeys.contests.detail(contestId),
-    queryFn: async (): Promise<ContestDto> => {
-      const response = await getContest({ path: { contestId } });
-
-      if (!response.data?.contest) {
-        throwApiError(response.error, 'Contest detail response is missing data.');
-      }
-
-      refreshOnContestStatusChange(
-        queryClient,
-        QueryKeys.contests.detail(contestId),
-        response.data.contest.status,
-        leaderboardKeyFor(contestId, response.data.contest.selectionType),
-      );
-      return response.data.contest;
-    },
-    enabled: Boolean(contestId),
-    retry: false,
-    refetchInterval: (query) => contestRefetchInterval(query.state.data?.status),
-  });
+  const contestQuery = useLiveContestQuery(contestId, (contest) => leaderboardKeyFor(contestId, contest.selectionType));
 
   // #112 — the same cadence the contest board polls entries on, driven by the same predicate.
   // The contest read above refreshes until settlement (#362), so this starts when play starts and
