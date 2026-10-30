@@ -33,7 +33,7 @@ describe('SquadStandingsGrid', () => {
     expect(screen.getByTestId('board-standing-squad-1')).toHaveTextContent('42.5');
   });
 
-  it('links each squad where the page says, and names it without a link otherwise', () => {
+  it('links each squad to the path the page gives', () => {
     renderGrid({ squadPath: (squadId) => `/squads/${squadId}` });
     expect(screen.getByRole('link', { name: /Casey Crushers/ })).toHaveAttribute('href', '/squads/squad-1');
   });

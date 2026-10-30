@@ -14,7 +14,6 @@ import { LEADERBOARD_PAGE_SIZE, SETTLED_NOTE, type BoardRow } from './leaderboar
  * own columns and notes.
  */
 
-
 /** A board's standings: the scoreboard grid in a tile, searchable by entry, a page at a time. */
 export function ScoreboardGrid<Row extends BoardRow>({
   columns,
@@ -90,7 +89,6 @@ export function LeaderboardFrame({
     </ContestPageFrame>
   );
 }
-
 
 /**
  * The note naming the viewer's best placed entry: the first of their squad's placed rows, since

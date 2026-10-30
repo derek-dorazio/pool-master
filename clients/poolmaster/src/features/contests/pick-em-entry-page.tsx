@@ -116,7 +116,6 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
     contest,
     entryId,
     feature: 'pick-em-entry-page',
-    picksName: 'Pick\'em',
     sportEventId,
     submitInvalidates: [
       QueryKeys.contests.pickEmLeaderboard(contestId),

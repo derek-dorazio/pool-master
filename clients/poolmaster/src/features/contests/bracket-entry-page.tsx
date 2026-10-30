@@ -66,7 +66,6 @@ export function BracketEntryPage({ contest }: { contest: ContestDto }) {
     contest,
     entryId,
     feature: 'bracket-entry-page',
-    picksName: 'Bracket',
     sportEventId,
   });
   const entryQuery = useContestEntryQuery(contestId, entryId);

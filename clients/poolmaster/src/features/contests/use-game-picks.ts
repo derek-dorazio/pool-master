@@ -15,6 +15,12 @@ import { QueryKeys } from '@/lib/query-keys';
 import { CONTEST_POLL_INTERVAL_MS, shouldPollContestEntries } from './contest-status';
 import { entryWriteKeys } from './use-contest-entries';
 
+/** What each page's picks are called in its log and error lines, by its log actions' prefix. */
+const PICKS_NAMES = {
+  bracket: 'Bracket',
+  pickEm: 'Pick\'em',
+} as const;
+
 /**
  * One entry's game picks for one event, as a bracket or a pick'em week reads and writes them: the
  * picks, the save that takes a pick or the tiebreaker, the submit, and the tiebreaker being typed.
@@ -29,23 +35,21 @@ export function useGamePicks({
   contest,
   entryId,
   feature,
-  picksName,
   sportEventId,
   submitInvalidates = [],
 }: {
   /** The log actions' prefix, such as `bracket` for `bracket.save.failed`. */
-  action: string;
+  action: keyof typeof PICKS_NAMES;
   contest: ContestDto;
   entryId: string;
   /** The logger's feature, the page's name. */
   feature: string;
-  /** What the picks are called in log and error lines, such as `Bracket`. */
-  picksName: string;
   sportEventId: string;
   /** Reads a submit changes besides the entry's own, such as the leaderboards that show it. */
   submitInvalidates?: readonly QueryKey[];
 }) {
   const logger = getLogger().child({ feature });
+  const picksName = PICKS_NAMES[action];
   const queryClient = useQueryClient();
   const contestId = contest.id;
   const gamePicksKey = QueryKeys.gamePicks.detail(contestId, entryId, sportEventId);

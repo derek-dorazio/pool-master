@@ -35,7 +35,6 @@ function renderGamePicks(contestStatus: ContestStatus = ContestStatus.OPEN) {
     contest,
     entryId: ENTRY_ID,
     feature: 'test',
-    picksName: 'Bracket',
     sportEventId: EVENT_ID,
     submitInvalidates: [QueryKeys.contests.bracketLeaderboard(contest.id)],
   }), { wrapper });
