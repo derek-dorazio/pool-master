@@ -205,8 +205,8 @@ export const QueryKeys = {
     all: ['poolmaster', 'root-admin'] as const,
     eventParticipants: (eventId: QueryKeyId) =>
       ['poolmaster', 'root-admin', 'events', eventId, 'participants'] as const,
-    eventSyncEvents: (sport: QueryKeyId) =>
-      ['poolmaster', 'root-admin', 'event-sync-events', sport] as const,
+    eventSyncEvents: (sport: QueryKeyId, eventYear: number) =>
+      ['poolmaster', 'root-admin', 'event-sync-events', sport, eventYear] as const,
     eventsByYear: (eventYear: number) => ['poolmaster', 'root-admin', 'events', 'year', eventYear] as const,
     // The Manage sport screens (golf's first, every sport's since #623). Lists of one sport take
     // the sport; invalidating the bare prefix (`leagues`, `events`, `participants`) refreshes every

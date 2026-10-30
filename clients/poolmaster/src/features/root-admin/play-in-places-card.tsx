@@ -188,21 +188,13 @@ function PlayInWinnerPicker({
     },
   });
 
-  if (teamsQuery.isError) {
-    return (
-      <InlineError>
-        {extractErrorMessage(teamsQuery.error, { fallback: `Couldn't load the ${vocabulary.participant.many}. Try again in a moment.` })}
-      </InlineError>
-    );
-  }
-
   return (
     <>
       {teamsQuery.needsSearch ? (
         <Input
           aria-label={`Find a ${vocabulary.participant.one}`}
           data-testid={`root-admin-play-in-winner-search-${place.id}`}
-          onChange={(change) => setSearch(change.target.value)}
+          onChange={(change) => { setSearch(change.target.value); setParticipantId(NONE); }}
           type="search"
           value={search}
         />
@@ -230,6 +222,11 @@ function PlayInWinnerPicker({
       {mutation.isError ? (
         <InlineError className="w-full">
           {extractErrorMessage(mutation.error, { codeMessages: { ...bracketErrorMessages(vocabulary), ...offLeagueRosterMessages(vocabulary, sportLeague) }, fallback: 'The winner could not be saved. Try again.' })}
+        </InlineError>
+      ) : null}
+      {teamsQuery.isError ? (
+        <InlineError className="w-full">
+          {extractErrorMessage(teamsQuery.error, { fallback: `Couldn't load the ${vocabulary.participant.many}. Try again in a moment.` })}
         </InlineError>
       ) : null}
     </>

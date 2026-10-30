@@ -721,6 +721,38 @@ describe('RootAdminSportEventResultsPage for a basketball tournament', () => {
       expect(listParticipantsMock).toHaveBeenCalledWith(expect.objectContaining({ query: { sportId: 'sport-basketball', status: 'ACTIVE', q: 'Xav' } }));
     });
 
+    it('clears the chosen winner when a new search no longer lists it, so Set winner cannot save a team the admin no longer sees', async () => {
+      seedPlayIn();
+      listParticipantLeagueAffiliationsMock.mockResolvedValue({ data: { affiliations: [] } });
+      listParticipantsMock.mockImplementation((options: { query: { q: string } }) => Promise.resolve({ data: { participants: options.query.q === 'Xav' ? [xavier] : [] } }));
+      renderPage();
+
+      const search = await screen.findByTestId('root-admin-play-in-winner-search-sep-5');
+      await userEvent.type(search, 'Xav');
+      const select = screen.getByTestId('root-admin-play-in-winner-select-sep-5');
+      await waitFor(() => expect(within(select).getAllByRole('option')).toHaveLength(2));
+      await userEvent.selectOptions(select, 'p-6');
+      expect(screen.getByTestId('root-admin-play-in-winner-save-sep-5')).toBeEnabled();
+
+      await userEvent.clear(search);
+      await userEvent.type(search, 'Hou');
+
+      await waitFor(() => expect(listParticipantsMock).toHaveBeenCalledWith(expect.objectContaining({ query: { sportId: 'sport-basketball', status: 'ACTIVE', q: 'Hou' } })));
+      expect(screen.getByTestId('root-admin-play-in-winner-save-sep-5')).toBeDisabled();
+    });
+
+    it('keeps the search box beside a failed search, so the admin can change the name and try again', async () => {
+      seedPlayIn();
+      listParticipantLeagueAffiliationsMock.mockResolvedValue({ data: { affiliations: [] } });
+      listParticipantsMock.mockResolvedValue({ error: { error: { code: 'INTERNAL_ERROR', message: 'boom' } } });
+      renderPage();
+
+      await userEvent.type(await screen.findByTestId('root-admin-play-in-winner-search-sep-5'), 'Xav');
+
+      expect(await screen.findByRole('alert')).toHaveTextContent('boom');
+      expect(screen.getByTestId('root-admin-play-in-winner-search-sep-5')).toHaveValue('Xav');
+    });
+
     it('lists only the marked places', async () => {
       seedPlayIn();
       renderPage();
@@ -801,6 +833,39 @@ describe('RootAdminSportEventResultsPage for a basketball tournament', () => {
 
       await waitFor(() => expect(within(replacedBy).getAllByRole('option').map((option) => option.textContent)).toEqual(['Choose a team', 'Xavier']));
       expect(listParticipantsMock).toHaveBeenCalledWith(expect.objectContaining({ query: { sportId: 'sport-basketball', status: 'ACTIVE', q: 'Xav' } }));
+    });
+
+    it('clears the chosen replacement when a new search no longer lists it, so Replace cannot submit a team the admin no longer sees', async () => {
+      seedWithdrawals();
+      listParticipantLeagueAffiliationsMock.mockResolvedValue({ data: { affiliations: [] } });
+      listParticipantsMock.mockImplementation((options: { query: { q: string } }) => Promise.resolve({ data: { participants: options.query.q === 'Xav' ? [replacement] : [] } }));
+      renderPage();
+
+      const search = await screen.findByTestId('root-admin-withdrawal-replacement-search');
+      await userEvent.selectOptions(screen.getByTestId('root-admin-withdrawal-select'), 'sep-4');
+      await userEvent.type(search, 'Xav');
+      const replacedBy = screen.getByTestId('root-admin-withdrawal-replacement-select');
+      await waitFor(() => expect(within(replacedBy).getAllByRole('option')).toHaveLength(2));
+      await userEvent.selectOptions(replacedBy, 'p-6');
+      expect(screen.getByTestId('root-admin-withdrawal-replace')).toBeEnabled();
+
+      await userEvent.clear(search);
+      await userEvent.type(search, 'Hou');
+
+      await waitFor(() => expect(listParticipantsMock).toHaveBeenCalledWith(expect.objectContaining({ query: { sportId: 'sport-basketball', status: 'ACTIVE', q: 'Hou' } })));
+      expect(screen.getByTestId('root-admin-withdrawal-replace')).toBeDisabled();
+    });
+
+    it('keeps the replacement search box beside a failed search, so the admin can change the name and try again', async () => {
+      seedWithdrawals();
+      listParticipantLeagueAffiliationsMock.mockResolvedValue({ data: { affiliations: [] } });
+      listParticipantsMock.mockResolvedValue({ error: { error: { code: 'INTERNAL_ERROR', message: 'boom' } } });
+      renderPage();
+
+      await userEvent.type(await screen.findByTestId('root-admin-withdrawal-replacement-search'), 'Xav');
+
+      expect(await screen.findByRole('alert')).toHaveTextContent('boom');
+      expect(screen.getByTestId('root-admin-withdrawal-replacement-search')).toHaveValue('Xav');
     });
 
     it('titles the card Withdrawals, holding the withdrawn team and replacement pickers', async () => {

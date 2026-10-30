@@ -75,61 +75,60 @@ export function WithdrawalsCard({
       <p className="text-sm text-muted-foreground">
         {`If a ${participant.one} withdraws before playing, name who takes the place. Picks of the withdrawn ${participant.one} stay, and score as a first-round loss. Once their ${noun.one} starts, enter the withdrawal as a walkover instead.`}
       </p>
-      {candidatesQuery.isError ? (
-        <InlineError>
-          {extractErrorMessage(candidatesQuery.error, { fallback: `Couldn't load the ${participant.many}. Try again in a moment.` })}
-        </InlineError>
-      ) : (
-        <div className="flex flex-wrap items-end gap-3">
+      <div className="flex flex-wrap items-end gap-3">
+        <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+          {`Withdrawn ${participant.one}`}
+          <Select data-testid="root-admin-withdrawal-select" onChange={(change) => setWithdrawnId(change.target.value)} value={withdrawnId}>
+            <option value={NONE}>{`Choose a ${participant.one}`}</option>
+            {replaceable.map((entry) => (
+              <option key={entry.id} value={entry.id}>{describeEntry(entry)}</option>
+            ))}
+          </Select>
+        </label>
+        {candidatesQuery.needsSearch ? (
           <label className="flex flex-col gap-1 text-xs text-muted-foreground">
-            {`Withdrawn ${participant.one}`}
-            <Select data-testid="root-admin-withdrawal-select" onChange={(change) => setWithdrawnId(change.target.value)} value={withdrawnId}>
-              <option value={NONE}>{`Choose a ${participant.one}`}</option>
-              {replaceable.map((entry) => (
-                <option key={entry.id} value={entry.id}>{describeEntry(entry)}</option>
-              ))}
-            </Select>
+            {`Find a ${participant.one}`}
+            <Input
+              data-testid="root-admin-withdrawal-replacement-search"
+              onChange={(change) => { setSearch(change.target.value); setReplacementId(NONE); }}
+              type="search"
+              value={search}
+            />
           </label>
-          {candidatesQuery.needsSearch ? (
-            <label className="flex flex-col gap-1 text-xs text-muted-foreground">
-              {`Find a ${participant.one}`}
-              <Input
-                data-testid="root-admin-withdrawal-replacement-search"
-                onChange={(change) => setSearch(change.target.value)}
-                type="search"
-                value={search}
-              />
-            </label>
-          ) : null}
-          <label className="flex flex-col gap-1 text-xs text-muted-foreground">
-            Replaced by
-            <Select
-              data-testid="root-admin-withdrawal-replacement-select"
-              disabled={!candidatesQuery.data}
-              onChange={(change) => setReplacementId(change.target.value)}
-              value={replacementId}
-            >
-              <option value={NONE}>{candidatePrompt(candidatesQuery, `Choose a ${participant.one}`, participant.one)}</option>
-              {candidates.map((candidate) => (
-                <option key={candidate.id} value={candidate.id}>{candidate.name}</option>
-              ))}
-            </Select>
-          </label>
-          <Button
-            data-testid="root-admin-withdrawal-replace"
-            disabled={withdrawnId === NONE || replacementId === NONE || mutation.isPending}
-            onClick={() => mutation.mutate(undefined, { onSuccess: () => { setWithdrawnId(NONE); setReplacementId(NONE); } })}
-            size="sm"
+        ) : null}
+        <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+          Replaced by
+          <Select
+            data-testid="root-admin-withdrawal-replacement-select"
+            disabled={!candidatesQuery.data}
+            onChange={(change) => setReplacementId(change.target.value)}
+            value={replacementId}
           >
-            {`Replace ${participant.one}`}
-          </Button>
-          {mutation.isError ? (
-            <InlineError className="w-full">
-              {extractErrorMessage(mutation.error, { codeMessages: { ...bracketErrorMessages(vocabulary), ...offLeagueRosterMessages(vocabulary, sportLeague) }, fallback: `The ${participant.one} could not be replaced. Try again.` })}
-            </InlineError>
-          ) : null}
-        </div>
-      )}
+            <option value={NONE}>{candidatePrompt(candidatesQuery, `Choose a ${participant.one}`, participant.one)}</option>
+            {candidates.map((candidate) => (
+              <option key={candidate.id} value={candidate.id}>{candidate.name}</option>
+            ))}
+          </Select>
+        </label>
+        <Button
+          data-testid="root-admin-withdrawal-replace"
+          disabled={withdrawnId === NONE || replacementId === NONE || mutation.isPending}
+          onClick={() => mutation.mutate(undefined, { onSuccess: () => { setWithdrawnId(NONE); setReplacementId(NONE); } })}
+          size="sm"
+        >
+          {`Replace ${participant.one}`}
+        </Button>
+        {mutation.isError ? (
+          <InlineError className="w-full">
+            {extractErrorMessage(mutation.error, { codeMessages: { ...bracketErrorMessages(vocabulary), ...offLeagueRosterMessages(vocabulary, sportLeague) }, fallback: `The ${participant.one} could not be replaced. Try again.` })}
+          </InlineError>
+        ) : null}
+        {candidatesQuery.isError ? (
+          <InlineError className="w-full">
+            {extractErrorMessage(candidatesQuery.error, { fallback: `Couldn't load the ${participant.many}. Try again in a moment.` })}
+          </InlineError>
+        ) : null}
+      </div>
       <p className="text-xs text-muted-foreground">The replacement joins unseeded, last in the last tier, at the lowest price.</p>
     </PanelCard>
   );
