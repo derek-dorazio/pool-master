@@ -5,11 +5,10 @@ import {
   Callout,
   ConfirmationModal,
   formatDateTimeDisplay,
-  Heading,
   LinkButton,
   ListCard,
+  PanelCard,
   StatusBadge,
-  Tile,
   useDisplayPreferences,
 } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
@@ -101,25 +100,22 @@ export function SportEventWorkflowCard({
   });
 
   return (
-    <Tile>
-      <div className="flex items-start justify-between gap-3">
-        <Heading level={2} variant="card" size="lg">Workflow</Heading>
+    <PanelCard
+      padded
+      title="Workflow"
+      trailing={(
         <StatusBadge tone={sportEventStatusTone(tournament.status)}>
           {formatSportEventStatus(tournament.status)}
         </StatusBadge>
-      </div>
-
-      <div className="mt-4">
-        <SportEventWorkflowRail rounds={rounds} tournament={tournament} />
-      </div>
+      )}
+    >
+      <SportEventWorkflowRail rounds={rounds} tournament={tournament} />
 
       {tournament.status === SportEventStatus.DRAFT ? (
-        <div className="mt-4">
-          <SportEventReleaseAction eventId={eventId} tournament={tournament} />
-        </div>
+        <SportEventReleaseAction eventId={eventId} tournament={tournament} />
       ) : null}
 
-      <div className="mt-4 flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2">
         {tournament.allowedTransitions.length > 0 ? (
           tournament.allowedTransitions.map((toStatus) => (
             <Button
@@ -141,7 +137,7 @@ export function SportEventWorkflowCard({
         )}
       </div>
 
-      <div className="mt-4 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+      <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
         <Button
           data-testid="root-admin-sport-event-auto-toggle"
           onClick={() => setAutoToggleOpen(true)}
@@ -171,7 +167,6 @@ export function SportEventWorkflowCard({
             Edit schedule
           </LinkButton>
         }
-        className="mt-4"
         description={
           roundsError
             ? extractErrorMessage(roundsError, {
@@ -237,6 +232,6 @@ export function SportEventWorkflowCard({
         testId="root-admin-sport-event-auto-modal"
         title="Automatic lifecycle"
       />
-    </Tile>
+    </PanelCard>
   );
 }

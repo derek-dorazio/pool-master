@@ -76,6 +76,17 @@ describe('RootAdminPlansPage', () => {
     expect(screen.getByTestId('root-admin-plans-last-change')).toHaveTextContent('Never changed: using the starting values.');
   });
 
+  it('shows each feature group as its own titled card listing what every plan includes', async () => {
+    renderPage();
+
+    await screen.findByTestId('root-admin-plans-form');
+    for (const title of ['Emails', 'Championships', 'History']) {
+      expect(screen.getByRole('region', { name: title })).toBeVisible();
+    }
+    expect(screen.getByRole('region', { name: 'Emails' })).toHaveAttribute('data-testid', 'root-admin-plans-features-EMAILS');
+    expect(within(screen.getByRole('region', { name: 'History' })).getAllByRole('listitem').length).toBeGreaterThan(0);
+  });
+
   it('shows an error, not an endless loading state, when the plans group cannot be read', async () => {
     getSettingsGroupMock.mockResolvedValue({ status: 404, error: { error: { code: 'NOT_FOUND', message: 'Settings group PLAN_CONFIG was not found.' } } });
     renderPage();

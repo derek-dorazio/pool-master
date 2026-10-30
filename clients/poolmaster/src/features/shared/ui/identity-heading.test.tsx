@@ -52,7 +52,7 @@ describe("IdentityHeading", () => {
     expect(navigator.clipboard.writeText).toHaveBeenCalledWith("GOLF-1234");
   });
 
-  it("announces Copy failed as an alert when the clipboard write is refused", async () => {
+  it("says the copy failed, as an alert, when the clipboard write is refused", async () => {
     Object.assign(navigator, {
       clipboard: {
         writeText: vi.fn().mockRejectedValue(new Error("denied")),
@@ -69,7 +69,7 @@ describe("IdentityHeading", () => {
     fireEvent.click(screen.getByRole("button", { name: "Copy league code" }));
 
     await waitFor(() => {
-      expect(screen.getByRole("alert")).toHaveTextContent("Copy failed");
+      expect(screen.getByRole("alert")).toHaveTextContent("Couldn't copy");
     });
     expect(screen.queryByText("Copied")).not.toBeInTheDocument();
   });
