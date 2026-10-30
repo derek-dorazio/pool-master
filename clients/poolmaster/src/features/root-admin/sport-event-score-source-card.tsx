@@ -2,16 +2,7 @@ import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { SportEventSyncScope, getSportDefinition } from '@poolmaster/shared/domain';
 import { linkEventScoreSource, listProviders, unlinkEventScoreSource } from '@/lib/api';
-import {
-  Button,
-  ConfirmationModal,
-  formatDateTimeDisplay,
-  Heading,
-  PickerModal,
-  StatusBadge,
-  Tile,
-  useDisplayPreferences,
-} from '@/features/shared/ui';
+import { Button, ConfirmationModal, formatDateTimeDisplay, PanelCard, PickerModal, StatusBadge, useDisplayPreferences } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -143,9 +134,8 @@ export function SportEventScoreSourceCard({
   });
 
   return (
-    <Tile>
-      <Heading level={2} variant="card" size="lg">Score source</Heading>
-      <div className="mt-3 flex flex-wrap items-center gap-3">
+    <PanelCard padded title="Score source">
+      <div className="flex flex-wrap items-center gap-3">
         <StatusBadge tone={syncScopeTone(tournament.syncScope)}>
           {syncScopeLabel(tournament.syncScope)}
         </StatusBadge>
@@ -283,6 +273,6 @@ export function SportEventScoreSourceCard({
         testId="root-admin-sport-event-unlink-modal"
         title="Unlink score source"
       />
-    </Tile>
+    </PanelCard>
   );
 }

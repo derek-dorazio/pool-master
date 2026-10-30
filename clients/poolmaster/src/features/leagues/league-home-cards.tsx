@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react';
 import { ContestStatus, SelectionType, SquadMembershipStatus } from '@poolmaster/shared/domain';
 import type { ContestDto, ContestEntryDto, SquadDto } from '@/lib/api';
 import { formatUserName } from '@/features/account/user-name';
@@ -14,6 +13,8 @@ import {
   formatDateTimeDisplay,
   Heading,
   LinkButton,
+  PanelCard,
+  PanelList,
   LOADING_TEXT,
   Tile,
   useDisplayPreferences,
@@ -40,42 +41,6 @@ import {
   buildLeagueTeamPath,
   buildLeagueTrophyCasePath,
 } from './league-routing';
-
-function HomeCard({
-  children,
-  footer,
-  testId,
-  title,
-  trailing,
-}: {
-  children: ReactNode;
-  footer?: { label: string; testId: string; to: string };
-  testId: string;
-  title: string;
-  trailing?: ReactNode;
-}) {
-  return (
-    <section aria-label={title} className="overflow-hidden rounded-2xl border border-border bg-card" data-testid={testId}>
-      <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
-        <Heading level={2} variant="card" size="sm">{title}</Heading>
-        {trailing}
-      </div>
-      {children}
-      {footer ? (
-        <LinkButton
-          className="rounded-none border-t border-border"
-          layout="row"
-          data-testid={footer.testId}
-          size="sm"
-          to={footer.to}
-          variant="ghost"
-        >
-          {footer.label} →
-        </LinkButton>
-      ) : null}
-    </section>
-  );
-}
 
 export function UpNextCard({
   entriesState,
@@ -137,13 +102,13 @@ export function OtherContestsCard({
   leagueCode: string;
 }) {
   return (
-    <HomeCard
+    <PanelCard
       footer={{ label: 'All contests', testId: 'league-home-all-contests', to: buildLeagueContestsPath(leagueCode) }}
       testId="league-home-other-contests"
       title="Other contests"
     >
       {contests.length ? (
-        <ul className="divide-y divide-border">
+        <PanelList>
           {contests.map((contest) => {
             const hasEntry = (entriesByContestId.get(contest.id)?.length ?? 0) > 0;
             return (
@@ -167,11 +132,11 @@ export function OtherContestsCard({
               </li>
             );
           })}
-        </ul>
+        </PanelList>
       ) : (
         <p className="px-4 py-4 text-sm text-muted-foreground">No other contests are open or live right now.</p>
       )}
-    </HomeCard>
+    </PanelCard>
   );
 }
 
@@ -208,7 +173,7 @@ export function LiveStandingsCard({
     : rosterQuery.data ? buildTopStandings(rosterQuery.data, mySquadId) : null;
 
   return (
-    <HomeCard
+    <PanelCard
       footer={{
         label: 'Full leaderboard',
         testId: 'league-home-full-leaderboard',
@@ -232,7 +197,7 @@ export function LiveStandingsCard({
       ) : (
         <p className="px-4 py-4 text-sm text-muted-foreground">No submitted entries yet.</p>
       )}
-    </HomeCard>
+    </PanelCard>
   );
 }
 
@@ -253,7 +218,7 @@ export function YourTeamCard({
     : [];
 
   return (
-    <HomeCard
+    <PanelCard
       footer={{ label: team ? `Go to ${team.name}` : 'Choose your name', testId: 'league-home-my-team', to: buildLeagueTeamPath(leagueCode) }}
       testId="league-home-your-team"
       title="Yours"
@@ -267,7 +232,7 @@ export function YourTeamCard({
       ) : (
         <p className="px-4 py-4 text-sm text-muted-foreground">You haven&apos;t chosen your name in this league yet.</p>
       )}
-    </HomeCard>
+    </PanelCard>
   );
 }
 
@@ -295,16 +260,16 @@ export function CupsCard({
   }
 
   return (
-    <HomeCard
+    <PanelCard
       footer={{ label: 'Trophy case', testId: 'league-home-trophy-case', to: buildLeagueTrophyCasePath(leagueCode, year) }}
       testId="league-home-cups"
       title={`${year} cups`}
     >
-      <ul>
+      <PanelList>
         {cups.slice(0, HOME_CUPS).map((cup) => {
           const progress = cupProgress(cup);
           return (
-            <li className="border-t border-border first:border-t-0" key={cup.id}>
+            <li key={cup.id}>
               <LinkButton
                 className="flex-col items-start gap-0.5 rounded-none px-4 py-3"
                 layout="row"
@@ -320,7 +285,7 @@ export function CupsCard({
             </li>
           );
         })}
-      </ul>
-    </HomeCard>
+      </PanelList>
+    </PanelCard>
   );
 }

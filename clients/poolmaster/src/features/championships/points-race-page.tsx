@@ -3,19 +3,7 @@ import { useCallback, useMemo } from 'react';
 import { Link, Navigate, useParams } from 'react-router';
 import type { CupDto } from '@/lib/api';
 import { buildLeagueCupSquadPath, buildLeaguePointsRacePath, buildLeagueTrophyCasePath } from '@/features/leagues/league-routing';
-import {
-  Chip,
-  EmptyState,
-  ErrorState,
-  formatDateDisplay,
-  Heading,
-  LinkButton,
-  LoadingState,
-  MetricGrid,
-  MetricTile,
-  Tile,
-  useDisplayPreferences,
-} from '@/features/shared/ui';
+import { Chip, EmptyState, ErrorState, formatDateDisplay, LinkButton, LoadingState, MetricGrid, MetricTile, PanelCard, useDisplayPreferences } from '@/features/shared/ui';
 import { hasPlanFeature } from '@/features/plans/plan-features';
 import { PlanLockedNotice } from '@/features/plans/plan-locked-notice';
 import { buildPodium } from './championship-view';
@@ -160,15 +148,12 @@ export function PointsRacePage() {
   return (
     <div className="space-y-6" data-testid="points-race">
       <CupChips cups={cups.includes(cup) ? cups : [...cups, cup]} leagueCode={leagueCode} selectedId={cup.sportLeagueId} year={year} />
-      <Tile className="space-y-5" padding="sm" radius="lg">
-        <div>
-          <Heading level={2} variant="card" size="xl">{cup.name}</Heading>
-          <p className="mt-1 text-sm text-muted-foreground" data-testid="points-race-summary">
-            {cup.sportLeagueName} · {cup.crownedAt
-              ? `Crowned ${formatDateDisplay(cup.crownedAt, displayPreferences)}`
-              : isSeasonOver ? 'Not crowned' : `${progress.final} of ${progress.total} contests final`}
-          </p>
-        </div>
+      <PanelCard padded title={cup.name}>
+        <p className="text-sm text-muted-foreground" data-testid="points-race-summary">
+          {cup.sportLeagueName} · {cup.crownedAt
+            ? `Crowned ${formatDateDisplay(cup.crownedAt, displayPreferences)}`
+            : isSeasonOver ? 'Not crowned' : `${progress.final} of ${progress.total} contests final`}
+        </p>
         {isCrowned ? (
           hasPlanFeature(league, PlanFeature.CUP_CROWNING)
             ? <Podium focusSquadId={viewer.mySquadId} steps={buildPodium(cup.standings)} testId="cup-podium" />
@@ -192,18 +177,14 @@ export function PointsRacePage() {
           showMovement={!isSeasonOver}
           squadPath={squadPath}
         />
-      </Tile>
-      <Tile className="space-y-3" padding="sm" radius="lg">
-        <div>
-          <Heading level={2} variant="card" size="lg">The race so far</Heading>
-          <p className="text-sm text-muted-foreground">Top five, after each final contest</p>
-        </div>
+      </PanelCard>
+      <PanelCard padded title="The race so far">
+        <p className="text-sm text-muted-foreground">Top five, after each final contest</p>
         <CupRaceChart focusSquadId={viewer.mySquadId} series={buildRaceSeries(cup)} />
-      </Tile>
-      <Tile className="space-y-3" padding="sm" radius="lg">
-        <Heading level={2} variant="card" size="lg">Contests in this cup</Heading>
+      </PanelCard>
+      <PanelCard padded title="Contests in this cup">
         <CupContestList contests={cup.contests} leagueCode={leagueCode} />
-      </Tile>
+      </PanelCard>
     </div>
   );
 }

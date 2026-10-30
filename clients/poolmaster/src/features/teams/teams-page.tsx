@@ -2,12 +2,11 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { useEffect, useMemo } from 'react';
 import { useParams } from 'react-router';
 import { useLeagueContextGuard } from '@/features/leagues/league-context-guard';
-import { buildLeagueTeamHomePath } from '@/features/leagues/league-routing';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
 import { DataGrid, ErrorState, formatDateDisplay, LoadingState, PageHeader, useDisplayPreferences } from '@/features/shared/ui';
 import { getLogger } from '@/lib/logger';
 import { buildTeamDirectoryRows, type TeamDirectoryRow } from './team-directory';
-import { TeamName } from './team-name';
+import { teamNameColumn } from './team-name-column';
 import { useLeagueSquadsQuery } from './use-league-squads-query';
 
 const TEAMS_PER_PAGE = 25;
@@ -34,20 +33,7 @@ export function TeamsPage() {
   const rows = useMemo(() => buildTeamDirectoryRows(teamsQuery.data ?? []), [teamsQuery.data]);
   const columns = useMemo<ColumnDef<TeamDirectoryRow, string>[]>(
     () => [
-      {
-        id: 'team',
-        header: 'Name',
-        accessorFn: (row) => row.team.name,
-        cell: ({ row }) => (
-          <TeamName
-            iconKey={row.original.team.iconKey}
-            isActive={row.original.team.isActive}
-            name={row.original.team.name}
-            testId={`league-team-home-link-${row.original.team.id}`}
-            to={buildLeagueTeamHomePath(leagueCode, row.original.team.id)}
-          />
-        ),
-      },
+      teamNameColumn<TeamDirectoryRow>(leagueCode),
       {
         id: 'owners',
         header: 'Owners',
