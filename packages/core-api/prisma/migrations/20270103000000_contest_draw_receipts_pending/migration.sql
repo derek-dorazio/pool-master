@@ -5,9 +5,9 @@
 -- AlterTable
 ALTER TABLE "contest_draws" ADD COLUMN "receipts_pending_sport_event_id" UUID;
 
--- CreateIndex: partial, so only the few draws still owing receipts are indexed. Prisma cannot
--- declare a partial index, so it lives here only.
-CREATE INDEX "contest_draws_receipts_pending_sport_event_id_idx" ON "contest_draws"("receipts_pending_sport_event_id") WHERE "receipts_pending_sport_event_id" IS NOT NULL;
+-- CreateIndex: a whole one, as every foreign key has (an event's delete finds its draws by it);
+-- it also serves the sweep's read of the draws still owing receipts.
+CREATE INDEX "contest_draws_receipts_pending_sport_event_id_idx" ON "contest_draws"("receipts_pending_sport_event_id");
 
 -- AddForeignKey
 ALTER TABLE "contest_draws" ADD CONSTRAINT "contest_draws_receipts_pending_sport_event_id_fkey" FOREIGN KEY ("receipts_pending_sport_event_id") REFERENCES "sport_events"("id") ON DELETE SET NULL ON UPDATE CASCADE;

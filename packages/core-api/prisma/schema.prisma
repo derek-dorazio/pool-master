@@ -1687,8 +1687,7 @@ model ContestDraw {
   receiptsPendingSportEvent SportEvent? @relation("ContestDrawReceiptsPending", fields: [receiptsPendingSportEventId], references: [id], onDelete: SetNull)
 
   @@index([drawnByUserId])
-  // The pending event's index is partial, contest_draws_receipts_pending_sport_event_id_idx
-  // (WHERE it is set), in its migration: Prisma cannot declare one (#1171).
+  @@index([receiptsPendingSportEventId])
   @@map("contest_draws")
 }
 
