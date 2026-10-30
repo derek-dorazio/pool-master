@@ -8,8 +8,8 @@ import {
   Button,
   ConfirmationModal,
   FormField,
-  Heading,
   Input,
+  PanelCard,
   Select,
   SortableList,
   Tile,
@@ -154,9 +154,11 @@ export function TierDefinitionsPanel({
     : 0;
 
   return (
-    <Tile>
-      <div className="flex items-center justify-between gap-3">
-        <Heading level={3} variant="card" size="base">Tiers</Heading>
+    <PanelCard
+      headingLevel={3}
+      padded
+      title="Tiers"
+      trailing={(
         <Button
           data-testid="root-admin-tier-def-add"
           disabled={locked || draft.length >= 12}
@@ -166,10 +168,10 @@ export function TierDefinitionsPanel({
         >
           Add tier
         </Button>
-      </div>
-
+      )}
+    >
       {saveMutation.isError && !deleteTarget ? (
-        <Alert className="mt-3" data-testid="root-admin-tier-def-error" tone="danger">
+        <Alert data-testid="root-admin-tier-def-error" tone="danger">
           {extractErrorMessage(saveMutation.error, {
             codeMessages: {
               SPORT_EVENT_TIERS_LOCKED:
@@ -182,7 +184,6 @@ export function TierDefinitionsPanel({
 
       <SortableList
         aria-label="Tier definitions"
-        className="mt-4"
         items={draft}
         onReorder={(orderedIds) =>
           setDraft((current) => reorderById(current, orderedIds))
@@ -241,7 +242,7 @@ export function TierDefinitionsPanel({
       />
 
       {dirty ? (
-        <div className="mt-4 flex justify-end gap-2">
+        <div className="flex justify-end gap-2">
           <Button
             data-testid="root-admin-tier-def-discard"
             onClick={() => setDraft(serverDraft)}
@@ -314,6 +315,6 @@ export function TierDefinitionsPanel({
           </FormField>
         ) : null}
       </ConfirmationModal>
-    </Tile>
+    </PanelCard>
   );
 }

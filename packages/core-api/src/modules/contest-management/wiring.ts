@@ -32,6 +32,7 @@ import { contestBracketGames, findBracketProblem } from '../scoring-families/hea
 import { ContestCutoffKind, cutoffTiming } from '../contests/entry-window';
 import { knockoutSeeds } from '../scoring-families/head-to-head/score-team';
 import { hasSportEventStarted } from '../events/operational-timing';
+import { BatchedRead, batchedByIds, batchedByKey, withReads } from '../../core/batched-read';
 import type { ContestOpeningReader } from './contest-opening';
 import { ContestManagementService, type ContestCreateSportEventReader } from './service';
 
@@ -142,14 +143,32 @@ export function createContestSportEventReader({ sportEvents, sports, field, valu
 
 /**
  * What asking whether a setup could open on an event needs (#1007): contest creation's reader,
- * plus the next game a squares contest could still be played on.
+ * plus the next game a squares contest could still be played on. Its reads are batched (#1316):
+ * the events asked about together, as an event page's offers are, are read together, each read
+ * once for all of them. Build one for each page read and let it go with it.
  */
 export function createContestOpeningReader(prisma: PrismaClient): ContestOpeningReader {
-  const matches = new PrismaSportEventMatchRepository(prisma);
+  const sportEvents = new PrismaSportEventRepository(prisma);
+  const sports = new PrismaSportRepository(prisma);
+  const field = new PrismaSportEventParticipantRepository(prisma);
+  const eventMatches = new PrismaSportEventMatchRepository(prisma);
+  const eventsById = batchedByIds((ids) => sportEvents.findByIds(ids), (event) => event.id);
+  const participantCounts = new BatchedRead<string, number>(async (sportEventIds) => {
+    const counts = await sportEvents.countParticipants([...new Set(sportEventIds)]);
+    return sportEventIds.map((sportEventId) => counts.get(sportEventId) ?? 0);
+  });
+  // The sport rows are a fixed list of a handful, so the first ask reads them all.
+  const sportRows = batchedByKey(() => sports.findAll(), (sport) => sport.sport);
+  const gamesOf = batchedByKey((sportEventIds) => eventMatches.findBySportEvents(sportEventIds), (game) => game.sportEventId);
+  const fieldOf = batchedByKey((sportEventIds) => field.findBySportEvents(sportEventIds), (row) => row.sportEventId);
+  const matches = withReads(eventMatches, { findBySportEvent: (sportEventId) => gamesOf.load(sportEventId) });
   const reader = createContestSportEventReader({
-    sportEvents: new PrismaSportEventRepository(prisma),
-    sports: new PrismaSportRepository(prisma),
-    field: new PrismaSportEventParticipantRepository(prisma),
+    sportEvents: withReads(sportEvents, {
+      findById: async (id) => (await eventsById.load([id])).at(0) ?? null,
+      countParticipants: async (sportEventIds) => new Map(await Promise.all(sportEventIds.map(async (sportEventId) => [sportEventId, await participantCounts.load(sportEventId)] as const))),
+    }),
+    sports: withReads(sports, { findBySport: async (sport) => (await sportRows.load(sport)).at(0) ?? null }),
+    field: withReads(field, { findBySportEvent: (sportEventId) => fieldOf.load(sportEventId) }),
     valuations: new PrismaSportEventParticipantValuationRepository(prisma),
     matches,
   });

@@ -803,6 +803,15 @@ describe('RootAdminSportEventResultsPage for a basketball tournament', () => {
       expect(listParticipantsMock).toHaveBeenCalledWith(expect.objectContaining({ query: { sportId: 'sport-basketball', status: 'ACTIVE', q: 'Xav' } }));
     });
 
+    it('titles the card Withdrawals, holding the withdrawn team and replacement pickers', async () => {
+      seedWithdrawals();
+      renderPage();
+
+      const card = await screen.findByRole('region', { name: 'Withdrawals' });
+      expect(card).toHaveAttribute('data-testid', 'root-admin-withdrawals');
+      expect(within(card).getByTestId('root-admin-withdrawal-select')).toBeVisible();
+    });
+
     it('leaves out a winner already placed in its next game, as the server refuses to replace it', async () => {
       seedWithdrawals([...firstRound, match({ id: 'm3', matchNumber: 3, roundNumber: 2, homeSportEventParticipantId: 'sep-1' })]);
       renderPage();

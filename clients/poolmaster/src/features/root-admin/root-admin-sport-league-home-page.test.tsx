@@ -160,6 +160,17 @@ describe('pool-master-qqs RootAdminSportLeagueHomePage', () => {
     expect(screen.getByText('Scottie Scheffler')).toBeInTheDocument();
   });
 
+  it('titles the roster card Roster with its Add button on it, and the bulk upload card Bulk-update rankings', async () => {
+    seed();
+    renderPage();
+
+    const roster = await screen.findByRole('region', { name: /^Roster/ });
+    expect(within(roster).getByRole('heading', { level: 3, name: 'Roster' })).toBeVisible();
+    expect(within(roster).getByRole('button', { name: /^Add / })).toBeVisible();
+    expect(await within(roster).findByText('Rory McIlroy')).toBeVisible();
+    expect(screen.getByRole('region', { name: 'Bulk-update rankings' })).toBeVisible();
+  });
+
   it('shows the tour\'s active state and counts in its heading, and its details with one Edit', async () => {
     seed();
     renderPage();

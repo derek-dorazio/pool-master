@@ -368,7 +368,7 @@ Rules:
   asks made in one turn of the event loop and answers them from one repository read across
   them, so the fan-out costs the same statements for 2 rows as for 20. The batched reads are
   built for one fan-out and dropped with it; `ContestService.livePositionsOfMany` (a cup's
-  projection) is the worked example.
+  projection) and the event pages' `createContestOpeningReader` are the worked examples.
 
 ---
 

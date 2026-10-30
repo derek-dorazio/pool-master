@@ -21,6 +21,12 @@ export class PrismaLeagueRepository implements LeagueRepository {
     });
   }
 
+  async findByIds(ids: readonly string[]): Promise<League[]> {
+    if (ids.length === 0) return [];
+    const rows = await this.prisma.league.findMany({ where: { id: { in: [...new Set(ids)] } } });
+    return rows.map(mapToLeague);
+  }
+
   async findByCode(code: string): Promise<League | null> {
     const row = await this.prisma.league.findFirst({
       where: { leagueCode: code },

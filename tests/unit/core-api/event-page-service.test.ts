@@ -89,22 +89,50 @@ function build(options: {
     findBySportSlug: (sport, slug) => Promise.resolve(pages.find((page) => page.sport === sport && page.slug === slug) ?? null),
     findActive: (sport) => Promise.resolve(pages.filter((page) => page.isActive && (sport === undefined || page.sport === sport))),
     findOffers: (ids) => Promise.resolve(offers.filter((each) => ids.includes(each.eventPageId))),
-    findEditionsNotOver: (sportLeagueId, seriesName) => Promise.resolve(options.editions?.[`${sportLeagueId}/${seriesName}`] ?? []),
+    findEditionsNotOver: (series) => {
+      reads.editions += 1;
+      return Promise.resolve(series.map(({ sportLeagueId, eventSeriesName }) => options.editions?.[`${sportLeagueId}/${eventSeriesName}`] ?? []));
+    },
   };
   const asked: Array<{ sportEventId: string; setup: ContestOpeningSetup }> = [];
+  const reads = { editions: 0, openings: 0 };
   const service = new EventPageService({
     pages: repo,
-    opening: (sportEventId, setup) => {
-      asked.push({ sportEventId, setup });
-      const opening = options.openings?.[sportEventId] ?? ContestOpening.OPEN;
-      const closesAt = opening === ContestOpening.CLOSED ? null : options.closesAt?.[sportEventId] ?? DEFAULT_CLOSES_AT;
-      return Promise.resolve({ opening, closesAt });
+    openings: () => {
+      reads.openings += 1;
+      return (sportEventId, setup) => {
+        asked.push({ sportEventId, setup });
+        const opening = options.openings?.[sportEventId] ?? ContestOpening.OPEN;
+        const closesAt = opening === ContestOpening.CLOSED ? null : options.closesAt?.[sportEventId] ?? DEFAULT_CLOSES_AT;
+        return Promise.resolve({ opening, closesAt });
+      };
     },
   });
-  return { service, asked };
+  return { service, asked, reads };
 }
 
 describe('EventPageService', () => {
+  it('reads every listed page\'s offers\' editions in one read, and asks their openings from one batch for the whole list (#1316)', async () => {
+    const second = { ...PAGE, id: 'page-2', slug: 'wild-card-weekend', displayOrder: 2 };
+    const { service, reads, asked } = build({
+      pages: [PAGE, second],
+      offers: [CLUTCH_CARD, { ...BRACKET, eventPageId: second.id }, SQUARES],
+      editions: {
+        'cw/Conference Championships': [edition('cw-2027', '2027-01-24T20:00:00.000Z')],
+        'nfl/NFL Playoffs': [edition('playoffs-2027', '2027-01-09T18:00:00.000Z')],
+      },
+    });
+
+    const views = await service.listPages(Sport.AMERICAN_FOOTBALL);
+
+    expect(views.map((view) => [view.page.id, view.offers.map((each) => each.offer.id)])).toEqual([
+      [PAGE.id, ['clutch-card', 'squares']],
+      [second.id, ['bracket']],
+    ]);
+    expect(reads).toEqual({ editions: 1, openings: 1 });
+    expect(asked).toHaveLength(3);
+  });
+
   it('shows each offer with its series\' next edition and whether it opens now, in order', async () => {
     const { service } = build({
       editions: {

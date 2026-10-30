@@ -70,6 +70,13 @@ describe('pool-master-za4 EventFieldGridCard', () => {
     mockLogger.child.mockReturnValue(mockLogger);
   });
 
+  it('titles the card with the field size and points to the Tiers page on its first line', () => {
+    renderCard({ entries: [entry(), entry({ id: 'sep-2', participantId: 'p-2' })] });
+
+    const card = screen.getByRole('region', { name: 'Field (2)' });
+    expect(card).toContainElement(screen.getByTestId('root-admin-event-field-tiers-link'));
+  });
+
   it('pool-master-za4 renders an empty (not "null") input for a golfer with no derived price', () => {
     renderCard({ entries: [entry({ valuation: null })] });
     const priceInput = screen.getByTestId('root-admin-event-field-price-sep-1');

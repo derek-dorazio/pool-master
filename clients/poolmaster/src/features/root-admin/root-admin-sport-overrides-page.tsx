@@ -1,6 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { getIngestionSchedule, resetSportIngestionOverride, setSportIngestionOverride } from '@/lib/api';
+import { useEffect, useState } from 'react';
+import { resetSportIngestionOverride, setSportIngestionOverride } from '@/lib/api';
 import {
   Button,
   Checkbox,
@@ -22,6 +21,7 @@ import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { throwApiError, extractErrorMessage } from '@/lib/errors';
 import { ManagePageIntro } from './manage-page-intro';
+import { useIngestionScheduleQuery } from './use-ingestion-schedule-query';
 
 export function RootAdminSportOverridesPage() {
   const [overrideSport, setOverrideSport] = useState<SyncSport>('GOLF');
@@ -31,21 +31,8 @@ export function RootAdminSportOverridesPage() {
     Record<IngestionPolicyKey, boolean> | null
   >(null);
 
-  const ingestionConfigQuery = useQuery({
-    queryKey: QueryKeys.rootAdmin.ingestionConfig,
-    queryFn: async (): Promise<IngestionScheduleConfig> => {
-      const response = await getIngestionSchedule();
-      if (!response.data) {
-        throwApiError(response.error, 'Ingestion schedule response is missing data.');
-      }
-      return response.data;
-    },
-    retry: false,
-  });
-  const configSource = useMemo(
-    () => ingestionConfigQuery.data ? cloneIngestionConfig(ingestionConfigQuery.data) : null,
-    [ingestionConfigQuery.data],
-  );
+  const ingestionConfigQuery = useIngestionScheduleQuery();
+  const configSource = ingestionConfigQuery.data ?? null;
   // Keep the loading state visible during the brief query-to-local-draft seeding window.
   const isDraftLoading =
     ingestionConfigQuery.isLoading
@@ -59,6 +46,13 @@ export function RootAdminSportOverridesPage() {
     setIngestionDraft(configSource);
     setOverrideDraft(buildSportOverrideDraft(configSource, overrideSport));
   }, [configSource, overrideSport]);
+
+  // An override's save and reset both answer with the whole schedule, which the drafts start from.
+  const takeSavedConfig = (saved: IngestionScheduleConfig) => {
+    const nextDraft = cloneIngestionConfig(saved);
+    setIngestionDraft(nextDraft);
+    setOverrideDraft(buildSportOverrideDraft(nextDraft, overrideSport));
+  };
 
   const sportOverrideMutation = useInvalidatingMutation({
     mutationFn: async (input: {
@@ -80,11 +74,7 @@ export function RootAdminSportOverridesPage() {
 
       return response.data;
     },
-    onSuccess: (data) => {
-      const nextDraft = cloneIngestionConfig(data);
-      setIngestionDraft(nextDraft);
-      setOverrideDraft(buildSportOverrideDraft(nextDraft, overrideSport));
-    },
+    onSuccess: takeSavedConfig,
     invalidates: [QueryKeys.rootAdmin.ingestionConfig, QueryKeys.rootAdmin.settings],
   });
 
@@ -100,11 +90,7 @@ export function RootAdminSportOverridesPage() {
 
       return response.data;
     },
-    onSuccess: (data) => {
-      const nextDraft = cloneIngestionConfig(data);
-      setIngestionDraft(nextDraft);
-      setOverrideDraft(buildSportOverrideDraft(nextDraft, overrideSport));
-    },
+    onSuccess: takeSavedConfig,
     invalidates: [QueryKeys.rootAdmin.ingestionConfig, QueryKeys.rootAdmin.settings],
   });
 

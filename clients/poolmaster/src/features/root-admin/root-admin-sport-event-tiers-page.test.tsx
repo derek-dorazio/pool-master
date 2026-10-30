@@ -174,6 +174,18 @@ describe('pool-master-dyb RootAdminSportEventTiersPage', () => {
     expect(screen.getByTestId('root-admin-tier-def-row-tier-1')).toBeInTheDocument();
   });
 
+  it('titles the board Tier assignments and the definitions Tiers, with Add tier on the Tiers card', async () => {
+    seed();
+    renderPage();
+
+    const board = await screen.findByRole('region', { name: 'Tier assignments' });
+    expect(board).toContainElement(screen.getByTestId('root-admin-tier-column-tier-1'));
+    const tiers = screen.getByRole('region', { name: 'Tiers' });
+    expect(within(tiers).getByRole('heading', { level: 3, name: 'Tiers' })).toBeVisible();
+    expect(tiers).toContainElement(screen.getByTestId('root-admin-tier-def-add'));
+    expect(tiers).toContainElement(screen.getByTestId('root-admin-tier-def-row-tier-1'));
+  });
+
   it('pool-master-dyb reassigns a golfer via the "Move to tier" select and saves the full desired state', async () => {
     seed();
     replaceEventTierAssignmentsMock.mockResolvedValue({ data: null });

@@ -127,7 +127,7 @@ describe('Event page offers', () => {
 });
 
 describe('PrismaEventPageRepository.findEditionsNotOver', () => {
-  it('reads the edition under way first, then the rest soonest first, leaving out finished ones', async () => {
+  it('reads each series asked for in one read, in the order asked: the edition under way first, then the rest soonest first, leaving out finished ones and other series (#1316)', async () => {
     const prisma = getPrisma();
     const edition = await freshEventEdition(prisma, { name: 'Event page editions' });
     const series = await prisma.eventSeries.findUniqueOrThrow({ where: { id: edition.eventSeriesId } });
@@ -143,9 +143,26 @@ describe('PrismaEventPageRepository.findEditionsNotOver', () => {
     await make(2026, SportEventStatus.IN_PROGRESS, '2026-04-10T12:00:00.000Z');
     await make(2029, SportEventStatus.CANCELLED, '2029-04-10T12:00:00.000Z');
 
-    const editions = await new PrismaEventPageRepository(getAppPrisma()).findEditionsNotOver(series.sportLeagueId, series.name);
+    const other = await prisma.eventSeries.findUniqueOrThrow({ where: { id: (await freshEventEdition(prisma, { name: 'Event page other series' })).eventSeriesId } });
+    await prisma.sportEvent.create({
+      data: {
+        eventSeriesId: other.id, eventYear: 2027, status: SportEventStatus.SCHEDULED, startDate: new Date('2027-01-10T12:00:00.000Z'),
+        externalId: `event-page-${randomUUID()}`, providerId: 'integration-test', sport: Sport.GOLF, name: `${other.name} 2027`,
+      },
+    });
+    const unasked = { sportLeagueId: series.sportLeagueId, eventSeriesName: 'No such series' };
 
-    expect(editions.map((each) => each.eventYear)).toEqual([2026, 2027, 2028]);
+    const editions = await new PrismaEventPageRepository(getAppPrisma()).findEditionsNotOver([
+      { sportLeagueId: other.sportLeagueId, eventSeriesName: other.name },
+      { sportLeagueId: series.sportLeagueId, eventSeriesName: series.name },
+      unasked,
+    ]);
+
+    expect(editions.map((each) => each.map((edition) => edition.name))).toEqual([
+      [`${other.name} 2027`],
+      [`${series.name} 2026`, `${series.name} 2027`, `${series.name} 2028`],
+      [],
+    ]);
   });
 });
 

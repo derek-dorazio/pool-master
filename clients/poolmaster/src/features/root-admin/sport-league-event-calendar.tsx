@@ -1,64 +1,16 @@
 import type { SportNoun } from '@poolmaster/shared/domain';
-import { createColumnHelper } from '@tanstack/react-table';
 import { useMemo } from 'react';
-import { DataGrid, StatusBadge, formatDateTimeDisplay, useDisplayPreferences, type DisplayPreferences } from '@/features/shared/ui';
+import { DataGrid, useDisplayPreferences, type DisplayPreferences } from '@/features/shared/ui';
 import type { SportEventDto } from '@/lib/api';
-import {
-  deriveSportEventReadiness,
-  formatSportEventStatus,
-  sportEventStatusTone,
-} from './sport-admin-utils';
 import { buildSportEventPath, capitalize } from './manage-navigation';
+import { sportEventNameColumn, sportEventScheduleColumns } from './sport-event-columns';
 import { useManagedSport } from './use-managed-sport';
-
-const columnHelper = createColumnHelper<SportEventDto>();
 
 /** The calendar's columns, the first named for the sport's event ("Tournament", "Race"). */
 const buildCalendarColumns = (eventLabel: string, displayPreferences: DisplayPreferences) => [
-  columnHelper.accessor('name', {
-    header: eventLabel,
-    cell: ({ row }) => (
-      <div>
-        <div className="font-medium text-foreground">{row.original.name}</div>
-        <div className="mt-1 text-xs text-muted-foreground">
-          {row.original.venue || 'Venue not set'}
-        </div>
-      </div>
-    ),
-  }),
-  columnHelper.accessor('startDate', {
-    header: 'Starts',
-    cell: ({ getValue }) => formatDateTimeDisplay(getValue(), displayPreferences),
-  }),
-  columnHelper.accessor('status', {
-    header: 'Status',
-    cell: ({ getValue }) => (
-      <StatusBadge tone={sportEventStatusTone(getValue())}>
-        {formatSportEventStatus(getValue())}
-      </StatusBadge>
-    ),
-  }),
-  columnHelper.display({
-    id: 'readiness',
-    header: 'Readiness',
-    cell: ({ row }) => {
-      const readiness = deriveSportEventReadiness(row.original);
-      return (
-        <div>
-          <StatusBadge tone={readiness.tone}>{readiness.label}</StatusBadge>
-          {readiness.reasons.length ? (
-            <div className="mt-1 text-xs text-muted-foreground">
-              {readiness.reasons.join(', ')}
-            </div>
-          ) : null}
-        </div>
-      );
-    },
-    enableColumnFilter: false,
-    enableSorting: false,
-  }),
+  sportEventNameColumn(eventLabel),
+  ...sportEventScheduleColumns(displayPreferences),
 ];
-
 /**
  * plans/124 §6.3, reshaped by plans/147 — the read-only calendar of one tour's tournaments
  * in one event year (earliest first), each linking to its Tournament Home.

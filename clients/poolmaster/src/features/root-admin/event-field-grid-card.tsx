@@ -13,12 +13,11 @@ import {
   Button,
   Checkbox,
   DataGrid,
-  Heading,
   Input,
   LinkButton,
+  PanelCard,
   Select,
   StatusBadge,
-  Tile,
 } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
@@ -257,52 +256,47 @@ export function EventFieldGridCard({
   const { event, participant } = getSportDefinition(sport).vocabulary;
 
   return (
-    <Tile>
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <Heading level={3} variant="card" size="base">
-            Field ({entries.length})
-          </Heading>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Tier assignment and pricing per tier are managed on the{' '}
-            <LinkButton
-              data-testid="root-admin-event-field-tiers-link"
-              size="sm"
-              to={`${buildSportEventPath(sport, eventId)}/tiers`}
-              variant="secondary"
-            >
-              Tiers page
-            </LinkButton>
-            .
-          </p>
-        </div>
-      </div>
+    <PanelCard
+      headingLevel={3}
+      padded
+      title={`Field (${entries.length})`}
+    >
+      <p className="text-sm text-muted-foreground">
+        Tier assignment and pricing per tier are managed on the{' '}
+        <LinkButton
+          data-testid="root-admin-event-field-tiers-link"
+          size="sm"
+          to={`${buildSportEventPath(sport, eventId)}/tiers`}
+          variant="secondary"
+        >
+          Tiers page
+        </LinkButton>
+        .
+      </p>
 
       {fieldError ? (
-        <Alert className="mt-3" data-testid="root-admin-event-field-load-error" tone="danger">
+        <Alert data-testid="root-admin-event-field-load-error" tone="danger">
           {fieldError}
         </Alert>
       ) : null}
 
-      <div className="mt-4">
-        <DataGrid
-          columns={fieldColumns}
-          data={entries}
-          emptyMessage={
-            fieldLoading
-              ? 'Loading field...'
-              : `No ${participant.many} in the field yet. Seed from the ${sportLeagueNoun.one} roster or add participants.`
-          }
-          getRowId={(entry) => entry.id}
-          meta={meta}
-          rowTestId={(entry) => `root-admin-event-field-row-${entry.id}`}
-          tableTestId="root-admin-event-field-table"
-        />
-      </div>
+      <DataGrid
+        columns={fieldColumns}
+        data={entries}
+        emptyMessage={
+          fieldLoading
+            ? 'Loading field...'
+            : `No ${participant.many} in the field yet. Seed from the ${sportLeagueNoun.one} roster or add participants.`
+        }
+        getRowId={(entry) => entry.id}
+        meta={meta}
+        rowTestId={(entry) => `root-admin-event-field-row-${entry.id}`}
+        tableTestId="root-admin-event-field-table"
+      />
 
       {patches.length > 0 || invalidCount > 0 ? (
         <div
-          className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-muted/40 px-4 py-3"
+          className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-muted/40 px-4 py-3"
           data-testid="root-admin-event-field-dirty-bar"
         >
           <span className="text-sm text-muted-foreground">
@@ -334,7 +328,7 @@ export function EventFieldGridCard({
       ) : null}
 
       {saveMutation.isError ? (
-        <Alert className="mt-3" data-testid="root-admin-event-field-save-error" tone="danger">
+        <Alert data-testid="root-admin-event-field-save-error" tone="danger">
           {extractErrorMessage(saveMutation.error, {
             codeMessages: {
               SPORT_EVENT_TIERS_LOCKED: `This ${event.one} has been released for contests, so its prices are locked.`,
@@ -343,6 +337,6 @@ export function EventFieldGridCard({
           })}
         </Alert>
       ) : null}
-    </Tile>
+    </PanelCard>
   );
 }

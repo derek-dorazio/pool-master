@@ -1,8 +1,9 @@
-import { Check, Copy } from "lucide-react";
+import { Check } from "lucide-react";
 import type { ReactNode } from "react";
 import { Button } from "./button";
 import { cn } from "./class-names";
 import { ConfirmDialog } from "./confirm-dialog";
+import { CopyButton } from "./copy-button";
 import { DialogActions } from "./dialog-actions";
 import { FormField, Input } from "./form-field";
 import { Modal } from "./modal";
@@ -327,16 +328,17 @@ export type ReadOnlyDetailModalProps = BaseModalTemplateProps & {
     value: ReactNode;
   }>;
   detailContent: ReactNode;
-  onCopy?: () => void;
+  /** What Copy puts on the clipboard; without it the modal has no Copy button. */
+  copyText?: string;
 };
 
 export function ReadOnlyDetailModal({
   copyLabel = "Copy details",
+  copyText,
   description,
   detailContent,
   details,
   onCancel,
-  onCopy,
   onOpenChange,
   open,
   testId,
@@ -347,12 +349,7 @@ export function ReadOnlyDetailModal({
       description={description}
       footer={
         <>
-          {onCopy ? (
-            <Button onClick={onCopy} type="button" variant="secondary">
-              <Copy aria-hidden size={16} />
-              {copyLabel}
-            </Button>
-          ) : null}
+          {copyText === undefined ? null : <CopyButton label={copyLabel} text={copyText} />}
           <Button onClick={onCancel} type="button">
             Close
           </Button>

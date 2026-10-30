@@ -87,6 +87,24 @@ describe('MemberJoinedNotices', () => {
     expect(email.textBody).toContain('Members and owners: https://app.example.test/league/OFFICE/admin/teams');
   });
 
+  it('reads every busy league, and whether each join was told at once, in one read each, however many leagues were busy (#1255)', async () => {
+    const other = world.addLeague({ name: 'Golf Pool', leagueCode: 'GOLF' });
+    world.addMember({ league: other, user: commissioner, role: LeagueRole.COMMISSIONER });
+    for (const [index, name] of ['Ann', 'Ben', 'Cal', 'Dee'].entries()) {
+      await join(name, new Date(THURSDAY_MORNING.getTime() + index * MINUTE));
+      await join(`${name}2`, new Date(THURSDAY_MORNING.getTime() + index * MINUTE), { inLeague: other });
+    }
+    const leagueReads = [jest.spyOn(world.leagues, 'findByIds'), jest.spyOn(world.leagues, 'findById')];
+    const toldReads = [jest.spyOn(outbox, 'findLeagueIdsRecordedByPrefix'), jest.spyOn(outbox, 'findLeagueIdsRecorded')];
+
+    await notices().service.queueDue(FRIDAY_OVERNIGHT);
+
+    expect(new Set(nextDayEmails().map((row) => row.subject))).toEqual(new Set(['1 more joined Golf Pool', '1 more joined Office Pool']));
+    expect(leagueReads.map((read) => read.mock.calls.length)).toEqual([1, 0]);
+    // The day's next-day emails are read once too, before the joins.
+    expect(toldReads.map((read) => read.mock.calls.length)).toEqual([1, 1]);
+  });
+
   it('sends the next-day email once, however many sweeps run that day', async () => {
     for (const [index, name] of ['Ann', 'Ben', 'Cal', 'Dee'].entries()) {
       await join(name, new Date(THURSDAY_MORNING.getTime() + index * MINUTE));

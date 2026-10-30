@@ -12,21 +12,8 @@
  * let them go with it: they remember nothing between batches.
  */
 import { ContestEntryStatus, contestEntryEventStatus } from '@poolmaster/shared/domain';
-import { BatchedRead, batchedByKey } from '../../core/batched-read';
+import { BatchedRead, batchedByIds, batchedByKey, withReads } from '../../core/batched-read';
 import type { ContestServiceDeps } from './service';
-
-/** `target` with `reads` in place of its own methods of those names, and every other method its own. */
-function withReads<Port extends object>(target: Port, reads: Partial<Port>): Port {
-  return Object.assign(Object.create(target) as Port, reads);
-}
-
-/** A batched read of rows by a list of ids each: one read of every id asked for, each asker given its own ids' rows in its order. */
-function batchedByIds<Row>(readMany: (ids: readonly string[]) => Promise<readonly Row[]>, idOf: (row: Row) => string): BatchedRead<readonly string[], Row[]> {
-  return new BatchedRead(async (asks) => {
-    const byId = new Map<string, Row>((await readMany([...new Set(asks.flat())])).map((row) => [idOf(row), row]));
-    return asks.map((ids) => [...new Set(ids)].map((id) => byId.get(id)).filter((row): row is Row => row !== undefined));
-  });
-}
 
 /**
  * A batched read of rows by entry and event: one read across every entry and event asked for,

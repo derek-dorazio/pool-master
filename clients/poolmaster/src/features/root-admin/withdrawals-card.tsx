@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { SportVocabulary } from '@poolmaster/shared/domain';
 import { replaceEventParticipant } from '@/lib/api';
 import type { SportEventDto, SportEventMatchDto, SportEventParticipantDto } from '@/lib/api';
-import { Button, Heading, InlineError, Input, Select, Tile } from '@/features/shared/ui';
+import { Button, InlineError, Input, PanelCard, Select } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -71,17 +71,16 @@ export function WithdrawalsCard({
   }
 
   return (
-    <Tile data-testid="root-admin-withdrawals">
-      <Heading level={3} variant="card" size="base">Withdrawals</Heading>
-      <p className="mt-1 text-sm text-muted-foreground">
+    <PanelCard headingLevel={3} padded testId="root-admin-withdrawals" title="Withdrawals">
+      <p className="text-sm text-muted-foreground">
         {`If a ${participant.one} withdraws before playing, name who takes the place. Picks of the withdrawn ${participant.one} stay, and score as a first-round loss. Once their ${noun.one} starts, enter the withdrawal as a walkover instead.`}
       </p>
       {candidatesQuery.isError ? (
-        <InlineError className="mt-3">
+        <InlineError>
           {extractErrorMessage(candidatesQuery.error, { fallback: `Couldn't load the ${participant.many}. Try again in a moment.` })}
         </InlineError>
       ) : (
-        <div className="mt-4 flex flex-wrap items-end gap-3">
+        <div className="flex flex-wrap items-end gap-3">
           <label className="flex flex-col gap-1 text-xs text-muted-foreground">
             {`Withdrawn ${participant.one}`}
             <Select data-testid="root-admin-withdrawal-select" onChange={(change) => setWithdrawnId(change.target.value)} value={withdrawnId}>
@@ -131,7 +130,7 @@ export function WithdrawalsCard({
           ) : null}
         </div>
       )}
-      <p className="mt-3 text-xs text-muted-foreground">The replacement joins unseeded, last in the last tier, at the lowest price.</p>
-    </Tile>
+      <p className="text-xs text-muted-foreground">The replacement joins unseeded, last in the last tier, at the lowest price.</p>
+    </PanelCard>
   );
 }

@@ -57,3 +57,16 @@ export function batchedByKey<Row>(
     return keys.map((key) => [...(byKey.get(key) ?? [])]);
   });
 }
+
+/** `target` with `reads` in place of its own methods of those names, and every other method its own. */
+export function withReads<Port extends object>(target: Port, reads: Partial<Port>): Port {
+  return Object.assign(Object.create(target) as Port, reads);
+}
+
+/** A batched read of rows by a list of ids each: one read of every id asked for, each asker given its own ids' rows in its order. */
+export function batchedByIds<Row>(readMany: (ids: readonly string[]) => Promise<readonly Row[]>, idOf: (row: Row) => string): BatchedRead<readonly string[], Row[]> {
+  return new BatchedRead(async (asks) => {
+    const byId = new Map<string, Row>((await readMany([...new Set(asks.flat())])).map((row) => [idOf(row), row]));
+    return asks.map((ids) => [...new Set(ids)].map((id) => byId.get(id)).filter((row): row is Row => row !== undefined));
+  });
+}

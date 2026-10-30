@@ -15,9 +15,10 @@ import {
   Button,
   Checkbox,
   DateDisplay,
-  Heading,
   InlineError,
   Input,
+  PanelCard,
+  PanelList,
   Select,
   SettingsSectionHeader,
   SimpleTable,
@@ -213,9 +214,8 @@ function FeatureList({ form }: { form: UseFormReturn<PlanSettingsDraft> }) {
         title="Features"
       />
       {Object.values(PlanFeatureGroup).map((featureGroup) => (
-        <Tile data-testid={`root-admin-plans-features-${featureGroup}`} key={featureGroup} padding="none" radius="xl">
-          <Heading level={3} variant="card" size="sm" className="px-4 pt-4">{PLAN_FEATURE_GROUP_LABEL[featureGroup]}</Heading>
-          <ul className="divide-y divide-border">
+        <PanelCard headingLevel={3} key={featureGroup} testId={`root-admin-plans-features-${featureGroup}`} title={PLAN_FEATURE_GROUP_LABEL[featureGroup]}>
+          <PanelList>
             {ALWAYS_INCLUDED[featureGroup].map((label) => (
               <li className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 text-sm" key={label}>
                 <span className="text-foreground">{label}</span>
@@ -239,8 +239,8 @@ function FeatureList({ form }: { form: UseFormReturn<PlanSettingsDraft> }) {
                 </Select>
               </li>
             ))}
-          </ul>
-        </Tile>
+          </PanelList>
+        </PanelCard>
       ))}
     </section>
   );

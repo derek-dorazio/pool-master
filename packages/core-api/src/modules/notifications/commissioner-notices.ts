@@ -72,7 +72,7 @@ import {
 import type { DueNotifications } from '../events/event-lifecycle-scheduler';
 import type { EmailConfig } from '@poolmaster/shared/dto';
 import { contestClosesAt, type ContestSummaryDeps } from './contest-summary';
-import { activeLeagueMembersWithRoles, type LeagueMemberDeps } from './league-members';
+import { activeLeagueMembersByLeague, type LeagueMemberDeps } from './league-members';
 
 const HOUR_MS = 60 * 60_000;
 const DAY_MS = 24 * HOUR_MS;
@@ -96,7 +96,7 @@ const UPCOMING_STATUSES: readonly SportEventStatus[] = [SportEventStatus.DRAFT, 
 
 export interface CommissionerNoticeDeps extends LeagueMemberDeps, Pick<ContestSummaryDeps, 'matches'> {
   sportEvents: Pick<SportEventRepository, 'findAll' | 'findByIds' | 'countParticipants'>;
-  contests: Pick<ContestRepository, 'findBySportEvent' | 'findByStatuses'>;
+  contests: Pick<ContestRepository, 'findBySportEvent' | 'findBySportEvents' | 'findByStatuses'>;
   /** A draft contest's rules, for when its picks close. */
   configurations: Pick<ContestConfigurationRepository, 'findByContest'>;
   /** The default contest setups offered on an event. */
@@ -109,9 +109,18 @@ export interface CommissionerNoticeDeps extends LeagueMemberDeps, Pick<ContestSu
   eventPages: Pick<EventPageService, 'pagesByEvent'>;
   /** Last year's contests' winners. */
   finalStandings: Pick<ContestService, 'finalStandingsOf'>;
-  email: Pick<EmailService, 'send' | 'leaguesRecorded' | 'hasRecordedForContest'>;
+  email: Pick<EmailService, 'send' | 'leaguesRecorded' | 'leaguesRecordedAbout' | 'hasRecordedForContest'>;
   appBaseUrl: string;
   logger?: FastifyBaseLogger;
+}
+
+/** By event, the leagues with one of `contests` on it. */
+function leagueIdsByEvent(contests: readonly Contest[]): Map<string, Set<string>> {
+  const byEvent = new Map<string, Set<string>>();
+  for (const contest of contests) {
+    for (const sportEventId of contest.sportEventIds) byEvent.set(sportEventId, (byEvent.get(sportEventId) ?? new Set<string>()).add(contest.leagueId));
+  }
+  return byEvent;
 }
 
 /** Which event email is due: C1 while the event is more than 7 days out, then C2 once released. */
@@ -142,32 +151,49 @@ function digestMondayOf(now: Date, digestHour: number): string | null {
   return `${part('year')}-${part('month')}-${part('day')}`;
 }
 
+/** Each league's commissioners, read for many leagues at once and remembered for the run (#1255). */
+class LeagueCommissioners {
+  private readonly known = new Map<string, Promise<User[]>>();
+
+  constructor(private readonly deps: LeagueMemberDeps) {}
+
+  /** Reads the commissioners of every league named that is not read yet, in one read of each kind. */
+  async load(leagueIds: readonly string[]): Promise<void> {
+    const missing = [...new Set(leagueIds)].filter((leagueId) => !this.known.has(leagueId));
+    if (missing.length === 0) return;
+    const read = activeLeagueMembersByLeague(this.deps, missing);
+    for (const leagueId of missing) {
+      this.known.set(leagueId, read.then((byLeague) => (byLeague.get(leagueId) ?? [])
+        .filter(({ role }) => role === LeagueRole.COMMISSIONER)
+        .map(({ user }) => user)));
+    }
+    await read;
+  }
+
+  async of(leagueId: string): Promise<User[]> {
+    await this.load([leagueId]);
+    return await this.known.get(leagueId) ?? [];
+  }
+}
+
 export class CommissionerNotices implements DueNotifications {
   constructor(private readonly deps: CommissionerNoticeDeps) {}
 
   async queueDue(now: Date): Promise<void> {
-    const commissioners = new Map<string, Promise<User[]>>();
-    const commissionersOf = (leagueId: string): Promise<User[]> => {
-      const known = commissioners.get(leagueId);
-      if (known) return known;
-      const found = activeLeagueMembersWithRoles(this.deps, leagueId)
-        .then((members) => members.filter(({ role }) => role === LeagueRole.COMMISSIONER).map(({ user }) => user));
-      commissioners.set(leagueId, found);
-      return found;
-    };
+    const commissioners = new LeagueCommissioners(this.deps);
     const firstWeeks = new Map<string, Promise<string | undefined>>();
     // Read once a run, and only when an email is due.
     let pages: Promise<Map<string, EventPage>> | undefined;
     const eventPages = (): Promise<Map<string, EventPage>> => (pages ??= this.deps.eventPages.pagesByEvent());
-    await this.queueEventNotices(now, commissionersOf, firstWeeks, eventPages);
-    await this.queueWeeklyDigests(now, commissionersOf, firstWeeks, eventPages);
-    await this.queueContestsNotOpen(now, commissionersOf);
+    await this.queueEventNotices(now, commissioners, firstWeeks, eventPages);
+    await this.queueWeeklyDigests(now, commissioners, firstWeeks, eventPages);
+    await this.queueContestsNotOpen(now, commissioners);
   }
 
   /** C1 and C2, for every event starting within 10 days. */
   private async queueEventNotices(
     now: Date,
-    commissionersOf: (leagueId: string) => Promise<User[]>,
+    commissioners: LeagueCommissioners,
     firstWeeks: Map<string, Promise<string | undefined>>,
     eventPages: () => Promise<Map<string, EventPage>>,
   ): Promise<void> {
@@ -175,34 +201,61 @@ export class CommissionerNotices implements DueNotifications {
       startsFrom: now,
       startsBefore: new Date(now.getTime() + COMING_UP_MS),
     });
-    let leagues: League[] | undefined;
-    for (const sportEvent of sportEvents) {
+    const due = sportEvents.flatMap((sportEvent) => {
       const templateKey = dueEventNotice(sportEvent, now);
-      if (templateKey === null) continue;
+      return templateKey === null ? [] : [{ sportEvent, templateKey }];
+    });
+    if (due.length === 0) return;
+    // The leagues told of each due event, and the leagues with a contest on each event ready for
+    // contests, are read once for the run, not once per event (#1255).
+    const readyIds = due.filter(({ templateKey }) => templateKey === 'EVENT_READY_FOR_CONTESTS').map(({ sportEvent }) => sportEvent.id);
+    const [toldComingUp, toldReady] = await Promise.all([
+      this.deps.email.leaguesRecordedAbout('EVENT_COMING_UP', due.filter(({ templateKey }) => templateKey === 'EVENT_COMING_UP').map(({ sportEvent }) => sportEvent.id)),
+      this.deps.email.leaguesRecordedAbout('EVENT_READY_FOR_CONTESTS', readyIds),
+    ]);
+    const leagues = (await this.deps.leagues.findActive())
+      .filter((league) => league.eventEmailDelivery === EventEmailDelivery.PER_EVENT);
+    if (leagues.length === 0) return;
+    // Read at the first ready event a league is still to be told of, for every ready event.
+    let leagueIdsWithContest: Promise<Map<string, Set<string>>> | undefined;
+    const sends: Array<{ sportEvent: SportEvent; templateKey: EventNoticeKey; untold: League[] }> = [];
+    for (const { sportEvent, templateKey } of due) {
       try {
         if (!await this.isToldOf(sportEvent, firstWeeks)) continue;
-        const told = await this.deps.email.leaguesRecorded(templateKey, sportEvent.id);
-        leagues ??= (await this.deps.leagues.findActive())
-          .filter((league) => league.eventEmailDelivery === EventEmailDelivery.PER_EVENT);
+        const told = (templateKey === 'EVENT_COMING_UP' ? toldComingUp : toldReady).get(sportEvent.id) ?? new Set<string>();
         let untold = leagues.filter((league) => !told.has(league.id) && !league.mutedSportLeagueIds.includes(sportEvent.sportLeagueId));
-        if (templateKey === 'EVENT_READY_FOR_CONTESTS') {
-          // poolmaster-allow-query-in-loop: #1255
-          const withContest = new Set((await this.deps.contests.findBySportEvent(sportEvent.id)).map((contest) => contest.leagueId));
-          untold = untold.filter((league) => !withContest.has(league.id));
+        if (templateKey === 'EVENT_READY_FOR_CONTESTS' && untold.length > 0) {
+          leagueIdsWithContest ??= this.deps.contests.findBySportEvents(readyIds).then(leagueIdsByEvent);
+          const withContest = (await leagueIdsWithContest).get(sportEvent.id);
+          untold = untold.filter((league) => !withContest?.has(league.id));
         }
-        if (untold.length === 0) continue;
-        if (templateKey === 'EVENT_COMING_UP') {
-          await this.sendComingUp(sportEvent, untold, commissionersOf, await eventPages());
-        } else {
-          await this.sendReadyForContests(sportEvent, untold, commissionersOf, await eventPages());
-        }
+        if (untold.length > 0) sends.push({ sportEvent, templateKey, untold });
       } catch (error) {
-        this.deps.logger?.error({
-          action: 'email.commissionerEventNotices.failed',
-          data: { sportEventId: sportEvent.id, templateKey, error: error instanceof Error ? error.message : String(error) },
-        }, 'Failed to queue commissioner emails for an event');
+        this.failedEventNotices(sportEvent, templateKey, error);
       }
     }
+    if (sends.length === 0) return;
+    // The commissioners of every league still to be told of any event are read once for the run,
+    // and not at all once every league has been told (#1255).
+    await commissioners.load(sends.flatMap(({ untold }) => untold.map((league) => league.id)));
+    for (const { sportEvent, templateKey, untold } of sends) {
+      try {
+        if (templateKey === 'EVENT_COMING_UP') {
+          await this.sendComingUp(sportEvent, untold, commissioners, await eventPages());
+        } else {
+          await this.sendReadyForContests(sportEvent, untold, commissioners, await eventPages());
+        }
+      } catch (error) {
+        this.failedEventNotices(sportEvent, templateKey, error);
+      }
+    }
+  }
+
+  private failedEventNotices(sportEvent: SportEvent, templateKey: EventNoticeKey, error: unknown): void {
+    this.deps.logger?.error({
+      action: 'email.commissionerEventNotices.failed',
+      data: { sportEventId: sportEvent.id, templateKey, error: error instanceof Error ? error.message : String(error) },
+    }, 'Failed to queue commissioner emails for an event');
   }
 
   /** False for a later week of a season whose events are weeks: only its first week is told of. */
@@ -217,7 +270,7 @@ export class CommissionerNotices implements DueNotifications {
   /** The digest, for each league that chose it and hasn't had this week's, once Monday's digest hour has come. */
   private async queueWeeklyDigests(
     now: Date,
-    commissionersOf: (leagueId: string) => Promise<User[]>,
+    commissioners: LeagueCommissioners,
     firstWeeks: Map<string, Promise<string | undefined>>,
     eventPages: () => Promise<Map<string, EventPage>>,
   ): Promise<void> {
@@ -235,17 +288,15 @@ export class CommissionerNotices implements DueNotifications {
       }
     }
     upcoming.sort((left, right) => left.startDate.getTime() - right.startDate.getTime());
-    const contestLeagues = new Map<string, Set<string>>();
-    for (const sportEvent of upcoming) {
-      // poolmaster-allow-query-in-loop: #1255
-      contestLeagues.set(sportEvent.id, new Set((await this.deps.contests.findBySportEvent(sportEvent.id)).map((contest) => contest.leagueId)));
-    }
+    // Every upcoming event's contests in one read, not one per event (#1255).
+    const contestLeagues = leagueIdsByEvent(upcoming.length === 0 ? [] : await this.deps.contests.findBySportEvents(upcoming.map((sportEvent) => sportEvent.id)));
     const sportLeagueIds = [...new Set(upcoming.map((sportEvent) => sportEvent.sportLeagueId))];
     const sportLeagueNames = new Map((sportLeagueIds.length === 0 ? [] : await this.deps.sportLeagues.findByIds(sportLeagueIds))
       .map((sportLeague) => [sportLeague.id, sportLeague.name]));
 
     const pages = await eventPages();
     const nextWeekFrom = now.getTime() + DIGEST_WEEK_MS;
+    await commissioners.load(due.map((league) => league.id));
     for (const league of due) {
       try {
         const listed = upcoming
@@ -267,7 +318,7 @@ export class CommissionerNotices implements DueNotifications {
         const thisWeek = listed.filter((listedEvent) => listedEvent.startsAt.getTime() < nextWeekFrom);
         const nextWeek = listed.filter((listedEvent) => listedEvent.startsAt.getTime() >= nextWeekFrom);
         const contestsUrl = buildLeagueAdminContestsUrl(this.deps.appBaseUrl, league.leagueCode);
-        for (const user of await commissionersOf(league.id)) {
+        for (const user of await commissioners.of(league.id)) {
           await this.deps.email.send('EVENT_WEEKLY_DIGEST', {
             to: emailRecipientOf(user),
             about: `${monday}:${league.id}`,
@@ -298,7 +349,7 @@ export class CommissionerNotices implements DueNotifications {
   private async sendComingUp(
     sportEvent: SportEvent,
     leagues: League[],
-    commissionersOf: (leagueId: string) => Promise<User[]>,
+    commissioners: LeagueCommissioners,
     pages: Map<string, EventPage>,
   ): Promise<void> {
     const [event, defaults, lastYear] = await Promise.all([
@@ -313,7 +364,7 @@ export class CommissionerNotices implements DueNotifications {
       // one: on the event's page when it has one, else on the league's contest types page.
       const howItWorksUrl = eventPageUrl ?? buildLeagueContestTypesUrl(this.deps.appBaseUrl, league.leagueCode);
       const setups = defaults.map((template) => this.setupTile(template, howItWorksUrl));
-      for (const user of await commissionersOf(league.id)) {
+      for (const user of await commissioners.of(league.id)) {
         await this.deps.email.send('EVENT_COMING_UP', {
           to: emailRecipientOf(user),
           about: `${sportEvent.id}:${league.id}`,
@@ -383,7 +434,7 @@ export class CommissionerNotices implements DueNotifications {
   private async sendReadyForContests(
     sportEvent: SportEvent,
     leagues: League[],
-    commissionersOf: (leagueId: string) => Promise<User[]>,
+    commissioners: LeagueCommissioners,
     pages: Map<string, EventPage>,
   ): Promise<void> {
     const [fieldSizes, event, defaults, lastYear] = await Promise.all([
@@ -401,7 +452,7 @@ export class CommissionerNotices implements DueNotifications {
         buildCreateContestUrl(this.deps.appBaseUrl, league.leagueCode, { templateId: template.id, sportEventId: sportEvent.id }),
       ));
       const contestTypesUrl = buildLeagueContestTypesUrl(this.deps.appBaseUrl, league.leagueCode);
-      for (const user of await commissionersOf(league.id)) {
+      for (const user of await commissioners.of(league.id)) {
         await this.deps.email.send('EVENT_READY_FOR_CONTESTS', {
           to: emailRecipientOf(user),
           about: `${sportEvent.id}:${league.id}`,
@@ -422,7 +473,7 @@ export class CommissionerNotices implements DueNotifications {
   }
 
   /** C4, for every draft contest whose picks close within 48 hours. */
-  private async queueContestsNotOpen(now: Date, commissionersOf: (leagueId: string) => Promise<User[]>): Promise<void> {
+  private async queueContestsNotOpen(now: Date, commissioners: LeagueCommissioners): Promise<void> {
     const drafts = (await this.deps.contests.findByStatuses([ContestStatus.DRAFT]))
       .filter((contest) => now.getTime() - contest.createdAt.getTime() >= JUST_CREATED_MS);
     if (drafts.length === 0) return;
@@ -435,7 +486,7 @@ export class CommissionerNotices implements DueNotifications {
         // Picks never close before the first event starts, so one starting later than 48 hours
         // from now has nothing due yet.
         if (!first || !UPCOMING_STATUSES.includes(first.status) || first.startDate.getTime() - now.getTime() > NOT_OPEN_MS) continue;
-        await this.queueContestNotOpen(contest, first, now, commissionersOf);
+        await this.queueContestNotOpen(contest, first, now, commissioners);
       } catch (error) {
         this.deps.logger?.error({
           action: 'email.contestNotOpen.failed',
@@ -449,7 +500,7 @@ export class CommissionerNotices implements DueNotifications {
     contest: Contest,
     first: SportEvent,
     now: Date,
-    commissionersOf: (leagueId: string) => Promise<User[]>,
+    commissioners: LeagueCommissioners,
   ): Promise<void> {
     const rules = (await this.deps.configurations.findByContest(contest.id))?.configJson;
     if (!rules) return;
@@ -460,7 +511,7 @@ export class CommissionerNotices implements DueNotifications {
     const league = await this.deps.leagues.findById(contest.leagueId);
     if (!league?.isActive) return;
     const contestAdminUrl = buildContestAdminUrl(this.deps.appBaseUrl, league.leagueCode, contest.id);
-    for (const user of await commissionersOf(league.id)) {
+    for (const user of await commissioners.of(league.id)) {
       await this.deps.email.send('CONTEST_NOT_OPEN', {
         to: emailRecipientOf(user),
         about: contest.id,
