@@ -1,7 +1,8 @@
 -- The "already told?" checks match an email's notice subject exactly (#1169) instead of a prefix
 -- of its idempotency key, which no index served: Postgres walked every row of the template.
--- Emails recorded before this have no subject; a check that misses one goes on to send, and the
--- idempotency key still records it once.
+-- Emails recorded before this have no subject; a check that misses one goes on to build the
+-- email, which the idempotency key mostly records once. The exception is a next-day member-joined
+-- email in the first day after this lands, which can repeat joins told at once just before it.
 
 -- AlterTable
 ALTER TABLE "email_messages" ADD COLUMN "notice_about" VARCHAR(200);

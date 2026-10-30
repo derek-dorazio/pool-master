@@ -28,8 +28,10 @@ Every email is a row in `email_messages` (#844 slice 3), one per recipient:
   without the league or recipient: the sport event, the contest, the digest's Monday, the join,
   or the day of a busy day's joins. A sweep asks "already told?" for all its subjects in one
   exact-match read on (template, subject, league), not a scan of key prefixes. Rows recorded
-  before the column have none, so such a check misses them and goes on to build the email; the
-  idempotency key still keeps it from being recorded twice.
+  before the column have none, so such a check misses them and goes on to build the email. The
+  idempotency key keeps most such emails from being recorded twice; the exception is a next-day
+  member-joined email in the first day after the column lands, which can repeat joins told at
+  once just before it.
 - **The sender** (`EmailSender`) runs in every core-api task. It claims due rows with
   `FOR UPDATE SKIP LOCKED`, so two tasks never send the same email, and sends no faster than
   `EMAIL_CONFIG.sendRatePerSecond` per task. A queued email wakes it; a 15-second tick picks up
