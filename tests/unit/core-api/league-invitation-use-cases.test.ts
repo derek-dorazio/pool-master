@@ -25,6 +25,7 @@ import { inMemoryLeagueWorld, type InMemoryLeagueWorld } from '../../support/in-
 import { asPrismaClient } from '../../support/prisma-double';
 import { expectDefined } from '../../support/expect-defined';
 import { deliverQueuedEmail, emailServiceOver } from '../../support/email-service';
+import { inMemoryEmailMessages, type InMemoryEmailMessages } from '../../support/in-memory-email-messages';
 import { buildContest } from '../../factories';
 
 /**
@@ -63,12 +64,20 @@ function teamNamePrisma(world: InMemoryLeagueWorld) {
   });
 }
 
-function setup(options: { mail?: MailDeliveryProvider; withPrisma?: boolean; appBaseUrl?: string; contests?: Contest[]; contestsFail?: boolean } = {}) {
+function setup(options: {
+  mail?: MailDeliveryProvider;
+  outbox?: InMemoryEmailMessages;
+  withPrisma?: boolean;
+  appBaseUrl?: string;
+  contests?: Contest[];
+  contestsFail?: boolean;
+} = {}) {
   const world = inMemoryLeagueWorld();
   const commissioner = world.addUser({ firstName: 'Casey', lastName: 'Commish' });
   const league = world.addLeague({ name: 'Office Pool', leagueCode: 'OFFICE' });
   world.addMember({ league, user: commissioner, role: LeagueRole.COMMISSIONER });
-  const email = options.mail ? emailServiceOver(options.mail) : undefined;
+  const outbox = options.outbox ?? inMemoryEmailMessages();
+  const email = options.mail ? emailServiceOver(options.mail, outbox) : undefined;
   const appBaseUrl = options.appBaseUrl ?? 'http://localhost:5173';
   const service = new InvitationService({
     invitations: world.leagueInvitations,
@@ -96,7 +105,7 @@ function setup(options: { mail?: MailDeliveryProvider; withPrisma?: boolean; app
         appBaseUrl,
       })
       : { tellJoined: async () => undefined },
-    ...(email ? { email } : {}),
+    ...(email ? { email, invitationEmails: world.invitationEmails(outbox) } : {}),
     ...(options.withPrisma ? { prisma: teamNamePrisma(world) } : {}),
     ...(options.appBaseUrl ? { appBaseUrl: options.appBaseUrl } : {}),
   });
@@ -268,6 +277,27 @@ describe('InvitationService — inviting by email', () => {
     const [stored] = world.tables.leagueInvitations.where(() => true);
     expect(result.sent).toEqual([{ invitation: stored, emailState: { status: 'QUEUED', skipReason: undefined } }]);
     expect(mail.sent).toHaveLength(0);
+  });
+
+  it('creates none of the paste\'s invitations when their emails cannot be queued, so the same paste again invites and emails everyone', async () => {
+    const mail = recordingMail();
+    const outbox = inMemoryEmailMessages();
+    const { world, commissioner, league, service } = setup({ mail: mail.provider, outbox });
+    const paste = { leagueId: league.id, emails: ['alice@example.com', 'bob@example.com'], invitedBy: commissioner.id };
+    const recordMany = jest.spyOn(outbox, 'recordMany').mockRejectedValueOnce(new Error('database unavailable'));
+
+    await expect(service.sendEmailInvitations(paste)).rejects.toThrow('database unavailable');
+    expect(world.tables.leagueInvitations.where(() => true)).toEqual([]);
+
+    recordMany.mockRestore();
+    const again = await service.sendEmailInvitations(paste);
+    await deliverQueuedEmail();
+
+    expect(again.skippedDuplicates).toEqual([]);
+    expect(again.sent.map(({ invitation, emailState }) => [invitation.email, emailState?.status]))
+      .toEqual([['alice@example.com', 'QUEUED'], ['bob@example.com', 'QUEUED']]);
+    expect(world.tables.leagueInvitations.where(() => true).map((row) => row.email)).toEqual(['alice@example.com', 'bob@example.com']);
+    expect(mail.sent.map((message) => message.to).sort()).toEqual(['alice@example.com', 'bob@example.com']);
   });
 });
 

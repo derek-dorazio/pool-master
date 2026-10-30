@@ -13,6 +13,12 @@ one read of the suppressed addresses, one of who turned the email's category off
 write of every row, answering each email's id and status without reading its content back.
 A failed read or write fails the whole batch, so the caller logs it once.
 
+A caller that must keep its emails with the rows they are about passes `sendMany` a third
+argument that writes the outbox rows in its own transaction. League email invites do (#1357):
+the paste's invitations and their invite emails commit together, so a failed outbox write
+keeps no invitation, and the same paste again invites everyone instead of skipping them as
+pending. The sender is woken only after that transaction commits.
+
 ## Outbox
 
 Every email is a row in `email_messages` (#844 slice 3), one per recipient:

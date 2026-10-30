@@ -30,6 +30,8 @@ import type {
   LeagueMembershipRepository,
   LeagueRepository,
   LeagueSearchFilters,
+  EmailMessageRepository,
+  InvitationEmailTransaction,
   MembershipTransaction,
   SquadMembershipRepository,
   SquadOwnerInvitationRepository,
@@ -72,10 +74,11 @@ class Table<T extends DomainEntity> {
 
   constructor(private readonly prefix: string) {}
 
-  insert(row: NewRow<T>): T {
+  /** Stores the row under `id` when the caller chose one, as an adapter writing a given id does. */
+  insert(row: NewRow<T>, id?: string): T {
     this.sequence += 1;
     const now = new Date();
-    const stored = { ...row, id: `${this.prefix}-${this.sequence}`, createdAt: now, updatedAt: now } as T;
+    const stored = { ...row, id: id ?? `${this.prefix}-${this.sequence}`, createdAt: now, updatedAt: now } as T;
     this.rows.set(stored.id, stored);
     return { ...stored };
   }
@@ -126,6 +129,11 @@ export interface InMemoryLeagueWorld {
   ownerInvitations: SquadOwnerInvitationRepository;
   /** One all-or-nothing unit over the tables above: a throw inside `run` rolls every table back. */
   transaction: MembershipTransaction;
+  /**
+   * `PrismaInvitationEmailTransaction` over these invitations and `emails`: a throw inside `run`
+   * rolls the invitations back. The outbox is not rolled back, so a test fails its write.
+   */
+  invitationEmails(emails: Pick<EmailMessageRepository, 'recordMany'>): InvitationEmailTransaction;
   /** Every plan change logged, by `leagues.changePlan` or the move to Free, oldest first. */
   planChanges: Array<{ leagueId: string; fromPlan: LeaguePlan; toPlan: LeaguePlan; changeReason: LeaguePlanChangeReason; changedById: string | null }>;
   /** Every renewal date move the extend methods logged, oldest first. */
@@ -389,7 +397,7 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
     findPendingByEmails: async (leagueId, emails) => leagueInvitations.where((row) =>
       row.leagueId === leagueId && row.email !== undefined && emails.includes(row.email) && row.status === InvitationStatus.PENDING),
     create: async (row) => leagueInvitations.insert(row),
-    createMany: async (rows) => rows.map((row) => leagueInvitations.insert(row)),
+    createMany: async (rows) => rows.map(({ id, ...row }) => leagueInvitations.insert(row, id)),
     update: async (id, updates) => leagueInvitations.patch(id, updates),
   };
 
@@ -479,6 +487,23 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
     },
   };
 
+  function invitationEmails(emails: Pick<EmailMessageRepository, 'recordMany'>): InvitationEmailTransaction {
+    return {
+      run: async (work) => {
+        const restore = leagueInvitations.snapshot();
+        transactionState.open += 1;
+        try {
+          return await work({ invitations: transactionView(leagueInvitationRepo), emails });
+        } catch (error) {
+          restore();
+          throw error;
+        } finally {
+          transactionState.open -= 1;
+        }
+      },
+    };
+  }
+
   let userSequence = 0;
   let leagueSequence = 0;
 
@@ -491,6 +516,7 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
     leagueInvitations: leagueInvitationRepo,
     ownerInvitations: ownerInvitationRepo,
     transaction,
+    invitationEmails,
     planChanges,
     planRenewalChanges,
     tables: { users, leagues, memberships, squads, squadMemberships, leagueInvitations, ownerInvitations },

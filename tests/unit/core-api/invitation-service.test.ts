@@ -27,6 +27,7 @@ import {
   fakeSquadMembershipRepo,
   fakeSquadRepo,
   fakeUserRepo,
+  passThroughInvitationEmails,
 } from '../../support/repo-fakes';
 import { mockFn } from '../../support/mock-fn';
 import type { MailDeliveryProvider } from '../../../packages/core-api/src/modules/email/mail-delivery';
@@ -50,7 +51,6 @@ function createMockInvitationRepo(
     })),
     createMany: mockFn<LeagueInvitationRepository['createMany']>(async (inputs) => inputs.map((input) => ({
       ...input,
-      id: 'new-invite-id',
       createdAt: new Date(),
       updatedAt: new Date(),
     }))),
@@ -186,6 +186,7 @@ describe('InvitationService', () => {
         providerName: 'smtp' as const,
         send: mockFn<MailDeliveryProvider['send']>(async () => ({ provider: 'smtp', messageId: 'mail-1' })),
       };
+      const outbox = inMemoryEmailMessages();
       const service = new InvitationService({
         invitations: invitationRepo,
         memberships: createMockMembershipRepo(),
@@ -197,7 +198,8 @@ describe('InvitationService', () => {
           })),
         }),
         prisma: asPrismaClient(createMockProvisioningPrisma()),
-        email: emailServiceOver(mailDelivery),
+        email: emailServiceOver(mailDelivery, outbox),
+        invitationEmails: passThroughInvitationEmails(invitationRepo, outbox),
         appBaseUrl: 'https://app.primetimecommissioner.com/',
         users: createProvisioningUsers(),
         contests: NO_CONTESTS,
@@ -222,7 +224,7 @@ describe('InvitationService', () => {
         metadata: expect.objectContaining({
           templateKey: 'LEAGUE_MEMBER_INVITE',
           leagueId: 'league-1',
-          invitationId: 'new-invite-id',
+          invitationId: result.sent[0].invitation.id,
         }) as unknown,
       }));
       const sentMessage = mailDelivery.send.mock.calls[0][0];
@@ -245,6 +247,7 @@ describe('InvitationService', () => {
         leagues: createMockLeagueRepo(),
         prisma: asPrismaClient(createMockProvisioningPrisma()),
         email: emailServiceOver(mailDelivery, outbox),
+        invitationEmails: passThroughInvitationEmails(invitationRepo, outbox),
         appBaseUrl: 'https://app.primetimecommissioner.com',
         users: createProvisioningUsers(),
         contests: NO_CONTESTS,
@@ -258,26 +261,56 @@ describe('InvitationService', () => {
       });
       await deliverQueuedEmail();
 
-      expect(result.sent.map((sent) => sent.invitation.id)).toEqual(['new-invite-id']);
+      expect(result.sent.map((sent) => sent.invitation.email)).toEqual(['alice@example.com']);
       expect(mailDelivery.send).toHaveBeenCalledTimes(1);
       expect(outbox.rows).toEqual([expect.objectContaining({
-        invitationId: 'new-invite-id',
+        invitationId: result.sent[0].invitation.id,
         status: 'QUEUED',
         attempts: 1,
         lastError: 'SES rejected request',
       })]);
     });
 
-    it('fails the request with the invitations already created when their emails cannot be queued, recording none of the emails', async () => {
+    it('writes the invitations and their invite emails through one transaction, never the service\'s own outbox, each email naming its invitation', async () => {
       const invitationRepo = createMockInvitationRepo();
-      const outbox = inMemoryEmailMessages();
-      outbox.recordMany = () => Promise.reject(new Error('database unavailable'));
+      const ownOutbox = inMemoryEmailMessages();
+      const transactionOutbox = inMemoryEmailMessages();
+      const transaction = passThroughInvitationEmails(invitationRepo, transactionOutbox);
+      const run = jest.spyOn(transaction, 'run');
+      const service = new InvitationService({
+        invitations: createMockInvitationRepo(),
+        memberships: createMockMembershipRepo(),
+        leagues: createMockLeagueRepo(),
+        prisma: asPrismaClient(createMockProvisioningPrisma()),
+        email: emailServiceOver({ providerName: 'smtp', send: jest.fn() }, ownOutbox),
+        invitationEmails: transaction,
+        users: createProvisioningUsers(),
+        contests: NO_CONTESTS,
+        memberJoined: NOBODY_TOLD,
+      });
+
+      const result = await service.sendEmailInvitations({
+        leagueId: 'league-1',
+        emails: ['alice@example.com', 'bob@example.com'],
+        invitedBy: 'owner-1',
+      });
+
+      expect(run).toHaveBeenCalledTimes(1);
+      expect(jest.mocked(invitationRepo.createMany).mock.calls.map(([rows]) => rows.map((row) => row.email)))
+        .toEqual([['alice@example.com', 'bob@example.com']]);
+      expect(transactionOutbox.rows.map((row) => [row.recipientEmail, row.invitationId]))
+        .toEqual(result.sent.map(({ invitation }) => [invitation.email, invitation.id]));
+      expect(ownOutbox.rows).toEqual([]);
+    });
+
+    it('refuses to send email invitations with an email service but no invitationEmails, creating nothing', async () => {
+      const invitationRepo = createMockInvitationRepo();
       const service = new InvitationService({
         invitations: invitationRepo,
         memberships: createMockMembershipRepo(),
         leagues: createMockLeagueRepo(),
         prisma: asPrismaClient(createMockProvisioningPrisma()),
-        email: emailServiceOver({ providerName: 'smtp', send: jest.fn() }, outbox),
+        email: emailServiceOver({ providerName: 'smtp', send: jest.fn() }),
         users: createProvisioningUsers(),
         contests: NO_CONTESTS,
         memberJoined: NOBODY_TOLD,
@@ -285,14 +318,10 @@ describe('InvitationService', () => {
 
       await expect(service.sendEmailInvitations({
         leagueId: 'league-1',
-        emails: ['alice@example.com', 'bob@example.com'],
+        emails: ['alice@example.com'],
         invitedBy: 'owner-1',
-      })).rejects.toThrow('database unavailable');
-
-      // Pinned until the invitations and their emails are written together.
-      expect(jest.mocked(invitationRepo.createMany).mock.calls.map(([rows]) => rows.map((row) => row.email)))
-        .toEqual([['alice@example.com', 'bob@example.com']]);
-      expect(outbox.rows).toEqual([]);
+      })).rejects.toThrow('InvitationService needs invitationEmails');
+      expect(invitationRepo.createMany).not.toHaveBeenCalled();
     });
 
     it('refuses to invite into a league that does not exist, creating nothing, since its name and code are the email\'s sender', async () => {

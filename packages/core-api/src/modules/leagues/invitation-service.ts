@@ -5,6 +5,7 @@
 import type {
   ContestRepository,
   EmailMessageState,
+  InvitationEmailTransaction,
   LeagueInvitationRepository,
   LeagueMembershipRepository,
   LeagueRepository,
@@ -109,6 +110,8 @@ export interface InvitationServiceDeps {
   prisma?: PrismaClient;
   logger?: FastifyBaseLogger;
   email?: EmailService;
+  /** Writes new email invitations and their invite emails together (#1357); needed with `email`. */
+  invitationEmails?: InvitationEmailTransaction;
   appBaseUrl?: string;
 }
 
@@ -169,7 +172,8 @@ export class InvitationService {
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + DEFAULT_INVITE_EXPIRY_DAYS);
     const addresses = [...toInvite];
-    const invitations = await this.deps.invitations.createMany(addresses.map((email) => ({
+    const invitations = addresses.map((email): Omit<LeagueInvitation, 'createdAt' | 'updatedAt'> => ({
+      id: randomUUID(),
       leagueId: input.leagueId,
       email,
       inviteCode: generateInviteCode(),
@@ -179,8 +183,8 @@ export class InvitationService {
       currentUses: 0,
       invitedBy: input.invitedBy,
       expiresAt,
-    })));
-    const emailStates = await this.queueLeagueInvitationEmails(invitations.map((invitation, index) => ({
+    }));
+    const { created, emailStates } = await this.createInvitationsWithEmails(invitations, invitations.map((invitation, index) => ({
       invitationId: invitation.id,
       email: addresses[index],
       inviterName,
@@ -189,7 +193,7 @@ export class InvitationService {
       expiresAt,
       message: input.message,
     })));
-    const sent = invitations.map((invitation, index): InvitationWithEmailState => ({ invitation, emailState: emailStates[index] }));
+    const sent = created.map((invitation, index): InvitationWithEmailState => ({ invitation, emailState: emailStates[index] }));
     this.logger?.info({
       action: 'leagueInvitation.sendEmail.success',
       data: {
@@ -203,17 +207,32 @@ export class InvitationService {
     return { sent, skippedMembers, skippedDuplicates };
   }
 
-  /** `queueLeagueInvitationEmail` for a whole paste in one batch (#1173): each one's status, in order. */
-  private async queueLeagueInvitationEmails(invites: readonly LeagueInvitationEmail[]): Promise<(EmailMessageState | null)[]> {
+  /**
+   * Writes the paste's invitations and queues their invite emails in one batch (#1173), in one
+   * transaction (#1357): when the emails cannot be written, neither are the invitations, so the
+   * same paste again invites everyone instead of skipping them as pending. Answers each email's
+   * status, in order.
+   */
+  private async createInvitationsWithEmails(
+    invitations: readonly Omit<LeagueInvitation, 'createdAt' | 'updatedAt'>[],
+    invites: readonly LeagueInvitationEmail[],
+  ): Promise<{ created: LeagueInvitation[]; emailStates: (EmailMessageState | null)[] }> {
     if (!this.deps.email) {
       this.logger?.debug({
         action: 'leagueInvitation.emailDelivery.skipped',
         data: { invitationCount: invites.length },
       }, 'No email service configured for league invitation');
-      return invites.map(() => null);
+      return { created: await this.deps.invitations.createMany(invitations), emailStates: invites.map(() => null) };
     }
-    const states = await this.deps.email.sendMany('LEAGUE_MEMBER_INVITE', invites.map((invite) => this.inviteEmail(invite)));
-    return states.map(({ status, skipReason }) => ({ status, skipReason }));
+    const writes = this.deps.invitationEmails;
+    if (!writes) throw new Error('InvitationService needs invitationEmails to send email invitations with its email service');
+    let created: LeagueInvitation[] = [];
+    const states = await this.deps.email.sendMany('LEAGUE_MEMBER_INVITE', invites.map((invite) => this.inviteEmail(invite)), (records) =>
+      writes.run(async ({ invitations: invitationWrites, emails }) => {
+        created = await invitationWrites.createMany(invitations);
+        return emails.recordMany(records);
+      }));
+    return { created, emailStates: states.map(({ status, skipReason }) => ({ status, skipReason })) };
   }
 
   /**
