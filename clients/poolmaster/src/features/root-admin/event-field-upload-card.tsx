@@ -4,7 +4,6 @@ import { BulkUploadPanel, Button, PanelCard, StatusBadge, UploadPreviewTable } f
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
-import { QueryKeys } from '@/lib/query-keys';
 import type { SportEventParticipantDto } from '@/lib/api';
 import { capitalize } from './manage-navigation';
 import {
@@ -16,6 +15,7 @@ import {
   type EventFieldUploadPreviewRow,
   type EventFieldUploadRow,
 } from './event-field-upload';
+import { fieldWriteKeys } from './use-sport-event';
 
 const RESOLUTION_TONE: Record<EventFieldUploadPreviewRow['resolution'], 'active' | 'warning' | 'danger'> = {
   MATCHED: 'active',
@@ -76,12 +76,7 @@ export function EventFieldUploadCard({
       return response.data.participants;
     },
     // The same reads the grid save refreshes: the field, and the tournament's counts and tiers.
-    invalidates: [
-      QueryKeys.rootAdmin.manageSport.field(eventId),
-      QueryKeys.rootAdmin.manageSport.event(eventId),
-      QueryKeys.rootAdmin.manageSport.events,
-      QueryKeys.rootAdmin.manageSport.tiers(eventId),
-    ],
+    invalidates: fieldWriteKeys(eventId),
     onError: (error) => {
       logger.warn({ action: 'event.fieldUpload.apply.failed', err: error }, 'Field upload was rejected');
     },

@@ -6,17 +6,13 @@ import {
   DataGridPage,
   LinkButton,
   StatusBadge,
-  formatDateTimeDisplay,
   useDisplayPreferences,
 } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import {
-  deriveSportEventReadiness,
-  formatSportEventStatus,
   syncScopeLabel,
   syncScopeTone,
-  sportEventStatusTone,
 } from './sport-admin-utils';
 import type { SportEventDto } from '@/lib/api';
 import {
@@ -25,6 +21,7 @@ import {
   capitalize,
   MANAGE_LIST_PAGE_SIZE,
 } from './manage-navigation';
+import { sportEventNameColumn, sportEventScheduleColumns } from './sport-event-columns';
 import { useManagedSport } from './use-managed-sport';
 import { SportSectionMenu } from './sport-section-menu';
 
@@ -51,18 +48,7 @@ export function RootAdminSportEventListPage() {
 
   const columns = useMemo(
     () => [
-      columnHelper.accessor((row) => `${row.name} ${row.venue || ''}`.trim(), {
-        id: 'tournament',
-        header: capitalize(event.one),
-        cell: ({ row }) => (
-          <div>
-            <div className="font-medium text-foreground">{row.original.name}</div>
-            <div className="mt-1 text-xs text-muted-foreground">
-              {row.original.venue || 'Venue not set'}
-            </div>
-          </div>
-        ),
-      }),
+      sportEventNameColumn(capitalize(event.one)),
       columnHelper.accessor('syncScope', {
         header: 'Sync',
         cell: ({ getValue }) => (
@@ -71,37 +57,7 @@ export function RootAdminSportEventListPage() {
           </StatusBadge>
         ),
       }),
-      columnHelper.accessor('startDate', {
-        header: 'Starts',
-        cell: ({ getValue }) => formatDateTimeDisplay(getValue(), displayPreferences),
-      }),
-      columnHelper.accessor('status', {
-        header: 'Status',
-        cell: ({ getValue }) => (
-          <StatusBadge tone={sportEventStatusTone(getValue())}>
-            {formatSportEventStatus(getValue())}
-          </StatusBadge>
-        ),
-      }),
-      columnHelper.display({
-        id: 'readiness',
-        header: 'Readiness',
-        cell: ({ row }) => {
-          const readiness = deriveSportEventReadiness(row.original);
-          return (
-            <div>
-              <StatusBadge tone={readiness.tone}>{readiness.label}</StatusBadge>
-              {readiness.reasons.length ? (
-                <div className="mt-1 text-xs text-muted-foreground">
-                  {readiness.reasons.join(', ')}
-                </div>
-              ) : null}
-            </div>
-          );
-        },
-        enableColumnFilter: false,
-        enableSorting: false,
-      }),
+      ...sportEventScheduleColumns(displayPreferences),
       columnHelper.accessor('loadedParticipantCount', {
         header: 'Field',
         cell: ({ getValue }) => getValue(),
