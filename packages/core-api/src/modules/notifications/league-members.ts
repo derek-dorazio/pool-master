@@ -2,8 +2,14 @@ import type { LeagueMembershipRepository, UserRepository } from '@poolmaster/sha
 import type { LeagueRole, User } from '@poolmaster/shared/domain';
 
 export interface LeagueMemberDeps {
-  memberships: Pick<LeagueMembershipRepository, 'findByLeague'>;
-  users: Pick<UserRepository, 'findActiveByLeague'>;
+  memberships: Pick<LeagueMembershipRepository, 'findByLeagues'>;
+  users: Pick<UserRepository, 'findActiveByLeagues'>;
+}
+
+/** A league member a league email goes to, with their role in the league. */
+export interface LeagueMemberWithRole {
+  user: User;
+  role: LeagueRole;
 }
 
 /**
@@ -15,17 +21,32 @@ export async function activeLeagueMembers(deps: LeagueMemberDeps, leagueId: stri
 }
 
 /** The same people, each with their role in the league, for an email commissioners get too. */
-export async function activeLeagueMembersWithRoles(
+export async function activeLeagueMembersWithRoles(deps: LeagueMemberDeps, leagueId: string): Promise<LeagueMemberWithRole[]> {
+  return (await activeLeagueMembersByLeague(deps, [leagueId])).get(leagueId) ?? [];
+}
+
+/**
+ * The same people for several leagues, by league, in two reads whatever the number of leagues
+ * (#1255): a sweep or an event-wide email reads every league it tells at once. Each league's
+ * people come in the users read's order; a league with none has an empty list.
+ */
+export async function activeLeagueMembersByLeague(
   deps: LeagueMemberDeps,
-  leagueId: string,
-): Promise<Array<{ user: User; role: LeagueRole }>> {
+  leagueIds: readonly string[],
+): Promise<Map<string, LeagueMemberWithRole[]>> {
+  const byLeague = new Map([...new Set(leagueIds)].map((leagueId): [string, LeagueMemberWithRole[]] => [leagueId, []]));
+  if (byLeague.size === 0) return byLeague;
   const [memberships, users] = await Promise.all([
-    deps.memberships.findByLeague(leagueId),
-    deps.users.findActiveByLeague(leagueId),
+    deps.memberships.findByLeagues([...byLeague.keys()]),
+    deps.users.findActiveByLeagues([...byLeague.keys()]),
   ]);
-  const roles = new Map(memberships.map((membership) => [membership.userId, membership.role]));
-  return users.flatMap((user) => {
-    const role = roles.get(user.id);
-    return user.isActive && role !== undefined ? [{ user, role }] : [];
-  });
+  const membershipsByUser = new Map<string, typeof memberships>();
+  for (const membership of memberships) {
+    membershipsByUser.set(membership.userId, [...(membershipsByUser.get(membership.userId) ?? []), membership]);
+  }
+  for (const user of users) {
+    if (!user.isActive) continue;
+    for (const { leagueId, role } of membershipsByUser.get(user.id) ?? []) byLeague.get(leagueId)?.push({ user, role });
+  }
+  return byLeague;
 }

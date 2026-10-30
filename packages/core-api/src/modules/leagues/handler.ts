@@ -19,7 +19,7 @@ import { toSquadMembershipDto } from '../../mappers/squads.mapper';
 import { sendError } from '../../core/error-handler';
 import type { CreateLeagueInput, LeagueActivityCounts, LeagueForViewer, LeagueService, UpdateLeagueCupSettingsInput, UpdateLeagueDetailsInput } from './service';
 import { LeagueNotFoundError, LeagueOperationError } from './service';
-import { isPlatformSearchTerm, LeagueMembershipStatus, PLATFORM_SEARCH_MIN_LENGTH } from '@poolmaster/shared/domain';
+import { LeagueMembershipStatus, PLATFORM_SEARCH_MIN_LENGTH, platformSearchTerm } from '@poolmaster/shared/domain';
 import type { League, LeagueMembership } from '@poolmaster/shared/domain';
 import type {
   SquadMembershipRepository,
@@ -110,7 +110,8 @@ export function createLeagueHandlers(
     }
     // Every league on the platform is the largest list a root admin reads, and nothing pages it
     // (§16), so it takes a search term (#1180). A member's own leagues need none.
-    if (scope === 'all' && !isPlatformSearchTerm(request.query.search)) {
+    const search = platformSearchTerm(request.query.search);
+    if (scope === 'all' && search === null) {
       logger.warn({
         action: 'leagueRoute.list.searchRequired',
         data: { userId, scope },
@@ -123,14 +124,11 @@ export function createLeagueHandlers(
       );
     }
 
-    const rows = await leagueService.listLeagues({
-      scope,
-      userId,
-      filters: {
-        ...(request.query.search ? { search: request.query.search } : {}),
-        ...(request.query.isActive !== undefined ? { isActive: request.query.isActive } : {}),
-      },
-    });
+    const isActive = request.query.isActive !== undefined ? { isActive: request.query.isActive } : {};
+    // An `all` without a search term was refused above, so the other branch is always `mine`.
+    const rows = await leagueService.listLeagues(scope === 'all' && search !== null
+      ? { scope: 'all', userId, filters: { search, ...isActive } }
+      : { scope: 'mine', userId, filters: { ...(request.query.search ? { search: request.query.search } : {}), ...isActive } });
     // The memberships below are all the VIEWER's, so the member embedded in each is the
     // viewer — one read, not one per league.
     const viewer = await userRepo.findById(userId);

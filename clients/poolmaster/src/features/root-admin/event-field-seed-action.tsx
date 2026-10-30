@@ -6,8 +6,8 @@ import { Alert, Button, ConfirmationModal } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
-import { QueryKeys } from '@/lib/query-keys';
 import type { SeedSportEventParticipantsResponse } from '@/lib/api';
+import { fieldWriteKeys } from './use-sport-event';
 
 type SeedResult = SeedSportEventParticipantsResponse;
 
@@ -38,12 +38,7 @@ export function EventFieldSeedAction({ eventId, sport, sportLeague }: {
       }
       return response.data;
     },
-    invalidates: [
-      QueryKeys.rootAdmin.manageSport.field(eventId),
-      QueryKeys.rootAdmin.manageSport.event(eventId),
-      QueryKeys.rootAdmin.manageSport.events,
-      QueryKeys.rootAdmin.manageSport.tiers(eventId),
-    ],
+    invalidates: fieldWriteKeys(eventId),
     onSuccess: (data) => {
       setResult(data);
       setOpen(false);

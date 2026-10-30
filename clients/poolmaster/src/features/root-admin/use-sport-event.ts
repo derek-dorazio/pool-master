@@ -17,6 +17,19 @@ import { QueryKeys } from '@/lib/query-keys';
  * golf projection of their own.
  */
 
+/**
+ * The reads a change to an event's field reaches: the field, the event and its counts, the event
+ * list's counts, and the tiers its participants sit in.
+ */
+export function fieldWriteKeys(eventId: string) {
+  return [
+    QueryKeys.rootAdmin.manageSport.field(eventId),
+    QueryKeys.rootAdmin.manageSport.event(eventId),
+    QueryKeys.rootAdmin.manageSport.events,
+    QueryKeys.rootAdmin.manageSport.tiers(eventId),
+  ];
+}
+
 export function useSportEventQuery(eventId: string) {
   return useQuery({
     queryKey: QueryKeys.rootAdmin.manageSport.event(eventId),

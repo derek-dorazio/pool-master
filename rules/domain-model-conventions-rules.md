@@ -643,8 +643,8 @@ a retention policy, not a page parameter.
   Use an entity-named array — `{ users: [...] }`, `{ leagues: [...] }`, `{ squads: [...] }`
   — matching `LeagueListResponse` and `SquadListResponse`.
 - Repository ports that take paging arguments or return `{ items, total }`. A port is not
-  a place to hide a page either: `UserRepository.findAll` takes filters and returns
-  `User[]`.
+  a place to hide a page either: `UserRepository.search` takes a required term and filters,
+  and returns `User[]`.
 
 **Append-only history is bounded by a window, not a page.** The sync-run history grows
 without bound, so `listProviderSyncRuns` (formerly `adminListProviderSyncRuns`, which took
@@ -659,6 +659,9 @@ league, so none of them may be read whole (#1180). Users and leagues (`scope=all
 search of at least `PLATFORM_SEARCH_MIN_LENGTH` characters, answering 400
 `SEARCH_TERM_REQUIRED`; events need a sport, a sport league or a year
 (`SPORT_EVENT_FILTER_REQUIRED`); participants need a sport or a search. The searches are
-substring matches, so each column they match carries a trigram GIN index. A Manage page over
+substring matches, so each column they match carries a trigram GIN index. The repository
+read takes the term as required (`UserRepository.search`, `LeagueRepository.search`), so no
+caller can skip it; a background job that must reach every row has its own named read, such
+as `LeagueRepository.findActive` for the commissioner notices (#1313). A Manage page over
 one of these lists asks for the filter first — a search box, or a year that defaults to this
 one — rather than loading everything and filtering in the browser.

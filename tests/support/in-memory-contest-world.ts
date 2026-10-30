@@ -373,6 +373,8 @@ export class InMemoryContestWorld {
           contest.sportEventIds.includes(sportEventId)
           && (!filter?.statuses || filter.statuses.includes(contest.status))
           && (!filter?.excludeStatuses || !filter.excludeStatuses.includes(contest.status))),
+      findBySportEvents: async (sportEventIds) =>
+        [...this.contests.values()].filter((contest) => contest.sportEventIds.some((sportEventId) => sportEventIds.includes(sportEventId))),
       findJoinableByReleasedEdition: async () => [],
       findByStatuses: async (statuses) =>
         [...this.contests.values()].filter((contest) => statuses.includes(contest.status)),
@@ -486,6 +488,8 @@ export class InMemoryContestWorld {
       },
       findByContest: async (contestId) =>
         [...this.entries.values()].filter((entry) => entry.contestId === contestId),
+      findByContests: async (contestIds) =>
+        [...this.entries.values()].filter((entry) => contestIds.includes(entry.contestId)),
       findByContestWithSquad: async (contestId, options) =>
         [...this.entries.values()]
           .filter((entry) =>
@@ -604,6 +608,8 @@ export class InMemoryContestWorld {
     return {
       findByLeague: async (leagueId) =>
         [...this.memberships.values()].filter((row) => row.leagueId === leagueId),
+      findByLeagues: async (leagueIds) =>
+        [...this.memberships.values()].filter((row) => leagueIds.includes(row.leagueId)),
       findByUser: async (userId) =>
         [...this.memberships.values()].filter((row) => row.userId === userId),
       countActiveByLeagues: async () => new Map(),
@@ -704,8 +710,8 @@ export class InMemoryContestWorld {
   leagueRepo(): LeagueRepository {
     return fakeLeagueRepo({
       findById: async (id) => this.leagues.get(id) ?? null,
-      findAll: async (filters = {}) => [...this.leagues.values()]
-        .filter((league) => filters.isActive === undefined || league.isActive === filters.isActive),
+      findByIds: async (ids) => ids.flatMap((id) => this.leagues.get(id) ?? []),
+      findActive: async () => [...this.leagues.values()].filter((league) => league.isActive),
     });
   }
 
@@ -717,6 +723,12 @@ export class InMemoryContestWorld {
       findActiveByLeague: async (leagueId) => {
         const memberIds = new Set([...this.memberships.values()]
           .filter((membership) => membership.leagueId === leagueId && membership.status === LeagueMembershipStatus.ACTIVE)
+          .map((membership) => membership.userId));
+        return [...this.users.values()].filter((user) => memberIds.has(user.id));
+      },
+      findActiveByLeagues: async (leagueIds) => {
+        const memberIds = new Set([...this.memberships.values()]
+          .filter((membership) => leagueIds.includes(membership.leagueId) && membership.status === LeagueMembershipStatus.ACTIVE)
           .map((membership) => membership.userId));
         return [...this.users.values()].filter((user) => memberIds.has(user.id));
       },

@@ -180,6 +180,16 @@ export class PrismaContestRepository implements ContestRepository {
     return rows.map(mapToContest);
   }
 
+  async findBySportEvents(sportEventIds: readonly string[]): Promise<Contest[]> {
+    if (sportEventIds.length === 0) return [];
+    const rows = await this.prisma.contest.findMany({
+      where: { sportEvents: { some: { sportEventId: { in: [...new Set(sportEventIds)] } } } },
+      orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+      include: CONTEST_INCLUDE,
+    });
+    return rows.map(mapToContest);
+  }
+
   async findJoinableByReleasedEdition(edition: ReleasedEdition): Promise<Contest[]> {
     const series = await this.prisma.eventSeries.findUnique({
       where: { id: edition.eventSeriesId },

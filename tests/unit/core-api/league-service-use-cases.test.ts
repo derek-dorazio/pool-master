@@ -195,14 +195,14 @@ describe('LeagueService — the "mine" league list', () => {
     }));
   });
 
-  it('returns every league under scope "all", with the viewer\'s membership only where they hold one', async () => {
+  it('returns every league matching the search under scope "all", with the viewer\'s membership only where they hold one', async () => {
     const world = inMemoryLeagueWorld();
     const admin = world.addUser({ isRootAdmin: true });
     const joined = world.addLeague({ name: 'Joined' });
     world.addLeague({ name: 'Stranger' });
     world.addMember({ league: joined, user: admin });
 
-    const rows = await serviceFor(world).listLeagues({ scope: 'all', userId: admin.id });
+    const rows = await serviceFor(world).listLeagues({ scope: 'all', userId: admin.id, filters: { search: 'e' } });
 
     const byName = new Map(rows.map((row) => [row.league.name, row]));
     expect(byName.get('Joined')?.membership?.userId).toBe(admin.id);

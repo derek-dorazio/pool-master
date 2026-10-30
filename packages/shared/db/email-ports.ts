@@ -109,6 +109,11 @@ export interface EmailMessageRepository {
    * with `keyPrefix`: for anyone, in any state.
    */
   findLeagueIdsRecorded(query: { templateKey: EmailTemplateKey; keyPrefix: string }): Promise<Set<string>>;
+  /**
+   * `findLeagueIdsRecorded` for several key prefixes in one read (#1255): by prefix, the leagues
+   * recorded under it. A prefix nothing is recorded under has an empty set.
+   */
+  findLeagueIdsRecordedByPrefix(query: { templateKey: EmailTemplateKey; keyPrefixes: readonly string[] }): Promise<Map<string, Set<string>>>;
   /** Where each invitation's latest email of `templateKey` stands, by invitation id. */
   findLatestStateByInvitations(
     invitationIds: string[],
