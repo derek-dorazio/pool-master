@@ -2,13 +2,13 @@
  * Prisma adapter for LeagueInvitationRepository port.
  */
 
-import type { LeagueInvitation as PrismaLeagueInvitation, PrismaClient } from '@prisma/client';
+import type { LeagueInvitation as PrismaLeagueInvitation, Prisma, PrismaClient } from '@prisma/client';
 import type { LeagueInvitationRepository } from '@poolmaster/shared/db';
 import type { InviteType, InvitationStatus, LeagueInvitation } from '@poolmaster/shared/domain';
 import { InvitationStatus as SharedInvitationStatus, InviteType as SharedInviteType } from '@poolmaster/shared/domain';
 
 export class PrismaLeagueInvitationRepository implements LeagueInvitationRepository {
-  constructor(private readonly prisma: PrismaClient) {}
+  constructor(private readonly prisma: PrismaClient | Prisma.TransactionClient) {}
 
   async findById(id: string): Promise<LeagueInvitation | null> {
     const row = await this.prisma.leagueInvitation.findUnique({ where: { id } });
@@ -52,10 +52,12 @@ export class PrismaLeagueInvitationRepository implements LeagueInvitationReposit
   }
 
   async createMany(
-    invitations: readonly Omit<LeagueInvitation, 'id' | 'createdAt' | 'updatedAt'>[],
+    invitations: readonly Omit<LeagueInvitation, 'createdAt' | 'updatedAt'>[],
   ): Promise<LeagueInvitation[]> {
     if (invitations.length === 0) return [];
-    const rows = await this.prisma.leagueInvitation.createManyAndReturn({ data: invitations.map(toCreateData) });
+    const rows = await this.prisma.leagueInvitation.createManyAndReturn({
+      data: invitations.map((invitation) => ({ id: invitation.id, ...toCreateData(invitation) })),
+    });
     // Each invite code is unique, so it names the row written for each invitation given.
     const byCode = new Map(rows.map((row) => [row.inviteCode, mapToInvitation(row)]));
     return invitations.map((invitation) => {

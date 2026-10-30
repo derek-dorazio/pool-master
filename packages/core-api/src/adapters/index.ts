@@ -5,6 +5,7 @@ export { PrismaLeagueInvitationRepository } from './prisma-league-invitation-rep
 export { PrismaSquadRepository } from './prisma-squad-repository';
 export { PrismaSquadMembershipRepository } from './prisma-squad-membership-repository';
 export { PrismaSquadOwnerInvitationRepository } from './prisma-squad-owner-invitation-repository';
+export { PrismaInvitationEmailTransaction } from './prisma-invitation-email-transaction';
 export { PrismaMembershipTransaction } from './prisma-membership-transaction';
 export { PrismaContestRepository } from './prisma-contest-repository';
 export { PrismaParticipantRepository } from './prisma-participant-repository';

@@ -70,6 +70,7 @@ export class BulkService {
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7);
     const created = await this.invitationRepo.createMany([...toInvite].map((email) => ({
+      id: randomUUID(),
       leagueId,
       email,
       inviteCode: randomUUID().replace(/-/g, '').slice(0, 12),

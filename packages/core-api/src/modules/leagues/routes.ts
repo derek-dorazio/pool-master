@@ -16,6 +16,7 @@ import {
   PrismaLeagueMembershipRepository,
   PrismaLeagueInvitationRepository,
   PrismaSquadMembershipRepository,
+  PrismaInvitationEmailTransaction,
   PrismaMembershipTransaction,
   PrismaSportLeagueRepository,
   PrismaSquadRepository,
@@ -81,6 +82,7 @@ export function leaguesModule(fastify: FastifyInstance, opts: MailModuleOptions 
     prisma,
     logger: fastify.log,
     email,
+    invitationEmails: new PrismaInvitationEmailTransaction(prisma),
     appBaseUrl,
   });
   const memberService = new MemberService({

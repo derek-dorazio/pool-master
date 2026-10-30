@@ -41,6 +41,8 @@ export type {
   ContestEntryWithSquad,
   LockedPredictionWeek,
   ContestRepository,
+  InvitationEmailRepositories,
+  InvitationEmailTransaction,
   LeagueInvitationRepository,
   LeagueMembershipRepository,
   LeagueRepository,

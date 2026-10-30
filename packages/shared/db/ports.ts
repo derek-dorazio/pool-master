@@ -29,6 +29,7 @@ import type {
 } from '../domain';
 
 import type { ParticipantMatchQuery } from './sport-catalog-ports';
+import type { EmailMessageRepository } from './email-ports';
 
 // --- Identity ---
 
@@ -424,9 +425,27 @@ export interface LeagueInvitationRepository {
   /** The league's PENDING invitations to any of the addresses, in one read (#1173). */
   findPendingByEmails(leagueId: string, emails: readonly string[]): Promise<LeagueInvitation[]>;
   create(invitation: Omit<LeagueInvitation, 'id' | 'createdAt' | 'updatedAt'>): Promise<LeagueInvitation>;
-  /** `create` for several invitations in one write (#1173), answered in the order given. */
-  createMany(invitations: readonly Omit<LeagueInvitation, 'id' | 'createdAt' | 'updatedAt'>[]): Promise<LeagueInvitation[]>;
+  /**
+   * `create` for several invitations in one write (#1173), answered in the order given. Each
+   * comes with its id, so its invite email can be worked out before either is written (#1357).
+   */
+  createMany(invitations: readonly Omit<LeagueInvitation, 'createdAt' | 'updatedAt'>[]): Promise<LeagueInvitation[]>;
   update(id: string, updates: Partial<LeagueInvitation>): Promise<LeagueInvitation>;
+}
+
+/** The writes an email invite makes: the invitations, and their invite emails in the outbox. */
+export interface InvitationEmailRepositories {
+  invitations: Pick<LeagueInvitationRepository, 'createMany'>;
+  emails: Pick<EmailMessageRepository, 'recordMany'>;
+}
+
+/**
+ * Runs `work` in one transaction (#1357): the invitations and their emails commit together or not
+ * at all, so a failed email write never leaves invitations nobody was emailed, which a second
+ * paste of the same list would skip as pending.
+ */
+export interface InvitationEmailTransaction {
+  run<T>(work: (repos: InvitationEmailRepositories) => Promise<T>): Promise<T>;
 }
 
 // --- Sport & Participant ---
