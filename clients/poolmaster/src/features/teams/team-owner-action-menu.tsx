@@ -1,8 +1,7 @@
-import * as Dialog from '@radix-ui/react-dialog';
-import { useState, type ReactNode } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router';
 import { changeMemberRole, removeSquadOwner } from '@/lib/api';
-import { Button, Heading, InlineError, MenuItem } from '@/features/shared/ui';
+import { Button, InlineError, MenuItem, Modal } from '@/features/shared/ui';
 import { buildLeagueAdminTeamPath } from '@/features/leagues/league-routing';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -11,62 +10,6 @@ import type { TeamMember } from './my-team-shared';
 
 type OwnerRole = TeamMember['leagueRole'];
 type ActiveAction = 'promote' | 'demote' | 'remove' | null;
-
-function OwnerActionDialog({
-  open,
-  onOpenChange,
-  title,
-  description,
-  children,
-  testId,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  title: string;
-  description: string;
-  children: ReactNode;
-  testId: string;
-}) {
-  return (
-    <Dialog.Root onOpenChange={onOpenChange} open={open}>
-      <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-background/70 backdrop-blur-sm" />
-        <Dialog.Content
-          aria-describedby={`${testId}-description`}
-          className="fixed left-1/2 top-1/2 z-50 w-[min(96vw,36rem)] -translate-x-1/2 -translate-y-1/2 rounded-4xl border border-border bg-card p-6 shadow-2xl"
-          data-testid={testId}
-        >
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <Dialog.Title asChild>
-                <Heading level={2} variant="section">
-                  {title}
-                </Heading>
-              </Dialog.Title>
-              <Dialog.Description
-                className="mt-2 text-sm text-muted-foreground"
-                id={`${testId}-description`}
-              >
-                {description}
-              </Dialog.Description>
-            </div>
-            <Dialog.Close asChild>
-              <Button
-                aria-label={`Close ${title}`}
-                className="rounded-full border border-border p-2 text-muted-foreground transition hover:border-primary/40 hover:text-foreground"
-                type="button"
-              >
-                ×
-              </Button>
-            </Dialog.Close>
-          </div>
-
-          <div className="mt-6">{children}</div>
-        </Dialog.Content>
-      </Dialog.Portal>
-    </Dialog.Root>
-  );
-}
 
 export function TeamOwnerActionMenu({
   activeOwnerCount,
@@ -151,6 +94,13 @@ export function TeamOwnerActionMenu({
     ? extractErrorMessage(removeOwnerMutation.error, { fallback: 'We could not remove that owner right now.' })
     : null;
   const actionIsPending = changeRoleMutation.isPending || removeOwnerMutation.isPending;
+  const dialogTitle =
+    activeAction === 'promote'
+      ? 'Promote to commissioner'
+      : activeAction === 'demote'
+        ? 'Demote to member'
+        : 'Remove owner';
+  const dialogTestId = `${testPrefix}-dialog-${teamId}-${ownerUserId}`;
 
   return (
     <>
@@ -206,7 +156,9 @@ export function TeamOwnerActionMenu({
         ) : null}
       </div>
 
-      <OwnerActionDialog
+      <Modal
+        closeLabel={`Close ${dialogTitle}`}
+        descriptionId={`${dialogTestId}-description`}
         description={
           activeAction === 'promote'
             ? `${ownerName} will gain commissioner authority for this league.`
@@ -222,14 +174,9 @@ export function TeamOwnerActionMenu({
           }
         }}
         open={activeAction !== null}
-        testId={`${testPrefix}-dialog-${teamId}-${ownerUserId}`}
-        title={
-          activeAction === 'promote'
-            ? 'Promote to commissioner'
-            : activeAction === 'demote'
-              ? 'Demote to member'
-              : 'Remove owner'
-        }
+        size="sm"
+        testId={dialogTestId}
+        title={dialogTitle}
       >
         {activeAction === 'promote' ? (
           <div className="space-y-4">
@@ -313,7 +260,7 @@ export function TeamOwnerActionMenu({
             )}
           </div>
         ) : null}
-      </OwnerActionDialog>
+      </Modal>
     </>
   );
 }

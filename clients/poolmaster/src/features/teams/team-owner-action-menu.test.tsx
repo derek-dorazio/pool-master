@@ -220,4 +220,13 @@ describe('TeamOwnerActionMenu', () => {
     expect(await screen.findByTestId('team-home-owner-actions-confirm-remove-team-1-user-2')).toBeInTheDocument();
     expect(screen.queryByText('Only an active owner can do this')).not.toBeInTheDocument();
   });
+
+  it('opens each action as a titled dialog that names the owner in its description', async () => {
+    renderMenu();
+
+    openAction('remove');
+
+    const dialog = await screen.findByRole('dialog', { name: 'Remove owner' });
+    expect(dialog).toHaveAccessibleDescription(expect.stringContaining('will stop being an owner and will leave this league'));
+  });
 });

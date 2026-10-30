@@ -23,7 +23,7 @@ export const SCANNED_ROOT = 'clients/poolmaster/src';
 export const BASELINE_FILE = 'scripts/duplicate-baseline.json';
 
 /** The total of `count` across the baseline. Only ever lowered, with the entries that removed it. */
-export const BASELINE_CEILING = 5;
+export const BASELINE_CEILING = 3;
 
 /**
  * Big enough to skip short idioms (an import block, a `useMutation` call), small enough to catch
@@ -109,7 +109,7 @@ async function main() {
   }
   for (const { key, count, allowed, ticket } of removed) {
     console.error(
-      `Copy removed: ${key} now holds ${count} (baseline ${allowed}, ${ticket}). ` +
+      `Copy removed: ${key} now holds ${count} (baseline ${allowed}, ${ticket ?? 'kept as look-alike'}). ` +
         `Lower its count in ${BASELINE_FILE} (delete the entry at 0) and BASELINE_CEILING with it.`,
     );
   }
