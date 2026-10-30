@@ -167,7 +167,7 @@ describe('pool-master-qqs RootAdminSportLeagueHomePage', () => {
     const roster = await screen.findByRole('region', { name: /^Roster/ });
     expect(within(roster).getByRole('heading', { level: 3, name: 'Roster' })).toBeVisible();
     expect(within(roster).getByRole('button', { name: /^Add / })).toBeVisible();
-    expect(within(roster).getByText('Rory McIlroy')).toBeVisible();
+    expect(await within(roster).findByText('Rory McIlroy')).toBeVisible();
     expect(screen.getByRole('region', { name: 'Bulk-update rankings' })).toBeVisible();
   });
 
