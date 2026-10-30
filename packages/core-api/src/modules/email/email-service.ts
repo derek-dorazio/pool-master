@@ -140,7 +140,7 @@ export const UNSUBSCRIBE_PAGE_PATH = '/email/unsubscribe';
 export const ONE_CLICK_UNSUBSCRIBE_PATH = '/api/v1/email/unsubscribe';
 
 export interface EmailServiceOptions {
-  messages: Pick<EmailMessageRepository, 'record' | 'existsForContest' | 'findLeagueIdsRecorded' | 'findLatestStateByInvitations'>;
+  messages: Pick<EmailMessageRepository, 'record' | 'existsForContest' | 'findLeagueIdsRecorded' | 'findLeagueIdsRecordedByPrefix' | 'findLatestStateByInvitations'>;
   /** Addresses that bounced for good or complained: their email is skipped, not queued. */
   suppressions: Pick<EmailSuppressionRepository, 'findByEmail'>;
   /** Categories each user turned off: their email in one is skipped, not queued. */
@@ -258,6 +258,15 @@ export class EmailService {
    */
   async leaguesRecorded(templateKey: SystemEmailTemplateKey, about: string): Promise<Set<string>> {
     return this.options.messages.findLeagueIdsRecorded({ templateKey, keyPrefix: idempotencyKeyPrefix(templateKey, about) });
+  }
+
+  /** `leaguesRecorded` for several abouts in one read (#1255): by about, the leagues already told. */
+  async leaguesRecordedAbout(templateKey: SystemEmailTemplateKey, abouts: readonly string[]): Promise<Map<string, Set<string>>> {
+    const byPrefix = await this.options.messages.findLeagueIdsRecordedByPrefix({
+      templateKey,
+      keyPrefixes: abouts.map((about) => idempotencyKeyPrefix(templateKey, about)),
+    });
+    return new Map(abouts.map((about) => [about, byPrefix.get(idempotencyKeyPrefix(templateKey, about)) ?? new Set<string>()]));
   }
 
   /**

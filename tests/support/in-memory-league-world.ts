@@ -199,6 +199,10 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
       const userIds = new Set(memberships.where((row) => row.leagueId === leagueId && isActiveMembership(row)).map((row) => row.userId));
       return users.where((row) => userIds.has(row.id));
     },
+    findActiveByLeagues: async (leagueIds) => {
+      const userIds = new Set(memberships.where((row) => leagueIds.includes(row.leagueId) && isActiveMembership(row)).map((row) => row.userId));
+      return users.where((row) => userIds.has(row.id));
+    },
     findByIdentifier: async (identifier) =>
       one(users.where((row) => row.email === identifier)) ?? one(users.where((row) => row.username === identifier)),
     findHolderOtherThan: async (identifier, exceptUserId) =>
@@ -214,6 +218,7 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
 
   const leagueRepo: LeagueRepository = {
     findById: async (id) => leagues.get(id),
+    findByIds: async (ids) => leagues.where((row) => ids.includes(row.id)),
     findByCode: async (code) => one(leagues.where((row) => row.leagueCode === code)),
     search: async (filters) => leagues.where((row) => matchesLeagueSearch(row, filters)),
     findActive: async () => leagues.where((row) => row.isActive),
@@ -288,6 +293,9 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
   const membershipRepo: LeagueMembershipRepository = {
     findByLeague: async (leagueId) =>
       memberships.where((row) => row.leagueId === leagueId && isActiveMembership(row))
+        .sort((a, b) => a.joinedAt.getTime() - b.joinedAt.getTime()),
+    findByLeagues: async (leagueIds) =>
+      memberships.where((row) => leagueIds.includes(row.leagueId) && isActiveMembership(row))
         .sort((a, b) => a.joinedAt.getTime() - b.joinedAt.getTime()),
     findByUser: async (userId) =>
       memberships.where((row) => row.userId === userId && isActiveMembership(row)),

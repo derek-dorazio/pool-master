@@ -20,7 +20,8 @@ import {
 } from '@poolmaster/shared/domain';
 import type { ContestFinalStandings } from '../../../packages/core-api/src/modules/contests/service';
 import { EMAIL_SETTINGS, EmailService } from '../../../packages/core-api/src/modules/email';
-import { CommissionerNotices } from '../../../packages/core-api/src/modules/notifications';
+import { CommissionerNotices, type CommissionerNoticeDeps } from '../../../packages/core-api/src/modules/notifications';
+import { expectDefined } from '../../support/expect-defined';
 import { fakeLogger } from '../../support/fake-logger';
 import { inMemoryEmailMessages, inMemoryEmailOptOuts, inMemoryEmailSuppressions, type InMemoryEmailMessages } from '../../support/in-memory-email-messages';
 import { TEST_UNSUBSCRIBE, TEST_PLAN_ENTITLEMENTS } from '../../support/email-service';
@@ -55,7 +56,7 @@ describe('CommissionerNotices', () => {
     sportLeagueReads = 0;
   });
 
-  function notices(): CommissionerNotices {
+  function notices(overrides: Partial<CommissionerNoticeDeps> = {}): CommissionerNotices {
     const config = EMAIL_SETTINGS.defaults({ POOLMASTER_ENVIRONMENT: 'prod' });
     const logger = fakeLogger();
     const email = new EmailService({
@@ -91,7 +92,24 @@ describe('CommissionerNotices', () => {
       email,
       appBaseUrl: 'https://app.example.test/',
       logger,
+      ...overrides,
     });
+  }
+
+  /** The repositories a run reads per event or league, each read spied on (#1255). */
+  function spiedReads() {
+    const contests = world.contestRepo();
+    const memberships = world.membershipRepo();
+    const users = world.userRepo();
+    const reads = {
+      contestsOnEvents: jest.spyOn(contests, 'findBySportEvents'),
+      contestsOnEvent: jest.spyOn(contests, 'findBySportEvent'),
+      memberships: jest.spyOn(memberships, 'findByLeagues'),
+      users: jest.spyOn(users, 'findActiveByLeagues'),
+      toldByPrefix: jest.spyOn(outbox, 'findLeagueIdsRecordedByPrefix'),
+    };
+    const counts = () => Object.fromEntries(Object.entries(reads).map(([name, read]) => [name, read.mock.calls.length]));
+    return { deps: { contests, memberships, users }, counts };
   }
 
   function person(leagueId: string, firstName: string, role: LeagueRole = LeagueRole.COMMISSIONER) {
@@ -213,6 +231,37 @@ describe('CommissionerNotices', () => {
   });
 
   describe('Ready for contests (C2)', () => {
+    it('reads the contests on every ready event, the leagues told of each event and every league\'s commissioners once a run, however many events and leagues (#1255)', async () => {
+      const leagues = [world.addLeague({ name: 'Office League' }), world.addLeague({ name: 'Club League' }), world.addLeague({ name: 'Busy League' })];
+      const commissioners = leagues.map((league, index) => person(league.id, `Commissioner${index}`));
+      const masters = event({ name: 'The Masters', startDate: inDays(5) });
+      event({ name: 'RBC Heritage', startDate: inDays(6) });
+      event({ name: 'Valspar Championship', startDate: inDays(9), status: SportEventStatus.DRAFT });
+      world.addContest(expectDefined(leagues[2]).id, { status: ContestStatus.DRAFT, sportEventIds: [masters.id] });
+      const { deps, counts } = spiedReads();
+
+      await notices(deps).queueDue(NOW);
+
+      expect(counts()).toEqual({ contestsOnEvents: 1, contestsOnEvent: 0, memberships: 1, users: 1, toldByPrefix: 2 });
+      expect(sent('EVENT_READY_FOR_CONTESTS')).toHaveLength(5);
+      expect(new Set(sent('EVENT_COMING_UP').map(({ userId }) => userId))).toEqual(new Set(commissioners.map((user) => user.id)));
+    });
+
+    it('reads no members on a sweep where every league has already been told of every due event (#1255)', async () => {
+      const office = world.addLeague({ name: 'Office League' });
+      person(office.id, 'Casey');
+      event({ name: 'The Masters', startDate: inDays(5) });
+      event({ name: 'Valspar Championship', startDate: inDays(9), status: SportEventStatus.DRAFT });
+      await notices().queueDue(NOW);
+      const toldBefore = outbox.rows.length;
+      const { deps, counts } = spiedReads();
+
+      await notices(deps).queueDue(new Date(NOW.getTime() + HOUR));
+
+      expect(outbox.rows).toHaveLength(toldBefore);
+      expect(counts()).toMatchObject({ memberships: 0, users: 0 });
+    });
+
     it('tells commissioners of leagues with no contest on a released event within 7 days, with its field and the default setups offered on it in their order, each opening Create contest with the setup and the event chosen', async () => {
       const office = world.addLeague({ name: 'Office League', leagueCode: 'OFFICE24' });
       const busy = world.addLeague({ name: 'Busy League' });
@@ -315,6 +364,22 @@ describe('CommissionerNotices', () => {
   });
 
   describe('Weekly digest', () => {
+    it('reads the contests on every upcoming event and every digest league\'s commissioners once, however many events and leagues (#1255)', async () => {
+      for (const name of ['Office League', 'Club League']) {
+        const league = world.addLeague({ name, eventEmailDelivery: EventEmailDelivery.WEEKLY_DIGEST });
+        person(league.id, `${name} Commissioner`);
+      }
+      event({ name: 'The Masters', startDate: mondayPlus(2) });
+      event({ name: 'RBC Heritage', startDate: mondayPlus(4) });
+      event({ name: 'Valspar Championship', startDate: mondayPlus(6) });
+      const { deps, counts } = spiedReads();
+
+      await notices(deps).queueDue(MONDAY);
+
+      expect(sent('EVENT_WEEKLY_DIGEST')).toHaveLength(2);
+      expect(counts()).toMatchObject({ contestsOnEvents: 1, contestsOnEvent: 0, memberships: 1, users: 1 });
+    });
+
     it('names the sport leagues of every upcoming event from one read', async () => {
       const office = world.addLeague({ name: 'Office League', eventEmailDelivery: EventEmailDelivery.WEEKLY_DIGEST });
       person(office.id, 'Casey');
