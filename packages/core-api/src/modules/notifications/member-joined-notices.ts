@@ -46,7 +46,7 @@ export interface MemberJoinedNoticeDeps extends LeagueMemberDeps {
   leagues: Pick<LeagueRepository, 'findById' | 'findByIds'>;
   /** Each joiner's squad, by name. */
   squadMemberships: Pick<SquadMembershipRepository, 'findByLeagueUsersWithSquadName'>;
-  email: Pick<EmailService, 'send' | 'leaguesRecorded' | 'leaguesRecordedAbout'>;
+  email: Pick<EmailService, 'send' | 'leaguesRecordedAbout'>;
   /** The next day's email goes at the overnight hour every scheduled league email uses. */
   readConfig: () => Pick<EmailConfig, 'weeklyDigestHour'>;
   appBaseUrl: string;
@@ -59,6 +59,8 @@ interface JoinNotice {
   timing: MemberJoinedTiming;
   joins: LeagueMembership[];
   about: string;
+  /** What the sweep asks "already told?" about (#1169): the join for an at-once email, the day for the next day's. */
+  noticeAbout: string;
 }
 
 /** The at-once email's outbox subject for one join: the membership and when it joined, as a rejoin is a new join. */
@@ -93,7 +95,7 @@ export class MemberJoinedNotices implements DueNotifications {
       const position = today.findIndex((join) => join.id === membership.id);
       if (position < 0 || position >= AT_ONCE_PER_DAY) return;
       await this.sendEach(
-        [{ league, timing: MemberJoinedTiming.AT_ONCE, joins: [membership], about: atOnceAbout(membership) }],
+        [{ league, timing: MemberJoinedTiming.AT_ONCE, joins: [membership], about: atOnceAbout(membership), noticeAbout: atOnceAbout(membership) }],
         (_notice, error) => this.failedAtOnce(membership, error),
       );
     } catch (error) {
@@ -112,7 +114,8 @@ export class MemberJoinedNotices implements DueNotifications {
    * Yesterday's joins that weren't told at once, for each league that had them and hasn't been
    * told, once the overnight hour has come in US Eastern time. The outbox is the record of who was
    * told at once, so someone leaving later that day, or a join committing after a later one, never
-   * drops or repeats anyone.
+   * drops or repeats anyone. Who was told, the day's email and each join's own, is one read for the
+   * sweep (#1169), and a league whose joins were all told at once costs nothing more.
    */
   async queueDue(now: Date): Promise<void> {
     const today = easternDayOf(now, this.deps.readConfig().weeklyDigestHour);
@@ -126,20 +129,22 @@ export class MemberJoinedNotices implements DueNotifications {
       .map(([leagueId, memberships]) => ({ leagueId, joins: joinsOn(memberships, yesterday) }))
       .filter(({ joins }) => joins.length > 0);
     if (busy.length === 0) return;
-    const told = await this.deps.email.leaguesRecorded('LEAGUE_MEMBER_JOINED', yesterday);
-    const due = busy.filter(({ leagueId }) => !told.has(leagueId));
-    if (due.length === 0) return;
-    // Every due league's joins and leagues are read once for the sweep, not once per league (#1255).
-    const [toldAtOnce, leagues] = await Promise.all([
-      this.deps.email.leaguesRecordedAbout('LEAGUE_MEMBER_JOINED', due.flatMap(({ joins }) => joins.map(atOnceAbout))),
-      this.deps.leagues.findByIds(due.map(({ leagueId }) => leagueId)),
+    const told = await this.deps.email.leaguesRecordedAbout('LEAGUE_MEMBER_JOINED', [
+      yesterday,
+      ...busy.flatMap(({ joins }) => joins.map(atOnceAbout)),
     ]);
-    const leagueById = new Map(leagues.map((league) => [league.id, league]));
-    const notices = due.flatMap(({ leagueId, joins }): JoinNotice[] => {
-      const untold = joins.filter((join) => !toldAtOnce.get(atOnceAbout(join))?.has(leagueId));
+    const toldYesterday = told.get(yesterday);
+    const due = busy
+      .filter(({ leagueId }) => !toldYesterday?.has(leagueId))
+      .map(({ leagueId, joins }) => ({ leagueId, untold: joins.filter((join) => !told.get(atOnceAbout(join))?.has(leagueId)) }))
+      .filter(({ untold }) => untold.length > 0);
+    if (due.length === 0) return;
+    // Every due league is read once for the sweep, not once per league (#1255).
+    const leagueById = new Map((await this.deps.leagues.findByIds(due.map(({ leagueId }) => leagueId))).map((league) => [league.id, league]));
+    const notices = due.flatMap(({ leagueId, untold }): JoinNotice[] => {
       const league = leagueById.get(leagueId);
-      return untold.length > 0 && league?.isActive
-        ? [{ league, timing: MemberJoinedTiming.NEXT_DAY, joins: untold, about: `${yesterday}:${leagueId}` }]
+      return league?.isActive
+        ? [{ league, timing: MemberJoinedTiming.NEXT_DAY, joins: untold, about: `${yesterday}:${leagueId}`, noticeAbout: yesterday }]
         : [];
     });
     if (notices.length === 0) return;
@@ -175,7 +180,7 @@ export class MemberJoinedNotices implements DueNotifications {
   }
 
   private async send(
-    { league, timing, joins, about }: JoinNotice,
+    { league, timing, joins, about, noticeAbout }: JoinNotice,
     members: readonly LeagueMemberWithRole[],
     memberCount: number,
     squadNames: ReadonlyMap<string, string>,
@@ -190,6 +195,7 @@ export class MemberJoinedNotices implements DueNotifications {
       await this.deps.email.send('LEAGUE_MEMBER_JOINED', {
         to: emailRecipientOf(user),
         about,
+        noticeAbout,
         league: { id: league.id, name: league.name, leagueCode: league.leagueCode, plan: league.plan },
         data: {
           userName: formatUserName(user),

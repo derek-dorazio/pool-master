@@ -93,7 +93,7 @@ export class PlanPreviewNotices implements DueNotifications {
     const commissioners = await activeCommissionersByLeague(this.deps, untold.map(({ league }) => league.id));
     for (const { league, days, daysLeft, about } of untold) {
       try {
-        await this.send(league, daysLeft, `${about}:${league.id}`, commissioners.get(league.id) ?? []);
+        await this.send(league, daysLeft, about, commissioners.get(league.id) ?? []);
       } catch (error) {
         this.deps.logger?.error({
           action: 'email.planPreviewEnding.failed',
@@ -103,13 +103,14 @@ export class PlanPreviewNotices implements DueNotifications {
     }
   }
 
-  private async send(league: League, daysLeft: number, about: string, commissioners: readonly User[]): Promise<void> {
+  private async send(league: League, daysLeft: number, noticeAbout: string, commissioners: readonly User[]): Promise<void> {
     const free = this.deps.planEntitlements.forPlan(LeaguePlan.FREE).caps;
     const planUrl = buildLeaguePlanUrl(this.deps.appBaseUrl, league.leagueCode);
     for (const user of commissioners) {
       await this.deps.email.send('LEAGUE_PLAN_PREVIEW_ENDING', {
         to: emailRecipientOf(user),
-        about,
+        about: `${noticeAbout}:${league.id}`,
+        noticeAbout,
         league: { id: league.id, name: league.name, leagueCode: league.leagueCode, plan: league.plan },
         data: {
           userName: formatUserName(user),

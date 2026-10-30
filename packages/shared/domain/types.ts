@@ -172,6 +172,8 @@ export interface EmailMessage extends DomainEntity {
   invitationId?: string;
   /** Template, what the email is about, and the recipient: one email per key, ever. */
   idempotencyKey: string;
+  /** The subject a sweep asks "already told?" about (#1169); unset on an email no sweep checks for. */
+  noticeAbout?: string;
   fromName: string;
   fromAddress: string;
   /** Absent on a skipped email and once the bodies are cleared. */

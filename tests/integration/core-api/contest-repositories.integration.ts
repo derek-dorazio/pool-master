@@ -1254,7 +1254,7 @@ describe('StandingsEmailPositionRepository (#877)', () => {
 });
 
 describe('EmailMessageRepository.existsForContest (#877)', () => {
-  it('finds a contest\'s email of the template under the key prefix, for anyone and in any state, and nothing for another contest, template or moment', async () => {
+  it('finds a contest\'s email of the template by its exact notice subject, for anyone and in any state, and nothing for another contest, template or subject (#1169)', async () => {
     const { league, event, suffix } = await createLeagueAndEvent();
     const contest = await createContest(league.id, event.id, 'Outbox');
     const other = await createContest(league.id, event.id, 'Other Outbox');
@@ -1265,49 +1265,56 @@ describe('EmailMessageRepository.existsForContest (#877)', () => {
       contestId: contest.id,
       recipientEmail: `standings-${suffix}@integration.test`,
       idempotencyKey: `CONTEST_STANDINGS:${about}:user-${suffix}`,
+      noticeAbout: about,
       fromName: 'Contest Repo League',
       fromAddress: 'league@integration.test',
       status: 'SKIPPED',
       skipReason: 'OPTED_OUT',
     });
-    const exists = (contestId: string, templateKey: 'CONTEST_STANDINGS' | 'CONTEST_OPENED', keyPrefix: string) =>
-      outbox.existsForContest({ contestId, templateKey, keyPrefix });
+    const exists = (contestId: string, templateKey: 'CONTEST_STANDINGS' | 'CONTEST_OPENED', noticeAbout: string) =>
+      outbox.existsForContest({ contestId, templateKey, noticeAbout });
 
-    await expect(exists(contest.id, 'CONTEST_STANDINGS', `CONTEST_STANDINGS:${about}:`)).resolves.toBe(true);
-    await expect(exists(contest.id, 'CONTEST_STANDINGS', `CONTEST_STANDINGS:${contest.id}:${event.id}:round-2:`)).resolves.toBe(false);
-    await expect(exists(contest.id, 'CONTEST_STANDINGS', `CONTEST_STANDINGS:${contest.id}:${event.id}:round-10:`)).resolves.toBe(false);
-    await expect(exists(contest.id, 'CONTEST_OPENED', `CONTEST_OPENED:${about}:`)).resolves.toBe(false);
-    await expect(exists(other.id, 'CONTEST_STANDINGS', `CONTEST_STANDINGS:${about}:`)).resolves.toBe(false);
+    await expect(exists(contest.id, 'CONTEST_STANDINGS', about)).resolves.toBe(true);
+    await expect(exists(contest.id, 'CONTEST_STANDINGS', `${contest.id}:${event.id}:round-2`)).resolves.toBe(false);
+    await expect(exists(contest.id, 'CONTEST_STANDINGS', `${contest.id}:${event.id}:round-10`)).resolves.toBe(false);
+    // A subject is matched whole, never as the start of a longer one.
+    await expect(exists(contest.id, 'CONTEST_STANDINGS', `${contest.id}:${event.id}`)).resolves.toBe(false);
+    await expect(exists(contest.id, 'CONTEST_OPENED', about)).resolves.toBe(false);
+    await expect(exists(other.id, 'CONTEST_STANDINGS', about)).resolves.toBe(false);
   });
 });
 
-describe('EmailMessageRepository.findLeagueIdsRecorded (#893)', () => {
-  it('lists each league with an email of the template under the key prefix once, in any state, and no league for another template or subject', async () => {
+describe('EmailMessageRepository.findLeagueIdsByNotice (#893, #1169)', () => {
+  it('lists, by notice subject, each league with an email of the template about it once, in any state, and no league for another template or subject', async () => {
     const first = await createLeagueAndEvent();
     const second = await createLeagueAndEvent();
     const third = await createLeagueAndEvent();
     const outbox = new PrismaEmailMessageRepository(getAppPrisma());
-    const record = (templateKey: 'EVENT_COMING_UP' | 'EVENT_READY_FOR_CONTESTS', leagueId: string, about: string, user: string) => outbox.record({
+    const record = (templateKey: 'EVENT_COMING_UP' | 'EVENT_READY_FOR_CONTESTS', leagueId: string, eventId: string, user: string) => outbox.record({
       templateKey,
       leagueId,
       recipientEmail: `${user}-${first.suffix}@integration.test`,
-      idempotencyKey: `${templateKey}:${about}:${user}-${first.suffix}`,
+      idempotencyKey: `${templateKey}:${eventId}:${leagueId}:${user}-${first.suffix}`,
+      noticeAbout: eventId,
       fromName: 'Contest Repo League',
       fromAddress: 'league@integration.test',
       status: 'SKIPPED',
       skipReason: 'OPTED_OUT',
     });
     const eventId = first.event.id;
-    await record('EVENT_COMING_UP', first.league.id, `${eventId}:${first.league.id}`, 'casey');
-    await record('EVENT_COMING_UP', first.league.id, `${eventId}:${first.league.id}`, 'jordan');
-    await record('EVENT_COMING_UP', second.league.id, `${eventId}:${second.league.id}`, 'casey');
-    await record('EVENT_COMING_UP', third.league.id, `${second.event.id}:${third.league.id}`, 'casey');
-    await record('EVENT_READY_FOR_CONTESTS', third.league.id, `${eventId}:${third.league.id}`, 'casey');
+    await record('EVENT_COMING_UP', first.league.id, eventId, 'casey');
+    await record('EVENT_COMING_UP', first.league.id, eventId, 'jordan');
+    await record('EVENT_COMING_UP', second.league.id, eventId, 'casey');
+    await record('EVENT_COMING_UP', third.league.id, second.event.id, 'casey');
+    await record('EVENT_READY_FOR_CONTESTS', third.league.id, eventId, 'casey');
 
-    await expect(outbox.findLeagueIdsRecorded({ templateKey: 'EVENT_COMING_UP', keyPrefix: `EVENT_COMING_UP:${eventId}:` }))
-      .resolves.toEqual(new Set([first.league.id, second.league.id]));
-    await expect(outbox.findLeagueIdsRecorded({ templateKey: 'EVENT_READY_FOR_CONTESTS', keyPrefix: `EVENT_READY_FOR_CONTESTS:${second.event.id}:` }))
-      .resolves.toEqual(new Set());
+    await expect(outbox.findLeagueIdsByNotice({ templateKey: 'EVENT_COMING_UP', noticeAbouts: [eventId, third.event.id] })).resolves.toEqual(new Map([
+      [eventId, new Set([first.league.id, second.league.id])],
+      [third.event.id, new Set()],
+    ]));
+    await expect(outbox.findLeagueIdsByNotice({ templateKey: 'EVENT_READY_FOR_CONTESTS', noticeAbouts: [second.event.id] }))
+      .resolves.toEqual(new Map([[second.event.id, new Set()]]));
+    await expect(outbox.findLeagueIdsByNotice({ templateKey: 'EVENT_COMING_UP', noticeAbouts: [] })).resolves.toEqual(new Map());
   });
 });
 

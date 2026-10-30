@@ -112,7 +112,7 @@ export interface CommissionerNoticeDeps extends LeagueMemberDeps {
   eventPages: Pick<EventPageService, 'pagesByEvent'>;
   /** Last year's contests' winners. */
   standings: Pick<ContestEntryStandingRepository, 'findWinnersByContests'>;
-  email: Pick<EmailService, 'send' | 'leaguesRecorded' | 'leaguesRecordedAbout'>;
+  email: Pick<EmailService, 'send' | 'leaguesRecordedAbout'>;
   appBaseUrl: string;
   logger?: FastifyBaseLogger;
 }
@@ -275,7 +275,7 @@ export class CommissionerNotices implements DueNotifications {
   ): Promise<void> {
     const monday = digestMondayOf(now, this.deps.readConfig().weeklyDigestHour);
     if (monday === null) return;
-    const told = await this.deps.email.leaguesRecorded('EVENT_WEEKLY_DIGEST', monday);
+    const told = (await this.deps.email.leaguesRecordedAbout('EVENT_WEEKLY_DIGEST', [monday])).get(monday) ?? new Set<string>();
     const due = (await this.deps.leagues.findActive())
       .filter((league) => league.eventEmailDelivery === EventEmailDelivery.WEEKLY_DIGEST && !told.has(league.id));
     if (due.length === 0) return;
@@ -321,6 +321,7 @@ export class CommissionerNotices implements DueNotifications {
           await this.deps.email.send('EVENT_WEEKLY_DIGEST', {
             to: emailRecipientOf(user),
             about: `${monday}:${league.id}`,
+            noticeAbout: monday,
             league: { id: league.id, name: league.name, leagueCode: league.leagueCode, plan: league.plan },
             data: { userName: formatUserName(user), leagueName: league.name, thisWeek, nextWeek, contestsUrl },
           });
@@ -367,6 +368,7 @@ export class CommissionerNotices implements DueNotifications {
         await this.deps.email.send('EVENT_COMING_UP', {
           to: emailRecipientOf(user),
           about: `${sportEvent.id}:${league.id}`,
+          noticeAbout: sportEvent.id,
           league: { id: league.id, name: league.name, leagueCode: league.leagueCode, plan: league.plan },
           data: {
             userName: formatUserName(user),
@@ -459,6 +461,7 @@ export class CommissionerNotices implements DueNotifications {
         await this.deps.email.send('EVENT_READY_FOR_CONTESTS', {
           to: emailRecipientOf(user),
           about: `${sportEvent.id}:${league.id}`,
+          noticeAbout: sportEvent.id,
           league: { id: league.id, name: league.name, leagueCode: league.leagueCode, plan: league.plan },
           data: {
             userName: formatUserName(user),
@@ -547,6 +550,7 @@ export class CommissionerNotices implements DueNotifications {
       await this.deps.email.send('CONTEST_NOT_OPEN', {
         to: emailRecipientOf(user),
         about: contest.id,
+        noticeAbout: contest.id,
         league: { id: league.id, name: league.name, leagueCode: league.leagueCode, plan: league.plan },
         refs: { contestId: contest.id },
         data: {

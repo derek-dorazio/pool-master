@@ -103,7 +103,7 @@ describe('CommissionerNotices', () => {
       contestsOnEvent: jest.spyOn(contests, 'findBySportEvent'),
       memberships: jest.spyOn(memberships, 'findByLeagues'),
       users: jest.spyOn(users, 'findActiveByLeagues'),
-      toldByPrefix: jest.spyOn(outbox, 'findLeagueIdsRecordedByPrefix'),
+      toldByPrefix: jest.spyOn(outbox, 'findLeagueIdsByNotice'),
     };
     const counts = () => Object.fromEntries(Object.entries(reads).map(([name, read]) => [name, read.mock.calls.length]));
     return { deps: { contests, memberships, users }, counts };
@@ -396,6 +396,19 @@ describe('CommissionerNotices', () => {
       expect(counts()).toMatchObject({ contestsOnEvents: 1, contestsOnEvent: 0, memberships: 1, users: 1 });
     });
 
+    it('reads no events, contests or commissioners on a later sweep of a Monday whose digests were all sent (#1169)', async () => {
+      const office = world.addLeague({ name: 'Office League', eventEmailDelivery: EventEmailDelivery.WEEKLY_DIGEST });
+      person(office.id, 'Casey');
+      event({ name: 'The Masters', startDate: mondayPlus(2) });
+      await notices().queueDue(MONDAY);
+      const { deps, counts } = spiedReads();
+
+      await notices(deps).queueDue(new Date(MONDAY.getTime() + 5 * 60_000));
+
+      expect(sent('EVENT_WEEKLY_DIGEST')).toHaveLength(1);
+      expect(counts()).toMatchObject({ contestsOnEvents: 0, memberships: 0, users: 0 });
+    });
+
     it('names the sport leagues of every upcoming event from one read', async () => {
       const office = world.addLeague({ name: 'Office League', eventEmailDelivery: EventEmailDelivery.WEEKLY_DIGEST });
       person(office.id, 'Casey');
@@ -547,7 +560,7 @@ describe('CommissionerNotices', () => {
         rulesOfOne: jest.spyOn(configurations, 'findByContest'),
         leagues: jest.spyOn(leagueRepo, 'findByIds'),
         leagueById: jest.spyOn(leagueRepo, 'findById'),
-        told: jest.spyOn(outbox, 'findLeagueIdsRecordedByPrefix'),
+        told: jest.spyOn(outbox, 'findLeagueIdsByNotice'),
         toldForContest: jest.spyOn(outbox, 'existsForContest'),
         memberships: jest.spyOn(memberships, 'findByLeagues'),
         users: jest.spyOn(users, 'findActiveByLeagues'),

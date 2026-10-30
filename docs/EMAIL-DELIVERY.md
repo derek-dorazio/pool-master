@@ -24,6 +24,14 @@ Every email is a row in `email_messages` (#844 slice 3), one per recipient:
   or the address for an invite) it makes `idempotency_key`, which is unique. A retried action,
   a second sweep or a double click records nothing new. A resend is a new invite code, so a
   new email.
+- **What a notice is about** (`notice_about`, #1169). A sweep's notice also records its subject
+  without the league or recipient: the sport event, the contest, the digest's Monday, the join,
+  or the day of a busy day's joins. A sweep asks "already told?" for all its subjects in one
+  exact-match read on (template, subject, league), not a scan of key prefixes. Rows recorded
+  before the column have none, so such a check misses them and goes on to build the email. The
+  idempotency key keeps most such emails from being recorded twice; the exception is a next-day
+  member-joined email in the first day after the column lands, which can repeat joins told at
+  once just before it.
 - **The sender** (`EmailSender`) runs in every core-api task. It claims due rows with
   `FOR UPDATE SKIP LOCKED`, so two tasks never send the same email, and sends no faster than
   `EMAIL_CONFIG.sendRatePerSecond` per task. A queued email wakes it; a 15-second tick picks up
@@ -599,7 +607,9 @@ has come, listing in the order they joined every join of the day with no at-once
 outbox, so someone leaving later that day or two joins committing out of order never drops or
 repeats anyone. A join is an active MEMBER membership by its `joinedAt`, so the league's creator
 never counts. The idempotency key is the membership and its join time at once, and the day and
-league the next day, each per person.
+league the next day, each per person. A sweep reads whether the day and every busy day's joins
+were told in one read, and a league whose joins were all told at once is due nothing and read
+no further (#1169).
 
 **Contest expanded** (`CONTEST_EXPANDED`, #987, category Account, so always sent, on every plan)
 tells a league's commissioners when one of its contests is expanded (plans/payments.md §8): the
