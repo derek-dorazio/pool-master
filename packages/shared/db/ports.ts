@@ -462,16 +462,16 @@ export interface ParticipantProviderMappingRepository {
 
 // --- Contest ---
 
-/**
- * The one port for `Contest` (#247 merged the contest-management copy into it). `create` is
- * called by the one creation path, `ContestManagementService.createContest` (#245).
- */
 /** A quick pick draw whose entries' receipts are still to send (#1171): its contest and the event it dealt. */
 export interface PendingDrawReceipts {
   contestId: string;
   sportEventId: string;
 }
 
+/**
+ * The one port for `Contest` (#247 merged the contest-management copy into it). `create` is
+ * called by the one creation path, `ContestManagementService.createContest` (#245).
+ */
 export interface ContestRepository {
   findById(id: string): Promise<Contest | null>;
   /** The contests under `ids`, in one read, missing ones left out (#1315). */
