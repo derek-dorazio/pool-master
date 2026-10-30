@@ -35,6 +35,12 @@ import { asPrismaClient } from '../../support/prisma-double';
 import { deliverQueuedEmail, emailServiceOver } from '../../support/email-service';
 import { inMemoryEmailMessages } from '../../support/in-memory-email-messages';
 
+/** An email service and the invitation transaction over the same outbox, as the routes wire them. */
+function withEmail(mail: MailDeliveryProvider, invitations: Pick<LeagueInvitationRepository, 'createMany'>) {
+  const outbox = inMemoryEmailMessages();
+  return { email: emailServiceOver(mail, outbox), invitationEmails: passThroughInvitationEmails(invitations, outbox) };
+}
+
 /** A league with no open contests, for the welcome email's list. */
 const NO_CONTESTS = { findOpenByLeague: async () => [] };
 const NOBODY_TOLD = { tellJoined: async () => undefined };
@@ -303,27 +309,6 @@ describe('InvitationService', () => {
       expect(ownOutbox.rows).toEqual([]);
     });
 
-    it('refuses to send email invitations with an email service but no invitationEmails, creating nothing', async () => {
-      const invitationRepo = createMockInvitationRepo();
-      const service = new InvitationService({
-        invitations: invitationRepo,
-        memberships: createMockMembershipRepo(),
-        leagues: createMockLeagueRepo(),
-        prisma: asPrismaClient(createMockProvisioningPrisma()),
-        email: emailServiceOver({ providerName: 'smtp', send: jest.fn() }),
-        users: createProvisioningUsers(),
-        contests: NO_CONTESTS,
-        memberJoined: NOBODY_TOLD,
-      });
-
-      await expect(service.sendEmailInvitations({
-        leagueId: 'league-1',
-        emails: ['alice@example.com'],
-        invitedBy: 'owner-1',
-      })).rejects.toThrow('InvitationService needs invitationEmails');
-      expect(invitationRepo.createMany).not.toHaveBeenCalled();
-    });
-
     it('refuses to invite into a league that does not exist, creating nothing, since its name and code are the email\'s sender', async () => {
       const invitationRepo = createMockInvitationRepo();
       const service = new InvitationService({
@@ -469,7 +454,7 @@ describe('InvitationService', () => {
         users: createProvisioningUsers(),
         contests: NO_CONTESTS,
         memberJoined: NOBODY_TOLD,
-        email: mailDelivery ? emailServiceOver(mailDelivery) : undefined,
+        ...(mailDelivery ? withEmail(mailDelivery, invitationRepo) : { email: undefined }),
         appBaseUrl: 'https://app.example.com',
       });
       return { invitationRepo, service };
@@ -699,7 +684,7 @@ describe('InvitationService', () => {
         squads: createMockSquadRepo(),
         squadMemberships: createMockSquadMembershipRepo(),
         prisma: asPrismaClient(createMockProvisioningPrisma()),
-        email: emailServiceOver(mailDelivery),
+        ...withEmail(mailDelivery, invitationRepo),
         appBaseUrl: 'https://app.primetimecommissioner.com',
         users: createProvisioningUsers(),
         contests: NO_CONTESTS,
@@ -749,7 +734,7 @@ describe('InvitationService', () => {
         memberships: membershipRepo,
         leagues: createMockLeagueRepo(),
         prisma: asPrismaClient(createMockProvisioningPrisma()),
-        email: emailServiceOver(mailDelivery),
+        ...withEmail(mailDelivery, createMockInvitationRepo()),
         users: createProvisioningUsers(),
         contests: NO_CONTESTS,
         memberJoined: NOBODY_TOLD,
@@ -782,7 +767,7 @@ describe('InvitationService', () => {
         squads: createMockSquadRepo(),
         squadMemberships: createMockSquadMembershipRepo(),
         prisma: asPrismaClient(createMockProvisioningPrisma()),
-        email: emailServiceOver(mailDelivery),
+        ...withEmail(mailDelivery, createMockInvitationRepo()),
         appBaseUrl: 'https://app.primetimecommissioner.com',
         users: createProvisioningUsers(),
         contests: NO_CONTESTS,

@@ -15,6 +15,7 @@ import '@poolmaster/shared/dto/leagues.dto';
 import '@poolmaster/shared/dto/errors.dto';
 import {
   PrismaContestRepository,
+  PrismaInvitationEmailTransaction,
   PrismaLeagueRepository,
   PrismaLeagueMembershipRepository,
   PrismaLeagueInvitationRepository,
@@ -53,6 +54,7 @@ export function invitationsModule(fastify: FastifyInstance, opts: MailModuleOpti
     prisma,
     logger: fastify.log,
     email,
+    invitationEmails: new PrismaInvitationEmailTransaction(prisma),
     appBaseUrl,
   });
   const handlers = createInvitationHandlers(invitationService, userRepo);

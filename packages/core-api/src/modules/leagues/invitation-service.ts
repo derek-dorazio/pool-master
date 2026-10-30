@@ -96,7 +96,7 @@ const DEFAULT_INVITER_NAME = 'League commissioner';
  * Everything InvitationService reads and writes (#211). It replaced a nine-parameter positional
  * constructor, where a dependency added mid-list silently shifted every argument after it.
  */
-export interface InvitationServiceDeps {
+interface InvitationServiceBaseDeps {
   invitations: LeagueInvitationRepository;
   memberships: LeagueMembershipRepository;
   leagues: LeagueRepository;
@@ -109,11 +109,17 @@ export interface InvitationServiceDeps {
   memberJoined: Pick<MemberJoinedNotices, 'tellJoined'>;
   prisma?: PrismaClient;
   logger?: FastifyBaseLogger;
-  email?: EmailService;
-  /** Writes new email invitations and their invite emails together (#1357); needed with `email`. */
-  invitationEmails?: InvitationEmailTransaction;
   appBaseUrl?: string;
 }
+
+/**
+ * With an email service comes the transaction that writes new email invitations and their invite
+ * emails together (#1357), so a service that can email can never write the two apart.
+ */
+export type InvitationServiceDeps = InvitationServiceBaseDeps & (
+  | { email: EmailService; invitationEmails: InvitationEmailTransaction }
+  | { email?: undefined; invitationEmails?: undefined }
+);
 
 export class InvitationService {
   private readonly logger?: FastifyBaseLogger;
@@ -225,13 +231,17 @@ export class InvitationService {
       return { created: await this.deps.invitations.createMany(invitations), emailStates: invites.map(() => null) };
     }
     const writes = this.deps.invitationEmails;
-    if (!writes) throw new Error('InvitationService needs invitationEmails to send email invitations with its email service');
     let created: LeagueInvitation[] = [];
     const states = await this.deps.email.sendMany('LEAGUE_MEMBER_INVITE', invites.map((invite) => this.inviteEmail(invite)), (records) =>
       writes.run(async ({ invitations: invitationWrites, emails }) => {
         created = await invitationWrites.createMany(invitations);
         return emails.recordMany(records);
       }));
+    // sendMany writes through `record` whenever it has inputs; if it ever returned early instead,
+    // the invitations would be missing with no error, so that fails here.
+    if (created.length !== invitations.length) {
+      throw new Error(`Wrote ${created.length} of ${invitations.length} email invitations: their emails were not recorded`);
+    }
     return { created, emailStates: states.map(({ status, skipReason }) => ({ status, skipReason })) };
   }
 

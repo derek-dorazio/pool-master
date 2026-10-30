@@ -79,6 +79,7 @@ function setup(options: {
   const outbox = options.outbox ?? inMemoryEmailMessages();
   const email = options.mail ? emailServiceOver(options.mail, outbox) : undefined;
   const appBaseUrl = options.appBaseUrl ?? 'http://localhost:5173';
+  const mailDeps = email ? { email, invitationEmails: world.invitationEmails(outbox) } : { email: undefined };
   const service = new InvitationService({
     invitations: world.leagueInvitations,
     memberships: world.memberships,
@@ -105,7 +106,7 @@ function setup(options: {
         appBaseUrl,
       })
       : { tellJoined: async () => undefined },
-    ...(email ? { email, invitationEmails: world.invitationEmails(outbox) } : {}),
+    ...mailDeps,
     ...(options.withPrisma ? { prisma: teamNamePrisma(world) } : {}),
     ...(options.appBaseUrl ? { appBaseUrl: options.appBaseUrl } : {}),
   });
