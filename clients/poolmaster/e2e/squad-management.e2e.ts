@@ -207,17 +207,17 @@ test('an owner renames their squad, changes its icon and adds a co-owner by invi
     await test.step('the co-owner registers through the invite code and lands on the squad as their own', async () => {
       const coOwner = await newRolePage();
       await coOwner.goto(`/team-invite/${inviteCode}`);
-      await expect(coOwner.getByTestId('team-invite-register-form')).toBeVisible();
+      await expect(coOwner.getByTestId('sign-up-form')).toBeVisible();
       // No email field: the account takes the address the invitation was sent to.
-      await coOwner.getByTestId('team-invite-register-first-name').fill(run.coOwner.firstName);
-      await coOwner.getByTestId('team-invite-register-last-name').fill(run.coOwner.lastName);
-      await coOwner.getByTestId('team-invite-register-username').fill(run.coOwner.username);
-      await coOwner.getByTestId('team-invite-register-password').fill(
-        `${GENERATED_PASSWORD_PREFIX}${randomBytes(12).toString('hex')}`,
-      );
+      await coOwner.getByTestId('sign-up-first-name').fill(run.coOwner.firstName);
+      await coOwner.getByTestId('sign-up-last-name').fill(run.coOwner.lastName);
+      await coOwner.getByTestId('sign-up-username').fill(run.coOwner.username);
+      const coOwnerPassword = `${GENERATED_PASSWORD_PREFIX}${randomBytes(12).toString('hex')}`;
+      await coOwner.getByTestId('sign-up-password').fill(coOwnerPassword);
+      await coOwner.getByTestId('sign-up-confirm-password').fill(coOwnerPassword);
       const registered = await submitAndRead<{ user: { id: string; email: string } }>(
         coOwner,
-        'team-invite-register-submit',
+        'sign-up-submit',
         'POST',
         '/api/v1/team-invitations/register',
       );

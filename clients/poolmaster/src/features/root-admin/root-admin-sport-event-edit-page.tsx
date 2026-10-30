@@ -18,6 +18,7 @@ import {
 } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
+import { formPageSave } from '@/lib/form-page-save';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import { useManageBreadcrumbOverride } from './manage-breadcrumb-context';
@@ -121,12 +122,8 @@ function SportEventEditForm({ tournament }: { tournament: SportEventDto }) {
     <FormPage
       cancelTo={homePath}
       description={`The ${sportLeagueNoun.one} and event year are fixed at creation and cannot be changed.`}
-      errorMessage={updateMutation.isError
-        ? extractErrorMessage(updateMutation.error, { fallback: 'We could not save these details.' })
-        : undefined}
-      isPending={updateMutation.isPending}
+      {...formPageSave(form, updateMutation, 'We could not save these details.')}
       isSubmitDisabled={!form.formState.isValid}
-      onSubmit={(event) => void form.handleSubmit((values) => updateMutation.mutate(values))(event)}
       pendingLabel="Saving..."
       submitLabel="Save details"
       submitTestId="root-admin-sport-event-edit-save"

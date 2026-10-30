@@ -12,6 +12,7 @@ import {
   getTiersInPlay,
 } from '@poolmaster/shared/domain';
 import type { ContestConfigurationRequest } from '@poolmaster/shared/dto';
+import { z } from 'zod';
 
 /** The selection types the rules fields can edit: one arm each of the configuration request. */
 export type EditableSelectionType = ContestConfigurationRequest['selectionType'];
@@ -40,6 +41,22 @@ export type ContestRulesValues = {
   tiersUsed: string;
   unlimitedEntries: boolean;
 };
+
+/** The rules fields' checks, which the create and edit forms extend with their own fields. */
+export const CONTEST_RULES_FORM_SHAPE = {
+  countedScores: z.string(),
+  maxEntriesPerTeam: z.string(),
+  maxSquaresPerEntry: z.string(),
+  pickEmAgainstTheSpread: z.boolean(),
+  pickEmMode: z.enum(PickEmMode),
+  picksPerEntry: z.string(),
+  picksPerTier: z.string(),
+  rosterSize: z.string(),
+  startsAtRound: z.string(),
+  survivorReuseTeams: z.boolean(),
+  tiersUsed: z.string(),
+  unlimitedEntries: z.boolean(),
+} satisfies { [Field in keyof ContestRulesValues]: z.ZodType<ContestRulesValues[Field]> };
 
 function parseWholeNumber(value: string) {
   const parsed = Number(value);

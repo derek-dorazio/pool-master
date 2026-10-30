@@ -5,7 +5,8 @@ import { createLeagueSquad } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-context';
 import { buildLeaguePath } from '@/features/leagues/league-routing';
 import { FormPage } from '@/features/shared/ui';
-import { extractErrorMessage, throwApiError } from '@/lib/errors';
+import { throwApiError } from '@/lib/errors';
+import { formPageSave } from '@/lib/form-page-save';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import { buildDefaultTeamName } from './team-defaults';
@@ -53,12 +54,8 @@ export function CreateTeamForm({
     <FormPage
       cancelTo={buildLeaguePath(leagueCode)}
       description="Every member plays in this league under a name and an icon of their choosing. You can change both later."
-      errorMessage={createMutation.isError
-        ? extractErrorMessage(createMutation.error, { fallback: 'We could not save your name and icon.' })
-        : null}
-      isPending={createMutation.isPending}
+      {...formPageSave(form, createMutation, 'We could not save your name and icon.')}
       isSubmitDisabled={isInactiveLeague}
-      onSubmit={(event) => void form.handleSubmit((values) => createMutation.mutate(values))(event)}
       pendingLabel="Creating..."
       submitLabel="Save"
       submitTestId="create-team-save"

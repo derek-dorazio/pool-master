@@ -7,6 +7,7 @@ import type { ParticipantDto, UpdateParticipantData } from '@/lib/api';
 import { AsyncPage, FormField, FormPage, Input, Select } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
+import { formPageSave } from '@/lib/form-page-save';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import { PARTICIPANT_STATUSES, participantStatusLabel } from './sport-admin-utils';
@@ -99,12 +100,8 @@ function ParticipantEditForm({ player }: { player: ParticipantDto }) {
   return (
     <FormPage
       cancelTo={homePath}
-      errorMessage={updateMutation.isError
-        ? extractErrorMessage(updateMutation.error, { fallback: `We could not save this ${participant.one}.` })
-        : undefined}
-      isPending={updateMutation.isPending}
+      {...formPageSave(form, updateMutation, `We could not save this ${participant.one}.`)}
       isSubmitDisabled={!form.formState.isValid}
-      onSubmit={(event) => void form.handleSubmit((values) => updateMutation.mutate(values))(event)}
       pendingLabel="Saving..."
       submitLabel={`Save ${participant.one}`}
       submitTestId="root-admin-participant-edit-save"

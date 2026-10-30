@@ -42,7 +42,7 @@ export type DataGridJumpToRow = {
   testId?: string;
 };
 
-type DataGridProps<TData> = {
+export type DataGridProps<TData> = {
   // TanStack's ColumnDef<TData, TValue> is invariant in TValue, so a heterogeneous column
   // array cannot name a single TValue -- `unknown` rejects ColumnDef<Row, string>. `any` is
   // TanStack's own documented shape for this position.
