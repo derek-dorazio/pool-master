@@ -23,7 +23,10 @@ The shared UI layer is split into three levels:
    `SimpleTable` built from its parts (`density="compact"` inside a card,
    `surface="inverse"` on a navy panel, `isHighlighted` for the viewer's row,
    `numeric` for figures); an upload preview is an `UploadPreviewTable`; a
-   table that needs search or sorting is a `DataGrid`.
+   table that needs search or sorting is a `DataGrid`. Copy to clipboard is a
+   `CopyButton` (`iconOnly` in a tight spot), which says Copied, shows an inline
+   error when the browser refuses and logs it; feature code never calls
+   `navigator.clipboard` itself.
 2. **Templates** compose primitives into repeated page or modal workflows, such
    as `ManagementListPage`, `EntityDetailPage`, `FormModal`, and
    `ConfirmationModal`.

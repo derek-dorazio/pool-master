@@ -5,6 +5,7 @@ export type { NavMenuItem } from "./nav-menus";
 export { BulkUploadPanel } from "./bulk-upload-panel";
 export { UploadPreviewTable } from "./upload-preview-table";
 export { Button, LinkButton, type LinkButtonProps, MenuItem } from "./button";
+export { CopyButton } from "./copy-button";
 export { Breadcrumbs, PageHeader } from "./page-header";
 export { ChoiceCard } from "./choice-card";
 export { cn } from "./class-names";
