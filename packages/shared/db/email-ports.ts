@@ -26,6 +26,8 @@ interface EmailMessageRecordBase {
   entryId?: string;
   invitationId?: string;
   idempotencyKey: string;
+  /** The subject a sweep asks "already told?" about (#1169), without the league or the recipient. */
+  noticeAbout?: string;
   fromName: string;
   fromAddress: string;
 }
@@ -112,20 +114,16 @@ export interface EmailMessageRepository {
    */
   deleteBatchCreatedBefore(cutoff: Date, limit: number): Promise<number>;
   /**
-   * Whether an email of `templateKey` about the contest is recorded under an idempotency key
-   * starting with `keyPrefix`: for anyone, in any state.
+   * Whether an email of `templateKey` about the contest is recorded with the notice subject
+   * `noticeAbout` (#1169): for anyone, in any state.
    */
-  existsForContest(query: { contestId: string; templateKey: EmailTemplateKey; keyPrefix: string }): Promise<boolean>;
+  existsForContest(query: { contestId: string; templateKey: EmailTemplateKey; noticeAbout: string }): Promise<boolean>;
   /**
-   * The leagues an email of `templateKey` is recorded from under an idempotency key starting
-   * with `keyPrefix`: for anyone, in any state.
+   * The leagues an email of `templateKey` is recorded from, by each of `noticeAbouts` (#1169), in
+   * one read matching the subject exactly: for anyone, in any state. A subject nothing is
+   * recorded about has an empty set.
    */
-  findLeagueIdsRecorded(query: { templateKey: EmailTemplateKey; keyPrefix: string }): Promise<Set<string>>;
-  /**
-   * `findLeagueIdsRecorded` for several key prefixes in one read (#1255): by prefix, the leagues
-   * recorded under it. A prefix nothing is recorded under has an empty set.
-   */
-  findLeagueIdsRecordedByPrefix(query: { templateKey: EmailTemplateKey; keyPrefixes: readonly string[] }): Promise<Map<string, Set<string>>>;
+  findLeagueIdsByNotice(query: { templateKey: EmailTemplateKey; noticeAbouts: readonly string[] }): Promise<Map<string, Set<string>>>;
   /** Where each invitation's latest email of `templateKey` stands, by invitation id. */
   findLatestStateByInvitations(
     invitationIds: string[],

@@ -553,6 +553,7 @@ export class LiveStandings implements DueNotifications {
         return {
           to: emailRecipientOf(user),
           about: due.about,
+          noticeAbout: due.about,
           league: { id: league.id, name: league.name, leagueCode: league.leagueCode, plan: league.plan },
           refs: { contestId: contest.id },
           data: {

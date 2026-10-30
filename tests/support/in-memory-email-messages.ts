@@ -137,17 +137,13 @@ export function inMemoryEmailMessages(now: () => Date = () => new Date()): InMem
       }
       return Promise.resolve(old.length);
     },
-    existsForContest({ contestId, templateKey, keyPrefix }) {
+    existsForContest({ contestId, templateKey, noticeAbout }) {
       return Promise.resolve(rows.some((row) =>
-        row.contestId === contestId && row.templateKey === templateKey && row.idempotencyKey.startsWith(keyPrefix)));
+        row.contestId === contestId && row.templateKey === templateKey && row.noticeAbout === noticeAbout));
     },
-    findLeagueIdsRecorded({ templateKey, keyPrefix }) {
-      return Promise.resolve(new Set(rows.flatMap((row) =>
-        row.templateKey === templateKey && row.idempotencyKey.startsWith(keyPrefix) && row.leagueId ? [row.leagueId] : [])));
-    },
-    findLeagueIdsRecordedByPrefix({ templateKey, keyPrefixes }) {
-      return Promise.resolve(new Map(keyPrefixes.map((keyPrefix) => [keyPrefix, new Set(rows.flatMap((row) =>
-        row.templateKey === templateKey && row.idempotencyKey.startsWith(keyPrefix) && row.leagueId ? [row.leagueId] : []))])));
+    findLeagueIdsByNotice({ templateKey, noticeAbouts }) {
+      return Promise.resolve(new Map(noticeAbouts.map((noticeAbout) => [noticeAbout, new Set(rows.flatMap((row) =>
+        row.templateKey === templateKey && row.noticeAbout === noticeAbout && row.leagueId ? [row.leagueId] : []))])));
     },
     findLatestStateByInvitations(invitationIds: string[], templateKey: EmailTemplateKey) {
       const latest = new Map<string, EmailMessageState>();

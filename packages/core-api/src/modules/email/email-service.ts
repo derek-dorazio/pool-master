@@ -102,6 +102,13 @@ export type EmailSendInput<Key extends SystemEmailTemplateKey> = {
    * the action that sends it runs. Something the person asked to have sent again is a new subject.
    */
   about: string;
+  /**
+   * The subject a sweep later asks "already told?" about (#1169), without the league or the
+   * recipient: the event an "event coming up" email is about, the day a next-day email covers.
+   * Recorded on the outbox row, where `leaguesRecordedAbout` and `hasRecordedForContest` match it
+   * exactly. Only an email a sweep checks for sets it.
+   */
+  noticeAbout?: string;
   data: SystemEmailTemplateDataByKey[Key];
   refs?: EmailRefs;
 } & LeagueOf<Key>;
@@ -150,7 +157,7 @@ interface PreparedEmail {
 }
 
 export interface EmailServiceOptions {
-  messages: Pick<EmailMessageRepository, 'record' | 'recordMany' | 'existsForContest' | 'findLeagueIdsRecorded' | 'findLeagueIdsRecordedByPrefix' | 'findLatestStateByInvitations'>;
+  messages: Pick<EmailMessageRepository, 'record' | 'recordMany' | 'existsForContest' | 'findLeagueIdsByNotice' | 'findLatestStateByInvitations'>;
   /** Addresses that bounced for good or complained: their email is skipped, not queued. */
   suppressions: Pick<EmailSuppressionRepository, 'findByEmail' | 'findSuppressedEmails'>;
   /** Categories each user turned off: their email in one is skipped, not queued. */
@@ -248,6 +255,7 @@ export class EmailService {
         recipientUserId: input.to.userId,
         recipientEmail: address,
         idempotencyKey: `${idempotencyKeyPrefix(templateKey, input.about)}${input.to.userId ?? address.toLowerCase()}`,
+        noticeAbout: input.noticeAbout,
         fromName: from.name,
         fromAddress: from.address,
       },
@@ -299,30 +307,21 @@ export class EmailService {
   }
 
   /**
-   * Whether an email of `templateKey` about `about` is already recorded for anyone in the contest,
-   * sent or skipped. A clock-driven email whose moment stays due for a while asks it, to do the
-   * work that goes with queueing it only once.
+   * Whether an email of `templateKey` with the notice subject `noticeAbout` is already recorded for
+   * anyone in the contest, sent or skipped. A clock-driven email whose moment stays due for a while
+   * asks it, to do the work that goes with queueing it only once.
    */
-  async hasRecordedForContest(templateKey: SystemEmailTemplateKey, contestId: string, about: string): Promise<boolean> {
-    return this.options.messages.existsForContest({ contestId, templateKey, keyPrefix: idempotencyKeyPrefix(templateKey, about) });
+  async hasRecordedForContest(templateKey: SystemEmailTemplateKey, contestId: string, noticeAbout: string): Promise<boolean> {
+    return this.options.messages.existsForContest({ contestId, templateKey, noticeAbout });
   }
 
   /**
-   * The leagues an email of `templateKey` about `about` is already recorded from, for anyone,
-   * sent or skipped. An email every league sends about one subject, such as an event coming up,
-   * asks it to tell each league once.
+   * The leagues an email of `templateKey` is already recorded from, by notice subject (#1169), for
+   * anyone, sent or skipped, in one exact read. An email every league sends about one subject, such
+   * as an event coming up, asks it to tell each league once.
    */
-  async leaguesRecorded(templateKey: SystemEmailTemplateKey, about: string): Promise<Set<string>> {
-    return this.options.messages.findLeagueIdsRecorded({ templateKey, keyPrefix: idempotencyKeyPrefix(templateKey, about) });
-  }
-
-  /** `leaguesRecorded` for several abouts in one read (#1255): by about, the leagues already told. */
-  async leaguesRecordedAbout(templateKey: SystemEmailTemplateKey, abouts: readonly string[]): Promise<Map<string, Set<string>>> {
-    const byPrefix = await this.options.messages.findLeagueIdsRecordedByPrefix({
-      templateKey,
-      keyPrefixes: abouts.map((about) => idempotencyKeyPrefix(templateKey, about)),
-    });
-    return new Map(abouts.map((about) => [about, byPrefix.get(idempotencyKeyPrefix(templateKey, about)) ?? new Set<string>()]));
+  async leaguesRecordedAbout(templateKey: SystemEmailTemplateKey, noticeAbouts: readonly string[]): Promise<Map<string, Set<string>>> {
+    return this.options.messages.findLeagueIdsByNotice({ templateKey, noticeAbouts });
   }
 
   /**

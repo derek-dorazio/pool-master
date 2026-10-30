@@ -10,7 +10,6 @@ import {
   PrismaContestEntryRepository,
   PrismaContestEntryStandingRepository,
   PrismaContestRepository,
-  PrismaEmailMessageRepository,
   PrismaLeagueMembershipRepository,
   PrismaLeagueRepository,
   PrismaSquadMembershipRepository,
@@ -116,39 +115,6 @@ describe('notification batch reads (#1255)', () => {
 
     expect(found.map((entry) => entry.id)).toEqual([firstEntry.id, secondEntry.id]);
     await expect(entries.findByContests([])).resolves.toEqual([]);
-  });
-
-  it('reads the leagues recorded under several key prefixes in one read, by prefix, with an empty set for a prefix nothing is under', async () => {
-    const [first, second] = await Promise.all([seedLeagueWithTeams(0), seedLeagueWithTeams(0)]);
-    const outbox = new PrismaEmailMessageRepository(getPrisma());
-    const suffix = randomUUID().slice(0, 8);
-    const record = (templateKey: 'LEAGUE_MEMBER_JOINED' | 'EVENT_COMING_UP', leagueId: string, about: string, user: string) => outbox.record({
-      templateKey,
-      leagueId,
-      recipientEmail: `${user}-${suffix}@integration.test`,
-      idempotencyKey: `${templateKey}:${about}:${user}-${suffix}`,
-      fromName: 'Batch League',
-      fromAddress: 'league@integration.test',
-      status: 'SKIPPED',
-      skipReason: 'OPTED_OUT',
-    });
-    await record('LEAGUE_MEMBER_JOINED', first.league.id, 'join-a', 'casey');
-    await record('LEAGUE_MEMBER_JOINED', first.league.id, 'join-a', 'jordan');
-    await record('LEAGUE_MEMBER_JOINED', second.league.id, 'join-b', 'casey');
-    await record('EVENT_COMING_UP', second.league.id, 'join-c', 'casey');
-    const prefixes = ['LEAGUE_MEMBER_JOINED:join-a:', 'LEAGUE_MEMBER_JOINED:join-b:', 'LEAGUE_MEMBER_JOINED:join-c:'];
-
-    const recorded = await outbox.findLeagueIdsRecordedByPrefix({ templateKey: 'LEAGUE_MEMBER_JOINED', keyPrefixes: prefixes });
-
-    expect(recorded).toEqual(new Map([
-      ['LEAGUE_MEMBER_JOINED:join-a:', new Set([first.league.id])],
-      ['LEAGUE_MEMBER_JOINED:join-b:', new Set([second.league.id])],
-      ['LEAGUE_MEMBER_JOINED:join-c:', new Set()],
-    ]));
-    for (const keyPrefix of prefixes) {
-      expect(recorded.get(keyPrefix)).toEqual(await outbox.findLeagueIdsRecorded({ templateKey: 'LEAGUE_MEMBER_JOINED', keyPrefix }));
-    }
-    await expect(outbox.findLeagueIdsRecordedByPrefix({ templateKey: 'LEAGUE_MEMBER_JOINED', keyPrefixes: [] })).resolves.toEqual(new Map());
   });
 });
 

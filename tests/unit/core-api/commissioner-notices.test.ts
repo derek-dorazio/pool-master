@@ -103,7 +103,7 @@ describe('CommissionerNotices', () => {
       contestsOnEvent: jest.spyOn(contests, 'findBySportEvent'),
       memberships: jest.spyOn(memberships, 'findByLeagues'),
       users: jest.spyOn(users, 'findActiveByLeagues'),
-      toldByPrefix: jest.spyOn(outbox, 'findLeagueIdsRecordedByPrefix'),
+      toldByPrefix: jest.spyOn(outbox, 'findLeagueIdsByNotice'),
     };
     const counts = () => Object.fromEntries(Object.entries(reads).map(([name, read]) => [name, read.mock.calls.length]));
     return { deps: { contests, memberships, users }, counts };
@@ -547,7 +547,7 @@ describe('CommissionerNotices', () => {
         rulesOfOne: jest.spyOn(configurations, 'findByContest'),
         leagues: jest.spyOn(leagueRepo, 'findByIds'),
         leagueById: jest.spyOn(leagueRepo, 'findById'),
-        told: jest.spyOn(outbox, 'findLeagueIdsRecordedByPrefix'),
+        told: jest.spyOn(outbox, 'findLeagueIdsByNotice'),
         toldForContest: jest.spyOn(outbox, 'existsForContest'),
         memberships: jest.spyOn(memberships, 'findByLeagues'),
         users: jest.spyOn(users, 'findActiveByLeagues'),

@@ -918,6 +918,10 @@ model EmailMessage {
   entryId            String?                  @map("entry_id") @db.Uuid
   invitationId       String?                  @map("invitation_id") @db.Uuid
   idempotencyKey     String                   @unique @map("idempotency_key")
+  /// The subject a sweep asks "already told?" about (#1169), such as the event an "event coming
+  /// up" email is about: its idempotency key without the league or the recipient. Matched exactly,
+  /// so the check reads only that subject's rows. Null on an email no sweep checks for.
+  noticeAbout        String?                  @map("notice_about") @db.VarChar(200)
   fromName           String                   @map("from_name") @db.VarChar(255)
   fromAddress        String                   @map("from_address") @db.VarChar(255)
   subject            String?
@@ -949,7 +953,7 @@ model EmailMessage {
   @@index([createdAt])
   @@index([providerMessageId])
   @@index([contestId, templateKey])
-  @@index([templateKey, leagueId])
+  @@index([templateKey, noticeAbout, leagueId])
   @@index([entryId])
   @@index([leagueId])
   @@index([recipientUserId])

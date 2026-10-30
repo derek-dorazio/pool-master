@@ -92,8 +92,7 @@ describe('PlanPreviewNotices', () => {
       commissioners.push(owner);
     }
     const reads = [
-      jest.spyOn(outbox, 'findLeagueIdsRecordedByPrefix'),
-      jest.spyOn(outbox, 'findLeagueIdsRecorded'),
+      jest.spyOn(outbox, 'findLeagueIdsByNotice'),
       jest.spyOn(world.memberships, 'findByLeagues'),
       jest.spyOn(world.users, 'findActiveByLeagues'),
     ];
@@ -101,8 +100,8 @@ describe('PlanPreviewNotices', () => {
     await notices().service.queueDue(overnight('04-17'));
 
     expect(reminders()).toHaveLength(4);
-    expect(reads.map((read) => read.mock.calls.length)).toEqual([1, 0, 1, 1]);
-    const readUsers = await expectDefined(reads[3]?.mock.results[0]).value as User[];
+    expect(reads.map((read) => read.mock.calls.length)).toEqual([1, 1, 1]);
+    const readUsers = await expectDefined(reads[2]?.mock.results[0]).value as User[];
     expect(new Set(readUsers.map((user) => user.id))).toEqual(new Set(commissioners.map((user) => user.id)));
   });
 

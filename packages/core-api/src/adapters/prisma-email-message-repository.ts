@@ -176,39 +176,24 @@ export class PrismaEmailMessageRepository implements EmailMessageRepository {
     return count;
   }
 
-  async existsForContest(query: { contestId: string; templateKey: EmailTemplateKey; keyPrefix: string }): Promise<boolean> {
+  async existsForContest(query: { contestId: string; templateKey: EmailTemplateKey; noticeAbout: string }): Promise<boolean> {
     const row = await this.prisma.emailMessage.findFirst({
-      where: { contestId: query.contestId, templateKey: query.templateKey, idempotencyKey: { startsWith: query.keyPrefix } },
+      where: { contestId: query.contestId, templateKey: query.templateKey, noticeAbout: query.noticeAbout },
       select: { id: true },
     });
     return row !== null;
   }
 
-  async findLeagueIdsRecorded(query: { templateKey: EmailTemplateKey; keyPrefix: string }): Promise<Set<string>> {
-    const rows = await this.prisma.emailMessage.findMany({
-      where: { templateKey: query.templateKey, idempotencyKey: { startsWith: query.keyPrefix }, leagueId: { not: null } },
-      distinct: ['leagueId'],
-      select: { leagueId: true },
-    });
-    return new Set(rows.flatMap((row) => row.leagueId ?? []));
-  }
-
-  async findLeagueIdsRecordedByPrefix(query: { templateKey: EmailTemplateKey; keyPrefixes: readonly string[] }): Promise<Map<string, Set<string>>> {
-    const recorded = new Map(query.keyPrefixes.map((prefix) => [prefix, new Set<string>()]));
+  async findLeagueIdsByNotice(query: { templateKey: EmailTemplateKey; noticeAbouts: readonly string[] }): Promise<Map<string, Set<string>>> {
+    const recorded = new Map(query.noticeAbouts.map((about) => [about, new Set<string>()]));
     if (recorded.size === 0) return recorded;
     const rows = await this.prisma.emailMessage.findMany({
-      where: {
-        templateKey: query.templateKey,
-        OR: [...recorded.keys()].map((prefix) => ({ idempotencyKey: { startsWith: prefix } })),
-        leagueId: { not: null },
-      },
-      select: { idempotencyKey: true, leagueId: true },
+      where: { templateKey: query.templateKey, noticeAbout: { in: [...recorded.keys()] }, leagueId: { not: null } },
+      distinct: ['noticeAbout', 'leagueId'],
+      select: { noticeAbout: true, leagueId: true },
     });
     for (const row of rows) {
-      if (row.leagueId === null) continue;
-      for (const [prefix, leagueIds] of recorded) {
-        if (row.idempotencyKey.startsWith(prefix)) leagueIds.add(row.leagueId);
-      }
+      if (row.noticeAbout !== null && row.leagueId !== null) recorded.get(row.noticeAbout)?.add(row.leagueId);
     }
     return recorded;
   }
@@ -246,6 +231,7 @@ function toEmailMessage(row: EmailMessageRow): EmailMessage {
     entryId: row.entryId ?? undefined,
     invitationId: row.invitationId ?? undefined,
     idempotencyKey: row.idempotencyKey,
+    noticeAbout: row.noticeAbout ?? undefined,
     fromName: row.fromName,
     fromAddress: row.fromAddress,
     subject: row.subject ?? undefined,
@@ -273,6 +259,7 @@ function toCreateData(input: EmailMessageRecord): Prisma.EmailMessageCreateManyI
     entryId: input.entryId,
     invitationId: input.invitationId,
     idempotencyKey: input.idempotencyKey,
+    noticeAbout: input.noticeAbout,
     fromName: input.fromName,
     fromAddress: input.fromAddress,
     status: input.status,
