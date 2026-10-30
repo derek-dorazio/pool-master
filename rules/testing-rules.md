@@ -1116,6 +1116,14 @@ timing them, so it catches the per-row read at any data size.
   spec. It has no exemption list: every list route has its case.
 - A count that grows is a defect: fix the read (§3 *Defect Verification Protocol*), never loosen the
   case.
+- **One counter per layer.** An integration test that counts queries counts SQL statements with
+  `recordStatements` from `tests/integration/statement-log.ts`, whether or not it is a scaling
+  case; `statementsOn` and `statementCounts` there name what each statement did to which table, and
+  `statementParams` what it was sent with. An `include` is one Prisma operation but a statement per
+  relation, so a statement count is the database's real cost. Do not add another test counter.
+  The functional suite's per-request budget (§6) is the other counter: `countingQueries` in
+  `packages/core-api/src/core/request-query-usage.ts` is production code, counts Prisma
+  operations, and applies only to that budget.
 
 ---
 

@@ -21,7 +21,7 @@ import {
   setupIntegrationTests,
   teardownIntegrationTests,
 } from '../helpers';
-import { countingPrisma } from '../../support/counting-prisma';
+import { recordStatements, statementCounts, statementsOn, StatementVerb } from '../statement-log';
 import { createRoundRows, createSportEventRow } from '../../support/sport-event-rows';
 import { createContestRow } from '../../support/contest-rows';
 
@@ -184,10 +184,9 @@ describe('PrismaContestEntryMatchPredictionRepository', () => {
 
   it('saves a full slate of picks, replacing earlier ones, in the same number of queries as one pick (#1254)', async () => {
     const { event, game } = await createWeek('Week 1', AT);
-    const { entry: oneGame } = await createPickEmEntry([event.id]);
-    const { entry: fullSlate } = await createPickEmEntry([event.id]);
-    const counted = countingPrisma(getAppPrisma());
-    const predictions = new PrismaContestEntryMatchPredictionRepository(counted.prisma);
+    const { entry: oneGameEntry } = await createPickEmEntry([event.id]);
+    const { entry: fullSlateEntry } = await createPickEmEntry([event.id]);
+    const predictions = new PrismaContestEntryMatchPredictionRepository(getAppPrisma());
     const saveOn = (contestEntryId: string, matchNumbers: readonly number[], at: Date) => writePicks(predictions, {
       contestEntryId,
       sportEventId: event.id,
@@ -201,19 +200,23 @@ describe('PrismaContestEntryMatchPredictionRepository', () => {
       eventStatus: ContestEntryStatus.DRAFT,
       at,
     });
-    await writePicks(repos().predictions, {
-      contestEntryId: fullSlate.id, sportEventId: event.id, clearedMatchIds: [], eventStatus: null, at: AT,
-      saves: [{ sportEventMatchId: game(1).id, predictedResult: PredictedResult.TEAM, sportEventParticipantId: expectDefined(game(1).homeSportEventParticipantId), confidence: 1 }],
-    });
+    // Both entries start with one earlier pick, so each save also replaces one.
+    for (const contestEntryId of [oneGameEntry.id, fullSlateEntry.id]) {
+      await writePicks(repos().predictions, {
+        contestEntryId, sportEventId: event.id, clearedMatchIds: [], eventStatus: null, at: AT,
+        saves: [{ sportEventMatchId: game(1).id, predictedResult: PredictedResult.TEAM, sportEventParticipantId: expectDefined(game(1).homeSportEventParticipantId), confidence: 1 }],
+      });
+    }
 
-    await saveOn(oneGame.id, [1], LATER);
-    const oneGameQueries = counted.total();
-    await saveOn(fullSlate.id, [1, 2, 3], LATER);
-    const fullSlateQueries = counted.total() - oneGameQueries;
+    const oneGame = await recordStatements(() => saveOn(oneGameEntry.id, [1], LATER));
+    const fullSlate = await recordStatements(() => saveOn(fullSlateEntry.id, [1, 2, 3], LATER));
 
-    expect(fullSlateQueries).toBe(oneGameQueries);
-    expect(counted.count('ContestEntryMatchPrediction.upsert')).toBe(0);
-    const picks = await repos().predictions.findByEntryAndEvent(fullSlate.id, event.id);
+    expect(fullSlate.statements).toHaveLength(oneGame.statements.length);
+    // The picks are replaced by one delete and one insert, never written one at a time.
+    expect(statementCounts(fullSlate.statements).filter(([target]) => !target.startsWith('SELECT ') && target.endsWith(' contest_entry_match_predictions')))
+      .toEqual([['DELETE contest_entry_match_predictions', 1], ['INSERT contest_entry_match_predictions', 1]]);
+    expect(statementsOn(fullSlate.statements, StatementVerb.INSERT, 'contest_entry_match_predictions').some(({ sql }) => sql.includes('ON CONFLICT'))).toBe(false);
+    const picks = await repos().predictions.findByEntryAndEvent(fullSlateEntry.id, event.id);
     expect(picks.map((pick) => [pick.sportEventMatchId, pick.sportEventParticipantId, pick.confidence, pick.pickedAt])).toEqual(
       [1, 2, 3].map((matchNumber) => [game(matchNumber).id, game(matchNumber).awaySportEventParticipantId, matchNumber, LATER]),
     );

@@ -33,7 +33,7 @@ import {
   setupIntegrationTests,
   teardownIntegrationTests,
 } from '../helpers';
-import { countingPrisma } from '../../support/counting-prisma';
+import { recordStatements, statementsOn, StatementVerb } from '../statement-log';
 import { createRoundRows, createSportEventRow } from '../../support/sport-event-rows';
 import { integrationPlanEntitlements } from '../plan-entitlements';
 import { createContestRow } from '../../support/contest-rows';
@@ -184,15 +184,16 @@ async function midSeason() {
 describe('ContestService.getPickEmLeaderboard reads (#762)', () => {
   it('loads the games of all six weeks in one query, and the entries and picks of only the week under way, not a set per week', async () => {
     const season = await midSeason();
-    const { prisma, count } = countingPrisma(getAppPrisma());
+    const service = createContestService(getAppPrisma(), getApp().log, { planEntitlements: integrationPlanEntitlements() });
 
-    const leaderboard = await createContestService(prisma, getApp().log, { planEntitlements: integrationPlanEntitlements(prisma) }).getPickEmLeaderboard(season.contest.id, season.viewerId);
+    const { result: leaderboard, statements } = await recordStatements(() => service.getPickEmLeaderboard(season.contest.id, season.viewerId));
 
-    // One query for every week's games; the live week is scored from those, not read again.
-    expect(count('SportEventMatch.findMany')).toBe(1);
+    const reads = (table: string) => statementsOn(statements, StatementVerb.SELECT, table).length;
+    // One statement for every week's games; the live week is scored from those, not read again.
+    expect(reads('sport_event_matches')).toBe(1);
     // The contest's entries once for the board, once for the live week's submitted entries.
-    expect(count('ContestEntry.findMany')).toBe(2);
-    expect(count('ContestEntryMatchPrediction.findMany')).toBe(1);
+    expect(reads('contest_entries')).toBe(2);
+    expect(reads('contest_entry_match_predictions')).toBe(1);
     expect(leaderboard.weeks.map((week) => [week.started, week.settled])).toEqual([
       [true, true], [true, true], [true, true], [true, true], [true, false], [false, false],
     ]);
@@ -229,12 +230,12 @@ describe('ContestService.getPickEmLeaderboard reads (#762)', () => {
   it('counts a cancelled week for nothing: no games, no tiebreaker total, and settled without a live load', async () => {
     const cancelled = await createWeek('Week 1', new Date(Date.now() - 7 * DAY), SportEventStatus.CANCELLED);
     const { contest, viewerId } = await createPickEmContest([cancelled.event.id]);
-    const { prisma, count } = countingPrisma(getAppPrisma());
+    const service = createContestService(getAppPrisma(), getApp().log, { planEntitlements: integrationPlanEntitlements() });
 
-    const leaderboard = await createContestService(prisma, getApp().log, { planEntitlements: integrationPlanEntitlements(prisma) }).getPickEmLeaderboard(contest.id, viewerId);
+    const { result: leaderboard, statements } = await recordStatements(() => service.getPickEmLeaderboard(contest.id, viewerId));
 
     expect(leaderboard.weeks.map((week) => [week.settled, week.gameCount, week.tiebreakerTotalPoints])).toEqual([[true, 0, null]]);
-    expect(count('SportEventMatch.findMany')).toBe(1);
-    expect(count('ContestEntryMatchPrediction.findMany')).toBe(0);
+    expect(statementsOn(statements, StatementVerb.SELECT, 'sport_event_matches')).toHaveLength(1);
+    expect(statementsOn(statements, StatementVerb.SELECT, 'contest_entry_match_predictions')).toHaveLength(0);
   });
 });

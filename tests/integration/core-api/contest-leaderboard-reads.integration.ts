@@ -13,8 +13,8 @@ import {
   setupIntegrationTests,
   teardownIntegrationTests,
 } from '../helpers';
-import { countingPrisma } from '../../support/counting-prisma';
 import { integrationPlanEntitlements } from '../plan-entitlements';
+import { recordStatements, statementParams, statementsOn, statementTarget, StatementVerb, type RecordedStatement } from '../statement-log';
 import { freshEventEdition } from '../../support/event-edition';
 import { expectDefined } from '../../support/expect-defined';
 
@@ -253,23 +253,13 @@ async function golfContest(events: ReadonlyArray<{ event: { id: string } }>) {
   return { contest, viewerId: owner.user.id, addEntry, freeze };
 }
 
-/** Every query against the field and the picks that names `sportEventId`, as `Model.operation`. */
-function fieldAndPickReadsOf(sportEventId: string) {
-  const reads: string[] = [];
-  const client = getPrisma().$extends({
-    query: {
-      $allModels: {
-        async $allOperations({ model, operation, args, query }) {
-          if ((model.startsWith('SportEventParticipant') || model === 'ContestEntryPick') && JSON.stringify(args).includes(sportEventId)) {
-            reads.push(`${model}.${operation}`);
-          }
-          return query(args);
-        },
-      },
-    },
-  });
-  return { prisma: client as unknown as PrismaClient, reads };
+/** Each statement reading the picks, as the events among `sportEventIds` it names. */
+function pickReadsOf(statements: readonly RecordedStatement[], sportEventIds: readonly string[] = []): string[][] {
+  return statementsOn(statements, StatementVerb.SELECT, 'contest_entry_picks')
+    .map((statement) => sportEventIds.filter((id) => statementParams(statement).includes(id)));
 }
+
+const majorIds = (season: Awaited<ReturnType<typeof fourMajors>>) => season.majors.map((major) => major.event.id);
 
 function serviceOn(prisma: PrismaClient) {
   return createContestService(prisma, getApp().log, { planEntitlements: integrationPlanEntitlements(prisma) });
@@ -278,13 +268,10 @@ function serviceOn(prisma: PrismaClient) {
 describe('ContestService.getLeaderboard reads (#1162)', () => {
   it('reads the entries once and only the major under way\'s picks, not every pick once per major', async () => {
     const season = await fourMajors(ContestStatus.ACTIVE, false);
-    const { prisma, count, rows } = countingPrisma(getAppPrisma());
+    const { result: leaderboard, statements } = await recordStatements(() => serviceOn(getAppPrisma()).getLeaderboard(season.contest.id, season.viewerId));
 
-    const leaderboard = await serviceOn(prisma).getLeaderboard(season.contest.id, season.viewerId);
-
-    expect(count('ContestEntry.findMany')).toBe(1);
-    expect(count('ContestEntryPick.findMany')).toBe(1);
-    expect(rows('ContestEntryPick.findMany')).toBe(ENTRIES * PICKS_PER_EVENT);
+    expect(statementsOn(statements, StatementVerb.SELECT, 'contest_entries')).toHaveLength(1);
+    expect(pickReadsOf(statements, majorIds(season))).toEqual([[season.majors[3]?.event.id]]);
     // The settled majors answer from their frozen standings; the live one lists every entry unscored.
     const first = leaderboard.entries.find((entry) => entry.entryId === season.entries[0]?.id);
     expect(first?.events.map((event) => [event.sportEventId, event.position, event.score])).toEqual([
@@ -303,12 +290,12 @@ describe('ContestService.getLeaderboard reads (#1162)', () => {
 
   it('answers a COMPLETED contest from its frozen totals, reading the picks of the shown major alone', async () => {
     const season = await fourMajors(ContestStatus.COMPLETED, true);
-    const { prisma, count, rows } = countingPrisma(getAppPrisma());
 
-    const leaderboard = await serviceOn(prisma).getLeaderboard(season.contest.id, season.viewerId, season.majors[1]?.event.id);
+    const { result: leaderboard, statements } = await recordStatements(
+      () => serviceOn(getAppPrisma()).getLeaderboard(season.contest.id, season.viewerId, season.majors[1]?.event.id),
+    );
 
-    expect(count('ContestEntryPick.findMany')).toBe(1);
-    expect(rows('ContestEntryPick.findMany')).toBe(ENTRIES * PICKS_PER_EVENT);
+    expect(pickReadsOf(statements, majorIds(season))).toEqual([[season.majors[1]?.event.id]]);
     expect(leaderboard.sportEventId).toBe(season.majors[1]?.event.id);
     expect(leaderboard.entries.map((entry) => [entry.entryName, entry.score, entry.position])).toEqual([
       ['Entry 1', -12, 1],
@@ -319,28 +306,30 @@ describe('ContestService.getLeaderboard reads (#1162)', () => {
 
   it('answers a second viewer within 30 seconds from the board already computed, reading no entries or picks again', async () => {
     const season = await fourMajors(ContestStatus.ACTIVE, false);
-    const { prisma, count } = countingPrisma(getAppPrisma());
-    const service = serviceOn(prisma);
+    const service = serviceOn(getAppPrisma());
 
-    const first = await service.getLeaderboard(season.contest.id, season.viewerId);
-    const second = await service.getLeaderboard(season.contest.id, season.viewerId);
+    const { result: [first, second], statements } = await recordStatements(async () => [
+      await service.getLeaderboard(season.contest.id, season.viewerId),
+      await service.getLeaderboard(season.contest.id, season.viewerId),
+    ]);
 
     expect(second).toEqual(first);
-    expect(count('ContestEntry.findMany')).toBe(1);
-    expect(count('ContestEntryPick.findMany')).toBe(1);
+    expect(statementsOn(statements, StatementVerb.SELECT, 'contest_entries')).toHaveLength(1);
+    expect(pickReadsOf(statements)).toHaveLength(1);
   });
 
   it('computes the live standings email\'s board afresh even when a viewer\'s board is cached, so an email never reports older scores', async () => {
     const season = await fourMajors(ContestStatus.ACTIVE, false);
-    const { prisma, count } = countingPrisma(getAppPrisma());
-    const service = serviceOn(prisma);
+    const service = serviceOn(getAppPrisma());
 
     const contest = expectDefined(await new PrismaContestRepository(getAppPrisma()).findById(season.contest.id));
 
-    await service.getLeaderboard(season.contest.id, season.viewerId);
-    await service.leaderboardOf(contest);
+    const { statements } = await recordStatements(async () => {
+      await service.getLeaderboard(season.contest.id, season.viewerId);
+      await service.leaderboardOf(contest);
+    });
 
-    expect(count('ContestEntryPick.findMany')).toBe(2);
+    expect(pickReadsOf(statements)).toHaveLength(2);
   });
   it('ranks a settled major\'s frozen results with a live major\'s real scores, totals frozen plus live, and level totals sharing a place', async () => {
     const settled = await createEvent('Masters', 200, SportEventStatus.COMPLETED);
@@ -384,11 +373,13 @@ describe('ContestService.getLeaderboard reads (#1162)', () => {
       { eventId: cancelled.event.id, fieldRowIds: [first, second] },
       { eventId: live.event.id, fieldRowIds: [expectDefined(live.field[0]).id, expectDefined(live.field[1]).id] },
     ]);
-    const { prisma, reads } = fieldAndPickReadsOf(cancelled.event.id);
 
-    const leaderboard = await serviceOn(prisma).getLeaderboard(contest.id, viewerId);
+    const { result: leaderboard, statements } = await recordStatements(() => serviceOn(getAppPrisma()).getLeaderboard(contest.id, viewerId));
 
-    expect(reads).toEqual([]);
+    // No read of the field's tables or the picks names the cancelled major.
+    expect(statements
+      .filter((statement) => /^SELECT (sport_event_participant|contest_entry_picks)/.test(statementTarget(statement) ?? ''))
+      .filter((statement) => statementParams(statement).includes(cancelled.event.id))).toEqual([]);
     expect(leaderboard.sportEventId).toBe(live.event.id);
     expect(leaderboard.entries.map((entry) => [entry.entryId, entry.score, entry.events.map((event) => event.sportEventId)])).toEqual([
       [both.id, -8, [live.event.id]],

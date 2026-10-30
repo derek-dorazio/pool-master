@@ -85,3 +85,49 @@ export async function recordStatements<Result>(call: () => Promise<Result>): Pro
     recorders.delete(record);
   }
 }
+
+/** What a statement does to its table. */
+export enum StatementVerb {
+  SELECT = 'SELECT',
+  INSERT = 'INSERT',
+  UPDATE = 'UPDATE',
+  DELETE = 'DELETE',
+}
+
+/** Each verb with how Prisma's SQL names the table it acts on; a count's subquery names its table first too. */
+const STATEMENT_TARGETS: ReadonlyArray<readonly [StatementVerb, RegExp]> = [
+  [StatementVerb.SELECT, /^SELECT\b.*?\bFROM "public"\."(\w+)"/s],
+  [StatementVerb.INSERT, /^INSERT INTO "public"\."(\w+)"/],
+  [StatementVerb.UPDATE, /^UPDATE "public"\."(\w+)"/],
+  [StatementVerb.DELETE, /^DELETE FROM "public"\."(\w+)"/],
+];
+
+/** The verb and table of a statement, as `SELECT sport_events`, or null for one on no table (a transaction's BEGIN or COMMIT). */
+export function statementTarget({ sql }: RecordedStatement): string | null {
+  for (const [verb, pattern] of STATEMENT_TARGETS) {
+    const table = pattern.exec(sql)?.[1];
+    if (table !== undefined) return `${verb} ${table}`;
+  }
+  return null;
+}
+
+/** The statements that do `verb` to `table`. */
+export function statementsOn(statements: readonly RecordedStatement[], verb: StatementVerb, table: string): RecordedStatement[] {
+  return statements.filter((statement) => statementTarget(statement) === `${verb} ${table}`);
+}
+
+/** How many statements did each verb to each table, as `[target, count]` sorted by target; transaction control is left out. */
+export function statementCounts(statements: readonly RecordedStatement[]): Array<[string, number]> {
+  const counts = new Map<string, number>();
+  for (const statement of statements) {
+    const target = statementTarget(statement);
+    if (target !== null) counts.set(target, (counts.get(target) ?? 0) + 1);
+  }
+  return [...counts].sort(([left], [right]) => left.localeCompare(right));
+}
+
+/** The values a statement was sent with, in placeholder order. */
+export function statementParams({ params }: RecordedStatement): unknown[] {
+  const parsed: unknown = JSON.parse(params);
+  return Array.isArray(parsed) ? parsed : [];
+}
