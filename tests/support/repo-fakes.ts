@@ -382,6 +382,8 @@ export function fakeContestRepo(overrides: Partial<ContestRepository> = {}): Con
     findBySportEvents: many(),
     findJoinableByReleasedEdition: many(),
     findByStatuses: many(),
+    findDrawReceiptsPending: many(),
+    clearDrawReceiptsPending: nothing(),
     create: createdContest(echoCreate('contest')),
     update: echoUpdate(),
     moveToSeason: jest.fn().mockResolvedValue({ status: 'moved' }),

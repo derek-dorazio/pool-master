@@ -411,10 +411,16 @@ the to-par tiebreaker in golf; a pick'em week lists each game's pick, with its s
 the spread and its value in a confidence pool, and the tiebreaker as the total score of its
 game; a bracket lists its last three rounds, the final first; a survivor week names the team and
 its game. A pick'em, bracket or survivor week that goes back to draft and is submitted again
-sends a new receipt. The two formats nobody submits get theirs when their draw runs: a quick pick
+sends a new receipt. The two formats nobody submits get theirs once their draw runs: a quick pick
 contest's draw sends every entry its dealt picks ("Your quick picks"), and a squares draw sends
 every entry holding a box its boxes with their numbers, the away team's digit for the row and
-the home team's for the column ("Your numbers"). Claiming a box sends nothing.
+the home team's for the column ("Your numbers"). Claiming a box sends nothing. A squares draw
+queues its receipts in one batch as it answers. A quick pick draw only marks itself as owing them,
+recording the event it dealt (`contest_draws.receipts_pending_sport_event_id`, #1171): the next
+lifecycle sweep, up to five minutes later, queues every dealt entry's receipt for that event in one
+batch, even once the event has started, and clears the mark. A sweep that cannot queue
+them keeps the mark and the next sweep tries again; the idempotency key keeps a receipt from
+going twice.
 
 "New contest open" emails (#845) are queued when a commissioner opens a contest (`DRAFT` to
 `OPEN`), to every active league member: the contest's events, its rules in the same sentence

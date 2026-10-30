@@ -66,6 +66,7 @@ import { versionModule } from './modules/version/routes';
 
 // Draft module
 import { selectionsModule } from './modules/selections/routes';
+import { createDrawReceipts } from './modules/selections/wiring';
 
 // Ingestion module
 import { ProviderRegistry, IngestionScheduler, publishLiveScoreUpdate } from './modules/ingestion/core';
@@ -146,14 +147,18 @@ export function buildApp() {
     sportEvents: new PrismaSportEventRepository(prisma),
     rounds: new PrismaSportEventRoundRepository(prisma),
     eventLifecycleService,
-    notificationsDue: createDueNotifications(prisma, {
-      email,
-      readConfig: () => appSettings.get(EMAIL_SETTINGS),
-      appBaseUrl,
-      logger: app.log,
-      planEntitlements,
-      memberJoined,
-    }),
+    notificationsDue: [
+      ...createDueNotifications(prisma, {
+        email,
+        readConfig: () => appSettings.get(EMAIL_SETTINGS),
+        appBaseUrl,
+        logger: app.log,
+        planEntitlements,
+        memberJoined,
+      }),
+      // A quick pick draw's receipts, queued by the draw for the sweep (#1171).
+      createDrawReceipts(prisma, app.log, { email, appBaseUrl, planEntitlements }),
+    ],
     jobLock,
     logger: app.log,
   });

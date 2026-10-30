@@ -17,7 +17,7 @@
  *
  * Each sweep ends with the "notifications due" step (#845): the emails that fire on the clock
  * rather than on an action, such as entry reminders and live standings, are queued once their
- * time has come. The outbox's idempotency key keeps a second sweep, or a second server task, from
+ * time has come, and so are the receipts a quick pick draw left to the sweep (#1171). The outbox's idempotency key keeps a second sweep, or a second server task, from
  * sending one twice.
  *
  * Every server task runs this scheduler, and the sweep runs on one of them (#1159): the task

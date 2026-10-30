@@ -38,12 +38,15 @@ import {
   buildEntryUrl,
   formatUserName,
   type ContestEntryCompletedEmailData,
+  type EmailSendInput,
   type EmailService,
   type EntryReceipt,
   type GamePickLine,
 } from '../email';
 import type { GamePickGame, GamePickTeam, GamePicksView } from '../selections/prediction-service';
 import type { SquaresBoard } from '../selections/squares-service';
+
+const TEMPLATE_KEY = 'CONTEST_ENTRY_COMPLETED';
 
 /** How many of a bracket's rounds its receipt lists, the final first: the final, the semifinals and the quarterfinals. */
 const BRACKET_RECEIPT_ROUNDS = 3;
@@ -58,7 +61,7 @@ export interface EntryReceiptDeps {
   users: Pick<UserRepository, 'findByIds'>;
   /** The event's sport league, named on the receipt, and a bracket's round names ("Sweet 16"). */
   sportLeagues: Pick<SportLeagueRepository, 'findById'>;
-  email: Pick<EmailService, 'send'>;
+  email: Pick<EmailService, 'sendMany'>;
   appBaseUrl: string;
   logger?: FastifyBaseLogger;
 }
@@ -103,8 +106,8 @@ export class EntryReceipts implements GamePicksReceiptNotice, SquaresDrawnNotice
   constructor(private readonly deps: EntryReceiptDeps) {}
 
   /**
-   * Queues the receipt for a submitted week to every active owner of the entry's squad. A failure
-   * is logged and never fails the submit: the picks are already saved.
+   * Queues the receipt for a submitted week to every active owner of the entry's squad, in one
+   * batch. A failure is logged and never fails the submit: the picks are already saved.
    */
   async gamePicksSubmitted(view: GamePicksView, week: SubmittedWeek): Promise<void> {
     try {
@@ -129,18 +132,19 @@ export class EntryReceipts implements GamePicksReceiptNotice, SquaresDrawnNotice
     const submittedAt = view.submittedAt;
     const receipt = this.receiptOf(view, sportEvent, setting.sportLeague?.roundNames ?? []);
     const tiebreaker = describeTiebreaker(view, sportEvent);
-    await this.sendToOwners(setting, {
+    await this.deps.email.sendMany(TEMPLATE_KEY, this.ownerEmails(setting, {
       contest,
       entry,
       sportEvent,
       about: `${entry.id}:${sportEvent.id}:${submittedAt.toISOString()}`,
       data: { submittedAt, ...(tiebreaker !== null && { tiebreaker }), receipt },
-    });
+    }));
   }
 
   /**
    * Queues each entry with a box a receipt of its boxes' numbers, once the squares draw is in.
-   * Rows take the away team's score and columns the home team's, as the grid shows them.
+   * Rows take the away team's score and columns the home team's, as the grid shows them. Every
+   * receipt goes to the outbox in one batch (#1171), however many entries hold boxes.
    */
   async squaresDrawn({ board, entries, sportEvent }: DrawnSquares): Promise<void> {
     const { contest, digits } = board;
@@ -152,12 +156,12 @@ export class EntryReceipts implements GamePicksReceiptNotice, SquaresDrawnNotice
         this.deps.logger?.warn({ action: 'email.entryReceipt.skipped', data: { contestId: contest.id } }, 'Skipped squares receipts because the league or the draw is gone');
         return;
       }
-      for (const entry of holders) {
+      await this.deps.email.sendMany(TEMPLATE_KEY, holders.flatMap((entry) => {
         const boxes = board.boxes
           .filter((box) => box.contestEntryId === entry.id)
           .map((box) => ({ rowNumber: digits.rowDigits[box.rowIndex], columnNumber: digits.columnDigits[box.columnIndex] }))
           .sort((left, right) => left.rowNumber - right.rowNumber || left.columnNumber - right.columnNumber);
-        await this.sendToOwners(setting, {
+        return this.ownerEmails(setting, {
           contest,
           entry,
           sportEvent,
@@ -172,7 +176,7 @@ export class EntryReceipts implements GamePicksReceiptNotice, SquaresDrawnNotice
             },
           },
         });
-      }
+      }));
     } catch (error) {
       this.deps.logger?.error({
         action: 'email.entryReceipt.failed',
@@ -205,43 +209,34 @@ export class EntryReceipts implements GamePicksReceiptNotice, SquaresDrawnNotice
     return { league, sportLeague, ownersBySquad };
   }
 
-  /** Queues the receipt to every active owner of the entry's squad; one owner's failure never costs the others theirs. */
-  private async sendToOwners(setting: ReceiptSetting, input: {
+  /** The receipt for every active owner of the entry's squad, to queue in one batch with the others. */
+  private ownerEmails(setting: ReceiptSetting, input: {
     contest: Contest;
     entry: ContestEntryWithSquad;
     sportEvent: SportEvent;
     about: string;
     data: Pick<ContestEntryCompletedEmailData, 'submittedAt' | 'tiebreaker' | 'receipt'>;
-  }): Promise<void> {
+  }): Array<EmailSendInput<typeof TEMPLATE_KEY>> {
     const { contest, entry, sportEvent } = input;
     const { league } = setting;
     const entryUrl = buildEntryUrl(this.deps.appBaseUrl, league.leagueCode, contest.id, entry.id);
     const event = buildEmailEventHeader(this.deps.appBaseUrl, sportEvent, setting.sportLeague?.name ?? '');
-    for (const user of setting.ownersBySquad.get(entry.squadId) ?? []) {
-      try {
-        await this.deps.email.send('CONTEST_ENTRY_COMPLETED', {
-          to: emailRecipientOf(user),
-          about: input.about,
-          league: { id: league.id, name: league.name, leagueCode: league.leagueCode, plan: league.plan },
-          refs: { contestId: contest.id, entryId: entry.id },
-          data: {
-            userName: formatUserName(user),
-            leagueName: league.name,
-            event,
-            contestName: contest.name,
-            teamName: entry.squadName,
-            entryName: entry.name,
-            entryUrl,
-            ...input.data,
-          },
-        });
-      } catch (error) {
-        this.deps.logger?.error({
-          action: 'email.entryReceipt.failed',
-          data: { contestId: contest.id, entryId: entry.id, userId: user.id, error: error instanceof Error ? error.message : String(error) },
-        }, 'Failed to queue an entry receipt');
-      }
-    }
+    return (setting.ownersBySquad.get(entry.squadId) ?? []).map((user) => ({
+      to: emailRecipientOf(user),
+      about: input.about,
+      league: { id: league.id, name: league.name, leagueCode: league.leagueCode, plan: league.plan },
+      refs: { contestId: contest.id, entryId: entry.id },
+      data: {
+        userName: formatUserName(user),
+        leagueName: league.name,
+        event,
+        contestName: contest.name,
+        teamName: entry.squadName,
+        entryName: entry.name,
+        entryUrl,
+        ...input.data,
+      },
+    }));
   }
 
   private receiptOf(view: GamePicksView, sportEvent: SportEvent, roundNames: readonly string[]): EntryReceipt {

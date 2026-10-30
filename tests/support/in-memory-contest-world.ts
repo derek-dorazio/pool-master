@@ -379,6 +379,9 @@ export class InMemoryContestWorld {
       findJoinableByReleasedEdition: async () => [],
       findByStatuses: async (statuses) =>
         [...this.contests.values()].filter((contest) => statuses.includes(contest.status)),
+      // The world records no draw rows, so none owes its receipts.
+      findDrawReceiptsPending: async () => [],
+      clearDrawReceiptsPending: async () => undefined,
       create: async (input, limits) => this.seasonFull(input.leagueId, input.seasonYear, limits)
         ?? { status: 'created', contest: this.addContest(input.leagueId, input) },
       moveToSeason: async (id, seasonYear, limits) => {

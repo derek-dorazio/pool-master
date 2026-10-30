@@ -79,5 +79,7 @@ export interface ContestDrawRecordInput {
   fieldOrder: readonly string[];
   entryOrder: readonly string[];
   drawnByUserId: string | null;
+  /** The one event the draw deals (#713), whose receipts the next lifecycle sweep sends (#1171). */
+  sportEventId: string;
   entries: ReadonlyArray<{ entryId: string; sportEventParticipantIds: readonly string[] }>;
 }
