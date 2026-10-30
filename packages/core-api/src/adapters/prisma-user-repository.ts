@@ -61,6 +61,16 @@ export class PrismaUserRepository implements UserRepository {
     return rows.map(mapToUser);
   }
 
+  async findActiveByLeagues(leagueIds: readonly string[]): Promise<User[]> {
+    if (leagueIds.length === 0) return [];
+    // The leagues' join is the scope, as for one league.
+    const rows = await this.prisma.user.findMany({
+      where: { memberships: { some: { leagueId: { in: [...new Set(leagueIds)] }, status: LeagueMembershipStatus.ACTIVE } } },
+      orderBy: [{ lastName: 'asc' }, { firstName: 'asc' }],
+    });
+    return rows.map(mapToUser);
+  }
+
   async findByIdentifier(identifier: string): Promise<User | null> {
     // Each column is @unique on its own, so up to two rows can match: one by email, one by
     // username. The email holder wins (#1028).

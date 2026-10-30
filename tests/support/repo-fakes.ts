@@ -120,6 +120,7 @@ export function fakeUserRepo(overrides: Partial<UserRepository> = {}): UserRepos
     findByEmail: one(),
     findAll: many(),
     findActiveByLeague: many(),
+    findActiveByLeagues: many(),
     findByIdentifier: one(),
     findHolderOtherThan: one(),
     countActiveRootAdmins: jest.fn().mockResolvedValue(0),
@@ -132,6 +133,7 @@ export function fakeUserRepo(overrides: Partial<UserRepository> = {}): UserRepos
 export function fakeLeagueRepo(overrides: Partial<LeagueRepository> = {}): LeagueRepository {
   return {
     findById: one(),
+    findByIds: many(),
     findByCode: one(),
     findAll: many(),
     findByUser: many(),
@@ -152,6 +154,7 @@ export function fakeLeagueMembershipRepo(
 ): LeagueMembershipRepository {
   return {
     findByLeague: many(),
+    findByLeagues: many(),
     findByUser: many(),
     countActiveByLeagues: jest.fn().mockResolvedValue(new Map()),
     findByLeagueAndUser: one(),
@@ -373,6 +376,7 @@ export function fakeContestRepo(overrides: Partial<ContestRepository> = {}): Con
     findOpenByLeague: many(),
     findSportLeagueIdsBySeason: many(),
     findBySportEvent: many(),
+    findBySportEvents: many(),
     findJoinableByReleasedEdition: many(),
     findByStatuses: many(),
     create: createdContest(echoCreate('contest')),
@@ -392,6 +396,7 @@ export function fakeContestEntryRepo(
   return {
     findByIdWithSquad: one(),
     findByContest: many(),
+    findByContests: many(),
     findByContestWithSquad: many(),
     findByContestAndSquad: many(),
     findIdsByContestAndSquad: many(),

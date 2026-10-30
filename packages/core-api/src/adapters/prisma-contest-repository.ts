@@ -172,6 +172,24 @@ export class PrismaContestRepository implements ContestRepository {
     return rows.map(mapToContest);
   }
 
+  async findBySportEvents(sportEventIds: readonly string[], filter?: ContestStatusFilter): Promise<Contest[]> {
+    if (sportEventIds.length === 0) return [];
+    const rows = await this.prisma.contest.findMany({
+      where: {
+        sportEvents: { some: { sportEventId: { in: [...new Set(sportEventIds)] } } },
+        ...((filter?.statuses || filter?.excludeStatuses?.length) && {
+          status: {
+            ...(filter.statuses && { in: [...filter.statuses] }),
+            ...(filter.excludeStatuses?.length && { notIn: [...filter.excludeStatuses] }),
+          },
+        }),
+      },
+      orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+      include: CONTEST_INCLUDE,
+    });
+    return rows.map(mapToContest);
+  }
+
   async findJoinableByReleasedEdition(edition: ReleasedEdition): Promise<Contest[]> {
     const series = await this.prisma.eventSeries.findUnique({
       where: { id: edition.eventSeriesId },
