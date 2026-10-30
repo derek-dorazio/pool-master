@@ -219,8 +219,10 @@ Rules:
 
 - Use shared primitives for buttons, inputs, textareas, modals, tiles, page
   headers, status badges, action tiles, error banners, and grid/table shells.
-- Do not use bare `<button>`, `<input>`, or `<textarea>` in feature code when a
-  shared primitive exists. New shared primitives belong under
+- Do not use bare `<button>`, `<input>`, `<textarea>` or `<table>` in feature code when a
+  shared primitive exists. A small table is built from `SimpleTable` and its parts
+  (`TableHead`, `TableBody`, `TableRow`, `TableHeaderCell`, `TableCell`), a table that needs
+  search or sorting is a `DataGrid`, and an upload preview is an `UploadPreviewTable`. New shared primitives belong under
   `clients/poolmaster/src/features/shared/ui/`.
 - If the existing shared primitive is missing a needed variant, extend the
   primitive rather than creating a page-local near-duplicate.

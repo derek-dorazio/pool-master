@@ -225,15 +225,16 @@ describe('LeagueService', () => {
       });
     }
 
-    it('reads every league for scope "all" and only the viewer\'s for scope "mine"', async () => {
+    it('searches every league for scope "all" and reads only the viewer\'s for scope "mine"', async () => {
       const leagueRepo = createMockLeagueRepo({
-        findAll: jest.fn().mockResolvedValue([buildLeague({ id: 'league-1' })]),
+        search: jest.fn().mockResolvedValue([buildLeague({ id: 'league-1' })]),
         findByUser: jest.fn().mockResolvedValue([buildLeague({ id: 'league-2' })]),
       });
 
       const all = await createService({ leagueRepo }).listLeagues({
         scope: 'all',
         userId: 'user-1',
+        filters: { search: 'league' },
       });
       const mine = await createService({ leagueRepo }).listLeagues({
         scope: 'mine',
@@ -256,7 +257,7 @@ describe('LeagueService', () => {
       });
 
       // Handed over as filters — the service composes, it does not query.
-      expect(leagueRepo.findAll).toHaveBeenCalledWith({ search: 'Ryder', isActive: true });
+      expect(leagueRepo.search).toHaveBeenCalledWith({ search: 'Ryder', isActive: true });
     });
 
     it('hands the same filters to the member-scoped read, so the query narrows it rather than the service (#1182)', async () => {
@@ -279,7 +280,7 @@ describe('LeagueService', () => {
 
     it('joins member and active-contest counts onto the right leagues', async () => {
       const leagueRepo = createMockLeagueRepo({
-        findAll: jest.fn().mockResolvedValue([
+        search: jest.fn().mockResolvedValue([
           buildLeague({ id: 'league-1', name: 'First' }),
           buildLeague({ id: 'league-2', name: 'Second' }),
         ]),
@@ -293,7 +294,7 @@ describe('LeagueService', () => {
         leagueRepo,
         membershipRepo,
         prisma: createCountingPrisma([{ leagueId: 'league-2', _count: { _all: 7 } }]),
-      }).listLeagues({ scope: 'all', userId: 'user-1' });
+      }).listLeagues({ scope: 'all', userId: 'user-1', filters: { search: 'league' } });
 
       expect(membershipRepo.countActiveByLeagues).toHaveBeenCalledWith(['league-1', 'league-2']);
       // Counts land on their own league, and a league absent from a count map reads 0
@@ -366,7 +367,7 @@ describe('LeagueService', () => {
       const prisma = createCountingPrisma();
 
       await expect(
-        createService({ membershipRepo, prisma }).listLeagues({ scope: 'all', userId: 'user-1' }),
+        createService({ membershipRepo, prisma }).listLeagues({ scope: 'all', userId: 'user-1', filters: { search: 'league' } }),
       ).resolves.toEqual([]);
 
       // An empty `in` list would scan, so the member count is skipped entirely.
@@ -375,7 +376,7 @@ describe('LeagueService', () => {
 
     it('attaches the viewer\'s own membership, and null for a league they do not belong to', async () => {
       const leagueRepo = createMockLeagueRepo({
-        findAll: jest.fn().mockResolvedValue([
+        search: jest.fn().mockResolvedValue([
           buildLeague({ id: 'league-mine' }),
           buildLeague({ id: 'league-theirs' }),
         ]),
@@ -390,6 +391,7 @@ describe('LeagueService', () => {
       const rows = await createService({ leagueRepo, membershipRepo }).listLeagues({
         scope: 'all',
         userId: 'user-1',
+        filters: { search: 'league' },
       });
 
       // A8's one exception is a SET of the viewer's memberships beside the leagues, so a
@@ -401,12 +403,13 @@ describe('LeagueService', () => {
 
     it('returns leagues carrying no viewer context on the league itself (A8)', async () => {
       const leagueRepo = createMockLeagueRepo({
-        findAll: jest.fn().mockResolvedValue([buildLeague({ id: 'league-1' })]),
+        search: jest.fn().mockResolvedValue([buildLeague({ id: 'league-1' })]),
       });
 
       const [row] = await createService({ leagueRepo }).listLeagues({
         scope: 'all',
         userId: 'user-1',
+        filters: { search: 'league' },
       });
 
       // The admin list used to hard-code `isRootAdmin: true`, `memberType: null` and an

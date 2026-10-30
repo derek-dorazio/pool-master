@@ -41,6 +41,7 @@ export type {
   LeagueInvitationRepository,
   LeagueMembershipRepository,
   LeagueRepository,
+  LeagueSearch,
   LeagueSearchFilters,
   LeaguePlanChange,
   MembershipRepositories,
@@ -57,6 +58,7 @@ export type {
   StandingsEmailPosition,
   StandingsEmailPositionRepository,
   UserRepository,
+  UserSearch,
   UserSearchFilters,
   UserUpdate,
 } from './ports';

@@ -3,6 +3,7 @@ export { Alert, Callout } from "./alert";
 export { AdminAreaLayout, LeagueMenu } from "./nav-menus";
 export type { NavMenuItem } from "./nav-menus";
 export { BulkUploadPanel } from "./bulk-upload-panel";
+export { UploadPreviewTable } from "./upload-preview-table";
 export { Button, LinkButton, type LinkButtonProps, MenuItem } from "./button";
 export { Breadcrumbs, PageHeader } from "./page-header";
 export { ChoiceCard } from "./choice-card";
@@ -37,6 +38,14 @@ export { ListCard, ListStack } from "./list-card";
 export { SplitContentLayout } from "./layout-presets";
 export { DefinitionList, MetricGrid, MetricTile } from "./metric-grid";
 export { SelectableDataGrid } from "./selectable-data-grid";
+export {
+  SimpleTable,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeaderCell,
+  TableRow,
+} from "./simple-table";
 export { SortableList } from "./sortable-list";
 export { ServerErrorBar } from "./server-error";
 export { SectionHeader } from "./section";
