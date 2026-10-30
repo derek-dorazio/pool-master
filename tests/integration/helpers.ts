@@ -423,7 +423,8 @@ export async function createTestUser(overrides: {
   isRootAdmin?: boolean;
 } = {}): Promise<TestUserResult> {
   const id = randomUUID();
-  const email = overrides.email ?? `test-${id.slice(0, 8)}@integration.test`;
+  // The whole id: eight characters of it collided once the local test database held tens of thousands of users.
+  const email = overrides.email ?? `test-${id}@integration.test`;
   const username = overrides.username ?? email;
   const fallbackName = overrides.displayName ?? `Test User ${id.slice(0, 8)}`;
   const [fallbackFirstName = 'Test', ...fallbackLastParts] = fallbackName.split(/\s+/);

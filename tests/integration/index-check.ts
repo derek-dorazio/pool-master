@@ -130,6 +130,86 @@ function joinsOn(conditions: string, column: string, alias: string): boolean {
   return new RegExp(`(?:=\\s*\\(*${qualified}|${qualified}\\)?(?:::[\\w"]+)?\\s*=)`).test(conditions);
 }
 
+/**
+ * Splits `text` at `separator` (` AND ` or ` OR `) where it is not inside parentheses, after
+ * dropping parentheses that wrap all of it.
+ */
+function splitTopLevel(text: string, separator: string): string[] {
+  let body = text.trim();
+  while (body.startsWith('(') && closingParen(body, 0) === body.length - 1) body = body.slice(1, -1).trim();
+  const parts: string[] = [];
+  let depth = 0;
+  let start = 0;
+  for (let at = 0; at < body.length; at += 1) {
+    if (body[at] === '(') depth += 1;
+    else if (body[at] === ')') depth -= 1;
+    else if (depth === 0 && body.startsWith(separator, at)) {
+      parts.push(body.slice(start, at));
+      start = at + separator.length;
+    }
+  }
+  return [...parts, body.slice(start)].map((part) => part.trim()).filter((part) => part !== '');
+}
+
+function closingParen(text: string, open: number): number {
+  let depth = 0;
+  for (let at = open; at < text.length; at += 1) {
+    if (text[at] === '(') depth += 1;
+    else if (text[at] === ')') {
+      depth -= 1;
+      if (depth === 0) return at;
+    }
+  }
+  return -1;
+}
+
+/**
+ * Whether some index in `leads` could serve `condition`: a conjunction is served when one of its
+ * terms is, a disjunction only when every branch is, and a single comparison when it compares a
+ * column one of the indexes leads on by an operator that index serves.
+ */
+function servedBy(condition: string, leads: Array<IndexLead & { column: string }>, alias: string | undefined): boolean {
+  const branches = splitTopLevel(condition, ' OR ');
+  if (branches.length > 1) return branches.every((branch) => servedBy(branch, leads, alias));
+  const terms = splitTopLevel(condition, ' AND ');
+  if (terms.length > 1) return terms.some((term) => servedBy(term, leads, alias));
+  const comparison = `(${terms[0] ?? ''})`;
+  return leads.some((index) => comparesColumn(comparison, index.column, index.operatorClass, alias, false));
+}
+
+/** The aliases a condition names, among the plan's: qualified columns, and `own` when it names a bare one. */
+function aliasesIn(text: string, aliases: Set<string>, own: string | undefined): Set<string> {
+  const named = new Set([...text.matchAll(/\b(\w+)\./g)].map((match) => match[1]).filter((alias) => aliases.has(alias)));
+  if (own !== undefined) named.add(own);
+  return named;
+}
+
+/**
+ * The aliases joined to `start` through the plan's conditions: a condition that names two aliases
+ * joins them, whichever node carries it.
+ */
+function joinedAliases(start: string, nodes: PlanNode[], heapOf: Map<PlanNode, PlanNode>): Set<string> {
+  const aliases = new Set(nodes.map((node) => node.Alias).filter((alias) => alias !== undefined));
+  const groups = nodes.flatMap((node) => {
+    const own = node.Alias ?? heapOf.get(node)?.Alias;
+    return [
+      ...[node['Index Cond'], node['Recheck Cond'], node.Filter].filter((text) => text !== undefined).map((text) => aliasesIn(text, aliases, own)),
+      ...[node['Join Filter'], node['Hash Cond'], node['Merge Cond']].filter((text) => text !== undefined).map((text) => aliasesIn(text, aliases, undefined)),
+    ];
+  });
+  const reached = new Set([start]);
+  for (let grew = true; grew;) {
+    grew = false;
+    for (const group of groups) {
+      if ([...group].some((alias) => reached.has(alias)) && [...group].some((alias) => !reached.has(alias))) {
+        for (const alias of group) reached.add(alias);
+        grew = true;
+      }
+    }
+  }
+  return reached;
+}
+
 function flatten(node: PlanNode): PlanNode[] {
   return [node, ...(node.Plans ?? []).flatMap(flatten)];
 }
@@ -146,13 +226,18 @@ function indexesOn(table: string, indexes: Map<string, IndexLead>): Array<IndexL
   return [...indexes.values()].filter((index): index is IndexLead & { column: string } => index.table === table && index.column !== null);
 }
 
-/** Whether some node of the plan other than `walked` filters its table by a bound value an index on it could look up. */
-function enteredByBoundValue(walked: PlanNode, nodes: PlanNode[], indexes: Map<string, IndexLead>): boolean {
+/**
+ * Whether some node of the plan other than `walked`, on a table joined to it, filters its table by
+ * a bound value an index on it could look up.
+ */
+function enteredByBoundValue(walked: PlanNode, walkedAlias: string, nodes: PlanNode[], indexes: Map<string, IndexLead>, heapOf: Map<PlanNode, PlanNode>): boolean {
+  const joined = joinedAliases(walkedAlias, nodes, heapOf);
   return nodes.some((node) => {
-    const table = node === walked ? undefined : tableOf(node, indexes);
+    const alias = node.Alias ?? heapOf.get(node)?.Alias;
+    const table = node === walked || alias === walkedAlias || alias === undefined || !joined.has(alias) ? undefined : tableOf(node, indexes);
     if (table === undefined) return false;
     const text = ownConditions(node);
-    return indexesOn(table, indexes).some((index) => comparesColumn(text, index.column, index.operatorClass, node.Alias, true));
+    return indexesOn(table, indexes).some((index) => comparesColumn(text, index.column, index.operatorClass, alias, true));
   });
 }
 
@@ -161,27 +246,28 @@ function enteredByBoundValue(walked: PlanNode, nodes: PlanNode[], indexes: Map<s
  * index. On a table of a few test rows the planner may walk one index for its order and filter,
  * use a later column of another, or walk this side of a join and look the other side up, rather
  * than use the index that serves the read. That index exists, so nothing is missing, when:
- * - the node's own filter compares a column some index on the table leads on, by an operator that
- *   index serves; or
- * - the plan joins the table by a column some index on it leads on, and another table of the plan
- *   is filtered by a bound value an index on it could look up, so the read could start there.
+ * - the node's own conditions are served by some index on the table (`servedBy`); or
+ * - the plan joins the table by a column some index on it leads on, and a table joined to it is
+ *   filtered by a bound value an index on that table could look up, so the read could start there.
  */
-function anotherIndexServes(node: PlanNode, table: string, nodes: PlanNode[], indexes: Map<string, IndexLead>, heap: PlanNode | undefined): boolean {
+function anotherIndexServes(node: PlanNode, table: string, nodes: PlanNode[], indexes: Map<string, IndexLead>, heapOf: Map<PlanNode, PlanNode>): boolean {
   // A Bitmap Index Scan's rows are filtered by the Bitmap Heap Scan above it, which names the table.
-  const own = heap === undefined ? ownConditions(node) : `${ownConditions(node)} ${ownConditions(heap)}`;
+  const heap = heapOf.get(node);
+  const own = [node['Index Cond'], heap?.['Recheck Cond'], heap?.Filter, node.Filter].filter((text) => text !== undefined);
   const alias = node.Alias ?? heap?.Alias;
   const leads = indexesOn(table, indexes);
-  if (leads.some((index) => comparesColumn(own, index.column, index.operatorClass, alias, false))) return true;
+  if (own.length > 0 && servedBy(own.map((text) => `(${text})`).join(' AND '), leads, alias)) return true;
   if (alias === undefined) return false;
   const conditions = nodes.filter((other) => other !== node).map((other) => [ownConditions(other), other['Join Filter'], other['Hash Cond'], other['Merge Cond']].join(' ')).join(' ');
-  return leads.some((index) => joinsOn(conditions, index.column, alias)) && enteredByBoundValue(node, nodes, indexes);
+  return leads.some((index) => joinsOn(conditions, index.column, alias)) && enteredByBoundValue(node, alias, nodes, indexes, heapOf);
 }
 
 /**
  * The whole-table reads in a plan. With sequential scans off the planner still reads a table
- * whole when no index serves its filter, in one of three ways: a sequential scan; walking an index
- * by a condition on a column it does not lead on; or walking an index for its order and filtering
- * every row.
+ * whole when no index serves its filter, in one of four ways: a sequential scan; walking an index
+ * by a condition on a column it does not lead on; walking an index for its order and filtering
+ * every row; or walking an index with no condition at all, which reads every row unless a `Limit`
+ * above it stops the walk early.
  */
 export function findWholeScans(plan: PlanNode, indexes: Map<string, IndexLead>): WholeScan[] {
   const nodes = flatten(plan);
@@ -189,15 +275,18 @@ export function findWholeScans(plan: PlanNode, indexes: Map<string, IndexLead>):
   for (const heap of nodes.filter((node) => node['Node Type'] === 'Bitmap Heap Scan')) {
     for (const child of flatten(heap).slice(1)) heapOf.set(child, heap);
   }
+  const underLimit = new Set(nodes.filter((node) => node['Node Type'] === 'Limit').flatMap((limit) => flatten(limit).slice(1)));
   const scans: WholeScan[] = [];
   for (const node of nodes) {
     const index = node['Index Name'] === undefined ? undefined : indexes.get(node['Index Name']);
     if (node['Node Type'] === 'Seq Scan' && node['Relation Name']) {
       scans.push({ table: node['Relation Name'], how: 'a sequential scan' });
-    } else if (INDEX_NODES.has(node['Node Type']) && index && !anotherIndexServes(node, index.table, nodes, indexes, heapOf.get(node))) {
+    } else if (INDEX_NODES.has(node['Node Type']) && index && !anotherIndexServes(node, index.table, nodes, indexes, heapOf)) {
       const condition = node['Index Cond'];
       if (condition === undefined && node.Filter !== undefined) {
         scans.push({ table: index.table, how: `walking every entry of ${String(node['Index Name'])} and filtering` });
+      } else if (condition === undefined && !underLimit.has(node)) {
+        scans.push({ table: index.table, how: `walking every entry of ${String(node['Index Name'])}, with no filter` });
       } else if (condition !== undefined && index.column !== null && !constrainsLead(condition, index.column)) {
         scans.push({ table: index.table, how: `walking all of ${String(node['Index Name'])}, which leads on ${index.column}` });
       }

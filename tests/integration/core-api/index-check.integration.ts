@@ -132,6 +132,7 @@ const INDEXES = new Map<string, IndexLead>([
   ['users_email_key', { table: 'users', column: 'email', operatorClass: 'text_ops' }],
   ['users_email_trgm_idx', { table: 'users', column: 'email', operatorClass: 'gin_trgm_ops' }],
   ['users_is_root_admin_is_active_idx', { table: 'users', column: 'is_root_admin', operatorClass: 'bool_ops' }],
+  ['users_username_trgm_idx', { table: 'users', column: 'username', operatorClass: 'gin_trgm_ops' }],
   ['contest_entries_id_contest_id_key', { table: 'contest_entries', column: 'id', operatorClass: 'uuid_ops' }],
   ['contest_entries_contest_id_squad_id_entry_number_key', { table: 'contest_entries', column: 'contest_id', operatorClass: 'uuid_ops' }],
   ['league_memberships_user_id_status_idx', { table: 'league_memberships', column: 'user_id', operatorClass: 'uuid_ops' }],
@@ -199,5 +200,29 @@ describe('missing-index check on fixed plans: whether another index could serve 
       indexScan('league_memberships_user_id_status_idx', 'm', { 'Index Cond': '(user_id = u.id)' }),
     );
     expect(findWholeScans(plan, INDEXES)).toEqual([{ table: 'users', how: 'walking every entry of users_pkey and filtering' }]);
+  });
+
+  it('reports an index walk with no condition or filter, which reads every row, and passes it under a Limit that stops it early', () => {
+    const walk: PlanNode = { 'Node Type': 'Index Only Scan', 'Index Name': 'users_pkey', 'Relation Name': 'users', Alias: 'users' };
+    expect(findWholeScans(walk, INDEXES)).toEqual([{ table: 'users', how: 'walking every entry of users_pkey, with no filter' }]);
+    expect(findWholeScans({ 'Node Type': 'Limit', Plans: [walk] }, INDEXES)).toEqual([]);
+  });
+
+  it('reports a walked join side when the table entered by a bound value is not joined to it', () => {
+    const plan = nestedLoop(
+      nestedLoop(
+        indexScan('users_pkey', 'u', { Filter: '((timezone)::text = $2)' }),
+        indexScan('league_memberships_user_id_status_idx', 'm', { 'Index Cond': '(user_id = u.id)' }),
+      ),
+      indexScan('leagues_pkey', 'l', { 'Index Cond': '(id = $1)' }),
+    );
+    expect(findWholeScans(plan, INDEXES)).toEqual([{ table: 'users', how: 'walking every entry of users_pkey and filtering' }]);
+  });
+
+  it('passes an OR filter only when an index serves every branch', () => {
+    expect(findWholeScans(indexScan('users_pkey', 'users', { Filter: '((email ~~* $1) OR ((username)::text ~~* $2))' }), INDEXES)).toEqual([]);
+    expect(findWholeScans(indexScan('users_pkey', 'users', { Filter: '((email ~~* $1) OR ((timezone)::text = $2))' }), INDEXES))
+      .toEqual([{ table: 'users', how: 'walking every entry of users_pkey and filtering' }]);
+    expect(findWholeScans(indexScan('users_pkey', 'users', { Filter: '((email ~~* $1) AND ((timezone)::text = $2))' }), INDEXES)).toEqual([]);
   });
 });
