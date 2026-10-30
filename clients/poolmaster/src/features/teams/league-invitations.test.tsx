@@ -314,7 +314,8 @@ describe('Commissioner tools › Invites: waiting on an answer', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Copy invite link for friend@example.com' }));
 
     await waitFor(() => expect(writeTextMock).toHaveBeenCalledWith(`${window.location.origin}/invite/email-code`));
-    expect(await screen.findByTestId('league-invitation-copied-email-1')).toHaveTextContent('Link copied');
+    const row = screen.getByTestId('league-invitation-email-1');
+    expect(await within(row).findByRole('status')).toHaveTextContent('Copied');
   });
 
   it('copies the new link after a resend replaces the invite code, not the one that stopped working', async () => {
@@ -532,7 +533,7 @@ describe('Commissioner tools › Invites: invite people', () => {
     expect(screen.getByRole('textbox', { name: 'Join link' })).toHaveValue('');
   });
 
-  it('keeps the join link visible for manual copy when the clipboard refuses the write', async () => {
+  it('says the copy failed and keeps the join link in its field for a manual copy when the clipboard refuses the write', async () => {
     const writeTextMock = vi.fn().mockRejectedValue(new Error('Clipboard blocked'));
     Object.assign(navigator, { clipboard: { writeText: writeTextMock } });
     listLeagueInvitationsMock.mockResolvedValue({ data: { invitations: [joinLink({ inviteCode: 'invite-xyz' })] } });
@@ -543,7 +544,7 @@ describe('Commissioner tools › Invites: invite people', () => {
     );
     fireEvent.click(screen.getByRole('button', { name: 'Copy join link' }));
 
-    await waitFor(() => expect(writeTextMock).toHaveBeenCalled());
+    expect(await screen.findByTestId('league-copy-join-url-failed')).toHaveTextContent('Couldn\'t copy. Select the link and copy it by hand.');
     expect(screen.getByRole('textbox', { name: 'Join link' })).toHaveValue(`${window.location.origin}/invite/invite-xyz`);
   });
 });

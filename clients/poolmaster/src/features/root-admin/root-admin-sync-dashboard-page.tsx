@@ -151,15 +151,6 @@ function buildRunEvidenceRows(details: ProviderSyncRunDetails | null | undefined
   }));
 }
 
-/**
- * The Clipboard API is missing on insecure (plain-http) origins, though the DOM types say it never
- * is; copying there does nothing instead of throwing.
- */
-function copyText(text: string): void {
-  const clipboard = navigator.clipboard as Clipboard | undefined;
-  void clipboard?.writeText(text);
-}
-
 export function RootAdminSyncDashboardPage() {
   const displayPreferences = useDisplayPreferences();
   const [payloadRun, setPayloadRun] = useState<ProviderSyncRun | null>(null);
@@ -608,11 +599,7 @@ export function RootAdminSyncDashboardPage() {
             : undefined
         }
         onCancel={() => setPayloadRun(null)}
-        onCopy={() => {
-          if (payloadRun) {
-            copyText(formatJsonPayload({ payload: payloadRun.payload, details: runDetails ?? null }));
-          }
-        }}
+        copyText={payloadRun ? formatJsonPayload({ payload: payloadRun.payload, details: runDetails ?? null }) : undefined}
         onOpenChange={(open) => {
           if (!open) {
             setPayloadRun(null);
@@ -630,11 +617,7 @@ export function RootAdminSyncDashboardPage() {
           </pre>
         }
         onCancel={() => setJsonPayload(null)}
-        onCopy={() => {
-          if (jsonPayload) {
-            copyText(formatJsonPayload(jsonPayload.payload));
-          }
-        }}
+        copyText={jsonPayload ? formatJsonPayload(jsonPayload.payload) : undefined}
         onOpenChange={(open) => {
           if (!open) {
             setJsonPayload(null);

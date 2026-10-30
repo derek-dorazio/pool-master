@@ -1,6 +1,5 @@
-import { Check, Copy } from "lucide-react";
-import { useState, type ReactNode } from "react";
-import { Button } from "./button";
+import type { ReactNode } from "react";
+import { CopyButton } from "./copy-button";
 import { IconAvatar } from "./icon-avatar";
 import { Heading } from "./heading";
 
@@ -42,32 +41,10 @@ export function IdentityHeading({ avatar, code, icon, meta, name, testId }: Iden
 }
 
 function CodeChip({ label, value }: { label: string; value: string }) {
-  const [copyState, setCopyState] = useState<"copied" | "failed" | "idle">("idle");
-
-  async function handleCopy() {
-    try {
-      await navigator.clipboard.writeText(value);
-      setCopyState("copied");
-    } catch {
-      setCopyState("failed");
-    }
-  }
-
   return (
     <span className="inline-flex items-center gap-1 rounded-md border border-dashed border-border pl-2 font-mono text-xs text-foreground">
       {value}
-      <Button
-        aria-label={`Copy ${label}`}
-        className="h-7 w-7 rounded-md"
-        onClick={() => void handleCopy()}
-        size="icon"
-        variant="ghost"
-      >
-        {copyState === "copied" ? <Check aria-hidden size={14} /> : <Copy aria-hidden size={14} />}
-      </Button>
-      <span className="sr-only" role={copyState === "failed" ? "alert" : "status"}>
-        {copyState === "copied" ? "Copied" : copyState === "failed" ? "Copy failed" : ""}
-      </span>
+      <CopyButton className="h-7 w-7" iconOnly label={`Copy ${label}`} text={value} variant="ghost" />
     </span>
   );
 }

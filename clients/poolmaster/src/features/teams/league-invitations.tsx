@@ -1,7 +1,6 @@
 import { useQuery, useQueryClient, type QueryKey } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
 import { EmailMessageStatus, EmailSkipReason, InvitationStatus, InviteType } from '@poolmaster/shared/domain';
-import { Check, Copy } from 'lucide-react';
 import { useMemo, useState, type SubmitEvent } from 'react';
 import {
   generateInviteLink,
@@ -18,6 +17,7 @@ import { buildInvitePath } from '@/features/leagues/league-routing';
 import {
   Alert,
   Button,
+  CopyButton,
   DataGrid,
   DateDisplay,
   FormField,
@@ -68,7 +68,6 @@ type InviteRow = {
   sentBy: string;
 };
 
-type RowCopy = { invitationId: string; state: 'copied' | 'failed' };
 
 function buildInviteUrl(inviteCode: string): string {
   return `${window.location.origin}${buildInvitePath(inviteCode)}`;
@@ -199,7 +198,6 @@ type InvitePeopleProps = {
 /** Invite by email, and the league's join link with Copy. */
 function InvitePeople({ invitationsKey, isInactiveLeague, joinLink, leagueId }: InvitePeopleProps) {
   const [inviteEmail, setInviteEmail] = useState('');
-  const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const joinUrl = joinLink ? buildInviteUrl(joinLink.inviteCode) : '';
 
   const sendInviteMutation = useInvalidatingMutation({
@@ -238,18 +236,6 @@ function InvitePeople({ invitationsKey, isInactiveLeague, joinLink, leagueId }: 
       setInviteEmail('');
     } catch {
       // Error state is rendered from the mutation; the typed email stays for a retry.
-    }
-  }
-
-  async function handleCopyJoinLink() {
-    if (!joinLink) {
-      return;
-    }
-    try {
-      await navigator.clipboard.writeText(joinUrl);
-      setCopiedCode(joinLink.inviteCode);
-    } catch {
-      // The link stays visible in its field for a manual copy.
     }
   }
 
@@ -304,20 +290,16 @@ function InvitePeople({ invitationsKey, isInactiveLeague, joinLink, leagueId }: 
               value={joinUrl}
             />
             <div className="flex gap-2">
-              <Button
-                aria-label="Copy join link"
-                data-testid="league-copy-join-url"
+              <CopyButton
                 disabled={!joinLink}
-                onClick={() => void handleCopyJoinLink()}
-                size="icon"
-                title="Copy join link"
-                type="button"
+                failedMessage="Couldn't copy. Select the link and copy it by hand."
+                iconOnly
+                key={joinUrl}
+                label="Copy join link"
+                testId="league-copy-join-url"
+                text={joinUrl}
                 variant="icon"
-              >
-                {joinLink && copiedCode === joinLink.inviteCode
-                  ? <Check aria-hidden size={18} />
-                  : <Copy aria-hidden size={18} />}
-              </Button>
+              />
               <Button
                 data-testid="league-create-join-url"
                 disabled={inviteLinkMutation.isPending || isInactiveLeague}
@@ -367,7 +349,6 @@ function WaitingInvites({
 }: WaitingInvitesProps) {
   const logger = getLogger().child({ feature: 'league-invitations' });
   const [filter, setFilter] = useState<InviteFilter>('pending');
-  const [rowCopy, setRowCopy] = useState<RowCopy | null>(null);
 
   // A failed resend or cancel can still mean the list is stale: a resend replaces the code before
   // sending, and a refused cancel means the invite was settled elsewhere. Reload either way.
@@ -383,7 +364,6 @@ function WaitingInvites({
       return response.data.invitation;
     },
     onSuccess: (invitation) => {
-      setRowCopy(null);
       logger.info(
         { action: 'leagueInvitations.resend.succeeded', data: { leagueId, invitationId: invitation.id } },
         'Resent a league invitation',
@@ -434,23 +414,13 @@ function WaitingInvites({
   const cancel = cancelMutation.mutateAsync;
 
   const columns = useMemo<ColumnDef<InviteRow, string>[]>(() => {
-    async function handleCopyRowLink(invitationId: string, link: string) {
-      try {
-        await navigator.clipboard.writeText(link);
-        setRowCopy({ invitationId, state: 'copied' });
-      } catch {
-        // Show the link on the row so it can be copied by hand.
-        setRowCopy({ invitationId, state: 'failed' });
-      }
-    }
-
     return [
       {
         id: 'invited',
         header: 'Invited',
         accessorFn: (row) => row.label,
         cell: ({ row }) => {
-          const { invitation, isEmail, label, link } = row.original;
+          const { invitation, isEmail, label } = row.original;
           return (
             <div className="min-w-0 space-y-1">
               <div className="font-medium text-foreground">{label}</div>
@@ -464,14 +434,6 @@ function WaitingInvites({
                 >
                   {emailStatusLabel(invitation, invitation.emailStatus)}
                 </div>
-              ) : null}
-              {rowCopy?.invitationId === invitation.id && rowCopy.state === 'failed' ? (
-                <p
-                  className="break-all font-mono text-xs text-foreground"
-                  data-testid={`league-invitation-link-${invitation.id}`}
-                >
-                  {link}
-                </p>
               ) : null}
             </div>
           );
@@ -508,28 +470,26 @@ function WaitingInvites({
         enableGlobalFilter: false,
         cell: ({ row }) => {
           const { invitation, isEmail, isExpired, label, link } = row.original;
-          const isCopied = rowCopy?.invitationId === invitation.id && rowCopy.state === 'copied';
           return (
             <div className="flex items-center justify-end gap-2 whitespace-nowrap">
-              {isCopied ? (
-                <span className="text-xs text-muted-foreground" data-testid={`league-invitation-copied-${invitation.id}`}>
-                  Link copied
-                </span>
-              ) : null}
               {/* An expired link no longer works, so there is nothing to copy; Resend makes a new one. */}
               {isExpired ? null : (
-                <Button
-                  aria-label={`Copy invite link for ${label}`}
-                  data-testid={`league-invitation-copy-${invitation.id}`}
+                <CopyButton
                   disabled={isResending}
-                  onClick={() => void handleCopyRowLink(invitation.id, link)}
+                  failedMessage={(
+                    <>
+                      {'Couldn\'t copy. The link is '}
+                      <span className="break-all font-mono text-foreground" data-testid={`league-invitation-link-${invitation.id}`}>{link}</span>
+                    </>
+                  )}
+                  iconOnly
+                  key={link}
+                  label={`Copy invite link for ${label}`}
                   size="sm"
-                  title="Copy invite link"
-                  type="button"
+                  testId={`league-invitation-copy-${invitation.id}`}
+                  text={link}
                   variant="ghost"
-                >
-                  {isCopied ? <Check aria-hidden size={16} /> : <Copy aria-hidden size={16} />}
-                </Button>
+                />
               )}
               {isEmail ? (
                 <Button
@@ -558,7 +518,7 @@ function WaitingInvites({
         },
       },
     ];
-  }, [cancel, isBusy, isInactiveLeague, isResending, resend, rowCopy]);
+  }, [cancel, isBusy, isInactiveLeague, isResending, resend]);
 
   return (
     <section className="space-y-3" data-testid="league-waiting-invites">
