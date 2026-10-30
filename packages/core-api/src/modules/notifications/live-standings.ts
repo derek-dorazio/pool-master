@@ -574,6 +574,8 @@ export class LiveStandings implements DueNotifications {
         action: 'email.liveStandings.sendFailed',
         data: { contestId: contest.id, leagueId: league.id, recipients: recipients.length, error: error instanceof Error ? error.message : String(error) },
       }, 'Failed to queue the live standings emails');
+      // Nothing was recorded, so the next sweep sends it again, measured from the last baseline.
+      return;
     }
     // After the emails: the places they showed are the next email's baseline.
     await this.deps.positions.record(rows.map((row) => ({ contestEntryId: row.entryId, position: row.position })));

@@ -268,6 +268,33 @@ describe('InvitationService', () => {
       })]);
     });
 
+    it('fails the request with the invitations already created when their emails cannot be queued, recording none of the emails', async () => {
+      const invitationRepo = createMockInvitationRepo();
+      const outbox = inMemoryEmailMessages();
+      outbox.recordMany = () => Promise.reject(new Error('database unavailable'));
+      const service = new InvitationService({
+        invitations: invitationRepo,
+        memberships: createMockMembershipRepo(),
+        leagues: createMockLeagueRepo(),
+        prisma: asPrismaClient(createMockProvisioningPrisma()),
+        email: emailServiceOver({ providerName: 'smtp', send: jest.fn() }, outbox),
+        users: createProvisioningUsers(),
+        contests: NO_CONTESTS,
+        memberJoined: NOBODY_TOLD,
+      });
+
+      await expect(service.sendEmailInvitations({
+        leagueId: 'league-1',
+        emails: ['alice@example.com', 'bob@example.com'],
+        invitedBy: 'owner-1',
+      })).rejects.toThrow('database unavailable');
+
+      // Pinned until the invitations and their emails are written together.
+      expect(jest.mocked(invitationRepo.createMany).mock.calls.map(([rows]) => rows.map((row) => row.email)))
+        .toEqual([['alice@example.com', 'bob@example.com']]);
+      expect(outbox.rows).toEqual([]);
+    });
+
     it('refuses to invite into a league that does not exist, creating nothing, since its name and code are the email\'s sender', async () => {
       const invitationRepo = createMockInvitationRepo();
       const service = new InvitationService({
