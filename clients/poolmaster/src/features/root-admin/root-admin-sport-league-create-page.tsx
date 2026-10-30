@@ -4,8 +4,9 @@ import { useNavigate } from 'react-router';
 import { z } from 'zod';
 import { createSportLeague } from '@/lib/api';
 import { FormField, FormPage, Input } from '@/features/shared/ui';
-import { extractErrorMessage, throwApiError } from '@/lib/errors';
+import { throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
+import { formPageSave } from '@/lib/form-page-save';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import { buildSportLeagueListPath, capitalize } from './manage-navigation';
@@ -64,12 +65,8 @@ export function RootAdminSportLeagueCreatePage() {
   return (
     <FormPage
       cancelTo={listPath}
-      errorMessage={createMutation.isError
-        ? extractErrorMessage(createMutation.error, { fallback: `We could not create this ${sportLeague.one}.` })
-        : undefined}
-      isPending={createMutation.isPending}
+      {...formPageSave(form, createMutation, `We could not create this ${sportLeague.one}.`)}
       isSubmitDisabled={!form.formState.isValid}
-      onSubmit={(event) => void form.handleSubmit((values) => createMutation.mutate(values))(event)}
       pendingLabel="Creating..."
       submitLabel={`Create ${sportLeague.one}`}
       submitTestId="root-admin-sport-league-list-new-save"

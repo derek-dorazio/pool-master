@@ -13,8 +13,9 @@ import {
   toDateTimeLocalValue,
   useDisplayPreferences,
 } from '@/features/shared/ui';
-import { extractErrorMessage, throwApiError } from '@/lib/errors';
+import { throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
+import { formPageSave } from '@/lib/form-page-save';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import { useManageBreadcrumbOverride } from './manage-breadcrumb-context';
@@ -110,12 +111,8 @@ function SportEventScheduleForm({
     <FormPage
       cancelTo={homePath}
       description={`When each ${round.one} starts and ends. The background scheduler moves the ${event.one} along this schedule.`}
-      errorMessage={roundsMutation.isError
-        ? extractErrorMessage(roundsMutation.error, { fallback: `We could not save the ${round.one} schedule.` })
-        : undefined}
-      isPending={roundsMutation.isPending}
+      {...formPageSave(form, roundsMutation, `We could not save the ${round.one} schedule.`)}
       isSubmitDisabled={!form.formState.isValid}
-      onSubmit={(event) => void form.handleSubmit((values) => roundsMutation.mutate(values))(event)}
       pendingLabel="Saving..."
       submitLabel="Save schedule"
       submitTestId="root-admin-sport-event-rounds-save"

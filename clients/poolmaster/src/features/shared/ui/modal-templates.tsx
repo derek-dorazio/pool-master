@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { Button } from "./button";
 import { cn } from "./class-names";
 import { ConfirmDialog } from "./confirm-dialog";
+import { DialogActions } from "./dialog-actions";
 import { FormField, Input } from "./form-field";
 import { Modal } from "./modal";
 import { ServerErrorBar } from "./server-error";
@@ -54,32 +55,21 @@ export function FormModal({
   testId,
   title,
 }: FormModalProps) {
-  const visibleSaveLabel = isPending && pendingLabel ? pendingLabel : saveLabel;
-
   return (
     <Modal
       description={description}
-      footer={
-        <>
-          <Button
-            disabled={isPending}
-            onClick={onCancel}
-            type="button"
-            variant="secondary"
-          >
-            {cancelLabel}
-          </Button>
-          <Button
-            data-testid={saveTestId ?? (testId ? `${testId}-save` : undefined)}
-            disabled={!canSave || isPending}
-            isLoading={isPending}
-            onClick={onSave}
-            type="button"
-          >
-            {visibleSaveLabel}
-          </Button>
-        </>
-      }
+      footer={(
+        <DialogActions
+          actionLabel={saveLabel}
+          actionTestId={saveTestId ?? (testId ? `${testId}-save` : undefined)}
+          cancelLabel={cancelLabel}
+          isActionDisabled={!canSave}
+          isPending={isPending}
+          onAction={onSave}
+          onCancel={onCancel}
+          pendingLabel={pendingLabel}
+        />
+      )}
       isCloseDisabled={isPending}
       onClose={onCancel}
       onOpenChange={onOpenChange}
