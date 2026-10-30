@@ -121,8 +121,19 @@ export interface ContestEntryStandingResult {
 export type ContestEntryStandingWrite = Omit<ContestEntryStandingResult, 'id'>;
 
 /** The frozen contest-entry standing (#246): written by settlement, read by a settled contest. */
+/** An entry that finished first in its contest, named as the contest's standings name it. */
+export interface ContestWinner {
+  contestId: string;
+  entryName: string;
+}
+
 export interface ContestEntryStandingRepository {
   findByContest(contestId: string): Promise<ContestEntryStandingResult[]>;
+  /**
+   * The entries in first place in each of several contests, in one read (#1336): by contest, in
+   * the order the contest's final standings list them, entry number then name.
+   */
+  findWinnersByContests(contestIds: readonly string[]): Promise<ContestWinner[]>;
   /** One per entry: creates or overwrites the entry's standing. */
   upsert(write: ContestEntryStandingWrite): Promise<void>;
 }

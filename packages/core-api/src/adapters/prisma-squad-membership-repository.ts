@@ -1,5 +1,5 @@
 import type { Prisma, PrismaClient, SquadMembership as PrismaSquadMembership } from '@prisma/client';
-import type { SquadMembershipRepository, SquadMembershipWithSquadName } from '@poolmaster/shared/db';
+import type { LeagueUser, SquadMembershipRepository, SquadMembershipWithSquadName } from '@poolmaster/shared/db';
 import type { SquadMembership, SquadMembershipStatus } from '@poolmaster/shared/domain';
 import { SquadMembershipStatus as SharedSquadMembershipStatus } from '@poolmaster/shared/domain';
 import { forgettingReads, memoizedRead, ReadMemoKey } from '../core/request-read-memo';
@@ -55,6 +55,16 @@ export class PrismaSquadMembershipRepository implements SquadMembershipRepositor
       include: { squad: { select: { name: true } } },
     });
     return row ? { ...mapToSquadMembership(row), squadName: row.squad.name } : null;
+  }
+
+  async findByLeagueUsersWithSquadName(people: readonly LeagueUser[]): Promise<SquadMembershipWithSquadName[]> {
+    if (people.length === 0) return [];
+    // An OR of the pairs, not a league list by a user list, which would match their cross product.
+    const rows = await this.prisma.squadMembership.findMany({
+      where: { OR: people.map(({ leagueId, userId }) => ({ leagueId, userId })) },
+      include: { squad: { select: { name: true } } },
+    });
+    return rows.map((row) => ({ ...mapToSquadMembership(row), squadName: row.squad.name }));
   }
 
   async create(

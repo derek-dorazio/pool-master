@@ -6,7 +6,7 @@ import type {
   UserTimeFormat as PrismaUserTimeFormat,
 } from '@prisma/client';
 import type { UserRepository, UserSearch, UserSearchFilters, UserUpdate } from '@poolmaster/shared/db';
-import { AuthProvider, LeagueMembershipStatus, TimeFormat, type User } from '@poolmaster/shared/domain';
+import { AuthProvider, LeagueMembershipStatus, TimeFormat, type LeagueRole, type User } from '@poolmaster/shared/domain';
 
 /**
  * Prisma adapter for `UserRepository`.
@@ -69,11 +69,15 @@ export class PrismaUserRepository implements UserRepository {
     return rows.map(mapToUser);
   }
 
-  async findActiveByLeagues(leagueIds: readonly string[]): Promise<User[]> {
+  async findActiveByLeagues(leagueIds: readonly string[], roles?: readonly LeagueRole[]): Promise<User[]> {
     if (leagueIds.length === 0) return [];
     // The leagues' join is the scope, as for one league.
     const rows = await this.prisma.user.findMany({
-      where: { memberships: { some: { leagueId: { in: [...new Set(leagueIds)] }, status: LeagueMembershipStatus.ACTIVE } } },
+      where: {
+        memberships: {
+          some: { leagueId: { in: [...new Set(leagueIds)] }, status: LeagueMembershipStatus.ACTIVE, ...(roles && { role: { in: [...roles] } }) },
+        },
+      },
       orderBy: [{ lastName: 'asc' }, { firstName: 'asc' }],
     });
     return rows.map(mapToUser);

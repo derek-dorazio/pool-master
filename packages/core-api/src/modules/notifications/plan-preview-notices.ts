@@ -15,7 +15,7 @@
 
 import type { FastifyBaseLogger } from 'fastify';
 import type { LeagueRepository } from '@poolmaster/shared/db';
-import { LeaguePlan, LeagueRole, PlanCap, type League } from '@poolmaster/shared/domain';
+import { LeaguePlan, PlanCap, type League, type User } from '@poolmaster/shared/domain';
 import type { EmailConfig } from '@poolmaster/shared/dto';
 import {
   emailRecipientOf,
@@ -28,7 +28,7 @@ import {
 import type { DueNotifications } from '../events/event-lifecycle-scheduler';
 import type { LeaguePlanService } from '../plans/league-plan-service';
 import type { PlanEntitlementsService } from '../plans/plan-entitlements-service';
-import { activeLeagueMembersWithRoles, type LeagueMemberDeps } from './league-members';
+import { activeCommissionersByLeague, type LeagueMemberDeps } from './league-members';
 import { easternDateOf, easternDayOf } from './overnight-day';
 
 const DAY_MS = 24 * 60 * 60_000;
@@ -40,7 +40,7 @@ export interface PlanPreviewNoticeDeps extends LeagueMemberDeps {
   plans: Pick<LeaguePlanService, 'moveEndedToFree'>;
   /** The reminder says what Free allows. */
   planEntitlements: Pick<PlanEntitlementsService, 'forPlan'>;
-  email: Pick<EmailService, 'send' | 'leaguesRecorded'>;
+  email: Pick<EmailService, 'send' | 'leaguesRecordedAbout'>;
   /** Reminders go at the overnight hour every scheduled league email uses. */
   readConfig: () => Pick<EmailConfig, 'weeklyDigestHour'>;
   appBaseUrl: string;
@@ -84,16 +84,16 @@ export class PlanPreviewNotices implements DueNotifications {
         const days = reminderFor(daysLeft);
         return days === null ? [] : [{ league, days, daysLeft, about: reminderAbout(league.planRenewsAt, days) }];
       });
-    const sent = new Map<string, Set<string>>();
-    for (const { league, days, daysLeft, about } of due) {
+    if (due.length === 0) return;
+    // Every reminder's told check, and the commissioners of every league still to be told, are
+    // read once for the sweep, not once per league (#1336).
+    const told = await this.deps.email.leaguesRecordedAbout('LEAGUE_PLAN_PREVIEW_ENDING', [...new Set(due.map(({ about }) => about))]);
+    const untold = due.filter(({ league, about }) => !told.get(about)?.has(league.id));
+    if (untold.length === 0) return;
+    const commissioners = await activeCommissionersByLeague(this.deps, untold.map(({ league }) => league.id));
+    for (const { league, days, daysLeft, about } of untold) {
       try {
-        let told = sent.get(about);
-        if (told === undefined) {
-          told = await this.deps.email.leaguesRecorded('LEAGUE_PLAN_PREVIEW_ENDING', about);
-          sent.set(about, told);
-        }
-        if (told.has(league.id)) continue;
-        await this.send(league, daysLeft, `${about}:${league.id}`);
+        await this.send(league, daysLeft, `${about}:${league.id}`, commissioners.get(league.id) ?? []);
       } catch (error) {
         this.deps.logger?.error({
           action: 'email.planPreviewEnding.failed',
@@ -103,11 +103,10 @@ export class PlanPreviewNotices implements DueNotifications {
     }
   }
 
-  private async send(league: League, daysLeft: number, about: string): Promise<void> {
+  private async send(league: League, daysLeft: number, about: string, commissioners: readonly User[]): Promise<void> {
     const free = this.deps.planEntitlements.forPlan(LeaguePlan.FREE).caps;
     const planUrl = buildLeaguePlanUrl(this.deps.appBaseUrl, league.leagueCode);
-    const members = await activeLeagueMembersWithRoles(this.deps, league.id);
-    for (const { user } of members.filter(({ role }) => role === LeagueRole.COMMISSIONER)) {
+    for (const user of commissioners) {
       await this.deps.email.send('LEAGUE_PLAN_PREVIEW_ENDING', {
         to: emailRecipientOf(user),
         about,

@@ -43,7 +43,6 @@ describe('MemberJoinedNotices', () => {
         : world.memberships,
       leagues: world.leagues,
       squadMemberships: world.squadMemberships,
-      squads: world.squads,
       users: world.users,
       email: emailServiceInto(outbox),
       readConfig: () => EMAIL_SETTINGS.defaults({ POOLMASTER_ENVIRONMENT: 'prod' }),
@@ -103,6 +102,28 @@ describe('MemberJoinedNotices', () => {
     expect(leagueReads.map((read) => read.mock.calls.length)).toEqual([1, 0]);
     // The day's next-day emails are read once too, before the joins.
     expect(toldReads.map((read) => read.mock.calls.length)).toEqual([1, 1]);
+  });
+
+  it('reads the busy leagues\' members, member counts and joiners\' squads in one read each, however many leagues and joiners (#1336)', async () => {
+    const other = world.addLeague({ name: 'Golf Pool', leagueCode: 'GOLF' });
+    world.addMember({ league: other, user: commissioner, role: LeagueRole.COMMISSIONER });
+    for (const [index, name] of ['Ann', 'Ben', 'Cal', 'Dee', 'Eve'].entries()) {
+      await join(name, new Date(THURSDAY_MORNING.getTime() + index * MINUTE));
+      await join(`${name}2`, new Date(THURSDAY_MORNING.getTime() + index * MINUTE), { inLeague: other });
+    }
+    const reads = [
+      jest.spyOn(world.memberships, 'findByLeagues'),
+      jest.spyOn(world.users, 'findActiveByLeagues'),
+      jest.spyOn(world.memberships, 'countActiveByLeagues'),
+      jest.spyOn(world.squadMemberships, 'findByLeagueUsersWithSquadName'),
+    ];
+
+    await notices().service.queueDue(FRIDAY_OVERNIGHT);
+
+    expect(new Set(nextDayEmails().map((row) => row.subject))).toEqual(new Set(['2 more joined Golf Pool', '2 more joined Office Pool']));
+    expect(reads.map((read) => read.mock.calls.length)).toEqual([1, 1, 1, 1]);
+    const golf = expectDefined(nextDayEmails().find((row) => row.subject === '2 more joined Golf Pool'));
+    expect(golf.textBody).toContain('Dee2 Joiner (Dee2 Joiner)\nEve2 Joiner (Eve2 Joiner)');
   });
 
   it('sends the next-day email once, however many sweeps run that day', async () => {

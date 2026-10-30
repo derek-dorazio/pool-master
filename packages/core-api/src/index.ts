@@ -149,7 +149,7 @@ export function buildApp() {
     notificationsDue: [
       createEntryReminders(prisma, { email, readConfig: () => appSettings.get(EMAIL_SETTINGS), appBaseUrl, logger: app.log }),
       createLiveStandings(prisma, { email, readConfig: () => appSettings.get(EMAIL_SETTINGS), appBaseUrl, logger: app.log, planEntitlements }),
-      createCommissionerNotices(prisma, { email, readConfig: () => appSettings.get(EMAIL_SETTINGS), appBaseUrl, logger: app.log, planEntitlements }),
+      createCommissionerNotices(prisma, { email, readConfig: () => appSettings.get(EMAIL_SETTINGS), appBaseUrl, logger: app.log }),
       createDraftEventNotices(prisma, { email, appBaseUrl, logger: app.log }),
       memberJoined,
       createPlanPreviewNotices(prisma, { email, readConfig: () => appSettings.get(EMAIL_SETTINGS), appBaseUrl, logger: app.log, planEntitlements }),

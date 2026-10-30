@@ -21,6 +21,7 @@ import {
   type ContestSelectionConfig,
   type RoundName,
   type SportEvent,
+  type SportEventMatch,
   type SportLeague,
 } from '@poolmaster/shared/domain';
 import { ContestCutoffKind, contestCutoff, cutoffTiming } from '../contests/entry-window';
@@ -93,11 +94,23 @@ export async function contestClosesAt(
   rules: ContestSelectionConfig,
   first: SportEvent,
 ): Promise<Date> {
+  return contestClosesAtGiven(contest, rules, first, closesOnAGame(contest, rules) ? await deps.matches.findBySportEvent(first.id) : []);
+}
+
+/** Whether the contest's picks close at one of its first event's games, so its close needs the event's games. */
+export function closesOnAGame(contest: Contest, rules: ContestSelectionConfig): boolean {
+  return contestCutoff(rules, contest.squaresGameMatchId).kind !== ContestCutoffKind.EVENT_START;
+}
+
+/** `contestClosesAt` with the first event's games already read, for a sweep that reads every contest's at once. */
+export function contestClosesAtGiven(
+  contest: Contest,
+  rules: ContestSelectionConfig,
+  first: SportEvent,
+  games: readonly SportEventMatch[],
+): Date {
   const cutoff = contestCutoff(rules, contest.squaresGameMatchId);
-  const window = cutoff.kind === ContestCutoffKind.EVENT_START
-    ? first
-    : cutoffTiming(cutoff, first, await deps.matches.findBySportEvent(first.id));
-  return window.startDate;
+  return (cutoff.kind === ContestCutoffKind.EVENT_START ? first : cutoffTiming(cutoff, first, games)).startDate;
 }
 
 /** A knockout's rounds by name, in its sport league's words where it has them ("Sweet 16"). */

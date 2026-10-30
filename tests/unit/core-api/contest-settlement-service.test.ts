@@ -24,6 +24,7 @@ import {
   fakeContestConfigurationRepo,
   fakeContestEntryPickRepo,
   fakeContestEntryRepo,
+  fakeContestEntryStandingRepo,
   fakeContestRepo,
   fakeParticipantContestScoringRuleRepo,
   fakeSportEventRepo,
@@ -182,7 +183,7 @@ function world({
         else eventStandings.push(row);
       },
     },
-    standings: {
+    standings: fakeContestEntryStandingRepo({
       findByContest: async (contestId) => standings.filter((row) => row.contestId === contestId),
       upsert: async (write) => {
         const at = standings.findIndex((row) => row.contestEntryId === write.contestEntryId);
@@ -190,7 +191,7 @@ function world({
         if (at >= 0) standings[at] = row;
         else standings.push(row);
       },
-    },
+    }),
   });
 
   return {
