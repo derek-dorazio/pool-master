@@ -87,13 +87,13 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
       tags: TAGS,
       summary: 'List sport events',
       description:
-        'The sport-event catalog, narrowed by sport, statuses, sport league, event year and name and never paged. At least one of `sport`, `sportLeagueId` and `eventYear` is required, so the list never reads every event: 400 SPORT_EVENT_FILTER_REQUIRED otherwise. Any signed-in user may read it: '
-        + 'contest setup picks an event from it, and a root admin browses it. Each event carries its loaded field '
+        'The sport-event catalog, narrowed by sport, statuses, sport league, event year and name and never paged. At least one of `sport`, `sportLeagueId` and `eventYear` is required, so the list never reads every event: 400 SPORT_EVENT_FILTER_REQUIRED otherwise. A root admin browses the whole catalog. Any other signed-in user, for contest setup, may list only events in the statuses that can still take a contest (SCHEDULED, POSTPONED, IN_PROGRESS) or one sport league\'s `eventYear`: 403 ROOT_ADMIN_ACCESS_REQUIRED otherwise (#1348). '
+        + 'Each event carries its loaded field '
         + 'size, contest-setup readiness and tier count; a root admin\'s list also carries each event\'s adminCounts. '
         + 'DRAFT events (not yet released for contests) are listed for a root admin only.',
       operationId: 'listEvents',
       querystring: schemaRef('SportEventListQuery'),
-      response: { 200: schemaRef('SportEventListResponse'), ...errors(400, 401) },
+      response: { 200: schemaRef('SportEventListResponse'), ...errors(400, 401, 403) },
     },
     handler: handler.listEvents,
   });

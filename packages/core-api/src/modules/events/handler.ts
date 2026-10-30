@@ -52,7 +52,7 @@ import type {
   SportEventRoundMatchupsResponse,
   UpdateSportEventMatchRequest,
 } from '@poolmaster/shared/dto/bracket.dto';
-import { SportEventSyncScope } from '@poolmaster/shared/domain';
+import { OFFERABLE_SPORT_EVENT_STATUSES, SportEventSyncScope } from '@poolmaster/shared/domain';
 import { sendError } from '../../core/error-handler';
 import {
   mapFieldUploadPreviewToDto,
@@ -76,6 +76,7 @@ import {
 } from '../ingestion/ingestion-service';
 import type { EventLifecycleService } from './event-lifecycle-service';
 import type { EventScoreSourceService } from './event-score-source-service';
+import { SportEventError } from './errors';
 import type { SportEventServices } from './wiring';
 
 type EventParams = { Params: { eventId: string } };
@@ -84,6 +85,18 @@ type RoundParams = { Params: { eventId: string; roundNumber: number } };
 /** Only a root admin sees drafts (#431) and reads an event's admin counts (#1198). */
 function isRootAdmin(request: FastifyRequest): boolean {
   return request.authUser?.isRootAdmin === true;
+}
+
+/**
+ * The event lists a caller other than a root admin may read (#1348): events that can still take a
+ * contest, or one sport league's season. Both stay small; a sport across every year is the root
+ * admin's catalog alone.
+ */
+function isMemberEventList(query: SportEventListQuery): boolean {
+  const offerableOnly = query.status !== undefined && query.status.length > 0
+    && query.status.every((status) => OFFERABLE_SPORT_EVENT_STATUSES.includes(status));
+  const oneSeason = query.sportLeagueId !== undefined && query.eventYear !== undefined;
+  return offerableOnly || oneSeason;
 }
 
 export interface EventHandlerDeps {
@@ -128,6 +141,10 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
       // A DRAFT event is the admin's work in progress: only a root admin sees it (#431), and only
       // a root admin's list counts its readiness (#1198).
       const rootAdmin = isRootAdmin(request);
+      if (!rootAdmin && !isMemberEventList(request.query)) {
+        logger.warn({ action: 'events.route.list.forbidden', data: { ...request.query } }, 'Rejected an unbounded sport event list from a caller without the root-admin claim');
+        throw new SportEventError('Only a root admin may list events beyond those open for contests or one sport league season.', 'ROOT_ADMIN_ACCESS_REQUIRED', 403);
+      }
       const events = (await sportEvents.listEvents(
         { ...filters, statuses: status, releasedOnly: !rootAdmin },
         { adminCounts: rootAdmin },

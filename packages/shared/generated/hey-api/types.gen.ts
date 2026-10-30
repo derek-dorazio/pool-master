@@ -30475,6 +30475,10 @@ export type ListEventsErrors = {
      * Standard API error envelope.
      */
     401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
 };
 
 export type ListEventsError = ListEventsErrors[keyof ListEventsErrors];
@@ -32862,6 +32866,10 @@ export type ListParticipantsErrors = {
      * Standard API error envelope.
      */
     400: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
 };
 
 export type ListParticipantsError = ListParticipantsErrors[keyof ListParticipantsErrors];
@@ -32968,6 +32976,10 @@ export type ListParticipantProviderMappingsData = {
 };
 
 export type ListParticipantProviderMappingsErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */

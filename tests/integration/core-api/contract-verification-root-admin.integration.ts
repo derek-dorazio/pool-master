@@ -1,4 +1,5 @@
 import { expect } from '@jest/globals';
+import { randomUUID } from 'node:crypto';
 import Fastify from 'fastify';
 import { FASTIFY_AJV_OPTIONS } from '../../../packages/core-api/src/plugins/string-transforms';
 import type { FastifyInstance } from 'fastify';
@@ -438,6 +439,38 @@ describe('Contract verification (root admin)', () => {
       expect({ url: refusal.url, status: response.statusCode }).toEqual({ url: refusal.url, status: 400 });
       expect(ErrorEnvelopeSchema.safeParse(response.json()).success).toBe(true);
       expect({ url: refusal.url, code: response.json<ErrorEnvelope>().error.code }).toEqual(refusal);
+    }
+  });
+
+  // #1348 — the participant catalog and a sport's events across every year are the root admin's
+  // reads. A league lists only events that can still take a contest, or one sport league season.
+  it('refuses the catalog lists to a non-root-admin with 403 and answers only the bounded event lists', async () => {
+    const member = await createTestUser({ displayName: 'Contract Non Admin Catalog Reader' });
+    const sportLeagueId = randomUUID();
+    const refused = [
+      '/api/v1/participants?sportId=GOLF',
+      '/api/v1/participants?q=scheffler',
+      `/api/v1/participants/${randomUUID()}/provider-mappings`,
+      '/api/v1/events?sport=GOLF',
+      '/api/v1/events?sport=GOLF&status=SCHEDULED&status=COMPLETED',
+      `/api/v1/events?sportLeagueId=${sportLeagueId}`,
+      '/api/v1/events?eventYear=2026',
+    ];
+    for (const url of refused) {
+      const response = await getApp().inject({ method: 'GET', url, headers: member.headers });
+      expect(ErrorEnvelopeSchema.safeParse(response.json()).success).toBe(true);
+      expect({ url, status: response.statusCode, code: response.json<ErrorEnvelope>().error.code })
+        .toEqual({ url, status: 403, code: 'ROOT_ADMIN_ACCESS_REQUIRED' });
+    }
+
+    const answered = [
+      '/api/v1/events?sport=GOLF&status=SCHEDULED&status=POSTPONED&status=IN_PROGRESS',
+      `/api/v1/events?sportLeagueId=${sportLeagueId}&eventYear=2026`,
+    ];
+    for (const url of answered) {
+      const response = await getApp().inject({ method: 'GET', url, headers: member.headers });
+      expect({ url, status: response.statusCode }).toEqual({ url, status: 200 });
+      expect(SportEventListResponseSchema.safeParse(response.json()).success).toBe(true);
     }
   });
 
