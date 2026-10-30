@@ -19,7 +19,11 @@ The shared UI layer is split into three levels:
    is `LoadingState`, `EmptyState` or `ErrorState` (`size="inline"` for one line
    inside a card), a one-line failure beside what failed is an `InlineError`, and
    a query's loading, error, empty and data branches are one `QueryState`; never
-   hand-type a `text-destructive` or "Loading..." paragraph.
+   hand-type a `text-destructive` or "Loading..." paragraph. A small table is a
+   `SimpleTable` built from its parts (`density="compact"` inside a card,
+   `surface="inverse"` on a navy panel, `isHighlighted` for the viewer's row,
+   `numeric` for figures); an upload preview is an `UploadPreviewTable`; a
+   table that needs search or sorting is a `DataGrid`.
 2. **Templates** compose primitives into repeated page or modal workflows, such
    as `ManagementListPage`, `EntityDetailPage`, `FormModal`, and
    `ConfirmationModal`.

@@ -22,6 +22,12 @@ import {
   Input,
   Select,
   SettingsSectionHeader,
+  SimpleTable,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeaderCell,
+  TableRow,
   Tile,
 } from '@/features/shared/ui';
 import {
@@ -59,8 +65,6 @@ const FEATURE_STARTS_AT_LABEL: Readonly<Record<LeaguePlan, string>> = {
   [LeaguePlan.PREMIUM]: 'Premium and up',
   [LeaguePlan.PLATINUM]: 'Platinum only',
 };
-
-const tableHeaderClassName = 'bg-[var(--table-header-surface)] text-xs uppercase text-muted-foreground';
 
 /**
  * /manage/plans (#946): what each league plan allows, saved as the PLAN_CONFIG settings group, so
@@ -185,25 +189,25 @@ function CapsGrid({ form }: { form: UseFormReturn<PlanSettingsDraft> }) {
         title="Caps"
       />
       <Tile className="overflow-x-auto" data-testid="root-admin-plans-caps" padding="none" radius="md">
-        <table className="min-w-full text-left text-sm">
-          <thead className={tableHeaderClassName}>
+        <SimpleTable className="min-w-full">
+          <TableHead>
             <tr>
-              <th className="px-4 py-2" scope="col">Cap</th>
+              <TableHeaderCell>Cap</TableHeaderCell>
               {LEAGUE_PLANS.map((plan) => (
-                <th className="px-4 py-2" key={plan} scope="col">{LEAGUE_PLAN_LABEL[plan]}</th>
+                <TableHeaderCell key={plan}>{LEAGUE_PLAN_LABEL[plan]}</TableHeaderCell>
               ))}
             </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
+          </TableHead>
+          <TableBody>
             {Object.values(PlanCap).map((cap) => (
-              <tr data-testid={`root-admin-plans-cap-${cap}`} key={cap}>
-                <th className="px-4 py-3 align-top font-medium text-foreground" scope="row">{PLAN_CAP_LABEL[cap]}</th>
+              <TableRow data-testid={`root-admin-plans-cap-${cap}`} key={cap}>
+                <TableHeaderCell className="py-3 align-top text-foreground" scope="row">{PLAN_CAP_LABEL[cap]}</TableHeaderCell>
                 {LEAGUE_PLANS.map((plan) => {
                   const cellName = `${PLAN_CAP_LABEL[cap]} on ${LEAGUE_PLAN_LABEL[plan]}`;
                   const error = errors.caps?.[cap]?.[plan]?.limit?.message;
                   const errorId = `root-admin-plans-${cap}-${plan}-error`;
                   return (
-                    <td className="min-w-40 px-4 py-3 align-top" key={plan}>
+                    <TableCell className="min-w-40 py-3 align-top" key={plan}>
                       <div className="space-y-2">
                         {caps[cap][plan].unlimited ? (
                           <p className="py-2 text-foreground">{formatPlanLimit(null)}</p>
@@ -227,13 +231,13 @@ function CapsGrid({ form }: { form: UseFormReturn<PlanSettingsDraft> }) {
                         </label>
                         {error ? <InlineError id={errorId}>{error}</InlineError> : null}
                       </div>
-                    </td>
+                    </TableCell>
                   );
                 })}
-              </tr>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </SimpleTable>
       </Tile>
     </section>
   );
