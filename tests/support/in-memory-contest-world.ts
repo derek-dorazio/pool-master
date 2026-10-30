@@ -608,8 +608,8 @@ export class InMemoryContestWorld {
     return {
       findByLeague: async (leagueId) =>
         [...this.memberships.values()].filter((row) => row.leagueId === leagueId),
-      findByLeagues: async (leagueIds) =>
-        [...this.memberships.values()].filter((row) => leagueIds.includes(row.leagueId)),
+      findByLeagues: async (leagueIds, roles) =>
+        [...this.memberships.values()].filter((row) => leagueIds.includes(row.leagueId) && (roles === undefined || roles.includes(row.role))),
       findByUser: async (userId) =>
         [...this.memberships.values()].filter((row) => row.userId === userId),
       countActiveByLeagues: async () => new Map(),
@@ -696,6 +696,12 @@ export class InMemoryContestWorld {
         const squad = membership ? this.squads.get(membership.squadId) : undefined;
         return membership && squad ? { ...membership, squadName: squad.name } : null;
       },
+      findByLeagueUsersWithSquadName: async (people) => [...this.squadMemberships.values()].flatMap((row) => {
+        const squad = this.squads.get(row.squadId);
+        return squad && people.some(({ leagueId, userId }) => row.leagueId === leagueId && row.userId === userId)
+          ? [{ ...row, squadName: squad.name }]
+          : [];
+      }),
       create: async (input) => this.addSquadMember(input.squadId, input.userId, input),
       update: async (id, updates) => {
         const existing = this.squadMemberships.get(id);
@@ -726,9 +732,10 @@ export class InMemoryContestWorld {
           .map((membership) => membership.userId));
         return [...this.users.values()].filter((user) => memberIds.has(user.id));
       },
-      findActiveByLeagues: async (leagueIds) => {
+      findActiveByLeagues: async (leagueIds, roles) => {
         const memberIds = new Set([...this.memberships.values()]
-          .filter((membership) => leagueIds.includes(membership.leagueId) && membership.status === LeagueMembershipStatus.ACTIVE)
+          .filter((membership) => leagueIds.includes(membership.leagueId) && membership.status === LeagueMembershipStatus.ACTIVE
+            && (roles === undefined || roles.includes(membership.role)))
           .map((membership) => membership.userId));
         return [...this.users.values()].filter((user) => memberIds.has(user.id));
       },
@@ -772,6 +779,16 @@ export class InMemoryContestWorld {
     return {
       findByContest: async (contestId) =>
         [...this.standings.values()].filter((row) => row.contestId === contestId),
+      findWinnersByContests: async (contestIds) => [...this.standings.values()]
+        .filter((row) => contestIds.includes(row.contestId) && row.position === 1)
+        .flatMap((row) => {
+          const entry = this.entries.get(row.contestEntryId);
+          return entry ? [{ contestId: row.contestId, entryName: entry.name, entryNumber: entry.entryNumber }] : [];
+        })
+        .sort((left, right) => left.contestId.localeCompare(right.contestId)
+          || left.entryNumber - right.entryNumber
+          || left.entryName.localeCompare(right.entryName))
+        .map(({ contestId, entryName }) => ({ contestId, entryName })),
       // One per entry, as the adapter's upsert on contest_entry_id.
       upsert: async (write) => {
         this.standings.set(write.contestEntryId, { id: this.standings.get(write.contestEntryId)?.id ?? this.nextId('standing'), ...write });

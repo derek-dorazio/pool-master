@@ -11,6 +11,7 @@ import type {
   ContestEntryStandingRepository,
   ContestEntryStandingResult,
   ContestEntryStandingWrite,
+  ContestWinner,
 } from '@poolmaster/shared/db';
 
 export class PrismaContestEntryStandingRepository implements ContestEntryStandingRepository {
@@ -33,6 +34,16 @@ export class PrismaContestEntryStandingRepository implements ContestEntryStandin
       settledAt: row.settledAt,
       totalScore: row.totalScore,
     }));
+  }
+
+  async findWinnersByContests(contestIds: readonly string[]): Promise<ContestWinner[]> {
+    if (contestIds.length === 0) return [];
+    const rows = await this.prisma.contestEntryStanding.findMany({
+      where: { contestId: { in: [...new Set(contestIds)] }, position: 1 },
+      select: { contestId: true, contestEntry: { select: { name: true } } },
+      orderBy: [{ contestId: 'asc' }, { contestEntry: { entryNumber: 'asc' } }, { contestEntry: { name: 'asc' } }],
+    });
+    return rows.map((row) => ({ contestId: row.contestId, entryName: row.contestEntry.name }));
   }
 
   async upsert(write: ContestEntryStandingWrite): Promise<void> {

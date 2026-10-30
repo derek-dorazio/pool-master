@@ -14,6 +14,7 @@ import {
   PrismaContestEntryMatchPredictionRepository,
   PrismaContestEntryPickRepository,
   PrismaContestEntryRepository,
+  PrismaContestEntryStandingRepository,
   PrismaContestRepository,
   PrismaLeagueMembershipRepository,
   PrismaLeagueRepository,
@@ -21,7 +22,6 @@ import {
   PrismaSportEventRepository,
   PrismaSportLeagueRepository,
   PrismaSquadMembershipRepository,
-  PrismaSquadRepository,
   PrismaSquaresRepository,
   PrismaStandingsEmailPositionRepository,
   PrismaUserRepository,
@@ -95,7 +95,6 @@ export function createCommissionerNotices(prisma: PrismaClient, options: {
   readConfig: () => EmailConfig;
   appBaseUrl: string;
   logger: FastifyBaseLogger;
-  planEntitlements: PlanEntitlementsService;
 }): CommissionerNotices {
   return new CommissionerNotices({
     sportEvents: new PrismaSportEventRepository(prisma),
@@ -108,7 +107,7 @@ export function createCommissionerNotices(prisma: PrismaClient, options: {
     memberships: new PrismaLeagueMembershipRepository(prisma),
     users: new PrismaUserRepository(prisma),
     eventPages: createEventPageService(prisma, options.logger),
-    finalStandings: createContestService(prisma, options.logger, { planEntitlements: options.planEntitlements }),
+    standings: new PrismaContestEntryStandingRepository(prisma),
     ...options,
   });
 }
@@ -189,7 +188,6 @@ export function createMemberJoinedNotices(prisma: PrismaClient, options: {
     memberships: new PrismaLeagueMembershipRepository(prisma),
     leagues: new PrismaLeagueRepository(prisma),
     squadMemberships: new PrismaSquadMembershipRepository(prisma),
-    squads: new PrismaSquadRepository(prisma),
     users: new PrismaUserRepository(prisma),
     ...options,
   });

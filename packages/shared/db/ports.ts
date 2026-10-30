@@ -109,8 +109,11 @@ export interface UserRepository {
    * current members, and a league's removed members only grow over the years.
    */
   findActiveByLeague(leagueId: string): Promise<User[]>;
-  /** `findActiveByLeague` for several leagues in one read (#1255): each user once, in the same order. */
-  findActiveByLeagues(leagueIds: readonly string[]): Promise<User[]>;
+  /**
+   * `findActiveByLeague` for several leagues in one read (#1255): each user once, in the same
+   * order. Given `roles`, only the members holding one of them in one of the leagues (#1336).
+   */
+  findActiveByLeagues(leagueIds: readonly string[], roles?: readonly LeagueRole[]): Promise<User[]>;
 
   /**
    * Resolves a user by an identifier that may be either their email or their username.
@@ -273,8 +276,11 @@ export interface LeagueRepository {
 export interface LeagueMembershipRepository {
   /** The league's ACTIVE memberships, earliest joiner first. */
   findByLeague(leagueId: string): Promise<LeagueMembership[]>;
-  /** Several leagues' ACTIVE memberships in one read, earliest joiner first (#1255). */
-  findByLeagues(leagueIds: readonly string[]): Promise<LeagueMembership[]>;
+  /**
+   * Several leagues' ACTIVE memberships in one read, earliest joiner first (#1255). Given
+   * `roles`, only the memberships with one of them (#1336).
+   */
+  findByLeagues(leagueIds: readonly string[], roles?: readonly LeagueRole[]): Promise<LeagueMembership[]>;
   findByUser(userId: string): Promise<LeagueMembership[]>;
 
   /**
@@ -316,6 +322,12 @@ export interface SquadDetails extends Squad {
   members: SquadMemberDetails[];
 }
 
+/** A person in a league. */
+export interface LeagueUser {
+  leagueId: string;
+  userId: string;
+}
+
 /** A squad membership with its squad's name: the league context's squad edge (#1165). */
 export interface SquadMembershipWithSquadName extends SquadMembership {
   squadName: string;
@@ -353,6 +365,11 @@ export interface SquadMembershipRepository {
   findByLeagueAndUser(leagueId: string, userId: string): Promise<SquadMembership | null>;
   /** `findByLeagueAndUser` with the squad's name, in the same read. */
   findByLeagueAndUserWithSquadName(leagueId: string, userId: string): Promise<SquadMembershipWithSquadName | null>;
+  /**
+   * `findByLeagueAndUserWithSquadName` for several people, each in their league, in one read
+   * (#1336): one row for each pair that has a squad, in no order.
+   */
+  findByLeagueUsersWithSquadName(people: readonly LeagueUser[]): Promise<SquadMembershipWithSquadName[]>;
   create(
     membership: Omit<SquadMembership, 'id' | 'createdAt' | 'updatedAt'>,
   ): Promise<SquadMembership>;

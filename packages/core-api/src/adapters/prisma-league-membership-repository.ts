@@ -23,10 +23,10 @@ export class PrismaLeagueMembershipRepository implements LeagueMembershipReposit
     return rows.map(mapToMembership);
   }
 
-  async findByLeagues(leagueIds: readonly string[]): Promise<LeagueMembership[]> {
+  async findByLeagues(leagueIds: readonly string[], roles?: readonly LeagueRole[]): Promise<LeagueMembership[]> {
     if (leagueIds.length === 0) return [];
     const rows = await this.prisma.leagueMembership.findMany({
-      where: { leagueId: { in: [...new Set(leagueIds)] }, status: MembershipStatus.ACTIVE },
+      where: { leagueId: { in: [...new Set(leagueIds)] }, status: MembershipStatus.ACTIVE, ...(roles && { role: { in: [...roles] } }) },
       orderBy: [{ joinedAt: 'asc' }, { id: 'asc' }],
     });
     return rows.map(mapToMembership);

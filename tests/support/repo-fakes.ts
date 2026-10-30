@@ -190,6 +190,7 @@ export function fakeSquadMembershipRepo(
     findBySquadAndUser: one(),
     findByLeagueAndUser: one(),
     findByLeagueAndUserWithSquadName: one(),
+    findByLeagueUsersWithSquadName: many(),
     create: echoCreate('squad-membership'),
     update: echoUpdate(),
     ...overrides,
@@ -449,6 +450,7 @@ export function fakeContestEntryStandingRepo(
 ): ContestEntryStandingRepository {
   return {
     findByContest: many(),
+    findWinnersByContests: many(),
     upsert: nothing(),
     ...overrides,
   };

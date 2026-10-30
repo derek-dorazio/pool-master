@@ -11,6 +11,7 @@ export type {
   ContestEntryStandingRepository,
   ContestEntryStandingResult,
   ContestEntryStandingWrite,
+  ContestWinner,
   ParticipantContestScoringRuleRepository,
 } from './contest-management-ports';
 export type {
@@ -51,6 +52,7 @@ export type {
   ParticipantSearchFilters,
   SquadDetails,
   SquadMemberDetails,
+  LeagueUser,
   SquadMembershipWithSquadName,
   SquadMembershipRepository,
   SquadOwnerInvitationRepository,

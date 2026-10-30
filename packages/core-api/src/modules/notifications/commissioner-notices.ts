@@ -26,8 +26,10 @@ import type { FastifyBaseLogger } from 'fastify';
 import type {
   ContestConfigTemplateRepository,
   ContestConfigurationRepository,
+  ContestEntryStandingRepository,
   ContestRepository,
   LeagueRepository,
+  SportEventMatchRepository,
   SportEventRepository,
   SportLeagueRepository,
 } from '@poolmaster/shared/db';
@@ -35,7 +37,6 @@ import {
   ContestStatus,
   ContestTemplateEventType,
   EventEmailDelivery,
-  LeagueRole,
   SportEventStatus,
   contestTemplateEventTypeOf,
   countParticipants,
@@ -47,9 +48,9 @@ import {
   type EventPage,
   type League,
   type SportEvent,
+  type SportEventMatch,
   type User,
 } from '@poolmaster/shared/domain';
-import type { ContestService } from '../contests/service';
 import type { EventPageService } from '../event-pages/service';
 import {
   emailRecipientOf,
@@ -71,8 +72,8 @@ import {
 } from '../email';
 import type { DueNotifications } from '../events/event-lifecycle-scheduler';
 import type { EmailConfig } from '@poolmaster/shared/dto';
-import { contestClosesAt, type ContestSummaryDeps } from './contest-summary';
-import { activeLeagueMembersByLeague, type LeagueMemberDeps } from './league-members';
+import { closesOnAGame, contestClosesAtGiven } from './contest-summary';
+import { activeCommissionersByLeague, type LeagueMemberDeps } from './league-members';
 
 const HOUR_MS = 60 * 60_000;
 const DAY_MS = 24 * HOUR_MS;
@@ -94,22 +95,24 @@ const DIGEST_TIME_ZONE = 'America/New_York';
 /** The events C1 and C2 are about: not yet started, and not called off or on hold. */
 const UPCOMING_STATUSES: readonly SportEventStatus[] = [SportEventStatus.DRAFT, SportEventStatus.SCHEDULED];
 
-export interface CommissionerNoticeDeps extends LeagueMemberDeps, Pick<ContestSummaryDeps, 'matches'> {
+export interface CommissionerNoticeDeps extends LeagueMemberDeps {
+  /** A draft contest's first event's games, for a contest whose picks close at one of them. */
+  matches: Pick<SportEventMatchRepository, 'findBySportEvents'>;
   sportEvents: Pick<SportEventRepository, 'findAll' | 'findByIds' | 'countParticipants'>;
   contests: Pick<ContestRepository, 'findBySportEvent' | 'findBySportEvents' | 'findByStatuses'>;
   /** A draft contest's rules, for when its picks close. */
-  configurations: Pick<ContestConfigurationRepository, 'findByContest'>;
+  configurations: Pick<ContestConfigurationRepository, 'findByContests'>;
   /** The default contest setups offered on an event. */
   templates: Pick<ContestConfigTemplateRepository, 'list'>;
-  leagues: Pick<LeagueRepository, 'findById' | 'findActive'>;
+  leagues: Pick<LeagueRepository, 'findByIds' | 'findActive'>;
   /** C1, C2 and the digest name each event's sport league. */
   sportLeagues: Pick<SportLeagueRepository, 'findById' | 'findByIds'>;
   readConfig: () => Pick<EmailConfig, 'weeklyDigestHour'>;
   /** The event page offering each event, which C1, C2 and the digest link to. */
   eventPages: Pick<EventPageService, 'pagesByEvent'>;
   /** Last year's contests' winners. */
-  finalStandings: Pick<ContestService, 'finalStandingsOf'>;
-  email: Pick<EmailService, 'send' | 'leaguesRecorded' | 'leaguesRecordedAbout' | 'hasRecordedForContest'>;
+  standings: Pick<ContestEntryStandingRepository, 'findWinnersByContests'>;
+  email: Pick<EmailService, 'send' | 'leaguesRecorded' | 'leaguesRecordedAbout'>;
   appBaseUrl: string;
   logger?: FastifyBaseLogger;
 }
@@ -161,12 +164,8 @@ class LeagueCommissioners {
   async load(leagueIds: readonly string[]): Promise<void> {
     const missing = [...new Set(leagueIds)].filter((leagueId) => !this.known.has(leagueId));
     if (missing.length === 0) return;
-    const read = activeLeagueMembersByLeague(this.deps, missing);
-    for (const leagueId of missing) {
-      this.known.set(leagueId, read.then((byLeague) => (byLeague.get(leagueId) ?? [])
-        .filter(({ role }) => role === LeagueRole.COMMISSIONER)
-        .map(({ user }) => user)));
-    }
+    const read = activeCommissionersByLeague(this.deps, missing);
+    for (const leagueId of missing) this.known.set(leagueId, read.then((byLeague) => byLeague.get(leagueId) ?? []));
     await read;
   }
 
@@ -420,11 +419,15 @@ export class CommissionerNotices implements DueNotifications {
     const contests = (await this.deps.contests.findBySportEvent(previous.id, { statuses: [ContestStatus.COMPLETED] }))
       // A season contest that included the edition didn't make anyone its winner.
       .filter((contest) => leagueIds.has(contest.leagueId) && contest.sportEventIds.length === 1);
+    if (contests.length === 0) return byLeague;
+    // Every contest's winners in one read, not one per contest (#1336).
+    const winnersByContest = new Map<string, string[]>();
+    for (const { contestId, entryName } of await this.deps.standings.findWinnersByContests(contests.map((contest) => contest.id))) {
+      winnersByContest.set(contestId, [...(winnersByContest.get(contestId) ?? []), entryName]);
+    }
     for (const contest of contests) {
-      const winners = (await this.deps.finalStandings.finalStandingsOf(contest)).entries
-        .filter((entry) => entry.position === 1)
-        .map((entry) => entry.entryName);
-      if (winners.length === 0) continue;
+      const winners = winnersByContest.get(contest.id);
+      if (winners === undefined) continue;
       byLeague.set(contest.leagueId, [...(byLeague.get(contest.leagueId) ?? []), { contestName: contest.name, winners }]);
     }
     return byLeague;
@@ -472,7 +475,11 @@ export class CommissionerNotices implements DueNotifications {
     }
   }
 
-  /** C4, for every draft contest whose picks close within 48 hours. */
+  /**
+   * C4, for every draft contest whose picks close within 48 hours. The contests' rules, games,
+   * told checks, leagues and commissioners are each read once for the run, not once per contest
+   * (#1336).
+   */
   private async queueContestsNotOpen(now: Date, commissioners: LeagueCommissioners): Promise<void> {
     const drafts = (await this.deps.contests.findByStatuses([ContestStatus.DRAFT]))
       .filter((contest) => now.getTime() - contest.createdAt.getTime() >= JUST_CREATED_MS);
@@ -480,36 +487,61 @@ export class CommissionerNotices implements DueNotifications {
     const sportEvents = new Map((await this.deps.sportEvents.findByIds(
       [...new Set(drafts.flatMap((contest) => contest.sportEventIds.slice(0, 1)))],
     )).map((sportEvent) => [sportEvent.id, sportEvent]));
-    for (const contest of drafts) {
+    // Picks never close before the first event starts, so a contest whose first event starts later
+    // than 48 hours from now has nothing due yet.
+    const starting = drafts.flatMap((contest) => {
+      const first = sportEvents.get(contest.sportEventIds[0] ?? '');
+      return first && UPCOMING_STATUSES.includes(first.status) && first.startDate.getTime() - now.getTime() <= NOT_OPEN_MS
+        ? [{ contest, first }]
+        : [];
+    });
+    if (starting.length === 0) return;
+    const rulesByContest = new Map((await this.deps.configurations.findByContests(starting.map(({ contest }) => contest.id)))
+      .map((configuration) => [configuration.contestId, configuration.configJson]));
+    const ruled = starting.flatMap(({ contest, first }) => {
+      const rules = rulesByContest.get(contest.id);
+      return rules ? [{ contest, first, rules }] : [];
+    });
+    const onAGame = [...new Set(ruled.filter(({ contest, rules }) => closesOnAGame(contest, rules)).map(({ first }) => first.id))];
+    const gamesByEvent = new Map<string, SportEventMatch[]>();
+    for (const game of onAGame.length === 0 ? [] : await this.deps.matches.findBySportEvents(onAGame)) {
+      gamesByEvent.set(game.sportEventId, [...(gamesByEvent.get(game.sportEventId) ?? []), game]);
+    }
+    const closing = ruled.flatMap(({ contest, first, rules }) => {
+      const closesAt = contestClosesAtGiven(contest, rules, first, gamesByEvent.get(first.id) ?? []);
+      const closesIn = closesAt.getTime() - now.getTime();
+      return closesIn > 0 && closesIn <= NOT_OPEN_MS ? [{ contest, closesAt }] : [];
+    });
+    if (closing.length === 0) return;
+    // The email is about its contest, so the one league recorded about a contest is the contest's.
+    const told = await this.deps.email.leaguesRecordedAbout('CONTEST_NOT_OPEN', closing.map(({ contest }) => contest.id));
+    const untold = closing.filter(({ contest }) => !told.get(contest.id)?.has(contest.leagueId));
+    if (untold.length === 0) return;
+    const leagues = new Map((await this.deps.leagues.findByIds([...new Set(untold.map(({ contest }) => contest.leagueId))]))
+      .filter((league) => league.isActive)
+      .map((league) => [league.id, league]));
+    const sends = untold.flatMap(({ contest, closesAt }) => {
+      const league = leagues.get(contest.leagueId);
+      return league ? [{ contest, closesAt, league }] : [];
+    });
+    if (sends.length === 0) return;
+    await commissioners.load(sends.map(({ league }) => league.id));
+    for (const send of sends) {
       try {
-        const first = sportEvents.get(contest.sportEventIds[0] ?? '');
-        // Picks never close before the first event starts, so one starting later than 48 hours
-        // from now has nothing due yet.
-        if (!first || !UPCOMING_STATUSES.includes(first.status) || first.startDate.getTime() - now.getTime() > NOT_OPEN_MS) continue;
-        await this.queueContestNotOpen(contest, first, now, commissioners);
+        await this.sendContestNotOpen(send, commissioners);
       } catch (error) {
         this.deps.logger?.error({
           action: 'email.contestNotOpen.failed',
-          data: { contestId: contest.id, leagueId: contest.leagueId, error: error instanceof Error ? error.message : String(error) },
+          data: { contestId: send.contest.id, leagueId: send.contest.leagueId, error: error instanceof Error ? error.message : String(error) },
         }, 'Failed to queue the contest not open email');
       }
     }
   }
 
-  private async queueContestNotOpen(
-    contest: Contest,
-    first: SportEvent,
-    now: Date,
+  private async sendContestNotOpen(
+    { contest, closesAt, league }: { contest: Contest; closesAt: Date; league: League },
     commissioners: LeagueCommissioners,
   ): Promise<void> {
-    const rules = (await this.deps.configurations.findByContest(contest.id))?.configJson;
-    if (!rules) return;
-    const closesAt = await contestClosesAt(this.deps, contest, rules, first);
-    const closesIn = closesAt.getTime() - now.getTime();
-    if (closesIn <= 0 || closesIn > NOT_OPEN_MS) return;
-    if (await this.deps.email.hasRecordedForContest('CONTEST_NOT_OPEN', contest.id, contest.id)) return;
-    const league = await this.deps.leagues.findById(contest.leagueId);
-    if (!league?.isActive) return;
     const contestAdminUrl = buildContestAdminUrl(this.deps.appBaseUrl, league.leagueCode, contest.id);
     for (const user of await commissioners.of(league.id)) {
       await this.deps.email.send('CONTEST_NOT_OPEN', {

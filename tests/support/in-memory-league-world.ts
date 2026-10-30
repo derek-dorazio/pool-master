@@ -199,8 +199,10 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
       const userIds = new Set(memberships.where((row) => row.leagueId === leagueId && isActiveMembership(row)).map((row) => row.userId));
       return users.where((row) => userIds.has(row.id));
     },
-    findActiveByLeagues: async (leagueIds) => {
-      const userIds = new Set(memberships.where((row) => leagueIds.includes(row.leagueId) && isActiveMembership(row)).map((row) => row.userId));
+    findActiveByLeagues: async (leagueIds, roles) => {
+      const userIds = new Set(memberships
+        .where((row) => leagueIds.includes(row.leagueId) && isActiveMembership(row) && (roles === undefined || roles.includes(row.role)))
+        .map((row) => row.userId));
       return users.where((row) => userIds.has(row.id));
     },
     findByIdentifier: async (identifier) =>
@@ -294,8 +296,8 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
     findByLeague: async (leagueId) =>
       memberships.where((row) => row.leagueId === leagueId && isActiveMembership(row))
         .sort((a, b) => a.joinedAt.getTime() - b.joinedAt.getTime()),
-    findByLeagues: async (leagueIds) =>
-      memberships.where((row) => leagueIds.includes(row.leagueId) && isActiveMembership(row))
+    findByLeagues: async (leagueIds, roles) =>
+      memberships.where((row) => leagueIds.includes(row.leagueId) && isActiveMembership(row) && (roles === undefined || roles.includes(row.role)))
         .sort((a, b) => a.joinedAt.getTime() - b.joinedAt.getTime()),
     findByUser: async (userId) =>
       memberships.where((row) => row.userId === userId && isActiveMembership(row)),
@@ -362,6 +364,12 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
       const squad = membership ? squads.get(membership.squadId) : null;
       return membership && squad ? { ...membership, squadName: squad.name } : null;
     },
+    findByLeagueUsersWithSquadName: async (people) =>
+      squadMemberships.where((row) => people.some(({ leagueId, userId }) => row.leagueId === leagueId && row.userId === userId))
+        .flatMap((row) => {
+          const squad = squads.get(row.squadId);
+          return squad ? [{ ...row, squadName: squad.name }] : [];
+        }),
     create: async (row) => {
       if (squadMemberships.where((item) => item.leagueId === row.leagueId && item.userId === row.userId).length) {
         throw new Error(`Unique constraint: squad membership for ${row.userId} in ${row.leagueId} exists`);
