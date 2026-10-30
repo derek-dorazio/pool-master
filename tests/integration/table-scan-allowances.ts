@@ -12,4 +12,23 @@ export interface TableScanAllowance {
   reason: string;
 }
 
-export const TABLE_SCAN_ALLOWANCES: readonly TableScanAllowance[] = [];
+export const TABLE_SCAN_ALLOWANCES: readonly TableScanAllowance[] = [
+  {
+    table: 'leagues',
+    sqlIncludes: 'FROM "public"."leagues" WHERE "public"."leagues"."is_active" = $? ORDER BY',
+    reason: 'The commissioner notices tell every active league of a due event, so they read every active league, and only when an event email is due; '
+      + 'no screen calls it (#1313). The lifecycle sweep test sends it (#1303).',
+  },
+  {
+    table: 'contest_sport_events',
+    sqlIncludes: 'NOT ("public"."contests"."status" = CAST($?::text AS "public"."PrismaContestStatus") AND (EXISTS(SELECT "t0"."contest_id" FROM "public"."contest_sport_events"',
+    reason: "A league's current contests leave out a draft whose event has started. The generic plan on the tests' near-empty tables hashes that EXISTS over every row; "
+      + 'the real plan checks each of the league\'s contests through contest_sport_events_contest_id_sport_event_id_key, and costs far less, so Postgres keeps it (checked on 50k contests, #1302).',
+  },
+  {
+    table: 'contest_entries',
+    sqlIncludes: 'SET "last_standings_email_position" = placed.position',
+    reason: "A standings email records each placed entry's position by id. On the tests' near-empty table the plan hashes the ids against every entry; "
+      + 'the real plan looks up each id through contest_entries_pkey, so Postgres keeps it (checked on 200k entries, #1302).',
+  },
+];

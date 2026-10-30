@@ -238,7 +238,7 @@ describe('ContestNotices', () => {
       for (const [owner, submitted] of [[entrant, true], [drafting, false]] as const) {
         const created = await world.entryRepo().create({ contestId: contest.id, squadId: owner.squad.id, entryNumber: 1, name: 'Entry 1', tiebreakerValue: null }, { entriesPerContest: () => null });
         if (created.status !== 'created') throw new Error('entry not created');
-        if (submitted) await world.entryRepo().setEventStatus(created.entry.id, week.id, ContestEntryStatus.SUBMITTED, new Date());
+        if (submitted) world.setEntryEventStatus(created.entry.id, week.id, ContestEntryStatus.SUBMITTED, new Date());
       }
 
       await notices().contestsStarted([contest], week);
@@ -311,6 +311,7 @@ describe('ContestNotices', () => {
             if (contestId === broken.id) throw new Error('database unavailable');
             return world.entryRepo().findByContest(contestId);
           },
+          findByContests: (contestIds) => world.entryRepo().findByContests(contestIds),
         },
       });
 
@@ -402,7 +403,7 @@ describe('ContestNotices', () => {
       for (const [owner, submitted] of [[entrant, true], [drafting, false]] as const) {
         const created = await world.entryRepo().create({ contestId: contest.id, squadId: owner.squad.id, entryNumber: 1, name: 'Entry 1', tiebreakerValue: null }, { entriesPerContest: () => null });
         if (created.status !== 'created') throw new Error('entry not created');
-        if (submitted) await world.entryRepo().setEventStatus(created.entry.id, event.id, ContestEntryStatus.SUBMITTED, new Date());
+        if (submitted) world.setEntryEventStatus(created.entry.id, event.id, ContestEntryStatus.SUBMITTED, new Date());
       }
 
       await notices().contestSettled(contest);
@@ -447,7 +448,7 @@ describe('ContestNotices', () => {
     async function enter(contestId: string, owner: { squad: { id: string } }, sportEventId: string, submitted: boolean) {
       const created = await world.entryRepo().create({ contestId, squadId: owner.squad.id, entryNumber: 1, name: 'Entry 1', tiebreakerValue: null }, { entriesPerContest: () => null });
       if (created.status !== 'created') throw new Error('entry not created');
-      if (submitted) await world.entryRepo().setEventStatus(created.entry.id, sportEventId, ContestEntryStatus.SUBMITTED, new Date());
+      if (submitted) world.setEntryEventStatus(created.entry.id, sportEventId, ContestEntryStatus.SUBMITTED, new Date());
     }
 
     it('sends no event changed email when a cancelled event ends a one-event contest, and the no-scores result names the event to the commissioners and members with a submitted entry, Contest updates turned off or not', async () => {
@@ -509,6 +510,42 @@ describe('ContestNotices', () => {
         ['CONTEST_EVENT_CHANGED', entrant.user.id, majors.id],
         ['CONTEST_EVENT_CHANGED', entrant.user.id, season.id],
       ]));
+    });
+
+    it('reads the leagues, members and entrants of every contest on the event once each, however many contests and leagues it has (#1255)', async () => {
+      const masters = world.addSportEvent({ name: 'The Masters', startDate: STARTS_AT, status: SportEventStatus.POSTPONED });
+      const office = world.addLeague();
+      const club = world.addLeague();
+      const first = world.addContest(office.id, { sportEventIds: [masters.id] });
+      const second = world.addContest(office.id, { sportEventIds: [masters.id] });
+      const third = world.addContest(club.id, { sportEventIds: [masters.id] });
+      const officeCommissioner = member(office.id, 'Casey', { role: LeagueRole.COMMISSIONER });
+      const clubCommissioner = member(club.id, 'Robin', { role: LeagueRole.COMMISSIONER });
+      const entrant = member(office.id, 'Nora');
+      const clubEntrant = member(club.id, 'Jules');
+      await enter(second.id, entrant, masters.id, true);
+      await enter(third.id, clubEntrant, masters.id, true);
+      const leagues = world.leagueRepo();
+      const memberships = world.membershipRepo();
+      const users = world.userRepo();
+      const entries = world.entryRepo();
+      const reads = [
+        jest.spyOn(leagues, 'findByIds'), jest.spyOn(leagues, 'findById'),
+        jest.spyOn(memberships, 'findByLeagues'), jest.spyOn(users, 'findActiveByLeagues'),
+        jest.spyOn(entries, 'findByContests'), jest.spyOn(entries, 'findByContest'),
+      ];
+
+      await notices({ leagues, memberships, users, entries }).sportEventChanged(masters, { kind: ContestEventChangeKind.POSTPONED });
+
+      expect(reads.map((read) => read.mock.calls.length)).toEqual([1, 0, 1, 1, 1, 0]);
+      expect(new Set(outbox.rows.map((row) => `${row.recipientUserId ?? ''}:${row.contestId ?? ''}`))).toEqual(new Set([
+        `${officeCommissioner.user.id}:${first.id}`,
+        `${officeCommissioner.user.id}:${second.id}`,
+        `${entrant.user.id}:${second.id}`,
+        `${clubCommissioner.user.id}:${third.id}`,
+        `${clubEntrant.user.id}:${third.id}`,
+      ]));
+      expect(outbox.rows).toHaveLength(5);
     });
 
     it('tells no commissioner of a draft contest that its event was postponed', async () => {

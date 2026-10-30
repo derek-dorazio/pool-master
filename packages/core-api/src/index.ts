@@ -74,7 +74,7 @@ import type { LiveScoreResult } from '@poolmaster/shared/dto';
 import { IngestionPersistence } from './modules/ingestion/persistence/ingestion-persistence';
 import { createEventLifecycleService, eventFieldCache } from './modules/events/wiring';
 import { EventLifecycleScheduler } from './modules/events/event-lifecycle-scheduler';
-import { createCommissionerNotices, createContestExpandedNotices, createContestNotices, createDraftEventNotices, createEntryReminders, createLiveStandings, createMemberJoinedNotices, createPlanPreviewNotices } from './modules/notifications';
+import { createContestExpandedNotices, createContestNotices, createDueNotifications, createMemberJoinedNotices } from './modules/notifications';
 import { ProviderSyncRunLedger } from './modules/ingestion/persistence/provider-sync-run-ledger';
 import { SyncRunDetailsRetention, SyncRunRetention } from './modules/ingestion/persistence/sync-run-retention';
 import { registerConfiguredProviders } from './modules/ingestion/core/provider-bindings';
@@ -146,14 +146,14 @@ export function buildApp() {
     sportEvents: new PrismaSportEventRepository(prisma),
     rounds: new PrismaSportEventRoundRepository(prisma),
     eventLifecycleService,
-    notificationsDue: [
-      createEntryReminders(prisma, { email, readConfig: () => appSettings.get(EMAIL_SETTINGS), appBaseUrl, logger: app.log }),
-      createLiveStandings(prisma, { email, readConfig: () => appSettings.get(EMAIL_SETTINGS), appBaseUrl, logger: app.log, planEntitlements }),
-      createCommissionerNotices(prisma, { email, readConfig: () => appSettings.get(EMAIL_SETTINGS), appBaseUrl, logger: app.log, planEntitlements }),
-      createDraftEventNotices(prisma, { email, appBaseUrl, logger: app.log }),
+    notificationsDue: createDueNotifications(prisma, {
+      email,
+      readConfig: () => appSettings.get(EMAIL_SETTINGS),
+      appBaseUrl,
+      logger: app.log,
+      planEntitlements,
       memberJoined,
-      createPlanPreviewNotices(prisma, { email, readConfig: () => appSettings.get(EMAIL_SETTINGS), appBaseUrl, logger: app.log, planEntitlements }),
-    ],
+    }),
     jobLock,
     logger: app.log,
   });

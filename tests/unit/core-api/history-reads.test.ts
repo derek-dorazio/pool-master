@@ -75,7 +75,7 @@ async function leagueWithSeasons(seasonCount: number) {
   const cupService = new CupService({
     cups: counted(cups, reads),
     leagues: counted(cups.leagues, reads),
-    liveContests: { livePositionsOf: () => Promise.resolve([]) },
+    liveContests: { livePositionsOfMany: () => Promise.resolve(new Map()) },
     squads: counted(squads, reads),
     sportLeagues: counted(sportLeagues, reads),
     now: () => NOW,

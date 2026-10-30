@@ -11,6 +11,7 @@ export type {
   ContestEntryStandingRepository,
   ContestEntryStandingResult,
   ContestEntryStandingWrite,
+  ContestWinner,
   ParticipantContestScoringRuleRepository,
 } from './contest-management-ports';
 export type {
@@ -29,15 +30,19 @@ export type {
   ContestEntryDeleteResult,
   ContestEntryRepository,
   ContestEntryMatchPredictionRepository,
+  ContestEntryMatchPredictionChange,
   ContestEntryMatchPredictionSave,
+  ContestEntryMatchPredictionSaveResult,
   ContestEntrySeasonPrediction,
   ContestEntryMatchPredictionWrite,
   ContestEntryTotals,
   ContestEntryWithSquad,
+  LockedPredictionWeek,
   ContestRepository,
   LeagueInvitationRepository,
   LeagueMembershipRepository,
   LeagueRepository,
+  LeagueSearch,
   LeagueSearchFilters,
   LeaguePlanChange,
   MembershipRepositories,
@@ -47,6 +52,7 @@ export type {
   ParticipantSearchFilters,
   SquadDetails,
   SquadMemberDetails,
+  LeagueUser,
   SquadMembershipWithSquadName,
   SquadMembershipRepository,
   SquadOwnerInvitationRepository,
@@ -54,6 +60,7 @@ export type {
   StandingsEmailPosition,
   StandingsEmailPositionRepository,
   UserRepository,
+  UserSearch,
   UserSearchFilters,
   UserUpdate,
 } from './ports';
@@ -147,7 +154,7 @@ export type {
   CupRepository,
 } from './cup-ports';
 export type { ChampionshipRepository, FinalContest, LeagueYearReviewRepository, SeriesContest } from './championship-ports';
-export type { EventPageRepository } from './event-page-ports';
+export type { EventPageRepository, EventPageSeries } from './event-page-ports';
 export type {
   ContestExpansionRepository,
   ContestExpansionState,

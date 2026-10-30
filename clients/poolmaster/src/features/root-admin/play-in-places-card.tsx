@@ -2,13 +2,13 @@ import { useState } from 'react';
 import { SportEventStatus, type SportVocabulary } from '@poolmaster/shared/domain';
 import { setEventPlayInWinner, updateEventParticipants } from '@/lib/api';
 import type { SportEventDto, SportEventParticipantDto } from '@/lib/api';
-import { Button, Heading, LOADING_TEXT, Select, Tile } from '@/features/shared/ui';
+import { Button, InlineError, Input, PanelCard, Select } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import { bracketErrorMessages, describeEntry, offLeagueRosterMessages } from './bracket-copy';
-import { useEventLeagueCandidatesQuery, useSportLeagueNoun } from './use-sport-catalog';
+import { candidatePrompt, useEventLeagueCandidatesQuery, useSportLeagueNoun } from './use-sport-catalog';
 
 const logger = getLogger().child({ feature: 'root-admin-play-in' });
 
@@ -46,17 +46,16 @@ export function PlayInPlacesCard({
   }
 
   return (
-    <Tile data-testid="root-admin-play-in-places">
-      <Heading level={3} variant="card" size="base">{`${word.charAt(0).toUpperCase()}${word.slice(1)} places`}</Heading>
-      <p className="mt-1 text-sm text-muted-foreground">
+    <PanelCard headingLevel={3} padded testId="root-admin-play-in-places" title={`${word.charAt(0).toUpperCase()}${word.slice(1)} places`}>
+      <p className="text-sm text-muted-foreground">
         {released
           ? `Name the ${team.one} in each ${word} place. It takes over the place's seed, picks and bracket spot.`
           : `Mark each place a ${word} fills later. Its ${team.one} is named after the ${vocabulary.event.one} is released.`}
       </p>
       {places.length === 0 ? (
-        <p className="mt-3 text-sm text-muted-foreground" data-testid="root-admin-play-in-empty">{`No ${word} places.`}</p>
+        <p className="text-sm text-muted-foreground" data-testid="root-admin-play-in-empty">{`No ${word} places.`}</p>
       ) : (
-        <ul className="mt-3 space-y-3">
+        <ul className="space-y-3">
           {places.map((place) => (
             <li className="flex flex-wrap items-center gap-3" data-testid={`root-admin-play-in-place-${place.id}`} key={place.id}>
               <span className="min-w-40 text-sm font-medium">{describeEntry(place)}</span>
@@ -68,7 +67,7 @@ export function PlayInPlacesCard({
         </ul>
       )}
       {released ? null : <PlayInMarker eventId={event.id} field={field} vocabulary={vocabulary} />}
-    </Tile>
+    </PanelCard>
   );
 }
 
@@ -105,9 +104,9 @@ function PlayInUnmarkButton({ eventId, row, vocabulary }: { eventId: string; row
         {`Remove ${playInWord(vocabulary)} mark`}
       </Button>
       {mutation.isError ? (
-        <p className="text-sm text-destructive" role="alert">
+        <InlineError>
           {extractErrorMessage(mutation.error, { codeMessages: bracketErrorMessages(vocabulary), fallback: 'That change could not be saved. Try again.' })}
-        </p>
+        </InlineError>
       ) : null}
     </>
   );
@@ -120,7 +119,7 @@ function PlayInMarker({ eventId, field, vocabulary }: { eventId: string; field: 
   const candidates = field.filter((entry) => !entry.isPlayInPlace);
 
   return (
-    <div className="mt-4 flex flex-wrap items-end gap-3">
+    <div className="flex flex-wrap items-end gap-3">
       <label className="flex flex-col gap-1 text-xs text-muted-foreground">
         {`Mark a ${playInWord(vocabulary)} place`}
         <Select data-testid="root-admin-play-in-mark-select" onChange={(change) => setRowId(change.target.value)} value={rowId}>
@@ -140,9 +139,9 @@ function PlayInMarker({ eventId, field, vocabulary }: { eventId: string; field: 
         {`Mark as ${playInWord(vocabulary)} place`}
       </Button>
       {mutation.isError ? (
-        <p className="w-full text-sm text-destructive" role="alert">
+        <InlineError className="w-full">
           {extractErrorMessage(mutation.error, { codeMessages: bracketErrorMessages(vocabulary), fallback: 'That change could not be saved. Try again.' })}
-        </p>
+        </InlineError>
       ) : null}
     </div>
   );
@@ -161,7 +160,8 @@ function PlayInWinnerPicker({
   vocabulary: SportVocabulary;
 }) {
   const [participantId, setParticipantId] = useState(NONE);
-  const teamsQuery = useEventLeagueCandidatesQuery(event);
+  const [search, setSearch] = useState('');
+  const teamsQuery = useEventLeagueCandidatesQuery(event, search);
   const sportLeague = useSportLeagueNoun(event.sport, event.sportLeagueId);
   const inEvent = new Set(field.map((entry) => entry.participantId));
   const candidates = (teamsQuery.data ?? []).filter((participant) => !inEvent.has(participant.id));
@@ -188,16 +188,17 @@ function PlayInWinnerPicker({
     },
   });
 
-  if (teamsQuery.isError) {
-    return (
-      <p className="text-sm text-destructive" role="alert">
-        {extractErrorMessage(teamsQuery.error, { fallback: `Couldn't load the ${vocabulary.participant.many}. Try again in a moment.` })}
-      </p>
-    );
-  }
-
   return (
     <>
+      {teamsQuery.needsSearch ? (
+        <Input
+          aria-label={`Find a ${vocabulary.participant.one}`}
+          data-testid={`root-admin-play-in-winner-search-${place.id}`}
+          onChange={(change) => { setSearch(change.target.value); setParticipantId(NONE); }}
+          type="search"
+          value={search}
+        />
+      ) : null}
       <Select
         aria-label={`Who fills ${place.participant.name}'s ${playInWord(vocabulary)} place`}
         data-testid={`root-admin-play-in-winner-select-${place.id}`}
@@ -205,7 +206,7 @@ function PlayInWinnerPicker({
         onChange={(change) => setParticipantId(change.target.value)}
         value={participantId}
       >
-        <option value={NONE}>{teamsQuery.data ? `Choose the winning ${vocabulary.participant.one}` : LOADING_TEXT}</option>
+        <option value={NONE}>{candidatePrompt(teamsQuery, `Choose the winning ${vocabulary.participant.one}`, vocabulary.participant.one)}</option>
         {candidates.map((participant) => (
           <option key={participant.id} value={participant.id}>{participant.name}</option>
         ))}
@@ -219,9 +220,14 @@ function PlayInWinnerPicker({
         Set winner
       </Button>
       {mutation.isError ? (
-        <p className="w-full text-sm text-destructive" role="alert">
+        <InlineError className="w-full">
           {extractErrorMessage(mutation.error, { codeMessages: { ...bracketErrorMessages(vocabulary), ...offLeagueRosterMessages(vocabulary, sportLeague) }, fallback: 'The winner could not be saved. Try again.' })}
-        </p>
+        </InlineError>
+      ) : null}
+      {teamsQuery.isError ? (
+        <InlineError className="w-full">
+          {extractErrorMessage(teamsQuery.error, { fallback: `Couldn't load the ${vocabulary.participant.many}. Try again in a moment.` })}
+        </InlineError>
       ) : null}
     </>
   );

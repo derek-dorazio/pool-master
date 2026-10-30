@@ -2,15 +2,7 @@ import { createColumnHelper } from '@tanstack/react-table';
 import { useMemo, useState, type Dispatch, type SetStateAction } from 'react';
 import { eventSportDefinition, type SportComposite } from '@poolmaster/shared/domain';
 import { applyEventGameStatLines, type GameStatLineUploadRequest, type SportEventDto } from '@/lib/api';
-import {
-  Alert,
-  Button,
-  DataGrid,
-  Heading,
-  Input,
-  SegmentedControl,
-  Tile,
-} from '@/features/shared/ui';
+import { Alert, Button, DataGrid, Input, PanelCard, SegmentedControl } from '@/features/shared/ui';
 import { SPORT_STAT_LABELS } from '@/features/contests/scoring-family-ui/stat-labels';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
@@ -204,9 +196,8 @@ export function StatLinesPanel({ event }: { event: SportEventDto }) {
       )}
 
       {gameOptions.length > 0 ? (
-        <Tile>
-          <Heading level={3} variant="card" size="base">Box score</Heading>
-          <p className="mt-1 text-sm text-muted-foreground">
+        <PanelCard headingLevel={3} padded title="Box score">
+          <p className="text-sm text-muted-foreground">
             Each game&rsquo;s box score is loaded with the event&rsquo;s sport data file. Fix one player&rsquo;s line at a time: saving replaces their whole line for the game, and clearing every stat removes it. Leave a stat blank for zero.
           </p>
 
@@ -232,7 +223,7 @@ export function StatLinesPanel({ event }: { event: SportEventDto }) {
               tableTestId="root-admin-stat-lines-table"
             />
           </div>
-        </Tile>
+        </PanelCard>
       ) : null}
     </div>
   );

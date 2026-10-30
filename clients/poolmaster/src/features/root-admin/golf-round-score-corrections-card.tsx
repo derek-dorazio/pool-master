@@ -5,10 +5,9 @@ import {
   Alert,
   Button,
   DataGrid,
-  Heading,
   Input,
+  PanelCard,
   Select,
-  Tile,
   timeZoneGenericName,
   toDateTimeLocalValue,
   useDisplayPreferences,
@@ -338,41 +337,38 @@ export function GolfRoundScoreCorrectionsCard({
   );
 
   return (
-    <Tile>
-      <Heading level={3} variant="card" size="base">Corrections</Heading>
-      <p className="mt-1 text-sm text-muted-foreground">
+    <PanelCard headingLevel={3} padded title="Corrections">
+      <p className="text-sm text-muted-foreground">
         Fix one golfer&rsquo;s round result at a time. Enter every value yourself: changing strokes does not change to par, and completing a round does not set its time.
       </p>
 
       {rowsError ? (
-        <Alert className="mt-3" data-testid="root-admin-golf-scores-corrections-error" tone="danger">
+        <Alert data-testid="root-admin-golf-scores-corrections-error" tone="danger">
           {rowsError}
         </Alert>
       ) : null}
 
       {saveMutation.isError ? (
-        <Alert className="mt-3" data-testid="root-admin-golf-scores-correction-save-error" tone="danger">
+        <Alert data-testid="root-admin-golf-scores-correction-save-error" tone="danger">
           {extractErrorMessage(saveMutation.error, {
             fallback: 'We could not save that correction.',
           })}
         </Alert>
       ) : null}
 
-      <div className="mt-4">
-        <DataGrid
-          columns={correctionColumns}
-          data={rows}
-          emptyMessage={
-            rowsLoading
-              ? 'Loading scores...'
-              : 'No scores recorded for this round yet. Use the bulk load above.'
-          }
-          getRowId={(row) => row.sportEventParticipantId}
-          meta={meta}
-          rowTestId={(row) => `root-admin-golf-scores-row-${row.sportEventParticipantId}`}
-          tableTestId="root-admin-golf-scores-corrections-table"
-        />
-      </div>
-    </Tile>
+      <DataGrid
+        columns={correctionColumns}
+        data={rows}
+        emptyMessage={
+          rowsLoading
+            ? 'Loading scores...'
+            : 'No scores recorded for this round yet. Use the bulk load above.'
+        }
+        getRowId={(row) => row.sportEventParticipantId}
+        meta={meta}
+        rowTestId={(row) => `root-admin-golf-scores-row-${row.sportEventParticipantId}`}
+        tableTestId="root-admin-golf-scores-corrections-table"
+      />
+    </PanelCard>
   );
 }

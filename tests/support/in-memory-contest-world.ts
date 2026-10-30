@@ -76,6 +76,7 @@ import { PLAN_SETTINGS } from '../../packages/core-api/src/modules/plans/plan-se
 import { contestCutoff, ContestCutoffKind } from '../../packages/core-api/src/modules/contests/entry-window';
 import { hasSportEventStarted } from '../../packages/core-api/src/modules/events/operational-timing';
 import { planEntitlementsOver } from './plan-entitlements';
+import { fieldReads } from './field-reads';
 
 /** Thrown where Postgres would reject the write with a unique-constraint violation (P2002). */
 export class UniqueConstraintViolation extends Error {
@@ -346,6 +347,7 @@ export class InMemoryContestWorld {
   contestRepo(): ContestRepository {
     return {
       findById: async (id) => this.contests.get(id) ?? null,
+      findByIds: async (ids) => ids.flatMap((id) => this.contests.get(id) ?? []),
       findByLeague: async (leagueId, statuses) =>
         [...this.contests.values()].filter((contest) => contest.leagueId === leagueId && statuses.includes(contest.status)),
       findCurrentByLeague: async (leagueId, now) =>
@@ -372,6 +374,8 @@ export class InMemoryContestWorld {
           contest.sportEventIds.includes(sportEventId)
           && (!filter?.statuses || filter.statuses.includes(contest.status))
           && (!filter?.excludeStatuses || !filter.excludeStatuses.includes(contest.status))),
+      findBySportEvents: async (sportEventIds) =>
+        [...this.contests.values()].filter((contest) => contest.sportEventIds.some((sportEventId) => sportEventIds.includes(sportEventId))),
       findJoinableByReleasedEdition: async () => [],
       findByStatuses: async (statuses) =>
         [...this.contests.values()].filter((contest) => statuses.includes(contest.status)),
@@ -444,6 +448,29 @@ export class InMemoryContestWorld {
     };
   }
 
+  /**
+   * Sets an entry's status for one event as a submit or a pick change writes it: `submittedAt`
+   * stamped for SUBMITTED, cleared for DRAFT, the row's tiebreaker kept. Test setup, and the
+   * game-picks fake's write.
+   */
+  setEntryEventStatus(id: string, sportEventId: string, status: ContestEntryStatus, at: Date): ContestEntry {
+    const existing = this.entries.get(id);
+    if (!existing) throw new Error(`Record to update not found: entry ${id}`);
+    const kept = existing.events.find((row) => row.sportEventId === sportEventId)?.tiebreakerValue;
+    const event = {
+      sportEventId,
+      status,
+      ...(status === 'SUBMITTED' && { submittedAt: at }),
+      ...(kept !== undefined && { tiebreakerValue: kept }),
+    };
+    const updated: ContestEntry = {
+      ...existing,
+      events: [...existing.events.filter((row) => row.sportEventId !== sportEventId), event],
+    };
+    this.entries.set(id, updated);
+    return updated;
+  }
+
   entryRepo(): ContestEntryRepository {
     return {
       findByIdWithSquad: async (id) => {
@@ -452,6 +479,8 @@ export class InMemoryContestWorld {
       },
       findByContest: async (contestId) =>
         [...this.entries.values()].filter((entry) => entry.contestId === contestId),
+      findByContests: async (contestIds) =>
+        [...this.entries.values()].filter((entry) => contestIds.includes(entry.contestId)),
       findByContestWithSquad: async (contestId, options) =>
         [...this.entries.values()]
           .filter((entry) =>
@@ -460,6 +489,11 @@ export class InMemoryContestWorld {
               || entry.events.some((event) =>
                 event.sportEventId === options.submittedFor && event.status === 'SUBMITTED')))
           .sort((left, right) => this.byEntryOrder(left, right))
+          .map((entry) => this.withSquad(entry)),
+      findByContestsWithSquad: async (contestIds) =>
+        [...this.entries.values()]
+          .filter((entry) => contestIds.includes(entry.contestId))
+          .sort((left, right) => left.contestId.localeCompare(right.contestId) || this.byEntryOrder(left, right))
           .map((entry) => this.withSquad(entry)),
       findByContestAndSquad: async (contestId, squadId) =>
         [...this.entries.values()]
@@ -527,24 +561,6 @@ export class InMemoryContestWorld {
         this.entries.set(id, updated);
         return updated;
       },
-      setEventStatus: async (id, sportEventId, status: ContestEntryStatus, at) => {
-        const existing = this.entries.get(id);
-        if (!existing) throw new Error(`Record to update not found: entry ${id}`);
-        // As the adapter's upsert does, the row's tiebreaker is kept.
-        const kept = existing.events.find((row) => row.sportEventId === sportEventId)?.tiebreakerValue;
-        const event = {
-          sportEventId,
-          status,
-          ...(status === 'SUBMITTED' && { submittedAt: at }),
-          ...(kept !== undefined && { tiebreakerValue: kept }),
-        };
-        const updated: ContestEntry = {
-          ...existing,
-          events: [...existing.events.filter((row) => row.sportEventId !== sportEventId), event],
-        };
-        this.entries.set(id, updated);
-        return updated;
-      },
       delete: async (id) => {
         const contestId = this.entries.get(id)?.contestId;
         if (contestId !== undefined && this.contests.get(contestId)?.drawnAt !== undefined) return { status: 'contestDrawn' };
@@ -583,6 +599,8 @@ export class InMemoryContestWorld {
     return {
       findByLeague: async (leagueId) =>
         [...this.memberships.values()].filter((row) => row.leagueId === leagueId),
+      findByLeagues: async (leagueIds, roles) =>
+        [...this.memberships.values()].filter((row) => leagueIds.includes(row.leagueId) && (roles === undefined || roles.includes(row.role))),
       findByUser: async (userId) =>
         [...this.memberships.values()].filter((row) => row.userId === userId),
       countActiveByLeagues: async () => new Map(),
@@ -669,6 +687,12 @@ export class InMemoryContestWorld {
         const squad = membership ? this.squads.get(membership.squadId) : undefined;
         return membership && squad ? { ...membership, squadName: squad.name } : null;
       },
+      findByLeagueUsersWithSquadName: async (people) => [...this.squadMemberships.values()].flatMap((row) => {
+        const squad = this.squads.get(row.squadId);
+        return squad && people.some(({ leagueId, userId }) => row.leagueId === leagueId && row.userId === userId)
+          ? [{ ...row, squadName: squad.name }]
+          : [];
+      }),
       create: async (input) => this.addSquadMember(input.squadId, input.userId, input),
       update: async (id, updates) => {
         const existing = this.squadMemberships.get(id);
@@ -683,8 +707,8 @@ export class InMemoryContestWorld {
   leagueRepo(): LeagueRepository {
     return fakeLeagueRepo({
       findById: async (id) => this.leagues.get(id) ?? null,
-      findAll: async (filters = {}) => [...this.leagues.values()]
-        .filter((league) => filters.isActive === undefined || league.isActive === filters.isActive),
+      findByIds: async (ids) => ids.flatMap((id) => this.leagues.get(id) ?? []),
+      findActive: async () => [...this.leagues.values()].filter((league) => league.isActive),
     });
   }
 
@@ -696,6 +720,13 @@ export class InMemoryContestWorld {
       findActiveByLeague: async (leagueId) => {
         const memberIds = new Set([...this.memberships.values()]
           .filter((membership) => membership.leagueId === leagueId && membership.status === LeagueMembershipStatus.ACTIVE)
+          .map((membership) => membership.userId));
+        return [...this.users.values()].filter((user) => memberIds.has(user.id));
+      },
+      findActiveByLeagues: async (leagueIds, roles) => {
+        const memberIds = new Set([...this.memberships.values()]
+          .filter((membership) => leagueIds.includes(membership.leagueId) && membership.status === LeagueMembershipStatus.ACTIVE
+            && (roles === undefined || roles.includes(membership.role)))
           .map((membership) => membership.userId));
         return [...this.users.values()].filter((user) => memberIds.has(user.id));
       },
@@ -753,6 +784,16 @@ export class InMemoryContestWorld {
     return {
       findByContest: async (contestId) =>
         [...this.standings.values()].filter((row) => row.contestId === contestId),
+      findWinnersByContests: async (contestIds) => [...this.standings.values()]
+        .filter((row) => contestIds.includes(row.contestId) && row.position === 1)
+        .flatMap((row) => {
+          const entry = this.entries.get(row.contestEntryId);
+          return entry ? [{ contestId: row.contestId, entryName: entry.name, entryNumber: entry.entryNumber }] : [];
+        })
+        .sort((left, right) => left.contestId.localeCompare(right.contestId)
+          || left.entryNumber - right.entryNumber
+          || left.entryName.localeCompare(right.entryName))
+        .map(({ contestId, entryName }) => ({ contestId, entryName })),
       // One per entry, as the adapter's upsert on contest_entry_id.
       upsert: async (write) => {
         this.standings.set(write.contestEntryId, { id: this.standings.get(write.contestEntryId)?.id ?? this.nextId('standing'), ...write });
@@ -764,6 +805,8 @@ export class InMemoryContestWorld {
     return {
       findByContest: async (contestId) =>
         [...this.eventStandings.values()].filter((row) => row.contestId === contestId),
+      findByContests: async (contestIds) =>
+        [...this.eventStandings.values()].filter((row) => contestIds.includes(row.contestId)),
       upsert: async (write) => {
         const key = `${write.contestEntryId}:${write.sportEventId}`;
         this.eventStandings.set(key, { id: this.eventStandings.get(key)?.id ?? this.nextId('event-standing'), ...write });
@@ -805,7 +848,7 @@ export class InMemoryContestWorld {
       users: this.userRepo(),
       sportEvents: this.sportEventRepo(),
       sportLeagues: this.sportLeagueRepo(),
-      eventParticipants: { listEventParticipants: async () => [], listCachedEventParticipants: async () => [] },
+      eventParticipants: fieldReads(async () => []),
       tiers: {
         listTiers: async (sportEventId: string) => this.eventTiers.get(sportEventId) ?? [],
       },

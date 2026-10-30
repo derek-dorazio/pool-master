@@ -205,8 +205,8 @@ export const QueryKeys = {
     all: ['poolmaster', 'root-admin'] as const,
     eventParticipants: (eventId: QueryKeyId) =>
       ['poolmaster', 'root-admin', 'events', eventId, 'participants'] as const,
-    eventSyncEvents: (sport: QueryKeyId) =>
-      ['poolmaster', 'root-admin', 'event-sync-events', sport] as const,
+    eventSyncEvents: (sport: QueryKeyId, eventYear: number) =>
+      ['poolmaster', 'root-admin', 'event-sync-events', sport, eventYear] as const,
     eventsByYear: (eventYear: number) => ['poolmaster', 'root-admin', 'events', 'year', eventYear] as const,
     // The Manage sport screens (golf's first, every sport's since #623). Lists of one sport take
     // the sport; invalidating the bare prefix (`leagues`, `events`, `participants`) refreshes every
@@ -222,8 +222,8 @@ export const QueryKeys = {
       leagueRoster: (sportLeagueId: QueryKeyId) =>
         ['poolmaster', 'root-admin', 'manage-sport', 'league-roster', sportLeagueId] as const,
       events: ['poolmaster', 'root-admin', 'manage-sport', 'events'] as const,
-      sportEvents: (sport: QueryKeyId) =>
-        ['poolmaster', 'root-admin', 'manage-sport', 'events', 'sport', sport] as const,
+      sportEvents: (sport: QueryKeyId, eventYear: number) =>
+        ['poolmaster', 'root-admin', 'manage-sport', 'events', 'sport', sport, eventYear] as const,
       // Under the `events` prefix, so invalidating the list refreshes each league's too: one
       // year's events, and the years a league has events in (#1251).
       leagueEvents: (sportLeagueId: QueryKeyId, eventYear: number | null) =>
@@ -246,10 +246,8 @@ export const QueryKeys = {
       liveSimulation: (eventId: QueryKeyId) =>
         ['poolmaster', 'root-admin', 'manage-sport', 'event', eventId, 'live-simulation'] as const,
       participants: ['poolmaster', 'root-admin', 'manage-sport', 'participants'] as const,
-      participantList: (sport: QueryKeyId, status?: string) =>
-        ['poolmaster', 'root-admin', 'manage-sport', 'participants', sport, 'list', status ?? 'ACTIVE'] as const,
-      participantSearch: (sport: QueryKeyId, search: string) =>
-        ['poolmaster', 'root-admin', 'manage-sport', 'participants', sport, 'search', search] as const,
+      participantSearch: (sport: QueryKeyId, search: string, status = 'ACTIVE') =>
+        ['poolmaster', 'root-admin', 'manage-sport', 'participants', sport, 'search', search, status] as const,
       participant: (participantId: QueryKeyId) =>
         ['poolmaster', 'root-admin', 'manage-sport', 'participant', participantId] as const,
       participantMappings: (participantId: QueryKeyId) =>

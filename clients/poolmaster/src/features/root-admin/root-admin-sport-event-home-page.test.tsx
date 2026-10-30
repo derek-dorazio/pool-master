@@ -253,6 +253,16 @@ describe('pool-master-3dg RootAdminSportEventHomePage', () => {
     });
   });
 
+  it('titles the workflow card Workflow and shows the tournament\'s status badge on it', async () => {
+    seedDefaults();
+    renderPage();
+
+    const card = await screen.findByRole('region', { name: /^Workflow/ });
+    expect(within(card).getByRole('heading', { level: 2, name: 'Workflow' })).toBeVisible();
+    expect(within(card).getByText('Scheduled')).toBeVisible();
+    expect(card).toContainElement(screen.getByTestId('root-admin-sport-event-workflow-rail'));
+  });
+
   it('pool-master-3dg confirms and applies an allowed lifecycle transition', async () => {
     seedDefaults();
     transitionEventMock.mockResolvedValue({
@@ -855,6 +865,16 @@ describe('Overview blocks: empty values, refusals and closing dialogs', () => {
       expect(screen.queryByTestId('root-admin-sport-event-auto-modal')).not.toBeInTheDocument(),
     );
     expect(updateEventMock).not.toHaveBeenCalled();
+  });
+
+  it('titles the rounds box Rounds inside the workflow card, with Edit schedule beside it', async () => {
+    seedDefaults();
+    renderPage();
+
+    const rounds = await screen.findByRole('region', { name: 'Rounds' });
+    expect(screen.getByRole('region', { name: /^Workflow/ })).toContainElement(rounds);
+    expect(within(rounds).getByRole('heading', { level: 3, name: 'Rounds' })).toBeVisible();
+    expect(rounds).toContainElement(screen.getByTestId('root-admin-sport-event-rounds-edit'));
   });
 
   it('shows the server\'s reason in the Rounds card when the round schedule cannot be loaded', async () => {

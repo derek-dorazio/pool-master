@@ -1,15 +1,12 @@
-import { useQuery } from '@tanstack/react-query';
 import { createColumnHelper } from '@tanstack/react-table';
 import { useMemo } from 'react';
-import { listContestConfigTemplates } from '@/lib/api';
 import {
   DataGridPage,
   StatusBadge,
 } from '@/features/shared/ui';
 import { getLogger } from '@/lib/logger';
 import type { ContestConfigTemplate } from './content-configuration-utils';
-import { QueryKeys } from '@/lib/query-keys';
-import { throwApiError } from '@/lib/errors';
+import { useContestConfigTemplatesQuery } from './use-contest-config-templates-query';
 import { MANAGE_LIST_PAGE_SIZE } from './manage-navigation';
 
 const columnHelper = createColumnHelper<ContestConfigTemplate>();
@@ -19,19 +16,7 @@ export function RootAdminContentConfigurationListPage() {
     feature: 'root-admin-content-configuration-list-page',
   });
 
-  const templatesQuery = useQuery({
-    queryKey: QueryKeys.contestConfigTemplates.list({}),
-    queryFn: async (): Promise<ContestConfigTemplate[]> => {
-      const response = await listContestConfigTemplates();
-
-      if (!response.data?.templates) {
-        throwApiError(response.error, 'Contest template response is missing data.');
-      }
-
-      return response.data.templates;
-    },
-    retry: false,
-  });
+  const templatesQuery = useContestConfigTemplatesQuery();
 
   const templates = [...(templatesQuery.data ?? [])].sort((left, right) => {
     if (left.sortOrder !== right.sortOrder) {

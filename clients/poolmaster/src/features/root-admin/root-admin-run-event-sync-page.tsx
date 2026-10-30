@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getSportDefinition, SportEventSyncScope } from '@poolmaster/shared/domain';
-import { listProviders, submitEventSync, listEvents, type SportEventDto } from '@/lib/api';
+import { submitEventSync, listEvents, type SportEventDto } from '@/lib/api';
 import { getLogger } from '@/lib/logger';
 import {
   Alert,
@@ -21,13 +21,14 @@ import {
   getSupportedSyncSports,
   type EventSyncPresetId,
   type EventSyncSubmission,
-  type ProviderSummary,
   type SyncSport,
 } from './root-admin-sync-utils';
 import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
+import { EventYearSelect } from './event-year-select';
 import { ManagePageIntro } from './manage-page-intro';
+import { useProvidersQuery } from './use-providers-query';
 
 type MockEventState = 'open' | 'locked' | 'live' | 'completed';
 
@@ -79,20 +80,11 @@ export function RootAdminRunEventSyncPage() {
   const [eventSyncPresetId, setEventSyncPresetId] = useState<EventSyncPresetId>(
     'EVENTPARTICIPANTS',
   );
+  const [eventYear, setEventYear] = useState(() => new Date().getFullYear());
   const [selectedEventExternalId, setSelectedEventExternalId] = useState('');
   const [mockEventState, setMockEventState] = useState<MockEventState | ''>('');
 
-  const providersQuery = useQuery({
-    queryKey: QueryKeys.rootAdmin.providers,
-    queryFn: async (): Promise<ProviderSummary[]> => {
-      const response = await listProviders();
-      if (!response.data?.providers) {
-        throwApiError(response.error, 'Provider list response is missing data.');
-      }
-      return response.data.providers;
-    },
-    retry: false,
-  });
+  const providersQuery = useProvidersQuery();
 
   const supportedSyncSports = useMemo(
     () => getSupportedSyncSports(providersQuery.data),
@@ -123,11 +115,12 @@ export function RootAdminRunEventSyncPage() {
   }, [mockEventState, supportsMockEventState]);
 
   const eventsQuery = useQuery({
-    queryKey: QueryKeys.rootAdmin.eventSyncEvents(eventSyncSport),
+    queryKey: QueryKeys.rootAdmin.eventSyncEvents(eventSyncSport, eventYear),
     queryFn: async (): Promise<SportEventDto[]> => {
       const response = await listEvents({
         query: {
           sport: eventSyncSport,
+          eventYear,
         },
       });
 
@@ -297,6 +290,8 @@ export function RootAdminRunEventSyncPage() {
               ))}
             </Select>
           </FormField>
+
+          <EventYearSelect onChange={setEventYear} testId="root-admin-event-sync-year" value={eventYear} />
 
           <FormField label="Event">
             <Select

@@ -165,7 +165,7 @@ describe('EntryReminders.queueDue', () => {
     const created = await world.entryRepo().create({ contestId, squadId, entryNumber: 1, name: 'Entry 1', tiebreakerValue: null }, { entriesPerContest: () => null });
     if (created.status !== 'created') throw new Error('entry not created');
     if (submittedFor) {
-      await world.entryRepo().setEventStatus(created.entry.id, submittedFor, ContestEntryStatus.SUBMITTED, new Date());
+      world.setEntryEventStatus(created.entry.id, submittedFor, ContestEntryStatus.SUBMITTED, new Date());
     }
     return created.entry;
   }

@@ -164,7 +164,7 @@ describe('Start from an event page', () => {
     renderStart(SQUARES);
     fireEvent.click(await screen.findByTestId('start-share-with-commissioner'));
 
-    expect(await screen.findByTestId('start-share-failed')).toHaveTextContent('Couldn\'t copy the link');
+    expect(await screen.findByTestId('start-share-with-commissioner-failed')).toHaveTextContent('Couldn\'t copy the link');
   });
 
   it('offers a member who runs no league their own league or the page to send their commissioner', async () => {

@@ -10,7 +10,6 @@ import type { CreateContestRequest } from '@poolmaster/shared/dto';
 import {
   type ContestScoringSettings,
   ParticipantScoringDefinitionIdSchema,
-  PickEmMode,
   PlanCap,
   SUPPORTED_SPORTS,
   SelectionType,
@@ -56,6 +55,7 @@ import {
   Eyebrow,
   FormField,
   FormPage,
+  InlineError,
   Input,
 } from '@/features/shared/ui';
 import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
@@ -70,6 +70,7 @@ import {
 import { EventChoices, NoEligibleEventsAlert, SetupSection, SportPicker } from './create-contest-sections';
 import { ContestRulesFields } from './contest-rules-fields';
 import {
+  CONTEST_RULES_FORM_SHAPE,
   DEFAULT_CONTEST_RULES,
   defaultCountedScoresFor,
   parseContestRules,
@@ -145,29 +146,18 @@ function isCreatableSelectionType(selectionType: SelectionType): selectionType i
 }
 
 const createContestFormSchema = z.object({
+  ...CONTEST_RULES_FORM_SHAPE,
   contestName: z.string().trim().min(1, 'Contest name is required.'),
-  countedScores: z.string(),
   didNotFinishPoints: z.string(),
-  maxEntriesPerTeam: z.string(),
-  maxSquaresPerEntry: z.string(),
-  pickEmAgainstTheSpread: z.boolean(),
-  survivorReuseTeams: z.boolean(),
-  pickEmMode: z.enum(PickEmMode),
-  picksPerEntry: z.string(),
-  picksPerTier: z.string(),
   pointsTable: z.string(),
-  rosterSize: z.string(),
   roundValues: z.string(),
   scoringDefinitionId: ParticipantScoringDefinitionIdSchema,
-  startsAtRound: z.string(),
-  tiersUsed: z.string(),
   selectedTemplateId: z.string(),
   selectionType: z.enum(creatableSelectionTypes),
   sport: z.custom<Sport>((value) => SUPPORTED_SPORTS.some((sport) => sport === value)),
   sportEventId: z.string().min(1, 'Choose an event for the contest.'),
   /** The game a squares contest is played on (#711); empty for every other format. */
   sportEventMatchId: z.string(),
-  unlimitedEntries: z.boolean(),
   upsetBonusMultiplier: z.string(),
   upsetBonusRule: z.enum([UpsetBonusRule.NONE, UpsetBonusRule.SEED_DIFFERENCE]),
 });
@@ -840,7 +830,7 @@ export function CreateContestPage() {
           values={values}
         />
         {rulesError !== null ? (
-          <p className="text-sm text-destructive" data-testid="contest-rules-error">{rulesError}</p>
+          <InlineError testId="contest-rules-error">{rulesError}</InlineError>
         ) : null}
         {scoringSettingsUi.Fields ? (
           <scoringSettingsUi.Fields
@@ -851,7 +841,7 @@ export function CreateContestPage() {
           />
         ) : null}
         {parsedScoring.error !== null ? (
-          <p className="text-sm text-destructive" data-testid="contest-scoring-error">{parsedScoring.error}</p>
+          <InlineError testId="contest-scoring-error">{parsedScoring.error}</InlineError>
         ) : null}
       </SetupSection>
 

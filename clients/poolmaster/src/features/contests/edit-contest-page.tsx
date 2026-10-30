@@ -1,4 +1,4 @@
-import { ContestStatus, PickEmMode, SelectionType, eventSportDefinition, formatSelectionTypeName } from '@poolmaster/shared/domain';
+import { ContestStatus, SelectionType, eventSportDefinition, formatSelectionTypeName } from '@poolmaster/shared/domain';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery } from '@tanstack/react-query';
 import { Lock } from 'lucide-react';
@@ -33,6 +33,7 @@ import { firstContestEvent } from './contest-events';
 import { CONTEST_RELEASE_CODE_MESSAGES } from './contest-release-messages';
 import { ContestRulesFields } from './contest-rules-fields';
 import {
+  CONTEST_RULES_FORM_SHAPE,
   parseContestRules,
   toContestRulesValues,
   type ContestRulesValues,
@@ -43,19 +44,8 @@ import { useContestQuery } from './use-contest-query';
 import { useManagedContestQuery } from './use-managed-contest-query';
 
 const editContestFormSchema = z.object({
+  ...CONTEST_RULES_FORM_SHAPE,
   contestName: z.string().trim().min(1, 'Contest name is required.'),
-  countedScores: z.string(),
-  maxEntriesPerTeam: z.string(),
-  maxSquaresPerEntry: z.string(),
-  pickEmAgainstTheSpread: z.boolean(),
-  survivorReuseTeams: z.boolean(),
-  pickEmMode: z.enum(PickEmMode),
-  picksPerEntry: z.string(),
-  picksPerTier: z.string(),
-  rosterSize: z.string(),
-  startsAtRound: z.string(),
-  tiersUsed: z.string(),
-  unlimitedEntries: z.boolean(),
 });
 
 type EditContestFormValues = z.infer<typeof editContestFormSchema>;

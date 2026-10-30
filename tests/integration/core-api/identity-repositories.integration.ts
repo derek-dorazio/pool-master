@@ -9,6 +9,7 @@
  * here, because "the port exists" was exactly the state that produced the problem.
  */
 import {
+  getAppPrisma,
   setupIntegrationTests,
   teardownIntegrationTests,
   getPrisma,
@@ -59,17 +60,16 @@ async function createLeague(prisma: ReturnType<typeof getPrisma>, code: string, 
 }
 
 describe('identity cluster repositories (#202)', () => {
-  describe('UserRepository.findAll — the unscoped read (A1)', () => {
+  describe('UserRepository.search — the unscoped read (A1)', () => {
     it('matches the search term across email, username, firstName and lastName', async () => {
-      const prisma = getPrisma();
-      const repo = new PrismaUserRepository(prisma);
+      const repo = new PrismaUserRepository(getAppPrisma());
       const marker = `zzq${Date.now().toString(36)}`;
 
       const byLastName = await createTestUser({ lastName: `Sur${marker}` });
       const byFirstName = await createTestUser({ firstName: `Fore${marker}` });
       const byEmail = await createTestUser({ email: `mail${marker}@integration.test` });
 
-      const users = await repo.findAll({ search: marker });
+      const users = await repo.search({ search: marker });
 
       const ids = users.map((user) => user.id);
       expect(ids).toContain(byLastName.user.id);
@@ -78,54 +78,51 @@ describe('identity cluster repositories (#202)', () => {
     });
 
     it('finds a user by full name, each word matching a different column, and not when one word matches nothing', async () => {
-      const prisma = getPrisma();
-      const repo = new PrismaUserRepository(prisma);
+      const repo = new PrismaUserRepository(getAppPrisma());
       const marker = Date.now().toString(36);
       const created = await createTestUser({ firstName: `Ali${marker}`, lastName: `Smith${marker}` });
       await createTestUser({ firstName: `Ali${marker}`, lastName: `Jones${marker}` });
 
-      const fullName = await repo.findAll({ search: `  Ali${marker}   Smith${marker} ` });
-      const wrongSurname = await repo.findAll({ search: `Ali${marker} Brown${marker}` });
+      const fullName = await repo.search({ search: `  Ali${marker}   Smith${marker} ` });
+      const wrongSurname = await repo.search({ search: `Ali${marker} Brown${marker}` });
 
       expect(fullName.map((user) => user.id)).toEqual([created.user.id]);
       expect(wrongSurname).toEqual([]);
     });
 
     it('matches case-insensitively', async () => {
-      const prisma = getPrisma();
-      const repo = new PrismaUserRepository(prisma);
+      const repo = new PrismaUserRepository(getAppPrisma());
       const marker = `Mixed${Date.now().toString(36)}`;
       const created = await createTestUser({ lastName: marker });
 
-      const users = await repo.findAll({ search: marker.toUpperCase() });
+      const users = await repo.search({ search: marker.toUpperCase() });
 
       expect(users.map((user) => user.id)).toContain(created.user.id);
     });
 
     it('returns every match, unpaged', async () => {
       // §16 — the API does not page. A filter narrows the set; nothing slices it.
-      const prisma = getPrisma();
-      const repo = new PrismaUserRepository(prisma);
+      const repo = new PrismaUserRepository(getAppPrisma());
       const marker = `all${Date.now().toString(36)}`;
       await createTestUser({ lastName: marker });
       await createTestUser({ lastName: marker });
       await createTestUser({ lastName: marker });
 
-      const users = await repo.findAll({ search: marker });
+      const users = await repo.search({ search: marker });
 
       expect(users).toHaveLength(3);
     });
 
     it('filters on isActive', async () => {
       const prisma = getPrisma();
-      const repo = new PrismaUserRepository(prisma);
+      const repo = new PrismaUserRepository(getAppPrisma());
       const marker = `act${Date.now().toString(36)}`;
       const active = await createTestUser({ lastName: marker });
       const inactive = await createTestUser({ lastName: marker });
       await prisma.user.update({ where: { id: inactive.user.id }, data: { isActive: false } });
 
-      const activeOnly = await repo.findAll({ search: marker, isActive: true });
-      const inactiveOnly = await repo.findAll({ search: marker, isActive: false });
+      const activeOnly = await repo.search({ search: marker, isActive: true });
+      const inactiveOnly = await repo.search({ search: marker, isActive: false });
 
       expect(activeOnly.map((user) => user.id)).toEqual([active.user.id]);
       expect(inactiveOnly.map((user) => user.id)).toEqual([inactive.user.id]);
@@ -133,36 +130,54 @@ describe('identity cluster repositories (#202)', () => {
 
     it('filters on isRootAdmin, finding only root admins or only everyone else', async () => {
       const prisma = getPrisma();
-      const repo = new PrismaUserRepository(prisma);
+      const repo = new PrismaUserRepository(getAppPrisma());
       const marker = `root${Date.now().toString(36)}`;
       const rootAdmin = await createTestUser({ lastName: marker });
       const member = await createTestUser({ lastName: marker });
       await prisma.user.update({ where: { id: rootAdmin.user.id }, data: { isRootAdmin: true } });
 
-      const rootAdmins = await repo.findAll({ search: marker, isRootAdmin: true });
-      const others = await repo.findAll({ search: marker, isRootAdmin: false });
+      const rootAdmins = await repo.search({ search: marker, isRootAdmin: true });
+      const others = await repo.search({ search: marker, isRootAdmin: false });
 
       expect(rootAdmins.map((user) => user.id)).toEqual([rootAdmin.user.id]);
       expect(others.map((user) => user.id)).toEqual([member.user.id]);
     });
 
     it('never returns a password hash on the domain user', async () => {
-      const prisma = getPrisma();
-      const repo = new PrismaUserRepository(prisma);
+      const repo = new PrismaUserRepository(getAppPrisma());
       const marker = `secret${Date.now().toString(36)}`;
       await createTestUser({ lastName: marker, password: 'TestPass123' });
 
-      const users = await repo.findAll({ search: marker });
+      const users = await repo.search({ search: marker });
 
       expect(users).toHaveLength(1);
       expect(users[0]).not.toHaveProperty('passwordHash');
     });
   });
 
+  describe('UserRepository.findActiveRootAdmins (#1313)', () => {
+    it('finds the active root admins, leaving out a disabled root admin and everyone else', async () => {
+      const prisma = getPrisma();
+      const repo = new PrismaUserRepository(getAppPrisma());
+      const marker = `admins${Date.now().toString(36)}`;
+      const active = await createTestUser({ lastName: marker });
+      const disabled = await createTestUser({ lastName: marker });
+      const member = await createTestUser({ lastName: marker });
+      await prisma.user.update({ where: { id: active.user.id }, data: { isRootAdmin: true } });
+      await prisma.user.update({ where: { id: disabled.user.id }, data: { isRootAdmin: true, isActive: false } });
+
+      const ids = (await repo.findActiveRootAdmins()).map((user) => user.id);
+
+      expect(ids).toContain(active.user.id);
+      expect(ids).not.toContain(disabled.user.id);
+      expect(ids).not.toContain(member.user.id);
+    });
+  });
+
   describe('UserRepository.findActiveByLeague — the scoped peer read (A4 + A6)', () => {
     it('returns only users sharing the given league', async () => {
       const prisma = getPrisma();
-      const repo = new PrismaUserRepository(prisma);
+      const repo = new PrismaUserRepository(getAppPrisma());
 
       const insider = await createTestUser({ lastName: 'Insider' });
       const peer = await createTestUser({ lastName: 'Peer' });
@@ -201,7 +216,7 @@ describe('identity cluster repositories (#202)', () => {
 
     it('carries the fields a member roster needs', async () => {
       const prisma = getPrisma();
-      const repo = new PrismaUserRepository(prisma);
+      const repo = new PrismaUserRepository(getAppPrisma());
       const member = await createTestUser({ firstName: 'Roster', lastName: 'Member' });
       const league = await createLeague(prisma, `${LEAGUE_CODE_PREFIX}A3`, 'Roster League');
       await prisma.leagueMembership.create({
@@ -225,7 +240,7 @@ describe('identity cluster repositories (#202)', () => {
 
     it('leaves out a member removed from the league, whose membership is INACTIVE, keeping the active one (#1182)', async () => {
       const prisma = getPrisma();
-      const repo = new PrismaUserRepository(prisma);
+      const repo = new PrismaUserRepository(getAppPrisma());
       const former = await createTestUser({ lastName: 'Former' });
       const current = await createTestUser({ lastName: 'Current' });
       const league = await createLeague(prisma, `${LEAGUE_CODE_PREFIX}A4`, 'Inactive Membership League');
@@ -247,7 +262,7 @@ describe('identity cluster repositories (#202)', () => {
   // `account/service.ts`.
   describe('UserRepository.findByIdentifier', () => {
     it('resolves the same user by either email or username', async () => {
-      const repo = new PrismaUserRepository(getPrisma());
+      const repo = new PrismaUserRepository(getAppPrisma());
       const marker = `ident${Date.now().toString(36)}`;
       const created = await createTestUser({ email: `${marker}@integration.test` });
 
@@ -263,7 +278,7 @@ describe('identity cluster repositories (#202)', () => {
       // colliding with somebody else's email is just as unusable as a duplicate username —
       // which is why the availability check is one question, not two.
       const prisma = getPrisma();
-      const repo = new PrismaUserRepository(prisma);
+      const repo = new PrismaUserRepository(getAppPrisma());
       const marker = `cross${Date.now().toString(36)}`;
       const created = await createTestUser({ email: `${marker}@integration.test` });
       await prisma.user.update({
@@ -281,7 +296,7 @@ describe('identity cluster repositories (#202)', () => {
       ['the username holder was created first', 'username-first'],
     ] as const)('returns the account whose EMAIL the identifier is, not the one whose username it is, when %s', async (_order, order) => {
       // Both orders, so the answer can't come from the order Postgres happens to return rows in.
-      const repo = new PrismaUserRepository(getPrisma());
+      const repo = new PrismaUserRepository(getAppPrisma());
       const shared = `both${order}${Date.now().toString(36)}@integration.test`;
       const createEmailHolder = () => createTestUser({ email: shared, username: `email-holder-${shared}` });
       const createUsernameHolder = () => createTestUser({ username: shared });
@@ -296,7 +311,7 @@ describe('identity cluster repositories (#202)', () => {
     });
 
     it('returns null for an identifier nobody holds', async () => {
-      const repo = new PrismaUserRepository(getPrisma());
+      const repo = new PrismaUserRepository(getAppPrisma());
 
       await expect(repo.findByIdentifier(`nobody-${Date.now()}@integration.test`))
         .resolves.toBeNull();
@@ -306,7 +321,7 @@ describe('identity cluster repositories (#202)', () => {
   describe('UserRepository.findHolderOtherThan', () => {
     it("finds another account holding the identifier in either column, even when the subject's own row matches too", async () => {
       const prisma = getPrisma();
-      const repo = new PrismaUserRepository(prisma);
+      const repo = new PrismaUserRepository(getAppPrisma());
       const shared = `held${Date.now().toString(36)}@integration.test`;
       const subject = await createTestUser();
       const other = await createTestUser();
@@ -323,7 +338,7 @@ describe('identity cluster repositories (#202)', () => {
   describe('UserRepository.countActiveRootAdmins', () => {
     it('counts active root admins and nobody else', async () => {
       const prisma = getPrisma();
-      const repo = new PrismaUserRepository(prisma);
+      const repo = new PrismaUserRepository(getAppPrisma());
 
       const before = await repo.countActiveRootAdmins();
 
@@ -342,7 +357,7 @@ describe('identity cluster repositories (#202)', () => {
 
   describe('UserRepository.update', () => {
     it('applies the given fields and leaves the rest alone', async () => {
-      const repo = new PrismaUserRepository(getPrisma());
+      const repo = new PrismaUserRepository(getAppPrisma());
       const created = await createTestUser({ firstName: 'Before', lastName: 'Change' });
 
       const updated = await repo.update(created.user.id, { firstName: 'After' });
@@ -357,7 +372,7 @@ describe('identity cluster repositories (#202)', () => {
       // preferences are `string | undefined`, so "clear my timezone" was inexpressible — and
       // mapping a null through the enum Record returns undefined, which Prisma reads as "no
       // change", so a clear would have silently done nothing.
-      const repo = new PrismaUserRepository(getPrisma());
+      const repo = new PrismaUserRepository(getAppPrisma());
       const created = await createTestUser({ lastName: 'Preferences' });
 
       const set = await repo.update(created.user.id, {
@@ -383,7 +398,7 @@ describe('identity cluster repositories (#202)', () => {
     });
 
     it('never returns a password hash on the updated user', async () => {
-      const repo = new PrismaUserRepository(getPrisma());
+      const repo = new PrismaUserRepository(getAppPrisma());
       const created = await createTestUser({ lastName: 'Hashless', password: 'TestPass123' });
 
       const updated = await repo.update(created.user.id, { firstName: 'Still' });
@@ -395,7 +410,7 @@ describe('identity cluster repositories (#202)', () => {
   describe('LeagueRepository.findByUser — the scoped league read (A2)', () => {
     it('returns only leagues the user is a member of', async () => {
       const prisma = getPrisma();
-      const repo = new PrismaLeagueRepository(prisma);
+      const repo = new PrismaLeagueRepository(getAppPrisma());
       const member = await createTestUser({ lastName: 'LeagueMember' });
 
       const mine = await createLeague(prisma, `${LEAGUE_CODE_PREFIX}B1`, 'Mine');
@@ -422,8 +437,7 @@ describe('identity cluster repositories (#202)', () => {
     });
 
     it('returns an empty list for a user with no memberships', async () => {
-      const prisma = getPrisma();
-      const repo = new PrismaLeagueRepository(prisma);
+      const repo = new PrismaLeagueRepository(getAppPrisma());
       const loner = await createTestUser({ lastName: 'Loner' });
 
       expect(await repo.findByUser(loner.user.id)).toEqual([]);
@@ -431,7 +445,7 @@ describe('identity cluster repositories (#202)', () => {
 
     it('omits a league the user was removed from, so a removed member no longer sees it in their leagues', async () => {
       const prisma = getPrisma();
-      const repo = new PrismaLeagueRepository(prisma);
+      const repo = new PrismaLeagueRepository(getAppPrisma());
       const former = await createTestUser({ lastName: 'FormerMember' });
 
       const current = await createLeague(prisma, `${LEAGUE_CODE_PREFIX}B4`, 'Current');
@@ -452,7 +466,7 @@ describe('identity cluster repositories (#202)', () => {
 
     it('narrows a member\'s leagues by a case-insensitive name search and the active flag in the query (#1182)', async () => {
       const prisma = getPrisma();
-      const repo = new PrismaLeagueRepository(prisma);
+      const repo = new PrismaLeagueRepository(getAppPrisma());
       const member = await createTestUser({ lastName: 'Searcher' });
       const office = await createLeague(prisma, `${LEAGUE_CODE_PREFIX}B6`, 'Office Majors');
       const closed = await createLeague(prisma, `${LEAGUE_CODE_PREFIX}B7`, 'Old Office Pool', false);
@@ -478,7 +492,7 @@ describe('identity cluster repositories (#202)', () => {
   describe('LeagueRepository Hall of Lame setting (#873)', () => {
     it('shows the Hall of Lame on a new league, and stores it hidden and shown again', async () => {
       const prisma = getPrisma();
-      const repo = new PrismaLeagueRepository(prisma);
+      const repo = new PrismaLeagueRepository(getAppPrisma());
       const league = await createLeague(prisma, `${LEAGUE_CODE_PREFIX}H1`, 'Lame');
 
       expect((await repo.findById(league.id))?.hallOfLameVisible).toBe(true);
@@ -491,7 +505,7 @@ describe('identity cluster repositories (#202)', () => {
   describe('LeagueMembershipRepository.countActiveByLeagues', () => {
     it('counts active members per league and omits leagues with none', async () => {
       const prisma = getPrisma();
-      const repo = new PrismaLeagueMembershipRepository(prisma);
+      const repo = new PrismaLeagueMembershipRepository(getAppPrisma());
 
       const busy = await createLeague(prisma, `${LEAGUE_CODE_PREFIX}D1`, 'Busy');
       const quiet = await createLeague(prisma, `${LEAGUE_CODE_PREFIX}D2`, 'Quiet');
@@ -530,7 +544,7 @@ describe('identity cluster repositories (#202)', () => {
     });
 
     it('returns an empty map for no league ids, without querying', async () => {
-      const repo = new PrismaLeagueMembershipRepository(getPrisma());
+      const repo = new PrismaLeagueMembershipRepository(getAppPrisma());
 
       await expect(repo.countActiveByLeagues([])).resolves.toEqual(new Map());
     });
@@ -539,7 +553,7 @@ describe('identity cluster repositories (#202)', () => {
   describe('LeagueMembershipRepository.findActiveJoinedSince (#903)', () => {
     it("finds every league's active memberships joined at or after the time, in the order they joined, leaving out earlier and inactive ones", async () => {
       const prisma = getPrisma();
-      const repo = new PrismaLeagueMembershipRepository(prisma);
+      const repo = new PrismaLeagueMembershipRepository(getAppPrisma());
       const first = await createLeague(prisma, `${LEAGUE_CODE_PREFIX}J1`, 'Joins One');
       const second = await createLeague(prisma, `${LEAGUE_CODE_PREFIX}J2`, 'Joins Two');
       const [early, late, left, before] = await Promise.all([
@@ -569,42 +583,53 @@ describe('identity cluster repositories (#202)', () => {
     });
   });
 
-  describe('LeagueRepository.findAll — the unscoped read (A1)', () => {
-    it('filters by name search and isActive, and returns everything when unfiltered', async () => {
+  describe('LeagueRepository.search — the unscoped read (A1)', () => {
+    it('finds the leagues whose name holds the search term, narrowed by isActive', async () => {
       const prisma = getPrisma();
-      const repo = new PrismaLeagueRepository(prisma);
+      const repo = new PrismaLeagueRepository(getAppPrisma());
       const marker = `Findable${Date.now().toString(36)}`;
 
       const activeLeague = await createLeague(prisma, `${LEAGUE_CODE_PREFIX}C1`, `${marker} Active`, true);
       const inactiveLeague = await createLeague(prisma, `${LEAGUE_CODE_PREFIX}C2`, `${marker} Inactive`, false);
 
-      const searched = await repo.findAll({ search: marker });
+      const searched = await repo.search({ search: marker });
       expect(searched.map((league) => league.id).sort())
         .toEqual([activeLeague.id, inactiveLeague.id].sort());
 
-      const activeOnly = await repo.findAll({ search: marker, isActive: true });
+      const activeOnly = await repo.search({ search: marker, isActive: true });
       expect(activeOnly.map((league) => league.id)).toEqual([activeLeague.id]);
-
-      // Unfiltered is the unscoped read A1 reserves for rootAdmin.
-      const all = await repo.findAll();
-      expect(all.length).toBeGreaterThanOrEqual(2);
     });
 
     it('matches the league name case-insensitively', async () => {
       const prisma = getPrisma();
-      const repo = new PrismaLeagueRepository(prisma);
+      const repo = new PrismaLeagueRepository(getAppPrisma());
       const marker = `CaseLeague${Date.now().toString(36)}`;
       const league = await createLeague(prisma, `${LEAGUE_CODE_PREFIX}C3`, marker);
 
-      const found = await repo.findAll({ search: marker.toLowerCase() });
+      const found = await repo.search({ search: marker.toLowerCase() });
 
       expect(found.map((row) => row.id)).toContain(league.id);
     });
   });
 
+  describe('LeagueRepository.findActive (#1313)', () => {
+    it('finds every active league and leaves out an inactive one', async () => {
+      const prisma = getPrisma();
+      const repo = new PrismaLeagueRepository(getAppPrisma());
+      const marker = `Sweep${Date.now().toString(36)}`;
+      const active = await createLeague(prisma, `${LEAGUE_CODE_PREFIX}C4`, `${marker} Active`, true);
+      const inactive = await createLeague(prisma, `${LEAGUE_CODE_PREFIX}C5`, `${marker} Inactive`, false);
+
+      const ids = (await repo.findActive()).map((league) => league.id);
+
+      expect(ids).toContain(active.id);
+      expect(ids).not.toContain(inactive.id);
+    });
+  });
+
   describe('LeagueRepository.create — the plan (#944)', () => {
     it('starts a new league on a Premium gift that runs about six months from its creation', async () => {
-      const repo = new PrismaLeagueRepository(getPrisma());
+      const repo = new PrismaLeagueRepository(getAppPrisma());
 
       const league = await repo.create({
         leagueCode: `${LEAGUE_CODE_PREFIX}P1`, name: 'Plan Default', isActive: true, iconKey: LeagueIconKey.TROPHY, cupName: 'Plan Default Cup',
@@ -622,7 +647,7 @@ describe('identity cluster repositories (#202)', () => {
   describe('LeagueMembershipRepository.findByUser', () => {
     it('lists a user\'s ACTIVE memberships, most recently joined first', async () => {
       const prisma = getPrisma();
-      const repo = new PrismaLeagueMembershipRepository(prisma);
+      const repo = new PrismaLeagueMembershipRepository(getAppPrisma());
       const { user } = await createTestUser({ lastName: 'Joiner' });
       const [older, newer, left] = await Promise.all([
         createLeague(prisma, `${LEAGUE_CODE_PREFIX}E1`, 'Joined First'),
@@ -645,7 +670,7 @@ describe('identity cluster repositories (#202)', () => {
   describe('LeagueInvitationRepository reads', () => {
     it('reads an invitation by id, null for an unknown id, and lists a league\'s invitations newest first', async () => {
       const prisma = getPrisma();
-      const repo = new PrismaLeagueInvitationRepository(prisma);
+      const repo = new PrismaLeagueInvitationRepository(getAppPrisma());
       const { user } = await createTestUser({ lastName: 'Inviter' });
       const [league, otherLeague] = await Promise.all([
         createLeague(prisma, `${LEAGUE_CODE_PREFIX}F1`, 'Inviting'),
@@ -665,7 +690,7 @@ describe('identity cluster repositories (#202)', () => {
 
     it('lists as outstanding only pending invites and email invites that expired unaccepted, leaving out accepted, revoked and expired join links (#1182)', async () => {
       const prisma = getPrisma();
-      const repo = new PrismaLeagueInvitationRepository(prisma);
+      const repo = new PrismaLeagueInvitationRepository(getAppPrisma());
       const { user } = await createTestUser({ lastName: 'OutstandingInviter' });
       const league = await createLeague(prisma, `${LEAGUE_CODE_PREFIX}F3`, 'Outstanding');
       let day = 0;

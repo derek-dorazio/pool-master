@@ -24,7 +24,7 @@ export interface DraftEventNoticeDeps {
   sportEvents: Pick<SportEventRepository, 'findAll'>;
   /** What each draft event still needs before it can be released. */
   releaseReadiness: Pick<SportEventService, 'releaseBlockersOf'>;
-  users: Pick<UserRepository, 'findAll'>;
+  users: Pick<UserRepository, 'findActiveRootAdmins'>;
   email: Pick<EmailService, 'send'>;
   appBaseUrl: string;
   logger?: FastifyBaseLogger;
@@ -40,7 +40,7 @@ export class DraftEventNotices implements DueNotifications {
       startsBefore: new Date(now.getTime() + WARN_DAYS * DAY_MS + 1),
     });
     if (drafts.length === 0) return;
-    const rootAdmins = await this.deps.users.findAll({ isActive: true, isRootAdmin: true });
+    const rootAdmins = await this.deps.users.findActiveRootAdmins();
     for (const sportEvent of drafts) {
       try {
         await this.queueOne(sportEvent, rootAdmins, now);

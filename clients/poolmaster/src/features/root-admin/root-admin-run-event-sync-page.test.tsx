@@ -120,6 +120,7 @@ describe('RootAdminRunEventSyncPage', () => {
       expect(listEventsMock).toHaveBeenCalledWith({
         query: {
           sport: 'GOLF',
+          eventYear: new Date().getFullYear(),
         },
       });
     });
@@ -152,6 +153,26 @@ describe('RootAdminRunEventSyncPage', () => {
     expect(
       screen.getByTestId('root-admin-event-sync-response'),
     ).toHaveTextContent('golf-masters-2026');
+  });
+
+  it('reads only the chosen year of events, never every year of the sport, and reads the next year when the year changes', async () => {
+    const thisYear = new Date().getFullYear();
+    renderPage();
+
+    await waitFor(() => {
+      expect(listEventsMock).toHaveBeenCalledWith({ query: { sport: 'GOLF', eventYear: thisYear } });
+    });
+    expect(listEventsMock).not.toHaveBeenCalledWith({ query: { sport: 'GOLF' } });
+
+    fireEvent.change(screen.getByTestId('root-admin-event-sync-year'), {
+      target: { value: String(thisYear - 1) },
+    });
+
+    await waitFor(() => {
+      expect(listEventsMock).toHaveBeenCalledWith({ query: { sport: 'GOLF', eventYear: thisYear - 1 } });
+    });
+    const calls = listEventsMock.mock.calls as [{ query: { eventYear?: number } }][];
+    expect(calls.every(([options]) => typeof options.query.eventYear === 'number')).toBe(true);
   });
 
   it('offers only events linked to a provider event, names the sport by its display name, and explains the empty list when none is linked', async () => {

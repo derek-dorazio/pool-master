@@ -13,6 +13,7 @@ import { PrismaEventPageRepository } from '../../../packages/core-api/src/adapte
 import { createContestOpeningReader } from '../../../packages/core-api/src/modules/contest-management/wiring';
 import {
   cleanupTestData,
+  getAppPrisma,
   getPrisma,
   setupIntegrationTests,
   teardownIntegrationTests,
@@ -30,7 +31,7 @@ const NOW = new Date('2030-01-10T12:00:00.000Z');
 
 describe('Seeded event pages', () => {
   it('seeds Championship Weekend with the Clutch Card first and primary, the NFL bracket from the conference round, then NFL Squares', async () => {
-    const pages = new PrismaEventPageRepository(getPrisma());
+    const pages = new PrismaEventPageRepository(getAppPrisma());
 
     const page = await pages.findBySportSlug(Sport.AMERICAN_FOOTBALL, 'championship-weekend');
     const offers = await pages.findOffers([page?.id ?? '']);
@@ -118,7 +119,7 @@ describe('Event page offers', () => {
     try {
       await offer(1, true);
 
-      expect(await new PrismaEventPageRepository(getPrisma()).findOffers([page.id])).toEqual([]);
+      expect(await new PrismaEventPageRepository(getAppPrisma()).findOffers([page.id])).toEqual([]);
     } finally {
       await remove();
     }
@@ -126,7 +127,7 @@ describe('Event page offers', () => {
 });
 
 describe('PrismaEventPageRepository.findEditionsNotOver', () => {
-  it('reads the edition under way first, then the rest soonest first, leaving out finished ones', async () => {
+  it('reads each series asked for in one read, in the order asked: the edition under way first, then the rest soonest first, leaving out finished ones and other series (#1316)', async () => {
     const prisma = getPrisma();
     const edition = await freshEventEdition(prisma, { name: 'Event page editions' });
     const series = await prisma.eventSeries.findUniqueOrThrow({ where: { id: edition.eventSeriesId } });
@@ -142,9 +143,26 @@ describe('PrismaEventPageRepository.findEditionsNotOver', () => {
     await make(2026, SportEventStatus.IN_PROGRESS, '2026-04-10T12:00:00.000Z');
     await make(2029, SportEventStatus.CANCELLED, '2029-04-10T12:00:00.000Z');
 
-    const editions = await new PrismaEventPageRepository(prisma).findEditionsNotOver(series.sportLeagueId, series.name);
+    const other = await prisma.eventSeries.findUniqueOrThrow({ where: { id: (await freshEventEdition(prisma, { name: 'Event page other series' })).eventSeriesId } });
+    await prisma.sportEvent.create({
+      data: {
+        eventSeriesId: other.id, eventYear: 2027, status: SportEventStatus.SCHEDULED, startDate: new Date('2027-01-10T12:00:00.000Z'),
+        externalId: `event-page-${randomUUID()}`, providerId: 'integration-test', sport: Sport.GOLF, name: `${other.name} 2027`,
+      },
+    });
+    const unasked = { sportLeagueId: series.sportLeagueId, eventSeriesName: 'No such series' };
 
-    expect(editions.map((each) => each.eventYear)).toEqual([2026, 2027, 2028]);
+    const editions = await new PrismaEventPageRepository(getAppPrisma()).findEditionsNotOver([
+      { sportLeagueId: other.sportLeagueId, eventSeriesName: other.name },
+      { sportLeagueId: series.sportLeagueId, eventSeriesName: series.name },
+      unasked,
+    ]);
+
+    expect(editions.map((each) => each.map((edition) => edition.name))).toEqual([
+      [`${other.name} 2027`],
+      [`${series.name} 2026`, `${series.name} 2027`, `${series.name} 2028`],
+      [],
+    ]);
   });
 });
 
@@ -165,7 +183,7 @@ describe('createContestOpeningReader.nextSquaresKickoff', () => {
     const ahead = await prisma.sportEventMatch.create({
       data: { sportEventId: sportEvent.id, sportEventRoundId: round.id, matchNumber: 2, isNeutralSite: false, scheduledDate: new Date('2030-01-24T20:00:00.000Z') },
     });
-    const reader = createContestOpeningReader(prisma);
+    const reader = createContestOpeningReader(getAppPrisma());
     const state = await reader.findById(sportEvent.id);
     if (state === null) throw new Error('The event was not read back.');
 

@@ -43,6 +43,7 @@ import { contestManagementModule } from '../../packages/core-api/src/modules/con
 import { cupsModule } from '../../packages/core-api/src/modules/cups/routes';
 import { championshipModule } from '../../packages/core-api/src/modules/championship/routes';
 import { historyModule } from '../../packages/core-api/src/modules/history/routes';
+import { eventPagesModule } from '../../packages/core-api/src/modules/event-pages/routes';
 import { contestConfigTemplatesModule } from '../../packages/core-api/src/modules/contest-config-templates/routes';
 import { participantsModule } from '../../packages/core-api/src/modules/participants/routes';
 import { usersModule } from '../../packages/core-api/src/modules/users/routes';
@@ -134,6 +135,8 @@ const MAIL_ENVIRONMENT_KEYS = [
 ] as const;
 type MailEnvironmentKey = (typeof MAIL_ENVIRONMENT_KEYS)[number];
 
+/** The providers the shared app's ingestion, participant and event routes read; empty until a test registers one. */
+const providerRegistry = new ProviderRegistry();
 /** The shared app's settings cache; `cleanupTestData` refreshes it so deleted rows are not served. */
 let appSettings: AppSettingsService | undefined;
 /** Stands in for CloudFront: what each admin save asked the CDN to clear (#1181). */
@@ -147,14 +150,27 @@ export function getApp(): FastifyInstance {
   return app;
 }
 
-/** Get the shared Prisma client. */
 /** The CDN invalidations the app's admin saves have asked for; `reset` it before the save a test checks. */
 export function getCdnInvalidations(): RecordingCdnInvalidator {
   return cdn;
 }
 
+/** The shared app's provider registry, for a test that registers a provider of its own. */
+export function getProviderRegistry(): ProviderRegistry {
+  return providerRegistry;
+}
+
+/** The tests' own client, for seeds, reads that check what was written, and cleanup. Its statements are not planned. */
 export function getPrisma(): PrismaClient {
   return prisma;
+}
+
+/**
+ * The app's client, for repositories, adapters and services a test builds itself: its statements
+ * are planned by the missing-index check, as the app's own are (#1301).
+ */
+export function getAppPrisma(): PrismaClient {
+  return appPrisma;
 }
 
 /** Build the Fastify app with real plugins and modules (no background jobs), on `prisma`. */
@@ -170,7 +186,6 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
   testApp.setErrorHandler(globalErrorHandler);
 
   // The ingestion, platform and mail services index.ts builds, without the background scheduler.
-  const providerRegistry = new ProviderRegistry();
   const runtimeConfigRepository = new PrismaPlatformRuntimeConfigRepository(prisma);
   const settings = new AppSettingsService({
     repository: runtimeConfigRepository,
@@ -246,6 +261,7 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
   testApp.register(usersModule, { prefix: '/api/v1/users', email, emailPreferences: outbox.preferences });
   testApp.register(eventsModule, { prefix: '/api/v1/events', ingestionService, providerRegistry, cdn });
   testApp.register(sportsModule, { prefix: '/api/v1/sports' });
+  testApp.register(eventPagesModule, { prefix: '/api/v1/event-pages' });
   testApp.register(contestConfigTemplatesModule, { prefix: '/api/v1/contest-config-templates', cdn });
   testApp.register(sportLeaguesModule, { prefix: '/api/v1/sport-leagues', cdn });
   testApp.register(selectionsModule, { prefix: '/api/v1/selections', email, planEntitlements });
@@ -407,7 +423,8 @@ export async function createTestUser(overrides: {
   isRootAdmin?: boolean;
 } = {}): Promise<TestUserResult> {
   const id = randomUUID();
-  const email = overrides.email ?? `test-${id.slice(0, 8)}@integration.test`;
+  // The whole id: eight characters of it collided once the local test database held tens of thousands of users.
+  const email = overrides.email ?? `test-${id}@integration.test`;
   const username = overrides.username ?? email;
   const fallbackName = overrides.displayName ?? `Test User ${id.slice(0, 8)}`;
   const [fallbackFirstName = 'Test', ...fallbackLastParts] = fallbackName.split(/\s+/);

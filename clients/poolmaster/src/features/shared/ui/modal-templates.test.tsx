@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { ApiError } from "@/lib/errors";
@@ -127,15 +127,16 @@ describe("pool-master-3ew: shared modal templates", () => {
     expect(handleApply).toHaveBeenCalledTimes(1);
   });
 
-  it("pool-master-3ew.11: renders read-only detail metadata and copy action", () => {
-    const handleCopy = vi.fn();
+  it("shows read-only detail metadata and copies the text it was given", async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.assign(navigator, { clipboard: { writeText } });
 
     render(
       <ReadOnlyDetailModal
         detailContent={<pre>{"{ \"status\": \"COMPLETED\" }"}</pre>}
         details={[{ id: "status", label: "Status", value: "Completed" }]}
         onCancel={vi.fn()}
-        onCopy={handleCopy}
+        copyText={"{ \"status\": \"COMPLETED\" }"}
         onOpenChange={vi.fn()}
         open
         title="Sync payload"
@@ -145,7 +146,7 @@ describe("pool-master-3ew: shared modal templates", () => {
     expect(screen.getByText("Status")).toBeInTheDocument();
     expect(screen.getByText("Completed")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Copy details" }));
-    expect(handleCopy).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(writeText).toHaveBeenCalledWith("{ \"status\": \"COMPLETED\" }"));
   });
 
   it("pool-master-rop.62: keeps read-only detail values keyed by item identity after reorder", () => {

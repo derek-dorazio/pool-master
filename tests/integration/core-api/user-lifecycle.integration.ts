@@ -11,7 +11,7 @@
  * cleared — so that is what this does, directly against the shared function. De-duplicating
  * destructive code without a test that watches it delete is not worth the saving.
  */
-import { setupIntegrationTests, teardownIntegrationTests, getPrisma, createTestUser } from '../helpers';
+import { getAppPrisma, setupIntegrationTests, teardownIntegrationTests, getPrisma, createTestUser } from '../helpers';
 import {
   countUserDeleteDependencies,
   deleteUserCascade,
@@ -22,6 +22,8 @@ import {
 import { PrismaUserRepository } from '../../../packages/core-api/src/adapters';
 import { LeagueIconKey, LeaguePlan, LeaguePlanChangeReason, LeagueRole, LeagueMembershipStatus } from '@poolmaster/shared/domain';
 import { hashRefreshToken } from '../../../packages/core-api/src/modules/auth/refresh-token-hash';
+import { waitUntilBlockedBy } from '../contest-lock';
+import { holdMemberLock } from '../member-lock';
 
 const LEAGUE_CODE_PREFIX = 'ULIFE';
 
@@ -82,6 +84,27 @@ describe('shared user delete cascade (#202)', () => {
     ).resolves.toBe(0);
   });
 
+  it('waits for a refresh under way on the account before deleting its tokens, so the two cannot deadlock', async () => {
+    const prisma = getPrisma();
+    const { user } = await createTestUser({ lastName: 'MidRefresh' });
+    const token = await prisma.refreshToken.create({
+      data: { tokenHash: hashRefreshToken(`mid-refresh-${user.id}`), userId: user.id, expiresAt: new Date(Date.now() + 60 * 60_000) },
+    });
+    // A refresh holding the member's lock, about to rotate the account's token.
+    const refresh = holdMemberLock(prisma, user.id);
+    const holderPid = await refresh.ready;
+
+    const deleting = prisma.$transaction((tx) => deleteUserCascade(tx, user.id));
+    await waitUntilBlockedBy(prisma, holderPid);
+    await refresh.release((tx) => tx.refreshToken.updateMany({
+      where: { id: token.id, revokedAt: null },
+      data: { revokedAt: new Date() },
+    }));
+
+    await expect(deleting).resolves.toBeUndefined();
+    await expect(prisma.user.findUnique({ where: { id: user.id } })).resolves.toBeNull();
+  });
+
   it('deletes a user who changed a league\'s plan, keeping the plan change with nobody named as who made it', async () => {
     const prisma = getPrisma();
     const { user } = await createTestUser({ lastName: 'PlanChanger' });
@@ -119,17 +142,16 @@ describe('shared user delete cascade (#202)', () => {
       },
     });
 
-    const counts = await countUserDeleteDependencies(prisma, user.id);
+    const counts = await countUserDeleteDependencies(getAppPrisma(), user.id);
 
     expect(counts.leagueCount).toBe(1);
     expect(hasUserDeleteDependencies(counts)).toBe(true);
   });
 
   it('reports no dependencies for an unattached user', async () => {
-    const prisma = getPrisma();
     const { user } = await createTestUser({ lastName: 'Unattached' });
 
-    const counts = await countUserDeleteDependencies(prisma, user.id);
+    const counts = await countUserDeleteDependencies(getAppPrisma(), user.id);
 
     expect(counts).toEqual({ leagueCount: 0, squadMembershipCount: 0, createdSquadCount: 0 });
     expect(hasUserDeleteDependencies(counts)).toBe(false);
@@ -145,20 +167,18 @@ describe('shared user delete cascade (#202)', () => {
     // fixtures. The count logic is unit-tested against a mocked client where it can be
     // controlled; what this covers is the branch that holds regardless of the count.
     it('never reports a non-root-admin as the last root admin', async () => {
-      const prisma = getPrisma();
       const plainUser = await createTestUser({ lastName: 'Plain' });
 
       await expect(
-        isLastRootAdmin(new PrismaUserRepository(prisma), { ...plainUser.user, isActive: true }),
+        isLastRootAdmin(new PrismaUserRepository(getAppPrisma()), { ...plainUser.user, isActive: true }),
       ).resolves.toBe(false);
     });
 
     it('does not report a root admin as the last one while others exist', async () => {
-      const prisma = getPrisma();
       const first = await createTestUser({ lastName: 'AdminOne', isRootAdmin: true });
       const second = await createTestUser({ lastName: 'AdminTwo', isRootAdmin: true });
 
-      const users = new PrismaUserRepository(prisma);
+      const users = new PrismaUserRepository(getAppPrisma());
 
       await expect(isLastRootAdmin(users, { ...first.user, isActive: true })).resolves.toBe(false);
       await expect(isLastRootAdmin(users, { ...second.user, isActive: true })).resolves.toBe(false);
@@ -183,11 +203,11 @@ describe('shared user delete cascade (#202)', () => {
     });
 
     // Two live, one already revoked — the already-revoked one must not be counted again.
-    await expect(revokeUserSessions(prisma, user.id)).resolves.toBe(2);
+    await expect(revokeUserSessions(getAppPrisma(), user.id)).resolves.toBe(2);
     await expect(
       prisma.refreshToken.count({ where: { userId: user.id, revokedAt: null } }),
     ).resolves.toBe(0);
     // Idempotent: nothing live left to revoke.
-    await expect(revokeUserSessions(prisma, user.id)).resolves.toBe(0);
+    await expect(revokeUserSessions(getAppPrisma(), user.id)).resolves.toBe(0);
   });
 });

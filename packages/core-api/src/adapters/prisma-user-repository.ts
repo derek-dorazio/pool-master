@@ -5,8 +5,8 @@ import type {
   UserAuthProvider as PrismaUserAuthProvider,
   UserTimeFormat as PrismaUserTimeFormat,
 } from '@prisma/client';
-import type { UserRepository, UserSearchFilters, UserUpdate } from '@poolmaster/shared/db';
-import { AuthProvider, LeagueMembershipStatus, TimeFormat, type User } from '@poolmaster/shared/domain';
+import type { UserRepository, UserSearch, UserSearchFilters, UserUpdate } from '@poolmaster/shared/db';
+import { AuthProvider, LeagueMembershipStatus, TimeFormat, type LeagueRole, type User } from '@poolmaster/shared/domain';
 
 /**
  * Prisma adapter for `UserRepository`.
@@ -43,10 +43,18 @@ export class PrismaUserRepository implements UserRepository {
     return row ? mapToUser(row) : null;
   }
 
-  async findAll(filters: UserSearchFilters = {}): Promise<User[]> {
+  async search(filters: UserSearch): Promise<User[]> {
     // Not paged — §16. Narrowing is the filter's job; the caller gets the whole result.
     const rows = await this.prisma.user.findMany({
       where: buildUserWhere(filters),
+      orderBy: { createdAt: 'desc' },
+    });
+    return rows.map(mapToUser);
+  }
+
+  async findActiveRootAdmins(): Promise<User[]> {
+    const rows = await this.prisma.user.findMany({
+      where: { isRootAdmin: true, isActive: true },
       orderBy: { createdAt: 'desc' },
     });
     return rows.map(mapToUser);
@@ -56,6 +64,20 @@ export class PrismaUserRepository implements UserRepository {
     // The league join IS the scope (A4 + A6) — there is no way to call this unscoped.
     const rows = await this.prisma.user.findMany({
       where: { memberships: { some: { leagueId, status: LeagueMembershipStatus.ACTIVE } } },
+      orderBy: [{ lastName: 'asc' }, { firstName: 'asc' }],
+    });
+    return rows.map(mapToUser);
+  }
+
+  async findActiveByLeagues(leagueIds: readonly string[], roles?: readonly LeagueRole[]): Promise<User[]> {
+    if (leagueIds.length === 0) return [];
+    // The leagues' join is the scope, as for one league.
+    const rows = await this.prisma.user.findMany({
+      where: {
+        memberships: {
+          some: { leagueId: { in: [...new Set(leagueIds)] }, status: LeagueMembershipStatus.ACTIVE, ...(roles && { role: { in: [...roles] } }) },
+        },
+      },
       orderBy: [{ lastName: 'asc' }, { firstName: 'asc' }],
     });
     return rows.map(mapToUser);

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, type ReactNode } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Link } from 'react-router';
 import { buildEventPagePath, EventPageOfferState, getSportDefinition, ScoringFamily, Sport } from '@poolmaster/shared/domain';
 import type { EventPageDto, EventPageOfferDto, SportLeagueDto } from '@/lib/api';
@@ -6,17 +6,28 @@ import { getLogger } from '@/lib/logger';
 import { STAT_POOL_CONTEST_TYPE, STAT_POOL_FORMULAS } from '@/features/contests/scoring-family-ui/stat-pool-copy';
 import { useSportLeaguesQuery } from '@/features/contest-types/use-sport-leagues-query';
 import {
-  cn,
+  Chip,
   ErrorState,
   Eyebrow,
+  FaqList,
   Heading,
   LinkButton,
   LoadingState,
+  NumberedSteps,
+  SimpleTable,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeaderCell,
+  TableRow,
   Tile,
 } from '@/features/shared/ui';
+import { LandingDisclaimer } from './components/landing-disclaimer';
+import { LandingSection } from './components/landing-section';
+import { StartButton } from './components/start-button';
 import { EVENT_PAGE_ACTIONS } from './event-page-copy';
-import { CLUTCH_CARD_EXAMPLE, CLUTCH_CARD_PAGE, CLUTCH_CARD_SECTIONS, type ClutchCardRound, type ClutchCardSectionId } from './clutch-card-copy';
-import { buildStartPath, type StartRequest } from './start-path';
+import { CLUTCH_CARD_EXAMPLE, CLUTCH_CARD_PAGE, CLUTCH_CARD_SECTIONS, type ClutchCardRound } from './clutch-card-copy';
+import type { StartRequest } from './start-path';
 import { useEventPagesQuery } from './use-event-pages-query';
 
 /** The built stat lines, in the order the copy tells them: each sport's composite name and formula. */
@@ -25,27 +36,6 @@ const BUILT_STAT_LINE_SPORTS: readonly Sport[] = [Sport.BASEBALL, Sport.BASKETBA
 /** A sport's stat line name: its composite's. */
 function statLineName(sport: Sport): string | undefined {
   return getSportDefinition(sport).composite?.name;
-}
-
-/** A section's heading row: its eyebrow, title and intro, and the address its menu link jumps to. */
-function Section({ id, eyebrow, title, intro, testId, children }: {
-  id?: ClutchCardSectionId;
-  eyebrow: string;
-  title: string;
-  intro?: string;
-  testId: string;
-  children: ReactNode;
-}) {
-  return (
-    <section className="scroll-mt-6 space-y-4" data-testid={testId} id={id}>
-      <Eyebrow>{eyebrow}</Eyebrow>
-      <div className="space-y-2">
-        <Heading level={2} variant="display">{title}</Heading>
-        {intro ? <p className="max-w-2xl text-base text-muted-foreground">{intro}</p> : null}
-      </div>
-      {children}
-    </section>
-  );
 }
 
 /** A title round on the calendar: available while its stat pool sport league is, and its event page when one offers it. */
@@ -88,13 +78,7 @@ function rankOffer(offer: EventPageOfferDto): number {
   return offer.state === EventPageOfferState.OPEN ? 0 : 1;
 }
 
-function StartButton({ request, testId }: { request: StartRequest | null; testId: string }) {
-  if (!request) {
-    return null;
-  }
-  return <LinkButton data-testid={testId} size="lg" to={buildStartPath(request)}>{CLUTCH_CARD_PAGE.hero.start}</LinkButton>;
-}
-
+/** The page's start button: none while no event page offers a Clutch Card. */
 /** The hero's made-up card, mid-series: each star's games, the best ones counted. */
 function ExampleCard() {
   const example = CLUTCH_CARD_EXAMPLE;
@@ -102,33 +86,33 @@ function ExampleCard() {
   const counted = new Set([...stars].sort((a, b) => b.total - a.total).slice(0, example.counted).map((star) => star.tier));
   const cardTotal = stars.filter((star) => counted.has(star.tier)).reduce((sum, star) => sum + star.total, 0);
   return (
-    <div className="rounded-2xl border border-inverse-border bg-surface-inverse-deep p-4" data-testid="clutch-card-example">
+    <Tile data-testid="clutch-card-example" padding="sm" radius="md" variant="inverseDeep">
       <div className="flex items-center justify-between gap-2">
         <p className="font-display font-bold">{example.name}</p>
-        <span className="rounded-pill bg-primary px-2.5 py-0.5 text-xs font-semibold text-primary-foreground">{example.status}</span>
+        <Chip tone="brand">{example.status}</Chip>
       </div>
       <p className="mt-1 text-xs text-on-inverse-muted">{statLineName(example.sport)}</p>
-      <table className="mt-3 w-full text-sm">
-        <thead>
-          <tr className="text-xs text-on-inverse-muted">
-            <th className="py-1 text-left font-medium">Star</th>
-            {example.games.map((game) => <th className="py-1 text-right font-medium" key={game}>{game}</th>)}
-            <th className="py-1 text-right font-medium">Total</th>
+      <SimpleTable className="mt-3" density="compact" surface="inverse">
+        <TableHead className="normal-case">
+          <tr>
+            <TableHeaderCell>Star</TableHeaderCell>
+            {example.games.map((game) => <TableHeaderCell align="right" key={game}>{game}</TableHeaderCell>)}
+            <TableHeaderCell align="right">Total</TableHeaderCell>
           </tr>
-        </thead>
-        <tbody>
+        </TableHead>
+        <TableBody>
           {stars.map((star) => (
-            <tr className={cn('border-t border-inverse-border', counted.has(star.tier) ? null : 'text-on-inverse-muted')} key={star.tier}>
-              <td className="py-1.5">
+            <TableRow className={counted.has(star.tier) ? undefined : 'text-on-inverse-muted'} key={star.tier}>
+              <TableCell className="whitespace-nowrap">
                 <span className="mr-2 font-mono text-xs text-primary">{star.tier}</span>
                 {`${star.position}, ${star.team}`}
-              </td>
-              {star.scores.map((score, index) => <td className="py-1.5 text-right font-mono" key={example.games[index]}>{score}</td>)}
-              <td className="py-1.5 text-right font-mono font-semibold">{star.total}</td>
-            </tr>
+              </TableCell>
+              {star.scores.map((score, index) => <TableCell className="font-mono" key={example.games[index]} numeric>{score}</TableCell>)}
+              <TableCell className="font-mono font-semibold" numeric>{star.total}</TableCell>
+            </TableRow>
           ))}
-        </tbody>
-      </table>
+        </TableBody>
+      </SimpleTable>
       <div className="mt-3 flex items-center justify-between border-t border-inverse-border pt-3">
         <p className="text-sm text-on-inverse-muted">{example.rank}</p>
         <div className="text-right">
@@ -139,17 +123,17 @@ function ExampleCard() {
       <p className="mt-2 text-xs text-on-inverse-muted" data-testid="clutch-card-example-note">
         {`${example.note} ${statLineName(example.sport) ?? ''} = ${STAT_POOL_FORMULAS[example.sport] ?? ''}, each game.`}
       </p>
-    </div>
+    </Tile>
   );
 }
 
 function Hero({ startRequest }: { startRequest: StartRequest | null }) {
   const hero = CLUTCH_CARD_PAGE.hero;
   return (
-    <section className="grid gap-x-12 gap-y-8 rounded-2xl border border-inverse-border bg-surface-inverse p-6 text-on-inverse sm:p-10 lg:grid-cols-2 lg:items-center" data-testid="clutch-card-hero">
+    <Tile as="section" className="grid gap-x-12 gap-y-8 p-6 sm:p-10 lg:grid-cols-2 lg:items-center" data-testid="clutch-card-hero" padding="none" radius="md" variant="inverse">
       <div className="space-y-3 lg:col-span-2">
         <div className="flex items-center gap-2">
-          <span className="rounded-pill bg-primary px-2.5 py-0.5 text-xs font-bold text-primary-foreground">{hero.badge}</span>
+          <Chip tone="brand">{hero.badge}</Chip>
           <Eyebrow tone="inverse">{hero.eyebrow}</Eyebrow>
         </div>
         <Heading data-testid="clutch-card-tagline" level={1} tone="inherit" variant="hero">
@@ -161,31 +145,31 @@ function Hero({ startRequest }: { startRequest: StartRequest | null }) {
       <div className="space-y-5">
         <p className="max-w-xl text-lg text-on-inverse-muted" data-testid="clutch-card-hook">{hero.hook}</p>
         <div className="flex flex-wrap items-center gap-3">
-          <StartButton request={startRequest} testId="clutch-card-start" />
+          {startRequest ? <StartButton request={startRequest} size="lg" testId="clutch-card-start">{hero.start}</StartButton> : null}
           <a className="text-sm font-semibold underline underline-offset-4" data-testid="clutch-card-see-cards" href="#card-types">{hero.seeTheCards}</a>
         </div>
         <p className="text-sm text-on-inverse-muted">{hero.note}</p>
       </div>
       <ExampleCard />
-    </section>
+    </Tile>
   );
 }
 
 function CardTypes() {
   const copy = CLUTCH_CARD_PAGE.cardTypes;
   return (
-    <Section eyebrow={copy.eyebrow} id="card-types" intro={copy.intro} testId="clutch-card-types" title={copy.title}>
+    <LandingSection eyebrow={copy.eyebrow} id="card-types" intro={copy.intro} testId="clutch-card-types" title={copy.title}>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {BUILT_STAT_LINE_SPORTS.map((sport) => (
-          <div className="rounded-2xl border border-inverse-border bg-surface-inverse p-5 text-on-inverse" data-testid={`clutch-card-type-${sport}`} key={sport}>
+          <Tile data-testid={`clutch-card-type-${sport}`} key={sport} padding="none" radius="md" className="p-5" variant="inverse">
             <Eyebrow tone="inverse">{getSportDefinition(sport).name}</Eyebrow>
             <Heading level={3} variant="card" size="xl" tone="primary">{statLineName(sport)}</Heading>
             <p className="mt-2 font-mono text-sm">{STAT_POOL_FORMULAS[sport]}</p>
             <p className="mt-2 text-sm text-on-inverse-muted">{copy.lines[sport]}</p>
-          </div>
+          </Tile>
         ))}
       </div>
-    </Section>
+    </LandingSection>
   );
 }
 
@@ -198,20 +182,21 @@ function RoundChip({ round }: { round: CalendarRound }) {
     </>
   );
   if (!round.isAvailable) {
-    return <span className="rounded-pill border border-dashed border-border px-3 py-1 text-sm text-muted-foreground" data-testid={testId}>{label}</span>;
+    return <Chip className="text-sm" data-testid={testId} tone="placeholder">{label}</Chip>;
   }
-  const className = 'rounded-pill border border-primary bg-primary/10 px-3 py-1 text-sm font-semibold text-foreground';
   return round.eventPage ? (
-    <Link className={cn(className, 'hover:bg-primary/20')} data-testid={testId} to={buildEventPagePath(round.eventPage.sport, round.eventPage.slug)}>{label}</Link>
+    <Chip asChild className="text-sm hover:bg-primary/20" tone="brandTint">
+      <Link data-testid={testId} to={buildEventPagePath(round.eventPage.sport, round.eventPage.slug)}>{label}</Link>
+    </Chip>
   ) : (
-    <span className={className} data-testid={testId}>{label}</span>
+    <Chip className="text-sm" data-testid={testId} tone="brandTint">{label}</Chip>
   );
 }
 
 function Calendar({ rounds }: { rounds: ReadonlyMap<string, CalendarRound> | null }) {
   const copy = CLUTCH_CARD_PAGE.calendar;
   return (
-    <Section eyebrow={copy.eyebrow} id="calendar" intro={copy.intro} testId="clutch-card-calendar" title={copy.title}>
+    <LandingSection eyebrow={copy.eyebrow} id="calendar" intro={copy.intro} testId="clutch-card-calendar" title={copy.title}>
       {rounds ? (
         <>
           <ul className="divide-y divide-border rounded-2xl border border-border">
@@ -236,14 +221,14 @@ function Calendar({ rounds }: { rounds: ReadonlyMap<string, CalendarRound> | nul
       ) : (
         <ErrorState body="We couldn't load the championship calendar. Try again in a moment." testId="clutch-card-calendar-error" title="Calendar unavailable" />
       )}
-    </Section>
+    </LandingSection>
   );
 }
 
 function Why() {
   const copy = CLUTCH_CARD_PAGE.why;
   return (
-    <Section eyebrow={copy.eyebrow} testId="clutch-card-why" title={copy.title}>
+    <LandingSection eyebrow={copy.eyebrow} testId="clutch-card-why" title={copy.title}>
       <div className="grid gap-4 md:grid-cols-2">
         {copy.points.map((point) => (
           <Tile key={point.title} padding="md" radius="md">
@@ -252,25 +237,15 @@ function Why() {
           </Tile>
         ))}
       </div>
-    </Section>
+    </LandingSection>
   );
 }
 
 function HowItPlays() {
   const copy = CLUTCH_CARD_PAGE.howItPlays;
   return (
-    <Section eyebrow={copy.eyebrow} id="how-it-plays" intro={copy.intro} testId="clutch-card-how-it-plays" title={copy.title}>
-      <ol className="grid gap-4 md:grid-cols-3">
-        {copy.steps.map((step, index) => (
-          <li className="list-none" key={step.title}>
-            <Tile className="h-full" padding="md" radius="md">
-              <p className="font-display text-2xl font-bold text-muted-foreground">{index + 1}</p>
-              <Heading level={3} variant="card">{step.title}</Heading>
-              <p className="mt-1 text-sm text-muted-foreground">{step.body}</p>
-            </Tile>
-          </li>
-        ))}
-      </ol>
+    <LandingSection eyebrow={copy.eyebrow} id="how-it-plays" intro={copy.intro} testId="clutch-card-how-it-plays" title={copy.title}>
+      <NumberedSteps steps={copy.steps} />
       <div className="grid gap-4 md:grid-cols-3">
         {copy.modes.map((mode) => (
           <div className="rounded-xl border border-border p-4" key={mode.title}>
@@ -279,23 +254,16 @@ function HowItPlays() {
           </div>
         ))}
       </div>
-    </Section>
+    </LandingSection>
   );
 }
 
 function Faq() {
   const copy = CLUTCH_CARD_PAGE.faq;
   return (
-    <Section eyebrow={copy.eyebrow} id="questions" testId="clutch-card-faq" title={copy.title}>
-      <div className="divide-y divide-border rounded-2xl border border-border">
-        {copy.items.map((item) => (
-          <details className="p-4" key={item.question}>
-            <summary className="cursor-pointer font-semibold text-foreground">{item.question}</summary>
-            <p className="mt-2 text-sm text-muted-foreground">{item.answer}</p>
-          </details>
-        ))}
-      </div>
-    </Section>
+    <LandingSection eyebrow={copy.eyebrow} id="questions" testId="clutch-card-faq" title={copy.title}>
+      <FaqList items={copy.items} />
+    </LandingSection>
   );
 }
 
@@ -360,12 +328,12 @@ export function ClutchCardPage() {
       <Tile className="flex flex-col items-start gap-4" data-testid="clutch-card-closing" padding="lg" radius="lg">
         <Heading level={2} variant="display">{CLUTCH_CARD_PAGE.closing.title}</Heading>
         {startRequest ? (
-          <StartButton request={startRequest} testId="clutch-card-closing-start" />
+          <StartButton request={startRequest} size="lg" testId="clutch-card-closing-start">{CLUTCH_CARD_PAGE.hero.start}</StartButton>
         ) : (
           <LinkButton data-testid="clutch-card-closing-how-to-play" to="/how-to-play" variant="secondary">{EVENT_PAGE_ACTIONS.seeEveryWayToPlay}</LinkButton>
         )}
       </Tile>
-      <p className="text-xs text-muted-foreground" data-testid="clutch-card-disclaimer">{CLUTCH_CARD_PAGE.footer}</p>
+      <LandingDisclaimer testId="clutch-card-disclaimer">{CLUTCH_CARD_PAGE.footer}</LandingDisclaimer>
     </section>
   );
 }

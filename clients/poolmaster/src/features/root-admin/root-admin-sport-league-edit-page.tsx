@@ -1,20 +1,15 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { sportLeagueNounOf } from '@poolmaster/shared/domain';
-import { useMemo } from 'react';
 import { useForm } from 'react-hook-form';
-import { useNavigate, useParams } from 'react-router';
+import { useNavigate } from 'react-router';
 import { z } from 'zod';
-import { updateSportLeague } from '@/lib/api';
 import type { SportLeagueDto } from '@/lib/api';
-import { AsyncPage, FormField, FormPage, Input } from '@/features/shared/ui';
-import { extractErrorMessage, throwApiError } from '@/lib/errors';
-import { getLogger } from '@/lib/logger';
-import { useInvalidatingMutation } from '@/lib/mutation-hooks';
-import { QueryKeys } from '@/lib/query-keys';
-import { useManageBreadcrumbOverride } from './manage-breadcrumb-context';
+import { FormField, FormPage, Input } from '@/features/shared/ui';
+import { formPageSave } from '@/lib/form-page-save';
 import { buildSportLeaguePath, capitalize } from './manage-navigation';
-import { useSportLeagueNoun, useSportLeaguesQuery } from './use-sport-catalog';
 import { useManagedSport } from './use-managed-sport';
+import { SportLeaguePage } from './sport-league-page';
+import { useUpdateSportLeague } from './use-update-sport-league';
 
 const editSchema = z.object({
   name: z.string().trim().min(1, 'A name is required'),
@@ -24,9 +19,6 @@ const editSchema = z.object({
 type EditValues = z.infer<typeof editSchema>;
 
 function SportLeagueEditForm({ sportLeague }: { sportLeague: SportLeagueDto }) {
-  const logger = getLogger().child({
-    feature: 'root-admin-sport-league-edit-page',
-  });
   const navigate = useNavigate();
   const { sport } = useManagedSport();
   const sportLeagueNoun = sportLeagueNounOf(sport, sportLeague.noun);
@@ -38,36 +30,19 @@ function SportLeagueEditForm({ sportLeague }: { sportLeague: SportLeagueDto }) {
     mode: 'onChange',
   });
 
-  const updateMutation = useInvalidatingMutation({
-    mutationFn: async (values: EditValues) => {
-      const response = await updateSportLeague({
-        path: { sportLeagueId: sportLeague.id },
-        body: { name: values.name, matchKeyword: values.matchKeyword?.trim() ?? '' },
-      });
-      if (!response.data?.sportLeague) {
-        throwApiError(response.error, 'Sport league update response is missing data.');
-      }
-      return response.data.sportLeague;
-    },
-    invalidates: [QueryKeys.rootAdmin.manageSport.leagues],
-    onSuccess: () => navigate(homePath),
-    onError: (error) => {
-      logger.warn(
-        { action: 'sportLeague.update.failed', err: error },
-        'Sport league update was rejected',
-      );
-    },
+  const updateMutation = useUpdateSportLeague({
+    failedAction: 'sportLeague.update.failed',
+    onSuccess: () => void navigate(homePath),
+    refusedMessage: 'Sport league update was rejected',
+    sportLeagueId: sportLeague.id,
+    toBody: (values: EditValues) => ({ name: values.name, matchKeyword: values.matchKeyword?.trim() ?? '' }),
   });
 
   return (
     <FormPage
       cancelTo={homePath}
-      errorMessage={updateMutation.isError
-        ? extractErrorMessage(updateMutation.error, { fallback: `We could not save this ${sportLeagueNoun.one}.` })
-        : undefined}
-      isPending={updateMutation.isPending}
+      {...formPageSave(form, updateMutation, `We could not save this ${sportLeagueNoun.one}.`)}
       isSubmitDisabled={!form.formState.isValid}
-      onSubmit={(event) => void form.handleSubmit((values) => updateMutation.mutate(values))(event)}
       pendingLabel="Saving..."
       submitLabel={`Save ${sportLeagueNoun.one}`}
       submitTestId="root-admin-sport-league-edit-save"
@@ -89,29 +64,5 @@ function SportLeagueEditForm({ sportLeague }: { sportLeague: SportLeagueDto }) {
 
 /** Edit a sport league's name and match keyword, with one Save. */
 export function RootAdminSportLeagueEditPage() {
-  const { leagueId = '' } = useParams<{ leagueId: string }>();
-  const { sport } = useManagedSport();
-  const sportLeagueNoun = useSportLeagueNoun(sport, leagueId);
-  const leaguesQuery = useSportLeaguesQuery(sport);
-  const sportLeague = useMemo(
-    // poolmaster-allow-list-lookup: sport leagues are reference data, a few dozen rows that do not grow with history
-    () => leaguesQuery.data?.find((candidate) => candidate.id === leagueId),
-    [leaguesQuery.data, leagueId],
-  );
-
-  useManageBreadcrumbOverride(leagueId || undefined, sportLeague?.name);
-
-  return (
-    <AsyncPage
-      emptyBody={`This ${sportLeagueNoun.one} does not exist or has been removed.`}
-      emptyTitle={`${capitalize(sportLeagueNoun.one)} not found`}
-      errorBody={extractErrorMessage(leaguesQuery.error, {
-        fallback: `We could not load this ${sportLeagueNoun.one} right now.`,
-      })}
-      loadingBody={`Loading ${sportLeagueNoun.one}...`}
-      state={leaguesQuery.isLoading ? 'loading' : leaguesQuery.isError ? 'error' : sportLeague ? 'ready' : 'empty'}
-    >
-      {sportLeague ? <SportLeagueEditForm sportLeague={sportLeague} /> : null}
-    </AsyncPage>
-  );
+  return <SportLeaguePage>{(sportLeague) => <SportLeagueEditForm sportLeague={sportLeague} />}</SportLeaguePage>;
 }

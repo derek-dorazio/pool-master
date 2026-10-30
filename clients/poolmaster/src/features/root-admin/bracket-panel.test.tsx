@@ -144,8 +144,6 @@ function rosterOf(...participants: ReturnType<typeof participantFixture>[]) {
   });
 }
 
-/** A team of the sport's other league, on its roster and not the tournament's. */
-const southCarolina = participantFixture({ id: 'p-9', name: 'South Carolina', sportId: 'sport-basketball' });
 
 function renderPage() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -677,7 +675,7 @@ describe('RootAdminSportEventResultsPage for a basketball tournament', () => {
     function seedPlayIn() {
       seed([], { field: [duke, vermont, houston, texas, pairing] });
       listSportsMock.mockResolvedValue({ data: { sports: [{ id: 'sport-basketball', sport: 'BASKETBALL', participantType: 'TEAM', tournamentFormat: 'MATCHES', createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-01T00:00:00.000Z' }] } });
-      listParticipantsMock.mockResolvedValue({ data: { participants: [duke.participant, texas.participant, xavier].map((participant) => participantFixture({ ...participant, sportId: 'sport-basketball' })) } });
+      rosterOf(duke.participant, texas.participant, xavier);
     }
 
     it('names a marked place\'s winner from the active teams not already in the tournament', async () => {
@@ -696,14 +694,63 @@ describe('RootAdminSportEventResultsPage for a basketball tournament', () => {
       }));
     });
 
-    it('offers only the teams on the tournament\'s league roster once the league has one, leaving out another league\'s team', async () => {
+    it('offers the teams on the tournament\'s league roster without reading the sport\'s whole list of teams', async () => {
       seedPlayIn();
-      listParticipantsMock.mockResolvedValue({ data: { participants: [xavier, southCarolina] } });
-      rosterOf(xavier);
       renderPage();
 
       const select = await screen.findByTestId('root-admin-play-in-winner-select-sep-5');
       await waitFor(() => expect(within(select).getAllByRole('option').map((option) => option.textContent)).toEqual(['Choose the winning team', 'Xavier']));
+      expect(listParticipantsMock).not.toHaveBeenCalled();
+      expect(screen.queryByTestId('root-admin-play-in-winner-search-sep-5')).not.toBeInTheDocument();
+    });
+
+    it('asks for 3 characters of a team\'s name when the league has no roster, then offers the matching teams not in the tournament', async () => {
+      seedPlayIn();
+      listParticipantLeagueAffiliationsMock.mockResolvedValue({ data: { affiliations: [] } });
+      listParticipantsMock.mockResolvedValue({ data: { participants: [texas.participant, xavier] } });
+      renderPage();
+
+      const select = await screen.findByTestId('root-admin-play-in-winner-select-sep-5');
+      await waitFor(() => expect(within(select).getAllByRole('option').map((option) => option.textContent)).toEqual(['Type at least 3 characters to find a team']));
+      expect(select).toBeDisabled();
+      expect(listParticipantsMock).not.toHaveBeenCalled();
+
+      await userEvent.type(screen.getByTestId('root-admin-play-in-winner-search-sep-5'), 'Xav');
+
+      await waitFor(() => expect(within(select).getAllByRole('option').map((option) => option.textContent)).toEqual(['Choose the winning team', 'Xavier']));
+      expect(listParticipantsMock).toHaveBeenCalledWith(expect.objectContaining({ query: { sportId: 'sport-basketball', status: 'ACTIVE', q: 'Xav' } }));
+    });
+
+    it('clears the chosen winner when a new search no longer lists it, so Set winner cannot save a team the admin no longer sees', async () => {
+      seedPlayIn();
+      listParticipantLeagueAffiliationsMock.mockResolvedValue({ data: { affiliations: [] } });
+      listParticipantsMock.mockImplementation((options: { query: { q: string } }) => Promise.resolve({ data: { participants: options.query.q === 'Xav' ? [xavier] : [] } }));
+      renderPage();
+
+      const search = await screen.findByTestId('root-admin-play-in-winner-search-sep-5');
+      await userEvent.type(search, 'Xav');
+      const select = screen.getByTestId('root-admin-play-in-winner-select-sep-5');
+      await waitFor(() => expect(within(select).getAllByRole('option')).toHaveLength(2));
+      await userEvent.selectOptions(select, 'p-6');
+      expect(screen.getByTestId('root-admin-play-in-winner-save-sep-5')).toBeEnabled();
+
+      await userEvent.clear(search);
+      await userEvent.type(search, 'Hou');
+
+      await waitFor(() => expect(listParticipantsMock).toHaveBeenCalledWith(expect.objectContaining({ query: { sportId: 'sport-basketball', status: 'ACTIVE', q: 'Hou' } })));
+      expect(screen.getByTestId('root-admin-play-in-winner-save-sep-5')).toBeDisabled();
+    });
+
+    it('keeps the search box beside a failed search, so the admin can change the name and try again', async () => {
+      seedPlayIn();
+      listParticipantLeagueAffiliationsMock.mockResolvedValue({ data: { affiliations: [] } });
+      listParticipantsMock.mockResolvedValue({ error: { error: { code: 'INTERNAL_ERROR', message: 'boom' } } });
+      renderPage();
+
+      await userEvent.type(await screen.findByTestId('root-admin-play-in-winner-search-sep-5'), 'Xav');
+
+      expect(await screen.findByRole('alert')).toHaveTextContent('boom');
+      expect(screen.getByTestId('root-admin-play-in-winner-search-sep-5')).toHaveValue('Xav');
     });
 
     it('lists only the marked places', async () => {
@@ -740,7 +787,7 @@ describe('RootAdminSportEventResultsPage for a basketball tournament', () => {
     function seedWithdrawals(matches: SportEventMatchDto[] = firstRound) {
       seed(matches);
       listSportsMock.mockResolvedValue({ data: { sports: [{ id: 'sport-basketball', sport: 'BASKETBALL', participantType: 'TEAM', tournamentFormat: 'MATCHES', createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-01T00:00:00.000Z' }] } });
-      listParticipantsMock.mockResolvedValue({ data: { participants: [duke.participant, replacement].map((participant) => participantFixture({ ...participant, sportId: 'sport-basketball' })) } });
+      rosterOf(duke.participant, replacement);
     }
 
     it('offers only the teams of games not yet started, and replaces the chosen one with a team not in the tournament', async () => {
@@ -763,14 +810,71 @@ describe('RootAdminSportEventResultsPage for a basketball tournament', () => {
       }));
     });
 
-    it('offers only replacements on the tournament\'s league roster once the league has one, leaving out another league\'s team', async () => {
+    it('offers replacements from the tournament\'s league roster without reading the sport\'s whole list of teams', async () => {
       seedWithdrawals();
-      listParticipantsMock.mockResolvedValue({ data: { participants: [replacement, southCarolina] } });
-      rosterOf(replacement, duke.participant);
       renderPage();
 
       const replacedBy = await screen.findByTestId('root-admin-withdrawal-replacement-select');
       await waitFor(() => expect(within(replacedBy).getAllByRole('option').map((option) => option.textContent)).toEqual(['Choose a team', 'Xavier']));
+      expect(listParticipantsMock).not.toHaveBeenCalled();
+    });
+
+    it('asks for 3 characters of a replacement\'s name when the league has no roster, then searches the sport for it', async () => {
+      seedWithdrawals();
+      listParticipantLeagueAffiliationsMock.mockResolvedValue({ data: { affiliations: [] } });
+      listParticipantsMock.mockResolvedValue({ data: { participants: [replacement] } });
+      renderPage();
+
+      const replacedBy = await screen.findByTestId('root-admin-withdrawal-replacement-select');
+      await waitFor(() => expect(within(replacedBy).getAllByRole('option').map((option) => option.textContent)).toEqual(['Type at least 3 characters to find a team']));
+      expect(listParticipantsMock).not.toHaveBeenCalled();
+
+      await userEvent.type(screen.getByTestId('root-admin-withdrawal-replacement-search'), 'Xav');
+
+      await waitFor(() => expect(within(replacedBy).getAllByRole('option').map((option) => option.textContent)).toEqual(['Choose a team', 'Xavier']));
+      expect(listParticipantsMock).toHaveBeenCalledWith(expect.objectContaining({ query: { sportId: 'sport-basketball', status: 'ACTIVE', q: 'Xav' } }));
+    });
+
+    it('clears the chosen replacement when a new search no longer lists it, so Replace cannot submit a team the admin no longer sees', async () => {
+      seedWithdrawals();
+      listParticipantLeagueAffiliationsMock.mockResolvedValue({ data: { affiliations: [] } });
+      listParticipantsMock.mockImplementation((options: { query: { q: string } }) => Promise.resolve({ data: { participants: options.query.q === 'Xav' ? [replacement] : [] } }));
+      renderPage();
+
+      const search = await screen.findByTestId('root-admin-withdrawal-replacement-search');
+      await userEvent.selectOptions(screen.getByTestId('root-admin-withdrawal-select'), 'sep-4');
+      await userEvent.type(search, 'Xav');
+      const replacedBy = screen.getByTestId('root-admin-withdrawal-replacement-select');
+      await waitFor(() => expect(within(replacedBy).getAllByRole('option')).toHaveLength(2));
+      await userEvent.selectOptions(replacedBy, 'p-6');
+      expect(screen.getByTestId('root-admin-withdrawal-replace')).toBeEnabled();
+
+      await userEvent.clear(search);
+      await userEvent.type(search, 'Hou');
+
+      await waitFor(() => expect(listParticipantsMock).toHaveBeenCalledWith(expect.objectContaining({ query: { sportId: 'sport-basketball', status: 'ACTIVE', q: 'Hou' } })));
+      expect(screen.getByTestId('root-admin-withdrawal-replace')).toBeDisabled();
+    });
+
+    it('keeps the replacement search box beside a failed search, so the admin can change the name and try again', async () => {
+      seedWithdrawals();
+      listParticipantLeagueAffiliationsMock.mockResolvedValue({ data: { affiliations: [] } });
+      listParticipantsMock.mockResolvedValue({ error: { error: { code: 'INTERNAL_ERROR', message: 'boom' } } });
+      renderPage();
+
+      await userEvent.type(await screen.findByTestId('root-admin-withdrawal-replacement-search'), 'Xav');
+
+      expect(await screen.findByRole('alert')).toHaveTextContent('boom');
+      expect(screen.getByTestId('root-admin-withdrawal-replacement-search')).toHaveValue('Xav');
+    });
+
+    it('titles the card Withdrawals, holding the withdrawn team and replacement pickers', async () => {
+      seedWithdrawals();
+      renderPage();
+
+      const card = await screen.findByRole('region', { name: 'Withdrawals' });
+      expect(card).toHaveAttribute('data-testid', 'root-admin-withdrawals');
+      expect(within(card).getByTestId('root-admin-withdrawal-select')).toBeVisible();
     });
 
     it('leaves out a winner already placed in its next game, as the server refuses to replace it', async () => {

@@ -3,16 +3,7 @@ import { PlanFeatureGroup } from '@poolmaster/shared/domain';
 import { useAuth } from '@/features/auth/auth-context';
 import { buildLeagueAdminPlanPath } from '@/features/leagues/league-routing';
 import { useLeaguesQuery } from '@/features/leagues/use-leagues-query';
-import {
-  Chip,
-  ErrorState,
-  Heading,
-  LinkButton,
-  LoadingState,
-  PageHeader,
-  SectionHeader,
-  Tile,
-} from '@/features/shared/ui';
+import { Chip, ErrorState, FaqList, Heading, LinkButton, LoadingState, PageHeader, SectionHeader, Tile } from '@/features/shared/ui';
 import { getLogger } from '@/lib/logger';
 import { PlanCards } from './plan-cards';
 import { PlanComparisonTable } from './plan-comparison-table';
@@ -105,14 +96,7 @@ export function PublicPlansPage() {
 
       <section className="space-y-3" data-testid="public-plans-questions">
         <SectionHeader title="Questions" />
-        {QUESTIONS.map((item) => (
-          <Tile key={item.question} padding="sm" radius="md">
-            <details>
-              <summary className="cursor-pointer font-semibold text-foreground">{item.question}</summary>
-              <p className="mt-2 text-sm text-muted-foreground">{item.answer}</p>
-            </details>
-          </Tile>
-        ))}
+        <FaqList items={QUESTIONS} />
       </section>
 
       {auth.isAuthenticated ? null : (

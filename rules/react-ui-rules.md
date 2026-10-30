@@ -219,8 +219,10 @@ Rules:
 
 - Use shared primitives for buttons, inputs, textareas, modals, tiles, page
   headers, status badges, action tiles, error banners, and grid/table shells.
-- Do not use bare `<button>`, `<input>`, or `<textarea>` in feature code when a
-  shared primitive exists. New shared primitives belong under
+- Do not use bare `<button>`, `<input>`, `<textarea>` or `<table>` in feature code when a
+  shared primitive exists. A small table is built from `SimpleTable` and its parts
+  (`TableHead`, `TableBody`, `TableRow`, `TableHeaderCell`, `TableCell`), a table that needs
+  search or sorting is a `DataGrid`, and an upload preview is an `UploadPreviewTable`. New shared primitives belong under
   `clients/poolmaster/src/features/shared/ui/`.
 - If the existing shared primitive is missing a needed variant, extend the
   primitive rather than creating a page-local near-duplicate.
@@ -361,7 +363,8 @@ state, stale actions, and unthemeable markup accumulate.
   `features/shared/ui`, a product piece in the feature folder that owns it.
 - `npm run rules:check:duplicates` fails CI on a new near-identical block in
   the web app. `scripts/duplicate-baseline.json` lists today's copies, each with
-  the ticket that removes it; a PR that removes one shrinks its entry and
+  the ticket that removes it, or, when the two blocks only look alike, a one-line
+  `reason` it stays; a PR that removes one shrinks its entry and
   `BASELINE_CEILING`, and a new copy never goes on the list.
 - Prefer shared primitives from `clients/poolmaster/src/features/shared/ui/`
   for buttons, inputs, textareas, modals, page templates, tiles, badges, and
@@ -401,7 +404,7 @@ state, stale actions, and unthemeable markup accumulate.
   Every title is a `Heading`: `level` picks the tag and `variant` the look (`hero`, `display`,
   `page`, `section`, `subtitle`, `label`, `eyebrow`, or `card` with a `size`), so no page types a heading's font, size or
   `title-card` class string by hand. Small labels over a title are `Eyebrow`, in label blue (`text-label`),
-  or `tone="inverse"` on a navy panel. The selected tab is `bg-selected`. Leaderboard totals are
+  or `tone="inverse"` on a navy panel (a `Tile` with `variant="inverse"` or `"inverseDeep"`, never hand-built). The gold pill is a `Chip` with `tone="brand"` (`asChild` when it is a link), and the outlined uppercase tagline pill is a `StatusBadge` with `tone="brandOutline"`. The selected tab is `bg-selected`. Leaderboard totals are
   `score-total` (condensed), and a leaderboard's `DataGrid` takes `headerTone="scoreboard"`
   (navy header, gold column names). A `Button` or `LinkButton` used as a row or card, not as a button, takes
   `layout="row"` (sentence case, full width, left aligned, wraps; colour still comes from
@@ -519,7 +522,7 @@ UI surfaces that participate in automation must expose stable machine-oriented s
 - Reusable features should use consistent selector prefixes by domain, for example:
   - `league-create-submit`
   - `contest-create-hero`
-  - `auth-register-email`
+  - `sign-up-email`
   - `selection-room-available-panel`
 - New web/admin UI code should add these stable selectors as part of implementation, not later as test-only cleanup.
 - If a DOM element may need to be addressed from browser automation or app-side JavaScript, give it a stable selector when the component is created.

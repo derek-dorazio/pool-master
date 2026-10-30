@@ -2,8 +2,8 @@ import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
 import { Sport } from '@poolmaster/shared/domain';
 import { createSportEventServices } from '../../../packages/core-api/src/modules/events/wiring';
-import { cleanupTestData, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
-import { countingPrisma } from '../../support/counting-prisma';
+import { cleanupTestData, getAppPrisma, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
+import { recordStatements, statementCounts } from '../statement-log';
 import { expectDefined } from '../../support/expect-defined';
 
 // Creating, cloning and importing events against real Postgres (#1253): each writes its events,
@@ -45,32 +45,26 @@ function providerSlate(count: number, year: number) {
   });
 }
 
-/** The services, built on a client that counts every query they make. */
-function countedServices() {
-  const counted = countingPrisma(getPrisma());
-  return { counted, sportEvents: createSportEventServices(counted.prisma).sportEvents };
-}
-
 describe('Importing a provider\'s year of events (#1253)', () => {
   it('imports any number of events in the same number of queries', async () => {
     const tour = await golfTour();
     const counts = [];
     for (const [year, size] of [[2027, 2], [2028, 6]] as const) {
-      const { counted, sportEvents } = countedServices();
-      const { created, skipped } = await sportEvents.importProviderEventYear({
+      const { sportEvents } = createSportEventServices(getAppPrisma());
+      const { result: { created, skipped }, statements } = await recordStatements(() => sportEvents.importProviderEventYear({
         sportLeagueId: tour.id, eventYear: year, providerId: PROVIDER_ID, providerEvents: providerSlate(size, year),
-      });
+      }));
       expect([created.length, skipped.length]).toEqual([size, 0]);
-      counts.push(counted.total());
+      counts.push(statementCounts(statements));
     }
 
-    expect(counts[1]).toBe(counts[0]);
+    expect(counts[1]).toEqual(counts[0]);
   });
 
   it('creates each event linked to its provider with the rounds its dates imply and the default tiers, answering what a read gives', async () => {
     const tour = await golfTour();
     const slate = providerSlate(2, 2027);
-    const { sportEvents } = createSportEventServices(getPrisma());
+    const { sportEvents } = createSportEventServices(getAppPrisma());
 
     const { created } = await sportEvents.importProviderEventYear({ sportLeagueId: tour.id, eventYear: 2027, providerId: PROVIDER_ID, providerEvents: slate });
 
@@ -89,7 +83,7 @@ describe('Importing a provider\'s year of events (#1253)', () => {
   it('skips an event already linked, a series that has an edition that year, and a second event of one name, creating the rest', async () => {
     const tour = await golfTour();
     const [linked, edition, fresh] = providerSlate(3, 2027);
-    const { sportEvents } = createSportEventServices(getPrisma());
+    const { sportEvents } = createSportEventServices(getAppPrisma());
     await sportEvents.importProviderEventYear({ sportLeagueId: tour.id, eventYear: 2027, providerId: PROVIDER_ID, providerEvents: [expectDefined(linked)] });
     await sportEvents.createEvent({ sportLeagueId: tour.id, eventYear: 2027, name: expectDefined(edition).name, startDate: expectDefined(edition).startDate });
     const sameName = { ...expectDefined(fresh), externalId: `slate-${randomUUID()}` };
@@ -112,14 +106,14 @@ describe('Cloning a year\'s calendar (#1253)', () => {
     const counts = [];
     for (const size of [2, 6]) {
       const tour = await golfTour();
-      await createSportEventServices(getPrisma()).sportEvents.importProviderEventYear({
+      await createSportEventServices(getAppPrisma()).sportEvents.importProviderEventYear({
         sportLeagueId: tour.id, eventYear: 2027, providerId: PROVIDER_ID, providerEvents: providerSlate(size, 2027),
       });
-      const { counted, sportEvents } = countedServices();
+      const { sportEvents } = createSportEventServices(getAppPrisma());
 
-      const cloned = await sportEvents.cloneEventYear({ sportLeagueId: tour.id, eventYear: 2027 });
+      const { result: cloned, statements } = await recordStatements(() => sportEvents.cloneEventYear({ sportLeagueId: tour.id, eventYear: 2027 }));
 
-      counts.push(counted.total());
+      counts.push(statementCounts(statements));
       expect(cloned.map(({ event }) => [event.eventYear, event.status, event.providerId])).toEqual(cloned.map(() => [2028, 'DRAFT', 'manual-admin']));
       for (const summary of cloned) {
         expect(summary).toEqual(await sportEvents.requireAdminSummary(summary.event.id));
@@ -128,25 +122,32 @@ describe('Cloning a year\'s calendar (#1253)', () => {
       expect(rounds).toBe(size * 4);
     }
 
-    expect(counts[1]).toBe(counts[0]);
+    expect(counts[1]).toEqual(counts[0]);
   });
 });
 
 describe('Creating one event (#1253)', () => {
-  it('creates the event with its default rounds and tiers, answering the summary a read of it gives', async () => {
+  it('creates the event with its default rounds and tiers in one insert per table, answering the summary a read of it gives', async () => {
     const tour = await golfTour();
-    const { counted, sportEvents } = countedServices();
+    const { sportEvents } = createSportEventServices(getAppPrisma());
 
-    const created = await sportEvents.createEvent({ sportLeagueId: tour.id, eventYear: 2027, name: 'The Batch Classic', startDate: new Date('2027-05-06T12:00:00.000Z') });
+    const { result: created, statements } = await recordStatements(
+      () => sportEvents.createEvent({ sportLeagueId: tour.id, eventYear: 2027, name: 'The Batch Classic', startDate: new Date('2027-05-06T12:00:00.000Z') }),
+    );
 
-    expect(counted.total()).toBeLessThanOrEqual(8);
+    // One insert per table: the default rounds and tiers go in together, not one at a time; and
+    // every read is pinned too, so an added read shows.
+    expect(statementCounts(statements)).toEqual([
+      ['INSERT event_series', 1], ['INSERT sport_event_rounds', 1], ['INSERT sport_event_tiers', 1], ['INSERT sport_events', 1],
+      ['SELECT event_series', 2], ['SELECT sport_leagues', 2], ['SELECT sports', 1],
+    ]);
     expect(created).toEqual(await sportEvents.requireAdminSummary(created.event.id));
     expect(await getPrisma().sportEventRound.count({ where: { sportEventId: created.event.id } })).toBe(4);
   });
 
   it('refuses a second edition of a series in a year with 409 EVENT_EDITION_ALREADY_EXISTS', async () => {
     const tour = await golfTour();
-    const { sportEvents } = createSportEventServices(getPrisma());
+    const { sportEvents } = createSportEventServices(getAppPrisma());
     await sportEvents.createEvent({ sportLeagueId: tour.id, eventYear: 2027, name: 'The Batch Classic', startDate: new Date('2027-05-06T12:00:00.000Z') });
 
     await expect(sportEvents.createEvent({ sportLeagueId: tour.id, eventYear: 2027, name: 'The Batch Classic', startDate: new Date('2027-05-13T12:00:00.000Z') }))
@@ -159,27 +160,26 @@ describe('Editing an event\'s tiers (#1253)', () => {
 
   it('saves a tier list in the same number of queries however many tiers stay as they were', async () => {
     const tour = await golfTour();
-    const { sportEvents, tiers } = createSportEventServices(getPrisma());
+    const { sportEvents, tiers } = createSportEventServices(getAppPrisma());
     const six = await sportEvents.createEvent({ sportLeagueId: tour.id, eventYear: 2027, name: 'Six Tier Open', startDate: new Date('2027-05-06T12:00:00.000Z') });
     const two = await sportEvents.createEvent({ sportLeagueId: tour.id, eventYear: 2027, name: 'Two Tier Open', startDate: new Date('2027-05-13T12:00:00.000Z') });
     await tiers.replaceTiers({ sportEventId: two.event.id, tiers: [tier(1), tier(2)] });
 
     const counts = [];
     for (const [event, size] of [[two, 2], [six, 6]] as const) {
-      const counted = countingPrisma(getPrisma());
-      await createSportEventServices(counted.prisma).tiers.replaceTiers({
+      const { statements } = await recordStatements(() => createSportEventServices(getAppPrisma()).tiers.replaceTiers({
         sportEventId: event.event.id,
         tiers: [...Array.from({ length: size }, (_, index) => tier(index + 1)), tier(size + 1)],
-      });
-      counts.push(counted.total());
+      }));
+      counts.push(statementCounts(statements));
     }
 
-    expect(counts[1]).toBe(counts[0]);
+    expect(counts[1]).toEqual(counts[0]);
   });
 
   it('reverses, renames, removes and adds tiers in one save, a new tier taking a removed one\'s number and kept tiers keeping their rows', async () => {
     const tour = await golfTour();
-    const { sportEvents, tiers } = createSportEventServices(getPrisma());
+    const { sportEvents, tiers } = createSportEventServices(getAppPrisma());
     const created = await sportEvents.createEvent({ sportLeagueId: tour.id, eventYear: 2027, name: 'Shuffle Open', startDate: new Date('2027-05-06T12:00:00.000Z') });
     const before = await getPrisma().sportEventTier.findMany({ where: { sportEventId: created.event.id } });
     const idByKey = new Map(before.map((row) => [row.tierKey, row.id]));

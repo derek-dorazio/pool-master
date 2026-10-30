@@ -1,8 +1,4 @@
-import type {
-  ButtonHTMLAttributes,
-  HTMLAttributes,
-  ReactNode,
-} from "react";
+import type { HTMLAttributes, ReactNode } from "react";
 import { Link, type LinkProps } from "react-router";
 import { cn } from "./class-names";
 import { Heading } from "./heading";
@@ -13,28 +9,32 @@ export function ListStack({ className, ...props }: ListStackProps) {
   return <div className={cn("space-y-3", className)} {...props} />;
 }
 
-type ListCardBaseProps = {
-  actions?: ReactNode;
+type ListCardProps = LinkProps & {
   description?: ReactNode;
   metadata?: ReactNode;
   title: ReactNode;
   trailing?: ReactNode;
 };
 
-const listCardClassName =
-  "block w-full rounded-3xl border border-border bg-background p-4 text-left text-foreground transition sm:p-5";
-
-const interactiveListCardClassName = "hover:border-primary/40 hover:bg-card";
-
-function ListCardContent({
-  actions,
+/** A list row that opens `to`: its title, a description and metadata, with `trailing` on the right. */
+export function ListCard({
+  className,
   description,
   metadata,
   title,
+  to,
   trailing,
-}: ListCardBaseProps) {
+  ...linkProps
+}: ListCardProps) {
   return (
-    <>
+    <Link
+      className={cn(
+        "block w-full rounded-3xl border border-border bg-background p-4 text-left text-foreground transition hover:border-primary/40 hover:bg-card sm:p-5",
+        className,
+      )}
+      to={to}
+      {...linkProps}
+    >
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
           <Heading level={3} variant="card" size="lg">{title}</Heading>
@@ -53,80 +53,6 @@ function ListCardContent({
           </div>
         ) : null}
       </div>
-      {actions ? <div className="mt-5 flex flex-wrap gap-3">{actions}</div> : null}
-    </>
-  );
-}
-
-type StaticListCardProps = HTMLAttributes<HTMLDivElement> &
-  ListCardBaseProps & {
-    to?: never;
-  };
-
-type ButtonListCardProps = ButtonHTMLAttributes<HTMLButtonElement> &
-  ListCardBaseProps & {
-    to?: never;
-  };
-
-type LinkListCardProps = LinkProps &
-  ListCardBaseProps & {
-    disabled?: never;
-  };
-
-export function ListCard({
-  actions,
-  className,
-  description,
-  metadata,
-  title,
-  to,
-  trailing,
-  ...props
-}: StaticListCardProps | ButtonListCardProps | LinkListCardProps) {
-  const children = (
-    <ListCardContent
-      actions={actions}
-      description={description}
-      metadata={metadata}
-      title={title}
-      trailing={trailing}
-    />
-  );
-
-  if (to) {
-    const linkProps = props as Omit<LinkProps, "to">;
-
-    return (
-      <Link
-        className={cn(listCardClassName, interactiveListCardClassName, className)}
-        to={to}
-        {...linkProps}
-      >
-        {children}
-      </Link>
-    );
-  }
-
-  if ("onClick" in props || "disabled" in props) {
-    const buttonProps = props as ButtonHTMLAttributes<HTMLButtonElement>;
-
-    return (
-      <button
-        className={cn(listCardClassName, interactiveListCardClassName, className)}
-        type="button"
-        {...buttonProps}
-      >
-        {children}
-      </button>
-    );
-  }
-
-  return (
-    <div
-      className={cn(listCardClassName, className)}
-      {...(props as HTMLAttributes<HTMLDivElement>)}
-    >
-      {children}
-    </div>
+    </Link>
   );
 }

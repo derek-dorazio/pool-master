@@ -6,12 +6,27 @@ The shared UI layer is split into three levels:
    `Button`, `Tile`, `Modal`, `DataGrid`, `ActionTile`, `StatusBadge` and
    `Eyebrow`. A bordered card box is a `Tile` (`padding="none"` plus your own
    padding when it needs less), and the small uppercase line over a title is an
-   `Eyebrow`; a title is a `Heading` (`level` is the tag, `variant` the look:
+   `Eyebrow`; a navy panel is a `Tile` with `variant="inverse"` (or
+   `"inverseDeep"`), and the gold pill is a `Chip` with `tone="brand"` (a tinted one
+   is `tone="brandTint"`, a not-yet one `tone="placeholder"`, and `asChild` puts it on a
+   `Link`); the outlined uppercase tagline pill is a `StatusBadge` with
+   `tone="brandOutline"`, not a `Chip`, which is sentence case; a title is a `Heading` (`level` is the tag, `variant` the look:
    `hero`, `display`, `page`, `section`, `subtitle`, `label`, `eyebrow`, or `card` with a `size`); letter spacing comes from the theme's `tracking-eyebrow` and
    `tracking-label`, never a hand-typed `tracking-[…]`. A button drawn as a line of content
    (a list row, a card toggle, a pick) is a `Button` or `LinkButton` with
    `layout="row"`, and a dropdown entry is a `MenuItem`; never hand-type
-   `normal-case tracking-normal` onto a button.
+   `normal-case tracking-normal` onto a button. A loading, empty or error state
+   is `LoadingState`, `EmptyState` or `ErrorState` (`size="inline"` for one line
+   inside a card), a one-line failure beside what failed is an `InlineError`, and
+   a query's loading, error, empty and data branches are one `QueryState`; never
+   hand-type a `text-destructive` or "Loading..." paragraph. A small table is a
+   `SimpleTable` built from its parts (`density="compact"` inside a card,
+   `surface="inverse"` on a navy panel, `isHighlighted` for the viewer's row,
+   `numeric` for figures); an upload preview is an `UploadPreviewTable`; a
+   table that needs search or sorting is a `DataGrid`. Copy to clipboard is a
+   `CopyButton` (`iconOnly` in a tight spot), which says Copied, shows an inline
+   error when the browser refuses and logs it; feature code never calls
+   `navigator.clipboard` itself.
 2. **Templates** compose primitives into repeated page or modal workflows, such
    as `ManagementListPage`, `EntityDetailPage`, `FormModal`, and
    `ConfirmationModal`.
@@ -50,12 +65,32 @@ League pages and administration areas use the pieces named in
 `AdminAreaLayout`, `IdentityHeading`, `SettingsSection` / `SettingsRow`
 (`SettingsSectionHeader` alone titles a section whose body is a `DataGrid`),
 `DangerZone` / `DangerZoneAction`, and `FormPage` for a full-page edit
-(with `IconPalette` when the form picks an icon).
+(with `IconPalette` when the form picks an icon). A `FormPage` saved by one
+mutation takes its submit, pending state and error from `formPageSave` in
+`@/lib/form-page-save`. A root admin settings group's form is built on
+`useSettingsGroupForm` and `SettingsSaveError` in `features/root-admin`, which
+send the version the draft came from and offer the newer one on a conflict.
+`ConfirmDialog` and `FormModal` share one footer, `DialogActions`.
+A dialog that is neither a form nor a confirmation, such as a menu action
+with its own buttons, is a plain `Modal`.
+
+A titled card is a `PanelCard`: its title in a ruled bar, with an optional
+slot on the right such as a badge or a clear button, then its body and an
+optional footer link under a rule. Its body is unpadded for a `PanelList` of
+divided rows, and `padded` gives prose, forms or metric grids the card's own
+padding. Don't hand-build a heading inside a `Tile` for this.
 
 A team's icon and name come from `features/teams`, not this folder, because they
 are a product piece: `TeamAvatar` draws the icon in its coloured square, and
-`TeamName` puts it beside the name, linked or plain, with the You and Inactive
+`TeamName` puts it beside the name, linked or plain, with the Yours and Inactive
 markers and an optional line underneath.
+
+Public and landing pages share four more pieces. `NumberedSteps` shows steps in tiles under one
+gold numeral style, with an optional picture. `FaqList` shows questions that open to their
+answers. `ExpandableTile` is a tile whose face opens it across its grid row. `Countdown` shows
+days, hours and minutes as one timer. The event page kit (`StartButton`, `LandingSection`,
+`PhotoHero`, `StickyActionBar`, `NextUpCard`, `LandingDisclaimer`) is a product piece, so it
+lives in `features/event-pages/components`.
 
 `InfoPopover` keeps secondary facts out of a page's way: an icon button whose
 callout opens on mouse hover or on a tap, for a phone.

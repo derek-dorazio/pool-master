@@ -14,7 +14,7 @@ import type {
   StandingsEmailPosition,
   StandingsEmailPositionRepository,
 } from '@poolmaster/shared/db';
-import { ContestEntryStatus, type ContestEntry } from '@poolmaster/shared/domain';
+import { ContestEntryStatus, type ContestEntry, type ContestEntryEventStatus } from '@poolmaster/shared/domain';
 import { lockContestRow } from './contest-row-lock';
 
 /** Every entry read carries its status in each of its contest's events (#713). */
@@ -48,6 +48,16 @@ export class PrismaContestEntryRepository implements ContestEntryRepository {
     return rows.map((row) => ({ ...mapToEntry(row), squadName: row.squad.name }));
   }
 
+  async findByContestsWithSquad(contestIds: readonly string[]): Promise<ContestEntryWithSquad[]> {
+    if (contestIds.length === 0) return [];
+    const rows = await this.prisma.contestEntry.findMany({
+      where: { contestId: { in: [...contestIds] } },
+      include: { squad: { select: { name: true } }, ...ENTRY_EVENTS },
+      orderBy: [{ contestId: 'asc' }, { entryNumber: 'asc' }, { createdAt: 'asc' }],
+    });
+    return rows.map((row) => ({ ...mapToEntry(row), squadName: row.squad.name }));
+  }
+
   async countByContests(contestIds: readonly string[]): Promise<Map<string, number>> {
     const counts = new Map(contestIds.map((contestId) => [contestId, 0]));
     if (!contestIds.length) return counts;
@@ -70,6 +80,16 @@ export class PrismaContestEntryRepository implements ContestEntryRepository {
     });
     for (const row of rows) counts.set(row.contestId, row._count._all);
     return counts;
+  }
+
+  async findByContests(contestIds: readonly string[]): Promise<ContestEntry[]> {
+    if (contestIds.length === 0) return [];
+    const rows = await this.prisma.contestEntry.findMany({
+      where: { contestId: { in: [...new Set(contestIds)] } },
+      orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+      include: ENTRY_EVENTS,
+    });
+    return rows.map(mapToEntry);
   }
 
   async findByContest(contestId: string): Promise<ContestEntry[]> {
@@ -180,17 +200,6 @@ export class PrismaContestEntryRepository implements ContestEntryRepository {
     return mapToEntry(row);
   }
 
-  async setEventStatus(id: string, sportEventId: string, status: ContestEntryStatus, at: Date): Promise<ContestEntry> {
-    const submittedAt = status === 'SUBMITTED' ? at : null;
-    await this.prisma.contestEntryEvent.upsert({
-      where: { contestEntryId_sportEventId: { contestEntryId: id, sportEventId } },
-      create: { contestEntryId: id, sportEventId, status, submittedAt },
-      update: { status, submittedAt },
-    });
-    const row = await this.prisma.contestEntry.findUniqueOrThrow({ where: { id }, include: ENTRY_EVENTS });
-    return mapToEntry(row);
-  }
-
   /** Refused once the contest is drawn; waits for a draw being recorded (#644). */
   async delete(id: string): Promise<ContestEntryDeleteResult> {
     return this.prisma.$transaction(async (tx) => {
@@ -247,7 +256,7 @@ function mapToEntry(row: {
   entryNumber: number;
   name: string;
   tiebreakerValue: number | null;
-  events: { sportEventId: string; status: ContestEntryStatus; submittedAt: Date | null; tiebreakerValue: number | null }[];
+  events: Parameters<typeof toEntryEventStatus>[0][];
   createdAt: Date;
   updatedAt: Date;
 }): ContestEntry {
@@ -258,13 +267,23 @@ function mapToEntry(row: {
     entryNumber: row.entryNumber,
     name: row.name,
     tiebreakerValue: row.tiebreakerValue ?? undefined,
-    events: row.events.map((event) => ({
-      sportEventId: event.sportEventId,
-      status: event.status,
-      submittedAt: event.submittedAt ?? undefined,
-      tiebreakerValue: event.tiebreakerValue ?? undefined,
-    })),
+    events: row.events.map(toEntryEventStatus),
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
+  };
+}
+
+/** An entry's row for one event, as every read of an entry's events maps it. */
+export function toEntryEventStatus(row: {
+  sportEventId: string;
+  status: ContestEntryStatus;
+  submittedAt: Date | null;
+  tiebreakerValue: number | null;
+}): ContestEntryEventStatus {
+  return {
+    sportEventId: row.sportEventId,
+    status: row.status,
+    submittedAt: row.submittedAt ?? undefined,
+    tiebreakerValue: row.tiebreakerValue ?? undefined,
   };
 }

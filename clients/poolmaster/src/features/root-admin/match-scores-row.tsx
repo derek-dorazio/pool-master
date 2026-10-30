@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { MatchEnding, MatchSide, MatchStatus, type SportMatchPeriods } from '@poolmaster/shared/domain';
 import { clearEventMatchPeriodScore, recordEventMatchPeriodScore, recordEventMatchResult } from '@/lib/api';
 import type { SportEventMatchDto } from '@/lib/api';
-import { Button, Input } from '@/features/shared/ui';
+import { Button, InlineError, Input, TableCell } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -52,7 +52,7 @@ export function MatchScoresRow({
 
   return (
     <tr className="align-top" data-testid={`root-admin-bracket-scores-${match.matchNumber}`}>
-      <td className="px-4 pb-3" colSpan={columns}>
+      <TableCell className="pt-0 pb-3" colSpan={columns}>
         <div className="flex flex-wrap gap-3">
           {periodNumbers.map((periodNumber) => {
             const saved = match.periodScores.find((score) => score.periodNumber === periodNumber);
@@ -83,7 +83,7 @@ export function MatchScoresRow({
             savedShootout={shootout}
           />
         </div>
-      </td>
+      </TableCell>
     </tr>
   );
 }
@@ -222,9 +222,9 @@ function ScoreMoment({
                   </label>
                 ))}
               </div>
-              {shootoutLevel ? <p className="text-sm text-destructive">{'The shoot-out can\'t be level: the winner\'s is the higher.'}</p> : null}
+              {shootoutLevel ? <InlineError>{'The shoot-out can\'t be level: the winner\'s is the higher.'}</InlineError> : null}
             </div>
-          ) : tied ? <p className="text-sm text-destructive">{'The final score can\'t be a tie: the winner\'s score is the higher.'}</p> : null}
+          ) : tied ? <InlineError>{'The final score can\'t be a tie: the winner\'s score is the higher.'}</InlineError> : null}
           <div className="flex gap-2">
             <Button
               data-testid={`${testId}-save`}
@@ -271,12 +271,12 @@ function ScoreMoment({
         </div>
       )}
       {failed ? (
-        <p className="mt-2 text-sm text-destructive" data-testid={`${testId}-error`} role="alert">
+        <InlineError className="mt-2" testId={`${testId}-error`}>
           {extractErrorMessage(failed, {
             codeMessages: bracketErrorMessages(context.vocabulary, match, context.bracket),
             fallback: 'This score could not be saved. Try again.',
           })}
-        </p>
+        </InlineError>
       ) : null}
     </div>
   );

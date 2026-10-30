@@ -1,4 +1,3 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   ContestEntryStatus,
   ContestStatus,
@@ -9,7 +8,7 @@ import {
 import { Pencil } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router';
-import { enterContest, getContest, updateContestEntry, type ContestDto, type ContestEntryDto } from '@/lib/api';
+import { enterContest, updateContestEntry, type ContestEntryDto } from '@/lib/api';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import {
   buildContestEntryPath,
@@ -42,15 +41,14 @@ import {
   areContestEntriesOpen,
   CONTEST_ENTRY_STATUS_LABELS,
   CONTEST_ENTRY_STATUS_TONES,
-  contestRefetchInterval,
   contestStatusLabel,
-  refreshOnContestStatusChange,
 } from './contest-status';
 import { contestSchedule } from './use-contest-schedule';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { entryWriteKeys, useContestEntriesQuery } from './use-contest-entries';
 import { useContestLeague } from './use-contest-league';
+import { useLiveContestQuery } from './use-contest-query';
 
 type ContestEntryParticipant = NonNullable<ContestEntryDto['participants']>[number];
 
@@ -137,28 +135,7 @@ export function ContestDetailPage() {
   const [renameEntryId, setRenameEntryId] = useState<string | null>(null);
   const [renameDraft, setRenameDraft] = useState('');
 
-  const queryClient = useQueryClient();
-  const contestQuery = useQuery({
-    queryKey: QueryKeys.contests.detail(contestId),
-    queryFn: async (): Promise<ContestDto> => {
-      const response = await getContest({ path: { contestId } });
-
-      if (!response.data?.contest) {
-        throwApiError(response.error, 'Contest detail response is missing data.');
-      }
-
-      refreshOnContestStatusChange(
-        queryClient,
-        QueryKeys.contests.detail(contestId),
-        response.data.contest.status,
-        QueryKeys.contestEntries.byContest(contestId),
-      );
-      return response.data.contest;
-    },
-    enabled: Boolean(contestId),
-    retry: false,
-    refetchInterval: (query) => contestRefetchInterval(query.state.data?.status),
-  });
+  const contestQuery = useLiveContestQuery(contestId, () => QueryKeys.contestEntries.byContest(contestId));
 
   const contestEntriesQuery = useContestEntriesQuery(contestId, contestQuery.data?.status);
 

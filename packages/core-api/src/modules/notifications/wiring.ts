@@ -14,6 +14,7 @@ import {
   PrismaContestEntryMatchPredictionRepository,
   PrismaContestEntryPickRepository,
   PrismaContestEntryRepository,
+  PrismaContestEntryStandingRepository,
   PrismaContestRepository,
   PrismaLeagueMembershipRepository,
   PrismaLeagueRepository,
@@ -21,7 +22,6 @@ import {
   PrismaSportEventRepository,
   PrismaSportLeagueRepository,
   PrismaSquadMembershipRepository,
-  PrismaSquadRepository,
   PrismaSquaresRepository,
   PrismaStandingsEmailPositionRepository,
   PrismaUserRepository,
@@ -41,6 +41,7 @@ import { MemberJoinedNotices } from './member-joined-notices';
 import { PlanPreviewNotices } from './plan-preview-notices';
 import { LeaguePlanService } from '../plans/league-plan-service';
 import type { PlanEntitlementsService } from '../plans/plan-entitlements-service';
+import type { DueNotifications } from '../events/event-lifecycle-scheduler';
 
 export function createEntryReminders(prisma: PrismaClient, options: {
   email: EmailService;
@@ -95,7 +96,6 @@ export function createCommissionerNotices(prisma: PrismaClient, options: {
   readConfig: () => EmailConfig;
   appBaseUrl: string;
   logger: FastifyBaseLogger;
-  planEntitlements: PlanEntitlementsService;
 }): CommissionerNotices {
   return new CommissionerNotices({
     sportEvents: new PrismaSportEventRepository(prisma),
@@ -108,7 +108,7 @@ export function createCommissionerNotices(prisma: PrismaClient, options: {
     memberships: new PrismaLeagueMembershipRepository(prisma),
     users: new PrismaUserRepository(prisma),
     eventPages: createEventPageService(prisma, options.logger),
-    finalStandings: createContestService(prisma, options.logger, { planEntitlements: options.planEntitlements }),
+    standings: new PrismaContestEntryStandingRepository(prisma),
     ...options,
   });
 }
@@ -189,7 +189,6 @@ export function createMemberJoinedNotices(prisma: PrismaClient, options: {
     memberships: new PrismaLeagueMembershipRepository(prisma),
     leagues: new PrismaLeagueRepository(prisma),
     squadMemberships: new PrismaSquadMembershipRepository(prisma),
-    squads: new PrismaSquadRepository(prisma),
     users: new PrismaUserRepository(prisma),
     ...options,
   });
@@ -210,4 +209,27 @@ export function createPlanPreviewNotices(prisma: PrismaClient, options: {
     users: new PrismaUserRepository(prisma),
     ...options,
   });
+}
+
+/**
+ * The lifecycle sweep's "notifications due" step, every clock-driven email in the order a sweep
+ * queues them. `memberJoined` is the routes' own, so a join and the sweep share one.
+ */
+export function createDueNotifications(prisma: PrismaClient, options: {
+  email: EmailService;
+  readConfig: () => EmailConfig;
+  appBaseUrl: string;
+  logger: FastifyBaseLogger;
+  planEntitlements: PlanEntitlementsService;
+  memberJoined: MemberJoinedNotices;
+}): DueNotifications[] {
+  const { email, readConfig, appBaseUrl, logger, planEntitlements } = options;
+  return [
+    createEntryReminders(prisma, { email, readConfig, appBaseUrl, logger }),
+    createLiveStandings(prisma, { email, readConfig, appBaseUrl, logger, planEntitlements }),
+    createCommissionerNotices(prisma, { email, readConfig, appBaseUrl, logger }),
+    createDraftEventNotices(prisma, { email, appBaseUrl, logger }),
+    options.memberJoined,
+    createPlanPreviewNotices(prisma, { email, readConfig, appBaseUrl, logger, planEntitlements }),
+  ];
 }

@@ -1,5 +1,6 @@
 import { createColumnHelper } from '@tanstack/react-table';
 import { useMemo, useState, type Dispatch, type SetStateAction } from 'react';
+import { isPlatformSearchTerm, PLATFORM_SEARCH_MIN_LENGTH } from '@poolmaster/shared/domain';
 import {
   createParticipantLeagueAffiliation,
   deleteParticipantLeagueAffiliation,
@@ -9,18 +10,19 @@ import {
   Button,
   ConfirmationModal,
   DataGrid,
-  Heading,
+  InlineError,
   Input,
+  PanelCard,
   PickerModal,
   StatusBadge,
-  Tile,
 } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
+import { useDebouncedValue } from '@/lib/use-debounced-value';
 import type { ParticipantLeagueAffiliationDto } from '@/lib/api';
-import { capitalize } from './manage-navigation';
+import { capitalize, SEARCH_DEBOUNCE_MS } from './manage-navigation';
 import { useParticipantsQuery, useSportLeagueNoun } from './use-sport-catalog';
 import { useManagedSport } from './use-managed-sport';
 
@@ -151,11 +153,16 @@ export function SportLeagueRosterGridCard({
     setDraft({});
   }
 
+  // The picker searches the sport rather than reading its whole roster (#1313).
+  const addTerm = useDebouncedValue(addSearch.trim(), SEARCH_DEBOUNCE_MS);
+  const canSearch = isPlatformSearchTerm(addTerm);
   const playersQuery = useParticipantsQuery({
     sport,
-    queryKey: QueryKeys.rootAdmin.manageSport.participantList(sport, 'ACTIVE'),
+    queryKey: QueryKeys.rootAdmin.manageSport.participantSearch(sport, addTerm),
     status: 'ACTIVE',
-    enabled: addOpen,
+    q: addTerm,
+    enabled: addOpen && canSearch,
+    keepPrevious: true,
   });
 
   const saveMutation = useInvalidatingMutation({
@@ -265,13 +272,12 @@ export function SportLeagueRosterGridCard({
     [entries],
   );
 
-  const addablePlayers = useMemo(() => {
-    const term = addSearch.trim().toLowerCase();
-    return (playersQuery.data ?? [])
+  const addablePlayers = useMemo(
+    () => (canSearch ? (playersQuery.data ?? []) : [])
       .filter((player) => !rosterIds.has(player.id))
-      .filter((player) => term === '' || player.name.toLowerCase().includes(term))
-      .map((player) => ({ id: player.id, name: player.name }));
-  }, [addSearch, playersQuery.data, rosterIds]);
+      .map((player) => ({ id: player.id, name: player.name })),
+    [canSearch, playersQuery.data, rosterIds],
+  );
 
   const gridMeta = useMemo<RosterGridMeta>(
     () => ({ draft, setDraft, onRemove: setRemoveTarget }),
@@ -279,14 +285,11 @@ export function SportLeagueRosterGridCard({
   );
 
   return (
-    <Tile>
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <Heading level={3} variant="card" size="base">Roster</Heading>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {`${entries.length} ${entries.length === 1 ? participant.one : participant.many} on this ${sportLeague.one}.`}
-          </p>
-        </div>
+    <PanelCard
+      headingLevel={3}
+      padded
+      title="Roster"
+      trailing={(
         <Button
           data-testid="root-admin-sport-league-roster-add"
           onClick={() => {
@@ -298,31 +301,33 @@ export function SportLeagueRosterGridCard({
         >
           {`Add ${participant.one}`}
         </Button>
-      </div>
+      )}
+    >
+      <p className="text-sm text-muted-foreground">
+        {`${entries.length} ${entries.length === 1 ? participant.one : participant.many} on this ${sportLeague.one}.`}
+      </p>
 
       {rosterError ? (
-        <p className="mt-3 text-sm font-medium text-destructive">{rosterError}</p>
+        <InlineError>{rosterError}</InlineError>
       ) : null}
 
-      <div className="mt-4">
-        <DataGrid
-          columns={rosterColumns}
-          data={entries}
-          emptyMessage={
-            rosterLoading
-              ? 'Loading roster...'
-              : `No ${participant.many} on this ${sportLeague.one} yet. Add ${participant.many} or use the bulk upload above.`
-          }
-          getRowId={(entry) => entry.participantId}
-          meta={gridMeta}
-          rowTestId={(entry) => `root-admin-sport-league-roster-row-${entry.participantId}`}
-          tableTestId="root-admin-sport-league-roster-table"
-        />
-      </div>
+      <DataGrid
+        columns={rosterColumns}
+        data={entries}
+        emptyMessage={
+          rosterLoading
+            ? 'Loading roster...'
+            : `No ${participant.many} on this ${sportLeague.one} yet. Add ${participant.many} or use the bulk upload above.`
+        }
+        getRowId={(entry) => entry.participantId}
+        meta={gridMeta}
+        rowTestId={(entry) => `root-admin-sport-league-roster-row-${entry.participantId}`}
+        tableTestId="root-admin-sport-league-roster-table"
+      />
 
       {dirtyRows.length > 0 || invalidCount > 0 ? (
         <div
-          className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-muted/40 px-4 py-3"
+          className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-muted/40 px-4 py-3"
           data-testid="root-admin-sport-league-roster-dirty-bar"
         >
           <span className="text-sm text-muted-foreground">
@@ -354,21 +359,23 @@ export function SportLeagueRosterGridCard({
       ) : null}
 
       {saveMutation.isError ? (
-        <p className="mt-3 text-sm font-medium text-destructive">
+        <InlineError>
           {extractErrorMessage(saveMutation.error, {
             fallback: 'We could not save these rankings.',
           })}
-        </p>
+        </InlineError>
       ) : null}
 
       <PickerModal
         canApply={addSelectedId !== null}
         emptyMessage={
-          playersQuery.isLoading
-            ? `Loading ${participant.many}...`
-            : playersQuery.isError
-              ? `We could not load the ${participant.one} list.`
-              : `Every active ${participant.one} is already on this roster.`
+          !canSearch
+            ? `Type at least ${PLATFORM_SEARCH_MIN_LENGTH} characters to find a ${participant.one}.`
+            : playersQuery.isFetching
+              ? `Searching ${participant.many}...`
+              : playersQuery.isError
+                ? `We could not load the ${participant.one} list.`
+                : `No active ${participant.one} off this roster matched the search.`
         }
         getItemLabel={(item) => item.name}
         isPending={addMutation.isPending}
@@ -422,6 +429,6 @@ export function SportLeagueRosterGridCard({
         title={`Remove ${participant.one}`}
         tone="danger"
       />
-    </Tile>
+    </PanelCard>
   );
 }

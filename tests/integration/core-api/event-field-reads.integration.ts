@@ -11,12 +11,14 @@ import {
   cleanupTestData,
   createTestUser,
   getApp,
+  getAppPrisma,
   getPrisma,
   setupIntegrationTests,
   teardownIntegrationTests,
 } from '../helpers';
-import { countingPrisma } from '../../support/counting-prisma';
+import { recordStatements, statementCounts, statementParams, statementsOn, StatementVerb, type RecordedStatement } from '../statement-log';
 import { freshEventEdition } from '../../support/event-edition';
+import { expectDefined } from '../../support/expect-defined';
 import { passReadCacheTtl, restoreReadCacheClock } from '../../support/read-cache-clock';
 
 // An event's field against real Postgres (#1163): read in one repository call on one connection,
@@ -117,12 +119,28 @@ async function eventWithField(sport: Sport, names: readonly string[]) {
 describe('An event\'s field', () => {
   it('is read in one call on the field table, each row with its participant, affiliation, price, standing and rounds in round order, seeded first', async () => {
     const { event, ana, bea, cal } = await golfEvent();
-    const counting = countingPrisma(getPrisma());
 
-    const field = await createSportEventParticipantService(counting.prisma).listEventParticipants(event.id);
+    const { result: field, statements } = await recordStatements(() => createSportEventParticipantService(getAppPrisma()).listEventParticipants(event.id));
 
-    // The event's own row, then the field with every relation in one call: no read per table.
-    expect(counting.operations()).toEqual([['SportEvent.findUnique', 1], ['SportEventParticipant.findMany', 1]]);
+    // The event's own row, then the field and each of its relations in one statement: no read per
+    // row, and nothing else. A field row's games are read twice, as the home side and as the away side.
+    expect(statementCounts(statements)).toEqual([
+      ['SELECT event_series', 1],
+      ['SELECT participant_league_affiliations', 1],
+      ['SELECT participants', 1],
+      ['SELECT sport_event_matches', 2],
+      ['SELECT sport_event_participant_golf_rounds', 1],
+      ['SELECT sport_event_participant_golf_standings', 1],
+      ['SELECT sport_event_participant_race_results', 1],
+      ['SELECT sport_event_participant_rounds', 1],
+      ['SELECT sport_event_participant_standings', 1],
+      ['SELECT sport_event_participant_stat_lines', 1],
+      ['SELECT sport_event_participant_valuations', 1],
+      ['SELECT sport_event_participants', 1],
+      ['SELECT sport_event_rounds', 1],
+      ['SELECT sport_events', 1],
+      ['SELECT sport_leagues', 1],
+    ]);
     expect(field.map((row) => [row.entry.id, row.affiliatedWithSportLeague])).toEqual([[ana.id, true], [bea.id, true], [cal.id, false]]);
     const [anaRow, beaRow] = field;
     expect(anaRow.valuation).toMatchObject({ price: 12 });
@@ -135,18 +153,19 @@ describe('An event\'s field', () => {
 
   it('is read once for every contest and pick screen on the event within 30 seconds, and again after', async () => {
     const { event } = await golfEvent();
-    const counting = countingPrisma(getPrisma());
-    const contestReads = createSportEventParticipantService(counting.prisma);
-    const pickScreenReads = createSportEventParticipantService(counting.prisma);
+    const contestReads = createSportEventParticipantService(getAppPrisma());
+    const pickScreenReads = createSportEventParticipantService(getAppPrisma());
+    const fieldReads = (statements: readonly RecordedStatement[]) => statementsOn(statements, StatementVerb.SELECT, 'sport_event_participants');
 
-    await contestReads.listCachedEventParticipants(event.id);
-    await pickScreenReads.listCachedEventParticipants(event.id);
-    const sharedReads = counting.count('SportEventParticipant.findMany');
+    const shared = await recordStatements(async () => {
+      await contestReads.listCachedEventParticipants(event.id);
+      await pickScreenReads.listCachedEventParticipants(event.id);
+    });
     passReadCacheTtl();
-    await pickScreenReads.listCachedEventParticipants(event.id);
+    const afterTtl = await recordStatements(() => pickScreenReads.listCachedEventParticipants(event.id));
 
-    expect(sharedReads).toBe(1);
-    expect(counting.count('SportEventParticipant.findMany')).toBe(2);
+    expect(fieldReads(shared.statements)).toHaveLength(1);
+    expect(fieldReads(afterTtl.statements)).toHaveLength(1);
   });
 
   it('is read afresh as soon as an admin write to the event answers, so the next poll shows the change', async () => {
@@ -240,8 +259,8 @@ describe('An event\'s field, for every scoring family', () => {
       data: { sportEventId: event.id, sportEventRoundId: round1.id, matchNumber: 3, homeSportEventParticipantId: kansas.id, awaySportEventParticipantId: baylor.id, isNeutralSite: true },
     });
 
-    const rows = await createSportEventParticipantService(prisma).listEventParticipants(event.id);
-    const matches = await new PrismaSportEventMatchRepository(prisma).findBySportEvent(event.id);
+    const rows = await createSportEventParticipantService(getAppPrisma()).listEventParticipants(event.id);
+    const matches = await new PrismaSportEventMatchRepository(getAppPrisma()).findBySportEvent(event.id);
 
     const dukeRow = rows.find((row) => row.entry.id === duke.id);
     expect(dukeRow?.matches.map((match) => [match.matchNumber, match.roundNumber])).toEqual([[1, 1], [2, 2]]);
@@ -266,8 +285,8 @@ describe('An event\'s field, for every scoring family', () => {
       data: { sportEventParticipantId: scratched.id, resultStatus: 'DID_NOT_START' },
     });
 
-    const rows = await createSportEventParticipantService(prisma).listEventParticipants(event.id);
-    const results = await new PrismaSportEventParticipantRaceResultRepository(prisma).findBySportEvent(event.id);
+    const rows = await createSportEventParticipantService(getAppPrisma()).listEventParticipants(event.id);
+    const results = await new PrismaSportEventParticipantRaceResultRepository(getAppPrisma()).findBySportEvent(event.id);
 
     const byRow = new Map(rows.map((row) => [row.entry.id, row.raceResult]));
     expect(byRow.get(winner.id)).toMatchObject({ finishPosition: 1, startPosition: 2, resultStatus: 'FINISHED', isOfficial: true, riderName: 'Ron Turcotte' });
@@ -282,14 +301,15 @@ describe('An event\'s field, for every scoring family', () => {
 describe('A write to one field row', () => {
   it('reads that row alone to answer, with the values the whole field read gives it', async () => {
     const { event, ana } = await golfEvent();
-    const counting = countingPrisma(getPrisma());
-    const service = createSportEventParticipantService(counting.prisma);
+    const service = createSportEventParticipantService(getAppPrisma());
 
-    const row = await service.getEventParticipant(event.id, ana.id);
+    const { result: row, statements } = await recordStatements(() => service.getEventParticipant(event.id, ana.id));
 
-    expect(counting.rows('SportEventParticipant.findFirst')).toBe(1);
-    expect(counting.count('SportEventParticipant.findMany')).toBe(0);
-    const [fromField] = await createSportEventParticipantService(getPrisma()).listEventParticipants(event.id);
+    const fieldReads = statementsOn(statements, StatementVerb.SELECT, 'sport_event_participants');
+    expect(fieldReads).toHaveLength(1);
+    expect(statementParams(expectDefined(fieldReads[0]))).toContain(ana.id);
+    expect(expectDefined(fieldReads[0]).sql).toContain('LIMIT');
+    const [fromField] = await createSportEventParticipantService(getAppPrisma()).listEventParticipants(event.id);
     expect(row).toEqual(fromField);
   });
 

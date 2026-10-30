@@ -1,26 +1,17 @@
 import { useEffect, useMemo } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Controller, useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import type { z } from 'zod';
+import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router';
-import { RegisterWithTeamOwnerInvitationRequestSchema } from '@poolmaster/shared/dto';
-import { acceptTeamOwnerInvitation, registerWithTeamOwnerInvitation } from '@/lib/api';
+import { acceptTeamOwnerInvitation } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-context';
-import { setAuthSessionUser } from '@/features/auth/auth-session-cache';
-import { signUpWithDisplayPreferences } from '@/features/auth/signup-display-preferences';
+import { SignUpForm } from '@/features/auth/sign-up-form';
 import { InvitationContextCard } from '@/features/leagues/invitation-context-card';
 import { describeUnusableInvitation } from '@/features/leagues/unusable-invitation';
 import {
-  browserTimeZone,
   Button,
   Chip,
-  FormField,
   Heading,
-  Input,
   LinkButton,
   PublicInviteJoinPage,
-  TimeZoneSelect,
 } from '@/features/shared/ui';
 import { getLogger } from '@/lib/logger';
 import {
@@ -38,17 +29,6 @@ import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
 
-/*
- * #217 — the invited stranger registers here rather than being sent away.
- *
- * `inviteCode` is supplied by the route, and there is deliberately no email field: the account is
- * created with the address the commissioner invited, which the server reads off the invitation. A
- * squad-owner invitation grants league membership, so honouring an address typed in here would let
- * a forwarded invite link admit an unintended person.
- */
-const RegisterFormSchema = RegisterWithTeamOwnerInvitationRequestSchema.omit({ inviteCode: true, locale: true });
-type RegisterFormValues = z.infer<typeof RegisterFormSchema>;
-
 export function JoinTeamOwnerPage() {
   // Memoised: `child()` returns a new logger on every call, and the effects below depend on it,
   // so a logger built during render re-ran them — re-logging the invitation — on every render.
@@ -57,7 +37,6 @@ export function JoinTeamOwnerPage() {
   }), []);
   const { inviteCode = '' } = useParams<{ inviteCode: string }>();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const { isAuthenticated } = useAuth();
   const invitationQuery = useQuery({
     queryKey: getTeamOwnerInvitationPreviewQueryKey(inviteCode),
@@ -102,75 +81,18 @@ export function JoinTeamOwnerPage() {
     );
   }, [inviteCode, invitationQuery.data, isAuthenticated, logger]);
 
-  const registerForm = useForm<RegisterFormValues>({
-    resolver: zodResolver(RegisterFormSchema),
-    mode: 'onSubmit',
-    defaultValues: { username: '', password: '', firstName: '', lastName: '', timezone: browserTimeZone() },
-  });
-
   /**
-   * #217 — register and join in one request.
-   *
-   * This replaced a dead end: the page told an invited stranger to "sign in or create an account
-   * first, then come back", but `acceptTeamOwnerInvitation` needs a session, so there was no way
-   * through for somebody without an account. One request now registers them with the invited
-   * email, joins them to the league and the squad, and returns a session.
+   * #217 — register and join in one request. `acceptTeamOwnerInvitation` needs a session, so an
+   * invited stranger signs up here against the invitation, which joins them to the league and
+   * the team and returns a session.
    */
-  const registerMutation = useInvalidatingMutation({
-    mutationFn: async (values: RegisterFormValues) => {
-      const response = await signUpWithDisplayPreferences(values.timezone ?? browserTimeZone(), (preferences) =>
-        registerWithTeamOwnerInvitation({
-          body: {
-            inviteCode,
-            username: values.username.trim().toLowerCase(),
-            password: values.password,
-            firstName: values.firstName.trim(),
-            lastName: values.lastName.trim(),
-            ...preferences,
-          },
-        }));
-      if (!response.data?.user) {
-        throwApiError(response.error, 'Registration response is missing data.');
-      }
-
-      return response.data;
-    },
-    onSuccess: (data) => {
-      // The session arrives with the response, so seed the cache rather than making the new
-      // member's first action a round trip to discover who they are.
-      setAuthSessionUser(queryClient, data.user);
-      logger.info(
-        {
-          action: 'teamInvite.register.succeeded',
-          data: {
-            inviteCode,
-            userId: data.user.id,
-            leagueCode: invitationQuery.data?.league.leagueCode ?? null,
-          },
-        },
-        'Registered an invited co-owner and joined their team',
-      );
-      const leagueCode = invitationQuery.data?.league.leagueCode;
-      if (leagueCode) {
-        rememberRecentLeagueCode(leagueCode);
-        void navigate(buildLeagueTeamPath(leagueCode), { replace: true });
-      }
-    },
-    invalidates: [
-      QueryKeys.leagues.list,
-      QueryKeys.leagueTeams.all,
-    ],
-    onError: (error) => {
-      logger.warn(
-        {
-          action: 'teamInvite.register.failed',
-          data: { inviteCode },
-          err: error,
-        },
-        'Failed to register an invited co-owner',
-      );
-    },
-  });
+  function handleRegistered() {
+    const leagueCode = invitationQuery.data?.league.leagueCode;
+    if (leagueCode) {
+      rememberRecentLeagueCode(leagueCode);
+      void navigate(buildLeagueTeamPath(leagueCode), { replace: true });
+    }
+  }
 
   const acceptMutation = useInvalidatingMutation({
     mutationFn: async () => {
@@ -280,16 +202,7 @@ export function JoinTeamOwnerPage() {
           </div>
         ) : null}
         {inviteCode && invitationQuery.data && !unusableInvitationMessage ? (
-          <form
-            className="mt-5 space-y-4 rounded-3xl border border-border bg-background p-5"
-            data-testid="team-invite-register-form"
-            onSubmit={(event) => {
-              event.preventDefault();
-              void registerForm.handleSubmit((values) =>
-                registerMutation.mutateAsync(values).catch(() => undefined),
-              )();
-            }}
-          >
+          <div className="mt-5 space-y-4 rounded-3xl border border-border bg-background p-5" data-testid="team-invite-register">
             <div>
               <Heading level={3} variant="card" size="sm">Create your account</Heading>
               <p className="mt-1 text-sm text-muted-foreground">
@@ -297,78 +210,21 @@ export function JoinTeamOwnerPage() {
                 confirm — you&apos;ll land straight in the league.
               </p>
             </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <FormField error={registerForm.formState.errors.firstName?.message} label="First name">
-                <Input
-                  data-testid="team-invite-register-first-name"
-                  {...registerForm.register('firstName')}
-                />
-              </FormField>
-              <FormField error={registerForm.formState.errors.lastName?.message} label="Last name">
-                <Input
-                  data-testid="team-invite-register-last-name"
-                  {...registerForm.register('lastName')}
-                />
-              </FormField>
-            </div>
-            <FormField error={registerForm.formState.errors.username?.message} label="Username">
-              <Input
-                data-testid="team-invite-register-username"
-                {...registerForm.register('username')}
-              />
-            </FormField>
-            <FormField error={registerForm.formState.errors.password?.message} label="Password">
-              <Input
-                data-testid="team-invite-register-password"
-                type="password"
-                {...registerForm.register('password')}
-              />
-            </FormField>
-            <FormField
-              error={registerForm.formState.errors.timezone?.message}
-              helperText="Dates and times are shown in this zone. You can change it later in your account."
-              id="team-invite-register-time-zone"
-              label="Time zone"
-            >
-              <Controller
-                control={registerForm.control}
-                name="timezone"
-                render={({ field }) => (
-                  <TimeZoneSelect
-                    data-testid="team-invite-register-time-zone"
-                    id="team-invite-register-time-zone"
-                    name={field.name}
-                    onBlur={field.onBlur}
-                    onChange={(event) => field.onChange(event.target.value)}
-                    ref={field.ref}
-                    value={field.value}
-                  />
-                )}
-              />
-            </FormField>
-            {registerMutation.isError ? (
-              <p className="text-sm text-destructive" data-testid="team-invite-register-error">
-                {extractErrorMessage(registerMutation.error, {
-                  fallback: 'We could not create your account. Please try again.',
-                  codeMessages: {
-                    // The one case worth its own words: the invited address already has an
-                    // account, so the answer is to sign in rather than register again.
-                    SQUAD_OWNER_INVITATION_ACCOUNT_EXISTS:
-                      'An account already exists for the email this invitation was sent to. Sign in to accept it.',
-                    SQUAD_OWNER_INVITATION_ALREADY_ACCEPTED:
-                      'This invitation has already been accepted. Sign in to reach the league.',
-                  },
-                })}
-              </p>
-            ) : null}
-            <Button
-              data-testid="team-invite-register-submit"
-              disabled={registerMutation.isPending}
-              type="submit"
-            >
-              {registerMutation.isPending ? 'Creating your account...' : 'Create account and join'}
-            </Button>
-          </form>
+            <SignUpForm
+              errorMessages={{
+                // The one case worth its own words: the invited address already has an
+                // account, so the answer is to sign in rather than register again.
+                SQUAD_OWNER_INVITATION_ACCOUNT_EXISTS:
+                  'An account already exists for the email this invitation was sent to. Sign in to accept it.',
+                SQUAD_OWNER_INVITATION_ALREADY_ACCEPTED:
+                  'This invitation has already been accepted. Sign in to reach the league.',
+              }}
+              onRegistered={handleRegistered}
+              pendingLabel="Creating your account..."
+              submitLabel="Create account and join"
+              mode={{ kind: 'teamInvite', inviteCode }}
+            />
+          </div>
         ) : null}
         <div className="mt-5 flex flex-wrap gap-3">
           <LinkButton

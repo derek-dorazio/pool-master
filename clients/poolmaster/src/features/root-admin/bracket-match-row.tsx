@@ -3,7 +3,18 @@ import { MatchEnding, MatchSide, MatchStatus, formatSpread, type SportMatchPerio
 import { cancelEventMatch, clearEventMatchResult, recordEventMatchResult, updateEventBracketMatch } from '@/lib/api';
 import type { SportEventMatchDto, SportEventParticipantDto } from '@/lib/api';
 import { tieWord } from '@/features/contests/contest-sport';
-import { Button, ConfirmDialog, formatDateTimeDisplay, Input, Select, StatusBadge, useDisplayPreferences } from '@/features/shared/ui';
+import {
+  Button,
+  ConfirmDialog,
+  formatDateTimeDisplay,
+  InlineError,
+  Input,
+  Select,
+  StatusBadge,
+  TableCell,
+  TableRow,
+  useDisplayPreferences,
+} from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -76,6 +87,45 @@ function bracketInvalidates(eventId: string) {
   return [QueryKeys.rootAdmin.manageSport.event(eventId)];
 }
 
+type MatchPath = { eventId: string; matchNumber: number };
+
+/**
+ * One write to a match: `write` sends it, and a refusal is thrown so the editor can say why and
+ * is logged as `failedAction` with `refusedMessage`. The bracket is read again on success.
+ */
+function useMatchWrite<Variables = void>({
+  context,
+  failedAction,
+  logData,
+  match,
+  onSuccess,
+  refusedMessage,
+  write,
+}: {
+  context: BracketContext;
+  failedAction: string;
+  /** What the log adds about the variables, beside the match number. */
+  logData?: (variables: Variables) => Record<string, unknown>;
+  match: SportEventMatchDto;
+  onSuccess?: () => void;
+  refusedMessage: string;
+  write: (path: MatchPath, variables: Variables) => Promise<{ error?: unknown }>;
+}) {
+  return useInvalidatingMutation({
+    mutationFn: async (variables: Variables) => {
+      const response = await write({ eventId: context.eventId, matchNumber: match.matchNumber }, variables);
+      if (response.error) {
+        throwApiError(response.error);
+      }
+    },
+    invalidates: bracketInvalidates(context.eventId),
+    onSuccess,
+    onError: (error, variables) => {
+      logger.warn({ action: failedAction, data: { matchNumber: match.matchNumber, ...logData?.(variables) }, err: error }, refusedMessage);
+    },
+  });
+}
+
 /**
  * One match of the bracket tab (#700). Before release an admin edits the pairing of any side no
  * earlier match fills; once the event is released one tap names the winner, and a final result
@@ -90,36 +140,24 @@ export function BracketMatchRow({ match, released, context }: { match: SportEven
   const noun = matchNoun(context.vocabulary);
   const errorCopy = bracketErrorMessages(context.vocabulary, match, context.bracket);
 
-  const result = useInvalidatingMutation({
-    mutationFn: async (winnerSide: MatchSide | null) => {
-      const path = { eventId: context.eventId, matchNumber: match.matchNumber };
-      const response = winnerSide === null
-        ? await clearEventMatchResult({ path })
-        : await recordEventMatchResult({ path, body: { winnerSide, homeScore: null, awayScore: null } });
-      if (response.error) {
-        throwApiError(response.error);
-      }
-      return response.data;
-    },
-    invalidates: bracketInvalidates(context.eventId),
-    onError: (error, winnerSide) => {
-      logger.warn({ action: 'event.bracket.result.failed', data: { matchNumber: match.matchNumber, winnerSide }, err: error }, 'Match result was rejected');
-    },
+  const result = useMatchWrite({
+    context,
+    failedAction: 'event.bracket.result.failed',
+    logData: (winnerSide: MatchSide | null) => ({ winnerSide }),
+    match,
+    refusedMessage: 'Match result was rejected',
+    write: (path, winnerSide) => (winnerSide === null
+      ? clearEventMatchResult({ path })
+      : recordEventMatchResult({ path, body: { winnerSide, homeScore: null, awayScore: null } })),
   });
 
-  const cancel = useInvalidatingMutation({
-    mutationFn: async () => {
-      const response = await cancelEventMatch({ path: { eventId: context.eventId, matchNumber: match.matchNumber } });
-      if (response.error) {
-        throwApiError(response.error);
-      }
-      return response.data;
-    },
-    invalidates: bracketInvalidates(context.eventId),
+  const cancel = useMatchWrite({
+    context,
+    failedAction: 'event.bracket.cancel.failed',
+    match,
     onSuccess: () => setConfirmingCancel(false),
-    onError: (error) => {
-      logger.warn({ action: 'event.bracket.cancel.failed', data: { matchNumber: match.matchNumber }, err: error }, 'Game cancellation was rejected');
-    },
+    refusedMessage: 'Game cancellation was rejected',
+    write: (path) => cancelEventMatch({ path }),
   });
 
   const home = sideEntry(match, MatchSide.HOME, context.fieldById);
@@ -142,23 +180,23 @@ export function BracketMatchRow({ match, released, context }: { match: SportEven
 
   return (
     <>
-      <tr className="border-t border-border align-top" data-testid={`root-admin-bracket-match-${match.matchNumber}`}>
-        <td className="px-4 py-2 font-medium">{match.matchNumber}</td>
-        <td className="px-4 py-2" data-testid={`root-admin-bracket-pairing-${match.matchNumber}`}>
+      <TableRow className="align-top" data-testid={`root-admin-bracket-match-${match.matchNumber}`}>
+        <TableCell className="font-medium">{match.matchNumber}</TableCell>
+        <TableCell data-testid={`root-admin-bracket-pairing-${match.matchNumber}`}>
           {editing ? (
             <PairingEditor context={context} homeFed={homeFed} awayFed={awayFed} match={match} onDone={() => setEditing(false)} />
           ) : describePairing(match, context)}
-        </td>
+        </TableCell>
         {context.spreads ? (
-          <td className="px-4 py-2" data-testid={`root-admin-bracket-spread-${match.matchNumber}`}>
+          <TableCell data-testid={`root-admin-bracket-spread-${match.matchNumber}`}>
             <SpreadCell context={context} match={match} released={released} />
-          </td>
+          </TableCell>
         ) : null}
-        <td className="px-4 py-2 text-muted-foreground">{formatDateTimeDisplay(match.scheduledDate, displayPreferences, 'To be announced')}</td>
-        <td className="px-4 py-2">
+        <TableCell className="text-muted-foreground">{formatDateTimeDisplay(match.scheduledDate, displayPreferences, 'To be announced')}</TableCell>
+        <TableCell>
           <StatusBadge tone={MATCH_STATUS_TONE[match.status]}>{MATCH_STATUS_LABEL[match.status]}</StatusBadge>
-        </td>
-        <td className="px-4 py-2">
+        </TableCell>
+        <TableCell>
           {pairingEditable && !editing ? (
             <Button data-testid={`root-admin-bracket-edit-${match.matchNumber}`} onClick={() => setEditing(true)} size="sm" variant="secondary">
               Edit pairing
@@ -224,21 +262,21 @@ export function BracketMatchRow({ match, released, context }: { match: SportEven
             tone="danger"
           >
             {cancel.isError ? (
-              <p className="text-sm text-destructive" data-testid={`root-admin-bracket-cancel-error-${match.matchNumber}`} role="alert">
+              <InlineError testId={`root-admin-bracket-cancel-error-${match.matchNumber}`}>
                 {extractErrorMessage(cancel.error, { codeMessages: errorCopy, fallback: `This ${noun.one} could not be cancelled. Try again.` })}
-              </p>
+              </InlineError>
             ) : null}
           </ConfirmDialog>
           {released && (!home || !away) ? (
             <p className="text-sm text-muted-foreground">{`Waiting on both ${context.vocabulary.participant.many}`}</p>
           ) : null}
           {result.isError ? (
-            <p className="mt-2 text-sm text-destructive" data-testid={`root-admin-bracket-error-${match.matchNumber}`} role="alert">
+            <InlineError className="mt-2" testId={`root-admin-bracket-error-${match.matchNumber}`}>
               {extractErrorMessage(result.error, { codeMessages: errorCopy, fallback: `This ${noun.one}'s result could not be saved. Try again.` })}
-            </p>
+            </InlineError>
           ) : null}
-        </td>
-      </tr>
+        </TableCell>
+      </TableRow>
       {periods ? <MatchScoresRow columns={context.spreads ? 6 : 5} context={context} match={match} periods={periods} /> : null}
     </>
   );
@@ -256,22 +294,13 @@ function TieResult({ match, context }: { match: SportEventMatchDto; context: Bra
   const score = /^\d{1,3}$/.test(value.trim()) ? Number(value.trim()) : null;
   const testId = `root-admin-bracket-tie-${match.matchNumber}`;
 
-  const save = useInvalidatingMutation({
-    mutationFn: async (level: number) => {
-      const response = await recordEventMatchResult({
-        path: { eventId: context.eventId, matchNumber: match.matchNumber },
-        body: { winnerSide: null, homeScore: level, awayScore: level },
-      });
-      if (response.error) {
-        throwApiError(response.error);
-      }
-      return response.data;
-    },
-    invalidates: bracketInvalidates(context.eventId),
+  const save = useMatchWrite({
+    context,
+    failedAction: 'event.bracket.tie.failed',
+    match,
     onSuccess: () => setEditing(false),
-    onError: (error) => {
-      logger.warn({ action: 'event.bracket.tie.failed', data: { matchNumber: match.matchNumber }, err: error }, 'Tie result was rejected');
-    },
+    refusedMessage: 'Tie result was rejected',
+    write: (path, level: number) => recordEventMatchResult({ path, body: { winnerSide: null, homeScore: level, awayScore: level } }),
   });
 
   if (!editing) {
@@ -317,12 +346,12 @@ function TieResult({ match, context }: { match: SportEventMatchDto; context: Bra
       </Button>
       <Button disabled={save.isPending} onClick={() => setEditing(false)} size="sm" variant="ghost">Cancel</Button>
       {save.isError ? (
-        <p className="w-full text-sm text-destructive" data-testid={`${testId}-error`} role="alert">
+        <InlineError className="w-full" testId={`${testId}-error`}>
           {extractErrorMessage(save.error, {
             codeMessages: bracketErrorMessages(context.vocabulary, match, context.bracket),
             fallback: `This ${word.toLowerCase()} could not be saved. Try again.`,
           })}
-        </p>
+        </InlineError>
       ) : null}
     </div>
   );
@@ -349,22 +378,14 @@ function EarlyEndingResult({
   const [winnerSide, setWinnerSide] = useState<MatchSide>(MatchSide.HOME);
   const testId = `root-admin-bracket-early-${match.matchNumber}`;
 
-  const save = useInvalidatingMutation({
-    mutationFn: async () => {
-      const response = await recordEventMatchResult({
-        path: { eventId: context.eventId, matchNumber: match.matchNumber },
-        body: { winnerSide, homeScore: null, awayScore: null, ending },
-      });
-      if (response.error) {
-        throwApiError(response.error);
-      }
-      return response.data;
-    },
-    invalidates: bracketInvalidates(context.eventId),
+  const save = useMatchWrite({
+    context,
+    failedAction: 'event.bracket.early-ending.failed',
+    logData: () => ({ ending }),
+    match,
     onSuccess: () => setEditing(false),
-    onError: (error) => {
-      logger.warn({ action: 'event.bracket.early-ending.failed', data: { matchNumber: match.matchNumber, ending }, err: error }, 'Early ending was rejected');
-    },
+    refusedMessage: 'Early ending was rejected',
+    write: (path) => recordEventMatchResult({ path, body: { winnerSide, homeScore: null, awayScore: null, ending } }),
   });
 
   if (!editing) {
@@ -406,12 +427,12 @@ function EarlyEndingResult({
       </Button>
       <Button disabled={save.isPending} onClick={() => setEditing(false)} size="sm" variant="ghost">Cancel</Button>
       {save.isError ? (
-        <p className="w-full text-sm text-destructive" data-testid={`${testId}-error`} role="alert">
+        <InlineError className="w-full" testId={`${testId}-error`}>
           {extractErrorMessage(save.error, {
             codeMessages: bracketErrorMessages(context.vocabulary, match, context.bracket),
             fallback: `This ${matchNoun(context.vocabulary).one}'s result could not be saved. Try again.`,
           })}
-        </p>
+        </InlineError>
       ) : null}
     </div>
   );
@@ -445,25 +466,19 @@ function PairingEditor({
     .filter((id): id is string => id !== null));
   const options = context.field.filter((entry) => entry.isActive && !placedElsewhere.has(entry.id));
 
-  const save = useInvalidatingMutation({
-    mutationFn: async () => {
-      const response = await updateEventBracketMatch({
-        path: { eventId: context.eventId, matchNumber: match.matchNumber },
-        body: {
-          ...(homeFed ? {} : { homeSportEventParticipantId: homeId === NO_TEAM ? null : homeId }),
-          ...(awayFed ? {} : { awaySportEventParticipantId: awayId === NO_TEAM ? null : awayId }),
-        },
-      });
-      if (response.error) {
-        throwApiError(response.error);
-      }
-      return response.data;
-    },
-    invalidates: bracketInvalidates(context.eventId),
+  const save = useMatchWrite({
+    context,
+    failedAction: 'event.bracket.pairing.failed',
+    match,
     onSuccess: onDone,
-    onError: (error) => {
-      logger.warn({ action: 'event.bracket.pairing.failed', data: { matchNumber: match.matchNumber }, err: error }, 'Pairing edit was rejected');
-    },
+    refusedMessage: 'Pairing edit was rejected',
+    write: (path) => updateEventBracketMatch({
+      path,
+      body: {
+        ...(homeFed ? {} : { homeSportEventParticipantId: homeId === NO_TEAM ? null : homeId }),
+        ...(awayFed ? {} : { awaySportEventParticipantId: awayId === NO_TEAM ? null : awayId }),
+      },
+    }),
   });
 
   function sideSelect(side: MatchSide, value: string, onChange: (next: string) => void) {
@@ -504,15 +519,15 @@ function PairingEditor({
         <Button disabled={save.isPending} onClick={onDone} size="sm" variant="ghost">Cancel</Button>
       </div>
       {homeId !== NO_TEAM && homeId === awayId ? (
-        <p className="text-sm text-destructive">{`A ${team.one} can't play itself. Pick two different ${team.many}.`}</p>
+        <InlineError>{`A ${team.one} can't play itself. Pick two different ${team.many}.`}</InlineError>
       ) : null}
       {save.isError ? (
-        <p className="text-sm text-destructive" data-testid={`root-admin-bracket-pairing-error-${match.matchNumber}`} role="alert">
+        <InlineError testId={`root-admin-bracket-pairing-error-${match.matchNumber}`}>
           {extractErrorMessage(save.error, {
             codeMessages: bracketErrorMessages(context.vocabulary, match, context.bracket),
             fallback: `This ${noun.one}'s pairing could not be saved. Try again.`,
           })}
-        </p>
+        </InlineError>
       ) : null}
     </div>
   );
@@ -542,22 +557,14 @@ function SpreadCell({ match, released, context }: { match: SportEventMatchDto; r
   const clearing = parsed === null && released;
   const valid = parsed === null ? !clearing : Number.isFinite(parsed) && Math.abs(parsed) <= 99.5 && Number.isInteger(parsed * 2);
 
-  const save = useInvalidatingMutation({
-    mutationFn: async (homeSpread: number | null) => {
-      const response = await updateEventBracketMatch({
-        path: { eventId: context.eventId, matchNumber: match.matchNumber },
-        body: { homeSpread },
-      });
-      if (response.error) {
-        throwApiError(response.error);
-      }
-      return response.data;
-    },
-    invalidates: bracketInvalidates(context.eventId),
+  const save = useMatchWrite({
+    context,
+    failedAction: 'event.bracket.spread.failed',
+    logData: (homeSpread: number | null) => ({ homeSpread }),
+    match,
     onSuccess: () => setEditing(false),
-    onError: (error, homeSpread) => {
-      logger.warn({ action: 'event.bracket.spread.failed', data: { matchNumber: match.matchNumber, homeSpread }, err: error }, 'Spread edit was rejected');
-    },
+    refusedMessage: 'Spread edit was rejected',
+    write: (path, homeSpread) => updateEventBracketMatch({ path, body: { homeSpread } }),
   });
 
   if (!editing) {
@@ -597,11 +604,11 @@ function SpreadCell({ match, released, context }: { match: SportEventMatchDto; r
         />
       </label>
       {valid ? null : (
-        <p className="text-sm text-destructive">
+        <InlineError>
           {clearing
             ? `The ${context.vocabulary.event.one} has been released, so this spread can be changed but not cleared.`
             : 'Enter a spread in half points, such as -3.5 or 7, between -99.5 and 99.5.'}
-        </p>
+        </InlineError>
       )}
       <div className="flex gap-2">
         <Button
@@ -615,12 +622,12 @@ function SpreadCell({ match, released, context }: { match: SportEventMatchDto; r
         <Button disabled={save.isPending} onClick={() => setEditing(false)} size="sm" variant="ghost">Cancel</Button>
       </div>
       {save.isError ? (
-        <p className="text-sm text-destructive" data-testid={`root-admin-bracket-spread-error-${match.matchNumber}`} role="alert">
+        <InlineError testId={`root-admin-bracket-spread-error-${match.matchNumber}`}>
           {extractErrorMessage(save.error, {
             codeMessages: bracketErrorMessages(context.vocabulary, match, context.bracket),
             fallback: 'This spread could not be saved. Try again.',
           })}
-        </p>
+        </InlineError>
       ) : null}
     </div>
   );

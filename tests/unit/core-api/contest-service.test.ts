@@ -55,6 +55,7 @@ import type { MailDeliveryProvider } from '../../../packages/core-api/src/module
 import { expectDefined } from '../../support/expect-defined';
 import { deliverQueuedEmail, emailServiceOver } from '../../support/email-service';
 import { platinumEntitlements } from '../../support/plan-entitlements';
+import { fieldReads } from '../../support/field-reads';
 
 function createMockContestRepo(overrides: Partial<ContestRepository> = {}): ContestRepository {
   return fakeContestRepo({
@@ -227,7 +228,7 @@ function buildService(deps: Partial<ContestServiceDeps> = {}): ContestService {
       countParticipants: jest.fn().mockImplementation(async (ids: readonly string[]) => new Map(ids.map((id) => [id, 1]))),
     }),
     sportLeagues: { findById: jest.fn().mockResolvedValue({ id: 'pga-tour', name: 'PGA Tour' }) },
-    eventParticipants: { listEventParticipants: jest.fn().mockResolvedValue([]), listCachedEventParticipants: jest.fn().mockResolvedValue([]) },
+    eventParticipants: fieldReads(jest.fn().mockResolvedValue([]), jest.fn().mockResolvedValue([])),
     tiers: { listTiers: jest.fn().mockResolvedValue([]) },
     ...deps,
   });
@@ -1119,7 +1120,7 @@ describe('ContestService', () => {
         squadMemberships: createMockSquadMembershipRepo(),
         entries: entryRepo,
         picks: pickRepo,
-        eventParticipants: { listEventParticipants: jest.fn(), listCachedEventParticipants },
+        eventParticipants: fieldReads(jest.fn(), listCachedEventParticipants),
       });
 
       const result = await service.getLeaderboard('contest-1', 'user-1');

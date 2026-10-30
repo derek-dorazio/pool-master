@@ -1,6 +1,6 @@
 import { PARTICIPANT_SCORING_DEFINITIONS } from '@poolmaster/shared/domain';
 import { applyEventGolfRoundScores, previewEventGolfRoundScores } from '@/lib/api';
-import { BulkUploadPanel, Heading, StatusBadge, Tile } from '@/features/shared/ui';
+import { BulkUploadPanel, PanelCard, StatusBadge, UploadPreviewTable } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -119,9 +119,8 @@ export function GolfRoundScoreUploadCard({
   const templateSampleRow = ['ext-123', 'Rory McIlroy', 70, -2, 18, 'COMPLETED'];
 
   return (
-    <Tile>
-      <Heading level={3} variant="card" size="base">Bulk load</Heading>
-      <p className="mt-1 text-sm text-muted-foreground">
+    <PanelCard headingLevel={3} padded title="Bulk load">
+      <p className="text-sm text-muted-foreground">
         Paste or upload this round&rsquo;s scores, preview how each row resolves and
         changes, then apply.
       </p>
@@ -152,45 +151,19 @@ export function GolfRoundScoreUploadCard({
               : null
           }
           renderPreview={(rows) => (
-            <div className="overflow-x-auto rounded-2xl border border-border">
-              <table
-                className="min-w-full text-left text-sm"
-                data-testid="root-admin-golf-scores-upload-preview-table"
-              >
-                <thead className="bg-[var(--table-header-surface)] text-xs uppercase text-muted-foreground">
-                  <tr>
-                    <th className="px-4 py-2">Row</th>
-                    <th className="px-4 py-2">Resolution</th>
-                    <th className="px-4 py-2">Player</th>
-                    <th className="px-4 py-2">Before → After</th>
-                    <th className="px-4 py-2">Change</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map((entry, index) => (
-                    <tr className="border-t border-border" key={`${describeRow(entry.row)}-${index}`}>
-                      <td className="px-4 py-2">{describeRow(entry.row)}</td>
-                      <td className="px-4 py-2">
-                        <StatusBadge tone={RESOLUTION_TONE[entry.resolution]}>
-                          {entry.resolution}
-                        </StatusBadge>
-                      </td>
-                      <td className="px-4 py-2">{entry.participantName || '—'}</td>
-                      <td className="px-4 py-2 text-muted-foreground">
-                        {describeValues(entry.before)}{' '}
-                        →{' '}
-                        <span className="text-foreground">{describeValues(entry.after)}</span>
-                      </td>
-                      <td className="px-4 py-2">
-                        <StatusBadge tone={CHANGE_TONE[entry.change]}>
-                          {CHANGE_LABEL[entry.change]}
-                        </StatusBadge>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <UploadPreviewTable
+              change={{
+                before: (entry) => describeValues(entry.before),
+                after: (entry) => describeValues(entry.after),
+                badge: (entry) => <StatusBadge tone={CHANGE_TONE[entry.change]}>{CHANGE_LABEL[entry.change]}</StatusBadge>,
+              }}
+              describeRow={(entry) => describeRow(entry.row)}
+              match={(entry) => entry.participantName || '—'}
+              matchHeader="Player"
+              resolution={(entry) => <StatusBadge tone={RESOLUTION_TONE[entry.resolution]}>{entry.resolution}</StatusBadge>}
+              rows={rows}
+              testId="root-admin-golf-scores-upload-preview-table"
+            />
           )}
           templateFilename={`golf-round-${round}-scores-template.csv`}
           templateHeaders={GOLF_ROUND_SCORE_UPLOAD_HEADERS}
@@ -207,6 +180,6 @@ export function GolfRoundScoreUploadCard({
           }
         />
       </div>
-    </Tile>
+    </PanelCard>
   );
 }

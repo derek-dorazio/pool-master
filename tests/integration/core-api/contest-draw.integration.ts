@@ -6,6 +6,7 @@
 import { randomUUID } from 'node:crypto';
 import {
   cleanupTestData,
+  getAppPrisma,
   getPrisma,
   setupIntegrationTests,
   teardownIntegrationTests,
@@ -125,7 +126,7 @@ describe('ContestEntryPickService.recordDraw', () => {
     const draw = drawOf(fixture);
     const [first, second] = fixture.entryIds;
 
-    await new ContestEntryPickService(prisma).recordDraw(draw);
+    await new ContestEntryPickService(getAppPrisma()).recordDraw(draw);
 
     const stored = await prisma.contestDraw.findUniqueOrThrow({ where: { contestId: fixture.contestId } });
     expect(stored).toMatchObject({
@@ -148,7 +149,7 @@ describe('ContestEntryPickService.recordDraw', () => {
     const entries = await prisma.contestEntryEvent.findMany({ where: { contestEntry: { contestId: fixture.contestId } } });
     expect(entries.map((entry) => entry.status)).toEqual(['SUBMITTED', 'SUBMITTED']);
 
-    const contest = await new PrismaContestRepository(prisma).findById(fixture.contestId);
+    const contest = await new PrismaContestRepository(getAppPrisma()).findById(fixture.contestId);
     expect(contest?.drawnAt).toEqual(stored.drawnAt);
   });
 
@@ -156,7 +157,7 @@ describe('ContestEntryPickService.recordDraw', () => {
     const prisma = getPrisma();
     const fixture = await seedRandomDrawContest();
 
-    const { drawnAt } = await new ContestEntryPickService(prisma).recordDraw(drawOf(fixture));
+    const { drawnAt } = await new ContestEntryPickService(getAppPrisma()).recordDraw(drawOf(fixture));
 
     const stored = await prisma.contestDraw.findUniqueOrThrow({ where: { contestId: fixture.contestId } });
     expect(drawnAt).toEqual(stored.drawnAt);
@@ -167,7 +168,7 @@ describe('ContestEntryPickService.recordDraw', () => {
   it('refuses a second draw of the same contest and writes nothing more', async () => {
     const prisma = getPrisma();
     const fixture = await seedRandomDrawContest();
-    const service = new ContestEntryPickService(prisma);
+    const service = new ContestEntryPickService(getAppPrisma());
     await service.recordDraw(drawOf(fixture));
 
     await expect(service.recordDraw({ ...drawOf(fixture), seed: 'second-seed' }))
@@ -182,7 +183,7 @@ describe('ContestEntryPickService.recordDraw', () => {
     const fixture = await seedRandomDrawContest();
     const draw = drawOf(fixture);
 
-    await expect(new ContestEntryPickService(prisma).recordDraw({ ...draw, entries: draw.entries.slice(0, 1) }))
+    await expect(new ContestEntryPickService(getAppPrisma()).recordDraw({ ...draw, entries: draw.entries.slice(0, 1) }))
       .rejects.toBeInstanceOf(ContestDrawEntriesChangedError);
 
     expect(await prisma.contestDraw.count({ where: { contestId: fixture.contestId } })).toBe(0);
@@ -192,10 +193,9 @@ describe('ContestEntryPickService.recordDraw', () => {
   });
 
   it('reads a contest that has not been drawn with no draw time', async () => {
-    const prisma = getPrisma();
     const fixture = await seedRandomDrawContest();
 
-    const contest = await new PrismaContestRepository(prisma).findById(fixture.contestId);
+    const contest = await new PrismaContestRepository(getAppPrisma()).findById(fixture.contestId);
 
     expect(contest?.drawnAt).toBeUndefined();
   });
@@ -218,7 +218,7 @@ describe('a draw racing an entry write', () => {
       },
     }));
     const holderPid = await holder.ready;
-    const draw = new ContestEntryPickService(prisma).recordDraw(drawOf(fixture)).then(() => 'recorded', (error: unknown) => error);
+    const draw = new ContestEntryPickService(getAppPrisma()).recordDraw(drawOf(fixture)).then(() => 'recorded', (error: unknown) => error);
     await waitUntilBlockedBy(prisma, holderPid).finally(() => holder.release());
 
     expect(await draw).toBeInstanceOf(ContestDrawEntriesChangedError);
@@ -237,7 +237,7 @@ describe('a draw racing an entry write', () => {
       data: { contestId: fixture.contestId, seed: 'held-seed', fieldOrder: [], entryOrder: [], drawnByUserId: fixture.userId },
     }));
     const holderPid = await holder.ready;
-    const created = new PrismaContestEntryRepository(prisma).create({
+    const created = new PrismaContestEntryRepository(getAppPrisma()).create({
       contestId: fixture.contestId,
       squadId: firstEntry.squadId,
       entryNumber: 2,
@@ -259,7 +259,7 @@ describe('a draw racing an entry write', () => {
       data: { contestId: fixture.contestId, seed: 'held-seed', fieldOrder: [], entryOrder: [], drawnByUserId: fixture.userId },
     }));
     const holderPid = await holder.ready;
-    const deleted = new PrismaContestEntryRepository(prisma).delete(first);
+    const deleted = new PrismaContestEntryRepository(getAppPrisma()).delete(first);
     await waitUntilBlockedBy(prisma, holderPid).finally(() => holder.release());
 
     expect(await deleted).toEqual({ status: 'contestDrawn' });

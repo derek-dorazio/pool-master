@@ -1,15 +1,6 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
 import { useLocation, useParams } from 'react-router';
 import { PredictedResult, type Sport } from '@poolmaster/shared/domain';
-import {
-  getGamePicks,
-  saveGamePicks,
-  submitGamePicks,
-  type ContestDto,
-  type GamePicksResponse,
-  type SaveGamePicksRequest,
-} from '@/lib/api';
+import type { ContestDto } from '@/lib/api';
 import {
   Alert,
   ErrorState,
@@ -19,10 +10,7 @@ import {
   MetricTile,
   Tile,
 } from '@/features/shared/ui';
-import { ApiError, extractErrorMessage, throwApiError, type ErrorCodeMessages } from '@/lib/errors';
-import { getLogger } from '@/lib/logger';
-import { useInvalidatingMutation } from '@/lib/mutation-hooks';
-import { QueryKeys } from '@/lib/query-keys';
+import { extractErrorMessage, type ErrorCodeMessages } from '@/lib/errors';
 import { parseRouteState } from '@/routes/route-state';
 import { BracketBoard } from './bracket-board';
 import { BracketSubmitPanel } from './bracket-entry-submit';
@@ -31,13 +19,10 @@ import { ContestEntryFrame } from './contest-header';
 import { useContestLeague } from './use-contest-league';
 import { contestEventStart, contestMatchNoun, contestParticipantNoun, contestScoreUnit } from './contest-sport';
 import { firstContestEvent } from './contest-events';
-import {
-  CONTEST_POLL_INTERVAL_MS,
-  contestStatusLabel,
-  shouldPollContestEntries,
-} from './contest-status';
+import { contestStatusLabel } from './contest-status';
 import { useBracketRoundLabel } from './use-bracket-round-label';
-import { entryWriteKeys, useContestEntryQuery } from './use-contest-entries';
+import { useContestEntryQuery } from './use-contest-entries';
+import { useGamePicks } from './use-game-picks';
 
 /**
  * Copy for the refusals a bracket's picks, tiebreaker and submit can meet (#721), in the
@@ -68,84 +53,23 @@ function formatScore(points: number | null) {
  * have cleared later picks that no longer follow from it.
  */
 export function BracketEntryPage({ contest }: { contest: ContestDto }) {
-  const logger = getLogger().child({ feature: 'bracket-entry-page' });
   const { entryId = '', leagueCode: routeLeagueCode } = useParams<{ entryId: string; leagueCode?: string }>();
   const location = useLocation();
-  const queryClient = useQueryClient();
   const contestId = contest.id;
   const hintedLeagueCode = routeLeagueCode ?? parseRouteState(location.state).leagueCode ?? null;
   // A bracket covers one event (#721).
   const sportEventId = firstContestEvent(contest)?.sportEventId ?? '';
-  const gamePicksKey = QueryKeys.gamePicks.detail(contestId, entryId, sportEventId);
-  // Null until the member types: the field shows the saved tiebreaker until then, so a refetch
-  // never overwrites what is being typed (rules/react-ui-rules.md §5 Server Data Form-State Hazard).
-  const [tiebreakerDraft, setTiebreakerDraft] = useState<string | null>(null);
   const roundLabel = useBracketRoundLabel(contest.sport, sportEventId);
 
-  const gamePicksQuery = useQuery({
-    queryKey: gamePicksKey,
-    queryFn: async (): Promise<GamePicksResponse> => {
-      const response = await getGamePicks({ path: { contestId, entryId, sportEventId } });
-      if (!response.data) {
-        throwApiError(response.error, 'Bracket picks response is missing data.');
-      }
-      return response.data;
-    },
-    enabled: Boolean(entryId && sportEventId),
-    retry: false,
-    // Once the games are under way each pick's mark moves with the results.
-    refetchInterval: shouldPollContestEntries(contest.status) ? CONTEST_POLL_INTERVAL_MS : false,
+  const { gamePicksQuery, saveMutation, setTiebreakerDraft, submitMutation, tiebreakerDraft } = useGamePicks({
+    action: 'bracket',
+    contest,
+    entryId,
+    feature: 'bracket-entry-page',
+    sportEventId,
   });
   const entryQuery = useContestEntryQuery(contestId, entryId);
   const { leagueCode: backLeagueCode } = useContestLeague(contest.leagueId, hintedLeagueCode);
-
-  const logRefusal = (action: string, error: Error) => {
-    const payload = { action, data: { contestId, entryId }, err: error };
-    if (error instanceof ApiError) {
-      logger.warn(payload, 'Bracket write was rejected');
-    } else {
-      logger.error(payload, 'Bracket write failed unexpectedly');
-    }
-  };
-
-  // Saving a pick or the tiebreaker answers with the whole bracket, which replaces the cache: the
-  // server may have cleared later picks. The entry list carries its status, which a change can
-  // send back to draft.
-  const saveMutation = useInvalidatingMutation({
-    mutationFn: async (body: SaveGamePicksRequest) => {
-      const response = await saveGamePicks({ path: { contestId, entryId, sportEventId }, body });
-      if (!response.data) {
-        throwApiError(response.error, 'Bracket save response is missing data.');
-      }
-      return response.data;
-    },
-    onSuccess: (saved) => {
-      queryClient.setQueryData<GamePicksResponse>(gamePicksKey, saved);
-      setTiebreakerDraft(null);
-    },
-    invalidates: [QueryKeys.contestEntries.byContest(contestId)],
-    onError: (error) => {
-      logRefusal('bracket.save.failed', error);
-      // A refused pick means the bracket on screen is not the server's: read it again.
-      void queryClient.invalidateQueries({ queryKey: gamePicksKey });
-    },
-  });
-
-  const submitMutation = useInvalidatingMutation({
-    mutationFn: async () => {
-      const response = await submitGamePicks({ path: { contestId, entryId, sportEventId } });
-      if (!response.data) {
-        throwApiError(response.error, 'Bracket submit response is missing data.');
-      }
-      return response.data;
-    },
-    onSuccess: (submitted) => {
-      logger.info({ action: 'bracket.submit.succeeded', data: { contestId, entryId } }, 'Submitted bracket');
-      queryClient.setQueryData<GamePicksResponse>(gamePicksKey, submitted);
-    },
-    invalidates: [...entryWriteKeys(contestId)],
-    onError: (error) => logRefusal('bracket.submit.failed', error),
-  });
 
   if (gamePicksQuery.isLoading || entryQuery.isLoading) {
     return <LoadingState body="Loading bracket..." />;

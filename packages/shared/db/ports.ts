@@ -8,6 +8,7 @@
 import type {
   Contest,
   ContestEntry,
+  ContestEntryEventStatus,
   ContestEntryMatchPrediction,
   ContestEntryStatus,
   PredictedChoice,
@@ -43,6 +44,14 @@ export interface UserSearchFilters {
 }
 
 /**
+ * A user search with its term, which `UserRepository.search` requires (#1313): no read lists
+ * every user. The caller checks and trims the term with `platformSearchTerm`.
+ */
+export interface UserSearch extends UserSearchFilters {
+  search: string;
+}
+
+/**
  * The writable fields of a `User`, as an update.
  *
  * `passwordHash` is absent by design — it is a secret, set through `create`'s separate
@@ -72,17 +81,21 @@ export interface UserRepository {
   findByEmail(email: string): Promise<User | null>;
 
   /**
-   * Every user, optionally filtered, newest first.
+   * The users matching a search term, further narrowed by the other filters, newest first.
    *
    * **This is the unscoped read — access rule A1 permits it to rootAdmin only.** The port
    * does not enforce that; the route does. Added in #202 because its absence is what sent
    * `admin/user-service.ts` straight to `prisma.user.findMany`, and from there to a
-   * hand-rolled result shape (§2y).
+   * hand-rolled result shape (§2y). The term is required (#1313), so there is no read of
+   * every user.
    *
    * Not paged, by product decision — see §16, "No paging in the API". Filter to narrow a
    * result set; do not slice it.
    */
-  findAll(filters?: UserSearchFilters): Promise<User[]>;
+  search(filters: UserSearch): Promise<User[]>;
+
+  /** The active root admins, who get the platform's own notices (#1313). */
+  findActiveRootAdmins(): Promise<User[]>;
 
   /**
    * Users holding an ACTIVE `LeagueMembership` in the given league, ordered by name.
@@ -96,6 +109,11 @@ export interface UserRepository {
    * current members, and a league's removed members only grow over the years.
    */
   findActiveByLeague(leagueId: string): Promise<User[]>;
+  /**
+   * `findActiveByLeague` for several leagues in one read (#1255): each user once, in the same
+   * order. Given `roles`, only the members holding one of them in one of the leagues (#1336).
+   */
+  findActiveByLeagues(leagueIds: readonly string[], roles?: readonly LeagueRole[]): Promise<User[]>;
 
   /**
    * Resolves a user by an identifier that may be either their email or their username.
@@ -157,6 +175,14 @@ export interface LeagueSearchFilters {
   isActive?: boolean;
 }
 
+/**
+ * A league search with its term, which `LeagueRepository.search` requires (#1313): no read
+ * lists every league for a screen. The caller checks and trims the term with `platformSearchTerm`.
+ */
+export interface LeagueSearch extends LeagueSearchFilters {
+  search: string;
+}
+
 /** One logged move of a league to another plan (#945), with why it moved (#1032). */
 export interface LeaguePlanChange {
   fromPlan: LeaguePlan;
@@ -166,15 +192,22 @@ export interface LeaguePlanChange {
 
 export interface LeagueRepository {
   findById(id: string): Promise<League | null>;
+  /** The leagues named, in no particular order; an id with no league is left out (#1255). */
+  findByIds(ids: readonly string[]): Promise<League[]>;
   findByCode(code: string): Promise<League | null>;
 
   /**
-   * Every league, optionally filtered. **Unscoped — A1 permits it to rootAdmin only.**
-   *
-   * Not paged, unlike `UserRepository.findAll`: the admin league surface does not page,
-   * and adding an unused page parameter would be a shape nobody asked for.
+   * The leagues whose name matches a search term, further narrowed by the active flag, most
+   * recently updated first. **Unscoped — A1 permits it to rootAdmin only.** The term is
+   * required (#1313), so the admin list never reads every league. Not paged (§16).
    */
-  findAll(filters?: LeagueSearchFilters): Promise<League[]>;
+  search(filters: LeagueSearch): Promise<League[]>;
+
+  /**
+   * Every active league, for the commissioner notices that go to each league. The one read of
+   * all leagues, and no screen calls it.
+   */
+  findActive(): Promise<League[]>;
 
   /**
    * Leagues the user holds an ACTIVE `LeagueMembership` in — the scoped read access rule A2
@@ -243,6 +276,11 @@ export interface LeagueRepository {
 export interface LeagueMembershipRepository {
   /** The league's ACTIVE memberships, earliest joiner first. */
   findByLeague(leagueId: string): Promise<LeagueMembership[]>;
+  /**
+   * Several leagues' ACTIVE memberships in one read, earliest joiner first (#1255). Given
+   * `roles`, only the memberships with one of them (#1336).
+   */
+  findByLeagues(leagueIds: readonly string[], roles?: readonly LeagueRole[]): Promise<LeagueMembership[]>;
   findByUser(userId: string): Promise<LeagueMembership[]>;
 
   /**
@@ -284,6 +322,12 @@ export interface SquadDetails extends Squad {
   members: SquadMemberDetails[];
 }
 
+/** A person in a league. */
+export interface LeagueUser {
+  leagueId: string;
+  userId: string;
+}
+
 /** A squad membership with its squad's name: the league context's squad edge (#1165). */
 export interface SquadMembershipWithSquadName extends SquadMembership {
   squadName: string;
@@ -321,6 +365,11 @@ export interface SquadMembershipRepository {
   findByLeagueAndUser(leagueId: string, userId: string): Promise<SquadMembership | null>;
   /** `findByLeagueAndUser` with the squad's name, in the same read. */
   findByLeagueAndUserWithSquadName(leagueId: string, userId: string): Promise<SquadMembershipWithSquadName | null>;
+  /**
+   * `findByLeagueAndUserWithSquadName` for several people, each in their league, in one read
+   * (#1336): one row for each pair that has a squad, in no order.
+   */
+  findByLeagueUsersWithSquadName(people: readonly LeagueUser[]): Promise<SquadMembershipWithSquadName[]>;
   create(
     membership: Omit<SquadMembership, 'id' | 'createdAt' | 'updatedAt'>,
   ): Promise<SquadMembership>;
@@ -416,6 +465,8 @@ export interface ParticipantProviderMappingRepository {
  */
 export interface ContestRepository {
   findById(id: string): Promise<Contest | null>;
+  /** The contests under `ids`, in one read, missing ones left out (#1315). */
+  findByIds(ids: readonly string[]): Promise<Contest[]>;
   /** The league's contests in one of `statuses`, newest first. */
   findByLeague(leagueId: string, statuses: readonly Contest['status'][]): Promise<Contest[]>;
   /**
@@ -438,6 +489,8 @@ export interface ContestRepository {
   findSportLeagueIdsBySeason(leagueId: string, seasonYear: number): Promise<string[]>;
   /** The event's contests, oldest first, optionally narrowed to or away from some statuses. */
   findBySportEvent(sportEventId: string, filter?: ContestStatusFilter): Promise<Contest[]>;
+  /** The contests on any of the events, each once, oldest first (#1255). */
+  findBySportEvents(sportEventIds: readonly string[]): Promise<Contest[]>;
   /**
    * The contests a released edition can join (#714, #1179): made from a template covering the
    * edition's series (matched by the series' name within its sport league), not COMPLETED, not
@@ -586,11 +639,15 @@ export type ContestEntryDeleteResult = { status: 'deleted' } | { status: 'contes
 export interface ContestEntryRepository {
   findByIdWithSquad(id: string): Promise<ContestEntryWithSquad | null>;
   findByContest(contestId: string): Promise<ContestEntry[]>;
+  /** Several contests' entries in one read, in creation order as `findByContest` lists them (#1255). */
+  findByContests(contestIds: readonly string[]): Promise<ContestEntry[]>;
   /**
    * In entry-number order, then creation order. `submittedFor` keeps the entries that submitted
    * that event alone (#481, per event since #713).
    */
   findByContestWithSquad(contestId: string, options?: { submittedFor?: string }): Promise<ContestEntryWithSquad[]>;
+  /** Every entry of each contest, in one read (#1315): by contest, then in `findByContestWithSquad`'s order. */
+  findByContestsWithSquad(contestIds: readonly string[]): Promise<ContestEntryWithSquad[]>;
   /** The squad's entries in one contest, drafts included, in entry-number order (#1167). */
   findByContestAndSquad(contestId: string, squadId: string): Promise<ContestEntry[]>;
   /** The ids alone of the squad's entries in one contest, drafts included, in entry-number order (#1197). */
@@ -616,11 +673,6 @@ export interface ContestEntryRepository {
    */
   create(entry: ContestEntryCreate, limits: ContestEntryCreateLimits): Promise<ContestEntryCreateResult>;
   update(id: string, updates: Partial<Pick<ContestEntry, 'name' | 'tiebreakerValue'>>): Promise<ContestEntry>;
-  /**
-   * Sets the entry's status for one event of its contest (#713), stamping `submittedAt` when it
-   * becomes SUBMITTED and clearing it when it returns to DRAFT. Answers with the entry.
-   */
-  setEventStatus(id: string, sportEventId: string, status: ContestEntryStatus, at: Date): Promise<ContestEntry>;
   delete(id: string): Promise<ContestEntryDeleteResult>;
 }
 
@@ -646,18 +698,42 @@ export type ContestEntryMatchPredictionWrite = PredictedChoice & {
   confidence: number | null;
 };
 
-/** A change to an entry's picks for one event's games, written all or none. */
-export interface ContestEntryMatchPredictionSave {
-  contestEntryId: string;
-  sportEventId: string;
+/** An entry's picks and its row for one event, as a change reads them under the entry's lock (#1268). */
+export interface LockedPredictionWeek {
+  /** Its picks on the event's games, in game order. */
+  predictions: readonly ContestEntryMatchPrediction[];
+  /** Its status and tiebreaker for the event; null while it has no row for the event. */
+  event: ContestEntryEventStatus | null;
+}
+
+/** What one change writes to an entry's picks for one event's games. */
+export interface ContestEntryMatchPredictionChange {
   saves: readonly ContestEntryMatchPredictionWrite[];
   /** Games whose pick is removed. */
   clearedMatchIds: readonly string[];
-  /** The entry's status for the event after the change, when it changes; stamped as `setEventStatus` does. */
+  /** The entry's status for the event after the change, when it changes: `submittedAt` is `at` for SUBMITTED, cleared for DRAFT. */
   eventStatus: ContestEntryStatus | null;
   /** The entry's tiebreaker guess for the event after the change, when it changes (#717): kept on its row for the event. */
   tiebreakerValue?: number | null;
+}
+
+/**
+ * A change to an entry's picks for one event's games, written all or none. `decide` is handed
+ * the week as it stands once the entry is locked, and answers with the change, or null when
+ * there is nothing to write, so a change that committed while this one waited is judged too
+ * (#1268). It may throw to refuse; nothing is written then.
+ */
+export interface ContestEntryMatchPredictionSave {
+  contestEntryId: string;
+  sportEventId: string;
   at: Date;
+  decide: (week: LockedPredictionWeek) => ContestEntryMatchPredictionChange | null;
+}
+
+/** What a save did: the change `decide` answered with, null when none, and the week it left. */
+export interface ContestEntryMatchPredictionSaveResult {
+  written: ContestEntryMatchPredictionChange | null;
+  week: LockedPredictionWeek;
 }
 
 /** A pick read across several events (#719): which event its game is in, and the participant its field row stands for (null for a tie pick, #792). */
@@ -669,12 +745,12 @@ export type ContestEntrySeasonPrediction = ContestEntryMatchPrediction & { sport
 export interface ContestEntryMatchPredictionRepository {
   /** The entry's picks on the event's games. */
   findByEntryAndEvent(contestEntryId: string, sportEventId: string): Promise<ContestEntryMatchPrediction[]>;
-  /** Several entries' picks on the event's games, in game order: a leaderboard's or settlement's read. */
+  /** Several entries' picks on the event's games, by entry, each in game order: a leaderboard's or settlement's read. */
   findByEntriesAndEvent(contestEntryIds: readonly string[], sportEventId: string): Promise<ContestEntryMatchPrediction[]>;
   /** Several entries' picks on several events' games, each with its event and team: a survivor season's read (#719). */
   findByEntriesAndEvents(contestEntryIds: readonly string[], sportEventIds: readonly string[]): Promise<ContestEntrySeasonPrediction[]>;
   /** Whether any entry, in any contest, has a pick on the game: its spread is then fixed (#720). */
   hasAnyOnMatch(sportEventMatchId: string): Promise<boolean>;
-  save(change: ContestEntryMatchPredictionSave): Promise<void>;
+  save(change: ContestEntryMatchPredictionSave): Promise<ContestEntryMatchPredictionSaveResult>;
 }
 

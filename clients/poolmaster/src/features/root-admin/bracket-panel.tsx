@@ -1,6 +1,6 @@
 import { getSportDefinition, SportEventStatus } from '@poolmaster/shared/domain';
 import type { SportEventDto } from '@/lib/api';
-import { Alert, Heading, Tile } from '@/features/shared/ui';
+import { Alert, Heading, PanelCard, SimpleTable, TableBody, TableHead, TableHeaderCell } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
 import { formsNoBracket, matchNoun } from './bracket-copy';
 import { BracketMatchRow, type BracketContext } from './bracket-match-row';
@@ -57,44 +57,43 @@ export function BracketPanel({ event }: { event: SportEventDto }) {
 
   return (
     <div className="space-y-6">
-      <Tile>
-        <Heading level={3} variant="card" size="base">Bracket</Heading>
+      <PanelCard headingLevel={3} padded title="Bracket">
         {bracket.length > 0 ? (
-          <p className="mt-1 text-sm text-muted-foreground" data-testid="root-admin-bracket-help">
+          <p className="text-sm text-muted-foreground" data-testid="root-admin-bracket-help">
             {released
               ? `Choose the ${vocabulary.participant.one} that won each ${noun.one}. The winner moves on to its next ${noun.one}.`
               : `Pairings can change until the ${vocabulary.event.one} is released. Results are entered after that.`}
           </p>
         ) : null}
         {bracket.length === 0 ? (
-          <p className="mt-2 text-sm text-muted-foreground" data-testid="root-admin-bracket-empty">
+          <p className="text-sm text-muted-foreground" data-testid="root-admin-bracket-empty">
             {`No bracket yet. Its ${noun.many} are loaded before the ${vocabulary.event.one} is released.`}
           </p>
         ) : roundNumbers.map((roundNumber) => (
           <section className="mt-4" data-testid={`root-admin-bracket-round-${roundNumber}`} key={roundNumber}>
             <Heading level={4} variant="label">{roundLabel(roundNumber, roundCount)}</Heading>
             <div className="mt-2 overflow-x-auto rounded-2xl border border-border">
-              <table className="min-w-full text-left text-sm">
-                <thead className="bg-[var(--table-header-surface)] text-xs uppercase text-muted-foreground">
+              <SimpleTable className="min-w-full">
+                <TableHead>
                   <tr>
-                    <th className="px-4 py-2">{capitalize(noun.one)}</th>
-                    <th className="px-4 py-2">Pairing</th>
-                    {context.spreads ? <th className="px-4 py-2">Spread</th> : null}
-                    <th className="px-4 py-2">Time</th>
-                    <th className="px-4 py-2">Status</th>
-                    <th className="px-4 py-2">{released ? 'Winner' : 'Edit'}</th>
+                    <TableHeaderCell>{capitalize(noun.one)}</TableHeaderCell>
+                    <TableHeaderCell>Pairing</TableHeaderCell>
+                    {context.spreads ? <TableHeaderCell>Spread</TableHeaderCell> : null}
+                    <TableHeaderCell>Time</TableHeaderCell>
+                    <TableHeaderCell>Status</TableHeaderCell>
+                    <TableHeaderCell>{released ? 'Winner' : 'Edit'}</TableHeaderCell>
                   </tr>
-                </thead>
-                <tbody>
+                </TableHead>
+                <TableBody>
                   {bracket.filter((match) => match.roundNumber === roundNumber).map((match) => (
                     <BracketMatchRow context={context} key={match.id} match={match} released={released} />
                   ))}
-                </tbody>
-              </table>
+                </TableBody>
+              </SimpleTable>
             </div>
           </section>
         ))}
-      </Tile>
+      </PanelCard>
       <ReseedRoundsCard context={context} event={event} roundCount={roundCount} roundLabel={roundLabel} />
       <PlayInPlacesCard event={event} field={fieldQuery.data} vocabulary={vocabulary} />
       <WithdrawalsCard bracket={bracket} event={event} field={fieldQuery.data} vocabulary={vocabulary} />

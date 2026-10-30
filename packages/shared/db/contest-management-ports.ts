@@ -44,6 +44,10 @@ export interface ParticipantContestScoringRuleRepository {
   findByContestConfiguration(
     contestConfigurationId: string,
   ): Promise<ParticipantContestScoringRule[]>;
+  /** Every rule of each configuration, in one read (#1315), in sort order within each. */
+  findByContestConfigurations(
+    contestConfigurationIds: readonly string[],
+  ): Promise<ParticipantContestScoringRule[]>;
   create(
     rule: ParticipantContestScoringRuleCreate,
   ): Promise<ParticipantContestScoringRule>;
@@ -116,9 +120,20 @@ export interface ContestEntryStandingResult {
 
 export type ContestEntryStandingWrite = Omit<ContestEntryStandingResult, 'id'>;
 
+/** An entry that finished first in its contest, named as the contest's standings name it. */
+export interface ContestWinner {
+  contestId: string;
+  entryName: string;
+}
+
 /** The frozen contest-entry standing (#246): written by settlement, read by a settled contest. */
 export interface ContestEntryStandingRepository {
   findByContest(contestId: string): Promise<ContestEntryStandingResult[]>;
+  /**
+   * The entries in first place in each of several contests, in one read (#1336): by contest, in
+   * the order the contest's final standings list them, entry number then name.
+   */
+  findWinnersByContests(contestIds: readonly string[]): Promise<ContestWinner[]>;
   /** One per entry: creates or overwrites the entry's standing. */
   upsert(write: ContestEntryStandingWrite): Promise<void>;
 }
@@ -134,6 +149,8 @@ export type ContestEntryEventStandingWrite = Omit<ContestEntryEventStandingResul
 export interface ContestEntryEventStandingRepository {
   /** Every event's standings of the contest, best first within each event. */
   findByContest(contestId: string): Promise<ContestEntryEventStandingResult[]>;
+  /** `findByContest` for several contests in one read (#1315): by contest, then in its order. */
+  findByContests(contestIds: readonly string[]): Promise<ContestEntryEventStandingResult[]>;
   /** One per entry and event: creates or overwrites it. */
   upsert(write: ContestEntryEventStandingWrite): Promise<void>;
 }

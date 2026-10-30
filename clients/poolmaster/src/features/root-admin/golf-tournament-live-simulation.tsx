@@ -1,11 +1,18 @@
 import { useQuery } from '@tanstack/react-query';
-import { getEventLiveSimulation, listProviders, startEventLiveSimulation } from '@/lib/api';
-import { Button, formatDateTimeDisplay, useDisplayPreferences, type DisplayPreferences } from '@/features/shared/ui';
+import { getEventLiveSimulation, startEventLiveSimulation } from '@/lib/api';
+import {
+  Button,
+  type DisplayPreferences,
+  formatDateTimeDisplay,
+  InlineError,
+  useDisplayPreferences,
+} from '@/features/shared/ui';
 import { extractErrorMessage, hasErrorCode, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import type { SportEventDto, SportEventLiveSimulationResponse } from '@/lib/api';
+import { useProvidersQuery } from './use-providers-query';
 
 function describeSimulation(simulation: SportEventLiveSimulationResponse, displayPreferences: DisplayPreferences): string {
   const finish = formatDateTimeDisplay(simulation.endsAt, displayPreferences);
@@ -28,17 +35,7 @@ const statusRefreshMs = 30_000;
 export function GolfTournamentLiveSimulation({ tournament }: { tournament: SportEventDto }) {
   const displayPreferences = useDisplayPreferences();
   const logger = getLogger().child({ feature: 'root-admin-sport-event-home-page' });
-  const providersQuery = useQuery({
-    queryKey: QueryKeys.rootAdmin.providers,
-    queryFn: async () => {
-      const response = await listProviders();
-      if (!response.data?.providers) {
-        throwApiError(response.error, 'Provider list response is missing data.');
-      }
-      return response.data.providers;
-    },
-    retry: false,
-  });
+  const providersQuery = useProvidersQuery();
   // poolmaster-allow-list-lookup: the handful of data providers, fixed reference data
   const supported = (providersQuery.data ?? []).some(
     (provider) => provider.providerId === tournament.providerId && provider.supportsLiveSimulation,
@@ -108,14 +105,14 @@ export function GolfTournamentLiveSimulation({ tournament }: { tournament: Sport
         </p>
       ) : null}
       {statusQuery.isError ? (
-        <p className="mt-2 text-sm text-destructive" data-testid="root-admin-golf-tournament-live-simulation-status-error" role="alert">
+        <InlineError className="mt-2" testId="root-admin-golf-tournament-live-simulation-status-error">
           {extractErrorMessage(statusQuery.error, { fallback: 'The live simulation status could not be read.' })}
-        </p>
+        </InlineError>
       ) : null}
       {startMutation.isError ? (
-        <p className="mt-2 text-sm text-destructive" data-testid="root-admin-golf-tournament-live-simulation-error" role="alert">
+        <InlineError className="mt-2" testId="root-admin-golf-tournament-live-simulation-error">
           {extractErrorMessage(startMutation.error, { fallback: 'The live simulation could not be started.' })}
-        </p>
+        </InlineError>
       ) : null}
     </div>
   );

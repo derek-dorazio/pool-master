@@ -6,12 +6,14 @@ import {
   Alert,
   Button,
   DateTimeField,
+  dateTimeLocalValueToIso,
+  formatDateTimeDisplay,
   FormField,
+  InlineError,
   Input,
+  QueryState,
   StatusBadge,
   Tile,
-  formatDateTimeDisplay,
-  dateTimeLocalValueToIso,
   toDateTimeLocalValue,
   useDisplayPreferences,
 } from '@/features/shared/ui';
@@ -155,45 +157,43 @@ export function SportEventProviderBrowse({
             className="mt-4 space-y-2"
             data-testid="root-admin-sport-event-create-catalog"
           >
-            {catalog.isLoading ? (
-              <p className="text-sm text-muted-foreground">Loading provider events...</p>
-            ) : catalog.isError ? (
-              <p className="text-sm text-destructive">
-                {extractErrorMessage(catalog.error, {
-                  fallback: 'We could not load the provider catalog.',
-                })}
-              </p>
-            ) : catalog.events.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                No provider events fall in this window.
-              </p>
-            ) : (
-              catalog.events.map((event) => (
-                <Tile
-                  className="flex items-center justify-between gap-3 px-4 py-3"
-                  padding="none"
-                  radius="md"
-                  key={event.externalId}
-                >
-                  <div className="min-w-0">
-                    <div className="font-medium text-foreground">{event.name}</div>
-                    <div className="mt-1 text-xs text-muted-foreground">
-                      {formatDateTimeDisplay(event.startDate, displayPreferences)} &ndash;{' '}
-                      {formatDateTimeDisplay(event.endDate, displayPreferences)} · {event.status}
-                    </div>
-                  </div>
-                  <Button
-                    data-testid={`root-admin-sport-event-create-select-${event.externalId}`}
-                    onClick={() => setSelectedEvent(event)}
-                    size="sm"
-                    type="button"
-                    variant="secondary"
+            <QueryState
+              empty="No provider events fall in this window."
+              error={extractErrorMessage(catalog.error, {
+                fallback: 'We could not load the provider catalog.',
+              })}
+              isEmpty={(events) => events.length === 0}
+              loading="Loading provider events..."
+              query={{ data: catalog.isLoading ? undefined : catalog.events, isError: catalog.isError }}
+            >
+              {(events) => (
+                events.map((event) => (
+                  <Tile
+                    className="flex items-center justify-between gap-3 px-4 py-3"
+                    padding="none"
+                    radius="md"
+                    key={event.externalId}
                   >
-                    Select
-                  </Button>
-                </Tile>
-              ))
-            )}
+                    <div className="min-w-0">
+                      <div className="font-medium text-foreground">{event.name}</div>
+                      <div className="mt-1 text-xs text-muted-foreground">
+                        {formatDateTimeDisplay(event.startDate, displayPreferences)} &ndash;{' '}
+                        {formatDateTimeDisplay(event.endDate, displayPreferences)} · {event.status}
+                      </div>
+                    </div>
+                    <Button
+                      data-testid={`root-admin-sport-event-create-select-${event.externalId}`}
+                      onClick={() => setSelectedEvent(event)}
+                      size="sm"
+                      type="button"
+                      variant="secondary"
+                    >
+                      Select
+                    </Button>
+                  </Tile>
+                ))
+              )}
+            </QueryState>
           </div>
         </Tile>
       ) : (
@@ -254,14 +254,14 @@ export function SportEventProviderBrowse({
             </div>
 
             {createMutation.isError ? (
-              <p className="text-sm font-medium text-destructive">
+              <InlineError>
                 {extractErrorMessage(createMutation.error, {
                   codeMessages: {
                     EVENT_EDITION_ALREADY_EXISTS: `This ${sportLeagueNounOf(sport, scopedSportLeague?.noun ?? null).one} already has a ${edition.eventYear} edition of this ${eventNoun.one}.`,
                   },
                   fallback: `We could not create this ${eventNoun.one}.`,
                 })}
-              </p>
+              </InlineError>
             ) : null}
           </div>
         </Tile>

@@ -1,15 +1,14 @@
 import { useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { SportEventSyncScope, getSportDefinition } from '@poolmaster/shared/domain';
-import { linkEventScoreSource, listProviders, unlinkEventScoreSource } from '@/lib/api';
+import { linkEventScoreSource, unlinkEventScoreSource } from '@/lib/api';
 import {
   Button,
   ConfirmationModal,
   formatDateTimeDisplay,
-  Heading,
+  InlineError,
+  PanelCard,
   PickerModal,
   StatusBadge,
-  Tile,
   useDisplayPreferences,
 } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
@@ -27,6 +26,7 @@ import {
 } from './use-provider-catalog';
 import type { SportEventDto } from '@/lib/api';
 import { getScoringFamilyAdminUi } from './scoring-family-admin';
+import { useProvidersQuery } from './use-providers-query';
 
 type PickerCatalogEvent = ProviderCatalogEvent & { id: string };
 
@@ -74,18 +74,7 @@ export function SportEventScoreSourceCard({
     [catalog.events],
   );
 
-  const providersQuery = useQuery({
-    enabled: tournament.syncScope === SportEventSyncScope.NONE,
-    queryKey: QueryKeys.rootAdmin.providers,
-    queryFn: async () => {
-      const response = await listProviders();
-      if (!response.data?.providers) {
-        throwApiError(response.error, 'Provider list response is missing data.');
-      }
-      return response.data.providers;
-    },
-    retry: false,
-  });
+  const providersQuery = useProvidersQuery({ enabled: tournament.syncScope === SportEventSyncScope.NONE });
   // poolmaster-allow-list-lookup: the few data providers
   const simulatingProviderId = (providersQuery.data ?? []).find(
     (provider) => provider.sportsCovered.includes(tournament.sport) && provider.supportsLiveSimulation,
@@ -143,9 +132,8 @@ export function SportEventScoreSourceCard({
   });
 
   return (
-    <Tile>
-      <Heading level={2} variant="card" size="lg">Score source</Heading>
-      <div className="mt-3 flex flex-wrap items-center gap-3">
+    <PanelCard padded title="Score source">
+      <div className="flex flex-wrap items-center gap-3">
         <StatusBadge tone={syncScopeTone(tournament.syncScope)}>
           {syncScopeLabel(tournament.syncScope)}
         </StatusBadge>
@@ -205,9 +193,9 @@ export function SportEventScoreSourceCard({
         </p>
       ) : null}
       {linkMutation.isError && !linkOpen ? (
-        <p className="mt-2 text-sm text-destructive" data-testid="root-admin-sport-event-link-error" role="alert">
+        <InlineError className="mt-2" testId="root-admin-sport-event-link-error">
           {extractErrorMessage(linkMutation.error, { fallback: 'The link was rejected.' })}
-        </p>
+        </InlineError>
       ) : null}
       {tournament.syncScope === SportEventSyncScope.NONE ? null : (
         <GolfTournamentLiveSimulation tournament={tournament} />
@@ -283,6 +271,6 @@ export function SportEventScoreSourceCard({
         testId="root-admin-sport-event-unlink-modal"
         title="Unlink score source"
       />
-    </Tile>
+    </PanelCard>
   );
 }

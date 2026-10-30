@@ -90,7 +90,6 @@ function setup(options: { mail?: MailDeliveryProvider; withPrisma?: boolean; app
         memberships: world.memberships,
         leagues: world.leagues,
         squadMemberships: world.squadMemberships,
-        squads: world.squads,
         users: world.users,
         email,
         readConfig: () => EMAIL_SETTINGS.defaults({ POOLMASTER_ENVIRONMENT: 'prod' }),

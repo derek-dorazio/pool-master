@@ -1055,6 +1055,10 @@ Integration tests share a single Postgres database and run serially (`maxWorkers
 - **No test depends on today's date.** Build events with start dates relative to the clock the
   test runs on (or a clock it controls), never fixed calendar dates that a later run outlives.
   A seeded season is moved relative to the run day for the same reason.
+- **Two clients.** `getPrisma()` is the tests' own: seeds, reads that check what was written,
+  cleanup. A repository, adapter or service the test builds takes `getAppPrisma()`, the client
+  the app runs on, so the missing-index check plans its statements (`model-change-rules.md`
+  *Indexes Follow The Reads And The Foreign Keys*).
 
 ### Cleanup Pattern
 
@@ -1096,16 +1100,30 @@ timing them, so it catches the per-row read at any data size.
   `app.inject`, and `rowsShown` says how many of them the response shows. The helper reads a seed of
   2 and one of 20 and fails if the statement count differs, listing the statements whose count
   changed.
+- **A list whose length code fixes** (one row per plan, per email category, per settings group)
+  cannot grow from 2 to 20, and must still cost the same few statements however many rows it
+  has. It takes `expectFixedQueries` instead: `route`, `call`, `fixedBy` naming what fixes the
+  length, `rowsShown`, and `statements`, the exact count the read sends. A per-row read added later
+  breaks the pin. The helper refuses a response showing fewer than two of the items that could each
+  cost a query, since one item costs the same either way. Never use it for a list a user or a sync
+  can grow.
 - **Seed the rows that could each cost a query:** the teams of a team list, the years of a history,
   the contests of a cup, and each parent of the row (give each contest its own event, so a read per
   event shows too). The helper refuses a case whose larger seed the response does not show, or whose
   read sends no recorded statement, since its count would prove nothing. It sends any email the
   seed queued before it starts counting.
 - **Enforced by** `npm run rules:check:query-scaling`, which reads the list routes from the OpenAPI
-  spec. Routes that shipped before it are listed in `scripts/query-scaling-gaps.mjs`, each with the
-  ticket that will add its test; that list only shrinks, and a new route never goes on it.
+  spec. It has no exemption list: every list route has its case.
 - A count that grows is a defect: fix the read (§3 *Defect Verification Protocol*), never loosen the
   case.
+- **One counter per layer.** An integration test that counts queries counts SQL statements with
+  `recordStatements` from `tests/integration/statement-log.ts`, whether or not it is a scaling
+  case; `statementsOn` and `statementCounts` there name what each statement did to which table, and
+  `statementParams` what it was sent with. An `include` is one Prisma operation but a statement per
+  relation, so a statement count is the database's real cost. Do not add another test counter.
+  The functional suite's per-request budget (§6) is the other counter: `countingQueries` in
+  `packages/core-api/src/core/request-query-usage.ts` is production code, counts Prisma
+  operations, and applies only to that budget.
 
 ---
 

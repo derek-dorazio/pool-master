@@ -40,6 +40,7 @@ import {
   type SportEvent,
   type SportEventParticipant,
 } from '@poolmaster/shared/domain';
+import { BatchedRead } from '../../core/batched-read';
 import { ReadCache } from '../../core/read-cache';
 import { deriveSeedNumbersAndOdds } from '../golf/golf-seeding-algorithm';
 import {
@@ -121,6 +122,19 @@ function fieldUploadValues(entry: SportEventParticipant): FieldUploadValues {
   };
 }
 
+/** The values of `patch` that differ from the field row's, so a value sent unchanged is not written again. */
+function changedValues(entry: SportEventParticipant, patch: SportEventParticipantPatch): SportEventParticipantPatch {
+  const before = fieldUploadValues(entry);
+  const changed: SportEventParticipantPatch = {};
+  if (patch.isActive !== undefined && patch.isActive !== before.isActive) changed.isActive = patch.isActive;
+  if (patch.inactiveReason !== undefined && patch.inactiveReason !== before.inactiveReason) changed.inactiveReason = patch.inactiveReason;
+  if (patch.ranking !== undefined && patch.ranking !== before.ranking) changed.ranking = patch.ranking;
+  if (patch.oddsToWin !== undefined && patch.oddsToWin !== before.oddsToWin) changed.oddsToWin = patch.oddsToWin;
+  if (patch.seedNumber !== undefined && patch.seedNumber !== before.seedNumber) changed.seedNumber = patch.seedNumber;
+  if (patch.isPlayInPlace !== undefined && patch.isPlayInPlace !== entry.isPlayInPlace) changed.isPlayInPlace = patch.isPlayInPlace;
+  return changed;
+}
+
 /** The patch a row carries: only the values it names, each exactly as sent. */
 function fieldUploadPatch(row: FieldUploadRowInput): SportEventParticipantPatch {
   const patch: SportEventParticipantPatch = {};
@@ -163,6 +177,9 @@ export interface SportEventParticipantServiceDeps {
   logger?: FastifyBaseLogger;
 }
 
+/** An event's field as readers read it: now, from this container's cache, or batched for a fan-out. */
+export type EventFieldReads = Pick<SportEventParticipantService, 'listEventParticipants' | 'listCachedEventParticipants' | 'batchedFieldReads'>;
+
 export class SportEventParticipantService {
   private readonly fieldCache: EventFieldCache;
 
@@ -187,6 +204,29 @@ export class SportEventParticipantService {
    */
   listCachedEventParticipants(sportEventId: string): Promise<SportEventParticipantView[]> {
     return this.fieldCache.get(sportEventId, this.deps.now?.() ?? new Date(), () => this.listEventParticipants(sportEventId));
+  }
+
+  /**
+   * The same two reads for one fan-out (#1315), batched: the fields asked for together are read
+   * together, with their events, in the same few statements however many events. The cached
+   * read still answers from this container's cache first.
+   */
+  batchedFieldReads(): EventFieldReads {
+    const fields = new BatchedRead<string, SportEventParticipantView[]>(async (sportEventIds) => {
+      const events = new Map((await this.deps.sportEvents.findByIds([...new Set(sportEventIds)])).map((event) => [event.id, event]));
+      const missing = sportEventIds.find((sportEventId) => !events.has(sportEventId));
+      if (missing !== undefined) {
+        throw new SportEventError(`Sport event ${missing} was not found.`, 'EVENT_NOT_FOUND', 404);
+      }
+      const rows = await this.deps.field.findFieldsForEvents([...events.values()].map((event) => ({ sportEventId: event.id, sportLeagueId: event.sportLeagueId })));
+      return sportEventIds.map((sportEventId) => rows.filter((row) => row.entry.sportEventId === sportEventId));
+    });
+    const reads: EventFieldReads = {
+      listEventParticipants: (sportEventId) => fields.load(sportEventId),
+      listCachedEventParticipants: (sportEventId) => this.fieldCache.get(sportEventId, this.deps.now?.() ?? new Date(), () => fields.load(sportEventId)),
+      batchedFieldReads: () => reads,
+    };
+    return reads;
   }
 
   /**
@@ -325,11 +365,13 @@ export class SportEventParticipantService {
         404,
       );
     }
-    await this.deps.field.updateMany(updates.map(({ sportEventParticipantId, price, ...patch }) => ({
-      id: sportEventParticipantId,
-      updates: patch,
-      price,
-    })));
+    // Only the values that change are written, so a grid saved with most rows untouched writes
+    // little: the adapter writes one statement per distinct new value (#1252).
+    const entryById = new Map(field.map((entry) => [entry.id, entry]));
+    await this.deps.field.updateMany(updates.map(({ sportEventParticipantId, price, ...patch }) => {
+      const entry = entryById.get(sportEventParticipantId);
+      return { id: sportEventParticipantId, updates: entry ? changedValues(entry, patch) : patch, price };
+    }));
     return this.listEventParticipants(sportEventId);
   }
 

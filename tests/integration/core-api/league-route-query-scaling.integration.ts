@@ -7,9 +7,11 @@
  * `rules/testing-rules.md` §9B *Query Scaling Tests* says when a route needs one.
  */
 import { randomUUID } from 'crypto';
-import { ContestStatus, SelectionType } from '@poolmaster/shared/domain';
+import { ContestStatus, LEAGUE_PLANS, OptionalEmailCategory, SelectionType } from '@poolmaster/shared/domain';
 import {
+  EmailPreferencesResponseSchema,
   LeagueContextResponseSchema,
+  LeaguePlanListResponseSchema,
   LeaguePaymentListResponseSchema,
   ListLeagueInvitationsResponseSchema,
   SquadResponseSchema,
@@ -26,7 +28,7 @@ import {
 } from '../helpers';
 import { DAY, get, okBody, seedLeagueWithTeams } from '../list-route-seeds';
 import { expectDefined } from '../../support/expect-defined';
-import { expectConstantQueries } from '../query-scaling';
+import { expectConstantQueries, expectFixedQueries } from '../query-scaling';
 
 // No mocks.
 
@@ -225,6 +227,42 @@ describe('league, team and user reads cost the same statements for 2 rows as for
       seed: seedUsersFound,
       call: ({ term, rootAdmin }) => get(`/api/v1/users/?search=${term}`, rootAdmin),
       rowsShown: (response) => okBody(response, UserListResponseSchema).users.length,
+    });
+  });
+});
+
+describe('fixed-length lists cost the same statements every time', () => {
+  it('GET the plans: one row per plan, read without a query of its own', async () => {
+    const viewer = await createTestUser();
+    await expectFixedQueries({
+      route: 'GET /api/v1/plans/',
+      fixedBy: 'the plans',
+      call: () => get('/api/v1/plans/', viewer),
+      rowsShown: (response) => {
+        const { plans } = okBody(response, LeaguePlanListResponseSchema);
+        expect(plans).toHaveLength(LEAGUE_PLANS.length);
+        return plans.length;
+      },
+      statements: 0,
+    });
+  });
+
+  it("GET a user's email preferences: one switch per category from the user, their bounce status and one read of their opt-outs, whichever they turned off", async () => {
+    const user = await createTestUser();
+    await getPrisma().emailOptOut.createMany({
+      data: [OptionalEmailCategory.LIVE_STANDINGS, OptionalEmailCategory.RESULTS].map((category) => ({ userId: user.user.id, category })),
+    });
+    await expectFixedQueries({
+      route: 'GET /api/v1/users/{userId}/email-preferences',
+      fixedBy: 'the optional email categories',
+      call: () => get(`/api/v1/users/${user.user.id}/email-preferences`, user),
+      rowsShown: (response) => {
+        const { preferences } = okBody(response, EmailPreferencesResponseSchema);
+        expect(preferences).toHaveLength(Object.values(OptionalEmailCategory).length);
+        expect(preferences.filter((preference) => !preference.enabled)).toHaveLength(2);
+        return preferences.length;
+      },
+      statements: 3,
     });
   });
 });

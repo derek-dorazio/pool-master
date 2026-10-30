@@ -1,17 +1,33 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { useMemo } from 'react';
 import type { CupProjectedStandingDto, CupStandingRowDto } from '@/lib/api';
-import { cn, DataGrid } from '@/features/shared/ui';
-import { TeamName } from '@/features/teams/team-name';
-import { describeMovement, formatCupPoints, formatProjectedStanding } from './cup-view';
-
-const STANDINGS_PER_PAGE = 25;
+import { cn } from '@/features/shared/ui';
+import { describeMovement, formatProjectedStanding } from './cup-view';
+import { squadStandingColumns } from './squad-standing-columns';
+import { SquadStandingsGrid } from './squad-standings-grid';
 
 const MOVEMENT_CLASS = {
   up: 'text-foreground',
   down: 'text-destructive',
   none: 'text-muted-foreground',
 } as const;
+
+/** How far a squad moved since the latest counted contest. */
+const MOVEMENT_COLUMN: ColumnDef<CupStandingRowDto, string | number> = {
+  id: 'movement',
+  header: 'Move',
+  accessorFn: (row) => row.movement ?? 0,
+  enableGlobalFilter: false,
+  enableSorting: false,
+  cell: ({ row }) => {
+    const movement = describeMovement(row.original.movement);
+    return (
+      <span aria-label={movement.description} className={cn('text-xs font-bold', MOVEMENT_CLASS[movement.direction])}>
+        {movement.label}
+      </span>
+    );
+  },
+};
 
 /**
  * A cup's standings: place, movement since the latest counted contest, squad, points, wins and
@@ -37,50 +53,12 @@ export function CupStandingsGrid({
 }) {
   const columns = useMemo<ColumnDef<CupStandingRowDto, string | number>[]>(
     () => [
-      {
-        id: 'place',
-        header: 'Place',
-        accessorFn: (row) => row.position,
-        enableGlobalFilter: false,
-        cell: ({ row }) => <span className="font-semibold tabular-nums">{row.original.displayPosition}</span>,
-      },
-      ...(showMovement ? [{
-        id: 'movement',
-        header: 'Move',
-        accessorFn: (row: CupStandingRowDto) => row.movement ?? 0,
-        enableGlobalFilter: false,
-        enableSorting: false,
-        cell: ({ row }: { row: { original: CupStandingRowDto } }) => {
-          const movement = describeMovement(row.original.movement);
-          return (
-            <span aria-label={movement.description} className={cn('text-xs font-bold', MOVEMENT_CLASS[movement.direction])}>
-              {movement.label}
-            </span>
-          );
-        },
-      }] : []),
-      {
-        id: 'squad',
-        header: 'Squad',
-        accessorFn: (row) => row.squadName,
-        cell: ({ row }) => (
-          <TeamName
-            iconKey={row.original.squadIconKey}
-            isActive={row.original.squadIsActive}
-            isMine={row.original.squadId === focusSquadId}
-            name={row.original.squadName}
-            testId={`cup-standing-squad-${row.original.squadId}`}
-            to={squadPath(row.original.squadId)}
-          />
-        ),
-      },
-      {
-        id: 'points',
-        header: 'Points',
-        accessorFn: (row) => row.points,
-        enableGlobalFilter: false,
-        cell: ({ row }) => <span className="score-total">{formatCupPoints(row.original.points)}</span>,
-      },
+      ...squadStandingColumns<CupStandingRowDto>({
+        afterPlace: showMovement ? [MOVEMENT_COLUMN] : [],
+        focusSquadId,
+        squadPath,
+        testIdPrefix: 'cup',
+      }),
       {
         id: 'wins',
         header: 'Wins',
@@ -111,21 +89,5 @@ export function CupStandingsGrid({
     [focusSquadId, projection, showMovement, squadPath],
   );
 
-  const focusRow = rows.find((row) => row.squadId === focusSquadId);
-
-  return (
-    <DataGrid
-      headerTone="scoreboard"
-      columns={columns}
-      data={rows}
-      emptyMessage={rows.length ? 'No squad matches that search.' : 'No squads in this league yet.'}
-      getRowId={(row) => row.squadId}
-      jumpToRow={focusRow ? { rowId: focusRow.squadId, label: `Jump to ${focusRow.squadName}`, testId: 'cup-standings-jump' } : undefined}
-      pageSize={STANDINGS_PER_PAGE}
-      rowTestId={(row) => `cup-standing-${row.squadId}`}
-      search={{ label: 'Find a squad', testId: 'cup-standings-search' }}
-      showColumnFilters={false}
-      tableTestId="cup-standings"
-    />
-  );
+  return <SquadStandingsGrid columns={columns} focusSquadId={focusSquadId} rows={rows} testIdPrefix="cup" />;
 }

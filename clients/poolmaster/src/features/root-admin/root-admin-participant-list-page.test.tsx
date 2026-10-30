@@ -83,19 +83,33 @@ describe('pool-master-rfy RootAdminParticipantListPage', () => {
     mockLogger.child.mockReturnValue(mockLogger);
   });
 
-  it('pool-master-rfy renders players with status and a row link to the golfer\'s page', async () => {
+  function searchFor(term: string) {
+    fireEvent.change(screen.getByTestId('root-admin-participant-list-search'), { target: { value: term } });
+  }
+
+  it('asks for at least 3 characters and reads no golfers until they are typed', async () => {
+    renderPage();
+
+    expect(await screen.findByText('Type at least 3 characters to find a golfer.')).toBeInTheDocument();
+    searchFor('Ro');
+    await new Promise((resolve) => setTimeout(resolve, 400));
+
+    expect(screen.getByText('Type at least 3 characters to find a golfer.')).toBeInTheDocument();
+    expect(listParticipantsMock).not.toHaveBeenCalled();
+  });
+
+  it('pool-master-rfy sends the typed search to the server and renders the golfers it returns, with status and a row link', async () => {
     listParticipantsMock.mockResolvedValue({
       data: {
-        participants: [
-          player(),
-          player({ id: 'p-jon', name: 'Jon Rahm' }),
-        ],
+        participants: [player()],
       },
     });
     renderPage();
 
+    searchFor('Ro');
+    searchFor('Rory');
+
     expect(await screen.findByText('Rory McIlroy')).toBeInTheDocument();
-    expect(screen.getByText('Jon Rahm')).toBeInTheDocument();
     // #236: the mapping count column is gone; the golfer's page reads the mappings itself.
     expect(screen.queryByText('Provider mappings')).not.toBeInTheDocument();
     expect(screen.getByTestId('root-admin-participant-row-p-rory')).toHaveTextContent('Active');
@@ -107,16 +121,18 @@ describe('pool-master-rfy RootAdminParticipantListPage', () => {
       'Retired',
       'Suspended',
     ]);
-    // Default status filter is ACTIVE.
+    // Default status filter is ACTIVE; the debounced term is sent once.
+    expect(listParticipantsMock).toHaveBeenCalledTimes(1);
     expect(listParticipantsMock).toHaveBeenCalledWith(
-      expect.objectContaining({ query: { sportId: 'sport-golf', status: 'ACTIVE' } }),
+      expect.objectContaining({ query: { sportId: 'sport-golf', status: 'ACTIVE', q: 'Rory' } }),
     );
   });
 
-  it('pool-master-rfy re-queries when the status filter changes, so non-active golfers are reachable', async () => {
+  it('pool-master-rfy re-queries the search when the status filter changes, so non-active golfers are reachable', async () => {
     listParticipantsMock.mockResolvedValue({ data: { participants: [] } });
     renderPage();
-    await screen.findByText('No active golfers.');
+    searchFor('Rory');
+    await screen.findByText('No active golfers matched the search.');
 
     await userEvent.selectOptions(
       screen.getByTestId('root-admin-participant-list-status'),
@@ -125,30 +141,25 @@ describe('pool-master-rfy RootAdminParticipantListPage', () => {
 
     await waitFor(() =>
       expect(listParticipantsMock).toHaveBeenCalledWith(
-        expect.objectContaining({ query: { sportId: 'sport-golf', status: 'RETIRED' } }),
+        expect.objectContaining({ query: { sportId: 'sport-golf', status: 'RETIRED', q: 'Rory' } }),
       ),
     );
-    expect(await screen.findByText('No retired golfers.')).toBeInTheDocument();
+    expect(await screen.findByText('No retired golfers matched the search.')).toBeInTheDocument();
   });
 
-  it('pool-master-rfy shows empty and error states', async () => {
-    listParticipantsMock.mockResolvedValue({ data: { participants: [] } });
-    renderPage();
-    expect(
-      await screen.findByText('No active golfers.'),
-    ).toBeInTheDocument();
-  });
-
-  it('pool-master-rfy surfaces the load error', async () => {
+  it('keeps the search box and shows the load error in the grid when the search fails', async () => {
     listParticipantsMock.mockResolvedValue({
       error: { error: { code: 'INTERNAL', message: 'Player index offline' } },
       response: { status: 500 },
     });
     renderPage();
+    searchFor('Rory');
+
     expect(await screen.findByText('Player index offline')).toBeInTheDocument();
+    expect(screen.getByTestId('root-admin-participant-list-search')).toHaveValue('Rory');
   });
 
-  it('narrows the players list with the search box and shows 25 golfers a page', async () => {
+  it('narrows the returned golfers with the search box and shows 25 a page', async () => {
     listParticipantsMock.mockResolvedValue({
       data: {
         participants: Array.from({ length: 30 }, (_, index) =>
@@ -156,12 +167,13 @@ describe('pool-master-rfy RootAdminParticipantListPage', () => {
       },
     });
     renderPage();
+    searchFor('Golfer');
 
     expect(await screen.findByText('Golfer 01')).toBeInTheDocument();
     expect(screen.getByText('Golfer 25')).toBeInTheDocument();
     expect(screen.queryByText('Golfer 26')).not.toBeInTheDocument();
 
-    await userEvent.type(screen.getByTestId('root-admin-participant-list-search'), 'Golfer 3');
+    searchFor('Golfer 3');
     expect(await screen.findByText('Golfer 30')).toBeInTheDocument();
     expect(screen.queryByText('Golfer 01')).not.toBeInTheDocument();
   });
@@ -169,7 +181,7 @@ describe('pool-master-rfy RootAdminParticipantListPage', () => {
   it('opens Add player as its own page, and Cancel returns to the list without saving', async () => {
     listParticipantsMock.mockResolvedValue({ data: { participants: [] } });
     renderPage();
-    await screen.findByText('No active golfers.');
+    await screen.findByText('Type at least 3 characters to find a golfer.');
 
     await userEvent.click(screen.getByTestId('root-admin-participant-list-new'));
     expect(await screen.findByTestId('root-admin-participant-create-page')).toBeInTheDocument();
@@ -203,7 +215,7 @@ describe('pool-master-rfy RootAdminParticipantListPage', () => {
       data: { participant: player({ id: 'new', name: 'Ludvig Åberg' }) },
     });
     renderPage();
-    await screen.findByText('No active golfers.');
+    await screen.findByText('Type at least 3 characters to find a golfer.');
 
     await userEvent.click(screen.getByTestId('root-admin-participant-list-new'));
     await userEvent.type(
@@ -223,7 +235,7 @@ describe('pool-master-rfy RootAdminParticipantListPage', () => {
   it('pool-master-rfy blocks submit until a name is entered', async () => {
     listParticipantsMock.mockResolvedValue({ data: { participants: [] } });
     renderPage();
-    await screen.findByText('No active golfers.');
+    await screen.findByText('Type at least 3 characters to find a golfer.');
     await userEvent.click(screen.getByTestId('root-admin-participant-list-new'));
     expect(screen.getByTestId('root-admin-participant-list-new-save')).toBeDisabled();
   });

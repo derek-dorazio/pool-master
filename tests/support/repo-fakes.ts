@@ -118,8 +118,10 @@ export function fakeUserRepo(overrides: Partial<UserRepository> = {}): UserRepos
     findById: one(),
     findByIds: many(),
     findByEmail: one(),
-    findAll: many(),
+    search: many(),
+    findActiveRootAdmins: many(),
     findActiveByLeague: many(),
+    findActiveByLeagues: many(),
     findByIdentifier: one(),
     findHolderOtherThan: one(),
     countActiveRootAdmins: jest.fn().mockResolvedValue(0),
@@ -132,8 +134,10 @@ export function fakeUserRepo(overrides: Partial<UserRepository> = {}): UserRepos
 export function fakeLeagueRepo(overrides: Partial<LeagueRepository> = {}): LeagueRepository {
   return {
     findById: one(),
+    findByIds: many(),
     findByCode: one(),
-    findAll: many(),
+    search: many(),
+    findActive: many(),
     findByUser: many(),
     create: echoCreate('league'),
     update: echoUpdate(),
@@ -152,6 +156,7 @@ export function fakeLeagueMembershipRepo(
 ): LeagueMembershipRepository {
   return {
     findByLeague: many(),
+    findByLeagues: many(),
     findByUser: many(),
     countActiveByLeagues: jest.fn().mockResolvedValue(new Map()),
     findByLeagueAndUser: one(),
@@ -185,6 +190,7 @@ export function fakeSquadMembershipRepo(
     findBySquadAndUser: one(),
     findByLeagueAndUser: one(),
     findByLeagueAndUserWithSquadName: one(),
+    findByLeagueUsersWithSquadName: many(),
     create: echoCreate('squad-membership'),
     update: echoUpdate(),
     ...overrides,
@@ -325,6 +331,7 @@ export function fakeSportEventParticipantRepo(
     findBySportEvent: many(),
     findBySportEvents: many(),
     findFieldForEvent: many(),
+    findFieldsForEvents: many(),
     findFieldRow: one(),
     countDistinctParticipants: jest.fn().mockResolvedValue(0),
     createMany: nothing(),
@@ -366,6 +373,7 @@ export function fakeParticipantProviderMappingRepo(
 export function fakeContestRepo(overrides: Partial<ContestRepository> = {}): ContestRepository {
   return {
     findById: one(),
+    findByIds: many(),
     findByLeague: many(),
     findCurrentByLeague: many(),
     findFinishedByLeague: many(),
@@ -373,6 +381,7 @@ export function fakeContestRepo(overrides: Partial<ContestRepository> = {}): Con
     findOpenByLeague: many(),
     findSportLeagueIdsBySeason: many(),
     findBySportEvent: many(),
+    findBySportEvents: many(),
     findJoinableByReleasedEdition: many(),
     findByStatuses: many(),
     create: createdContest(echoCreate('contest')),
@@ -393,7 +402,9 @@ export function fakeContestEntryRepo(
   return {
     findByIdWithSquad: one(),
     findByContest: many(),
+    findByContests: many(),
     findByContestWithSquad: many(),
+    findByContestsWithSquad: many(),
     findByContestAndSquad: many(),
     findIdsByContestAndSquad: many(),
     findBySquadAndContests: many(),
@@ -402,7 +413,6 @@ export function fakeContestEntryRepo(
     countSubmittedByContests: jest.fn().mockResolvedValue(new Map()),
     create: createdEntry(echoCreate('contest-entry')),
     update: echoUpdate(),
-    setEventStatus: echoEventStatus(),
     delete: jest.fn().mockResolvedValue({ status: 'deleted' }),
     ...overrides,
   };
@@ -424,14 +434,6 @@ function createdEntry(create: jest.Mock): ContestEntryRepository['create'] {
     ({ status: 'created', entry: { events: [], ...((await create(input)) as Partial<ContestEntry>) } }));
 }
 
-/** Echoes the one event status the call set, as the entry the port answers with. */
-function echoEventStatus(): ContestEntryRepository['setEventStatus'] {
-  return jest.fn().mockImplementation(async (id: string, sportEventId: string, status: ContestEntry['events'][number]['status'], at: Date) => ({
-    id,
-    events: [{ sportEventId, status, ...(status === 'SUBMITTED' && { submittedAt: at }) }],
-  }));
-}
-
 /** Read-only, like the port: a pick is only ever inserted through ContestEntryPickService. */
 export function fakeContestEntryPickRepo(
   overrides: Partial<ContestEntryPickRepository> = {},
@@ -449,6 +451,7 @@ export function fakeContestEntryStandingRepo(
 ): ContestEntryStandingRepository {
   return {
     findByContest: many(),
+    findWinnersByContests: many(),
     upsert: nothing(),
     ...overrides,
   };
@@ -459,6 +462,7 @@ export function fakeContestEntryEventStandingRepo(
 ): ContestEntryEventStandingRepository {
   return {
     findByContest: many(),
+    findByContests: many(),
     upsert: nothing(),
     ...overrides,
   };
@@ -492,6 +496,7 @@ export function fakeParticipantContestScoringRuleRepo(
 ): ParticipantContestScoringRuleRepository {
   return {
     findByContestConfiguration: many(),
+    findByContestConfigurations: many(),
     create: echoCreate('participant-contest-scoring-rule'),
     deleteByContestConfiguration: nothing(),
     ...overrides,

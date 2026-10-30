@@ -43,13 +43,13 @@ import {
   type StandingsLine,
 } from '../email';
 import { describeEventFormat, shareSummaryReads, summarizeContest, type ContestSummaryDeps } from './contest-summary';
-import { activeLeagueMembers, activeLeagueMembersWithRoles, type LeagueMemberDeps } from './league-members';
+import { activeLeagueMembers, activeLeagueMembersByLeague, activeLeagueMembersWithRoles, type LeagueMemberDeps } from './league-members';
 import { leaderCount } from './live-standings';
 
 export interface ContestNoticeDeps extends ContestSummaryDeps, LeagueMemberDeps {
   contests: Pick<ContestRepository, 'findById' | 'findBySportEvent'>;
-  leagues: Pick<LeagueRepository, 'findById'>;
-  entries: Pick<ContestEntryRepository, 'findByContest'>;
+  leagues: Pick<LeagueRepository, 'findById' | 'findByIds'>;
+  entries: Pick<ContestEntryRepository, 'findByContest' | 'findByContests'>;
   squadMemberships: Pick<SquadMembershipRepository, 'findBySquads'>;
   /** A settled contest's frozen places, for its final results. */
   finalStandings: Pick<ContestService, 'finalStandingsOf'>;
@@ -282,13 +282,19 @@ export class ContestNotices implements ContestOpenedNotice, ContestStartedNotice
     if (contests.length === 0) return;
     const sportLeagueName = (await this.deps.sportLeagues.findById(sportEvent.sportLeagueId))?.name ?? '';
     const event = buildEmailEventHeader(this.deps.appBaseUrl, sportEvent, sportLeagueName);
+    // Every league with a contest on the event, its members and every contest's entrants are read
+    // once for the whole event, not once per contest (#1255).
+    const leagueIds = [...new Set(contests.map((contest) => contest.leagueId))];
+    const [leagues, membersByLeague, entrantsByContest] = await Promise.all([
+      this.deps.leagues.findByIds(leagueIds),
+      activeLeagueMembersByLeague(this.deps, leagueIds),
+      this.entrantsByContest(contests),
+    ]);
+    const leagueById = new Map(leagues.map((league) => [league.id, league]));
     await Promise.all(contests.map(async (contest) => {
-      const [league, members, entrants] = await Promise.all([
-        // poolmaster-allow-query-in-loop: #1255
-        this.deps.leagues.findById(contest.leagueId),
-        activeLeagueMembersWithRoles(this.deps, contest.leagueId),
-        this.entrantsOf(contest),
-      ]);
+      const league = leagueById.get(contest.leagueId);
+      const members = membersByLeague.get(contest.leagueId) ?? [];
+      const entrants = entrantsByContest.get(contest.id) ?? new Set<string>();
       if (!league) {
         this.skipped('email.sportEventChanged.skipped', contest, 'Skipped the event changed email because its league is gone');
         return;
@@ -324,10 +330,23 @@ export class ContestNotices implements ContestOpenedNotice, ContestStartedNotice
 
   /** The people owning an entry submitted for any of the contest's events, as E1 counts entrants. */
   private async entrantsOf(contest: Contest): Promise<Set<string>> {
-    const submitted = (await this.deps.entries.findByContest(contest.id)).filter((entry) => contest.sportEventIds
-      .some((sportEventId) => contestEntryEventStatus(entry, sportEventId) === ContestEntryStatus.SUBMITTED));
-    return new Set((await this.deps.squadMemberships.findBySquads([...new Set(submitted.map((entry) => entry.squadId))]))
-      .map((owner) => owner.userId));
+    return (await this.entrantsByContest([contest])).get(contest.id) ?? new Set<string>();
+  }
+
+  /** `entrantsOf` for several contests, by contest, in two reads whatever their number (#1255). */
+  private async entrantsByContest(contests: readonly Contest[]): Promise<Map<string, Set<string>>> {
+    const contestById = new Map(contests.map((contest) => [contest.id, contest]));
+    const submitted = (await this.deps.entries.findByContests([...contestById.keys()])).filter((entry) => contestById.get(entry.contestId)
+      ?.sportEventIds.some((sportEventId) => contestEntryEventStatus(entry, sportEventId) === ContestEntryStatus.SUBMITTED));
+    const ownersBySquad = new Map<string, string[]>();
+    for (const owner of await this.deps.squadMemberships.findBySquads([...new Set(submitted.map((entry) => entry.squadId))])) {
+      ownersBySquad.set(owner.squadId, [...(ownersBySquad.get(owner.squadId) ?? []), owner.userId]);
+    }
+    const entrants = new Map([...contestById.keys()].map((contestId): [string, Set<string>] => [contestId, new Set()]));
+    for (const entry of submitted) {
+      for (const userId of ownersBySquad.get(entry.squadId) ?? []) entrants.get(entry.contestId)?.add(userId);
+    }
+    return entrants;
   }
 
   /**

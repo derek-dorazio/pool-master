@@ -30,12 +30,12 @@ describe('ContestExpandedNotices', () => {
     world.addMember({ league, user: world.addUser({ firstName: 'Morgan', email: 'morgan@example.com' }) });
   });
 
-  function notices(overrides: { findByLeagueFails?: boolean } = {}) {
+  function notices(overrides: { membersReadFails?: boolean } = {}) {
     const logger = fakeLogger();
     const service = new ContestExpandedNotices({
       leagues: world.leagues,
-      memberships: overrides.findByLeagueFails
-        ? { findByLeague: async () => { throw new Error('connection reset'); } }
+      memberships: overrides.membersReadFails
+        ? { findByLeagues: async () => { throw new Error('connection reset'); } }
         : world.memberships,
       users: world.users,
       email: emailServiceInto(outbox),
@@ -85,7 +85,7 @@ describe('ContestExpandedNotices', () => {
   });
 
   it('logs rather than throws when the commissioners can\'t be read, since the expansion has already been written', async () => {
-    const { service, logger } = notices({ findByLeagueFails: true });
+    const { service, logger } = notices({ membersReadFails: true });
 
     await expect(service.tellExpanded({ contest: contest(), entriesPerContest: 50, expandedById: sam.id, granted: false })).resolves.toBeUndefined();
 

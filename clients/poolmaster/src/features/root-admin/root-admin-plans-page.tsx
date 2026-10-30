@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
-import { useForm, type UseFormReturn } from 'react-hook-form';
+import type { UseFormReturn } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   LEAGUE_PLANS,
@@ -10,17 +9,24 @@ import {
   PlanFeature,
   PlanFeatureGroup,
 } from '@poolmaster/shared/domain';
-import { updateSettingsGroup, type SettingsGroup } from '@/lib/api';
+import type { SettingsGroup } from '@/lib/api';
 import {
-  Alert,
   AsyncPage,
   Button,
   Checkbox,
   DateDisplay,
-  Heading,
+  InlineError,
   Input,
+  PanelCard,
+  PanelList,
   Select,
   SettingsSectionHeader,
+  SimpleTable,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeaderCell,
+  TableRow,
   Tile,
 } from '@/features/shared/ui';
 import {
@@ -30,10 +36,10 @@ import {
   PLAN_FEATURE_LABEL,
   formatPlanLimit,
 } from '@/features/plans/plan-labels';
-import { QueryKeys } from '@/lib/query-keys';
-import { useInvalidatingMutation } from '@/lib/mutation-hooks';
-import { extractErrorMessage, hasErrorCode, throwApiError } from '@/lib/errors';
+import { extractErrorMessage } from '@/lib/errors';
 import { ManagePageIntro } from './manage-page-intro';
+import { SettingsSaveError } from './settings-save-error';
+import { useSettingsGroupForm } from './use-settings-group-form';
 import { useSettingsGroupQuery } from './use-settings-groups';
 import {
   PlanSettingsDraftSchema,
@@ -58,8 +64,6 @@ const FEATURE_STARTS_AT_LABEL: Readonly<Record<LeaguePlan, string>> = {
   [LeaguePlan.PREMIUM]: 'Premium and up',
   [LeaguePlan.PLATINUM]: 'Platinum only',
 };
-
-const tableHeaderClassName = 'bg-[var(--table-header-surface)] text-xs uppercase text-muted-foreground';
 
 /**
  * /manage/plans (#946): what each league plan allows, saved as the PLAN_CONFIG settings group, so
@@ -93,69 +97,33 @@ export function RootAdminPlansPage() {
  * like the Settings page forms, and a 409 offers to load the newer value.
  */
 function PlanSettingsForm({ group }: { group: PlanSettingsGroup }) {
-  const queryClient = useQueryClient();
-  const [baseUpdatedAt, setBaseUpdatedAt] = useState(group.updatedAt);
   const [lastChange, setLastChange] = useState({ at: group.updatedAt, by: group.updatedBy });
-  const form = useForm<PlanSettingsDraft>({
+  const { conflicted, form, loadLatest, saveMutation, submit } = useSettingsGroupForm({
+    group,
+    onTaken: (taken) => setLastChange({ at: taken.updatedAt, by: taken.updatedBy }),
     resolver: zodResolver(PlanSettingsDraftSchema),
-    defaultValues: toPlanSettingsDraft(group.value),
+    subject: 'Plans settings',
+    toForm: toPlanSettingsDraft,
+    toValue: toPlanConfig,
   });
-
-  const saveMutation = useInvalidatingMutation({
-    mutationFn: async (draft: PlanSettingsDraft) => {
-      const response = await updateSettingsGroup({
-        path: { key: 'PLAN_CONFIG' },
-        body: { key: 'PLAN_CONFIG', value: toPlanConfig(draft), expectedUpdatedAt: baseUpdatedAt },
-      });
-      if (response.data?.key !== 'PLAN_CONFIG') {
-        throwApiError(response.error, 'Plans settings response is missing data.');
-      }
-      return response.data;
-    },
-    onSuccess: (saved) => {
-      setBaseUpdatedAt(saved.updatedAt);
-      setLastChange({ at: saved.updatedAt, by: saved.updatedBy });
-      form.reset(toPlanSettingsDraft(saved.value));
-    },
-    invalidates: [QueryKeys.rootAdmin.settings],
-  });
-
-  const conflicted = hasErrorCode(saveMutation.error, 'SETTINGS_CONFLICT');
-
-  async function loadLatest() {
-    await queryClient.refetchQueries({ queryKey: QueryKeys.rootAdmin.settingsGroup('PLAN_CONFIG'), exact: true });
-    const latest = queryClient.getQueryData<PlanSettingsGroup>(QueryKeys.rootAdmin.settingsGroup('PLAN_CONFIG'));
-    if (!latest) {
-      return;
-    }
-    setBaseUpdatedAt(latest.updatedAt);
-    setLastChange({ at: latest.updatedAt, by: latest.updatedBy });
-    form.reset(toPlanSettingsDraft(latest.value));
-    saveMutation.reset();
-  }
 
   return (
     <form
       className="space-y-8"
       data-testid="root-admin-plans-form"
       noValidate
-      onSubmit={(event) => void form.handleSubmit((draft) => saveMutation.mutate(draft))(event)}
+      onSubmit={(event) => void submit(event)}
     >
       <CapsGrid form={form} />
       <FeatureList form={form} />
-      {saveMutation.isError ? (
-        <Alert
-          action={conflicted ? (
-            <Button onClick={() => void loadLatest()} type="button" variant="secondary">
-              Load the latest plans
-            </Button>
-          ) : undefined}
-          data-testid="root-admin-plans-error"
-          tone="danger"
-        >
-          {extractErrorMessage(saveMutation.error, { fallback: 'We could not save the plans.' })}
-        </Alert>
-      ) : null}
+      <SettingsSaveError
+        conflicted={conflicted}
+        error={saveMutation.error}
+        fallback="We could not save the plans."
+        loadLabel="Load the latest plans"
+        onLoadLatest={loadLatest}
+        testId="root-admin-plans-error"
+      />
       <div className="flex flex-wrap items-center gap-3">
         <Button data-testid="root-admin-plans-save" disabled={saveMutation.isPending} type="submit">
           {saveMutation.isPending ? 'Saving...' : 'Save plans'}
@@ -184,25 +152,25 @@ function CapsGrid({ form }: { form: UseFormReturn<PlanSettingsDraft> }) {
         title="Caps"
       />
       <Tile className="overflow-x-auto" data-testid="root-admin-plans-caps" padding="none" radius="md">
-        <table className="min-w-full text-left text-sm">
-          <thead className={tableHeaderClassName}>
+        <SimpleTable className="min-w-full">
+          <TableHead>
             <tr>
-              <th className="px-4 py-2" scope="col">Cap</th>
+              <TableHeaderCell>Cap</TableHeaderCell>
               {LEAGUE_PLANS.map((plan) => (
-                <th className="px-4 py-2" key={plan} scope="col">{LEAGUE_PLAN_LABEL[plan]}</th>
+                <TableHeaderCell key={plan}>{LEAGUE_PLAN_LABEL[plan]}</TableHeaderCell>
               ))}
             </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
+          </TableHead>
+          <TableBody>
             {Object.values(PlanCap).map((cap) => (
-              <tr data-testid={`root-admin-plans-cap-${cap}`} key={cap}>
-                <th className="px-4 py-3 align-top font-medium text-foreground" scope="row">{PLAN_CAP_LABEL[cap]}</th>
+              <TableRow data-testid={`root-admin-plans-cap-${cap}`} key={cap}>
+                <TableHeaderCell className="py-3 align-top text-foreground" scope="row">{PLAN_CAP_LABEL[cap]}</TableHeaderCell>
                 {LEAGUE_PLANS.map((plan) => {
                   const cellName = `${PLAN_CAP_LABEL[cap]} on ${LEAGUE_PLAN_LABEL[plan]}`;
                   const error = errors.caps?.[cap]?.[plan]?.limit?.message;
                   const errorId = `root-admin-plans-${cap}-${plan}-error`;
                   return (
-                    <td className="min-w-40 px-4 py-3 align-top" key={plan}>
+                    <TableCell className="min-w-40 py-3 align-top" key={plan}>
                       <div className="space-y-2">
                         {caps[cap][plan].unlimited ? (
                           <p className="py-2 text-foreground">{formatPlanLimit(null)}</p>
@@ -224,15 +192,15 @@ function CapsGrid({ form }: { form: UseFormReturn<PlanSettingsDraft> }) {
                           />
                           Unlimited
                         </label>
-                        {error ? <p className="text-sm text-destructive" id={errorId}>{error}</p> : null}
+                        {error ? <InlineError id={errorId}>{error}</InlineError> : null}
                       </div>
-                    </td>
+                    </TableCell>
                   );
                 })}
-              </tr>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </SimpleTable>
       </Tile>
     </section>
   );
@@ -246,9 +214,8 @@ function FeatureList({ form }: { form: UseFormReturn<PlanSettingsDraft> }) {
         title="Features"
       />
       {Object.values(PlanFeatureGroup).map((featureGroup) => (
-        <Tile data-testid={`root-admin-plans-features-${featureGroup}`} key={featureGroup} padding="none" radius="xl">
-          <Heading level={3} variant="card" size="sm" className="px-4 pt-4">{PLAN_FEATURE_GROUP_LABEL[featureGroup]}</Heading>
-          <ul className="divide-y divide-border">
+        <PanelCard headingLevel={3} key={featureGroup} testId={`root-admin-plans-features-${featureGroup}`} title={PLAN_FEATURE_GROUP_LABEL[featureGroup]}>
+          <PanelList>
             {ALWAYS_INCLUDED[featureGroup].map((label) => (
               <li className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 text-sm" key={label}>
                 <span className="text-foreground">{label}</span>
@@ -272,8 +239,8 @@ function FeatureList({ form }: { form: UseFormReturn<PlanSettingsDraft> }) {
                 </Select>
               </li>
             ))}
-          </ul>
-        </Tile>
+          </PanelList>
+        </PanelCard>
       ))}
     </section>
   );

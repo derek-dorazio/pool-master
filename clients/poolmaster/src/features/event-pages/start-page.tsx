@@ -14,6 +14,7 @@ import { useLeaguesQuery } from '@/features/leagues/use-leagues-query';
 import { sportLeaguesUsedQuery } from '@/features/plans/use-sport-leagues-used';
 import {
   Button,
+  CopyButton,
   EmptyState,
   ErrorState,
   Eyebrow,
@@ -89,26 +90,14 @@ function PickerRow({ league, offer, page, request }: { league: LeagueDto; offer:
 
 /** Copies the event page's link, for a member to send whoever runs their league. */
 function ShareWithCommissionerButton({ page }: { page: EventPageDto }) {
-  const [copyState, setCopyState] = useState<'copied' | 'failed' | 'idle'>('idle');
-  async function copyLink() {
-    try {
-      await navigator.clipboard.writeText(`${window.location.origin}${buildEventPagePath(page.sport, page.slug)}`);
-      setCopyState('copied');
-    } catch {
-      setCopyState('failed');
-    }
-  }
   return (
-    <div className="space-y-1">
-      <Button data-testid="start-share-with-commissioner" onClick={() => void copyLink()} type="button" variant="secondary">
-        {copyState === 'copied' ? 'Link copied' : 'Share with your commissioner'}
-      </Button>
-      {copyState === 'failed' ? (
-        <p className="text-sm text-destructive" data-testid="start-share-failed" role="alert">
-          {'Couldn\'t copy the link. Copy this page\'s address from your browser instead.'}
-        </p>
-      ) : null}
-    </div>
+    <CopyButton
+      copiedLabel="Link copied"
+      failedMessage="Couldn't copy the link. Copy this page's address from your browser instead."
+      label="Share with your commissioner"
+      testId="start-share-with-commissioner"
+      text={`${window.location.origin}${buildEventPagePath(page.sport, page.slug)}`}
+    />
   );
 }
 

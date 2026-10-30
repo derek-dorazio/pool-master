@@ -1,16 +1,15 @@
-import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useLocation, useNavigate } from "react-router";
 import { PasswordResetConfirmRequestSchema } from "@poolmaster/shared/dto";
 import { confirmPasswordReset } from "@/lib/api";
 import { extractErrorMessage, hasErrorCode, throwApiError } from "@/lib/errors";
 import { getLogger } from "@/lib/logger";
 import { useInvalidatingMutation } from "@/lib/mutation-hooks";
-import { FormField, FormPage, Heading, Input, LinkButton, Tile } from "@/features/shared/ui";
+import { FormField, FormPage, Input, LinkButton, PanelCard } from "@/features/shared/ui";
 import { useAuth } from "./auth-context";
 import { FORGOT_PASSWORD_PATH } from "./auth-paths";
+import { useLinkToken } from "./use-link-token";
 
 const resetPasswordFormSchema = PasswordResetConfirmRequestSchema.omit({ token: true })
   .extend({
@@ -24,26 +23,16 @@ const resetPasswordFormSchema = PasswordResetConfirmRequestSchema.omit({ token: 
 
 type ResetPasswordFormValues = z.infer<typeof resetPasswordFormSchema>;
 
-/**
- * The token rides in the link's fragment (`#token=...`), which the browser never sends to a
- * server. Read once on arrival; the page then clears it from the address bar.
- */
-function readTokenFromHash(hash: string): string | null {
-  const token = new URLSearchParams(hash.replace(/^#/, "")).get("token");
-  return token?.trim() ? token : null;
-}
-
 function DeadLinkState() {
   return (
-    <Tile className="mx-auto max-w-md space-y-4" padding="lg" radius="xl">
-      <Heading level={2} variant="card" size="lg">Choose a new password</Heading>
+    <PanelCard className="mx-auto max-w-md" padded title="Choose a new password">
       <p className="text-sm text-muted-foreground" data-testid="reset-password-link-invalid">
         This reset link has expired or has already been used.
       </p>
       <LinkButton data-testid="reset-password-send-new-link" to={FORGOT_PASSWORD_PATH}>
         Send a new link
       </LinkButton>
-    </Tile>
+    </PanelCard>
   );
 }
 
@@ -55,21 +44,11 @@ function DeadLinkState() {
 export function ResetPasswordPage() {
   const logger = getLogger().child({ feature: "reset-password-page" });
   const auth = useAuth();
-  const location = useLocation();
-  const navigate = useNavigate();
-  const [token] = useState(() => readTokenFromHash(location.hash));
+  const token = useLinkToken();
   const form = useForm<ResetPasswordFormValues>({
     resolver: zodResolver(resetPasswordFormSchema),
     defaultValues: { newPassword: "", confirmNewPassword: "" },
   });
-
-  // Clears the token from the address bar, so it is not left in history or shared by copying
-  // the URL. Synchronises with the browser's location, an external system.
-  useEffect(() => {
-    if (location.hash) {
-      void navigate({ pathname: location.pathname, search: location.search }, { replace: true });
-    }
-  }, [location.hash, location.pathname, location.search, navigate]);
 
   const confirmMutation = useInvalidatingMutation({
     mutationFn: async (values: ResetPasswordFormValues & { token: string }) => {
@@ -99,15 +78,14 @@ export function ResetPasswordPage() {
 
   if (confirmMutation.isSuccess) {
     return (
-      <Tile className="mx-auto max-w-md space-y-4" padding="lg" radius="xl">
-        <Heading level={2} variant="card" size="lg">Password reset</Heading>
+      <PanelCard className="mx-auto max-w-md" padded title="Password reset">
         <p className="text-sm text-muted-foreground" data-testid="reset-password-done">
           Your password is reset. Sign in with your new password.
         </p>
         <LinkButton data-testid="reset-password-sign-in" to="/">
           Sign in
         </LinkButton>
-      </Tile>
+      </PanelCard>
     );
   }
 

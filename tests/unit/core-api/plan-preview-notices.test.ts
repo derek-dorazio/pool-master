@@ -82,6 +82,40 @@ describe('PlanPreviewNotices', () => {
     ]);
   });
 
+  it('reads every ending league\'s told check and commissioners in one read each, reading no member who is not a commissioner, however many leagues and renewal dates (#1336)', async () => {
+    const commissioners = [commissioner];
+    for (const [index, renewsAt] of [ENDS_AT, ENDS_AT, new Date(ENDS_AT.getTime() + 24 * HOUR)].entries()) {
+      const other = world.addLeague({ name: `Pool ${String(index)}`, leagueCode: `POOL${String(index)}`, plan: LeaguePlan.PREMIUM, planRenewsAt: renewsAt });
+      const owner = world.addUser({ firstName: `Owner${String(index)}`, lastName: 'Commish' });
+      world.addMember({ league: other, user: owner, role: LeagueRole.COMMISSIONER });
+      world.addMember({ league: other, user: world.addUser({ firstName: `Member${String(index)}`, lastName: 'Player' }) });
+      commissioners.push(owner);
+    }
+    const reads = [
+      jest.spyOn(outbox, 'findLeagueIdsRecordedByPrefix'),
+      jest.spyOn(outbox, 'findLeagueIdsRecorded'),
+      jest.spyOn(world.memberships, 'findByLeagues'),
+      jest.spyOn(world.users, 'findActiveByLeagues'),
+    ];
+
+    await notices().service.queueDue(overnight('04-17'));
+
+    expect(reminders()).toHaveLength(4);
+    expect(reads.map((read) => read.mock.calls.length)).toEqual([1, 0, 1, 1]);
+    const readUsers = await expectDefined(reads[3]?.mock.results[0]).value as User[];
+    expect(new Set(readUsers.map((user) => user.id))).toEqual(new Set(commissioners.map((user) => user.id)));
+  });
+
+  it('reads no commissioners on a sweep where every ending league has already been reminded (#1336)', async () => {
+    await notices().service.queueDue(overnight('04-17'));
+    const memberReads = jest.spyOn(world.memberships, 'findByLeagues');
+
+    await notices().service.queueDue(new Date(overnight('04-17').getTime() + HOUR));
+
+    expect(reminders()).toHaveLength(1);
+    expect(memberReads).not.toHaveBeenCalled();
+  });
+
   it('sends each reminder once, however many sweeps run that day', async () => {
     const { service } = notices();
 

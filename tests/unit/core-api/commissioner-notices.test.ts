@@ -18,9 +18,9 @@ import {
   type SportEvent,
   type SportLeague,
 } from '@poolmaster/shared/domain';
-import type { ContestFinalStandings } from '../../../packages/core-api/src/modules/contests/service';
 import { EMAIL_SETTINGS, EmailService } from '../../../packages/core-api/src/modules/email';
-import { CommissionerNotices } from '../../../packages/core-api/src/modules/notifications';
+import { CommissionerNotices, type CommissionerNoticeDeps } from '../../../packages/core-api/src/modules/notifications';
+import { expectDefined } from '../../support/expect-defined';
 import { fakeLogger } from '../../support/fake-logger';
 import { inMemoryEmailMessages, inMemoryEmailOptOuts, inMemoryEmailSuppressions, type InMemoryEmailMessages } from '../../support/in-memory-email-messages';
 import { TEST_UNSUBSCRIBE, TEST_PLAN_ENTITLEMENTS } from '../../support/email-service';
@@ -40,7 +40,6 @@ describe('CommissionerNotices', () => {
   let world: InMemoryContestWorld;
   let outbox: InMemoryEmailMessages;
   let templates: ContestConfigTemplate[];
-  let finals: Map<string, ContestFinalStandings>;
   let eventPages: Map<string, EventPage>;
   let eventPageReads: number;
   let sportLeagueReads: number;
@@ -49,13 +48,12 @@ describe('CommissionerNotices', () => {
     world = new InMemoryContestWorld();
     outbox = inMemoryEmailMessages();
     templates = [];
-    finals = new Map();
     eventPages = new Map();
     eventPageReads = 0;
     sportLeagueReads = 0;
   });
 
-  function notices(): CommissionerNotices {
+  function notices(overrides: Partial<CommissionerNoticeDeps> = {}): CommissionerNotices {
     const config = EMAIL_SETTINGS.defaults({ POOLMASTER_ENVIRONMENT: 'prod' });
     const logger = fakeLogger();
     const email = new EmailService({
@@ -73,7 +71,7 @@ describe('CommissionerNotices', () => {
       sportEvents: world.sportEventRepo(),
       contests: world.contestRepo(),
       configurations: world.configurationRepo(),
-      matches: { findBySportEvent: async () => [] },
+      matches: { findBySportEvents: async () => [] },
       templates: { list: async () => templates },
       leagues: world.leagueRepo(),
       readConfig: () => config,
@@ -87,11 +85,28 @@ describe('CommissionerNotices', () => {
       memberships: world.membershipRepo(),
       users: world.userRepo(),
       eventPages: { pagesByEvent: () => { eventPageReads += 1; return Promise.resolve(eventPages); } },
-      finalStandings: { finalStandingsOf: async (contest) => finals.get(contest.id) ?? { scoringDefinitionId: null, entries: [] } },
+      standings: world.standingRepo(),
       email,
       appBaseUrl: 'https://app.example.test/',
       logger,
+      ...overrides,
     });
+  }
+
+  /** The repositories a run reads per event or league, each read spied on (#1255). */
+  function spiedReads() {
+    const contests = world.contestRepo();
+    const memberships = world.membershipRepo();
+    const users = world.userRepo();
+    const reads = {
+      contestsOnEvents: jest.spyOn(contests, 'findBySportEvents'),
+      contestsOnEvent: jest.spyOn(contests, 'findBySportEvent'),
+      memberships: jest.spyOn(memberships, 'findByLeagues'),
+      users: jest.spyOn(users, 'findActiveByLeagues'),
+      toldByPrefix: jest.spyOn(outbox, 'findLeagueIdsRecordedByPrefix'),
+    };
+    const counts = () => Object.fromEntries(Object.entries(reads).map(([name, read]) => [name, read.mock.calls.length]));
+    return { deps: { contests, memberships, users }, counts };
   }
 
   function person(leagueId: string, firstName: string, role: LeagueRole = LeagueRole.COMMISSIONER) {
@@ -160,11 +175,11 @@ describe('CommissionerNotices', () => {
       event({ name: 'Another Open', eventYear: 2025, status: SportEventStatus.COMPLETED, startDate: new Date('2025-04-17T12:00:00.000Z') });
       const pick6 = world.addContest(office.id, { name: 'Masters Pick 6', status: ContestStatus.COMPLETED, sportEventIds: [previous.id] });
       const tied = world.addContest(office.id, { name: 'Masters Salary Cap', status: ContestStatus.COMPLETED, sportEventIds: [previous.id] });
-      finals.set(pick6.id, standings([['Green Jackets', 1], ['Amen Corner', 2]]));
-      finals.set(tied.id, standings([['Azalea', 1], ['Magnolia', 1], ['Rae\'s Creek', 3]]));
+      settle(pick6.id, [['Green Jackets', 1], ['Amen Corner', 2]]);
+      settle(tied.id, [['Azalea', 1], ['Magnolia', 1], ['Rae\'s Creek', 3]]);
       const otherMajor = event({ name: 'The Open', eventYear: 2025, status: SportEventStatus.COMPLETED, startDate: new Date('2025-07-17T12:00:00.000Z') });
       const season = world.addContest(office.id, { name: 'Majors Pool', status: ContestStatus.COMPLETED, sportEventIds: [previous.id, otherMajor.id] });
-      finals.set(season.id, standings([['Season Champs', 1]]));
+      settle(season.id, [['Season Champs', 1]]);
       event({ name: 'The Masters', startDate: inDays(9) });
 
       await notices().queueDue(NOW);
@@ -174,6 +189,25 @@ describe('CommissionerNotices', () => {
       expect(text).not.toContain('Majors Pool');
       expect(text).not.toContain("It isn't open for contests yet");
       expect(textTo('EVENT_COMING_UP', jordan.id, family)).not.toContain('Last year');
+    });
+
+    it("reads last year's winners of every league's contests on the previous edition in one read, however many contests (#1336)", async () => {
+      const office = world.addLeague({ name: 'Office League' });
+      const casey = person(office.id, 'Casey');
+      const previous = event({ name: 'The Masters', eventYear: 2025, status: SportEventStatus.COMPLETED, startDate: new Date('2025-04-10T12:00:00.000Z') });
+      for (const name of ['Pick 6', 'Salary Cap', 'Pick 4']) {
+        const contest = world.addContest(office.id, { name: `Masters ${name}`, status: ContestStatus.COMPLETED, sportEventIds: [previous.id] });
+        settle(contest.id, [[`${name} Champs`, 1], [`${name} Runners-up`, 2]]);
+      }
+      event({ name: 'The Masters', startDate: inDays(9) });
+      const standings = world.standingRepo();
+      const winnerReads = jest.spyOn(standings, 'findWinnersByContests');
+
+      await notices({ standings }).queueDue(NOW);
+
+      expect(winnerReads).toHaveBeenCalledTimes(1);
+      expect(textTo('EVENT_COMING_UP', casey.id, office))
+        .toContain('Pick 6 Champs won Masters Pick 6.\nSalary Cap Champs won Masters Salary Cap.\nPick 4 Champs won Masters Pick 4.');
     });
 
     it('sends nothing for an event more than 10 days out, within 7 days, postponed or cancelled', async () => {
@@ -213,6 +247,37 @@ describe('CommissionerNotices', () => {
   });
 
   describe('Ready for contests (C2)', () => {
+    it('reads the contests on every ready event, the leagues told of each event and every league\'s commissioners once a run, however many events and leagues (#1255)', async () => {
+      const leagues = [world.addLeague({ name: 'Office League' }), world.addLeague({ name: 'Club League' }), world.addLeague({ name: 'Busy League' })];
+      const commissioners = leagues.map((league, index) => person(league.id, `Commissioner${index}`));
+      const masters = event({ name: 'The Masters', startDate: inDays(5) });
+      event({ name: 'RBC Heritage', startDate: inDays(6) });
+      event({ name: 'Valspar Championship', startDate: inDays(9), status: SportEventStatus.DRAFT });
+      world.addContest(expectDefined(leagues[2]).id, { status: ContestStatus.DRAFT, sportEventIds: [masters.id] });
+      const { deps, counts } = spiedReads();
+
+      await notices(deps).queueDue(NOW);
+
+      expect(counts()).toEqual({ contestsOnEvents: 1, contestsOnEvent: 0, memberships: 1, users: 1, toldByPrefix: 2 });
+      expect(sent('EVENT_READY_FOR_CONTESTS')).toHaveLength(5);
+      expect(new Set(sent('EVENT_COMING_UP').map(({ userId }) => userId))).toEqual(new Set(commissioners.map((user) => user.id)));
+    });
+
+    it('reads no members on a sweep where every league has already been told of every due event (#1255)', async () => {
+      const office = world.addLeague({ name: 'Office League' });
+      person(office.id, 'Casey');
+      event({ name: 'The Masters', startDate: inDays(5) });
+      event({ name: 'Valspar Championship', startDate: inDays(9), status: SportEventStatus.DRAFT });
+      await notices().queueDue(NOW);
+      const toldBefore = outbox.rows.length;
+      const { deps, counts } = spiedReads();
+
+      await notices(deps).queueDue(new Date(NOW.getTime() + HOUR));
+
+      expect(outbox.rows).toHaveLength(toldBefore);
+      expect(counts()).toMatchObject({ memberships: 0, users: 0 });
+    });
+
     it('tells commissioners of leagues with no contest on a released event within 7 days, with its field and the default setups offered on it in their order, each opening Create contest with the setup and the event chosen', async () => {
       const office = world.addLeague({ name: 'Office League', leagueCode: 'OFFICE24' });
       const busy = world.addLeague({ name: 'Busy League' });
@@ -315,6 +380,22 @@ describe('CommissionerNotices', () => {
   });
 
   describe('Weekly digest', () => {
+    it('reads the contests on every upcoming event and every digest league\'s commissioners once, however many events and leagues (#1255)', async () => {
+      for (const name of ['Office League', 'Club League']) {
+        const league = world.addLeague({ name, eventEmailDelivery: EventEmailDelivery.WEEKLY_DIGEST });
+        person(league.id, `${name} Commissioner`);
+      }
+      event({ name: 'The Masters', startDate: mondayPlus(2) });
+      event({ name: 'RBC Heritage', startDate: mondayPlus(4) });
+      event({ name: 'Valspar Championship', startDate: mondayPlus(6) });
+      const { deps, counts } = spiedReads();
+
+      await notices(deps).queueDue(MONDAY);
+
+      expect(sent('EVENT_WEEKLY_DIGEST')).toHaveLength(2);
+      expect(counts()).toMatchObject({ contestsOnEvents: 1, contestsOnEvent: 0, memberships: 1, users: 1 });
+    });
+
     it('names the sport leagues of every upcoming event from one read', async () => {
       const office = world.addLeague({ name: 'Office League', eventEmailDelivery: EventEmailDelivery.WEEKLY_DIGEST });
       person(office.id, 'Casey');
@@ -448,6 +529,56 @@ describe('CommissionerNotices', () => {
       expect(text).toContain(`Open contest: https://app.example.test/league/OFFICE24/admin/contests/${contest.id}`);
     });
 
+    it('reads every due draft contest\'s rules, told check, league and commissioners in one read each, and reads no member who is not a commissioner, however many contests and leagues (#1336)', async () => {
+      const leagues = [world.addLeague({ name: 'Office League' }), world.addLeague({ name: 'Family League' }), world.addLeague({ name: 'Golf League' })];
+      const commissioners = leagues.map((league, index) => person(league.id, `Commish${String(index)}`));
+      for (const league of leagues) person(league.id, `${league.name} Member`, LeagueRole.MEMBER);
+      for (const [index, league] of [...leagues, ...leagues].entries()) {
+        // A draft event within 48 hours has no C1 or C2 due, so only C4 reads.
+        const sportEvent = event({ name: `Event ${String(index)}`, status: SportEventStatus.DRAFT, startDate: inDays(1.9) });
+        world.addConfiguration(world.addContest(league.id, { name: `Contest ${String(index)}`, status: ContestStatus.DRAFT, sportEventIds: [sportEvent.id] }).id);
+      }
+      const configurations = world.configurationRepo();
+      const leagueRepo = world.leagueRepo();
+      const memberships = world.membershipRepo();
+      const users = world.userRepo();
+      const reads = {
+        rules: jest.spyOn(configurations, 'findByContests'),
+        rulesOfOne: jest.spyOn(configurations, 'findByContest'),
+        leagues: jest.spyOn(leagueRepo, 'findByIds'),
+        leagueById: jest.spyOn(leagueRepo, 'findById'),
+        told: jest.spyOn(outbox, 'findLeagueIdsRecordedByPrefix'),
+        toldForContest: jest.spyOn(outbox, 'existsForContest'),
+        memberships: jest.spyOn(memberships, 'findByLeagues'),
+        users: jest.spyOn(users, 'findActiveByLeagues'),
+      };
+
+      await notices({ configurations, leagues: leagueRepo, memberships, users }).queueDue(NOW);
+
+      expect(sent('CONTEST_NOT_OPEN')).toHaveLength(6);
+      expect(Object.fromEntries(Object.entries(reads).map(([name, read]) => [name, read.mock.calls.length])))
+        .toEqual({ rules: 1, rulesOfOne: 0, leagues: 1, leagueById: 0, told: 1, toldForContest: 0, memberships: 1, users: 1 });
+      const readUsers = await expectDefined(reads.users.mock.results[0]).value as Array<{ id: string }>;
+      expect(new Set(readUsers.map((user) => user.id))).toEqual(new Set(commissioners.map((user) => user.id)));
+    });
+
+    it('reads nothing past the told check on a sweep where every due draft contest has already been told (#1336)', async () => {
+      const office = world.addLeague({ name: 'Office League' });
+      person(office.id, 'Casey');
+      const masters = event({ name: 'The Masters', status: SportEventStatus.DRAFT, startDate: inDays(1.9) });
+      world.addConfiguration(world.addContest(office.id, { status: ContestStatus.DRAFT, sportEventIds: [masters.id] }).id);
+      await notices().queueDue(NOW);
+      const leagueRepo = world.leagueRepo();
+      const memberships = world.membershipRepo();
+      const leagueReads = jest.spyOn(leagueRepo, 'findByIds');
+      const memberReads = jest.spyOn(memberships, 'findByLeagues');
+
+      await notices({ leagues: leagueRepo, memberships }).queueDue(new Date(NOW.getTime() + HOUR));
+
+      expect(sent('CONTEST_NOT_OPEN')).toHaveLength(1);
+      expect([leagueReads.mock.calls.length, memberReads.mock.calls.length]).toEqual([0, 0]);
+    });
+
     it('sends nothing for a contest whose picks close more than 48 hours out or have closed, one that is open, or one created in the last 6 hours', async () => {
       const league = world.addLeague();
       person(league.id, 'Casey');
@@ -466,19 +597,24 @@ describe('CommissionerNotices', () => {
     });
   });
 
-  function standings(places: Array<[string, number]>): ContestFinalStandings {
-    return {
-      scoringDefinitionId: null,
-      entries: places.map(([entryName, position], index) => ({
-        entryId: `entry-${index}`,
-        entryName,
-        squadId: `squad-${index}`,
-        squadName: `Squad ${index}`,
+  /** Settles `contestId` with an entry of each name, in the order given, at each place. */
+  function settle(contestId: string, places: Array<[string, number]>): void {
+    for (const [index, [name, position]] of places.entries()) {
+      const id = `${contestId}-entry-${String(index)}`;
+      world.entries.set(id, { id, contestId, squadId: `${contestId}-squad-${String(index)}`, entryNumber: 1, name, events: [], createdAt: NOW, updatedAt: NOW });
+      world.standings.set(id, {
+        id: `${id}-standing`,
+        contestId,
+        contestEntryId: id,
         position,
         displayPosition: String(position),
-        score: null,
-      })),
-    };
+        countingPickLimit: 0,
+        scoredPickCount: 0,
+        asOf: null,
+        settledAt: NOW,
+        totalScore: null,
+      });
+    }
   }
 
   function template(overrides: Partial<ContestConfigTemplate> & { id: string; name: string }): ContestConfigTemplate {

@@ -23,8 +23,9 @@ import bcrypt from 'bcryptjs';
 import { randomBytes } from 'node:crypto';
 import type { FastifyBaseLogger } from 'fastify';
 import type { UserRepository, UserSearchFilters } from '@poolmaster/shared/db';
-import { isKnownLocale, isKnownTimeZone, isPlatformSearchTerm, PLATFORM_SEARCH_MIN_LENGTH, type TimeFormat, type User } from '@poolmaster/shared/domain';
+import { isKnownLocale, isKnownTimeZone, PLATFORM_SEARCH_MIN_LENGTH, platformSearchTerm, type TimeFormat, type User } from '@poolmaster/shared/domain';
 import { UserOperationError } from './user-errors';
+import { lockMemberRow } from '../../adapters';
 import type { PasswordChangedNotifier } from '../auth/password-changed-notifier';
 import type { EmailChangeUndoService } from '../auth/email-change-undo-service';
 import { EmailChangedBy } from '../email';
@@ -82,7 +83,8 @@ export class UserService {
    */
   async listUsers(actor: UserWriteActor, filters: UserSearchFilters): Promise<User[]> {
     this.requireRootAdmin(actor, 'list users');
-    if (!isPlatformSearchTerm(filters.search)) {
+    const search = platformSearchTerm(filters.search);
+    if (search === null) {
       this.logger?.warn({
         action: 'userService.list.searchRequired',
         data: { actorUserId: actor.userId },
@@ -93,7 +95,7 @@ export class UserService {
         400,
       );
     }
-    const users = await this.users.findAll({ ...filters, search: filters.search?.trim() });
+    const users = await this.users.search({ ...filters, search });
     this.logger?.info({
       action: 'userService.list.success',
       data: { actorUserId: actor.userId, count: users.length },
@@ -364,7 +366,12 @@ export class UserService {
    */
   async revokeSessions(actor: UserWriteActor, targetUserId: string): Promise<number> {
     const user = await this.requireWritableUser(actor, targetUserId);
-    const revokedCount = await revokeUserSessions(this.prisma, user.id);
+    // Behind the member's lock, so a refresh in flight commits its new token first and this
+    // revokes it too (#1264).
+    const revokedCount = await this.prisma.$transaction(async (tx) => {
+      await lockMemberRow(tx, user.id);
+      return revokeUserSessions(tx, user.id);
+    });
 
     this.logger?.info({
       action: 'userService.revokeSessions.success',

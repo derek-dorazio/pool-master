@@ -18,6 +18,7 @@ import { createEventLifecycleService } from '../../../packages/core-api/src/modu
 import {
   cleanupTestData,
   createTestUser,
+  getAppPrisma,
   getPrisma,
   setupIntegrationTests,
   teardownIntegrationTests,
@@ -47,13 +48,12 @@ beforeEach(async () => {
 });
 
 function repos() {
-  const prisma = getPrisma();
   return {
-    contests: new PrismaContestRepository(prisma),
-    entries: new PrismaContestEntryRepository(prisma),
-    picks: new PrismaContestEntryPickRepository(prisma),
-    standings: new PrismaContestEntryStandingRepository(prisma),
-    eventStandings: new PrismaContestEntryEventStandingRepository(prisma),
+    contests: new PrismaContestRepository(getAppPrisma()),
+    entries: new PrismaContestEntryRepository(getAppPrisma()),
+    picks: new PrismaContestEntryPickRepository(getAppPrisma()),
+    standings: new PrismaContestEntryStandingRepository(getAppPrisma()),
+    eventStandings: new PrismaContestEntryEventStandingRepository(getAppPrisma()),
   };
 }
 
@@ -159,6 +159,15 @@ async function createEntry(contestId: string, squadId: string, entryNumber: numb
   const result = await repos().entries.create({ contestId, squadId, entryNumber, name, tiebreakerValue: null }, { entriesPerContest: () => null });
   if (result.status !== 'created') throw new Error(`seed: entry ${name} refused (${result.status})`);
   return result.entry;
+}
+
+/** Submits one event of an entry, as a submit writes it: SUBMITTED, stamped `at`. */
+async function submitEntryEvent(entryId: string, sportEventId: string, at: Date) {
+  await getPrisma().contestEntryEvent.upsert({
+    where: { contestEntryId_sportEventId: { contestEntryId: entryId, sportEventId } },
+    create: { contestEntryId: entryId, sportEventId, status: 'SUBMITTED', submittedAt: at },
+    update: { status: 'SUBMITTED', submittedAt: at },
+  });
 }
 
 /** An entry's event statuses as [event, status] pairs, by event id. */
@@ -510,7 +519,7 @@ describe('ContestRepository', () => {
     const later = await createLaterEvent(suffix);
     const contest = await createContest(league.id, event.id, 'Growing', ContestStatus.OPEN);
     const entry = await createEntry(contest.id, squads[0].id, 1, 'Grower');
-    await repos().entries.setEventStatus(entry.id, event.id, 'SUBMITTED', new Date('2026-06-01T12:00:00.000Z'));
+    await submitEntryEvent(entry.id, event.id, new Date('2026-06-01T12:00:00.000Z'));
 
     await repos().contests.replaceSportEvents(contest.id, [later.event.id, event.id]);
 
@@ -684,7 +693,7 @@ describe('ContestConfigurationRepository', () => {
       },
     });
 
-    const configuration = await new PrismaContestConfigurationRepository(getPrisma()).findByContest(contest.id);
+    const configuration = await new PrismaContestConfigurationRepository(getAppPrisma()).findByContest(contest.id);
 
     expect(configuration?.configJson).toEqual({
       selectionType: SelectionType.BUDGET_PICK,
@@ -728,7 +737,7 @@ describe('ParticipantContestScoringRuleRepository', () => {
 
   it('writes a rule\'s typed settings into its config column and reads them back as the definition\'s settings', async () => {
     const configuration = await configurationFor('Typed settings');
-    const repo = new PrismaParticipantContestScoringRuleRepository(getPrisma());
+    const repo = new PrismaParticipantContestScoringRuleRepository(getAppPrisma());
 
     await repo.create({
       contestConfigurationId: configuration.id,
@@ -758,7 +767,7 @@ describe('ParticipantContestScoringRuleRepository', () => {
         { contestConfigurationId: kept.id, participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 1, config: {} },
       ],
     });
-    const repo = new PrismaParticipantContestScoringRuleRepository(getPrisma());
+    const repo = new PrismaParticipantContestScoringRuleRepository(getAppPrisma());
 
     await repo.deleteByContestConfiguration(replaced.id);
 
@@ -776,7 +785,7 @@ describe('ParticipantContestScoringRuleRepository', () => {
       ],
     });
 
-    const rules = await new PrismaParticipantContestScoringRuleRepository(getPrisma()).findByContestConfiguration(configuration.id);
+    const rules = await new PrismaParticipantContestScoringRuleRepository(getAppPrisma()).findByContestConfiguration(configuration.id);
 
     expect(rules.map((rule) => rule.scoring)).toEqual([
       { success: true, data: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: {} } },
@@ -818,7 +827,7 @@ describe('ContestConfigTemplateRepository', () => {
     await createTemplate('knockout', ContestTemplateEventType.KNOCKOUT, 1);
     await createTemplate('week', ContestTemplateEventType.WEEK, 0);
 
-    const templates = await new PrismaContestConfigTemplateRepository(getPrisma())
+    const templates = await new PrismaContestConfigTemplateRepository(getAppPrisma())
       .list({ sport: Sport.GOLF, eventType: ContestTemplateEventType.KNOCKOUT });
 
     expect(ours(templates).map((template) => template.templateKey)).toEqual([`${prefix}knockout`, `${prefix}any`]);
@@ -845,7 +854,7 @@ describe('ContestConfigTemplateRepository', () => {
     await createTemplate('sport-wide', null, 0);
     await createTemplate('lpga', null, 1, lpga.id);
     await createTemplate('pga', null, 2, pga.id);
-    const repo = new PrismaContestConfigTemplateRepository(getPrisma());
+    const repo = new PrismaContestConfigTemplateRepository(getAppPrisma());
 
     const forLpga = await repo.list({ sport: Sport.GOLF, sportLeagueId: lpga.id });
     const unfiltered = await repo.list({ sport: Sport.GOLF });
@@ -865,7 +874,7 @@ describe('ContestConfigTemplateRepository', () => {
     await createTemplate('lpga-week', ContestTemplateEventType.WEEK, 1, lpga.id);
     await createTemplate('any', null, 2);
 
-    const templates = await new PrismaContestConfigTemplateRepository(getPrisma())
+    const templates = await new PrismaContestConfigTemplateRepository(getAppPrisma())
       .list({ sport: Sport.GOLF, sportLeagueId: lpga.id, eventType: ContestTemplateEventType.KNOCKOUT });
 
     expect(ours(templates).map((template) => template.templateKey)).toEqual([`${prefix}lpga-knockout`, `${prefix}any`]);
@@ -881,7 +890,7 @@ describe('ContestConfigTemplateRepository', () => {
   it('updates only the fields given, and a retired template leaves the active list', async () => {
     const kept = await createTemplate('kept', null, 0);
     const retired = await createTemplate('retired', null, 1);
-    const repo = new PrismaContestConfigTemplateRepository(getPrisma());
+    const repo = new PrismaContestConfigTemplateRepository(getAppPrisma());
 
     const updated = await repo.update(retired.id, { name: 'Retired Template', active: false });
 
@@ -1072,23 +1081,6 @@ describe('ContestEntryRepository', () => {
     expect(entry.events.every((row) => row.submittedAt === undefined)).toBe(true);
   });
 
-  it('submits one event of an entry with its submit time, leaving its other event a draft, and clears the time when it returns to DRAFT', async () => {
-    const { league, squads, event, suffix } = await createLeagueAndEvent();
-    const later = await createLaterEvent(suffix);
-    const contest = await createContest(league.id, [event.id, later.event.id], 'Per Event', ContestStatus.OPEN);
-    const entry = await createEntry(contest.id, squads[0].id, 1, 'Submitter');
-    const at = new Date('2026-06-02T08:00:00.000Z');
-
-    const submitted = await repos().entries.setEventStatus(entry.id, event.id, 'SUBMITTED', at);
-
-    expect(submitted.events.find((row) => row.sportEventId === event.id)).toEqual({ sportEventId: event.id, status: 'SUBMITTED', submittedAt: at });
-    expect(submitted.events.find((row) => row.sportEventId === later.event.id)).toEqual({ sportEventId: later.event.id, status: 'DRAFT', submittedAt: undefined });
-
-    const reverted = await repos().entries.setEventStatus(entry.id, event.id, 'DRAFT', new Date('2026-06-03T08:00:00.000Z'));
-
-    expect(reverted.events.find((row) => row.sportEventId === event.id)).toEqual({ sportEventId: event.id, status: 'DRAFT', submittedAt: undefined });
-  });
-
   it('lists a contest\'s entries by entry number with squad names, optionally only the ones that submitted one event', async () => {
     const { league, squads, event, suffix } = await createLeagueAndEvent();
     const later = await createLaterEvent(suffix);
@@ -1097,9 +1089,9 @@ describe('ContestEntryRepository', () => {
     const second = await createEntry(contest.id, squads[1].id, 2, 'Second');
     const first = await createEntry(contest.id, squads[0].id, 1, 'First');
     const draft = await createEntry(contest.id, squads[1].id, 3, 'Draft');
-    await repos().entries.setEventStatus(second.id, event.id, 'SUBMITTED', new Date());
-    await repos().entries.setEventStatus(first.id, event.id, 'SUBMITTED', new Date());
-    await repos().entries.setEventStatus(draft.id, later.event.id, 'SUBMITTED', new Date());
+    await submitEntryEvent(second.id, event.id, new Date());
+    await submitEntryEvent(first.id, event.id, new Date());
+    await submitEntryEvent(draft.id, later.event.id, new Date());
 
     const all = await repos().entries.findByContestWithSquad(contest.id);
     const submittedFirstEvent = await repos().entries.findByContestWithSquad(contest.id, { submittedFor: event.id });
@@ -1126,9 +1118,9 @@ describe('ContestEntryRepository', () => {
     const one = await createEntry(contest.id, squads[1].id, 1, 'Later Event');
     await createEntry(contest.id, squads[1].id, 2, 'Draft');
     await createEntry(empty.id, squads[0].id, 1, 'Draft Elsewhere');
-    await repos().entries.setEventStatus(both.id, event.id, 'SUBMITTED', new Date());
-    await repos().entries.setEventStatus(both.id, later.event.id, 'SUBMITTED', new Date());
-    await repos().entries.setEventStatus(one.id, later.event.id, 'SUBMITTED', new Date());
+    await submitEntryEvent(both.id, event.id, new Date());
+    await submitEntryEvent(both.id, later.event.id, new Date());
+    await submitEntryEvent(one.id, later.event.id, new Date());
 
     await expect(repos().entries.countSubmittedByContests([contest.id, empty.id])).resolves.toEqual(new Map([
       [contest.id, 2],
@@ -1166,9 +1158,9 @@ describe('ContestEntryRepository', () => {
     const second = await createEntry(contest.id, squads[0].id, 2, 'Second');
     await createEntry(contest.id, squads[1].id, 1, 'Draft');
     await createEntry(other.id, squads[1].id, 1, 'Elsewhere');
-    await repos().entries.setEventStatus(first.id, event.id, 'SUBMITTED', new Date());
-    await repos().entries.setEventStatus(first.id, later.event.id, 'SUBMITTED', new Date());
-    await repos().entries.setEventStatus(second.id, later.event.id, 'SUBMITTED', new Date());
+    await submitEntryEvent(first.id, event.id, new Date());
+    await submitEntryEvent(first.id, later.event.id, new Date());
+    await submitEntryEvent(second.id, later.event.id, new Date());
 
     await expect(repos().entries.countForContest(contest.id)).resolves.toEqual({
       submittedEntryCount: 2,
@@ -1211,7 +1203,7 @@ describe('ContestEntryRepository', () => {
     }, { entriesPerContest: () => null });
     const entry = created.status === 'created' ? created.entry : null;
     const stored = expectDefined(entry);
-    await repos().entries.setEventStatus(stored.id, event.id, 'SUBMITTED', new Date());
+    await submitEntryEvent(stored.id, event.id, new Date());
 
     const updated = await repos().entries.update(stored.id, { name: 'Renamed' });
 
@@ -1240,7 +1232,7 @@ describe('StandingsEmailPositionRepository (#877)', () => {
     const leader = await createEntry(contest.id, squads[0].id, 1, 'Leader');
     const unscored = await createEntry(contest.id, squads[1].id, 1, 'Unscored');
     const elsewhere = await createEntry(other.id, squads[0].id, 1, 'Elsewhere');
-    const positions = new PrismaStandingsEmailPositionRepository(getPrisma());
+    const positions = new PrismaStandingsEmailPositionRepository(getAppPrisma());
 
     await expect(positions.findByContest(contest.id)).resolves.toEqual(new Map());
     await positions.record([
@@ -1265,7 +1257,7 @@ describe('EmailMessageRepository.existsForContest (#877)', () => {
     const { league, event, suffix } = await createLeagueAndEvent();
     const contest = await createContest(league.id, event.id, 'Outbox');
     const other = await createContest(league.id, event.id, 'Other Outbox');
-    const outbox = new PrismaEmailMessageRepository(getPrisma());
+    const outbox = new PrismaEmailMessageRepository(getAppPrisma());
     const about = `${contest.id}:${event.id}:round-1`;
     await outbox.record({
       templateKey: 'CONTEST_STANDINGS',
@@ -1293,7 +1285,7 @@ describe('EmailMessageRepository.findLeagueIdsRecorded (#893)', () => {
     const first = await createLeagueAndEvent();
     const second = await createLeagueAndEvent();
     const third = await createLeagueAndEvent();
-    const outbox = new PrismaEmailMessageRepository(getPrisma());
+    const outbox = new PrismaEmailMessageRepository(getAppPrisma());
     const record = (templateKey: 'EVENT_COMING_UP' | 'EVENT_READY_FOR_CONTESTS', leagueId: string, about: string, user: string) => outbox.record({
       templateKey,
       leagueId,
@@ -1338,7 +1330,7 @@ describe('SportEventRepository.findAll start bounds (#893)', () => {
     const middle = await create('07');
     await create('10');
 
-    const found = await new PrismaSportEventRepository(prisma).findAll({
+    const found = await new PrismaSportEventRepository(getAppPrisma()).findAll({
       q: suffix,
       startsFrom: from.startDate,
       startsBefore: new Date('2026-06-10T12:00:00.000Z'),
@@ -1512,10 +1504,10 @@ describe('EventLifecycleService — starting an event\'s contests on the ports (
       });
     }
     const alphaEntry = await createEntry(open.id, squads[0].id, 1, 'Alpha Entry');
-    await repos().entries.setEventStatus(alphaEntry.id, event.id, 'SUBMITTED', new Date());
+    await submitEntryEvent(alphaEntry.id, event.id, new Date());
     const send = mockFn<MailDeliveryProvider['send']>(async () => ({ provider: 'smtp', messageId: 'mail' }));
-    const lifecycle = createEventLifecycleService(prisma, {
-      contestStarted: createContestNotices(prisma, {
+    const lifecycle = createEventLifecycleService(getAppPrisma(), {
+      contestStarted: createContestNotices(getAppPrisma(), {
         email: emailServiceOver({ providerName: 'smtp', send }),
         appBaseUrl: 'https://app.example.test',
         logger: fakeLogger(),
@@ -1573,10 +1565,10 @@ describe('EventLifecycleService — an event cancelled under a contest (#845 C7)
       data: { squadId: squads[0].id, leagueId: league.id, userId: member.user.id, status: 'ACTIVE', joinedAt: new Date() },
     });
     const entry = await createEntry(open.id, squads[0].id, 1, 'Alpha Entry');
-    await repos().entries.setEventStatus(entry.id, event.id, 'SUBMITTED', new Date());
+    await submitEntryEvent(entry.id, event.id, new Date());
     const send = mockFn<MailDeliveryProvider['send']>(async () => ({ provider: 'smtp', messageId: 'mail' }));
-    const lifecycle = createEventLifecycleService(prisma, {
-      sportEventChanged: createContestNotices(prisma, {
+    const lifecycle = createEventLifecycleService(getAppPrisma(), {
+      sportEventChanged: createContestNotices(getAppPrisma(), {
         email: emailServiceOver({ providerName: 'smtp', send }),
         appBaseUrl: 'https://app.example.test',
         logger: fakeLogger(),
@@ -1623,9 +1615,9 @@ describe('Entry reminders on the Prisma adapters (#845)', () => {
     }
     await createEntry(open.id, squads[0].id, 1, 'Alpha Entry');
     const bravoEntry = await createEntry(open.id, squads[1].id, 1, 'Bravo Entry');
-    await repos().entries.setEventStatus(bravoEntry.id, event.id, 'SUBMITTED', new Date());
+    await submitEntryEvent(bravoEntry.id, event.id, new Date());
     const send = mockFn<MailDeliveryProvider['send']>(async () => ({ provider: 'smtp', messageId: 'mail' }));
-    const reminders = createEntryReminders(prisma, {
+    const reminders = createEntryReminders(getAppPrisma(), {
       email: emailServiceOver({ providerName: 'smtp', send }),
       readConfig: () => EMAIL_SETTINGS.defaults({ POOLMASTER_ENVIRONMENT: 'prod' }),
       appBaseUrl: 'https://app.example.test',

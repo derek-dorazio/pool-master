@@ -9,10 +9,12 @@ import { createContestOpeningReader } from '../contest-management/wiring';
 import { EventPageService } from './service';
 
 export function createEventPageService(prisma: PrismaClient, logger?: FastifyBaseLogger): EventPageService {
-  const reader = createContestOpeningReader(prisma);
   return new EventPageService({
     pages: new PrismaEventPageRepository(prisma),
-    opening: (sportEventId, setup) => contestOpening(reader, sportEventId, setup, new Date()),
+    openings: () => {
+      const reader = createContestOpeningReader(prisma);
+      return (sportEventId, setup) => contestOpening(reader, sportEventId, setup, new Date());
+    },
     logger,
   });
 }
