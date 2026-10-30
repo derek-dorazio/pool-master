@@ -21,7 +21,7 @@ import {
   PrismaSportEventParticipantValuationRepository,
 } from '../../../packages/core-api/src/adapters';
 import { cleanupTestData, getAppPrisma, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
-import { countingPrisma } from '../../support/counting-prisma';
+import { recordStatements, statementCounts, type RecordedStatement } from '../statement-log';
 import { expectDefined } from '../../support/expect-defined';
 import { freshEventEdition } from '../../support/event-edition';
 
@@ -86,31 +86,40 @@ async function eventWithField(size: number) {
   return { ...setup, field };
 }
 
-/** Runs `write` on a small field and on a big one and answers how many queries each made. */
-async function queriesFor(write: (prisma: ReturnType<typeof countingPrisma>['prisma'], fieldSize: number) => Promise<unknown>) {
+/**
+ * Runs `test` on a small field and on a big one, answering for each how many statements the writes
+ * it passes to `measure` sent to each table, as `statementCounts` gives them: its seeding and its
+ * checks are not counted.
+ */
+async function queriesFor(test: (fieldSize: number, measure: <Result>(write: () => Promise<Result>) => Promise<Result>) => Promise<unknown>) {
   const counts = [];
   for (const fieldSize of [SMALL_FIELD, BIG_FIELD]) {
-    const counted = countingPrisma(getAppPrisma());
-    await write(counted.prisma, fieldSize);
-    counts.push(counted.total());
+    const sent: RecordedStatement[] = [];
+    await test(fieldSize, async (write) => {
+      const { result, statements } = await recordStatements(write);
+      sent.push(...statements);
+      return result;
+    });
+    counts.push(statementCounts(sent));
   }
   return counts;
 }
 
 describe('Adding players to an event\'s field (#1252)', () => {
   it('adds any number of players in one insert', async () => {
-    const counts = await queriesFor(async (prisma, size) => {
+    const counts = await queriesFor(async (size, measure) => {
       const { sport, event } = await golfEvent();
       const golfers = await participants(sport.id, size);
-      await new PrismaSportEventParticipantRepository(prisma).createMany(event.id, golfers.map((golfer, index) => ({
+      await measure(() => new PrismaSportEventParticipantRepository(getAppPrisma()).createMany(event.id, golfers.map((golfer, index) => ({
         participantId: golfer.id,
         seedNumber: index + 1,
-      })));
+      }))));
       const field = await getPrisma().sportEventParticipant.findMany({ where: { sportEventId: event.id }, orderBy: { seedNumber: 'asc' } });
       expect(field.map((row) => [row.participantId, row.seedNumber])).toEqual(golfers.map((golfer, index) => [golfer.id, index + 1]));
     });
 
-    expect(counts).toEqual([1, 1]);
+    const oneInsert = [['INSERT sport_event_participants', 1]];
+    expect(counts).toEqual([oneInsert, oneInsert]);
   });
 });
 
@@ -130,13 +139,13 @@ describe('Saving the field grid (#1252)', () => {
   });
 
   it('gives rows the same change in one update, and writes every manual price in a fixed number of queries', async () => {
-    const counts = await queriesFor(async (prisma, size) => {
+    const counts = await queriesFor(async (size, measure) => {
       const { field } = await eventWithField(size);
-      await new PrismaSportEventParticipantRepository(prisma).updateMany(field.map((row) => ({
+      await measure(() => new PrismaSportEventParticipantRepository(getAppPrisma()).updateMany(field.map((row) => ({
         id: row.id,
         updates: { isActive: false, inactiveReason: 'WITHDRAWN' },
         price: 1_000,
-      })));
+      }))));
       const rows = await getPrisma().sportEventParticipant.findMany({ where: { id: { in: field.map((row) => row.id) } }, include: { valuation: true } });
       expect(rows.every((row) => !row.isActive && row.inactiveReason === 'WITHDRAWN')).toBe(true);
       expect(rows.map((row) => [Number(row.valuation?.price), row.valuation?.priceAssignedSource])).toEqual(
@@ -144,7 +153,7 @@ describe('Saving the field grid (#1252)', () => {
       );
     });
 
-    expect(counts[1]).toBe(counts[0]);
+    expect(counts[1]).toEqual(counts[0]);
   });
 
   it('writes each row its own seed, and a price of null clears the price but keeps the row\'s tier', async () => {
@@ -170,19 +179,19 @@ describe('Saving the field grid (#1252)', () => {
 
 describe('Assigning an event\'s tiers and prices (#1252)', () => {
   it('assigns every row a tier in a fixed number of queries, keeping a row\'s price, id and creation time', async () => {
-    const counts = await queriesFor(async (prisma, size) => {
+    const counts = await queriesFor(async (size, measure) => {
       const { event, field } = await eventWithField(size);
       const tier = await getPrisma().sportEventTier.create({ data: { sportEventId: event.id, tierKey: 'A', label: 'Tier A', tierNumber: 1 } });
       const priced = await getPrisma().sportEventParticipantValuation.create({
         data: { sportEventParticipantId: expectDefined(field[0]).id, price: 700, priceAssignedSource: ValuationSource.AUTO_ODDS },
       });
 
-      await new PrismaSportEventParticipantValuationRepository(prisma).assignTiers(field.map((row, index) => ({
+      await measure(() => new PrismaSportEventParticipantValuationRepository(getAppPrisma()).assignTiers(field.map((row, index) => ({
         sportEventParticipantId: row.id,
         sportEventTierId: tier.id,
         tierOrderIndex: index,
         source: ValuationSource.AUTO_RANKING,
-      })));
+      }))));
 
       const valuations = await getPrisma().sportEventParticipantValuation.findMany({ where: { sportEventTierId: tier.id }, orderBy: { tierOrderIndex: 'asc' } });
       expect(valuations.map((row) => [row.sportEventParticipantId, row.tierOrderIndex])).toEqual(field.map((row, index) => [row.id, index]));
@@ -190,11 +199,11 @@ describe('Assigning an event\'s tiers and prices (#1252)', () => {
       expect(Number(valuations[0]?.price)).toBe(700);
     });
 
-    expect(counts[1]).toBe(counts[0]);
+    expect(counts[1]).toEqual(counts[0]);
   });
 
   it('prices every row and saves the event\'s pricing values in a fixed number of queries, keeping a row\'s tier', async () => {
-    const counts = await queriesFor(async (prisma, size) => {
+    const counts = await queriesFor(async (size, measure) => {
       const { event, field } = await eventWithField(size);
       const tier = await getPrisma().sportEventTier.create({ data: { sportEventId: event.id, tierKey: 'A', label: 'Tier A', tierNumber: 1 } });
       await getPrisma().sportEventParticipantValuation.create({
@@ -202,11 +211,11 @@ describe('Assigning an event\'s tiers and prices (#1252)', () => {
       });
       const pricingConfig = { profileName: 'Standard', salaryCap: 50_000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 };
 
-      await new PrismaSportEventParticipantValuationRepository(prisma).assignEventPrices({
+      await measure(() => new PrismaSportEventParticipantValuationRepository(getAppPrisma()).assignEventPrices({
         sportEventId: event.id,
         pricingConfig,
         assignments: field.map((row, index) => ({ sportEventParticipantId: row.id, price: 10_000 - index * 100, source: ValuationSource.AUTO_ODDS })),
-      });
+      }));
 
       const rows = await getPrisma().sportEventParticipant.findMany({ where: { sportEventId: event.id }, include: { valuation: true } });
       const byId = new Map(rows.map((row) => [row.id, row.valuation]));
@@ -216,23 +225,23 @@ describe('Assigning an event\'s tiers and prices (#1252)', () => {
       expect(saved.pricingConfig).toEqual(pricingConfig);
     });
 
-    expect(counts[1]).toBe(counts[0]);
+    expect(counts[1]).toEqual(counts[0]);
   });
 });
 
 describe('Uploading a sport league\'s rankings (#1252)', () => {
   it('ranks every player in a fixed number of queries, adding missing affiliations and keeping existing ones\' ids', async () => {
-    const counts = await queriesFor(async (prisma, size) => {
+    const counts = await queriesFor(async (size, measure) => {
       const { sport, sportLeagueId } = await golfEvent();
       const golfers = await participants(sport.id, size);
       const existing = await getPrisma().participantLeagueAffiliation.create({
         data: { participantId: expectDefined(golfers[0]).id, sportLeagueId, ranking: 99 },
       });
 
-      await new PrismaParticipantLeagueAffiliationRepository(prisma).upsertRankings(sportLeagueId, golfers.map((golfer, index) => ({
+      await measure(() => new PrismaParticipantLeagueAffiliationRepository(getAppPrisma()).upsertRankings(sportLeagueId, golfers.map((golfer, index) => ({
         participantId: golfer.id,
         ranking: index + 1,
-      })));
+      }))));
 
       const rows = await getPrisma().participantLeagueAffiliation.findMany({
         where: { sportLeagueId, participantId: { in: golfers.map((golfer) => golfer.id) } },
@@ -242,7 +251,7 @@ describe('Uploading a sport league\'s rankings (#1252)', () => {
       expect(rows[0]).toMatchObject({ id: existing.id, createdAt: existing.createdAt });
     });
 
-    expect(counts[1]).toBe(counts[0]);
+    expect(counts[1]).toEqual(counts[0]);
   });
 
   it('refuses to re-rank a player with no affiliation, writing none of the rankings', async () => {
@@ -262,17 +271,17 @@ describe('Uploading a sport league\'s rankings (#1252)', () => {
 
 describe('Entering a race\'s finishing order (#1252)', () => {
   it('writes every runner\'s result and standing in a fixed number of queries, keeping a result\'s id', async () => {
-    const counts = await queriesFor(async (prisma, size) => {
+    const counts = await queriesFor(async (size, measure) => {
       const { event, field } = await eventWithField(size);
       const earlier = await getPrisma().sportEventParticipantRaceResult.create({
         data: { sportEventParticipantId: expectDefined(field[0]).id, finishPosition: 9, resultStatus: RaceResultStatus.FINISHED },
       });
 
-      await new PrismaSportEventParticipantRaceResultRepository(prisma).applyResults(event.id, {
+      await measure(() => new PrismaSportEventParticipantRaceResultRepository(getAppPrisma()).applyResults(event.id, {
         isOfficial: true,
         results: field.map((row, index) => ({ sportEventParticipantId: row.id, finishPosition: index + 1, startPosition: null, resultStatus: RaceResultStatus.FINISHED, riderName: null })),
         standings: field.map((row, index) => ({ sportEventParticipantId: row.id, position: index + 1, displayPosition: `${index + 1}`, status: ParticipantStandingStatus.COMPLETE, currentRound: 1, asOf: AS_OF })),
-      });
+      }));
 
       const rows = await getPrisma().sportEventParticipant.findMany({ where: { sportEventId: event.id }, include: { raceResult: true, standing: true } });
       const byId = new Map(rows.map((row) => [row.id, row]));
@@ -281,13 +290,13 @@ describe('Entering a race\'s finishing order (#1252)', () => {
       expect(byId.get(expectDefined(field[0]).id)?.raceResult).toMatchObject({ id: earlier.id, createdAt: earlier.createdAt });
     });
 
-    expect(counts[1]).toBe(counts[0]);
+    expect(counts[1]).toEqual(counts[0]);
   });
 });
 
 describe('Entering a bracket match\'s result (#1252)', () => {
   it('writes every team\'s standing in a fixed number of queries, keeping a standing\'s id and the columns the write leaves alone', async () => {
-    const counts = await queriesFor(async (prisma, size) => {
+    const counts = await queriesFor(async (size, measure) => {
       const { event, round, field } = await eventWithField(size);
       const [home, away] = field;
       const match = await getPrisma().sportEventMatch.create({
@@ -304,11 +313,11 @@ describe('Entering a bracket match\'s result (#1252)', () => {
         data: { sportEventParticipantId: expectDefined(home).id, position: 4, status: ParticipantStandingStatus.ACTIVE },
       });
 
-      await new PrismaSportEventMatchRepository(prisma).applyResult({
+      await measure(() => new PrismaSportEventMatchRepository(getAppPrisma()).applyResult({
         result: { id: match.id, status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME, homeScore: 70, awayScore: 60, homeShootoutScore: null, awayShootoutScore: null, ending: MatchEnding.PLAYED },
         sideFill: null,
         standings: field.map((row, index) => ({ sportEventParticipantId: row.id, position: index + 1, displayPosition: `${index + 1}`, status: ParticipantStandingStatus.ACTIVE, currentRound: 1, asOf: AS_OF })),
-      });
+      }));
 
       const standings = await getPrisma().sportEventParticipantStanding.findMany({ where: { sportEventParticipantId: { in: field.map((row) => row.id) } } });
       const byId = new Map(standings.map((row) => [row.sportEventParticipantId, row]));
@@ -317,20 +326,20 @@ describe('Entering a bracket match\'s result (#1252)', () => {
       expect((await getPrisma().sportEventMatch.findUniqueOrThrow({ where: { id: match.id } })).winnerSide).toBe(MatchSide.HOME);
     });
 
-    expect(counts[1]).toBe(counts[0]);
+    expect(counts[1]).toEqual(counts[0]);
   });
 });
 
 describe('Entering a golf round\'s scores (#1252)', () => {
   it('writes every golfer\'s round in a fixed number of queries, creating missing rounds, keeping scored ones\' ids and answering them in the order given', async () => {
-    const counts = await queriesFor(async (prisma, size) => {
+    const counts = await queriesFor(async (size, measure) => {
       const { round, field } = await eventWithField(size);
       const scored = await getPrisma().sportEventParticipantRound.create({
         data: { sportEventParticipantId: expectDefined(field[0]).id, sportEventRoundId: round.id, status: 'IN_PROGRESS', golf: { create: { strokes: 30, scoreToPar: -2, thru: 9 } } },
         include: { golf: true },
       });
 
-      const results = await new PrismaSportEventParticipantGolfRoundRepository(prisma).upsertMany(field.map((row, index) => ({
+      const results = await measure(() => new PrismaSportEventParticipantGolfRoundRepository(getAppPrisma()).upsertMany(field.map((row, index) => ({
         sportEventParticipantId: row.id,
         sportEventRoundId: round.id,
         status: ParticipantRoundStatus.COMPLETED,
@@ -338,7 +347,7 @@ describe('Entering a golf round\'s scores (#1252)', () => {
         strokes: 70 + index,
         scoreToPar: index - 2,
         thru: 18,
-      })));
+      }))));
 
       expect(results.map(({ participantRound, golf }) => [participantRound.sportEventParticipantId, participantRound.status, golf.strokes]))
         .toEqual(field.map((row, index) => [row.id, ParticipantRoundStatus.COMPLETED, 70 + index]));
@@ -347,7 +356,7 @@ describe('Entering a golf round\'s scores (#1252)', () => {
       expect(first.golf).toMatchObject({ id: expectDefined(scored.golf).id, createdAt: expectDefined(scored.golf).createdAt });
     });
 
-    expect(counts[1]).toBe(counts[0]);
+    expect(counts[1]).toEqual(counts[0]);
   });
 
   it('leaves alone the scored rounds a write does not name, when it names different rounds for different golfers', async () => {
@@ -378,11 +387,11 @@ describe('Entering a golf round\'s scores (#1252)', () => {
   });
 
   it('writes every golfer\'s standing, answered in the order given, and then every rank in a fixed number of queries each, keeping the standing\'s id and totals', async () => {
-    const counts = await queriesFor(async (prisma, size) => {
+    const counts = await queriesFor(async (size, measure) => {
       const { field } = await eventWithField(size);
-      const standings = new PrismaSportEventParticipantGolfStandingRepository(prisma);
+      const standings = new PrismaSportEventParticipantGolfStandingRepository(getAppPrisma());
 
-      const written = await standings.upsertMany(field.map((row, index) => ({
+      const written = await measure(() => standings.upsertMany(field.map((row, index) => ({
         sportEventParticipantId: row.id,
         currentRound: 1,
         status: ParticipantStandingStatus.ACTIVE,
@@ -390,8 +399,8 @@ describe('Entering a golf round\'s scores (#1252)', () => {
         eventScoreToPar: index - 2,
         eventStrokes: 70 + index,
         currentRoundThru: 18,
-      })));
-      await standings.updateRanks(written.map(({ standing }, index) => ({ standingId: standing.id, position: index + 1, displayPosition: `T${index + 1}` })));
+      }))));
+      await measure(() => standings.updateRanks(written.map(({ standing }, index) => ({ standingId: standing.id, position: index + 1, displayPosition: `T${index + 1}` }))));
 
       expect(written.map(({ standing }) => standing.sportEventParticipantId)).toEqual(field.map((row) => row.id));
       const afterById = new Map((await standings.findBySportEventParticipants(field.map((row) => row.id))).map((result) => [result.standing.id, result]));
@@ -400,6 +409,6 @@ describe('Entering a golf round\'s scores (#1252)', () => {
         .toEqual(written.map(({ standing, golf }, index) => [standing.id, index + 1, `T${index + 1}`, golf.id, golf.eventStrokes, AS_OF]));
     });
 
-    expect(counts[1]).toBe(counts[0]);
+    expect(counts[1]).toEqual(counts[0]);
   });
 });

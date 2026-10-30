@@ -85,3 +85,61 @@ export async function recordStatements<Result>(call: () => Promise<Result>): Pro
     recorders.delete(record);
   }
 }
+
+/** What a statement does to its table. */
+export enum StatementVerb {
+  SELECT = 'SELECT',
+  INSERT = 'INSERT',
+  UPDATE = 'UPDATE',
+  DELETE = 'DELETE',
+}
+
+/**
+ * Each verb with how SQL names the table it acts on: Prisma's own statements qualify it with
+ * `"public".`, a raw statement (a row lock) may not, and a count's subquery names its table first.
+ */
+const STATEMENT_TARGETS: ReadonlyArray<readonly [StatementVerb, RegExp]> = [
+  [StatementVerb.SELECT, /^SELECT\b.*?\bFROM (?:"public"\.)?"(\w+)"/s],
+  [StatementVerb.INSERT, /^INSERT INTO (?:"public"\.)?"(\w+)"/],
+  [StatementVerb.UPDATE, /^UPDATE (?:"public"\.)?"(\w+)"/],
+  [StatementVerb.DELETE, /^DELETE FROM (?:"public"\.)?"(\w+)"/],
+];
+
+/** A transaction's control statements, which act on no table. */
+const TRANSACTION_CONTROL = /^(?:BEGIN|COMMIT|ROLLBACK|SAVEPOINT|RELEASE)\b/i;
+
+/**
+ * The verb and table of a statement, as `SELECT sport_events`, or null for transaction control.
+ * Any other statement throws, so a statement no count can place never drops out of one unseen.
+ */
+export function statementTarget(statement: RecordedStatement): string | null {
+  // Multi-line raw SQL starts with a newline and indentation.
+  const sql = statement.sql.trimStart();
+  for (const [verb, pattern] of STATEMENT_TARGETS) {
+    const table = pattern.exec(sql)?.[1];
+    if (table !== undefined) return `${verb} ${table}`;
+  }
+  if (TRANSACTION_CONTROL.test(sql)) return null;
+  throw new Error(`No table found in a recorded statement; teach statementTarget its form: ${sql.slice(0, 200)}`);
+}
+
+/** The statements that do `verb` to `table`. */
+export function statementsOn(statements: readonly RecordedStatement[], verb: StatementVerb, table: string): RecordedStatement[] {
+  return statements.filter((statement) => statementTarget(statement) === `${verb} ${table}`);
+}
+
+/** How many statements did each verb to each table, as `[target, count]` sorted by target; transaction control is left out. */
+export function statementCounts(statements: readonly RecordedStatement[]): Array<[string, number]> {
+  const counts = new Map<string, number>();
+  for (const statement of statements) {
+    const target = statementTarget(statement);
+    if (target !== null) counts.set(target, (counts.get(target) ?? 0) + 1);
+  }
+  return [...counts].sort(([left], [right]) => left.localeCompare(right));
+}
+
+/** The values a statement was sent with, in placeholder order. */
+export function statementParams({ params }: RecordedStatement): unknown[] {
+  const parsed: unknown = JSON.parse(params);
+  return Array.isArray(parsed) ? parsed : [];
+}
