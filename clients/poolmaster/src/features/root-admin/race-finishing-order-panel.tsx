@@ -2,7 +2,20 @@ import { getSportDefinition, RaceResultOrderError, RaceResultStatus, type SportV
 import { useState } from 'react';
 import { applyEventRaceResults, previewEventRaceResults } from '@/lib/api';
 import type { SportEventDto, SportEventParticipantDto } from '@/lib/api';
-import { Alert, BulkUploadPanel, Checkbox, PanelCard, StatusBadge } from '@/features/shared/ui';
+import {
+  Alert,
+  BulkUploadPanel,
+  Checkbox,
+  PanelCard,
+  SimpleTable,
+  StatusBadge,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeaderCell,
+  TableRow,
+  UploadPreviewTable,
+} from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError, type ErrorCodeMessages } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -123,16 +136,16 @@ function StoredFinishingOrder({ event, field }: { event: SportEventDto; field: r
             </p>
           ) : null}
           <div className="mt-4 overflow-x-auto rounded-2xl border border-border">
-            <table className="min-w-full text-left text-sm" data-testid="root-admin-race-result-table">
-              <thead className="bg-[var(--table-header-surface)] text-xs uppercase text-muted-foreground">
+            <SimpleTable className="min-w-full" data-testid="root-admin-race-result-table">
+              <TableHead>
                 <tr>
-                  <th className="px-4 py-2">Finish</th>
-                  <th className="px-4 py-2">{capitalize(vocabulary.participant.one)}</th>
-                  <th className="px-4 py-2">Start</th>
-                  {vocabulary.rider !== undefined ? <th className="px-4 py-2">{vocabulary.rider}</th> : null}
+                  <TableHeaderCell>Finish</TableHeaderCell>
+                  <TableHeaderCell>{capitalize(vocabulary.participant.one)}</TableHeaderCell>
+                  <TableHeaderCell>Start</TableHeaderCell>
+                  {vocabulary.rider !== undefined ? <TableHeaderCell>{vocabulary.rider}</TableHeaderCell> : null}
                 </tr>
-              </thead>
-              <tbody>
+              </TableHead>
+              <TableBody>
                 {[...field].sort(byFinish).map((entry) => {
                   const { race } = entry;
                   const finish = !race
@@ -141,18 +154,18 @@ function StoredFinishingOrder({ event, field }: { event: SportEventDto; field: r
                       ? (race.finishPosition === null ? '—' : formatOrdinal(race.finishPosition))
                       : RACE_RESULT_STATUS_LABELS[race.resultStatus];
                   return (
-                    <tr className="border-t border-border" data-testid={`root-admin-race-result-row-${entry.id}`} key={entry.id}>
-                      <td className="px-4 py-2 font-medium" data-testid={`root-admin-race-result-finish-${entry.id}`}>{finish}</td>
-                      <td className="px-4 py-2">{entry.participant.name}</td>
-                      <td className="px-4 py-2 text-muted-foreground">{race?.startPosition ?? '—'}</td>
+                    <TableRow data-testid={`root-admin-race-result-row-${entry.id}`} key={entry.id}>
+                      <TableCell className="font-medium" data-testid={`root-admin-race-result-finish-${entry.id}`}>{finish}</TableCell>
+                      <TableCell>{entry.participant.name}</TableCell>
+                      <TableCell className="text-muted-foreground">{race?.startPosition ?? '—'}</TableCell>
                       {vocabulary.rider !== undefined ? (
-                        <td className="px-4 py-2 text-muted-foreground">{race?.riderName ?? '—'}</td>
+                        <TableCell className="text-muted-foreground">{race?.riderName ?? '—'}</TableCell>
                       ) : null}
-                    </tr>
+                    </TableRow>
                   );
                 })}
-              </tbody>
-            </table>
+              </TableBody>
+            </SimpleTable>
           </div>
         </>
       )}
@@ -249,42 +262,24 @@ function FinishingOrderUploadCard({ event, field }: { event: SportEventDto; fiel
                   {orderErrorMessages(vocabulary)[orderError]}
                 </Alert>
               ))}
-              <div className="overflow-x-auto rounded-2xl border border-border">
-                <table className="min-w-full text-left text-sm" data-testid="root-admin-race-result-upload-preview-table">
-                  <thead className="bg-[var(--table-header-surface)] text-xs uppercase text-muted-foreground">
-                    <tr>
-                      <th className="px-4 py-2">Row</th>
-                      <th className="px-4 py-2">Match</th>
-                      <th className="px-4 py-2">{capitalize(vocabulary.participant.one)}</th>
-                      <th className="px-4 py-2">Before → After</th>
-                      <th className="px-4 py-2">Change</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {rows.map((entry, index) => (
-                      <tr className="border-t border-border" key={`${describeRow(entry.row)}-${index}`}>
-                        <td className="px-4 py-2">{describeRow(entry.row)}</td>
-                        <td className="px-4 py-2">
-                          <StatusBadge tone={RESOLUTION_TONE[entry.resolution]}>{RESOLUTION_LABEL[entry.resolution]}</StatusBadge>
-                        </td>
-                        <td className="px-4 py-2">{entry.participantName ?? '—'}</td>
-                        <td className="px-4 py-2 text-muted-foreground">
-                          {describeRaceResult(entry.before)}
-                          {' → '}
-                          <span className="text-foreground">{describeRaceResult(entry.after)}</span>
-                        </td>
-                        <td className="px-4 py-2">
-                          {entry.rowError ? (
-                            <StatusBadge tone="danger">{ROW_ERROR_LABEL[entry.rowError]}</StatusBadge>
-                          ) : entry.change ? (
-                            <StatusBadge tone={CHANGE_TONE[entry.change]}>{CHANGE_LABEL[entry.change]}</StatusBadge>
-                          ) : '—'}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <UploadPreviewTable
+                change={{
+                  before: (entry) => describeRaceResult(entry.before),
+                  after: (entry) => describeRaceResult(entry.after),
+                  badge: (entry) => entry.rowError ? (
+                    <StatusBadge tone="danger">{ROW_ERROR_LABEL[entry.rowError]}</StatusBadge>
+                  ) : entry.change ? (
+                    <StatusBadge tone={CHANGE_TONE[entry.change]}>{CHANGE_LABEL[entry.change]}</StatusBadge>
+                  ) : '—',
+                }}
+                describeRow={(entry) => describeRow(entry.row)}
+                match={(entry) => entry.participantName ?? '—'}
+                matchHeader={capitalize(vocabulary.participant.one)}
+                resolution={(entry) => <StatusBadge tone={RESOLUTION_TONE[entry.resolution]}>{RESOLUTION_LABEL[entry.resolution]}</StatusBadge>}
+                resolutionHeader="Match"
+                rows={rows}
+                testId="root-admin-race-result-upload-preview-table"
+              />
             </div>
           )}
           templateFilename={`${event.name.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}-finishing-order.csv`}

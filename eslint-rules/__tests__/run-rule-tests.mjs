@@ -111,9 +111,12 @@ ruleTester.run('no-bare-ui-controls', noBareUiControls, {
     'const b = <Input value={v} onChange={f} />;',
     // A DOM element that is not one of the three.
     'const c = <div role="button" />;',
+    // Tables come from SimpleTable and its parts.
+    'const d = <SimpleTable><TableBody><TableRow><TableCell>1</TableCell></TableRow></TableBody></SimpleTable>;',
   ],
   invalid: [
     { code: 'const a = <button type="button">go</button>;', errors: [{ messageId: 'bareControl' }] },
+    { code: 'const d = <table><tbody /></table>;', errors: [{ messageId: 'bareTable' }] },
     { code: 'const b = <input value="" readOnly />;', errors: [{ messageId: 'bareControl' }] },
     { code: 'const c = <textarea readOnly />;', errors: [{ messageId: 'bareControl' }] },
   ],

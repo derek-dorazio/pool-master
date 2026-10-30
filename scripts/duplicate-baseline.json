@@ -51,24 +51,8 @@
     },
     {
       "files": [
-        "clients/poolmaster/src/features/root-admin/event-field-upload-card.tsx",
-        "clients/poolmaster/src/features/root-admin/race-finishing-order-panel.tsx"
-      ],
-      "count": 1,
-      "ticket": "#1290"
-    },
-    {
-      "files": [
         "clients/poolmaster/src/features/root-admin/golf-round-score-corrections-card.tsx",
         "clients/poolmaster/src/features/root-admin/stat-lines-panel.tsx"
-      ],
-      "count": 1,
-      "ticket": "#1290"
-    },
-    {
-      "files": [
-        "clients/poolmaster/src/features/root-admin/golf-round-score-upload-card.tsx",
-        "clients/poolmaster/src/features/root-admin/race-finishing-order-panel.tsx"
       ],
       "count": 1,
       "ticket": "#1290"

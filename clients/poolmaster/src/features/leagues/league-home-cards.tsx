@@ -7,7 +7,6 @@ import { MineMarker } from '@/features/contests/mine-marker';
 import { listedContestStartsAt } from '@/features/contests/use-contest-schedule';
 import { useBracketLeaderboardQuery, useContestLeaderboardQuery } from '@/features/contests/use-contest-leaderboard';
 import {
-  cn,
   Countdown,
   EmptyState,
   Eyebrow,
@@ -18,6 +17,10 @@ import {
   PanelCard,
   PanelList,
   QueryState,
+  SimpleTable,
+  TableBody,
+  TableCell,
+  TableRow,
   Tile,
   useDisplayPreferences,
 } from '@/features/shared/ui';
@@ -144,14 +147,14 @@ export function OtherContestsCard({
 
 function StandingsRow({ row }: { row: StandingRow }) {
   return (
-    <tr className={cn('border-t border-border first:border-t-0', row.isMine ? 'bg-primary/10' : undefined)}>
-      <td className="w-10 px-4 py-2 text-muted-foreground">{row.position ?? '–'}</td>
-      <td className="px-2 py-2 font-semibold text-foreground">
+    <TableRow className="first:border-t-0" isHighlighted={row.isMine}>
+      <TableCell className="w-10 text-muted-foreground" numeric align="left">{row.position ?? '–'}</TableCell>
+      <TableCell className="px-2 font-semibold text-foreground">
         {row.name}
         {row.isMine ? <span className="ml-2 inline-block"><MineMarker /></span> : null}
-      </td>
-      <td className="px-4 py-2 text-right">{row.total ?? '–'}</td>
-    </tr>
+      </TableCell>
+      <TableCell numeric>{row.total ?? '–'}</TableCell>
+    </TableRow>
   );
 }
 
@@ -193,12 +196,12 @@ export function LiveStandingsCard({
         query={{ data: standings ?? undefined, isError: leaderboardQuery.isError }}
       >
         {(top) => (
-          <table className="w-full text-sm tabular-nums">
-            <tbody>
+          <SimpleTable>
+            <TableBody>
               {top.rows.map((row) => <StandingsRow key={row.entryId} row={row} />)}
               {top.myRowBelow ? <StandingsRow row={top.myRowBelow} /> : null}
-            </tbody>
-          </table>
+            </TableBody>
+          </SimpleTable>
         )}
       </QueryState>
     </PanelCard>
