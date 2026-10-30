@@ -1,5 +1,6 @@
 /**
- * The one way core-api sends a system email (#844): `emailService.send(templateKey, input)`.
+ * The one way core-api sends a system email (#844): `emailService.send(templateKey, input)`, or
+ * `sendMany(templateKey, inputs)` for many people at once (#1173).
  * It checks EMAIL_CONFIG and who may be emailed here, renders the template for the recipient,
  * picks the sender (the league's address for a league email, the app's otherwise) and records
  * the email in the outbox, queued for the sender or skipped with the reason. Callers never
@@ -9,6 +10,8 @@
 import type { FastifyBaseLogger } from 'fastify';
 import type { EmailConfig } from '@poolmaster/shared/dto';
 import type {
+  EmailMessageRecord,
+  EmailMessageRecordState,
   EmailMessageRepository,
   EmailMessageState,
   EmailOptOutRepository,
@@ -139,12 +142,19 @@ const SKIP_LOG_MESSAGES: Record<EmailSkipReason, string> = {
 export const UNSUBSCRIBE_PAGE_PATH = '/email/unsubscribe';
 export const ONE_CLICK_UNSUBSCRIBE_PATH = '/api/v1/email/unsubscribe';
 
+/** One email worked out before any query: refs for the log, the outbox row's addressing, a skip known already. */
+interface PreparedEmail {
+  refs: { templateKey: SystemEmailTemplateKey } & EmailRefs & { leagueId?: string };
+  recipient: Omit<EmailMessageRecord, 'status' | 'skipReason' | 'subject' | 'textBody' | 'htmlBody' | 'listUnsubscribeUrl' | 'dueAt'>;
+  skipped: EmailSkipReason | undefined;
+}
+
 export interface EmailServiceOptions {
-  messages: Pick<EmailMessageRepository, 'record' | 'existsForContest' | 'findLeagueIdsRecorded' | 'findLeagueIdsRecordedByPrefix' | 'findLatestStateByInvitations'>;
+  messages: Pick<EmailMessageRepository, 'record' | 'recordMany' | 'existsForContest' | 'findLeagueIdsRecorded' | 'findLeagueIdsRecordedByPrefix' | 'findLatestStateByInvitations'>;
   /** Addresses that bounced for good or complained: their email is skipped, not queued. */
-  suppressions: Pick<EmailSuppressionRepository, 'findByEmail'>;
+  suppressions: Pick<EmailSuppressionRepository, 'findByEmail' | 'findSuppressedEmails'>;
   /** Categories each user turned off: their email in one is skipped, not queued. */
-  optOuts: Pick<EmailOptOutRepository, 'isOptedOut'>;
+  optOuts: Pick<EmailOptOutRepository, 'isOptedOut' | 'findOptedOutUsers'>;
   /** Signs the unsubscribe links an email a member can turn off carries, under `appBaseUrl`. */
   unsubscribe: { tokens: UnsubscribeTokens; appBaseUrl: string };
   /** Which transport sends: reserved domains are skipped only on SES. */
@@ -177,7 +187,50 @@ export class EmailService {
     templateKey: Key,
     input: EmailSendInput<Key>,
   ): Promise<EmailMessage> {
+    const email = this.prepare(templateKey, input, this.options.readConfig());
+    const skipped = email.skipped
+      ?? (await this.options.suppressions.findByEmail(email.recipient.recipientEmail) ? EmailSkipReason.SUPPRESSED : undefined)
+      ?? (await this.optedOut(templateKey, input.to.userId) ? EmailSkipReason.OPTED_OUT : undefined);
+    const { message, created } = await this.options.messages.record(this.recordOf(templateKey, input, email, skipped));
+    this.logRecorded(email.refs, message, created);
+    if (created && message.status === EmailMessageStatus.QUEUED) this.options.onQueued?.();
+    return message;
+  }
+
+  /**
+   * `send` for many people at once (#1173), in about four queries however many there are: one
+   * read of the suppressed addresses, one of who turned the email's category off, and one write
+   * of every email, without reading the rows back. Answers each email's id and where it stands,
+   * in the order given. A failed read or write is thrown for the caller to handle, and nothing
+   * is recorded then.
+   */
+  async sendMany<Key extends SystemEmailTemplateKey>(
+    templateKey: Key,
+    inputs: readonly EmailSendInput<Key>[],
+  ): Promise<EmailMessageRecordState[]> {
+    if (inputs.length === 0) return [];
     const config = this.options.readConfig();
+    const emails = inputs.map((input) => this.prepare(templateKey, input, config));
+    const reachable = emails.filter((email) => email.skipped === undefined);
+    const category = optionalCategoryOf(templateKey);
+    const userIds = category === undefined ? [] : reachable.flatMap((email) => email.recipient.recipientUserId ?? []);
+    const [suppressed, optedOut] = await Promise.all([
+      reachable.length === 0
+        ? new Set<string>()
+        : this.options.suppressions.findSuppressedEmails(reachable.map((email) => email.recipient.recipientEmail)),
+      category === undefined || userIds.length === 0 ? new Set<string>() : this.options.optOuts.findOptedOutUsers(userIds, category),
+    ]);
+    const records = emails.map((email, index) => this.recordOf(templateKey, inputs[index], email, email.skipped
+      ?? (suppressed.has(email.recipient.recipientEmail.toLowerCase()) ? EmailSkipReason.SUPPRESSED : undefined)
+      ?? (email.recipient.recipientUserId !== undefined && optedOut.has(email.recipient.recipientUserId) ? EmailSkipReason.OPTED_OUT : undefined)));
+    const states = await this.options.messages.recordMany(records);
+    states.forEach((state, index) => this.logRecorded(emails[index].refs, state, state.created));
+    if (states.some((state) => state.created && state.status === EmailMessageStatus.QUEUED)) this.options.onQueued?.();
+    return states;
+  }
+
+  /** What one email is before any query: its refs, its outbox row's addressing, and a skip known already. */
+  private prepare<Key extends SystemEmailTemplateKey>(templateKey: Key, input: EmailSendInput<Key>, config: EmailConfig): PreparedEmail {
     const league: EmailLeague | undefined = input.league;
     const refs = {
       templateKey,
@@ -188,34 +241,30 @@ export class EmailService {
     };
     const address = input.to.email.trim();
     const from = this.senderFor(league);
-    const recipient = {
-      ...refs,
-      recipientUserId: input.to.userId,
-      recipientEmail: address,
-      idempotencyKey: `${idempotencyKeyPrefix(templateKey, input.about)}${input.to.userId ?? address.toLowerCase()}`,
-      fromName: from.name,
-      fromAddress: from.address,
+    return {
+      refs,
+      recipient: {
+        ...refs,
+        recipientUserId: input.to.userId,
+        recipientEmail: address,
+        idempotencyKey: `${idempotencyKeyPrefix(templateKey, input.about)}${input.to.userId ?? address.toLowerCase()}`,
+        fromName: from.name,
+        fromAddress: from.address,
+      },
+      skipped: switchedOffReason(config, templateKey)
+        ?? (this.inPlan(templateKey, league) ? undefined : EmailSkipReason.NOT_IN_PLAN)
+        ?? (this.mayReceive(address, config) ? undefined : EmailSkipReason.NOT_ALLOWED_IN_ENVIRONMENT),
     };
-    const skipped = switchedOffReason(config, templateKey)
-      ?? (this.inPlan(templateKey, league) ? undefined : EmailSkipReason.NOT_IN_PLAN)
-      ?? (this.mayReceive(address, config) ? undefined : EmailSkipReason.NOT_ALLOWED_IN_ENVIRONMENT)
-      ?? (await this.options.suppressions.findByEmail(address) ? EmailSkipReason.SUPPRESSED : undefined)
-      ?? (await this.optedOut(templateKey, input.to.userId) ? EmailSkipReason.OPTED_OUT : undefined);
-    if (skipped) {
-      const { message, created } = await this.options.messages.record({
-        ...recipient,
-        status: EmailMessageStatus.SKIPPED,
-        skipReason: skipped,
-      });
-      if (created) {
-        this.options.logger?.info({
-          action: 'email.send.skip',
-          data: { reason: skipped, ...logRefs(refs) },
-        }, SKIP_LOG_MESSAGES[skipped]);
-      }
-      return message;
-    }
+  }
 
+  /** The outbox row: skipped with the reason, or queued with the email rendered for the recipient. */
+  private recordOf<Key extends SystemEmailTemplateKey>(
+    templateKey: Key,
+    input: EmailSendInput<Key>,
+    { refs, recipient }: PreparedEmail,
+    skipped: EmailSkipReason | undefined,
+  ): EmailMessageRecord {
+    if (skipped) return { ...recipient, status: EmailMessageStatus.SKIPPED, skipReason: skipped };
     const unsubscribe = this.unsubscribeLinks(templateKey, input.to.userId);
     const content = renderSystemEmailTemplate(templateKey, input.data, {
       timeZone: this.resolveTimeZone(input.to.timeZone, refs),
@@ -223,7 +272,7 @@ export class EmailService {
       hour12: input.to.timeFormat ? input.to.timeFormat === TimeFormat.TWELVE_HOUR : undefined,
       unsubscribeUrl: unsubscribe?.pageUrl,
     });
-    const { message, created } = await this.options.messages.record({
+    return {
       ...recipient,
       status: EmailMessageStatus.QUEUED,
       subject: content.subject,
@@ -231,15 +280,22 @@ export class EmailService {
       htmlBody: content.html,
       listUnsubscribeUrl: unsubscribe?.oneClickUrl,
       dueAt: this.options.now?.() ?? new Date(),
-    });
-    if (created) {
-      this.options.logger?.info({ action: 'email.send.queued', data: logRefs(refs) }, 'Queued email');
-      this.options.onQueued?.();
-    } else {
+    };
+  }
+
+  private logRecorded(refs: PreparedEmail['refs'], state: EmailMessageState, created: boolean): void {
+    if (!created) {
+      if (state.status === EmailMessageStatus.SKIPPED) return;
       // Debug: a scheduler sweep records a due email again on every pass until its time is past.
       this.options.logger?.debug({ action: 'email.send.duplicate', data: logRefs(refs) }, 'Email already recorded; not queued again');
+    } else if (state.status === EmailMessageStatus.SKIPPED && state.skipReason) {
+      this.options.logger?.info({
+        action: 'email.send.skip',
+        data: { reason: state.skipReason, ...logRefs(refs) },
+      }, SKIP_LOG_MESSAGES[state.skipReason]);
+    } else {
+      this.options.logger?.info({ action: 'email.send.queued', data: logRefs(refs) }, 'Queued email');
     }
-    return message;
   }
 
   /**

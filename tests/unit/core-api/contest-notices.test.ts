@@ -202,21 +202,34 @@ describe('ContestNotices', () => {
       );
     });
 
-    it('still tells the rest of the league when one member\'s email cannot be queued', async () => {
+    it('queues every member\'s email in one write, so a league of any size costs the same', async () => {
       const league = world.addLeague();
       const event = world.addSportEvent({ startDate: STARTS_AT });
       const contest = world.addContest(league.id, { sportEventIds: [event.id] });
       world.addConfiguration(contest.id);
-      const nora = member(league.id, 'Nora');
-      const dana = member(league.id, 'Dana');
-      const record = outbox.record.bind(outbox);
-      outbox.record = async (input) => (input.recipientUserId === nora.user.id ? Promise.reject(new Error('database unavailable')) : record(input));
+      const members = ['Nora', 'Dana', 'Sam'].map((name) => member(league.id, name));
+      const recordMany = jest.spyOn(outbox, 'recordMany');
 
       await notices().contestOpened(contest.id);
 
-      expect(recipientIds()).toEqual([dana.user.id]);
+      expect(recordMany.mock.calls.map(([rows]) => rows.map((row) => row.recipientUserId)))
+        .toEqual([members.map(({ user }) => user.id)]);
+    });
+
+    it('logs it and still finishes opening the contest when the league\'s emails cannot be queued', async () => {
+      const league = world.addLeague();
+      const event = world.addSportEvent({ startDate: STARTS_AT });
+      const contest = world.addContest(league.id, { sportEventIds: [event.id] });
+      world.addConfiguration(contest.id);
+      member(league.id, 'Nora');
+      member(league.id, 'Dana');
+      outbox.recordMany = () => Promise.reject(new Error('database unavailable'));
+
+      await expect(notices().contestOpened(contest.id)).resolves.toBeUndefined();
+
+      expect(recipientIds()).toEqual([]);
       expect(logger.error).toHaveBeenCalledWith(
-        expect.objectContaining({ action: 'email.contestNotice.failed' }),
+        expect.objectContaining({ action: 'email.contestNotice.failed', data: expect.objectContaining({ recipients: 2 }) as unknown }),
         'Failed to queue a contest email',
       );
     });

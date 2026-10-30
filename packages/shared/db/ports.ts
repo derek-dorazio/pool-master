@@ -420,8 +420,11 @@ export interface LeagueInvitationRepository {
    */
   findOutstandingByLeague(leagueId: string): Promise<LeagueInvitation[]>;
   findByCode(inviteCode: string): Promise<LeagueInvitation | null>;
-  findByEmail(leagueId: string, email: string): Promise<LeagueInvitation | null>;
+  /** The league's PENDING invitations to any of the addresses, in one read (#1173). */
+  findPendingByEmails(leagueId: string, emails: readonly string[]): Promise<LeagueInvitation[]>;
   create(invitation: Omit<LeagueInvitation, 'id' | 'createdAt' | 'updatedAt'>): Promise<LeagueInvitation>;
+  /** `create` for several invitations in one write (#1173), answered in the order given. */
+  createMany(invitations: readonly Omit<LeagueInvitation, 'id' | 'createdAt' | 'updatedAt'>[]): Promise<LeagueInvitation[]>;
   update(id: string, updates: Partial<LeagueInvitation>): Promise<LeagueInvitation>;
 }
 

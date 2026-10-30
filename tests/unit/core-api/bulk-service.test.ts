@@ -35,6 +35,9 @@ function createMockInvitationRepo(overrides: Partial<LeagueInvitationRepository>
     create: mockFn<LeagueInvitationRepository['create']>(async (input) => ({
       ...input, id: 'new-invite', createdAt: new Date(), updatedAt: new Date(),
     })),
+    createMany: mockFn<LeagueInvitationRepository['createMany']>(async (inputs) => inputs.map((input) => ({
+      ...input, id: 'new-invite', createdAt: new Date(), updatedAt: new Date(),
+    }))),
     update: jest.fn().mockResolvedValue(buildInvitation()),
     ...overrides,
   });
@@ -45,7 +48,7 @@ describe('BulkService', () => {
   // caller and the repo owner removed it from scope.
 
   describe('importMembersFromCsv', () => {
-    it('creates invitations for valid emails', async () => {
+    it('creates the invitations for every valid email in one write, after one read of the pending ones', async () => {
       const invitationRepo = createMockInvitationRepo();
       const service = new BulkService(
         createMockLeagueRepo(),
@@ -56,7 +59,10 @@ describe('BulkService', () => {
         { email: 'bob@example.com' },
       ]);
       expect(result.sent).toBe(2);
-      expect(invitationRepo.create).toHaveBeenCalledTimes(2);
+      expect(invitationRepo.findPendingByEmails).toHaveBeenCalledTimes(1);
+      expect(jest.mocked(invitationRepo.createMany).mock.calls.map(([rows]) => rows.map((row) => row.email)))
+        .toEqual([['alice@example.com', 'bob@example.com']]);
+      expect(invitationRepo.create).not.toHaveBeenCalled();
     });
 
     it('skips invalid emails', async () => {
@@ -72,12 +78,24 @@ describe('BulkService', () => {
       expect(result.failed).toHaveLength(1);
     });
 
+    it('invites an address given twice once, counting the second as a duplicate', async () => {
+      const invitationRepo = createMockInvitationRepo();
+      const service = new BulkService(
+        createMockLeagueRepo(),
+        createMockMembershipRepo(), invitationRepo,
+      );
+      const result = await service.importMembersFromCsv('league-1', 'user-1', [
+        { email: 'Alice@example.com' },
+        { email: 'alice@example.com ' },
+      ]);
+      expect(result.sent).toBe(1);
+      expect(result.duplicates).toEqual(['alice@example.com']);
+    });
+
     it('skips duplicate pending invitations', async () => {
       const invitationRepo = createMockInvitationRepo({
-        findByEmail: jest.fn().mockImplementation(async (_lid: string, email: string) => {
-          if (email === 'existing@example.com') return buildInvitation({ email });
-          return null;
-        }),
+        findPendingByEmails: jest.fn().mockImplementation(async (_leagueId: string, emails: readonly string[]) =>
+          emails.filter((email) => email === 'existing@example.com').map((email) => buildInvitation({ email }))),
       });
       const service = new BulkService(
         createMockLeagueRepo(),

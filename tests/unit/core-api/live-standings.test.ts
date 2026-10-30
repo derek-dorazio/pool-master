@@ -808,6 +808,35 @@ describe('LiveStandings.queueDue', () => {
     expect(outbox.rows).toHaveLength(0);
   });
 
+  it('keeps the last baseline when the emails cannot be queued, so the next sweep sends them with the real movement', async () => {
+    const { league, masters, contest } = liveMasters();
+    const ana = member(league.id, 'Ana');
+    const ben = member(league.id, 'Ben');
+    boards.set(contest.id, [row('e1', ana.squad, 1, -6), row('e2', ben.squad, 2, -3)]);
+    await standings().queueDue(after(ROUND_1_DONE, 31));
+    fields.set(masters.id, [golfer('g1', [done(1, ROUND_1_DONE), done(2, ROUND_2_DONE)]), golfer('g2', [done(1, ROUND_1_DONE), done(2, ROUND_2_DONE)])]);
+    boards.set(contest.id, [row('e2', ben.squad, 1, -9), row('e1', ana.squad, 2, -7)]);
+    const recordMany = outbox.recordMany.bind(outbox);
+    outbox.recordMany = () => Promise.reject(new Error('database unavailable'));
+    logger.info.mockClear();
+
+    await standings().queueDue(after(ROUND_2_DONE, 31));
+
+    expect(positions).toEqual(new Map([['e1', 1], ['e2', 2]]));
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'email.liveStandings.sendFailed' }),
+      'Failed to queue the live standings emails',
+    );
+    expect(logger.info).not.toHaveBeenCalledWith(expect.objectContaining({ action: 'email.liveStandings.queued' }), expect.any(String));
+
+    outbox.recordMany = recordMany;
+    await standings().queueDue(after(ROUND_2_DONE, 36));
+
+    const [round2] = emailsTo(ana.user.id).filter((email) => email.subject?.startsWith('After round 2'));
+    expect(round2.textBody).toContain('2. Entry e1 (Ana\'s Squad), yours, -7, down 1');
+    expect(positions).toEqual(new Map([['e1', 2], ['e2', 1]]));
+  });
+
   it('logs a contest whose standings fail and still sends the others', async () => {
     const { league, masters, contest } = liveMasters();
     const ana = member(league.id, 'Ana');

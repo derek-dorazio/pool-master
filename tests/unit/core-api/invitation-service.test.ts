@@ -48,6 +48,12 @@ function createMockInvitationRepo(
       createdAt: new Date(),
       updatedAt: new Date(),
     })),
+    createMany: mockFn<LeagueInvitationRepository['createMany']>(async (inputs) => inputs.map((input) => ({
+      ...input,
+      id: 'new-invite-id',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }))),
     update: mockFn<LeagueInvitationRepository['update']>(async (id, updates) => ({
       ...buildInvitation({ id }),
       ...updates,
@@ -151,7 +157,7 @@ function createMockProvisioningPrisma() {
 
 describe('InvitationService', () => {
   describe('sendEmailInvitations', () => {
-    it('creates invitations for each email', async () => {
+    it('creates the invitations for every email in one write, after one read of the pending ones', async () => {
       const invitationRepo = createMockInvitationRepo();
       const service = new InvitationService({
         invitations: invitationRepo,
@@ -167,7 +173,11 @@ describe('InvitationService', () => {
         invitedBy: 'owner-1',
       });
       expect(result.sent).toHaveLength(2);
-      expect(invitationRepo.create).toHaveBeenCalledTimes(2);
+      expect(invitationRepo.findPendingByEmails).toHaveBeenCalledTimes(1);
+      expect(invitationRepo.findPendingByEmails).toHaveBeenCalledWith('league-1', ['alice@example.com', 'bob@example.com']);
+      expect(jest.mocked(invitationRepo.createMany).mock.calls.map(([rows]) => rows.map((row) => row.email)))
+        .toEqual([['alice@example.com', 'bob@example.com']]);
+      expect(invitationRepo.create).not.toHaveBeenCalled();
     });
 
     it('pool-master-7ij sends themed invite emails after invitation records are created', async () => {
@@ -258,6 +268,33 @@ describe('InvitationService', () => {
       })]);
     });
 
+    it('fails the request with the invitations already created when their emails cannot be queued, recording none of the emails', async () => {
+      const invitationRepo = createMockInvitationRepo();
+      const outbox = inMemoryEmailMessages();
+      outbox.recordMany = () => Promise.reject(new Error('database unavailable'));
+      const service = new InvitationService({
+        invitations: invitationRepo,
+        memberships: createMockMembershipRepo(),
+        leagues: createMockLeagueRepo(),
+        prisma: asPrismaClient(createMockProvisioningPrisma()),
+        email: emailServiceOver({ providerName: 'smtp', send: jest.fn() }, outbox),
+        users: createProvisioningUsers(),
+        contests: NO_CONTESTS,
+        memberJoined: NOBODY_TOLD,
+      });
+
+      await expect(service.sendEmailInvitations({
+        leagueId: 'league-1',
+        emails: ['alice@example.com', 'bob@example.com'],
+        invitedBy: 'owner-1',
+      })).rejects.toThrow('database unavailable');
+
+      // Pinned until the invitations and their emails are written together.
+      expect(jest.mocked(invitationRepo.createMany).mock.calls.map(([rows]) => rows.map((row) => row.email)))
+        .toEqual([['alice@example.com', 'bob@example.com']]);
+      expect(outbox.rows).toEqual([]);
+    });
+
     it('refuses to invite into a league that does not exist, creating nothing, since its name and code are the email\'s sender', async () => {
       const invitationRepo = createMockInvitationRepo();
       const service = new InvitationService({
@@ -279,10 +316,8 @@ describe('InvitationService', () => {
 
     it('skips emails with existing pending invitations', async () => {
       const invitationRepo = createMockInvitationRepo({
-        findByEmail: jest.fn().mockImplementation(async (_leagueId: string, email: string) => {
-          if (email === 'existing@example.com') return buildInvitation({ email });
-          return null;
-        }),
+        findPendingByEmails: jest.fn().mockImplementation(async (_leagueId: string, emails: readonly string[]) =>
+          emails.filter((email) => email === 'existing@example.com').map((email) => buildInvitation({ email }))),
       });
       const service = new InvitationService({
         invitations: invitationRepo,
@@ -316,7 +351,7 @@ describe('InvitationService', () => {
         emails: ['ALICE@Example.COM'],
         invitedBy: 'owner-1',
       });
-      expect(invitationRepo.create).toHaveBeenNthCalledWith(1, expect.objectContaining({ email: 'alice@example.com' }));
+      expect(jest.mocked(invitationRepo.createMany).mock.calls[0][0].map((row) => row.email)).toEqual(['alice@example.com']);
     });
   });
 

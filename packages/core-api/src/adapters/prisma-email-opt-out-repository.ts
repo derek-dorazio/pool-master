@@ -23,6 +23,15 @@ export class PrismaEmailOptOutRepository implements EmailOptOutRepository {
     return row !== null;
   }
 
+  async findOptedOutUsers(userIds: readonly string[], category: OptionalEmailCategory): Promise<Set<string>> {
+    if (userIds.length === 0) return new Set();
+    const rows = await this.prisma.emailOptOut.findMany({
+      where: { userId: { in: [...new Set(userIds)] }, category },
+      select: { userId: true },
+    });
+    return new Set(rows.map((row) => row.userId));
+  }
+
   async setOptedOut(userId: string, category: OptionalEmailCategory, optedOut: boolean): Promise<void> {
     if (optedOut) {
       // ON CONFLICT DO NOTHING: turning off a category that is already off changes nothing.

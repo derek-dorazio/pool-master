@@ -21,6 +21,7 @@ import {
   PrismaLeagueRepository,
   PrismaUserRepository,
 } from '../../../packages/core-api/src/adapters';
+import { recordStatements } from '../statement-log';
 import {
   InvitationStatus,
   InviteType,
@@ -717,6 +718,63 @@ describe('identity cluster repositories (#202)', () => {
       const outstanding = await repo.findOutstandingByLeague(league.id);
 
       expect(outstanding.map((row) => row.id)).toEqual([expiredEmail.id, pendingLink.id, pendingEmail.id]);
+    });
+
+    it('finds the league\'s pending invitations to any of the addresses in one read, leaving out accepted ones, other addresses and other leagues (#1173)', async () => {
+      const prisma = getPrisma();
+      const repo = new PrismaLeagueInvitationRepository(getAppPrisma());
+      const { user } = await createTestUser({ lastName: 'PendingInviter' });
+      const [league, otherLeague] = await Promise.all([
+        createLeague(prisma, `${LEAGUE_CODE_PREFIX}F4`, 'Pending'),
+        createLeague(prisma, `${LEAGUE_CODE_PREFIX}F5`, 'Pending elsewhere'),
+      ]);
+      const invite = (leagueId: string, email: string, status: InvitationStatus) => prisma.leagueInvitation.create({
+        data: { leagueId, email, status, inviteType: InviteType.EMAIL, inviteCode: `${LEAGUE_CODE_PREFIX}-${email}-${leagueId}-${Date.now()}`, invitedBy: user.id },
+      });
+      const pending = await invite(league.id, 'pending@integration.test', InvitationStatus.PENDING);
+      await invite(league.id, 'accepted@integration.test', InvitationStatus.ACCEPTED);
+      await invite(league.id, 'not-asked@integration.test', InvitationStatus.PENDING);
+      await invite(otherLeague.id, 'elsewhere@integration.test', InvitationStatus.PENDING);
+
+      const { result, statements } = await recordStatements(() => repo.findPendingByEmails(league.id, [
+        'pending@integration.test', 'accepted@integration.test', 'elsewhere@integration.test',
+      ]));
+
+      expect(result.map((row) => row.id)).toEqual([pending.id]);
+      expect(statements).toHaveLength(1);
+      await expect(repo.findPendingByEmails(league.id, [])).resolves.toEqual([]);
+    });
+
+    it('creates several invitations in one write and answers each in the order given', async () => {
+      const prisma = getPrisma();
+      const repo = new PrismaLeagueInvitationRepository(getAppPrisma());
+      const { user } = await createTestUser({ lastName: 'BatchInviter' });
+      const league = await createLeague(prisma, `${LEAGUE_CODE_PREFIX}F6`, 'Batch');
+      const expiresAt = new Date('2026-11-06T00:00:00.000Z');
+      const invitation = (email: string) => ({
+        leagueId: league.id,
+        email,
+        inviteCode: `${LEAGUE_CODE_PREFIX}-${email}-${Date.now()}`,
+        inviteType: InviteType.EMAIL,
+        status: InvitationStatus.PENDING,
+        maxUses: 1,
+        currentUses: 0,
+        invitedBy: user.id,
+        expiresAt,
+      });
+
+      const { result, statements } = await recordStatements(() => repo.createMany([
+        invitation('zed@integration.test'), invitation('amy@integration.test'), invitation('kim@integration.test'),
+      ]));
+
+      expect(result.map((row) => [row.email, row.status, row.expiresAt])).toEqual([
+        ['zed@integration.test', InvitationStatus.PENDING, expiresAt],
+        ['amy@integration.test', InvitationStatus.PENDING, expiresAt],
+        ['kim@integration.test', InvitationStatus.PENDING, expiresAt],
+      ]);
+      expect(statements.filter(({ sql }) => sql.startsWith('INSERT'))).toHaveLength(1);
+      await expect(prisma.leagueInvitation.count({ where: { leagueId: league.id } })).resolves.toBe(3);
+      await expect(repo.createMany([])).resolves.toEqual([]);
     });
   });
 });

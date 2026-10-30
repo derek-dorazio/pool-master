@@ -7,6 +7,7 @@
 import type {
   EmailMessageRecord,
   EmailMessageRecordResult,
+  EmailMessageRecordState,
   EmailMessageRepository,
   EmailMessageState,
   EmailOptOutRepository,
@@ -43,6 +44,14 @@ export function inMemoryEmailMessages(now: () => Date = () => new Date()): InMem
     findById(id: string): Promise<EmailMessage | undefined> {
       const row = rows.find((candidate) => candidate.id === id);
       return Promise.resolve(row ? { ...row } : undefined);
+    },
+    async recordMany(inputs: readonly EmailMessageRecord[]): Promise<EmailMessageRecordState[]> {
+      const states: EmailMessageRecordState[] = [];
+      for (const input of inputs) {
+        const { message, created } = await this.record(input);
+        states.push({ id: message.id, status: message.status, skipReason: message.skipReason, created });
+      }
+      return states;
     },
     record(input: EmailMessageRecord): Promise<EmailMessageRecordResult> {
       const existing = rows.find((row) => row.idempotencyKey === input.idempotencyKey);
@@ -173,6 +182,10 @@ export function inMemoryEmailSuppressions(): InMemoryEmailSuppressions {
       const found = rows.find((row) => row.email === email.toLowerCase());
       return Promise.resolve(found ? { ...found } : undefined);
     },
+    findSuppressedEmails(emails) {
+      const asked = new Set(emails.map((email) => email.toLowerCase()));
+      return Promise.resolve(new Set(rows.filter((row) => asked.has(row.email)).map((row) => row.email)));
+    },
   };
 }
 
@@ -194,6 +207,9 @@ export function inMemoryEmailOptOuts(): InMemoryEmailOptOuts {
     },
     isOptedOut(userId, category) {
       return Promise.resolve(rows.has(keyOf(userId, category)));
+    },
+    findOptedOutUsers(userIds, category) {
+      return Promise.resolve(new Set(userIds.filter((userId) => rows.has(keyOf(userId, category)))));
     },
     setOptedOut(userId, category, optedOut) {
       if (optedOut) rows.add(keyOf(userId, category));

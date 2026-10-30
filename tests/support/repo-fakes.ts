@@ -240,11 +240,9 @@ export function fakeLeagueInvitationRepo(
     findById: one(),
     findOutstandingByLeague: many(),
     findByCode: one(),
-    // Single row despite the plural-sounding name — the port declares
-    // `Promise<LeagueInvitation | null>`. Defaulting this to [] made every email look
-    // like a duplicate and silently turned bulk import into a no-op.
-    findByEmail: one(),
+    findPendingByEmails: many(),
     create: echoCreate('league-invitation'),
+    createMany: echoCreateMany('league-invitation'),
     update: echoUpdate(),
     ...overrides,
   };

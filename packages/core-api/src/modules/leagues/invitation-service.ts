@@ -35,6 +35,7 @@ import {
   buildLeagueHomeUrl,
   buildLeagueInviteUrl,
   type EmailLeague,
+  type EmailSendInput,
   type EmailService,
 } from '../email';
 import type { ApiErrorCode } from '@poolmaster/shared/dto';
@@ -74,6 +75,17 @@ export interface InvitationPreview {
     leagueCode: string;
     name: string;
   };
+}
+
+/** One invite email to queue: the invitation, who sent it, and the league it is to. */
+interface LeagueInvitationEmail {
+  invitationId: string;
+  email: string;
+  inviterName: string;
+  league: EmailLeague;
+  inviteCode: string;
+  expiresAt: Date;
+  message?: string;
 }
 
 const DEFAULT_INVITE_EXPIRY_DAYS = 7;
@@ -127,59 +139,57 @@ export class InvitationService {
     // The commissioner guard has found the league already; its name and code are the email's sender.
     if (!league) throw new LeagueNotFoundError(input.leagueId);
     this.requireActiveLeague(league, 'sendEmail');
-    const sent: InvitationWithEmailState[] = [];
     const skippedMembers: string[] = [];
     const skippedDuplicates: string[] = [];
-    for (const email of input.emails) {
-      const normalised = email.toLowerCase().trim();
-      if (memberEmails.has(normalised)) {
+    const normalised = input.emails.map((email) => email.toLowerCase().trim());
+    // One read of the pending invitations for the whole paste (#1173), not one per address.
+    const pending = new Set((await this.deps.invitations.findPendingByEmails(
+      input.leagueId,
+      [...new Set(normalised.filter((email) => !memberEmails.has(email)))],
+    )).map((invitation) => invitation.email));
+    const toInvite = new Set<string>();
+    for (const email of normalised) {
+      if (memberEmails.has(email)) {
         this.logger?.warn({
           action: 'leagueInvitation.sendEmail.skippedMember',
           data: { leagueId: input.leagueId, invitedBy: input.invitedBy },
         }, 'Skipped invitation for existing member email');
-        skippedMembers.push(normalised);
-        continue;
-      }
-      // poolmaster-allow-query-in-loop: #1173
-      const existing = await this.deps.invitations.findByEmail(input.leagueId, normalised);
-      if (existing) {
+        skippedMembers.push(email);
+      } else if (pending.has(email) || toInvite.has(email)) {
+        // An address given twice is invited once: the second finds the first's invitation pending.
         this.logger?.warn({
           action: 'leagueInvitation.sendEmail.skippedDuplicate',
           data: { leagueId: input.leagueId, invitedBy: input.invitedBy },
         }, 'Skipped duplicate pending invitation');
-        skippedDuplicates.push(normalised);
-        continue;
+        skippedDuplicates.push(email);
+      } else {
+        toInvite.add(email);
       }
-      const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + DEFAULT_INVITE_EXPIRY_DAYS);
-      // poolmaster-allow-query-in-loop: #1173
-      const invitation = await this.deps.invitations.create({
-        leagueId: input.leagueId,
-        email: normalised,
-        inviteCode: generateInviteCode(),
-        inviteType: InviteType.EMAIL,
-        status: InvitationStatus.PENDING,
-        maxUses: 1,
-        currentUses: 0,
-        invitedBy: input.invitedBy,
-        expiresAt,
-      });
-      const emailState = await this.queueLeagueInvitationEmail({
-        invitationId: invitation.id,
-        email: normalised,
-        inviterName,
-        league: {
-          id: input.leagueId,
-          name: league.name,
-          leagueCode: league.leagueCode,
-          plan: league.plan,
-        },
-        inviteCode: invitation.inviteCode,
-        expiresAt,
-        message: input.message,
-      });
-      sent.push({ invitation, emailState });
     }
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + DEFAULT_INVITE_EXPIRY_DAYS);
+    const addresses = [...toInvite];
+    const invitations = await this.deps.invitations.createMany(addresses.map((email) => ({
+      leagueId: input.leagueId,
+      email,
+      inviteCode: generateInviteCode(),
+      inviteType: InviteType.EMAIL,
+      status: InvitationStatus.PENDING,
+      maxUses: 1,
+      currentUses: 0,
+      invitedBy: input.invitedBy,
+      expiresAt,
+    })));
+    const emailStates = await this.queueLeagueInvitationEmails(invitations.map((invitation, index) => ({
+      invitationId: invitation.id,
+      email: addresses[index],
+      inviterName,
+      league: { id: input.leagueId, name: league.name, leagueCode: league.leagueCode, plan: league.plan },
+      inviteCode: invitation.inviteCode,
+      expiresAt,
+      message: input.message,
+    })));
+    const sent = invitations.map((invitation, index): InvitationWithEmailState => ({ invitation, emailState: emailStates[index] }));
     this.logger?.info({
       action: 'leagueInvitation.sendEmail.success',
       data: {
@@ -193,19 +203,24 @@ export class InvitationService {
     return { sent, skippedMembers, skippedDuplicates };
   }
 
+  /** `queueLeagueInvitationEmail` for a whole paste in one batch (#1173): each one's status, in order. */
+  private async queueLeagueInvitationEmails(invites: readonly LeagueInvitationEmail[]): Promise<(EmailMessageState | null)[]> {
+    if (!this.deps.email) {
+      this.logger?.debug({
+        action: 'leagueInvitation.emailDelivery.skipped',
+        data: { invitationCount: invites.length },
+      }, 'No email service configured for league invitation');
+      return invites.map(() => null);
+    }
+    const states = await this.deps.email.sendMany('LEAGUE_MEMBER_INVITE', invites.map((invite) => this.inviteEmail(invite)));
+    return states.map(({ status, skipReason }) => ({ status, skipReason }));
+  }
+
   /**
    * Queues the invite email in the outbox and returns its status. A new invite code is a new
    * email, so a resend is queued again while a repeated request for the same code is not.
    */
-  private async queueLeagueInvitationEmail(input: {
-    invitationId: string;
-    email: string;
-    inviterName: string;
-    league: EmailLeague;
-    inviteCode: string;
-    expiresAt: Date;
-    message?: string;
-  }): Promise<EmailMessageState | null> {
+  private async queueLeagueInvitationEmail(input: LeagueInvitationEmail): Promise<EmailMessageState | null> {
     if (!this.deps.email) {
       this.logger?.debug({
         action: 'leagueInvitation.emailDelivery.skipped',
@@ -213,8 +228,12 @@ export class InvitationService {
       }, 'No email service configured for league invitation');
       return null;
     }
-    const templateKey = 'LEAGUE_MEMBER_INVITE';
-    const queued = await this.deps.email.send(templateKey, {
+    const queued = await this.deps.email.send('LEAGUE_MEMBER_INVITE', this.inviteEmail(input));
+    return { status: queued.status, skipReason: queued.skipReason };
+  }
+
+  private inviteEmail(input: LeagueInvitationEmail): EmailSendInput<'LEAGUE_MEMBER_INVITE'> {
+    return {
       to: { email: input.email },
       about: `${input.invitationId}:${input.inviteCode}`,
       league: input.league,
@@ -228,8 +247,7 @@ export class InvitationService {
         message: input.message,
         expiresAt: input.expiresAt,
       },
-    });
-    return { status: queued.status, skipReason: queued.skipReason };
+    };
   }
 
   /**

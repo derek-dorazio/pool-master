@@ -2,10 +2,11 @@
  * Prisma adapter for EmailMessageRepository — the email outbox (#844).
  */
 
-import type { EmailMessage as EmailMessageRow, PrismaClient } from '@prisma/client';
+import type { EmailMessage as EmailMessageRow, Prisma, PrismaClient } from '@prisma/client';
 import type {
   EmailMessageRecord,
   EmailMessageRecordResult,
+  EmailMessageRecordState,
   EmailMessageRepository,
   EmailMessageState,
 } from '@poolmaster/shared/db';
@@ -28,38 +29,41 @@ export class PrismaEmailMessageRepository implements EmailMessageRepository {
   }
 
   async record(input: EmailMessageRecord): Promise<EmailMessageRecordResult> {
-    const base = {
-      templateKey: input.templateKey,
-      recipientUserId: input.recipientUserId,
-      recipientEmail: input.recipientEmail,
-      leagueId: input.leagueId,
-      contestId: input.contestId,
-      entryId: input.entryId,
-      invitationId: input.invitationId,
-      idempotencyKey: input.idempotencyKey,
-      fromName: input.fromName,
-      fromAddress: input.fromAddress,
-      status: input.status,
-    };
     // ON CONFLICT DO NOTHING: a key already recorded writes nothing, and raises nothing that
     // would abort a surrounding transaction.
-    const { count } = await this.prisma.emailMessage.createMany({
-      data: input.status === EmailMessageStatus.QUEUED
-        ? {
-          ...base,
-          subject: input.subject,
-          textBody: input.textBody,
-          htmlBody: input.htmlBody,
-          listUnsubscribeUrl: input.listUnsubscribeUrl,
-          nextAttemptAt: input.dueAt,
-        }
-        : { ...base, skipReason: input.skipReason },
-      skipDuplicates: true,
-    });
+    const { count } = await this.prisma.emailMessage.createMany({ data: toCreateData(input), skipDuplicates: true });
     const row = await this.prisma.emailMessage.findUniqueOrThrow({
       where: { idempotencyKey: input.idempotencyKey },
     });
     return { message: toEmailMessage(row), created: count === 1 };
+  }
+
+  async recordMany(inputs: readonly EmailMessageRecord[]): Promise<EmailMessageRecordState[]> {
+    if (inputs.length === 0) return [];
+    const state = { id: true, idempotencyKey: true, status: true, skipReason: true } as const;
+    // One write answering the rows it wrote, ids and status only (Prisma wraps it in a transaction).
+    const written = await this.prisma.emailMessage.createManyAndReturn({
+      data: inputs.map(toCreateData),
+      skipDuplicates: true,
+      select: state,
+    });
+    const writtenKeys = new Set(written.map((row) => row.idempotencyKey));
+    const already = inputs.map((input) => input.idempotencyKey).filter((key) => !writtenKeys.has(key));
+    // Only the emails recorded before are read, and only where they stand.
+    const stored = already.length === 0 ? [] : await this.prisma.emailMessage.findMany({
+      where: { idempotencyKey: { in: [...new Set(already)] } },
+      select: state,
+    });
+    const byKey = new Map([...stored, ...written].map((row) => [row.idempotencyKey, row]));
+    const answered = new Set<string>();
+    return inputs.map((input) => {
+      const row = byKey.get(input.idempotencyKey);
+      if (!row) throw new Error(`Email ${input.idempotencyKey} was neither written nor found`);
+      // A key the batch names twice was written by its first mention only.
+      const created = writtenKeys.has(row.idempotencyKey) && !answered.has(row.idempotencyKey);
+      answered.add(row.idempotencyKey);
+      return { id: row.id, status: row.status, skipReason: row.skipReason ?? undefined, created };
+    });
   }
 
   async claimDue(claim: {
@@ -256,4 +260,31 @@ function toEmailMessage(row: EmailMessageRow): EmailMessage {
     providerMessageId: row.providerMessageId ?? undefined,
     sentAt: row.sentAt ?? undefined,
   };
+}
+
+/** An email's outbox row as written: its content only when it is queued. */
+function toCreateData(input: EmailMessageRecord): Prisma.EmailMessageCreateManyInput {
+  const base = {
+    templateKey: input.templateKey,
+    recipientUserId: input.recipientUserId,
+    recipientEmail: input.recipientEmail,
+    leagueId: input.leagueId,
+    contestId: input.contestId,
+    entryId: input.entryId,
+    invitationId: input.invitationId,
+    idempotencyKey: input.idempotencyKey,
+    fromName: input.fromName,
+    fromAddress: input.fromAddress,
+    status: input.status,
+  };
+  return input.status === EmailMessageStatus.QUEUED
+    ? {
+      ...base,
+      subject: input.subject,
+      textBody: input.textBody,
+      htmlBody: input.htmlBody,
+      listUnsubscribeUrl: input.listUnsubscribeUrl,
+      nextAttemptAt: input.dueAt,
+    }
+    : { ...base, skipReason: input.skipReason };
 }

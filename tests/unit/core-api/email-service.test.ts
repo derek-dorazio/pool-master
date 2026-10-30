@@ -574,3 +574,95 @@ describe('email service: the league\'s plan', () => {
     expect(message.skipReason).toBe('EMAIL_DISABLED');
   });
 });
+
+describe('email service: many recipients at once (#1173)', () => {
+  function receiptTo(userId: string, email: string): EmailSendInput<'CONTEST_ENTRY_COMPLETED'> {
+    const receipt = entryReceipt(userId);
+    return { ...receipt, to: { email, userId } };
+  }
+
+  it('reads the suppressed addresses and the opted-out members once each for the whole batch, and answers each email in the order given', async () => {
+    const outbox = inMemoryEmailMessages();
+    const suppressions = inMemoryEmailSuppressions();
+    await suppressions.suppress({ email: 'Gone@Gmail.com', suppressionReason: 'BOUNCE' });
+    const optOuts = inMemoryEmailOptOuts();
+    await optOuts.setOptedOut('user-2', 'RECEIPTS', true);
+    const suppressedRead = jest.spyOn(suppressions, 'findSuppressedEmails');
+    const optOutRead = jest.spyOn(optOuts, 'findOptedOutUsers');
+    const recordMany = jest.spyOn(outbox, 'recordMany');
+
+    const states = await service({ outbox, suppressions, optOuts }).sendMany('CONTEST_ENTRY_COMPLETED', [
+      receiptTo('user-1', 'gone@gmail.com'),
+      receiptTo('user-2', 'quiet@gmail.com'),
+      receiptTo('user-3', 'member@gmail.com'),
+    ]);
+
+    expect(states.map(({ status, skipReason, created }) => [status, skipReason, created])).toEqual([
+      ['SKIPPED', 'SUPPRESSED', true],
+      ['SKIPPED', 'OPTED_OUT', true],
+      ['QUEUED', undefined, true],
+    ]);
+    expect(states.map((state) => state.id)).toEqual(outbox.rows.map((row) => row.id));
+    expect(suppressedRead.mock.calls).toEqual([[['gone@gmail.com', 'quiet@gmail.com', 'member@gmail.com']]]);
+    expect(optOutRead.mock.calls).toEqual([[['user-1', 'user-2', 'user-3'], 'RECEIPTS']]);
+    expect(recordMany).toHaveBeenCalledTimes(1);
+    expect(outbox.rows[2].textBody).toContain('Masters Pick 6');
+    expect(outbox.rows[0].textBody).toBeUndefined();
+  });
+
+  it('reads neither list when email is switched off, recording every email as skipped', async () => {
+    const suppressions = inMemoryEmailSuppressions();
+    const optOuts = inMemoryEmailOptOuts();
+    const suppressedRead = jest.spyOn(suppressions, 'findSuppressedEmails');
+    const optOutRead = jest.spyOn(optOuts, 'findOptedOutUsers');
+
+    const states = await service({ suppressions, optOuts, readConfig: () => emailConfig({ enabled: false }) })
+      .sendMany('CONTEST_ENTRY_COMPLETED', [receiptTo('user-1', 'a@gmail.com'), receiptTo('user-2', 'b@gmail.com')]);
+
+    expect(states.map((state) => state.skipReason)).toEqual(['EMAIL_DISABLED', 'EMAIL_DISABLED']);
+    expect(suppressedRead).not.toHaveBeenCalled();
+    expect(optOutRead).not.toHaveBeenCalled();
+  });
+
+  it('reads no opt-outs for an email nobody can turn off, such as an invite', async () => {
+    const optOuts = inMemoryEmailOptOuts();
+    const optOutRead = jest.spyOn(optOuts, 'findOptedOutUsers');
+
+    await service({ optOuts }).sendMany('LEAGUE_MEMBER_INVITE', [invite('a@gmail.com'), invite('b@gmail.com')]);
+
+    expect(optOutRead).not.toHaveBeenCalled();
+  });
+
+  it('records an email already sent once, answering it as not created, and wakes the sender only for new queued emails', async () => {
+    const outbox = inMemoryEmailMessages();
+    const onQueued = jest.fn();
+    const email = service({ outbox, onQueued });
+    const first = await email.send('LEAGUE_MEMBER_INVITE', invite('member@gmail.com'));
+    onQueued.mockClear();
+
+    const states = await email.sendMany('LEAGUE_MEMBER_INVITE', [invite('Member@Gmail.com'), invite('new@gmail.com')]);
+
+    expect(states.map(({ id, created }) => [id === first.id, created])).toEqual([[true, false], [false, true]]);
+    expect(outbox.rows).toHaveLength(2);
+    expect(onQueued).toHaveBeenCalledTimes(1);
+  });
+
+  it('wakes the sender not at all when every email is a repeat', async () => {
+    const onQueued = jest.fn();
+    const email = service({ onQueued });
+    await email.sendMany('LEAGUE_MEMBER_INVITE', [invite('member@gmail.com')]);
+    onQueued.mockClear();
+
+    await email.sendMany('LEAGUE_MEMBER_INVITE', [invite('member@gmail.com')]);
+
+    expect(onQueued).not.toHaveBeenCalled();
+  });
+
+  it('records nothing and reads nothing for no recipients', async () => {
+    const outbox = inMemoryEmailMessages();
+    const recordMany = jest.spyOn(outbox, 'recordMany');
+
+    await expect(service({ outbox }).sendMany('LEAGUE_MEMBER_INVITE', [])).resolves.toEqual([]);
+    expect(recordMany).not.toHaveBeenCalled();
+  });
+});

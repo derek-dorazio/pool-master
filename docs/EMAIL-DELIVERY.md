@@ -6,6 +6,13 @@ renders the template for the recipient, picks the sender, and records one email 
 in the outbox; the sender sends it a moment later. Callers never render or call a transport
 themselves.
 
+An email to many people at once, such as a contest notice to a whole league, goes through
+`EmailService.sendMany(templateKey, inputs)` instead (#1173). It makes the same checks and
+renders each email the same way, in about four queries however many recipients there are:
+one read of the suppressed addresses, one of who turned the email's category off, and one
+write of every row, answering each email's id and status without reading its content back.
+A failed read or write fails the whole batch, so the caller logs it once.
+
 ## Outbox
 
 Every email is a row in `email_messages` (#844 slice 3), one per recipient:

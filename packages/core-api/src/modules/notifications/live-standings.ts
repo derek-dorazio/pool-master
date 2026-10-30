@@ -105,7 +105,7 @@ export interface LiveStandingsDeps extends LeagueMemberDeps {
   positions: StandingsEmailPositionRepository;
   leagues: Pick<LeagueRepository, 'findById'>;
   squadMemberships: Pick<SquadMembershipRepository, 'findBySquads'>;
-  email: Pick<EmailService, 'send' | 'hasRecordedForContest'>;
+  email: Pick<EmailService, 'sendMany' | 'hasRecordedForContest'>;
   readConfig: () => Pick<EmailConfig, 'standingsBufferMinutes'>;
   appBaseUrl: string;
   logger?: FastifyBaseLogger;
@@ -546,11 +546,11 @@ export class LiveStandings implements DueNotifications {
     const recipients = await this.recipients(league, rows);
     const leaderboardUrl = buildLeaderboardUrl(this.deps.appBaseUrl, league.leagueCode, contest.id);
 
-    await Promise.all(recipients.map(async ({ user, squadIds }) => {
-      const ownsSquad = (squadId: string): boolean => squadIds.has(squadId);
-      const lines = rows.map((row) => ({ ...row.line, isYours: ownsSquad(row.squadId) }));
-      try {
-        await this.deps.email.send('CONTEST_STANDINGS', {
+    try {
+      await this.deps.email.sendMany('CONTEST_STANDINGS', recipients.map(({ user, squadIds }) => {
+        const ownsSquad = (squadId: string): boolean => squadIds.has(squadId);
+        const lines = rows.map((row) => ({ ...row.line, isYours: ownsSquad(row.squadId) }));
+        return {
           to: emailRecipientOf(user),
           about: due.about,
           league: { id: league.id, name: league.name, leagueCode: league.leagueCode, plan: league.plan },
@@ -567,14 +567,16 @@ export class LiveStandings implements DueNotifications {
             leaderboardUrl,
             ...board.personal(ownsSquad),
           },
-        });
-      } catch (error) {
-        this.deps.logger?.error({
-          action: 'email.liveStandings.sendFailed',
-          data: { contestId: contest.id, leagueId: league.id, userId: user.id, error: error instanceof Error ? error.message : String(error) },
-        }, 'Failed to queue a live standings email');
-      }
-    }));
+        };
+      }));
+    } catch (error) {
+      this.deps.logger?.error({
+        action: 'email.liveStandings.sendFailed',
+        data: { contestId: contest.id, leagueId: league.id, recipients: recipients.length, error: error instanceof Error ? error.message : String(error) },
+      }, 'Failed to queue the live standings emails');
+      // Nothing was recorded, so the next sweep sends it again, measured from the last baseline.
+      return;
+    }
     // After the emails: the places they showed are the next email's baseline.
     await this.deps.positions.record(rows.map((row) => ({ contestEntryId: row.entryId, position: row.position })));
     this.deps.logger?.info({
