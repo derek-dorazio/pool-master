@@ -109,8 +109,8 @@ export async function readIndexLeads(prisma: PrismaClient): Promise<Map<string, 
 const BTREE_COMPARISON = String.raw`(?:<=|>=|=|<(?![>=])|>|IS NULL\b)`;
 /** `LIKE` and `ILIKE`, which only a trigram index serves. */
 const PATTERN_MATCH = String.raw`~~\*?`;
-/** A bound value on the right of a comparison: `$1`, `ANY ($1)`, `($1)::"SomeEnum"`. */
-const BOUND_VALUE = String.raw`\s*(?:ANY\s*)?\(*\$\d+`;
+/** A bound value on the right of a comparison: `$1`, `ANY ($1)`, `ANY (ARRAY[$1, $2])` for an IN list, `($1)::"SomeEnum"`. */
+const BOUND_VALUE = String.raw`\s*(?:ANY\s*)?\(*(?:ARRAY\[)?\$\d+`;
 
 /**
  * Whether `text`, a condition or filter, compares `column` in a way an index leading on it with
@@ -267,15 +267,17 @@ function anotherIndexServes(node: PlanNode, table: string, nodes: PlanNode[], in
  * whole when no index serves its filter, in one of four ways: a sequential scan; walking an index
  * by a condition on a column it does not lead on; walking an index for its order and filtering
  * every row; or walking an index with no condition at all, which reads every row unless a `Limit`
- * above it stops the walk early.
+ * above it stops the walk early. Only a statement with a `LIMIT` (`limited`) stops early: Prisma
+ * ends every `findMany` and `count()` with an `OFFSET`, which plans as a `Limit` too and stops
+ * nothing.
  */
-export function findWholeScans(plan: PlanNode, indexes: Map<string, IndexLead>): WholeScan[] {
+export function findWholeScans(plan: PlanNode, indexes: Map<string, IndexLead>, { limited = false }: { limited?: boolean } = {}): WholeScan[] {
   const nodes = flatten(plan);
   const heapOf = new Map<PlanNode, PlanNode>();
   for (const heap of nodes.filter((node) => node['Node Type'] === 'Bitmap Heap Scan')) {
     for (const child of flatten(heap).slice(1)) heapOf.set(child, heap);
   }
-  const underLimit = new Set(nodes.filter((node) => node['Node Type'] === 'Limit').flatMap((limit) => flatten(limit).slice(1)));
+  const underLimit = new Set(limited ? nodes.filter((node) => node['Node Type'] === 'Limit').flatMap(streamedFrom) : []);
   const scans: WholeScan[] = [];
   for (const node of nodes) {
     const index = node['Index Name'] === undefined ? undefined : indexes.get(node['Index Name']);
@@ -295,6 +297,17 @@ export function findWholeScans(plan: PlanNode, indexes: Map<string, IndexLead>):
   return scans;
 }
 
+/**
+ * Nodes that read every row of their input before returning one, so a `Limit` above them cannot
+ * stop a walk below them. A bitmap is built from the whole index scan before its heap is read.
+ */
+const DRAINING_NODES = new Set(['Sort', 'Incremental Sort', 'Aggregate', 'Hash', 'Materialize', 'SetOp', 'WindowAgg', 'Bitmap Heap Scan']);
+
+/** The nodes under `limit` that it can stop early: those reached without passing a draining node. */
+function streamedFrom(limit: PlanNode): PlanNode[] {
+  return (limit.Plans ?? []).flatMap((child) => (DRAINING_NODES.has(child['Node Type']) ? [] : [child, ...streamedFrom(child)]));
+}
+
 /** Whether an index condition constrains the index's first column: Postgres prints it first in its clause. */
 function constrainsLead(condition: string, column: string): boolean {
   return new RegExp(`\\(\\s*"?${column}"?\\b`).test(condition);
@@ -312,7 +325,7 @@ export async function planWholeScans(prisma: PrismaClient, sql: string, indexes:
     await tx.$executeRawUnsafe(`PREPARE ${name} AS ${sql}`);
     const [row] = await tx.$queryRawUnsafe<Array<{ 'QUERY PLAN': Array<{ Plan: PlanNode }> }>>(`EXPLAIN (FORMAT JSON) EXECUTE ${name}${values}`);
     await tx.$executeRawUnsafe(`DEALLOCATE ${name}`);
-    return findWholeScans(row['QUERY PLAN'][0].Plan, indexes);
+    return findWholeScans(row['QUERY PLAN'][0].Plan, indexes, { limited: /\bLIMIT\b/i.test(sql) });
   });
 }
 

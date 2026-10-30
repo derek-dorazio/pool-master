@@ -38,6 +38,10 @@ const MEMBERSHIPS_BY_JOINED_AT = 'SELECT "public"."league_memberships"."id" FROM
 const MEMBERSHIPS_BY_LEAGUE = 'SELECT "public"."league_memberships"."id" FROM "public"."league_memberships" WHERE "public"."league_memberships"."league_id" = $1';
 const LEAGUES_BY_CODE_PATTERN_IN_ORDER = 'SELECT "public"."leagues"."id" FROM "public"."leagues" WHERE "public"."leagues"."league_code"::text ILIKE $1 ORDER BY "public"."leagues"."id"';
 const MEMBERSHIPS_JOINED_WITH_USER = 'SELECT "m"."id" FROM "public"."users" AS "u" JOIN "public"."league_memberships" AS "m" ON "m"."joined_at" = "u"."created_at" WHERE "u"."id" = $1';
+// As Prisma sends `user.findMany({ orderBy: { id: 'asc' } })` and `user.count()`: an OFFSET, and no LIMIT.
+const USERS_IN_ID_ORDER = 'SELECT "public"."users"."id" FROM "public"."users" WHERE 1=1 ORDER BY "public"."users"."id" ASC OFFSET $1';
+const USERS_COUNTED = 'SELECT COUNT(*) FROM (SELECT "public"."users"."id" FROM "public"."users" WHERE 1=1 OFFSET $1) AS "sub"';
+const FIRST_USER_IN_ID_ORDER = 'SELECT "public"."users"."id" FROM "public"."users" WHERE 1=1 ORDER BY "public"."users"."id" ASC LIMIT $1 OFFSET $2';
 const SPORTS_BY_TYPE = 'SELECT "public"."sports"."id" FROM "public"."sports" WHERE "public"."sports"."participant_type" = $1';
 
 function sent(sql: string): Statement {
@@ -149,6 +153,13 @@ function nestedLoop(outer: PlanNode, inner: PlanNode, joinFilter?: string): Plan
   return { 'Node Type': 'Nested Loop', ...(joinFilter === undefined ? {} : { 'Join Filter': joinFilter }), Plans: [outer, inner] };
 }
 
+describe('missing-index check on what Prisma sends with no filter', () => {
+  it('reports an unfiltered findMany and count, whose OFFSET plans as a Limit that stops nothing, and passes a findFirst whose LIMIT stops the walk', async () => {
+    const findings = await findUnindexedScans(getPrisma(), [sent(USERS_IN_ID_ORDER), sent(USERS_COUNTED), sent(FIRST_USER_IN_ID_ORDER)]);
+    expect(findings.map((finding) => [finding.sql, finding.table])).toEqual([[USERS_IN_ID_ORDER, 'users'], [USERS_COUNTED, 'users']]);
+  });
+});
+
 describe('missing-index check on fixed plans: whether another index could serve a walked read', () => {
   it('passes a walk in key order filtered by a column another index leads on, and a walk by that column held second', () => {
     expect(findWholeScans(indexScan('contest_entries_id_contest_id_key', 'contest_entries', { Filter: '(contest_id = $1)' }), INDEXES)).toEqual([]);
@@ -202,10 +213,25 @@ describe('missing-index check on fixed plans: whether another index could serve 
     expect(findWholeScans(plan, INDEXES)).toEqual([{ table: 'users', how: 'walking every entry of users_pkey and filtering' }]);
   });
 
-  it('reports an index walk with no condition or filter, which reads every row, and passes it under a Limit that stops it early', () => {
+  it('reports an index walk with no condition or filter, which reads every row, and passes it under the Limit of a LIMIT that stops it early', () => {
     const walk: PlanNode = { 'Node Type': 'Index Only Scan', 'Index Name': 'users_pkey', 'Relation Name': 'users', Alias: 'users' };
     expect(findWholeScans(walk, INDEXES)).toEqual([{ table: 'users', how: 'walking every entry of users_pkey, with no filter' }]);
-    expect(findWholeScans({ 'Node Type': 'Limit', Plans: [walk] }, INDEXES)).toEqual([]);
+    expect(findWholeScans({ 'Node Type': 'Limit', Plans: [walk] }, INDEXES, { limited: true })).toEqual([]);
+  });
+
+  it('reports a walk under the Limit of an OFFSET alone, as Prisma ends every findMany and count, since an OFFSET stops nothing', () => {
+    const walk: PlanNode = { 'Node Type': 'Index Only Scan', 'Index Name': 'users_pkey', 'Relation Name': 'users', Alias: 'users' };
+    const everyRow = [{ table: 'users', how: 'walking every entry of users_pkey, with no filter' }];
+    expect(findWholeScans({ 'Node Type': 'Limit', Plans: [walk] }, INDEXES)).toEqual(everyRow);
+    expect(findWholeScans({ 'Node Type': 'Aggregate', Plans: [{ 'Node Type': 'Limit', Plans: [walk] }] }, INDEXES)).toEqual(everyRow);
+  });
+
+  it('reports a walk a LIMIT cannot stop because a Sort, Aggregate or bitmap between them reads every row first', () => {
+    const walk: PlanNode = { 'Node Type': 'Index Only Scan', 'Index Name': 'users_pkey', 'Relation Name': 'users', Alias: 'users' };
+    const bitmap: PlanNode = { 'Node Type': 'Bitmap Heap Scan', 'Relation Name': 'users', Alias: 'users', Plans: [{ 'Node Type': 'Bitmap Index Scan', 'Index Name': 'users_pkey' }] };
+    for (const drained of [{ 'Node Type': 'Sort', Plans: [walk] }, { 'Node Type': 'Aggregate', Plans: [walk] }, { 'Node Type': 'Sort', Plans: [bitmap] }]) {
+      expect(findWholeScans({ 'Node Type': 'Limit', Plans: [drained] }, INDEXES, { limited: true })).toEqual([{ table: 'users', how: 'walking every entry of users_pkey, with no filter' }]);
+    }
   });
 
   it('reports a walked join side when the table entered by a bound value is not joined to it', () => {
@@ -217,6 +243,15 @@ describe('missing-index check on fixed plans: whether another index could serve 
       indexScan('leagues_pkey', 'l', { 'Index Cond': '(id = $1)' }),
     );
     expect(findWholeScans(plan, INDEXES)).toEqual([{ table: 'users', how: 'walking every entry of users_pkey and filtering' }]);
+  });
+
+  it('passes the joined side of a sort by a related column, walked whole on the test tables, when the driving side is entered by an IN list of bound values', () => {
+    const plan = nestedLoop(
+      indexScan('league_memberships_user_id_status_idx', 'm', { 'Index Cond': '(user_id = ANY (ARRAY[$1, $2]))' }),
+      { 'Node Type': 'Materialize', Plans: [indexScan('users_pkey', 'u', {})] },
+      '(u.id = m.user_id)',
+    );
+    expect(findWholeScans({ 'Node Type': 'Limit', Plans: [{ 'Node Type': 'Sort', Plans: [plan] }] }, INDEXES)).toEqual([]);
   });
 
   it('passes an OR filter only when an index serves every branch', () => {
