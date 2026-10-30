@@ -1,12 +1,12 @@
 import { randomBytes } from 'node:crypto';
-import { expect, test, type APIRequestContext, type Page, type Response } from '@playwright/test';
+import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
 import {
   adminSignIn,
   logOut,
   readAdminCredentials,
   type AdminCredentials,
 } from './helpers/admin-session';
-import { WRITE_TIMEOUT_MS, isCall, readCsrfToken, submitAndRead } from './helpers/browser-writes';
+import { readCsrfToken, submitAndRead } from './helpers/browser-writes';
 import { removeJourneyRun, type JourneyRun } from './helpers/journey-teardown';
 import { generatePassword, registerFreshUser } from './helpers/user-session';
 
@@ -212,22 +212,6 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
     journey.tourId = tourId;
 
     const playerIds = await test.step(`create ${PLAYER_COUNT} players`, async () => {
-      // #678 — every player list this step's page loads, so the search below waits for a list
-      // that carries all six new golfers instead of racing the reload that follows each save.
-      const listedIds: Set<string>[] = [];
-      const recordList = (response: Response) => {
-        if (!isCall(response, 'GET', '/api/v1/participants') || !response.ok()) {
-          return;
-        }
-        response
-          .json()
-          .then((body: { participants: { id: string }[] }) => {
-            listedIds.push(new Set(body.participants.map((participant) => participant.id)));
-          })
-          // A list the app discarded mid-flight has no body to read; a later one will follow.
-          .catch(() => undefined);
-      };
-      page.on('response', recordList);
       await page.goto('/manage/sports/golf/participants');
       const ids: string[] = [];
       for (let index = 1; index <= PLAYER_COUNT; index += 1) {
@@ -241,15 +225,8 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
         );
         ids.push(created.participant.id);
       }
-      await expect
-        .poll(
-          () => listedIds.some((listed) => ids.every((id) => listed.has(id))),
-          // The list is unpaged and grows on QA, so its reload gets a server read's budget.
-          { message: 'the player list never reloaded with every new golfer', timeout: WRITE_TIMEOUT_MS },
-        )
-        .toBe(true);
-      page.off('response', recordList);
-      // The players list pages at 25 rows, so narrow it to this run's golfers.
+      // The list reads nothing until a search is typed (#1313), so the search, typed after every
+      // save, is a fresh server read that carries all six new golfers.
       const search = page.getByTestId('root-admin-participant-list-search');
       await search.fill(run.playerNamePrefix);
       await expect(search).toHaveValue(run.playerNamePrefix);
