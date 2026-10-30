@@ -20,6 +20,7 @@ import {
   cleanupTestData,
   createTestUser,
   getApp,
+  getAppPrisma,
   getPrisma,
   setupIntegrationTests,
   teardownIntegrationTests,
@@ -151,7 +152,7 @@ describe('League plans', () => {
 
   it('changes nothing and logs nothing when the league has left the plan the change started from, so the log never records a stale from-plan', async () => {
     const { commissioner, league } = await createLeague();
-    const repository = new PrismaLeagueRepository(getPrisma());
+    const repository = new PrismaLeagueRepository(getAppPrisma());
     await repository.changePlan(league.id, { fromPlan: LeaguePlan.PREMIUM, toPlan: LeaguePlan.FREE, changedById: commissioner.user.id });
 
     // A second commissioner's change read the league while it was still on Premium.
@@ -222,7 +223,7 @@ describe('League plans', () => {
     const rootAdmin = await createTestUser({ displayName: 'Gift Root Admin', isRootAdmin: true });
     const now = new Date();
     await getPrisma().league.update({ where: { id: league.id }, data: { planRenewsAt: new Date(now.getTime() - 60_000) } });
-    await new PrismaLeagueRepository(getPrisma()).moveEndedPlansToFree(now);
+    await new PrismaLeagueRepository(getAppPrisma()).moveEndedPlansToFree(now);
 
     const res = await getApp().inject({
       method: 'POST',
@@ -321,7 +322,7 @@ describe('League plans', () => {
   it('lets an extension that starts while another write holds the league wait for it, then log the move from the date that write left', async () => {
     const { league } = await createLeague();
     const rootAdmin = await createTestUser({ displayName: 'Gift Root Admin', isRootAdmin: true });
-    const repo = new PrismaLeagueRepository(getPrisma());
+    const repo = new PrismaLeagueRepository(getAppPrisma());
     const movedMeanwhile = new Date(Date.now() + 200 * 24 * 60 * 60_000);
     const later = new Date(Date.now() + 400 * 24 * 60 * 60_000);
     let release: () => void = () => undefined;
@@ -348,7 +349,7 @@ describe('League plans', () => {
   it('lets an extend-all that starts while another write holds a running league wait for it, then log that league\'s move from the date that write left', async () => {
     const { league } = await createLeague();
     const rootAdmin = await createTestUser({ displayName: 'Gift Root Admin', isRootAdmin: true });
-    const repo = new PrismaLeagueRepository(getPrisma());
+    const repo = new PrismaLeagueRepository(getAppPrisma());
     const movedMeanwhile = new Date(Date.now() + 200 * 24 * 60 * 60_000);
     const later = new Date(Date.now() + 400 * 24 * 60 * 60_000);
     let release: () => void = () => undefined;
@@ -373,7 +374,7 @@ describe('League plans', () => {
   });
 
   it('moves every league whose preview period has ended to Free, logged as made by no one, once, leaving a running gift alone', async () => {
-    const repo = new PrismaLeagueRepository(getPrisma());
+    const repo = new PrismaLeagueRepository(getAppPrisma());
     const { league: ended } = await createLeague();
     const { league: running } = await createLeague();
     const now = new Date();
@@ -393,7 +394,7 @@ describe('League plans', () => {
   });
 
   it('stamps each move to Free with the time the sweep picked the league by, not the database clock', async () => {
-    const repo = new PrismaLeagueRepository(getPrisma());
+    const repo = new PrismaLeagueRepository(getAppPrisma());
     const { league } = await createLeague();
     const sweptAt = new Date(Date.now() - 60 * 60_000);
     await getPrisma().league.update({ where: { id: league.id }, data: { planRenewsAt: new Date(sweptAt.getTime() - 60_000) } });
@@ -405,7 +406,7 @@ describe('League plans', () => {
   });
 
   it('leaves an ended league on its plan when an extension holding it commits while the move to Free waits', async () => {
-    const repo = new PrismaLeagueRepository(getPrisma());
+    const repo = new PrismaLeagueRepository(getAppPrisma());
     const { league } = await createLeague();
     const now = new Date();
     await getPrisma().league.update({ where: { id: league.id }, data: { planRenewsAt: new Date(now.getTime() - 60_000) } });
@@ -431,7 +432,7 @@ describe('League plans', () => {
   });
 
   it('finds the active leagues not on Free whose preview period ends within the window, soonest first, for the reminders', async () => {
-    const repo = new PrismaLeagueRepository(getPrisma());
+    const repo = new PrismaLeagueRepository(getAppPrisma());
     const now = new Date();
     const at = (days: number) => new Date(now.getTime() + days * 24 * 60 * 60_000);
     const { league: inWeek } = await createLeague();

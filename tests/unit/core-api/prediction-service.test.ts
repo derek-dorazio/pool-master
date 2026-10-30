@@ -28,6 +28,7 @@ import { SelectionError } from '../../../packages/core-api/src/modules/selection
 import { expectDefined } from '../../support/expect-defined';
 import { InMemoryContestWorld } from '../../support/in-memory-contest-world';
 import { InMemoryGamePicks } from '../../support/in-memory-game-picks';
+import { fakeLogger } from '../../support/fake-logger';
 
 const HOUR = 60 * 60 * 1000;
 /** The test's clock starts two hours before the week's first kickoff. */
@@ -39,6 +40,9 @@ const T0 = new Date('2026-09-01T00:00:00.000Z');
 const offeringTiePicks = (sport: Sport): SportDefinition => ({ ...getSportDefinition(sport), pickEm: { tiePicks: true, againstTheSpread: false } });
 
 function setup(options: { mode?: PickEmMode; contestStatus?: ContestStatus; selectionType?: SelectionType; tiePicks?: boolean } = {}) {
+  const logger = fakeLogger();
+  /** When set, the next write decides its change and then fails, as a write the database refuses after the check does. */
+  let failNextWrite = false;
   const world = new InMemoryContestWorld();
   const week = new InMemoryGamePicks(world);
   const league = world.addLeague();
@@ -91,7 +95,16 @@ function setup(options: { mode?: PickEmMode; contestStatus?: ContestStatus; sele
     matches: week.matchRepo(),
     field: week.fieldRepo(),
     participants: week.participantRepo(),
-    predictions: week.predictionRepo(),
+    predictions: {
+      ...week.predictionRepo(),
+      save: async (change) => {
+        if (!failNextWrite) return week.predictionRepo().save(change);
+        failNextWrite = false;
+        change.decide({ predictions: [...week.predictions.values()].filter((row) => row.contestEntryId === change.contestEntryId), event: expectDefined(world.entries.get(change.contestEntryId)).events.find((event) => event.sportEventId === change.sportEventId) ?? null });
+        throw new Error('the write failed');
+      },
+    },
+    logger,
     receipts: { gamePicksSubmitted: async (view, submitted) => { receipts.push(view); receiptWeeks.push(submitted); } },
     ...(options.tiePicks ? { sportDefinitionOf: offeringTiePicks } : {}),
     now: () => now,
@@ -112,7 +125,8 @@ function setup(options: { mode?: PickEmMode; contestStatus?: ContestStatus; sele
   });
 
   return {
-    world, week, service, contest, sportEvent, otherEvent, alice, bob, input, pick, tiePick, receipts, receiptWeeks,
+    world, week, service, contest, sportEvent, otherEvent, alice, bob, input, pick, tiePick, receipts, receiptWeeks, logger,
+    failNextWrite: () => { failNextWrite = true; },
     games: { thursday, sunday, monday, cancelled, otherWeekGame },
     weekStatus: () => contestEntryEventStatus(expectDefined(world.entries.get(aliceEntry.id)), sportEvent.id),
     submittedAt: () => expectDefined(world.entries.get(aliceEntry.id)).events
@@ -427,6 +441,20 @@ describe('PredictionService.submitGamePicks — submitting the week', () => {
 });
 
 describe('PredictionService — a submitted week before the first kickoff', () => {
+  it('logs a return to draft once the write that makes it has committed, and not for a write that fails', async () => {
+    const context = setup();
+    await submitFullWeek(context);
+    const returnedToDraft = () => context.logger.info.mock.calls.filter(([fields]) => (fields as { action?: string }).action === 'prediction.returnedToDraft');
+
+    context.failNextWrite();
+    await expect(context.service.clearGamePick({ ...context.input, sportEventMatchId: context.games.sunday.id })).rejects.toThrow('the write failed');
+    expect(returnedToDraft()).toHaveLength(0);
+    expect(context.weekStatus()).toBe(ContestEntryStatus.SUBMITTED);
+
+    await context.service.clearGamePick({ ...context.input, sportEventMatchId: context.games.sunday.id });
+    expect(returnedToDraft()).toHaveLength(1);
+  });
+
   it('sends a submitted week back to DRAFT when a pick is cleared, and clears submittedAt', async () => {
     const context = setup();
     await submitFullWeek(context);

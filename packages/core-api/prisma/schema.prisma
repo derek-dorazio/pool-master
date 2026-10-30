@@ -1860,6 +1860,8 @@ model SportEvent {
   @@index([sport, status])
   @@index([startDate, endDate])
   @@index([status])
+  /// A trigram index serves the event name search, a substring match (#1301).
+  @@index([name(ops: raw("gin_trgm_ops"))], type: Gin, map: "sport_events_name_trgm_idx")
   @@map("sport_events")
 }
 

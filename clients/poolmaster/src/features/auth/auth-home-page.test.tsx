@@ -377,25 +377,25 @@ describe('AuthHomePage', () => {
     renderAuthHomePage();
 
     fireEvent.click(screen.getByRole('radio', { name: 'Create account' }));
-    fireEvent.change(screen.getByTestId('auth-register-first-name'), {
+    fireEvent.change(screen.getByTestId('sign-up-first-name'), {
       target: { value: 'Derek' },
     });
-    fireEvent.change(screen.getByTestId('auth-register-last-name'), {
+    fireEvent.change(screen.getByTestId('sign-up-last-name'), {
       target: { value: 'Dorazio' },
     });
-    fireEvent.change(screen.getByTestId('auth-register-email'), {
+    fireEvent.change(screen.getByTestId('sign-up-email'), {
       target: { value: 'derek@example.com' },
     });
-    fireEvent.change(screen.getByTestId('auth-register-username'), {
+    fireEvent.change(screen.getByTestId('sign-up-username'), {
       target: { value: 'derek' },
     });
-    fireEvent.change(screen.getByTestId('auth-register-password'), {
+    fireEvent.change(screen.getByTestId('sign-up-password'), {
       target: { value: 'password123' },
     });
-    fireEvent.change(screen.getByTestId('auth-register-confirm-password'), {
+    fireEvent.change(screen.getByTestId('sign-up-confirm-password'), {
       target: { value: 'password123' },
     });
-    fireEvent.click(screen.getByTestId('auth-register-submit'));
+    fireEvent.click(screen.getByTestId('sign-up-submit'));
 
     await screen.findByRole('alert');
 
@@ -403,10 +403,7 @@ describe('AuthHomePage', () => {
     expect(mockLogger.warn).toHaveBeenCalledWith(
       expect.objectContaining({
         action: 'auth.register.failed',
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- expect.objectContaining(...) is Vitest's asymmetric-matcher sentinel, typed any by design.
-        data: expect.objectContaining({
-          destination: '/welcome',
-        }),
+        data: { hasTeamInvitation: false },
       }),
       expect.any(String),
     );
@@ -426,25 +423,25 @@ describe('AuthHomePage', () => {
     const { queryClient } = renderAuthHomePage();
 
     fireEvent.click(screen.getByRole('radio', { name: 'Create account' }));
-    fireEvent.change(screen.getByTestId('auth-register-first-name'), {
+    fireEvent.change(screen.getByTestId('sign-up-first-name'), {
       target: { value: 'Reg' },
     });
-    fireEvent.change(screen.getByTestId('auth-register-last-name'), {
+    fireEvent.change(screen.getByTestId('sign-up-last-name'), {
       target: { value: 'User' },
     });
-    fireEvent.change(screen.getByTestId('auth-register-email'), {
+    fireEvent.change(screen.getByTestId('sign-up-email'), {
       target: { value: 'registered@example.com' },
     });
-    fireEvent.change(screen.getByTestId('auth-register-username'), {
+    fireEvent.change(screen.getByTestId('sign-up-username'), {
       target: { value: 'registered' },
     });
-    fireEvent.change(screen.getByTestId('auth-register-password'), {
+    fireEvent.change(screen.getByTestId('sign-up-password'), {
       target: { value: 'password123' },
     });
-    fireEvent.change(screen.getByTestId('auth-register-confirm-password'), {
+    fireEvent.change(screen.getByTestId('sign-up-confirm-password'), {
       target: { value: 'password123' },
     });
-    fireEvent.click(screen.getByTestId('auth-register-submit'));
+    fireEvent.click(screen.getByTestId('sign-up-submit'));
 
     await screen.findByTestId('welcome-destination');
 
@@ -457,20 +454,20 @@ describe('AuthHomePage', () => {
 
   function fillAndSubmitRegisterForm(timeZone?: string) {
     fireEvent.click(screen.getByRole('radio', { name: 'Create account' }));
-    fireEvent.change(screen.getByTestId('auth-register-first-name'), { target: { value: 'Reg' } });
-    fireEvent.change(screen.getByTestId('auth-register-last-name'), { target: { value: 'User' } });
-    fireEvent.change(screen.getByTestId('auth-register-email'), {
+    fireEvent.change(screen.getByTestId('sign-up-first-name'), { target: { value: 'Reg' } });
+    fireEvent.change(screen.getByTestId('sign-up-last-name'), { target: { value: 'User' } });
+    fireEvent.change(screen.getByTestId('sign-up-email'), {
       target: { value: 'registered@example.com' },
     });
-    fireEvent.change(screen.getByTestId('auth-register-username'), { target: { value: 'registered' } });
-    fireEvent.change(screen.getByTestId('auth-register-password'), { target: { value: 'password123' } });
-    fireEvent.change(screen.getByTestId('auth-register-confirm-password'), {
+    fireEvent.change(screen.getByTestId('sign-up-username'), { target: { value: 'registered' } });
+    fireEvent.change(screen.getByTestId('sign-up-password'), { target: { value: 'password123' } });
+    fireEvent.change(screen.getByTestId('sign-up-confirm-password'), {
       target: { value: 'password123' },
     });
     if (timeZone) {
-      fireEvent.change(screen.getByTestId('auth-register-time-zone'), { target: { value: timeZone } });
+      fireEvent.change(screen.getByTestId('sign-up-time-zone'), { target: { value: timeZone } });
     }
-    fireEvent.click(screen.getByTestId('auth-register-submit'));
+    fireEvent.click(screen.getByTestId('sign-up-submit'));
   }
 
   it('sends the time zone picked at signup and the browser locale with the new account', async () => {

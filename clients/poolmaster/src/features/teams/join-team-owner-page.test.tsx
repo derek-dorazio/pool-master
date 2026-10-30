@@ -117,16 +117,16 @@ describe('JoinTeamOwnerPage', () => {
 
     renderJoinTeamOwnerPage();
 
-    expect(await screen.findByTestId('team-invite-register-form')).toBeVisible();
+    expect(await screen.findByTestId('sign-up-form')).toBeVisible();
     expect(screen.getByRole('heading', { name: 'Join Beer Bellies as a co-owner' })).toBeInTheDocument();
-    expect(screen.getByTestId('team-invite-register-submit')).toBeVisible();
+    expect(screen.getByTestId('sign-up-submit')).toBeVisible();
     // Signing in stays available for somebody who already has an account; what is gone is the
     // "create an account and come back" round trip.
     expect(screen.getByTestId('team-invite-sign-in')).toHaveAttribute('href', '/');
     expect(screen.queryByTestId('team-invite-create-account')).not.toBeInTheDocument();
     // No email field: the account uses the invited address, which the server reads off the
     // invitation. That is the security property, so its absence is asserted.
-    expect(screen.queryByTestId('team-invite-register-email')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('sign-up-email')).not.toBeInTheDocument();
     await waitFor(() =>
       expect(getTeamOwnerInvitationPreviewMock).toHaveBeenCalledWith({
         path: { inviteCode: 'TEAM123' },
@@ -171,20 +171,23 @@ describe('JoinTeamOwnerPage', () => {
 
     renderJoinTeamOwnerPage();
 
-    await screen.findByTestId('team-invite-register-form');
-    fireEvent.change(screen.getByTestId('team-invite-register-first-name'), {
+    await screen.findByTestId('sign-up-form');
+    fireEvent.change(screen.getByTestId('sign-up-first-name'), {
       target: { value: 'Sam' },
     });
-    fireEvent.change(screen.getByTestId('team-invite-register-last-name'), {
+    fireEvent.change(screen.getByTestId('sign-up-last-name'), {
       target: { value: 'Stranger' },
     });
-    fireEvent.change(screen.getByTestId('team-invite-register-username'), {
+    fireEvent.change(screen.getByTestId('sign-up-username'), {
       target: { value: 'Stranger' },
     });
-    fireEvent.change(screen.getByTestId('team-invite-register-password'), {
+    fireEvent.change(screen.getByTestId('sign-up-password'), {
       target: { value: 'stranger-pass-1' },
     });
-    fireEvent.click(screen.getByTestId('team-invite-register-submit'));
+    fireEvent.change(screen.getByTestId('sign-up-confirm-password'), {
+      target: { value: 'stranger-pass-1' },
+    });
+    fireEvent.click(screen.getByTestId('sign-up-submit'));
 
     await waitFor(() =>
       expect(registerWithTeamOwnerInvitationMock).toHaveBeenCalledWith({
@@ -376,10 +379,11 @@ describe('JoinTeamOwnerPage', () => {
     }
 
     function fillRegistration() {
-      fireEvent.change(screen.getByTestId('team-invite-register-first-name'), { target: { value: 'Sam' } });
-      fireEvent.change(screen.getByTestId('team-invite-register-last-name'), { target: { value: 'Stranger' } });
-      fireEvent.change(screen.getByTestId('team-invite-register-username'), { target: { value: 'stranger' } });
-      fireEvent.change(screen.getByTestId('team-invite-register-password'), { target: { value: 'stranger-pass-1' } });
+      fireEvent.change(screen.getByTestId('sign-up-first-name'), { target: { value: 'Sam' } });
+      fireEvent.change(screen.getByTestId('sign-up-last-name'), { target: { value: 'Stranger' } });
+      fireEvent.change(screen.getByTestId('sign-up-username'), { target: { value: 'stranger' } });
+      fireEvent.change(screen.getByTestId('sign-up-password'), { target: { value: 'stranger-pass-1' } });
+      fireEvent.change(screen.getByTestId('sign-up-confirm-password'), { target: { value: 'stranger-pass-1' } });
     }
 
     afterEach(() => {
@@ -394,7 +398,7 @@ describe('JoinTeamOwnerPage', () => {
       getTeamOwnerInvitationPreviewMock.mockResolvedValue(preview);
 
       renderJoinTeamOwnerPage();
-      await screen.findByTestId('team-invite-register-form');
+      await screen.findByTestId('sign-up-form');
       fillRegistration();
 
       const loadedLogs = mockLogger.info.mock.calls.filter(
@@ -413,7 +417,7 @@ describe('JoinTeamOwnerPage', () => {
 
       expect(await screen.findByTestId('team-invite-sign-in')).toBeInTheDocument();
       expect(screen.getByRole('heading', { name: 'Join as a co-owner' })).toBeInTheDocument();
-      expect(screen.queryByTestId('team-invite-register-form')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('sign-up-form')).not.toBeInTheDocument();
     });
 
     it('tells an invitee whose email already has an account to sign in instead of registering again', async () => {
@@ -424,11 +428,11 @@ describe('JoinTeamOwnerPage', () => {
       });
 
       renderJoinTeamOwnerPage();
-      await screen.findByTestId('team-invite-register-form');
+      await screen.findByTestId('sign-up-form');
       fillRegistration();
-      fireEvent.click(screen.getByTestId('team-invite-register-submit'));
+      fireEvent.click(screen.getByTestId('sign-up-submit'));
 
-      expect(await screen.findByTestId('team-invite-register-error')).toHaveTextContent(
+      expect(await screen.findByTestId('sign-up-error')).toHaveTextContent(
         'An account already exists for the email this invitation was sent to. Sign in to accept it.',
       );
       expect(screen.queryByTestId('team-destination')).not.toBeInTheDocument();
@@ -439,10 +443,10 @@ describe('JoinTeamOwnerPage', () => {
       getTeamOwnerInvitationPreviewMock.mockResolvedValue(preview);
 
       renderJoinTeamOwnerPage();
-      await screen.findByTestId('team-invite-register-form');
-      fireEvent.click(screen.getByTestId('team-invite-register-submit'));
+      await screen.findByTestId('sign-up-form');
+      fireEvent.click(screen.getByTestId('sign-up-submit'));
 
-      await waitFor(() => expect(screen.getByTestId('team-invite-register-username')).toHaveAttribute('aria-invalid', 'true'));
+      await waitFor(() => expect(screen.getByTestId('sign-up-username')).toHaveAttribute('aria-invalid', 'true'));
       expect(registerWithTeamOwnerInvitationMock).not.toHaveBeenCalled();
     });
 
@@ -564,7 +568,8 @@ describe('Joining a team as a co-owner from an invite link', () => {
     fireEvent.change(await screen.findByRole('textbox', { name: 'First name' }), { target: { value: ' Jordan ' } });
     fireEvent.change(screen.getByRole('textbox', { name: 'Last name' }), { target: { value: ' Rivers ' } });
     fireEvent.change(screen.getByRole('textbox', { name: 'Username' }), { target: { value: '  JRivers ' } });
-    fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'correct-horse-battery-1' } });
+    fireEvent.change(screen.getByLabelText('Create password'), { target: { value: 'correct-horse-battery-1' } });
+    fireEvent.change(screen.getByLabelText('Confirm password'), { target: { value: 'correct-horse-battery-1' } });
     fireEvent.click(screen.getByRole('button', { name: 'Create account and join' }));
 
     expect(await screen.findByText(

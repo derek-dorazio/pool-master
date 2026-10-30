@@ -284,6 +284,11 @@ export interface SportEventParticipantRepository {
    * `sportLeagueId` is the event's, against which each participant's affiliation is flagged.
    */
   findFieldForEvent(sportEventId: string, sportLeagueId: string): Promise<SportEventParticipantView[]>;
+  /**
+   * `findFieldForEvent` for several events in the same few statements (#1315), each event's
+   * affiliations flagged against its own sport league: in the order of `events`, then in seed order.
+   */
+  findFieldsForEvents(events: readonly { sportEventId: string; sportLeagueId: string }[]): Promise<SportEventParticipantView[]>;
   /** One field row of the event, read as `findFieldForEvent` reads each, or null when the event has no such row. */
   findFieldRow(sportEventId: string, sportEventParticipantId: string, sportLeagueId: string): Promise<SportEventParticipantView | null>;
   /** How many different participants the events' fields hold between them: a season's teams (#836). */

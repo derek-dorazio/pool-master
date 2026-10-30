@@ -428,6 +428,7 @@ export class InMemorySportEvents {
       findBySportEvent: async (sportEventId) => bySeed(sportEventId),
       findBySportEvents: async (sportEventIds) => [...sportEventIds].sort().flatMap((sportEventId) => bySeed(sportEventId)),
       findFieldForEvent: async (sportEventId, sportLeagueId) => bySeed(sportEventId).map((entry) => this.fieldRow(entry, sportLeagueId)),
+      findFieldsForEvents: async (events) => events.flatMap(({ sportEventId, sportLeagueId }) => bySeed(sportEventId).map((entry) => this.fieldRow(entry, sportLeagueId))),
       findFieldRow: async (sportEventId, sportEventParticipantId, sportLeagueId) => {
         const entry = this.field.find((row) => row.id === sportEventParticipantId && row.sportEventId === sportEventId);
         return entry ? this.fieldRow(entry, sportLeagueId) : null;

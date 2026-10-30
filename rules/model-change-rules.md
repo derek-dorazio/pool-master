@@ -219,8 +219,9 @@ it names, and every read by that column, scans the referencing table (#1177).
   `REFERENCE_TABLES` (`tests/integration/index-check.ts`); a new table that stays a handful of
   rows goes on that list. A whole read that is right on purpose goes in
   `tests/integration/table-scan-allowances.ts` with its reason, or the ticket that adds the
-  index. The tests' own seeds and cleanup run on another client and are not planned; neither are
-  repository suites that call an adapter with the tests' client.
+  index. The tests' own seeds, checks and cleanup run on `getPrisma()` and are not planned. A
+  repository, adapter or service a test builds itself takes `getAppPrisma()`, so its statements
+  are planned like the app's.
 
 ---
 

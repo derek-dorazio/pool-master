@@ -17,6 +17,7 @@ import {
 import {
   cleanupTestData,
   createTestUser,
+  getAppPrisma,
   getPrisma,
   setupIntegrationTests,
   teardownIntegrationTests,
@@ -43,18 +44,17 @@ const TIERS = [
 ];
 
 function repos() {
-  const prisma = getPrisma();
   return {
-    events: new PrismaSportEventRepository(prisma),
-    eventSeries: new PrismaEventSeriesRepository(prisma),
-    rounds: new PrismaSportEventRoundRepository(prisma),
-    field: new PrismaSportEventParticipantRepository(prisma),
-    tiers: new PrismaSportEventTierRepository(prisma),
-    valuations: new PrismaSportEventParticipantValuationRepository(prisma),
-    golfRounds: new PrismaSportEventParticipantGolfRoundRepository(prisma),
-    golfStandings: new PrismaSportEventParticipantGolfStandingRepository(prisma),
-    participants: new PrismaParticipantRepository(prisma),
-    mappings: new PrismaParticipantProviderMappingRepository(prisma),
+    events: new PrismaSportEventRepository(getAppPrisma()),
+    eventSeries: new PrismaEventSeriesRepository(getAppPrisma()),
+    rounds: new PrismaSportEventRoundRepository(getAppPrisma()),
+    field: new PrismaSportEventParticipantRepository(getAppPrisma()),
+    tiers: new PrismaSportEventTierRepository(getAppPrisma()),
+    valuations: new PrismaSportEventParticipantValuationRepository(getAppPrisma()),
+    golfRounds: new PrismaSportEventParticipantGolfRoundRepository(getAppPrisma()),
+    golfStandings: new PrismaSportEventParticipantGolfStandingRepository(getAppPrisma()),
+    participants: new PrismaParticipantRepository(getAppPrisma()),
+    mappings: new PrismaParticipantProviderMappingRepository(getAppPrisma()),
   };
 }
 
@@ -207,7 +207,7 @@ describe('SportEventRepository — writes', () => {
 describe('EventSeriesRepository', () => {
   it('finds a sport league\'s recurring event by name, creating it only the first time', async () => {
     const sportId = await golfSportId();
-    const sportLeague = await new PrismaSportLeagueRepository(getPrisma()).create({ sportId, name: 'PGA Tour', matchKeyword: null, bracketAdvancement: BracketAdvancement.FIXED });
+    const sportLeague = await new PrismaSportLeagueRepository(getAppPrisma()).create({ sportId, name: 'PGA Tour', matchKeyword: null, bracketAdvancement: BracketAdvancement.FIXED });
     const { eventSeries } = repos();
 
     const first = await seriesNamed(eventSeries, sportLeague.id, 'The Masters');
@@ -220,7 +220,7 @@ describe('EventSeriesRepository', () => {
   // plans/147 decision 9 (#314) — a series is a dimension with a lifecycle, and starts active.
   it('creates a series active', async () => {
     const sportId = await golfSportId();
-    const sportLeague = await new PrismaSportLeagueRepository(getPrisma()).create({ sportId, name: 'PGA Tour', matchKeyword: null, bracketAdvancement: BracketAdvancement.FIXED });
+    const sportLeague = await new PrismaSportLeagueRepository(getAppPrisma()).create({ sportId, name: 'PGA Tour', matchKeyword: null, bracketAdvancement: BracketAdvancement.FIXED });
 
     const series = await seriesNamed(repos().eventSeries, sportLeague.id, 'The Masters');
 

@@ -13,6 +13,7 @@ import { PrismaChampionshipRepository, PrismaLeagueYearReviewRepository } from '
 import {
   cleanupTestData,
   createTestUser,
+  getAppPrisma,
   getPrisma,
   setupIntegrationTests,
   teardownIntegrationTests,
@@ -188,7 +189,7 @@ async function seedLeague() {
 
 describe('PrismaChampionshipRepository (#863)', () => {
   it('writes a contest\'s finishes once, keeping the first when settlement writes them again, and reads them back by league and year', async () => {
-    const repo = new PrismaChampionshipRepository(getPrisma());
+    const repo = new PrismaChampionshipRepository(getAppPrisma());
     const { league, squads, contest } = await seedLeague();
     const masters = await contest('Masters');
     const finish = (squadId: string, place: number, year = 2026) => ({
@@ -218,7 +219,7 @@ describe('PrismaChampionshipRepository (#863)', () => {
   });
 
   it('answers whether the league has a counted finish in a year: not for a year of only NOT_COUNTED finishes, nor another league\'s (#1166)', async () => {
-    const repo = new PrismaChampionshipRepository(getPrisma());
+    const repo = new PrismaChampionshipRepository(getAppPrisma());
     const { league, squads, contest } = await seedLeague();
     const other = await seedLeague();
     const counted = await contest('Counted');
@@ -240,7 +241,7 @@ describe('PrismaChampionshipRepository (#863)', () => {
   });
 
   it('counts the league\'s open and live contests that will count, not drafts, finals or NOT_COUNTED ones', async () => {
-    const repo = new PrismaChampionshipRepository(getPrisma());
+    const repo = new PrismaChampionshipRepository(getAppPrisma());
     const { league, contest } = await seedLeague();
     await contest('Open', { status: 'OPEN' });
     await contest('Live', { status: 'ACTIVE' });
@@ -252,7 +253,7 @@ describe('PrismaChampionshipRepository (#863)', () => {
   });
 
   it('reads the completed contests that went final in a year\'s range, end exclusive, plus those named whenever they ended, each with its sports league (#837)', async () => {
-    const repo = new PrismaChampionshipRepository(getPrisma());
+    const repo = new PrismaChampionshipRepository(getAppPrisma());
     const { league, contest } = await seedLeague();
     const from = new Date('2026-01-01T05:00:00.000Z');
     const to = new Date('2027-01-01T05:00:00.000Z');
@@ -277,7 +278,7 @@ describe('PrismaChampionshipRepository (#863)', () => {
 
   it('reads the completed one-event contests with their series, event year and games counted: how many, over how many rounds, and how many send their winner on (#874, #1166)', async () => {
     const prisma = getPrisma();
-    const repo = new PrismaChampionshipRepository(prisma);
+    const repo = new PrismaChampionshipRepository(getAppPrisma());
     const { league, contest } = await seedLeague();
     const masters = await contest('Masters', { cupWeight: 'NOT_COUNTED' });
     const final = await contest('Final');
@@ -318,7 +319,7 @@ describe('PrismaChampionshipRepository (#863)', () => {
 
 describe('PrismaLeagueYearReviewRepository (#872)', () => {
   it('records a league\'s year in review once and reads it back; a second record for the same year answers null and keeps the first', async () => {
-    const repo = new PrismaLeagueYearReviewRepository(getPrisma());
+    const repo = new PrismaLeagueYearReviewRepository(getAppPrisma());
     const { league } = await seedLeague();
     const sender = await createTestUser({ firstName: 'Review', lastName: `Sender${randomUUID().slice(0, 8)}` });
     const other = await createTestUser({ firstName: 'Second', lastName: `Press${randomUUID().slice(0, 8)}` });

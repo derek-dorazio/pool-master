@@ -1,12 +1,11 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { useMemo } from 'react';
 import type { ChampionshipStandingRowDto } from '@/lib/api';
-import { Button, DataGrid, cn } from '@/features/shared/ui';
-import { TeamName } from '@/features/teams/team-name';
-import { formatCupPoints, formatOrdinalPlace } from './cup-view';
+import { Button, cn } from '@/features/shared/ui';
+import { formatOrdinalPlace } from './cup-view';
 import { FINISH_MATRIX_PLACES, type ContestResultFilter } from './championship-view';
-
-const STANDINGS_PER_PAGE = 25;
+import { squadStandingColumns } from './squad-standing-columns';
+import { SquadStandingsGrid } from './squad-standings-grid';
 
 /**
  * The finish matrix: each squad's place and points, then how many counted contests it finished
@@ -30,34 +29,7 @@ export function ChampionshipStandingsGrid({
 }) {
   const columns = useMemo<ColumnDef<ChampionshipStandingRowDto, string | number>[]>(
     () => [
-      {
-        id: 'place',
-        header: 'Place',
-        accessorFn: (row) => row.position,
-        enableGlobalFilter: false,
-        cell: ({ row }) => <span className="font-semibold tabular-nums">{row.original.displayPosition}</span>,
-      },
-      {
-        id: 'squad',
-        header: 'Squad',
-        accessorFn: (row) => row.squadName,
-        cell: ({ row }) => (
-          <TeamName
-            iconKey={row.original.squadIconKey}
-            isActive={row.original.squadIsActive}
-            isMine={row.original.squadId === focusSquadId}
-            name={row.original.squadName}
-            testId={`championship-standing-squad-${row.original.squadId}`}
-          />
-        ),
-      },
-      {
-        id: 'points',
-        header: 'Points',
-        accessorFn: (row) => row.points,
-        enableGlobalFilter: false,
-        cell: ({ row }) => <span className="score-total">{formatCupPoints(row.original.points)}</span>,
-      },
+      ...squadStandingColumns<ChampionshipStandingRowDto>({ focusSquadId, testIdPrefix: 'championship' }),
       ...Array.from({ length: FINISH_MATRIX_PLACES }, (_, index): ColumnDef<ChampionshipStandingRowDto, string | number> => ({
         id: `finish-${index + 1}`,
         header: formatOrdinalPlace(index + 1),
@@ -99,21 +71,13 @@ export function ChampionshipStandingsGrid({
     [filter, focusSquadId, onFilter],
   );
 
-  const focusRow = searchable ? rows.find((row) => row.squadId === focusSquadId) : undefined;
-
   return (
-    <DataGrid
-      headerTone="scoreboard"
+    <SquadStandingsGrid
       columns={columns}
-      data={rows}
-      emptyMessage={rows.length ? 'No squad matches that search.' : 'No squads in this league yet.'}
-      getRowId={(row) => row.squadId}
-      jumpToRow={focusRow ? { rowId: focusRow.squadId, label: `Jump to ${focusRow.squadName}`, testId: 'championship-standings-jump' } : undefined}
-      pageSize={STANDINGS_PER_PAGE}
-      rowTestId={(row) => `championship-standing-${row.squadId}`}
-      search={searchable ? { label: 'Find a squad', testId: 'championship-standings-search' } : undefined}
-      showColumnFilters={false}
-      tableTestId="championship-standings"
+      focusSquadId={focusSquadId}
+      rows={rows}
+      searchable={searchable}
+      testIdPrefix="championship"
     />
   );
 }

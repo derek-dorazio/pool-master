@@ -12,4 +12,10 @@ export interface TableScanAllowance {
   reason: string;
 }
 
-export const TABLE_SCAN_ALLOWANCES: readonly TableScanAllowance[] = [];
+export const TABLE_SCAN_ALLOWANCES: readonly TableScanAllowance[] = [
+  {
+    table: 'leagues',
+    sqlIncludes: 'FROM "public"."leagues" WHERE 1=1 ORDER BY "public"."leagues"."updated_at" DESC',
+    reason: "The root admin's all-leagues list with no search reads every league; #1313 decides whether it requires a search.",
+  },
+];
