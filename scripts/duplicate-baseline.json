@@ -19,46 +19,6 @@
     },
     {
       "files": [
-        "clients/poolmaster/src/features/billing/billing-settings-form.tsx",
-        "clients/poolmaster/src/features/root-admin/root-admin-budget-pricing-settings-form.tsx"
-      ],
-      "count": 1,
-      "ticket": "#1290"
-    },
-    {
-      "files": [
-        "clients/poolmaster/src/features/billing/billing-settings-form.tsx",
-        "clients/poolmaster/src/features/root-admin/root-admin-email-settings-form.tsx"
-      ],
-      "count": 1,
-      "ticket": "#1290"
-    },
-    {
-      "files": [
-        "clients/poolmaster/src/features/billing/billing-settings-form.tsx",
-        "clients/poolmaster/src/features/root-admin/root-admin-plans-page.tsx"
-      ],
-      "count": 1,
-      "ticket": "#1290"
-    },
-    {
-      "files": [
-        "clients/poolmaster/src/features/championships/edit-championship-settings-page.tsx",
-        "clients/poolmaster/src/features/leagues/edit-league-page.tsx"
-      ],
-      "count": 1,
-      "ticket": "#1290"
-    },
-    {
-      "files": [
-        "clients/poolmaster/src/features/contests/create-contest-page.tsx",
-        "clients/poolmaster/src/features/contests/edit-contest-page.tsx"
-      ],
-      "count": 1,
-      "ticket": "#1290"
-    },
-    {
-      "files": [
         "clients/poolmaster/src/features/root-admin/bracket-match-row.tsx",
         "clients/poolmaster/src/features/root-admin/bracket-match-row.tsx"
       ],
@@ -107,14 +67,6 @@
     },
     {
       "files": [
-        "clients/poolmaster/src/features/root-admin/root-admin-budget-pricing-settings-form.tsx",
-        "clients/poolmaster/src/features/root-admin/root-admin-email-settings-form.tsx"
-      ],
-      "count": 1,
-      "ticket": "#1290"
-    },
-    {
-      "files": [
         "clients/poolmaster/src/features/root-admin/root-admin-content-configuration-detail-page.tsx",
         "clients/poolmaster/src/features/root-admin/root-admin-content-configuration-list-page.tsx"
       ],
@@ -133,14 +85,6 @@
       "files": [
         "clients/poolmaster/src/features/root-admin/root-admin-run-event-sync-page.tsx",
         "clients/poolmaster/src/features/root-admin/root-admin-sync-dashboard-page.tsx"
-      ],
-      "count": 1,
-      "ticket": "#1290"
-    },
-    {
-      "files": [
-        "clients/poolmaster/src/features/root-admin/root-admin-sport-event-edit-page.tsx",
-        "clients/poolmaster/src/features/root-admin/root-admin-sport-event-schedule-page.tsx"
       ],
       "count": 1,
       "ticket": "#1290"
@@ -189,22 +133,6 @@
       "files": [
         "clients/poolmaster/src/features/root-admin/tier-board.tsx",
         "clients/poolmaster/src/features/root-admin/tier-definitions-panel.tsx"
-      ],
-      "count": 1,
-      "ticket": "#1290"
-    },
-    {
-      "files": [
-        "clients/poolmaster/src/features/shared/ui/confirm-dialog.tsx",
-        "clients/poolmaster/src/features/shared/ui/modal-templates.tsx"
-      ],
-      "count": 1,
-      "ticket": "#1290"
-    },
-    {
-      "files": [
-        "clients/poolmaster/src/features/shared/ui/data-grid.tsx",
-        "clients/poolmaster/src/features/shared/ui/page-templates.tsx"
       ],
       "count": 1,
       "ticket": "#1290"

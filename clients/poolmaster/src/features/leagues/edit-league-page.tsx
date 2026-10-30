@@ -12,7 +12,8 @@ import {
   Input,
   Textarea,
 } from '@/features/shared/ui';
-import { extractErrorMessage, throwApiError } from '@/lib/errors';
+import { throwApiError } from '@/lib/errors';
+import { formPageSave } from '@/lib/form-page-save';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { syncLeagueCaches } from './league-cache';
 import { LEAGUE_ICON_OPTIONS } from './league-icon-catalog';
@@ -90,11 +91,7 @@ function EditLeagueForm({ league }: { league: LeagueDto }) {
     <FormPage
       cancelTo={settingsPath}
       description="Members see these at the top of League Home."
-      errorMessage={saveMutation.isError
-        ? extractErrorMessage(saveMutation.error, { fallback: 'We could not save the league.' })
-        : null}
-      isPending={saveMutation.isPending}
-      onSubmit={(event) => void form.handleSubmit((values) => saveMutation.mutate(values))(event)}
+      {...formPageSave(form, saveMutation, 'We could not save the league.')}
       pendingLabel="Saving..."
       submitLabel="Save league"
       submitTestId="edit-league-save"

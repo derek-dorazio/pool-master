@@ -3,7 +3,8 @@ import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router';
 import { type SquadDto, updateLeagueSquad } from '@/lib/api';
 import { FormPage } from '@/features/shared/ui';
-import { extractErrorMessage, throwApiError } from '@/lib/errors';
+import { throwApiError } from '@/lib/errors';
+import { formPageSave } from '@/lib/form-page-save';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import { TeamFormFields } from './team-form-fields';
@@ -57,11 +58,7 @@ export function EditTeamForm({
     <FormPage
       cancelTo={returnTo}
       description="The name and icon every member of the league sees."
-      errorMessage={saveMutation.isError
-        ? extractErrorMessage(saveMutation.error, { fallback: 'We could not save the name and icon.' })
-        : null}
-      isPending={saveMutation.isPending}
-      onSubmit={(event) => void form.handleSubmit((values) => saveMutation.mutate(values))(event)}
+      {...formPageSave(form, saveMutation, 'We could not save the name and icon.')}
       pendingLabel="Saving..."
       submitLabel="Save"
       submitTestId="edit-team-save"

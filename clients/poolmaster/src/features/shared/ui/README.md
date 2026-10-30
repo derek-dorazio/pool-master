@@ -62,7 +62,12 @@ League pages and administration areas use the pieces named in
 `AdminAreaLayout`, `IdentityHeading`, `SettingsSection` / `SettingsRow`
 (`SettingsSectionHeader` alone titles a section whose body is a `DataGrid`),
 `DangerZone` / `DangerZoneAction`, and `FormPage` for a full-page edit
-(with `IconPalette` when the form picks an icon).
+(with `IconPalette` when the form picks an icon). A `FormPage` saved by one
+mutation takes its submit, pending state and error from `formPageSave` in
+`@/lib/form-page-save`. A root admin settings group's form is built on
+`useSettingsGroupForm` and `SettingsSaveError` in `features/root-admin`, which
+send the version the draft came from and offer the newer one on a conflict.
+`ConfirmDialog` and `FormModal` share one footer, `DialogActions`.
 
 A titled card is a `PanelCard`: its title in a ruled bar, with an optional
 slot on the right such as a badge or a clear button, then its body and an

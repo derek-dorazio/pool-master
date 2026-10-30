@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Button } from "./button";
+import { DialogActions } from "./dialog-actions";
 import { Modal } from "./modal";
 
 type ConfirmDialogProps = {
@@ -37,32 +37,22 @@ export function ConfirmDialog({
   title,
   tone = "default",
 }: ConfirmDialogProps) {
-  const visibleConfirmLabel = isPending && pendingLabel ? pendingLabel : confirmLabel;
-
   return (
     <Modal
       description={description}
-      footer={
-        <>
-          <Button
-            disabled={isPending}
-            onClick={onCancel}
-            type="button"
-            variant="secondary"
-          >
-            {cancelLabel}
-          </Button>
-          <Button
-            data-testid={confirmTestId ?? (testId ? `${testId}-confirm` : undefined)}
-            disabled={isConfirmDisabled || isPending}
-            onClick={onConfirm}
-            type="button"
-            variant={tone === "danger" ? "danger" : "primary"}
-          >
-            {visibleConfirmLabel}
-          </Button>
-        </>
-      }
+      footer={(
+        <DialogActions
+          actionLabel={confirmLabel}
+          actionTestId={confirmTestId ?? (testId ? `${testId}-confirm` : undefined)}
+          cancelLabel={cancelLabel}
+          isActionDisabled={isConfirmDisabled}
+          isPending={isPending}
+          onAction={onConfirm}
+          onCancel={onCancel}
+          pendingLabel={pendingLabel}
+          tone={tone}
+        />
+      )}
       isCloseDisabled={isPending}
       onClose={onCancel}
       onOpenChange={onOpenChange}
