@@ -489,6 +489,7 @@ export class CommissionerNotices implements DueNotifications {
     const drafts = await this.deps.contests.findDraftsStartingBy({
       firstStartsBy: new Date(now.getTime() + NOT_OPEN_MS),
       createdBy: new Date(now.getTime() - JUST_CREATED_MS),
+      firstStatuses: UPCOMING_STATUSES,
     });
     if (drafts.length === 0) return;
     const sportEvents = new Map((await this.deps.sportEvents.findByIds(

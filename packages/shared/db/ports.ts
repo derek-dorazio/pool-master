@@ -7,6 +7,7 @@
 
 import type {
   Contest,
+  SportEventStatus,
   ContestEntry,
   ContestEntryEventStatus,
   ContestEntryMatchPrediction,
@@ -510,18 +511,23 @@ export interface ContestRepository {
   /** Every contest in one of `statuses`, oldest first, across leagues: the live standings sweep reads it (#877). */
   findByStatuses(statuses: readonly Contest['status'][]): Promise<Contest[]>;
   /**
-   * The draft contests created by `createdBy` whose first event starts by `firstStartsBy` (#1170),
-   * oldest first, across leagues: the "contest not open" sweep reads them, never every draft.
+   * The draft contests created by `createdBy` whose first event starts by `firstStartsBy` and is
+   * still in one of `firstStatuses` (#1170), oldest first, across leagues: the "contest not open"
+   * sweep reads them, never every draft, nor a draft whose first event has started or finished.
    */
-  findDraftsStartingBy(query: { firstStartsBy: Date; createdBy: Date }): Promise<Contest[]>;
+  findDraftsStartingBy(query: { firstStartsBy: Date; createdBy: Date; firstStatuses: readonly SportEventStatus[] }): Promise<Contest[]>;
   /**
    * The contests whose next reminder check has come (#1170), any status, oldest check first: the
    * entry reminder sweep reads only these. A contest no longer OPEN or ACTIVE is answered once, so
    * the sweep clears its check.
    */
   findReminderChecksDue(now: Date): Promise<Contest[]>;
-  /** Sets when each contest's reminders are next checked, or clears it with null (#1170). */
-  scheduleReminderChecks(schedule: readonly ReminderCheck[]): Promise<void>;
+  /**
+   * Sets when each contest's reminders are next checked, or clears it with null (#1170), for the
+   * contests whose check is still at or before `sweptAt`, the sweep's time: a recheck made while
+   * the sweep ran is kept, so the next sweep looks with the new times.
+   */
+  scheduleReminderChecks(schedule: readonly ReminderCheck[], sweptAt: Date): Promise<void>;
   /**
    * Has the entry reminder sweep look again at `at` at the OPEN and ACTIVE contests named, or on
    * the event, because their events or their times changed (#1170). One write.

@@ -387,17 +387,20 @@ export class InMemoryContestWorld {
       findJoinableByReleasedEdition: async () => [],
       findByStatuses: async (statuses) =>
         [...this.contests.values()].filter((contest) => statuses.includes(contest.status)),
-      findDraftsStartingBy: async ({ firstStartsBy, createdBy }) => [...this.contests.values()].filter((contest) => {
+      findDraftsStartingBy: async ({ firstStartsBy, createdBy, firstStatuses }) => [...this.contests.values()].filter((contest) => {
         const first = this.sportEvents.get(contest.sportEventIds[0] ?? '');
         return contest.status === ContestStatus.DRAFT && contest.createdAt <= createdBy
-          && first !== undefined && first.startDate <= firstStartsBy;
+          && first !== undefined && first.startDate <= firstStartsBy && firstStatuses.includes(first.status);
       }),
       findReminderChecksDue: async (now) => [...this.reminderChecks]
         .flatMap(([contestId, at]) => (at !== null && at <= now ? [{ contestId, at }] : []))
         .sort((left, right) => left.at.getTime() - right.at.getTime())
         .flatMap(({ contestId }) => this.contests.get(contestId) ?? []),
-      scheduleReminderChecks: async (schedule) => {
-        for (const { contestId, at } of schedule) this.reminderChecks.set(contestId, at);
+      scheduleReminderChecks: async (schedule, sweptAt) => {
+        for (const { contestId, at } of schedule) {
+          const current = this.reminderChecks.get(contestId);
+          if (current !== undefined && current !== null && current <= sweptAt) this.reminderChecks.set(contestId, at);
+        }
       },
       recheckReminders: async (scope, at) => {
         for (const contest of this.contests.values()) {

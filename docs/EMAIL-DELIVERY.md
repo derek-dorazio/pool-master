@@ -482,7 +482,8 @@ live contest. A contest is looked at as it opens, when its events change, when a
 or a game's time moves, and when its quiet hours after opening end; each look sends what is due
 and sets the contest's next reminder time, or clears it when none is left. A contest no longer
 open or live is cleared the next time it comes up. A look that fails keeps its time, so the next
-sweep tries again. A saved change to `entryReminderHours` reaches each contest at its next look:
+sweep tries again; a recheck made while a sweep runs is kept over the time that sweep worked out.
+A saved change to `entryReminderHours` reaches each contest at its next look (#1366 closes this):
 a contest already waiting for a later reminder misses an earlier one the change adds.
 
 Who is told depends on the format:

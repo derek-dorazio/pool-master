@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { ContestFormat, ContestStatus, ContestTemplateEventType, CupWeight, LeaguePaymentKind, SelectionType, Sport } from '@poolmaster/shared/domain';
+import { ContestFormat, ContestStatus, ContestTemplateEventType, CupWeight, LeaguePaymentKind, SelectionType, Sport, SportEventStatus } from '@poolmaster/shared/domain';
 import type { ContestCreate } from '@poolmaster/shared/db';
 import {
   PrismaContestConfigTemplateRepository,
@@ -251,10 +251,8 @@ describe('ContestRepository', () => {
       await repos().contests.transitionStatus(draft.id, { from: [ContestStatus.DRAFT], to: ContestStatus.OPEN, openedAt, nextReminderAt: openedAt });
       const finished = await createContest(league.id, event.id, 'Finished', ContestStatus.COMPLETED);
       const later = await createContest(league.id, event.id, 'Later', ContestStatus.OPEN);
-      await repos().contests.scheduleReminderChecks([
-        { contestId: finished.id, at: new Date('2026-05-31T12:00:00.000Z') },
-        { contestId: later.id, at: new Date('2026-06-02T12:00:00.000Z') },
-      ]);
+      await getPrisma().contest.update({ where: { id: finished.id }, data: { nextReminderAt: new Date('2026-05-31T12:00:00.000Z') } });
+      await getPrisma().contest.update({ where: { id: later.id }, data: { nextReminderAt: new Date('2026-06-02T12:00:00.000Z') } });
 
       const due = await repos().contests.findReminderChecksDue(new Date('2026-06-01T12:30:00.000Z'));
 
@@ -266,11 +264,27 @@ describe('ContestRepository', () => {
     it('sets each contest its own next check, or clears it, in one transaction however many contests share a time', async () => {
       const { league, event } = await createLeagueAndEvent();
       const contests = await Promise.all(['A', 'B', 'C'].map((name) => createContest(league.id, event.id, name, ContestStatus.OPEN)));
+      const sweptAt = new Date('2026-06-01T12:00:00.000Z');
+      await repos().contests.recheckReminders({ contestIds: contests.map((contest) => contest.id) }, sweptAt);
       const at = new Date('2026-06-02T12:00:00.000Z');
       const [a, b, c] = contests;
-      await repos().contests.scheduleReminderChecks([{ contestId: a.id, at }, { contestId: b.id, at: null }, { contestId: c.id, at }]);
+      await repos().contests.scheduleReminderChecks([{ contestId: a.id, at }, { contestId: b.id, at: null }, { contestId: c.id, at }], sweptAt);
 
       await expect(Promise.all(contests.map((contest) => nextReminderAtOf(contest.id)))).resolves.toEqual([at, null, at]);
+    });
+
+    it('keeps a recheck made while the sweep ran instead of the time the sweep worked out from the old schedule', async () => {
+      const { league, event } = await createLeagueAndEvent();
+      const contest = await createContest(league.id, event.id, 'Moved', ContestStatus.OPEN);
+      const sweptAt = new Date('2026-06-01T12:00:00.000Z');
+      await repos().contests.recheckReminders({ contestIds: [contest.id] }, sweptAt);
+      // An admin moves the event's start after the sweep read the contest.
+      const rechecked = new Date('2026-06-01T12:00:05.000Z');
+      await repos().contests.recheckReminders({ sportEventId: event.id }, rechecked);
+
+      await repos().contests.scheduleReminderChecks([{ contestId: contest.id, at: new Date('2026-06-03T12:00:00.000Z') }], sweptAt);
+
+      await expect(nextReminderAtOf(contest.id)).resolves.toEqual(rechecked);
     });
 
     it('rechecks only the open and live contests named or on the event, leaving drafts, finished contests and other events alone', async () => {
@@ -293,7 +307,7 @@ describe('ContestRepository', () => {
     });
   });
 
-  it('finds only the drafts past their first hours whose first event starts by the time asked, never other drafts (#1170)', async () => {
+  it('finds only the drafts past their first hours whose first event starts by the time asked and has not started or finished, never other drafts (#1170)', async () => {
     const { league, event, suffix } = await createLeagueAndEvent();
     const later = await createLaterEvent(suffix);
     const soon = await createContest(league.id, [event.id, later.event.id], 'Soon', ContestStatus.DRAFT);
@@ -305,10 +319,16 @@ describe('ContestRepository', () => {
     });
     const young = await createContest(league.id, event.id, 'Young', ContestStatus.DRAFT);
     await getPrisma().contest.update({ where: { id: young.id }, data: { createdAt: new Date('2026-06-03T00:00:00.000Z') } });
+    // Left unopened past an event that has since finished.
+    const finishedEvent = await createLaterEvent(suffix, new Date('2026-05-01T12:00:00.000Z'));
+    await getPrisma().sportEvent.update({ where: { id: finishedEvent.event.id }, data: { status: 'COMPLETED' } });
+    const abandoned = await createContest(league.id, finishedEvent.event.id, 'Abandoned', ContestStatus.DRAFT);
+    await getPrisma().contest.update({ where: { id: abandoned.id }, data: { createdAt: new Date('2026-04-01T00:00:00.000Z') } });
 
     const drafts = await repos().contests.findDraftsStartingBy({
       firstStartsBy: new Date('2026-06-05T00:00:00.000Z'),
       createdBy: new Date('2026-06-02T00:00:00.000Z'),
+      firstStatuses: [SportEventStatus.DRAFT, SportEventStatus.SCHEDULED],
     });
 
     expect(drafts.filter((contest) => contest.leagueId === league.id).map((contest) => contest.id)).toEqual([soon.id]);

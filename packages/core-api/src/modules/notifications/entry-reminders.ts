@@ -199,7 +199,7 @@ export class EntryReminders implements DueNotifications {
         }
       }
     }
-    await this.deps.contests.scheduleReminderChecks(schedule);
+    await this.deps.contests.scheduleReminderChecks(schedule, now);
   }
 
   /**

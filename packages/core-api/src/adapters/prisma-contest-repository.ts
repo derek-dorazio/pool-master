@@ -226,12 +226,16 @@ export class PrismaContestRepository implements ContestRepository {
     return rows.map(mapToContest);
   }
 
-  async findDraftsStartingBy({ firstStartsBy, createdBy }: { firstStartsBy: Date; createdBy: Date }): Promise<Contest[]> {
+  async findDraftsStartingBy({ firstStartsBy, createdBy, firstStatuses }: {
+    firstStartsBy: Date;
+    createdBy: Date;
+    firstStatuses: readonly SportEventStatus[];
+  }): Promise<Contest[]> {
     const rows = await this.prisma.contest.findMany({
       where: {
         status: ContestStatus.DRAFT,
         createdAt: { lte: createdBy },
-        sportEvents: { some: { sequence: 1, sportEvent: { startDate: { lte: firstStartsBy } } } },
+        sportEvents: { some: { sequence: 1, sportEvent: { startDate: { lte: firstStartsBy }, status: { in: [...firstStatuses] } } } },
       },
       orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
       include: CONTEST_INCLUDE,
@@ -248,7 +252,7 @@ export class PrismaContestRepository implements ContestRepository {
     return rows.map(mapToContest);
   }
 
-  async scheduleReminderChecks(schedule: readonly ReminderCheck[]): Promise<void> {
+  async scheduleReminderChecks(schedule: readonly ReminderCheck[], sweptAt: Date): Promise<void> {
     // Prisma has no update of many rows to different values, so the contests are written in one
     // statement per distinct time, in one transaction. A sweep's contests share few times: those
     // on one event come due together and move on to its next reminder together.
@@ -261,7 +265,8 @@ export class PrismaContestRepository implements ContestRepository {
     await this.prisma.$transaction([...byTime].map(([time, contestIds]) =>
       // poolmaster-allow-query-in-loop: one statement per distinct reminder time, which Prisma cannot set in one
       this.prisma.contest.updateMany({
-        where: { id: { in: contestIds } },
+        // A check moved past the sweep's time was rechecked while it ran, so it is kept.
+        where: { id: { in: contestIds }, nextReminderAt: { lte: sweptAt } },
         data: { nextReminderAt: time === null ? null : new Date(time) },
       })));
   }

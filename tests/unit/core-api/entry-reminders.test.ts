@@ -635,6 +635,53 @@ describe('EntryReminders.queueDue', () => {
     expect(world.reminderChecks.get(contest.id)).toBeNull();
   });
 
+  it('keeps the check of a contest whose reminders fail to queue, so the next sweep tries it again, while the others move on (#1170)', async () => {
+    const failing = world.addLeague();
+    const fine = world.addLeague();
+    const event = world.addSportEvent({ startDate: CLOSES_AT });
+    const stuck = contestWithRules(failing.id, { sportEventIds: [event.id] });
+    const sent = contestWithRules(fine.id, { sportEventIds: [event.id] });
+    member(failing.id, 'Nora');
+    member(fine.id, 'Omar');
+    const leagues = world.leagueRepo();
+    jest.spyOn(world, 'leagueRepo').mockReturnValue({
+      ...leagues,
+      findById: async (id) => {
+        if (id === failing.id) throw new Error('league read failed');
+        return leagues.findById(id);
+      },
+    });
+
+    await reminders().queueDue(before(CLOSES_AT, 48, 1));
+
+    expect(world.reminderChecks.get(stuck.id)).toEqual(new Date(0));
+    expect(world.reminderChecks.get(sent.id)).toEqual(before(CLOSES_AT, 24));
+  });
+
+  it('keeps a recheck made while the sweep ran, instead of the time it worked out from the times it read (#1170)', async () => {
+    const league = world.addLeague();
+    const event = world.addSportEvent({ startDate: CLOSES_AT });
+    const contest = contestWithRules(league.id, { sportEventIds: [event.id] });
+    member(league.id, 'Nora');
+    const sweptAt = before(CLOSES_AT, 48, 1);
+    const rechecked = new Date(sweptAt.getTime() + 1000);
+    const contests = world.contestRepo();
+    jest.spyOn(world, 'contestRepo').mockReturnValue({
+      ...contests,
+      findReminderChecksDue: async (now) => {
+        const due = await contests.findReminderChecksDue(now);
+        // An admin moves the event's start just after the sweep read its contests.
+        await contests.recheckReminders({ sportEventId: event.id }, rechecked);
+        return due;
+      },
+    });
+
+    await reminders().queueDue(sweptAt);
+
+    expect(outbox.rows).toHaveLength(1);
+    expect(world.reminderChecks.get(contest.id)).toEqual(rechecked);
+  });
+
   it('clears the check of a contest no longer open or live without reading its rules (#1170)', async () => {
     const league = world.addLeague();
     const event = world.addSportEvent({ startDate: CLOSES_AT });
