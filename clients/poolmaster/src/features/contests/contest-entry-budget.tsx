@@ -9,6 +9,7 @@ import {
   cn,
   FormField,
   Heading,
+  InlineError,
   Input,
   ListStack,
   ProgressIndicator,
@@ -64,9 +65,9 @@ export function BudgetSpendBar({ noun, summary }: { noun: SportNoun; summary: Bu
         ) : null}
       </div>
       {isOverBudget ? (
-        <p className="text-sm text-destructive" data-testid="contest-entry-over-budget">
+        <InlineError testId="contest-entry-over-budget">
           Your {noun.many} cost more than the salary cap. Tap a picked {noun.one} to remove them.
-        </p>
+        </InlineError>
       ) : cannotFill ? (
         <p className="text-sm text-muted-foreground" data-testid="contest-entry-budget-unfillable">
           {cheapestFill === null
