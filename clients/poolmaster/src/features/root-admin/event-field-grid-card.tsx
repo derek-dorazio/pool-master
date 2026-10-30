@@ -275,30 +275,28 @@ export function EventFieldGridCard({
       </p>
 
       {fieldError ? (
-        <Alert className="mt-3" data-testid="root-admin-event-field-load-error" tone="danger">
+        <Alert data-testid="root-admin-event-field-load-error" tone="danger">
           {fieldError}
         </Alert>
       ) : null}
 
-      <div className="mt-4">
-        <DataGrid
-          columns={fieldColumns}
-          data={entries}
-          emptyMessage={
-            fieldLoading
-              ? 'Loading field...'
-              : `No ${participant.many} in the field yet. Seed from the ${sportLeagueNoun.one} roster or add participants.`
-          }
-          getRowId={(entry) => entry.id}
-          meta={meta}
-          rowTestId={(entry) => `root-admin-event-field-row-${entry.id}`}
-          tableTestId="root-admin-event-field-table"
-        />
-      </div>
+      <DataGrid
+        columns={fieldColumns}
+        data={entries}
+        emptyMessage={
+          fieldLoading
+            ? 'Loading field...'
+            : `No ${participant.many} in the field yet. Seed from the ${sportLeagueNoun.one} roster or add participants.`
+        }
+        getRowId={(entry) => entry.id}
+        meta={meta}
+        rowTestId={(entry) => `root-admin-event-field-row-${entry.id}`}
+        tableTestId="root-admin-event-field-table"
+      />
 
       {patches.length > 0 || invalidCount > 0 ? (
         <div
-          className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-muted/40 px-4 py-3"
+          className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-muted/40 px-4 py-3"
           data-testid="root-admin-event-field-dirty-bar"
         >
           <span className="text-sm text-muted-foreground">
@@ -330,7 +328,7 @@ export function EventFieldGridCard({
       ) : null}
 
       {saveMutation.isError ? (
-        <Alert className="mt-3" data-testid="root-admin-event-field-save-error" tone="danger">
+        <Alert data-testid="root-admin-event-field-save-error" tone="danger">
           {extractErrorMessage(saveMutation.error, {
             codeMessages: {
               SPORT_EVENT_TIERS_LOCKED: `This ${event.one} has been released for contests, so its prices are locked.`,

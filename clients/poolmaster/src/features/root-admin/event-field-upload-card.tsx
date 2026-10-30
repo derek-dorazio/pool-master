@@ -105,93 +105,91 @@ export function EventFieldUploadCard({
         Adjust rankings, odds, seeds and withdrawals for {participant.many} already on this
         field. {capitalize(participant.many)} must be on the field first — add them to the field to adjust them.
       </p>
-      <div className="mt-4">
-        <BulkUploadPanel<EventFieldUploadRow, EventFieldUploadPreviewRow>
-          apply={(rows) => applyMutation.mutateAsync(rows).then(() => undefined)}
-          applyError={
-            applyMutation.isError
-              ? extractErrorMessage(applyMutation.error, { fallback: 'We could not apply this upload.' })
-              : null
-          }
-          applyLabel="Apply to field"
-          formatNote="Columns: externalId or playerName (one required), then any of ranking, oddsToWin, seedNumber, isActive (true / false), inactiveReason (WITHDRAWN / ELIMINATED). A blank cell leaves the value as it is; the word null clears it."
-          isApplyPending={applyMutation.isPending}
-          isPreviewPending={previewMutation.isPending}
-          onApplied={() => previewMutation.reset()}
-          parse={parseEventFieldUpload}
-          preview={(rows) => previewMutation.mutateAsync(rows).then((response) => response.rows)}
-          previewError={
-            previewMutation.isError
-              ? extractErrorMessage(previewMutation.error, { fallback: 'We could not preview this upload.' })
-              : null
-          }
-          renderPreview={(rows) => (
-            <div className="space-y-3">
-              {rollup ? (
-                <p className="text-sm text-muted-foreground" data-testid="root-admin-event-field-upload-rollup">
-                  {rollup.total} rows · {rollup.matched} matched · {rollup.unresolved} not on the field ·{' '}
-                  {rollup.ambiguous} ambiguous · {rollup.duplicate} duplicate · {rollup.update} to update ·{' '}
-                  {rollup.unchanged} unchanged
-                </p>
-              ) : null}
-              <div className="overflow-x-auto rounded-2xl border border-border">
-                <table className="min-w-full text-left text-sm" data-testid="root-admin-event-field-upload-preview-table">
-                  <thead className="bg-[var(--table-header-surface)] text-xs uppercase text-muted-foreground">
-                    <tr>
-                      <th className="px-4 py-2">Row</th>
-                      <th className="px-4 py-2">Resolution</th>
-                      <th className="px-4 py-2">{capitalize(participant.one)}</th>
-                      <th className="px-4 py-2">Before → After</th>
-                      <th className="px-4 py-2">Change</th>
+      <BulkUploadPanel<EventFieldUploadRow, EventFieldUploadPreviewRow>
+        apply={(rows) => applyMutation.mutateAsync(rows).then(() => undefined)}
+        applyError={
+          applyMutation.isError
+            ? extractErrorMessage(applyMutation.error, { fallback: 'We could not apply this upload.' })
+            : null
+        }
+        applyLabel="Apply to field"
+        formatNote="Columns: externalId or playerName (one required), then any of ranking, oddsToWin, seedNumber, isActive (true / false), inactiveReason (WITHDRAWN / ELIMINATED). A blank cell leaves the value as it is; the word null clears it."
+        isApplyPending={applyMutation.isPending}
+        isPreviewPending={previewMutation.isPending}
+        onApplied={() => previewMutation.reset()}
+        parse={parseEventFieldUpload}
+        preview={(rows) => previewMutation.mutateAsync(rows).then((response) => response.rows)}
+        previewError={
+          previewMutation.isError
+            ? extractErrorMessage(previewMutation.error, { fallback: 'We could not preview this upload.' })
+            : null
+        }
+        renderPreview={(rows) => (
+          <div className="space-y-3">
+            {rollup ? (
+              <p className="text-sm text-muted-foreground" data-testid="root-admin-event-field-upload-rollup">
+                {rollup.total} rows · {rollup.matched} matched · {rollup.unresolved} not on the field ·{' '}
+                {rollup.ambiguous} ambiguous · {rollup.duplicate} duplicate · {rollup.update} to update ·{' '}
+                {rollup.unchanged} unchanged
+              </p>
+            ) : null}
+            <div className="overflow-x-auto rounded-2xl border border-border">
+              <table className="min-w-full text-left text-sm" data-testid="root-admin-event-field-upload-preview-table">
+                <thead className="bg-[var(--table-header-surface)] text-xs uppercase text-muted-foreground">
+                  <tr>
+                    <th className="px-4 py-2">Row</th>
+                    <th className="px-4 py-2">Resolution</th>
+                    <th className="px-4 py-2">{capitalize(participant.one)}</th>
+                    <th className="px-4 py-2">Before → After</th>
+                    <th className="px-4 py-2">Change</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((entry, index) => (
+                    <tr
+                      className="border-t border-border"
+                      data-testid={`root-admin-event-field-upload-row-${index}`}
+                      key={`${describeRow(entry.row)}-${index}`}
+                    >
+                      <td className="px-4 py-2">{describeRow(entry.row)}</td>
+                      <td className="px-4 py-2">
+                        <StatusBadge tone={RESOLUTION_TONE[entry.resolution]}>{entry.resolution}</StatusBadge>
+                      </td>
+                      <td className="px-4 py-2">
+                        {entry.participantName || '—'}
+                        {entry.message ? (
+                          <span className="mt-1 block text-xs text-muted-foreground">{entry.message}</span>
+                        ) : null}
+                      </td>
+                      <td className="px-4 py-2 text-muted-foreground">
+                        {formatEventFieldUploadValues(entry.before)} →{' '}
+                        <span className="text-foreground">{formatEventFieldUploadValues(entry.after)}</span>
+                      </td>
+                      <td className="px-4 py-2">
+                        {entry.change ? (
+                          <StatusBadge tone={CHANGE_TONE[entry.change]}>{entry.change}</StatusBadge>
+                        ) : (
+                          <StatusBadge tone="danger">{entry.rowError === 'DUPLICATE_PARTICIPANT' ? 'DUPLICATE' : 'BLOCKED'}</StatusBadge>
+                        )}
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {rows.map((entry, index) => (
-                      <tr
-                        className="border-t border-border"
-                        data-testid={`root-admin-event-field-upload-row-${index}`}
-                        key={`${describeRow(entry.row)}-${index}`}
-                      >
-                        <td className="px-4 py-2">{describeRow(entry.row)}</td>
-                        <td className="px-4 py-2">
-                          <StatusBadge tone={RESOLUTION_TONE[entry.resolution]}>{entry.resolution}</StatusBadge>
-                        </td>
-                        <td className="px-4 py-2">
-                          {entry.participantName || '—'}
-                          {entry.message ? (
-                            <span className="mt-1 block text-xs text-muted-foreground">{entry.message}</span>
-                          ) : null}
-                        </td>
-                        <td className="px-4 py-2 text-muted-foreground">
-                          {formatEventFieldUploadValues(entry.before)} →{' '}
-                          <span className="text-foreground">{formatEventFieldUploadValues(entry.after)}</span>
-                        </td>
-                        <td className="px-4 py-2">
-                          {entry.change ? (
-                            <StatusBadge tone={CHANGE_TONE[entry.change]}>{entry.change}</StatusBadge>
-                          ) : (
-                            <StatusBadge tone="danger">{entry.rowError === 'DUPLICATE_PARTICIPANT' ? 'DUPLICATE' : 'BLOCKED'}</StatusBadge>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          )}
-          templateFilename={`${sportPathSegment(sport)}-field-upload-template.csv`}
-          templateHeaders={EVENT_FIELD_UPLOAD_HEADERS}
-          templateRows={entries.length > 0 ? eventFieldUploadTemplateRows(entries) : undefined}
-          testId="root-admin-event-field-upload"
-          unresolvedCount={eventFieldUploadBlockedCount}
-          unresolvedNotice={(count) =>
-            `${count} row${count === 1 ? '' : 's'} cannot be applied: each row must name one ${participant.one} already on this field, once. Fix or remove ${
-              count === 1 ? 'it' : 'them'
-            } before applying.`
-          }
-        />
-      </div>
+          </div>
+        )}
+        templateFilename={`${sportPathSegment(sport)}-field-upload-template.csv`}
+        templateHeaders={EVENT_FIELD_UPLOAD_HEADERS}
+        templateRows={entries.length > 0 ? eventFieldUploadTemplateRows(entries) : undefined}
+        testId="root-admin-event-field-upload"
+        unresolvedCount={eventFieldUploadBlockedCount}
+        unresolvedNotice={(count) =>
+          `${count} row${count === 1 ? '' : 's'} cannot be applied: each row must name one ${participant.one} already on this field, once. Fix or remove ${
+            count === 1 ? 'it' : 'them'
+          } before applying.`
+        }
+      />
     </PanelCard>
   );
 }

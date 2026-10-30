@@ -151,7 +151,7 @@ function ReseedRound({
   const unfinishedNoun = unfinished.length === 1 ? noun.one : noun.many;
 
   return (
-    <section className="mt-4" data-testid={`root-admin-reseed-round-${roundNumber}`}>
+    <section data-testid={`root-admin-reseed-round-${roundNumber}`}>
       <Heading level={4} variant="label">{roundLabel(roundNumber, roundCount)}</Heading>
       {ready ? null : (
         <p className="mt-1 text-sm text-muted-foreground" data-testid={`root-admin-reseed-waiting-${roundNumber}`}>

@@ -53,9 +53,9 @@ export function PlayInPlacesCard({
           : `Mark each place a ${word} fills later. Its ${team.one} is named after the ${vocabulary.event.one} is released.`}
       </p>
       {places.length === 0 ? (
-        <p className="mt-3 text-sm text-muted-foreground" data-testid="root-admin-play-in-empty">{`No ${word} places.`}</p>
+        <p className="text-sm text-muted-foreground" data-testid="root-admin-play-in-empty">{`No ${word} places.`}</p>
       ) : (
-        <ul className="mt-3 space-y-3">
+        <ul className="space-y-3">
           {places.map((place) => (
             <li className="flex flex-wrap items-center gap-3" data-testid={`root-admin-play-in-place-${place.id}`} key={place.id}>
               <span className="min-w-40 text-sm font-medium">{describeEntry(place)}</span>
@@ -119,7 +119,7 @@ function PlayInMarker({ eventId, field, vocabulary }: { eventId: string; field: 
   const candidates = field.filter((entry) => !entry.isPlayInPlace);
 
   return (
-    <div className="mt-4 flex flex-wrap items-end gap-3">
+    <div className="flex flex-wrap items-end gap-3">
       <label className="flex flex-col gap-1 text-xs text-muted-foreground">
         {`Mark a ${playInWord(vocabulary)} place`}
         <Select data-testid="root-admin-play-in-mark-select" onChange={(change) => setRowId(change.target.value)} value={rowId}>

@@ -170,7 +170,6 @@ export function TierDefinitionsPanel({
         </Button>
       )}
     >
-
       {saveMutation.isError && !deleteTarget ? (
         <Alert data-testid="root-admin-tier-def-error" tone="danger">
           {extractErrorMessage(saveMutation.error, {
@@ -185,7 +184,6 @@ export function TierDefinitionsPanel({
 
       <SortableList
         aria-label="Tier definitions"
-        className="mt-4"
         items={draft}
         onReorder={(orderedIds) =>
           setDraft((current) => reorderById(current, orderedIds))
@@ -244,7 +242,7 @@ export function TierDefinitionsPanel({
       />
 
       {dirty ? (
-        <div className="mt-4 flex justify-end gap-2">
+        <div className="flex justify-end gap-2">
           <Button
             data-testid="root-admin-tier-def-discard"
             onClick={() => setDraft(serverDraft)}

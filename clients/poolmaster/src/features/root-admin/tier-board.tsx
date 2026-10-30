@@ -337,14 +337,13 @@ export function TierBoard({
         </div>
       ) : null}
     >
-
       {saveError ? (
         <Alert data-testid="root-admin-tier-board-error" tone="danger">
           {saveError}
         </Alert>
       ) : null}
 
-      <div className="mt-4 flex gap-4 overflow-x-auto pb-2">
+      <div className="flex gap-4 overflow-x-auto pb-2">
         {board.map((column) => (
           <TierBoardColumn
             column={column}

@@ -100,73 +100,71 @@ export function SportLeagueRosterUploadCard({ leagueId }: { leagueId: string }) 
       <p className="text-sm text-muted-foreground">
         {`Paste or upload the current rankings, preview how each row resolves to a ${participant.one}, then apply.`}
       </p>
-      <div className="mt-4">
-        <BulkUploadPanel<RosterUploadRow, RosterPreviewRow>
-          apply={(rows) => applyMutation.mutateAsync(rows).then(() => undefined)}
-          applyError={
-            applyMutation.isError
-              ? extractErrorMessage(applyMutation.error, {
-                  fallback: 'We could not apply this roster upload.',
-                })
-              : null
-          }
-          applyLabel="Apply rankings"
-          formatNote="Columns: externalId or playerName (one is required), plus ranking."
-          isApplyPending={applyMutation.isPending}
-          isPreviewPending={previewMutation.isPending}
-          parse={parseRosterUpload}
-          preview={(rows) => previewMutation.mutateAsync(rows)}
-          previewError={
-            previewMutation.isError
-              ? extractErrorMessage(previewMutation.error, {
-                  fallback: 'We could not preview this roster upload.',
-                })
-              : null
-          }
-          renderPreview={(rows) => (
-            <div className="overflow-x-auto rounded-2xl border border-border">
-              <table
-                className="min-w-full text-left text-sm"
-                data-testid="root-admin-sport-league-roster-upload-preview-table"
-              >
-                <thead className="bg-[var(--table-header-surface)] text-xs uppercase text-muted-foreground">
-                  <tr>
-                    <th className="px-4 py-2">Row</th>
-                    <th className="px-4 py-2">Resolution</th>
-                    <th className="px-4 py-2">{capitalize(participant.one)}</th>
+      <BulkUploadPanel<RosterUploadRow, RosterPreviewRow>
+        apply={(rows) => applyMutation.mutateAsync(rows).then(() => undefined)}
+        applyError={
+          applyMutation.isError
+            ? extractErrorMessage(applyMutation.error, {
+                fallback: 'We could not apply this roster upload.',
+              })
+            : null
+        }
+        applyLabel="Apply rankings"
+        formatNote="Columns: externalId or playerName (one is required), plus ranking."
+        isApplyPending={applyMutation.isPending}
+        isPreviewPending={previewMutation.isPending}
+        parse={parseRosterUpload}
+        preview={(rows) => previewMutation.mutateAsync(rows)}
+        previewError={
+          previewMutation.isError
+            ? extractErrorMessage(previewMutation.error, {
+                fallback: 'We could not preview this roster upload.',
+              })
+            : null
+        }
+        renderPreview={(rows) => (
+          <div className="overflow-x-auto rounded-2xl border border-border">
+            <table
+              className="min-w-full text-left text-sm"
+              data-testid="root-admin-sport-league-roster-upload-preview-table"
+            >
+              <thead className="bg-[var(--table-header-surface)] text-xs uppercase text-muted-foreground">
+                <tr>
+                  <th className="px-4 py-2">Row</th>
+                  <th className="px-4 py-2">Resolution</th>
+                  <th className="px-4 py-2">{capitalize(participant.one)}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((row, index) => (
+                  <tr className="border-t border-border" key={`${describeRow(row.row)}-${index}`}>
+                    <td className="px-4 py-2">{describeRow(row.row)}</td>
+                    <td className="px-4 py-2">
+                      <StatusBadge tone={RESOLUTION_TONE[row.resolution]}>
+                        {row.resolution}
+                      </StatusBadge>
+                    </td>
+                    <td className="px-4 py-2">
+                      {row.participantName || '—'}
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {rows.map((row, index) => (
-                    <tr className="border-t border-border" key={`${describeRow(row.row)}-${index}`}>
-                      <td className="px-4 py-2">{describeRow(row.row)}</td>
-                      <td className="px-4 py-2">
-                        <StatusBadge tone={RESOLUTION_TONE[row.resolution]}>
-                          {row.resolution}
-                        </StatusBadge>
-                      </td>
-                      <td className="px-4 py-2">
-                        {row.participantName || '—'}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-          templateFilename={`${sportPathSegment(sport)}-${sportLeague.one}-roster-template.csv`}
-          templateHeaders={ROSTER_UPLOAD_HEADERS}
-          testId="root-admin-sport-league-roster-upload"
-          unresolvedCount={(rows) =>
-            rows.filter((row) => row.resolution !== 'MATCHED').length
-          }
-          unresolvedNotice={(count) =>
-            `${count} row${count === 1 ? '' : 's'} could not be matched to a ${participant.one}. Fix or remove ${
-              count === 1 ? 'it' : 'them'
-            } before applying.`
-          }
-        />
-      </div>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        templateFilename={`${sportPathSegment(sport)}-${sportLeague.one}-roster-template.csv`}
+        templateHeaders={ROSTER_UPLOAD_HEADERS}
+        testId="root-admin-sport-league-roster-upload"
+        unresolvedCount={(rows) =>
+          rows.filter((row) => row.resolution !== 'MATCHED').length
+        }
+        unresolvedNotice={(count) =>
+          `${count} row${count === 1 ? '' : 's'} could not be matched to a ${participant.one}. Fix or remove ${
+            count === 1 ? 'it' : 'them'
+          } before applying.`
+        }
+      />
     </PanelCard>
   );
 }

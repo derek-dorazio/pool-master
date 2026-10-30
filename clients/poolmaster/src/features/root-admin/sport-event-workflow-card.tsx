@@ -109,18 +109,13 @@ export function SportEventWorkflowCard({
         </StatusBadge>
       )}
     >
-
-      <div>
-        <SportEventWorkflowRail rounds={rounds} tournament={tournament} />
-      </div>
+      <SportEventWorkflowRail rounds={rounds} tournament={tournament} />
 
       {tournament.status === SportEventStatus.DRAFT ? (
-        <div className="mt-4">
-          <SportEventReleaseAction eventId={eventId} tournament={tournament} />
-        </div>
+        <SportEventReleaseAction eventId={eventId} tournament={tournament} />
       ) : null}
 
-      <div className="mt-4 flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2">
         {tournament.allowedTransitions.length > 0 ? (
           tournament.allowedTransitions.map((toStatus) => (
             <Button
@@ -142,7 +137,7 @@ export function SportEventWorkflowCard({
         )}
       </div>
 
-      <div className="mt-4 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+      <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
         <Button
           data-testid="root-admin-sport-event-auto-toggle"
           onClick={() => setAutoToggleOpen(true)}
@@ -172,7 +167,6 @@ export function SportEventWorkflowCard({
             Edit schedule
           </LinkButton>
         }
-        className="mt-4"
         description={
           roundsError
             ? extractErrorMessage(roundsError, {

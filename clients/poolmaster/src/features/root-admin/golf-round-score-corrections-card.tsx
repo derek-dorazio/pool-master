@@ -343,34 +343,32 @@ export function GolfRoundScoreCorrectionsCard({
       </p>
 
       {rowsError ? (
-        <Alert className="mt-3" data-testid="root-admin-golf-scores-corrections-error" tone="danger">
+        <Alert data-testid="root-admin-golf-scores-corrections-error" tone="danger">
           {rowsError}
         </Alert>
       ) : null}
 
       {saveMutation.isError ? (
-        <Alert className="mt-3" data-testid="root-admin-golf-scores-correction-save-error" tone="danger">
+        <Alert data-testid="root-admin-golf-scores-correction-save-error" tone="danger">
           {extractErrorMessage(saveMutation.error, {
             fallback: 'We could not save that correction.',
           })}
         </Alert>
       ) : null}
 
-      <div className="mt-4">
-        <DataGrid
-          columns={correctionColumns}
-          data={rows}
-          emptyMessage={
-            rowsLoading
-              ? 'Loading scores...'
-              : 'No scores recorded for this round yet. Use the bulk load above.'
-          }
-          getRowId={(row) => row.sportEventParticipantId}
-          meta={meta}
-          rowTestId={(row) => `root-admin-golf-scores-row-${row.sportEventParticipantId}`}
-          tableTestId="root-admin-golf-scores-corrections-table"
-        />
-      </div>
+      <DataGrid
+        columns={correctionColumns}
+        data={rows}
+        emptyMessage={
+          rowsLoading
+            ? 'Loading scores...'
+            : 'No scores recorded for this round yet. Use the bulk load above.'
+        }
+        getRowId={(row) => row.sportEventParticipantId}
+        meta={meta}
+        rowTestId={(row) => `root-admin-golf-scores-row-${row.sportEventParticipantId}`}
+        tableTestId="root-admin-golf-scores-corrections-table"
+      />
     </PanelCard>
   );
 }

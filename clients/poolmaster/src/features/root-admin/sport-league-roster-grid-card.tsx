@@ -302,28 +302,26 @@ export function SportLeagueRosterGridCard({
       </p>
 
       {rosterError ? (
-        <InlineError className="mt-3">{rosterError}</InlineError>
+        <InlineError>{rosterError}</InlineError>
       ) : null}
 
-      <div className="mt-4">
-        <DataGrid
-          columns={rosterColumns}
-          data={entries}
-          emptyMessage={
-            rosterLoading
-              ? 'Loading roster...'
-              : `No ${participant.many} on this ${sportLeague.one} yet. Add ${participant.many} or use the bulk upload above.`
-          }
-          getRowId={(entry) => entry.participantId}
-          meta={gridMeta}
-          rowTestId={(entry) => `root-admin-sport-league-roster-row-${entry.participantId}`}
-          tableTestId="root-admin-sport-league-roster-table"
-        />
-      </div>
+      <DataGrid
+        columns={rosterColumns}
+        data={entries}
+        emptyMessage={
+          rosterLoading
+            ? 'Loading roster...'
+            : `No ${participant.many} on this ${sportLeague.one} yet. Add ${participant.many} or use the bulk upload above.`
+        }
+        getRowId={(entry) => entry.participantId}
+        meta={gridMeta}
+        rowTestId={(entry) => `root-admin-sport-league-roster-row-${entry.participantId}`}
+        tableTestId="root-admin-sport-league-roster-table"
+      />
 
       {dirtyRows.length > 0 || invalidCount > 0 ? (
         <div
-          className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-muted/40 px-4 py-3"
+          className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-muted/40 px-4 py-3"
           data-testid="root-admin-sport-league-roster-dirty-bar"
         >
           <span className="text-sm text-muted-foreground">
@@ -355,7 +353,7 @@ export function SportLeagueRosterGridCard({
       ) : null}
 
       {saveMutation.isError ? (
-        <InlineError className="mt-3">
+        <InlineError>
           {extractErrorMessage(saveMutation.error, {
             fallback: 'We could not save these rankings.',
           })}
