@@ -210,10 +210,15 @@ export class EmailService {
    * of every email, without reading the rows back. Answers each email's id and where it stands,
    * in the order given. A failed read or write is thrown for the caller to handle, and nothing
    * is recorded then.
+   *
+   * `record` writes the outbox rows instead of this service's outbox, for a caller that writes
+   * them in a transaction with the rows they are about (#1357). The sender is woken once it
+   * resolves, after that transaction has committed.
    */
   async sendMany<Key extends SystemEmailTemplateKey>(
     templateKey: Key,
     inputs: readonly EmailSendInput<Key>[],
+    record: (records: readonly EmailMessageRecord[]) => Promise<EmailMessageRecordState[]> = (records) => this.options.messages.recordMany(records),
   ): Promise<EmailMessageRecordState[]> {
     if (inputs.length === 0) return [];
     const config = this.options.readConfig();
@@ -230,7 +235,7 @@ export class EmailService {
     const records = emails.map((email, index) => this.recordOf(templateKey, inputs[index], email, email.skipped
       ?? (suppressed.has(email.recipient.recipientEmail.toLowerCase()) ? EmailSkipReason.SUPPRESSED : undefined)
       ?? (email.recipient.recipientUserId !== undefined && optedOut.has(email.recipient.recipientUserId) ? EmailSkipReason.OPTED_OUT : undefined)));
-    const states = await this.options.messages.recordMany(records);
+    const states = await record(records);
     states.forEach((state, index) => this.logRecorded(emails[index].refs, state, state.created));
     if (states.some((state) => state.created && state.status === EmailMessageStatus.QUEUED)) this.options.onQueued?.();
     return states;

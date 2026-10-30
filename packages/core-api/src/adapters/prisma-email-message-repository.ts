@@ -39,31 +39,7 @@ export class PrismaEmailMessageRepository implements EmailMessageRepository {
   }
 
   async recordMany(inputs: readonly EmailMessageRecord[]): Promise<EmailMessageRecordState[]> {
-    if (inputs.length === 0) return [];
-    const state = { id: true, idempotencyKey: true, status: true, skipReason: true } as const;
-    // One write answering the rows it wrote, ids and status only (Prisma wraps it in a transaction).
-    const written = await this.prisma.emailMessage.createManyAndReturn({
-      data: inputs.map(toCreateData),
-      skipDuplicates: true,
-      select: state,
-    });
-    const writtenKeys = new Set(written.map((row) => row.idempotencyKey));
-    const already = inputs.map((input) => input.idempotencyKey).filter((key) => !writtenKeys.has(key));
-    // Only the emails recorded before are read, and only where they stand.
-    const stored = already.length === 0 ? [] : await this.prisma.emailMessage.findMany({
-      where: { idempotencyKey: { in: [...new Set(already)] } },
-      select: state,
-    });
-    const byKey = new Map([...stored, ...written].map((row) => [row.idempotencyKey, row]));
-    const answered = new Set<string>();
-    return inputs.map((input) => {
-      const row = byKey.get(input.idempotencyKey);
-      if (!row) throw new Error(`Email ${input.idempotencyKey} was neither written nor found`);
-      // A key the batch names twice was written by its first mention only.
-      const created = writtenKeys.has(row.idempotencyKey) && !answered.has(row.idempotencyKey);
-      answered.add(row.idempotencyKey);
-      return { id: row.id, status: row.status, skipReason: row.skipReason ?? undefined, created };
-    });
+    return recordEmailMessages(this.prisma, inputs);
   }
 
   async claimDue(claim: {
@@ -216,6 +192,41 @@ export class PrismaEmailMessageRepository implements EmailMessageRepository {
     }
     return latest;
   }
+}
+
+/**
+ * `recordMany` on any client, so a caller can record its emails in its own transaction with the
+ * rows they are about (#1357).
+ */
+export async function recordEmailMessages(
+  db: PrismaClient | Prisma.TransactionClient,
+  inputs: readonly EmailMessageRecord[],
+): Promise<EmailMessageRecordState[]> {
+  if (inputs.length === 0) return [];
+  const state = { id: true, idempotencyKey: true, status: true, skipReason: true } as const;
+  // One write answering the rows it wrote, ids and status only (in a transaction of its own, or the caller's).
+  const written = await db.emailMessage.createManyAndReturn({
+    data: inputs.map(toCreateData),
+    skipDuplicates: true,
+    select: state,
+  });
+  const writtenKeys = new Set(written.map((row) => row.idempotencyKey));
+  const already = inputs.map((input) => input.idempotencyKey).filter((key) => !writtenKeys.has(key));
+  // Only the emails recorded before are read, and only where they stand.
+  const stored = already.length === 0 ? [] : await db.emailMessage.findMany({
+    where: { idempotencyKey: { in: [...new Set(already)] } },
+    select: state,
+  });
+  const byKey = new Map([...stored, ...written].map((row) => [row.idempotencyKey, row]));
+  const answered = new Set<string>();
+  return inputs.map((input) => {
+    const row = byKey.get(input.idempotencyKey);
+    if (!row) throw new Error(`Email ${input.idempotencyKey} was neither written nor found`);
+    // A key the batch names twice was written by its first mention only.
+    const created = writtenKeys.has(row.idempotencyKey) && !answered.has(row.idempotencyKey);
+    answered.add(row.idempotencyKey);
+    return { id: row.id, status: row.status, skipReason: row.skipReason ?? undefined, created };
+  });
 }
 
 function toEmailMessage(row: EmailMessageRow): EmailMessage {

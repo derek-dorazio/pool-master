@@ -8,6 +8,7 @@
  * Each access rule from docs/DOMAIN-OPERATIONS.md that motivated a method is asserted
  * here, because "the port exists" was exactly the state that produced the problem.
  */
+import { randomUUID } from 'node:crypto';
 import {
   getAppPrisma,
   setupIntegrationTests,
@@ -745,13 +746,14 @@ describe('identity cluster repositories (#202)', () => {
       await expect(repo.findPendingByEmails(league.id, [])).resolves.toEqual([]);
     });
 
-    it('creates several invitations in one write and answers each in the order given', async () => {
+    it('creates several invitations in one write under the ids given, answering each in the order given', async () => {
       const prisma = getPrisma();
       const repo = new PrismaLeagueInvitationRepository(getAppPrisma());
       const { user } = await createTestUser({ lastName: 'BatchInviter' });
       const league = await createLeague(prisma, `${LEAGUE_CODE_PREFIX}F6`, 'Batch');
       const expiresAt = new Date('2026-11-06T00:00:00.000Z');
       const invitation = (email: string) => ({
+        id: randomUUID(),
         leagueId: league.id,
         email,
         inviteCode: `${LEAGUE_CODE_PREFIX}-${email}-${Date.now()}`,
@@ -763,10 +765,10 @@ describe('identity cluster repositories (#202)', () => {
         expiresAt,
       });
 
-      const { result, statements } = await recordStatements(() => repo.createMany([
-        invitation('zed@integration.test'), invitation('amy@integration.test'), invitation('kim@integration.test'),
-      ]));
+      const given = [invitation('zed@integration.test'), invitation('amy@integration.test'), invitation('kim@integration.test')];
+      const { result, statements } = await recordStatements(() => repo.createMany(given));
 
+      expect(result.map((row) => row.id)).toEqual(given.map((row) => row.id));
       expect(result.map((row) => [row.email, row.status, row.expiresAt])).toEqual([
         ['zed@integration.test', InvitationStatus.PENDING, expiresAt],
         ['amy@integration.test', InvitationStatus.PENDING, expiresAt],

@@ -59,6 +59,8 @@ import type {
   ContestEntryStandingRepository,
   ContestRepository,
   ContestSquaresRepository,
+  EmailMessageRepository,
+  InvitationEmailTransaction,
   LeagueInvitationRepository,
   LeagueMembershipRepository,
   LeagueRepository,
@@ -231,6 +233,18 @@ export function passThroughMembershipTransaction<D extends MembershipRepositorie
       }),
     },
   };
+}
+
+/**
+ * An `InvitationEmailTransaction` that writes straight to the invitations and outbox given, for
+ * service tests that assert results rather than atomicity. It rolls back nothing; the in-memory
+ * league world's `invitationEmails` is the one that rolls back.
+ */
+export function passThroughInvitationEmails(
+  invitations: Pick<LeagueInvitationRepository, 'createMany'>,
+  emails: Pick<EmailMessageRepository, 'recordMany'>,
+): InvitationEmailTransaction {
+  return { run: async (work) => work({ invitations, emails }) };
 }
 
 export function fakeLeagueInvitationRepo(

@@ -5,6 +5,7 @@
 import type {
   ContestRepository,
   EmailMessageState,
+  InvitationEmailTransaction,
   LeagueInvitationRepository,
   LeagueMembershipRepository,
   LeagueRepository,
@@ -95,7 +96,7 @@ const DEFAULT_INVITER_NAME = 'League commissioner';
  * Everything InvitationService reads and writes (#211). It replaced a nine-parameter positional
  * constructor, where a dependency added mid-list silently shifted every argument after it.
  */
-export interface InvitationServiceDeps {
+interface InvitationServiceBaseDeps {
   invitations: LeagueInvitationRepository;
   memberships: LeagueMembershipRepository;
   leagues: LeagueRepository;
@@ -108,9 +109,17 @@ export interface InvitationServiceDeps {
   memberJoined: Pick<MemberJoinedNotices, 'tellJoined'>;
   prisma?: PrismaClient;
   logger?: FastifyBaseLogger;
-  email?: EmailService;
   appBaseUrl?: string;
 }
+
+/**
+ * With an email service comes the transaction that writes new email invitations and their invite
+ * emails together (#1357), so a service that can email can never write the two apart.
+ */
+export type InvitationServiceDeps = InvitationServiceBaseDeps & (
+  | { email: EmailService; invitationEmails: InvitationEmailTransaction }
+  | { email?: undefined; invitationEmails?: undefined }
+);
 
 export class InvitationService {
   private readonly logger?: FastifyBaseLogger;
@@ -169,7 +178,8 @@ export class InvitationService {
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + DEFAULT_INVITE_EXPIRY_DAYS);
     const addresses = [...toInvite];
-    const invitations = await this.deps.invitations.createMany(addresses.map((email) => ({
+    const invitations = addresses.map((email): Omit<LeagueInvitation, 'createdAt' | 'updatedAt'> => ({
+      id: randomUUID(),
       leagueId: input.leagueId,
       email,
       inviteCode: generateInviteCode(),
@@ -179,8 +189,8 @@ export class InvitationService {
       currentUses: 0,
       invitedBy: input.invitedBy,
       expiresAt,
-    })));
-    const emailStates = await this.queueLeagueInvitationEmails(invitations.map((invitation, index) => ({
+    }));
+    const { created, emailStates } = await this.createInvitationsWithEmails(invitations, invitations.map((invitation, index) => ({
       invitationId: invitation.id,
       email: addresses[index],
       inviterName,
@@ -189,7 +199,7 @@ export class InvitationService {
       expiresAt,
       message: input.message,
     })));
-    const sent = invitations.map((invitation, index): InvitationWithEmailState => ({ invitation, emailState: emailStates[index] }));
+    const sent = created.map((invitation, index): InvitationWithEmailState => ({ invitation, emailState: emailStates[index] }));
     this.logger?.info({
       action: 'leagueInvitation.sendEmail.success',
       data: {
@@ -203,17 +213,36 @@ export class InvitationService {
     return { sent, skippedMembers, skippedDuplicates };
   }
 
-  /** `queueLeagueInvitationEmail` for a whole paste in one batch (#1173): each one's status, in order. */
-  private async queueLeagueInvitationEmails(invites: readonly LeagueInvitationEmail[]): Promise<(EmailMessageState | null)[]> {
+  /**
+   * Writes the paste's invitations and queues their invite emails in one batch (#1173), in one
+   * transaction (#1357): when the emails cannot be written, neither are the invitations, so the
+   * same paste again invites everyone instead of skipping them as pending. Answers each email's
+   * status, in order.
+   */
+  private async createInvitationsWithEmails(
+    invitations: readonly Omit<LeagueInvitation, 'createdAt' | 'updatedAt'>[],
+    invites: readonly LeagueInvitationEmail[],
+  ): Promise<{ created: LeagueInvitation[]; emailStates: (EmailMessageState | null)[] }> {
     if (!this.deps.email) {
       this.logger?.debug({
         action: 'leagueInvitation.emailDelivery.skipped',
         data: { invitationCount: invites.length },
       }, 'No email service configured for league invitation');
-      return invites.map(() => null);
+      return { created: await this.deps.invitations.createMany(invitations), emailStates: invites.map(() => null) };
     }
-    const states = await this.deps.email.sendMany('LEAGUE_MEMBER_INVITE', invites.map((invite) => this.inviteEmail(invite)));
-    return states.map(({ status, skipReason }) => ({ status, skipReason }));
+    const writes = this.deps.invitationEmails;
+    let created: LeagueInvitation[] = [];
+    const states = await this.deps.email.sendMany('LEAGUE_MEMBER_INVITE', invites.map((invite) => this.inviteEmail(invite)), (records) =>
+      writes.run(async ({ invitations: invitationWrites, emails }) => {
+        created = await invitationWrites.createMany(invitations);
+        return emails.recordMany(records);
+      }));
+    // sendMany writes through `record` whenever it has inputs; if it ever returned early instead,
+    // the invitations would be missing with no error, so that fails here.
+    if (created.length !== invitations.length) {
+      throw new Error(`Wrote ${created.length} of ${invitations.length} email invitations: their emails were not recorded`);
+    }
+    return { created, emailStates: states.map(({ status, skipReason }) => ({ status, skipReason })) };
   }
 
   /**

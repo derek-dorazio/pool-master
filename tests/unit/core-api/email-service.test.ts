@@ -665,4 +665,23 @@ describe('email service: many recipients at once (#1173)', () => {
     await expect(service({ outbox }).sendMany('LEAGUE_MEMBER_INVITE', [])).resolves.toEqual([]);
     expect(recordMany).not.toHaveBeenCalled();
   });
+
+  it('writes the rows through the record given instead of its own outbox, and wakes the sender only once that write has resolved', async () => {
+    const ownOutbox = inMemoryEmailMessages();
+    const callersOutbox = inMemoryEmailMessages();
+    const onQueued = jest.fn();
+    const wokenDuringWrite: boolean[] = [];
+
+    const states = await service({ outbox: ownOutbox, onQueued }).sendMany('LEAGUE_MEMBER_INVITE', [invite('a@gmail.com')], async (records) => {
+      const written = await callersOutbox.recordMany(records);
+      wokenDuringWrite.push(onQueued.mock.calls.length > 0);
+      return written;
+    });
+
+    expect(states.map(({ status, created }) => [status, created])).toEqual([['QUEUED', true]]);
+    expect(callersOutbox.rows.map((row) => row.recipientEmail)).toEqual(['a@gmail.com']);
+    expect(ownOutbox.rows).toEqual([]);
+    expect(wokenDuringWrite).toEqual([false]);
+    expect(onQueued).toHaveBeenCalledTimes(1);
+  });
 });
