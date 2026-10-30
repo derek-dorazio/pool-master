@@ -90,6 +90,11 @@ const T0 = new Date('2026-04-01T12:00:00Z');
 
 export class InMemoryContestWorld {
   readonly contests = new Map<string, Contest>();
+  /**
+   * When the entry reminder sweep next looks at each contest (#1170). A contest added OPEN or
+   * ACTIVE is looked at on the first sweep, as the column's backfill leaves contests already open.
+   */
+  readonly reminderChecks = new Map<string, Date | null>();
   readonly configurations = new Map<string, ContestConfiguration>();
   readonly entries = new Map<string, ContestEntry>();
   readonly picks = new Map<string, ContestEntryPickWithParticipant>();
@@ -216,6 +221,9 @@ export class InMemoryContestWorld {
       ...overrides,
     };
     this.contests.set(contest.id, contest);
+    if (contest.status === ContestStatus.OPEN || contest.status === ContestStatus.ACTIVE) {
+      this.reminderChecks.set(contest.id, new Date(0));
+    }
     return contest;
   }
 
@@ -379,6 +387,29 @@ export class InMemoryContestWorld {
       findJoinableByReleasedEdition: async () => [],
       findByStatuses: async (statuses) =>
         [...this.contests.values()].filter((contest) => statuses.includes(contest.status)),
+      findDraftsStartingBy: async ({ firstStartsBy, createdBy, firstStatuses }) => [...this.contests.values()].filter((contest) => {
+        const first = this.sportEvents.get(contest.sportEventIds[0] ?? '');
+        return contest.status === ContestStatus.DRAFT && contest.createdAt <= createdBy
+          && first !== undefined && first.startDate <= firstStartsBy && firstStatuses.includes(first.status);
+      }),
+      findReminderChecksDue: async (now) => [...this.reminderChecks]
+        .flatMap(([contestId, at]) => (at !== null && at <= now ? [{ contestId, at }] : []))
+        .sort((left, right) => left.at.getTime() - right.at.getTime())
+        .flatMap(({ contestId }) => this.contests.get(contestId) ?? []),
+      scheduleReminderChecks: async (schedule, sweptAt) => {
+        for (const { contestId, at } of schedule) {
+          const current = this.reminderChecks.get(contestId);
+          if (current !== undefined && current !== null && current <= sweptAt) this.reminderChecks.set(contestId, at);
+        }
+      },
+      recheckReminders: async (scope, at) => {
+        for (const contest of this.contests.values()) {
+          const named = 'contestIds' in scope ? scope.contestIds.includes(contest.id) : contest.sportEventIds.includes(scope.sportEventId);
+          if (named && (contest.status === ContestStatus.OPEN || contest.status === ContestStatus.ACTIVE)) {
+            this.reminderChecks.set(contest.id, at);
+          }
+        }
+      },
       // The world records no draw rows, so none owes its receipts.
       findDrawReceiptsPending: async () => [],
       clearDrawReceiptsPending: async () => undefined,
@@ -780,6 +811,7 @@ export class InMemoryContestWorld {
       ...(transition.startsAt && { startsAt: transition.startsAt }),
       ...(transition.endsAt && { endsAt: transition.endsAt }),
     });
+    if (transition.nextReminderAt) this.reminderChecks.set(id, transition.nextReminderAt);
     return true;
   }
 

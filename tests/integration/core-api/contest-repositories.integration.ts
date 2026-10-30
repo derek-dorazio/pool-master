@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { ContestFormat, ContestStatus, ContestTemplateEventType, CupWeight, LeaguePaymentKind, SelectionType, Sport } from '@poolmaster/shared/domain';
+import { ContestFormat, ContestStatus, ContestTemplateEventType, CupWeight, LeaguePaymentKind, SelectionType, Sport, SportEventStatus } from '@poolmaster/shared/domain';
 import type { ContestCreate } from '@poolmaster/shared/db';
 import {
   PrismaContestConfigTemplateRepository,
@@ -238,6 +238,100 @@ describe('ContestRepository', () => {
       [open.id, [first.event.id]],
       [live.id, [second.event.id]],
     ]);
+  });
+
+  describe('entry reminder checks (#1170)', () => {
+    const nextReminderAtOf = async (contestId: string) =>
+      (await getPrisma().contest.findUniqueOrThrow({ where: { id: contestId }, select: { nextReminderAt: true } })).nextReminderAt;
+
+    it('sets the first check as a contest opens, and answers only the contests whose check has come, oldest check first, in any status', async () => {
+      const { league, event } = await createLeagueAndEvent();
+      const draft = await createContest(league.id, event.id, 'Draft', ContestStatus.DRAFT);
+      const openedAt = new Date('2026-06-01T12:00:00.000Z');
+      await repos().contests.transitionStatus(draft.id, { from: [ContestStatus.DRAFT], to: ContestStatus.OPEN, openedAt, nextReminderAt: openedAt });
+      const finished = await createContest(league.id, event.id, 'Finished', ContestStatus.COMPLETED);
+      const later = await createContest(league.id, event.id, 'Later', ContestStatus.OPEN);
+      await getPrisma().contest.update({ where: { id: finished.id }, data: { nextReminderAt: new Date('2026-05-31T12:00:00.000Z') } });
+      await getPrisma().contest.update({ where: { id: later.id }, data: { nextReminderAt: new Date('2026-06-02T12:00:00.000Z') } });
+
+      const due = await repos().contests.findReminderChecksDue(new Date('2026-06-01T12:30:00.000Z'));
+
+      expect(due.filter((contest) => contest.leagueId === league.id).map((contest) => [contest.id, contest.sportEventIds]))
+        .toEqual([[finished.id, [event.id]], [draft.id, [event.id]]]);
+      await expect(nextReminderAtOf(draft.id)).resolves.toEqual(openedAt);
+    });
+
+    it('sets each contest its own next check, or clears it, in one transaction however many contests share a time', async () => {
+      const { league, event } = await createLeagueAndEvent();
+      const contests = await Promise.all(['A', 'B', 'C'].map((name) => createContest(league.id, event.id, name, ContestStatus.OPEN)));
+      const sweptAt = new Date('2026-06-01T12:00:00.000Z');
+      await repos().contests.recheckReminders({ contestIds: contests.map((contest) => contest.id) }, sweptAt);
+      const at = new Date('2026-06-02T12:00:00.000Z');
+      const [a, b, c] = contests;
+      await repos().contests.scheduleReminderChecks([{ contestId: a.id, at }, { contestId: b.id, at: null }, { contestId: c.id, at }], sweptAt);
+
+      await expect(Promise.all(contests.map((contest) => nextReminderAtOf(contest.id)))).resolves.toEqual([at, null, at]);
+    });
+
+    it('keeps a recheck made while the sweep ran instead of the time the sweep worked out from the old schedule', async () => {
+      const { league, event } = await createLeagueAndEvent();
+      const contest = await createContest(league.id, event.id, 'Moved', ContestStatus.OPEN);
+      const sweptAt = new Date('2026-06-01T12:00:00.000Z');
+      await repos().contests.recheckReminders({ contestIds: [contest.id] }, sweptAt);
+      // An admin moves the event's start after the sweep read the contest.
+      const rechecked = new Date('2026-06-01T12:00:05.000Z');
+      await repos().contests.recheckReminders({ sportEventId: event.id }, rechecked);
+
+      await repos().contests.scheduleReminderChecks([{ contestId: contest.id, at: new Date('2026-06-03T12:00:00.000Z') }], sweptAt);
+
+      await expect(nextReminderAtOf(contest.id)).resolves.toEqual(rechecked);
+    });
+
+    it('rechecks only the open and live contests named or on the event, leaving drafts, finished contests and other events alone', async () => {
+      const { league, event, suffix } = await createLeagueAndEvent();
+      const other = await createLaterEvent(suffix);
+      const open = await createContest(league.id, event.id, 'Open', ContestStatus.OPEN);
+      const live = await createContest(league.id, [event.id, other.event.id], 'Live', ContestStatus.ACTIVE);
+      const draft = await createContest(league.id, event.id, 'Draft', ContestStatus.DRAFT);
+      const done = await createContest(league.id, event.id, 'Done', ContestStatus.COMPLETED);
+      const elsewhere = await createContest(league.id, other.event.id, 'Elsewhere', ContestStatus.OPEN);
+      const at = new Date('2026-06-01T12:00:00.000Z');
+
+      await repos().contests.recheckReminders({ sportEventId: event.id }, at);
+      const byEvent = await Promise.all([open, live, draft, done, elsewhere].map((contest) => nextReminderAtOf(contest.id)));
+      await repos().contests.recheckReminders({ contestIds: [elsewhere.id, draft.id] }, at);
+
+      expect(byEvent).toEqual([at, at, null, null, null]);
+      await expect(nextReminderAtOf(elsewhere.id)).resolves.toEqual(at);
+      await expect(nextReminderAtOf(draft.id)).resolves.toBeNull();
+    });
+  });
+
+  it('finds only the drafts past their first hours whose first event starts by the time asked and has not started or finished, never other drafts (#1170)', async () => {
+    const { league, event, suffix } = await createLeagueAndEvent();
+    const later = await createLaterEvent(suffix);
+    const soon = await createContest(league.id, [event.id, later.event.id], 'Soon', ContestStatus.DRAFT);
+    const laterFirst = await createContest(league.id, [later.event.id, event.id], 'Later first', ContestStatus.DRAFT);
+    const open = await createContest(league.id, event.id, 'Open', ContestStatus.OPEN);
+    await getPrisma().contest.updateMany({
+      where: { id: { in: [soon.id, laterFirst.id, open.id] } },
+      data: { createdAt: new Date('2026-06-01T00:00:00.000Z') },
+    });
+    const young = await createContest(league.id, event.id, 'Young', ContestStatus.DRAFT);
+    await getPrisma().contest.update({ where: { id: young.id }, data: { createdAt: new Date('2026-06-03T00:00:00.000Z') } });
+    // Left unopened past an event that has since finished.
+    const finishedEvent = await createLaterEvent(suffix, new Date('2026-05-01T12:00:00.000Z'));
+    await getPrisma().sportEvent.update({ where: { id: finishedEvent.event.id }, data: { status: 'COMPLETED' } });
+    const abandoned = await createContest(league.id, finishedEvent.event.id, 'Abandoned', ContestStatus.DRAFT);
+    await getPrisma().contest.update({ where: { id: abandoned.id }, data: { createdAt: new Date('2026-04-01T00:00:00.000Z') } });
+
+    const drafts = await repos().contests.findDraftsStartingBy({
+      firstStartsBy: new Date('2026-06-05T00:00:00.000Z'),
+      createdBy: new Date('2026-06-02T00:00:00.000Z'),
+      firstStatuses: [SportEventStatus.DRAFT, SportEventStatus.SCHEDULED],
+    });
+
+    expect(drafts.filter((contest) => contest.leagueId === league.id).map((contest) => contest.id)).toEqual([soon.id]);
   });
 
   it("finds only the league's own contests open for entries, oldest first, by id and name", async () => {
@@ -1817,10 +1911,16 @@ describe('Entry reminders on the Prisma adapters (#845)', () => {
       appBaseUrl: 'https://app.example.test',
     });
     const dayBefore = new Date(event.startDate.getTime() - 24 * 60 * 60_000 + 60_000);
+    // Made OPEN directly, so the sweep is told to look at it, as opening it would (#1170).
+    await repos().contests.recheckReminders({ contestIds: [open.id] }, dayBefore);
 
     await reminders.queueDue(dayBefore);
     await reminders.queueDue(dayBefore);
     await deliverQueuedEmail();
+
+    // The sweep moved the check on to the 3-hour reminder.
+    await expect(getPrisma().contest.findUniqueOrThrow({ where: { id: open.id }, select: { nextReminderAt: true } }))
+      .resolves.toEqual({ nextReminderAt: new Date(event.startDate.getTime() - 3 * 60 * 60_000) });
 
     // Other suites' contests may be due too; only this league's emails are this test's.
     const ours = send.mock.calls.map(([message]) => message).filter((message) => message.from.name === league.name);

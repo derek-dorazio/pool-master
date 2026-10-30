@@ -596,23 +596,117 @@ describe('EntryReminders.queueDue', () => {
     ]);
   });
 
-  it('reads no rules for a contest none of whose events starts within the earliest reminder\'s reach, and none at all when no contest is in reach', async () => {
+  it('checks each contest once, then reads nothing until its next reminder time, which it stores on the contest (#1170)', async () => {
     const league = world.addLeague();
     const soon = world.addSportEvent({ startDate: CLOSES_AT });
     const later = world.addSportEvent({ startDate: new Date(CLOSES_AT.getTime() + 72 * HOUR) });
     const due = contestWithRules(league.id, { sportEventIds: [soon.id] });
-    contestWithRules(league.id, { sportEventIds: [later.id] });
+    const notYet = contestWithRules(league.id, { sportEventIds: [later.id] });
     member(league.id, 'Nora');
 
     await reminders().queueDue(before(CLOSES_AT, 48, 1));
 
     expect(outbox.rows).toHaveLength(1);
-    expect(reads.filter((read) => read.startsWith('rules:'))).toEqual([`rules:${due.id}`]);
+    expect(world.reminderChecks.get(due.id)).toEqual(before(CLOSES_AT, 24));
+    expect(world.reminderChecks.get(notYet.id)).toEqual(before(later.startDate, 48));
 
     reads = [];
-    await reminders().queueDue(before(CLOSES_AT, 96));
+    await reminders().queueDue(before(CLOSES_AT, 48, 6));
 
+    expect(reads).toEqual([]);
+    expect(outbox.rows).toHaveLength(1);
+  });
+
+  it('sends the next reminder when its time comes, and stores none once the last one is sent (#1170)', async () => {
+    const league = world.addLeague();
+    const event = world.addSportEvent({ startDate: CLOSES_AT });
+    const contest = contestWithRules(league.id, { sportEventIds: [event.id] });
+    member(league.id, 'Nora');
+
+    for (const hours of [48, 24, 3]) {
+      await reminders().queueDue(before(CLOSES_AT, hours, 1));
+    }
+
+    expect(outbox.rows.map((row) => row.idempotencyKey)).toEqual([
+      expect.stringContaining(':48h:'),
+      expect.stringContaining(':24h:'),
+      expect.stringContaining(':3h:'),
+    ]);
+    expect(world.reminderChecks.get(contest.id)).toBeNull();
+  });
+
+  it('keeps the check of a contest whose reminders fail to queue, so the next sweep tries it again, while the others move on (#1170)', async () => {
+    const failing = world.addLeague();
+    const fine = world.addLeague();
+    const event = world.addSportEvent({ startDate: CLOSES_AT });
+    const stuck = contestWithRules(failing.id, { sportEventIds: [event.id] });
+    const sent = contestWithRules(fine.id, { sportEventIds: [event.id] });
+    member(failing.id, 'Nora');
+    member(fine.id, 'Omar');
+    const leagues = world.leagueRepo();
+    jest.spyOn(world, 'leagueRepo').mockReturnValue({
+      ...leagues,
+      findById: async (id) => {
+        if (id === failing.id) throw new Error('league read failed');
+        return leagues.findById(id);
+      },
+    });
+
+    await reminders().queueDue(before(CLOSES_AT, 48, 1));
+
+    expect(world.reminderChecks.get(stuck.id)).toEqual(new Date(0));
+    expect(world.reminderChecks.get(sent.id)).toEqual(before(CLOSES_AT, 24));
+  });
+
+  it('keeps a recheck made while the sweep ran, instead of the time it worked out from the times it read (#1170)', async () => {
+    const league = world.addLeague();
+    const event = world.addSportEvent({ startDate: CLOSES_AT });
+    const contest = contestWithRules(league.id, { sportEventIds: [event.id] });
+    member(league.id, 'Nora');
+    const sweptAt = before(CLOSES_AT, 48, 1);
+    const rechecked = new Date(sweptAt.getTime() + 1000);
+    const contests = world.contestRepo();
+    jest.spyOn(world, 'contestRepo').mockReturnValue({
+      ...contests,
+      findReminderChecksDue: async (now) => {
+        const due = await contests.findReminderChecksDue(now);
+        // An admin moves the event's start just after the sweep read its contests.
+        await contests.recheckReminders({ sportEventId: event.id }, rechecked);
+        return due;
+      },
+    });
+
+    await reminders().queueDue(sweptAt);
+
+    expect(outbox.rows).toHaveLength(1);
+    expect(world.reminderChecks.get(contest.id)).toEqual(rechecked);
+  });
+
+  it('clears the check of a contest no longer open or live without reading its rules (#1170)', async () => {
+    const league = world.addLeague();
+    const event = world.addSportEvent({ startDate: CLOSES_AT });
+    const contest = contestWithRules(league.id, { sportEventIds: [event.id] });
+    world.contests.set(contest.id, { ...contest, status: ContestStatus.COMPLETED });
+    member(league.id, 'Nora');
+
+    await reminders().queueDue(before(CLOSES_AT, 48, 1));
+
+    expect(outbox.rows).toHaveLength(0);
     expect(reads.filter((read) => read.startsWith('rules:'))).toEqual([]);
+    expect(world.reminderChecks.get(contest.id)).toBeNull();
+  });
+
+  it('looks again at a contest opened less than 6 hours ago when its quiet hours end, and sends the reminder still due then (#1170)', async () => {
+    const league = world.addLeague();
+    const event = world.addSportEvent({ startDate: CLOSES_AT });
+    const openedAt = before(CLOSES_AT, 48, -5 * 60);
+    const contest = contestWithRules(league.id, { sportEventIds: [event.id], openedAt });
+    member(league.id, 'Nora');
+
+    await reminders().queueDue(before(CLOSES_AT, 48, 1));
+
+    expect(outbox.rows).toHaveLength(0);
+    expect(world.reminderChecks.get(contest.id)).toEqual(new Date(openedAt.getTime() + 6 * HOUR));
   });
 
   it('follows the offsets a root admin saved in EMAIL_CONFIG', async () => {
@@ -622,10 +716,10 @@ describe('EntryReminders.queueDue', () => {
     member(league.id, 'Nora');
     const config = { ...EMAIL_SETTINGS.defaults({ POOLMASTER_ENVIRONMENT: 'prod' }), entryReminderHours: [72] };
 
-    await reminders(config).queueDue(before(CLOSES_AT, 48, 1));
-    expect(outbox.rows).toHaveLength(0);
-
     await reminders(config).queueDue(before(CLOSES_AT, 72, 1));
     expect(outbox.rows.map((row) => row.idempotencyKey)).toEqual([expect.stringContaining(':72h:')]);
+
+    await reminders(config).queueDue(before(CLOSES_AT, 48, 1));
+    expect(outbox.rows).toHaveLength(1);
   });
 });

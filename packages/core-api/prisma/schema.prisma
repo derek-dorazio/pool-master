@@ -1200,22 +1200,26 @@ model ParticipantProviderMapping {
 // =============================================================================
 
 model Contest {
-  id            String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  leagueId      String              @map("league_id") @db.Uuid
-  name          String
-  status        PrismaContestStatus @default(DRAFT)
-  contestFormat PrismaContestFormat @default(ROSTER) @map("contest_format")
-  selectionType PrismaSelectionType @map("selection_type")
+  id             String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  leagueId       String              @map("league_id") @db.Uuid
+  name           String
+  status         PrismaContestStatus @default(DRAFT)
+  contestFormat  PrismaContestFormat @default(ROSTER) @map("contest_format")
+  selectionType  PrismaSelectionType @map("selection_type")
   /// When the commissioner opened the contest to the league (#845); null for a draft, and for contests opened before it was kept.
-  openedAt      DateTime?           @map("opened_at") @db.Timestamptz
-  startsAt      DateTime?           @map("starts_at") @db.Timestamptz
-  endsAt        DateTime?           @map("ends_at") @db.Timestamptz
+  openedAt       DateTime?           @map("opened_at") @db.Timestamptz
+  startsAt       DateTime?           @map("starts_at") @db.Timestamptz
+  endsAt         DateTime?           @map("ends_at") @db.Timestamptz
+  /// When the entry reminder sweep next looks at the contest (#1170): its next reminder's moment,
+  /// the end of the quiet hours after it opened, or once its events or their times change. Null
+  /// when no reminder is left; the sweep reads only contests whose moment has come.
+  nextReminderAt DateTime?           @map("next_reminder_at") @db.Timestamptz
   /// The season whose cup the contest counts toward (#841): its first event's year at creation.
-  seasonYear    Int                 @map("season_year")
+  seasonYear     Int                 @map("season_year")
   /// How much it counts toward its cup and the championship (#841); fixed once COMPLETED.
-  cupWeight     PrismaCupWeight     @default(NORMAL) @map("cup_weight")
-  createdAt     DateTime            @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt     DateTime            @updatedAt @map("updated_at") @db.Timestamptz
+  cupWeight      PrismaCupWeight     @default(NORMAL) @map("cup_weight")
+  createdAt      DateTime            @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime            @updatedAt @map("updated_at") @db.Timestamptz
 
   league              League                      @relation(fields: [leagueId], references: [id])
   sportEvents         ContestSportEvent[]
@@ -1235,6 +1239,7 @@ model Contest {
 
   @@index([leagueId, seasonYear])
   @@index([status])
+  @@index([nextReminderAt])
   @@map("contests")
 }
 

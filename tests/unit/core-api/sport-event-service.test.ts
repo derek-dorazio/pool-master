@@ -1,5 +1,6 @@
 import { expect, jest } from '@jest/globals';
 import { MANUAL_ADMIN_PROVIDER_ID, Sport, SportEventStatus } from '@poolmaster/shared/domain';
+import type { ContestRepository } from '@poolmaster/shared/db';
 import { EventLifecycleService } from '../../../packages/core-api/src/modules/events/event-lifecycle-service';
 import type { SportEventChangedNotice } from '../../../packages/core-api/src/modules/notifications';
 import { SportEventService } from '../../../packages/core-api/src/modules/events/service';
@@ -35,6 +36,7 @@ const NOW = new Date('2026-01-15T12:00:00.000Z');
 
 function setup(sportName: Sport = Sport.GOLF, sportEventChanged?: SportEventChangedNotice) {
   const store = new InMemorySportEvents();
+  const reminderRechecks = jest.fn<ContestRepository['recheckReminders']>().mockResolvedValue(undefined);
   const sport = store.addSport(sportName);
   const sportLeague = store.addSportLeague(sport.id);
   const sportEvents = store.sportEventRepo();
@@ -70,11 +72,13 @@ function setup(sportName: Sport = Sport.GOLF, sportEventChanged?: SportEventChan
       tiers: store.tierRepo(),
       valuations: store.valuationRepo(),
       ...NO_PICKS_ON_EVENT,
+      contests: { recheckReminders: async () => undefined },
     }),
     lifecycle,
+    contests: { recheckReminders: reminderRechecks },
     now: () => NOW,
   });
-  return { store, service, sportLeague, lifecycle, sportEvents };
+  return { store, service, sportLeague, lifecycle, sportEvents, reminderRechecks };
 }
 
 /** An ordinary edit: a moved start of a released event is told to its leagues. */
@@ -661,6 +665,18 @@ describe('SportEventService.updateEvent keeps the round schedule in step with th
 
     expect(notice.sportEventChanged).not.toHaveBeenCalled();
     expect(roundsOf(store, released.id)).toEqual([{ roundNumber: 1, scheduledDate: '2026-06-04T11:45:00.000Z' }]);
+  });
+
+  it('has the reminder sweep look again at the event\'s contests when its start moves, even quietly, but not when the start stays (#1170)', async () => {
+    const { store, service, sportLeague, reminderRechecks } = setup();
+    const { event: released } = await service.createEvent({ sportLeagueId: sportLeague.id, eventYear: 2026, ...MANUAL_INPUT, rounds: 1 });
+    await store.sportEventRepo().update(released.id, { status: SportEventStatus.SCHEDULED });
+
+    await service.updateEvent(released.id, { name: 'Renamed', startDate: MANUAL_INPUT.startDate }, TELL);
+    expect(reminderRechecks).not.toHaveBeenCalled();
+
+    await service.updateEvent(released.id, { startDate: new Date('2026-06-04T11:45:00.000Z') }, { tellMembers: false });
+    expect(reminderRechecks.mock.calls).toEqual([[{ sportEventId: released.id }, NOW]]);
   });
 
   it('leaves the round schedule alone when an edit changes neither the start date nor the round count', async () => {

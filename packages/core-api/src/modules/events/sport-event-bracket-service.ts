@@ -24,6 +24,7 @@ import { randomUUID } from 'node:crypto';
 import type { FastifyBaseLogger } from 'fastify';
 import type {
   ContestEntryMatchPredictionRepository,
+  ContestRepository,
   ParticipantLeagueAffiliationRepository,
   ParticipantRepository,
   ReplacementValuation,
@@ -191,7 +192,10 @@ export interface SportEventBracketServiceDeps {
   valuations: Pick<SportEventParticipantValuationRepository, 'findBySportEvent'>;
   /** Whether a game has picks: a released game's spread is fixed once it has (#720). */
   predictions: Pick<ContestEntryMatchPredictionRepository, 'hasAnyOnMatch'>;
+  /** A game's new time can move its contests' entry reminders (#1170). */
+  contests: Pick<ContestRepository, 'recheckReminders'>;
   newId?: () => string;
+  now?: () => Date;
   logger?: FastifyBaseLogger;
 }
 
@@ -269,6 +273,10 @@ export class SportEventBracketService {
       await this.assertSpreadUnpicked(event, match);
     }
     await this.deps.matches.update(match.id, edit);
+    // A squares grid or a second-chance bracket closes at a game's start (#1170).
+    if (edit.scheduledDate !== undefined && edit.scheduledDate?.getTime() !== match.scheduledDate?.getTime()) {
+      await this.deps.contests.recheckReminders({ sportEventId }, this.deps.now?.() ?? new Date());
+    }
     this.deps.logger?.info({ sportEventId, matchNumber, changesSides, changesSpread }, 'Updated bracket match');
     const updated = (await this.deps.matches.findBySportEvent(sportEventId)).find((candidate) => candidate.id === match.id);
     return updated as SportEventMatch;

@@ -92,7 +92,8 @@ async function contestOn(leagueId: string, sportEventIds: readonly string[], sta
       status,
       contestFormat: 'PREDICTION',
       selectionType: SelectionType.PICK_EM,
-      ...(status === ContestStatus.DRAFT ? {} : { openedAt: new Date(0) }),
+      // Opened long ago, and due a look from the entry reminder sweep, as opening it leaves it (#1170).
+      ...(status === ContestStatus.DRAFT ? {} : { openedAt: new Date(0), nextReminderAt: new Date(0) }),
     },
   });
 }

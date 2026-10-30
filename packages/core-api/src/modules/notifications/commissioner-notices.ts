@@ -99,7 +99,7 @@ export interface CommissionerNoticeDeps extends LeagueMemberDeps {
   /** A draft contest's first event's games, for a contest whose picks close at one of them. */
   matches: Pick<SportEventMatchRepository, 'findBySportEvents'>;
   sportEvents: Pick<SportEventRepository, 'findAll' | 'findByIds' | 'countParticipants'>;
-  contests: Pick<ContestRepository, 'findBySportEvent' | 'findBySportEvents' | 'findByStatuses'>;
+  contests: Pick<ContestRepository, 'findBySportEvent' | 'findBySportEvents' | 'findDraftsStartingBy'>;
   /** A draft contest's rules, for when its picks close. */
   configurations: Pick<ContestConfigurationRepository, 'findByContests'>;
   /** The default contest setups offered on an event. */
@@ -484,8 +484,13 @@ export class CommissionerNotices implements DueNotifications {
    * (#1336).
    */
   private async queueContestsNotOpen(now: Date, commissioners: LeagueCommissioners): Promise<void> {
-    const drafts = (await this.deps.contests.findByStatuses([ContestStatus.DRAFT]))
-      .filter((contest) => now.getTime() - contest.createdAt.getTime() >= JUST_CREATED_MS);
+    // Only the drafts past their first hour whose first event starts within 48 hours are read
+    // (#1170), never every draft ever left unopened.
+    const drafts = await this.deps.contests.findDraftsStartingBy({
+      firstStartsBy: new Date(now.getTime() + NOT_OPEN_MS),
+      createdBy: new Date(now.getTime() - JUST_CREATED_MS),
+      firstStatuses: UPCOMING_STATUSES,
+    });
     if (drafts.length === 0) return;
     const sportEvents = new Map((await this.deps.sportEvents.findByIds(
       [...new Set(drafts.flatMap((contest) => contest.sportEventIds.slice(0, 1)))],

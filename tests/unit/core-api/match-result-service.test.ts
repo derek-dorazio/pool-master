@@ -34,6 +34,7 @@ async function setup({ sport = Sport.BASKETBALL, status = SportEventStatus.IN_PR
     matches: store.matchRepo(),
     tiers: store.tierRepo(),
     valuations: store.valuationRepo(),
+    contests: { recheckReminders: async () => undefined },
     ...NO_PICKS_ON_EVENT,
     newId: () => {
       sequence += 1;
@@ -72,6 +73,7 @@ async function week() {
     matches: store.matchRepo(),
     tiers: store.tierRepo(),
     valuations: store.valuationRepo(),
+    contests: { recheckReminders: async () => undefined },
     ...NO_PICKS_ON_EVENT,
     newId: () => {
       sequence += 1;
