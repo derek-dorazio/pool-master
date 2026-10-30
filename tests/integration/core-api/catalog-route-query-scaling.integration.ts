@@ -1,7 +1,8 @@
 /**
  * #1248 — the sport catalog's list reads cost the same SQL statements for 2 rows as for 20: the
- * sport leagues, one sport league with its affiliations, and the matchups proposed for a
- * reseeded bracket round. The sports, a list the platform fixes, cost the same pinned count.
+ * sport leagues, one sport league with its affiliations, the events and one event's field, rounds,
+ * tiers and bracket, and the matchups proposed for a reseeded bracket round. The sports, a list
+ * the platform fixes, cost the same pinned count.
  *
  * Each case seeds sport leagues of its own beside the reference data the migrations seed, which
  * the list also shows. `rules/testing-rules.md` §9B *Query Scaling Tests* says when a route
@@ -11,7 +12,12 @@ import { randomUUID } from 'crypto';
 import { BracketAdvancement, MatchSide, MatchStatus, Sport, SportEventStatus } from '@poolmaster/shared/domain';
 import {
   ParticipantLeagueAffiliationListResponseSchema,
+  SportEventBracketResponseSchema,
+  SportEventListResponseSchema,
+  SportEventResponseSchema,
+  SportEventRoundListResponseSchema,
   SportEventRoundMatchupsResponseSchema,
+  SportEventTierListResponseSchema,
   SportLeagueListResponseSchema,
   SportListResponseSchema,
   SportLeagueResponseSchema,
@@ -23,7 +29,7 @@ import {
   setupIntegrationTests,
   teardownIntegrationTests,
 } from '../helpers';
-import { DAY, get, okBody } from '../list-route-seeds';
+import { DAY, get, okBody, seedEventWithField, seedFootballWeek, seedTiers } from '../list-route-seeds';
 import { expectConstantQueries, expectFixedQueries } from '../query-scaling';
 
 // No mocks.
@@ -79,6 +85,46 @@ async function seedSportLeagues(sportLeagues: number) {
     await seedSportLeague(1);
   }
   return createTestUser({ isRootAdmin: true });
+}
+
+/**
+ * A root admin, and a golf sport league of its own with `events` upcoming events, each in a series
+ * of its own with a field of two and a tier, so the per-event field and tier counts scale too.
+ */
+async function seedSportLeagueEvents(events: number) {
+  const prisma = getPrisma();
+  const sportLeague = await seedSportLeague(0);
+  for (let index = 0; index < events; index += 1) {
+    const series = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `${sportLeague.name} Event ${String(index)}` } });
+    const startDate = new Date(Date.now() + (31 + index) * DAY);
+    const event = await prisma.sportEvent.create({
+      data: {
+        eventSeriesId: series.id, eventYear: startDate.getUTCFullYear(), externalId: `scaling-${randomUUID()}`, providerId: 'integration-test',
+        sport: Sport.GOLF, name: `${sportLeague.name} Event ${String(index)}`, startDate,
+      },
+    });
+    const field = [];
+    for (let golfer = 0; golfer < 2; golfer += 1) {
+      const participant = await prisma.participant.create({
+        data: { sportId: sportLeague.sportId, name: `Event Golfer ${randomUUID().slice(0, 8)}`, participantType: 'INDIVIDUAL', status: 'ACTIVE' },
+      });
+      field.push(await prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: participant.id, isActive: true } }));
+    }
+    await seedTiers(event.id, field, 1);
+  }
+  return { sportLeague, rootAdmin: await createTestUser({ isRootAdmin: true }) };
+}
+
+/** A root admin, and a golf event with `rounds` scheduled rounds a day apart. */
+async function seedEventRounds(rounds: number) {
+  const prisma = getPrisma();
+  const { event } = await seedEventWithField(2);
+  for (let roundNumber = 1; roundNumber <= rounds; roundNumber += 1) {
+    await prisma.sportEventRound.create({
+      data: { sportEventId: event.id, roundNumber, scheduledDate: new Date(event.startDate.getTime() + (roundNumber - 1) * DAY) },
+    });
+  }
+  return { event, rootAdmin: await createTestUser({ isRootAdmin: true }) };
 }
 
 /**
@@ -181,6 +227,58 @@ describe('sport catalog reads cost the same statements for 2 rows as for 20', ()
       call: () => get('/api/v1/sports/', viewer),
       rowsShown: (response) => okBody(response, SportListResponseSchema).sports.length,
       statements: 1,
+    });
+  });
+
+  it("GET a sport league's events: the same statements for 2 events as for 20", async () => {
+    await expectConstantQueries({
+      route: 'GET /api/v1/events/',
+      seed: seedSportLeagueEvents,
+      call: ({ sportLeague, rootAdmin }) => get(`/api/v1/events/?sportLeagueId=${sportLeague.id}`, rootAdmin),
+      rowsShown: (response) => okBody(response, SportEventListResponseSchema).events.length,
+    });
+  });
+
+  it('GET an event: the same statements for a field of 2 as for 20', async () => {
+    await expectConstantQueries({
+      route: 'GET /api/v1/events/{eventId}',
+      seed: async (golfers) => ({ ...(await seedEventWithField(golfers)), rootAdmin: await createTestUser({ isRootAdmin: true }) }),
+      call: ({ event, rootAdmin }) => get(`/api/v1/events/${event.id}`, rootAdmin),
+      rowsShown: (response) => okBody(response, SportEventResponseSchema).event.loadedParticipantCount,
+    });
+  });
+
+  it("GET an event's rounds: the same statements for 2 rounds as for 20", async () => {
+    await expectConstantQueries({
+      route: 'GET /api/v1/events/{eventId}/rounds',
+      seed: seedEventRounds,
+      call: ({ event, rootAdmin }) => get(`/api/v1/events/${event.id}/rounds`, rootAdmin),
+      rowsShown: (response) => okBody(response, SportEventRoundListResponseSchema).rounds.length,
+    });
+  });
+
+  it("GET an event's tiers: the same statements for 2 tiers as for 20", async () => {
+    await expectConstantQueries({
+      route: 'GET /api/v1/events/{eventId}/tiers',
+      seed: async (tiers) => {
+        const { event, field } = await seedEventWithField(tiers);
+        await seedTiers(event.id, field, tiers);
+        return { event, rootAdmin: await createTestUser({ isRootAdmin: true }) };
+      },
+      call: ({ event, rootAdmin }) => get(`/api/v1/events/${event.id}/tiers`, rootAdmin),
+      rowsShown: (response) => okBody(response, SportEventTierListResponseSchema).tiers.length,
+    });
+  });
+
+  it("GET an event's bracket: the same statements for 2 games as for 20", async () => {
+    await expectConstantQueries({
+      route: 'GET /api/v1/events/{eventId}/bracket',
+      seed: async (games) => ({
+        ...(await seedFootballWeek({ games, startDate: new Date(Date.now() + 7 * DAY), status: SportEventStatus.SCHEDULED })),
+        rootAdmin: await createTestUser({ isRootAdmin: true }),
+      }),
+      call: ({ event, rootAdmin }) => get(`/api/v1/events/${event.id}/bracket`, rootAdmin),
+      rowsShown: (response) => okBody(response, SportEventBracketResponseSchema).matches.length,
     });
   });
 });
