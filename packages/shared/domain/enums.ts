@@ -332,6 +332,18 @@ export const SportEventStatus = {
 export type SportEventStatus = (typeof SportEventStatus)[keyof typeof SportEventStatus];
 
 /**
+ * The statuses an event can still take a contest in: released and not yet started (or moved), or a
+ * knockout under way for a second-chance bracket or a squares game to come. A finished or called
+ * off event never can. Contest setup lists events in these statuses, and they bound what a
+ * caller other than a root admin may list (#1348).
+ */
+export const OFFERABLE_SPORT_EVENT_STATUSES: readonly SportEventStatus[] = [
+  SportEventStatus.SCHEDULED,
+  SportEventStatus.POSTPONED,
+  SportEventStatus.IN_PROGRESS,
+];
+
+/**
  * Whether provider sync may touch a SportEvent — separate from providerId/externalId
  * identity. NONE: unlinked, nothing syncs. SCORES_ONLY: an admin linked it to a provider
  * event, so live scores (and an admin-triggered field load) reach it. Every event is

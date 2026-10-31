@@ -49,17 +49,19 @@ export function participantsModule(fastify: FastifyInstance, opts: ParticipantsM
   // --- Search / List ---
 
   fastify.get('/', {
+    onRequest: requireRootAdmin,
     schema: {
       tags: ['Participants'],
       summary: 'List participants',
       description:
-        'The participant catalog, narrowed by text and filters and never paged. `sportId` or a `q` of at least 3 characters is required, so the list never reads every sport\'s catalog: 400 SEARCH_TERM_REQUIRED otherwise. Any signed-in user may read it: '
-        + 'contest setup and ingestion mapping browse it, and a root admin maintains it.',
+        'The participant catalog, narrowed by text and filters and never paged. `sportId` or a `q` of at least 3 characters is required, so the list never reads every sport\'s catalog: 400 SEARCH_TERM_REQUIRED otherwise. '
+        + 'Root admin only (403 ROOT_ADMIN_ACCESS_REQUIRED otherwise): a league reads an event\'s field by the event, never the catalog (#1348).',
       operationId: 'listParticipants',
       querystring: schemaRef('ParticipantListQuery'),
       response: {
         200: schemaRef('ParticipantListResponse'),
         400: schemaRef('ErrorEnvelope'),
+        403: schemaRef('ErrorEnvelope'),
       },
     },
     handler: handler.searchParticipants,
@@ -118,14 +120,16 @@ export function participantsModule(fastify: FastifyInstance, opts: ParticipantsM
   });
 
   fastify.get('/:id/provider-mappings', {
+    onRequest: requireRootAdmin,
     schema: {
       tags: ['Participants'],
       summary: 'List a participant\'s provider identities',
-      description: 'How each provider knows the participant — the identities synced data is matched by.',
+      description: 'How each provider knows the participant — the identities synced data is matched by. Root admin only (403 ROOT_ADMIN_ACCESS_REQUIRED otherwise).',
       operationId: 'listParticipantProviderMappings',
       params: { type: 'object', required: ['id'], properties: { id: { type: 'string' } } },
       response: {
         200: schemaRef('ParticipantProviderMappingListResponse'),
+        403: schemaRef('ErrorEnvelope'),
         404: schemaRef('ErrorEnvelope'),
       },
     },

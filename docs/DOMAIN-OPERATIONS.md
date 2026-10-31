@@ -344,7 +344,11 @@ of the contest: the template is where it came from, not what it is.
   to advertise each contest, and the signed-out How to Play page shows them, so a visitor can see
   what PoolMaster runs before signing up. Retired (inactive) templates are public too: they are
   the same kind of copy, with nothing about a league or a user. It was opened for that reason, not
-  because it is global; the other global objects stay `authenticated`. The plan list (#971) is
+  because it is global; the other global objects stay `authenticated`.
+- **Global is not unbounded.** A catalog list that grows with every season or sport stays with
+  the root admin (#1348): the participant list and a participant's provider identities are
+  `rootAdmin`, and the event list answers anyone else only for events that can still take a
+  contest or one sport league season. The plan list (#971) is
   the third exception: every plan's caps and features, built from the plan settings alone, for
   the signed-out Plans page. It holds nothing about any league or user; a league's own plan
   still needs a session.
@@ -631,7 +635,7 @@ are gone (#236).
 
 | Operation | Role | Notes |
 |---|---|---|
-| List | `authenticated` | `listEvents`, filtered by sport, statuses (one or several), sport league (through the series), event year and a name search, unpaged (§16). Returns the canonical `SportEventDto` — the row plus `loadedParticipantCount`, `tierCount`, contest-setup readiness and `allowedTransitions` — to every caller, and `adminCounts` (untiered, unpriced, empty tiers, contests across every league) to a root admin only, `null` to anyone else (#1198). `DRAFT` events are listed to root admins only (#431) |
+| List | `authenticated`, bounded | `listEvents`, filtered by sport, statuses (one or several), sport league (through the series), event year and a name search, unpaged (§16). Returns the canonical `SportEventDto` — the row plus `loadedParticipantCount`, `tierCount`, contest-setup readiness and `allowedTransitions` — to every caller, and `adminCounts` (untiered, unpriced, empty tiers, contests across every league) to a root admin only, `null` to anyone else (#1198). `DRAFT` events are listed to root admins only (#431). A caller other than a root admin lists only events in the statuses that can still take a contest (`OFFERABLE_SPORT_EVENT_STATUSES`: `SCHEDULED`, `POSTPONED`, `IN_PROGRESS`) or one sport league's `eventYear`; any other list is the root admin's catalog, 403 `ROOT_ADMIN_ACCESS_REQUIRED` (#1348) |
 | List event years | `authenticated` | `listEventYears`, `GET /events/years?sportLeagueId=`: the years a sport league has events in, earliest first, read without loading the events (#1198, #1251), for a year picker that then lists one year. A year with only `DRAFT` events is listed to root admins only |
 | Read one | `authenticated` | `getEvent`. A `DRAFT` event is 404 `EVENT_NOT_FOUND` to anyone but a root admin (#431) |
 | Create | `rootAdmin` | `createEvent` (manual) or `createEventFromProviderEvent` (linked for scores), on a sport league in an event year. The series is found or created by name; a second edition of a series in one year is 409 `EVENT_EDITION_ALREADY_EXISTS` — the database's `(eventSeriesId, eventYear)` constraint. The sport comes from the sport league. Seeds the rounds and the default tiers. Provider sync never creates an event: it updates the one linked to a provider event and skips the rest. Every new event is `DRAFT`: commissioners can't see or use it until it is released |
@@ -782,14 +786,14 @@ event's, by the ruling above, and so is its salary cap: a budget contest copies 
 
 | Operation | Role | Notes |
 |---|---|---|
-| List / search | `authenticated` | Filtered by sport, status, `role` and more, unpaged (§16). `role` is the playing role ("GOLFER"); it was `position` until #246, which left `position` meaning rank alone |
+| List / search | `rootAdmin` | **A10** · 403 `ROOT_ADMIN_ACCESS_REQUIRED` (#1348): only the admin screens browse the catalog; a league reads participants through an event's field. Filtered by sport, status, `role` and more, unpaged (§16). `role` is the playing role ("GOLFER"); it was `position` until #246, which left `position` meaning rank alone |
 | Read one | `authenticated` | |
 | Create, update | `rootAdmin` | **A10** · 403 `ROOT_ADMIN_ACCESS_REQUIRED` from the claim. Before #235 any signed-in user could create or rename a catalog participant |
 
 ### ParticipantProviderMapping
 
 Provider plumbing. Written by sync; read and repaired by `rootAdmin`. #236 adds one read,
-`listParticipantProviderMappings` (`authenticated`, like every catalog read), for the player
+`listParticipantProviderMappings` (`rootAdmin` since #1348; it was `authenticated`), for the admin player
 page — the mapping count the golf player list carried is gone. #205 adds the repair:
 `bindParticipantProviderMapping` (`rootAdmin`, `POST /participants/:id/provider-mappings`) binds
 a provider's identifier to the participant with `MANUAL` confidence, moving it if another

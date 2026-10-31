@@ -224,7 +224,7 @@ describe('events routes', () => {
 
       const viewerRes = await getApp().inject({
         method: 'GET',
-        url: '/api/v1/events/?sport=GOLF',
+        url: '/api/v1/events/?sport=GOLF&status=SCHEDULED&status=POSTPONED&status=IN_PROGRESS',
         headers: viewer.headers,
       });
       expect(viewerRes.statusCode).toBe(200);

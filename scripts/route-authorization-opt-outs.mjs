@@ -112,7 +112,6 @@ export const ROUTE_AUTHORIZATION_OPT_OUTS = [
     'GET /api/v1/sport-leagues/:sportLeagueId',
     'GET /api/v1/sport-leagues/:sportLeagueId/affiliations',
     'GET /api/v1/participants/:id',
-    'GET /api/v1/participants/:id/provider-mappings',
   ].map((route) => ({
     route,
     reason: 'Global object read (access rule A11): owned by no league, identical for every viewer, so readable by any signed-in user.',

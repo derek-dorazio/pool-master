@@ -1421,7 +1421,7 @@ export const updateContestConfigTemplate = <ThrowOnError extends boolean = false
 /**
  * List sport events
  *
- * The sport-event catalog, narrowed by sport, statuses, sport league, event year and name and never paged. At least one of `sport`, `sportLeagueId` and `eventYear` is required, so the list never reads every event: 400 SPORT_EVENT_FILTER_REQUIRED otherwise. Any signed-in user may read it: contest setup picks an event from it, and a root admin browses it. Each event carries its loaded field size, contest-setup readiness and tier count; a root admin's list also carries each event's adminCounts. DRAFT events (not yet released for contests) are listed for a root admin only.
+ * The sport-event catalog, narrowed by sport, statuses, sport league, event year and name and never paged. At least one of `sport`, `sportLeagueId` and `eventYear` is required, so the list never reads every event: 400 SPORT_EVENT_FILTER_REQUIRED otherwise. A root admin browses the whole catalog. Any other signed-in user, for contest setup, may list only events in the statuses that can still take a contest (SCHEDULED, POSTPONED, IN_PROGRESS) or one sport league's `eventYear`: 403 ROOT_ADMIN_ACCESS_REQUIRED otherwise (#1348). Each event carries its loaded field size, contest-setup readiness and tier count; a root admin's list also carries each event's adminCounts. DRAFT events (not yet released for contests) are listed for a root admin only.
  */
 export const listEvents = <ThrowOnError extends boolean = false>(options?: Options<ListEventsData, ThrowOnError>): RequestResult<ListEventsResponses, ListEventsErrors, ThrowOnError> => (options?.client ?? client).get<ListEventsResponses, ListEventsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -2232,7 +2232,7 @@ export const getEventPage = <ThrowOnError extends boolean = false>(options: Opti
 /**
  * List participants
  *
- * The participant catalog, narrowed by text and filters and never paged. `sportId` or a `q` of at least 3 characters is required, so the list never reads every sport's catalog: 400 SEARCH_TERM_REQUIRED otherwise. Any signed-in user may read it: contest setup and ingestion mapping browse it, and a root admin maintains it.
+ * The participant catalog, narrowed by text and filters and never paged. `sportId` or a `q` of at least 3 characters is required, so the list never reads every sport's catalog: 400 SEARCH_TERM_REQUIRED otherwise. Root admin only (403 ROOT_ADMIN_ACCESS_REQUIRED otherwise): a league reads an event's field by the event, never the catalog (#1348).
  */
 export const listParticipants = <ThrowOnError extends boolean = false>(options?: Options<ListParticipantsData, ThrowOnError>): RequestResult<ListParticipantsResponses, ListParticipantsErrors, ThrowOnError> => (options?.client ?? client).get<ListParticipantsResponses, ListParticipantsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -2284,7 +2284,7 @@ export const updateParticipant = <ThrowOnError extends boolean = false>(options:
 /**
  * List a participant's provider identities
  *
- * How each provider knows the participant — the identities synced data is matched by.
+ * How each provider knows the participant — the identities synced data is matched by. Root admin only (403 ROOT_ADMIN_ACCESS_REQUIRED otherwise).
  */
 export const listParticipantProviderMappings = <ThrowOnError extends boolean = false>(options: Options<ListParticipantProviderMappingsData, ThrowOnError>): RequestResult<ListParticipantProviderMappingsResponses, ListParticipantProviderMappingsErrors, ThrowOnError> => (options.client ?? client).get<ListParticipantProviderMappingsResponses, ListParticipantProviderMappingsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
