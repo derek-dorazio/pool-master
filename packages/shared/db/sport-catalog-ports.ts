@@ -341,7 +341,7 @@ export interface SportEventTierRepository {
    * tier when none is given.
    */
   replace(sportEventId: string, tiers: readonly SportEventTierDefinition[], reassignTo?: string): Promise<void>;
-  /** Valuations placed in each of the event's tiers (0 where none). */
+  /** Valuations placed in each of the event's tiers; a tier with none is left out. */
   countValuations(sportEventId: string): Promise<Map<string, number>>;
 }
 
