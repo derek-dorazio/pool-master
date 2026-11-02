@@ -1071,11 +1071,11 @@ describe('the member contest emails\' header, contest card and places', () => {
 });
 
 describe('the email preview examples', () => {
-  it('link every preview email to QA, never to localhost, so each link works when the preview is opened in a real inbox', () => {
+  it('link and load pictures in every preview email from QA, never localhost, so each link and picture works in a real inbox', () => {
     const templateKeys = Object.keys(EMAIL_TEMPLATES) as SystemEmailTemplateKey[];
     const linksOffQa = templateKeys.flatMap((templateKey) => {
       const message = renderSystemEmailTemplate(templateKey, EMAIL_TEMPLATE_FIXTURES[templateKey], UTC);
-      const hrefs = [...message.html.matchAll(/href="([^"]+)"/g)].map((match) => match[1]);
+      const hrefs = [...message.html.matchAll(/(?:href|src)="([^"]+)"/g)].map((match) => match[1]);
       const textUrls = message.text.match(/https?:\/\/\S+/g) ?? [];
       return [...hrefs, ...textUrls]
         .filter((url) => !url.startsWith('https://qa.ultimateofficepoolmanager.com/') && !url.startsWith('mailto:'))
