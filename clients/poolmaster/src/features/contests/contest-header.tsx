@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import type { ContestEntryStatus } from '@poolmaster/shared/domain';
-import { useNavigate } from 'react-router';
+import { Navigate, useLocation, useNavigate } from 'react-router';
 import type { ContestDto } from '@/lib/api';
 import {
   buildContestLandingPath,
@@ -9,6 +9,7 @@ import {
   buildLeagueContestLeaderboardPath,
   buildLeagueContestPath,
 } from '@/features/leagues/league-routing';
+import { useLeagueContextById } from '@/features/leagues/use-league-context';
 import { Breadcrumbs, Heading, SegmentedControl, Tile } from '@/features/shared/ui';
 import { buildMyContestEntriesPath, entryPageView, type ContestView } from './contest-page-view';
 import { ContestStatusBadge } from './contest-status-badge';
@@ -71,6 +72,26 @@ function ContestSubMenu({
 }
 
 /**
+ * Where a contest page belongs when its URL names another league (#1412): the same page under the
+ * contest's own league, or null while the league loads, when the URL is right, or when the league
+ * can't be read (the page then shows as it is).
+ */
+function useOwnLeagueAddress(leagueId: string, leagueCode: string): string | null {
+  const location = useLocation();
+  const { league } = useLeagueContextById(leagueId);
+  if (!league || league.leagueCode.toLowerCase() === leagueCode.toLowerCase()) {
+    return null;
+  }
+  const segments = location.pathname.split('/');
+  const codeAt = segments.indexOf('league') + 1;
+  if (codeAt === 0) {
+    return null;
+  }
+  segments[codeAt] = encodeURIComponent(league.leagueCode);
+  return `${segments.join('/')}${location.search}${location.hash}`;
+}
+
+/**
  * The header every contest page shares: the trail back to the league's contests, badges, a title with anything beside it and a summary
  * line on the left, the page's own actions on the right, and the contest sub-menu underneath.
  */
@@ -124,6 +145,7 @@ function ContestHeader({
  * Every contest page's frame: the header with the trail Contests / contest (/ entry), the
  * contest's status badge, name and the Leaderboard / Entries / My entry sub-menu built from the
  * contest, then the page's body. Contests opens the league's contests on this contest (#1392).
+ * A URL naming another league is replaced with the contest's own league's (#1412).
  */
 export function ContestPageFrame({
   actions,
@@ -163,6 +185,10 @@ export function ContestPageFrame({
   titleAside?: ReactNode;
   titleTestId: string;
 }) {
+  const ownLeagueAddress = useOwnLeagueAddress(contest.leagueId, leagueCode);
+  if (ownLeagueAddress) {
+    return <Navigate replace to={ownLeagueAddress} />;
+  }
   const isEntryPage = entryName !== undefined;
   const trail = [
     { href: buildContestsFocusPath(leagueCode, contest), label: 'Contests' },
