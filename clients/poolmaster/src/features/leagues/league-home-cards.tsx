@@ -1,10 +1,9 @@
-import { ContestStatus, SelectionType, SquadMembershipStatus } from '@poolmaster/shared/domain';
+import { SelectionType, SquadMembershipStatus } from '@poolmaster/shared/domain';
 import type { ContestDto, ContestEntryDto, SquadDto } from '@/lib/api';
 import { formatUserName } from '@/features/account/user-name';
-import { ContestRow } from '@/features/contests/contest-row';
+import { CurrentContestList } from '@/features/contests/current-contest-list';
 import { ContestStatusBadge } from '@/features/contests/contest-status-badge';
 import { MineMarker } from '@/features/contests/mine-marker';
-import { listedContestStartsAt } from '@/features/contests/use-contest-schedule';
 import { useBracketLeaderboardQuery, useContestLeaderboardQuery } from '@/features/contests/use-contest-leaderboard';
 import {
   Countdown,
@@ -33,14 +32,12 @@ import {
 } from './league-home';
 import {
   describeMyEntry,
-  ENTRY_STATE_NOTE,
   type MyEntriesState,
 } from '@/features/contests/my-contest-entry';
 import { cupProgress, cupsOnShow, describeCupStanding } from '@/features/championships/cup-view';
 import { useSeasonCupsQuery } from '@/features/championships/use-cups-query';
 import {
   buildLeagueContestLeaderboardPath,
-  buildLeagueContestPath,
   buildLeagueContestsPath,
   buildLeaguePointsRacePath,
   buildLeagueTeamPath,
@@ -93,7 +90,8 @@ export function UpNextCard({
   );
 }
 
-export function OtherContestsCard({
+/** League Home's Live and open card (#1390): the shared current-contest list, less the Up next contest. */
+export function LiveAndOpenCard({
   contests,
   entriesByContestId,
   entriesState,
@@ -101,7 +99,7 @@ export function OtherContestsCard({
   leagueCode,
 }: {
   contests: readonly ContestDto[];
-  entriesByContestId: ReadonlyMap<string, ContestEntryDto[]>;
+  entriesByContestId: ReadonlyMap<string, readonly ContestEntryDto[]>;
   entriesState: MyEntriesState;
   hasTeam: boolean;
   leagueCode: string;
@@ -109,38 +107,19 @@ export function OtherContestsCard({
   return (
     <PanelCard
       footer={{ label: 'All contests', testId: 'league-home-all-contests', to: buildLeagueContestsPath(leagueCode) }}
-      testId="league-home-other-contests"
-      title="Other contests"
+      testId="league-home-live-and-open"
+      title="Live and open"
     >
-      {contests.length ? (
-        <PanelList>
-          {contests.map((contest) => {
-            const hasEntry = (entriesByContestId.get(contest.id)?.length ?? 0) > 0;
-            return (
-              <li key={contest.id}>
-                <ContestRow
-                  density="compact"
-                  name={contest.name}
-                  note={!hasTeam
-                    ? 'Choose your name in this league to enter'
-                    : entriesState !== 'ready'
-                      ? ENTRY_STATE_NOTE[entriesState]
-                      : hasEntry ? 'You have an entry' : 'You haven’t entered'}
-                  startsAt={listedContestStartsAt(contest)}
-                  state={{ leagueCode }}
-                  status={<ContestStatusBadge status={contest.status} />}
-                  testId={`league-home-contest-${contest.id}`}
-                  to={contest.status === ContestStatus.ACTIVE
-                    ? buildLeagueContestLeaderboardPath(leagueCode, contest.id)
-                    : buildLeagueContestPath(leagueCode, contest.id)}
-                />
-              </li>
-            );
-          })}
-        </PanelList>
-      ) : (
-        <EmptyState body="No other contests are open or live right now." size="inline" />
-      )}
+      <CurrentContestList
+        contests={contests}
+        emptyBody="No other contests are open or live right now."
+        entriesByContestId={entriesByContestId}
+        entriesState={entriesState}
+        hasTeam={hasTeam}
+        leagueCode={leagueCode}
+        showDrafts={false}
+        testIdPrefix="league-home-contest"
+      />
     </PanelCard>
   );
 }

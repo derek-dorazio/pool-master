@@ -2,38 +2,26 @@ import { useParams, useSearchParams } from "react-router";
 import { useEffect, useMemo } from "react";
 import { useLeagueContextGuard } from "@/features/leagues/league-context-guard";
 import { getLogger } from "@/lib/logger";
-import {
-  Chip,
-  EmptyState,
-  ErrorState,
-  Heading,
-  ListStack,
-  LoadingState,
-  PageHeader,
-  Tile,
-} from "@/features/shared/ui";
-import { formatSelectionTypeName, pluralize } from '@poolmaster/shared/domain';
-import { buildLeagueContestPath } from '@/features/leagues/league-routing';
-import { ContestRow } from './contest-row';
-import { ContestStatusBadge } from './contest-status-badge';
-import { listedContestStartsAt } from './use-contest-schedule';
+import { ErrorState, LoadingState, PanelCard } from "@/features/shared/ui";
 import { useLeagueContext } from '@/features/leagues/use-league-context';
-import { ContestsViewSwitch } from './contests-view-switch';
+import { ContestsPageHeader } from './contests-view-switch';
+import { CurrentContestList } from './current-contest-list';
 import { useMyContestEntries } from './use-contest-entries';
 import { useLeagueContestsQuery } from './use-league-contests-query';
 
-
+/**
+ * Contests › Current (#1390): every current contest in the league, in the shared list League
+ * Home uses, with entry counts. `?focus={contestId}` tints and scrolls to the contest the viewer
+ * came from; an id that is not listed just shows the list.
+ */
 export function LeagueContestsPage() {
   const { leagueCode = "" } = useParams<{ leagueCode: string }>();
   const [searchParams] = useSearchParams();
-  const logger = getLogger().child({
-    feature: "league-contests-page",
-  });
-  const isMyEntriesFilter = searchParams.get("filter") === "my-entries";
+  const focusContestId = searchParams.get("focus");
+  const logger = useMemo(() => getLogger().child({ feature: "league-contests-page" }), []);
 
   // #202 — one league-context call, shared. Carries the viewer's own edges (A8).
   const { query: leagueQuery, league, viewer } = useLeagueContext(leagueCode);
-
 
   useEffect(() => {
     if (!leagueQuery.isError) {
@@ -41,47 +29,26 @@ export function LeagueContestsPage() {
     }
 
     logger.warn(
-      {
-        action: "leagueContests.league.failed",
-        data: {
-          leagueCode,
-        },
-        err: leagueQuery.error,
-      },
+      { action: "leagueContests.league.failed", data: { leagueCode }, err: leagueQuery.error },
       "League Contests page failed to load league context",
     );
   }, [leagueCode, leagueQuery.error, leagueQuery.isError, logger]);
 
   const leagueId = league?.id ?? "";
+  // The list holds the current contests only (#1161); finished ones are on the Past tab.
   const contestsQuery = useLeagueContestsQuery(leagueId);
-
-  // The list holds the current contests only (#1161); finished ones are on Contest History.
-  const activeContests = useMemo(() => contestsQuery.data ?? [], [contestsQuery.data]);
-  const myEntries = useMyContestEntries(leagueId, isMyEntriesFilter && viewer.mySquadId !== null);
+  const hasTeam = viewer.mySquadId !== null;
+  const myEntries = useMyContestEntries(leagueId, hasTeam);
   useEffect(() => {
     if (!myEntries.isError) {
       return;
     }
 
     logger.warn(
-      {
-        action: "leagueContests.myEntries.failed",
-        data: {
-          leagueCode,
-        },
-      },
+      { action: "leagueContests.myEntries.failed", data: { leagueCode } },
       "League Contests page failed to load the team's contest entries",
     );
   }, [leagueCode, myEntries.isError, logger]);
-  const visibleActiveContests = useMemo(() => {
-    if (!isMyEntriesFilter) {
-      return activeContests;
-    }
-
-    return activeContests.filter(
-      (contest) => (myEntries.entriesByContestId.get(contest.id)?.length ?? 0) > 0,
-    );
-  }, [activeContests, isMyEntriesFilter, myEntries.entriesByContestId]);
   const leagueContext = useLeagueContextGuard(leagueQuery, {
     loadingBody: "Loading league contests...",
   });
@@ -92,21 +59,12 @@ export function LeagueContestsPage() {
     return leagueContext.element;
   }
 
-
   return (
     <section className="space-y-6" data-testid="league-contests-page">
-      <PageHeader
-        description={
-          isMyEntriesFilter
-            ? "Active contests where you have an entry."
-            : "Active contests in this league."
-        }
-        title="Contests"
-      />
-
-      <ContestsViewSwitch
+      <ContestsPageHeader
+        description="Live and open contests in this league."
         leagueCode={league.leagueCode}
-        value={isMyEntriesFilter ? "mine" : "active"}
+        view="current"
       />
 
       {contestsQuery.isLoading ? (
@@ -114,54 +72,20 @@ export function LeagueContestsPage() {
       ) : contestsQuery.isError ? (
         <ErrorState body="We couldn't load contests for this league." />
       ) : (
-        <Tile data-testid="league-contests-active">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <Heading level={2} variant="card" size="xl">
-                {isMyEntriesFilter ? "My active contests" : "Active contests"}
-              </Heading>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Open a contest to view its leaderboard, manage entries, and see
-                picks once the event has started.
-              </p>
-            </div>
-            <Chip tone="info">
-              {visibleActiveContests.length}
-            </Chip>
-          </div>
-
-          <ListStack className="mt-5">
-            {isMyEntriesFilter && myEntries.isLoading ? (
-              <p className="text-sm text-muted-foreground">
-                Loading your contests...
-              </p>
-            ) : isMyEntriesFilter && myEntries.isError ? (
-              <ErrorState body="We couldn't load your contests." />
-            ) : visibleActiveContests.length ? (
-              visibleActiveContests.map((contest) => (
-                <ContestRow
-                  details={formatSelectionTypeName(contest.selectionType)}
-                  key={contest.id}
-                  name={contest.name}
-                  startsAt={listedContestStartsAt(contest)}
-                  state={{ leagueCode: league.leagueCode }}
-                  status={<ContestStatusBadge status={contest.status} />}
-                  testId={`league-contest-${contest.id}`}
-                  to={buildLeagueContestPath(league.leagueCode, contest.id)}
-                  trailing={pluralize(contest.entryCount ?? 0, 'entry', 'entries')}
-                />
-              ))
-            ) : (
-              <EmptyState
-                body={
-                  isMyEntriesFilter
-                    ? "You don’t have entries in any active contests yet."
-                    : "No active contests are available for this league yet."
-                }
-              />
-            )}
-          </ListStack>
-        </Tile>
+        <PanelCard testId="league-contests-current" title="Current contests">
+          <CurrentContestList
+            contests={contestsQuery.data ?? []}
+            emptyBody="No contests are open or live right now. Finished ones are under Past."
+            entriesByContestId={myEntries.entriesByContestId}
+            entriesState={myEntries.state}
+            focusContestId={focusContestId}
+            hasTeam={hasTeam}
+            leagueCode={league.leagueCode}
+            showDrafts={viewer.isCommissioner}
+            showEntryCount
+            testIdPrefix="league-contest"
+          />
+        </PanelCard>
       )}
     </section>
   );
