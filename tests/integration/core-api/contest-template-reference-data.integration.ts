@@ -1071,7 +1071,7 @@ describe('Every seeded sport league\'s default templates and their names (#802)'
     const leagues = await getPrisma().sportLeague.findMany({ include: { sport: true }, orderBy: { name: 'asc' } });
     const scopes = [
       ...leagues.filter((league) => SCORED_SPORTS.includes(league.sport.sport))
-        .map((league) => ({ name: league.name, sport: league.sport.sport, sportLeagueId: league.id as string | null, definition: sportLeagueDefinitionOf(league.sport.sport, league) })),
+        .map((league) => ({ name: league.name, sport: league.sport.sport, sportLeagueId: league.id, definition: sportLeagueDefinitionOf(league.sport.sport, league) })),
       ...SCORED_SPORTS.filter((sport) => !leagues.some((league) => league.sport.sport === sport))
         .map((sport) => ({ name: `${sport} (sport-wide)`, sport, sportLeagueId: null as string | null, definition: getSportDefinition(sport) })),
     ];

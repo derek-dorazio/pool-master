@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
+import { ContestStatus } from '@poolmaster/shared/domain';
 import type { LeagueDto, LeagueMembershipDto } from '@/lib/api';
 import {
+  buildContestLandingPath,
   buildLeagueContestPath,
   buildLeagueContestEntryPath,
   buildLeagueAdminContestsPath,
@@ -101,5 +103,23 @@ describe('pool-master-rop.23: league routing generated DTO fixtures', () => {
     expect(buildLeagueContestEntryPath('BIGDOGS', 'contest-9', 'entry-2')).toBe(
       '/league/BIGDOGS/contests/contest-9/entries/entry-2',
     );
+  });
+});
+
+describe('buildContestLandingPath', () => {
+  it('opens a contest still taking entries on its Entries page', () => {
+    expect(buildContestLandingPath('BIGDAWGS', { id: 'c1', status: ContestStatus.OPEN })).toBe('/league/BIGDAWGS/contests/c1');
+  });
+
+  it('opens a commissioner draft on its Entries page', () => {
+    expect(buildContestLandingPath('BIGDAWGS', { id: 'c1', status: ContestStatus.DRAFT })).toBe('/league/BIGDAWGS/contests/c1');
+  });
+
+  it('opens a live contest on its Leaderboard', () => {
+    expect(buildContestLandingPath('BIGDAWGS', { id: 'c1', status: ContestStatus.ACTIVE })).toBe('/league/BIGDAWGS/contests/c1/leaderboard');
+  });
+
+  it('opens a final contest on its Leaderboard', () => {
+    expect(buildContestLandingPath('BIGDAWGS', { id: 'c1', status: ContestStatus.COMPLETED })).toBe('/league/BIGDAWGS/contests/c1/leaderboard');
   });
 });

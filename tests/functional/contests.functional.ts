@@ -269,7 +269,7 @@ describe('SDK Functional: Contests and Entries', () => {
         sportEventIds: [importedEvent.sportEventId],
         contestFormat: ContestFormat.ROSTER,
         selectionType: SelectionType.TIERED,
-        templateId: defaultTemplate?.id as string,
+        templateId: defaultTemplate?.id,
       },
     });
 
@@ -377,7 +377,7 @@ describe('SDK Functional: Contests and Entries', () => {
         sportEventIds: [importedEvent.sportEventId],
         contestFormat: ContestFormat.ROSTER,
         selectionType: SelectionType.TIERED,
-        templateId: defaultTemplate?.id as string,
+        templateId: defaultTemplate?.id,
         configuration: {
           maxEntriesPerSquad: 3,
           selectionType: SelectionType.TIERED,

@@ -1,6 +1,6 @@
-import type { ReactNode } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import { Link } from 'react-router';
-import { DateDisplay, ListCard } from '@/features/shared/ui';
+import { cn, DateDisplay, ListCard } from '@/features/shared/ui';
 
 /**
  * One contest in a list (#1279), drawn the same way on the contests page, a cup, a championship
@@ -9,11 +9,13 @@ import { DateDisplay, ListCard } from '@/features/shared/ui';
  * the list adds (entries, cup weight, a squad's place) beside it. The whole row opens `to`.
  *
  * `card` is a list of its own; `compact` is a row in a summary card such as league home's.
+ * `isHighlighted` marks the contest the viewer came from: it is tinted and scrolled into view.
  */
 export function ContestRow({
   completedAt = null,
   density = 'card',
   details,
+  isHighlighted = false,
   name,
   note,
   startsAt,
@@ -28,6 +30,8 @@ export function ContestRow({
   density?: 'card' | 'compact';
   /** What kind of contest it is, such as its format or sports league, after the date. */
   details?: ReactNode;
+  /** The contest the viewer came from, tinted and scrolled into view. */
+  isHighlighted?: boolean;
   name: string;
   /** A line about the contest for this list: who won it, why it doesn't count, the viewer's entry. */
   note?: ReactNode;
@@ -42,6 +46,13 @@ export function ContestRow({
   /** The list's own figure, shown beside the status badge. */
   trailing?: ReactNode;
 }) {
+  const linkRef = useRef<HTMLAnchorElement>(null);
+  useEffect(() => {
+    if (isHighlighted) {
+      linkRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }
+  }, [isHighlighted]);
+  const highlight = isHighlighted ? 'bg-primary/10' : null;
   const date = completedAt ? (
     <span data-testid={`${testId}-date`}>
       Finished <DateDisplay className="text-muted-foreground" timeStyle={null} value={completedAt} />
@@ -68,8 +79,10 @@ export function ContestRow({
   if (density === 'compact') {
     return (
       <Link
-        className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-muted"
+        className={cn('flex items-center justify-between gap-3 px-4 py-3 hover:bg-muted', highlight)}
+        data-highlighted={isHighlighted || undefined}
         data-testid={testId}
+        ref={linkRef}
         state={state}
         to={to}
       >
@@ -85,7 +98,10 @@ export function ContestRow({
 
   return (
     <ListCard
+      className={cn(highlight)}
+      data-highlighted={isHighlighted || undefined}
       data-testid={testId}
+      ref={linkRef}
       description={facts}
       metadata={note}
       state={state}

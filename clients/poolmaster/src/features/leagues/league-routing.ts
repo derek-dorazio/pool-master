@@ -1,5 +1,5 @@
-import { LeagueMembershipStatus, LeagueRole } from '@poolmaster/shared/domain';
-import type { LeagueDto, LeagueMembershipDto } from '@/lib/api';
+import { ContestStatus, LeagueMembershipStatus, LeagueRole } from '@poolmaster/shared/domain';
+import type { ContestDto, LeagueDto, LeagueMembershipDto } from '@/lib/api';
 import { readCookie } from '@/lib/cookies';
 
 
@@ -59,10 +59,6 @@ export function buildLeagueContestsPath(leagueCode: string) {
   return `/league/${leagueCode}/contests`;
 }
 
-export function buildLeagueMyContestsPath(leagueCode: string) {
-  return `/league/${leagueCode}/contests?filter=my-entries`;
-}
-
 export function buildLeagueContestHistoryPath(leagueCode: string) {
   return `/league/${leagueCode}/contests/history`;
 }
@@ -73,6 +69,16 @@ export function buildLeagueContestPath(leagueCode: string, contestId: string) {
 
 export function buildLeagueContestLeaderboardPath(leagueCode: string, contestId: string) {
   return `/league/${leagueCode}/contests/${contestId}/leaderboard`;
+}
+
+/**
+ * Where a contest opens from any list (#1388's one link rule): a contest still taking entries
+ * (or a commissioner's draft) opens its Entries page; a live or final one opens its Leaderboard.
+ */
+export function buildContestLandingPath(leagueCode: string, contest: Pick<ContestDto, 'id' | 'status'>) {
+  return contest.status === ContestStatus.ACTIVE || contest.status === ContestStatus.COMPLETED
+    ? buildLeagueContestLeaderboardPath(leagueCode, contest.id)
+    : buildLeagueContestPath(leagueCode, contest.id);
 }
 
 export function buildLeagueContestEntryPath(leagueCode: string, contestId: string, entryId: string) {

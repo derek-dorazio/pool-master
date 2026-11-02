@@ -9,7 +9,6 @@ import type {
   ContestEntryPickRepository,
   ContestEntryPickWithParticipant,
 } from '@poolmaster/shared/db';
-import type { ParticipantInactiveReason } from '@poolmaster/shared/domain';
 import { mapContestEntryPickRowToDomain } from '../mappers/contest-entry-picks.mapper';
 
 const PICK_ORDER = [{ pickedAt: 'asc' as const }, { id: 'asc' as const }];
@@ -57,7 +56,7 @@ export class PrismaContestEntryPickRepository implements ContestEntryPickReposit
         participantId: row.sportEventParticipant.participantId,
         participantName: row.sportEventParticipant.participant.name,
         isActive: row.sportEventParticipant.isActive,
-        inactiveReason: row.sportEventParticipant.inactiveReason as ParticipantInactiveReason | null,
+        inactiveReason: row.sportEventParticipant.inactiveReason,
         role: row.sportEventParticipant.participant.role ?? null,
         teamAffiliation: row.sportEventParticipant.participant.teamAffiliation ?? null,
       },

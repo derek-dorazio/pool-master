@@ -170,7 +170,7 @@ export function useMutationActionWorkflow<TData, TVariables = void>({
     isError: error !== null,
     isPending,
     reset,
-    run: run as MutationActionRun<TVariables, TData>,
+    run,
     toast,
   };
 }

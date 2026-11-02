@@ -10,7 +10,7 @@ import type {
   ProviderSyncRunRepository,
   ProviderSyncRunUpdate,
 } from '@poolmaster/shared/db';
-import type { ProviderSyncRun, ProviderSyncRunWithDetails, Sport } from '@poolmaster/shared/domain';
+import type { ProviderSyncRun, ProviderSyncRunWithDetails } from '@poolmaster/shared/domain';
 
 export class PrismaProviderSyncRunRepository implements ProviderSyncRunRepository {
   constructor(private readonly prisma: PrismaClient) {}
@@ -99,7 +99,7 @@ function toProviderSyncRun(row: Omit<ProviderSyncRunRow, 'detailsJson'>): Provid
   return {
     id: row.id,
     providerId: row.providerId,
-    sport: row.sport as Sport,
+    sport: row.sport,
     eventId: row.eventId,
     status: row.status,
     startedAt: row.startedAt,
@@ -113,5 +113,5 @@ function toPayload(payload: Prisma.JsonValue): Record<string, unknown> {
   if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
     return {};
   }
-  return payload as Record<string, unknown>;
+  return payload;
 }

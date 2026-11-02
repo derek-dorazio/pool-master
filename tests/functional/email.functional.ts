@@ -173,7 +173,7 @@ async function enteredContest() {
       sportEventIds: [event.sportEventId],
       contestFormat: ContestFormat.ROSTER,
       selectionType: SelectionType.TIERED,
-      templateId: template?.id as string,
+      templateId: template?.id,
       configuration: { maxEntriesPerSquad: 1, selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 1 },
     },
   });

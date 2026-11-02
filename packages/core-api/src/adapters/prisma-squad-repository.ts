@@ -1,6 +1,6 @@
 import type { Prisma, PrismaClient, Squad as PrismaSquad } from '@prisma/client';
 import type { SquadDetails, SquadRepository } from '@poolmaster/shared/db';
-import type { Squad, TeamIconKey } from '@poolmaster/shared/domain';
+import type { Squad } from '@poolmaster/shared/domain';
 import { forgettingReads, memoizedRead, ReadMemoKey } from '../core/request-read-memo';
 import { mapToSquadMembership } from './prisma-squad-membership-repository';
 import { mapToUser } from './prisma-user-repository';
@@ -116,7 +116,7 @@ function mapToSquad(row: PrismaSquad): Squad {
     leagueId: row.leagueId,
     createdBy: row.createdBy,
     name: row.name,
-    iconKey: row.iconKey as TeamIconKey,
+    iconKey: row.iconKey,
     isActive: row.isActive,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,

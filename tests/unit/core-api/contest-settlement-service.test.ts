@@ -85,7 +85,7 @@ function entry(id: string, entryNumber: number, submitted: readonly string[]): C
  * against +2), so B wins the contest on the sum (-9 against -4). One counted golfer per event.
  */
 function world({
-  configJson = { selectionType: 'TIERED', picksPerTier: 1, countedScores: 1 } as Record<string, unknown>,
+  configJson = { selectionType: 'TIERED', picksPerTier: 1, countedScores: 1 },
   scoringRules = [parseContestScoringSettings('GOLF_RELATIVE_TO_PAR_TOTAL', {})],
 }: { configJson?: Record<string, unknown>; scoringRules?: ReturnType<typeof parseContestScoringSettings>[] } = {}) {
   // Each major is four rounds of par 72, the par read off the golfers' finished rounds.

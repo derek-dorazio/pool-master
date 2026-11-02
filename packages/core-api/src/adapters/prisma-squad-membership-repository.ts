@@ -1,6 +1,6 @@
 import type { Prisma, PrismaClient, SquadMembership as PrismaSquadMembership } from '@prisma/client';
 import type { LeagueUser, SquadMembershipRepository, SquadMembershipWithSquadName } from '@poolmaster/shared/db';
-import type { SquadMembership, SquadMembershipStatus } from '@poolmaster/shared/domain';
+import type { SquadMembership } from '@poolmaster/shared/domain';
 import { SquadMembershipStatus as SharedSquadMembershipStatus } from '@poolmaster/shared/domain';
 import { forgettingReads, memoizedRead, ReadMemoKey } from '../core/request-read-memo';
 
@@ -102,7 +102,7 @@ export function mapToSquadMembership(row: PrismaSquadMembership): SquadMembershi
     squadId: row.squadId,
     leagueId: row.leagueId,
     userId: row.userId,
-    status: row.status as SquadMembershipStatus,
+    status: row.status,
     joinedAt: row.joinedAt,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,

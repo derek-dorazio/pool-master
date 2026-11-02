@@ -15,9 +15,8 @@ import { useLeagueSquadQuery } from '@/features/teams/use-league-squad-query';
 import { getLogger } from '@/lib/logger';
 import { parseRouteState } from '@/routes/route-state';
 import { useLeagueContextGuard } from './league-context-guard';
-import type { MyEntriesState } from '@/features/contests/my-contest-entry';
 import { pickUpNextContest } from './league-home';
-import { CupsCard, LiveStandingsCard, OtherContestsCard, UpNextCard, YourTeamCard } from './league-home-cards';
+import { CupsCard, LiveAndOpenCard, LiveStandingsCard, UpNextCard, YourTeamCard } from './league-home-cards';
 import { LeagueIcon } from './league-icon';
 import { buildLeagueContestsPath, buildLeagueTeamPath } from './league-routing';
 import { useLeagueContext } from './use-league-context';
@@ -43,7 +42,7 @@ function plural(count: number, one: string, many: string) {
 
 /**
  * League Home: the league's identity once, then what needs the member now: the contest that
- * closes soonest, live standings for a contest they are in, and their own team.
+ * closes soonest, live standings for each contest they are in, and their own team.
  */
 export function LeagueHomePage() {
   const { leagueCode = '' } = useParams<{ leagueCode: string }>();
@@ -95,15 +94,13 @@ export function LeagueHomePage() {
 
   const upNext = pickUpNextContest(currentContests, now);
   const otherContests = currentContests.filter((contest) => contest.id !== upNext?.contest.id);
-  const liveContest = currentContests.find(
+  const liveContests = currentContests.filter(
     (contest) => contest.status === ContestStatus.ACTIVE
       && (myEntries.entriesByContestId.get(contest.id)?.length ?? 0) > 0,
   );
   const myTeam = myTeamQuery.data ?? null;
   const hasTeam = viewer.mySquadId !== null;
-  const entriesState: MyEntriesState = myEntries.isError
-    ? 'failed'
-    : myEntries.isLoading ? 'loading' : 'ready';
+  const entriesState = myEntries.state;
 
   return (
     <section className="space-y-6" data-testid="league-home">
@@ -160,7 +157,7 @@ export function LeagueHomePage() {
               />
             ) : null}
             {currentContests.length ? (
-              <OtherContestsCard
+              <LiveAndOpenCard
                 contests={otherContests}
                 entriesByContestId={myEntries.entriesByContestId}
                 entriesState={entriesState}
@@ -180,8 +177,8 @@ export function LeagueHomePage() {
             )}
           </div>
           <div className="grid gap-5">
-            {liveContest ? (
-              <LiveStandingsCard contest={liveContest} leagueCode={leagueCode} mySquadId={viewer.mySquadId} />
+            {liveContests.length ? (
+              <LiveStandingsCard contests={liveContests} leagueCode={leagueCode} mySquadId={viewer.mySquadId} />
             ) : null}
             {hasPlanFeature(league, PlanFeature.CUP_STANDINGS) ? (
               <CupsCard

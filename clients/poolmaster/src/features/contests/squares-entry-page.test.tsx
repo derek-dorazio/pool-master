@@ -89,7 +89,11 @@ function renderPage(path: string) {
 function primeMocks({
   board = squaresBoardFixture(),
   contest = squaresContestFixture(),
-  role = 'MEMBER' as 'MEMBER' | 'COMMISSIONER',
+  role = 'MEMBER',
+}: {
+  board?: ReturnType<typeof squaresBoardFixture>;
+  contest?: ReturnType<typeof squaresContestFixture>;
+  role?: 'MEMBER' | 'COMMISSIONER';
 } = {}) {
   getContestMock.mockResolvedValue({ data: { contest } });
   getSquaresBoardMock.mockResolvedValue({ data: board });

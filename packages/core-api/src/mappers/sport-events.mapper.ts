@@ -11,9 +11,7 @@ import {
   type SportEventTier,
 } from '@poolmaster/shared/domain';
 import type {
-  EventReadinessReasonDto,
   ImportSportEventYearFromProviderResponse,
-  EventReadinessStatusDto,
   SportEventDto,
   SportEventLiveSimulationResponse,
   SportEventRoundDto,
@@ -62,8 +60,8 @@ export function mapSportEventToDto({
     participantCount: event.participantCount ?? null,
     loadedParticipantCount,
     pricing: event.pricingConfig ?? null,
-    readinessStatus: operationalState.readinessStatus as EventReadinessStatusDto,
-    readinessReasons: operationalState.readinessReasons as EventReadinessReasonDto[],
+    readinessStatus: operationalState.readinessStatus,
+    readinessReasons: operationalState.readinessReasons,
     contestEligible: operationalState.contestEligible,
     eventSeriesId: event.eventSeriesId,
     eventYear: event.eventYear,

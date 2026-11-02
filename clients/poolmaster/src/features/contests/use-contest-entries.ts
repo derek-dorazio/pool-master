@@ -11,6 +11,7 @@ import {
 import { throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import { CONTEST_POLL_INTERVAL_MS, shouldPollContestEntries } from './contest-status';
+import type { MyEntriesState } from './my-contest-entry';
 
 /** One contest's entries, read through the key every page shares for them. */
 async function fetchContestEntries(contestId: string): Promise<ContestEntryListResponse> {
@@ -70,6 +71,8 @@ export type MyContestEntries = {
   entriesByContestId: ReadonlyMap<string, ContestEntryDto[]>;
   isError: boolean;
   isLoading: boolean;
+  /** Whether the entries are known yet, as the rows that describe them read it. */
+  state: MyEntriesState;
 };
 
 /**
@@ -95,6 +98,7 @@ export function useMyContestEntries(leagueId: string, enabled: boolean): MyConte
     entriesByContestId: query.data ?? EMPTY,
     isError: query.isError,
     isLoading: query.isLoading,
+    state: query.isError ? 'failed' : query.isLoading ? 'loading' : 'ready',
   };
 }
 

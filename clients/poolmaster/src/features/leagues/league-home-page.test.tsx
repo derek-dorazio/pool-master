@@ -132,14 +132,27 @@ function standing(position: number, squadId: string, squadName: string, totalSco
   };
 }
 
+function liveLeaderboard(contestId: string, entries: ReturnType<typeof standing>[]) {
+  return {
+    contestId,
+    sportEventId: `event-${contestId}`,
+    sport: 'GOLF',
+    scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
+    countingRule: { type: 'BEST_N', count: 4 },
+    participants: [],
+    asOf: null,
+    entries,
+  };
+}
+
 function primeMocks({
   contests = [] as ReturnType<typeof contest>[],
-  entriesByContest = {} as Record<string, ReturnType<typeof entry>[]>,
+  entriesByContest = {},
   cups = [] as CupDto[],
-  eventStarts = {} as Record<string, string>,
+  eventStarts = {},
   isActive = true,
   hasTeam = true,
-  role = 'MEMBER' as 'MEMBER' | 'COMMISSIONER',
+  role = 'MEMBER',
   features = Object.values(PlanFeature),
 }: {
   features?: PlanFeature[];
@@ -242,7 +255,7 @@ describe('League Home', () => {
       'href',
       '/league/BIGDAWGS/contests/sooner',
     );
-    expect(within(screen.getByTestId('league-home-other-contests')).getByText('US Open Pick 6')).toBeInTheDocument();
+    expect(within(screen.getByTestId('league-home-live-and-open')).getByText('US Open Pick 6')).toBeInTheDocument();
   });
 
   it('offers View entry up next once the team has submitted its entry', async () => {
@@ -296,7 +309,7 @@ describe('League Home', () => {
     expect(await upNext.findByText('Checking your entry...')).toBeInTheDocument();
     expect(upNext.getByRole('link', { name: 'View contest' })).toHaveAttribute('href', '/league/BIGDAWGS/contests/open-1');
     expect(upNext.queryByRole('link', { name: 'Make your picks' })).not.toBeInTheDocument();
-    expect(screen.getByTestId('league-home-other-contests')).not.toHaveTextContent('You haven’t entered');
+    expect(screen.getByTestId('league-home-live-and-open')).not.toHaveTextContent('You have not entered yet.');
   });
 
   it('says it could not check the entry, rather than offering picks, when the entries cannot be loaded', async () => {
@@ -311,7 +324,7 @@ describe('League Home', () => {
     expect(await upNext.findByText("We couldn't check your entry.")).toBeInTheDocument();
     expect(upNext.getByRole('link', { name: 'View contest' })).toBeInTheDocument();
     expect(upNext.queryByRole('link', { name: 'Make your picks' })).not.toBeInTheDocument();
-    expect(screen.getByTestId('league-home-other-contests')).not.toHaveTextContent('You haven’t entered');
+    expect(screen.getByTestId('league-home-live-and-open')).not.toHaveTextContent('You have not entered yet.');
   });
 
   it('puts nothing up next once a contest\'s cutoff has passed, even while it still reads open', async () => {
@@ -322,7 +335,7 @@ describe('League Home', () => {
 
     renderLeagueHome();
 
-    expect(await within(await screen.findByTestId('league-home-other-contests')).findByText('RBC Heritage Tiers')).toBeInTheDocument();
+    expect(await within(await screen.findByTestId('league-home-live-and-open')).findByText('RBC Heritage Tiers')).toBeInTheDocument();
     expect(screen.queryByTestId('league-home-up-next')).not.toBeInTheDocument();
   });
 
@@ -365,12 +378,95 @@ describe('League Home', () => {
     );
   });
 
+  it('offers a chip for each live contest the team is in, switching the top five to the chosen one', async () => {
+    primeMocks({
+      contests: [contest('live-1', 'Masters Pick 6', 'ACTIVE'), contest('live-2', 'NBA Finals Stars', 'ACTIVE')],
+      entriesByContest: { 'live-1': [entry('live-1', 'team-1')], 'live-2': [entry('live-2', 'team-1')] },
+    });
+    getContestLeaderboardMock.mockImplementation(({ path }: { path: { contestId: string } }) => apiSuccess(liveLeaderboard(
+      path.contestId,
+      path.contestId === 'live-1' ? [standing(1, 'team-a', 'Bogey Men', -14)] : [standing(1, 'team-z', 'Net Gains', 22)],
+    )));
+
+    renderLeagueHome();
+
+    const standings = within(await screen.findByTestId('league-home-live-standings'));
+    expect(standings.getByRole('radio', { name: 'Masters Pick 6' })).toBeChecked();
+    expect(standings.getByRole('radio', { name: 'NBA Finals Stars' })).not.toBeChecked();
+    expect(await standings.findByText('Bogey Men')).toBeInTheDocument();
+    expect(getContestLeaderboardMock).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(standings.getByRole('radio', { name: 'NBA Finals Stars' }));
+
+    expect(await standings.findByText('Net Gains')).toBeInTheDocument();
+    expect(standings.queryByText('Bogey Men')).not.toBeInTheDocument();
+    expect(standings.getByRole('heading', { name: 'NBA Finals Stars · Top 5' })).toBeInTheDocument();
+    expect(standings.getByRole('link', { name: /Full leaderboard/ })).toHaveAttribute('href', '/league/BIGDAWGS/contests/live-2/leaderboard');
+    expect(getContestLeaderboardMock).toHaveBeenCalledTimes(2);
+    expect(getContestLeaderboardMock.mock.lastCall?.[0]).toMatchObject({ path: { contestId: 'live-2' } });
+  });
+
+  it('shows no chips when the team is in one live contest', async () => {
+    primeMocks({
+      contests: [contest('live-1', 'Masters Pick 6', 'ACTIVE'), contest('live-2', 'NBA Finals Stars', 'ACTIVE')],
+      entriesByContest: { 'live-1': [entry('live-1', 'team-1')] },
+    });
+    getContestLeaderboardMock.mockResolvedValue(apiSuccess(liveLeaderboard('live-1', [standing(1, 'team-a', 'Bogey Men', -14)])));
+
+    renderLeagueHome();
+
+    const standings = within(await screen.findByTestId('league-home-live-standings'));
+    expect(await standings.findByText('Bogey Men')).toBeInTheDocument();
+    expect(standings.queryByRole('radiogroup')).not.toBeInTheDocument();
+    expect(standings.getByRole('heading', { name: 'Masters Pick 6 · Top 5' })).toBeInTheDocument();
+  });
+
+  it('lists the other live and open contests under Live and open, live first, leaving out the one up next', async () => {
+    primeMocks({
+      contests: [contest('open-1', 'RBC Heritage Tiers', 'OPEN'), contest('open-2', 'US Open Pick 6', 'OPEN'), contest('live-1', 'Masters Pick 6', 'ACTIVE')],
+      eventStarts: { 'event-open-1': '2026-04-20T12:00:00.000Z', 'event-open-2': '2026-06-18T12:00:00.000Z' },
+    });
+
+    renderLeagueHome();
+
+    const card = await screen.findByTestId('league-home-live-and-open');
+    expect(await within(card).findByTestId('league-home-contest-group-live')).toHaveTextContent('Masters Pick 6');
+    expect(within(card).getByTestId('league-home-contest-group-open')).toHaveTextContent('US Open Pick 6');
+    expect(within(card).queryByTestId('league-home-contest-open-1')).not.toBeInTheDocument();
+    expect(within(card).getByTestId('league-home-contest-live-1')).toHaveAttribute('href', '/league/BIGDAWGS/contests/live-1/leaderboard');
+  });
+
+  it('makes one request each for the league, its contests, the team\'s entries and one live leaderboard', async () => {
+    primeMocks({
+      contests: [contest('open-1', 'RBC Heritage Tiers', 'OPEN'), contest('open-2', 'US Open Pick 6', 'OPEN'), contest('live-1', 'Masters Pick 6', 'ACTIVE')],
+      entriesByContest: { 'live-1': [entry('live-1', 'team-1')] },
+    });
+    getContestLeaderboardMock.mockResolvedValue(apiSuccess({
+      contestId: 'live-1',
+      sportEventId: 'event-live-1',
+      sport: 'GOLF',
+      scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
+      countingRule: { type: 'BEST_N', count: 4 },
+      participants: [],
+      asOf: null,
+      entries: [standing(1, 'team-1', 'Casey Crushers', -5)],
+    }));
+
+    renderLeagueHome();
+
+    expect(await within(await screen.findByTestId('league-home-live-standings')).findByText('Casey Crushers')).toBeInTheDocument();
+    expect(getLeagueByCodeMock).toHaveBeenCalledTimes(1);
+    expect(listContestsMock).toHaveBeenCalledTimes(1);
+    expect(listMyContestEntriesMock).toHaveBeenCalledTimes(1);
+    expect(getContestLeaderboardMock).toHaveBeenCalledTimes(1);
+  });
+
   it('shows no live standings for a live contest the team has no entry in', async () => {
     primeMocks({ contests: [contest('live-1', 'Masters Pick 6', 'ACTIVE')] });
 
     renderLeagueHome();
 
-    expect(await within(await screen.findByTestId('league-home-other-contests')).findByText('You haven’t entered')).toBeInTheDocument();
+    expect(await within(await screen.findByTestId('league-home-live-and-open')).findByText('You have not entered yet.')).toBeInTheDocument();
     expect(screen.queryByTestId('league-home-live-standings')).not.toBeInTheDocument();
     expect(getContestLeaderboardMock).not.toHaveBeenCalled();
   });

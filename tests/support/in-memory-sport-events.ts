@@ -117,10 +117,10 @@ export class InMemorySportEvents {
   }
 
   addParticipant(sportId: string, name: string, overrides: Partial<Participant> = {}): Participant {
-    const participant = stamp({
+    const participant: Participant = stamp({
       id: this.id('participant'), sportId, name, participantType: 'INDIVIDUAL', status: 'ACTIVE',
       injuryStatus: { status: 'HEALTHY' }, externalIds: {}, ...overrides,
-    }) as Participant;
+    });
     this.participants.push(participant);
     return participant;
   }
@@ -134,12 +134,12 @@ export class InMemorySportEvents {
    * Pass `sportLeagueId` (and `eventSeriesId`, `eventYear`) to place it on a real one.
    */
   addEvent(overrides: Partial<SportEvent> = {}): SportEvent {
-    const event = stamp({
+    const event: SportEvent = stamp({
       id: this.id('event'), externalId: 'ext', providerId: 'manual-admin', sport: 'GOLF', name: 'Open',
       eventSeriesId: this.id('event-series'), eventYear: 2026, sportLeagueId: 'sport-league-unplaced',
       startDate: new Date('2026-06-04T12:00:00.000Z'), status: 'SCHEDULED',
       metadata: {}, syncScope: 'NONE', autoLifecycleEnabled: true, ...overrides,
-    }) as SportEvent;
+    });
     this.events.push(event);
     return event;
   }

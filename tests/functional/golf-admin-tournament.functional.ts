@@ -31,7 +31,6 @@ import {
 } from '@poolmaster/shared/generated/hey-api';
 import { buildRegisteredUser, promoteToRootAdmin } from './builders';
 import {
-  createFunctionalEmail,
   disconnectFunctionalPrisma,
   expectFunctionalError,
   getFunctionalPrisma,
@@ -562,5 +561,3 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     expectFunctionalError(await createParticipant({ client: c, body: { sportId: ANY_UUID, participantType: 'INDIVIDUAL', name: `denied-${RUN}` } }), deny);
   });
 });
-
-void createFunctionalEmail;
