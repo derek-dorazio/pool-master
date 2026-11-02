@@ -44,6 +44,21 @@ export interface SportLeagueFilters {
 
 export type SportLeagueUpdate = Partial<Pick<SportLeague, 'name' | 'matchKeyword' | 'isActive' | 'currentEventYear' | 'bracketAdvancement'>>;
 
+/**
+ * What still uses a sport league, each a reason it cannot be deleted (#1400). Its affiliations
+ * and its series with no events are its own and go with it, so they are not counted.
+ */
+export interface SportLeagueUses {
+  /** Events across every series of the sport league, every year. */
+  sportEventCount: number;
+  /** Contest setups offered for its events. */
+  contestTemplateCount: number;
+  /** Event page offers on its series. */
+  eventPageOfferCount: number;
+  /** Leagues' season cups for it. */
+  cupCount: number;
+}
+
 export interface SportLeagueRepository {
   findById(id: string): Promise<SportLeague | null>;
   /** The sports leagues with these ids that exist. */
@@ -53,6 +68,14 @@ export interface SportLeagueRepository {
   findBySportAndName(sportId: string, name: string): Promise<SportLeague | null>;
   create(input: Pick<SportLeague, 'sportId' | 'name' | 'matchKeyword' | 'bracketAdvancement'>): Promise<SportLeague>;
   update(id: string, updates: SportLeagueUpdate): Promise<SportLeague>;
+  /**
+   * Deletes the sport league unless something still uses it (#1400), in one transaction that locks
+   * it and its series first, so nothing can start using it between the count and the delete. Its
+   * affiliations and its series go with it, and every league that muted its event emails forgets
+   * it. Returns what uses it, counted under the lock: all zero means it was deleted. Null when no
+   * such sport league exists.
+   */
+  deleteUnlessUsed(id: string): Promise<SportLeagueUses | null>;
 }
 
 export interface ParticipantRanking {

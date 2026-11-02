@@ -77793,6 +77793,60 @@
             }
           }
         }
+      },
+      "delete": {
+        "operationId": "deleteSportLeague",
+        "summary": "Delete a sport league",
+        "tags": [
+          "Sport leagues"
+        ],
+        "description": "Deletes a sport league nothing uses any more, with its affiliations and its event series that have no events, and takes it out of every league's muted sport leagues. 409 SPORT_LEAGUE_IN_USE, naming what still uses it, while it has an event in any year, a contest setup, an event page offer or a league's cup: delete its events first; the others are reference data or league history, and the sport league stays. Root admin only.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "sportLeagueId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Default Response"
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/v1/sport-leagues/{sportLeagueId}/affiliations": {
@@ -78489,6 +78543,60 @@
             }
           },
           "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteParticipant",
+        "summary": "Delete a participant",
+        "tags": [
+          "Participants"
+        ],
+        "description": "Deletes a participant no event field holds, with their sport league affiliations and provider identities. 409 PARTICIPANT_IN_USE while any event's field, in any year, has them: remove them from the field, or delete the event, first. Root admin only (403 ROOT_ADMIN_ACCESS_REQUIRED otherwise).",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Default Response"
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
             "description": "Standard API error envelope.",
             "content": {
               "application/json": {

@@ -192,6 +192,26 @@ export class ParticipantService {
     }
   }
 
+  /**
+   * Deletes a participant no event field holds (#1400), with its sport league affiliations and
+   * provider identities. 404 PARTICIPANT_NOT_FOUND; 409 PARTICIPANT_IN_USE while any event's field,
+   * in any year, has them: the field row is what scores and picks hang from.
+   */
+  async delete(id: string): Promise<void> {
+    const fieldEntries = await this.participantRepo.deleteUnlessOnAField(id);
+    if (fieldEntries === null) {
+      throw new ParticipantNotFoundError(id);
+    }
+    if (fieldEntries > 0) {
+      this.logger?.warn(
+        { action: 'participants.delete.inUse', data: { participantId: id, fieldEntries } },
+        'Refused to delete a participant who is on an event field',
+      );
+      throw new ParticipantInUseError(id, fieldEntries);
+    }
+    this.logger?.info({ action: 'participants.delete.success', data: { participantId: id } }, 'Deleted participant');
+  }
+
   // --- Provider Mappings ---
 
   async getProviderMappings(participantId: string): Promise<ParticipantProviderMapping[]> {
@@ -233,5 +253,15 @@ export class ParticipantNotFoundError extends Error {
   constructor(participantId: string) {
     super(`Participant not found: ${participantId}`);
     this.name = 'ParticipantNotFoundError';
+  }
+}
+
+export class ParticipantInUseError extends Error {
+  readonly code: ApiErrorCode = 'PARTICIPANT_IN_USE';
+  readonly statusCode = 409;
+
+  constructor(participantId: string, fieldEntries: number) {
+    super(`Participant ${participantId} is on ${fieldEntries} event ${fieldEntries === 1 ? 'field' : 'fields'}, so they cannot be deleted.`);
+    this.name = 'ParticipantInUseError';
   }
 }

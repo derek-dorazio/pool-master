@@ -66,3 +66,28 @@ describe('ParticipantService writes', () => {
     expect(logger.error).toHaveBeenCalledWith(expect.objectContaining({ action: 'participants.create.failed' }), expect.any(String));
   });
 });
+
+describe('ParticipantService delete (#1400)', () => {
+  it('deletes a participant no event field holds', async () => {
+    const participants = fakeParticipantRepo();
+    const service = new ParticipantService(participants, fakeParticipantProviderMappingRepo(), fakeLogger());
+
+    await expect(service.delete('participant-1')).resolves.toBeUndefined();
+
+    expect(participants.deleteUnlessOnAField).toHaveBeenCalledWith('participant-1');
+  });
+
+  it('refuses with 409 PARTICIPANT_IN_USE when the locked count finds them on an event field', async () => {
+    const participants = fakeParticipantRepo({ deleteUnlessOnAField: jest.fn().mockResolvedValue(2) });
+    const service = new ParticipantService(participants, fakeParticipantProviderMappingRepo(), fakeLogger());
+
+    await expect(service.delete('participant-1')).rejects.toMatchObject({ code: 'PARTICIPANT_IN_USE', statusCode: 409 });
+  });
+
+  it('answers 404 PARTICIPANT_NOT_FOUND for an unknown participant', async () => {
+    const participants = fakeParticipantRepo({ deleteUnlessOnAField: jest.fn().mockResolvedValue(null) });
+    const service = new ParticipantService(participants, fakeParticipantProviderMappingRepo(), fakeLogger());
+
+    await expect(service.delete('participant-9')).rejects.toMatchObject({ code: 'PARTICIPANT_NOT_FOUND', statusCode: 404 });
+  });
+});

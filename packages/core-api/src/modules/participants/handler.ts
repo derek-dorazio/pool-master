@@ -27,6 +27,7 @@ export function createParticipantHandlers(
     getParticipant,
     createParticipant,
     updateParticipant,
+    deleteParticipant,
     listProviderMappings,
     bindProviderMapping,
   };
@@ -63,6 +64,13 @@ export function createParticipantHandlers(
     }
     const providerMappings = await participantService.getProviderMappings(request.params.id);
     return { providerMappings: providerMappings.map(mapParticipantProviderMappingToDto) };
+  }
+
+  // The service's not-found and in-use errors carry their own code and status; the global error
+  // handler sends them.
+  async function deleteParticipant(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) {
+    await participantService.delete(request.params.id);
+    return reply.status(204).send();
   }
 
   async function bindProviderMapping(
