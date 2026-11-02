@@ -205,13 +205,12 @@ export class ContestNotices implements ContestOpenedNotice, ContestStartedNotice
       return;
     }
     const leaderboardUrl = buildLeaderboardUrl(this.deps.appBaseUrl, league.leagueCode, contest.id);
-    const contestUrl = buildContestUrl(this.deps.appBaseUrl, league.leagueCode, contest.id);
     const resultsFor = (user: User, outcome: ContestResultsOutcome): EmailSendInput<'CONTEST_RESULTS'> => ({
       to: emailRecipientOf(user),
       about: contest.id,
       league: { id: league.id, name: league.name, leagueCode: league.leagueCode, plan: league.plan },
       refs: { contestId: contest.id },
-      data: { userName: formatUserName(user), leagueName: league.name, contestName: contest.name, outcome, leaderboardUrl, contestUrl },
+      data: { userName: formatUserName(user), leagueName: league.name, contestName: contest.name, outcome, leaderboardUrl },
     });
 
     if (final.entries.length === 0) {

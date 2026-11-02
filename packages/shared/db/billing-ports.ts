@@ -1,4 +1,4 @@
-import type { LeaguePaymentKind } from '../domain';
+import type { ContestStatus, LeaguePaymentKind } from '../domain';
 
 /** A contest's expansion and entry count (#987), read together. */
 export interface ContestExpansionState {
@@ -54,7 +54,8 @@ export interface PaymentPayer {
 export interface LeaguePaymentRecord {
   id: string;
   kind: LeaguePaymentKind;
-  contestId: string | null;
+  /** The contest it was for, and where that contest stands; null when the contest was deleted. */
+  contest: { id: string; status: ContestStatus } | null;
   payer: PaymentPayer | null;
   amountCents: number;
   description: string;

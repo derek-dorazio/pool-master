@@ -427,7 +427,7 @@ describe('ContestNotices', () => {
       const text = textTo(entrant.user.id);
       expect(outbox.rows[0]?.subject).toBe('Masters Pick 6 ended with no scores');
       expect(text).toContain('Every event was cancelled, so Masters Pick 6 ends with no scores.');
-      expect(text).toContain(`View contest: https://app.example.test/league/OFFICE24/contests/${contest.id}`);
+      expect(text).toContain(`View contest: https://app.example.test/league/OFFICE24/contests/${contest.id}/leaderboard`);
     });
 
     it('says only that the contest ended with no scores when some of its events were played', async () => {
@@ -488,7 +488,7 @@ describe('ContestNotices', () => {
       expect(toNora?.fromName).toBe('Office League');
       expect(toNora?.subject).toBe('Masters Pick 6 ended with no scores');
       expect(textTo(entrant.user.id)).toContain('The Masters was cancelled, so Masters Pick 6 ends with no scores.');
-      expect(textTo(entrant.user.id)).toContain(`View contest: https://app.example.test/league/OFFICE24/contests/${contest.id}`);
+      expect(textTo(entrant.user.id)).toContain(`View contest: https://app.example.test/league/OFFICE24/contests/${contest.id}/leaderboard`);
     });
 
     it('sends no event changed email when a cancelled event was the last of a contest\'s events still to play, and the no-scores result is the only email', async () => {

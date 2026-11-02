@@ -1555,7 +1555,13 @@ export type LeaguePayment = {
     /**
      * The contest it was for; null when that contest was deleted.
      */
-    contestId: string | null;
+    contest: {
+        id: string;
+        /**
+         * Where the line links: an open contest to its Entries, a live or final one to its Leaderboard.
+         */
+        status: 'DRAFT' | 'OPEN' | 'ACTIVE' | 'COMPLETED';
+    } | null;
     /**
      * Who paid; null for a Poolmaster grant or when that account was deleted.
      */
@@ -1592,7 +1598,13 @@ export type LeaguePaymentListResponse = {
         /**
          * The contest it was for; null when that contest was deleted.
          */
-        contestId: string | null;
+        contest: {
+            id: string;
+            /**
+             * Where the line links: an open contest to its Entries, a live or final one to its Leaderboard.
+             */
+            status: 'DRAFT' | 'OPEN' | 'ACTIVE' | 'COMPLETED';
+        } | null;
         /**
          * Who paid; null for a Poolmaster grant or when that account was deleted.
          */
