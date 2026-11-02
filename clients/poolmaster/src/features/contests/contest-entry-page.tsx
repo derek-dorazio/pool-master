@@ -50,7 +50,7 @@ import { ContestEventSwitcher } from './contest-event-switcher';
 import { entryEventStatus, hasContestEventStarted } from './contest-events';
 import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
-import { useInvalidatingMutation } from '@/lib/mutation-hooks';
+import { refreshAfterWrite, useInvalidatingMutation } from '@/lib/mutation-hooks';
 
 type SelectionState = SelectionStateResponse;
 /** One tap on a field row: `isSelected` is whether the entry held it before the tap. */
@@ -469,9 +469,11 @@ function RosterContestEntryPage() {
       // A pick can send a submitted entry back to draft, which the contest's entry lists and
       // counts show. Those reads are marked stale for the next page that shows them, and none is
       // read again here: this page already shows what changed.
-      for (const queryKey of [...entryWriteKeys(contestId), QueryKeys.contestEntries.detail(contestId, entryId)]) {
-        void queryClient.invalidateQueries({ queryKey, refetchType: 'none' });
-      }
+      void refreshAfterWrite(
+        queryClient,
+        [...entryWriteKeys(contestId), QueryKeys.contestEntries.detail(contestId, entryId)],
+        { refetchType: 'none' },
+      );
     },
     invalidates: [],
     onError: (error, { participantId }, context) => {

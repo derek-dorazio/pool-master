@@ -1,6 +1,7 @@
 import {
   useMutation as useTanStackMutation,
   useQueryClient,
+  type InvalidateQueryFilters,
   type QueryClient,
   type QueryKey,
   type UseMutationOptions,
@@ -38,15 +39,17 @@ async function resolveInvalidates<TData, TVariables, TContext>(
  * when its page mounts. A read already in flight is cancelled first: it may have reached the
  * server before the write, and invalidating alone lets its answer land as fresh, so a page that
  * mounts meanwhile joins that read instead of starting its own and the saved row never shows.
+ * `refetchType: 'none'` only marks them stale, for a page that already shows what the write changed.
  */
 export async function refreshAfterWrite(
   queryClient: QueryClient,
   queryKeys: readonly QueryKey[],
+  options: Pick<InvalidateQueryFilters, 'refetchType'> = {},
 ): Promise<void> {
   await Promise.all(
     queryKeys.map(async (queryKey) => {
       await queryClient.cancelQueries({ queryKey });
-      await queryClient.invalidateQueries({ queryKey });
+      await queryClient.invalidateQueries({ queryKey, ...options });
     }),
   );
 }

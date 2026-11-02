@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-quer
 import { renderHook, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { useInvalidatingMutation } from './mutation-hooks';
+import { refreshAfterWrite, useInvalidatingMutation } from './mutation-hooks';
 import { QueryKeys } from './query-keys';
 
 function createWrapper(queryClient: QueryClient) {
@@ -97,6 +97,40 @@ describe('pool-master-rop.78.10: useInvalidatingMutation invalidation contract',
     releaseFirstRead();
 
     await waitFor(() => expect(list.current.data).toEqual(['Tour A', 'Tour B']));
+  });
+
+  it('marking reads stale without refetching still cancels a read in flight, so its pre-write answer is never kept and the next reader reads again', async () => {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    const entriesKey = QueryKeys.contestEntries.byContest('contest-1');
+    let entryStatus = 'SUBMITTED';
+    let releaseFirstRead: () => void = () => undefined;
+    const firstReadHeld = new Promise<void>((resolve) => {
+      releaseFirstRead = resolve;
+    });
+    let reads = 0;
+    const readEntries = async (): Promise<string> => {
+      reads += 1;
+      const answer = entryStatus;
+      if (reads === 1) {
+        await firstReadHeld;
+      }
+      return answer;
+    };
+    void queryClient.query({ queryKey: entriesKey, queryFn: readEntries }).catch(() => undefined);
+
+    // A pick change sends the entry back to draft; nothing on this page reads the list again.
+    entryStatus = 'DRAFT';
+    await refreshAfterWrite(queryClient, [entriesKey], { refetchType: 'none' });
+    releaseFirstRead();
+    expect(reads).toBe(1);
+
+    const { result: entries } = renderHook(
+      () => useQuery({ queryKey: entriesKey, queryFn: readEntries }),
+      { wrapper: createWrapper(queryClient) },
+    );
+    await waitFor(() => expect(entries.current.data).toBe('DRAFT'));
   });
 
   it('pool-master-rop.78.10: supports explicit no-invalidation mutations', async () => {
