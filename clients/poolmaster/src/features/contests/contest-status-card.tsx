@@ -108,7 +108,6 @@ function NotOpenCard({
         <LinkButton
           className={inverseLinkClassName}
           data-testid="contest-preview-as-member"
-          state={{ leagueCode }}
           to={buildLeagueContestPath(leagueCode, contest.id)}
           variant="secondary"
         >
@@ -181,7 +180,6 @@ function ViewInLeagueLink({ contestId, leagueCode }: { contestId: string; league
       <LinkButton
         className={inverseLinkClassName}
         data-testid="contest-view-in-league"
-        state={{ leagueCode }}
         to={buildLeagueContestPath(leagueCode, contestId)}
         variant="secondary"
       >
@@ -286,7 +284,6 @@ function PlayedCard({
       <div>
         <LinkButton
           data-testid="contest-status-leaderboard"
-          state={{ leagueCode }}
           to={buildLeagueContestLeaderboardPath(leagueCode, contestId)}
         >
           {isFinal ? 'See the results' : 'Full leaderboard'}

@@ -1026,6 +1026,16 @@ describe('the member contest emails\' header, contest card and places', () => {
     expect(message.html).toContain('Morgan Member · -14');
   });
 
+  it('links a results email that ended with no scores to the contest\'s final leaderboard, as a scored one does', () => {
+    const noScores = renderSystemEmailTemplate('CONTEST_RESULTS', {
+      ...results,
+      outcome: { kind: ContestResultsKind.NO_SCORES, cancelledEvents: ['The Masters'] },
+    }, UTC);
+
+    expect(noScores.text).toContain(`View contest: ${results.leaderboardUrl}`);
+    expect(noScores.html).toContain(`href="${results.leaderboardUrl}"`);
+  });
+
   it('heads tied final results with every winner', () => {
     const outcome = results.outcome.kind === ContestResultsKind.SCORED ? results.outcome : undefined;
     if (!outcome) throw new Error('the fixture is scored');

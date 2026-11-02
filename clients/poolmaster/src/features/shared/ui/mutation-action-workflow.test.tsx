@@ -19,6 +19,7 @@ function renderWorkflow<TData, TVariables = void>(
   });
 
   const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
+  const cancelSpy = vi.spyOn(queryClient, "cancelQueries");
 
   function Harness() {
     const workflow = useMutationActionWorkflow(options);
@@ -51,7 +52,7 @@ function renderWorkflow<TData, TVariables = void>(
     </QueryClientProvider>,
   );
 
-  return { invalidateSpy, queryClient };
+  return { cancelSpy, invalidateSpy, queryClient };
 }
 
 describe("pool-master-pjr.4: shared mutation action workflow", () => {
@@ -83,6 +84,20 @@ describe("pool-master-pjr.4: shared mutation action workflow", () => {
     expect(await screen.findByText("Saved")).toBeInTheDocument();
     expect(screen.getByText("The action completed.")).toBeInTheDocument();
     expect(screen.getByTestId("pending")).toHaveTextContent("idle");
+  });
+
+  it("cancels a read of an invalidated list still in flight before invalidating it, so its pre-save answer is not kept as fresh", async () => {
+    const action = vi.fn().mockResolvedValue({ id: "updated" });
+    const { cancelSpy, invalidateSpy } = renderWorkflow({
+      action,
+      invalidateQueries: [QueryKeys.leagues.list],
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Run" }));
+
+    await waitFor(() => expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: QueryKeys.leagues.list }));
+    expect(cancelSpy).toHaveBeenCalledWith({ queryKey: QueryKeys.leagues.list });
+    expect(cancelSpy.mock.invocationCallOrder[0]).toBeLessThan(invalidateSpy.mock.invocationCallOrder[0]);
   });
 
   it("rule: preserves error state and emits the configured error toast without closing", async () => {

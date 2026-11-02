@@ -42,13 +42,6 @@ describe('entryColumn', () => {
     expect(screen.getByTestId('board-row-entry-1')).toHaveTextContent('Casey Crushers');
   });
 
-  it('names the entry without a link while the league is unknown', () => {
-    renderBoard([entryColumn('board', { contestId: 'contest-1', leagueCode: null, isMine: () => false })]);
-
-    expect(screen.queryByTestId('board-entry-link-entry-1')).not.toBeInTheDocument();
-    expect(screen.getByTestId('board-row-entry-1')).toHaveTextContent('Crushers 1');
-  });
-
   it('marks only the viewer\'s squad\'s entries Yours', () => {
     renderBoard([entryColumn('board', { contestId: 'contest-1', leagueCode: 'BIGDAWGS', isMine: isMySquadsEntry('squad-1') })]);
 

@@ -1,8 +1,7 @@
 import type { ColumnDef } from '@tanstack/react-table';
-import { useLocation, useParams } from 'react-router';
+import { useParams } from 'react-router';
 import { describeSquaresRules } from '@poolmaster/shared/domain';
 import type { ContestDto, SquaresBoardResponse, SquaresEntryDto } from '@/lib/api';
-import { parseRouteState } from '@/routes/route-state';
 import { ContestEntryBackLinks, ContestPageFrame } from './contest-header';
 import { entryPageView } from './contest-page-view';
 import { entryColumn, placeColumn, totalColumn } from './leaderboard-columns';
@@ -25,18 +24,16 @@ function squaresRules(board: SquaresBoardResponse | undefined) {
  * the numbers are drawn, and then follow each quarter's winner.
  */
 export function SquaresEntryPage({ contest }: { contest: ContestDto }) {
-  const { entryId = '', leagueCode: routeLeagueCode } = useParams<{ entryId: string; leagueCode?: string }>();
-  const location = useLocation();
+  const { entryId = '' } = useParams<{ entryId: string }>();
   const contestId = contest.id;
-  const hintedLeagueCode = routeLeagueCode ?? parseRouteState(location.state).leagueCode ?? null;
   const boardQuery = useSquaresBoardQuery(contest);
   const entryQuery = useContestEntryQuery(contestId, entryId);
-  const { leagueCode, viewer } = useContestLeague(contest.leagueId, hintedLeagueCode);
+  const { leagueCode, viewer } = useContestLeague(contest.leagueId);
   const entry = entryQuery.data?.entry ?? null;
 
   return (
     <ContestPageFrame
-      actions={<ContestEntryBackLinks contestId={contestId} leagueCode={leagueCode} />}
+      actions={<ContestEntryBackLinks leagueCode={leagueCode} />}
       contest={contest}
       current={entryPageView(contest, entryId)}
       leagueCode={leagueCode}
@@ -64,7 +61,7 @@ export function SquaresEntryPage({ contest }: { contest: ContestDto }) {
 type StandingRow = SquaresEntryDto & { entryId: string };
 
 /** The standings' columns: place once Final, the entry, its boxes and the quarters it won. */
-function standingsColumns(contestId: string, leagueCode: string | null, myEntryIds: readonly string[]): ColumnDef<StandingRow>[] {
+function standingsColumns(contestId: string, leagueCode: string, myEntryIds: readonly string[]): ColumnDef<StandingRow>[] {
   return [
     placeColumn(TEST_ID),
     // A squares entry names no squad, so the viewer's own are the entries the contest says are theirs.
@@ -78,9 +75,9 @@ function standingsColumns(contestId: string, leagueCode: string | null, myEntryI
  * A squares contest's leaderboard (#711): each quarter's winner and the grid with the winning
  * boxes outlined, then every entry with its boxes and the quarters it won, placed once Final.
  */
-export function SquaresLeaderboard({ contest, leagueCode: hintedLeagueCode }: { contest: ContestDto; leagueCode: string | null }) {
+export function SquaresLeaderboard({ contest }: { contest: ContestDto }) {
   const boardQuery = useSquaresBoardQuery(contest);
-  const { leagueCode, viewer } = useContestLeague(contest.leagueId, hintedLeagueCode);
+  const { leagueCode, viewer } = useContestLeague(contest.leagueId);
 
   return (
     <LeaderboardFrame

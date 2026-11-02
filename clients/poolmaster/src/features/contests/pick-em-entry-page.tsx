@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useLocation, useParams } from 'react-router';
+import { useParams } from 'react-router';
 import {
   ContestEntryStatus,
   PickEmMode,
@@ -24,12 +24,11 @@ import {
 } from '@/features/shared/ui';
 import { extractErrorMessage, type ErrorCodeMessages } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
-import { parseRouteState } from '@/routes/route-state';
 import { formatPickProgress, formatPoints } from './bracket-layout';
 import { ContestEventSwitcher } from './contest-event-switcher';
 import { currentContestEvent, entryEventStatus } from './contest-events';
 import { ContestEntryFrame } from './contest-header';
-import { useContestLeague } from './use-contest-league';
+import { useContestLeagueCode } from './use-contest-league';
 import { contestEventStart, contestMatchNoun, contestParticipantNoun, contestScoreUnit, contestTieLabel } from './contest-sport';
 import {
   CONTEST_ENTRY_STATUS_LABELS,
@@ -96,10 +95,8 @@ function formatScore(points: number | null) {
  */
 export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
   const displayPreferences = useDisplayPreferences();
-  const { entryId = '', leagueCode: routeLeagueCode } = useParams<{ entryId: string; leagueCode?: string }>();
-  const location = useLocation();
+  const { entryId = '' } = useParams<{ entryId: string }>();
   const contestId = contest.id;
-  const hintedLeagueCode = routeLeagueCode ?? parseRouteState(location.state).leagueCode ?? null;
   // The week being picked, else the latest played, until the member switches.
   const [requestedEventId, setRequestedEventId] = useState<string | null>(null);
   const sportEventId = requestedEventId ?? currentContestEvent(contest)?.sportEventId ?? '';
@@ -123,7 +120,7 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
     ],
   });
   const entryQuery = useContestEntryQuery(contestId, entryId);
-  const { leagueCode: backLeagueCode } = useContestLeague(contest.leagueId, hintedLeagueCode);
+  const leagueCode = useContestLeagueCode();
 
   const switchWeek = (next: string) => {
     saveMutation.reset();
@@ -196,7 +193,7 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
       contest={contest}
       entry={entrySummary}
       entryId={entryId}
-      leagueCode={backLeagueCode}
+      leagueCode={leagueCode}
       phase={contestStatusLabel(contest.status)}
       picksRevealed={entryQuery.data?.picksRevealed ?? false}
       rules={[

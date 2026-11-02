@@ -52,7 +52,7 @@ function ContestSubMenu({
         onChange={(next) => {
           const path = paths[next as ContestView];
           if (path) {
-            void navigate(path, { state: { leagueCode } });
+            void navigate(path);
           }
         }}
         options={views.map((view) => ({ label: labels[view], testId: `contest-menu-${view}`, value: view }))}
@@ -111,8 +111,7 @@ function ContestHeader({
 
 /**
  * Every contest page's frame: the header with the contest's status badge, name and the
- * Entries / Leaderboard / My entry sub-menu built from the contest, then the page's body. The
- * sub-menu shows only when the league is known, since its paths are the league's.
+ * Entries / Leaderboard / My entry sub-menu built from the contest, then the page's body.
  */
 export function ContestPageFrame({
   actions,
@@ -138,7 +137,7 @@ export function ContestPageFrame({
   current: ContestView | null;
   /** Anything the header shows under the title and summary, such as a schedule or notes. */
   details?: ReactNode;
-  leagueCode: string | null;
+  leagueCode: string;
   /** Whether the Leaderboard option shows: its endpoint refuses until picks are revealed. */
   picksRevealed: boolean;
   summary?: ReactNode;
@@ -154,7 +153,7 @@ export function ContestPageFrame({
       <ContestHeader
         actions={actions}
         badges={badges === undefined ? <ContestStatusBadge status={contest.status} /> : badges}
-        menu={leagueCode ? (
+        menu={(
           <ContestSubMenu
             contestId={contest.id}
             current={current}
@@ -162,7 +161,7 @@ export function ContestPageFrame({
             myEntryId={contest.myEntryIds?.[0] ?? null}
             picksRevealed={picksRevealed}
           />
-        ) : null}
+        )}
         summary={summary}
         title={title ?? contest.name}
         titleAside={titleAside}
@@ -175,26 +174,12 @@ export function ContestPageFrame({
   );
 }
 
-/**
- * An entry page's way back: to its league, and to the contest too when the league is not known
- * (with the league known, the sub-menu's Entries is the way to the contest).
- */
-export function ContestEntryBackLinks({ contestId, leagueCode }: { contestId: string; leagueCode: string | null }) {
+/** An entry page's way back to its league; the sub-menu's Entries is the way to the contest. */
+export function ContestEntryBackLinks({ leagueCode }: { leagueCode: string }) {
   return (
-    <>
-      {leagueCode ? null : (
-        <LinkButton data-testid="contest-entry-back-to-contest" to={`/contests/${contestId}`} variant="secondary">
-          Back to contest
-        </LinkButton>
-      )}
-      <LinkButton
-        data-testid="contest-entry-back-to-league"
-        to={leagueCode ? buildLeaguePath(leagueCode) : '/welcome'}
-        variant="secondary"
-      >
-        Back to league
-      </LinkButton>
-    </>
+    <LinkButton data-testid="contest-entry-back-to-league" to={buildLeaguePath(leagueCode)} variant="secondary">
+      Back to league
+    </LinkButton>
   );
 }
 
@@ -222,7 +207,7 @@ export function ContestEntryFrame({
   /** The entry's own read: its squad, number and dates; null until it loads. */
   entry: { createdAt?: string | null; entryNumber: number; squadName: string; updatedAt?: string | null } | null;
   entryId: string;
-  leagueCode: string | null;
+  leagueCode: string;
   /** The contest's phase as the page words it. */
   phase: string;
   picksRevealed: boolean;
@@ -237,7 +222,7 @@ export function ContestEntryFrame({
 }) {
   return (
     <ContestPageFrame
-      actions={<ContestEntryBackLinks contestId={contest.id} leagueCode={leagueCode} />}
+      actions={<ContestEntryBackLinks leagueCode={leagueCode} />}
       badges={null}
       contest={contest}
       current={entryPageView(contest, entryId)}

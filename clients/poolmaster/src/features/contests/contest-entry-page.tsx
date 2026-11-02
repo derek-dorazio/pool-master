@@ -1,13 +1,12 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router';
+import { useNavigate, useParams } from 'react-router';
 import { getContest, getSelectionState, selectContestPick, submitContestEntry, unselectContestPick, updateContestEntry, type SelectionStateResponse, type ContestDto } from '@/lib/api';
 import {
   buildLeagueContestPath,
 } from '@/features/leagues/league-routing';
 import { ContestEntryStatus, ContestStatus, SelectionType, formatDollars, type SportNoun } from '@poolmaster/shared/domain';
 import { getLogger } from '@/lib/logger';
-import { parseRouteState } from '@/routes/route-state';
 import {
   Alert,
   Button,
@@ -42,7 +41,7 @@ import {
   contestStatusLabel,
 } from './contest-status';
 import { ContestEntryFrame } from './contest-header';
-import { useContestLeague } from './use-contest-league';
+import { useContestLeagueCode } from './use-contest-league';
 import { contestEntryTiebreaker, contestRosterParticipantNoun } from './contest-sport';
 import { entryWriteKeys, useContestEntryQuery } from './use-contest-entries';
 import { contestSchedule } from './use-contest-schedule';
@@ -50,7 +49,7 @@ import { ContestEventSwitcher } from './contest-event-switcher';
 import { entryEventStatus, hasContestEventStarted } from './contest-events';
 import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
-import { useInvalidatingMutation } from '@/lib/mutation-hooks';
+import { refreshAfterWrite, useInvalidatingMutation } from '@/lib/mutation-hooks';
 
 type SelectionState = SelectionStateResponse;
 /** One tap on a field row: `isSelected` is whether the entry held it before the tap. */
@@ -142,15 +141,9 @@ function RosterContestEntryPage() {
   const logger = getLogger().child({
     feature: 'contest-entry-page',
   });
-  const { contestId = '', entryId = '', leagueCode: routeLeagueCode } = useParams<{
-    contestId: string;
-    entryId: string;
-    leagueCode?: string;
-  }>();
-  const location = useLocation();
+  const { contestId = '', entryId = '' } = useParams<{ contestId: string; entryId: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const hintedLeagueCode = routeLeagueCode ?? parseRouteState(location.state).leagueCode ?? null;
   // Null opens the room on the contest's current event; the server says which one that is.
   const [requestedEventId, setRequestedEventId] = useState<string | null>(null);
   const selectionStateQueryKey = QueryKeys.selectionStates.detail(contestId, entryId, requestedEventId ?? undefined);
@@ -181,16 +174,8 @@ function RosterContestEntryPage() {
     retry: false,
   });
 
-  /*
-   * #202 — the league-context read, by id.
-   *
-   * This was a bespoke query under a key called `contestLeagueCodes`, existing to turn the
-   * contest's `leagueId` into a `leagueCode` for the back link. `getLeague` returns the same
-   * `LeagueContextResponse` as the by-code read now, so this is the shared hook: the league (for
-   * its code) and the viewer's edges, cached under the league rather than under a
-   * contest-shaped key that nothing else could reuse.
-   */
-  const { leagueCode: backLeagueCode } = useContestLeague(contestQuery.data?.leagueId, hintedLeagueCode);
+  // The league is the URL's: every contest page lives under its league (#1393).
+  const leagueCode = useContestLeagueCode();
   // The event's start is the entry cutoff (#431); the contest's status follows the event's own
   // move to in progress, which can lag the start, and the server refuses picks from the start on.
   const schedule = contestSchedule(contestQuery.data);
@@ -469,9 +454,11 @@ function RosterContestEntryPage() {
       // A pick can send a submitted entry back to draft, which the contest's entry lists and
       // counts show. Those reads are marked stale for the next page that shows them, and none is
       // read again here: this page already shows what changed.
-      for (const queryKey of [...entryWriteKeys(contestId), QueryKeys.contestEntries.detail(contestId, entryId)]) {
-        void queryClient.invalidateQueries({ queryKey, refetchType: 'none' });
-      }
+      void refreshAfterWrite(
+        queryClient,
+        [...entryWriteKeys(contestId), QueryKeys.contestEntries.detail(contestId, entryId)],
+        { refetchType: 'none' },
+      );
     },
     invalidates: [],
     onError: (error, { participantId }, context) => {
@@ -559,9 +546,6 @@ function RosterContestEntryPage() {
   // The prediction the contest's scoring family asks for: a golf entry's winning score, none
   // for a race, whose entries submit without one.
   const tiebreaker = contestEntryTiebreaker(contest);
-  const backToContestPath = backLeagueCode
-    ? buildLeagueContestPath(backLeagueCode, contestId)
-    : `/contests/${contestId}`;
   const entrySummary = entryQuery.data?.entry ?? null;
   const myEntryIds = contest.myEntryIds ?? [];
   const isMyEntry = myEntryIds.includes(entryId);
@@ -623,9 +607,7 @@ function RosterContestEntryPage() {
     } catch {
       return;
     }
-    void navigate(backToContestPath, {
-      state: { leagueCode: backLeagueCode },
-    });
+    void navigate(buildLeagueContestPath(leagueCode, contestId));
   }
 
   const progressNote = picksHidden ? null : [
@@ -649,7 +631,7 @@ function RosterContestEntryPage() {
       contest={contest}
       entry={entrySummary}
       entryId={entryId}
-      leagueCode={backLeagueCode}
+      leagueCode={leagueCode}
       phase={getContestPhaseLabel(contest, isEditable)}
       picksRevealed={entryQuery.data?.picksRevealed ?? false}
       status={picksHidden ? null : entryStatus}

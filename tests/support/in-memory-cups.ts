@@ -4,7 +4,7 @@
  * each league's points table, held in plain arrays so a service test can build a season and read
  * it back.
  */
-import type { CupContest, CupContestFinish, CupKey, CupRankedEntry, CupRepository, LeagueCupContest, LeagueRepository } from '@poolmaster/shared/db';
+import type { CupContest, CupContestFinish, CupKey, CupRepository, LeagueCupContest, LeagueRepository } from '@poolmaster/shared/db';
 import {
   ContestStatus,
   CupPointsScale,
@@ -14,6 +14,7 @@ import {
   type CupPointsTable,
   type CupStanding,
   type League,
+  type RankedContestEntry,
 } from '@poolmaster/shared/domain';
 import { buildLeague } from '../factories';
 
@@ -23,7 +24,8 @@ export interface InMemoryCupContest extends CupContest, CupKey {}
 export class InMemoryCups implements CupRepository {
   readonly cups: Cup[] = [];
   readonly contests: InMemoryCupContest[] = [];
-  readonly rankedEntries: CupRankedEntry[] = [];
+  /** Entries with a frozen place, which `settle` writes finishes from. */
+  readonly rankedEntries: Array<RankedContestEntry & { contestId: string }> = [];
   readonly finishes: CupContestFinish[] = [];
   readonly standings: CupStanding[] = [];
   private readonly leagueRows = new Map<string, League>();
@@ -92,10 +94,6 @@ export class InMemoryCups implements CupRepository {
       .filter((contest) => contest.leagueId === leagueId && (seasonYear === undefined || contest.seasonYear === seasonYear) && contest.status !== ContestStatus.DRAFT)
       .sort((left, right) => left.firstEventStartsAt.getTime() - right.firstEventStartsAt.getTime())
       .map(({ leagueId: _leagueId, seasonYear: season, sportLeagueId, ...contest }) => ({ seasonYear: season, sportLeagueId, contest }));
-  }
-
-  async findRankedEntries(contestIds: readonly string[]): Promise<CupRankedEntry[]> {
-    return this.rankedEntries.filter((entry) => contestIds.includes(entry.contestId));
   }
 
   /** Writes a contest's finishes as settlement does: from its ranked entries, at its weight now. */

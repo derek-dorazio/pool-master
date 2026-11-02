@@ -4596,11 +4596,16 @@ export interface components {
             amountCents: number;
             /** @description What it was for, as written when it was paid: "Masters Pool: up to 200 entries, free while payments are off". */
             description: string;
-            /**
-             * Format: uuid
-             * @description The contest it was for; null when that contest was deleted.
-             */
-            contestId: string | null;
+            /** @description The contest it was for; null when that contest was deleted. */
+            contest: {
+                /** Format: uuid */
+                id: string;
+                /**
+                 * @description Where the line links: an open contest to its Entries, a live or final one to its Leaderboard.
+                 * @enum {string}
+                 */
+                status: "DRAFT" | "OPEN" | "ACTIVE" | "COMPLETED";
+            } | null;
             /** @description Who paid; null for a Poolmaster grant or when that account was deleted. */
             payer: {
                 /** Format: uuid */
@@ -4624,11 +4629,16 @@ export interface components {
                 amountCents: number;
                 /** @description What it was for, as written when it was paid: "Masters Pool: up to 200 entries, free while payments are off". */
                 description: string;
-                /**
-                 * Format: uuid
-                 * @description The contest it was for; null when that contest was deleted.
-                 */
-                contestId: string | null;
+                /** @description The contest it was for; null when that contest was deleted. */
+                contest: {
+                    /** Format: uuid */
+                    id: string;
+                    /**
+                     * @description Where the line links: an open contest to its Entries, a live or final one to its Leaderboard.
+                     * @enum {string}
+                     */
+                    status: "DRAFT" | "OPEN" | "ACTIVE" | "COMPLETED";
+                } | null;
                 /** @description Who paid; null for a Poolmaster grant or when that account was deleted. */
                 payer: {
                     /** Format: uuid */

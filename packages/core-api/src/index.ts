@@ -129,7 +129,7 @@ export function buildApp() {
     logger: app.log,
   });
   const appBaseUrl = readApplicationBaseUrl(process.env);
-  const contestNotices = createContestNotices(prisma, { email, appBaseUrl, logger: app.log, planEntitlements });
+  const contestNotices = createContestNotices(prisma, { email, appBaseUrl, logger: app.log });
   const contestSettlement = createContestSettlementService(prisma, app.log, { contestSettled: contestNotices });
   const eventLifecycleService = createEventLifecycleService(prisma, {
     logger: app.log,

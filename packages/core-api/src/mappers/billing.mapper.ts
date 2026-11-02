@@ -13,7 +13,7 @@ export function toLeaguePaymentListResponse(payments: readonly LeaguePaymentReco
       paidAt: payment.paidAt.toISOString(),
       amountCents: payment.amountCents,
       description: payment.description,
-      contestId: payment.contestId,
+      contest: payment.contest,
       payer: payment.payer ? { id: payment.payer.id, name: formatUserName(payment.payer) } : null,
     })),
   };

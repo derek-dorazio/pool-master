@@ -183,7 +183,6 @@ export const EMAIL_TEMPLATE_FIXTURES: { [Key in SystemEmailTemplateKey]: SystemE
       yourWins: [{ entryName: 'Green Jackets', squadName: 'Morgan Member' }],
     },
     leaderboardUrl: 'http://localhost:5173/league/OFFICE24/contests/contest-1/leaderboard',
-    contestUrl: 'http://localhost:5173/league/OFFICE24/contests/contest-1',
   },
   CONTEST_EVENT_CHANGED: {
     userName: 'Morgan Member',

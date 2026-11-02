@@ -90,6 +90,8 @@ async function week() {
 }
 
 const homeWins = { winnerSide: MatchSide.HOME, homeScore: 80, awayScore: 70 };
+/** The bracket as the write leaves it, handed on so the lifecycle need not read it again (#1355). */
+const writtenBracketWithResult = expect.arrayContaining([expect.objectContaining({ id: 'match-1', status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME, homeScore: 80 })]);
 const awayWins = { winnerSide: MatchSide.AWAY, homeScore: 70, awayScore: 80 };
 
 describe('MatchResultService.recordResult', () => {
@@ -102,6 +104,19 @@ describe('MatchResultService.recordResult', () => {
     expect(bracket.find((match) => match.matchNumber === 3)).toMatchObject({ homeSportEventParticipantId: vermont.id, awaySportEventParticipantId: null });
   });
 
+  it('answers with the bracket as it wrote it, reading the bracket once and not again after the write (#1355)', async () => {
+    const { store, event, vermont } = await setup();
+    const matches = store.matchRepo();
+    const findBySportEvent = jest.spyOn(matches, 'findBySportEvent');
+    const service = new MatchResultService({ sportEvents: store.sportEventRepo(), matches, now: () => AS_OF });
+
+    const bracket = await service.recordResult(event.id, 1, awayWins);
+
+    expect(findBySportEvent).toHaveBeenCalledTimes(1);
+    expect(bracket).toEqual(await store.matchRepo().findBySportEvent(event.id));
+    expect(bracket.find((match) => match.matchNumber === 3)?.homeSportEventParticipantId).toBe(vermont.id);
+  });
+
   it('asks the lifecycle to start the contests whose cutoff the result passed, with the service clock, on an event under way', async () => {
     const { store, event } = await setup();
     const activateContestsPastCutoff = jest.fn<EventLifecycleService['activateContestsPastCutoff']>(async () => undefined);
@@ -109,7 +124,7 @@ describe('MatchResultService.recordResult', () => {
 
     await service.recordResult(event.id, 1, homeWins);
 
-    expect(activateContestsPastCutoff).toHaveBeenCalledWith(expect.objectContaining({ id: event.id, status: SportEventStatus.IN_PROGRESS }), AS_OF);
+    expect(activateContestsPastCutoff).toHaveBeenCalledWith(expect.objectContaining({ id: event.id, status: SportEventStatus.IN_PROGRESS }), AS_OF, writtenBracketWithResult);
   });
 
   it('starts no contest for a result on an event that is not under way', async () => {
@@ -134,7 +149,7 @@ describe('MatchResultService.recordResult', () => {
 
     await service.recordResult(event.id, 1, homeWins);
 
-    expect(settleContestsForFinishedGame).toHaveBeenCalledWith(expect.objectContaining({ id: event.id }), 'match-1', AS_OF);
+    expect(settleContestsForFinishedGame).toHaveBeenCalledWith(expect.objectContaining({ id: event.id }), 'match-1', AS_OF, writtenBracketWithResult);
   });
 
   it('accepts a result with no scores', async () => {
