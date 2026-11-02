@@ -425,7 +425,7 @@ export class SquadOwnerInvitationService {
     invitation: SquadOwnerInvitation;
     email: string;
   }> {
-    const invitation = await this.requirePendingInvitation(inviteCode);
+    const { invitation } = await this.requirePendingInvitation(inviteCode);
     const existingUser = await this.findUserByEmail(invitation.email);
     if (existingUser) {
       throw new SquadOwnerInvitationOperationError(
@@ -443,9 +443,9 @@ export class SquadOwnerInvitationService {
    * The PENDING-and-unexpired check, shared by both acceptance paths. It also refuses a team that
    * has gone inactive since the invitation was sent. Every path that inactivates a team revokes
    * its pending invitations (#529), so this is the backstop: accepting one must never revive an
-   * inactive team (#488).
+   * inactive team (#488). Answers the invitation with its team.
    */
-  private async requirePendingInvitation(inviteCode: string): Promise<SquadOwnerInvitation> {
+  private async requirePendingInvitation(inviteCode: string): Promise<{ invitation: SquadOwnerInvitation; squad: Squad }> {
     const invitation = await this.invitationRepo.findByCode(inviteCode);
     if (!invitation) {
       throw new SquadOwnerInvitationNotFoundError(`Co-owner invitation not found: ${inviteCode}`);
@@ -466,16 +466,16 @@ export class SquadOwnerInvitationService {
       );
     }
     await this.requireActiveLeague(invitation.leagueId);
-    await this.requireActiveSquad(
+    const squad = await this.requireActiveSquad(
       invitation.leagueId,
       invitation.squadId,
       'This invitation is no longer active, so it cannot be accepted.',
     );
-    return invitation;
+    return { invitation, squad };
   }
 
   async acceptInvitation(inviteCode: string, userId: string): Promise<TeamOwnerInvitationDto> {
-    const invitation = await this.requirePendingInvitation(inviteCode);
+    const { invitation, squad } = await this.requirePendingInvitation(inviteCode);
 
     await this.rejectIfCurrentLeagueMember(invitation.leagueId, userId);
     // The invitation is for the address it was sent to; a forwarded code must not admit someone
@@ -497,7 +497,8 @@ export class SquadOwnerInvitationService {
       }),
     }));
     await this.memberJoined.tellJoined(joined);
-    return this.mapInvitationDto(accepted);
+    // The team as read above: seating an owner leaves its name and icon as they were.
+    return toInvitationDto(accepted, squad);
   }
 
   /** The shared last-commissioner rule, raised as this module's operation error. */

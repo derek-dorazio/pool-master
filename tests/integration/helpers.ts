@@ -26,6 +26,7 @@ import { describeUnindexedScans, indexCheck } from './index-check';
 import { healthPlugin } from '../../packages/core-api/src/plugins/health';
 import { authGuard } from '../../packages/core-api/src/plugins/auth-guard';
 import { etagPlugin } from '../../packages/core-api/src/plugins/etag-support';
+import { requestReadMemo } from '../../packages/core-api/src/plugins/request-read-memo';
 import { FASTIFY_AJV_OPTIONS } from '../../packages/core-api/src/plugins/string-transforms';
 import { FASTIFY_SCHEMA_CONTROLLER } from '../../packages/core-api/src/plugins/serializer-cache';
 import { globalErrorHandler } from '../../packages/core-api/src/core/error-handler';
@@ -179,7 +180,8 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
 
   testApp.decorate('prisma', prisma);
 
-  // Core plugins
+  // Core plugins. Each request shares its point reads, as the API's do (#1355).
+  testApp.register(requestReadMemo);
   testApp.register(healthPlugin);
   testApp.register(etagPlugin);
   testApp.register(authGuard);

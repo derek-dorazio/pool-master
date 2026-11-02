@@ -679,8 +679,7 @@ export class ContestManagementService {
     return joined;
   }
 
-  /** The contest's events, in its sequence order; each must still exist. */
-  /** The contest's events in its order, read together (#1355). */
+  /** The contest's events in its sequence order, read together (#1355); each must still exist. */
   private async findContestSportEvents(contest: Contest): Promise<ContestCreateSportEventState[]> {
     const byId = new Map((await this.sportEventReader.findByIds(contest.sportEventIds)).map((sportEvent) => [sportEvent.id, sportEvent]));
     return contest.sportEventIds.map((sportEventId) => {

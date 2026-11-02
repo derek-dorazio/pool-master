@@ -2993,3 +2993,28 @@ describe('ContestManagementService sports leagues a year (#947)', () => {
     expect(cupsAsked).toEqual([]);
   });
 });
+
+describe('createContestSportEventReader.findByIds (#1355)', () => {
+  it('gives each event its own sport\'s stored tournament format, even when the events are of different sports', async () => {
+    const store = new InMemorySportEvents();
+    // Formats other than each sport's default, so a fall back to the default would show.
+    store.addSport(Sport.GOLF).tournamentFormat = TournamentFormat.RACE;
+    store.addSport(Sport.TENNIS).tournamentFormat = TournamentFormat.STROKE_PLAY_TOURNAMENT;
+    const golf = store.addEvent({ sport: Sport.GOLF });
+    const tennis = store.addEvent({ sport: Sport.TENNIS });
+    const reader = createContestSportEventReader({
+      sportEvents: store.sportEventRepo(),
+      sports: store.sportRepo(),
+      field: store.fieldRepo(),
+      valuations: store.valuationRepo(),
+      matches: store.matchRepo(),
+    });
+
+    const states = await reader.findByIds([golf.id, tennis.id]);
+
+    expect(states.map(({ id, tournamentFormat }) => [id, tournamentFormat])).toEqual([
+      [golf.id, TournamentFormat.RACE],
+      [tennis.id, TournamentFormat.STROKE_PLAY_TOURNAMENT],
+    ]);
+  });
+});

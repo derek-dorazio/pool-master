@@ -86,11 +86,12 @@ export function createContestSportEventReader({ sportEvents, sports, field, valu
     if (events.length === 0) {
       return [];
     }
-    // A contest's events share one sport league, so one sport; any other caller has one event.
-    const [sport, loaded] = await Promise.all([
-      sports.findBySport(events[0].sport),
+    // The sport rows are a fixed handful, so all of them are one read whatever sports the events have.
+    const [sportRows, loaded] = await Promise.all([
+      sports.findAll(),
       sportEvents.countParticipants(events.map((event) => event.id)),
     ]);
+    const sportByKind = new Map(sportRows.map((row) => [row.sport, row]));
     return events.map((event) => ({
       id: event.id,
       status: event.status,
@@ -101,7 +102,7 @@ export function createContestSportEventReader({ sportEvents, sports, field, valu
       // A sport league scored by its own family plays its own format (#934: a stat pool plays
       // golf's, not its team sport's matches); any other plays its sport's.
       tournamentFormat: (event.scoringFamily ?? null) === null
-        ? (sport?.sport === event.sport ? sport.tournamentFormat : undefined) ?? getDefaultTournamentFormatForSport(event.sport)
+        ? sportByKind.get(event.sport)?.tournamentFormat ?? getDefaultTournamentFormatForSport(event.sport)
         : eventSportDefinition(event).tournamentFormat,
       participantCount: event.participantCount ?? null,
       loadedParticipantCount: loaded.get(event.id) ?? 0,
@@ -164,8 +165,8 @@ export function createContestOpeningReader(prisma: PrismaClient): ContestOpening
     const counts = await sportEvents.countParticipants([...new Set(sportEventIds)]);
     return sportEventIds.map((sportEventId) => counts.get(sportEventId) ?? 0);
   });
-  // The sport rows are a fixed list of a handful, so the first ask reads them all.
-  const sportRows = batchedByKey(() => sports.findAll(), (sport) => sport.sport);
+  // The sport rows are a fixed list of a handful: the first ask reads them all, for the whole page.
+  let sportRows: ReturnType<typeof sports.findAll> | undefined;
   const gamesOf = batchedByKey((sportEventIds) => eventMatches.findBySportEvents(sportEventIds), (game) => game.sportEventId);
   const fieldOf = batchedByKey((sportEventIds) => field.findBySportEvents(sportEventIds), (row) => row.sportEventId);
   const matches = withReads(eventMatches, { findBySportEvent: (sportEventId) => gamesOf.load(sportEventId) });
@@ -175,7 +176,7 @@ export function createContestOpeningReader(prisma: PrismaClient): ContestOpening
       findByIds: (ids) => eventsById.load(ids),
       countParticipants: async (sportEventIds) => new Map(await Promise.all(sportEventIds.map(async (sportEventId) => [sportEventId, await participantCounts.load(sportEventId)] as const))),
     }),
-    sports: withReads(sports, { findBySport: async (sport) => (await sportRows.load(sport)).at(0) ?? null }),
+    sports: withReads(sports, { findAll: () => (sportRows ??= sports.findAll()) }),
     field: withReads(field, { findBySportEvent: (sportEventId) => fieldOf.load(sportEventId) }),
     valuations: new PrismaSportEventParticipantValuationRepository(prisma),
     matches,
