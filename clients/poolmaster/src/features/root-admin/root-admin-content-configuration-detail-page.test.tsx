@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter, Route, Routes } from 'react-router';
+import { MemoryRouter, Route, Routes, useNavigate } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { RootAdminContentConfigurationDetailPage } from './root-admin-content-configuration-detail-page';
@@ -74,6 +74,16 @@ function seedTemplates() {
   });
 }
 
+/** Stands in for the template list's links: opens another template on the same page. */
+function OpenOtherTemplate() {
+  const navigate = useNavigate();
+  return (
+    <button data-testid="open-other-template" onClick={() => void navigate('/manage/content-configuration/golf-budget')} type="button">
+      Other template
+    </button>
+  );
+}
+
 function renderPage(templateKey = 'golf-tiered-pick-6') {
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -81,18 +91,22 @@ function renderPage(templateKey = 'golf-tiered-pick-6') {
     },
   });
 
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={[`/manage/content-configuration/${templateKey}`]}>
-        <Routes>
-          <Route
-            element={<RootAdminContentConfigurationDetailPage />}
-            path="/manage/content-configuration/:templateKey"
-          />
-        </Routes>
-      </MemoryRouter>
-    </QueryClientProvider>,
-  );
+  return {
+    queryClient,
+    ...render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter initialEntries={[`/manage/content-configuration/${templateKey}`]}>
+          <OpenOtherTemplate />
+          <Routes>
+            <Route
+              element={<RootAdminContentConfigurationDetailPage />}
+              path="/manage/content-configuration/:templateKey"
+            />
+          </Routes>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    ),
+  };
 }
 
 describe('RootAdminContentConfigurationDetailPage', () => {
@@ -142,6 +156,41 @@ describe('RootAdminContentConfigurationDetailPage', () => {
         }),
       });
     });
+  });
+
+  it('keeps an unsaved edit when the templates are read again in the background', async () => {
+    seedTemplates();
+    const { queryClient } = renderPage();
+    fireEvent.change(await screen.findByTestId('root-admin-content-config-name'), {
+      target: { value: 'My unsaved name' },
+    });
+
+    listContestConfigTemplatesMock.mockResolvedValue({
+      data: { templates: [{ ...buildTemplate(), description: 'Read again from the server.' }] },
+    });
+    await queryClient.refetchQueries();
+
+    expect(listContestConfigTemplatesMock).toHaveBeenCalledTimes(2);
+    expect(screen.getByTestId('root-admin-content-config-name')).toHaveValue('My unsaved name');
+  });
+
+  it('opens another template with its own values, not the draft left on the one before', async () => {
+    listContestConfigTemplatesMock.mockResolvedValue({
+      data: {
+        templates: [
+          buildTemplate(),
+          { ...buildTemplate(), id: '22222222-2222-4222-8222-222222222222', templateKey: 'golf-budget', name: 'Budget golf' },
+        ],
+      },
+    });
+    renderPage();
+    fireEvent.change(await screen.findByTestId('root-admin-content-config-name'), {
+      target: { value: 'Unsaved tiered name' },
+    });
+
+    fireEvent.click(screen.getByTestId('open-other-template'));
+
+    await waitFor(() => expect(screen.getByTestId('root-admin-content-config-name')).toHaveValue('Budget golf'));
   });
 
   it('edits a budget template\'s golfers per entry and scores that count, with no picks per tier', async () => {

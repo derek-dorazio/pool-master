@@ -1,5 +1,6 @@
 import { Trophy } from 'lucide-react';
-import { Fragment, useEffect, useState } from 'react';
+import { Fragment, useState } from 'react';
+import { flushSync } from 'react-dom';
 import { useParams } from 'react-router';
 import type { ContestDto } from '@/lib/api';
 import {
@@ -275,8 +276,6 @@ export function ContestLeaderboardPage() {
   const [collapsedEntryIds, setCollapsedEntryIds] = useState<ReadonlySet<string>>(() => new Set());
   const [search, setSearch] = useState('');
   const [pageIndex, setPageIndex] = useState(0);
-  // Set by Jump to my entry; once the page holding that entry renders, it is scrolled into view.
-  const [jumpTargetId, setJumpTargetId] = useState<string | null>(null);
   // Which event's picks the board shows (#713); null is the server's choice, its latest revealed.
   const [requestedEventId, setRequestedEventId] = useState<string | null>(null);
 
@@ -299,14 +298,6 @@ export function ContestLeaderboardPage() {
   });
   const { leagueCode, viewer } = useContestLeague(contestQuery.data?.leagueId);
   const leaderboardFallback = useLeaderboardFallback(leaderboardQuery, { action: 'contestLeaderboard.load.failed', contestId });
-
-  useEffect(() => {
-    if (!jumpTargetId) {
-      return;
-    }
-    document.getElementById(entryBlockId(jumpTargetId))?.scrollIntoView({ block: 'start', behavior: 'smooth' });
-    setJumpTargetId(null);
-  }, [jumpTargetId, pageIndex]);
 
   if (contestQuery.isLoading) {
     return <LoadingState body="Loading contest leaderboard..." />;
@@ -385,14 +376,17 @@ export function ContestLeaderboardPage() {
     if (!target) {
       return;
     }
-    setSearch('');
-    setPageIndex(Math.floor(myBestIndex / LEADERBOARD_PAGE_SIZE));
-    setCollapsedEntryIds((current) => {
-      const next = new Set(current);
-      next.delete(target.entryId);
-      return next;
+    // The page holding the entry renders first, so the entry is there to scroll to.
+    flushSync(() => {
+      setSearch('');
+      setPageIndex(Math.floor(myBestIndex / LEADERBOARD_PAGE_SIZE));
+      setCollapsedEntryIds((current) => {
+        const next = new Set(current);
+        next.delete(target.entryId);
+        return next;
+      });
     });
-    setJumpTargetId(target.entryId);
+    document.getElementById(entryBlockId(target.entryId))?.scrollIntoView({ block: 'start', behavior: 'smooth' });
   };
 
   return (

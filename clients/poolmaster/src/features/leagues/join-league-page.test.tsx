@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SquadMembershipStatus, TeamIconKey } from '@poolmaster/shared/domain';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
+import { MemoryRouter, Route, Routes, useLocation, useNavigate } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { AuthProvider } from '@/features/auth/auth-provider';
@@ -92,6 +92,12 @@ function LeagueDestination() {
   return <div data-team-setup-failed={String(teamSetupFailed)} data-testid="league-destination" />;
 }
 
+/** Stands in for a second invite link followed while the join page is open. */
+function FollowOtherInvite() {
+  const navigate = useNavigate();
+  return <button data-testid="follow-other-invite" onClick={() => void navigate('/invite/OTHER456')} type="button">Other invite</button>;
+}
+
 function renderJoinLeaguePage(initialEntry = '/invite/LEAGUE123') {
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -105,6 +111,7 @@ function renderJoinLeaguePage(initialEntry = '/invite/LEAGUE123') {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <MemoryRouter initialEntries={[initialEntry]}>
+          <FollowOtherInvite />
           <Routes>
             <Route element={<JoinLeaguePage />} path="/invite/:inviteCode" />
             <Route element={<LeagueDestination />} path="/league/:leagueCode" />
@@ -152,6 +159,29 @@ describe('pool-master-rop.23: JoinLeaguePage generated DTO fixtures', () => {
 
     expect(chosen).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByTestId(`join-league-team-icon-${TeamIconKey.CAPTAIN_SMILE_FIELD}`)).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  it('starts another invite with the default team name and icon, not the choices made on the one before', async () => {
+    getCurrentUserMock.mockResolvedValue(apiSuccess({
+      user: buildCurrentUser({ firstName: 'Derek', lastName: 'Dorazio' }),
+    }));
+    refreshTokenMock.mockResolvedValue({ data: null });
+    getInvitationPreviewMock.mockResolvedValue(apiSuccess(getInvitationPreviewData(
+      buildInvitationPreview(),
+    )));
+    renderJoinLeaguePage();
+
+    const nameInput = await screen.findByTestId('join-league-team-name');
+    const defaultName = (nameInput as HTMLInputElement).value;
+    fireEvent.change(nameInput, { target: { value: 'Typed For The First League' } });
+    fireEvent.click(screen.getByTestId(`join-league-team-icon-${TeamIconKey.TURBO_TURTLE_MIDNIGHT}`));
+
+    fireEvent.click(screen.getByTestId('follow-other-invite'));
+
+    await waitFor(() => expect(screen.getByTestId('join-league-team-name')).toHaveValue(defaultName));
+    expect(defaultName).not.toBe('');
+    expect(screen.getByTestId(`join-league-team-icon-${TeamIconKey.CAPTAIN_SMILE_FIELD}`)).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByTestId(`join-league-team-icon-${TeamIconKey.TURBO_TURTLE_MIDNIGHT}`)).toHaveAttribute('aria-pressed', 'false');
   });
 
   it('pool-master-rop.23: lets an authenticated member set team name and icon during join', async () => {
