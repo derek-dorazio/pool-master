@@ -132,6 +132,19 @@ function standing(position: number, squadId: string, squadName: string, totalSco
   };
 }
 
+function liveLeaderboard(contestId: string, entries: ReturnType<typeof standing>[]) {
+  return {
+    contestId,
+    sportEventId: `event-${contestId}`,
+    sport: 'GOLF',
+    scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
+    countingRule: { type: 'BEST_N', count: 4 },
+    participants: [],
+    asOf: null,
+    entries,
+  };
+}
+
 function primeMocks({
   contests = [] as ReturnType<typeof contest>[],
   entriesByContest = {} as Record<string, ReturnType<typeof entry>[]>,
@@ -363,6 +376,49 @@ describe('League Home', () => {
       'href',
       '/league/BIGDAWGS/contests/live-1/leaderboard',
     );
+  });
+
+  it('offers a chip for each live contest the team is in, switching the top five to the chosen one', async () => {
+    primeMocks({
+      contests: [contest('live-1', 'Masters Pick 6', 'ACTIVE'), contest('live-2', 'NBA Finals Stars', 'ACTIVE')],
+      entriesByContest: { 'live-1': [entry('live-1', 'team-1')], 'live-2': [entry('live-2', 'team-1')] },
+    });
+    getContestLeaderboardMock.mockImplementation(({ path }: { path: { contestId: string } }) => apiSuccess(liveLeaderboard(
+      path.contestId,
+      path.contestId === 'live-1' ? [standing(1, 'team-a', 'Bogey Men', -14)] : [standing(1, 'team-z', 'Net Gains', 22)],
+    )));
+
+    renderLeagueHome();
+
+    const standings = within(await screen.findByTestId('league-home-live-standings'));
+    expect(standings.getByRole('radio', { name: 'Masters Pick 6' })).toBeChecked();
+    expect(standings.getByRole('radio', { name: 'NBA Finals Stars' })).not.toBeChecked();
+    expect(await standings.findByText('Bogey Men')).toBeInTheDocument();
+    expect(getContestLeaderboardMock).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(standings.getByRole('radio', { name: 'NBA Finals Stars' }));
+
+    expect(await standings.findByText('Net Gains')).toBeInTheDocument();
+    expect(standings.queryByText('Bogey Men')).not.toBeInTheDocument();
+    expect(standings.getByRole('heading', { name: 'NBA Finals Stars · Top 5' })).toBeInTheDocument();
+    expect(standings.getByRole('link', { name: /Full leaderboard/ })).toHaveAttribute('href', '/league/BIGDAWGS/contests/live-2/leaderboard');
+    expect(getContestLeaderboardMock).toHaveBeenCalledTimes(2);
+    expect(getContestLeaderboardMock.mock.lastCall?.[0]).toMatchObject({ path: { contestId: 'live-2' } });
+  });
+
+  it('shows no chips when the team is in one live contest', async () => {
+    primeMocks({
+      contests: [contest('live-1', 'Masters Pick 6', 'ACTIVE'), contest('live-2', 'NBA Finals Stars', 'ACTIVE')],
+      entriesByContest: { 'live-1': [entry('live-1', 'team-1')] },
+    });
+    getContestLeaderboardMock.mockResolvedValue(apiSuccess(liveLeaderboard('live-1', [standing(1, 'team-a', 'Bogey Men', -14)])));
+
+    renderLeagueHome();
+
+    const standings = within(await screen.findByTestId('league-home-live-standings'));
+    expect(await standings.findByText('Bogey Men')).toBeInTheDocument();
+    expect(standings.queryByRole('radiogroup')).not.toBeInTheDocument();
+    expect(standings.getByRole('heading', { name: 'Masters Pick 6 · Top 5' })).toBeInTheDocument();
   });
 
   it('lists the other live and open contests under Live and open, live first, leaving out the one up next', async () => {
