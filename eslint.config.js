@@ -10,8 +10,13 @@ import react from 'eslint-plugin-react';
 import reactHooks from 'eslint-plugin-react-hooks';
 import reactRefresh from 'eslint-plugin-react-refresh';
 import testingLibrary from 'eslint-plugin-testing-library';
-import vitest from 'eslint-plugin-vitest';
+import vitest from '@vitest/eslint-plugin';
+import { createRequire } from 'node:module';
 import poolmaster from './eslint-rules/index.mjs';
+
+// eslint-plugin-react's `version: 'detect'` calls `context.getFilename()`, which
+// ESLint 10 removed (#1384). Read the installed React version here instead.
+const REACT_VERSION = createRequire(import.meta.url)('react/package.json').version;
 
 /**
  * Selector sets are hoisted to module scope on purpose.
@@ -490,9 +495,20 @@ export default tseslint.config(
     files: WEBAPP_FILES,
     plugins: { 'react-hooks': reactHooks },
     // `exhaustive-deps` is on; deliberate exceptions cite rules/react-ui-rules.md §5 inline.
+    //
+    // The React Compiler rules from react-hooks 7 (#1384) are on as plain lint rules,
+    // with two exceptions:
+    // - `incompatible-library` only says the Compiler would skip a component that uses
+    //   react-hook-form's `watch` or TanStack Table. We don't run the Compiler, so it
+    //   reports nothing to fix.
+    // - `set-state-in-effect` enforces rules/react-ui-rules.md §5 *Use Effect Only For
+    //   External Synchronization*. It found 11 existing sites; it is turned on with
+    //   their fix in #1408 rather than in this dependency upgrade.
     rules: {
-      'react-hooks/rules-of-hooks': 'error',
+      ...asErrors(reactHooks.configs['recommended-latest'].rules),
       'react-hooks/exhaustive-deps': 'error',
+      'react-hooks/incompatible-library': 'off',
+      'react-hooks/set-state-in-effect': 'off',
     },
   },
   {
@@ -518,7 +534,7 @@ export default tseslint.config(
   {
     files: WEBAPP_FILES,
     plugins: { react },
-    settings: { react: { version: 'detect' } },
+    settings: { react: { version: REACT_VERSION } },
     rules: asErrors({
       ...react.configs.flat.recommended.rules,
       ...react.configs.flat['jsx-runtime'].rules,
