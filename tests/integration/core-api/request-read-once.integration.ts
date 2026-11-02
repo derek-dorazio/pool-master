@@ -34,7 +34,9 @@ import { freshEventEdition } from '../../support/event-edition';
 // The routes #1355 brought under the request query budget, against Postgres: each reads the
 // joiner, the team, the league and the contest's events once however many steps of the request
 // need them, and sends exactly the statements pinned here. A count that moves is a read added
-// or lost: look at which table moved before changing the pin.
+// or lost: look at which table moved before changing the pin. The two settling routes (a game's
+// result, an event's status change) stay on the functional suite's query budget allow list
+// (#1387), which stops counting them there, so these pins are what holds their counts.
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -282,6 +284,196 @@ describe('Opening a contest (#1355)', () => {
       ['SELECT sports', 1],
       ['SELECT users', 1],
       ['UPDATE contests', 1],
+    ]);
+  });
+});
+
+/**
+ * A league's squares contest under way on a football game: the league's team holds the top row,
+ * the numbers are drawn, and the first three quarters are scored. With `gameFinished`, the game's
+ * final result is already in, as an event finished after its last game would have it.
+ */
+async function squaresContestUnderWay(options: { gameFinished: boolean }) {
+  const prisma = getPrisma();
+  const { leagueId, squadId } = await leagueWithTeam();
+  const admin = await createTestUser({ isRootAdmin: true });
+  const suffix = randomUUID().slice(0, 8);
+  const sport = await prisma.sport.upsert({
+    where: { sport: Sport.AMERICAN_FOOTBALL },
+    create: { sport: Sport.AMERICAN_FOOTBALL, participantType: 'TEAM', tournamentFormat: 'MATCHES' },
+    update: {},
+  });
+  const event = await prisma.sportEvent.create({
+    data: {
+      ...(await freshEventEdition(prisma)),
+      externalId: `read-once-squares-${suffix}`,
+      providerId: 'integration-test',
+      sport: Sport.AMERICAN_FOOTBALL,
+      name: `Read Once Bowl ${suffix}`,
+      startDate: new Date(Date.now() - 3 * 60 * 60 * 1000),
+      status: 'IN_PROGRESS',
+    },
+  });
+  const [home, away] = await Promise.all(['Home', 'Away'].map(async (side) => {
+    const team = await prisma.participant.create({
+      data: { sportId: sport.id, name: `Read Once ${side} ${suffix}`, participantType: 'TEAM', status: 'ACTIVE' },
+    });
+    return prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: team.id, isActive: true } });
+  }));
+  const round = await prisma.sportEventRound.create({ data: { sportEventId: event.id, roundNumber: 1, scheduledDate: event.startDate } });
+  const game = await prisma.sportEventMatch.create({
+    data: {
+      sportEventId: event.id,
+      sportEventRoundId: round.id,
+      matchNumber: 1,
+      isNeutralSite: true,
+      homeSportEventParticipantId: home.id,
+      awaySportEventParticipantId: away.id,
+      ...(options.gameFinished
+        ? { status: 'COMPLETED', winnerSide: 'AWAY', homeScore: 27, awayScore: 31 }
+        : { status: 'IN_PROGRESS' }),
+      periodScores: {
+        create: [
+          { periodNumber: 1, homeScore: 7, awayScore: 0 },
+          { periodNumber: 2, homeScore: 14, awayScore: 10 },
+          { periodNumber: 3, homeScore: 21, awayScore: 24 },
+        ],
+      },
+    },
+  });
+  const contest = await prisma.contest.create({
+    data: {
+      leagueId,
+      seasonYear: 2026,
+      sportEvents: { create: { sportEventId: event.id, sequence: 1 } },
+      squaresGame: { create: { sportEventMatchId: game.id } },
+      name: `Read Once Squares ${suffix}`,
+      status: 'ACTIVE',
+      contestFormat: 'SQUARES',
+      selectionType: 'SQUARES',
+    },
+  });
+  const entry = await prisma.contestEntry.create({
+    data: { contestId: contest.id, squadId, entryNumber: 1, name: `Read Once Entry ${suffix}`, events: { create: { sportEventId: event.id } } },
+  });
+  await prisma.contestEntrySquare.createMany({
+    data: TIER_KEYS.map((_, columnIndex) => ({ contestId: contest.id, contestEntryId: entry.id, rowIndex: 0, columnIndex })),
+  });
+  await prisma.contestSquaresDraw.create({
+    data: { contestId: contest.id, seed: 'read-once', rowDigits: [1, 0, 2, 3, 4, 5, 6, 7, 8, 9], columnDigits: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] },
+  });
+  return { admin, eventId: event.id, contestId: contest.id, gameId: game.id };
+}
+
+/**
+ * How many reads of the contest's final places, best first: what its championship finishes and
+ * its results email take. The standings write reads the rows it replaces too, unordered.
+ */
+function finalPlaceReads(statements: readonly RecordedStatement[], contestId: string): number {
+  return readsWith(statements, 'contest_entry_standings', contestId).filter((statement) => statement.sql.includes('ORDER BY')).length;
+}
+
+describe('Settling a squares contest with its game (#1355)', () => {
+  it('reads the bracket once, then settles the contest from the bracket it wrote, and sends a fixed set of statements when a game\'s result settles a squares contest', async () => {
+    const { admin, eventId, contestId, gameId } = await squaresContestUnderWay({ gameFinished: false });
+
+    const { response, statements } = await measureRequest({
+      method: 'PUT',
+      url: `/api/v1/events/${eventId}/bracket/matches/1/result`,
+      headers: admin.headers,
+      payload: { winnerSide: 'AWAY', homeScore: 27, awayScore: 31 },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect((await getPrisma().contest.findUniqueOrThrow({ where: { id: contestId } })).status).toBe(ContestStatus.COMPLETED);
+    expect([statementsOn(statements, StatementVerb.SELECT, 'sport_event_matches').length, readsWith(statements, 'sport_event_matches', gameId).length]).toEqual([1, 0]);
+    expect(finalPlaceReads(statements, contestId)).toBe(1);
+    expect(requestCounts(statements)).toEqual([
+      ['DELETE contest_squares_winners', 1],
+      ['INSERT contest_entry_event_standings', 1],
+      ['INSERT contest_entry_standings', 1],
+      ['INSERT contest_squares_winners', 1],
+      ['INSERT league_year_finishes', 1],
+      ['INSERT sport_event_participant_standings', 1],
+      ['SELECT contest_draws', 1],
+      ['SELECT contest_entries', 1],
+      ['SELECT contest_entry_event_standings', 1],
+      ['SELECT contest_entry_events', 1],
+      ['SELECT contest_entry_squares', 1],
+      ['SELECT contest_entry_standings', 2],
+      ['SELECT contest_sport_events', 1],
+      ['SELECT contest_squares_draws', 2],
+      ['SELECT contest_squares_games', 1],
+      ['SELECT contests', 2],
+      ['SELECT event_series', 1],
+      ['SELECT league_memberships', 1],
+      ['SELECT leagues', 1],
+      ['SELECT sport_event_match_period_scores', 1],
+      ['SELECT sport_event_matches', 1],
+      ['SELECT sport_event_participant_standings', 1],
+      ['SELECT sport_event_rounds', 1],
+      ['SELECT sport_events', 2],
+      ['SELECT sport_leagues', 1],
+      ['SELECT squad_memberships', 1],
+      ['SELECT squads', 1],
+      ['SELECT users', 1],
+      ['UPDATE contests', 1],
+      ['UPDATE sport_event_matches', 1],
+    ]);
+  });
+});
+
+describe('Finishing an event (#1355)', () => {
+  it('reads each settled contest\'s final places once for both its championship finishes and its results email, and sends a fixed set of statements when an event\'s status change settles a contest', async () => {
+    const { admin, eventId, contestId } = await squaresContestUnderWay({ gameFinished: true });
+
+    const { response, statements } = await measureRequest({
+      method: 'POST',
+      url: `/api/v1/events/${eventId}/transition`,
+      headers: admin.headers,
+      payload: { toStatus: 'COMPLETED' },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect((await getPrisma().contest.findUniqueOrThrow({ where: { id: contestId } })).status).toBe(ContestStatus.COMPLETED);
+    expect(finalPlaceReads(statements, contestId)).toBe(1);
+    expect(requestCounts(statements)).toEqual([
+      ['DELETE contest_squares_winners', 1],
+      ['INSERT contest_entry_event_standings', 1],
+      ['INSERT contest_entry_standings', 1],
+      ['INSERT contest_squares_winners', 1],
+      ['INSERT league_year_finishes', 1],
+      ['SELECT contest_draws', 1],
+      ['SELECT contest_entries', 1],
+      ['SELECT contest_entry_event_standings', 2],
+      ['SELECT contest_entry_events', 1],
+      ['SELECT contest_entry_squares', 1],
+      ['SELECT contest_entry_standings', 2],
+      ['SELECT contest_sport_events', 2],
+      ['SELECT contest_squares_draws', 2],
+      ['SELECT contest_squares_games', 1],
+      ['SELECT contests', 1],
+      ['SELECT event_series', 2],
+      ['SELECT league_memberships', 1],
+      ['SELECT leagues', 1],
+      ['SELECT participant_league_affiliations', 1],
+      ['SELECT participants', 1],
+      ['SELECT sport_event_match_period_scores', 3],
+      ['SELECT sport_event_matches', 3],
+      ['SELECT sport_event_participant_race_results', 1],
+      ['SELECT sport_event_participant_rounds', 1],
+      ['SELECT sport_event_participant_standings', 1],
+      ['SELECT sport_event_participant_valuations', 1],
+      ['SELECT sport_event_participants', 4],
+      ['SELECT sport_event_rounds', 3],
+      ['SELECT sport_event_tiers', 2],
+      ['SELECT sport_events', 3],
+      ['SELECT sport_leagues', 2],
+      ['SELECT squad_memberships', 1],
+      ['SELECT squads', 1],
+      ['SELECT users', 1],
+      ['UPDATE contests', 1],
+      ['UPDATE sport_events', 1],
     ]);
   });
 });

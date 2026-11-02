@@ -338,7 +338,7 @@ describe('ContestNotices', () => {
   });
 
   describe('contestSettled (F1, F2, F3)', () => {
-    /** A settled place for an entry of the squad, as `finalStandingsOf` answers it. */
+    /** A settled place for an entry of the squad, as `readFinalStandings` answers it. */
     function place(squad: { id: string; name: string }, entryName: string, position: number, displayPosition: string, score: number) {
       return { entryId: `entry-${entryName}`, entryName, squadId: squad.id, squadName: squad.name, position, displayPosition, score };
     }

@@ -52,7 +52,6 @@ export interface ContestNoticeDeps extends ContestSummaryDeps, LeagueMemberDeps 
   leagues: Pick<LeagueRepository, 'findById' | 'findByIds'>;
   entries: Pick<ContestEntryRepository, 'findByContest' | 'findByContests'>;
   squadMemberships: Pick<SquadMembershipRepository, 'findBySquads'>;
-  /** A settled contest's frozen places, for its final results. */
   email: Pick<EmailService, 'sendMany'>;
   appBaseUrl: string;
   logger?: FastifyBaseLogger;
