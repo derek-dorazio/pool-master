@@ -160,8 +160,8 @@ Championship"; #1102 (Derek 2026-10-27) added the sport so the Clutch Card calen
 (both legs one event of two games), **Champions League Final**, **Women's World Cup Semifinals**
 and **Women's World Cup Final** (display 110 to 140, after the soccer bracket leagues).
 #1044 and #993 built **WNBA Semifinals** (display 80; both series one event, as the NBA's
-conference finals are) and **WNBA Finals** (display 90), on Triple Threat, with the 2025 playoffs
-as test data because the 2026 Finals were still being played.
+conference finals are) and **WNBA Finals** (display 90), on Triple Threat. Their test data is the 2026 playoffs (#1130,
+swapped in from the 2025 playoffs once Golden State won the 2026 Finals in seven).
 
 **Soccer name. Decided for now (Derek 2026-10-24):** **Hat Trick**, with **Golden Boot** also
 considered. Derek may change it once he sees the contest (#994).
