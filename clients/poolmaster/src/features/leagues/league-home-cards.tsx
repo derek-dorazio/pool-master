@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { SelectionType, SquadMembershipStatus } from '@poolmaster/shared/domain';
 import type { ContestDto, ContestEntryDto, SquadDto } from '@/lib/api';
 import { formatUserName } from '@/features/account/user-name';
@@ -16,6 +17,7 @@ import {
   PanelCard,
   PanelList,
   QueryState,
+  SegmentedControl,
   SimpleTable,
   TableBody,
   TableCell,
@@ -137,24 +139,24 @@ function StandingsRow({ row }: { row: StandingRow }) {
   );
 }
 
-/** The top five of a live contest the viewer has an entry in, with their own row if lower. */
+/**
+ * Live standings (#1391): a chip for every live contest the viewer has an entry in, the first
+ * chosen to start, and the chosen contest's top five with their own row if lower. Only the chosen
+ * contest's leaderboard is read, so Home makes one leaderboard request however many are live.
+ */
 export function LiveStandingsCard({
-  contest,
+  contests,
   leagueCode,
   mySquadId,
 }: {
-  contest: ContestDto;
+  /** The live contests the viewer has an entry in, at least one. */
+  contests: readonly ContestDto[];
   leagueCode: string;
   mySquadId: string | null;
 }) {
-  // A bracket contest's standings are their own read (#721).
-  const isBracket = contest.selectionType === SelectionType.BRACKET;
-  const rosterQuery = useContestLeaderboardQuery(contest.id, contest.status, { enabled: !isBracket });
-  const bracketQuery = useBracketLeaderboardQuery(contest.id, contest.status, { enabled: isBracket });
-  const leaderboardQuery = isBracket ? bracketQuery : rosterQuery;
-  const standings = isBracket
-    ? bracketQuery.data ? buildBracketTopStandings(bracketQuery.data, mySquadId) : null
-    : rosterQuery.data ? buildTopStandings(rosterQuery.data, mySquadId) : null;
+  const [chosenId, setChosenId] = useState(contests[0].id);
+  // A contest that went final since the chip was chosen falls back to the first one still live.
+  const contest = contests.find((candidate) => candidate.id === chosenId) ?? contests[0];
 
   return (
     <PanelCard
@@ -167,23 +169,53 @@ export function LiveStandingsCard({
       title={`${contest.name} · Top 5`}
       trailing={<ContestStatusBadge status={contest.status} />}
     >
-      <QueryState
-        empty="No submitted entries yet."
-        error="We couldn't load the standings."
-        isEmpty={(top) => !top.rows.length}
-        loading="Loading standings..."
-        query={{ data: standings ?? undefined, isError: leaderboardQuery.isError }}
-      >
-        {(top) => (
-          <SimpleTable>
-            <TableBody>
-              {top.rows.map((row) => <StandingsRow key={row.entryId} row={row} />)}
-              {top.myRowBelow ? <StandingsRow row={top.myRowBelow} /> : null}
-            </TableBody>
-          </SimpleTable>
-        )}
-      </QueryState>
+      {contests.length > 1 ? (
+        <div className="border-b border-border px-4 py-3">
+          <SegmentedControl
+            aria-label="Live contest to show"
+            onChange={setChosenId}
+            options={contests.map((option) => ({
+              label: option.name,
+              testId: `league-home-live-standings-chip-${option.id}`,
+              value: option.id,
+            }))}
+            value={contest.id}
+          />
+        </div>
+      ) : null}
+      <TopStandings contest={contest} key={contest.id} mySquadId={mySquadId} />
     </PanelCard>
+  );
+}
+
+/** One live contest's top five, read from its own leaderboard. */
+function TopStandings({ contest, mySquadId }: { contest: ContestDto; mySquadId: string | null }) {
+  // A bracket contest's standings are their own read (#721).
+  const isBracket = contest.selectionType === SelectionType.BRACKET;
+  const rosterQuery = useContestLeaderboardQuery(contest.id, contest.status, { enabled: !isBracket });
+  const bracketQuery = useBracketLeaderboardQuery(contest.id, contest.status, { enabled: isBracket });
+  const leaderboardQuery = isBracket ? bracketQuery : rosterQuery;
+  const standings = isBracket
+    ? bracketQuery.data ? buildBracketTopStandings(bracketQuery.data, mySquadId) : null
+    : rosterQuery.data ? buildTopStandings(rosterQuery.data, mySquadId) : null;
+
+  return (
+    <QueryState
+      empty="No submitted entries yet."
+      error="We couldn't load the standings."
+      isEmpty={(top) => !top.rows.length}
+      loading="Loading standings..."
+      query={{ data: standings ?? undefined, isError: leaderboardQuery.isError }}
+    >
+      {(top) => (
+        <SimpleTable>
+          <TableBody>
+            {top.rows.map((row) => <StandingsRow key={row.entryId} row={row} />)}
+            {top.myRowBelow ? <StandingsRow row={top.myRowBelow} /> : null}
+          </TableBody>
+        </SimpleTable>
+      )}
+    </QueryState>
   );
 }
 

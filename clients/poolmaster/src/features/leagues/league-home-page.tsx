@@ -42,7 +42,7 @@ function plural(count: number, one: string, many: string) {
 
 /**
  * League Home: the league's identity once, then what needs the member now: the contest that
- * closes soonest, live standings for a contest they are in, and their own team.
+ * closes soonest, live standings for each contest they are in, and their own team.
  */
 export function LeagueHomePage() {
   const { leagueCode = '' } = useParams<{ leagueCode: string }>();
@@ -94,7 +94,7 @@ export function LeagueHomePage() {
 
   const upNext = pickUpNextContest(currentContests, now);
   const otherContests = currentContests.filter((contest) => contest.id !== upNext?.contest.id);
-  const liveContest = currentContests.find(
+  const liveContests = currentContests.filter(
     (contest) => contest.status === ContestStatus.ACTIVE
       && (myEntries.entriesByContestId.get(contest.id)?.length ?? 0) > 0,
   );
@@ -177,8 +177,8 @@ export function LeagueHomePage() {
             )}
           </div>
           <div className="grid gap-5">
-            {liveContest ? (
-              <LiveStandingsCard contest={liveContest} leagueCode={leagueCode} mySquadId={viewer.mySquadId} />
+            {liveContests.length ? (
+              <LiveStandingsCard contests={liveContests} leagueCode={leagueCode} mySquadId={viewer.mySquadId} />
             ) : null}
             {hasPlanFeature(league, PlanFeature.CUP_STANDINGS) ? (
               <CupsCard
