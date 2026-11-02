@@ -75,7 +75,7 @@
     "rules:check:brand-copy": "node scripts/check-brand-copy.mjs",
     "rules:check:duplicates": "node scripts/check-duplicates.mjs",
     "rules:check:plan-references": "node scripts/check-plan-references.mjs --warn-only",
-    "lint:service": "eslint 'packages/**/*.ts' 'scripts/**/*.ts' 'tests/**/*.{ts,tsx}' --max-warnings 0",
+    "lint:service": "eslint 'packages/**/*.ts' 'scripts/**/*.ts' --max-warnings 0 && eslint 'tests/**/*.{ts,tsx}' --max-warnings 0",
     "lint:webapp": "eslint 'clients/poolmaster/src/**/*.{ts,tsx}' 'clients/poolmaster/e2e/**/*.ts' 'clients/poolmaster/*.config.ts' --max-warnings 0",
     "typecheck:service": "turbo typecheck --filter=!@poolmaster/poolmaster",
     "typecheck:webapp": "turbo typecheck --filter=@poolmaster/poolmaster",
