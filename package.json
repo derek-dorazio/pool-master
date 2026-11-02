@@ -84,29 +84,29 @@
     "prepare": "node -e \"import('husky').then((h) => console.log(h.default()), (e) => { if (e.code !== 'ERR_MODULE_NOT_FOUND') throw e; })\""
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.5",
+    "@eslint/js": "^10.0.1",
     "@hey-api/client-fetch": "^0.13.1",
     "@hey-api/openapi-ts": "^0.99.0",
     "@jest/globals": "^30.5.2",
     "@tanstack/eslint-plugin-query": "^5.105.0",
     "@types/jest": "^30.0.0",
     "@types/node": "^24.19.2",
-    "eslint": "^9.39.5",
+    "@vitest/eslint-plugin": "^1.6.28",
+    "eslint": "^10.14.0",
     "eslint-import-resolver-typescript": "^4.4.5",
     "eslint-plugin-import-x": "^4.17.1",
     "eslint-plugin-jest": "^29.17.0",
     "eslint-plugin-jest-dom": "^5.10.1",
     "eslint-plugin-jsx-a11y": "^6.10.2",
     "eslint-plugin-react": "^7.37.5",
-    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.7",
     "eslint-plugin-testing-library": "^7.16.2",
-    "eslint-plugin-vitest": "^0.5.4",
     "husky": "^9.1.7",
     "jest": "^30.5.2",
     "jest-util": "^30.5.1",
     "jscpd": "^4.3.0",
-    "lint-staged": "^16.4.0",
+    "lint-staged": "^17.6.0",
     "openapi-typescript": "^7.13.0",
     "prettier": "^3.9.10",
     "ts-jest": "^29.4.15",
@@ -125,6 +125,12 @@
     },
     "@redocly/openapi-core": {
       "js-yaml": "^4.3.2"
+    },
+    "eslint-plugin-react": {
+      "eslint": "$eslint"
+    },
+    "eslint-plugin-jsx-a11y": {
+      "eslint": "$eslint"
     }
   },
   "packageManager": "npm@11.3.0",

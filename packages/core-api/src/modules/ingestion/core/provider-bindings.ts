@@ -121,6 +121,7 @@ export function loadProviderBindingsFromEnv(
       `Invalid SPORT_DATA_PROVIDER_BINDINGS_JSON: ${
         error instanceof Error ? error.message : String(error)
       }`,
+      { cause: error },
     );
   }
 

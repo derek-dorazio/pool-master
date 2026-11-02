@@ -8,7 +8,7 @@ function caught(run: () => never): Error {
     if (err instanceof Error) {
       return err;
     }
-    throw new Error(`expected an Error to be thrown, got ${String(err)}`);
+    throw new Error(`expected an Error to be thrown, got ${String(err)}`, { cause: err });
   }
 }
 

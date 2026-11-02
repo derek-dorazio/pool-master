@@ -187,6 +187,11 @@ Do not leave post-mutation cache behavior implicit.
   TanStack Query or the reviewed route/data pattern should own that work.
 - If a value can be computed during render from existing props/state, compute it
   there instead of storing derived state and syncing it with an Effect.
+- `npm run lint:webapp` enforces the render-purity half of this with the
+  `react-hooks` React Compiler rules (`purity`, `refs`, `immutability`,
+  `set-state-in-render` and the rest of `recommended-latest`), as errors.
+  `set-state-in-effect`, the rule for this section's Effects, is off until #1408
+  fixes its existing sites.
 
 ### State Structure Rules
 
