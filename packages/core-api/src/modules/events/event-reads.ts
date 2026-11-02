@@ -42,13 +42,17 @@ export function readEventsOnce(
 }
 
 /**
- * Each event's matches, read once, by event or across events: the events not read yet are read
- * together. Answers as the repository does, by event and then in match-number order.
+ * Each event's matches, read once, by event or across events: an event of `known` is not read,
+ * and the events not read yet are read together. Answers as the repository does, by event and
+ * then in match-number order.
  */
 export function readEventMatchesOnce(
   source: Pick<SportEventMatchRepository, 'findBySportEvents'>,
+  known: ReadonlyMap<string, readonly SportEventMatch[]> = new Map(),
 ): Pick<SportEventMatchRepository, 'findBySportEvent' | 'findBySportEvents'> {
-  const answers = new Map<string, Promise<SportEventMatch[]>>();
+  const answers = new Map<string, Promise<SportEventMatch[]>>(
+    [...known].map(([sportEventId, matches]) => [sportEventId, Promise.resolve([...matches])]),
+  );
   const findBySportEvents = async (ids: readonly string[]): Promise<SportEventMatch[]> => {
     const sportEventIds = [...new Set(ids)].sort();
     readMissingTogether(answers, sportEventIds, async (missing) => {

@@ -26,7 +26,6 @@ export function contestManagementModule(
     email: opts.email,
     appBaseUrl: readApplicationBaseUrl(process.env),
     logger: fastify.log,
-    planEntitlements: opts.planEntitlements,
   }));
   const handlers = createContestManagementHandlers(contestManagementService);
 

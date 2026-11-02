@@ -17,7 +17,7 @@ import {
   type SportEventMatch,
   type SportLeague,
 } from '@poolmaster/shared/domain';
-import type { ContestFinalStandings } from '../../../packages/core-api/src/modules/contests/service';
+import type { ContestFinalStandings } from '../../../packages/core-api/src/modules/contests/final-standings';
 import { ContestEventChangeKind, EMAIL_SETTINGS, EmailService } from '../../../packages/core-api/src/modules/email';
 import { ContestNotices, type ContestNoticeDeps } from '../../../packages/core-api/src/modules/notifications';
 import { fakeLogger } from '../../support/fake-logger';
@@ -104,7 +104,6 @@ describe('ContestNotices', () => {
       memberships: world.membershipRepo(),
       squadMemberships: world.squadMembershipRepo(),
       users: world.userRepo(),
-      finalStandings: { finalStandingsOf: async () => final },
       email,
       appBaseUrl: 'https://app.example.test/',
       logger,
@@ -362,8 +361,8 @@ describe('ContestNotices', () => {
         ],
       };
 
-      await notices().contestSettled(contest);
-      await notices().contestSettled(contest);
+      await notices().contestSettled(contest, final);
+      await notices().contestSettled(contest, final);
 
       expect(recipientIds()).toEqual([nora.user.id, dana.user.id, onlooker.user.id].sort());
       expect(outbox.rows.every((row) => row.templateKey === 'CONTEST_RESULTS' && row.fromName === 'Office League')).toBe(true);
@@ -394,7 +393,7 @@ describe('ContestNotices', () => {
         entries: [place(nora.squad, 'Chalk', 1, 'T1', 12), place(dana.squad, 'Upsets', 1, 'T1', 12), place(sam.squad, 'Coin Flip', 3, '3', 9)],
       };
 
-      await notices().contestSettled(contest);
+      await notices().contestSettled(contest, final);
 
       expect(textTo(sam.user.id)).toContain('Week 1 Pick\'em is over. Chalk (Nora\'s Squad) and Upsets (Dana\'s Squad) tied for first.');
       expect(textTo(sam.user.id)).toContain('Final standings:');
@@ -419,7 +418,7 @@ describe('ContestNotices', () => {
         if (submitted) world.setEntryEventStatus(created.entry.id, event.id, ContestEntryStatus.SUBMITTED, new Date());
       }
 
-      await notices().contestSettled(contest);
+      await notices().contestSettled(contest, final);
 
       expect(recipientIds()).toEqual([commissioner.user.id, entrant.user.id].sort());
       expect(recipientIds()).not.toContain(drafting.user.id);
@@ -437,7 +436,7 @@ describe('ContestNotices', () => {
       const contest = world.addContest(league.id, { name: 'Super Bowl Squares', sportEventIds: [played.id, cancelled.id] });
       const commissioner = member(league.id, 'Casey', { role: LeagueRole.COMMISSIONER });
 
-      await notices().contestSettled(contest);
+      await notices().contestSettled(contest, final);
 
       expect(textTo(commissioner.user.id)).toContain('Super Bowl Squares has ended with no scores.');
     });
@@ -446,7 +445,7 @@ describe('ContestNotices', () => {
       const event = world.addSportEvent({ startDate: STARTS_AT });
       const contest = world.addContest('no-such-league', { sportEventIds: [event.id] });
 
-      await notices().contestSettled(contest);
+      await notices().contestSettled(contest, final);
 
       expect(outbox.rows).toHaveLength(0);
       expect(logger.warn).toHaveBeenCalledWith(
@@ -480,7 +479,7 @@ describe('ContestNotices', () => {
 
       expect(outbox.rows).toEqual([]);
 
-      await notices().contestSettled(contest);
+      await notices().contestSettled(contest, final);
 
       expect(recipientIds()).toEqual([commissioner.user.id, entrant.user.id].sort());
       expect(outbox.rows.every((row) => row.templateKey === 'CONTEST_RESULTS')).toBe(true);
@@ -499,7 +498,7 @@ describe('ContestNotices', () => {
       const commissioner = member(league.id, 'Casey', { role: LeagueRole.COMMISSIONER });
 
       await notices().sportEventChanged(open, { kind: ContestEventChangeKind.CANCELLED });
-      await notices().contestSettled(contest);
+      await notices().contestSettled(contest, final);
 
       expect(outbox.rows.map((row) => [row.templateKey, row.recipientUserId])).toEqual([['CONTEST_RESULTS', commissioner.user.id]]);
       expect(textTo(commissioner.user.id)).toContain('Every event was cancelled, so Majors Pool ends with no scores.');

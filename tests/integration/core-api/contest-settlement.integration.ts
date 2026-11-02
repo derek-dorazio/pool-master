@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { Prisma } from '@prisma/client';
 import { Sport, type Contest } from '@poolmaster/shared/domain';
-import { createContestService, createContestSettlementService } from '../../../packages/core-api/src/modules/contests/wiring';
+import { createContestSettlementService } from '../../../packages/core-api/src/modules/contests/wiring';
 import {
   cleanupTestData,
   createTestUser,
@@ -12,8 +12,7 @@ import {
 } from '../helpers';
 import { freshEventEdition } from '../../support/event-edition';
 import { fakeLogger } from '../../support/fake-logger';
-import type { ContestFinalStandings } from '../../../packages/core-api/src/modules/contests/service';
-import { integrationPlanEntitlements } from '../plan-entitlements';
+import type { ContestFinalStandings } from '../../../packages/core-api/src/modules/contests/final-standings';
 
 beforeAll(() => setupIntegrationTests());
 afterEach(() => cleanupTestData());
@@ -25,11 +24,10 @@ afterAll(async () => {
 describe('pool-master-eux.6: schedule-driven Golf contest settlement', () => {
   it('pool-master-eux.6: freezes final standings, completes the sport event\'s contests, tells the league its final places once per completion, and is idempotent', async () => {
     const prisma = getPrisma();
-    const contests = createContestService(getAppPrisma(), fakeLogger(), { planEntitlements: integrationPlanEntitlements() });
-    // What the final results email reads, read when settlement tells it the contest completed.
+    // The final places settlement hands the final results email when the contest completes.
     const told: Array<{ contestId: string; final: ContestFinalStandings }> = [];
     const service = createContestSettlementService(getAppPrisma(), undefined, {
-      contestSettled: { contestSettled: async (contest: Contest) => { told.push({ contestId: contest.id, final: await contests.finalStandingsOf(contest) }); } },
+      contestSettled: { contestSettled: async (contest: Contest, final: ContestFinalStandings) => { told.push({ contestId: contest.id, final }); } },
     });
     const suffix = randomUUID().slice(0, 8);
     const owner = await createTestUser({ displayName: `Golf Settlement ${suffix}` });

@@ -53,7 +53,7 @@ function lifecycleSweep(now: Date) {
   const readConfig = () => EMAIL_SETTINGS.defaults({ POOLMASTER_ENVIRONMENT: 'prod' });
   const appBaseUrl = 'https://app.example.test';
   const { email } = createEmailOutbox({ prisma, readConfig, planEntitlements, env: process.env, logger });
-  const contestNotices = createContestNotices(prisma, { email, appBaseUrl, logger, planEntitlements });
+  const contestNotices = createContestNotices(prisma, { email, appBaseUrl, logger });
   const scheduler = new EventLifecycleScheduler({
     sportEvents: new PrismaSportEventRepository(prisma),
     rounds: new PrismaSportEventRoundRepository(prisma),
