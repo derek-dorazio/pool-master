@@ -1,8 +1,9 @@
 /**
  * The write permission on shared catalog objects (#236): a route-level `onRequest` hook
  * that lets a request through only when its access token carries the root-admin claim
- * (access rule A10). Reads of the same objects need only a signed-in user. One guard for
- * every such write, rather than a check per handler.
+ * (access rule A10). Reads of the same objects mostly need only a signed-in user; the catalog
+ * reads only an admin screen makes (the participant list, #1348) take this guard too. One guard
+ * for every such route, rather than a check per handler.
  *
  * `onRequest`, not `preHandler`: Fastify validates params and body between the two, so a
  * preHandler guard would answer a malformed request from a non-admin with 400 — telling
@@ -34,8 +35,8 @@ export async function requireRootAdmin(request: FastifyRequest, reply: FastifyRe
     return;
   }
   (request.contextLogger ?? request.log).warn(
-    { action: 'rootAdmin.write.forbidden', data: { method: request.method, route: request.routeOptions.url } },
-    'Rejected a root-admin write from a caller without the claim',
+    { action: 'rootAdmin.route.forbidden', data: { method: request.method, route: request.routeOptions.url } },
+    'Rejected a root-admin route from a caller without the claim',
   );
   await sendError(reply, 403, 'ROOT_ADMIN_ACCESS_REQUIRED', 'Root-admin access is required');
 }
