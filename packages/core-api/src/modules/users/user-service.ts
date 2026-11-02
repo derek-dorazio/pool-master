@@ -29,6 +29,7 @@ import { lockMemberRow } from '../../adapters';
 import type { PasswordChangedNotifier } from '../auth/password-changed-notifier';
 import type { EmailChangeUndoService } from '../auth/email-change-undo-service';
 import { EmailChangedBy } from '../email';
+import { forgettingReads, ReadMemoKey } from '../../core/request-read-memo';
 import {
   cancelOpenPasswordResetTokens,
   countUserDeleteDependencies,
@@ -239,14 +240,14 @@ export class UserService {
     const passwordHash = await bcrypt.hash(request.newPassword, BCRYPT_ROUNDS);
     const changedAt = new Date();
 
-    await this.prisma.$transaction(async (tx) => {
+    await forgettingReads(ReadMemoKey.user, () => this.prisma.$transaction(async (tx) => {
       await tx.user.update({ where: { id: targetUserId }, data: { passwordHash } });
 
       // Every other session ends; the caller's own stays signed in.
       await revokeUserSessions(tx, targetUserId, request.currentRefreshToken);
       // A reset link sent before the change must not undo it (#847).
       await cancelOpenPasswordResetTokens(tx, targetUserId, changedAt);
-    });
+    }));
     this.logger?.info({
       action: 'userService.changePassword.success',
       data: { userId: targetUserId },
@@ -269,11 +270,11 @@ export class UserService {
     const temporaryPassword = buildTemporaryPassword();
     const passwordHash = await bcrypt.hash(temporaryPassword, BCRYPT_ROUNDS);
 
-    await this.prisma.$transaction(async (tx) => {
+    await forgettingReads(ReadMemoKey.user, () => this.prisma.$transaction(async (tx) => {
       await tx.user.update({ where: { id: user.id }, data: { passwordHash } });
       await revokeUserSessions(tx, user.id);
       await cancelOpenPasswordResetTokens(tx, user.id, new Date());
-    });
+    }));
 
     this.logger?.info({
       action: 'userService.resetPassword.success',
@@ -328,10 +329,10 @@ export class UserService {
     // One transaction. These were two statements, so a failure between them left the user
     // flagged inactive with live refresh tokens: disabled in the UI, still able to refresh a
     // session for up to the refresh-token lifetime.
-    await this.prisma.$transaction(async (tx) => {
+    await forgettingReads(ReadMemoKey.user, () => this.prisma.$transaction(async (tx) => {
       await tx.user.update({ where: { id: user.id }, data: { isActive: false } });
       await revokeUserSessions(tx, user.id, keepRefreshToken);
-    });
+    }));
 
     this.logger?.info({
       action: 'userService.disable.success',
@@ -439,7 +440,7 @@ export class UserService {
       );
     }
 
-    await this.prisma.$transaction((tx) => deleteUserCascade(tx, user.id));
+    await forgettingReads(ReadMemoKey.user, () => this.prisma.$transaction((tx) => deleteUserCascade(tx, user.id)));
 
     this.logger?.info({
       action: 'userService.delete.success',
@@ -482,13 +483,13 @@ export class UserService {
       );
     }
 
-    await this.prisma.$transaction(async (tx) => {
+    await forgettingReads(ReadMemoKey.user, () => this.prisma.$transaction(async (tx) => {
       await tx.user.update({ where: { id: user.id }, data: { isRootAdmin: nextValue } });
       if (!nextValue) {
         // Demotion revokes sessions so the removed authority cannot be used until re-login.
         await revokeUserSessions(tx, user.id);
       }
-    });
+    }));
 
     this.logger?.info({
       action: 'userService.setRootAdmin.success',

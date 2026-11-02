@@ -94,6 +94,11 @@ export class SportEventTierService {
     return this.deps.tiers.findBySportEvent(sportEventId);
   }
 
+  /** Every event's tiers from one read, each in tier order (#1355). */
+  listTiersOfEvents(sportEventIds: readonly string[]): Promise<SportEventTier[]> {
+    return this.deps.tiers.findBySportEvents(sportEventIds);
+  }
+
   /**
    * New events' default tiers, every event's in one insert (#1253): the sport league's tier count
    * where it sets one (the College Football Playoff: six), else the sport's (golf: six). A

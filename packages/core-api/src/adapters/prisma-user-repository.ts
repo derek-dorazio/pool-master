@@ -7,6 +7,7 @@ import type {
 } from '@prisma/client';
 import type { UserRepository, UserSearch, UserSearchFilters, UserUpdate } from '@poolmaster/shared/db';
 import { AuthProvider, LeagueMembershipStatus, TimeFormat, type LeagueRole, type User } from '@poolmaster/shared/domain';
+import { forgettingReads, memoizedRead, ReadMemoKey } from '../core/request-read-memo';
 
 /**
  * Prisma adapter for `UserRepository`.
@@ -27,9 +28,12 @@ import { AuthProvider, LeagueMembershipStatus, TimeFormat, type LeagueRole, type
 export class PrismaUserRepository implements UserRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
+  /** Remembered for the request (#1355): a join reads the joiner for the check, the team and each email. */
   async findById(id: string): Promise<User | null> {
-    const row = await this.prisma.user.findUnique({ where: { id } });
-    return row ? mapToUser(row) : null;
+    return memoizedRead(this.prisma, `${ReadMemoKey.user}${id}`, async () => {
+      const row = await this.prisma.user.findUnique({ where: { id } });
+      return row ? mapToUser(row) : null;
+    });
   }
 
   async findByIds(ids: readonly string[]): Promise<User[]> {
@@ -148,7 +152,7 @@ export class PrismaUserRepository implements UserRepository {
    * so clearing a preference would have silently done nothing.
    */
   async update(id: string, updates: UserUpdate): Promise<User> {
-    const row = await this.prisma.user.update({
+    const row = await forgettingReads(ReadMemoKey.user, () => this.prisma.user.update({
       where: { id },
       data: {
         ...(updates.email !== undefined && { email: updates.email }),
@@ -163,7 +167,7 @@ export class PrismaUserRepository implements UserRepository {
           timeFormat: updates.timeFormat === null ? null : toPrismaTimeFormat(updates.timeFormat),
         }),
       },
-    });
+    }));
     return mapToUser(row);
   }
 

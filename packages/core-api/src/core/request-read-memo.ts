@@ -142,9 +142,11 @@ export const ReadMemoKey = {
   leagueMembership: 'league-membership:',
   contest: 'contest:',
   contestConfiguration: 'contest-configuration:',
+  squad: 'squad:',
   squadMembership: 'squad-membership:',
   sportEvent: 'sport-event:',
   sportLeague: 'sport-league:',
+  user: 'user:',
 } as const;
 
 /** One of the `ReadMemoKey` prefixes: what a write names to forget. */

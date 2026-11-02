@@ -17,13 +17,13 @@ import {
 } from '../../../packages/core-api/src/modules/squads/owner-invitation-service';
 import {
   fakeLeagueMembershipRepo,
+  fakeLeagueRepo,
   fakeSquadMembershipRepo,
   fakeSquadOwnerInvitationRepo,
   fakeSquadRepo,
   fakeUserRepo,
   passThroughMembershipTransaction,
 } from '../../support/repo-fakes';
-import { asPrismaClient } from '../../support/prisma-double';
 import { mockFn } from '../../support/mock-fn';
 import { emailServiceInto } from '../../support/email-service';
 
@@ -135,21 +135,16 @@ function createInvitationRepo(
   });
 }
 
-function createPrisma(overrides: Record<string, unknown> = {}) {
-  return {
-    user: {
-      findUnique: jest.fn().mockResolvedValue(null),
-    },
-    league: {
-      findUnique: jest.fn().mockResolvedValue({
-        id: 'league-1',
-        leagueCode: 'BIGDAWGS',
-        name: 'Big Dawgs',
-        isActive: true,
-      }),
-    },
-    ...overrides,
-  };
+/** The league the service reads to check it is active and to name it in emails. */
+function createLeagues() {
+  return fakeLeagueRepo({
+    findById: jest.fn().mockResolvedValue({
+      id: 'league-1',
+      leagueCode: 'BIGDAWGS',
+      name: 'Big Dawgs',
+      isActive: true,
+    }),
+  });
 }
 
 describe('SquadOwnerInvitationService', () => {
@@ -187,7 +182,6 @@ describe('SquadOwnerInvitationService', () => {
         return null;
       }),
     });
-    const prisma = createPrisma();
     // #202 step 3.6 — the email lookup goes through `UserRepository.findByEmail`.
     const users = fakeUserRepo({ findByEmail: jest.fn().mockResolvedValue({ id: 'user-2', email: 'member@example.com' }) });
     const service = new SquadOwnerInvitationService(passThroughMembershipTransaction({
@@ -196,7 +190,7 @@ describe('SquadOwnerInvitationService', () => {
       squads: createSquadRepo(),
       squadMemberships: createSquadMembershipRepo(),
       users,
-      prisma: asPrismaClient(prisma),
+      leagues: createLeagues(),
       email: emailServiceInto(),
       memberJoined: NOBODY_TOLD,
       appBaseUrl: APP_BASE_URL,
@@ -232,7 +226,6 @@ describe('SquadOwnerInvitationService', () => {
     });
     const invitationRepo = createInvitationRepo();
     const squadMembershipRepo = createSquadMembershipRepo();
-    const prisma = createPrisma();
     // #202 step 3.6 — the email lookup goes through `UserRepository.findByEmail`.
     const users = fakeUserRepo({ findByEmail: jest.fn().mockResolvedValue({ id: 'user-9', email: 'outside@example.com' }) });
     const service = new SquadOwnerInvitationService(passThroughMembershipTransaction({
@@ -241,7 +234,7 @@ describe('SquadOwnerInvitationService', () => {
       squads: createSquadRepo(),
       squadMemberships: squadMembershipRepo,
       users,
-      prisma: asPrismaClient(prisma),
+      leagues: createLeagues(),
       email: emailServiceInto(),
       memberJoined: NOBODY_TOLD,
       appBaseUrl: APP_BASE_URL,
@@ -316,7 +309,7 @@ describe('SquadOwnerInvitationService', () => {
           squads: createSquadRepo(),
           squadMemberships: createSquadMembershipRepo(),
           users: fakeUserRepo({ findByEmail: jest.fn().mockResolvedValue(options.existingUser ?? null) }),
-          prisma: asPrismaClient(createPrisma()),
+          leagues: createLeagues(),
           email: emailServiceInto(),
           memberJoined: NOBODY_TOLD,
           appBaseUrl: APP_BASE_URL,
@@ -419,7 +412,7 @@ describe('SquadOwnerInvitationService', () => {
       squads: createSquadRepo(),
       squadMemberships: createSquadMembershipRepo(),
       users: fakeUserRepo({ findById: jest.fn().mockResolvedValue(buildUser()) }),
-      prisma: asPrismaClient(createPrisma()),
+      leagues: createLeagues(),
       email: emailServiceInto(),
       memberJoined: NOBODY_TOLD,
       appBaseUrl: APP_BASE_URL,
@@ -466,7 +459,7 @@ describe('SquadOwnerInvitationService', () => {
       squads,
       squadMemberships: createSquadMembershipRepo(),
       users: fakeUserRepo({ findById: jest.fn().mockResolvedValue(buildUser()) }),
-      prisma: asPrismaClient(createPrisma()),
+      leagues: createLeagues(),
       email: emailServiceInto(),
       memberJoined: NOBODY_TOLD,
       appBaseUrl: APP_BASE_URL,
@@ -536,7 +529,7 @@ describe('SquadOwnerInvitationService', () => {
         ]),
       }),
       users: fakeUserRepo({ findById: jest.fn().mockResolvedValue(buildUser()) }),
-      prisma: asPrismaClient(createPrisma()),
+      leagues: createLeagues(),
       email: emailServiceInto(),
       memberJoined: NOBODY_TOLD,
       appBaseUrl: APP_BASE_URL,

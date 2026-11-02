@@ -8,6 +8,7 @@ import '@poolmaster/shared/dto/team-owner-invitations.dto';
 import '@poolmaster/shared/dto';
 import {
   PrismaLeagueMembershipRepository,
+  PrismaLeagueRepository,
   PrismaSquadMembershipRepository,
   PrismaMembershipTransaction,
   PrismaSquadOwnerInvitationRepository,
@@ -39,6 +40,7 @@ export function squadsModule(fastify: FastifyInstance, opts: MailModuleOptions &
   const squadOwnerInvitationRepo = new PrismaSquadOwnerInvitationRepository(prisma);
   const leagueMembershipRepo = new PrismaLeagueMembershipRepository(prisma);
   const userRepo = new PrismaUserRepository(prisma);
+  const leagueRepo = new PrismaLeagueRepository(prisma);
   const membershipTransaction = new PrismaMembershipTransaction(prisma);
   const service = new SquadService({
     squads: squadRepo,
@@ -56,7 +58,7 @@ export function squadsModule(fastify: FastifyInstance, opts: MailModuleOptions &
     squads: squadRepo,
     squadMemberships: squadMembershipRepo,
     users: userRepo,
-    prisma,
+    leagues: leagueRepo,
     membershipTransaction,
     email: opts.email,
     memberJoined: opts.memberJoined,

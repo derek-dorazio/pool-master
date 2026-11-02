@@ -71,7 +71,7 @@ function ownerInvitationService() {
     squads: new PrismaSquadRepository(getAppPrisma()),
     squadMemberships: new PrismaSquadMembershipRepository(getAppPrisma()),
     users: new PrismaUserRepository(getAppPrisma()),
-    prisma: getAppPrisma(),
+    leagues: new PrismaLeagueRepository(getAppPrisma()),
     memberJoined: { tellJoined: async () => undefined },
     membershipTransaction: new PrismaMembershipTransaction(getAppPrisma()),
     email: emailServiceInto(),

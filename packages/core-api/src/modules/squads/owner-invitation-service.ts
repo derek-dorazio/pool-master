@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto';
-import type { PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 import type {
   LeagueMembershipRepository,
+  LeagueRepository,
   MembershipRepositories,
   MembershipTransaction,
   SquadMembershipRepository,
@@ -58,7 +58,7 @@ interface ReplaceOwnerInput extends InviteOwnerInput {
 
 export interface SquadOwnerInvitationServiceDeps extends MembershipRepositories {
   users: UserRepository;
-  prisma: PrismaClient;
+  leagues: Pick<LeagueRepository, 'findById'>;
   membershipTransaction: MembershipTransaction;
   /** Sends the co-owner invitation (#845 B4) and "you were added as a co-owner" (B5). */
   email: Pick<EmailService, 'send'>;
@@ -74,7 +74,7 @@ export class SquadOwnerInvitationService {
   private readonly squadRepo: SquadRepository;
   private readonly squadMembershipRepo: SquadMembershipRepository;
   private readonly users: UserRepository;
-  private readonly prisma: PrismaClient;
+  private readonly leagues: Pick<LeagueRepository, 'findById'>;
   private readonly membershipTransaction: MembershipTransaction;
   private readonly email: Pick<EmailService, 'send'>;
   private readonly memberJoined: Pick<MemberJoinedNotices, 'tellJoined'>;
@@ -87,7 +87,7 @@ export class SquadOwnerInvitationService {
     this.squadRepo = deps.squads;
     this.squadMembershipRepo = deps.squadMemberships;
     this.users = deps.users;
-    this.prisma = deps.prisma;
+    this.leagues = deps.leagues;
     this.membershipTransaction = deps.membershipTransaction;
     this.email = deps.email;
     this.memberJoined = deps.memberJoined;
@@ -166,7 +166,8 @@ export class SquadOwnerInvitationService {
 
     await this.emailInvitee(invitation, squad, input.actorUserId, existingUser);
     if (joined) await this.memberJoined.tellJoined(joined);
-    return this.mapInvitationDto(invitation);
+    // The team as read above: the reply shows its name and icon, which nothing here changes.
+    return toInvitationDto(invitation, squad);
   }
 
   async replaceOwner(input: ReplaceOwnerInput): Promise<TeamOwnerInvitationDto> {
@@ -276,7 +277,8 @@ export class SquadOwnerInvitationService {
 
     await this.emailInvitee(invitation, squad, input.actorUserId, existingUser);
     if (joined) await this.memberJoined.tellJoined(joined);
-    return this.mapInvitationDto(invitation);
+    // The team as read above: the reply shows its name and icon, which nothing here changes.
+    return toInvitationDto(invitation, squad);
   }
 
   /**
@@ -293,7 +295,7 @@ export class SquadOwnerInvitationService {
   ): Promise<void> {
     try {
       const [league, inviter, owners] = await Promise.all([
-        this.prisma.league.findUnique({ where: { id: invitation.leagueId } }),
+        this.leagues.findById(invitation.leagueId),
         this.users.findById(actorUserId),
         this.squadMembershipRepo.findBySquad(squad.id),
       ]);
@@ -382,7 +384,7 @@ export class SquadOwnerInvitationService {
       throw new SquadOwnerInvitationNotFoundError(`Co-owner invitation not found: ${inviteCode}`);
     }
     const squad = await this.squadRepo.findById(invitation.squadId);
-    const league = await this.prisma.league.findUnique({ where: { id: invitation.leagueId } });
+    const league = await this.leagues.findById(invitation.leagueId);
     if (!squad || !league) {
       throw new SquadOwnerInvitationOperationError(
         'This invitation is no longer available',
@@ -423,7 +425,7 @@ export class SquadOwnerInvitationService {
     invitation: SquadOwnerInvitation;
     email: string;
   }> {
-    const invitation = await this.requirePendingInvitation(inviteCode);
+    const { invitation } = await this.requirePendingInvitation(inviteCode);
     const existingUser = await this.findUserByEmail(invitation.email);
     if (existingUser) {
       throw new SquadOwnerInvitationOperationError(
@@ -441,9 +443,9 @@ export class SquadOwnerInvitationService {
    * The PENDING-and-unexpired check, shared by both acceptance paths. It also refuses a team that
    * has gone inactive since the invitation was sent. Every path that inactivates a team revokes
    * its pending invitations (#529), so this is the backstop: accepting one must never revive an
-   * inactive team (#488).
+   * inactive team (#488). Answers the invitation with its team.
    */
-  private async requirePendingInvitation(inviteCode: string): Promise<SquadOwnerInvitation> {
+  private async requirePendingInvitation(inviteCode: string): Promise<{ invitation: SquadOwnerInvitation; squad: Squad }> {
     const invitation = await this.invitationRepo.findByCode(inviteCode);
     if (!invitation) {
       throw new SquadOwnerInvitationNotFoundError(`Co-owner invitation not found: ${inviteCode}`);
@@ -464,16 +466,16 @@ export class SquadOwnerInvitationService {
       );
     }
     await this.requireActiveLeague(invitation.leagueId);
-    await this.requireActiveSquad(
+    const squad = await this.requireActiveSquad(
       invitation.leagueId,
       invitation.squadId,
       'This invitation is no longer active, so it cannot be accepted.',
     );
-    return invitation;
+    return { invitation, squad };
   }
 
   async acceptInvitation(inviteCode: string, userId: string): Promise<TeamOwnerInvitationDto> {
-    const invitation = await this.requirePendingInvitation(inviteCode);
+    const { invitation, squad } = await this.requirePendingInvitation(inviteCode);
 
     await this.rejectIfCurrentLeagueMember(invitation.leagueId, userId);
     // The invitation is for the address it was sent to; a forwarded code must not admit someone
@@ -495,7 +497,8 @@ export class SquadOwnerInvitationService {
       }),
     }));
     await this.memberJoined.tellJoined(joined);
-    return this.mapInvitationDto(accepted);
+    // The team as read above: seating an owner leaves its name and icon as they were.
+    return toInvitationDto(accepted, squad);
   }
 
   /** The shared last-commissioner rule, raised as this module's operation error. */
@@ -580,7 +583,7 @@ export class SquadOwnerInvitationService {
 
   /** An inactive league is read-only, so it neither issues nor honours owner invitations. */
   private async requireActiveLeague(leagueId: string) {
-    const league = await this.prisma.league.findUnique({ where: { id: leagueId } });
+    const league = await this.leagues.findById(leagueId);
     if (league && !league.isActive) {
       throw new SquadOwnerInvitationOperationError(
         'This league is inactive. Reactivate it before inviting or adding co-owners.',

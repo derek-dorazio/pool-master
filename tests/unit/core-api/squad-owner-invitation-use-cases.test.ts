@@ -20,7 +20,6 @@ import { emailServiceInto } from '../../support/email-service';
 import { fakeLogger } from '../../support/fake-logger';
 import type { EmailService } from '../../../packages/core-api/src/modules/email';
 import type { FastifyBaseLogger } from 'fastify';
-import { asPrismaClient } from '../../support/prisma-double';
 import { expectDefined } from '../../support/expect-defined';
 
 /**
@@ -55,11 +54,6 @@ function leagueWithTwoTeams(): League3 {
   const owner = world.addUser({ firstName: 'Olive', lastName: 'Owner' });
   const { squad: commissionerSquad } = world.addMember({ league, user: commissioner, role: LeagueRole.COMMISSIONER });
   const { squad: ownerSquad } = world.addMember({ league, user: owner });
-  const prisma = asPrismaClient({
-    league: {
-      findUnique: jest.fn(async ({ where }: { where: { id: string } }) => world.tables.leagues.get(where.id)),
-    },
-  });
   const outbox = inMemoryEmailMessages();
   const email = emailServiceInto(outbox);
   const logger = fakeLogger();
@@ -71,7 +65,7 @@ function leagueWithTwoTeams(): League3 {
     squadMemberships: world.squadMemberships,
     membershipTransaction: world.transaction,
     users: world.users,
-    prisma,
+    leagues: world.leagues,
     email,
     memberJoined: { tellJoined: async (membership) => { toldJoined.push(membership); } },
     appBaseUrl: 'https://app.example.test/',

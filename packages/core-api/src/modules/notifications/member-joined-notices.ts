@@ -27,7 +27,7 @@ import {
 } from '../email';
 import type { EmailConfig } from '@poolmaster/shared/dto';
 import type { DueNotifications } from '../events/event-lifecycle-scheduler';
-import { activeLeagueMembersByLeague, type LeagueMemberDeps, type LeagueMemberWithRole } from './league-members';
+import { activeLeagueMembersByLeague, leagueMembersOf, type LeagueMemberDeps, type LeagueMemberWithRole } from './league-members';
 import { easternDateOf, easternDayOf } from './overnight-day';
 
 /** The first this many joins of a league's day are told at once; the rest wait for the next day. */
@@ -42,7 +42,7 @@ export interface MemberJoinedModuleOptions {
 }
 
 export interface MemberJoinedNoticeDeps extends LeagueMemberDeps {
-  memberships: Pick<LeagueMembershipRepository, 'findByLeague' | 'findByLeagues' | 'findActiveJoinedSince' | 'countActiveByLeagues'>;
+  memberships: Pick<LeagueMembershipRepository, 'findByLeagues' | 'findActiveJoinedSince' | 'countActiveByLeagues'>;
   leagues: Pick<LeagueRepository, 'findById' | 'findByIds'>;
   /** Each joiner's squad, by name. */
   squadMemberships: Pick<SquadMembershipRepository, 'findByLeagueUsersWithSquadName'>;
@@ -91,12 +91,17 @@ export class MemberJoinedNotices implements DueNotifications {
     try {
       const league = await this.deps.leagues.findById(membership.leagueId);
       if (!league?.isActive) return;
-      const today = joinsOn(await this.deps.memberships.findByLeague(league.id), easternDateOf(membership.joinedAt));
+      // The league's memberships say whether this join is one of the day's first three, and then
+      // name the members the email goes to, so they are read once (#1355).
+      const memberships = await this.deps.memberships.findByLeagues([league.id]);
+      const today = joinsOn(memberships, easternDateOf(membership.joinedAt));
       const position = today.findIndex((join) => join.id === membership.id);
       if (position < 0 || position >= AT_ONCE_PER_DAY) return;
+      const members = leagueMembersOf([league.id], memberships, await this.deps.users.findActiveByLeagues([league.id]));
       await this.sendEach(
         [{ league, timing: MemberJoinedTiming.AT_ONCE, joins: [membership], about: atOnceAbout(membership), noticeAbout: atOnceAbout(membership) }],
         (_notice, error) => this.failedAtOnce(membership, error),
+        members,
       );
     } catch (error) {
       this.failedAtOnce(membership, error);
@@ -148,23 +153,27 @@ export class MemberJoinedNotices implements DueNotifications {
         : [];
     });
     if (notices.length === 0) return;
+    const members = await activeLeagueMembersByLeague(this.deps, notices.map(({ league }) => league.id));
     await this.sendEach(notices, ({ league }, error) => {
       this.deps.logger?.error({
         action: 'email.memberJoined.nextDayFailed',
         data: { leagueId: league.id, day: yesterday, error: error instanceof Error ? error.message : String(error) },
       }, 'Failed to queue the next day\'s new member joined email');
-    });
+    }, members);
   }
 
   /**
-   * Each notice's email to its league's commissioners. Every league's members, member counts and
-   * joiners' squads are read once for all of them, not once per league or joiner (#1336); a notice
-   * whose email fails goes to `failed`, and the rest still go.
+   * Each notice's email to its league's commissioners, given each league's members. Member counts
+   * and joiners' squads are read once for all of them, not once per league or joiner (#1336); a
+   * notice whose email fails goes to `failed`, and the rest still go.
    */
-  private async sendEach(notices: readonly JoinNotice[], failed: (notice: JoinNotice, error: unknown) => void): Promise<void> {
+  private async sendEach(
+    notices: readonly JoinNotice[],
+    failed: (notice: JoinNotice, error: unknown) => void,
+    membersByLeague: ReadonlyMap<string, LeagueMemberWithRole[]>,
+  ): Promise<void> {
     const leagueIds = notices.map(({ league }) => league.id);
-    const [membersByLeague, counts, squads] = await Promise.all([
-      activeLeagueMembersByLeague(this.deps, leagueIds),
+    const [counts, squads] = await Promise.all([
       this.deps.memberships.countActiveByLeagues([...new Set(leagueIds)]),
       this.deps.squadMemberships.findByLeagueUsersWithSquadName(notices.flatMap(({ league, joins }) =>
         joins.map((join) => ({ leagueId: league.id, userId: join.userId })))),

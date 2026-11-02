@@ -4,9 +4,14 @@ import {
   PrismaLeagueMembershipRepository,
   PrismaLeagueRepository,
   PrismaMembershipTransaction,
+  PrismaSquadRepository,
   PrismaUserRepository,
 } from '../../../packages/core-api/src/adapters';
 import { LeagueService } from '../../../packages/core-api/src/modules/leagues/service';
+import { UserService } from '../../../packages/core-api/src/modules/users/user-service';
+import { PasswordChangedNotifier } from '../../../packages/core-api/src/modules/auth/password-changed-notifier';
+import { EmailChangeUndoService } from '../../../packages/core-api/src/modules/auth/email-change-undo-service';
+import { emailServiceInto } from '../../support/email-service';
 import { runWithReadMemo } from '../../../packages/core-api/src/core/request-read-memo';
 import {
   cleanupTestData,
@@ -17,9 +22,9 @@ import {
   teardownIntegrationTests,
 } from '../helpers';
 
-// The request read memo against Postgres (#1176): within one request the league and a member's
-// membership are read once and shared, a write through the repository is seen by the next read,
-// and a transaction's own client always reads the database.
+// The request read memo against Postgres (#1176, #1355): within one request the league, a member's
+// membership, a user and a team are read once and shared, a write through the repository is seen
+// by the next read, and a transaction's own client always reads the database.
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -39,6 +44,21 @@ async function seedLeague(isActive = true) {
     data: { leagueId: league.id, userId: user.id, role: LeagueRole.COMMISSIONER, status: LeagueMembershipStatus.ACTIVE },
   });
   return { league, user, membership };
+}
+
+async function seedSquad(leagueId: string, createdBy: string) {
+  return getPrisma().squad.create({ data: { leagueId, createdBy, name: `Memo Team ${randomUUID().slice(0, 8)}`, iconKey: 'CAPTAIN_SMILE_FIELD' } });
+}
+
+function userService(users: PrismaUserRepository): UserService {
+  const email = emailServiceInto();
+  const appBaseUrl = 'https://app.example.test';
+  return new UserService(
+    users,
+    getAppPrisma(),
+    new PasswordChangedNotifier(users, email, appBaseUrl),
+    new EmailChangeUndoService({ users, prisma: getAppPrisma(), email, appBaseUrl }),
+  );
 }
 
 describe('request read memo with the Prisma repositories (#1176)', () => {
@@ -145,5 +165,70 @@ describe('request read memo with the Prisma repositories (#1176)', () => {
     });
 
     expect(after?.status).toBe(LeagueMembershipStatus.INACTIVE);
+  });
+
+  it('reads a user and a team once per request (#1355)', async () => {
+    const { league, user } = await seedLeague();
+    const squad = await seedSquad(league.id, user.id);
+    const users = new PrismaUserRepository(getAppPrisma());
+    const squads = new PrismaSquadRepository(getAppPrisma());
+
+    const first = await runWithReadMemo(async () => ({
+      user: [await users.findById(user.id), await users.findById(user.id)],
+      squad: [await squads.findById(squad.id), await squads.findById(squad.id)],
+    }));
+
+    expect(first.user[0]?.id).toBe(user.id);
+    expect(first.user[1]).toBe(first.user[0]);
+    expect(first.squad[0]?.id).toBe(squad.id);
+    expect(first.squad[1]).toBe(first.squad[0]);
+  });
+
+  it('sees a user and a team renamed earlier in the same request through their repositories (#1355)', async () => {
+    const { league, user } = await seedLeague();
+    const squad = await seedSquad(league.id, user.id);
+    const users = new PrismaUserRepository(getAppPrisma());
+    const squads = new PrismaSquadRepository(getAppPrisma());
+
+    const after = await runWithReadMemo(async () => {
+      await users.findById(user.id);
+      await squads.findById(squad.id);
+      await users.update(user.id, { firstName: 'Renamed' });
+      await squads.update(squad.id, { name: 'Renamed Team' });
+      return { user: await users.findById(user.id), squad: await squads.findById(squad.id) };
+    });
+
+    expect(after.user?.firstName).toBe('Renamed');
+    expect(after.squad?.name).toBe('Renamed Team');
+  });
+
+  it('answers a disabled account as inactive when the same request read it before disabling it (#1355)', async () => {
+    const { user } = await seedLeague();
+    const { user: admin } = await createTestUser({ isRootAdmin: true });
+    const users = new PrismaUserRepository(getAppPrisma());
+
+    const disabled = await runWithReadMemo(async () => {
+      await users.findById(user.id);
+      return userService(users).disableUser({ userId: admin.id, isRootAdmin: true }, user.id);
+    });
+
+    expect(disabled.isActive).toBe(false);
+  });
+
+  it('forgets a team read during a membership transaction once the transaction commits (#1355)', async () => {
+    const { league, user } = await seedLeague();
+    const squad = await seedSquad(league.id, user.id);
+    const squads = new PrismaSquadRepository(getAppPrisma());
+
+    const after = await runWithReadMemo(async () => {
+      await new PrismaMembershipTransaction(getAppPrisma()).run(async (repos) => {
+        await repos.squads.update(squad.id, { isActive: false });
+        // Outside the transaction, so it sees the row as it was before the write.
+        await squads.findById(squad.id);
+      });
+      return squads.findById(squad.id);
+    });
+
+    expect(after?.isActive).toBe(false);
   });
 });
