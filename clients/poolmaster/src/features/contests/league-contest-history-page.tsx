@@ -23,6 +23,7 @@ import { useContestFinishedYearsQuery } from './use-league-contests-query';
 /**
  * Contest History (#837): one year's completed contests at a time, newest first, each with its
  * winner. The year is in the link (`?year=2025`); without one, the newest year with a final contest.
+ * `?focus={contestId}` tints and scrolls to the contest a contest page's breadcrumb came from.
  */
 export function LeagueContestHistoryPage() {
   const { leagueCode = '' } = useParams<{ leagueCode: string }>();
@@ -127,6 +128,7 @@ export function LeagueContestHistoryPage() {
               <ChampionshipContestList
                 contests={resultsQuery.data}
                 emptyBody={`No contest was completed in ${year}.`}
+                focusContestId={searchParams.get('focus')}
                 leagueCode={league.leagueCode}
                 testIdPrefix="league-history-contest"
               />

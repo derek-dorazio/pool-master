@@ -10,6 +10,7 @@ import { Tile } from "./tile";
 export function ExpandableTile({
   children,
   face,
+  id,
   isOpen,
   onToggle,
   testId,
@@ -18,6 +19,8 @@ export function ExpandableTile({
   children: ReactNode;
   /** What the closed tile shows: its picture, name and line. */
   face: ReactNode;
+  /** The tile's anchor, for a page that scrolls to it. */
+  id?: string;
   isOpen: boolean;
   onToggle: () => void;
   testId: string;
@@ -26,6 +29,7 @@ export function ExpandableTile({
     <Tile
       className={cn("flex flex-col gap-3", isOpen ? "col-span-full border-primary" : null)}
       data-testid={testId}
+      id={id}
       padding="none"
       radius="md"
     >

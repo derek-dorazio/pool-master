@@ -1,41 +1,99 @@
-import { fireEvent, render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { fireEvent, render, screen, within } from '@testing-library/react';
+import type { ReactNode } from 'react';
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
 import { ContestEntryStatus, ContestStatus } from '@poolmaster/shared/domain';
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ContestDto } from '@/lib/api';
-import { ContestEntryBackLinks, ContestEntryFrame, ContestPageFrame } from './contest-header';
+import { bindApiMocks } from '@/test/msw-api';
+import { ContestEntryFrame, ContestPageFrame } from './contest-header';
 import { entryPageView, type ContestView } from './contest-page-view';
 
-const contest = { id: 'contest-1', myEntryIds: ['entry-1'], name: 'Masters Pool', status: ContestStatus.ACTIVE } as ContestDto;
+const { getLeagueMock } = vi.hoisted(() => ({ getLeagueMock: vi.fn() }));
+
+bindApiMocks({ getLeague: getLeagueMock });
+
+vi.mock('@/features/auth/auth-context', () => ({
+  useAuth: () => ({ isAuthenticated: true, isLoading: false, isRootAdmin: false, user: { id: 'user-1', isRootAdmin: false }, clearSession: vi.fn() }),
+}));
+
+const contest = {
+  endsAt: '2026-04-12T23:00:00.000Z',
+  id: 'contest-1',
+  leagueId: 'league-1',
+  myEntryIds: ['entry-1'],
+  name: 'Masters Pool',
+  status: ContestStatus.ACTIVE,
+} as ContestDto;
+
+function leagueRead(leagueCode: string) {
+  return { data: { league: { id: 'league-1', leagueCode, name: 'Big Dawgs' }, membership: null, squadMembership: null } };
+}
+
+function LocationProbe() {
+  const location = useLocation();
+  return <div data-testid="location">{`${location.pathname}${location.search}`}</div>;
+}
+
+/** Draws `page` at `url` under `/league/:leagueCode/contests/:contestId/*`, with where the URL ends up. */
+function renderAt(page: ReactNode, url = '/league/BIGDAWGS/contests/contest-1') {
+  render(
+    <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+      <MemoryRouter initialEntries={[url]}>
+        <Routes>
+          <Route element={<>{page}<LocationProbe /></>} path="/league/:leagueCode/contests/:contestId/*" />
+        </Routes>
+      </MemoryRouter>
+    </QueryClientProvider>,
+  );
+}
+
+beforeEach(() => {
+  getLeagueMock.mockResolvedValue(leagueRead('BIGDAWGS'));
+});
+
+afterEach(() => {
+  vi.clearAllMocks();
+});
 
 function renderFrame({
+  contestOverrides = {},
   current = 'entries',
+  entryName,
   leagueCode = 'BIGDAWGS',
   myEntryIds = contest.myEntryIds,
   picksRevealed = true,
   title,
+  url,
 }: {
+  contestOverrides?: Partial<ContestDto>;
   current?: ContestView | null;
+  entryName?: string;
   leagueCode?: string;
   myEntryIds?: string[];
   picksRevealed?: boolean;
   title?: string;
+  url?: string;
 } = {}) {
-  render(
-    <MemoryRouter>
-      <ContestPageFrame
-        contest={{ ...contest, myEntryIds }}
-        current={current}
-        leagueCode={leagueCode}
-        picksRevealed={picksRevealed}
-        testId="frame"
-        title={title}
-        titleTestId="frame-heading"
-      >
-        <p>Page body</p>
-      </ContestPageFrame>
-    </MemoryRouter>,
+  renderAt(
+    <ContestPageFrame
+      contest={{ ...contest, myEntryIds, ...contestOverrides }}
+      current={current}
+      entryName={entryName}
+      leagueCode={leagueCode}
+      picksRevealed={picksRevealed}
+      testId="frame"
+      title={title}
+      titleTestId="frame-heading"
+    >
+      <p>Page body</p>
+    </ContestPageFrame>,
+    url,
   );
+}
+
+function breadcrumbs() {
+  return within(screen.getByRole('navigation', { name: 'Contest breadcrumbs' }));
 }
 
 describe('ContestPageFrame', () => {
@@ -53,12 +111,36 @@ describe('ContestPageFrame', () => {
     expect(screen.getByTestId('frame-heading')).toHaveTextContent('Casey Crushers 1');
   });
 
-  it('offers Entries, Leaderboard and My entry once picks are revealed and the viewer has an entry, on the current page', () => {
+  it('offers Leaderboard, Entries and My entry in that order once picks are revealed and the viewer has one entry, on the current page', () => {
     renderFrame({ current: 'leaderboard' });
 
-    expect(screen.getByTestId('contest-menu-entries')).not.toBeChecked();
+    const options = within(screen.getByTestId('contest-menu')).getAllByRole('radio');
+    expect(options.map((option) => option.getAttribute('data-testid'))).toEqual([
+      'contest-menu-leaderboard',
+      'contest-menu-entries',
+      'contest-menu-my-entry',
+    ]);
     expect(screen.getByTestId('contest-menu-leaderboard')).toBeChecked();
-    expect(screen.getByTestId('contest-menu-my-entry')).toBeInTheDocument();
+    expect(screen.getByText('My entry')).toBeInTheDocument();
+  });
+
+  it('opens the viewer\'s only entry from My entry', () => {
+    renderFrame();
+
+    fireEvent.click(screen.getByTestId('contest-menu-my-entry'));
+
+    expect(screen.getByTestId('location')).toHaveTextContent('/league/BIGDAWGS/contests/contest-1/entries/entry-1');
+  });
+
+  it('names the option My entries and opens Entries showing only the viewer\'s when they have two or more entries', () => {
+    renderFrame({ myEntryIds: ['entry-1', 'entry-2'] });
+
+    expect(screen.getByText('My entries')).toBeInTheDocument();
+    expect(screen.queryByText('My entry')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('contest-menu-my-entry'));
+
+    expect(screen.getByTestId('location')).toHaveTextContent('/league/BIGDAWGS/contests/contest-1?mine=1');
   });
 
   it('leaves out My entry when the viewer has no entry in the contest', () => {
@@ -85,18 +167,64 @@ describe('ContestPageFrame', () => {
 });
 
 describe('entryPageView', () => {
-  it('names the viewer\'s own entry page My entry and another team\'s entry page nothing', () => {
+  it('names the viewer\'s only entry page My entry and another team\'s entry page nothing', () => {
     expect(entryPageView(contest, 'entry-1')).toBe('my-entry');
     expect(entryPageView(contest, 'entry-9')).toBeNull();
     expect(entryPageView({ myEntryIds: undefined }, 'entry-1')).toBeNull();
   });
+
+  it('names none of a viewer\'s several entry pages My entry, since My entries is then their list', () => {
+    expect(entryPageView({ myEntryIds: ['entry-1', 'entry-2'] }, 'entry-1')).toBeNull();
+  });
 });
 
-describe('ContestEntryBackLinks', () => {
-  it('goes back to the league, the sub-menu being the way to the contest', () => {
-    render(<MemoryRouter><ContestEntryBackLinks leagueCode="BIGDAWGS" /></MemoryRouter>);
+describe('The contest breadcrumb', () => {
+  it('trails Contests then the contest\'s name on a contest page, Contests opening the Current tab on a live contest', () => {
+    renderFrame();
 
-    expect(screen.getByTestId('contest-entry-back-to-league')).toHaveAttribute('href', '/league/BIGDAWGS');
+    expect(breadcrumbs().getByRole('link', { name: 'Contests' })).toHaveAttribute('href', '/league/BIGDAWGS/contests?focus=contest-1');
+    expect(breadcrumbs().getByText('Masters Pool')).toHaveAttribute('aria-current', 'page');
+  });
+
+  it('opens the Past tab at the year the contest ended, focused on it, from a final contest', () => {
+    renderFrame({ contestOverrides: { status: ContestStatus.COMPLETED } });
+
+    expect(breadcrumbs().getByRole('link', { name: 'Contests' })).toHaveAttribute(
+      'href',
+      '/league/BIGDAWGS/contests/history?year=2026&focus=contest-1',
+    );
+  });
+
+  it('trails Contests, the contest and the entry on an entry page, the contest opening where it lands', () => {
+    renderFrame({ current: null, entryName: 'Birdie Hunters 2', url: '/league/BIGDAWGS/contests/contest-1/entries/entry-9' });
+
+    expect(breadcrumbs().getByRole('link', { name: 'Contests' })).toHaveAttribute('href', '/league/BIGDAWGS/contests?focus=contest-1');
+    expect(breadcrumbs().getByRole('link', { name: 'Masters Pool' })).toHaveAttribute('href', '/league/BIGDAWGS/contests/contest-1/leaderboard');
+    expect(breadcrumbs().getByText('Birdie Hunters 2')).toHaveAttribute('aria-current', 'page');
+  });
+
+  it('shows no Back to league button, the breadcrumb being the way back', () => {
+    renderFrame({ current: null, entryName: 'Birdie Hunters 2' });
+
+    expect(screen.queryByRole('link', { name: 'Back to league' })).not.toBeInTheDocument();
+  });
+});
+
+describe('A contest page under the wrong league', () => {
+  it('replaces the URL with the same page under the contest\'s own league, keeping its search', async () => {
+    getLeagueMock.mockResolvedValue(leagueRead('OFFICE24'));
+
+    renderFrame({ url: '/league/BIGDAWGS/contests/contest-1/leaderboard?mine=1' });
+
+    await vi.waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent('/league/OFFICE24/contests/contest-1/leaderboard?mine=1'));
+  });
+
+  it('stays on the page when the URL names the contest\'s own league', async () => {
+    renderFrame();
+
+    await vi.waitFor(() => expect(getLeagueMock).toHaveBeenCalled());
+    expect(screen.getByTestId('frame-heading')).toHaveTextContent('Masters Pool');
+    expect(screen.getByTestId('location')).toHaveTextContent('/league/BIGDAWGS/contests/contest-1');
   });
 });
 
@@ -104,8 +232,7 @@ describe('ContestEntryFrame', () => {
   const entry = { createdAt: '2026-10-20T15:00:00.000Z', entryNumber: 2, squadName: 'Birdie Hunters', updatedAt: '2026-10-29T15:00:00.000Z' };
 
   function drawEntryFrame(status: ContestEntryStatus | null = ContestEntryStatus.DRAFT) {
-    render(
-      <MemoryRouter>
+    renderAt(
         <ContestEntryFrame
           contest={contest}
           entry={entry}
@@ -118,8 +245,8 @@ describe('ContestEntryFrame', () => {
           title="Birdie Hunters 2"
         >
           <p>The picks</p>
-        </ContestEntryFrame>
-      </MemoryRouter>,
+        </ContestEntryFrame>,
+      '/league/BIGDAWGS/contests/contest-1/entries/entry-1',
     );
   }
 

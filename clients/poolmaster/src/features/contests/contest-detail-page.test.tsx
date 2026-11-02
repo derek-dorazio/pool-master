@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
@@ -84,7 +84,7 @@ vi.mock('@/lib/logger', () => ({
   getLogger: () => mockLogger,
 }));
 
-function renderContestBoard() {
+function renderContestBoard(search = '') {
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: {
@@ -96,7 +96,7 @@ function renderContestBoard() {
   return render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter
-        initialEntries={[{ pathname: '/league/BIGDAWGS/contests/contest-1' }]}
+        initialEntries={[{ pathname: '/league/BIGDAWGS/contests/contest-1', search }]}
       >
         <Routes>
           <Route element={<ContestDetailPage />} path="/league/:leagueCode/contests/:contestId" />
@@ -268,17 +268,38 @@ describe('ContestDetailPage (Contest Board)', () => {
     mockLogger.child.mockClear();
   });
 
-  it('shows a live contest as "Live" in the live colour, and its Status row reads "Live", never the raw enum', async () => {
+  it('shows a live contest as "Live" in the live colour in its header badge, never the raw enum', async () => {
     primeMocks({ contestStatus: 'ACTIVE' });
 
     renderContestBoard();
 
     await screen.findByRole('heading', { name: 'Masters Pick 6' });
-    // The header badge comes first in the page, then the Status row in the rules section.
-    const [badge, statusRow] = screen.getAllByText('Live');
-    expect(badge).toHaveClass('shadow-[var(--shadow-red-pulse)]');
-    expect(statusRow).toBeInTheDocument();
+    expect(screen.getByText('Live')).toHaveClass('shadow-[var(--shadow-red-pulse)]');
     expect(screen.queryByText('ACTIVE')).not.toBeInTheDocument();
+  });
+
+  it('names the contest\'s way to play in words, never its codes, and links to How to Play opened on it at its sport', async () => {
+    primeMocks();
+
+    renderContestBoard();
+
+    const howToPlay = within(await screen.findByTestId('contest-how-to-play'));
+    expect(howToPlay.getByText('Way to play')).toBeInTheDocument();
+    expect(screen.queryByText('TIERED')).not.toBeInTheDocument();
+    expect(screen.queryByText('Selection type')).not.toBeInTheDocument();
+    expect(screen.queryByText('Contest format')).not.toBeInTheDocument();
+    expect(howToPlay.getByTestId('contest-how-to-play-link')).toHaveAttribute('href', '/how-to-play?sport=golf&format=TIERED');
+  });
+
+  it('has no Back to league button, the Contests breadcrumb being the way back', async () => {
+    primeMocks();
+
+    renderContestBoard();
+
+    await screen.findByRole('heading', { name: 'Masters Pick 6' });
+    expect(screen.queryByRole('link', { name: 'Back to league' })).not.toBeInTheDocument();
+    expect(within(screen.getByRole('navigation', { name: 'Contest breadcrumbs' })).getByRole('link', { name: 'Contests' }))
+      .toHaveAttribute('href', '/league/BIGDAWGS/contests?focus=contest-1');
   });
 
   it('shows when the contest starts and ends from the events the contest read carries, reading no event', async () => {
@@ -353,6 +374,29 @@ describe('ContestDetailPage (Contest Board)', () => {
 
     // Header counts must NOT change with the toggle.
     expect(screen.getByTestId('contest-board-total-count')).toHaveTextContent('Total Entries: 2');
+  });
+
+  it('opens on only the viewer\'s entries, with My entries chosen in the menu, from a My entries link', async () => {
+    primeMocks({
+      entries: [
+        buildEntry({ id: 'entry-1', squadId: 'squad-1' }),
+        buildEntry({ id: 'entry-2', squadId: 'squad-1', entryNumber: 2, name: 'Birdie Hunters Entry 2' }),
+        buildEntry({ id: 'entry-3', squadId: 'squad-other', squadName: 'Other Team', name: 'Other Team Entry 1' }),
+      ],
+    });
+
+    renderContestBoard('?mine=1');
+
+    expect(await screen.findByTestId('contest-board-entry-entry-2')).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByTestId('contest-board-entry-entry-3')).not.toBeInTheDocument());
+    expect(screen.getByTestId('contest-board-my-only-toggle')).toBeChecked();
+    expect(screen.getByTestId('contest-menu-my-entry')).toBeChecked();
+    expect(screen.getByTestId('contest-menu-my-entry')).toHaveAccessibleName('My entries');
+
+    fireEvent.click(screen.getByTestId('contest-board-my-only-toggle'));
+
+    expect(await screen.findByTestId('contest-board-entry-entry-3')).toBeInTheDocument();
+    expect(screen.getByTestId('contest-menu-entries')).toBeChecked();
   });
 
   // pool-master-dxd.13 — own entries get the spotlight regardless of toggle state.

@@ -214,7 +214,7 @@ export const EMAIL_TEMPLATE_FIXTURES: { [Key in SystemEmailTemplateKey]: SystemE
     setups: MASTERS_SETUPS,
     lastYear: [{ contestName: 'Masters Pick 6', winners: ['Green Jackets'] }],
     eventPageUrl: MASTERS_PAGE_URL,
-    contestTypesUrl: 'http://localhost:5173/league/OFFICE24/contest-types',
+    contestTypesUrl: 'http://localhost:5173/league/OFFICE24/admin/contest-types',
   },
   EVENT_WEEKLY_DIGEST: {
     userName: 'Casey Commissioner',

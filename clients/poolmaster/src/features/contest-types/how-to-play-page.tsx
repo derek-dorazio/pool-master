@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { SelectionType, formatSelectionTypeName, getSportDefinition, type Sport } from '@poolmaster/shared/domain';
 import type { ContestConfigTemplateDto, LeagueDto } from '@/lib/api';
@@ -15,7 +15,7 @@ import { buildLeagueAdminContestCreateFromTemplatePath } from '@/features/league
 import { useLeaguesQuery } from '@/features/leagues/use-leagues-query';
 import { useSportLeaguesQuery } from './use-sport-leagues-query';
 import { ComingUpRow } from '@/features/event-pages/coming-up-row';
-import { CLUTCH_CARD_PAGE_PATH } from '@/features/event-pages/event-page-paths';
+import { CLUTCH_CARD_PAGE_PATH, howToPlayFormatAnchor } from '@/features/event-pages/event-page-paths';
 
 /** How a pool runs, in three steps, each with its picture. */
 const HOW_IT_WORKS: readonly { picture: StepPicture; title: string; body: string }[] = [
@@ -30,6 +30,11 @@ const FORMAT_ORDER = Object.values(SelectionType);
 /** The Clutch Card's place among the ways to play, which are otherwise formats. */
 const CLUTCH_CARD = 'CLUTCH_CARD';
 type WayToPlay = SelectionType | typeof CLUTCH_CARD;
+
+/** The way to play a `?format=` link names, or null when it names none. */
+function wayToPlayFrom(format: string | null): WayToPlay | null {
+  return FORMAT_ORDER.find((selectionType) => selectionType === format) ?? null;
+}
 
 /** A sport as the page's link names it: `?sport=horse-racing`. */
 function sportSlug(sport: Sport) {
@@ -108,6 +113,7 @@ function FormatCard({ selectionType, sports, chosen, isOpen, onToggle, onChooseS
           )}
         </>
       )}
+      id={howToPlayFormatAnchor(selectionType)}
       isOpen={isOpen}
       onToggle={onToggle}
       testId={`how-to-play-format-${selectionType}`}
@@ -283,8 +289,18 @@ export function HowToPlayPage() {
   const chosenSport = catalog.find((sport) => sportSlug(sport.sport) === searchParams.get('sport')) ?? null;
   const chosenLeague = chosenSport?.leagues.find((league) => league.slug === searchParams.get('league')) ?? null;
   const chosen = chosenLeague?.groups ?? chosenSport?.groups ?? null;
-  const [openFormat, setOpenFormat] = useState<WayToPlay | null>(null);
+  // A contest page's "How to play this contest" names its format (#1392): that tile opens, in view.
+  const [requestedFormat] = useState(() => wayToPlayFrom(searchParams.get('format')));
+  const [openFormat, setOpenFormat] = useState<WayToPlay | null>(requestedFormat);
   const toggle = (wayToPlay: WayToPlay) => setOpenFormat((open) => (open === wayToPlay ? null : wayToPlay));
+  const catalogLoaded = templatesQuery.isSuccess && sportLeaguesQuery.isSuccess;
+  const scrolledToRequested = useRef(false);
+  useEffect(() => {
+    if (catalogLoaded && requestedFormat && !scrolledToRequested.current) {
+      scrolledToRequested.current = true;
+      document.getElementById(howToPlayFormatAnchor(requestedFormat))?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    }
+  }, [catalogLoaded, requestedFormat]);
 
   // Create contest is for whoever runs an active league; only a signed-in viewer's are read.
   const { leagues, commissionerLeagueIds } = useLeaguesQuery({ enabled: auth.isAuthenticated });

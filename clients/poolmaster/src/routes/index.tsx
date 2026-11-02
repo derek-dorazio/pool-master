@@ -88,6 +88,7 @@ import { ManageTeamsPage } from '@/features/teams/manage-teams-page';
 import {
   LegacyContestCreateRedirect,
   LegacyContestManageRedirect,
+  LegacyContestTypesRedirect,
   LegacyGolfManageRedirect,
   LegacyJoinInviteRedirect,
   LegacyLeagueEntriesRedirect,
@@ -235,6 +236,10 @@ export const router = createBrowserRouter([
                     element: <CreateContestPage />,
                   },
                   {
+                    path: 'contest-types',
+                    element: <LeagueContestTypesPage />,
+                  },
+                  {
                     path: 'contests/:contestId',
                     element: <ManageContestPage />,
                   },
@@ -320,7 +325,7 @@ export const router = createBrowserRouter([
           },
           {
             path: 'league/:leagueCode/contest-types',
-            element: <LeagueContestTypesPage />,
+            element: <LegacyContestTypesRedirect />,
           },
           {
             path: 'league/:leagueCode/contests',

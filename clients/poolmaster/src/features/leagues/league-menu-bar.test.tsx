@@ -69,14 +69,14 @@ describe('LeagueMenuBar', () => {
     refreshTokenMock.mockReset();
   });
 
-  it('gives members Home, Contests, Championships, Contest types, their own squad by its name, and Members', async () => {
+  it('gives members Home, Contests, Championships, their own squad by its name, and Members, with Contest types left to Commissioner tools', async () => {
     renderMenu();
 
     const menu = within(await screen.findByRole('navigation', { name: 'League' }));
     expect(menu.getByRole('link', { name: 'Home' })).toHaveAttribute('href', '/league/BIGDAWGS');
     expect(menu.getByRole('link', { name: 'Contests' })).toHaveAttribute('href', '/league/BIGDAWGS/contests');
     expect(menu.getByRole('link', { name: 'Championships' })).toHaveAttribute('href', '/league/BIGDAWGS/championships');
-    expect(menu.getByRole('link', { name: 'Contest types' })).toHaveAttribute('href', '/league/BIGDAWGS/contest-types');
+    expect(menu.queryByRole('link', { name: 'Contest types' })).not.toBeInTheDocument();
     expect(await menu.findByRole('link', { name: "Derek's Great Golf Guys" })).toHaveAttribute('href', '/league/BIGDAWGS/team');
     expect(menu.getByRole('link', { name: 'Members' })).toHaveAttribute('href', '/league/BIGDAWGS/teams');
     expect(menu.queryByRole('link', { name: /team/i })).not.toBeInTheDocument();
@@ -146,8 +146,10 @@ describe('buildLeagueMenuItems', () => {
     expect(activeLabel('/league/BIGDAWGS/contests/contest-1/leaderboard')).toEqual(['Contests']);
   });
 
-  it('marks only Contest types on the contest types page, not Contests', () => {
-    expect(activeLabel('/league/BIGDAWGS/contest-types')).toEqual(['Contest types']);
+  it('lists five items, Contest types not among them', () => {
+    expect(buildLeagueMenuItems('BIGDAWGS', '/league/BIGDAWGS').map((item) => item.label)).toEqual([
+      'Home', 'Contests', 'Championships', 'Yours', 'Members',
+    ]);
   });
 
   it('keeps Championships marked on every page of a year, down to a squad\'s cup points', () => {
