@@ -19,7 +19,6 @@ export function ContestRow({
   name,
   note,
   startsAt,
-  state,
   status,
   testId,
   to,
@@ -37,8 +36,6 @@ export function ContestRow({
   note?: ReactNode;
   /** When it starts, or null when it has no event yet. */
   startsAt: string | null;
-  /** Router state for the link, such as the league code the contest pages read. */
-  state?: unknown;
   /** The contest's status badge. */
   status?: ReactNode;
   testId: string;
@@ -83,7 +80,6 @@ export function ContestRow({
         data-highlighted={isHighlighted || undefined}
         data-testid={testId}
         ref={linkRef}
-        state={state}
         to={to}
       >
         <span className="min-w-0">
@@ -104,7 +100,6 @@ export function ContestRow({
       ref={linkRef}
       description={facts}
       metadata={note}
-      state={state}
       title={name}
       to={to}
       trailing={side}

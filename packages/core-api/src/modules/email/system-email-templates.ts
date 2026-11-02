@@ -413,8 +413,8 @@ export interface ContestResultsEmailData {
   leagueName: string;
   contestName: string;
   outcome: ContestResultsOutcome;
+  /** Every results email opens the final leaderboard: a final contest's landing page. */
   leaderboardUrl: string;
-  contestUrl: string;
 }
 
 /** What happened to an event a contest is on (#845 C6, C7). */
@@ -1925,8 +1925,8 @@ function renderContestResultsEmail(
       preheader: lead,
       title: 'No scores',
       leagueName: data.leagueName,
-      bodyBlocks: [paragraph(`Hi ${escapeHtml(data.userName)},`), paragraph(escapeHtml(lead)), button('View contest', data.contestUrl)].join(''),
-      textLines: [`Hi ${data.userName},`, '', lead, '', `View contest: ${data.contestUrl}`],
+      bodyBlocks: [paragraph(`Hi ${escapeHtml(data.userName)},`), paragraph(escapeHtml(lead)), button('View contest', data.leaderboardUrl)].join(''),
+      textLines: [`Hi ${data.userName},`, '', lead, '', `View contest: ${data.leaderboardUrl}`],
     });
   }
   const lead = [`${data.contestName} is over.`, describeWinners(outcome.winners)].filter((sentence) => sentence !== null).join(' ');

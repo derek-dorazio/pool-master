@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { PRODUCT_NAME } from '@poolmaster/shared/domain';
 import { bindApiMocks } from '@/test/msw-api';
 // `./app-shell.tsx?raw` and `./app-shell` are DIFFERENT modules: Vite's `?raw`
 // query yields the file's source as a string, which the assertions below read.
@@ -145,6 +146,7 @@ function renderAppShell(initialEntries = ['/league/LEAGUE1']) {
       <MemoryRouter initialEntries={initialEntries}>
         <Routes>
           <Route element={<AppShell />} path="/">
+            <Route element={<div data-testid="mock-home">Home</div>} index />
             <Route element={<div data-testid="mock-outlet">Outlet</div>} path="league/:leagueCode/*" />
             <Route element={<div data-testid="mock-outlet">Outlet</div>} path="*" />
           </Route>
@@ -331,6 +333,35 @@ describe('AppShell', () => {
     expect(listLeaguesMock).not.toHaveBeenCalled();
     expect(screen.queryByTestId('mock-league-selector-create')).not.toBeInTheDocument();
     expect(screen.queryByTestId('mock-league-menu')).not.toBeInTheDocument();
+  });
+
+  it.each([
+    ['a league page', '/league/LEAGUE1'],
+    ['How to Play', '/how-to-play'],
+    ['Plans', '/plans'],
+    ['an event page', '/play/american-football/championship-weekend'],
+  ])('makes the header brand a Home link to / on %s, signed in and signed out', async (_page, path) => {
+    listLeaguesMock.mockResolvedValue({ data: { leagues: [], memberships: [] } });
+    const { unmount } = renderAppShell([path]);
+
+    expect(screen.getByRole('link', { name: 'Home' })).toHaveAttribute('href', '/');
+    expect(screen.getByTestId('app-shell-home')).toHaveTextContent(PRODUCT_NAME);
+    await waitFor(() => expect(listLeaguesMock).toHaveBeenCalled());
+    unmount();
+
+    authState.isAuthenticated = false;
+    renderAppShell([path]);
+
+    expect(screen.getByRole('link', { name: 'Home' })).toHaveAttribute('href', '/');
+  });
+
+  it('takes a member home when they follow the header brand from a page outside their league', async () => {
+    listLeaguesMock.mockResolvedValue({ data: { leagues: [], memberships: [] } });
+    renderAppShell(['/how-to-play']);
+
+    fireEvent.click(screen.getByRole('link', { name: 'Home' }));
+
+    expect(await screen.findByTestId('mock-home')).toBeInTheDocument();
   });
 
   it('links a signed-out visitor to How to Play and Plans from the header and the footer', () => {

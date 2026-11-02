@@ -201,7 +201,7 @@ describe('SDK Functional: contest expansions (#987)', () => {
     expect(await sentMailWithSubject(commissioner.email, 'Herald House Picks now takes 50 entries')).toEqual([]);
   });
 
-  it('lists the league\'s payment history newest first to its commissioners and root admins only, naming no payer on a Primetime Commissioner grant', async () => {
+  it('lists the league\'s payment history newest first, each line with its contest and that contest\'s status, to its commissioners and root admins only, naming no payer on a Primetime Commissioner grant', async () => {
     const { commissioner, league, contestId } = await freeContest('Ledger House');
     const admin = await buildRegisteredUser({ firstName: 'Ledger', lastName: 'Admin' });
     await promoteToRootAdmin(admin);
@@ -218,9 +218,11 @@ describe('SDK Functional: contest expansions (#987)', () => {
     const byOutsider = await listLeaguePayments({ client: outsider.client, path: { id: league.id } });
     const byMember = await listLeaguePayments({ client: member.client, path: { id: league.id } });
 
-    expect(byCommissioner.payments.map(({ amountCents, description, contestId: lineContestId, payer }) => ({ amountCents, description, contestId: lineContestId, payer }))).toEqual([
-      { amountCents: 0, description: 'Ledger House Picks: 50 to 300 entries, given free by Primetime Commissioner: Office party', contestId, payer: null },
-      { amountCents: 0, description: 'Ledger House Picks: up to 50 entries, free while payments are off', contestId, payer: { id: commissioner.userId, name: commissioner.displayName } },
+    // Each line names its contest and where that contest stands, so the page links it where it opens.
+    const contest = { id: contestId, status: 'OPEN' };
+    expect(byCommissioner.payments.map(({ amountCents, description, contest: lineContest, payer }) => ({ amountCents, description, contest: lineContest, payer }))).toEqual([
+      { amountCents: 0, description: 'Ledger House Picks: 50 to 300 entries, given free by Primetime Commissioner: Office party', contest, payer: null },
+      { amountCents: 0, description: 'Ledger House Picks: up to 50 entries, free while payments are off', contest, payer: { id: commissioner.userId, name: commissioner.displayName } },
     ]);
     expect(byAdmin.data?.payments).toHaveLength(2);
     expect(byOutsider.response?.status).toBe(403);

@@ -60,7 +60,7 @@ export function LeaderboardFrame({
 }: {
   children: ReactNode;
   contest: ContestDto;
-  leagueCode: string | null;
+  leagueCode: string;
   /** The board's own lines under the title, such as the viewer's best place. */
   notes?: ReactNode;
   /** The settled line: `SETTLED_NOTE` unless the board has words of its own, or null where a note of its own stands instead. */

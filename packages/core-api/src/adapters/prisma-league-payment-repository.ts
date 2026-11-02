@@ -13,7 +13,7 @@ export class PrismaLeaguePaymentRepository implements LeaguePaymentRepository {
       select: {
         id: true,
         kind: true,
-        contestId: true,
+        contest: { select: { id: true, status: true } },
         amountCents: true,
         description: true,
         paidAt: true,

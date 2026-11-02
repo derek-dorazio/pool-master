@@ -16,7 +16,7 @@ function renderFrame({
   title,
 }: {
   current?: ContestView | null;
-  leagueCode?: string | null;
+  leagueCode?: string;
   myEntryIds?: string[];
   picksRevealed?: boolean;
   title?: string;
@@ -76,12 +76,6 @@ describe('ContestPageFrame', () => {
     expect(screen.getByTestId('contest-menu-my-entry')).toBeInTheDocument();
   });
 
-  it('shows no sub-menu while the league is unknown, since every option is a league path', () => {
-    renderFrame({ leagueCode: null });
-
-    expect(screen.queryByTestId('contest-menu')).not.toBeInTheDocument();
-  });
-
   it('selects no option on another team\'s entry page', () => {
     renderFrame({ current: null });
 
@@ -99,18 +93,10 @@ describe('entryPageView', () => {
 });
 
 describe('ContestEntryBackLinks', () => {
-  it('goes back to the league alone when the league is known, the sub-menu being the way to the contest', () => {
-    render(<MemoryRouter><ContestEntryBackLinks contestId="contest-1" leagueCode="BIGDAWGS" /></MemoryRouter>);
+  it('goes back to the league, the sub-menu being the way to the contest', () => {
+    render(<MemoryRouter><ContestEntryBackLinks leagueCode="BIGDAWGS" /></MemoryRouter>);
 
     expect(screen.getByTestId('contest-entry-back-to-league')).toHaveAttribute('href', '/league/BIGDAWGS');
-    expect(screen.queryByTestId('contest-entry-back-to-contest')).not.toBeInTheDocument();
-  });
-
-  it('goes back to the contest and to the welcome page while the league is unknown', () => {
-    render(<MemoryRouter><ContestEntryBackLinks contestId="contest-1" leagueCode={null} /></MemoryRouter>);
-
-    expect(screen.getByTestId('contest-entry-back-to-contest')).toHaveAttribute('href', '/contests/contest-1');
-    expect(screen.getByTestId('contest-entry-back-to-league')).toHaveAttribute('href', '/welcome');
   });
 });
 

@@ -2,7 +2,6 @@ import { useParams, useSearchParams } from 'react-router';
 import { useEffect } from 'react';
 import { ChampionshipContestList } from '@/features/championships/championship-contest-list';
 import { useChampionshipContestsQuery } from '@/features/championships/use-championship-query';
-import { buildLeagueContestPath } from '@/features/leagues/league-routing';
 import { getLeagueLoadErrorCopy } from '@/features/leagues/league-load-error';
 import {
   Chip,
@@ -126,7 +125,6 @@ export function LeagueContestHistoryPage() {
               <LoadingState body="Loading contest history..." />
             ) : (
               <ChampionshipContestList
-                contestPath={buildLeagueContestPath}
                 contests={resultsQuery.data}
                 emptyBody={`No contest was completed in ${year}.`}
                 leagueCode={league.leagueCode}
