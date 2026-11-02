@@ -789,7 +789,7 @@ describe('event read handlers count admin numbers for a root admin only (#1198)'
     const event = store.addEvent({ status: SportEventStatus.SCHEDULED });
     store.contestsByEvent.set(event.id, 3);
 
-    const response = await handlers.listEvents(asFastifyRequest<ListEventsRequest>({ query: { eventYear: 2026 }, authUser: MEMBER, log }));
+    const response = await handlers.listEvents(asFastifyRequest<ListEventsRequest>({ query: { eventYear: 2026, status: [SportEventStatus.SCHEDULED] }, authUser: MEMBER, log }));
 
     expect(response.events).toEqual([expect.objectContaining({ id: event.id, adminCounts: null })]);
     expect(countContests).not.toHaveBeenCalled();

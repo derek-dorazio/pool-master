@@ -14,6 +14,12 @@ export interface TableScanAllowance {
 
 export const TABLE_SCAN_ALLOWANCES: readonly TableScanAllowance[] = [
   {
+    table: 'sport_events',
+    sqlIncludes: 'FROM "public"."sport_events" WHERE "public"."sport_events"."event_year" = $? ORDER BY',
+    reason: "The root admin Events page lists one year's events across every sport; no index leads on event_year yet. "
+      + '#1377 adds one. The contract test sends it as a root admin (#1348).',
+  },
+  {
     table: 'leagues',
     sqlIncludes: 'FROM "public"."leagues" WHERE "public"."leagues"."is_active" = $? ORDER BY',
     reason: 'The commissioner notices tell every active league of a due event, so they read every active league, and only when an event email is due; '

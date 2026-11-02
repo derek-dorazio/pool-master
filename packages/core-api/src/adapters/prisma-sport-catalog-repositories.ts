@@ -904,11 +904,14 @@ export class PrismaSportEventTierRepository implements SportEventTierRepository 
   }
 
   async countValuations(sportEventId: string): Promise<Map<string, number>> {
-    const tiers = await this.prisma.sportEventTier.findMany({
-      where: { sportEventId },
-      select: { id: true, _count: { select: { valuations: true } } },
+    // Grouped from the valuations, filtered to the event's tiers: a relation `_count` on the tiers
+    // groups every valuation of every event before joining.
+    const groups = await this.prisma.sportEventParticipantValuation.groupBy({
+      by: ['sportEventTierId'],
+      where: { sportEventTier: { sportEventId } },
+      _count: { _all: true },
     });
-    return new Map(tiers.map((tier) => [tier.id, tier._count.valuations]));
+    return new Map(groups.flatMap((group) => (group.sportEventTierId === null ? [] : [[group.sportEventTierId, group._count._all]])));
   }
 }
 
