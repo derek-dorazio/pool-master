@@ -5,6 +5,7 @@ import { submitAndRead } from './helpers/browser-writes';
 import { removeSquadManagementRun, type SquadManagementRun } from './helpers/squad-management-teardown';
 import { GENERATED_PASSWORD_PREFIX } from './helpers/constants';
 import { registerFreshUser } from './helpers/user-session';
+import { newRunId, e2eName, e2eEmail, e2eUsername, e2eLeagueCode } from './helpers/test-marker';
 
 /**
  * #363 — squad management against the real API (plans/core-squad-management-e2e.md): the owner
@@ -70,11 +71,11 @@ test('an owner renames their squad, changes its icon and adds a co-owner by invi
   const credentials = readAdminCredentials();
   admin = credentials;
 
-  const runId = `${Date.now().toString(36)}${randomBytes(2).toString('hex')}`;
+  const runId = newRunId();
   const user = (role: string, label: string) => ({
-    username: `e2e-${role}-${runId}`,
+    username: e2eUsername(role, runId),
     // RFC 2606 reserves .invalid, so nothing sent to these can reach a real mailbox.
-    email: `e2e-${role}-${runId}@e2e.invalid`,
+    email: e2eEmail(role, runId),
     firstName: 'E2E',
     lastName: `${label} ${runId}`,
   });
@@ -86,10 +87,10 @@ test('an owner renames their squad, changes its icon and adds a co-owner by invi
     // Brand new on purpose: an invitation to an address that already has an account is accepted
     // at once, with no invite code to follow.
     coOwner: user('so', 'CoOwner'),
-    leagueName: `E2E Squads League ${runId}`,
-    leagueCode: `E2ES${runId.toUpperCase()}`,
-    squadName: `E2E Squad ${runId}`,
-    renamedSquadName: `E2E Renamed ${runId}`,
+    leagueName: e2eName('Squads League', runId),
+    leagueCode: e2eLeagueCode('S', runId),
+    squadName: e2eName('Squad', runId),
+    renamedSquadName: e2eName('Renamed', runId),
   };
   // Recorded before anything is created, so a failure on the first write is still torn down.
   runs.push(run);

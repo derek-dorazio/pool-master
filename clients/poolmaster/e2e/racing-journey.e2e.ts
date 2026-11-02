@@ -1,4 +1,3 @@
-import { randomBytes } from 'node:crypto';
 import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
 import {
   adminSignIn,
@@ -9,6 +8,7 @@ import {
 import { submitAndRead } from './helpers/browser-writes';
 import { removeJourneyRun, type JourneyRun } from './helpers/journey-teardown';
 import { registerFreshUser } from './helpers/user-session';
+import { newRunId, e2eName, e2eEmail, e2eUsername, e2eLeagueCode } from './helpers/test-marker';
 
 /**
  * #623 — the horse racing journey (plans/racing-sports.md §9, slice 4): the root admin builds a
@@ -117,29 +117,29 @@ test('act 1: the root admin builds a race — circuit, eight horses, the race, i
   const credentials = readAdminCredentials();
   admin = credentials;
 
-  const runId = `${Date.now().toString(36)}${randomBytes(2).toString('hex')}`;
+  const runId = newRunId();
   const run: JourneyRun = {
     runId,
     sport: 'HORSE_RACING',
-    tourName: `E2E Circuit ${runId}`,
-    playerNamePrefix: `E2E Horse ${runId}`,
-    tournamentName: `E2E Stakes ${runId}`,
+    tourName: e2eName('Circuit', runId),
+    playerNamePrefix: e2eName('Horse', runId),
+    tournamentName: e2eName('Stakes', runId),
     commissioner: {
-      username: `e2e-rc-${runId}`,
-      email: `e2e-rc-${runId}@e2e.invalid`,
+      username: e2eUsername('rc', runId),
+      email: e2eEmail('rc', runId),
       firstName: 'E2E',
       lastName: `Racing Commissioner ${runId}`,
     },
     member: {
-      username: `e2e-rm-${runId}`,
-      email: `e2e-rm-${runId}@e2e.invalid`,
+      username: e2eUsername('rm', runId),
+      email: e2eEmail('rm', runId),
       firstName: 'E2E',
       lastName: `Racing Member ${runId}`,
     },
-    leagueName: `E2E Racing League ${runId}`,
-    leagueCode: `E2ER${runId.toUpperCase()}`,
-    contestName: `E2E Derby Picks ${runId}`,
-    squadName: `E2E Stable ${runId}`,
+    leagueName: e2eName('Racing League', runId),
+    leagueCode: e2eLeagueCode('R', runId),
+    contestName: e2eName('Derby Picks', runId),
+    squadName: e2eName('Stable', runId),
   };
   runs.push(run);
   journey = { run };

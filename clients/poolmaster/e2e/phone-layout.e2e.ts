@@ -1,9 +1,9 @@
-import { randomBytes } from 'node:crypto';
 import { expect, test, type Page } from '@playwright/test';
 import { adminApiHeaders } from './helpers/admin-api';
 import { readAdminCredentials } from './helpers/admin-session';
 import { removeLeague, removeUser, type JourneyUser } from './helpers/journey-teardown';
 import { registerFreshUser } from './helpers/user-session';
+import { newRunId, e2eEmail, e2eUsername } from './helpers/test-marker';
 
 /**
  * #929 — the app on a phone's browser: a commissioner signs up, creates a league and starts a
@@ -84,10 +84,10 @@ async function expectNoZoomingFields(page: Page) {
 
 test('a commissioner signs up, creates a league and starts a contest on a phone without any page running wider than the screen', async ({ page }) => {
   test.setTimeout(120_000);
-  const runId = `${Date.now().toString(36)}${randomBytes(2).toString('hex')}`;
+  const runId = newRunId();
   const commissioner: JourneyUser = {
-    username: `e2e-ph-${runId}`,
-    email: `e2e-ph-${runId}@e2e.invalid`,
+    username: e2eUsername('ph', runId),
+    email: e2eEmail('ph', runId),
     firstName: 'E2E',
     lastName: `Phone ${runId}`,
   };
