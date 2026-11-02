@@ -1872,6 +1872,7 @@ model SportEvent {
   @@unique([providerId, externalId])
   // One edition of a series per year: there is one 2026 Masters (plans/147 decision 5).
   @@unique([eventSeriesId, eventYear])
+  @@index([eventYear])
   @@index([sport, status])
   @@index([startDate, endDate])
   @@index([status])

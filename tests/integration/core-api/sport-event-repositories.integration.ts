@@ -69,9 +69,9 @@ async function golfSportId(): Promise<string> {
   return sport.id;
 }
 
-async function createEvent(name = 'Repository Open') {
+async function createEvent(name = 'Repository Open', eventYear?: number) {
   return createSportEventRow(repos().events, {
-    ...(await freshEventEdition(getPrisma())),
+    ...(await freshEventEdition(getPrisma(), { eventYear })),
     externalId: `repo-${randomUUID()}`,
     providerId: 'integration-test',
     sport: Sport.GOLF,
@@ -138,6 +138,19 @@ describe('SportEventRepository — writes', () => {
     await createEvent('Desert Open');
 
     expect((await events.findAll({ q: 'harbour' })).map((row) => row.name)).toEqual(['Harbour Classic']);
+  });
+
+  it("lists one year's events across every sport through an index that leads on the event year, not by reading every event", async () => {
+    const { events } = repos();
+    const thisYear = await createEvent('Year Open', 2031);
+    await createEvent('Last Year Open', 2030);
+
+    const { result, statements } = await recordStatements(() => events.findAll({ eventYear: 2031 }));
+
+    expect(result.map((row) => row.id)).toEqual([thisYear.id]);
+    expect(statements.map((statement) => statementShape(statement.sql)).join('\n'))
+      .toContain('WHERE "public"."sport_events"."event_year" = $?');
+    await expect(findUnindexedScans(getPrisma(), statements.map(({ sql }) => ({ sql, test: 'findAll by year' })))).resolves.toEqual([]);
   });
 
   it('deletes an event that has rounds, tiers and a scored, valued field — which a bare event delete could not', async () => {
