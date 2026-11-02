@@ -100,6 +100,7 @@ describe('RootAdminIngestionSchedulePage', () => {
       }),
     );
   });
+
   it('keeps an unsaved edit when the schedule is read again in the background', async () => {
     const { queryClient } = renderPage();
     fireEvent.change(

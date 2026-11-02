@@ -115,6 +115,7 @@ describe('RootAdminSportOverridesPage', () => {
       }),
     );
   });
+
   it('shows the chosen sport\'s own override and drops an unsaved tick when the sport changes', async () => {
     getIngestionScheduleMock.mockResolvedValue(SCHEDULE_WITH_BASKETBALL_OVERRIDE);
     renderPage();

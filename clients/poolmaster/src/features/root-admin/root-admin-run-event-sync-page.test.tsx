@@ -242,6 +242,7 @@ describe('RootAdminRunEventSyncPage', () => {
       });
     });
   });
+
   it('falls back to the first sport a provider syncs when no provider covers golf, and reads that sport\'s events', async () => {
     listProvidersMock.mockResolvedValue({
       data: {
