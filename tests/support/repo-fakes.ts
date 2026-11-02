@@ -281,6 +281,8 @@ export function fakeSportLeagueRepo(overrides: Partial<SportLeagueRepository> = 
     findBySportAndName: one(),
     create: echoCreate('sport-league'),
     update: echoUpdate(),
+    findUses: jest.fn().mockResolvedValue({ sportEventCount: 0, contestTemplateCount: 0, eventPageOfferCount: 0, cupCount: 0 }),
+    delete: nothing(),
     ...overrides,
   };
 }
@@ -366,6 +368,8 @@ export function fakeParticipantRepo(
     findMatchingAny: many(),
     create: echoCreate('participant'),
     update: echoUpdate(),
+    countEventFieldEntries: jest.fn().mockResolvedValue(0),
+    delete: nothing(),
     ...overrides,
   };
 }

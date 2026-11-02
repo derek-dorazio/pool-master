@@ -193,6 +193,8 @@ export class InMemorySportEvents {
         Object.assign(row, Object.fromEntries(Object.entries<unknown>(updates).filter(([, value]) => value !== undefined)));
         return row;
       },
+      findUses: async () => { throw new Error('not used'); },
+      delete: async () => { throw new Error('not used'); },
     };
   }
 
@@ -208,6 +210,8 @@ export class InMemorySportEvents {
       ))),
       create: async () => { throw new Error('not used'); },
       update: async () => { throw new Error('not used'); },
+      countEventFieldEntries: async () => { throw new Error('not used'); },
+      delete: async () => { throw new Error('not used'); },
     };
   }
 

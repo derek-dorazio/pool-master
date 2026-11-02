@@ -2853,7 +2853,11 @@ export interface paths {
         get: operations["getSportLeague"];
         put?: never;
         post?: never;
-        delete?: never;
+        /**
+         * Delete a sport league
+         * @description Deletes a sport league nothing uses any more, with its affiliations and its event series that have no events. 409 SPORT_LEAGUE_IN_USE, naming what still uses it, while it has an event in any year, a contest setup, an event page offer or a league's cup: delete its events first; the others are reference data or league history, and the sport league stays. Root admin only.
+         */
+        delete: operations["deleteSportLeague"];
         options?: never;
         head?: never;
         /**
@@ -3029,7 +3033,11 @@ export interface paths {
         get: operations["getParticipant"];
         put?: never;
         post?: never;
-        delete?: never;
+        /**
+         * Delete a participant
+         * @description Deletes a participant no event field holds, with their sport league affiliations and provider identities. 409 PARTICIPANT_IN_USE while any event's field, in any year, has them: remove them from the field, or delete the event, first. Root admin only (403 ROOT_ADMIN_ACCESS_REQUIRED otherwise).
+         */
+        delete: operations["deleteParticipant"];
         options?: never;
         head?: never;
         /**
@@ -31991,6 +31999,53 @@ export interface operations {
             };
         };
     };
+    deleteSportLeague: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                sportLeagueId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
     updateSportLeague: {
         parameters: {
             query?: never;
@@ -32476,6 +32531,53 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    deleteParticipant: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

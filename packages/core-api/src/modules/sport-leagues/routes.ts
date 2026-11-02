@@ -113,6 +113,21 @@ export function sportLeaguesModule(fastify: FastifyInstance, opts: SportLeaguesM
     handler: handler.updateSportLeague,
   });
 
+  fastify.delete('/:sportLeagueId', {
+    ...write,
+    schema: {
+      tags: TAGS,
+      summary: 'Delete a sport league',
+      description: 'Deletes a sport league nothing uses any more, with its affiliations and its event series that have no events. '
+        + '409 SPORT_LEAGUE_IN_USE, naming what still uses it, while it has an event in any year, a contest setup, an event page offer or a league\'s cup: '
+        + 'delete its events first; the others are reference data or league history, and the sport league stays. Root admin only.',
+      operationId: 'deleteSportLeague',
+      params: SPORT_LEAGUE_PARAMS,
+      response: { 204: { type: 'null' }, ...errors(403, 404, 409) },
+    },
+    handler: handler.deleteSportLeague,
+  });
+
   fastify.get('/:sportLeagueId/affiliations', {
     schema: {
       tags: TAGS,

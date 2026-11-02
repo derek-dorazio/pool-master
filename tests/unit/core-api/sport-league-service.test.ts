@@ -287,3 +287,33 @@ describe('SportLeagueService — affiliation upload', () => {
     ]);
   });
 });
+
+describe('SportLeagueService — deleting a sport league (#1400)', () => {
+  it('deletes a sport league nothing uses', async () => {
+    const { service, deps } = buildService();
+
+    await service.deleteSportLeague('sl-pga');
+
+    expect(deps.sportLeagues.delete).toHaveBeenCalledWith('sl-pga');
+  });
+
+  it('refuses with 409 SPORT_LEAGUE_IN_USE naming every use, counted, and deletes nothing', async () => {
+    const { service, deps } = buildService({
+      sportLeagues: { findUses: jest.fn().mockResolvedValue({ sportEventCount: 3, contestTemplateCount: 1, eventPageOfferCount: 2, cupCount: 1 }) },
+    });
+
+    await expect(service.deleteSportLeague('sl-pga')).rejects.toMatchObject({
+      code: 'SPORT_LEAGUE_IN_USE',
+      statusCode: 409,
+      message: 'PGA Tour still has 3 events, 1 contest setup, 2 event page offers, 1 league cup, so it cannot be deleted.',
+    });
+    expect(deps.sportLeagues.delete).not.toHaveBeenCalled();
+  });
+
+  it('answers 404 SPORT_LEAGUE_NOT_FOUND for an unknown sport league and deletes nothing', async () => {
+    const { service, deps } = buildService({ sportLeagues: { findById: jest.fn().mockResolvedValue(null) } });
+
+    await expect(service.deleteSportLeague('sl-missing')).rejects.toMatchObject({ code: 'SPORT_LEAGUE_NOT_FOUND', statusCode: 404 });
+    expect(deps.sportLeagues.delete).not.toHaveBeenCalled();
+  });
+});

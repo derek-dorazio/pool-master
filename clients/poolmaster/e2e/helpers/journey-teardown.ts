@@ -12,10 +12,9 @@ import type { AdminCredentials } from './admin-session';
  *     which is why the league goes first)
  *   → tour → players → commissioner → member.
  *
- * Tours and participants have no delete operation, so they are inactivated: out of every
- * active picker and identifiable by run id for the QA reset (#83). That, and the
- * `event_series` row creating a tournament makes, is the expected residue. (plans/147 removed
- * the season the journey used to create, and with it a step here.)
+ * The tour goes once its tournaments have, taking its roster and the `event_series` rows the
+ * tournaments made with it; each player goes once no event field holds them (#1400). (plans/147
+ * removed the season the journey used to create, and with it a step here.)
  *
  * Every lookup is by the attempt's run-unique names rather than ids captured during the test, so
  * an attempt that failed between a write and reading its response is still found and removed.
@@ -84,11 +83,11 @@ export async function removeJourneyRun(
     return null;
   });
   if (tourId) {
-    await attempt(log, `tour "${run.tourName}"`, () => inactivateTour(api, headers, tourId, run, log));
+    await attempt(log, `tour "${run.tourName}"`, () => removeTour(api, headers, tourId, run.tourName, log));
   } else {
-    log(`tour "${run.tourName}" not found; no tour to inactivate`);
+    log(`tour "${run.tourName}" not found; no tour to remove`);
   }
-  await attempt(log, `players "${run.playerNamePrefix} *"`, () => inactivatePlayers(api, headers, run, log));
+  await attempt(log, `players "${run.playerNamePrefix} *"`, () => removePlayers(api, headers, run.playerNamePrefix, log));
   await attempt(log, `user ${run.commissioner.username}`, () => removeUser(api, headers, run.commissioner, log));
   await attempt(log, `user ${run.member.username}`, () => removeUser(api, headers, run.member, log));
 }
@@ -150,39 +149,34 @@ async function findTourId(api: APIRequestContext, headers: AuthHeaders, run: Jou
   return sportLeagues.find((candidate) => candidate.name === run.tourName)?.id ?? null;
 }
 
-async function inactivateTour(
-  api: APIRequestContext,
-  headers: AuthHeaders,
-  tourId: string,
-  run: JourneyRun,
-  log: Log,
-) {
-  await expectOk(
-    api.patch(`/api/v1/sport-leagues/${tourId}`, { headers, data: { isActive: false } }),
-    'inactivate tour',
-  );
-  log(`tour "${run.tourName}" inactivated (no delete operation exists)`);
+/** Refused while it still has an event or a contest setup; its roster and empty series go with it. */
+export async function removeTour(api: APIRequestContext, headers: AuthHeaders, tourId: string, tourName: string, log: Log) {
+  await expectOk(api.delete(`/api/v1/sport-leagues/${tourId}`, { headers }), 'delete tour');
+  const reread = await api.get(`/api/v1/sport-leagues/${tourId}`, { headers });
+  log(reread.status() === 404
+    ? `tour "${tourName}" removed with its roster and series (re-read 404)`
+    : `tour "${tourName}" STILL PRESENT after delete (re-read ${reread.status()})`);
 }
 
-// An inactive player drops out of the active roster and the field search.
-async function inactivatePlayers(api: APIRequestContext, headers: AuthHeaders, run: JourneyRun, log: Log) {
+/**
+ * Every player named "<prefix> *", active or not: an earlier teardown made them inactive. Each is
+ * refused while an event field still holds them, which is why the tournaments go first.
+ */
+export async function removePlayers(api: APIRequestContext, headers: AuthHeaders, playerNamePrefix: string, log: Log) {
   const list = await expectOk(
-    api.get('/api/v1/participants', { headers, params: { q: run.playerNamePrefix, status: 'ACTIVE' } }),
+    api.get('/api/v1/participants', { headers, params: { q: playerNamePrefix } }),
     'search players',
   );
   const { participants } = (await list.json()) as { participants: { id: string; name: string }[] };
-  const players = participants.filter((candidate) => candidate.name.startsWith(`${run.playerNamePrefix} `));
+  const players = participants.filter((candidate) => candidate.name.startsWith(`${playerNamePrefix} `));
   if (players.length === 0) {
-    log(`no active players named "${run.playerNamePrefix} *"; nothing to inactivate`);
+    log(`no players named "${playerNamePrefix} *"; nothing to remove`);
     return;
   }
   for (const player of players) {
     await attempt(log, `player "${player.name}"`, async () => {
-      await expectOk(
-        api.patch(`/api/v1/participants/${player.id}`, { headers, data: { status: 'INACTIVE' } }),
-        `inactivate player ${player.name}`,
-      );
-      log(`player "${player.name}" inactivated (no delete operation exists)`);
+      await expectOk(api.delete(`/api/v1/participants/${player.id}`, { headers }), `delete player ${player.name}`);
+      log(`player "${player.name}" removed`);
     });
   }
 }

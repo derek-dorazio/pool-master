@@ -66,3 +66,33 @@ describe('ParticipantService writes', () => {
     expect(logger.error).toHaveBeenCalledWith(expect.objectContaining({ action: 'participants.create.failed' }), expect.any(String));
   });
 });
+
+describe('ParticipantService delete (#1400)', () => {
+  it('deletes a participant no event field holds', async () => {
+    const participants = fakeParticipantRepo({ findById: jest.fn().mockResolvedValue(PARTICIPANT) });
+    const service = new ParticipantService(participants, fakeParticipantProviderMappingRepo(), fakeLogger());
+
+    await service.delete('participant-1');
+
+    expect(participants.delete).toHaveBeenCalledWith('participant-1');
+  });
+
+  it('refuses with 409 PARTICIPANT_IN_USE while an event field holds them, and deletes nothing', async () => {
+    const participants = fakeParticipantRepo({
+      findById: jest.fn().mockResolvedValue(PARTICIPANT),
+      countEventFieldEntries: jest.fn().mockResolvedValue(2),
+    });
+    const service = new ParticipantService(participants, fakeParticipantProviderMappingRepo(), fakeLogger());
+
+    await expect(service.delete('participant-1')).rejects.toMatchObject({ code: 'PARTICIPANT_IN_USE', statusCode: 409 });
+    expect(participants.delete).not.toHaveBeenCalled();
+  });
+
+  it('answers 404 PARTICIPANT_NOT_FOUND for an unknown participant and deletes nothing', async () => {
+    const participants = fakeParticipantRepo({ findById: jest.fn().mockResolvedValue(null) });
+    const service = new ParticipantService(participants, fakeParticipantProviderMappingRepo(), fakeLogger());
+
+    await expect(service.delete('participant-9')).rejects.toMatchObject({ code: 'PARTICIPANT_NOT_FOUND', statusCode: 404 });
+    expect(participants.delete).not.toHaveBeenCalled();
+  });
+});

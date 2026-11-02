@@ -32525,6 +32525,41 @@ export type CreateSportLeagueResponses = {
 
 export type CreateSportLeagueResponse = CreateSportLeagueResponses[keyof CreateSportLeagueResponses];
 
+export type DeleteSportLeagueData = {
+    body?: never;
+    path: {
+        sportLeagueId: string;
+    };
+    query?: never;
+    url: '/api/v1/sport-leagues/{sportLeagueId}';
+};
+
+export type DeleteSportLeagueErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    409: ErrorEnvelope;
+};
+
+export type DeleteSportLeagueError = DeleteSportLeagueErrors[keyof DeleteSportLeagueErrors];
+
+export type DeleteSportLeagueResponses = {
+    /**
+     * Default Response
+     */
+    204: void;
+};
+
+export type DeleteSportLeagueResponse = DeleteSportLeagueResponses[keyof DeleteSportLeagueResponses];
+
 export type GetSportLeagueData = {
     body?: never;
     path: {
@@ -32907,6 +32942,41 @@ export type CreateParticipantResponses = {
 };
 
 export type CreateParticipantResponse = CreateParticipantResponses[keyof CreateParticipantResponses];
+
+export type DeleteParticipantData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/participants/{id}';
+};
+
+export type DeleteParticipantErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    409: ErrorEnvelope;
+};
+
+export type DeleteParticipantError = DeleteParticipantErrors[keyof DeleteParticipantErrors];
+
+export type DeleteParticipantResponses = {
+    /**
+     * Default Response
+     */
+    204: void;
+};
+
+export type DeleteParticipantResponse = DeleteParticipantResponses[keyof DeleteParticipantResponses];
 
 export type GetParticipantData = {
     body?: never;

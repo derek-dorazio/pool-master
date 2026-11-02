@@ -1,0 +1,165 @@
+/**
+ * #1400 — deleting a sport league or a participant costs the same SQL statements however many
+ * affiliations, series and provider identities go with it, and a sport league a contest setup
+ * still offers is refused. Against real Postgres, through the app; no mocks.
+ */
+import { randomUUID } from 'node:crypto';
+import { Sport } from '@poolmaster/shared/domain';
+import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto';
+import {
+  cleanupTestData,
+  createTestUser,
+  getApp,
+  getPrisma,
+  setupIntegrationTests,
+  teardownIntegrationTests,
+  type TestUserResult,
+  withoutJsonBodyHeaders,
+} from '../helpers';
+import { recordStatements } from '../statement-log';
+
+const SMALL = 2;
+const LARGE = 20;
+
+const made = { sportLeagueIds: new Set<string>(), participantIds: new Set<string>(), templateIds: new Set<string>() };
+
+beforeAll(() => setupIntegrationTests());
+afterAll(async () => {
+  const prisma = getPrisma();
+  const sportLeagueIds = [...made.sportLeagueIds];
+  const participantIds = [...made.participantIds];
+  await prisma.contestConfigTemplate.deleteMany({ where: { id: { in: [...made.templateIds] } } });
+  await prisma.participantLeagueAffiliation.deleteMany({ where: { OR: [{ sportLeagueId: { in: sportLeagueIds } }, { participantId: { in: participantIds } }] } });
+  await prisma.participantProviderMapping.deleteMany({ where: { participantId: { in: participantIds } } });
+  await prisma.eventSeries.deleteMany({ where: { sportLeagueId: { in: sportLeagueIds } } });
+  await prisma.sportLeague.deleteMany({ where: { id: { in: sportLeagueIds } } });
+  await prisma.participant.deleteMany({ where: { id: { in: participantIds } } });
+  await cleanupTestData();
+  await teardownIntegrationTests();
+});
+
+async function golfSportId(): Promise<string> {
+  const sport = await getPrisma().sport.upsert({
+    where: { sport: Sport.GOLF },
+    create: { sport: Sport.GOLF, participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    update: {},
+  });
+  return sport.id;
+}
+
+async function tour(sportId: string): Promise<string> {
+  const row = await getPrisma().sportLeague.create({ data: { sportId, name: `Delete Scaling Tour ${randomUUID().slice(0, 8)}` } });
+  made.sportLeagueIds.add(row.id);
+  return row.id;
+}
+
+async function golfer(sportId: string): Promise<string> {
+  const row = await getPrisma().participant.create({
+    data: { sportId, name: `Delete Scaling Golfer ${randomUUID().slice(0, 8)}`, participantType: 'INDIVIDUAL', status: 'ACTIVE' },
+  });
+  made.participantIds.add(row.id);
+  return row.id;
+}
+
+/** A tour with `size` affiliated golfers and `size` series that have no event. */
+async function tourWithRoster(size: number): Promise<string> {
+  const prisma = getPrisma();
+  const sportId = await golfSportId();
+  const sportLeagueId = await tour(sportId);
+  for (let index = 0; index < size; index += 1) {
+    await prisma.participantLeagueAffiliation.create({ data: { sportLeagueId, participantId: await golfer(sportId), ranking: index + 1 } });
+    await prisma.eventSeries.create({ data: { sportLeagueId, name: `Emptied Classic ${index}` } });
+  }
+  return sportLeagueId;
+}
+
+/** A golfer affiliated with `size` tours and known to `size` providers. */
+async function golferWithIdentities(size: number): Promise<string> {
+  const prisma = getPrisma();
+  const sportId = await golfSportId();
+  const participantId = await golfer(sportId);
+  for (let index = 0; index < size; index += 1) {
+    await prisma.participantLeagueAffiliation.create({ data: { sportLeagueId: await tour(sportId), participantId } });
+    await prisma.participantProviderMapping.create({
+      data: { participantId, providerId: `delete-scaling-${index}`, externalId: randomUUID(), confidence: 'MANUAL' },
+    });
+  }
+  return participantId;
+}
+
+function remove(url: string, admin: TestUserResult) {
+  return getApp().inject({ method: 'DELETE', url, headers: withoutJsonBodyHeaders(admin.headers) });
+}
+
+describe('deleting a sport league or a participant costs fixed statements (#1400)', () => {
+  it(`DELETE a sport league: the same 8 statements with ${SMALL} affiliations and empty series as with ${LARGE}, and every one is gone`, async () => {
+    const admin = await createTestUser({ isRootAdmin: true });
+    const small = await tourWithRoster(SMALL);
+    const large = await tourWithRoster(LARGE);
+
+    const smallRun = await recordStatements(() => remove(`/api/v1/sport-leagues/${small}`, admin));
+    const largeRun = await recordStatements(() => remove(`/api/v1/sport-leagues/${large}`, admin));
+
+    expect(smallRun.result.statusCode).toBe(204);
+    expect(largeRun.result.statusCode).toBe(204);
+    expect(largeRun.statements).toHaveLength(smallRun.statements.length);
+    expect(smallRun.statements).toHaveLength(SPORT_LEAGUE_DELETE_STATEMENTS);
+    const prisma = getPrisma();
+    expect(await prisma.sportLeague.count({ where: { id: { in: [small, large] } } })).toBe(0);
+    expect(await prisma.eventSeries.count({ where: { sportLeagueId: { in: [small, large] } } })).toBe(0);
+    expect(await prisma.participantLeagueAffiliation.count({ where: { sportLeagueId: { in: [small, large] } } })).toBe(0);
+  });
+
+  it(`DELETE a participant: the same 7 statements with ${SMALL} affiliations and provider identities as with ${LARGE}, and every one is gone`, async () => {
+    const admin = await createTestUser({ isRootAdmin: true });
+    const small = await golferWithIdentities(SMALL);
+    const large = await golferWithIdentities(LARGE);
+
+    const smallRun = await recordStatements(() => remove(`/api/v1/participants/${small}`, admin));
+    const largeRun = await recordStatements(() => remove(`/api/v1/participants/${large}`, admin));
+
+    expect(smallRun.result.statusCode).toBe(204);
+    expect(largeRun.result.statusCode).toBe(204);
+    expect(largeRun.statements).toHaveLength(smallRun.statements.length);
+    expect(smallRun.statements).toHaveLength(PARTICIPANT_DELETE_STATEMENTS);
+    const prisma = getPrisma();
+    expect(await prisma.participant.count({ where: { id: { in: [small, large] } } })).toBe(0);
+    expect(await prisma.participantLeagueAffiliation.count({ where: { participantId: { in: [small, large] } } })).toBe(0);
+    expect(await prisma.participantProviderMapping.count({ where: { participantId: { in: [small, large] } } })).toBe(0);
+  });
+
+  it('refuses to delete a sport league a contest setup is offered for with 409 SPORT_LEAGUE_IN_USE naming the setup, and keeps it', async () => {
+    const admin = await createTestUser({ isRootAdmin: true });
+    const sportLeagueId = await tour(await golfSportId());
+    const template = await getPrisma().contestConfigTemplate.create({
+      data: {
+        sport: Sport.GOLF,
+        sportLeagueId,
+        contestFormat: 'ROSTER',
+        selectionType: 'TIERED',
+        templateKey: `delete-guard-${randomUUID()}`,
+        name: 'Delete Guard Setup',
+        description: 'A setup that keeps its sport league.',
+        sortOrder: 1,
+        configJson: {},
+      },
+    });
+    made.templateIds.add(template.id);
+
+    const response = await remove(`/api/v1/sport-leagues/${sportLeagueId}`, admin);
+
+    expect(response.statusCode).toBe(409);
+    const { error } = ErrorEnvelopeSchema.parse(response.json());
+    expect(error.code).toBe('SPORT_LEAGUE_IN_USE');
+    expect(error.message).toContain('1 contest setup');
+    expect(await getPrisma().sportLeague.count({ where: { id: sportLeagueId } })).toBe(1);
+  });
+});
+
+/**
+ * Find; its uses, counted in one query that reads its series too; then the transaction (begin,
+ * affiliations, series, the sport league, commit).
+ */
+const SPORT_LEAGUE_DELETE_STATEMENTS = 8;
+/** Find; its field entries, counted; then the transaction (begin, affiliations, provider identities, the participant, commit). */
+const PARTICIPANT_DELETE_STATEMENTS = 7;

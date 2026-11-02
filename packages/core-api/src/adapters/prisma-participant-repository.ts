@@ -83,6 +83,18 @@ export class PrismaParticipantRepository implements ParticipantRepository {
     });
     return mapToParticipant(row);
   }
+
+  async countEventFieldEntries(id: string): Promise<number> {
+    return this.prisma.sportEventParticipant.count({ where: { participantId: id } });
+  }
+
+  async delete(id: string): Promise<void> {
+    await this.prisma.$transaction([
+      this.prisma.participantLeagueAffiliation.deleteMany({ where: { participantId: id } }),
+      this.prisma.participantProviderMapping.deleteMany({ where: { participantId: id } }),
+      this.prisma.participant.delete({ where: { id } }),
+    ]);
+  }
 }
 
 export function mapToParticipant(row: {

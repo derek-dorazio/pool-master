@@ -38,6 +38,7 @@ import type {
   SportLeagueFilters,
   SportLeagueRepository,
   SportLeagueUpdate,
+  SportLeagueUses,
   SportRepository,
   TierAssignment,
 } from '@poolmaster/shared/db';
@@ -139,6 +140,30 @@ export class PrismaSportLeagueRepository implements SportLeagueRepository {
     });
     // A sport event's read carries its sport league's settings, so those are forgotten too.
     return toSportLeague(await forgettingReads([ReadMemoKey.sportEvent, ReadMemoKey.sportLeague], write));
+  }
+
+  async findUses(id: string): Promise<SportLeagueUses> {
+    const row = await this.prisma.sportLeague.findUnique({
+      where: { id },
+      select: {
+        _count: { select: { contestConfigTemplates: true, eventPageOffers: true, cups: true } },
+        eventSeries: { select: { _count: { select: { sportEvents: true } } } },
+      },
+    });
+    return {
+      sportEventCount: row?.eventSeries.reduce((total, series) => total + series._count.sportEvents, 0) ?? 0,
+      contestTemplateCount: row?._count.contestConfigTemplates ?? 0,
+      eventPageOfferCount: row?._count.eventPageOffers ?? 0,
+      cupCount: row?._count.cups ?? 0,
+    };
+  }
+
+  async delete(id: string): Promise<void> {
+    await forgettingReads(ReadMemoKey.sportLeague, () => this.prisma.$transaction([
+      this.prisma.participantLeagueAffiliation.deleteMany({ where: { sportLeagueId: id } }),
+      this.prisma.eventSeries.deleteMany({ where: { sportLeagueId: id } }),
+      this.prisma.sportLeague.delete({ where: { id } }),
+    ]));
   }
 }
 

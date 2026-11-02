@@ -605,6 +605,7 @@ an operation's shape from a 400 — the answer the `/admin` routes these replace
 | List | `public` | `listSportLeagues` takes the sport — the one list that does — and `isActive`. Each row carries its sport, its `displayName` ("NCAA Men's Basketball" where the name alone doesn't say the sport), its `displayOrder` (its place among its sport's leagues, major professional leagues first; reference data), its affiliation and event counts and its `currentEventYear`. Public for the How to Play page (see A11) |
 | Read one | `authenticated` | `getSportLeague` |
 | Create, update | `rootAdmin` | `createSportLeague` takes the sport; unique on `(sportId, name)`. Adding a tour is one call, not a migration |
+| Delete | `rootAdmin` | `deleteSportLeague` (#1400) deletes a sport league nothing uses, with its affiliations and its series that have no events. 409 `SPORT_LEAGUE_IN_USE`, naming what still uses it, while it has an event in any year, a contest setup, an event page offer or a league's cup |
 | Set the current event year | `rootAdmin` | `updateSportLeague` with `currentEventYear` — one write, so a sport league never has two. 422 `EVENT_YEAR_HAS_NO_EVENTS` for a year the sport league has no events in: the integrity the season foreign key it replaced used to give (#315) |
 | Set how brackets advance | `rootAdmin` | `bracketAdvancement` on create or update (#722): `FIXED` (the default) sends each winner to the match its link names; `RESEED_BY_SEED` lets a round's matches link nowhere, so the admin places their winners by seed (the NFL after Wild Card weekend). 422 `SPORT_LEAGUE_NOT_BRACKET` for `RESEED_BY_SEED` on a sport not played as a bracket. A change is 409 `SPORT_LEAGUE_BRACKET_ADVANCEMENT_LOCKED` while any event of the sport league, in any year, has its bracket loaded (#730): the bracket's links were drawn for the rule it has, and a fixed rule would strand the winners of games that link nowhere. Sending the rule it already has changes nothing |
 
@@ -789,6 +790,7 @@ event's, by the ruling above, and so is its salary cap: a budget contest copies 
 | List / search | `rootAdmin` | **A10** · 403 `ROOT_ADMIN_ACCESS_REQUIRED` (#1348): only the admin screens browse the catalog; a league reads participants through an event's field. Filtered by sport, status, `role` and more, unpaged (§16). `role` is the playing role ("GOLFER"); it was `position` until #246, which left `position` meaning rank alone |
 | Read one | `authenticated` | |
 | Create, update | `rootAdmin` | **A10** · 403 `ROOT_ADMIN_ACCESS_REQUIRED` from the claim. Before #235 any signed-in user could create or rename a catalog participant |
+| Delete | `rootAdmin` | `deleteParticipant` (#1400) deletes a participant no event field holds, with their sport league affiliations and provider identities. 409 `PARTICIPANT_IN_USE` while any event's field, in any year, has them: the field row is what picks and scores hang from |
 
 ### ParticipantProviderMapping
 
