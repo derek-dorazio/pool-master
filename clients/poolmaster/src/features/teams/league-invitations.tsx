@@ -31,7 +31,7 @@ import {
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { QueryKeys } from '@/lib/query-keys';
-import { useInvalidatingMutation } from '@/lib/mutation-hooks';
+import { refreshAfterWrite, useInvalidatingMutation } from '@/lib/mutation-hooks';
 
 /**
  * League invitations, on Commissioner tools › Invites: "Invite people" (by email, or the join link)
@@ -352,7 +352,7 @@ function WaitingInvites({
   // A failed resend or cancel can still mean the list is stale: a resend replaces the code before
   // sending, and a refused cancel means the invite was settled elsewhere. Reload either way.
   const queryClient = useQueryClient();
-  const reloadInvitations = () => queryClient.invalidateQueries({ queryKey: invitationsKey });
+  const reloadInvitations = () => refreshAfterWrite(queryClient, [invitationsKey]);
 
   const resendMutation = useInvalidatingMutation({
     mutationFn: async (invitationId: string) => {
