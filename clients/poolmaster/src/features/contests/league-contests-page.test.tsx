@@ -49,9 +49,11 @@ function renderLeagueContestsPage(path = '/league/BIGDAWGS/contests') {
 }
 
 function primeCommonMocks({
+  isMember = true,
   isRootAdmin = false,
   leagueRole = 'MEMBER',
 }: {
+  isMember?: boolean;
   isRootAdmin?: boolean;
   leagueRole?: 'COMMISSIONER' | 'MEMBER';
 } = {}) {
@@ -84,7 +86,7 @@ function primeCommonMocks({
       },
       // #202 (A8) — the viewer's own membership, delivered once with the league context. It was
       // `memberType` and a `leagueRelationship` block on the league itself.
-      membership: {
+      membership: isMember ? {
         id: 'league-membership-1',
         leagueId: 'league-1',
         userId: 'user-1',
@@ -103,9 +105,9 @@ function primeCommonMocks({
         joinedAt: '2026-04-15T00:00:00.000Z',
         createdAt: '2026-04-15T00:00:00.000Z',
         updatedAt: '2026-04-15T00:00:00.000Z',
-      },
+      } : null,
       // The viewer owns team-1; each row says where that team's entry stands.
-      squadMembership: {
+      squadMembership: isMember ? {
         id: 'team-membership-1',
         squadId: 'team-1',
         leagueId: 'league-1',
@@ -114,7 +116,7 @@ function primeCommonMocks({
         joinedAt: '2026-04-15T00:00:00.000Z',
         createdAt: '2026-04-15T00:00:00.000Z',
         updatedAt: '2026-04-15T00:00:00.000Z',
-      },
+      } : null,
     },
   });
 }
@@ -240,6 +242,18 @@ describe('LeagueContestsPage', () => {
     const groups = await screen.findAllByRole('region', { name: /^(Open for entries|Draft)$/ });
     expect(groups.map((group) => group.getAttribute('aria-label'))).toEqual(['Open for entries', 'Draft']);
     expect(screen.getByTestId('league-contest-contest-2')).toHaveAttribute('href', '/league/BIGDAWGS/contests/contest-2');
+  });
+
+  it('shows a root admin looking into a league they are not in the drafts the server sends them', async () => {
+    primeCommonMocks({ isMember: false, isRootAdmin: true });
+    listContestsMock.mockResolvedValue({
+      data: { contests: [{ ...contest('contest-2', 'PGA Draft'), status: 'DRAFT' }, contest('contest-1', 'Masters Pick 6')] },
+    });
+
+    renderLeagueContestsPage();
+
+    expect(await screen.findByTestId('league-contest-group-draft')).toHaveTextContent('PGA Draft');
+    expect(listMyContestEntriesMock).not.toHaveBeenCalled();
   });
 
   it('never shows a member a draft', async () => {

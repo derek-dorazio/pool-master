@@ -81,7 +81,7 @@ export function LeagueContestsPage() {
             focusContestId={focusContestId}
             hasTeam={hasTeam}
             leagueCode={league.leagueCode}
-            showDrafts={viewer.isCommissioner}
+            showDrafts={viewer.isCommissioner || viewer.isRootAdmin}
             showEntryCount
             testIdPrefix="league-contest"
           />

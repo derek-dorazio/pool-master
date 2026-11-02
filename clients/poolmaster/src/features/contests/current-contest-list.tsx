@@ -34,7 +34,7 @@ export function CurrentContestList({
   focusContestId?: string | null;
   hasTeam: boolean;
   leagueCode: string;
-  /** Whether the viewer commissions the league, the only people who see a draft. */
+  /** Whether the viewer commissions the league or is a root admin, the only people who see a draft. */
   showDrafts: boolean;
   /** Each row's entry count after its kind, for the Contests page's full list. */
   showEntryCount?: boolean;
