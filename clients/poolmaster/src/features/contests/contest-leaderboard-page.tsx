@@ -1,8 +1,7 @@
 import { Trophy } from 'lucide-react';
 import { Fragment, useEffect, useState } from 'react';
-import { useLocation, useParams } from 'react-router';
+import { useParams } from 'react-router';
 import type { ContestDto } from '@/lib/api';
-import { parseRouteState } from '@/routes/route-state';
 import {
   Button,
   Chip,
@@ -269,12 +268,7 @@ function EntryBlock({
 
 export function ContestLeaderboardPage() {
   const displayPreferences = useDisplayPreferences();
-  const { contestId = '', leagueCode: routeLeagueCode } = useParams<{
-    contestId: string;
-    leagueCode?: string;
-  }>();
-  const location = useLocation();
-  const hintedLeagueCode = routeLeagueCode ?? parseRouteState(location.state).leagueCode ?? null;
+  const { contestId = '' } = useParams<{ contestId: string }>();
 
   // #389 — which entries' participant rows are hidden. Keyed by entry id so it survives the live
   // polls; an entry that first appears mid-session starts expanded like every other.
@@ -303,7 +297,7 @@ export function ContestLeaderboardPage() {
     enabled: contestQuery.data !== undefined && !isBracket && !isPickEm && !isSurvivor && !isSquares,
     sportEventId: requestedEventId,
   });
-  const { leagueCode, viewer } = useContestLeague(contestQuery.data?.leagueId, hintedLeagueCode);
+  const { leagueCode, viewer } = useContestLeague(contestQuery.data?.leagueId);
   const leaderboardFallback = useLeaderboardFallback(leaderboardQuery, { action: 'contestLeaderboard.load.failed', contestId });
 
   useEffect(() => {
@@ -319,16 +313,16 @@ export function ContestLeaderboardPage() {
   }
 
   if (contestQuery.data && isBracket) {
-    return <BracketLeaderboard contest={contestQuery.data} leagueCode={leagueCode} />;
+    return <BracketLeaderboard contest={contestQuery.data} />;
   }
   if (contestQuery.data && isPickEm) {
-    return <PickEmLeaderboard contest={contestQuery.data} leagueCode={leagueCode} />;
+    return <PickEmLeaderboard contest={contestQuery.data} />;
   }
   if (contestQuery.data && isSurvivor) {
-    return <SurvivorLeaderboard contest={contestQuery.data} leagueCode={leagueCode} />;
+    return <SurvivorLeaderboard contest={contestQuery.data} />;
   }
   if (contestQuery.data && isSquares) {
-    return <SquaresLeaderboard contest={contestQuery.data} leagueCode={leagueCode} />;
+    return <SquaresLeaderboard contest={contestQuery.data} />;
   }
 
   if (contestQuery.isError || !contestQuery.data) {

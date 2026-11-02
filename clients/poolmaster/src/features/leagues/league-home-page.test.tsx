@@ -286,6 +286,18 @@ describe('League Home', () => {
     expect(listMyContestEntriesMock).toHaveBeenCalledWith(expect.objectContaining({ path: { id: 'league-1' } }));
   });
 
+  it('opens an open contest under Other contests on its Entries and a live one on its Leaderboard', async () => {
+    primeMocks({
+      contests: [contest('open-1', 'RBC Heritage Tiers', 'OPEN'), contest('open-2', 'US Open Pick 6', 'OPEN'), contest('live-1', 'Masters Pick 6', 'ACTIVE')],
+    });
+
+    renderLeagueHome();
+
+    const others = within(await screen.findByTestId('league-home-other-contests'));
+    expect(await others.findByTestId('league-home-contest-open-2')).toHaveAttribute('href', '/league/BIGDAWGS/contests/open-2');
+    expect(others.getByTestId('league-home-contest-live-1')).toHaveAttribute('href', '/league/BIGDAWGS/contests/live-1/leaderboard');
+  });
+
   it('does not offer to make picks while it is still checking whether the team has entered', async () => {
     primeMocks({ contests: [contest('open-1', 'RBC Heritage Tiers', 'OPEN'), contest('open-2', 'US Open Pick 6', 'OPEN')] });
     listMyContestEntriesMock.mockImplementation(() => new Promise(() => undefined));

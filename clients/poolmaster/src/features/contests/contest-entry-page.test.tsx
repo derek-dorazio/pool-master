@@ -4,6 +4,7 @@ import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { ContestEntryPage } from './contest-entry-page';
+import { ContestEntryLeagueRedirect } from './contest-entry-league-redirect';
 import { QueryKeys } from '@/lib/query-keys';
 
 type SelectionGroup = {
@@ -122,15 +123,10 @@ function renderContestEntryPage() {
   const view = render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter
-        initialEntries={[
-          {
-            pathname: '/contests/contest-1/entries/entry-1',
-            state: { leagueCode: 'BIGDAWGS' },
-          },
-        ]}
+        initialEntries={['/league/BIGDAWGS/contests/contest-1/entries/entry-1']}
       >
         <Routes>
-          <Route element={<ContestEntryPage />} path="/contests/:contestId/entries/:entryId" />
+          <Route element={<ContestEntryPage />} path="/league/:leagueCode/contests/:contestId/entries/:entryId" />
           <Route
             element={<div data-testid="contest-page" />}
             path="/league/:leagueCode/contests/:contestId"
@@ -560,10 +556,8 @@ describe('ContestEntryPage', () => {
     expect(updateContestEntryMock).not.toHaveBeenCalled();
   });
 
-  it('lands a submit from an entry reached by its unscoped link on the contest page, not Not found, even before the league read lands', async () => {
+  it('lands a submit from an entry reached by its unscoped link on the contest page, not Not found', async () => {
     primeCommonMocks();
-    // The league read never answers, so nothing but the URL can name the contest's league.
-    getLeagueMock.mockReturnValue(new Promise(() => undefined));
     getSelectionStateMock.mockResolvedValue({
       data: buildSelectionState([
         {
@@ -585,7 +579,7 @@ describe('ContestEntryPage', () => {
         <MemoryRouter initialEntries={['/contests/contest-1/entries/entry-1']}>
           <Routes>
             {/* The app's routes for an entry page, as routes/index.tsx declares them. */}
-            <Route element={<ContestEntryPage />} path="/contests/:contestId/entries/:entryId" />
+            <Route element={<ContestEntryLeagueRedirect />} path="/contests/:contestId/entries/:entryId" />
             <Route element={<ContestEntryPage />} path="/league/:leagueCode/contests/:contestId/entries/:entryId" />
             <Route element={<div data-testid="contest-page" />} path="/league/:leagueCode/contests/:contestId" />
             <Route element={<div data-testid="not-found" />} path="*" />

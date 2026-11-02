@@ -41,12 +41,12 @@ export function isMySquadsEntry(mySquadId: string | null) {
 }
 
 /**
- * The entry: its name, linking to its page when the league is known, the viewer's own marked
+ * The entry: its name, linking to its page, the viewer's own marked
  * (`isMine` says which those are), and its squad's name underneath. Searched by both names.
  */
 export function entryColumn<Row extends BoardRow>(
   testIdPrefix: string,
-  { contestId, isMine, leagueCode }: { contestId: string; isMine: (row: NoInfer<Row>) => boolean; leagueCode: string | null },
+  { contestId, isMine, leagueCode }: { contestId: string; isMine: (row: NoInfer<Row>) => boolean; leagueCode: string },
 ): ColumnDef<Row> {
   return {
     id: 'entry',
@@ -55,18 +55,13 @@ export function entryColumn<Row extends BoardRow>(
     cell: ({ row }) => (
       <span className="block min-w-0">
         <span className="flex flex-wrap items-center gap-2">
-          {leagueCode ? (
-            <Link
-              className="font-medium text-foreground hover:underline"
-              data-testid={`${testIdPrefix}-entry-link-${row.original.entryId}`}
-              state={{ leagueCode }}
-              to={buildLeagueContestEntryPath(leagueCode, contestId, row.original.entryId)}
-            >
-              {row.original.entryName}
-            </Link>
-          ) : (
-            <span className="font-medium">{row.original.entryName}</span>
-          )}
+          <Link
+            className="font-medium text-foreground hover:underline"
+            data-testid={`${testIdPrefix}-entry-link-${row.original.entryId}`}
+            to={buildLeagueContestEntryPath(leagueCode, contestId, row.original.entryId)}
+          >
+            {row.original.entryName}
+          </Link>
           {isMine(row.original) ? <MineMarker /> : null}
         </span>
         {row.original.squadName ? <span className="block text-xs text-muted-foreground">{row.original.squadName}</span> : null}

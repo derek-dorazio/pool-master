@@ -14,7 +14,7 @@ type BracketRow = BracketLeaderboardResponse['entries'][number];
 const TEST_ID = 'bracket-leaderboard';
 
 /** The bracket board's columns: its points, the most it can still reach, correct picks and the tiebreaker. */
-function bracketColumns(contestId: string, leagueCode: string | null, mySquadId: string | null, gameCount: number): ColumnDef<BracketRow>[] {
+function bracketColumns(contestId: string, leagueCode: string, mySquadId: string | null, gameCount: number): ColumnDef<BracketRow>[] {
   return [
     placeColumn(TEST_ID),
     entryColumn(TEST_ID, { contestId, isMine: isMySquadsEntry(mySquadId), leagueCode }),
@@ -53,10 +53,10 @@ function bracketColumns(contestId: string, leagueCode: string | null, mySquadId:
  * the page says picks are not revealed yet. Polled while the contest is live, so places move
  * with the results; once the contest settles the same read serves the frozen standings.
  */
-export function BracketLeaderboard({ contest, leagueCode: hintedLeagueCode }: { contest: ContestDto; leagueCode: string | null }) {
+export function BracketLeaderboard({ contest }: { contest: ContestDto }) {
   const contestId = contest.id;
   const leaderboardQuery = useBracketLeaderboardQuery(contestId, contest.status);
-  const { leagueCode, viewer } = useContestLeague(contest.leagueId, hintedLeagueCode);
+  const { leagueCode, viewer } = useContestLeague(contest.leagueId);
   const fallback = useLeaderboardFallback(leaderboardQuery, { action: 'bracketLeaderboard.load.failed', contestId });
 
   if (fallback || !leaderboardQuery.data) {

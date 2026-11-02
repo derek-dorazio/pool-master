@@ -326,6 +326,25 @@ describe('LeagueContestsPage', () => {
   });
 });
 
+describe('LeagueContestsPage links', () => {
+  afterEach(() => {
+    getCurrentUserMock.mockReset();
+    getLeagueByCodeMock.mockReset();
+    listContestsMock.mockReset();
+    refreshTokenMock.mockReset();
+  });
+
+  it('opens an open contest on its Entries and a live one on its Leaderboard', async () => {
+    primeCommonMocks();
+    listContestsMock.mockResolvedValue({ data: { contests: [contest('open-1', 'Masters Pick 6'), contest('live-1', 'PGA Championship Tiers', 'ACTIVE')] } });
+
+    renderLeagueContestsPage();
+
+    expect(await screen.findByTestId('league-contest-open-1')).toHaveAttribute('href', '/league/BIGDAWGS/contests/open-1');
+    expect(screen.getByTestId('league-contest-live-1')).toHaveAttribute('href', '/league/BIGDAWGS/contests/live-1/leaderboard');
+  });
+});
+
 describe('LeagueContestsPage, beyond the default list', () => {
   afterEach(resetMocks);
 

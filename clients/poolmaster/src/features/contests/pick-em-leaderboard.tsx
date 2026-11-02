@@ -42,7 +42,7 @@ function WeekCell({ entryId, week }: { entryId: string; week: PickEmRow['weeks']
 /** The season board's columns: place, the entry and its group, the season total, then one per week. */
 function pickEmColumns(
   contestId: string,
-  leagueCode: string | null,
+  leagueCode: string,
   mySquadId: string | null,
   weeks: readonly PickEmWeek[],
 ): ColumnDef<PickEmRow>[] {
@@ -68,10 +68,10 @@ function pickEmColumns(
  * with a trophy. A week under way is scored live from the games played; a settled week is frozen.
  * Polled while the contest is live, so places move with the results.
  */
-export function PickEmLeaderboard({ contest, leagueCode: hintedLeagueCode }: { contest: ContestDto; leagueCode: string | null }) {
+export function PickEmLeaderboard({ contest }: { contest: ContestDto }) {
   const contestId = contest.id;
   const leaderboardQuery = usePickEmLeaderboardQuery(contestId, contest.status);
-  const { leagueCode, viewer } = useContestLeague(contest.leagueId, hintedLeagueCode);
+  const { leagueCode, viewer } = useContestLeague(contest.leagueId);
   const fallback = useLeaderboardFallback(leaderboardQuery, { action: 'pickEmLeaderboard.load.failed', contestId });
 
   if (fallback || !leaderboardQuery.data) {

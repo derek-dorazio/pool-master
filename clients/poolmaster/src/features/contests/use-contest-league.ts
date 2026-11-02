@@ -1,10 +1,15 @@
+import { useParams } from 'react-router';
 import { useLeagueContextById } from '@/features/leagues/use-league-context';
 
-/**
- * A contest page's league: the viewer's place in it, and its code, from the route's hint when
- * there is one, else from the league read once it lands (null until then).
- */
-export function useContestLeague(leagueId: string | undefined, hintedLeagueCode: string | null) {
+/** A contest page's league code: the URL's, since every contest page lives under its league (#1393). */
+export function useContestLeagueCode() {
+  const { leagueCode = '' } = useParams<{ leagueCode: string }>();
+  return leagueCode;
+}
+
+/** A contest page's league code, and the viewer's place in its league from the league read. */
+export function useContestLeague(leagueId: string | undefined) {
+  const leagueCode = useContestLeagueCode();
   const { league, viewer } = useLeagueContextById(leagueId);
-  return { league, leagueCode: hintedLeagueCode ?? league?.leagueCode ?? null, viewer };
+  return { league, leagueCode, viewer };
 }
