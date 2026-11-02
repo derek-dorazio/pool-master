@@ -155,7 +155,6 @@ export type {
   LeagueCupContest,
   CupContestFinish,
   CupKey,
-  CupRankedEntry,
   CupRepository,
 } from './cup-ports';
 export type { ChampionshipRepository, FinalContest, LeagueYearReviewRepository, SeriesContest } from './championship-ports';

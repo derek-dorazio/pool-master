@@ -284,20 +284,6 @@ describe('PrismaCupRepository (#841)', () => {
     await expect(repo.findSeasonYears(league.id)).resolves.toEqual([2026, 2025]);
   });
 
-  it('reads every entry with a frozen place, with its squad, and none without one', async () => {
-    const repo = new PrismaCupRepository(getAppPrisma());
-    const { squads, contest } = await seedLeague();
-    const { contest: masters } = await contest('Masters', { places: [[squads.eagles.id, 1], [squads.birdies.id, 2], [squads.birdies.id, null]] });
-
-    const entries = await repo.findRankedEntries([masters.id]);
-
-    expect(entries.map((entry) => [entry.squadId, entry.position]).sort((left, right) => Number(left[1]) - Number(right[1]))).toEqual([
-      [squads.eagles.id, 1],
-      [squads.birdies.id, 2],
-    ]);
-    await expect(repo.findRankedEntries([])).resolves.toEqual([]);
-  });
-
   it('keeps a league\'s points table on its row, STANDARD by default, and refuses custom points on any other table', async () => {
     const prisma = getPrisma();
     const leagues = new PrismaLeagueRepository(getAppPrisma());

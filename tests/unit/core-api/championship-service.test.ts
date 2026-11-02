@@ -41,7 +41,6 @@ function build(squads: Squad[] = [EAGLES, BIRDIES, BOGEYS]) {
   const finishes = new InMemoryChampionship();
   const service = new ChampionshipService({
     finishes,
-    cups,
     leagues: cups.leagues,
     squads: fakeSquadRepo({ findByLeague: jest.fn().mockResolvedValue(squads) }),
     now: () => NOW,
@@ -53,12 +52,11 @@ function build(squads: Squad[] = [EAGLES, BIRDIES, BOGEYS]) {
     settledAt: Date,
     overrides: { cupWeight?: CupWeight } = {},
   ) => {
-    cups.rankedEntries.push(...places.map(([squadId, position]) => ({ contestId: id, squadId, position })));
     return service.recordContest({
       id,
       leagueId: LEAGUE,
       cupWeight: overrides.cupWeight ?? CupWeight.NORMAL,
-    }, settledAt);
+    }, settledAt, places.map(([squadId, position]) => ({ squadId, position })));
   };
   return { cups, finishes, service, settle };
 }

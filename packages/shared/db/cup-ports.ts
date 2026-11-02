@@ -4,7 +4,6 @@ import type {
   CupPointsTable,
   CupStanding,
   CupWeight,
-  RankedContestEntry,
   SelectionType,
   SquadContestFinish,
 } from '../domain';
@@ -30,11 +29,6 @@ export interface LeagueCupContest {
   seasonYear: number;
   sportLeagueId: string;
   contest: CupContest;
-}
-
-/** One entry with a frozen place in a settled contest. */
-export interface CupRankedEntry extends RankedContestEntry {
-  contestId: string;
 }
 
 /**
@@ -69,8 +63,6 @@ export interface CupRepository {
    * start: what `findContests` reads for each cup, in one read.
    */
   findLeagueContests(leagueId: string, seasonYear?: number): Promise<LeagueCupContest[]>;
-  /** Every entry with a frozen place in the contests. */
-  findRankedEntries(contestIds: readonly string[]): Promise<CupRankedEntry[]>;
   /** Each squad's settled finish in the contests, from its best entry. */
   findFinishes(contestIds: readonly string[]): Promise<CupContestFinish[]>;
   /** The crowned cups' frozen standings, by cup and position; none for an open one. */
