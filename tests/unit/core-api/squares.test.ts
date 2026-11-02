@@ -23,7 +23,8 @@ import {
 } from '@poolmaster/shared/domain';
 import { ContestSettlementService } from '../../../packages/core-api/src/modules/contests/contest-settlement-service';
 import { SelectionError } from '../../../packages/core-api/src/modules/selections/selection-errors';
-import type { DrawnSquares } from '../../../packages/core-api/src/modules/notifications';
+import type { ContestSettledNotice, DrawnSquares } from '../../../packages/core-api/src/modules/notifications';
+import type { ChampionshipService } from '../../../packages/core-api/src/modules/championship/service';
 import { SquaresService, type SquaresActor } from '../../../packages/core-api/src/modules/selections/squares-service';
 import { expectDefined } from '../../support/expect-defined';
 import { InMemoryContestWorld } from '../../support/in-memory-contest-world';
@@ -419,6 +420,50 @@ describe('ContestSettlementService settling a squares contest with its game', ()
     ]);
     const standings = [...context.world.standings.values()].map((standing) => [standing.contestEntryId, standing.displayPosition, standing.totalScore]);
     expect(standings).toEqual(expect.arrayContaining([[context.alice.id, '1', 2], [context.bob.id, '2', 1]]));
+  });
+
+  it('settles from the games handed over without reading them, and gives the championship and the results email the final places read once (#1355)', async () => {
+    const context = setup({ status: ContestStatus.ACTIVE });
+    context.squares.addBox(context.contest.id, context.alice.id, 0, 7);
+    context.squares.addBox(context.contest.id, context.bob.id, 3, 4);
+    context.drawInOrder();
+    context.updateGame({
+      status: MatchStatus.COMPLETED, homeScore: 27, awayScore: 20,
+      periodScores: [period(1, 7, 0), period(2, 14, 3), period(3, 21, 13), period(4, 24, 20)],
+    });
+    const matches = context.games.matchRepo();
+    const gameReads = jest.spyOn(matches, 'findBySportEvents');
+    const standings = context.world.standingRepo();
+    const standingReads = jest.spyOn(standings, 'findByContest');
+    const recordContest = jest.fn<ChampionshipService['recordContest']>(async () => 0);
+    const contestSettled = jest.fn<ContestSettledNotice['contestSettled']>(async () => undefined);
+    const settlement = new ContestSettlementService({
+      ...context.deps,
+      matches,
+      standings,
+      contests: context.world.contestRepo(),
+      sportEvents: context.world.sportEventRepo(),
+      squares: context.squares.repo(),
+      championship: { recordContest },
+      contestSettled: { contestSettled },
+    });
+    const completedAt = later(KICKOFF, 4);
+
+    await settlement.settleFinishedGame(context.superBowl.id, context.game.id, { completedAt, games: [expectDefined(context.games.matches.get(context.game.id))] });
+
+    expect(gameReads).not.toHaveBeenCalled();
+    expect(standingReads).toHaveBeenCalledTimes(1);
+    // Alice holds the final's box and the first quarter's, Bob the second's.
+    expect(recordContest).toHaveBeenCalledWith(expect.objectContaining({ id: context.contest.id }), completedAt, [
+      { squadId: context.alice.squadId, position: 1 },
+      { squadId: context.bob.squadId, position: 2 },
+    ]);
+    expect(contestSettled).toHaveBeenCalledWith(expect.objectContaining({ id: context.contest.id }), expect.objectContaining({
+      entries: [
+        expect.objectContaining({ entryId: context.alice.id, position: 1 }),
+        expect.objectContaining({ entryId: context.bob.id, position: 2 }),
+      ],
+    }));
   });
 
   it('waits for every quarter\'s score when the result goes in first, then settles with all four winners once the last quarter is entered', async () => {

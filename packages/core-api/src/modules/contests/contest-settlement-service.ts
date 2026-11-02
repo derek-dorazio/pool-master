@@ -18,6 +18,7 @@ import {
   squaresWinners,
   type Contest,
   type SportEvent,
+  type SportEventMatch,
 } from '@poolmaster/shared/domain';
 import { loadPickEmScoring, loadPickEmWeekStandings, PickEmRulesMissingError } from './pick-em-standings';
 import type { GamePickScoring } from '../scoring-families/head-to-head/game-picks';
@@ -48,6 +49,7 @@ import {
 import { FINISHED_EVENT_STATUSES } from './entry-window';
 import { readEventMatchesOnce, readEventsOnce, readOncePerKey } from '../events/event-reads';
 import type { ChampionshipService } from '../championship/service';
+import { readFinalStandings, type ContestFinalStandings } from './final-standings';
 import type { ContestSettledNotice } from '../notifications/contest-notices';
 
 type LifecycleLogger = Pick<FastifyBaseLogger, 'debug' | 'info' | 'warn' | 'error' | 'fatal'>;
@@ -288,14 +290,15 @@ export class ContestSettlementService {
   /**
    * Settles the squares contests played on one game (#711) once the game is decided: its result is
    * in, or it was cancelled. They settle with their game, not with its event, which may run on for
-   * weeks (the Super Bowl is the last game of the NFL playoffs). Answers how many it completed.
+   * weeks (the Super Bowl is the last game of the NFL playoffs). `games`, the event's games as the
+   * caller just wrote them, saves reading them. Answers how many it completed.
    */
-  async settleFinishedGame(sportEventId: string, sportEventMatchId: string, input?: { completedAt?: Date }): Promise<number> {
+  async settleFinishedGame(sportEventId: string, sportEventMatchId: string, input?: { completedAt?: Date; games?: readonly SportEventMatch[] }): Promise<number> {
     const sportEvent = await this.deps.sportEvents.findById(sportEventId);
     if (!sportEvent) return 0;
     const contests = (await this.deps.contests.findBySportEvent(sportEventId, { excludeStatuses: NOT_SETTLED }))
       .filter((contest) => contest.selectionType === SelectionType.SQUARES && contest.squaresGameMatchId === sportEventMatchId);
-    const reads = this.sharedReads(sportEvent);
+    const reads = this.sharedReads(sportEvent, input?.games);
     let completed = 0;
     for (const contest of contests) {
       const settled = await this.settleSquaresContest(reads, contest, sportEvent, input?.completedAt ?? new Date(), { waitForEveryPeriod: true });
@@ -550,11 +553,11 @@ export class ContestSettlementService {
    * The reads of one event's settlement, shared by its contests (#1199). Settlement writes
    * standings and contest statuses, never the events, matches or fields these hold.
    */
-  private sharedReads(sportEvent: SportEvent): SettlementReads {
+  private sharedReads(sportEvent: SportEvent, games?: readonly SportEventMatch[]): SettlementReads {
     return {
       ...this.deps,
       sportEvents: readEventsOnce(this.deps.sportEvents, [sportEvent]),
-      matches: readEventMatchesOnce(this.deps.matches),
+      matches: readEventMatchesOnce(this.deps.matches, games === undefined ? undefined : new Map([[sportEvent.id, games]])),
       eventParticipants: { listEventParticipants: readOncePerKey((id) => this.deps.eventParticipants.listEventParticipants(id)) },
     };
   }
@@ -565,20 +568,23 @@ export class ContestSettlementService {
    * than final with no finishes.
    */
   private async complete(contest: Contest, completedAt: Date): Promise<boolean> {
-    await this.deps.championship.recordContest(contest, completedAt);
+    // The final places, read once for the finishes and the email both (#1355).
+    const final = await readFinalStandings(this.deps, contest);
+    const ranked = final.entries.flatMap(({ squadId, position }) => (position === null ? [] : [{ squadId, position }]));
+    await this.deps.championship.recordContest(contest, completedAt, ranked);
     const completed = await this.deps.contests.transitionStatus(contest.id, {
       from: SETTLEABLE,
       to: ContestStatus.COMPLETED,
       endsAt: completedAt,
     });
-    if (completed) await this.tellContestSettled(contest);
+    if (completed) await this.tellContestSettled(contest, final);
     return completed;
   }
 
   /** F1 or F2, the final results: queued for the league, never failing the settlement. */
-  private async tellContestSettled(contest: Contest): Promise<void> {
+  private async tellContestSettled(contest: Contest, final: ContestFinalStandings): Promise<void> {
     try {
-      await this.deps.contestSettled?.contestSettled(contest);
+      await this.deps.contestSettled?.contestSettled(contest, final);
     } catch (err) {
       this.logger.error({
         contestId: contest.id,

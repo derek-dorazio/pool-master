@@ -43,7 +43,7 @@ export interface FinishedSportEventSettlement {
   settleFinishedGame(
     sportEventId: string,
     sportEventMatchId: string,
-    input?: { completedAt?: Date },
+    input?: { completedAt?: Date; games?: readonly SportEventMatch[] },
   ): Promise<unknown>;
 }
 
@@ -226,10 +226,11 @@ export class EventLifecycleService {
 
   /**
    * A game's result is in, or it was cancelled (#711): the squares contests played on it settle
-   * now, while its event may still have weeks to run.
+   * now, while its event may still have weeks to run. `games`, the event's games as just written,
+   * saves reading them again.
    */
-  async settleContestsForFinishedGame(sportEvent: SportEvent, sportEventMatchId: string, now: Date = new Date()): Promise<void> {
-    await this.contestSettlement?.settleFinishedGame(sportEvent.id, sportEventMatchId, { completedAt: now });
+  async settleContestsForFinishedGame(sportEvent: SportEvent, sportEventMatchId: string, now: Date = new Date(), games?: readonly SportEventMatch[]): Promise<void> {
+    await this.contestSettlement?.settleFinishedGame(sportEvent.id, sportEventMatchId, { completedAt: now, games });
   }
 
   private async settleContestsForFinishedEvent(
@@ -251,13 +252,15 @@ export class EventLifecycleService {
    * The event's OPEN contests go live at their cutoff (#721): every contest when the event starts,
    * a second-chance bracket at its starting round's first game, and a squares contest at its
    * game's kickoff (#711), each of which comes while the event is under way, so the lifecycle scheduler asks again on each sweep of an event in progress.
+   * `knownGames`, the event's games as a caller just wrote them, saves reading them.
    */
   async activateContestsPastCutoff(
     sportEvent: SportEvent,
     now: Date = new Date(),
+    knownGames?: readonly SportEventMatch[],
   ): Promise<void> {
     const candidates = await this.contestDeps.contests.findBySportEvent(sportEvent.id, { statuses: STARTABLE });
-    let games: SportEventMatch[] | undefined;
+    let games: readonly SportEventMatch[] | undefined = knownGames;
     // A bracket's or squares contest's cutoff is in its configuration: all of them read at once (#1183).
     const cutoffConfigured = candidates.filter((contest) => contest.selectionType === SelectionType.BRACKET || contest.selectionType === SelectionType.SQUARES);
     const configJsonByContest = new Map(
