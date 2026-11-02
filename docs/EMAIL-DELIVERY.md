@@ -213,7 +213,8 @@ the file wasn't drawn again, or when a sport has neither a photo nor a drawing.
 
 `npm run email:preview` renders every template with the examples in
 `tests/support/email-template-fixtures.ts` into `tmp/email-preview/` (HTML and plain text).
-The examples' pictures load from QA, so a preview sent to a real inbox shows them. Options:
+The examples link to QA and load their pictures from there, so a preview sent to a real inbox shows
+its pictures and every link opens a QA page. Options:
 
 - `-- --send` also sends each one to local Mailpit.
 - `-- --to you@example.com` sends each one to that address through the provider the

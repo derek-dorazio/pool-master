@@ -13,12 +13,12 @@ import {
 } from '../../packages/core-api/src/modules/email';
 
 /**
- * Pictures load from QA, where every merge to main deploys them, so a preview sent to a real
- * inbox shows them; a local web app on localhost can't serve a mail client.
+ * Links and pictures point at QA, where every merge to main deploys, so a preview sent to a real
+ * inbox shows its pictures and every link opens; localhost means nothing to a mail client.
  */
-const IMAGE_HOST = 'https://qa.ultimateofficepoolmanager.com';
-const GOLF_IMAGE_URL = `${IMAGE_HOST}/email/sports/golf.jpg`;
-const MASTERS_PAGE_URL = 'http://localhost:5173/play/golf/the-masters';
+const QA_HOST = 'https://qa.ultimateofficepoolmanager.com';
+const GOLF_IMAGE_URL = `${QA_HOST}/email/sports/golf.jpg`;
+const MASTERS_PAGE_URL = `${QA_HOST}/play/golf/the-masters`;
 const MASTERS_HEADER = {
   sportLeagueName: 'PGA Tour',
   eventName: 'The Masters',
@@ -27,22 +27,22 @@ const MASTERS_HEADER = {
 };
 /** The Masters a contest is on, in the member contest emails. */
 const MASTERS_CONTEST_EVENT = { ...MASTERS_HEADER, startsAt: new Date('2026-04-09T11:40:00.000Z') };
-const TIERED_FORMAT = { name: 'Tiered', imageUrl: `${IMAGE_HOST}/email/formats/tiered.png` };
+const TIERED_FORMAT = { name: 'Tiered', imageUrl: `${QA_HOST}/email/formats/tiered.png` };
 const MASTERS_RULES = 'Pick 1 golfer from each of 6 tiers. The best 4 scores count.';
 const MASTERS_SETUPS = [
   {
     formatName: 'Tiered',
     name: 'Tiered: 1 golfer per tier, best 4 count',
     description: 'Pick one golfer from each of 6 tiers. Your best 4 scores count.',
-    imageUrl: `${IMAGE_HOST}/email/formats/tiered.png`,
-    url: 'http://localhost:5173/league/OFFICE24/admin/contests/new?template=template-1&event=event-1',
+    imageUrl: `${QA_HOST}/email/formats/tiered.png`,
+    url: `${QA_HOST}/league/OFFICE24/admin/contests/new?template=template-1&event=event-1`,
   },
   {
     formatName: 'Survivor',
     name: 'Survivor: pick a golfer to make the cut',
     description: 'Pick one golfer each round. If yours misses the cut, you are out.',
-    imageUrl: `${IMAGE_HOST}/email/formats/survivor.png`,
-    url: 'http://localhost:5173/league/OFFICE24/admin/contests/new?template=template-2&event=event-1',
+    imageUrl: `${QA_HOST}/email/formats/survivor.png`,
+    url: `${QA_HOST}/league/OFFICE24/admin/contests/new?template=template-2&event=event-1`,
   },
 ];
 
@@ -56,7 +56,7 @@ export const EMAIL_TEMPLATE_FIXTURES: { [Key in SystemEmailTemplateKey]: SystemE
     inviterName: 'Casey Commissioner',
     leagueName: 'Office League',
     leagueCode: 'OFFICE24',
-    inviteUrl: 'http://localhost:5173/invite/abc123def456',
+    inviteUrl: `${QA_HOST}/invite/abc123def456`,
     message: 'Join us for the Masters pool this year.',
     expiresAt: '2026-04-04T18:30:00.000Z',
   },
@@ -64,9 +64,9 @@ export const EMAIL_TEMPLATE_FIXTURES: { [Key in SystemEmailTemplateKey]: SystemE
     userName: 'Morgan Member',
     leagueName: 'Office League',
     leagueCode: 'OFFICE24',
-    leagueHomeUrl: 'http://localhost:5173/league/OFFICE24',
+    leagueHomeUrl: `${QA_HOST}/league/OFFICE24`,
     teamName: 'Morgan\'s Squad',
-    openContests: [{ name: 'Masters Pick 6', url: 'http://localhost:5173/league/OFFICE24/contests/contest-1' }],
+    openContests: [{ name: 'Masters Pick 6', url: `${QA_HOST}/league/OFFICE24/contests/contest-1` }],
   },
   SQUAD_OWNER_INVITE: {
     recipientEmail: 'jordan@example.com',
@@ -74,7 +74,7 @@ export const EMAIL_TEMPLATE_FIXTURES: { [Key in SystemEmailTemplateKey]: SystemE
     squadName: 'Morgan\'s Squad',
     leagueName: 'Office League',
     leagueCode: 'OFFICE24',
-    inviteUrl: 'http://localhost:5173/team-invite/abc123def456',
+    inviteUrl: `${QA_HOST}/team-invite/abc123def456`,
     expiresAt: '2026-04-04T18:30:00.000Z',
     soleOwner: false,
   },
@@ -84,7 +84,7 @@ export const EMAIL_TEMPLATE_FIXTURES: { [Key in SystemEmailTemplateKey]: SystemE
     squadName: 'Morgan\'s Squad',
     leagueName: 'Office League',
     leagueCode: 'OFFICE24',
-    leagueHomeUrl: 'http://localhost:5173/league/OFFICE24',
+    leagueHomeUrl: `${QA_HOST}/league/OFFICE24`,
     soleOwner: false,
   },
   CONTEST_ENTRY_COMPLETED: {
@@ -94,7 +94,7 @@ export const EMAIL_TEMPLATE_FIXTURES: { [Key in SystemEmailTemplateKey]: SystemE
     contestName: 'Masters Pick 6',
     teamName: 'Morgan\'s Squad',
     entryName: 'Entry 1',
-    entryUrl: 'http://localhost:5173/league/OFFICE24/contests/contest-1/entries/entry-1',
+    entryUrl: `${QA_HOST}/league/OFFICE24/contests/contest-1/entries/entry-1`,
     submittedAt: '2026-04-08T15:30:00.000Z',
     tiebreaker: '-12',
     receipt: {
@@ -117,7 +117,7 @@ export const EMAIL_TEMPLATE_FIXTURES: { [Key in SystemEmailTemplateKey]: SystemE
     rules: MASTERS_RULES,
     entryCount: 12,
     hasEntry: false,
-    leaderboardUrl: 'http://localhost:5173/league/OFFICE24/contests/contest-1/leaderboard',
+    leaderboardUrl: `${QA_HOST}/league/OFFICE24/contests/contest-1/leaderboard`,
   },
   CONTEST_ENTRY_REMINDER: {
     userName: 'Morgan Member',
@@ -130,7 +130,7 @@ export const EMAIL_TEMPLATE_FIXTURES: { [Key in SystemEmailTemplateKey]: SystemE
     closesAt: new Date('2026-04-09T11:40:00.000Z'),
     hoursBefore: 3,
     standing: { kind: EntryReminderKind.DRAFT, drafts: 1, progress: { made: 4, of: 6 } },
-    contestUrl: 'http://localhost:5173/league/OFFICE24/contests/contest-1',
+    contestUrl: `${QA_HOST}/league/OFFICE24/contests/contest-1`,
   },
   CONTEST_OPENED: {
     userName: 'Morgan Member',
@@ -142,7 +142,7 @@ export const EMAIL_TEMPLATE_FIXTURES: { [Key in SystemEmailTemplateKey]: SystemE
     rules: MASTERS_RULES,
     entriesPerMember: '1 entry per member',
     closesAt: new Date('2026-04-09T11:40:00.000Z'),
-    contestUrl: 'http://localhost:5173/league/OFFICE24/contests/contest-1',
+    contestUrl: `${QA_HOST}/league/OFFICE24/contests/contest-1`,
   },
   CONTEST_STANDINGS: {
     userName: 'Morgan Member',
@@ -162,7 +162,7 @@ export const EMAIL_TEMPLATE_FIXTURES: { [Key in SystemEmailTemplateKey]: SystemE
     cut: [{ entryName: 'Long Shots', names: ['Danny Willett', 'Mike Weir'] }],
     out: [],
     champions: [],
-    leaderboardUrl: 'http://localhost:5173/league/OFFICE24/contests/contest-1/leaderboard',
+    leaderboardUrl: `${QA_HOST}/league/OFFICE24/contests/contest-1/leaderboard`,
   },
   CONTEST_RESULTS: {
     userName: 'Morgan Member',
@@ -182,7 +182,7 @@ export const EMAIL_TEMPLATE_FIXTURES: { [Key in SystemEmailTemplateKey]: SystemE
       entryCount: 18,
       yourWins: [{ entryName: 'Green Jackets', squadName: 'Morgan Member' }],
     },
-    leaderboardUrl: 'http://localhost:5173/league/OFFICE24/contests/contest-1/leaderboard',
+    leaderboardUrl: `${QA_HOST}/league/OFFICE24/contests/contest-1/leaderboard`,
   },
   CONTEST_EVENT_CHANGED: {
     userName: 'Morgan Member',
@@ -195,7 +195,7 @@ export const EMAIL_TEMPLATE_FIXTURES: { [Key in SystemEmailTemplateKey]: SystemE
       newStart: new Date('2027-04-15T12:00:00.000Z'),
       picksOpen: true,
     },
-    contestUrl: 'http://localhost:5173/league/OFFICE24/contests/contest-1',
+    contestUrl: `${QA_HOST}/league/OFFICE24/contests/contest-1`,
   },
   EVENT_COMING_UP: {
     userName: 'Casey Commissioner',
@@ -204,7 +204,7 @@ export const EMAIL_TEMPLATE_FIXTURES: { [Key in SystemEmailTemplateKey]: SystemE
     released: false,
     setups: MASTERS_SETUPS.map((setup) => ({ ...setup, url: MASTERS_PAGE_URL })),
     lastYear: [{ contestName: 'Masters Pick 6', winners: ['Green Jackets'] }],
-    contestsUrl: 'http://localhost:5173/league/OFFICE24/admin/contests',
+    contestsUrl: `${QA_HOST}/league/OFFICE24/admin/contests`,
   },
   EVENT_READY_FOR_CONTESTS: {
     userName: 'Casey Commissioner',
@@ -214,26 +214,26 @@ export const EMAIL_TEMPLATE_FIXTURES: { [Key in SystemEmailTemplateKey]: SystemE
     setups: MASTERS_SETUPS,
     lastYear: [{ contestName: 'Masters Pick 6', winners: ['Green Jackets'] }],
     eventPageUrl: MASTERS_PAGE_URL,
-    contestTypesUrl: 'http://localhost:5173/league/OFFICE24/contest-types',
+    contestTypesUrl: `${QA_HOST}/league/OFFICE24/contest-types`,
   },
   EVENT_WEEKLY_DIGEST: {
     userName: 'Casey Commissioner',
     leagueName: 'Office League',
     thisWeek: [
-      { eventName: 'The Masters', sportLeagueName: 'PGA Tour', startsAt: new Date('2027-04-08T12:00:00.000Z'), imageUrl: GOLF_IMAGE_URL, eventPageUrl: MASTERS_PAGE_URL, state: DigestEventState.READY, createContestUrl: 'http://localhost:5173/league/OFFICE24/admin/contests/new?event=event-1' },
-      { eventName: 'Kentucky Derby', sportLeagueName: 'Triple Crown', startsAt: new Date('2027-04-10T22:00:00.000Z'), imageUrl: `${IMAGE_HOST}/email/sports/horse-racing.jpg`, eventPageUrl: null, state: DigestEventState.CONTEST_SET_UP },
+      { eventName: 'The Masters', sportLeagueName: 'PGA Tour', startsAt: new Date('2027-04-08T12:00:00.000Z'), imageUrl: GOLF_IMAGE_URL, eventPageUrl: MASTERS_PAGE_URL, state: DigestEventState.READY, createContestUrl: `${QA_HOST}/league/OFFICE24/admin/contests/new?event=event-1` },
+      { eventName: 'Kentucky Derby', sportLeagueName: 'Triple Crown', startsAt: new Date('2027-04-10T22:00:00.000Z'), imageUrl: `${QA_HOST}/email/sports/horse-racing.jpg`, eventPageUrl: null, state: DigestEventState.CONTEST_SET_UP },
     ],
     nextWeek: [
       { eventName: 'RBC Heritage', sportLeagueName: 'PGA Tour', startsAt: new Date('2027-04-15T12:00:00.000Z'), imageUrl: GOLF_IMAGE_URL, eventPageUrl: null, state: DigestEventState.NOT_READY },
     ],
-    contestsUrl: 'http://localhost:5173/league/OFFICE24/admin/contests',
+    contestsUrl: `${QA_HOST}/league/OFFICE24/admin/contests`,
   },
   CONTEST_NOT_OPEN: {
     userName: 'Casey Commissioner',
     leagueName: 'Office League',
     contestName: 'Masters Pick 6',
     closesAt: new Date('2027-04-08T12:00:00.000Z'),
-    contestAdminUrl: 'http://localhost:5173/league/OFFICE24/admin/contests/contest-1',
+    contestAdminUrl: `${QA_HOST}/league/OFFICE24/admin/contests/contest-1`,
   },
   EVENT_STILL_DRAFT: {
     firstName: 'Riley',
@@ -241,19 +241,19 @@ export const EMAIL_TEMPLATE_FIXTURES: { [Key in SystemEmailTemplateKey]: SystemE
     startsAt: new Date('2027-04-08T12:00:00.000Z'),
     daysLeft: 6,
     stillNeeded: ['its prices have not been assigned'],
-    eventAdminUrl: 'http://localhost:5173/manage/sports/golf/events/event-1',
+    eventAdminUrl: `${QA_HOST}/manage/sports/golf/events/event-1`,
   },
   PASSWORD_RESET: {
     firstName: 'Morgan',
     username: 'morgan',
-    resetUrl: 'https://app.example.com/reset-password#token=example-token',
+    resetUrl: `${QA_HOST}/reset-password#token=example-token`,
     expiresInMinutes: 10,
   },
   PASSWORD_CHANGED: {
     firstName: 'Morgan',
     username: 'morgan',
     changedAt: new Date('2026-10-22T14:05:00.000Z'),
-    forgotPasswordUrl: 'https://app.example.com/forgot-password',
+    forgotPasswordUrl: `${QA_HOST}/forgot-password`,
   },
   EMAIL_CHANGED: {
     firstName: 'Morgan',
@@ -261,7 +261,7 @@ export const EMAIL_TEMPLATE_FIXTURES: { [Key in SystemEmailTemplateKey]: SystemE
     newEmail: 'morgan.new@example.com',
     changedAt: new Date('2026-10-22T14:05:00.000Z'),
     changedBy: EmailChangedBy.ACCOUNT_OWNER,
-    undoUrl: 'https://app.example.com/undo-email-change#token=example-token',
+    undoUrl: `${QA_HOST}/undo-email-change#token=example-token`,
     undoDays: 7,
   },
   EMAIL_TEST: {
@@ -280,7 +280,7 @@ export const EMAIL_TEMPLATE_FIXTURES: { [Key in SystemEmailTemplateKey]: SystemE
       { name: '2026 NFL Cup', place: '1st', squadCount: 12, points: '240', trophy: CupTrophy.CHAMPION },
       { name: '2026 PGA Tour Cup', place: 'T5', squadCount: 12, points: '180', trophy: null },
     ],
-    squadYearUrl: 'http://localhost:5173/league/OFFICE24/team?year=2026',
+    squadYearUrl: `${QA_HOST}/league/OFFICE24/team?year=2026`,
   },
   LEAGUE_MEMBER_JOINED: {
     userName: 'Casey Commissioner',
@@ -288,7 +288,7 @@ export const EMAIL_TEMPLATE_FIXTURES: { [Key in SystemEmailTemplateKey]: SystemE
     timing: MemberJoinedTiming.AT_ONCE,
     joined: [{ name: 'Morgan Member', squadName: 'Morgan\'s Squad' }],
     memberCount: 9,
-    membersUrl: 'http://localhost:5173/league/OFFICE24/admin/teams',
+    membersUrl: `${QA_HOST}/league/OFFICE24/admin/teams`,
   },
   CONTEST_EXPANDED: {
     userName: 'Casey Commissioner',
@@ -296,7 +296,7 @@ export const EMAIL_TEMPLATE_FIXTURES: { [Key in SystemEmailTemplateKey]: SystemE
     contestName: 'Masters Pool',
     entriesPerContest: 50,
     expandedBy: 'Sam Commissioner',
-    contestUrl: 'http://localhost:5173/league/OFFICE24/admin/contests/contest-1',
+    contestUrl: `${QA_HOST}/league/OFFICE24/admin/contests/contest-1`,
   },
   LEAGUE_PLAN_PREVIEW_ENDING: {
     userName: 'Casey Commissioner',
@@ -305,6 +305,6 @@ export const EMAIL_TEMPLATE_FIXTURES: { [Key in SystemEmailTemplateKey]: SystemE
     endsAt: new Date('2027-04-24T18:30:00.000Z'),
     freeEntriesPerContest: 20,
     freeSportsLeaguesPerYear: 5,
-    planUrl: 'http://localhost:5173/league/OFFICE24/admin/plan',
+    planUrl: `${QA_HOST}/league/OFFICE24/admin/plan`,
   },
 };
