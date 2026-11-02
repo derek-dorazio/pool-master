@@ -11,14 +11,13 @@ import {
   Heading,
   LinkButton,
   LoadingState,
-  PageHeader,
   Select,
   Tile,
 } from '@/features/shared/ui';
 import { getLogger } from '@/lib/logger';
 import { chooseContestHistoryYear } from './contest-history';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
-import { ContestsViewSwitch } from './contests-view-switch';
+import { ContestsPageHeader } from './contests-view-switch';
 import { useContestFinishedYearsQuery } from './use-league-contests-query';
 
 
@@ -84,10 +83,10 @@ export function LeagueContestHistoryPage() {
 
   return (
     <section className="space-y-6" data-testid="league-contest-history-page">
-      <PageHeader
-        actions={<ContestsViewSwitch leagueCode={league.leagueCode} value="history" />}
+      <ContestsPageHeader
         description="Completed contests, with final standings and revealed picks."
-        title="Contests"
+        leagueCode={league.leagueCode}
+        view="past"
       />
 
       {yearsQuery.isLoading ? (

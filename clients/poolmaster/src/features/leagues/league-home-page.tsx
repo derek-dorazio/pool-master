@@ -15,9 +15,8 @@ import { useLeagueSquadQuery } from '@/features/teams/use-league-squad-query';
 import { getLogger } from '@/lib/logger';
 import { parseRouteState } from '@/routes/route-state';
 import { useLeagueContextGuard } from './league-context-guard';
-import type { MyEntriesState } from '@/features/contests/my-contest-entry';
 import { pickUpNextContest } from './league-home';
-import { CupsCard, LiveStandingsCard, OtherContestsCard, UpNextCard, YourTeamCard } from './league-home-cards';
+import { CupsCard, LiveAndOpenCard, LiveStandingsCard, UpNextCard, YourTeamCard } from './league-home-cards';
 import { LeagueIcon } from './league-icon';
 import { buildLeagueContestsPath, buildLeagueTeamPath } from './league-routing';
 import { useLeagueContext } from './use-league-context';
@@ -101,9 +100,7 @@ export function LeagueHomePage() {
   );
   const myTeam = myTeamQuery.data ?? null;
   const hasTeam = viewer.mySquadId !== null;
-  const entriesState: MyEntriesState = myEntries.isError
-    ? 'failed'
-    : myEntries.isLoading ? 'loading' : 'ready';
+  const entriesState = myEntries.state;
 
   return (
     <section className="space-y-6" data-testid="league-home">
@@ -160,7 +157,7 @@ export function LeagueHomePage() {
               />
             ) : null}
             {currentContests.length ? (
-              <OtherContestsCard
+              <LiveAndOpenCard
                 contests={otherContests}
                 entriesByContestId={myEntries.entriesByContestId}
                 entriesState={entriesState}
