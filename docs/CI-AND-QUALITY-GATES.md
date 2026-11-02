@@ -421,8 +421,8 @@ about 4 GB on the runner and failed with "JavaScript heap out of memory" before 
 anything, so its CI step sets `NODE_OPTIONS=--max-old-space-size=6144`. In November 2026
 typescript-eslint 8.72 (#1184) pushed the single program past 6 GB as well (peak resident
 about 6.8 GB, against 6.6 GB on 8.58), so `lint:service` now runs two ESLint processes in
-turn: `packages/` with `scripts/`, then `tests/`. Each builds a smaller program; they peak at
-about 5.2 GB and 4.1 GB. A local run with a larger default heap does not show this;
+turn: `packages/` with `scripts/`, then `tests/`. Each builds a smaller program; under
+ESLint 10 (#1384) they peak at about 5.1 GB and 4.4 GB. A local run with a larger default heap does not show this;
 reproduce a CI failure with `NODE_OPTIONS=--max-old-space-size=6144 npm run lint:service`.
 
 Note that `npm run lint` and `npm run typecheck` each build that program, in
