@@ -206,7 +206,7 @@ export function RootAdminIngestionSchedulePage() {
                         onChange={(event) =>
                           updateDraftValue(
                             field.key,
-                            field.intervalKey as IngestionEditableField,
+                            field.intervalKey,
                             event.target.value,
                           )}
                         type="number"
@@ -220,7 +220,7 @@ export function RootAdminIngestionSchedulePage() {
                           onChange={(event) =>
                             updateDraftValue(
                               field.key,
-                              extraKey as IngestionEditableField,
+                              extraKey,
                               event.target.value,
                             )}
                           type="number"

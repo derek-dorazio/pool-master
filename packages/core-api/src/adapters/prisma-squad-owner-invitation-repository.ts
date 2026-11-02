@@ -6,7 +6,6 @@ import type {
 import type { SquadOwnerInvitationRepository } from '@poolmaster/shared/db';
 import type {
   SquadOwnerInvitation,
-  SquadOwnerInvitationStatus,
 } from '@poolmaster/shared/domain';
 import { SquadOwnerInvitationStatus as SharedSquadOwnerInvitationStatus } from '@poolmaster/shared/domain';
 
@@ -106,7 +105,7 @@ function mapToInvitation(row: PrismaSquadOwnerInvitation): SquadOwnerInvitation 
     squadId: row.squadId,
     email: row.email,
     inviteCode: row.inviteCode,
-    status: row.status as SquadOwnerInvitationStatus,
+    status: row.status,
     invitedBy: row.invitedBy,
     expiresAt: row.expiresAt ?? undefined,
     acceptedAt: row.acceptedAt ?? undefined,

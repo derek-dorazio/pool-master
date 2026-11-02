@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { AssertTrue } from './assert-never';
 
 import { ParticipantRoundStatus } from './enums';
 
@@ -236,8 +237,7 @@ export const ContestScoringSettingsSchema = z.discriminatedUnion('participantSco
 type SameType<A, B> = [A] extends [B] ? ([B] extends [A] ? true : false) : false;
 // Compile-time proof that the schema above and `ContestScoringSettings` admit the same values: a
 // definition added to the settings record and not to the schema fails the typecheck here.
-const settingsSchemaMatchesType: SameType<ContestScoringSettings, z.infer<typeof ContestScoringSettingsSchema>> = true;
-void settingsSchemaMatchesType;
+export type SettingsSchemaMatchesType = AssertTrue<SameType<ContestScoringSettings, z.infer<typeof ContestScoringSettingsSchema>>>;
 
 /**
  * A stored rule's definition id and config, read back. A row can name a definition the registry

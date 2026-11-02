@@ -408,7 +408,7 @@ export class ContestService {
         'CONTEST_EDIT_STATUS_INVALID',
       );
     }
-    const updatedContest = await this.deps.contests.update(contestId, updates as Partial<Contest>);
+    const updatedContest = await this.deps.contests.update(contestId, updates);
     this.logger.info({ contestId }, 'contest update completed');
     return updatedContest;
   }

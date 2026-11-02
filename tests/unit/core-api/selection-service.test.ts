@@ -5,7 +5,6 @@ import type {
   ContestEntry,
   ContestEntryPick,
   LeagueMembership,
-  Participant,
   SportEvent,
   SportEventParticipant,
   SquadMembership,
@@ -116,7 +115,7 @@ function configuration(overrides: Partial<ContestConfiguration> = {}): ContestCo
     configJson: { selectionType: SelectionType.TIERED, picksPerTier: 2, countedScores: 3 },
     ...TIMESTAMPS,
     ...overrides,
-  } as ContestConfiguration;
+  };
 }
 
 function entry(
@@ -166,7 +165,7 @@ const PARTICIPANTS = ['p-a', 'p-b', 'p-c', 'p-d'].map(
       injuryStatus: { status: 'HEALTHY' },
       externalIds: {},
       ...TIMESTAMPS,
-    }) as Participant,
+    }),
 );
 
 function pick(
@@ -1383,7 +1382,7 @@ describe('SelectionService.runDraw — the random draw deals every entry its pic
       entries: [entry(ENTRY_ID, SQUAD_ID), entry(OTHER_ENTRY_ID, 'squad-2'), entry('entry-3', 'squad-3')],
     }],
   ])('refuses 409 %s, dealing nothing', async (expected, overrides) => {
-    const { service, recordDraw } = setup({ ...DRAW, entries: [...DRAW.entries], ...overrides } as SetupOptions);
+    const { service, recordDraw } = setup({ ...DRAW, entries: [...DRAW.entries], ...overrides });
 
     await expect(service.runDraw(runDraw)).rejects.toMatchObject({
       code: expected.split(' ')[0],

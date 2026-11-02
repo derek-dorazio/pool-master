@@ -168,6 +168,8 @@ jobs:
       - run: npm run build --workspace @poolmaster/shared
       # Type-aware ESLint over packages/, scripts/ and tests/ outgrew Node's default ~4 GB heap
       # on the runner (#787 slice 4: main itself was at the limit), so it gets 6 GB.
+      # typescript-eslint 8.72 pushed one program over 6 GB too (#1184), so lint:service now
+      # lints packages/ + scripts/ and tests/ in two ESLint processes (peaks ~5.2 and ~4.1 GB).
       - name: service - lint
         run: npm run lint:service
         env:

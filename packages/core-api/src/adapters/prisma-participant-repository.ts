@@ -74,9 +74,11 @@ export class PrismaParticipantRepository implements ParticipantRepository {
         ...(updates.role !== undefined && { role: updates.role }),
         ...(updates.teamAffiliation !== undefined && { teamAffiliation: updates.teamAffiliation }),
         ...(updates.status !== undefined && { status: updates.status }),
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion -- needed: Prisma's JSON input type has an index signature this interface lacks; the rule misreads it inside the conditional spread.
         ...(updates.injuryStatus !== undefined && { injuryStatus: updates.injuryStatus as object }),
         ...(updates.photoUrl !== undefined && { photoUrl: updates.photoUrl }),
         ...(updates.photoLastUpdated !== undefined && { photoLastUpdated: updates.photoLastUpdated }),
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion -- needed: Prisma's JSON input type has an index signature this interface lacks; the rule misreads it inside the conditional spread.
         ...(updates.externalIds !== undefined && { externalIds: updates.externalIds as object }),
         ...(updates.externalId !== undefined && { externalId: updates.externalId }),
       },

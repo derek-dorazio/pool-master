@@ -56,7 +56,7 @@ export function createMemberHandlers(
       const membership = await memberService.changeRole({
         leagueId: request.params.id,
         targetUserId: request.params.uid,
-        newRole: request.body.role as Parameters<MemberService['changeRole']>[0]['newRole'],
+        newRole: request.body.role,
       });
       logger.info({
         action: 'leagueMemberRoute.changeRole.success',

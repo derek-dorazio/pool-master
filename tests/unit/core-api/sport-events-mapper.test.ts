@@ -23,7 +23,7 @@ function event(overrides: Partial<SportEvent> = {}): SportEvent {
     createdAt: new Date('2026-01-01T00:00:00.000Z'),
     updatedAt: new Date('2026-01-02T00:00:00.000Z'),
     ...overrides,
-  } as SportEvent;
+  };
 }
 
 /** A root admin's summary, with the admin counts; `adminCounts: null` is everyone else's. */
