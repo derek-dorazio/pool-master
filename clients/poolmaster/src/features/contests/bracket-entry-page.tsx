@@ -1,4 +1,4 @@
-import { useLocation, useParams } from 'react-router';
+import { useParams } from 'react-router';
 import { PredictedResult, type Sport } from '@poolmaster/shared/domain';
 import type { ContestDto } from '@/lib/api';
 import {
@@ -11,12 +11,11 @@ import {
   Tile,
 } from '@/features/shared/ui';
 import { extractErrorMessage, type ErrorCodeMessages } from '@/lib/errors';
-import { parseRouteState } from '@/routes/route-state';
 import { BracketBoard } from './bracket-board';
 import { BracketSubmitPanel } from './bracket-entry-submit';
 import { buildBracketRounds, describeBracketClose, formatPickProgress, formatPoints, type BracketGame, type BracketTeam } from './bracket-layout';
 import { ContestEntryFrame } from './contest-header';
-import { useContestLeague } from './use-contest-league';
+import { useContestLeagueCode } from './use-contest-league';
 import { contestEventStart, contestMatchNoun, contestParticipantNoun, contestScoreUnit } from './contest-sport';
 import { firstContestEvent } from './contest-events';
 import { contestStatusLabel } from './contest-status';
@@ -53,10 +52,8 @@ function formatScore(points: number | null) {
  * have cleared later picks that no longer follow from it.
  */
 export function BracketEntryPage({ contest }: { contest: ContestDto }) {
-  const { entryId = '', leagueCode: routeLeagueCode } = useParams<{ entryId: string; leagueCode?: string }>();
-  const location = useLocation();
+  const { entryId = '' } = useParams<{ entryId: string }>();
   const contestId = contest.id;
-  const hintedLeagueCode = routeLeagueCode ?? parseRouteState(location.state).leagueCode ?? null;
   // A bracket covers one event (#721).
   const sportEventId = firstContestEvent(contest)?.sportEventId ?? '';
   const roundLabel = useBracketRoundLabel(contest.sport, sportEventId);
@@ -69,7 +66,7 @@ export function BracketEntryPage({ contest }: { contest: ContestDto }) {
     sportEventId,
   });
   const entryQuery = useContestEntryQuery(contestId, entryId);
-  const { leagueCode: backLeagueCode } = useContestLeague(contest.leagueId, hintedLeagueCode);
+  const leagueCode = useContestLeagueCode();
 
   if (gamePicksQuery.isLoading || entryQuery.isLoading) {
     return <LoadingState body="Loading bracket..." />;
@@ -118,7 +115,7 @@ export function BracketEntryPage({ contest }: { contest: ContestDto }) {
       contest={contest}
       entry={entrySummary}
       entryId={entryId}
-      leagueCode={backLeagueCode}
+      leagueCode={leagueCode}
       phase={isOpen ? `Open until ${closesAt}` : contestStatusLabel(contest.status)}
       picksRevealed={entryQuery.data?.picksRevealed ?? false}
       status={picksHidden ? null : gamePicks.status}

@@ -73,7 +73,7 @@ function WeekCell({ entryId, week, weekId }: { entryId: string; week: SurvivorRo
 /** The board's columns: place, the entry and its group, whether it is still in, weeks survived, then one per week. */
 function survivorColumns(
   contestId: string,
-  leagueCode: string | null,
+  leagueCode: string,
   mySquadId: string | null,
   weeks: readonly SurvivorWeek[],
   weekName: WeekName,
@@ -113,10 +113,10 @@ function survivorColumns(
  * is a column of its own, named as the bracket names it. Polled while the contest is live, so
  * entries drop out as the results come in.
  */
-export function SurvivorLeaderboard({ contest, leagueCode: hintedLeagueCode }: { contest: ContestDto; leagueCode: string | null }) {
+export function SurvivorLeaderboard({ contest }: { contest: ContestDto }) {
   const contestId = contest.id;
   const leaderboardQuery = useSurvivorLeaderboardQuery(contestId, contest.status);
-  const { leagueCode, viewer } = useContestLeague(contest.leagueId, hintedLeagueCode);
+  const { leagueCode, viewer } = useContestLeague(contest.leagueId);
   // A playoff's rounds (#785) are named as its bracket names them.
   const playoffEventId = leaderboardQuery.data?.weeks.find((week) => week.roundCount > 1)?.sportEventId ?? '';
   const roundLabel = useBracketRoundLabel(contest.sport, playoffEventId);

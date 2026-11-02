@@ -4,6 +4,7 @@
  * only: members never see prices.
  */
 import { z } from 'zod';
+import { ContestStatus } from '@poolmaster/shared/domain';
 import { registerSchema } from './schema-registry';
 
 const EntriesPerContestSchema = z.number().int().min(1).max(100_000);
@@ -50,7 +51,10 @@ export const LeaguePaymentSchema = z.object({
   paidAt: PaidAtSchema,
   amountCents: AmountCentsSchema,
   description: PaymentDescriptionSchema,
-  contestId: z.uuid().nullable().describe('The contest it was for; null when that contest was deleted.'),
+  contest: z.object({
+    id: z.uuid(),
+    status: z.enum(ContestStatus).describe('Where the line links: an open contest to its Entries, a live or final one to its Leaderboard.'),
+  }).nullable().describe('The contest it was for; null when that contest was deleted.'),
   payer: z.object({
     id: z.uuid(),
     name: z.string().describe('Their name, for display.'),

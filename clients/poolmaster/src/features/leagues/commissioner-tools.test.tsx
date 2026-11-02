@@ -1013,7 +1013,7 @@ describe('League plan', () => {
 
 // The leagues list is only touched by delete; it must drop the league.
 describe('League payments', () => {
-  it('lists the league\'s payments on League settings, newest first, each linking to its contest', async () => {
+  it('lists the league\'s payments on League settings, newest first, each linking to its contest where the contest opens: Entries while open, Leaderboard once live', async () => {
     primeMocks();
     listLeaguePaymentsMock.mockResolvedValue(apiSuccess({
       payments: [
@@ -1022,7 +1022,7 @@ describe('League payments', () => {
           paidAt: '2026-10-24T15:00:00.000Z',
           amountCents: 0,
           description: 'Masters Pool: 50 to 100 entries, free while payments are off',
-          contestId: 'contest-1',
+          contest: { id: 'contest-1', status: 'OPEN' },
           payer: { id: 'user-1', name: 'Casey Commissioner' },
         },
         {
@@ -1030,7 +1030,15 @@ describe('League payments', () => {
           paidAt: '2026-10-23T15:00:00.000Z',
           amountCents: 0,
           description: 'Old Pool: up to 50 entries, free while payments are off',
-          contestId: null,
+          contest: null,
+          payer: null,
+        },
+        {
+          id: '0f6e3c1a-1111-4b4b-9c9c-000000000000',
+          paidAt: '2026-10-22T15:00:00.000Z',
+          amountCents: 0,
+          description: 'Live Pool: up to 50 entries, free while payments are off',
+          contest: { id: 'contest-2', status: 'ACTIVE' },
           payer: null,
         },
       ],
@@ -1040,13 +1048,15 @@ describe('League payments', () => {
 
     const payments = within(await screen.findByTestId('league-payments'));
     const lines = await payments.findAllByTestId(/^league-payment-/);
-    expect(lines).toHaveLength(2);
+    expect(lines).toHaveLength(3);
     expect(lines[0]).toHaveTextContent('Casey Commissioner');
     expect(lines[0]).toHaveTextContent('$0');
     expect(within(lines[0]).getByRole('link', { name: 'Masters Pool: 50 to 100 entries, free while payments are off' }))
       .toHaveAttribute('href', '/league/BIGDAWGS/contests/contest-1');
     // A deleted contest's line keeps its description, with nothing to link to.
     expect(within(lines[1]).queryByRole('link')).not.toBeInTheDocument();
+    expect(within(lines[2]).getByRole('link', { name: 'Live Pool: up to 50 entries, free while payments are off' }))
+      .toHaveAttribute('href', '/league/BIGDAWGS/contests/contest-2/leaderboard');
     expect(listLeaguePaymentsMock).toHaveBeenCalledWith(expect.objectContaining({ path: { id: 'league-1' } }));
   });
 

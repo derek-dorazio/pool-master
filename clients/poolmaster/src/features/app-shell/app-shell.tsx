@@ -139,14 +139,16 @@ export function AppShell() {
             the full second row, so the header never runs wider than the screen. */}
         <div className="mx-auto grid max-w-6xl grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-3 px-4 py-4 sm:px-6 sm:py-5 lg:flex lg:justify-between">
           <div className="flex min-w-0 items-center gap-4 max-lg:contents">
-            <div className="min-w-0 space-y-1">
+            {/* The brand goes home (#1395): `/` lands a signed-out visitor on the welcome page and
+                a member on their league's home, so every page has a way back there. */}
+            <Link aria-label="Home" className="group block min-w-0 space-y-1" data-testid="app-shell-home" to="/">
               <StatusBadge className="hidden text-primary tracking-normal sm:inline-flex" tone="brandOutline">
                 {PRODUCT_TAGLINE}
               </StatusBadge>
-              <p className="font-display text-xl font-black uppercase italic tracking-normal text-on-inverse sm:text-2xl">
+              <span className="block font-display text-xl font-black uppercase italic tracking-normal text-on-inverse group-hover:text-primary group-focus-visible:text-primary sm:text-2xl">
                 {PRODUCT_NAME}
-              </p>
-            </div>
+              </span>
+            </Link>
 
             {shouldLoadLeagueShell ? (
               <LeagueSelector

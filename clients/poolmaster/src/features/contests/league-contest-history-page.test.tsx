@@ -72,7 +72,7 @@ function prime(years = YEARS) {
 }
 
 describe('LeagueContestHistoryPage', () => {
-  it('opens on the newest year with a completed contest, each row naming its winner and opening the contest', async () => {
+  it('opens on the newest year with a completed contest, each row naming its winner and opening the final contest on its leaderboard', async () => {
     prime();
 
     renderHistory();
@@ -80,7 +80,7 @@ describe('LeagueContestHistoryPage', () => {
     const row = await screen.findByTestId('league-history-contest-contest-1');
     expect(row).toHaveTextContent('Masters Tiers');
     expect(row).toHaveTextContent('Won by Birdie Bandits · 12 entries');
-    expect(row).toHaveAttribute('href', '/league/BIGDAWGS/contests/contest-1');
+    expect(row).toHaveAttribute('href', '/league/BIGDAWGS/contests/contest-1/leaderboard');
     expect(screen.getByTestId('league-contests-history')).toHaveTextContent('Completed in 2026');
     expect(listContestResultsMock).toHaveBeenCalledWith(expect.objectContaining({ query: { year: 2026 } }));
   });

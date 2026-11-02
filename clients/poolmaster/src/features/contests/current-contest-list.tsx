@@ -66,7 +66,6 @@ export function CurrentContestList({
                   name={contest.name}
                   note={describeMyEntry(leagueCode, contest, entriesByContestId.get(contest.id), entriesState, hasTeam).note}
                   startsAt={listedContestStartsAt(contest)}
-                  state={{ leagueCode }}
                   testId={`${testIdPrefix}-${contest.id}`}
                   to={buildContestLandingPath(leagueCode, contest)}
                 />

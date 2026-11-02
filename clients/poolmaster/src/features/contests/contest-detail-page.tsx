@@ -7,18 +7,16 @@ import {
 } from '@poolmaster/shared/domain';
 import { Pencil } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Link, useLocation, useNavigate, useParams } from 'react-router';
+import { Link, useNavigate, useParams } from 'react-router';
 import { enterContest, updateContestEntry, type ContestEntryDto } from '@/lib/api';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import {
-  buildContestEntryPath,
   buildLeagueAdminContestPath,
   buildLeagueContestEntryPath,
   buildLeaguePath,
 } from '@/features/leagues/league-routing';
 import { formatPlanLimit } from '@/features/plans/plan-labels';
 import { getLogger } from '@/lib/logger';
-import { parseRouteState } from '@/routes/route-state';
 import {
   Alert,
   Button,
@@ -124,12 +122,7 @@ export function ContestDetailPage() {
   const logger = getLogger().child({
     feature: 'contest-board',
   });
-  const { contestId = '', leagueCode: routeLeagueCode } = useParams<{
-    contestId: string;
-    leagueCode?: string;
-  }>();
-  const location = useLocation();
-  const hintedLeagueCode = routeLeagueCode ?? parseRouteState(location.state).leagueCode ?? null;
+  const { contestId = '' } = useParams<{ contestId: string }>();
   const [expandedEntryId, setExpandedEntryId] = useState<string | null>(null);
   const [myOnly, setMyOnly] = useState(false);
   const [renameEntryId, setRenameEntryId] = useState<string | null>(null);
@@ -151,7 +144,7 @@ export function ContestDetailPage() {
    * purpose of learning which squad is theirs. One request replaces it, and it is one this page
    * benefits from caching anyway.
    */
-  const { leagueCode: adminLeagueCode, viewer } = useContestLeague(leagueId || undefined, hintedLeagueCode);
+  const { leagueCode, viewer } = useContestLeague(leagueId || undefined);
   const myTeamId = viewer.mySquadId;
 
   const enterContestMutation = useInvalidatingMutation({
@@ -163,14 +156,7 @@ export function ContestDetailPage() {
       return response.data.entry;
     },
     onSuccess: (entry) => {
-      void navigate(
-        hintedLeagueCode
-          ? buildLeagueContestEntryPath(hintedLeagueCode, contestId, entry.id)
-          : buildContestEntryPath(contestId, entry.id),
-        {
-        state: { leagueCode: hintedLeagueCode },
-        },
-      );
+      void navigate(buildLeagueContestEntryPath(leagueCode, contestId, entry.id));
     },
     invalidates: entryWriteKeys(contestId),
   });
@@ -203,13 +189,13 @@ export function ContestDetailPage() {
         action: 'contestBoard.contest.failed',
         data: {
           contestId,
-          leagueCode: hintedLeagueCode ?? null,
+          leagueCode,
         },
         err: contestQuery.error,
       },
       'Contest Board failed to load contest data',
     );
-  }, [contestId, contestQuery.error, contestQuery.isError, hintedLeagueCode, logger]);
+  }, [contestId, contestQuery.error, contestQuery.isError, leagueCode, logger]);
 
   useEffect(() => {
     if (!contestQuery.data || !contestEntriesQuery.data) {
@@ -221,7 +207,7 @@ export function ContestDetailPage() {
         action: 'contestBoard.page.loaded',
         data: {
           contestId,
-          leagueCode: hintedLeagueCode ?? null,
+          leagueCode,
           status: contestQuery.data.status,
           entryCount: contestEntriesQuery.data.entries.length,
           myEntryCount: contestQuery.data.myEntryIds?.length ?? 0,
@@ -234,7 +220,7 @@ export function ContestDetailPage() {
     contestEntriesQuery.data,
     contestId,
     contestQuery.data,
-    hintedLeagueCode,
+    leagueCode,
     logger,
   ]);
 
@@ -269,9 +255,6 @@ export function ContestDetailPage() {
   const isFull = entryCap !== null && totalCount >= entryCap;
   const canCreateEntry = entriesOpen && Boolean(myTeamId) && !isFull;
 
-  const backToLeaguePath = hintedLeagueCode
-    ? buildLeaguePath(hintedLeagueCode)
-    : '/welcome';
 
   function startRenameEntry(entry: ContestEntryDto) {
     setRenameEntryId(entry.id);
@@ -290,7 +273,7 @@ export function ContestDetailPage() {
       actions={(
         <LinkButton
           data-testid="contest-back-to-league"
-          to={backToLeaguePath}
+          to={buildLeaguePath(leagueCode)}
           variant="secondary"
         >
           Back to league
@@ -330,7 +313,7 @@ export function ContestDetailPage() {
           </div>
         </>
       )}
-      leagueCode={hintedLeagueCode}
+      leagueCode={leagueCode}
       picksRevealed={picksRevealed}
       summary={(
         <p className="mt-2 text-sm text-muted-foreground" data-testid="contest-detail-summary">
@@ -384,13 +367,13 @@ export function ContestDetailPage() {
           <Alert className="mt-3" data-testid="contest-board-full">
             This contest is full.
             {/* Members never see expansions or prices; its commissioners can expand it. */}
-            {viewer.isCommissioner && adminLeagueCode ? (
+            {viewer.isCommissioner ? (
               <>
                 {' '}
                 <Link
                   className="font-medium text-primary underline"
                   data-testid="contest-board-full-expand-link"
-                  to={buildLeagueAdminContestPath(adminLeagueCode, contest.id)}
+                  to={buildLeagueAdminContestPath(leagueCode, contest.id)}
                 >
                   Expand contest
                 </Link>
@@ -490,13 +473,8 @@ export function ContestDetailPage() {
                           variant="icon"
                         >
                           <Link
-                            state={{ leagueCode: hintedLeagueCode }}
                             title="Edit entry"
-                            to={
-                              hintedLeagueCode
-                                ? buildLeagueContestEntryPath(hintedLeagueCode, contestId, entry.id)
-                                : buildContestEntryPath(contestId, entry.id)
-                            }
+                            to={buildLeagueContestEntryPath(leagueCode, contestId, entry.id)}
                           >
                             <Pencil aria-hidden size={16} />
                           </Link>

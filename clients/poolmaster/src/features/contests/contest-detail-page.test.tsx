@@ -105,10 +105,6 @@ function renderContestBoard() {
             path="/league/:leagueCode/contests/:contestId/entries/:entryId"
           />
           <Route
-            element={<div data-testid="contest-entry-page" />}
-            path="/contests/:contestId/entries/:entryId"
-          />
-          <Route
             element={<div data-testid="contest-leaderboard-page" />}
             path="/league/:leagueCode/contests/:contestId/leaderboard"
           />

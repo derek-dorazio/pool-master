@@ -2889,13 +2889,33 @@
             "type": "string",
             "description": "What it was for, as written when it was paid: \"Masters Pool: up to 200 entries, free while payments are off\"."
           },
-          "contestId": {
+          "contest": {
             "description": "The contest it was for; null when that contest was deleted.",
             "type": [
-              "string",
+              "object",
               "null"
             ],
-            "format": "uuid"
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "DRAFT",
+                  "OPEN",
+                  "ACTIVE",
+                  "COMPLETED"
+                ],
+                "description": "Where the line links: an open contest to its Entries, a live or final one to its Leaderboard."
+              }
+            },
+            "required": [
+              "id",
+              "status"
+            ],
+            "additionalProperties": false
           },
           "payer": {
             "description": "Who paid; null for a Poolmaster grant or when that account was deleted.",
@@ -2925,7 +2945,7 @@
           "paidAt",
           "amountCents",
           "description",
-          "contestId",
+          "contest",
           "payer"
         ],
         "additionalProperties": false,
@@ -2958,13 +2978,33 @@
                   "type": "string",
                   "description": "What it was for, as written when it was paid: \"Masters Pool: up to 200 entries, free while payments are off\"."
                 },
-                "contestId": {
+                "contest": {
                   "description": "The contest it was for; null when that contest was deleted.",
                   "type": [
-                    "string",
+                    "object",
                     "null"
                   ],
-                  "format": "uuid"
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "DRAFT",
+                        "OPEN",
+                        "ACTIVE",
+                        "COMPLETED"
+                      ],
+                      "description": "Where the line links: an open contest to its Entries, a live or final one to its Leaderboard."
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "status"
+                  ],
+                  "additionalProperties": false
                 },
                 "payer": {
                   "description": "Who paid; null for a Poolmaster grant or when that account was deleted.",
@@ -2994,7 +3034,7 @@
                 "paidAt",
                 "amountCents",
                 "description",
-                "contestId",
+                "contest",
                 "payer"
               ],
               "additionalProperties": false,
