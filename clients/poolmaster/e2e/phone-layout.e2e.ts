@@ -3,7 +3,7 @@ import { adminApiHeaders } from './helpers/admin-api';
 import { readAdminCredentials } from './helpers/admin-session';
 import { removeLeague, removeUser, type JourneyUser } from './helpers/journey-teardown';
 import { registerFreshUser } from './helpers/user-session';
-import { newRunId, e2eEmail, e2eUsername } from './helpers/test-marker';
+import { newRunId, e2eEmail, e2eLeagueCode, e2eName, e2eUsername } from './helpers/test-marker';
 
 /**
  * #929 — the app on a phone's browser: a commissioner signs up, creates a league and starts a
@@ -91,8 +91,8 @@ test('a commissioner signs up, creates a league and starts a contest on a phone 
     firstName: 'E2E',
     lastName: `Phone ${runId}`,
   };
-  // League codes stop at 16 characters, and the run id is about 13.
-  const leagueCode = `PH${runId.toUpperCase()}`;
+  const leagueCode = e2eLeagueCode('H', runId);
+  const leagueName = e2eName('Phone', runId);
   created.push({ leagueCode, commissioner });
 
   await test.step('the sign-in page fits the phone and its fields do not zoom', async () => {
@@ -109,7 +109,7 @@ test('a commissioner signs up, creates a league and starts a contest on a phone 
     await page.getByTestId('welcome-create-league').click();
     await expectNoZoomingFields(page);
     await page.getByTestId('create-league-code').fill(leagueCode);
-    await page.getByTestId('create-league-name').fill(`Phone ${runId}`);
+    await page.getByTestId('create-league-name').fill(leagueName);
     await page.getByTestId('create-league-next').click();
     await page.getByTestId('create-league-submit').click();
     await expect(page.getByTestId('league-home')).toBeVisible();
