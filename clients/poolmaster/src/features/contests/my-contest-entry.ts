@@ -9,7 +9,7 @@ import { currentContestEvent, entryEventStatus } from './contest-events';
 /** Whether the viewer's entries in the current contests are known yet. */
 export type MyEntriesState = 'loading' | 'failed' | 'ready';
 
-export const ENTRY_STATE_NOTE = {
+const ENTRY_STATE_NOTE = {
   failed: "We couldn't check your entry.",
   loading: 'Checking your entry...',
 } as const;

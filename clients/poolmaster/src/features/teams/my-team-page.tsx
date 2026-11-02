@@ -17,7 +17,6 @@ import { extractErrorMessage } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { CreateTeamForm } from './create-team-form';
 import { TeamAvatar } from './team-avatar';
-import { MyTeamEntriesSection } from './my-team-entries-section';
 import { TEAM_PAGE_FALLBACK_ERROR } from './my-team-shared';
 import { formatOwnerCount } from './team-directory';
 import { TeamOwnersSection } from './team-owners-section';
@@ -25,9 +24,10 @@ import { useLeagueSquadQuery } from './use-league-squad-query';
 import { useMyTeamOwners } from './use-my-team-owners';
 
 /**
- * My team: the viewer's own team in this league, with Edit team, its owners, its year in the
- * championship and cups (#872), and Leave league as the member's one danger action. A member with
- * no team yet creates one here.
+ * Yours: the viewer's own team in this league, and nothing else: its name and icon with Edit and
+ * All years, its owners, its year in the championship and cups (#872), and Leave league as the
+ * member's one danger action. Contests and the team's entries in them are on League Home and the
+ * Contests page (#1394). A member with no team yet creates one here.
  */
 export function MyTeamPage() {
   const { leagueCode = '' } = useParams<{ leagueCode: string }>();
@@ -128,8 +128,6 @@ export function MyTeamPage() {
           This league is inactive, so this page is read-only.
         </Alert>
       ) : null}
-
-      <MyTeamEntriesSection leagueCode={leagueCode} leagueId={leagueId} teamId={myTeam.id} />
 
       <TeamOwnersSection
         canManageAnyTeam={viewer.isCommissioner || viewer.isRootAdmin}
