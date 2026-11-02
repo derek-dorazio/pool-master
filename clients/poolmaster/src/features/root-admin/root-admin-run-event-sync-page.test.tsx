@@ -242,4 +242,95 @@ describe('RootAdminRunEventSyncPage', () => {
       });
     });
   });
+  it('falls back to the first sport a provider syncs when no provider covers golf, and reads that sport\'s events', async () => {
+    listProvidersMock.mockResolvedValue({
+      data: {
+        providers: [
+          { providerId: 'espn', providerName: 'ESPN', status: 'HEALTHY', sportsCovered: ['BASKETBALL'] },
+        ],
+      },
+    });
+    listEventsMock.mockResolvedValue({ data: { events: [] } });
+
+    renderPage();
+
+    await waitFor(() => {
+      expect(listEventsMock).toHaveBeenCalledWith({ query: { sport: 'BASKETBALL', eventYear: new Date().getFullYear() } });
+    });
+    expect(screen.getByTestId('root-admin-event-sync-sport')).toHaveValue('BASKETBALL');
+  });
+
+  it('drops the selected event when the preset rules it out, so sync cannot run on it', async () => {
+    renderPage();
+
+    await screen.findByRole('option', { name: /Manual Test Golf Tournament/ });
+    fireEvent.change(screen.getByTestId('root-admin-event-sync-event-id'), {
+      target: { value: 'golf-masters-2026' },
+    });
+    expect(screen.getByTestId('root-admin-event-sync-now')).toBeEnabled();
+
+    // A scheduled event has no live scores to sync without a mock state.
+    fireEvent.change(screen.getByTestId('root-admin-event-sync-preset'), {
+      target: { value: 'EVENTLIVESCORES' },
+    });
+
+    expect(screen.getByTestId('root-admin-event-sync-event-id')).toHaveValue('');
+    expect(screen.getByTestId('root-admin-event-sync-now')).toBeDisabled();
+  });
+
+  it('stops sending a mock event state once the chosen sport has no mock feed', async () => {
+    listProvidersMock.mockResolvedValue({
+      data: {
+        providers: [
+          { providerId: 'mock-contest-feed', providerName: 'Mock contest feed', status: 'HEALTHY', sportsCovered: ['GOLF'] },
+          { providerId: 'espn', providerName: 'ESPN', status: 'HEALTHY', sportsCovered: ['BASKETBALL'] },
+        ],
+      },
+    });
+    listEventsMock.mockImplementation(({ query }: { query: { sport: string } }) => Promise.resolve({
+      data: {
+        events: [{
+          id: `event-${query.sport}`,
+          externalId: `${query.sport.toLowerCase()}-event`,
+          sport: query.sport,
+          name: `${query.sport} event`,
+          venue: 'QA Venue',
+          location: 'Test City',
+          status: 'SCHEDULED',
+          startDate: '2026-04-27T16:00:00.000Z',
+          endDate: null,
+          participantCount: 10,
+          readinessStatus: 'CONTEST_ELIGIBLE',
+          readinessReasons: [],
+          contestEligible: true,
+          syncScope: 'SCORES_ONLY',
+        }],
+      },
+    }));
+    renderPage();
+
+    fireEvent.change(await screen.findByTestId('root-admin-event-sync-mock-event-state'), {
+      target: { value: 'live' },
+    });
+    expect(screen.getByText('Mock event state: live')).toBeInTheDocument();
+
+    fireEvent.change(screen.getByTestId('root-admin-event-sync-sport'), {
+      target: { value: 'BASKETBALL' },
+    });
+
+    expect(screen.queryByTestId('root-admin-event-sync-mock-event-state')).not.toBeInTheDocument();
+    expect(screen.queryByText('Mock event state: live')).not.toBeInTheDocument();
+    expect(await screen.findByRole('option', { name: /BASKETBALL event/ })).toBeInTheDocument();
+    fireEvent.change(screen.getByTestId('root-admin-event-sync-event-id'), {
+      target: { value: 'basketball-event' },
+    });
+    fireEvent.click(screen.getByTestId('root-admin-event-sync-now'));
+
+    await waitFor(() => {
+      expect(submitEventSyncMock).toHaveBeenCalledWith({
+        path: { sport: 'BASKETBALL', eventId: 'basketball-event' },
+        body: { feeds: ['EVENTPARTICIPANTS'] },
+      });
+    });
+  });
 });

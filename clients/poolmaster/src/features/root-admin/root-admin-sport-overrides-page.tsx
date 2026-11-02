@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { resetSportIngestionOverride, setSportIngestionOverride } from '@/lib/api';
 import {
   Button,
@@ -12,7 +12,6 @@ import {
 import { ALL_SYNC_SPORT_OPTIONS, type SyncSport } from './root-admin-sync-utils';
 import {
   buildSportOverrideDraft,
-  cloneIngestionConfig,
   INGESTION_POLICY_FIELDS,
   type IngestionPolicyKey,
   type IngestionScheduleConfig,
@@ -25,33 +24,21 @@ import { useIngestionScheduleQuery } from './use-ingestion-schedule-query';
 
 export function RootAdminSportOverridesPage() {
   const [overrideSport, setOverrideSport] = useState<SyncSport>('GOLF');
-  const [ingestionDraft, setIngestionDraft] =
-    useState<IngestionScheduleConfig | null>(null);
-  const [overrideDraft, setOverrideDraft] = useState<
+  // Null until the admin ticks a box, saves or resets: the boxes show the selected sport's loaded
+  // override until then, and a refetch never overwrites a tick (rules/react-ui-rules.md §5
+  // Server Data Form-State Hazard). Choosing another sport drops them.
+  const [overrideEdits, setOverrideEdits] = useState<
     Record<IngestionPolicyKey, boolean> | null
   >(null);
 
   const ingestionConfigQuery = useIngestionScheduleQuery();
   const configSource = ingestionConfigQuery.data ?? null;
-  // Keep the loading state visible during the brief query-to-local-draft seeding window.
-  const isDraftLoading =
-    ingestionConfigQuery.isLoading
-    || (!ingestionConfigQuery.isError && (!overrideDraft || !ingestionDraft));
+  const overrideDraft = overrideEdits
+    ?? (configSource ? buildSportOverrideDraft(configSource, overrideSport) : null);
 
-  useEffect(() => {
-    if (!configSource) {
-      return;
-    }
-
-    setIngestionDraft(configSource);
-    setOverrideDraft(buildSportOverrideDraft(configSource, overrideSport));
-  }, [configSource, overrideSport]);
-
-  // An override's save and reset both answer with the whole schedule, which the drafts start from.
+  // An override's save and reset both answer with the whole schedule, which the boxes start from.
   const takeSavedConfig = (saved: IngestionScheduleConfig) => {
-    const nextDraft = cloneIngestionConfig(saved);
-    setIngestionDraft(nextDraft);
-    setOverrideDraft(buildSportOverrideDraft(nextDraft, overrideSport));
+    setOverrideEdits(buildSportOverrideDraft(saved, overrideSport));
   };
 
   const sportOverrideMutation = useInvalidatingMutation({
@@ -121,7 +108,10 @@ export function RootAdminSportOverridesPage() {
         <FormField label="Sport">
           <Select
             data-testid="root-admin-sport-overrides-sport"
-            onChange={(event) => setOverrideSport(event.target.value as SyncSport)}
+            onChange={(event) => {
+              setOverrideSport(event.target.value as SyncSport);
+              setOverrideEdits(null);
+            }}
             value={overrideSport}
           >
             {ALL_SYNC_SPORT_OPTIONS.map((sport) => (
@@ -132,7 +122,7 @@ export function RootAdminSportOverridesPage() {
           </Select>
         </FormField>
 
-        {isDraftLoading ? (
+        {ingestionConfigQuery.isLoading ? (
           <div className="mt-4">
             <LoadingState
               body="Loading sport override configuration..."
@@ -147,7 +137,7 @@ export function RootAdminSportOverridesPage() {
               title="Sport overrides unavailable"
             />
           </div>
-        ) : !overrideDraft || !ingestionDraft ? null : (
+        ) : !overrideDraft || !configSource ? null : (
           <>
             <div className="mt-4 space-y-3">
               {INGESTION_POLICY_FIELDS.map((field) => (
@@ -158,20 +148,16 @@ export function RootAdminSportOverridesPage() {
                   <span className="font-medium text-foreground">{field.label}</span>
                   <div className="flex items-center gap-3">
                     <span className="text-xs text-muted-foreground">
-                      Global: {ingestionDraft[field.key].enabled ? 'On' : 'Off'}
+                      Global: {configSource[field.key].enabled ? 'On' : 'Off'}
                     </span>
                     <Checkbox
                       checked={overrideDraft[field.key]}
                       data-testid={`root-admin-sport-overrides-${field.key}`}
                       onChange={(event) =>
-                        setOverrideDraft((current) =>
-                          current
-                            ? {
-                                ...current,
-                                [field.key]: event.target.checked,
-                              }
-                            : current,
-                        )}
+                        setOverrideEdits({
+                          ...overrideDraft,
+                          [field.key]: event.target.checked,
+                        })}
                     />
                   </div>
                 </label>

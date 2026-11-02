@@ -30,14 +30,26 @@ function renderPage() {
     },
   });
 
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <MemoryRouter>
-        <RootAdminIngestionSchedulePage />
-      </MemoryRouter>
-    </QueryClientProvider>,
-  );
+  return {
+    queryClient,
+    ...render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <RootAdminIngestionSchedulePage />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    ),
+  };
 }
+
+const REFETCHED_SCHEDULE = {
+  data: {
+    healthCheck: { enabled: true, intervalMinutes: 10 },
+    eventParticipants: { enabled: true, intervalMinutes: 360, lookaheadDays: 14 },
+    eventLiveScores: { enabled: true, intervalSeconds: 60 },
+    perSportOverrides: {},
+  },
+};
 
 describe('RootAdminIngestionSchedulePage', () => {
   beforeEach(() => {
@@ -88,6 +100,32 @@ describe('RootAdminIngestionSchedulePage', () => {
       }),
     );
   });
+  it('keeps an unsaved edit when the schedule is read again in the background', async () => {
+    const { queryClient } = renderPage();
+    fireEvent.change(
+      await screen.findByTestId('root-admin-ingestion-page-eventLiveScores-intervalSeconds'),
+      { target: { value: '45' } },
+    );
+
+    getIngestionScheduleMock.mockResolvedValue(REFETCHED_SCHEDULE);
+    await queryClient.refetchQueries();
+
+    expect(screen.getByTestId('root-admin-ingestion-page-eventLiveScores-intervalSeconds')).toHaveValue(45);
+    expect(getIngestionScheduleMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('shows the schedule as read again when nothing has been edited yet', async () => {
+    const { queryClient } = renderPage();
+    expect(await screen.findByTestId('root-admin-ingestion-page-eventLiveScores-intervalSeconds')).toHaveValue(30);
+
+    getIngestionScheduleMock.mockResolvedValue(REFETCHED_SCHEDULE);
+    await queryClient.refetchQueries();
+
+    await waitFor(() =>
+      expect(screen.getByTestId('root-admin-ingestion-page-eventLiveScores-intervalSeconds')).toHaveValue(60),
+    );
+  });
+
   it('shows the server\'s reason when saving the schedule is refused, instead of silently keeping the edit', async () => {
     updateIngestionScheduleMock.mockResolvedValue({
       error: { error: { code: 'VALIDATION_ERROR', message: 'intervalSeconds must be at least 10.' } },

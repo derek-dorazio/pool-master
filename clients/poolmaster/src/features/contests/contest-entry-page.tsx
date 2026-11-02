@@ -102,7 +102,7 @@ function getNextIncompleteGroupId(selectionGroups: SelectionGroup[]) {
  * with the page it opens through the contest's own key.
  */
 export function ContestEntryPage() {
-  const { contestId = '' } = useParams<{ contestId: string }>();
+  const { contestId = '', entryId = '' } = useParams<{ contestId: string; entryId: string }>();
   const contestQuery = useQuery(contestDetailQueryOptions(contestId));
   if (contestQuery.isLoading) {
     return <LoadingState body="Loading contest entry..." />;
@@ -118,7 +118,8 @@ export function ContestEntryPage() {
   if (contestQuery.data?.selectionType === SelectionType.SQUARES) {
     return <SquaresEntryPage contest={contestQuery.data} />;
   }
-  return <RosterContestEntryPage />;
+  // Keyed by the entry, so opening another entry starts from that entry's own name and tiebreaker.
+  return <RosterContestEntryPage key={entryId} />;
 }
 
 function contestDetailQueryOptions(contestId: string) {
@@ -149,10 +150,12 @@ function RosterContestEntryPage() {
   const selectionStateQueryKey = QueryKeys.selectionStates.detail(contestId, entryId, requestedEventId ?? undefined);
   const groupToggleRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
-  const [entryNameDraft, setEntryNameDraft] = useState('');
-  const [tiebreakerDraft, setTiebreakerDraft] = useState('');
-  const [draftDetailsSeedKey, setDraftDetailsSeedKey] = useState<string | null>(null);
-  const [expandedGroupId, setExpandedGroupId] = useState<string | null>(null);
+  // Null until the viewer types: the fields show the entry's saved name and tiebreaker until then.
+  const [editedEntryName, setEntryNameDraft] = useState<string | null>(null);
+  const [editedTiebreaker, setTiebreakerDraft] = useState<string | null>(null);
+  // Undefined until the viewer opens or closes a group, and again once a filled group hands on:
+  // the next group still short of picks opens then. Null keeps every group closed.
+  const [chosenGroupId, setExpandedGroupId] = useState<string | null | undefined>(undefined);
 
   const contestQuery = useQuery(contestDetailQueryOptions(contestId));
 
@@ -197,40 +200,16 @@ function RosterContestEntryPage() {
     [selectionStateQuery.data?.selectionGroups],
   );
 
-  useEffect(() => {
-    if (!detailsSeedSource) {
-      return;
-    }
-
-    const nextSeedKey = `${contestId}:${entryId}`;
-    if (draftDetailsSeedKey === nextSeedKey) {
-      return;
-    }
-
-    setEntryNameDraft(detailsSeedSource.name);
-    setTiebreakerDraft(
-      detailsSeedSource.tiebreakerValue === null || detailsSeedSource.tiebreakerValue === undefined
-        ? ''
-        : String(detailsSeedSource.tiebreakerValue),
-    );
-    setDraftDetailsSeedKey(nextSeedKey);
-  }, [contestId, detailsSeedSource, draftDetailsSeedKey, entryId]);
-
-  useEffect(() => {
-    if (!selectableGroups.length) {
-      setExpandedGroupId(null);
-      return;
-    }
-
-    const nextIncomplete = getNextIncompleteGroupId(selectableGroups);
-    setExpandedGroupId((current) => {
-      if (current && selectableGroups.some((group) => group.groupId === current)) {
-        return current;
-      }
-
-      return nextIncomplete;
-    });
-  }, [selectableGroups]);
+  const entryNameDraft = editedEntryName ?? detailsSeedSource?.name ?? '';
+  const tiebreakerDraft = editedTiebreaker
+    ?? (detailsSeedSource?.tiebreakerValue === null || detailsSeedSource?.tiebreakerValue === undefined
+      ? ''
+      : String(detailsSeedSource.tiebreakerValue));
+  // A group the viewer chose stays open while it is on the page; otherwise the next short one is.
+  const expandedGroupId = chosenGroupId !== undefined
+    && (chosenGroupId === null || selectableGroups.some((group) => group.groupId === chosenGroupId))
+    ? chosenGroupId
+    : getNextIncompleteGroupId(selectableGroups);
 
   useEffect(() => {
     if (!expandedGroupId) {
@@ -726,7 +705,8 @@ function RosterContestEntryPage() {
                     const nextGroup = selectionGroups
                       .slice(currentIndex + 1)
                       .find((candidate) => candidate.selectedParticipantIds.length < candidate.picksFromGroup);
-                    setExpandedGroupId(nextGroup?.groupId ?? null);
+                    // With no short group after this one, the first short group opens instead.
+                    setExpandedGroupId(nextGroup?.groupId);
                   }
                   void pickChangeMutation
                     .mutateAsync({ participantId, isSelected: group.selectedParticipantIds.includes(participantId) })

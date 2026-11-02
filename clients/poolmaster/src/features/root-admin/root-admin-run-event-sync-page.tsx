@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getSportDefinition, SportEventSyncScope } from '@poolmaster/shared/domain';
 import { submitEventSync, listEvents, type SportEventDto } from '@/lib/api';
@@ -76,13 +76,14 @@ export function RootAdminRunEventSyncPage() {
   const logger = getLogger().child({
     feature: 'root-admin-run-event-sync-page',
   });
-  const [eventSyncSport, setEventSyncSport] = useState<SyncSport>('GOLF');
+  // The viewer's choices; the values the page uses fall back while a choice is not available.
+  const [chosenSyncSport, setEventSyncSport] = useState<SyncSport>('GOLF');
   const [eventSyncPresetId, setEventSyncPresetId] = useState<EventSyncPresetId>(
     'EVENTPARTICIPANTS',
   );
   const [eventYear, setEventYear] = useState(() => new Date().getFullYear());
-  const [selectedEventExternalId, setSelectedEventExternalId] = useState('');
-  const [mockEventState, setMockEventState] = useState<MockEventState | ''>('');
+  const [chosenEventExternalId, setSelectedEventExternalId] = useState('');
+  const [chosenMockEventState, setMockEventState] = useState<MockEventState | ''>('');
 
   const providersQuery = useProvidersQuery();
 
@@ -90,6 +91,10 @@ export function RootAdminRunEventSyncPage() {
     () => getSupportedSyncSports(providersQuery.data),
     [providersQuery.data],
   );
+  // A sport no provider syncs falls back to the first one that does.
+  const eventSyncSport = supportedSyncSports.includes(chosenSyncSport)
+    ? chosenSyncSport
+    : supportedSyncSports.at(0) ?? chosenSyncSport;
   const supportsMockEventState = useMemo(
     () =>
       // poolmaster-allow-list-lookup: the handful of data providers, fixed reference data
@@ -99,20 +104,8 @@ export function RootAdminRunEventSyncPage() {
     [eventSyncSport, providersQuery.data],
   );
 
-  useEffect(() => {
-    if (!supportedSyncSports.includes(eventSyncSport)) {
-      const fallbackSport = supportedSyncSports.at(0);
-      if (fallbackSport) {
-        setEventSyncSport(fallbackSport);
-      }
-    }
-  }, [eventSyncSport, supportedSyncSports]);
-
-  useEffect(() => {
-    if (!supportsMockEventState && mockEventState) {
-      setMockEventState('');
-    }
-  }, [mockEventState, supportsMockEventState]);
+  // A mock state applies only while the mock feed covers the sport.
+  const mockEventState = supportsMockEventState ? chosenMockEventState : '';
 
   const eventsQuery = useQuery({
     queryKey: QueryKeys.rootAdmin.eventSyncEvents(eventSyncSport, eventYear),
@@ -146,17 +139,10 @@ export function RootAdminRunEventSyncPage() {
     );
   }, [eventSyncPresetId, eventsQuery.data, mockEventState, supportsMockEventState]);
   const selectedEvent = selectableEvents.find((event) =>
-    event.externalId === selectedEventExternalId,
+    event.externalId === chosenEventExternalId,
   );
-
-  useEffect(() => {
-    if (
-      selectedEventExternalId
-      && !selectableEvents.some((event) => event.externalId === selectedEventExternalId)
-    ) {
-      setSelectedEventExternalId('');
-    }
-  }, [selectableEvents, selectedEventExternalId]);
+  // An event the sport, year, preset or mock state rules out is no longer selected.
+  const selectedEventExternalId = selectedEvent ? chosenEventExternalId : '';
 
   const eventSyncMutation = useInvalidatingMutation({
     mutationFn: async (input: {

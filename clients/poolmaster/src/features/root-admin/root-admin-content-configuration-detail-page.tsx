@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useParams } from 'react-router';
 import { updateContestConfigTemplate, type ContestConfigTemplateDto } from '@/lib/api';
 import { getLogger } from '@/lib/logger';
@@ -34,10 +34,17 @@ type ContestConfigTemplateUpdateResult = ContestConfigTemplateDto;
 
 export function RootAdminContentConfigurationDetailPage() {
   const { templateKey = '' } = useParams<{ templateKey: string }>();
+  // Keyed by the template, so opening another one starts a fresh draft.
+  return <ContentConfigurationDetail key={templateKey} templateKey={templateKey} />;
+}
+
+function ContentConfigurationDetail({ templateKey }: { templateKey: string }) {
   const logger = getLogger().child({
     feature: 'root-admin-content-configuration-detail-page',
   });
-  const [draft, setDraft] = useState<ContestConfigTemplate | null>(null);
+  // Null until the admin edits or saves: the form shows the loaded template until then, and a
+  // refetch never overwrites an edit (rules/react-ui-rules.md §5 Server Data Form-State Hazard).
+  const [edits, setEdits] = useState<ContestConfigTemplate | null>(null);
 
   const templatesQuery = useContestConfigTemplatesQuery();
 
@@ -47,11 +54,8 @@ export function RootAdminContentConfigurationDetailPage() {
     [templateKey, templatesQuery.data],
   );
 
-  useEffect(() => {
-    if (template) {
-      setDraft(cloneContestTemplate(template));
-    }
-  }, [template]);
+  const templateDraft = useMemo(() => (template ? cloneContestTemplate(template) : null), [template]);
+  const draft = edits ?? templateDraft;
 
   const contestTemplateMutation = useInvalidatingMutation({
     mutationFn: async (input: {
@@ -77,7 +81,7 @@ export function RootAdminContentConfigurationDetailPage() {
       return response.data.template;
     },
     onSuccess: (updatedTemplate) => {
-      setDraft(cloneContestTemplate(updatedTemplate));
+      setEdits(cloneContestTemplate(updatedTemplate));
       logger.info(
         {
           action: 'rootAdmin.contentConfiguration.saved',
@@ -93,11 +97,9 @@ export function RootAdminContentConfigurationDetailPage() {
   });
 
   function updateDraft(updater: (current: ContestConfigTemplate) => ContestConfigTemplate) {
-    setDraft((current) => {
-      if (!current) {
-        return current;
-      }
-      return updater(current);
+    setEdits((edited) => {
+      const current = edited ?? templateDraft;
+      return current ? updater(current) : edited;
     });
   }
 

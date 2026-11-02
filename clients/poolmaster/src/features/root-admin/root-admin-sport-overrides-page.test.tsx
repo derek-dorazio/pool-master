@@ -30,14 +30,26 @@ function renderPage() {
     },
   });
 
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <MemoryRouter>
-        <RootAdminSportOverridesPage />
-      </MemoryRouter>
-    </QueryClientProvider>,
-  );
+  return {
+    queryClient,
+    ...render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <RootAdminSportOverridesPage />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    ),
+  };
 }
+
+const SCHEDULE_WITH_BASKETBALL_OVERRIDE = {
+  data: {
+    healthCheck: { enabled: true, intervalMinutes: 5 },
+    eventParticipants: { enabled: true, intervalMinutes: 360, lookaheadDays: 14 },
+    eventLiveScores: { enabled: true, intervalSeconds: 30 },
+    perSportOverrides: { BASKETBALL: { eventLiveScores: { enabled: false } } },
+  },
+};
 
 describe('RootAdminSportOverridesPage', () => {
   beforeEach(() => {
@@ -102,5 +114,34 @@ describe('RootAdminSportOverridesPage', () => {
         },
       }),
     );
+  });
+  it('shows the chosen sport\'s own override and drops an unsaved tick when the sport changes', async () => {
+    getIngestionScheduleMock.mockResolvedValue(SCHEDULE_WITH_BASKETBALL_OVERRIDE);
+    renderPage();
+
+    const healthCheck = await screen.findByTestId('root-admin-sport-overrides-healthCheck');
+    fireEvent.click(healthCheck);
+    expect(healthCheck).not.toBeChecked();
+
+    fireEvent.change(screen.getByTestId('root-admin-sport-overrides-sport'), { target: { value: 'BASKETBALL' } });
+
+    expect(screen.getByTestId('root-admin-sport-overrides-healthCheck')).toBeChecked();
+    expect(screen.getByTestId('root-admin-sport-overrides-eventLiveScores')).not.toBeChecked();
+
+    fireEvent.change(screen.getByTestId('root-admin-sport-overrides-sport'), { target: { value: 'GOLF' } });
+
+    expect(screen.getByTestId('root-admin-sport-overrides-healthCheck')).toBeChecked();
+  });
+
+  it('keeps an unsaved tick when the schedule is read again in the background', async () => {
+    const { queryClient } = renderPage();
+    fireEvent.click(await screen.findByTestId('root-admin-sport-overrides-eventLiveScores'));
+
+    getIngestionScheduleMock.mockResolvedValue(SCHEDULE_WITH_BASKETBALL_OVERRIDE);
+    await queryClient.refetchQueries();
+
+    expect(getIngestionScheduleMock).toHaveBeenCalledTimes(2);
+    expect(screen.getByTestId('root-admin-sport-overrides-eventLiveScores')).not.toBeChecked();
+    expect(screen.getByTestId('root-admin-sport-overrides-healthCheck')).toBeChecked();
   });
 });

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { resetIngestionSchedule, updateIngestionSchedule } from '@/lib/api';
 import {
   Alert,
@@ -30,18 +30,13 @@ type IngestionEditableField =
   | 'lookaheadDays';
 
 export function RootAdminIngestionSchedulePage() {
-  const [draft, setDraft] = useState<IngestionScheduleConfig | null>(null);
+  // Null until the admin edits, saves or resets: the form shows the loaded schedule until then,
+  // and a refetch never overwrites an edit (rules/react-ui-rules.md §5 Server Data Form-State Hazard).
+  const [edits, setEdits] = useState<IngestionScheduleConfig | null>(null);
 
   const ingestionConfigQuery = useIngestionScheduleQuery();
   const configSource = ingestionConfigQuery.data ?? null;
-
-  useEffect(() => {
-    if (!configSource || draft) {
-      return;
-    }
-
-    setDraft(configSource);
-  }, [configSource, draft]);
+  const draft = edits ?? configSource;
 
   const ingestionConfigMutation = useInvalidatingMutation({
     mutationFn: async (nextDraft: IngestionScheduleConfig) => {
@@ -60,7 +55,7 @@ export function RootAdminIngestionSchedulePage() {
       return response.data;
     },
     onSuccess: (data) => {
-      setDraft(cloneIngestionConfig(data));
+      setEdits(cloneIngestionConfig(data));
     },
     invalidates: [QueryKeys.rootAdmin.ingestionConfig, QueryKeys.rootAdmin.settings],
   });
@@ -74,7 +69,7 @@ export function RootAdminIngestionSchedulePage() {
       return response.data;
     },
     onSuccess: (data) => {
-      setDraft(cloneIngestionConfig(data));
+      setEdits(cloneIngestionConfig(data));
     },
     invalidates: [QueryKeys.rootAdmin.ingestionConfig, QueryKeys.rootAdmin.settings],
   });
@@ -84,9 +79,10 @@ export function RootAdminIngestionSchedulePage() {
     field: IngestionEditableField,
     value: boolean | string,
   ) {
-    setDraft((current) => {
+    setEdits((edited) => {
+      const current = edited ?? configSource;
       if (!current) {
-        return current;
+        return edited;
       }
 
       const currentPolicy = current[key];

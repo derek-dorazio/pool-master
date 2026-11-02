@@ -907,6 +907,24 @@ describe('ContestLeaderboardPage', () => {
     expect(screen.queryByTestId('contest-leaderboard-entry-entry-1')).not.toBeInTheDocument();
   });
 
+  it('scrolls the viewer\'s entry into view on the page Jump to my entry turns to', async () => {
+    primeMocks({ leaderboard: leaderboardWithEntries(30), mySquadId: 'squad-28' });
+    const scrolledElements: Element[] = [];
+    const scrollSpy = vi.spyOn(Element.prototype, 'scrollIntoView').mockImplementation(function scrollIntoView(this: Element) {
+      scrolledElements.push(this);
+    });
+
+    try {
+      renderLeaderboard();
+      fireEvent.click(await screen.findByTestId('contest-leaderboard-jump-to-mine'));
+
+      expect(scrolledElements).toHaveLength(1);
+      expect(scrolledElements[0]).toContainElement(screen.getByTestId('contest-leaderboard-entry-entry-28'));
+    } finally {
+      scrollSpy.mockRestore();
+    }
+  });
+
   it('offers no Jump to my entry when the viewer has no entry on the leaderboard', async () => {
     primeMocks({ mySquadId: 'squad-elsewhere' });
 

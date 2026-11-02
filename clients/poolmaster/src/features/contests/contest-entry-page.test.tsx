@@ -1089,6 +1089,84 @@ describe('ContestEntryPage — selection rules the server enforces', () => {
     expect(screen.getByText('1/2 saved')).toBeInTheDocument();
   });
 
+  /** Two one-pick tiers, the first holding Scottie Scheffler and the second Rory McIlroy. */
+  function twoOnePickTiers(tier1: string[], tier2: string[]) {
+    return [
+      {
+        groupId: 'tier-1',
+        groupName: 'Tier 1',
+        groupNumber: 1,
+        picksFromGroup: 1,
+        selectedParticipantIds: tier1,
+        participants: [buildGolfParticipant('sep-1', 'Scottie Scheffler', 1, tier1.includes('sep-1'))],
+      },
+      {
+        groupId: 'tier-2',
+        groupName: 'Tier 2',
+        groupNumber: 2,
+        picksFromGroup: 1,
+        selectedParticipantIds: tier2,
+        participants: [buildGolfParticipant('sep-2', 'Rory McIlroy', 2, tier2.includes('sep-2'))],
+      },
+    ];
+  }
+
+  it('keeps a typed entry name when the room is read again before it is saved', async () => {
+    primeCommonMocks();
+    getSelectionStateMock.mockResolvedValue({ data: buildSelectionState(twoOnePickTiers([], [])) });
+    const { queryClient } = renderContestEntryPage();
+
+    const nameInput = await screen.findByTestId('contest-entry-name-input');
+    expect(nameInput).toHaveValue('Birdie Hunters Entry 1');
+    fireEvent.change(nameInput, { target: { value: 'Sunday Charge' } });
+
+    getSelectionStateMock.mockResolvedValue({
+      data: { ...buildSelectionState(twoOnePickTiers([], [])), selectedEntryName: 'Renamed Elsewhere' },
+    });
+    await queryClient.refetchQueries();
+
+    expect(getSelectionStateMock).toHaveBeenCalledTimes(2);
+    expect(screen.getByTestId('contest-entry-name-input')).toHaveValue('Sunday Charge');
+  });
+
+  it('opens the earlier tier still short of picks once the last short tier is filled', async () => {
+    primeCommonMocks();
+    let tier2: string[] = [];
+    getSelectionStateMock.mockImplementation(() => Promise.resolve({ data: buildSelectionState(twoOnePickTiers([], tier2)) }));
+    selectContestPickMock.mockImplementation(() => {
+      tier2 = ['sep-2'];
+      return Promise.resolve(pickAnswer(['sep-2']));
+    });
+    renderContestEntryPage();
+
+    expect(await screen.findByText('Scottie Scheffler')).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('contest-entry-group-toggle-tier-2'));
+    fireEvent.click(await screen.findByTestId('contest-entry-participant-sep-2'));
+
+    await waitFor(() => expect(selectContestPickMock).toHaveBeenCalledWith(pickPath('sep-2')));
+    expect(await screen.findByText('Scottie Scheffler')).toBeInTheDocument();
+    expect(screen.queryByTestId('contest-entry-participant-sep-2')).not.toBeInTheDocument();
+  });
+
+  it('keeps every tier closed after the viewer closes the open one, even when the room is read again', async () => {
+    primeCommonMocks();
+    getSelectionStateMock.mockResolvedValue({ data: buildSelectionState(twoOnePickTiers([], [])) });
+    const { queryClient } = renderContestEntryPage();
+
+    expect(await screen.findByText('Scottie Scheffler')).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('contest-entry-group-toggle-tier-1'));
+    expect(screen.queryByText('Scottie Scheffler')).not.toBeInTheDocument();
+
+    // The second tier's name changes, so the room read again is new data, not the same answer.
+    const [tier1, tier2] = twoOnePickTiers([], []);
+    getSelectionStateMock.mockResolvedValue({ data: buildSelectionState([tier1, { ...tier2, groupName: 'Tier 2 renamed' }]) });
+    await queryClient.refetchQueries();
+
+    expect(await screen.findByText('Tier 2 renamed')).toBeInTheDocument();
+    expect(screen.queryByText('Scottie Scheffler')).not.toBeInTheDocument();
+    expect(screen.queryByText('Rory McIlroy')).not.toBeInTheDocument();
+  });
+
   function primeHiddenOtherTeamEntry() {
     primeCommonMocks();
     getContestMock.mockResolvedValue({ data: { contest: contestFixture({ myEntryIds: ['entry-mine'] }) } });

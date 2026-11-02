@@ -111,6 +111,38 @@ describe('Team lifecycle dialogs', () => {
     );
   });
 
+  it('shows the inactivation notice only while the inactivated team is selected', async () => {
+    inactivateLeagueSquadMock.mockResolvedValue({ data: { squad: buildTeam({ isActive: false }) } });
+    const otherTeam = buildTeam({ id: 'team-2', name: 'Eagle Eyes' });
+    function SwitchingHarness() {
+      const [team, setTeam] = useState(buildTeam());
+      return (
+        <>
+          <button data-testid="select-other-team" onClick={() => setTeam(otherTeam)} type="button">Other team</button>
+          <LifecycleHarness team={team} />
+        </>
+      );
+    }
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter initialEntries={['/league/BIGDAWGS/team']}>
+          <Routes>
+            <Route element={<SwitchingHarness />} path="/league/:leagueCode/team" />
+          </Routes>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    fireEvent.click(screen.getByTestId('open-inactivate'));
+    fireEvent.click(await screen.findByTestId('my-team-confirm-inactivate'));
+    expect(await screen.findByText(/Birdie Hunters is now inactive/)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('select-other-team'));
+
+    expect(screen.queryByText(/Birdie Hunters is now inactive/)).not.toBeInTheDocument();
+  });
+
   it('shows the server\'s refusal to inactivate, keeps the dialog open, and clears the refusal on cancel', async () => {
     inactivateLeagueSquadMock.mockResolvedValue({
       error: {
