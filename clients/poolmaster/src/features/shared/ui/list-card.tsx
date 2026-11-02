@@ -1,4 +1,4 @@
-import type { HTMLAttributes, ReactNode } from "react";
+import type { HTMLAttributes, ReactNode, Ref } from "react";
 import { Link, type LinkProps } from "react-router";
 import { cn } from "./class-names";
 import { Heading } from "./heading";
@@ -12,6 +12,7 @@ export function ListStack({ className, ...props }: ListStackProps) {
 type ListCardProps = LinkProps & {
   description?: ReactNode;
   metadata?: ReactNode;
+  ref?: Ref<HTMLAnchorElement>;
   title: ReactNode;
   trailing?: ReactNode;
 };

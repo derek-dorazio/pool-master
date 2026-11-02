@@ -49,9 +49,11 @@ function renderLeagueContestsPage(path = '/league/BIGDAWGS/contests') {
 }
 
 function primeCommonMocks({
+  isMember = true,
   isRootAdmin = false,
   leagueRole = 'MEMBER',
 }: {
+  isMember?: boolean;
   isRootAdmin?: boolean;
   leagueRole?: 'COMMISSIONER' | 'MEMBER';
 } = {}) {
@@ -84,7 +86,7 @@ function primeCommonMocks({
       },
       // #202 (A8) — the viewer's own membership, delivered once with the league context. It was
       // `memberType` and a `leagueRelationship` block on the league itself.
-      membership: {
+      membership: isMember ? {
         id: 'league-membership-1',
         leagueId: 'league-1',
         userId: 'user-1',
@@ -103,9 +105,9 @@ function primeCommonMocks({
         joinedAt: '2026-04-15T00:00:00.000Z',
         createdAt: '2026-04-15T00:00:00.000Z',
         updatedAt: '2026-04-15T00:00:00.000Z',
-      },
-      // The viewer owns team-1; the My contests view reads each contest's entries for it.
-      squadMembership: {
+      } : null,
+      // The viewer owns team-1; each row says where that team's entry stands.
+      squadMembership: isMember ? {
         id: 'team-membership-1',
         squadId: 'team-1',
         leagueId: 'league-1',
@@ -114,7 +116,7 @@ function primeCommonMocks({
         joinedAt: '2026-04-15T00:00:00.000Z',
         createdAt: '2026-04-15T00:00:00.000Z',
         updatedAt: '2026-04-15T00:00:00.000Z',
-      },
+      } : null,
     },
   });
 }
@@ -159,64 +161,173 @@ function contest(id: string, name: string, status: 'OPEN' | 'ACTIVE' | 'COMPLETE
   };
 }
 
+function resetMocks() {
+  for (const mock of [getCurrentUserMock, getLeagueByCodeMock, listMyContestEntriesMock, listContestsMock, logoutUserMock, refreshTokenMock]) {
+    mock.mockReset();
+  }
+}
+
 describe('LeagueContestsPage', () => {
-  afterEach(() => {
-    getCurrentUserMock.mockReset();
-    getLeagueByCodeMock.mockReset();
-    listMyContestEntriesMock.mockReset();
-    listContestsMock.mockReset();
-    logoutUserMock.mockReset();
-    refreshTokenMock.mockReset();
+  afterEach(resetMocks);
+
+  it('shows the current contests on the Current tab, with entry counts and no history section', async () => {
+    primeCommonMocks();
+    listContestsMock.mockResolvedValue({ data: { contests: [{ ...contest('contest-1', 'Masters Pick 6'), entryCount: 12 }] } });
+    listMyContestEntriesMock.mockResolvedValue(myEntries([]));
+
+    renderLeagueContestsPage();
+
+    expect(await screen.findByRole('radio', { name: 'Current' })).toBeChecked();
+    expect(await screen.findByTestId('league-contests-current')).toHaveTextContent('Masters Pick 6');
+    expect(screen.getByTestId('league-contest-contest-1')).toHaveTextContent('12 entries');
+    expect(screen.queryByTestId('league-contests-history')).not.toBeInTheDocument();
+    expect(listContestsMock.mock.calls[0]?.[0]).not.toHaveProperty('query');
   });
 
-  it('shows the current contests the list returns on Active Contests, with no history section', async () => {
-    primeCommonMocks({ leagueRole: 'COMMISSIONER' });
+  it('groups live contests before open ones, opening live on the leaderboard and open on Entries', async () => {
+    primeCommonMocks();
     listContestsMock.mockResolvedValue({
-      data: {
-        contests: [
-          {
-            id: 'contest-1',
-            name: 'Masters Pick 6',
-            status: 'OPEN',
-            contestType: 'ROSTER',
-            selectionType: 'TIERED',
-            leagueId: 'league-1',
-            sport: 'GOLF',
-            sportEvents: listedEvents(),
-            entryCount: 12,
-          },
-        ],
-      },
+      data: { contests: [contest('contest-1', 'Masters Pick 6'), contest('contest-3', 'US Open Pick 6', 'ACTIVE')] },
+    });
+    listMyContestEntriesMock.mockResolvedValue(myEntries(['contest-3']));
+
+    renderLeagueContestsPage();
+
+    const groups = await screen.findAllByRole('region', { name: /^(Live|Open for entries)$/ });
+    expect(groups.map((group) => group.getAttribute('aria-label'))).toEqual(['Live', 'Open for entries']);
+    expect(screen.getByTestId('league-contest-contest-3')).toHaveAttribute('href', '/league/BIGDAWGS/contests/contest-3/leaderboard');
+    expect(screen.getByTestId('league-contest-contest-1')).toHaveAttribute('href', '/league/BIGDAWGS/contests/contest-1');
+  });
+
+  it('says on every row where the team\'s entry stands, reading the entries once for the league', async () => {
+    primeCommonMocks();
+    listContestsMock.mockResolvedValue({
+      data: { contests: [contest('contest-1', 'Masters Pick 6'), contest('contest-3', 'US Open Pick 6', 'ACTIVE')] },
+    });
+    listMyContestEntriesMock.mockResolvedValue(myEntries(['contest-3']));
+
+    renderLeagueContestsPage();
+
+    expect(await screen.findByText('Your entry is submitted.')).toBeInTheDocument();
+    expect(screen.getByTestId('league-contest-contest-1')).toHaveTextContent('You have not entered yet.');
+    expect(getLeagueByCodeMock).toHaveBeenCalledTimes(1);
+    expect(listContestsMock).toHaveBeenCalledTimes(1);
+    expect(listMyContestEntriesMock).toHaveBeenCalledTimes(1);
+    expect(listMyContestEntriesMock).toHaveBeenCalledWith(expect.objectContaining({ path: { id: 'league-1' } }));
+  });
+
+  it('says it could not check the entry, rather than that there is none, when the entries cannot be read', async () => {
+    primeCommonMocks();
+    listContestsMock.mockResolvedValue({ data: { contests: [contest('contest-1', 'Masters Pick 6')] } });
+    listMyContestEntriesMock.mockResolvedValue({
+      error: { error: { code: 'INTERNAL_ERROR', message: 'Boom' } },
+      status: 500,
     });
 
     renderLeagueContestsPage();
 
-    expect(await screen.findByTestId('league-contests-page')).toBeInTheDocument();
-    expect(screen.queryByText(/Contest cards and commissioner contest actions are available from League Home/i)).not.toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: 'Open League Home' })).not.toBeInTheDocument();
+    expect(await screen.findByText("We couldn't check your entry.")).toBeInTheDocument();
+    expect(screen.queryByText('You have not entered yet.')).not.toBeInTheDocument();
+  });
 
-    expect(await screen.findByTestId('league-contests-active')).toHaveTextContent('Masters Pick 6');
-    expect(screen.getByTestId('league-contests-active')).toHaveTextContent('12 entries');
-    expect(screen.queryByTestId('league-contests-history')).not.toBeInTheDocument();
-    expect(listContestsMock).toHaveBeenCalledWith(expect.objectContaining({ path: { id: 'league-1' } }));
-    expect(listContestsMock.mock.calls[0]?.[0]).not.toHaveProperty('query');
-    expect(screen.getByTestId('league-contest-contest-1')).toHaveAttribute(
-      'href',
-      '/league/BIGDAWGS/contests/contest-1',
-    );    // The team's entries are read only for the My contests filter.
+  it('shows a commissioner their drafts under Draft, after the open contests', async () => {
+    primeCommonMocks({ leagueRole: 'COMMISSIONER' });
+    listContestsMock.mockResolvedValue({
+      data: { contests: [{ ...contest('contest-2', 'PGA Draft'), status: 'DRAFT' }, contest('contest-1', 'Masters Pick 6')] },
+    });
+    listMyContestEntriesMock.mockResolvedValue(myEntries([]));
+
+    renderLeagueContestsPage();
+
+    const groups = await screen.findAllByRole('region', { name: /^(Open for entries|Draft)$/ });
+    expect(groups.map((group) => group.getAttribute('aria-label'))).toEqual(['Open for entries', 'Draft']);
+    expect(screen.getByTestId('league-contest-contest-2')).toHaveAttribute('href', '/league/BIGDAWGS/contests/contest-2');
+  });
+
+  it('shows a root admin looking into a league they are not in the drafts the server sends them', async () => {
+    primeCommonMocks({ isMember: false, isRootAdmin: true });
+    listContestsMock.mockResolvedValue({
+      data: { contests: [{ ...contest('contest-2', 'PGA Draft'), status: 'DRAFT' }, contest('contest-1', 'Masters Pick 6')] },
+    });
+
+    renderLeagueContestsPage();
+
+    expect(await screen.findByTestId('league-contest-group-draft')).toHaveTextContent('PGA Draft');
     expect(listMyContestEntriesMock).not.toHaveBeenCalled();
+  });
+
+  it('never shows a member a draft', async () => {
+    primeCommonMocks();
+    listContestsMock.mockResolvedValue({
+      data: { contests: [{ ...contest('contest-2', 'PGA Draft'), status: 'DRAFT' }, contest('contest-1', 'Masters Pick 6')] },
+    });
+    listMyContestEntriesMock.mockResolvedValue(myEntries([]));
+
+    renderLeagueContestsPage();
+
+    expect(await screen.findByTestId('league-contest-contest-1')).toBeInTheDocument();
+    expect(screen.queryByTestId('league-contest-contest-2')).not.toBeInTheDocument();
+  });
+
+  it('tints the contest named by ?focus, the one the viewer came from', async () => {
+    primeCommonMocks();
+    listContestsMock.mockResolvedValue({
+      data: { contests: [contest('contest-1', 'Masters Pick 6'), contest('contest-3', 'US Open Pick 6', 'ACTIVE')] },
+    });
+    listMyContestEntriesMock.mockResolvedValue(myEntries([]));
+
+    renderLeagueContestsPage('/league/BIGDAWGS/contests?focus=contest-3');
+
+    expect(await screen.findByTestId('league-contest-contest-3')).toHaveAttribute('data-highlighted', 'true');
+    expect(screen.getByTestId('league-contest-contest-1')).not.toHaveAttribute('data-highlighted');
+  });
+
+  it('just shows the list when ?focus names a contest that is not current', async () => {
+    primeCommonMocks();
+    listContestsMock.mockResolvedValue({ data: { contests: [contest('contest-1', 'Masters Pick 6')] } });
+    listMyContestEntriesMock.mockResolvedValue(myEntries([]));
+
+    renderLeagueContestsPage('/league/BIGDAWGS/contests?focus=gone');
+
+    expect(await screen.findByTestId('league-contest-contest-1')).not.toHaveAttribute('data-highlighted');
+  });
+
+  it('shows the whole Current list for an old My contests link', async () => {
+    primeCommonMocks();
+    listContestsMock.mockResolvedValue({
+      data: { contests: [contest('contest-1', 'Masters Pick 6'), contest('contest-3', 'US Open Pick 6', 'ACTIVE')] },
+    });
+    listMyContestEntriesMock.mockResolvedValue(myEntries(['contest-3']));
+
+    renderLeagueContestsPage('/league/BIGDAWGS/contests?filter=my-entries');
+
+    expect(await screen.findByTestId('league-contest-contest-1')).toBeInTheDocument();
+    expect(screen.getByTestId('league-contest-contest-3')).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'Current' })).toBeChecked();
+  });
+
+  it('offers only the Current and Past tabs, with no My contests tab', async () => {
+    primeCommonMocks();
+    listContestsMock.mockResolvedValue({ data: { contests: [] } });
+
+    renderLeagueContestsPage();
+
+    const radios = await screen.findAllByRole('radio');
+    expect(radios.map((radio) => radio.getAttribute('aria-label') ?? radio.textContent)).toEqual(['Current', 'Past']);
+  });
+
+  it('links to How to play from the page header', async () => {
+    primeCommonMocks();
+    listContestsMock.mockResolvedValue({ data: { contests: [] } });
+
+    renderLeagueContestsPage();
+
+    expect(await screen.findByTestId('contests-how-to-play')).toHaveAttribute('href', '/how-to-play');
   });
 });
 
 describe('LeagueContestsPage, beyond the default list', () => {
-  afterEach(() => {
-    getCurrentUserMock.mockReset();
-    getLeagueByCodeMock.mockReset();
-    listMyContestEntriesMock.mockReset();
-    listContestsMock.mockReset();
-    logoutUserMock.mockReset();
-    refreshTokenMock.mockReset();
-  });
+  afterEach(resetMocks);
 
   it('keeps contest setup out of the member Contests page, even for a commissioner', async () => {
     primeCommonMocks({ leagueRole: 'COMMISSIONER' });
@@ -224,19 +335,19 @@ describe('LeagueContestsPage, beyond the default list', () => {
 
     renderLeagueContestsPage();
 
-    expect(await screen.findByTestId('league-contests-active')).toBeInTheDocument();
+    expect(await screen.findByTestId('league-contests-current')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /Manage contests/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /Create contest/i })).not.toBeInTheDocument();
   });
 
-  it('says the league has no active contests when the list returns none current', async () => {
+  it('says no contest is open or live, pointing to Past, when the list returns none current', async () => {
     primeCommonMocks();
     listContestsMock.mockResolvedValue({ data: { contests: [] } });
 
     renderLeagueContestsPage();
 
-    expect(await screen.findByTestId('league-contests-active')).toHaveTextContent(
-      'No active contests are available for this league yet.',
+    expect(await screen.findByTestId('league-contest-empty')).toHaveTextContent(
+      'No contests are open or live right now. Finished ones are under Past.',
     );
   });
 
@@ -250,52 +361,6 @@ describe('LeagueContestsPage, beyond the default list', () => {
     renderLeagueContestsPage();
 
     expect(await screen.findByText("We couldn't load contests for this league.")).toBeInTheDocument();
-    expect(screen.queryByTestId('league-contests-active')).not.toBeInTheDocument();
-  });
-
-  it('lists only the active contests the viewer\'s team has entered under "My Contests"', async () => {
-    primeCommonMocks();
-    listContestsMock.mockResolvedValue({
-      data: {
-        contests: [
-          contest('contest-1', 'Masters Pick 6'),
-          contest('contest-3', 'US Open Pick 6', 'ACTIVE'),
-        ],
-      },
-    });
-    listMyContestEntriesMock.mockResolvedValue(myEntries(['contest-3']));
-
-    renderLeagueContestsPage('/league/BIGDAWGS/contests?filter=my-entries');
-
-    expect(await screen.findByRole('radio', { name: 'My contests' })).toBeChecked();
-    expect(await screen.findByTestId('league-contest-contest-3')).toBeInTheDocument();
-    expect(screen.queryByTestId('league-contest-contest-1')).not.toBeInTheDocument();
-    // One read for the team's entries across the league, not one per contest (#1197).
-    expect(listMyContestEntriesMock).toHaveBeenCalledTimes(1);
-    expect(listMyContestEntriesMock).toHaveBeenCalledWith(expect.objectContaining({ path: { id: 'league-1' } }));
-  });
-
-  it('says the viewer has no entries under "My Contests" when they have entered none', async () => {
-    primeCommonMocks();
-    listContestsMock.mockResolvedValue({ data: { contests: [contest('contest-1', 'Masters Pick 6')] } });
-    listMyContestEntriesMock.mockResolvedValue(myEntries([]));
-
-    renderLeagueContestsPage('/league/BIGDAWGS/contests?filter=my-entries');
-
-    expect(await screen.findByText('You don’t have entries in any active contests yet.')).toBeInTheDocument();
-  });
-
-  it('shows an error under "My Contests" when reading the team\'s entries fails, rather than claiming it has none', async () => {
-    primeCommonMocks();
-    listContestsMock.mockResolvedValue({ data: { contests: [contest('contest-1', 'Masters Pick 6')] } });
-    listMyContestEntriesMock.mockResolvedValue({
-      error: { error: { code: 'INTERNAL_ERROR', message: 'Boom' } },
-      status: 500,
-    });
-
-    renderLeagueContestsPage('/league/BIGDAWGS/contests?filter=my-entries');
-
-    expect(await screen.findByText("We couldn't load your contests.")).toBeInTheDocument();
-    expect(screen.queryByText('You don’t have entries in any active contests yet.')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('league-contests-current')).not.toBeInTheDocument();
   });
 });

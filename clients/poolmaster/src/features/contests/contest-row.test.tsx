@@ -1,7 +1,7 @@
 import { render, screen, within } from '@testing-library/react';
 import type { ComponentProps } from 'react';
 import { MemoryRouter } from 'react-router';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { ContestRow } from './contest-row';
 
 function drawRow(props: Partial<ComponentProps<typeof ContestRow>> = {}) {
@@ -21,6 +21,25 @@ function drawRow(props: Partial<ComponentProps<typeof ContestRow>> = {}) {
 }
 
 describe.each(['card', 'compact'] as const)('ContestRow (%s)', (density) => {
+  it('tints the contest the viewer came from and scrolls it into view', () => {
+    const scroll = vi.spyOn(Element.prototype, 'scrollIntoView');
+    const row = drawRow({ density, isHighlighted: true });
+
+    expect(row).toHaveAttribute('data-highlighted', 'true');
+    expect(row.className).toContain('bg-primary/10');
+    expect(scroll).toHaveBeenCalledTimes(1);
+    scroll.mockRestore();
+  });
+
+  it('leaves an ordinary row untinted and where it is', () => {
+    const scroll = vi.spyOn(Element.prototype, 'scrollIntoView');
+    const row = drawRow({ density });
+
+    expect(row).not.toHaveAttribute('data-highlighted');
+    expect(scroll).not.toHaveBeenCalled();
+    scroll.mockRestore();
+  });
+
   it('opens its contest from anywhere on the row', () => {
     const row = drawRow({ density });
 
