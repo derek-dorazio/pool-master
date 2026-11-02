@@ -147,12 +147,12 @@ function liveLeaderboard(contestId: string, entries: ReturnType<typeof standing>
 
 function primeMocks({
   contests = [] as ReturnType<typeof contest>[],
-  entriesByContest = {} as Record<string, ReturnType<typeof entry>[]>,
+  entriesByContest = {},
   cups = [] as CupDto[],
-  eventStarts = {} as Record<string, string>,
+  eventStarts = {},
   isActive = true,
   hasTeam = true,
-  role = 'MEMBER' as 'MEMBER' | 'COMMISSIONER',
+  role = 'MEMBER',
   features = Object.values(PlanFeature),
 }: {
   features?: PlanFeature[];

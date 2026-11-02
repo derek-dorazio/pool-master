@@ -32,7 +32,6 @@ import { deliverQueuedEmail, emailServiceOver } from '../../support/email-servic
 import { EMAIL_SETTINGS } from '../../../packages/core-api/src/modules/email';
 import { createContestNotices, createEntryReminders } from '../../../packages/core-api/src/modules/notifications';
 import { fakeLogger } from '../../support/fake-logger';
-import { integrationPlanEntitlements } from '../plan-entitlements';
 import { createContestRow } from '../../support/contest-rows';
 
 // The contest-cluster ports (#247) against real Postgres: what each read returns and in what
@@ -1799,7 +1798,6 @@ describe('EventLifecycleService — starting an event\'s contests on the ports (
         email: emailServiceOver({ providerName: 'smtp', send }),
         appBaseUrl: 'https://app.example.test',
         logger: fakeLogger(),
-        planEntitlements: integrationPlanEntitlements(),
       }),
     });
 
@@ -1860,7 +1858,6 @@ describe('EventLifecycleService — an event cancelled under a contest (#845 C7)
         email: emailServiceOver({ providerName: 'smtp', send }),
         appBaseUrl: 'https://app.example.test',
         logger: fakeLogger(),
-        planEntitlements: integrationPlanEntitlements(),
       }),
     });
 

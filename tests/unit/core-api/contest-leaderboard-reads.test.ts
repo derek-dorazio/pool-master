@@ -217,7 +217,7 @@ describe('contest scoring of unplayed rounds', () => {
       [3, 'COMPLETED', 70, -2],
       [4, 'IN_PROGRESS', 71, -1],
     ]);
-    lastGroup.rounds[3].golf = { strokes: 71, scoreToPar: -1, thru: 18 } as typeof lastGroup.rounds[number]['golf'];
+    lastGroup.rounds[3].golf = { strokes: 71, scoreToPar: -1, thru: 18 };
 
     const [, score] = toParticipantScores(field(leader, lastGroup), scoringEvent({ rounds: 4, roundsPar: null, status: 'COMPLETED' }), GOLF_SCORING);
 
@@ -286,7 +286,7 @@ function golfer(
       : { standing: { asOf: null, status: standingStatus }, golf: { eventScoreToPar } },
     rounds: rounds.map(([roundNumber, status, strokes, scoreToPar]) => ({
       round: { roundNumber, status },
-      golf: { strokes, scoreToPar, thru: status === 'IN_PROGRESS' ? 9 : 18 } as { strokes: number; scoreToPar: number; thru: number | null },
+      golf: { strokes, scoreToPar, thru: status === 'IN_PROGRESS' ? 9 : 18 },
     })),
   };
 }

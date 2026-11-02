@@ -25,13 +25,13 @@ export interface StoredSyncRunDetails {
 /** The payload JSON of a stored sync run, or null when the column holds no object. */
 export function readStoredSyncRunPayload(payloadJson: unknown): StoredSyncRunPayload | null {
   return payloadJson && typeof payloadJson === 'object' && !Array.isArray(payloadJson)
-    ? payloadJson as StoredSyncRunPayload
+    ? payloadJson
     : null;
 }
 
 /** The details JSON of a stored sync run, or null when the column holds none. */
 export function readStoredSyncRunDetails(detailsJson: unknown): StoredSyncRunDetails | null {
   return detailsJson && typeof detailsJson === 'object' && !Array.isArray(detailsJson)
-    ? detailsJson as StoredSyncRunDetails
+    ? detailsJson
     : null;
 }

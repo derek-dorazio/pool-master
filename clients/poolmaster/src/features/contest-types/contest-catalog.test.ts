@@ -26,7 +26,7 @@ function template(templateKey: string, overrides: Partial<ContestConfigTemplateD
     schemaVersion: 1,
     configuration: { selectionType: 'TIERED', picksPerTier: 1, countedScores: 4, maxEntriesPerSquad: 1 },
     ...overrides,
-  } as ContestConfigTemplateDto;
+  };
 }
 
 const TEMPLATES = [

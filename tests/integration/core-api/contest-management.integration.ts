@@ -69,14 +69,13 @@ describe('Contest management integration', () => {
           status: 'ACTIVE',
         },
       });
-      const eventParticipant = await prisma.sportEventParticipant.create({
+      await prisma.sportEventParticipant.create({
         data: {
           sportEventId,
           participantId: participant.id,
           isActive: true,
         },
       });
-      void eventParticipant;
     }
   }
 

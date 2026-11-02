@@ -5,7 +5,7 @@
  * shifts a past year. A year freezes itself: once it is over, no contest can go final in it.
  */
 import type { FastifyBaseLogger } from 'fastify';
-import type { ChampionshipRepository, CupRepository, LeagueRepository, SquadRepository } from '@poolmaster/shared/db';
+import type { ChampionshipRepository, LeagueRepository, SquadRepository } from '@poolmaster/shared/db';
 import {
   type ChampionshipTile,
   CupWeight,
@@ -18,6 +18,7 @@ import {
   tallyChampionship,
   type Contest,
   type LeagueYearFinish,
+  type RankedContestEntry,
   type Squad,
 } from '@poolmaster/shared/domain';
 
@@ -77,7 +78,6 @@ export interface ChampionshipYearSummaryView {
 
 export interface ChampionshipServiceDeps {
   finishes: ChampionshipRepository;
-  cups: Pick<CupRepository, 'findRankedEntries'>;
   /** The league's points table and championship name come from its row, read once per request (#1176). */
   leagues: Pick<LeagueRepository, 'findById'>;
   squads: SquadRepository;
@@ -95,16 +95,17 @@ export class ChampionshipService {
   /**
    * Writes a contest's finishes as it goes final: each squad once, from its best entry's frozen
    * place, scored on the league's points table and the contest's weight. Settlement calls it after
-   * freezing the places and before completing the contest, so a failure leaves the contest to be
-   * settled again. A second call for the contest writes nothing. Answers how many it wrote.
+   * freezing the places, with the entries it placed, and before completing the contest, so a
+   * failure leaves the contest to be settled again. A second call for the contest writes nothing.
+   * Answers how many it wrote.
    */
-  async recordContest(contest: Pick<Contest, 'id' | 'leagueId' | 'cupWeight'>, settledAt: Date): Promise<number> {
+  async recordContest(contest: Pick<Contest, 'id' | 'leagueId' | 'cupWeight'>, settledAt: Date, ranked: readonly RankedContestEntry[]): Promise<number> {
     const league = await this.deps.leagues.findById(contest.leagueId);
     if (league === null) {
       this.deps.logger?.warn({ action: 'championship.record.leagueMissing', data: { contestId: contest.id, leagueId: contest.leagueId } }, 'Championship finishes not written: the contest\'s league is gone');
       return 0;
     }
-    const finishes = squadContestFinishes(await this.deps.cups.findRankedEntries([contest.id]));
+    const finishes = squadContestFinishes(ranked);
     if (finishes.length === 0) {
       this.deps.logger?.debug({ action: 'championship.record.noResult', data: { contestId: contest.id } }, 'Championship finishes not written: nobody placed');
       return 0;

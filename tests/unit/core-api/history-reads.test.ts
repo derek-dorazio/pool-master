@@ -80,7 +80,7 @@ async function leagueWithSeasons(seasonCount: number) {
     sportLeagues: counted(sportLeagues, reads),
     now: () => NOW,
   });
-  const championship = new ChampionshipService({ finishes: counted(finishes, reads), cups: counted(cups, reads), leagues: counted(cups.leagues, reads), squads: counted(squads, reads), now: () => NOW });
+  const championship = new ChampionshipService({ finishes: counted(finishes, reads), leagues: counted(cups.leagues, reads), squads: counted(squads, reads), now: () => NOW });
   const history = new HistoryService({
     finishes: counted(finishes, reads),
     squads: counted(squads, reads),
@@ -114,9 +114,10 @@ async function leagueWithSeasons(seasonCount: number) {
           firstEventStartsAt: new Date(completedAt.getTime() - 86_400_000),
           completedAt,
         });
-        cups.rankedEntries.push(...places.map(([squadId, position]) => ({ contestId: id, squadId, position })));
+        const ranked = places.map(([squadId, position]) => ({ squadId, position }));
+        cups.rankedEntries.push(...ranked.map((entry) => ({ ...entry, contestId: id })));
         cups.settle(id, completedAt);
-        await championship.recordContest({ id, leagueId: LEAGUE, cupWeight: CupWeight.NORMAL }, completedAt);
+        await championship.recordContest({ id, leagueId: LEAGUE, cupWeight: CupWeight.NORMAL }, completedAt, ranked);
       }
     }
     const pgaCup = cups.cups.find((cup) => cup.seasonYear === seasonYear && cup.sportLeagueId === 'pga');
@@ -141,7 +142,7 @@ async function leagueWithSeasons(seasonCount: number) {
   });
   cups.rankedEntries.push({ contestId: `fun-${String(quietYear)}`, squadId: 'bogeys', position: 1 });
   cups.settle(`fun-${String(quietYear)}`, quietAt);
-  await championship.recordContest({ id: `fun-${String(quietYear)}`, leagueId: LEAGUE, cupWeight: CupWeight.NOT_COUNTED }, quietAt);
+  await championship.recordContest({ id: `fun-${String(quietYear)}`, leagueId: LEAGUE, cupWeight: CupWeight.NOT_COUNTED }, quietAt, [{ squadId: 'bogeys', position: 1 }]);
   reads.count = 0;
   return { history, championship, cupService, reads };
 }

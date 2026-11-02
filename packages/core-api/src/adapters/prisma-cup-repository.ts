@@ -3,7 +3,7 @@
  */
 
 import type { Prisma, PrismaClient } from '@prisma/client';
-import type { CupContest, CupContestFinish, CupKey, CupRankedEntry, CupRepository, LeagueCupContest } from '@poolmaster/shared/db';
+import type { CupContest, CupContestFinish, CupKey, CupRepository, LeagueCupContest } from '@poolmaster/shared/db';
 import { ContestStatus, CupStatus, type Cup, type CupPointsTable, type CupStanding } from '@poolmaster/shared/domain';
 
 const CUP_SELECT = {
@@ -151,19 +151,6 @@ export class PrismaCupRepository implements CupRepository {
       select: CUP_CONTEST_SELECT,
     });
     return toCupContests(rows);
-  }
-
-  async findRankedEntries(contestIds: readonly string[]): Promise<CupRankedEntry[]> {
-    if (contestIds.length === 0) {
-      return [];
-    }
-    const rows = await this.prisma.contestEntryStanding.findMany({
-      where: { contestId: { in: [...contestIds] }, position: { not: null } },
-      select: { contestId: true, position: true, contestEntry: { select: { squadId: true } } },
-    });
-    return rows.flatMap((row) => row.position === null
-      ? []
-      : [{ contestId: row.contestId, squadId: row.contestEntry.squadId, position: row.position }]);
   }
 
   async findFinishes(contestIds: readonly string[]): Promise<CupContestFinish[]> {

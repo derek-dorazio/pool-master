@@ -25,7 +25,7 @@ import {
   type User,
 } from '@poolmaster/shared/domain';
 import { areEventPicksOpen } from '../contests/entry-window';
-import type { ContestService } from '../contests/service';
+import type { ContestFinalStandings } from '../contests/final-standings';
 import {
   emailRecipientOf,
   ContestEventChangeKind,
@@ -52,8 +52,6 @@ export interface ContestNoticeDeps extends ContestSummaryDeps, LeagueMemberDeps 
   leagues: Pick<LeagueRepository, 'findById' | 'findByIds'>;
   entries: Pick<ContestEntryRepository, 'findByContest' | 'findByContests'>;
   squadMemberships: Pick<SquadMembershipRepository, 'findBySquads'>;
-  /** A settled contest's frozen places, for its final results. */
-  finalStandings: Pick<ContestService, 'finalStandingsOf'>;
   email: Pick<EmailService, 'sendMany'>;
   appBaseUrl: string;
   logger?: FastifyBaseLogger;
@@ -75,9 +73,9 @@ function toEmailEvent(sportEvent: SportEvent): ContestEmailEvent {
   return { name: sportEvent.name, startsAt: sportEvent.startDate };
 }
 
-/** The contest-settled seam ContestSettlementService calls. */
+/** The contest-settled seam ContestSettlementService calls, with the final places it read. */
 export interface ContestSettledNotice {
-  contestSettled(contest: Contest): Promise<void>;
+  contestSettled(contest: Contest, final: ContestFinalStandings): Promise<void>;
 }
 
 /** What happened to an event, as EventLifecycleService and SportEventService report it. */
@@ -194,10 +192,9 @@ export class ContestNotices implements ContestOpenedNotice, ContestStartedNotice
    * own entries finished, and congratulates the owners of the winning entries. F2 instead, to the
    * commissioners and the members with an entry, when the contest ended with no scores.
    */
-  async contestSettled(contest: Contest): Promise<void> {
-    const [league, final, members] = await Promise.all([
+  async contestSettled(contest: Contest, final: ContestFinalStandings): Promise<void> {
+    const [league, members] = await Promise.all([
       this.deps.leagues.findById(contest.leagueId),
-      this.deps.finalStandings.finalStandingsOf(contest),
       activeLeagueMembersWithRoles(this.deps, contest.leagueId),
     ]);
     if (!league) {

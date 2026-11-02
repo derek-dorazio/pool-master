@@ -73,7 +73,7 @@ function request<R extends FastifyRequest>(fields: Partial<R>, signedIn = true):
     ...fields,
     authUser: signedIn ? { userId: 'actor-1', email: 'actor@example.com', isRootAdmin: false } : undefined,
     log: fakeLogger(),
-  } as Partial<R>);
+  });
 }
 
 async function call(handler: (request: never, reply: FastifyReply) => Promise<unknown>, req: FastifyRequest) {

@@ -67,7 +67,7 @@ function requestAs<R extends FastifyRequest>(user: User | null, fields: Partial<
     ...fields,
     authUser: user ? { userId: user.id, email: user.email, isRootAdmin: user.isRootAdmin === true } : undefined,
     log: fakeLogger(),
-  } as Partial<R>);
+  });
 }
 
 type Handler = (request: never, reply: FastifyReply) => Promise<unknown>;

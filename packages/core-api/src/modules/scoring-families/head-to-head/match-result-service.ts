@@ -211,14 +211,15 @@ export class MatchResultService {
     const result = { id: match.id, status: MatchStatus.COMPLETED, winnerSide: input.winnerSide, homeScore: input.homeScore, awayScore: input.awayScore, ...shootout, ending };
     // A tie sends nobody on: only a game that forms no bracket can end level.
     const sideFill = input.winnerSide === null ? null : this.advance(bracket, match, sideRowId(match, input.winnerSide));
-    await this.write(sportEventId, bracket, result, sideFill);
+    const after = await this.write(sportEventId, bracket, result, sideFill);
     this.deps.logger?.info({ sportEventId, matchNumber, winnerSide: input.winnerSide, ending, winnerChanges }, 'Saved a match result');
     const now = this.deps.now?.() ?? new Date();
+    // The bracket as written stands in for a read of it, here and for the contests (#1355).
     if (sportEvent.status === SportEventStatus.IN_PROGRESS) {
-      await this.deps.contestActivation?.activateContestsPastCutoff(sportEvent, now);
+      await this.deps.contestActivation?.activateContestsPastCutoff(sportEvent, now, after);
     }
-    await this.deps.contestActivation?.settleContestsForFinishedGame(sportEvent, match.id, now);
-    return this.deps.matches.findBySportEvent(sportEventId);
+    await this.deps.contestActivation?.settleContestsForFinishedGame(sportEvent, match.id, now, after);
+    return after;
   }
 
   /**
@@ -235,9 +236,9 @@ export class MatchResultService {
     }
     this.assertNextMatchOpen(sportEventId, bracket, match);
     const result = { id: match.id, status: MatchStatus.SCHEDULED, winnerSide: null, homeScore: null, awayScore: null, ...NO_RESULT_DETAILS };
-    await this.write(sportEventId, bracket, result, this.advance(bracket, match, null));
+    const after = await this.write(sportEventId, bracket, result, this.advance(bracket, match, null));
     this.deps.logger?.info({ sportEventId, matchNumber }, 'Cleared a match result');
-    return this.deps.matches.findBySportEvent(sportEventId);
+    return after;
   }
 
   /**
@@ -273,11 +274,11 @@ export class MatchResultService {
       );
     }
     const result = { id: match.id, status: MatchStatus.CANCELLED, winnerSide: null, homeScore: null, awayScore: null, ...NO_RESULT_DETAILS };
-    await this.write(sportEventId, bracket, result, null);
+    const after = await this.write(sportEventId, bracket, result, null);
     this.deps.logger?.info({ sportEventId, matchNumber }, 'Cancelled a game');
     // A squares contest on the game ends Final with no scores (#711, #743).
-    await this.deps.contestActivation?.settleContestsForFinishedGame(sportEvent, match.id, this.deps.now?.() ?? new Date());
-    return this.deps.matches.findBySportEvent(sportEventId);
+    await this.deps.contestActivation?.settleContestsForFinishedGame(sportEvent, match.id, this.deps.now?.() ?? new Date(), after);
+    return after;
   }
 
   /**
@@ -385,8 +386,8 @@ export class MatchResultService {
     bracket: readonly SportEventMatch[],
     result: Pick<SportEventMatch, 'id' | 'status' | 'winnerSide' | 'homeScore' | 'awayScore' | 'homeShootoutScore' | 'awayShootoutScore' | 'ending'>,
     sideFill: MatchSideFill | null,
-  ): Promise<void> {
-    // The standings are read off the bracket as it will stand after this write.
+  ): Promise<SportEventMatch[]> {
+    // The standings are read off the bracket as it will stand after this write, which is answered.
     const after = bracket.map((candidate) => {
       if (candidate.id === result.id) return { ...candidate, ...result };
       if (sideFill && candidate.id === sideFill.id) {
@@ -400,6 +401,7 @@ export class MatchResultService {
     const standings = formsNoBracket(after, linksOn) ? gameStandings(after, asOf) : bracketStandings(after, asOf);
     await this.deps.matches.applyResult({ result, sideFill, standings });
     this.deps.logger?.debug({ sportEventId, matchId: result.id }, 'Rewrote the event standings');
+    return after;
   }
 
   private assertNextMatchOpen(sportEventId: string, bracket: readonly SportEventMatch[], match: SportEventMatch): void {

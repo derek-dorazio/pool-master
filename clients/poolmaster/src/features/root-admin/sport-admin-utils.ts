@@ -11,7 +11,7 @@ import type {
   SportEventParticipantDto,
   SportEventRoundDto,
 } from '@/lib/api';
-import { SportEventStatus, getSportDefinition, type ParticipantRoundStatus, type Sport } from '@poolmaster/shared/domain';
+import { SportEventStatus, getSportDefinition, type AssertTrue, type ParticipantRoundStatus, type Sport } from '@poolmaster/shared/domain';
 
 /**
  * plans/124 §6.3 / §6.4 — shared, pure helpers for the golf admin hub, tournament
@@ -356,8 +356,7 @@ type _ParticipantStatusExhaustive =
       ? true
       : ['unknown golf player status listed', (typeof PARTICIPANT_STATUSES)[number]]
     : ['golf player status missing from PARTICIPANT_STATUSES', ManagedParticipantStatus];
-const _participantStatusExhaustive: _ParticipantStatusExhaustive = true;
-void _participantStatusExhaustive;
+export type ParticipantStatusesMatchEnum = AssertTrue<_ParticipantStatusExhaustive>;
 
 const PARTICIPANT_STATUS_LABELS: Record<ManagedParticipantStatus, string> = {
   ACTIVE: 'Active',
@@ -484,8 +483,7 @@ type _GolfRoundScoreStatusExhaustive =
       ? true
       : ['unknown golf round status listed', (typeof GOLF_ROUND_SCORE_STATUSES)[number]]
     : ['golf round status missing from GOLF_ROUND_SCORE_STATUSES', GolfRoundScoreStatus];
-const _golfRoundScoreStatusExhaustive: _GolfRoundScoreStatusExhaustive = true;
-void _golfRoundScoreStatusExhaustive;
+export type GolfRoundScoreStatusesMatchEnum = AssertTrue<_GolfRoundScoreStatusExhaustive>;
 
 const GOLF_ROUND_STATUS_LABEL: Record<GolfRoundScoreStatus, string> = {
   IN_PROGRESS: 'In progress',

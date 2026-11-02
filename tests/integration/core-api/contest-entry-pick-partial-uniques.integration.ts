@@ -131,7 +131,7 @@ async function seedContestFixture(contestFormat: 'ROSTER'): Promise<FixtureConte
       sportEvents: { create: { sportEventId: sportEvent.id, sequence: 1 } },
       name: `Partial Uniques Contest ${suffix}`,
       status: 'OPEN',
-      contestFormat: contestFormat as 'ROSTER',
+      contestFormat,
       selectionType: 'TIERED',
     },
   });
