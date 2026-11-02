@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import { MemoryRouter, Route, Routes } from 'react-router';
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { buildPlanEntitlements } from '@/features/plans/test/fixtures';
@@ -84,6 +84,10 @@ vi.mock('@/lib/logger', () => ({
   getLogger: () => mockLogger,
 }));
 
+function SearchProbe() {
+  return <div data-testid="location-search">{useLocation().search}</div>;
+}
+
 function renderContestBoard(search = '') {
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -99,7 +103,7 @@ function renderContestBoard(search = '') {
         initialEntries={[{ pathname: '/league/BIGDAWGS/contests/contest-1', search }]}
       >
         <Routes>
-          <Route element={<ContestDetailPage />} path="/league/:leagueCode/contests/:contestId" />
+          <Route element={<><ContestDetailPage /><SearchProbe /></>} path="/league/:leagueCode/contests/:contestId" />
           <Route
             element={<div data-testid="contest-entry-page" />}
             path="/league/:leagueCode/contests/:contestId/entries/:entryId"
@@ -397,6 +401,18 @@ describe('ContestDetailPage (Contest Board)', () => {
 
     expect(await screen.findByTestId('contest-board-entry-entry-3')).toBeInTheDocument();
     expect(screen.getByTestId('contest-menu-entries')).toBeChecked();
+  });
+
+  it('changes only its own param in the link when My entries only is ticked and unticked, keeping any other', async () => {
+    primeMocks({ entries: [buildEntry({ id: 'entry-1', squadId: 'squad-1' })] });
+
+    renderContestBoard('?from=email');
+
+    fireEvent.click(await screen.findByTestId('contest-board-my-only-toggle'));
+    expect(screen.getByTestId('location-search')).toHaveTextContent('?from=email&mine=1');
+
+    fireEvent.click(screen.getByTestId('contest-board-my-only-toggle'));
+    expect(screen.getByTestId('location-search')).toHaveTextContent(/^\?from=email$/);
   });
 
   // pool-master-dxd.13 — own entries get the spotlight regardless of toggle state.

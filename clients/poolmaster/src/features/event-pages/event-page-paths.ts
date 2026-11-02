@@ -23,8 +23,8 @@ export function buildHowToPlayFormatPath(sport: Sport | null, selectionType: Sel
 }
 
 /** The anchor of a way to play's tile on How to Play, which the format link scrolls to. */
-export function howToPlayFormatAnchor(wayToPlay: string): string {
-  return `how-to-play-${wayToPlay.toLowerCase().replaceAll('_', '-')}`;
+export function howToPlayFormatAnchor(selectionType: SelectionType): string {
+  return `how-to-play-${selectionType.toLowerCase().replaceAll('_', '-')}`;
 }
 
 /** The Clutch Card's own landing page (#1066), where How to Play's Clutch Card links for more. */

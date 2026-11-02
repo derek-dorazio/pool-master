@@ -32,7 +32,7 @@ const CLUTCH_CARD = 'CLUTCH_CARD';
 type WayToPlay = SelectionType | typeof CLUTCH_CARD;
 
 /** The way to play a `?format=` link names, or null when it names none. */
-function wayToPlayFrom(format: string | null): WayToPlay | null {
+function wayToPlayFrom(format: string | null): SelectionType | null {
   return FORMAT_ORDER.find((selectionType) => selectionType === format) ?? null;
 }
 

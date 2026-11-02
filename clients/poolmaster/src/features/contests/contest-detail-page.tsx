@@ -339,7 +339,14 @@ export function ContestDetailPage() {
               <Checkbox
                 checked={myOnly}
                 data-testid="contest-board-my-only-toggle"
-                onChange={(event) => setSearchParams(event.target.checked ? { [MY_ENTRIES_PARAM]: '1' } : {}, { replace: true })}
+                onChange={(event) => setSearchParams((params) => {
+                  if (event.target.checked) {
+                    params.set(MY_ENTRIES_PARAM, '1');
+                  } else {
+                    params.delete(MY_ENTRIES_PARAM);
+                  }
+                  return params;
+                }, { replace: true })}
               />
               My entries only
             </label>
