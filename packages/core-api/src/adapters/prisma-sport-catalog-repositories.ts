@@ -1121,7 +1121,7 @@ export function toSportEventParticipant(row: Prisma.SportEventParticipantGetPayl
     sportEventId: row.sportEventId,
     participantId: row.participantId,
     isActive: row.isActive,
-    inactiveReason: (row.inactiveReason ?? undefined),
+    inactiveReason: row.inactiveReason ?? undefined,
     ranking: row.ranking ?? undefined,
     oddsToWin: row.oddsToWin === null ? undefined : Number(row.oddsToWin),
     seedNumber: row.seedNumber ?? undefined,

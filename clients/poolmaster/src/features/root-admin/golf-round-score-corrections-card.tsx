@@ -161,7 +161,7 @@ const correctionColumns = [
       const raw =
         draft[entry.sportEventParticipantId]?.status ??
         (GOLF_ROUND_SCORE_STATUSES.includes(entry.status)
-          ? (entry.status)
+          ? entry.status
           : 'IN_PROGRESS');
       return (
         <Select
