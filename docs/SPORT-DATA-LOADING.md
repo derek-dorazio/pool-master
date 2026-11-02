@@ -347,9 +347,9 @@ semifinals as one event of two games, game 1 the first legs and game 2 the secon
 Saint-Germain over Arsenal on penalties in the final) and
 `soccer-2023-womens-world-cup-semifinals-and-final-test.json` (the 2023 Women's World Cup
 semifinals, both one event of one game, and Spain over England in the final) and
-`basketball-2025-wnba-semifinals-and-finals-test.json` (both 2025 WNBA semifinal series as one
-event, game N holding each series' Game N: Las Vegas over Indiana in five, Phoenix over Minnesota
-in four, and Las Vegas's Finals sweep of Phoenix). The field is both teams' players who
+`basketball-2026-wnba-semifinals-and-finals-test.json` (both 2026 WNBA semifinal series as one
+event, game N holding each series' Game N: Atlanta's sweep of New York and Golden State's of Las
+Vegas, and Golden State over Atlanta in seven in the Finals). The field is both teams' players who
 can score the sport's composite, ranked by their regular-season composite total; tiers come
 from that ranking and prices are the default curve, so no odds are made up. Each box score was
 checked player by player against a second source, named in the file's provenance. A test load
