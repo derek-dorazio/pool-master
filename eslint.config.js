@@ -534,6 +534,10 @@ export default tseslint.config(
   {
     files: WEBAPP_FILES,
     plugins: { react },
+    // eslint-plugin-react runs under ESLint 10 through a package.json override (#1384).
+    // Its recommended rules work, but `react/jsx-filename-extension` and
+    // `react/forward-ref-uses-ref` still call `context.getFilename()` and
+    // `context.getSourceCode()`, which ESLint 10 removed: enabling either crashes lint.
     settings: { react: { version: REACT_VERSION } },
     rules: asErrors({
       ...react.configs.flat.recommended.rules,
