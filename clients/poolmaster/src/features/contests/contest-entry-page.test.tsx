@@ -560,6 +560,46 @@ describe('ContestEntryPage', () => {
     expect(updateContestEntryMock).not.toHaveBeenCalled();
   });
 
+  it('lands a submit from an entry reached by its unscoped link on the contest page, not Not found, even before the league read lands', async () => {
+    primeCommonMocks();
+    // The league read never answers, so nothing but the URL can name the contest's league.
+    getLeagueMock.mockReturnValue(new Promise(() => undefined));
+    getSelectionStateMock.mockResolvedValue({
+      data: buildSelectionState([
+        {
+          groupId: 'tier-1',
+          groupName: 'Tier 1',
+          groupNumber: 1,
+          picksFromGroup: 1,
+          selectedParticipantIds: ['sep-1'],
+          participants: [{ ...buildGolfParticipant('sep-1', 'Sovereignty', 1, true), role: 'HORSE' }],
+        },
+      ]),
+    });
+    getContestMock.mockResolvedValue({ data: { contest: contestFixture({ sport: 'HORSE_RACING', name: 'Derby Pick 3' }) } });
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- forwards the untyped selection-state mock's resolution.
+    submitContestEntryMock.mockImplementation(() => getSelectionStateMock());
+
+    render(
+      <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+        <MemoryRouter initialEntries={['/contests/contest-1/entries/entry-1']}>
+          <Routes>
+            {/* The app's routes for an entry page, as routes/index.tsx declares them. */}
+            <Route element={<ContestEntryPage />} path="/contests/:contestId/entries/:entryId" />
+            <Route element={<ContestEntryPage />} path="/league/:leagueCode/contests/:contestId/entries/:entryId" />
+            <Route element={<div data-testid="contest-page" />} path="/league/:leagueCode/contests/:contestId" />
+            <Route element={<div data-testid="not-found" />} path="*" />
+          </Routes>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    fireEvent.click(await screen.findByTestId('contest-entry-submit'));
+
+    expect(await screen.findByTestId('contest-page')).toBeInTheDocument();
+    expect(screen.queryByTestId('not-found')).not.toBeInTheDocument();
+  });
+
   it('pool-master-rop.20 preserves unsaved entry details across selection-state query refetches', async () => {
     primeCommonMocks();
     const selectionGroups = [
