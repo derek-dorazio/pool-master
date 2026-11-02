@@ -118,7 +118,7 @@ export function sportLeaguesModule(fastify: FastifyInstance, opts: SportLeaguesM
     schema: {
       tags: TAGS,
       summary: 'Delete a sport league',
-      description: 'Deletes a sport league nothing uses any more, with its affiliations and its event series that have no events. '
+      description: 'Deletes a sport league nothing uses any more, with its affiliations and its event series that have no events, and takes it out of every league\'s muted sport leagues. '
         + '409 SPORT_LEAGUE_IN_USE, naming what still uses it, while it has an event in any year, a contest setup, an event page offer or a league\'s cup: '
         + 'delete its events first; the others are reference data or league history, and the sport league stays. Root admin only.',
       operationId: 'deleteSportLeague',

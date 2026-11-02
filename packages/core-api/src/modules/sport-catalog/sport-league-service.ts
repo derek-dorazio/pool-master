@@ -155,7 +155,8 @@ export class SportLeagueService {
    */
   async deleteSportLeague(sportLeagueId: string): Promise<void> {
     const sportLeague = await this.requireSportLeague(sportLeagueId);
-    const uses = await this.deps.sportLeagues.findUses(sportLeagueId);
+    const uses = await this.deps.sportLeagues.deleteUnlessUsed(sportLeagueId);
+    if (uses === null) throw sportLeagueNotFound(sportLeagueId);
     const inUse = describeSportLeagueUses(uses);
     if (inUse.length > 0) {
       this.deps.logger?.warn({
@@ -168,7 +169,6 @@ export class SportLeagueService {
         409,
       );
     }
-    await this.deps.sportLeagues.delete(sportLeagueId);
     this.deps.logger?.info({ action: 'sportLeagueService.deleteSportLeague.success', data: { sportLeagueId } }, 'Deleted sport league');
   }
 
@@ -285,9 +285,7 @@ export class SportLeagueService {
 
   private async requireSportLeague(sportLeagueId: string): Promise<SportLeague> {
     const sportLeague = await this.deps.sportLeagues.findById(sportLeagueId);
-    if (!sportLeague) {
-      throw new SportCatalogError(`Sport league ${sportLeagueId} was not found.`, 'SPORT_LEAGUE_NOT_FOUND', 404);
-    }
+    if (!sportLeague) throw sportLeagueNotFound(sportLeagueId);
     return sportLeague;
   }
 
@@ -315,6 +313,10 @@ function requireSportOf(sportsById: ReadonlyMap<string, Sport>, sportLeague: Spo
     throw new SportCatalogError(`No Sport row exists for sport league ${sportLeague.id}.`, 'SPORT_NOT_FOUND', 404);
   }
   return sport;
+}
+
+function sportLeagueNotFound(sportLeagueId: string): SportCatalogError {
+  return new SportCatalogError(`Sport league ${sportLeagueId} was not found.`, 'SPORT_LEAGUE_NOT_FOUND', 404);
 }
 
 /** What a refusal names: "2 events, 1 contest setup". Empty when nothing uses the sport league. */

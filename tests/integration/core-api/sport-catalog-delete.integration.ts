@@ -21,7 +21,7 @@ import { recordStatements } from '../statement-log';
 const SMALL = 2;
 const LARGE = 20;
 
-const made = { sportLeagueIds: new Set<string>(), participantIds: new Set<string>(), templateIds: new Set<string>() };
+const made = { sportLeagueIds: new Set<string>(), participantIds: new Set<string>(), templateIds: new Set<string>(), leagueIds: new Set<string>() };
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -29,6 +29,8 @@ afterAll(async () => {
   const sportLeagueIds = [...made.sportLeagueIds];
   const participantIds = [...made.participantIds];
   await prisma.contestConfigTemplate.deleteMany({ where: { id: { in: [...made.templateIds] } } });
+  await prisma.cup.deleteMany({ where: { leagueId: { in: [...made.leagueIds] } } });
+  await prisma.league.deleteMany({ where: { id: { in: [...made.leagueIds] } } });
   await prisma.participantLeagueAffiliation.deleteMany({ where: { OR: [{ sportLeagueId: { in: sportLeagueIds } }, { participantId: { in: participantIds } }] } });
   await prisma.participantProviderMapping.deleteMany({ where: { participantId: { in: participantIds } } });
   await prisma.eventSeries.deleteMany({ where: { sportLeagueId: { in: sportLeagueIds } } });
@@ -92,7 +94,7 @@ function remove(url: string, admin: TestUserResult) {
 }
 
 describe('deleting a sport league or a participant costs fixed statements (#1400)', () => {
-  it(`DELETE a sport league: the same 8 statements with ${SMALL} affiliations and empty series as with ${LARGE}, and every one is gone`, async () => {
+  it(`DELETE a sport league: the same 11 statements with ${SMALL} affiliations and empty series as with ${LARGE}, and every one is gone`, async () => {
     const admin = await createTestUser({ isRootAdmin: true });
     const small = await tourWithRoster(SMALL);
     const large = await tourWithRoster(LARGE);
@@ -154,12 +156,55 @@ describe('deleting a sport league or a participant costs fixed statements (#1400
     expect(error.message).toContain('1 contest setup');
     expect(await getPrisma().sportLeague.count({ where: { id: sportLeagueId } })).toBe(1);
   });
+
+  it('refuses to delete a sport league a league\'s season cup is for with 409 SPORT_LEAGUE_IN_USE, and keeps the cup', async () => {
+    const admin = await createTestUser({ isRootAdmin: true });
+    const prisma = getPrisma();
+    const sportLeagueId = await tour(await golfSportId());
+    const suffix = randomUUID().slice(0, 8).toUpperCase();
+    const league = await prisma.league.create({ data: { name: `Cup League ${suffix}`, leagueCode: `CUPDEL${suffix}`, cupName: 'Delete Guard Cup' } });
+    made.leagueIds.add(league.id);
+    const cup = await prisma.cup.create({ data: { leagueId: league.id, seasonYear: 2026, sportLeagueId } });
+
+    const response = await remove(`/api/v1/sport-leagues/${sportLeagueId}`, admin);
+
+    expect(response.statusCode).toBe(409);
+    const { error } = ErrorEnvelopeSchema.parse(response.json());
+    expect(error.code).toBe('SPORT_LEAGUE_IN_USE');
+    expect(error.message).toContain('1 league cup');
+    // The cup's foreign key cascades, so only the refusal keeps it.
+    expect(await prisma.cup.count({ where: { id: cup.id } })).toBe(1);
+    expect(await prisma.sportLeague.count({ where: { id: sportLeagueId } })).toBe(1);
+  });
+
+  it('removes the deleted sport league from every league that muted it, and leaves their other muted sport leagues', async () => {
+    const admin = await createTestUser({ isRootAdmin: true });
+    const prisma = getPrisma();
+    const sportId = await golfSportId();
+    const doomed = await tour(sportId);
+    const kept = await tour(sportId);
+    const suffix = randomUUID().slice(0, 8).toUpperCase();
+    const muting = await prisma.league.create({
+      data: { name: `Muting League ${suffix}`, leagueCode: `MUTEA${suffix}`, cupName: 'Muting Cup', mutedSportLeagueIds: [doomed, kept] },
+    });
+    const other = await prisma.league.create({
+      data: { name: `Other League ${suffix}`, leagueCode: `MUTEB${suffix}`, cupName: 'Other Cup', mutedSportLeagueIds: [kept] },
+    });
+    made.leagueIds.add(muting.id);
+    made.leagueIds.add(other.id);
+
+    expect((await remove(`/api/v1/sport-leagues/${doomed}`, admin)).statusCode).toBe(204);
+
+    expect((await prisma.league.findUniqueOrThrow({ where: { id: muting.id } })).mutedSportLeagueIds).toEqual([kept]);
+    expect((await prisma.league.findUniqueOrThrow({ where: { id: other.id } })).mutedSportLeagueIds).toEqual([kept]);
+  });
 });
 
 /**
- * Find; its uses, counted in one query that reads its series too; then the transaction (begin,
- * affiliations, series, the sport league, commit).
+ * Find; then one transaction: begin, lock the sport league, lock its series, its uses (one query
+ * and its series' event counts), affiliations, series, the leagues that muted it, the sport
+ * league, commit.
  */
-const SPORT_LEAGUE_DELETE_STATEMENTS = 8;
-/** Find; its field entries, counted; then the transaction (begin, affiliations, provider identities, the participant, commit). */
+const SPORT_LEAGUE_DELETE_STATEMENTS = 11;
+/** One transaction: begin, lock the participant, count their field rows, affiliations, provider identities, the participant, commit. */
 const PARTICIPANT_DELETE_STATEMENTS = 7;

@@ -11,10 +11,11 @@ import {
   getParticipant,
   getSportLeague,
   listSports,
+  updateLeagueEventEmailSettings,
 } from '@poolmaster/shared/generated/hey-api';
 import type { Client } from '@poolmaster/shared/generated/hey-api/client';
-import { buildRegisteredUser, promoteToRootAdmin, type RegisteredUserContext } from './builders';
-import { disconnectFunctionalPrisma, expectFunctionalError, getFunctionalPrisma } from './setup';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, type RegisteredUserContext } from './builders';
+import { cleanupFunctionalData, disconnectFunctionalPrisma, expectFunctionalError, getFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
 
 // #1400 — a root admin deletes a sport league (a tour) or a participant (a player) that nothing
@@ -48,6 +49,7 @@ afterAll(async () => {
   await db.participant.deleteMany({ where: { id: { in: participantIds } } });
   await db.refreshToken.deleteMany({ where: { userId: { in: [...created.userIds] } } });
   await db.user.deleteMany({ where: { id: { in: [...created.userIds] } } });
+  await cleanupFunctionalData();
   await disconnectFunctionalPrisma();
 });
 
@@ -125,6 +127,32 @@ describe('SDK Functional: a root admin deletes a sport league or a participant n
     expect(await db.eventSeries.count({ where: { sportLeagueId } })).toBe(0);
     expect(await db.participantLeagueAffiliation.count({ where: { sportLeagueId } })).toBe(0);
     expect((await getParticipant({ client, path: { id: participantId } })).response?.status).toBe(200);
+  });
+
+  it('takes a deleted sport league out of every league\'s muted list, so the league can still save its event email settings', async () => {
+    const { client } = await rootAdmin();
+    const sportLeagueId = await newTour(client, 'Muted Tour');
+    const keptId = await newTour(client, 'Kept Muted Tour');
+    const { league, commissionerClient } = await buildLeagueWithCommissioner({ leagueName: `Muting League ${RUN}` });
+    const muted = await updateLeagueEventEmailSettings({
+      client: commissionerClient,
+      path: { id: league.id },
+      body: { mutedSportLeagueIds: [sportLeagueId, keptId], eventEmailDelivery: 'PER_EVENT' },
+    });
+    expect(muted.response?.status).toBe(200);
+
+    expect((await deleteSportLeague({ client, path: { sportLeagueId } })).response?.status).toBe(204);
+
+    const { mutedSportLeagueIds } = await getFunctionalPrisma().league.findUniqueOrThrow({ where: { id: league.id } });
+    expect(mutedSportLeagueIds).toEqual([keptId]);
+    // The settings page sends the league's whole list back on save.
+    const saved = await updateLeagueEventEmailSettings({
+      client: commissionerClient,
+      path: { id: league.id },
+      body: { mutedSportLeagueIds, eventEmailDelivery: 'PER_EVENT' },
+    });
+    expect(saved.response?.status).toBe(200);
+    expect(expectDefined(saved.data).league.mutedSportLeagueIds).toEqual([keptId]);
   });
 
   it('refuses to delete a sport league that still has an event with 409 SPORT_LEAGUE_IN_USE, and keeps it', async () => {

@@ -68,14 +68,14 @@ export interface SportLeagueRepository {
   findBySportAndName(sportId: string, name: string): Promise<SportLeague | null>;
   create(input: Pick<SportLeague, 'sportId' | 'name' | 'matchKeyword' | 'bracketAdvancement'>): Promise<SportLeague>;
   update(id: string, updates: SportLeagueUpdate): Promise<SportLeague>;
-  /** What still uses the sport league, read in one query. */
-  findUses(id: string): Promise<SportLeagueUses>;
   /**
-   * Deletes the sport league with its affiliations and its event series, in one transaction. The
-   * caller has checked `findUses`: a series with an event, or anything else that uses the sport
-   * league, fails the delete on its foreign key.
+   * Deletes the sport league unless something still uses it (#1400), in one transaction that locks
+   * it and its series first, so nothing can start using it between the count and the delete. Its
+   * affiliations and its series go with it, and every league that muted its event emails forgets
+   * it. Returns what uses it, counted under the lock: all zero means it was deleted. Null when no
+   * such sport league exists.
    */
-  delete(id: string): Promise<void>;
+  deleteUnlessUsed(id: string): Promise<SportLeagueUses | null>;
 }
 
 export interface ParticipantRanking {

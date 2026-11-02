@@ -467,14 +467,13 @@ export interface ParticipantRepository {
   findMatchingAny(sportId: string, queries: readonly ParticipantMatchQuery[]): Promise<Participant[]>;
   create(participant: Omit<Participant, 'id' | 'createdAt' | 'updatedAt'>): Promise<Participant>;
   update(id: string, updates: Partial<Participant>): Promise<Participant>;
-  /** How many event fields the participant is on, every event and year (#1400). */
-  countEventFieldEntries(id: string): Promise<number>;
   /**
-   * Deletes the participant with its sport league affiliations and provider identities, in one
-   * transaction. The caller has checked `countEventFieldEntries`: a field row fails the delete on
-   * its foreign key.
+   * Deletes the participant unless an event field holds them (#1400), with their sport league
+   * affiliations and provider identities, in one transaction that locks the participant first, so
+   * no field can add them between the count and the delete. Returns how many fields hold them,
+   * counted under the lock: 0 means they were deleted. Null when no such participant exists.
    */
-  delete(id: string): Promise<void>;
+  deleteUnlessOnAField(id: string): Promise<number | null>;
 }
 
 export interface ParticipantProviderMappingRepository {

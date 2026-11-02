@@ -142,28 +142,37 @@ export class PrismaSportLeagueRepository implements SportLeagueRepository {
     return toSportLeague(await forgettingReads([ReadMemoKey.sportEvent, ReadMemoKey.sportLeague], write));
   }
 
-  async findUses(id: string): Promise<SportLeagueUses> {
-    const row = await this.prisma.sportLeague.findUnique({
-      where: { id },
-      select: {
-        _count: { select: { contestConfigTemplates: true, eventPageOffers: true, cups: true } },
-        eventSeries: { select: { _count: { select: { sportEvents: true } } } },
-      },
-    });
-    return {
-      sportEventCount: row?.eventSeries.reduce((total, series) => total + series._count.sportEvents, 0) ?? 0,
-      contestTemplateCount: row?._count.contestConfigTemplates ?? 0,
-      eventPageOfferCount: row?._count.eventPageOffers ?? 0,
-      cupCount: row?._count.cups ?? 0,
-    };
-  }
-
-  async delete(id: string): Promise<void> {
-    await forgettingReads(ReadMemoKey.sportLeague, () => this.prisma.$transaction([
-      this.prisma.participantLeagueAffiliation.deleteMany({ where: { sportLeagueId: id } }),
-      this.prisma.eventSeries.deleteMany({ where: { sportLeagueId: id } }),
-      this.prisma.sportLeague.delete({ where: { id } }),
-    ]));
+  async deleteUnlessUsed(id: string): Promise<SportLeagueUses | null> {
+    return forgettingReads(ReadMemoKey.sportLeague, () => this.prisma.$transaction(async (tx) => {
+      // FOR UPDATE conflicts with the FOR KEY SHARE a child insert takes on the row it references:
+      // a cup, setup or offer (on the sport league) or an event (on its series) made meanwhile
+      // either committed first and is counted below, or waits and then fails once the rows are gone.
+      // A cup would otherwise go silently, by its cascade.
+      const locked = await tx.$queryRaw<{ id: string }[]>`SELECT id FROM "sport_leagues" WHERE id = ${id}::uuid FOR UPDATE`;
+      if (locked.length === 0) return null;
+      await tx.$queryRaw`SELECT id FROM "event_series" WHERE sport_league_id = ${id}::uuid ORDER BY id FOR UPDATE`;
+      const row = await tx.sportLeague.findUniqueOrThrow({
+        where: { id },
+        select: {
+          _count: { select: { contestConfigTemplates: true, eventPageOffers: true, cups: true } },
+          eventSeries: { select: { _count: { select: { sportEvents: true } } } },
+        },
+      });
+      const uses: SportLeagueUses = {
+        sportEventCount: row.eventSeries.reduce((total, series) => total + series._count.sportEvents, 0),
+        contestTemplateCount: row._count.contestConfigTemplates,
+        eventPageOfferCount: row._count.eventPageOffers,
+        cupCount: row._count.cups,
+      };
+      if (Object.values(uses).some((count) => count > 0)) return uses;
+      await tx.participantLeagueAffiliation.deleteMany({ where: { sportLeagueId: id } });
+      await tx.eventSeries.deleteMany({ where: { sportLeagueId: id } });
+      // A muted list is checked when set, not a foreign key, and a league saves its whole list
+      // back: an id left in it would make that save fail. Prisma cannot remove an array element.
+      await tx.$executeRaw`UPDATE "leagues" SET muted_sport_league_ids = array_remove(muted_sport_league_ids, ${id}::uuid) WHERE ${id}::uuid = ANY(muted_sport_league_ids)`;
+      await tx.sportLeague.delete({ where: { id } });
+      return uses;
+    }));
   }
 }
 

@@ -198,10 +198,10 @@ export class ParticipantService {
    * in any year, has them: the field row is what scores and picks hang from.
    */
   async delete(id: string): Promise<void> {
-    if (!(await this.participantRepo.findById(id))) {
+    const fieldEntries = await this.participantRepo.deleteUnlessOnAField(id);
+    if (fieldEntries === null) {
       throw new ParticipantNotFoundError(id);
     }
-    const fieldEntries = await this.participantRepo.countEventFieldEntries(id);
     if (fieldEntries > 0) {
       this.logger?.warn(
         { action: 'participants.delete.inUse', data: { participantId: id, fieldEntries } },
@@ -209,7 +209,6 @@ export class ParticipantService {
       );
       throw new ParticipantInUseError(id, fieldEntries);
     }
-    await this.participantRepo.delete(id);
     this.logger?.info({ action: 'participants.delete.success', data: { participantId: id } }, 'Deleted participant');
   }
 

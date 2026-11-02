@@ -84,16 +84,19 @@ export class PrismaParticipantRepository implements ParticipantRepository {
     return mapToParticipant(row);
   }
 
-  async countEventFieldEntries(id: string): Promise<number> {
-    return this.prisma.sportEventParticipant.count({ where: { participantId: id } });
-  }
-
-  async delete(id: string): Promise<void> {
-    await this.prisma.$transaction([
-      this.prisma.participantLeagueAffiliation.deleteMany({ where: { participantId: id } }),
-      this.prisma.participantProviderMapping.deleteMany({ where: { participantId: id } }),
-      this.prisma.participant.delete({ where: { id } }),
-    ]);
+  async deleteUnlessOnAField(id: string): Promise<number | null> {
+    return this.prisma.$transaction(async (tx) => {
+      // FOR UPDATE conflicts with the FOR KEY SHARE a field row's insert takes on the participant:
+      // one added meanwhile either committed first and is counted, or waits and then fails.
+      const locked = await tx.$queryRaw<{ id: string }[]>`SELECT id FROM "participants" WHERE id = ${id}::uuid FOR UPDATE`;
+      if (locked.length === 0) return null;
+      const fieldEntries = await tx.sportEventParticipant.count({ where: { participantId: id } });
+      if (fieldEntries > 0) return fieldEntries;
+      await tx.participantLeagueAffiliation.deleteMany({ where: { participantId: id } });
+      await tx.participantProviderMapping.deleteMany({ where: { participantId: id } });
+      await tx.participant.delete({ where: { id } });
+      return 0;
+    });
   }
 }
 
