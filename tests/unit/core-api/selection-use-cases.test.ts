@@ -98,7 +98,7 @@ function leagueMembership(userId: string, role: 'COMMISSIONER' | 'MEMBER'): Leag
     status: 'ACTIVE',
     joinedAt: TIMESTAMPS.createdAt,
     ...TIMESTAMPS,
-  } as LeagueMembership;
+  };
 }
 
 function entry(id: string, squadId: string, tiebreakerValue: number | null = null): ContestEntry {
@@ -152,7 +152,7 @@ function buildWorld(options: WorldOptions = {}) {
     metadata: {},
     ...TIMESTAMPS,
   }) as SportEventParticipant);
-  const participants = golfers.map((golfer) => ({
+  const participants = golfers.map((golfer): Participant => ({
     id: `p-${golfer}`,
     sportId: 'sport-1',
     name: `Golfer ${golfer.toUpperCase()}`,
@@ -161,7 +161,7 @@ function buildWorld(options: WorldOptions = {}) {
     injuryStatus: { status: 'HEALTHY' },
     externalIds: {},
     ...TIMESTAMPS,
-  }) as Participant);
+  }));
   const tierGroups = TIERS.map((tier) => ({
     tierKey: tier.key,
     label: tier.label,
@@ -428,7 +428,7 @@ describe('Tiered selection — a member building an entry', () => {
   it('refuses a pick from someone who has left the entry\'s team, leaving the entry unchanged', async () => {
     const world = buildWorld({
       squadMemberships: [
-        squadMembership(SQUAD_A, ALICE, { status: 'INACTIVE' } as Partial<SquadMembership>),
+        squadMembership(SQUAD_A, ALICE, { status: 'INACTIVE' }),
         squadMembership(SQUAD_B, BOB),
       ],
     });

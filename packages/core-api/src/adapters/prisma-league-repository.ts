@@ -4,7 +4,7 @@
 
 import type { League as PrismaLeague, Prisma, PrismaClient } from '@prisma/client';
 import type { LeaguePlanChange, LeagueRepository, LeagueSearch, LeagueSearchFilters } from '@poolmaster/shared/db';
-import type { League, LeagueIconKey, LeaguePlan } from '@poolmaster/shared/domain';
+import type { League, LeaguePlan } from '@poolmaster/shared/domain';
 import { LeagueMembershipStatus as MembershipStatus, LeaguePlanChangeReason } from '@poolmaster/shared/domain';
 import { forgettingReads, memoizedRead, ReadMemoKey } from '../core/request-read-memo';
 
@@ -229,7 +229,7 @@ function mapToLeague(row: PrismaLeague): League {
     name: row.name,
     description: row.description ?? undefined,
     isActive: row.isActive,
-    iconKey: row.iconKey as LeagueIconKey,
+    iconKey: row.iconKey,
     cupName: row.cupName,
     cupPointsScale: row.cupPointsScale,
     cupCustomPoints: row.cupCustomPoints,

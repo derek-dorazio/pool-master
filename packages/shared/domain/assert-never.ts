@@ -6,3 +6,11 @@
 export function assertNever(value: never, what = 'value'): never {
   throw new Error(`Unhandled ${what}: ${String(value)}`);
 }
+
+/**
+ * Compiles only when `T` is `true`. A check written as
+ * `export type StatusesMatchEnum = AssertTrue<...>` fails the typecheck when an enum and the
+ * list or schema that must match it drift apart. Nothing imports such a check; it is
+ * exported only so that neither the compiler nor lint reports it as unused.
+ */
+export type AssertTrue<T extends true> = T;

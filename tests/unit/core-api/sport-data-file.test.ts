@@ -58,7 +58,7 @@ function horseRacingFile(): HorseRacingFile {
       }],
     }],
   };
-  return file as HorseRacingFile;
+  return file;
 }
 
 interface RaceTestSeed {
@@ -303,7 +303,7 @@ describe('sport data bracket', () => {
         }],
       }],
     };
-    return file as BracketFile;
+    return file;
   }
 
   it('reads a basketball file whose events carry a bracket, region seeds and a play-in place', () => {

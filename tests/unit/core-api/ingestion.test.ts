@@ -9,7 +9,6 @@ import { IngestionScheduler } from '../../../packages/core-api/src/modules/inges
 import type { IngestionCallbacks } from '../../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';
 import type {
   SportDataProvider,
-  ProviderHealthStatus,
 } from '../../../packages/core-api/src/modules/ingestion/core/provider-interface';
 import type { Sport } from '@poolmaster/shared/domain';
 import type { LiveScoreResult } from '@poolmaster/shared/dto';
@@ -22,7 +21,7 @@ function createMockProvider(overrides: Partial<SportDataProvider> = {}): SportDa
   return {
     providerId: 'mock-provider',
     providerName: 'Mock Provider',
-    sportsCovered: ['GOLF' as Sport],
+    sportsCovered: ['GOLF'],
     getUpcomingEvents: jest.fn().mockResolvedValue([]),
     getEventDetails: jest.fn().mockResolvedValue(null),
     getParticipants: jest.fn().mockResolvedValue([]),
@@ -32,7 +31,7 @@ function createMockProvider(overrides: Partial<SportDataProvider> = {}): SportDa
       status: 'HEALTHY',
       errorRateLastHour: 0,
       latencyMsP95: 50,
-    } as ProviderHealthStatus),
+    }),
     ...overrides,
   };
 }
@@ -76,9 +75,9 @@ describe('ProviderRegistry', () => {
 
   it('registers a provider and retrieves it by sport', () => {
     const provider = createMockProvider();
-    registry.register('GOLF' as Sport, provider, 'PRIMARY');
+    registry.register('GOLF', provider, 'PRIMARY');
 
-    const result = registry.getProvider('GOLF' as Sport);
+    const result = registry.getProvider('GOLF');
     expect(result).toBe(provider);
   });
 
@@ -91,7 +90,7 @@ describe('ProviderRegistry', () => {
     const golfProvider = createMockProvider({ providerId: 'golf-api' });
     const nflProvider = createMockProvider({ providerId: 'nfl-api' });
 
-    registry.register('GOLF' as Sport, golfProvider, 'PRIMARY');
+    registry.register('GOLF', golfProvider, 'PRIMARY');
     registry.register('NFL' as Sport, nflProvider, 'PRIMARY');
 
     const sports = registry.getSupportedSports();
@@ -107,7 +106,7 @@ describe('ProviderRegistry', () => {
     const nflProvider = createMockProvider({ providerId: 'nfl-api' });
 
     // Register the same provider for two sports — should appear once in results
-    registry.register('GOLF' as Sport, sharedProvider, 'PRIMARY');
+    registry.register('GOLF', sharedProvider, 'PRIMARY');
     registry.register('NFL' as Sport, sharedProvider, 'PRIMARY');
     registry.register('NFL' as Sport, nflProvider, 'PRIMARY');
 
@@ -122,7 +121,7 @@ describe('ProviderRegistry', () => {
     const golfProvider = createMockProvider({ providerId: 'golf-stats' });
     const nflProvider = createMockProvider({ providerId: 'nfl-stats' });
 
-    registry.register('GOLF' as Sport, golfProvider, 'PRIMARY');
+    registry.register('GOLF', golfProvider, 'PRIMARY');
     registry.register('NFL' as Sport, nflProvider, 'PRIMARY');
 
     expect(registry.getProviderById('golf-stats')).toBe(golfProvider);
@@ -134,7 +133,7 @@ describe('ProviderRegistry', () => {
     const sharedProvider = createMockProvider({ providerId: 'multi-sport-api' });
 
     // Same provider registered for multiple sports.
-    registry.register('GOLF' as Sport, sharedProvider, 'PRIMARY');
+    registry.register('GOLF', sharedProvider, 'PRIMARY');
     registry.register('NFL' as Sport, sharedProvider, 'PRIMARY');
     registry.register('NBA' as Sport, sharedProvider, 'PRIMARY');
 
@@ -177,10 +176,10 @@ describe('IngestionScheduler', () => {
       const provider = createMockProvider({
         getLiveScores: jest.fn().mockResolvedValue(mockResult),
       });
-      registry.register('GOLF' as Sport, provider, 'PRIMARY');
+      registry.register('GOLF', provider, 'PRIMARY');
 
       const scheduler = new IngestionScheduler(registry, callbacks);
-      const job = await scheduler.pollLiveScores('GOLF' as Sport, 'evt-1');
+      const job = await scheduler.pollLiveScores('GOLF', 'evt-1');
 
       expect(job.status).toBe('COMPLETED');
       expect(job.recordsProcessed).toBe(1);

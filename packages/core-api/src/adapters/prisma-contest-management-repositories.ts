@@ -52,7 +52,7 @@ export class PrismaContestConfigurationRepository
         templateId: configuration.templateId,
         templateVersion: configuration.templateVersion,
         selectionType: configuration.selectionType,
-        configJson: configuration.configJson as object | undefined,
+        configJson: configuration.configJson,
         minimumEntries: configuration.minimumEntries,
         maxEntriesPerSquad: configuration.maxEntriesPerSquad,
         totalPrizePoolAmount: configuration.totalPrizePoolAmount,
@@ -78,7 +78,7 @@ export class PrismaContestConfigurationRepository
           selectionType: updates.selectionType,
         }),
         ...(updates.configJson !== undefined && {
-          configJson: updates.configJson as object,
+          configJson: updates.configJson,
         }),
         ...(updates.minimumEntries !== undefined && {
           minimumEntries: updates.minimumEntries,
@@ -149,7 +149,7 @@ export class PrismaContestConfigTemplateRepository
         ...(updates.sortOrder !== undefined && { sortOrder: updates.sortOrder }),
         ...(updates.isDefault !== undefined && { isDefault: updates.isDefault }),
         ...(updates.active !== undefined && { active: updates.active }),
-        ...(updates.configJson !== undefined && { configJson: updates.configJson as object }),
+        ...(updates.configJson !== undefined && { configJson: updates.configJson }),
         ...(updates.schemaVersion !== undefined && { schemaVersion: updates.schemaVersion }),
       },
     });

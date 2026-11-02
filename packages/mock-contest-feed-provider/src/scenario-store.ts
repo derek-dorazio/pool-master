@@ -53,6 +53,7 @@ import { loadTourSeedScenarios } from './tour-seeds';
  */
 type Unvalidated<T> = { readonly [K in keyof T]?: unknown };
 
+// eslint-disable-next-line @typescript-eslint/no-generated-empty-object-type -- T is still a type parameter here, so the mapped type looks empty; each call site names its record.
 function isRecord<T>(value: unknown): value is Unvalidated<T> {
   return typeof value === 'object' && value !== null;
 }
@@ -96,7 +97,7 @@ function ensureEnumValue<T extends readonly string[]>(value: string, allowed: T,
   if (!allowed.includes(value)) {
     throw new Error(`Invalid ${field}: ${value}`);
   }
-  return value as T[number];
+  return value;
 }
 
 function ensureIsoDateTime(value: string, field: string): string {

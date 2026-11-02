@@ -363,7 +363,7 @@ async function startIntegrationMailSink(): Promise<void> {
 
   previousMailEnv = Object.fromEntries(
     MAIL_ENVIRONMENT_KEYS.map((key) => [key, process.env[key]]),
-  ) as Partial<Record<MailEnvironmentKey, string | undefined>>;
+  );
 
   const sink = await startSmtpSinkServer();
   integrationSmtpServer = sink;

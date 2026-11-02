@@ -55,7 +55,7 @@ function configuration(overrides: Partial<ContestConfiguration> = {}): ContestCo
     createdAt: new Date('2026-01-01T00:00:00.000Z'),
     updatedAt: new Date('2026-01-01T00:00:00.000Z'),
     ...overrides,
-  } as ContestConfiguration;
+  };
 }
 
 function entry(id: string, squadId: string): ContestEntry {
@@ -109,7 +109,7 @@ function participant(id: string, overrides: Partial<Participant> = {}): Particip
     createdAt: new Date('2026-01-01T00:00:00.000Z'),
     updatedAt: new Date('2026-01-01T00:00:00.000Z'),
     ...overrides,
-  } as Participant;
+  };
 }
 
 describe('#324 draft rules — role predicate', () => {

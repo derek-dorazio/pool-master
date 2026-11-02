@@ -4,7 +4,7 @@
 
 import type { LeagueInvitation as PrismaLeagueInvitation, Prisma, PrismaClient } from '@prisma/client';
 import type { LeagueInvitationRepository } from '@poolmaster/shared/db';
-import type { InviteType, InvitationStatus, LeagueInvitation } from '@poolmaster/shared/domain';
+import type { LeagueInvitation } from '@poolmaster/shared/domain';
 import { InvitationStatus as SharedInvitationStatus, InviteType as SharedInviteType } from '@poolmaster/shared/domain';
 
 export class PrismaLeagueInvitationRepository implements LeagueInvitationRepository {
@@ -90,8 +90,8 @@ function mapToInvitation(row: PrismaLeagueInvitation): LeagueInvitation {
     leagueId: row.leagueId,
     email: row.email ?? undefined,
     inviteCode: row.inviteCode,
-    inviteType: row.inviteType as InviteType,
-    status: row.status as InvitationStatus,
+    inviteType: row.inviteType,
+    status: row.status,
     maxUses: row.maxUses,
     currentUses: row.currentUses,
     invitedBy: row.invitedBy,

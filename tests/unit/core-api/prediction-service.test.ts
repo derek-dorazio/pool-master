@@ -19,7 +19,6 @@ import {
   type ContestEntry,
   type Sport,
   type SportDefinition,
-  type SportEvent,
   type SportEventMatch,
 } from '@poolmaster/shared/domain';
 import { PredictionService, type GamePicksView } from '../../../packages/core-api/src/modules/selections/prediction-service';
@@ -139,7 +138,7 @@ function setup(options: { mode?: PickEmMode; contestStatus?: ContestStatus; sele
       world.contests.set(contest.id, { ...expectDefined(world.contests.get(contest.id)), status });
     },
     setEventStatus: (status: SportEventStatus) => {
-      world.sportEvents.set(sportEvent.id, { ...expectDefined(world.sportEvents.get(sportEvent.id)), status } as SportEvent);
+      world.sportEvents.set(sportEvent.id, { ...expectDefined(world.sportEvents.get(sportEvent.id)), status });
     },
   };
 }

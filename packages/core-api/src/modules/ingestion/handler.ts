@@ -183,7 +183,7 @@ export function createIngestionHandlers(
     const { providerId } = request.params;
     const { sport, sportLeagueId, from, to, search } = request.query;
     try {
-      const events = await eventScoreSourceService.listCandidateEvents(providerId, sport as Sport, {
+      const events = await eventScoreSourceService.listCandidateEvents(providerId, sport, {
         sportLeagueId,
         from: from ? new Date(from) : undefined,
         to: to ? new Date(to) : undefined,

@@ -203,7 +203,7 @@ export class EventScoreSourceService {
     if (!provider) {
       throw new EventScoreSourceError(`Provider ${input.providerId} was not found.`, 'PROVIDER_NOT_FOUND', 404);
     }
-    if (!provider.sportsCovered.includes(existing.sport as Sport)) {
+    if (!provider.sportsCovered.includes(existing.sport)) {
       throw new EventScoreSourceError(
         `Provider ${input.providerId} does not cover ${existing.sport}, the sport of sport event ${sportEventId}.`,
         'PROVIDER_SPORT_MISMATCH',

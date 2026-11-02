@@ -6,7 +6,6 @@ import type { LeagueMembership as PrismaLeagueMembership, Prisma, PrismaClient }
 import type { LeagueMembershipRepository } from '@poolmaster/shared/db';
 import type {
   LeagueMembership,
-  LeagueMembershipStatus,
   LeagueRole,
 } from '@poolmaster/shared/domain';
 import { LeagueMembershipStatus as MembershipStatus } from '@poolmaster/shared/domain';
@@ -104,8 +103,8 @@ function mapToMembership(row: PrismaLeagueMembership): LeagueMembership {
     id: row.id,
     leagueId: row.leagueId,
     userId: row.userId,
-    role: row.role as LeagueRole,
-    status: row.status as LeagueMembershipStatus,
+    role: row.role,
+    status: row.status,
     joinedAt: row.joinedAt,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,

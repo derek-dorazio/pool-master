@@ -400,7 +400,7 @@ describe('LiveStandings.queueDue', () => {
     const ana = member(league.id, 'Ana');
     boards.set(contest.id, [row('e1', ana.squad, 1, -6)]);
     world.contests.set(contest.id, { ...contest, status: ContestStatus.COMPLETED });
-    const race = world.addSportEvent({ name: 'Kentucky Derby', sport: 'HORSE_RACING', startDate: new Date('2026-05-02T22:57:00.000Z'), status: SportEventStatus.IN_PROGRESS, rounds: 2 } as Partial<SportEvent> & { startDate: Date });
+    const race = world.addSportEvent({ name: 'Kentucky Derby', sport: 'HORSE_RACING', startDate: new Date('2026-05-02T22:57:00.000Z'), status: SportEventStatus.IN_PROGRESS, rounds: 2 });
     const derby = world.addContest(league.id, { status: ContestStatus.ACTIVE, sportEventIds: [race.id] });
     fields.set(race.id, fields.get(masters.id) ?? []);
     boards.set(derby.id, [row('e9', ana.squad, 1, 10)]);
@@ -570,7 +570,7 @@ describe('LiveStandings.queueDue', () => {
           weeklyWinner: index === 0 && entry.week1?.position === 1,
         })),
       })),
-    } as PickEmLeaderboardModel;
+    };
   }
 
   it('sends a settled pick\'em week\'s results once the buffer has passed: the week\'s winner and leaders, the season, next week and a picks link for readers with an entry, but not after the last week', async () => {
@@ -719,7 +719,7 @@ describe('LiveStandings.queueDue', () => {
   /** A live bracket whose first round's last result went in at `done`, with round 2 set to start. */
   function liveBracket(done: Date) {
     const league = world.addLeague({ name: 'Office League', leagueCode: 'OFFICE24' });
-    const tournament = world.addSportEvent({ name: 'NCAA Tournament', sport: 'BASKETBALL', startDate: new Date('2026-03-19T16:00:00.000Z'), status: SportEventStatus.IN_PROGRESS, rounds: 6 } as Partial<SportEvent> & { startDate: Date });
+    const tournament = world.addSportEvent({ name: 'NCAA Tournament', sport: 'BASKETBALL', startDate: new Date('2026-03-19T16:00:00.000Z'), status: SportEventStatus.IN_PROGRESS, rounds: 6 });
     const contest = world.addContest(league.id, {
       name: 'March Madness',
       status: ContestStatus.ACTIVE,
@@ -771,7 +771,7 @@ describe('LiveStandings.queueDue', () => {
   it('names a bracket\'s rounds from its own games when its event stores no round count, so a four-round playoff is named in its league\'s words', async () => {
     const done = new Date('2026-04-30T04:30:00.000Z');
     const league = world.addLeague({ name: 'Office League', leagueCode: 'OFFICE24' });
-    const playoffs = world.addSportEvent({ name: 'NBA Playoffs', sport: 'BASKETBALL', startDate: new Date('2026-04-18T17:00:00.000Z'), status: SportEventStatus.IN_PROGRESS } as Partial<SportEvent> & { startDate: Date });
+    const playoffs = world.addSportEvent({ name: 'NBA Playoffs', sport: 'BASKETBALL', startDate: new Date('2026-04-18T17:00:00.000Z'), status: SportEventStatus.IN_PROGRESS });
     const contest = world.addContest(league.id, { name: 'Playoff Bracket', status: ContestStatus.ACTIVE, contestFormat: ContestFormat.PREDICTION, selectionType: SelectionType.BRACKET, sportEventIds: [playoffs.id] });
     roundNames = ['First Round', 'Conference Semifinals', 'Conference Finals', 'NBA Finals'];
     matches.set(playoffs.id, [
