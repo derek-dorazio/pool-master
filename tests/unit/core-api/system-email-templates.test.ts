@@ -399,7 +399,7 @@ describe('pool-master-98i system email templates', () => {
       expect(message.text).toContain('T2. Azalea (The Fourballs), -9, down 1');
       expect(message.html).toContain('▲2');
       expect(message.html).toContain('▼1');
-      expect(message.text).toContain('Full leaderboard: http://localhost:5173/league/OFFICE24/contests/contest-1/leaderboard');
+      expect(message.text).toContain('Full leaderboard: https://qa.ultimateofficepoolmanager.com/league/OFFICE24/contests/contest-1/leaderboard');
     });
 
     it('lists the reader\'s entries placed below the leaders, and their golfers who missed the cut', () => {
@@ -464,7 +464,7 @@ describe('pool-master-98i system email templates', () => {
         yours: [],
         entryCount: 9,
         cut: [],
-        picksUrl: 'http://localhost:5173/league/OFFICE24/contests/contest-1',
+        picksUrl: 'https://qa.ultimateofficepoolmanager.com/league/OFFICE24/contests/contest-1',
       }, { timeZone: 'America/New_York' });
 
       expect(message.subject).toBe('After Week 3: NFL Pick\'em');
@@ -472,7 +472,7 @@ describe('pool-master-98i system email templates', () => {
       expect(message.text).toContain('Week 3, top 2 of 9:\nT1. Upset City (Casey & Co), 13\nT1. Chalk (Pat), 13');
       expect(message.text).toContain('Season top 1 of 9, by points:\n1. Chalk (Pat), 38, up 1');
       expect(message.text).toContain('Next week: Week 4, first kickoff Thu, Sep 24, 2026');
-      expect(message.text).toContain('Make picks for next week: http://localhost:5173/league/OFFICE24/contests/contest-1');
+      expect(message.text).toContain('Make picks for next week: https://qa.ultimateofficepoolmanager.com/league/OFFICE24/contests/contest-1');
       expect(message.html).toContain('Make picks for next week');
     });
 
@@ -670,7 +670,7 @@ describe('the year in review', () => {
     expect(message.text).toContain('1sts: 4\n2nds: 2\n3rds: 1\nContests played: 18');
     expect(message.text).toContain('2026 NFL Cup: 1st of 12, 240 points · Champion');
     expect(message.text).toContain('2026 PGA Tour Cup: T5 of 12, 180 points');
-    expect(message.html).toContain('href="http://localhost:5173/league/OFFICE24/team?year=2026"');
+    expect(message.html).toContain('href="https://qa.ultimateofficepoolmanager.com/league/OFFICE24/team?year=2026"');
   });
 
   it('says no championship contest counted for a squad that placed only in a cup, leaves out the Cups section for one in none, and gives a name not ending in s the usual possessive', () => {
@@ -690,8 +690,8 @@ describe('new member joined', () => {
     expect(message.subject).toBe('Morgan Member joined Office League');
     expect(message.text).toContain("Morgan Member joined Office League as Morgan's Squad.");
     expect(message.text).toContain('The league has 9 members now.');
-    expect(message.text).toContain('Members and owners: http://localhost:5173/league/OFFICE24/admin/teams');
-    expect(message.html).toContain('href="http://localhost:5173/league/OFFICE24/admin/teams"');
+    expect(message.text).toContain('Members and owners: https://qa.ultimateofficepoolmanager.com/league/OFFICE24/admin/teams');
+    expect(message.html).toContain('href="https://qa.ultimateofficepoolmanager.com/league/OFFICE24/admin/teams"');
   });
 
   it('lists a busy day\'s later joins the next day, each with their squad when they have one, and escapes their names', () => {
@@ -730,8 +730,8 @@ describe('contest expanded', () => {
 
     expect(message.subject).toBe('Masters Pool now takes 50 entries');
     expect(message.text).toContain("Masters Pool was expanded to 50 entries by Sam Commissioner. It's in Office League's payment history.");
-    expect(message.text).toContain('Manage contest: http://localhost:5173/league/OFFICE24/admin/contests/contest-1');
-    expect(message.html).toContain('href="http://localhost:5173/league/OFFICE24/admin/contests/contest-1"');
+    expect(message.text).toContain('Manage contest: https://qa.ultimateofficepoolmanager.com/league/OFFICE24/admin/contests/contest-1');
+    expect(message.html).toContain('href="https://qa.ultimateofficepoolmanager.com/league/OFFICE24/admin/contests/contest-1"');
   });
 
   it('names Primetime Commissioner for a grant, and escapes the contest\'s name', () => {
@@ -756,8 +756,8 @@ describe('Premium preview period ending', () => {
     expect(message.text).toContain('Office League was gifted Premium for its preview period. The preview period ends in 7 days, on Sat, Apr 24, 2027.');
     expect(message.text).toContain('After that, Office League moves to the Free plan: up to 20 entries per contest and 5 sports leagues a year.');
     expect(message.text).toContain('Nothing is deleted: contests keep the entries they have, and Premium features are hidden, not removed.');
-    expect(message.text).toContain('See your plan: http://localhost:5173/league/OFFICE24/admin/plan');
-    expect(message.html).toContain('href="http://localhost:5173/league/OFFICE24/admin/plan"');
+    expect(message.text).toContain('See your plan: https://qa.ultimateofficepoolmanager.com/league/OFFICE24/admin/plan');
+    expect(message.html).toContain('href="https://qa.ultimateofficepoolmanager.com/league/OFFICE24/admin/plan"');
     expect(`${message.subject} ${message.text}`.toLowerCase()).not.toContain('expire');
   });
 
@@ -1067,5 +1067,21 @@ describe('the member contest emails\' header, contest card and places', () => {
     expect(message.text).toContain('Entry completed\nThe Masters (PGA Tour), Thu, Apr 9, 2026');
     expect(message.html).toContain(`src="${receipt.event.imageUrl}"`);
     expect(message.text).toContain('Not affiliated with PGA Tour or any sports league.');
+  });
+});
+
+describe('the email preview examples', () => {
+  it('link every preview email to QA, never to localhost, so each link works when the preview is opened in a real inbox', () => {
+    const templateKeys = Object.keys(EMAIL_TEMPLATES) as SystemEmailTemplateKey[];
+    const linksOffQa = templateKeys.flatMap((templateKey) => {
+      const message = renderSystemEmailTemplate(templateKey, EMAIL_TEMPLATE_FIXTURES[templateKey], UTC);
+      const hrefs = [...message.html.matchAll(/href="([^"]+)"/g)].map((match) => match[1]);
+      const textUrls = message.text.match(/https?:\/\/\S+/g) ?? [];
+      return [...hrefs, ...textUrls]
+        .filter((url) => !url.startsWith('https://qa.ultimateofficepoolmanager.com/') && !url.startsWith('mailto:'))
+        .map((url) => `${templateKey}: ${url}`);
+    });
+
+    expect(linksOffQa).toEqual([]);
   });
 });
