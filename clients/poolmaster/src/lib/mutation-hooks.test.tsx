@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { renderHook, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
@@ -49,6 +49,54 @@ describe('pool-master-rop.78.10: useInvalidatingMutation invalidation contract',
     expect(invalidateSpy).toHaveBeenCalledWith({
       queryKey: QueryKeys.contestEntries.byContest('contest-1'),
     });
+  });
+
+  it('a list read still in flight when the save lands is read again, so a page opened after the save shows the saved row', async () => {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    });
+    const listKey = QueryKeys.rootAdmin.manageSport.sportLeagues('golf');
+    let savedTours = ['Tour A'];
+    let releaseFirstRead: () => void = () => undefined;
+    const firstReadHeld = new Promise<void>((resolve) => {
+      releaseFirstRead = resolve;
+    });
+    let reads = 0;
+    const readTours = async (): Promise<string[]> => {
+      reads += 1;
+      // What the server answers is fixed when the read reaches it, not when the answer arrives.
+      const answer = [...savedTours];
+      if (reads === 1) {
+        await firstReadHeld;
+      }
+      return answer;
+    };
+
+    // The list page asked for the list, and the admin left for the New page before it answered.
+    void queryClient.query({ queryKey: listKey, queryFn: readTours }).catch(() => undefined);
+
+    const { result: save } = renderHook(
+      () =>
+        useInvalidatingMutation({
+          // eslint-disable-next-line @typescript-eslint/require-await -- mutationFn must return a Promise per MutationFunction's type.
+          mutationFn: async () => {
+            savedTours = [...savedTours, 'Tour B'];
+          },
+          invalidates: [QueryKeys.rootAdmin.manageSport.leagues],
+        }),
+      { wrapper: createWrapper(queryClient) },
+    );
+    save.current.mutate();
+    await waitFor(() => expect(save.current.isSuccess).toBe(true));
+
+    // Back on the list page; the read from before the save answers only now.
+    const { result: list } = renderHook(
+      () => useQuery({ queryKey: listKey, queryFn: readTours }),
+      { wrapper: createWrapper(queryClient) },
+    );
+    releaseFirstRead();
+
+    await waitFor(() => expect(list.current.data).toEqual(['Tour A', 'Tour B']));
   });
 
   it('pool-master-rop.78.10: supports explicit no-invalidation mutations', async () => {

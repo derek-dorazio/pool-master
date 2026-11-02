@@ -1,5 +1,6 @@
 import { useQueryClient, type QueryKey } from "@tanstack/react-query";
 import { useCallback, useState, type ReactNode } from "react";
+import { refreshAfterWrite } from "@/lib/mutation-hooks";
 
 export type MutationActionToast = {
   description?: ReactNode;
@@ -120,9 +121,7 @@ export function useMutationActionWorkflow<TData, TVariables = void>({
             : invalidateQueries;
 
         if (queryKeys?.length) {
-          await Promise.all(
-            queryKeys.map((queryKey) => queryClient.invalidateQueries({ queryKey })),
-          );
+          await refreshAfterWrite(queryClient, queryKeys);
         }
 
         await onSuccess?.(result, actionVariables);

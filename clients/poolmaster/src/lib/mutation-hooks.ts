@@ -1,6 +1,7 @@
 import {
   useMutation as useTanStackMutation,
   useQueryClient,
+  type QueryClient,
   type QueryKey,
   type UseMutationOptions,
   type UseMutationResult,
@@ -32,6 +33,24 @@ async function resolveInvalidates<TData, TVariables, TContext>(
   return invalidates;
 }
 
+/**
+ * Marks the reads under `queryKeys` stale after a write, so each reads again now (on screen) or
+ * when its page mounts. A read already in flight is cancelled first: it may have reached the
+ * server before the write, and invalidating alone lets its answer land as fresh, so a page that
+ * mounts meanwhile joins that read instead of starting its own and the saved row never shows.
+ */
+export async function refreshAfterWrite(
+  queryClient: QueryClient,
+  queryKeys: readonly QueryKey[],
+): Promise<void> {
+  await Promise.all(
+    queryKeys.map(async (queryKey) => {
+      await queryClient.cancelQueries({ queryKey });
+      await queryClient.invalidateQueries({ queryKey });
+    }),
+  );
+}
+
 export function useInvalidatingMutation<
   TData = unknown,
   TError = Error,
@@ -59,9 +78,7 @@ export function useInvalidatingMutation<
         return;
       }
 
-      await Promise.all(
-        queryKeys.map((queryKey) => queryClient.invalidateQueries({ queryKey })),
-      );
+      await refreshAfterWrite(queryClient, queryKeys);
     },
   });
 }
