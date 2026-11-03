@@ -7,7 +7,7 @@ These rules govern the single go-forward React application: `clients/poolmaster`
 The PoolMaster web app is a React 19 + TypeScript application using:
 
 - Vite
-- React Router 8
+- React Router
 - TanStack Query
 - React local state for component/UI state
 - React Hook Form
