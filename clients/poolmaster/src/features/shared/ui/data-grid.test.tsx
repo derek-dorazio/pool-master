@@ -282,7 +282,7 @@ describe("pool-master-dn4.1: shared DataGrid primitive", () => {
       scroll.mockRestore();
     });
 
-    it("scrolls the row into view during the click itself, with the row's page already in the table", () => {
+    it("scrolls the jumped row, on its page in the table, into view", () => {
       const scrolled: Element[] = [];
       const scroll = vi.spyOn(Element.prototype, "scrollIntoView").mockImplementation(function scrollIntoView(this: Element) {
         scrolled.push(this);
