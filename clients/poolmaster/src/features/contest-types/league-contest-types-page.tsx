@@ -28,8 +28,9 @@ import { useSportLeaguesQuery } from './use-sport-leagues-query';
 export function LeagueContestTypesPage() {
   const logger = useMemo(() => getLogger().child({ feature: 'league-contest-types-page' }), []);
   const { leagueCode = '' } = useParams<{ leagueCode: string }>();
-  const { query: leagueQuery, league, viewer } = useLeagueContext(leagueCode);
-  const canCreate = viewer.isCommissioner && league?.isActive === true;
+  const { query: leagueQuery, league } = useLeagueContext(leagueCode);
+  // Commissioner tools admits only commissioners and root admins; an inactive league creates nothing.
+  const canCreate = league?.isActive === true;
 
   const templatesQuery = useActiveContestTemplatesQuery();
   const sportLeaguesQuery = useSportLeaguesQuery();
@@ -77,7 +78,7 @@ export function LeagueContestTypesPage() {
       <PageHeader
         description={canCreate
           ? `Every contest you can run in ${league.name}. Pick one to start setting it up.`
-          : `Every contest ${league.name} can run. Ask your commissioner for the ones you'd like to play.`}
+          : `Every contest ${league.name} can run, once the league is active again.`}
         title="Contest types"
       />
 

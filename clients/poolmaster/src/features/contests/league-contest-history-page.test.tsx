@@ -111,6 +111,22 @@ describe('LeagueContestHistoryPage', () => {
     expect(await screen.findByTestId('league-history-contest-contest-1')).toBeInTheDocument();
   });
 
+  it('tints the contest a contest page\'s Contests breadcrumb came from, in the year the link names, and no other', async () => {
+    prime();
+
+    renderHistory('/league/BIGDAWGS/contests/history?year=2025&focus=contest-0');
+
+    expect(await screen.findByTestId('league-history-contest-contest-0')).toHaveAttribute('data-highlighted', 'true');
+  });
+
+  it('tints nothing when the focused contest is not in the year shown', async () => {
+    prime();
+
+    renderHistory('/league/BIGDAWGS/contests/history?focus=contest-gone');
+
+    expect(await screen.findByTestId('league-history-contest-contest-1')).not.toHaveAttribute('data-highlighted');
+  });
+
   it('says the league has no completed contests yet, and asks for no year', async () => {
     prime([]);
 

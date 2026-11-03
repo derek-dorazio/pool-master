@@ -239,7 +239,7 @@ administration area (root admin included), reusing the same shared components.
    admins looking at the league, can open. No commissioner-only control appears
    in the member area: a commissioner acts as a member most of the time.
 2. **One league menu.** Member pages share one menu under the app bar (Home,
-   Contests, Championships, Contest types, the viewer's own squad by its
+   Contests, Championships, the viewer's own squad by its
    name — **Yours** until they have one — and Members; `LeagueMenu`). Commissioners also see a
    Commissioner tools button at its right end. The league selector stays in the
    app bar. An administration area has its own header with a way back and a side
@@ -270,8 +270,14 @@ administration area (root admin included), reusing the same shared components.
 9. **One header per entity's pages.** Pages that show one entity from
    different angles share one header and a segmented sub-menu between them,
    not "Back to" and "View" links on each page. A contest's pages share
-   `ContestPageFrame`: Entries, Leaderboard once picks are revealed, and My entry
-   once the viewer has one. A contest leaderboard is built from the leaderboard
+   `ContestPageFrame`: a breadcrumb (Contests / contest, and / entry on an entry
+   page) whose Contests opens the league's contests on that contest's tab,
+   scrolled to it and tinted (`?focus=`), then the sub-menu Leaderboard once
+   picks are revealed, Entries, and My entry once the viewer has one (My
+   entries, opening Entries on only theirs, once they have two or more). A
+   contest page shows its way to play in words and links to How to Play opened
+   on it, never the raw format codes. A contest page under a league that is not
+   the contest's own is replaced with the same page under its own league. A contest leaderboard is built from the leaderboard
    kit in `features/contests` (`LeaderboardFrame`, `ScoreboardGrid`, the Place,
    Entry and total columns, and `YourBestNote` for the viewer's best entry) and
    defines only its own columns and notes; the viewer's own rows, here and in

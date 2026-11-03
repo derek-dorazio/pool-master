@@ -90,9 +90,9 @@ export function buildEventPageUrl(appBaseUrl: string, page: Pick<EventPage, 'spo
   return `${appBaseUrl.replace(/\/+$/, '')}${buildEventPagePath(page.sport, page.slug)}`;
 }
 
-/** The league's contest types page: every way to play its sport leagues offer. */
+/** The league's contest types page, in Commissioner tools (#1392): every way to play its sport leagues offer. */
 export function buildLeagueContestTypesUrl(appBaseUrl: string, leagueCode: string): string {
-  return `${buildLeagueHomeUrl(appBaseUrl, leagueCode)}/contest-types`;
+  return `${buildLeagueHomeUrl(appBaseUrl, leagueCode)}/admin/contest-types`;
 }
 
 /** A sport's picture at the top of an email about one of its events. */

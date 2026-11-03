@@ -1,14 +1,19 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, renderHook, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ColumnDef } from '@tanstack/react-table';
 import { MemoryRouter } from 'react-router';
 import { ContestStatus } from '@poolmaster/shared/domain';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { ContestDto } from '@/lib/api';
 import { ApiError } from '@/lib/errors';
 import { entryColumn, isMySquadsEntry, placeColumn, totalColumn } from './leaderboard-columns';
 import { LeaderboardFrame, ScoreboardGrid, YourBestNote } from './leaderboard-kit';
 import { useLeaderboardFallback } from './use-leaderboard-fallback';
+
+vi.mock('@/features/auth/auth-context', () => ({
+  useAuth: () => ({ isAuthenticated: true, isLoading: false, isRootAdmin: false, user: { id: 'user-1', isRootAdmin: false }, clearSession: vi.fn() }),
+}));
 
 type Row = { entryId: string; entryName: string; displayPosition: string | null; position: number | null; points: number; squadId: string; squadName: string };
 
@@ -92,12 +97,15 @@ describe('ScoreboardGrid', () => {
 const contest = { id: 'contest-1', myEntryIds: [], name: 'Masters Pool', status: ContestStatus.ACTIVE } as unknown as ContestDto;
 
 function renderFrame(props: Partial<Parameters<typeof LeaderboardFrame>[0]> = {}) {
+  // The frame reads the contest's league to check the URL names it (#1412); this contest names none.
   render(
-    <MemoryRouter>
-      <LeaderboardFrame contest={contest} leagueCode="BIGDAWGS" notes={<p>Your best: T1</p>} {...props}>
-        <p>The board</p>
-      </LeaderboardFrame>
-    </MemoryRouter>,
+    <QueryClientProvider client={new QueryClient()}>
+      <MemoryRouter>
+        <LeaderboardFrame contest={contest} leagueCode="BIGDAWGS" notes={<p>Your best: T1</p>} {...props}>
+          <p>The board</p>
+        </LeaderboardFrame>
+      </MemoryRouter>
+    </QueryClientProvider>,
   );
 }
 

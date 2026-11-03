@@ -165,6 +165,26 @@ describe('How to Play', () => {
     expect(screen.queryByTestId('how-to-play-sport-banner')).not.toBeInTheDocument();
   });
 
+  it('opens the way to play a contest page\'s link names, at its sport, and scrolls it into view', async () => {
+    const scrollIntoView = vi.spyOn(Element.prototype, 'scrollIntoView');
+    listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: GOLF_AND_FOOTBALL } });
+    renderPage('/how-to-play?sport=golf&format=TIERED');
+
+    const details = await screen.findByTestId('how-to-play-format-TIERED-details');
+    expect(within(details).getAllByRole('listitem')).toHaveLength(3);
+    expect(screen.getByTestId('how-to-play-sport-banner')).toHaveTextContent('Golf');
+    await vi.waitFor(() => expect(scrollIntoView.mock.contexts).toContain(screen.getByTestId('how-to-play-format-TIERED')));
+    scrollIntoView.mockRestore();
+  });
+
+  it('opens no way to play when the link names a format that is not one', async () => {
+    listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: GOLF_AND_FOOTBALL } });
+    renderPage('/how-to-play?format=NOT_A_FORMAT');
+
+    await screen.findByTestId('how-to-play-format-TIERED');
+    expect(screen.queryByTestId('how-to-play-format-TIERED-details')).not.toBeInTheDocument();
+  });
+
   it('names each sport\'s leagues as chips in a row beside their sport, the most popular sport first and its major league first', async () => {
     listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: GOLF_AND_FOOTBALL } });
     renderPage();

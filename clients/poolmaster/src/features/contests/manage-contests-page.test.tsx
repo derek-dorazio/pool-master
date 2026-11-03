@@ -319,7 +319,7 @@ describe('ManageContestsPage', () => {
     expect(empty.getByText('No contests yet')).toBeInTheDocument();
     expect(empty.getByRole('link', { name: 'Create contest' })).toHaveAttribute('href', '/league/BIGDAWGS/admin/contests/new');
     expect(screen.getByTestId('manage-contests-create-link')).toHaveAttribute('href', '/league/BIGDAWGS/admin/contests/new');
-    expect(screen.getByTestId('manage-contests-contest-types-link')).toHaveAttribute('href', '/league/BIGDAWGS/contest-types');
+    expect(screen.getByTestId('manage-contests-contest-types-link')).toHaveAttribute('href', '/league/BIGDAWGS/admin/contest-types');
   });
 
   it('marks an inactive league and offers no way to create a contest in it', async () => {

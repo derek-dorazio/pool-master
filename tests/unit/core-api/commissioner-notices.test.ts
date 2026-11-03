@@ -156,7 +156,7 @@ describe('CommissionerNotices', () => {
       expect(text).toContain("The Masters starts Sat, Apr 11, 2026. Get ready to set up Office League's contest.");
       expect(text).toContain("It isn't open for contests yet. We'll email you when it is.");
       expect(text).toContain('Coming up soon\nThe Masters (PGA Tour), Sat, Apr 11, 2026');
-      expect(text).toContain('Ways to play:\nTiered: Pick 6: https://app.example.test/league/OFFICE24/contest-types');
+      expect(text).toContain('Ways to play:\nTiered: Pick 6: https://app.example.test/league/OFFICE24/admin/contest-types');
       expect(text).toContain('Plan your contest: https://app.example.test/league/OFFICE24/admin/contests');
       expect(text).not.toContain('See every way to play');
       expect(text).toContain('Not affiliated with PGA Tour or any sports league.');
@@ -307,7 +307,7 @@ describe('CommissionerNotices', () => {
         `Tiered: Pick 6: https://app.example.test/league/OFFICE24/admin/contests/new?template=pick-6&event=${masters.id}`,
         '',
       ].join('\n'));
-      expect(text).toContain('See every way to play: https://app.example.test/league/OFFICE24/contest-types\nField: 40 golfers');
+      expect(text).toContain('See every way to play: https://app.example.test/league/OFFICE24/admin/contest-types\nField: 40 golfers');
     });
 
     it("sends C2's \"See every way to play\" and C1's tiles to the event's page when one offers it, and to the contest types page otherwise, reading the pages once a run", async () => {
@@ -326,7 +326,7 @@ describe('CommissionerNotices', () => {
       expect(textTo('EVENT_READY_FOR_CONTESTS', casey.id, office)).toContain('See every way to play: https://app.example.test/play/golf/the-masters');
       const comingUp = sent('EVENT_COMING_UP').map(({ text }) => text);
       expect(comingUp.filter((text) => text.includes('Tiered: Pick 6: https://app.example.test/play/golf/the-open'))).toHaveLength(1);
-      expect(comingUp.filter((text) => text.includes('Tiered: Pick 6: https://app.example.test/league/OFFICE24/contest-types'))).toHaveLength(1);
+      expect(comingUp.filter((text) => text.includes('Tiered: Pick 6: https://app.example.test/league/OFFICE24/admin/contest-types'))).toHaveLength(1);
       expect(comingUp.some((text) => text.includes('See every way to play'))).toBe(false);
       expect(eventPageReads).toBe(1);
     });

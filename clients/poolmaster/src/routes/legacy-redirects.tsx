@@ -8,11 +8,15 @@
  */
 import { Sport } from '@poolmaster/shared/domain';
 import { Navigate, useLocation, useParams } from 'react-router';
+import { HOW_TO_PLAY_PATH } from '@/features/event-pages/event-page-paths';
+import { useLeagueContextGuard } from '@/features/leagues/league-context-guard';
 import {
   buildLeagueAdminContestCreatePath,
   buildLeagueAdminContestPath,
   buildLeagueAdminContestsPath,
+  buildLeagueContestTypesPath,
 } from '@/features/leagues/league-routing';
+import { useLeagueContext } from '@/features/leagues/use-league-context';
 import { buildSportPath } from '@/features/root-admin/manage-navigation';
 
 export function LegacyJoinInviteRedirect() {
@@ -39,6 +43,21 @@ export function LegacyContestCreateRedirect() {
 export function LegacyContestManageRedirect() {
   const { contestId = '', leagueCode = '' } = useParams<{ contestId: string; leagueCode: string }>();
   return <Navigate replace to={buildLeagueAdminContestPath(leagueCode, contestId)} />;
+}
+
+/**
+ * Contest types left the member menu for Commissioner tools (#1392): a commissioner's old link
+ * opens it there, and a member's opens How to Play, which explains every contest type.
+ */
+export function LegacyContestTypesRedirect() {
+  const { leagueCode = '' } = useParams<{ leagueCode: string }>();
+  const { query, viewer } = useLeagueContext(leagueCode);
+  const leagueContext = useLeagueContextGuard(query, { loadingBody: 'Loading contest types...' });
+  if (leagueContext.state === 'blocked') {
+    return leagueContext.element;
+  }
+  const canManage = viewer.isCommissioner || viewer.isRootAdmin;
+  return <Navigate replace to={canManage ? buildLeagueContestTypesPath(leagueCode) : HOW_TO_PLAY_PATH} />;
 }
 
 /**

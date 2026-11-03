@@ -10,6 +10,7 @@ import {
   buildLeagueAdminInvitesPath,
   buildLeagueAdminPath,
   buildLeagueAdminTeamsPath,
+  buildLeagueContestTypesPath,
   buildLeaguePath,
 } from './league-routing';
 
@@ -62,7 +63,8 @@ export function CommissionerToolsLayout() {
           to: invitesPath,
         },
         {
-          isActive: isAtOrUnder(pathname, contestsPath),
+          // Contest types sits beside Create contest (#1392), so Contests stays lit on it.
+          isActive: isAtOrUnder(pathname, contestsPath) || pathname === buildLeagueContestTypesPath(leagueCode),
           label: 'Contests',
           testId: 'commissioner-tools-menu-contests',
           to: contestsPath,

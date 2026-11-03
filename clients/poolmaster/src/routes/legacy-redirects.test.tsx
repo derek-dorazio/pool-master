@@ -1,12 +1,27 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { bindApiMocks } from '@/test/msw-api';
 import {
   LegacyContestCreateRedirect,
   LegacyContestManageRedirect,
+  LegacyContestTypesRedirect,
   LegacyGolfManageRedirect,
   LegacyManageContestsRedirect,
 } from './legacy-redirects';
+
+const { getLeagueByCodeMock } = vi.hoisted(() => ({ getLeagueByCodeMock: vi.fn() }));
+
+bindApiMocks({ getLeagueByCode: getLeagueByCodeMock });
+
+vi.mock('@/features/auth/auth-context', () => ({
+  useAuth: () => ({ isAuthenticated: true, isLoading: false, isRootAdmin: false, user: { id: 'user-1', isRootAdmin: false }, clearSession: vi.fn() }),
+}));
+
+afterEach(() => {
+  getLeagueByCodeMock.mockReset();
+});
 
 function LocationProbe() {
   return <div data-testid="location">{useLocation().pathname}</div>;
@@ -90,5 +105,40 @@ describe('Golf Manage links from before every sport shared one set of pages', ()
     renderGolfLinkAt('/manage/golf/rankings');
 
     expect(screen.getByTestId('location')).toHaveTextContent('/manage/sports/golf/events');
+  });
+});
+
+describe('The Contest types link from before it moved to Commissioner tools', () => {
+  function renderContestTypesLink(role: 'COMMISSIONER' | 'MEMBER') {
+    getLeagueByCodeMock.mockResolvedValue({
+      data: {
+        league: { id: 'league-1', leagueCode: 'BIGDAWGS', name: 'Big Dawgs', isActive: true },
+        membership: { id: 'membership-1', leagueId: 'league-1', userId: 'user-1', role, status: 'ACTIVE' },
+        squadMembership: null,
+      },
+    });
+    render(
+      <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+        <MemoryRouter initialEntries={['/league/BIGDAWGS/contest-types']}>
+          <Routes>
+            <Route element={<LegacyContestTypesRedirect />} path="/league/:leagueCode/contest-types" />
+            <Route element={<LocationProbe />} path="/league/:leagueCode/admin/*" />
+            <Route element={<LocationProbe />} path="/how-to-play" />
+          </Routes>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+  }
+
+  it('opens Contest types in Commissioner tools for a commissioner', async () => {
+    renderContestTypesLink('COMMISSIONER');
+
+    expect(await screen.findByTestId('location')).toHaveTextContent('/league/BIGDAWGS/admin/contest-types');
+  });
+
+  it('opens How to Play, which explains every contest type, for a member', async () => {
+    renderContestTypesLink('MEMBER');
+
+    expect(await screen.findByTestId('location')).toHaveTextContent('/how-to-play');
   });
 });
