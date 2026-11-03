@@ -26,7 +26,7 @@
 
 import { z } from 'zod';
 import { BracketAdvancement, getSportDefinition, MatchEnding, MatchSide, matchPeriodsOf, RaceResultStatus, ScoringFamily, type Sport, type SportComposite, sportPlaysMatches, SPORT_STAT_VALUE_MAX, SportStat, sportStatValueMin, SUPPORTED_SPORTS } from '@poolmaster/shared/domain';
-import { findBracketProblems } from '../../src/modules/events/sport-event-bracket-service';
+import { findBracketProblems, formsNoBracket } from '../../src/modules/events/sport-event-bracket-service';
 import { placesFormFinishingOrder } from '../../src/modules/scoring-families/finish-position/race-order';
 
 /** The one envelope version this loader reads; any other is refused rather than misread. */
@@ -164,6 +164,13 @@ const MatchSchema = z.object({
     homeScore: z.number().int().min(0),
     awayScore: z.number().int().min(0),
   }).strict()).optional(),
+  /**
+   * Test data only (RESULTS): the game was postponed out of its week (a Premier League match moved
+   * for a cup tie), so it is cancelled after release, as an admin cancels it, and carries no
+   * result. It stays in the file because the week's field still holds both its teams, and the
+   * release refuses a field member in no game. Only a week's game can be: a bracket cannot lose one.
+   */
+  cancelled: z.literal(true).optional(),
 }).strict();
 
 const EventSchema = z.object({
@@ -406,6 +413,10 @@ function checkLeague(league: SportDataLeague, file: ParsedSportDataFile, hasPar:
     }
     if (!file.testData && matches.some((match) => match.result !== undefined)) problems.push(`${where}: carries match results, which only test data may.`);
     if (!file.testData && matches.some((match) => match.periodScores !== undefined)) problems.push(`${where}: carries period scores, which only test data may.`);
+    for (const problem of cancelledGameProblems(file.testData, matches)) problems.push(`${where}: ${problem}.`);
+    for (const key of unplacedFieldMembers(event, matches)) {
+      problems.push(`${where}: ${key} is in the field but in no match, and the release refuses a field member left out of the games.`);
+    }
     for (const problem of periodScoreProblems(file.scope.sport, matches)) problems.push(`${where}: ${problem}.`);
     for (const problem of gameProblems(event, fieldKeys, contents.has(SportDataContent.STATS), composite)) problems.push(`${where}: ${problem}.`);
     for (const problem of tieProblems(event, matches)) problems.push(`${where}: ${problem}.`);
@@ -437,6 +448,33 @@ function gameProblems(event: SportDataEvent, fieldKeys: ReadonlySet<string>, loa
     }
   }
   return problems;
+}
+
+/**
+ * What is wrong with the cancelled games: one in a real file, one with a result or period scores,
+ * or one in a bracket, which the server refuses to cancel (`cancelMatch`).
+ */
+function cancelledGameProblems(testData: boolean, matches: readonly SportDataMatch[]): string[] {
+  const cancelled = matches.filter((match) => match.cancelled === true);
+  if (cancelled.length === 0) return [];
+  if (!testData) return cancelled.map((match) => `cancels match ${match.matchNumber}, which only test data may`);
+  const isWeek = formsNoBracket(matches, (match) => match.advancesTo !== null);
+  return cancelled.flatMap((match) => {
+    if (!isWeek) return [`match ${match.matchNumber} is cancelled, but only a week's game can be: a bracket cannot lose a game`];
+    if (match.result !== undefined || match.periodScores !== undefined) return [`match ${match.matchNumber} is cancelled, so it has no result and no period scores`];
+    return [];
+  });
+}
+
+/**
+ * The field members a loaded bracket or week names in no match, which the release refuses
+ * (`releaseBlockers`): a team on a bye is named on its later match, and a week's field is the
+ * teams that play it, a postponed game kept as cancelled. Empty for an event with no matches.
+ */
+function unplacedFieldMembers(event: SportDataEvent, matches: readonly SportDataMatch[]): string[] {
+  if (matches.length === 0) return [];
+  const named = new Set(matches.flatMap((match) => [match.home, match.away]));
+  return event.field.filter((entry) => !named.has(entry.player)).map((entry) => entry.player);
 }
 
 /**

@@ -329,6 +329,7 @@ describe('sport data bracket', () => {
       'NCAA Men, Tournament: bracket: match 3 advances to match 1, which is not in a later round.',
       'NCAA Men, Tournament: bracket: match 1 home names a team, but match 3\'s winner fills it.',
       'NCAA Men, Tournament: bracket: a bracket has one final, the one match whose winner advances nowhere, but this one has 0.',
+      'NCAA Men, Tournament: ncaa-texas-xavier is in the field but in no match, and the release refuses a field member left out of the games.',
     ]);
   });
 
@@ -336,7 +337,10 @@ describe('sport data bracket', () => {
     const file = bracketFile();
     file.sportLeagues[0].events[0].matches[0].away = 'ncaa-gonzaga';
 
-    expect(problemsOf(file)).toEqual(['NCAA Men, Tournament: bracket: match 1 away names ncaa-gonzaga, which is not on the event\'s field.']);
+    expect(problemsOf(file)).toEqual([
+      'NCAA Men, Tournament: bracket: match 1 away names ncaa-gonzaga, which is not on the event\'s field.',
+      'NCAA Men, Tournament: ncaa-vermont is in the field but in no match, and the release refuses a field member left out of the games.',
+    ]);
   });
 
   it('refuses a bracket the scope\'s contents leave out, and BRACKET without FIELDS', () => {
@@ -411,6 +415,46 @@ describe('sport data bracket', () => {
       'NCAA Men, Tournament: match 1 has no winner, so it needs level scores, played to its end with no shoot-out.',
       'NCAA Men, Tournament: match 2 has no winner, so it needs level scores, played to its end with no shoot-out.',
     ]);
+  });
+
+  it('refuses a week whose field has a team in none of its games, which the release would refuse', () => {
+    const week = weekTestSeed();
+    week.sportLeagues[0].events[0].matches = week.sportLeagues[0].events[0].matches.slice(0, 1);
+
+    expect(problemsOf(week, true)).toEqual([
+      'NCAA Men, Tournament: ncaa-houston is in the field but in no match, and the release refuses a field member left out of the games.',
+      'NCAA Men, Tournament: ncaa-texas-xavier is in the field but in no match, and the release refuses a field member left out of the games.',
+    ]);
+  });
+
+  it('reads a week\'s postponed game as cancelled, with no result, so every team of the week stays in a game', () => {
+    const week = weekTestSeed();
+    const second = week.sportLeagues[0].events[0].matches[1] as BracketMatch & { cancelled?: boolean };
+    delete second.result;
+    second.cancelled = true;
+
+    const matches = parseSportDataFile(week, { allowTestData: true }).sportLeagues[0].events[0].matches;
+
+    expect(matches?.map((match) => [match.matchNumber, match.cancelled, match.result?.winner])).toEqual([[1, undefined, 'HOME'], [2, true, undefined]]);
+  });
+
+  it('refuses a cancelled game in a real file, with a result or period scores, and in a bracket, which cannot lose a game', () => {
+    const real = weekTestSeed();
+    real.testData = false;
+    real.scope.contents = ['SCHEDULE', 'PLAYERS', 'FIELDS', 'BRACKET'];
+    real.sportLeagues[0].events[0].field = real.sportLeagues[0].events[0].field.map((entry) => ({ ...(entry as object), oddsToWin: undefined }));
+    for (const match of real.sportLeagues[0].events[0].matches) delete match.result;
+    Object.assign(real.sportLeagues[0].events[0].matches[1], { cancelled: true });
+    expect(problemsOf(real)).toEqual(['NCAA Men, Tournament: cancels match 2, which only test data may.']);
+
+    const played = weekTestSeed();
+    Object.assign(played.sportLeagues[0].events[0].matches[1], { cancelled: true });
+    expect(problemsOf(played, true)).toEqual(['NCAA Men, Tournament: match 2 is cancelled, so it has no result and no period scores.']);
+
+    const bracket = bracketTestSeed();
+    delete bracket.sportLeagues[0].events[0].matches[1].result;
+    Object.assign(bracket.sportLeagues[0].events[0].matches[1], { cancelled: true });
+    expect(problemsOf(bracket, true)).toEqual(['NCAA Men, Tournament: match 2 is cancelled, but only a week\'s game can be: a bracket cannot lose a game.']);
   });
 
   it('refuses a result with an ending that is not one', () => {

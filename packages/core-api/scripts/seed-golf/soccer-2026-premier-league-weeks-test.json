@@ -17,7 +17,7 @@
   "testData": true,
   "provenance": {
     "gatheredAt": "2026-10-21",
-    "gatheredBy": "load-sport-data, matchweeks 20 to 38 of the 2025-26 Premier League as played, each week its own event whose matches form no bracket, every week's field all 20 clubs. Kickoffs (UK local time, turned to UTC), home sides, full-time and half-time scores from openfootball; across the whole season every club's wins, draws, losses and goals for and against agree with Wikipedia's final table, and ESPN's scoreboards agree on kickoff, home side and score for the 17 matches of five dates. Clubs are ranked by their final 2025-26 table position, the same in both halves' files. Odds to win are made up from the ranking. The season is split by the year each matchweek starts in, as a file holds one season year. Two matchweek 31 matches were rescheduled weeks later (Wolverhampton Wanderers v Arsenal, played 18 February 2026, and Manchester City v Crystal Palace, played 13 May 2026), so they are left out of their week, as a postponed match is cancelled from its week.",
+    "gatheredBy": "load-sport-data, matchweeks 20 to 38 of the 2025-26 Premier League as played, each week its own event whose matches form no bracket, every week's field all 20 clubs. Kickoffs (UK local time, turned to UTC), home sides, full-time and half-time scores from openfootball; across the whole season every club's wins, draws, losses and goals for and against agree with Wikipedia's final table, and ESPN's scoreboards agree on kickoff, home side and score for the 17 matches of five dates. Clubs are ranked by their final 2025-26 table position, the same in both halves' files. Odds to win are made up from the ranking. The season is split by the year each matchweek starts in, as a file holds one season year. Two matchweek 31 matches were rescheduled weeks later (Wolverhampton Wanderers v Arsenal, played 18 February 2026, and Manchester City v Crystal Palace, played 13 May 2026), so they stay in matchweek 31 marked cancelled, with no kickoff and no result, and the load cancels them after the week is released, as an admin cancels a postponed game; neither is played in a later week, since a club plays once a week.",
     "sources": [
       {
         "name": "openfootball, English Premier League 2025/26",
@@ -4018,6 +4018,24 @@
                   "awayScore": 1
                 }
               ]
+            },
+            {
+              "matchNumber": 9,
+              "roundNumber": 1,
+              "home": "pl-wolverhampton-wanderers",
+              "away": "pl-arsenal",
+              "isNeutralSite": false,
+              "advancesTo": null,
+              "cancelled": true
+            },
+            {
+              "matchNumber": 10,
+              "roundNumber": 1,
+              "home": "pl-manchester-city",
+              "away": "pl-crystal-palace",
+              "isNeutralSite": false,
+              "advancesTo": null,
+              "cancelled": true
             }
           ]
         },
