@@ -13,13 +13,14 @@ import type {
   ContestStatusFilter,
   ContestStatusTransition,
   ContestUpdate,
+  DeletedDraftContest,
   PendingDrawReceipts,
   ReleasedEdition,
   ReminderCheck,
 } from '@poolmaster/shared/db';
 import { championshipYear, ContestStatus, SelectionType, SportEventStatus, type Contest, type ContestFormat, type CupWeight, type Sport } from '@poolmaster/shared/domain';
 import { forgettingReads, memoizedRead, memoizedReadMany, ReadMemoKey } from '../core/request-read-memo';
-import { lockContestRow } from './contest-row-lock';
+import { lockContestRow, lockContestRowsAtOnce } from './contest-row-lock';
 
 /**
  * What every contest read joins: its events in sequence order with their sport (#713), its draw
@@ -403,6 +404,40 @@ export class PrismaContestRepository implements ContestRepository {
       await tx.contest.delete({ where: { id } });
     }));
   }
+
+  async deleteAbandonedDraftsBatch(lastEventStartedBefore: Date, limit: number): Promise<DeletedDraftContest[]> {
+    const where = abandonedDraftWhere(lastEventStartedBefore);
+    const candidates = await this.prisma.contest.findMany({ where, select: { id: true }, orderBy: { id: 'asc' }, take: limit });
+    if (candidates.length === 0) return [];
+    return this.prisma.$transaction(async (tx) => {
+      // The candidates were chosen before the locks. A commissioner may have opened one or given
+      // it a later event meanwhile, so the batch is read again under them.
+      await lockContestRowsAtOnce(tx, candidates.map((contest) => contest.id));
+      const drafts = await tx.contest.findMany({
+        where: { id: { in: candidates.map((contest) => contest.id) }, ...where },
+        select: { id: true, leagueId: true },
+        orderBy: { id: 'asc' },
+      });
+      if (drafts.length === 0) return drafts;
+      // The same child-first order `delete` takes, for every draft of the batch at once.
+      const contestId = { in: drafts.map((draft) => draft.id) };
+      await tx.contestEntryPick.deleteMany({ where: { entry: { contestId } } });
+      await tx.contestEntry.deleteMany({ where: { contestId } });
+      await tx.participantContestScoringRule.deleteMany({ where: { contestConfiguration: { contestId } } });
+      await tx.contestPrizeDefinition.deleteMany({ where: { contestConfiguration: { contestId } } });
+      await tx.contestConfiguration.deleteMany({ where: { contestId } });
+      await tx.contest.deleteMany({ where: { id: contestId } });
+      return drafts;
+    });
+  }
+}
+
+/** A DRAFT contest with at least one event, every one of which started before the cutoff (#1195). */
+function abandonedDraftWhere(lastEventStartedBefore: Date): Prisma.ContestWhereInput {
+  return {
+    status: ContestStatus.DRAFT,
+    sportEvents: { some: {}, none: { sportEvent: { startDate: { gte: lastEventStartedBefore } } } },
+  };
 }
 
 function mapToContest(row: {

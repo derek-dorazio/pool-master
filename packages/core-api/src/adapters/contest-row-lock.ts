@@ -29,3 +29,13 @@ export async function lockContestRows(tx: Prisma.TransactionClient, contestIds: 
 export async function lockContestEntryRow(tx: Prisma.TransactionClient, entryId: string): Promise<void> {
   await tx.$queryRaw`SELECT id FROM "contest_entries" WHERE id = ${entryId}::uuid FOR UPDATE`;
 }
+
+/**
+ * Takes the row locks of the contests under `contestIds` in one statement, in id order (#1195),
+ * for a caller locking a whole batch. The caller re-reads under the locks whatever it decided on
+ * before them: a writer it waited for has committed by then.
+ */
+export async function lockContestRowsAtOnce(tx: Prisma.TransactionClient, contestIds: readonly string[]): Promise<void> {
+  if (contestIds.length === 0) return;
+  await tx.$queryRaw`SELECT id FROM "contests" WHERE id = ANY(${[...contestIds]}::uuid[]) ORDER BY id FOR UPDATE`;
+}

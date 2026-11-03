@@ -412,6 +412,7 @@ export function fakeContestRepo(overrides: Partial<ContestRepository> = {}): Con
     transitionStatuses: jest.fn().mockImplementation(async (ids: readonly string[]) => [...ids]),
     setCupWeight: jest.fn().mockResolvedValue(true),
     delete: nothing(),
+    deleteAbandonedDraftsBatch: many(),
     ...overrides,
   };
 }

@@ -230,7 +230,10 @@ sender), and prod runs more than one task. So that a job runs once, not once per
 - **A table that grows without end gets a retention period and a nightly cleanup step**
   (`core/nightly-cleanup.ts`, #1175). The step lives in the module that owns the table, deletes
   in bounded batches with plain Prisma (`deleteInBatches`), and is added to the one
-  `NightlyCleanupScheduler`, which runs under its own job lock and logs one summary line per run.
+  `NightlyCleanupScheduler`, which runs under its own job lock and logs one summary line per run. A
+  step deleting rows another writer may change takes their row locks first, as the abandoned
+  draft contest step does (#1195), and re-reads its filter under them, so a row that changed
+  meanwhile is kept.
 
 ### Provider data reaches only events an admin authored and linked
 
