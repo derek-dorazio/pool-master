@@ -943,7 +943,8 @@ describe('soccer-2025 and soccer-2026-premier-league-weeks-test.json', () => {
     for (const week of weeks) {
       expect(week.rounds).toBe(1);
       expect(week.field).toHaveLength(20);
-      expect((week.matches ?? []).every((game) => game.roundNumber === 1 && game.advancesTo === null && !game.isNeutralSite && game.periodScores?.length === 1)).toBe(true);
+      expect((week.matches ?? []).every((game) => game.roundNumber === 1 && game.advancesTo === null && !game.isNeutralSite)).toBe(true);
+      expect((week.matches ?? []).filter((game) => game.cancelled !== true).every((game) => game.periodScores?.length === 1)).toBe(true);
     }
   });
 
@@ -952,13 +953,22 @@ describe('soccer-2025 and soccer-2026-premier-league-weeks-test.json', () => {
     expect(spring.sportLeagues[0].players).toEqual(autumn.sportLeagues[0].players);
   });
 
-  it('leaves the two rescheduled matchweek 31 matches out of their week, so it has 8 games and the other weeks 10', () => {
-    const counts = weeks.map((week) => week.matches?.length);
-    expect(counts[30]).toBe(8);
-    expect(counts.filter((count) => count === 10)).toHaveLength(37);
-    const week31 = (weeks[30].matches ?? []).map((game) => [game.home, game.away]);
-    expect(week31).not.toContainEqual(['pl-wolverhampton-wanderers', 'pl-arsenal']);
-    expect(week31).not.toContainEqual(['pl-manchester-city', 'pl-crystal-palace']);
+  it('names every club of every matchweek\'s field in one of its games, so each week can be released', () => {
+    for (const week of weeks) {
+      const named = new Set((week.matches ?? []).flatMap((game) => [game.home, game.away]));
+      expect([week.name, week.field.filter((entry) => !named.has(entry.player)).map((entry) => entry.player)]).toEqual([week.name, []]);
+    }
+  });
+
+  it('keeps matchweek 31\'s two rescheduled matches, Wolves v Arsenal and Manchester City v Crystal Palace, in their week cancelled with no result, and plays the other eight', () => {
+    expect(weeks.map((week) => week.matches?.length)).toEqual(Array.from({ length: 38 }, () => 10));
+    const week31 = weeks[30].matches ?? [];
+    expect(week31.filter((game) => game.cancelled === true).map((game) => [game.home, game.away, game.result])).toEqual([
+      ['pl-wolverhampton-wanderers', 'pl-arsenal', undefined],
+      ['pl-manchester-city', 'pl-crystal-palace', undefined],
+    ]);
+    expect(week31.filter((game) => game.cancelled !== true).every((game) => game.result !== undefined)).toBe(true);
+    expect(weeks.flatMap((week) => week.matches ?? []).filter((game) => game.cancelled === true)).toHaveLength(2);
   });
 
   it('enters a level match with no winner, opens with Liverpool\'s 4-2 win over Bournemouth and ends with Arsenal\'s 2-1 win at Crystal Palace', () => {

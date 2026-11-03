@@ -44,6 +44,7 @@ import { expectDefined } from '../support/expect-defined';
 import { unlinkContestsFromSportEvents } from '../support/contest-event-links';
 import { standardEventPricing } from '../support/budget-pricing';
 import { expectMatchesSchema } from '../support/expect-matches-schema';
+import { oneEventOf } from '../support/sport-test-seed';
 
 // An NFL regular-season week end to end over HTTP (#715). The week is its own event of one round,
 // its field the eight teams playing, and its four games link nowhere: they form no bracket, even
@@ -52,6 +53,8 @@ import { expectMatchesSchema } from '../support/expect-matches-schema';
 // and completes the week. A
 // contest scored by knockout round points is refused on it, because no team goes a round further.
 // The QA test seed of the 2025 season's first weeks loads a week the same way, played.
+// A soccer week loads the same way: the Premier League seed's matchweek 31, whose two postponed
+// games the loader cancels after release (its describe block is at the end of this file).
 //
 // Every date in the first test is fixed in 2099, so the server's real clock never reaches the week.
 
@@ -252,6 +255,36 @@ describe('SDK Functional: an NFL regular-season week (#715)', () => {
     const nameOf = (id: string | null) => expectDefined(field.find((row) => row.id === id)).participant.name;
     expect(games.slice(0, 1).map((game) => [nameOf(game.homeSportEventParticipantId), nameOf(game.awaySportEventParticipantId), game.homeScore, game.awayScore, game.winnerSide]))
       .toEqual([['Philadelphia Eagles', 'Dallas Cowboys', 24, 20, MatchSide.HOME]]);
+
+    expect((await transitionEvent({ client: a, path: { eventId: event.id }, body: { toStatus: 'IN_PROGRESS' } })).data?.event.status).toBe('IN_PROGRESS');
+    expect((await transitionEvent({ client: a, path: { eventId: event.id }, body: { toStatus: 'COMPLETED' } })).data?.event.status).toBe('COMPLETED');
+  });
+});
+
+describe('SDK Functional: a soccer week with postponed games', () => {
+  it('loads Premier League Matchweek 31 of the test seed released, its two postponed games cancelled and its other eight played, and completes it', async () => {
+    const admin = await buildRegisteredUser({ displayName: 'Matchweek Loader' });
+    await promoteToRootAdmin(admin);
+    const a = admin.client;
+
+    const tag = `${RUN}-pl-31`;
+    const file = oneEventOf('soccer-2026-premier-league-weeks-test.json', 'Premier League', 'Premier League Matchweek 31')(tag, 2026);
+    const weekName = file.sportLeagues[0].events[0].name;
+    // Release refuses an event that has started by the server's clock, so the seed is dated from today.
+    await loadSportData(file, { getClient: () => Promise.resolve(a), now: new Date(), mode: LoadMode.APPLY });
+
+    const premierLeague = expectDefined(expectDefined((await listSportLeagues({ client: a, query: { sport: Sport.SOCCER } })).data).sportLeagues
+      .find((league) => league.name === 'Premier League'));
+    const event = expectDefined(expectDefined((await listEvents({ client: a, query: { sportLeagueId: premierLeague.id } })).data).events
+      .find((row) => row.name === weekName));
+    created.sportEventIds.add(event.id);
+    expect(event.status).toBe('SCHEDULED');
+    const games = expectMatchesSchema(SportEventBracketResponseSchema, (await getEventBracket({ client: a, path: { eventId: event.id } })).data).matches;
+    const field = expectDefined((await listEventParticipants({ client: a, path: { eventId: event.id } })).data).participants;
+    const nameOf = (id: string | null) => expectDefined(field.find((row) => row.id === id)).participant.name;
+    expect(games.filter((game) => game.status === MatchStatus.CANCELLED).map((game) => [nameOf(game.homeSportEventParticipantId), nameOf(game.awaySportEventParticipantId), game.homeScore]))
+      .toEqual([['Wolverhampton Wanderers', 'Arsenal', null], ['Manchester City', 'Crystal Palace', null]]);
+    expect(games.filter((game) => game.status === MatchStatus.COMPLETED)).toHaveLength(8);
 
     expect((await transitionEvent({ client: a, path: { eventId: event.id }, body: { toStatus: 'IN_PROGRESS' } })).data?.event.status).toBe('IN_PROGRESS');
     expect((await transitionEvent({ client: a, path: { eventId: event.id }, body: { toStatus: 'COMPLETED' } })).data?.event.status).toBe('COMPLETED');

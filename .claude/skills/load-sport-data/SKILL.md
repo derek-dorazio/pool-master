@@ -31,7 +31,7 @@ race week):
 | Schedule | Once per season, early | `SCHEDULE` |
 | Field | When it is announced, then again on the Tuesday of event week for withdrawals and alternates | `PLAYERS`, `FIELDS` |
 | Bracket | With the field, for a sport played as a bracket (Selection Sunday for March Madness); again as game times are announced | `PLAYERS`, `FIELDS`, `BRACKET` |
-| Weeks | Once a season, when a league of weekly games publishes its schedule (the NFL's in May): each week is an event, its field every team and its games matches that link nowhere | `SCHEDULE`, `PLAYERS`, `FIELDS`, `BRACKET` |
+| Weeks | Once a season, when a league of weekly games publishes its schedule (the NFL's in May): each week is an event, its field every team that plays that week (a team on a bye is left out, since release refuses a field member in no game) and its games matches that link nowhere | `SCHEDULE`, `PLAYERS`, `FIELDS`, `BRACKET` |
 | Box scores | For a championship stat pool: the field once both teams are known, then each game's box score after it is played, from two sources that agree player by player | `PLAYERS`, `FIELDS`, `STATS` |
 
 A field file carries the players its entries name (`FIELDS` always comes with `PLAYERS`),
@@ -163,7 +163,9 @@ stopped early says how in its result's `ending` (`RETIREMENT`, `WALKOVER`, `DEFA
 is played), and a walkover's scores are null. A league of weekly games tries pick'em on last season's weeks as played: each week its own event, every game a
 match that links nowhere, with its real `result`
 (`american-football-2025-nfl-weeks-test.json`, `docs/SPORT-DATA-LOADING.md` *Seeded NFL
-regular-season weeks*). A drawn week game's `result` has a null `winner`. A season that spans two
+regular-season weeks*). A drawn week game's `result` has a null `winner`. A game postponed out
+of its week stays in that week with `cancelled: true` and no result, so both its teams are still
+in a game; the load cancels it after release, before the other results. A season that spans two
 years splits into one file per year its weeks start in, since a file's events start in its
 season year (the Premier League seeds, *Seeded soccer weeks*).
 

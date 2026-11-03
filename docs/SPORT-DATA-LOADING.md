@@ -397,8 +397,10 @@ week is, and every week's field holds all the league's teams:
   the 2025-26 Premier League's matchweeks 1 to 19 and 20 to 38, `Premier League Matchweek 1` to
   `Premier League Matchweek 38`, split by the year each matchweek starts in, as a file holds one
   season year. Both rank the 20 clubs by the final table. Two matchweek 31 matches were
-  rescheduled weeks later, so they are left out of their week, as a postponed game is cancelled
-  from its week.
+  rescheduled weeks later (Wolves v Arsenal and Manchester City v Crystal Palace), so they stay
+  in their week marked `cancelled`, with no result, and the load cancels them once the week is
+  released, as an admin cancels a postponed game. Release refuses a week with a team in none of
+  its games, so a postponed game is never simply left out of the file.
 - `soccer-2023-fifa-womens-world-cup-group-matchdays-test.json`: the 2023 Women's World Cup's
   three group matchdays, `FIFA Women's World Cup Matchday 1` to `3`, 16 neutral-site matches
   each. It loads into the same sport league as the knockout seed and keeps its FIFA rankings.

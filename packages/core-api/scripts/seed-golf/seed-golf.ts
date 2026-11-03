@@ -21,8 +21,9 @@
  * A test seed (`testData: true`) adds the made-up parts: its dates move forward by whole
  * weeks so the first event starts at least a week after the run, and each event that is
  * still a draft gets odds, tiers, prices and stored scores and is released for contests (a
- * bracket's play-in places then take their winners before its results go in; a race's finishing
- * order goes in after release, as the admin's official result). A
+ * bracket's play-in places then take their winners and a week's postponed games are cancelled
+ * before its results go in; a race's finishing order goes in after release, as the admin's
+ * official result). A
  * draft that an earlier run stopped part-way through is finished the same way. A real file
  * never releases an event, writes odds, tiers, prices or scores, or deletes anything.
  *
@@ -61,6 +62,7 @@ import {
   applyParticipantLeagueAffiliationUpload,
   autoAssignEventPrices,
   autoAssignEventTiers,
+  cancelEventMatch,
   createEvent,
   createParticipant,
   createSportLeague,
@@ -912,6 +914,7 @@ class Loader {
     if (sportPlaysMatches(this.sport)) {
       await must(releaseEvent({ client, path }), `Release ${event.name}`);
       await fillPlayInPlacesFor(client, eventId, event, participantIds);
+      await cancelPostponedGamesFor(client, eventId, event);
       await enterBracketResultsFor(client, eventId, event);
       return;
     }
@@ -961,6 +964,16 @@ async function fillPlayInPlacesFor(client: Client, eventId: string, event: Sport
     const winnerId = found(participantIds.get(place.playInWinner) ?? undefined, `${event.name}: the participant id for ${place.playInWinner}`);
     const row = found(rows.find((candidate) => candidate.participantId === placeId), `${event.name}: the field row of ${place.player}`);
     await must(setEventPlayInWinner({ client, path: { eventId, sportEventParticipantId: row.id }, body: { participantId: winnerId } }), `Set the winner of ${place.player} in ${event.name}`);
+  }
+}
+
+/**
+ * A week test seed's postponed games, cancelled on the released event before any result, as an
+ * admin cancels a game moved out of its week: it counts for no pick and no standing.
+ */
+async function cancelPostponedGamesFor(client: Client, eventId: string, event: SportDataEvent): Promise<void> {
+  for (const match of (event.matches ?? []).filter((candidate) => candidate.cancelled === true)) {
+    await must(cancelEventMatch({ client, path: { eventId, matchNumber: match.matchNumber } }), `Cancel the postponed match ${match.matchNumber} of ${event.name}`);
   }
 }
 
