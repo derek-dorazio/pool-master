@@ -3,7 +3,7 @@ import { afterAll, afterEach, beforeAll } from 'vitest';
 import { resetApiMocks, server } from './test/msw-api';
 
 beforeAll(() => {
-  server.listen({ onUnhandledRequest: 'error' });
+  server.listen({ onUnhandledFrame: 'error' });
 });
 
 afterEach(() => {
