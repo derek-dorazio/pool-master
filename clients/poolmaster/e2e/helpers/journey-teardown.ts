@@ -116,9 +116,9 @@ export async function removeLeague(api: APIRequestContext, headers: AuthHeaders,
     'delete league',
   );
   const reread = await api.get(leagueByCode, { headers });
-  log(reread.status() === 404
-    ? `league ${leagueCode} removed with its contest, entries, squads and invite link (re-read 404)`
-    : `league ${leagueCode} STILL PRESENT after delete (re-read ${reread.status()})`);
+  // A delete that answered but left the row is a failure, which attempt() logs as residue.
+  if (reread.status() !== 404) throw new Error(`league ${leagueCode} STILL PRESENT after delete (re-read ${reread.status()})`);
+  log(`league ${leagueCode} removed with its contest, entries, squads and invite link (re-read 404)`);
 }
 
 async function removeTournament(api: APIRequestContext, headers: AuthHeaders, sport: JourneySport, tournamentName: string, log: Log) {
@@ -135,9 +135,8 @@ async function removeTournament(api: APIRequestContext, headers: AuthHeaders, sp
   }
   await expectOk(api.delete(`/api/v1/events/${event.id}`, { headers }), 'delete tournament');
   const reread = await api.get(`/api/v1/events/${event.id}`, { headers });
-  log(reread.status() === 404
-    ? `tournament "${tournamentName}" removed with its field, rounds, scores and tiers (re-read 404)`
-    : `tournament "${tournamentName}" STILL PRESENT after delete (re-read ${reread.status()})`);
+  if (reread.status() !== 404) throw new Error(`tournament "${tournamentName}" STILL PRESENT after delete (re-read ${reread.status()})`);
+  log(`tournament "${tournamentName}" removed with its field, rounds, scores and tiers (re-read 404)`);
 }
 
 async function findTourId(api: APIRequestContext, headers: AuthHeaders, run: JourneyRun): Promise<string | null> {
@@ -153,9 +152,8 @@ async function findTourId(api: APIRequestContext, headers: AuthHeaders, run: Jou
 export async function removeTour(api: APIRequestContext, headers: AuthHeaders, tourId: string, tourName: string, log: Log) {
   await expectOk(api.delete(`/api/v1/sport-leagues/${tourId}`, { headers }), 'delete tour');
   const reread = await api.get(`/api/v1/sport-leagues/${tourId}`, { headers });
-  log(reread.status() === 404
-    ? `tour "${tourName}" removed with its roster and series (re-read 404)`
-    : `tour "${tourName}" STILL PRESENT after delete (re-read ${reread.status()})`);
+  if (reread.status() !== 404) throw new Error(`tour "${tourName}" STILL PRESENT after delete (re-read ${reread.status()})`);
+  log(`tour "${tourName}" removed with its roster and series (re-read 404)`);
 }
 
 /**
@@ -183,7 +181,7 @@ export async function removePlayers(api: APIRequestContext, headers: AuthHeaders
 
 // Lifted from the #278 plumbing probe, which first proved it. Shared with the squad-management
 // teardown (#363).
-export async function removeUser(api: APIRequestContext, headers: AuthHeaders, created: JourneyUser, log: Log) {
+export async function removeUser(api: APIRequestContext, headers: AuthHeaders, created: Pick<JourneyUser, 'username' | 'email'>, log: Log) {
   const search = await api.get('/api/v1/users/', { headers, params: { search: created.username } });
   if (!search.ok()) {
     throw new Error(`search failed: ${search.status()}`);
@@ -200,7 +198,6 @@ export async function removeUser(api: APIRequestContext, headers: AuthHeaders, c
     'delete user',
   );
   const reread = await api.get(`/api/v1/users/${user.id}`, { headers });
-  log(reread.status() === 404
-    ? `user ${created.username} removed (re-read 404)`
-    : `user ${created.username} STILL PRESENT after delete (re-read ${reread.status()})`);
+  if (reread.status() !== 404) throw new Error(`user ${created.username} STILL PRESENT after delete (re-read ${reread.status()})`);
+  log(`user ${created.username} removed (re-read 404)`);
 }

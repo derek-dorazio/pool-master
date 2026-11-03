@@ -1,10 +1,10 @@
-import { randomBytes } from 'node:crypto';
 import { expect, test, type APIRequestContext } from '@playwright/test';
 import { adminApiHeaders, expectOk, type AuthHeaders } from './helpers/admin-api';
 import { logOut, readAdminCredentials, type AdminCredentials } from './helpers/admin-session';
 import { submitAndRead } from './helpers/browser-writes';
 import { removeJourneyRun, type JourneyRun } from './helpers/journey-teardown';
 import { registerFreshUser } from './helpers/user-session';
+import { newRunId, e2eName, e2eEmail, e2eUsername, e2eLeagueCode } from './helpers/test-marker';
 
 /**
  * #718 — the pick'em pool journey: the root admin sets up two released American football weeks
@@ -100,7 +100,7 @@ async function postJson<T>(api: APIRequestContext, headers: AuthHeaders, path: s
 }
 
 function weekName(run: JourneyRun, index: number): string {
-  return index === 0 ? run.tournamentName : `E2E Pickem Week ${index + 1} ${run.runId}`;
+  return index === 0 ? run.tournamentName : e2eName(`Pickem Week ${index + 1}`, run.runId);
 }
 
 test('act 1: the root admin releases two American football weeks, each one game between two teams', async ({ playwright }, testInfo) => {
@@ -108,30 +108,30 @@ test('act 1: the root admin releases two American football weeks, each one game 
   const credentials = readAdminCredentials();
   admin = credentials;
 
-  const runId = `${Date.now().toString(36)}${randomBytes(2).toString('hex')}`;
+  const runId = newRunId();
   const run: JourneyRun = {
     runId,
     sport: 'AMERICAN_FOOTBALL',
-    tourName: `E2E Football League ${runId}`,
-    playerNamePrefix: `E2E Club ${runId}`,
-    tournamentName: `E2E Pickem Week 1 ${runId}`,
-    moreTournamentNames: [`E2E Pickem Week 2 ${runId}`],
+    tourName: e2eName('Football League', runId),
+    playerNamePrefix: e2eName('Club', runId),
+    tournamentName: e2eName('Pickem Week 1', runId),
+    moreTournamentNames: [e2eName('Pickem Week 2', runId)],
     commissioner: {
-      username: `e2e-pc-${runId}`,
-      email: `e2e-pc-${runId}@e2e.invalid`,
+      username: e2eUsername('pc', runId),
+      email: e2eEmail('pc', runId),
       firstName: 'E2E',
       lastName: `Pickem Commissioner ${runId}`,
     },
     member: {
-      username: `e2e-pm-${runId}`,
-      email: `e2e-pm-${runId}@e2e.invalid`,
+      username: e2eUsername('pm', runId),
+      email: e2eEmail('pm', runId),
       firstName: 'E2E',
       lastName: `Pickem Member ${runId}`,
     },
-    leagueName: `E2E Pickem League ${runId}`,
-    leagueCode: `E2EP${runId.toUpperCase()}`,
-    contestName: `E2E Pickem Pool ${runId}`,
-    squadName: `E2E Pickers ${runId}`,
+    leagueName: e2eName('Pickem League', runId),
+    leagueCode: e2eLeagueCode('P', runId),
+    contestName: e2eName('Pickem Pool', runId),
+    squadName: e2eName('Pickers', runId),
   };
   runs.push(run);
   journey = { run };

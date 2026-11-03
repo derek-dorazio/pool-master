@@ -1,10 +1,10 @@
-import { randomBytes } from 'node:crypto';
 import { expect, test, type APIRequestContext } from '@playwright/test';
 import { adminApiHeaders, expectOk, type AuthHeaders } from './helpers/admin-api';
 import { adminSignIn, logOut, readAdminCredentials, type AdminCredentials } from './helpers/admin-session';
 import { submitAndRead } from './helpers/browser-writes';
 import { removeJourneyRun, type JourneyRun } from './helpers/journey-teardown';
 import { generatePassword, registerFreshUser } from './helpers/user-session';
+import { newRunId, e2eName, e2eEmail, e2eUsername, e2eLeagueCode } from './helpers/test-marker';
 
 /**
  * #711 — the squares pool journey: the root admin releases an American football event of one game
@@ -99,29 +99,29 @@ test('act 1: the root admin releases an American football event of one game betw
   const credentials = readAdminCredentials();
   admin = credentials;
 
-  const runId = `${Date.now().toString(36)}${randomBytes(2).toString('hex')}`;
+  const runId = newRunId();
   const run: JourneyRun = {
     runId,
     sport: 'AMERICAN_FOOTBALL',
-    tourName: `E2E Squares League ${runId}`,
-    playerNamePrefix: `E2E Squares Club ${runId}`,
-    tournamentName: `E2E Squares Bowl ${runId}`,
+    tourName: e2eName('Squares League', runId),
+    playerNamePrefix: e2eName('Squares Club', runId),
+    tournamentName: e2eName('Squares Bowl', runId),
     commissioner: {
-      username: `e2e-sc-${runId}`,
-      email: `e2e-sc-${runId}@e2e.invalid`,
+      username: e2eUsername('sc', runId),
+      email: e2eEmail('sc', runId),
       firstName: 'E2E',
       lastName: `Squares Commissioner ${runId}`,
     },
     member: {
-      username: `e2e-sm-${runId}`,
-      email: `e2e-sm-${runId}@e2e.invalid`,
+      username: e2eUsername('sm', runId),
+      email: e2eEmail('sm', runId),
       firstName: 'E2E',
       lastName: `Squares Member ${runId}`,
     },
-    leagueName: `E2E Squares Pool League ${runId}`,
-    leagueCode: `E2ES${runId.toUpperCase()}`,
-    contestName: `E2E Squares ${runId}`,
-    squadName: `E2E Boxers ${runId}`,
+    leagueName: e2eName('Squares Pool League', runId),
+    leagueCode: e2eLeagueCode('S', runId),
+    contestName: e2eName('Squares', runId),
+    squadName: e2eName('Boxers', runId),
   };
   runs.push(run);
   journey = { run };

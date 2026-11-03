@@ -1,4 +1,3 @@
-import { randomBytes } from 'node:crypto';
 import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
 import {
   adminSignIn,
@@ -9,6 +8,7 @@ import {
 import { readCsrfToken, submitAndRead } from './helpers/browser-writes';
 import { removeJourneyRun, type JourneyRun } from './helpers/journey-teardown';
 import { registerFreshUser } from './helpers/user-session';
+import { newRunId, e2eName, e2eEmail, e2eUsername, e2eLeagueCode } from './helpers/test-marker';
 
 /**
  * #749 — the knockout journey, on the 2025 WNBA playoffs as they were played (seeds and series
@@ -148,29 +148,29 @@ test('act 1: the root admin builds the 2025 WNBA playoffs — league, eight team
   const credentials = readAdminCredentials();
   admin = credentials;
 
-  const runId = `${Date.now().toString(36)}${randomBytes(2).toString('hex')}`;
+  const runId = newRunId();
   const run: JourneyRun = {
     runId,
     sport: 'BASKETBALL',
-    tourName: `E2E Playoff League ${runId}`,
-    playerNamePrefix: `E2E Team ${runId}`,
-    tournamentName: `E2E Playoffs ${runId}`,
+    tourName: e2eName('Playoff League', runId),
+    playerNamePrefix: e2eName('Team', runId),
+    tournamentName: e2eName('Playoffs', runId),
     commissioner: {
-      username: `e2e-kc-${runId}`,
-      email: `e2e-kc-${runId}@e2e.invalid`,
+      username: e2eUsername('kc', runId),
+      email: e2eEmail('kc', runId),
       firstName: 'E2E',
       lastName: `Knockout Commissioner ${runId}`,
     },
     member: {
-      username: `e2e-km-${runId}`,
-      email: `e2e-km-${runId}@e2e.invalid`,
+      username: e2eUsername('km', runId),
+      email: e2eEmail('km', runId),
       firstName: 'E2E',
       lastName: `Knockout Member ${runId}`,
     },
-    leagueName: `E2E Bracket League ${runId}`,
-    leagueCode: `E2EK${runId.toUpperCase()}`,
-    contestName: `E2E Playoff Picks ${runId}`,
-    squadName: `E2E Bench ${runId}`,
+    leagueName: e2eName('Bracket League', runId),
+    leagueCode: e2eLeagueCode('K', runId),
+    contestName: e2eName('Playoff Picks', runId),
+    squadName: e2eName('Bench', runId),
   };
   runs.push(run);
   journey = { run };

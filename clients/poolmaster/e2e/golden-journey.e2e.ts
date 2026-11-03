@@ -1,4 +1,3 @@
-import { randomBytes } from 'node:crypto';
 import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
 import {
   adminSignIn,
@@ -9,6 +8,7 @@ import {
 import { readCsrfToken, submitAndRead } from './helpers/browser-writes';
 import { removeJourneyRun, type JourneyRun } from './helpers/journey-teardown';
 import { generatePassword, registerFreshUser } from './helpers/user-session';
+import { newRunId, e2eName, e2eEmail, e2eUsername, e2eLeagueCode } from './helpers/test-marker';
 
 /**
  * #84, #280 — the golden journey (plans/130 §"Phase 2 — the journey suite", deleted:
@@ -142,31 +142,31 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
 
     // Inside the test body, not at module load: a retry re-imports this module in a new worker
     // and must get its own id rather than collide with its first attempt.
-    const runId = `${Date.now().toString(36)}${randomBytes(2).toString('hex')}`;
+    const runId = newRunId();
     const run: JourneyRun = {
       runId,
       sport: 'GOLF',
-      tourName: `E2E Tour ${runId}`,
-      playerNamePrefix: `E2E Golfer ${runId}`,
-      tournamentName: `E2E Open ${runId}`,
-      moreTournamentNames: [`E2E Classic ${runId}`, `E2E Invitational ${runId}`],
+      tourName: e2eName('Tour', runId),
+      playerNamePrefix: e2eName('Golfer', runId),
+      tournamentName: e2eName('Open', runId),
+      moreTournamentNames: [e2eName('Classic', runId), e2eName('Invitational', runId)],
       // RFC 2606 reserves .invalid, so nothing sent to these can reach a real mailbox.
       commissioner: {
-        username: `e2e-c-${runId}`,
-        email: `e2e-c-${runId}@e2e.invalid`,
+        username: e2eUsername('c', runId),
+        email: e2eEmail('c', runId),
         firstName: 'E2E',
         lastName: `Commissioner ${runId}`,
       },
       member: {
-        username: `e2e-m-${runId}`,
-        email: `e2e-m-${runId}@e2e.invalid`,
+        username: e2eUsername('m', runId),
+        email: e2eEmail('m', runId),
         firstName: 'E2E',
         lastName: `Member ${runId}`,
       },
-      leagueName: `E2E League ${runId}`,
-      leagueCode: `E2E${runId.toUpperCase()}`,
-      contestName: `E2E Pick Six ${runId}`,
-      squadName: `E2E Squad ${runId}`,
+      leagueName: e2eName('League', runId),
+      leagueCode: e2eLeagueCode('', runId),
+      contestName: e2eName('Pick Six', runId),
+      squadName: e2eName('Squad', runId),
     };
     // Recorded before anything is created, so a failure on the first write is still torn down.
     runs.push(run);
@@ -516,7 +516,7 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
       await expect(eventChoice).toBeChecked();
       await page.getByTestId('contest-format-BUDGET_PICK').click();
       await expect(page.getByTestId('contest-budget-salary-cap')).toContainText('$50,000 salary cap');
-      await page.getByTestId('contest-name').fill(`E2E Budget ${run.runId}`);
+      await page.getByTestId('contest-name').fill(e2eName('Budget', run.runId));
       await page.getByTestId('contest-budget-roster-size').fill(String(BUDGET_ROSTER_SIZE));
       await page.getByTestId('contest-budget-counted-scores').fill(String(BUDGET_ROSTER_SIZE));
       const created = await submitAndRead<{ contest: { id: string; selectionType: string } }>(
@@ -697,7 +697,7 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
     });
 
     await test.step('rename the entry inline on the board', async () => {
-      const name = `E2E Entry ${run.runId}`;
+      const name = e2eName('Entry', run.runId);
       await page.getByTestId('contest-menu-entries').click();
       await page.getByTestId(`contest-board-rename-${state.entryId}`).click();
       await page.getByTestId(`contest-board-rename-input-${state.entryId}`).fill(name);
@@ -1231,7 +1231,7 @@ test('act 7: a contest over two tournaments — the commissioner adds the second
   if (!firstName || !secondName) {
     throw new Error('act 1 named no further tournaments for act 7');
   }
-  const contestName = `E2E Two Events ${run.runId}`;
+  const contestName = e2eName('Two Events', run.runId);
 
   // The same day a week out, morning and afternoon, so both are in one year whatever the date.
   const tournaments = await test.step('the root admin builds and releases two more one-round tournaments on the tour, each with the six players a tier apiece', async () => {

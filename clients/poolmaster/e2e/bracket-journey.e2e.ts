@@ -1,10 +1,10 @@
-import { randomBytes } from 'node:crypto';
 import { expect, test, type APIRequestContext } from '@playwright/test';
 import { adminApiHeaders, expectOk, type AuthHeaders } from './helpers/admin-api';
 import { logOut, readAdminCredentials, type AdminCredentials } from './helpers/admin-session';
 import { submitAndRead } from './helpers/browser-writes';
 import { removeJourneyRun, type JourneyRun } from './helpers/journey-teardown';
 import { registerFreshUser } from './helpers/user-session';
+import { newRunId, e2eName, e2eEmail, e2eUsername, e2eLeagueCode } from './helpers/test-marker';
 
 /**
  * #721 — the bracket pool journey: the root admin sets up a released four-team basketball
@@ -102,29 +102,29 @@ test('act 1: the root admin releases a four-team basketball tournament of two ro
   const credentials = readAdminCredentials();
   admin = credentials;
 
-  const runId = `${Date.now().toString(36)}${randomBytes(2).toString('hex')}`;
+  const runId = newRunId();
   const run: JourneyRun = {
     runId,
     sport: 'BASKETBALL',
-    tourName: `E2E Conference ${runId}`,
-    playerNamePrefix: `E2E Team ${runId}`,
-    tournamentName: `E2E Bracket Classic ${runId}`,
+    tourName: e2eName('Conference', runId),
+    playerNamePrefix: e2eName('Team', runId),
+    tournamentName: e2eName('Bracket Classic', runId),
     commissioner: {
-      username: `e2e-bc-${runId}`,
-      email: `e2e-bc-${runId}@e2e.invalid`,
+      username: e2eUsername('bc', runId),
+      email: e2eEmail('bc', runId),
       firstName: 'E2E',
       lastName: `Bracket Commissioner ${runId}`,
     },
     member: {
-      username: `e2e-bm-${runId}`,
-      email: `e2e-bm-${runId}@e2e.invalid`,
+      username: e2eUsername('bm', runId),
+      email: e2eEmail('bm', runId),
       firstName: 'E2E',
       lastName: `Bracket Member ${runId}`,
     },
-    leagueName: `E2E Bracket League ${runId}`,
-    leagueCode: `E2EB${runId.toUpperCase()}`,
-    contestName: `E2E Bracket Pool ${runId}`,
-    squadName: `E2E Bracketeers ${runId}`,
+    leagueName: e2eName('Bracket League', runId),
+    leagueCode: e2eLeagueCode('B', runId),
+    contestName: e2eName('Bracket Pool', runId),
+    squadName: e2eName('Bracketeers', runId),
   };
   runs.push(run);
   journey = { run };
