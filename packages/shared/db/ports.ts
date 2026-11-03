@@ -605,7 +605,7 @@ export interface ContestRepository {
    * Deletes up to `limit` abandoned drafts (#1195): DRAFT contests with at least one event, every
    * one of which started before `lastEventStartedBefore`. Each goes as `delete` takes one, with
    * its configuration and rules, in a few set-based deletes under the drafts' row locks, so a
-   * draft opened meanwhile is kept. Resolves to the drafts deleted.
+   * draft opened or given a later event meanwhile is kept. Resolves to the drafts deleted.
    */
   deleteAbandonedDraftsBatch(lastEventStartedBefore: Date, limit: number): Promise<DeletedDraftContest[]>;
 }
