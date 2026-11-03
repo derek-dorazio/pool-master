@@ -282,6 +282,33 @@ describe("pool-master-dn4.1: shared DataGrid primitive", () => {
       scroll.mockRestore();
     });
 
+    it("scrolls the row into view during the click itself, with the row's page already in the table", () => {
+      const scrolled: Element[] = [];
+      const scroll = vi.spyOn(Element.prototype, "scrollIntoView").mockImplementation(function scrollIntoView(this: Element) {
+        scrolled.push(this);
+      });
+      render(grid("row-5"));
+
+      fireEvent.click(screen.getByTestId("test-jump"));
+
+      expect(scrolled).toHaveLength(1);
+      expect(scrolled[0]).toBe(screen.getByTestId("test-row-row-5"));
+      expect(scrolled[0].isConnected).toBe(true);
+      scroll.mockRestore();
+    });
+
+    it("clears a column filter that hides the row before turning to its page", () => {
+      render(grid("row-5"));
+      fireEvent.change(screen.getByTestId("data-grid-filter-name"), { target: { value: "Name 2" } });
+      expect(screen.queryByTestId("test-row-row-5")).not.toBeInTheDocument();
+
+      fireEvent.click(screen.getByTestId("test-jump"));
+
+      expect(screen.getByTestId("data-grid-filter-name")).toHaveValue("");
+      expect(screen.getByTestId("test-row-row-5")).toHaveAttribute("aria-current", "true");
+      expect(screen.getByRole("navigation", { name: "Pages" })).toHaveTextContent("5–5 of 5");
+    });
+
     it("offers no jump for a row that is not in the data", () => {
       render(grid("row-9"));
 
