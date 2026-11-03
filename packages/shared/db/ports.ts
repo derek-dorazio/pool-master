@@ -601,6 +601,13 @@ export interface ContestRepository {
   setCupWeight(id: string, cupWeight: Contest['cupWeight'], whileIn: readonly Contest['status'][]): Promise<boolean>;
   /** Deletes a contest with its entries, picks, selection state, configuration and rules. */
   delete(id: string): Promise<void>;
+  /**
+   * Deletes up to `limit` abandoned drafts (#1195): DRAFT contests with at least one event, every
+   * one of which started before `lastEventStartedBefore`. Each goes as `delete` takes one, with
+   * its configuration and rules, in a few set-based deletes under the drafts' row locks, so a
+   * draft opened meanwhile is kept. Resolves to the drafts deleted.
+   */
+  deleteAbandonedDraftsBatch(lastEventStartedBefore: Date, limit: number): Promise<DeletedDraftContest[]>;
 }
 
 /** A sport event just released, as `ContestRepository.findJoinableByReleasedEdition` matches it. */
@@ -661,6 +668,12 @@ export interface ContestSeasonFull {
 export type ContestCreateResult =
   | { status: 'created'; contest: Contest }
   | ContestSeasonFull;
+
+/** A draft contest the nightly cleanup deleted (#1195), with its league for the run's log line. */
+export interface DeletedDraftContest {
+  id: string;
+  leagueId: string;
+}
 
 export type ContestSeasonMoveResult =
   | { status: 'moved' }

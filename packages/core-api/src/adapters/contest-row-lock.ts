@@ -29,3 +29,19 @@ export async function lockContestRows(tx: Prisma.TransactionClient, contestIds: 
 export async function lockContestEntryRow(tx: Prisma.TransactionClient, entryId: string): Promise<void> {
   await tx.$queryRaw`SELECT id FROM "contest_entries" WHERE id = ${entryId}::uuid FOR UPDATE`;
 }
+
+/**
+ * Takes the row locks of the contests under `contestIds` still in DRAFT (#1195), in id order and
+ * in one statement, and resolves to their ids. A contest opened before its lock was taken is left
+ * out, and one being opened meanwhile is waited for and then left out, so a caller deleting drafts
+ * deletes only contests that are drafts until it commits.
+ */
+export async function lockDraftContestRows(tx: Prisma.TransactionClient, contestIds: readonly string[]): Promise<string[]> {
+  if (contestIds.length === 0) return [];
+  const rows = await tx.$queryRaw<{ id: string }[]>`
+    SELECT id::text AS id FROM "contests"
+    WHERE id = ANY(${[...contestIds]}::uuid[]) AND status = 'DRAFT'
+    ORDER BY id
+    FOR UPDATE`;
+  return rows.map((row) => row.id);
+}

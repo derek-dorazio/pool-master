@@ -24,6 +24,7 @@ import { countingQueries } from './core/request-query-usage';
 // Domain modules (core-api)
 import { authModule } from './modules/auth/routes';
 import { RefreshTokenRetention } from './modules/auth/refresh-token-retention';
+import { AbandonedDraftRetention } from './modules/contests/abandoned-draft-retention';
 import { leaguesModule } from './modules/leagues/routes';
 import { squadsModule } from './modules/squads/routes';
 import { invitationsModule } from './modules/invitations/routes';
@@ -54,6 +55,7 @@ import { BILLING_SETTINGS } from './modules/billing/billing-settings';
 import { billingModule } from './modules/billing/routes';
 import {
   PrismaLeagueRepository,
+  PrismaContestRepository,
   PrismaParticipantProviderMappingRepository,
   PrismaPlatformRuntimeConfigRepository,
   PrismaProviderSyncRunRepository,
@@ -170,6 +172,7 @@ export function buildApp() {
       emailRetention,
       new SyncRunDetailsRetention(providerSyncRuns),
       new SyncRunRetention(providerSyncRuns),
+      new AbandonedDraftRetention(new PrismaContestRepository(prisma), app.log),
     ],
     jobLock,
     logger: app.log,

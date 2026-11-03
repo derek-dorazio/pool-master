@@ -13,13 +13,14 @@ import type {
   ContestStatusFilter,
   ContestStatusTransition,
   ContestUpdate,
+  DeletedDraftContest,
   PendingDrawReceipts,
   ReleasedEdition,
   ReminderCheck,
 } from '@poolmaster/shared/db';
 import { championshipYear, ContestStatus, SelectionType, SportEventStatus, type Contest, type ContestFormat, type CupWeight, type Sport } from '@poolmaster/shared/domain';
 import { forgettingReads, memoizedRead, memoizedReadMany, ReadMemoKey } from '../core/request-read-memo';
-import { lockContestRow } from './contest-row-lock';
+import { lockContestRow, lockDraftContestRows } from './contest-row-lock';
 
 /**
  * What every contest read joins: its events in sequence order with their sport (#713), its draw
@@ -402,6 +403,34 @@ export class PrismaContestRepository implements ContestRepository {
       await tx.contestConfiguration.deleteMany({ where: { contestId: id } });
       await tx.contest.delete({ where: { id } });
     }));
+  }
+
+  async deleteAbandonedDraftsBatch(lastEventStartedBefore: Date, limit: number): Promise<DeletedDraftContest[]> {
+    const candidates = await this.prisma.contest.findMany({
+      where: {
+        status: ContestStatus.DRAFT,
+        sportEvents: { some: {}, none: { sportEvent: { startDate: { gte: lastEventStartedBefore } } } },
+      },
+      select: { id: true, leagueId: true },
+      orderBy: { id: 'asc' },
+      take: limit,
+    });
+    if (candidates.length === 0) return [];
+    // The same child-first order `delete` takes, for every draft of the batch at once.
+    const deletedIds = await this.prisma.$transaction(async (tx) => {
+      const draftIds = await lockDraftContestRows(tx, candidates.map((contest) => contest.id));
+      if (draftIds.length === 0) return draftIds;
+      const contestId = { in: draftIds };
+      await tx.contestEntryPick.deleteMany({ where: { entry: { contestId } } });
+      await tx.contestEntry.deleteMany({ where: { contestId } });
+      await tx.participantContestScoringRule.deleteMany({ where: { contestConfiguration: { contestId } } });
+      await tx.contestPrizeDefinition.deleteMany({ where: { contestConfiguration: { contestId } } });
+      await tx.contestConfiguration.deleteMany({ where: { contestId } });
+      await tx.contest.deleteMany({ where: { id: contestId } });
+      return draftIds;
+    });
+    const deleted = new Set(deletedIds);
+    return candidates.filter((contest) => deleted.has(contest.id));
   }
 }
 

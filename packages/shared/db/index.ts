@@ -27,6 +27,7 @@ export type {
   ContestSeasonFull,
   ContestSeasonLimits,
   ContestSeasonMoveResult,
+  DeletedDraftContest,
   ContestEntryCreateLimits,
   ContestEntryCreateResult,
   ContestEntryDeleteResult,

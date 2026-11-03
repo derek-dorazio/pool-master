@@ -462,6 +462,19 @@ export class InMemoryContestWorld {
       delete: async (id) => {
         this.contests.delete(id);
       },
+      deleteAbandonedDraftsBatch: async (lastEventStartedBefore, limit) => {
+        const abandoned = [...this.contests.values()]
+          .filter((contest) => {
+            const events = contest.sportEventIds.flatMap((id) => this.sportEvents.get(id) ?? []);
+            return contest.status === ContestStatus.DRAFT
+              && events.length > 0
+              && events.every((event) => event.startDate < lastEventStartedBefore);
+          })
+          .sort((left, right) => left.id.localeCompare(right.id))
+          .slice(0, limit);
+        for (const contest of abandoned) this.contests.delete(contest.id);
+        return abandoned.map((contest) => ({ id: contest.id, leagueId: contest.leagueId }));
+      },
     };
   }
 
