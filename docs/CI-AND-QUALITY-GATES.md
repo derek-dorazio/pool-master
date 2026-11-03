@@ -705,8 +705,7 @@ agent transcripts short. The globs are in `lint-staged.config.mjs` and must matc
 hook through the root `prepare` script. That script skips quietly where husky is
 not installed (the `--omit=dev` image stage) and where there is no `.git` (a
 Docker build). Cloud agent sessions run `npm ci` at start, so their commits run
-the hook too. `lint-staged` is pinned to 16.x because 17 needs Node 22.22.1, which
-is newer than the cloud image's Node.
+the hook too.
 
 ## Local equivalents
 
