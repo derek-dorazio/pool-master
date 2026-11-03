@@ -84,6 +84,7 @@ function renderCommissionerTools(path = '/league/BIGDAWGS/admin') {
                   <Route element={<EditEventEmailsPage />} path="event-emails/edit" />
                   <Route element={<LeaguePlanPage />} path="plan" />
                   <Route element={<LeaguePlanEditRedirect />} path="plan/edit" />
+                  <Route element={<div data-testid="contest-types-destination" />} path="contest-types" />
                 </Route>
               </Route>
             </Route>
@@ -180,6 +181,15 @@ describe('Commissioner tools guard', () => {
 
     expect(await screen.findByTestId('league-settings-page')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Back to league' })).toHaveAttribute('href', '/league/BIGDAWGS');
+  });
+
+  it('opens Contest types inside Commissioner tools with Contests lit, since it sits beside Create contest', async () => {
+    primeMocks();
+
+    renderCommissionerTools('/league/BIGDAWGS/admin/contest-types');
+
+    expect(await screen.findByTestId('contest-types-destination')).toBeInTheDocument();
+    expect(screen.getByTestId('commissioner-tools-menu-contests')).toHaveAttribute('aria-current', 'page');
   });
 
   it('lets a root admin who is not a commissioner into League settings', async () => {

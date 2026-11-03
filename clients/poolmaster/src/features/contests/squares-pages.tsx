@@ -2,7 +2,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { useParams } from 'react-router';
 import { describeSquaresRules } from '@poolmaster/shared/domain';
 import type { ContestDto, SquaresBoardResponse, SquaresEntryDto } from '@/lib/api';
-import { ContestEntryBackLinks, ContestPageFrame } from './contest-header';
+import { ContestPageFrame } from './contest-header';
 import { entryPageView } from './contest-page-view';
 import { entryColumn, placeColumn, totalColumn } from './leaderboard-columns';
 import { LeaderboardFrame, ScoreboardGrid } from './leaderboard-kit';
@@ -33,9 +33,9 @@ export function SquaresEntryPage({ contest }: { contest: ContestDto }) {
 
   return (
     <ContestPageFrame
-      actions={<ContestEntryBackLinks leagueCode={leagueCode} />}
       contest={contest}
       current={entryPageView(contest, entryId)}
+      entryName={entry?.name ?? ''}
       leagueCode={leagueCode}
       picksRevealed={entryQuery.data?.picksRevealed ?? false}
       summary={(

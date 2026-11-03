@@ -130,6 +130,7 @@ export type {
   SportLeagueFilters,
   SportLeagueRepository,
   SportLeagueUpdate,
+  SportLeagueUses,
   SportRepository,
   TierAssignment,
 } from './sport-catalog-ports';

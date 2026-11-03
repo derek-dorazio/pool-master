@@ -1,0 +1,50 @@
+# Remove what e2e runs left behind on QA (#1401). Every browser e2e spec tears down what it made,
+# but a run that is cancelled or times out never reaches its teardown and leaves its league, tour,
+# events, players and users on QA. This finds them by the one test-name marker every spec uses
+# (clients/poolmaster/e2e/helpers/test-marker.ts) and deletes them through the admin API, the
+# way the teardowns do: no database access, one league at a time.
+#
+# Nightly at 08:00 UTC (about 3 AM Eastern), and by hand. It never runs against anything but QA,
+# and leaves alone any run that started less than two hours ago, so it never races a live run.
+# Queued emails to @e2e.invalid addresses stay; they are harmless. See docs/CI-AND-QUALITY-GATES.md.
+name: Sweep QA e2e residue
+
+on:
+  schedule:
+    - cron: '0 8 * * *'
+  workflow_dispatch:
+    inputs:
+      min_age_hours:
+        description: Leave runs younger than this many hours alone
+        type: string
+        default: '2'
+
+permissions:
+  contents: read
+
+# One sweep at a time: two would race to delete the same rows.
+concurrency:
+  group: sweep-qa-e2e-residue
+  cancel-in-progress: false
+
+jobs:
+  sweep:
+    name: sweep
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      POOLMASTER_E2E_BASE_URL: https://qa.ultimateofficepoolmanager.com
+      POOLMASTER_E2E_ADMIN_IDENTIFIER: ${{ secrets.POOLMASTER_E2E_ADMIN_IDENTIFIER }}
+      POOLMASTER_E2E_ADMIN_PASSWORD: ${{ secrets.POOLMASTER_E2E_ADMIN_PASSWORD }}
+      # A scheduled run has no inputs; the script's own default (2 hours) applies.
+      SWEEP_MIN_AGE_HOURS: ${{ inputs.min_age_hours }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: 'npm'
+      - run: npm ci
+      # The sweep only calls the API: Playwright's request client, no browser to install.
+      - name: Sweep QA
+        run: npm run e2e:sweep-residue --workspace @poolmaster/poolmaster

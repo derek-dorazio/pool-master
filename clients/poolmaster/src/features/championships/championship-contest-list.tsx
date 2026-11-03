@@ -10,16 +10,20 @@ import { describeContestResult } from './championship-view';
  * A championship year's final contests (#837), newest first: its sports league and date, who won
  * and how many entries, and whether it counted. Filtered to a squad, each row also shows that
  * squad's place and points. Every contest here is final, so a row opens it where a final
- * contest opens (#1389): its leaderboard.
+ * contest opens (#1389): its leaderboard. `focusContestId` tints and scrolls to the contest the
+ * viewer came from (#1392).
  */
 export function ChampionshipContestList({
   contests,
   emptyBody,
+  focusContestId = null,
   leagueCode,
   testIdPrefix = 'championship-contest',
 }: {
   contests: ContestResultSummaryDto[];
   emptyBody: string;
+  /** The contest the viewer came from, from the page's `?focus=`. */
+  focusContestId?: string | null;
   leagueCode: string;
   testIdPrefix?: string;
 }) {
@@ -35,6 +39,7 @@ export function ChampionshipContestList({
           <ContestRow
             completedAt={contest.completedAt}
             details={contest.sportLeagueName}
+            isHighlighted={contest.contestId === focusContestId}
             key={contest.contestId}
             name={contest.name}
             note={state.note}

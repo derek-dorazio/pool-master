@@ -56,6 +56,11 @@ export function createSportLeagueHandlers(sportLeagues: SportLeagueService, list
       return { sportLeague: mapSportLeagueToDto(sportLeague) };
     },
 
+    deleteSportLeague: async (request: FastifyRequest<SportLeagueParams>, reply: FastifyReply) => {
+      await sportLeagues.deleteSportLeague(request.params.sportLeagueId);
+      return reply.status(204).send();
+    },
+
     listAffiliations: async (request: FastifyRequest<SportLeagueParams>): Promise<ParticipantLeagueAffiliationListResponse> => {
       const affiliations = await sportLeagues.listAffiliations(request.params.sportLeagueId);
       return { affiliations: affiliations.map(mapAffiliationToDto) };

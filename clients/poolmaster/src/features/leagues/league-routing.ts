@@ -1,4 +1,4 @@
-import { ContestStatus, LeagueMembershipStatus, LeagueRole } from '@poolmaster/shared/domain';
+import { ContestStatus, LeagueMembershipStatus, LeagueRole, championshipYear } from '@poolmaster/shared/domain';
 import type { ContestDto, LeagueDto, LeagueMembershipDto } from '@/lib/api';
 import { readCookie } from '@/lib/cookies';
 
@@ -50,9 +50,12 @@ export function buildLeagueCupSquadPath(leagueCode: string, year: number, sportL
   return `${buildLeaguePointsRacePath(leagueCode, year, sportLeagueId)}/squads/${squadId}`;
 }
 
-/** Every contest type the league could run (#803): with create links for its commissioners. */
+/**
+ * Every contest type the league could run (#803), with create links: in Commissioner tools
+ * beside Create contest (#1392). Members learn the contest types from How to Play.
+ */
 export function buildLeagueContestTypesPath(leagueCode: string) {
-  return `/league/${leagueCode}/contest-types`;
+  return `/league/${leagueCode}/admin/contest-types`;
 }
 
 export function buildLeagueContestsPath(leagueCode: string) {
@@ -79,6 +82,20 @@ export function buildContestLandingPath(leagueCode: string, contest: Pick<Contes
   return contest.status === ContestStatus.ACTIVE || contest.status === ContestStatus.COMPLETED
     ? buildLeagueContestLeaderboardPath(leagueCode, contest.id)
     : buildLeagueContestPath(leagueCode, contest.id);
+}
+
+/**
+ * A contest page's way back to the Contests page (#1392): the tab the contest is listed on, Past
+ * at the year it went final once it is final and Current before, with the contest in focus, so
+ * its row is scrolled to and tinted.
+ */
+export function buildContestsFocusPath(leagueCode: string, contest: Pick<ContestDto, 'endsAt' | 'id' | 'status'>) {
+  const focus = `focus=${encodeURIComponent(contest.id)}`;
+  if (contest.status !== ContestStatus.COMPLETED) {
+    return `${buildLeagueContestsPath(leagueCode)}?${focus}`;
+  }
+  const year = contest.endsAt ? `year=${String(championshipYear(new Date(contest.endsAt)))}&` : '';
+  return `${buildLeagueContestHistoryPath(leagueCode)}?${year}${focus}`;
 }
 
 export function buildLeagueContestEntryPath(leagueCode: string, contestId: string, entryId: string) {

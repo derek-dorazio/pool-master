@@ -777,6 +777,12 @@ jobs:
         run: scripts/ci-install-playwright-chromium.sh
       - name: Run PoolMaster browser E2E against the local stack
         run: npm run test:poolmaster:browser-e2e
+      # #1401 — the nightly QA sweep's script, against this stack once the suite is done: it must
+      # find and remove whatever a spec's teardown missed, and fail the job if a removal fails.
+      - name: Sweep the local stack for e2e residue
+        env:
+          SWEEP_MIN_AGE_HOURS: '0'
+        run: npm run e2e:sweep-residue --workspace @poolmaster/poolmaster
       - name: Collect server logs
         if: failure()
         run: cp "$RUNNER_TEMP/core-api.log" "$RUNNER_TEMP/preview.log" clients/poolmaster/ || true

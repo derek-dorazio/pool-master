@@ -497,18 +497,14 @@ export default tseslint.config(
     // `exhaustive-deps` is on; deliberate exceptions cite rules/react-ui-rules.md §5 inline.
     //
     // The React Compiler rules from react-hooks 7 (#1384) are on as plain lint rules,
-    // with two exceptions:
-    // - `incompatible-library` only says the Compiler would skip a component that uses
-    //   react-hook-form's `watch` or TanStack Table. We don't run the Compiler, so it
-    //   reports nothing to fix.
-    // - `set-state-in-effect` enforces rules/react-ui-rules.md §5 *Use Effect Only For
-    //   External Synchronization*. It found 11 existing sites; it is turned on with
-    //   their fix in #1408 rather than in this dependency upgrade.
+    // `set-state-in-effect` among them (rules/react-ui-rules.md §5 *Use Effect Only For
+    // External Synchronization*), with one exception: `incompatible-library` only says the
+    // Compiler would skip a component that uses react-hook-form's `watch` or TanStack Table.
+    // We don't run the Compiler, so it reports nothing to fix.
     rules: {
       ...asErrors(reactHooks.configs['recommended-latest'].rules),
       'react-hooks/exhaustive-deps': 'error',
       'react-hooks/incompatible-library': 'off',
-      'react-hooks/set-state-in-effect': 'off',
     },
   },
   {

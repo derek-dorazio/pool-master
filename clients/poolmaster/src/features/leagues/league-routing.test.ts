@@ -3,6 +3,7 @@ import { ContestStatus } from '@poolmaster/shared/domain';
 import type { LeagueDto, LeagueMembershipDto } from '@/lib/api';
 import {
   buildContestLandingPath,
+  buildContestsFocusPath,
   buildLeagueContestPath,
   buildLeagueContestEntryPath,
   buildLeagueAdminContestsPath,
@@ -121,5 +122,24 @@ describe('buildContestLandingPath', () => {
 
   it('opens a final contest on its Leaderboard', () => {
     expect(buildContestLandingPath('BIGDAWGS', { id: 'c1', status: ContestStatus.COMPLETED })).toBe('/league/BIGDAWGS/contests/c1/leaderboard');
+  });
+});
+
+describe('buildContestsFocusPath', () => {
+  it('opens the Current tab focused on a contest that is not final', () => {
+    for (const status of [ContestStatus.DRAFT, ContestStatus.OPEN, ContestStatus.ACTIVE]) {
+      expect(buildContestsFocusPath('BIGDAWGS', { endsAt: null, id: 'c1', status })).toBe('/league/BIGDAWGS/contests?focus=c1');
+    }
+  });
+
+  it('opens the Past tab at the US Eastern year a final contest ended, focused on it', () => {
+    // 3 AM UTC on New Year's Day is still New Year's Eve in the East.
+    expect(buildContestsFocusPath('BIGDAWGS', { endsAt: '2027-01-01T03:00:00.000Z', id: 'c1', status: ContestStatus.COMPLETED }))
+      .toBe('/league/BIGDAWGS/contests/history?year=2026&focus=c1');
+  });
+
+  it('opens the Past tab on its newest year, focused on the contest, when a final contest has no end', () => {
+    expect(buildContestsFocusPath('BIGDAWGS', { endsAt: null, id: 'c1', status: ContestStatus.COMPLETED }))
+      .toBe('/league/BIGDAWGS/contests/history?focus=c1');
   });
 });

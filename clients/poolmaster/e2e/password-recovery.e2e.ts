@@ -1,10 +1,10 @@
-import { randomBytes } from 'node:crypto';
 import { expect, test } from '@playwright/test';
 import { adminApiHeaders } from './helpers/admin-api';
 import { logOut, readAdminCredentials } from './helpers/admin-session';
 import { removeUser, type JourneyUser } from './helpers/journey-teardown';
 import { waitForMailText } from './helpers/mailpit';
 import { generatePassword, registerFreshUser } from './helpers/user-session';
+import { newRunId, e2eEmail, e2eUsername } from './helpers/test-marker';
 
 /**
  * #848 — "Forgot password?" end to end (plans/password-recovery.md): a person who forgot their
@@ -41,11 +41,11 @@ test.afterAll(async ({ playwright }, testInfo) => {
 
 test('a person who forgot their password resets it from the emailed link and signs in with the new one', async ({ page }) => {
   test.setTimeout(120_000);
-  const runId = `${Date.now().toString(36)}${randomBytes(2).toString('hex')}`;
+  const runId = newRunId();
   const user: JourneyUser = {
-    username: `e2e-pr-${runId}`,
+    username: e2eUsername('pr', runId),
     // RFC 2606 reserves .invalid; the local stack's Mailpit catches it, nothing real is sent.
-    email: `e2e-pr-${runId}@e2e.invalid`,
+    email: e2eEmail('pr', runId),
     firstName: 'E2E',
     lastName: `Recovery ${runId}`,
   };

@@ -119,6 +119,27 @@ export function participantsModule(fastify: FastifyInstance, opts: ParticipantsM
     handler: handler.updateParticipant,
   });
 
+  fastify.delete('/:id', {
+    onRequest: requireRootAdmin,
+    schema: {
+      tags: ['Participants'],
+      summary: 'Delete a participant',
+      description:
+        'Deletes a participant no event field holds, with their sport league affiliations and provider identities. '
+        + '409 PARTICIPANT_IN_USE while any event\'s field, in any year, has them: remove them from the field, or delete the event, first. '
+        + 'Root admin only (403 ROOT_ADMIN_ACCESS_REQUIRED otherwise).',
+      operationId: 'deleteParticipant',
+      params: { type: 'object', required: ['id'], properties: { id: { type: 'string', format: 'uuid' } } },
+      response: {
+        204: { type: 'null' },
+        403: schemaRef('ErrorEnvelope'),
+        404: schemaRef('ErrorEnvelope'),
+        409: schemaRef('ErrorEnvelope'),
+      },
+    },
+    handler: handler.deleteParticipant,
+  });
+
   fastify.get('/:id/provider-mappings', {
     onRequest: requireRootAdmin,
     schema: {

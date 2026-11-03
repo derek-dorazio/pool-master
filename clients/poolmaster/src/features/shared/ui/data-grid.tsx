@@ -10,7 +10,8 @@ import {
   type SortingState,
   useReactTable,
 } from "@tanstack/react-table";
-import { useEffect, useMemo, useRef, useState, type AnchorHTMLAttributes } from "react";
+import { useMemo, useRef, useState, type AnchorHTMLAttributes } from "react";
+import { flushSync } from "react-dom";
 import { Button } from "./button";
 import { cn } from "./class-names";
 import { Input } from "./form-field";
@@ -113,12 +114,8 @@ export function DataGrid<TData>({
     pageSize: pageSize ?? Number.MAX_SAFE_INTEGER,
   });
 
-  // Set by the jump action until the unfiltered rows render; then its page is turned to.
-  const [pendingJumpRowId, setPendingJumpRowId] = useState<string | null>(null);
-  // The last jump that landed: its row stays highlighted until the next jump. A new object per
-  // jump, so a repeat jump to the same row scrolls again and nothing else (a sort, a page) does.
-  const [landedJump, setLandedJump] = useState<{ rowId: string } | null>(null);
-  const jumpedRowId = landedJump?.rowId ?? null;
+  // The last row jumped to: it stays highlighted until the next jump.
+  const [jumpedRowId, setJumpedRowId] = useState<string | null>(null);
   const tableRef = useRef<HTMLTableElement>(null);
 
   const resetPageIndex = () =>
@@ -163,37 +160,26 @@ export function DataGrid<TData>({
     [table],
   );
 
-  const sortedRows = table.getSortedRowModel().rows;
-  const isUnfiltered = globalFilter === "" && columnFilters.length === 0;
   const canJump = jumpToRow !== undefined && table.getCoreRowModel().rows.some((row) => row.id === jumpToRow.rowId);
 
-  useEffect(() => {
-    if (pendingJumpRowId === null || !isUnfiltered) {
-      return;
-    }
-    const index = sortedRows.findIndex((row) => row.id === pendingJumpRowId);
-    setPendingJumpRowId(null);
+  // Each step renders before the next reads it: the unfiltered rows say which page holds the row,
+  // and that page is in the table to scroll to. A repeat jump scrolls again; a sort or page never does.
+  const jump = (rowId: string) => {
+    flushSync(() => {
+      setGlobalFilter("");
+      setColumnFilters([]);
+    });
+    const index = table.getSortedRowModel().rows.findIndex((row) => row.id === rowId);
     if (index < 0) {
       return;
     }
-    setPagination((current) => ({ ...current, pageIndex: Math.floor(index / current.pageSize) }));
-    setLandedJump({ rowId: pendingJumpRowId });
-  }, [isUnfiltered, pendingJumpRowId, sortedRows]);
-
-  // Runs after the render that turned to the row's page, so the row is there to scroll to.
-  useEffect(() => {
-    if (landedJump === null) {
-      return;
-    }
+    flushSync(() => {
+      setPagination((current) => ({ ...current, pageIndex: Math.floor(index / current.pageSize) }));
+      setJumpedRowId(rowId);
+    });
     tableRef.current
-      ?.querySelector(`[data-row-id="${CSS.escape(landedJump.rowId)}"]`)
+      ?.querySelector(`[data-row-id="${CSS.escape(rowId)}"]`)
       ?.scrollIntoView({ block: "center", behavior: "smooth" });
-  }, [landedJump]);
-
-  const jump = (rowId: string) => {
-    setGlobalFilter("");
-    setColumnFilters([]);
-    setPendingJumpRowId(rowId);
   };
 
   const matchingRowCount = table.getFilteredRowModel().rows.length;

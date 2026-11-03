@@ -35,17 +35,21 @@ import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
 import type { ParsedRouteState } from '@/routes/route-state';
 
 export function JoinLeaguePage() {
+  const { inviteCode = '' } = useParams<{ inviteCode: string }>();
+  // Keyed by the invite, so another invite starts with a fresh team name and icon.
+  return <JoinLeagueByInvite inviteCode={inviteCode} key={inviteCode} />;
+}
+
+function JoinLeagueByInvite({ inviteCode }: { inviteCode: string }) {
   const logger = getLogger().child({
     feature: 'join-league-page',
   });
-  const { inviteCode = '' } = useParams<{ inviteCode: string }>();
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
   // null until the viewer types: the field shows the default built from their name, which is
   // only known once the signed-in user has loaded.
   const [teamNameDraft, setTeamNameDraft] = useState<string | null>(null);
   const [selectedIconKey, setSelectedIconKey] = useState<TeamIconKey>(TeamIconKey.CAPTAIN_SMILE_FIELD);
-  const [teamSetupSeedInviteCode, setTeamSetupSeedInviteCode] = useState<string | null>(null);
   const defaultTeamNameSeed = useMemo(
     () => buildDefaultTeamName(user?.firstName, user?.lastName),
     [user?.firstName, user?.lastName],
@@ -93,16 +97,6 @@ export function JoinLeaguePage() {
       'League invitation preview loaded',
     );
   }, [inviteCode, invitationQuery.data, isAuthenticated, logger]);
-
-  useEffect(() => {
-    if (teamSetupSeedInviteCode === inviteCode) {
-      return;
-    }
-
-    setTeamNameDraft(null);
-    setSelectedIconKey(TeamIconKey.CAPTAIN_SMILE_FIELD);
-    setTeamSetupSeedInviteCode(inviteCode);
-  }, [inviteCode, teamSetupSeedInviteCode]);
 
   const acceptMutation = useInvalidatingMutation({
     mutationFn: async () => {

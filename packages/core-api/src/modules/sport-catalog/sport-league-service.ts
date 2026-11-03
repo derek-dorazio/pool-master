@@ -16,6 +16,7 @@ import type {
   SportEventRepository,
   SportLeagueRepository,
   SportLeagueUpdate,
+  SportLeagueUses,
   SportRepository,
 } from '@poolmaster/shared/db';
 import {
@@ -147,6 +148,30 @@ export class SportLeagueService {
     return (await this.summarize([updated]))[0];
   }
 
+  /**
+   * Deletes a sport league nothing uses any more (#1400), with its affiliations and its series that
+   * have no events. 404 SPORT_LEAGUE_NOT_FOUND; 409 SPORT_LEAGUE_IN_USE, naming what still uses it,
+   * while it has an event, a contest setup, an event page offer or a league's cup.
+   */
+  async deleteSportLeague(sportLeagueId: string): Promise<void> {
+    const sportLeague = await this.requireSportLeague(sportLeagueId);
+    const uses = await this.deps.sportLeagues.deleteUnlessUsed(sportLeagueId);
+    if (uses === null) throw sportLeagueNotFound(sportLeagueId);
+    const inUse = describeSportLeagueUses(uses);
+    if (inUse.length > 0) {
+      this.deps.logger?.warn({
+        action: 'sportLeagueService.deleteSportLeague.inUse',
+        data: { sportLeagueId, ...uses },
+      }, 'Refused to delete a sport league that is still in use');
+      throw new SportCatalogError(
+        `${sportLeague.name} still has ${inUse.join(', ')}, so it cannot be deleted.`,
+        'SPORT_LEAGUE_IN_USE',
+        409,
+      );
+    }
+    this.deps.logger?.info({ action: 'sportLeagueService.deleteSportLeague.success', data: { sportLeagueId } }, 'Deleted sport league');
+  }
+
   /** A reseeded bracket is a bracket's rule: only a sport played as a bracket takes one. */
   private assertAdvancementFits(sport: Sport, bracketAdvancement: BracketAdvancement | undefined): void {
     if (bracketAdvancement === BracketAdvancement.RESEED_BY_SEED && !sportPlaysMatches(sport)) {
@@ -260,9 +285,7 @@ export class SportLeagueService {
 
   private async requireSportLeague(sportLeagueId: string): Promise<SportLeague> {
     const sportLeague = await this.deps.sportLeagues.findById(sportLeagueId);
-    if (!sportLeague) {
-      throw new SportCatalogError(`Sport league ${sportLeagueId} was not found.`, 'SPORT_LEAGUE_NOT_FOUND', 404);
-    }
+    if (!sportLeague) throw sportLeagueNotFound(sportLeagueId);
     return sportLeague;
   }
 
@@ -290,4 +313,19 @@ function requireSportOf(sportsById: ReadonlyMap<string, Sport>, sportLeague: Spo
     throw new SportCatalogError(`No Sport row exists for sport league ${sportLeague.id}.`, 'SPORT_NOT_FOUND', 404);
   }
   return sport;
+}
+
+function sportLeagueNotFound(sportLeagueId: string): SportCatalogError {
+  return new SportCatalogError(`Sport league ${sportLeagueId} was not found.`, 'SPORT_LEAGUE_NOT_FOUND', 404);
+}
+
+/** What a refusal names: "2 events, 1 contest setup". Empty when nothing uses the sport league. */
+export function describeSportLeagueUses(uses: SportLeagueUses): string[] {
+  const counted = (count: number, one: string, many: string) => (count === 0 ? [] : [`${count} ${count === 1 ? one : many}`]);
+  return [
+    ...counted(uses.sportEventCount, 'event', 'events'),
+    ...counted(uses.contestTemplateCount, 'contest setup', 'contest setups'),
+    ...counted(uses.eventPageOfferCount, 'event page offer', 'event page offers'),
+    ...counted(uses.cupCount, 'league cup', 'league cups'),
+  ];
 }

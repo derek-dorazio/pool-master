@@ -1,9 +1,9 @@
-import { randomBytes } from 'node:crypto';
 import { expect, test, type Page } from '@playwright/test';
 import { adminApiHeaders } from './helpers/admin-api';
 import { readAdminCredentials } from './helpers/admin-session';
 import { removeLeague, removeUser, type JourneyUser } from './helpers/journey-teardown';
 import { registerFreshUser } from './helpers/user-session';
+import { newRunId, e2eEmail, e2eLeagueCode, e2eName, e2eUsername } from './helpers/test-marker';
 
 /**
  * #929 — the app on a phone's browser: a commissioner signs up, creates a league and starts a
@@ -84,15 +84,15 @@ async function expectNoZoomingFields(page: Page) {
 
 test('a commissioner signs up, creates a league and starts a contest on a phone without any page running wider than the screen', async ({ page }) => {
   test.setTimeout(120_000);
-  const runId = `${Date.now().toString(36)}${randomBytes(2).toString('hex')}`;
+  const runId = newRunId();
   const commissioner: JourneyUser = {
-    username: `e2e-ph-${runId}`,
-    email: `e2e-ph-${runId}@e2e.invalid`,
+    username: e2eUsername('ph', runId),
+    email: e2eEmail('ph', runId),
     firstName: 'E2E',
     lastName: `Phone ${runId}`,
   };
-  // League codes stop at 16 characters, and the run id is about 13.
-  const leagueCode = `PH${runId.toUpperCase()}`;
+  const leagueCode = e2eLeagueCode('H', runId);
+  const leagueName = e2eName('Phone', runId);
   created.push({ leagueCode, commissioner });
 
   await test.step('the sign-in page fits the phone and its fields do not zoom', async () => {
@@ -109,7 +109,7 @@ test('a commissioner signs up, creates a league and starts a contest on a phone 
     await page.getByTestId('welcome-create-league').click();
     await expectNoZoomingFields(page);
     await page.getByTestId('create-league-code').fill(leagueCode);
-    await page.getByTestId('create-league-name').fill(`Phone ${runId}`);
+    await page.getByTestId('create-league-name').fill(leagueName);
     await page.getByTestId('create-league-next').click();
     await page.getByTestId('create-league-submit').click();
     await expect(page.getByTestId('league-home')).toBeVisible();

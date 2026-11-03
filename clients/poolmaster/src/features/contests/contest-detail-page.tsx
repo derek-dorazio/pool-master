@@ -7,14 +7,14 @@ import {
 } from '@poolmaster/shared/domain';
 import { Pencil } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
 import { enterContest, updateContestEntry, type ContestEntryDto } from '@/lib/api';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import {
   buildLeagueAdminContestPath,
   buildLeagueContestEntryPath,
-  buildLeaguePath,
 } from '@/features/leagues/league-routing';
+import { buildHowToPlayFormatPath } from '@/features/event-pages/event-page-paths';
 import { formatPlanLimit } from '@/features/plans/plan-labels';
 import { getLogger } from '@/lib/logger';
 import {
@@ -35,11 +35,11 @@ import {
 } from '@/features/shared/ui';
 import { currentContestEvent, entryEventStatus } from './contest-events';
 import { ContestPageFrame } from './contest-header';
+import { MY_ENTRIES_PARAM } from './contest-page-view';
 import {
   areContestEntriesOpen,
   CONTEST_ENTRY_STATUS_LABELS,
   CONTEST_ENTRY_STATUS_TONES,
-  contestStatusLabel,
 } from './contest-status';
 import { contestSchedule } from './use-contest-schedule';
 import { QueryKeys } from '@/lib/query-keys';
@@ -124,7 +124,9 @@ export function ContestDetailPage() {
   });
   const { contestId = '' } = useParams<{ contestId: string }>();
   const [expandedEntryId, setExpandedEntryId] = useState<string | null>(null);
-  const [myOnly, setMyOnly] = useState(false);
+  // My entries (#1392) opens this page with `?mine=1`; the checkbox keeps the link in step.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const myOnly = searchParams.get(MY_ENTRIES_PARAM) === '1';
   const [renameEntryId, setRenameEntryId] = useState<string | null>(null);
   const [renameDraft, setRenameDraft] = useState('');
 
@@ -270,17 +272,8 @@ export function ContestDetailPage() {
 
   return (
     <ContestPageFrame
-      actions={(
-        <LinkButton
-          data-testid="contest-back-to-league"
-          to={buildLeaguePath(leagueCode)}
-          variant="secondary"
-        >
-          Back to league
-        </LinkButton>
-      )}
       contest={contest}
-      current="entries"
+      current={myOnly && (contest.myEntryIds?.length ?? 0) > 1 ? 'my-entry' : 'entries'}
       details={(
         <>
           {schedule ? (
@@ -346,7 +339,14 @@ export function ContestDetailPage() {
               <Checkbox
                 checked={myOnly}
                 data-testid="contest-board-my-only-toggle"
-                onChange={(event) => setMyOnly(event.target.checked)}
+                onChange={(event) => setSearchParams((params) => {
+                  if (event.target.checked) {
+                    params.set(MY_ENTRIES_PARAM, '1');
+                  } else {
+                    params.delete(MY_ENTRIES_PARAM);
+                  }
+                  return params;
+                }, { replace: true })}
               />
               My entries only
             </label>
@@ -557,14 +557,12 @@ export function ContestDetailPage() {
         </div>
       </Tile>
 
-      <Tile id="contest-rules">
-        <Heading level={3} variant="card" size="xl" tone="inherit">Contest rules and snapshot</Heading>
+      <Tile data-testid="contest-how-to-play">
+        <Heading level={3} variant="card" size="xl" tone="inherit">How to play</Heading>
         <DefinitionList
           className="mt-5"
           items={[
-            { id: 'contest-format', label: 'Contest format', value: contest.contestFormat },
-            { id: 'selection-type', label: 'Selection type', value: contest.selectionType },
-            { id: 'status', label: 'Status', value: contestStatusLabel(contest.status) },
+            { id: 'way-to-play', label: 'Way to play', value: formatSelectionTypeName(contest.selectionType) },
             {
               id: 'events',
               label: contest.sportEvents.length === 1 ? 'Event' : 'Events',
@@ -572,6 +570,14 @@ export function ContestDetailPage() {
             },
           ]}
         />
+        <LinkButton
+          className="mt-5"
+          data-testid="contest-how-to-play-link"
+          to={buildHowToPlayFormatPath(contest.sport ?? null, contest.selectionType)}
+          variant="secondary"
+        >
+          How to play this contest
+        </LinkButton>
       </Tile>
     </ContestPageFrame>
   );

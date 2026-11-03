@@ -20,6 +20,12 @@ export const TABLE_SCAN_ALLOWANCES: readonly TableScanAllowance[] = [
       + 'no screen calls it (#1313). The lifecycle sweep test sends it (#1303).',
   },
   {
+    table: 'leagues',
+    sqlIncludes: 'SET muted_sport_league_ids = array_remove(muted_sport_league_ids, $?::uuid) WHERE $?::uuid = ANY(muted_sport_league_ids)',
+    reason: "Deleting a sport league (#1400) takes it out of every league's muted list, which has no foreign key or index. It runs only when a root admin or the "
+      + 'nightly QA e2e sweep deletes a tour nothing uses, so a GIN index every league write would pay for is not worth it.',
+  },
+  {
     table: 'contest_sport_events',
     sqlIncludes: 'NOT ("public"."contests"."status" = CAST($?::text AS "public"."PrismaContestStatus") AND (EXISTS(SELECT "t0"."contest_id" FROM "public"."contest_sport_events"',
     reason: "A league's current contests leave out a draft whose event has started. The generic plan on the tests' near-empty tables hashes that EXISTS over every row; "

@@ -80,10 +80,10 @@ const NFL_WEEK = {
   sportLeagueId: NFL,
 };
 
-function primeMocks(role: 'COMMISSIONER' | 'MEMBER') {
+function primeMocks(role: 'COMMISSIONER' | 'MEMBER', { isActive = true }: { isActive?: boolean } = {}) {
   getLeagueByCodeMock.mockResolvedValue({
     data: {
-      league: { id: 'league-1', leagueCode: 'BIGDAWGS', name: 'Big Dawgs', isActive: true, iconKey: 'TROPHY', memberCount: 2, activeContestCount: 0, createdAt: '2026-04-15T00:00:00.000Z' },
+      league: { id: 'league-1', leagueCode: 'BIGDAWGS', name: 'Big Dawgs', isActive, iconKey: 'TROPHY', memberCount: 2, activeContestCount: 0, createdAt: '2026-04-15T00:00:00.000Z' },
       membership: { id: 'membership-1', leagueId: 'league-1', userId: 'user-1', role, status: 'ACTIVE', joinedAt: '2026-04-15T00:00:00.000Z', createdAt: '2026-04-15T00:00:00.000Z', updatedAt: '2026-04-15T00:00:00.000Z' },
       squadMembership: null,
     },
@@ -99,9 +99,9 @@ function renderPage() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={['/league/BIGDAWGS/contest-types']}>
+      <MemoryRouter initialEntries={['/league/BIGDAWGS/admin/contest-types']}>
         <Routes>
-          <Route element={<LeagueContestTypesPage />} path="/league/:leagueCode/contest-types" />
+          <Route element={<LeagueContestTypesPage />} path="/league/:leagueCode/admin/contest-types" />
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
@@ -143,12 +143,12 @@ describe('League › Contest types', () => {
     expect(screen.queryByTestId(`contest-types-stat-pool-${NBA}`)).not.toBeInTheDocument();
   });
 
-  it('gives a member the menu without any create links, so they can see what else the league could run', async () => {
-    primeMocks('MEMBER');
+  it('gives the commissioner of an inactive league the menu without any create links, saying it can run them once active again', async () => {
+    primeMocks('COMMISSIONER', { isActive: false });
     renderPage();
 
     await screen.findByTestId('contest-type-nfl-tiered-doubling');
-    expect(screen.getByTestId('league-contest-types-page')).toHaveTextContent('Ask your commissioner');
+    expect(screen.getByTestId('league-contest-types-page')).toHaveTextContent('once the league is active again');
     expect(screen.queryByText('Create this contest')).not.toBeInTheDocument();
     expect(screen.queryByText('No upcoming events yet')).not.toBeInTheDocument();
     expect(listEventsMock).not.toHaveBeenCalled();
