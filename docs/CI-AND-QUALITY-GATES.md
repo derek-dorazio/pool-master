@@ -502,8 +502,8 @@ typechecked or linted.
 
 The parser is wired with `projectService: true` and
 `tsconfigRootDir: import.meta.dirname`, which requires Node ≥ 20.11 for
-`import.meta.dirname`. CI reads the Node version from `.nvmrc` (24.22.2, the
-Active LTS line, since #138) and the Dockerfiles pin the same version, which
+`import.meta.dirname`. CI reads the Node version from `.nvmrc` (26.13.0, the
+Active LTS line, since #1385) and the Dockerfiles pin the same version, which
 satisfies that requirement.
 
 The base preset is `typescript-eslint`'s `strictTypeChecked` (#525). At its
