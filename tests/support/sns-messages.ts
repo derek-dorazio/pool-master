@@ -26,7 +26,7 @@ export interface SnsSigner {
 
 export function snsSigner(): SnsSigner {
   const { privateKey, publicKey } = generateKeyPairSync('rsa', { modulusLength: 2048 });
-  const certificate = publicKey.export({ type: 'spki', format: 'pem' }).toString();
+  const certificate = publicKey.export({ type: 'spki', format: 'pem' });
   return {
     certificate,
     fetchCertificate: () => Promise.resolve(certificate),
