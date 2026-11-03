@@ -53,6 +53,8 @@ import { oneEventOf } from '../support/sport-test-seed';
 // and completes the week. A
 // contest scored by knockout round points is refused on it, because no team goes a round further.
 // The QA test seed of the 2025 season's first weeks loads a week the same way, played.
+// A soccer week loads the same way: the Premier League seed's matchweek 31, whose two postponed
+// games the loader cancels after release (its describe block is at the end of this file).
 //
 // Every date in the first test is fixed in 2099, so the server's real clock never reaches the week.
 

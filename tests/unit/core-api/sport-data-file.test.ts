@@ -451,6 +451,12 @@ describe('sport data bracket', () => {
     Object.assign(played.sportLeagues[0].events[0].matches[1], { cancelled: true });
     expect(problemsOf(played, true)).toEqual(['NCAA Men, Tournament: match 2 is cancelled, so it has no result and no period scores.']);
 
+    const scored = weekTestSeed();
+    const scoredGame = scored.sportLeagues[0].events[0].matches[1];
+    delete scoredGame.result;
+    Object.assign(scoredGame, { cancelled: true, periodScores: [{ periodNumber: 1, homeScore: 0, awayScore: 0 }] });
+    expect(problemsOf(scored, true)).toContain('NCAA Men, Tournament: match 2 is cancelled, so it has no result and no period scores.');
+
     const bracket = bracketTestSeed();
     delete bracket.sportLeagues[0].events[0].matches[1].result;
     Object.assign(bracket.sportLeagues[0].events[0].matches[1], { cancelled: true });
