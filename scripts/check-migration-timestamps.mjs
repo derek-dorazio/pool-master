@@ -9,8 +9,8 @@
  * WHY ONLY ADDED MIGRATIONS. The fix for a collision that has shipped is not a rename: Prisma
  * records applied migrations by name, so renaming one an environment has applied makes the old
  * name read as applied-but-missing and the new one as unapplied, and the next `migrate deploy`
- * re-runs work already done. `main` carries two such pairs (`20260419223000` and
- * `20260930140000`); they stay. So the check fails only when a migration the current change
+ * re-runs work already done. The pre-squash history carried two such pairs, which the #1429
+ * baseline replaced. So the check fails only when a migration the current change
  * adds shares its prefix with any other migration — no exception list to prune.
  *
  * WHAT "ADDED" IS MEASURED AGAINST.

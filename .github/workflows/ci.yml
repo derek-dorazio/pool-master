@@ -323,9 +323,9 @@ jobs:
   # integration tests broke", when what it means is that two committed artifacts disagree -- a
   # different problem with a different fix, and one no test failure would name. It reuses the
   # postgres:16 service the suites already run rather than standing up anything new, needs no
-  # generated client, and all 80-odd migrations apply in about three seconds.
+  # generated client, and the migrations apply in about three seconds.
   #
-  # This is also what makes a history squash (#88) a provable change rather than a leap of faith:
+  # This is also what makes a history squash (#1429) a provable change rather than a leap of faith:
   # squash, gate stays green, done.
   schema-migration-drift:
     name: schema-migration-drift

@@ -15,7 +15,7 @@
  *
  * HOW IT CHECKS. Build the database the way production does — an empty database plus
  * `migrate deploy` — then ask Prisma to diff that against the schema. A non-empty diff means the
- * two artifacts disagree. All 80-odd migrations apply in about 3 seconds, so this is cheap enough
+ * two artifacts disagree. The whole history applies in about 3 seconds, so this is cheap enough
  * to run on every change.
  *
  * WHY A SCRATCH DATABASE AND NOT A SHADOW ONE. `prisma migrate diff --from-migrations` wants a

@@ -507,24 +507,21 @@ that it was already there.
   and does not overwrite a row an environment has corrected by hand.
 - State every column the table requires, including ones that have a column default, when the
   default is one the schema warns against relying on (`Sport.tournamentFormat`, #236).
-- An `id` no longer has to be supplied: every uuid `id` carries `DEFAULT gen_random_uuid()` as
-  of #340. `20261004140000_seed_golf_sport_reference_row` calls `gen_random_uuid()` by hand
-  because `sports.id` had no default when it was written; it stays exactly as it is, because it
-  is applied, but a new reference-data migration can simply omit the column.
+- An `id` does not have to be supplied: every uuid `id` carries `DEFAULT gen_random_uuid()`
+  (#340), so a reference-data migration can simply omit the column.
 - A row that uses an enum value goes in a later migration than the one that adds the value:
-  Postgres refuses a new enum value inside the transaction that adds it. The HORSE_RACING row and
-  templates (`20261013120100_horse_racing_reference_data`) follow the migration adding the value.
+  Postgres refuses a new enum value inside the transaction that adds it.
 - Change it in a *later* migration, never by editing an applied one: Prisma records applied
   migrations by checksum, and an edited migration makes the next `migrate deploy` fail.
-- Two examples are in the tree: `contest_config_templates`, seeded by
-  `20260419213000_add_contest_config_templates` and evolved by later migrations, and the GOLF
-  `sports` row, seeded by `20261004140000_seed_golf_sport_reference_row`.
+- Every reference row that existed when the history was squashed (#1429) is in
+  `20270107000100_baseline_reference_data`: the sports, sport leagues, contest config templates,
+  event pages and their offers. Later reference data arrives in its own migrations after it.
 - A new sport needs code as well as a row, so its row arrives in the migration that adds its
   support — not in a list of every sport the `Sport` enum names.
 - A sport league that a seeded contest template names is reference data too, though leagues are
   otherwise admin-created: insert it in the same migration, idempotent on its `(sport_id, name)`
-  unique, and let each template find its league by sport and name rather than by a fixed id
-  (`20261013190100_auto_racing_reference_data`). The template's foreign key restricts the
+  unique, and let each template find its league by sport and name rather than by a fixed id.
+  The template's foreign key restricts the
   league's delete, so test cleanup that empties sport leagues must keep the ones a template names.
 
 **The test for "is this reference data" is whether the app breaks without it, not whether it is

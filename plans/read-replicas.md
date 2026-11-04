@@ -192,7 +192,8 @@ leagues, contests, accounts and events made by hand are not kept. Every sport da
 on QA is in the repo (checked 2026-10-28), and "Load all test data" with test participants
 rebuilds the test leagues.
 
-**Squashing the migrations in the same move.** With no prod database yet and QA starting empty,
+**Squashing the migrations in the same move.** The history was last squashed on 2026-11-04
+(#1429); when this epic starts, check whether enough has piled up since to squash again. With no prod database yet and QA starting empty,
 nothing anywhere needs the 207 migrations' history, so they become one baseline migration
 (Derek, 2026-10-28). It must keep the reference data the migrations insert (sports, sport leagues,
 contest setups, event pages, email templates), not just the tables. The proof: run the old chain
