@@ -1,306 +1,61 @@
 import { spawnSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 import { PrismaClient } from '@prisma/client';
+import { compareMigrationState, migrationsInImage } from './reset-qa-database.mjs';
 
-const LEAGUE_CODE_MIGRATION = '20260411173000_add_league_code';
+// QA's migrate task: `prisma migrate deploy`, after one check Prisma does not make.
+//
+// When the database records applied migrations this image does not carry, the history was
+// squashed (#1429) or rewritten, and `migrate deploy` would try to build the baseline over tables
+// that already exist and fail with a raw SQL error. Nothing can repair that in place on QA; the
+// Reset QA database workflow wipes it and replays this image's migrations. So the task stops
+// before deploying and says so. The per-migration repairs this file used to carry named
+// migrations the squash deleted, and went with them.
 
-// Empty since #91. This held one entry per bespoke per-migration repair script
-// (substrate foundation, sport-league season, Season collapse); those scripts are
-// deleted, because QA was wiped and re-migrated from scratch on 2026-10-04 and a
-// stuck migration is now recovered with the Reset QA database workflow
-// (scripts/reset-qa-database.mjs) rather than a script written per failure.
-// With nothing registered, a failed migration this file cannot repair falls
-// through to the error below, which is the intended outcome: the migrate task
-// fails loudly and the database gets reset. The dispatch is kept as the seam a
-// future repair would register through. #83's plan would have retired it with the
-// migration squash; that squash was declined (#88), so the seam and the league_code
-// repair logic below stay until something else needs them gone.
-const SCRIPTED_REPAIRS = [];
-
-export function selectScriptedRepair(unresolvedMigrationNames) {
-  return SCRIPTED_REPAIRS.find(
-    (repair) => unresolvedMigrationNames.includes(repair.migrationName),
-  ) ?? null;
+/**
+ * Why this image cannot migrate the database, or null when it can. `recorded` is the database's
+ * `_prisma_migrations` rows; an empty list is a new database, which deploys normally.
+ */
+export function historyMismatch(inImage, recorded) {
+  const { unexpected } = compareMigrationState(inImage, recorded);
+  if (unexpected.length === 0) return null;
+  const shown = unexpected.slice(0, 5).join(', ');
+  const more = unexpected.length > 5 ? ` and ${unexpected.length - 5} more` : '';
+  return `The database records ${unexpected.length} applied migration(s) this image does not carry `
+    + `(${shown}${more}). The migration history was squashed or rewritten, so it cannot be `
+    + 'migrated in place: run the "Reset QA database" workflow, then re-run this deploy.';
 }
 
-function runPrisma(args) {
-  const result = spawnSync('npx', ['prisma', ...args], {
-    stdio: 'pipe',
-    encoding: 'utf8',
-    env: process.env,
-  });
-
-  if (result.stdout) {
-    process.stdout.write(result.stdout);
-  }
-  if (result.stderr) {
-    process.stderr.write(result.stderr);
-  }
-
-  return result;
-}
-
-function runNodeScript(args) {
-  const result = spawnSync('node', args, {
-    stdio: 'pipe',
-    encoding: 'utf8',
-    env: process.env,
-  });
-
-  if (result.stdout) {
-    process.stdout.write(result.stdout);
-  }
-  if (result.stderr) {
-    process.stderr.write(result.stderr);
-  }
-
-  return result;
-}
-
-async function hasUnresolvedFailedMigration(prisma, migrationName) {
-  const rows = await prisma.$queryRawUnsafe(
-    `
-      SELECT migration_name
+async function readMigrationRows(prisma) {
+  try {
+    return await prisma.$queryRawUnsafe(`
+      SELECT migration_name, finished_at, rolled_back_at
       FROM public."_prisma_migrations"
-      WHERE migration_name = $1
-        AND finished_at IS NULL
-        AND rolled_back_at IS NULL
-      LIMIT 1
-    `,
-    migrationName,
-  );
-
-  return Array.isArray(rows) && rows.length > 0;
-}
-
-async function isMigrationMarkedApplied(prisma, migrationName) {
-  const rows = await prisma.$queryRawUnsafe(
-    `
-      SELECT migration_name
-      FROM public."_prisma_migrations"
-      WHERE migration_name = $1
-        AND finished_at IS NOT NULL
-        AND rolled_back_at IS NULL
-      LIMIT 1
-    `,
-    migrationName,
-  );
-
-  return Array.isArray(rows) && rows.length > 0;
-}
-
-async function listUnresolvedFailedMigrations(prisma) {
-  const rows = await prisma.$queryRawUnsafe(`
-    SELECT migration_name
-    FROM public."_prisma_migrations"
-    WHERE finished_at IS NULL
-      AND rolled_back_at IS NULL
-    ORDER BY started_at ASC
-  `);
-
-  return Array.isArray(rows) ? rows.map((row) => row.migration_name) : [];
-}
-
-async function readLeagueCodeMigrationHealth(prisma) {
-  const [state] = await prisma.$queryRawUnsafe(`
-    SELECT
-      EXISTS (
-        SELECT 1
-        FROM information_schema.columns
-        WHERE table_schema = 'public'
-          AND table_name = 'leagues'
-          AND column_name = 'league_code'
-      ) AS has_column,
-      EXISTS (
-        SELECT 1
-        FROM pg_indexes
-        WHERE schemaname = 'public'
-          AND tablename = 'leagues'
-          AND indexname = 'leagues_league_code_key'
-      ) AS has_unique_index,
-      EXISTS (
-        SELECT 1
-        FROM information_schema.columns
-        WHERE table_schema = 'public'
-          AND table_name = 'leagues'
-          AND column_name = 'league_code'
-          AND is_nullable = 'YES'
-      ) AS is_nullable,
-      EXISTS (
-        SELECT 1
-        FROM "leagues"
-        WHERE "league_code" IS NULL
-      ) AS has_null_codes,
-      EXISTS (
-        SELECT 1
-        FROM (
-          SELECT "league_code"
-          FROM "leagues"
-          GROUP BY "league_code"
-          HAVING COUNT(*) > 1
-        ) duplicates
-      ) AS has_duplicate_codes
-  `);
-
-  return {
-    hasColumn: Boolean(state?.has_column),
-    hasUniqueIndex: Boolean(state?.has_unique_index),
-    isNullable: Boolean(state?.is_nullable),
-    hasNullCodes: Boolean(state?.has_null_codes),
-    hasDuplicateCodes: Boolean(state?.has_duplicate_codes),
-  };
-}
-
-async function assertNoUnresolvedFailedMigrations(prisma) {
-  const unresolved = await listUnresolvedFailedMigrations(prisma);
-  if (unresolved.length > 0) {
-    throw new Error(`Prisma still reports unresolved failed migrations: ${unresolved.join(', ')}`);
+    `);
+  } catch {
+    // A database with no _prisma_migrations table has never been migrated.
+    return [];
   }
-}
-
-async function assertLeagueCodeMigrationHealthy(prisma) {
-  const health = await readLeagueCodeMigrationHealth(prisma);
-  if (
-    !health.hasColumn
-    || !health.hasUniqueIndex
-    || health.isNullable
-    || health.hasNullCodes
-    || health.hasDuplicateCodes
-  ) {
-    throw new Error(
-      `league_code migration health check failed: ${JSON.stringify(health)}`,
-    );
-  }
-}
-
-async function shouldRepairLeagueCodeMigration(prisma) {
-  if (await hasUnresolvedFailedMigration(prisma, LEAGUE_CODE_MIGRATION)) {
-    return true;
-  }
-
-  if (!(await isMigrationMarkedApplied(prisma, LEAGUE_CODE_MIGRATION))) {
-    return false;
-  }
-
-  const health = await readLeagueCodeMigrationHealth(prisma);
-  return (
-    !health.hasColumn
-    || !health.hasUniqueIndex
-    || health.isNullable
-    || health.hasNullCodes
-    || health.hasDuplicateCodes
-  );
-}
-
-async function repairLeagueCodeMigration(prisma) {
-  console.log(`Attempting one-time repair for migration ${LEAGUE_CODE_MIGRATION}...`);
-
-  await prisma.$executeRawUnsafe(`
-    DROP INDEX IF EXISTS "leagues_league_code_key";
-  `);
-
-  await prisma.$executeRawUnsafe(`
-    ALTER TABLE "leagues"
-    ADD COLUMN IF NOT EXISTS "league_code" VARCHAR(16);
-  `);
-
-  await prisma.$executeRawUnsafe(`
-    UPDATE "leagues"
-    SET "league_code" = CONCAT(
-      LEFT(
-        COALESCE(NULLIF(UPPER(REGEXP_REPLACE("name", '[^A-Za-z0-9]+', '', 'g')), ''), 'LEAGUE'),
-        8
-      ),
-      RIGHT(REPLACE("id"::text, '-', ''), 8)
-    )
-  `);
-
-  await prisma.$executeRawUnsafe(`
-    ALTER TABLE "leagues"
-    ALTER COLUMN "league_code" SET NOT NULL;
-  `);
-
-  await prisma.$executeRawUnsafe(`
-    CREATE UNIQUE INDEX IF NOT EXISTS "leagues_league_code_key"
-    ON "leagues"("league_code");
-  `);
 }
 
 async function main() {
-  console.log('Running prisma migrate deploy...');
-  let result = runPrisma(['migrate', 'deploy', '--schema', 'prisma/schema.prisma']);
-
   const prisma = new PrismaClient();
-
-  if (result.status === 0) {
-    await assertNoUnresolvedFailedMigrations(prisma);
-    if (await isMigrationMarkedApplied(prisma, LEAGUE_CODE_MIGRATION)) {
-      await assertLeagueCodeMigrationHealthy(prisma);
-    }
-    console.log('Prisma migrations completed successfully.');
-    await prisma.$disconnect();
-    return;
-  }
-
-  const combinedOutput = `${result.stdout ?? ''}\n${result.stderr ?? ''}`;
-
   try {
-    const scriptedRepair = selectScriptedRepair(await listUnresolvedFailedMigrations(prisma));
-    if (scriptedRepair) {
-      console.log(`Attempting one-time repair for migration ${scriptedRepair.migrationName}...`);
-      result = runNodeScript(scriptedRepair.args);
-
-      if (result.status !== 0) {
-        throw new Error(
-          `Failed to repair ${scriptedRepair.migrationName}. The repair script refused or failed.`,
-        );
-      }
-
-      await assertNoUnresolvedFailedMigrations(prisma);
-      console.log(`Prisma migrations completed successfully after repairing ${scriptedRepair.migrationName}.`);
-      return;
-    }
-
-    const shouldRepair = await shouldRepairLeagueCodeMigration(prisma);
-
-    if (!shouldRepair) {
-      throw new Error(
-        `Migration deploy failed and no resolvable ${LEAGUE_CODE_MIGRATION} failure was found.\n${combinedOutput}`,
-      );
-    }
-
-    await repairLeagueCodeMigration(prisma);
-    await assertLeagueCodeMigrationHealthy(prisma);
-
-    if (await hasUnresolvedFailedMigration(prisma, LEAGUE_CODE_MIGRATION)) {
-      console.log(`Resolving ${LEAGUE_CODE_MIGRATION} as applied...`);
-      result = runPrisma([
-        'migrate',
-        'resolve',
-        '--applied',
-        LEAGUE_CODE_MIGRATION,
-        '--schema',
-        'prisma/schema.prisma',
-      ]);
-
-      if (result.status !== 0) {
-        throw new Error(`Failed to resolve ${LEAGUE_CODE_MIGRATION} as applied.`);
-      }
-    }
-
-    console.log('Retrying prisma migrate deploy after repair...');
-    result = runPrisma(['migrate', 'deploy', '--schema', 'prisma/schema.prisma']);
-
-    if (result.status !== 0) {
-      throw new Error('Prisma migrate deploy still failed after repairing league_code migration.');
-    }
-
-    await assertNoUnresolvedFailedMigrations(prisma);
-    await assertLeagueCodeMigrationHealthy(prisma);
-    console.log('Prisma migrations completed successfully after repair.');
+    const mismatch = historyMismatch(migrationsInImage(), await readMigrationRows(prisma));
+    if (mismatch) throw new Error(mismatch);
   } finally {
     await prisma.$disconnect();
   }
+
+  console.log('Running prisma migrate deploy...');
+  const result = spawnSync('npx', ['prisma', 'migrate', 'deploy', '--schema', 'prisma/schema.prisma'], {
+    stdio: 'inherit',
+    env: process.env,
+  });
+  if (result.status !== 0) {
+    throw new Error('prisma migrate deploy failed. If QA is stuck, run the "Reset QA database" workflow.');
+  }
+  console.log('Prisma migrations completed successfully.');
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

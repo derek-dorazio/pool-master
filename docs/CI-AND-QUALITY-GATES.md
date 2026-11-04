@@ -297,7 +297,7 @@ whole history applies in about three seconds.
 It is not in the `deploy-publish-images` dependency list. Drift does not break a
 deploy: QA is built from the migrations, so it gets the real schema either way. What
 drift breaks is anyone who *generates* from `schema.prisma` — above all a history
-squash (#88) — which is why the gate blocks the pull request that would introduce it
+squash (#1429) — which is why the gate blocks the pull request that would introduce it
 rather than the deploy that would carry it.
 
 Only `service-unit-tests` collects service coverage in this workflow, because only

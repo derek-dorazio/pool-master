@@ -192,6 +192,42 @@ columns the history had built as `varchar(255)`.
 
 ---
 
+## Squashing The Migration History
+
+The history was squashed once, on 2026-11-04 (#1429): 217 migrations became
+`20270107000000_baseline_schema` and `20270107000100_baseline_reference_data`. A squash is only
+free while no environment holds data worth keeping; today that is true because QA is
+disposable and stage and prod have never had a database. Once one does, a squash means marking
+the baseline applied there (`prisma migrate resolve --applied`) after proving its schema
+matches, and the QA reset must never be pointed at it.
+
+- **Do it when nothing else is adding a migration.** Any branch with its own migration deletes
+  it after the squash merges and regenerates it against the baseline, because an older timestamp
+  sorts before the baseline and cannot apply to an empty database.
+- **The schema migration is generated, then completed by hand from the old database.**
+  `prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script`
+  builds everything the schema declares. It does not build what the schema cannot say: the
+  `pg_trgm` extension, CHECK constraints, partial unique indexes, and NOT NULL on scalar lists
+  (Prisma never emits it for them). Take those from the database the old history builds, and
+  append them in a section of their own.
+- **Reference rows are dumped, never copied from the old `INSERT`s.** Later migrations update and
+  delete rows earlier ones inserted. `pg_dump --data-only --column-inserts` of an empty database
+  after the whole old history is the truth, and every row there is reference data because test
+  data never goes in a migration. Literal build-time timestamps become `now()`.
+- **Prove it.** Build one scratch database from the old history and one from the baseline.
+  Compare, per table, each column's type, nullability and default, every constraint
+  (`pg_get_constraintdef`), index (`pg_indexes`), enum (in label order), extension, trigger and
+  function; and every row as `to_jsonb(row) - 'created_at' - 'updated_at'`. Column order, `now()`
+  against `CURRENT_TIMESTAMP`, and a UNIQUE constraint against a unique index of the same name
+  are equivalent; nothing else may differ. Then `npm run db:drift:check` and the full gate set.
+- **Roll it out on QA with a reset.** QA records the old names, so the deploy's migrate step
+  stops and names the Reset QA database workflow (`run-migrations.mjs`). The order after merge:
+  Reset QA database (the owner's approval), re-run the deploy's failed jobs, Load sport data.
+- **Tests that replayed a deleted migration go with it.** A test that reads an old
+  `migration.sql` to check its one-time backfill has nothing left to test.
+
+---
+
 ## Indexes Follow The Reads And The Foreign Keys
 
 Postgres does not index a foreign key's referencing column. Without one, deleting the row

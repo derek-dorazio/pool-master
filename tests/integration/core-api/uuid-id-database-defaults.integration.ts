@@ -13,8 +13,8 @@
  *
  *   1. The reason for choosing this direction: raw SQL that omits `id` now works. That is what
  *      reference-data migrations and bootstrap scripts do, and before this change they had to
- *      call `gen_random_uuid()` by hand — `20261004140000_seed_golf_sport_reference_row` does
- *      exactly that, precisely because `sports.id` had no default. The rows here are sport
+ *      call `gen_random_uuid()` by hand — the old GOLF sport row migration did exactly that,
+ *      precisely because `sports.id` had no default. The rows here are sport
  *      leagues: since #603 the `sports` table holds one row per built sport, so it can no longer
  *      take throwaway rows.
  *   2. The reason it is safe: `dbgenerated` changes nothing Prisma-side. An explicitly supplied

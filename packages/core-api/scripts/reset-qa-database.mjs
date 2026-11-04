@@ -11,8 +11,9 @@
  * the same situation next time without a bespoke repair.
  *
  * #83's reset half is what is built here. The repair scripts it would have retired are now
- * gone (#91): this workflow is the recovery path, so they had nothing left to do. The migration
- * squash was declined outright (#88), so nothing downstream is waiting on it.
+ * gone (#91): this workflow is the recovery path, so they had nothing left to do. #88 declined
+ * #83's squash half; #1429 did it in the end, and this reset is how QA moves onto a squashed
+ * baseline (rules/model-change-rules.md, *Squashing The Migration History*).
  *
  * #83's narrative plan was deleted with the closed epic, per ADR-0002. It carried the squash
  * script design and the "when this stops being free" analysis; retrieve it with
@@ -59,8 +60,8 @@ Apply mode DESTROYS EVERY ROW in the target database:
   2. verifies the recorded history is exactly this image's migrations, all applied
   3. runs bootstrap-users.mjs with FIXTURE_JSON so QA has its root admin back
 
-The sport catalog needs nothing here: the GOLF row is reference data, inserted by
-20261004140000_seed_golf_sport_reference_row, so re-applying the migrations restores it.
+The sport catalog needs nothing here: sports, sport leagues and contest templates are
+reference data, inserted by migrations, so re-applying the migrations restores them.
 
 Required apply flags:
   --apply
