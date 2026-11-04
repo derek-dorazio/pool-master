@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { historyMismatch } from './run-migrations.mjs';
+import { historyMismatch, isMissingMigrationsTable } from './run-migrations.mjs';
 
 // #1429 squashed the migration history into a baseline. A database migrated by the old history
 // records names the new image does not carry, and `migrate deploy` would fail on it with a raw
@@ -38,5 +38,18 @@ describe('run-migrations history check', () => {
   it('ignores a rolled-back migration the image does not carry, since it was never applied', () => {
     const rolledBack = { migration_name: '20260101000000_gone', finished_at: new Date(), rolled_back_at: new Date() };
     assert.equal(historyMismatch(inImage, [rolledBack]), null);
+  });
+});
+
+describe('run-migrations reading the recorded history', () => {
+  it('reads a missing _prisma_migrations table as a never-migrated database', () => {
+    assert.equal(isMissingMigrationsTable({ code: 'P2010', meta: { code: '42P01' } }), true);
+  });
+
+  it('does not read a connection, auth or other query error as an empty history', () => {
+    assert.equal(isMissingMigrationsTable({ code: 'P1001' }), false);
+    assert.equal(isMissingMigrationsTable({ code: 'P1000' }), false);
+    assert.equal(isMissingMigrationsTable({ code: 'P2010', meta: { code: '42501' } }), false);
+    assert.equal(isMissingMigrationsTable(new Error('boom')), false);
   });
 });

@@ -892,19 +892,19 @@ usually faster than any targeted repair:
    2026 tournaments for manual league and contest testing (`docs/SPORT-DATA-LOADING.md`, *Seeded 2026
    tournaments*). A reset leaves none.
 
-The reset wipes every row, re-applies every migration — which restores the reference data,
-the GOLF `sports` row and the contest config templates — and runs `bootstrap-users.mjs` for
+The reset wipes every row, re-applies every migration — which restores the reference data
+(sports, sport leagues, contest config templates, event pages) — and runs `bootstrap-users.mjs` for
 the root admin. `rules/architecture-rules.md` §6 says which data lives where and why.
 
 A dispatch waiting for approval stays approvable, so the workflow takes
 `concurrency: cancel-in-progress` — a second dispatch cancels the older one rather than
 leaving a wipe armed behind a stale notification.
 
-A reset is the recovery path for every refused migration. `run-migrations.mjs` still carries a
-registry for per-migration repair scripts, but it is empty: the three that existed were deleted
-in #91, once QA could be reset instead of repaired a failure at a time. Nothing is registered,
-so a failure the file cannot repair fails the migrate job loudly, and the reset above is the
-answer.
+A reset is the recovery path for every refused migration; there are no per-migration repair
+scripts. `run-migrations.mjs` (the migrate task) also stops before deploying when the database
+records applied migrations the image does not carry, as QA does right after a history squash
+(#1429), and its error names this workflow. Any other failure of `prisma migrate deploy` fails
+the migrate job loudly, and the reset above is the answer.
 
 ## Test suites
 

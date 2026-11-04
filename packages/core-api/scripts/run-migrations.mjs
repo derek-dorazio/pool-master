@@ -26,15 +26,25 @@ export function historyMismatch(inImage, recorded) {
     + 'migrated in place: run the "Reset QA database" workflow, then re-run this deploy.';
 }
 
+/**
+ * Whether a read failed only because `_prisma_migrations` does not exist, which means the
+ * database has never been migrated. Prisma reports Postgres's undefined_table (42P01) as P2010.
+ * Anything else (bad URL, auth, network, permissions) is a real failure and must not read as an
+ * empty history.
+ */
+export function isMissingMigrationsTable(error) {
+  return error?.code === 'P2010' && error?.meta?.code === '42P01';
+}
+
 async function readMigrationRows(prisma) {
   try {
     return await prisma.$queryRawUnsafe(`
       SELECT migration_name, finished_at, rolled_back_at
       FROM public."_prisma_migrations"
     `);
-  } catch {
-    // A database with no _prisma_migrations table has never been migrated.
-    return [];
+  } catch (error) {
+    if (isMissingMigrationsTable(error)) return [];
+    throw error;
   }
 }
 
