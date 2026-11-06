@@ -42,52 +42,52 @@ M ≈ 1 week, L > 1 week; $ = monthly AWS spend.
    storms against Postgres (needs RDS Proxy, which pins sessions on our advisory locks), and a
    second deploy shape. The worker service (#1186) covers every candidate below.
 
-## 1. Compute topology and background work
+## 1. Compute and background work
 
-| # | Idea | Ticket | Cost | Benefit | Pri |
-|---|---|---|---|---|---|
-| 1.1 | Dedicated worker service; API tasks run no jobs | #1186 | S–M, +$10–20 | API CPU/pool isolated from settlement, sync, fan-out; API scales on traffic alone; stops every new API task adding an email sender | **P1** |
-| 1.2 | ECS service autoscaling on API (CPU + ALB requests/target), min 2 | — | S, $0 base | Game-day spikes absorbed without a manual deploy | **P1** |
-| 1.3 | Generic Postgres job table + worker claim loop (Recommendation 1) | — | M | Durable request → worker handoff; replaces in-process `setImmediate` work that dies with its task | **P1** (with 1.1) |
-| 1.4 | Settlement and contest-start emails built by worker | #1387 | S (after 1.3) | Admin transition routes under budget; with 1.3, seconds of delay, not a sweep | P2 |
-| 1.5 | Manual event sync runs as a job on the worker | — | S (after 1.3) | Long provider calls and score writes off API tasks; survives a deploy | P2 |
-| 1.6 | Event create / clone / import as a job | #1253 (allow-list) | M | Heavy admin writes off the request; route back under budget | P3 |
-| 1.7 | Commissioner bulk actions (year-in-review send, invite batches) as jobs | — | S each | Large leagues don't time out the request | P3 |
-| 1.8 | Split job types across workers (ingestion vs email) | (out of scope in #1186) | S | Isolation if one job type starves another | P3 |
+| # | Idea | Ticket | Cost | Issue | Benefit | Pri |
+|---|---|---|---|---|---|---|
+| 1.1 | Dedicated worker service; API tasks run no jobs | #1186 | S–M, +$10–20 | Every API task runs every background job, so whichever task holds a job lock spends its CPU and connections on settlement, live sync and email while also serving users. | API tasks serve requests only and scale on traffic alone, and adding an API task no longer adds another email sender. | **P1** |
+| 1.2 | ECS autoscaling on the API service (CPU and ALB requests per target), minimum 2 | — | S, $0 base | Prod runs a fixed two tasks with no autoscaling, so a game-day spike needs a manual change. | Spikes are absorbed automatically, and capacity drops back after the games end. | **P1** |
+| 1.3 | Generic Postgres job table with a worker claim loop | — | M | Work a request starts in the background (such as a manual event sync) runs in memory on that API task and is lost if the task stops or redeploys. | Requests hand work to the worker durably, with retries, in the same transaction as the write that caused it. | **P1** |
+| 1.4 | Settlement and contest-start emails built by the worker | #1387 | S (after 1.3) | The admin event transition routes build league emails inside the request and run 27 to 40 queries. | Both routes fit the query budget, and with the job table the emails go out seconds later rather than at the next sweep. | P2 |
+| 1.5 | Manual event sync as a worker job | — | S (after 1.3) | A manual sync's provider calls and score writes run on the API task that took the admin's request. | That load moves off the API tasks, and a sync in progress survives a deploy. | P2 |
+| 1.6 | Event create, clone and import as a job | #1253 | M | These admin routes do heavy writes inside the request and sit on the query budget allow-list. | The heavy writes move off the request and the routes come back under budget. | P3 |
+| 1.7 | Commissioner bulk actions (year in review, invite batches) as jobs | — | S each | Bulk actions scale with league size and run inside the request. | Large leagues can't time out the request. | P3 |
+| 1.8 | Split job types across separate workers | (out of scope in #1186) | S | With one worker, a long ingestion run can delay email delivery, or the other way round. | Each job type is isolated from the others; only worth doing if starvation shows up. | P3 |
 
 ## 2. Database
 
-| # | Idea | Ticket | Cost | Benefit | Pri |
-|---|---|---|---|---|---|
-| 2.1 | Performance Insights + `pg_stat_statements` + slow log on prod | #1246 | S, ~$0–10 | Real per-query evidence before tuning anything else | **P1** |
-| 2.2 | Volume seed + nightly perf run at prod-like size | #1245 | M | Catches plan flips and scans that tiny QA data hides | **P1** |
-| 2.3 | Keep job-lock connection on the direct writer endpoint (never behind a txn pooler/Proxy) | — | S (doc + guard) | Advisory locks stay correct if RDS Proxy or PgBouncer is added | **P1** (note) |
-| 2.4 | Aurora Serverless v2 writer + reader; read pool opt-in for never-writing flows | #1156, #1187–#1192 | L, +$50–150 | Read scale-out; writer capacity scales with load | P2 |
-| 2.5 | Re-check migration squash before Aurora move | #1188 | S | Clean QA rebuild on Aurora | P2 (with 2.4) |
-| 2.6 | Field grid save as one statement | #1308 | S (raw SQL) / M (model) | One admin route under budget; no user-facing gain | P3 |
-| 2.7 | Partition or archive append-heavy score tables (stat lines, golf rounds) by season | — | L | Keeps indexes hot after several seasons | P3 |
+| # | Idea | Ticket | Cost | Issue | Benefit | Pri |
+|---|---|---|---|---|---|---|
+| 2.1 | Performance Insights, pg_stat_statements and a slow query log on prod | #1246 | S, ~$0–10 | We have no per-query evidence from real traffic, only query counts from tests. | Tuning is driven by what prod actually spends time on. | **P1** |
+| 2.2 | Volume test data and a nightly performance run at prod-like size | #1245 | M | QA's small data set hides query plans that change at scale and scans that only hurt with many rows. | Those regressions are caught before customers see them. | **P1** |
+| 2.3 | Keep the job-lock connection on the direct writer endpoint | — | S (doc and guard) | The job locks are session advisory locks, which break behind a transaction pooler and pin connections behind RDS Proxy. | Locks stay correct if RDS Proxy or PgBouncer is added later. | **P1** |
+| 2.4 | Aurora Serverless v2 writer and reader, with an opt-in read pool | #1156, #1187–#1192 | L, +$50–150 | One Postgres instance serves every read and write, and read-only traffic grows with history. | Reads scale out on readers, and the writer's capacity grows and shrinks with load. | P2 |
+| 2.5 | Re-check the migration squash before the Aurora move | #1188 | S | Migrations added since the 11-04 squash make a fresh Aurora build slower and noisier. | QA rebuilds cleanly on Aurora. | P2 |
+| 2.6 | Save the field grid in one statement | #1308 | S raw SQL / M model | A full grid of new rankings or odds is one update per row and sits over the query budget. | One admin route gets under budget; there is no user-facing gain. | P3 |
+| 2.7 | Partition or archive score tables by season | — | L | Stat lines and golf rounds grow every season and their indexes grow with them. | Indexes stay small and hot after several seasons. | P3 |
 
 ## 3. Caching
 
-| # | Idea | Ticket | Cost | Benefit | Pri |
-|---|---|---|---|---|---|
-| 3.1 | Compute live leaderboards once per score write (worker), store a snapshot row with a version; reads serve the snapshot | — | M | Hottest game-day read becomes one PK lookup on every task; no shared cache needed | **P1**–P2 |
-| 3.2 | ETag / 304 on polled endpoints keyed by snapshot version | — | S (after 3.1) | 30 s polls of unchanged boards cost no serialization or bandwidth | P2 |
-| 3.3 | Long TTL (or no expiry, keyed by settle version) for settled contests, history, trophy room | — | S | Immutable reads stop hitting the DB; pairs with 2.4 | P2 |
-| 3.4 | Short TTL cache of the caller's league membership/role for auth checks | — | S | Removes a repeat read from nearly every league-scoped request | P2 |
-| 3.5 | AWS WAF rate-based rules at CloudFront/ALB (fleet-wide) instead of only in-memory limits | — | S, ~$10 | Real per-IP limits on login, reset, sign-up regardless of task count | **P1** |
-| 3.6 | ElastiCache Redis (shared cache, cross-task invalidation, shared limits) | — | M, +$25–100 | Only if Recommendation 2's triggers fire | P3 |
+| # | Idea | Ticket | Cost | Issue | Benefit | Pri |
+|---|---|---|---|---|---|---|
+| 3.1 | Compute each live leaderboard once per score write and store it as a versioned snapshot | — | M | Live leaderboards are computed on read, once per API task every 30 seconds, from every entry, pick and field row. | The heaviest game-day read becomes one lookup on every task, and no shared cache is needed for it. | **P1–P2** |
+| 3.2 | ETag and 304 on polled endpoints, keyed by the snapshot version | — | S (after 3.1) | Clients poll every 30 seconds and get the full board back even when nothing changed. | Unchanged polls cost no serialization or bandwidth. | P2 |
+| 3.3 | Cache settled contests, history and the trophy room by settle version, with no expiry | — | S | These pages never change after settlement but are read from the database on every view. | Those reads stop hitting the database, which pairs well with the read replicas. | P2 |
+| 3.4 | Short-TTL cache of the caller's league membership and role | — | S | Nearly every league request reads the caller's membership to check access. | One repeated read disappears from most requests. | P2 |
+| 3.5 | AWS WAF rate-based rules in front of CloudFront and the ALB | — | S, ~$10 | Rate limits are kept in memory per task, so the real limit is the limit times the task count, and a deploy resets it. | Login, password reset and sign-up get real per-IP limits whatever the task count. | **P1** |
+| 3.6 | ElastiCache Redis | — | M, +$25–100 | Caches are per task, so a value can be up to one TTL stale on other tasks. | Shared values and immediate invalidation; only worth it past about 6 tasks or when cross-task freshness matters. | P3 |
 
 ## 4. Persistence fit
 
-| # | Use case | Store | Ticket | Cost | Benefit | Pri |
+| # | Idea | Ticket | Cost | Issue | Benefit | Pri |
 |---|---|---|---|---|---|---|
-| 4.1 | Core domain (leagues, contests, entries, picks, scores, standings) | Postgres (keep) | — | — | Relational integrity and tenant joins | — |
-| 4.2 | Email outbox and send history | Postgres (keep; DynamoDB + TTL optional later) | — | — | Already decided; bodies cleared at 30 d, rows at 13 mo | — |
-| 4.3 | Raw provider payloads (`provider_sync_runs.payload_json` / `details_json`) | S3, key on the row; lifecycle to IA/expire | — | S | Keeps the biggest JSON out of the DB and backups | P2 |
-| 4.4 | Settled season archives (final boards, history exports) | S3 JSON, served via signed URL | — | M | Cheap immutable history; pairs with 3.3 | P3 |
-| 4.5 | Admin uploads (field CSVs) | S3 then job (1.3) | — | S | Large uploads off the request body | P3 |
-| 4.6 | Sessions, rate counters, feature flags | Stay as is (JWT + refresh rows; WAF; settings in Postgres) | — | — | No DynamoDB/Redis case | — |
+| 4.1 | Core domain (leagues, contests, entries, picks, scores, standings): keep on Postgres | — | — | This data is relational and every query joins within a league. | Postgres keeps integrity and tenant joins; no other store fits better. | Keep |
+| 4.2 | Email outbox and send history: keep on Postgres | — | — | DynamoDB with TTL was considered on 10-30 and set aside. | No change is needed: bodies are cleared at 30 days and rows deleted at 13 months. | Keep |
+| 4.3 | Raw provider payloads (sync run payload and details JSON): move to S3, with the key on the row | — | S | Raw provider JSON is the largest data per row and is rarely read after the sync. | The database and its backups stay small, and S3 lifecycle rules expire old payloads cheaply. | P2 |
+| 4.4 | Settled season archives: S3 JSON, served by signed URL | — | M | Final boards and history exports are written once and read rarely. | History is cheap to keep forever and pairs with 3.3. | P3 |
+| 4.5 | Admin uploads (field CSVs): S3, then a job | — | S | A large upload is parsed inside the request body. | Big uploads no longer tie up an API request. | P3 |
+| 4.6 | Sessions, rate counters and feature flags: keep as they are | — | — | JWT with refresh rows, WAF limits and settings in Postgres already cover these. | No DynamoDB or Redis case exists here. | Keep |
 
 ## Suggested order
 
