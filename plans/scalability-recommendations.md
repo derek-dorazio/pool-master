@@ -20,7 +20,7 @@ M ≈ 1 week, L > 1 week; $ = monthly AWS spend.
 - Request-started work (`outsideRequest` + `setImmediate`, e.g. manual event sync) runs on the API
   task that took the request and is lost if that task stops.
 
-## Decisions
+## Recommendations on the four questions
 
 1. **Job transport: stay on Postgres.** Add one generic job table (same claim pattern as the
    email outbox: `SKIP LOCKED`, lease, retries) for request → worker handoff, polled every 1–2 s
@@ -48,7 +48,7 @@ M ≈ 1 week, L > 1 week; $ = monthly AWS spend.
 |---|---|---|---|---|---|
 | 1.1 | Dedicated worker service; API tasks run no jobs | #1186 | S–M, +$10–20 | API CPU/pool isolated from settlement, sync, fan-out; API scales on traffic alone; stops every new API task adding an email sender | **P1** |
 | 1.2 | ECS service autoscaling on API (CPU + ALB requests/target), min 2 | — | S, $0 base | Game-day spikes absorbed without a manual deploy | **P1** |
-| 1.3 | Generic Postgres job table + worker claim loop (Decision 1) | — | M | Durable request → worker handoff; replaces in-process `setImmediate` work that dies with its task | **P1** (with 1.1) |
+| 1.3 | Generic Postgres job table + worker claim loop (Recommendation 1) | — | M | Durable request → worker handoff; replaces in-process `setImmediate` work that dies with its task | **P1** (with 1.1) |
 | 1.4 | Settlement and contest-start emails built by worker | #1387 | S (after 1.3) | Admin transition routes under budget; with 1.3, seconds of delay, not a sweep | P2 |
 | 1.5 | Manual event sync runs as a job on the worker | — | S (after 1.3) | Long provider calls and score writes off API tasks; survives a deploy | P2 |
 | 1.6 | Event create / clone / import as a job | #1253 (allow-list) | M | Heavy admin writes off the request; route back under budget | P3 |
@@ -76,7 +76,7 @@ M ≈ 1 week, L > 1 week; $ = monthly AWS spend.
 | 3.3 | Long TTL (or no expiry, keyed by settle version) for settled contests, history, trophy room | — | S | Immutable reads stop hitting the DB; pairs with 2.4 | P2 |
 | 3.4 | Short TTL cache of the caller's league membership/role for auth checks | — | S | Removes a repeat read from nearly every league-scoped request | P2 |
 | 3.5 | AWS WAF rate-based rules at CloudFront/ALB (fleet-wide) instead of only in-memory limits | — | S, ~$10 | Real per-IP limits on login, reset, sign-up regardless of task count | **P1** |
-| 3.6 | ElastiCache Redis (shared cache, cross-task invalidation, shared limits) | — | M, +$25–100 | Only if Decision 2's triggers fire | P3 |
+| 3.6 | ElastiCache Redis (shared cache, cross-task invalidation, shared limits) | — | M, +$25–100 | Only if Recommendation 2's triggers fire | P3 |
 
 ## 4. Persistence fit
 
