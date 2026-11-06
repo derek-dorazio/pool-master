@@ -40,6 +40,7 @@ import { readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { PrismaClient } from '@prisma/client';
+import { compareMigrationState } from './migration-state.mjs';
 
 const SCHEMA_PATH = 'prisma/schema.prisma';
 const MIGRATIONS_DIR = 'prisma/migrations';
@@ -108,25 +109,6 @@ export function migrationsInImage(dir = MIGRATIONS_DIR) {
     .filter((entry) => entry.isDirectory())
     .map((entry) => entry.name)
     .sort();
-}
-
-/**
- * What a reset is supposed to leave behind: every migration in the image, applied, and nothing
- * recorded that the image does not have. A mismatch after a reset means the image and the
- * database disagree about what exists, which is the state this tool is meant to end.
- */
-export function compareMigrationState(inImage, recorded) {
-  const applied = recorded.filter((row) => row.finished_at !== null && row.rolled_back_at === null)
-    .map((row) => row.migration_name);
-  const appliedSet = new Set(applied);
-  const imageSet = new Set(inImage);
-  return {
-    missing: inImage.filter((name) => !appliedSet.has(name)),
-    unexpected: applied.filter((name) => !imageSet.has(name)),
-    unfinished: recorded
-      .filter((row) => row.finished_at === null || row.rolled_back_at !== null)
-      .map((row) => row.migration_name),
-  };
 }
 
 async function readMigrationRows(prisma) {

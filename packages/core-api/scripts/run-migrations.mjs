@@ -1,7 +1,8 @@
 import { spawnSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 import { PrismaClient } from '@prisma/client';
-import { compareMigrationState, migrationsInImage } from './reset-qa-database.mjs';
+import { compareMigrationState } from './migration-state.mjs';
+import { migrationsInImage } from './reset-qa-database.mjs';
 
 // QA's migrate task: `prisma migrate deploy`, after one check Prisma does not make.
 //

@@ -4,16 +4,14 @@ import { fileURLToPath } from 'node:url';
 
 import {
   assertQaDatabaseUrl,
-  compareMigrationState,
   migrationsInImage,
 } from './reset-qa-database.mjs';
 
 /**
  * #83 — the guards in front of destroying every row in a database.
  *
- * `compareMigrationState` is the other half: it decides whether a finished reset actually left
- * the history this image expects. A reset that reported success while leaving a failed or
- * unknown migration behind would recreate the P3009 state it exists to clear.
+ * Whether a finished reset left the history this image expects is `compareMigrationState`,
+ * tested in migration-state.test.mjs.
  */
 describe('reset-qa-database guards', () => {
   it('refuses a missing DATABASE_URL', () => {
@@ -39,52 +37,6 @@ describe('reset-qa-database guards', () => {
   it('accepts a non-QA database only with the explicit opt-out', () => {
     assert.doesNotThrow(() => assertQaDatabaseUrl('postgresql://u:p@localhost:5432/x', 'true'));
     assert.throws(() => assertQaDatabaseUrl('postgresql://u:p@localhost:5432/x', 'yes'), /does not look like/);
-  });
-});
-
-describe('reset-qa-database migration-state verification', () => {
-  const inImage = ['20260101000000_a', '20260202000000_b'];
-  const applied = (name) => ({ migration_name: name, finished_at: new Date(), rolled_back_at: null });
-
-  it('is clean when every image migration is applied and nothing else is recorded', () => {
-    assert.deepEqual(
-      compareMigrationState(inImage, inImage.map(applied)),
-      { missing: [], unexpected: [], unfinished: [] },
-    );
-  });
-
-  it('reports a migration the image has but the database did not apply', () => {
-    const state = compareMigrationState(inImage, [applied('20260101000000_a')]);
-    assert.deepEqual(state.missing, ['20260202000000_b']);
-  });
-
-  it('reports a migration the database records that the image does not have', () => {
-    const state = compareMigrationState(inImage, [...inImage.map(applied), applied('20250101000000_gone')]);
-    assert.deepEqual(state.unexpected, ['20250101000000_gone']);
-  });
-
-  // The exact state that made plans/147's refusal unrecoverable: a row present but unfinished,
-  // which Prisma answers P3009 to on every later deploy.
-  it('reports an unfinished migration, which is the P3009 state', () => {
-    const state = compareMigrationState(inImage, [
-      applied('20260101000000_a'),
-      { migration_name: '20260202000000_b', finished_at: null, rolled_back_at: null },
-    ]);
-    assert.deepEqual(state.unfinished, ['20260202000000_b']);
-    assert.deepEqual(state.missing, ['20260202000000_b']);
-  });
-
-  it('treats a rolled-back migration as not applied', () => {
-    const state = compareMigrationState(inImage, [
-      applied('20260101000000_a'),
-      { migration_name: '20260202000000_b', finished_at: new Date(), rolled_back_at: new Date() },
-    ]);
-    assert.deepEqual(state.missing, ['20260202000000_b']);
-    assert.deepEqual(state.unfinished, ['20260202000000_b']);
-  });
-
-  it('is clean against an empty database, which has no history at all', () => {
-    assert.deepEqual(compareMigrationState([], []), { missing: [], unexpected: [], unfinished: [] });
   });
 });
 
