@@ -27,12 +27,18 @@
  * the root package-lock.json, so a branch that changes dependencies reinstalls.
  * The client check compares the schema Prisma copied into the generated client
  * against the checked-in schema, so a branch that changes schema.prisma also
- * regenerates. The migration check compares applied rows in _prisma_migrations
- * against migration directories, so a branch that adds a migration also deploys.
+ * regenerates. The migration check compares the names applied in
+ * _prisma_migrations against the migration directories, so a branch that adds a
+ * migration also deploys.
  *
  * Migrations go through `prisma migrate deploy`: `reset` is the wrong verb for a
- * database that was just created, and `deploy` is non-destructive. A dirty
- * database is what `npm run db:test:reset` is for.
+ * database that was just created, and `deploy` is non-destructive. The one
+ * exception is a history deploy cannot move forward from: an applied migration
+ * this branch does not carry (the 217 migrations #1429 squashed into two
+ * baselines, or a branch that dropped one), or a row left unfinished. Then the
+ * hook runs `npm run db:test:reset`'s script, which empties poolmaster_test and
+ * re-applies this branch's migrations. That database holds nothing but test
+ * data, and a count of rows would call the old history ready (217 >= 2).
  *
  * Not built here: @poolmaster/shared. Its `types` point at source, so lint and
  * both unit suites never need dist/; the turbo typecheck task builds it through
@@ -73,13 +79,17 @@
  */
 
 import { spawnSync } from 'node:child_process';
-import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, realpathSync, statSync } from 'node:fs';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+import { compareMigrationState } from '../../packages/core-api/scripts/migration-state.mjs';
 
 const ROOT = process.env.CLAUDE_PROJECT_DIR || process.cwd();
 const SCHEMA = join(ROOT, 'packages/core-api/prisma/schema.prisma');
 const MIGRATIONS_DIR = join(ROOT, 'packages/core-api/prisma/migrations');
 const PRISMA_BIN = join(ROOT, 'node_modules/.bin/prisma');
+const RESET_TEST_DB_SCRIPT = join(ROOT, 'scripts/reset-test-database.mjs');
 const TEST_DB = 'poolmaster_test';
 const TEST_DB_URL = `postgresql://postgres:postgres@localhost:5432/${TEST_DB}`;
 // Connects as the documented role over TCP, so it also proves the password is set.
@@ -95,7 +105,7 @@ const PG_ENV = { ...process.env, PGPASSWORD: 'postgres', PGCONNECT_TIMEOUT: '3' 
 //
 //     npm ci                 300s
 //     prisma generate        120s
-//     prisma migrate deploy  150s
+//     prisma migrate deploy  150s  (or the test database reset, which replaces it)
 //     ----------------------------
 //     sum                    570s, leaving 30s for node startup and report()
 //
@@ -287,20 +297,70 @@ function ensureTestDatabase() {
   return true;
 }
 
+/**
+ * `psql -tA` output of `migration_name, finished_at, rolled_back_at` as the rows
+ * compareMigrationState reads. Unaligned output prints NULL as an empty column.
+ */
+export function parseMigrationRows(stdout) {
+  return stdout.split('\n').filter(Boolean).map((line) => {
+    const [name, finishedAt, rolledBackAt] = line.split('|');
+    return {
+      migration_name: name,
+      finished_at: finishedAt ? finishedAt : null,
+      rolled_back_at: rolledBackAt ? rolledBackAt : null,
+    };
+  });
+}
+
+/**
+ * What poolmaster_test needs to match this branch: nothing, `migrate deploy` for
+ * migrations it has not applied yet, or a reset when its history is one deploy
+ * cannot build on. `recorded` is empty for a database that was never migrated.
+ */
+export function migrationPlan(inImage, recorded) {
+  const { missing, unexpected, unfinished } = compareMigrationState(inImage, recorded);
+  if (unexpected.length > 0) {
+    return {
+      action: 'reset',
+      reason: `it records ${unexpected.length} applied migration(s) this branch does not carry`,
+    };
+  }
+  if (unfinished.length > 0) {
+    return {
+      action: 'reset',
+      reason: `it records ${unfinished.length} migration(s) unfinished or rolled back (${unfinished.join(', ')})`,
+    };
+  }
+  if (missing.length > 0) return { action: 'deploy', pending: missing.length };
+  return { action: 'ready' };
+}
+
 function ensureMigrations(prismaAvailable) {
-  const expected = readdirSync(MIGRATIONS_DIR, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory()).length;
+  const inImage = readdirSync(MIGRATIONS_DIR, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name)
+    .sort();
   // Fails when _prisma_migrations does not exist yet, i.e. nothing applied.
-  const applied = psql(
-    TEST_DB,
-    'SELECT count(*) FROM _prisma_migrations WHERE finished_at IS NOT NULL AND rolled_back_at IS NULL',
-  );
-  if (applied.ok && Number(applied.stdout) >= expected) {
-    ready.push(`${TEST_DB} (${expected} migrations)`);
+  const rows = psql(TEST_DB, 'SELECT migration_name, finished_at, rolled_back_at FROM _prisma_migrations');
+  const plan = migrationPlan(inImage, rows.ok ? parseMigrationRows(rows.stdout) : []);
+  if (plan.action === 'ready') {
+    ready.push(`${TEST_DB} (${inImage.length} migrations)`);
     return;
   }
   if (!prismaAvailable) {
     warnings.push(`${TEST_DB} needs migrations, but the Prisma CLI is unavailable (see FAILED above)`);
+    return;
+  }
+  if (plan.action === 'reset') {
+    const r = run('node', [RESET_TEST_DB_SCRIPT], {
+      env: { ...process.env, TEST_DATABASE_URL: TEST_DB_URL },
+      timeoutMs: MIGRATE_DEPLOY_TIMEOUT_MS,
+    });
+    if (!r.ok) {
+      warnings.push(`${TEST_DB} needed a reset because ${plan.reason}, and npm run db:test:reset failed: ${r.detail}`);
+      return;
+    }
+    done.push(`reset ${TEST_DB} and applied ${inImage.length} migration(s), because ${plan.reason} (npm run db:test:reset)`);
     return;
   }
   const r = run(PRISMA_BIN, ['migrate', 'deploy', '--schema', 'prisma/schema.prisma'], {
@@ -312,8 +372,7 @@ function ensureMigrations(prismaAvailable) {
     warnings.push(`prisma migrate deploy against ${TEST_DB} failed: ${r.detail}`);
     return;
   }
-  const before = applied.ok ? Number(applied.stdout) : 0;
-  done.push(`applied ${expected - before} migration(s) to ${TEST_DB} (prisma migrate deploy)`);
+  done.push(`applied ${plan.pending} migration(s) to ${TEST_DB} (prisma migrate deploy)`);
 }
 
 function report() {
@@ -358,4 +417,17 @@ function main() {
   report();
 }
 
-main();
+// Run only as the hook; the test imports the functions above without starting setup.
+// Real paths on both sides: Node resolves symlinks for the main module but argv[1]
+// keeps the path as typed, so a symlinked $CLAUDE_PROJECT_DIR would otherwise make
+// the hook exit 0 with no report at all.
+export function isRunAsHook(argvPath, moduleUrl) {
+  if (!argvPath) return false;
+  try {
+    return realpathSync(argvPath) === fileURLToPath(moduleUrl);
+  } catch {
+    return false;
+  }
+}
+
+if (isRunAsHook(process.argv[1], import.meta.url)) main();
