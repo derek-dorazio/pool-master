@@ -79,9 +79,9 @@
  */
 
 import { spawnSync } from 'node:child_process';
-import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, realpathSync, statSync } from 'node:fs';
 import { join } from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 
 import { compareMigrationState } from '../../packages/core-api/scripts/migration-state.mjs';
 
@@ -418,4 +418,16 @@ function main() {
 }
 
 // Run only as the hook; the test imports the functions above without starting setup.
-if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) main();
+// Real paths on both sides: Node resolves symlinks for the main module but argv[1]
+// keeps the path as typed, so a symlinked $CLAUDE_PROJECT_DIR would otherwise make
+// the hook exit 0 with no report at all.
+export function isRunAsHook(argvPath, moduleUrl) {
+  if (!argvPath) return false;
+  try {
+    return realpathSync(argvPath) === fileURLToPath(moduleUrl);
+  } catch {
+    return false;
+  }
+}
+
+if (isRunAsHook(process.argv[1], import.meta.url)) main();

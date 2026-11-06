@@ -1,7 +1,11 @@
 import assert from 'node:assert/strict';
+import { mkdtempSync, rmSync, symlinkSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { dirname, join } from 'node:path';
 import { describe, it } from 'node:test';
+import { fileURLToPath } from 'node:url';
 
-import { migrationPlan, parseMigrationRows } from './session-start-environment.mjs';
+import { isRunAsHook, migrationPlan, parseMigrationRows } from './session-start-environment.mjs';
 
 /**
  * #1431 — what the cloud session-start hook does to poolmaster_test.
@@ -66,5 +70,30 @@ describe('session-start hook _prisma_migrations parsing', () => {
 
   it('reads an empty table as no rows', () => {
     assert.deepEqual(parseMigrationRows(''), []);
+  });
+});
+
+describe('session-start hook run-as-main guard', () => {
+  const hookPath = fileURLToPath(new URL('./session-start-environment.mjs', import.meta.url));
+  const hookUrl = new URL('./session-start-environment.mjs', import.meta.url).href;
+
+  it('runs when executed by its real path', () => {
+    assert.equal(isRunAsHook(hookPath, hookUrl), true);
+  });
+
+  it('still runs when the project directory is reached through a symlink, so setup is never silently skipped', () => {
+    const scratch = mkdtempSync(join(tmpdir(), 'hook-symlink-'));
+    try {
+      const alias = join(scratch, 'alias');
+      symlinkSync(dirname(hookPath), alias);
+      assert.equal(isRunAsHook(join(alias, 'session-start-environment.mjs'), hookUrl), true);
+    } finally {
+      rmSync(scratch, { recursive: true, force: true });
+    }
+  });
+
+  it('does not run when imported by another script, such as this test', () => {
+    assert.equal(isRunAsHook(fileURLToPath(import.meta.url), hookUrl), false);
+    assert.equal(isRunAsHook(undefined, hookUrl), false);
   });
 });
