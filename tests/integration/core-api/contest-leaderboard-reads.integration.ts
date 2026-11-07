@@ -440,6 +440,30 @@ describe('Contest leaderboard snapshots (#1435)', () => {
     expect(await snapshotRows(unread.contest.id)).toEqual([]);
   });
 
+  it('rebuilds the boards of every contest on the event in the same reads for 2 contests as for 5, and one write per board', async () => {
+    const rebuildStatements = async (contestCount: number) => {
+      const live = await createEvent('PGA', 1, SportEventStatus.IN_PROGRESS, [-5, -3, -2, 0]);
+      const golfers = live.field.map((row) => expectDefined(row.id));
+      for (let index = 0; index < contestCount; index++) {
+        const { contest, viewerId, addEntry } = await golfContest([live]);
+        await addEntry('Entry 1', [{ eventId: live.event.id, fieldRowIds: [expectDefined(golfers[0]), expectDefined(golfers[1])] }]);
+        await serviceOn(getAppPrisma()).getLeaderboard(contest.id, viewerId);
+      }
+      const { statements } = await recordStatements(() => serviceOn(getAppPrisma()).rebuildLeaderboardSnapshots({ sportEventIds: [live.event.id], contestIds: [] }));
+      return statements;
+    };
+
+    const two = await rebuildStatements(2);
+    const five = await rebuildStatements(5);
+
+    const reads = (statements: typeof two) => statements.filter((statement) => statement.sql.startsWith('SELECT')).length;
+    const writes = (statements: typeof two) => statements.filter((statement) => !statement.sql.startsWith('SELECT')).map((statement) => statement.sql.split(' SET ')[0]);
+    expect(reads(five)).toBe(reads(two));
+    // Each board is its own row with its own JSON: one UPDATE apiece, answering the version stored.
+    expect(writes(two)).toEqual(Array(2).fill('UPDATE "public"."contest_leaderboard_snapshots"'));
+    expect(writes(five)).toEqual(Array(5).fill('UPDATE "public"."contest_leaderboard_snapshots"'));
+  });
+
   it('rebuilds the stored board when an admin saves the event through the events routes, before the save answers', async () => {
     const { live, contest, viewerId, golfers } = await liveContest();
     const admin = await createTestUser({ isRootAdmin: true });
@@ -462,12 +486,12 @@ describe('Contest leaderboard snapshots (#1435)', () => {
       contestId: contest.id, shownEvent: '', computedFrom, contestUpdatedAt: contest.updatedAt, validUntil: null, board: { label },
     });
 
-    expect(await write('first', at(100))).toBe(true);
-    expect(await write('older', at(50))).toBe(false);
-    expect(await write('same moment', at(100))).toBe(false);
+    expect(await write('first', at(100))).toMatchObject({ version: 1, board: { label: 'first' } });
+    expect(await write('older', at(50))).toBeNull();
+    expect(await write('same moment', at(100))).toBeNull();
     expect(await snapshots.find(contest.id, '')).toMatchObject({ version: 1, board: { label: 'first' } });
 
-    expect(await write('newer', at(200))).toBe(true);
+    expect(await write('newer', at(200))).toMatchObject({ version: 2, board: { label: 'newer' } });
     expect(await snapshots.find(contest.id, '')).toMatchObject({ version: 2, board: { label: 'newer' } });
   });
 

@@ -4,7 +4,6 @@ import type { LeaderboardRebuilds } from '../../packages/core-api/src/modules/co
 export class RecordingLeaderboardRebuilds implements LeaderboardRebuilds {
   readonly sportEventIds: string[] = [];
   readonly contestIds: string[] = [];
-  flushes = 0;
 
   async eventsChanged(sportEventIds: readonly string[]): Promise<void> {
     this.sportEventIds.push(...sportEventIds);
@@ -14,7 +13,6 @@ export class RecordingLeaderboardRebuilds implements LeaderboardRebuilds {
     this.contestIds.push(...contestIds);
   }
 
-  async flush(): Promise<void> {
-    this.flushes++;
-  }
+  /** Nothing waits here: each write is recorded as it tells. */
+  async flush(): Promise<void> {}
 }

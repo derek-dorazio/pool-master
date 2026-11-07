@@ -180,10 +180,10 @@ export interface ContestLeaderboardSnapshotRepository<Board> {
   findKeysByContestsOrEvents(contestIds: readonly string[], sportEventIds: readonly string[]): Promise<ContestLeaderboardSnapshotKey[]>;
   /**
    * Stores the snapshot unless the one stored began computing at the same moment or later, so an
-   * older rebuild never overwrites a newer board. Answers whether it was stored; each store moves
-   * `version` up by one.
+   * older rebuild never overwrites a newer board. Answers the snapshot as stored, or null when the
+   * one stored was kept; each store moves `version` up by one.
    */
-  save(write: ContestLeaderboardSnapshotWrite<Board>): Promise<boolean>;
+  save(write: ContestLeaderboardSnapshotWrite<Board>): Promise<ContestLeaderboardSnapshot<Board> | null>;
   /** Drops the snapshot, so the next read computes the board again. */
   delete(key: ContestLeaderboardSnapshotKey): Promise<void>;
 }

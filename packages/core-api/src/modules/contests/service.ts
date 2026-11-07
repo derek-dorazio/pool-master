@@ -221,7 +221,6 @@ export interface ContestServiceDeps {
 /** A contest's board with the snapshot version it was read from, for the poll's ETag (#1436). */
 export type ContestLeaderboardSnapshotRead = ContestLeaderboardSnapshot<ContestLeaderboardResponse>;
 
-
 export class ContestService {
   private readonly logger: LifecycleLogger;
   private readonly appBaseUrl: string;
@@ -604,9 +603,10 @@ export class ContestService {
         validUntil,
         board: toContestLeaderboardResponse(leaderboard),
       };
-      await this.deps.leaderboardSnapshots.save(write);
-      // Read back for the version stored; a newer board stored meanwhile answers instead.
-      return (await this.deps.leaderboardSnapshots.find(contest.id, shownEvent)) ?? { ...write, version: 1 };
+      // A newer board stored meanwhile answers instead of this one.
+      return (await this.deps.leaderboardSnapshots.save(write))
+        ?? (await this.deps.leaderboardSnapshots.find(contest.id, shownEvent))
+        ?? { ...write, version: 1 };
     })();
     this.snapshotsInFlight.set(key, rebuild);
     const settle = () => {
@@ -1775,7 +1775,6 @@ export class ContestService {
 
     return configuration.maxEntriesPerSquad ?? null;
   }
-
 
 }
 

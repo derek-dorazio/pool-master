@@ -357,6 +357,8 @@ export function buildApp() {
     eventLifecycleScheduler.stop();
     emailSender.stop();
     nightlyCleanupScheduler.stop();
+    // Rebuilds still waiting on their timer run now, so a deploy loses no score write's board.
+    await leaderboards.flush();
     // Closing the lock connection releases this task's job locks for another task to take.
     await jobLock.close();
     await prisma.$disconnect();

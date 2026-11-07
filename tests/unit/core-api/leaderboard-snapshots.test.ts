@@ -87,7 +87,7 @@ describe('DebouncedLeaderboardRebuilds', () => {
     expect(recorder.rebuilds).toEqual([{ sportEventIds: ['event-1'], contestIds: [] }]);
   });
 
-  it('flush rebuilds what is waiting at once, as settlement does before reading a board', async () => {
+  it('flush rebuilds what is waiting at once, and the timer it replaced fires nothing more', async () => {
     jest.useFakeTimers();
     const recorder = recordingRebuilder();
     const rebuilds = new DebouncedLeaderboardRebuilds({ rebuilder: recorder.rebuilder, logger });

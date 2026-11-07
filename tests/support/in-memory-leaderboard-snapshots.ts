@@ -32,13 +32,14 @@ export class InMemoryLeaderboardSnapshots<Board> implements ContestLeaderboardSn
       .map(({ contestId, shownEvent }) => ({ contestId, shownEvent }));
   }
 
-  async save(write: ContestLeaderboardSnapshotWrite<Board>): Promise<boolean> {
+  async save(write: ContestLeaderboardSnapshotWrite<Board>): Promise<ContestLeaderboardSnapshot<Board> | null> {
     this.saves.push(write);
     const key = `${write.contestId}:${write.shownEvent}`;
     const stored = this.rows.get(key);
-    if (stored && stored.computedFrom >= write.computedFrom) return false;
-    this.rows.set(key, { ...write, version: (stored?.version ?? 0) + 1 });
-    return true;
+    if (stored && stored.computedFrom >= write.computedFrom) return null;
+    const saved = { ...write, version: (stored?.version ?? 0) + 1 };
+    this.rows.set(key, saved);
+    return saved;
   }
 
   async delete({ contestId, shownEvent }: ContestLeaderboardSnapshotKey): Promise<void> {

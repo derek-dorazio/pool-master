@@ -13,6 +13,7 @@
  *   - Unknown externalEventId logs a warn and skips persistence.
  */
 
+import { RecordingLeaderboardRebuilds } from '../../support/recording-leaderboard-rebuilds';
 import {
   publishLiveScoreUpdate,
   LiveScoreValidationError,
@@ -269,6 +270,28 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
       })).rejects.toThrow('connection reset');
 
       expect(await readsAfresh(fieldCache)).toBe(true);
+    });
+
+    it('tells the leaderboard rebuilds the event once its live scores are written, so its contests\' stored boards are rebuilt (#1435)', async () => {
+      const leaderboards = new RecordingLeaderboardRebuilds();
+
+      await publishLiveScoreUpdate(result, {
+        prisma: asPrismaClient({ sportEvent: buildSportEventStub() }),
+        providerId: 'mock',
+        scoringFamilyForEvent: () => familyWriting(async () => persisted),
+        leaderboards,
+      });
+
+      expect(leaderboards.sportEventIds).toEqual(['evt-1']);
+    });
+
+    it('asks for no rebuild when the scores are refused unwritten (#1435)', async () => {
+      const leaderboards = new RecordingLeaderboardRebuilds();
+      const prisma = { sportEvent: { findUnique: jest.fn().mockResolvedValue({ id: 'evt-1', sport: 'GOLF', status: 'COMPLETED', eventSeries: { sportLeague: { scoringFamily: null } } }) } };
+
+      await publishLiveScoreUpdate(result, { prisma: asPrismaClient(prisma), providerId: 'mock', logger: fakeLogger(), scoringFamilyForEvent, leaderboards });
+
+      expect(leaderboards.sportEventIds).toEqual([]);
     });
 
     it('keeps it when the scores are refused unwritten, since the field has not changed', async () => {
