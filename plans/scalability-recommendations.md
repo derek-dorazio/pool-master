@@ -1,5 +1,7 @@
 # Scalability recommendations for the prod rollout
 
+Jobs work (1.3–1.5) is planned in `plans/background-jobs.md`, epic #1439.
+
 **Tracking issue:** #1158 (related: #1156 read replicas). Research only; no tickets filed for new rows.
 
 Written 2026-11-06 from a review of `main` at 6af455b. Priority: **P1** = before or at prod launch,
@@ -46,16 +48,18 @@ M ≈ 1 week, L > 1 week; $ = monthly AWS spend.
 
 | # | Idea | Ticket | Cost | Issue | Benefit | Pri |
 |---|---|---|---|---|---|---|
-| 1.1 | Dedicated worker service; API tasks run no jobs | #1186 | S–M, +$10–20 | Every API task runs every background job, so whichever task holds a job lock spends its CPU and connections on settlement, live sync and email while also serving users. | API tasks serve requests only and scale on traffic alone, and adding an API task no longer adds another email sender. | **P1** |
+| 1.1 | Dedicated worker service; API tasks run no jobs | #1186 | S–M, +$10–20 | Every API task runs every background job, so whichever task holds a job lock spends its CPU and connections on settlement, live sync and email while also serving users. | API tasks serve requests only and scale on traffic alone, and adding an API task no longer adds another email sender. | Paused (Derek 11-07) |
 | 1.2 | ECS autoscaling on the API service (CPU and ALB requests per target), minimum 2 | — | S, $0 base | Prod runs a fixed two tasks with no autoscaling, so a game-day spike needs a manual change. | Spikes are absorbed automatically, and capacity drops back after the games end. | **P1** |
-| 1.3 | Generic Postgres job table with a worker claim loop | — | M | Work a request starts in the background (such as a manual event sync) runs in memory on that API task and is lost if the task stops or redeploys. | Requests hand work to the worker durably, with retries, in the same transaction as the write that caused it. | **P1** |
+| 1.3 | Generic Postgres job table with a worker claim loop | #1440 | M | Work a request starts in the background (such as a manual event sync) runs in memory on that API task and is lost if the task stops or redeploys. | Requests hand work to the worker durably, with retries, in the same transaction as the write that caused it. | **P1** |
 | 1.4 | Settlement and contest-start emails built by the worker | #1387 | S (after 1.3) | The admin event transition routes build league emails inside the request and run 27 to 40 queries. | Both routes fit the query budget, and with the job table the emails go out seconds later rather than at the next sweep. | P2 |
-| 1.5 | Manual event sync as a worker job | — | S (after 1.3) | A manual sync's provider calls and score writes run on the API task that took the admin's request. | That load moves off the API tasks, and a sync in progress survives a deploy. | P2 |
-| 1.6 | Event create, clone and import as a job | #1253 | M | These admin routes do heavy writes inside the request and sit on the query budget allow-list. | The heavy writes move off the request and the routes come back under budget. | P3 |
-| 1.7 | Commissioner bulk actions (year in review, invite batches) as jobs | — | S each | Bulk actions scale with league size and run inside the request. | Large leagues can't time out the request. | P3 |
-| 1.8 | Split job types across separate workers | (out of scope in #1186) | S | With one worker, a long ingestion run can delay email delivery, or the other way round. | Each job type is isolated from the others; only worth doing if starvation shows up. | P3 |
+| 1.5 | Manual event sync as a worker job | #1441 | S (after 1.3) | A manual sync's provider calls and score writes run on the API task that took the admin's request. | That load moves off the API tasks, and a sync in progress survives a deploy. | P2 |
+| 1.6 | Event create, clone and import as a job | #1253 | M | These admin routes do heavy writes inside the request and sit on the query budget allow-list. | The heavy writes move off the request and the routes come back under budget. | Done: #1253 fixed the query count |
+| 1.7 | Commissioner bulk actions (year in review, invite batches) as jobs | — | S each | Bulk actions scale with league size and run inside the request. | Large leagues can't time out the request. | Not needed: already a fixed query count |
+| 1.8 | Split job types across separate workers | (out of scope in #1186) | S | With one worker, a long ingestion run can delay email delivery, or the other way round. | Each job type is isolated from the others; only worth doing if starvation shows up. | Closed (Derek 11-07) |
 
 ## 2. Database
+
+All 2.x items on hold (Derek 2026-11-07). When picked up: 2.1 waits for prod (QA traffic too thin); fold a pg_stat_statements report into 2.2's nightly volume run; 2.6 stays parked (Prisma 8, still RC, has no per-row bulk update; it does add partial indexes, worth revisiting on upgrade).
 
 | # | Idea | Ticket | Cost | Issue | Benefit | Pri |
 |---|---|---|---|---|---|---|
@@ -74,7 +78,7 @@ M ≈ 1 week, L > 1 week; $ = monthly AWS spend.
 | 3.1 | Compute each live leaderboard once per score write and store it as a versioned snapshot | #1435 | M | Live leaderboards are computed on read, once per API task every 30 seconds, from every entry, pick and field row. | The heaviest game-day read becomes one lookup on every task, and no shared cache is needed for it. Design: one row per contest and shown event, overwritten in place with a version counter; each score save (admin entry or sync) marks boards stale and a rebuild runs a few seconds after the last save; a rebuild only applies if computed from newer scores; no history, so nothing to prune (rows go with their contest). Settlement takes the final snapshot as its input (rebuilding first if a debounced rebuild is still pending) instead of recomputing, then writes the frozen standings, points, status and emails as today. | **P1–P2** |
 | 3.2 | ETag and 304 on polled endpoints, keyed by the snapshot version | #1436 | S (after 3.1) | Clients poll every 30 seconds and get the full board back even when nothing changed. | Unchanged polls cost no serialization or bandwidth. | P2 |
 | 3.3 | Cache league history, the trophy room and championship standings by settle version, with no expiry | #1437 | S | These pages aggregate across many settled contests, never change after settlement, and are read from the database on every view. A settled contest's own board needs nothing extra: after 3.1 it is its last snapshot. | Those reads stop hitting the database, which pairs well with the read replicas. | P2 |
-| 3.4 | Short-TTL cache of the caller's league membership and role | — | S | Nearly every league request reads the caller's membership to check access. | One repeated read disappears from most requests. | P2 |
+| 3.4 | Short-TTL cache of the caller's league membership and role | — | S | Nearly every league request reads the caller's membership to check access. | One repeated read disappears from most requests. Derek 11-07: 30 s per-task cache for all league requests, cleared on this task's own membership writes; caches only positive memberships (never "not a member", so a new joiner is never turned away); no JWT claims, no read/write split. | P2 |
 | 3.5 | AWS WAF rate-based rules in front of CloudFront and the ALB | — | S, ~$10 | Rate limits are kept in memory per task, so the real limit is the limit times the task count, and a deploy resets it. | Login, password reset and sign-up get real per-IP limits whatever the task count. | **P1** |
 | 3.6 | ElastiCache Redis | — | M, +$25–100 | Caches are per task, so a value can be up to one TTL stale on other tasks. | Shared values and immediate invalidation; only worth it past about 6 tasks or when cross-task freshness matters. | P3 |
 
