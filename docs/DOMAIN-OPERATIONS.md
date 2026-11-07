@@ -395,20 +395,30 @@ those properties. And a claim could not remove the database read anyway: the pre
 resolve the resource's league from the database whatever the token says, so a membership claim
 would not save the query, only add a second and staler source of truth beside it.
 
-### No caching, and no claim-based optimization, for now
+### A 30-second per-task membership cache, and still no claims (#1438)
 
-This is early-stage feature development, and the cost is one indexed read —
-`findByLeagueAndUser` on the `(leagueId, userId)` unique key — that `requireCommissionerForContest`
-already performs for every contest-scoped commissioner gate. Nothing about it needs optimizing.
+**Revisited 2026-11-07 with the repo owner (scalability recommendation 3.4).** Nearly every
+league request reads the caller's membership, so each API task now keeps an ACTIVE membership it
+read for 30 seconds (`LeagueMembershipCache`, `packages/core-api/src/core/league-membership-cache.ts`;
+TTL `LEAGUE_MEMBERSHIP_CACHE_TTL_MS`, default 30000, 0 keeps none). `findByLeagueAndUser` reads
+through it, behind the request read memo, so every gate and service that asks shares it. A read
+through a transaction's client skips it.
 
-### The prerequisite for revisiting it
+- **"Not a member" is never kept**: no row, or a row that is not ACTIVE. A user turned away who
+  then joins, on whichever task, is let in on their very next request; caching the refusal
+  would make them think the join failed and keep retrying.
+- **A task's own membership writes forget at once.** Every write to `league_memberships` goes
+  through `PrismaLeagueMembershipRepository.create`/`update` (join, leave, removal, role change,
+  a team inactivation's side effect, through `PrismaMembershipTransaction` or not) or through
+  league deletion; each forgets the entries it touches, and nothing read while a write is under
+  way, or by a read that started before it finished, is kept.
+- **The accepted staleness runs one way.** After a removal or role change made on another task,
+  this task can keep granting the old access for up to 30 seconds. The owner accepted that window
+  in place of a cross-task revocation path; past about six tasks, or if immediate cross-task
+  revocation is ever needed, shared Redis (recommendation 3.6) is the next step.
 
-**Anyone who later wants membership claims, or a membership cache, must first build a revocation
-path equivalent to the one that makes A10 safe** — removing a member, inactivating a squad or
-team, and every other path that ends a membership must invalidate whatever carries it, before
-the next request is decided. Nothing comparable exists for membership removal today, and
-removal by side effect makes it harder, not easier. Without it, saving the query introduces
-a gate that keeps granting access to a league the user was removed from.
+Membership still never rides on the token: the reasons above stand, and the cache leaves the
+pre-check resolving the resource's league from the database on every request.
 
 ---
 

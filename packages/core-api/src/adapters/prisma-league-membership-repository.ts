@@ -9,10 +9,14 @@ import type {
   LeagueRole,
 } from '@poolmaster/shared/domain';
 import { LeagueMembershipStatus as MembershipStatus } from '@poolmaster/shared/domain';
-import { forgettingReads, memoizedRead, ReadMemoKey } from '../core/request-read-memo';
+import { leagueMembershipCache, type LeagueMembershipCache } from '../core/league-membership-cache';
+import { forgettingReads, isRootClient, memoizedRead, ReadMemoKey } from '../core/request-read-memo';
 
 export class PrismaLeagueMembershipRepository implements LeagueMembershipRepository {
-  constructor(private readonly prisma: PrismaClient | Prisma.TransactionClient) {}
+  constructor(
+    private readonly prisma: PrismaClient | Prisma.TransactionClient,
+    private readonly cache: LeagueMembershipCache = leagueMembershipCache,
+  ) {}
 
   async findByLeague(leagueId: string): Promise<LeagueMembership[]> {
     const rows = await this.prisma.leagueMembership.findMany({
@@ -51,14 +55,23 @@ export class PrismaLeagueMembershipRepository implements LeagueMembershipReposit
     return rows.map(mapToMembership);
   }
 
-  /** Remembered for the request (#1176): the permission gate and the handler both ask for it. */
+  /**
+   * Remembered for the request (#1176): the permission gate and the handler both ask for it.
+   * An ACTIVE membership is also kept by this task for the cache's TTL (#1438); "not a member"
+   * never is. A read through a transaction sees its own rows, so it skips both.
+   */
   async findByLeagueAndUser(leagueId: string, userId: string): Promise<LeagueMembership | null> {
-    return memoizedRead(this.prisma, `${ReadMemoKey.leagueMembership}${leagueId}:${userId}`, async () => {
+    const load = async () => {
       const row = await this.prisma.leagueMembership.findUnique({
         where: { leagueId_userId: { leagueId, userId } },
       });
       return row ? mapToMembership(row) : null;
-    });
+    };
+    if (!isRootClient(this.prisma)) {
+      return load();
+    }
+    return memoizedRead(this.prisma, `${ReadMemoKey.leagueMembership}${leagueId}:${userId}`, () =>
+      this.cache.read(leagueId, userId, load));
   }
 
   async findActiveJoinedSince(since: Date): Promise<LeagueMembership[]> {
@@ -72,7 +85,7 @@ export class PrismaLeagueMembershipRepository implements LeagueMembershipReposit
   async create(
     membership: Omit<LeagueMembership, 'id' | 'createdAt' | 'updatedAt'>,
   ): Promise<LeagueMembership> {
-    const row = await forgettingReads(ReadMemoKey.leagueMembership, () => this.prisma.leagueMembership.create({
+    const row = await this.cache.writing(() => forgettingReads(ReadMemoKey.leagueMembership, () => this.prisma.leagueMembership.create({
       data: {
         leagueId: membership.leagueId,
         userId: membership.userId,
@@ -80,19 +93,22 @@ export class PrismaLeagueMembershipRepository implements LeagueMembershipReposit
         status: membership.status,
         joinedAt: membership.joinedAt,
       },
-    }));
+    })));
+    this.cache.forget(row.leagueId, row.userId);
     return mapToMembership(row);
   }
 
   async update(id: string, updates: Partial<LeagueMembership>): Promise<LeagueMembership> {
-    const row = await forgettingReads(ReadMemoKey.leagueMembership, () => this.prisma.leagueMembership.update({
+    const row = await this.cache.writing(() => forgettingReads(ReadMemoKey.leagueMembership, () => this.prisma.leagueMembership.update({
       where: { id },
       data: {
         ...(updates.role !== undefined && { role: updates.role }),
         ...(updates.status !== undefined && { status: updates.status }),
         ...(updates.joinedAt !== undefined && { joinedAt: updates.joinedAt }),
       },
-    }));
+    })));
+    // A role change or a leave/removal: this task stops granting the old access at once (#1438).
+    this.cache.forget(row.leagueId, row.userId);
     return mapToMembership(row);
   }
 
