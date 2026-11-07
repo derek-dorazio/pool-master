@@ -86,6 +86,33 @@ describe('background job table (#1440)', () => {
     expect(reclaimed.leaseUntil).toEqual(new Date(now.getTime() + 10 * MINUTE));
   });
 
+  it('writes no mark from a stale claim once the job was claimed again on a later attempt', async () => {
+    const jobs = repository();
+    await jobs.enqueue({ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: syncPayload('stale') });
+    const now = soonAfterQueued();
+    const [stale] = await jobs.claimDue({ now, limit: 1, leaseUntil: new Date(now.getTime() + 5 * MINUTE) });
+    const [current] = await jobs.claimDue({ now: new Date(now.getTime() + 5 * MINUTE), limit: 1, leaseUntil: new Date(now.getTime() + 10 * MINUTE) });
+
+    await expect(jobs.markSucceeded(current, now)).resolves.toBe(true);
+    await expect(jobs.markRetry(stale, { runAt: now, error: 'late failure' })).resolves.toBe(false);
+    await expect(jobs.markFailed(stale, { error: 'late failure', completedAt: now })).resolves.toBe(false);
+
+    const row = await getPrisma().backgroundJob.findUniqueOrThrow({ where: { id: current.id } });
+    expect(row).toMatchObject({ status: BackgroundJobStatus.SUCCEEDED, attempts: 2, lastError: null });
+  });
+
+  it('lets a new job with the same dedupe key queue while the first waits to be retried', async () => {
+    const jobs = repository();
+    const request = { type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: syncPayload('retry-key'), dedupeKey: 'MANUAL_EVENT_SYNC:retry-key' };
+    await jobs.enqueue(request);
+    const now = soonAfterQueued();
+    const [claimed] = await jobs.claimDue({ now, limit: 1, leaseUntil: new Date(now.getTime() + 5 * MINUTE) });
+    await jobs.markRetry(claimed, { runAt: new Date(now.getTime() + MINUTE), error: 'provider timed out' });
+
+    await expect(jobs.enqueue(request)).resolves.toBe(true);
+    await expect(getPrisma().backgroundJob.count({ where: { status: BackgroundJobStatus.QUEUED } })).resolves.toBe(2);
+  });
+
   it('leaves no job behind when the transaction that queued it rolls back', async () => {
     await expect(getAppPrisma().$transaction(async (tx) => {
       await insertBackgroundJobs(tx, [{ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: syncPayload('rolled-back') }]);
@@ -122,8 +149,8 @@ describe('background job table (#1440)', () => {
     const [retried, failed] = await jobs.claimDue({ now, limit: 2, leaseUntil: new Date(now.getTime() + 5 * MINUTE) });
     const longError = 'x'.repeat(BACKGROUND_JOB_ERROR_MAX_LENGTH + 50);
 
-    await jobs.markRetry(retried.id, { runAt: new Date(now.getTime() + MINUTE), error: 'provider timed out' });
-    await jobs.markFailed(failed.id, { error: longError, completedAt: now });
+    await jobs.markRetry(retried, { runAt: new Date(now.getTime() + MINUTE), error: 'provider timed out' });
+    await jobs.markFailed(failed, { error: longError, completedAt: now });
 
     const retriedRow = await getPrisma().backgroundJob.findUniqueOrThrow({ where: { id: retried.id } });
     const failedRow = await getPrisma().backgroundJob.findUniqueOrThrow({ where: { id: failed.id } });

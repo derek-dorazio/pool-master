@@ -4,7 +4,7 @@
  * same port is tested against Postgres in background-jobs.integration.
  */
 
-import type { BackgroundJobRepository } from '@poolmaster/shared/db';
+import type { BackgroundJobClaim, BackgroundJobRepository } from '@poolmaster/shared/db';
 import { BackgroundJobStatus, type BackgroundJob, type BackgroundJobRequest } from '@poolmaster/shared/domain';
 
 export interface InMemoryBackgroundJobs extends BackgroundJobRepository {
@@ -19,10 +19,13 @@ export function inMemoryBackgroundJobs(now: () => Date = () => new Date()): InMe
   const claimLimits: number[] = [];
   let nextId = 1;
 
-  function update(id: string, changes: Partial<InMemoryBackgroundJobs['rows'][number]>): void {
-    const row = rows.find((candidate) => candidate.id === id);
-    if (!row) throw new Error(`No background job ${id}`);
+  /** Writes only while the job is still RUNNING on the claim's attempt, as the adapter does. */
+  function markClaimed(claim: BackgroundJobClaim, changes: Partial<InMemoryBackgroundJobs['rows'][number]>): boolean {
+    const row = rows.find((candidate) => candidate.id === claim.id);
+    if (!row) throw new Error(`No background job ${claim.id}`);
+    if (row.status !== BackgroundJobStatus.RUNNING || row.attempts !== claim.attempts) return false;
     Object.assign(row, changes);
+    return true;
   }
 
   function enqueueOne(request: BackgroundJobRequest): boolean {
@@ -57,18 +60,12 @@ export function inMemoryBackgroundJobs(now: () => Date = () => new Date()): InMe
       }
       return Promise.resolve(due.map((row) => ({ ...row })));
     },
-    markSucceeded: (id, completedAt) => {
-      update(id, { status: BackgroundJobStatus.SUCCEEDED, completedAt, leaseUntil: undefined });
-      return Promise.resolve();
-    },
-    markRetry: (id, { runAt, error }) => {
-      update(id, { status: BackgroundJobStatus.QUEUED, runAt, lastError: error, leaseUntil: undefined });
-      return Promise.resolve();
-    },
-    markFailed: (id, { error, completedAt }) => {
-      update(id, { status: BackgroundJobStatus.FAILED, lastError: error, completedAt, leaseUntil: undefined });
-      return Promise.resolve();
-    },
+    markSucceeded: (claim, completedAt) =>
+      Promise.resolve(markClaimed(claim, { status: BackgroundJobStatus.SUCCEEDED, completedAt, leaseUntil: undefined })),
+    markRetry: (claim, { runAt, error }) =>
+      Promise.resolve(markClaimed(claim, { status: BackgroundJobStatus.QUEUED, runAt, lastError: error, leaseUntil: undefined })),
+    markFailed: (claim, { error, completedAt }) =>
+      Promise.resolve(markClaimed(claim, { status: BackgroundJobStatus.FAILED, lastError: error, completedAt, leaseUntil: undefined })),
     deleteBatchCompletedBefore: (status, cutoff, limit) => {
       const batch = rows
         .filter((row) => row.status === status && row.completedAt !== undefined && row.completedAt < cutoff)

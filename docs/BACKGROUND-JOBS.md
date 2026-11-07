@@ -32,8 +32,9 @@ so a bad payload fails in the request that made it.
 
 Either way the queue wakes this task's runner, so on an idle system the job starts at once.
 
-A `dedupeKey` keeps one pending job per subject: an enqueue with a key a queued job holds writes
-nothing. Claiming a job clears its key, so a request made while it runs queues a fresh one.
+A `dedupeKey` keeps one job waiting for its first try per subject: an enqueue with a key such a
+job holds writes nothing. Claiming a job clears its key for good, so a request made while it runs,
+or while it waits to be retried, queues a fresh one.
 
 ## Running
 
@@ -50,6 +51,7 @@ query budget.
 | Its stored payload fails its schema | `FAILED` at once: every try would fail alike |
 | Its task stops mid-run | still `RUNNING` until the lease ends, then due again on any task |
 | Its leases lapsed on every try | `FAILED` |
+| A try outlives its lease and another task claims it | the newer attempt's outcome: each mark is fenced to the attempt that claimed it, so the late one writes nothing |
 
 On shutdown a task stops claiming and gives its jobs in flight 10 seconds; anything still running
 is re-run once its lease ends.
@@ -65,6 +67,7 @@ Every line carries `action` and the job's id, type and attempt (`docs/LOGGING-OP
 | `backgroundJobs.failed` | error | Failed its last try. This is the alert: look at the job's `last_error` |
 | `backgroundJobs.invalidPayload` | error | Its payload failed its schema; it never ran |
 | `backgroundJobs.abandoned` | error | Its leases kept lapsing |
+| `backgroundJobs.claimLost` | warn | A try outran its lease and the job was claimed again; this try's outcome was not written, the newer attempt's stands |
 | `backgroundJobs.runner.failure` | error | A claim or a write failed; the next poll tries again |
 
 ## Retention

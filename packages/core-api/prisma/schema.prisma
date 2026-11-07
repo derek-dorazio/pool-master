@@ -2237,8 +2237,9 @@ model BackgroundJob {
   /// While RUNNING, until when the claiming task holds it; past this the job is due again.
   leaseUntil  DateTime?                 @map("lease_until") @db.Timestamptz
   lastError   String?                   @map("last_error")
-  /// One pending job per subject: an enqueue with a key a queued job holds writes nothing.
-  /// Cleared when the job is claimed, so a later enqueue queues a fresh job.
+  /// One job waiting for its first try per subject: an enqueue with a key such a job holds
+  /// writes nothing. Cleared for good when the job is claimed, so a later enqueue (even while
+  /// the job waits to be retried) queues a fresh job.
   dedupeKey   String?                   @unique @map("dedupe_key") @db.VarChar(200)
   createdAt   DateTime                  @default(now()) @map("created_at") @db.Timestamptz
   completedAt DateTime?                 @map("completed_at") @db.Timestamptz

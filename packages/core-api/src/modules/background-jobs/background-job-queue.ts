@@ -14,7 +14,7 @@ import { BACKGROUND_JOB_PAYLOADS, type BackgroundJobPayload } from './background
 export interface BackgroundJobOptions {
   /** Due at once when omitted. */
   runAt?: Date;
-  /** One pending job per subject: a key a queued job holds queues nothing. */
+  /** One job waiting for its first try per subject: a key such a job holds queues nothing. */
   dedupeKey?: string;
 }
 

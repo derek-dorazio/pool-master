@@ -153,7 +153,7 @@ export type {
   EmailOptOutRepository,
   EmailSuppressionRepository,
 } from './email-ports';
-export type { BackgroundJobRepository } from './background-job-ports';
+export type { BackgroundJobClaim, BackgroundJobRepository } from './background-job-ports';
 export type {
   CupContest,
   LeagueCupContest,

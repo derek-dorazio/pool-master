@@ -161,7 +161,10 @@ export class BackgroundJobRunner {
     try {
       if (job.attempts > BACKGROUND_JOB_MAX_ATTEMPTS) {
         // Only a lease that lapsed again and again gets here: each task running it stopped mid-run.
-        await this.options.jobs.markFailed(job.id, { error: 'Gave up: every lease on this job lapsed', completedAt: this.now() });
+        if (!await this.options.jobs.markFailed(job, { error: 'Gave up: every lease on this job lapsed', completedAt: this.now() })) {
+          this.lostClaim(job);
+          return;
+        }
         this.options.logger?.error({ action: 'backgroundJobs.abandoned', data: refs }, 'Gave up on a background job whose leases kept lapsing');
         return;
       }
@@ -169,7 +172,10 @@ export class BackgroundJobRunner {
       if (!parsed.success) {
         // A payload that fails its schema fails every try alike, so it is not retried.
         const error = `Invalid payload: ${parsed.error.message}`;
-        await this.options.jobs.markFailed(job.id, { error, completedAt: this.now() });
+        if (!await this.options.jobs.markFailed(job, { error, completedAt: this.now() })) {
+          this.lostClaim(job);
+          return;
+        }
         this.options.logger?.error({ action: 'backgroundJobs.invalidPayload', data: { ...refs, error } }, 'A background job\'s payload is invalid; it will not run');
         return;
       }
@@ -177,7 +183,10 @@ export class BackgroundJobRunner {
       // The registry is exhaustive over the type, so the handler for `job.type` reads this payload.
       const handler = this.options.handlers[job.type] as (payload: unknown, context: BackgroundJobContext) => Promise<void>;
       await handler(parsed.data, { jobId: job.id, attempt: job.attempts, logger: this.options.logger });
-      await this.options.jobs.markSucceeded(job.id, this.now());
+      if (!await this.options.jobs.markSucceeded(job, this.now())) {
+        this.lostClaim(job);
+        return;
+      }
       this.options.logger?.info({
         action: 'backgroundJobs.succeeded',
         data: { ...refs, durationMs: this.now().getTime() - startedAt },
@@ -187,17 +196,34 @@ export class BackgroundJobRunner {
     }
   }
 
+  /**
+   * This try outran its lease and the job was claimed again: the newer attempt's outcome stands,
+   * so this one's is not written.
+   */
+  private lostClaim(job: BackgroundJob): void {
+    this.options.logger?.warn({
+      action: 'backgroundJobs.claimLost',
+      data: { jobId: job.id, type: job.type, attempt: job.attempts },
+    }, 'A background job outran its lease and was claimed again; this try\'s outcome was not recorded');
+  }
+
   private async recordFailure(job: BackgroundJob, err: unknown): Promise<void> {
     const error = describeError(err);
     const refs = { jobId: job.id, type: job.type, attempt: job.attempts, error };
     try {
       if (job.attempts <= BACKGROUND_JOB_RETRY_DELAYS_MS.length) {
         const retryInMs = BACKGROUND_JOB_RETRY_DELAYS_MS[job.attempts - 1];
-        await this.options.jobs.markRetry(job.id, { runAt: new Date(this.now().getTime() + retryInMs), error });
+        if (!await this.options.jobs.markRetry(job, { runAt: new Date(this.now().getTime() + retryInMs), error })) {
+          this.lostClaim(job);
+          return;
+        }
         this.options.logger?.warn({ action: 'backgroundJobs.retry', data: { ...refs, retryInMs } }, 'Background job failed; it will be tried again');
         return;
       }
-      await this.options.jobs.markFailed(job.id, { error, completedAt: this.now() });
+      if (!await this.options.jobs.markFailed(job, { error, completedAt: this.now() })) {
+        this.lostClaim(job);
+        return;
+      }
       this.options.logger?.error({ action: 'backgroundJobs.failed', data: refs }, 'Background job failed on its last try; it will not run again');
     } catch (recordErr) {
       // The lease lapses and the job is tried again.

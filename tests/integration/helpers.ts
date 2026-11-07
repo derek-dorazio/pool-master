@@ -155,7 +155,6 @@ const cdn = new RecordingCdnInvalidator();
 const integrationSns = snsSigner();
 const confirmedSnsSubscriptions: string[] = [];
 
-/** Get the shared Fastify app instance (created once per test suite). */
 /**
  * A job queue over the real job table, and the runner it wakes, as index.ts wires them but with
  * no poll timer: a queued job wakes the runner. `runWith` binds the handlers, which usually need
@@ -177,6 +176,7 @@ export function integrationBackgroundJobs(prisma: PrismaClient = getAppPrisma())
   };
 }
 
+/** Get the shared Fastify app instance (created once per test suite). */
 export function getApp(): FastifyInstance {
   return app;
 }

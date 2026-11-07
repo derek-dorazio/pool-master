@@ -3,7 +3,7 @@
  */
 
 import type { BackgroundJob as BackgroundJobRow, Prisma, PrismaClient } from '@prisma/client';
-import type { BackgroundJobRepository } from '@poolmaster/shared/db';
+import type { BackgroundJobClaim, BackgroundJobRepository } from '@poolmaster/shared/db';
 import {
   BackgroundJobStatus,
   type BackgroundJob,
@@ -49,35 +49,35 @@ export class PrismaBackgroundJobRepository implements BackgroundJobRepository {
     });
   }
 
-  async markSucceeded(id: string, completedAt: Date): Promise<void> {
-    await this.prisma.backgroundJob.update({
-      where: { id },
-      data: { status: BackgroundJobStatus.SUCCEEDED, completedAt, leaseUntil: null },
+  async markSucceeded(claim: BackgroundJobClaim, completedAt: Date): Promise<boolean> {
+    return this.markClaimed(claim, { status: BackgroundJobStatus.SUCCEEDED, completedAt, leaseUntil: null });
+  }
+
+  async markRetry(claim: BackgroundJobClaim, retry: { runAt: Date; error: string }): Promise<boolean> {
+    return this.markClaimed(claim, {
+      status: BackgroundJobStatus.QUEUED,
+      runAt: retry.runAt,
+      leaseUntil: null,
+      lastError: truncateError(retry.error),
     });
   }
 
-  async markRetry(id: string, retry: { runAt: Date; error: string }): Promise<void> {
-    await this.prisma.backgroundJob.update({
-      where: { id },
-      data: {
-        status: BackgroundJobStatus.QUEUED,
-        runAt: retry.runAt,
-        leaseUntil: null,
-        lastError: truncateError(retry.error),
-      },
+  async markFailed(claim: BackgroundJobClaim, failed: { error: string; completedAt: Date }): Promise<boolean> {
+    return this.markClaimed(claim, {
+      status: BackgroundJobStatus.FAILED,
+      completedAt: failed.completedAt,
+      leaseUntil: null,
+      lastError: truncateError(failed.error),
     });
   }
 
-  async markFailed(id: string, failed: { error: string; completedAt: Date }): Promise<void> {
-    await this.prisma.backgroundJob.update({
-      where: { id },
-      data: {
-        status: BackgroundJobStatus.FAILED,
-        completedAt: failed.completedAt,
-        leaseUntil: null,
-        lastError: truncateError(failed.error),
-      },
+  /** Writes `data` only while the job is still RUNNING on the claim's attempt. */
+  private async markClaimed(claim: BackgroundJobClaim, data: Prisma.BackgroundJobUpdateManyMutationInput): Promise<boolean> {
+    const { count } = await this.prisma.backgroundJob.updateMany({
+      where: { id: claim.id, status: BackgroundJobStatus.RUNNING, attempts: claim.attempts },
+      data,
     });
+    return count === 1;
   }
 
   async deleteBatchCompletedBefore(
@@ -101,7 +101,7 @@ export class PrismaBackgroundJobRepository implements BackgroundJobRepository {
 
 /**
  * Queues jobs on any client, so an adapter can write them in the transaction of the change that
- * caused them: they commit or roll back together. A dedupe key a queued job holds writes nothing
+ * caused them: they commit or roll back together. A dedupe key a job waiting for its first try holds writes nothing
  * (ON CONFLICT DO NOTHING, which raises nothing that would abort the caller's transaction).
  * Resolves to how many were written.
  */

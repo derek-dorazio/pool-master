@@ -149,6 +149,26 @@ describe('background job runner (#1440)', () => {
     expect(only(jobs).status).toBe(BackgroundJobStatus.SUCCEEDED);
   });
 
+  it('records nothing from a try that outran its lease and was claimed again, so the newer attempt\'s outcome stands', async () => {
+    const { jobs, runner, queue, time, logger } = setup({
+      handler: async (_payload, context) => {
+        if (context.attempt !== 1) return;
+        // The first try runs past its lease; another task claims the job and finishes it meanwhile.
+        time.advance(BACKGROUND_JOB_LEASE_MS);
+        const [reclaimed] = await jobs.claimDue({ now: time.now(), limit: 1, leaseUntil: new Date(time.now().getTime() + BACKGROUND_JOB_LEASE_MS) });
+        await jobs.markSucceeded(reclaimed, time.now());
+        throw new Error('first try failed late');
+      },
+    });
+    await queue.enqueue(BackgroundJobType.MANUAL_EVENT_SYNC, syncPayload());
+
+    await runner.drain();
+
+    expect(only(jobs)).toMatchObject({ status: BackgroundJobStatus.SUCCEEDED, attempts: 2 });
+    expect(only(jobs).lastError).toBeUndefined();
+    expect(logger.warn).toHaveBeenCalledWith(expect.objectContaining({ action: 'backgroundJobs.claimLost' }), expect.any(String));
+  });
+
   it('gives up with an error log on a job whose leases lapsed on every try, without running it a fifth time', async () => {
     const { jobs, handler, runner, time, logger } = setup();
     await jobs.enqueue({ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: syncPayload() });

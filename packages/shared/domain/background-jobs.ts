@@ -25,9 +25,10 @@ export interface BackgroundJob {
 }
 
 /**
- * A job to queue, its payload already checked against its type's schema. A `dedupeKey` already
- * on a queued job queues nothing: one pending job per subject. The key is released when the job
- * is claimed, so a request made while it runs queues a fresh one.
+ * A job to queue, its payload already checked against its type's schema. A `dedupeKey` a job
+ * waiting for its first try holds queues nothing: one such job per subject. The key is released
+ * for good when the job is claimed, so a request made while it runs, or while it waits to be
+ * retried, queues a fresh one.
  */
 export interface BackgroundJobRequest {
   type: BackgroundJobType;

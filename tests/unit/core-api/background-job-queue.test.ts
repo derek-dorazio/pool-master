@@ -49,7 +49,7 @@ describe('background job queue (#1440)', () => {
     expect(runner.wake).not.toHaveBeenCalled();
   });
 
-  it('coalesces a second enqueue with the dedupe key a queued job holds into that one job', async () => {
+  it('coalesces a second enqueue with the dedupe key a job waiting for its first try holds into that one job', async () => {
     const { jobs, queue } = setup();
 
     await expect(queue.enqueue(BackgroundJobType.MANUAL_EVENT_SYNC, PAYLOAD, { dedupeKey: 'sync:event-1' })).resolves.toBe(true);
