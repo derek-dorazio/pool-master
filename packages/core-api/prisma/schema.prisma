@@ -209,6 +209,17 @@ enum PrismaEmailMessageStatus {
   COMPLAINED
 }
 
+enum PrismaBackgroundJobType {
+  MANUAL_EVENT_SYNC
+}
+
+enum PrismaBackgroundJobStatus {
+  QUEUED
+  RUNNING
+  SUCCEEDED
+  FAILED
+}
+
 enum PrismaEmailSkipReason {
   EMAIL_DISABLED
   TEMPLATE_DISABLED
@@ -2212,6 +2223,30 @@ model PlatformRuntimeConfig {
   updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   @@map("platform_runtime_configs")
+}
+
+/// Durable work a request handed off (#1439), claimed and run by any server task. Written in
+/// the transaction of the change that caused it; the nightly cleanup deletes finished jobs.
+model BackgroundJob {
+  id          String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  type        PrismaBackgroundJobType
+  payload     Json
+  status      PrismaBackgroundJobStatus @default(QUEUED)
+  runAt       DateTime                  @default(now()) @map("run_at") @db.Timestamptz
+  attempts    Int                       @default(0)
+  /// While RUNNING, until when the claiming task holds it; past this the job is due again.
+  leaseUntil  DateTime?                 @map("lease_until") @db.Timestamptz
+  lastError   String?                   @map("last_error")
+  /// One pending job per subject: an enqueue with a key a queued job holds writes nothing.
+  /// Cleared when the job is claimed, so a later enqueue queues a fresh job.
+  dedupeKey   String?                   @unique @map("dedupe_key") @db.VarChar(200)
+  createdAt   DateTime                  @default(now()) @map("created_at") @db.Timestamptz
+  completedAt DateTime?                 @map("completed_at") @db.Timestamptz
+
+  @@index([status, runAt])
+  @@index([status, leaseUntil])
+  @@index([status, completedAt])
+  @@map("background_jobs")
 }
 
 /// One saved change to a platform_runtime_configs row (#450). Append-only.

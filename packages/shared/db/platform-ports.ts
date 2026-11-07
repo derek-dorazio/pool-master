@@ -4,6 +4,7 @@
  */
 
 import type {
+  BackgroundJobRequest,
   PlatformRuntimeConfig,
   PlatformRuntimeConfigChange,
   ProviderSyncRun,
@@ -37,11 +38,22 @@ export interface ProviderSyncRunFilters {
 
 export interface ProviderSyncRunRepository {
   create(input: ProviderSyncRunCreate): Promise<ProviderSyncRun>;
+  /**
+   * Writes the runs, in order, and the background job `job` builds from them, in one transaction
+   * (#1441): a sync request's runs never exist without the job that runs them, nor the job
+   * without its runs.
+   */
+  createWithJob(
+    inputs: readonly ProviderSyncRunCreate[],
+    job: (runs: ProviderSyncRun[]) => BackgroundJobRequest,
+  ): Promise<ProviderSyncRun[]>;
   update(id: string, update: ProviderSyncRunUpdate): Promise<void>;
   /** Newest submission first, without the detailed diagnostics. */
   findAll(filters: ProviderSyncRunFilters): Promise<ProviderSyncRun[]>;
   /** One run with its detailed diagnostics, or null when there is no such run. */
   findById(id: string): Promise<ProviderSyncRunWithDetails | null>;
+  /** The runs with these ids that exist, in one read, without the detailed diagnostics. */
+  findManyByIds(ids: readonly string[]): Promise<ProviderSyncRun[]>;
   /**
    * Clears the detailed diagnostics of up to `limit` runs submitted before `before` that still
    * have them; returns how many. Open-ended, so a missed night or a backfilled run is still

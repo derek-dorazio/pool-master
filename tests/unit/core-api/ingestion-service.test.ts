@@ -4,40 +4,27 @@ import {
   type IngestionServiceDependencies,
   SportEventSyncScopeError,
 } from '../../../packages/core-api/src/modules/ingestion/ingestion-service';
-import type { ProviderSyncRunRepository } from '../../../packages/shared/db';
 import { SyncOrchestrator } from '../../../packages/core-api/src/modules/ingestion/core/sync-orchestrator';
 import { Sport } from '../../../packages/shared/domain';
 import { fakeParticipantProviderMappingRepo, fakeSportEventRepo } from '../../support/repo-fakes';
-import { mockFn } from '../../support/mock-fn';
+import { inMemorySyncRuns, type InMemorySyncRuns } from '../../support/in-memory-sync-runs';
+import { BackgroundJobQueue, BackgroundJobRunner } from '../../../packages/core-api/src/modules/background-jobs';
 import { fakeLogger } from '../../support/fake-logger';
 import { fakeSportDataProvider, registryWith } from '../../support/fake-sport-data-provider';
 import { stubInstance } from '../../support/stub-instance';
 import { IngestionScheduler } from '../../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';
 
-async function flushMicrotasks(times = 5): Promise<void> {
-  for (let index = 0; index < times; index += 1) {
-    await Promise.resolve();
-  }
-}
+type IngestionPorts = Pick<IngestionServiceDependencies, 'sportEvents' | 'participantMappings' | 'syncRuns' | 'jobs'>;
 
-type IngestionPorts = Pick<IngestionServiceDependencies, 'sportEvents' | 'participantMappings' | 'syncRuns'>;
-
-function ports(overrides: Partial<IngestionPorts> = {}): IngestionPorts {
+function ports(overrides: Partial<Omit<IngestionPorts, 'syncRuns'>> & { syncRuns?: InMemorySyncRuns } = {}): IngestionPorts {
+  const syncRuns = overrides.syncRuns ?? inMemorySyncRuns();
   return {
     sportEvents: fakeSportEventRepo(),
     participantMappings: fakeParticipantProviderMappingRepo(),
-    syncRuns: { create: jest.fn(), update: jest.fn(), findAll: jest.fn(), findById: jest.fn(), clearDetailsBatchSubmittedBefore: jest.fn(), deleteBatchSubmittedBefore: jest.fn() },
+    jobs: new BackgroundJobQueue({ jobs: syncRuns.jobs }),
     ...overrides,
+    syncRuns,
   };
-}
-
-/** Echoes a sync-run create back as the stored run, which is what the ledger reads. */
-function echoSyncRunCreate() {
-  return mockFn<ProviderSyncRunRepository['create']>(async (input) => ({
-    id: 'sync-run-1',
-    createdAt: new Date('2026-01-01T00:00:00.000Z'),
-    ...input,
-  }));
 }
 
 describe('IngestionService manual sync submission', () => {
@@ -76,17 +63,9 @@ describe('IngestionService manual sync submission', () => {
     expect(scheduler.runEventSync).not.toHaveBeenCalled();
   });
 
-  it('pool-master-rop.68.2.3 normalizes manual event sync before submission', async () => {
+  it('pool-master-rop.68.2.3 normalizes manual event sync before submission, and its job runs the normalized scope', async () => {
     const now = new Date('2026-05-30T12:00:00.000Z');
-    let deferredSync: (() => void) | undefined;
-    const setImmediateSpy = jest
-      .spyOn(global, 'setImmediate')
-      .mockImplementation((callback: () => void) => {
-        deferredSync = callback;
-        return 0 as unknown as NodeJS.Immediate;
-      });
-    const providerSyncRunCreate = echoSyncRunCreate();
-    const providerSyncRunUpdate = jest.fn().mockResolvedValue(undefined);
+    const syncRuns = inMemorySyncRuns();
     const registry = registryWith(fakeSportDataProvider({
       providerId: 'mock-contest-feed',
       providerName: 'Mock Contest Feed Provider',
@@ -120,7 +99,7 @@ describe('IngestionService manual sync submission', () => {
     const service = new IngestionService({
       // pool-master-cgb — no local SportEvent row exists yet for this
       // manual sync target, so the syncScope guard is a permissive no-op.
-      ...ports({ syncRuns: { create: providerSyncRunCreate, update: providerSyncRunUpdate, findAll: jest.fn(), findById: jest.fn(), clearDetailsBatchSubmittedBefore: jest.fn(), deleteBatchSubmittedBefore: jest.fn() } }),
+      ...ports({ syncRuns }),
       registry,
       scheduler,
       logger: fakeLogger(),
@@ -128,49 +107,50 @@ describe('IngestionService manual sync submission', () => {
       syncOrchestrator: new SyncOrchestrator({ now: () => now }),
     });
 
-    try {
-      const result = await service.syncEventData({
-        sport: Sport.GOLF,
-        eventId: '  golf-open-championship-2026  ',
-        feeds: ['EVENTLIVESCORES', 'EVENTLIVESCORES'],
-        mockEventState: 'live',
-      }, 'admin-1', 'admin@example.com');
+    const result = await service.syncEventData({
+      sport: Sport.GOLF,
+      eventId: '  golf-open-championship-2026  ',
+      feeds: ['EVENTLIVESCORES', 'EVENTLIVESCORES'],
+      mockEventState: 'live',
+    }, 'admin-1', 'admin@example.com');
 
-      expect(result.eventId).toBe('golf-open-championship-2026');
-      expect(result.requestedFeeds).toEqual(['EVENTLIVESCORES']);
-      expect(providerSyncRunCreate).toHaveBeenCalledWith(expect.objectContaining({
-        sport: Sport.GOLF,
-        eventId: 'golf-open-championship-2026',
-        payload: expect.objectContaining({
-          requestedFeeds: ['EVENTLIVESCORES'],
-          requestedFeed: 'EVENTLIVESCORES',
-          requestPayload: expect.objectContaining({
-            source: 'MANUAL',
-            actor: {
-              type: 'ROOT_ADMIN',
-              userId: 'admin-1',
-              email: 'admin@example.com',
-            },
-            mockEventState: 'live',
-          }),
+    expect(result.eventId).toBe('golf-open-championship-2026');
+    expect(result.requestedFeeds).toEqual(['EVENTLIVESCORES']);
+    expect(syncRuns.rows).toEqual([expect.objectContaining({
+      sport: Sport.GOLF,
+      eventId: 'golf-open-championship-2026',
+      status: 'SUBMITTED',
+      payload: expect.objectContaining({
+        requestedFeeds: ['EVENTLIVESCORES'],
+        requestedFeed: 'EVENTLIVESCORES',
+        requestPayload: expect.objectContaining({
+          source: 'MANUAL',
+          actor: {
+            type: 'ROOT_ADMIN',
+            userId: 'admin-1',
+            email: 'admin@example.com',
+          },
+          mockEventState: 'live',
         }),
-      }));
-      const payloadJson = providerSyncRunCreate.mock.calls[0][0].payload;
-      expect(payloadJson).not.toHaveProperty('source');
-      expect(payloadJson).not.toHaveProperty('actor');
-      expect(payloadJson).not.toHaveProperty('mockEventState');
-      expect(deferredSync).toBeDefined();
-      deferredSync?.();
-      await flushMicrotasks();
-      expect(scheduler.runEventSync).toHaveBeenCalledWith({
-        sport: Sport.GOLF,
-        eventId: 'golf-open-championship-2026',
-        feeds: ['EVENTLIVESCORES'],
-        mockEventState: 'live',
-      });
-    } finally {
-      setImmediateSpy.mockRestore();
-    }
+      }),
+    })]);
+    const payloadJson = syncRuns.rows[0].payload;
+    expect(payloadJson).not.toHaveProperty('source');
+    expect(payloadJson).not.toHaveProperty('actor');
+    expect(payloadJson).not.toHaveProperty('mockEventState');
+    expect(scheduler.runEventSync).not.toHaveBeenCalled();
+
+    const runner = new BackgroundJobRunner({
+      jobs: syncRuns.jobs,
+      handlers: { MANUAL_EVENT_SYNC: (payload) => service.runManualEventSync(payload) },
+    });
+    await runner.drain();
+    expect(scheduler.runEventSync).toHaveBeenCalledWith({
+      sport: Sport.GOLF,
+      eventId: 'golf-open-championship-2026',
+      feeds: ['EVENTLIVESCORES'],
+      mockEventState: 'live',
+    });
   });
 
   describe('pool-master-cgb: manual sync-trigger syncScope guard', () => {
@@ -186,15 +166,7 @@ describe('IngestionService manual sync submission', () => {
         getPerSportConfig: jest.fn(),
       };
       return new IngestionService({
-        ...ports({
-          sportEvents: fakeSportEventRepo({ findByProviderRef }),
-          syncRuns: {
-            create: echoSyncRunCreate(),
-            update: jest.fn().mockResolvedValue(undefined),
-            findAll: jest.fn(),
-            findById: jest.fn(), clearDetailsBatchSubmittedBefore: jest.fn(), deleteBatchSubmittedBefore: jest.fn(),
-          },
-        }),
+        ...ports({ sportEvents: fakeSportEventRepo({ findByProviderRef }) }),
         registry,
         scheduler,
         logger: fakeLogger(),

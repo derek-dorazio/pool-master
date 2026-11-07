@@ -79,6 +79,12 @@ import { createContestManagementService } from '../../packages/core-api/src/modu
 import { IngestionService } from '../../packages/core-api/src/modules/ingestion/ingestion-service';
 import { ProviderRegistry } from '../../packages/core-api/src/modules/ingestion/core/provider-registry';
 import {
+  BackgroundJobQueue,
+  BackgroundJobRunner,
+  type BackgroundJobHandlers,
+} from '../../packages/core-api/src/modules/background-jobs';
+import {
+  PrismaBackgroundJobRepository,
   PrismaLeagueRepository,
   PrismaParticipantProviderMappingRepository,
   PrismaPlatformRuntimeConfigRepository,
@@ -150,6 +156,27 @@ const integrationSns = snsSigner();
 const confirmedSnsSubscriptions: string[] = [];
 
 /** Get the shared Fastify app instance (created once per test suite). */
+/**
+ * A job queue over the real job table, and the runner it wakes, as index.ts wires them but with
+ * no poll timer: a queued job wakes the runner. `runWith` binds the handlers, which usually need
+ * the service the queue was handed to.
+ */
+export function integrationBackgroundJobs(prisma: PrismaClient = getAppPrisma()): {
+  queue: BackgroundJobQueue;
+  runWith(handlers: BackgroundJobHandlers): BackgroundJobRunner;
+} {
+  const repository = new PrismaBackgroundJobRepository(prisma);
+  const queue = new BackgroundJobQueue({ jobs: repository });
+  return {
+    queue,
+    runWith(handlers) {
+      const runner = new BackgroundJobRunner({ jobs: repository, handlers });
+      queue.wakes(runner);
+      return runner;
+    },
+  };
+}
+
 export function getApp(): FastifyInstance {
   return app;
 }
@@ -235,13 +262,17 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
     runtimeConfigs: runtimeConfigRepository,
     users: new PrismaUserRepository(prisma),
   });
+  // The job runner has no timer here: a queued job wakes it, as in the app.
+  const backgroundJobs = integrationBackgroundJobs(prisma);
   const ingestionService = new IngestionService({
     registry: providerRegistry,
     sportEvents: new PrismaSportEventRepository(prisma),
     participantMappings: new PrismaParticipantProviderMappingRepository(prisma),
     syncRuns: new PrismaProviderSyncRunRepository(prisma),
     ingestionConfigReader: ingestionConfigService,
+    jobs: backgroundJobs.queue,
   });
+  backgroundJobs.runWith({ MANUAL_EVENT_SYNC: (payload) => ingestionService.runManualEventSync(payload) });
 
   // Route modules
   testApp.register(authModule, { prefix: '/api/v1/auth', email });
@@ -798,6 +829,7 @@ export async function cleanupTestData(): Promise<void> {
   }
 
   await prisma.providerSyncRun.deleteMany();
+  await prisma.backgroundJob.deleteMany();
   // Matches name field rows, rounds and each other with RESTRICT foreign keys, so the bracket goes first.
   await prisma.sportEventMatch.deleteMany();
   await prisma.sportEventParticipantGolfRound.deleteMany();
