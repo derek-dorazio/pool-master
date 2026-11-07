@@ -275,6 +275,12 @@ export interface LeagueRepository {
   moveEndedPlansToFree(now: Date): Promise<Array<{ leagueId: string; fromPlan: LeaguePlan }>>;
 }
 
+/** How `LeagueMembershipRepository.findByLeagueAndUser` may be answered. */
+export interface MembershipReadOptions {
+  /** Read the database, not the task's membership cache: for a precondition that decides a write. */
+  fresh?: boolean;
+}
+
 export interface LeagueMembershipRepository {
   /** The league's ACTIVE memberships, earliest joiner first. */
   findByLeague(leagueId: string): Promise<LeagueMembership[]>;
@@ -295,7 +301,13 @@ export interface LeagueMembershipRepository {
    * shape that service invented (§2y).
    */
   countActiveByLeagues(leagueIds: string[]): Promise<Map<string, number>>;
-  findByLeagueAndUser(leagueId: string, userId: string): Promise<LeagueMembership | null>;
+  /**
+   * The user's membership of the league, of any status. An access check may be answered from
+   * the task's short membership cache (#1438), which can be up to one TTL behind a removal made
+   * on another task. A check that decides a write (is this user already a member?) passes
+   * `{ fresh: true }` to read the database instead.
+   */
+  findByLeagueAndUser(leagueId: string, userId: string, options?: MembershipReadOptions): Promise<LeagueMembership | null>;
   /**
    * Every league's active memberships that joined at or after `since`, in the order they joined:
    * the next day's "New member joined" email lists a busy day's joins (#903).
