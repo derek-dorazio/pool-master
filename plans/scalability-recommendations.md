@@ -1,5 +1,7 @@
 # Scalability recommendations for the prod rollout
 
+Jobs work (1.3–1.5) is planned in `plans/background-jobs.md`, epic #1439.
+
 **Tracking issue:** #1158 (related: #1156 read replicas). Research only; no tickets filed for new rows.
 
 Written 2026-11-06 from a review of `main` at 6af455b. Priority: **P1** = before or at prod launch,
@@ -46,14 +48,14 @@ M ≈ 1 week, L > 1 week; $ = monthly AWS spend.
 
 | # | Idea | Ticket | Cost | Issue | Benefit | Pri |
 |---|---|---|---|---|---|---|
-| 1.1 | Dedicated worker service; API tasks run no jobs | #1186 | S–M, +$10–20 | Every API task runs every background job, so whichever task holds a job lock spends its CPU and connections on settlement, live sync and email while also serving users. | API tasks serve requests only and scale on traffic alone, and adding an API task no longer adds another email sender. | **P1** |
+| 1.1 | Dedicated worker service; API tasks run no jobs | #1186 | S–M, +$10–20 | Every API task runs every background job, so whichever task holds a job lock spends its CPU and connections on settlement, live sync and email while also serving users. | API tasks serve requests only and scale on traffic alone, and adding an API task no longer adds another email sender. | Paused (Derek 11-07) |
 | 1.2 | ECS autoscaling on the API service (CPU and ALB requests per target), minimum 2 | — | S, $0 base | Prod runs a fixed two tasks with no autoscaling, so a game-day spike needs a manual change. | Spikes are absorbed automatically, and capacity drops back after the games end. | **P1** |
-| 1.3 | Generic Postgres job table with a worker claim loop | — | M | Work a request starts in the background (such as a manual event sync) runs in memory on that API task and is lost if the task stops or redeploys. | Requests hand work to the worker durably, with retries, in the same transaction as the write that caused it. | **P1** |
+| 1.3 | Generic Postgres job table with a worker claim loop | #1440 | M | Work a request starts in the background (such as a manual event sync) runs in memory on that API task and is lost if the task stops or redeploys. | Requests hand work to the worker durably, with retries, in the same transaction as the write that caused it. | **P1** |
 | 1.4 | Settlement and contest-start emails built by the worker | #1387 | S (after 1.3) | The admin event transition routes build league emails inside the request and run 27 to 40 queries. | Both routes fit the query budget, and with the job table the emails go out seconds later rather than at the next sweep. | P2 |
-| 1.5 | Manual event sync as a worker job | — | S (after 1.3) | A manual sync's provider calls and score writes run on the API task that took the admin's request. | That load moves off the API tasks, and a sync in progress survives a deploy. | P2 |
-| 1.6 | Event create, clone and import as a job | #1253 | M | These admin routes do heavy writes inside the request and sit on the query budget allow-list. | The heavy writes move off the request and the routes come back under budget. | P3 |
-| 1.7 | Commissioner bulk actions (year in review, invite batches) as jobs | — | S each | Bulk actions scale with league size and run inside the request. | Large leagues can't time out the request. | P3 |
-| 1.8 | Split job types across separate workers | (out of scope in #1186) | S | With one worker, a long ingestion run can delay email delivery, or the other way round. | Each job type is isolated from the others; only worth doing if starvation shows up. | P3 |
+| 1.5 | Manual event sync as a worker job | #1441 | S (after 1.3) | A manual sync's provider calls and score writes run on the API task that took the admin's request. | That load moves off the API tasks, and a sync in progress survives a deploy. | P2 |
+| 1.6 | Event create, clone and import as a job | #1253 | M | These admin routes do heavy writes inside the request and sit on the query budget allow-list. | The heavy writes move off the request and the routes come back under budget. | Done: #1253 fixed the query count |
+| 1.7 | Commissioner bulk actions (year in review, invite batches) as jobs | — | S each | Bulk actions scale with league size and run inside the request. | Large leagues can't time out the request. | Not needed: already a fixed query count |
+| 1.8 | Split job types across separate workers | (out of scope in #1186) | S | With one worker, a long ingestion run can delay email delivery, or the other way round. | Each job type is isolated from the others; only worth doing if starvation shows up. | Closed (Derek 11-07) |
 
 ## 2. Database
 
