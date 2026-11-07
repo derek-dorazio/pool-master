@@ -59,6 +59,8 @@ M ≈ 1 week, L > 1 week; $ = monthly AWS spend.
 
 ## 2. Database
 
+All 2.x items on hold (Derek 2026-11-07). When picked up: 2.1 waits for prod (QA traffic too thin); fold a pg_stat_statements report into 2.2's nightly volume run; 2.6 stays parked (Prisma 8, still RC, has no per-row bulk update; it does add partial indexes, worth revisiting on upgrade).
+
 | # | Idea | Ticket | Cost | Issue | Benefit | Pri |
 |---|---|---|---|---|---|---|
 | 2.1 | Performance Insights, pg_stat_statements and a slow query log on prod | #1246 | S, ~$0–10 | We have no per-query evidence from real traffic, only query counts from tests. | Tuning is driven by what prod actually spends time on. | **P1** |
