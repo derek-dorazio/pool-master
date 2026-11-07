@@ -186,7 +186,7 @@ describe('ContestService.getPickEmLeaderboard reads (#762)', () => {
     const season = await midSeason();
     const service = createContestService(getAppPrisma(), getApp().log, { planEntitlements: integrationPlanEntitlements() });
 
-    const { result: leaderboard, statements } = await recordStatements(() => service.getPickEmLeaderboard(season.contest.id, season.viewerId));
+    const { result: leaderboard, statements } = await recordStatements(() => service.getPickEmLeaderboard(season.contest.id, season.viewerId).then((read) => read.board));
 
     const reads = (table: string) => statementsOn(statements, StatementVerb.SELECT, table).length;
     // One statement for every week's games; the live week is scored from those, not read again.
@@ -202,7 +202,7 @@ describe('ContestService.getPickEmLeaderboard reads (#762)', () => {
   it('reports each settled week\'s game count and tiebreaker total from the batched games, and the live week\'s too', async () => {
     const season = await midSeason();
 
-    const leaderboard = await createContestService(getAppPrisma(), getApp().log, { planEntitlements: integrationPlanEntitlements() }).getPickEmLeaderboard(season.contest.id, season.viewerId);
+    const leaderboard = (await createContestService(getAppPrisma(), getApp().log, { planEntitlements: integrationPlanEntitlements() }).getPickEmLeaderboard(season.contest.id, season.viewerId)).board;
 
     expect(leaderboard.weeks.map((week) => [week.gameCount, week.tiebreakerTotalPoints])).toEqual([
       [3, 37], [3, 37], [3, 37], [3, 37],
@@ -214,7 +214,7 @@ describe('ContestService.getPickEmLeaderboard reads (#762)', () => {
   it('scores the week under way live and leaves the weeks the entry did not submit, and the week to come, empty', async () => {
     const season = await midSeason();
 
-    const leaderboard = await createContestService(getAppPrisma(), getApp().log, { planEntitlements: integrationPlanEntitlements() }).getPickEmLeaderboard(season.contest.id, season.viewerId);
+    const leaderboard = (await createContestService(getAppPrisma(), getApp().log, { planEntitlements: integrationPlanEntitlements() }).getPickEmLeaderboard(season.contest.id, season.viewerId)).board;
 
     const row = expectDefined(leaderboard.entries.find((entry) => entry.entryId === season.entry.id));
     expect(row.weeks.map((week) => [week.submitted, week.points])).toEqual([
@@ -232,10 +232,67 @@ describe('ContestService.getPickEmLeaderboard reads (#762)', () => {
     const { contest, viewerId } = await createPickEmContest([cancelled.event.id]);
     const service = createContestService(getAppPrisma(), getApp().log, { planEntitlements: integrationPlanEntitlements() });
 
-    const { result: leaderboard, statements } = await recordStatements(() => service.getPickEmLeaderboard(contest.id, viewerId));
+    const { result: leaderboard, statements } = await recordStatements(() => service.getPickEmLeaderboard(contest.id, viewerId).then((read) => read.board));
 
     expect(leaderboard.weeks.map((week) => [week.settled, week.gameCount, week.tiebreakerTotalPoints])).toEqual([[true, 0, null]]);
     expect(statementsOn(statements, StatementVerb.SELECT, 'sport_event_matches')).toHaveLength(1);
     expect(statementsOn(statements, StatementVerb.SELECT, 'contest_entry_match_predictions')).toHaveLength(0);
+  });
+});
+
+describe('Stored pick\'em leaderboards (#1435)', () => {
+  const serviceOn = () => createContestService(getAppPrisma(), getApp().log, { planEntitlements: integrationPlanEntitlements() });
+  const snapshotRows = (contestId: string) => getPrisma().contestLeaderboardSnapshot.findMany({ where: { contestId } });
+
+  it('answers a poll on another API task from the stored board, reading no entries, picks or games again', async () => {
+    const season = await midSeason();
+    const first = await serviceOn().getPickEmLeaderboard(season.contest.id, season.viewerId);
+
+    const { result, statements } = await recordStatements(() => serviceOn().getPickEmLeaderboard(season.contest.id, season.viewerId));
+
+    expect(result).toEqual(first);
+    for (const table of ['contest_entries', 'contest_entry_match_predictions', 'sport_event_matches', 'contest_configurations']) {
+      expect(statementsOn(statements, StatementVerb.SELECT, table)).toEqual([]);
+    }
+    expect(statementsOn(statements, StatementVerb.SELECT, 'contest_leaderboard_snapshots')).toHaveLength(1);
+    // The contest (6), the reader's squad membership (1; the task keeps the league membership,
+    // #1438), and the snapshot (1): pinned however many weeks, games, entries and picks the season has.
+    expect(statements).toHaveLength(8);
+  });
+
+  it('stores the board until the next game kicks off, whose picks it would then reveal', async () => {
+    const season = await midSeason();
+
+    await serviceOn().getPickEmLeaderboard(season.contest.id, season.viewerId);
+
+    const nextKickoff = expectDefined(season.nextWeek.games[0]?.scheduledDate);
+    expect(await snapshotRows(season.contest.id)).toMatchObject([{ shownEvent: '', validUntil: nextKickoff }]);
+  });
+
+  it('rebuilds the stored board when an admin saves a game\'s result through the events routes, before the save answers', async () => {
+    const season = await midSeason();
+    const admin = await createTestUser({ isRootAdmin: true });
+    await serviceOn().getPickEmLeaderboard(season.contest.id, season.viewerId);
+
+    const saved = await getApp().inject({
+      method: 'PUT',
+      url: `/api/v1/events/${season.liveWeek.event.id}/bracket/matches/3/result`,
+      headers: admin.headers,
+      payload: { winnerSide: 'HOME', homeScore: 24, awayScore: 10 },
+    });
+
+    expect(saved.statusCode).toBe(200);
+    expect(await snapshotRows(season.contest.id)).toMatchObject([{ version: 2 }]);
+    const { board } = await serviceOn().getPickEmLeaderboard(season.contest.id, season.viewerId);
+    // The third home pick now scores too.
+    expect(expectDefined(board.entries.find((entry) => entry.entryId === season.entry.id)).totalPoints).toBe(3);
+  });
+
+  it('refuses the lineup leaderboard of a pick\'em contest whose pick\'em board is stored, as before it was stored', async () => {
+    const season = await midSeason();
+    await serviceOn().getPickEmLeaderboard(season.contest.id, season.viewerId);
+
+    await expect(serviceOn().getLeaderboard(season.contest.id, season.viewerId)).rejects.toMatchObject({ code: 'CONTEST_FORMAT_MISMATCH' });
+    expect(await snapshotRows(season.contest.id)).toMatchObject([{ version: 1 }]);
   });
 });

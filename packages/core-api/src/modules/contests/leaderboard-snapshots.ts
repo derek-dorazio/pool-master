@@ -15,9 +15,51 @@
  */
 import type { FastifyBaseLogger } from 'fastify';
 import type { ContestLeaderboardSnapshot } from '@poolmaster/shared/db';
-import type { Contest } from '@poolmaster/shared/domain';
+import { SelectionType, type Contest, type SportEvent, type SportEventMatch } from '@poolmaster/shared/domain';
 import { readMillisecondsSetting } from '../../core/read-cache';
 import { outsideRequest } from '../../core/request-scope';
+
+/** Which leaderboard a stored board is: each contest has one, by how its entries pick. */
+export const LeaderboardKind = {
+  /** A lineup of participants, scored by their results: golf, racing, knockout, stat pools. */
+  ROSTER: 'ROSTER',
+  BRACKET: 'BRACKET',
+  PICK_EM: 'PICK_EM',
+  SURVIVOR: 'SURVIVOR',
+} as const;
+export type LeaderboardKind = (typeof LeaderboardKind)[keyof typeof LeaderboardKind];
+
+/** The contest's leaderboard; none for squares, whose grid is its board. */
+export function leaderboardKindOf(contest: Pick<Contest, 'selectionType'>): LeaderboardKind | null {
+  switch (contest.selectionType) {
+    case SelectionType.TIERED:
+    case SelectionType.BUDGET_PICK:
+    case SelectionType.RANDOM_DRAW:
+      return LeaderboardKind.ROSTER;
+    case SelectionType.BRACKET:
+      return LeaderboardKind.BRACKET;
+    case SelectionType.PICK_EM:
+      return LeaderboardKind.PICK_EM;
+    case SelectionType.SURVIVOR:
+      return LeaderboardKind.SURVIVOR;
+    case SelectionType.SQUARES:
+      return null;
+  }
+}
+
+/**
+ * The first moment after `now` that one of the contest's events or games is due to start: when a
+ * bracket, pick'em or survivor board may reveal picks it does not show yet, and must be computed
+ * again. Null when nothing is still to start.
+ */
+export function nextKickoffAfter(
+  now: Date,
+  events: readonly Pick<SportEvent, 'startDate'>[],
+  games: readonly Pick<SportEventMatch, 'scheduledDate'>[],
+): Date | null {
+  const starts = [...events.map((event) => event.startDate), ...games.flatMap((game) => (game.scheduledDate ? [game.scheduledDate] : []))];
+  return starts.reduce<Date | null>((soonest, start) => (start > now && (soonest === null || start < soonest) ? start : soonest), null);
+}
 
 /** The key of the board a read naming no event gets: the latest event whose picks are revealed. */
 export const DEFAULT_SHOWN_EVENT = '';

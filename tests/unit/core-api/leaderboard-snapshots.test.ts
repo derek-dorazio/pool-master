@@ -1,10 +1,14 @@
 import { afterEach, describe, expect, it, jest } from '@jest/globals';
+import { SelectionType } from '@poolmaster/shared/domain';
 import {
   DebouncedLeaderboardRebuilds,
   LEADERBOARD_REBUILD_DELAY_MS,
   LEADERBOARD_REBUILD_MAX_WAIT_MS,
   LEADERBOARD_SNAPSHOT_MAX_AGE_MS,
   isSnapshotCurrent,
+  leaderboardKindOf,
+  LeaderboardKind,
+  nextKickoffAfter,
   readLeaderboardRebuildDelayMs,
   readLeaderboardSnapshotMaxAgeMs,
   type LeaderboardChanges,
@@ -183,6 +187,34 @@ describe('isSnapshotCurrent', () => {
 
   it('is no longer current once the contest itself changed, such as completing at settlement', () => {
     expect(isSnapshotCurrent(stored, { updatedAt: later(1) }, later(2), LEADERBOARD_SNAPSHOT_MAX_AGE_MS)).toBe(false);
+  });
+});
+
+describe('nextKickoffAfter', () => {
+  const now = new Date('2026-11-08T18:00:00.000Z');
+  const at = (hours: number) => new Date(now.getTime() + hours * 3_600_000);
+
+  it('is the soonest event or game start still to come, skipping those already started and games with no date', () => {
+    expect(nextKickoffAfter(now, [{ startDate: at(-48) }, { startDate: at(72) }], [{ scheduledDate: at(-1) }, { scheduledDate: null }, { scheduledDate: at(5) }]))
+      .toEqual(at(5));
+  });
+
+  it('is null once everything has started, so only a write changes the board', () => {
+    expect(nextKickoffAfter(now, [{ startDate: at(-48) }], [{ scheduledDate: now }])).toBeNull();
+  });
+});
+
+describe('leaderboardKindOf', () => {
+  it('stores lineup contests as the roster board, each prediction format as its own, and squares as none', () => {
+    expect(Object.fromEntries(Object.values(SelectionType).map((selectionType) => [selectionType, leaderboardKindOf({ selectionType })]))).toEqual({
+      [SelectionType.TIERED]: LeaderboardKind.ROSTER,
+      [SelectionType.BUDGET_PICK]: LeaderboardKind.ROSTER,
+      [SelectionType.RANDOM_DRAW]: LeaderboardKind.ROSTER,
+      [SelectionType.BRACKET]: LeaderboardKind.BRACKET,
+      [SelectionType.PICK_EM]: LeaderboardKind.PICK_EM,
+      [SelectionType.SURVIVOR]: LeaderboardKind.SURVIVOR,
+      [SelectionType.SQUARES]: null,
+    });
   });
 });
 

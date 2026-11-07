@@ -62,7 +62,7 @@ import {
   SquadMembershipStatus,
   TeamIconKey,
 } from '@poolmaster/shared/domain';
-import type { ContestServiceDeps } from '../../packages/core-api/src/modules/contests/service';
+import type { ContestServiceDeps, StoredLeaderboard } from '../../packages/core-api/src/modules/contests/service';
 import { buildLeague, buildUser } from '../factories';
 import {
   fakeLeagueRepo,
@@ -78,7 +78,6 @@ import { hasSportEventStarted } from '../../packages/core-api/src/modules/events
 import { planEntitlementsOver } from './plan-entitlements';
 import { fieldReads } from './field-reads';
 import { InMemoryLeaderboardSnapshots } from './in-memory-leaderboard-snapshots';
-import type { ContestLeaderboardResponse } from '@poolmaster/shared/dto';
 
 /** Thrown where Postgres would reject the write with a unique-constraint violation (P2002). */
 export class UniqueConstraintViolation extends Error {
@@ -105,7 +104,7 @@ export class InMemoryContestWorld {
   /** Settled contest standings, one per entry. */
   readonly standings = new Map<string, ContestEntryStandingResult>();
   /** Each contest's stored leaderboards (#1435). */
-  readonly leaderboardSnapshots = new InMemoryLeaderboardSnapshots<ContestLeaderboardResponse>(
+  readonly leaderboardSnapshots = new InMemoryLeaderboardSnapshots<StoredLeaderboard>(
     (sportEventId) => [...this.contests.values()].filter((contest) => contest.sportEventIds.includes(sportEventId)).map((contest) => contest.id),
   );
   readonly leagues = new Map<string, League>();

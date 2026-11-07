@@ -333,7 +333,7 @@ describe('a second-chance bracket — its leaderboard and standings', () => {
     context.setNow(at(3));
     await context.lifecycle.activateContestsPastCutoff(context.eventNow(), at(3));
 
-    const leaderboard = await context.contests.getBracketLeaderboard(context.contest.id, context.bob.id);
+    const leaderboard = (await context.contests.getBracketLeaderboard(context.contest.id, context.bob.id)).board;
 
     expect(leaderboard).toMatchObject({ gameCount: 3, finalTotalPoints: null });
     expect(leaderboard.entries.map((row) => [row.entryName, row.points, row.maxPossiblePoints])).toEqual([['Alice FC', 0, 2 + 2 + 4]]);

@@ -28,6 +28,11 @@ export interface BracketLeaderboardModel {
   entries: BracketLeaderboardEntryRow[];
 }
 
+/** A stored leaderboard (#1435) as the API answers it: the board it holds, mapped by `toBracketLeaderboardResponse` when computed. */
+export function toBracketLeaderboardSnapshotResponse(snapshot: { board: BracketLeaderboardResponse }): BracketLeaderboardResponse {
+  return snapshot.board;
+}
+
 export function toBracketLeaderboardResponse(model: BracketLeaderboardModel): BracketLeaderboardResponse {
   return {
     contestId: model.contestId,

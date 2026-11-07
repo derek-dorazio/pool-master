@@ -151,7 +151,7 @@ function setup(options: { untimedLaterRounds?: boolean } = {}) {
   return {
     world, contest, playoffs, contestService, settlement, predictions, input, pick, save, play, place, storedPicks,
     setNow: (when: Date) => { now = when; },
-    leaderboard: () => contestService.getSurvivorLeaderboard(contest.id, expectDefined(users.get('Alice'))),
+    leaderboard: () => contestService.getSurvivorLeaderboard(contest.id, expectDefined(users.get('Alice'))).then((read) => read.board),
     /** Round 1 picked and submitted as the file comment tells it, and played. */
     async playRound1() {
       await save('Alice', 2, 'T3');

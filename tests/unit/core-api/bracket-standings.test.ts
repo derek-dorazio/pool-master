@@ -112,7 +112,11 @@ function setup(options: { rules?: (configurationId: string) => ParticipantContes
 
   let now = DURING;
   const deps = world.contestServiceDeps({
-    scoringRules: fakeParticipantContestScoringRuleRepo({ findByContestConfiguration: jest.fn().mockResolvedValue(rules) }),
+    scoringRules: fakeParticipantContestScoringRuleRepo({
+      findByContestConfiguration: jest.fn().mockResolvedValue(rules),
+      // The background rebuild reads every contest's rules at once.
+      findByContestConfigurations: jest.fn().mockResolvedValue(rules),
+    }),
     eventParticipants: games.fieldService(),
     predictions: games.predictionRepo(),
     matches: games.matchRepo(),
@@ -368,7 +372,7 @@ describe('ContestService.getBracketLeaderboard', () => {
     const context = setup();
     context.play(ROUND_ONE_CHALK, ROUND_TWO_CHALK);
 
-    const leaderboard = await context.contestService.getBracketLeaderboard(context.contest.id, context.viewer.id);
+    const leaderboard = (await context.contestService.getBracketLeaderboard(context.contest.id, context.viewer.id)).board;
 
     expect(leaderboard).toMatchObject({ contestId: context.contest.id, sportEventId: context.sportEvent.id, eventCancelled: false, gameCount: 7, finalTotalPoints: null });
     expect(leaderboard.entries.map((row) => [row.entryName, row.displayPosition, row.points, row.maxPossiblePoints, row.correctPickCount, row.tiebreakerValue])).toEqual([
@@ -386,7 +390,7 @@ describe('ContestService.getBracketLeaderboard', () => {
     // A correction after settlement: the final was really won by T2, 66 to 70.
     context.play(new Map([[7, { home: 'T1', away: 'T2', winner: AWAY, homeScore: 66, awayScore: 70 }]]));
 
-    const leaderboard = await context.contestService.getBracketLeaderboard(context.contest.id, context.viewer.id);
+    const leaderboard = (await context.contestService.getBracketLeaderboard(context.contest.id, context.viewer.id)).board;
 
     expect(leaderboard.entries.map((row) => [row.entryName, row.displayPosition, row.points, row.maxPossiblePoints])).toEqual([
       ['Alice', '1', 12, 12],
@@ -401,7 +405,7 @@ describe('ContestService.getBracketLeaderboard', () => {
     context.world.sportEvents.set(context.sportEvent.id, { ...expectDefined(context.world.sportEvents.get(context.sportEvent.id)), status: SportEventStatus.CANCELLED });
     await context.settlement.settleFinishedSportEvent(context.sportEvent.id, { completedAt: SETTLED_AT });
 
-    const leaderboard = await context.contestService.getBracketLeaderboard(context.contest.id, context.viewer.id);
+    const leaderboard = (await context.contestService.getBracketLeaderboard(context.contest.id, context.viewer.id)).board;
 
     expect(leaderboard).toMatchObject({ eventCancelled: true, gameCount: 0, finalTotalPoints: null });
     expect(leaderboard.entries.map((row) => [row.entryName, row.points, row.maxPossiblePoints, row.correctPickCount])).toEqual([
@@ -409,6 +413,35 @@ describe('ContestService.getBracketLeaderboard', () => {
       ['Bob', 0, 0, 0],
       ['Cara', 0, 0, 0],
     ]);
+  });
+});
+
+describe('Stored bracket leaderboards (#1435)', () => {
+  it('answers the next poll from the stored board until a result is saved, then from the board rebuilt with that result', async () => {
+    const context = setup();
+    context.play(ROUND_ONE_CHALK, ROUND_TWO_CHALK);
+    const first = await context.contestService.getBracketLeaderboard(context.contest.id, context.viewer.id);
+
+    context.play(FINAL_T1_70_66);
+    const unsignalled = await context.contestService.getBracketLeaderboard(context.contest.id, context.viewer.id);
+    context.setNow(new Date(DURING.getTime() + 60_000));
+    await context.contestService.rebuildLeaderboardSnapshots({ sportEventIds: [context.sportEvent.id], contestIds: [] });
+    const rebuilt = await context.contestService.getBracketLeaderboard(context.contest.id, context.viewer.id);
+
+    // A result no write told of stays off the stored board; the rebuild the write asks for shows it.
+    expect(unsignalled).toEqual(first);
+    expect(rebuilt.version).toBe(first.version + 1);
+    expect(rebuilt.board.finalTotalPoints).toBe(136);
+    expect(rebuilt.board.entries.map((row) => [row.entryName, row.points])).toEqual([['Alice', 12], ['Bob', 12], ['Cara', 5]]);
+  });
+
+  it('stores no board while picks are hidden, so the first read after the start computes it', async () => {
+    const context = setup({ contestStatus: ContestStatus.OPEN });
+    context.setNow(BEFORE_START);
+
+    await context.contestService.getBracketLeaderboard(context.contest.id, context.viewer.id).catch(() => undefined);
+
+    expect(context.world.leaderboardSnapshots.rows.size).toBe(0);
   });
 });
 

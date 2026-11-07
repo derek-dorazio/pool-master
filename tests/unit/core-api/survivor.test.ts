@@ -181,7 +181,7 @@ function setup(rules: { reuseTeamsOnceAllUsed?: boolean } = {}) {
     playWeek1: () => { play(g1, MatchSide.HOME); play(g2, MatchSide.HOME); },
     playWeek2: () => { play(g3, MatchSide.HOME); play(g4, MatchSide.HOME); },
     playWeek3: () => { cancel(g5); play(g6, MatchSide.HOME); },
-    leaderboard: () => contestService.getSurvivorLeaderboard(contest.id, viewerId),
+    leaderboard: () => contestService.getSurvivorLeaderboard(contest.id, viewerId).then((read) => read.board),
     storedPicks: (entryId: string) => [...games.predictions.values()]
       .filter((row) => row.contestEntryId === entryId)
       .map((row) => row.sportEventMatchId)
@@ -538,6 +538,20 @@ describe('ContestService.getSurvivorLeaderboard', () => {
     expect(weeksOf('Alice')).toEqual([[SurvivorWeekOutcome.SURVIVED, 'Bills'], [SurvivorWeekOutcome.PENDING, null], [null, null]]);
     expect(weeksOf('Bob')).toEqual([[SurvivorWeekOutcome.SURVIVED, 'Chiefs'], [SurvivorWeekOutcome.ELIMINATED, 'Jets'], [null, null]]);
     expect(weeksOf('Cara')).toEqual([[SurvivorWeekOutcome.ELIMINATED, 'Jets'], [null, null], [null, null]]);
+  });
+
+  it('keeps the stored board only until the next game kicks off, then shows the team picked for it (#1435)', async () => {
+    const context = setup();
+    context.playWeek1();
+    context.play(context.gamesByNumber.g3, MatchSide.HOME);
+    context.setNow(later(WEEK_2, 2));
+    await context.leaderboard();
+
+    // The Chiefs v Raiders kickoff reveals Alice's week 2 pick: the stored board is good until then.
+    expect([...context.world.leaderboardSnapshots.rows.values()].map((row) => row.validUntil)).toEqual([later(WEEK_2, 24)]);
+    context.setNow(new Date(later(WEEK_2, 24).getTime() + 1));
+    const board = await context.leaderboard();
+    expect(expectDefined(board.entries.find((entry) => entry.entryName === 'Alice')).weeks[1]?.team).toBe('Chiefs');
   });
 
   it('names no team for a week the entry left in draft, even once that pick\'s game has kicked off', async () => {

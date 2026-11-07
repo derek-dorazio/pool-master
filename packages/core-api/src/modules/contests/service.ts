@@ -63,9 +63,12 @@ import {
 import {
   CONTEST_EVENT_NOT_IN_CONTEST,
   type ApiErrorCode,
+  type BracketLeaderboardResponse,
   type ContestEntryDto,
   type ContestLeaderboardResponse,
   type OpenContestUsageDto,
+  type PickEmLeaderboardResponse,
+  type SurvivorLeaderboardResponse,
 } from '@poolmaster/shared/dto';
 import {
   toContestEntryDto,
@@ -76,13 +79,21 @@ import {
   type ContestLeaderboardEntryRow,
   type ContestLeaderboardModel,
 } from '../../mappers/contests.mapper';
-import type { BracketLeaderboardEntryRow, BracketLeaderboardModel } from '../../mappers/bracket-leaderboard.mapper';
-import type { PickEmLeaderboardEntryRow, PickEmLeaderboardModel } from '../../mappers/pick-em-leaderboard.mapper';
+import { toBracketLeaderboardResponse, type BracketLeaderboardEntryRow, type BracketLeaderboardModel } from '../../mappers/bracket-leaderboard.mapper';
+import { toPickEmLeaderboardResponse, type PickEmLeaderboardEntryRow, type PickEmLeaderboardModel } from '../../mappers/pick-em-leaderboard.mapper';
 import { BracketScoringUnavailableError, loadBracketStandings, type BracketEntryStanding } from './bracket-standings';
-import { DEFAULT_SHOWN_EVENT, LEADERBOARD_SNAPSHOT_MAX_AGE_MS, isSnapshotCurrent, type LeaderboardChanges } from './leaderboard-snapshots';
+import {
+  DEFAULT_SHOWN_EVENT,
+  LEADERBOARD_SNAPSHOT_MAX_AGE_MS,
+  LeaderboardKind,
+  isSnapshotCurrent,
+  leaderboardKindOf,
+  nextKickoffAfter,
+  type LeaderboardChanges,
+} from './leaderboard-snapshots';
 import { loadPickEmScoring, loadPickEmWeekStandings, pickEmWeekGames } from './pick-em-standings';
 import { loadSurvivorSeason, survivorWeekKey } from './survivor-standings';
-import type { SurvivorLeaderboardModel } from '../../mappers/survivor-leaderboard.mapper';
+import { toSurvivorLeaderboardResponse, type SurvivorLeaderboardModel } from '../../mappers/survivor-leaderboard.mapper';
 import {
   applySettledContestStandings,
   applySettledContestTotals,
@@ -210,7 +221,7 @@ export interface ContestServiceDeps {
   appBaseUrl?: string;
   now?: () => Date;
   /** Each contest's leaderboard as last computed (#1435), which every viewer's poll reads. */
-  leaderboardSnapshots: ContestLeaderboardSnapshotRepository<ContestLeaderboardResponse>;
+  leaderboardSnapshots: ContestLeaderboardSnapshotRepository<StoredLeaderboard>;
   /**
    * How old a snapshot may be before a read computes it again (#1435), for the changes no write
    * signals (a participant's name, a squad's). Five minutes unless set.
@@ -218,8 +229,27 @@ export interface ContestServiceDeps {
   leaderboardSnapshotMaxAgeMs?: number;
 }
 
+/** A stored board, tagged with the leaderboard it is (#1435): a contest has one kind of board. */
+interface StoredBoards {
+  [LeaderboardKind.ROSTER]: ContestLeaderboardResponse;
+  [LeaderboardKind.BRACKET]: BracketLeaderboardResponse;
+  [LeaderboardKind.PICK_EM]: PickEmLeaderboardResponse;
+  [LeaderboardKind.SURVIVOR]: SurvivorLeaderboardResponse;
+}
+
+/** The board of one kind. */
+export type StoredBoardOf<Kind extends LeaderboardKind> = StoredBoards[Kind];
+
+export type StoredLeaderboard = { [Kind in LeaderboardKind]: { kind: Kind; board: StoredBoards[Kind] } }[LeaderboardKind];
+
+/** A stored leaderboard as the snapshot table holds it. */
+export type ContestLeaderboardSnapshotRead = ContestLeaderboardSnapshot<StoredLeaderboard>;
+
 /** A contest's board with the snapshot version it was read from, for the poll's ETag (#1436). */
-export type ContestLeaderboardSnapshotRead = ContestLeaderboardSnapshot<ContestLeaderboardResponse>;
+export interface LeaderboardRead<Board> {
+  version: number;
+  board: Board;
+}
 
 export class ContestService {
   private readonly logger: LifecycleLogger;
@@ -563,45 +593,49 @@ export class ContestService {
     contestId: string,
     requesterUserId: string,
     requestedSportEventId?: string,
-  ): Promise<ContestLeaderboardSnapshotRead> {
+  ): Promise<LeaderboardRead<ContestLeaderboardResponse>> {
     const { contest } = await this.getEntryContext(contestId, requesterUserId, 'read');
-    return this.leaderboardSnapshotOf(contest, requestedSportEventId ?? DEFAULT_SHOWN_EVENT);
+    return this.leaderboardSnapshotOf(contest, LeaderboardKind.ROSTER, requestedSportEventId ?? DEFAULT_SHOWN_EVENT);
   }
 
   /**
-   * The contest's stored board for the shown event when it is current, else one computed now and
-   * stored (#1435): none is stored yet, it is older than the max age, an event it does not show
-   * has started since, or the contest changed since.
+   * The contest's stored board of `kind` for the shown event when it is current, else one computed
+   * now and stored (#1435): none is stored yet, it is older than the max age, a game or event it
+   * does not show has started since, or the contest changed since. A contest whose board is not of
+   * `kind` computes, which refuses it as that leaderboard's read does.
    */
-  private async leaderboardSnapshotOf(contest: Contest, shownEvent: string): Promise<ContestLeaderboardSnapshotRead> {
+  private async leaderboardSnapshotOf<Kind extends LeaderboardKind>(contest: Contest, kind: Kind, shownEvent: string): Promise<LeaderboardRead<StoredBoardOf<Kind>>> {
     const stored = await this.deps.leaderboardSnapshots.find(contest.id, shownEvent);
-    if (stored && isSnapshotCurrent(stored, contest, this.now(), this.snapshotMaxAgeMs)) return stored;
-    return this.rebuildLeaderboardSnapshot(contest, shownEvent);
+    if (stored && isSnapshotCurrent(stored, contest, this.now(), this.snapshotMaxAgeMs)) {
+      const board = boardOfKind(stored.board, kind);
+      if (board) return { version: stored.version, board };
+    }
+    const rebuilt = await this.rebuildLeaderboardSnapshot(contest, kind, shownEvent);
+    const board = boardOfKind(rebuilt.board, kind);
+    if (!board) throw new Error(`Contest ${contest.id} stored a ${rebuilt.board.kind} board for a ${kind} read`);
+    return { version: rebuilt.version, board };
   }
 
   /**
-   * Computes the contest's board for the shown event from the scores as they stand and stores it,
-   * unless a board computed from newer reads was stored meanwhile. Viewers asking at once share
-   * one computation. A board that cannot be shown throws as the read would, and stores nothing.
+   * Computes the contest's board of `kind` for the shown event from the scores as they stand and
+   * stores it, unless a board computed from newer reads was stored meanwhile. Viewers asking at
+   * once share one computation. A board that cannot be shown throws as the read would, and stores
+   * nothing.
    */
-  private rebuildLeaderboardSnapshot(contest: Contest, shownEvent: string): Promise<ContestLeaderboardSnapshotRead> {
-    const key = `${contest.id}:${shownEvent}`;
+  private rebuildLeaderboardSnapshot(contest: Contest, kind: LeaderboardKind, shownEvent: string): Promise<ContestLeaderboardSnapshotRead> {
+    const key = `${contest.id}:${kind}:${shownEvent}`;
     const inFlight = this.snapshotsInFlight.get(key);
     if (inFlight) return inFlight;
     const rebuild = (async () => {
       const computedFrom = this.now();
-      const { leaderboard, validUntil } = await this.boardOf(
-        contest,
-        shownEvent === DEFAULT_SHOWN_EVENT ? undefined : shownEvent,
-        (sportEventId) => loadEventField(this.deps, sportEventId),
-      );
+      const { board, validUntil } = await this.computeStoredLeaderboard(contest, kind, shownEvent);
       const write = {
         contestId: contest.id,
         shownEvent,
         computedFrom,
         contestUpdatedAt: contest.updatedAt,
         validUntil,
-        board: toContestLeaderboardResponse(leaderboard),
+        board,
       };
       // A newer board stored meanwhile answers instead of this one.
       return (await this.deps.leaderboardSnapshots.save(write))
@@ -614,6 +648,36 @@ export class ContestService {
     };
     rebuild.then(settle, settle);
     return rebuild;
+  }
+
+  /**
+   * The contest's board of `kind` as the API answers it, with the moment it must be computed again
+   * to show something time alone reveals: a lineup board's next event to start, a pick'em or
+   * survivor board's next event or game to start, whose picks it reveals. A bracket reveals every
+   * pick when it starts, so only a result changes its board after.
+   */
+  private async computeStoredLeaderboard(contest: Contest, kind: LeaderboardKind, shownEvent: string): Promise<{ board: StoredLeaderboard; validUntil: Date | null }> {
+    if (kind === LeaderboardKind.ROSTER) {
+      const { leaderboard, validUntil } = await this.boardOf(
+        contest,
+        shownEvent === DEFAULT_SHOWN_EVENT ? undefined : shownEvent,
+        (sportEventId) => loadEventField(this.deps, sportEventId),
+      );
+      return { board: { kind, board: toContestLeaderboardResponse(leaderboard) }, validUntil };
+    }
+    switch (kind) {
+      case LeaderboardKind.BRACKET:
+        // Every pick of a bracket is revealed at once, when it starts; only results change it after.
+        return { board: { kind, board: toBracketLeaderboardResponse((await this.bracketStandingsOf(contest)).leaderboard) }, validUntil: null };
+      case LeaderboardKind.PICK_EM: {
+        const { leaderboard, validUntil } = await this.pickEmBoardOf(contest);
+        return { board: { kind, board: toPickEmLeaderboardResponse(leaderboard) }, validUntil };
+      }
+      case LeaderboardKind.SURVIVOR: {
+        const { leaderboard, validUntil } = await this.survivorBoardOf(contest);
+        return { board: { kind, board: toSurvivorLeaderboardResponse(leaderboard) }, validUntil };
+      }
+    }
   }
 
   /**
@@ -633,7 +697,7 @@ export class ContestService {
       const contest = contests.get(key.contestId);
       if (!contest) return;
       try {
-        await batched.rebuildLeaderboardSnapshot(contest, key.shownEvent);
+        await batched.rebuildLeaderboardSnapshot(contest, leaderboardKindOf(contest) ?? LeaderboardKind.ROSTER, key.shownEvent);
       } catch (error) {
         if (error instanceof ContestOperationError) {
           this.logger.info({ contestId: key.contestId, shownEvent: key.shownEvent, code: error.code }, 'leaderboard snapshot dropped: the board can no longer be shown');
@@ -858,9 +922,9 @@ export class ContestService {
    * answers from the standings frozen at settlement, so a later result correction does not change
    * a settled place.
    */
-  async getBracketLeaderboard(contestId: string, requesterUserId: string): Promise<BracketLeaderboardModel> {
+  async getBracketLeaderboard(contestId: string, requesterUserId: string): Promise<LeaderboardRead<BracketLeaderboardResponse>> {
     const { contest } = await this.getEntryContext(contestId, requesterUserId, 'read');
-    return (await this.bracketStandingsOf(contest)).leaderboard;
+    return this.leaderboardSnapshotOf(contest, LeaderboardKind.BRACKET, DEFAULT_SHOWN_EVENT);
   }
 
   /**
@@ -969,7 +1033,8 @@ export class ContestService {
    */
   private async rosterPositionsOf(contest: Contest): Promise<readonly { squadId: string; position: number | null }[]> {
     const stored = await this.deps.leaderboardSnapshots.find(contest.id, DEFAULT_SHOWN_EVENT);
-    if (stored && isSnapshotCurrent(stored, contest, this.now(), this.snapshotMaxAgeMs)) return stored.board.entries;
+    const board = stored && isSnapshotCurrent(stored, contest, this.now(), this.snapshotMaxAgeMs) ? boardOfKind(stored.board, LeaderboardKind.ROSTER) : null;
+    if (board) return board.entries;
     return (await this.boardOf(contest, undefined, (sportEventId) => loadEventField(this.deps, sportEventId))).leaderboard.entries;
   }
 
@@ -997,13 +1062,18 @@ export class ContestService {
    * scored live, and a pick only scores once its game is played, so a live week shows nothing a
    * game's kickoff has not revealed. A COMPLETED contest's totals and places are the frozen ones.
    */
-  async getPickEmLeaderboard(contestId: string, requesterUserId: string): Promise<PickEmLeaderboardModel> {
+  async getPickEmLeaderboard(contestId: string, requesterUserId: string): Promise<LeaderboardRead<PickEmLeaderboardResponse>> {
     const { contest } = await this.getEntryContext(contestId, requesterUserId, 'read');
-    return this.pickEmLeaderboardOf(contest);
+    return this.leaderboardSnapshotOf(contest, LeaderboardKind.PICK_EM, DEFAULT_SHOWN_EVENT);
   }
 
   /** The same pick'em leaderboard for a contest already in hand, with no reader to check: what the week results emails read (#877). */
   async pickEmLeaderboardOf(contest: Contest): Promise<PickEmLeaderboardModel> {
+    return (await this.pickEmBoardOf(contest)).leaderboard;
+  }
+
+  /** The pick'em leaderboard, with the next kickoff of the season's games, whose picks it reveals (#1435). */
+  private async pickEmBoardOf(contest: Contest): Promise<{ leaderboard: PickEmLeaderboardModel; validUntil: Date | null }> {
     const contestId = contest.id;
     if (contest.selectionType !== SelectionType.PICK_EM) {
       throw new ContestOperationError(
@@ -1102,7 +1172,7 @@ export class ContestService {
       || left.entryNumber - right.entryNumber
       || left.entryName.localeCompare(right.entryName));
 
-    return {
+    const leaderboard: PickEmLeaderboardModel = {
       contestId,
       mode: scoring.mode,
       againstTheSpread: scoring.againstTheSpread,
@@ -1119,6 +1189,7 @@ export class ContestService {
       })),
       entries: rows,
     };
+    return { leaderboard, validUntil: nextKickoffAfter(now, events, [...matchesByEvent.values()].flat()) };
   }
 
   /**
@@ -1127,13 +1198,18 @@ export class ContestService {
    * the entry's outcome and, once its game has kicked off, the team it picked. Read live from the
    * results; a COMPLETED contest's places are the ones frozen at settlement.
    */
-  async getSurvivorLeaderboard(contestId: string, requesterUserId: string): Promise<SurvivorLeaderboardModel> {
+  async getSurvivorLeaderboard(contestId: string, requesterUserId: string): Promise<LeaderboardRead<SurvivorLeaderboardResponse>> {
     const { contest } = await this.getEntryContext(contestId, requesterUserId, 'read');
-    return this.survivorLeaderboardOf(contest);
+    return this.leaderboardSnapshotOf(contest, LeaderboardKind.SURVIVOR, DEFAULT_SHOWN_EVENT);
   }
 
   /** The same survivor leaderboard for a contest already in hand, with no reader to check: what the week results emails read (#877). */
   async survivorLeaderboardOf(contest: Contest): Promise<SurvivorLeaderboardModel> {
+    return (await this.survivorBoardOf(contest)).leaderboard;
+  }
+
+  /** The survivor leaderboard, with the next kickoff of the season's games, whose picks it reveals (#1435). */
+  private async survivorBoardOf(contest: Contest): Promise<{ leaderboard: SurvivorLeaderboardModel; validUntil: Date | null }> {
     const contestId = contest.id;
     if (contest.selectionType !== SelectionType.SURVIVOR) {
       throw new ContestOperationError(
@@ -1187,7 +1263,7 @@ export class ContestService {
       };
     }).sort((left, right) => left.position - right.position || left.entryNumber - right.entryNumber || left.entryName.localeCompare(right.entryName));
 
-    return {
+    const leaderboard: SurvivorLeaderboardModel = {
       contestId,
       weeks: season.weeks.map(({ event, roundNumber, roundCount, weekNumber, started, cancelled }, index) => ({
         sportEventId: event.id,
@@ -1208,6 +1284,8 @@ export class ContestService {
       })),
       entries,
     };
+    const validUntil = nextKickoffAfter(now, season.weeks.map((week) => week.event), season.weeks.flatMap((week) => week.games));
+    return { leaderboard, validUntil };
   }
 
   async createEntry(
@@ -1941,4 +2019,11 @@ function toSettledStanding(standing: {
     scoredPickCount: standing.scoredPickCount,
     score: standing.totalScore,
   };
+}
+
+/** The stored board when it is of `kind`, else null. */
+function boardOfKind<K extends LeaderboardKind>(stored: StoredLeaderboard, kind: K): StoredBoardOf<K> | null {
+  if (stored.kind !== kind) return null;
+  // The tag names the board's kind, so a match is that kind's board.
+  return stored.board as StoredBoardOf<K>;
 }

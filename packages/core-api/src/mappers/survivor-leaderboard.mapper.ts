@@ -46,6 +46,11 @@ export interface SurvivorLeaderboardModel {
   entries: SurvivorLeaderboardEntryRow[];
 }
 
+/** A stored leaderboard (#1435) as the API answers it: the board it holds, mapped by `toSurvivorLeaderboardResponse` when computed. */
+export function toSurvivorLeaderboardSnapshotResponse(snapshot: { board: SurvivorLeaderboardResponse }): SurvivorLeaderboardResponse {
+  return snapshot.board;
+}
+
 export function toSurvivorLeaderboardResponse(model: SurvivorLeaderboardModel): SurvivorLeaderboardResponse {
   return {
     contestId: model.contestId,

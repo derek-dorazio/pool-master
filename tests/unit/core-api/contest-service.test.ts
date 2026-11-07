@@ -5,6 +5,7 @@ import {
   ContestNotFoundError,
 
   type ContestServiceDeps,
+  type StoredLeaderboard,
   type EntrySubmittedReceiptInput,
 } from '../../../packages/core-api/src/modules/contests/service';
 import type { ParticipantValuationView } from '../../../packages/core-api/src/modules/events/sport-event-tier-service';
@@ -52,7 +53,6 @@ import {
 } from '../../support/repo-fakes';
 import { mockFn } from '../../support/mock-fn';
 import { InMemoryLeaderboardSnapshots } from '../../support/in-memory-leaderboard-snapshots';
-import type { ContestLeaderboardResponse } from '@poolmaster/shared/dto';
 import type { MailDeliveryProvider } from '../../../packages/core-api/src/modules/email/mail-delivery';
 import { expectDefined } from '../../support/expect-defined';
 import { deliverQueuedEmail, emailServiceOver } from '../../support/email-service';
@@ -232,7 +232,7 @@ function buildService(deps: Partial<ContestServiceDeps> = {}): ContestService {
     sportLeagues: { findById: jest.fn().mockResolvedValue({ id: 'pga-tour', name: 'PGA Tour' }) },
     eventParticipants: fieldReads(jest.fn().mockResolvedValue([]), jest.fn().mockResolvedValue([])),
     tiers: { listTiers: jest.fn().mockResolvedValue([]) },
-    leaderboardSnapshots: new InMemoryLeaderboardSnapshots<ContestLeaderboardResponse>(),
+    leaderboardSnapshots: new InMemoryLeaderboardSnapshots<StoredLeaderboard>(),
     ...deps,
   });
 }
