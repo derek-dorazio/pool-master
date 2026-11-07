@@ -34,7 +34,8 @@ import { MatchResultService } from '../scoring-families/head-to-head/match-resul
 import { eventStoresGolfRoundScores } from '../scoring-families/golf-round-scores';
 import { eventStoresRaceResults } from '../scoring-families/race-results';
 import { SportLeagueService } from '../sport-catalog/sport-league-service';
-import type { ContestStartedNotice, SportEventChangedNotice } from '../notifications/contest-notices';
+import type { SportEventChangedNotice } from '../notifications/contest-notices';
+import type { BackgroundJobQueue } from '../background-jobs';
 import { EventLifecycleService, type FinishedSportEventSettlement, type ReleasedEditionContests } from './event-lifecycle-service';
 import { SportEventService } from './service';
 import { SportEventBracketService } from './sport-event-bracket-service';
@@ -208,8 +209,8 @@ export function createEventLifecycleService(
   prisma: PrismaClient,
   options: {
     logger?: FastifyBaseLogger;
-    /** Who is told a contest has gone live (#845); without it, nobody is. */
-    contestStarted?: ContestStartedNotice;
+    /** Where a contest that goes live queues its "Contest is live" email job (#845, #1387); without it, nobody is told. */
+    jobs?: Pick<BackgroundJobQueue, 'request' | 'queued'>;
     /** Who is told an event was postponed, moved or cancelled (#845); without it, nobody is. */
     sportEventChanged?: SportEventChangedNotice;
     contestSettlement?: FinishedSportEventSettlement;
@@ -224,7 +225,7 @@ export function createEventLifecycleService(
     },
     new PrismaSportEventRepository(prisma),
     options.logger,
-    options.contestStarted,
+    options.jobs,
     options.contestSettlement,
     options.releasedEditionContests,
     options.sportEventChanged,

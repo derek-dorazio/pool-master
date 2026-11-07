@@ -9,6 +9,7 @@
  */
 import { expect, jest } from '@jest/globals';
 import {
+  BackgroundJobType,
   ContestEntryStatus,
   ContestFormat,
   ContestStatus,
@@ -23,7 +24,9 @@ import {
 } from '@poolmaster/shared/domain';
 import { ContestSettlementService } from '../../../packages/core-api/src/modules/contests/contest-settlement-service';
 import { SelectionError } from '../../../packages/core-api/src/modules/selections/selection-errors';
-import type { ContestSettledNotice, DrawnSquares } from '../../../packages/core-api/src/modules/notifications';
+import type { DrawnSquares } from '../../../packages/core-api/src/modules/notifications';
+import { BackgroundJobQueue } from '../../../packages/core-api/src/modules/background-jobs';
+import { inMemoryBackgroundJobs } from '../../support/in-memory-background-jobs';
 import type { ChampionshipService } from '../../../packages/core-api/src/modules/championship/service';
 import { SquaresService, type SquaresActor } from '../../../packages/core-api/src/modules/selections/squares-service';
 import { expectDefined } from '../../support/expect-defined';
@@ -422,7 +425,7 @@ describe('ContestSettlementService settling a squares contest with its game', ()
     expect(standings).toEqual(expect.arrayContaining([[context.alice.id, '1', 2], [context.bob.id, '2', 1]]));
   });
 
-  it('settles from the games handed over without reading them, and gives the championship and the results email the final places read once (#1355)', async () => {
+  it('settles from the games handed over without reading them, gives the championship the final places read once, and writes the results email job with the move (#1355, #1387)', async () => {
     const context = setup({ status: ContestStatus.ACTIVE });
     context.squares.addBox(context.contest.id, context.alice.id, 0, 7);
     context.squares.addBox(context.contest.id, context.bob.id, 3, 4);
@@ -436,7 +439,8 @@ describe('ContestSettlementService settling a squares contest with its game', ()
     const standings = context.world.standingRepo();
     const standingReads = jest.spyOn(standings, 'findByContest');
     const recordContest = jest.fn<ChampionshipService['recordContest']>(async () => 0);
-    const contestSettled = jest.fn<ContestSettledNotice['contestSettled']>(async () => undefined);
+    const jobs = new BackgroundJobQueue({ jobs: inMemoryBackgroundJobs() });
+    const queued = jest.spyOn(jobs, 'queued');
     const settlement = new ContestSettlementService({
       ...context.deps,
       matches,
@@ -445,7 +449,7 @@ describe('ContestSettlementService settling a squares contest with its game', ()
       sportEvents: context.world.sportEventRepo(),
       squares: context.squares.repo(),
       championship: { recordContest },
-      contestSettled: { contestSettled },
+      jobs,
     });
     const completedAt = later(KICKOFF, 4);
 
@@ -458,12 +462,13 @@ describe('ContestSettlementService settling a squares contest with its game', ()
       { squadId: context.alice.squadId, position: 1 },
       { squadId: context.bob.squadId, position: 2 },
     ]);
-    expect(contestSettled).toHaveBeenCalledWith(expect.objectContaining({ id: context.contest.id }), expect.objectContaining({
-      entries: [
-        expect.objectContaining({ entryId: context.alice.id, position: 1 }),
-        expect.objectContaining({ entryId: context.bob.id, position: 2 }),
-      ],
-    }));
+    expect(context.world.backgroundJobs).toEqual([{
+      type: BackgroundJobType.CONTEST_SETTLED_EMAILS,
+      payload: { contestId: context.contest.id },
+      runAt: undefined,
+      dedupeKey: `CONTEST_SETTLED_EMAILS:${context.contest.id}`,
+    }]);
+    expect(queued).toHaveBeenCalledTimes(1);
   });
 
   it('waits for every quarter\'s score when the result goes in first, then settles with all four winners once the last quarter is entered', async () => {

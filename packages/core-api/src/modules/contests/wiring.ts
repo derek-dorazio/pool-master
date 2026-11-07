@@ -34,7 +34,7 @@ import type { BracketStandingsReadDeps } from './bracket-standings';
 import { ContestService } from './service';
 import { ContestLeaderboardCache, readLeaderboardCacheTtlMs } from './contest-leaderboard-cache';
 import { createChampionshipService } from '../championship/wiring';
-import type { ContestSettledNotice } from '../notifications/contest-notices';
+import type { BackgroundJobQueue } from '../background-jobs';
 
 /** The bracket, pick'em and survivor reads, plus the batched match read the season leaderboards take (#762). */
 function createContestLeaderboardReadDeps(
@@ -90,7 +90,7 @@ export function createContestService(
 export function createContestSettlementService(
   prisma: PrismaClient,
   logger?: FastifyBaseLogger,
-  options?: { contestSettled?: ContestSettledNotice },
+  options?: { jobs?: Pick<BackgroundJobQueue, 'request' | 'queued'> },
 ): ContestSettlementService {
   return new ContestSettlementService({
     ...createContestLeaderboardReadDeps(prisma, logger),
@@ -100,7 +100,7 @@ export function createContestSettlementService(
     eventStandings: new PrismaContestEntryEventStandingRepository(prisma),
     squares: new PrismaSquaresRepository(prisma),
     championship: createChampionshipService(prisma, logger),
-    contestSettled: options?.contestSettled,
+    jobs: options?.jobs,
     logger,
   });
 }

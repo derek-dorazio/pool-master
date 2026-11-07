@@ -13,10 +13,10 @@ import { createContestSettlementService } from '../../../packages/core-api/src/m
 import { createEmailOutbox, EMAIL_SETTINGS } from '../../../packages/core-api/src/modules/email';
 import { EventLifecycleScheduler } from '../../../packages/core-api/src/modules/events/event-lifecycle-scheduler';
 import { createEventLifecycleService } from '../../../packages/core-api/src/modules/events/wiring';
-import { createContestNotices, createDueNotifications, createMemberJoinedNotices } from '../../../packages/core-api/src/modules/notifications';
+import { createContestEmailJobs, createContestNotices, createDueNotifications, createMemberJoinedNotices } from '../../../packages/core-api/src/modules/notifications';
 import { createDrawReceipts } from '../../../packages/core-api/src/modules/selections/wiring';
 import { fakeLogger } from '../../support/fake-logger';
-import { cleanupTestData, createTestUser, getAppPrisma, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
+import { cleanupTestData, createTestUser, getAppPrisma, getPrisma, integrationBackgroundJobs, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
 import { DAY, HOUR, seedEventWithField, seedFootballWeek, seedLeagueWithTeams } from '../list-route-seeds';
 import { integrationPlanEntitlements } from '../plan-entitlements';
 
@@ -54,14 +54,20 @@ function lifecycleSweep(now: Date) {
   const appBaseUrl = 'https://app.example.test';
   const { email } = createEmailOutbox({ prisma, readConfig, planEntitlements, env: process.env, logger });
   const contestNotices = createContestNotices(prisma, { email, appBaseUrl, logger });
+  const contestEmailJobs = createContestEmailJobs(prisma, { notices: contestNotices, logger });
+  const jobs = integrationBackgroundJobs(prisma);
+  jobs.runWith({
+    CONTEST_STARTED_EMAILS: (payload) => contestEmailJobs.contestStarted(payload),
+    CONTEST_SETTLED_EMAILS: (payload) => contestEmailJobs.contestSettled(payload),
+  });
   const scheduler = new EventLifecycleScheduler({
     sportEvents: new PrismaSportEventRepository(prisma),
     rounds: new PrismaSportEventRoundRepository(prisma),
     eventLifecycleService: createEventLifecycleService(prisma, {
       logger,
-      contestStarted: contestNotices,
+      jobs: jobs.queue,
       sportEventChanged: contestNotices,
-      contestSettlement: createContestSettlementService(prisma, logger, { contestSettled: contestNotices }),
+      contestSettlement: createContestSettlementService(prisma, logger, { jobs: jobs.queue }),
       releasedEditionContests: createContestManagementService(prisma, logger, planEntitlements),
     }),
     notificationsDue: [

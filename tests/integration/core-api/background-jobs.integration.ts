@@ -17,6 +17,7 @@ import {
   insertBackgroundJobs,
 } from '../../../packages/core-api/src/adapters/prisma-background-job-repository';
 import { PrismaProviderSyncRunRepository } from '../../../packages/core-api/src/adapters';
+import { jobHandlers } from '../../support/in-memory-background-jobs';
 import {
   BackgroundJobQueue,
   BackgroundJobRetention,
@@ -56,12 +57,12 @@ describe('background job table (#1440)', () => {
     const ran: string[] = [];
     const runner = () => new BackgroundJobRunner({
       jobs: repository(),
-      handlers: {
+      handlers: jobHandlers({
         MANUAL_EVENT_SYNC: async (payload) => {
           ran.push(payload.eventId);
           await new Promise((resolve) => { setTimeout(resolve, 5); });
         },
-      },
+      }),
     });
 
     await Promise.all([runner().drain(), runner().drain()]);

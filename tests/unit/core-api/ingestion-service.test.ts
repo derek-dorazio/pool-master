@@ -10,6 +10,7 @@ import { fakeParticipantProviderMappingRepo, fakeSportEventRepo } from '../../su
 import { inMemorySyncRuns, type InMemorySyncRuns } from '../../support/in-memory-sync-runs';
 import { BackgroundJobQueue, BackgroundJobRunner } from '../../../packages/core-api/src/modules/background-jobs';
 import { fakeLogger } from '../../support/fake-logger';
+import { jobHandlers } from '../../support/in-memory-background-jobs';
 import { fakeSportDataProvider, registryWith } from '../../support/fake-sport-data-provider';
 import { stubInstance } from '../../support/stub-instance';
 import { IngestionScheduler } from '../../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';
@@ -142,7 +143,7 @@ describe('IngestionService manual sync submission', () => {
 
     const runner = new BackgroundJobRunner({
       jobs: syncRuns.jobs,
-      handlers: { MANUAL_EVENT_SYNC: (payload) => service.runManualEventSync(payload) },
+      handlers: jobHandlers({ MANUAL_EVENT_SYNC: (payload) => service.runManualEventSync(payload) }),
     });
     await runner.drain();
     expect(scheduler.runEventSync).toHaveBeenCalledWith({

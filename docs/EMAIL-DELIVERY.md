@@ -472,7 +472,9 @@ logged and never undoes the change.
 contests from `OPEN` to `ACTIVE`. They go to every active league member, once each: "Good luck,
 everyone", the event, the contest's rules, the number of entries and a link to the leaderboard,
 with a line telling a member without an entry they can still follow it. They list no entries.
-An already-active contest is not told again.
+An already-active contest is not told again. The move writes a `CONTEST_STARTED_EMAILS`
+background job in its transaction, and the job builds the emails seconds later, outside the
+request (#1387, `docs/BACKGROUND-JOBS.md`).
 
 Entry reminders ("Picks close soon", #845) are the first email sent on the clock rather than
 on an action. Each lifecycle scheduler sweep (every 5 minutes) ends with a "notifications due"
@@ -541,8 +543,9 @@ from. After a round it also names the reader's golfers who missed the cut in it.
 idempotency key (contest, event, round, event, week or bracket round, person) keeps a second sweep or task from
 sending one twice.
 
-Final results emails (`CONTEST_RESULTS`, #845 slice 4) are queued by contest settlement the
-moment it moves a contest to `COMPLETED`, whatever its format. A contest with frozen places tells
+Final results emails (`CONTEST_RESULTS`, #845 slice 4) are queued for each contest settlement
+moves to `COMPLETED`, whatever its format, by the `CONTEST_SETTLED_EMAILS` background job the
+move writes in its transaction (#1387): seconds after, outside the request that settled it. A contest with frozen places tells
 every active league member, once each: who won (every entry placed first when they tie), the
 final top 10 and anyone tied with the 10th, then the reader's entries placed below them, each
 total as the contest scores it. The owners of a winning entry are congratulated at the top. A

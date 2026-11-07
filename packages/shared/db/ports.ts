@@ -6,6 +6,7 @@
  */
 
 import type {
+  BackgroundJobRequest,
   Contest,
   SportEventStatus,
   ContestEntry,
@@ -648,6 +649,11 @@ export interface ContestStatusTransition {
   nextReminderAt?: Date;
   startsAt?: Date;
   endsAt?: Date;
+  /**
+   * The background jobs the move causes, written in its transaction (#1387): given the contests
+   * that moved, so a contest already moved by someone else queues nothing.
+   */
+  jobs?: (movedContestIds: readonly string[]) => readonly BackgroundJobRequest[];
 }
 
 /** A new contest; `sportEventIds` are its events in sequence order. */
