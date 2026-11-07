@@ -3,7 +3,7 @@
  */
 
 import type { LeagueMembership as PrismaLeagueMembership, Prisma, PrismaClient } from '@prisma/client';
-import type { LeagueMembershipRepository } from '@poolmaster/shared/db';
+import type { LeagueMembershipRepository, MembershipReadOptions } from '@poolmaster/shared/db';
 import type {
   LeagueMembership,
   LeagueRole,
@@ -58,9 +58,11 @@ export class PrismaLeagueMembershipRepository implements LeagueMembershipReposit
   /**
    * Remembered for the request (#1176): the permission gate and the handler both ask for it.
    * An ACTIVE membership is also kept by this task for the cache's TTL (#1438); "not a member"
-   * never is. A read through a transaction sees its own rows, so it skips both.
+   * never is. A read through a transaction sees its own rows, so it skips both. `fresh` skips the
+   * cache for a precondition that decides a write, so a member who left on another task can rejoin
+   * here at once; it is remembered for the request under its own key.
    */
-  async findByLeagueAndUser(leagueId: string, userId: string): Promise<LeagueMembership | null> {
+  async findByLeagueAndUser(leagueId: string, userId: string, options?: MembershipReadOptions): Promise<LeagueMembership | null> {
     const load = async () => {
       const row = await this.prisma.leagueMembership.findUnique({
         where: { leagueId_userId: { leagueId, userId } },
@@ -69,6 +71,9 @@ export class PrismaLeagueMembershipRepository implements LeagueMembershipReposit
     };
     if (!isRootClient(this.prisma)) {
       return load();
+    }
+    if (options?.fresh) {
+      return memoizedRead(this.prisma, `${ReadMemoKey.leagueMembership}fresh:${leagueId}:${userId}`, load);
     }
     return memoizedRead(this.prisma, `${ReadMemoKey.leagueMembership}${leagueId}:${userId}`, () =>
       this.cache.read(leagueId, userId, load));

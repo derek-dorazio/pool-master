@@ -619,7 +619,9 @@ export class SquadOwnerInvitationService {
     if (!userId) {
       return;
     }
-    const existingMembership = await this.membershipRepo.findByLeagueAndUser(leagueId, userId);
+    // Fresh, not the task's membership cache (#1438): someone removed on another task moments ago
+    // can be invited back at once.
+    const existingMembership = await this.membershipRepo.findByLeagueAndUser(leagueId, userId, { fresh: true });
     if (existingMembership?.status === LeagueMembershipStatus.ACTIVE) {
       throw new SquadOwnerInvitationOperationError(
         'That email already belongs to a current league member',

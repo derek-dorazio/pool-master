@@ -46,6 +46,7 @@ export type {
   InvitationEmailTransaction,
   LeagueInvitationRepository,
   LeagueMembershipRepository,
+  MembershipReadOptions,
   LeagueRepository,
   LeagueSearch,
   LeagueSearchFilters,

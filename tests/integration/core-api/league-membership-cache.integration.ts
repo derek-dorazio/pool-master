@@ -1,9 +1,15 @@
 import { randomUUID } from 'node:crypto';
 import { LeagueMembershipStatus, LeagueRole } from '@poolmaster/shared/domain';
 import {
+  PrismaContestRepository,
+  PrismaLeagueInvitationRepository,
   PrismaLeagueMembershipRepository,
+  PrismaLeagueRepository,
   PrismaMembershipTransaction,
+  PrismaUserRepository,
 } from '../../../packages/core-api/src/adapters';
+import { InvitationService } from '../../../packages/core-api/src/modules/leagues/invitation-service';
+import { LeagueService } from '../../../packages/core-api/src/modules/leagues/service';
 import { LeagueMembershipCache } from '../../../packages/core-api/src/core/league-membership-cache';
 import { runWithReadMemo } from '../../../packages/core-api/src/core/request-read-memo';
 import {
@@ -197,5 +203,70 @@ describe('league membership cache: a task forgets on its own writes', () => {
 
     expect(seen.during?.role).toBe(LeagueRole.COMMISSIONER);
     expect(after?.role).toBe(LeagueRole.MEMBER);
+  });
+});
+
+describe('league membership cache: a check that decides a write reads fresh', () => {
+  it('lets a member who left on another task accept a new invite on this task at once, not "already a member"', async () => {
+    const { league, commissioner, joiner } = await seedLeague();
+    const row = await getPrisma().leagueMembership.create({
+      data: { leagueId: league.id, userId: joiner.id, role: LeagueRole.MEMBER, status: LeagueMembershipStatus.ACTIVE },
+    });
+    const invite = await getPrisma().leagueInvitation.create({
+      data: { leagueId: league.id, inviteCode: `CACHE${randomUUID().slice(0, 8)}`, inviteType: 'LINK', maxUses: 0, invitedBy: commissioner.id },
+    });
+    const a = task();
+    const b = task();
+    const invitations = new InvitationService({
+      invitations: new PrismaLeagueInvitationRepository(getAppPrisma()),
+      memberships: a.memberships,
+      leagues: new PrismaLeagueRepository(getAppPrisma()),
+      users: new PrismaUserRepository(getAppPrisma()),
+      contests: new PrismaContestRepository(getAppPrisma()),
+      memberJoined: { tellJoined: async () => undefined },
+    });
+
+    const cachedOnA = await request(() => a.memberships.findByLeagueAndUser(league.id, joiner.id));
+    await request(() => b.memberships.update(row.id, { status: LeagueMembershipStatus.INACTIVE }));
+    const rejoined = await request(() => invitations.acceptInvitation(invite.inviteCode, joiner.id));
+
+    expect(cachedOnA?.status).toBe(LeagueMembershipStatus.ACTIVE);
+    expect(rejoined.status).toBe(LeagueMembershipStatus.ACTIVE);
+    expect(rejoined.id).toBe(row.id);
+  });
+
+  it('answers a fresh read from the database while the cache still holds the row from before another task\'s removal', async () => {
+    const { league, commissioner, commissionerMembershipId } = await seedLeague();
+    const a = task();
+    const b = task();
+    await request(() => a.memberships.findByLeagueAndUser(league.id, commissioner.id));
+    await request(() => b.memberships.update(commissionerMembershipId, { status: LeagueMembershipStatus.INACTIVE }));
+
+    const cached = await request(() => a.memberships.findByLeagueAndUser(league.id, commissioner.id));
+    const fresh = await request(() => a.memberships.findByLeagueAndUser(league.id, commissioner.id, { fresh: true }));
+
+    expect(cached?.status).toBe(LeagueMembershipStatus.ACTIVE);
+    expect(fresh?.status).toBe(LeagueMembershipStatus.INACTIVE);
+  });
+});
+
+describe('league membership cache: deleting a league', () => {
+  it('forgets every member of the deleted league kept by this task\'s cache', async () => {
+    const { league, commissioner } = await seedLeague();
+    await getPrisma().league.update({ where: { id: league.id }, data: { isActive: false } });
+    const before = await request(() => new PrismaLeagueMembershipRepository(getAppPrisma()).findByLeagueAndUser(league.id, commissioner.id));
+    const memberships = new PrismaLeagueMembershipRepository(getAppPrisma());
+    const service = new LeagueService({
+      leagues: new PrismaLeagueRepository(getAppPrisma()),
+      memberships,
+      users: new PrismaUserRepository(getAppPrisma()),
+      prisma: getAppPrisma(),
+    });
+
+    await request(() => service.deleteInactiveLeague(league.id, league.leagueCode));
+    const after = await request(() => memberships.findByLeagueAndUser(league.id, commissioner.id));
+
+    expect(before?.status).toBe(LeagueMembershipStatus.ACTIVE);
+    expect(after).toBeNull();
   });
 });
