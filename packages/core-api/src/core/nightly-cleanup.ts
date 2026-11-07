@@ -10,7 +10,13 @@ import type { JobLock } from './job-lock';
  * step that fails is logged and the others still run; whatever it left is deleted the next night.
  */
 /** Each step's key in the run's summary line. */
-export type NightlyCleanupStepName = 'refreshTokens' | 'emailMessages' | 'syncRunDetails' | 'syncRuns' | 'abandonedDraftContests';
+export type NightlyCleanupStepName =
+  | 'refreshTokens'
+  | 'emailMessages'
+  | 'syncRunDetails'
+  | 'syncRuns'
+  | 'abandonedDraftContests'
+  | 'backgroundJobs';
 
 export interface NightlyCleanupStep {
   /** Names the step's count in the run's summary line. */

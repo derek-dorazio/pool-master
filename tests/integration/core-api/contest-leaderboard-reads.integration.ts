@@ -418,9 +418,10 @@ describe('Contest leaderboard snapshots (#1435)', () => {
     for (const table of ['contest_entries', 'contest_entry_picks', 'sport_event_participants', 'contest_configurations']) {
       expect(statementsOn(statements, StatementVerb.SELECT, table)).toEqual([]);
     }
-    // The contest (6), the reader's league and squad memberships (2), and the snapshot (1):
-    // pinned, however many entries, picks and golfers.
-    expect(statements).toHaveLength(9);
+    // The contest (6), the reader's squad membership (1; the league membership is kept by the
+    // task since the first read, #1438), and the snapshot (1): pinned, however many entries,
+    // picks and golfers.
+    expect(statements).toHaveLength(8);
   });
 
   it('rebuilds a stored board from the new scores after a score write, moving its version up, and builds none for a contest no one has read', async () => {

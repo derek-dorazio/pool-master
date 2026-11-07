@@ -11,6 +11,7 @@ export { PrismaContestRepository } from './prisma-contest-repository';
 export { PrismaParticipantRepository } from './prisma-participant-repository';
 export { PrismaParticipantProviderMappingRepository } from './prisma-participant-provider-mapping-repository';
 export { PrismaEmailMessageRepository } from './prisma-email-message-repository';
+export { PrismaBackgroundJobRepository, insertBackgroundJobs } from './prisma-background-job-repository';
 export { PrismaEmailOptOutRepository } from './prisma-email-opt-out-repository';
 export { PrismaEmailSuppressionRepository } from './prisma-email-suppression-repository';
 export { PrismaPlatformRuntimeConfigRepository } from './prisma-platform-runtime-config-repository';

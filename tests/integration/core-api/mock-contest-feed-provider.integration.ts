@@ -19,6 +19,7 @@ import {
   getApp,
   getAppPrisma,
   getPrisma,
+  integrationBackgroundJobs,
   setupIntegrationTests,
   teardownIntegrationTests,
 } from '../helpers';
@@ -756,6 +757,7 @@ describe('mock contest feed provider event-first verification', () => {
       displayName: 'Golf Sync Verification Root Admin',
       isRootAdmin: true,
     });
+    const backgroundJobs = integrationBackgroundJobs();
     const providerService = new IngestionService({
       registry,
       sportEvents: new PrismaSportEventRepository(getAppPrisma()),
@@ -764,7 +766,9 @@ describe('mock contest feed provider event-first verification', () => {
       scheduler,
       ingestionConfigReader: configReader,
       syncRunLedger,
+      jobs: backgroundJobs.queue,
     });
+    backgroundJobs.runWith({ MANUAL_EVENT_SYNC: (payload) => providerService.runManualEventSync(payload) });
 
     const linked = await linkProviderGolfEvents(new Date('2026-04-01T00:00:00.000Z'), new Date('2026-06-30T23:59:59.999Z'));
     expect(linked).toBeGreaterThan(0);
@@ -897,6 +901,7 @@ describe('mock contest feed provider event-first verification', () => {
       displayName: 'Golf Live E2E Root Admin',
       isRootAdmin: true,
     });
+    const backgroundJobs = integrationBackgroundJobs();
     const providerService = new IngestionService({
       registry,
       sportEvents: new PrismaSportEventRepository(getAppPrisma()),
@@ -904,7 +909,9 @@ describe('mock contest feed provider event-first verification', () => {
       syncRuns: new PrismaProviderSyncRunRepository(getAppPrisma()),
       scheduler,
       syncRunLedger,
+      jobs: backgroundJobs.queue,
     });
+    backgroundJobs.runWith({ MANUAL_EVENT_SYNC: (payload) => providerService.runManualEventSync(payload) });
 
     await linkProviderGolfEvents(new Date('2026-04-01T00:00:00.000Z'), new Date('2026-06-30T23:59:59.999Z'));
 

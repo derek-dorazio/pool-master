@@ -968,6 +968,29 @@ export const EmailMessageStatus = {
 } as const;
 export type EmailMessageStatus = (typeof EmailMessageStatus)[keyof typeof EmailMessageStatus];
 
+/**
+ * One kind of background job (#1439): work a request hands off rather than waits for. Each has
+ * one handler and one payload schema, in the background-jobs module's registries.
+ */
+export const BackgroundJobType = {
+  /** Runs a root admin's submitted sync of one event's feeds (#1441). */
+  MANUAL_EVENT_SYNC: 'MANUAL_EVENT_SYNC',
+} as const;
+export type BackgroundJobType = (typeof BackgroundJobType)[keyof typeof BackgroundJobType];
+
+/** Where one background job stands. */
+export const BackgroundJobStatus = {
+  /** Waiting for its run time, first time or after a failed try. */
+  QUEUED: 'QUEUED',
+  /** Claimed by a server task until its lease ends; a lease that ends unfinished makes it due again. */
+  RUNNING: 'RUNNING',
+  /** Its handler finished. */
+  SUCCEEDED: 'SUCCEEDED',
+  /** Its last try failed, or its payload was invalid; it will not run again. */
+  FAILED: 'FAILED',
+} as const;
+export type BackgroundJobStatus = (typeof BackgroundJobStatus)[keyof typeof BackgroundJobStatus];
+
 /** Why an email was skipped rather than queued. */
 export const EmailSkipReason = {
   /** EMAIL_CONFIG has system email switched off. */

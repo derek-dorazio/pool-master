@@ -132,7 +132,7 @@ export async function forgettingReads<T>(prefixes: ReadMemoPrefix | readonly Rea
 }
 
 /** An interactive transaction's client has no `$transaction` of its own. */
-function isRootClient(client: PrismaClient | Prisma.TransactionClient): client is PrismaClient {
+export function isRootClient(client: PrismaClient | Prisma.TransactionClient): client is PrismaClient {
   return '$transaction' in client;
 }
 

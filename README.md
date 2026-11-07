@@ -42,6 +42,7 @@ the one people read.
 | Querying an environment's database from a laptop (tunnel, psql aliases, read-only user) | [`docs/DATABASE-ACCESS.md`](docs/DATABASE-ACCESS.md) |
 | Runtime logs and how to query them | [`docs/LOGGING-OPERATIONS.md`](docs/LOGGING-OPERATIONS.md) |
 | Email providers by environment | [`docs/EMAIL-DELIVERY.md`](docs/EMAIL-DELIVERY.md) |
+| Background jobs: work a request hands off, how it runs, retries and is cleaned up | [`docs/BACKGROUND-JOBS.md`](docs/BACKGROUND-JOBS.md) |
 | Setting up an event by hand and running it through its lifecycle (a golf tournament on a simulated live round, a knockout bracket, cancelling an event) | [`docs/EVENT-SETUP-PROCEDURES.md`](docs/EVENT-SETUP-PROCEDURES.md) |
 | Setting up a race's odds, tiers and contests, and entering its result | [`docs/RACE-SETUP-PROCEDURES.md`](docs/RACE-SETUP-PROCEDURES.md) |
 | Loading schedules, fields and brackets from a data file, and the test seeds for trying contests | [`docs/SPORT-DATA-LOADING.md`](docs/SPORT-DATA-LOADING.md) |

@@ -3,6 +3,7 @@
  * the sync dashboard reads.
  */
 
+import { randomUUID } from 'node:crypto';
 import { Prisma, type PrismaClient, type ProviderSyncRun as ProviderSyncRunRow } from '@prisma/client';
 import type {
   ProviderSyncRunCreate,
@@ -10,24 +11,42 @@ import type {
   ProviderSyncRunRepository,
   ProviderSyncRunUpdate,
 } from '@poolmaster/shared/db';
-import type { ProviderSyncRun, ProviderSyncRunWithDetails } from '@poolmaster/shared/domain';
+import type { BackgroundJobRequest, ProviderSyncRun, ProviderSyncRunWithDetails } from '@poolmaster/shared/domain';
+import { insertBackgroundJobs } from './prisma-background-job-repository';
 
 export class PrismaProviderSyncRunRepository implements ProviderSyncRunRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
   async create(input: ProviderSyncRunCreate): Promise<ProviderSyncRun> {
-    return toProviderSyncRun(await this.prisma.providerSyncRun.create({
-      data: {
-        providerId: input.providerId,
-        sport: input.sport,
-        eventId: input.eventId,
-        status: input.status,
-        startedAt: input.startedAt,
-        completedAt: input.completedAt,
-        payloadJson: input.payload as Prisma.InputJsonValue,
-        ...(input.createdAt && { createdAt: input.createdAt }),
-      },
-    }));
+    return toProviderSyncRun(await this.prisma.providerSyncRun.create({ data: toCreateData(input) }));
+  }
+
+  async createWithJob(
+    inputs: readonly ProviderSyncRunCreate[],
+    job: (runs: ProviderSyncRun[]) => BackgroundJobRequest,
+  ): Promise<ProviderSyncRun[]> {
+    // Ids chosen here, so the runs come back in the order given.
+    const data = inputs.map((input) => ({ id: randomUUID(), ...toCreateData(input) }));
+    return this.prisma.$transaction(async (tx) => {
+      const rows = await tx.providerSyncRun.createManyAndReturn({ data, omit: { detailsJson: true } });
+      const byId = new Map(rows.map((row) => [row.id, row]));
+      const runs = data.map(({ id }) => {
+        const row = byId.get(id);
+        if (!row) throw new Error(`Sync run ${id} was not written`);
+        return toProviderSyncRun(row);
+      });
+      await insertBackgroundJobs(tx, [job(runs)]);
+      return runs;
+    });
+  }
+
+  async findManyByIds(ids: readonly string[]): Promise<ProviderSyncRun[]> {
+    if (ids.length === 0) return [];
+    const rows = await this.prisma.providerSyncRun.findMany({
+      where: { id: { in: [...ids] } },
+      omit: { detailsJson: true },
+    });
+    return rows.map(toProviderSyncRun);
   }
 
   async update(id: string, update: ProviderSyncRunUpdate): Promise<void> {
@@ -114,4 +133,17 @@ function toPayload(payload: Prisma.JsonValue): Record<string, unknown> {
     return {};
   }
   return payload;
+}
+
+function toCreateData(input: ProviderSyncRunCreate) {
+  return {
+    providerId: input.providerId,
+    sport: input.sport,
+    eventId: input.eventId,
+    status: input.status,
+    startedAt: input.startedAt,
+    completedAt: input.completedAt,
+    payloadJson: input.payload as Prisma.InputJsonValue,
+    ...(input.createdAt && { createdAt: input.createdAt }),
+  };
 }

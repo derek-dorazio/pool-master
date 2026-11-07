@@ -547,9 +547,12 @@ export class InvitationService {
         );
       }
     }
+    // Fresh, not the task's membership cache (#1438): a member who left on another task moments
+    // ago must be able to rejoin, not be told they are already a member.
     const existingMembership = await this.deps.memberships.findByLeagueAndUser(
       invitation.leagueId,
       userId,
+      { fresh: true },
     );
     if (existingMembership) {
       if (existingMembership.status === LeagueMembershipStatus.ACTIVE) {

@@ -81,6 +81,7 @@ import {
   getApp,
   getAppPrisma,
   getPrisma,
+  integrationBackgroundJobs,
   setupIntegrationTests,
   teardownIntegrationTests,
   withoutJsonBodyHeaders,
@@ -319,13 +320,16 @@ async function buildIngestionApp(provider: SportDataProvider | null): Promise<Fa
     now: () => new Date('2026-04-05T12:00:00.000Z'),
   });
   const prisma = getPrisma();
+  const backgroundJobs = integrationBackgroundJobs();
   const ingestionService = new IngestionService({
     registry,
     sportEvents: new PrismaSportEventRepository(getAppPrisma()),
     participantMappings: new PrismaParticipantProviderMappingRepository(getAppPrisma()),
     syncRuns: new PrismaProviderSyncRunRepository(getAppPrisma()),
     scheduler,
+    jobs: backgroundJobs.queue,
   });
+  backgroundJobs.runWith({ MANUAL_EVENT_SYNC: (payload) => ingestionService.runManualEventSync(payload) });
 
   app.decorate('prisma', prisma);
   app.setErrorHandler(globalErrorHandler);

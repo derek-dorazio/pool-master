@@ -24,6 +24,7 @@ import { ensureDefaultSquadForLeagueMember } from '../squads/default-squad';
 import { RESERVED_LEAGUE_CODES } from '../email';
 import type { ApiErrorCode } from '@poolmaster/shared/dto';
 import { forgetAllReads } from '../../core/request-read-memo';
+import { leagueMembershipCache } from '../../core/league-membership-cache';
 
 /** A league's active member and active contest counts, as the league DTO carries them. */
 export interface LeagueActivityCounts {
@@ -517,7 +518,9 @@ export class LeagueService {
       action: 'league.delete.transaction.start',
       data: { leagueId },
     }, 'Deleting league-owned records');
-    await this.deps.prisma.$transaction(async (tx) => {
+    const prisma = this.deps.prisma;
+    // Nothing read while the delete runs is kept, and this task forgets the league's members (#1438).
+    await leagueMembershipCache.writing(() => prisma.$transaction(async (tx) => {
       // The contests' row locks come first, the order a random draw takes them in (#646).
       const contests = await tx.contest.findMany({ where: { leagueId }, select: { id: true } });
       await lockContestRows(tx, contests.map((contest) => contest.id));
@@ -557,7 +560,8 @@ export class LeagueService {
       await tx.league.delete({
         where: { id: leagueId },
       });
-    });
+    }));
+    leagueMembershipCache.forgetLeague(leagueId);
     // The league and everything in it are gone: a later read in this request must not find them.
     forgetAllReads();
     this.logger?.info({

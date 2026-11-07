@@ -144,7 +144,7 @@ describe('Adding a co-owner to a team (#1355)', () => {
       ['INSERT league_memberships', 1],
       ['INSERT squad_memberships', 1],
       ['INSERT squad_owner_invitations', 1],
-      ['SELECT league_memberships', 5],
+      ['SELECT league_memberships', 4], // the commissioner's own membership is kept from setting up the team (#1438)
       ['SELECT leagues', 1],
       ['SELECT squad_memberships', 3],
       ['SELECT squad_owner_invitations', 1],
@@ -273,7 +273,7 @@ describe('Opening a contest (#1355)', () => {
       ['SELECT contest_squares_games', 2],
       ['SELECT contests', 2],
       ['SELECT event_series', 1],
-      ['SELECT league_memberships', 2],
+      ['SELECT league_memberships', 1], // the commissioner's own membership is kept from creating the contest (#1438)
       ['SELECT leagues', 1],
       ['SELECT participant_contest_scoring_rules', 1],
       ['SELECT sport_event_participant_valuations', 2],

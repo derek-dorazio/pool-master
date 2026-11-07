@@ -755,6 +755,56 @@ describe('SDK Functional: Leagues', () => {
     expect(leaveAfterHandoffResponse.data).toEqual({ success: true });
   });
 
+  // #1438 — the API keeps a caller's ACTIVE league membership for 30 seconds, but never "not a
+  // member": a user turned away who then joins must get in on the very next request, or they
+  // would think the join failed and keep retrying. A removal or role change this API makes takes
+  // effect on the next request too. This lane runs the cache at its production TTL.
+  it('lets a user turned away from a league in on the very next request after they join, and turns them away again at once when removed', async () => {
+    const commissioner = await buildRegisteredUser({ displayName: 'Cache Commissioner' });
+    const joiner = await buildRegisteredUser({ displayName: 'Cache Joiner' });
+    const createResponse = await createLeague({
+      client: commissioner.client,
+      body: buildCreateLeagueBody('Membership Cache League'),
+    });
+    const leagueId = createResponse.data?.league.id as string;
+    expect(leagueId).toBeTruthy();
+
+    const refused = await listLeagueMembers({ client: joiner.client, path: { id: leagueId } });
+    expectFunctionalError(refused, { status: 403, code: 'LEAGUE_MEMBERSHIP_REQUIRED' });
+
+    const invitation = await generateInviteLink({ client: commissioner.client, path: { id: leagueId }, body: { maxUses: 1 } });
+    const accepted = await acceptInvitation({
+      client: joiner.client,
+      body: { inviteCode: invitation.data?.invitation.inviteCode as string },
+    });
+    expect(accepted.data?.membership.userId).toBe(joiner.userId);
+
+    const admitted = await listLeagueMembers({ client: joiner.client, path: { id: leagueId } });
+    expect(admitted.data?.members.map((m) => m.userId)).toContain(joiner.userId);
+
+    const promoted = await changeMemberRole({
+      client: commissioner.client,
+      path: { id: leagueId, uid: joiner.userId },
+      body: { role: 'COMMISSIONER' },
+    });
+    expect(promoted.data?.membership.role).toBe('COMMISSIONER');
+    const asCommissioner = await generateInviteLink({ client: joiner.client, path: { id: leagueId }, body: { maxUses: 1 } });
+    expect(asCommissioner.data?.invitation.inviteCode).toBeTruthy();
+
+    const demoted = await changeMemberRole({
+      client: commissioner.client,
+      path: { id: leagueId, uid: joiner.userId },
+      body: { role: 'MEMBER' },
+    });
+    expect(demoted.data?.membership.role).toBe('MEMBER');
+    const removed = await removeMember({ client: commissioner.client, path: { id: leagueId, uid: joiner.userId } });
+    expect(removed.data).toEqual({ success: true });
+
+    const afterRemoval = await listLeagueMembers({ client: joiner.client, path: { id: leagueId } });
+    expect(afterRemoval.error).toBeDefined();
+    expect(afterRemoval.response?.status).toBe(403);
+  });
+
   it('rejects non-commissioners from member management routes with stable league permission codes', async () => {
     const commissioner = await buildRegisteredUser({
       displayName: 'Management Commissioner',

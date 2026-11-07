@@ -62,6 +62,7 @@ import {
   PrismaUserRepository,
   PrismaSportEventRepository,
   PrismaSportEventRoundRepository,
+  PrismaBackgroundJobRepository,
 } from './adapters';
 import { clientLogsModule } from './modules/client-logs/routes';
 import { versionModule } from './modules/version/routes';
@@ -95,6 +96,12 @@ import {
 import { emailEventsModule } from './modules/email/email-events-routes';
 import { emailUnsubscribeModule } from './modules/email/email-unsubscribe-routes';
 import { emailTestModule } from './modules/email/email-test-routes';
+import {
+  BackgroundJobQueue,
+  BackgroundJobRetention,
+  BackgroundJobRunner,
+  readBackgroundJobPollMs,
+} from './modules/background-jobs';
 
 export function buildApp() {
   const app = Fastify({
@@ -173,6 +180,9 @@ export function buildApp() {
     logger: app.log,
   });
   const providerSyncRuns = new PrismaProviderSyncRunRepository(prisma);
+  // Work a request hands off rather than waits for (#1439): queued here, run by the runner below.
+  const backgroundJobRepository = new PrismaBackgroundJobRepository(prisma);
+  const backgroundJobs = new BackgroundJobQueue({ jobs: backgroundJobRepository });
   // #1175: tables that grow without end are trimmed to their retention periods once a night.
   const nightlyCleanupScheduler = new NightlyCleanupScheduler({
     steps: [
@@ -181,6 +191,7 @@ export function buildApp() {
       new SyncRunDetailsRetention(providerSyncRuns),
       new SyncRunRetention(providerSyncRuns),
       new AbandonedDraftRetention(new PrismaContestRepository(prisma), app.log),
+      new BackgroundJobRetention(backgroundJobRepository),
     ],
     jobLock,
     logger: app.log,
@@ -258,8 +269,19 @@ export function buildApp() {
     scheduler: ingestionScheduler,
     ingestionConfigReader: ingestionConfigService,
     syncRunLedger: providerSyncRunLedger,
+    jobs: backgroundJobs,
     logger: app.log,
   });
+  // Every task runs the job runner (the worker service, #1186, is paused); a queued job wakes it.
+  const backgroundJobRunner = new BackgroundJobRunner({
+    jobs: backgroundJobRepository,
+    handlers: {
+      MANUAL_EVENT_SYNC: (payload) => ingestionService.runManualEventSync(payload),
+    },
+    pollMs: readBackgroundJobPollMs(process.env),
+    logger: app.log,
+  });
+  backgroundJobs.wakes(backgroundJobRunner);
 
   // =========================================================================
   // Domain modules (protected by auth-guard)
@@ -349,6 +371,9 @@ export function buildApp() {
 
     // Retention always runs, like the lifecycle sweep: nothing about it depends on a provider.
     nightlyCleanupScheduler.start();
+
+    // The job runner always runs: every queued job waits for it.
+    backgroundJobRunner.start();
   });
 
   app.addHook('onClose', async () => {
@@ -357,7 +382,10 @@ export function buildApp() {
     eventLifecycleScheduler.stop();
     emailSender.stop();
     nightlyCleanupScheduler.stop();
-    // Rebuilds still waiting on their timer run now, so a deploy loses no score write's board.
+    // Stops claiming and lets the jobs in flight finish briefly; a lapsed lease re-runs the rest.
+    await backgroundJobRunner.stop();
+    // Rebuilds still waiting on their timer run now, so a deploy loses no score write's board,
+    // including one a job above just wrote.
     await leaderboards.flush();
     // Closing the lock connection releases this task's job locks for another task to take.
     await jobLock.close();
