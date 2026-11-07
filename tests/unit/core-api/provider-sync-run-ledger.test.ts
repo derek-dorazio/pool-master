@@ -1,10 +1,11 @@
 import { expect } from '@jest/globals';
-import { Sport, type ProviderSyncRun } from '@poolmaster/shared/domain';
+import { BackgroundJobType, Sport, type ProviderSyncRun } from '@poolmaster/shared/domain';
 import { ProviderSyncRunLedger, readPayload } from '../../../packages/core-api/src/modules/ingestion/persistence/provider-sync-run-ledger';
 import { SyncOrchestrator } from '../../../packages/core-api/src/modules/ingestion/core/sync-orchestrator';
 import type { IngestionJobRecord } from '../../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';
 import type { ProviderSyncRunRepository } from '@poolmaster/shared/db';
 import { mockFn } from '../../support/mock-fn';
+import { inMemorySyncRuns } from '../../support/in-memory-sync-runs';
 
 function createSyncRun(overrides: Partial<ProviderSyncRun> = {}): ProviderSyncRun {
   return {
@@ -97,6 +98,32 @@ function createJob(overrides: Partial<IngestionJobRecord> = {}): IngestionJobRec
 }
 
 describe('ProviderSyncRunLedger', () => {
+  it('writes a manual sync\'s SUBMITTED runs through the one write that also queues their job, handing the job the runs', async () => {
+    const now = new Date('2026-05-30T12:00:00.000Z');
+    const normalizedRequest = new SyncOrchestrator({ now: () => now }).normalizeRequest({
+      source: 'MANUAL',
+      actor: { type: 'ROOT_ADMIN', userId: 'admin-1', email: 'admin@example.com' },
+      scope: { type: 'EVENT', sport: Sport.GOLF, eventId: 'event-1', feeds: ['EVENTPARTICIPANTS', 'EVENTLIVESCORES'] },
+    });
+    const syncRuns = inMemorySyncRuns();
+    const ledger = new ProviderSyncRunLedger(syncRuns);
+
+    const runs = await ledger.createSubmissionsWithJob({
+      normalizedRequest,
+      providerId: 'mock-provider',
+      submittedAt: now,
+      runType: 'MANUAL_EVENT_SYNC',
+      job: (written) => ({ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: { ids: written.map((run) => run.id) } }),
+    });
+
+    expect(syncRuns.create).not.toHaveBeenCalled();
+    expect(runs.map((run) => [run.status, readPayload(run).requestedFeed, run.createdAt])).toEqual([
+      ['SUBMITTED', 'EVENTPARTICIPANTS', now],
+      ['SUBMITTED', 'EVENTLIVESCORES', now],
+    ]);
+    expect(syncRuns.jobs.rows).toEqual([expect.objectContaining({ payload: { ids: runs.map((run) => run.id) } })]);
+  });
+
   it('pool-master-rop.68.2.4 creates scheduled provider sync run rows with normalized request diagnostics', async () => {
     const now = new Date('2026-05-30T12:00:00.000Z');
     const normalizedRequest = new SyncOrchestrator({ now: () => now }).normalizeRequest({
@@ -113,7 +140,7 @@ describe('ProviderSyncRunLedger', () => {
       ...createSyncRun(),
       ...input,
     }));
-    const ledger = new ProviderSyncRunLedger({ create: providerSyncRunCreate, update: jest.fn(), findAll: jest.fn(), findById: jest.fn(), clearDetailsBatchSubmittedBefore: jest.fn(), deleteBatchSubmittedBefore: jest.fn() });
+    const ledger = new ProviderSyncRunLedger({ create: providerSyncRunCreate, update: jest.fn(), findAll: jest.fn(), findById: jest.fn(), createWithJob: jest.fn(), findManyByIds: jest.fn(), clearDetailsBatchSubmittedBefore: jest.fn(), deleteBatchSubmittedBefore: jest.fn() });
 
     const runs = await ledger.createSubmissions({
       normalizedRequest,
@@ -154,7 +181,7 @@ describe('ProviderSyncRunLedger', () => {
 
   it('pool-master-rop.68.2.4 marks a provider sync run completed after a successful ingestion job', async () => {
     const providerSyncRunUpdate = mockFn<ProviderSyncRunRepository['update']>(async () => undefined);
-    const ledger = new ProviderSyncRunLedger({ create: jest.fn(), update: providerSyncRunUpdate, findAll: jest.fn(), findById: jest.fn(), clearDetailsBatchSubmittedBefore: jest.fn(), deleteBatchSubmittedBefore: jest.fn() });
+    const ledger = new ProviderSyncRunLedger({ create: jest.fn(), update: providerSyncRunUpdate, findAll: jest.fn(), findById: jest.fn(), createWithJob: jest.fn(), findManyByIds: jest.fn(), clearDetailsBatchSubmittedBefore: jest.fn(), deleteBatchSubmittedBefore: jest.fn() });
     const syncRun = createSyncRun();
     const job = createJob();
 
@@ -215,7 +242,7 @@ describe('ProviderSyncRunLedger', () => {
 
   it('stores only the changed write rows while the summary still counts every row', async () => {
     const providerSyncRunUpdate = mockFn<ProviderSyncRunRepository['update']>(async () => undefined);
-    const ledger = new ProviderSyncRunLedger({ create: jest.fn(), update: providerSyncRunUpdate, findAll: jest.fn(), findById: jest.fn(), clearDetailsBatchSubmittedBefore: jest.fn(), deleteBatchSubmittedBefore: jest.fn() });
+    const ledger = new ProviderSyncRunLedger({ create: jest.fn(), update: providerSyncRunUpdate, findAll: jest.fn(), findById: jest.fn(), createWithJob: jest.fn(), findManyByIds: jest.fn(), clearDetailsBatchSubmittedBefore: jest.fn(), deleteBatchSubmittedBefore: jest.fn() });
     const job = createJob();
 
     await ledger.executeFeedRun(createSyncRun(), async () => job);
@@ -231,7 +258,7 @@ describe('ProviderSyncRunLedger', () => {
 
   it('stores no write rows, only the summary, when a sync changed nothing', async () => {
     const providerSyncRunUpdate = mockFn<ProviderSyncRunRepository['update']>(async () => undefined);
-    const ledger = new ProviderSyncRunLedger({ create: jest.fn(), update: providerSyncRunUpdate, findAll: jest.fn(), findById: jest.fn(), clearDetailsBatchSubmittedBefore: jest.fn(), deleteBatchSubmittedBefore: jest.fn() });
+    const ledger = new ProviderSyncRunLedger({ create: jest.fn(), update: providerSyncRunUpdate, findAll: jest.fn(), findById: jest.fn(), createWithJob: jest.fn(), findManyByIds: jest.fn(), clearDetailsBatchSubmittedBefore: jest.fn(), deleteBatchSubmittedBefore: jest.fn() });
     const unchangedRow = { id: 'row-1', entityType: 'SportEventParticipant', disposition: 'UNCHANGED' as const };
     const job = createJob({
       writeDiagnostics: {
@@ -250,7 +277,7 @@ describe('ProviderSyncRunLedger', () => {
 
   it('pool-master-rop.68.2.4 marks a provider sync run failed when the ingestion job returns FAILED', async () => {
     const providerSyncRunUpdate = mockFn<ProviderSyncRunRepository['update']>(async () => undefined);
-    const ledger = new ProviderSyncRunLedger({ create: jest.fn(), update: providerSyncRunUpdate, findAll: jest.fn(), findById: jest.fn(), clearDetailsBatchSubmittedBefore: jest.fn(), deleteBatchSubmittedBefore: jest.fn() });
+    const ledger = new ProviderSyncRunLedger({ create: jest.fn(), update: providerSyncRunUpdate, findAll: jest.fn(), findById: jest.fn(), createWithJob: jest.fn(), findManyByIds: jest.fn(), clearDetailsBatchSubmittedBefore: jest.fn(), deleteBatchSubmittedBefore: jest.fn() });
     const syncRun = createSyncRun();
     const failedJob = createJob({
       status: 'FAILED',
@@ -281,7 +308,7 @@ describe('ProviderSyncRunLedger', () => {
 
   it('pool-master-rop.68.2.4 marks a provider sync run failed and rethrows when execution throws', async () => {
     const providerSyncRunUpdate = mockFn<ProviderSyncRunRepository['update']>(async () => undefined);
-    const ledger = new ProviderSyncRunLedger({ create: jest.fn(), update: providerSyncRunUpdate, findAll: jest.fn(), findById: jest.fn(), clearDetailsBatchSubmittedBefore: jest.fn(), deleteBatchSubmittedBefore: jest.fn() });
+    const ledger = new ProviderSyncRunLedger({ create: jest.fn(), update: providerSyncRunUpdate, findAll: jest.fn(), findById: jest.fn(), createWithJob: jest.fn(), findManyByIds: jest.fn(), clearDetailsBatchSubmittedBefore: jest.fn(), deleteBatchSubmittedBefore: jest.fn() });
     const syncRun = createSyncRun();
     const executionError = new Error('provider exploded');
 
@@ -317,7 +344,7 @@ describe('ProviderSyncRunLedger', () => {
 
   it('pool-master-rop.68.2.4 can mark a submitted run failed without executing a job', async () => {
     const providerSyncRunUpdate = mockFn<ProviderSyncRunRepository['update']>(async () => undefined);
-    const ledger = new ProviderSyncRunLedger({ create: jest.fn(), update: providerSyncRunUpdate, findAll: jest.fn(), findById: jest.fn(), clearDetailsBatchSubmittedBefore: jest.fn(), deleteBatchSubmittedBefore: jest.fn() });
+    const ledger = new ProviderSyncRunLedger({ create: jest.fn(), update: providerSyncRunUpdate, findAll: jest.fn(), findById: jest.fn(), createWithJob: jest.fn(), findManyByIds: jest.fn(), clearDetailsBatchSubmittedBefore: jest.fn(), deleteBatchSubmittedBefore: jest.fn() });
     const syncRun = createSyncRun();
 
     await ledger.failSubmittedRun(syncRun, new Error('unsupported feed'));

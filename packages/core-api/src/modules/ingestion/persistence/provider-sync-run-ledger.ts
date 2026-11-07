@@ -1,7 +1,7 @@
 import { type Prisma } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
-import type { ProviderSyncRunRepository } from '@poolmaster/shared/db';
-import { IngestionJobStatus, ProviderSyncRunStatus, type ProviderSyncRun } from '@poolmaster/shared/domain';
+import type { ProviderSyncRunCreate, ProviderSyncRunRepository } from '@poolmaster/shared/db';
+import { IngestionJobStatus, ProviderSyncRunStatus, type BackgroundJobRequest, type ProviderSyncRun } from '@poolmaster/shared/domain';
 import type { ProviderSyncRequestPayloadDto, ProviderSyncRunPayloadDto } from '@poolmaster/shared/dto';
 import type { IngestionFeedType, EventSyncRequest, IngestionJobRecord } from '../core/ingestion-scheduler';
 import type { NormalizedSyncRequest } from '../core/sync-orchestrator';
@@ -25,47 +25,21 @@ export class ProviderSyncRunLedger {
     private readonly logger?: FastifyBaseLogger,
   ) {}
 
-  async createSubmissions(input: {
-    normalizedRequest: NormalizedSyncRequest;
-    providerId: string;
-    submittedAt: Date;
-    runType: string;
-  }): Promise<ProviderSyncRun[]> {
-    const { sport, eventId, feeds } = input.normalizedRequest.scope;
-    const requestContext = buildNormalizedSyncRequestContext(input.normalizedRequest);
-    const runs = await Promise.all(
-      feeds.map(async (feed) => {
-        const payloadJson = {
-          runType: input.runType,
-          requestedFeeds: feeds,
-          requestedFeed: feed,
-          requestPayload: {
-            sport,
-            eventId,
-            ...requestContext,
-          } satisfies ProviderSyncRequestPayloadDto,
-          stats: {},
-          outcome: buildSyncOutcome({
-            status: 'SUBMITTED',
-            summary: buildSubmittedSyncRunDetail(feed, eventId),
-          }),
-          detail: buildSubmittedSyncRunDetail(feed, eventId),
-        };
-        // poolmaster-allow-query-in-loop: one run per requested feed, a handful per sync request
-        return this.syncRuns.create({
-          providerId: input.providerId,
-          sport,
-          eventId,
-          status: 'SUBMITTED',
-          startedAt: null,
-          completedAt: null,
-          payload: payloadJson,
-          createdAt: input.submittedAt,
-        });
-      }),
+  async createSubmissions(input: SubmissionInput): Promise<ProviderSyncRun[]> {
+    return Promise.all(
+      // poolmaster-allow-query-in-loop: one run per requested feed, a handful per sync request
+      submissionRuns(input).map((run) => this.syncRuns.create(run)),
     );
+  }
 
-    return runs;
+  /**
+   * `createSubmissions`, with the job that will run them written in the same transaction
+   * (#1441): neither is written without the other. `job` names the runs as written.
+   */
+  async createSubmissionsWithJob(
+    input: SubmissionInput & { job: (runs: ProviderSyncRun[]) => BackgroundJobRequest },
+  ): Promise<ProviderSyncRun[]> {
+    return this.syncRuns.createWithJob(submissionRuns(input), input.job);
   }
 
   async executeFeedRun(
@@ -366,4 +340,42 @@ export function isEventSyncFeedType(
 ): feed is EventSyncRequest['feeds'][number] {
   return feed === 'EVENTPARTICIPANTS'
     || feed === 'EVENTLIVESCORES';
+}
+
+interface SubmissionInput {
+  normalizedRequest: NormalizedSyncRequest;
+  providerId: string;
+  submittedAt: Date;
+  runType: string;
+}
+
+/** One SUBMITTED run per requested feed, as the sync history shows it before it starts. */
+function submissionRuns(input: SubmissionInput): ProviderSyncRunCreate[] {
+  const { sport, eventId, feeds } = input.normalizedRequest.scope;
+  const requestContext = buildNormalizedSyncRequestContext(input.normalizedRequest);
+  return feeds.map((feed) => ({
+    providerId: input.providerId,
+    sport,
+    eventId,
+    status: 'SUBMITTED',
+    startedAt: null,
+    completedAt: null,
+    payload: {
+      runType: input.runType,
+      requestedFeeds: feeds,
+      requestedFeed: feed,
+      requestPayload: {
+        sport,
+        eventId,
+        ...requestContext,
+      } satisfies ProviderSyncRequestPayloadDto,
+      stats: {},
+      outcome: buildSyncOutcome({
+        status: 'SUBMITTED',
+        summary: buildSubmittedSyncRunDetail(feed, eventId),
+      }),
+      detail: buildSubmittedSyncRunDetail(feed, eventId),
+    },
+    createdAt: input.submittedAt,
+  }));
 }

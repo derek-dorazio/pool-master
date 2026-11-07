@@ -13,7 +13,14 @@ import type {
   ProviderSyncRunRepository,
   SportEventRepository,
 } from '@poolmaster/shared/db';
-import { type Sport, SportEventSyncScope, type ProviderSyncRun, type ProviderSyncRunStatus, type ProviderSyncRunWithDetails } from '@poolmaster/shared/domain';
+import {
+  BackgroundJobType,
+  ProviderSyncRunStatus,
+  type Sport,
+  SportEventSyncScope,
+  type ProviderSyncRun,
+  type ProviderSyncRunWithDetails,
+} from '@poolmaster/shared/domain';
 import type { ProviderRegistry } from './core/provider-registry';
 import type { SportDataProvider } from './core/provider-interface';
 import { supportsLiveSimulation, supportsMockEventStateControls } from './core/provider-interface';
@@ -23,16 +30,14 @@ import type {
   IngestionScheduleConfigReader,
   IngestionScheduler,
 } from './core/ingestion-scheduler';
-import {
-  SyncOrchestrator,
-  type NormalizedEventSyncScope,
-} from './core/sync-orchestrator';
+import { SyncOrchestrator } from './core/sync-orchestrator';
 import {
   ProviderSyncRunLedger,
   isEventSyncFeedType,
   readPayload,
 } from './persistence/provider-sync-run-ledger';
-import { outsideRequest } from '../../core/request-scope';
+import type { BackgroundJobQueue } from '../background-jobs/background-job-queue';
+import type { ManualEventSyncJobPayload } from './manual-event-sync-job';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -149,6 +154,8 @@ export interface IngestionServiceDependencies {
   ingestionConfigReader?: IngestionScheduleConfigReader;
   syncOrchestrator?: Pick<SyncOrchestrator, 'normalizeRequest'>;
   syncRunLedger?: ProviderSyncRunLedger;
+  /** Queues the job that runs a manual event sync's submitted runs (#1441). */
+  jobs: Pick<BackgroundJobQueue, 'request' | 'queued'>;
   logger?: FastifyBaseLogger;
 }
 
@@ -161,6 +168,7 @@ export class IngestionService {
   private readonly ingestionConfigReader?: IngestionScheduleConfigReader;
   private readonly syncOrchestrator: Pick<SyncOrchestrator, 'normalizeRequest'>;
   private readonly syncRunLedger: ProviderSyncRunLedger;
+  private readonly jobs: Pick<BackgroundJobQueue, 'request' | 'queued'>;
   private readonly logger?: FastifyBaseLogger;
 
   constructor(deps: IngestionServiceDependencies) {
@@ -170,6 +178,7 @@ export class IngestionService {
     this.syncRuns = deps.syncRuns;
     this.scheduler = deps.scheduler;
     this.ingestionConfigReader = deps.ingestionConfigReader;
+    this.jobs = deps.jobs;
     this.logger = deps.logger;
     this.syncOrchestrator = deps.syncOrchestrator ?? new SyncOrchestrator();
     this.syncRunLedger = deps.syncRunLedger ?? new ProviderSyncRunLedger(deps.syncRuns, deps.logger);
@@ -322,8 +331,7 @@ export class IngestionService {
     rootAdminUserId: string,
     rootAdminEmail: string,
   ): Promise<ProviderManualSyncSubmissionResult> {
-    const scheduler = this.scheduler;
-    if (!scheduler) {
+    if (!this.scheduler) {
       throw new Error('Ingestion scheduler is required for manual event sync');
     }
 
@@ -370,21 +378,20 @@ export class IngestionService {
       providerId: provider.providerId,
       rootAdminUserId,
     }, 'Submitting manual event sync');
-    const syncRuns = await this.syncRunLedger.createSubmissions({
+    // The runs and the job that runs them commit together; the job runs on whichever task claims it.
+    const syncRuns = await this.syncRunLedger.createSubmissionsWithJob({
       normalizedRequest,
       providerId: provider.providerId,
       submittedAt,
       runType: 'MANUAL_EVENT_SYNC',
+      job: (runs) => this.jobs.request(BackgroundJobType.MANUAL_EVENT_SYNC, {
+        syncRunIds: runs.map((run) => run.id),
+        sport: normalizedScope.sport,
+        eventId: normalizedScope.eventId,
+        mockEventState: normalizedScope.mockEventState,
+      }),
     });
-
-    // Outside the request: the sync runs on after the response and reads afresh.
-    outsideRequest(() => setImmediate(() => {
-      void this.executeSubmittedEventSync({
-        scheduler,
-        normalizedScope,
-        syncRuns,
-      });
-    }));
+    this.jobs.queued();
 
     this.logger?.info({
       sport: normalizedScope.sport,
@@ -404,19 +411,26 @@ export class IngestionService {
     };
   }
 
-  private async executeSubmittedEventSync(input: {
-    scheduler: IngestionScheduler;
-    normalizedScope: NormalizedEventSyncScope;
-    syncRuns: ProviderSyncRun[];
-  }): Promise<void> {
-    this.logger?.debug({
-      sport: input.normalizedScope.sport,
-      eventId: input.normalizedScope.eventId,
-      requestedFeeds: input.normalizedScope.feeds,
-      mockEventState: input.normalizedScope.mockEventState ?? null,
-      syncRunIds: input.syncRuns.map((run) => run.id),
-    }, 'Executing submitted manual event sync');
-    for (const syncRun of input.syncRuns) {
+  /**
+   * The MANUAL_EVENT_SYNC job (#1441): runs each submitted run's feed, one after another. A run
+   * that is no longer SUBMITTED was started by an earlier try of this job, so a retry skips it:
+   * the sync-run ledger is what makes the job idempotent. A feed that fails is recorded on its run
+   * and the rest still run; only a failure the ledger could not record fails the job.
+   */
+  async runManualEventSync(payload: ManualEventSyncJobPayload): Promise<void> {
+    const scheduler = this.scheduler;
+    if (!scheduler) {
+      throw new Error('Ingestion scheduler is required for manual event sync');
+    }
+    const scope = { sport: payload.sport, eventId: payload.eventId, mockEventState: payload.mockEventState ?? null };
+    this.logger?.debug({ ...scope, syncRunIds: payload.syncRunIds }, 'Executing submitted manual event sync');
+    const stored = new Map((await this.syncRuns.findManyByIds(payload.syncRunIds)).map((run) => [run.id, run]));
+    for (const syncRunId of payload.syncRunIds) {
+      const syncRun = stored.get(syncRunId);
+      if (syncRun?.status !== ProviderSyncRunStatus.SUBMITTED) {
+        this.logger?.info({ ...scope, syncRunId, status: syncRun?.status ?? null }, 'Skipped a manual sync run that is no longer submitted');
+        continue;
+      }
       const { requestedFeed } = readPayload(syncRun);
       if (!isEventSyncFeedType(requestedFeed)) {
         await this.syncRunLedger.failSubmittedRun(syncRun, new Error(`Unsupported event sync feed: ${String(requestedFeed)}`));
@@ -425,23 +439,21 @@ export class IngestionService {
 
       try {
         await this.syncRunLedger.executeFeedRun(syncRun, () =>
-          input.scheduler.runEventSync({
-            sport: input.normalizedScope.sport,
-            eventId: input.normalizedScope.eventId,
+          scheduler.runEventSync({
+            sport: payload.sport,
+            eventId: payload.eventId,
             feeds: [requestedFeed],
-            mockEventState: input.normalizedScope.mockEventState,
+            mockEventState: payload.mockEventState,
           }),
         );
       } catch (error) {
         this.logger?.error({
+          ...scope,
           syncRunId: syncRun.id,
-          sport: input.normalizedScope.sport,
-          eventId: input.normalizedScope.eventId,
           requestedFeed,
           error,
         }, 'Manual event sync feed failed after provider sync run was marked failed');
-        // The ledger already marks the submitted run as failed; keep the
-        // asynchronous manual submission worker moving through remaining feeds.
+        // The ledger already marks the run as failed; the job moves on to the remaining feeds.
       }
     }
   }

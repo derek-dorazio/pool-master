@@ -227,6 +227,11 @@ sender), and prod runs more than one task. So that a job runs once, not once per
   are the models. The lock makes a race rare; the guarded write makes it harmless.
 - **A queue claims its rows** (`FOR UPDATE SKIP LOCKED`, as the email outbox does) and needs no
   job lock: each task takes different rows.
+- **Work a request starts but does not wait for is a background job** (`modules/background-jobs`,
+  #1439), not `outsideRequest` around a `setImmediate`. The job is written in the transaction of
+  the change that caused it, so a deploy or a crashed task never loses it; any task's runner
+  claims it, and a throw is retried. Its handler is idempotent, because a lapsed lease runs it
+  again. A recurring job stays a timer under a job lock: the table is for one-off work.
 - **A table that grows without end gets a retention period and a nightly cleanup step**
   (`core/nightly-cleanup.ts`, #1175). The step lives in the module that owns the table, deletes
   in bounded batches with plain Prisma (`deleteInBatches`), and is added to the one
