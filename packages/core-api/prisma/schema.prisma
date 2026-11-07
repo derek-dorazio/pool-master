@@ -1221,21 +1221,22 @@ model Contest {
   createdAt      DateTime            @default(now()) @map("created_at") @db.Timestamptz
   updatedAt      DateTime            @updatedAt @map("updated_at") @db.Timestamptz
 
-  league              League                      @relation(fields: [leagueId], references: [id])
-  sportEvents         ContestSportEvent[]
-  configuration       ContestConfiguration?
-  entries             ContestEntry[]
-  entryStandings      ContestEntryStanding[]
-  entryEventStandings ContestEntryEventStanding[]
-  draw                ContestDraw?
-  squaresGame         ContestSquaresGame?
-  squares             ContestEntrySquare[]
-  squaresDraw         ContestSquaresDraw?
-  squaresWinners      ContestSquaresWinner[]
-  emailMessages       EmailMessage[]
-  yearFinishes        LeagueYearFinish[]
-  expansions          ContestExpansion[]
-  payments            LeaguePayment[]
+  league               League                       @relation(fields: [leagueId], references: [id])
+  sportEvents          ContestSportEvent[]
+  configuration        ContestConfiguration?
+  entries              ContestEntry[]
+  entryStandings       ContestEntryStanding[]
+  entryEventStandings  ContestEntryEventStanding[]
+  draw                 ContestDraw?
+  squaresGame          ContestSquaresGame?
+  squares              ContestEntrySquare[]
+  squaresDraw          ContestSquaresDraw?
+  squaresWinners       ContestSquaresWinner[]
+  emailMessages        EmailMessage[]
+  yearFinishes         LeagueYearFinish[]
+  expansions           ContestExpansion[]
+  payments             LeaguePayment[]
+  leaderboardSnapshots ContestLeaderboardSnapshot[]
 
   @@index([leagueId, seasonYear])
   @@index([status])
@@ -1670,6 +1671,37 @@ model ContestEntryEventStanding {
   @@index([contestId, sportEventId, position])
   @@index([sportEventId])
   @@map("contest_entry_event_standings")
+}
+
+/// A contest's leaderboard as last computed (#1435), one row per contest and shown event,
+/// overwritten in place. Rebuilt a few seconds after a write changes what it is computed from
+/// (a score save, a sync, a settlement), so every viewer's poll is one read of this row instead of
+/// a computation from every entry, pick and field row. No history is kept: the row goes with its
+/// contest.
+model ContestLeaderboardSnapshot {
+  contestId        String    @map("contest_id") @db.Uuid
+  /// The event whose picks it shows: that event's id, or '' for the board a viewer gets when
+  /// naming none (the latest event whose picks are revealed).
+  shownEvent       String    @map("shown_event") @db.VarChar(36)
+  /// Goes up by one on every write: what a poll's ETag is built from (#1436).
+  version          Int       @default(1)
+  /// When the rebuild that wrote it began reading. A rebuild that began earlier never overwrites
+  /// it, so a slow rebuild of older scores cannot replace a newer board.
+  computedFrom     DateTime  @map("computed_from") @db.Timestamptz
+  /// The contest's own `updatedAt` it was computed under: a contest changed since (its status,
+  /// its name) is computed again on the next read.
+  contestUpdatedAt DateTime  @map("contest_updated_at") @db.Timestamptz
+  /// When the next of the contest's events not yet revealed in it starts, after which the board
+  /// must be computed again to show it; null when every event is revealed.
+  validUntil       DateTime? @map("valid_until") @db.Timestamptz
+  /// The board as the API answers it.
+  board            Json      @db.JsonB
+  updatedAt        DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  contest Contest @relation(fields: [contestId], references: [id], onDelete: Cascade)
+
+  @@id([contestId, shownEvent])
+  @@map("contest_leaderboard_snapshots")
 }
 
 /// A random-draw contest's draw (#601): the commissioner's one explicit "Run draw", which dealt

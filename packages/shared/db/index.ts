@@ -11,6 +11,10 @@ export type {
   ContestEntryStandingRepository,
   ContestEntryStandingResult,
   ContestEntryStandingWrite,
+  ContestLeaderboardSnapshot,
+  ContestLeaderboardSnapshotKey,
+  ContestLeaderboardSnapshotRepository,
+  ContestLeaderboardSnapshotWrite,
   ContestWinner,
   ParticipantContestScoringRuleRepository,
 } from './contest-management-ports';

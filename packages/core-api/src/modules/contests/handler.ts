@@ -24,7 +24,7 @@ import {
   toContestEntryListResponse,
   toContestEntryResponse,
   toContestResponse,
-  toContestLeaderboardResponse,
+  toContestLeaderboardSnapshotResponse,
   toMyContestEntriesResponse,
 } from '../../mappers/contests.mapper';
 import { toBracketLeaderboardResponse } from '../../mappers/bracket-leaderboard.mapper';
@@ -227,7 +227,7 @@ export function createContestHandlers(contestService: ContestService) {
     const userId = request.authUser?.userId as string;
     logger.debug({ contestId: request.params.contestId, userId }, 'contest leaderboard route start');
     try {
-      const leaderboard = await contestService.getLeaderboard(
+      const snapshot = await contestService.getLeaderboard(
         request.params.contestId,
         userId,
         request.query.sportEventId,
@@ -235,10 +235,11 @@ export function createContestHandlers(contestService: ContestService) {
       logger.info({
         contestId: request.params.contestId,
         userId,
-        entryCount: leaderboard.entries.length,
-        participantCount: leaderboard.participants.length,
+        version: snapshot.version,
+        entryCount: snapshot.board.entries.length,
+        participantCount: snapshot.board.participants.length,
       }, 'contest leaderboard route completed');
-      return reply.send(toContestLeaderboardResponse(leaderboard));
+      return reply.send(toContestLeaderboardSnapshotResponse(snapshot));
     } catch (err) {
       if (err instanceof ContestNotFoundError) {
         logger.warn({ contestId: request.params.contestId, userId }, 'contest leaderboard route missing contest');

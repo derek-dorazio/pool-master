@@ -13,7 +13,7 @@
  */
 import { ContestEntryStatus, contestEntryEventStatus } from '@poolmaster/shared/domain';
 import { BatchedRead, batchedByIds, batchedByKey, withReads } from '../../core/batched-read';
-import type { ContestServiceDeps } from './service';
+import type { ContestLeaderboardSnapshotRead, ContestServiceDeps } from './service';
 
 /**
  * A batched read of rows by entry and event: one read across every entry and event asked for,
@@ -54,6 +54,17 @@ export function batchedLeaderboardDeps(deps: ContestServiceDeps): ContestService
     (prediction) => ({ entryId: prediction.contestEntryId, sportEventId: prediction.sportEventId }),
   );
   const participants = batchedByIds((ids) => deps.participants.findByIds(ids), (participant) => participant.id);
+  const snapshots = new BatchedRead<{ contestId: string; shownEvent: string }, ContestLeaderboardSnapshotRead | null>(async (asks) => {
+    const found = new Map<string, ContestLeaderboardSnapshotRead>();
+    for (const shownEvent of new Set(asks.map((ask) => ask.shownEvent))) {
+      const contestIds = asks.filter((ask) => ask.shownEvent === shownEvent).map((ask) => ask.contestId);
+      // poolmaster-allow-query-in-loop: one read per shown event asked for; a fan-out asks for one
+      for (const snapshot of await deps.leaderboardSnapshots.findByContests(contestIds, shownEvent)) {
+        found.set(`${snapshot.contestId}:${snapshot.shownEvent}`, snapshot);
+      }
+    }
+    return asks.map((ask) => found.get(`${ask.contestId}:${ask.shownEvent}`) ?? null);
+  });
   return {
     ...deps,
     contests: withReads(deps.contests, { findById: async (id) => (await contests.load([id])).at(0) ?? null }),
@@ -81,6 +92,7 @@ export function batchedLeaderboardDeps(deps: ContestServiceDeps): ContestService
       findByEntriesAndEvents: (entryIds, sportEventIds) => predictions.load({ entryIds, sportEventIds }),
     },
     participants: { findByIds: (ids) => participants.load(ids) },
+    leaderboardSnapshots: withReads(deps.leaderboardSnapshots, { find: (contestId, shownEvent) => snapshots.load({ contestId, shownEvent }) }),
     eventParticipants: deps.eventParticipants.batchedFieldReads(),
   };
 }

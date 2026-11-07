@@ -10,7 +10,6 @@
  * `rules/testing-rules.md` §9B *Query Scaling Tests* says when a route needs one.
  */
 // First, before the app is built: no leaderboard is kept, so each board below is computed afresh.
-import '../leaderboard-cache-off';
 import { ContestEntryStatus, ContestStatus, PickEmMode, PredictedResult, SelectionType, SportEventStatus } from '@poolmaster/shared/domain';
 import { CupProjectionResponseSchema } from '@poolmaster/shared/dto';
 import type { Response } from 'light-my-request';

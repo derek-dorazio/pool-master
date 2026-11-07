@@ -25,6 +25,7 @@ import type { SyncWriteDetailRow, SyncWriteDiagnostics } from '../core/sync-writ
 import { summarizeSyncWriteRows } from '../core/sync-write-diagnostics';
 import type { EventFieldCache } from '../../events/event-field-cache';
 import type { CdnInvalidator } from '../../../core/cdn-invalidator';
+import type { LeaderboardRebuilds } from '../../contests/leaderboard-snapshots';
 import { PublicReadPath } from '../../../core/public-cache';
 import { forgettingReads, ReadMemoKey } from '../../../core/request-read-memo';
 
@@ -38,13 +39,15 @@ export class IngestionPersistence {
   /**
    * `fieldCache`: the event fields this container read lately, an event's forgotten once its field
    * is written (#1163). `cdn`: clears the public event pages once a field is written, since a
-   * loaded field is what turns an offer from NOT_YET to OPEN (#1181).
+   * loaded field is what turns an offer from NOT_YET to OPEN (#1181). `leaderboards`: told once a
+   * field is written, so the event's contests' stored leaderboards are computed again (#1435).
    */
   constructor(
     private readonly prisma: PrismaClient,
     private readonly logger?: FastifyBaseLogger,
     private readonly fieldCache?: Pick<EventFieldCache, 'forget'>,
     private readonly cdn?: CdnInvalidator,
+    private readonly leaderboards?: Pick<LeaderboardRebuilds, 'eventsChanged'>,
   ) {}
 
   async persistEventsWithDiagnostics(
@@ -279,6 +282,7 @@ export class IngestionPersistence {
     } finally {
       this.fieldCache?.forget(persistedEvent.id);
       this.cdn?.invalidate([PublicReadPath.EVENT_PAGES]);
+      await this.leaderboards?.eventsChanged([persistedEvent.id]);
     }
 
     this.logger?.info({

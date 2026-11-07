@@ -142,6 +142,52 @@ export interface ContestEntryStandingRepository {
   upsertMany(contestId: string, writes: readonly ContestEntryStandingWrite[]): Promise<void>;
 }
 
+/**
+ * A contest's leaderboard as last computed (#1435): one per contest and shown event, overwritten
+ * in place. `Board` is the board as the API answers it.
+ */
+export interface ContestLeaderboardSnapshot<Board> {
+  contestId: string;
+  /** The shown event's id, or '' for the board of a read naming none (the latest event whose picks are revealed). */
+  shownEvent: string;
+  /** Up by one on every write. */
+  version: number;
+  /** When the rebuild that wrote it began reading. */
+  computedFrom: Date;
+  /** The contest's `updatedAt` it was computed under. */
+  contestUpdatedAt: Date;
+  /** When an event not yet revealed in it starts; null when every event is revealed. */
+  validUntil: Date | null;
+  board: Board;
+}
+
+export type ContestLeaderboardSnapshotWrite<Board> = Omit<ContestLeaderboardSnapshot<Board>, 'version'>;
+
+export interface ContestLeaderboardSnapshotKey {
+  contestId: string;
+  shownEvent: string;
+}
+
+export interface ContestLeaderboardSnapshotRepository<Board> {
+  /** The snapshot of this contest and shown event, by its primary key; null when none is stored. */
+  find(contestId: string, shownEvent: string): Promise<ContestLeaderboardSnapshot<Board> | null>;
+  /** Several contests' snapshots of one shown event in one read (#1315), in no set order. */
+  findByContests(contestIds: readonly string[], shownEvent: string): Promise<ContestLeaderboardSnapshot<Board>[]>;
+  /**
+   * Which snapshots are stored, without their boards, of these contests and of every contest on
+   * these events: one read, so a write whose contests no one has viewed costs nothing more.
+   */
+  findKeysByContestsOrEvents(contestIds: readonly string[], sportEventIds: readonly string[]): Promise<ContestLeaderboardSnapshotKey[]>;
+  /**
+   * Stores the snapshot unless the one stored began computing at the same moment or later, so an
+   * older rebuild never overwrites a newer board. Answers whether it was stored; each store moves
+   * `version` up by one.
+   */
+  save(write: ContestLeaderboardSnapshotWrite<Board>): Promise<boolean>;
+  /** Drops the snapshot, so the next read computes the board again. */
+  delete(key: ContestLeaderboardSnapshotKey): Promise<void>;
+}
+
 /** An entry's settled result in one event of its contest (#713): the contest standing, narrowed to the event. */
 export interface ContestEntryEventStandingResult extends ContestEntryStandingResult {
   sportEventId: string;

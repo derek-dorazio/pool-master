@@ -345,6 +345,16 @@ const LEADERBOARD_PICK_DETAIL_BY_SCORING_FAMILY: Readonly<Record<ScoringFamily, 
   }),
 };
 
+/**
+ * A stored leaderboard (#1435) as the API answers it: the board it holds, which was mapped by
+ * `toContestLeaderboardResponse` when it was computed.
+ */
+export function toContestLeaderboardSnapshotResponse(
+  snapshot: { board: ContestLeaderboardResponse },
+): ContestLeaderboardResponse {
+  return snapshot.board;
+}
+
 export function toContestLeaderboardResponse(
   leaderboard: ContestLeaderboardModel,
 ): ContestLeaderboardResponse {

@@ -47,7 +47,7 @@ describe('ReadCache.forget', () => {
 describe('readCacheTtlMs', () => {
   it('reads the variable it is named, 30 seconds when unset, and names it when refusing a value', () => {
     expect(readCacheTtlMs({ EVENT_FIELD_CACHE_TTL_MS: '0' }, 'EVENT_FIELD_CACHE_TTL_MS')).toBe(0);
-    expect(readCacheTtlMs({ CONTEST_LEADERBOARD_CACHE_TTL_MS: '0' }, 'EVENT_FIELD_CACHE_TTL_MS')).toBe(30_000);
+    expect(readCacheTtlMs({ PUBLIC_READ_CACHE_TTL_MS: '0' }, 'EVENT_FIELD_CACHE_TTL_MS')).toBe(30_000);
     expect(() => readCacheTtlMs({ EVENT_FIELD_CACHE_TTL_MS: '-5' }, 'EVENT_FIELD_CACHE_TTL_MS'))
       .toThrow('EVENT_FIELD_CACHE_TTL_MS must be a whole number of milliseconds, 0 or more; got "-5"');
   });
