@@ -1,8 +1,9 @@
 /**
  * The job that settles a finished event's contests (#1448): its payload and the request the
  * event's status change writes in its transaction. Settling an event can mean hundreds of
- * contests, so it runs in the background, never in the request that finished the event. The
- * handler is ContestSettlementService.settleFinishedSportEvent.
+ * contests, so it runs in the background, never in the request that finished the event. Its
+ * handler is EventLifecycleService.settleFinishedEventContests, which sends a cancellation's C7
+ * email and then settles through ContestSettlementService.settleFinishedSportEvent.
  */
 
 import { z } from 'zod';
