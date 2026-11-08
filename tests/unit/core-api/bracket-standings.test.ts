@@ -233,6 +233,20 @@ describe('ContestSettlementService — a bracket contest (#721)', () => {
     expect(summary).toEqual({ sportEventId: context.sportEvent.id, contestsSettled: 1, contestsCompleted: 1, standingsUpserted: 3 });
   });
 
+  it('freezes the same points and places the live bracket leaderboard showed with every result in, before the event completed', async () => {
+    const context = setup();
+    context.play(ROUND_ONE_CHALK, ROUND_TWO_CHALK, FINAL_T1_70_66);
+    const live = await context.contestService.getBracketLeaderboard(context.contest.id, context.viewer.id);
+    context.completeEvent();
+
+    await context.settlement.settleFinishedSportEvent(context.sportEvent.id, { completedAt: SETTLED_AT });
+
+    const frozen = [...context.world.standings.values()]
+      .sort((left, right) => (left.position ?? Infinity) - (right.position ?? Infinity))
+      .map((row) => [row.contestEntryId, row.totalScore, row.displayPosition]);
+    expect(frozen).toEqual(live.board.entries.map((row) => [row.entryId, row.points, row.displayPosition]));
+  });
+
   it('reads the bracket\'s games and field once for every bracket contest on the event, and settles each of them', async () => {
     const context = setup();
     const second = context.world.addContest(context.world.addLeague().id, {

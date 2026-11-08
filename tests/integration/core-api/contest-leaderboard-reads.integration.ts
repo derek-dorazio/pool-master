@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto';
 import type { PrismaClient } from '@prisma/client';
 import { ContestStatus, Sport, SportEventStatus } from '@poolmaster/shared/domain';
 import { PrismaContestLeaderboardSnapshotRepository, PrismaContestRepository } from '../../../packages/core-api/src/adapters';
-import { createContestService } from '../../../packages/core-api/src/modules/contests/wiring';
+import { createContestService, createContestSettlementService } from '../../../packages/core-api/src/modules/contests/wiring';
 import {
   cleanupTestData,
   createTestUser,
@@ -399,6 +399,43 @@ describe('ContestService.getLeaderboard reads (#1162)', () => {
       // It skipped the live major, so it ranks there at its missed lineup's score, as settling it will.
       [onlyCancelled.id, 32, [live.event.id]],
     ]);
+  });
+});
+
+describe('Roster settlement freezes the last live board (#1435)', () => {
+  it('freezes the same entries, totals and places, a shared T1 and a missed lineup included, that the live board showed just before the event ended, and nothing for a cancelled event', async () => {
+    const cancelled = await createEvent('Masters', 200, SportEventStatus.CANCELLED);
+    // Golfers 1 to 4 finish the live major at -5, -3, -2 and level par; two count per entry.
+    const live = await createEvent('PGA', 1, SportEventStatus.IN_PROGRESS, [-5, -3, -2, 0]);
+    const { contest, viewerId, addEntry } = await golfContest([cancelled, live]);
+    const golfer = (event: typeof live, index: number) => expectDefined(event.field[index]).id;
+    const cancelledPicks = { eventId: cancelled.event.id, fieldRowIds: [golfer(cancelled, 0), golfer(cancelled, 1)] };
+    // -5 + 0 and -3 - 2 are level at -5, so the two share first.
+    const first = await addEntry('First Pair', [cancelledPicks, { eventId: live.event.id, fieldRowIds: [golfer(live, 0), golfer(live, 3)] }]);
+    const second = await addEntry('Second Pair', [cancelledPicks, { eventId: live.event.id, fieldRowIds: [golfer(live, 1), golfer(live, 2)] }]);
+    // It skipped the live major, so both paths rank it there at its missed lineup's score (#714).
+    const skipped = await addEntry('Skipped Live', [cancelledPicks]);
+
+    const { board } = await serviceOn(getAppPrisma()).getLeaderboard(contest.id, viewerId, live.event.id);
+    const liveTotals = board.entries.map((entry) => [entry.entryId, entry.totalScore, entry.displayPosition]);
+    const liveEvent = board.entries.map((entry) => {
+      const result = expectDefined(entry.events.find((event) => event.sportEventId === live.event.id));
+      return [entry.entryId, result.totalScore, result.position];
+    });
+    expect(liveTotals.map(([entryId, , place]) => [entryId, place])).toEqual([[first.id, 'T1'], [second.id, 'T1'], [skipped.id, '3']]);
+
+    const prisma = getPrisma();
+    await prisma.sportEvent.update({ where: { id: live.event.id }, data: { status: SportEventStatus.COMPLETED } });
+    await createContestSettlementService(getAppPrisma()).settleFinishedSportEvent(live.event.id);
+
+    const byPlace = { orderBy: [{ position: 'asc' as const }, { contestEntryId: 'asc' as const }] };
+    const frozenTotals = await prisma.contestEntryStanding.findMany({ where: { contestId: contest.id }, ...byPlace });
+    const frozenEvent = await prisma.contestEntryEventStanding.findMany({ where: { contestId: contest.id, sportEventId: live.event.id }, ...byPlace });
+    const sameOrder = <Row extends readonly unknown[]>(rows: Row[]) => [...rows].sort((left, right) => String(left[0]).localeCompare(String(right[0])));
+    expect(sameOrder(frozenTotals.map((row) => [row.contestEntryId, row.totalScore, row.displayPosition]))).toEqual(sameOrder(liveTotals));
+    expect(sameOrder(frozenEvent.map((row) => [row.contestEntryId, row.totalScore, row.position]))).toEqual(sameOrder(liveEvent));
+    expect(await prisma.contestEntryEventStanding.count({ where: { contestId: contest.id, sportEventId: cancelled.event.id } })).toBe(0);
+    expect((await prisma.contest.findUniqueOrThrow({ where: { id: contest.id } })).status).toBe(ContestStatus.COMPLETED);
   });
 });
 

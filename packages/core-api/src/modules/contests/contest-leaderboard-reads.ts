@@ -10,17 +10,22 @@ import type {
   ContestEntryWithSquad,
   ParticipantContestScoringRuleRepository,
 } from '@poolmaster/shared/db';
-import { ContestEntryStatus, contestEntryEventStatus, type Contest, type ContestScoringSettings } from '@poolmaster/shared/domain';
+import { ContestEntryStatus, contestEntryEventStatus, type Contest, type ContestScoringSettings, type ScoreDirection } from '@poolmaster/shared/domain';
 import type {
   SportEventParticipantService,
   SportEventParticipantView,
 } from '../events/sport-event-participant-service';
-import type {
-  ContestLeaderboardEntryInput,
-  ContestScoringConfigurationRow,
-  ParticipantScore,
+import {
+  buildContestEntryStanding,
+  buildMissedEventStanding,
+  rankContestEntryStandings,
+  type ContestCountingRule,
+  type ContestLeaderboardEntryInput,
+  type ContestScoringConfigurationRow,
+  type ParticipantScore,
 } from './contest-leaderboard-calculator';
 import { scoringFamilyForEvent, type FieldScoringEvent } from '../scoring-families';
+import type { ContestEntryStandingRow } from '../../mappers/contests.mapper';
 
 export interface ContestLeaderboardReadDeps {
   eventParticipants: Pick<SportEventParticipantService, 'listEventParticipants'>;
@@ -49,6 +54,35 @@ export function toParticipantScores(
   scoring: ContestScoringSettings,
 ): ParticipantScore[] {
   return scoringFamilyForEvent(event).scoreField(field, event, scoring);
+}
+
+/**
+ * One event's ranked standings for one contest (#1435): its submitted entries scored by their
+ * picks against the field, and the entries that missed it at the missed lineup's score (#714).
+ * The live leaderboard and settlement both rank an event here and nowhere else, so the last board
+ * a member sees before the event ends is the result its settlement freezes.
+ */
+export function rankContestEvent(input: {
+  field: readonly SportEventParticipantView[];
+  event: FieldScoringEvent;
+  scoring: ContestScoringSettings;
+  countingRule: ContestCountingRule;
+  direction: ScoreDirection;
+  submitted: readonly ContestLeaderboardEntryInput[];
+  missed: readonly ContestLeaderboardEntryInput[];
+}): { rows: ContestEntryStandingRow[]; scores: ParticipantScore[] } {
+  const { field, event, scoring, countingRule, direction, submitted, missed } = input;
+  const scores = toParticipantScores(field, event, scoring);
+  const scoreById = new Map(scores.map((score) => [score.sportEventParticipantId, score]));
+  const missedScore = missed.length > 0 ? scoreMissedLineup(field, event, scoring, countingRule.count) : null;
+  const rows = rankContestEntryStandings(
+    [
+      ...submitted.map((entry) => buildContestEntryStanding(entry, scoreById, countingRule, direction)),
+      ...missed.map((entry) => buildMissedEventStanding(entry, missedScore, countingRule, direction)),
+    ],
+    direction,
+  );
+  return { rows, scores };
 }
 
 /** What a lineup scores in an event its entry missed (#714), by the event's scoring family. */
