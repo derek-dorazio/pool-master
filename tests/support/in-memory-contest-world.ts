@@ -78,6 +78,8 @@ import { contestCutoff, ContestCutoffKind } from '../../packages/core-api/src/mo
 import { hasSportEventStarted } from '../../packages/core-api/src/modules/events/operational-timing';
 import { planEntitlementsOver } from './plan-entitlements';
 import { fieldReads } from './field-reads';
+import { InMemoryLeaderboardSnapshots } from './in-memory-leaderboard-snapshots';
+import type { ContestLeaderboardResponse } from '@poolmaster/shared/dto';
 
 /** Thrown where Postgres would reject the write with a unique-constraint violation (P2002). */
 export class UniqueConstraintViolation extends Error {
@@ -105,6 +107,10 @@ export class InMemoryContestWorld {
   readonly eventStandings = new Map<string, ContestEntryEventStandingResult>();
   /** Settled contest standings, one per entry. */
   readonly standings = new Map<string, ContestEntryStandingResult>();
+  /** Each contest's stored leaderboards (#1435). */
+  readonly leaderboardSnapshots = new InMemoryLeaderboardSnapshots<ContestLeaderboardResponse>(
+    (sportEventId) => [...this.contests.values()].filter((contest) => contest.sportEventIds.includes(sportEventId)).map((contest) => contest.id),
+  );
   readonly leagues = new Map<string, League>();
   readonly users = new Map<string, User>();
   readonly memberships = new Map<string, LeagueMembership>();
@@ -904,6 +910,7 @@ export class InMemoryContestWorld {
       },
       participants: { findByIds: async () => [] },
       matches: { findBySportEvent: async () => [], findBySportEvents: async () => [] },
+      leaderboardSnapshots: this.leaderboardSnapshots,
       standings: this.standingRepo(),
       eventStandings: this.eventStandingRepo(),
       memberships: this.membershipRepo(),

@@ -12,6 +12,7 @@ import {
   PrismaContestEntryEventStandingRepository,
   PrismaContestExpansionRepository,
   PrismaContestEntryStandingRepository,
+  PrismaContestLeaderboardSnapshotRepository,
   PrismaContestRepository,
   PrismaLeagueMembershipRepository,
   PrismaLeagueRepository,
@@ -32,7 +33,7 @@ import type { SportEventParticipantService } from '../events/sport-event-partici
 import { ContestSettlementService } from './contest-settlement-service';
 import type { BracketStandingsReadDeps } from './bracket-standings';
 import { ContestService } from './service';
-import { ContestLeaderboardCache, readLeaderboardCacheTtlMs } from './contest-leaderboard-cache';
+import { readLeaderboardSnapshotMaxAgeMs, type LeaderboardRebuilds } from './leaderboard-snapshots';
 import { createChampionshipService } from '../championship/wiring';
 import type { BackgroundJobQueue } from '../background-jobs';
 
@@ -56,8 +57,8 @@ function createContestLeaderboardReadDeps(
   };
 }
 
-/** One leaderboard cache for the container (#1162): the contest page and a cup's projection share it. */
-const leaderboardCache = new ContestLeaderboardCache(readLeaderboardCacheTtlMs(process.env));
+/** How old a stored leaderboard may be before a read computes it again (#1435). */
+const leaderboardSnapshotMaxAgeMs = readLeaderboardSnapshotMaxAgeMs(process.env);
 
 export function createContestService(
   prisma: PrismaClient,
@@ -83,14 +84,15 @@ export function createContestService(
     logger,
     email: options.email,
     appBaseUrl: options.appBaseUrl,
-    leaderboardCache,
+    leaderboardSnapshots: new PrismaContestLeaderboardSnapshotRepository(prisma),
+    leaderboardSnapshotMaxAgeMs,
   });
 }
 
 export function createContestSettlementService(
   prisma: PrismaClient,
   logger?: FastifyBaseLogger,
-  options?: { jobs?: Pick<BackgroundJobQueue, 'request' | 'queued'> },
+  options?: { jobs?: Pick<BackgroundJobQueue, 'request' | 'queued'>; leaderboards?: Pick<LeaderboardRebuilds, 'contestsChanged'> },
 ): ContestSettlementService {
   return new ContestSettlementService({
     ...createContestLeaderboardReadDeps(prisma, logger),
@@ -101,6 +103,7 @@ export function createContestSettlementService(
     squares: new PrismaSquaresRepository(prisma),
     championship: createChampionshipService(prisma, logger),
     jobs: options?.jobs,
+    leaderboards: options?.leaderboards,
     logger,
   });
 }

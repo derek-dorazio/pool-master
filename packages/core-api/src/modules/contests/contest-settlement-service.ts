@@ -52,6 +52,7 @@ import type { ChampionshipService } from '../championship/service';
 import { readFinalStandings } from './final-standings';
 import { contestSettledEmailsJob } from '../notifications/contest-email-job-requests';
 import type { BackgroundJobQueue } from '../background-jobs';
+import type { LeaderboardRebuilds } from './leaderboard-snapshots';
 
 type LifecycleLogger = Pick<FastifyBaseLogger, 'debug' | 'info' | 'warn' | 'error' | 'fatal'>;
 
@@ -102,6 +103,8 @@ export interface ContestSettlementDeps extends BracketStandingsReadDeps {
   championship: Pick<ChampionshipService, 'recordContest'>;
   /** Where a contest that completes queues its final results email job (#845 F1, F2, #1387); without it, nobody is told. */
   jobs?: Pick<BackgroundJobQueue, 'request' | 'queued'>;
+  /** Told which contests settled, so their stored leaderboards show the frozen result (#1435). */
+  leaderboards?: Pick<LeaderboardRebuilds, 'contestsChanged'>;
   logger?: LifecycleLogger;
 }
 
@@ -274,6 +277,8 @@ export class ContestSettlementService {
         contestsCompleted++;
       }
     }
+
+    if (contestsSettled > 0) await this.deps.leaderboards?.contestsChanged(contests.map((contest) => contest.id));
 
     this.logger.info({
       sportEventId,

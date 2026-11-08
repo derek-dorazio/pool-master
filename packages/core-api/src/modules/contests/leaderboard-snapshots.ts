@@ -1,0 +1,166 @@
+/**
+ * Live leaderboards computed once per score write (#1435). Each contest's board is stored as a
+ * snapshot, one per contest and shown event, and every viewer's poll reads that row instead of
+ * computing the board from every entry, pick and field row.
+ *
+ * A write that changes what boards are computed from (an admin's score entry, an event write, a
+ * provider sync, live scores, a settlement) tells `LeaderboardRebuilds`, which rebuilds the
+ * stored boards of the contests touched once the writes stop: `delayMs` after the last one, or
+ * `maxWaitMs` after the first while they keep coming, as `core/cdn-invalidator.ts` batches its
+ * invalidations. A sync writing hundreds of scores therefore costs one rebuild per contest.
+ *
+ * The rebuild runs on the task that took the write; the snapshot it stores is read by every task,
+ * so a viewer anywhere sees it on their next poll. A read also computes the board itself when the
+ * stored one is not current (`isSnapshotCurrent`), which covers the changes no write signals.
+ */
+import type { FastifyBaseLogger } from 'fastify';
+import type { ContestLeaderboardSnapshot } from '@poolmaster/shared/db';
+import type { Contest } from '@poolmaster/shared/domain';
+import { readMillisecondsSetting } from '../../core/read-cache';
+import { outsideRequest } from '../../core/request-scope';
+
+/** The key of the board a read naming no event gets: the latest event whose picks are revealed. */
+export const DEFAULT_SHOWN_EVENT = '';
+
+/** How long after the last write the boards it touched are rebuilt, unless the environment sets another. */
+export const LEADERBOARD_REBUILD_DELAY_MS = 3_000;
+
+/** The longest a rebuild waits while writes keep arriving, as in a provider sync. */
+export const LEADERBOARD_REBUILD_MAX_WAIT_MS = 15_000;
+
+/**
+ * How old a stored board may be before a read computes it again: the bound on the changes no
+ * write signals, such as a participant's or a squad's new name.
+ */
+export const LEADERBOARD_SNAPSHOT_MAX_AGE_MS = 300_000;
+
+/**
+ * The rebuild delay from `LEADERBOARD_REBUILD_DELAY_MS`, in milliseconds, else 3 seconds. 0
+ * rebuilds before the write that asked answers, as the functional API lane runs, where a test
+ * reads the board right after the write it checks.
+ */
+export function readLeaderboardRebuildDelayMs(env: NodeJS.ProcessEnv): number {
+  return readMillisecondsSetting(env, 'LEADERBOARD_REBUILD_DELAY_MS', LEADERBOARD_REBUILD_DELAY_MS);
+}
+
+/** The max age from `LEADERBOARD_SNAPSHOT_MAX_AGE_MS`, in milliseconds, else 5 minutes. */
+export function readLeaderboardSnapshotMaxAgeMs(env: NodeJS.ProcessEnv): number {
+  return readMillisecondsSetting(env, 'LEADERBOARD_SNAPSHOT_MAX_AGE_MS', LEADERBOARD_SNAPSHOT_MAX_AGE_MS);
+}
+
+/**
+ * Whether a stored board still answers a read at `now`: it is younger than `maxAgeMs`, no event
+ * it does not show has started since, and the contest has not changed since (its status, its
+ * name, its draw).
+ */
+export function isSnapshotCurrent(
+  snapshot: Pick<ContestLeaderboardSnapshot<unknown>, 'computedFrom' | 'validUntil' | 'contestUpdatedAt'>,
+  contest: Pick<Contest, 'updatedAt'>,
+  now: Date,
+  maxAgeMs: number,
+): boolean {
+  return now.getTime() - snapshot.computedFrom.getTime() < maxAgeMs
+    && (snapshot.validUntil === null || now < snapshot.validUntil)
+    && snapshot.contestUpdatedAt.getTime() === contest.updatedAt.getTime();
+}
+
+/** What `rebuildLeaderboardSnapshots` is told changed. */
+export interface LeaderboardChanges {
+  sportEventIds: readonly string[];
+  contestIds: readonly string[];
+}
+
+/** What a write tells when it changed what leaderboards are computed from. */
+export interface LeaderboardRebuilds {
+  /** The fields or statuses of these events changed: their contests' boards are rebuilt soon. */
+  eventsChanged(sportEventIds: readonly string[]): Promise<void>;
+  /** These contests changed (a settlement froze their standings): their boards are rebuilt soon. */
+  contestsChanged(contestIds: readonly string[]): Promise<void>;
+  /** Rebuilds what is waiting now, and answers once it and any rebuild under way are done. */
+  flush(): Promise<void>;
+}
+
+/** The one call this needs from the contest service. */
+export interface LeaderboardRebuilder {
+  rebuildLeaderboardSnapshots(changes: LeaderboardChanges): Promise<void>;
+}
+
+type RebuildLogger = Pick<FastifyBaseLogger, 'error'>;
+
+export interface DebouncedLeaderboardRebuildsOptions {
+  rebuilder: LeaderboardRebuilder;
+  logger: RebuildLogger;
+  delayMs?: number;
+  maxWaitMs?: number;
+}
+
+export class DebouncedLeaderboardRebuilds implements LeaderboardRebuilds {
+  private readonly pendingEvents = new Set<string>();
+  private readonly pendingContests = new Set<string>();
+  private timer: NodeJS.Timeout | null = null;
+  /** When the first of the pending writes asked, which bounds how long they wait. */
+  private firstAskedAt: number | null = null;
+  /** The rebuilds under way, one after another, so two never compute the same board at once. */
+  private running: Promise<void> = Promise.resolve();
+  private readonly delayMs: number;
+  private readonly maxWaitMs: number;
+
+  constructor(private readonly options: DebouncedLeaderboardRebuildsOptions) {
+    this.delayMs = options.delayMs ?? LEADERBOARD_REBUILD_DELAY_MS;
+    this.maxWaitMs = options.maxWaitMs ?? LEADERBOARD_REBUILD_MAX_WAIT_MS;
+  }
+
+  eventsChanged(sportEventIds: readonly string[]): Promise<void> {
+    for (const sportEventId of sportEventIds) this.pendingEvents.add(sportEventId);
+    return this.schedule();
+  }
+
+  contestsChanged(contestIds: readonly string[]): Promise<void> {
+    for (const contestId of contestIds) this.pendingContests.add(contestId);
+    return this.schedule();
+  }
+
+  flush(): Promise<void> {
+    if (this.timer !== null) clearTimeout(this.timer);
+    this.timer = null;
+    return this.runPending();
+  }
+
+  private schedule(): Promise<void> {
+    if (this.pendingEvents.size === 0 && this.pendingContests.size === 0) return Promise.resolve();
+    if (this.delayMs === 0) return this.runPending();
+    const now = Date.now();
+    this.firstAskedAt ??= now;
+    if (this.timer !== null) clearTimeout(this.timer);
+    const wait = Math.min(this.delayMs, this.firstAskedAt + this.maxWaitMs - now);
+    this.timer = setTimeout(() => void this.flush(), Math.max(0, wait));
+    this.timer.unref();
+    return Promise.resolve();
+  }
+
+  private runPending(): Promise<void> {
+    this.firstAskedAt = null;
+    const changes: LeaderboardChanges = {
+      sportEventIds: [...this.pendingEvents].sort(),
+      contestIds: [...this.pendingContests].sort(),
+    };
+    this.pendingEvents.clear();
+    this.pendingContests.clear();
+    if (changes.sportEventIds.length > 0 || changes.contestIds.length > 0) {
+      this.running = this.running.then(() => this.rebuild(changes));
+    }
+    return this.running;
+  }
+
+  private async rebuild(changes: LeaderboardChanges): Promise<void> {
+    try {
+      // Not the request's work, whichever request's write asked for it: its own reads, uncounted.
+      await outsideRequest(() => this.options.rebuilder.rebuildLeaderboardSnapshots(changes));
+    } catch (error) {
+      this.options.logger.error({
+        action: 'leaderboard.rebuild.failed',
+        data: { ...changes, error: error instanceof Error ? error.message : String(error) },
+      }, 'Leaderboard rebuild failed; the stored boards stand until a read finds them out of date');
+    }
+  }
+}

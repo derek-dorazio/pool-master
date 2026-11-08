@@ -100,6 +100,7 @@ import type { LiveScoreResult } from '@poolmaster/shared/dto';
 import { freshEventEdition } from '../../support/event-edition';
 import type { z } from 'zod';
 import { expectDefined } from '../../support/expect-defined';
+import { RecordingLeaderboardRebuilds } from '../../support/recording-leaderboard-rebuilds';
 import { RecordingCdnInvalidator } from '../../support/recording-cdn-invalidator';
 
 // The shared package exports the participant response schema but not its inferred type.
@@ -339,7 +340,7 @@ async function buildIngestionApp(provider: SportDataProvider | null): Promise<Fa
     providerRegistry: registry,
   });
   await app.register(participantsModule, { prefix: '/api/v1/participants', providerRegistry: registry });
-  await app.register(eventsModule, { prefix: '/api/v1/events', ingestionService, providerRegistry: registry, cdn: new RecordingCdnInvalidator() });
+  await app.register(eventsModule, { prefix: '/api/v1/events', ingestionService, providerRegistry: registry, cdn: new RecordingCdnInvalidator(), leaderboards: new RecordingLeaderboardRebuilds() });
   await app.ready();
 
   return app;

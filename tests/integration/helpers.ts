@@ -75,7 +75,8 @@ import { ingestionModule } from '../../packages/core-api/src/modules/ingestion/r
 import { createContestEmailJobs, createContestExpandedNotices, createContestNotices, createMemberJoinedNotices } from '../../packages/core-api/src/modules/notifications';
 import { jobHandlers } from '../support/in-memory-background-jobs';
 import { createEventLifecycleService } from '../../packages/core-api/src/modules/events/wiring';
-import { createContestSettlementService } from '../../packages/core-api/src/modules/contests/wiring';
+import { createContestService, createContestSettlementService } from '../../packages/core-api/src/modules/contests/wiring';
+import { DebouncedLeaderboardRebuilds } from '../../packages/core-api/src/modules/contests/leaderboard-snapshots';
 import { createContestManagementService } from '../../packages/core-api/src/modules/contest-management/wiring';
 import { IngestionService } from '../../packages/core-api/src/modules/ingestion/ingestion-service';
 import { ProviderRegistry } from '../../packages/core-api/src/modules/ingestion/core/provider-registry';
@@ -257,11 +258,17 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
   // emails as jobs, as in index.ts.
   const contestNotices = createContestNotices(prisma, { email, appBaseUrl: readApplicationBaseUrl(process.env), logger: testApp.log });
   const contestEmailJobs = createContestEmailJobs(prisma, { notices: contestNotices, logger: testApp.log });
+  // No delay, as the functional lane runs: a write's boards are rebuilt before it answers (#1435).
+  const leaderboards = new DebouncedLeaderboardRebuilds({
+    rebuilder: createContestService(prisma, testApp.log, { planEntitlements }),
+    logger: testApp.log,
+    delayMs: 0,
+  });
   const eventLifecycleService = createEventLifecycleService(prisma, {
     logger: testApp.log,
     jobs: backgroundJobs.queue,
     sportEventChanged: contestNotices,
-    contestSettlement: createContestSettlementService(prisma, testApp.log, { jobs: backgroundJobs.queue }),
+    contestSettlement: createContestSettlementService(prisma, testApp.log, { jobs: backgroundJobs.queue, leaderboards }),
     releasedEditionContests: createContestManagementService(prisma, testApp.log, planEntitlements),
   });
   const ingestionConfigService = new IngestionConfigService(settings);
@@ -316,7 +323,7 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
   testApp.register(historyModule, { prefix: '/api/v1/leagues/:id/history', email, planEntitlements });
   testApp.register(participantsModule, { prefix: '/api/v1/participants', providerRegistry });
   testApp.register(usersModule, { prefix: '/api/v1/users', email, emailPreferences: outbox.preferences });
-  testApp.register(eventsModule, { prefix: '/api/v1/events', eventLifecycleService, ingestionService, providerRegistry, cdn });
+  testApp.register(eventsModule, { prefix: '/api/v1/events', eventLifecycleService, ingestionService, providerRegistry, cdn, leaderboards });
   testApp.register(sportsModule, { prefix: '/api/v1/sports' });
   testApp.register(eventPagesModule, { prefix: '/api/v1/event-pages' });
   testApp.register(contestConfigTemplatesModule, { prefix: '/api/v1/contest-config-templates', cdn });
