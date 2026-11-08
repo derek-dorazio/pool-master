@@ -303,9 +303,12 @@ resource "aws_cloudfront_distribution" "webapp" {
     viewer_protocol_policy = "redirect-to-https"
     compress               = true
 
+    # If-None-Match reaches the API so a leaderboard poll holding the current board's ETag is
+    # answered 304 with no body (#1436). Nothing here is cached (TTL 0), so the extra header in
+    # the cache key costs nothing.
     forwarded_values {
       query_string = true
-      headers      = ["Authorization", "x-tenant-id", "x-user-id", "Content-Type"]
+      headers      = ["Authorization", "x-tenant-id", "x-user-id", "Content-Type", "If-None-Match"]
       cookies {
         forward = "all"
       }

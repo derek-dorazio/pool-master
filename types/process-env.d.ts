@@ -23,6 +23,8 @@ declare global {
       JWT_SECRET?: string;
       APP_BASE_URL?: string;
       AUTO_START_SCHEDULER?: string;
+      // all (default), api or worker: read only through readTaskRole() (#1186).
+      CORE_API_ROLE?: string;
       POOLMASTER_DISABLE_AUTO_START?: string;
       CLIENT_LOGS_RATE_LIMIT_PER_MIN?: string;
       OPENAPI_EXPORT?: string;
