@@ -250,7 +250,7 @@ async function golfContest(events: ReadonlyArray<{ event: { id: string } }>) {
       countingPickLimit: 2, scoredPickCount: 2, asOf: new Date(), settledAt: new Date(), totalScore,
     },
   });
-  return { contest, viewerId: owner.user.id, addEntry, freeze };
+  return { contest, viewerId: owner.user.id, viewerHeaders: owner.headers, addEntry, freeze };
 }
 
 /** Each statement reading the picks, as the events among `sportEventIds` it names. */
@@ -399,10 +399,10 @@ describe('Contest leaderboard snapshots (#1435)', () => {
 
   async function liveContest() {
     const live = await createEvent('PGA', 1, SportEventStatus.IN_PROGRESS, [-5, -3, -2, 0]);
-    const { contest, viewerId, addEntry } = await golfContest([live]);
+    const { contest, viewerId, viewerHeaders, addEntry } = await golfContest([live]);
     const golfers = live.field.map((row) => row.id);
     const entry = await addEntry('Entry 1', [{ eventId: live.event.id, fieldRowIds: [golfers[0], golfers[1]].map((id) => expectDefined(id)) }]);
-    return { live, contest, viewerId, golfers, entry };
+    return { live, contest, viewerId, viewerHeaders, golfers, entry };
   }
 
   const snapshotRows = (contestId: string) => getPrisma().contestLeaderboardSnapshot.findMany({ where: { contestId } });
@@ -568,5 +568,48 @@ describe('Contest leaderboard snapshots (#1435)', () => {
 
     await new PrismaContestRepository(getAppPrisma()).delete(contest.id);
     expect(await snapshotRows(contest.id)).toEqual([]);
+  });
+
+  describe('ETag and 304 by the stored board (#1436)', () => {
+    const poll = (contestId: string, headers: Record<string, string>) =>
+      getApp().inject({ method: 'GET', url: `/api/v1/contests/${contestId}/leaderboard`, headers });
+
+    it('answers a poll holding the current board with 304 and no body, after the access check and one snapshot read', async () => {
+      const { contest, viewerHeaders } = await liveContest();
+      const first = await poll(contest.id, viewerHeaders);
+      const etag = String(first.headers.etag);
+
+      const { result: second, statements } = await recordStatements(() => poll(contest.id, { ...viewerHeaders, 'if-none-match': etag }));
+
+      expect(first.statusCode).toBe(200);
+      expect(etag).toMatch(/^"lb-1-\d+"$/);
+      expect([second.statusCode, second.body, second.headers.etag]).toEqual([304, '', etag]);
+      expect(second.headers['cache-control']).toBe(first.headers['cache-control']);
+      expect(statementsOn(statements, StatementVerb.SELECT, 'contest_leaderboard_snapshots')).toHaveLength(1);
+      expect(statementsOn(statements, StatementVerb.SELECT, 'contest_entries')).toEqual([]);
+    });
+
+    it('sends the board again with a new tag once a rebuild stored newer scores', async () => {
+      const { live, contest, viewerHeaders, golfers } = await liveContest();
+      const etag = String((await poll(contest.id, viewerHeaders)).headers.etag);
+
+      await setScore(expectDefined(golfers[0]), -9);
+      await serviceOn(getAppPrisma()).rebuildLeaderboardSnapshots({ sportEventIds: [live.event.id], contestIds: [] });
+      const after = await poll(contest.id, { ...viewerHeaders, 'if-none-match': etag });
+
+      expect(after.statusCode).toBe(200);
+      expect(after.headers.etag).not.toBe(etag);
+      expect((after.json<{ entries: { totalScore: number }[] }>()).entries.map((entry) => entry.totalScore)).toEqual([-12]);
+    });
+
+    it('refuses a reader outside the league even with the board\'s tag, never answering 304', async () => {
+      const { contest, viewerHeaders } = await liveContest();
+      const etag = String((await poll(contest.id, viewerHeaders)).headers.etag);
+      const outsider = await createTestUser({ displayName: 'Outsider' });
+
+      const refused = await poll(contest.id, { ...outsider.headers, 'if-none-match': etag });
+
+      expect(refused.statusCode).toBe(403);
+    });
   });
 });

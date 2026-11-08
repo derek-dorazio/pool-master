@@ -1,7 +1,7 @@
 /**
  * ETag/304 support plugin for Fastify.
  *
- * On response: computes MD5 hash of JSON body, sets ETag header.
+ * On response: computes MD5 hash of JSON body, sets ETag header, unless the route set its own.
  * On request: checks If-None-Match header against current ETag.
  * If match -> returns 304 Not Modified (no body, saves bandwidth).
  *
@@ -17,6 +17,12 @@ export const etagPlugin = fp((app) => {
   app.addHook('onSend', async (request, reply, payload) => {
     // Only for GET requests with JSON responses
     if (request.method !== 'GET') return payload;
+    // A route that names its own version (the leaderboards, #1436) set the ETag and answered any
+    // 304 itself, without serializing a body to hash.
+    if (reply.hasHeader('ETag')) {
+      reply.header('Cache-Control', cacheControlFor(request, reply));
+      return payload;
+    }
     if (!payload || typeof payload !== 'string') return payload;
 
     // Compute ETag from response body

@@ -248,6 +248,8 @@ export type ContestLeaderboardSnapshotRead = ContestLeaderboardSnapshot<StoredLe
 /** A contest's board with the snapshot version it was read from, for the poll's ETag (#1436). */
 export interface LeaderboardRead<Board> {
   version: number;
+  /** When the stored board began computing: with `version`, names this board for an ETag (#1436). */
+  computedFrom: Date;
   board: Board;
 }
 
@@ -608,12 +610,12 @@ export class ContestService {
     const stored = await this.deps.leaderboardSnapshots.find(contest.id, shownEvent);
     if (stored && isSnapshotCurrent(stored, contest, this.now(), this.snapshotMaxAgeMs)) {
       const board = boardOfKind(stored.board, kind);
-      if (board) return { version: stored.version, board };
+      if (board) return { version: stored.version, computedFrom: stored.computedFrom, board };
     }
     const rebuilt = await this.rebuildLeaderboardSnapshot(contest, kind, shownEvent);
     const board = boardOfKind(rebuilt.board, kind);
     if (!board) throw new Error(`Contest ${contest.id} stored a ${rebuilt.board.kind} board for a ${kind} read`);
-    return { version: rebuilt.version, board };
+    return { version: rebuilt.version, computedFrom: rebuilt.computedFrom, board };
   }
 
   /**
