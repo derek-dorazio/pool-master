@@ -47,6 +47,7 @@ import {
 } from '../helpers';
 import { DAY, HOUR, get, okBody, seedEventWithField, seedFootballWeek, seedLeagueWithTeams, seedTiers } from '../list-route-seeds';
 import { expectConstantQueries } from '../query-scaling';
+import { recordStatements, statementsOn, StatementVerb } from '../statement-log';
 
 // No mocks.
 
@@ -644,5 +645,28 @@ describe('contest reads cost the same statements for 2 rows as for 20', () => {
       call: ({ contest, commissioner }) => get(`/api/v1/selections/${contest.id}/squares`, commissioner),
       rowsShown: (response) => okBody(response, SquaresBoardResponseSchema).boxes.length,
     });
+  });
+});
+
+describe('A poll of a stored prediction leaderboard (#1435)', () => {
+  it.each([
+    ['bracket', 'bracket-leaderboard', () => seedBracketContest(3)],
+    ['survivor', 'survivor-leaderboard', () => seedPredictionContest(SelectionType.SURVIVOR, { entries: 3, weeks: 2 })],
+    ['pick\'em', 'pick-em-leaderboard', () => seedPredictionContest(SelectionType.PICK_EM, { entries: 3, weeks: 2 })],
+  ])('answers a %s board from the stored snapshot in a pinned count, reading no entries, picks or games', async (_kind, path, seed) => {
+    const { contest, commissioner } = await seed();
+    const url = `/api/v1/contests/${contest.id}/${path}`;
+    expect((await get(url, commissioner)).statusCode).toBe(200);
+
+    const { result, statements } = await recordStatements(() => get(url, commissioner));
+
+    expect(result.statusCode).toBe(200);
+    for (const table of ['contest_entries', 'contest_entry_match_predictions', 'sport_event_matches', 'contest_configurations']) {
+      expect(statementsOn(statements, StatementVerb.SELECT, table)).toEqual([]);
+    }
+    expect(statementsOn(statements, StatementVerb.SELECT, 'contest_leaderboard_snapshots')).toHaveLength(1);
+    // The contest (6), the reader's squad membership (1; the task keeps the league membership,
+    // #1438) and the snapshot (1): the same 8 for every prediction board, as for a lineup board.
+    expect(statements).toHaveLength(8);
   });
 });

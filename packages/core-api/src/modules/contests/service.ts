@@ -657,15 +657,15 @@ export class ContestService {
    * pick when it starts, so only a result changes its board after.
    */
   private async computeStoredLeaderboard(contest: Contest, kind: LeaderboardKind, shownEvent: string): Promise<{ board: StoredLeaderboard; validUntil: Date | null }> {
-    if (kind === LeaderboardKind.ROSTER) {
-      const { leaderboard, validUntil } = await this.boardOf(
-        contest,
-        shownEvent === DEFAULT_SHOWN_EVENT ? undefined : shownEvent,
-        (sportEventId) => loadEventField(this.deps, sportEventId),
-      );
-      return { board: { kind, board: toContestLeaderboardResponse(leaderboard) }, validUntil };
-    }
     switch (kind) {
+      case LeaderboardKind.ROSTER: {
+        const { leaderboard, validUntil } = await this.boardOf(
+          contest,
+          shownEvent === DEFAULT_SHOWN_EVENT ? undefined : shownEvent,
+          (sportEventId) => loadEventField(this.deps, sportEventId),
+        );
+        return { board: { kind, board: toContestLeaderboardResponse(leaderboard) }, validUntil };
+      }
       case LeaderboardKind.BRACKET:
         // Every pick of a bracket is revealed at once, when it starts; only results change it after.
         return { board: { kind, board: toBracketLeaderboardResponse((await this.bracketStandingsOf(contest)).leaderboard) }, validUntil: null };
@@ -695,9 +695,11 @@ export class ContestService {
     const batched = new ContestService({ ...batchedLeaderboardDeps(this.deps), logger: this.logger, now: this.now });
     await Promise.all(keys.map(async (key) => {
       const contest = contests.get(key.contestId);
-      if (!contest) return;
+      // A squares contest has no leaderboard (its grid is its board), so none is ever stored.
+      const kind = contest ? leaderboardKindOf(contest) : null;
+      if (!contest || !kind) return;
       try {
-        await batched.rebuildLeaderboardSnapshot(contest, leaderboardKindOf(contest) ?? LeaderboardKind.ROSTER, key.shownEvent);
+        await batched.rebuildLeaderboardSnapshot(contest, kind, key.shownEvent);
       } catch (error) {
         if (error instanceof ContestOperationError) {
           this.logger.info({ contestId: key.contestId, shownEvent: key.shownEvent, code: error.code }, 'leaderboard snapshot dropped: the board can no longer be shown');

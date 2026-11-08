@@ -30,7 +30,9 @@ import {
   ContestEntryOperationError,
   ContestOperationError,
   ContestService,
+  type StoredLeaderboard,
 } from '../../../packages/core-api/src/modules/contests/service';
+import { LeaderboardKind } from '../../../packages/core-api/src/modules/contests/leaderboard-snapshots';
 import {
   EIGHT_SEEDS,
   eightTeamBracket,
@@ -433,6 +435,22 @@ describe('Stored bracket leaderboards (#1435)', () => {
     expect(rebuilt.version).toBe(first.version + 1);
     expect(rebuilt.board.finalTotalPoints).toBe(136);
     expect(rebuilt.board.entries.map((row) => [row.entryName, row.points])).toEqual([['Alice', 12], ['Bob', 12], ['Cara', 5]]);
+  });
+
+  it('computes again and stores tagged a current row stored before boards were tagged, rather than answering its untagged board', async () => {
+    const context = setup();
+    context.play(ROUND_ONE_CHALK, ROUND_TWO_CHALK);
+    const first = await context.contestService.getBracketLeaderboard(context.contest.id, context.viewer.id);
+    // A row as the first slice stored it: the board alone, with no kind beside it.
+    const [key, row] = expectDefined([...context.world.leaderboardSnapshots.rows.entries()].at(0));
+    context.world.leaderboardSnapshots.rows.set(key, { ...row, board: row.board.board as unknown as StoredLeaderboard });
+    context.setNow(new Date(DURING.getTime() + 60_000));
+
+    const read = await context.contestService.getBracketLeaderboard(context.contest.id, context.viewer.id);
+
+    expect(read.version).toBe(first.version + 1);
+    expect(read.board).toEqual(first.board);
+    expect(expectDefined(context.world.leaderboardSnapshots.rows.get(key)).board.kind).toBe(LeaderboardKind.BRACKET);
   });
 
   it('stores no board while picks are hidden, so the first read after the start computes it', async () => {

@@ -85,6 +85,7 @@ import { selectionErrors, type SelectionError } from './selection-errors';
 import type { GamePicksReceiptNotice } from '../notifications/entry-receipts';
 import { loadSurvivorWeeks, survivorPicksByEntry, survivorWeeksOf } from '../contests/survivor-standings';
 import { survivorRun, survivorTeamsUsedInCycle } from '../scoring-families/head-to-head/survivor';
+import type { LeaderboardRebuilds } from '../contests/leaderboard-snapshots';
 
 export interface PredictionServiceDeps {
   contests: Pick<ContestRepository, 'findById'>;
@@ -99,6 +100,11 @@ export interface PredictionServiceDeps {
   predictions: ContestEntryMatchPredictionRepository;
   /** Sends the entry's owners a receipt of a submitted week (#867); none sends nothing. */
   receipts?: GamePicksReceiptNotice;
+  /**
+   * Told when a week is submitted or sent back to draft, so the contest's stored leaderboard
+   * (#1435), which lists the entries that submitted and each week's submitted flag, is rebuilt.
+   */
+  leaderboards?: Pick<LeaderboardRebuilds, 'contestsChanged'>;
   /** Each sport's definition, for what its pools offer (tie picks, #792); the sport registry unless given. */
   sportDefinitionOf?: (sport: Sport) => SportDefinition;
   now?: () => Date;
@@ -396,6 +402,7 @@ export class PredictionService {
       { action: 'prediction.submit.submitted', data: { contestId: context.contest.id, entryId: context.entry.id, sportEventId: context.sportEvent.id } },
       'Submitted a contest entry\'s game picks for one event',
     );
+    await this.deps.leaderboards?.contestsChanged([context.contest.id]);
     // The receipt is sent from the week already loaded, not read again (#1201).
     await this.deps.receipts?.gamePicksSubmitted(view, { contest: submitted.contest, entry: submitted.entry, sportEvent: submitted.sportEvent });
     return view;
@@ -438,6 +445,7 @@ export class PredictionService {
         'Sent a submitted week back to draft after a change it no longer passes',
       );
     }
+    if (written?.eventStatus) await this.deps.leaderboards?.contestsChanged([context.contest.id]);
     return { after: this.withLockedWeek(context, week), written };
   }
 
