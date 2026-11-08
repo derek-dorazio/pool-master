@@ -454,12 +454,15 @@ test('act 4: the root admin starts the race, loads its official finishing order,
   });
 
   await test.step(`the settled entry scores ${EXPECTED_ENTRY_POINTS} on the edited table, and the leaderboard says it is final`, async () => {
-    const managed = await page.request.get(
-      `/api/v1/leagues/${state.leagueId}/contest-management/contests/${state.contestId}`,
-    );
-    expect(managed.ok(), `GET the managed contest answered ${managed.status()}`).toBe(true);
-    const { contest } = (await managed.json()) as { contest: { status: string } };
-    expect(contest.status).toBe('COMPLETED');
+    // The contest settles in a background job a moment after the event completes (#1448).
+    await expect.poll(async () => {
+      const managed = await page.request.get(
+        `/api/v1/leagues/${state.leagueId}/contest-management/contests/${state.contestId}`,
+      );
+      expect(managed.ok(), `GET the managed contest answered ${managed.status()}`).toBe(true);
+      const { contest } = (await managed.json()) as { contest: { status: string } };
+      return contest.status;
+    }, { message: 'the contest settles once the event completes' }).toBe('COMPLETED');
 
     const leaderboard = await page.request.get(`/api/v1/contests/${state.contestId}/leaderboard`);
     expect(leaderboard.ok(), `GET the leaderboard answered ${leaderboard.status()}`).toBe(true);
