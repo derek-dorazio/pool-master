@@ -822,9 +822,8 @@ export class ContestService {
           ? missedEventEntries(contest, contestEntries, new Set(entries.map((entry) => entry.id)))
           : [];
         for (const entry of missed) entriesById.set(entry.id, entry);
-        const ranked = rankContestEvent({ field, event, scoring: scoring.scoring, countingRule, direction, submitted: entries, missed });
-        const scores = ranked.scores;
-        rows = ranked.rows;
+        const { rows: rankedRows, scores } = rankContestEvent({ field, event, scoring: scoring.scoring, countingRule, direction, submitted: entries, missed });
+        rows = rankedRows;
         if (settled.length > 0) {
           rows = applySettledContestStandings(rows, settled.map(toSettledStanding));
         }
