@@ -113,12 +113,62 @@ export function getFunctionalBaseUrl(): string {
   return readState().baseUrl;
 }
 
+/** `POST /api/v1/events/:eventId/transition`, whose COMPLETED or CANCELLED settles in a job (#1448). */
+const EVENT_TRANSITION_PATH = /\/api\/v1\/events\/([^/]+)\/transition$/;
+const SETTLE_JOB_WAIT_MS = 30_000;
+const SETTLE_JOB_POLL_MS = 50;
+
+/**
+ * Waits until the job settling this event's contests has run. The server settles a finished
+ * event in a background job after the transition answers, and the scenarios read the settled
+ * standings next, as a member would once the job is done. A job that fails, or is still waiting
+ * after SETTLE_JOB_WAIT_MS, fails the test with its last error.
+ */
+export async function awaitEventSettlementJobs(sportEventId: string): Promise<void> {
+  const database = getFunctionalPrisma();
+  const deadline = Date.now() + SETTLE_JOB_WAIT_MS;
+  const where = {
+    type: 'SETTLE_SPORT_EVENT_CONTESTS' as const,
+    payload: { path: ['sportEventId'], equals: sportEventId },
+  };
+  for (;;) {
+    const unfinished = await database.backgroundJob.findMany({
+      where: { ...where, status: { in: ['QUEUED', 'RUNNING'] } },
+      select: { status: true, attempts: true, lastError: true },
+    });
+    const failed = await database.backgroundJob.findFirst({
+      where: { ...where, OR: [{ status: 'FAILED' }, { status: 'QUEUED', attempts: { gt: 0 } }] },
+      select: { lastError: true },
+    });
+    if (failed) {
+      throw new Error(`Settling event ${sportEventId}'s contests failed: ${failed.lastError ?? 'no error recorded'}`);
+    }
+    if (unfinished.length === 0) return;
+    if (Date.now() > deadline) {
+      throw new Error(`Settling event ${sportEventId}'s contests was still ${unfinished[0]?.status} after ${SETTLE_JOB_WAIT_MS} ms`);
+    }
+    await new Promise((resolve) => setTimeout(resolve, SETTLE_JOB_POLL_MS));
+  }
+}
+
+/** A successful event transition answers only once the job it queued has settled the event. */
+function waitingForEventSettlement(client: Client): Client {
+  client.interceptors.response.use(async (response: Response, request: Request) => {
+    const transition = EVENT_TRANSITION_PATH.exec(new URL(request.url).pathname);
+    if (request.method === 'POST' && transition?.[1] && response.ok) {
+      await awaitEventSettlementJobs(decodeURIComponent(transition[1]));
+    }
+    return response;
+  });
+  return client;
+}
+
 export function getSdkClient(): Client {
-  return createClient(
+  return waitingForEventSettlement(createClient(
     createConfig({
       baseUrl: getFunctionalBaseUrl(),
     }),
-  );
+  ));
 }
 
 export function createAuthenticatedClient(accessToken: string): Client {
@@ -133,7 +183,7 @@ export function createAuthenticatedClient(accessToken: string): Client {
     return request;
   });
 
-  return client;
+  return waitingForEventSettlement(client);
 }
 
 export function createCookieSessionClient(session: {
@@ -163,7 +213,7 @@ export function createCookieSessionClient(session: {
     return request;
   });
 
-  return client;
+  return waitingForEventSettlement(client);
 }
 
 export function getFunctionalPrisma(): PrismaClient {

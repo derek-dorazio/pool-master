@@ -16,6 +16,7 @@ import {
 } from '../../../packages/core-api/src/adapters';
 import { recordStatements, statementShape } from '../statement-log';
 import { createEventLifecycleService } from '../../../packages/core-api/src/modules/events/wiring';
+import { createContestSettlementService } from '../../../packages/core-api/src/modules/contests/wiring';
 import {
   cleanupTestData,
   createTestUser,
@@ -1926,19 +1927,30 @@ describe('EventLifecycleService — an event cancelled under a contest (#845 C7)
       logger: fakeLogger(),
     });
     const emailJobs = createContestEmailJobs(getAppPrisma(), { notices, logger: fakeLogger() });
-    const lifecycle = createEventLifecycleService(getAppPrisma(), { sportEventChanged: notices });
+    const lifecycle = createEventLifecycleService(getAppPrisma(), {
+      jobs: jobs.queue,
+      sportEventChanged: notices,
+      contestSettlement: createContestSettlementService(getAppPrisma(), fakeLogger()),
+    });
+    // Held until the transition has returned, so the email is seen to come from its jobs (#1448, #1458).
+    const runner = integrationBackgroundJobs().runWith({
+      SETTLE_SPORT_EVENT_CONTESTS: (payload) => lifecycle.settleFinishedEventContests(payload),
+      CONTEST_EVENT_CHANGED_EMAILS: (payload) => emailJobs.contestEventChanged(payload),
+    });
 
     await lifecycle.applySportEventStatusTransition({
       sportEventId: event.id, toStatus: 'CANCELLED', actor: { type: 'ROOT_ADMIN' },
     });
+    await deliverQueuedEmail();
+    expect(send).not.toHaveBeenCalled();
 
-    // The cancellation wrote one job, for the one contest that goes on, and built no email (#1458).
-    await expect(prisma.backgroundJob.findMany({ select: { type: true, payload: true } })).resolves.toEqual([{
-      type: 'CONTEST_EVENT_CHANGED_EMAILS',
+    // The settle job decides which contests hear of the cancellation and writes one job for the
+    // one contest that goes on, building no email itself (#1458), then settles.
+    await runner.drain();
+    await expect(prisma.backgroundJob.findMany({ where: { type: 'CONTEST_EVENT_CHANGED_EMAILS' }, select: { payload: true } })).resolves.toEqual([{
       payload: { contestId: open.id, sportEventId: event.id, change: { kind: 'CANCELLED', startsAt: event.startDate.toISOString() } },
     }]);
-    await expect(prisma.emailMessage.count({ where: { templateKey: 'CONTEST_EVENT_CHANGED' } })).resolves.toBe(0);
-    await jobs.runWith({ CONTEST_EVENT_CHANGED_EMAILS: (payload) => emailJobs.contestEventChanged(payload) }).drain();
+    await runner.drain();
     await deliverQueuedEmail();
     expect(send.mock.calls.map(([message]) => message.to).sort()).toEqual([owner.user.email, member.user.email].sort());
     const toMember = send.mock.calls.find(([message]) => message.to === member.user.email)?.[0];

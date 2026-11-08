@@ -1,4 +1,4 @@
-import { expect } from '@jest/globals';
+import { expect, jest } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
 import type { InjectOptions, LightMyRequestResponse } from 'fastify';
 import { API_ROUTES } from '@poolmaster/shared/api-routes';
@@ -33,6 +33,7 @@ import {
   type RecordedStatement,
 } from '../statement-log';
 import { freshEventEdition } from '../../support/event-edition';
+import { PrismaContestRepository } from '../../../packages/core-api/src/adapters';
 
 // The routes #1355 brought under the request query budget, against Postgres: each reads the
 // joiner, the team, the league and the contest's events once however many steps of the request
@@ -49,6 +50,23 @@ afterAll(async () => {
 beforeEach(() => cleanupTestData());
 
 const TIER_KEYS = ['A', 'B', 'C', 'D', 'E', 'F'];
+
+/**
+ * What an event's move to COMPLETED sends (#1448): the event and its answer, the job that settles
+ * its contests, and the leaderboard rebuild the status change asks for. No contest is read or
+ * written, so the count is the same however many contests the event holds.
+ */
+const PINNED_TRANSITION_COUNTS: Array<[string, number]> = [
+  ['INSERT background_jobs', 1],
+  ['SELECT contest_leaderboard_snapshots', 1],
+  ['SELECT contest_sport_events', 2],
+  ['SELECT event_series', 2],
+  ['SELECT sport_event_participants', 3],
+  ['SELECT sport_event_tiers', 2],
+  ['SELECT sport_events', 2],
+  ['SELECT sport_leagues', 2],
+  ['UPDATE sport_events', 1],
+];
 
 /**
  * The request's response and every statement it sent. The background jobs it queues are held
@@ -308,7 +326,7 @@ describe('Opening a contest (#1355)', () => {
  * the numbers are drawn, and the first three quarters are scored. With `gameFinished`, the game's
  * final result is already in, as an event finished after its last game would have it.
  */
-async function squaresContestUnderWay(options: { gameFinished: boolean }) {
+async function squaresContestUnderWay(options: { gameFinished: boolean; contests?: number }) {
   const prisma = getPrisma();
   const { commissioner, leagueId, squadId } = await leagueWithTeam();
   const admin = await createTestUser({ isRootAdmin: true });
@@ -356,28 +374,33 @@ async function squaresContestUnderWay(options: { gameFinished: boolean }) {
       },
     },
   });
-  const contest = await prisma.contest.create({
-    data: {
-      leagueId,
-      seasonYear: 2026,
-      sportEvents: { create: { sportEventId: event.id, sequence: 1 } },
-      squaresGame: { create: { sportEventMatchId: game.id } },
-      name: `Read Once Squares ${suffix}`,
-      status: 'ACTIVE',
-      contestFormat: 'SQUARES',
-      selectionType: 'SQUARES',
-    },
-  });
-  const entry = await prisma.contestEntry.create({
-    data: { contestId: contest.id, squadId, entryNumber: 1, name: `Read Once Entry ${suffix}`, events: { create: { sportEventId: event.id } } },
-  });
-  await prisma.contestEntrySquare.createMany({
-    data: TIER_KEYS.map((_, columnIndex) => ({ contestId: contest.id, contestEntryId: entry.id, rowIndex: 0, columnIndex })),
-  });
-  await prisma.contestSquaresDraw.create({
-    data: { contestId: contest.id, seed: 'read-once', rowDigits: [1, 0, 2, 3, 4, 5, 6, 7, 8, 9], columnDigits: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] },
-  });
-  return { admin, eventId: event.id, contestId: contest.id, gameId: game.id, commissionerId: commissioner.user.id };
+  // Each contest is a squares pool on the same game, with one entry holding a row of boxes.
+  const contestIds: string[] = [];
+  for (let number = 1; number <= (options.contests ?? 1); number++) {
+    const contest = await prisma.contest.create({
+      data: {
+        leagueId,
+        seasonYear: 2026,
+        sportEvents: { create: { sportEventId: event.id, sequence: 1 } },
+        squaresGame: { create: { sportEventMatchId: game.id } },
+        name: `Read Once Squares ${suffix} ${number}`,
+        status: 'ACTIVE',
+        contestFormat: 'SQUARES',
+        selectionType: 'SQUARES',
+      },
+    });
+    const entry = await prisma.contestEntry.create({
+      data: { contestId: contest.id, squadId, entryNumber: 1, name: `Read Once Entry ${suffix} ${number}`, events: { create: { sportEventId: event.id } } },
+    });
+    await prisma.contestEntrySquare.createMany({
+      data: TIER_KEYS.map((_, columnIndex) => ({ contestId: contest.id, contestEntryId: entry.id, rowIndex: 0, columnIndex })),
+    });
+    await prisma.contestSquaresDraw.create({
+      data: { contestId: contest.id, seed: 'read-once', rowDigits: [1, 0, 2, 3, 4, 5, 6, 7, 8, 9], columnDigits: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] },
+    });
+    contestIds.push(contest.id);
+  }
+  return { admin, eventId: event.id, contestId: contestIds[0] ?? '', contestIds, gameId: game.id, commissionerId: commissioner.user.id };
 }
 
 /**
@@ -450,8 +473,8 @@ describe('Settling a squares contest with its game (#1355)', () => {
   });
 });
 
-describe('Finishing an event (#1355)', () => {
-  it('reads each settled contest\'s final places once for its championship finishes, never the event\'s field a squares contest does not score, builds no email, and sends a fixed set of statements when an event\'s status change settles a contest', async () => {
+describe('Finishing an event (#1355, #1448)', () => {
+  it('answers an event\'s status change with a fixed set of statements that settles nothing, then settles its contest in the job, reading its final places once for its championship finishes and once for its results email', async () => {
     const { admin, eventId, contestId, commissionerId } = await squaresContestUnderWay({ gameFinished: true });
 
     const { response, statements } = await measureRequest({
@@ -462,51 +485,88 @@ describe('Finishing an event (#1355)', () => {
     });
 
     expect(response.statusCode).toBe(200);
+    // The request only moves the event and writes the job that settles it.
+    expect((await getPrisma().contest.findUniqueOrThrow({ where: { id: contestId } })).status).toBe(ContestStatus.ACTIVE);
+    expect(requestCounts(statements)).toEqual(PINNED_TRANSITION_COUNTS);
+    const [settleJob] = await getPrisma().backgroundJob.findMany({ select: { type: true, payload: true } });
+    expect(settleJob).toEqual({
+      type: 'SETTLE_SPORT_EVENT_CONTESTS',
+      payload: { sportEventId: eventId, completedAt: expect.any(String) },
+    });
+
+    const { statements: jobStatements } = await recordStatements(() => drainBackgroundJobs());
+
     expect((await getPrisma().contest.findUniqueOrThrow({ where: { id: contestId } })).status).toBe(ContestStatus.COMPLETED);
-    expect(finalPlaceReads(statements, contestId)).toBe(1);
-    expect(requestCounts(statements)).toEqual([
-      ['DELETE contest_squares_winners', 1],
-      ['INSERT background_jobs', 1],
-      ['INSERT contest_entry_event_standings', 1],
-      ['INSERT contest_entry_standings', 1],
-      ['INSERT contest_squares_winners', 1],
-      ['INSERT league_year_finishes', 1],
-      ['SELECT contest_draws', 1],
-      ['SELECT contest_entries', 1],
-      ['SELECT contest_entry_event_standings', 2],
-      ['SELECT contest_entry_events', 1],
-      ['SELECT contest_entry_squares', 1],
-      ['SELECT contest_entry_standings', 2],
-      // The leaderboard rebuilds settlement and the save ask for (#1435), with no delay as this
-      // app runs: which settled contests have a stored board, and the same for the event's contests.
-      ['SELECT contest_leaderboard_snapshots', 2],
-      ['SELECT contest_sport_events', 3],
-      ['SELECT contest_squares_draws', 2],
-      ['SELECT contest_squares_games', 1],
-      ['SELECT contests', 1],
-      ['SELECT event_series', 2],
-      ['SELECT leagues', 1],
-      ['SELECT sport_event_match_period_scores', 1],
-      ['SELECT sport_event_matches', 1],
-      ['SELECT sport_event_participants', 3],
-      ['SELECT sport_event_rounds', 1],
-      ['SELECT sport_event_tiers', 2],
-      ['SELECT sport_events', 3],
-      ['SELECT sport_leagues', 2],
-      ['SELECT squads', 1],
-      ['UPDATE contests', 1],
-      ['UPDATE sport_events', 1],
+    // Once by settlement for its championship finishes, and once by the results email job it queued.
+    expect(finalPlaceReads(jobStatements, contestId)).toBe(2);
+    // The settle job's contest wrote its final results email job, which queued the email.
+    await expect(getPrisma().backgroundJob.findMany({ select: { type: true, status: true }, orderBy: { type: 'asc' } })).resolves.toEqual([
+      { type: 'CONTEST_SETTLED_EMAILS', status: 'SUCCEEDED' },
+      { type: 'SETTLE_SPORT_EVENT_CONTESTS', status: 'SUCCEEDED' },
     ]);
-    // The final results email is the job's: none was queued in the request, and its job queues it.
-    await expect(contestEmails(contestId)).resolves.toEqual([]);
-    await expect(getPrisma().backgroundJob.findMany({ select: { type: true, payload: true } })).resolves.toEqual([
-      { type: 'CONTEST_SETTLED_EMAILS', payload: { contestId } },
-    ]);
-    await drainBackgroundJobs();
     await expect(contestEmails(contestId)).resolves.toEqual([{ templateKey: 'CONTEST_RESULTS', recipientUserId: commissionerId }]);
-    // A retry of the job queues nothing twice: each email is recorded under its idempotency key.
-    await integrationBackgroundJobs().queue.enqueue(BackgroundJobType.CONTEST_SETTLED_EMAILS, { contestId });
+  });
+
+  it('sends the same statements to finish an event with three contests as with one, as their settling is the job\'s', async () => {
+    const one = await squaresContestUnderWay({ gameFinished: true });
+    const three = await squaresContestUnderWay({ gameFinished: true, contests: 3 });
+
+    const [withOne, withThree] = [
+      await measureRequest({ method: 'POST', url: `/api/v1/events/${one.eventId}/transition`, headers: one.admin.headers, payload: { toStatus: 'COMPLETED' } }),
+      await measureRequest({ method: 'POST', url: `/api/v1/events/${three.eventId}/transition`, headers: three.admin.headers, payload: { toStatus: 'COMPLETED' } }),
+    ];
+
+    expect([withOne.response.statusCode, withThree.response.statusCode]).toEqual([200, 200]);
+    expect(requestCounts(withThree.statements)).toEqual(requestCounts(withOne.statements));
     await drainBackgroundJobs();
-    await expect(contestEmails(contestId)).resolves.toEqual([{ templateKey: 'CONTEST_RESULTS', recipientUserId: commissionerId }]);
+    const statuses = await getPrisma().contest.findMany({ where: { id: { in: [...one.contestIds, ...three.contestIds] } }, select: { status: true } });
+    expect(statuses.map(({ status }) => status)).toEqual(Array(4).fill(ContestStatus.COMPLETED));
+  });
+
+  it('leaves no contest half settled when the settle job fails part way: the retry completes the rest once, and the one already completed keeps its result', async () => {
+    const { admin, eventId, contestIds } = await squaresContestUnderWay({ gameFinished: true, contests: 2 });
+    const [first, second] = contestIds;
+    // The second contest's move to COMPLETED fails once, as a lost connection would.
+    const transitionStatus = PrismaContestRepository.prototype.transitionStatus;
+    const failing = jest.spyOn(PrismaContestRepository.prototype, 'transitionStatus')
+      .mockImplementation(async function (this: PrismaContestRepository, id, transition) {
+        if (id === second && transition.to === ContestStatus.COMPLETED && failing.mock.calls.filter(([calledId]) => calledId === second).length === 1) {
+          throw new Error('connection lost');
+        }
+        return transitionStatus.call(this, id, transition);
+      });
+    const settled = () => getPrisma().contest.findMany({
+      where: { id: { in: contestIds } },
+      select: { id: true, status: true, endsAt: true },
+      orderBy: { name: 'asc' },
+    });
+
+    try {
+      await measureRequest({ method: 'POST', url: `/api/v1/events/${eventId}/transition`, headers: admin.headers, payload: { toStatus: 'COMPLETED' } });
+      await drainBackgroundJobs();
+
+      const [afterFailure] = await getPrisma().backgroundJob.findMany({ where: { type: 'SETTLE_SPORT_EVENT_CONTESTS' }, select: { status: true, attempts: true, lastError: true } });
+      expect(afterFailure).toEqual({ status: 'QUEUED', attempts: 1, lastError: expect.stringContaining('connection lost') });
+      const [firstSettled, secondUnsettled] = await settled();
+      expect([firstSettled.status, secondUnsettled.status]).toEqual([ContestStatus.COMPLETED, ContestStatus.ACTIVE]);
+
+      // The retry, made due now rather than after its backoff.
+      await getPrisma().backgroundJob.updateMany({ where: { type: 'SETTLE_SPORT_EVENT_CONTESTS' }, data: { runAt: new Date() } });
+      await drainBackgroundJobs();
+
+      await expect(settled()).resolves.toEqual([
+        { id: first, status: ContestStatus.COMPLETED, endsAt: firstSettled.endsAt },
+        { id: second, status: ContestStatus.COMPLETED, endsAt: firstSettled.endsAt },
+      ]);
+      // Each contest has its one entry's standing, and was completed (and told of its results) once.
+      const standings = await getPrisma().contestEntryStanding.groupBy({ by: ['contestId'], where: { contestId: { in: contestIds } }, _count: true, orderBy: { contestId: 'asc' } });
+      expect(standings.map(({ _count }) => _count)).toEqual([1, 1]);
+      const emailJobs = await getPrisma().backgroundJob.findMany({ where: { type: 'CONTEST_SETTLED_EMAILS' }, select: { payload: true } });
+      expect(emailJobs.map(({ payload }) => (payload as { contestId: string }).contestId).sort()).toEqual([...contestIds].sort());
+      await expect(getPrisma().backgroundJob.findFirst({ where: { type: 'SETTLE_SPORT_EVENT_CONTESTS' }, select: { status: true, attempts: true } }))
+        .resolves.toEqual({ status: 'SUCCEEDED', attempts: 2 });
+    } finally {
+      failing.mockRestore();
+    }
   });
 });

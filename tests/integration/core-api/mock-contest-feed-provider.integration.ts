@@ -883,8 +883,14 @@ describe('mock contest feed provider event-first verification', () => {
     const registry = new ProviderRegistry();
     registry.register(Sport.GOLF, provider, 'PRIMARY');
     const settlement = createContestSettlementService(getAppPrisma());
+    const settleJobs = integrationBackgroundJobs();
     const eventLifecycleService = createEventLifecycleService(getAppPrisma(), {
+      jobs: settleJobs.queue,
       contestSettlement: settlement,
+    });
+    // Completing the event queues the job that settles its contests (#1448); this runs it.
+    const settleRunner = settleJobs.runWith({
+      SETTLE_SPORT_EVENT_CONTESTS: (payload) => eventLifecycleService.settleFinishedEventContests(payload),
     });
     const persistence = new IngestionPersistence(getAppPrisma());
     const syncRunLedger = new ProviderSyncRunLedger(new PrismaProviderSyncRunRepository(getAppPrisma()));
@@ -1051,6 +1057,7 @@ describe('mock contest feed provider event-first verification', () => {
       toStatus: 'COMPLETED',
       actor: { type: 'ROOT_ADMIN' },
     });
+    await settleRunner.drain();
 
     await expect(prisma.sportEvent.findUniqueOrThrow({
       where: {

@@ -812,6 +812,7 @@ export class InMemoryContestWorld {
         if (!existing || existing.status !== transition.from) return null;
         const next: SportEvent = { ...existing, status: transition.to, ...(transition.endDate && { endDate: transition.endDate }) };
         this.sportEvents.set(id, next);
+        this.backgroundJobs.push(...(transition.jobs ?? []));
         return next;
       },
     });

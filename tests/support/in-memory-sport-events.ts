@@ -38,6 +38,7 @@ import type {
 import type { SportEventBracketServiceDeps } from '../../packages/core-api/src/modules/events/sport-event-bracket-service';
 import { MatchEnding, BracketAdvancement, findSportRow, MatchSide, MatchStatus, ParticipantInactiveReason, ParticipantStatus, ValuationSource } from '@poolmaster/shared/domain';
 import type {
+  BackgroundJobRequest,
   SportEventParticipantStatLine,
   GolfRoundResult,
   GolfStandingResult,
@@ -96,6 +97,8 @@ export class InMemorySportEvents {
   raceResultRows: SportEventParticipantRaceResult[] = [];
   statLineRows: SportEventParticipantStatLine[] = [];
   matchRows: SportEventMatch[] = [];
+  /** The jobs each status move wrote with it (#1448). */
+  backgroundJobs: BackgroundJobRequest[] = [];
 
   id(prefix: string): string {
     this.sequence += 1;
@@ -318,6 +321,7 @@ export class InMemorySportEvents {
         if (!row || row.status !== transition.from) return null;
         row.status = transition.to;
         if (transition.endDate) row.endDate = transition.endDate;
+        this.backgroundJobs.push(...(transition.jobs ?? []));
         return row;
       },
       delete: async (id) => {
