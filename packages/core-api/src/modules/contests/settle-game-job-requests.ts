@@ -21,7 +21,8 @@ export type SettleGameContestsJobPayload = z.infer<typeof SettleGameContestsJobP
 /**
  * The job for one game just decided. Its dedupe key holds one such job per game still waiting for
  * its first try, so a result saved and then corrected before it runs queues one; the job reads the
- * game as it then stands.
+ * game as it then stands, and settles at the first save's time. A game whose result was cleared
+ * before the job runs settles nothing.
  */
 export function settleGameContestsJob(
   jobs: Pick<BackgroundJobQueue, 'request'>,

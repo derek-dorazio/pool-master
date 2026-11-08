@@ -53,10 +53,10 @@ import {
 } from '@poolmaster/shared/domain';
 import { SportEventError } from '../../events/errors';
 import type { EventLifecycleService, FinishedGameSettlement } from '../../events/event-lifecycle-service';
+import { formsNoBracket } from '../../events/sport-event-bracket-service';
 
 /** No game settlement: contests are not wired to this service, or the change decides no game. */
 const NO_SETTLEMENT: FinishedGameSettlement = { jobs: [], queued: () => undefined };
-import { formsNoBracket } from '../../events/sport-event-bracket-service';
 
 export interface MatchResultInput {
   /** The side that won; null for a tie (#792), only in a game of a week, which forms no bracket. */

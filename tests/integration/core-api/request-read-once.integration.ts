@@ -503,6 +503,27 @@ describe('Settling a squares contest with its game (#1355, #1460)', () => {
     expect(statuses.map(({ status }) => status)).toEqual(Array(4).fill(ContestStatus.COMPLETED));
   });
 
+  it('keeps a squares contest open when its game\'s result is cleared before the job runs, and settles it with winners once the result is saved again', async () => {
+    const { admin, eventId, contestId } = await squaresContestUnderWay({ gameFinished: false });
+    const resultUrl = `/api/v1/events/${eventId}/bracket/matches/1/result`;
+    const saveResult: InjectOptions = { method: 'PUT', url: resultUrl, headers: admin.headers, payload: { winnerSide: 'AWAY', homeScore: 27, awayScore: 31 } };
+
+    await measureRequest(saveResult);
+    const cleared = await measureRequest({ method: 'DELETE', url: resultUrl, headers: withoutJsonBodyHeaders(admin.headers) });
+    expect(cleared.response.statusCode).toBe(200);
+    await drainBackgroundJobs();
+
+    // The job found the game undecided, so the contest waits for its result.
+    await expect(contestStatuses([contestId])).resolves.toEqual([[contestId, ContestStatus.ACTIVE]]);
+    await expect(getPrisma().contestSquaresWinner.count({ where: { contestId } })).resolves.toBe(0);
+
+    await measureRequest(saveResult);
+    await drainBackgroundJobs();
+
+    await expect(contestStatuses([contestId])).resolves.toEqual([[contestId, ContestStatus.COMPLETED]]);
+    await expect(getPrisma().contestSquaresWinner.count({ where: { contestId } })).resolves.toBeGreaterThan(0);
+  });
+
   it('leaves no squares contest half settled when the game\'s job fails part way: the retry completes the rest once', async () => {
     const { admin, eventId, contestIds } = await squaresContestUnderWay({ gameFinished: false, contests: 2 });
     const [first, second] = contestIds;

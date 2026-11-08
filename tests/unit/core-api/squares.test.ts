@@ -567,6 +567,17 @@ describe('ContestSettlementService settling a squares contest with its game', ()
     expect(context.world.standings.size).toBe(0);
   });
 
+  it('settles nothing on a game whose result was cleared before its job ran, so the contest stays open for the next result', async () => {
+    const context = setup({ status: ContestStatus.ACTIVE });
+    context.drawInOrder();
+    context.updateGame({ status: MatchStatus.SCHEDULED, homeScore: null, awayScore: null });
+
+    await expect(context.settlement.settleFinishedGame(context.superBowl.id, context.game.id, { completedAt: later(KICKOFF, 4) })).resolves.toBe(0);
+
+    expect(context.contestStatus()).toBe(ContestStatus.ACTIVE);
+    expect(context.world.standings.size).toBe(0);
+  });
+
   it('leaves squares contests on other games of the event unsettled', async () => {
     const context = setup({ status: ContestStatus.ACTIVE });
     const other = context.games.addGame(context.superBowl.id, 2, KICKOFF);
