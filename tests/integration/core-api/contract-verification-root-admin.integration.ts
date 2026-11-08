@@ -329,7 +329,7 @@ async function buildIngestionApp(provider: SportDataProvider | null): Promise<Fa
     scheduler,
     jobs: backgroundJobs.queue,
   });
-  backgroundJobs.runWith({ MANUAL_EVENT_SYNC: (payload) => ingestionService.runManualEventSync(payload) });
+  backgroundJobs.runWith({ MANUAL_EVENT_SYNC: (payload, context) => ingestionService.runManualEventSync(payload, context) });
 
   app.decorate('prisma', prisma);
   app.setErrorHandler(globalErrorHandler);

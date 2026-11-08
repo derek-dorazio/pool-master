@@ -768,7 +768,7 @@ describe('mock contest feed provider event-first verification', () => {
       syncRunLedger,
       jobs: backgroundJobs.queue,
     });
-    backgroundJobs.runWith({ MANUAL_EVENT_SYNC: (payload) => providerService.runManualEventSync(payload) });
+    backgroundJobs.runWith({ MANUAL_EVENT_SYNC: (payload, context) => providerService.runManualEventSync(payload, context) });
 
     const linked = await linkProviderGolfEvents(new Date('2026-04-01T00:00:00.000Z'), new Date('2026-06-30T23:59:59.999Z'));
     expect(linked).toBeGreaterThan(0);
@@ -911,7 +911,7 @@ describe('mock contest feed provider event-first verification', () => {
       syncRunLedger,
       jobs: backgroundJobs.queue,
     });
-    backgroundJobs.runWith({ MANUAL_EVENT_SYNC: (payload) => providerService.runManualEventSync(payload) });
+    backgroundJobs.runWith({ MANUAL_EVENT_SYNC: (payload, context) => providerService.runManualEventSync(payload, context) });
 
     await linkProviderGolfEvents(new Date('2026-04-01T00:00:00.000Z'), new Date('2026-06-30T23:59:59.999Z'));
 

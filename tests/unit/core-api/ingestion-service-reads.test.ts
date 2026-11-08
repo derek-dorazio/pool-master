@@ -1,3 +1,4 @@
+import { expectDefined } from '../../support/expect-defined';
 import { expect } from '@jest/globals';
 import {
   DEFAULT_SYNC_RUN_WINDOW_HOURS,
@@ -57,7 +58,7 @@ function service(
   });
   const runner = new BackgroundJobRunner({
     jobs: runs.jobs,
-    handlers: jobHandlers({ MANUAL_EVENT_SYNC: (payload) => ingestion.runManualEventSync(payload) }),
+    handlers: jobHandlers({ MANUAL_EVENT_SYNC: (payload, context) => ingestion.runManualEventSync(payload, context) }),
     logger: fakeLogger(),
   });
   jobs.wakes(runner);
@@ -384,7 +385,43 @@ describe('IngestionService manual sync job (#1441)', () => {
 
     await expect(ingestion.runManualEventSync({
       syncRunIds: ['00000000-0000-4000-8000-000000000001'], sport: Sport.GOLF, eventId: 'evt-1',
-    })).rejects.toThrow('Ingestion scheduler is required for manual event sync');
+    }, { attempt: 1 })).rejects.toThrow('Ingestion scheduler is required for manual event sync');
+  });
+
+  it('runs the other feeds, then fails the job when a failed feed\'s run could not be marked FAILED, so the retry marks it interrupted (#1445)', async () => {
+    const runs = syncRuns();
+    const update = runs.update.getMockImplementation();
+    let refuseFailedWrite = true;
+    runs.update.mockImplementation((id, change) => {
+      if (change.status === 'FAILED' && refuseFailedWrite) {
+        refuseFailedWrite = false;
+        return Promise.reject(new Error('connection reset'));
+      }
+      return expectDefined(update)(id, change);
+    });
+    const runEventSync = jest.fn()
+      .mockRejectedValueOnce(new Error('provider timed out'))
+      .mockResolvedValue([COMPLETED_JOB]);
+    const scheduler = stubInstance(IngestionScheduler, { runEventSync });
+    const ingestion = service({ registry: registryWith(fakeSportDataProvider()), scheduler, syncRuns: runs });
+    const failing = await runs.create({
+      providerId: 'mock-provider', sport: Sport.GOLF, eventId: 'evt-1', status: 'SUBMITTED',
+      startedAt: null, completedAt: null, payload: { requestedFeed: 'EVENTPARTICIPANTS' },
+    });
+    const healthy = await runs.create({
+      providerId: 'mock-provider', sport: Sport.GOLF, eventId: 'evt-1', status: 'SUBMITTED',
+      startedAt: null, completedAt: null, payload: { requestedFeed: 'EVENTLIVESCORES' },
+    });
+    const payload = { syncRunIds: [failing.id, healthy.id], sport: Sport.GOLF, eventId: 'evt-1' };
+
+    await expect(ingestion.runManualEventSync(payload, { attempt: 1 })).rejects.toThrow(`without a recorded outcome: ${failing.id}`);
+    expect(runs.rows.find((run) => run.id === failing.id)?.status).toBe('IN_PROGRESS');
+    expect(runs.rows.find((run) => run.id === healthy.id)?.status).toBe('COMPLETED');
+
+    await ingestion.runManualEventSync(payload, { attempt: 2 });
+
+    expect(runs.rows.find((run) => run.id === failing.id)?.status).toBe('FAILED');
+    expect(runEventSync).toHaveBeenCalledTimes(2);
   });
 
   it('runs outside the submitting request\'s read memo, so the background sync reads afresh', async () => {
