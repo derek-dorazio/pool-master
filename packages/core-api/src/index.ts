@@ -79,7 +79,15 @@ import type { LiveScoreResult } from '@poolmaster/shared/dto';
 import { IngestionPersistence } from './modules/ingestion/persistence/ingestion-persistence';
 import { createEventLifecycleService, eventFieldCache } from './modules/events/wiring';
 import { EventLifecycleScheduler } from './modules/events/event-lifecycle-scheduler';
-import { createContestEmailJobs, createContestExpandedNotices, createContestNotices, createDueNotifications, createMemberJoinedNotices } from './modules/notifications';
+import {
+  createContestEmailJobs,
+  createContestExpandedNotices,
+  createContestNotices,
+  createDueNotifications,
+  createMemberJoinedNotices,
+  DueNotificationKind,
+  DueNotificationsScheduler,
+} from './modules/notifications';
 import { ProviderSyncRunLedger } from './modules/ingestion/persistence/provider-sync-run-ledger';
 import { SyncRunDetailsRetention, SyncRunRetention } from './modules/ingestion/persistence/sync-run-retention';
 import { registerConfiguredProviders } from './modules/ingestion/core/provider-bindings';
@@ -174,21 +182,23 @@ export function buildApp() {
     sportEvents: new PrismaSportEventRepository(prisma),
     rounds: new PrismaSportEventRoundRepository(prisma),
     eventLifecycleService,
-    notificationsDue: [
-      ...createDueNotifications(prisma, {
-        email,
-        readConfig: () => appSettings.get(EMAIL_SETTINGS),
-        appBaseUrl,
-        logger: app.log,
-        planEntitlements,
-        memberJoined,
-      }),
-      // A quick pick draw's receipts, queued by the draw for the sweep (#1171).
-      createDrawReceipts(prisma, app.log, { email, appBaseUrl, planEntitlements }),
-    ],
     jobLock,
     logger: app.log,
   });
+  // The emails that come due on the clock (#845), each kind on a timer and lock of its own so a
+  // slow one never holds up another or the lifecycle sweep.
+  const dueNotificationsSchedulers = [
+    ...createDueNotifications(prisma, {
+      email,
+      readConfig: () => appSettings.get(EMAIL_SETTINGS),
+      appBaseUrl,
+      logger: app.log,
+      planEntitlements,
+      memberJoined,
+    }),
+    // A quick pick draw's receipts, queued by the draw for the sweep (#1171).
+    { kind: DueNotificationKind.DRAW_RECEIPTS, notifications: createDrawReceipts(prisma, app.log, { email, appBaseUrl, planEntitlements }) },
+  ].map((due) => new DueNotificationsScheduler({ ...due, jobLock, logger: app.log }));
   const providerSyncRuns = new PrismaProviderSyncRunRepository(prisma);
   // #1175: tables that grow without end are trimmed to their retention periods once a night.
   const nightlyCleanupScheduler = new NightlyCleanupScheduler({
@@ -387,6 +397,9 @@ export function buildApp() {
     eventLifecycleScheduler.start();
     app.log.info('Event lifecycle scheduler started');
 
+    // The clock-driven emails always run, each on its own timer, as the lifecycle sweep does.
+    for (const scheduler of dueNotificationsSchedulers) scheduler.start();
+
     // The email outbox's sender always runs: every email waits in the outbox for it.
     emailSender.start();
 
@@ -401,6 +414,7 @@ export function buildApp() {
     appSettings.stop();
     ingestionScheduler.stop();
     eventLifecycleScheduler.stop();
+    for (const scheduler of dueNotificationsSchedulers) scheduler.stop();
     emailSender.stop();
     nightlyCleanupScheduler.stop();
     // Stops claiming and lets the jobs in flight finish briefly; a lapsed lease re-runs the rest.

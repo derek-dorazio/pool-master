@@ -78,7 +78,7 @@ import {
   type EntryReminderStanding,
 } from '../email';
 import { hasSportEventStarted } from '../events/operational-timing';
-import type { DueNotifications } from '../events/event-lifecycle-scheduler';
+import type { DueNotifications } from './due-notifications-scheduler';
 import type { SportEventTierService } from '../events/sport-event-tier-service';
 import { contestBracketGames } from '../scoring-families/head-to-head/bracket-picks';
 import { survivorRun } from '../scoring-families/head-to-head/survivor';

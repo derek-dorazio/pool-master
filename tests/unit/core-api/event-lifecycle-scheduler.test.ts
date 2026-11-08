@@ -17,8 +17,6 @@
  *   - One event's failure does not stop the sweep from processing the rest.
  */
 import type { SportEvent } from '@poolmaster/shared/domain';
-import type { PrismaClient } from '@prisma/client';
-import { memoizedRead, ReadMemoKey } from '../../../packages/core-api/src/core/request-read-memo';
 import { EventLifecycleScheduler } from '../../../packages/core-api/src/modules/events/event-lifecycle-scheduler';
 import { InMemorySportEvents } from '../../support/in-memory-sport-events';
 import { fakeLogger } from '../../support/fake-logger';
@@ -315,36 +313,19 @@ describe('EventLifecycleScheduler and a contest whose cutoff comes mid-event (#7
     expect(logger.error).toHaveBeenCalledWith(expect.objectContaining({ sportEventId: 'evt-fails', error: 'boom' }), expect.any(String));
   });
 
-  it('asks the notifications due step to queue what is due at the sweep time, after the event transitions', async () => {
+  it('queues no email: the clock-driven emails sweep on timers of their own, so a sweep only moves events and contests', async () => {
     const { sportEvents, rounds } = storeWith([
       { event: { id: 'evt-1', status: 'SCHEDULED', startDate: new Date('2026-06-01T00:00:00.000Z') }, rounds: [] },
     ]);
-    const order: string[] = [];
-    const eventLifecycleService = {
-      activateContestsPastCutoff: jest.fn(),
-      applySportEventStatusTransition: jest.fn().mockImplementation(async () => { order.push('transition'); }),
-    };
-    const notificationsDue = { queueDue: jest.fn(async () => { order.push('notifications'); }) };
-    const sweptAt = new Date('2026-06-01T13:00:00.000Z');
-    const scheduler = new EventLifecycleScheduler({ sportEvents, rounds, eventLifecycleService, jobLock: heldHere(), notificationsDue: [notificationsDue], logger: fakeLogger(), now: () => sweptAt });
+    const eventLifecycleService = { activateContestsPastCutoff: jest.fn(), applySportEventStatusTransition: jest.fn() };
+    const keys: string[] = [];
+    const jobLock = { runExclusive: async (key: string, work: () => Promise<void>) => { keys.push(key); await work(); return true; } };
+    const scheduler = new EventLifecycleScheduler({ sportEvents, rounds, eventLifecycleService, jobLock, logger: fakeLogger(), now: () => new Date('2026-06-01T13:00:00.000Z') });
 
     await scheduler.runSweep();
 
-    expect(notificationsDue.queueDue).toHaveBeenCalledWith(sweptAt);
-    expect(order).toEqual(['transition', 'notifications']);
-  });
-
-  it('logs a failed notifications step without failing the sweep, and still runs the next kind of email', async () => {
-    const { sportEvents, rounds } = storeWith([]);
-    const eventLifecycleService = { activateContestsPastCutoff: jest.fn(), applySportEventStatusTransition: jest.fn() };
-    const logger = fakeLogger();
-    const reminders = { queueDue: jest.fn().mockRejectedValue(new Error('outbox down')) };
-    const standings = { queueDue: jest.fn(async () => undefined) };
-    const scheduler = new EventLifecycleScheduler({ sportEvents, rounds, eventLifecycleService, jobLock: heldHere(), notificationsDue: [reminders, standings], logger });
-
-    await expect(scheduler.runSweep()).resolves.toBeUndefined();
-    expect(logger.error).toHaveBeenCalledWith(expect.objectContaining({ error: 'outbox down' }), expect.any(String));
-    expect(standings.queueDue).toHaveBeenCalledTimes(1);
+    expect(eventLifecycleService.applySportEventStatusTransition).toHaveBeenCalledTimes(1);
+    expect(keys).toEqual(['event-lifecycle-sweep']);
   });
 });
 
@@ -358,18 +339,16 @@ describe('EventLifecycleScheduler.runSweep across server tasks (#1159)', () => {
     applySportEventStatusTransition: jest.fn().mockResolvedValue(undefined),
   });
 
-  it('moves no event and queues no email when another server task holds the sweep lock', async () => {
+  it('moves no event when another server task holds the sweep lock', async () => {
     const { sportEvents, rounds } = storeWith(due());
     const eventLifecycleService = lifecycle();
-    const notificationsDue = { queueDue: jest.fn().mockResolvedValue(undefined) };
     const jobLock = heldElsewhere();
-    const scheduler = new EventLifecycleScheduler({ sportEvents, rounds, eventLifecycleService, notificationsDue: [notificationsDue], jobLock, logger: fakeLogger(), now });
+    const scheduler = new EventLifecycleScheduler({ sportEvents, rounds, eventLifecycleService, jobLock, logger: fakeLogger(), now });
 
     await scheduler.runSweep();
 
     expect(jobLock.keys).toEqual(['event-lifecycle-sweep']);
     expect(eventLifecycleService.applySportEventStatusTransition).not.toHaveBeenCalled();
-    expect(notificationsDue.queueDue).not.toHaveBeenCalled();
   });
 
   it('skips a sweep that comes due while the previous sweep is still running, and sweeps again after it ends', async () => {
@@ -404,23 +383,5 @@ describe('EventLifecycleScheduler.runSweep across server tasks (#1159)', () => {
     await expect(scheduler.runSweep()).resolves.toBeUndefined();
 
     expect(logger.error).toHaveBeenCalledWith({ error: 'db down' }, 'Event lifecycle sweep failed');
-  });
-
-  it('gives each sweep its own read memo, so a read its steps share is made once per sweep', async () => {
-    const { sportEvents, rounds } = storeWith([]);
-    const eventLifecycleService = { activateContestsPastCutoff: jest.fn(), applySportEventStatusTransition: jest.fn() };
-    // Stands in for the root Prisma client, the only one whose reads are remembered.
-    const root = { $transaction: jest.fn() } as unknown as PrismaClient;
-    const load = jest.fn(async () => ({ name: 'NFL' }));
-    const readSportLeague = { queueDue: jest.fn(async () => { await memoizedRead(root, `${ReadMemoKey.sportLeague}nfl`, load); }) };
-    const scheduler = new EventLifecycleScheduler({
-      sportEvents, rounds, eventLifecycleService, jobLock: heldHere(), notificationsDue: [readSportLeague, readSportLeague], logger: fakeLogger(),
-    });
-
-    await scheduler.runSweep();
-    expect(load).toHaveBeenCalledTimes(1);
-    await scheduler.runSweep();
-
-    expect(load).toHaveBeenCalledTimes(2);
   });
 });

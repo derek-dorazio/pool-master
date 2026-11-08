@@ -11,7 +11,7 @@
 
 import type { FastifyBaseLogger } from 'fastify';
 import type { ContestRepository } from '@poolmaster/shared/db';
-import type { DueNotifications } from '../events/event-lifecycle-scheduler';
+import type { DueNotifications } from '../notifications/due-notifications-scheduler';
 import type { SelectionService } from './service';
 
 export interface DrawReceiptsDeps {

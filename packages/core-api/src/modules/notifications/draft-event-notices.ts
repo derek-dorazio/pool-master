@@ -13,7 +13,7 @@ import type { FastifyBaseLogger } from 'fastify';
 import type { SportEventRepository, UserRepository } from '@poolmaster/shared/db';
 import { SportEventStatus, type SportEvent, type User } from '@poolmaster/shared/domain';
 import { emailRecipientOf, buildSportEventAdminUrl, type EmailService } from '../email';
-import type { DueNotifications } from '../events/event-lifecycle-scheduler';
+import type { DueNotifications } from './due-notifications-scheduler';
 import type { SportEventService } from '../events/service';
 
 const DAY_MS = 24 * 60 * 60_000;

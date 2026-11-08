@@ -44,7 +44,7 @@ import { MemberJoinedNotices } from './member-joined-notices';
 import { PlanPreviewNotices } from './plan-preview-notices';
 import { LeaguePlanService } from '../plans/league-plan-service';
 import type { PlanEntitlementsService } from '../plans/plan-entitlements-service';
-import type { DueNotifications } from '../events/event-lifecycle-scheduler';
+import { DueNotificationKind, type NamedDueNotifications } from './due-notifications-scheduler';
 
 export function createEntryReminders(prisma: PrismaClient, options: {
   email: EmailService;
@@ -233,8 +233,8 @@ export function createPlanPreviewNotices(prisma: PrismaClient, options: {
 }
 
 /**
- * The lifecycle sweep's "notifications due" step, every clock-driven email in the order a sweep
- * queues them. `memberJoined` is the routes' own, so a join and the sweep share one.
+ * Every clock-driven email, each kind named for the sweep and lock of its own it runs on
+ * (`DueNotificationsScheduler`). `memberJoined` is the routes' own, so a join and the sweep share one.
  */
 export function createDueNotifications(prisma: PrismaClient, options: {
   email: EmailService;
@@ -243,14 +243,14 @@ export function createDueNotifications(prisma: PrismaClient, options: {
   logger: FastifyBaseLogger;
   planEntitlements: PlanEntitlementsService;
   memberJoined: MemberJoinedNotices;
-}): DueNotifications[] {
+}): NamedDueNotifications[] {
   const { email, readConfig, appBaseUrl, logger, planEntitlements } = options;
   return [
-    createEntryReminders(prisma, { email, readConfig, appBaseUrl, logger }),
-    createLiveStandings(prisma, { email, readConfig, appBaseUrl, logger, planEntitlements }),
-    createCommissionerNotices(prisma, { email, readConfig, appBaseUrl, logger }),
-    createDraftEventNotices(prisma, { email, appBaseUrl, logger }),
-    options.memberJoined,
-    createPlanPreviewNotices(prisma, { email, readConfig, appBaseUrl, logger, planEntitlements }),
+    { kind: DueNotificationKind.ENTRY_REMINDERS, notifications: createEntryReminders(prisma, { email, readConfig, appBaseUrl, logger }) },
+    { kind: DueNotificationKind.LIVE_STANDINGS, notifications: createLiveStandings(prisma, { email, readConfig, appBaseUrl, logger, planEntitlements }) },
+    { kind: DueNotificationKind.COMMISSIONER_NOTICES, notifications: createCommissionerNotices(prisma, { email, readConfig, appBaseUrl, logger }) },
+    { kind: DueNotificationKind.DRAFT_EVENT_NOTICES, notifications: createDraftEventNotices(prisma, { email, appBaseUrl, logger }) },
+    { kind: DueNotificationKind.MEMBER_JOINED_NOTICES, notifications: options.memberJoined },
+    { kind: DueNotificationKind.PLAN_PREVIEW_NOTICES, notifications: createPlanPreviewNotices(prisma, { email, readConfig, appBaseUrl, logger, planEntitlements }) },
   ];
 }

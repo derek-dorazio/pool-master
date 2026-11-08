@@ -26,7 +26,7 @@ import {
   type JoinedMember,
 } from '../email';
 import type { EmailConfig } from '@poolmaster/shared/dto';
-import type { DueNotifications } from '../events/event-lifecycle-scheduler';
+import type { DueNotifications } from './due-notifications-scheduler';
 import { activeLeagueMembersByLeague, leagueMembersOf, type LeagueMemberDeps, type LeagueMemberWithRole } from './league-members';
 import { easternDateOf, easternDayOf } from './overnight-day';
 

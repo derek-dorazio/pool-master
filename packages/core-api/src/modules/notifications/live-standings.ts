@@ -75,7 +75,7 @@ import {
   type StandingsMoment,
   type StandingsNextWeek,
 } from '../email';
-import type { DueNotifications } from '../events/event-lifecycle-scheduler';
+import type { DueNotifications } from './due-notifications-scheduler';
 import type { SportEventParticipantService, SportEventParticipantView } from '../events/sport-event-participant-service';
 import { eventStoresGolfRoundScores } from '../scoring-families/golf-round-scores';
 import { lastFinishedMatchRound } from '../scoring-families/head-to-head/finished-rounds';

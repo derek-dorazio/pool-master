@@ -221,6 +221,10 @@ sender), and prod runs more than one task. So that a job runs once, not once per
   a connection of its own). The task that takes a job's lock keeps it from tick to tick and the
   others skip that job, until the holder stops and its connection closes. A new provider loop
   passes a lock key; a loop that only changes this process's own state needs none.
+- **One recurring job per lock.** Work that sweeps every league (an email kind, a cleanup) gets a
+  timer and lock of its own rather than a step inside another sweep, so a slow one never holds
+  up the rest. The clock-driven emails each run on a `DueNotificationsScheduler` (#845), apart
+  from the lifecycle sweep that puts contests live.
 - **A status change that triggers side effects is a guarded write** — `updateMany` where the
   row is still in the status it was read in — and only the caller whose write landed runs the
   side effects. `SportEventRepository.transitionStatus` and `ContestRepository.transitionStatus`

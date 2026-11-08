@@ -477,8 +477,9 @@ background job in its transaction, and the job builds the emails seconds later, 
 request (#1387, `docs/BACKGROUND-JOBS.md`).
 
 Entry reminders ("Picks close soon", #845) are the first email sent on the clock rather than
-on an action. Each lifecycle scheduler sweep (every 5 minutes) ends with a "notifications due"
-step, which queues the reminder whose time has come, at the `entryReminderHours` offsets before
+on an action. Each kind of clock-driven email sweeps every 5 minutes on a timer and job lock of
+its own (`DueNotificationsScheduler`), apart from the lifecycle sweep, so a slow kind never holds
+up another or a contest going live. The reminders' sweep queues the reminder whose time has come, at the `entryReminderHours` offsets before
 each event's cutoff (the event's start, a second-chance bracket's starting round, a squares
 game's kickoff). Everyone gets a reminder at the same moment, one email per person however many
 squads they own. Only the latest reminder whose time has passed is sent, and none more than an
@@ -577,7 +578,7 @@ contests a cancellation tells is decided before the event's contests settle. The
 idempotency key names the change and the start it leaves (a move, both starts), so a second
 postponement or a move back to an earlier new date is told again.
 
-Commissioner event emails (#845 C1, C2 and C4) are the "notifications due" step's third kind,
+Commissioner event emails (#845 C1, C2 and C4) are the third kind of clock-driven email,
 in the Commissioner updates category:
 
 - **Coming up soon** (`EVENT_COMING_UP`): an event of any sport league, released or still a

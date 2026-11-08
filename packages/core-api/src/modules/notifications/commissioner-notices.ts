@@ -70,7 +70,7 @@ import {
   type PreviousContestWinners,
   type WeeklyDigestEvent,
 } from '../email';
-import type { DueNotifications } from '../events/event-lifecycle-scheduler';
+import type { DueNotifications } from './due-notifications-scheduler';
 import type { EmailConfig } from '@poolmaster/shared/dto';
 import { closesOnAGame, contestClosesAtGiven } from './contest-summary';
 import { activeCommissionersByLeague, type LeagueMemberDeps } from './league-members';

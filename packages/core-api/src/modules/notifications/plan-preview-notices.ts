@@ -25,7 +25,7 @@ import {
   type EmailService,
   type PlanPreviewReminderDays,
 } from '../email';
-import type { DueNotifications } from '../events/event-lifecycle-scheduler';
+import type { DueNotifications } from './due-notifications-scheduler';
 import type { LeaguePlanService } from '../plans/league-plan-service';
 import type { PlanEntitlementsService } from '../plans/plan-entitlements-service';
 import { activeCommissionersByLeague, type LeagueMemberDeps } from './league-members';
