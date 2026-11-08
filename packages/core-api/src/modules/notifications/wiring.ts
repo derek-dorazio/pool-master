@@ -18,6 +18,7 @@ import {
   PrismaContestRepository,
   PrismaLeagueMembershipRepository,
   PrismaLeagueRepository,
+  PrismaParticipantContestScoringRuleRepository,
   PrismaSportEventMatchRepository,
   PrismaSportEventRepository,
   PrismaSportLeagueRepository,
@@ -32,6 +33,7 @@ import type { EmailService } from '../email';
 import { createSportEventParticipantService, createSportEventServices, createSportEventTierService } from '../events/wiring';
 import { CommissionerNotices } from './commissioner-notices';
 import { ContestExpandedNotices } from './contest-expanded-notices';
+import { ContestEmailJobs } from './contest-email-jobs';
 import { ContestNotices } from './contest-notices';
 import { DraftEventNotices } from './draft-event-notices';
 import { EntryReceipts } from './entry-receipts';
@@ -85,6 +87,24 @@ export function createContestNotices(prisma: PrismaClient, options: {
     memberships: new PrismaLeagueMembershipRepository(prisma),
     squadMemberships: new PrismaSquadMembershipRepository(prisma),
     users: new PrismaUserRepository(prisma),
+    ...options,
+  });
+}
+
+/** The handlers of the contest started and final results email jobs (#1387), over `notices`. */
+export function createContestEmailJobs(prisma: PrismaClient, options: {
+  notices: Pick<ContestNotices, 'contestStarted' | 'contestSettled'>;
+  logger: FastifyBaseLogger;
+}): ContestEmailJobs {
+  return new ContestEmailJobs({
+    contests: new PrismaContestRepository(prisma),
+    sportEvents: new PrismaSportEventRepository(prisma),
+    finalStandings: {
+      configurations: new PrismaContestConfigurationRepository(prisma),
+      scoringRules: new PrismaParticipantContestScoringRuleRepository(prisma),
+      standings: new PrismaContestEntryStandingRepository(prisma),
+      entries: new PrismaContestEntryRepository(prisma),
+    },
     ...options,
   });
 }

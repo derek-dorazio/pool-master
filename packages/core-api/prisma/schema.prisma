@@ -211,6 +211,8 @@ enum PrismaEmailMessageStatus {
 
 enum PrismaBackgroundJobType {
   MANUAL_EVENT_SYNC
+  CONTEST_STARTED_EMAILS
+  CONTEST_SETTLED_EMAILS
 }
 
 enum PrismaBackgroundJobStatus {

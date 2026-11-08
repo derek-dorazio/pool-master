@@ -78,7 +78,7 @@ import type { LiveScoreResult } from '@poolmaster/shared/dto';
 import { IngestionPersistence } from './modules/ingestion/persistence/ingestion-persistence';
 import { createEventLifecycleService, eventFieldCache } from './modules/events/wiring';
 import { EventLifecycleScheduler } from './modules/events/event-lifecycle-scheduler';
-import { createContestExpandedNotices, createContestNotices, createDueNotifications, createMemberJoinedNotices } from './modules/notifications';
+import { createContestEmailJobs, createContestExpandedNotices, createContestNotices, createDueNotifications, createMemberJoinedNotices } from './modules/notifications';
 import { ProviderSyncRunLedger } from './modules/ingestion/persistence/provider-sync-run-ledger';
 import { SyncRunDetailsRetention, SyncRunRetention } from './modules/ingestion/persistence/sync-run-retention';
 import { registerConfiguredProviders } from './modules/ingestion/core/provider-bindings';
@@ -139,7 +139,12 @@ export function buildApp() {
     logger: app.log,
   });
   const appBaseUrl = readApplicationBaseUrl(process.env);
+  // Work a request hands off rather than waits for (#1439): queued here, run by the runner below.
+  const backgroundJobRepository = new PrismaBackgroundJobRepository(prisma);
+  const backgroundJobs = new BackgroundJobQueue({ jobs: backgroundJobRepository });
   const contestNotices = createContestNotices(prisma, { email, appBaseUrl, logger: app.log });
+  // A contest going live or completing queues its league's email as a job (#1387).
+  const contestEmailJobs = createContestEmailJobs(prisma, { notices: contestNotices, logger: app.log });
   // Live leaderboards are computed once per score write (#1435): every write that changes what a
   // board is computed from tells this, and the boards it touched are rebuilt once the writes stop.
   const leaderboards = new DebouncedLeaderboardRebuilds({
@@ -147,10 +152,10 @@ export function buildApp() {
     logger: app.log,
     delayMs: readLeaderboardRebuildDelayMs(process.env),
   });
-  const contestSettlement = createContestSettlementService(prisma, app.log, { contestSettled: contestNotices, leaderboards });
+  const contestSettlement = createContestSettlementService(prisma, app.log, { jobs: backgroundJobs, leaderboards });
   const eventLifecycleService = createEventLifecycleService(prisma, {
     logger: app.log,
-    contestStarted: contestNotices,
+    jobs: backgroundJobs,
     sportEventChanged: contestNotices,
     contestSettlement,
     releasedEditionContests: createContestManagementService(prisma, app.log, planEntitlements),
@@ -180,9 +185,6 @@ export function buildApp() {
     logger: app.log,
   });
   const providerSyncRuns = new PrismaProviderSyncRunRepository(prisma);
-  // Work a request hands off rather than waits for (#1439): queued here, run by the runner below.
-  const backgroundJobRepository = new PrismaBackgroundJobRepository(prisma);
-  const backgroundJobs = new BackgroundJobQueue({ jobs: backgroundJobRepository });
   // #1175: tables that grow without end are trimmed to their retention periods once a night.
   const nightlyCleanupScheduler = new NightlyCleanupScheduler({
     steps: [
@@ -277,6 +279,8 @@ export function buildApp() {
     jobs: backgroundJobRepository,
     handlers: {
       MANUAL_EVENT_SYNC: (payload) => ingestionService.runManualEventSync(payload),
+      CONTEST_STARTED_EMAILS: (payload) => contestEmailJobs.contestStarted(payload),
+      CONTEST_SETTLED_EMAILS: (payload) => contestEmailJobs.contestSettled(payload),
     },
     pollMs: readBackgroundJobPollMs(process.env),
     logger: app.log,

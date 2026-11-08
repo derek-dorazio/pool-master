@@ -14,6 +14,7 @@ import { Sport, SportEventSyncScope, type SportEvent } from '../../../packages/s
 import { fakeParticipantProviderMappingRepo, fakeSportEventRepo } from '../../support/repo-fakes';
 import { fakeSportDataProvider, registryWith } from '../../support/fake-sport-data-provider';
 import { fakeLogger } from '../../support/fake-logger';
+import { jobHandlers } from '../../support/in-memory-background-jobs';
 import { stubInstance } from '../../support/stub-instance';
 import { inMemorySyncRuns, type InMemorySyncRuns } from '../../support/in-memory-sync-runs';
 import { BackgroundJobQueue, BackgroundJobRunner } from '../../../packages/core-api/src/modules/background-jobs';
@@ -56,7 +57,7 @@ function service(
   });
   const runner = new BackgroundJobRunner({
     jobs: runs.jobs,
-    handlers: { MANUAL_EVENT_SYNC: (payload) => ingestion.runManualEventSync(payload) },
+    handlers: jobHandlers({ MANUAL_EVENT_SYNC: (payload) => ingestion.runManualEventSync(payload) }),
     logger: fakeLogger(),
   });
   jobs.wakes(runner);

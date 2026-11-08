@@ -7,9 +7,11 @@ import {
   createTestUser,
   getAppPrisma,
   getPrisma,
+  integrationBackgroundJobs,
   setupIntegrationTests,
   teardownIntegrationTests,
 } from '../helpers';
+import { createContestEmailJobs } from '../../../packages/core-api/src/modules/notifications';
 import { freshEventEdition } from '../../support/event-edition';
 import { fakeLogger } from '../../support/fake-logger';
 import type { ContestFinalStandings } from '../../../packages/core-api/src/modules/contests/final-standings';
@@ -24,11 +26,18 @@ afterAll(async () => {
 describe('pool-master-eux.6: schedule-driven Golf contest settlement', () => {
   it('pool-master-eux.6: freezes final standings, completes the sport event\'s contests, tells the league its final places once per completion, and is idempotent', async () => {
     const prisma = getPrisma();
-    // The final places settlement hands the final results email when the contest completes.
+    // The final places the final results email job reads once the contest completes (#1387).
     const told: Array<{ contestId: string; final: ContestFinalStandings }> = [];
-    const service = createContestSettlementService(getAppPrisma(), undefined, {
-      contestSettled: { contestSettled: async (contest: Contest, final: ContestFinalStandings) => { told.push({ contestId: contest.id, final }); } },
+    const jobs = integrationBackgroundJobs();
+    const service = createContestSettlementService(getAppPrisma(), undefined, { jobs: jobs.queue });
+    const emailJobs = createContestEmailJobs(getAppPrisma(), {
+      notices: {
+        contestStarted: () => Promise.reject(new Error('No contest started email expected')),
+        contestSettled: async (contest: Contest, final: ContestFinalStandings) => { told.push({ contestId: contest.id, final }); },
+      },
+      logger: fakeLogger(),
     });
+    const runner = jobs.runWith({ CONTEST_SETTLED_EMAILS: (payload) => emailJobs.contestSettled(payload) });
     const suffix = randomUUID().slice(0, 8);
     const owner = await createTestUser({ displayName: `Golf Settlement ${suffix}` });
     const sport = await prisma.sport.upsert({
@@ -160,6 +169,7 @@ describe('pool-master-eux.6: schedule-driven Golf contest settlement', () => {
     expect(statuses.find((contest) => contest.id === directContest.id)?.endsAt)
       .toEqual(new Date('2026-05-31T22:00:00.000Z'));
     await expect(prisma.contestEntryStanding.count({ where: { contestId: noRuleContest.id } })).resolves.toBe(0);
+    await runner.drain();
     expect(told).toEqual([{
       contestId: directContest.id,
       final: {
@@ -224,6 +234,7 @@ describe('pool-master-eux.6: schedule-driven Golf contest settlement', () => {
       where: { id: directContest.id },
       select: { status: true, endsAt: true },
     })).resolves.toEqual({ status: 'COMPLETED', endsAt: new Date('2026-05-31T22:00:00.000Z') });
+    await runner.drain();
     expect(told).toHaveLength(1);
 
     // The event's own standings froze at the first settlement too (#713).
@@ -248,6 +259,7 @@ describe('pool-master-eux.6: schedule-driven Golf contest settlement', () => {
       [-9, '1'],
       [1, '2'],
     ]);
+    await runner.drain();
     expect(told.map((notice) => notice.contestId)).toEqual([directContest.id, directContest.id]);
     // Still one row per entry: the resettle updated the standings in place.
     await expect(prisma.contestEntryStanding.count({ where: { contestId: directContest.id } })).resolves.toBe(2);
@@ -331,24 +343,23 @@ describe('golf contest settlement — which contests settle', () => {
     await expect(prisma.contestEntryStanding.count({ where: { contestId: invalidSettings.id } })).resolves.toBe(0);
   });
 
-  it('still completes a contest whose final results email cannot be queued, and logs the failure', async () => {
+  it('completes a contest without building its final results email, leaving that to a job that is retried when the email cannot be queued', async () => {
     const prisma = getPrisma();
-    const logger = fakeLogger();
-    const service = createContestSettlementService(getAppPrisma(), logger, {
-      contestSettled: { contestSettled: async () => Promise.reject(new Error('outbox unavailable')) },
-    });
+    const jobs = integrationBackgroundJobs();
+    const service = createContestSettlementService(getAppPrisma(), fakeLogger(), { jobs: jobs.queue });
+    const runner = jobs.runWith({ CONTEST_SETTLED_EMAILS: () => Promise.reject(new Error('outbox unavailable')) });
     const { league, event, suffix } = await seedCompletedEvent();
     const active = await createSettlementContest({ leagueId: league.id, sportEventId: event.id, name: `Mail Down ${suffix}` });
 
     const summary = await service.settleFinishedSportEvent(event.id);
+    await runner.drain();
 
     expect(summary).toMatchObject({ contestsSettled: 1, contestsCompleted: 1 });
     await expect(prisma.contest.findUniqueOrThrow({ where: { id: active.id }, select: { status: true } }))
       .resolves.toEqual({ status: 'COMPLETED' });
-    expect(logger.error).toHaveBeenCalledWith(
-      expect.objectContaining({ contestId: active.id, error: 'outbox unavailable' }),
-      'Failed to queue final results emails',
-    );
+    await expect(prisma.backgroundJob.findMany({ select: { type: true, payload: true, status: true, attempts: true, lastError: true } })).resolves.toEqual([
+      { type: 'CONTEST_SETTLED_EMAILS', payload: { contestId: active.id }, status: 'QUEUED', attempts: 1, lastError: 'outbox unavailable' },
+    ]);
   });
 
   it('settles nothing while the event is not yet COMPLETED', async () => {

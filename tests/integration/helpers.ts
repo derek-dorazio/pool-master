@@ -72,7 +72,8 @@ import {
 } from '../../packages/core-api/src/modules/email';
 import { snsSigner, TEST_TOPIC_ARN } from '../support/sns-messages';
 import { ingestionModule } from '../../packages/core-api/src/modules/ingestion/routes';
-import { createContestExpandedNotices, createContestNotices, createMemberJoinedNotices } from '../../packages/core-api/src/modules/notifications';
+import { createContestEmailJobs, createContestExpandedNotices, createContestNotices, createMemberJoinedNotices } from '../../packages/core-api/src/modules/notifications';
+import { jobHandlers } from '../support/in-memory-background-jobs';
 import { createEventLifecycleService } from '../../packages/core-api/src/modules/events/wiring';
 import { createContestService, createContestSettlementService } from '../../packages/core-api/src/modules/contests/wiring';
 import { DebouncedLeaderboardRebuilds } from '../../packages/core-api/src/modules/contests/leaderboard-snapshots';
@@ -155,6 +156,9 @@ const cdn = new RecordingCdnInvalidator();
 // The SES events route believes messages signed by this key, from TEST_TOPIC_ARN (#844 slice 4).
 const integrationSns = snsSigner();
 const confirmedSnsSubscriptions: string[] = [];
+/** The shared app's job runner, and whether a test holds its jobs back. */
+let backgroundJobRunner: BackgroundJobRunner | undefined;
+let backgroundJobsHeld = false;
 
 /**
  * A job queue over the real job table, and the runner it wakes, as index.ts wires them but with
@@ -163,14 +167,14 @@ const confirmedSnsSubscriptions: string[] = [];
  */
 export function integrationBackgroundJobs(prisma: PrismaClient = getAppPrisma()): {
   queue: BackgroundJobQueue;
-  runWith(handlers: BackgroundJobHandlers): BackgroundJobRunner;
+  runWith(handlers: Partial<BackgroundJobHandlers>): BackgroundJobRunner;
 } {
   const repository = new PrismaBackgroundJobRepository(prisma);
   const queue = new BackgroundJobQueue({ jobs: repository });
   return {
     queue,
     runWith(handlers) {
-      const runner = new BackgroundJobRunner({ jobs: repository, handlers });
+      const runner = new BackgroundJobRunner({ jobs: repository, handlers: jobHandlers(handlers) });
       queue.wakes(runner);
       return runner;
     },
@@ -248,8 +252,12 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
     logger: testApp.log,
   });
   emailSender = outbox.sender;
-  // An event's status change and a game's result start, settle and email its contests, as in index.ts.
+  // The job runner has no timer here: a queued job wakes it, as in the app, unless a test holds it.
+  const backgroundJobs = integrationBackgroundJobs(prisma);
+  // An event's status change and a game's result start and settle its contests, and queue their
+  // emails as jobs, as in index.ts.
   const contestNotices = createContestNotices(prisma, { email, appBaseUrl: readApplicationBaseUrl(process.env), logger: testApp.log });
+  const contestEmailJobs = createContestEmailJobs(prisma, { notices: contestNotices, logger: testApp.log });
   // No delay, as the functional lane runs: a write's boards are rebuilt before it answers (#1435).
   const leaderboards = new DebouncedLeaderboardRebuilds({
     rebuilder: createContestService(prisma, testApp.log, { planEntitlements }),
@@ -258,9 +266,9 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
   });
   const eventLifecycleService = createEventLifecycleService(prisma, {
     logger: testApp.log,
-    contestStarted: contestNotices,
+    jobs: backgroundJobs.queue,
     sportEventChanged: contestNotices,
-    contestSettlement: createContestSettlementService(prisma, testApp.log, { contestSettled: contestNotices, leaderboards }),
+    contestSettlement: createContestSettlementService(prisma, testApp.log, { jobs: backgroundJobs.queue, leaderboards }),
     releasedEditionContests: createContestManagementService(prisma, testApp.log, planEntitlements),
   });
   const ingestionConfigService = new IngestionConfigService(settings);
@@ -269,8 +277,6 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
     runtimeConfigs: runtimeConfigRepository,
     users: new PrismaUserRepository(prisma),
   });
-  // The job runner has no timer here: a queued job wakes it, as in the app.
-  const backgroundJobs = integrationBackgroundJobs(prisma);
   const ingestionService = new IngestionService({
     registry: providerRegistry,
     sportEvents: new PrismaSportEventRepository(prisma),
@@ -279,7 +285,13 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
     ingestionConfigReader: ingestionConfigService,
     jobs: backgroundJobs.queue,
   });
-  backgroundJobs.runWith({ MANUAL_EVENT_SYNC: (payload) => ingestionService.runManualEventSync(payload) });
+  const runner = backgroundJobs.runWith({
+    MANUAL_EVENT_SYNC: (payload) => ingestionService.runManualEventSync(payload),
+    CONTEST_STARTED_EMAILS: (payload) => contestEmailJobs.contestStarted(payload),
+    CONTEST_SETTLED_EMAILS: (payload) => contestEmailJobs.contestSettled(payload),
+  });
+  backgroundJobRunner = runner;
+  backgroundJobs.queue.wakes({ wake: () => { if (!backgroundJobsHeld) runner.wake(); } });
 
   // Route modules
   testApp.register(authModule, { prefix: '/api/v1/auth', email });
@@ -378,9 +390,31 @@ export function getConfirmedSnsSubscriptions(): readonly string[] {
   return confirmedSnsSubscriptions;
 }
 
-/** Waits until every email the app has queued so far has been handed to the SMTP sink. */
+/**
+ * Waits until every email the app has queued so far has been handed to the SMTP sink, the ones
+ * its background jobs queue (#1387) included.
+ */
 export async function deliverQueuedIntegrationEmail(): Promise<void> {
+  await drainBackgroundJobs();
   await emailSender?.drain();
+}
+
+/** Runs every due background job the app has queued, and resolves once none is left. */
+export async function drainBackgroundJobs(): Promise<void> {
+  await backgroundJobRunner?.drain();
+}
+
+/**
+ * Runs `call` with the app's background jobs held: a job it queues waits for a later
+ * `drainBackgroundJobs`, so what `call` sends is the request's own statements alone.
+ */
+export async function holdingBackgroundJobs<Result>(call: () => Promise<Result>): Promise<Result> {
+  backgroundJobsHeld = true;
+  try {
+    return await call();
+  } finally {
+    backgroundJobsHeld = false;
+  }
 }
 
 /** The emails this worker's app has sent to the integration SMTP sink, oldest first (#442). */

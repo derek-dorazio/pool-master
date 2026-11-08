@@ -36,6 +36,7 @@ import type {
   UserRepository,
 } from '@poolmaster/shared/db';
 import type {
+  BackgroundJobRequest,
   Contest,
   ContestConfiguration,
   ContestEntry,
@@ -96,6 +97,8 @@ export class InMemoryContestWorld {
    * ACTIVE is looked at on the first sweep, as the column's backfill leaves contests already open.
    */
   readonly reminderChecks = new Map<string, Date | null>();
+  /** The background jobs contest moves wrote with them (#1387), in order. */
+  readonly backgroundJobs: BackgroundJobRequest[] = [];
   readonly configurations = new Map<string, ContestConfiguration>();
   readonly entries = new Map<string, ContestEntry>();
   readonly picks = new Map<string, ContestEntryPickWithParticipant>();
@@ -462,8 +465,8 @@ export class InMemoryContestWorld {
         this.contests.set(id, { ...existing, cupWeight });
         return true;
       },
-      transitionStatus: async (id, transition) => this.transitionContest(id, transition),
-      transitionStatuses: async (ids, transition) => ids.filter((id) => this.transitionContest(id, transition)),
+      transitionStatus: async (id, transition) => this.transitionContests([id], transition).length > 0,
+      transitionStatuses: async (ids, transition) => this.transitionContests(ids, transition),
       delete: async (id) => {
         this.contests.delete(id);
       },
@@ -818,7 +821,14 @@ export class InMemoryContestWorld {
     return fakeParticipantContestScoringRuleRepo();
   }
 
-  /** The guarded status write `transitionStatus` makes: whether the contest moved. */
+  /** The guarded status write `transitionStatuses` makes, and the jobs it writes with the contests it moved. */
+  private transitionContests(ids: readonly string[], transition: ContestStatusTransition): string[] {
+    const moved = ids.filter((id) => this.transitionContest(id, transition));
+    if (moved.length > 0) this.backgroundJobs.push(...(transition.jobs?.(moved) ?? []));
+    return moved;
+  }
+
+  /** Whether one contest moved. */
   private transitionContest(id: string, transition: ContestStatusTransition): boolean {
     const existing = this.contests.get(id);
     if (!existing || !transition.from.includes(existing.status)) return false;

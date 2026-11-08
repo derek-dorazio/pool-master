@@ -9,7 +9,7 @@ import {
   type BackgroundJobPayload,
 } from '../../../packages/core-api/src/modules/background-jobs';
 import { fakeLogger } from '../../support/fake-logger';
-import { inMemoryBackgroundJobs, type InMemoryBackgroundJobs } from '../../support/in-memory-background-jobs';
+import { inMemoryBackgroundJobs, jobHandlers, type InMemoryBackgroundJobs } from '../../support/in-memory-background-jobs';
 
 const START = new Date('2026-11-07T12:00:00.000Z').getTime();
 const MINUTE = 60_000;
@@ -40,7 +40,7 @@ function setup(options: {
   const jobs = inMemoryBackgroundJobs(time.now);
   const logger = fakeLogger();
   const handler = jest.fn(options.handler ?? (() => Promise.resolve()));
-  const handlers: BackgroundJobHandlers = { MANUAL_EVENT_SYNC: handler };
+  const handlers: BackgroundJobHandlers = jobHandlers({ MANUAL_EVENT_SYNC: handler });
   const runner = new BackgroundJobRunner({
     jobs,
     handlers,

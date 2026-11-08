@@ -1,5 +1,6 @@
-import type { ContestRepository } from '@poolmaster/shared/db';
+import type { ContestRepository, ContestStatusTransition } from '@poolmaster/shared/db';
 import {
+  BackgroundJobType,
   ContestStatus,
   MatchStatus,
   SPORT_EVENT_STATUS_TRANSITIONS,
@@ -13,7 +14,9 @@ import {
   EventLifecycleService,
   type EventLifecycleContestDeps,
 } from '../../../packages/core-api/src/modules/events/event-lifecycle-service';
-import type { ContestStartedNotice, SportEventChangedNotice } from '../../../packages/core-api/src/modules/notifications';
+import type { SportEventChangedNotice } from '../../../packages/core-api/src/modules/notifications';
+import { BackgroundJobQueue } from '../../../packages/core-api/src/modules/background-jobs';
+import { inMemoryBackgroundJobs } from '../../support/in-memory-background-jobs';
 import { buildContest } from '../../factories';
 import { InMemorySportEvents } from '../../support/in-memory-sport-events';
 import { fakeContestConfigurationRepo, fakeContestRepo } from '../../support/repo-fakes';
@@ -32,23 +35,48 @@ const STARTED_CONTEST = buildContest({
 });
 
 /**
- * The contest ports, empty by default. `startedContest` adds one OPEN contest on the event;
- * `transitioned` is whether the guarded write finds it still startable.
+ * A contest repository's guarded status write: moves those of `ids` that `moves` keeps, and
+ * writes the jobs the move asks for to `written`, as the adapter does in its transaction.
  */
-function contestDeps(options: { startedContest?: boolean; transitioned?: boolean } = {}): EventLifecycleContestDeps {
+function guardedMove(written: unknown[], moves: (ids: readonly string[], transition: ContestStatusTransition) => string[] = (ids) => [...ids]) {
+  return mockFn<ContestRepository['transitionStatuses']>(async (ids, transition) => {
+    const moved = moves(ids, transition);
+    if (moved.length > 0) written.push(...(transition.jobs?.(moved) ?? []));
+    return moved;
+  });
+}
+
+/**
+ * The contest ports, empty by default. `startedContest` adds one OPEN contest on the event;
+ * `transitioned` is whether the guarded write finds it still startable. `written` collects the
+ * jobs each move writes with it.
+ */
+function contestDeps(options: { startedContest?: boolean; transitioned?: boolean; written?: unknown[] } = {}): EventLifecycleContestDeps {
   return {
     contests: fakeContestRepo({
       findBySportEvent: jest.fn().mockResolvedValue(options.startedContest ? [STARTED_CONTEST] : []),
-      transitionStatuses: mockFn<ContestRepository['transitionStatuses']>(async (ids) => (options.transitioned ?? true ? [...ids] : [])),
+      transitionStatuses: guardedMove(options.written ?? [], (ids) => (options.transitioned ?? true ? [...ids] : [])),
     }),
     configurations: fakeContestConfigurationRepo(),
     matches: { findBySportEvent: jest.fn().mockResolvedValue([]) },
   };
 }
 
-/** A contest-started notice that records whom it was asked to tell. */
-function startedNotice(): ContestStartedNotice & { contestsStarted: jest.Mock } {
-  return { contestsStarted: mockFn<ContestStartedNotice['contestsStarted']>(async () => undefined) };
+/** A real job queue, whose `queued` (the wake after commit) is watched. */
+function startedJobs() {
+  const queue = new BackgroundJobQueue({ jobs: inMemoryBackgroundJobs() });
+  jest.spyOn(queue, 'queued');
+  return queue;
+}
+
+/** The "Contest is live" job one contest's move writes. */
+function startedEmailsJob(contestId: string) {
+  return {
+    type: BackgroundJobType.CONTEST_STARTED_EMAILS,
+    payload: { contestId, sportEventId: 'sport-event-1' },
+    runAt: undefined,
+    dedupeKey: `CONTEST_STARTED_EMAILS:${contestId}`,
+  };
 }
 
 /** An in-memory store holding the one event under test, and the port over it. */
@@ -305,6 +333,8 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
 
     expect(settlement.settleFinishedSportEvent).toHaveBeenCalledWith('sport-event-1', {
       completedAt: eventEndDate,
+      // Handed over as just written, so settlement does not read it again.
+      sportEvent: expect.objectContaining({ id: 'sport-event-1', status: SportEventStatus.COMPLETED }) as unknown,
     });
   });
 
@@ -336,11 +366,12 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
   });
 
   // pool-master-9ya — relocated from ingestion-persistence.test.ts.
-  it('pool-master-9ya activates open contests when an event starts and asks for each one\'s contest-started emails', async () => {
+  it('pool-master-9ya activates open contests when an event starts and writes each one\'s contest-started email job with the move, building no email itself', async () => {
     const { sportEvents } = seededEvents({ status: SportEventStatus.SCHEDULED });
-    const contests = contestDeps({ startedContest: true });
-    const notice = startedNotice();
-    const service = new EventLifecycleService(contests, sportEvents, fakeLogger(), notice);
+    const written: unknown[] = [];
+    const contests = contestDeps({ startedContest: true, written });
+    const jobs = startedJobs();
+    const service = new EventLifecycleService(contests, sportEvents, fakeLogger(), jobs);
 
     await service.applySportEventStatusTransition({
       sportEventId: 'sport-event-1',
@@ -351,24 +382,25 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
     expect(contests.contests.findBySportEvent).toHaveBeenCalledWith('sport-event-1', {
       statuses: [ContestStatus.OPEN],
     });
-    expect(contests.contests.transitionStatuses).toHaveBeenCalledWith(['contest-1'], {
+    expect(contests.contests.transitionStatuses).toHaveBeenCalledWith(['contest-1'], expect.objectContaining({
       from: [ContestStatus.OPEN],
       to: ContestStatus.ACTIVE,
       startsAt: STARTED_EVENT_START,
-    });
-    expect(notice.contestsStarted).toHaveBeenCalledTimes(1);
-    expect(notice.contestsStarted).toHaveBeenCalledWith([STARTED_CONTEST], expect.objectContaining({ id: 'sport-event-1' }));
+    }));
+    expect(written).toEqual([startedEmailsJob('contest-1')]);
+    expect(jobs.queued).toHaveBeenCalledTimes(1);
   });
 
-  it('starts every contest going live at the event\'s start in one write, and asks once for the emails of those it moved, not one already live', async () => {
+  it('starts every contest going live at the event\'s start in one write, and writes an email job for each it moved, none for one already live', async () => {
     const { sportEvents } = seededEvents({ status: SportEventStatus.SCHEDULED });
     const second = buildContest({ ...STARTED_CONTEST, id: 'contest-2', leagueId: 'league-2' });
     const alreadyLive = buildContest({ ...STARTED_CONTEST, id: 'contest-3', leagueId: 'league-3' });
+    const written: unknown[] = [];
     const contests = contestDeps();
     contests.contests.findBySportEvent = jest.fn().mockResolvedValue([STARTED_CONTEST, second, alreadyLive]);
-    contests.contests.transitionStatuses = mockFn<ContestRepository['transitionStatuses']>(async (ids) => ids.filter((id) => id !== alreadyLive.id));
-    const notice = startedNotice();
-    const service = new EventLifecycleService(contests, sportEvents, fakeLogger(), notice);
+    contests.contests.transitionStatuses = guardedMove(written, (ids) => ids.filter((id) => id !== alreadyLive.id));
+    const jobs = startedJobs();
+    const service = new EventLifecycleService(contests, sportEvents, fakeLogger(), jobs);
 
     await service.applySportEventStatusTransition({
       sportEventId: 'sport-event-1',
@@ -379,11 +411,11 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
     expect(contests.contests.transitionStatuses).toHaveBeenCalledTimes(1);
     expect(contests.contests.transitionStatuses).toHaveBeenCalledWith(['contest-1', 'contest-2', 'contest-3'], expect.objectContaining({ startsAt: STARTED_EVENT_START }));
     expect(contests.contests.transitionStatus).not.toHaveBeenCalled();
-    expect(notice.contestsStarted).toHaveBeenCalledTimes(1);
-    expect(notice.contestsStarted).toHaveBeenCalledWith([STARTED_CONTEST, second], expect.objectContaining({ id: 'sport-event-1' }));
+    expect(written).toEqual([startedEmailsJob('contest-1'), startedEmailsJob('contest-2')]);
+    expect(jobs.queued).toHaveBeenCalledTimes(1);
   });
 
-  it('still tells the contests already live when a later start\'s write fails, since no later sweep would start them again', async () => {
+  it('still wakes the runner for the contests already live when a later start\'s write fails, since their jobs committed with them', async () => {
     const kickoff = new Date(STARTED_EVENT_START.getTime() + 60 * 60_000);
     const { sportEvents } = seededEvents({ status: SportEventStatus.IN_PROGRESS });
     const atStart = buildContest({ ...STARTED_CONTEST, id: 'contest-at-start' });
@@ -394,6 +426,7 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
       selectionType: SelectionType.SQUARES,
       squaresGameMatchId: 'game-1',
     });
+    const written: unknown[] = [];
     const contests = contestDeps();
     contests.contests.findBySportEvent = jest.fn().mockResolvedValue([atStart, squares]);
     contests.configurations = fakeContestConfigurationRepo({
@@ -404,23 +437,25 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
         { id: 'game-1', sportEventId: 'sport-event-1', roundNumber: 1, status: MatchStatus.IN_PROGRESS, scheduledDate: kickoff } as SportEventMatch,
       ]),
     };
-    contests.contests.transitionStatuses = mockFn<ContestRepository['transitionStatuses']>(async (ids, transition) => {
+    contests.contests.transitionStatuses = guardedMove(written, (ids, transition) => {
       if (transition.startsAt?.getTime() === kickoff.getTime()) throw new Error('database unavailable');
       return [...ids];
     });
-    const notice = startedNotice();
-    const service = new EventLifecycleService(contests, sportEvents, fakeLogger(), notice);
+    const jobs = startedJobs();
+    const service = new EventLifecycleService(contests, sportEvents, fakeLogger(), jobs);
 
     await expect(service.activateContestsPastCutoff(expectDefined(await sportEvents.findById('sport-event-1')), new Date(kickoff.getTime() + 60_000)))
       .rejects.toThrow('database unavailable');
 
-    expect(notice.contestsStarted).toHaveBeenCalledWith([atStart], expect.objectContaining({ id: 'sport-event-1' }));
+    expect(written).toEqual([startedEmailsJob('contest-at-start')]);
+    expect(jobs.queued).toHaveBeenCalledTimes(1);
   });
 
-  it('pool-master-9ya does not ask for contest-started emails again when the contest is already active', async () => {
+  it('pool-master-9ya writes no contest-started email job, and wakes nothing, when the contest is already active', async () => {
     const { sportEvents } = seededEvents({ status: SportEventStatus.SCHEDULED });
-    const notice = startedNotice();
-    const service = new EventLifecycleService(contestDeps({ startedContest: true, transitioned: false }), sportEvents, fakeLogger(), notice);
+    const written: unknown[] = [];
+    const jobs = startedJobs();
+    const service = new EventLifecycleService(contestDeps({ startedContest: true, transitioned: false, written }), sportEvents, fakeLogger(), jobs);
 
     await service.applySportEventStatusTransition({
       sportEventId: 'sport-event-1',
@@ -428,30 +463,11 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
       actor: { type: 'SYSTEM' },
     });
 
-    expect(notice.contestsStarted).not.toHaveBeenCalled();
+    expect(written).toEqual([]);
+    expect(jobs.queued).not.toHaveBeenCalled();
   });
 
-  it('keeps the transition successful, and logs it, when the contest-started emails cannot be queued', async () => {
-    const logger = fakeLogger();
-    const { sportEvents } = seededEvents({ status: SportEventStatus.SCHEDULED });
-    const notice = { contestsStarted: jest.fn().mockRejectedValue(new Error('database unavailable')) };
-    const service = new EventLifecycleService(contestDeps({ startedContest: true }), sportEvents, logger, notice);
-
-    await expect(
-      service.applySportEventStatusTransition({
-        sportEventId: 'sport-event-1',
-        toStatus: SportEventStatus.IN_PROGRESS,
-        actor: { type: 'SYSTEM' },
-      }),
-    ).resolves.toMatchObject({ toStatus: SportEventStatus.IN_PROGRESS });
-
-    expect(logger.error).toHaveBeenCalledWith(
-      expect.objectContaining({ contestIds: ['contest-1'], error: 'database unavailable' }),
-      'Failed to queue contest started emails',
-    );
-  });
-
-  it('still starts the contest when no contest-started notice is wired', async () => {
+  it('still starts the contest, in a write that asks for no job, when no job queue is wired', async () => {
     const { sportEvents } = seededEvents();
     const contests = contestDeps({ startedContest: true });
 
@@ -462,6 +478,7 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
     });
 
     expect(contests.contests.transitionStatuses).toHaveBeenCalledWith(['contest-1'], expect.objectContaining({ to: ContestStatus.ACTIVE }));
+    expect(jest.mocked(contests.contests.transitionStatuses).mock.calls[0]?.[1].jobs).toBeUndefined();
   });
 });
 

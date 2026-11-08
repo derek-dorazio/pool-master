@@ -49,8 +49,9 @@ import {
 import { FINISHED_EVENT_STATUSES } from './entry-window';
 import { readEventMatchesOnce, readEventsOnce, readOncePerKey } from '../events/event-reads';
 import type { ChampionshipService } from '../championship/service';
-import { readFinalStandings, type ContestFinalStandings } from './final-standings';
-import type { ContestSettledNotice } from '../notifications/contest-notices';
+import { readFinalStandings } from './final-standings';
+import { contestSettledEmailsJob } from '../notifications/contest-email-job-requests';
+import type { BackgroundJobQueue } from '../background-jobs';
 import type { LeaderboardRebuilds } from './leaderboard-snapshots';
 
 type LifecycleLogger = Pick<FastifyBaseLogger, 'debug' | 'info' | 'warn' | 'error' | 'fatal'>;
@@ -100,8 +101,8 @@ export interface ContestSettlementDeps extends BracketStandingsReadDeps {
   eventStandings: ContestEntryEventStandingRepository;
   squares: Pick<ContestSquaresRepository, 'findSquares' | 'findDraw' | 'replaceWinners'>;
   championship: Pick<ChampionshipService, 'recordContest'>;
-  /** The final results email (#845 F1, F2), queued once a contest completes. */
-  contestSettled?: ContestSettledNotice;
+  /** Where a contest that completes queues its final results email job (#845 F1, F2, #1387); without it, nobody is told. */
+  jobs?: Pick<BackgroundJobQueue, 'request' | 'queued'>;
   /** Told which contests settled, so their stored leaderboards show the frozen result (#1435). */
   leaderboards?: Pick<LeaderboardRebuilds, 'contestsChanged'>;
   logger?: LifecycleLogger;
@@ -122,12 +123,15 @@ export class ContestSettlementService {
     this.logger = deps.logger ?? createNoopLogger();
   }
 
-  /** Settles the contests of a finished event: one that completed, or one that was cancelled. */
+  /**
+   * Settles the contests of a finished event: one that completed, or one that was cancelled.
+   * `sportEvent` is the event as the caller has just written it, when it has, so it is not read again.
+   */
   async settleFinishedSportEvent(
     sportEventId: string,
-    input?: { completedAt?: Date },
+    input?: { completedAt?: Date; sportEvent?: SportEvent },
   ): Promise<ContestSettlementSummary> {
-    const sportEvent = await this.deps.sportEvents.findById(sportEventId);
+    const sportEvent = input?.sportEvent?.id === sportEventId ? input.sportEvent : await this.deps.sportEvents.findById(sportEventId);
     if (!sportEvent || !FINISHED_EVENT_STATUSES.includes(sportEvent.status)) {
       return {
         sportEventId,
@@ -140,9 +144,6 @@ export class ContestSettlementService {
     const completedAt = input?.completedAt ?? sportEvent.endDate ?? sportEvent.startDate;
     const cancelled = sportEvent.status === SportEventStatus.CANCELLED;
     const reads = this.sharedReads(sportEvent);
-    // The field is the event's, read once; each contest scores it under its own settings below.
-    // A cancelled event is never scored, whatever scores it holds.
-    const field = cancelled ? [] : await loadEventField(reads, sportEventId);
     // A COMPLETED contest is already settled: its standing is the frozen result, and re-running
     // settlement (the event re-sent as COMPLETED, or a late score correction) must not rewrite
     // it. Only a contest moved back out of COMPLETED would be settled again, and no route does
@@ -218,6 +219,10 @@ export class ContestSettlementService {
         continue;
       }
       const scoringDefinition = scoring.definition;
+      // The field is the event's, read once however many contests score it (the shared reads
+      // remember it), and only when one does: a bracket, survivor, squares or pick'em contest
+      // never reads it. A cancelled event is never scored, whatever scores it holds.
+      const field = cancelled ? [] : await loadEventField(reads, sportEventId);
       // Scored per contest: a contest's settings (a points table) change its participants' scores.
       const participants = toParticipantScores(field, sportEvent, scoring.scoring);
       const scoreById = new Map(
@@ -573,30 +578,19 @@ export class ContestSettlementService {
    * than final with no finishes.
    */
   private async complete(contest: Contest, completedAt: Date): Promise<boolean> {
-    // The final places, read once for the finishes and the email both (#1355).
     const final = await readFinalStandings(this.deps, contest);
     const ranked = final.entries.flatMap(({ squadId, position }) => (position === null ? [] : [{ squadId, position }]));
     await this.deps.championship.recordContest(contest, completedAt, ranked);
+    const { jobs } = this.deps;
     const completed = await this.deps.contests.transitionStatus(contest.id, {
       from: SETTLEABLE,
       to: ContestStatus.COMPLETED,
       endsAt: completedAt,
+      // F1 or F2, the final results, built by a job written with the move.
+      ...(jobs && { jobs: () => [contestSettledEmailsJob(jobs, contest.id)] }),
     });
-    if (completed) await this.tellContestSettled(contest, final);
+    if (completed) jobs?.queued();
     return completed;
-  }
-
-  /** F1 or F2, the final results: queued for the league, never failing the settlement. */
-  private async tellContestSettled(contest: Contest, final: ContestFinalStandings): Promise<void> {
-    try {
-      await this.deps.contestSettled?.contestSettled(contest, final);
-    } catch (err) {
-      this.logger.error({
-        contestId: contest.id,
-        leagueId: contest.leagueId,
-        error: err instanceof Error ? err.message : String(err),
-      }, 'Failed to queue final results emails');
-    }
   }
 
   /** Whether every event the contest covers has completed or been cancelled: then the contest itself settles. */
