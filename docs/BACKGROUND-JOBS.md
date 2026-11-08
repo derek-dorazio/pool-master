@@ -42,8 +42,22 @@ or while it waits to be retried, queues a fresh one.
 
 ## Running
 
-Every core-api task runs the runner (the separate worker service, #1186, is paused). It polls
-every `BACKGROUND_JOB_POLL_MS` (default 1000) and on each wake, claims at most 2 due jobs at a
+Which core-api tasks run the runner is their role, `CORE_API_ROLE` (#1186):
+
+| Role | Serves requests | Runs the background work | A queued email or job |
+|---|---|---|---|
+| `all` (unset; QA and local dev) | yes | yes | wakes this task's sender or runner |
+| `api` | yes | no | waits for a worker's poll |
+| `worker` | yes, but behind no load balancer: only health checks reach it | yes | from its own work, wakes it; from an API task, found by its poll |
+
+The background work is the job runner, the email sender, the event lifecycle sweep, nightly
+cleanup and provider ingestion (still also gated by `AUTO_START_SCHEDULER`). A worker's email
+sender polls every second rather than every 15, since an API task's email never wakes it. An
+unknown role stops the task at startup. The advisory job locks (#1159) hold in every role, so
+old and new workers overlapping in a deploy run each scheduled job once. No environment runs
+`api` or `worker` yet: the worker's ECS service is not in Terraform.
+
+The runner polls every `BACKGROUND_JOB_POLL_MS` (default 1000) and on each wake, claims at most 2 due jobs at a
 time with `FOR UPDATE SKIP LOCKED`, and runs each outside any request: its own reads, no request
 query budget.
 

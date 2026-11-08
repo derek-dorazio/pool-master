@@ -1,8 +1,8 @@
 /**
  * The background job runner (#1439): claims due jobs and runs each with its type's handler. It
- * runs in every core-api task; the claim skips rows another task holds, so two tasks never run
- * one job. A queued job wakes it, and a poll catches retries, lapsed leases and jobs queued on
- * another task.
+ * runs in every core-api task that runs the background work (all but `api`, #1186); the claim
+ * skips rows another task holds, so two tasks never run one job. A queued job wakes it, and a
+ * poll catches retries, lapsed leases and jobs queued on another task.
  *
  * A handler that throws is tried again 1, 5 and 30 minutes later, then the job is FAILED with an
  * error log. A task that stops mid-job leaves it RUNNING until its lease ends, and the next claim

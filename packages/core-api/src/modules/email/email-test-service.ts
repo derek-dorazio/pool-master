@@ -1,8 +1,9 @@
 /**
  * The root admin's test email (#910): one fixed email to one address, recorded and sent like any
  * other, so the overall switch, "Only send to", the suppression list and the provider are all
- * exercised. It wakes the sender and waits a few seconds for this email's first try, so the Email
- * settings can show what happened; it never waits for the rest of the queue.
+ * exercised. It wakes this task's sender, when it runs one (#1186), and waits a few seconds for
+ * this email's first try, so the Email settings can show what happened; it never waits for the
+ * rest of the queue.
  */
 import type { EmailMessageRepository, UserRepository } from '@poolmaster/shared/db';
 import { EmailMessageStatus, EmailTemplateKey, type EmailMessage } from '@poolmaster/shared/domain';
@@ -16,7 +17,8 @@ const POLL_MS = 250;
 
 export interface EmailTestServiceOptions {
   email: Pick<EmailService, 'send'>;
-  sender: Pick<EmailSender, 'wake'>;
+  /** This task's sender; absent on an API-only task, whose emails a worker's sender polls for. */
+  sender?: Pick<EmailSender, 'wake'>;
   messages: Pick<EmailMessageRepository, 'findById'>;
   users: Pick<UserRepository, 'findById'>;
   /** POOLMASTER_ENVIRONMENT, named in the email. */
@@ -55,7 +57,7 @@ export class EmailTestService {
       data: { environment: this.options.environment, requestedBy, requestedAt },
     });
     if (message.status !== EmailMessageStatus.QUEUED) return message;
-    this.options.sender.wake();
+    this.options.sender?.wake();
     let current = message;
     for (let poll = 0; poll < SETTLE_POLLS && awaitingFirstTry(current); poll++) {
       await this.sleep(POLL_MS);

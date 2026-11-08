@@ -16,6 +16,7 @@ import { FASTIFY_SCHEMA_CONTROLLER } from './plugins/serializer-cache';
 import { globalErrorHandler } from './core/error-handler';
 import { createFastifyLoggerOptions } from './core/logger';
 import { readTrustProxy } from './core/config';
+import { readTaskRole, taskRolePlan } from './core/task-role';
 import { PostgresJobLock } from './core/job-lock';
 import { NightlyCleanupScheduler } from './core/nightly-cleanup';
 import { createCdnInvalidator } from './core/cdn-invalidator';
@@ -113,6 +114,8 @@ export function buildApp() {
   // Counts each request's queries against its budget (#1244).
   const prisma = countingQueries(new PrismaClient());
   const isOpenApiExport = process.env.OPENAPI_EXPORT === 'true';
+  // Whether this task serves requests, runs the background work, or both (#1186).
+  const role = taskRolePlan(readTaskRole(process.env));
 
   app.decorate('prisma', prisma);
 
@@ -137,6 +140,8 @@ export function buildApp() {
     planEntitlements,
     env: process.env,
     logger: app.log,
+    wakesSender: role.runsBackgroundWork,
+    senderTickMs: role.emailSenderTickMs,
   });
   const appBaseUrl = readApplicationBaseUrl(process.env);
   // Work a request hands off rather than waits for (#1439): queued here, run by the runner below.
@@ -274,7 +279,8 @@ export function buildApp() {
     jobs: backgroundJobs,
     logger: app.log,
   });
-  // Every task runs the job runner (the worker service, #1186, is paused); a queued job wakes it.
+  // The task that runs the background work runs the job runner (#1186); a job it queues itself wakes
+  // it, and one an API-only task queued is found by its poll.
   const backgroundJobRunner = new BackgroundJobRunner({
     jobs: backgroundJobRepository,
     handlers: {
@@ -285,7 +291,7 @@ export function buildApp() {
     pollMs: readBackgroundJobPollMs(process.env),
     logger: app.log,
   });
-  backgroundJobs.wakes(backgroundJobRunner);
+  if (role.runsBackgroundWork) backgroundJobs.wakes(backgroundJobRunner);
 
   // =========================================================================
   // Domain modules (protected by auth-guard)
@@ -357,6 +363,12 @@ export function buildApp() {
     // place of a stored value; the background refresh then carries other tasks' saves here.
     await appSettings.load();
     appSettings.start();
+
+    // An API-only task (#1186) serves requests and leaves everything below to the worker.
+    if (!role.runsBackgroundWork) {
+      app.log.info({ action: 'taskRole.apiOnly' }, 'Serving requests only; the worker runs the background work');
+      return;
+    }
 
     // Ingestion
     if (process.env.AUTO_START_SCHEDULER !== 'false') {

@@ -3,9 +3,9 @@ import type { FastifyBaseLogger } from 'fastify';
 import { RequiredEnvMissingError } from './config';
 
 /**
- * Each background job runs on one server task at a time (#1159). Every API task starts the
- * schedulers, and prod runs two; without this, each tick's provider calls, score writes and
- * email fan-out happen once per task.
+ * Each background job runs on one server task at a time (#1159). Every task that runs the
+ * background work starts the schedulers, prod runs two, and a deploy overlaps old and new;
+ * without this, each tick's provider calls, score writes and email fan-out happen once per task.
  */
 export interface JobLock {
   /**

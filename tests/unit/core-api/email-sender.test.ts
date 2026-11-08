@@ -439,4 +439,55 @@ describe('email sender', () => {
       ['QUEUED', 'Welcome to Office League'],
     ]);
   });
+
+  it('looks for due email at the tick it is given, so a worker sends an API task\'s email within a second', async () => {
+    jest.useFakeTimers();
+    try {
+      const time = clock();
+      const outbox = inMemoryEmailMessages(time.now);
+      const { transport, sent } = recordingTransport();
+      const worker = new EmailSender({
+        messages: outbox,
+        transport,
+        readConfig: () => EMAIL_SETTINGS.defaults({ POOLMASTER_ENVIRONMENT: 'prod' }),
+        logger: fakeLogger(),
+        now: time.now,
+        sleep: time.sleep,
+        tickMs: 1000,
+      });
+      worker.start();
+      await jest.advanceTimersByTimeAsync(0);
+      // Queued by another task, so nothing wakes this sender: only its timer finds the email.
+      await outbox.record(queued(1));
+
+      await jest.advanceTimersByTimeAsync(1000);
+      worker.stop();
+
+      expect(sent.map((message) => message.to)).toEqual(['member1@gmail.com']);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('waits its default 15 seconds between looks when no tick is given', async () => {
+    jest.useFakeTimers();
+    try {
+      const time = clock();
+      const outbox = inMemoryEmailMessages(time.now);
+      const { transport, sent } = recordingTransport();
+      const task = sender({ outbox, transport, time });
+      task.start();
+      await jest.advanceTimersByTimeAsync(0);
+      await outbox.record(queued(1));
+
+      await jest.advanceTimersByTimeAsync(14_000);
+      const beforeTick = sent.length;
+      await jest.advanceTimersByTimeAsync(1000);
+      task.stop();
+
+      expect([beforeTick, sent.length]).toEqual([0, 1]);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
 });
