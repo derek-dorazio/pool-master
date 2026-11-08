@@ -83,7 +83,8 @@ import { ProviderSyncRunLedger } from './modules/ingestion/persistence/provider-
 import { SyncRunDetailsRetention, SyncRunRetention } from './modules/ingestion/persistence/sync-run-retention';
 import { registerConfiguredProviders } from './modules/ingestion/core/provider-bindings';
 import { createScheduledEventReader } from './modules/ingestion/core/scheduled-event-reader';
-import { createContestSettlementService } from './modules/contests/wiring';
+import { createContestService, createContestSettlementService } from './modules/contests/wiring';
+import { DebouncedLeaderboardRebuilds, readLeaderboardRebuildDelayMs } from './modules/contests/leaderboard-snapshots';
 import { createContestManagementService } from './modules/contest-management/wiring';
 import { scoringFamilyForEvent } from './modules/scoring-families';
 import {
@@ -139,7 +140,14 @@ export function buildApp() {
   });
   const appBaseUrl = readApplicationBaseUrl(process.env);
   const contestNotices = createContestNotices(prisma, { email, appBaseUrl, logger: app.log });
-  const contestSettlement = createContestSettlementService(prisma, app.log, { contestSettled: contestNotices });
+  // Live leaderboards are computed once per score write (#1435): every write that changes what a
+  // board is computed from tells this, and the boards it touched are rebuilt once the writes stop.
+  const leaderboards = new DebouncedLeaderboardRebuilds({
+    rebuilder: createContestService(prisma, app.log, { planEntitlements }),
+    logger: app.log,
+    delayMs: readLeaderboardRebuildDelayMs(process.env),
+  });
+  const contestSettlement = createContestSettlementService(prisma, app.log, { contestSettled: contestNotices, leaderboards });
   const eventLifecycleService = createEventLifecycleService(prisma, {
     logger: app.log,
     contestStarted: contestNotices,
@@ -150,7 +158,7 @@ export function buildApp() {
   const memberJoined = createMemberJoinedNotices(prisma, { email, readConfig: () => appSettings.get(EMAIL_SETTINGS), appBaseUrl, logger: app.log });
   // Admin saves, and provider syncs that load an event's field, clear the public reads CloudFront keeps (#1181).
   const cdn = createCdnInvalidator(process.env, app.log);
-  const ingestionPersistence = new IngestionPersistence(prisma, app.log, eventFieldCache, cdn);
+  const ingestionPersistence = new IngestionPersistence(prisma, app.log, eventFieldCache, cdn, leaderboards);
   const jobLock = new PostgresJobLock(process.env.DATABASE_URL, app.log);
   const eventLifecycleScheduler = new EventLifecycleScheduler({
     sportEvents: new PrismaSportEventRepository(prisma),
@@ -241,6 +249,7 @@ export function buildApp() {
         logger: app.log,
         scoringFamilyForEvent,
         fieldCache: eventFieldCache,
+        leaderboards,
       });
     },
   };
@@ -309,6 +318,7 @@ export function buildApp() {
     ingestionService,
     providerRegistry: registry,
     cdn,
+    leaderboards,
   });
   app.register(sportsModule, { prefix: '/api/v1/sports' });
   app.register(sportLeaguesModule, { prefix: '/api/v1/sport-leagues', cdn });
@@ -374,6 +384,9 @@ export function buildApp() {
     nightlyCleanupScheduler.stop();
     // Stops claiming and lets the jobs in flight finish briefly; a lapsed lease re-runs the rest.
     await backgroundJobRunner.stop();
+    // Rebuilds still waiting on their timer run now, so a deploy loses no score write's board,
+    // including one a job above just wrote.
+    await leaderboards.flush();
     // Closing the lock connection releases this task's job locks for another task to take.
     await jobLock.close();
     await prisma.$disconnect();

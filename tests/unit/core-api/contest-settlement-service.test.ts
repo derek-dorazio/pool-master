@@ -3,6 +3,7 @@
  * event completes, and only the last event's completion settles the contest itself, with each
  * entry's total the sum of its frozen event scores.
  */
+import { RecordingLeaderboardRebuilds } from '../../support/recording-leaderboard-rebuilds';
 import type {
   ContestEntryEventStandingRepository,
   ContestEntryEventStandingResult,
@@ -145,7 +146,9 @@ function world({
     }
   });
 
+  const leaderboards = new RecordingLeaderboardRebuilds();
   const service = new ContestSettlementService({
+    leaderboards,
     squares: fakeSquaresRepo(),
     championship,
     sportEvents: fakeSportEventRepo({
@@ -211,6 +214,7 @@ function world({
 
   return {
     service,
+    leaderboards,
     settledReads,
     eventStandingWrites,
     standingWrites,
@@ -263,6 +267,23 @@ describe('ContestSettlementService — a contest of two events (#713)', () => {
       .toEqual([['entry-b', -9, 1, 2], ['entry-a', -4, 2, 2]]);
     expect(w.contest().status).toBe(ContestStatus.COMPLETED);
     expect(summary).toMatchObject({ contestsSettled: 1, contestsCompleted: 1, standingsUpserted: 2 });
+  });
+
+  it('tells the leaderboard rebuilds each contest it settled an event of, so their stored boards show the frozen standings (#1435)', async () => {
+    const w = world();
+    w.complete(MASTERS);
+
+    await w.service.settleFinishedSportEvent(MASTERS, { completedAt: T });
+
+    expect(w.leaderboards.contestIds).toEqual(['majors']);
+  });
+
+  it('asks for no rebuild when it settles nothing, as for an event that has not completed (#1435)', async () => {
+    const w = world();
+
+    await w.service.settleFinishedSportEvent(MASTERS, { completedAt: T });
+
+    expect(w.leaderboards.contestIds).toEqual([]);
   });
 
   it('hands the contest to the league championship as it goes final, after its places are frozen and before it is COMPLETED', async () => {

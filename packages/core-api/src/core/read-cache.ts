@@ -19,13 +19,21 @@ export const READ_CACHE_TTL_MS = 30_000;
  * the write it checks. Anything but a whole number of 0 or more refuses to start.
  */
 export function readCacheTtlMs(env: NodeJS.ProcessEnv, name: string): number {
+  return readMillisecondsSetting(env, name, READ_CACHE_TTL_MS);
+}
+
+/**
+ * The milliseconds the environment variable `name` sets, else `defaultMs`. Anything but a whole
+ * number of 0 or more refuses to start rather than guess.
+ */
+export function readMillisecondsSetting(env: NodeJS.ProcessEnv, name: string, defaultMs: number): number {
   const raw = env[name];
-  if (raw === undefined || raw === '') return READ_CACHE_TTL_MS;
-  const ttlMs = Number(raw);
-  if (!Number.isInteger(ttlMs) || ttlMs < 0) {
+  if (raw === undefined || raw === '') return defaultMs;
+  const ms = Number(raw);
+  if (!Number.isInteger(ms) || ms < 0) {
     throw new Error(`${name} must be a whole number of milliseconds, 0 or more; got "${raw}"`);
   }
-  return ttlMs;
+  return ms;
 }
 
 interface CachedRead<T> {

@@ -57,10 +57,10 @@ const env = {
   // version-info.json, which the functional global setup writes (#180).
   POOLMASTER_ENVIRONMENT: process.env.POOLMASTER_ENVIRONMENT ?? 'test',
   LOG_LEVEL: process.env.LOG_LEVEL ?? 'warn',
-  // #1162 — the API keeps a contest leaderboard it computed for 30 seconds. Functional tests
-  // read a board right after the score write they check, so this lane keeps none; the cache
-  // itself is covered by the unit and integration suites.
-  CONTEST_LEADERBOARD_CACHE_TTL_MS: process.env.CONTEST_LEADERBOARD_CACHE_TTL_MS ?? '0',
+  // #1435 — the API rebuilds a contest's stored leaderboard a few seconds after a score write.
+  // Functional tests read a board right after the write they check, so this lane rebuilds before
+  // the write answers; the delay itself is covered by the unit suite.
+  LEADERBOARD_REBUILD_DELAY_MS: process.env.LEADERBOARD_REBUILD_DELAY_MS ?? '0',
   // #1181 — likewise the public reads (event pages, sport leagues, templates, sports): the tests
   // read an event page right after the event write that changes it.
   PUBLIC_READ_CACHE_TTL_MS: process.env.PUBLIC_READ_CACHE_TTL_MS ?? '0',

@@ -12,7 +12,7 @@ import { ContestLeaderboardResponseSchema, type ErrorEnvelope } from '@poolmaste
 import { PARTICIPANT_SCORING_DEFINITIONS, Sport } from '@poolmaster/shared/domain';
 import { freshEventEdition } from '../../support/event-edition';
 import { expectDefined } from '../../support/expect-defined';
-import { passReadCacheTtl, restoreReadCacheClock } from '../../support/read-cache-clock';
+import { forgetStoredLeaderboards, passReadCacheTtl, restoreReadCacheClock } from '../../support/read-cache-clock';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -273,8 +273,9 @@ describe('pool-master-eux.4: Golf leaderboard read API', () => {
         },
       });
     }
-    // The next viewer poll, once the board computed above has expired (#1162).
+    // The next viewer poll, after standings the test froze without a write that tells (#1435).
     passReadCacheTtl();
+    await forgetStoredLeaderboards(prisma);
     const settledResponse = await getApp().inject({
       method: 'GET',
       url: `/api/v1/contests/${contest.id}/leaderboard`,
@@ -295,6 +296,7 @@ describe('pool-master-eux.4: Golf leaderboard read API', () => {
       where: { contestConfiguration: { contestId: contest.id } },
     });
     passReadCacheTtl();
+    await forgetStoredLeaderboards(prisma);
     const noRuleResponse = await getApp().inject({
       method: 'GET',
       url: `/api/v1/contests/${contest.id}/leaderboard`,

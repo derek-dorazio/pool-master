@@ -28,6 +28,7 @@ import { emptySyncWriteDiagnostics } from './sync-write-diagnostics';
 import type { ScoringFamilyEvent, ScoringFamilyModule } from '../../scoring-families';
 import { countLiveScoreUpdates } from './live-score-count';
 import type { EventFieldCache } from '../../events/event-field-cache';
+import type { LeaderboardRebuilds } from '../../contests/leaderboard-snapshots';
 
 export class LiveScoreValidationError extends Error {
   constructor(reason: string, public readonly issues: unknown) {
@@ -44,6 +45,8 @@ export interface LiveScorePublisherDeps {
   scoringFamilyForEvent: (event: ScoringFamilyEvent) => ScoringFamilyModule;
   /** The event fields this container read lately: an event's is forgotten once its scores are written (#1163). */
   fieldCache?: Pick<EventFieldCache, 'forget'>;
+  /** Told once an event's scores are written, so its contests' stored leaderboards are computed again (#1435). */
+  leaderboards?: Pick<LeaderboardRebuilds, 'eventsChanged'>;
 }
 
 export interface LiveScorePersistenceResult {
@@ -151,6 +154,7 @@ export async function publishLiveScoreUpdate(
     return await writer.persist(deps, sportEvent, validated);
   } finally {
     deps.fieldCache?.forget(sportEvent.id);
+    await deps.leaderboards?.eventsChanged([sportEvent.id]);
   }
 }
 

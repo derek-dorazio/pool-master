@@ -401,7 +401,10 @@ describe('Settling a squares contest with its game (#1355)', () => {
       ['SELECT contest_entry_events', 1],
       ['SELECT contest_entry_squares', 1],
       ['SELECT contest_entry_standings', 2],
-      ['SELECT contest_sport_events', 1],
+      // The leaderboard rebuild the save asks for (#1435), with no delay as this app runs: the
+      // contests on the event, then which of them have a stored board (none here).
+      ['SELECT contest_leaderboard_snapshots', 1],
+      ['SELECT contest_sport_events', 2],
       ['SELECT contest_squares_draws', 2],
       ['SELECT contest_squares_games', 1],
       ['SELECT contests', 2],
@@ -449,7 +452,10 @@ describe('Finishing an event (#1355)', () => {
       ['SELECT contest_entry_events', 1],
       ['SELECT contest_entry_squares', 1],
       ['SELECT contest_entry_standings', 2],
-      ['SELECT contest_sport_events', 2],
+      // The leaderboard rebuilds settlement and the save ask for (#1435), with no delay as this
+      // app runs: which settled contests have a stored board, and the same for the event's contests.
+      ['SELECT contest_leaderboard_snapshots', 2],
+      ['SELECT contest_sport_events', 3],
       ['SELECT contest_squares_draws', 2],
       ['SELECT contest_squares_games', 1],
       ['SELECT contests', 1],

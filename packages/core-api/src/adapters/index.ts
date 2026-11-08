@@ -23,6 +23,7 @@ export {
   PrismaContestEntryEventStandingRepository,
   PrismaContestEntryStandingRepository,
 } from './prisma-contest-entry-standing-repository';
+export { PrismaContestLeaderboardSnapshotRepository } from './prisma-contest-leaderboard-snapshot-repository';
 export {
   PrismaContestConfigTemplateRepository,
   PrismaContestConfigurationRepository,

@@ -2,7 +2,7 @@ import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
 import type { PrismaClient } from '@prisma/client';
 import { ContestStatus, Sport, SportEventStatus } from '@poolmaster/shared/domain';
-import { PrismaContestRepository } from '../../../packages/core-api/src/adapters';
+import { PrismaContestLeaderboardSnapshotRepository, PrismaContestRepository } from '../../../packages/core-api/src/adapters';
 import { createContestService } from '../../../packages/core-api/src/modules/contests/wiring';
 import {
   cleanupTestData,
@@ -268,19 +268,19 @@ function serviceOn(prisma: PrismaClient) {
 describe('ContestService.getLeaderboard reads (#1162)', () => {
   it('reads the entries once and only the major under way\'s picks, not every pick once per major', async () => {
     const season = await fourMajors(ContestStatus.ACTIVE, false);
-    const { result: leaderboard, statements } = await recordStatements(() => serviceOn(getAppPrisma()).getLeaderboard(season.contest.id, season.viewerId));
+    const { result: { board: leaderboard }, statements } = await recordStatements(() => serviceOn(getAppPrisma()).getLeaderboard(season.contest.id, season.viewerId));
 
     expect(statementsOn(statements, StatementVerb.SELECT, 'contest_entries')).toHaveLength(1);
     expect(pickReadsOf(statements, majorIds(season))).toEqual([[season.majors[3]?.event.id]]);
     // The settled majors answer from their frozen standings; the live one lists every entry unscored.
     const first = leaderboard.entries.find((entry) => entry.entryId === season.entries[0]?.id);
-    expect(first?.events.map((event) => [event.sportEventId, event.position, event.score])).toEqual([
+    expect(first?.events.map((event) => [event.sportEventId, event.position, event.totalScore])).toEqual([
       [season.majors[0]?.event.id, 1, -3],
       [season.majors[1]?.event.id, 1, -3],
       [season.majors[2]?.event.id, 1, -3],
       [season.majors[3]?.event.id, null, null],
     ]);
-    expect(leaderboard.entries.map((entry) => [entry.entryName, entry.score, entry.position])).toEqual([
+    expect(leaderboard.entries.map((entry) => [entry.entryName, entry.totalScore, entry.position])).toEqual([
       ['Entry 1', -9, 1],
       ['Entry 2', -6, 2],
       ['Entry 3', -3, 3],
@@ -291,26 +291,26 @@ describe('ContestService.getLeaderboard reads (#1162)', () => {
   it('answers a COMPLETED contest from its frozen totals, reading the picks of the shown major alone', async () => {
     const season = await fourMajors(ContestStatus.COMPLETED, true);
 
-    const { result: leaderboard, statements } = await recordStatements(
+    const { result: { board: leaderboard }, statements } = await recordStatements(
       () => serviceOn(getAppPrisma()).getLeaderboard(season.contest.id, season.viewerId, season.majors[1]?.event.id),
     );
 
     expect(pickReadsOf(statements, majorIds(season))).toEqual([[season.majors[1]?.event.id]]);
     expect(leaderboard.sportEventId).toBe(season.majors[1]?.event.id);
-    expect(leaderboard.entries.map((entry) => [entry.entryName, entry.score, entry.position])).toEqual([
+    expect(leaderboard.entries.map((entry) => [entry.entryName, entry.totalScore, entry.position])).toEqual([
       ['Entry 1', -12, 1],
       ['Entry 2', -8, 2],
       ['Entry 3', -4, 3],
     ]);
   });
 
-  it('answers a second viewer within 30 seconds from the board already computed, reading no entries or picks again', async () => {
+  it('answers a second viewer on another API task from the stored snapshot, reading no entries or picks again', async () => {
     const season = await fourMajors(ContestStatus.ACTIVE, false);
-    const service = serviceOn(getAppPrisma());
 
+    // Two services, as two API tasks each build their own: the snapshot is shared in the database (#1435).
     const { result: [first, second], statements } = await recordStatements(async () => [
-      await service.getLeaderboard(season.contest.id, season.viewerId),
-      await service.getLeaderboard(season.contest.id, season.viewerId),
+      await serviceOn(getAppPrisma()).getLeaderboard(season.contest.id, season.viewerId),
+      await serviceOn(getAppPrisma()).getLeaderboard(season.contest.id, season.viewerId),
     ]);
 
     expect(second).toEqual(first);
@@ -318,7 +318,7 @@ describe('ContestService.getLeaderboard reads (#1162)', () => {
     expect(pickReadsOf(statements)).toHaveLength(1);
   });
 
-  it('computes the live standings email\'s board afresh even when a viewer\'s board is cached, so an email never reports older scores', async () => {
+  it('computes the live standings email\'s board afresh even when a viewer\'s board is stored, so an email never reports older scores', async () => {
     const season = await fourMajors(ContestStatus.ACTIVE, false);
     const service = serviceOn(getAppPrisma());
 
@@ -348,16 +348,16 @@ describe('ContestService.getLeaderboard reads (#1162)', () => {
     await freeze(two.id, settled.event.id, 2, -2);
     await freeze(three.id, settled.event.id, 3, -1);
 
-    const leaderboard = await serviceOn(getAppPrisma()).getLeaderboard(contest.id, viewerId);
+    const { board: leaderboard } = await serviceOn(getAppPrisma()).getLeaderboard(contest.id, viewerId);
 
     // Entry 3: -1 + (-5 - 2) = -8. Entries 1 and 2: -3 + (-2 + 0) and -2 + (-3 + 0), both -5.
-    expect(leaderboard.entries.map((entry) => [entry.entryName, entry.score, entry.position, entry.displayPosition])).toEqual([
+    expect(leaderboard.entries.map((entry) => [entry.entryName, entry.totalScore, entry.position, entry.displayPosition])).toEqual([
       ['Entry 3', -8, 1, '1'],
       ['Entry 1', -5, 2, 'T2'],
       ['Entry 2', -5, 2, 'T2'],
     ]);
     const eventsOf = (entryId: string) => expectDefined(leaderboard.entries.find((entry) => entry.entryId === entryId)).events
-      .map((event) => [event.sportEventId, event.position, event.score]);
+      .map((event) => [event.sportEventId, event.position, event.totalScore]);
     expect(eventsOf(one.id)).toEqual([[settled.event.id, 1, -3], [live.event.id, 3, -2]]);
     expect(eventsOf(two.id)).toEqual([[settled.event.id, 2, -2], [live.event.id, 2, -3]]);
     expect(eventsOf(three.id)).toEqual([[settled.event.id, 3, -1], [live.event.id, 1, -7]]);
@@ -374,16 +374,167 @@ describe('ContestService.getLeaderboard reads (#1162)', () => {
       { eventId: live.event.id, fieldRowIds: [expectDefined(live.field[0]).id, expectDefined(live.field[1]).id] },
     ]);
 
-    const { result: leaderboard, statements } = await recordStatements(() => serviceOn(getAppPrisma()).getLeaderboard(contest.id, viewerId));
+    const { result: { board: leaderboard }, statements } = await recordStatements(() => serviceOn(getAppPrisma()).getLeaderboard(contest.id, viewerId));
 
     // No read of the field's tables or the picks names the cancelled major.
     expect(statements
       .filter((statement) => /^SELECT (sport_event_participant|contest_entry_picks)/.test(statementTarget(statement) ?? ''))
       .filter((statement) => statementParams(statement).includes(cancelled.event.id))).toEqual([]);
     expect(leaderboard.sportEventId).toBe(live.event.id);
-    expect(leaderboard.entries.map((entry) => [entry.entryId, entry.score, entry.events.map((event) => event.sportEventId)])).toEqual([
+    expect(leaderboard.entries.map((entry) => [entry.entryId, entry.totalScore, entry.events.map((event) => event.sportEventId)])).toEqual([
       [both.id, -8, [live.event.id]],
       [onlyCancelled.id, null, []],
     ]);
+  });
+});
+
+describe('Contest leaderboard snapshots (#1435)', () => {
+  /** The golfer on this field row now stands at `scoreToPar`, as a score save writes it. */
+  async function setScore(fieldRowId: string, scoreToPar: number) {
+    await getPrisma().sportEventParticipantGolfStanding.updateMany({
+      where: { standing: { sportEventParticipantId: fieldRowId } },
+      data: { eventScoreToPar: scoreToPar, eventStrokes: 144 + scoreToPar },
+    });
+  }
+
+  async function liveContest() {
+    const live = await createEvent('PGA', 1, SportEventStatus.IN_PROGRESS, [-5, -3, -2, 0]);
+    const { contest, viewerId, addEntry } = await golfContest([live]);
+    const golfers = live.field.map((row) => row.id);
+    const entry = await addEntry('Entry 1', [{ eventId: live.event.id, fieldRowIds: [golfers[0], golfers[1]].map((id) => expectDefined(id)) }]);
+    return { live, contest, viewerId, golfers, entry };
+  }
+
+  const snapshotRows = (contestId: string) => getPrisma().contestLeaderboardSnapshot.findMany({ where: { contestId } });
+
+  it('answers a poll from the stored board in one read by its key, after the access check, reading no entries, picks or field', async () => {
+    const { contest, viewerId } = await liveContest();
+    await serviceOn(getAppPrisma()).getLeaderboard(contest.id, viewerId);
+
+    const { result, statements } = await recordStatements(() => serviceOn(getAppPrisma()).getLeaderboard(contest.id, viewerId));
+
+    expect(result.board.entries.map((entry) => [entry.entryName, entry.totalScore])).toEqual([['Entry 1', -8]]);
+    expect(statementsOn(statements, StatementVerb.SELECT, 'contest_leaderboard_snapshots')).toHaveLength(1);
+    for (const table of ['contest_entries', 'contest_entry_picks', 'sport_event_participants', 'contest_configurations']) {
+      expect(statementsOn(statements, StatementVerb.SELECT, table)).toEqual([]);
+    }
+    // The contest (6), the reader's squad membership (1; the league membership is kept by the
+    // task since the first read, #1438), and the snapshot (1): pinned, however many entries,
+    // picks and golfers.
+    expect(statements).toHaveLength(8);
+  });
+
+  it('rebuilds a stored board from the new scores after a score write, moving its version up, and builds none for a contest no one has read', async () => {
+    const { live, contest, viewerId, golfers } = await liveContest();
+    const unread = await golfContest([live]);
+    const service = serviceOn(getAppPrisma());
+    const first = await service.getLeaderboard(contest.id, viewerId);
+
+    await setScore(expectDefined(golfers[0]), -9);
+    await service.rebuildLeaderboardSnapshots({ sportEventIds: [live.event.id], contestIds: [] });
+
+    expect(await snapshotRows(contest.id)).toMatchObject([{ version: first.version + 1 }]);
+    const { result: second, statements } = await recordStatements(() => service.getLeaderboard(contest.id, viewerId));
+    // -9 and -3 now count: the board read is the one rebuilt, not one computed by the read.
+    expect(second.board.entries.map((entry) => [entry.entryName, entry.totalScore])).toEqual([['Entry 1', -12]]);
+    expect(statementsOn(statements, StatementVerb.SELECT, 'contest_entries')).toEqual([]);
+    expect(await snapshotRows(unread.contest.id)).toEqual([]);
+  });
+
+  it('rebuilds the boards of every contest on the event in the same reads for 2 contests as for 5, and one write per board', async () => {
+    const rebuildStatements = async (contestCount: number) => {
+      const live = await createEvent('PGA', 1, SportEventStatus.IN_PROGRESS, [-5, -3, -2, 0]);
+      const golfers = live.field.map((row) => expectDefined(row.id));
+      for (let index = 0; index < contestCount; index++) {
+        const { contest, viewerId, addEntry } = await golfContest([live]);
+        await addEntry('Entry 1', [{ eventId: live.event.id, fieldRowIds: [expectDefined(golfers[0]), expectDefined(golfers[1])] }]);
+        await serviceOn(getAppPrisma()).getLeaderboard(contest.id, viewerId);
+      }
+      const { statements } = await recordStatements(() => serviceOn(getAppPrisma()).rebuildLeaderboardSnapshots({ sportEventIds: [live.event.id], contestIds: [] }));
+      return statements;
+    };
+
+    const two = await rebuildStatements(2);
+    const five = await rebuildStatements(5);
+
+    const reads = (statements: typeof two) => statements.filter((statement) => statement.sql.startsWith('SELECT')).length;
+    const writes = (statements: typeof two) => statements.filter((statement) => !statement.sql.startsWith('SELECT')).map((statement) => statement.sql.split(' SET ')[0]);
+    expect(reads(five)).toBe(reads(two));
+    // Each board is its own row with its own JSON: one UPDATE apiece, answering the version stored.
+    expect(writes(two)).toEqual(Array(2).fill('UPDATE "public"."contest_leaderboard_snapshots"'));
+    expect(writes(five)).toEqual(Array(5).fill('UPDATE "public"."contest_leaderboard_snapshots"'));
+  });
+
+  it('rebuilds the stored board when an admin saves the event through the events routes, before the save answers', async () => {
+    const { live, contest, viewerId, golfers } = await liveContest();
+    const admin = await createTestUser({ isRootAdmin: true });
+    await serviceOn(getAppPrisma()).getLeaderboard(contest.id, viewerId);
+    await setScore(expectDefined(golfers[1]), -6);
+
+    const saved = await getApp().inject({ method: 'PATCH', url: `/api/v1/events/${live.event.id}`, headers: admin.headers, payload: { venue: 'Valhalla' } });
+
+    expect(saved.statusCode).toBe(200);
+    expect(await snapshotRows(contest.id)).toMatchObject([{ version: 2 }]);
+    const { board } = await serviceOn(getAppPrisma()).getLeaderboard(contest.id, viewerId);
+    expect(board.entries.map((entry) => entry.totalScore)).toEqual([-11]);
+  });
+
+  it('never lets a rebuild that began earlier overwrite a board computed from newer reads', async () => {
+    const { contest } = await liveContest();
+    const snapshots = new PrismaContestLeaderboardSnapshotRepository<{ label: string }>(getAppPrisma());
+    const at = (ms: number) => new Date(Date.UTC(2026, 10, 7, 21, 0, 0, ms));
+    const write = (label: string, computedFrom: Date) => snapshots.save({
+      contestId: contest.id, shownEvent: '', computedFrom, contestUpdatedAt: contest.updatedAt, validUntil: null, board: { label },
+    });
+
+    expect(await write('first', at(100))).toMatchObject({ version: 1, board: { label: 'first' } });
+    expect(await write('older', at(50))).toBeNull();
+    expect(await write('same moment', at(100))).toBeNull();
+    expect(await snapshots.find(contest.id, '')).toMatchObject({ version: 1, board: { label: 'first' } });
+
+    expect(await write('newer', at(200))).toMatchObject({ version: 2, board: { label: 'newer' } });
+    expect(await snapshots.find(contest.id, '')).toMatchObject({ version: 2, board: { label: 'newer' } });
+  });
+
+  it('drops a stored board its rebuild can no longer show, so the next read answers why', async () => {
+    const { live, contest, viewerId } = await liveContest();
+    const service = serviceOn(getAppPrisma());
+    await service.getLeaderboard(contest.id, viewerId);
+    await getPrisma().participantContestScoringRule.deleteMany({ where: { contestConfiguration: { contestId: contest.id } } });
+
+    await service.rebuildLeaderboardSnapshots({ sportEventIds: [live.event.id], contestIds: [] });
+
+    expect(await snapshotRows(contest.id)).toEqual([]);
+    await expect(service.getLeaderboard(contest.id, viewerId)).rejects.toMatchObject({ code: 'CONTEST_LEADERBOARD_SCORING_RULE_MISSING' });
+  });
+
+  it('computes the board again on the next read once the contest changed since it was stored, such as completing', async () => {
+    const { contest, viewerId } = await liveContest();
+    const service = serviceOn(getAppPrisma());
+    await service.getLeaderboard(contest.id, viewerId);
+    await getPrisma().contest.update({ where: { id: contest.id }, data: { name: `${contest.name} renamed` } });
+
+    const { statements } = await recordStatements(() => service.getLeaderboard(contest.id, viewerId));
+
+    expect(statementsOn(statements, StatementVerb.SELECT, 'contest_entries')).toHaveLength(1);
+    expect(await snapshotRows(contest.id)).toMatchObject([{ version: 2 }]);
+  });
+
+  it('keeps one stored board per shown event, and deletes them with their contest', async () => {
+    const settled = await createEvent('Masters', 200, SportEventStatus.COMPLETED, [-1, -2, -3, -4]);
+    const live = await createEvent('PGA', 1, SportEventStatus.IN_PROGRESS, [-5, -3, -2, 0]);
+    const { contest, viewerId, addEntry } = await golfContest([settled, live]);
+    await addEntry('Entry 1', [
+      { eventId: settled.event.id, fieldRowIds: [expectDefined(settled.field[0]).id, expectDefined(settled.field[1]).id] },
+      { eventId: live.event.id, fieldRowIds: [expectDefined(live.field[0]).id, expectDefined(live.field[1]).id] },
+    ]);
+    const service = serviceOn(getAppPrisma());
+    await service.getLeaderboard(contest.id, viewerId);
+    await service.getLeaderboard(contest.id, viewerId, settled.event.id);
+
+    expect((await snapshotRows(contest.id)).map((row) => row.shownEvent).sort()).toEqual(['', settled.event.id].sort());
+
+    await new PrismaContestRepository(getAppPrisma()).delete(contest.id);
+    expect(await snapshotRows(contest.id)).toEqual([]);
   });
 });

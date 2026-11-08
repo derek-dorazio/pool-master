@@ -1,3 +1,4 @@
+import { RecordingLeaderboardRebuilds } from '../../support/recording-leaderboard-rebuilds';
 import { expect } from '@jest/globals';
 import { Sport } from '@poolmaster/shared/domain';
 import { IngestionPersistence } from '../../../packages/core-api/src/modules/ingestion/persistence/ingestion-persistence';
@@ -397,6 +398,70 @@ describe('IngestionPersistence', () => {
 
       expect(await readsAfresh(fieldCache)).toBe(true);
     });
+  });
+
+  it('tells the leaderboard rebuilds the event whose field a sync wrote, so its contests\' stored boards are rebuilt (#1435)', async () => {
+    const detail: SportEventDetail = {
+      ...buildInProgressEvent(),
+      externalId: 'golf-open-2026',
+      status: 'SCHEDULED',
+      participants: [
+        {
+          externalId: 'golfer-01',
+          providerId: 'mock-contest-feed',
+          sport: Sport.GOLF,
+          name: 'Scottie Scheffler',
+          active: true,
+          ranking: 7,
+          metadata: {
+            seed: 1,
+            odds: 8.5,
+            oddsSourceEventId: 'golf-open-2026',
+          },
+        },
+      ],
+    };
+    const prisma = fieldSyncPrisma({
+      externalId: 'golfer-01',
+      eventRow: {
+        id: 'sport-event-1',
+        externalId: 'golf-open-2026',
+        providerId: 'mock-contest-feed',
+        sport: Sport.GOLF,
+        name: 'Manual Test Golf Tournament',
+        venue: null,
+        location: null,
+        startDate: detail.startDate,
+        endDate: null,
+        status: 'SCHEDULED',
+        rounds: null,
+        participantCount: null,
+        releaseAt: new Date('2026-05-01T20:00:00.000Z'),
+        fieldLocksAt: new Date('2026-05-02T19:00:00.000Z'),
+        fieldLocked: true,
+        metadata: detail.metadata,
+      },
+      linkedEvent: { id: 'sport-event-1', sport: Sport.GOLF, status: 'SCHEDULED', eventSeries: { sportLeague: { participantType: null, scoringFamily: null } } },
+      fieldRow: {
+        id: 'sport-event-participant-1',
+        isActive: true,
+        inactiveReason: null,
+        ranking: 12,
+        oddsToWin: 11.25,
+        seedNumber: 3,
+        metadata: {
+          seed: 3,
+          odds: 11.25,
+          oddsSourceEventId: 'golf-open-2026',
+        },
+      },
+    });
+    const leaderboards = new RecordingLeaderboardRebuilds();
+    const persistence = new IngestionPersistence(asPrismaClient(prisma), fakeLogger(), undefined, undefined, leaderboards);
+
+    await persistence.persistEventDetailWithDiagnostics(detail);
+
+    expect(leaderboards.sportEventIds).toEqual(['sport-event-1']);
   });
 
   it('reads every linked event of a feed in one query and writes only the changed ones in one transaction (#1247)', async () => {

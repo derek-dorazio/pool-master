@@ -74,7 +74,8 @@ import { snsSigner, TEST_TOPIC_ARN } from '../support/sns-messages';
 import { ingestionModule } from '../../packages/core-api/src/modules/ingestion/routes';
 import { createContestExpandedNotices, createContestNotices, createMemberJoinedNotices } from '../../packages/core-api/src/modules/notifications';
 import { createEventLifecycleService } from '../../packages/core-api/src/modules/events/wiring';
-import { createContestSettlementService } from '../../packages/core-api/src/modules/contests/wiring';
+import { createContestService, createContestSettlementService } from '../../packages/core-api/src/modules/contests/wiring';
+import { DebouncedLeaderboardRebuilds } from '../../packages/core-api/src/modules/contests/leaderboard-snapshots';
 import { createContestManagementService } from '../../packages/core-api/src/modules/contest-management/wiring';
 import { IngestionService } from '../../packages/core-api/src/modules/ingestion/ingestion-service';
 import { ProviderRegistry } from '../../packages/core-api/src/modules/ingestion/core/provider-registry';
@@ -249,11 +250,17 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
   emailSender = outbox.sender;
   // An event's status change and a game's result start, settle and email its contests, as in index.ts.
   const contestNotices = createContestNotices(prisma, { email, appBaseUrl: readApplicationBaseUrl(process.env), logger: testApp.log });
+  // No delay, as the functional lane runs: a write's boards are rebuilt before it answers (#1435).
+  const leaderboards = new DebouncedLeaderboardRebuilds({
+    rebuilder: createContestService(prisma, testApp.log, { planEntitlements }),
+    logger: testApp.log,
+    delayMs: 0,
+  });
   const eventLifecycleService = createEventLifecycleService(prisma, {
     logger: testApp.log,
     contestStarted: contestNotices,
     sportEventChanged: contestNotices,
-    contestSettlement: createContestSettlementService(prisma, testApp.log, { contestSettled: contestNotices }),
+    contestSettlement: createContestSettlementService(prisma, testApp.log, { contestSettled: contestNotices, leaderboards }),
     releasedEditionContests: createContestManagementService(prisma, testApp.log, planEntitlements),
   });
   const ingestionConfigService = new IngestionConfigService(settings);
@@ -304,7 +311,7 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
   testApp.register(historyModule, { prefix: '/api/v1/leagues/:id/history', email, planEntitlements });
   testApp.register(participantsModule, { prefix: '/api/v1/participants', providerRegistry });
   testApp.register(usersModule, { prefix: '/api/v1/users', email, emailPreferences: outbox.preferences });
-  testApp.register(eventsModule, { prefix: '/api/v1/events', eventLifecycleService, ingestionService, providerRegistry, cdn });
+  testApp.register(eventsModule, { prefix: '/api/v1/events', eventLifecycleService, ingestionService, providerRegistry, cdn, leaderboards });
   testApp.register(sportsModule, { prefix: '/api/v1/sports' });
   testApp.register(eventPagesModule, { prefix: '/api/v1/event-pages' });
   testApp.register(contestConfigTemplatesModule, { prefix: '/api/v1/contest-config-templates', cdn });

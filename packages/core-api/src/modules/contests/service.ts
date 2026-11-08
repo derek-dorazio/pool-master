@@ -28,6 +28,8 @@ import type {
   SquadRepository,
   UserRepository,
   ContestExpansionRepository,
+  ContestLeaderboardSnapshot,
+  ContestLeaderboardSnapshotRepository,
 } from '@poolmaster/shared/db';
 import type {
   Contest,
@@ -58,9 +60,16 @@ import {
   ScoringFamily,
   eventSportDefinition,
 } from '@poolmaster/shared/domain';
-import { CONTEST_EVENT_NOT_IN_CONTEST, type ContestEntryDto, type ApiErrorCode, type OpenContestUsageDto } from '@poolmaster/shared/dto';
+import {
+  CONTEST_EVENT_NOT_IN_CONTEST,
+  type ApiErrorCode,
+  type ContestEntryDto,
+  type ContestLeaderboardResponse,
+  type OpenContestUsageDto,
+} from '@poolmaster/shared/dto';
 import {
   toContestEntryDto,
+  toContestLeaderboardResponse,
   type ContestEntryEventResultRow,
   type ContestEntryParticipantRow,
   type ContestEntryStandingRow,
@@ -70,7 +79,7 @@ import {
 import type { BracketLeaderboardEntryRow, BracketLeaderboardModel } from '../../mappers/bracket-leaderboard.mapper';
 import type { PickEmLeaderboardEntryRow, PickEmLeaderboardModel } from '../../mappers/pick-em-leaderboard.mapper';
 import { BracketScoringUnavailableError, loadBracketStandings, type BracketEntryStanding } from './bracket-standings';
-import { ContestLeaderboardCache } from './contest-leaderboard-cache';
+import { DEFAULT_SHOWN_EVENT, LEADERBOARD_SNAPSHOT_MAX_AGE_MS, isSnapshotCurrent, type LeaderboardChanges } from './leaderboard-snapshots';
 import { loadPickEmScoring, loadPickEmWeekStandings, pickEmWeekGames } from './pick-em-standings';
 import { loadSurvivorSeason, survivorWeekKey } from './survivor-standings';
 import type { SurvivorLeaderboardModel } from '../../mappers/survivor-leaderboard.mapper';
@@ -200,24 +209,31 @@ export interface ContestServiceDeps {
   email?: EmailService;
   appBaseUrl?: string;
   now?: () => Date;
+  /** Each contest's leaderboard as last computed (#1435), which every viewer's poll reads. */
+  leaderboardSnapshots: ContestLeaderboardSnapshotRepository<ContestLeaderboardResponse>;
   /**
-   * The leaderboards computed lately (#1162), shared by every contest service in the container;
-   * a service built without one keeps its own.
+   * How old a snapshot may be before a read computes it again (#1435), for the changes no write
+   * signals (a participant's name, a squad's). Five minutes unless set.
    */
-  leaderboardCache?: ContestLeaderboardCache;
+  leaderboardSnapshotMaxAgeMs?: number;
 }
+
+/** A contest's board with the snapshot version it was read from, for the poll's ETag (#1436). */
+export type ContestLeaderboardSnapshotRead = ContestLeaderboardSnapshot<ContestLeaderboardResponse>;
 
 export class ContestService {
   private readonly logger: LifecycleLogger;
   private readonly appBaseUrl: string;
   private readonly now: () => Date;
-  private readonly leaderboardCache: ContestLeaderboardCache;
+  private readonly snapshotMaxAgeMs: number;
+  /** The boards this service is computing now, by key, so viewers asking at once share one. */
+  private readonly snapshotsInFlight = new Map<string, Promise<ContestLeaderboardSnapshotRead>>();
 
   constructor(private readonly deps: ContestServiceDeps) {
     this.logger = deps.logger ?? createNoopLogger();
     this.appBaseUrl = deps.appBaseUrl ?? 'http://localhost:5173';
     this.now = deps.now ?? (() => new Date());
-    this.leaderboardCache = deps.leaderboardCache ?? new ContestLeaderboardCache();
+    this.snapshotMaxAgeMs = deps.leaderboardSnapshotMaxAgeMs ?? LEADERBOARD_SNAPSHOT_MAX_AGE_MS;
   }
 
   /**
@@ -539,25 +555,99 @@ export class ContestService {
    * The contest leaderboard (#713): every entry's contest total and its result in each revealed
    * event, with its picks in one shown event — `sportEventId`, else the latest revealed one. A
    * completed event answers from the standings frozen when it settled; a COMPLETED contest's
-   * totals are the ones frozen at its settlement. Every viewer polls it, so a board computed in
-   * the last 30 seconds answers for its contest (#1162); the reader is checked each time.
+   * totals are the ones frozen at its settlement. Every viewer polls it, so it is answered from the
+   * contest's snapshot (#1435), computed once after the writes that change it; the reader is
+   * checked each time.
    */
   async getLeaderboard(
     contestId: string,
     requesterUserId: string,
     requestedSportEventId?: string,
-  ): Promise<ContestLeaderboardModel> {
+  ): Promise<ContestLeaderboardSnapshotRead> {
     const { contest } = await this.getEntryContext(contestId, requesterUserId, 'read');
-    return this.cachedLeaderboardOf(contest, requestedSportEventId);
+    return this.leaderboardSnapshotOf(contest, requestedSportEventId ?? DEFAULT_SHOWN_EVENT);
   }
 
-  /** A viewer's board: computed from the event fields every contest on the event shares (#1163). */
-  private cachedLeaderboardOf(contest: Contest, requestedSportEventId?: string): Promise<ContestLeaderboardModel> {
-    return this.leaderboardCache.get(contest.id, requestedSportEventId, this.now(), () => this.boardOf(
-      contest,
-      requestedSportEventId,
-      (sportEventId) => this.deps.eventParticipants.listCachedEventParticipants(sportEventId),
-    ));
+  /**
+   * The contest's stored board for the shown event when it is current, else one computed now and
+   * stored (#1435): none is stored yet, it is older than the max age, an event it does not show
+   * has started since, or the contest changed since.
+   */
+  private async leaderboardSnapshotOf(contest: Contest, shownEvent: string): Promise<ContestLeaderboardSnapshotRead> {
+    const stored = await this.deps.leaderboardSnapshots.find(contest.id, shownEvent);
+    if (stored && isSnapshotCurrent(stored, contest, this.now(), this.snapshotMaxAgeMs)) return stored;
+    return this.rebuildLeaderboardSnapshot(contest, shownEvent);
+  }
+
+  /**
+   * Computes the contest's board for the shown event from the scores as they stand and stores it,
+   * unless a board computed from newer reads was stored meanwhile. Viewers asking at once share
+   * one computation. A board that cannot be shown throws as the read would, and stores nothing.
+   */
+  private rebuildLeaderboardSnapshot(contest: Contest, shownEvent: string): Promise<ContestLeaderboardSnapshotRead> {
+    const key = `${contest.id}:${shownEvent}`;
+    const inFlight = this.snapshotsInFlight.get(key);
+    if (inFlight) return inFlight;
+    const rebuild = (async () => {
+      const computedFrom = this.now();
+      const { leaderboard, validUntil } = await this.boardOf(
+        contest,
+        shownEvent === DEFAULT_SHOWN_EVENT ? undefined : shownEvent,
+        (sportEventId) => loadEventField(this.deps, sportEventId),
+      );
+      const write = {
+        contestId: contest.id,
+        shownEvent,
+        computedFrom,
+        contestUpdatedAt: contest.updatedAt,
+        validUntil,
+        board: toContestLeaderboardResponse(leaderboard),
+      };
+      // A newer board stored meanwhile answers instead of this one.
+      return (await this.deps.leaderboardSnapshots.save(write))
+        ?? (await this.deps.leaderboardSnapshots.find(contest.id, shownEvent))
+        ?? { ...write, version: 1 };
+    })();
+    this.snapshotsInFlight.set(key, rebuild);
+    const settle = () => {
+      if (this.snapshotsInFlight.get(key) === rebuild) this.snapshotsInFlight.delete(key);
+    };
+    rebuild.then(settle, settle);
+    return rebuild;
+  }
+
+  /**
+   * Computes again every stored board of the contests named and of the contests on the events
+   * named (#1435), after a write changed what they are computed from. A contest no viewer has read
+   * has none, and is computed on its first read. A board that can no longer be shown is dropped,
+   * so the next read answers why. Each board's failure is logged and leaves the others to finish.
+   */
+  async rebuildLeaderboardSnapshots(changes: LeaderboardChanges): Promise<void> {
+    const keys = await this.deps.leaderboardSnapshots.findKeysByContestsOrEvents(changes.contestIds, changes.sportEventIds);
+    if (keys.length === 0) return;
+    const contests = new Map((await this.deps.contests.findByIds([...new Set(keys.map((key) => key.contestId))]))
+      .map((contest) => [contest.id, contest]));
+    // Built side by side on reads batched across them (#1315), as a cup's projection is.
+    const batched = new ContestService({ ...batchedLeaderboardDeps(this.deps), logger: this.logger, now: this.now });
+    await Promise.all(keys.map(async (key) => {
+      const contest = contests.get(key.contestId);
+      if (!contest) return;
+      try {
+        await batched.rebuildLeaderboardSnapshot(contest, key.shownEvent);
+      } catch (error) {
+        if (error instanceof ContestOperationError) {
+          this.logger.info({ contestId: key.contestId, shownEvent: key.shownEvent, code: error.code }, 'leaderboard snapshot dropped: the board can no longer be shown');
+          // poolmaster-allow-query-in-loop: only a board that can no longer be shown, rare; each its own row
+          await this.deps.leaderboardSnapshots.delete(key);
+          return;
+        }
+        this.logger.error({
+          contestId: key.contestId,
+          shownEvent: key.shownEvent,
+          error: error instanceof Error ? error.message : String(error),
+        }, 'leaderboard snapshot rebuild failed; the stored board stands until its next rebuild');
+      }
+    }));
   }
 
   /**
@@ -565,15 +655,15 @@ export class ContestService {
    * standings emails read (#877), computed afresh from fields read now, so an email never
    * reports a board older than the scores that queued it.
    */
-  leaderboardOf(contest: Contest, requestedSportEventId?: string): Promise<ContestLeaderboardModel> {
-    return this.boardOf(contest, requestedSportEventId, (sportEventId) => loadEventField(this.deps, sportEventId));
+  async leaderboardOf(contest: Contest, requestedSportEventId?: string): Promise<ContestLeaderboardModel> {
+    return (await this.boardOf(contest, requestedSportEventId, (sportEventId) => loadEventField(this.deps, sportEventId))).leaderboard;
   }
 
   private async boardOf(
     contest: Contest,
     requestedSportEventId: string | undefined,
     readField: (sportEventId: string) => Promise<SportEventParticipantView[]>,
-  ): Promise<ContestLeaderboardModel> {
+  ): Promise<{ leaderboard: ContestLeaderboardModel; validUntil: Date | null }> {
     const contestId = contest.id;
     const now = this.now();
     // No event's picks are revealed while the contest takes entries, unless a draw dealt them.
@@ -743,7 +833,11 @@ export class ContestService {
       };
     });
 
-    return {
+    // The board shows only the events revealed now: the next to start reveals another.
+    const nextReveal = events
+      .filter((event) => !revealed.includes(event))
+      .reduce<Date | null>((soonest, event) => (soonest === null || event.startDate < soonest ? event.startDate : soonest), null);
+    const leaderboard: ContestLeaderboardModel = {
       contestId,
       sportEventId: shownEvent.id,
       sport: shownEvent.sport,
@@ -755,6 +849,7 @@ export class ContestService {
       entries: leaderboardEntries,
       asOf: shown.asOf,
     };
+    return { leaderboard, validUntil: nextReveal };
   }
 
   /**
@@ -859,12 +954,23 @@ export class ContestService {
 
   /**
    * `livePositionsOf` for several contests, by contest id, in the same statements however many
-   * (#1315): their boards are built side by side on reads batched across them, and a board this
-   * container computed lately is still answered from its cache.
+   * (#1315): their stored boards are read together (#1435), and the ones not current are built
+   * side by side on reads batched across them.
    */
   async livePositionsOfMany(contestIds: readonly string[]): Promise<Map<string, RankedContestEntry[]>> {
-    const batched = new ContestService({ ...batchedLeaderboardDeps(this.deps), logger: this.logger, now: this.now, leaderboardCache: this.leaderboardCache });
+    const batched = new ContestService({ ...batchedLeaderboardDeps(this.deps), logger: this.logger, now: this.now });
     return new Map(await Promise.all(contestIds.map(async (contestId) => [contestId, await batched.livePositionsOf(contestId)] as const)));
+  }
+
+  /**
+   * A lineup contest's places as its board stands: its stored board when current (#1435), else one
+   * computed now and not stored, so a cup's projection reads the same statements however many of
+   * its contests no one has viewed lately.
+   */
+  private async rosterPositionsOf(contest: Contest): Promise<readonly { squadId: string; position: number | null }[]> {
+    const stored = await this.deps.leaderboardSnapshots.find(contest.id, DEFAULT_SHOWN_EVENT);
+    if (stored && isSnapshotCurrent(stored, contest, this.now(), this.snapshotMaxAgeMs)) return stored.board.entries;
+    return (await this.boardOf(contest, undefined, (sportEventId) => loadEventField(this.deps, sportEventId))).leaderboard.entries;
   }
 
   private async liveBoardOf(contest: Contest): Promise<readonly { squadId: string; position: number | null }[]> {
@@ -872,7 +978,7 @@ export class ContestService {
       case SelectionType.TIERED:
       case SelectionType.BUDGET_PICK:
       case SelectionType.RANDOM_DRAW:
-        return (await this.cachedLeaderboardOf(contest)).entries;
+        return this.rosterPositionsOf(contest);
       case SelectionType.PICK_EM:
         return (await this.pickEmLeaderboardOf(contest)).entries;
       case SelectionType.SURVIVOR:
@@ -1669,7 +1775,6 @@ export class ContestService {
 
     return configuration.maxEntriesPerSquad ?? null;
   }
-
 
 }
 

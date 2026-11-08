@@ -51,6 +51,8 @@ import {
   fakeUserRepo,
 } from '../../support/repo-fakes';
 import { mockFn } from '../../support/mock-fn';
+import { InMemoryLeaderboardSnapshots } from '../../support/in-memory-leaderboard-snapshots';
+import type { ContestLeaderboardResponse } from '@poolmaster/shared/dto';
 import type { MailDeliveryProvider } from '../../../packages/core-api/src/modules/email/mail-delivery';
 import { expectDefined } from '../../support/expect-defined';
 import { deliverQueuedEmail, emailServiceOver } from '../../support/email-service';
@@ -230,6 +232,7 @@ function buildService(deps: Partial<ContestServiceDeps> = {}): ContestService {
     sportLeagues: { findById: jest.fn().mockResolvedValue({ id: 'pga-tour', name: 'PGA Tour' }) },
     eventParticipants: fieldReads(jest.fn().mockResolvedValue([]), jest.fn().mockResolvedValue([])),
     tiers: { listTiers: jest.fn().mockResolvedValue([]) },
+    leaderboardSnapshots: new InMemoryLeaderboardSnapshots<ContestLeaderboardResponse>(),
     ...deps,
   });
 }
@@ -374,11 +377,22 @@ function buildGolfFieldView(input: {
       ranking: undefined,
       oddsToWin: undefined,
       seedNumber: undefined,
+      sportEventId: 'event-1',
+      isPlayInPlace: false,
+      createdAt: new Date('2026-01-01T00:00:00.000Z'),
+      updatedAt: new Date('2026-01-01T00:00:00.000Z'),
     },
     participant: {
       id: `participant-${input.id}`,
       name: input.participantName,
       shortName: undefined,
+      sportId: 'golf',
+      participantType: 'INDIVIDUAL',
+      status: 'ACTIVE',
+      injuryStatus: { status: 'HEALTHY' },
+      externalIds: {},
+      createdAt: new Date('2026-01-01T00:00:00.000Z'),
+      updatedAt: new Date('2026-01-01T00:00:00.000Z'),
     },
     valuation: null,
     standing: {
@@ -398,6 +412,7 @@ function buildGolfFieldView(input: {
     rounds: (input.rounds ?? []).map((round) => ({
       round: { status: round.status, roundNumber: round.round },
       golf: { strokes: round.strokes, scoreToPar: round.scoreToPar, thru: round.thru },
+      statLines: [],
     })),
     raceResult: null,
     matches: [],
@@ -1034,7 +1049,7 @@ describe('ContestService', () => {
           storedScoringRule({ participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 1, active: true }),
         ]),
       });
-      const listCachedEventParticipants = jest.fn().mockResolvedValue([
+      const listEventParticipants = jest.fn().mockResolvedValue([
         buildGolfFieldView({
           id: 'sep-1',
           participantName: 'Rory McIlroy',
@@ -1120,14 +1135,14 @@ describe('ContestService', () => {
         squadMemberships: createMockSquadMembershipRepo(),
         entries: entryRepo,
         picks: pickRepo,
-        eventParticipants: fieldReads(jest.fn(), listCachedEventParticipants),
+        eventParticipants: fieldReads(listEventParticipants, jest.fn()),
       });
 
-      const result = await service.getLeaderboard('contest-1', 'user-1');
+      const { board: result } = await service.getLeaderboard('contest-1', 'user-1');
 
       expect(result.scoringDefinitionId).toBe('GOLF_RELATIVE_TO_PAR_TOTAL');
       expect(result.countingRule).toEqual({ type: 'BEST_N', count: 2 });
-      expect(result.entries.map((entry) => [entry.entryId, entry.score, entry.position])).toEqual([
+      expect(result.entries.map((entry) => [entry.entryId, entry.totalScore, entry.position])).toEqual([
         ['entry-2', -9, 1],
         ['entry-1', -7, 2],
       ]);
@@ -1140,16 +1155,15 @@ describe('ContestService', () => {
         { pickId: 'pick-5', isCounting: true, isDropped: false },
         { pickId: 'pick-6', isCounting: false, isDropped: true },
       ]);
-      // The field is the event's own rows, passed through; the server no longer preformats
+      // The field is the event's own rows, as their canonical DTO; the server no longer preformats
       // rounds (#248). Rendered through the definition the leaderboard names, they read as the
       // deleted displayValue did: strokes once complete, to par while in progress.
-      expect(result.participants).toBe(await listCachedEventParticipants.mock.results[0].value);
-      const rory = result.participants.find((participant) => participant.entry.id === 'sep-1');
+      const rory = result.participants.find((participant) => participant.id === 'sep-1');
       const formatRound = expectDefined(PARTICIPANT_SCORING_DEFINITIONS[result.scoringDefinitionId].formatRound);
-      expect(rory?.rounds.map(({ round, golf }) => formatRound({ status: round.status, ...expectDefined(golf) })))
+      expect(rory?.rounds.map(({ status, golf }) => formatRound({ status, ...expectDefined(golf) })))
         .toEqual(['69', '-2']);
-      // Only the entries that submitted the event count: entry 3 is still a draft, so off the board.
-      expect(listCachedEventParticipants).toHaveBeenCalledWith('event-1');
+      // The board is computed from the field as read now, not a copy kept for 30 seconds (#1435).
+      expect(listEventParticipants).toHaveBeenCalledWith('event-1');
     });
 
     it('rejects leaving a contest after picks already exist', async () => {
@@ -2045,11 +2059,11 @@ describe('ContestService.getLeaderboard — refusals and the settled read', () =
       }),
     });
 
-    const result = await service.getLeaderboard('contest-1', 'user-1');
+    const { board: result } = await service.getLeaderboard('contest-1', 'user-1');
 
     expect(result.countingRule).toEqual({ type: 'BEST_N', count: 4 });
-    expect(result.asOf).toEqual(settledAt);
-    expect(result.entries.map((entry) => [entry.entryId, entry.position, entry.score])).toEqual([
+    expect(result.asOf).toEqual(settledAt.toISOString());
+    expect(result.entries.map((entry) => [entry.entryId, entry.position, entry.totalScore])).toEqual([
       ['entry-2', 1, -9],
       ['entry-1', 2, -4],
     ]);
@@ -2064,11 +2078,11 @@ describe('ContestService.getLeaderboard — refusals and the settled read', () =
       standings: fakeContestEntryStandingRepo({ findByContest: jest.fn().mockResolvedValue([]) }),
     });
 
-    const result = await service.getLeaderboard('contest-1', 'user-1');
+    const { board: result } = await service.getLeaderboard('contest-1', 'user-1');
 
     expect(result.countingRule).toEqual({ type: 'BEST_N', count: 2 });
     expect(result.entries).toHaveLength(1);
-    expect(result.entries[0]).toMatchObject({ score: null, position: null });
+    expect(result.entries[0]).toMatchObject({ totalScore: null, position: null });
   });
 });
 
