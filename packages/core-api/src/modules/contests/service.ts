@@ -98,6 +98,7 @@ import {
   applySettledContestStandings,
   applySettledContestTotals,
   buildContestEntryStanding,
+  buildMissedEventStanding,
   rankContestEntryStandings,
   rankContestTotals,
   resolveContestCountingRule,
@@ -112,6 +113,8 @@ import {
   loadContestScoringConfiguration,
   loadEventField,
   loadEventPicks,
+  missedEventEntries,
+  scoreMissedLineup,
   submittedLeaderboardEntries,
   toLeaderboardEntryInput,
   toParticipantScores,
@@ -818,7 +821,15 @@ export class ContestService {
       if (isShown || (settled.length === 0 && event.status !== SportEventStatus.CANCELLED)) {
         const field = await readField(event.id);
         const scores = toParticipantScores(field, event, scoring.scoring);
-        rows = rankEventStandings(entries, scores, countingRule, direction);
+        // An entry that skipped a live event is ranked at its missed lineup's score (#714), as its
+        // settlement will rank it, so the last live board is the settled result. A settled event's
+        // frozen standings already hold it, and a cancelled event scores nobody (#743).
+        const missed = settled.length === 0 && event.status !== SportEventStatus.CANCELLED
+          ? missedEventEntries(contest, contestEntries, new Set(entries.map((entry) => entry.id)))
+          : [];
+        for (const entry of missed) entriesById.set(entry.id, entry);
+        const missedScore = missed.length > 0 ? scoreMissedLineup(field, event, scoring.scoring, countingRule.count) : null;
+        rows = rankEventStandings(entries, scores, countingRule, direction, missed, missedScore);
         if (settled.length > 0) {
           rows = applySettledContestStandings(rows, settled.map(toSettledStanding));
         }
@@ -1985,16 +1996,21 @@ function withContestEventOrder<Entry extends ContestEntry>(entry: Entry, contest
   return { ...entry, events: [...entry.events].sort((left, right) => order(left.sportEventId) - order(right.sportEventId)) };
 }
 
-/** One event's entry standings, live: each submitted entry's picks scored against the event's field and ranked. */
+/** One event's standings: its submitted entries by their picks, and its missed ones at `missedScore`. */
 function rankEventStandings(
   entries: readonly ContestLeaderboardEntryInput[],
   scores: readonly ParticipantScore[],
   countingRule: ContestCountingRule,
   direction: Parameters<typeof rankContestEntryStandings>[1],
+  missed: readonly ContestLeaderboardEntryInput[],
+  missedScore: number | null,
 ): ContestEntryStandingRow[] {
   const scoreById = new Map(scores.map((score) => [score.sportEventParticipantId, score]));
   return rankContestEntryStandings(
-    entries.map((entry) => buildContestEntryStanding(entry, scoreById, countingRule, direction)),
+    [
+      ...entries.map((entry) => buildContestEntryStanding(entry, scoreById, countingRule, direction)),
+      ...missed.map((entry) => buildMissedEventStanding(entry, missedScore, countingRule, direction)),
+    ],
     direction,
   );
 }

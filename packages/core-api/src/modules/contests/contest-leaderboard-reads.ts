@@ -87,9 +87,24 @@ export async function loadContestScoringConfiguration(
 
 /**
  * The entries of a contest of several events that did not submit a lineup for one of them (#714):
- * each is scored for that event as a missed lineup once it finishes. A one-event contest has
- * none: an entry that never submitted is simply not in it.
+ * each is scored for that event as a missed lineup, on the live board while the event is under
+ * way and in its settled standings after, so the two always agree. A one-event contest has none:
+ * an entry that never submitted is simply not in it.
  */
+export function missedEventEntries(
+  contest: Pick<Contest, 'sportEventIds'>,
+  entries: readonly ContestEntryWithSquad[],
+  submittedEntryIds: ReadonlySet<string>,
+): ContestLeaderboardEntryInput[] {
+  if (contest.sportEventIds.length < 2) {
+    return [];
+  }
+  return entries
+    .filter((entry) => !submittedEntryIds.has(entry.id))
+    .map((entry) => toLeaderboardEntryInput(entry, []));
+}
+
+/** `missedEventEntries`, reading the contest's entries first. */
 export async function loadMissedEventEntries(
   deps: Pick<ContestLeaderboardReadDeps, 'entries'>,
   contest: Pick<Contest, 'id' | 'sportEventIds'>,
@@ -98,10 +113,7 @@ export async function loadMissedEventEntries(
   if (contest.sportEventIds.length < 2) {
     return [];
   }
-  const entries = await deps.entries.findByContestWithSquad(contest.id);
-  return entries
-    .filter((entry) => !submittedEntryIds.has(entry.id))
-    .map((entry) => toLeaderboardEntryInput(entry, []));
+  return missedEventEntries(contest, await deps.entries.findByContestWithSquad(contest.id), submittedEntryIds);
 }
 
 /** A contest entry as the leaderboard reads it: its name, its squad, and its picks in one event. */

@@ -246,7 +246,13 @@ async function buildTwoTournamentContest(
   });
 
   // Plays the tournament and posts every score, then completes it, or calls it off after the scores.
-  const playTournament = async (eventId: string, scores: Record<string, number>, endStatus: 'COMPLETED' | 'CANCELLED' = 'COMPLETED') => {
+  /** Plays the tournament to its final scores, runs `beforeEnd` (if any) with them saved, then ends it. */
+  const playTournament = async (
+    eventId: string,
+    scores: Record<string, number>,
+    endStatus: 'COMPLETED' | 'CANCELLED' = 'COMPLETED',
+    beforeEnd?: () => Promise<void>,
+  ) => {
     expect((await transitionEvent({ client: a, path: { eventId }, body: { toStatus: 'IN_PROGRESS' } })).data?.event.status).toBe('IN_PROGRESS');
     const rows = GOLFERS.map((golfer) => ({
       playerName: `${golfer} ${RUN}${tag}`,
@@ -256,6 +262,7 @@ async function buildTwoTournamentContest(
       status: 'COMPLETED' as const,
     }));
     expect((await applyEventGolfRoundScores({ client: a, path: { eventId, roundNumber: 1 }, body: { rows } })).response?.status).toBe(200);
+    if (beforeEnd) await beforeEnd();
     expect((await transitionEvent({ client: a, path: { eventId }, body: { toStatus: endStatus } })).data?.event.status).toBe(endStatus);
   };
   type BoardEntry = {
@@ -349,6 +356,25 @@ describe('SDK Functional: a golf contest over two tournaments (#713)', () => {
       [commissionerEntryId]: { totalScore: -3, displayPosition: '1', events: { [open.eventId]: [-3, '1'], [classic.eventId]: [0, '2'] } },
       [memberEntryId]: { totalScore: 26, displayPosition: '2', events: { [open.eventId]: [32, '2'], [classic.eventId]: [-6, '1'] } },
     });
+  }, 60_000);
+
+  // The board a member sees just before a tournament ends is the result it settles to: an entry
+  // that skipped it is scored as the missed lineup while it is still live, not only once settled.
+  it('shows an entry that skipped the live tournament at its missed-lineup score, so the last live board equals the settled standings', async () => {
+    const { open, contestId, member, commissionerEntryId, memberEntryId, playTournament, standingsOf } =
+      await buildTwoTournamentContest(' parity', { memberSkipsOpen: true });
+    const board = async () => expectMatchesSchema(ContestLeaderboardResponseSchema, (await getContestLeaderboard({ client: member.client, path: { contestId }, query: { sportEventId: open.eventId } })).data);
+    const lastLive: Array<Awaited<ReturnType<typeof board>>> = [];
+
+    await playTournament(open.eventId, OPEN_SCORES, 'COMPLETED', async () => { lastLive.push(await board()); });
+    const settled = await board();
+
+    const live = expectDefined(lastLive.at(0));
+    expect(standingsOf(live.entries)).toEqual({
+      [commissionerEntryId]: { totalScore: -3, displayPosition: '1', events: { [open.eventId]: [-3, '1'] } },
+      [memberEntryId]: { totalScore: 32, displayPosition: '2', events: { [open.eventId]: [32, '2'] } },
+    });
+    expect(standingsOf(live.entries)).toEqual(standingsOf(settled.entries));
   }, 60_000);
 
   // #714: a majors pool's later majors join it as each is released, with no commissioner step.

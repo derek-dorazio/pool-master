@@ -363,6 +363,19 @@ describe('ContestService.getLeaderboard reads (#1162)', () => {
     expect(eventsOf(three.id)).toEqual([[settled.event.id, 3, -1], [live.event.id, 1, -7]]);
   });
 
+  it('adds no entry that skipped a cancelled major to its board, since a cancelled major scores nobody, missed or played', async () => {
+    const cancelled = await createEvent('Masters', 200, SportEventStatus.CANCELLED);
+    const later = await createEvent('Open', -30, SportEventStatus.SCHEDULED);
+    const { contest, viewerId, addEntry } = await golfContest([cancelled, later]);
+    const played = await addEntry('Played It', [{ eventId: cancelled.event.id, fieldRowIds: [expectDefined(cancelled.field[0]).id, expectDefined(cancelled.field[1]).id] }]);
+    await addEntry('Skipped It', []);
+
+    const { board: leaderboard } = await serviceOn(getAppPrisma()).getLeaderboard(contest.id, viewerId, cancelled.event.id);
+
+    expect(leaderboard.sportEventId).toBe(cancelled.event.id);
+    expect(leaderboard.entries.map((entry) => [entry.entryId, entry.totalScore])).toEqual([[played.id, null]]);
+  });
+
   it('counts a cancelled major for nothing and reads neither its field nor its picks, while its entries stay on the board', async () => {
     const cancelled = await createEvent('Masters', 200, SportEventStatus.CANCELLED);
     const live = await createEvent('PGA', 1, SportEventStatus.IN_PROGRESS, [-5, -3, -2, 0]);
@@ -383,7 +396,8 @@ describe('ContestService.getLeaderboard reads (#1162)', () => {
     expect(leaderboard.sportEventId).toBe(live.event.id);
     expect(leaderboard.entries.map((entry) => [entry.entryId, entry.totalScore, entry.events.map((event) => event.sportEventId)])).toEqual([
       [both.id, -8, [live.event.id]],
-      [onlyCancelled.id, null, []],
+      // It skipped the live major, so it ranks there at its missed lineup's score, as settling it will.
+      [onlyCancelled.id, 32, [live.event.id]],
     ]);
   });
 });
