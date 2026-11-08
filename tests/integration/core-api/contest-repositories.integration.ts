@@ -1918,18 +1918,27 @@ describe('EventLifecycleService — an event cancelled under a contest (#845 C7)
     const entry = await createEntry(open.id, squads[0].id, 1, 'Alpha Entry');
     await submitEntryEvent(entry.id, event.id, new Date());
     const send = mockFn<MailDeliveryProvider['send']>(async () => ({ provider: 'smtp', messageId: 'mail' }));
-    const lifecycle = createEventLifecycleService(getAppPrisma(), {
-      sportEventChanged: createContestNotices(getAppPrisma(), {
-        email: emailServiceOver({ providerName: 'smtp', send }),
-        appBaseUrl: 'https://app.example.test',
-        logger: fakeLogger(),
-      }),
+    const jobs = integrationBackgroundJobs();
+    const notices = createContestNotices(getAppPrisma(), {
+      email: emailServiceOver({ providerName: 'smtp', send }),
+      jobs: jobs.queue,
+      appBaseUrl: 'https://app.example.test',
+      logger: fakeLogger(),
     });
+    const emailJobs = createContestEmailJobs(getAppPrisma(), { notices, logger: fakeLogger() });
+    const lifecycle = createEventLifecycleService(getAppPrisma(), { sportEventChanged: notices });
 
     await lifecycle.applySportEventStatusTransition({
       sportEventId: event.id, toStatus: 'CANCELLED', actor: { type: 'ROOT_ADMIN' },
     });
 
+    // The cancellation wrote one job, for the one contest that goes on, and built no email (#1458).
+    await expect(prisma.backgroundJob.findMany({ select: { type: true, payload: true } })).resolves.toEqual([{
+      type: 'CONTEST_EVENT_CHANGED_EMAILS',
+      payload: { contestId: open.id, sportEventId: event.id, change: { kind: 'CANCELLED', startsAt: event.startDate.toISOString() } },
+    }]);
+    await expect(prisma.emailMessage.count({ where: { templateKey: 'CONTEST_EVENT_CHANGED' } })).resolves.toBe(0);
+    await jobs.runWith({ CONTEST_EVENT_CHANGED_EMAILS: (payload) => emailJobs.contestEventChanged(payload) }).drain();
     await deliverQueuedEmail();
     expect(send.mock.calls.map(([message]) => message.to).sort()).toEqual([owner.user.email, member.user.email].sort());
     const toMember = send.mock.calls.find(([message]) => message.to === member.user.email)?.[0];

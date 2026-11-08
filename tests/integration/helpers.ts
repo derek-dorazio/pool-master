@@ -256,7 +256,7 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
   const backgroundJobs = integrationBackgroundJobs(prisma);
   // An event's status change and a game's result start and settle its contests, and queue their
   // emails as jobs, as in index.ts.
-  const contestNotices = createContestNotices(prisma, { email, appBaseUrl: readApplicationBaseUrl(process.env), logger: testApp.log });
+  const contestNotices = createContestNotices(prisma, { email, jobs: backgroundJobs.queue, appBaseUrl: readApplicationBaseUrl(process.env), logger: testApp.log });
   const contestEmailJobs = createContestEmailJobs(prisma, { notices: contestNotices, logger: testApp.log });
   // No delay, as the functional lane runs: a write's boards are rebuilt before it answers (#1435).
   const leaderboards = new DebouncedLeaderboardRebuilds({
@@ -289,6 +289,7 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
     MANUAL_EVENT_SYNC: (payload, context) => ingestionService.runManualEventSync(payload, context),
     CONTEST_STARTED_EMAILS: (payload) => contestEmailJobs.contestStarted(payload),
     CONTEST_SETTLED_EMAILS: (payload) => contestEmailJobs.contestSettled(payload),
+    CONTEST_EVENT_CHANGED_EMAILS: (payload) => contestEmailJobs.contestEventChanged(payload),
   });
   backgroundJobRunner = runner;
   backgroundJobs.queue.wakes({ wake: () => { if (!backgroundJobsHeld) runner.wake(); } });

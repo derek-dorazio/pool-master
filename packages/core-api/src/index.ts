@@ -147,7 +147,7 @@ export function buildApp() {
   // Work a request hands off rather than waits for (#1439): queued here, run by the runner below.
   const backgroundJobRepository = new PrismaBackgroundJobRepository(prisma);
   const backgroundJobs = new BackgroundJobQueue({ jobs: backgroundJobRepository });
-  const contestNotices = createContestNotices(prisma, { email, appBaseUrl, logger: app.log });
+  const contestNotices = createContestNotices(prisma, { email, jobs: backgroundJobs, appBaseUrl, logger: app.log });
   // A contest going live or completing queues its league's email as a job (#1387).
   const contestEmailJobs = createContestEmailJobs(prisma, { notices: contestNotices, logger: app.log });
   // Live leaderboards are computed once per score write (#1435): every write that changes what a
@@ -287,6 +287,7 @@ export function buildApp() {
       MANUAL_EVENT_SYNC: (payload, context) => ingestionService.runManualEventSync(payload, context),
       CONTEST_STARTED_EMAILS: (payload) => contestEmailJobs.contestStarted(payload),
       CONTEST_SETTLED_EMAILS: (payload) => contestEmailJobs.contestSettled(payload),
+      CONTEST_EVENT_CHANGED_EMAILS: (payload) => contestEmailJobs.contestEventChanged(payload),
     },
     pollMs: readBackgroundJobPollMs(process.env),
     logger: app.log,

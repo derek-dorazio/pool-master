@@ -16,6 +16,7 @@ on one server task*). The job table is for one-off work.
 | `MANUAL_EVENT_SYNC` | A root admin's event sync (`submitEventSync`, #1441), with the `SUBMITTED` runs in one transaction | `IngestionService.runManualEventSync`: runs each run's feed in turn | It runs only the runs still `SUBMITTED`, so a feed an earlier try started never runs twice; on a retry, a run an earlier try left `IN_PROGRESS` is marked `FAILED` as interrupted (#1445). A feed whose failure could not be written fails the job after the other feeds, so that retry happens. A feed that fails is recorded on its run; the job still succeeds |
 | `CONTEST_STARTED_EMAILS` | Each contest that goes live (`EventLifecycleService`, #1387), with its move to `ACTIVE`. Payload: the contest and the event that started it; dedupe key `CONTEST_STARTED_EMAILS:<contestId>` | `ContestEmailJobs.contestStarted`: reads the contest and event again and queues "Contest is live" (E1) to the league | Each email's outbox idempotency key is the contest, the event and the person, so a retry queues only what an earlier try did not |
 | `CONTEST_SETTLED_EMAILS` | Each contest that completes (`ContestSettlementService`, #1387), with its move to `COMPLETED`. Payload: the contest; dedupe key `CONTEST_SETTLED_EMAILS:<contestId>` | `ContestEmailJobs.contestSettled`: reads the final places frozen at settlement and queues "Final results" (F1 to F3); a contest no longer completed is skipped | As above, keyed by the contest and the person |
+| `CONTEST_EVENT_CHANGED_EMAILS` | Each open or live contest on an event that is postponed, moved or cancelled (`ContestNotices.sportEventChanged`, #1458), all in one write after the event's change. Payload: the contest, the event, the change and the event's start as it left it (and the old start of a move); dedupe key `CONTEST_EVENT_CHANGED_EMAILS:<contestId>:<change>` | `ContestEmailJobs.contestEventChanged`: reads the contest and event again and queues C6 or C7 to its commissioners and entrants, whatever the contest's status now (a cancellation's job may run after settlement); a contest or event gone is skipped | Keyed by the contest, the change and the person, as above |
 
 Adding a type: a value in `BackgroundJobType` (domain enum and Prisma enum, by migration), its
 payload schema in `BACKGROUND_JOB_PAYLOADS`, and its handler where index.ts builds the runner.
@@ -32,7 +33,8 @@ so a bad payload fails in the request that made it.
   `queued()` after the commit. `ProviderSyncRunRepository.createWithJob` is the model; a
   contest's status move takes its jobs as `ContestStatusTransition.jobs`, given the contests
   that moved.
-- A job on its own: `enqueue(type, payload)`.
+- A job on its own: `enqueue(type, payload)`; many with no other write, such as one per contest
+  on an event, in one insert: `enqueueMany(requests)`, each built with `request`.
 
 Either way the queue wakes this task's runner when it runs one (see *Running*), so on an idle
 system the job starts at once; on an `api` task the job waits for a worker's poll, within

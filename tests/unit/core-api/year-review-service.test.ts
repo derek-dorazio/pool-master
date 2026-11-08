@@ -102,7 +102,7 @@ describe('YearReviewService', () => {
     league = world.addLeague({ name: 'Office League', leagueCode: 'OFFICE24' });
   });
 
-  function service(email?: Pick<EmailService, 'send'>): YearReviewService {
+  function service(email?: Pick<EmailService, 'sendMany'>): YearReviewService {
     const logger = fakeLogger();
     return new YearReviewService({
       reviews,
@@ -223,11 +223,25 @@ describe('YearReviewService', () => {
     expect(outbox.rows).toEqual([]);
   });
 
+  it('queues every owner\'s email in one outbox write, however many squads placed (#1459)', async () => {
+    countedFinish(2025);
+    const sender = world.addUser({ firstName: 'Casey' });
+    const year = { championship: { cupName: 'Office League Cup', isOver: true, standing: standing(1, 100, [1], 1), squadCount: 3, pointsBehindLeader: 0, contestsCounted: 1, contestsToGo: 0 }, cups: [] };
+    const owners = [owner('Erin', 'Eagles', year), owner('Finn', 'Falcons', year), owner('Gail', 'Gulls', year)];
+    const batched = jest.spyOn(outbox, 'recordMany');
+
+    await service().send(league.id, 2025, sender.id);
+
+    expect(batched).toHaveBeenCalledTimes(1);
+    expect(batched.mock.calls[0]?.[0]).toHaveLength(3);
+    expect(owners.every(({ userId }) => sentTo(userId) !== undefined)).toBe(true);
+  });
+
   it('records nothing when an email fails partway, so the commissioner can press Send again', async () => {
     countedFinish(2025);
     const sender = world.addUser({ firstName: 'Casey' });
     owner('Erin', 'Eagles', { championship: { cupName: 'Office League Cup', isOver: true, standing: standing(1, 100, [1], 1), squadCount: 2, pointsBehindLeader: 0, contestsCounted: 1, contestsToGo: 0 }, cups: [] });
-    const failing = { send: jest.fn().mockRejectedValue(new Error('outbox down')) };
+    const failing = { sendMany: jest.fn().mockRejectedValue(new Error('outbox down')) };
 
     await expect(service(failing).send(league.id, 2025, sender.id)).rejects.toThrow('outbox down');
 
