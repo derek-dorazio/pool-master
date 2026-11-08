@@ -110,6 +110,13 @@ the admin screen shows) and enqueues `MANUAL_EVENT_SYNC` (payload: sync run ids,
 transaction. The handler runs `executeSubmittedEventSync`. A run already `IN_PROGRESS` or done is
 skipped on retry, so the ledger makes it idempotent. The `outsideRequest(setImmediate(...))` call goes away.
 
+**#1448, settling a finished event's contests.** A COMPLETED or CANCELLED transition writes
+`SETTLE_SPORT_EVENT_CONTESTS` (payload: event id, settle time) in the write that moves the event,
+and answers. The job sends a cancellation's C7 email and settles each contest with the leaderboard's
+ranking (#1455). Each contest settles in its own write and leaves `COMPLETED`, so a retry picks up only
+the contests an earlier try did not. The transition route leaves the query-budget allow list.
+Leagues will soon hold hundreds of contests, so no per-contest loop stays in a request.
+
 ## Testing
 
 - Unit: claim/lease/retry/backoff/FAILED state machine with an injected clock; dedupe coalescing;

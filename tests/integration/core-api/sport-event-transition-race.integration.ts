@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { Sport, SportEventStatus } from '@poolmaster/shared/domain';
+import { BackgroundJobType, Sport, SportEventStatus } from '@poolmaster/shared/domain';
 import {
   PrismaContestConfigurationRepository,
   PrismaContestRepository,
@@ -10,7 +10,7 @@ import {
   EventLifecycleService,
   type FinishedSportEventSettlement,
 } from '../../../packages/core-api/src/modules/events/event-lifecycle-service';
-import { cleanupTestData, getAppPrisma, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
+import { cleanupTestData, getAppPrisma, getPrisma, integrationBackgroundJobs, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
 import { createSportEventRow } from '../../support/sport-event-rows';
 import { freshEventEdition } from '../../support/event-edition';
 import { fakeLogger } from '../../support/fake-logger';
@@ -26,13 +26,13 @@ afterAll(async () => {
 });
 beforeEach(() => cleanupTestData());
 
-/** A lifecycle service over the real event table, its settlement counted rather than run. */
+/**
+ * A lifecycle service over the real event and job tables. Its settlement is never run: what is
+ * counted is the settle jobs the status change writes (#1448), each of which would settle once.
+ */
 function lifecycleCountingSettlements() {
-  const settled: string[] = [];
   const settlement: FinishedSportEventSettlement = {
-    settleFinishedSportEvent: async (sportEventId) => {
-      settled.push(sportEventId);
-    },
+    settleFinishedSportEvent: async () => undefined,
     settleFinishedGame: async () => undefined,
   };
   const service = new EventLifecycleService(
@@ -43,10 +43,14 @@ function lifecycleCountingSettlements() {
     },
     new PrismaSportEventRepository(getAppPrisma()),
     fakeLogger(),
-    undefined,
+    integrationBackgroundJobs().queue,
     settlement,
   );
-  return { service, settled };
+  const settleJobs = async () => (await getPrisma().backgroundJob.findMany({
+    where: { type: BackgroundJobType.SETTLE_SPORT_EVENT_CONTESTS },
+    select: { payload: true },
+  })).map(({ payload }) => (payload as { sportEventId: string }).sportEventId);
+  return { service, settleJobs };
 }
 
 async function createInProgressEvent() {
@@ -66,9 +70,9 @@ async function createInProgressEvent() {
 }
 
 describe('a sport event status change made by two callers at once', () => {
-  it('settles the event once when two callers complete it at the same moment', async () => {
+  it('queues one job to settle the event when two callers complete it at the same moment', async () => {
     const event = await createInProgressEvent();
-    const { service, settled } = lifecycleCountingSettlements();
+    const { service, settleJobs } = lifecycleCountingSettlements();
     const complete = () => service.applySportEventStatusTransition({
       sportEventId: event.id,
       toStatus: SportEventStatus.COMPLETED,
@@ -77,13 +81,13 @@ describe('a sport event status change made by two callers at once', () => {
 
     await Promise.all([complete(), complete()]);
 
-    expect(settled).toEqual([event.id]);
+    await expect(settleJobs()).resolves.toEqual([event.id]);
     expect((await getPrisma().sportEvent.findUniqueOrThrow({ where: { id: event.id } })).status).toBe('COMPLETED');
   });
 
-  it('does not settle the event again when the scheduler completes it after an admin already has', async () => {
+  it('queues no second settle job when the scheduler completes the event after an admin already has', async () => {
     const event = await createInProgressEvent();
-    const { service, settled } = lifecycleCountingSettlements();
+    const { service, settleJobs } = lifecycleCountingSettlements();
     await service.applySportEventStatusTransition({
       sportEventId: event.id,
       toStatus: SportEventStatus.COMPLETED,
@@ -98,6 +102,6 @@ describe('a sport event status change made by two callers at once', () => {
       fromStatus: SportEventStatus.IN_PROGRESS,
     });
 
-    expect(settled).toEqual([event.id]);
+    await expect(settleJobs()).resolves.toEqual([event.id]);
   });
 });

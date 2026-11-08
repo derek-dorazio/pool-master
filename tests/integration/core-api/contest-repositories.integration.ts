@@ -16,6 +16,7 @@ import {
 } from '../../../packages/core-api/src/adapters';
 import { recordStatements, statementShape } from '../statement-log';
 import { createEventLifecycleService } from '../../../packages/core-api/src/modules/events/wiring';
+import { createContestSettlementService } from '../../../packages/core-api/src/modules/contests/wiring';
 import {
   cleanupTestData,
   createTestUser,
@@ -1918,18 +1919,28 @@ describe('EventLifecycleService — an event cancelled under a contest (#845 C7)
     const entry = await createEntry(open.id, squads[0].id, 1, 'Alpha Entry');
     await submitEntryEvent(entry.id, event.id, new Date());
     const send = mockFn<MailDeliveryProvider['send']>(async () => ({ provider: 'smtp', messageId: 'mail' }));
+    const jobs = integrationBackgroundJobs();
     const lifecycle = createEventLifecycleService(getAppPrisma(), {
+      jobs: jobs.queue,
       sportEventChanged: createContestNotices(getAppPrisma(), {
         email: emailServiceOver({ providerName: 'smtp', send }),
         appBaseUrl: 'https://app.example.test',
         logger: fakeLogger(),
       }),
+      contestSettlement: createContestSettlementService(getAppPrisma(), fakeLogger()),
+    });
+    // Held until the transition has returned, so the email is seen to come from its settle job (#1448).
+    const runner = integrationBackgroundJobs().runWith({
+      SETTLE_SPORT_EVENT_CONTESTS: (payload) => lifecycle.settleFinishedEventContests(payload),
     });
 
     await lifecycle.applySportEventStatusTransition({
       sportEventId: event.id, toStatus: 'CANCELLED', actor: { type: 'ROOT_ADMIN' },
     });
+    await deliverQueuedEmail();
+    expect(send).not.toHaveBeenCalled();
 
+    await runner.drain();
     await deliverQueuedEmail();
     expect(send.mock.calls.map(([message]) => message.to).sort()).toEqual([owner.user.email, member.user.email].sort());
     const toMember = send.mock.calls.find(([message]) => message.to === member.user.email)?.[0];

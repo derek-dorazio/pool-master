@@ -33,6 +33,7 @@ import { hasSportEventStarted } from './operational-timing';
 import { ContestEventChangeKind } from '../email';
 import type { SportEventChange, SportEventChangedNotice } from '../notifications/contest-notices';
 import { contestStartedEmailsJob } from '../notifications/contest-email-job-requests';
+import { settleSportEventContestsJob, type SettleSportEventContestsJobPayload } from '../contests/settle-sport-event-job-requests';
 import type { BackgroundJobQueue } from '../background-jobs';
 import type { ApiErrorCode } from '@poolmaster/shared/dto';
 
@@ -112,7 +113,10 @@ export class EventLifecycleService {
     private readonly contestDeps: EventLifecycleContestDeps,
     private readonly sportEvents: SportEventRepository,
     private readonly logger?: FastifyBaseLogger,
-    /** Where each contest that goes live queues its "Contest is live" email job (#1387); without it, nobody is told. */
+    /**
+     * Where each contest that goes live queues its "Contest is live" email job (#1387), and a
+     * finished event queues the job that settles its contests (#1448); without it, neither runs.
+     */
     private readonly jobs?: Pick<BackgroundJobQueue, 'request' | 'queued'>,
     private readonly contestSettlement?: FinishedSportEventSettlement,
     private readonly releasedEditionContests?: ReleasedEditionContests,
@@ -152,14 +156,26 @@ export class EventLifecycleService {
       );
     }
 
+    // An event that completes or is cancelled settles its contests in a background job written
+    // with the status (#1448): an event can hold hundreds of contests, too many for the request.
+    // A cancelled event counts for nothing, so it must not hold a contest open either (#743).
+    const finishing = input.toStatus === SportEventStatus.COMPLETED || input.toStatus === SportEventStatus.CANCELLED;
+    const now = new Date();
+    const endDate = input.toStatus === SportEventStatus.COMPLETED && !before.endDate ? now : undefined;
+    // A cancelled event has no end date of its own, and its start may still be ahead, so its
+    // contests settle at the cancellation.
+    const settleAt = endDate ?? before.endDate ?? (input.toStatus === SportEventStatus.CANCELLED ? now : before.startDate);
+    const settleJob = finishing && this.jobs && this.contestSettlement
+      ? settleSportEventContestsJob(this.jobs, input.sportEventId, settleAt)
+      : undefined;
+
     // Written only while the event is still where it was read (#1159): of two callers making the
     // change at once, one writes it and runs the side effects below, and the other stops here.
     const updated = await this.sportEvents.transitionStatus(input.sportEventId, {
       from: fromStatus,
       to: input.toStatus,
-      ...(input.toStatus === SportEventStatus.COMPLETED && !before.endDate
-        ? { endDate: new Date() }
-        : {}),
+      ...(endDate && { endDate }),
+      ...(settleJob && { jobs: [settleJob] }),
     });
     if (!updated) {
       const current = (await this.sportEvents.findById(input.sportEventId)) ?? before;
@@ -192,15 +208,9 @@ export class EventLifecycleService {
     if (input.toStatus === SportEventStatus.POSTPONED && fromStatus !== SportEventStatus.POSTPONED) {
       await this.tellSportEventChanged(updated, { kind: ContestEventChangeKind.POSTPONED });
     }
-    // C7 goes before settlement, which finishes the contests it is told to.
-    if (input.toStatus === SportEventStatus.CANCELLED && fromStatus !== SportEventStatus.CANCELLED) {
-      await this.tellSportEventChanged(updated, { kind: ContestEventChangeKind.CANCELLED });
-    }
-    // A cancelled event settles its contests too (#743): it counts for nothing, so it must not
-    // hold a contest open.
-    if (input.toStatus === SportEventStatus.COMPLETED || input.toStatus === SportEventStatus.CANCELLED) {
-      await this.settleContestsForFinishedEvent(updated);
-    }
+    // The cancellation email (C7) is sent by the settlement job, before it finishes the contests
+    // it is about.
+    if (settleJob) this.jobs?.queued();
 
     return {
       sportEvent: updated,
@@ -236,19 +246,33 @@ export class EventLifecycleService {
     await this.contestSettlement?.settleFinishedGame(sportEvent.id, sportEventMatchId, { completedAt: now, games });
   }
 
-  private async settleContestsForFinishedEvent(
-    sportEvent: SportEvent,
-  ): Promise<void> {
+  /**
+   * The SETTLE_SPORT_EVENT_CONTESTS job (#1448): settles the contests of an event that completed
+   * or was cancelled, after telling a cancelled event's leagues (C7), which it must do while their
+   * contests are still open. It reads the event again: one moved back out of COMPLETED or
+   * CANCELLED before the job ran settles nothing, and its next finish queues a job of its own.
+   *
+   * Settlement is idempotent, so a retry after a failure part way finishes the rest: a contest
+   * already COMPLETED is not settled again, one whose standings for this event are frozen keeps
+   * them, and C7's idempotency key sends it to each member once.
+   */
+  async settleFinishedEventContests(payload: SettleSportEventContestsJobPayload): Promise<void> {
     if (!this.contestSettlement) {
+      throw new Error('Contest settlement is required to settle a finished event\'s contests');
+    }
+    const sportEvent = await this.sportEvents.findById(payload.sportEventId);
+    if (sportEvent?.status !== SportEventStatus.COMPLETED && sportEvent?.status !== SportEventStatus.CANCELLED) {
+      this.logger?.warn(
+        { action: 'events.settleContests.skipped', data: { sportEventId: payload.sportEventId, status: sportEvent?.status ?? null } },
+        'Skipped settling an event\'s contests because the event is gone or no longer finished',
+      );
       return;
     }
-
-    // A cancelled event has no end date of its own, and its start may still be ahead, so its
-    // contests settle at the cancellation.
-    const cancelledAt = sportEvent.status === SportEventStatus.CANCELLED ? new Date() : undefined;
+    if (sportEvent.status === SportEventStatus.CANCELLED) {
+      await this.tellSportEventChanged(sportEvent, { kind: ContestEventChangeKind.CANCELLED });
+    }
     await this.contestSettlement.settleFinishedSportEvent(sportEvent.id, {
-      completedAt: sportEvent.endDate ?? cancelledAt ?? sportEvent.startDate,
-      // The event as its transition just wrote it, so settlement does not read it again.
+      completedAt: new Date(payload.completedAt),
       sportEvent,
     });
   }

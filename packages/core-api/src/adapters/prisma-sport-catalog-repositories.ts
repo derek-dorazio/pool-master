@@ -57,6 +57,7 @@ import type {
 } from '@poolmaster/shared/domain';
 import { EventPricingConfigSchema, MatchSide, ParticipantInactiveReason, ParticipantStatus, SportEventStatus, ValuationSource } from '@poolmaster/shared/domain';
 import { forgettingReads, memoizedRead, memoizedReadMany, ReadMemoKey } from '../core/request-read-memo';
+import { insertBackgroundJobs } from './prisma-background-job-repository';
 import { toGolfRound, toGolfStanding } from './prisma-golf-repositories';
 import { MATCH_INCLUDE, toSportEventMatch } from './prisma-match-repositories';
 import { mapToParticipant } from './prisma-participant-repository';
@@ -385,14 +386,20 @@ export class PrismaSportEventRepository implements SportEventRepository {
   }
 
   async transitionStatus(id: string, transition: SportEventStatusTransition): Promise<SportEvent | null> {
-    const result = await forgettingReads(ReadMemoKey.sportEvent, () => this.prisma.sportEvent.updateMany({
-      where: { id, status: transition.from },
-      data: {
-        status: transition.to,
-        ...(transition.endDate && { endDate: transition.endDate }),
-      },
-    }));
-    return result.count > 0 ? this.findById(id) : null;
+    const jobs = transition.jobs ?? [];
+    const move = async (db: PrismaClient | Prisma.TransactionClient): Promise<boolean> => {
+      const result = await db.sportEvent.updateMany({
+        where: { id, status: transition.from },
+        data: {
+          status: transition.to,
+          ...(transition.endDate && { endDate: transition.endDate }),
+        },
+      });
+      if (result.count > 0 && jobs.length > 0) await insertBackgroundJobs(db, jobs);
+      return result.count > 0;
+    };
+    const moved = await forgettingReads(ReadMemoKey.sportEvent, () => (jobs.length > 0 ? this.prisma.$transaction(move) : move(this.prisma)));
+    return moved ? this.findById(id) : null;
   }
 
   async delete(id: string): Promise<void> {
