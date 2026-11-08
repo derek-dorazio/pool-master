@@ -823,8 +823,8 @@ export class ContestService {
         const scores = toParticipantScores(field, event, scoring.scoring);
         // An entry that skipped a live event is ranked at its missed lineup's score (#714), as its
         // settlement will rank it, so the last live board is the settled result. A settled event's
-        // frozen standings already hold it.
-        const missed = settled.length === 0
+        // frozen standings already hold it, and a cancelled event scores nobody (#743).
+        const missed = settled.length === 0 && event.status !== SportEventStatus.CANCELLED
           ? missedEventEntries(contest, contestEntries, new Set(entries.map((entry) => entry.id)))
           : [];
         for (const entry of missed) entriesById.set(entry.id, entry);
@@ -1996,7 +1996,6 @@ function withContestEventOrder<Entry extends ContestEntry>(entry: Entry, contest
   return { ...entry, events: [...entry.events].sort((left, right) => order(left.sportEventId) - order(right.sportEventId)) };
 }
 
-/** One event's entry standings, live: each submitted entry's picks scored against the event's field and ranked. */
 /** One event's standings: its submitted entries by their picks, and its missed ones at `missedScore`. */
 function rankEventStandings(
   entries: readonly ContestLeaderboardEntryInput[],
