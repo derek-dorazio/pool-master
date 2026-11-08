@@ -34,7 +34,9 @@ so a bad payload fails in the request that made it.
   that moved.
 - A job on its own: `enqueue(type, payload)`.
 
-Either way the queue wakes this task's runner, so on an idle system the job starts at once.
+Either way the queue wakes this task's runner when it runs one (see *Running*), so on an idle
+system the job starts at once; on an `api` task the job waits for a worker's poll, within
+`BACKGROUND_JOB_POLL_MS`.
 
 A `dedupeKey` keeps one job waiting for its first try per subject: an enqueue with a key such a
 job holds writes nothing. Claiming a job clears its key for good, so a request made while it runs,

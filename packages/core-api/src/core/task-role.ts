@@ -43,10 +43,14 @@ export interface TaskRolePlan {
 export function readTaskRole(env: { readonly CORE_API_ROLE?: string } = process.env): TaskRole {
   const raw = env.CORE_API_ROLE?.trim();
   if (!raw) return TaskRole.ALL;
-  if (!TASK_ROLES.includes(raw)) {
+  if (!isTaskRole(raw)) {
     throw new Error(`CORE_API_ROLE "${raw}" must be one of ${TASK_ROLES.join(', ')}.`);
   }
-  return raw as TaskRole;
+  return raw;
+}
+
+function isTaskRole(value: string): value is TaskRole {
+  return TASK_ROLES.includes(value);
 }
 
 export function taskRolePlan(role: TaskRole): TaskRolePlan {

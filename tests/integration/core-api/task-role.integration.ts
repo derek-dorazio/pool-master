@@ -16,10 +16,27 @@ import { IngestionScheduler } from '../../../packages/core-api/src/modules/inges
 let savedEnv: NodeJS.ProcessEnv;
 let app: FastifyInstance | undefined;
 
+const realSenderStart = EmailSender.prototype.start;
+
 function stubLoops() {
+  const senderTicks: (number | undefined)[] = [];
+  // The sender's real start, so the tick its timer gets is the one the app wired; its drain does
+  // nothing, and the timer is stopped at once.
+  jest.spyOn(EmailSender.prototype, 'drain').mockResolvedValue(undefined);
+  const emailSender = jest.spyOn(EmailSender.prototype, 'start').mockImplementation(function startOnce(this: EmailSender) {
+    const timers = jest.spyOn(global, 'setInterval');
+    try {
+      realSenderStart.call(this);
+      senderTicks.push(timers.mock.calls.at(-1)?.[1]);
+    } finally {
+      timers.mockRestore();
+      this.stop();
+    }
+  });
   return {
+    senderTicks,
     jobRunner: jest.spyOn(BackgroundJobRunner.prototype, 'start').mockImplementation(() => undefined),
-    emailSender: jest.spyOn(EmailSender.prototype, 'start').mockImplementation(() => undefined),
+    emailSender,
     lifecycleSweep: jest.spyOn(EventLifecycleScheduler.prototype, 'start').mockImplementation(() => undefined),
     nightlyCleanup: jest.spyOn(NightlyCleanupScheduler.prototype, 'start').mockImplementation(() => undefined),
     ingestion: jest.spyOn(IngestionScheduler.prototype, 'start').mockImplementation(() => undefined),
@@ -105,6 +122,8 @@ describe('core-api task roles', () => {
     expect(started(loops)).toEqual(ALL_LOOPS);
     expect(loops.runnerWiredToQueue).toHaveBeenCalledTimes(1);
     expect(loops.senderWake).toHaveBeenCalled();
+    // The sender's default tick: a wake, not the timer, sends a request's email here.
+    expect(loops.senderTicks).toEqual([15_000]);
   });
 
   it('starts no background loop on an API-only task, and leaves the email a request queues for the worker', async () => {
@@ -118,7 +137,7 @@ describe('core-api task roles', () => {
     expect(loops.senderWake).not.toHaveBeenCalled();
   });
 
-  it('runs every background loop on a worker, which still wakes its own sender and runner for work it queues', async () => {
+  it('runs every background loop on a worker, polling for email every second and still waking its own sender and runner', async () => {
     const loops = stubLoops();
     const server = await bootAs('worker');
 
@@ -127,6 +146,8 @@ describe('core-api task roles', () => {
     expect(started(loops)).toEqual(ALL_LOOPS);
     expect(loops.runnerWiredToQueue).toHaveBeenCalledTimes(1);
     expect(loops.senderWake).toHaveBeenCalled();
+    // Every second, so an email an API task queued goes out within one.
+    expect(loops.senderTicks).toEqual([1000]);
   });
 
   it('refuses to build a task whose role it does not know', async () => {
