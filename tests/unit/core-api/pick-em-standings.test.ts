@@ -337,6 +337,31 @@ describe('ContestService.getPickEmLeaderboard', () => {
   });
 });
 
+describe('Pick\'em settlement freezes the last live board (#1435)', () => {
+  it('freezes the season totals and places, and each week\'s points and places, the live leaderboard showed with every game final', async () => {
+    const context = setup();
+    await settleWeek1(context);
+    context.setNow(DURING_WEEK_2);
+    context.playWeek2();
+    const live = await context.leaderboard();
+
+    await settleWeek2(context);
+
+    const season = [...context.world.standings.values()]
+      .sort((left, right) => (left.position ?? Infinity) - (right.position ?? Infinity) || left.contestEntryId.localeCompare(right.contestEntryId))
+      .map((row) => [row.contestEntryId, row.totalScore, row.displayPosition]);
+    expect(season).toEqual(live.entries.map((entry) => [entry.entryId, entry.totalPoints, entry.displayPosition]));
+    const week2 = [...context.world.eventStandings.values()]
+      .filter((row) => row.sportEventId === context.week2.id)
+      .sort((left, right) => left.contestEntryId.localeCompare(right.contestEntryId))
+      .map((row) => [row.contestEntryId, row.totalScore, row.displayPosition]);
+    const liveWeek2 = live.entries
+      .flatMap((entry) => entry.weeks.filter((week) => week.sportEventId === context.week2.id && week.submitted).map((week) => [entry.entryId, week.points, week.displayPosition]))
+      .sort((left, right) => String(left[0]).localeCompare(String(right[0])));
+    expect(week2).toEqual(liveWeek2);
+  });
+});
+
 describe('ContestService.livePositionsOf — pick\'em', () => {
   it('ranks nobody in a live pick\'em contest before its first kickoff, so a cup projects nothing from it yet', async () => {
     const context = setup();

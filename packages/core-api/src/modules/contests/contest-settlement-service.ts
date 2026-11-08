@@ -29,9 +29,6 @@ import {
   type BracketStandingsReadDeps,
 } from './bracket-standings';
 import {
-  buildContestEntryStanding,
-  buildMissedEventStanding,
-  rankContestEntryStandings,
   rankContestTotals,
   type ContestEntryTotal,
   resolveContestCountingRule,
@@ -43,8 +40,7 @@ import {
   loadContestScoringConfiguration,
   loadEventField,
   loadMissedEventEntries,
-  scoreMissedLineup,
-  toParticipantScores,
+  rankContestEvent,
 } from './contest-leaderboard-reads';
 import { FINISHED_EVENT_STATUSES } from './entry-window';
 import { readEventMatchesOnce, readEventsOnce, readOncePerKey } from '../events/event-reads';
@@ -223,29 +219,17 @@ export class ContestSettlementService {
       // remember it), and only when one does: a bracket, survivor, squares or pick'em contest
       // never reads it. A cancelled event is never scored, whatever scores it holds.
       const field = cancelled ? [] : await loadEventField(reads, sportEventId);
-      // Scored per contest: a contest's settings (a points table) change its participants' scores.
-      const participants = toParticipantScores(field, sportEvent, scoring.scoring);
-      const scoreById = new Map(
-        participants.map((participant) => [participant.sportEventParticipantId, participant]),
-      );
-      const asOf = resolveContestStandingAsOf(participants, completedAt);
       if (!cancelled && !settledForEvent.has(contest.id)) {
         const entries = await loadContestLeaderboardEntries(this.deps, contest.id, sportEventId);
         // In a contest of several events, an entry that missed this one is scored as a missed
         // lineup (#714) and ranked with the rest, so skipping an event never helps its total.
         const missed = await loadMissedEventEntries(this.deps, contest, new Set(entries.map((entry) => entry.id)));
-        const missedScore = missed.length > 0
-          ? scoreMissedLineup(field, sportEvent, scoring.scoring, countingRule.count)
-          : null;
-        const rankedEntries = rankContestEntryStandings(
-          [
-            ...entries.map((entry) =>
-              buildContestEntryStanding(entry, scoreById, countingRule, scoringDefinition.direction),
-            ),
-            ...missed.map((entry) => buildMissedEventStanding(entry, missedScore, countingRule, scoringDefinition.direction)),
-          ],
-          scoringDefinition.direction,
-        );
+        // Ranked by the one function the live leaderboard ranks an event with (#1435), from the
+        // final scores: the standings frozen here are the board members saw as the event ended.
+        const { rows: rankedEntries, scores: participants } = rankContestEvent({
+          field, event: sportEvent, scoring: scoring.scoring, countingRule, direction: scoringDefinition.direction, submitted: entries, missed,
+        });
+        const asOf = resolveContestStandingAsOf(participants, completedAt);
         // The single writer of ContestEntryEventStanding: one transaction per contest settled.
         // poolmaster-allow-query-in-loop: one write per contest on the event, each its own all-or-none standings (#1172)
         await this.deps.eventStandings.upsertMany(contest.id, rankedEntries.map((entry) => ({

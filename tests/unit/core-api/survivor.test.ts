@@ -623,6 +623,24 @@ describe('ContestSettlementService — a survivor contest', () => {
     expect(expectDefined(context.world.contests.get(context.contest.id)).status).toBe(ContestStatus.COMPLETED);
   });
 
+  it('freezes the same weeks survived and places the live survivor leaderboard showed with the last week\'s games final (#1435)', async () => {
+    const context = setup();
+    context.playWeek1();
+    await settle(context, context.week1.id, later(WEEK_1, 48));
+    context.playWeek2();
+    await settle(context, context.week2.id, later(WEEK_2, 48));
+    context.playWeek3();
+    context.setNow(later(WEEK_3, 24));
+    const live = await context.leaderboard();
+
+    await settle(context, context.week3.id, later(WEEK_3, 48));
+
+    const totals = (await context.world.standingRepo().findByContest(context.contest.id))
+      .sort((left, right) => (left.position ?? Infinity) - (right.position ?? Infinity) || left.contestEntryId.localeCompare(right.contestEntryId))
+      .map((standing) => [standing.contestEntryId, standing.totalScore, standing.displayPosition]);
+    expect(totals).toEqual(live.entries.map((entry) => [entry.entryId, entry.weeksSurvived, entry.displayPosition]));
+  });
+
   it('reads the season\'s weeks and games once for every survivor contest on the last week, and completes each of them', async () => {
     const context = setup();
     const second = context.world.addContest(context.world.addLeague().id, {
