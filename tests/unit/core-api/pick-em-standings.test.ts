@@ -141,7 +141,7 @@ function setup() {
       play(g5, MatchSide.HOME, 20, 10);
       play(g6, MatchSide.HOME, 17, 14);
     },
-    leaderboard: () => contestService.getPickEmLeaderboard(contest.id, viewer.id),
+    leaderboard: () => contestService.getPickEmLeaderboard(contest.id, viewer.id).then((read) => read.board),
   };
 }
 

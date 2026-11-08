@@ -47,6 +47,11 @@ export interface PickEmLeaderboardModel {
   entries: PickEmLeaderboardEntryRow[];
 }
 
+/** A stored leaderboard (#1435) as the API answers it: the board it holds, mapped by `toPickEmLeaderboardResponse` when computed. */
+export function toPickEmLeaderboardSnapshotResponse(snapshot: { board: PickEmLeaderboardResponse }): PickEmLeaderboardResponse {
+  return snapshot.board;
+}
+
 export function toPickEmLeaderboardResponse(model: PickEmLeaderboardModel): PickEmLeaderboardResponse {
   return {
     contestId: model.contestId,

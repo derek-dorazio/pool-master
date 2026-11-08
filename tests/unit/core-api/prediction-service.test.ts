@@ -28,6 +28,7 @@ import { expectDefined } from '../../support/expect-defined';
 import { InMemoryContestWorld } from '../../support/in-memory-contest-world';
 import { InMemoryGamePicks } from '../../support/in-memory-game-picks';
 import { fakeLogger } from '../../support/fake-logger';
+import { RecordingLeaderboardRebuilds } from '../../support/recording-leaderboard-rebuilds';
 
 const HOUR = 60 * 60 * 1000;
 /** The test's clock starts two hours before the week's first kickoff. */
@@ -84,6 +85,7 @@ function setup(options: { mode?: PickEmMode; contestStatus?: ContestStatus; sele
   const receipts: GamePicksView[] = [];
   // The week each receipt was handed with, so it reads nothing the service already loaded (#1201).
   const receiptWeeks: SubmittedWeek[] = [];
+  const leaderboards = new RecordingLeaderboardRebuilds();
   const service = new PredictionService({
     contests: world.contestRepo(),
     configurations: world.configurationRepo(),
@@ -105,6 +107,7 @@ function setup(options: { mode?: PickEmMode; contestStatus?: ContestStatus; sele
     },
     logger,
     receipts: { gamePicksSubmitted: async (view, submitted) => { receipts.push(view); receiptWeeks.push(submitted); } },
+    leaderboards,
     ...(options.tiePicks ? { sportDefinitionOf: offeringTiePicks } : {}),
     now: () => now,
   });
@@ -124,7 +127,7 @@ function setup(options: { mode?: PickEmMode; contestStatus?: ContestStatus; sele
   });
 
   return {
-    world, week, service, contest, sportEvent, otherEvent, alice, bob, input, pick, tiePick, receipts, receiptWeeks, logger,
+    world, week, service, contest, sportEvent, otherEvent, alice, bob, input, pick, tiePick, receipts, receiptWeeks, logger, leaderboards,
     failNextWrite: () => { failNextWrite = true; },
     games: { thursday, sunday, monday, cancelled, otherWeekGame },
     weekStatus: () => contestEntryEventStatus(expectDefined(world.entries.get(aliceEntry.id)), sportEvent.id),
@@ -489,6 +492,40 @@ describe('PredictionService — a submitted week before the first kickoff', () =
     await context.service.saveGamePicks({ ...context.input, picks: [context.pick(context.games.thursday, 3)] });
     const view = await context.service.clearGamePick({ ...context.input, sportEventMatchId: context.games.sunday.id });
     expect(view.pickedCount).toBe(1);
+  });
+});
+
+describe('PredictionService — rebuilding the stored leaderboard (#1435)', () => {
+  it('rebuilds the contest\'s board once when a week is submitted, and not when a submit is refused or repeats', async () => {
+    const context = setup();
+    await context.service.saveGamePicks({ ...context.input, picks: [context.pick(context.games.thursday, 3)] });
+    await expectRefused(context.service.submitGamePicks(context.input), 'PREDICTION_WEEK_INCOMPLETE', 409);
+    expect(context.leaderboards.contestIds).toEqual([]);
+
+    await submitFullWeek(context);
+    expect(context.leaderboards.contestIds).toEqual([context.contest.id]);
+
+    await context.service.submitGamePicks(context.input);
+    expect(context.leaderboards.contestIds).toEqual([context.contest.id]);
+  });
+
+  it('rebuilds the contest\'s board when a change sends a submitted week back to draft, and not for a save that keeps a draft a draft', async () => {
+    const context = setup();
+    await context.service.saveGamePicks({ ...context.input, picks: [context.pick(context.games.thursday, 3)] });
+    expect(context.leaderboards.contestIds).toEqual([]);
+
+    await submitFullWeek(context);
+    await context.service.clearGamePick({ ...context.input, sportEventMatchId: context.games.sunday.id });
+    expect(context.leaderboards.contestIds).toEqual([context.contest.id, context.contest.id]);
+  });
+
+  it('keeps the board as it is for a save that leaves a submitted week submitted', async () => {
+    const context = setup();
+    await submitFullWeek(context);
+    await context.service.saveGamePicks({
+      ...context.input, picks: [context.pick(context.games.thursday, 2), context.pick(context.games.sunday, 3)],
+    });
+    expect(context.leaderboards.contestIds).toEqual([context.contest.id]);
   });
 });
 

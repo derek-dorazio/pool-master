@@ -27,9 +27,9 @@ import {
   toContestLeaderboardSnapshotResponse,
   toMyContestEntriesResponse,
 } from '../../mappers/contests.mapper';
-import { toBracketLeaderboardResponse } from '../../mappers/bracket-leaderboard.mapper';
-import { toPickEmLeaderboardResponse } from '../../mappers/pick-em-leaderboard.mapper';
-import { toSurvivorLeaderboardResponse } from '../../mappers/survivor-leaderboard.mapper';
+import { toBracketLeaderboardSnapshotResponse } from '../../mappers/bracket-leaderboard.mapper';
+import { toPickEmLeaderboardSnapshotResponse } from '../../mappers/pick-em-leaderboard.mapper';
+import { toSurvivorLeaderboardSnapshotResponse } from '../../mappers/survivor-leaderboard.mapper';
 import { createRequestContextLogger } from '../../core/logger';
 import { sendError } from '../../core/error-handler';
 import type { ContestService, ContestViewer } from './service';
@@ -267,8 +267,8 @@ export function createContestHandlers(contestService: ContestService) {
     logger.debug({ contestId: request.params.contestId, userId }, 'bracket leaderboard route start');
     try {
       const leaderboard = await contestService.getBracketLeaderboard(request.params.contestId, userId);
-      logger.info({ contestId: request.params.contestId, userId, entryCount: leaderboard.entries.length }, 'bracket leaderboard route completed');
-      return reply.send(toBracketLeaderboardResponse(leaderboard));
+      logger.info({ contestId: request.params.contestId, userId, version: leaderboard.version, entryCount: leaderboard.board.entries.length }, 'bracket leaderboard route completed');
+      return reply.send(toBracketLeaderboardSnapshotResponse(leaderboard));
     } catch (err) {
       if (err instanceof ContestNotFoundError) {
         logger.warn({ contestId: request.params.contestId, userId }, 'bracket leaderboard route missing contest');
@@ -292,8 +292,8 @@ export function createContestHandlers(contestService: ContestService) {
     logger.debug({ contestId: request.params.contestId, userId }, 'pick\'em leaderboard route start');
     try {
       const leaderboard = await contestService.getPickEmLeaderboard(request.params.contestId, userId);
-      logger.info({ contestId: request.params.contestId, userId, entryCount: leaderboard.entries.length, weekCount: leaderboard.weeks.length }, 'pick\'em leaderboard route completed');
-      return reply.send(toPickEmLeaderboardResponse(leaderboard));
+      logger.info({ contestId: request.params.contestId, userId, version: leaderboard.version, entryCount: leaderboard.board.entries.length, weekCount: leaderboard.board.weeks.length }, 'pick\'em leaderboard route completed');
+      return reply.send(toPickEmLeaderboardSnapshotResponse(leaderboard));
     } catch (err) {
       if (err instanceof ContestNotFoundError) {
         logger.warn({ contestId: request.params.contestId, userId }, 'pick\'em leaderboard route missing contest');
@@ -317,8 +317,8 @@ export function createContestHandlers(contestService: ContestService) {
     logger.debug({ contestId: request.params.contestId, userId }, 'survivor leaderboard route start');
     try {
       const leaderboard = await contestService.getSurvivorLeaderboard(request.params.contestId, userId);
-      logger.info({ contestId: request.params.contestId, userId, entryCount: leaderboard.entries.length, weekCount: leaderboard.weeks.length }, 'survivor leaderboard route completed');
-      return reply.send(toSurvivorLeaderboardResponse(leaderboard));
+      logger.info({ contestId: request.params.contestId, userId, version: leaderboard.version, entryCount: leaderboard.board.entries.length, weekCount: leaderboard.board.weeks.length }, 'survivor leaderboard route completed');
+      return reply.send(toSurvivorLeaderboardSnapshotResponse(leaderboard));
     } catch (err) {
       if (err instanceof ContestNotFoundError) {
         logger.warn({ contestId: request.params.contestId, userId }, 'survivor leaderboard route missing contest');

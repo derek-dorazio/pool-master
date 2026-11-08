@@ -4,6 +4,7 @@
  * port and its implementation.
  */
 
+import type { LeaderboardRebuilds } from '../contests/leaderboard-snapshots';
 import type { PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 import {
@@ -73,7 +74,7 @@ export function createDrawReceipts(
 export function createPredictionService(
   prisma: PrismaClient,
   logger: FastifyBaseLogger,
-  options?: { email?: EmailService; appBaseUrl?: string },
+  options?: { email?: EmailService; appBaseUrl?: string; leaderboards?: Pick<LeaderboardRebuilds, 'contestsChanged'> },
 ): PredictionService {
   return new PredictionService({
     contests: new PrismaContestRepository(prisma),
@@ -89,6 +90,7 @@ export function createPredictionService(
     ...(options?.email && options.appBaseUrl !== undefined && {
       receipts: createEntryReceipts(prisma, { email: options.email, appBaseUrl: options.appBaseUrl, logger }),
     }),
+    leaderboards: options?.leaderboards,
     logger,
   });
 }

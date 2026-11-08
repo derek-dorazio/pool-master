@@ -343,7 +343,7 @@ export function buildApp() {
   // =========================================================================
   // Draft module
   // =========================================================================
-  app.register(selectionsModule, { prefix: '/api/v1/selections', email, planEntitlements });
+  app.register(selectionsModule, { prefix: '/api/v1/selections', email, planEntitlements, leaderboards });
 
   // =========================================================================
   // Lifecycle hooks

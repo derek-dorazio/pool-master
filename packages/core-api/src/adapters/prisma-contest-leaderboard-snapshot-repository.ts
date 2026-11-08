@@ -48,26 +48,37 @@ export class PrismaContestLeaderboardSnapshotRepository<Board> implements Contes
   }
 
   async save(write: ContestLeaderboardSnapshotWrite<Board>): Promise<ContestLeaderboardSnapshot<Board> | null> {
+    const stored = await this.overwriteOlder(write);
+    if (stored) return stored;
+    // No older row: there is none yet, or the one there is newer. Skipping a duplicate keeps the
+    // newer one, and keeps two first rebuilds at once from failing each other.
     const { contestId, shownEvent, computedFrom, contestUpdatedAt, validUntil } = write;
-    const board = write.board as Prisma.InputJsonValue;
+    const created = await this.prisma.contestLeaderboardSnapshot.createMany({
+      data: [{ contestId, shownEvent, computedFrom, contestUpdatedAt, validUntil, board: write.board as Prisma.InputJsonValue }],
+      skipDuplicates: true,
+    });
+    if (created.count > 0) return { ...write, version: 1 };
+    // Another first build inserted between the two: overwrite it if it began earlier than this one.
+    return this.overwriteOlder(write);
+  }
+
+  /**
+   * Overwrites the stored row only if it was computed from older reads: one that began at the same
+   * moment or later holds scores at least as new, and is kept. One statement, answering the row
+   * stored, or null when there is no older row.
+   */
+  private async overwriteOlder(write: ContestLeaderboardSnapshotWrite<Board>): Promise<ContestLeaderboardSnapshot<Board> | null> {
+    const { contestId, shownEvent, computedFrom, contestUpdatedAt, validUntil } = write;
     try {
-      // Only a row computed from older reads is overwritten: one that began at the same moment or
-      // later holds scores at least as new, and is kept. One statement, answering the row stored.
       const updated = await this.prisma.contestLeaderboardSnapshot.update({
         where: { contestId_shownEvent: { contestId, shownEvent }, computedFrom: { lt: computedFrom } },
-        data: { computedFrom, contestUpdatedAt, validUntil, board, version: { increment: 1 } },
+        data: { computedFrom, contestUpdatedAt, validUntil, board: write.board as Prisma.InputJsonValue, version: { increment: 1 } },
       });
       return toSnapshot<Board>(updated);
     } catch (error) {
-      if (!(error instanceof PrismaErrors.PrismaClientKnownRequestError) || error.code !== RECORD_NOT_FOUND) throw error;
+      if (error instanceof PrismaErrors.PrismaClientKnownRequestError && error.code === RECORD_NOT_FOUND) return null;
+      throw error;
     }
-    // No older row: there is none yet, or the one there is newer. Skipping a duplicate keeps the
-    // newer one, and keeps two first rebuilds at once from failing each other.
-    const created = await this.prisma.contestLeaderboardSnapshot.createMany({
-      data: [{ contestId, shownEvent, computedFrom, contestUpdatedAt, validUntil, board }],
-      skipDuplicates: true,
-    });
-    return created.count > 0 ? { ...write, version: 1 } : null;
   }
 
   async delete({ contestId, shownEvent }: ContestLeaderboardSnapshotKey): Promise<void> {
