@@ -1,15 +1,30 @@
 import { expect, jest } from '@jest/globals';
-import { MatchEnding, MatchPeriodLayout, MatchSide, MatchStatus, ParticipantStandingStatus, Sport, SportEventStatus } from '@poolmaster/shared/domain';
+import { BackgroundJobType, MatchEnding, MatchPeriodLayout, MatchSide, MatchStatus, ParticipantStandingStatus, Sport, SportEventStatus, type BackgroundJobRequest } from '@poolmaster/shared/domain';
 import { SportEventBracketService } from '../../../packages/core-api/src/modules/events/sport-event-bracket-service';
 import type { EventLifecycleService } from '../../../packages/core-api/src/modules/events/event-lifecycle-service';
 import { MatchResultService, describeScoreProblem } from '../../../packages/core-api/src/modules/scoring-families/head-to-head/match-result-service';
 import { InMemorySportEvents, NO_PICKS_ON_EVENT } from '../../support/in-memory-sport-events';
+import { expectDefined } from '../../support/expect-defined';
 
 // The admin's match results against an in-memory store (#699): what a result saves (the winner,
 // the next match's side, every team's standing), what it refuses, and the correction lock. The
 // Prisma adapter's transaction is covered in sport-event-matches.integration.
 
 const AS_OF = new Date('2027-03-19T04:00:00.000Z');
+
+/** Stands in for the job the lifecycle builds to settle a game's squares contests. */
+const SETTLE_GAME_JOB: BackgroundJobRequest = {
+  type: BackgroundJobType.SETTLE_GAME_CONTESTS,
+  payload: { sportEventId: 'event', sportEventMatchId: 'game', completedAt: AS_OF.toISOString() },
+  dedupeKey: 'SETTLE_GAME_CONTESTS:game',
+};
+
+/** A lifecycle's game settlement that hands over SETTLE_GAME_JOB, and records the wake after the write. */
+function gameSettlement() {
+  const queued = jest.fn<() => void>();
+  const finishedGameSettlement = jest.fn<EventLifecycleService['finishedGameSettlement']>(() => ({ jobs: [SETTLE_GAME_JOB], queued }));
+  return { finishedGameSettlement, queued };
+}
 
 async function setup({ sport = Sport.BASKETBALL, status = SportEventStatus.IN_PROGRESS }: { sport?: Sport; status?: SportEventStatus } = {}) {
   const store = new InMemorySportEvents();
@@ -120,7 +135,7 @@ describe('MatchResultService.recordResult', () => {
   it('asks the lifecycle to start the contests whose cutoff the result passed, with the service clock, on an event under way', async () => {
     const { store, event } = await setup();
     const activateContestsPastCutoff = jest.fn<EventLifecycleService['activateContestsPastCutoff']>(async () => undefined);
-    const service = new MatchResultService({ sportEvents: store.sportEventRepo(), matches: store.matchRepo(), contestActivation: { activateContestsPastCutoff, settleContestsForFinishedGame: jest.fn<EventLifecycleService['settleContestsForFinishedGame']>(async () => undefined) }, now: () => AS_OF });
+    const service = new MatchResultService({ sportEvents: store.sportEventRepo(), matches: store.matchRepo(), contestActivation: { activateContestsPastCutoff, finishedGameSettlement: gameSettlement().finishedGameSettlement }, now: () => AS_OF });
 
     await service.recordResult(event.id, 1, homeWins);
 
@@ -130,26 +145,48 @@ describe('MatchResultService.recordResult', () => {
   it('starts no contest for a result on an event that is not under way', async () => {
     const { store, event } = await setup({ status: SportEventStatus.SCHEDULED });
     const activateContestsPastCutoff = jest.fn<EventLifecycleService['activateContestsPastCutoff']>(async () => undefined);
-    const service = new MatchResultService({ sportEvents: store.sportEventRepo(), matches: store.matchRepo(), contestActivation: { activateContestsPastCutoff, settleContestsForFinishedGame: jest.fn<EventLifecycleService['settleContestsForFinishedGame']>(async () => undefined) }, now: () => AS_OF });
+    const service = new MatchResultService({ sportEvents: store.sportEventRepo(), matches: store.matchRepo(), contestActivation: { activateContestsPastCutoff, finishedGameSettlement: gameSettlement().finishedGameSettlement }, now: () => AS_OF });
 
     await service.recordResult(event.id, 1, homeWins);
 
     expect(activateContestsPastCutoff).not.toHaveBeenCalled();
   });
 
-  it('asks the lifecycle to settle the squares contests on the game once its result is in, whatever the event\'s status', async () => {
+  it('writes the job settling the squares contests on the game with its result, whatever the event\'s status, and wakes the runner only once it is written', async () => {
     const { store, event } = await setup({ status: SportEventStatus.SCHEDULED });
-    const settleContestsForFinishedGame = jest.fn<EventLifecycleService['settleContestsForFinishedGame']>(async () => undefined);
+    const settlement = gameSettlement();
+    const matches = store.matchRepo();
+    const applyResult = jest.spyOn(matches, 'applyResult');
     const service = new MatchResultService({
       sportEvents: store.sportEventRepo(),
-      matches: store.matchRepo(),
-      contestActivation: { activateContestsPastCutoff: jest.fn<EventLifecycleService['activateContestsPastCutoff']>(async () => undefined), settleContestsForFinishedGame },
+      matches,
+      contestActivation: { activateContestsPastCutoff: jest.fn<EventLifecycleService['activateContestsPastCutoff']>(async () => undefined), finishedGameSettlement: settlement.finishedGameSettlement },
       now: () => AS_OF,
     });
 
     await service.recordResult(event.id, 1, homeWins);
 
-    expect(settleContestsForFinishedGame).toHaveBeenCalledWith(expect.objectContaining({ id: event.id }), 'match-1', AS_OF, writtenBracketWithResult);
+    expect(settlement.finishedGameSettlement).toHaveBeenCalledWith(event.id, 'match-1', AS_OF);
+    expect(applyResult).toHaveBeenCalledWith(expect.objectContaining({ jobs: [SETTLE_GAME_JOB] }));
+    expect(settlement.queued).toHaveBeenCalledTimes(1);
+    expect(applyResult.mock.invocationCallOrder[0]).toBeLessThan(expectDefined(settlement.queued.mock.invocationCallOrder[0]));
+  });
+
+  it('wakes no runner when the result cannot be written', async () => {
+    const { store, event } = await setup();
+    const settlement = gameSettlement();
+    const matches = store.matchRepo();
+    jest.spyOn(matches, 'applyResult').mockRejectedValue(new Error('connection lost'));
+    const service = new MatchResultService({
+      sportEvents: store.sportEventRepo(),
+      matches,
+      contestActivation: { activateContestsPastCutoff: jest.fn<EventLifecycleService['activateContestsPastCutoff']>(async () => undefined), finishedGameSettlement: settlement.finishedGameSettlement },
+      now: () => AS_OF,
+    });
+
+    await expect(service.recordResult(event.id, 1, homeWins)).rejects.toThrow('connection lost');
+
+    expect(settlement.queued).not.toHaveBeenCalled();
   });
 
   it('accepts a result with no scores', async () => {
@@ -486,6 +523,25 @@ describe('MatchResultService.cancelMatch', () => {
     ]);
   });
 
+  it('writes the job settling the squares contests on the game with its cancellation, so they end Final with no scores', async () => {
+    const { store, event } = await week();
+    const settlement = gameSettlement();
+    const matches = store.matchRepo();
+    const applyResult = jest.spyOn(matches, 'applyResult');
+    const service = new MatchResultService({
+      sportEvents: store.sportEventRepo(),
+      matches,
+      contestActivation: { activateContestsPastCutoff: jest.fn<EventLifecycleService['activateContestsPastCutoff']>(async () => undefined), finishedGameSettlement: settlement.finishedGameSettlement },
+      now: () => AS_OF,
+    });
+
+    await service.cancelMatch(event.id, 1);
+
+    expect(settlement.finishedGameSettlement).toHaveBeenCalledWith(event.id, 'game-1', AS_OF);
+    expect(applyResult).toHaveBeenCalledWith(expect.objectContaining({ result: expect.objectContaining({ status: MatchStatus.CANCELLED }), jobs: [SETTLE_GAME_JOB] }));
+    expect(settlement.queued).toHaveBeenCalledTimes(1);
+  });
+
   it('changes nothing when the game is already cancelled', async () => {
     const { service, event } = await week();
     await service.cancelMatch(event.id, 1);
@@ -543,23 +599,29 @@ describe('MatchResultService period scores', () => {
     expect(games.find((game) => game.matchNumber === 1)?.periodScores).toEqual([{ periodNumber: 3, homeScore: 17, awayScore: 3 }]);
   });
 
-  it('asks the lifecycle to settle the squares contests on a finished game when a quarter\'s score is entered after its result, and not before it', async () => {
+  it('writes the job settling the squares contests on a finished game with a quarter\'s score entered after its result, and none with one entered before it', async () => {
     const { store, event } = await week();
-    const settleContestsForFinishedGame = jest.fn<EventLifecycleService['settleContestsForFinishedGame']>(async () => undefined);
+    const settlement = gameSettlement();
+    const matches = store.matchRepo();
+    const savePeriodScore = jest.spyOn(matches, 'savePeriodScore');
     const service = new MatchResultService({
       sportEvents: store.sportEventRepo(),
-      matches: store.matchRepo(),
-      contestActivation: { activateContestsPastCutoff: jest.fn<EventLifecycleService['activateContestsPastCutoff']>(async () => undefined), settleContestsForFinishedGame },
+      matches,
+      contestActivation: { activateContestsPastCutoff: jest.fn<EventLifecycleService['activateContestsPastCutoff']>(async () => undefined), finishedGameSettlement: settlement.finishedGameSettlement },
       now: () => AS_OF,
     });
     await service.recordPeriodScore(event.id, 1, 1, { homeScore: 7, awayScore: 0 });
-    expect(settleContestsForFinishedGame).not.toHaveBeenCalled();
+    expect(savePeriodScore).toHaveBeenLastCalledWith('game-1', { periodNumber: 1, homeScore: 7, awayScore: 0 }, []);
+    expect(settlement.finishedGameSettlement).not.toHaveBeenCalled();
     await service.recordResult(event.id, 1, { winnerSide: MatchSide.HOME, homeScore: 24, awayScore: 10 });
-    settleContestsForFinishedGame.mockClear();
+    settlement.finishedGameSettlement.mockClear();
+    settlement.queued.mockClear();
 
     await service.recordPeriodScore(event.id, 1, 3, { homeScore: 17, awayScore: 3 });
 
-    expect(settleContestsForFinishedGame).toHaveBeenCalledWith(expect.objectContaining({ id: event.id }), 'game-1', AS_OF);
+    expect(settlement.finishedGameSettlement).toHaveBeenCalledWith(event.id, 'game-1', AS_OF);
+    expect(savePeriodScore).toHaveBeenLastCalledWith('game-1', { periodNumber: 3, homeScore: 17, awayScore: 3 }, [SETTLE_GAME_JOB]);
+    expect(settlement.queued).toHaveBeenCalledTimes(1);
   });
 
   it('clears a quarter\'s score, and changes nothing for a quarter not entered', async () => {

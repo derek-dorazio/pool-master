@@ -113,22 +113,26 @@ export function getFunctionalBaseUrl(): string {
   return readState().baseUrl;
 }
 
-/** `POST /api/v1/events/:eventId/transition`, whose COMPLETED or CANCELLED settles in a job (#1448). */
-const EVENT_TRANSITION_PATH = /\/api\/v1\/events\/([^/]+)\/transition$/;
+/**
+ * A write to one event: its status change (a COMPLETED or CANCELLED settles its contests in a job,
+ * #1448), or a game's result, late quarter score or cancellation (its squares contests settle in a
+ * job, #1460).
+ */
+const EVENT_WRITE_PATH = /\/api\/v1\/events\/([^/]+)\//;
 const SETTLE_JOB_WAIT_MS = 30_000;
 const SETTLE_JOB_POLL_MS = 50;
 
 /**
- * Waits until the job settling this event's contests has run. The server settles a finished
- * event in a background job after the transition answers, and the scenarios read the settled
- * standings next, as a member would once the job is done. A job that fails, or is still waiting
+ * Waits until the jobs settling this event's contests have run. The server settles a finished
+ * event, or a decided game's squares contests, in a background job after the write answers, and
+ * the scenarios read the settled standings next, as a member would once the job is done. A job that fails, or is still waiting
  * after SETTLE_JOB_WAIT_MS, fails the test with its last error.
  */
 export async function awaitEventSettlementJobs(sportEventId: string): Promise<void> {
   const database = getFunctionalPrisma();
   const deadline = Date.now() + SETTLE_JOB_WAIT_MS;
   const where = {
-    type: 'SETTLE_SPORT_EVENT_CONTESTS' as const,
+    type: { in: ['SETTLE_SPORT_EVENT_CONTESTS' as const, 'SETTLE_GAME_CONTESTS' as const] },
     payload: { path: ['sportEventId'], equals: sportEventId },
   };
   for (;;) {
@@ -151,12 +155,12 @@ export async function awaitEventSettlementJobs(sportEventId: string): Promise<vo
   }
 }
 
-/** A successful event transition answers only once the job it queued has settled the event. */
+/** A successful write to an event answers only once the settling jobs it queued have run. */
 function waitingForEventSettlement(client: Client): Client {
   client.interceptors.response.use(async (response: Response, request: Request) => {
-    const transition = EVENT_TRANSITION_PATH.exec(new URL(request.url).pathname);
-    if (request.method === 'POST' && transition?.[1] && response.ok) {
-      await awaitEventSettlementJobs(decodeURIComponent(transition[1]));
+    const write = EVENT_WRITE_PATH.exec(new URL(request.url).pathname);
+    if (request.method !== 'GET' && write?.[1] && response.ok) {
+      await awaitEventSettlementJobs(decodeURIComponent(write[1]));
     }
     return response;
   });

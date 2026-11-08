@@ -18,7 +18,6 @@ import {
   squaresWinners,
   type Contest,
   type SportEvent,
-  type SportEventMatch,
 } from '@poolmaster/shared/domain';
 import { loadPickEmScoring, loadPickEmWeekStandings, PickEmRulesMissingError } from './pick-em-standings';
 import type { GamePickScoring } from '../scoring-families/head-to-head/game-picks';
@@ -284,15 +283,15 @@ export class ContestSettlementService {
   /**
    * Settles the squares contests played on one game (#711) once the game is decided: its result is
    * in, or it was cancelled. They settle with their game, not with its event, which may run on for
-   * weeks (the Super Bowl is the last game of the NFL playoffs). `games`, the event's games as the
-   * caller just wrote them, saves reading them. Answers how many it completed.
+   * weeks (the Super Bowl is the last game of the NFL playoffs). It runs in the SETTLE_GAME_CONTESTS
+   * job, which reads the game as it stands then. Answers how many it completed.
    */
-  async settleFinishedGame(sportEventId: string, sportEventMatchId: string, input?: { completedAt?: Date; games?: readonly SportEventMatch[] }): Promise<number> {
+  async settleFinishedGame(sportEventId: string, sportEventMatchId: string, input?: { completedAt?: Date }): Promise<number> {
     const sportEvent = await this.deps.sportEvents.findById(sportEventId);
     if (!sportEvent) return 0;
     const contests = (await this.deps.contests.findBySportEvent(sportEventId, { excludeStatuses: NOT_SETTLED }))
       .filter((contest) => contest.selectionType === SelectionType.SQUARES && contest.squaresGameMatchId === sportEventMatchId);
-    const reads = this.sharedReads(sportEvent, input?.games);
+    const reads = this.sharedReads(sportEvent);
     let completed = 0;
     for (const contest of contests) {
       const settled = await this.settleSquaresContest(reads, contest, sportEvent, input?.completedAt ?? new Date(), { waitForEveryPeriod: true });
@@ -547,11 +546,11 @@ export class ContestSettlementService {
    * The reads of one event's settlement, shared by its contests (#1199). Settlement writes
    * standings and contest statuses, never the events, matches or fields these hold.
    */
-  private sharedReads(sportEvent: SportEvent, games?: readonly SportEventMatch[]): SettlementReads {
+  private sharedReads(sportEvent: SportEvent): SettlementReads {
     return {
       ...this.deps,
       sportEvents: readEventsOnce(this.deps.sportEvents, [sportEvent]),
-      matches: readEventMatchesOnce(this.deps.matches, games === undefined ? undefined : new Map([[sportEvent.id, games]])),
+      matches: readEventMatchesOnce(this.deps.matches),
       eventParticipants: { listEventParticipants: readOncePerKey((id) => this.deps.eventParticipants.listEventParticipants(id)) },
     };
   }

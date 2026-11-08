@@ -117,6 +117,11 @@ ranking (#1455). Each contest settles in its own write and leaves `COMPLETED`, s
 the contests an earlier try did not. The transition route leaves the query-budget allow list.
 Leagues will soon hold hundreds of contests, so no per-contest loop stays in a request.
 
+**#1460, settling a decided game's squares contests.** A game's result, a quarter score entered
+after it, or its cancellation writes `SETTLE_GAME_CONTESTS` (payload: event, game, decided time) in
+the match write's transaction. The job settles the squares contests on that game, reading the game
+as it stands then, so a correction made before it runs is the one it settles from.
+
 ## Testing
 
 - Unit: claim/lease/retry/backoff/FAILED state machine with an injected clock; dedupe coalescing;

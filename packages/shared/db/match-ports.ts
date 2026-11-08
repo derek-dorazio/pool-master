@@ -4,7 +4,7 @@
  * the head-to-head family.
  */
 
-import type { MatchEnding, MatchSide, MatchStatus, ParticipantStandingStatus, SportEventMatch, SportEventMatchPeriodScore } from '../domain';
+import type { BackgroundJobRequest, MatchEnding, MatchSide, MatchStatus, ParticipantStandingStatus, SportEventMatch, SportEventMatchPeriodScore } from '../domain';
 
 /** One match of a bracket being loaded. `id` is chosen by the caller so links can name it. */
 export interface SportEventMatchWrite {
@@ -66,6 +66,8 @@ export interface MatchResultApply {
   sideFill: MatchSideFill | null;
   /** Created or replaced, one per team in the bracket. */
   standings: readonly BracketStandingWrite[];
+  /** Background jobs the result causes (settling the game's squares contests), written with it. */
+  jobs?: readonly BackgroundJobRequest[];
 }
 
 export interface SportEventMatchRepository {
@@ -82,8 +84,11 @@ export interface SportEventMatchRepository {
   placeSides(sides: readonly { id: string; homeSportEventParticipantId: string; awaySportEventParticipantId: string }[]): Promise<void>;
   /** A result entered or cleared, the side it fills and the standings it leaves, all or none. */
   applyResult(apply: MatchResultApply): Promise<void>;
-  /** Creates or replaces the score at the end of one period of a match (#772). */
-  savePeriodScore(sportEventMatchId: string, score: SportEventMatchPeriodScore): Promise<void>;
+  /**
+   * Creates or replaces the score at the end of one period of a match (#772), with any background
+   * jobs it causes in the same transaction.
+   */
+  savePeriodScore(sportEventMatchId: string, score: SportEventMatchPeriodScore, jobs?: readonly BackgroundJobRequest[]): Promise<void>;
   /** Removes the score at the end of one period of a match; removing none changes nothing. */
   deletePeriodScore(sportEventMatchId: string, periodNumber: number): Promise<void>;
 }
