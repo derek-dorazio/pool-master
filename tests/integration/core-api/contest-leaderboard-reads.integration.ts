@@ -383,7 +383,8 @@ describe('ContestService.getLeaderboard reads (#1162)', () => {
     expect(leaderboard.sportEventId).toBe(live.event.id);
     expect(leaderboard.entries.map((entry) => [entry.entryId, entry.totalScore, entry.events.map((event) => event.sportEventId)])).toEqual([
       [both.id, -8, [live.event.id]],
-      [onlyCancelled.id, null, []],
+      // It skipped the live major, so it ranks there at its missed lineup's score, as settling it will.
+      [onlyCancelled.id, 32, [live.event.id]],
     ]);
   });
 });
