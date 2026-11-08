@@ -545,10 +545,11 @@ sending one twice.
 
 Final results emails (`CONTEST_RESULTS`, #845 slice 4) are queued for each contest settlement
 moves to `COMPLETED`, whatever its format, by the `CONTEST_SETTLED_EMAILS` background job the
-move writes in its transaction (#1387): seconds after, outside the request that settled it. A contest with frozen places tells
-every active league member, once each: who won (every entry placed first when they tie), the
-final top 10 and anyone tied with the 10th, then the reader's entries placed below them, each
-total as the contest scores it. The owners of a winning entry are congratulated at the top. A
+move writes in its transaction (#1387): seconds after, outside the request that settled it. A
+contest with frozen places tells every active league member, once each: who won (every entry
+placed first when they tie), the final top 10 and anyone tied with the 10th, then the reader's
+entries placed below them, each total as the contest scores it. The owners of a winning entry
+are congratulated at the top. A
 contest that completes with no places (every event cancelled, a squares game never played)
 instead tells its commissioners and the members with an entry that it ended with no scores. The
 idempotency key (contest, person) sends it once, even to a contest settled again after being
