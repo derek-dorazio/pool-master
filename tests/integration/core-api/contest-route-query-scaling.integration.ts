@@ -40,6 +40,7 @@ import { writePicks } from '../../support/prediction-writes';
 import {
   cleanupTestData,
   createTestUser,
+  getApp,
   getAppPrisma,
   getPrisma,
   setupIntegrationTests,
@@ -668,5 +669,21 @@ describe('A poll of a stored prediction leaderboard (#1435)', () => {
     // The contest (6), the reader's squad membership (1; the task keeps the league membership,
     // #1438) and the snapshot (1): the same 8 for every prediction board, as for a lineup board.
     expect(statements).toHaveLength(8);
+  });
+
+  it.each([
+    ['bracket', 'bracket-leaderboard', () => seedBracketContest(3)],
+    ['survivor', 'survivor-leaderboard', () => seedPredictionContest(SelectionType.SURVIVOR, { entries: 3, weeks: 2 })],
+    ['pick\'em', 'pick-em-leaderboard', () => seedPredictionContest(SelectionType.PICK_EM, { entries: 3, weeks: 2 })],
+  ])('answers a %s poll that holds the stored board\'s tag with 304 and no body (#1436)', async (_kind, path, seed) => {
+    const { contest, commissioner } = await seed();
+    const url = `/api/v1/contests/${contest.id}/${path}`;
+    const first = await get(url, commissioner);
+    const etag = String(first.headers.etag);
+
+    const unchanged = await getApp().inject({ method: 'GET', url, headers: { ...commissioner.headers, 'if-none-match': etag } });
+
+    expect(etag).toMatch(/^"lb-\d+-\d+"$/);
+    expect([unchanged.statusCode, unchanged.body, unchanged.headers.etag]).toEqual([304, '', etag]);
   });
 });
