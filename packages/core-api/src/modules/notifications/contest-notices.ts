@@ -7,7 +7,9 @@
  * being postponed, moved or cancelled (C6, C7).
  *
  * Each email is queued once per person: its outbox idempotency key is the contest (and for E1
- * the event) and the person, so a retried call finds it recorded and skips.
+ * the event) and the person, so a retried call finds it recorded and skips. E1 and F1 are built
+ * by background jobs (#1387), so their failures throw for the job to retry; D1 and the event
+ * changes are built in the request, and log theirs.
  */
 
 import type { FastifyBaseLogger } from 'fastify';
@@ -64,18 +66,8 @@ export interface ContestOpenedNotice {
   contestOpened(contestId: string): Promise<void>;
 }
 
-/** The contest-started seam EventLifecycleService calls, once for all of an event's contests that just went live. */
-export interface ContestStartedNotice {
-  contestsStarted(contests: readonly Contest[], sportEvent: SportEvent): Promise<void>;
-}
-
 function toEmailEvent(sportEvent: SportEvent): ContestEmailEvent {
   return { name: sportEvent.name, startsAt: sportEvent.startDate };
-}
-
-/** The contest-settled seam ContestSettlementService calls, with the final places it read. */
-export interface ContestSettledNotice {
-  contestSettled(contest: Contest, final: ContestFinalStandings): Promise<void>;
 }
 
 /** What happened to an event, as EventLifecycleService and SportEventService report it. */
@@ -92,7 +84,7 @@ export interface SportEventChangedNotice {
 /** Only an open or live contest hears about its events: a finished one is done, and a draft one's commissioners aren't told. */
 const TOLD_OF_EVENT_CHANGES = [ContestStatus.OPEN, ContestStatus.ACTIVE];
 
-export class ContestNotices implements ContestOpenedNotice, ContestStartedNotice, ContestSettledNotice, SportEventChangedNotice {
+export class ContestNotices implements ContestOpenedNotice, SportEventChangedNotice {
   constructor(private readonly deps: ContestNoticeDeps) {}
 
   /** D1: tells every active member the contest is open, with its rules and when picks close. */
@@ -129,29 +121,12 @@ export class ContestNotices implements ContestOpenedNotice, ContestStartedNotice
   }
 
   /**
-   * E1 for each contest that just went live for `sportEvent`. The event's matches, sport league
-   * and tiers are read once for all of them (#1199), and one contest failing to queue doesn't
-   * stop the rest.
-   */
-  async contestsStarted(contests: readonly Contest[], sportEvent: SportEvent): Promise<void> {
-    const shared = shareSummaryReads(this.deps, [sportEvent]);
-    for (const contest of contests) {
-      try {
-        await this.contestStarted(contest, sportEvent, shared);
-      } catch (err) {
-        this.deps.logger?.error({
-          action: 'email.contestStarted.failed',
-          data: { contestId: contest.id, leagueId: contest.leagueId, error: err instanceof Error ? err.message : String(err) },
-        }, 'Failed to queue contest started emails');
-      }
-    }
-  }
-
-  /**
    * E1: wishes every active member good luck as the contest goes live for `sportEvent`, with the
-   * event, the rules and how many entries are in. No entry list: the leaderboard has it.
+   * event, the rules and how many entries are in. No entry list: the leaderboard has it. A
+   * failure to queue throws, for its job to retry.
    */
-  private async contestStarted(contest: Contest, sportEvent: SportEvent, shared: ContestSummaryDeps): Promise<void> {
+  async contestStarted(contest: Contest, sportEvent: SportEvent): Promise<void> {
+    const shared = shareSummaryReads(this.deps, [sportEvent]);
     const [league, summary, entries] = await Promise.all([
       this.deps.leagues.findById(contest.leagueId),
       summarizeContest(shared, contest),
@@ -166,7 +141,7 @@ export class ContestNotices implements ContestOpenedNotice, ContestStartedNotice
       .map((owner) => owner.userId));
     const eventFormat = await describeEventFormat(shared, sportEvent);
     const leaderboardUrl = buildLeaderboardUrl(this.deps.appBaseUrl, league.leagueCode, contest.id);
-    await this.sendEach('CONTEST_STARTED_SUMMARY', contest, league, await activeLeagueMembers(this.deps, league.id), (user) => ({
+    await this.queueEach('CONTEST_STARTED_SUMMARY', await activeLeagueMembers(this.deps, league.id), (user) => ({
       to: emailRecipientOf(user),
       about: `${contest.id}:${sportEvent.id}`,
       league: { id: league.id, name: league.name, leagueCode: league.leagueCode, plan: league.plan },
@@ -190,7 +165,8 @@ export class ContestNotices implements ContestOpenedNotice, ContestStartedNotice
   /**
    * F1, with F3 folded in: tells every active member who won, the final top 10 and where their
    * own entries finished, and congratulates the owners of the winning entries. F2 instead, to the
-   * commissioners and the members with an entry, when the contest ended with no scores.
+   * commissioners and the members with an entry, when the contest ended with no scores. A
+   * failure to queue throws, for its job to retry.
    */
   async contestSettled(contest: Contest, final: ContestFinalStandings): Promise<void> {
     const [league, members] = await Promise.all([
@@ -223,7 +199,7 @@ export class ContestNotices implements ContestOpenedNotice, ContestStartedNotice
       const recipients = members
         .filter(({ user, role }) => role === LeagueRole.COMMISSIONER || entrants.has(user.id))
         .map(({ user }) => user);
-      await this.sendEach('CONTEST_RESULTS', contest, league, recipients, (user) => resultsFor(user, outcome));
+      await this.queueEach('CONTEST_RESULTS', recipients, (user) => resultsFor(user, outcome));
       return;
     }
 
@@ -234,7 +210,7 @@ export class ContestNotices implements ContestOpenedNotice, ContestStartedNotice
     }
     const leaders = leaderCount(final.entries);
     const winners = final.entries.filter((entry) => entry.position === 1);
-    await this.sendEach('CONTEST_RESULTS', contest, league, members.map(({ user }) => user), (user) => {
+    await this.queueEach('CONTEST_RESULTS', members.map(({ user }) => user), (user) => {
       const squadIds = squadsByOwner.get(user.id) ?? new Set<string>();
       const lines = final.entries.map((entry): StandingsLine => ({
         place: entry.displayPosition,
@@ -346,10 +322,19 @@ export class ContestNotices implements ContestOpenedNotice, ContestStartedNotice
     return entrants;
   }
 
+  /** Queues the email to every recipient in one batch (#1173), a few queries however large the league. */
+  private async queueEach<Key extends SystemEmailTemplateKey>(
+    templateKey: Key,
+    recipients: User[],
+    inputFor: (user: User) => EmailSendInput<Key>,
+  ): Promise<void> {
+    if (recipients.length === 0) return;
+    await this.deps.email.sendMany(templateKey, recipients.map(inputFor));
+  }
+
   /**
-   * Queues the email to every recipient in one batch (#1173), a few queries however large the
-   * league. A failure is logged and not thrown: the contest has already moved, and the email
-   * must not undo it.
+   * `queueEach` from a request: a failure is logged and not thrown, since the contest has
+   * already moved and the email must not undo it.
    */
   private async sendEach<Key extends SystemEmailTemplateKey>(
     templateKey: Key,
@@ -358,9 +343,8 @@ export class ContestNotices implements ContestOpenedNotice, ContestStartedNotice
     recipients: User[],
     inputFor: (user: User) => EmailSendInput<Key>,
   ): Promise<void> {
-    if (recipients.length === 0) return;
     try {
-      await this.deps.email.sendMany(templateKey, recipients.map(inputFor));
+      await this.queueEach(templateKey, recipients, inputFor);
     } catch (error) {
       this.deps.logger?.error({
         action: 'email.contestNotice.failed',

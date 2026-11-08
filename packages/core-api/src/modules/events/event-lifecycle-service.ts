@@ -31,13 +31,15 @@ import {
 import { ContestCutoffKind, contestCutoff, cutoffTiming, type EventTiming } from '../contests/entry-window';
 import { hasSportEventStarted } from './operational-timing';
 import { ContestEventChangeKind } from '../email';
-import type { ContestStartedNotice, SportEventChange, SportEventChangedNotice } from '../notifications/contest-notices';
+import type { SportEventChange, SportEventChangedNotice } from '../notifications/contest-notices';
+import { contestStartedEmailsJob } from '../notifications/contest-email-job-requests';
+import type { BackgroundJobQueue } from '../background-jobs';
 import type { ApiErrorCode } from '@poolmaster/shared/dto';
 
 export interface FinishedSportEventSettlement {
   settleFinishedSportEvent(
     sportEventId: string,
-    input?: { completedAt?: Date },
+    input?: { completedAt?: Date; sportEvent?: SportEvent },
   ): Promise<unknown>;
   /** Settles the squares contests on one game once it has a result or is cancelled (#711). */
   settleFinishedGame(
@@ -92,8 +94,8 @@ export class EventLifecycleError extends Error {
 
 /**
  * The contest side of an event transition (#247): which contests start. Before #247 this was a
- * raw PrismaClient; contests are slice 3's cluster and now have ports. Who is told is the
- * notifications module's ContestStartedNotice (#845).
+ * raw PrismaClient; contests are slice 3's cluster and now have ports. Each contest that goes
+ * live queues its "Contest is live" email job in the same write (#845, #1387).
  */
 export interface EventLifecycleContestDeps {
   contests: ContestRepository;
@@ -110,7 +112,8 @@ export class EventLifecycleService {
     private readonly contestDeps: EventLifecycleContestDeps,
     private readonly sportEvents: SportEventRepository,
     private readonly logger?: FastifyBaseLogger,
-    private readonly contestStarted?: ContestStartedNotice,
+    /** Where each contest that goes live queues its "Contest is live" email job (#1387); without it, nobody is told. */
+    private readonly jobs?: Pick<BackgroundJobQueue, 'request' | 'queued'>,
     private readonly contestSettlement?: FinishedSportEventSettlement,
     private readonly releasedEditionContests?: ReleasedEditionContests,
     private readonly sportEventChanged?: SportEventChangedNotice,
@@ -245,6 +248,8 @@ export class EventLifecycleService {
     const cancelledAt = sportEvent.status === SportEventStatus.CANCELLED ? new Date() : undefined;
     await this.contestSettlement.settleFinishedSportEvent(sportEvent.id, {
       completedAt: sportEvent.endDate ?? cancelledAt ?? sportEvent.startDate,
+      // The event as its transition just wrote it, so settlement does not read it again.
+      sportEvent,
     });
   }
 
@@ -285,7 +290,8 @@ export class EventLifecycleService {
       dueByStart.set(startsAt, [...(dueByStart.get(startsAt) ?? []), { contest, cutoff: cutoff.kind }]);
     }
 
-    const started: Contest[] = [];
+    const { jobs } = this;
+    let started = 0;
     try {
       for (const [startsAt, due] of dueByStart) {
         // poolmaster-allow-query-in-loop: one write per cutoff moment (the event's start, a bracket round's, a squares game's kickoff), not per contest
@@ -293,6 +299,8 @@ export class EventLifecycleService {
           from: STARTABLE,
           to: ContestStatus.ACTIVE,
           startsAt: new Date(startsAt),
+          // E1, "Contest is live": one job per contest that went live, written with its move.
+          ...(jobs && { jobs: (contestIds) => contestIds.map((contestId) => contestStartedEmailsJob(jobs, contestId, sportEvent.id)) }),
         }));
         for (const { contest, cutoff } of due) {
           const logged = {
@@ -306,26 +314,12 @@ export class EventLifecycleService {
             continue;
           }
           this.logger?.info({ ...logged, cutoff }, 'Activated contest from in-progress sport event');
-          started.push(contest);
+          started++;
         }
       }
     } finally {
-      // The contests already live are told even when a later write fails: they are no longer
-      // startable, so no later sweep would tell them.
-      if (started.length > 0) await this.tellContestsStarted(started, sportEvent);
-    }
-  }
-
-  /** E1, "Contest is live": queued for each contest's league, never failing the transition. */
-  private async tellContestsStarted(contests: Contest[], sportEvent: SportEvent): Promise<void> {
-    try {
-      await this.contestStarted?.contestsStarted(contests, sportEvent);
-    } catch (err) {
-      this.logger?.error({
-        sportEventId: sportEvent.id,
-        contestIds: contests.map((contest) => contest.id),
-        error: err instanceof Error ? err.message : String(err),
-      }, 'Failed to queue contest started emails');
+      // The jobs of the contests already live have committed with them, even when a later write fails.
+      if (started > 0) jobs?.queued();
     }
   }
 }

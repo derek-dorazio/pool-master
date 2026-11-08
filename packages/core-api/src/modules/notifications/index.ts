@@ -1,4 +1,6 @@
 export * from './commissioner-notices';
+export * from './contest-email-job-requests';
+export * from './contest-email-jobs';
 export * from './contest-expanded-notices';
 export * from './contest-notices';
 export * from './draft-event-notices';

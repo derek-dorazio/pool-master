@@ -5,7 +5,8 @@
  */
 
 import type { BackgroundJobClaim, BackgroundJobRepository } from '@poolmaster/shared/db';
-import { BackgroundJobStatus, type BackgroundJob, type BackgroundJobRequest } from '@poolmaster/shared/domain';
+import { BackgroundJobStatus, BackgroundJobType, type BackgroundJob, type BackgroundJobRequest } from '@poolmaster/shared/domain';
+import type { BackgroundJobHandlers } from '../../packages/core-api/src/modules/background-jobs';
 
 export interface InMemoryBackgroundJobs extends BackgroundJobRepository {
   /** Every job, in the order queued. */
@@ -74,4 +75,14 @@ export function inMemoryBackgroundJobs(now: () => Date = () => new Date()): InMe
       return Promise.resolve(batch.length);
     },
   };
+}
+
+/**
+ * A handler for every job type: the ones given, and for the rest one that throws, so a test whose
+ * code queues a job it did not expect sees that job fail rather than pass unnoticed.
+ */
+export function jobHandlers(handlers: Partial<BackgroundJobHandlers>): BackgroundJobHandlers {
+  const unexpected = (type: BackgroundJobType) => () => Promise.reject(new Error(`No ${type} job was expected in this test`));
+  return Object.fromEntries(Object.values(BackgroundJobType)
+    .map((type) => [type, handlers[type] ?? unexpected(type)])) as BackgroundJobHandlers;
 }

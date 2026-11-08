@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { ContestFormat, ContestStatus, ContestTemplateEventType, CupWeight, LeaguePaymentKind, SelectionType, Sport, SportEventStatus } from '@poolmaster/shared/domain';
+import { BackgroundJobType, ContestFormat, ContestStatus, ContestTemplateEventType, CupWeight, LeaguePaymentKind, SelectionType, Sport, SportEventStatus } from '@poolmaster/shared/domain';
 import type { ContestCreate } from '@poolmaster/shared/db';
 import {
   PrismaContestConfigTemplateRepository,
@@ -21,6 +21,7 @@ import {
   createTestUser,
   getAppPrisma,
   getPrisma,
+  integrationBackgroundJobs,
   setupIntegrationTests,
   teardownIntegrationTests,
 } from '../helpers';
@@ -30,7 +31,7 @@ import { expectDefined } from '../../support/expect-defined';
 import type { MailDeliveryProvider } from '../../../packages/core-api/src/modules/email/mail-delivery';
 import { deliverQueuedEmail, emailServiceOver } from '../../support/email-service';
 import { EMAIL_SETTINGS } from '../../../packages/core-api/src/modules/email';
-import { createContestNotices, createEntryReminders } from '../../../packages/core-api/src/modules/notifications';
+import { contestStartedEmailsJob, createContestEmailJobs, createContestNotices, createEntryReminders } from '../../../packages/core-api/src/modules/notifications';
 import { fakeLogger } from '../../support/fake-logger';
 import { createContestRow } from '../../support/contest-rows';
 
@@ -510,6 +511,49 @@ describe('ContestRepository', () => {
       await expect(repos().contests.findById(id)).resolves.toEqual(expect.objectContaining({ status: ContestStatus.ACTIVE, startsAt }));
     }
     await expect(repos().contests.findById(live.id)).resolves.toEqual(expect.objectContaining({ status: ContestStatus.ACTIVE, startsAt: undefined }));
+  });
+
+  it('writes the jobs a move asks for in its transaction, for the contests it moved only, and none on a move that changes nothing', async () => {
+    const { league, event } = await createLeagueAndEvent();
+    const open = await createContest(league.id, event.id, 'Starts now', ContestStatus.OPEN);
+    const live = await createContest(league.id, event.id, 'Already live', ContestStatus.ACTIVE);
+    const queue = integrationBackgroundJobs().queue;
+    const asked: string[][] = [];
+    const start = {
+      from: [ContestStatus.OPEN],
+      to: ContestStatus.ACTIVE,
+      startsAt: new Date('2026-06-04T12:00:00.000Z'),
+      jobs: (contestIds: readonly string[]) => {
+        asked.push([...contestIds]);
+        return contestIds.map((contestId) => contestStartedEmailsJob(queue, contestId, event.id));
+      },
+    };
+
+    await expect(repos().contests.transitionStatuses([open.id, live.id], start)).resolves.toEqual([open.id]);
+    await expect(repos().contests.transitionStatus(open.id, start)).resolves.toBe(false);
+
+    expect(asked).toEqual([[open.id]]);
+    await expect(getPrisma().backgroundJob.findMany({ select: { type: true, payload: true, dedupeKey: true, status: true } })).resolves.toEqual([{
+      type: 'CONTEST_STARTED_EMAILS',
+      payload: { contestId: open.id, sportEventId: event.id },
+      dedupeKey: `CONTEST_STARTED_EMAILS:${open.id}`,
+      status: 'QUEUED',
+    }]);
+  });
+
+  it('leaves the contest unmoved when the jobs its move asks for cannot be written, so no move ever loses its job', async () => {
+    const { league, event } = await createLeagueAndEvent();
+    const contest = await createContest(league.id, event.id, 'Rolled back', ContestStatus.ACTIVE);
+
+    await expect(repos().contests.transitionStatus(contest.id, {
+      from: [ContestStatus.ACTIVE],
+      to: ContestStatus.COMPLETED,
+      endsAt: new Date('2026-06-07T22:00:00.000Z'),
+      jobs: () => { throw new Error('job not built'); },
+    })).rejects.toThrow('job not built');
+
+    await expect(repos().contests.findById(contest.id)).resolves.toEqual(expect.objectContaining({ status: ContestStatus.ACTIVE, endsAt: undefined }));
+    await expect(getPrisma().backgroundJob.count()).resolves.toBe(0);
   });
 
   it('sets a cup weight only while the contest is in the given statuses, and says when it changed nothing', async () => {
@@ -1793,17 +1837,28 @@ describe('EventLifecycleService — starting an event\'s contests on the ports (
     const alphaEntry = await createEntry(open.id, squads[0].id, 1, 'Alpha Entry');
     await submitEntryEvent(alphaEntry.id, event.id, new Date());
     const send = mockFn<MailDeliveryProvider['send']>(async () => ({ provider: 'smtp', messageId: 'mail' }));
-    const lifecycle = createEventLifecycleService(getAppPrisma(), {
-      contestStarted: createContestNotices(getAppPrisma(), {
+    const jobs = integrationBackgroundJobs();
+    const lifecycle = createEventLifecycleService(getAppPrisma(), { jobs: jobs.queue });
+    const emailJobs = createContestEmailJobs(getAppPrisma(), {
+      notices: createContestNotices(getAppPrisma(), {
         email: emailServiceOver({ providerName: 'smtp', send }),
         appBaseUrl: 'https://app.example.test',
         logger: fakeLogger(),
       }),
+      logger: fakeLogger(),
     });
+    // Held until the transition has returned, so the good luck emails are seen to come from its job.
+    const runner = integrationBackgroundJobs().runWith({ CONTEST_STARTED_EMAILS: (payload) => emailJobs.contestStarted(payload) });
 
     await lifecycle.applySportEventStatusTransition({
       sportEventId: event.id, toStatus: 'IN_PROGRESS', actor: { type: 'ROOT_ADMIN' },
     });
+    await deliverQueuedEmail();
+    expect(send).not.toHaveBeenCalled();
+    await expect(prisma.backgroundJob.findMany({ select: { type: true, payload: true, status: true } })).resolves.toEqual([
+      { type: 'CONTEST_STARTED_EMAILS', payload: { contestId: open.id, sportEventId: event.id }, status: 'QUEUED' },
+    ]);
+    await runner.drain();
 
     const [started, untouched] = await Promise.all([
       repos().contests.findById(open.id),
@@ -1825,8 +1880,18 @@ describe('EventLifecycleService — starting an event\'s contests on the ports (
     await lifecycle.applySportEventStatusTransition({
       sportEventId: event.id, toStatus: 'IN_PROGRESS', actor: { type: 'SYSTEM' },
     });
+    await runner.drain();
     await deliverQueuedEmail();
     expect(send).toHaveBeenCalledTimes(3);
+    await expect(prisma.backgroundJob.count()).resolves.toBe(1);
+
+    // A retry of the job, after a try that queued the emails but was not marked done, finds
+    // each one recorded and sends nothing twice.
+    await jobs.queue.enqueue(BackgroundJobType.CONTEST_STARTED_EMAILS, { contestId: open.id, sportEventId: event.id });
+    await runner.drain();
+    await deliverQueuedEmail();
+    expect(send).toHaveBeenCalledTimes(3);
+    await expect(prisma.backgroundJob.findMany({ select: { status: true } })).resolves.toEqual([{ status: 'SUCCEEDED' }, { status: 'SUCCEEDED' }]);
   });
 });
 

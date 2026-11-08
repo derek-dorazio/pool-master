@@ -14,6 +14,8 @@ on one server task*). The job table is for one-off work.
 | Type | Queued by | Handler | Why a retry is safe |
 |---|---|---|---|
 | `MANUAL_EVENT_SYNC` | A root admin's event sync (`submitEventSync`, #1441), with the `SUBMITTED` runs in one transaction | `IngestionService.runManualEventSync`: runs each run's feed in turn | It skips every run that is no longer `SUBMITTED`, so a feed an earlier try started never runs twice. A feed that fails is recorded on its run; the job still succeeds |
+| `CONTEST_STARTED_EMAILS` | Each contest that goes live (`EventLifecycleService`, #1387), with its move to `ACTIVE`. Payload: the contest and the event that started it; dedupe key `CONTEST_STARTED_EMAILS:<contestId>` | `ContestEmailJobs.contestStarted`: reads the contest and event again and queues "Contest is live" (E1) to the league | Each email's outbox idempotency key is the contest, the event and the person, so a retry queues only what an earlier try did not |
+| `CONTEST_SETTLED_EMAILS` | Each contest that completes (`ContestSettlementService`, #1387), with its move to `COMPLETED`. Payload: the contest; dedupe key `CONTEST_SETTLED_EMAILS:<contestId>` | `ContestEmailJobs.contestSettled`: reads the final places frozen at settlement and queues "Final results" (F1 to F3); a contest no longer completed is skipped | As above, keyed by the contest and the person |
 
 Adding a type: a value in `BackgroundJobType` (domain enum and Prisma enum, by migration), its
 payload schema in `BACKGROUND_JOB_PAYLOADS`, and its handler where index.ts builds the runner.
@@ -27,7 +29,9 @@ so a bad payload fails in the request that made it.
 
 - A job with a cause written elsewhere: `request(type, payload)` builds it, the adapter writing
   the cause writes it in its transaction (`insertBackgroundJobs(tx, …)`), and the caller calls
-  `queued()` after the commit. `ProviderSyncRunRepository.createWithJob` is the model.
+  `queued()` after the commit. `ProviderSyncRunRepository.createWithJob` is the model; a
+  contest's status move takes its jobs as `ContestStatusTransition.jobs`, given the contests
+  that moved.
 - A job on its own: `enqueue(type, payload)`.
 
 Either way the queue wakes this task's runner, so on an idle system the job starts at once.
@@ -81,5 +85,6 @@ Tests drive the real runner, never a "run inline" branch (`rules/testing-rules.m
 *Forbidden Application-Code Patterns*). Unit tests use the in-memory job table in
 `tests/support/in-memory-background-jobs.ts` with an injected clock and call `drain()`. The
 integration app's runner has no timer: a queued job wakes it, as in the app
-(`integrationBackgroundJobs` in `tests/integration/helpers.ts`). Functional tests wait on the
-outcome, such as a sync run's status.
+(`integrationBackgroundJobs` in `tests/integration/helpers.ts`). `deliverQueuedIntegrationEmail`
+drains the app's jobs first, and `holdingBackgroundJobs` holds them back while a test counts a
+request's own statements. Functional tests wait on the outcome, such as a sync run's status.

@@ -21,6 +21,7 @@ import type {
 import { championshipYear, ContestStatus, SelectionType, SportEventStatus, type Contest, type ContestFormat, type CupWeight, type Sport } from '@poolmaster/shared/domain';
 import { forgettingReads, memoizedRead, memoizedReadMany, ReadMemoKey } from '../core/request-read-memo';
 import { lockContestRow, lockContestRowsAtOnce } from './contest-row-lock';
+import { insertBackgroundJobs } from './prisma-background-job-repository';
 
 /**
  * What every contest read joins: its events in sequence order with their sport (#713), its draw
@@ -305,33 +306,26 @@ export class PrismaContestRepository implements ContestRepository {
   }
 
   async transitionStatus(id: string, transition: ContestStatusTransition): Promise<boolean> {
-    const result = await forgettingReads(ReadMemoKey.contest, () => this.prisma.contest.updateMany({
-      where: { id, status: { in: [...transition.from] } },
-      data: {
-        status: transition.to,
-        ...(transition.openedAt && { openedAt: transition.openedAt }),
-        ...(transition.nextReminderAt && { nextReminderAt: transition.nextReminderAt }),
-        ...(transition.startsAt && { startsAt: transition.startsAt }),
-        ...(transition.endsAt && { endsAt: transition.endsAt }),
-      },
-    }));
-    return result.count > 0;
+    return (await this.transitionStatuses([id], transition)).length > 0;
   }
 
+  /**
+   * One guarded write. With `jobs`, the jobs for the contests it moved are written in the same
+   * transaction, so a move that rolls back queues nothing and a committed one never loses its job.
+   */
   async transitionStatuses(ids: readonly string[], transition: ContestStatusTransition): Promise<string[]> {
     if (ids.length === 0) return [];
-    const rows = await forgettingReads(ReadMemoKey.contest, () => this.prisma.contest.updateManyAndReturn({
-      where: { id: { in: [...ids] }, status: { in: [...transition.from] } },
-      data: {
-        status: transition.to,
-        ...(transition.openedAt && { openedAt: transition.openedAt }),
-        ...(transition.nextReminderAt && { nextReminderAt: transition.nextReminderAt }),
-        ...(transition.startsAt && { startsAt: transition.startsAt }),
-        ...(transition.endsAt && { endsAt: transition.endsAt }),
-      },
-      select: { id: true },
-    }));
-    return rows.map((row) => row.id);
+    const { jobs } = transition;
+    const move = async (db: PrismaClient | Prisma.TransactionClient): Promise<string[]> => {
+      const moved = (await db.contest.updateManyAndReturn({
+        where: { id: { in: [...ids] }, status: { in: [...transition.from] } },
+        data: toStatusTransitionData(transition),
+        select: { id: true },
+      })).map((row) => row.id);
+      if (jobs && moved.length > 0) await insertBackgroundJobs(db, jobs(moved));
+      return moved;
+    };
+    return forgettingReads(ReadMemoKey.contest, () => (jobs ? this.prisma.$transaction(move) : move(this.prisma)));
   }
 
   async setCupWeight(id: string, cupWeight: Contest['cupWeight'], whileIn: readonly Contest['status'][]): Promise<boolean> {
@@ -521,4 +515,15 @@ async function seasonWithoutRoom(
   return used.includes(limits.sportLeagueId) || used.length < limits.sportLeaguesPerYear
     ? null
     : { status: 'sportsLeagueLimitReached', sportLeaguesPerYear: limits.sportLeaguesPerYear, sportLeagueCount: used.length };
+}
+
+/** The columns a status move writes: the status, and each moment it sets. */
+function toStatusTransitionData(transition: ContestStatusTransition): Prisma.ContestUpdateManyMutationInput {
+  return {
+    status: transition.to,
+    ...(transition.openedAt && { openedAt: transition.openedAt }),
+    ...(transition.nextReminderAt && { nextReminderAt: transition.nextReminderAt }),
+    ...(transition.startsAt && { startsAt: transition.startsAt }),
+    ...(transition.endsAt && { endsAt: transition.endsAt }),
+  };
 }

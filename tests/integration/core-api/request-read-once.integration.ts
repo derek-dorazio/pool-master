@@ -2,7 +2,7 @@ import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
 import type { InjectOptions, LightMyRequestResponse } from 'fastify';
 import { API_ROUTES } from '@poolmaster/shared/api-routes';
-import { ContestStatus, SelectionType, Sport } from '@poolmaster/shared/domain';
+import { BackgroundJobType, ContestStatus, SelectionType, Sport } from '@poolmaster/shared/domain';
 import type {
   ContestResponse,
   LeagueContextResponse,
@@ -16,7 +16,10 @@ import {
   cleanupTestData,
   createTestUser,
   getApp,
+  drainBackgroundJobs,
   getPrisma,
+  holdingBackgroundJobs,
+  integrationBackgroundJobs,
   setupIntegrationTests,
   teardownIntegrationTests,
   withoutJsonBodyHeaders,
@@ -35,8 +38,8 @@ import { freshEventEdition } from '../../support/event-edition';
 // joiner, the team, the league and the contest's events once however many steps of the request
 // need them, and sends exactly the statements pinned here. A count that moves is a read added
 // or lost: look at which table moved before changing the pin. The two settling routes (a game's
-// result, an event's status change) stay on the functional suite's query budget allow list
-// (#1387), which stops counting them there, so these pins are what holds their counts.
+// result, an event's status change) build no email in the request: each contest they start or
+// complete writes its email job with the move (#1387), and the job queues the emails after.
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -47,10 +50,22 @@ beforeEach(() => cleanupTestData());
 
 const TIER_KEYS = ['A', 'B', 'C', 'D', 'E', 'F'];
 
-/** The request's response and every statement it sent. */
+/**
+ * The request's response and every statement it sent. The background jobs it queues are held
+ * until it has returned, so their statements are not counted as its own.
+ */
 async function measureRequest(request: InjectOptions): Promise<{ response: LightMyRequestResponse; statements: RecordedStatement[] }> {
-  const { result, statements } = await recordStatements(() => getApp().inject(request));
+  const { result, statements } = await holdingBackgroundJobs(() => recordStatements(() => getApp().inject(request)));
   return { response: result, statements };
+}
+
+/** The emails queued about one contest, by template, and to whom. */
+async function contestEmails(contestId: string): Promise<Array<{ templateKey: string; recipientUserId: string | null }>> {
+  return getPrisma().emailMessage.findMany({
+    where: { contestId },
+    select: { templateKey: true, recipientUserId: true },
+    orderBy: [{ templateKey: 'asc' }, { recipientUserId: 'asc' }],
+  });
 }
 
 /**
@@ -295,7 +310,7 @@ describe('Opening a contest (#1355)', () => {
  */
 async function squaresContestUnderWay(options: { gameFinished: boolean }) {
   const prisma = getPrisma();
-  const { leagueId, squadId } = await leagueWithTeam();
+  const { commissioner, leagueId, squadId } = await leagueWithTeam();
   const admin = await createTestUser({ isRootAdmin: true });
   const suffix = randomUUID().slice(0, 8);
   const sport = await prisma.sport.upsert({
@@ -362,7 +377,7 @@ async function squaresContestUnderWay(options: { gameFinished: boolean }) {
   await prisma.contestSquaresDraw.create({
     data: { contestId: contest.id, seed: 'read-once', rowDigits: [1, 0, 2, 3, 4, 5, 6, 7, 8, 9], columnDigits: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] },
   });
-  return { admin, eventId: event.id, contestId: contest.id, gameId: game.id };
+  return { admin, eventId: event.id, contestId: contest.id, gameId: game.id, commissionerId: commissioner.user.id };
 }
 
 /**
@@ -374,8 +389,8 @@ function finalPlaceReads(statements: readonly RecordedStatement[], contestId: st
 }
 
 describe('Settling a squares contest with its game (#1355)', () => {
-  it('reads the bracket once, then settles the contest from the bracket it wrote, and sends a fixed set of statements when a game\'s result settles a squares contest', async () => {
-    const { admin, eventId, contestId, gameId } = await squaresContestUnderWay({ gameFinished: false });
+  it('reads the bracket once, settles the contest from the bracket it wrote, builds no email, and sends a fixed set of statements when a game\'s result settles a squares contest', async () => {
+    const { admin, eventId, contestId, gameId, commissionerId } = await squaresContestUnderWay({ gameFinished: false });
 
     const { response, statements } = await measureRequest({
       method: 'PUT',
@@ -390,6 +405,7 @@ describe('Settling a squares contest with its game (#1355)', () => {
     expect(finalPlaceReads(statements, contestId)).toBe(1);
     expect(requestCounts(statements)).toEqual([
       ['DELETE contest_squares_winners', 1],
+      ['INSERT background_jobs', 1],
       ['INSERT contest_entry_event_standings', 1],
       ['INSERT contest_entry_standings', 1],
       ['INSERT contest_squares_winners', 1],
@@ -409,7 +425,6 @@ describe('Settling a squares contest with its game (#1355)', () => {
       ['SELECT contest_squares_games', 1],
       ['SELECT contests', 2],
       ['SELECT event_series', 1],
-      ['SELECT league_memberships', 1],
       ['SELECT leagues', 1],
       ['SELECT sport_event_match_period_scores', 1],
       ['SELECT sport_event_matches', 1],
@@ -417,18 +432,27 @@ describe('Settling a squares contest with its game (#1355)', () => {
       ['SELECT sport_event_rounds', 1],
       ['SELECT sport_events', 2],
       ['SELECT sport_leagues', 1],
-      ['SELECT squad_memberships', 1],
       ['SELECT squads', 1],
-      ['SELECT users', 1],
       ['UPDATE contests', 1],
       ['UPDATE sport_event_matches', 1],
     ]);
+    // The final results email is the job's: none was queued in the request, and its job queues it.
+    await expect(contestEmails(contestId)).resolves.toEqual([]);
+    await expect(getPrisma().backgroundJob.findMany({ select: { type: true, payload: true } })).resolves.toEqual([
+      { type: 'CONTEST_SETTLED_EMAILS', payload: { contestId } },
+    ]);
+    await drainBackgroundJobs();
+    await expect(contestEmails(contestId)).resolves.toEqual([{ templateKey: 'CONTEST_RESULTS', recipientUserId: commissionerId }]);
+    // A retry of the job queues nothing twice: each email is recorded under its idempotency key.
+    await integrationBackgroundJobs().queue.enqueue(BackgroundJobType.CONTEST_SETTLED_EMAILS, { contestId });
+    await drainBackgroundJobs();
+    await expect(contestEmails(contestId)).resolves.toEqual([{ templateKey: 'CONTEST_RESULTS', recipientUserId: commissionerId }]);
   });
 });
 
 describe('Finishing an event (#1355)', () => {
-  it('reads each settled contest\'s final places once for both its championship finishes and its results email, and sends a fixed set of statements when an event\'s status change settles a contest', async () => {
-    const { admin, eventId, contestId } = await squaresContestUnderWay({ gameFinished: true });
+  it('reads each settled contest\'s final places once for its championship finishes, never the event\'s field a squares contest does not score, builds no email, and sends a fixed set of statements when an event\'s status change settles a contest', async () => {
+    const { admin, eventId, contestId, commissionerId } = await squaresContestUnderWay({ gameFinished: true });
 
     const { response, statements } = await measureRequest({
       method: 'POST',
@@ -442,6 +466,7 @@ describe('Finishing an event (#1355)', () => {
     expect(finalPlaceReads(statements, contestId)).toBe(1);
     expect(requestCounts(statements)).toEqual([
       ['DELETE contest_squares_winners', 1],
+      ['INSERT background_jobs', 1],
       ['INSERT contest_entry_event_standings', 1],
       ['INSERT contest_entry_standings', 1],
       ['INSERT contest_squares_winners', 1],
@@ -460,26 +485,28 @@ describe('Finishing an event (#1355)', () => {
       ['SELECT contest_squares_games', 1],
       ['SELECT contests', 1],
       ['SELECT event_series', 2],
-      ['SELECT league_memberships', 1],
       ['SELECT leagues', 1],
-      ['SELECT participant_league_affiliations', 1],
-      ['SELECT participants', 1],
-      ['SELECT sport_event_match_period_scores', 3],
-      ['SELECT sport_event_matches', 3],
-      ['SELECT sport_event_participant_race_results', 1],
-      ['SELECT sport_event_participant_rounds', 1],
-      ['SELECT sport_event_participant_standings', 1],
-      ['SELECT sport_event_participant_valuations', 1],
-      ['SELECT sport_event_participants', 4],
-      ['SELECT sport_event_rounds', 3],
+      ['SELECT sport_event_match_period_scores', 1],
+      ['SELECT sport_event_matches', 1],
+      ['SELECT sport_event_participants', 3],
+      ['SELECT sport_event_rounds', 1],
       ['SELECT sport_event_tiers', 2],
       ['SELECT sport_events', 3],
       ['SELECT sport_leagues', 2],
-      ['SELECT squad_memberships', 1],
       ['SELECT squads', 1],
-      ['SELECT users', 1],
       ['UPDATE contests', 1],
       ['UPDATE sport_events', 1],
     ]);
+    // The final results email is the job's: none was queued in the request, and its job queues it.
+    await expect(contestEmails(contestId)).resolves.toEqual([]);
+    await expect(getPrisma().backgroundJob.findMany({ select: { type: true, payload: true } })).resolves.toEqual([
+      { type: 'CONTEST_SETTLED_EMAILS', payload: { contestId } },
+    ]);
+    await drainBackgroundJobs();
+    await expect(contestEmails(contestId)).resolves.toEqual([{ templateKey: 'CONTEST_RESULTS', recipientUserId: commissionerId }]);
+    // A retry of the job queues nothing twice: each email is recorded under its idempotency key.
+    await integrationBackgroundJobs().queue.enqueue(BackgroundJobType.CONTEST_SETTLED_EMAILS, { contestId });
+    await drainBackgroundJobs();
+    await expect(contestEmails(contestId)).resolves.toEqual([{ templateKey: 'CONTEST_RESULTS', recipientUserId: commissionerId }]);
   });
 });
