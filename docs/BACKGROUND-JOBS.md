@@ -13,7 +13,7 @@ on one server task*). The job table is for one-off work.
 
 | Type | Queued by | Handler | Why a retry is safe |
 |---|---|---|---|
-| `MANUAL_EVENT_SYNC` | A root admin's event sync (`submitEventSync`, #1441), with the `SUBMITTED` runs in one transaction | `IngestionService.runManualEventSync`: runs each run's feed in turn | It skips every run that is no longer `SUBMITTED`, so a feed an earlier try started never runs twice. A feed that fails is recorded on its run; the job still succeeds |
+| `MANUAL_EVENT_SYNC` | A root admin's event sync (`submitEventSync`, #1441), with the `SUBMITTED` runs in one transaction | `IngestionService.runManualEventSync`: runs each run's feed in turn | It runs only the runs still `SUBMITTED`, so a feed an earlier try started never runs twice; on a retry, a run an earlier try left `IN_PROGRESS` is marked `FAILED` as interrupted (#1445). A feed that fails is recorded on its run; the job still succeeds |
 | `CONTEST_STARTED_EMAILS` | Each contest that goes live (`EventLifecycleService`, #1387), with its move to `ACTIVE`. Payload: the contest and the event that started it; dedupe key `CONTEST_STARTED_EMAILS:<contestId>` | `ContestEmailJobs.contestStarted`: reads the contest and event again and queues "Contest is live" (E1) to the league | Each email's outbox idempotency key is the contest, the event and the person, so a retry queues only what an earlier try did not |
 | `CONTEST_SETTLED_EMAILS` | Each contest that completes (`ContestSettlementService`, #1387), with its move to `COMPLETED`. Payload: the contest; dedupe key `CONTEST_SETTLED_EMAILS:<contestId>` | `ContestEmailJobs.contestSettled`: reads the final places frozen at settlement and queues "Final results" (F1 to F3); a contest no longer completed is skipped | As above, keyed by the contest and the person |
 
@@ -54,14 +54,16 @@ Which core-api tasks run the runner is their role, `CORE_API_ROLE` (#1186):
 
 The background work is the job runner, the email sender, the event lifecycle sweep, nightly
 cleanup and provider ingestion (still also gated by `AUTO_START_SCHEDULER`). A worker's email
-sender polls every second rather than every 15, since an API task's email never wakes it. An
+sender polls every second rather than every 15, since an API task's email never wakes it; a job
+an API task queued waits for the worker's job poll, at most `BACKGROUND_JOB_POLL_MS`. An
 unknown role stops the task at startup. The advisory job locks (#1159) hold in every role, so
 old and new workers overlapping in a deploy run each scheduled job once. No environment runs
 `api` or `worker` yet: the worker's ECS service is not in Terraform.
 
-The runner polls every `BACKGROUND_JOB_POLL_MS` (default 1000) and on each wake, claims at most 2 due jobs at a
-time with `FOR UPDATE SKIP LOCKED`, and runs each outside any request: its own reads, no request
-query budget.
+The runner polls every `BACKGROUND_JOB_POLL_MS` (default 10000, #1446) and on each wake. It runs at
+most 2 jobs at a time, and each slot claims its next due job with `FOR UPDATE SKIP LOCKED` as
+soon as its last one finishes, so one slow job never holds up the jobs behind it (#1447). Each
+job runs outside any request: its own reads, no request query budget.
 
 | What happens | The job becomes |
 |---|---|

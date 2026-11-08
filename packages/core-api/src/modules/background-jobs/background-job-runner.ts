@@ -20,8 +20,12 @@ export const BACKGROUND_JOB_RETRY_DELAYS_MS = [60_000, 5 * 60_000, 30 * 60_000] 
 export const BACKGROUND_JOB_MAX_ATTEMPTS = BACKGROUND_JOB_RETRY_DELAYS_MS.length + 1;
 /** A claim holds a job this long; past it the job is due again on any task. */
 export const BACKGROUND_JOB_LEASE_MS = 5 * 60_000;
-/** How often the runner looks for due jobs, unless the environment sets another. */
-export const BACKGROUND_JOB_POLL_MS = 1000;
+/**
+ * How often the runner looks for due jobs, unless the environment sets another. A queued job wakes
+ * its own task's runner at once, so the poll only finds retries, lapsed leases and jobs another
+ * task queued; ten seconds keeps an idle task's cost low (Derek 2026-11-08, #1446).
+ */
+export const BACKGROUND_JOB_POLL_MS = 10_000;
 /** Jobs a task runs at once: few, so a burst of jobs never takes the pool that serves requests. */
 export const BACKGROUND_JOB_CONCURRENCY = 2;
 /** How long a stopping task waits for its jobs in flight; a lapsed lease re-runs the rest. */
@@ -52,7 +56,7 @@ export interface BackgroundJobRunnerOptions {
 
 /**
  * The poll interval the environment variable BACKGROUND_JOB_POLL_MS sets, in milliseconds, else
- * one second. Anything but a whole number above 0 refuses to start.
+ * ten seconds. Anything but a whole number above 0 refuses to start.
  */
 export function readBackgroundJobPollMs(env: NodeJS.ProcessEnv): number {
   const raw = env['BACKGROUND_JOB_POLL_MS'];
@@ -66,9 +70,14 @@ export function readBackgroundJobPollMs(env: NodeJS.ProcessEnv): number {
 
 export class BackgroundJobRunner {
   private timer?: ReturnType<typeof setInterval>;
+  /** Resolves once nothing is running and the last claim found nothing more due. */
   private draining?: Promise<void>;
-  /** Counts wakes, so a drain can tell whether one came while it was running jobs. */
-  private wakes = 0;
+  private settleDrain?: () => void;
+  /** The jobs this task is running, never more than the concurrency. */
+  private readonly inFlight = new Set<Promise<void>>();
+  private claiming = false;
+  /** Counts asks to claim (wakes, polls, finished jobs), so a claim can tell one came meanwhile. */
+  private claimAsks = 0;
   private stopping = false;
   private readonly now: () => Date;
   private readonly sleep: (ms: number) => Promise<void>;
@@ -108,52 +117,73 @@ export class BackgroundJobRunner {
   }
 
   /**
-   * Runs every due job and resolves once none is left. A wake during a drain makes it look again
-   * before it ends, so a job queued meanwhile is not left for the next poll. Never rejects: a
-   * failure is logged and the next poll tries again.
+   * Runs every due job and resolves once none is left. Each slot claims its next job as soon as
+   * its last one finishes (#1447), so one slow job never holds up the jobs behind it. A wake while
+   * jobs run claims into any free slot at once. Never rejects: a failure is logged and the next
+   * poll tries again.
    *
    * A drain a request wakes runs outside that request: it is shared by every later wake, and
    * neither the request's read memo nor its query budget is its own.
    */
   drain(): Promise<void> {
     if (this.stopping) return this.draining ?? Promise.resolve();
-    this.wakes++;
-    if (this.draining) return this.draining;
-    this.draining = outsideRequest(() => this.run());
-    return this.draining;
+    this.draining ??= new Promise<void>((resolve) => { this.settleDrain = resolve; });
+    const draining = this.draining;
+    void outsideRequest(() => this.fill());
+    return draining;
   }
 
-  private async run(): Promise<void> {
+  /** Claims due jobs into the free slots, then resolves the drain if nothing is left running. */
+  private async fill(): Promise<void> {
+    this.claimAsks++;
+    if (this.claiming) return;
+    this.claiming = true;
     try {
-      let wakesSeen: number;
+      let asksSeen: number;
       do {
-        wakesSeen = this.wakes;
-        await this.runDue();
-      } while (this.wakes !== wakesSeen && !this.stopping);
+        asksSeen = this.claimAsks;
+        await this.claimIntoFreeSlots();
+      } while (this.claimAsks !== asksSeen && !this.stopping);
     } catch (err) {
       this.options.logger?.error({
         action: 'backgroundJobs.runner.failure',
         data: { error: describeError(err) },
       }, 'Background job pass failed; the next poll tries again');
     } finally {
-      // Cleared in the same step as the last wake check, so a later wake starts a new drain.
+      this.claiming = false;
+    }
+    if (this.inFlight.size === 0) {
+      const settle = this.settleDrain;
       this.draining = undefined;
+      this.settleDrain = undefined;
+      settle?.();
     }
   }
 
-  /** Claims up to `concurrency` jobs at a time and runs them, until a claim comes back short. */
-  private async runDue(): Promise<void> {
+  /** Fills every free slot, until a claim comes back short of the slots it asked for. */
+  private async claimIntoFreeSlots(): Promise<void> {
     while (!this.stopping) {
+      const free = this.concurrency - this.inFlight.size;
+      if (free <= 0) return;
       const now = this.now();
-      // poolmaster-allow-query-in-loop: one claim per batch of up to the concurrency, not per job
-      const batch = await this.options.jobs.claimDue({
+      // poolmaster-allow-query-in-loop: one claim per set of free slots, not per job
+      const claimed = await this.options.jobs.claimDue({
         now,
-        limit: this.concurrency,
+        limit: free,
         leaseUntil: new Date(now.getTime() + BACKGROUND_JOB_LEASE_MS),
       });
-      await Promise.all(batch.map((job) => this.runOne(job)));
-      if (batch.length < this.concurrency) return;
+      for (const job of claimed) this.runInSlot(job);
+      if (claimed.length < free) return;
     }
+  }
+
+  /** Runs one job in a slot; when it ends, the slot claims the next due job. */
+  private runInSlot(job: BackgroundJob): void {
+    const running: Promise<void> = this.runOne(job).finally(() => {
+      this.inFlight.delete(running);
+      void this.fill();
+    });
+    this.inFlight.add(running);
   }
 
   private async runOne(job: BackgroundJob): Promise<void> {

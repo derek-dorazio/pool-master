@@ -416,8 +416,12 @@ export class IngestionService {
    * that is no longer SUBMITTED was started by an earlier try of this job, so a retry skips it:
    * the sync-run ledger is what makes the job idempotent. A feed that fails is recorded on its run
    * and the rest still run; only a failure the ledger could not record fails the job.
+   *
+   * On a retry, a run still IN_PROGRESS was left so by an earlier try that stopped mid-feed, or
+   * whose failure could not be written (#1445): it is marked FAILED as interrupted, rather than
+   * left showing as running for good, and is not run again.
    */
-  async runManualEventSync(payload: ManualEventSyncJobPayload): Promise<void> {
+  async runManualEventSync(payload: ManualEventSyncJobPayload, context: { attempt: number } = { attempt: 1 }): Promise<void> {
     const scheduler = this.scheduler;
     if (!scheduler) {
       throw new Error('Ingestion scheduler is required for manual event sync');
@@ -427,6 +431,14 @@ export class IngestionService {
     const stored = new Map((await this.syncRuns.findManyByIds(payload.syncRunIds)).map((run) => [run.id, run]));
     for (const syncRunId of payload.syncRunIds) {
       const syncRun = stored.get(syncRunId);
+      if (syncRun?.status === ProviderSyncRunStatus.IN_PROGRESS && context.attempt > 1) {
+        await this.syncRunLedger.failSubmittedRun(
+          syncRun,
+          new Error('Interrupted: an earlier try of this sync stopped before the feed finished'),
+          syncRun.startedAt,
+        );
+        continue;
+      }
       if (syncRun?.status !== ProviderSyncRunStatus.SUBMITTED) {
         this.logger?.info({ ...scope, syncRunId, status: syncRun?.status ?? null }, 'Skipped a manual sync run that is no longer submitted');
         continue;

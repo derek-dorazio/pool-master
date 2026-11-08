@@ -337,7 +337,7 @@ describe('IngestionService manual sync job (#1441)', () => {
     expect(runs.jobs.rows[0].status).toBe('SUCCEEDED');
   });
 
-  it('on a retry, runs only the runs still SUBMITTED, so a feed an earlier try started never runs twice', async () => {
+  it('on a retry, marks a run an earlier try left IN_PROGRESS FAILED as interrupted and runs only the SUBMITTED ones, so no feed runs twice and none shows as running forever (#1445)', async () => {
     const runs = syncRuns();
     const runEventSync = jest.fn().mockResolvedValue([COMPLETED_JOB]);
     const scheduler = stubInstance(IngestionScheduler, { runEventSync });
@@ -351,12 +351,32 @@ describe('IngestionService manual sync job (#1441)', () => {
       startedAt: new Date(), completedAt: null, payload: { requestedFeed: 'EVENTLIVESCORES' },
     });
 
-    await ingestion.runManualEventSync({ syncRunIds: [started.id, waiting.id], sport: Sport.GOLF, eventId: 'evt-1' });
+    await ingestion.runManualEventSync({ syncRunIds: [started.id, waiting.id], sport: Sport.GOLF, eventId: 'evt-1' }, { attempt: 2 });
 
     expect(runEventSync).toHaveBeenCalledTimes(1);
     expect(runEventSync).toHaveBeenCalledWith(expect.objectContaining({ feeds: ['EVENTPARTICIPANTS'] }));
-    expect(runs.rows.find((run) => run.id === started.id)?.status).toBe('IN_PROGRESS');
+    const interrupted = runs.rows.find((run) => run.id === started.id);
+    expect(interrupted?.status).toBe('FAILED');
+    expect(interrupted?.completedAt).toBeInstanceOf(Date);
+    const failedWith = runs.update.mock.calls.find(([id, update]) => id === started.id && update.status === 'FAILED')?.[1];
+    expect(JSON.stringify(failedWith?.details)).toContain('Interrupted');
     expect(runs.rows.find((run) => run.id === waiting.id)?.status).toBe('COMPLETED');
+  });
+
+  it('on a first try, leaves a run already IN_PROGRESS alone, since only a retry can know an earlier try stopped', async () => {
+    const runs = syncRuns();
+    const runEventSync = jest.fn().mockResolvedValue([COMPLETED_JOB]);
+    const scheduler = stubInstance(IngestionScheduler, { runEventSync });
+    const ingestion = service({ registry: registryWith(fakeSportDataProvider()), scheduler, syncRuns: runs });
+    const started = await runs.create({
+      providerId: 'mock-provider', sport: Sport.GOLF, eventId: 'evt-1', status: 'IN_PROGRESS',
+      startedAt: new Date(), completedAt: null, payload: { requestedFeed: 'EVENTLIVESCORES' },
+    });
+
+    await ingestion.runManualEventSync({ syncRunIds: [started.id], sport: Sport.GOLF, eventId: 'evt-1' }, { attempt: 1 });
+
+    expect(runEventSync).not.toHaveBeenCalled();
+    expect(runs.rows.find((run) => run.id === started.id)?.status).toBe('IN_PROGRESS');
   });
 
   it('fails the job when no scheduler is wired on the task that runs it, so the runner retries it', async () => {

@@ -68,7 +68,7 @@ Each one says how it is idempotent (outbox idempotency keys for emails, the sync
 ### The runner
 
 - Starts in every core-api task (as the email sender does). It polls every
-  `BACKGROUND_JOB_POLL_MS` (default 1000; env-configurable like the cache TTLs, so test lanes can
+  `BACKGROUND_JOB_POLL_MS` (default 10000 since 2026-11-08, #1446; env-configurable like the cache TTLs, so test lanes can
   shorten it) and on a local wake.
 - Claims up to N due rows with `FOR UPDATE SKIP LOCKED` (a row lock, which Derek allows as raw SQL),
   setting `RUNNING`, `attempts + 1`, `lease_until = now + 5 min`, and clearing `dedupe_key`. Two tasks never
