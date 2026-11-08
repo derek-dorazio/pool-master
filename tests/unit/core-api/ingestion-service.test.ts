@@ -143,7 +143,7 @@ describe('IngestionService manual sync submission', () => {
 
     const runner = new BackgroundJobRunner({
       jobs: syncRuns.jobs,
-      handlers: jobHandlers({ MANUAL_EVENT_SYNC: (payload) => service.runManualEventSync(payload) }),
+      handlers: jobHandlers({ MANUAL_EVENT_SYNC: (payload, context) => service.runManualEventSync(payload, context) }),
     });
     await runner.drain();
     expect(scheduler.runEventSync).toHaveBeenCalledWith({

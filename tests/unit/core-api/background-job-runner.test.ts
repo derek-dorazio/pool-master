@@ -204,8 +204,66 @@ describe('background job runner (#1440)', () => {
 
     expect(handler).toHaveBeenCalledTimes(5);
     expect(mostAtOnce).toBe(2);
-    expect(jobs.claimLimits.every((limit) => limit === 2)).toBe(true);
+    expect(jobs.claimLimits.every((limit) => limit >= 1 && limit <= 2)).toBe(true);
     expect(jobs.rows.every((row) => row.status === BackgroundJobStatus.SUCCEEDED)).toBe(true);
+  });
+
+  it('keeps running short jobs in the free slot while one slow job holds the other, instead of waiting for it (#1447)', async () => {
+    let releaseSlow: (() => void) | undefined;
+    const finished: string[] = [];
+    const { jobs, runner, queue } = setup({
+      concurrency: 2,
+      handler: async (payload) => {
+        if (payload.eventId === 'event-1') {
+          await new Promise<void>((resolve) => { releaseSlow = resolve; });
+        }
+        finished.push(payload.eventId);
+      },
+    });
+    for (let index = 1; index <= 4; index++) {
+      await queue.enqueue(BackgroundJobType.MANUAL_EVENT_SYNC, syncPayload(index));
+    }
+
+    const draining = runner.drain();
+    for (let turn = 0; turn < 20 && finished.length < 3; turn++) {
+      await new Promise((resolve) => { setImmediate(resolve); });
+    }
+    const finishedWhileSlowRan = [...finished];
+    releaseSlow?.();
+    await draining;
+
+    expect(finishedWhileSlowRan).toEqual(['event-2', 'event-3', 'event-4']);
+    expect(finished).toEqual(['event-2', 'event-3', 'event-4', 'event-1']);
+    expect(jobs.rows.every((row) => row.status === BackgroundJobStatus.SUCCEEDED)).toBe(true);
+  });
+
+  it('claims a job queued while a slow job runs into the free slot at once, without waiting for the slow job', async () => {
+    let releaseSlow: (() => void) | undefined;
+    const finished: string[] = [];
+    const { runner, queue } = setup({
+      concurrency: 2,
+      handler: async (payload) => {
+        if (payload.eventId === 'event-1') {
+          await new Promise<void>((resolve) => { releaseSlow = resolve; });
+        }
+        finished.push(payload.eventId);
+      },
+    });
+    queue.wakes(runner);
+    await queue.enqueue(BackgroundJobType.MANUAL_EVENT_SYNC, syncPayload(1));
+    const draining = runner.drain();
+    await new Promise((resolve) => { setImmediate(resolve); });
+
+    await queue.enqueue(BackgroundJobType.MANUAL_EVENT_SYNC, syncPayload(2));
+    for (let turn = 0; turn < 20 && finished.length < 1; turn++) {
+      await new Promise((resolve) => { setImmediate(resolve); });
+    }
+    const finishedWhileSlowRan = [...finished];
+    releaseSlow?.();
+    await draining;
+
+    expect(finishedWhileSlowRan).toEqual(['event-2']);
+    expect(finished).toEqual(['event-2', 'event-1']);
   });
 
   it('runs a job queued while a drain is running before that drain ends, rather than leaving it for the next poll', async () => {
@@ -265,9 +323,9 @@ describe('background job runner (#1440)', () => {
 });
 
 describe('background job poll interval (#1440)', () => {
-  it('is one second unless BACKGROUND_JOB_POLL_MS sets a whole number of milliseconds above 0', () => {
-    expect(readBackgroundJobPollMs({})).toBe(1000);
-    expect(readBackgroundJobPollMs({ BACKGROUND_JOB_POLL_MS: '' })).toBe(1000);
+  it('is ten seconds unless BACKGROUND_JOB_POLL_MS sets a whole number of milliseconds above 0', () => {
+    expect(readBackgroundJobPollMs({})).toBe(10_000);
+    expect(readBackgroundJobPollMs({ BACKGROUND_JOB_POLL_MS: '' })).toBe(10_000);
     expect(readBackgroundJobPollMs({ BACKGROUND_JOB_POLL_MS: '200' })).toBe(200);
   });
 

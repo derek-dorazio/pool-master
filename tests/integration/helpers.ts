@@ -286,7 +286,7 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
     jobs: backgroundJobs.queue,
   });
   const runner = backgroundJobs.runWith({
-    MANUAL_EVENT_SYNC: (payload) => ingestionService.runManualEventSync(payload),
+    MANUAL_EVENT_SYNC: (payload, context) => ingestionService.runManualEventSync(payload, context),
     CONTEST_STARTED_EMAILS: (payload) => contestEmailJobs.contestStarted(payload),
     CONTEST_SETTLED_EMAILS: (payload) => contestEmailJobs.contestSettled(payload),
   });

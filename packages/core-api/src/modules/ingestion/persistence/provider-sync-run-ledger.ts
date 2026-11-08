@@ -19,6 +19,18 @@ type SyncOutcomePayload = Prisma.InputJsonObject & {
   errors: number;
 };
 
+/**
+ * A feed's run whose outcome could not be written, so it is still IN_PROGRESS (#1445): unlike a
+ * feed failure the ledger recorded, this one the run's job must fail on, so its retry marks the
+ * run interrupted.
+ */
+export class SyncRunOutcomeUnrecordedError extends Error {
+  constructor(readonly syncRunId: string, cause: unknown) {
+    super(`The outcome of sync run ${syncRunId} could not be recorded`, { cause });
+    this.name = 'SyncRunOutcomeUnrecordedError';
+  }
+}
+
 export class ProviderSyncRunLedger {
   constructor(
     private readonly syncRuns: ProviderSyncRunRepository,
@@ -139,7 +151,12 @@ export class ProviderSyncRunLedger {
       // Failed executions do not have a trustworthy completed write set. Keep
       // writeDiagnostics reserved for normalized rows that were actually
       // compared and returned by a completed persistence callback.
-      await this.failSubmittedRun(syncRun, error, startedAt, startedPayload, startedDetails);
+      try {
+        await this.failSubmittedRun(syncRun, error, startedAt, startedPayload, startedDetails);
+      } catch (recordError) {
+        // The run is left IN_PROGRESS: the caller must know, so a retry can mark it (#1445).
+        throw new SyncRunOutcomeUnrecordedError(syncRun.id, recordError);
+      }
       throw error;
     }
   }

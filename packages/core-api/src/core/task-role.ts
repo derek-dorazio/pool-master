@@ -11,7 +11,7 @@
  *   sweep, nightly cleanup and provider ingestion. It still listens on its port for health
  *   checks, but sits behind no load balancer. Work it runs itself still wakes its sender and
  *   runner, but an email or job an API task queued is found only by polling, so its email
- *   sender polls every second, as the job runner already does.
+ *   sender polls every second (its job runner polls every BACKGROUND_JOB_POLL_MS).
  *
  * The advisory job locks (#1159) stay in every role, so two workers overlapping during a deploy
  * still run each scheduled job once.

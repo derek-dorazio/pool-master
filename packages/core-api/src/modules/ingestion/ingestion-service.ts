@@ -33,6 +33,7 @@ import type {
 import { SyncOrchestrator } from './core/sync-orchestrator';
 import {
   ProviderSyncRunLedger,
+  SyncRunOutcomeUnrecordedError,
   isEventSyncFeedType,
   readPayload,
 } from './persistence/provider-sync-run-ledger';
@@ -416,8 +417,12 @@ export class IngestionService {
    * that is no longer SUBMITTED was started by an earlier try of this job, so a retry skips it:
    * the sync-run ledger is what makes the job idempotent. A feed that fails is recorded on its run
    * and the rest still run; only a failure the ledger could not record fails the job.
+   *
+   * On a retry, a run still IN_PROGRESS was left so by an earlier try that stopped mid-feed, or
+   * whose failure could not be written (#1445): it is marked FAILED as interrupted, rather than
+   * left showing as running for good, and is not run again.
    */
-  async runManualEventSync(payload: ManualEventSyncJobPayload): Promise<void> {
+  async runManualEventSync(payload: ManualEventSyncJobPayload, context: { attempt: number }): Promise<void> {
     const scheduler = this.scheduler;
     if (!scheduler) {
       throw new Error('Ingestion scheduler is required for manual event sync');
@@ -425,8 +430,18 @@ export class IngestionService {
     const scope = { sport: payload.sport, eventId: payload.eventId, mockEventState: payload.mockEventState ?? null };
     this.logger?.debug({ ...scope, syncRunIds: payload.syncRunIds }, 'Executing submitted manual event sync');
     const stored = new Map((await this.syncRuns.findManyByIds(payload.syncRunIds)).map((run) => [run.id, run]));
+    // Runs whose outcome the ledger could not write: the job fails after the rest have run.
+    const unrecorded: string[] = [];
     for (const syncRunId of payload.syncRunIds) {
       const syncRun = stored.get(syncRunId);
+      if (syncRun?.status === ProviderSyncRunStatus.IN_PROGRESS && context.attempt > 1) {
+        await this.syncRunLedger.failSubmittedRun(
+          syncRun,
+          new Error('Interrupted: an earlier try of this sync stopped before the feed finished'),
+          syncRun.startedAt,
+        );
+        continue;
+      }
       if (syncRun?.status !== ProviderSyncRunStatus.SUBMITTED) {
         this.logger?.info({ ...scope, syncRunId, status: syncRun?.status ?? null }, 'Skipped a manual sync run that is no longer submitted');
         continue;
@@ -447,14 +462,23 @@ export class IngestionService {
           }),
         );
       } catch (error) {
+        if (error instanceof SyncRunOutcomeUnrecordedError) {
+          unrecorded.push(syncRun.id);
+          this.logger?.error({ ...scope, syncRunId: syncRun.id, requestedFeed, error }, 'Manual event sync feed failed and its run could not be marked FAILED; the job will be retried');
+          continue;
+        }
         this.logger?.error({
           ...scope,
           syncRunId: syncRun.id,
           requestedFeed,
           error,
-        }, 'Manual event sync feed failed after provider sync run was marked failed');
-        // The ledger already marks the run as failed; the job moves on to the remaining feeds.
+        }, 'Manual event sync feed failed; its run is marked FAILED');
+        // The ledger marked the run failed; the job moves on to the remaining feeds.
       }
+    }
+    if (unrecorded.length > 0) {
+      // A retry marks these runs interrupted rather than leaving them IN_PROGRESS for good.
+      throw new Error(`Manual event sync left ${String(unrecorded.length)} run(s) without a recorded outcome: ${unrecorded.join(', ')}`);
     }
   }
 
