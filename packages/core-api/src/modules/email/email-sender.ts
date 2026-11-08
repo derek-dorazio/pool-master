@@ -1,8 +1,8 @@
 /**
  * The email outbox's sender (#844): claims due emails and hands each to the transport, no faster
- * than EMAIL_CONFIG's rate. It runs in every core-api task; the claim skips rows another task
- * holds, so two tasks never send the same email. A queued email wakes it, and a timer catches
- * retries and anything a wake missed.
+ * than EMAIL_CONFIG's rate. It runs in every core-api task but an `api` one (#1186); the claim
+ * skips rows another task holds, so two tasks never send the same email. A queued email wakes
+ * it, and a timer catches retries, anything a wake missed and email an `api` task queued.
  */
 
 import type { FastifyBaseLogger } from 'fastify';
@@ -42,6 +42,8 @@ export interface EmailSenderOptions {
   logger?: FastifyBaseLogger;
   now?: () => Date;
   sleep?: (ms: number) => Promise<void>;
+  /** How often the timer looks for due email; 15 seconds unless set (a worker sets 1, #1186). */
+  tickMs?: number;
 }
 
 export class EmailSender {
@@ -60,7 +62,7 @@ export class EmailSender {
 
   start(): void {
     if (this.timer) return;
-    this.timer = setInterval(() => { void this.drain(); }, TICK_MS);
+    this.timer = setInterval(() => { void this.drain(); }, this.options.tickMs ?? TICK_MS);
     this.timer.unref();
     void this.drain();
     this.options.logger?.info({ action: 'email.sender.start' }, 'Email sender started');

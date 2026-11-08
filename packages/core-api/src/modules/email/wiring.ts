@@ -43,6 +43,13 @@ export function createEmailOutbox(options: {
   planEntitlements: Pick<PlanEntitlementsService, 'forPlan'>;
   env?: NodeJS.ProcessEnv;
   logger?: FastifyBaseLogger;
+  /**
+   * False on an API-only task (#1186): a queued email waits for the worker's sender rather than
+   * waking this task's, which never starts. True unless set.
+   */
+  wakesSender?: boolean;
+  /** How often the sender's timer looks for due email; its default unless set. */
+  senderTickMs?: number;
 }): EmailOutbox {
   const mailConfig = readMailDeliveryConfig(options.env);
   const transport = createMailDeliveryProvider(mailConfig, options.logger);
@@ -55,7 +62,9 @@ export function createEmailOutbox(options: {
     transport,
     readConfig: options.readConfig,
     logger: options.logger,
+    tickMs: options.senderTickMs,
   });
+  const wakesSender = options.wakesSender ?? true;
   const email = new EmailService({
     messages,
     suppressions,
@@ -65,7 +74,7 @@ export function createEmailOutbox(options: {
     readConfig: options.readConfig,
     planEntitlements: options.planEntitlements,
     senderAddress: mailConfig.fromEmail,
-    onQueued: () => { sender.wake(); },
+    onQueued: wakesSender ? () => { sender.wake(); } : undefined,
     logger: options.logger,
   });
   const deliveryEvents = new EmailDeliveryEvents({ messages, suppressions, logger: options.logger });
@@ -77,7 +86,7 @@ export function createEmailOutbox(options: {
     tokens: unsubscribeTokens,
     logger: options.logger,
   });
-  const test = new EmailTestService({ email, sender, messages, users, environment: readAppEnv(options.env ?? process.env) });
+  const test = new EmailTestService({ email, sender: wakesSender ? sender : undefined, messages, users, environment: readAppEnv(options.env ?? process.env) });
   const retention = new EmailMessageRetention(messages);
   return { email, sender, deliveryEvents, preferences, test, retention };
 }

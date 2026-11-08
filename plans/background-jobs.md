@@ -3,8 +3,9 @@
 **Tracking issue:** #1439 (tickets #1440, #1387, #1441)
 
 Written 2026-11-07 from rows 1.3–1.7 of `plans/scalability-recommendations.md`, agreed with Derek in
-the scalability thread. The dedicated worker service (#1186, row 1.1) is **paused**: every API task
-runs the job runner until we choose to add the worker.
+the scalability thread. The dedicated worker service (#1186, row 1.1): Derek asked 2026-11-08 for the
+code now and no deployment yet, so the `CORE_API_ROLE` flag is built and every environment still runs
+`all`, one task doing both.
 
 ## What we want
 
@@ -22,8 +23,11 @@ and a deploy or a crashed task never loses it. This replaces in-process `outside
 | 1.5 | Manual event sync runs as a job | #1441 |
 
 Out of scope, and why:
-- **1.1 worker service (#1186):** paused by Derek 2026-11-07. Adding it later is a flag (API tasks
-  stop running the runner and schedulers) plus Terraform; the jobs need no change.
+- **1.1 worker service (#1186):** the flag is coded (2026-11-08): `api` tasks start no runner,
+  sender or scheduler and wake nothing, `worker` tasks run them all. What is left is Terraform, a
+  `core_api_worker` ECS service on the same image with `CORE_API_ROLE=worker`, `desired_count = 1`,
+  no load balancer, and `CORE_API_ROLE=api` on the existing service; Derek applies it when he wants
+  it on QA. The jobs need no change.
 - **1.6 event create / clone / import:** #1253 already brought these routes to a fixed query count; no job is needed.
 - **1.7 commissioner bulk actions:** checked. The year-in-review send and the member CSV import
   already read and write in a fixed number of queries and queue their emails to the outbox. No job is needed.
