@@ -979,6 +979,8 @@ export const BackgroundJobType = {
   CONTEST_STARTED_EMAILS: 'CONTEST_STARTED_EMAILS',
   /** Queues "Final results" (F1 to F3) to the league of one contest that just completed (#1387). */
   CONTEST_SETTLED_EMAILS: 'CONTEST_SETTLED_EMAILS',
+  /** Settles the contests of one event that just completed or was cancelled (#1448). */
+  SETTLE_SPORT_EVENT_CONTESTS: 'SETTLE_SPORT_EVENT_CONTESTS',
 } as const;
 export type BackgroundJobType = (typeof BackgroundJobType)[keyof typeof BackgroundJobType];
 

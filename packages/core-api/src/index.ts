@@ -287,6 +287,7 @@ export function buildApp() {
       MANUAL_EVENT_SYNC: (payload, context) => ingestionService.runManualEventSync(payload, context),
       CONTEST_STARTED_EMAILS: (payload) => contestEmailJobs.contestStarted(payload),
       CONTEST_SETTLED_EMAILS: (payload) => contestEmailJobs.contestSettled(payload),
+      SETTLE_SPORT_EVENT_CONTESTS: (payload) => eventLifecycleService.settleFinishedEventContests(payload),
     },
     pollMs: readBackgroundJobPollMs(process.env),
     logger: app.log,

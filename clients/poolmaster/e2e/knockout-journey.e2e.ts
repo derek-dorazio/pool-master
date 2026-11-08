@@ -542,12 +542,15 @@ test('act 4: the root admin starts the playoffs and names each series\' winner o
   });
 
   await test.step(`the settled entry scores ${EXPECTED_TOTAL} with the upset bonus, the Aces are champions, and the leaderboard says it is final`, async () => {
-    const managed = await page.request.get(
-      `/api/v1/leagues/${state.leagueId}/contest-management/contests/${state.contestId}`,
-    );
-    expect(managed.ok(), `GET the managed contest answered ${managed.status()}`).toBe(true);
-    const { contest } = (await managed.json()) as { contest: { status: string } };
-    expect(contest.status).toBe('COMPLETED');
+    // The contest settles in a background job a moment after the event completes (#1448).
+    await expect.poll(async () => {
+      const managed = await page.request.get(
+        `/api/v1/leagues/${state.leagueId}/contest-management/contests/${state.contestId}`,
+      );
+      expect(managed.ok(), `GET the managed contest answered ${managed.status()}`).toBe(true);
+      const { contest } = (await managed.json()) as { contest: { status: string } };
+      return contest.status;
+    }, { message: 'the contest settles once the event completes' }).toBe('COMPLETED');
 
     const read = await readKnockoutLeaderboard(page, state.contestId, state.entryId);
     expect(read.total).toBe(EXPECTED_TOTAL);

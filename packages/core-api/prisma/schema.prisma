@@ -213,6 +213,7 @@ enum PrismaBackgroundJobType {
   MANUAL_EVENT_SYNC
   CONTEST_STARTED_EMAILS
   CONTEST_SETTLED_EMAILS
+  SETTLE_SPORT_EVENT_CONTESTS
 }
 
 enum PrismaBackgroundJobStatus {

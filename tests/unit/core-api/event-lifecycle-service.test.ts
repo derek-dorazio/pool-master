@@ -79,6 +79,23 @@ function startedEmailsJob(contestId: string) {
   };
 }
 
+/** The settle job a finished event's move writes (#1448). */
+function settleJob(completedAt: Date) {
+  return {
+    type: BackgroundJobType.SETTLE_SPORT_EVENT_CONTESTS,
+    payload: { sportEventId: 'sport-event-1', completedAt: completedAt.toISOString() },
+    runAt: undefined,
+    dedupeKey: 'SETTLE_SPORT_EVENT_CONTESTS:sport-event-1',
+  };
+}
+
+function fakeSettlement() {
+  return {
+    settleFinishedSportEvent: jest.fn().mockResolvedValue({ contestsCompleted: 1 }),
+    settleFinishedGame: jest.fn().mockResolvedValue(0),
+  };
+}
+
 /** An in-memory store holding the one event under test, and the port over it. */
 function seededEvents(overrides: Partial<SportEvent> = {}) {
   const store = new InMemorySportEvents();
@@ -309,60 +326,95 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
   // pool-master-eux.6 — relocated from ingestion-persistence.test.ts (that
   // module now only proves it delegates here, see
   // tests/unit/core-api/ingestion-persistence.test.ts).
-  it('pool-master-eux.6 triggers Golf contest settlement from completed schedule events', async () => {
+  it('writes the job that settles its contests with the completed status, at the event\'s end, and settles nothing in the request (#1448)', async () => {
     const settlement = {
       settleFinishedSportEvent: jest.fn().mockResolvedValue({ contestsCompleted: 1 }),
       settleFinishedGame: jest.fn().mockResolvedValue(0),
     };
     const eventEndDate = new Date('2026-05-31T22:00:00.000Z');
-    const { sportEvents } = seededEvents({ status: SportEventStatus.IN_PROGRESS, endDate: eventEndDate });
-    const contests = contestDeps();
-    const service = new EventLifecycleService(
-      contests,
-      sportEvents,
-      fakeLogger(),
-      undefined,
-      settlement,
-    );
+    const store = new InMemorySportEvents();
+    store.addEvent({ id: 'sport-event-1', name: 'Golf', startDate: new Date('2026-05-28T12:00:00.000Z'), endDate: eventEndDate, status: SportEventStatus.IN_PROGRESS });
+    const jobs = startedJobs();
+    const service = new EventLifecycleService(contestDeps(), store.sportEventRepo(), fakeLogger(), jobs, settlement);
 
-    await service.applySportEventStatusTransition({
-      sportEventId: 'sport-event-1',
-      toStatus: SportEventStatus.COMPLETED,
-      actor: { type: 'SYSTEM' },
+    await service.applySportEventStatusTransition({ sportEventId: 'sport-event-1', toStatus: SportEventStatus.COMPLETED, actor: { type: 'SYSTEM' } });
+
+    expect(store.backgroundJobs).toEqual([settleJob(eventEndDate)]);
+    expect(jobs.queued).toHaveBeenCalledTimes(1);
+    expect(settlement.settleFinishedSportEvent).not.toHaveBeenCalled();
+  });
+
+  it('settles a cancelled event\'s contests at the cancellation rather than its future start', async () => {
+    const startDate = new Date('2099-05-28T12:00:00.000Z');
+    const store = new InMemorySportEvents();
+    store.addEvent({ id: 'sport-event-1', name: 'Golf', startDate, status: SportEventStatus.SCHEDULED });
+    const before = new Date();
+    const service = new EventLifecycleService(contestDeps(), store.sportEventRepo(), fakeLogger(), startedJobs(), fakeSettlement());
+
+    await service.applySportEventStatusTransition({ sportEventId: 'sport-event-1', toStatus: SportEventStatus.CANCELLED, actor: { type: 'ROOT_ADMIN' } });
+
+    const [job] = store.backgroundJobs;
+    const completedAt = new Date((job.payload as { completedAt: string }).completedAt);
+    expect(completedAt.getTime()).toBeGreaterThanOrEqual(before.getTime());
+    expect(completedAt.getTime()).toBeLessThan(startDate.getTime());
+  });
+
+  it('writes no settlement job when another caller finished the event first, since that caller\'s move wrote one', async () => {
+    const store = new InMemorySportEvents();
+    store.addEvent({ id: 'sport-event-1', name: 'Golf', startDate: new Date('2026-05-28T12:00:00.000Z'), status: SportEventStatus.IN_PROGRESS });
+    const repo = store.sportEventRepo();
+    const jobs = startedJobs();
+    // The other caller's move lands between this one's read and its write.
+    const findById = repo.findById.bind(repo);
+    jest.spyOn(repo, 'findById').mockImplementationOnce(async (id) => {
+      const seen = await findById(id);
+      await repo.transitionStatus(id, { from: SportEventStatus.IN_PROGRESS, to: SportEventStatus.COMPLETED });
+      return seen;
     });
+    const service = new EventLifecycleService(contestDeps(), repo, fakeLogger(), jobs, fakeSettlement());
+
+    await service.applySportEventStatusTransition({ sportEventId: 'sport-event-1', toStatus: SportEventStatus.COMPLETED, actor: { type: 'SYSTEM' }, fromStatus: SportEventStatus.IN_PROGRESS });
+
+    expect(store.backgroundJobs).toEqual([]);
+    expect(jobs.queued).not.toHaveBeenCalled();
+  });
+
+  it('settles the event\'s contests when its job runs, at the completion the job carries', async () => {
+    const settlement = fakeSettlement();
+    const { sportEvents } = seededEvents({ status: SportEventStatus.COMPLETED });
+    const completedAt = new Date('2026-05-31T22:00:00.000Z');
+
+    await new EventLifecycleService(contestDeps(), sportEvents, fakeLogger(), startedJobs(), settlement)
+      .settleFinishedEventContests({ sportEventId: 'sport-event-1', completedAt: completedAt.toISOString() });
 
     expect(settlement.settleFinishedSportEvent).toHaveBeenCalledWith('sport-event-1', {
-      completedAt: eventEndDate,
-      // Handed over as just written, so settlement does not read it again.
+      completedAt,
       sportEvent: expect.objectContaining({ id: 'sport-event-1', status: SportEventStatus.COMPLETED }) as unknown,
     });
   });
 
-  it('settles the contests of an event when it is cancelled, at the cancellation rather than its future start', async () => {
-    const settlement = {
-      settleFinishedSportEvent: jest.fn().mockResolvedValue({ contestsCompleted: 1 }),
-      settleFinishedGame: jest.fn().mockResolvedValue(0),
-    };
-    const startDate = new Date('2099-05-28T12:00:00.000Z');
-    const { sportEvents } = seededEvents({ status: SportEventStatus.SCHEDULED, startDate });
-    const before = new Date();
-    const service = new EventLifecycleService(
-      contestDeps(),
-      sportEvents,
-      fakeLogger(),
-      undefined,
-      settlement,
+  it('settles nothing, and says why, when the job finds the event moved back out of COMPLETED, since its next finish queues a job of its own', async () => {
+    const settlement = fakeSettlement();
+    const logger = fakeLogger();
+    const { sportEvents } = seededEvents({ status: SportEventStatus.IN_PROGRESS });
+
+    await new EventLifecycleService(contestDeps(), sportEvents, logger, startedJobs(), settlement)
+      .settleFinishedEventContests({ sportEventId: 'sport-event-1', completedAt: new Date().toISOString() });
+
+    expect(settlement.settleFinishedSportEvent).not.toHaveBeenCalled();
+    expect(logger.warn).toHaveBeenCalledWith(
+      { action: 'events.settleContests.skipped', data: { sportEventId: 'sport-event-1', status: SportEventStatus.IN_PROGRESS } },
+      expect.any(String),
     );
+  });
 
-    await service.applySportEventStatusTransition({
-      sportEventId: 'sport-event-1',
-      toStatus: SportEventStatus.CANCELLED,
-      actor: { type: 'ROOT_ADMIN' },
-    });
+  it('lets a settlement failure throw from the job, so the runner retries it', async () => {
+    const settlement = fakeSettlement();
+    settlement.settleFinishedSportEvent.mockRejectedValueOnce(new Error('connection reset'));
+    const { sportEvents } = seededEvents({ status: SportEventStatus.COMPLETED });
 
-    const [, input] = settlement.settleFinishedSportEvent.mock.calls[0] as [string, { completedAt: Date }];
-    expect(input.completedAt.getTime()).toBeGreaterThanOrEqual(before.getTime());
-    expect(input.completedAt.getTime()).toBeLessThan(startDate.getTime());
+    await expect(new EventLifecycleService(contestDeps(), sportEvents, fakeLogger(), startedJobs(), settlement)
+      .settleFinishedEventContests({ sportEventId: 'sport-event-1', completedAt: new Date().toISOString() })).rejects.toThrow('connection reset');
   });
 
   // pool-master-9ya — relocated from ingestion-persistence.test.ts.
@@ -502,16 +554,18 @@ describe('EventLifecycleService event change emails (#845 C6, C7)', () => {
     expect(notice.sportEventChanged).toHaveBeenCalledWith(expect.objectContaining({ id: 'sport-event-1', status: SportEventStatus.POSTPONED }), { kind: 'POSTPONED' });
   });
 
-  it('tells the leagues an event was cancelled before its contests settle', async () => {
+  it('tells the leagues an event was cancelled before its job settles its contests', async () => {
     const order: string[] = [];
     const settlement = {
       settleFinishedSportEvent: jest.fn(async () => { order.push('settled'); return { sportEventId: 'sport-event-1', contestsSettled: 1, contestsCompleted: 1, standingsUpserted: 0 }; }),
       settleFinishedGame: jest.fn().mockResolvedValue(0),
     };
     const { sportEvents } = seededEvents({ status: SportEventStatus.SCHEDULED });
-    const service = new EventLifecycleService(contestDeps(), sportEvents, fakeLogger(), undefined, settlement, undefined, changedNotice(order));
+    const service = new EventLifecycleService(contestDeps(), sportEvents, fakeLogger(), startedJobs(), settlement, undefined, changedNotice(order));
 
     await service.applySportEventStatusTransition({ sportEventId: 'sport-event-1', toStatus: SportEventStatus.CANCELLED, actor: { type: 'ROOT_ADMIN' } });
+    expect(order).toEqual([]);
+    await service.settleFinishedEventContests({ sportEventId: 'sport-event-1', completedAt: new Date().toISOString() });
 
     expect(order).toEqual(['told CANCELLED', 'settled']);
   });
@@ -538,18 +592,14 @@ describe('EventLifecycleService event change emails (#845 C6, C7)', () => {
     expect(notice.sportEventChanged).toHaveBeenCalledWith(storedEvent(), { kind: 'RESCHEDULED', previousStart });
   });
 
-  it('still cancels the event and settles its contests, and logs it, when the event changed emails cannot be queued', async () => {
+  it('still settles a cancelled event\'s contests, and logs it, when the event changed emails cannot be queued', async () => {
     const logger = fakeLogger();
-    const settlement = {
-      settleFinishedSportEvent: jest.fn().mockResolvedValue({ contestsCompleted: 1 }),
-      settleFinishedGame: jest.fn().mockResolvedValue(0),
-    };
-    const { sportEvents } = seededEvents({ status: SportEventStatus.SCHEDULED });
+    const settlement = fakeSettlement();
+    const { sportEvents } = seededEvents({ status: SportEventStatus.CANCELLED });
     const notice = { sportEventChanged: jest.fn().mockRejectedValue(new Error('database unavailable')) };
-    const service = new EventLifecycleService(contestDeps(), sportEvents, logger, undefined, settlement, undefined, notice);
+    const service = new EventLifecycleService(contestDeps(), sportEvents, logger, startedJobs(), settlement, undefined, notice);
 
-    await expect(service.applySportEventStatusTransition({ sportEventId: 'sport-event-1', toStatus: SportEventStatus.CANCELLED, actor: { type: 'ROOT_ADMIN' } }))
-      .resolves.toMatchObject({ toStatus: SportEventStatus.CANCELLED });
+    await service.settleFinishedEventContests({ sportEventId: 'sport-event-1', completedAt: new Date().toISOString() });
 
     expect(settlement.settleFinishedSportEvent).toHaveBeenCalled();
     expect(logger.error).toHaveBeenCalledWith(

@@ -5,6 +5,7 @@
  */
 
 import type {
+  BackgroundJobRequest,
   EventPricingConfig,
   EventSeries,
   MatchSide,
@@ -138,6 +139,11 @@ export interface SportEventStatusTransition {
   to: SportEvent['status'];
   /** Written with the status, for an event that completes without an end date of its own. */
   endDate?: Date;
+  /**
+   * Written in the same transaction as the status, and only when the status moves, such as the
+   * job that settles the event's contests (#1448): a move that rolls back queues nothing.
+   */
+  jobs?: readonly BackgroundJobRequest[];
 }
 
 export interface SportEventProviderSummary {
