@@ -496,6 +496,38 @@ describe('Contest leaderboard snapshots (#1435)', () => {
     expect(await snapshots.find(contest.id, '')).toMatchObject({ version: 2, board: { label: 'newer' } });
   });
 
+  it('lets the newer of two first builds win even when the older one inserts first, between the newer one\'s two writes', async () => {
+    const { contest } = await liveContest();
+    const appPrisma = getAppPrisma();
+    const older = new PrismaContestLeaderboardSnapshotRepository<{ label: string }>(appPrisma);
+    const write = (label: string, ms: number) => ({
+      contestId: contest.id, shownEvent: '', computedFrom: new Date(Date.UTC(2026, 10, 7, 21, 0, 0, ms)), contestUpdatedAt: contest.updatedAt, validUntil: null, board: { label },
+    });
+    // The newer build finds no row to overwrite; the older build's insert lands before its own.
+    let olderInserted = false;
+    const racing = new Proxy(appPrisma, {
+      get(target, property, receiver) {
+        if (property !== 'contestLeaderboardSnapshot') return Reflect.get(target, property, receiver) as unknown;
+        const model = target.contestLeaderboardSnapshot;
+        return new Proxy(model, {
+          get(modelTarget, method, modelReceiver) {
+            if (method !== 'createMany' || olderInserted) return Reflect.get(modelTarget, method, modelReceiver) as unknown;
+            return async (args: Parameters<typeof model.createMany>[0]) => {
+              olderInserted = true;
+              await older.save(write('older', 100));
+              return modelTarget.createMany(args);
+            };
+          },
+        });
+      },
+    });
+
+    const saved = await new PrismaContestLeaderboardSnapshotRepository<{ label: string }>(racing).save(write('newer', 200));
+
+    expect(saved).toMatchObject({ version: 2, board: { label: 'newer' } });
+    expect(await older.find(contest.id, '')).toMatchObject({ version: 2, board: { label: 'newer' } });
+  });
+
   it('drops a stored board its rebuild can no longer show, so the next read answers why', async () => {
     const { live, contest, viewerId } = await liveContest();
     const service = serviceOn(getAppPrisma());
