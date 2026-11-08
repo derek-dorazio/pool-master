@@ -1,4 +1,4 @@
-import { expect } from '@jest/globals';
+import { expect, jest } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
 import type { PrismaClient } from '@prisma/client';
 import { ContestStatus, Sport, SportEventStatus } from '@poolmaster/shared/domain';
@@ -600,6 +600,36 @@ describe('Contest leaderboard snapshots (#1435)', () => {
       expect(after.statusCode).toBe(200);
       expect(after.headers.etag).not.toBe(etag);
       expect((after.json<{ entries: { totalScore: number }[] }>()).entries.map((entry) => entry.totalScore)).toEqual([-12]);
+    });
+
+    it('sends the board again with a new tag and the newly revealed picks once the next event starts, never a 304 for the old board', async () => {
+      const live = await createEvent('PGA', 1, SportEventStatus.IN_PROGRESS, [-5, -3, -2, 0]);
+      // The next event starts a minute from now, so the stored board is good only until then.
+      const next = await createEvent('Next', -1 / (24 * 60), SportEventStatus.SCHEDULED, [-1, -4, 0, 0]);
+      const { contest, viewerHeaders, addEntry } = await golfContest([live, next]);
+      const pickOf = (event: typeof live, index: number) => expectDefined(event.field[index]?.id);
+      await addEntry('Entry 1', [
+        { eventId: live.event.id, fieldRowIds: [pickOf(live, 0), pickOf(live, 1)] },
+        { eventId: next.event.id, fieldRowIds: [pickOf(next, 0), pickOf(next, 1)] },
+      ]);
+      const before = await poll(contest.id, viewerHeaders);
+      const etag = String(before.headers.etag);
+
+      // Only the clock moves, past the next event's start: no write tells the rebuilds of it.
+      jest.useFakeTimers({ doNotFake: ['nextTick', 'setImmediate', 'clearImmediate', 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'queueMicrotask', 'hrtime', 'performance'] });
+      try {
+        jest.setSystemTime(Date.now() + 2 * 60 * 1000);
+        const after = await poll(contest.id, { ...viewerHeaders, 'if-none-match': etag });
+
+        expect(before.json<{ sportEventId: string }>().sportEventId).toBe(live.event.id);
+        expect(after.statusCode).toBe(200);
+        expect(after.headers.etag).not.toBe(etag);
+        const shown = after.json<{ sportEventId: string; entries: { picks: { sportEventParticipantId: string }[] }[] }>();
+        expect(shown.sportEventId).toBe(next.event.id);
+        expect(shown.entries.flatMap((entry) => entry.picks.map((pick) => pick.sportEventParticipantId)).sort()).toEqual([pickOf(next, 0), pickOf(next, 1)].sort());
+      } finally {
+        jest.useRealTimers();
+      }
     });
 
     it('refuses a reader outside the league even with the board\'s tag, never answering 304', async () => {
