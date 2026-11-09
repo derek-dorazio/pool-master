@@ -275,6 +275,9 @@
       --illustration-brown: #8a5a3a;
       --illustration-asphalt: #2b2f36;
       --illustration-road: #3a3f47;
+      /* On graphite ice the light-mode puck disappears: a near-black side under a lighter top. */
+      --illustration-puck: #0a0b0d;
+      --illustration-puck-top: #5a5e66;
       --illustration-tint: var(--color-graphite-800);
       --illustration-chip: #2f333a;
       --illustration-card: var(--color-graphite-650);

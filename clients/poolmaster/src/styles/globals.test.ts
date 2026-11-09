@@ -18,8 +18,8 @@ const NOT_A_COLOUR = /^--(font|tracking|radius|ease|duration)/;
 
 /**
  * Colour roles that are deliberately the same in both modes: the navy header bar and the text on
- * it, the dark text on gold, the silver and bronze medals, the deep shadows, and drawing colours
- * that read on paper and graphite alike.
+ * it, the dark text on gold, the silver and bronze medals, the deep shadows, and the orange and the
+ * tennis ball in the drawings, which read on paper and graphite alike.
  */
 const SAME_IN_BOTH_MODES = new Set([
   '--surface-inverse',
@@ -43,8 +43,6 @@ const SAME_IN_BOTH_MODES = new Set([
   '--shadow-xl',
   '--shadow-2xl',
   '--illustration-orange',
-  '--illustration-puck',
-  '--illustration-puck-top',
   '--illustration-tennis-ball',
 ]);
 
@@ -115,6 +113,11 @@ describe('theme file', () => {
     expect(lightTokens.get('--illustration-grass-dark')).toBe('#6c8a62');
     expect(darkTokens.get('--illustration-grass')).toBe('#55705a');
     expect(darkTokens.get('--illustration-grass-dark')).toBe('#4a634f');
+  });
+
+  it('draws the hockey puck with a dark value of its own, so it shows on graphite ice', () => {
+    expect(darkTokens.get('--illustration-puck')).toBe('#0a0b0d');
+    expect(darkTokens.get('--illustration-puck-top')).toBe('#5a5e66');
   });
 
   it('gives small labels the navy haze in dark mode, since label blue on graphite is too dark to read', () => {
