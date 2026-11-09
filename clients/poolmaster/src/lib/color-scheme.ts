@@ -11,7 +11,7 @@ export type AppliedColorScheme = 'light' | 'dark';
 /**
  * Where the browser remembers a signed-in member's Appearance choice, so the first-paint script
  * in `index.html` can apply it before the session loads. That script repeats this key by hand
- * (it runs before any module), and `color-scheme.test.ts` checks the two agree.
+ * (it runs before any module), and `color-scheme.test.tsx` checks the two agree.
  */
 export const COLOR_SCHEME_STORAGE_KEY = 'poolmaster.colorScheme';
 
