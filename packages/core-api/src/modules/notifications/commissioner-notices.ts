@@ -16,7 +16,7 @@
  * events of the next two weeks the league would have heard about, by week, with whether the league
  * has a contest on each. A week with nothing coming up sends nothing.
  *
- * The lifecycle scheduler's "notifications due" step calls `queueDue` on every sweep. Each email
+ * Its sweep (`DueNotificationsScheduler`) calls `queueDue` every five minutes. Each email
  * is queued once: its outbox idempotency key is the event and league (C1, C2), the contest (C4)
  * or the Monday and the league (the digest) and the person, and a league or contest already told is skipped before any work. So if a
  * send fails partway through a league's commissioners, the rest of that league is not told.
@@ -70,7 +70,7 @@ import {
   type PreviousContestWinners,
   type WeeklyDigestEvent,
 } from '../email';
-import type { DueNotifications } from '../events/event-lifecycle-scheduler';
+import type { DueNotifications } from './due-notifications-scheduler';
 import type { EmailConfig } from '@poolmaster/shared/dto';
 import { closesOnAGame, contestClosesAtGiven } from './contest-summary';
 import { activeCommissionersByLeague, type LeagueMemberDeps } from './league-members';

@@ -15,10 +15,9 @@
  * scheduler's job is the two status writes below, and, while an event is in progress, starting
  * the contests whose cutoff comes after the event's start (a second-chance bracket, #721).
  *
- * Each sweep ends with the "notifications due" step (#845): the emails that fire on the clock
- * rather than on an action, such as entry reminders and live standings, are queued once their
- * time has come, and so are the receipts a quick pick draw left to the sweep (#1171). The outbox's idempotency key keeps a second sweep, or a second server task, from
- * sending one twice.
+ * The emails that fire on the clock rather than on an action, such as entry reminders and live
+ * standings, sweep on timers of their own (`DueNotificationsScheduler`), so a slow one never
+ * holds up an event's move or its contests going live.
  *
  * Every server task runs this scheduler, and the sweep runs on one of them (#1159): the task
  * holding the sweep's job lock. A sweep still running when the next is due is not overlapped.
@@ -28,24 +27,17 @@ import type { FastifyBaseLogger } from 'fastify';
 import type { SportEventRepository, SportEventRoundRepository } from '@poolmaster/shared/db';
 import { SportEventStatus, type SportEvent, type SportEventRound } from '@poolmaster/shared/domain';
 import type { JobLock } from '../../core/job-lock';
-import { runWithReadMemo } from '../../core/request-read-memo';
+import { LockedSweep } from '../../core/locked-sweep';
 import type { EventLifecycleService } from './event-lifecycle-service';
 import { errorMessage } from '../../core/error-message';
 
 const SWEEP_INTERVAL_MS = 5 * 60 * 1000;
 const SWEEP_LOCK_KEY = 'event-lifecycle-sweep';
 
-/** The emails that come due on the clock (#845): each sweep asks them to queue what is due. */
-export interface DueNotifications {
-  queueDue(now: Date): Promise<void>;
-}
-
 export interface EventLifecycleSchedulerOptions {
   sportEvents: Pick<SportEventRepository, 'findAutoLifecycleCandidates'>;
   rounds: Pick<SportEventRoundRepository, 'findBySportEvents'>;
   eventLifecycleService: Pick<EventLifecycleService, 'applySportEventStatusTransition' | 'activateContestsPastCutoff'>;
-  /** The "notifications due" step, one per kind of email; omitted, a sweep only moves events and contests. */
-  notificationsDue?: readonly DueNotifications[];
   /** Keeps the sweep to one server task. */
   jobLock: JobLock;
   logger?: FastifyBaseLogger;
@@ -53,68 +45,45 @@ export interface EventLifecycleSchedulerOptions {
 }
 
 export class EventLifecycleScheduler {
-  private timer?: ReturnType<typeof setInterval>;
+  private readonly lockedSweep: LockedSweep;
   private readonly sportEvents: EventLifecycleSchedulerOptions['sportEvents'];
   private readonly rounds: EventLifecycleSchedulerOptions['rounds'];
   private readonly eventLifecycleService: EventLifecycleSchedulerOptions['eventLifecycleService'];
-  private readonly notificationsDue: readonly DueNotifications[];
-  private readonly jobLock: JobLock;
   private readonly logger?: FastifyBaseLogger;
   private readonly now: () => Date;
-  private sweeping = false;
 
   constructor(options: EventLifecycleSchedulerOptions) {
     this.sportEvents = options.sportEvents;
     this.rounds = options.rounds;
     this.eventLifecycleService = options.eventLifecycleService;
-    this.notificationsDue = options.notificationsDue ?? [];
-    this.jobLock = options.jobLock;
     this.logger = options.logger;
     this.now = options.now ?? (() => new Date());
+    this.lockedSweep = new LockedSweep({
+      lockKey: SWEEP_LOCK_KEY,
+      jobLock: options.jobLock,
+      intervalMs: SWEEP_INTERVAL_MS,
+      label: 'event lifecycle sweep',
+      logger: options.logger,
+    }, () => this.sweep());
   }
 
   start(): void {
-    if (this.timer) {
-      return;
-    }
-    this.timer = setInterval(() => {
-      void this.runSweep();
-    }, SWEEP_INTERVAL_MS);
-    this.timer.unref();
+    this.lockedSweep.start();
     this.logger?.info('Event lifecycle scheduler started');
   }
 
   stop(): void {
-    if (this.timer) {
-      clearInterval(this.timer);
-      this.timer = undefined;
-    }
+    this.lockedSweep.stop();
   }
 
   /**
    * One sweep pass, when this task holds the sweep's lock and no sweep is still running here.
-   * Exposed directly so tests and manual triggers don't need to wait on the timer.
+   * Exposed directly so tests and manual triggers don't need to wait on the timer. One read memo
+   * per sweep (#1200), as a request has: the contests of one event share its sport league's read,
+   * and a write in the sweep forgets what it touches.
    */
-  async runSweep(): Promise<void> {
-    if (this.sweeping) {
-      this.logger?.warn('Skipped an event lifecycle sweep because the previous one is still running');
-      return;
-    }
-    this.sweeping = true;
-    try {
-      // One read memo per sweep (#1200), as a request has: the contests of one event share its
-      // sport league's read, and a write in the sweep forgets what it touches.
-      const ran = await this.jobLock.runExclusive(SWEEP_LOCK_KEY, () => runWithReadMemo(() => this.sweep()));
-      if (!ran) {
-        this.logger?.debug('Skipped an event lifecycle sweep because another server task runs it');
-      }
-    } catch (error) {
-      this.logger?.error({
-        error: errorMessage(error),
-      }, 'Event lifecycle sweep failed');
-    } finally {
-      this.sweeping = false;
-    }
+  runSweep(): Promise<void> {
+    return this.lockedSweep.run();
   }
 
   private async sweep(): Promise<void> {
@@ -130,18 +99,6 @@ export class EventLifecycleScheduler {
           sportEventId: candidate.id,
           error: errorMessage(error),
         }, 'Event lifecycle scheduler failed to apply a due transition');
-      }
-    }
-
-    // After the transitions, so a contest that just went live is not reminded about. Each kind
-    // on its own, so one failing does not hold up the others.
-    for (const notifications of this.notificationsDue) {
-      try {
-        await notifications.queueDue(now);
-      } catch (error) {
-        this.logger?.error({
-          error: errorMessage(error),
-        }, 'Event lifecycle scheduler failed to queue the notifications due');
       }
     }
   }

@@ -1497,7 +1497,7 @@ export class ContestService {
    * (#481), to every owner of the entry's squad (#845, catalog row D3), with when picks close so
    * they know how long it can still change. The selection room only calls it once the lineup has
    * passed the submit check, so it does not judge the lineup again. A quick pick contest's draw
-   * has it sent for every entry it dealt (#867), listing the dealt picks, by the lifecycle sweep
+   * has it sent for every entry it dealt (#867), listing the dealt picks, by the receipts sweep
    * after the draw (#1171).
    *
    * The room passes what it already read for the pick (#1196): the contest, the event, the
