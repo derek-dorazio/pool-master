@@ -126,7 +126,8 @@ type JobWhere = NonNullable<Parameters<ReturnType<typeof getFunctionalPrisma>['b
 
 /**
  * Waits until the jobs `where` names have run. A job that fails, or is still waiting after
- * JOB_WAIT_MS, fails the test with its last error.
+ * JOB_WAIT_MS, fails the test with its last error. Callers name only the jobs queued since their
+ * write was sent, so an earlier test's failed job never fails a later one.
  */
 async function awaitJobs(what: string, where: JobWhere): Promise<void> {
   const database = getFunctionalPrisma();
@@ -152,32 +153,41 @@ async function awaitJobs(what: string, where: JobWhere): Promise<void> {
  * event, or a decided game's squares contests, in a background job after the write answers, and
  * the scenarios read the settled standings next, as a member would once the job is done.
  */
-export async function awaitEventSettlementJobs(sportEventId: string): Promise<void> {
+export async function awaitEventSettlementJobs(sportEventId: string, since: Date): Promise<void> {
   await awaitJobs(`Settling event ${sportEventId}'s contests`, {
     type: { in: ['SETTLE_SPORT_EVENT_CONTESTS', 'SETTLE_GAME_CONTESTS'] },
     payload: { path: ['sportEventId'], equals: sportEventId },
+    createdAt: { gte: since },
   });
 }
 
 /**
- * Waits until every queued leaderboard rebuild has run. A write that changes what boards are
+ * Waits until every leaderboard rebuild queued since `since` has run. A write that changes what boards are
  * computed from (a score, a field, a status, a pick'em week, a settlement) rebuilds them in a job
  * after it answers (#1463), and the scenarios read the board next, as a member's next poll would.
  */
-async function awaitLeaderboardRebuildJobs(): Promise<void> {
-  await awaitJobs('Rebuilding leaderboards', { type: 'REBUILD_LEADERBOARDS' });
+async function awaitLeaderboardRebuildJobs(since: Date): Promise<void> {
+  await awaitJobs('Rebuilding leaderboards', { type: 'REBUILD_LEADERBOARDS', createdAt: { gte: since } });
 }
+
+/** When each write was sent: the jobs it queued are the ones created since. */
+const writeSentAt = new WeakMap<Request, Date>();
 
 /**
  * A successful write answers only once the jobs it queued for what the scenarios read next have
  * run: an event's settling jobs, then the board rebuilds any write (settlement included) queued.
  */
 function waitingForQueuedJobs(client: Client): Client {
+  client.interceptors.request.use((request: Request) => {
+    if (request.method !== 'GET') writeSentAt.set(request, new Date());
+    return request;
+  });
   client.interceptors.response.use(async (response: Response, request: Request) => {
-    if (request.method === 'GET' || !response.ok) return response;
+    const sentAt = writeSentAt.get(request);
+    if (!sentAt || !response.ok) return response;
     const write = EVENT_WRITE_PATH.exec(new URL(request.url).pathname);
-    if (write?.[1]) await awaitEventSettlementJobs(decodeURIComponent(write[1]));
-    await awaitLeaderboardRebuildJobs();
+    if (write?.[1]) await awaitEventSettlementJobs(decodeURIComponent(write[1]), sentAt);
+    await awaitLeaderboardRebuildJobs(sentAt);
     return response;
   });
   return client;

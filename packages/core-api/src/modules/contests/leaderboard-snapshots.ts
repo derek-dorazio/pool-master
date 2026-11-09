@@ -10,8 +10,9 @@
  * for the writes made while that rebuild runs.
  *
  * The rebuild runs wherever the job runner does (the worker, when tasks are split); the snapshot
- * it stores is read by every task, so a viewer anywhere sees it on their next poll. A read also computes the board itself when the
- * stored one is not current (`isSnapshotCurrent`), which covers the changes no write signals.
+ * it stores is read by every task, so a viewer anywhere sees it on their next poll. A read also
+ * computes the board itself when the stored one is not current (`isSnapshotCurrent`), which
+ * covers the changes no write signals.
  */
 import type { ContestLeaderboardSnapshot } from '@poolmaster/shared/db';
 import { SelectionType, type Contest, type SportEvent, type SportEventMatch } from '@poolmaster/shared/domain';
