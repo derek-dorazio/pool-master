@@ -28,6 +28,7 @@ export function toUserDto(user: User): UserDto {
     timezone: user.timezone,
     locale: user.locale,
     timeFormat: user.timeFormat,
+    colorScheme: user.colorScheme,
     createdAt: user.createdAt.toISOString(),
   };
 }

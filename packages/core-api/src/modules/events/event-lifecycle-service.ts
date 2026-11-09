@@ -58,11 +58,15 @@ export interface FinishedGameSettlement {
   queued(): void;
 }
 
-/** The contests a released edition joins: those made from a template covering its series (#714). */
+/**
+ * The contests a released edition joins: those made from a template covering its series (#714),
+ * as one job per contest for the release to write with its status change (#1318).
+ */
 export interface ReleasedEditionContests {
-  addReleasedEditionToTemplateContests(
+  releasedEditionJobs(
     sportEvent: Pick<SportEvent, 'id' | 'eventSeriesId' | 'eventYear'>,
-  ): Promise<unknown>;
+    jobs: Pick<BackgroundJobQueue, 'request'>,
+  ): Promise<readonly BackgroundJobRequest[]>;
 }
 
 /** Who drove the transition: an admin by hand, or the lifecycle scheduler. */
@@ -176,6 +180,13 @@ export class EventLifecycleService {
     const settleJob = finishing && this.jobs && this.contestSettlement
       ? settleSportEventContestsJob(this.jobs, input.sportEventId, settleAt)
       : undefined;
+    // A released edition joins the contests made to cover its series, a majors pool's major
+    // (#714), by one job per contest written with the release (#1318): a release that loses a
+    // race queues nothing, and one that lands always has its contests' jobs.
+    const releaseJobs = isRelease && this.releasedEditionContests
+      ? await this.releasedEditionContests.releasedEditionJobs(before, this.requireJobs('release an edition into its template contests'))
+      : [];
+    const jobs = [...(settleJob ? [settleJob] : []), ...releaseJobs];
 
     // Written only while the event is still where it was read (#1159): of two callers making the
     // change at once, one writes it and runs the side effects below, and the other stops here.
@@ -183,7 +194,7 @@ export class EventLifecycleService {
       from: fromStatus,
       to: input.toStatus,
       ...(endDate && { endDate }),
-      ...(settleJob && { jobs: [settleJob] }),
+      ...(jobs.length > 0 && { jobs }),
     });
     if (!updated) {
       const current = (await this.sportEvents.findById(input.sportEventId)) ?? before;
@@ -203,13 +214,6 @@ export class EventLifecycleService {
       return { sportEvent: current, fromStatus, toStatus: input.toStatus };
     }
 
-    // A released edition joins the contests made to cover its series, a majors pool's major (#714).
-    // It runs after the release is written, outside a transaction: a contest whose rules refuse the
-    // edition is logged and skipped inside, but any other failure answers the release as failed
-    // with the event already released, and its commissioner can still add the edition by hand.
-    if (input.release && input.toStatus === SportEventStatus.SCHEDULED) {
-      await this.releasedEditionContests?.addReleasedEditionToTemplateContests(updated);
-    }
     if (input.toStatus === SportEventStatus.IN_PROGRESS) {
       await this.activateContestsPastCutoff(updated);
     }
@@ -218,7 +222,7 @@ export class EventLifecycleService {
     }
     // The cancellation email (C7) is sent by the settlement job, before it finishes the contests
     // it is about.
-    if (settleJob) this.jobs?.queued();
+    if (jobs.length > 0) this.jobs?.queued();
 
     return {
       sportEvent: updated,
@@ -230,6 +234,12 @@ export class EventLifecycleService {
   /** C6: a released event's start moved, as an admin's edit reports it. */
   async sportEventRescheduled(sportEvent: SportEvent, previousStart: Date): Promise<void> {
     await this.tellSportEventChanged(sportEvent, { kind: ContestEventChangeKind.RESCHEDULED, previousStart });
+  }
+
+  /** The job queue, which `what` cannot do without. */
+  private requireJobs(what: string): Pick<BackgroundJobQueue, 'request' | 'queued'> {
+    if (!this.jobs) throw new Error(`A background job queue is required to ${what}`);
+    return this.jobs;
   }
 
   /** C6: queued for the leagues on the event, never failing the admin's change. */

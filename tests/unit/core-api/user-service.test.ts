@@ -18,7 +18,7 @@ import bcrypt from 'bcryptjs';
 import { UserService } from '../../../packages/core-api/src/modules/users/user-service';
 import { fakeUserRepo } from '../../support/repo-fakes';
 import { asPrismaClient } from '../../support/prisma-double';
-import { TimeFormat, type User } from '../../../packages/shared/domain';
+import { ColorScheme, TimeFormat, type User } from '../../../packages/shared/domain';
 import { stubInstance } from '../../support/stub-instance';
 import { PasswordChangedNotifier } from '../../../packages/core-api/src/modules/auth/password-changed-notifier';
 import type { EmailChange } from '../../../packages/core-api/src/modules/auth/email-change-undo-service';
@@ -270,7 +270,7 @@ describe('profile, username and preferences', () => {
       timezone: '  America/New_York  ',
       timeFormat: TimeFormat.TWELVE_HOUR,
     });
-    // `locale` was not named, so it is absent rather than cleared.
+    // `locale` and `colorScheme` were not named, so they are absent rather than cleared.
     expect(users.update).toHaveBeenCalledWith('user-1', {
       timezone: 'America/New_York',
       timeFormat: TimeFormat.TWELVE_HOUR,
@@ -280,6 +280,7 @@ describe('profile, username and preferences', () => {
       timezone: null,
       locale: '   ',
       timeFormat: TimeFormat.TWENTY_FOUR_HOUR,
+      colorScheme: ColorScheme.DARK,
     });
     // Blank counts as cleared; a domain enum passes through unmapped, because the adapter owns
     // the row mapping.
@@ -287,7 +288,12 @@ describe('profile, username and preferences', () => {
       timezone: null,
       locale: null,
       timeFormat: TimeFormat.TWENTY_FOUR_HOUR,
+      colorScheme: ColorScheme.DARK,
     });
+
+    // A null Appearance clears the choice, which the website reads as Match my device.
+    await service.updatePreferences(self, 'user-1', { colorScheme: null });
+    expect(users.update).toHaveBeenLastCalledWith('user-1', { colorScheme: null });
   });
 });
 

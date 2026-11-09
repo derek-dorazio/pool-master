@@ -524,6 +524,17 @@ export const TimeFormat = {
 } as const;
 export type TimeFormat = (typeof TimeFormat)[keyof typeof TimeFormat];
 
+/**
+ * The member's Appearance choice. A user with none saved has no value: the website then follows
+ * the device, and the mobile app opens dark (`rules/mobile-rules.md`).
+ */
+export const ColorScheme = {
+  DEVICE: 'DEVICE',
+  LIGHT: 'LIGHT',
+  DARK: 'DARK',
+} as const;
+export type ColorScheme = (typeof ColorScheme)[keyof typeof ColorScheme];
+
 
 /** What auto-assignment orders a field by when it fills an event's tiers. Cross-sport (#236; was GolfTierSource). */
 export const TierSource = {
@@ -987,6 +998,8 @@ export const BackgroundJobType = {
   SETTLE_GAME_CONTESTS: 'SETTLE_GAME_CONTESTS',
   /** Rebuilds the stored live leaderboards of one event's contests, or of one contest (#1463). */
   REBUILD_LEADERBOARDS: 'REBUILD_LEADERBOARDS',
+  /** Adds a released edition to one contest made from a template covering its series, a majors pool's major (#1318). */
+  ADD_RELEASED_EDITION_TO_CONTEST: 'ADD_RELEASED_EDITION_TO_CONTEST',
 } as const;
 export type BackgroundJobType = (typeof BackgroundJobType)[keyof typeof BackgroundJobType];
 
