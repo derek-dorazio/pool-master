@@ -156,12 +156,14 @@ export function buildApp() {
   const leaderboards = new JobLeaderboardRebuilds(backgroundJobs);
   const leaderboardRebuilder = createContestService(prisma, app.log, { planEntitlements });
   const contestSettlement = createContestSettlementService(prisma, app.log, { jobs: backgroundJobs, leaderboards });
+  // A released edition joins its template contests by a job per contest (#1318).
+  const releasedEditionContests = createContestManagementService(prisma, app.log, planEntitlements);
   const eventLifecycleService = createEventLifecycleService(prisma, {
     logger: app.log,
     jobs: backgroundJobs,
     sportEventChanged: contestNotices,
     contestSettlement,
-    releasedEditionContests: createContestManagementService(prisma, app.log, planEntitlements),
+    releasedEditionContests,
   });
   const memberJoined = createMemberJoinedNotices(prisma, { email, readConfig: () => appSettings.get(EMAIL_SETTINGS), appBaseUrl, logger: app.log });
   // Admin saves, and provider syncs that load an event's field, clear the public reads CloudFront keeps (#1181).
@@ -289,6 +291,7 @@ export function buildApp() {
       SETTLE_SPORT_EVENT_CONTESTS: (payload) => eventLifecycleService.settleFinishedEventContests(payload),
       SETTLE_GAME_CONTESTS: (payload) => eventLifecycleService.settleFinishedGameContests(payload),
       REBUILD_LEADERBOARDS: (payload) => leaderboardRebuilder.rebuildLeaderboardSnapshots(leaderboardChangesOf(payload)),
+      ADD_RELEASED_EDITION_TO_CONTEST: (payload) => releasedEditionContests.addReleasedEditionToContest(payload),
     },
     pollMs: readBackgroundJobPollMs(process.env),
     logger: app.log,
