@@ -809,8 +809,8 @@ and stops. Merge happens when the owner asks for it, after their own read.
 Nothing skips the PR. `main` is protected by the `protect-main` ruleset with no bypass
 (`docs/CI-AND-QUALITY-GATES.md` *Repository setup — branch protection*): GitHub refuses
 every direct push, from agents and the owner alike, and merges only a PR whose required
-checks are green, whose branch is up to date with `main`, and whose review threads are all
-resolved. GitHub rules apply to a whole branch, not to paths, so there is no docs-only
+checks are green, whose CodeQL scan has no high-or-worse security alert or error, whose
+branch is up to date with `main`, and whose review threads are all resolved. GitHub rules apply to a whole branch, not to paths, so there is no docs-only
 exception.
 
 What a small change skips is the *review*, not the PR.
@@ -825,9 +825,12 @@ What a small change skips is the *review*, not the PR.
 - Trivial typo, link, or formatting fixes anywhere in `docs/` or `rules/` that do not change
   rule meaning.
 
-A doc-only PR runs only the `changes` and `all-contract-gates` jobs; every other required
-check is skipped, which GitHub counts as passing, so it is mergeable in about two minutes.
-The author squash-merges it as soon as it is green, with no review thread and no merge go.
+A doc-only PR runs only the `changes` and `all-contract-gates` jobs and CodeQL; every other
+required check is skipped, which GitHub counts as passing, so it is mergeable in about two
+minutes. The author squash-merges it as soon as it is green, with no review thread and no
+merge go. Each merge leaves other open PRs behind `main`, and they must update and re-run CI
+before they can merge, so batch fast-lane changes rather than landing them one at a time
+while code PRs are waiting.
 
 **Reviewed PR for substantive plan/doc changes.** When a plan or doc change is large enough
 to warrant a second pair of eyes — a brand-new ADR, a workflow-rules rewrite, a
@@ -844,8 +847,6 @@ Examples that did not:
 - Updating a plan with a mid-execution status note.
 - Fixing a broken cross-reference in a rule file.
 - Adding a session-handoff "resume here" note.
-
-(Closing an issue with a closing comment needs no commit at all.)
 
 ### Substantive plan or rule change — ask before fast-laning
 

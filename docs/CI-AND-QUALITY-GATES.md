@@ -113,8 +113,7 @@ fonts and upgrades the tests do not need.
 The CI gates only enforce discipline if `main` cannot be reached without going
 through them. This section documents the GitHub branch-protection ruleset that
 backs the workflow. It is live on `main` (ruleset id 15875428) as configured below,
-with no bypass, since 2026-11-09 (#1479). Before then it targeted no branch, listed job
-names that no longer existed and allowed an admin bypass, so it gated nothing.
+with no bypass.
 
 Without this configuration, direct pushes to `main` bypass every gate:
 the rule-enforcement scanners, `api:check`, the review triggers marker, and
@@ -160,13 +159,16 @@ Rules:
         - service-build
         - service-image-smoke
         - service-mock-provider-build
+  ✓ Require code scanning results
+      CodeQL: security alerts high or higher, other alerts errors
 
 Bypass list:        (empty — no exceptions)
 ```
 
 A job that CI skips because the PR does not touch its area (the `changes` filter)
 reports as skipped, and GitHub counts a skipped required check as passing. So a
-doc-only PR is green once `changes` and `all-contract-gates` pass, in about two minutes.
+doc-only PR is mergeable once `changes`, `all-contract-gates` and CodeQL pass, in about
+two minutes.
 
 The status check names must match the `name:` of each job in
 `.github/workflows/ci.yml` exactly (for a sharded job, the aggregate job, e.g.
@@ -195,7 +197,8 @@ gh api repos/derek-dorazio/pool-master/rulesets/15875428 --jq '{
   current_user_can_bypass,
   strict_status_checks: (.rules[] | select(.type=="required_status_checks") | .parameters.strict_required_status_checks_policy),
   required_status_checks: (.rules[] | select(.type=="required_status_checks") | .parameters.required_status_checks | map(.context)),
-  allowed_merge_methods: (.rules[] | select(.type=="pull_request") | .parameters.allowed_merge_methods)
+  allowed_merge_methods: (.rules[] | select(.type=="pull_request") | .parameters.allowed_merge_methods),
+  code_scanning: (.rules[] | select(.type=="code_scanning") | .parameters.code_scanning_tools)
 }'
 ```
 
@@ -209,7 +212,8 @@ Expected output:
   "current_user_can_bypass": "never",
   "strict_status_checks": true,
   "required_status_checks": ["changes", "all-contract-gates", "service-lint-typecheck", "service-unit-tests", "service-integration-tests", "service-functional-api-tests", "schema-migration-drift", "poolmaster-unit-tests", "poolmaster-build", "poolmaster-browser-e2e-local", "service-build", "service-image-smoke", "service-mock-provider-build"],
-  "allowed_merge_methods": ["squash"]
+  "allowed_merge_methods": ["squash"],
+  "code_scanning": [{"tool": "CodeQL", "security_alerts_threshold": "high_or_higher", "alerts_threshold": "errors"}]
 }
 ```
 
@@ -221,10 +225,8 @@ partially bypassed — fix before treating the configuration as complete.
 
 `rules:check:pr-review-triggers` (step 3 below) reads the PR body for a
 literal `<!-- review:triggers -->` marker and **warns** if missing (#284 — it
-used to fail). If branch protection does not require PRs, a contributor can
-bypass the marker by direct-pushing to `main`, in which case the check never
-runs at all. The ruleset now refuses direct pushes, so every change reaches the check. Its value depends entirely on PR flow being enforced, and now
-also on the warning being read.
+used to fail). Because the ruleset refuses direct pushes, every change reaches
+the check; its value now depends on the warning being read.
 
 ## Job DAG
 
