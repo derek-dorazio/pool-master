@@ -394,7 +394,7 @@ flowchart LR
   I[npm ci + prisma generate + build shared] --> R[npm run rules:check]
   R --> A[npm run api:check]
   A --> M[Review triggers (PRs only, advisory)]
-  M --> L[npm run lint]
+  M --> L[npm run lint:service]
   L --> TC[npm run typecheck]
 ```
 
@@ -403,7 +403,7 @@ flowchart LR
 | 1 | `npm run rules:check` | ~1-2s (regex scan) | Two sub-checks are blocking; four are warn-only |
 | 2 | `npm run api:check` | ~20-30s (re-exports OpenAPI + regenerates SDK) | Yes |
 | 3 | review triggers marker | <1s (single API call to GitHub) | No — warns only (PRs only) |
-| 4 | `npm run lint` | ~17s for `lint:service` in CI before `tests/` entered its glob; the webapp's own `lint:webapp` is ~33s in `poolmaster-build` | Yes |
+| 4 | `NODE_OPTIONS=--max-old-space-size=6144 npm run lint:service` | ~17s before `tests/` entered its glob; the webapp's own `lint:webapp` is ~33s in `poolmaster-build` | Yes |
 | 5 | `npm run typecheck` | ~9s (`typecheck:service`) + ~8s (`typecheck:tests`) + ~1s (`typecheck:e2e`) in CI | Yes |
 
 Costs re-measured 2026-10-05 from CI run 1228 rather than estimated. Lint is
