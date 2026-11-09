@@ -135,4 +135,28 @@ describe('the root admin test email', () => {
     expect(result.status).toBe(EmailMessageStatus.QUEUED);
     expect(waits).toBe(32);
   });
+
+  it('names an admin it cannot find as a root admin, and returns an email settings skipped straight away, without waiting', async () => {
+    const skipped = { id: 'email-1', status: EmailMessageStatus.SKIPPED };
+    const send = jest.fn().mockResolvedValue(skipped);
+    const messages = { findById: jest.fn() };
+    const service = new EmailTestService({ email: { send }, messages, users: { findById: async () => null }, environment: 'qa' });
+
+    await expect(service.send('derek@gmail.com', 'gone-admin')).resolves.toBe(skipped);
+
+    expect((send.mock.calls as Array<[string, unknown]>)[0]?.[1]).toMatchObject({ data: { requestedBy: 'A root admin' } });
+    expect(messages.findById).not.toHaveBeenCalled();
+  });
+
+  it('keeps the email as it stood when a poll cannot find it, and returns it after the last poll', async () => {
+    const queued = { id: 'email-1', status: EmailMessageStatus.QUEUED, attempts: 0 };
+    const sleep = jest.fn(async () => undefined);
+    const service = new EmailTestService({
+      email: { send: async () => queued }, messages: { findById: async () => null }, users: { findById: async () => ADMIN }, environment: 'qa', now: () => NOW, sleep,
+    } as unknown as ConstructorParameters<typeof EmailTestService>[0]);
+
+    await expect(service.send('derek@gmail.com', ADMIN.id)).resolves.toBe(queued);
+    expect(sleep.mock.calls.length).toBeGreaterThan(1);
+  });
 });
+

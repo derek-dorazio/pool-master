@@ -81,6 +81,7 @@ import { eventStoresGolfRoundScores } from '../scoring-families/golf-round-score
 import { lastFinishedMatchRound } from '../scoring-families/head-to-head/finished-rounds';
 import { lastFinishedRound } from '../scoring-families/stroke-play/finished-rounds';
 import { activeLeagueMembersWithRoles, type LeagueMemberDeps } from './league-members';
+import { errorMessage } from '../../core/error-message';
 
 /** How late a standings email may still go after its time, as for entry reminders. */
 const STANDINGS_GRACE_MS = 60 * 60_000;
@@ -194,7 +195,7 @@ export class LiveStandings implements DueNotifications {
       } catch (error) {
         this.deps.logger?.error({
           action: 'email.liveStandings.failed',
-          data: { contestId: contest.id, leagueId: contest.leagueId, error: error instanceof Error ? error.message : String(error) },
+          data: { contestId: contest.id, leagueId: contest.leagueId, error: errorMessage(error) },
         }, 'Failed to queue live standings emails for a contest');
       }
     }
@@ -576,7 +577,7 @@ export class LiveStandings implements DueNotifications {
     } catch (error) {
       this.deps.logger?.error({
         action: 'email.liveStandings.sendFailed',
-        data: { contestId: contest.id, leagueId: league.id, recipients: recipients.length, error: error instanceof Error ? error.message : String(error) },
+        data: { contestId: contest.id, leagueId: league.id, recipients: recipients.length, error: errorMessage(error) },
       }, 'Failed to queue the live standings emails');
       // Nothing was recorded, so the next sweep sends it again, measured from the last baseline.
       return;

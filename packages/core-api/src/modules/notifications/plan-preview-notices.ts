@@ -30,6 +30,7 @@ import type { LeaguePlanService } from '../plans/league-plan-service';
 import type { PlanEntitlementsService } from '../plans/plan-entitlements-service';
 import { activeCommissionersByLeague, type LeagueMemberDeps } from './league-members';
 import { easternDateOf, easternDayOf } from './overnight-day';
+import { errorMessage } from '../../core/error-message';
 
 const DAY_MS = 24 * 60 * 60_000;
 /** Far enough ahead to cover every renewal date the first reminder is due for, in US Eastern dates. */
@@ -97,7 +98,7 @@ export class PlanPreviewNotices implements DueNotifications {
       } catch (error) {
         this.deps.logger?.error({
           action: 'email.planPreviewEnding.failed',
-          data: { leagueId: league.id, days, error: error instanceof Error ? error.message : String(error) },
+          data: { leagueId: league.id, days, error: errorMessage(error) },
         }, 'Failed to queue the Premium preview period ending email');
       }
     }

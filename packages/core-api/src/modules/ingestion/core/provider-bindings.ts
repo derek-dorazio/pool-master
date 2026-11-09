@@ -3,6 +3,7 @@ import type { SportDataProvider } from './provider-interface';
 import type { ProviderRegistry } from './provider-registry';
 import { MockContestFeedAdapter } from '../adapters';
 import { AppEnvironment, isDeployedEnvironment, readAppEnv } from '../../../core/config';
+import { errorMessage } from '../../../core/error-message';
 
 export interface ProviderBinding {
   readonly baseUrl?: string;
@@ -119,7 +120,7 @@ export function loadProviderBindingsFromEnv(
   } catch (error) {
     throw new Error(
       `Invalid SPORT_DATA_PROVIDER_BINDINGS_JSON: ${
-        error instanceof Error ? error.message : String(error)
+        errorMessage(error)
       }`,
       { cause: error },
     );

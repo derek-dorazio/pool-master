@@ -10,6 +10,7 @@
  */
 
 import type { FastifyBaseLogger } from 'fastify';
+import { errorMessage } from './error-message';
 import type { JobLock } from './job-lock';
 import { runWithReadMemo } from './request-read-memo';
 
@@ -76,7 +77,7 @@ export class LockedSweep {
     } catch (error) {
       logger?.error({
         action: 'lockedSweep.failed',
-        data: { lockKey, error: error instanceof Error ? error.message : String(error) },
+        data: { lockKey, error: errorMessage(error) },
       }, `The ${label} failed`);
     } finally {
       this.running = false;

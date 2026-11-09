@@ -812,20 +812,9 @@ function buildProviderPayload(
   provider: SportDataProvider,
   captureSession?: ProviderPayloadCaptureSession | null,
 ): IngestionJobProviderPayload {
-  if (captureSession) {
-    const raw = captureSession.consumeProviderPayloads();
-    const payload: IngestionJobProviderPayload = {
-      operation,
-      rawCaptured: raw.length > 0,
-      rawTruncated: raw.some((entry) => entry.rawOmitted === true),
-    };
-    if (raw.length > 0) {
-      payload.raw = raw;
-    }
-    return payload;
-  }
-
-  if (!supportsProviderPayloadDiagnostics(provider)) {
+  // A capture session's payloads first; else the provider's own, when it keeps any.
+  const source = captureSession ?? (supportsProviderPayloadDiagnostics(provider) ? provider : null);
+  if (!source) {
     return {
       operation,
       rawCaptured: false,
@@ -833,7 +822,7 @@ function buildProviderPayload(
     };
   }
 
-  const raw = provider.consumeProviderPayloads();
+  const raw = source.consumeProviderPayloads();
   const payload: IngestionJobProviderPayload = {
     operation,
     rawCaptured: raw.length > 0,

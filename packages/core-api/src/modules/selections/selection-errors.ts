@@ -252,14 +252,6 @@ export const selectionErrors = {
       409,
     ),
 
-  /** Only the entry's own squad, and members of its league, see its game picks (#716). */
-  entryViewDenied: () =>
-    new SelectionError(
-      'You can only view the entries of a league you belong to',
-      'ENTRY_ACCESS_DENIED',
-      403,
-    ),
-
   /** A pick names one of the event's games (#716). */
   gameNotFound: (sportEventMatchId: string, sportEventId: string) =>
     new SelectionError(

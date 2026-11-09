@@ -68,6 +68,15 @@ floor on its own, and a new file in a matched folder falls under it the day it i
   these files reaches (96% of branches today). A branch left unrun is a defensive one no input
   can reach, such as a default on a lookup in a map built from the same list; prefer reshaping
   the code so the branch does not exist over leaving it.
+- **Services, module logic, shared domain and shared DTOs**: 90% of lines and 80% of branches
+  per file. That is every file under `modules/` except routes, handlers, `wiring.ts`,
+  `*-job-requests.ts`, repositories, mappers, barrels and ingestion's provider `adapters/` and
+  `persistence/`, plus everything under `packages/shared/domain` and `packages/shared/dto`. The
+  left-out files are proven by the integration and functional suites, or by their own floors
+  (mappers #1481, handlers #1482). A new file in a matched folder is held to 90/80 the day it
+  lands, so it lands with its unit tests.
+- A file matched by several globs must meet every one of them, so a scoring file is held to
+  both its own floor and 90/80. A looser glob cannot carve out an exception.
 - **The rest of the suite** has a suite-level floor. Jest leaves every file a glob matches out of
   `global`, so re-measure and re-set `global` whenever a glob is added, about 1 point under the
   new figure.
@@ -484,7 +493,7 @@ What belongs here is what a gate failure means for a *test*:
   - rerun the exact command once Postgres is available
   - if `poolmaster_test` still looks dirty, use `npm run db:test:reset` or the
     matching `:fresh` script (`test:service:integration:fresh`,
-    `test:service:functional-api:fresh`, `test:coverage:service:fresh`). These
+    `test:service:functional-api:fresh`). These
     work from agent sessions too: the reset drops and recreates the `public` schema
     through `prisma db execute`, then runs `migrate deploy`, rather than calling
     `prisma migrate reset`, which Prisma refuses for an AI agent. It refuses any
@@ -921,8 +930,8 @@ DATABASE_URL=postgresql://postgres:postgres@localhost:5432/poolmaster_test npm r
 npm run coverage:floors:check
 ```
 
-The floors are Babel counts. The V8 numbers from `test:coverage:service:merged` are not
-comparable. `docs/CI-AND-QUALITY-GATES.md` covers the CI side and the sharded reproduction.
+The floors are Babel counts (Jest's default provider); a V8 run counts per line, so its numbers
+are not comparable. `docs/CI-AND-QUALITY-GATES.md` covers the CI side and the sharded reproduction.
 
 ### Backend Suite Placement Heuristics
 

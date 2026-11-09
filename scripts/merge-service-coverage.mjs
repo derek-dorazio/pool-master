@@ -1,13 +1,11 @@
-// #294 — merges per-suite service coverage into coverage/service-merged/. It runs no tests.
+// #294 — merges service coverage reports into one, coverage/service-merged/ unless --out names
+// another directory. It runs no tests.
 //
-// run-backend-coverage.mjs calls it after running the suites, locally and in the on-demand
-// coverage.yml workflow (#302). It takes any list of inputs, so per-suite coverage gathered
-// elsewhere (separate CI jobs, shards) can be merged the same way. A missing input is a
-// warning, not an error: a suite that failed still leaves the others worth reporting. Only
-// an empty merge (no inputs at all) fails.
+// CI's service-integration-tests job calls it to merge the four integration shards' coverage
+// before the per-file floor check (#1483). Merge reports from one provider only. A missing
+// input is a warning, not an error; only an empty merge (no input found at all) fails.
 //
-// CLI: node scripts/merge-service-coverage.mjs [--out <dir>] [<coverage-final.json> ...]  (USAGE)
-// With no inputs it reads the three default per-suite locations under coverage/.
+// CLI: node scripts/merge-service-coverage.mjs [--out <dir>] <coverage-final.json> [...]  (USAGE)
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -18,13 +16,8 @@ import istanbulReports from 'istanbul-reports';
 const { createCoverageMap } = istanbulCoverage;
 const { createContext } = istanbulReport;
 
-export const DEFAULT_INPUTS = [
-  'coverage/service-unit/coverage-final.json',
-  'coverage/service-integration/coverage-final.json',
-  'coverage/service-functional-api/coverage-final.json',
-];
 export const DEFAULT_OUT_DIR = 'coverage/service-merged';
-export const USAGE = 'node scripts/merge-service-coverage.mjs [--out <dir>] [<coverage-final.json> ...]';
+export const USAGE = 'node scripts/merge-service-coverage.mjs [--out <dir>] <coverage-final.json> [...]';
 
 export function mergeServiceCoverage({ inputs, outDir }) {
   const coverageMap = createCoverageMap({});
@@ -77,13 +70,16 @@ function parseArgs(argv) {
       inputs.push(argv[i]);
     }
   }
-  return { outDir, inputs: inputs.length > 0 ? inputs : DEFAULT_INPUTS };
+  if (inputs.length === 0) {
+    return null;
+  }
+  return { outDir, inputs };
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const args = parseArgs(process.argv.slice(2));
   if (!args) {
-    console.error(`--out needs a directory.\nUsage: ${USAGE}`);
+    console.error(`Give at least one coverage-final.json, and a directory after --out.\nUsage: ${USAGE}`);
     process.exit(1);
   }
   const { inputs, outDir } = args;

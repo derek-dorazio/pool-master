@@ -15,6 +15,7 @@ import { SportEventStatus, type SportEvent, type User } from '@poolmaster/shared
 import { emailRecipientOf, buildSportEventAdminUrl, type EmailService } from '../email';
 import type { DueNotifications } from './due-notifications-scheduler';
 import type { SportEventService } from '../events/service';
+import { errorMessage } from '../../core/error-message';
 
 const DAY_MS = 24 * 60 * 60_000;
 /** G1 starts this many days before an event starts. */
@@ -47,7 +48,7 @@ export class DraftEventNotices implements DueNotifications {
       } catch (error) {
         this.deps.logger?.error({
           action: 'email.eventStillDraft.failed',
-          data: { sportEventId: sportEvent.id, error: error instanceof Error ? error.message : String(error) },
+          data: { sportEventId: sportEvent.id, error: errorMessage(error) },
         }, 'Failed to queue the event still in draft email');
       }
     }

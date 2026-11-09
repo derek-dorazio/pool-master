@@ -10,6 +10,7 @@ import { SlidingWindowRateLimiter } from '../../../packages/core-api/src/core/sl
 import {
   PasswordResetError,
   PasswordResetService,
+  readPerMinuteLimit,
 } from '../../../packages/core-api/src/modules/auth/password-reset-service';
 import { EmailChangeUndoService } from '../../../packages/core-api/src/modules/auth/email-change-undo-service';
 import { AuthService } from '../../../packages/core-api/src/modules/auth/auth-service';
@@ -47,19 +48,26 @@ function buildService(overrides: {
   emailConfig?: EmailConfig;
   limits?: { requestsPerMinute?: number; confirmsPerMinute?: number };
   now?: () => Date;
+  user?: User | null;
+  issuedThisHour?: number;
+  liveLink?: boolean;
+  claimed?: number;
 } = {}) {
   const tx = {
     passwordResetToken: {
       deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
-      updateMany: jest.fn().mockResolvedValue({ count: 0 }),
+      updateMany: jest.fn().mockResolvedValue({ count: overrides.claimed ?? 0 }),
       create: jest.fn().mockResolvedValue({ id: 'reset-1' }),
+      findUniqueOrThrow: jest.fn().mockResolvedValue({ userId: USER.id }),
     },
+    user: { update: jest.fn().mockResolvedValue({}) },
+    refreshToken: { updateMany: jest.fn().mockResolvedValue({ count: 1 }) },
   };
   const prisma = {
     user: { findUnique: jest.fn().mockResolvedValue({ passwordHash: 'stored-hash' }) },
     passwordResetToken: {
-      count: jest.fn().mockResolvedValue(0),
-      findFirst: jest.fn().mockResolvedValue(null),
+      count: jest.fn().mockResolvedValue(overrides.issuedThisHour ?? 0),
+      findFirst: jest.fn().mockResolvedValue(overrides.liveLink ? { id: 'reset-1' } : null),
     },
     $transaction: jest.fn().mockImplementation(async (work: (client: typeof tx) => Promise<unknown>) => work(tx)),
   };
@@ -67,7 +75,7 @@ function buildService(overrides: {
   if (overrides.recordEmail) outbox.record = overrides.recordEmail;
   const logger = fakeLogger();
   const service = new PasswordResetService({
-    users: fakeUserRepo({ findByIdentifier: jest.fn().mockResolvedValue(USER) }),
+    users: fakeUserRepo({ findByIdentifier: jest.fn().mockResolvedValue(overrides.user === undefined ? USER : overrides.user), findById: jest.fn().mockResolvedValue(USER) }),
     prisma: asPrismaClient(prisma),
     email: new EmailService({
       messages: outbox,
@@ -84,7 +92,7 @@ function buildService(overrides: {
     now: overrides.now,
     ...overrides.limits,
   });
-  return { service, prisma, outbox, logger };
+  return { service, prisma, tx, outbox, logger };
 }
 
 describe('SlidingWindowRateLimiter', () => {
@@ -189,6 +197,36 @@ describe('PasswordResetService.requestReset', () => {
   });
 });
 
+describe('PasswordResetService.requestReset, the requests it drops', () => {
+  it('sends nothing for an identifier that names no account, or an account over its hourly limit, and logs each', async () => {
+    const unmatched = buildService({ user: null });
+    const busy = buildService({ issuedThisHour: 3 });
+
+    await unmatched.service.requestReset('nobody@example.com');
+    await busy.service.requestReset('riley@example.com');
+
+    expect([...unmatched.outbox.rows, ...busy.outbox.rows]).toEqual([]);
+    expect(unmatched.logger.warn).toHaveBeenCalledWith(expect.objectContaining({ action: 'authService.passwordReset.unmatched' }), expect.any(String));
+    expect(busy.logger.warn).toHaveBeenCalledWith(expect.objectContaining({ action: 'authService.passwordReset.accountRateLimited' }), expect.any(String));
+  });
+});
+
+describe('readPerMinuteLimit', () => {
+  afterEach(() => { delete process.env['TEST_PER_MIN']; });
+
+  it('reads a whole number from the environment, falls back when unset or blank, and refuses anything below 1', () => {
+    expect(readPerMinuteLimit('TEST_PER_MIN', 5)).toBe(5);
+    process.env['TEST_PER_MIN'] = ' ';
+    expect(readPerMinuteLimit('TEST_PER_MIN', 5)).toBe(5);
+    process.env['TEST_PER_MIN'] = '12';
+    expect(readPerMinuteLimit('TEST_PER_MIN', 5)).toBe(12);
+    process.env['TEST_PER_MIN'] = '0';
+    expect(() => readPerMinuteLimit('TEST_PER_MIN', 5)).toThrow('TEST_PER_MIN must be a whole number of at least 1, got "0".');
+    process.env['TEST_PER_MIN'] = 'lots';
+    expect(() => readPerMinuteLimit('TEST_PER_MIN', 5)).toThrow('got "lots"');
+  });
+});
+
 describe('PasswordResetService.confirmReset', () => {
   it('refuses mismatched passwords before it touches any link', async () => {
     const { service, prisma } = buildService();
@@ -204,6 +242,26 @@ describe('PasswordResetService.confirmReset', () => {
     await expect(service.confirmReset('dead-token', 'NewPass-1234', 'NewPass-1234'))
       .rejects.toMatchObject({ code: 'PASSWORD_RESET_LINK_INVALID', statusCode: 400 });
     expect(prisma.$transaction).not.toHaveBeenCalled();
+  });
+
+  it('sets the new password, cancels the open links, signs the account out and emails that the password changed', async () => {
+    const { service, tx, outbox, logger } = buildService({ liveLink: true, claimed: 1 });
+
+    await service.confirmReset('live-token', 'NewPass-1234', 'NewPass-1234');
+
+    expect(tx.user.update).toHaveBeenCalledWith({ where: { id: USER.id }, data: { passwordHash: expect.any(String) } });
+    expect(tx.passwordResetToken.updateMany).toHaveBeenCalledTimes(2);
+    expect(tx.refreshToken.updateMany).toHaveBeenCalledTimes(1);
+    expect(outbox.rows.map((row) => row.templateKey)).toEqual(['PASSWORD_CHANGED']);
+    expect(logger.info).toHaveBeenCalledWith(expect.objectContaining({ action: 'authService.passwordReset.confirmed' }), expect.any(String));
+  });
+
+  it('refuses a live link another click claimed first with PASSWORD_RESET_LINK_INVALID, changing no password', async () => {
+    const { service, tx } = buildService({ liveLink: true, claimed: 0 });
+
+    await expect(service.confirmReset('live-token', 'NewPass-1234', 'NewPass-1234'))
+      .rejects.toMatchObject({ code: 'PASSWORD_RESET_LINK_INVALID', statusCode: 400 });
+    expect(tx.user.update).not.toHaveBeenCalled();
   });
 });
 
@@ -334,11 +392,11 @@ describe('PASSWORD_CHANGED email', () => {
 });
 
 describe('PasswordChangedNotifier', () => {
-  function notifierWith(config: EmailConfig = EMAIL_SETTINGS.defaults({ POOLMASTER_ENVIRONMENT: 'prod' })) {
+  function notifierWith(config: EmailConfig = EMAIL_SETTINGS.defaults({ POOLMASTER_ENVIRONMENT: 'prod' }), user: User | null = USER) {
     const logger = fakeLogger();
     const outbox = inMemoryEmailMessages();
     const notifier = new PasswordChangedNotifier(
-      fakeUserRepo({ findById: jest.fn().mockResolvedValue(USER) }),
+      fakeUserRepo({ findById: jest.fn().mockResolvedValue(user) }),
       new EmailService({
         messages: outbox,
         suppressions: inMemoryEmailSuppressions(),
@@ -381,5 +439,15 @@ describe('PasswordChangedNotifier', () => {
       expect.objectContaining({ action: 'authService.passwordChanged.emailQueued' }),
       expect.any(String),
     );
+  });
+
+  it('emails nothing and logs nothing when the account is gone by the time the change is told', async () => {
+    const { notifier, outbox, logger } = notifierWith(undefined, null);
+
+    await notifier.notify(USER.id, new Date('2026-10-22T12:00:00.000Z'));
+
+    expect(outbox.rows).toEqual([]);
+    expect(logger.info).not.toHaveBeenCalled();
+    expect(logger.error).not.toHaveBeenCalled();
   });
 });

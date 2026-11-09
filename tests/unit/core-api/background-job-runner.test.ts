@@ -320,6 +320,45 @@ describe('background job runner (#1440)', () => {
     await runner.drain();
     expect(handler).toHaveBeenCalledTimes(1);
   });
+
+  it('records a failure with its cause, and a thrown value that is not an Error as text', async () => {
+    const failures = [new Error('sync failed', { cause: new Error('provider timed out') }), 'rate limited'];
+    const { jobs, runner, queue } = setup({ handler: async () => { throw failures.shift() as unknown; } });
+    await queue.enqueue(BackgroundJobType.MANUAL_EVENT_SYNC, syncPayload(1));
+    await queue.enqueue(BackgroundJobType.MANUAL_EVENT_SYNC, syncPayload(2));
+
+    await runner.drain();
+
+    expect(jobs.rows.map((row) => row.lastError).sort((left, right) => String(left).localeCompare(String(right))))
+      .toEqual(['rate limited', 'sync failed: provider timed out']);
+  });
+
+  it('logs a failure it cannot record and leaves the job for its lease to lapse', async () => {
+    const { jobs, runner, queue, logger } = setup({ handler: () => Promise.reject(new Error('provider timed out')) });
+    await queue.enqueue(BackgroundJobType.MANUAL_EVENT_SYNC, syncPayload());
+    jobs.markRetry = () => Promise.reject(new Error('connection reset'));
+
+    await runner.drain();
+
+    expect(only(jobs).status).toBe(BackgroundJobStatus.RUNNING);
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'backgroundJobs.recordFailure' }),
+      expect.any(String),
+    );
+  });
+
+  it('starts polling once however often started, runs what is due at once, and stops polling when stopped', async () => {
+    const { jobs, runner, queue, logger } = setup();
+    await queue.enqueue(BackgroundJobType.MANUAL_EVENT_SYNC, syncPayload());
+
+    runner.start();
+    runner.start();
+    await runner.stop();
+    await runner.stop();
+
+    expect(logger.info.mock.calls.filter(([entry]) => (entry as { action: string }).action === 'backgroundJobs.runner.start')).toHaveLength(1);
+    expect(only(jobs).status).toBe(BackgroundJobStatus.SUCCEEDED);
+  });
 });
 
 describe('background job poll interval (#1440)', () => {

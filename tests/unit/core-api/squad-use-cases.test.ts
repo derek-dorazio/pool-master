@@ -19,8 +19,8 @@ import { expectDefined } from '../../support/expect-defined';
  * Team use cases — list, read, create, rename and re-icon, inactivate, add and remove owners —
  * against the in-memory league world. Each asserts what the league holds afterwards (who owns
  * which team, who is still a league member, what the team is called), not which repository
- * calls were made. Permanently deleting a team runs a Prisma transaction, so it is covered
- * against Postgres in the integration suite instead.
+ * calls were made. Permanently deleting a team runs a Prisma transaction: here its order of
+ * writes against a recording client, and its effect against Postgres in the integration suite.
  */
 
 interface TwoTeamLeague {
@@ -34,7 +34,7 @@ interface TwoTeamLeague {
 }
 
 /** A league with a commissioner on their own team and one member who owns a team alone. */
-function leagueWithTwoTeams(): TwoTeamLeague {
+function leagueWithTwoTeams(prisma = asPrismaClient({})): TwoTeamLeague {
   const world = inMemoryLeagueWorld();
   const league = world.addLeague({ name: 'Office Pool', leagueCode: 'OFFICE' });
   const commissioner = world.addUser({ firstName: 'Casey', lastName: 'Commish' });
@@ -47,8 +47,8 @@ function leagueWithTwoTeams(): TwoTeamLeague {
     membershipTransaction: world.transaction,
     leagueMemberships: world.memberships,
     users: world.users,
-    // Only `deleteInactiveSquad` reaches Prisma; these tests stop before its transaction.
-    prisma: asPrismaClient({}),
+    // Only `deleteInactiveSquad` reaches Prisma.
+    prisma,
   });
   return { world, league, commissioner, commissionerSquad, owner, ownerSquad, service };
 }
@@ -512,6 +512,51 @@ describe('Team use cases', () => {
       world.tables.squads.patch(foreignSquad.id, { isActive: false });
 
       await expect(rejectionCode(service.deleteInactiveSquad(league.id, foreignSquad.id, 'admin'))).resolves.toBe('SQUAD_NOT_FOUND');
+    });
+
+    /** A transaction client that records each delete, holding `entries` and `finishedPlaces` for the team. */
+    function recordingPrisma(entries: { id: string; contestId: string }[], finishedPlaces: number) {
+      const writes: string[] = [];
+      const tx = new Proxy({}, {
+        get: (_target, model: string) => (model === '$queryRaw'
+          ? (_strings: TemplateStringsArray, ...values: unknown[]) => { writes.push(`lock ${String(values[0])}`); return Promise.resolve([]); }
+          : {
+              findMany: () => Promise.resolve(entries),
+              count: () => Promise.resolve(finishedPlaces),
+              deleteMany: () => { writes.push(model); return Promise.resolve({ count: 1 }); },
+              delete: () => { writes.push(`${model}!`); return Promise.resolve({}); },
+            }),
+      });
+      return { writes, prisma: asPrismaClient({ $transaction: jest.fn((work: (client: typeof tx) => Promise<unknown>) => work(tx)) }) };
+    }
+
+    it('locks the team\'s contests, then deletes its entries and their picks, its invitations, its owners and itself', async () => {
+      const { writes, prisma } = recordingPrisma([{ id: 'entry-1', contestId: 'contest-b' }, { id: 'entry-2', contestId: 'contest-a' }], 0);
+      const { world, league, ownerSquad, service } = leagueWithTwoTeams(prisma);
+      world.tables.squads.patch(ownerSquad.id, { isActive: false });
+
+      await service.deleteInactiveSquad(league.id, ownerSquad.id, 'admin');
+
+      expect(writes).toEqual(['lock contest-a', 'lock contest-b', 'contestEntryPick', 'contestEntry', 'squadOwnerInvitation', 'squadMembership', 'squad!']);
+    });
+
+    it('deletes a team with no entries without touching entries or picks', async () => {
+      const { writes, prisma } = recordingPrisma([], 0);
+      const { world, league, ownerSquad, service } = leagueWithTwoTeams(prisma);
+      world.tables.squads.patch(ownerSquad.id, { isActive: false });
+
+      await service.deleteInactiveSquad(league.id, ownerSquad.id, 'admin');
+
+      expect(writes).toEqual(['squadOwnerInvitation', 'squadMembership', 'squad!']);
+    });
+
+    it('keeps a team that has places in finished contests, refusing with SQUAD_DELETE_HAS_RESULTS and deleting nothing', async () => {
+      const { writes, prisma } = recordingPrisma([{ id: 'entry-1', contestId: 'contest-a' }], 2);
+      const { world, league, ownerSquad, service } = leagueWithTwoTeams(prisma);
+      world.tables.squads.patch(ownerSquad.id, { isActive: false });
+
+      await expect(rejectionCode(service.deleteInactiveSquad(league.id, ownerSquad.id, 'admin'))).resolves.toBe('SQUAD_DELETE_HAS_RESULTS');
+      expect(writes).toEqual(['lock contest-a']);
     });
   });
 });

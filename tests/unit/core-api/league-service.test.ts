@@ -582,6 +582,43 @@ describe('LeagueService', () => {
         statusCode: 400,
       });
     });
+
+    const inactive = () => createMockLeagueRepo({
+      findById: jest.fn().mockResolvedValue(buildLeague({ id: 'league-1', leagueCode: 'GONE123', isActive: false })),
+    });
+
+    it('answers 500 LEAGUE_DELETE_UNAVAILABLE when the service was built without database access', async () => {
+      const service = new LeagueService({ leagues: inactive(), memberships: createMockMembershipRepo(), users: fakeUserRepo() });
+
+      await expect(service.deleteInactiveLeague('league-1', 'GONE123')).rejects.toMatchObject({
+        code: 'LEAGUE_DELETE_UNAVAILABLE',
+        statusCode: 500,
+      });
+    });
+
+    it('locks the league\'s contests, then deletes everything the league owns and the league last, in one transaction', async () => {
+      const deleted: string[] = [];
+      const locked: unknown[] = [];
+      const tx = new Proxy({}, {
+        get: (_target, model: string) => (model === '$queryRaw'
+          ? (_strings: TemplateStringsArray, ...values: unknown[]) => { locked.push(values[0]); return Promise.resolve([]); }
+          : {
+              findMany: () => Promise.resolve([{ id: 'contest-b' }, { id: 'contest-a' }]),
+              deleteMany: () => { deleted.push(model); return Promise.resolve({ count: 1 }); },
+              delete: () => { deleted.push(`${model}!`); return Promise.resolve({}); },
+            }),
+      });
+      const prisma = asPrismaClient({ $transaction: jest.fn((work: (client: typeof tx) => Promise<unknown>) => work(tx)) });
+      const service = new LeagueService({ leagues: inactive(), memberships: createMockMembershipRepo(), users: fakeUserRepo(), prisma });
+
+      await service.deleteInactiveLeague('league-1', 'GONE123');
+
+      expect(locked).toEqual(['contest-a', 'contest-b']);
+      expect(deleted).toEqual([
+        'contestEntryPick', 'contestEntry', 'participantContestScoringRule', 'contestPrizeDefinition', 'contestConfiguration',
+        'contest', 'leagueInvitation', 'squadOwnerInvitation', 'squadMembership', 'leagueMembership', 'squad', 'league!',
+      ]);
+    });
   });
 
   describe('getLeagueForViewer', () => {
