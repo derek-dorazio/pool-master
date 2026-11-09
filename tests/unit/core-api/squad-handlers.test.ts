@@ -1,237 +1,136 @@
-import { expect } from '@jest/globals';
-import type { FastifyReply, FastifyRequest } from 'fastify';
-import { LeagueMembershipStatus, LeagueRole, type League, type Squad, type User } from '@poolmaster/shared/domain';
-import { createSquadHandlers } from '../../../packages/core-api/src/modules/squads/handler';
-import { SquadService } from '../../../packages/core-api/src/modules/squads/service';
-import { inMemoryLeagueWorld, type InMemoryLeagueWorld } from '../../support/in-memory-league-world';
-import { asFastifyReply, asFastifyRequest } from '../../support/fastify-doubles';
-import { asPrismaClient } from '../../support/prisma-double';
-import { fakeLogger } from '../../support/fake-logger';
-import { expectDefined } from '../../support/expect-defined';
-
 /**
- * The team route handlers: what HTTP status and body each service outcome becomes. They run on
- * a real `SquadService` over the in-memory league world, so a 201 means a team really was
- * stored and a 400 carries the service's own error code.
+ * The team (squad) route handlers (#1482), called with a stand-in squad service: what each
+ * operation passes on and answers with, the status a missing team or a refused change is sent
+ * with, and that any other error, such as an unauthenticated request's 401, reaches the global
+ * error handler unchanged.
  */
+import { expect } from '@jest/globals';
+import { SquadNotFoundError, SquadOperationError } from '../../../packages/core-api/src/modules/squads/errors';
+import { createSquadHandlers } from '../../../packages/core-api/src/modules/squads/handler';
+import type { SquadService } from '../../../packages/core-api/src/modules/squads/service';
+import type { AuthUser } from '../../../packages/core-api/src/plugins/auth-guard';
+import { authUser, callHandler, stubRequest } from '../../support/handler-call';
 
-interface Setup {
-  world: InMemoryLeagueWorld;
-  league: League;
-  commissioner: User;
-  owner: User;
-  ownerSquad: Squad;
-  handlers: ReturnType<typeof createSquadHandlers>;
-}
+const boom = new Error('database down');
+const squad = { id: 'squad-1', leagueId: 'league-1', name: 'The Squad' };
+const membership = { id: 'sm-1', squadId: 'squad-1', userId: 'user-2' };
+const me = authUser('user-1');
+const admin = authUser('admin', { isRootAdmin: true });
 
-function setup(): Setup {
-  const world = inMemoryLeagueWorld();
-  const league = world.addLeague();
-  const commissioner = world.addUser({ firstName: 'Casey', lastName: 'Commish' });
-  const owner = world.addUser({ firstName: 'Olive', lastName: 'Owner' });
-  world.addMember({ league, user: commissioner, role: LeagueRole.COMMISSIONER });
-  const { squad: ownerSquad } = world.addMember({ league, user: owner });
-  const service = new SquadService({
-    squads: world.squads,
-    squadMemberships: world.squadMemberships,
-    membershipTransaction: world.transaction,
-    leagueMemberships: world.memberships,
-    users: world.users,
-    prisma: asPrismaClient({}),
-  });
-  return { world, league, commissioner, owner, ownerSquad, handlers: createSquadHandlers(service) };
-}
-
-function replyDouble() {
-  const reply = {
-    statusCode: 200,
-    body: undefined as unknown,
-    code: jest.fn(function code(this: { statusCode: number }, status: number) {
-      this.statusCode = status;
-      return this;
-    }),
-    status: jest.fn(function status(this: { statusCode: number }, status: number) {
-      this.statusCode = status;
-      return this;
-    }),
-    send: jest.fn(function send(this: { body: unknown }, body: unknown) {
-      this.body = body;
-      return this;
-    }),
+function squadService(overrides: Record<string, unknown> = {}) {
+  return {
+    listSquads: jest.fn((..._args: unknown[]) => Promise.resolve([squad])),
+    getSquad: jest.fn((..._args: unknown[]) => Promise.resolve(squad)),
+    createSquad: jest.fn((..._args: unknown[]) => Promise.resolve(squad)),
+    updateSquad: jest.fn((..._args: unknown[]) => Promise.resolve(squad)),
+    inactivateSquad: jest.fn((..._args: unknown[]) => Promise.resolve(squad)),
+    deleteInactiveSquad: jest.fn((..._args: unknown[]) => Promise.resolve()),
+    addOwner: jest.fn((..._args: unknown[]) => Promise.resolve(membership)),
+    removeOwner: jest.fn((..._args: unknown[]) => Promise.resolve(membership)),
+    ...overrides,
   };
-  return reply;
 }
+const handlersOver = (fake = squadService()) => createSquadHandlers(fake as unknown as SquadService);
 
-function requestAs<R extends FastifyRequest>(user: User | null, fields: Partial<R>): R {
-  return asFastifyRequest<R>({
-    ...fields,
-    authUser: user ? { userId: user.id, email: user.email, isRootAdmin: user.isRootAdmin === true } : undefined,
-    log: fakeLogger(),
-  });
-}
+const params = { id: 'league-1', squadId: 'squad-1' };
+const operations = {
+  listSquads: { method: 'listSquads', request: (user: AuthUser | null = me) => stubRequest({ params: { id: 'league-1' }, authUser: user ?? undefined }) },
+  getSquad: { method: 'getSquad', request: (user: AuthUser | null = me) => stubRequest({ params, authUser: user ?? undefined }) },
+  createSquad: { method: 'createSquad', request: (user: AuthUser | null = me) => stubRequest({ params: { id: 'league-1' }, body: { name: ' Mine ', iconKey: 'EAGLE' }, authUser: user ?? undefined }) },
+  updateSquad: { method: 'updateSquad', request: (user: AuthUser | null = me) => stubRequest({ params, body: { name: 'Renamed' }, authUser: user ?? undefined }) },
+  inactivateSquad: { method: 'inactivateSquad', request: (user: AuthUser | null = me) => stubRequest({ params, authUser: user ?? undefined }) },
+  deleteSquad: { method: 'deleteInactiveSquad', request: (user: AuthUser | null = admin) => stubRequest({ params, authUser: user ?? undefined }) },
+  addOwner: { method: 'addOwner', request: (user: AuthUser | null = me) => stubRequest({ params, body: { userId: 'user-2' }, authUser: user ?? undefined }) },
+  removeOwner: { method: 'removeOwner', request: (user: AuthUser | null = me) => stubRequest({ params: { ...params, userId: 'user-2' }, authUser: user ?? undefined }) },
+} as const;
+type Operation = keyof typeof operations;
+const names = Object.keys(operations) as Operation[];
 
-type Handler = (request: never, reply: FastifyReply) => Promise<unknown>;
+describe('team route handlers: success', () => {
+  it('lists a league\'s teams and reads one, as the caller', async () => {
+    const fake = squadService();
+    const handlers = handlersOver(fake);
 
-async function call(handler: Handler, request: FastifyRequest) {
-  const reply = replyDouble();
-  await handler(request as never, asFastifyReply(reply as unknown as Partial<FastifyReply>));
-  return reply;
-}
+    const list = await callHandler(handlers.listSquads, operations.listSquads.request());
+    const one = await callHandler(handlers.getSquad, stubRequest({ params, authUser: admin, contextLogger: false }));
 
-describe('Team route handlers', () => {
-  it('lists a league\'s teams for a member with 200', async () => {
-    const { league, owner, handlers } = setup();
-
-    const reply = await call(handlers.listSquads, requestAs(owner, { params: { id: league.id } }));
-
-    expect(reply.statusCode).toBe(200);
-    expect((reply.body as { squads: unknown[] }).squads).toHaveLength(2);
-  });
-
-  it('answers 400 with the service\'s code when a non-member lists a league\'s teams', async () => {
-    const { world, league, handlers } = setup();
-
-    const reply = await call(handlers.listSquads, requestAs(world.addUser(), { params: { id: league.id } }));
-
-    expect(reply.statusCode).toBe(400);
-    expect(reply.body).toMatchObject({ error: { code: 'LEAGUE_MEMBERSHIP_REQUIRED' } });
+    expect(fake.listSquads).toHaveBeenCalledWith('league-1', 'user-1', false);
+    expect(fake.getSquad).toHaveBeenCalledWith('league-1', 'squad-1', 'admin', true);
+    expect(list).toMatchObject({ statusCode: 200, body: { squads: [squad] } });
+    expect(one.body).toEqual({ squad });
   });
 
-  it('answers 404 SQUAD_NOT_FOUND for a team that is not in the league', async () => {
-    const { league, owner, handlers } = setup();
+  it('creates a team with 201 from the body\'s name and icon, and one with neither', async () => {
+    const fake = squadService();
+    const handlers = handlersOver(fake);
 
-    const reply = await call(handlers.getSquad, requestAs(owner, { params: { id: league.id, squadId: 'no-such-team' } }));
+    const created = await callHandler(handlers.createSquad, operations.createSquad.request());
+    await callHandler(handlers.createSquad, stubRequest({ params: { id: 'league-1' }, body: {}, authUser: me, contextLogger: false }));
 
-    expect(reply.statusCode).toBe(404);
-    expect(reply.body).toMatchObject({ error: { code: 'SQUAD_NOT_FOUND' } });
+    expect(created).toMatchObject({ statusCode: 201, body: { squad } });
+    expect(fake.createSquad.mock.calls).toEqual([
+      ['league-1', 'user-1', { name: ' Mine ', iconKey: 'EAGLE' }],
+      ['league-1', 'user-1', { name: undefined, iconKey: undefined }],
+    ]);
   });
 
-  it('reads one team with 200', async () => {
-    const { league, owner, ownerSquad, handlers } = setup();
+  it('updates, inactivates and deletes a team, answering with the team or success', async () => {
+    const fake = squadService();
+    const handlers = handlersOver(fake);
 
-    const reply = await call(handlers.getSquad, requestAs(owner, { params: { id: league.id, squadId: ownerSquad.id } }));
+    const updated = await callHandler(handlers.updateSquad, stubRequest({ params, body: { iconKey: 'EAGLE' }, authUser: admin, contextLogger: false }));
+    const inactivated = await callHandler(handlers.inactivateSquad, stubRequest({ params, authUser: me, contextLogger: false }));
+    const deleted = await callHandler(handlers.deleteSquad, stubRequest({ params, authUser: admin, contextLogger: false }));
 
-    expect(reply.statusCode).toBe(200);
-    expect(reply.body).toMatchObject({ squad: { id: ownerSquad.id } });
+    expect(fake.updateSquad).toHaveBeenCalledWith('league-1', 'squad-1', 'admin', { name: undefined, iconKey: 'EAGLE' }, true);
+    expect(fake.inactivateSquad).toHaveBeenCalledWith('league-1', 'squad-1', 'user-1', false);
+    expect(fake.deleteInactiveSquad).toHaveBeenCalledWith('league-1', 'squad-1', 'admin');
+    expect(updated.body).toEqual({ squad });
+    expect(inactivated.body).toEqual({ squad });
+    expect(deleted.body).toEqual({ success: true });
   });
 
-  it('creates a team for a member with no team and answers 201', async () => {
-    const { world, league, handlers } = setup();
-    const newcomer = world.addUser();
-    world.tables.memberships.insert({
-      leagueId: league.id,
-      userId: newcomer.id,
-      role: LeagueRole.MEMBER,
-      status: LeagueMembershipStatus.ACTIVE,
-      joinedAt: new Date(),
-    });
+  it('adds a co-owner with 201 and removes one with 200, answering with the membership', async () => {
+    const fake = squadService();
+    const handlers = handlersOver(fake);
 
-    const reply = await call(
-      handlers.createSquad,
-      requestAs(newcomer, { params: { id: league.id }, body: { name: 'Fresh Squad' } }),
-    );
+    const added = await callHandler(handlers.addOwner, stubRequest({ params, body: { userId: 'user-2' }, authUser: admin, contextLogger: false }));
+    const removed = await callHandler(handlers.removeOwner, stubRequest({ params: { ...params, userId: 'user-2' }, authUser: me, contextLogger: false }));
 
-    expect(reply.statusCode).toBe(201);
-    expect(world.tables.squads.where((squad) => squad.name === 'Fresh Squad')).toHaveLength(1);
+    expect(fake.addOwner).toHaveBeenCalledWith('league-1', 'squad-1', 'admin', 'user-2', true);
+    expect(fake.removeOwner).toHaveBeenCalledWith('league-1', 'squad-1', 'user-1', 'user-2', false);
+    expect(added).toMatchObject({ statusCode: 201, body: { membership } });
+    expect(removed).toMatchObject({ statusCode: 200, body: { membership } });
+  });
+});
+
+describe('team route handlers: refusals', () => {
+  it.each(names)('%s answers a missing team with 404 SQUAD_NOT_FOUND', async (handler) => {
+    const { method, request } = operations[handler];
+    const handlers = handlersOver(squadService({ [method]: () => Promise.reject(new SquadNotFoundError('Squad not found')) }));
+
+    expect(await callHandler(handlers[handler], request())).toMatchObject({ statusCode: 404, body: { error: { code: 'SQUAD_NOT_FOUND' } } });
   });
 
-  it('answers 400 SQUAD_MEMBERSHIP_CONFLICT when a member who owns a team tries to create another', async () => {
-    const { league, owner, handlers } = setup();
+  it.each(names)('%s answers a refused change with 400 and the service\'s code', async (handler) => {
+    const { method, request } = operations[handler];
+    const handlers = handlersOver(squadService({ [method]: () => Promise.reject(new SquadOperationError('Not allowed', 'SQUAD_MEMBERSHIP_CONFLICT')) }));
 
-    const reply = await call(handlers.createSquad, requestAs(owner, { params: { id: league.id }, body: {} }));
-
-    expect(reply.statusCode).toBe(400);
-    expect(reply.body).toMatchObject({ error: { code: 'SQUAD_MEMBERSHIP_CONFLICT' } });
+    expect(await callHandler(handlers[handler], request())).toMatchObject({ statusCode: 400, body: { error: { code: 'SQUAD_MEMBERSHIP_CONFLICT' } } });
   });
 
-  it('renames a team with 200 and answers 400 SQUAD_NAME_TAKEN when the name is another team\'s', async () => {
-    const { world, league, owner, ownerSquad, commissioner, handlers } = setup();
-    const commissionerTeam = expectDefined(world.squadMembershipOf(league.id, commissioner.id));
-    const takenName = expectDefined(world.tables.squads.get(commissionerTeam.squadId)).name;
+  it.each(names)('%s passes an unexpected failure on to the global error handler', async (handler) => {
+    const { method, request } = operations[handler];
+    const handlers = handlersOver(squadService({ [method]: () => Promise.reject(boom) }));
 
-    const renamed = await call(
-      handlers.updateSquad,
-      requestAs(owner, { params: { id: league.id, squadId: ownerSquad.id }, body: { name: 'Par Patrol' } }),
-    );
-    const clash = await call(
-      handlers.updateSquad,
-      requestAs(owner, { params: { id: league.id, squadId: ownerSquad.id }, body: { name: takenName } }),
-    );
-
-    expect(renamed.statusCode).toBe(200);
-    expect(clash.statusCode).toBe(400);
-    expect(clash.body).toMatchObject({ error: { code: 'SQUAD_NAME_TAKEN' } });
-    expect(world.tables.squads.get(ownerSquad.id)?.name).toBe('Par Patrol');
+    await expect(callHandler(handlers[handler], request())).rejects.toBe(boom);
   });
 
-  it('inactivates a team for the commissioner with 200', async () => {
-    const { league, commissioner, ownerSquad, handlers } = setup();
+  it.each(names)('%s lets an unauthenticated request\'s 401 reach the global error handler, calling no service', async (handler) => {
+    const fake = squadService();
+    const { method, request } = operations[handler];
 
-    const reply = await call(
-      handlers.inactivateSquad,
-      requestAs(commissioner, { params: { id: league.id, squadId: ownerSquad.id } }),
-    );
-
-    expect(reply.statusCode).toBe(200);
-    expect(reply.body).toMatchObject({ squad: { id: ownerSquad.id, isActive: false } });
-  });
-
-  it('answers 400 SQUAD_DELETE_REQUIRES_INACTIVE when deleting an active team', async () => {
-    const { world, league, ownerSquad, handlers } = setup();
-    const admin = world.addUser({ isRootAdmin: true });
-
-    const reply = await call(
-      handlers.deleteSquad,
-      requestAs(admin, { params: { id: league.id, squadId: ownerSquad.id } }),
-    );
-
-    expect(reply.statusCode).toBe(400);
-    expect(reply.body).toMatchObject({ error: { code: 'SQUAD_DELETE_REQUIRES_INACTIVE' } });
-  });
-
-  it('adds a co-owner with 201 and removes them again with 200', async () => {
-    const { world, league, owner, ownerSquad, handlers } = setup();
-    const coOwner = world.addUser();
-    world.tables.memberships.insert({
-      leagueId: league.id,
-      userId: coOwner.id,
-      role: LeagueRole.MEMBER,
-      status: LeagueMembershipStatus.ACTIVE,
-      joinedAt: new Date(),
-    });
-
-    const added = await call(
-      handlers.addOwner,
-      requestAs(owner, { params: { id: league.id, squadId: ownerSquad.id }, body: { userId: coOwner.id } }),
-    );
-    const removed = await call(
-      handlers.removeOwner,
-      requestAs(owner, { params: { id: league.id, squadId: ownerSquad.id, userId: coOwner.id } }),
-    );
-
-    expect(added.statusCode).toBe(201);
-    expect(removed.statusCode).toBe(200);
-    expect(world.membershipOf(league.id, coOwner.id)?.status).toBe(LeagueMembershipStatus.INACTIVE);
-  });
-
-  it('answers 400 SQUAD_OWNER_REMOVE_REQUIRES_MULTIPLE_OWNERS when removing a team\'s only owner', async () => {
-    const { league, commissioner, owner, ownerSquad, handlers } = setup();
-
-    const reply = await call(
-      handlers.removeOwner,
-      requestAs(commissioner, { params: { id: league.id, squadId: ownerSquad.id, userId: owner.id } }),
-    );
-
-    expect(reply.statusCode).toBe(400);
-    expect(reply.body).toMatchObject({ error: { code: 'SQUAD_OWNER_REMOVE_REQUIRES_MULTIPLE_OWNERS' } });
-  });
-
-  it('lets an unauthenticated request\'s 401 reach the global error handler instead of answering it as a team error', async () => {
-    const { league, handlers } = setup();
-
-    await expect(call(handlers.listSquads, requestAs(null, { params: { id: league.id } }))).rejects.toMatchObject({
-      statusCode: 401,
-      code: 'AUTH_SESSION_REQUIRED',
-    });
+    await expect(callHandler(handlersOver(fake)[handler], request(null))).rejects.toMatchObject({ statusCode: 401, code: 'AUTH_SESSION_REQUIRED' });
+    expect(fake[method]).not.toHaveBeenCalled();
   });
 });
