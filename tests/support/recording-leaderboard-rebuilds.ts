@@ -12,7 +12,4 @@ export class RecordingLeaderboardRebuilds implements LeaderboardRebuilds {
   async contestsChanged(contestIds: readonly string[]): Promise<void> {
     this.contestIds.push(...contestIds);
   }
-
-  /** Nothing waits here: each write is recorded as it tells. */
-  async flush(): Promise<void> {}
 }

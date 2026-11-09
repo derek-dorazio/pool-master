@@ -92,7 +92,7 @@ export function createContestService(
 export function createContestSettlementService(
   prisma: PrismaClient,
   logger?: FastifyBaseLogger,
-  options?: { jobs?: Pick<BackgroundJobQueue, 'request' | 'queued'>; leaderboards?: Pick<LeaderboardRebuilds, 'contestsChanged'> },
+  options?: { jobs?: Pick<BackgroundJobQueue, 'request' | 'queued'>; leaderboards?: Pick<LeaderboardRebuilds, 'eventsChanged'> },
 ): ContestSettlementService {
   return new ContestSettlementService({
     ...createContestLeaderboardReadDeps(prisma, logger),

@@ -138,6 +138,11 @@ as it stands then, so a correction made before it runs is the one it settles fro
    request-started work goes through a job, not `outsideRequest`).
 2. **#1387** and 3. **Manual event sync as a job** (#1441): each after 1, independent of each other.
 
-Rows 3.1's debounced leaderboard rebuild ("Precompute live leaderboard snapshots") can later move
-onto this table (a `REBUILD_LEADERBOARD` job with a contest dedupe key and a `run_at` a few seconds
-out). It isn't a dependency: that work ships with its own in-process debounce first.
+**#1463, rebuilding live leaderboards.** The in-process debounced rebuild that row 3.1 shipped
+with ("Precompute live leaderboard snapshots") moved onto this table as `REBUILD_LEADERBOARDS`, one
+job per event or contest a write names, due at once. Its dedupe key is the debounce: while a job
+waits, more writes to the same event queue nothing, and a write made while it runs queues one more.
+The timer, its `LEADERBOARD_REBUILD_DELAY_MS` setting and its flush at shutdown are gone, and a
+rebuild queued on one task survives that task stopping. Settlement asks for one rebuild of the
+settled event rather than one per contest. On a split deploy the rebuild runs on the worker, at most
+one poll (10 seconds) after the write; a viewer's read still computes a board that is not current.

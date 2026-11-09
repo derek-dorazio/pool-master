@@ -27,6 +27,7 @@ import { writePicks } from '../../support/prediction-writes';
 import {
   cleanupTestData,
   createTestUser,
+  drainBackgroundJobs,
   getApp,
   getAppPrisma,
   getPrisma,
@@ -269,7 +270,7 @@ describe('Stored pick\'em leaderboards (#1435)', () => {
     expect(await snapshotRows(season.contest.id)).toMatchObject([{ shownEvent: '', validUntil: nextKickoff }]);
   });
 
-  it('rebuilds the stored board when an admin saves a game\'s result through the events routes, before the save answers', async () => {
+  it('rebuilds the stored board in a job once an admin saves a game\'s result through the events routes (#1463)', async () => {
     const season = await midSeason();
     const admin = await createTestUser({ isRootAdmin: true });
     await serviceOn().getPickEmLeaderboard(season.contest.id, season.viewerId);
@@ -282,6 +283,7 @@ describe('Stored pick\'em leaderboards (#1435)', () => {
     });
 
     expect(saved.statusCode).toBe(200);
+    await drainBackgroundJobs();
     expect(await snapshotRows(season.contest.id)).toMatchObject([{ version: 2 }]);
     const { board } = await serviceOn().getPickEmLeaderboard(season.contest.id, season.viewerId);
     // The third home pick now scores too.

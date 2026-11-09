@@ -76,7 +76,8 @@ import { createContestEmailJobs, createContestExpandedNotices, createContestNoti
 import { jobHandlers } from '../support/in-memory-background-jobs';
 import { createEventLifecycleService } from '../../packages/core-api/src/modules/events/wiring';
 import { createContestService, createContestSettlementService } from '../../packages/core-api/src/modules/contests/wiring';
-import { DebouncedLeaderboardRebuilds } from '../../packages/core-api/src/modules/contests/leaderboard-snapshots';
+import { JobLeaderboardRebuilds } from '../../packages/core-api/src/modules/contests/leaderboard-snapshots';
+import { leaderboardChangesOf } from '../../packages/core-api/src/modules/contests/leaderboard-rebuild-job-requests';
 import { createContestManagementService } from '../../packages/core-api/src/modules/contest-management/wiring';
 import { IngestionService } from '../../packages/core-api/src/modules/ingestion/ingestion-service';
 import { ProviderRegistry } from '../../packages/core-api/src/modules/ingestion/core/provider-registry';
@@ -258,12 +259,9 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
   // emails as jobs, as in index.ts.
   const contestNotices = createContestNotices(prisma, { email, appBaseUrl: readApplicationBaseUrl(process.env), logger: testApp.log });
   const contestEmailJobs = createContestEmailJobs(prisma, { notices: contestNotices, logger: testApp.log });
-  // No delay, as the functional lane runs: a write's boards are rebuilt before it answers (#1435).
-  const leaderboards = new DebouncedLeaderboardRebuilds({
-    rebuilder: createContestService(prisma, testApp.log, { planEntitlements }),
-    logger: testApp.log,
-    delayMs: 0,
-  });
+  // A write's boards are rebuilt by a job per event or contest, as in index.ts (#1463).
+  const leaderboards = new JobLeaderboardRebuilds(backgroundJobs.queue);
+  const leaderboardRebuilder = createContestService(prisma, testApp.log, { planEntitlements });
   const eventLifecycleService = createEventLifecycleService(prisma, {
     logger: testApp.log,
     jobs: backgroundJobs.queue,
@@ -291,6 +289,7 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
     CONTEST_SETTLED_EMAILS: (payload) => contestEmailJobs.contestSettled(payload),
     SETTLE_SPORT_EVENT_CONTESTS: (payload) => eventLifecycleService.settleFinishedEventContests(payload),
     SETTLE_GAME_CONTESTS: (payload) => eventLifecycleService.settleFinishedGameContests(payload),
+    REBUILD_LEADERBOARDS: (payload) => leaderboardRebuilder.rebuildLeaderboardSnapshots(leaderboardChangesOf(payload)),
   });
   backgroundJobRunner = runner;
   backgroundJobs.queue.wakes({ wake: () => { if (!backgroundJobsHeld) runner.wake(); } });
