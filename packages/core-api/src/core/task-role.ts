@@ -31,8 +31,8 @@ export const WORKER_EMAIL_SENDER_TICK_MS = 1000;
 
 export interface TaskRolePlan {
   /**
-   * Starts the job runner, email sender, lifecycle sweep, nightly cleanup and ingestion, and lets
-   * a queued email or job wake this task's sender or runner.
+   * Starts the job runner, email sender, lifecycle sweep, clock-driven email sweeps, nightly
+   * cleanup and ingestion, and lets a queued email or job wake this task's sender or runner.
    */
   runsBackgroundWork: boolean;
   /** How often this task's email sender looks for due email; undefined keeps its default. */

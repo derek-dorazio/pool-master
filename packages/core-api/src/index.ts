@@ -86,7 +86,7 @@ import {
   createDueNotifications,
   createMemberJoinedNotices,
   DueNotificationKind,
-  DueNotificationsScheduler,
+  staggeredDueNotificationsSchedulers,
 } from './modules/notifications';
 import { ProviderSyncRunLedger } from './modules/ingestion/persistence/provider-sync-run-ledger';
 import { SyncRunDetailsRetention, SyncRunRetention } from './modules/ingestion/persistence/sync-run-retention';
@@ -186,8 +186,8 @@ export function buildApp() {
     logger: app.log,
   });
   // The emails that come due on the clock (#845), each kind on a timer and lock of its own so a
-  // slow one never holds up another or the lifecycle sweep.
-  const dueNotificationsSchedulers = [
+  // slow one never holds up another or the lifecycle sweep, their ticks spread over the interval.
+  const dueNotificationsSchedulers = staggeredDueNotificationsSchedulers([
     ...createDueNotifications(prisma, {
       email,
       readConfig: () => appSettings.get(EMAIL_SETTINGS),
@@ -198,7 +198,7 @@ export function buildApp() {
     }),
     // A quick pick draw's receipts, queued by the draw for the sweep (#1171).
     { kind: DueNotificationKind.DRAW_RECEIPTS, notifications: createDrawReceipts(prisma, app.log, { email, appBaseUrl, planEntitlements }) },
-  ].map((due) => new DueNotificationsScheduler({ ...due, jobLock, logger: app.log }));
+  ], { jobLock, logger: app.log });
   const providerSyncRuns = new PrismaProviderSyncRunRepository(prisma);
   // #1175: tables that grow without end are trimmed to their retention periods once a night.
   const nightlyCleanupScheduler = new NightlyCleanupScheduler({

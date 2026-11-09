@@ -27,7 +27,7 @@ import type { FastifyBaseLogger } from 'fastify';
 import type { SportEventRepository, SportEventRoundRepository } from '@poolmaster/shared/db';
 import { SportEventStatus, type SportEvent, type SportEventRound } from '@poolmaster/shared/domain';
 import type { JobLock } from '../../core/job-lock';
-import { runWithReadMemo } from '../../core/request-read-memo';
+import { LockedSweep } from '../../core/locked-sweep';
 import type { EventLifecycleService } from './event-lifecycle-service';
 
 const SWEEP_INTERVAL_MS = 5 * 60 * 1000;
@@ -44,66 +44,45 @@ export interface EventLifecycleSchedulerOptions {
 }
 
 export class EventLifecycleScheduler {
-  private timer?: ReturnType<typeof setInterval>;
+  private readonly lockedSweep: LockedSweep;
   private readonly sportEvents: EventLifecycleSchedulerOptions['sportEvents'];
   private readonly rounds: EventLifecycleSchedulerOptions['rounds'];
   private readonly eventLifecycleService: EventLifecycleSchedulerOptions['eventLifecycleService'];
-  private readonly jobLock: JobLock;
   private readonly logger?: FastifyBaseLogger;
   private readonly now: () => Date;
-  private sweeping = false;
 
   constructor(options: EventLifecycleSchedulerOptions) {
     this.sportEvents = options.sportEvents;
     this.rounds = options.rounds;
     this.eventLifecycleService = options.eventLifecycleService;
-    this.jobLock = options.jobLock;
     this.logger = options.logger;
     this.now = options.now ?? (() => new Date());
+    this.lockedSweep = new LockedSweep({
+      lockKey: SWEEP_LOCK_KEY,
+      jobLock: options.jobLock,
+      intervalMs: SWEEP_INTERVAL_MS,
+      label: 'event lifecycle sweep',
+      logger: options.logger,
+    }, () => this.sweep());
   }
 
   start(): void {
-    if (this.timer) {
-      return;
-    }
-    this.timer = setInterval(() => {
-      void this.runSweep();
-    }, SWEEP_INTERVAL_MS);
-    this.timer.unref();
+    this.lockedSweep.start();
     this.logger?.info('Event lifecycle scheduler started');
   }
 
   stop(): void {
-    if (this.timer) {
-      clearInterval(this.timer);
-      this.timer = undefined;
-    }
+    this.lockedSweep.stop();
   }
 
   /**
    * One sweep pass, when this task holds the sweep's lock and no sweep is still running here.
-   * Exposed directly so tests and manual triggers don't need to wait on the timer.
+   * Exposed directly so tests and manual triggers don't need to wait on the timer. One read memo
+   * per sweep (#1200), as a request has: the contests of one event share its sport league's read,
+   * and a write in the sweep forgets what it touches.
    */
-  async runSweep(): Promise<void> {
-    if (this.sweeping) {
-      this.logger?.warn('Skipped an event lifecycle sweep because the previous one is still running');
-      return;
-    }
-    this.sweeping = true;
-    try {
-      // One read memo per sweep (#1200), as a request has: the contests of one event share its
-      // sport league's read, and a write in the sweep forgets what it touches.
-      const ran = await this.jobLock.runExclusive(SWEEP_LOCK_KEY, () => runWithReadMemo(() => this.sweep()));
-      if (!ran) {
-        this.logger?.debug('Skipped an event lifecycle sweep because another server task runs it');
-      }
-    } catch (error) {
-      this.logger?.error({
-        error: error instanceof Error ? error.message : String(error),
-      }, 'Event lifecycle sweep failed');
-    } finally {
-      this.sweeping = false;
-    }
+  runSweep(): Promise<void> {
+    return this.lockedSweep.run();
   }
 
   private async sweep(): Promise<void> {

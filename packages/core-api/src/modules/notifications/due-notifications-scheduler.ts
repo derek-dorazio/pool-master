@@ -2,7 +2,8 @@
  * The emails that come due on the clock rather than on an action (#845): entry reminders, live
  * standings, commissioner digests and the rest. Each kind sweeps on a timer of its own, behind a
  * job lock of its own, so a slow kind (a Monday morning's digests across every league) never
- * holds up another, nor the event lifecycle sweep that puts contests live.
+ * holds up another, nor the event lifecycle sweep that puts contests live. Their sweeps are
+ * staggered within each interval so they don't all reach the database on the same tick.
  *
  * Every server task that runs the background work starts one of these per kind, and each kind's
  * sweep runs on one of them (#1159): the task holding that kind's lock. The outbox's idempotency
@@ -11,7 +12,7 @@
 
 import type { FastifyBaseLogger } from 'fastify';
 import type { JobLock } from '../../core/job-lock';
-import { runWithReadMemo } from '../../core/request-read-memo';
+import { LockedSweep } from '../../core/locked-sweep';
 
 /** One kind of email that comes due on the clock: each sweep asks it to queue what is due. */
 export interface DueNotifications {
@@ -39,6 +40,13 @@ export interface NamedDueNotifications {
 /** As often as the event lifecycle sweep, which the kinds once ran inside. */
 export const DUE_NOTIFICATIONS_SWEEP_INTERVAL_MS = 5 * 60 * 1000;
 
+/**
+ * How far apart the kinds' sweeps fall within each interval. Started together, every kind would
+ * otherwise sweep on the same tick as the others and the lifecycle sweep, all sharing one task's
+ * connection pool.
+ */
+export const DUE_NOTIFICATIONS_STAGGER_MS = 30 * 1000;
+
 /** The job lock a kind's sweep holds. */
 export function dueNotificationsLockKey(kind: DueNotificationKind): string {
   return `notifications-due:${kind}`;
@@ -50,56 +58,51 @@ export interface DueNotificationsSchedulerOptions extends NamedDueNotifications 
   logger?: FastifyBaseLogger;
   now?: () => Date;
   intervalMs?: number;
+  /** How long after `start` the kind first sweeps; a full interval unless staggered. */
+  firstSweepAfterMs?: number;
 }
 
 export class DueNotificationsScheduler {
-  private timer?: ReturnType<typeof setInterval>;
-  private sweeping = false;
-  private readonly now: () => Date;
+  private readonly sweep: LockedSweep;
 
-  constructor(private readonly options: DueNotificationsSchedulerOptions) {
-    this.now = options.now ?? (() => new Date());
+  constructor(options: DueNotificationsSchedulerOptions) {
+    const now = options.now ?? (() => new Date());
+    const intervalMs = options.intervalMs ?? DUE_NOTIFICATIONS_SWEEP_INTERVAL_MS;
+    this.sweep = new LockedSweep({
+      lockKey: dueNotificationsLockKey(options.kind),
+      jobLock: options.jobLock,
+      intervalMs,
+      firstRunAfterMs: options.firstSweepAfterMs,
+      label: `${options.kind} notifications sweep`,
+      logger: options.logger,
+    }, () => options.notifications.queueDue(now()));
   }
 
   start(): void {
-    if (this.timer) return;
-    this.timer = setInterval(() => {
-      void this.runSweep();
-    }, this.options.intervalMs ?? DUE_NOTIFICATIONS_SWEEP_INTERVAL_MS);
-    this.timer.unref();
+    this.sweep.start();
   }
 
   stop(): void {
-    if (this.timer) {
-      clearInterval(this.timer);
-      this.timer = undefined;
-    }
+    this.sweep.stop();
   }
 
-  /**
-   * One sweep of the kind, when this task holds its lock and its last sweep here has ended.
-   * Each sweep has a read memo of its own, as a request has. A failure is logged, never thrown,
-   * so the timer carries on and the next sweep tries again.
-   */
-  async runSweep(): Promise<void> {
-    const { kind, notifications, jobLock, logger } = this.options;
-    if (this.sweeping) {
-      logger?.warn({ action: 'notificationsDue.overlap', data: { kind } }, 'Skipped a notifications sweep because the previous one is still running');
-      return;
-    }
-    this.sweeping = true;
-    try {
-      const ran = await jobLock.runExclusive(dueNotificationsLockKey(kind), () => runWithReadMemo(() => notifications.queueDue(this.now())));
-      if (!ran) {
-        logger?.debug({ action: 'notificationsDue.heldElsewhere', data: { kind } }, 'Skipped a notifications sweep because another server task runs it');
-      }
-    } catch (error) {
-      logger?.error({
-        action: 'notificationsDue.failed',
-        data: { kind, error: error instanceof Error ? error.message : String(error) },
-      }, 'A notifications sweep failed to queue the emails due');
-    } finally {
-      this.sweeping = false;
-    }
+  /** One sweep of the kind, when this task holds its lock and its last sweep here has ended. */
+  runSweep(): Promise<void> {
+    return this.sweep.run();
   }
+}
+
+/**
+ * One scheduler per kind, their sweeps spread `DUE_NOTIFICATIONS_STAGGER_MS` apart within each
+ * interval and all after the lifecycle sweep's, which comes at the interval itself.
+ */
+export function staggeredDueNotificationsSchedulers(
+  kinds: readonly NamedDueNotifications[],
+  options: { jobLock: JobLock; logger?: FastifyBaseLogger },
+): DueNotificationsScheduler[] {
+  return kinds.map((due, index) => new DueNotificationsScheduler({
+    ...due,
+    ...options,
+    firstSweepAfterMs: DUE_NOTIFICATIONS_SWEEP_INTERVAL_MS + (index + 1) * DUE_NOTIFICATIONS_STAGGER_MS,
+  }));
 }

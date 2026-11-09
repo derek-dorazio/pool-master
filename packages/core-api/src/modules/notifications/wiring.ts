@@ -1,6 +1,6 @@
 /**
  * Builds the notification emails (#845) from their Prisma adapters: the clock-driven ones for
- * the lifecycle scheduler's "notifications due" step, and the contest milestone ones for the
+ * sweeps of their own (`DueNotificationsScheduler`), and the contest milestone ones for the
  * services that move a contest.
  */
 

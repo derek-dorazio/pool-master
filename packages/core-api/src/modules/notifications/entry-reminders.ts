@@ -3,7 +3,7 @@
  * an event (the offsets are EMAIL_CONFIG.entryReminderHours), every league member with nothing
  * submitted for that event is told, all at the same moment, with no per-person time zone shift.
  *
- * The lifecycle scheduler's "notifications due" step calls `queueDue` on every sweep. A sweep
+ * Its sweep (`DueNotificationsScheduler`) calls `queueDue` every five minutes. A sweep
  * reads only the contests whose next reminder check has come (#1170): a contest is checked as it
  * opens, when its events or their times change, and at each reminder time; after a check it
  * waits for its next reminder time, so it is not looked at again in between. A reminder is queued

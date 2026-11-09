@@ -4,8 +4,8 @@
  * Someone joins by accepting a league invitation or by being added as a squad's co-owner. The first
  * three people to join a league on a day (US Eastern) are each told at once. A busy day's rest are
  * told together the next day, in one email listing everyone not told at once, so a league filling
- * up from a shared invite link doesn't flood its commissioners. The lifecycle scheduler's
- * "notifications due" step calls `queueDue` on every sweep; the next day's email goes once the
+ * up from a shared invite link doesn't flood its commissioners. Its sweep
+ * (`DueNotificationsScheduler`) calls `queueDue` every five minutes; the next day's email goes once the
  * overnight hour (EMAIL_CONFIG.weeklyDigestHour, 3am Eastern by default) has come, once per league,
  * its outbox idempotency key being the day and the league and the person.
  *

@@ -3,7 +3,7 @@
  * gifted Premium until its renewal date; its commissioners are reminded 30, 7 and 1 days before,
  * and once the date has passed the league moves to Free, with no grace period.
  *
- * The lifecycle scheduler's "notifications due" step calls `queueDue` on every sweep. Reminders go
+ * Its sweep (`DueNotificationsScheduler`) calls `queueDue` every five minutes. Reminders go
  * once the overnight hour (EMAIL_CONFIG.weeklyDigestHour, 3am Eastern by default) has come, on the
  * day that is 30, 7 or 1 days, counted in US Eastern dates, before the renewal date. A league that
  * missed one (its sweep was down, or a root admin set the date sooner) gets only the most urgent

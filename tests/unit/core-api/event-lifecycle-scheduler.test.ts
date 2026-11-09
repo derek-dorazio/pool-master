@@ -366,7 +366,7 @@ describe('EventLifecycleScheduler.runSweep across server tasks (#1159)', () => {
     await scheduler.runSweep();
 
     expect(eventLifecycleService.applySportEventStatusTransition).toHaveBeenCalledTimes(1);
-    expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('previous one is still running'));
+    expect(logger.warn).toHaveBeenCalledWith({ action: 'lockedSweep.overlap', data: { lockKey: 'event-lifecycle-sweep' } }, expect.stringContaining('previous one is still running'));
 
     finishFirst();
     await first;
@@ -382,6 +382,6 @@ describe('EventLifecycleScheduler.runSweep across server tasks (#1159)', () => {
 
     await expect(scheduler.runSweep()).resolves.toBeUndefined();
 
-    expect(logger.error).toHaveBeenCalledWith({ error: 'db down' }, 'Event lifecycle sweep failed');
+    expect(logger.error).toHaveBeenCalledWith({ action: 'lockedSweep.failed', data: { lockKey: 'event-lifecycle-sweep', error: 'db down' } }, 'The event lifecycle sweep failed');
   });
 });

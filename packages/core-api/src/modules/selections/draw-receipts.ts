@@ -1,7 +1,7 @@
 /**
- * Quick pick receipts (#867), sent by the lifecycle sweep rather than in the draw's request
- * (#1171). A draw marks itself as owing its entries their receipts; each sweep, under the sweep's
- * job lock, sends every marked draw's receipts and clears the marks. A receipt may so arrive up
+ * Quick pick receipts (#867), sent by their clock-driven sweep (`DRAW_RECEIPTS`) rather than in
+ * the draw's request (#1171). A draw marks itself as owing its entries their receipts; each sweep,
+ * under the sweep's job lock, sends every marked draw's receipts and clears the marks. A receipt may so arrive up
  * to one sweep, five minutes, after the draw.
  *
  * Each receipt is sent once: its outbox idempotency key is the entry, the event and the entry's

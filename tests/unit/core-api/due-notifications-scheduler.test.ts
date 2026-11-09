@@ -1,13 +1,16 @@
 /**
  * The clock-driven emails (#845) each sweep on a timer and job lock of their own, so a slow kind
- * never holds up another or the event lifecycle sweep that puts contests live.
+ * never holds up another or the event lifecycle sweep that puts contests live, and their sweeps
+ * are spread over each interval. The sweep itself (overlap, failure, read memo, timer) is
+ * `LockedSweep`'s, tested in locked-sweep.test.ts.
  */
-import type { PrismaClient } from '@prisma/client';
-import { memoizedRead, ReadMemoKey } from '../../../packages/core-api/src/core/request-read-memo';
 import {
+  DUE_NOTIFICATIONS_STAGGER_MS,
+  DUE_NOTIFICATIONS_SWEEP_INTERVAL_MS,
   DueNotificationKind,
   DueNotificationsScheduler,
   dueNotificationsLockKey,
+  staggeredDueNotificationsSchedulers,
   type DueNotifications,
 } from '../../../packages/core-api/src/modules/notifications';
 import { fakeLogger } from '../../support/fake-logger';
@@ -15,12 +18,12 @@ import { heldElsewhere, heldHere } from '../../support/job-locks';
 
 const SWEPT_AT = new Date('2026-06-01T13:00:00.000Z');
 
-function scheduler(notifications: DueNotifications, options: { kind?: DueNotificationKind; jobLock?: ReturnType<typeof heldHere>; logger?: ReturnType<typeof fakeLogger> } = {}) {
+function scheduler(notifications: DueNotifications, options: { kind?: DueNotificationKind; jobLock?: ReturnType<typeof heldHere> } = {}) {
   return new DueNotificationsScheduler({
     kind: options.kind ?? DueNotificationKind.ENTRY_REMINDERS,
     notifications,
     jobLock: options.jobLock ?? heldHere(),
-    logger: options.logger ?? fakeLogger(),
+    logger: fakeLogger(),
     now: () => SWEPT_AT,
   });
 }
@@ -68,64 +71,48 @@ describe('DueNotificationsScheduler', () => {
     expect(notifications.queueDue).not.toHaveBeenCalled();
   });
 
-  it('skips a sweep that comes due while its kind\'s last sweep is still running, and sweeps again after it ends', async () => {
-    let finishFirst!: () => void;
-    const notifications = { queueDue: jest.fn<Promise<void>, [Date]>().mockImplementationOnce(() => new Promise<void>((resolve) => { finishFirst = resolve; })).mockResolvedValue(undefined) };
-    const logger = fakeLogger();
-    const due = scheduler(notifications, { logger });
+  it('fits every kind\'s first sweep inside one interval after the lifecycle sweep\'s', () => {
+    const kinds = Object.values(DueNotificationKind);
 
-    const first = due.runSweep();
-    await new Promise((resolve) => setImmediate(resolve));
-    await due.runSweep();
-
-    expect(notifications.queueDue).toHaveBeenCalledTimes(1);
-    expect(logger.warn).toHaveBeenCalledWith({ action: 'notificationsDue.overlap', data: { kind: 'ENTRY_REMINDERS' } }, expect.any(String));
-    finishFirst();
-    await first;
-    await due.runSweep();
-    expect(notifications.queueDue).toHaveBeenCalledTimes(2);
+    expect(kinds.length * DUE_NOTIFICATIONS_STAGGER_MS).toBeLessThan(DUE_NOTIFICATIONS_SWEEP_INTERVAL_MS);
   });
 
-  it('logs a failed sweep with its kind rather than leaving the timer an unhandled rejection, and sweeps again next time', async () => {
-    const notifications = { queueDue: jest.fn<Promise<void>, [Date]>().mockRejectedValueOnce(new Error('outbox down')).mockResolvedValue(undefined) };
-    const logger = fakeLogger();
-    const due = scheduler(notifications, { logger });
+  describe('on its timer', () => {
+    beforeEach(() => jest.useFakeTimers({ now: SWEPT_AT }));
+    afterEach(() => jest.useRealTimers());
 
-    await expect(due.runSweep()).resolves.toBeUndefined();
-    await due.runSweep();
-
-    expect(logger.error).toHaveBeenCalledWith({ action: 'notificationsDue.failed', data: { kind: 'ENTRY_REMINDERS', error: 'outbox down' } }, expect.any(String));
-    expect(notifications.queueDue).toHaveBeenCalledTimes(2);
-  });
-
-  it('gives each sweep its own read memo, so a read the sweep repeats is made once per sweep', async () => {
-    // Stands in for the root Prisma client, the only one whose reads are remembered.
-    const root = { $transaction: jest.fn() } as unknown as PrismaClient;
-    const load = jest.fn(async () => ({ name: 'NFL' }));
-    const read = () => memoizedRead(root, `${ReadMemoKey.sportLeague}nfl`, load);
-    const due = scheduler({ queueDue: async () => { await read(); await read(); } });
-
-    await due.runSweep();
-    expect(load).toHaveBeenCalledTimes(1);
-    await due.runSweep();
-
-    expect(load).toHaveBeenCalledTimes(2);
-  });
-
-  it('sweeps on its timer once started, and no more once stopped', () => {
-    jest.useFakeTimers();
-    try {
+    it('sweeps at the time on the clock when given no clock of its own, every five minutes once started', async () => {
       const notifications = { queueDue: jest.fn(async () => undefined) };
-      const due = scheduler(notifications);
+      const due = new DueNotificationsScheduler({ kind: DueNotificationKind.ENTRY_REMINDERS, notifications, jobLock: heldHere() });
 
       due.start();
-      jest.advanceTimersByTime(5 * 60 * 1000);
-      expect(notifications.queueDue).toHaveBeenCalledTimes(1);
+      await jest.advanceTimersByTimeAsync(5 * 60 * 1000);
+
+      expect(notifications.queueDue).toHaveBeenCalledWith(new Date(SWEPT_AT.getTime() + 5 * 60 * 1000));
       due.stop();
-      jest.advanceTimersByTime(10 * 60 * 1000);
+      await jest.advanceTimersByTimeAsync(10 * 60 * 1000);
       expect(notifications.queueDue).toHaveBeenCalledTimes(1);
-    } finally {
-      jest.useRealTimers();
-    }
+    });
+
+    it('spreads the kinds\' sweeps thirty seconds apart, all after the lifecycle sweep\'s tick, then each every interval', async () => {
+      const kinds = [DueNotificationKind.ENTRY_REMINDERS, DueNotificationKind.LIVE_STANDINGS, DueNotificationKind.COMMISSIONER_NOTICES]
+        .map((kind) => ({ kind, notifications: { queueDue: jest.fn(async () => undefined) } }));
+      const schedulers = staggeredDueNotificationsSchedulers(kinds, { jobLock: heldHere() });
+      const swept = () => kinds.map(({ notifications }) => notifications.queueDue.mock.calls.length);
+
+      schedulers.forEach((due) => due.start());
+      await jest.advanceTimersByTimeAsync(DUE_NOTIFICATIONS_SWEEP_INTERVAL_MS);
+      expect(swept()).toEqual([0, 0, 0]);
+      await jest.advanceTimersByTimeAsync(DUE_NOTIFICATIONS_STAGGER_MS);
+      expect(swept()).toEqual([1, 0, 0]);
+      await jest.advanceTimersByTimeAsync(DUE_NOTIFICATIONS_STAGGER_MS);
+      expect(swept()).toEqual([1, 1, 0]);
+      await jest.advanceTimersByTimeAsync(DUE_NOTIFICATIONS_STAGGER_MS);
+      expect(swept()).toEqual([1, 1, 1]);
+      await jest.advanceTimersByTimeAsync(DUE_NOTIFICATIONS_SWEEP_INTERVAL_MS);
+
+      expect(swept()).toEqual([2, 2, 2]);
+      schedulers.forEach((due) => due.stop());
+    });
   });
 });

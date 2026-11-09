@@ -8,8 +8,8 @@
  * every league whose gift still runs, out to some months from now. A date never moves earlier,
  * and every move is logged with who made it and to when.
  *
- * Once a league's date has passed, it moves to Free (#986, plans/payments.md §3): the lifecycle
- * scheduler's sweep calls `moveEndedToFree`, after the reminders. There is no grace period, and
+ * Once a league's date has passed, it moves to Free (#986, plans/payments.md §3): the plan preview
+ * notices' sweep (`PLAN_PREVIEW_NOTICES`) calls `moveEndedToFree`, after the reminders. There is no grace period, and
  * each move is logged as a plan change made by no one.
  */
 
