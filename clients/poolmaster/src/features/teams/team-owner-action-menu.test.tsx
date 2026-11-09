@@ -72,6 +72,14 @@ describe('TeamOwnerActionMenu', () => {
     removeSquadOwnerMock.mockReset();
   });
 
+  it('draws the Owner actions trigger as an outline button, not a gold one with light text in dark mode', () => {
+    renderMenu();
+
+    const trigger = screen.getByTestId('team-home-owner-actions-trigger-team-1-user-2');
+    expect(trigger).toHaveClass('bg-background', 'text-foreground', 'border-border');
+    expect(trigger).not.toHaveClass('bg-primary');
+  });
+
   it('offers a plain owner only Remove owner, with no league role changes', () => {
     renderMenu({ canManageLeagueRole: false });
 

@@ -106,10 +106,11 @@ export function TeamOwnerActionMenu({
     <>
       <div className="relative">
         <Button
-          className="rounded-2xl border border-border px-4 py-2 text-sm font-medium text-foreground transition hover:bg-muted/40"
+          className="rounded-2xl px-4 py-2"
           data-testid={`${testPrefix}-trigger-${teamId}-${ownerUserId}`}
           onClick={() => setMenuOpen((current) => !current)}
           type="button"
+          variant="secondary"
         >
           Owner actions
         </Button>
