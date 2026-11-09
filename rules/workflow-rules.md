@@ -691,7 +691,9 @@ Before pushing code that could trigger CI, agents must run the full local qualit
 Required local pre-push commands:
 
 1. `npx turbo typecheck --force`
-2. `npm run lint` (eslint at `--max-warnings 0`)
+2. `NODE_OPTIONS=--max-old-space-size=6144 npm run lint:service`, then `npm run lint:webapp`
+   (eslint at `--max-warnings 0`): the two lint runs CI makes. The single `npm run lint` covers
+   the same files in one process and runs out of memory even at 6 GB.
 3. `npm run test:coverage:service:unit`: the unit suite with the coverage threshold CI enforces
 4. `npm run test:service:functional-api`
 5. `npm run test:poolmaster:unit`
