@@ -18,7 +18,7 @@
  *
  * Each goes once its moment is a buffer old (EMAIL_CONFIG.standingsBufferMinutes, Q3.11), so a
  * late correction lands first, and only within the hour after that: past it the moment is gone.
- * The lifecycle scheduler's "notifications due" step calls `queueDue` on every sweep. The first
+ * Its sweep (`DueNotificationsScheduler`) calls `queueDue` every five minutes. The first
  * sweep in that hour queues the email and records the board's places; later sweeps find the email
  * already in the outbox and leave both alone, so the next email's movement is measured from the
  * places this one showed, whatever a correction changes after it. The outbox idempotency key (the
@@ -75,7 +75,7 @@ import {
   type StandingsMoment,
   type StandingsNextWeek,
 } from '../email';
-import type { DueNotifications } from '../events/event-lifecycle-scheduler';
+import type { DueNotifications } from './due-notifications-scheduler';
 import type { SportEventParticipantService, SportEventParticipantView } from '../events/sport-event-participant-service';
 import { eventStoresGolfRoundScores } from '../scoring-families/golf-round-scores';
 import { lastFinishedMatchRound } from '../scoring-families/head-to-head/finished-rounds';

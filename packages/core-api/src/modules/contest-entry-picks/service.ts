@@ -144,7 +144,7 @@ export class ContestEntryPickService {
   /**
    * Records a random draw (#601) in one transaction: the draw row, every dealt pick, and every
    * entry submitted. All or nothing, so a contest is never half dealt. The draw row is marked as
-   * owing its entries their receipts, which the next lifecycle sweep sends (#1171).
+   * owing its entries their receipts, which the next receipts sweep sends (#1171).
    *
    * The draw row's unique contest key is the guard against two draws racing: the second
    * insert fails, and nothing of it is written. The entries are re-read inside the
@@ -180,7 +180,7 @@ export class ContestEntryPickService {
             fieldOrder: [...input.fieldOrder],
             entryOrder: [...input.entryOrder],
             drawnByUserId: input.drawnByUserId,
-            // The dealt entries' receipts go out on the next lifecycle sweep (#1171).
+            // The dealt entries' receipts go out on the next receipts sweep (#1171).
             receiptsPendingSportEventId: input.sportEventId,
           },
           select: { drawnAt: true },

@@ -580,7 +580,7 @@ export class SelectionService {
     );
     // The draw changed only what `recordDraw` wrote: the contest is drawn and every entry
     // submitted at the draw's time (#1196). The receipts are not sent here: the draw is marked as
-    // owing them, and the next lifecycle sweep sends them (#1171, `sendDrawReceipts`).
+    // owing them, and the next receipts sweep sends them (#1171, `sendDrawReceipts`).
     const drawnContext = withDraw(context, drawnAt, this.now());
     const picks = await this.findEventPicks(drawnContext, context.entries.map((entry) => entry.id));
 
@@ -589,7 +589,7 @@ export class SelectionService {
 
   /**
    * Queues every entry of a drawn quick pick contest its receipt of the dealt picks (#867), for
-   * the lifecycle sweep once the draw has marked them owed (#1171). The contest's room context is
+   * the receipts sweep once the draw has marked them owed (#1171). The contest's room context is
    * read once, the entries' picks in one read, and the receipts go to the outbox in one batch, so
    * the reads do not grow with the entries. The event is the one the draw dealt, as it recorded
    * it, even when the sweep runs after it started. A failure is thrown, so the sweep tries again.

@@ -4,7 +4,7 @@
  * root admin is told what it still needs before release, once a day until it is released or
  * starts.
  *
- * The lifecycle scheduler's "notifications due" step calls `queueDue` on every sweep. The
+ * Its sweep (`DueNotificationsScheduler`) calls `queueDue` every five minutes. The
  * outbox idempotency key is the event, the whole days left until it starts and the person, so
  * each day's email is queued once and the next day's is a new one.
  */
@@ -13,7 +13,7 @@ import type { FastifyBaseLogger } from 'fastify';
 import type { SportEventRepository, UserRepository } from '@poolmaster/shared/db';
 import { SportEventStatus, type SportEvent, type User } from '@poolmaster/shared/domain';
 import { emailRecipientOf, buildSportEventAdminUrl, type EmailService } from '../email';
-import type { DueNotifications } from '../events/event-lifecycle-scheduler';
+import type { DueNotifications } from './due-notifications-scheduler';
 import type { SportEventService } from '../events/service';
 import { errorMessage } from '../../core/error-message';
 

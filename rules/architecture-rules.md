@@ -214,13 +214,18 @@ for subscribers that never existed; they are in git history if that day comes.
 
 ### Background jobs run on one server task
 
-Every API task starts the schedulers (the lifecycle sweep, the provider loops, the email
-sender), and prod runs more than one task. So that a job runs once, not once per task (#1159):
+Every API task starts the schedulers (the lifecycle sweep, the clock-driven email sweeps, the
+provider loops, the email sender), and prod runs more than one task. So that a job runs once, not once per task (#1159):
 
 - **A recurring job holds a job lock** (`core/job-lock.ts`, a Postgres session advisory lock on
   a connection of its own). The task that takes a job's lock keeps it from tick to tick and the
   others skip that job, until the holder stops and its connection closes. A new provider loop
   passes a lock key; a loop that only changes this process's own state needs none.
+- **One recurring job per lock.** Work that sweeps every league (an email kind, a cleanup) gets a
+  timer and lock of its own rather than a step inside another sweep, so a slow one never holds
+  up the rest. Each runs on a `LockedSweep` (`core/locked-sweep.ts`): the lifecycle sweep, and
+  each clock-driven email kind on a `DueNotificationsScheduler` (#845), whose kinds start
+  staggered within the interval so they don't all reach the database on one tick.
 - **A status change that triggers side effects is a guarded write** — `updateMany` where the
   row is still in the status it was read in — and only the caller whose write landed runs the
   side effects. `SportEventRepository.transitionStatus` and `ContestRepository.transitionStatus`
