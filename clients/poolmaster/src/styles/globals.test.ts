@@ -33,7 +33,6 @@ const SAME_IN_BOTH_MODES = new Set([
   '--status-final-surface',
   '--status-final-text',
   '--text-label-on-inverse',
-  '--surface-selected',
   '--primary-foreground',
   '--accent-foreground',
   '--podium-1-text',
@@ -54,6 +53,17 @@ function followsADarkValue(name: string, seen = new Set<string>()): boolean {
   seen.add(name);
   const value = lightTokens.get(name) ?? '';
   return [...value.matchAll(/var\((--[\w-]+)\)/g)].some(([, reference]) => followsADarkValue(reference, seen));
+}
+
+/** WCAG contrast ratio between two #rrggbb colours. */
+function contrast(a: string, b: string): number {
+  const channel = (hex: string, at: number) => {
+    const value = Number.parseInt(hex.slice(at, at + 2), 16) / 255;
+    return value <= 0.039_28 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+  };
+  const luminance = (hex: string) => 0.2126 * channel(hex, 1) + 0.7152 * channel(hex, 3) + 0.0722 * channel(hex, 5);
+  const [x, y] = [luminance(a), luminance(b)];
+  return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05);
 }
 
 describe('theme file', () => {
@@ -126,6 +136,15 @@ describe('theme file', () => {
 
   it('gives small labels the navy haze in dark mode, since label blue on graphite is too dark to read', () => {
     expect(darkTokens.get('--text-label')).toBe('var(--color-navy-200)');
+  });
+
+  it('lifts the selected tab blue in dark mode so white text clears 4.5:1 and the tab clears 3:1 against a card', () => {
+    const selected = lightTokens.get('--color-field-blue-lifted') ?? '';
+    const card = lightTokens.get('--color-graphite-800') ?? '';
+
+    expect(darkTokens.get('--surface-selected')).toBe('var(--color-field-blue-lifted)');
+    expect(contrast(selected, '#ffffff')).toBeGreaterThanOrEqual(4.5);
+    expect(contrast(selected, card)).toBeGreaterThanOrEqual(3);
   });
 
   it('sets leaderboard totals at 18px, a step above the 16px row text, without a colour of their own', () => {
