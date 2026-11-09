@@ -68,4 +68,17 @@ describe('EmailUnsubscribePage', () => {
     expect(screen.getByTestId('email-unsubscribe-invalid')).toBeInTheDocument();
     expect(unsubscribeFromEmailMock).not.toHaveBeenCalled();
   });
+
+  it('keeps the button and shows the reason when unsubscribing fails for another cause', async () => {
+    unsubscribeFromEmailMock.mockResolvedValue({
+      error: { error: { code: 'INTERNAL_ERROR', message: 'Email settings are unavailable right now.' } },
+    });
+    renderPage();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Stop these emails' }));
+
+    expect(await screen.findByText('Email settings are unavailable right now.')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Stop these emails' })).toBeEnabled();
+    expect(screen.queryByTestId('email-unsubscribe-invalid')).not.toBeInTheDocument();
+  });
 });

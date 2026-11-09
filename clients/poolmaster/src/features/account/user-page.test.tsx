@@ -8,6 +8,7 @@ import {
   type AuthSessionUser,
 } from '@/features/auth/auth-session-cache';
 import { AuthProvider } from '@/features/auth/auth-provider';
+import { DEFAULT_DISPLAY_PREFERENCES } from '@/features/shared/ui';
 import { UserPage } from './user-page';
 
 /**
@@ -23,6 +24,7 @@ const {
   deleteUserMock,
   disableUserMock,
   enableUserMock,
+  getUserEmailPreferencesMock,
   getUserMock,
   listUserPaymentsMock,
   logoutUserMock,
@@ -47,6 +49,7 @@ const {
     deleteUserMock: vi.fn(),
     disableUserMock: vi.fn(),
     enableUserMock: vi.fn(),
+    getUserEmailPreferencesMock: vi.fn(),
     getUserMock: vi.fn(),
     listUserPaymentsMock: vi.fn(),
     logoutUserMock: vi.fn(),
@@ -64,6 +67,7 @@ bindApiMocks({
   disableUser: disableUserMock,
   enableUser: enableUserMock,
   getUser: getUserMock,
+  getUserEmailPreferences: getUserEmailPreferencesMock,
   listUserPayments: listUserPaymentsMock,
   logoutUser: logoutUserMock,
   refreshToken: refreshTokenMock,
@@ -179,6 +183,7 @@ describe('UserPage', () => {
     disableUserMock.mockReset();
     enableUserMock.mockReset();
     getUserMock.mockReset();
+    getUserEmailPreferencesMock.mockReset();
     listUserPaymentsMock.mockReset();
     primedUsersByPath.clear();
     logoutUserMock.mockReset();
@@ -656,4 +661,215 @@ describe('UserPage', () => {
     expect(screen.queryByTestId('user-page-delete-success')).not.toBeInTheDocument();
   });
 
+  it('signs out and returns to the home page when a deleted user picks Exit and sign out', async () => {
+    primeCurrentUser({ isActive: false });
+    deleteUserMock.mockResolvedValue({ data: { success: true } });
+    logoutUserMock.mockResolvedValue({ data: { success: true } });
+
+    renderUserPage();
+
+    await screen.findByTestId('user-page-inactive-banner');
+    fireEvent.click(screen.getByTestId('user-page-open-delete'));
+    await screen.findByTestId('user-page-delete-dialog');
+    fireEvent.change(screen.getByTestId('user-page-delete-confirmation'), { target: { value: 'derek@example.com' } });
+    fireEvent.click(screen.getByTestId('user-page-delete-submit'));
+    const success = await screen.findByTestId('user-page-delete-success');
+    fireEvent.click(within(success).getByRole('button', { name: 'Exit and sign out' }));
+
+    expect(await screen.findByTestId('root-route')).toBeInTheDocument();
+    expect(logoutUserMock).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    ['user-page-open-profile', 'user-page-profile-dialog'],
+    ['user-page-open-username', 'user-page-username-dialog'],
+    ['user-page-open-preferences', 'user-page-preferences-dialog'],
+  ])('closes the dialog opened by %s without saving when Cancel is clicked', async (openTestId, dialogTestId) => {
+    primeCurrentUser();
+
+    renderUserPage();
+
+    await screen.findByTestId('user-page');
+    fireEvent.click(screen.getByTestId(openTestId));
+    const dialog = await screen.findByTestId(dialogTestId);
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+
+    await waitFor(() => expect(screen.queryByTestId(dialogTestId)).not.toBeInTheDocument());
+    expect(updateUserProfileMock).not.toHaveBeenCalled();
+    expect(updateUserUsernameMock).not.toHaveBeenCalled();
+    expect(updateUserPreferencesMock).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['user-page-open-profile', 'user-page-profile-dialog'],
+    ['user-page-open-username', 'user-page-username-dialog'],
+    ['user-page-open-preferences', 'user-page-preferences-dialog'],
+    ['user-page-open-password', 'user-page-password-dialog'],
+    ['user-page-open-lifecycle', 'user-page-lifecycle-dialog'],
+  ])('closes the dialog opened by %s when Escape is pressed', async (openTestId, dialogTestId) => {
+    primeCurrentUser();
+
+    renderUserPage();
+
+    await screen.findByTestId('user-page');
+    fireEvent.click(screen.getByTestId(openTestId));
+    const dialog = await screen.findByTestId(dialogTestId);
+    fireEvent.keyDown(dialog, { key: 'Escape' });
+
+    await waitFor(() => expect(screen.queryByTestId(dialogTestId)).not.toBeInTheDocument());
+  });
+
+  it('opens the email notifications dialog from its tile and closes it again', async () => {
+    primeCurrentUser();
+    getUserEmailPreferencesMock.mockResolvedValue({
+      data: { preferences: [{ category: 'RESULTS', enabled: true }], emailSuppression: null },
+    });
+
+    renderUserPage();
+
+    await screen.findByTestId('user-page');
+    fireEvent.click(screen.getByTestId('user-page-open-email-notifications'));
+    const dialog = await screen.findByTestId('email-notifications-dialog');
+    expect(await within(dialog).findByLabelText(/^Results/)).toBeChecked();
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Close Email notifications' }));
+
+    await waitFor(() => expect(screen.queryByTestId('email-notifications-dialog')).not.toBeInTheDocument());
+  });
+
+  it('keeps the profile dialog open with the server reason when saving the profile fails', async () => {
+    primeCurrentUser();
+    updateUserProfileMock.mockResolvedValue({
+      error: { error: { code: 'ACCOUNT_EMAIL_TAKEN', message: 'That email is already in use.' } },
+    });
+
+    renderUserPage();
+
+    await screen.findByTestId('user-page');
+    fireEvent.click(screen.getByTestId('user-page-open-profile'));
+    const dialog = await screen.findByTestId('user-page-profile-dialog');
+    fireEvent.change(screen.getByTestId('user-page-email'), { target: { value: 'taken@example.com' } });
+    fireEvent.click(screen.getByTestId('user-page-save-profile'));
+
+    expect(await within(dialog).findByText('That email is already in use.')).toBeVisible();
+    expect(screen.queryByText('Your profile was updated.')).not.toBeInTheDocument();
+  });
+
+  it('keeps the preferences dialog open with the server reason when saving preferences fails', async () => {
+    primeCurrentUser();
+    updateUserPreferencesMock.mockResolvedValue({
+      error: { error: { code: 'VALIDATION_ERROR', message: 'That locale is not supported.' } },
+    });
+
+    renderUserPage();
+
+    await screen.findByTestId('user-page');
+    fireEvent.click(screen.getByTestId('user-page-open-preferences'));
+    const dialog = await screen.findByTestId('user-page-preferences-dialog');
+    fireEvent.click(screen.getByTestId('user-page-save-preferences'));
+
+    expect(await within(dialog).findByText('That locale is not supported.')).toBeVisible();
+    expect(screen.queryByText('Your preferences were updated.')).not.toBeInTheDocument();
+  });
+
+  it('sends no locale or clock when the user clears the locale and picks the system default clock', async () => {
+    primeCurrentUser();
+    updateUserPreferencesMock.mockResolvedValue({
+      data: { user: buildCurrentUser({ locale: undefined, timeFormat: undefined }) },
+    });
+
+    renderUserPage();
+
+    await screen.findByTestId('user-page');
+    fireEvent.click(screen.getByTestId('user-page-open-preferences'));
+    await screen.findByTestId('user-page-preferences-dialog');
+    fireEvent.change(screen.getByTestId('user-page-locale'), { target: { value: '   ' } });
+    fireEvent.change(screen.getByTestId('user-page-time-format'), { target: { value: '' } });
+    expect(screen.getByTestId('user-page-locale')).toHaveValue('');
+    fireEvent.click(screen.getByTestId('user-page-save-preferences'));
+
+    await waitFor(() =>
+      expect(updateUserPreferencesMock).toHaveBeenCalledWith({
+        path: { userId: 'me' },
+        body: { timezone: 'America/New_York', locale: undefined, timeFormat: undefined },
+      }),
+    );
+  });
+
+  it('opens the preferences dialog on the default time zone when the user has none saved', async () => {
+    primeCurrentUser({ timezone: undefined, locale: undefined, timeFormat: undefined });
+
+    renderUserPage();
+
+    await screen.findByTestId('user-page');
+    fireEvent.click(screen.getByTestId('user-page-open-preferences'));
+    await screen.findByTestId('user-page-preferences-dialog');
+
+    expect(screen.getByTestId('user-page-timezone')).toHaveValue(DEFAULT_DISPLAY_PREFERENCES.timeZone);
+    expect(screen.getByTestId('user-page-locale')).toHaveValue('');
+    expect(screen.getByTestId('user-page-time-format')).toHaveValue('');
+  });
+
+  it('shows the server reason and keeps the account active when inactivating fails', async () => {
+    primeCurrentUser();
+    disableUserMock.mockResolvedValue({
+      error: { error: { code: 'INTERNAL_ERROR', message: 'The account could not be inactivated.' } },
+    });
+
+    renderUserPage();
+
+    await screen.findByTestId('user-page');
+    fireEvent.click(screen.getByTestId('user-page-open-lifecycle'));
+    await screen.findByTestId('user-page-lifecycle-dialog');
+    fireEvent.click(screen.getByTestId('user-page-inactivate'));
+
+    expect(await screen.findByText('The account could not be inactivated.')).toBeVisible();
+    expect(screen.queryByTestId('user-page-inactive-banner')).not.toBeInTheDocument();
+  });
+
+  it('shows the server reason and keeps the account inactive when reactivating fails', async () => {
+    primeCurrentUser({ isActive: false });
+    enableUserMock.mockResolvedValue({
+      error: { error: { code: 'INTERNAL_ERROR', message: 'The account could not be reactivated.' } },
+    });
+
+    renderUserPage();
+
+    await screen.findByTestId('user-page-inactive-banner');
+    fireEvent.click(screen.getByTestId('user-page-open-lifecycle'));
+    await screen.findByTestId('user-page-lifecycle-dialog');
+    fireEvent.click(screen.getByTestId('user-page-reactivate'));
+
+    expect(await screen.findByText('The account could not be reactivated.')).toBeVisible();
+    expect(screen.getByTestId('user-page-inactive-banner')).toBeVisible();
+  });
+
+  it('labels a root admin\'s role as Root admin in the account details', async () => {
+    primeCurrentUser({ isRootAdmin: true });
+
+    renderUserPage('/users/user-1');
+
+    const accountDetails = await screen.findByTestId('user-page-account-details');
+    expect(within(accountDetails).getByText('Root admin')).toBeVisible();
+  });
+
+  it.each([
+    ['Cancel', (dialog: HTMLElement) => fireEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }))],
+    ['Escape', (dialog: HTMLElement) => fireEvent.keyDown(dialog, { key: 'Escape' })],
+  ])('closes the delete dialog on %s and starts over with an empty confirmation next time', async (_how, close) => {
+    primeCurrentUser({ isActive: false });
+
+    renderUserPage();
+
+    await screen.findByTestId('user-page-inactive-banner');
+    fireEvent.click(screen.getByTestId('user-page-open-delete'));
+    const dialog = await screen.findByTestId('user-page-delete-dialog');
+    fireEvent.change(screen.getByTestId('user-page-delete-confirmation'), { target: { value: 'derek@' } });
+    close(dialog);
+    await waitFor(() => expect(screen.queryByTestId('user-page-delete-dialog')).not.toBeInTheDocument());
+
+    fireEvent.click(screen.getByTestId('user-page-open-delete'));
+    await screen.findByTestId('user-page-delete-dialog');
+    expect(screen.getByTestId('user-page-delete-confirmation')).toHaveValue('');
+    expect(deleteUserMock).not.toHaveBeenCalled();
+  });
 });

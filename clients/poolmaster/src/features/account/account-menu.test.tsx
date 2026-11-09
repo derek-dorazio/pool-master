@@ -52,4 +52,19 @@ describe('AccountMenu', () => {
     fireEvent.click(screen.getByTestId('account-menu-trigger'));
     expect(screen.getByTestId('account-menu-profile')).toHaveAttribute('href', '/users/user-1');
   });
+
+  it('closes the menu when the Profile link is clicked', () => {
+    renderMenu();
+    fireEvent.click(screen.getByTestId('account-menu-trigger'));
+    fireEvent.click(screen.getByTestId('account-menu-profile'));
+    expect(screen.queryByTestId('account-menu-panel')).not.toBeInTheDocument();
+  });
+
+  it('closes the menu and signs the user out when Log out is clicked', () => {
+    const { onLogout } = renderMenu();
+    fireEvent.click(screen.getByTestId('account-menu-trigger'));
+    fireEvent.click(screen.getByTestId('account-menu-logout'));
+    expect(screen.queryByTestId('account-menu-panel')).not.toBeInTheDocument();
+    expect(onLogout).toHaveBeenCalledTimes(1);
+  });
 });

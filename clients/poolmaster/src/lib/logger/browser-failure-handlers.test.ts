@@ -85,4 +85,39 @@ describe('registerGlobalBrowserFailureHandlers', () => {
       expect.any(Function),
     );
   });
+
+  it('turns a window error that carries only a message into an Error and leaves missing positions null', () => {
+    const logger = createLogger();
+    const teardown = registerGlobalBrowserFailureHandlers(logger);
+
+    window.dispatchEvent(new ErrorEvent('error', { message: 'Script error.' }));
+
+    expect(logger.fatal).toHaveBeenCalledWith(
+      {
+        action: 'app.unhandledError',
+        err: new Error('Script error.'),
+        data: { filename: null, lineno: null, colno: null },
+      },
+      'Unhandled browser error',
+    );
+
+    teardown();
+  });
+
+  it('logs a rejection reason that is neither an Error nor a string exactly as it was thrown', () => {
+    const logger = createLogger();
+    const teardown = registerGlobalBrowserFailureHandlers(logger);
+    const reason = { code: 'TIMEOUT' };
+    const rejectionEvent = new Event('unhandledrejection') as PromiseRejectionEvent;
+    Object.defineProperty(rejectionEvent, 'reason', { configurable: true, value: reason });
+
+    window.dispatchEvent(rejectionEvent);
+
+    expect(logger.fatal).toHaveBeenCalledWith(
+      { action: 'app.unhandledRejection', err: reason },
+      'Unhandled promise rejection',
+    );
+
+    teardown();
+  });
 });
