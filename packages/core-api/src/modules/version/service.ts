@@ -1,5 +1,5 @@
-import { readAppEnv, type AppEnvironment } from '../../core/config';
-import { readVersionInfo, type VersionInfo } from '../../core/version-info';
+import type { AppEnvironment } from '../../core/config';
+import type { VersionInfo } from '../../core/version-info';
 
 export interface ServiceVersionRecord {
   readonly environment: AppEnvironment;
@@ -18,9 +18,9 @@ export interface ServiceVersionRecord {
  */
 export class VersionService {
   constructor(
-    private readonly build: VersionInfo = readVersionInfo(),
-    private readonly environment: AppEnvironment = readAppEnv(),
-    private readonly nodeVersion: string = process.version,
+    private readonly build: VersionInfo,
+    private readonly environment: AppEnvironment,
+    private readonly nodeVersion: string,
   ) {}
 
   getVersion(): ServiceVersionRecord {

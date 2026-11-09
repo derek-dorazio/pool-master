@@ -31,16 +31,20 @@ module.exports = {
   ],
   coverageThreshold: {
     // Files a glob below matches are left out of this total (Jest checks them on their own), so
-    // it covers what no per-file floor does: routes, repositories, mappers, wiring. Re-measured on
-    // 2026-11-09 (#1477) with the scoring files out of it, Babel: 72.72 / 68.38 / 66.80 / 73.19.
-    // About 1 point under; raise it as coverage grows, never lower it to pass.
+    // it covers what no per-file floor does: routes, handlers, wiring, ingestion's adapters and
+    // persistence, core-api's `core` and `adapters` folders and the rest of `packages/shared`.
+    // Most of that is proven by the integration and functional suites, so the unit figure is low. Re-measured on 2026-11-09 (#1477) with every per-file
+    // glob out of it, Babel: 33.94 / 28.56 / 25.96 / 34.45. About 1 point under; raise it as
+    // coverage grows, never lower it to pass.
     global: {
-      statements: 71.5,
-      branches: 67.5,
-      functions: 66,
-      lines: 72,
+      statements: 33,
+      branches: 27.5,
+      functions: 25,
+      lines: 33.5,
     },
+    // A file matched by several globs must meet every one of them: a scoring file is held to both.
     ...scoringFloors(),
+    ...logicFloors(),
   },
 };
 
@@ -62,4 +66,25 @@ function scoringFloors() {
     'events/bracket-reseed.ts',
     'notifications/live-standings.ts',
   ].map((glob) => [path.join(modules, glob), floor]));
+}
+
+/**
+ * Per-file floors on the rest of the unit-testable logic (#1477): module services and module
+ * logic, shared domain and shared DTOs, each file at 90% lines and 80% branches. Left out, since
+ * a unit test is not what proves them: routes and handlers (#1482), wiring, job-request
+ * declarations, repositories and mappers (#1481), barrels, and ingestion's provider adapters and
+ * persistence, which are database and network calls the integration suite covers.
+ */
+function logicFloors() {
+  const root = path.join(__dirname, '..');
+  const modules = path.join(root, 'packages/core-api/src/modules');
+  const logicFile = '!(routes|*-routes|handler|*-handler|wiring|*-job-requests|repository|*-repository|*-mapper|*-mappers|index).ts';
+  const floor = { lines: 90, branches: 80 };
+  return Object.fromEntries([
+    path.join(modules, `!(ingestion)/**/${logicFile}`),
+    path.join(modules, `ingestion/${logicFile}`),
+    path.join(modules, `ingestion/!(adapters|persistence)/**/${logicFile}`),
+    path.join(root, 'packages/shared/domain/**/*.ts'),
+    path.join(root, 'packages/shared/dto/**/*.ts'),
+  ].map((glob) => [glob, floor]));
 }

@@ -240,7 +240,10 @@ describe('Championships', () => {
 
     renderChampionships('/league/BIGDAWGS/championships/2026/race/sport-league-pga');
 
-    fireEvent.change(await screen.findByRole('combobox', { name: 'Year' }), { target: { value: '2024' } });
+    const picker = await screen.findByRole('combobox', { name: 'Year' });
+    // The years arrive with the league's history; 2024 can only be chosen once it is offered.
+    await within(picker).findByRole('option', { name: '2024' });
+    fireEvent.change(picker, { target: { value: '2024' } });
 
     expect(screen.getByTestId('location')).toHaveTextContent(/^\/league\/BIGDAWGS\/championships\/2024\/race/);
     expect(screen.getByTestId('location')).not.toHaveTextContent('sport-league-pga');

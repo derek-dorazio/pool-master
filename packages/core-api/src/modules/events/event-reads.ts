@@ -31,11 +31,10 @@ export function readEventsOnce(
   );
   return {
     findByIds: async (ids) => {
-      readMissingTogether(answers, ids, async (missing) => {
+      const sportEvents = await Promise.all(readTogether(answers, ids, async (missing) => {
         const found = new Map((await source.findByIds(missing)).map((sportEvent) => [sportEvent.id, sportEvent]));
         return (id) => found.get(id);
-      });
-      const sportEvents = await Promise.all(ids.map((id) => answers.get(id) ?? Promise.resolve(undefined)));
+      }));
       return sportEvents.filter((sportEvent): sportEvent is SportEvent => sportEvent !== undefined);
     },
   };
@@ -51,11 +50,11 @@ export function readEventMatchesOnce(
   const answers = new Map<string, Promise<SportEventMatch[]>>();
   const findBySportEvents = async (ids: readonly string[]): Promise<SportEventMatch[]> => {
     const sportEventIds = [...new Set(ids)].sort();
-    readMissingTogether(answers, sportEventIds, async (missing) => {
+    const answered = readTogether(answers, sportEventIds, async (missing) => {
       const matches = await source.findBySportEvents(missing);
       return (id) => matches.filter((match) => match.sportEventId === id);
     });
-    return (await Promise.all(sportEventIds.map((id) => answers.get(id) ?? Promise.resolve([])))).flat();
+    return (await Promise.all(answered)).flat();
   };
   return { findBySportEvent: (sportEventId) => findBySportEvents([sportEventId]), findBySportEvents };
 }
@@ -69,14 +68,16 @@ function remember<T>(answers: Map<string, Promise<T>>, key: string, load: () => 
   return answer;
 }
 
-/** Reads the keys not answered yet in one call, and records each one's share of it. */
-function readMissingTogether<T>(
+/**
+ * Each key's answer, in the order given: the keys not answered yet are read in one call, on the
+ * first of them to need it, and each one records its share of that read.
+ */
+function readTogether<T>(
   answers: Map<string, Promise<T>>,
   keys: readonly string[],
   load: (missing: string[]) => Promise<(key: string) => T>,
-): void {
+): Promise<T>[] {
   const missing = [...new Set(keys)].filter((key) => !answers.has(key));
-  if (missing.length === 0) return;
-  const read = load(missing);
-  for (const key of missing) void remember(answers, key, async () => (await read)(key));
+  let read: Promise<(key: string) => T> | undefined;
+  return keys.map((key) => remember(answers, key, async () => (await (read ??= load(missing)))(key)));
 }

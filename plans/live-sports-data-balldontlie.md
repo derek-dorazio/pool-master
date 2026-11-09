@@ -73,23 +73,25 @@ requests a minute. So the order is:
 
 Tickets 2 and 3 can run in parallel after 1. Ticket 4 needs 1 and at least one of 2 or 3.
 
-## Open questions, with recommendations
+## Decisions
 
-- **Q1. Should a provider's final score complete a bracket match by itself?** Completing a
-  match advances the winner and moves standings. Recommendation: yes, apply it when the
+Derek accepted every recommendation below on 2026-11-09.
+
+- **Q1 (decided). Should a provider's final score complete a bracket match by itself?** Completing a
+  match advances the winner and moves standings. Decided: yes, apply it when the
   provider marks the game final, since the admin can still correct or clear a result under
   the existing lock rules, and waiting for an admin brings back the person in the loop this
   work removes. Show the source ("from BALLDONTLIE") on the admin's results page.
-- **Q2. Live scores for brackets.** Matches today hold only final results. Recommendation:
+- **Q2 (decided). Live scores for brackets.** Matches today hold only final results. Decided:
   store and show the in-progress score as well, read-only, so a bracket page can show a game
-  live. If Derek prefers final-only for launch, ticket 2 drops the in-progress score.
-- **Q3. Polling cadence once webhooks run.** Recommendation: every 15 minutes for linked
+  live.
+- **Q3 (decided). Polling cadence once webhooks run.** Decided: every 15 minutes for linked
   in-progress events (from 5), plus one reconciliation sync at each game end.
-- **Q4. Which webhook events to subscribe to.** Recommendation: game started, period ended,
+- **Q4 (decided). Which webhook events to subscribe to.** Decided: game started, period ended,
   game ended, and golf hole completed and round completed. No per-play events (scored,
   rebound): one game produces hundreds, and the job refetches the box score anyway. At that
   level a full season of every covered league stays well under 500,000 deliveries a month.
-- **Q5. LPGA.** BALLDONTLIE has no LPGA. Recommendation: LPGA stays on the pipeline (results
+- **Q5 (decided). LPGA.** BALLDONTLIE has no LPGA. Decided: LPGA stays on the pipeline (results
   after each round) for launch. Revisit Goalserve golf if LPGA live leaderboards matter.
 
 ## Out of scope

@@ -29,6 +29,7 @@ import type { EmailConfig } from '@poolmaster/shared/dto';
 import type { DueNotifications } from '../events/event-lifecycle-scheduler';
 import { activeLeagueMembersByLeague, leagueMembersOf, type LeagueMemberDeps, type LeagueMemberWithRole } from './league-members';
 import { easternDateOf, easternDayOf } from './overnight-day';
+import { errorMessage } from '../../core/error-message';
 
 /** The first this many joins of a league's day are told at once; the rest wait for the next day. */
 const AT_ONCE_PER_DAY = 3;
@@ -111,7 +112,7 @@ export class MemberJoinedNotices implements DueNotifications {
   private failedAtOnce(membership: LeagueMembership, error: unknown): void {
     this.deps.logger?.error({
       action: 'email.memberJoined.failed',
-      data: { leagueId: membership.leagueId, membershipId: membership.id, error: error instanceof Error ? error.message : String(error) },
+      data: { leagueId: membership.leagueId, membershipId: membership.id, error: errorMessage(error) },
     }, 'Failed to queue the new member joined email');
   }
 
@@ -157,7 +158,7 @@ export class MemberJoinedNotices implements DueNotifications {
     await this.sendEach(notices, ({ league }, error) => {
       this.deps.logger?.error({
         action: 'email.memberJoined.nextDayFailed',
-        data: { leagueId: league.id, day: yesterday, error: error instanceof Error ? error.message : String(error) },
+        data: { leagueId: league.id, day: yesterday, error: errorMessage(error) },
       }, 'Failed to queue the next day\'s new member joined email');
     }, members);
   }

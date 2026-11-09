@@ -20,20 +20,26 @@ describe('DraftEventNotices', () => {
   let world: InMemoryContestWorld;
   let outbox: InMemoryEmailMessages;
   let blockers: Map<string, string[]>;
+  let logger: ReturnType<typeof fakeLogger>;
 
   beforeEach(() => {
     world = new InMemoryContestWorld();
     outbox = inMemoryEmailMessages();
     blockers = new Map();
+    logger = fakeLogger();
   });
 
   function notices(): DraftEventNotices {
     const config = EMAIL_SETTINGS.defaults({ POOLMASTER_ENVIRONMENT: 'prod' });
-    const logger = fakeLogger();
     const users = (): User[] => [...world.users.values()];
     return new DraftEventNotices({
       sportEvents: world.sportEventRepo(),
-      releaseReadiness: { releaseBlockersOf: async (sportEventId) => blockers.get(sportEventId) ?? [] },
+      releaseReadiness: {
+        releaseBlockersOf: async (sportEventId) => {
+          if (sportEventId === 'unreadable') throw new Error('readiness read failed');
+          return blockers.get(sportEventId) ?? [];
+        },
+      },
       users: {
         findActiveRootAdmins: async () => users().filter((user) => user.isActive && user.isRootAdmin === true),
       },
@@ -98,5 +104,20 @@ describe('DraftEventNotices', () => {
     await notices().queueDue(NOW);
 
     expect(outbox.rows).toEqual([]);
+  });
+
+  it('greets a root admin with no first name by username, and logs a draft whose readiness cannot be read while still telling the others', async () => {
+    const admin = world.addUser({ firstName: '', username: 'commish', isRootAdmin: true });
+    draft({ id: 'unreadable', name: 'Broken', startDate: inDays(2) });
+    draft({ name: 'Fine', startDate: inDays(3) });
+
+    await notices().queueDue(NOW);
+
+    expect(outbox.rows.map((row) => row.recipientUserId)).toEqual([admin.id]);
+    expect(outbox.rows[0]?.textBody).toContain('Hi commish');
+    expect(logger.error).toHaveBeenCalledWith(
+      { action: 'email.eventStillDraft.failed', data: { sportEventId: 'unreadable', error: 'readiness read failed' } },
+      expect.any(String),
+    );
   });
 });

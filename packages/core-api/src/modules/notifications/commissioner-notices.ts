@@ -74,6 +74,7 @@ import type { DueNotifications } from '../events/event-lifecycle-scheduler';
 import type { EmailConfig } from '@poolmaster/shared/dto';
 import { closesOnAGame, contestClosesAtGiven } from './contest-summary';
 import { activeCommissionersByLeague, type LeagueMemberDeps } from './league-members';
+import { errorMessage } from '../../core/error-message';
 
 const HOUR_MS = 60 * 60_000;
 const DAY_MS = 24 * HOUR_MS;
@@ -253,7 +254,7 @@ export class CommissionerNotices implements DueNotifications {
   private failedEventNotices(sportEvent: SportEvent, templateKey: EventNoticeKey, error: unknown): void {
     this.deps.logger?.error({
       action: 'email.commissionerEventNotices.failed',
-      data: { sportEventId: sportEvent.id, templateKey, error: error instanceof Error ? error.message : String(error) },
+      data: { sportEventId: sportEvent.id, templateKey, error: errorMessage(error) },
     }, 'Failed to queue commissioner emails for an event');
   }
 
@@ -329,7 +330,7 @@ export class CommissionerNotices implements DueNotifications {
       } catch (error) {
         this.deps.logger?.error({
           action: 'email.weeklyDigest.failed',
-          data: { leagueId: league.id, error: error instanceof Error ? error.message : String(error) },
+          data: { leagueId: league.id, error: errorMessage(error) },
         }, 'Failed to queue the weekly event digest');
       }
     }
@@ -540,7 +541,7 @@ export class CommissionerNotices implements DueNotifications {
       } catch (error) {
         this.deps.logger?.error({
           action: 'email.contestNotOpen.failed',
-          data: { contestId: send.contest.id, leagueId: send.contest.leagueId, error: error instanceof Error ? error.message : String(error) },
+          data: { contestId: send.contest.id, leagueId: send.contest.leagueId, error: errorMessage(error) },
         }, 'Failed to queue the contest not open email');
       }
     }
