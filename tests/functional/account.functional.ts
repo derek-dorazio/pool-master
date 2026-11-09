@@ -113,6 +113,39 @@ describe('SDK Functional: Account Lifecycle', () => {
     expect(loginWithNewPassword.data?.user.lastName).toBe('Person');
   });
 
+  it('saves the Appearance choice, reads it back on the account, and clears it to no choice', async () => {
+    const user = await buildRegisteredUser({ displayName: 'Appearance User' });
+    const cookieClient = createCookieSessionClient(user.login.tokens);
+
+    const before = await getUser({ client: cookieClient, path: { userId: 'me' } });
+    expect(before.data?.user.colorScheme).toBeUndefined();
+
+    const saved = await updateUserPreferences({ client: cookieClient, path: { userId: 'me' }, body: { colorScheme: 'DARK' } });
+    expect(saved.data?.user.colorScheme).toBe('DARK');
+
+    const reread = await getUser({ client: cookieClient, path: { userId: 'me' } });
+    expect(reread.data?.user.colorScheme).toBe('DARK');
+
+    const otherSave = await updateUserPreferences({ client: cookieClient, path: { userId: 'me' }, body: { timeFormat: '24H' } });
+    expect(otherSave.data?.user.colorScheme).toBe('DARK');
+
+    const cleared = await updateUserPreferences({ client: cookieClient, path: { userId: 'me' }, body: { colorScheme: null } });
+    expect(cleared.data?.user.colorScheme).toBeUndefined();
+  });
+
+  it('rejects an Appearance value that is not Match my device, Light or Dark', async () => {
+    const user = await buildRegisteredUser({ displayName: 'Appearance Invalid User' });
+    const cookieClient = createCookieSessionClient(user.login.tokens);
+
+    const response = await updateUserPreferences({
+      client: cookieClient,
+      path: { userId: 'me' },
+      body: { colorScheme: 'SEPIA' as unknown as 'DARK' },
+    });
+
+    expect(response.response?.status).toBe(400);
+  });
+
   it('inactivates an account, still signs it in as inactive, and permanently deletes it with exact email confirmation', async () => {
     const user = await buildRegisteredUser({
       displayName: 'Account Lifecycle User',

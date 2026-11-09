@@ -4,9 +4,10 @@ import type {
   User as PrismaUser,
   UserAuthProvider as PrismaUserAuthProvider,
   UserTimeFormat as PrismaUserTimeFormat,
+  UserColorScheme as PrismaUserColorScheme,
 } from '@prisma/client';
 import type { UserRepository, UserSearch, UserSearchFilters, UserUpdate } from '@poolmaster/shared/db';
-import { AuthProvider, LeagueMembershipStatus, TimeFormat, type LeagueRole, type User } from '@poolmaster/shared/domain';
+import { AuthProvider, ColorScheme, LeagueMembershipStatus, TimeFormat, type LeagueRole, type User } from '@poolmaster/shared/domain';
 import { forgettingReads, memoizedRead, ReadMemoKey } from '../core/request-read-memo';
 
 /**
@@ -166,6 +167,9 @@ export class PrismaUserRepository implements UserRepository {
         ...(updates.timeFormat !== undefined && {
           timeFormat: updates.timeFormat === null ? null : toPrismaTimeFormat(updates.timeFormat),
         }),
+        ...(updates.colorScheme !== undefined && {
+          colorScheme: updates.colorScheme === null ? null : COLOR_SCHEME_TO_PRISMA[updates.colorScheme],
+        }),
       },
     }));
     return mapToUser(row);
@@ -219,6 +223,7 @@ export function mapToUser(row: Omit<PrismaUser, 'passwordHash'>): User {
     timezone: row.timezone ?? undefined,
     locale: row.locale ?? undefined,
     timeFormat: fromPrismaTimeFormat(row.timeFormat),
+    colorScheme: row.colorScheme === null ? undefined : COLOR_SCHEME_FROM_PRISMA[row.colorScheme],
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };
@@ -247,6 +252,18 @@ const TIME_FORMAT_FROM_PRISMA: Record<PrismaUserTimeFormat, TimeFormat> = {
 const TIME_FORMAT_TO_PRISMA: Record<TimeFormat, PrismaUserTimeFormat> = {
   [TimeFormat.TWELVE_HOUR]: 'TWELVE_HOUR',
   [TimeFormat.TWENTY_FOUR_HOUR]: 'TWENTY_FOUR_HOUR',
+};
+
+const COLOR_SCHEME_FROM_PRISMA: Record<PrismaUserColorScheme, ColorScheme> = {
+  DEVICE: ColorScheme.DEVICE,
+  LIGHT: ColorScheme.LIGHT,
+  DARK: ColorScheme.DARK,
+};
+
+const COLOR_SCHEME_TO_PRISMA: Record<ColorScheme, PrismaUserColorScheme> = {
+  [ColorScheme.DEVICE]: 'DEVICE',
+  [ColorScheme.LIGHT]: 'LIGHT',
+  [ColorScheme.DARK]: 'DARK',
 };
 
 function fromPrismaAuthProvider(value: PrismaUserAuthProvider | null): AuthProvider | undefined {

@@ -18,6 +18,14 @@ enum UserTimeFormat {
   TWENTY_FOUR_HOUR @map("24H")
 }
 
+/// The member's Appearance choice (#1471). Null on the user means no choice yet: the website
+/// then follows the device, and the mobile app opens dark.
+enum UserColorScheme {
+  DEVICE
+  LIGHT
+  DARK
+}
+
 enum PrismaLeagueIconKey {
   GOLF_FLAG
   GOLF_BALL
@@ -604,6 +612,7 @@ model User {
   timezone     String?           @db.VarChar(50)
   locale       String?           @default("en-US") @db.VarChar(10)
   timeFormat   UserTimeFormat?   @default(TWELVE_HOUR) @map("time_format")
+  colorScheme  UserColorScheme?  @map("color_scheme")
   createdAt    DateTime          @default(now()) @map("created_at") @db.Timestamptz
   updatedAt    DateTime          @updatedAt @map("updated_at") @db.Timestamptz
 

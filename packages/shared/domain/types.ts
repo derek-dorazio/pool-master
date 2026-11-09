@@ -41,6 +41,7 @@ import type {
   TeamIconKey,
   TierAssignmentMode,
   TimeFormat,
+  ColorScheme,
   TournamentFormat,
 } from './enums';
 
@@ -67,6 +68,7 @@ export interface User extends DomainEntity {
   timezone?: string;
   locale?: string;
   timeFormat?: TimeFormat;
+  colorScheme?: ColorScheme;
 }
 
 // --- League ---

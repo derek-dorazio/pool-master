@@ -1,6 +1,7 @@
 import { type ReactNode, useEffect, useMemo, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getUser, logoutUser, refreshToken } from '@/lib/api';
+import { useAppliedColorScheme } from '@/lib/color-scheme';
 import { getLogger } from '@/lib/logger';
 import { DisplayPreferencesContext, displayPreferencesOf } from '@/features/shared/ui';
 import {
@@ -178,9 +179,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [user?.timezone, user?.locale, user?.timeFormat],
   );
 
+  const isLoading = meQuery.isLoading || refreshQuery.isFetching;
+  useAppliedColorScheme(
+    isLoading ? { kind: 'pending' } : user ? { kind: 'member', choice: user.colorScheme ?? null } : { kind: 'signedOut' },
+  );
+
   const value: AuthContextValue = {
     isAuthenticated: Boolean(user),
-    isLoading: meQuery.isLoading || refreshQuery.isFetching,
+    isLoading,
     isRootAdmin: user?.isRootAdmin ?? false,
     user,
     clearSession: async () => {
