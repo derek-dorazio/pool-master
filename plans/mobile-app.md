@@ -22,9 +22,10 @@ this plan. Nothing here is built.
 - **Sign-in uses the Bearer path the API already has.** Login already returns the tokens in
   the body and refresh already takes the token in the body; the app keeps the refresh token
   in the phone's keychain. No backend change is needed to sign in.
-- **The first release is the member app**: sign in, leagues, contests, picks for every
-  selection type, live leaderboards, my team, account. Root admin and most commissioner
-  tools stay on the web.
+- **Built member first, Free plan first.** The first release is the member app on the Free
+  plan: sign in, leagues, contests, picks for every selection type, live leaderboards, my
+  team, account. Paid-plan member screens and commissioner tools come after, if Derek wants
+  them; root admin never comes to the phone.
 - **Push notifications are the phone's real gain** and the one big backend addition: the
   same notices that send email today also go to the phone.
 
@@ -49,28 +50,45 @@ What governs this plan:
 
 ## 2. What the First Release Covers
 
-**In** (member app):
+The app is built in slices by **audience** (member, then commissioner) and by **plan** (Free,
+then the paid plans), per Derek 2026-11-09: member and Free first, then decide how much more.
+What each plan unlocks is `PLAN_CONFIG` (`packages/core-api/src/modules/plans/plan-settings.ts`);
+the app reads the league's entitlements from the API like the web does and never keeps its
+own list.
+
+Rough size, counted from the web app's pages: about 30 member screens (including 7 pick
+screens, one per selection type), about 8 of them paid-plan only, about 20 commissioner
+screens, and 31 root admin screens that never come to the phone.
+
+**First release: member, Free plan.**
 
 - Sign up, sign in, sign out, forgot password, and a remembered sign-in.
-- League switcher, league home, contests (current and past), contest page, rules and How to
-  Play.
+- League switcher, league home, contests (this year), contest page, rules and How to Play.
 - Entries and picks for every selection type: Tiered, Budget, Quick pick, Pick'em (straight
-  up and confidence), Bracket, Survivor and Squares.
-- Live leaderboards for each scoring family, squad standings, championships and the trophy
-  case.
-- My team and squad management, joining a league or a team from an invite link.
+  up and confidence), Bracket, Survivor and Squares. Every type is on Free.
+- Live leaderboards for each scoring family and squad standings.
+- My team, joining a league or a team from an invite link.
 - My account: profile, time zone and display settings, email preferences, appearance, and
   account deletion (an App Store requirement, §13).
-- Push notifications (§10) and dark mode (§7).
+- Dark mode (§7) and universal links (§6).
+- Push for the Free notices only: contest opened, entry received, results, event changed (§10).
 
-**Out**, staying on the web:
+A paid-plan league still works in the first release: its members get everything above. Paid
+screens show a short "open on the website" line in their place, never a price (§13).
 
-- Root admin: every `/manage` screen.
-- Commissioner tools beyond the light ones (open and close a contest, run a draw). Contest
-  setup, league settings, event emails and plans stay on the web; the app links there.
-- Billing and plan purchases (§13).
-- Public event pages (`/play/...`): their job is link previews and search, which are web
-  jobs. A universal link to one still opens the app when it is installed.
+**Later, decided after the first release:**
+
+- **Member, paid plans.** Championship and cup standings, cup crowning, the trophy case,
+  past years (Pro); the all-time summary and record book (Premium); push for the Pro notices
+  (entry reminders, contest started, standings, event coming up, member joined).
+- **Commissioner, light.** Open and close a contest, run a draw, invite members, manage
+  squads.
+- **Commissioner, full.** Contest setup, league settings, event emails, championship
+  settings. Recommend these stay on the web: long forms, used weekly at most.
+
+**Never on the phone:** root admin (`/manage`), billing and plan purchases (§13), and the
+public event pages (`/play/...`), whose job is link previews and search. A universal link to
+an event page still opens the app when it is installed.
 
 ## 3. Repository Layout
 
@@ -331,20 +349,29 @@ Per `rules/mobile-rules.md` §4 and `rules/testing-rules.md`:
 
 ## 14. Phases
 
-Narrative order only; tickets and estimates come next.
+Narrative order only; tickets and estimates come next. Phases 1 to 4 are the first release
+(member, Free); after it Derek decides which of phases 5 to 8 to build.
 
-1. **Foundations.** `design-tokens` with the generated `globals.css`; `client-core` with the
-   API client factory, query keys, errors and logger core; the Expo app skeleton with
-   fonts, theme, dark mode and the first primitives; CI checks; a TestFlight build that
-   signs in and shows the member's leagues.
-2. **Read.** League home, contests, contest page, leaderboards for each scoring family,
-   squads and championships, my team, account basics, universal links, polling.
-3. **Play.** Entries and picks for every selection type, invites, sign up, squad
-   management, the light commissioner actions.
-4. **Store ready.** Push notifications (backend and app), account deletion, minimum app
-   version, privacy labels, App Store review.
-5. **Android.** Same code: Play Console, Android back button and notification channels,
-   adaptive icon, a Maestro pass on Android, release.
+1. **Foundations** (about a quarter of the first release). `design-tokens` with the generated
+   `globals.css`; `client-core` with the API client factory, query keys, errors and logger
+   core; the Expo app skeleton with fonts, theme, dark mode and the first primitives; CI
+   checks; a TestFlight build that signs in and shows the member's leagues.
+2. **Read** (member, Free). League home, contests, contest page, leaderboards for each
+   scoring family, squad standings, my team, account basics, universal links, polling.
+3. **Play** (member, Free; the largest phase). Picks for the seven selection types, sign up,
+   joining from an invite link.
+4. **Store ready.** Push for the Free notices (the devices table, register routes and the
+   push sender are built once here), account deletion, minimum app version, privacy labels,
+   App Store review.
+
+Decision point: Derek looks at the first release and picks what comes next.
+
+5. **Member, paid plans.** The championship, cup, trophy, past-year, all-time and record book
+   screens, and push for the Pro notices (cheap once phase 4 has the sender).
+6. **Android.** Same code: Play Console, Android back button and notification channels,
+   adaptive icon, a Maestro pass on Android, release. Small, and can go any time after phase 4.
+7. **Commissioner, light.** Open and close, run a draw, invites, squad management.
+8. **Commissioner, full**, only if Derek wants it (§2 recommends the web).
 
 Phases 2 and 3 split by feature, so several threads can build screens in parallel once
 phase 1 has landed the kit.
