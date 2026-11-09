@@ -89,6 +89,8 @@ export interface EmailMessageRepository {
   markRetry(id: string, retry: { nextAttemptAt: Date; error: string }): Promise<void>;
   /** Back to QUEUED, due at `nextAttemptAt`, with the try not counted: the transport was busy. */
   markThrottled(id: string, nextAttemptAt: Date): Promise<void>;
+  /** SKIPPED for good, with its content cleared: EMAIL_CONFIG switched it off after it was queued. */
+  markSkipped(id: string, skipReason: EmailSkipReason): Promise<void>;
   /** FAILED for good. `clearContent` as for `markSent`. */
   markFailed(id: string, failed: { error: string; clearContent: boolean }): Promise<void>;
   /**

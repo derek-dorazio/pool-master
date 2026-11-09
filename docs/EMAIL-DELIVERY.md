@@ -278,6 +278,10 @@ holds:
 
 - `enabled`: whether any system email is sent. It defaults to off when `POOLMASTER_ENVIRONMENT=qa`
   and on everywhere else.
+  Switching it off also stops email already waiting in the outbox: the sender checks `enabled` and
+  the email's own switch again just before it sends, and records a switched-off email as SKIPPED
+  (`EMAIL_DISABLED` or `TEMPLATE_DISABLED`) instead (#1503). Switching email back on does not
+  send those later.
 - `templates`: one switch per system email, all on by default. Account emails (password reset and
   password changed) have no switch: switching one off would silently break password recovery. They still
   obey `enabled` and "Only send to".
