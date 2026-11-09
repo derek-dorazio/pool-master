@@ -2,6 +2,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { ColorScheme } from '@poolmaster/shared/domain';
+import { setDeviceDark } from '@/test/device-color-scheme';
 import { bindApiMocks } from '@/test/msw-api';
 import {
   AUTH_ME_QUERY_KEY,
@@ -437,6 +439,58 @@ describe('UserPage', () => {
         timeFormat: '24H',
       }),
     );
+  });
+
+  it('shows Match my device under Appearance when the member has not chosen, and leaves the choice unsaved when they save other preferences', async () => {
+    primeCurrentUserThenRefetches(buildCurrentUser({ timeFormat: '24H' }));
+    updateUserPreferencesMock.mockResolvedValue({ data: { user: buildCurrentUser({ timeFormat: '24H' }) } });
+
+    renderUserPage();
+
+    await screen.findByTestId('user-page');
+    fireEvent.click(screen.getByTestId('user-page-open-preferences'));
+    await screen.findByTestId('user-page-preferences-dialog');
+    expect(screen.getByTestId('user-page-color-scheme')).toHaveValue(ColorScheme.DEVICE);
+    fireEvent.click(screen.getByTestId('user-page-save-preferences'));
+
+    await waitFor(() => expect(updateUserPreferencesMock).toHaveBeenCalled());
+    const [[request]] = updateUserPreferencesMock.mock.calls as [[{ body: Record<string, unknown> }]];
+    expect(request.body).not.toHaveProperty('colorScheme');
+  });
+
+  it('saves Dark under Appearance and switches the page to dark at once, without a reload', async () => {
+    primeCurrentUserThenRefetches(buildCurrentUser({ colorScheme: ColorScheme.DARK }));
+    updateUserPreferencesMock.mockResolvedValue({ data: { user: buildCurrentUser({ colorScheme: ColorScheme.DARK }) } });
+
+    renderUserPage();
+
+    await screen.findByTestId('user-page');
+    expect(document.documentElement.dataset['colorScheme']).toBe('light');
+    fireEvent.click(screen.getByTestId('user-page-open-preferences'));
+    await screen.findByTestId('user-page-preferences-dialog');
+    fireEvent.change(screen.getByTestId('user-page-color-scheme'), { target: { value: ColorScheme.DARK } });
+    fireEvent.click(screen.getByTestId('user-page-save-preferences'));
+
+    await waitFor(() =>
+      expect(updateUserPreferencesMock).toHaveBeenCalledWith({
+        path: { userId: 'me' },
+        body: { timezone: 'America/New_York', locale: 'en-US', timeFormat: '12H', colorScheme: ColorScheme.DARK },
+      }),
+    );
+    await waitFor(() => expect(document.documentElement.dataset['colorScheme']).toBe('dark'));
+  });
+
+  it("opens the Appearance choice the member saved, and puts it on the page when the account loads", async () => {
+    setDeviceDark(true);
+    primeCurrentUser({ colorScheme: ColorScheme.LIGHT });
+
+    renderUserPage();
+
+    await screen.findByTestId('user-page');
+    await waitFor(() => expect(document.documentElement.dataset['colorScheme']).toBe('light'));
+    fireEvent.click(screen.getByTestId('user-page-open-preferences'));
+    await screen.findByTestId('user-page-preferences-dialog');
+    expect(screen.getByTestId('user-page-color-scheme')).toHaveValue(ColorScheme.LIGHT);
   });
 
   it('pool-master-l40 tells the user when a requested username is already taken', async () => {

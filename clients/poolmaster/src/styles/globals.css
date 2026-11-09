@@ -5,14 +5,14 @@
 @tailwind utilities;
 
 /* The one place the site's colours are defined (#1468). `:root` holds the light theme, and the
-   `prefers-color-scheme: dark` block below redefines every colour that changes in dark mode, so
-   the site follows the device setting. A colour token needs a dark value, or must follow one that
-   has it, unless `globals.test.ts` lists it as the same in both modes. Emails and link previews
-   can't read these: `BRAND_COLORS` (packages/shared/domain/brand.ts) mirrors the few they use,
-   and `brand-colors.test.ts` keeps the two in step. */
+   `data-color-scheme="dark"` block below redefines every colour that changes in dark mode. A
+   colour token needs a dark value, or must follow one that has it, unless `globals.test.ts`
+   lists it as the same in both modes. Emails and link previews can't read these: `BRAND_COLORS`
+   (packages/shared/domain/brand.ts) mirrors the few they use, and `brand-colors.test.ts` keeps
+   the two in step. */
 @layer base {
   :root {
-    color-scheme: light dark;
+    color-scheme: light;
 
     /* Sunday Prime brand scales. Raw values live only at the theme layer. */
     --color-navy-50: #eaeef6;
@@ -231,59 +231,60 @@
     --illustration-muted: #66665f;
   }
 
-  /* Dark mode, on whenever the device is set to dark: graphite pages and cards, with navy kept for
-     the header bar, the leaderboard headings and the hero's slanted cut (--surface-inverse). */
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --surface-canvas: var(--color-graphite-900);
-      --surface-raised: var(--color-graphite-800);
-      --surface-overlay: var(--color-graphite-700);
-      --surface-quiet: var(--color-graphite-700);
-      --surface-quiet-strong: var(--color-graphite-600);
-      --surface-quiet-hover: var(--color-graphite-700);
-      --text-primary: var(--color-graphite-50);
-      --text-secondary: var(--color-graphite-200);
-      --text-muted: var(--color-graphite-300);
-      /* Label blue is too dark to read on graphite; labels take navy haze, as on navy panels. */
-      --text-label: var(--color-navy-200);
-      --text-danger: var(--color-red-300);
-      /* White on the lighter dark-mode red is too faint; red buttons take dark text. */
-      --text-on-danger: var(--color-graphite-900);
-      --tint-base: var(--color-graphite-50);
-      --border-default: var(--color-graphite-500);
-      --border-strong: var(--color-graphite-400);
-      --accent-primary: var(--color-gold-muted);
-      --accent-primary-hover: var(--color-gold-muted-bright);
-      --chart-series-1: var(--color-gold-muted);
-      --chart-series-2: var(--color-graphite-50);
-      --chart-series-4: var(--color-navy-200);
-      --chart-series-5: var(--color-navy-300);
-      --shadow-base: #000000;
-      --illustration-ink: var(--color-graphite-50);
-      --illustration-paper: #f2f2f2;
-      --illustration-paper-ink: var(--color-graphite-900);
-      --illustration-gold: var(--color-gold-muted);
-      --illustration-gold-ink: var(--color-navy-600);
-      --illustration-sky: #1d2532;
-      --illustration-grass: #55705a;
-      --illustration-grass-dark: #4a634f;
-      --illustration-dirt: #7d6448;
-      --illustration-sand: #2a2620;
-      --illustration-red: var(--color-red-300);
-      --illustration-ice: #1d2532;
-      --illustration-court: var(--color-field-blue);
-      --illustration-brown: #8a5a3a;
-      --illustration-asphalt: #2b2f36;
-      --illustration-road: #3a3f47;
-      /* On graphite ice the light-mode puck disappears: a near-black side under a lighter top. */
-      --illustration-puck: #0a0b0d;
-      --illustration-puck-top: #5a5e66;
-      --illustration-tint: var(--color-graphite-800);
-      --illustration-chip: #2f333a;
-      --illustration-card: var(--color-graphite-650);
-      --illustration-line: color-mix(in srgb, var(--color-graphite-50) 12%, transparent);
-      --illustration-muted: var(--color-graphite-300);
-    }
+  /* Dark mode: graphite pages and cards, with navy kept for the header bar, the leaderboard
+     headings and the hero's slanted cut (--surface-inverse). On when the root element carries
+     data-color-scheme="dark", which src/lib/color-scheme.ts and the first-paint script in
+     index.html set from the member's Appearance (Match my device, Light or Dark). */
+  :root[data-color-scheme="dark"] {
+    color-scheme: dark;
+    --surface-canvas: var(--color-graphite-900);
+    --surface-raised: var(--color-graphite-800);
+    --surface-overlay: var(--color-graphite-700);
+    --surface-quiet: var(--color-graphite-700);
+    --surface-quiet-strong: var(--color-graphite-600);
+    --surface-quiet-hover: var(--color-graphite-700);
+    --text-primary: var(--color-graphite-50);
+    --text-secondary: var(--color-graphite-200);
+    --text-muted: var(--color-graphite-300);
+    /* Label blue is too dark to read on graphite; labels take navy haze, as on navy panels. */
+    --text-label: var(--color-navy-200);
+    --text-danger: var(--color-red-300);
+    /* White on the lighter dark-mode red is too faint; red buttons take dark text. */
+    --text-on-danger: var(--color-graphite-900);
+    --tint-base: var(--color-graphite-50);
+    --border-default: var(--color-graphite-500);
+    --border-strong: var(--color-graphite-400);
+    --accent-primary: var(--color-gold-muted);
+    --accent-primary-hover: var(--color-gold-muted-bright);
+    --chart-series-1: var(--color-gold-muted);
+    --chart-series-2: var(--color-graphite-50);
+    --chart-series-4: var(--color-navy-200);
+    --chart-series-5: var(--color-navy-300);
+    --shadow-base: #000000;
+    --illustration-ink: var(--color-graphite-50);
+    --illustration-paper: #f2f2f2;
+    --illustration-paper-ink: var(--color-graphite-900);
+    --illustration-gold: var(--color-gold-muted);
+    --illustration-gold-ink: var(--color-navy-600);
+    --illustration-sky: #1d2532;
+    --illustration-grass: #55705a;
+    --illustration-grass-dark: #4a634f;
+    --illustration-dirt: #7d6448;
+    --illustration-sand: #2a2620;
+    --illustration-red: var(--color-red-300);
+    --illustration-ice: #1d2532;
+    --illustration-court: var(--color-field-blue);
+    --illustration-brown: #8a5a3a;
+    --illustration-asphalt: #2b2f36;
+    --illustration-road: #3a3f47;
+    /* On graphite ice the light-mode puck disappears: a near-black side under a lighter top. */
+    --illustration-puck: #0a0b0d;
+    --illustration-puck-top: #5a5e66;
+    --illustration-tint: var(--color-graphite-800);
+    --illustration-chip: #2f333a;
+    --illustration-card: var(--color-graphite-650);
+    --illustration-line: color-mix(in srgb, var(--color-graphite-50) 12%, transparent);
+    --illustration-muted: var(--color-graphite-300);
   }
 }
 
