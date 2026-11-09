@@ -401,6 +401,13 @@ state, stale actions, and unthemeable markup accumulate.
   `packages/shared/domain/brand.ts` for everything outside it (system email, link preview
   images, the browser's tab colour). Those read `BRAND_COLORS`, never a hex of their own, and
   a palette change edits both files (`src/styles/brand-colors.test.ts` fails until it does).
+- Dark mode follows the device setting (`prefers-color-scheme`); there is no `.dark` class and
+  no `dark:` utility. `globals.css` defines the light theme in `:root` and redefines, in its one
+  dark-mode block, every colour role that changes. Dark mode sets roles (`--surface-*`,
+  `--text-*`, `--accent-primary`, …), never a raw `--color-*` value. A new colour role needs a
+  dark value, or must be built from a role that has one; `src/styles/globals.test.ts` fails
+  otherwise, unless the role is listed there as the same in both modes (the navy header bar, the
+  silver and bronze medals). Emails and link previews stay light.
 - The house type style is set once in the shared layer, not per page. The wordmark, card and
   tile titles (`title-card`), buttons, and the league menu are uppercase; the wordmark and
   titles are also italic. Page titles and section titles that sit on the page stay normal case.

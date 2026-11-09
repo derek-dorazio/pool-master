@@ -31,8 +31,8 @@ export const BRAND_COLORS = {
   gold: '#f5b800',
   /** `--color-field-blue`: small labels over titles and the selected tab. */
   fieldBlue: '#3d64a8',
-  /** `--color-red-400`: errors and losses. */
-  red: '#a8202d',
+  /** `--color-red-400`: errors and losses, the dusty red. */
+  red: '#b05157',
   /** `--color-paper`: the page behind everything. */
   paper: '#f5f5f2',
   /** `--surface-raised`: cards. */

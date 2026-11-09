@@ -5,7 +5,7 @@ import { dirname, join } from 'node:path';
 import { describe, it } from 'node:test';
 import { fileURLToPath } from 'node:url';
 
-import { isRunAsHook, migrationPlan, parseMigrationRows } from './session-start-environment.mjs';
+import { isRunAsHook, migrationPlan, parseMigrationRows, parseSchemaProbe, readDatabaseState } from './session-start-environment.mjs';
 
 /**
  * #1431 — what the cloud session-start hook does to poolmaster_test.
@@ -17,40 +17,59 @@ import { isRunAsHook, migrationPlan, parseMigrationRows } from './session-start-
  */
 const baselines = ['20270107000000_baseline_schema', '20270107000100_baseline_reference_data'];
 const applied = (name) => ({ migration_name: name, finished_at: '2026-11-01 10:00:00+00', rolled_back_at: null });
+const migrated = (recorded) => ({ recorded, publicTables: 1 });
 const oldHistory = Array.from({ length: 217 }, (_, i) => `2025${String(i).padStart(10, '0')}_old_${i}`);
 
 describe('session-start hook migration plan', () => {
   it('resets a test database built by the pre-squash history even though it has more rows than the tree has migrations', () => {
-    const plan = migrationPlan(baselines, oldHistory.map(applied));
+    const plan = migrationPlan(baselines, migrated(oldHistory.map(applied)));
     assert.equal(plan.action, 'reset');
     assert.match(plan.reason, /217 applied migration\(s\) this branch does not carry/);
   });
 
   it('resets when an applied migration was removed from the branch, even if every branch migration is applied', () => {
-    const plan = migrationPlan(baselines, [...baselines, '20260101000000_dropped'].map(applied));
+    const plan = migrationPlan(baselines, migrated([...baselines, '20260101000000_dropped'].map(applied)));
     assert.equal(plan.action, 'reset');
   });
 
   it('resets when a migration is recorded as unfinished, since deploy refuses that history with P3009', () => {
-    const plan = migrationPlan(baselines, [
+    const plan = migrationPlan(baselines, migrated([
       applied(baselines[0]),
       { migration_name: baselines[1], finished_at: null, rolled_back_at: null },
-    ]);
+    ]));
     assert.equal(plan.action, 'reset');
     assert.match(plan.reason, /unfinished or rolled back/);
   });
 
   it('deploys when the branch adds a migration the database has not applied yet', () => {
-    const plan = migrationPlan([...baselines, '20270201000000_new'], baselines.map(applied));
+    const plan = migrationPlan([...baselines, '20270201000000_new'], migrated(baselines.map(applied)));
     assert.deepEqual(plan, { action: 'deploy', pending: 1 });
   });
 
-  it('deploys every migration to a database that has never been migrated', () => {
-    assert.deepEqual(migrationPlan(baselines, []), { action: 'deploy', pending: 2 });
+  it('deploys every migration to an empty database that has never been migrated', () => {
+    assert.deepEqual(migrationPlan(baselines, { recorded: null, publicTables: 0 }), { action: 'deploy', pending: 2 });
+  });
+
+  it('deploys when the migrations table exists but is empty and nothing else is in public', () => {
+    assert.deepEqual(migrationPlan(baselines, { recorded: [], publicTables: 0 }), { action: 'deploy', pending: 2 });
+  });
+
+  it('resets when the migrations table exists but is empty and other tables are in public, which deploy also refuses', () => {
+    const plan = migrationPlan(baselines, { recorded: [], publicTables: 3 });
+    assert.equal(plan.action, 'reset');
+    assert.match(plan.reason, /3 table\(s\) in public but no _prisma_migrations/);
+  });
+
+  // #1434: tables left by `prisma db push` (or a manual restore) with no _prisma_migrations make
+  // `migrate deploy` fail with P3005 ("The database schema is not empty"), so the hook only warned.
+  it('resets a database whose public schema has tables but no migration history, since deploy refuses it with P3005', () => {
+    const plan = migrationPlan(baselines, { recorded: null, publicTables: 42 });
+    assert.equal(plan.action, 'reset');
+    assert.match(plan.reason, /42 table\(s\) in public but no _prisma_migrations/);
   });
 
   it('is ready when exactly the branch migrations are applied', () => {
-    assert.deepEqual(migrationPlan(baselines, baselines.map(applied)), { action: 'ready' });
+    assert.deepEqual(migrationPlan(baselines, migrated(baselines.map(applied))), { action: 'ready' });
   });
 });
 
@@ -70,6 +89,73 @@ describe('session-start hook _prisma_migrations parsing', () => {
 
   it('reads an empty table as no rows', () => {
     assert.deepEqual(parseMigrationRows(''), []);
+  });
+});
+
+describe('session-start hook schema probe parsing', () => {
+  it('reads a database with a migrations table and its count of other public tables', () => {
+    assert.deepEqual(parseSchemaProbe('t|57'), { hasMigrationsTable: true, publicTables: 57 });
+  });
+
+  it('reads a database with tables but no migrations table', () => {
+    assert.deepEqual(parseSchemaProbe('f|12'), { hasMigrationsTable: false, publicTables: 12 });
+  });
+
+  it('reads an empty database as no migrations table and no tables', () => {
+    assert.deepEqual(parseSchemaProbe('f|0'), { hasMigrationsTable: false, publicTables: 0 });
+  });
+
+  it('throws on output it does not recognise rather than guessing the database is empty', () => {
+    assert.throws(() => parseSchemaProbe(''), /Unrecognised schema probe output/);
+    assert.throws(() => parseSchemaProbe('t|many'), /Unrecognised schema probe output/);
+  });
+});
+
+describe('session-start hook reading the test database', () => {
+  // Answers each query in turn, so a test names exactly what psql returned.
+  const scripted = (...answers) => {
+    const calls = [];
+    const query = (database, sql) => {
+      calls.push(sql);
+      return answers[calls.length - 1];
+    };
+    return { query, calls };
+  };
+  const ok = (stdout) => ({ ok: true, stdout, detail: '' });
+  const fail = (detail) => ({ ok: false, stdout: '', detail });
+
+  it('warns and returns no database state when the schema probe cannot connect, instead of planning a deploy', () => {
+    const { query } = scripted(fail('exit 2\n      psql: error: connection refused'));
+    const result = readDatabaseState(query);
+    assert.equal(result.database, undefined);
+    assert.match(result.warning, /cannot read the schema of poolmaster_test: exit 2/);
+  });
+
+  it('warns and returns no database state when _prisma_migrations exists but cannot be read', () => {
+    const { query, calls } = scripted(ok('t|5'), fail('exit 1\n      ERROR: permission denied'));
+    const result = readDatabaseState(query);
+    assert.equal(calls.length, 2);
+    assert.equal(result.database, undefined);
+    assert.match(result.warning, /cannot read _prisma_migrations in poolmaster_test: exit 1/);
+  });
+
+  it('warns on garbled probe output rather than reading it as an empty database', () => {
+    const result = readDatabaseState(scripted(ok('nonsense')).query);
+    assert.equal(result.database, undefined);
+    assert.match(result.warning, /Unrecognised schema probe output/);
+  });
+
+  it('reports tables with no history without querying _prisma_migrations', () => {
+    const { query, calls } = scripted(ok('f|42'));
+    assert.deepEqual(readDatabaseState(query), { database: { recorded: null, publicTables: 42 } });
+    assert.equal(calls.length, 1);
+  });
+
+  it('reads the recorded history when _prisma_migrations exists', () => {
+    const { query } = scripted(ok('t|5'), ok(`${baselines[0]}|2026-11-01 10:00:00+00|`));
+    assert.deepEqual(readDatabaseState(query), {
+      database: { recorded: [applied(baselines[0])], publicTables: 5 },
+    });
   });
 });
 

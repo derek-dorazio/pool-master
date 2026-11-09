@@ -9,7 +9,7 @@ const themeColor = (token: string) =>
   `color-mix(in srgb, var(--${token}) calc(<alpha-value> * 100%), transparent)`;
 
 const config: Config = {
-  darkMode: ["class"],
+  darkMode: "media",
   content: ["./index.html", "./src/**/*.{ts,tsx}"],
   theme: {
     container: {
