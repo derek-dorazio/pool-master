@@ -123,4 +123,11 @@ describe('theme file', () => {
   it('gives small labels the navy haze in dark mode, since label blue on graphite is too dark to read', () => {
     expect(darkTokens.get('--text-label')).toBe('var(--color-navy-200)');
   });
+
+  it('sets leaderboard totals at 18px, a step above the 16px row text, without a colour of their own', () => {
+    const scoreTotal = /\.score-total \{([^}]*)\}/.exec(themeCss)?.[1] ?? '';
+
+    expect(scoreTotal).toMatch(/font-size: 1\.125rem;/);
+    expect(scoreTotal).not.toMatch(/(^|[^-])color:/);
+  });
 });

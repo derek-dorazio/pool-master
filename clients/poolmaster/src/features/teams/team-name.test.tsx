@@ -69,4 +69,17 @@ describe('TeamName', () => {
     rerender(<MemoryRouter><TeamName name="Blitz" /></MemoryRouter>);
     expect(screen.queryByText('Ann Lee, Bo Diaz')).not.toBeInTheDocument();
   });
+
+  it('leaves out the placeholder squad icon by default, so a list shows the name alone', () => {
+    renderInRouter(<TeamName iconKey={TeamIconKey.CAPTAIN_SMILE_OCEAN} name="Blitz" />);
+
+    expect(screen.getByText('Blitz')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Blitz icon')).not.toBeInTheDocument();
+  });
+
+  it('draws the squad icon beside the name when asked to show it', () => {
+    renderInRouter(<TeamName iconKey={TeamIconKey.CAPTAIN_SMILE_OCEAN} name="Blitz" showIcon />);
+
+    expect(screen.getByLabelText('Blitz icon')).toHaveClass(getTeamIconOption(TeamIconKey.CAPTAIN_SMILE_OCEAN).themeClass);
+  });
 });
