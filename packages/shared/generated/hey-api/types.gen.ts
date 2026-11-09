@@ -137,6 +137,10 @@ export type UserDto = {
      */
     timeFormat?: '12H' | '24H';
     /**
+     * Appearance the member chose: follow the device, light or dark. Absent means no choice yet; the website then follows the device.
+     */
+    colorScheme?: 'DEVICE' | 'LIGHT' | 'DARK';
+    /**
      * Account creation timestamp in ISO 8601 format.
      */
     createdAt?: string;
@@ -195,6 +199,10 @@ export type UserResponse = {
          */
         timeFormat?: '12H' | '24H';
         /**
+         * Appearance the member chose: follow the device, light or dark. Absent means no choice yet; the website then follows the device.
+         */
+        colorScheme?: 'DEVICE' | 'LIGHT' | 'DARK';
+        /**
          * Account creation timestamp in ISO 8601 format.
          */
         createdAt?: string;
@@ -251,6 +259,10 @@ export type UserListResponse = {
          */
         timeFormat?: '12H' | '24H';
         /**
+         * Appearance the member chose: follow the device, light or dark. Absent means no choice yet; the website then follows the device.
+         */
+        colorScheme?: 'DEVICE' | 'LIGHT' | 'DARK';
+        /**
          * Account creation timestamp in ISO 8601 format.
          */
         createdAt?: string;
@@ -301,6 +313,10 @@ export type UserPreferencesUpdateRequest = {
      * Preferred clock display format. Omit to leave unchanged; null to clear it.
      */
     timeFormat?: '12H' | '24H' | null;
+    /**
+     * Appearance: follow the device, light or dark. Omit to leave unchanged; null to clear it.
+     */
+    colorScheme?: 'DEVICE' | 'LIGHT' | 'DARK' | null;
 };
 
 /**
@@ -521,6 +537,10 @@ export type AuthResponse = {
          * 12-hour or 24-hour clock for the times the member sees. Absent means the locale's own.
          */
         timeFormat?: '12H' | '24H';
+        /**
+         * Appearance the member chose: follow the device, light or dark. Absent means no choice yet; the website then follows the device.
+         */
+        colorScheme?: 'DEVICE' | 'LIGHT' | 'DARK';
         /**
          * Account creation timestamp in ISO 8601 format.
          */
@@ -1734,6 +1754,10 @@ export type SquadMembershipDto = {
          */
         timeFormat?: '12H' | '24H';
         /**
+         * Appearance the member chose: follow the device, light or dark. Absent means no choice yet; the website then follows the device.
+         */
+        colorScheme?: 'DEVICE' | 'LIGHT' | 'DARK';
+        /**
          * Account creation timestamp in ISO 8601 format.
          */
         createdAt?: string;
@@ -1812,6 +1836,10 @@ export type SquadOwnerDto = {
          * 12-hour or 24-hour clock for the times the member sees. Absent means the locale's own.
          */
         timeFormat?: '12H' | '24H';
+        /**
+         * Appearance the member chose: follow the device, light or dark. Absent means no choice yet; the website then follows the device.
+         */
+        colorScheme?: 'DEVICE' | 'LIGHT' | 'DARK';
         /**
          * Account creation timestamp in ISO 8601 format.
          */
@@ -1926,6 +1954,10 @@ export type SquadDto = {
              * 12-hour or 24-hour clock for the times the member sees. Absent means the locale's own.
              */
             timeFormat?: '12H' | '24H';
+            /**
+             * Appearance the member chose: follow the device, light or dark. Absent means no choice yet; the website then follows the device.
+             */
+            colorScheme?: 'DEVICE' | 'LIGHT' | 'DARK';
             /**
              * Account creation timestamp in ISO 8601 format.
              */
@@ -2046,6 +2078,10 @@ export type SquadResponse = {
                  */
                 timeFormat?: '12H' | '24H';
                 /**
+                 * Appearance the member chose: follow the device, light or dark. Absent means no choice yet; the website then follows the device.
+                 */
+                colorScheme?: 'DEVICE' | 'LIGHT' | 'DARK';
+                /**
                  * Account creation timestamp in ISO 8601 format.
                  */
                 createdAt?: string;
@@ -2163,6 +2199,10 @@ export type SquadListResponse = {
                  */
                 timeFormat?: '12H' | '24H';
                 /**
+                 * Appearance the member chose: follow the device, light or dark. Absent means no choice yet; the website then follows the device.
+                 */
+                colorScheme?: 'DEVICE' | 'LIGHT' | 'DARK';
+                /**
                  * Account creation timestamp in ISO 8601 format.
                  */
                 createdAt?: string;
@@ -2251,6 +2291,10 @@ export type SquadMembershipResponse = {
              * 12-hour or 24-hour clock for the times the member sees. Absent means the locale's own.
              */
             timeFormat?: '12H' | '24H';
+            /**
+             * Appearance the member chose: follow the device, light or dark. Absent means no choice yet; the website then follows the device.
+             */
+            colorScheme?: 'DEVICE' | 'LIGHT' | 'DARK';
             /**
              * Account creation timestamp in ISO 8601 format.
              */
@@ -2695,6 +2739,10 @@ export type LeagueMembershipDto = {
          */
         timeFormat?: '12H' | '24H';
         /**
+         * Appearance the member chose: follow the device, light or dark. Absent means no choice yet; the website then follows the device.
+         */
+        colorScheme?: 'DEVICE' | 'LIGHT' | 'DARK';
+        /**
          * Account creation timestamp in ISO 8601 format.
          */
         createdAt?: string;
@@ -3110,6 +3158,10 @@ export type LeagueContextResponse = {
              */
             timeFormat?: '12H' | '24H';
             /**
+             * Appearance the member chose: follow the device, light or dark. Absent means no choice yet; the website then follows the device.
+             */
+            colorScheme?: 'DEVICE' | 'LIGHT' | 'DARK';
+            /**
              * Account creation timestamp in ISO 8601 format.
              */
             createdAt?: string;
@@ -3171,6 +3223,10 @@ export type LeagueContextResponse = {
              * 12-hour or 24-hour clock for the times the member sees. Absent means the locale's own.
              */
             timeFormat?: '12H' | '24H';
+            /**
+             * Appearance the member chose: follow the device, light or dark. Absent means no choice yet; the website then follows the device.
+             */
+            colorScheme?: 'DEVICE' | 'LIGHT' | 'DARK';
             /**
              * Account creation timestamp in ISO 8601 format.
              */
@@ -3388,6 +3444,10 @@ export type LeagueListResponse = {
              */
             timeFormat?: '12H' | '24H';
             /**
+             * Appearance the member chose: follow the device, light or dark. Absent means no choice yet; the website then follows the device.
+             */
+            colorScheme?: 'DEVICE' | 'LIGHT' | 'DARK';
+            /**
              * Account creation timestamp in ISO 8601 format.
              */
             createdAt?: string;
@@ -3480,6 +3540,10 @@ export type LeagueMembersResponse = {
              * 12-hour or 24-hour clock for the times the member sees. Absent means the locale's own.
              */
             timeFormat?: '12H' | '24H';
+            /**
+             * Appearance the member chose: follow the device, light or dark. Absent means no choice yet; the website then follows the device.
+             */
+            colorScheme?: 'DEVICE' | 'LIGHT' | 'DARK';
             /**
              * Account creation timestamp in ISO 8601 format.
              */
@@ -3576,6 +3640,10 @@ export type LeagueMembershipResponse = {
              * 12-hour or 24-hour clock for the times the member sees. Absent means the locale's own.
              */
             timeFormat?: '12H' | '24H';
+            /**
+             * Appearance the member chose: follow the device, light or dark. Absent means no choice yet; the website then follows the device.
+             */
+            colorScheme?: 'DEVICE' | 'LIGHT' | 'DARK';
             /**
              * Account creation timestamp in ISO 8601 format.
              */

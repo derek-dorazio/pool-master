@@ -9,9 +9,10 @@ function tokensIn(block: string): Map<string, string> {
   return new Map([...block.matchAll(/(--[\w-]+):\s*([^;]+);/g)].map(([, name, value]) => [name, value.trim()]));
 }
 
-const darkBlock = /@media \(prefers-color-scheme: dark\) \{\s*:root \{([^}]*)\}/.exec(themeCss)?.[1] ?? '';
+const DARK_SELECTOR = ':root[data-color-scheme="dark"] {';
+const darkBlock = themeCss.slice(themeCss.indexOf(DARK_SELECTOR) + DARK_SELECTOR.length).split('}')[0] ?? '';
 const darkTokens = tokensIn(darkBlock);
-const lightTokens = tokensIn(themeCss.slice(0, themeCss.indexOf('@media (prefers-color-scheme: dark)')));
+const lightTokens = tokensIn(themeCss.slice(0, themeCss.indexOf(DARK_SELECTOR)));
 
 /** Tokens that are not colours: type, spacing, motion. */
 const NOT_A_COLOUR = /^--(font|tracking|radius|ease|duration)/;
@@ -62,9 +63,12 @@ describe('theme file', () => {
     expect(undefinedTokens).toEqual([]);
   });
 
-  it('turns dark mode on from the device setting, with no class the app has to add', () => {
+  it('turns dark mode on from the data-color-scheme the app sets on the root, with no .dark class or media query of its own', () => {
+    expect(themeCss.indexOf(DARK_SELECTOR)).toBeGreaterThan(-1);
     expect(darkTokens.size).toBeGreaterThan(0);
+    expect(darkBlock).toMatch(/color-scheme: dark;/);
     expect(themeCss).not.toMatch(/^\s*\.dark\s*\{/m);
+    expect(themeCss).not.toMatch(/prefers-color-scheme/);
   });
 
   it('gives every colour role a dark value, or one it follows, unless it is listed as the same in both modes', () => {

@@ -17,7 +17,7 @@
  */
 import { z } from 'zod';
 import { registerSchema } from './schema-registry';
-import { AuthProvider, TimeFormat } from '@poolmaster/shared/domain';
+import { AuthProvider, ColorScheme, TimeFormat } from '@poolmaster/shared/domain';
 import { EmailInputSchema, NewPasswordInputSchema } from './common.dto';
 
 export const UserDtoSchema = z.object({
@@ -40,6 +40,10 @@ export const UserDtoSchema = z.object({
     .enum([TimeFormat.TWELVE_HOUR, TimeFormat.TWENTY_FOUR_HOUR])
     .optional()
     .describe('12-hour or 24-hour clock for the times the member sees. Absent means the locale\'s own.'),
+  colorScheme: z
+    .enum([ColorScheme.DEVICE, ColorScheme.LIGHT, ColorScheme.DARK])
+    .optional()
+    .describe('Appearance the member chose: follow the device, light or dark. Absent means no choice yet; the website then follows the device.'),
   createdAt: z.iso.datetime().optional().describe('Account creation timestamp in ISO 8601 format.'),
 }).describe('A user account. The canonical User shape, returned wherever a user is read — the authenticated caller, a league or squad peer, or a root-admin management row.');
 export type UserDto = z.infer<typeof UserDtoSchema>;
@@ -113,6 +117,11 @@ export const UserPreferencesUpdateRequestSchema = z.object({
     .nullable()
     .optional()
     .describe('Preferred clock display format. Omit to leave unchanged; null to clear it.'),
+  colorScheme: z
+    .enum([ColorScheme.DEVICE, ColorScheme.LIGHT, ColorScheme.DARK])
+    .nullable()
+    .optional()
+    .describe('Appearance: follow the device, light or dark. Omit to leave unchanged; null to clear it.'),
 }).describe('Preferences update payload. Omitted fields are untouched; null clears a field.');
 export type UserPreferencesUpdateRequest = z.infer<typeof UserPreferencesUpdateRequestSchema>;
 

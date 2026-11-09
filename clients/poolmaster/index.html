@@ -8,6 +8,21 @@
     <!-- The app bar's navy (--surface-inverse), so a phone's browser bar runs into the header. -->
     <meta name="theme-color" content="#0b1e3f" />
     <title>__PRODUCT_NAME__</title>
+    <script>
+      // Light or dark before the first paint (#1471): a signed-in member's remembered Appearance,
+      // else the device. src/lib/color-scheme.ts takes over once the app loads; the key below is
+      // its COLOR_SCHEME_STORAGE_KEY.
+      (function () {
+        var choice = null;
+        try {
+          choice = window.localStorage.getItem('poolmaster.colorScheme');
+        } catch (error) {
+          choice = null;
+        }
+        var dark = choice === 'DARK' || (choice !== 'LIGHT' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        document.documentElement.dataset.colorScheme = dark ? 'dark' : 'light';
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

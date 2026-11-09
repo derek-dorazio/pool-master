@@ -401,9 +401,13 @@ state, stale actions, and unthemeable markup accumulate.
   `packages/shared/domain/brand.ts` for everything outside it (system email, link preview
   images, the browser's tab colour). Those read `BRAND_COLORS`, never a hex of their own, and
   a palette change edits both files (`src/styles/brand-colors.test.ts` fails until it does).
-- Dark mode follows the device setting (`prefers-color-scheme`); there is no `.dark` class and
-  no `dark:` utility. `globals.css` defines the light theme in `:root` and redefines, in its one
-  dark-mode block, every colour role that changes. Dark mode sets roles (`--surface-*`,
+- Dark mode is on when the root element carries `data-color-scheme="dark"`; there is no
+  `.dark` class, no `dark:` utility and no `prefers-color-scheme` query in CSS.
+  `src/lib/color-scheme.ts` sets it from the member's Appearance (Match my device, Light or
+  Dark; no choice means Match my device), signed-out visitors follow their device, and a short
+  script in `index.html` sets it before the first paint from the choice the browser remembers.
+  `globals.css` defines the light theme in `:root` and redefines, in its one dark-mode block,
+  every colour role that changes. Dark mode sets roles (`--surface-*`,
   `--text-*`, `--accent-primary`, …), never a raw `--color-*` value. A new colour role needs a
   dark value, or must be built from a role that has one; `src/styles/globals.test.ts` fails
   otherwise, unless the role is listed there as the same in both modes (the navy header bar, the

@@ -524,6 +524,17 @@ export const TimeFormat = {
 } as const;
 export type TimeFormat = (typeof TimeFormat)[keyof typeof TimeFormat];
 
+/**
+ * The member's Appearance choice. A user with none saved has no value: the website then follows
+ * the device, and the mobile app opens dark (`rules/mobile-rules.md`).
+ */
+export const ColorScheme = {
+  DEVICE: 'DEVICE',
+  LIGHT: 'LIGHT',
+  DARK: 'DARK',
+} as const;
+export type ColorScheme = (typeof ColorScheme)[keyof typeof ColorScheme];
+
 
 /** What auto-assignment orders a field by when it fills an event's tiers. Cross-sport (#236; was GolfTierSource). */
 export const TierSource = {

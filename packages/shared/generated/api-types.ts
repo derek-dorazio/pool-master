@@ -3738,6 +3738,11 @@ export interface components {
              */
             timeFormat?: "12H" | "24H";
             /**
+             * @description Appearance the member chose: follow the device, light or dark. Absent means no choice yet; the website then follows the device.
+             * @enum {string}
+             */
+            colorScheme?: "DEVICE" | "LIGHT" | "DARK";
+            /**
              * Format: date-time
              * @description Account creation timestamp in ISO 8601 format.
              */
@@ -3775,6 +3780,11 @@ export interface components {
                  * @enum {string}
                  */
                 timeFormat?: "12H" | "24H";
+                /**
+                 * @description Appearance the member chose: follow the device, light or dark. Absent means no choice yet; the website then follows the device.
+                 * @enum {string}
+                 */
+                colorScheme?: "DEVICE" | "LIGHT" | "DARK";
                 /**
                  * Format: date-time
                  * @description Account creation timestamp in ISO 8601 format.
@@ -3814,6 +3824,11 @@ export interface components {
                  */
                 timeFormat?: "12H" | "24H";
                 /**
+                 * @description Appearance the member chose: follow the device, light or dark. Absent means no choice yet; the website then follows the device.
+                 * @enum {string}
+                 */
+                colorScheme?: "DEVICE" | "LIGHT" | "DARK";
+                /**
                  * Format: date-time
                  * @description Account creation timestamp in ISO 8601 format.
                  */
@@ -3848,6 +3863,11 @@ export interface components {
              * @enum {string|null}
              */
             timeFormat?: "12H" | "24H" | null;
+            /**
+             * @description Appearance: follow the device, light or dark. Omit to leave unchanged; null to clear it.
+             * @enum {string|null}
+             */
+            colorScheme?: "DEVICE" | "LIGHT" | "DARK" | null;
         };
         /** @description Password-change payload. Self only, because it requires the current password (A6). */
         UserPasswordChangeRequest: {
@@ -3970,6 +3990,11 @@ export interface components {
                  * @enum {string}
                  */
                 timeFormat?: "12H" | "24H";
+                /**
+                 * @description Appearance the member chose: follow the device, light or dark. Absent means no choice yet; the website then follows the device.
+                 * @enum {string}
+                 */
+                colorScheme?: "DEVICE" | "LIGHT" | "DARK";
                 /**
                  * Format: date-time
                  * @description Account creation timestamp in ISO 8601 format.
@@ -4742,6 +4767,11 @@ export interface components {
                  */
                 timeFormat?: "12H" | "24H";
                 /**
+                 * @description Appearance the member chose: follow the device, light or dark. Absent means no choice yet; the website then follows the device.
+                 * @enum {string}
+                 */
+                colorScheme?: "DEVICE" | "LIGHT" | "DARK";
+                /**
                  * Format: date-time
                  * @description Account creation timestamp in ISO 8601 format.
                  */
@@ -4808,6 +4838,11 @@ export interface components {
                  * @enum {string}
                  */
                 timeFormat?: "12H" | "24H";
+                /**
+                 * @description Appearance the member chose: follow the device, light or dark. Absent means no choice yet; the website then follows the device.
+                 * @enum {string}
+                 */
+                colorScheme?: "DEVICE" | "LIGHT" | "DARK";
                 /**
                  * Format: date-time
                  * @description Account creation timestamp in ISO 8601 format.
@@ -4909,6 +4944,11 @@ export interface components {
                      * @enum {string}
                      */
                     timeFormat?: "12H" | "24H";
+                    /**
+                     * @description Appearance the member chose: follow the device, light or dark. Absent means no choice yet; the website then follows the device.
+                     * @enum {string}
+                     */
+                    colorScheme?: "DEVICE" | "LIGHT" | "DARK";
                     /**
                      * Format: date-time
                      * @description Account creation timestamp in ISO 8601 format.
@@ -5014,6 +5054,11 @@ export interface components {
                          */
                         timeFormat?: "12H" | "24H";
                         /**
+                         * @description Appearance the member chose: follow the device, light or dark. Absent means no choice yet; the website then follows the device.
+                         * @enum {string}
+                         */
+                        colorScheme?: "DEVICE" | "LIGHT" | "DARK";
+                        /**
                          * Format: date-time
                          * @description Account creation timestamp in ISO 8601 format.
                          */
@@ -5118,6 +5163,11 @@ export interface components {
                          */
                         timeFormat?: "12H" | "24H";
                         /**
+                         * @description Appearance the member chose: follow the device, light or dark. Absent means no choice yet; the website then follows the device.
+                         * @enum {string}
+                         */
+                        colorScheme?: "DEVICE" | "LIGHT" | "DARK";
+                        /**
                          * Format: date-time
                          * @description Account creation timestamp in ISO 8601 format.
                          */
@@ -5193,6 +5243,11 @@ export interface components {
                      * @enum {string}
                      */
                     timeFormat?: "12H" | "24H";
+                    /**
+                     * @description Appearance the member chose: follow the device, light or dark. Absent means no choice yet; the website then follows the device.
+                     * @enum {string}
+                     */
+                    colorScheme?: "DEVICE" | "LIGHT" | "DARK";
                     /**
                      * Format: date-time
                      * @description Account creation timestamp in ISO 8601 format.
@@ -5502,6 +5557,11 @@ export interface components {
                  */
                 timeFormat?: "12H" | "24H";
                 /**
+                 * @description Appearance the member chose: follow the device, light or dark. Absent means no choice yet; the website then follows the device.
+                 * @enum {string}
+                 */
+                colorScheme?: "DEVICE" | "LIGHT" | "DARK";
+                /**
                  * Format: date-time
                  * @description Account creation timestamp in ISO 8601 format.
                  */
@@ -5806,6 +5866,11 @@ export interface components {
                      */
                     timeFormat?: "12H" | "24H";
                     /**
+                     * @description Appearance the member chose: follow the device, light or dark. Absent means no choice yet; the website then follows the device.
+                     * @enum {string}
+                     */
+                    colorScheme?: "DEVICE" | "LIGHT" | "DARK";
+                    /**
                      * Format: date-time
                      * @description Account creation timestamp in ISO 8601 format.
                      */
@@ -5852,6 +5917,11 @@ export interface components {
                      * @enum {string}
                      */
                     timeFormat?: "12H" | "24H";
+                    /**
+                     * @description Appearance the member chose: follow the device, light or dark. Absent means no choice yet; the website then follows the device.
+                     * @enum {string}
+                     */
+                    colorScheme?: "DEVICE" | "LIGHT" | "DARK";
                     /**
                      * Format: date-time
                      * @description Account creation timestamp in ISO 8601 format.
@@ -6018,6 +6088,11 @@ export interface components {
                      */
                     timeFormat?: "12H" | "24H";
                     /**
+                     * @description Appearance the member chose: follow the device, light or dark. Absent means no choice yet; the website then follows the device.
+                     * @enum {string}
+                     */
+                    colorScheme?: "DEVICE" | "LIGHT" | "DARK";
+                    /**
                      * Format: date-time
                      * @description Account creation timestamp in ISO 8601 format.
                      */
@@ -6089,6 +6164,11 @@ export interface components {
                      * @enum {string}
                      */
                     timeFormat?: "12H" | "24H";
+                    /**
+                     * @description Appearance the member chose: follow the device, light or dark. Absent means no choice yet; the website then follows the device.
+                     * @enum {string}
+                     */
+                    colorScheme?: "DEVICE" | "LIGHT" | "DARK";
                     /**
                      * Format: date-time
                      * @description Account creation timestamp in ISO 8601 format.
@@ -6162,6 +6242,11 @@ export interface components {
                      * @enum {string}
                      */
                     timeFormat?: "12H" | "24H";
+                    /**
+                     * @description Appearance the member chose: follow the device, light or dark. Absent means no choice yet; the website then follows the device.
+                     * @enum {string}
+                     */
+                    colorScheme?: "DEVICE" | "LIGHT" | "DARK";
                     /**
                      * Format: date-time
                      * @description Account creation timestamp in ISO 8601 format.

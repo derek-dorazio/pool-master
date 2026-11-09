@@ -20,6 +20,10 @@ holds no code yet. The choice of stack, and why, is ADR-0010.
   Query*, §5 *State, Effect, Form*.
 - Logic both apps need moves into a shared package rather than being copied. Screens and
   styling are per platform: the web app's HTML and Tailwind do not carry over.
+- The app opens in dark mode unless the member chose otherwise under Appearance (the user's
+  `colorScheme`: Match my device, Light or Dark). A member with no choice saved gets dark here,
+  where the website follows the device. It uses the same colour tokens as the web app, the
+  light and dark values in `clients/poolmaster/src/styles/globals.css`.
 
 ## 3. No Mock Data in Application Code
 
