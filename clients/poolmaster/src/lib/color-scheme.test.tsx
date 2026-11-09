@@ -15,7 +15,9 @@ function renderScheme(initial: State) {
 
 /** Runs the first-paint script from index.html, as the browser does before the app loads. */
 function runFirstPaintScript() {
-  const script = /<script>([\s\S]*?)<\/script>/.exec(indexHtml)?.[1] ?? '';
+  const open = '<script>';
+  const start = indexHtml.indexOf(open) + open.length;
+  const script = indexHtml.slice(start, indexHtml.indexOf('</script>', start));
   // eslint-disable-next-line @typescript-eslint/no-implied-eval -- runs index.html's own first-paint script, read from the file
   const firstPaint = new Function(script) as () => void;
   firstPaint();
