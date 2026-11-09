@@ -21,10 +21,10 @@
     "generate": "npm run generate:openapi && npm run generate:client"
   },
   "dependencies": {
-    "@fastify/swagger": "9.9.2",
-    "@fastify/swagger-ui": "^6.1.2",
+    "@fastify/swagger": "9.9.3",
+    "@fastify/swagger-ui": "^6.1.3",
     "@poolmaster/shared": "*",
-    "fastify": "^5.12.7"
+    "fastify": "^5.12.8"
   },
   "devDependencies": {
     "@hey-api/openapi-ts": "^0.99.0",

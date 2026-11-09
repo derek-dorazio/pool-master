@@ -88,7 +88,7 @@
     "@hey-api/client-fetch": "^0.13.1",
     "@hey-api/openapi-ts": "^0.99.0",
     "@jest/globals": "^30.5.2",
-    "@tanstack/eslint-plugin-query": "^5.105.0",
+    "@tanstack/eslint-plugin-query": "^5.106.1",
     "@types/jest": "^30.0.0",
     "@types/node": "^26.6.6",
     "@vitest/eslint-plugin": "^1.6.28",
