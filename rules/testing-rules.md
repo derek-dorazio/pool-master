@@ -68,13 +68,14 @@ floor on its own, and a new file in a matched folder falls under it the day it i
   these files reaches (96% of branches today). A branch left unrun is a defensive one no input
   can reach, such as a default on a lookup in a map built from the same list; prefer reshaping
   the code so the branch does not exist over leaving it.
-- **Services, module logic, shared domain and shared DTOs**: 90% of lines and 80% of branches
-  per file. That is every file under `modules/` except routes, handlers, `wiring.ts`,
-  `*-job-requests.ts`, repositories, mappers, barrels and ingestion's provider `adapters/` and
-  `persistence/`, plus everything under `packages/shared/domain` and `packages/shared/dto`. The
-  left-out files are proven by the integration and functional suites, or by their own floors
-  (mappers #1481, handlers #1482). A new file in a matched folder is held to 90/80 the day it
-  lands, so it lands with its unit tests.
+- **Services, module logic, mappers, shared domain and shared DTOs**: 90% of lines and 80% of
+  branches per file. That is every file under `modules/` except routes, handlers, `wiring.ts`,
+  `*-job-requests.ts`, repositories, barrels and ingestion's provider `adapters/` and
+  `persistence/`; every mapper in `packages/core-api/src/mappers` but its barrel; and everything
+  under `packages/shared/domain` and `packages/shared/dto`. A mapper's unit tests name each of its
+  null, omitted and per-sport cases. The left-out files are proven by the integration and
+  functional suites, or by their own floor (handlers #1482). A new file in a matched folder is
+  held to 90/80 the day it lands, so it lands with its unit tests.
 - A file matched by several globs must meet every one of them, so a scoring file is held to
   both its own floor and 90/80. A looser glob cannot carve out an exception.
 - **The rest of the suite** has a suite-level floor. Jest leaves every file a glob matches out of
