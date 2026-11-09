@@ -1,6 +1,13 @@
 import type { SportEvent } from '@poolmaster/shared/domain';
-import { mapSportEventToDto } from '../../../packages/core-api/src/mappers/sport-events.mapper';
-import type { SportEventSummary } from '../../../packages/core-api/src/modules/events/service';
+import {
+  mapLiveSimulationToResponse,
+  mapProviderEventYearImportToResponse,
+  mapSportEventRoundToDto,
+  mapSportEventTierToDto,
+  mapSportEventToDto,
+  mapSportEventYearsToResponse,
+} from '../../../packages/core-api/src/mappers/sport-events.mapper';
+import type { SportEventAdminSummary, SportEventSummary } from '../../../packages/core-api/src/modules/events/service';
 import { standardEventPricing } from '../../support/budget-pricing';
 
 function event(overrides: Partial<SportEvent> = {}): SportEvent {
@@ -127,5 +134,45 @@ describe('SportEvent next statuses on the wire', () => {
 
   it('does not offer SCHEDULED from a draft: releasing it is its own action (#431)', () => {
     expect(mapSportEventToDto(summary(event({ status: 'DRAFT' }), 0)).allowedTransitions).toEqual(['CANCELLED']);
+  });
+});
+
+describe('the event\'s rounds, tiers, years, live simulation and year import on the wire', () => {
+  const AT = new Date('2026-04-09T12:00:00.000Z');
+
+  it('sends a round\'s scheduled end as ISO, and a round with none as null', () => {
+    const round = { id: 'r1', sportEventId: 'e1', roundNumber: 1, scheduledDate: AT, scheduledEndAt: AT, createdAt: AT, updatedAt: AT };
+
+    expect(mapSportEventRoundToDto(round)).toEqual({ id: 'r1', sportEventId: 'e1', roundNumber: 1, scheduledDate: AT.toISOString(), scheduledEndAt: AT.toISOString() });
+    expect(mapSportEventRoundToDto({ ...round, scheduledEndAt: null }).scheduledEndAt).toBeNull();
+  });
+
+  it('sends a tier\'s key, label and number', () => {
+    expect(mapSportEventTierToDto({ id: 't1', sportEventId: 'e1', tierKey: 'A', label: 'Tier A', tierNumber: 1 } as never))
+      .toEqual({ id: 't1', sportEventId: 'e1', tierKey: 'A', label: 'Tier A', tierNumber: 1 });
+  });
+
+  it('sends an edition\'s years as a copy, in the order given', () => {
+    const years = [2026, 2025];
+
+    expect(mapSportEventYearsToResponse(years)).toEqual({ years: [2026, 2025] });
+    expect(mapSportEventYearsToResponse(years).years).not.toBe(years);
+  });
+
+  it('sends a live simulation\'s window as ISO with its phase and round', () => {
+    expect(mapLiveSimulationToResponse('e1', { startsAt: AT, endsAt: AT, minutesPerRound: 5, phase: 'RUNNING', currentRound: 2 } as never))
+      .toEqual({ sportEventId: 'e1', startsAt: AT.toISOString(), endsAt: AT.toISOString(), minutesPerRound: 5, phase: 'RUNNING', currentRound: 2 });
+  });
+
+  it('sends a year import\'s created events in full and each skipped one\'s id, name and reason only', () => {
+    const created = summary(event(), 0) as SportEventAdminSummary;
+
+    const dto = mapProviderEventYearImportToResponse({
+      created: [created],
+      skipped: [{ externalId: 'x1', name: 'Old Open', reason: 'ALREADY_LINKED', extra: true } as never],
+    });
+
+    expect(dto.created.map((item) => item.id)).toEqual(['11111111-1111-4111-8111-111111111111']);
+    expect(dto.skipped).toEqual([{ externalId: 'x1', name: 'Old Open', reason: 'ALREADY_LINKED' }]);
   });
 });
