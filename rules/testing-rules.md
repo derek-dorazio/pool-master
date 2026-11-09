@@ -882,6 +882,28 @@ Data integration files should prove a meaningful slice of persistence or lower-l
 - It is acceptable for a highly focused persistence file to have fewer cases when the subject is intentionally narrow, but that should be the exception rather than the default.
 - Do not create placeholder data-integration files that only prove one trivial success path and leave the real persistence/query behavior untested.
 
+### Repository Coverage Floor
+
+Repositories (`packages/core-api/src/adapters/**`) are tested by the integration suite, so their
+per-file coverage floor is checked against the integration suite's coverage (#1483): **every
+repository file reaches 90% lines and 80% branches**. The floor lives in
+`scripts/coverage-floors.json`. When a repository falls short, the fix is an integration test for
+the query or branch it misses, not a unit test against a mocked Prisma client (§1B). A file may
+sit lower only as a named exception in that config with a reason, which the reviewer accepts.
+
+CI runs the suite in four shards, and a shard measures every file but runs a quarter of the
+tests, so the check runs on the merged shard reports in the `service-integration-tests` job, not
+in Jest's `coverageThreshold`. Reproduce it locally with one unsharded run, which gives the same
+per-file numbers:
+
+```
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/poolmaster_test npm run test:coverage:service:integration
+npm run coverage:floors:check
+```
+
+The floors are Babel counts. The V8 numbers from `test:coverage:service:merged` are not
+comparable. `docs/CI-AND-QUALITY-GATES.md` covers the CI side and the sharded reproduction.
+
 ### Backend Suite Placement Heuristics
 
 When choosing a backend suite, use this order:

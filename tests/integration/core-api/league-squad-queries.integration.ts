@@ -6,6 +6,7 @@ import {
   LeagueRole,
   SquadMembershipStatus,
   SquadOwnerInvitationStatus,
+  TeamIconKey,
 } from '@poolmaster/shared/domain';
 import {
   PrismaLeagueMembershipRepository,
@@ -367,6 +368,39 @@ describe('PrismaSquadRepository squad details', () => {
     expect(edge?.squadId).toBe(squad.id);
     expect(edge?.squadName).toBe('Commissioner Team');
     expect(await repo.findByLeagueAndUserWithSquadName(league.id, noTeam.user.id)).toBeNull();
+  });
+
+  it('reads a team by id and null for an unknown id, and lists a league\'s active teams by default and every team when asked', async () => {
+    const { league, commissioner } = await createLeague('Lists');
+    const active = await createSquad(league.id, 'Active Team', commissioner.id);
+    const retired = await createSquad(league.id, 'Retired Team', commissioner.id, false);
+    const repo = new PrismaSquadRepository(getAppPrisma());
+
+    await expect(repo.findById(active.id)).resolves.toMatchObject({ id: active.id, name: 'Active Team' });
+    await expect(repo.findById(randomUUID())).resolves.toBeNull();
+    expect((await repo.findByLeague(league.id)).map((squad) => squad.id)).toEqual([active.id]);
+    expect((await repo.findByLeague(league.id, true)).map((squad) => squad.id)).toEqual([active.id, retired.id]);
+  });
+
+  it('finds a team by its name in the league, an inactive one too, and null for a name no team has', async () => {
+    const { league, commissioner } = await createLeague('Names');
+    const retired = await createSquad(league.id, 'Retired Name', commissioner.id, false);
+    const repo = new PrismaSquadRepository(getAppPrisma());
+
+    await expect(repo.findByLeagueAndName(league.id, 'Retired Name')).resolves.toMatchObject({ id: retired.id, isActive: false });
+    await expect(repo.findByLeagueAndName(league.id, 'No Such Team')).resolves.toBeNull();
+  });
+
+  it('changes only the fields an update names, keeping the icon when only the name changes', async () => {
+    const { league, commissioner } = await createLeague('Edits');
+    const squad = await createSquad(league.id, 'Before', commissioner.id);
+    const repo = new PrismaSquadRepository(getAppPrisma());
+
+    const withIcon = await repo.update(squad.id, { iconKey: TeamIconKey.CAPTAIN_SMILE_OCEAN });
+    const renamed = await repo.update(squad.id, { name: 'After' });
+
+    expect(withIcon).toMatchObject({ name: 'Before', iconKey: TeamIconKey.CAPTAIN_SMILE_OCEAN, isActive: true });
+    expect(renamed).toMatchObject({ name: 'After', iconKey: TeamIconKey.CAPTAIN_SMILE_OCEAN, isActive: true });
   });
 
   it('counts only the league\'s active teams', async () => {

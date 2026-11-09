@@ -208,4 +208,11 @@ describe('PrismaLeagueYearReviewRepository (#872)', () => {
     expect(await repo.findByLeagueYear(league.id, 2025)).toEqual(first);
     expect(await repo.findByLeagueYear(league.id, 2024)).toBeNull();
   });
+
+  it('passes on a failure other than a second press, such as a league that does not exist, instead of answering null', async () => {
+    const repo = new PrismaLeagueYearReviewRepository(getAppPrisma());
+    const sender = await createTestUser({ firstName: 'Review', lastName: `Orphan${randomUUID().slice(0, 8)}` });
+
+    await expect(repo.create({ leagueId: randomUUID(), year: 2025, sentByUserId: sender.user.id })).rejects.toThrow(/Foreign key constraint/);
+  });
 });

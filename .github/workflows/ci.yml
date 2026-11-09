@@ -298,13 +298,33 @@ jobs:
       - name: Run Prisma migrations
         run: npx prisma migrate deploy --schema=packages/core-api/prisma/schema.prisma
 
-      - name: Run service integration tests
-        run: npm run test:integration -- --shard=${{ matrix.shard }}/4
+      # #1483 -- each shard collects Babel coverage (Jest's default provider; V8 slowed this suite
+      # enough to time tests out, docs/CI-AND-QUALITY-GATES.md) and uploads its raw report. A
+      # shard's own numbers mean nothing per file: it measures every source file but runs a
+      # quarter of the tests. `service-integration-tests` merges the four and checks the floors.
+      - name: Run service integration tests with coverage
+        run: >-
+          npm run test:integration -- --shard=${{ matrix.shard }}/4
+          --coverage --coverageDirectory=coverage/service-integration
+          --coverageReporters=json --coverageReporters=text-summary
+
+      - name: Upload shard coverage
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-service-integration-shard-${{ matrix.shard }}
+          path: coverage/service-integration/coverage-final.json
+          if-no-files-found: error
+          retention-days: 7
 
   # The required check and deploy-publish-images' dependency keep this name, so sharding
   # changed neither. It skips whenever the shards skip, which branch protection counts as
   # passing, exactly as the unsharded job did: on a PR with no service change, and when
   # all-contract-gates fails (that required check is already red, so nothing slips through).
+  #
+  # #1483 -- it also merges the four shards' coverage and fails when any file under a floor in
+  # scripts/coverage-floors.json (repositories: 90% lines, 80% branches) falls short. Only the
+  # merged report has true per-file numbers, which is why the check lives here and not in Jest's
+  # coverageThreshold.
   service-integration-tests:
     name: service-integration-tests
     runs-on: ubuntu-latest
@@ -316,6 +336,38 @@ jobs:
         run: |
           echo "Shards: ${{ needs.service-integration-test-shards.result }}"
           test "${{ needs.service-integration-test-shards.result }}" = success
+
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: 'npm'
+      - run: npm ci
+
+      - name: Download shard coverage
+        uses: actions/download-artifact@v8
+        with:
+          pattern: coverage-service-integration-shard-*
+          path: coverage/shards
+
+      - name: Merge shard coverage
+        run: >-
+          node scripts/merge-service-coverage.mjs --out coverage/service-integration-merged
+          coverage/shards/coverage-service-integration-shard-1/coverage-final.json
+          coverage/shards/coverage-service-integration-shard-2/coverage-final.json
+          coverage/shards/coverage-service-integration-shard-3/coverage-final.json
+          coverage/shards/coverage-service-integration-shard-4/coverage-final.json
+
+      - name: Check per-file coverage floors
+        run: node scripts/check-coverage-floors.mjs coverage/service-integration-merged/coverage-final.json
+
+      - name: Upload merged integration coverage
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-service-integration
+          path: coverage/service-integration-merged
+          if-no-files-found: warn
 
   # #340 -- schema.prisma must describe what the committed migrations actually build.
   #
