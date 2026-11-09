@@ -14,14 +14,18 @@ import {
   PrismaSportEventRepository,
   PrismaStandingsEmailPositionRepository,
 } from '../../../packages/core-api/src/adapters';
-import { recordStatements, statementShape } from '../statement-log';
+import { recordStatements, statementCounts, statementShape } from '../statement-log';
+import { createContestManagementService } from '../../../packages/core-api/src/modules/contest-management/wiring';
+import { integrationPlanEntitlements } from '../plan-entitlements';
 import { createEventLifecycleService } from '../../../packages/core-api/src/modules/events/wiring';
 import { createContestSettlementService } from '../../../packages/core-api/src/modules/contests/wiring';
 import {
   cleanupTestData,
   createTestUser,
+  drainBackgroundJobs,
   getAppPrisma,
   getPrisma,
+  holdingBackgroundJobs,
   integrationBackgroundJobs,
   setupIntegrationTests,
   teardownIntegrationTests,
@@ -1140,6 +1144,67 @@ describe('ContestRepository.findJoinableByReleasedEdition (#714, #1179)', () => 
     const found = await repos().contests.findJoinableByReleasedEdition({ ...edition, id: released.id });
 
     expect(found.map((contest) => contest.name)).toEqual([first.name, second.name, noEvents.name]);
+  });
+
+  /**
+   * A league and a released edition of a second major, in the same tour and year as the league's
+   * event, with `pools` majors pools on that event covering both majors: one in the first league,
+   * or with three, two there and one in a second league.
+   */
+  async function majorsPools(pools: 1 | 3) {
+    const prisma = getPrisma();
+    const first = await createLeagueAndEvent();
+    const second = pools === 3 ? await createLeagueAndEvent() : first;
+    const firstMajor = await prisma.eventSeries.findUniqueOrThrow({ where: { id: first.event.eventSeriesId } });
+    const { event: released } = await createLaterEvent(first.suffix, new Date(Date.now() + 30 * 24 * 60 * 60 * 1000));
+    const releasedMajor = await prisma.eventSeries.findUniqueOrThrow({ where: { id: released.eventSeriesId } });
+    const template = await createSeriesTemplate(`majors-${randomUUID().slice(0, 8)}`, firstMajor.sportLeagueId, [firstMajor.name, releasedMajor.name]);
+    const contests = [];
+    for (let number = 1; number <= pools; number++) {
+      const { league } = number === 3 ? second : first;
+      // Every pool is on the first league's event, the major already played in the year.
+      contests.push(await contestFromTemplate(league.id, first.event.id, `Majors Pool ${number}`, template.id));
+    }
+    const edition = { id: released.id, eventSeriesId: released.eventSeriesId, eventYear: released.eventYear };
+    return { edition, contestIds: contests.map((contest) => contest.id), firstEventId: first.event.id };
+  }
+
+  it('releases a major into its majors pools by one job per pool (#1318): the same statements for three pools across two leagues as for one, and each job adds the major to its pool', async () => {
+    const service = createContestManagementService(getAppPrisma(), fakeLogger(), integrationPlanEntitlements(getAppPrisma()), undefined, integrationBackgroundJobs().queue);
+    const one = await majorsPools(1);
+    const three = await majorsPools(3);
+
+    const withOne = await holdingBackgroundJobs(() => recordStatements(() => service.addReleasedEditionToTemplateContests(one.edition)));
+    const withThree = await holdingBackgroundJobs(() => recordStatements(() => service.addReleasedEditionToTemplateContests(three.edition)));
+
+    expect([withOne.result, withThree.result]).toEqual([one.contestIds, three.contestIds]);
+    expect(statementCounts(withThree.statements)).toEqual(statementCounts(withOne.statements));
+    // One read of the joinable pools (with the relations its query loads) and one insert of their jobs.
+    expect(statementCounts(withThree.statements)).toEqual([
+      ['INSERT background_jobs', 1],
+      ['SELECT contest_draws', 1],
+      ['SELECT contest_sport_events', 1],
+      ['SELECT contest_squares_draws', 1],
+      ['SELECT contest_squares_games', 1],
+      ['SELECT contests', 1],
+      ['SELECT event_series', 1],
+      ['SELECT sport_events', 1],
+    ]);
+    await expect(getPrisma().contestSportEvent.count({ where: { sportEventId: { in: [one.edition.id, three.edition.id] } } })).resolves.toBe(0);
+
+    await drainBackgroundJobs();
+
+    const events = await getPrisma().contestSportEvent.findMany({
+      where: { contestId: { in: [...one.contestIds, ...three.contestIds] } },
+      orderBy: [{ contestId: 'asc' }, { sequence: 'asc' }],
+      select: { contestId: true, sportEventId: true },
+    });
+    for (const [pools, contestIds] of [[one, one.contestIds], [three, three.contestIds]] as const) {
+      for (const contestId of contestIds) {
+        expect(events.filter((row) => row.contestId === contestId).map((row) => row.sportEventId)).toEqual([pools.firstEventId, pools.edition.id]);
+      }
+    }
+    await expect(getPrisma().backgroundJob.count({ where: { type: BackgroundJobType.ADD_RELEASED_EDITION_TO_CONTEST, status: { not: 'SUCCEEDED' } } })).resolves.toBe(0);
   });
 });
 

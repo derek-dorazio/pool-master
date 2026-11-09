@@ -8,6 +8,8 @@ import type {
 } from '@poolmaster/shared/db';
 import type { SportEventTierGroup, SportEventTierService } from '../events/sport-event-tier-service';
 import type { ContestOpenedNotice } from '../notifications/contest-notices';
+import type { BackgroundJobQueue } from '../background-jobs/background-job-queue';
+import { addReleasedEditionToContestJob, type AddReleasedEditionToContestJobPayload } from './released-edition-job-requests';
 import type { CupService } from '../cups/service';
 import type { PlanEntitlementsService } from '../plans/plan-entitlements-service';
 import type {
@@ -169,6 +171,8 @@ export interface ContestManagementServiceDeps {
   logger?: LifecycleLogger;
   /** Tells the league a contest has opened (#845, the "New contest open" email). */
   contestOpened?: ContestOpenedNotice;
+  /** Where a released edition queues the job adding it to each template contest (#1318); `addReleasedEditionToTemplateContests` throws without it. */
+  jobs?: Pick<BackgroundJobQueue, 'request' | 'enqueueAll'>;
   now?: () => Date;
 }
 
@@ -183,6 +187,7 @@ export class ContestManagementService {
   private readonly planEntitlements: Pick<PlanEntitlementsService, 'forLeague'>;
   private readonly logger: LifecycleLogger;
   private readonly contestOpened?: ContestOpenedNotice;
+  private readonly jobs?: Pick<BackgroundJobQueue, 'request' | 'enqueueAll'>;
   private readonly now: () => Date;
 
   constructor(deps: ContestManagementServiceDeps) {
@@ -196,6 +201,7 @@ export class ContestManagementService {
     this.planEntitlements = deps.planEntitlements;
     this.logger = deps.logger ?? createNoopLogger();
     this.contestOpened = deps.contestOpened;
+    this.jobs = deps.jobs;
     this.now = deps.now ?? (() => new Date());
   }
 
@@ -647,36 +653,54 @@ export class ContestManagementService {
    * A released edition joins the contests made from a template covering its series (#714): a
    * majors pool takes each major of its year as the major is released. A contest takes it while
    * it can change its events (not finished, not drawn), when its events are all of the edition's
-   * year; a contest that already has it is left alone. One the contest's rules refuse (another
-   * salary cap, say) is logged and skipped, so one contest never stops the release or the rest.
-   * Answers the ids of the contests it joined.
+   * year; a contest that already has it is left alone.
+   *
+   * The release only finds those contests and queues one job per contest, in one write (#1318):
+   * a release can reach hundreds of pools across as many leagues, too many for its request. Each
+   * job adds the edition (`addReleasedEditionToContest`). Answers the ids of the contests queued.
    */
   async addReleasedEditionToTemplateContests(
     sportEvent: Pick<SportEvent, 'id' | 'eventSeriesId' | 'eventYear'>,
   ): Promise<string[]> {
+    const { jobs } = this;
+    if (!jobs) throw new Error('A background job queue is required to add a released edition to its template contests');
     // The repository filters status, draw, the edition and the year in one query (#1179), so a
     // series' years of finished pools are never read back.
-    const contests = await this.contestRepo.findJoinableByReleasedEdition(sportEvent);
-    const joined: string[] = [];
-    for (const contest of contests) {
-      try {
-        await this.setContestSportEvents(contest.leagueId, contest.id, [...contest.sportEventIds, sportEvent.id]);
-        joined.push(contest.id);
-      } catch (error) {
-        if (!(error instanceof ContestManagementError)) {
-          throw error;
-        }
-        this.logger.warn({
-          contestId: contest.id,
-          sportEventId: sportEvent.id,
-          code: error.code,
-        }, 'contest management left a released edition out of a template contest its rules refuse');
+    const contestIds = (await this.contestRepo.findJoinableByReleasedEdition(sportEvent)).map((contest) => contest.id);
+    await jobs.enqueueAll(contestIds.map((contestId) => addReleasedEditionToContestJob(jobs, contestId, sportEvent.id)));
+    if (contestIds.length > 0) {
+      this.logger.info({ sportEventId: sportEvent.id, contestIds }, 'contest management queued a released edition for its template contests');
+    }
+    return contestIds;
+  }
+
+  /**
+   * The ADD_RELEASED_EDITION_TO_CONTEST job (#1318): adds the edition to one template contest.
+   * A contest gone, or already holding the edition (a retry after the add), is left alone. One
+   * whose rules refuse it now (another salary cap, a draw dealt or the contest finished since the
+   * release) is logged and skipped, so the job succeeds and is not retried; any other failure
+   * throws, for the runner to retry.
+   */
+  async addReleasedEditionToContest(payload: AddReleasedEditionToContestJobPayload): Promise<void> {
+    const { contestId, sportEventId } = payload;
+    const contest = await this.contestRepo.findById(contestId);
+    if (!contest || contest.sportEventIds.includes(sportEventId)) {
+      this.logger.info({ contestId, sportEventId, found: contest !== null }, 'contest management left a released edition out of a contest that is gone or already has it');
+      return;
+    }
+    try {
+      await this.setContestSportEvents(contest.leagueId, contest.id, [...contest.sportEventIds, sportEventId]);
+      this.logger.info({ contestId, sportEventId }, 'contest management added a released edition to a template contest');
+    } catch (error) {
+      if (!(error instanceof ContestManagementError)) {
+        throw error;
       }
+      this.logger.warn({
+        contestId,
+        sportEventId,
+        code: error.code,
+      }, 'contest management left a released edition out of a template contest its rules refuse');
     }
-    if (joined.length > 0) {
-      this.logger.info({ sportEventId: sportEvent.id, contestIds: joined }, 'contest management added a released edition to its template contests');
-    }
-    return joined;
   }
 
   /** The contest's events in its sequence order, read together (#1355); each must still exist. */

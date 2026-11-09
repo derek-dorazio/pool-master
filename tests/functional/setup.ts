@@ -115,8 +115,8 @@ export function getFunctionalBaseUrl(): string {
 
 /**
  * A write to one event: its status change (a COMPLETED or CANCELLED settles its contests in a job,
- * #1448), or a game's result, late quarter score or cancellation (its squares contests settle in a
- * job, #1460).
+ * #1448), its release (each template contest takes the edition in a job, #1318), or a game's
+ * result, late quarter score or cancellation (its squares contests settle in a job, #1460).
  */
 const EVENT_WRITE_PATH = /\/api\/v1\/events\/([^/]+)\//;
 const JOB_WAIT_MS = 30_000;
@@ -149,13 +149,14 @@ async function awaitJobs(what: string, where: JobWhere): Promise<void> {
 }
 
 /**
- * Waits until the jobs settling this event's contests have run. The server settles a finished
- * event, or a decided game's squares contests, in a background job after the write answers, and
- * the scenarios read the settled standings next, as a member would once the job is done.
+ * Waits until the jobs an event's write queued for its contests have run: settling them when it
+ * finishes, or a decided game's squares contests, and adding a released edition to its template
+ * contests. The server runs these after the write answers, and the scenarios read the contests
+ * next, as a member would once the jobs are done.
  */
-export async function awaitEventSettlementJobs(sportEventId: string, since: Date): Promise<void> {
-  await awaitJobs(`Settling event ${sportEventId}'s contests`, {
-    type: { in: ['SETTLE_SPORT_EVENT_CONTESTS', 'SETTLE_GAME_CONTESTS'] },
+async function awaitEventContestJobs(sportEventId: string, since: Date): Promise<void> {
+  await awaitJobs(`Event ${sportEventId}'s contest jobs`, {
+    type: { in: ['SETTLE_SPORT_EVENT_CONTESTS', 'SETTLE_GAME_CONTESTS', 'ADD_RELEASED_EDITION_TO_CONTEST'] },
     payload: { path: ['sportEventId'], equals: sportEventId },
     createdAt: { gte: since },
   });
@@ -175,7 +176,7 @@ const writeSentAt = new WeakMap<Request, Date>();
 
 /**
  * A successful write answers only once the jobs it queued for what the scenarios read next have
- * run: an event's settling jobs, then the board rebuilds any write (settlement included) queued.
+ * run: an event's contest jobs, then the board rebuilds any write (settlement included) queued.
  */
 function waitingForQueuedJobs(client: Client): Client {
   client.interceptors.request.use((request: Request) => {
@@ -186,7 +187,7 @@ function waitingForQueuedJobs(client: Client): Client {
     const sentAt = writeSentAt.get(request);
     if (!sentAt || !response.ok) return response;
     const write = EVENT_WRITE_PATH.exec(new URL(request.url).pathname);
-    if (write?.[1]) await awaitEventSettlementJobs(decodeURIComponent(write[1]), sentAt);
+    if (write?.[1]) await awaitEventContestJobs(decodeURIComponent(write[1]), sentAt);
     await awaitLeaderboardRebuildJobs(sentAt);
     return response;
   });

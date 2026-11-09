@@ -4,6 +4,7 @@
  * so both build the service here rather than each wiring its dependencies.
  */
 import type { ContestOpenedNotice } from '../notifications/contest-notices';
+import type { BackgroundJobQueue } from '../background-jobs/background-job-queue';
 import type { PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 import type {
@@ -42,6 +43,8 @@ export function createContestManagementService(
   planEntitlements: PlanEntitlementsService,
   /** Who is told a contest has opened (#845); without it, nobody is. */
   contestOpened?: ContestOpenedNotice,
+  /** Where a released edition queues each template contest's job (#1318); the release throws without it. */
+  jobs?: Pick<BackgroundJobQueue, 'request' | 'enqueueAll'>,
 ): ContestManagementService {
   const sportEventTierService = createSportEventTierService(prisma, logger);
   return new ContestManagementService({
@@ -61,6 +64,7 @@ export function createContestManagementService(
     cups: createCupService(prisma, logger, planEntitlements),
     planEntitlements,
     contestOpened,
+    jobs,
   });
 }
 

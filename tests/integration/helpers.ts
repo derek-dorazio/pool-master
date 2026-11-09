@@ -262,12 +262,14 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
   // A write's boards are rebuilt by a job per event or contest, as in index.ts (#1463).
   const leaderboards = new JobLeaderboardRebuilds(backgroundJobs.queue);
   const leaderboardRebuilder = createContestService(prisma, testApp.log, { planEntitlements });
+  // A released edition joins its template contests by a job per contest (#1318).
+  const releasedEditionContests = createContestManagementService(prisma, testApp.log, planEntitlements, undefined, backgroundJobs.queue);
   const eventLifecycleService = createEventLifecycleService(prisma, {
     logger: testApp.log,
     jobs: backgroundJobs.queue,
     sportEventChanged: contestNotices,
     contestSettlement: createContestSettlementService(prisma, testApp.log, { jobs: backgroundJobs.queue, leaderboards }),
-    releasedEditionContests: createContestManagementService(prisma, testApp.log, planEntitlements),
+    releasedEditionContests,
   });
   const ingestionConfigService = new IngestionConfigService(settings);
   const platformSettingsService = new PlatformSettingsService({
@@ -291,6 +293,7 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
     SETTLE_SPORT_EVENT_CONTESTS: (payload) => eventLifecycleService.settleFinishedEventContests(payload),
     SETTLE_GAME_CONTESTS: (payload) => eventLifecycleService.settleFinishedGameContests(payload),
     REBUILD_LEADERBOARDS: (payload) => leaderboardRebuilder.rebuildLeaderboardSnapshots(leaderboardChangesOf(payload)),
+    ADD_RELEASED_EDITION_TO_CONTEST: (payload) => releasedEditionContests.addReleasedEditionToContest(payload),
   });
   backgroundJobRunner = runner;
   backgroundJobs.queue.wakes({ wake: () => { if (!backgroundJobsHeld) runner.wake(); } });
