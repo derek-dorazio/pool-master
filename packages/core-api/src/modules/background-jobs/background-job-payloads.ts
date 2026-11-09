@@ -5,6 +5,7 @@
 
 import type { z } from 'zod';
 import { BackgroundJobType } from '@poolmaster/shared/domain';
+import { AddReleasedEditionToContestJobPayloadSchema } from '../contest-management/released-edition-job-requests';
 import { ManualEventSyncJobPayloadSchema } from '../ingestion/manual-event-sync-job';
 import {
   ContestEventChangedEmailsJobPayloadSchema,
@@ -23,6 +24,7 @@ export const BACKGROUND_JOB_PAYLOADS = {
   [BackgroundJobType.SETTLE_SPORT_EVENT_CONTESTS]: SettleSportEventContestsJobPayloadSchema,
   [BackgroundJobType.SETTLE_GAME_CONTESTS]: SettleGameContestsJobPayloadSchema,
   [BackgroundJobType.REBUILD_LEADERBOARDS]: RebuildLeaderboardsJobPayloadSchema,
+  [BackgroundJobType.ADD_RELEASED_EDITION_TO_CONTEST]: AddReleasedEditionToContestJobPayloadSchema,
 } as const satisfies Record<BackgroundJobType, z.ZodType>;
 
 /** What a job of type `T` carries. */

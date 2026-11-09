@@ -254,3 +254,32 @@ describe('knockout round points — upset bonus', () => {
     expect(rows['Duke']).toMatchObject({ detail: { wins: 0, isAlive: true } });
   });
 });
+
+describe('knockout round points — edges', () => {
+  it('gives no upset bonus when no team in the field carries a seed', () => {
+    const field = bracketField([{ name: 'Duke' }, { name: 'Vermont' }], [
+      { matchNumber: 1, round: 1, home: 'Duke', away: 'Vermont', winner: MatchSide.AWAY },
+    ]);
+
+    expect(scores(field, knockout([1], SEED_DIFFERENCE))).toEqual({ Duke: 0, Vermont: 1 });
+  });
+
+  it('gives a win over an empty side (a walkover) its round value and no upset bonus', () => {
+    const field = bracketField(SEEDED, [
+      { matchNumber: 1, round: 1, home: 'Vermont', away: null, winner: MatchSide.HOME },
+    ]);
+
+    expect(scores(field, knockout([1], SEED_DIFFERENCE))['Vermont']).toBe(1);
+  });
+
+  it('throws on an upset bonus rule it does not know rather than scoring it', () => {
+    expect(() => upsetBonusFor({ rule: 'DOUBLE_OR_NOTHING' } as unknown as UpsetBonus, 4, 1)).toThrow();
+  });
+
+  it('scores a missed lineup 0 under knockout round points and leaves it unscored under another definition', () => {
+    const golf: ContestScoringSettings = { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: {} } as unknown as ContestScoringSettings;
+
+    expect(family.scoreMissedLineup([], TOURNAMENT, knockout([1]), 3)).toBe(0);
+    expect(family.scoreMissedLineup([], TOURNAMENT, golf, 3)).toBeNull();
+  });
+});

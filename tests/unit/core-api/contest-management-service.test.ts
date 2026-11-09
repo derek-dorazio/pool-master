@@ -49,6 +49,7 @@ import type {
   ParticipantContestScoringRuleRepository,
 } from '@poolmaster/shared/db';
 import {
+  ContestEventsChangedError,
   ContestManagementError,
   ContestManagementService,
   type ContestCreateSportEventReader,
@@ -64,6 +65,9 @@ import {
   fakeParticipantContestScoringRuleRepo,
 } from '../../support/repo-fakes';
 import { mockFn } from '../../support/mock-fn';
+import { BackgroundJobQueue } from '../../../packages/core-api/src/modules/background-jobs';
+import { inMemoryBackgroundJobs } from '../../support/in-memory-background-jobs';
+import { fakeLogger } from '../../support/fake-logger';
 import { expectDefined } from '../../support/expect-defined';
 import { EIGHT_SEEDS, eightTeamBracket, withResults } from '../../support/bracket-fixtures';
 import { InMemoryContestWorld } from '../../support/in-memory-contest-world';
@@ -2055,6 +2059,7 @@ describe('ContestManagementService — a contest of several events', () => {
       });
     }
     const configurationRepo = createContestConfigurationRepo();
+    const logger = fakeLogger();
     if (options.storedConfigJson) {
       (configurationRepo.findByContest as jest.Mock).mockResolvedValue({
         id: 'config-1',
@@ -2076,12 +2081,13 @@ describe('ContestManagementService — a contest of several events', () => {
       now: () => CONTEST_MANAGEMENT_TEST_NOW,
       cups: createCupKeeper(cupsAsked),
       planEntitlements: options.planEntitlements ?? platinumEntitlements(),
+      logger,
     });
     jest.mocked(contestRepo.findJoinableByReleasedEdition).mockImplementation(async () => {
       const contest = await contestRepo.findById('contest-1');
       return contest ? [contest] : [];
     });
-    return { service, contestRepo, configurationRepo, cupsAsked };
+    return { service, contestRepo, configurationRepo, cupsAsked, logger };
   }
 
   const tiered = (sportEventIds: string[]): CreateContestRequest => ({
@@ -2271,38 +2277,91 @@ describe('ContestManagementService — a contest of several events', () => {
     expect(contestRepo.replaceSportEvents).not.toHaveBeenCalled();
   });
 
-  describe('a released edition joining the contests made from a template covering its series (#714)', () => {
+  describe('a released edition joining the contests made from a template covering its series (#714, #1318)', () => {
     const PGA_EDITION = { id: PGA, eventSeriesId: 'series-pga-championship', eventYear: 2026 };
     const startedMasters = multiEventReader([
       { id: MASTERS, startDate: '2026-04-20T12:00:00.000Z', status: SportEventStatus.IN_PROGRESS },
       { id: PGA, startDate: '2026-05-14T12:00:00.000Z' },
     ]);
+    const jobs = new BackgroundJobQueue({ jobs: inMemoryBackgroundJobs(() => CONTEST_MANAGEMENT_TEST_NOW) });
 
-    it('adds the released major to a live majors pool of its year, after the majors it already has', async () => {
+    it('answers one job per joinable pool for the release to write, and changes no contest', async () => {
       const { service, contestRepo } = build({ reader: startedMasters, contest: { status: ContestStatus.ACTIVE } });
+      jest.mocked(contestRepo.findJoinableByReleasedEdition).mockResolvedValue([
+        { id: 'contest-1', leagueId: 'league-1', sportEventIds: [MASTERS] },
+        { id: 'contest-2', leagueId: 'league-2', sportEventIds: [MASTERS] },
+      ] as Awaited<ReturnType<typeof contestRepo.findJoinableByReleasedEdition>>);
 
-      await expect(service.addReleasedEditionToTemplateContests(PGA_EDITION)).resolves.toEqual(['contest-1']);
+      const requests = await service.releasedEditionJobs(PGA_EDITION, jobs);
 
       expect(contestRepo.findJoinableByReleasedEdition).toHaveBeenCalledWith(PGA_EDITION);
-      expect(contestRepo.replaceSportEvents).toHaveBeenCalledWith('contest-1', [MASTERS, PGA]);
-    });
-
-    it('skips a pool whose rules refuse the major (a random draw keeps one event) without failing the release', async () => {
-      const { service, contestRepo } = build({ reader: startedMasters, contest: { selectionType: SelectionType.RANDOM_DRAW } });
-
-      await expect(service.addReleasedEditionToTemplateContests(PGA_EDITION)).resolves.toEqual([]);
-
+      expect(requests).toEqual(['contest-1', 'contest-2'].map((contestId) => ({
+        type: 'ADD_RELEASED_EDITION_TO_CONTEST',
+        payload: { contestId, sportEventId: PGA },
+        runAt: undefined,
+        dedupeKey: `ADD_RELEASED_EDITION_TO_CONTEST:${contestId}:${PGA}`,
+      })));
+      expect(contestRepo.findById).not.toHaveBeenCalled();
       expect(contestRepo.replaceSportEvents).not.toHaveBeenCalled();
     });
 
-    it('does nothing when no template covers the released event\'s series', async () => {
+    it('answers no job when no template covers the released event\'s series', async () => {
       const { service, contestRepo } = build({ reader: startedMasters, contest: { status: ContestStatus.ACTIVE } });
       jest.mocked(contestRepo.findJoinableByReleasedEdition).mockResolvedValue([]);
 
-      await expect(service.addReleasedEditionToTemplateContests(PGA_EDITION)).resolves.toEqual([]);
+      await expect(service.releasedEditionJobs(PGA_EDITION, jobs)).resolves.toEqual([]);
+    });
 
-      expect(contestRepo.findById).not.toHaveBeenCalled();
+    it('a pool\'s job adds the released major to a live majors pool of its year, after the majors it already has', async () => {
+      const { service, contestRepo } = build({ reader: startedMasters, contest: { status: ContestStatus.ACTIVE } });
+
+      await service.addReleasedEditionToContest({ contestId: 'contest-1', sportEventId: PGA });
+
+      expect(contestRepo.findById).toHaveBeenCalledTimes(1);
+      expect(contestRepo.replaceSportEvents).toHaveBeenCalledWith('contest-1', [MASTERS, PGA], { replacing: [MASTERS] });
+    });
+
+    it('a pool\'s job writes nothing and throws, for the runner to retry from a fresh read, when another edition joined the pool since its read', async () => {
+      const { service, contestRepo } = build({ reader: startedMasters, contest: { status: ContestStatus.ACTIVE } });
+      jest.mocked(contestRepo.replaceSportEvents).mockResolvedValue(false);
+
+      await expect(service.addReleasedEditionToContest({ contestId: 'contest-1', sportEventId: PGA })).rejects.toBeInstanceOf(ContestEventsChangedError);
+      expect(contestRepo.recheckReminders).not.toHaveBeenCalled();
+    });
+
+    it('a pool\'s job leaves alone a pool that already has the major, so a retry after the add changes nothing', async () => {
+      const { service, contestRepo } = build({ reader: startedMasters, contest: { status: ContestStatus.ACTIVE, sportEventIds: [MASTERS, PGA] } });
+
+      await service.addReleasedEditionToContest({ contestId: 'contest-1', sportEventId: PGA });
+
       expect(contestRepo.replaceSportEvents).not.toHaveBeenCalled();
+    });
+
+    it('a pool\'s job succeeds without adding anything when the pool is gone', async () => {
+      const { service, contestRepo } = build({ reader: startedMasters });
+
+      await expect(service.addReleasedEditionToContest({ contestId: 'contest-1', sportEventId: PGA })).resolves.toBeUndefined();
+
+      expect(contestRepo.replaceSportEvents).not.toHaveBeenCalled();
+    });
+
+    it('a pool\'s job skips, and logs, a pool whose rules refuse the major (a random draw keeps one event) without failing, so it is not retried', async () => {
+      const { service, contestRepo, logger } = build({ reader: startedMasters, contest: { selectionType: SelectionType.RANDOM_DRAW } });
+
+      await expect(service.addReleasedEditionToContest({ contestId: 'contest-1', sportEventId: PGA })).resolves.toBeUndefined();
+
+      expect(contestRepo.replaceSportEvents).not.toHaveBeenCalled();
+      expect(logger.warn).toHaveBeenCalledWith(
+        expect.objectContaining({ contestId: 'contest-1', sportEventId: PGA, code: 'CONTEST_DRAW_SINGLE_EVENT' }),
+        expect.any(String),
+      );
+    });
+
+    it('a pool\'s job throws on any other failure, for the runner to retry', async () => {
+      const { service, contestRepo } = build({ reader: startedMasters, contest: { status: ContestStatus.ACTIVE } });
+      jest.mocked(contestRepo.replaceSportEvents).mockRejectedValue(new Error('connection lost'));
+
+      await expect(service.addReleasedEditionToContest({ contestId: 'contest-1', sportEventId: PGA })).rejects.toThrow('connection lost');
     });
   });
 });

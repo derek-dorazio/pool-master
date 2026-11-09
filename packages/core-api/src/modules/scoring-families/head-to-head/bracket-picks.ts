@@ -284,7 +284,7 @@ export function scoreBracketPicks(
 export function bracketFinal(bracket: readonly SportEventMatch[]): SportEventMatch | null {
   const lastRound = Math.max(...bracket.map((match) => match.roundNumber));
   const finals = bracket.filter((match) => match.roundNumber === lastRound);
-  return finals.length === 1 ? finals[0] ?? null : null;
+  return finals.length === 1 ? finals[0] : null;
 }
 
 /** The final's combined score, both teams together, once it is played: what the tiebreaker guesses. */
@@ -309,12 +309,12 @@ export interface RankedPredictionStanding {
  * points, most first. Among equal points, once the tiebreaker game's total is known (a bracket's
  * final, a week's last game) the entry whose tiebreaker is closest ranks first; an entry without
  * one ranks after those with one. Entries still level share a position ("T2"), as roster
- * standings do.
+ * standings do. Each standing comes back whole, with its place added, best first.
  */
-export function rankPredictionStandings(
-  standings: readonly PredictionStandingInput[],
+export function rankPredictionStandings<Standing extends PredictionStandingInput>(
+  standings: readonly Standing[],
   finalTotal: number | null,
-): RankedPredictionStanding[] {
+): Array<Standing & RankedPredictionStanding> {
   const distance = (standing: PredictionStandingInput): number =>
     finalTotal === null ? 0
       : standing.tiebreakerValue === null ? Number.MAX_SAFE_INTEGER
@@ -332,6 +332,6 @@ export function rankPredictionStandings(
       lastPosition = index + 1;
     }
     const tied = (counts.get(key(standing)) ?? 1) > 1;
-    return { entryId: standing.entryId, position: lastPosition, displayPosition: tied ? `T${lastPosition}` : String(lastPosition) };
+    return { ...standing, position: lastPosition, displayPosition: tied ? `T${lastPosition}` : String(lastPosition) };
   });
 }

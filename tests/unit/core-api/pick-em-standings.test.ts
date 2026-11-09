@@ -177,6 +177,24 @@ describe('loadPickEmWeekStandings', () => {
   });
 });
 
+describe('loadPickEmWeekStandings — an entry with no picks', () => {
+  it('scores an entry that submitted the week without a pick 0, placed after every entry that scored', async () => {
+    const context = setup();
+    context.world.entries.set('entry-blank', {
+      id: 'entry-blank', contestId: context.contest.id, squadId: 'squad-blank', entryNumber: 1, name: 'Blank',
+      events: [{ sportEventId: context.week1.id, status: ContestEntryStatus.SUBMITTED }], createdAt: T0, updatedAt: T0,
+    });
+    context.playWeek1();
+
+    const week = await loadPickEmWeekStandings(context.world.contestServiceDeps({
+      predictions: context.games.predictionRepo(),
+      matches: context.games.matchRepo(),
+    }), context.contest.id, expectDefined(context.world.sportEvents.get(context.week1.id)), { mode: PickEmMode.STRAIGHT_UP, againstTheSpread: false });
+
+    expect(week.entries.at(-1)).toMatchObject({ entry: { name: 'Blank' }, score: { points: 0, maxPossiblePoints: 0 }, displayPosition: '4' });
+  });
+});
+
 describe('ContestSettlementService — a pick\'em week', () => {
   it('freezes each submitted entry\'s points and place for the week, and leaves the contest ACTIVE while a week is still to play', async () => {
     const context = setup();

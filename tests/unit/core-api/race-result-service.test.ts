@@ -238,3 +238,23 @@ describe('RaceResultService — apply', () => {
     expect(store.raceResultRows.find((result) => result.sportEventParticipantId === scratched.id)?.resultStatus).toBe('DID_NOT_START');
   });
 });
+
+describe('RaceResultService — clock', () => {
+  it('stamps the standings an apply writes with the current time when it has no clock of its own', async () => {
+    const { store, event } = setup();
+    const service = new RaceResultService({
+      events: store.sportEventRepo(),
+      field: store.fieldRepo(),
+      participants: store.participantRepo(),
+      raceResults: store.raceResultRepo(),
+      storesRaceResults: eventStoresRaceResults,
+    });
+    const before = Date.now();
+
+    await service.applyResults(event.id, { isOfficial: true, rows: FULL_ORDER });
+
+    const stamps = store.standingRows.map((row) => row.asOf?.getTime() ?? 0);
+    expect(stamps.length).toBeGreaterThan(0);
+    expect(stamps.every((stamp) => stamp >= before && stamp <= Date.now())).toBe(true);
+  });
+});

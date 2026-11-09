@@ -440,9 +440,13 @@ export class InMemoryContestWorld {
       },
       // Mirrors the adapter: removed events take their picks and entry statuses with them, and
       // every entry gets a DRAFT status for each added event.
-      replaceSportEvents: async (id, sportEventIds) => {
+      replaceSportEvents: async (id, sportEventIds, options = {}) => {
         const existing = this.contests.get(id);
         if (!existing) throw new Error(`Record to update not found: contest ${id}`);
+        const { replacing } = options;
+        if (replacing && (replacing.length !== existing.sportEventIds.length || !replacing.every((eventId) => existing.sportEventIds.includes(eventId)))) {
+          return false;
+        }
         const removed = existing.sportEventIds.filter((eventId) => !sportEventIds.includes(eventId));
         this.contests.set(id, { ...existing, sportEventIds: [...sportEventIds] });
         for (const [pickId, pick] of this.picks) {
@@ -458,6 +462,7 @@ export class InMemoryContestWorld {
             .map((sportEventId) => ({ sportEventId, status: 'DRAFT' as const }));
           this.entries.set(entry.id, { ...entry, events: [...kept, ...added] });
         }
+        return true;
       },
       setCupWeight: async (id, cupWeight, whileIn) => {
         const existing = this.contests.get(id);
