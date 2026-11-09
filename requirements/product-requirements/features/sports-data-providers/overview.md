@@ -133,6 +133,27 @@ to check on each free tier first (Q SDP-012).
 | Horse racing, motorsport, marathons, cycling | No provider: finishing order at event end (Q SDP-013). Live motorsport running order is a nice-to-have, bought only once usage justifies it |
 | College hockey, PWHL, men's Frozen Four | No source; results only |
 
+Links, for exploring each:
+
+- **API-Sports**: [api-sports.io](https://api-sports.io) (all sports),
+  [api-football.com](https://www.api-football.com) (soccer, the same company),
+  [dashboard and free key](https://dashboard.api-football.com),
+  [terms](https://www.api-football.com/terms). Also sold through RapidAPI, monthly.
+- **BALLDONTLIE**: [balldontlie.io](https://www.balldontlie.io),
+  [docs](https://docs.balldontlie.io), [sign up](https://app.balldontlie.io/signup),
+  [terms](https://www.balldontlie.io/terms.html). Each league has its own site, and the list
+  is wider than the brief assumed: [PGA](https://pga.balldontlie.io),
+  [F1](https://f1.balldontlie.io), [ATP](https://atp.balldontlie.io),
+  [WTA](https://wta.balldontlie.io), [women's college basketball](https://ncaaw.balldontlie.io),
+  [Champions League](https://ucl.balldontlie.io), [MLS](https://mls.balldontlie.io) and
+  [EPL](https://epl.balldontlie.io) beside the NBA, WNBA, NFL, MLB, NHL and college sports.
+  Check whether its PGA and tennis feeds could replace Goalserve.
+- **Goalserve**: [goalserve.com](https://www.goalserve.com),
+  [golf prices](https://www.goalserve.com/en/sport-data-feeds/golf-api/prices),
+  [tennis prices](https://www.goalserve.com/en/sport-data-feeds/tennis-api/prices),
+  [horse racing prices](https://www.goalserve.com/en/sport-data-feeds/horse-racing-api/prices),
+  [terms](https://www.goalserve.com/en/terms-and-conditions).
+
 Terms, read 2026-11-09:
 
 - **BALLDONTLIE** allows "any lawful personal or commercial purpose", naming paid apps and
