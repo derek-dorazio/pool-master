@@ -512,8 +512,11 @@ test('act 4: the root admin starts the playoffs and names each series\' winner o
   });
 
   await test.step(`after the first round the entry has ${EXPECTED_TOTAL_AFTER_ROUND_1}, the Fever's upset of the 3 seed among it, and the Storm is out`, async () => {
+    // The board is rebuilt in a background job a moment after each winner is saved (#1463).
+    await expect.poll(async () => (await readKnockoutLeaderboard(page, state.contestId, state.entryId)).total, {
+      message: 'the board shows the first round once its rebuild has run',
+    }).toBe(EXPECTED_TOTAL_AFTER_ROUND_1);
     const read = await readKnockoutLeaderboard(page, state.contestId, state.entryId);
-    expect(read.total).toBe(EXPECTED_TOTAL_AFTER_ROUND_1);
     expect(pointsBySeed(read, state.fieldEntryIds)).toEqual(POINTS_AFTER_ROUND_1);
 
     await page.goto(`/league/${run.leagueCode}/contests/${state.contestId}/leaderboard`);

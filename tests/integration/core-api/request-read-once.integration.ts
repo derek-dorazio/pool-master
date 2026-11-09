@@ -54,14 +54,12 @@ const TIER_KEYS = ['A', 'B', 'C', 'D', 'E', 'F'];
 /**
  * What saving a game's result sends on an event under way (#1460): the game and its standings, the
  * contests on the event a result may start, the job that settles the game's squares contests, and
- * the leaderboard rebuild the save asks for. No contest is settled, so the count is the same
- * however many contests the game holds.
+ * the job that rebuilds the event's leaderboards (#1463). No contest is settled and no board is
+ * rebuilt, so the count is the same however many contests the game holds.
  */
 const PINNED_GAME_RESULT_COUNTS: Array<[string, number]> = [
-  ['INSERT background_jobs', 1],
+  ['INSERT background_jobs', 2],
   ['INSERT sport_event_participant_standings', 1],
-  ['SELECT contest_leaderboard_snapshots', 1],
-  ['SELECT contest_sport_events', 1],
   ['SELECT contests', 1],
   ['SELECT event_series', 1],
   ['SELECT sport_event_match_period_scores', 1],
@@ -75,13 +73,12 @@ const PINNED_GAME_RESULT_COUNTS: Array<[string, number]> = [
 
 /**
  * What an event's move to COMPLETED sends (#1448): the event and its answer, the job that settles
- * its contests, and the leaderboard rebuild the status change asks for. No contest is read or
+ * its contests, and the job that rebuilds its leaderboards (#1463). No contest or board is read or
  * written, so the count is the same however many contests the event holds.
  */
 const PINNED_TRANSITION_COUNTS: Array<[string, number]> = [
-  ['INSERT background_jobs', 1],
-  ['SELECT contest_leaderboard_snapshots', 1],
-  ['SELECT contest_sport_events', 2],
+  ['INSERT background_jobs', 2],
+  ['SELECT contest_sport_events', 1],
   ['SELECT event_series', 2],
   ['SELECT sport_event_participants', 3],
   ['SELECT sport_event_tiers', 2],
@@ -468,8 +465,10 @@ describe('Settling a squares contest with its game (#1355, #1460)', () => {
     // The request saves the result and writes the job that settles the game's contests.
     expect((await getPrisma().contest.findUniqueOrThrow({ where: { id: contestId } })).status).toBe(ContestStatus.ACTIVE);
     expect(requestCounts(statements)).toEqual(PINNED_GAME_RESULT_COUNTS);
-    await expect(getPrisma().backgroundJob.findMany({ select: { type: true, payload: true } })).resolves.toEqual([
+    await expect(getPrisma().backgroundJob.findMany({ select: { type: true, payload: true }, orderBy: { type: 'asc' } })).resolves.toEqual([
+      // Ordered as the job types are declared.
       { type: 'SETTLE_GAME_CONTESTS', payload: { sportEventId: eventId, sportEventMatchId: gameId, completedAt: expect.any(String) } },
+      { type: 'REBUILD_LEADERBOARDS', payload: { subject: 'EVENT', id: eventId } },
     ]);
 
     const { statements: jobStatements } = await recordStatements(() => drainBackgroundJobs());
@@ -567,21 +566,24 @@ describe('Finishing an event (#1355, #1448)', () => {
     // The request only moves the event and writes the job that settles it.
     expect((await getPrisma().contest.findUniqueOrThrow({ where: { id: contestId } })).status).toBe(ContestStatus.ACTIVE);
     expect(requestCounts(statements)).toEqual(PINNED_TRANSITION_COUNTS);
-    const [settleJob] = await getPrisma().backgroundJob.findMany({ select: { type: true, payload: true } });
-    expect(settleJob).toEqual({
-      type: 'SETTLE_SPORT_EVENT_CONTESTS',
-      payload: { sportEventId: eventId, completedAt: expect.any(String) },
-    });
+    await expect(getPrisma().backgroundJob.findMany({ select: { type: true, payload: true }, orderBy: { type: 'asc' } })).resolves.toEqual([
+      // Ordered as the job types are declared.
+      { type: 'SETTLE_SPORT_EVENT_CONTESTS', payload: { sportEventId: eventId, completedAt: expect.any(String) } },
+      { type: 'REBUILD_LEADERBOARDS', payload: { subject: 'EVENT', id: eventId } },
+    ]);
 
     const { statements: jobStatements } = await recordStatements(() => drainBackgroundJobs());
 
     expect((await getPrisma().contest.findUniqueOrThrow({ where: { id: contestId } })).status).toBe(ContestStatus.COMPLETED);
     // Once by settlement for its championship finishes, and once by the results email job it queued.
     expect(finalPlaceReads(jobStatements, contestId)).toBe(2);
-    // The settle job's contest wrote its final results email job, which queued the email.
+    // The settle job's contest wrote its final results email job, which queued the email, and the
+    // settlement asked for one more rebuild of the event's boards after the status change's own.
     await expect(getPrisma().backgroundJob.findMany({ select: { type: true, status: true }, orderBy: { type: 'asc' } })).resolves.toEqual([
       { type: 'CONTEST_SETTLED_EMAILS', status: 'SUCCEEDED' },
       { type: 'SETTLE_SPORT_EVENT_CONTESTS', status: 'SUCCEEDED' },
+      { type: 'REBUILD_LEADERBOARDS', status: 'SUCCEEDED' },
+      { type: 'REBUILD_LEADERBOARDS', status: 'SUCCEEDED' },
     ]);
     await expect(contestEmails(contestId)).resolves.toEqual([{ templateKey: 'CONTEST_RESULTS', recipientUserId: commissionerId }]);
   });

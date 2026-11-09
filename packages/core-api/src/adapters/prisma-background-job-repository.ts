@@ -20,6 +20,10 @@ export class PrismaBackgroundJobRepository implements BackgroundJobRepository {
     return (await insertBackgroundJobs(this.prisma, [request])) === 1;
   }
 
+  enqueueAll(requests: readonly BackgroundJobRequest[]): Promise<number> {
+    return insertBackgroundJobs(this.prisma, requests);
+  }
+
   async claimDue(claim: { now: Date; limit: number; leaseUntil: Date }): Promise<BackgroundJob[]> {
     const { now, limit, leaseUntil } = claim;
     return this.prisma.$transaction(async (tx) => {

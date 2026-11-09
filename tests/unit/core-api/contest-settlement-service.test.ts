@@ -269,13 +269,14 @@ describe('ContestSettlementService — a contest of two events (#713)', () => {
     expect(summary).toMatchObject({ contestsSettled: 1, contestsCompleted: 1, standingsUpserted: 2 });
   });
 
-  it('tells the leaderboard rebuilds each contest it settled an event of, so their stored boards show the frozen standings (#1435)', async () => {
+  it('asks for one rebuild of the settled event\'s boards, however many contests it settled, so they show the frozen standings (#1463)', async () => {
     const w = world();
     w.complete(MASTERS);
 
     await w.service.settleFinishedSportEvent(MASTERS, { completedAt: T });
 
-    expect(w.leaderboards.contestIds).toEqual(['majors']);
+    expect(w.leaderboards.sportEventIds).toEqual([MASTERS]);
+    expect(w.leaderboards.contestIds).toEqual([]);
   });
 
   it('asks for no rebuild when it settles nothing, as for an event that has not completed (#1435)', async () => {
@@ -283,6 +284,7 @@ describe('ContestSettlementService — a contest of two events (#713)', () => {
 
     await w.service.settleFinishedSportEvent(MASTERS, { completedAt: T });
 
+    expect(w.leaderboards.sportEventIds).toEqual([]);
     expect(w.leaderboards.contestIds).toEqual([]);
   });
 

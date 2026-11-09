@@ -215,6 +215,7 @@ enum PrismaBackgroundJobType {
   CONTEST_SETTLED_EMAILS
   SETTLE_SPORT_EVENT_CONTESTS
   SETTLE_GAME_CONTESTS
+  REBUILD_LEADERBOARDS
 }
 
 enum PrismaBackgroundJobStatus {

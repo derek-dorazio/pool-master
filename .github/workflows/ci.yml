@@ -688,11 +688,8 @@ jobs:
       # Links in email point at the served build, and the recovery spec reads them from Mailpit.
       APP_BASE_URL: http://localhost:4175
       POOLMASTER_E2E_MAILPIT_URL: http://localhost:8025
-      # #1435 — core-api rebuilds a contest's stored leaderboard a few seconds after a score write;
-      # the journeys read a board right after the write they check, so this API rebuilds before
-      # the write answers.
-      LEADERBOARD_REBUILD_DELAY_MS: '0'
-      # #1181 — likewise the public reads it keeps 30 seconds (event pages, sport leagues, templates).
+      # #1181 — core-api keeps no public read (event pages, sport leagues, templates); it keeps
+      # them 30 seconds by default, and the journeys read them right after the write they check.
       PUBLIC_READ_CACHE_TTL_MS: '0'
     steps:
       - uses: actions/checkout@v7

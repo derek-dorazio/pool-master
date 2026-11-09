@@ -98,8 +98,8 @@ export interface ContestSettlementDeps extends BracketStandingsReadDeps {
   championship: Pick<ChampionshipService, 'recordContest'>;
   /** Where a contest that completes queues its final results email job (#845 F1, F2, #1387); without it, nobody is told. */
   jobs?: Pick<BackgroundJobQueue, 'request' | 'queued'>;
-  /** Told which contests settled, so their stored leaderboards show the frozen result (#1435). */
-  leaderboards?: Pick<LeaderboardRebuilds, 'contestsChanged'>;
+  /** Told which event's contests settled, so their stored leaderboards show the frozen result (#1435). */
+  leaderboards?: Pick<LeaderboardRebuilds, 'eventsChanged'>;
   logger?: LifecycleLogger;
 }
 
@@ -261,7 +261,8 @@ export class ContestSettlementService {
       }
     }
 
-    if (contestsSettled > 0) await this.deps.leaderboards?.contestsChanged(contests.map((contest) => contest.id));
+    // One rebuild of the event's boards, however many of its contests settled.
+    if (contestsSettled > 0) await this.deps.leaderboards?.eventsChanged([sportEventId]);
 
     this.logger.info({
       sportEventId,

@@ -119,56 +119,72 @@ export function getFunctionalBaseUrl(): string {
  * job, #1460).
  */
 const EVENT_WRITE_PATH = /\/api\/v1\/events\/([^/]+)\//;
-const SETTLE_JOB_WAIT_MS = 30_000;
-const SETTLE_JOB_POLL_MS = 50;
+const JOB_WAIT_MS = 30_000;
+const JOB_POLL_MS = 50;
+
+type JobWhere = NonNullable<Parameters<ReturnType<typeof getFunctionalPrisma>['backgroundJob']['findMany']>[0]>['where'];
 
 /**
- * Waits until the jobs settling this event's contests have run. The server settles a finished
- * event, or a decided game's squares contests, in a background job after the write answers, and
- * the scenarios read the settled standings next, as a member would once the job is done. A job that fails, or is still waiting
- * after SETTLE_JOB_WAIT_MS, fails the test with its last error.
+ * Waits until the jobs `where` names have run. A job that fails, or is still waiting after
+ * JOB_WAIT_MS, fails the test with its last error.
  */
-export async function awaitEventSettlementJobs(sportEventId: string): Promise<void> {
+async function awaitJobs(what: string, where: JobWhere): Promise<void> {
   const database = getFunctionalPrisma();
-  const deadline = Date.now() + SETTLE_JOB_WAIT_MS;
-  const where = {
-    type: { in: ['SETTLE_SPORT_EVENT_CONTESTS' as const, 'SETTLE_GAME_CONTESTS' as const] },
-    payload: { path: ['sportEventId'], equals: sportEventId },
-  };
+  const deadline = Date.now() + JOB_WAIT_MS;
   for (;;) {
     const unfinished = await database.backgroundJob.findMany({
       where: { ...where, status: { in: ['QUEUED', 'RUNNING'] } },
-      select: { status: true, attempts: true, lastError: true },
+      select: { status: true },
     });
     const failed = await database.backgroundJob.findFirst({
       where: { ...where, OR: [{ status: 'FAILED' }, { status: 'QUEUED', attempts: { gt: 0 } }] },
       select: { lastError: true },
     });
-    if (failed) {
-      throw new Error(`Settling event ${sportEventId}'s contests failed: ${failed.lastError ?? 'no error recorded'}`);
-    }
+    if (failed) throw new Error(`${what} failed: ${failed.lastError ?? 'no error recorded'}`);
     if (unfinished.length === 0) return;
-    if (Date.now() > deadline) {
-      throw new Error(`Settling event ${sportEventId}'s contests was still ${unfinished[0]?.status} after ${SETTLE_JOB_WAIT_MS} ms`);
-    }
-    await new Promise((resolve) => setTimeout(resolve, SETTLE_JOB_POLL_MS));
+    if (Date.now() > deadline) throw new Error(`${what} was still ${unfinished[0]?.status} after ${JOB_WAIT_MS} ms`);
+    await new Promise((resolve) => setTimeout(resolve, JOB_POLL_MS));
   }
 }
 
-/** A successful write to an event answers only once the settling jobs it queued have run. */
-function waitingForEventSettlement(client: Client): Client {
+/**
+ * Waits until the jobs settling this event's contests have run. The server settles a finished
+ * event, or a decided game's squares contests, in a background job after the write answers, and
+ * the scenarios read the settled standings next, as a member would once the job is done.
+ */
+export async function awaitEventSettlementJobs(sportEventId: string): Promise<void> {
+  await awaitJobs(`Settling event ${sportEventId}'s contests`, {
+    type: { in: ['SETTLE_SPORT_EVENT_CONTESTS', 'SETTLE_GAME_CONTESTS'] },
+    payload: { path: ['sportEventId'], equals: sportEventId },
+  });
+}
+
+/**
+ * Waits until every queued leaderboard rebuild has run. A write that changes what boards are
+ * computed from (a score, a field, a status, a pick'em week, a settlement) rebuilds them in a job
+ * after it answers (#1463), and the scenarios read the board next, as a member's next poll would.
+ */
+async function awaitLeaderboardRebuildJobs(): Promise<void> {
+  await awaitJobs('Rebuilding leaderboards', { type: 'REBUILD_LEADERBOARDS' });
+}
+
+/**
+ * A successful write answers only once the jobs it queued for what the scenarios read next have
+ * run: an event's settling jobs, then the board rebuilds any write (settlement included) queued.
+ */
+function waitingForQueuedJobs(client: Client): Client {
   client.interceptors.response.use(async (response: Response, request: Request) => {
+    if (request.method === 'GET' || !response.ok) return response;
     const write = EVENT_WRITE_PATH.exec(new URL(request.url).pathname);
-    if (request.method !== 'GET' && write?.[1] && response.ok) {
-      await awaitEventSettlementJobs(decodeURIComponent(write[1]));
-    }
+    if (write?.[1]) await awaitEventSettlementJobs(decodeURIComponent(write[1]));
+    await awaitLeaderboardRebuildJobs();
     return response;
   });
   return client;
 }
 
 export function getSdkClient(): Client {
-  return waitingForEventSettlement(createClient(
+  return waitingForQueuedJobs(createClient(
     createConfig({
       baseUrl: getFunctionalBaseUrl(),
     }),
@@ -187,7 +203,7 @@ export function createAuthenticatedClient(accessToken: string): Client {
     return request;
   });
 
-  return waitingForEventSettlement(client);
+  return waitingForQueuedJobs(client);
 }
 
 export function createCookieSessionClient(session: {
@@ -217,7 +233,7 @@ export function createCookieSessionClient(session: {
     return request;
   });
 
-  return waitingForEventSettlement(client);
+  return waitingForQueuedJobs(client);
 }
 
 export function getFunctionalPrisma(): PrismaClient {
