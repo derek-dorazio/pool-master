@@ -563,14 +563,17 @@ Event changed emails (`CONTEST_EVENT_CHANGED`, #845 C6 and C7) are queued when a
 `POSTPONED` or `CANCELLED` (a root admin's transition, or the lifecycle scheduler), and when a
 root admin moves the start of a released (`SCHEDULED` or `POSTPONED`) event. Each open or live
 contest on the event (not a draft one) tells its league's active commissioners and the
-members owning an entry submitted for any of its events, one email per contest. When the
+members owning an entry submitted for any of its events, one email per contest. The change
+only decides which contests are told and writes one `CONTEST_EVENT_CHANGED_EMAILS` background
+job per contest, in one insert (#1458); each job builds its contest's emails seconds later,
+outside the request, so an event on hundreds of contests costs the admin's click two queries. When the
 event's picks are still open (the contest takes picks, isn't drawn, and the event hasn't reached
 its start), a postponed or moved event's email says they stay open until it starts; an event
 postponed after its start says the contest carries on when it resumes. A moved event's email
 gives its old and new start. A cancelled event counts for nothing; a contest it leaves with no
 event to play (its only one, or the last not already cancelled) is not told, since it ends with
-no scores and its final results email says why. The
-cancellation is told before the event's contests settle. The
+no scores and its final results email says why. Which
+contests a cancellation tells is decided before the event's contests settle. The
 idempotency key names the change and the start it leaves (a move, both starts), so a second
 postponement or a move back to an earlier new date is told again.
 

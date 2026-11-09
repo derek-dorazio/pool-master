@@ -741,8 +741,6 @@ export type ContestEntryDeleteResult = { status: 'deleted' } | { status: 'contes
 export interface ContestEntryRepository {
   findByIdWithSquad(id: string): Promise<ContestEntryWithSquad | null>;
   findByContest(contestId: string): Promise<ContestEntry[]>;
-  /** Several contests' entries in one read, in creation order as `findByContest` lists them (#1255). */
-  findByContests(contestIds: readonly string[]): Promise<ContestEntry[]>;
   /**
    * In entry-number order, then creation order. `submittedFor` keeps the entries that submitted
    * that event alone (#481, per event since #713).

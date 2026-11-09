@@ -423,7 +423,6 @@ export function fakeContestEntryRepo(
   return {
     findByIdWithSquad: one(),
     findByContest: many(),
-    findByContests: many(),
     findByContestWithSquad: many(),
     findByContestsWithSquad: many(),
     findByContestAndSquad: many(),
