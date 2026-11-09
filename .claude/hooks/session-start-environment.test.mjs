@@ -5,7 +5,7 @@ import { dirname, join } from 'node:path';
 import { describe, it } from 'node:test';
 import { fileURLToPath } from 'node:url';
 
-import { isRunAsHook, migrationPlan, parseMigrationRows, parseSchemaProbe } from './session-start-environment.mjs';
+import { isRunAsHook, migrationPlan, parseMigrationRows, parseSchemaProbe, readDatabaseState } from './session-start-environment.mjs';
 
 /**
  * #1431 — what the cloud session-start hook does to poolmaster_test.
@@ -108,6 +108,54 @@ describe('session-start hook schema probe parsing', () => {
   it('throws on output it does not recognise rather than guessing the database is empty', () => {
     assert.throws(() => parseSchemaProbe(''), /Unrecognised schema probe output/);
     assert.throws(() => parseSchemaProbe('t|many'), /Unrecognised schema probe output/);
+  });
+});
+
+describe('session-start hook reading the test database', () => {
+  // Answers each query in turn, so a test names exactly what psql returned.
+  const scripted = (...answers) => {
+    const calls = [];
+    const query = (database, sql) => {
+      calls.push(sql);
+      return answers[calls.length - 1];
+    };
+    return { query, calls };
+  };
+  const ok = (stdout) => ({ ok: true, stdout, detail: '' });
+  const fail = (detail) => ({ ok: false, stdout: '', detail });
+
+  it('warns and returns no database state when the schema probe cannot connect, instead of planning a deploy', () => {
+    const { query } = scripted(fail('exit 2\n      psql: error: connection refused'));
+    const result = readDatabaseState(query);
+    assert.equal(result.database, undefined);
+    assert.match(result.warning, /cannot read the schema of poolmaster_test: exit 2/);
+  });
+
+  it('warns and returns no database state when _prisma_migrations exists but cannot be read', () => {
+    const { query, calls } = scripted(ok('t|5'), fail('exit 1\n      ERROR: permission denied'));
+    const result = readDatabaseState(query);
+    assert.equal(calls.length, 2);
+    assert.equal(result.database, undefined);
+    assert.match(result.warning, /cannot read _prisma_migrations in poolmaster_test: exit 1/);
+  });
+
+  it('warns on garbled probe output rather than reading it as an empty database', () => {
+    const result = readDatabaseState(scripted(ok('nonsense')).query);
+    assert.equal(result.database, undefined);
+    assert.match(result.warning, /Unrecognised schema probe output/);
+  });
+
+  it('reports tables with no history without querying _prisma_migrations', () => {
+    const { query, calls } = scripted(ok('f|42'));
+    assert.deepEqual(readDatabaseState(query), { database: { recorded: null, publicTables: 42 } });
+    assert.equal(calls.length, 1);
+  });
+
+  it('reads the recorded history when _prisma_migrations exists', () => {
+    const { query } = scripted(ok('t|5'), ok(`${baselines[0]}|2026-11-01 10:00:00+00|`));
+    assert.deepEqual(readDatabaseState(query), {
+      database: { recorded: [applied(baselines[0])], publicTables: 5 },
+    });
   });
 });
 

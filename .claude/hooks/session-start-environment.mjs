@@ -370,30 +370,25 @@ export function migrationPlan(inImage, database) {
 }
 
 /**
- * poolmaster_test's migration history and table count, or null after pushing a
- * warning: a query that fails here is a database the hook cannot read, not one
- * that was never migrated, and deploying onto it would only bury the real error.
+ * poolmaster_test's migration history and table count as `{ database }`, or
+ * `{ warning }` when it cannot be read: a query that fails here is a database
+ * the hook cannot read, not one that was never migrated, and deploying onto it
+ * would only bury the real error. `query(database, sql)` is psql(), passed in so
+ * the failure paths can be tested without a server.
  */
-function readDatabaseState() {
-  const probe = psql(TEST_DB, SCHEMA_PROBE_SQL);
-  if (!probe.ok) {
-    warnings.push(`cannot read the schema of ${TEST_DB}: ${probe.detail}`);
-    return null;
-  }
+export function readDatabaseState(query) {
+  const probe = query(TEST_DB, SCHEMA_PROBE_SQL);
+  if (!probe.ok) return { warning: `cannot read the schema of ${TEST_DB}: ${probe.detail}` };
   let schema;
   try {
     schema = parseSchemaProbe(probe.stdout);
   } catch (error) {
-    warnings.push(`cannot read the schema of ${TEST_DB}: ${error.message}`);
-    return null;
+    return { warning: `cannot read the schema of ${TEST_DB}: ${error.message}` };
   }
-  if (!schema.hasMigrationsTable) return { recorded: null, publicTables: schema.publicTables };
-  const rows = psql(TEST_DB, 'SELECT migration_name, finished_at, rolled_back_at FROM _prisma_migrations');
-  if (!rows.ok) {
-    warnings.push(`cannot read _prisma_migrations in ${TEST_DB}: ${rows.detail}`);
-    return null;
-  }
-  return { recorded: parseMigrationRows(rows.stdout), publicTables: schema.publicTables };
+  if (!schema.hasMigrationsTable) return { database: { recorded: null, publicTables: schema.publicTables } };
+  const rows = query(TEST_DB, 'SELECT migration_name, finished_at, rolled_back_at FROM _prisma_migrations');
+  if (!rows.ok) return { warning: `cannot read _prisma_migrations in ${TEST_DB}: ${rows.detail}` };
+  return { database: { recorded: parseMigrationRows(rows.stdout), publicTables: schema.publicTables } };
 }
 
 function ensureMigrations(prismaAvailable) {
@@ -401,8 +396,11 @@ function ensureMigrations(prismaAvailable) {
     .filter((entry) => entry.isDirectory())
     .map((entry) => entry.name)
     .sort();
-  const database = readDatabaseState();
-  if (database === null) return;
+  const { database, warning } = readDatabaseState(psql);
+  if (warning) {
+    warnings.push(warning);
+    return;
+  }
   const plan = migrationPlan(inImage, database);
   if (plan.action === 'ready') {
     ready.push(`${TEST_DB} (${inImage.length} migrations)`);
