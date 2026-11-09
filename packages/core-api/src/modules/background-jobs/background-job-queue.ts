@@ -28,7 +28,7 @@ export class InvalidBackgroundJobPayloadError extends Error {
 export class BackgroundJobQueue {
   private runner?: { wake(): void };
 
-  constructor(private readonly options: { jobs: Pick<BackgroundJobRepository, 'enqueue' | 'enqueueMany'> }) {}
+  constructor(private readonly options: { jobs: Pick<BackgroundJobRepository, 'enqueue' | 'enqueueAll'> }) {}
 
   /**
    * The runner a queued job wakes, so a job on an idle system starts at once on the task that
@@ -60,14 +60,11 @@ export class BackgroundJobQueue {
     return written;
   }
 
-  /**
-   * Queues jobs built with `request` in one write and wakes the runner when any was written;
-   * resolves to how many were. For many jobs with no other write, such as one per contest.
-   */
-  async enqueueMany(requests: readonly BackgroundJobRequest[]): Promise<number> {
+  /** Queues jobs built with `request` in one write and wakes the runner; resolves to how many were written. */
+  async enqueueAll(requests: readonly BackgroundJobRequest[]): Promise<number> {
     if (requests.length === 0) return 0;
-    const written = await this.options.jobs.enqueueMany(requests);
-    if (written > 0) this.queued();
+    const written = await this.options.jobs.enqueueAll(requests);
+    this.queued();
     return written;
   }
 

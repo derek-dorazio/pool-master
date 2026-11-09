@@ -20,7 +20,7 @@ export class PrismaBackgroundJobRepository implements BackgroundJobRepository {
     return (await insertBackgroundJobs(this.prisma, [request])) === 1;
   }
 
-  async enqueueMany(requests: readonly BackgroundJobRequest[]): Promise<number> {
+  enqueueAll(requests: readonly BackgroundJobRequest[]): Promise<number> {
     return insertBackgroundJobs(this.prisma, requests);
   }
 

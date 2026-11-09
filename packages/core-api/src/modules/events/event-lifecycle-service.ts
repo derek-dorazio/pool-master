@@ -21,7 +21,7 @@ import type {
   SportEventMatchRepository,
   SportEventRepository,
 } from '@poolmaster/shared/db';
-import type { Contest, SportEvent, SportEventMatch } from '@poolmaster/shared/domain';
+import type { BackgroundJobRequest, Contest, SportEvent, SportEventMatch } from '@poolmaster/shared/domain';
 import {
   ContestStatus,
   SelectionType,
@@ -34,6 +34,7 @@ import { ContestEventChangeKind } from '../email';
 import type { SportEventChange, SportEventChangedNotice } from '../notifications/contest-notices';
 import { contestStartedEmailsJob } from '../notifications/contest-email-job-requests';
 import { settleSportEventContestsJob, type SettleSportEventContestsJobPayload } from '../contests/settle-sport-event-job-requests';
+import { settleGameContestsJob, type SettleGameContestsJobPayload } from '../contests/settle-game-job-requests';
 import type { BackgroundJobQueue } from '../background-jobs';
 import type { ApiErrorCode } from '@poolmaster/shared/dto';
 
@@ -46,8 +47,14 @@ export interface FinishedSportEventSettlement {
   settleFinishedGame(
     sportEventId: string,
     sportEventMatchId: string,
-    input?: { completedAt?: Date; games?: readonly SportEventMatch[] },
+    input?: { completedAt?: Date },
   ): Promise<unknown>;
+}
+
+/** The job a decided game's write carries, and what to call once that write has committed. */
+export interface FinishedGameSettlement {
+  jobs: readonly BackgroundJobRequest[];
+  queued(): void;
 }
 
 /** The contests a released edition joins: those made from a template covering its series (#714). */
@@ -238,12 +245,32 @@ export class EventLifecycleService {
   }
 
   /**
-   * A game's result is in, or it was cancelled (#711): the squares contests played on it settle
-   * now, while its event may still have weeks to run. `games`, the event's games as just written,
-   * saves reading them again.
+   * A game's result is in, a quarter score it waited for came after it, or it was cancelled
+   * (#711): the squares contests played on it settle now, while its event may still have weeks to
+   * run. They settle in a job the caller writes with the game, so a request never loops over an
+   * event's contests. Without a job queue and settlement, nothing settles.
    */
-  async settleContestsForFinishedGame(sportEvent: SportEvent, sportEventMatchId: string, now: Date = new Date(), games?: readonly SportEventMatch[]): Promise<void> {
-    await this.contestSettlement?.settleFinishedGame(sportEvent.id, sportEventMatchId, { completedAt: now, games });
+  finishedGameSettlement(sportEventId: string, sportEventMatchId: string, now: Date = new Date()): FinishedGameSettlement {
+    if (!this.jobs || !this.contestSettlement) return { jobs: [], queued: () => undefined };
+    const { jobs } = this;
+    return {
+      jobs: [settleGameContestsJob(jobs, sportEventId, sportEventMatchId, now)],
+      queued: () => jobs.queued(),
+    };
+  }
+
+  /**
+   * The SETTLE_GAME_CONTESTS job: settles the squares contests on one game as the game stands
+   * when the job runs. A contest already COMPLETED is not settled again, so a retry after a
+   * failure part way settles only the rest.
+   */
+  async settleFinishedGameContests(payload: SettleGameContestsJobPayload): Promise<void> {
+    if (!this.contestSettlement) {
+      throw new Error('Contest settlement is required to settle a finished game\'s contests');
+    }
+    await this.contestSettlement.settleFinishedGame(payload.sportEventId, payload.sportEventMatchId, {
+      completedAt: new Date(payload.completedAt),
+    });
   }
 
   /**

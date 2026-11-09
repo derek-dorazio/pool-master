@@ -14,11 +14,8 @@ export interface BackgroundJobRepository {
    * it in the same transaction instead.
    */
   enqueue(request: BackgroundJobRequest): Promise<boolean>;
-  /**
-   * Queues several jobs in one write, each skipped as `enqueue` skips one whose dedupe key a
-   * waiting job holds; resolves to how many were written.
-   */
-  enqueueMany(requests: readonly BackgroundJobRequest[]): Promise<number>;
+  /** Queues several jobs in one write, each unless a waiting job holds its dedupe key; resolves to how many were written. */
+  enqueueAll(requests: readonly BackgroundJobRequest[]): Promise<number>;
   /**
    * Claims up to `limit` due jobs, earliest due first: queued ones whose run time has come, and
    * running ones whose lease ended (their task stopped mid-run). Each becomes RUNNING with one

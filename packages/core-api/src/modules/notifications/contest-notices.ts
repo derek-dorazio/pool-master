@@ -62,7 +62,7 @@ export interface ContestNoticeDeps extends ContestSummaryDeps, LeagueMemberDeps 
   squadMemberships: Pick<SquadMembershipRepository, 'findBySquads'>;
   email: Pick<EmailService, 'sendMany'>;
   /** Where an event change queues each contest's email job (#1458); `sportEventChanged` throws without it. */
-  jobs?: Pick<BackgroundJobQueue, 'request' | 'enqueueMany'>;
+  jobs?: Pick<BackgroundJobQueue, 'request' | 'enqueueAll'>;
   appBaseUrl: string;
   logger?: FastifyBaseLogger;
   /** The clock that says whether an event's picks are still open; the real one by default. */
@@ -259,7 +259,7 @@ export class ContestNotices implements ContestOpenedNotice, SportEventChangedNot
     const contests = change.kind === ContestEventChangeKind.CANCELLED
       ? await this.stillToPlay(onEvent, sportEvent.id)
       : onEvent;
-    await jobs.enqueueMany(contests.map((contest) => contestEventChangedEmailsJob(jobs, contest.id, sportEvent, change)));
+    await jobs.enqueueAll(contests.map((contest) => contestEventChangedEmailsJob(jobs, contest.id, sportEvent, change)));
   }
 
   /**

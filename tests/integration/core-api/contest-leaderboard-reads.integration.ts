@@ -7,9 +7,11 @@ import { createContestService, createContestSettlementService } from '../../../p
 import {
   cleanupTestData,
   createTestUser,
+  drainBackgroundJobs,
   getApp,
   getAppPrisma,
   getPrisma,
+  holdingBackgroundJobs,
   setupIntegrationTests,
   teardownIntegrationTests,
 } from '../helpers';
@@ -457,6 +459,11 @@ describe('Contest leaderboard snapshots (#1435)', () => {
   }
 
   const snapshotRows = (contestId: string) => getPrisma().contestLeaderboardSnapshot.findMany({ where: { contestId } });
+  const rebuildJobs = (sportEventId: string) => getPrisma().backgroundJob.findMany({
+    where: { type: 'REBUILD_LEADERBOARDS', payload: { path: ['id'], equals: sportEventId } },
+    select: { status: true },
+    orderBy: { createdAt: 'asc' },
+  });
 
   it('answers a poll from the stored board in one read by its key, after the access check, reading no entries, picks or field', async () => {
     const { contest, viewerId } = await liveContest();
@@ -516,16 +523,48 @@ describe('Contest leaderboard snapshots (#1435)', () => {
     expect(writes(five)).toEqual(Array(5).fill('UPDATE "public"."contest_leaderboard_snapshots"'));
   });
 
-  it('rebuilds the stored board when an admin saves the event through the events routes, before the save answers', async () => {
+  it('answers an admin\'s event saves before rebuilding, queuing one rebuild job for the event however many saves, which then rebuilds the stored board (#1463)', async () => {
     const { live, contest, viewerId, golfers } = await liveContest();
     const admin = await createTestUser({ isRootAdmin: true });
     await serviceOn(getAppPrisma()).getLeaderboard(contest.id, viewerId);
     await setScore(expectDefined(golfers[1]), -6);
 
-    const saved = await getApp().inject({ method: 'PATCH', url: `/api/v1/events/${live.event.id}`, headers: admin.headers, payload: { venue: 'Valhalla' } });
+    const saves = await holdingBackgroundJobs(async () => {
+      const first = await getApp().inject({ method: 'PATCH', url: `/api/v1/events/${live.event.id}`, headers: admin.headers, payload: { venue: 'Valhalla' } });
+      const second = await getApp().inject({ method: 'PATCH', url: `/api/v1/events/${live.event.id}`, headers: admin.headers, payload: { venue: 'Quail Hollow' } });
+      return [first.statusCode, second.statusCode];
+    });
 
-    expect(saved.statusCode).toBe(200);
+    expect(saves).toEqual([200, 200]);
+    // The saves answered with the board as it was: the rebuild waits as one job for the event.
+    expect(await snapshotRows(contest.id)).toMatchObject([{ version: 1 }]);
+    expect(await rebuildJobs(live.event.id)).toEqual([{ status: 'QUEUED' }]);
+
+    await drainBackgroundJobs();
+
+    expect(await rebuildJobs(live.event.id)).toEqual([{ status: 'SUCCEEDED' }]);
     expect(await snapshotRows(contest.id)).toMatchObject([{ version: 2 }]);
+    const { board } = await serviceOn(getAppPrisma()).getLeaderboard(contest.id, viewerId);
+    expect(board.entries.map((entry) => entry.totalScore)).toEqual([-11]);
+  });
+
+  it('queues one more rebuild for a save made while the event\'s rebuild job runs, so the board ends on that save\'s scores (#1463)', async () => {
+    const { live, contest, viewerId, golfers } = await liveContest();
+    const admin = await createTestUser({ isRootAdmin: true });
+    await serviceOn(getAppPrisma()).getLeaderboard(contest.id, viewerId);
+    const save = () => getApp().inject({ method: 'PATCH', url: `/api/v1/events/${live.event.id}`, headers: admin.headers, payload: { venue: 'Valhalla' } });
+    await holdingBackgroundJobs(save);
+
+    // The waiting job is claimed, as a runner starting it does, and the next save lands meanwhile.
+    await getPrisma().backgroundJob.updateMany({
+      where: { type: 'REBUILD_LEADERBOARDS', payload: { path: ['id'], equals: live.event.id } },
+      data: { status: 'RUNNING', dedupeKey: null, attempts: 1, leaseUntil: new Date(Date.now() + 60_000) },
+    });
+    await setScore(expectDefined(golfers[1]), -6);
+    await holdingBackgroundJobs(save);
+
+    expect(await rebuildJobs(live.event.id)).toEqual([{ status: 'RUNNING' }, { status: 'QUEUED' }]);
+    await drainBackgroundJobs();
     const { board } = await serviceOn(getAppPrisma()).getLeaderboard(contest.id, viewerId);
     expect(board.entries.map((entry) => entry.totalScore)).toEqual([-11]);
   });

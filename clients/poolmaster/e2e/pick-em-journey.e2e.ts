@@ -357,9 +357,12 @@ test('act 3: a new member joins, picks week 1\'s game, saves the tiebreaker on i
   });
 
   await test.step('the season leaderboard lists the entry, with no points before the first kickoff', async () => {
-    await page.goto(`/league/${run.leagueCode}/contests/${state.contestId}/leaderboard`);
-    await expect(page.getByTestId('pick-em-leaderboard-table')).toBeVisible();
-    await expect(page.getByTestId(`pick-em-leaderboard-row-${state.entryId}`)).toBeVisible();
+    // The board is rebuilt in a background job a moment after the week is submitted (#1463).
+    await expect(async () => {
+      await page.goto(`/league/${run.leagueCode}/contests/${state.contestId}/leaderboard`);
+      await expect(page.getByTestId('pick-em-leaderboard-table')).toBeVisible();
+      await expect(page.getByTestId(`pick-em-leaderboard-row-${state.entryId}`)).toBeVisible({ timeout: 2_000 });
+    }).toPass({ timeout: 30_000 });
     await expect(page.getByTestId(`pick-em-leaderboard-total-${state.entryId}`)).toHaveText('0 pts');
     await expect(page.getByTestId('pick-em-leaderboard-not-started')).toBeVisible();
   });

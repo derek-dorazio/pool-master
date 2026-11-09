@@ -85,7 +85,8 @@ import { SyncRunDetailsRetention, SyncRunRetention } from './modules/ingestion/p
 import { registerConfiguredProviders } from './modules/ingestion/core/provider-bindings';
 import { createScheduledEventReader } from './modules/ingestion/core/scheduled-event-reader';
 import { createContestService, createContestSettlementService } from './modules/contests/wiring';
-import { DebouncedLeaderboardRebuilds, readLeaderboardRebuildDelayMs } from './modules/contests/leaderboard-snapshots';
+import { JobLeaderboardRebuilds } from './modules/contests/leaderboard-snapshots';
+import { leaderboardChangesOf } from './modules/contests/leaderboard-rebuild-job-requests';
 import { createContestManagementService } from './modules/contest-management/wiring';
 import { scoringFamilyForEvent } from './modules/scoring-families';
 import {
@@ -151,12 +152,9 @@ export function buildApp() {
   // A contest going live or completing queues its league's email as a job (#1387).
   const contestEmailJobs = createContestEmailJobs(prisma, { notices: contestNotices, logger: app.log });
   // Live leaderboards are computed once per score write (#1435): every write that changes what a
-  // board is computed from tells this, and the boards it touched are rebuilt once the writes stop.
-  const leaderboards = new DebouncedLeaderboardRebuilds({
-    rebuilder: createContestService(prisma, app.log, { planEntitlements }),
-    logger: app.log,
-    delayMs: readLeaderboardRebuildDelayMs(process.env),
-  });
+  // board is computed from tells this, which queues one rebuild job per event or contest (#1463).
+  const leaderboards = new JobLeaderboardRebuilds(backgroundJobs);
+  const leaderboardRebuilder = createContestService(prisma, app.log, { planEntitlements });
   const contestSettlement = createContestSettlementService(prisma, app.log, { jobs: backgroundJobs, leaderboards });
   const eventLifecycleService = createEventLifecycleService(prisma, {
     logger: app.log,
@@ -289,6 +287,8 @@ export function buildApp() {
       CONTEST_SETTLED_EMAILS: (payload) => contestEmailJobs.contestSettled(payload),
       CONTEST_EVENT_CHANGED_EMAILS: (payload) => contestEmailJobs.contestEventChanged(payload),
       SETTLE_SPORT_EVENT_CONTESTS: (payload) => eventLifecycleService.settleFinishedEventContests(payload),
+      SETTLE_GAME_CONTESTS: (payload) => eventLifecycleService.settleFinishedGameContests(payload),
+      REBUILD_LEADERBOARDS: (payload) => leaderboardRebuilder.rebuildLeaderboardSnapshots(leaderboardChangesOf(payload)),
     },
     pollMs: readBackgroundJobPollMs(process.env),
     logger: app.log,
@@ -402,9 +402,6 @@ export function buildApp() {
     nightlyCleanupScheduler.stop();
     // Stops claiming and lets the jobs in flight finish briefly; a lapsed lease re-runs the rest.
     await backgroundJobRunner.stop();
-    // Rebuilds still waiting on their timer run now, so a deploy loses no score write's board,
-    // including one a job above just wrote.
-    await leaderboards.flush();
     // Closing the lock connection releases this task's job locks for another task to take.
     await jobLock.close();
     await prisma.$disconnect();

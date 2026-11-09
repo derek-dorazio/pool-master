@@ -46,13 +46,17 @@ import {
   matchPeriodsOf,
   rankSortedScores,
   eventPlaysMatches,
+  type BackgroundJobRequest,
   type SportEvent,
   type SportEventMatch,
   type SportMatchPeriods,
 } from '@poolmaster/shared/domain';
 import { SportEventError } from '../../events/errors';
-import type { EventLifecycleService } from '../../events/event-lifecycle-service';
+import type { EventLifecycleService, FinishedGameSettlement } from '../../events/event-lifecycle-service';
 import { formsNoBracket } from '../../events/sport-event-bracket-service';
+
+/** No game settlement: contests are not wired to this service, or the change decides no game. */
+const NO_SETTLEMENT: FinishedGameSettlement = { jobs: [], queued: () => undefined };
 
 export interface MatchResultInput {
   /** The side that won; null for a tie (#792), only in a game of a week, which forms no bracket. */
@@ -86,9 +90,9 @@ export interface MatchResultServiceDeps {
    * Starts the event's contests whose cutoff a result shows has passed (#721): a result in a
    * second-chance bracket's starting round puts it live even where the scheduler leaves the event
    * to an admin, as a period score does for a squares contest on that game (#711). A game's result
-   * or cancellation settles the squares contests played on it.
+   * or cancellation settles the squares contests played on it, in a job written with the game.
    */
-  contestActivation?: Pick<EventLifecycleService, 'activateContestsPastCutoff' | 'settleContestsForFinishedGame'>;
+  contestActivation?: Pick<EventLifecycleService, 'activateContestsPastCutoff' | 'finishedGameSettlement'>;
   now?: () => Date;
   logger?: FastifyBaseLogger;
 }
@@ -211,14 +215,16 @@ export class MatchResultService {
     const result = { id: match.id, status: MatchStatus.COMPLETED, winnerSide: input.winnerSide, homeScore: input.homeScore, awayScore: input.awayScore, ...shootout, ending };
     // A tie sends nobody on: only a game that forms no bracket can end level.
     const sideFill = input.winnerSide === null ? null : this.advance(bracket, match, sideRowId(match, input.winnerSide));
-    const after = await this.write(sportEventId, bracket, result, sideFill);
-    this.deps.logger?.info({ sportEventId, matchNumber, winnerSide: input.winnerSide, ending, winnerChanges }, 'Saved a match result');
     const now = this.deps.now?.() ?? new Date();
-    // The bracket as written stands in for a read of it, here and for the contests (#1355).
+    // The squares contests on the game settle in a job written with its result.
+    const settlement = this.gameSettlement(sportEventId, match.id, now);
+    const after = await this.write(sportEventId, bracket, result, sideFill, settlement.jobs);
+    settlement.queued();
+    this.deps.logger?.info({ sportEventId, matchNumber, winnerSide: input.winnerSide, ending, winnerChanges }, 'Saved a match result');
+    // The bracket as written stands in for a read of it (#1355).
     if (sportEvent.status === SportEventStatus.IN_PROGRESS) {
       await this.deps.contestActivation?.activateContestsPastCutoff(sportEvent, now, after);
     }
-    await this.deps.contestActivation?.settleContestsForFinishedGame(sportEvent, match.id, now, after);
     return after;
   }
 
@@ -250,7 +256,7 @@ export class MatchResultService {
    * an earlier game, or sits among games of several rounds), since a bracket cannot lose a game.
    */
   async cancelMatch(sportEventId: string, matchNumber: number): Promise<SportEventMatch[]> {
-    const sportEvent = await this.requireReleasedBracketEvent(sportEventId);
+    await this.requireReleasedBracketEvent(sportEventId);
     const bracket = await this.deps.matches.findBySportEvent(sportEventId);
     const match = this.requireMatch(sportEventId, bracket, matchNumber);
     if (match.status === MatchStatus.CANCELLED) {
@@ -274,10 +280,11 @@ export class MatchResultService {
       );
     }
     const result = { id: match.id, status: MatchStatus.CANCELLED, winnerSide: null, homeScore: null, awayScore: null, ...NO_RESULT_DETAILS };
-    const after = await this.write(sportEventId, bracket, result, null);
+    // A squares contest on the game ends Final with no scores (#711, #743), in a job written with it.
+    const settlement = this.gameSettlement(sportEventId, match.id, this.deps.now?.() ?? new Date());
+    const after = await this.write(sportEventId, bracket, result, null, settlement.jobs);
+    settlement.queued();
     this.deps.logger?.info({ sportEventId, matchNumber }, 'Cancelled a game');
-    // A squares contest on the game ends Final with no scores (#711, #743).
-    await this.deps.contestActivation?.settleContestsForFinishedGame(sportEvent, match.id, this.deps.now?.() ?? new Date(), after);
     return after;
   }
 
@@ -309,16 +316,16 @@ export class MatchResultService {
         422,
       );
     }
-    await this.deps.matches.savePeriodScore(match.id, { periodNumber, ...input });
+    const now = this.deps.now?.() ?? new Date();
+    // A quarter entered after the result may be the last one a squares contest waits for: its
+    // settling job is written with the score.
+    const settlement = match.status === MatchStatus.COMPLETED ? this.gameSettlement(sportEventId, match.id, now) : NO_SETTLEMENT;
+    await this.deps.matches.savePeriodScore(match.id, { periodNumber, ...input }, settlement.jobs);
+    settlement.queued();
     this.deps.logger?.info({ sportEventId, matchNumber, periodNumber }, 'Saved a period score');
     // A scored period means the game is under way: a squares contest on it goes live (#711).
-    const now = this.deps.now?.() ?? new Date();
     if (sportEvent.status === SportEventStatus.IN_PROGRESS) {
       await this.deps.contestActivation?.activateContestsPastCutoff(sportEvent, now);
-    }
-    // A quarter entered after the result may be the last one a squares contest waits for.
-    if (match.status === MatchStatus.COMPLETED) {
-      await this.deps.contestActivation?.settleContestsForFinishedGame(sportEvent, match.id, now);
     }
     return this.deps.matches.findBySportEvent(sportEventId);
   }
@@ -386,6 +393,7 @@ export class MatchResultService {
     bracket: readonly SportEventMatch[],
     result: Pick<SportEventMatch, 'id' | 'status' | 'winnerSide' | 'homeScore' | 'awayScore' | 'homeShootoutScore' | 'awayShootoutScore' | 'ending'>,
     sideFill: MatchSideFill | null,
+    jobs: readonly BackgroundJobRequest[] = [],
   ): Promise<SportEventMatch[]> {
     // The standings are read off the bracket as it will stand after this write, which is answered.
     const after = bracket.map((candidate) => {
@@ -399,9 +407,14 @@ export class MatchResultService {
     });
     const asOf = (this.deps.now ?? (() => new Date()))();
     const standings = formsNoBracket(after, linksOn) ? gameStandings(after, asOf) : bracketStandings(after, asOf);
-    await this.deps.matches.applyResult({ result, sideFill, standings });
+    await this.deps.matches.applyResult({ result, sideFill, standings, jobs });
     this.deps.logger?.debug({ sportEventId, matchId: result.id }, 'Rewrote the event standings');
     return after;
+  }
+
+  /** The job settling the game's squares contests, when contests are wired to this service. */
+  private gameSettlement(sportEventId: string, sportEventMatchId: string, now: Date): FinishedGameSettlement {
+    return this.deps.contestActivation?.finishedGameSettlement(sportEventId, sportEventMatchId, now) ?? NO_SETTLEMENT;
   }
 
   private assertNextMatchOpen(sportEventId: string, bracket: readonly SportEventMatch[], match: SportEventMatch): void {

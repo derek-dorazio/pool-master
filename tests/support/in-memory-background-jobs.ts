@@ -49,7 +49,7 @@ export function inMemoryBackgroundJobs(now: () => Date = () => new Date()): InMe
     rows,
     claimLimits,
     enqueue: (request) => Promise.resolve(enqueueOne(request)),
-    enqueueMany: (requests) => Promise.resolve(requests.filter((request) => enqueueOne(request)).length),
+    enqueueAll: (requests) => Promise.resolve(requests.filter((request) => enqueueOne(request)).length),
     claimDue: ({ now: at, limit, leaseUntil }) => {
       claimLimits.push(limit);
       const due = rows

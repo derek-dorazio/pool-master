@@ -74,7 +74,7 @@ export function createEntryReminders(prisma: PrismaClient, options: {
 export function createContestNotices(prisma: PrismaClient, options: {
   email: EmailService;
   /** Where an event change queues each contest's email job (#1458); only the app's own notices tell event changes. */
-  jobs?: Pick<BackgroundJobQueue, 'request' | 'enqueueMany'>;
+  jobs?: Pick<BackgroundJobQueue, 'request' | 'enqueueAll'>;
   appBaseUrl: string;
   logger: FastifyBaseLogger;
 }): ContestNotices {

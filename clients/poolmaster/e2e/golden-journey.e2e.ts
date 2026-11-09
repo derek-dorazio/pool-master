@@ -969,14 +969,15 @@ test('act 5: each round of scores moves the leaderboard, and only a counted pick
           .toHaveValue(String(PAR_PER_ROUND + plan.scoresToPar[index]));
       }
 
-      const read = await readContestLeaderboard(page, state.contestId, state.entryId);
-      expectCountingPicksExplainTheTotal(read);
-      // What a leaderboard that tracks scoring has to change when a round lands, none of it a
-      // number this file chose: the entry's total, the order the field is placed in, and which
-      // of the entry's picks count.
-      expect(read.entry.total).not.toBe(before.entry.total);
-      expect(read.placedOrder).not.toEqual(before.placedOrder);
-      expect([...read.entry.countingIds].sort()).not.toEqual([...before.entry.countingIds].sort());
+      const read = await readContestLeaderboardOnceRebuilt(page, state.contestId, state.entryId, (rebuilt) => {
+        expectCountingPicksExplainTheTotal(rebuilt);
+        // What a leaderboard that tracks scoring has to change when a round lands, none of it a
+        // number this file chose: the entry's total, the order the field is placed in, and which
+        // of the entry's picks count.
+        expect(rebuilt.entry.total).not.toBe(before.entry.total);
+        expect(rebuilt.placedOrder).not.toEqual(before.placedOrder);
+        expect([...rebuilt.entry.countingIds].sort()).not.toEqual([...before.entry.countingIds].sort());
+      });
       // The entry's own rank has nowhere to move: it is the contest's only entry, so it is
       // first before and after. The ranks that do move are the field's, asserted through
       // `placedOrder` above. A second ranked entry needs a second squad and a second draft.
@@ -996,10 +997,11 @@ test('act 5: each round of scores moves the leaderboard, and only a counted pick
     const scoreBefore = scoreOn(afterRound3, dropped);
     const delta = await correctOneGolfersRound(page, state.eventId, CORRECTED_ROUND, afterRound3, dropped, CORRECTION_STROKES);
 
-    const read = await readContestLeaderboard(page, state.contestId, state.entryId);
+    const read = await readContestLeaderboardOnceRebuilt(page, state.contestId, state.entryId, (rebuilt) => {
+      // The write landed — the golfer's own event total moved by exactly the round's change …
+      expect(scoreOn(rebuilt, dropped)).toBe(scoreBefore + delta);
+    });
     expectCountingPicksExplainTheTotal(read);
-    // The write landed — the golfer's own event total moved by exactly the round's change …
-    expect(scoreOn(read, dropped)).toBe(scoreBefore + delta);
     // … the pick it belongs to is still dropped, having only got worse …
     expect(read.entry.droppedIds).toContain(dropped);
     // … and the entry's total, and the four picks that make it, did not move at all.
@@ -1014,9 +1016,10 @@ test('act 5: each round of scores moves the leaderboard, and only a counted pick
     const scoreBefore = scoreOn(afterPenalty, counting);
     const delta = await correctOneGolfersRound(page, state.eventId, CORRECTED_ROUND, afterPenalty, counting, -CORRECTION_STROKES);
 
-    const read = await readContestLeaderboard(page, state.contestId, state.entryId);
+    const read = await readContestLeaderboardOnceRebuilt(page, state.contestId, state.entryId, (rebuilt) => {
+      expect(scoreOn(rebuilt, counting)).toBe(scoreBefore + delta);
+    });
     expectCountingPicksExplainTheTotal(read);
-    expect(scoreOn(read, counting)).toBe(scoreBefore + delta);
     expect(read.entry.countingIds).toContain(counting);
     // The asymmetry this act exists for: the same size of correction, on a pick that counts,
     // moves the entry's total by its own change and nothing else.
@@ -1096,14 +1099,15 @@ test('act 6: completing the event settles the contest and freezes its standing a
     // A complete card, stated as the event states it: every scheduled round scored for every
     // golfer in the field.
     const scheduled = await readScheduledRoundNumbers(page, state.eventId);
-    const read = await readContestLeaderboard(page, state.contestId, state.entryId);
-    for (const fieldEntryId of state.fieldEntryIds) {
-      const golfer = golferOn(read, fieldEntryId);
-      expect(
-        [...golfer.rounds.keys()].sort((left, right) => left - right),
-        `${golfer.name} has no score in every scheduled round`,
-      ).toEqual(scheduled);
-    }
+    await readContestLeaderboardOnceRebuilt(page, state.contestId, state.entryId, (read) => {
+      for (const fieldEntryId of state.fieldEntryIds) {
+        const golfer = golferOn(read, fieldEntryId);
+        expect(
+          [...golfer.rounds.keys()].sort((left, right) => left - right),
+          `${golfer.name} has no score in every scheduled round`,
+        ).toEqual(scheduled);
+      }
+    });
   });
 
   const finalLive = await test.step('this is the last live leaderboard before completion', async () => {
@@ -1189,10 +1193,11 @@ test('act 6: completing the event settles the contest and freezes its standing a
       -CORRECTION_STROKES,
     );
 
-    const read = await readContestLeaderboard(page, state.contestId, state.entryId);
-    // Act 5 proved this correction, on a counting pick, moves a live entry's total by its own
-    // change. The golfer's event total moves here too, so the write plainly landed …
-    expect(scoreOn(read, counting)).toBe(scoreBefore + delta);
+    const read = await readContestLeaderboardOnceRebuilt(page, state.contestId, state.entryId, (rebuilt) => {
+      // Act 5 proved this correction, on a counting pick, moves a live entry's total by its own
+      // change. The golfer's event total moves here too, so the write plainly landed …
+      expect(scoreOn(rebuilt, counting)).toBe(scoreBefore + delta);
+    });
     // … and the settled entry does not move at all. That is the freeze: a provider correction
     // arriving after the result was called cannot rewrite who won.
     expect(read.entry.total).toBe(settled.entry.total);
@@ -1586,6 +1591,31 @@ type LeaderboardRead = {
   /** Field-row ids in the order the event places them, best first; an unplaced row is left out. */
   placedOrder: string[];
 };
+
+/**
+ * Reads the contest leaderboard until `expectations` hold of it. A write's boards are rebuilt in a
+ * background job a moment after the write answers (#1463), so the read straight after a score
+ * write can still be the board from before it, as a member's poll would be.
+ */
+async function readContestLeaderboardOnceRebuilt(
+  page: Page,
+  contestId: string,
+  entryId: string,
+  expectations: (read: LeaderboardRead) => void,
+): Promise<LeaderboardRead> {
+  const passed: LeaderboardRead[] = [];
+  await expect(async () => {
+    const read = await readContestLeaderboard(page, contestId, entryId);
+    expectations(read);
+    passed.push(read);
+  }).toPass({ timeout: BOARD_REBUILD_TIMEOUT_MS });
+  const rebuilt = passed.at(-1);
+  if (!rebuilt) throw new Error('the leaderboard was never read');
+  return rebuilt;
+}
+
+/** How long a read waits for the rebuild a write queued, well past the job runner's 10 s poll. */
+const BOARD_REBUILD_TIMEOUT_MS = 30_000;
 
 /**
  * Reads one entry's standing and the whole field off the contest leaderboard.

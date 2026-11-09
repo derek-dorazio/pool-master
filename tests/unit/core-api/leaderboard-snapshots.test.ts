@@ -1,169 +1,74 @@
-import { afterEach, describe, expect, it, jest } from '@jest/globals';
-import { SelectionType } from '@poolmaster/shared/domain';
+import { describe, expect, it, jest } from '@jest/globals';
+import { BackgroundJobStatus, BackgroundJobType, SelectionType } from '@poolmaster/shared/domain';
+import { BackgroundJobQueue } from '../../../packages/core-api/src/modules/background-jobs';
+import { leaderboardChangesOf, LeaderboardRebuildSubject } from '../../../packages/core-api/src/modules/contests/leaderboard-rebuild-job-requests';
 import {
-  DebouncedLeaderboardRebuilds,
-  LEADERBOARD_REBUILD_DELAY_MS,
-  LEADERBOARD_REBUILD_MAX_WAIT_MS,
+  JobLeaderboardRebuilds,
   LEADERBOARD_SNAPSHOT_MAX_AGE_MS,
   isSnapshotCurrent,
   leaderboardKindOf,
   LeaderboardKind,
   nextKickoffAfter,
-  readLeaderboardRebuildDelayMs,
   readLeaderboardSnapshotMaxAgeMs,
-  type LeaderboardChanges,
 } from '../../../packages/core-api/src/modules/contests/leaderboard-snapshots';
+import { inMemoryBackgroundJobs, type InMemoryBackgroundJobs } from '../../support/in-memory-background-jobs';
 
-/** Records each rebuild it is asked for; `gate`, when set, holds a rebuild until released. */
-function recordingRebuilder() {
-  const rebuilds: LeaderboardChanges[] = [];
-  let release: (() => void) | null = null;
-  let held = false;
-  return {
-    rebuilds,
-    holdNext() {
-      held = true;
-    },
-    release() {
-      release?.();
-    },
-    rebuilder: {
-      rebuildLeaderboardSnapshots: async (changes: LeaderboardChanges) => {
-        rebuilds.push(changes);
-        if (held) {
-          held = false;
-          await new Promise<void>((resolve) => {
-            release = resolve;
-          });
-        }
-      },
-    },
-  };
+function setup() {
+  const jobs = inMemoryBackgroundJobs();
+  const queue = new BackgroundJobQueue({ jobs });
+  const runner = { wake: jest.fn() };
+  queue.wakes(runner);
+  return { jobs, queue, runner, rebuilds: new JobLeaderboardRebuilds(queue) };
 }
 
-const logger = { error: jest.fn() };
+const waiting = (jobs: InMemoryBackgroundJobs) => jobs.rows
+  .filter((row) => row.status === BackgroundJobStatus.QUEUED)
+  .map((row) => ({ type: row.type, payload: row.payload }));
 
-afterEach(() => {
-  jest.useRealTimers();
-  logger.error.mockReset();
-});
+describe('JobLeaderboardRebuilds', () => {
+  it('queues one rebuild job per event and per contest a burst of writes names, however often each is named', async () => {
+    const { jobs, rebuilds, runner } = setup();
 
-describe('DebouncedLeaderboardRebuilds', () => {
-  it('rebuilds a burst of score writes once, for every event and contest they named, after the writes stop', async () => {
-    jest.useFakeTimers();
-    const recorder = recordingRebuilder();
-    const rebuilds = new DebouncedLeaderboardRebuilds({ rebuilder: recorder.rebuilder, logger });
-
-    await rebuilds.eventsChanged(['event-2']);
-    jest.advanceTimersByTime(LEADERBOARD_REBUILD_DELAY_MS - 1);
-    await rebuilds.eventsChanged(['event-1', 'event-2']);
+    await rebuilds.eventsChanged(['event-1', 'event-1', 'event-2']);
+    await rebuilds.eventsChanged(['event-1']);
     await rebuilds.contestsChanged(['contest-9']);
-    jest.advanceTimersByTime(LEADERBOARD_REBUILD_DELAY_MS - 1);
-    expect(recorder.rebuilds).toEqual([]);
+    await rebuilds.contestsChanged(['contest-9']);
 
-    jest.advanceTimersByTime(1);
-    await rebuilds.flush();
-
-    expect(recorder.rebuilds).toEqual([{ sportEventIds: ['event-1', 'event-2'], contestIds: ['contest-9'] }]);
-  });
-
-  it('rebuilds at the max wait while writes keep arriving, as a provider sync writes, rather than waiting for them to stop', async () => {
-    jest.useFakeTimers();
-    const recorder = recordingRebuilder();
-    const rebuilds = new DebouncedLeaderboardRebuilds({ rebuilder: recorder.rebuilder, logger });
-
-    // A write every second for longer than the max wait: the debounce alone would never fire.
-    for (let elapsed = 0; elapsed < LEADERBOARD_REBUILD_MAX_WAIT_MS; elapsed += 1_000) {
-      await rebuilds.eventsChanged(['event-1']);
-      jest.advanceTimersByTime(1_000);
-    }
-    await rebuilds.flush();
-
-    expect(recorder.rebuilds).toEqual([{ sportEventIds: ['event-1'], contestIds: [] }]);
-  });
-
-  it('with no delay, rebuilds before the write that asked answers', async () => {
-    const recorder = recordingRebuilder();
-    const rebuilds = new DebouncedLeaderboardRebuilds({ rebuilder: recorder.rebuilder, logger, delayMs: 0 });
-
-    await rebuilds.eventsChanged(['event-1']);
-
-    expect(recorder.rebuilds).toEqual([{ sportEventIds: ['event-1'], contestIds: [] }]);
-  });
-
-  it('flush rebuilds what is waiting at once, and the timer it replaced fires nothing more', async () => {
-    jest.useFakeTimers();
-    const recorder = recordingRebuilder();
-    const rebuilds = new DebouncedLeaderboardRebuilds({ rebuilder: recorder.rebuilder, logger });
-
-    await rebuilds.eventsChanged(['event-1']);
-    await rebuilds.flush();
-
-    expect(recorder.rebuilds).toEqual([{ sportEventIds: ['event-1'], contestIds: [] }]);
-    // The timer it replaced fires nothing more.
-    jest.advanceTimersByTime(LEADERBOARD_REBUILD_DELAY_MS);
-    await rebuilds.flush();
-    expect(recorder.rebuilds).toHaveLength(1);
-  });
-
-  it('runs one rebuild at a time: writes during a rebuild wait for it, and flush answers only once both are done', async () => {
-    const recorder = recordingRebuilder();
-    const rebuilds = new DebouncedLeaderboardRebuilds({ rebuilder: recorder.rebuilder, logger, delayMs: 0 });
-    recorder.holdNext();
-
-    const first = rebuilds.eventsChanged(['event-1']);
-    await Promise.resolve();
-    const second = rebuilds.eventsChanged(['event-2']);
-    let flushed = false;
-    const flushing = rebuilds.flush().then(() => {
-      flushed = true;
-    });
-    await new Promise((resolve) => setImmediate(resolve));
-
-    expect(recorder.rebuilds).toEqual([{ sportEventIds: ['event-1'], contestIds: [] }]);
-    expect(flushed).toBe(false);
-
-    recorder.release();
-    await Promise.all([first, second, flushing]);
-
-    expect(recorder.rebuilds).toEqual([
-      { sportEventIds: ['event-1'], contestIds: [] },
-      { sportEventIds: ['event-2'], contestIds: [] },
+    expect(waiting(jobs)).toEqual([
+      { type: BackgroundJobType.REBUILD_LEADERBOARDS, payload: { subject: LeaderboardRebuildSubject.EVENT, id: 'event-1' } },
+      { type: BackgroundJobType.REBUILD_LEADERBOARDS, payload: { subject: LeaderboardRebuildSubject.EVENT, id: 'event-2' } },
+      { type: BackgroundJobType.REBUILD_LEADERBOARDS, payload: { subject: LeaderboardRebuildSubject.CONTEST, id: 'contest-9' } },
     ]);
+    expect(runner.wake).toHaveBeenCalledTimes(4);
   });
 
-  it('logs a failed rebuild without failing the write that asked, and the next write still rebuilds', async () => {
-    let calls = 0;
-    const rebuilds = new DebouncedLeaderboardRebuilds({
-      rebuilder: {
-        rebuildLeaderboardSnapshots: async () => {
-          calls++;
-          if (calls === 1) throw new Error('database went away');
-        },
-      },
-      logger,
-      delayMs: 0,
-    });
-
-    await expect(rebuilds.eventsChanged(['event-1'])).resolves.toBeUndefined();
+  it('queues one more rebuild for a write made while the event\'s rebuild runs, so that write is not missed', async () => {
+    const { jobs, rebuilds } = setup();
     await rebuilds.eventsChanged(['event-1']);
 
-    expect(calls).toBe(2);
-    expect(logger.error).toHaveBeenCalledTimes(1);
-    expect(logger.error.mock.calls[0]?.[0]).toMatchObject({
-      action: 'leaderboard.rebuild.failed',
-      data: { sportEventIds: ['event-1'], error: 'database went away' },
-    });
+    // The runner claims the waiting job, which releases its key, as a rebuild starting does.
+    await jobs.claimDue({ now: new Date(Date.now() + 1_000), limit: 10, leaseUntil: new Date(Date.now() + 60_000) });
+    await rebuilds.eventsChanged(['event-1']);
+    await rebuilds.eventsChanged(['event-1']);
+
+    expect(jobs.rows.map((row) => row.status)).toEqual([BackgroundJobStatus.RUNNING, BackgroundJobStatus.QUEUED]);
   });
 
-  it('asks for nothing when a write named no event or contest', async () => {
-    const recorder = recordingRebuilder();
-    const rebuilds = new DebouncedLeaderboardRebuilds({ rebuilder: recorder.rebuilder, logger, delayMs: 0 });
+  it('writes nothing and wakes nothing when a write named no event or contest', async () => {
+    const { jobs, rebuilds, runner } = setup();
 
     await rebuilds.eventsChanged([]);
-    await rebuilds.flush();
+    await rebuilds.contestsChanged([]);
 
-    expect(recorder.rebuilds).toEqual([]);
+    expect(jobs.rows).toEqual([]);
+    expect(runner.wake).not.toHaveBeenCalled();
+  });
+});
+
+describe('leaderboardChangesOf', () => {
+  it('rebuilds every board on the job\'s event, or the boards of the job\'s contest', () => {
+    expect(leaderboardChangesOf({ subject: LeaderboardRebuildSubject.EVENT, id: 'event-1' })).toEqual({ sportEventIds: ['event-1'], contestIds: [] });
+    expect(leaderboardChangesOf({ subject: LeaderboardRebuildSubject.CONTEST, id: 'contest-9' })).toEqual({ sportEventIds: [], contestIds: ['contest-9'] });
   });
 });
 
@@ -219,17 +124,7 @@ describe('leaderboardKindOf', () => {
 });
 
 describe('leaderboard snapshot settings', () => {
-  it('rebuilds 3 seconds after the last write and keeps a board up to 5 minutes when unset', () => {
-    expect(readLeaderboardRebuildDelayMs({})).toBe(3_000);
+  it('keeps a stored board up to 5 minutes when the max age is unset', () => {
     expect(readLeaderboardSnapshotMaxAgeMs({ LEADERBOARD_SNAPSHOT_MAX_AGE_MS: '' })).toBe(300_000);
-  });
-
-  it('reads 0 as rebuilding before the write answers, as the functional lane runs', () => {
-    expect(readLeaderboardRebuildDelayMs({ LEADERBOARD_REBUILD_DELAY_MS: '0' })).toBe(0);
-  });
-
-  it.each(['-1', '1.5', 'soon'])('refuses to start with LEADERBOARD_REBUILD_DELAY_MS=%s rather than guess a delay', (raw) => {
-    expect(() => readLeaderboardRebuildDelayMs({ LEADERBOARD_REBUILD_DELAY_MS: raw }))
-      .toThrow('LEADERBOARD_REBUILD_DELAY_MS must be a whole number of milliseconds');
   });
 });

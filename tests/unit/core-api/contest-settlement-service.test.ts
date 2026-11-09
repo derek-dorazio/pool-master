@@ -88,14 +88,24 @@ function entry(id: string, entryNumber: number, submitted: readonly string[]): C
 function world({
   configJson = { selectionType: 'TIERED', picksPerTier: 1, countedScores: 1 },
   scoringRules = [parseContestScoringSettings('GOLF_RELATIVE_TO_PAR_TOTAL', {})],
-}: { configJson?: Record<string, unknown>; scoringRules?: ReturnType<typeof parseContestScoringSettings>[] } = {}) {
+  contestCount = 1,
+}: { configJson?: Record<string, unknown>; scoringRules?: ReturnType<typeof parseContestScoringSettings>[]; contestCount?: number } = {}) {
   // Each major is four rounds of par 72, the par read off the golfers' finished rounds.
   const course = { rounds: 4 };
   const events = new Map<string, SportEvent>([
     [MASTERS, { id: MASTERS, sport: 'GOLF', status: SportEventStatus.SCHEDULED, startDate: new Date('2026-04-09T12:00:00.000Z'), ...course } as SportEvent],
     [PGA, { id: PGA, sport: 'GOLF', status: SportEventStatus.SCHEDULED, startDate: new Date('2026-05-14T12:00:00.000Z'), ...course } as SportEvent],
   ]);
-  let contest: Contest = buildContest({ id: 'majors', sportEventIds: [MASTERS, PGA], status: ContestStatus.ACTIVE });
+  // `majors`, and for `contestCount` above 1 more contests on the same majors, played alike.
+  const contests = new Map<string, Contest>(Array.from({ length: contestCount }, (_, index) => {
+    const id = index === 0 ? 'majors' : `majors-${index + 1}`;
+    return [id, buildContest({ id, sportEventIds: [MASTERS, PGA], status: ContestStatus.ACTIVE })];
+  }));
+  const contestOf = (id: string) => {
+    const found = contests.get(id);
+    if (!found) throw new Error(`No contest ${id}`);
+    return found;
+  };
   const fields = new Map([
     [MASTERS, [golfer('sep-m1', -6), golfer('sep-m2', -1)]],
     [PGA, [golfer('sep-p1', 2), golfer('sep-p2', -8)]],
@@ -118,7 +128,7 @@ function world({
         championship.failNext = false;
         throw new Error('championship write failed');
       }
-      recorded.push({ contestId: recording.id, settledAt, positions: standings.map((row) => row.position), statusThen: contest.status });
+      recorded.push({ contestId: recording.id, settledAt, positions: standings.map((row) => row.position), statusThen: contestOf(recording.id).status });
       return standings.length;
     },
   };
@@ -157,10 +167,11 @@ function world({
     }),
     contests: fakeContestRepo({
       findBySportEvent: mockFn<ContestRepository['findBySportEvent']>(async (sportEventId, filter) =>
-        (contest.sportEventIds.includes(sportEventId) && !filter?.excludeStatuses?.includes(contest.status) ? [contest] : [])),
-      transitionStatus: mockFn<ContestRepository['transitionStatus']>(async (_id, transition) => {
+        [...contests.values()].filter((contest) => contest.sportEventIds.includes(sportEventId) && !filter?.excludeStatuses?.includes(contest.status))),
+      transitionStatus: mockFn<ContestRepository['transitionStatus']>(async (id, transition) => {
+        const contest = contestOf(id);
         if (!transition.from.includes(contest.status)) return false;
-        contest = { ...contest, status: transition.to };
+        contests.set(id, { ...contest, status: transition.to });
         return true;
       }),
     }),
@@ -224,7 +235,7 @@ function world({
     entries,
     recorded,
     championship,
-    contest: () => contest,
+    contest: () => contestOf('majors'),
     complete: (sportEventId: string) => {
       const event = events.get(sportEventId);
       if (event) events.set(sportEventId, { ...event, status: SportEventStatus.COMPLETED });
@@ -269,13 +280,15 @@ describe('ContestSettlementService — a contest of two events (#713)', () => {
     expect(summary).toMatchObject({ contestsSettled: 1, contestsCompleted: 1, standingsUpserted: 2 });
   });
 
-  it('tells the leaderboard rebuilds each contest it settled an event of, so their stored boards show the frozen standings (#1435)', async () => {
-    const w = world();
+  it('asks for one rebuild of the settled event\'s boards, however many contests it settled, so they show the frozen standings (#1463)', async () => {
+    const w = world({ contestCount: 3 });
     w.complete(MASTERS);
 
-    await w.service.settleFinishedSportEvent(MASTERS, { completedAt: T });
+    const summary = await w.service.settleFinishedSportEvent(MASTERS, { completedAt: T });
 
-    expect(w.leaderboards.contestIds).toEqual(['majors']);
+    expect(summary.contestsSettled).toBe(3);
+    expect(w.leaderboards.sportEventIds).toEqual([MASTERS]);
+    expect(w.leaderboards.contestIds).toEqual([]);
   });
 
   it('asks for no rebuild when it settles nothing, as for an event that has not completed (#1435)', async () => {
@@ -283,6 +296,7 @@ describe('ContestSettlementService — a contest of two events (#713)', () => {
 
     await w.service.settleFinishedSportEvent(MASTERS, { completedAt: T });
 
+    expect(w.leaderboards.sportEventIds).toEqual([]);
     expect(w.leaderboards.contestIds).toEqual([]);
   });
 

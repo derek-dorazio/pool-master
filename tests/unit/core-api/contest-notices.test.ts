@@ -558,7 +558,7 @@ describe('ContestNotices', () => {
       const memberships = world.membershipRepo();
       const entries = world.entryRepo();
       const memberReads = [jest.spyOn(leagues, 'findById'), jest.spyOn(memberships, 'findByLeagues'), jest.spyOn(entries, 'findByContest')];
-      const writes = jest.spyOn(jobRows, 'enqueueMany');
+      const writes = jest.spyOn(jobRows, 'enqueueAll');
 
       await notices({ leagues, memberships, entries }).sportEventChanged(masters, { kind: ContestEventChangeKind.POSTPONED });
 
@@ -603,7 +603,7 @@ describe('ContestNotices', () => {
     it('throws when the jobs cannot be written, so the caller logs that nobody was told', async () => {
       const masters = world.addSportEvent({ name: 'The Masters', startDate: STARTS_AT, status: SportEventStatus.POSTPONED });
       world.addContest(world.addLeague().id, { sportEventIds: [masters.id] });
-      jest.spyOn(jobRows, 'enqueueMany').mockRejectedValueOnce(new Error('database unavailable'));
+      jest.spyOn(jobRows, 'enqueueAll').mockRejectedValueOnce(new Error('database unavailable'));
 
       await expect(notices().sportEventChanged(masters, { kind: ContestEventChangeKind.POSTPONED })).rejects.toThrow('database unavailable');
     });
