@@ -52,9 +52,11 @@ carries a recommendation; Derek answers by ID. Refreshed 2026-10-28 with the
   - Derek's idea: a provider behind the port that reads public results pages on a schedule.
     Agreed scope (Derek, 2026-11-09): finishing order at event end only, never live scores or
     per-player stats.
-  - **Recommendation:** a new adapter (the mock feed stays test-only), reading two sources
-    shortly after the finish, with matching results sent to an admin to approve and
-    mismatches flagged. Plan as a ticket when Derek agrees.
+  - Derek, 2026-11-09: only if the cost saved warrants the complexity; start with the data
+    providers' trials and see what they offer first.
+  - **Recommendation if built:** a new adapter (the mock feed stays test-only), reading two
+    sources shortly after the finish, with matching results sent to an admin to approve and
+    mismatches flagged. Not ticketed.
 
 - `SDP-011` Horse racing feed
   - Finishing order at event end is all horse racing needs (Derek, 2026-11-09); see SDP-013.
