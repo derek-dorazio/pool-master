@@ -15,6 +15,7 @@ import {
   EmailMessageStatus,
   type DeliveryOutcomeStatus,
   type EmailMessage,
+  type EmailSkipReason,
   type EmailTemplateKey,
 } from '@poolmaster/shared/domain';
 
@@ -100,6 +101,13 @@ export class PrismaEmailMessageRepository implements EmailMessageRepository {
     await this.prisma.emailMessage.update({
       where: { id },
       data: { status: EmailMessageStatus.QUEUED, nextAttemptAt, attempts: { decrement: 1 } },
+    });
+  }
+
+  async markSkipped(id: string, skipReason: EmailSkipReason): Promise<void> {
+    await this.prisma.emailMessage.update({
+      where: { id },
+      data: { status: EmailMessageStatus.SKIPPED, skipReason, nextAttemptAt: null, ...CLEARED_CONTENT },
     });
   }
 

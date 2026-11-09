@@ -102,6 +102,10 @@ export function inMemoryEmailMessages(now: () => Date = () => new Date()): InMem
       update(id, { status: EmailMessageStatus.QUEUED, nextAttemptAt, attempts: (row?.attempts ?? 1) - 1 });
       return Promise.resolve();
     },
+    markSkipped(id, skipReason) {
+      update(id, { status: EmailMessageStatus.SKIPPED, skipReason, nextAttemptAt: undefined, ...CLEARED_CONTENT });
+      return Promise.resolve();
+    },
     markFailed(id, failed) {
       update(id, {
         status: EmailMessageStatus.FAILED,
