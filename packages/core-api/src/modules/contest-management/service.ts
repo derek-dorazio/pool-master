@@ -68,6 +68,7 @@ import type {
   Sport,
   SportEvent,
   CupWeight,
+  BackgroundJobRequest,
 } from '@poolmaster/shared/domain';
 import {
   ContestStatus,
@@ -171,8 +172,6 @@ export interface ContestManagementServiceDeps {
   logger?: LifecycleLogger;
   /** Tells the league a contest has opened (#845, the "New contest open" email). */
   contestOpened?: ContestOpenedNotice;
-  /** Where a released edition queues the job adding it to each template contest (#1318); `addReleasedEditionToTemplateContests` throws without it. */
-  jobs?: Pick<BackgroundJobQueue, 'request' | 'enqueueAll'>;
   now?: () => Date;
 }
 
@@ -187,7 +186,6 @@ export class ContestManagementService {
   private readonly planEntitlements: Pick<PlanEntitlementsService, 'forLeague'>;
   private readonly logger: LifecycleLogger;
   private readonly contestOpened?: ContestOpenedNotice;
-  private readonly jobs?: Pick<BackgroundJobQueue, 'request' | 'enqueueAll'>;
   private readonly now: () => Date;
 
   constructor(deps: ContestManagementServiceDeps) {
@@ -201,7 +199,6 @@ export class ContestManagementService {
     this.planEntitlements = deps.planEntitlements;
     this.logger = deps.logger ?? createNoopLogger();
     this.contestOpened = deps.contestOpened;
-    this.jobs = deps.jobs;
     this.now = deps.now ?? (() => new Date());
   }
 
@@ -559,6 +556,19 @@ export class ContestManagementService {
       this.logger.warn({ leagueId, contestId }, 'contest management set sport events missing contest');
       throw new ContestManagementError('Contest not found', 'CONTEST_NOT_FOUND', 404);
     }
+    await this.changeSportEvents(contest, sportEventIds);
+    return this.getContest(contestId);
+  }
+
+  /**
+   * Gives `contest`, as read, these events, under the rules a commissioner's edit keeps. With
+   * `onlyIfUnchanged`, the events are written only if the contest still has the ones it was read
+   * with, checked under its row lock; otherwise it throws ContestEventsChangedError and writes
+   * nothing, for a caller that cannot let a concurrent change be overwritten (#1318).
+   */
+  private async changeSportEvents(contest: Contest, sportEventIds: readonly string[], options: { onlyIfUnchanged?: boolean } = {}): Promise<void> {
+    const contestId = contest.id;
+    const { leagueId } = contest;
     if (contest.status === ContestStatus.COMPLETED || contest.drawnAt !== undefined) {
       this.logger.warn({ contestId, status: contest.status, drawn: contest.drawnAt !== undefined }, 'contest management set sport events refused for a settled or drawn contest');
       throw new ContestManagementError(
@@ -633,7 +643,13 @@ export class ContestManagementService {
         throw sportsLeagueLimitError(moved.sportLeaguesPerYear, newFirst.eventYear, moved.sportLeagueCount, `This contest can't move into ${newFirst.eventYear}.`);
       }
     }
-    await this.contestRepo.replaceSportEvents(contestId, orderedIds);
+    const replaced = options.onlyIfUnchanged
+      ? await this.contestRepo.replaceSportEvents(contestId, orderedIds, { replacing: contest.sportEventIds })
+      : await this.contestRepo.replaceSportEvents(contestId, orderedIds);
+    if (!replaced) {
+      this.logger.warn({ contestId, read: contest.sportEventIds, sportEventIds: orderedIds }, 'contest management set sport events found the events changed since they were read');
+      throw new ContestEventsChangedError(contestId);
+    }
     // New events move the reminders of a contest already open (#1170).
     await this.contestRepo.recheckReminders({ contestIds: [contestId] }, this.now());
     if (movesSeason) {
@@ -646,7 +662,6 @@ export class ContestManagementService {
       addedCount: added.length,
       removedCount: removed.length,
     }, 'contest management set sport events completed');
-    return this.getContest(contestId);
   }
 
   /**
@@ -655,23 +670,21 @@ export class ContestManagementService {
    * it can change its events (not finished, not drawn), when its events are all of the edition's
    * year; a contest that already has it is left alone.
    *
-   * The release only finds those contests and queues one job per contest, in one write (#1318):
-   * a release can reach hundreds of pools across as many leagues, too many for its request. Each
-   * job adds the edition (`addReleasedEditionToContest`). Answers the ids of the contests queued.
+   * A release can reach hundreds of pools across as many leagues, too many for its request, so it
+   * only finds those contests: this answers one job per contest (#1318), for the release to write
+   * with its own status change. Each job adds the edition (`addReleasedEditionToContest`).
    */
-  async addReleasedEditionToTemplateContests(
+  async releasedEditionJobs(
     sportEvent: Pick<SportEvent, 'id' | 'eventSeriesId' | 'eventYear'>,
-  ): Promise<string[]> {
-    const { jobs } = this;
-    if (!jobs) throw new Error('A background job queue is required to add a released edition to its template contests');
+    jobs: Pick<BackgroundJobQueue, 'request'>,
+  ): Promise<BackgroundJobRequest[]> {
     // The repository filters status, draw, the edition and the year in one query (#1179), so a
     // series' years of finished pools are never read back.
     const contestIds = (await this.contestRepo.findJoinableByReleasedEdition(sportEvent)).map((contest) => contest.id);
-    await jobs.enqueueAll(contestIds.map((contestId) => addReleasedEditionToContestJob(jobs, contestId, sportEvent.id)));
     if (contestIds.length > 0) {
-      this.logger.info({ sportEventId: sportEvent.id, contestIds }, 'contest management queued a released edition for its template contests');
+      this.logger.info({ sportEventId: sportEvent.id, contestIds }, 'contest management queues a released edition for its template contests');
     }
-    return contestIds;
+    return contestIds.map((contestId) => addReleasedEditionToContestJob(jobs, contestId, sportEvent.id));
   }
 
   /**
@@ -679,7 +692,9 @@ export class ContestManagementService {
    * A contest gone, or already holding the edition (a retry after the add), is left alone. One
    * whose rules refuse it now (another salary cap, a draw dealt or the contest finished since the
    * release) is logged and skipped, so the job succeeds and is not retried; any other failure
-   * throws, for the runner to retry.
+   * throws, for the runner to retry. That includes another edition's job adding its own edition
+   * to the pool between this job's read and its write: the write is refused rather than drop the
+   * other edition, and the retry reads both.
    */
   async addReleasedEditionToContest(payload: AddReleasedEditionToContestJobPayload): Promise<void> {
     const { contestId, sportEventId } = payload;
@@ -689,7 +704,7 @@ export class ContestManagementService {
       return;
     }
     try {
-      await this.setContestSportEvents(contest.leagueId, contest.id, [...contest.sportEventIds, sportEventId]);
+      await this.changeSportEvents(contest, [...contest.sportEventIds, sportEventId], { onlyIfUnchanged: true });
       this.logger.info({ contestId, sportEventId }, 'contest management added a released edition to a template contest');
     } catch (error) {
       if (!(error instanceof ContestManagementError)) {
@@ -1369,6 +1384,18 @@ export class ContestManagementError extends Error {
   ) {
     super(message);
     this.name = 'ContestManagementError';
+  }
+}
+
+/**
+ * A contest's events changed between the read a change was built from and its write (#1318), so
+ * nothing was written. Not a ContestManagementError: the change is not refused, only to be made
+ * again from a fresh read, as a background job's retry does.
+ */
+export class ContestEventsChangedError extends Error {
+  constructor(readonly contestId: string) {
+    super(`Contest ${contestId}'s events changed while this change was made`);
+    this.name = 'ContestEventsChangedError';
   }
 }
 

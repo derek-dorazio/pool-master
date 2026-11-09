@@ -157,7 +157,7 @@ export function buildApp() {
   const leaderboardRebuilder = createContestService(prisma, app.log, { planEntitlements });
   const contestSettlement = createContestSettlementService(prisma, app.log, { jobs: backgroundJobs, leaderboards });
   // A released edition joins its template contests by a job per contest (#1318).
-  const releasedEditionContests = createContestManagementService(prisma, app.log, planEntitlements, undefined, backgroundJobs);
+  const releasedEditionContests = createContestManagementService(prisma, app.log, planEntitlements);
   const eventLifecycleService = createEventLifecycleService(prisma, {
     logger: app.log,
     jobs: backgroundJobs,

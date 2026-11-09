@@ -13,6 +13,7 @@ import {
   EventLifecycleError,
   EventLifecycleService,
   type EventLifecycleContestDeps,
+  type ReleasedEditionContests,
 } from '../../../packages/core-api/src/modules/events/event-lifecycle-service';
 import type { SportEventChangedNotice } from '../../../packages/core-api/src/modules/notifications';
 import { BackgroundJobQueue } from '../../../packages/core-api/src/modules/background-jobs';
@@ -164,29 +165,60 @@ describe('EventLifecycleService release guard (#431)', () => {
     expect(storedEvent().status).toBe(SportEventStatus.SCHEDULED);
   });
 
-  it('adds a released edition to the contests made from a template covering its series, and only on release (#714)', async () => {
-    const { sportEvents } = seededEvents({ status: SportEventStatus.DRAFT });
-    const releasedEditionContests = { addReleasedEditionToTemplateContests: jest.fn().mockResolvedValue([]) };
-    const service = new EventLifecycleService(
-      contestDeps(), sportEvents, fakeLogger(), undefined, undefined, releasedEditionContests,
-    );
+  /** A template's contests the release of `sport-event-1` joins: one job per contest named. */
+  function releasedEditionContests(contestIds: readonly string[]) {
+    return {
+      releasedEditionJobs: mockFn<ReleasedEditionContests['releasedEditionJobs']>(async (sportEvent, jobs) => contestIds.map((contestId) =>
+        jobs.request(BackgroundJobType.ADD_RELEASED_EDITION_TO_CONTEST, { contestId, sportEventId: sportEvent.id }))),
+    };
+  }
 
-    await service.applySportEventStatusTransition({
-      sportEventId: 'sport-event-1',
-      toStatus: SportEventStatus.SCHEDULED,
-      actor: { type: 'ROOT_ADMIN' },
-      release: true,
-    });
-    await service.applySportEventStatusTransition({
-      sportEventId: 'sport-event-1',
-      toStatus: SportEventStatus.IN_PROGRESS,
-      actor: { type: 'SYSTEM' },
-    });
+  it('writes a released edition\'s template contest jobs with the release itself, and only on release (#714, #1318)', async () => {
+    const store = new InMemorySportEvents();
+    store.addEvent({ id: 'sport-event-1', name: 'PGA Championship', startDate: new Date('2026-05-14T12:00:00.000Z'), status: SportEventStatus.DRAFT, eventSeriesId: 'event-series-2', eventYear: 2026 });
+    const jobs = startedJobs();
+    const contests = releasedEditionContests(['contest-1', 'contest-2']);
+    const service = new EventLifecycleService(contestDeps(), store.sportEventRepo(), fakeLogger(), jobs, undefined, contests);
 
-    expect(releasedEditionContests.addReleasedEditionToTemplateContests).toHaveBeenCalledTimes(1);
-    expect(releasedEditionContests.addReleasedEditionToTemplateContests).toHaveBeenCalledWith(
-      expect.objectContaining({ id: 'sport-event-1', eventSeriesId: 'event-series-2', eventYear: 2026 }),
-    );
+    await service.applySportEventStatusTransition({ sportEventId: 'sport-event-1', toStatus: SportEventStatus.SCHEDULED, actor: { type: 'ROOT_ADMIN' }, release: true });
+    await service.applySportEventStatusTransition({ sportEventId: 'sport-event-1', toStatus: SportEventStatus.IN_PROGRESS, actor: { type: 'SYSTEM' } });
+
+    expect(contests.releasedEditionJobs).toHaveBeenCalledTimes(1);
+    expect(contests.releasedEditionJobs).toHaveBeenCalledWith(expect.objectContaining({ id: 'sport-event-1', eventSeriesId: 'event-series-2', eventYear: 2026 }), jobs);
+    expect(store.backgroundJobs.map((job) => job.payload)).toEqual([
+      { contestId: 'contest-1', sportEventId: 'sport-event-1' },
+      { contestId: 'contest-2', sportEventId: 'sport-event-1' },
+    ]);
+    expect(jobs.queued).toHaveBeenCalledTimes(1);
+  });
+
+  it('writes no template contest job when another caller released the edition first, since that release wrote them', async () => {
+    const store = new InMemorySportEvents();
+    store.addEvent({ id: 'sport-event-1', name: 'PGA Championship', startDate: new Date('2026-05-14T12:00:00.000Z'), status: SportEventStatus.DRAFT });
+    const repo = store.sportEventRepo();
+    const jobs = startedJobs();
+    // The other release lands between this one's read and its write.
+    const findById = repo.findById.bind(repo);
+    jest.spyOn(repo, 'findById').mockImplementationOnce(async (id) => {
+      const seen = await findById(id);
+      await repo.transitionStatus(id, { from: SportEventStatus.DRAFT, to: SportEventStatus.SCHEDULED });
+      return seen;
+    });
+    const service = new EventLifecycleService(contestDeps(), repo, fakeLogger(), jobs, undefined, releasedEditionContests(['contest-1']));
+
+    await service.applySportEventStatusTransition({ sportEventId: 'sport-event-1', toStatus: SportEventStatus.SCHEDULED, actor: { type: 'ROOT_ADMIN' }, release: true });
+
+    expect(store.backgroundJobs).toEqual([]);
+    expect(jobs.queued).not.toHaveBeenCalled();
+  });
+
+  it('refuses a release, leaving the event a draft, when there is no job queue for its template contests', async () => {
+    const { sportEvents, storedEvent } = seededEvents({ status: SportEventStatus.DRAFT });
+    const service = new EventLifecycleService(contestDeps(), sportEvents, fakeLogger(), undefined, undefined, releasedEditionContests(['contest-1']));
+
+    await expect(service.applySportEventStatusTransition({ sportEventId: 'sport-event-1', toStatus: SportEventStatus.SCHEDULED, actor: { type: 'ROOT_ADMIN' }, release: true }))
+      .rejects.toThrow('A background job queue is required');
+    expect(storedEvent().status).toBe(SportEventStatus.DRAFT);
   });
 
   it('refuses to start a draft that was never released (422 SPORT_EVENT_INVALID_TRANSITION)', async () => {

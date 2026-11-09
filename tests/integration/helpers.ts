@@ -263,7 +263,7 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
   const leaderboards = new JobLeaderboardRebuilds(backgroundJobs.queue);
   const leaderboardRebuilder = createContestService(prisma, testApp.log, { planEntitlements });
   // A released edition joins its template contests by a job per contest (#1318).
-  const releasedEditionContests = createContestManagementService(prisma, testApp.log, planEntitlements, undefined, backgroundJobs.queue);
+  const releasedEditionContests = createContestManagementService(prisma, testApp.log, planEntitlements);
   const eventLifecycleService = createEventLifecycleService(prisma, {
     logger: testApp.log,
     jobs: backgroundJobs.queue,

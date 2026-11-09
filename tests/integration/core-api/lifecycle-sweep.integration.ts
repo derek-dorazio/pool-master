@@ -69,7 +69,7 @@ function lifecycleSweep(now: Date) {
       jobs: jobs.queue,
       sportEventChanged: contestNotices,
       contestSettlement: createContestSettlementService(prisma, logger, { jobs: jobs.queue }),
-      releasedEditionContests: createContestManagementService(prisma, logger, planEntitlements, undefined, jobs.queue),
+      releasedEditionContests: createContestManagementService(prisma, logger, planEntitlements),
     }),
     notificationsDue: [
       ...createDueNotifications(prisma, {

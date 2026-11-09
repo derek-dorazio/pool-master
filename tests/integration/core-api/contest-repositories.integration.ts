@@ -1,3 +1,4 @@
+import { jest } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
 import { BackgroundJobType, ContestFormat, ContestStatus, ContestTemplateEventType, CupWeight, LeaguePaymentKind, SelectionType, Sport, SportEventStatus } from '@poolmaster/shared/domain';
 import type { ContestCreate } from '@poolmaster/shared/db';
@@ -16,6 +17,7 @@ import {
 } from '../../../packages/core-api/src/adapters';
 import { recordStatements, statementCounts, statementShape } from '../statement-log';
 import { createContestManagementService } from '../../../packages/core-api/src/modules/contest-management/wiring';
+import { ContestEventsChangedError } from '../../../packages/core-api/src/modules/contest-management/service';
 import { integrationPlanEntitlements } from '../plan-entitlements';
 import { createEventLifecycleService } from '../../../packages/core-api/src/modules/events/wiring';
 import { createContestSettlementService } from '../../../packages/core-api/src/modules/contests/wiring';
@@ -62,6 +64,23 @@ function repos() {
     eventStandings: new PrismaContestEntryEventStandingRepository(getAppPrisma()),
   };
 }
+
+/**
+ * What a release sends (#1318): the event read and moved, with one read of the template pools it
+ * joins and one insert of their jobs, however many pools in however many leagues.
+ */
+const PINNED_RELEASE_COUNTS: Array<[string, number]> = [
+  ['INSERT background_jobs', 1],
+  ['SELECT contest_draws', 1],
+  ['SELECT contest_sport_events', 1],
+  ['SELECT contest_squares_draws', 1],
+  ['SELECT contest_squares_games', 1],
+  ['SELECT contests', 1],
+  ['SELECT event_series', 3],
+  ['SELECT sport_events', 3],
+  ['SELECT sport_leagues', 2],
+  ['UPDATE sport_events', 1],
+];
 
 /** A league with two squads, and a golf event with three golfers on its field. */
 async function createLeagueAndEvent() {
@@ -1147,64 +1166,106 @@ describe('ContestRepository.findJoinableByReleasedEdition (#714, #1179)', () => 
   });
 
   /**
-   * A league and a released edition of a second major, in the same tour and year as the league's
-   * event, with `pools` majors pools on that event covering both majors: one in the first league,
-   * or with three, two there and one in a second league.
+   * A league and `majors` more majors still drafts, each with its field loaded and in the same
+   * tour and year as the league's event, with `pools` majors pools on that event covering every
+   * major: one in the first league, or with three, two there and one in a second league.
    */
-  async function majorsPools(pools: 1 | 3) {
+  async function majorsPools(pools: 1 | 3, majors: 1 | 2 = 1) {
     const prisma = getPrisma();
     const first = await createLeagueAndEvent();
     const second = pools === 3 ? await createLeagueAndEvent() : first;
     const firstMajor = await prisma.eventSeries.findUniqueOrThrow({ where: { id: first.event.eventSeriesId } });
-    const { event: released } = await createLaterEvent(first.suffix, new Date(Date.now() + 30 * 24 * 60 * 60 * 1000));
-    const releasedMajor = await prisma.eventSeries.findUniqueOrThrow({ where: { id: released.eventSeriesId } });
-    const template = await createSeriesTemplate(`majors-${randomUUID().slice(0, 8)}`, firstMajor.sportLeagueId, [firstMajor.name, releasedMajor.name]);
+    const drafts = [];
+    for (let number = 1; number <= majors; number++) {
+      const { event } = await createLaterEvent(first.suffix, new Date(Date.now() + (20 + 10 * number) * 24 * 60 * 60 * 1000));
+      drafts.push(await prisma.sportEvent.update({ where: { id: event.id }, data: { status: SportEventStatus.DRAFT } }));
+    }
+    const draftMajors = await prisma.eventSeries.findMany({ where: { id: { in: drafts.map((draft) => draft.eventSeriesId) } } });
+    const template = await createSeriesTemplate(`majors-${randomUUID().slice(0, 8)}`, firstMajor.sportLeagueId, [firstMajor.name, ...draftMajors.map((series) => series.name)]);
     const contests = [];
     for (let number = 1; number <= pools; number++) {
       const { league } = number === 3 ? second : first;
       // Every pool is on the first league's event, the major already played in the year.
       contests.push(await contestFromTemplate(league.id, first.event.id, `Majors Pool ${number}`, template.id));
     }
-    const edition = { id: released.id, eventSeriesId: released.eventSeriesId, eventYear: released.eventYear };
-    return { edition, contestIds: contests.map((contest) => contest.id), firstEventId: first.event.id };
+    return { draftIds: drafts.map((draft) => draft.id), contestIds: contests.map((contest) => contest.id), firstEventId: first.event.id };
   }
 
-  it('releases a major into its majors pools by one job per pool (#1318): the same statements for three pools across two leagues as for one, and each job adds the major to its pool', async () => {
-    const service = createContestManagementService(getAppPrisma(), fakeLogger(), integrationPlanEntitlements(getAppPrisma()), undefined, integrationBackgroundJobs().queue);
+  /** The release as the events routes make it, with the app's job queue: its jobs wait for a drain. */
+  function releasing() {
+    const contestManagement = createContestManagementService(getAppPrisma(), fakeLogger(), integrationPlanEntitlements(getAppPrisma()));
+    const lifecycle = createEventLifecycleService(getAppPrisma(), { jobs: integrationBackgroundJobs().queue, releasedEditionContests: contestManagement });
+    const release = (sportEventId: string) => lifecycle.applySportEventStatusTransition({
+      sportEventId, toStatus: SportEventStatus.SCHEDULED, actor: { type: 'ROOT_ADMIN' }, release: true,
+    });
+    return { contestManagement, release };
+  }
+
+  /** Each pool's events, in its order. */
+  async function poolEvents(contestIds: readonly string[]): Promise<string[][]> {
+    const rows = await getPrisma().contestSportEvent.findMany({
+      where: { contestId: { in: [...contestIds] } },
+      orderBy: { sequence: 'asc' },
+      select: { contestId: true, sportEventId: true },
+    });
+    return contestIds.map((contestId) => rows.filter((row) => row.contestId === contestId).map((row) => row.sportEventId));
+  }
+
+  it('releases a major into its majors pools by one job per pool written with the release (#1318): the same statements for three pools across two leagues as for one, and each job adds the major to its pool', async () => {
+    const { release } = releasing();
     const one = await majorsPools(1);
     const three = await majorsPools(3);
 
-    const withOne = await holdingBackgroundJobs(() => recordStatements(() => service.addReleasedEditionToTemplateContests(one.edition)));
-    const withThree = await holdingBackgroundJobs(() => recordStatements(() => service.addReleasedEditionToTemplateContests(three.edition)));
+    const withOne = await holdingBackgroundJobs(() => recordStatements(() => release(expectDefined(one.draftIds[0]))));
+    const withThree = await holdingBackgroundJobs(() => recordStatements(() => release(expectDefined(three.draftIds[0]))));
 
-    expect([withOne.result, withThree.result]).toEqual([one.contestIds, three.contestIds]);
     expect(statementCounts(withThree.statements)).toEqual(statementCounts(withOne.statements));
-    // One read of the joinable pools (with the relations its query loads) and one insert of their jobs.
-    expect(statementCounts(withThree.statements)).toEqual([
-      ['INSERT background_jobs', 1],
-      ['SELECT contest_draws', 1],
-      ['SELECT contest_sport_events', 1],
-      ['SELECT contest_squares_draws', 1],
-      ['SELECT contest_squares_games', 1],
-      ['SELECT contests', 1],
-      ['SELECT event_series', 1],
-      ['SELECT sport_events', 1],
-    ]);
-    await expect(getPrisma().contestSportEvent.count({ where: { sportEventId: { in: [one.edition.id, three.edition.id] } } })).resolves.toBe(0);
+    expect(statementCounts(withThree.statements)).toEqual(PINNED_RELEASE_COUNTS);
+    const jobs = await getPrisma().backgroundJob.findMany({ where: { type: BackgroundJobType.ADD_RELEASED_EDITION_TO_CONTEST }, select: { payload: true } });
+    expect(jobs.map(({ payload }) => (payload as { contestId: string }).contestId).sort()).toEqual([...one.contestIds, ...three.contestIds].sort());
+    await expect(poolEvents(three.contestIds)).resolves.toEqual(Array(3).fill([three.firstEventId]));
 
     await drainBackgroundJobs();
 
-    const events = await getPrisma().contestSportEvent.findMany({
-      where: { contestId: { in: [...one.contestIds, ...three.contestIds] } },
-      orderBy: [{ contestId: 'asc' }, { sequence: 'asc' }],
-      select: { contestId: true, sportEventId: true },
-    });
-    for (const [pools, contestIds] of [[one, one.contestIds], [three, three.contestIds]] as const) {
-      for (const contestId of contestIds) {
-        expect(events.filter((row) => row.contestId === contestId).map((row) => row.sportEventId)).toEqual([pools.firstEventId, pools.edition.id]);
-      }
-    }
+    await expect(poolEvents(one.contestIds)).resolves.toEqual([[one.firstEventId, one.draftIds[0]]]);
+    await expect(poolEvents(three.contestIds)).resolves.toEqual(Array(3).fill([three.firstEventId, three.draftIds[0]]));
     await expect(getPrisma().backgroundJob.count({ where: { type: BackgroundJobType.ADD_RELEASED_EDITION_TO_CONTEST, status: { not: 'SUCCEEDED' } } })).resolves.toBe(0);
+  });
+
+  it('keeps both majors when two majors\' jobs add them to one pool at once (#1318): the later write is refused, and its retry adds its major beside the other', async () => {
+    const { contestManagement, release } = releasing();
+    const { draftIds: [pga, open], contestIds: [poolId], firstEventId } = await majorsPools(1, 2);
+    await holdingBackgroundJobs(async () => {
+      await release(expectDefined(pga));
+      await release(expectDefined(open));
+    });
+    // Both jobs read the pool before either writes, as two job slots running them together can.
+    const replaceSportEvents = PrismaContestRepository.prototype.replaceSportEvents;
+    let arrived = 0;
+    let bothRead: () => void = () => undefined;
+    const reads = new Promise<void>((resolve) => { bothRead = resolve; });
+    const racing = jest.spyOn(PrismaContestRepository.prototype, 'replaceSportEvents').mockImplementation(async function (this: PrismaContestRepository, ...args) {
+      arrived += 1;
+      if (arrived === 2) bothRead();
+      await reads;
+      return replaceSportEvents.apply(this, args);
+    });
+    let outcomes: PromiseSettledResult<void>[];
+    try {
+      outcomes = await Promise.allSettled([pga, open].map((sportEventId) => contestManagement.addReleasedEditionToContest({ contestId: expectDefined(poolId), sportEventId: expectDefined(sportEventId) })));
+    } finally {
+      racing.mockRestore();
+    }
+
+    expect(outcomes.map((outcome) => outcome.status).sort()).toEqual(['fulfilled', 'rejected']);
+    const refused = outcomes.findIndex((outcome) => outcome.status === 'rejected');
+    expect((outcomes[refused] as PromiseRejectedResult).reason).toBeInstanceOf(ContestEventsChangedError);
+    await expect(poolEvents([expectDefined(poolId)])).resolves.toEqual([[firstEventId, [pga, open][1 - refused]]]);
+
+    // The runner's retry reads the pool again.
+    await contestManagement.addReleasedEditionToContest({ contestId: expectDefined(poolId), sportEventId: expectDefined([pga, open][refused]) });
+
+    await expect(poolEvents([expectDefined(poolId)])).resolves.toEqual([[firstEventId, pga, open]]);
   });
 });
 
