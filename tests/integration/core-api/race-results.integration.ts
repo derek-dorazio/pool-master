@@ -112,6 +112,19 @@ describe('SportEventParticipantRaceResultRepository', () => {
     expect((await repo.findBySportEvent(event.id)).map((result) => result.isOfficial)).toEqual([true, true]);
   });
 
+  it('makes the race official and rewrites the standings when the write names no results, keeping the results already stored', async () => {
+    const { prisma, event, arrow, bolt } = await seedRace();
+    const repo = new PrismaSportEventParticipantRaceResultRepository(getAppPrisma());
+    await repo.applyResults(event.id, { results: [write(arrow.id, 1), write(bolt.id, 2)], isOfficial: false, standings: [] });
+
+    await repo.applyResults(event.id, { results: [], isOfficial: true, standings: [standing(arrow.id, 1)] });
+
+    expect((await repo.findBySportEvent(event.id)).map((result) => [result.finishPosition, result.isOfficial]))
+      .toEqual(expect.arrayContaining([[1, true], [2, true]]));
+    const standings = await prisma.sportEventParticipantStanding.findMany({ where: { sportEventParticipant: { sportEventId: event.id } } });
+    expect(standings.map((row) => [row.sportEventParticipantId, row.position])).toEqual([[arrow.id, 1]]);
+  });
+
   it('writes nothing when one result names a field row that does not exist', async () => {
     const { prisma, event, arrow } = await seedRace();
     const repo = new PrismaSportEventParticipantRaceResultRepository(getAppPrisma());

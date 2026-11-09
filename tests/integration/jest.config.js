@@ -22,9 +22,10 @@ module.exports = {
   testTimeout: 30_000,
   // Run serially — integration tests share a database
   maxWorkers: 1,
-  // #302 — no coverageProvider here: CI runs this suite without coverage. Only
-  // run-backend-coverage.mjs collects it, with --coverageProvider=v8 so it merges with the FAPI
-  // server's V8 coverage (#296).
+  // #302, #1483 — no coverageProvider here, so Jest's default (Babel) applies: CI's four shards
+  // collect Babel coverage for the per-file repository floor (scripts/coverage-floors.json). Only
+  // run-backend-coverage.mjs passes --coverageProvider=v8, so it merges with the FAPI server's V8
+  // coverage (#296).
   collectCoverageFrom: [
     'packages/core-api/src/**/*.ts',
     'packages/shared/**/*.ts',

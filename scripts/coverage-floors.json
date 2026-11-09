@@ -1,0 +1,12 @@
+{
+  "$comment": "#1483 -- per-file coverage floors checked by scripts/check-coverage-floors.mjs against the merged integration-shard report (Babel counts). Each entry is a glob relative to the repo root; every matching file must reach `lines` and `branches`. A file may only sit lower as a named exception with a reason, which a reviewer accepts.",
+  "floors": [
+    {
+      "name": "repositories",
+      "include": "packages/core-api/src/adapters/**/*.ts",
+      "lines": 90,
+      "branches": 80,
+      "exceptions": {}
+    }
+  ]
+}
