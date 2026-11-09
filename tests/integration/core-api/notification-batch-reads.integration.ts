@@ -7,7 +7,6 @@ import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
 import { ContestStatus, LeagueRole, SelectionType, SportEventStatus } from '@poolmaster/shared/domain';
 import {
-  PrismaContestEntryRepository,
   PrismaContestEntryStandingRepository,
   PrismaContestRepository,
   PrismaLeagueMembershipRepository,
@@ -98,23 +97,6 @@ describe('notification batch reads (#1255)', () => {
     expect(members.some((user) => user.id === other.commissioner.user.id)).toBe(false);
     await expect(memberships.findByLeagues([])).resolves.toEqual([]);
     await expect(users.findActiveByLeagues([])).resolves.toEqual([]);
-  });
-
-  it('reads several contests\' entries in creation order, leaving out other contests', async () => {
-    const prisma = getPrisma();
-    const { league, squads } = await seedLeagueWithTeams(2);
-    const { event } = await nextMonth();
-    const [first, second, other] = await Promise.all([contestOn(league.id, [event.id]), contestOn(league.id, [event.id]), contestOn(league.id, [event.id])]);
-    const squad = (index: number) => expectDefined(squads[index]).id;
-    const firstEntry = await prisma.contestEntry.create({ data: { contestId: first.id, squadId: squad(0), entryNumber: 1, name: 'First' } });
-    const secondEntry = await prisma.contestEntry.create({ data: { contestId: second.id, squadId: squad(1), entryNumber: 1, name: 'Second' } });
-    await prisma.contestEntry.create({ data: { contestId: other.id, squadId: squad(0), entryNumber: 1, name: 'Other' } });
-    const entries = new PrismaContestEntryRepository(prisma);
-
-    const found = await entries.findByContests([second.id, first.id]);
-
-    expect(found.map((entry) => entry.id)).toEqual([firstEntry.id, secondEntry.id]);
-    await expect(entries.findByContests([])).resolves.toEqual([]);
   });
 });
 

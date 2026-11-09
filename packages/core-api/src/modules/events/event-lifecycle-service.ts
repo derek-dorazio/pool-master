@@ -224,7 +224,7 @@ export class EventLifecycleService {
     await this.tellSportEventChanged(sportEvent, { kind: ContestEventChangeKind.RESCHEDULED, previousStart });
   }
 
-  /** C6 or C7: queued for the leagues on the event, never failing the change. */
+  /** C6: queued for the leagues on the event, never failing the admin's change. */
   private async tellSportEventChanged(sportEvent: SportEvent, change: SportEventChange): Promise<void> {
     try {
       await this.sportEventChanged?.sportEventChanged(sportEvent, change);
@@ -268,8 +268,10 @@ export class EventLifecycleService {
       );
       return;
     }
+    // Nothing has settled yet, so a failure to queue C7 fails the job and its retry tells them:
+    // swallowed here, the contests would complete and nothing would ever tell them.
     if (sportEvent.status === SportEventStatus.CANCELLED) {
-      await this.tellSportEventChanged(sportEvent, { kind: ContestEventChangeKind.CANCELLED });
+      await this.sportEventChanged?.sportEventChanged(sportEvent, { kind: ContestEventChangeKind.CANCELLED });
     }
     await this.contestSettlement.settleFinishedSportEvent(sportEvent.id, {
       completedAt: new Date(payload.completedAt),

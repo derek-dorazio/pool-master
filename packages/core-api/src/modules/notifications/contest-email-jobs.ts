@@ -1,7 +1,8 @@
 /**
  * The contest emails built by background jobs rather than in the request that caused them:
  * "Contest is live" (E1) as a contest goes live and "Final results" (F1 to F3) as it completes
- * (#1387), and an event on the contest postponed, moved or cancelled (C6, C7; #1458). The move writes the job in its own transaction; the job reads what it
+ * (#1387), both written with the contest's status move, and an event on the contest postponed,
+ * moved or cancelled (C6, C7; #1458), written after the event's change. Each job reads what it
  * needs again and queues the emails exactly as the request once did.
  *
  * A job that throws is retried. Each email's outbox idempotency key is the contest (and for E1

@@ -61,7 +61,7 @@ export interface ContestNoticeDeps extends ContestSummaryDeps, LeagueMemberDeps 
   entries: Pick<ContestEntryRepository, 'findByContest'>;
   squadMemberships: Pick<SquadMembershipRepository, 'findBySquads'>;
   email: Pick<EmailService, 'sendMany'>;
-  /** Where an event change queues each contest's email job (#1458); without it, nobody is told. */
+  /** Where an event change queues each contest's email job (#1458); `sportEventChanged` throws without it. */
   jobs?: Pick<BackgroundJobQueue, 'request' | 'enqueueMany'>;
   appBaseUrl: string;
   logger?: FastifyBaseLogger;
