@@ -12,8 +12,9 @@ import type {
   SportEventMatchWrite,
 } from '@poolmaster/shared/db';
 import { MatchSide } from '@poolmaster/shared/domain';
-import type { SportEventMatch, SportEventMatchPeriodScore } from '@poolmaster/shared/domain';
+import type { BackgroundJobRequest, SportEventMatch, SportEventMatchPeriodScore } from '@poolmaster/shared/domain';
 import { rewriteStandings } from './prisma-standing-rewrite';
+import { insertBackgroundJobs } from './prisma-background-job-repository';
 
 /** What a match is read with: its round's number and its period scores in order. */
 export const MATCH_INCLUDE = {
@@ -66,11 +67,23 @@ export class PrismaSportEventMatchRepository implements SportEventMatchRepositor
     await this.prisma.sportEventMatch.update({ where: { id }, data: patch });
   }
 
-  async savePeriodScore(sportEventMatchId: string, { periodNumber, homeScore, awayScore }: SportEventMatchPeriodScore): Promise<void> {
-    await this.prisma.sportEventMatchPeriodScore.upsert({
+  async savePeriodScore(
+    sportEventMatchId: string,
+    { periodNumber, homeScore, awayScore }: SportEventMatchPeriodScore,
+    jobs: readonly BackgroundJobRequest[] = [],
+  ): Promise<void> {
+    const save = (db: Prisma.TransactionClient | PrismaClient) => db.sportEventMatchPeriodScore.upsert({
       where: { sportEventMatchId_periodNumber: { sportEventMatchId, periodNumber } },
       create: { sportEventMatchId, periodNumber, homeScore, awayScore },
       update: { homeScore, awayScore },
+    });
+    if (jobs.length === 0) {
+      await save(this.prisma);
+      return;
+    }
+    await this.prisma.$transaction(async (tx) => {
+      await save(tx);
+      await insertBackgroundJobs(tx, jobs);
     });
   }
 
@@ -83,7 +96,7 @@ export class PrismaSportEventMatchRepository implements SportEventMatchRepositor
     await this.prisma.$transaction(sides.map(({ id, ...values }) => this.prisma.sportEventMatch.update({ where: { id }, data: values })));
   }
 
-  async applyResult({ result, sideFill, standings }: MatchResultApply): Promise<void> {
+  async applyResult({ result, sideFill, standings, jobs = [] }: MatchResultApply): Promise<void> {
     const { id, ...values } = result;
     await this.prisma.$transaction(async (tx) => {
       await tx.sportEventMatch.update({ where: { id }, data: values });
@@ -97,6 +110,7 @@ export class PrismaSportEventMatchRepository implements SportEventMatchRepositor
       }
       // Every team's standing in a fixed number of statements, however big the bracket (#1252).
       await rewriteStandings(tx, standings.map(({ sportEventParticipantId, ...standing }) => ({ sportEventParticipantId, standing })));
+      if (jobs.length > 0) await insertBackgroundJobs(tx, jobs);
     });
   }
 }

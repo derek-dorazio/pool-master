@@ -981,6 +981,8 @@ export const BackgroundJobType = {
   CONTEST_SETTLED_EMAILS: 'CONTEST_SETTLED_EMAILS',
   /** Settles the contests of one event that just completed or was cancelled (#1448). */
   SETTLE_SPORT_EVENT_CONTESTS: 'SETTLE_SPORT_EVENT_CONTESTS',
+  /** Settles the squares contests played on one game once the game is decided (#711). */
+  SETTLE_GAME_CONTESTS: 'SETTLE_GAME_CONTESTS',
 } as const;
 export type BackgroundJobType = (typeof BackgroundJobType)[keyof typeof BackgroundJobType];
 

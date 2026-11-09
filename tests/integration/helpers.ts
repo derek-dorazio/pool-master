@@ -290,6 +290,7 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
     CONTEST_STARTED_EMAILS: (payload) => contestEmailJobs.contestStarted(payload),
     CONTEST_SETTLED_EMAILS: (payload) => contestEmailJobs.contestSettled(payload),
     SETTLE_SPORT_EVENT_CONTESTS: (payload) => eventLifecycleService.settleFinishedEventContests(payload),
+    SETTLE_GAME_CONTESTS: (payload) => eventLifecycleService.settleFinishedGameContests(payload),
   });
   backgroundJobRunner = runner;
   backgroundJobs.queue.wakes({ wake: () => { if (!backgroundJobsHeld) runner.wake(); } });

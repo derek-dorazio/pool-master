@@ -126,7 +126,7 @@ export interface SportEventServices {
 export function createMatchResultService(
   prisma: PrismaClient,
   logger?: FastifyBaseLogger,
-  contestActivation?: Pick<EventLifecycleService, 'activateContestsPastCutoff' | 'settleContestsForFinishedGame'>,
+  contestActivation?: Pick<EventLifecycleService, 'activateContestsPastCutoff' | 'finishedGameSettlement'>,
 ): MatchResultService {
   return new MatchResultService({
     sportEvents: new PrismaSportEventRepository(prisma),

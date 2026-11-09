@@ -425,7 +425,7 @@ describe('ContestSettlementService settling a squares contest with its game', ()
     expect(standings).toEqual(expect.arrayContaining([[context.alice.id, '1', 2], [context.bob.id, '2', 1]]));
   });
 
-  it('settles from the games handed over without reading them, gives the championship the final places read once, and writes the results email job with the move (#1355, #1387)', async () => {
+  it('reads the event\'s games once, gives the championship the final places read once, and writes the results email job with the move (#1355, #1387)', async () => {
     const context = setup({ status: ContestStatus.ACTIVE });
     context.squares.addBox(context.contest.id, context.alice.id, 0, 7);
     context.squares.addBox(context.contest.id, context.bob.id, 3, 4);
@@ -453,9 +453,9 @@ describe('ContestSettlementService settling a squares contest with its game', ()
     });
     const completedAt = later(KICKOFF, 4);
 
-    await settlement.settleFinishedGame(context.superBowl.id, context.game.id, { completedAt, games: [expectDefined(context.games.matches.get(context.game.id))] });
+    await settlement.settleFinishedGame(context.superBowl.id, context.game.id, { completedAt });
 
-    expect(gameReads).not.toHaveBeenCalled();
+    expect(gameReads).toHaveBeenCalledTimes(1);
     expect(standingReads).toHaveBeenCalledTimes(1);
     // Alice holds the final's box and the first quarter's, Bob the second's.
     expect(recordContest).toHaveBeenCalledWith(expect.objectContaining({ id: context.contest.id }), completedAt, [
@@ -564,6 +564,17 @@ describe('ContestSettlementService settling a squares contest with its game', ()
     context.updateGame({ status: MatchStatus.CANCELLED });
     await context.settlement.settleFinishedGame(context.superBowl.id, context.game.id, { completedAt: later(KICKOFF, 4) });
     expect(context.contestStatus()).toBe(ContestStatus.COMPLETED);
+    expect(context.world.standings.size).toBe(0);
+  });
+
+  it('settles nothing on a game whose result was cleared before its job ran, so the contest stays open for the next result', async () => {
+    const context = setup({ status: ContestStatus.ACTIVE });
+    context.drawInOrder();
+    context.updateGame({ status: MatchStatus.SCHEDULED, homeScore: null, awayScore: null });
+
+    await expect(context.settlement.settleFinishedGame(context.superBowl.id, context.game.id, { completedAt: later(KICKOFF, 4) })).resolves.toBe(0);
+
+    expect(context.contestStatus()).toBe(ContestStatus.ACTIVE);
     expect(context.world.standings.size).toBe(0);
   });
 
