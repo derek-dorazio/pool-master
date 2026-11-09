@@ -160,5 +160,5 @@ npm run dev              # Start services only (Docker already running)
 npm run build            # Build all packages
 npm run typecheck        # TypeScript check
 npm run test:unit        # Run service unit tests
-npm run test:coverage:service:fresh  # Full backend validation lane
+npm run test:coverage:service:unit  # Unit suite with its coverage threshold
 ```
