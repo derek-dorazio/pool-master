@@ -143,7 +143,7 @@ describe('SDK Functional: Account Lifecycle', () => {
       body: { colorScheme: 'SEPIA' as unknown as 'DARK' },
     });
 
-    expect(response.response.status).toBe(400);
+    expect(response.response?.status).toBe(400);
   });
 
   it('inactivates an account, still signs it in as inactive, and permanently deletes it with exact email confirmation', async () => {

@@ -684,7 +684,7 @@ export function UserPage() {
 
       <FormModal
         canSave={!disablePreferencesEditing}
-        description="Choose how dates and times appear for you."
+        description="Choose how dates and times appear for you, and whether the site is light or dark."
         error={preferencesMutation.isError ? preferencesMutation.error : null}
         errorFallback="We could not save your preferences."
         isPending={preferencesMutation.isPending}
