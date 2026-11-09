@@ -163,6 +163,19 @@ Frozen Four), Clutch Card stat depth, LPGA live depth, and written display right
 prepay is the risk if it disappoints, so trial first and start monthly or six-monthly.
 [Full Package prices](https://www.goalserve.com/en/sport-data-feeds/full-package-api/prices).
 
+**BALLDONTLIE All-Access, the leading option** (2026-11-09): its docs list 41 league APIs
+with schedules, rosters, results and per-player game stats for the NFL, college football,
+NBA, WNBA, men's and women's college basketball, MLB, NHL, Champions League, Premier
+League, MLS, the men's World Cup, ATP, WTA, the PGA TOUR and F1 `(Vendor)`. Only the NBA has an
+explicit live box-score endpoint; live updates elsewhere are to be checked. Pricing: free
+(5 requests a minute), $9.99 or $39.99 a month per league, or All-Access $299.99 a month for
+every league with webhooks and 600 requests a minute, about $2,830 a year paid annually
+`(Vendor)`. The free trial is 7 days. Not covered: LPGA, the Women's World Cup, NWSL,
+college hockey, the PWHL and racing. Those go through the pipeline, or Goalserve golf for LPGA
+if it needs to be live. Recommendation: BALLDONTLIE All-Access as the primary, the pipeline for
+the rest, and Goalserve as the backup. Per-league coverage is tracked in the
+[coverage matrix](https://claude.ai/artifact/GE63rHyQE3HzSqWZPeZ3wc).
+
 Terms, read 2026-11-09:
 
 - **BALLDONTLIE** allows "any lawful personal or commercial purpose", naming paid apps and
