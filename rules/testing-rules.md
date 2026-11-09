@@ -59,7 +59,8 @@ coverage but missing core positive/negative use-case proof is still incomplete.
 The webapp enforces per-folder coverage floors on top of its whole-suite floor:
 every `clients/poolmaster/src/features/*` folder and every `src/lib` folder must
 keep 90% of its lines and 85% of its branches covered (`vitest.config.ts`,
-`poolmaster-unit-tests` in CI). A slice that drops its folder under the floor adds
+`poolmaster-unit-tests` in CI). A source file no test loads still counts, at 0%.
+A slice that drops its folder under the floor adds
 behavior tests for what it left uncovered; it never lowers the floor or excludes
 app code to pass. The numbers live in `docs/CI-AND-QUALITY-GATES.md`.
 
