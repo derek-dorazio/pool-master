@@ -7,7 +7,10 @@ standalone browsable HTML file plus a ready-to-paste AI image prompt for the
 hero artwork.
 
 These are design inputs, not implementation. Nothing in `brand/` is wired into
-the webapp. After a direction is picked, Fran opens a plan slice against
+the webapp. The site's colours are defined in one place,
+`clients/poolmaster/src/styles/globals.css` (light and dark mode); email and link
+previews use the few in `BRAND_COLORS` (`packages/shared/domain/brand.ts`), which a
+test keeps in step with it. After a direction is picked, Fran opens a plan slice against
 `clients/poolmaster/src/features/auth/auth-home-page.tsx` and Pam finalizes the
 copy.
 

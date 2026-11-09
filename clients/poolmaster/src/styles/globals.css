@@ -4,8 +4,16 @@
 @tailwind components;
 @tailwind utilities;
 
+/* The one place the site's colours are defined (#1468). `:root` holds the light theme, and the
+   `prefers-color-scheme: dark` block below redefines every colour that changes in dark mode, so
+   the site follows the device setting. A colour token needs a dark value, or must follow one that
+   has it, unless `globals.test.ts` lists it as the same in both modes. Emails and link previews
+   can't read these: `BRAND_COLORS` (packages/shared/domain/brand.ts) mirrors the few they use,
+   and `brand-colors.test.ts` keeps the two in step. */
 @layer base {
   :root {
+    color-scheme: light dark;
+
     /* Sunday Prime brand scales. Raw values live only at the theme layer. */
     --color-navy-50: #eaeef6;
     --color-navy-100: #c9d3e6;
@@ -26,30 +34,50 @@
     --color-gold-500: #d79e00;
     --color-gold-600: #a87c00;
     --color-gold-700: #745600;
+    /* Dark mode's gold: full gold glares on graphite, so it is muted there. */
+    --color-gold-muted: #dcb455;
+    --color-gold-muted-bright: #e6c672;
     --color-bronze-100: #e9c9a0;
     --color-bronze-700: #5e3b0f;
-    --color-red-50: #fbe8ea;
-    --color-red-100: #f3bec3;
-    --color-red-200: #e28c96;
-    --color-red-300: #c55866;
-    --color-red-400: #a8202d;
-    --color-red-500: #851923;
-    --color-red-600: #5e0f17;
+    /* Dusty red. 400 is light mode's red (4.5:1 for small text on paper); 300 is dark mode's. */
+    --color-red-50: #f8eced;
+    --color-red-100: #eed2d4;
+    --color-red-200: #dca0a4;
+    --color-red-300: #c46a70;
+    --color-red-400: #b05157;
+    --color-red-500: #8c3f44;
+    --color-red-600: #632c30;
     --color-paper: #f5f5f2;
     /* The one quiet second colour: small labels over titles and the selected tab. */
     --color-field-blue: #3d64a8;
     --color-paper-warm: #fafaf7;
-    /* The brand's warm neutral steps (brand/theme/tokens.css): quiet fills and, on navy, quiet text. */
+    /* The brand's warm neutral steps: quiet fills and, on navy, quiet text. */
     --color-neutral-150: #eaeae6;
     --color-neutral-200: #e5e5e1;
     --color-neutral-350: #c8c8b7;
     --color-ink: #0b0b0b;
     --color-ink-soft: #2b2b2b;
+    /* Dark mode's graphite, darkest to lightest: page, card, raised, fill, line, then text. */
+    --color-graphite-900: #121316;
+    --color-graphite-800: #1a1c20;
+    --color-graphite-700: #202329;
+    --color-graphite-650: #23262b;
+    --color-graphite-600: #2a2d33;
+    --color-graphite-500: #2c2f35;
+    --color-graphite-400: #4a4e57;
+    --color-graphite-300: #9a9ca3;
+    --color-graphite-200: #c4c6cb;
+    --color-graphite-50: #ececec;
 
     --surface-canvas: var(--color-paper);
     --surface-raised: #ffffff;
+    /* Raised above a card: menus and popovers. */
+    --surface-overlay: var(--surface-raised);
     --surface-inverse: var(--color-navy-600);
     --surface-inverse-deep: var(--color-navy-800);
+    --surface-quiet: var(--color-neutral-150);
+    --surface-quiet-strong: var(--color-neutral-200);
+    --surface-quiet-hover: var(--color-paper-warm);
     --text-primary: var(--color-navy-600);
     --text-secondary: #3f3f3a;
     --text-muted: #6b6b64;
@@ -57,47 +85,52 @@
     --text-on-inverse-muted: color-mix(in srgb, var(--text-on-inverse) 66%, transparent);
     --surface-on-inverse-subtle: color-mix(in srgb, var(--text-on-inverse) 10%, transparent);
     --surface-on-inverse-hover: color-mix(in srgb, var(--text-on-inverse) 15%, transparent);
-    --text-accent: var(--color-gold-400);
     --text-label: var(--color-field-blue);
     --text-label-on-inverse: var(--color-navy-200);
     --surface-selected: var(--color-field-blue);
     --text-danger: var(--color-red-400);
-    --border-subtle: color-mix(in srgb, var(--color-navy-600) 10%, transparent);
-    --border-default: color-mix(in srgb, var(--color-navy-600) 18%, transparent);
+    /* The text on a red button. */
+    --text-on-danger: var(--text-on-inverse);
+    /* What borders and tints are mixed from: navy on paper, the light text on graphite. */
+    --tint-base: var(--color-navy-600);
+    --border-subtle: color-mix(in srgb, var(--tint-base) 10%, transparent);
+    --border-default: color-mix(in srgb, var(--tint-base) 18%, transparent);
     --border-strong: var(--color-navy-600);
     --border-on-inverse: color-mix(in srgb, var(--text-on-inverse) 12%, transparent);
     --accent-primary: var(--color-gold-400);
     --accent-primary-hover: var(--color-gold-300);
-    --status-active-surface: color-mix(in srgb, var(--color-gold-400) 16%, transparent);
-    --status-active-border: color-mix(in srgb, var(--color-gold-400) 54%, transparent);
-    --status-active-text: var(--color-navy-600);
-    --status-completed-surface: color-mix(in srgb, var(--color-navy-600) 8%, transparent);
-    --status-completed-border: color-mix(in srgb, var(--color-navy-600) 24%, transparent);
-    --status-completed-text: var(--color-navy-600);
-    --status-danger-surface: color-mix(in srgb, var(--color-red-400) 10%, transparent);
-    --status-danger-border: color-mix(in srgb, var(--color-red-400) 42%, transparent);
-    --status-danger-text: var(--color-red-400);
+    /* Gold and red as the base of a tint: the accent and danger, in each mode's own shade. */
+    --text-accent: var(--accent-primary);
+    --status-active-surface: color-mix(in srgb, var(--accent-primary) 16%, transparent);
+    --status-active-border: color-mix(in srgb, var(--accent-primary) 54%, transparent);
+    --status-active-text: var(--text-primary);
+    --status-completed-surface: color-mix(in srgb, var(--tint-base) 8%, transparent);
+    --status-completed-border: color-mix(in srgb, var(--tint-base) 24%, transparent);
+    --status-completed-text: var(--text-primary);
+    --status-danger-surface: color-mix(in srgb, var(--text-danger) 10%, transparent);
+    --status-danger-border: color-mix(in srgb, var(--text-danger) 42%, transparent);
+    --status-danger-text: var(--text-danger);
     /* A settled contest: solid navy with a gold edge, so it reads apart from every tinted tone. */
-    --status-final-surface: var(--color-navy-600);
-    --status-final-border: var(--color-gold-400);
+    --status-final-surface: var(--surface-inverse);
+    --status-final-border: var(--accent-primary);
     --status-final-text: var(--text-on-inverse);
-    --status-info-surface: color-mix(in srgb, var(--color-navy-600) 6%, transparent);
-    --status-info-border: color-mix(in srgb, var(--color-navy-600) 20%, transparent);
-    --status-info-text: var(--color-navy-600);
-    --status-neutral-surface: color-mix(in srgb, var(--color-navy-600) 4%, transparent);
-    --status-neutral-border: color-mix(in srgb, var(--color-navy-600) 16%, transparent);
+    --status-info-surface: color-mix(in srgb, var(--tint-base) 6%, transparent);
+    --status-info-border: color-mix(in srgb, var(--tint-base) 20%, transparent);
+    --status-info-text: var(--text-primary);
+    --status-neutral-surface: color-mix(in srgb, var(--tint-base) 4%, transparent);
+    --status-neutral-border: color-mix(in srgb, var(--tint-base) 16%, transparent);
     --status-neutral-text: var(--text-muted);
-    --status-warning-surface: color-mix(in srgb, var(--color-gold-400) 12%, transparent);
-    --status-warning-border: color-mix(in srgb, var(--color-gold-400) 46%, transparent);
-    --status-warning-text: var(--color-navy-600);
-    --table-header-surface: color-mix(in srgb, var(--color-navy-600) 4%, transparent);
-    --table-row-hover-surface: color-mix(in srgb, var(--color-gold-400) 8%, transparent);
+    --status-warning-surface: color-mix(in srgb, var(--accent-primary) 12%, transparent);
+    --status-warning-border: color-mix(in srgb, var(--accent-primary) 46%, transparent);
+    --status-warning-text: var(--text-primary);
+    --table-header-surface: color-mix(in srgb, var(--tint-base) 4%, transparent);
+    --table-row-hover-surface: color-mix(in srgb, var(--accent-primary) 8%, transparent);
     --workflow-default-surface: var(--surface-raised);
-    --workflow-default-hover-surface: var(--color-paper-warm);
-    --workflow-primary-surface: color-mix(in srgb, var(--color-gold-400) 12%, transparent);
-    --workflow-primary-hover-surface: color-mix(in srgb, var(--color-gold-400) 18%, transparent);
-    --workflow-danger-surface: color-mix(in srgb, var(--color-red-400) 8%, transparent);
-    --workflow-danger-hover-surface: color-mix(in srgb, var(--color-red-400) 12%, transparent);
+    --workflow-default-hover-surface: var(--surface-quiet-hover);
+    --workflow-primary-surface: color-mix(in srgb, var(--accent-primary) 12%, transparent);
+    --workflow-primary-hover-surface: color-mix(in srgb, var(--accent-primary) 18%, transparent);
+    --workflow-danger-surface: color-mix(in srgb, var(--text-danger) 8%, transparent);
+    --workflow-danger-hover-surface: color-mix(in srgb, var(--text-danger) 12%, transparent);
     --team-icon-sunset-surface: var(--status-danger-surface);
     --team-icon-sunset-text: var(--status-danger-text);
     --team-icon-field-surface: var(--status-active-surface);
@@ -111,39 +144,39 @@
     /* Line and mark colors for charts, one per series, in the order a chart hands them out. */
     --chart-series-1: var(--color-gold-500);
     --chart-series-2: var(--color-navy-600);
-    --chart-series-3: var(--color-red-400);
+    --chart-series-3: var(--text-danger);
     --chart-series-4: var(--color-navy-300);
     --chart-series-5: var(--color-navy-200);
-    --chart-grid: color-mix(in srgb, var(--color-navy-600) 10%, transparent);
+    --chart-grid: color-mix(in srgb, var(--tint-base) 10%, transparent);
     /* Podium steps, 1st to 3rd: gold, silver, bronze, each with the text that reads on it.
-       Medal colours are the same in both themes, so `.dark` does not redefine them. */
-    --podium-1-surface: var(--color-gold-400);
+       Gold follows each mode's accent; silver and bronze are the same in both modes. */
+    --podium-1-surface: var(--accent-primary);
     --podium-1-text: var(--color-navy-600);
     --podium-2-surface: var(--color-navy-100);
     --podium-2-text: var(--color-navy-500);
     --podium-3-surface: var(--color-bronze-100);
     --podium-3-text: var(--color-bronze-700);
 
-    /* The shared components' role colours, from the scales above. */
-    --background: var(--color-paper);
-    --foreground: var(--color-navy-600);
+    /* The shared components' role colours, from the roles above. */
+    --background: var(--surface-canvas);
+    --foreground: var(--text-primary);
     --card: var(--surface-raised);
-    --card-foreground: var(--color-navy-600);
-    --popover: var(--surface-raised);
-    --popover-foreground: var(--color-navy-600);
-    --primary: var(--color-gold-400);
+    --card-foreground: var(--text-primary);
+    --popover: var(--surface-overlay);
+    --popover-foreground: var(--text-primary);
+    --primary: var(--accent-primary);
     --primary-foreground: var(--color-navy-600);
-    --secondary: var(--color-neutral-200);
-    --secondary-foreground: var(--color-navy-600);
-    --muted: var(--color-neutral-150);
+    --secondary: var(--surface-quiet-strong);
+    --secondary-foreground: var(--text-primary);
+    --muted: var(--surface-quiet);
     --muted-foreground: var(--text-muted);
-    --accent: var(--color-gold-400);
+    --accent: var(--accent-primary);
     --accent-foreground: var(--color-navy-600);
-    --destructive: var(--color-red-400);
-    --destructive-foreground: var(--text-on-inverse);
+    --destructive: var(--text-danger);
+    --destructive-foreground: var(--text-on-danger);
     --border: var(--border-default);
     --input: var(--border-default);
-    --ring: var(--color-gold-400);
+    --ring: var(--accent-primary);
     --radius: 0.5rem;
     --font-display: "Archivo", ui-sans-serif, system-ui, sans-serif;
     --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
@@ -155,14 +188,16 @@
     --tracking-label: 0.12em;
     /* Button text and header links: uppercase, opened a little. */
     --tracking-button: 0.06em;
-    --shadow-sm: 0 1px 2px color-mix(in srgb, var(--color-navy-600) 6%, transparent);
-    --shadow-md: 0 4px 12px color-mix(in srgb, var(--color-navy-600) 8%, transparent);
-    --shadow-lg: 0 12px 28px color-mix(in srgb, var(--color-navy-600) 12%, transparent);
+    /* What soft shadows are cast in: navy on paper, black on graphite. */
+    --shadow-base: var(--color-navy-600);
+    --shadow-sm: 0 1px 2px color-mix(in srgb, var(--shadow-base) 6%, transparent);
+    --shadow-md: 0 4px 12px color-mix(in srgb, var(--shadow-base) 8%, transparent);
+    --shadow-lg: 0 12px 28px color-mix(in srgb, var(--shadow-base) 12%, transparent);
     --shadow-xl: 0 40px 80px -30px rgba(0, 0, 0, 0.7);
     --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-    --shadow-focus: 0 0 0 3px color-mix(in srgb, var(--color-gold-400) 45%, transparent);
-    --shadow-gold-glow: 0 0 0 3px color-mix(in srgb, var(--color-gold-400) 30%, transparent);
-    --shadow-red-pulse: 0 0 0 3px color-mix(in srgb, var(--color-red-400) 30%, transparent);
+    --shadow-focus: 0 0 0 3px color-mix(in srgb, var(--accent-primary) 45%, transparent);
+    --shadow-gold-glow: 0 0 0 3px color-mix(in srgb, var(--accent-primary) 30%, transparent);
+    --shadow-red-pulse: 0 0 0 3px color-mix(in srgb, var(--text-danger) 30%, transparent);
     --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
     --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
     --duration-fast: 120ms;
@@ -175,11 +210,11 @@
     --illustration-gold: #f5b800;
     --illustration-gold-ink: #0c2341;
     --illustration-sky: #dbe7f3;
-    --illustration-grass: #5b9e57;
-    --illustration-grass-dark: #4a8a47;
+    --illustration-grass: #7d9c72;
+    --illustration-grass-dark: #6c8a62;
     --illustration-dirt: #c99a6b;
     --illustration-sand: #efe0c6;
-    --illustration-red: #c8323c;
+    --illustration-red: #b05157;
     --illustration-orange: #e07a2e;
     --illustration-ice: #e9f3fa;
     --illustration-court: #3f6fa8;
@@ -196,48 +231,56 @@
     --illustration-muted: #66665f;
   }
 
-  .dark {
-    /* Label blue is too dark to read on navy; labels take navy haze, as on the light theme's navy panels. */
-    --text-label: var(--color-navy-200);
-    --background: var(--color-navy-800);
-    --foreground: var(--color-paper);
-    --card: var(--color-navy-600);
-    --card-foreground: var(--color-paper);
-    --popover: var(--color-navy-600);
-    --popover-foreground: var(--color-paper);
-    --primary: var(--color-gold-400);
-    --primary-foreground: var(--color-navy-800);
-    --secondary: var(--color-navy-550);
-    --secondary-foreground: var(--color-paper);
-    --muted: var(--color-navy-550);
-    --muted-foreground: var(--color-neutral-350);
-    --accent: var(--color-gold-400);
-    --accent-foreground: var(--color-navy-800);
-    --destructive: var(--color-red-400);
-    --destructive-foreground: var(--text-on-inverse);
-    --border: var(--border-on-inverse);
-    --input: var(--border-on-inverse);
-    --ring: var(--color-gold-400);
-    --chart-series-1: var(--color-gold-400);
-    --chart-series-2: var(--color-navy-50);
-    --chart-series-3: var(--color-red-200);
-    --chart-series-4: var(--color-navy-200);
-    --chart-series-5: var(--color-navy-300);
-    --chart-grid: color-mix(in srgb, var(--text-on-inverse) 12%, transparent);
-    --illustration-ink: #e9e7dc;
-    --illustration-paper: #f3f3ee;
-    --illustration-sky: #12305a;
-    --illustration-grass: #3f7f3c;
-    --illustration-grass-dark: #356c33;
-    --illustration-dirt: #8e6a48;
-    --illustration-sand: #2a3550;
-    --illustration-ice: #1a3a5e;
-    --illustration-court: #2c5280;
-    --illustration-tint: #12294d;
-    --illustration-chip: #16305a;
-    --illustration-card: #0c2341;
-    --illustration-line: color-mix(in srgb, var(--text-on-inverse) 14%, transparent);
-    --illustration-muted: #c2c2b6;
+  /* Dark mode, on whenever the device is set to dark: graphite pages and cards, with navy kept for
+     the header bar, the leaderboard headings and the hero's slanted cut (--surface-inverse). */
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --surface-canvas: var(--color-graphite-900);
+      --surface-raised: var(--color-graphite-800);
+      --surface-overlay: var(--color-graphite-700);
+      --surface-quiet: var(--color-graphite-700);
+      --surface-quiet-strong: var(--color-graphite-600);
+      --surface-quiet-hover: var(--color-graphite-700);
+      --text-primary: var(--color-graphite-50);
+      --text-secondary: var(--color-graphite-200);
+      --text-muted: var(--color-graphite-300);
+      /* Label blue is too dark to read on graphite; labels take navy haze, as on navy panels. */
+      --text-label: var(--color-navy-200);
+      --text-danger: var(--color-red-300);
+      /* White on the lighter dark-mode red is too faint; red buttons take dark text. */
+      --text-on-danger: var(--color-graphite-900);
+      --tint-base: var(--color-graphite-50);
+      --border-default: var(--color-graphite-500);
+      --border-strong: var(--color-graphite-400);
+      --accent-primary: var(--color-gold-muted);
+      --accent-primary-hover: var(--color-gold-muted-bright);
+      --chart-series-1: var(--color-gold-muted);
+      --chart-series-2: var(--color-graphite-50);
+      --chart-series-4: var(--color-navy-200);
+      --chart-series-5: var(--color-navy-300);
+      --shadow-base: #000000;
+      --illustration-ink: var(--color-graphite-50);
+      --illustration-paper: #f2f2f2;
+      --illustration-paper-ink: var(--color-graphite-900);
+      --illustration-gold: var(--color-gold-muted);
+      --illustration-gold-ink: var(--color-navy-600);
+      --illustration-sky: #1d2532;
+      --illustration-grass: #55705a;
+      --illustration-grass-dark: #4a634f;
+      --illustration-dirt: #7d6448;
+      --illustration-sand: #2a2620;
+      --illustration-red: var(--color-red-300);
+      --illustration-ice: #1d2532;
+      --illustration-court: var(--color-field-blue);
+      --illustration-brown: #8a5a3a;
+      --illustration-asphalt: #2b2f36;
+      --illustration-road: #3a3f47;
+      --illustration-tint: var(--color-graphite-800);
+      --illustration-chip: #2f333a;
+      --illustration-card: var(--color-graphite-650);
+      --illustration-line: color-mix(in srgb, var(--color-graphite-50) 12%, transparent);
+      --illustration-muted: var(--color-graphite-300);
+    }
   }
 }
 
