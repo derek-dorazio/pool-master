@@ -927,7 +927,7 @@ release, and the mock contest feed provider has its own suite.
   - `npm run test:coverage:service:unit` — run with coverage
 - **CI job:** `service-unit-tests` (no database). Runs `npm run test:coverage:service:unit` with Jest's default Babel coverage provider; the coverage threshold below fails the job. It is one of two coverage gates in CI; the other is the webapp unit suite's (`poolmaster-unit-tests`, §4 below).
 - **Required pre-push gate:** `npx jest --config tests/jest.config.js --forceExit` (per `AGENTS.md` Quality Gates).
-- **Coverage policy:** **Threshold configured at the suite level** — `coverageThreshold.global` in `tests/jest.config.js`: 67.5% statements, 65.5% branches, 65.5% functions, 67.5% lines. These are regression floors, not aspirational targets, raised in #747 to about 3 points under the lower of two measurements: Babel (this job) 74.63 / 68.84 / 68.42 / 74.36, and V8 (the merged report, which reuses this config) 70.69 / 85.52 / 79.87 / 70.69.
+- **Coverage policy:** **Per-file floors, plus a suite-level floor for the rest** (#1477; the rule is `rules/testing-rules.md` §1 *Coverage Floors*). In `tests/jest.config.js`, scoring, calculators, standings and settlement (`modules/scoring-families/**`, the `contests` standings, calculator and settlement files, `events/bracket-reseed.ts`, `notifications/live-standings.ts`) must each reach 100% statements, functions and lines and 96% branches on their own. Jest leaves files a glob matches out of `coverageThreshold.global`, which covers the rest: 71.5% statements, 67.5% branches, 66% functions, 72% lines, about 1 point under the Babel measurement of 2026-11-09 (72.72 / 68.38 / 66.80 / 73.19). These are regression floors: raise them as coverage grows, never lower one to pass. The floors are calibrated to Babel, this job's provider; the V8 merged report (`run-backend-coverage.mjs`) runs without them.
 - **Database:** none. Pure unit tests must not touch Postgres; if a test needs a DB, it belongs in the integration suite.
 
 ### 2. Backend integration (`tests/integration/**/*.integration.ts`)
@@ -1043,7 +1043,7 @@ release, and the mock contest feed provider has its own suite.
 
 | Suite | Threshold today | Source of truth |
 |---|---|---|
-| Backend unit | 67.5% / 65.5% / 65.5% / 67.5% (stmts / branches / fns / lines) | `tests/jest.config.js` |
+| Backend unit | scoring files 100% / 96% / 100% / 100% each; the rest 71.5% / 67.5% / 66% / 72% (stmts / branches / fns / lines) | `tests/jest.config.js` |
 | Backend integration | none | — |
 | Backend FAPI | none | — |
 | Webapp unit | 89% / 81.5% / 89.5% / 89% (stmts / branches / fns / lines) | `clients/poolmaster/vitest.config.ts` |

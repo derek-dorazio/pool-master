@@ -112,20 +112,17 @@ export async function loadPickEmWeekStandings(
     score: scoreGamePicks(games, picksByEntry.get(entry.id) ?? [], scoring),
     tiebreakerValue: contestEntryEventTiebreaker(entry, sportEventId),
   }));
-  const ranks = new Map(rankPredictionStandings(
-    scored.map(({ entry, score, tiebreakerValue }) => ({ entryId: entry.id, points: score.points, tiebreakerValue })),
+  const ranked = rankPredictionStandings(
+    scored.map((standing) => ({ ...standing, entryId: standing.entry.id, points: standing.score.points })),
     tiebreakerTotal,
-  ).map((rank) => [rank.entryId, rank]));
+  );
   return {
     sportEventId,
     eventCancelled,
     gameCount: games.length,
     tiebreakerTotalPoints: tiebreakerTotal,
-    entries: scored
-      .flatMap((standing) => {
-        const rank = ranks.get(standing.entry.id);
-        return rank ? [{ ...standing, position: rank.position, displayPosition: rank.displayPosition }] : [];
-      })
+    entries: ranked
+      .map(({ entry, score, tiebreakerValue, position, displayPosition }) => ({ entry, score, tiebreakerValue, position, displayPosition }))
       .sort((left, right) => left.position - right.position || left.entry.entryNumber - right.entry.entryNumber || left.entry.name.localeCompare(right.entry.name)),
   };
 }

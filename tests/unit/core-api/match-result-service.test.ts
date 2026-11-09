@@ -681,6 +681,39 @@ describe('MatchResultService period scores', () => {
   });
 });
 
+describe('MatchResultService period scores — refusals and clock', () => {
+  it('refuses (422 MATCH_PERIOD_INVALID) a period score in a sport that keeps none, naming the sport', async () => {
+    const { service, event } = await setup({ sport: Sport.TENNIS });
+
+    await expect(service.recordPeriodScore(event.id, 1, 1, { homeScore: 1, awayScore: 0 }))
+      .rejects.toMatchObject({ code: 'MATCH_PERIOD_INVALID', statusCode: 422, message: 'A tennis game keeps no score by period.' });
+  });
+
+  it('refuses (422 MATCH_SIDES_NOT_SET) a period score for a game still waiting for a team, and saves nothing', async () => {
+    const { service, event, store } = await setup();
+
+    await expect(service.recordPeriodScore(event.id, 3, 1, { homeScore: 20, awayScore: 18 }))
+      .rejects.toMatchObject({ code: 'MATCH_SIDES_NOT_SET', statusCode: 422 });
+    expect(store.matchRows.find((match) => match.matchNumber === 3)?.periodScores).toEqual([]);
+  });
+
+  it('stamps results, cancellations and period scores with the current time when it has no clock of its own', async () => {
+    const { store, event } = await week();
+    const service = new MatchResultService({ sportEvents: store.sportEventRepo(), matches: store.matchRepo() });
+    const before = Date.now();
+
+    await service.recordPeriodScore(event.id, 1, 1, { homeScore: 7, awayScore: 0 });
+    await service.recordResult(event.id, 1, homeWins);
+    await service.cancelMatch(event.id, 2);
+
+    const after = Date.now();
+    const stamps = store.standingRows.flatMap((row) => (row.asOf === null ? [] : [row.asOf.getTime()]));
+    expect(stamps.length).toBeGreaterThan(0);
+    expect(stamps.every((stamp) => stamp >= before && stamp <= after)).toBe(true);
+    expect(store.matchRows.find((match) => match.matchNumber === 2)?.status).toBe(MatchStatus.CANCELLED);
+  });
+});
+
 describe('MatchResultService on a week of games that form no bracket', () => {
   it('ranks no team on a week\'s result: both teams of the played game COMPLETE with no place, the teams still to play ACTIVE', async () => {
     const { service, event, bills, jets, chiefs, raiders, standingOf } = await week();

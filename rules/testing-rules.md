@@ -56,6 +56,26 @@ The 80% changed-file expectation exists to pressure slices toward writing tests,
 but it does not replace use-case coverage. A slice with acceptable percentage
 coverage but missing core positive/negative use-case proof is still incomplete.
 
+### Coverage Floors
+
+The backend unit suite enforces floors per file, not only over the whole suite, so a weak file
+cannot hide behind strong ones and a new file cannot land untested (#1477). They live in
+`coverageThreshold` in `tests/jest.config.js`, as globs: every file a glob matches must meet its
+floor on its own, and a new file in a matched folder falls under it the day it is added.
+
+- **Scoring, calculators, standings and settlement** (they decide who wins): 100% of lines,
+  statements and functions, and every branch a test can reach. The floor is the lowest any of
+  these files reaches (96% of branches today). A branch left unrun is a defensive one no input
+  can reach, such as a default on a lookup in a map built from the same list; prefer reshaping
+  the code so the branch does not exist over leaving it.
+- **The rest of the suite** has a suite-level floor. Jest leaves every file a glob matches out of
+  `global`, so re-measure and re-set `global` whenever a glob is added, about 1 point under the
+  new figure.
+
+The floors are measured with Babel, the provider CI's `service-unit-tests` job uses. Raise a
+floor as coverage grows; never lower one to pass. Meet a floor with tests that prove behavior
+(§1A), never with application code shaped for a test (§1B).
+
 ### Logging and Branch-Proof Rule
 
 When a slice is instrumenting logging or auditing branch behavior, the testing

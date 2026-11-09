@@ -276,6 +276,39 @@ describe('scoreBracketPicks', () => {
   });
 });
 
+describe('scoreBracketPicks — edges', () => {
+  const ONE_ROUND: KnockoutRoundPointsSettings = { roundValues: [1], upsetBonus: { rule: UpsetBonusRule.SEED_DIFFERENCE, multiplier: 1 } };
+
+  it('ignores a pick on a game the bracket does not have', () => {
+    const score = scoreBracketPicks(eightTeamBracket(), [pick(99, 'T1')], EIGHT_SEEDS, ONE_ROUND);
+
+    expect(score).toMatchObject({ points: 0, maxPossiblePoints: 0, decidedPickCount: 0 });
+    expect(score.picks.size).toBe(0);
+  });
+
+  it('scores a correct pick in a round the contest gives no value 0, and adds no upset bonus without seeds', () => {
+    const played = withResults(eightTeamBracket(), new Map([[1, { winner: AWAY }], [5, { home: 'T8', away: 'T4', winner: HOME }]]));
+
+    const score = scoreBracketPicks(played, [pick(1, 'T8'), pick(5, 'T8')], new Map(), ONE_ROUND);
+
+    expect(score.picks.get('m1')).toEqual({ outcome: PickOutcome.CORRECT, points: 1 });
+    expect(score.picks.get('m5')).toEqual({ outcome: PickOutcome.CORRECT, points: 0 });
+  });
+
+  it('scores a walkover win over an empty side its round value with no upset bonus, and busts a team that lost a result to an empty side', () => {
+    const bracket = bracketMatches('event-walkover', [
+      { matchNumber: 1, round: 1, home: 'T8', away: null },
+      { matchNumber: 2, round: 1, home: 'T2', away: null },
+    ]);
+    const played = withResults(bracket, new Map([[1, { winner: HOME }], [2, { winner: AWAY }]]));
+
+    const score = scoreBracketPicks(played, [pick(1, 'T8'), pick(2, 'T2')], EIGHT_SEEDS, ONE_ROUND);
+
+    expect(score.picks.get('m1')).toEqual({ outcome: PickOutcome.CORRECT, points: 1 });
+    expect(score.picks.get('m2')).toEqual({ outcome: PickOutcome.BUSTED, points: 0 });
+  });
+});
+
 describe('finalTotalPoints', () => {
   it('is null until the final is played, then both teams\' points together', () => {
     expect(finalTotalPoints(eightTeamBracket())).toBeNull();
@@ -286,9 +319,17 @@ describe('finalTotalPoints', () => {
 
 describe('rankPredictionStandings', () => {
   const standing = (entryId: string, points: number, tiebreakerValue: number | null) => ({ entryId, points, tiebreakerValue });
+  const places = (...args: Parameters<typeof rankPredictionStandings>) =>
+    rankPredictionStandings(...args).map(({ entryId, position, displayPosition }) => ({ entryId, position, displayPosition }));
+
+  it('hands each standing back whole, with its place added', () => {
+    expect(rankPredictionStandings([{ ...standing('a', 3, null), note: 'kept' }], null)).toEqual([
+      { entryId: 'a', points: 3, tiebreakerValue: null, note: 'kept', position: 1, displayPosition: '1' },
+    ]);
+  });
 
   it('ranks by points, most first, sharing a place between entries level on points while the final is unplayed', () => {
-    expect(rankPredictionStandings([standing('b', 7, 140), standing('a', 10, 100), standing('c', 7, 155)], null)).toEqual([
+    expect(places([standing('b', 7, 140), standing('a', 10, 100), standing('c', 7, 155)], null)).toEqual([
       { entryId: 'a', position: 1, displayPosition: '1' },
       { entryId: 'b', position: 2, displayPosition: 'T2' },
       { entryId: 'c', position: 2, displayPosition: 'T2' },
@@ -296,7 +337,7 @@ describe('rankPredictionStandings', () => {
   });
 
   it('puts the entry whose tiebreaker is closest to the final\'s total first among entries level on points', () => {
-    expect(rankPredictionStandings([standing('b', 7, 140), standing('a', 10, 100), standing('c', 7, 155)], 150)).toEqual([
+    expect(places([standing('b', 7, 140), standing('a', 10, 100), standing('c', 7, 155)], 150)).toEqual([
       { entryId: 'a', position: 1, displayPosition: '1' },
       { entryId: 'c', position: 2, displayPosition: '2' },
       { entryId: 'b', position: 3, displayPosition: '3' },
@@ -304,18 +345,18 @@ describe('rankPredictionStandings', () => {
   });
 
   it('never lets a closer tiebreaker lift an entry above one with more points', () => {
-    expect(rankPredictionStandings([standing('close', 6, 150), standing('far', 7, 10)], 150).map((rank) => rank.entryId)).toEqual(['far', 'close']);
+    expect(places([standing('close', 6, 150), standing('far', 7, 10)], 150).map((rank) => rank.entryId)).toEqual(['far', 'close']);
   });
 
   it('ranks an entry with no tiebreaker after the level entries that gave one', () => {
-    expect(rankPredictionStandings([standing('none', 7, null), standing('far', 7, 300)], 150)).toEqual([
+    expect(places([standing('none', 7, null), standing('far', 7, 300)], 150)).toEqual([
       { entryId: 'far', position: 1, displayPosition: '1' },
       { entryId: 'none', position: 2, displayPosition: '2' },
     ]);
   });
 
   it('shares a place between entries whose tiebreakers are equally close, over and under', () => {
-    expect(rankPredictionStandings([standing('under', 7, 145), standing('over', 7, 155), standing('last', 2, 150)], 150)).toEqual([
+    expect(places([standing('under', 7, 145), standing('over', 7, 155), standing('last', 2, 150)], 150)).toEqual([
       { entryId: 'under', position: 1, displayPosition: 'T1' },
       { entryId: 'over', position: 1, displayPosition: 'T1' },
       { entryId: 'last', position: 3, displayPosition: '3' },

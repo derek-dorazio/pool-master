@@ -103,13 +103,16 @@ export function scoreGolferForContest(
   row: SportEventParticipantView,
   context: UnplayedRoundContext,
 ): GolfContestScore {
+  // A round with no known par is left out: it cannot be scored against its par yet.
   const scoreUnplayed = (roundNumbers: readonly number[]) => {
-    const unplayedRoundNumbers = roundNumbers.filter((roundNumber) => context.parByRound.has(roundNumber));
-    const penalty = unplayedRoundNumbers.reduce(
-      (sum, roundNumber) => sum + UNPLAYED_ROUND_STROKES - (context.parByRound.get(roundNumber) ?? 0),
-      0,
-    );
-    return { unplayedRoundNumbers, penalty };
+    const unplayed = roundNumbers.flatMap((roundNumber) => {
+      const par = context.parByRound.get(roundNumber);
+      return par === undefined ? [] : [{ roundNumber, par }];
+    });
+    return {
+      unplayedRoundNumbers: unplayed.map(({ roundNumber }) => roundNumber),
+      penalty: unplayed.reduce((sum, { par }) => sum + UNPLAYED_ROUND_STROKES - par, 0),
+    };
   };
 
   const finished = new Map(row.rounds.filter(isRoundFinished).map((round) => [round.round.roundNumber, round]));
@@ -149,15 +152,10 @@ export function scoreGolferForContest(
  * so a missed major is never scored lighter than it will be.
  */
 export function scoreUnplayedLineup(context: UnplayedRoundContext, pickCount: number): number | null {
-  if (
-    context.scheduledRoundNumbers.length === 0
-    || context.scheduledRoundNumbers.some((roundNumber) => !context.parByRound.has(roundNumber))
-  ) {
+  const pars = context.scheduledRoundNumbers.map((roundNumber) => context.parByRound.get(roundNumber));
+  if (pars.length === 0 || !pars.every((par): par is number => par !== undefined)) {
     return null;
   }
-  const perGolfer = context.scheduledRoundNumbers.reduce(
-    (sum, roundNumber) => sum + UNPLAYED_ROUND_STROKES - (context.parByRound.get(roundNumber) ?? 0),
-    0,
-  );
+  const perGolfer = pars.reduce((sum, par) => sum + UNPLAYED_ROUND_STROKES - par, 0);
   return perGolfer * pickCount;
 }

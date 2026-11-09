@@ -160,6 +160,8 @@ describe('LiveStandings.queueDue', () => {
   let roundNames: string[];
   let positions: Map<string, number | null>;
   let failingContestId: string | null;
+  let failure: unknown;
+  let sportLeagueFound: boolean;
 
   beforeEach(() => {
     world = new InMemoryContestWorld();
@@ -174,6 +176,8 @@ describe('LiveStandings.queueDue', () => {
     roundNames = ['First Round', 'Second Round', 'Sweet 16', 'Elite Eight', 'Final Four', 'National Championship'];
     positions = new Map();
     failingContestId = null;
+    failure = new Error('leaderboard unavailable');
+    sportLeagueFound = true;
   });
 
   function standings(config = EMAIL_SETTINGS.defaults({ POOLMASTER_ENVIRONMENT: 'prod' })): LiveStandings {
@@ -195,7 +199,7 @@ describe('LiveStandings.queueDue', () => {
       eventStandings: world.eventStandingRepo(),
       leaderboards: {
         leaderboardOf: async (contest: Contest, sportEventId?: string): Promise<ContestLeaderboardModel> => {
-          if (contest.id === failingContestId) throw new Error('leaderboard unavailable');
+          if (contest.id === failingContestId) throw failure;
           return {
             contestId: contest.id,
             sportEventId: sportEventId ?? '',
@@ -230,7 +234,7 @@ describe('LiveStandings.queueDue', () => {
       },
       matches: { findBySportEvent: async (sportEventId) => matches.get(sportEventId) ?? [] },
       configurations: world.configurationRepo(),
-      sportLeagues: { findById: async () => ({ name: 'PGA Tour', roundNames }) as unknown as SportLeague },
+      sportLeagues: { findById: async () => (sportLeagueFound ? ({ name: 'PGA Tour', roundNames }) as unknown as SportLeague : null) },
       positions: {
         findByContest: async (contestId) => new Map(
           [
@@ -850,5 +854,159 @@ describe('LiveStandings.queueDue', () => {
     const [failure] = logger.error.mock.calls.map(([entry]) => entry as { action?: string; data?: { contestId?: string } });
     expect(failure.action).toBe('email.liveStandings.failed');
     expect(failure.data?.contestId).toBe(broken.id);
+  });
+  it('sends nothing and logs nothing when no contest is live', async () => {
+    liveMasters({ status: SportEventStatus.COMPLETED });
+    for (const contest of world.contests.values()) world.contests.set(contest.id, { ...contest, status: ContestStatus.COMPLETED });
+
+    await standings().queueDue(after(ROUND_1_DONE, 31));
+
+    expect(outbox.rows).toHaveLength(0);
+    expect(logger.error).not.toHaveBeenCalled();
+  });
+
+  it('logs a failure that is not an Error by its text', async () => {
+    const { contest } = liveMasters();
+    failingContestId = contest.id;
+    failure = 'leaderboard timed out';
+
+    await standings().queueDue(after(ROUND_1_DONE, 31));
+
+    const [failed] = logger.error.mock.calls.map(([entry]) => entry as { action?: string; data?: { error?: string } });
+    expect(failed).toMatchObject({ action: 'email.liveStandings.failed', data: { error: 'leaderboard timed out' } });
+  });
+
+  it('sends nothing for a contest whose league is gone', async () => {
+    const { contest } = liveMasters();
+    world.contests.set(contest.id, { ...contest, leagueId: 'no-such-league' });
+    boards.set(contest.id, [row('e1', { id: 'squad-x', name: 'X' }, 1, -6)]);
+
+    await standings().queueDue(after(ROUND_1_DONE, 31));
+
+    expect(outbox.rows).toHaveLength(0);
+  });
+
+  it('measures an event\'s settling from the first of its standings to freeze', async () => {
+    const league = world.addLeague({ name: 'Office League', leagueCode: 'OFFICE24' });
+    const masters = world.addSportEvent({ name: 'The Masters', startDate: new Date('2026-04-09T11:40:00.000Z'), status: SportEventStatus.COMPLETED, rounds: 4 });
+    const pga = world.addSportEvent({ name: 'PGA Championship', startDate: new Date('2026-05-14T11:00:00.000Z'), status: SportEventStatus.SCHEDULED, rounds: 4 });
+    const contest = world.addContest(league.id, { name: 'Majors Pool', status: ContestStatus.ACTIVE, sportEventIds: [masters.id, pga.id] });
+    const ana = member(league.id, 'Ana');
+    const firstAt = new Date('2026-04-13T00:00:00.000Z');
+    await settle(contest.id, masters.id, 'e1', firstAt);
+    await world.eventStandingRepo().upsertMany(contest.id, [{
+      contestId: contest.id, contestEntryId: 'e2', sportEventId: masters.id, position: 2, displayPosition: '2',
+      countingPickLimit: 4, scoredPickCount: 4, totalScore: -3, asOf: after(firstAt, 90), settledAt: after(firstAt, 90),
+    }]);
+    boards.set(contest.id, [row('e1', ana.squad, 1, -9)]);
+
+    await standings().queueDue(after(firstAt, 31));
+
+    expect(emailsTo(ana.user.id).map((email) => email.subject)).toEqual(['After The Masters: Majors Pool']);
+  });
+
+  it('shows no score for an entry the board has not placed, and no event score for an entry with none in the event', async () => {
+    const league = world.addLeague({ name: 'Office League', leagueCode: 'OFFICE24' });
+    const masters = world.addSportEvent({ name: 'The Masters', startDate: new Date('2026-04-09T11:40:00.000Z'), status: SportEventStatus.COMPLETED, rounds: 4 });
+    const pga = world.addSportEvent({ name: 'PGA Championship', startDate: new Date('2026-05-14T11:00:00.000Z'), status: SportEventStatus.IN_PROGRESS, rounds: 4 });
+    const contest = world.addContest(league.id, { name: 'Majors Pool', status: ContestStatus.ACTIVE, sportEventIds: [masters.id, pga.id] });
+    const ana = member(league.id, 'Ana');
+    const settledAt = new Date('2026-04-13T00:00:00.000Z');
+    await settle(contest.id, masters.id, 'e1', settledAt);
+    boards.set(contest.id, [row('e1', ana.squad, null, null, {
+      events: [{ sportEventId: masters.id, position: null, displayPosition: null, score: null }] as unknown as ContestLeaderboardEntryRow['events'],
+    })]);
+
+    await standings().queueDue(after(settledAt, 31));
+
+    const [toAna] = emailsTo(ana.user.id);
+    expect(toAna.textBody).toContain('Entry e1 (Ana\'s Squad), yours');
+    expect(toAna.textBody).not.toContain('Entry e1 (Ana\'s Squad), yours, -');
+    expect(toAna.textBody).not.toContain('Next event: PGA Championship, picks close');
+  });
+
+  it('shows no week score for an entry the week placed without points, and no season score for an entry the season has not placed', async () => {
+    const settledAt = new Date('2026-09-15T04:00:00.000Z');
+    const { league, contest, week1, week2, week3 } = await liveWeeks(SelectionType.PICK_EM, settledAt);
+    const ana = member(league.id, 'Ana');
+    const board = pickEmBoard(contest.id, [week1.id, week2.id, week3.id], [
+      { entryId: 'e1', squad: ana.squad, position: 1, total: 0, week1: { position: 1, points: 0 } },
+    ]);
+    board.entries[0] = { ...board.entries[0], position: null, displayPosition: null, weeks: board.entries[0].weeks.map((week, index) => (index === 0 ? { ...week, points: null } : week)) };
+    pickEmBoards.set(contest.id, board);
+
+    await standings().queueDue(after(settledAt, 31));
+
+    const [toAna] = emailsTo(ana.user.id);
+    expect(toAna.textBody).toContain('Week 1, everyone:\n1. Entry e1 (Ana\'s Squad), yours, no score yet');
+    expect(toAna.textBody).toContain('Season standings, by points:\n-. Entry e1 (Ana\'s Squad), yours, no score yet');
+  });
+
+  it('names the round a survivor entry went out in when its week has more than one, and counts entries still in when the board has no week for the event', async () => {
+    const settledAt = new Date('2026-09-15T04:00:00.000Z');
+    const { league, contest, week1, week2, week3 } = await liveWeeks(SelectionType.SURVIVOR, settledAt);
+    const ben = member(league.id, 'Ben');
+    const board = survivorBoard(contest.id, [week1.id, week2.id, week3.id], [
+      { entryId: 'e1', squad: ben.squad, position: 1, weeksSurvived: 1 },
+      { entryId: 'e2', squad: ben.squad, position: 2, weeksSurvived: 0, outInWeek1: { team: 'Chicago Bears' } },
+    ]);
+    board.weeks[0] = { ...board.weeks[0], roundNumber: 2, roundCount: 2 };
+    board.entries[1] = { ...board.entries[1], weeks: board.entries[1].weeks.map((week, index) => (index === 0 ? { ...week, roundNumber: 2 } : week)) };
+    survivorBoards.set(contest.id, board);
+
+    await standings().queueDue(after(settledAt, 31));
+    const [toBen] = emailsTo(ben.user.id);
+    expect(toBen.textBody).toContain('Entry e2 is out: Chicago Bears didn\'t win in round 2 of Week 1.');
+
+    outbox.rows.length = 0;
+    positions.clear();
+    survivorBoards.set(contest.id, { ...board, weeks: board.weeks.slice(1) });
+    const again = new Date('2026-09-15T05:00:00.000Z');
+    world.eventStandings.clear();
+    await settle(contest.id, week1.id, 'e1', again);
+    await standings().queueDue(after(again, 31));
+    expect(emailsTo(ben.user.id)[0].textBody).toContain('1 of 2 entries is still in Last One Standing.');
+  });
+
+  it('sends nothing for a bracket whose event is not under way', async () => {
+    const done = new Date('2026-03-21T04:30:00.000Z');
+    const { league, tournament, contest } = liveBracket(done);
+    const ana = member(league.id, 'Ana');
+    bracketBoards.set(contest.id, { entries: [bracketRow('e1', ana.squad, 1, 30, 190)], champions: new Map() });
+    world.sportEvents.set(tournament.id, { ...tournament, status: SportEventStatus.SCHEDULED });
+
+    await standings().queueDue(after(done, 31));
+
+    expect(outbox.rows).toHaveLength(0);
+  });
+
+  it('names a bracket round from its sport\'s own words, under no league name, when its sport league is not found', async () => {
+    const done = new Date('2026-03-21T04:30:00.000Z');
+    const { league, contest } = liveBracket(done);
+    const ana = member(league.id, 'Ana');
+    bracketBoards.set(contest.id, { entries: [bracketRow('e1', ana.squad, 1, 30, 190)], champions: new Map() });
+    sportLeagueFound = false;
+
+    await standings().queueDue(after(done, 31));
+
+    const [toAna] = emailsTo(ana.user.id);
+    expect(toAna.subject).toBe('After First Round: March Madness');
+    expect(toAna.textBody).toContain('NCAA Tournament, March Madness');
+    expect(toAna.textBody).not.toContain('PGA Tour');
+  });
+
+  it('logs a failure to queue that is not an Error by its text', async () => {
+    const { league, contest } = liveMasters();
+    const ana = member(league.id, 'Ana');
+    boards.set(contest.id, [row('e1', ana.squad, 1, -6)]);
+    const locked: unknown = 'outbox locked';
+    outbox.recordMany = async () => {
+      throw locked;
+    };
+
+    await standings().queueDue(after(ROUND_1_DONE, 31));
+
+    const [failed] = logger.error.mock.calls.map(([entry]) => entry as { action?: string; data?: { error?: string } });
+    expect(failed).toMatchObject({ action: 'email.liveStandings.sendFailed', data: { error: 'outbox locked' } });
   });
 });
