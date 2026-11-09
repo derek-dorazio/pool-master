@@ -127,7 +127,7 @@ describe('refresh and logout handlers', () => {
 });
 
 describe('password reset and email change undo handlers', () => {
-  it('answers a reset request with 202 before the reset runs', async () => {
+  it('answers a reset request with 202 once its address is under the limit, and runs the reset for its identifier', async () => {
     const r = resets();
 
     const reply = await callHandler(handlersOver(auth(), r).requestPasswordReset, stubRequest({ body: { identifier: 'ada@example.test' }, ip: '10.0.0.1', contextLogger: false }));

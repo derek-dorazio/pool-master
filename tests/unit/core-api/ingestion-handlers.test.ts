@@ -135,7 +135,39 @@ describe('manual event sync handler', () => {
   });
 });
 
-describe('provider catalog browse errors', () => {
+describe('provider catalog browse handler', () => {
+  const masters = {
+    externalId: 'ext-1', providerId: 'feed', sport: Sport.GOLF, name: 'The Masters', venue: 'Augusta National',
+    startDate: new Date('2027-04-08T00:00:00.000Z'), endDate: new Date('2027-04-11T00:00:00.000Z'), status: 'SCHEDULED', fieldLocked: false, metadata: {},
+  };
+
+  it('lists a provider\'s catalog events for the query\'s window read as dates, each as a provider event', async () => {
+    const listCandidateEvents = jest.fn((..._args: unknown[]) => Promise.resolve([masters]));
+
+    const reply = await callHandler(handlersOver(service(), scoreSources(listCandidateEvents)).listProviderCatalogEvents, stubRequest({
+      params: { providerId: 'feed' },
+      query: { sport: Sport.GOLF, sportLeagueId: 'sl-1', from: '2027-04-05T00:00:00.000Z', to: '2027-04-14T00:00:00.000Z', search: 'masters' },
+    }));
+
+    expect(listCandidateEvents).toHaveBeenCalledWith('feed', Sport.GOLF, {
+      sportLeagueId: 'sl-1', from: new Date('2027-04-05T00:00:00.000Z'), to: new Date('2027-04-14T00:00:00.000Z'), search: 'masters',
+    });
+    expect(reply.body).toEqual({
+      events: [{
+        externalId: 'ext-1', providerId: 'feed', sport: Sport.GOLF, name: 'The Masters', venue: 'Augusta National', location: null,
+        startDate: '2027-04-08T00:00:00.000Z', endDate: '2027-04-11T00:00:00.000Z', status: 'SCHEDULED', rounds: null, participantCount: null, fieldLocked: false,
+      }],
+    });
+  });
+
+  it('passes no window, search or sport league on when the query names none', async () => {
+    const listCandidateEvents = jest.fn((..._args: unknown[]) => Promise.resolve([]));
+
+    await callHandler(handlersOver(service(), scoreSources(listCandidateEvents)).listProviderCatalogEvents, stubRequest({ params: { providerId: 'feed' }, query: { sport: Sport.GOLF } }));
+
+    expect(listCandidateEvents).toHaveBeenCalledWith('feed', Sport.GOLF, { sportLeagueId: undefined, from: undefined, to: undefined, search: undefined });
+  });
+
   it('answers a catalog refusal with its own status and code, and passes any other failure on', async () => {
     const request = () => stubRequest({ params: { providerId: 'feed' }, query: { sport: Sport.GOLF } });
     const refused = handlersOver(service(), scoreSources(() => Promise.reject(new EventScoreSourceError('Unknown provider', 'PROVIDER_NOT_FOUND', 404))));

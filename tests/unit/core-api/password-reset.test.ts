@@ -307,25 +307,6 @@ describe('password reset request handler', () => {
     expect(reply.send).toHaveBeenCalledWith({ success: true });
     expect(order).toEqual(['reply', 'lookup']);
   });
-
-  it('answers 429 and looks nothing up when the address is over its limit', async () => {
-    const passwordResets = stubInstance(PasswordResetService, {
-      assertRequestAllowed: jest.fn().mockImplementation(() => {
-        throw new PasswordResetError('Too many tries. Wait a minute and try again.', 'PASSWORD_RESET_RATE_LIMITED', 429);
-      }),
-      requestReset: jest.fn(),
-    });
-    const handlers = createAuthHandlers(stubInstance(AuthService, {}), passwordResets, stubInstance(EmailChangeUndoService, {}));
-    const reply = createReply([]);
-
-    await handlers.requestPasswordReset(createRequest() as never, reply);
-
-    expect(reply.status).toHaveBeenCalledWith(429);
-    expect(reply.send).toHaveBeenCalledWith({
-      error: { code: 'PASSWORD_RESET_RATE_LIMITED', message: 'Too many tries. Wait a minute and try again.' },
-    });
-    expect(passwordResets.requestReset).not.toHaveBeenCalled();
-  });
 });
 
 describe('PASSWORD_RESET email', () => {

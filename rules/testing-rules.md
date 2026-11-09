@@ -74,8 +74,8 @@ floor on its own, and a new file in a matched folder falls under it the day it i
   and `persistence/`; every mapper in `packages/core-api/src/mappers` but its barrel; and
   everything under `packages/shared/domain` and `packages/shared/dto`. A mapper's unit tests name
   each of its null, omitted and per-sport cases. A handler's unit tests call it with a stand-in
-  service and the request and reply doubles in `tests/support/handler-call.ts`, with no Fastify
-  app or database, and name each refusal's status and code and that an error the handler does
+  service and no Fastify app or database, normally through the request and reply doubles in
+  `tests/support/handler-call.ts`, and name each refusal's status and code and that an error the handler does
   not own reaches the global error handler unchanged. The left-out files are proven by the
   integration and functional suites. A new file in a matched folder is held to 90/80 the day it
   lands, so it lands with its unit tests.
