@@ -152,6 +152,33 @@ describe('email sender', () => {
     expect(outbox.rows.map((row) => row.status)).toEqual(['SKIPPED', 'QUEUED']);
   });
 
+  it('skips, without sending, an email queued before an admin switched all email off', async () => {
+    const time = clock();
+    const outbox = inMemoryEmailMessages(time.now);
+    await outbox.record(queued(1));
+    const { transport, sent } = recordingTransport();
+
+    await sender({ outbox, transport, time, config: { enabled: false } }).drain();
+
+    expect(sent).toHaveLength(0);
+    expect(outbox.rows[0]).toMatchObject({ status: 'SKIPPED', skipReason: 'EMAIL_DISABLED', nextAttemptAt: undefined });
+  });
+
+  it('skips, without sending, an email queued before an admin switched that one email off, and still sends the others', async () => {
+    const time = clock();
+    const outbox = inMemoryEmailMessages(time.now);
+    await outbox.record(queued(1));
+    await outbox.record(queued(2, { templateKey: 'LEAGUE_MEMBER_INVITE', idempotencyKey: 'LEAGUE_MEMBER_INVITE:invite-2:user-2' }));
+    const { transport, sent } = recordingTransport();
+    const templates = { ...EMAIL_SETTINGS.defaults({ POOLMASTER_ENVIRONMENT: 'prod' }).templates, LEAGUE_JOIN_SUCCESS: false };
+
+    await sender({ outbox, transport, time, config: { templates } }).drain();
+
+    expect(sent.map((message) => message.to)).toEqual(['member2@gmail.com']);
+    expect(outbox.rows[0]).toMatchObject({ status: 'SKIPPED', skipReason: 'TEMPLATE_DISABLED' });
+    expect(outbox.rows[1]).toMatchObject({ status: 'SENT' });
+  });
+
   it('sends no more than the configured rate a second, waiting out the rest of each second between batches', async () => {
     const time = clock();
     const outbox = inMemoryEmailMessages(time.now);

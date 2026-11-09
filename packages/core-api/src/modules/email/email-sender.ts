@@ -9,6 +9,7 @@ import type { FastifyBaseLogger } from 'fastify';
 import type { EmailConfig } from '@poolmaster/shared/dto';
 import type { EmailMessageRepository } from '@poolmaster/shared/db';
 import type { EmailMessage, EmailTemplateKey } from '@poolmaster/shared/domain';
+import { emailSwitchedOffReason } from './email-settings';
 import { MailDeliveryThrottledError, type MailDeliveryProvider } from './mail-delivery';
 import { EMAIL_TEMPLATES } from './system-email-templates';
 import { outsideRequest } from '../../core/request-scope';
@@ -35,7 +36,7 @@ const CONTENT_SWEEP_WINDOW_MS = 7 * 24 * 60 * 60_000;
 export interface EmailSenderOptions {
   messages: Pick<
     EmailMessageRepository,
-    'claimDue' | 'markSent' | 'markRetry' | 'markThrottled' | 'markFailed' | 'clearContentCreatedBetween'
+    'claimDue' | 'markSent' | 'markRetry' | 'markThrottled' | 'markSkipped' | 'markFailed' | 'clearContentCreatedBetween'
   >;
   transport: MailDeliveryProvider;
   readConfig: () => EmailConfig;
@@ -119,7 +120,8 @@ export class EmailSender {
   /** One batch of at most the configured rate a second, until a batch comes back short. */
   private async sendDue(): Promise<void> {
     for (;;) {
-      const rate = this.options.readConfig().sendRatePerSecond;
+      const config = this.options.readConfig();
+      const rate = config.sendRatePerSecond;
       const startedAt = this.now().getTime();
       // poolmaster-allow-query-in-loop: one claim per batch of up to the send rate, not per email
       const batch = await this.options.messages.claimDue({
@@ -128,16 +130,26 @@ export class EmailSender {
         claimUntil: new Date(startedAt + CLAIM_MS),
         firstTemplateKeys: TIME_CRITICAL_TEMPLATE_KEYS,
       });
-      await Promise.all(batch.map((message) => this.sendOne(message)));
+      await Promise.all(batch.map((message) => this.sendOne(message, config)));
       if (batch.length < rate) return;
       const elapsed = this.now().getTime() - startedAt;
       if (elapsed < SECOND_MS) await this.sleep(SECOND_MS - elapsed);
     }
   }
 
-  private async sendOne(message: EmailMessage): Promise<void> {
+  private async sendOne(message: EmailMessage, config: EmailConfig): Promise<void> {
     const refs = logRefs(message);
     try {
+      // An admin may switch email off while it waits here; the switch stops it as it would a new one (#1503).
+      const switchedOff = emailSwitchedOffReason(config, message.templateKey);
+      if (switchedOff) {
+        await this.options.messages.markSkipped(message.id, switchedOff);
+        this.options.logger?.info({
+          action: 'email.sender.skip',
+          data: { ...refs, reason: switchedOff },
+        }, 'Email was switched off in settings after it was queued; skipped sending it');
+        return;
+      }
       if (this.isPastSendBy(message, this.now().getTime())) {
         await this.giveUpLate(message);
         return;

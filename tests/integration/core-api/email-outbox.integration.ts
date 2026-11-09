@@ -335,6 +335,22 @@ describe('email outbox: outcomes', () => {
     });
   });
 
+  it('records a claimed email switched off before it went as SKIPPED with the reason, no due time and no content', async () => {
+    const { message } = await repository().record(queued());
+    await repository().claimDue({ now: DUE, limit: 10, claimUntil: new Date(DUE.getTime() + 5 * MINUTE), firstTemplateKeys: [] });
+
+    await repository().markSkipped(message.id, 'EMAIL_DISABLED');
+
+    expect(await getPrisma().emailMessage.findUniqueOrThrow({ where: { id: message.id } })).toMatchObject({
+      status: 'SKIPPED',
+      skipReason: 'EMAIL_DISABLED',
+      nextAttemptAt: null,
+      subject: null,
+      textBody: null,
+      htmlBody: null,
+    });
+  });
+
   it('clears the subject and bodies of emails created in the window, and keeps the rows and the content outside it', async () => {
     const before = await repository().record(queued());
     const inside = await repository().record(queued());
