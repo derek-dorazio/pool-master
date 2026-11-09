@@ -29,4 +29,11 @@ describe('teamNameColumn', () => {
 
     expect(screen.getByText('Inactive')).toBeVisible();
   });
+
+  it('lists each team by name with no squad icon beside it', () => {
+    renderNameColumn(true);
+
+    expect(screen.getByText('Late Scratch')).toBeVisible();
+    expect(screen.queryByLabelText('Late Scratch icon')).not.toBeInTheDocument();
+  });
 });
