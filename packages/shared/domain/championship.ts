@@ -64,7 +64,7 @@ export function tallyChampionship(
     tally.points += finish.points;
     tally.played += 1;
     if (finish.place <= CHAMPIONSHIP_MATRIX_PLACES) {
-      tally.finishes[finish.place - 1] = (tally.finishes[finish.place - 1] ?? 0) + 1;
+      tally.finishes[finish.place - 1] += 1;
       tally.topTens += 1;
     }
     if (finish.place <= 3) tally.podiums += 1;
@@ -76,8 +76,8 @@ export function tallyChampionship(
 export function rankChampionshipTallies<T extends ChampionshipTally>(tallies: readonly T[]): Ranked<T>[] {
   return rankTallies(tallies, (left, right) =>
     right.points - left.points
-    || (right.finishes[0] ?? 0) - (left.finishes[0] ?? 0)
-    || (right.finishes[1] ?? 0) - (left.finishes[1] ?? 0));
+    || right.finishes[0] - left.finishes[0]
+    || right.finishes[1] - left.finishes[1]);
 }
 
 /** One medal tile: the most any squad has of its count, and every squad holding it. */
@@ -89,9 +89,9 @@ export interface ChampionshipTileLeader {
 }
 
 const TILE_COUNTS: Record<ChampionshipTile, (tally: ChampionshipTally) => number> = {
-  [ChampionshipTile.MOST_FIRSTS]: (tally) => tally.finishes[0] ?? 0,
-  [ChampionshipTile.MOST_SECONDS]: (tally) => tally.finishes[1] ?? 0,
-  [ChampionshipTile.MOST_THIRDS]: (tally) => tally.finishes[2] ?? 0,
+  [ChampionshipTile.MOST_FIRSTS]: (tally) => tally.finishes[0],
+  [ChampionshipTile.MOST_SECONDS]: (tally) => tally.finishes[1],
+  [ChampionshipTile.MOST_THIRDS]: (tally) => tally.finishes[2],
   [ChampionshipTile.MOST_PODIUMS]: (tally) => tally.podiums,
   [ChampionshipTile.MOST_TOP_TENS]: (tally) => tally.topTens,
   [ChampionshipTile.MOST_PLAYED]: (tally) => tally.played,

@@ -53,13 +53,8 @@
     "test:coverage:service:unit": "jest --config tests/jest.config.js --coverage --coverageDirectory coverage/service-unit --coverageReporters=json-summary --coverageReporters=json --coverageReporters=lcovonly --coverageReporters=clover --coverageReporters=text-summary --forceExit",
     "test:coverage:service:integration": "jest --config tests/integration/jest.config.js --coverage --coverageDirectory coverage/service-integration --coverageReporters=json-summary --coverageReporters=json --coverageReporters=lcovonly --coverageReporters=clover --coverageReporters=text-summary --forceExit",
     "coverage:floors:check": "node scripts/check-coverage-floors.mjs coverage/service-integration/coverage-final.json",
-    "test:coverage:service:functional-api": "node scripts/run-service-functional-api-coverage.mjs",
-    "test:coverage:service:merged": "node scripts/run-backend-coverage.mjs",
-    "test:coverage:service:fresh": "npm run db:test:reset && DATABASE_URL=postgresql://postgres:postgres@localhost:5432/poolmaster_test npm run test:coverage:service:merged",
     "test:coverage:poolmaster:unit": "npm run test:coverage --workspace @poolmaster/poolmaster",
     "test:functional": "npm run test:service:functional-api",
-    "test:functional:coverage": "npm run test:coverage:service:functional-api",
-    "test:coverage:backend": "npm run test:coverage:service:merged",
     "test:poolmaster": "npm run test:poolmaster:unit",
     "test:coverage:poolmaster": "npm run test:coverage:poolmaster:unit",
     "test:api": "jest --config tests/jest.config.js tests/api",
@@ -114,8 +109,7 @@
     "ts-node": "^10.9.2",
     "turbo": "^2.11.10",
     "typescript": "~6.0.3",
-    "typescript-eslint": "~8.72.1",
-    "v8-to-istanbul": "^9.3.0"
+    "typescript-eslint": "~8.72.1"
   },
   "overrides": {
     "openapi-typescript": {

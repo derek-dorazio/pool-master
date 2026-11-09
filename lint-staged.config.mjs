@@ -1,6 +1,6 @@
 // Pre-commit lint on staged files only (#526). Full type-aware lint is too slow for a
-// hook; CI still runs `npm run lint` over everything, and typecheck stays out of the
-// hook entirely.
+// hook; CI still lints everything (`lint:service` in service-lint-typecheck, `lint:webapp` in
+// poolmaster-build), and typecheck stays out of the hook entirely.
 //
 // The globs are the `lint` script's own scope in package.json. Keep them in step with
 // it: a file staged outside them is not linted here and would not be linted in CI

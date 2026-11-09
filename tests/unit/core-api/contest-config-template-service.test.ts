@@ -7,6 +7,7 @@ import type { ContestConfigTemplate } from '@poolmaster/shared/domain';
 import { ContestFormat, ContestTemplateEventType, SelectionType, Sport } from '@poolmaster/shared/domain';
 import {
   ContestConfigTemplateNotFoundError,
+  ContestConfigTemplateRulesMismatchError,
   ContestConfigTemplateService,
 } from '../../../packages/core-api/src/modules/contest-config-templates/service';
 
@@ -206,4 +207,16 @@ describe('ContestConfigTemplateService.updateTemplate', () => {
     await expect(service.updateTemplate('missing', { name: 'x' }))
       .rejects.toBeInstanceOf(ContestConfigTemplateNotFoundError);
   });
+
+  it('refuses rules of another selection type with ContestConfigTemplateRulesMismatchError, naming both, and stores nothing', async () => {
+    const { store, service } = templateStore([template({ id: 't1' })]);
+    const budgetRules = { selectionType: SelectionType.BUDGET_PICK, rosterSize: 6, countedScores: 4 } as unknown as ContestConfigTemplate['configJson'];
+
+    const failure = service.updateTemplate('t1', { configuration: budgetRules });
+
+    await expect(failure).rejects.toBeInstanceOf(ContestConfigTemplateRulesMismatchError);
+    await expect(failure).rejects.toThrow('This template is TIERED, so its configuration must be TIERED rules, not BUDGET_PICK.');
+    expect(store.get('t1')?.configJson).toEqual(template({}).configJson);
+  });
 });
+

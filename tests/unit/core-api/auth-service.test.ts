@@ -329,6 +329,45 @@ describe('AuthService', () => {
         statusCode: 401,
       } satisfies Partial<AuthError>);
     });
+
+    it('ends the whole session when a rotated token comes back after the grace window, and issues nothing', async () => {
+      const prisma = createPrismaMock();
+      prisma.refreshToken.findUnique.mockResolvedValue({
+        id: 'refresh-1',
+        userId: 'user-1',
+        sessionId: 'session-1',
+        revokedAt: new Date(Date.now() - 600_000),
+        rotatedAt: new Date(Date.now() - 600_000),
+        expiresAt: new Date(Date.now() + 60_000),
+        user: { id: 'user-1', email: 'user@example.com', isRootAdmin: false, isActive: true },
+      });
+      const service = new AuthService(fakeUserRepo(), asPrismaClient(prisma));
+
+      await expect(service.refresh('stolen-token')).rejects.toMatchObject({ code: 'INVALID_REFRESH_TOKEN', statusCode: 401 });
+
+      expect(prisma.tx.refreshToken.updateMany).toHaveBeenCalledWith({
+        where: { userId: 'user-1', sessionId: 'session-1', revokedAt: null },
+        data: { revokedAt: expect.any(Date) },
+      });
+      expect(prisma.tx.refreshToken.create).not.toHaveBeenCalled();
+    });
+
+    it('refuses a token another refresh rotated first, issuing nothing', async () => {
+      const prisma = createPrismaMock();
+      prisma.tx.refreshToken.updateMany.mockResolvedValue({ count: 0 });
+      prisma.refreshToken.findUnique.mockResolvedValue({
+        id: 'refresh-1',
+        userId: 'user-1',
+        sessionId: 'session-1',
+        revokedAt: null,
+        expiresAt: new Date(Date.now() + 60_000),
+        user: { id: 'user-1', email: 'user@example.com', isRootAdmin: false, isActive: true },
+      });
+      const service = new AuthService(fakeUserRepo(), asPrismaClient(prisma));
+
+      await expect(service.refresh('refresh-token')).rejects.toMatchObject({ code: 'INVALID_REFRESH_TOKEN', statusCode: 401 });
+      expect(prisma.tx.refreshToken.create).not.toHaveBeenCalled();
+    });
   });
 
   describe('sessions and profile', () => {

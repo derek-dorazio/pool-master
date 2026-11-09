@@ -12,6 +12,7 @@ import type { LeagueRepository } from '@poolmaster/shared/db';
 import { LeagueRole, type Contest } from '@poolmaster/shared/domain';
 import { emailRecipientOf, buildContestAdminUrl, formatUserName, type EmailService } from '../email';
 import { activeLeagueMembersWithRoles, type LeagueMemberDeps } from './league-members';
+import { errorMessage } from '../../core/error-message';
 
 /** One expansion, as the email tells it. */
 export interface ContestExpansionNotice {
@@ -62,7 +63,7 @@ export class ContestExpandedNotices {
     } catch (error) {
       this.deps.logger?.error({
         action: 'email.contestExpanded.failed',
-        data: { leagueId: contest.leagueId, contestId: contest.id, entriesPerContest, error: error instanceof Error ? error.message : String(error) },
+        data: { leagueId: contest.leagueId, contestId: contest.id, entriesPerContest, error: errorMessage(error) },
       }, 'Failed to queue the contest expanded email');
     }
   }

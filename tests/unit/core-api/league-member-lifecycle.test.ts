@@ -4,6 +4,7 @@ import type {
   SquadRepository,
   UserRepository,
 } from '@poolmaster/shared/db';
+import type { FastifyBaseLogger } from 'fastify';
 import {
   LeagueMembershipStatus,
   LeagueRole,
@@ -175,6 +176,24 @@ describe('league member lifecycle helpers', () => {
     );
     expect(squadRepo.update).toHaveBeenCalledWith('squad-1', { isActive: false });
     expect(inactivatedSquadId).toBe('squad-1');
+  });
+
+  it('skips a member with no squad membership or an inactive one, writing nothing and logging why', async () => {
+    const warn = jest.fn();
+    const logger = { debug: jest.fn(), warn, info: jest.fn() } as unknown as FastifyBaseLogger;
+    const inactive = { id: 'squad-membership-1', squadId: 'squad-1', status: SquadMembershipStatus.INACTIVE };
+    const squadMembershipRepo = createSquadMembershipRepo({
+      findByLeagueAndUser: jest.fn().mockResolvedValueOnce(null).mockResolvedValueOnce(inactive),
+      update: jest.fn(),
+    });
+    const input = { leagueId: 'league-1', userId: 'user-1', squadRepo: createSquadRepo(), squadMembershipRepo, logger };
+
+    await expect(deactivateSquadMembershipForLeagueMember(input)).resolves.toBeNull();
+    await expect(deactivateSquadMembershipForLeagueMember(input)).resolves.toBeNull();
+
+    expect(squadMembershipRepo.update).not.toHaveBeenCalled();
+    expect(warn.mock.calls.map(([entry]) => (entry as { data: { reason: string } }).data.reason))
+      .toEqual(['membership_missing', 'status:INACTIVE']);
   });
 
   /**

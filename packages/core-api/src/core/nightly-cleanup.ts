@@ -1,5 +1,6 @@
 import type { FastifyBaseLogger } from 'fastify';
 import type { JobLock } from './job-lock';
+import { errorMessage } from './error-message';
 
 /**
  * The nightly cleanup (#1175): once a day, each step deletes the rows its retention period no
@@ -103,7 +104,7 @@ export class NightlyCleanupScheduler {
     } catch (error) {
       this.options.logger?.error({
         action: 'nightlyCleanup.failed',
-        data: { error: error instanceof Error ? error.message : String(error) },
+        data: { error: errorMessage(error) },
       }, 'Nightly cleanup failed');
     } finally {
       this.running = false;
@@ -121,7 +122,7 @@ export class NightlyCleanupScheduler {
         failed.push(step.name);
         this.options.logger?.error({
           action: 'nightlyCleanup.stepFailed',
-          data: { step: step.name, error: error instanceof Error ? error.message : String(error) },
+          data: { step: step.name, error: errorMessage(error) },
         }, 'A nightly cleanup step failed; the next night tries again');
       }
     }

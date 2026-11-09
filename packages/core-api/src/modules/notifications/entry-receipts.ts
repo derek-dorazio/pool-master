@@ -45,6 +45,7 @@ import {
 } from '../email';
 import type { GamePickGame, GamePickTeam, GamePicksView } from '../selections/prediction-service';
 import type { SquaresBoard } from '../selections/squares-service';
+import { errorMessage } from '../../core/error-message';
 
 const TEMPLATE_KEY = 'CONTEST_ENTRY_COMPLETED';
 
@@ -115,7 +116,7 @@ export class EntryReceipts implements GamePicksReceiptNotice, SquaresDrawnNotice
     } catch (error) {
       this.deps.logger?.error({
         action: 'email.entryReceipt.failed',
-        data: { contestId: view.contestId, entryId: view.entryId, sportEventId: view.sportEventId, error: error instanceof Error ? error.message : String(error) },
+        data: { contestId: view.contestId, entryId: view.entryId, sportEventId: view.sportEventId, error: errorMessage(error) },
       }, 'Failed to queue an entry receipt');
     }
   }
@@ -180,7 +181,7 @@ export class EntryReceipts implements GamePicksReceiptNotice, SquaresDrawnNotice
     } catch (error) {
       this.deps.logger?.error({
         action: 'email.entryReceipt.failed',
-        data: { contestId: contest.id, error: error instanceof Error ? error.message : String(error) },
+        data: { contestId: contest.id, error: errorMessage(error) },
       }, 'Failed to queue an entry receipt');
     }
   }

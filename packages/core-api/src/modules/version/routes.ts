@@ -2,6 +2,8 @@ import type { FastifyInstance } from 'fastify';
 // Registers ServiceVersionResponse, which this module's route $refs (#192).
 import '@poolmaster/shared/dto/version.dto';
 import { schemaRef } from '@poolmaster/shared/dto/schema-registry';
+import { readAppEnv } from '../../core/config';
+import { readVersionInfo } from '../../core/version-info';
 import { schemaComponentsPlugin } from '../../plugins/schema-components';
 import { createVersionHandlers } from './handler';
 import { VersionService } from './service';
@@ -18,7 +20,7 @@ export function versionModule(
 ): void {
   void fastify.register(schemaComponentsPlugin);
 
-  const versionService = options.versionService ?? new VersionService();
+  const versionService = options.versionService ?? new VersionService(readVersionInfo(), readAppEnv(), process.version);
   const handler = createVersionHandlers(versionService);
 
   fastify.get('/', {
