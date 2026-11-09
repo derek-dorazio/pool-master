@@ -1,6 +1,6 @@
 import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
-import { MatchEnding, MatchSide, MatchStatus, ParticipantInactiveReason, ParticipantStatus, Sport } from '@poolmaster/shared/domain';
+import { BackgroundJobType, MatchEnding, MatchSide, MatchStatus, ParticipantInactiveReason, ParticipantStatus, Sport } from '@poolmaster/shared/domain';
 import type { SportEventMatchWrite } from '@poolmaster/shared/db';
 import { expectDefined } from '../../support/expect-defined';
 import {
@@ -224,6 +224,42 @@ describe('PrismaSportEventMatchRepository', () => {
     await expect(repos().matches.savePeriodScore(first.id, { periodNumber: 1, homeScore: -1, awayScore: 0 })).rejects.toThrow(/scores_check/);
   });
 
+  it('refuses a bracket naming a round the event does not have, and writes none of it', async () => {
+    const { event, entryOf } = await createBracketEvent();
+    const [first] = fourTeamBracket(entryOf);
+
+    await expect(repos().matches.replaceBracket(event.id, [{ ...first, roundNumber: 3, advancesToMatchId: null, advancesToSide: null }]))
+      .rejects.toThrow(`Sport event ${event.id} has no round 3`);
+    await expect(repos().matches.findBySportEvent(event.id)).resolves.toEqual([]);
+  });
+
+  it('saves a period score and queues its background jobs together, so a saved score always has its follow-up queued', async () => {
+    const { event, entryOf } = await createBracketEvent();
+    await repos().matches.replaceBracket(event.id, fourTeamBracket(entryOf));
+    const [first] = await repos().matches.findBySportEvent(event.id);
+
+    await repos().matches.savePeriodScore(first.id, { periodNumber: 1, homeScore: 10, awayScore: 8 }, [
+      { type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: { syncRunIds: [randomUUID()], sport: Sport.BASKETBALL, eventId: event.id } },
+    ]);
+
+    expect((await repos().matches.findById(first.id))?.periodScores).toEqual([{ periodNumber: 1, homeScore: 10, awayScore: 8 }]);
+    await expect(getPrisma().backgroundJob.count({ where: { type: BackgroundJobType.MANUAL_EVENT_SYNC } })).resolves.toBe(1);
+  });
+
+  it('places both sides of each named match in one write and leaves the other matches as they were', async () => {
+    const { event, entryOf } = await createBracketEvent();
+    await repos().matches.replaceBracket(event.id, fourTeamBracket(entryOf));
+    const [first, , final] = await repos().matches.findBySportEvent(event.id);
+
+    await repos().matches.placeSides([
+      { id: final.id, homeSportEventParticipantId: entryOf('Duke').id, awaySportEventParticipantId: entryOf('Texas').id },
+    ]);
+
+    const [unchanged, , placed] = await repos().matches.findBySportEvent(event.id);
+    expect(placed).toMatchObject({ homeSportEventParticipantId: entryOf('Duke').id, awaySportEventParticipantId: entryOf('Texas').id });
+    expect(unchanged.homeSportEventParticipantId).toBe(first.homeSportEventParticipantId);
+  });
+
   it('deletes the bracket with its event', async () => {
     const { event, entryOf } = await createBracketEvent();
     await repos().matches.replaceBracket(event.id, fourTeamBracket(entryOf));
@@ -263,6 +299,21 @@ describe('PrismaSportEventMatchRepository.applyResult', () => {
       [entryOf('Duke').id]: ['T3', 'ELIMINATED'],
       [entryOf('Vermont').id]: ['1', 'ACTIVE'],
     });
+  });
+
+  it('fills the away side of the next match when the winner advances to it as the away team', async () => {
+    const { event, entryOf } = await createBracketEvent();
+    await repos().matches.replaceBracket(event.id, fourTeamBracket(entryOf));
+    const [, second, final] = await repos().matches.findBySportEvent(event.id);
+
+    await repos().matches.applyResult({
+      result: { id: second.id, status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME, homeScore: 75, awayScore: 70, ...NO_SHOOTOUT },
+      sideFill: { id: final.id, side: MatchSide.AWAY, sportEventParticipantId: entryOf('Houston').id },
+      standings: [],
+    });
+
+    const filled = await repos().matches.findById(final.id);
+    expect(filled).toMatchObject({ awaySportEventParticipantId: entryOf('Houston').id, homeSportEventParticipantId: null });
   });
 
   it('stores a level match\'s shoot-out apart from its score, and clears it with the result (#791)', async () => {

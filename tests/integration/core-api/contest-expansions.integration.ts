@@ -7,6 +7,7 @@ import { randomUUID } from 'node:crypto';
 import { LeaguePaymentKind } from '@poolmaster/shared/domain';
 import type { ContestExpansionWrite } from '@poolmaster/shared/db';
 import { PrismaContestExpansionRepository } from '../../../packages/core-api/src/adapters';
+import { lockContestRowsAtOnce } from '../../../packages/core-api/src/adapters/contest-row-lock';
 import {
   cleanupTestData,
   createTestUser,
@@ -149,6 +150,16 @@ describe('PrismaContestExpansionRepository (#987)', () => {
     await expect(getPrisma().leaguePayment.count({ where: { leagueId: league.id } })).resolves.toBe(1);
   });
 
+  it('reads each asked-about contest\'s highest band, leaving out a contest never expanded, and reads none for none', async () => {
+    const expanded = await createLeagueAndContest();
+    const never = await createLeagueAndContest();
+    await repo().expand(write(expanded.league.id, expanded.contest.id, expanded.payer.id, 100));
+    await repo().expand(write(expanded.league.id, expanded.contest.id, expanded.payer.id, 200));
+
+    await expect(repo().findHighestBands([expanded.contest.id, never.contest.id])).resolves.toEqual(new Map([[expanded.contest.id, 200]]));
+    await expect(repo().findHighestBands([])).resolves.toEqual(new Map());
+  });
+
   it('lets only one of two commissioners expanding to the same band at once write it', async () => {
     const { league, contest, payer } = await createLeagueAndContest();
 
@@ -159,5 +170,27 @@ describe('PrismaContestExpansionRepository (#987)', () => {
 
     expect(results.map((result) => result.status).sort()).toEqual(['expanded', 'notAbove']);
     await expect(getPrisma().leaguePayment.count({ where: { leagueId: league.id } })).resolves.toBe(1);
+  });
+});
+
+describe('lockContestRowsAtOnce (#1195)', () => {
+  it('holds every named contest\'s row lock until the transaction ends, so another writer cannot take one meanwhile', async () => {
+    const { contest } = await createLeagueAndContest();
+
+    await getAppPrisma().$transaction(async (tx) => {
+      await lockContestRowsAtOnce(tx, [contest.id]);
+      await expect(getPrisma().$queryRaw`SELECT id FROM "contests" WHERE id = ${contest.id}::uuid FOR UPDATE NOWAIT`)
+        .rejects.toThrow(/could not obtain lock/);
+    });
+    await expect(getPrisma().$queryRaw`SELECT id FROM "contests" WHERE id = ${contest.id}::uuid FOR UPDATE NOWAIT`).resolves.toHaveLength(1);
+  });
+
+  it('locks nothing for an empty batch, leaving every contest free to write', async () => {
+    const { contest } = await createLeagueAndContest();
+
+    await getAppPrisma().$transaction(async (tx) => {
+      await lockContestRowsAtOnce(tx, []);
+      await expect(getPrisma().$queryRaw`SELECT id FROM "contests" WHERE id = ${contest.id}::uuid FOR UPDATE NOWAIT`).resolves.toHaveLength(1);
+    });
   });
 });
