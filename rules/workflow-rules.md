@@ -806,46 +806,54 @@ and stops. Merge happens when the owner asks for it, after their own read.
 
 ### What skips the PR flow
 
-Not every commit needs a branch and PR. The carve-out below covers changes that are pure
-metadata, narrative, or trivial maintenance — direct-push to `main` is the default for
-these paths. The CI rule scanners fire on pushes to `main` as well as on PRs, so the
-carve-out does not bypass them; it exists to keep small bookkeeping out of the PR queue.
+Nothing skips the PR. `main` is protected by the `protect-main` ruleset with no bypass
+(`docs/CI-AND-QUALITY-GATES.md` *Repository setup — branch protection*): GitHub refuses
+every direct push, from agents and the owner alike, and merges only a PR whose required
+checks are green, whose branch is up to date with `main`, and whose review threads are all
+resolved. GitHub rules apply to a whole branch, not to paths, so there is no docs-only
+exception.
 
-**Direct-push lane (no PR):**
+What a small change skips is the *review*, not the PR.
+
+**Fast lane (PR, no review, the author merges on green):**
 
 - `plans/<NN>-*.md` — narrative plan files updated *during* execution: mid-slice notes,
   status updates, deferred-section additions, completion notes. New plan files of
-  substantial size should land with their first slice (see *Docs ride with code* below);
-  trivial plan housekeeping pushes direct.
+  substantial size should land with their first slice (see *Docs ride with code* below).
 - `requirements/` and `tech-specs/` artifacts under active design discussion (before
-  implementation begins).
+  implementation begins), and research documents.
 - Trivial typo, link, or formatting fixes anywhere in `docs/` or `rules/` that do not change
   rule meaning.
 
-**Optional PR for substantive plan/doc changes.** When a plan or doc change is large enough
-to warrant a second pair of eyes — a brand-new ADR, a workflow-rules rewrite, a
-multi-section rule addition, a coordinated cross-doc update — open a PR so the diff is
-reviewable in one place.
+A doc-only PR runs only the `changes` and `all-contract-gates` jobs; every other required
+check is skipped, which GitHub counts as passing, so it is mergeable in about two minutes.
+The author squash-merges it as soon as it is green, with no review thread and no merge go.
 
-Examples that warranted PRs in this repo's history:
+**Reviewed PR for substantive plan/doc changes.** When a plan or doc change is large enough
+to warrant a second pair of eyes — a brand-new ADR, a workflow-rules rewrite, a
+multi-section rule addition, a coordinated cross-doc update — it goes through the normal
+review flow so the diff is reviewed in one place.
+
+Examples that warranted review in this repo's history:
 
 - Workflow-rules additions that introduce new branching or review semantics.
 - A new ADR with cross-cutting impact.
 
-Examples that did not warrant PRs:
+Examples that did not:
 
-- Closing an issue with a closing comment.
 - Updating a plan with a mid-execution status note.
 - Fixing a broken cross-reference in a rule file.
 - Adding a session-handoff "resume here" note.
 
-### Substantive plan or rule change — ask before pushing
+(Closing an issue with a closing comment needs no commit at all.)
 
-Before pushing a non-trivial plan, rule, or ADR change directly to `main`, the agent **must
-ask the user** whether to PR it or push direct. Phrasing:
+### Substantive plan or rule change — ask before fast-laning
 
-> "This <plan / rule / ADR> change is substantive enough that you may want it to go through
-> PR review — should I open a branch + PR, or push direct?"
+Before fast-lane merging a non-trivial plan, rule, or ADR change without review, the agent
+**must ask the user** whether it should be reviewed first. Phrasing:
+
+> "This <plan / rule / ADR> change is substantive enough that you may want it reviewed —
+> should it go through review, or should I merge it once it is green?"
 
 Substantive triggers (any of these → ask):
 
@@ -858,7 +866,7 @@ Substantive triggers (any of these → ask):
 - Any change a **future agent will read as canonical guidance** rather than as ephemeral
   execution notes.
 
-The cost of asking once is low; the cost of silently pushing a process change that should
+The cost of asking once is low; the cost of silently merging a process change that should
 have been reviewed is high — process changes propagate through every future slice, and
 reverting them after the fact is awkward.
 
@@ -877,8 +885,9 @@ Why this matters:
 - A reader looking at the PR for a code change should see the doc update next to the code,
   not have to chase a follow-up PR.
 
-Standalone doc-only PRs are reserved for the *substantive plan/doc* cases above. They are
-**not** a workaround for "I forgot to update the README in the code slice."
+Standalone doc-only PRs are for changes with no code behind them: the fast lane and the
+*substantive plan/doc* cases above. They are **not** a workaround for "I forgot to update
+the README in the code slice."
 
 ### Branch convention
 
@@ -889,7 +898,8 @@ Standalone doc-only PRs are reserved for the *substantive plan/doc* cases above.
   prefix.
 - Branch off the current `main` HEAD at slice start. Do not stack branches unless the
   dependency is genuine; when it is, follow *Slices in a series* below.
-- Never push directly to `main` except for the direct-push lane carve-out above.
+- Never push directly to `main`; the ruleset refuses it. Every change, docs included, lands
+  through a PR (see *What skips the PR flow* above).
 
 ### Slices in a series
 
