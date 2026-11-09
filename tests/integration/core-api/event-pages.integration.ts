@@ -71,6 +71,34 @@ describe('Seeded event pages', () => {
   });
 });
 
+describe('PrismaEventPageRepository page reads', () => {
+  it('reads a retired page with the sport and slug it redirects to, and null for a slug with no page', async () => {
+    const prisma = getPrisma();
+    const pages = new PrismaEventPageRepository(getAppPrisma());
+    const target = await prisma.eventPage.create({ data: { sport: Sport.GOLF, slug: `target-${randomUUID()}`, displayOrder: 998 } });
+    const retired = await prisma.eventPage.create({
+      data: { sport: Sport.GOLF, slug: `retired-${randomUUID()}`, displayOrder: 999, isActive: false, redirectToPageId: target.id },
+    });
+    try {
+      await expect(pages.findBySportSlug(Sport.GOLF, retired.slug)).resolves.toMatchObject({
+        isActive: false,
+        redirectTo: { sport: Sport.GOLF, slug: target.slug },
+      });
+      await expect(pages.findBySportSlug(Sport.GOLF, `missing-${randomUUID()}`)).resolves.toBeNull();
+    } finally {
+      await prisma.eventPage.delete({ where: { id: retired.id } });
+      await prisma.eventPage.delete({ where: { id: target.id } });
+    }
+  });
+
+  it('reads no offers for no pages and no editions for no series', async () => {
+    const pages = new PrismaEventPageRepository(getAppPrisma());
+
+    await expect(pages.findOffers([])).resolves.toEqual([]);
+    await expect(pages.findEditionsNotOver([])).resolves.toEqual([]);
+  });
+});
+
 describe('Event page offers', () => {
   /** A throwaway golf page with the seeded Clutch Card's league and a copy of its template, removed after. */
   async function scratchPage(templateActive: boolean) {

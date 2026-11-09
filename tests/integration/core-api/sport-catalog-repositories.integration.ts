@@ -297,6 +297,70 @@ describe('ParticipantRepository — search and matching', () => {
     await expect(participants.findById(randomUUID())).resolves.toBeNull();
   });
 
+  it('searches by status within a sport, and an empty search lists every participant of the sport by name', async () => {
+    const sport = await golfSport();
+    const participants = new PrismaParticipantRepository(getAppPrisma());
+    const active = await createParticipant(sport.id, 'Active Golfer');
+    const retired = await getPrisma().participant.create({ data: { sportId: sport.id, name: 'Retired Golfer', participantType: 'INDIVIDUAL', status: 'INACTIVE' } });
+
+    await expect(participants.search('Golfer', { sportId: sport.id, status: 'INACTIVE' })).resolves.toEqual([expect.objectContaining({ id: retired.id })]);
+    expect((await participants.search('  ', { sportId: sport.id })).map((participant) => participant.id)).toEqual([active.id, retired.id]);
+  });
+
+  it('updates every field it is given, reading the injury dates back as dates', async () => {
+    const sport = await golfSport();
+    const participants = new PrismaParticipantRepository(getAppPrisma());
+    const created = await participants.create({
+      sportId: sport.id, name: 'Old Name', participantType: 'INDIVIDUAL', status: 'ACTIVE', injuryStatus: { status: 'HEALTHY' }, externalIds: {},
+    });
+    const expectedReturn = new Date('2026-06-01T00:00:00.000Z');
+    const injuryUpdatedAt = new Date('2026-05-20T00:00:00.000Z');
+    const photoLastUpdated = new Date('2026-05-21T00:00:00.000Z');
+
+    const updated = await participants.update(created.id, {
+      name: 'New Name',
+      firstName: 'New',
+      lastName: 'Name',
+      shortName: 'N. Name',
+      nationality: 'USA',
+      role: 'GOLFER',
+      teamAffiliation: 'Team Blue',
+      status: 'INACTIVE',
+      injuryStatus: { status: 'OUT', detail: 'Wrist', expectedReturn, updatedAt: injuryUpdatedAt, source: 'feed' },
+      photoUrl: 'https://example.test/photo.jpg',
+      photoLastUpdated,
+      externalIds: { owgr: '99' },
+      externalId: 'owgr-new',
+    });
+
+    expect(updated).toEqual(expect.objectContaining({
+      name: 'New Name', firstName: 'New', lastName: 'Name', shortName: 'N. Name', nationality: 'USA', role: 'GOLFER',
+      teamAffiliation: 'Team Blue', status: 'INACTIVE', photoUrl: 'https://example.test/photo.jpg', photoLastUpdated,
+      externalIds: { owgr: '99' }, externalId: 'owgr-new',
+      injuryStatus: { status: 'OUT', detail: 'Wrist', expectedReturn, updatedAt: injuryUpdatedAt, source: 'feed' },
+    }));
+    await expect(participants.findById(created.id)).resolves.toEqual(updated);
+  });
+
+  it('deletes a participant on no field with its affiliations and provider identities, keeps one on a field and says how many rows hold it, and answers null for no participant', async () => {
+    const sport = await golfSport();
+    const participants = new PrismaParticipantRepository(getAppPrisma());
+    const free = await createParticipant(sport.id, 'Free Golfer');
+    await new PrismaParticipantProviderMappingRepository(getAppPrisma())
+      .bind({ providerId: 'integration-test', externalId: 'feed-free', confidence: 'MANUAL', participantId: free.id, mappedAt: new Date('2026-05-01T00:00:00.000Z') });
+    const fielded = await createParticipant(sport.id, 'Fielded Golfer');
+    const event = await createEvent('delete-participant');
+    await getPrisma().sportEventParticipant.create({ data: { sportEventId: event.id, participantId: fielded.id } });
+
+    await expect(participants.deleteUnlessOnAField(free.id)).resolves.toBe(0);
+    await expect(participants.deleteUnlessOnAField(fielded.id)).resolves.toBe(1);
+    await expect(participants.deleteUnlessOnAField(randomUUID())).resolves.toBeNull();
+
+    await expect(participants.findById(free.id)).resolves.toBeNull();
+    await expect(getPrisma().participantProviderMapping.count({ where: { participantId: free.id } })).resolves.toBe(0);
+    await expect(participants.findById(fielded.id)).resolves.toEqual(expect.objectContaining({ id: fielded.id }));
+  });
+
   it('binds a provider identity once: binding it again moves it to the new participant instead of duplicating it', async () => {
     const sport = await golfSport();
     const mappings = new PrismaParticipantProviderMappingRepository(getAppPrisma());
@@ -311,6 +375,15 @@ describe('ParticipantRepository — search and matching', () => {
     await expect(mappings.findByProviderExternalIds('integration-test', ['feed-42'])).resolves.toEqual([
       expect.objectContaining({ participantId: second.id, mappedAt: new Date('2026-05-02T00:00:00.000Z') }),
     ]);
+  });
+
+  it('reads no provider identities when asked about no external ids, though the provider has some', async () => {
+    const sport = await golfSport();
+    const mappings = new PrismaParticipantProviderMappingRepository(getAppPrisma());
+    const participant = await createParticipant(sport.id, 'Unasked');
+    await mappings.bind({ providerId: 'integration-test', externalId: 'feed-7', confidence: 'MANUAL', participantId: participant.id, mappedAt: new Date('2026-05-01T00:00:00.000Z') });
+
+    await expect(mappings.findByProviderExternalIds('integration-test', [])).resolves.toEqual([]);
   });
 });
 
