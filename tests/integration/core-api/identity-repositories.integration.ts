@@ -31,6 +31,7 @@ import {
   LeagueRole,
   LeagueMembershipStatus,
   TimeFormat,
+  ColorScheme,
 } from '@poolmaster/shared/domain';
 
 const LEAGUE_CODE_PREFIX = 'IDREPO';
@@ -381,20 +382,24 @@ describe('identity cluster repositories (#202)', () => {
         timezone: 'America/New_York',
         locale: 'en-US',
         timeFormat: TimeFormat.TWELVE_HOUR,
+        colorScheme: ColorScheme.DARK,
       });
       expect(set).toMatchObject({
         timezone: 'America/New_York',
         locale: 'en-US',
         timeFormat: TimeFormat.TWELVE_HOUR,
+        colorScheme: ColorScheme.DARK,
       });
 
       const cleared = await repo.update(created.user.id, {
         timezone: null,
         timeFormat: null,
+        colorScheme: null,
       });
 
       expect(cleared.timezone).toBeUndefined();
       expect(cleared.timeFormat).toBeUndefined();
+      expect(cleared.colorScheme).toBeUndefined();
       // Not named in the update, so untouched.
       expect(cleared.locale).toBe('en-US');
     });

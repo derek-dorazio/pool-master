@@ -216,6 +216,15 @@
               "24H"
             ]
           },
+          "colorScheme": {
+            "description": "Appearance the member chose: follow the device, light or dark. Absent means no choice yet; the website then follows the device.",
+            "type": "string",
+            "enum": [
+              "DEVICE",
+              "LIGHT",
+              "DARK"
+            ]
+          },
           "createdAt": {
             "description": "Account creation timestamp in ISO 8601 format.",
             "type": "string",
@@ -291,6 +300,15 @@
                 "enum": [
                   "12H",
                   "24H"
+                ]
+              },
+              "colorScheme": {
+                "description": "Appearance the member chose: follow the device, light or dark. Absent means no choice yet; the website then follows the device.",
+                "type": "string",
+                "enum": [
+                  "DEVICE",
+                  "LIGHT",
+                  "DARK"
                 ]
               },
               "createdAt": {
@@ -377,6 +395,15 @@
                   "enum": [
                     "12H",
                     "24H"
+                  ]
+                },
+                "colorScheme": {
+                  "description": "Appearance the member chose: follow the device, light or dark. Absent means no choice yet; the website then follows the device.",
+                  "type": "string",
+                  "enum": [
+                    "DEVICE",
+                    "LIGHT",
+                    "DARK"
                   ]
                 },
                 "createdAt": {
@@ -500,6 +527,19 @@
             "enum": [
               "12H",
               "24H",
+              null
+            ]
+          },
+          "colorScheme": {
+            "description": "Appearance: follow the device, light or dark. Omit to leave unchanged; null to clear it.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "DEVICE",
+              "LIGHT",
+              "DARK",
               null
             ]
           }
@@ -846,6 +886,15 @@
                 "enum": [
                   "12H",
                   "24H"
+                ]
+              },
+              "colorScheme": {
+                "description": "Appearance the member chose: follow the device, light or dark. Absent means no choice yet; the website then follows the device.",
+                "type": "string",
+                "enum": [
+                  "DEVICE",
+                  "LIGHT",
+                  "DARK"
                 ]
               },
               "createdAt": {
@@ -3248,6 +3297,15 @@
                   "24H"
                 ]
               },
+              "colorScheme": {
+                "description": "Appearance the member chose: follow the device, light or dark. Absent means no choice yet; the website then follows the device.",
+                "type": "string",
+                "enum": [
+                  "DEVICE",
+                  "LIGHT",
+                  "DARK"
+                ]
+              },
               "createdAt": {
                 "description": "Account creation timestamp in ISO 8601 format.",
                 "type": "string",
@@ -3377,6 +3435,15 @@
                 "enum": [
                   "12H",
                   "24H"
+                ]
+              },
+              "colorScheme": {
+                "description": "Appearance the member chose: follow the device, light or dark. Absent means no choice yet; the website then follows the device.",
+                "type": "string",
+                "enum": [
+                  "DEVICE",
+                  "LIGHT",
+                  "DARK"
                 ]
               },
               "createdAt": {
@@ -3668,6 +3735,15 @@
                       "enum": [
                         "12H",
                         "24H"
+                      ]
+                    },
+                    "colorScheme": {
+                      "description": "Appearance the member chose: follow the device, light or dark. Absent means no choice yet; the website then follows the device.",
+                      "type": "string",
+                      "enum": [
+                        "DEVICE",
+                        "LIGHT",
+                        "DARK"
                       ]
                     },
                     "createdAt": {
@@ -3980,6 +4056,15 @@
                           "enum": [
                             "12H",
                             "24H"
+                          ]
+                        },
+                        "colorScheme": {
+                          "description": "Appearance the member chose: follow the device, light or dark. Absent means no choice yet; the website then follows the device.",
+                          "type": "string",
+                          "enum": [
+                            "DEVICE",
+                            "LIGHT",
+                            "DARK"
                           ]
                         },
                         "createdAt": {
@@ -4303,6 +4388,15 @@
                               "24H"
                             ]
                           },
+                          "colorScheme": {
+                            "description": "Appearance the member chose: follow the device, light or dark. Absent means no choice yet; the website then follows the device.",
+                            "type": "string",
+                            "enum": [
+                              "DEVICE",
+                              "LIGHT",
+                              "DARK"
+                            ]
+                          },
                           "createdAt": {
                             "description": "Account creation timestamp in ISO 8601 format.",
                             "type": "string",
@@ -4474,6 +4568,15 @@
                     "enum": [
                       "12H",
                       "24H"
+                    ]
+                  },
+                  "colorScheme": {
+                    "description": "Appearance the member chose: follow the device, light or dark. Absent means no choice yet; the website then follows the device.",
+                    "type": "string",
+                    "enum": [
+                      "DEVICE",
+                      "LIGHT",
+                      "DARK"
                     ]
                   },
                   "createdAt": {
@@ -5467,6 +5570,15 @@
                   "24H"
                 ]
               },
+              "colorScheme": {
+                "description": "Appearance the member chose: follow the device, light or dark. Absent means no choice yet; the website then follows the device.",
+                "type": "string",
+                "enum": [
+                  "DEVICE",
+                  "LIGHT",
+                  "DARK"
+                ]
+              },
               "createdAt": {
                 "description": "Account creation timestamp in ISO 8601 format.",
                 "type": "string",
@@ -6284,6 +6396,15 @@
                       "24H"
                     ]
                   },
+                  "colorScheme": {
+                    "description": "Appearance the member chose: follow the device, light or dark. Absent means no choice yet; the website then follows the device.",
+                    "type": "string",
+                    "enum": [
+                      "DEVICE",
+                      "LIGHT",
+                      "DARK"
+                    ]
+                  },
                   "createdAt": {
                     "description": "Account creation timestamp in ISO 8601 format.",
                     "type": "string",
@@ -6393,6 +6514,15 @@
                     "enum": [
                       "12H",
                       "24H"
+                    ]
+                  },
+                  "colorScheme": {
+                    "description": "Appearance the member chose: follow the device, light or dark. Absent means no choice yet; the website then follows the device.",
+                    "type": "string",
+                    "enum": [
+                      "DEVICE",
+                      "LIGHT",
+                      "DARK"
                     ]
                   },
                   "createdAt": {
@@ -6803,6 +6933,15 @@
                         "24H"
                       ]
                     },
+                    "colorScheme": {
+                      "description": "Appearance the member chose: follow the device, light or dark. Absent means no choice yet; the website then follows the device.",
+                      "type": "string",
+                      "enum": [
+                        "DEVICE",
+                        "LIGHT",
+                        "DARK"
+                      ]
+                    },
                     "createdAt": {
                       "description": "Account creation timestamp in ISO 8601 format.",
                       "type": "string",
@@ -6953,6 +7092,15 @@
                         "24H"
                       ]
                     },
+                    "colorScheme": {
+                      "description": "Appearance the member chose: follow the device, light or dark. Absent means no choice yet; the website then follows the device.",
+                      "type": "string",
+                      "enum": [
+                        "DEVICE",
+                        "LIGHT",
+                        "DARK"
+                      ]
+                    },
                     "createdAt": {
                       "description": "Account creation timestamp in ISO 8601 format.",
                       "type": "string",
@@ -7097,6 +7245,15 @@
                     "enum": [
                       "12H",
                       "24H"
+                    ]
+                  },
+                  "colorScheme": {
+                    "description": "Appearance the member chose: follow the device, light or dark. Absent means no choice yet; the website then follows the device.",
+                    "type": "string",
+                    "enum": [
+                      "DEVICE",
+                      "LIGHT",
+                      "DARK"
                     ]
                   },
                   "createdAt": {
