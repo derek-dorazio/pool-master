@@ -361,4 +361,10 @@ describe('AuthProvider', () => {
       expect.any(String),
     );
   });
+
+  it('refuses to hand out auth state outside the provider', () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    expect(() => render(<AuthProbe />)).toThrow('useAuth must be used inside AuthProvider.');
+  });
 });

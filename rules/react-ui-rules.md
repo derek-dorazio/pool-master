@@ -488,6 +488,7 @@ What follows is the part specific to this app.
 - Add rendered frontend-layer tests for important flows so the app is exercised through components, routing, forms, query state, and generated-client integration boundaries.
 - Do not rely on unit tests alone for important user-facing flows.
 - Browser E2E should remain a smaller post-deploy confidence layer once the rebuilt web app exists; do not push all frontend confidence into Playwright.
+- Each feature folder carries its own coverage floor (90% lines, 85% branches, enforced by `vitest.config.ts`), so a new or changed feature brings its own tests rather than leaning on the rest of the suite. See `rules/testing-rules.md` §1 *Core Testing Standard*.
 
 ### Banned Test Patterns
 

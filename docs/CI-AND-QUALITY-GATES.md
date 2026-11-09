@@ -987,7 +987,7 @@ release, and the mock contest feed provider has its own suite.
   - `npm run test:coverage:poolmaster:unit` — run with coverage (v8 provider, lcov + json-summary reporters)
 - **CI job:** `poolmaster-unit-tests` (uploads `coverage-webapp-unit` artifact).
 - **Required pre-push gate:** `npm run test:poolmaster:unit` (per `AGENTS.md` Quality Gates).
-- **Coverage policy:** **Threshold configured at the suite level** — `coverage.thresholds` in `vitest.config.ts`: 89% statements, 81.5% branches, 89.5% functions, 89% lines (V8). A regression floor set in #747 about 3 points under the suite's 2026-10-18 measurement, 92.02 / 84.6 / 92.79 / 92.0; `npm run test:coverage:poolmaster:unit` fails below it.
+- **Coverage policy:** **Thresholds per folder and for the whole suite** — `coverage.thresholds` in `vitest.config.ts` (V8). Every `src/features/*` folder, the files directly in `src/lib`, and every `src/lib/*` folder must each keep **90% of lines and 85% of branches** covered on its own (#1478); the folder list is read from disk, so a new feature folder gets the floor automatically. The whole suite must also keep 94% statements, 87.5% branches, 94.5% functions and 94% lines, about 1 point under its 2026-11-09 measurement of 94.97 / 88.77 / 95.55 / 94.94. Coverage `include`s every `src/**/*.{ts,tsx}` file, so a file no test loads counts at 0% against its folder's floor rather than going unreported; `e2e/**` and the MSW harness in `src/test/**` are excluded as test code. `npm run test:coverage:poolmaster:unit` fails below any floor, and the error names the folder.
 - **Known anti-pattern this suite has accumulated:** `vi.mock('@/lib/api')` at module level in 30+ tests — see `pool-master-rop.4`. The intent is for this suite to use **MSW** for HTTP boundary mocking instead of replacing the SDK; the migration is tracked in epic `pool-master-rop.71`.
 
 ### 5. Webapp browser E2E (`clients/poolmaster/e2e/**/*.e2e.ts`)
@@ -1053,10 +1053,10 @@ release, and the mock contest feed provider has its own suite.
 | Backend unit | 67.5% / 65.5% / 65.5% / 67.5% (stmts / branches / fns / lines) | `tests/jest.config.js` |
 | Backend integration | none | — |
 | Backend FAPI | none | — |
-| Webapp unit | 89% / 81.5% / 89.5% / 89% (stmts / branches / fns / lines) | `clients/poolmaster/vitest.config.ts` |
+| Webapp unit | 94% / 87.5% / 94.5% / 94% (stmts / branches / fns / lines) for the suite, plus 90% lines / 85% branches for each feature folder and `src/lib` folder | `clients/poolmaster/vitest.config.ts` |
 | Webapp E2E | N/A | — |
 
-Both configured thresholds are intentionally **regression floors**, not targets, and they only ratchet up: when a slice raises measured coverage, the floor may follow to about 3 points under the new measurement, and it is never lowered to let a slice through. The backend one is measured with Babel statement counts, the method it was set against (#302), and must also clear the V8 run; the web one is V8, the only provider that suite uses. Real per-feature coverage targets are tracked in the rule-enforcement epic follow-ups; pages and modules touched by the q8h frontend rule hardening epic will gain explicit thresholds as part of that work. Until then, slice authors should aim for ≥ 80% statements on touched files but the suite-level gate stays at the floor.
+Both configured thresholds are intentionally **regression floors**, not targets, and they only ratchet up: when a slice raises measured coverage, the floor may follow to about 3 points under the new measurement, and it is never lowered to let a slice through. The backend one is measured with Babel statement counts, the method it was set against (#302), and must also clear the V8 run; the web one is V8, the only provider that suite uses. The webapp also has per-folder floors (90% lines, 85% branches for every feature folder and `src/lib` folder, #1478), so one weak feature cannot hide behind strong ones; a change that drops its folder under the floor adds tests, and the floor is never lowered. Vitest's `autoUpdate` stays off: it rewrites the config on every run, which would conflict between parallel PRs. Slice authors should still aim for ≥ 80% statements on touched files.
 
 ## File reference
 
