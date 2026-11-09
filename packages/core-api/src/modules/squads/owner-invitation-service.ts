@@ -41,6 +41,7 @@ import {
   type EmailService,
 } from '../email';
 import type { MemberJoinedNotices } from '../notifications/member-joined-notices';
+import { errorMessage } from '../../core/error-message';
 
 const DEFAULT_OWNER_INVITE_EXPIRY_DAYS = 7;
 
@@ -344,7 +345,7 @@ export class SquadOwnerInvitationService {
         data: {
           invitationId: invitation.id,
           leagueId: invitation.leagueId,
-          error: error instanceof Error ? error.message : String(error),
+          error: errorMessage(error),
         },
       }, 'Failed to queue the co-owner email');
     }

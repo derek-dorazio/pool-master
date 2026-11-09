@@ -7,6 +7,7 @@ import nodemailer, { type Transporter } from 'nodemailer';
 import type SMTPTransport from 'nodemailer/lib/smtp-transport';
 import type { FastifyBaseLogger } from 'fastify';
 import type { SystemEmailTemplateKey } from './system-email-templates';
+import { errorMessage } from '../../core/error-message';
 
 export type MailDeliveryProviderName = 'smtp' | 'ses';
 
@@ -146,14 +147,7 @@ export class SmtpMailDeliveryProvider implements MailDeliveryProvider {
     const recipients = [message.to];
     this.logger?.debug({
       action: 'mailDelivery.smtp.send.enter',
-      data: {
-        toCount: recipients.length,
-        templateKey: message.metadata.templateKey,
-        leagueId: message.metadata.leagueId ?? null,
-        contestId: message.metadata.contestId ?? null,
-        entryId: message.metadata.entryId ?? null,
-        invitationId: message.metadata.invitationId ?? null,
-      },
+      data: deliveryRefs(message),
     }, 'Submitting SMTP email');
     try {
       const result = await this.transport.sendMail({
@@ -167,29 +161,13 @@ export class SmtpMailDeliveryProvider implements MailDeliveryProvider {
       const messageId = typeof result.messageId === 'string' ? result.messageId : undefined;
       this.logger?.info({
         action: 'mailDelivery.smtp.send.success',
-        data: {
-          toCount: recipients.length,
-          messageId: messageId ?? null,
-          templateKey: message.metadata.templateKey,
-          leagueId: message.metadata.leagueId ?? null,
-          contestId: message.metadata.contestId ?? null,
-          entryId: message.metadata.entryId ?? null,
-          invitationId: message.metadata.invitationId ?? null,
-        },
+        data: { ...deliveryRefs(message), messageId: messageId ?? null },
       }, 'Submitted SMTP email');
       return { provider: this.providerName, messageId };
     } catch (err) {
       this.logger?.error({
         action: 'mailDelivery.smtp.send.failure',
-        data: {
-          toCount: recipients.length,
-          templateKey: message.metadata.templateKey,
-          leagueId: message.metadata.leagueId ?? null,
-          contestId: message.metadata.contestId ?? null,
-          entryId: message.metadata.entryId ?? null,
-          invitationId: message.metadata.invitationId ?? null,
-          error: err instanceof Error ? err.message : String(err),
-        },
+        data: { ...deliveryRefs(message), error: errorMessage(err) },
       }, 'SMTP email submission failed');
       throw new MailDeliveryError('SMTP email submission failed', this.providerName, err);
     }
@@ -229,14 +207,7 @@ export class SesMailDeliveryProvider implements MailDeliveryProvider {
     const configurationSetName = this.config.ses?.configurationSetName;
     this.logger?.debug({
       action: 'mailDelivery.ses.send.enter',
-      data: {
-        toCount: recipients.length,
-        templateKey: message.metadata.templateKey,
-        leagueId: message.metadata.leagueId ?? null,
-        contestId: message.metadata.contestId ?? null,
-        entryId: message.metadata.entryId ?? null,
-        invitationId: message.metadata.invitationId ?? null,
-      },
+      data: deliveryRefs(message),
     }, 'Submitting SES email');
     try {
       const command = new SendEmailCommand({
@@ -258,29 +229,13 @@ export class SesMailDeliveryProvider implements MailDeliveryProvider {
       const result = await this.client.send(command);
       this.logger?.info({
         action: 'mailDelivery.ses.send.success',
-        data: {
-          toCount: recipients.length,
-          messageId: result.MessageId ?? null,
-          templateKey: message.metadata.templateKey,
-          leagueId: message.metadata.leagueId ?? null,
-          contestId: message.metadata.contestId ?? null,
-          entryId: message.metadata.entryId ?? null,
-          invitationId: message.metadata.invitationId ?? null,
-        },
+        data: { ...deliveryRefs(message), messageId: result.MessageId ?? null },
       }, 'Submitted SES email');
       return { provider: this.providerName, messageId: result.MessageId };
     } catch (err) {
       this.logger?.error({
         action: 'mailDelivery.ses.send.failure',
-        data: {
-          toCount: recipients.length,
-          templateKey: message.metadata.templateKey,
-          leagueId: message.metadata.leagueId ?? null,
-          contestId: message.metadata.contestId ?? null,
-          entryId: message.metadata.entryId ?? null,
-          invitationId: message.metadata.invitationId ?? null,
-          error: err instanceof Error ? err.message : String(err),
-        },
+        data: { ...deliveryRefs(message), error: errorMessage(err) },
       }, 'SES email submission failed');
       if (err instanceof Error && err.name === SES_THROTTLED_ERROR) {
         throw new MailDeliveryThrottledError(this.providerName, err);
@@ -368,4 +323,16 @@ function listUnsubscribeHeaders(message: MailDeliveryMessage): { Name: string; V
     { Name: 'List-Unsubscribe', Value: `<${message.listUnsubscribeUrl}>` },
     { Name: 'List-Unsubscribe-Post', Value: 'List-Unsubscribe=One-Click' },
   ];
+}
+
+/** What a send's log lines say about the email: never its content, only what it was and for whom. */
+function deliveryRefs(message: MailDeliveryMessage) {
+  return {
+    toCount: 1,
+    templateKey: message.metadata.templateKey,
+    leagueId: message.metadata.leagueId ?? null,
+    contestId: message.metadata.contestId ?? null,
+    entryId: message.metadata.entryId ?? null,
+    invitationId: message.metadata.invitationId ?? null,
+  };
 }

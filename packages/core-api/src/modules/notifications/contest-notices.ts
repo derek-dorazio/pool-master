@@ -54,6 +54,7 @@ import {
 } from './contest-email-job-requests';
 import type { BackgroundJobQueue } from '../background-jobs/background-job-queue';
 import { leaderCount } from './live-standings';
+import { errorMessage } from '../../core/error-message';
 
 export interface ContestNoticeDeps extends ContestSummaryDeps, LeagueMemberDeps {
   contests: Pick<ContestRepository, 'findById' | 'findBySportEvent'>;
@@ -346,7 +347,7 @@ export class ContestNotices implements ContestOpenedNotice, SportEventChangedNot
     } catch (error) {
       this.deps.logger?.error({
         action: 'email.contestNotice.failed',
-        data: { templateKey, contestId: contest.id, leagueId: league.id, recipients: recipients.length, error: error instanceof Error ? error.message : String(error) },
+        data: { templateKey, contestId: contest.id, leagueId: league.id, recipients: recipients.length, error: errorMessage(error) },
       }, 'Failed to queue a contest email');
     }
   }

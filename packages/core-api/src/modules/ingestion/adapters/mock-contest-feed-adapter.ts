@@ -30,6 +30,7 @@ import type {
   GetMockContestFeedLiveReplayResponse,
   StartMockContestFeedLiveReplayResponse,
 } from '@poolmaster/mock-contest-feed-provider/generated/hey-api/types';
+import { errorMessage } from '../../../core/error-message';
 
 type ScenarioSummaryResponse = ListMockContestFeedScenariosResponse;
 type EventListResponse = ListMockContestFeedScenarioEventsResponse;
@@ -251,7 +252,7 @@ export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloa
         status: 'DOWN',
         errorRateLastHour: 1,
         latencyMsP95: Date.now() - startedAt,
-        message: error instanceof Error ? error.message : String(error),
+        message: errorMessage(error),
       };
     }
   }

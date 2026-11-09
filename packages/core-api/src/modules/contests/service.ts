@@ -140,6 +140,7 @@ import {
   type EmailSendInput,
   type EmailService,
 } from '../email';
+import { errorMessage } from '../../core/error-message';
 /** Who is reading contests, for what they may see: DRAFT contests are commissioner-only (#117). */
 export interface ContestViewer {
   userId: string;
@@ -710,7 +711,7 @@ export class ContestService {
         this.logger.error({
           contestId: key.contestId,
           shownEvent: key.shownEvent,
-          error: error instanceof Error ? error.message : String(error),
+          error: errorMessage(error),
         }, 'leaderboard snapshot rebuild failed; the stored board stands until its next rebuild');
       }
     }));
@@ -1631,7 +1632,7 @@ export class ContestService {
     } catch (err) {
       this.logger.error({
         action: 'contestEntry.emailDelivery.failure',
-        data: { contestId, entryIds, recipientCount: sends.length, templateKey, error: err instanceof Error ? err.message : String(err) },
+        data: { contestId, entryIds, recipientCount: sends.length, templateKey, error: errorMessage(err) },
       }, 'Failed to queue contest entry confirmation emails');
       throw err;
     }

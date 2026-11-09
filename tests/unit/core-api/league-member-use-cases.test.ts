@@ -290,6 +290,15 @@ describe('MemberDirectoryService — the league roster', () => {
     });
   });
 
+  it('leaves out a membership whose user the user read did not return, rather than listing it without one', async () => {
+    const world = inMemoryLeagueWorld();
+    const league = world.addLeague();
+    world.addMember({ league, user: world.addUser({ firstName: 'Ghost' }) });
+    const users = { ...world.users, findActiveByLeague: async () => [] };
+
+    await expect(new MemberDirectoryService(world.memberships, users).listMembers(league.id)).resolves.toEqual([]);
+  });
+
   it('returns an empty roster for a league with no members', async () => {
     const world = inMemoryLeagueWorld();
     await expect(new MemberDirectoryService(world.memberships, world.users).listMembers(world.addLeague().id))

@@ -18,6 +18,7 @@ import { randomUUID } from 'node:crypto';
 import { CloudFrontClient, CreateInvalidationCommand } from '@aws-sdk/client-cloudfront';
 import type { FastifyBaseLogger } from 'fastify';
 import type { PublicReadPath } from './public-cache';
+import { errorMessage } from './error-message';
 
 type InvalidatorLogger = Pick<FastifyBaseLogger, 'info' | 'error'>;
 
@@ -113,7 +114,7 @@ export class CloudFrontInvalidator implements CdnInvalidator {
       }
       logger.error({
         action: 'cdn.invalidate.failed',
-        data: { paths, round, error: err instanceof Error ? err.message : String(err) },
+        data: { paths, round, error: errorMessage(err) },
       }, 'CloudFront invalidation failed; the public reads stay cached up to an hour');
     }
   }

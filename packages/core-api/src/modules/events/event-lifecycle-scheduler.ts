@@ -30,6 +30,7 @@ import { SportEventStatus, type SportEvent, type SportEventRound } from '@poolma
 import type { JobLock } from '../../core/job-lock';
 import { runWithReadMemo } from '../../core/request-read-memo';
 import type { EventLifecycleService } from './event-lifecycle-service';
+import { errorMessage } from '../../core/error-message';
 
 const SWEEP_INTERVAL_MS = 5 * 60 * 1000;
 const SWEEP_LOCK_KEY = 'event-lifecycle-sweep';
@@ -109,7 +110,7 @@ export class EventLifecycleScheduler {
       }
     } catch (error) {
       this.logger?.error({
-        error: error instanceof Error ? error.message : String(error),
+        error: errorMessage(error),
       }, 'Event lifecycle sweep failed');
     } finally {
       this.sweeping = false;
@@ -127,7 +128,7 @@ export class EventLifecycleScheduler {
       } catch (error) {
         this.logger?.error({
           sportEventId: candidate.id,
-          error: error instanceof Error ? error.message : String(error),
+          error: errorMessage(error),
         }, 'Event lifecycle scheduler failed to apply a due transition');
       }
     }
@@ -139,7 +140,7 @@ export class EventLifecycleScheduler {
         await notifications.queueDue(now);
       } catch (error) {
         this.logger?.error({
-          error: error instanceof Error ? error.message : String(error),
+          error: errorMessage(error),
         }, 'Event lifecycle scheduler failed to queue the notifications due');
       }
     }

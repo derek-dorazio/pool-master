@@ -48,6 +48,15 @@ describe('BulkService', () => {
   // caller and the repo owner removed it from scope.
 
   describe('importMembersFromCsv', () => {
+    it('refuses a league that does not exist with LEAGUE_NOT_FOUND and invites nobody', async () => {
+      const invitationRepo = createMockInvitationRepo();
+      const service = new BulkService(createMockLeagueRepo({ findById: jest.fn().mockResolvedValue(null) }), createMockMembershipRepo(), invitationRepo);
+
+      await expect(service.importMembersFromCsv('no-league', 'user-1', [{ email: 'alice@example.com' }]))
+        .rejects.toMatchObject({ name: 'BulkOperationError', code: 'LEAGUE_NOT_FOUND' });
+      expect(invitationRepo.createMany).not.toHaveBeenCalled();
+    });
+
     it('creates the invitations for every valid email in one write, after one read of the pending ones', async () => {
       const invitationRepo = createMockInvitationRepo();
       const service = new BulkService(

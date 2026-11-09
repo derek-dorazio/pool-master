@@ -278,4 +278,24 @@ describe('MemberJoinedNotices', () => {
       expect.any(String),
     );
   });
+
+  it('tells nobody of joins to a league closed since, neither at once nor the next day', async () => {
+    const joins = [];
+    for (const [index, name] of ['Ann', 'Ben', 'Cal', 'Dee'].entries()) {
+      joins.push(await join(name, new Date(THURSDAY_MORNING.getTime() + index * MINUTE), { tell: false }));
+    }
+    world.tables.leagues.patch(league.id, { isActive: false });
+
+    await notices().service.tellJoined(expectDefined(joins[0]).membership);
+    await notices().service.queueDue(FRIDAY_OVERNIGHT);
+
+    expect(joinedEmails()).toHaveLength(0);
+  });
+
+  it('sends nothing the next day when nobody joined the day before', async () => {
+    await notices().service.queueDue(FRIDAY_OVERNIGHT);
+
+    expect(joinedEmails()).toHaveLength(0);
+  });
 });
+
