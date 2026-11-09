@@ -691,11 +691,16 @@ Before pushing code that could trigger CI, agents must run the full local qualit
 Required local pre-push commands:
 
 1. `npx turbo typecheck --force`
-2. `npm run lint` (eslint at `--max-warnings 0`)
-3. `npx jest --config tests/jest.config.js --forceExit`
+2. `NODE_OPTIONS=--max-old-space-size=6144 npm run lint:service`, then `npm run lint:webapp`
+   (eslint at `--max-warnings 0`): the two lint runs CI makes. The single `npm run lint` covers
+   the same files in one process and runs out of memory even at 6 GB.
+3. `npm run test:coverage:service:unit`: the unit suite with the coverage threshold CI enforces
 4. `npm run test:service:functional-api`
 5. `npm run test:poolmaster:unit`
-6. `npm run test:coverage:service:merged`
+6. `npm run test:coverage:service:integration`, then `npm run coverage:floors:check`: the
+   integration suite and the per-file repository floor. CI runs it in four shards and merges
+   them; one unsharded run gives the same per-file numbers (`docs/CI-AND-QUALITY-GATES.md`
+   *Repository coverage floor*).
 7. `npm run test:coverage:poolmaster:unit`
 8. `npm run rules:check` (it includes `rules:check:duplicates`, the web app copy detector)
 9. `npm run api:check`
@@ -739,8 +744,8 @@ Rules:
   otherwise explicitly accounted for, including failures caused by stale test
   infrastructure rather than production code.
 - For backend/service changes, the default is simple: no push until lint,
-  typecheck, unit, data integration, FAPI, and merged service coverage have
-  passed locally. If API contracts changed, `api:refresh` and `api:validate`
+  typecheck, unit and data integration (each with its coverage floor) and FAPI
+  have passed locally. If API contracts changed, `api:refresh` and `api:validate`
   must also pass first.
 - Do not classify a slice as “frontend only” if it changes any shared or
   backend-owned contract layer, including:
@@ -753,7 +758,7 @@ Rules:
   Those slices are backend-impacting and must satisfy the full backend gate
   before push even if the user-facing feature is primarily in the webapp.
 - **The DB-backed lanes share one database.** Export `DATABASE_URL` before running
-  them, run them one at a time (functional, then integration and merged coverage),
+  them, run them one at a time (functional, then integration),
   and never two at once: concurrent lanes clean up each other's rows and fail in
   ways CI never shows. Under load an integration setup can time out locally; rerun
   that file alone before calling it a failure.

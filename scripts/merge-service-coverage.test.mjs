@@ -83,4 +83,12 @@ describe('merge-service-coverage (#294)', () => {
     assert.ok(result.stderr.includes(USAGE), result.stderr);
     assert.ok(!result.stderr.includes('TypeError'), result.stderr);
   });
+
+  it('exits 1 with the usage line when no input is named, since there is no default list of suites to merge', () => {
+    const result = spawnSync(process.execPath, [script, '--out', path.join(tmp, 'no-inputs')], { encoding: 'utf8' });
+
+    assert.equal(result.status, 1);
+    assert.ok(result.stderr.includes(USAGE), result.stderr);
+    assert.ok(!fs.existsSync(path.join(tmp, 'no-inputs')));
+  });
 });
