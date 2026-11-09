@@ -41,7 +41,23 @@ carries a recommendation; Derek answers by ID. Refreshed 2026-10-28 with the
 - `SDP-002` Legal acceptability of an odds aggregator
   - Only matters if `SDP-003` changes. **Recommendation:** parked with it.
 
+- `SDP-012` Launch on the low-cost trio (added 2026-11-09)
+  - API-Sports, BALLDONTLIE and Goalserve instead of an enterprise feed at launch; see the
+    brief's *Low-cost launch path*.
+  - **Recommendation:** yes, after a free-tier check of college basketball on API-Sports,
+    Clutch Card stat depth on BALLDONTLIE, LPGA live depth and written display rights on
+    Goalserve. SportsDataIO once revenue justifies it.
+
+- `SDP-013` Public results provider for finish-order sports (added 2026-11-09)
+  - Derek's idea: a provider behind the port that reads public results pages on a schedule.
+    Agreed scope (Derek, 2026-11-09): finishing order at event end only, never live scores or
+    per-player stats.
+  - **Recommendation:** a new adapter (the mock feed stays test-only), reading two sources
+    shortly after the finish, with matching results sent to an admin to approve and
+    mismatches flagged. Plan as a ticket when Derek agrees.
+
 - `SDP-011` Horse racing feed
+  - Finishing order at event end is all horse racing needs (Derek, 2026-11-09); see SDP-013.
   - **Recommendation:** none for now; the pipeline loads each race's field and result.
     Before the 2027 Triple Crown, one evaluation of Goalserve's horse racing package on its
     30-day free trial, the only self-serve US entries and results feed found.

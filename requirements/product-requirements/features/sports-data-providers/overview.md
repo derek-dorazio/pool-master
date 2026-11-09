@@ -117,6 +117,39 @@ no feed found. These are results-only sports with one result per event (a finish
 which an admin can enter from two sources in minutes. They stay on the pipeline and admin
 entry (see below).
 
+## Low-cost launch path, explored 2026-11-09
+
+Derek asked whether the site could launch on the self-serve providers alone. The answer is
+mostly yes, for about $460 to $535 a month ($610 to $685 with Grand Slam tennis), with gaps
+to check on each free tier first (Q SDP-012).
+
+| Need | Source |
+|---|---|
+| Golf, PGA TOUR and LPGA only for now (Derek: LIV disbanded; DP World and world tours later) | Goalserve golf. Check LPGA is live hole by hole on the trial |
+| Bracket and pick'em game scores: NFL, CFP, NBA, NHL, MLB, soccer | API-Sports. Check men's and women's college basketball |
+| Clutch Card player stats: NBA, WNBA, NFL, MLB, NHL, college football and basketball | BALLDONTLIE. Check every scored stat is there |
+| Clutch Card player stats: soccer | API-Sports |
+| Grand Slam tennis | Goalserve tennis, $150 a month, if wanted |
+| Horse racing, motorsport, marathons, cycling | No provider: finishing order at event end (Q SDP-013). Live motorsport running order is a nice-to-have, bought only once usage justifies it |
+| College hockey, PWHL, men's Frozen Four | No source; results only |
+
+Terms, read 2026-11-09:
+
+- **BALLDONTLIE** allows "any lawful personal or commercial purpose", naming paid apps and
+  fantasy sports, with no attribution or separate licence `(Vendor)`. Only reselling the data
+  as a substitute data API is barred.
+- **Goalserve**'s terms are generic subscription terms with no display limit, and it sells
+  feeds "for your website" `(Vendor)`. Confirm in writing at the trial.
+- **API-Sports** allows use in websites and fantasy games and bars resale, but grants no
+  licence: rights are the user's to get from leagues, fantasy sports "may require additional
+  licenses", and it may suspend an account without refund on a rights holder's complaint;
+  dashboard purchases are prepaid and non-refundable `(Vendor)`. Acceptable for scores given
+  the US fantasy precedent (see *Is the public-source pipeline viable long term?*); never use its logos or images; pay monthly.
+
+Savings come from leaving whole leagues out of a contract, not from calling less: commercial
+real-time feeds are usually priced per league `(Reported)`. Each provider is another adapter
+to keep, so two or three is the ceiling.
+
 ## Recommendation
 
 **Primary: SportsDataIO** for golf, NFL, college football, men's and women's college
