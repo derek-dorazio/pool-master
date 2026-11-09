@@ -623,6 +623,28 @@ describe('ContestSettlementService — a survivor contest', () => {
     expect(expectDefined(context.world.contests.get(context.contest.id)).status).toBe(ContestStatus.COMPLETED);
   });
 
+  it('freezes no standings for a cancelled week and leaves the contest live', async () => {
+    const context = setup();
+    context.setEventStatus(context.week1.id, SportEventStatus.CANCELLED);
+
+    const summary = await context.settlement.settleFinishedSportEvent(context.week1.id, { completedAt: later(WEEK_1, 48) });
+
+    expect(summary).toMatchObject({ contestsSettled: 1, contestsCompleted: 0, standingsUpserted: 0 });
+    expect(await context.world.eventStandingRepo().findByContest(context.contest.id)).toEqual([]);
+    expect(expectDefined(context.world.contests.get(context.contest.id)).status).toBe(ContestStatus.ACTIVE);
+  });
+
+  it('keeps a week\'s frozen standings when the week is settled again', async () => {
+    const context = setup();
+    context.playWeek1();
+    await settle(context, context.week1.id, later(WEEK_1, 48));
+
+    await settle(context, context.week1.id, later(WEEK_1, 96));
+
+    const frozen = await context.world.eventStandingRepo().findByContest(context.contest.id);
+    expect(new Set(frozen.map((standing) => standing.settledAt.getTime()))).toEqual(new Set([later(WEEK_1, 48).getTime()]));
+  });
+
   it('freezes the same weeks survived and places the live survivor leaderboard showed with the last week\'s games final (#1435)', async () => {
     const context = setup();
     context.playWeek1();

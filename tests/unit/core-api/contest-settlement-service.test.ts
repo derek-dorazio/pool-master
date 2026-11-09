@@ -16,6 +16,7 @@ import type {
 } from '@poolmaster/shared/db';
 import {
   ContestStatus,
+  SelectionType,
   SportEventStatus,
   parseContestScoringSettings,
   type Contest,
@@ -89,7 +90,15 @@ function world({
   configJson = { selectionType: 'TIERED', picksPerTier: 1, countedScores: 1 },
   scoringRules = [parseContestScoringSettings('GOLF_RELATIVE_TO_PAR_TOTAL', {})],
   contestCount = 1,
-}: { configJson?: Record<string, unknown>; scoringRules?: ReturnType<typeof parseContestScoringSettings>[]; contestCount?: number } = {}) {
+  selectionType,
+  configurationReadFails = false,
+}: {
+  configJson?: Record<string, unknown>;
+  scoringRules?: ReturnType<typeof parseContestScoringSettings>[];
+  contestCount?: number;
+  selectionType?: SelectionType;
+  configurationReadFails?: boolean;
+} = {}) {
   // Each major is four rounds of par 72, the par read off the golfers' finished rounds.
   const course = { rounds: 4 };
   const events = new Map<string, SportEvent>([
@@ -99,7 +108,7 @@ function world({
   // `majors`, and for `contestCount` above 1 more contests on the same majors, played alike.
   const contests = new Map<string, Contest>(Array.from({ length: contestCount }, (_, index) => {
     const id = index === 0 ? 'majors' : `majors-${index + 1}`;
-    return [id, buildContest({ id, sportEventIds: [MASTERS, PGA], status: ContestStatus.ACTIVE })];
+    return [id, buildContest({ id, sportEventIds: [MASTERS, PGA], status: ContestStatus.ACTIVE, ...(selectionType && { selectionType }) })];
   }));
   const contestOf = (id: string) => {
     const found = contests.get(id);
@@ -120,15 +129,17 @@ function world({
   const eventStandings: ContestEntryEventStandingResult[] = [];
   const standings: ContestEntryStandingResult[] = [];
   // What the championship was handed at each recording, with the places frozen by then.
-  const recorded: Array<{ contestId: string; settledAt: Date; positions: Array<number | null | undefined>; statusThen: ContestStatus }> = [];
+  const recorded: Array<{ contestId: string; settledAt: Date; positions: Array<number | null | undefined>; statusThen: ContestStatus; ranked: ReadonlyArray<{ squadId: string; position: number }> }> = [];
   const championship = {
     failNext: false,
-    recordContest: async (recording: Contest, settledAt: Date) => {
+    beforeRecord: null as null | (() => void),
+    recordContest: async (recording: Contest, settledAt: Date, ranked: ReadonlyArray<{ squadId: string; position: number }>) => {
+      championship.beforeRecord?.();
       if (championship.failNext) {
         championship.failNext = false;
         throw new Error('championship write failed');
       }
-      recorded.push({ contestId: recording.id, settledAt, positions: standings.map((row) => row.position), statusThen: contestOf(recording.id).status });
+      recorded.push({ contestId: recording.id, settledAt, positions: standings.map((row) => row.position), statusThen: contestOf(recording.id).status, ranked });
       return standings.length;
     },
   };
@@ -176,7 +187,7 @@ function world({
       }),
     }),
     configurations: fakeContestConfigurationRepo({
-      findByContest: jest.fn().mockResolvedValue({
+      findByContest: configurationReadFails ? jest.fn().mockRejectedValue(new Error('database unavailable')) : jest.fn().mockResolvedValue({
         id: 'config-majors',
         contestId: 'majors',
         selectionType: 'TIERED',
@@ -225,6 +236,8 @@ function world({
 
   return {
     service,
+    events,
+    contests,
     leaderboards,
     settledReads,
     eventStandingWrites,
@@ -309,7 +322,10 @@ describe('ContestSettlementService — a contest of two events (#713)', () => {
 
     await w.service.settleFinishedSportEvent(PGA, { completedAt: T });
 
-    expect(w.recorded).toEqual([{ contestId: 'majors', settledAt: T, positions: [1, 2], statusThen: ContestStatus.ACTIVE }]);
+    expect(w.recorded).toEqual([{
+      contestId: 'majors', settledAt: T, positions: [1, 2], statusThen: ContestStatus.ACTIVE,
+      ranked: [{ squadId: 'squad-entry-b', position: 1 }, { squadId: 'squad-entry-a', position: 2 }],
+    }]);
     expect(w.contest().status).toBe(ContestStatus.COMPLETED);
   });
 
@@ -448,5 +464,80 @@ describe('ContestSettlementService — a cancelled event counts for nothing (#74
     expect(w.standings).toEqual([]);
     expect(w.contest().status).toBe(ContestStatus.COMPLETED);
     expect(summary).toMatchObject({ contestsCompleted: 1, standingsUpserted: 0 });
+  });
+});
+
+describe('ContestSettlementService — edge cases', () => {
+  it('settles from the event the caller has just written rather than reading it again', async () => {
+    const w = world();
+    const written = { ...(w.events.get(MASTERS) as SportEvent), status: SportEventStatus.COMPLETED };
+
+    const summary = await w.service.settleFinishedSportEvent(MASTERS, { completedAt: T, sportEvent: written });
+
+    expect(summary.contestsSettled).toBe(1);
+    expect(eventRows(w.eventStandings, MASTERS)).toEqual([['entry-a', -6, 1], ['entry-b', -1, 2]]);
+  });
+
+  it('counts no completion when another settle completed the contest first, though it writes the totals', async () => {
+    const w = world();
+    w.complete(MASTERS);
+    await w.service.settleFinishedSportEvent(MASTERS, { completedAt: T });
+    w.complete(PGA);
+    w.championship.beforeRecord = () => w.contests.set('majors', { ...w.contest(), status: ContestStatus.COMPLETED });
+
+    const summary = await w.service.settleFinishedSportEvent(PGA, { completedAt: T });
+
+    expect(summary).toMatchObject({ contestsSettled: 1, contestsCompleted: 0, standingsUpserted: 2 });
+  });
+
+  it('stamps an event\'s standings with the settle time when no golfer in the field carries one', async () => {
+    const w = world();
+    const settleAt = new Date('2026-04-13T01:00:00.000Z');
+    for (const [eventId, field] of w.fields) {
+      w.fields.set(eventId, field.map((row) => ({ ...row, standing: { ...row.standing, standing: { ...row.standing.standing, asOf: null as unknown as Date } } })));
+    }
+    w.complete(MASTERS);
+
+    await w.service.settleFinishedSportEvent(MASTERS, { completedAt: settleAt });
+
+    expect(w.eventStandings.map((row) => row.asOf)).toEqual([settleAt, settleAt]);
+  });
+
+  it('settles nothing for a game whose event is not found, or a game it cannot find on the event', async () => {
+    const w = world();
+
+    await expect(w.service.settleFinishedGame('no-such-event', 'match-1')).resolves.toBe(0);
+    await expect(w.service.settleFinishedGame(MASTERS, 'no-such-match')).resolves.toBe(0);
+  });
+
+  it.each([SelectionType.BRACKET, SelectionType.PICK_EM])('fails the settlement of a %s contest when its rules cannot be read, rather than skipping it as unscorable', async (selectionType) => {
+    const w = world({ selectionType, configurationReadFails: true });
+    w.complete(MASTERS);
+
+    await expect(w.service.settleFinishedSportEvent(MASTERS, { completedAt: T })).rejects.toThrow('database unavailable');
+  });
+
+  it.each([SelectionType.BRACKET, SelectionType.SQUARES])('counts a %s contest settled but not completed when another settle completed it first', async (selectionType) => {
+    const w = world({ selectionType });
+    w.cancel(MASTERS);
+    w.cancel(PGA);
+    w.championship.beforeRecord = () => w.contests.set('majors', { ...w.contest(), status: ContestStatus.COMPLETED });
+
+    const summary = await w.service.settleFinishedSportEvent(PGA, { completedAt: T });
+
+    expect(summary).toMatchObject({ contestsSettled: 1, contestsCompleted: 0 });
+  });
+
+  it('hands the championship only the entries the final standings place', async () => {
+    const w = world({ selectionType: SelectionType.BRACKET });
+    w.standings.push(
+      { id: 'standing-entry-a', contestId: 'majors', contestEntryId: 'entry-a', position: 1, displayPosition: '1', countingPickLimit: 1, scoredPickCount: 1, totalScore: 10, asOf: T, settledAt: T },
+      { id: 'standing-entry-b', contestId: 'majors', contestEntryId: 'entry-b', position: null, displayPosition: null, countingPickLimit: 1, scoredPickCount: 0, totalScore: null, asOf: T, settledAt: T },
+    );
+    w.cancel(PGA);
+
+    await w.service.settleFinishedSportEvent(PGA, { completedAt: T });
+
+    expect(w.recorded.at(-1)?.ranked).toEqual([{ squadId: 'squad-entry-a', position: 1 }]);
   });
 });

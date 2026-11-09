@@ -1,3 +1,5 @@
+const path = require('node:path');
+
 /** @type {import('jest').Config} */
 module.exports = {
   testEnvironment: 'node',
@@ -29,15 +31,36 @@ module.exports = {
     '!packages/shared/tsconfig.json',
   ],
   coverageThreshold: {
+    // Files a glob below matches are left out of this total (Jest checks them on their own), so
+    // it covers what no per-file floor does: routes, repositories, mappers, wiring. Re-measured on
+    // 2026-11-09 (#1477) with the scoring files out of it, Babel: 72.72 / 68.38 / 66.80 / 73.19.
+    // About 1 point under; raise it as coverage grows, never lower it to pass.
     global: {
-      // About 3 points under the lower of the two measurements of this suite, re-measured on
-      // 2026-10-18 (#747): Babel, here, 74.63 / 68.84 / 68.42 / 74.36; V8, as
-      // run-backend-coverage.mjs runs it, 70.69 / 85.52 / 79.87 / 70.69. Raise it as coverage
-      // grows; never lower it to pass.
-      statements: 67.5,
-      branches: 65.5,
-      functions: 65.5,
-      lines: 67.5,
+      statements: 71.5,
+      branches: 67.5,
+      functions: 66,
+      lines: 72,
     },
+    ...scoringFloors(),
   },
 };
+
+/**
+ * Per-file floors (#1477, rules/testing-rules.md §1 *Coverage Floors*): each file a glob matches
+ * must meet the floor on its own. Absolute, since Jest resolves a threshold glob against the
+ * working directory. Scoring, calculators, standings and settlement decide who wins: every line
+ * is covered, and every branch a test can reach.
+ */
+function scoringFloors() {
+  const modules = path.join(__dirname, '..', 'packages/core-api/src/modules');
+  const floor = { statements: 100, branches: 96, functions: 100, lines: 100 };
+  return Object.fromEntries([
+    'scoring-families/**/*.ts',
+    'contests/*-standings.ts',
+    'contests/final-standings.ts',
+    'contests/contest-leaderboard-calculator.ts',
+    'contests/contest-settlement-service.ts',
+    'events/bracket-reseed.ts',
+    'notifications/live-standings.ts',
+  ].map((glob) => [path.join(modules, glob), floor]));
+}

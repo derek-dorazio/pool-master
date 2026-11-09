@@ -45,10 +45,9 @@ export type GamePick = PredictedChoice & {
 
 /**
  * Whether a completed game's result is what the pick says: its team won, or for a tie pick, the
- * game ended level. False for a game still to be decided.
+ * game ended level. Its one caller asks only of a completed game.
  */
 function pickCameTrue(game: SportEventMatch, pick: GamePick): boolean {
-  if (game.status !== MatchStatus.COMPLETED) return false;
   if (pick.predictedResult === PredictedResult.TIE) return game.winnerSide === null;
   if (game.winnerSide === null) return false;
   const winner = game.winnerSide === MatchSide.HOME ? game.homeSportEventParticipantId : game.awaySportEventParticipantId;

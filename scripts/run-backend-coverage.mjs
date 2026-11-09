@@ -51,8 +51,11 @@ fs.mkdirSync(coverageRoot, { recursive: true });
 // instrumentation), and merging needs every suite to count the same way: V8 emits per-line
 // statement maps, Babel real statements, and unioning the two double-counts (#296). So the
 // Jest suites switch to V8 here, and only here — their configs default to Babel, which is what
-// CI's unit coverage gate measures (#302).
-const V8 = ['--', '--coverageProvider=v8'];
+// CI's unit coverage gate measures (#302). The floors in those configs are set against Babel's
+// counts, per file since #1477, and V8 counts the same code differently (a type-only file is 0%
+// under V8 and absent under Babel), so this report run does not apply them: the Babel run in CI
+// is the gate.
+const V8 = ['--', '--coverageProvider=v8', '--coverageThreshold={}'];
 
 console.log('Running service unit tests with coverage...');
 run('npm', ['run', 'test:coverage:service:unit', ...V8]);

@@ -17,6 +17,7 @@ import {
   MatchStatus,
   SelectionType,
   Sport,
+  SportEventStatus,
   squaresScoringMoments,
   squaresWinners,
   type ContestEntry,
@@ -576,6 +577,32 @@ describe('ContestSettlementService settling a squares contest with its game', ()
 
     expect(context.contestStatus()).toBe(ContestStatus.ACTIVE);
     expect(context.world.standings.size).toBe(0);
+  });
+
+  it('completes a squares contest with no winners when its event finishes before its game has a result', async () => {
+    const context = setup({ status: ContestStatus.ACTIVE });
+    context.squares.addBox(context.contest.id, context.alice.id, 0, 0);
+    context.drawInOrder();
+    context.world.sportEvents.set(context.superBowl.id, { ...context.superBowl, status: SportEventStatus.COMPLETED });
+
+    const summary = await context.settlement.settleFinishedSportEvent(context.superBowl.id, { completedAt: later(KICKOFF, 4) });
+
+    expect(summary).toMatchObject({ contestsSettled: 1, contestsCompleted: 1, standingsUpserted: 0 });
+    expect(context.contestStatus()).toBe(ContestStatus.COMPLETED);
+    expect(context.squares.winners.has(context.contest.id)).toBe(false);
+  });
+
+  it('stamps the winners with the current time when the game is settled without a completion time', async () => {
+    const context = setup({ status: ContestStatus.ACTIVE });
+    context.squares.addBox(context.contest.id, context.alice.id, 0, 7);
+    context.drawInOrder();
+    context.updateGame({ status: MatchStatus.COMPLETED, homeScore: 7, awayScore: 0, periodScores: [period(1, 7, 0), period(2, 7, 0), period(3, 7, 0), period(4, 7, 0)] });
+    const before = Date.now();
+
+    await expect(context.settlement.settleFinishedGame(context.superBowl.id, context.game.id)).resolves.toBe(1);
+
+    const [first] = context.squares.winners.get(context.contest.id) ?? [];
+    expect(expectDefined(first).settledAt.getTime()).toBeGreaterThanOrEqual(before);
   });
 
   it('leaves squares contests on other games of the event unsettled', async () => {

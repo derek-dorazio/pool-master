@@ -21,6 +21,7 @@ import {
   UpsetBonusRule,
   contestEntryEventTiebreaker,
   parseContestScoringSettings,
+  type ContestConfiguration,
   type ContestEntry,
   type ParticipantContestScoringRule,
 } from '@poolmaster/shared/domain';
@@ -156,6 +157,24 @@ describe('loadBracketStandings', () => {
       ['Cara', 3, 11, '3'],
     ]);
     expect(standings).toMatchObject({ finalTotalPoints: null, gameCount: 7 });
+  });
+
+  it('scores an entry that submitted with no picks 0 with nothing possible, and reads a configuration without bracket rules as starting at round 1', async () => {
+    const context = setup();
+    const empty: ContestEntry = {
+      id: 'entry-empty', contestId: context.contest.id, squadId: 'squad-empty', entryNumber: 1, name: 'Empty',
+      events: [{ sportEventId: context.sportEvent.id, status: ContestEntryStatus.SUBMITTED }], createdAt: T0, updatedAt: T0,
+    };
+    context.world.entries.set(empty.id, empty);
+    for (const [id, configuration] of context.world.configurations) {
+      context.world.configurations.set(id, { ...configuration, configJson: null as unknown as ContestConfiguration['configJson'] });
+    }
+    context.play(ROUND_ONE_CHALK);
+
+    const standings = await loadBracketStandings(context.deps, context.contest.id, context.sportEvent);
+
+    expect(standings.gameCount).toBe(7);
+    expect(rows(standings).at(-1)).toEqual(['Empty', 0, 0, '4']);
   });
 
   it('shrinks each entry\'s most possible as its picks bust, round by round', async () => {

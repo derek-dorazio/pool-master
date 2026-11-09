@@ -337,11 +337,14 @@ export class LiveStandings implements DueNotifications {
       if (!earlier || standing.settledAt < earlier) settledAt.set(standing.sportEventId, standing.settledAt);
     }
     const settled = contestEvents
-      .filter((sportEvent) => settledAt.has(sportEvent.id))
-      .sort((left, right) => (settledAt.get(left.id)?.getTime() ?? 0) - (settledAt.get(right.id)?.getTime() ?? 0));
-    const latest = settled.at(-1);
-    const latestAt = latest ? settledAt.get(latest.id) : undefined;
-    if (!latest || !latestAt || !isDue(latestAt)) return null;
+      .flatMap((sportEvent) => {
+        const at = settledAt.get(sportEvent.id);
+        return at ? [{ sportEvent, at }] : [];
+      })
+      .sort((left, right) => left.at.getTime() - right.at.getTime());
+    const last = settled.at(-1);
+    if (!last || !isDue(last.at)) return null;
+    const latest = last.sportEvent;
     const next = contestEvents
       .filter((sportEvent) => !settledAt.has(sportEvent.id) && !FINISHED_EVENT_STATUSES.includes(sportEvent.status))
       .sort((left, right) => left.startDate.getTime() - right.startDate.getTime())

@@ -7,6 +7,7 @@ import {
   type SportStat,
 } from '@poolmaster/shared/domain';
 import { getScoringFamilyModule } from '../../../packages/core-api/src/modules/scoring-families';
+import { compositeOf } from '../../../packages/core-api/src/modules/scoring-families/composite/score-games';
 import type { FieldScoringEvent } from '../../../packages/core-api/src/modules/scoring-families/scoring-family-module';
 import type { SportEventParticipantView } from '../../../packages/core-api/src/modules/events/sport-event-participant-service';
 import { InMemorySportEvents } from '../../support/in-memory-sport-events';
@@ -81,5 +82,11 @@ describe('composite — a stat pool player\'s score', () => {
 
   it('refuses to score an event whose sport has no composite', () => {
     expect(() => family.scoreField([], { ...WORLD_SERIES, sport: Sport.GOLF }, COMPOSITE_TOTAL)).toThrow();
+  });
+});
+
+describe('composite — guards', () => {
+  it('refuses to name the composite of an event whose sport has none', () => {
+    expect(() => compositeOf({ sport: Sport.GOLF, rounds: 4, roundsPar: undefined, status: SportEventStatus.IN_PROGRESS })).toThrow('A GOLF event has no composite to score');
   });
 });

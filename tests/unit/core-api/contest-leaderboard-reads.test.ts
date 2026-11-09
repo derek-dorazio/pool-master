@@ -132,6 +132,14 @@ describe('contest scoring of unplayed rounds', () => {
     expect(score).toMatchObject({ score: 32, detail: { scoringFamily: 'STROKE_PLAY', unplayedRoundNumbers: [1, 2, 3, 4] } });
   });
 
+  it('leaves a golfer who withdrew before the event unscored while no round\'s par is known yet', () => {
+    const removed = golfer('sep-removed', null, [], { isActive: false, inactiveReason: 'WITHDRAWN' });
+
+    const [score] = toParticipantScores(field(removed), scoringEvent({ rounds: 4, roundsPar: null }), GOLF_SCORING);
+
+    expect(score).toMatchObject({ score: null, detail: { scoringFamily: 'STROKE_PLAY', unplayedRoundNumbers: [] } });
+  });
+
   it('scores a golfer removed from the field after round 1 for that round plus 80 for each round after it', () => {
     const removed = golfer('sep-removed', 'COMPLETE', [[1, 'COMPLETED', 75, 3]], { isActive: false });
 
