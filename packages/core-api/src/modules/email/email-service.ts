@@ -34,10 +34,10 @@ import {
   type User,
 } from '@poolmaster/shared/domain';
 import type { PlanEntitlementsService } from '../plans/plan-entitlements-service';
+import { emailSwitchedOffReason } from './email-settings';
 import type { MailAddress, MailDeliveryProviderName } from './mail-delivery';
 import {
   EMAIL_TEMPLATES,
-  hasSettingsSwitch,
   PLATFORM_SENDER_NAME,
   renderSystemEmailTemplate,
   type EmailTemplateScope,
@@ -264,7 +264,7 @@ export class EmailService {
         fromName: from.name,
         fromAddress: from.address,
       },
-      skipped: switchedOffReason(config, templateKey)
+      skipped: emailSwitchedOffReason(config, templateKey)
         ?? (this.inPlan(templateKey, league) ? undefined : EmailSkipReason.NOT_IN_PLAN)
         ?? (this.mayReceive(address, config) ? undefined : EmailSkipReason.NOT_ALLOWED_IN_ENVIRONMENT),
     };
@@ -440,12 +440,6 @@ function logRefs(metadata: { templateKey: string } & EmailRefs & { leagueId?: st
     entryId: metadata.entryId ?? null,
     invitationId: metadata.invitationId ?? null,
   };
-}
-
-function switchedOffReason(config: EmailConfig, templateKey: SystemEmailTemplateKey): EmailSkipReason | undefined {
-  if (!config.enabled) return EmailSkipReason.EMAIL_DISABLED;
-  if (hasSettingsSwitch(templateKey) && !config.templates[templateKey]) return EmailSkipReason.TEMPLATE_DISABLED;
-  return undefined;
 }
 
 function domainOf(address: string): string {

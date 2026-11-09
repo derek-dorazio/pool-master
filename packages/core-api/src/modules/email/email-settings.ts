@@ -3,14 +3,16 @@
  * to. Root admins change it on /manage/settings; every core-api task sees a save within the
  * settings refresh. Transport and sender address stay in env (`EMAIL_PROVIDER`, `SMTP_*`,
  * `SES_*`), since they describe how the deployment is wired. EmailService reads it on every
- * email it records, and the sender reads the rate on every batch.
+ * email it records, and the sender reads the rate and the switches on every batch.
  */
 
 import { EmailConfigSchema } from '@poolmaster/shared/dto';
 import type { EmailConfig } from '@poolmaster/shared/dto';
+import { EmailSkipReason } from '@poolmaster/shared/domain';
 import { AppEnvironment, readAppEnv } from '../../core/config';
 import { defineSettingsGroup } from '../platform/settings-group';
 import type { EmailService } from './email-service';
+import { hasSettingsSwitch, type SystemEmailTemplateKey } from './system-email-templates';
 
 export const EMAIL_SETTINGS = defineSettingsGroup<EmailConfig>({
   key: 'EMAIL_CONFIG',
@@ -49,6 +51,17 @@ export const EMAIL_SETTINGS = defineSettingsGroup<EmailConfig>({
     },
   }),
 });
+
+/**
+ * Why EMAIL_CONFIG stops an email of `templateKey` now: all email switched off, or this email's
+ * own switch off. Asked when an email is recorded and again just before it is sent (#1503), so a
+ * switch turned off while email waits in the outbox stops it too.
+ */
+export function emailSwitchedOffReason(config: EmailConfig, templateKey: SystemEmailTemplateKey): EmailSkipReason | undefined {
+  if (!config.enabled) return EmailSkipReason.EMAIL_DISABLED;
+  if (hasSettingsSwitch(templateKey) && !config.templates[templateKey]) return EmailSkipReason.TEMPLATE_DISABLED;
+  return undefined;
+}
 
 /** What a route module that sends email is registered with: the app's one email service. */
 export interface MailModuleOptions {
