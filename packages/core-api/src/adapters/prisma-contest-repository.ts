@@ -350,12 +350,14 @@ export class PrismaContestRepository implements ContestRepository {
     return mapToContest(row);
   }
 
-  async replaceSportEvents(id: string, sportEventIds: readonly string[]): Promise<void> {
+  async replaceSportEvents(id: string, sportEventIds: readonly string[], options: { replacing?: readonly string[] } = {}): Promise<boolean> {
     // The contest row lock comes first, as every entry write and the draw take it (#644), so an
     // entry created meanwhile is either seen here or created after with the new events.
-    await forgettingReads(ReadMemoKey.contest, () => this.prisma.$transaction(async (tx) => {
+    return forgettingReads(ReadMemoKey.contest, () => this.prisma.$transaction(async (tx) => {
       await lockContestRow(tx, id);
       const current = await tx.contestSportEvent.findMany({ where: { contestId: id }, select: { sportEventId: true } });
+      const { replacing } = options;
+      if (replacing && !sameEvents(current.map((row) => row.sportEventId), replacing)) return false;
       const removed = current.map((row) => row.sportEventId).filter((eventId) => !sportEventIds.includes(eventId));
       if (removed.length > 0) {
         await tx.contestEntryPick.deleteMany({
@@ -378,6 +380,7 @@ export class PrismaContestRepository implements ContestRepository {
         data: entries.flatMap((entry) => sportEventIds.map((sportEventId) => ({ contestEntryId: entry.id, sportEventId }))),
         skipDuplicates: true,
       });
+      return true;
     }));
   }
 
@@ -526,4 +529,9 @@ function toStatusTransitionData(transition: ContestStatusTransition): Prisma.Con
     ...(transition.startsAt && { startsAt: transition.startsAt }),
     ...(transition.endsAt && { endsAt: transition.endsAt }),
   };
+}
+
+/** Whether two lists name the same events, in any order. */
+function sameEvents(left: readonly string[], right: readonly string[]): boolean {
+  return left.length === right.length && new Set([...left, ...right]).size === left.length;
 }
