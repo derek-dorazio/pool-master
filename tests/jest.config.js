@@ -43,7 +43,7 @@ module.exports = {
       functions: 25,
       lines: 33.5,
     },
-    // Jest holds a file to the first glob that matches it, so the scoring floors come first.
+    // A file matched by several globs must meet every one of them: a scoring file is held to both.
     ...scoringFloors(),
     ...logicFloors(),
   },

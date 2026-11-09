@@ -75,8 +75,8 @@ floor on its own, and a new file in a matched folder falls under it the day it i
   left-out files are proven by the integration and functional suites, or by their own floors
   (mappers #1481, handlers #1482). A new file in a matched folder is held to 90/80 the day it
   lands, so it lands with its unit tests.
-- Jest holds a file only to the first glob that matches it, so the scoring globs stay ahead of
-  the 90/80 ones in `coverageThreshold`.
+- A file matched by several globs must meet every one of them, so a scoring file is held to
+  both its own floor and 90/80. A looser glob cannot carve out an exception.
 - **The rest of the suite** has a suite-level floor. Jest leaves every file a glob matches out of
   `global`, so re-measure and re-set `global` whenever a glob is added, about 1 point under the
   new figure.
