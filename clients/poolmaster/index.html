@@ -11,7 +11,8 @@
     <script>
       // Light or dark before the first paint (#1471): a signed-in member's remembered Appearance,
       // else the device. src/lib/color-scheme.ts takes over once the app loads; the key below is
-      // its COLOR_SCHEME_STORAGE_KEY.
+      // its COLOR_SCHEME_STORAGE_KEY. A Content-Security-Policy, if one is ever added, must
+      // allow this inline script by its sha256 hash.
       (function () {
         var choice = null;
         try {
