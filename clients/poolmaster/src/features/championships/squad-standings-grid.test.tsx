@@ -1,3 +1,4 @@
+import { TeamIconKey } from '@poolmaster/shared/domain';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { describe, expect, it } from 'vitest';
@@ -5,7 +6,7 @@ import { squadStandingColumns, type SquadStandingRow } from './squad-standing-co
 import { SquadStandingsGrid } from './squad-standings-grid';
 
 const rows: SquadStandingRow[] = [
-  { displayPosition: '1', points: 425, position: 1, squadId: 'squad-1', squadIsActive: true, squadName: 'Casey Crushers' },
+  { displayPosition: '1', points: 425, position: 1, squadIconKey: TeamIconKey.CAPTAIN_SMILE_OCEAN, squadId: 'squad-1', squadIsActive: true, squadName: 'Casey Crushers' },
   { displayPosition: 'T2', points: 100, position: 2, squadId: 'squad-2', squadIsActive: true, squadName: 'Birdie Bandits' },
 ];
 
@@ -55,5 +56,12 @@ describe('SquadStandingsGrid', () => {
 
     expect(screen.queryByTestId('board-standings-search')).not.toBeInTheDocument();
     expect(screen.queryByTestId('board-standings-jump')).not.toBeInTheDocument();
+  });
+
+  it('shows no squad icon beside a place, since the placeholder icons read as a second badge', () => {
+    renderGrid();
+
+    expect(screen.getByText('Casey Crushers')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Casey Crushers icon')).not.toBeInTheDocument();
   });
 });

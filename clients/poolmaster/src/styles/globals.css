@@ -307,10 +307,11 @@
     text-transform: uppercase;
   }
 
-  /* A leaderboard's total: the condensed number face, large and in even-width digits. */
+  /* A leaderboard's total: the condensed number face in even-width digits, a step above the
+     16px row text (#1475), in the row's text colour (never red, which reads as "bad" on a number). */
   .score-total {
     font-family: var(--font-numeric);
-    font-size: 1.5rem;
+    font-size: 1.125rem;
     font-weight: 800;
     line-height: 1;
     font-variant-numeric: tabular-nums;
