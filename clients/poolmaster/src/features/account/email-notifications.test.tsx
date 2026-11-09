@@ -69,6 +69,29 @@ describe('EmailNotificationsDialog', () => {
     await waitFor(() => { expect(screen.getByLabelText(/Entry receipts/)).not.toBeChecked(); });
   });
 
+  it('shows the server reason and leaves the switch as it was when saving a change fails', async () => {
+    getUserEmailPreferencesMock.mockResolvedValue({ data: { preferences: ALL_ON, emailSuppression: null } });
+    updateUserEmailPreferenceMock.mockResolvedValue({
+      error: { error: { code: 'INTERNAL_ERROR', message: 'Email settings are unavailable right now.' } },
+    });
+    renderDialog();
+
+    fireEvent.click(await screen.findByLabelText(/Entry receipts/));
+
+    expect(await screen.findByText('Email settings are unavailable right now.')).toBeVisible();
+    expect(screen.getByLabelText(/Entry receipts/)).toBeChecked();
+  });
+
+  it('says the email settings could not be loaded when reading them fails', async () => {
+    getUserEmailPreferencesMock.mockResolvedValue({
+      error: { error: { code: 'INTERNAL_ERROR', message: 'Email settings could not be read.' } },
+    });
+    renderDialog();
+
+    expect(await screen.findByText('Email settings could not be read.')).toBeVisible();
+    expect(screen.queryAllByRole('checkbox')).toHaveLength(0);
+  });
+
   it('warns the member when no email reaches them because their address bounced', async () => {
     getUserEmailPreferencesMock.mockResolvedValue({ data: { preferences: ALL_ON, emailSuppression: 'BOUNCE' } });
     renderDialog();

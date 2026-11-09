@@ -308,11 +308,12 @@ drift breaks is anyone who *generates* from `schema.prisma` — above all a hist
 squash (#1429) — which is why the gate blocks the pull request that would introduce it
 rather than the deploy that would carry it.
 
-Only `service-unit-tests` collects service coverage in this workflow, because only
-the unit suite has a coverage threshold (#302). Integration and functional API run
-without coverage. The merged service coverage report is a separate, on-demand
-workflow, `coverage.yml`. See *Merged coverage and the
-coverage.yml workflow* below.
+Two backend jobs collect coverage in this workflow. `service-unit-tests` has the unit
+suite's coverage threshold (#302). The four integration shards each collect Babel
+coverage, and `service-integration-tests` merges them and checks the per-file
+repository floor (#1483, *Repository coverage floor* below). Functional API runs
+without coverage. The merged report across all three suites is a separate, on-demand
+workflow, `coverage.yml`. See *Merged coverage and the coverage.yml workflow* below.
 
 ### Path filtering: jobs a change cannot affect are skipped (#300)
 
@@ -934,7 +935,7 @@ release, and the mock contest feed provider has its own suite.
   - `npm run test:coverage:service:unit` — run with coverage
 - **CI job:** `service-unit-tests` (no database). Runs `npm run test:coverage:service:unit` with Jest's default Babel coverage provider; the coverage threshold below fails the job. It is one of two coverage gates in CI; the other is the webapp unit suite's (`poolmaster-unit-tests`, §4 below).
 - **Required pre-push gate:** `npx jest --config tests/jest.config.js --forceExit` (per `AGENTS.md` Quality Gates).
-- **Coverage policy:** **Threshold configured at the suite level** — `coverageThreshold.global` in `tests/jest.config.js`: 67.5% statements, 65.5% branches, 65.5% functions, 67.5% lines. These are regression floors, not aspirational targets, raised in #747 to about 3 points under the lower of two measurements: Babel (this job) 74.63 / 68.84 / 68.42 / 74.36, and V8 (the merged report, which reuses this config) 70.69 / 85.52 / 79.87 / 70.69.
+- **Coverage policy:** **Per-file floors, plus a suite-level floor for the rest** (#1477; the rule is `rules/testing-rules.md` §1 *Coverage Floors*). In `tests/jest.config.js`, scoring, calculators, standings and settlement (`modules/scoring-families/**`, the `contests` standings, calculator and settlement files, `events/bracket-reseed.ts`, `notifications/live-standings.ts`) must each reach 100% statements, functions and lines and 96% branches on their own. Jest leaves files a glob matches out of `coverageThreshold.global`, which covers the rest: 71.5% statements, 67.5% branches, 66% functions, 72% lines, about 1 point under the Babel measurement of 2026-11-09 (72.72 / 68.38 / 66.80 / 73.19). These are regression floors: raise them as coverage grows, never lower one to pass. The floors are calibrated to Babel, this job's provider; the V8 merged report (`run-backend-coverage.mjs`) runs without them.
 - **Database:** none. Pure unit tests must not touch Postgres; if a test needs a DB, it belongs in the integration suite.
 
 ### 2. Backend integration (`tests/integration/**/*.integration.ts`)
@@ -949,12 +950,12 @@ release, and the mock contest feed provider has its own suite.
   - `npm run test:service:integration` — run the suite (requires `DATABASE_URL` and a fresh DB)
   - `npm run test:service:integration:fresh` — reset DB then run
   - `npm run test:coverage:service:integration` — coverage variant
-- **CI job:** four shards, `service-integration-tests (1/4)` to `(4/4)`, each with its own Postgres service container, run `npm run test:integration -- --shard=k/4` with no coverage (#302, #295, #778). Jest shards by file, so every integration file must pass whichever other files share its shard (§9A isolation). A small `service-integration-tests` job turns the shard results into the one verdict branch protection and `deploy-publish-images` depend on; it skips when the shards skip.
+- **CI job:** four shards, `service-integration-tests (1/4)` to `(4/4)`, each with its own Postgres service container, run `npm run test:integration -- --shard=k/4 --coverage` with Jest's default Babel provider and upload `coverage-final.json` (#302, #295, #778, #1483). Jest shards by file, so every integration file must pass whichever other files share its shard (§9A isolation). The `service-integration-tests` job turns the shard results into the one verdict branch protection and `deploy-publish-images` depend on, then merges the four coverage reports and checks the per-file floors; it skips when the shards skip.
 - **No type-checking at test time:** `tests/tsconfig.json` sets `isolatedModules`, so ts-jest compiles each file on its own without type-checking, which makes the integration and functional suites about a fifth faster (#778). `npm run typecheck:tests`, a required CI step and pre-push gate, type-checks the same files, and with the flag it also refuses the patterns that can't be compiled file by file. Run it alongside a suite locally.
 - **Missing-index check (#1243):** the app runs on a Prisma client of its own, and when each file ends `teardownIntegrationTests` asks Postgres to plan every distinct statement that client sent, with `enable_seqscan = off` and a generic plan. A plan that reads a table whole, by a sequential scan, an index walked by a column it does not lead on, or an index walked in order with every row filtered, fails the file, unless another index on the table could serve the read, the table is in `REFERENCE_TABLES` (`tests/integration/index-check.ts`), or `tests/integration/table-scan-allowances.ts` lists it with a reason. An allowance a shard never meets is not flagged, so a fix PR deletes its own entry. Rule: `rules/model-change-rules.md` *Indexes Follow The Reads And The Foreign Keys*.
 - **Reproduce one shard locally:** `npm run test:integration -- --shard=1/4` (not the `test:service:integration` alias, which drops the flag: npm reads it as its own config).
 - **Required pre-push gate:** `DATABASE_URL=postgresql://postgres:postgres@localhost:5432/poolmaster_test npm run test:service:integration`.
-- **Coverage policy:** **No threshold** in `tests/integration/jest.config.js`, and no coverage in CI. Integration coverage is collected only for the merged report in `coverage.yml`.
+- **Coverage policy:** **Per-file floors on the merged shard reports**, not in `tests/integration/jest.config.js`: every repository file under `packages/core-api/src/adapters/` reaches 90% lines and 80% branches. See *Repository coverage floor* below.
 - **Database setup:** `npm run db:test:reset` recreates the test DB (empty schema, every migration applied); `npm run db:test:migrate` applies pending migrations only.
 
 ### 3. Backend functional API / FAPI (`tests/functional/**/*.functional.ts`)
@@ -987,7 +988,7 @@ release, and the mock contest feed provider has its own suite.
   - `npm run test:coverage:poolmaster:unit` — run with coverage (v8 provider, lcov + json-summary reporters)
 - **CI job:** `poolmaster-unit-tests` (uploads `coverage-webapp-unit` artifact).
 - **Required pre-push gate:** `npm run test:poolmaster:unit` (per `AGENTS.md` Quality Gates).
-- **Coverage policy:** **Threshold configured at the suite level** — `coverage.thresholds` in `vitest.config.ts`: 89% statements, 81.5% branches, 89.5% functions, 89% lines (V8). A regression floor set in #747 about 3 points under the suite's 2026-10-18 measurement, 92.02 / 84.6 / 92.79 / 92.0; `npm run test:coverage:poolmaster:unit` fails below it.
+- **Coverage policy:** **Thresholds per folder and for the whole suite** — `coverage.thresholds` in `vitest.config.ts` (V8). Every `src/features/*` folder, the files directly in `src/lib`, and every `src/lib/*` folder must each keep **90% of lines and 85% of branches** covered on its own (#1478); the folder list is read from disk, so a new feature folder gets the floor automatically. The whole suite must also keep 94% statements, 87.5% branches, 94.5% functions and 94% lines, about 1 point under its 2026-11-09 measurement of 94.97 / 88.77 / 95.55 / 94.94. Coverage `include`s every `src/**/*.{ts,tsx}` file, so a file no test loads counts at 0% against its folder's floor rather than going unreported; `e2e/**` and the MSW harness in `src/test/**` are excluded as test code. `npm run test:coverage:poolmaster:unit` fails below any floor, and the error names the folder.
 - **Known anti-pattern this suite has accumulated:** `vi.mock('@/lib/api')` at module level in 30+ tests — see `pool-master-rop.4`. The intent is for this suite to use **MSW** for HTTP boundary mocking instead of replacing the SDK; the migration is tracked in epic `pool-master-rop.71`.
 
 ### 5. Webapp browser E2E (`clients/poolmaster/e2e/**/*.e2e.ts`)
@@ -1046,17 +1047,33 @@ release, and the mock contest feed provider has its own suite.
 - **One coverage method within a merge (#296).** The FAPI server runs out of process under ts-node, so only V8 coverage can see it; the FAPI runner converts that coverage with `v8-to-istanbul` through each module's cached source map. For the merge to add up, the Jest suites must count the same way, so `run-backend-coverage.mjs` passes `--coverageProvider=v8` to unit and integration. Mixing Babel-instrumented statements with V8 per-line statements double-counts: the two maps share almost no locations, so the merge unions them. V8 counts per line, so comment and type-only lines inside an executed module count as covered, and merged percentages run higher than Babel's.
 - **Why V8 is not the default.** On a 4-vCPU runner, V8 coverage took unit from 12s (no coverage) to 49s and integration from 168s to 403s; Babel took them to 19s and 174s. So `tests/jest.config.js` and `tests/integration/jest.config.js` leave the provider at Jest's default (Babel), and V8 is used only where a merge needs it (#302).
 
+### Repository coverage floor (#1483)
+
+- **What it checks:** every file matched by a floor in `scripts/coverage-floors.json` reaches that floor's lines and branches percentage. Today there is one floor, `repositories`: `packages/core-api/src/adapters/**/*.ts` at 90% lines and 80% branches. A file may sit lower only as a named exception in the same file, with its own floor and a reason. A floor whose glob matches nothing, an exception with no reason, or an exception naming a file the floor does not cover fails the check, so the config cannot quietly go stale. Routes or mappers can be added as further entries.
+- **Why not Jest's `coverageThreshold`:** `jest --shard k/4` runs a quarter of the files but measures every source file, so in each shard a repository whose tests ran elsewhere shows a few percent and a per-file threshold would fail every shard. Only the merged report has true per-file numbers.
+- **In CI:** each `service-integration-tests (k/4)` shard uploads `coverage-service-integration-shard-k`. `service-integration-tests` downloads the four, merges them with `scripts/merge-service-coverage.mjs` into `coverage/service-integration-merged/`, runs `scripts/check-coverage-floors.mjs`, writes the per-file table (lowest first) to the step summary, and uploads the merged report as `coverage-service-integration`. A file under its floor fails the job with an annotation naming it.
+- **Reproduce locally:** an unsharded run gives the same per-file numbers as the merged shards: `npm run test:coverage:service:integration`, then `npm run coverage:floors:check`. To reproduce the sharded path exactly, run each shard into its own directory and merge them:
+  ```
+  for k in 1 2 3 4; do
+    npm run test:integration -- --shard=$k/4 --coverage --coverageDirectory=coverage/shard-$k --coverageReporters=json
+  done
+  node scripts/merge-service-coverage.mjs --out coverage/service-integration-merged coverage/shard-{1,2,3,4}/coverage-final.json
+  node scripts/check-coverage-floors.mjs coverage/service-integration-merged/coverage-final.json
+  ```
+  Use the Babel provider (the default). The V8 numbers from `test:coverage:service:merged` count per line and are not comparable.
+- **Fixing a shortfall:** add an integration test for the query or branch the repository misses (`rules/testing-rules.md` *Repository Coverage Floor*).
+
 ### Coverage thresholds — current state and roadmap
 
 | Suite | Threshold today | Source of truth |
 |---|---|---|
-| Backend unit | 67.5% / 65.5% / 65.5% / 67.5% (stmts / branches / fns / lines) | `tests/jest.config.js` |
-| Backend integration | none | — |
+| Backend unit | scoring files 100% / 96% / 100% / 100% each; the rest 71.5% / 67.5% / 66% / 72% (stmts / branches / fns / lines) | `tests/jest.config.js` |
+| Backend integration | per file, repositories: 90% lines / 80% branches (merged shards) | `scripts/coverage-floors.json` |
 | Backend FAPI | none | — |
-| Webapp unit | 89% / 81.5% / 89.5% / 89% (stmts / branches / fns / lines) | `clients/poolmaster/vitest.config.ts` |
+| Webapp unit | 94% / 87.5% / 94.5% / 94% (stmts / branches / fns / lines) for the suite, plus 90% lines / 85% branches for each feature folder and `src/lib` folder | `clients/poolmaster/vitest.config.ts` |
 | Webapp E2E | N/A | — |
 
-Both configured thresholds are intentionally **regression floors**, not targets, and they only ratchet up: when a slice raises measured coverage, the floor may follow to about 3 points under the new measurement, and it is never lowered to let a slice through. The backend one is measured with Babel statement counts, the method it was set against (#302), and must also clear the V8 run; the web one is V8, the only provider that suite uses. Real per-feature coverage targets are tracked in the rule-enforcement epic follow-ups; pages and modules touched by the q8h frontend rule hardening epic will gain explicit thresholds as part of that work. Until then, slice authors should aim for ≥ 80% statements on touched files but the suite-level gate stays at the floor.
+The two suite-level thresholds are intentionally **regression floors**, not targets, and they only ratchet up: when a slice raises measured coverage, the floor may follow to about 3 points under the new measurement, and it is never lowered to let a slice through. The backend one is measured with Babel statement counts, the method it was set against (#302), and must also clear the V8 run; the web one is V8, the only provider that suite uses. The webapp also has per-folder floors (90% lines, 85% branches for every feature folder and `src/lib` folder, #1478), so one weak feature cannot hide behind strong ones; a change that drops its folder under the floor adds tests, and the floor is never lowered. Vitest's `autoUpdate` stays off: it rewrites the config on every run, which would conflict between parallel PRs. Slice authors should still aim for ≥ 80% statements on touched files.
 
 ## File reference
 

@@ -58,6 +58,15 @@ describe('contest scoring definition', () => {
     });
   });
 
+  it('reads the active rule with the lowest sort order when several are active, whatever their stored order', () => {
+    const resolution = resolveContestScoringDefinition(configuration([
+      { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 2, active: true },
+      { participantScoringDefinitionId: 'FINISH_POSITION_POINTS', config: { pointsTable: [3, 2, 1], didNotFinishPoints: 0 }, sortOrder: 1, active: true },
+    ]));
+
+    expect(resolution).toMatchObject({ ok: true, id: 'FINISH_POSITION_POINTS' });
+  });
+
   it('carries the rule\'s settings to scoring, with keys retired before settings were typed dropped', () => {
     const resolution = resolveContestScoringDefinition(configuration([
       { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: { cutRule: { type: 'FIXED_SCORE', fixedScore: 80 } }, sortOrder: 1, active: true },
@@ -77,12 +86,13 @@ describe('contest scoring definition', () => {
 
   // #246 — the golf fallback is gone: every configuration carries a rule, so a missing one
   // is a defect to surface, not a cue to assume golf stroke play.
-  it('reports a configuration with no active scoring rule as RULE_MISSING rather than assuming golf', () => {
+  it('reports a missing configuration, or one with no active scoring rule, as RULE_MISSING rather than assuming golf', () => {
     expect(resolveContestScoringDefinition(configuration([])))
       .toEqual({ ok: false, reason: 'RULE_MISSING' });
     expect(resolveContestScoringDefinition(configuration([
       { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 1, active: false },
     ]))).toEqual({ ok: false, reason: 'RULE_MISSING' });
+    expect(resolveContestScoringDefinition(null)).toEqual({ ok: false, reason: 'RULE_MISSING' });
   });
 
   it('refuses to rank by a definition the registry does not know, rather than guessing its direction', () => {
@@ -172,6 +182,23 @@ describe('settled contest standings', () => {
       ['entry-a', 1, -3],
       ['late', 1, -20],
     ]);
+  });
+});
+
+describe('settled contest standings — order among equals', () => {
+  const live = (entryId: string, entryNumber: number, entryName: string) => ({
+    entryId, entryName, entryNumber, squadId: 's', squadName: 'S', score: null, position: null, displayPosition: null,
+    countingPickLimit: 1, scoredPickCount: 0, picks: [],
+  });
+
+  it('orders entries sharing a frozen place by entry number, then name, then id', () => {
+    const tied = { position: 1, displayPosition: 'T1', countingPickLimit: 1, scoredPickCount: 1, score: 5 };
+    const settled = applySettledContestStandings(
+      [live('d', 2, 'Alpha'), live('c', 1, 'Bravo'), live('b', 1, 'Alpha'), live('a', 1, 'Alpha')],
+      ['a', 'b', 'c', 'd'].map((contestEntryId) => ({ contestEntryId, ...tied })),
+    );
+
+    expect(settled.map((row) => row.entryId)).toEqual(['a', 'b', 'c', 'd']);
   });
 });
 
@@ -374,5 +401,23 @@ describe('contest totals across events', () => {
       ['entry-a', -4, 2],
       ['entry-c', 0, 3],
     ]);
+  });
+
+  it('orders tied totals by entry number, then name, then id, live and once settled, with an unplaced frozen entry after the placed ones', () => {
+    const named = [
+      { id: 'd', entryNumber: 2, name: 'Alpha' },
+      { id: 'c', entryNumber: 1, name: 'Bravo' },
+      { id: 'b', entryNumber: 1, name: 'Alpha' },
+      { id: 'a', entryNumber: 1, name: 'Alpha' },
+    ];
+    const live = rankContestTotals(named, named.map((entry) => score(entry.id, 'masters', -3)), 'LOWER_IS_BETTER');
+    expect(live.map((total) => total.entryId)).toEqual(['a', 'b', 'c', 'd']);
+
+    const tied = { position: 1, displayPosition: 'T1', countingPickLimit: 1, scoredPickCount: 1, score: -3 };
+    const settled = applySettledContestTotals([...live].reverse(), [
+      ...['a', 'b', 'c'].map((contestEntryId) => ({ contestEntryId, ...tied })),
+      { contestEntryId: 'd', position: null, displayPosition: null, countingPickLimit: 1, scoredPickCount: 0, score: null },
+    ]);
+    expect(settled.map((total) => [total.entryId, total.position])).toEqual([['a', 1], ['b', 1], ['c', 1], ['d', null]]);
   });
 });

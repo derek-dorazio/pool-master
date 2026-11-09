@@ -557,4 +557,54 @@ describe('AuthHomePage', () => {
       expect.any(String),
     );
   });
+
+  it('names the league and squad of a co-owner invitation and sends the visitor back to it', async () => {
+    fetchTeamOwnerInvitationPreviewMock.mockResolvedValue({
+      inviteCode: 'TEAMCODE1',
+      status: 'PENDING',
+      league: { id: '7c0c4b1e-0000-4000-8000-000000000001', leagueCode: 'BIGDAWGS', name: 'Big Dawgs' },
+      team: { id: '7c0c4b1e-0000-4000-8000-000000000002', name: 'Beer Bellies', iconKey: 'CAPTAIN_SMILE_FIELD' },
+      roleAfterAccept: 'MEMBER',
+    });
+
+    renderAuthHomePage({ pathname: '/', state: { from: '/team-invite/TEAMCODE1' } });
+
+    expect(await screen.findByText("You're almost inside Big Dawgs.")).toBeVisible();
+    expect(screen.getByText(/Sign in to join Beer Bellies as a co-owner/)).toBeVisible();
+    expect(screen.getByTestId('invitation-context-card')).toHaveTextContent('Co-owner invite');
+    expect(screen.getByText(/to join Beer Bellies as a co-owner\.$/)).toBeVisible();
+    expect(screen.getByRole('link', { name: 'Back to invitation' })).toHaveAttribute('href', '/team-invite/TEAMCODE1');
+    expect(fetchTeamOwnerInvitationPreviewMock).toHaveBeenCalledWith('TEAMCODE1');
+  });
+
+  it('warns and shows the invitation warning when a co-owner invitation preview fails to load', async () => {
+    fetchTeamOwnerInvitationPreviewMock.mockRejectedValue(new Error('Preview unavailable'));
+
+    renderAuthHomePage({ pathname: '/', state: { from: '/team-invite/TEAMCODE1' } });
+
+    expect(await screen.findByTestId('auth-invite-preview-error')).toBeVisible();
+    expect(mockLogger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'auth.teamInvitePreview.failed',
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- expect.objectContaining(...) is Vitest's asymmetric-matcher sentinel, typed any by design.
+        data: expect.objectContaining({ inviteCode: 'TEAMCODE1' }),
+      }),
+      expect.any(String),
+    );
+  });
+
+  it('names the league of a league invitation and offers the way back to it', async () => {
+    fetchInvitationPreviewMock.mockResolvedValue({
+      inviteCode: 'LEAGUE123',
+      status: 'PENDING',
+      league: { id: '7c0c4b1e-0000-4000-8000-000000000001', leagueCode: 'BIGDAWGS', name: 'Big Dawgs' },
+    });
+
+    renderAuthHomePage({ pathname: '/', state: { from: '/invite/LEAGUE123' } });
+
+    expect(await screen.findByText("You're almost inside Big Dawgs.")).toBeVisible();
+    expect(screen.getByTestId('invitation-context-card')).toHaveTextContent('League invite');
+    expect(screen.getByText(/come back to this invitation to join the league/)).toBeVisible();
+    expect(screen.getByRole('link', { name: 'Back to invitation' })).toHaveAttribute('href', '/invite/LEAGUE123');
+  });
 });

@@ -52,6 +52,7 @@
     "test:poolmaster:browser-e2e:smoke": "npm run test:e2e:smoke --workspace @poolmaster/poolmaster",
     "test:coverage:service:unit": "jest --config tests/jest.config.js --coverage --coverageDirectory coverage/service-unit --coverageReporters=json-summary --coverageReporters=json --coverageReporters=lcovonly --coverageReporters=clover --coverageReporters=text-summary --forceExit",
     "test:coverage:service:integration": "jest --config tests/integration/jest.config.js --coverage --coverageDirectory coverage/service-integration --coverageReporters=json-summary --coverageReporters=json --coverageReporters=lcovonly --coverageReporters=clover --coverageReporters=text-summary --forceExit",
+    "coverage:floors:check": "node scripts/check-coverage-floors.mjs coverage/service-integration/coverage-final.json",
     "test:coverage:service:functional-api": "node scripts/run-service-functional-api-coverage.mjs",
     "test:coverage:service:merged": "node scripts/run-backend-coverage.mjs",
     "test:coverage:service:fresh": "npm run db:test:reset && DATABASE_URL=postgresql://postgres:postgres@localhost:5432/poolmaster_test npm run test:coverage:service:merged",
