@@ -5,14 +5,19 @@ import { Chip } from '@/features/shared/ui';
 import { TeamAvatar } from './team-avatar';
 
 /**
- * A team's icon and name, linking on when there is somewhere to go, marked when it is the
- * viewer's own team or inactive, with an optional line underneath (its owners, say).
+ * A team's name, linking on when there is somewhere to go, marked when it is the viewer's own
+ * team or inactive, with an optional line underneath (its owners, say).
+ *
+ * The icon is off by default (#1474): today's icons are placeholders, and beside a place in
+ * standings they read as a second badge. Lists pass `showIcon` again once real icons exist; the
+ * squad's own pages and the icon pickers draw `TeamAvatar` themselves and keep showing it.
  */
 export function TeamName({
   iconKey,
   isActive = true,
   isMine = false,
   name,
+  showIcon = false,
   subtitle,
   testId,
   to,
@@ -21,6 +26,7 @@ export function TeamName({
   isActive?: boolean;
   isMine?: boolean;
   name: string;
+  showIcon?: boolean;
   subtitle?: string;
   testId?: string;
   to?: string;
@@ -28,7 +34,7 @@ export function TeamName({
   const nameClass = 'truncate font-semibold text-foreground';
   return (
     <div className="flex min-w-0 items-center gap-3">
-      <TeamAvatar iconKey={iconKey} />
+      {showIcon ? <TeamAvatar iconKey={iconKey} label={`${name} icon`} /> : null}
       <div className="min-w-0">
         <div className="flex min-w-0 items-center gap-2">
           {to ? (
