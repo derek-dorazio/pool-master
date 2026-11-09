@@ -157,15 +157,18 @@ describe('league invite by email under the EMAIL_CONFIG setting', () => {
       dueAt: new Date(),
     });
 
-    await saveEmailConfig((current) => ({ ...current, enabled: false }));
-    await deliverQueuedIntegrationEmail();
+    try {
+      await saveEmailConfig((current) => ({ ...current, enabled: false }));
+      await deliverQueuedIntegrationEmail();
 
-    expect(sentTo(recipientEmail)).toBe(0);
-    expect(await getPrisma().emailMessage.findUniqueOrThrow({ where: { id: message.id } })).toMatchObject({
-      status: 'SKIPPED',
-      skipReason: 'EMAIL_DISABLED',
-    });
-    await getPrisma().emailMessage.delete({ where: { id: message.id } });
+      expect(sentTo(recipientEmail)).toBe(0);
+      expect(await getPrisma().emailMessage.findUniqueOrThrow({ where: { id: message.id } })).toMatchObject({
+        status: 'SKIPPED',
+        skipReason: 'EMAIL_DISABLED',
+      });
+    } finally {
+      await getPrisma().emailMessage.delete({ where: { id: message.id } });
+    }
   });
 
   it('sends again as soon as an admin switches email back on', async () => {
