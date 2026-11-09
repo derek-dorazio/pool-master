@@ -5,8 +5,8 @@ in `background_jobs`, written in the same transaction as the change that caused 
 task claims it, runs it, and retries it on failure; a deploy or a crashed task never loses it.
 The code is `packages/core-api/src/modules/background-jobs`.
 
-Recurring work (the lifecycle sweep, the provider loops, the nightly cleanup, the email sender)
-stays on its own timer behind a job lock (`rules/architecture-rules.md` §4 *Background jobs run
+Recurring work (the lifecycle sweep, each kind of clock-driven email's sweep, the provider loops,
+the nightly cleanup, the email sender) stays on its own timer behind a job lock (`rules/architecture-rules.md` §4 *Background jobs run
 on one server task*). The job table is for one-off work.
 
 ## The job types
@@ -58,8 +58,9 @@ Which core-api tasks run the runner is their role, `CORE_API_ROLE` (#1186):
 | `api` | yes | no | waits for a worker's poll |
 | `worker` | yes, but behind no load balancer: only health checks reach it | yes | from its own work, wakes it; from an API task, found by its poll |
 
-The background work is the job runner, the email sender, the event lifecycle sweep, nightly
-cleanup and provider ingestion (still also gated by `AUTO_START_SCHEDULER`). A worker's email
+The background work is the job runner, the email sender, the event lifecycle sweep, the
+clock-driven email sweeps (one per kind, `DueNotificationsScheduler`), nightly cleanup and provider
+ingestion (still also gated by `AUTO_START_SCHEDULER`). A worker's email
 sender polls every second rather than every 15, since an API task's email never wakes it; a job
 an API task queued waits for the worker's job poll, at most `BACKGROUND_JOB_POLL_MS`. An
 unknown role stops the task at startup. The advisory job locks (#1159) hold in every role, so

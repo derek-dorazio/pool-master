@@ -436,7 +436,7 @@ every entry holding a box its boxes with their numbers, the away team's digit fo
 the home team's for the column ("Your numbers"). Claiming a box sends nothing. A squares draw
 queues its receipts in one batch as it answers. A quick pick draw only marks itself as owing them,
 recording the event it dealt (`contest_draws.receipts_pending_sport_event_id`, #1171): the next
-lifecycle sweep, up to five minutes later, queues every dealt entry's receipt for that event in one
+receipts sweep (`DRAW_RECEIPTS`, a clock-driven email sweep), up to five minutes later, queues every dealt entry's receipt for that event in one
 batch, even once the event has started, and clears the mark. A sweep that cannot queue
 them keeps the mark and the next sweep tries again; the idempotency key keeps a receipt from
 going twice.
@@ -481,8 +481,10 @@ background job in its transaction, and the job builds the emails seconds later, 
 request (#1387, `docs/BACKGROUND-JOBS.md`).
 
 Entry reminders ("Picks close soon", #845) are the first email sent on the clock rather than
-on an action. Each lifecycle scheduler sweep (every 5 minutes) ends with a "notifications due"
-step, which queues the reminder whose time has come, at the `entryReminderHours` offsets before
+on an action. Each kind of clock-driven email sweeps every 5 minutes on a timer and job lock of
+its own (`DueNotificationsScheduler`), apart from the lifecycle sweep, so a slow kind never holds
+up another or a contest going live. The kinds' sweeps fall 30 seconds apart within each interval,
+after the lifecycle sweep's, so they don't all reach the database at once. The reminders' sweep queues the reminder whose time has come, at the `entryReminderHours` offsets before
 each event's cutoff (the event's start, a second-chance bracket's starting round, a squares
 game's kickoff). Everyone gets a reminder at the same moment, one email per person however many
 squads they own. Only the latest reminder whose time has passed is sent, and none more than an
@@ -581,7 +583,7 @@ contests a cancellation tells is decided before the event's contests settle. The
 idempotency key names the change and the start it leaves (a move, both starts), so a second
 postponement or a move back to an earlier new date is told again.
 
-Commissioner event emails (#845 C1, C2 and C4) are the "notifications due" step's third kind,
+Commissioner event emails (#845 C1, C2 and C4) are the third kind of clock-driven email,
 in the Commissioner updates category:
 
 - **Coming up soon** (`EVENT_COMING_UP`): an event of any sport league, released or still a

@@ -1,5 +1,5 @@
 /**
- * #1303 — the event lifecycle sweep, every clock-driven email in it, through the app's client
+ * #1303 — the event lifecycle sweep and every clock-driven email's own sweep, through the app's client
  * against real Postgres, so the missing-index check plans what each pass sends. The unit tests
  * cover what each email says and when; this file runs a whole sweep, wired as index.ts wires it.
  */
@@ -13,7 +13,14 @@ import { createContestSettlementService } from '../../../packages/core-api/src/m
 import { createEmailOutbox, EMAIL_SETTINGS } from '../../../packages/core-api/src/modules/email';
 import { EventLifecycleScheduler } from '../../../packages/core-api/src/modules/events/event-lifecycle-scheduler';
 import { createEventLifecycleService } from '../../../packages/core-api/src/modules/events/wiring';
-import { createContestEmailJobs, createContestNotices, createDueNotifications, createMemberJoinedNotices } from '../../../packages/core-api/src/modules/notifications';
+import {
+  createContestEmailJobs,
+  createContestNotices,
+  createDueNotifications,
+  createMemberJoinedNotices,
+  DueNotificationKind,
+  DueNotificationsScheduler,
+} from '../../../packages/core-api/src/modules/notifications';
 import { createDrawReceipts } from '../../../packages/core-api/src/modules/selections/wiring';
 import { fakeLogger } from '../../support/fake-logger';
 import { cleanupTestData, createTestUser, getAppPrisma, getPrisma, integrationBackgroundJobs, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
@@ -71,22 +78,28 @@ function lifecycleSweep(now: Date) {
       contestSettlement: createContestSettlementService(prisma, logger, { jobs: jobs.queue }),
       releasedEditionContests: createContestManagementService(prisma, logger, planEntitlements),
     }),
-    notificationsDue: [
-      ...createDueNotifications(prisma, {
-        email,
-        readConfig,
-        appBaseUrl,
-        logger,
-        planEntitlements,
-        memberJoined: createMemberJoinedNotices(prisma, { email, readConfig, appBaseUrl, logger }),
-      }),
-      createDrawReceipts(prisma, logger, { email, appBaseUrl, planEntitlements }),
-    ],
     jobLock,
     logger,
     now: () => now,
   });
-  return { scheduler, logger };
+  // Each clock-driven email on its own sweep and lock, as index.ts wires them.
+  const dueSchedulers = [
+    ...createDueNotifications(prisma, {
+      email,
+      readConfig,
+      appBaseUrl,
+      logger,
+      planEntitlements,
+      memberJoined: createMemberJoinedNotices(prisma, { email, readConfig, appBaseUrl, logger }),
+    }),
+    { kind: DueNotificationKind.DRAW_RECEIPTS, notifications: createDrawReceipts(prisma, logger, { email, appBaseUrl, planEntitlements }) },
+  ].map((due) => new DueNotificationsScheduler({ ...due, jobLock, logger, now: () => now }));
+  /** The lifecycle sweep, then every kind's sweep, as their timers would run them. */
+  const sweep = async (): Promise<void> => {
+    await scheduler.runSweep();
+    await Promise.all(dueSchedulers.map((due) => due.runSweep()));
+  };
+  return { sweep, logger };
 }
 
 async function contestOn(leagueId: string, sportEventIds: readonly string[], status: ContestStatus) {
@@ -165,9 +178,9 @@ describe('event lifecycle sweep through the app client (#1303)', () => {
       where: { leagueId: league.id, role: 'MEMBER' },
       data: { joinedAt: new Date(monday.getTime() - 12 * HOUR) },
     });
-    const { scheduler, logger } = lifecycleSweep(monday);
+    const { sweep, logger } = lifecycleSweep(monday);
 
-    await scheduler.runSweep();
+    await sweep();
 
     expect(logger.error).not.toHaveBeenCalled();
     await expect(getPrisma().sportEvent.findUniqueOrThrow({ where: { id: started.event.id } })).resolves.toMatchObject({ status: SportEventStatus.IN_PROGRESS });
@@ -195,9 +208,9 @@ describe('event lifecycle sweep through the app client (#1303)', () => {
 
   it('runs a sweep with nothing due as a no-op, sending no email and logging no failure', async () => {
     const { league } = await seedLeagueWithTeams(1);
-    const { scheduler, logger } = lifecycleSweep(new Date());
+    const { sweep, logger } = lifecycleSweep(new Date());
 
-    await scheduler.runSweep();
+    await sweep();
 
     expect(logger.error).not.toHaveBeenCalled();
     await expect(getPrisma().emailMessage.count({ where: { leagueId: league.id } })).resolves.toBe(0);
