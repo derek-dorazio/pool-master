@@ -117,19 +117,16 @@ export async function loadBracketStandings(
     return { entry, score, champion };
   });
   const finalTotal = finalTotalPoints(games);
-  const ranks = new Map(rankPredictionStandings(
-    scored.map(({ entry, score }) => ({ entryId: entry.id, points: score.points, tiebreakerValue: contestEntryEventTiebreaker(entry, sportEventId) })),
+  const ranked = rankPredictionStandings(
+    scored.map((standing) => ({ ...standing, entryId: standing.entry.id, points: standing.score.points, tiebreakerValue: contestEntryEventTiebreaker(standing.entry, sportEventId) })),
     finalTotal,
-  ).map((rank) => [rank.entryId, rank]));
+  );
   return {
     eventCancelled,
     finalTotalPoints: finalTotal,
     gameCount: games.length,
-    entries: scored
-      .flatMap(({ entry, score, champion }) => {
-        const rank = ranks.get(entry.id);
-        return rank ? [{ entry, score, champion, position: rank.position, displayPosition: rank.displayPosition }] : [];
-      })
+    entries: ranked
+      .map(({ entry, score, champion, position, displayPosition }) => ({ entry, score, champion, position, displayPosition }))
       .sort((left, right) => left.position - right.position || left.entry.entryNumber - right.entry.entryNumber || left.entry.name.localeCompare(right.entry.name)),
   };
 }

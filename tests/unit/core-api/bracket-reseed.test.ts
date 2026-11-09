@@ -1,6 +1,7 @@
 import { expect } from '@jest/globals';
 import { MatchEnding, MatchSide, MatchStatus, type SportEventMatch } from '@poolmaster/shared/domain';
 import {
+  findReseededPlaceGaps,
   findRoundMatchupProblems,
   proposeRoundMatchups,
   reseededRounds,
@@ -235,5 +236,155 @@ describe('findBracketProblems on a league that reseeds', () => {
     const twoFinals = matches.map((match) => (match.matchNumber === 12 ? { ...match, roundNumber: 4, advancesTo: null } : match));
 
     expect(findBracketProblems(twoFinals, { ...context, reseeds: true })).toContain('a bracket has one final, the one match in its last round, but this one has 2 in round 4');
+  });
+});
+
+describe('findReseededPlaceGaps', () => {
+  it('finds no gap when each conference\'s open Divisional places match its Wild Card games', () => {
+    expect(findReseededPlaceGaps(nflPlayoff())).toEqual([]);
+  });
+
+  it('names the conference whose bye team was left out: one place more than the winners to come', () => {
+    const noBye = nflPlayoff().map((match) => (match.matchNumber === 7 ? { ...match, homeSportEventParticipantId: null } : match));
+
+    expect(findReseededPlaceGaps(noBye)).toEqual([{ roundNumber: 2, regionLabel: 'AFC', openPlaces: 4, winnersToCome: 3 }]);
+  });
+
+  it('checks every reseeded round in order, here the Divisional round and the conference championships', () => {
+    const unlinkedDivisional = nflPlayoff().map((match) => (match.roundNumber === 2 ? { ...match, advancesToMatchId: null, advancesToSide: null } : match));
+
+    expect(findReseededPlaceGaps(unlinkedDivisional)).toEqual([]);
+    expect(findReseededPlaceGaps(unlinkedDivisional.filter((match) => match.matchNumber !== 12))).toEqual([
+      { roundNumber: 3, regionLabel: 'NFC', openPlaces: 0, winnersToCome: 2 },
+    ]);
+  });
+
+  it('counts a side as open when the match linking into it names no side', () => {
+    const sideless = nflPlayoff().map((match) => (match.matchNumber === 1
+      ? { ...match, roundNumber: 2, regionLabel: 'NFC', advancesToMatchId: 'm8', advancesToSide: null }
+      : match));
+
+    expect(findReseededPlaceGaps(sideless)).toEqual([{ roundNumber: 2, regionLabel: 'AFC', openPlaces: 3, winnersToCome: 2 }]);
+  });
+});
+
+describe('roundPlacementBlocker — wording', () => {
+  it('names every unfinished game, and every started game, in the plural', () => {
+    expect(roundPlacementBlocker(nflPlayoff(), 2)).toEqual({
+      code: 'BRACKET_ROUND_NOT_FINISHED',
+      reason: 'matches 1, 2, 3, 4, 5, 6 of round 1 have no result yet',
+    });
+    const twoStarted = afterWildCard(UPSET_WEEKEND).map((match) => (match.matchNumber === 9 || match.matchNumber === 10
+      ? { ...match, status: MatchStatus.IN_PROGRESS }
+      : match));
+    expect(roundPlacementBlocker(twoStarted, 2)).toEqual({
+      code: 'BRACKET_ROUND_ALREADY_PLAYED',
+      reason: 'matches 9, 10 of round 2 have started',
+    });
+    const oneStarted = afterWildCard(UPSET_WEEKEND).map((match) => (match.matchNumber === 9 ? { ...match, status: MatchStatus.IN_PROGRESS } : match));
+    expect(roundPlacementBlocker(oneStarted, 2)?.reason).toBe('match 9 of round 2 has started');
+  });
+});
+
+describe('proposeRoundMatchups — edge cases', () => {
+  it('sorts a team with no seed after every seeded one, so it meets the best seed', () => {
+    const noSevenSeed = new Map([...seedOf].filter(([rowId]) => rowId !== 'AFC-7' && rowId !== 'AFC-5'));
+
+    expect(proposeRoundMatchups(afterWildCard(UPSET_WEEKEND), 2, noSevenSeed).matchups.slice(0, 2)).toEqual([
+      pair(7, 'AFC-1', 'AFC-5'),
+      pair(8, 'AFC-3', 'AFC-7'),
+    ]);
+  });
+
+  it('re-proposes the same pairing once the winners are already named in the round', () => {
+    const bracket = afterWildCard(UPSET_WEEKEND);
+    const placed = proposeRoundMatchups(bracket, 2, seedOf).matchups;
+    const saved = bracket.map((match) => {
+      const matchup = placed.find((candidate) => candidate.matchNumber === match.matchNumber);
+      return matchup ? { ...match, homeSportEventParticipantId: matchup.homeSportEventParticipantId, awaySportEventParticipantId: matchup.awaySportEventParticipantId } : match;
+    });
+
+    expect(proposeRoundMatchups(saved, 2, seedOf)).toEqual({ matchups: placed, problems: [] });
+  });
+
+  it('keeps a Wild Card winner its link already placed in the round', () => {
+    // The AFC 3 v 6 game links into match 8 home, where the 3 seed already stands.
+    const bracket = afterWildCard(UPSET_WEEKEND).map((match) => (match.matchNumber === 2
+      ? { ...match, advancesToMatchId: 'm8', advancesToSide: MatchSide.HOME }
+      : match.matchNumber === 8 ? { ...match, homeSportEventParticipantId: 'AFC-3' } : match));
+
+    const { matchups, problems } = proposeRoundMatchups(bracket.filter((match) => match.regionLabel === 'AFC' && match.roundNumber <= 2), 2, seedOf);
+
+    expect(problems).toEqual([]);
+    expect(matchups).toEqual([pair(7, 'AFC-1', 'AFC-7'), pair(8, 'AFC-3', 'AFC-5')]);
+  });
+
+  it('places a bye team that carries no seed on the side it holds', () => {
+    const bracket = afterWildCard(UPSET_WEEKEND).filter((match) => match.matchNumber === 1 || match.matchNumber === 7);
+    const noByeSeed = new Map([...seedOf].filter(([rowId]) => rowId !== 'AFC-1'));
+
+    expect(proposeRoundMatchups(bracket, 2, noByeSeed)).toEqual({ matchups: [pair(7, 'AFC-1', 'AFC-7')], problems: [] });
+  });
+
+  it('refuses a pairing of two teams that each hold a different match, and a pair left with no open match', () => {
+    // AFC: the 1 seed holds match 7 and the 5 seed is placed on match 8, so 1 v 5... the best and
+    // worst seeds left hold different matches, and the middle pair has nowhere to go.
+    const bracket = afterWildCard(new Map([[1, MatchSide.HOME], [2, MatchSide.HOME], [3, MatchSide.HOME]]))
+      .filter((match) => match.regionLabel === 'AFC' && match.roundNumber <= 2)
+      .map((match) => (match.matchNumber === 3 ? { ...match, awaySportEventParticipantId: 'AFC-6', homeSportEventParticipantId: 'AFC-4' }
+        : match.matchNumber === 2 ? { ...match, homeSportEventParticipantId: 'AFC-3', awaySportEventParticipantId: 'AFC-7' }
+          : match.matchNumber === 8 ? { ...match, homeSportEventParticipantId: 'AFC-5' } : match))
+      .filter((match) => match.matchNumber !== 1);
+
+    expect(proposeRoundMatchups(bracket, 2, seedOf)).toEqual({
+      matchups: [],
+      problems: [
+        'round 2 in AFC: the teams in matches 7 and 8 would meet, but each already holds its place',
+        'round 2 in AFC has no open match left for a pair',
+      ],
+    });
+  });
+
+  it('counts no team for a Wild Card game without a result', () => {
+    expect(proposeRoundMatchups(nflPlayoff(), 2, seedOf).problems).toEqual([
+      expect.stringContaining('round 2 in AFC has 4 places for 1 team'),
+      expect.stringContaining('round 2 in NFC has 4 places for 1 team'),
+    ]);
+  });
+
+  it('names the round without a region when its matches carry none', () => {
+    const unregioned = afterWildCard(UPSET_WEEKEND)
+      .filter((match) => match.regionLabel === 'AFC' && match.roundNumber <= 2 && match.matchNumber !== 3)
+      .map((match) => ({ ...match, regionLabel: null }));
+
+    expect(proposeRoundMatchups(unregioned, 2, seedOf).problems).toEqual(['round 2 has 4 places for 3 teams']);
+  });
+});
+
+describe('findRoundMatchupProblems — wording', () => {
+  const bracket = afterWildCard(UPSET_WEEKEND);
+
+  it('names every unset match in the plural, and no unplaced teams while a match is unset', () => {
+    expect(findRoundMatchupProblems(bracket, 2, [], seedOf)).toEqual(['matches 7, 8, 9, 10 of round 2 are not set']);
+  });
+
+  it('counts unplaced teams in the plural, and names a team or match with no region', () => {
+    const proposal = proposeRoundMatchups(bracket, 2, seedOf).matchups;
+    const unregioned = bracket.map((match) => (match.matchNumber === 10 ? { ...match, regionLabel: null } : match));
+
+    expect(findRoundMatchupProblems(unregioned, 2, [proposal[0], pair(8, 'AFC-3', 'AFC-3'), proposal[2], pair(10, 'NFC-2', 'NFC-2')], seedOf)).toEqual([
+      'match 8 away names a team already placed',
+      'match 10 home names a team from NFC, but the match is in no region',
+      'match 10 away names a team already placed',
+      'match 10 away names a team from NFC, but the match is in no region',
+      '2 teams left in round 2 are not placed',
+    ]);
+  });
+
+  it('names a team with no region played into a regional match', () => {
+    const unregionedTeam = bracket.map((match) => (match.matchNumber === 6 ? { ...match, regionLabel: null } : match));
+    const proposal = proposeRoundMatchups(bracket, 2, seedOf).matchups;
+
+    expect(findRoundMatchupProblems(unregionedTeam, 2, proposal, seedOf)).toEqual(['match 9 away names a team from no region, but the match is in NFC']);
   });
 });
