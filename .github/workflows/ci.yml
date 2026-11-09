@@ -195,9 +195,9 @@ jobs:
   # still block publish (deploy-publish-images needs service-lint-typecheck), but no longer
   # hold the tests back.
   #
-  # Only the unit suite collects coverage here, because only it is gated (#302). The
-  # merged unit + integration + FAPI report is .github/workflows/coverage.yml, run on
-  # demand: V8 coverage, which the merge needs, more than doubles integration time.
+  # The unit suite and the integration shards collect coverage here, both with Jest's default
+  # Babel provider (#302, #1483); V8 more than doubles integration time. Functional API runs
+  # without coverage. There is no merged cross-suite report (#1484).
 
   # No database. The coverage threshold in tests/jest.config.js is enforced here; the
   # webapp's is enforced in poolmaster-unit-tests. Jest's default provider (Babel) — see the config.
@@ -1816,8 +1816,7 @@ jobs:
   # `changes` is watched here even though it is not a quality gate. When it fails the jobs it
   # gates still run, so without it here its own failure would be the one that reports nothing.
   #
-  # Between the two reporters, every job in this workflow is watched. coverage.yml is a
-  # separate workflow and is not: a failure there still surfaces only on its run page.
+  # Between the two reporters, every job in this workflow is watched.
   main-ci-health-issue:
     name: main-ci-health-issue
     runs-on: ubuntu-latest

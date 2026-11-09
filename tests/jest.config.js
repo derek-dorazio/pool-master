@@ -18,7 +18,6 @@ module.exports = {
   coverageDirectory: '<rootDir>/coverage',
   // #302 — no coverageProvider here: CI's gating run uses Jest's default (Babel), which is the
   // method the coverageThreshold below was set against and costs ~7s rather than V8's ~37s.
-  // run-backend-coverage.mjs passes --coverageProvider=v8 for the merged report (#296).
   collectCoverageFrom: [
     'packages/core-api/src/**/*.ts',
     'packages/shared/**/*.ts',

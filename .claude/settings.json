@@ -14,7 +14,6 @@
       "Bash(npm run test:service:unit)",
       "Bash(npm run test:service:integration)",
       "Bash(npm run test:service:functional-api)",
-      "Bash(npm run test:coverage:service:merged)",
       "Bash(npm run build)",
       "Bash(npm run build:service)",
       "Bash(npm run build:poolmaster)",
@@ -31,8 +30,6 @@
       "Bash(node scripts/check-pr-review-triggers.mjs)",
       "Bash(node scripts/check-openapi-fresh.mjs)",
       "Bash(node scripts/run-service-functional-api.mjs)",
-      "Bash(node scripts/run-service-functional-api-coverage.mjs)",
-      "Bash(node scripts/run-backend-coverage.mjs)",
 
       "Bash(gh pr create *)",
       "Bash(gh pr edit *)",

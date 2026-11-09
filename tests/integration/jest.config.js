@@ -23,9 +23,7 @@ module.exports = {
   // Run serially — integration tests share a database
   maxWorkers: 1,
   // #302, #1483 — no coverageProvider here, so Jest's default (Babel) applies: CI's four shards
-  // collect Babel coverage for the per-file repository floor (scripts/coverage-floors.json). Only
-  // run-backend-coverage.mjs passes --coverageProvider=v8, so it merges with the FAPI server's V8
-  // coverage (#296).
+  // collect Babel coverage for the per-file repository floor (scripts/coverage-floors.json).
   collectCoverageFrom: [
     'packages/core-api/src/**/*.ts',
     'packages/shared/**/*.ts',

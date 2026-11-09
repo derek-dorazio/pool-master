@@ -494,7 +494,7 @@ What belongs here is what a gate failure means for a *test*:
   - rerun the exact command once Postgres is available
   - if `poolmaster_test` still looks dirty, use `npm run db:test:reset` or the
     matching `:fresh` script (`test:service:integration:fresh`,
-    `test:service:functional-api:fresh`, `test:coverage:service:fresh`). These
+    `test:service:functional-api:fresh`). These
     work from agent sessions too: the reset drops and recreates the `public` schema
     through `prisma db execute`, then runs `migrate deploy`, rather than calling
     `prisma migrate reset`, which Prisma refuses for an AI agent. It refuses any
@@ -931,8 +931,8 @@ DATABASE_URL=postgresql://postgres:postgres@localhost:5432/poolmaster_test npm r
 npm run coverage:floors:check
 ```
 
-The floors are Babel counts. The V8 numbers from `test:coverage:service:merged` are not
-comparable. `docs/CI-AND-QUALITY-GATES.md` covers the CI side and the sharded reproduction.
+The floors are Babel counts (Jest's default provider); a V8 run counts per line, so its numbers
+are not comparable. `docs/CI-AND-QUALITY-GATES.md` covers the CI side and the sharded reproduction.
 
 ### Backend Suite Placement Heuristics
 
