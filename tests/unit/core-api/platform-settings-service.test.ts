@@ -4,7 +4,12 @@ import { SettingsGroupKeySchema } from '@poolmaster/shared/dto/settings.dto';
 import { AppSettingsService } from '../../../packages/core-api/src/modules/platform/app-settings-service';
 import { PlatformSettingsService } from '../../../packages/core-api/src/modules/platform/platform-settings-service';
 import { SETTINGS_GROUPS } from '../../../packages/core-api/src/modules/platform/settings-groups';
-import { toSettingsChangeDto, toSettingsGroupDto } from '../../../packages/core-api/src/mappers/platform-settings.mapper';
+import {
+  toSettingsChangeDto,
+  toSettingsChangeListDto,
+  toSettingsGroupDto,
+  toSettingsGroupListDto,
+} from '../../../packages/core-api/src/mappers/platform-settings.mapper';
 import { fakeLogger } from '../../support/fake-logger';
 import { inMemoryRuntimeConfigs } from '../../support/in-memory-runtime-configs';
 import { fakeUserRepo } from '../../support/repo-fakes';
@@ -179,5 +184,19 @@ describe('the settings contract and the registry agree', () => {
     for (const view of await service.list()) {
       expect(() => toSettingsGroupDto(view)).not.toThrow();
     }
+  });
+
+  it('publishes the list of groups and the list of changes in the order the service gives them', async () => {
+    const { service } = await buildService();
+    const defaults = (await service.get('EMAIL_CONFIG')).state.defaults as object;
+    await service.save('EMAIL_CONFIG', {
+      key: 'EMAIL_CONFIG', value: { ...defaults, allowedRecipients: ['help@example.test'] }, expectedUpdatedAt: null,
+    }, ADMIN.id);
+
+    const groups = toSettingsGroupListDto(await service.list());
+    const changes = toSettingsChangeListDto(await service.history('EMAIL_CONFIG'));
+
+    expect(groups.groups.map((group) => group.key)).toEqual(SETTINGS_GROUPS.map((group) => group.key));
+    expect(changes.changes).toEqual([expect.objectContaining({ key: 'EMAIL_CONFIG', previousValue: null })]);
   });
 });

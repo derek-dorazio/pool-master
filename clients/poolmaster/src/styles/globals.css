@@ -50,6 +50,9 @@
     --color-paper: #f5f5f2;
     /* The one quiet second colour: small labels over titles and the selected tab. */
     --color-field-blue: #3d64a8;
+    /* Field blue lifted for graphite: white text still clears 4.5:1, and the selected tab
+       clears 3:1 against a dark card, where the light-mode blue sat at 2.9:1. */
+    --color-field-blue-lifted: #4470b5;
     --color-paper-warm: #fafaf7;
     /* The brand's warm neutral steps: quiet fills and, on navy, quiet text. */
     --color-neutral-150: #eaeae6;
@@ -248,6 +251,7 @@
     --text-muted: var(--color-graphite-300);
     /* Label blue is too dark to read on graphite; labels take navy haze, as on navy panels. */
     --text-label: var(--color-navy-200);
+    --surface-selected: var(--color-field-blue-lifted);
     --text-danger: var(--color-red-300);
     /* White on the lighter dark-mode red is too faint; red buttons take dark text. */
     --text-on-danger: var(--color-graphite-900);
