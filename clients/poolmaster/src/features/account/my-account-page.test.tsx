@@ -38,6 +38,7 @@ function renderLegacyMyAccountRoute() {
           <Routes>
             <Route element={<MyAccountPage />} path="/my-account" />
             <Route element={<div data-testid="canonical-user-route" />} path="/users/:userId" />
+            <Route element={<div data-testid="home-route" />} path="/" />
           </Routes>
         </MemoryRouter>
       </AuthProvider>
@@ -72,5 +73,21 @@ describe('MyAccountPage', () => {
     renderLegacyMyAccountRoute();
 
     expect(await screen.findByTestId('canonical-user-route')).toBeVisible();
+  });
+
+  it('sends a signed-out visitor on the legacy /my-account route to the home page', async () => {
+    getCurrentUserMock.mockResolvedValue({
+      error: { error: { code: 'UNAUTHORIZED', message: 'Sign in to continue.' } },
+      response: { status: 401 },
+    });
+    refreshTokenMock.mockResolvedValue({
+      error: { error: { code: 'UNAUTHORIZED', message: 'Sign in to continue.' } },
+      response: { status: 401 },
+    });
+
+    renderLegacyMyAccountRoute();
+
+    expect(await screen.findByTestId('home-route')).toBeVisible();
+    expect(screen.queryByTestId('canonical-user-route')).not.toBeInTheDocument();
   });
 });

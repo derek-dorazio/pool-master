@@ -118,14 +118,19 @@ vi.mock('@/features/leagues/create-league-modal', () => ({
   CreateLeagueModal: ({
     isOpen,
     onClose,
+    onCreated,
   }: {
     isOpen: boolean;
     onClose: () => void;
+    onCreated: (leagueCode: string) => void;
   }) => (
     isOpen ? (
       <div data-testid="mock-create-league-modal">
         <button data-testid="mock-create-league-modal-close" onClick={onClose} type="button">
           Close
+        </button>
+        <button data-testid="mock-create-league-modal-created" onClick={() => onCreated('NEWLEAGUE')} type="button">
+          Created
         </button>
       </div>
     ) : null
@@ -423,5 +428,57 @@ describe('AppShell', () => {
   it('pool-master-dxd.21 derives league context from router params instead of pathname regex', () => {
     expect(appShellSource).not.toContain('location.pathname.match');
     expect(appShellSource).toContain('useParams');
+  });
+
+  it('opens the create-league dialog from the league selector and closes it again', async () => {
+    listLeaguesMock.mockResolvedValue({ data: { leagues: [], memberships: [] } });
+
+    renderAppShell();
+
+    fireEvent.click(await screen.findByTestId('mock-league-selector-create'));
+    expect(await screen.findByTestId('mock-create-league-modal')).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('mock-create-league-modal-close'));
+
+    await waitFor(() => expect(screen.queryByTestId('mock-create-league-modal')).not.toBeInTheDocument());
+  });
+
+  it('opens the create-league dialog when the page is reached with createLeague=1 in the address', async () => {
+    listLeaguesMock.mockResolvedValue({ data: { leagues: [], memberships: [] } });
+
+    renderAppShell(['/league/LEAGUE1?createLeague=1']);
+
+    expect(await screen.findByTestId('mock-create-league-modal')).toBeInTheDocument();
+  });
+
+  it('closes the create-league dialog and goes to the new league once it is created', async () => {
+    listLeaguesMock.mockResolvedValue({ data: { leagues: [], memberships: [] } });
+
+    renderAppShell();
+
+    fireEvent.click(await screen.findByTestId('mock-league-selector-create'));
+    fireEvent.click(await screen.findByTestId('mock-create-league-modal-created'));
+
+    await waitFor(() => expect(screen.getByTestId('mock-league-menu')).toHaveTextContent('NEWLEAGUE'));
+    expect(screen.queryByTestId('mock-create-league-modal')).not.toBeInTheDocument();
+  });
+
+  it('goes to the league a member picks in the league selector', async () => {
+    listLeaguesMock.mockResolvedValue({ data: { leagues: [], memberships: [] } });
+
+    renderAppShell(['/league/OTHER']);
+
+    expect(await screen.findByTestId('mock-league-menu')).toHaveTextContent('OTHER');
+    fireEvent.click(screen.getByTestId('mock-league-selector-navigate'));
+
+    await waitFor(() => expect(screen.getByTestId('mock-league-menu')).toHaveTextContent('LEAGUE1'));
+  });
+
+  it('labels the account menu "Account" when the signed-in user has no name on record', async () => {
+    authState.user = undefined as unknown as typeof authState.user;
+    listLeaguesMock.mockResolvedValue({ data: { leagues: [], memberships: [] } });
+
+    renderAppShell(['/plans']);
+
+    expect(await screen.findByTestId('mock-account-menu-logout')).toHaveTextContent('Logout Account');
   });
 });
