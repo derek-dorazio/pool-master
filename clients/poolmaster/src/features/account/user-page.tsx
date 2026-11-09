@@ -53,7 +53,7 @@ import { formatUserName } from './user-name';
 import { buildUserPath, SELF_USER_ID } from './user-routing';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
-import { PRODUCT_NAME } from '@poolmaster/shared/domain';
+import { ColorScheme, PRODUCT_NAME } from '@poolmaster/shared/domain';
 
 type UserProfileFormValues = z.infer<typeof UserProfileUpdateRequestSchema>;
 type UserUsernameFormValues = z.infer<typeof UserUsernameUpdateRequestSchema>;
@@ -127,6 +127,7 @@ export function UserPage() {
       timezone: null,
       locale: null,
       timeFormat: null,
+      colorScheme: null,
     },
   });
   const passwordForm = useForm<UserPasswordFormValues>({
@@ -225,6 +226,9 @@ export function UserPage() {
           timezone: values.timezone?.trim() || undefined,
           locale: values.locale?.trim() || undefined,
           timeFormat: values.timeFormat ?? undefined,
+          // Sent only when the member changed it: saving other preferences must not turn
+          // "no choice yet" into Match my device, since the mobile app treats the two apart.
+          colorScheme: values.colorScheme === (user?.colorScheme ?? ColorScheme.DEVICE) ? undefined : values.colorScheme ?? undefined,
         },
       });
       if (!response.data?.user) {
@@ -406,6 +410,8 @@ export function UserPage() {
       timezone: activeUser.timezone ?? DEFAULT_DISPLAY_PREFERENCES.timeZone,
       locale: activeUser.locale ?? null,
       timeFormat: activeUser.timeFormat ?? null,
+      // No choice saved means the website follows the device, so that is what the form shows.
+      colorScheme: activeUser.colorScheme ?? ColorScheme.DEVICE,
     });
     preferencesMutation.reset();
     setActiveDialog('preferences');
@@ -491,7 +497,7 @@ export function UserPage() {
             />
 
             <ActionTile
-              description="Choose the time zone, locale and clock your dates and times are shown in."
+              description="Choose the time zone, locale and clock your dates and times are shown in, and whether the site is light or dark."
               data-testid="user-page-open-preferences"
               label="Edit preferences"
               onClick={openPreferencesDialog}
@@ -678,7 +684,7 @@ export function UserPage() {
 
       <FormModal
         canSave={!disablePreferencesEditing}
-        description="Choose how dates and times appear for you."
+        description="Choose how dates and times appear for you, and whether the site is light or dark."
         error={preferencesMutation.isError ? preferencesMutation.error : null}
         errorFallback="We could not save your preferences."
         isPending={preferencesMutation.isPending}
@@ -776,6 +782,33 @@ export function UserPage() {
                   <option value="">System default</option>
                   <option value="12H">12-hour</option>
                   <option value="24H">24-hour</option>
+                </Select>
+              )}
+            />
+          </FormField>
+          <FormField
+            error={preferencesForm.formState.errors.colorScheme?.message}
+            label="Appearance"
+          >
+            <Controller
+              control={preferencesForm.control}
+              name="colorScheme"
+              render={({ field }) => (
+                <Select
+                  data-testid="user-page-color-scheme"
+                  disabled={disablePreferencesEditing}
+                  name={field.name}
+                  onBlur={field.onBlur}
+                  onChange={(event) => {
+                    preferencesMutation.reset();
+                    field.onChange(event.target.value);
+                  }}
+                  ref={field.ref}
+                  value={field.value ?? ColorScheme.DEVICE}
+                >
+                  <option value={ColorScheme.DEVICE}>Match my device</option>
+                  <option value={ColorScheme.LIGHT}>Light</option>
+                  <option value={ColorScheme.DARK}>Dark</option>
                 </Select>
               )}
             />
