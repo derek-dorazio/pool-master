@@ -6,6 +6,8 @@ import {
   MailDeliveryError,
   MailDeliveryThrottledError,
   SesMailDeliveryProvider,
+  SmtpMailDeliveryProvider,
+  createMailDeliveryProvider,
   formatMailAddress,
   readApplicationBaseUrl,
   readMailDeliveryConfig,
@@ -294,5 +296,78 @@ describe('one-click unsubscribe headers', () => {
     });
 
     expect(sentCommands[0].input.Content?.Simple).not.toHaveProperty('Headers');
+  });
+});
+
+describe('SMTP mail delivery provider', () => {
+  const smtp = { provider: 'smtp' as const, fromEmail: 'noreply@poolmaster.local', smtp: { host: 'mailpit', port: 1025, secure: false } };
+  const message = {
+    from: { name: 'Office League', address: 'officeleague@qa.example.com' },
+    to: 'member@example.com',
+    subject: 'League invitation',
+    text: 'Plain text body',
+    html: '<p>HTML body</p>',
+    listUnsubscribeUrl: 'https://app.example.test/unsubscribe/abc',
+    metadata: { templateKey: 'LEAGUE_MEMBER_INVITE' as const, contestId: 'contest-1', entryId: 'entry-1' },
+  };
+
+  it('submits one email with its one-click unsubscribe headers, and answers with the server\'s message id', async () => {
+    const sendMail = jest.fn().mockResolvedValue({ messageId: '<smtp-1@mailpit>' });
+    const logger = fakeLogger();
+    const provider = new SmtpMailDeliveryProvider(smtp, { sendMail } as never, logger);
+
+    await expect(provider.send(message)).resolves.toEqual({ provider: 'smtp', messageId: '<smtp-1@mailpit>' });
+
+    expect(sendMail).toHaveBeenCalledWith(expect.objectContaining({
+      to: ['member@example.com'],
+      headers: { 'List-Unsubscribe': '<https://app.example.test/unsubscribe/abc>', 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' },
+    }));
+    expect(logger.info).toHaveBeenCalledWith(
+      { action: 'mailDelivery.smtp.send.success', data: { toCount: 1, templateKey: 'LEAGUE_MEMBER_INVITE', leagueId: null, contestId: 'contest-1', entryId: 'entry-1', invitationId: null, messageId: '<smtp-1@mailpit>' } },
+      expect.any(String),
+    );
+  });
+
+  it('answers no message id when the server gives none, and no headers on an email a member cannot turn off', async () => {
+    const sendMail = jest.fn().mockResolvedValue({});
+    const provider = new SmtpMailDeliveryProvider(smtp, { sendMail } as never);
+
+    await expect(provider.send({ ...message, listUnsubscribeUrl: undefined })).resolves.toEqual({ provider: 'smtp', messageId: undefined });
+    expect(sendMail).toHaveBeenCalledWith(expect.objectContaining({ headers: {} }));
+  });
+
+  it('reports a failed submission as a MailDeliveryError carrying its cause', async () => {
+    const refusal = new Error('connection refused');
+    const provider = new SmtpMailDeliveryProvider(smtp, { sendMail: () => Promise.reject(refusal) } as never, fakeLogger());
+
+    await expect(provider.send(message)).rejects.toMatchObject({ cause: refusal });
+    await expect(provider.send(message)).rejects.toBeInstanceOf(MailDeliveryError);
+  });
+
+  it('refuses a provider built without its own settings', () => {
+    expect(() => new SmtpMailDeliveryProvider({ provider: 'smtp', fromEmail: 'noreply@poolmaster.local' })).toThrow(MailDeliveryConfigError);
+    expect(() => new SesMailDeliveryProvider({ provider: 'ses', fromEmail: 'noreply@poolmaster.local' })).toThrow(MailDeliveryConfigError);
+  });
+});
+
+describe('mail delivery provider from the environment', () => {
+  it('builds the provider the environment names, with credentials only when both halves are set', () => {
+    expect(createMailDeliveryProvider(readMailDeliveryConfig({ EMAIL_PROVIDER: 'smtp', SMTP_USERNAME: 'user', SMTP_PASSWORD: 'secret' })).providerName).toBe('smtp');
+    expect(createMailDeliveryProvider(readMailDeliveryConfig({ EMAIL_PROVIDER: 'smtp' })).providerName).toBe('smtp');
+    expect(createMailDeliveryProvider(readMailDeliveryConfig({ EMAIL_PROVIDER: 'ses', AWS_ACCESS_KEY_ID: 'key', AWS_SECRET_ACCESS_KEY: 'secret' })).providerName).toBe('ses');
+    expect(createMailDeliveryProvider(readMailDeliveryConfig({ EMAIL_PROVIDER: 'ses' })).providerName).toBe('ses');
+  });
+
+  it('defaults to SMTP on localhost:1025, takes the other provider\'s sender when its own is unset, and refuses a port that is not a positive number', () => {
+    expect(readMailDeliveryConfig({})).toMatchObject({ provider: 'smtp', fromEmail: 'noreply@poolmaster.local', smtp: { host: 'localhost', port: 1025, secure: false } });
+    expect(readMailDeliveryConfig({ SES_FROM_EMAIL: 'ses@example.com', SMTP_SECURE: ' TRUE ' })).toMatchObject({ fromEmail: 'ses@example.com', smtp: { secure: true } });
+    expect(readMailDeliveryConfig({ EMAIL_PROVIDER: 'SES', SMTP_FROM: 'smtp@example.com' })).toMatchObject({ provider: 'ses', fromEmail: 'smtp@example.com', ses: { region: 'us-east-1' } });
+    expect(readMailDeliveryConfig({ EMAIL_PROVIDER: 'ses' }).fromEmail).toBe('noreply@poolmaster.local');
+    expect(() => readMailDeliveryConfig({ SMTP_PORT: 'zero' })).toThrow('Invalid SMTP_PORT: zero');
+    expect(() => readMailDeliveryConfig({ SMTP_PORT: '-25' })).toThrow('Invalid SMTP_PORT: -25');
+  });
+
+  it('serves links from the local web app when no base URL is set', () => {
+    expect(readApplicationBaseUrl({})).toBe('http://localhost:5173');
   });
 });

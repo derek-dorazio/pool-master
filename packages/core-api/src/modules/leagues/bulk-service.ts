@@ -100,7 +100,7 @@ export interface TeamReassignmentInput {
 export class BulkOperationError extends Error {
   code: ApiErrorCode;
 
-  constructor(reason: string, code: ApiErrorCode = 'LEAGUE_BULK_OPERATION_INVALID') {
+  constructor(reason: string, code: ApiErrorCode) {
     super(reason);
     this.name = 'BulkOperationError';
     this.code = code;

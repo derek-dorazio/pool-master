@@ -107,3 +107,19 @@ describe('perpetual trophies', () => {
     expect(isWeekOfGames({ count: 4, roundCount: 2, sendingWinnerOn: 0 })).toBe(false);
   });
 });
+
+describe('perpetual trophy plates in one year', () => {
+  it('puts the contest completed last first when the league ran it twice in a year, and one not yet completed after both', () => {
+    const trophies = buildPerpetualTrophies(
+      [
+        contest('masters-2025-open', 2025, { completedAt: null }),
+        contest('masters-2025-early', 2025, { completedAt: new Date('2025-04-10T00:00:00.000Z') }),
+        contest('masters-2025-late', 2025, { completedAt: new Date('2025-04-14T00:00:00.000Z') }),
+        contest('masters-2024', 2024),
+      ],
+      [],
+    );
+
+    expect(trophies[0].plates.map((plate) => plate.contestId)).toEqual(['masters-2025-late', 'masters-2025-early', 'masters-2025-open', 'masters-2024']);
+  });
+});

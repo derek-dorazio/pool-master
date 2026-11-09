@@ -37,6 +37,7 @@ import { settleSportEventContestsJob, type SettleSportEventContestsJobPayload } 
 import { settleGameContestsJob, type SettleGameContestsJobPayload } from '../contests/settle-game-job-requests';
 import type { BackgroundJobQueue } from '../background-jobs';
 import type { ApiErrorCode } from '@poolmaster/shared/dto';
+import { errorMessage } from '../../core/error-message';
 
 export interface FinishedSportEventSettlement {
   settleFinishedSportEvent(
@@ -239,7 +240,7 @@ export class EventLifecycleService {
       this.logger?.error({
         sportEventId: sportEvent.id,
         change: change.kind,
-        error: err instanceof Error ? err.message : String(err),
+        error: errorMessage(err),
       }, 'Failed to queue event changed emails');
     }
   }

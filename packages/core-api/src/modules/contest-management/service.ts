@@ -86,6 +86,7 @@ import {
 import { toEffectiveTierDtoList } from '../../mappers/contest-management.mapper';
 import { evaluateEventOperationalState, hasSportEventStarted } from '../events/operational-timing';
 import { ContestCutoffKind, contestCutoff, type ContestCutoff, type EventTiming } from '../contests/entry-window';
+import { errorMessage } from '../../core/error-message';
 
 interface CreateContestManagementContext {
   leagueId: string;
@@ -530,7 +531,7 @@ export class ContestManagementService {
     try {
       await this.contestOpened?.contestOpened(contestId);
     } catch (error) {
-      this.logger.error({ contestId, leagueId, error: error instanceof Error ? error.message : String(error) }, 'contest opened email could not be queued');
+      this.logger.error({ contestId, leagueId, error: errorMessage(error) }, 'contest opened email could not be queued');
     }
   }
 

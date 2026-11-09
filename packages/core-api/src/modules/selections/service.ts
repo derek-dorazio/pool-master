@@ -92,6 +92,7 @@ import {
   type SelectionParticipant,
   type SelectionPickResult,
 } from './types';
+import { errorMessage } from '../../core/error-message';
 
 export interface SelectionServiceDeps {
   contests: ContestRepository;
@@ -498,7 +499,7 @@ export class SelectionService {
         await this.deps.entryReceipts?.sendEntrySubmittedEmails(receiptInput(submittedContext, [entryId], picks));
       } catch (error) {
         this.deps.logger?.error(
-          { action: 'selection.submitEntry.receiptFailed', data: { contestId, entryId, error: error instanceof Error ? error.message : String(error) } },
+          { action: 'selection.submitEntry.receiptFailed', data: { contestId, entryId, error: errorMessage(error) } },
           'Failed to queue a submitted entry\'s receipt',
         );
       }

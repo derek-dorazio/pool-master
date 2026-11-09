@@ -68,6 +68,15 @@ floor on its own, and a new file in a matched folder falls under it the day it i
   these files reaches (96% of branches today). A branch left unrun is a defensive one no input
   can reach, such as a default on a lookup in a map built from the same list; prefer reshaping
   the code so the branch does not exist over leaving it.
+- **Services, module logic, shared domain and shared DTOs**: 90% of lines and 80% of branches
+  per file. That is every file under `modules/` except routes, handlers, `wiring.ts`,
+  `*-job-requests.ts`, repositories, mappers, barrels and ingestion's provider `adapters/` and
+  `persistence/`, plus everything under `packages/shared/domain` and `packages/shared/dto`. The
+  left-out files are proven by the integration and functional suites, or by their own floors
+  (mappers #1481, handlers #1482). A new file in a matched folder is held to 90/80 the day it
+  lands, so it lands with its unit tests.
+- Jest holds a file only to the first glob that matches it, so the scoring globs stay ahead of
+  the 90/80 ones in `coverageThreshold`.
 - **The rest of the suite** has a suite-level floor. Jest leaves every file a glob matches out of
   `global`, so re-measure and re-set `global` whenever a glob is added, about 1 point under the
   new figure.

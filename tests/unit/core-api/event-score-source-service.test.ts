@@ -395,3 +395,53 @@ describe('EventScoreSourceError', () => {
     expect(error.name).toBe('EventScoreSourceError');
   });
 });
+
+describe('EventScoreSourceService linking a score source', () => {
+  const golfEvent = { id: 'event-1', sport: 'GOLF', providerId: 'manual-admin', externalId: 'manual-1', syncScope: 'NONE' };
+
+  function linking(options: { conflict?: boolean; provider?: SportDataProvider | null; event?: Record<string, unknown> } = {}) {
+    const prisma = {
+      sportEvent: {
+        findUnique: jest.fn().mockResolvedValue(options.event ?? golfEvent),
+        findFirst: jest.fn().mockResolvedValue(options.conflict ? { id: 'event-2' } : null),
+        update: jest.fn().mockResolvedValue({}),
+      },
+    };
+    const service = new EventScoreSourceService(asPrismaClient(prisma), registryWith(options.provider === undefined ? buildProvider() : options.provider));
+    return { service, prisma };
+  }
+
+  it('links the event to the provider\'s event for scores only, in one write', async () => {
+    const { service, prisma } = linking();
+
+    await service.linkScoreSource('event-1', { providerId: 'mock-golf', externalId: 'ext-1' });
+
+    expect(prisma.sportEvent.update).toHaveBeenCalledWith({
+      where: { id: 'event-1' },
+      data: { providerId: 'mock-golf', externalId: 'ext-1', syncScope: 'SCORES_ONLY' },
+    });
+  });
+
+  it('refuses an unknown provider (404), a provider not covering the sport (422) and a provider event already linked elsewhere (409), writing nothing', async () => {
+    const unknown = linking({ provider: null });
+    const otherSport = linking({ event: { ...golfEvent, sport: 'TENNIS' } });
+    const taken = linking({ conflict: true });
+    const input = { providerId: 'mock-golf', externalId: 'ext-1' };
+
+    await expect(unknown.service.linkScoreSource('event-1', input)).rejects.toMatchObject({ code: 'PROVIDER_NOT_FOUND', statusCode: 404 });
+    await expect(otherSport.service.linkScoreSource('event-1', input)).rejects.toMatchObject({ code: 'PROVIDER_SPORT_MISMATCH', statusCode: 422 });
+    await expect(taken.service.linkScoreSource('event-1', input)).rejects.toMatchObject({ code: 'EXTERNAL_EVENT_ALREADY_LINKED', statusCode: 409 });
+    for (const { prisma } of [unknown, otherSport, taken]) expect(prisma.sportEvent.update).not.toHaveBeenCalled();
+  });
+
+  it('unlinks the event back to a manual placeholder that syncs nothing', async () => {
+    const { service, prisma } = linking({ event: { ...golfEvent, providerId: 'mock-golf', syncScope: 'SCORES_ONLY' } });
+
+    await service.unlinkScoreSource('event-1');
+
+    expect(prisma.sportEvent.update).toHaveBeenCalledWith({
+      where: { id: 'event-1' },
+      data: { providerId: 'manual-admin', externalId: expect.stringMatching(/^manual-/), syncScope: 'NONE' },
+    });
+  });
+});

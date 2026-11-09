@@ -220,6 +220,32 @@ describe('EntryReceipts', () => {
     expect(textTo(owners[0].id)).toContain('- Arsenal at Chelsea: Draw');
   });
 
+  it('reads a neutral-site game as "vs", a team not yet known as To be decided, a pick on a game with no line by the team alone, and a tiebreaker on no listed game by its total', async () => {
+    const { contest, event, entry, owners } = await entryIn(SelectionType.PICK_EM, { name: 'Week 1', sport: Sport.AMERICAN_FOOTBALL, startDate: KICKOFF });
+    const neutral = game({ id: 'game-1', away: 'Bills', home: 'Chiefs', picked: 'Chiefs' });
+    const undecided = { ...game({ id: 'game-2', away: 'Bears', home: 'Lions', picked: 'Lions' }), away: null, predictedAway: null };
+
+    await submitted(view({ contestId: contest.id, entryId: entry.id, sportEventId: event.id }, {
+      againstTheSpread: true,
+      tiebreakerMatchId: 'game-9',
+      tiebreakerValue: 38,
+      games: [{ ...neutral, match: { ...neutral.match, isNeutralSite: true } }, undecided],
+    }));
+
+    const text = textTo(owners[0].id);
+    expect(text).toContain('- Bills vs Chiefs: Chiefs');
+    expect(text).toContain('- To be decided at Lions: Lions');
+    expect(text).toContain('Tiebreaker: 38 total points\n');
+  });
+
+  it('sends nothing, logging the skip, for a week that is not submitted', async () => {
+    const { contest, event, entry } = await entryIn(SelectionType.PICK_EM, { name: 'Week 1', sport: Sport.AMERICAN_FOOTBALL, startDate: KICKOFF });
+
+    await submitted(view({ contestId: contest.id, entryId: entry.id, sportEventId: event.id }, { submittedAt: null, status: ContestEntryStatus.DRAFT }));
+
+    expect(outbox.rows).toEqual([]);
+  });
+
   it('sends a second receipt when a week is submitted again, and none twice for the same submission', async () => {
     const { contest, event, entry } = await entryIn(SelectionType.PICK_EM, { name: 'Week 1', sport: Sport.AMERICAN_FOOTBALL, startDate: KICKOFF });
     const base = { contestId: contest.id, entryId: entry.id, sportEventId: event.id };
