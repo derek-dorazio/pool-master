@@ -592,11 +592,9 @@ export interface ContestRepository {
    * Sets the events the contest covers to `sportEventIds`, in that order (#713). In one
    * transaction under the contest row lock: each entry gets a DRAFT status row for every added
    * event, and loses its status row and its picks (roster and game picks) on every removed one.
-   */
-  /**
-   * Gives the contest these events, in this order. With `replacing`, only if the contest's events
-   * under its row lock are still exactly those: otherwise nothing is written and it answers false,
-   * so a change built from a stale read never drops an event added meanwhile (#1318).
+   * With `replacing`, only if the contest's events under its row lock are still exactly those:
+   * otherwise nothing is written and it answers false, so a change built from a stale read never
+   * drops an event added meanwhile (#1318).
    */
   replaceSportEvents(id: string, sportEventIds: readonly string[], options?: { replacing?: readonly string[] }): Promise<boolean>;
   /**
