@@ -112,7 +112,8 @@ fonts and upgrades the tests do not need.
 
 The CI gates only enforce discipline if `main` cannot be reached without going
 through them. This section documents the GitHub branch-protection ruleset that
-backs the workflow.
+backs the workflow. It is live on `main` (ruleset id 15875428) as configured below,
+with no bypass.
 
 Without this configuration, direct pushes to `main` bypass every gate:
 the rule-enforcement scanners, `api:check`, the review triggers marker, and
@@ -126,7 +127,7 @@ GitHub UI: `Settings → Rules → Rulesets → New ruleset`. The ruleset replac
 the older "Branch protection rules" UI; either works, but rulesets are the
 forward path and the API shape this doc describes.
 
-### Recommended ruleset configuration
+### Ruleset configuration
 
 ```
 Ruleset name:       protect-main
@@ -153,72 +154,79 @@ Rules:
         - schema-migration-drift
         - service-functional-api-tests
         - poolmaster-unit-tests
-        - service-build
-        - service-mock-provider-build
         - poolmaster-build
+        - poolmaster-browser-e2e-local
+        - service-build
+        - service-image-smoke
+        - service-mock-provider-build
+  ✓ Require code scanning results
+      CodeQL: security alerts high or higher, other alerts errors
 
-Bypass list:
-  - Repository admin: bypass mode "always"   (solo-work escape hatch)
-    OR
-  - (empty)                                  (strict — no exceptions)
+Bypass list:        (empty — no exceptions)
 ```
 
+A job that CI skips because the PR does not touch its area (the `changes` filter)
+reports as skipped, and GitHub counts a skipped required check as passing. So a
+doc-only PR is mergeable once `changes`, `all-contract-gates` and CodeQL pass, in about
+two minutes.
+
 The status check names must match the `name:` of each job in
-`.github/workflows/ci.yml` exactly. If the workflow's job names change,
-update the ruleset to match — otherwise the protection silently stops
-gating the renamed check.
+`.github/workflows/ci.yml` exactly (for a sharded job, the aggregate job, e.g.
+`service-integration-tests`, not `service-integration-tests (1/4)`). **A PR that renames,
+adds or removes a gated job must say so, and the owner updates the ruleset in the same
+change** — otherwise the protection silently stops gating the renamed check (it happened
+once: the old list named `lint-and-typecheck` and `service-coverage-report`).
 
-### The bypass-list decision
+### No bypass
 
-Two coherent positions:
-
-- **Admin bypass allowed (`bypass_actors: [{ actor_type: RepositoryRole, actor_id: 5, bypass_mode: always }]`)** — repository admins can push directly to `main` for cleanup or emergency work. The PR flow remains the default and is enforced for every other actor and for the admin's own team-coordinated work. This is the recommended setting for solo-developer workflows where an escape hatch is occasionally useful.
-- **Strict (`bypass_actors: []`, `current_user_can_bypass: "never"`)** — even repo admins must go through PRs. No exceptions. Aligns with the strictest reading of `rules/workflow-rules.md §6` ("Never push directly to main").
-
-There is no wrong answer; pick the one that matches the team's working model.
+The bypass list is empty, on purpose. Agents act through the owner's GitHub account, which
+is a repository admin, so an admin bypass would also let an agent merge a red PR through the
+API — the exact hole the ruleset exists to close. GitHub rules apply to a whole branch, not
+to paths, so there is no way to allow direct pushes for docs only; doc changes take a short
+PR instead (`rules/workflow-rules.md` §6 *What skips the PR flow*).
 
 ### Verification via the GitHub API
 
 After saving the ruleset, verify the configuration with:
 
 ```bash
-gh api repos/<org>/<repo>/rulesets --jq '.[] | select(.name == "protect-main") | .id'
-gh api repos/<org>/<repo>/rulesets/<ruleset-id> --jq '{
+gh api repos/derek-dorazio/pool-master/rulesets/15875428 --jq '{
   enforcement,
+  include: .conditions.ref_name.include,
   bypass_actors,
   current_user_can_bypass,
   strict_status_checks: (.rules[] | select(.type=="required_status_checks") | .parameters.strict_required_status_checks_policy),
   required_status_checks: (.rules[] | select(.type=="required_status_checks") | .parameters.required_status_checks | map(.context)),
-  allowed_merge_methods: (.rules[] | select(.type=="pull_request") | .parameters.allowed_merge_methods)
+  allowed_merge_methods: (.rules[] | select(.type=="pull_request") | .parameters.allowed_merge_methods),
+  code_scanning: (.rules[] | select(.type=="code_scanning") | .parameters.code_scanning_tools)
 }'
 ```
 
-Expected output for the recommended configuration:
+Expected output:
 
 ```json
 {
   "enforcement": "active",
-  "bypass_actors": [{"actor_id": 5, "actor_type": "RepositoryRole", "bypass_mode": "always"}],
-  "current_user_can_bypass": "always",
+  "include": ["~DEFAULT_BRANCH"],
+  "bypass_actors": [],
+  "current_user_can_bypass": "never",
   "strict_status_checks": true,
-  "required_status_checks": ["all-contract-gates", "changes", "service-lint-typecheck", "service-unit-tests", "service-integration-tests", "service-functional-api-tests", "schema-migration-drift", "poolmaster-unit-tests", "service-build", "service-mock-provider-build", "poolmaster-build"],
-  "allowed_merge_methods": ["squash"]
+  "required_status_checks": ["changes", "all-contract-gates", "service-lint-typecheck", "service-unit-tests", "service-integration-tests", "service-functional-api-tests", "schema-migration-drift", "poolmaster-unit-tests", "poolmaster-build", "poolmaster-browser-e2e-local", "service-build", "service-image-smoke", "service-mock-provider-build"],
+  "allowed_merge_methods": ["squash"],
+  "code_scanning": [{"tool": "CodeQL", "security_alerts_threshold": "high_or_higher", "alerts_threshold": "errors"}]
 }
 ```
 
-If `bypass_actors` is empty and `current_user_can_bypass` is `"never"`, the
-ruleset is configured strictly. If the `required_status_checks` list does
-not include all ten job names, the gates are partially bypassed — fix
-before treating the configuration as complete.
+If `include` is empty the ruleset applies to nothing. If `bypass_actors` is not empty, or
+the `required_status_checks` list is missing any of the thirteen job names, the gates are
+partially bypassed — fix before treating the configuration as complete.
 
 ### Why the marker check matters here
 
 `rules:check:pr-review-triggers` (step 3 below) reads the PR body for a
 literal `<!-- review:triggers -->` marker and **warns** if missing (#284 — it
-used to fail). If branch protection does not require PRs, a contributor can
-bypass the marker by direct-pushing to `main`, in which case the check never
-runs at all. Its value depends entirely on PR flow being enforced, and now
-also on the warning being read.
+used to fail). Because the ruleset refuses direct pushes, every change reaches
+the check; its value now depends on the warning being read.
 
 ## Job DAG
 
@@ -674,10 +682,9 @@ authors don't have to remember it. Removing the marker from a PR body
 produces a warning, not a failure — but the section is still expected, and it is
 read by the owner and by the review session.
 
-The gate skips silently on `push` events (no `PR_NUMBER` in scope), so
-direct pushes to `main` (e.g., admin-bypass cleanup work) do not trip it.
-This is intentional: the marker is meaningful only in the PR review flow
-that branch protection enforces.
+The gate skips silently on `push` events (no `PR_NUMBER` in scope), so `main`'s own
+run after a squash merge does not trip it. This is intentional: the marker is meaningful
+only in the PR review flow that branch protection enforces.
 
 ## Pre-commit hook (#526)
 
