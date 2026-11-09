@@ -534,8 +534,6 @@ export class InMemoryContestWorld {
       },
       findByContest: async (contestId) =>
         [...this.entries.values()].filter((entry) => entry.contestId === contestId),
-      findByContests: async (contestIds) =>
-        [...this.entries.values()].filter((entry) => contestIds.includes(entry.contestId)),
       findByContestWithSquad: async (contestId, options) =>
         [...this.entries.values()]
           .filter((entry) =>

@@ -55,7 +55,7 @@ export interface YearReviewServiceDeps extends LeagueMemberDeps {
   leagues: Pick<LeagueRepository, 'findById'>;
   squadMemberships: Pick<SquadMembershipRepository, 'findBySquads'>;
   users: LeagueMemberDeps['users'] & Pick<UserRepository, 'findById'>;
-  email: Pick<EmailService, 'send'>;
+  email: Pick<EmailService, 'sendMany'>;
   appBaseUrl: string;
   logger?: FastifyBaseLogger;
   now?: () => Date;
@@ -123,12 +123,11 @@ export class YearReviewService {
     ]);
     const membersById = new Map(members.map((member) => [member.id, member]));
     const squadsById = new Map(squadYears.map((row) => [row.squadYear.squad.id, row]));
-    let queued = 0;
-    for (const membership of memberships) {
+    const sends = memberships.flatMap((membership) => {
       const user = membersById.get(membership.userId);
       const squad = squadsById.get(membership.squadId);
-      if (user === undefined || squad === undefined) continue;
-      await this.deps.email.send('YEAR_IN_REVIEW', {
+      if (user === undefined || squad === undefined) return [];
+      return [{
         to: emailRecipientOf(user),
         league: { id: league.id, name: league.name, leagueCode: league.leagueCode, plan: league.plan },
         about: `${league.id}:${String(year)}`,
@@ -138,10 +137,11 @@ export class YearReviewService {
           leagueName: league.name,
           squadYearUrl: buildSquadYearUrl(this.deps.appBaseUrl, league.leagueCode, year),
         },
-      });
-      queued += 1;
-    }
-    return queued;
+      }];
+    });
+    // One outbox write for every owner (#1459), however many squads placed.
+    await this.deps.email.sendMany('YEAR_IN_REVIEW', sends);
+    return sends.length;
   }
 }
 

@@ -7,9 +7,9 @@
  * being postponed, moved or cancelled (C6, C7).
  *
  * Each email is queued once per person: its outbox idempotency key is the contest (and for E1
- * the event) and the person, so a retried call finds it recorded and skips. E1 and F1 are built
- * by background jobs (#1387), so their failures throw for the job to retry; D1 and the event
- * changes are built in the request, and log theirs.
+ * the event) and the person, so a retried call finds it recorded and skips. E1 and F1 (#1387)
+ * and the event changes (#1458) are built by background jobs, so their failures throw for the
+ * job to retry; D1 is built in the request, and logs its own.
  */
 
 import type { FastifyBaseLogger } from 'fastify';
@@ -46,15 +46,23 @@ import {
   type SystemEmailTemplateKey,
 } from '../email';
 import { describeEventFormat, shareSummaryReads, summarizeContest, type ContestSummaryDeps } from './contest-summary';
-import { activeLeagueMembers, activeLeagueMembersByLeague, activeLeagueMembersWithRoles, type LeagueMemberDeps } from './league-members';
+import { activeLeagueMembers, activeLeagueMembersWithRoles, type LeagueMemberDeps } from './league-members';
+import {
+  contestEventChangedEmailsJob,
+  sportEventChangeAbout,
+  type ContestEventChangedEmailsJobPayload,
+} from './contest-email-job-requests';
+import type { BackgroundJobQueue } from '../background-jobs/background-job-queue';
 import { leaderCount } from './live-standings';
 
 export interface ContestNoticeDeps extends ContestSummaryDeps, LeagueMemberDeps {
   contests: Pick<ContestRepository, 'findById' | 'findBySportEvent'>;
-  leagues: Pick<LeagueRepository, 'findById' | 'findByIds'>;
-  entries: Pick<ContestEntryRepository, 'findByContest' | 'findByContests'>;
+  leagues: Pick<LeagueRepository, 'findById'>;
+  entries: Pick<ContestEntryRepository, 'findByContest'>;
   squadMemberships: Pick<SquadMembershipRepository, 'findBySquads'>;
   email: Pick<EmailService, 'sendMany'>;
+  /** Where an event change queues each contest's email job (#1458); `sportEventChanged` throws without it. */
+  jobs?: Pick<BackgroundJobQueue, 'request' | 'enqueueAll'>;
   appBaseUrl: string;
   logger?: FastifyBaseLogger;
   /** The clock that says whether an event's picks are still open; the real one by default. */
@@ -234,61 +242,64 @@ export class ContestNotices implements ContestOpenedNotice, SportEventChangedNot
   }
 
   /**
-   * C6 and C7: tells each league with an open or live contest on the event, its commissioners and
-   * the members with a submitted entry, one email per contest; a draft contest's commissioners
-   * are not told. A postponed or moved event keeps an open contest's picks open until it starts;
-   * a cancelled one counts for nothing. A cancellation that leaves a contest no event to play (its
-   * only one, or the last not already cancelled) ends it, and its no-scores result (F2) says so
-   * instead, which a member hears even with Contest updates turned off.
+   * C6 and C7: which contests hear that their event was postponed, moved or cancelled, each told
+   * by a job of its own (#1458), all written in one insert. An event can be on hundreds of
+   * contests across as many leagues, so no email is built here: the request that changed the
+   * event pays for one read of its contests and one write, however many there are.
+   *
+   * Each open or live contest on the event is told; a draft contest's commissioners are not. A
+   * cancellation that leaves a contest no event to play (its only one, or the last not already
+   * cancelled) ends it, and its no-scores result (F2) says so instead, so it gets no job. That is
+   * decided here, before settlement finishes those contests. A failure throws for the caller.
    */
   async sportEventChanged(sportEvent: SportEvent, change: SportEventChange): Promise<void> {
+    const { jobs } = this.deps;
+    if (!jobs) throw new Error('A background job queue is required to tell contests their event changed');
     const onEvent = await this.deps.contests.findBySportEvent(sportEvent.id, { statuses: TOLD_OF_EVENT_CHANGES });
     const contests = change.kind === ContestEventChangeKind.CANCELLED
       ? await this.stillToPlay(onEvent, sportEvent.id)
       : onEvent;
-    // The about names the change and the start it leaves, and a move both starts, so a second
-    // postponement or a move back to an earlier new date is told again.
-    const about = change.kind === ContestEventChangeKind.RESCHEDULED
-      ? `${sportEvent.id}:moved-${change.previousStart.toISOString()}-to-${sportEvent.startDate.toISOString()}`
-      : `${sportEvent.id}:${change.kind.toLowerCase()}-${sportEvent.startDate.toISOString()}`;
-    const now = this.deps.now?.() ?? new Date();
-    if (contests.length === 0) return;
-    const sportLeagueName = (await this.deps.sportLeagues.findById(sportEvent.sportLeagueId))?.name ?? '';
-    const event = buildEmailEventHeader(this.deps.appBaseUrl, sportEvent, sportLeagueName);
-    // Every league with a contest on the event, its members and every contest's entrants are read
-    // once for the whole event, not once per contest (#1255).
-    const leagueIds = [...new Set(contests.map((contest) => contest.leagueId))];
-    const [leagues, membersByLeague, entrantsByContest] = await Promise.all([
-      this.deps.leagues.findByIds(leagueIds),
-      activeLeagueMembersByLeague(this.deps, leagueIds),
-      this.entrantsByContest(contests),
+    await jobs.enqueueAll(contests.map((contest) => contestEventChangedEmailsJob(jobs, contest.id, sportEvent, change)));
+  }
+
+  /**
+   * C6 or C7 for one contest, from its job (#1458): its commissioners and the members with a
+   * submitted entry, each once. `sportEvent` is the event as the change left it; `change` is the
+   * job's. The contest is told whatever its status now, since a cancellation's job may run after
+   * settlement has finished a contest that goes on to other events. A failure to queue throws,
+   * for its job to retry; the outbox key is the contest, the change and the person, so a retry
+   * queues only what the failed try did not.
+   */
+  async contestEventChanged(contest: Contest, sportEvent: SportEvent, change: ContestEventChangedEmailsJobPayload['change']): Promise<void> {
+    const [league, sportLeague, members, entrants] = await Promise.all([
+      this.deps.leagues.findById(contest.leagueId),
+      this.deps.sportLeagues.findById(sportEvent.sportLeagueId),
+      activeLeagueMembersWithRoles(this.deps, contest.leagueId),
+      this.entrantsOf(contest),
     ]);
-    const leagueById = new Map(leagues.map((league) => [league.id, league]));
-    await Promise.all(contests.map(async (contest) => {
-      const league = leagueById.get(contest.leagueId);
-      const members = membersByLeague.get(contest.leagueId) ?? [];
-      const entrants = entrantsByContest.get(contest.id) ?? new Set<string>();
-      if (!league) {
-        this.skipped('email.sportEventChanged.skipped', contest, 'Skipped the event changed email because its league is gone');
-        return;
-      }
-      const picksOpen = areEventPicksOpen(contest, sportEvent, now);
-      const contestChange: ContestEventChange = change.kind === ContestEventChangeKind.CANCELLED
-        ? { kind: change.kind }
-        : change.kind === ContestEventChangeKind.RESCHEDULED
-          ? { kind: change.kind, previousStart: change.previousStart, newStart: sportEvent.startDate, picksOpen }
-          : { kind: change.kind, picksOpen };
-      const contestUrl = buildContestUrl(this.deps.appBaseUrl, league.leagueCode, contest.id);
-      const recipients = members
-        .filter(({ user, role }) => role === LeagueRole.COMMISSIONER || entrants.has(user.id))
-        .map(({ user }) => user);
-      await this.sendEach('CONTEST_EVENT_CHANGED', contest, league, recipients, (user) => ({
-        to: emailRecipientOf(user),
-        about: `${contest.id}:${about}`,
-        league: { id: league.id, name: league.name, leagueCode: league.leagueCode, plan: league.plan },
-        refs: { contestId: contest.id },
-        data: { userName: formatUserName(user), leagueName: league.name, contestName: contest.name, event, change: contestChange, contestUrl },
-      }));
+    if (!league) {
+      this.skipped('email.sportEventChanged.skipped', contest, 'Skipped the event changed email because its league is gone');
+      return;
+    }
+    const now = this.deps.now?.() ?? new Date();
+    const picksOpen = areEventPicksOpen(contest, sportEvent, now);
+    const contestChange: ContestEventChange = change.kind === ContestEventChangeKind.CANCELLED
+      ? { kind: change.kind }
+      : change.kind === ContestEventChangeKind.RESCHEDULED
+        ? { kind: change.kind, previousStart: new Date(change.previousStart), newStart: sportEvent.startDate, picksOpen }
+        : { kind: change.kind, picksOpen };
+    const event = buildEmailEventHeader(this.deps.appBaseUrl, sportEvent, sportLeague?.name ?? '');
+    const about = sportEventChangeAbout(sportEvent.id, change);
+    const contestUrl = buildContestUrl(this.deps.appBaseUrl, league.leagueCode, contest.id);
+    const recipients = members
+      .filter(({ user, role }) => role === LeagueRole.COMMISSIONER || entrants.has(user.id))
+      .map(({ user }) => user);
+    await this.queueEach('CONTEST_EVENT_CHANGED', recipients, (user) => ({
+      to: emailRecipientOf(user),
+      about: `${contest.id}:${about}`,
+      league: { id: league.id, name: league.name, leagueCode: league.leagueCode, plan: league.plan },
+      refs: { contestId: contest.id },
+      data: { userName: formatUserName(user), leagueName: league.name, contestName: contest.name, event, change: contestChange, contestUrl },
     }));
   }
 
@@ -303,23 +314,10 @@ export class ContestNotices implements ContestOpenedNotice, SportEventChangedNot
 
   /** The people owning an entry submitted for any of the contest's events, as E1 counts entrants. */
   private async entrantsOf(contest: Contest): Promise<Set<string>> {
-    return (await this.entrantsByContest([contest])).get(contest.id) ?? new Set<string>();
-  }
-
-  /** `entrantsOf` for several contests, by contest, in two reads whatever their number (#1255). */
-  private async entrantsByContest(contests: readonly Contest[]): Promise<Map<string, Set<string>>> {
-    const contestById = new Map(contests.map((contest) => [contest.id, contest]));
-    const submitted = (await this.deps.entries.findByContests([...contestById.keys()])).filter((entry) => contestById.get(entry.contestId)
-      ?.sportEventIds.some((sportEventId) => contestEntryEventStatus(entry, sportEventId) === ContestEntryStatus.SUBMITTED));
-    const ownersBySquad = new Map<string, string[]>();
-    for (const owner of await this.deps.squadMemberships.findBySquads([...new Set(submitted.map((entry) => entry.squadId))])) {
-      ownersBySquad.set(owner.squadId, [...(ownersBySquad.get(owner.squadId) ?? []), owner.userId]);
-    }
-    const entrants = new Map([...contestById.keys()].map((contestId): [string, Set<string>] => [contestId, new Set()]));
-    for (const entry of submitted) {
-      for (const userId of ownersBySquad.get(entry.squadId) ?? []) entrants.get(entry.contestId)?.add(userId);
-    }
-    return entrants;
+    const submitted = (await this.deps.entries.findByContest(contest.id)).filter((entry) => contest.sportEventIds
+      .some((sportEventId) => contestEntryEventStatus(entry, sportEventId) === ContestEntryStatus.SUBMITTED));
+    const owners = await this.deps.squadMemberships.findBySquads([...new Set(submitted.map((entry) => entry.squadId))]);
+    return new Set(owners.map((owner) => owner.userId));
   }
 
   /** Queues the email to every recipient in one batch (#1173), a few queries however large the league. */

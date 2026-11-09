@@ -30,6 +30,7 @@ import {
 import { createContestService } from '../contests/wiring';
 import { createEventPageService } from '../event-pages/wiring';
 import type { EmailService } from '../email';
+import type { BackgroundJobQueue } from '../background-jobs/background-job-queue';
 import { createSportEventParticipantService, createSportEventServices, createSportEventTierService } from '../events/wiring';
 import { CommissionerNotices } from './commissioner-notices';
 import { ContestExpandedNotices } from './contest-expanded-notices';
@@ -72,6 +73,8 @@ export function createEntryReminders(prisma: PrismaClient, options: {
 
 export function createContestNotices(prisma: PrismaClient, options: {
   email: EmailService;
+  /** Where an event change queues each contest's email job (#1458); only the app's own notices tell event changes. */
+  jobs?: Pick<BackgroundJobQueue, 'request' | 'enqueueAll'>;
   appBaseUrl: string;
   logger: FastifyBaseLogger;
 }): ContestNotices {
@@ -91,9 +94,9 @@ export function createContestNotices(prisma: PrismaClient, options: {
   });
 }
 
-/** The handlers of the contest started and final results email jobs (#1387), over `notices`. */
+/** The handlers of the contest email jobs (#1387, #1458), over `notices`. */
 export function createContestEmailJobs(prisma: PrismaClient, options: {
-  notices: Pick<ContestNotices, 'contestStarted' | 'contestSettled'>;
+  notices: Pick<ContestNotices, 'contestStarted' | 'contestSettled' | 'contestEventChanged'>;
   logger: FastifyBaseLogger;
 }): ContestEmailJobs {
   return new ContestEmailJobs({

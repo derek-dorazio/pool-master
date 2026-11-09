@@ -34,6 +34,7 @@ import {
 } from '../statement-log';
 import { freshEventEdition } from '../../support/event-edition';
 import { PrismaContestRepository } from '../../../packages/core-api/src/adapters';
+import { expectDefined } from '../../support/expect-defined';
 
 // The routes #1355 brought under the request query budget, against Postgres: each reads the
 // joiner, the team, the league and the contest's events once however many steps of the request
@@ -641,5 +642,142 @@ describe('Finishing an event (#1355, #1448)', () => {
     } finally {
       failing.mockRestore();
     }
+  });
+});
+
+/**
+ * A released event a week out, with OPEN contests on it: one in the first league, and with
+ * `contests: 3`, two there and one in a second league.
+ */
+async function openContestsOnScheduledEvent(options: { contests: 1 | 3 }) {
+  const prisma = getPrisma();
+  const admin = await createTestUser({ isRootAdmin: true });
+  const suffix = randomUUID().slice(0, 8);
+  const event = await prisma.sportEvent.create({
+    data: {
+      ...(await freshEventEdition(prisma)),
+      externalId: `read-once-changed-${suffix}`,
+      providerId: 'integration-test',
+      sport: Sport.AMERICAN_FOOTBALL,
+      name: `Read Once Changed ${suffix}`,
+      startDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      status: 'SCHEDULED',
+    },
+  });
+  const leagues = options.contests === 1 ? [await leagueWithTeam()] : [await leagueWithTeam(), await leagueWithTeam()];
+  const contestIds: string[] = [];
+  for (let number = 1; number <= options.contests; number++) {
+    const { leagueId } = expectDefined(leagues[number === 3 ? 1 : 0]);
+    const contest = await prisma.contest.create({
+      data: {
+        leagueId,
+        seasonYear: 2026,
+        sportEvents: { create: { sportEventId: event.id, sequence: 1 } },
+        name: `Read Once Changed ${suffix} ${number}`,
+        status: 'OPEN',
+        contestFormat: 'PREDICTION',
+        selectionType: SelectionType.PICK_EM,
+        openedAt: new Date(),
+      },
+    });
+    contestIds.push(contest.id);
+  }
+  return { admin, eventId: event.id, startDate: event.startDate, contestIds, commissionerIds: leagues.map(({ commissioner }) => commissioner.user.id) };
+}
+
+/** An admin's postponement of the event, or a move of its start by a day. */
+type EventChangeRequest = (seeded: Awaited<ReturnType<typeof openContestsOnScheduledEvent>>) => InjectOptions;
+const postpone: EventChangeRequest = ({ admin, eventId }) => ({
+  method: 'POST',
+  url: `/api/v1/events/${eventId}/transition`,
+  headers: admin.headers,
+  payload: { toStatus: 'POSTPONED' },
+});
+const moveByADay: EventChangeRequest = ({ admin, eventId, startDate }) => ({
+  method: 'PATCH',
+  url: `/api/v1/events/${eventId}`,
+  headers: admin.headers,
+  payload: { startDate: new Date(startDate.getTime() + 24 * 60 * 60 * 1000).toISOString() },
+});
+
+/**
+ * What an admin's postponement sends (#1458): the event and its answer, then one read of the
+ * contests told and one insert of their email jobs, beside the insert of the event's leaderboard
+ * rebuild job. No league, member or entry is read, so the count is the same however many
+ * contests, in however many leagues, the event holds.
+ */
+const PINNED_POSTPONE_COUNTS: Array<[string, number]> = [
+  ['INSERT background_jobs', 2],
+  ['SELECT contest_draws', 1],
+  ['SELECT contest_sport_events', 2],
+  ['SELECT contest_squares_draws', 1],
+  ['SELECT contest_squares_games', 1],
+  ['SELECT contests', 1],
+  ['SELECT event_series', 2],
+  ['SELECT sport_event_participants', 3],
+  ['SELECT sport_event_tiers', 2],
+  ['SELECT sport_events', 3],
+  ['SELECT sport_leagues', 2],
+  ['UPDATE sport_events', 1],
+];
+
+/**
+ * What an admin's move of a released event's start sends (#1458), on the same terms. It also
+ * shifts the event's rounds and rechecks its contests' entry reminders, in one write for all.
+ */
+const PINNED_MOVE_COUNTS: Array<[string, number]> = [
+  ['INSERT background_jobs', 2],
+  ['SELECT contest_draws', 1],
+  ['SELECT contest_sport_events', 2],
+  ['SELECT contest_squares_draws', 1],
+  ['SELECT contest_squares_games', 1],
+  ['SELECT contests', 1],
+  ['SELECT event_series', 3],
+  ['SELECT sport_event_participants', 3],
+  ['SELECT sport_event_rounds', 1],
+  ['SELECT sport_event_tiers', 2],
+  ['SELECT sport_events', 4],
+  ['SELECT sport_leagues', 3],
+  ['UPDATE contests', 1],
+  ['UPDATE sport_events', 1],
+];
+
+describe('Postponing or moving an event (#1458)', () => {
+  it.each([
+    ['postpone', postpone, PINNED_POSTPONE_COUNTS],
+    ['move', moveByADay, PINNED_MOVE_COUNTS],
+  ] as const)('answers an admin\'s %s with a fixed set of statements that builds no email, writing one email job per contest for the job runner', async (_change, request, pinned) => {
+    const seeded = await openContestsOnScheduledEvent({ contests: 3 });
+
+    const { response, statements } = await measureRequest(request(seeded));
+
+    expect(response.statusCode).toBe(200);
+    expect(requestCounts(statements)).toEqual(pinned);
+    const jobs = await getPrisma().backgroundJob.findMany({ where: { type: 'CONTEST_EVENT_CHANGED_EMAILS' }, select: { payload: true } });
+    expect(jobs).toHaveLength(3);
+    expect(jobs.map(({ payload }) => (payload as { contestId: string }).contestId).sort()).toEqual([...seeded.contestIds].sort());
+
+    await drainBackgroundJobs();
+
+    // Each contest's job tells that contest's own league: its commissioner, once per contest.
+    for (const [index, contestId] of seeded.contestIds.entries()) {
+      await expect(contestEmails(contestId)).resolves.toEqual([
+        { templateKey: 'CONTEST_EVENT_CHANGED', recipientUserId: seeded.commissionerIds[index === 2 ? 1 : 0] },
+      ]);
+    }
+  });
+
+  it.each([
+    ['postpone', postpone],
+    ['move', moveByADay],
+  ] as const)('sends the same statements to %s an event with three contests across two leagues as with one', async (_change, request) => {
+    const one = await openContestsOnScheduledEvent({ contests: 1 });
+    const three = await openContestsOnScheduledEvent({ contests: 3 });
+
+    const withOne = await measureRequest(request(one));
+    const withThree = await measureRequest(request(three));
+
+    expect([withOne.response.statusCode, withThree.response.statusCode]).toEqual([200, 200]);
+    expect(requestCounts(withThree.statements)).toEqual(requestCounts(withOne.statements));
   });
 });

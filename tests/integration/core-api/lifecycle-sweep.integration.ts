@@ -53,12 +53,13 @@ function lifecycleSweep(now: Date) {
   const readConfig = () => EMAIL_SETTINGS.defaults({ POOLMASTER_ENVIRONMENT: 'prod' });
   const appBaseUrl = 'https://app.example.test';
   const { email } = createEmailOutbox({ prisma, readConfig, planEntitlements, env: process.env, logger });
-  const contestNotices = createContestNotices(prisma, { email, appBaseUrl, logger });
-  const contestEmailJobs = createContestEmailJobs(prisma, { notices: contestNotices, logger });
   const jobs = integrationBackgroundJobs(prisma);
+  const contestNotices = createContestNotices(prisma, { email, jobs: jobs.queue, appBaseUrl, logger });
+  const contestEmailJobs = createContestEmailJobs(prisma, { notices: contestNotices, logger });
   jobs.runWith({
     CONTEST_STARTED_EMAILS: (payload) => contestEmailJobs.contestStarted(payload),
     CONTEST_SETTLED_EMAILS: (payload) => contestEmailJobs.contestSettled(payload),
+    CONTEST_EVENT_CHANGED_EMAILS: (payload) => contestEmailJobs.contestEventChanged(payload),
   });
   const scheduler = new EventLifecycleScheduler({
     sportEvents: new PrismaSportEventRepository(prisma),
