@@ -154,6 +154,15 @@ Links, for exploring each:
   [horse racing prices](https://www.goalserve.com/en/sport-data-feeds/horse-racing-api/prices),
   [terms](https://www.goalserve.com/en/terms-and-conditions).
 
+**Goalserve Full Package, a one-vendor option** (Derek found it, 2026-11-09): every Goalserve
+sport, with live scores, player and team stats, fixtures and odds, at $800 for 1 month,
+$3,550 for 6 months, or $4,000 for 12 months on sale (list $5,100), about $333 a month
+annually `(Vendor)`. That is cheaper than the three-provider path, and it needs one adapter
+instead of three. To check on the 30-day trial: college sports coverage (CFP, March Madness,
+Frozen Four), Clutch Card stat depth, LPGA live depth, and written display rights. Annual
+prepay is the risk if it disappoints, so trial first and start monthly or six-monthly.
+[Full Package prices](https://www.goalserve.com/en/sport-data-feeds/full-package-api/prices).
+
 Terms, read 2026-11-09:
 
 - **BALLDONTLIE** allows "any lawful personal or commercial purpose", naming paid apps and
