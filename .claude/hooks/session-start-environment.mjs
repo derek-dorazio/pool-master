@@ -35,7 +35,8 @@
  * database that was just created, and `deploy` is non-destructive. The one
  * exception is a history deploy cannot move forward from: an applied migration
  * this branch does not carry (the 217 migrations #1429 squashed into two
- * baselines, or a branch that dropped one), or a row left unfinished. Then the
+ * baselines, or a branch that dropped one), a row left unfinished, or tables in
+ * `public` with no _prisma_migrations at all (`prisma db push`). Then the
  * hook runs `npm run db:test:reset`'s script, which empties poolmaster_test and
  * re-applies this branch's migrations. That database holds nothing but test
  * data, and a count of rows would call the old history ready (217 >= 2).
@@ -313,12 +314,45 @@ export function parseMigrationRows(stdout) {
 }
 
 /**
+ * The answer to SCHEMA_PROBE_SQL: whether `_prisma_migrations` exists, and how many other base
+ * tables `public` holds. Throws on anything else, so a garbled answer is reported rather than
+ * read as an empty database and deployed onto.
+ */
+export function parseSchemaProbe(stdout) {
+  const match = /^([tf])\|(\d+)$/.exec(stdout.trim());
+  if (!match) throw new Error(`Unrecognised schema probe output: ${JSON.stringify(stdout)}`);
+  return { hasMigrationsTable: match[1] === 't', publicTables: Number(match[2]) };
+}
+
+// One query, so "no history" is an answer read from the catalog rather than inferred from a
+// failed SELECT -- a failed connection used to look exactly like a database never migrated.
+const SCHEMA_PROBE_SQL = `SELECT to_regclass('public._prisma_migrations') IS NOT NULL, count(*)
+  FROM information_schema.tables
+  WHERE table_schema = 'public' AND table_type = 'BASE TABLE' AND table_name <> '_prisma_migrations'`
+  .replace(/\s+/g, ' ');
+
+/**
  * What poolmaster_test needs to match this branch: nothing, `migrate deploy` for
  * migrations it has not applied yet, or a reset when its history is one deploy
- * cannot build on. `recorded` is empty for a database that was never migrated.
+ * cannot build on.
+ *
+ * `database.recorded` is the `_prisma_migrations` rows, or null when that table
+ * does not exist; `database.publicTables` counts the other tables in `public`.
+ * No history (no table, or an empty one) with tables beside it, left by
+ * `prisma db push` say, is a schema deploy refuses with P3005, so it resets; no
+ * history and nothing else is a fresh database, so it deploys.
  */
-export function migrationPlan(inImage, recorded) {
-  const { missing, unexpected, unfinished } = compareMigrationState(inImage, recorded);
+export function migrationPlan(inImage, database) {
+  if (database.recorded === null || database.recorded.length === 0) {
+    if (database.publicTables > 0) {
+      return {
+        action: 'reset',
+        reason: `it has ${database.publicTables} table(s) in public but no _prisma_migrations history, which migrate deploy refuses (P3005)`,
+      };
+    }
+    return { action: 'deploy', pending: inImage.length };
+  }
+  const { missing, unexpected, unfinished } = compareMigrationState(inImage, database.recorded);
   if (unexpected.length > 0) {
     return {
       action: 'reset',
@@ -335,14 +369,41 @@ export function migrationPlan(inImage, recorded) {
   return { action: 'ready' };
 }
 
+/**
+ * poolmaster_test's migration history and table count, or null after pushing a
+ * warning: a query that fails here is a database the hook cannot read, not one
+ * that was never migrated, and deploying onto it would only bury the real error.
+ */
+function readDatabaseState() {
+  const probe = psql(TEST_DB, SCHEMA_PROBE_SQL);
+  if (!probe.ok) {
+    warnings.push(`cannot read the schema of ${TEST_DB}: ${probe.detail}`);
+    return null;
+  }
+  let schema;
+  try {
+    schema = parseSchemaProbe(probe.stdout);
+  } catch (error) {
+    warnings.push(`cannot read the schema of ${TEST_DB}: ${error.message}`);
+    return null;
+  }
+  if (!schema.hasMigrationsTable) return { recorded: null, publicTables: schema.publicTables };
+  const rows = psql(TEST_DB, 'SELECT migration_name, finished_at, rolled_back_at FROM _prisma_migrations');
+  if (!rows.ok) {
+    warnings.push(`cannot read _prisma_migrations in ${TEST_DB}: ${rows.detail}`);
+    return null;
+  }
+  return { recorded: parseMigrationRows(rows.stdout), publicTables: schema.publicTables };
+}
+
 function ensureMigrations(prismaAvailable) {
   const inImage = readdirSync(MIGRATIONS_DIR, { withFileTypes: true })
     .filter((entry) => entry.isDirectory())
     .map((entry) => entry.name)
     .sort();
-  // Fails when _prisma_migrations does not exist yet, i.e. nothing applied.
-  const rows = psql(TEST_DB, 'SELECT migration_name, finished_at, rolled_back_at FROM _prisma_migrations');
-  const plan = migrationPlan(inImage, rows.ok ? parseMigrationRows(rows.stdout) : []);
+  const database = readDatabaseState();
+  if (database === null) return;
+  const plan = migrationPlan(inImage, database);
   if (plan.action === 'ready') {
     ready.push(`${TEST_DB} (${inImage.length} migrations)`);
     return;

@@ -51,7 +51,13 @@ describe('session-start hook migration plan', () => {
   });
 
   it('deploys when the migrations table exists but is empty and nothing else is in public', () => {
-    assert.deepEqual(migrationPlan(baselines, migrated([])), { action: 'deploy', pending: 2 });
+    assert.deepEqual(migrationPlan(baselines, { recorded: [], publicTables: 0 }), { action: 'deploy', pending: 2 });
+  });
+
+  it('resets when the migrations table exists but is empty and other tables are in public, which deploy also refuses', () => {
+    const plan = migrationPlan(baselines, { recorded: [], publicTables: 3 });
+    assert.equal(plan.action, 'reset');
+    assert.match(plan.reason, /3 table\(s\) in public but no _prisma_migrations/);
   });
 
   // #1434: tables left by `prisma db push` (or a manual restore) with no _prisma_migrations make
