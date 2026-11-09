@@ -248,4 +248,27 @@ describe('YearReviewService', () => {
     expect(reviews.rows).toEqual([]);
     expect((await service().getLastYear(league.id)).status).toBe(YearReviewStatus.READY);
   });
+
+  it('emails a squad that placed only in a cup with no championship line and every medal count at 0', async () => {
+    countedFinish(2025);
+    const sender = world.addUser({ firstName: 'Casey' });
+    const cupOnly = owner('Cory', 'Cuppers', {
+      championship: null,
+      cups: [{ view: cup('NFL', CupStatus.CROWNED, 4), contestsCounted: 2, standing: { ...standing(3, 900, [], 0), wins: 0, podiums: 1, contestsCounted: 2, pointsAfter: [], trophy: null } }],
+    });
+
+    await service().send(league.id, 2025, sender.id);
+
+    const text = sentTo(cupOnly.userId)?.text ?? '';
+    expect(text).toContain('2025 NFL Cup: 3rd of 4, 90 points');
+    expect(text).not.toContain('Office League Cup');
+    expect(text).toContain('1sts: 0\n2nds: 0\n3rds: 0\nContests played: 0');
+  });
+
+  it('reads a review sent with no sender recorded as SENT by nobody', async () => {
+    reviews.rows.push({ leagueId: league.id, year: 2025, sentByUserId: null, sentAt: NOW });
+
+    expect(await service().getLastYear(league.id)).toEqual({ year: 2025, status: YearReviewStatus.SENT, sentAt: NOW, sentBy: null });
+  });
 });
+

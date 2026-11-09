@@ -41,6 +41,7 @@ import {
 } from '../email';
 import type { ApiErrorCode } from '@poolmaster/shared/dto';
 import type { MemberJoinedNotices } from '../notifications/member-joined-notices';
+import { errorMessage } from '../../core/error-message';
 
 export interface SendInvitationsInput {
   leagueId: string;
@@ -678,7 +679,7 @@ export class InvitationService {
           invitationId: input.invitationId,
           leagueId: input.league.id,
           templateKey,
-          error: err instanceof Error ? err.message : String(err),
+          error: errorMessage(err),
         },
       }, 'Failed to queue league join success email');
     }
@@ -695,7 +696,7 @@ export class InvitationService {
     } catch (err) {
       this.logger?.error({
         action: 'leagueInvitation.joinSuccessEmail.openContestsFailed',
-        data: { invitationId, leagueId: league.id, error: err instanceof Error ? err.message : String(err) },
+        data: { invitationId, leagueId: league.id, error: errorMessage(err) },
       }, 'Failed to look up open contests for the league join success email; sending it without them');
       return [];
     }

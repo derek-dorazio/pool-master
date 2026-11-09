@@ -5,6 +5,7 @@
  */
 import { Prisma } from '@prisma/client';
 import type { FastifyReply, FastifyRequest } from 'fastify';
+import { EmailMessageStatus, type User } from '@poolmaster/shared/domain';
 import { EmailChangedBy, renderSystemEmailTemplate, type EmailChangedEmailData } from '../../../packages/core-api/src/modules/email';
 import { EmailChangeUndoService } from '../../../packages/core-api/src/modules/auth/email-change-undo-service';
 import { AuthService } from '../../../packages/core-api/src/modules/auth/auth-service';
@@ -125,5 +126,119 @@ describe('undo race for the old address', () => {
     });
 
     await expect(service.undo('abc')).rejects.toMatchObject({ code: 'EMAIL_CHANGE_UNDO_ADDRESS_TAKEN', statusCode: 409 });
+  });
+});
+
+describe('telling the old address of an email change', () => {
+  const user = { id: 'user-1', email: 'riley.new@example.test', firstName: 'Riley', lastName: 'Q', username: 'riley' } as User;
+  const change = { user, oldEmail: 'riley@example.test', changedBy: EmailChangedBy.ACCOUNT_OWNER, changedAt: new Date('2026-10-22T14:05:00.000Z') };
+
+  function tellingService(send: jest.Mock, transactionFails = false) {
+    const tx = { emailChangeUndoToken: { deleteMany: jest.fn(async () => ({ count: 0 })), create: jest.fn(async () => ({ id: 'undo-1' })) } };
+    const logger = fakeLogger();
+    const service = new EmailChangeUndoService({
+      users: fakeUserRepo(),
+      prisma: asPrismaClient({
+        $transaction: jest.fn(async (run: (client: typeof tx) => Promise<unknown>) => {
+          if (transactionFails) throw new Error('database unavailable');
+          return run(tx);
+        }),
+      }),
+      email: { send },
+      appBaseUrl: 'https://app.example.test',
+      logger,
+    });
+    return { service, tx, logger };
+  }
+
+  it('stores a hashed undo link and emails it to the old address about that link, logging it queued', async () => {
+    const send = jest.fn(async () => ({ status: EmailMessageStatus.QUEUED }));
+    const { service, tx, logger } = tellingService(send);
+
+    await service.tellOldAddress(change);
+
+    expect(tx.emailChangeUndoToken.create).toHaveBeenCalledTimes(1);
+    const [[key, mail]] = send.mock.calls as unknown as Array<[string, { to: { email: string }; about: string }]>;
+    expect(key).toBe('EMAIL_CHANGED');
+    expect(mail.to.email).toBe('riley@example.test');
+    expect(mail.about).toBe('undo-1');
+    expect(logger.info).toHaveBeenCalledWith(expect.objectContaining({ action: 'userService.emailChanged.emailQueued' }), expect.any(String));
+  });
+
+  it('logs an email skipped by email settings as skipped, and a failed write as failed, never throwing', async () => {
+    const skipped = tellingService(jest.fn(async () => ({ status: EmailMessageStatus.SKIPPED, skipReason: 'DISABLED' })));
+    const failing = tellingService(jest.fn(), true);
+
+    await skipped.service.tellOldAddress(change);
+    await expect(failing.service.tellOldAddress(change)).resolves.toBeUndefined();
+
+    expect(skipped.logger.warn).toHaveBeenCalledWith(expect.objectContaining({ action: 'userService.emailChanged.emailSkipped' }), expect.any(String));
+    expect(failing.logger.error).toHaveBeenCalledWith(expect.objectContaining({ action: 'userService.emailChanged.emailFailed' }), expect.any(String));
+  });
+});
+
+describe('using an undo link', () => {
+  const link = { userId: 'user-1', oldEmail: 'riley@example.test' };
+
+  function undoing(options: { found?: typeof link | null; holder?: boolean; claimed?: number; writeFails?: Error } = {}) {
+    const tx = {
+      emailChangeUndoToken: {
+        updateMany: jest.fn(async () => ({ count: options.claimed ?? 1 })),
+        findUniqueOrThrow: jest.fn(async () => ({ createdAt: new Date('2026-10-24T12:00:00.000Z') })),
+      },
+      user: {
+        update: jest.fn(async () => { if (options.writeFails) throw options.writeFails; return {}; }),
+        updateMany: jest.fn(async () => ({ count: 1 })),
+      },
+      passwordResetToken: { updateMany: jest.fn(async () => ({ count: 0 })) },
+      refreshToken: { updateMany: jest.fn(async () => ({ count: 2 })) },
+    };
+    const logger = fakeLogger();
+    const service = new EmailChangeUndoService({
+      users: fakeUserRepo({ findHolderOtherThan: jest.fn(async () => (options.holder ? ({ id: 'someone-else' } as User) : null)) }),
+      prisma: asPrismaClient({
+        emailChangeUndoToken: { findFirst: jest.fn(async () => (options.found === undefined ? link : options.found)) },
+        $transaction: jest.fn((run: (client: typeof tx) => Promise<unknown>) => run(tx)),
+      }),
+      email: { send: jest.fn() },
+      appBaseUrl: 'https://app.example.test',
+      logger,
+    });
+    return { service, tx, logger };
+  }
+
+  it('puts the old address back, replaces the password, cancels the later links and the reset links, and signs the account out', async () => {
+    const { service, tx, logger } = undoing();
+
+    await service.undo('abc');
+
+    expect(tx.user.update).toHaveBeenCalledWith({ where: { id: 'user-1' }, data: { email: 'riley@example.test' } });
+    expect(tx.user.updateMany).toHaveBeenCalledWith(expect.objectContaining({ where: { id: 'user-1', passwordHash: { not: null } } }));
+    expect(tx.emailChangeUndoToken.updateMany).toHaveBeenCalledTimes(2);
+    expect(tx.passwordResetToken.updateMany).toHaveBeenCalledTimes(1);
+    expect(tx.refreshToken.updateMany).toHaveBeenCalledTimes(1);
+    expect(logger.info).toHaveBeenCalledWith(expect.objectContaining({ action: 'authService.emailChangeUndo.confirmed' }), expect.any(String));
+  });
+
+  it('answers EMAIL_CHANGE_UNDO_LINK_INVALID for a dead link, and for a live one another click claimed first, changing nothing', async () => {
+    const dead = undoing({ found: null });
+    const raced = undoing({ claimed: 0 });
+
+    await expect(dead.service.undo('abc')).rejects.toMatchObject({ code: 'EMAIL_CHANGE_UNDO_LINK_INVALID', statusCode: 400 });
+    await expect(raced.service.undo('abc')).rejects.toMatchObject({ code: 'EMAIL_CHANGE_UNDO_LINK_INVALID', statusCode: 400 });
+    expect(raced.tx.user.update).not.toHaveBeenCalled();
+  });
+
+  it('answers EMAIL_CHANGE_UNDO_ADDRESS_TAKEN when another account holds the old address, before writing anything', async () => {
+    const { service, tx } = undoing({ holder: true });
+
+    await expect(service.undo('abc')).rejects.toMatchObject({ code: 'EMAIL_CHANGE_UNDO_ADDRESS_TAKEN', statusCode: 409 });
+    expect(tx.emailChangeUndoToken.updateMany).not.toHaveBeenCalled();
+  });
+
+  it('lets any other failed write through, as it is', async () => {
+    const { service } = undoing({ writeFails: new Error('connection reset') });
+
+    await expect(service.undo('abc')).rejects.toThrow('connection reset');
   });
 });

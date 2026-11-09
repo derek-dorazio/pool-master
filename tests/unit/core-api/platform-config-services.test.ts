@@ -280,6 +280,64 @@ describe('AppSettingsService', () => {
     expect(settings.get(group).limit).toBe(5);
   });
 
+  it('logs a change hook that throws and keeps the new value, so one bad hook cannot hold a setting back', async () => {
+    const repository = inMemoryRuntimeConfigs();
+    repository.put('SAMPLE_CONFIG', { enabled: true, limit: 2, label: null });
+    const logger = fakeLogger();
+    const group = sampleGroup(() => { throw new Error('hook broke'); });
+    const settings = settingsFor(repository, asGroups(group), undefined, logger);
+    await settings.load();
+
+    repository.put('SAMPLE_CONFIG', { enabled: true, limit: 4, label: null });
+    await settings.refresh();
+
+    expect(settings.get(group).limit).toBe(4);
+    expect(logger.error).toHaveBeenCalledWith(expect.objectContaining({ action: 'appSettings.onChange.failed' }), expect.any(String));
+  });
+
+  it('uses the defaults for a stored value that is not an object at all', async () => {
+    const repository = inMemoryRuntimeConfigs();
+    repository.put('SAMPLE_CONFIG', 'not settings');
+    const group = sampleGroup();
+    const settings = settingsFor(repository, asGroups(group));
+
+    await settings.load();
+
+    expect(settings.get(group)).toEqual({ enabled: true, limit: 5, label: null });
+  });
+
+  it('refuses a group it was not given', async () => {
+    const settings = settingsFor(inMemoryRuntimeConfigs(), asGroups(sampleGroup()));
+    await settings.load();
+    const stranger = defineSettingsGroup<Sample>({ ...sampleGroup(), key: 'STRANGER' });
+
+    expect(() => settings.get(stranger)).toThrow('Settings group STRANGER is not registered');
+  });
+
+  it('refreshes on its interval once started, starts once however often asked, and stops refreshing when stopped', async () => {
+    jest.useFakeTimers();
+    try {
+      const repository = inMemoryRuntimeConfigs();
+      const group = sampleGroup();
+      const settings = settingsFor(repository, asGroups(group));
+      await settings.load();
+      const refresh = jest.spyOn(settings, 'refresh').mockResolvedValue();
+
+      settings.start();
+      settings.start();
+      jest.advanceTimersByTime(60_000 * 5);
+      const whileRunning = refresh.mock.calls.length;
+      settings.stop();
+      settings.stop();
+      jest.advanceTimersByTime(60_000 * 5);
+
+      expect(whileRunning).toBeGreaterThan(0);
+      expect(refresh).toHaveBeenCalledTimes(whileRunning);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
   it('refuses two groups declared with the same key', () => {
     expect(() => settingsFor(inMemoryRuntimeConfigs(), asGroups(sampleGroup(), sampleGroup())))
       .toThrow('Settings group SAMPLE_CONFIG is declared twice');

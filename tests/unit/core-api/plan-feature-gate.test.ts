@@ -1,6 +1,6 @@
 import { LeaguePlan, PlanFeature, championshipYear } from '@poolmaster/shared/domain';
 import { PlanEntitlementsService } from '../../../packages/core-api/src/modules/plans/plan-entitlements-service';
-import { featuresNeeded, requirePlanFeatures } from '../../../packages/core-api/src/modules/plans/plan-feature-gate';
+import { describePlanFeatureGate, featuresNeeded, requirePlanFeatures } from '../../../packages/core-api/src/modules/plans/plan-feature-gate';
 import { PLAN_SETTINGS } from '../../../packages/core-api/src/modules/plans/plan-settings';
 import { buildLeague } from '../../factories';
 import { fakeLogger } from '../../support/fake-logger';
@@ -122,4 +122,30 @@ describe('requirePlanFeatures', () => {
     expect(reply.statusCode).toBe(404);
     expect(reply.payload).toMatchObject({ error: { code: 'LEAGUE_NOT_FOUND' } });
   });
+
+  it('answers 400 LEAGUE_ID_REQUIRED without reading a plan when the path names no league', async () => {
+    const forLeague = jest.fn();
+
+    const { reply } = await run(requirePlanFeatures({ forLeague }, [PlanFeature.CHAMPIONSHIP]), { params: {} });
+
+    expect(reply.statusCode).toBe(400);
+    expect(reply.payload).toMatchObject({ error: { code: 'LEAGUE_ID_REQUIRED' } });
+    expect(forLeague).not.toHaveBeenCalled();
+  });
+
+  it('lets a plan read that fails for any other reason through to the error handler', async () => {
+    const forLeague = jest.fn().mockRejectedValue(new Error('database unavailable'));
+
+    await expect(run(requirePlanFeatures({ forLeague }, [PlanFeature.CHAMPIONSHIP]), { params: { id: 'league-1' } }))
+      .rejects.toThrow('database unavailable');
+  });
 });
+
+describe('describePlanFeatureGate', () => {
+  it('names the features a route needs, and PAST_YEARS for an earlier year when the route reads one', () => {
+    expect(describePlanFeatureGate([PlanFeature.CHAMPIONSHIP])).toContain('unless the league\'s plan has CHAMPIONSHIP (root admins too).');
+    expect(describePlanFeatureGate([PlanFeature.CHAMPIONSHIP], true))
+      .toContain('has CHAMPIONSHIP, PAST_YEARS for a year before the current one (root admins too).');
+  });
+});
+

@@ -210,6 +210,14 @@ describe('SquaresService claiming boxes', () => {
     expect(context.squares.boxesOf(context.contest.id)).toHaveLength(2);
   });
 
+  it('names the limit as one box when an entry may hold only one', async () => {
+    const context = setup({ maxSquaresPerEntry: 1 });
+    context.squares.addBox(context.contest.id, context.alice.id, 0, 0);
+
+    await expect(context.service.claim(context.contest.id, 0, 1, context.alice.id, context.actor('Alice')))
+      .rejects.toThrow('An entry can hold 1 box in this contest, and this one has them all.');
+  });
+
   it('lets a member clear their own box but not another squad\'s', async () => {
     const context = setup();
     context.squares.addBox(context.contest.id, context.alice.id, 1, 1);

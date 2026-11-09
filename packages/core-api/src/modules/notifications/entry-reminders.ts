@@ -85,6 +85,7 @@ import { survivorRun } from '../scoring-families/head-to-head/survivor';
 import { readEventMatchesOnce, readEventsOnce, readOncePerKey } from '../events/event-reads';
 import { summarizeContest } from './contest-summary';
 import { activeLeagueMembers, type LeagueMemberDeps } from './league-members';
+import { errorMessage } from '../../core/error-message';
 
 /**
  * How late a reminder may still go after its time. The scheduler sweeps every 5 minutes, and a
@@ -194,7 +195,7 @@ export class EntryReminders implements DueNotifications {
           // The contest keeps its check, so the next sweep tries again.
           this.deps.logger?.error({
             action: 'email.entryReminders.failed',
-            data: { contestId: contest.id, leagueId: contest.leagueId, error: error instanceof Error ? error.message : String(error) },
+            data: { contestId: contest.id, leagueId: contest.leagueId, error: errorMessage(error) },
           }, 'Failed to queue entry reminders for a contest');
         }
       }

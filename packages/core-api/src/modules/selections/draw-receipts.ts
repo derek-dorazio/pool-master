@@ -13,6 +13,7 @@ import type { FastifyBaseLogger } from 'fastify';
 import type { ContestRepository } from '@poolmaster/shared/db';
 import type { DueNotifications } from '../events/event-lifecycle-scheduler';
 import type { SelectionService } from './service';
+import { errorMessage } from '../../core/error-message';
 
 export interface DrawReceiptsDeps {
   contests: Pick<ContestRepository, 'findDrawReceiptsPending' | 'clearDrawReceiptsPending'>;
@@ -36,7 +37,7 @@ export class DrawReceipts implements DueNotifications {
       } catch (error) {
         this.deps.logger?.error({
           action: 'email.drawReceipts.failed',
-          data: { ...draw, error: error instanceof Error ? error.message : String(error) },
+          data: { ...draw, error: errorMessage(error) },
         }, 'Failed to queue a quick pick draw\'s receipts; the next sweep tries again');
       }
     }
