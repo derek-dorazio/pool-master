@@ -3,8 +3,9 @@
  * picks: dates become ISO strings, a value not there becomes null (or is left out where the
  * schema makes it optional), and nested extensions appear only when the row has them.
  */
-import type { LeagueInvitation, Participant, User } from '@poolmaster/shared/domain';
-import { ContestFormat } from '@poolmaster/shared/domain';
+import type { LeagueInvitation, Participant } from '@poolmaster/shared/domain';
+import { ContestFormat, InvitationStatus, InviteType } from '@poolmaster/shared/domain';
+import { buildInvitation, buildMembership, buildUser } from '../../factories';
 import { mapContestEntryPickRowToDomain, type ContestEntryPickRow } from '../../../packages/core-api/src/mappers/contest-entry-picks.mapper';
 import { mapLeagueInvitationToDto, mapLeagueMembershipToDto } from '../../../packages/core-api/src/mappers/leagues-extra.mapper';
 import {
@@ -187,26 +188,26 @@ describe('field row mappers', () => {
 });
 
 describe('league membership and invitation mappers', () => {
-  const user = { id: 'user-1', email: 'riley@example.test', username: 'riley', firstName: 'Riley', lastName: 'Quinn', isActive: true, createdAt: created } as User;
+  const user = buildUser({ id: 'user-1', email: 'riley@example.test', username: 'riley', firstName: 'Riley', lastName: 'Quinn', createdAt: created });
 
   it('shows a membership with its dates and the member as a user', () => {
-    const dto = mapLeagueMembershipToDto({ id: 'm-1', leagueId: 'league-1', userId: 'user-1', role: 'MEMBER', status: 'ACTIVE', joinedAt: created, createdAt: created, updatedAt: updated } as never, user);
+    const dto = mapLeagueMembershipToDto(buildMembership({ id: 'm-1', joinedAt: created, createdAt: created, updatedAt: updated }), user);
 
     expect(dto).toMatchObject({ id: 'm-1', role: 'MEMBER', joinedAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-02-01T00:00:00.000Z', user: { id: 'user-1', isRootAdmin: false } });
   });
 
-  const joinLink = {
+  const joinLink = buildInvitation({
     id: 'inv-1',
-    leagueId: 'league-1',
+    email: undefined,
     inviteCode: 'JOIN123',
-    inviteType: 'LINK',
-    status: 'PENDING',
+    inviteType: InviteType.LINK,
     maxUses: 10,
     currentUses: 2,
     invitedBy: 'user-1',
+    expiresAt: undefined,
     createdAt: created,
     updatedAt: updated,
-  } as unknown as LeagueInvitation;
+  });
 
   it('gives a join link with no email, expiry or acceptance, and no email sent, nulls for each', () => {
     expect(mapLeagueInvitationToDto(joinLink, null)).toMatchObject({
@@ -221,15 +222,15 @@ describe('league membership and invitation mappers', () => {
   });
 
   it('shows an accepted email invitation with its address, expiry, acceptance and where its email stands', () => {
-    const accepted = {
+    const accepted: LeagueInvitation = {
       ...joinLink,
       email: 'sam@example.test',
-      inviteType: 'EMAIL',
-      status: 'ACCEPTED',
+      inviteType: InviteType.EMAIL,
+      status: InvitationStatus.ACCEPTED,
       expiresAt: new Date('2026-03-01T00:00:00.000Z'),
       acceptedAt: new Date('2026-02-15T00:00:00.000Z'),
       acceptedBy: 'user-2',
-    } as unknown as LeagueInvitation;
+    };
 
     expect(mapLeagueInvitationToDto(accepted, { status: 'SKIPPED', skipReason: 'UNSUBSCRIBED' } as never)).toMatchObject({
       email: 'sam@example.test',

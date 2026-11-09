@@ -12,12 +12,11 @@ import {
   PlanFeature,
   PredictedResult,
   type EmailMessage,
-  type League,
   type ParticipantLeagueAffiliation,
   type SportConfig,
   type SportEventMatch,
-  type User,
 } from '@poolmaster/shared/domain';
+import { buildLeague, buildUser } from '../../factories';
 import { toAuthResponse, toTokenRefreshResponse } from '../../../packages/core-api/src/mappers/auth.mapper';
 import { toLeaguePaymentListResponse, toUserPaymentListResponse } from '../../../packages/core-api/src/mappers/billing.mapper';
 import {
@@ -211,9 +210,7 @@ describe('auth mappers', () => {
   const tokens = { accessToken: 'a', refreshToken: 'r', csrfToken: 'c', expiresIn: 900, sessionId: 's' };
 
   it('answers a sign-in with the user and the tokens, never the session id', () => {
-    const user: User = {
-      id: 'u1', email: 'ada@example.test', username: 'ada', firstName: 'Ada', lastName: 'L', isActive: true, createdAt: AT, updatedAt: AT,
-    };
+    const user = buildUser({ id: 'u1' });
 
     const dto = toAuthResponse(user, tokens);
 
@@ -233,21 +230,13 @@ describe('toLeagueDto', () => {
     features: new Set([PlanFeature.EMAIL_CONTEST_RESULTS, PlanFeature.EMAIL_CONTEST_OPENED]),
     commissionerSelectable: true,
   };
-  const league = (description: string | undefined) => ({
-    id: 'l1',
+  const league = (description: string | undefined) => buildLeague({
     leagueCode: 'ABC',
     name: 'Office',
     description,
-    isActive: true,
-    iconKey: 'trophy',
     createdAt: AT,
-    cupName: 'Cup',
-    cupPointsScale: 'STANDARD',
-    cupCustomPoints: null,
-    hallOfLameVisible: true,
     planRenewsAt: AT,
-    mutedSportLeagueIds: [],
-  } as unknown as League);
+  });
 
   it('sends the plan\'s features in the published order and its counts as given', () => {
     const dto = toLeagueDto(league('Our pool'), entitlements, { memberCount: 4, activeContestCount: 2 });
