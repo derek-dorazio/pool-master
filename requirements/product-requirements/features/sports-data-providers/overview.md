@@ -166,8 +166,13 @@ prepay is the risk if it disappoints, so trial first and start monthly or six-mo
 **BALLDONTLIE All-Access, the leading option** (2026-11-09): its docs list 41 league APIs
 with schedules, rosters, results and per-player game stats for the NFL, college football,
 NBA, WNBA, men's and women's college basketball, MLB, NHL, Champions League, Premier
-League, MLS, the men's World Cup, ATP, WTA, the PGA TOUR and F1 `(Vendor)`. Only the NBA has an
-explicit live box-score endpoint; live updates elsewhere are to be checked. Pricing: free
+League, MLS, the men's World Cup, ATP, WTA, the PGA TOUR and F1 `(Vendor)`. Its webhooks (All-Access) push live events, up to a minute behind, for the NBA, WNBA, MLB, NHL,
+NFL, college football and basketball, ATP, WTA, soccer and PGA golf (hole and round completed)
+`(Vendor)`. For our design, a webhook should trigger work, not carry the score itself: the receiver
+checks the signature and queues a background job. The job fetches the game's box score or
+scorecard from the REST API, saves it, and the debounced leaderboard rebuild follows. A slow
+scheduled poll stays as the safety net for missed deliveries. Subscribe to the coarse events
+(period, game and hole ends) to stay within 500,000 deliveries a month. Pricing: free
 (5 requests a minute), $9.99 or $39.99 a month per league, or All-Access $299.99 a month for
 every league with webhooks and 600 requests a minute, about $2,830 a year paid annually
 `(Vendor)`. The free trial is 7 days. Not covered: LPGA, the Women's World Cup, NWSL,
