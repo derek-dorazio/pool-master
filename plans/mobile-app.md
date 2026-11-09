@@ -280,12 +280,21 @@ Most screens are lists and forms. Four need more thought:
 
 The one backend addition the app needs.
 
-- **Device registration**: a `devices` table (user, Expo push token, platform, app version,
-  last seen) and two routes, register and unregister, through the normal DTO, mapper,
+- **Device registration**: a `devices` table (user, Expo push token, the phone's native
+  Apple or Google push token, platform, app version, last seen) and two routes, register and unregister, through the normal DTO, mapper,
   OpenAPI and contract-verification chain (`add-endpoint` skill).
 - **Sending**: Expo's push service, which talks to Apple and Google for us, from a
   background job (`rules/architecture-rules.md` §4: no event bus; the notifications module
   calls the push service).
+- **Keep the sender swappable** (Derek 2026-11-09). The notifications module sends through one
+  small push sender port with an Expo adapter. Because the native token is stored from day
+  one, moving to AWS SNS later is a new adapter, Terraform for the SNS platform applications
+  (holding the Apple push key and the Firebase key) and pruning dead tokens ourselves, with no
+  app release. Whether to move is a later decision; nothing for SNS is built now.
+- **Infrastructure now**: one Secrets Manager secret for the Expo access token, passed to the
+  API like the JWT secret. The API already reaches the internet through the NAT gateway.
+  Outside AWS: the Apple Developer account (its push key is kept by EAS), the Expo project,
+  and later a Firebase project for Android.
 - **One notice, two channels.** The notices that already queue email (entry reminders, live
   standings, contest summaries, member joined) also queue a push, from the same
   computation, so nothing is worked out twice.
