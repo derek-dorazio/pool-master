@@ -3,9 +3,17 @@ import { ParticipantType, ScoringFamily, Sport, SportEventStatus } from '@poolma
 import { ContestLeaderboardResponseSchema } from '@poolmaster/shared/dto';
 import {
   type ContestSportEventRow,
+  type ScoredContestEntryPickRow,
+  toContestEntryDetailResponse,
+  toContestEntryDto,
+  toContestEntryListResponse,
+  toContestEntryResponse,
+  toContestFinishedYearsResponse,
   toContestLeaderboardResponse,
+  toContestLeaderboardSnapshotResponse,
   toContestListResponse,
   toContestResponse,
+  toMyContestEntriesResponse,
 } from '../../../packages/core-api/src/mappers/contests.mapper';
 import { buildContest } from '../../factories';
 
@@ -219,5 +227,145 @@ describe('toContestLeaderboardResponse', () => {
     const [pick] = parsed.entries[0].picks;
     expect([pick.golf, pick.race, pick.knockout]).toEqual([null, null, null]);
     expect(pick.composite).toEqual({ points: 19, games: [{ roundNumber: 1, score: 2 }, { roundNumber: 3, score: 17 }] });
+  });
+});
+
+describe('toContestLeaderboardResponse per-sport pick detail', () => {
+  const AS_OF = new Date('2026-04-12T22:00:00.000Z');
+  const board = (sport: Sport, participant: ScoredContestEntryPickRow['participant'], asOf: Date | null) => toContestLeaderboardResponse({
+    contestId: 'contest-1',
+    sportEventId: 'event-1',
+    sport,
+    participantType: null,
+    scoringFamily: null,
+    scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
+    countingRule: { type: 'BEST_N', count: 4 },
+    participants: [],
+    entries: [{
+      entryId: 'entry-1',
+      entryName: 'Mine',
+      entryNumber: 1,
+      squadId: 'squad-1',
+      squadName: 'Mine',
+      score: 3,
+      position: 1,
+      displayPosition: '1',
+      countingPickLimit: 4,
+      scoredPickCount: 1,
+      events: [],
+      picks: [{
+        pickId: 'pick-1',
+        sportEventParticipantId: 'sep-1',
+        pickedAt: AS_OF,
+        slot: null,
+        isCounting: true,
+        isDropped: false,
+        participant,
+      }],
+    }],
+    asOf,
+  });
+
+  it('publishes a golf pick\'s score to par and unplayed rounds on the golf block, the others null, and the board\'s as-of time', () => {
+    const response = board(Sport.GOLF, {
+      sportEventParticipantId: 'sep-1',
+      name: 'Scottie',
+      score: -6,
+      detail: { scoringFamily: ScoringFamily.STROKE_PLAY, unplayedRoundNumbers: [4] },
+      asOf: null,
+    }, AS_OF);
+
+    const [pick] = response.entries[0].picks;
+    expect(pick).toEqual(expect.objectContaining({ golf: { scoreToPar: -6, unplayedRoundNumbers: [4] }, race: null, knockout: null, composite: null }));
+    expect(response.asOf).toBe(AS_OF.toISOString());
+  });
+
+  it('publishes a knockout team pick\'s points, wins, upset bonus and whether it is alive on the knockout block, the others null', () => {
+    const response = board(Sport.BASKETBALL, {
+      sportEventParticipantId: 'sep-1',
+      name: 'Duke',
+      score: 7,
+      detail: { scoringFamily: ScoringFamily.HEAD_TO_HEAD, wins: 2, upsetBonusPoints: 3, isAlive: false },
+      asOf: null,
+    }, null);
+
+    const [pick] = response.entries[0].picks;
+    expect(pick).toEqual(expect.objectContaining({ golf: null, race: null, composite: null, knockout: { points: 7, wins: 2, upsetBonusPoints: 3, isAlive: false } }));
+    expect(response.asOf).toBeNull();
+  });
+
+  it('answers a stored leaderboard with the board it holds, unchanged', () => {
+    const stored = board(Sport.GOLF, {
+      sportEventParticipantId: 'sep-1', name: 'Scottie', score: null, detail: { scoringFamily: ScoringFamily.STROKE_PLAY, unplayedRoundNumbers: [] }, asOf: null,
+    }, null);
+
+    expect(toContestLeaderboardSnapshotResponse({ board: stored })).toBe(stored);
+  });
+});
+
+describe('contest entry mappers', () => {
+  const CREATED = new Date('2026-04-01T00:00:00.000Z');
+  const row = {
+    id: 'entry-1',
+    contestId: 'contest-1',
+    squadId: 'squad-1',
+    entryNumber: 1,
+    name: 'Mine',
+    events: [
+      { sportEventId: 'event-1', status: 'SUBMITTED', submittedAt: CREATED },
+      { sportEventId: 'event-2', status: 'DRAFT', submittedAt: null },
+    ] as never,
+    picksCount: 2,
+    createdAt: CREATED,
+    updatedAt: CREATED,
+  };
+
+  it('hides an entry\'s picks when none are given, sending an omitted tiebreaker and an unsubmitted event\'s time as null', () => {
+    const dto = toContestEntryDto(row, { name: 'Squad' });
+
+    expect(dto).not.toHaveProperty('participants');
+    expect(dto.tiebreakerValue).toBeNull();
+    expect(dto.squadName).toBe('Squad');
+    expect(dto.events.map((event) => event.submittedAt)).toEqual([CREATED.toISOString(), null]);
+  });
+
+  it('shows an entry\'s picks when given, an omitted status, role and team as null', () => {
+    const dto = toContestEntryDto({ ...row, tiebreakerValue: 140 }, { name: 'Squad' }, [
+      { pickId: 'p1', sportEventParticipantId: 'sep-1', sportEventId: 'event-1', participantId: 'x1', participantName: 'One', pickedAt: CREATED },
+      {
+        pickId: 'p2',
+        sportEventParticipantId: 'sep-2',
+        sportEventId: 'event-1',
+        participantId: 'x2',
+        participantName: 'Two',
+        participantStatus: 'ACTIVE',
+        role: 'QB',
+        teamAffiliation: 'KC',
+        pickedAt: CREATED,
+      },
+    ]);
+
+    expect(dto.tiebreakerValue).toBe(140);
+    expect(dto.participants?.map((pick) => [pick.participantStatus, pick.role, pick.teamAffiliation]))
+      .toEqual([[null, null, null], ['ACTIVE', 'QB', 'KC']]);
+  });
+
+  it('wraps an entry for its single, detail, list and own-entries responses, the list counting its entries', () => {
+    const entry = toContestEntryDto(row, { name: 'Squad' });
+
+    expect(toContestEntryResponse('contest-1', entry)).toEqual({ contestId: 'contest-1', entry });
+    expect(toContestEntryDetailResponse('contest-1', entry, true)).toEqual({ contestId: 'contest-1', picksRevealed: true, entry });
+    expect(toContestEntryListResponse({ contestId: 'contest-1', entries: [entry, entry], picksRevealed: false }))
+      .toEqual({ contestId: 'contest-1', total: 2, picksRevealed: false, entries: [entry, entry] });
+    expect(toMyContestEntriesResponse([entry])).toEqual({ entries: [entry] });
+  });
+
+  it('sends a league\'s finished years as a copy, in the order given', () => {
+    const years = [2026, 2025];
+
+    const dto = toContestFinishedYearsResponse(years);
+
+    expect(dto.years).toEqual([2026, 2025]);
+    expect(dto.years).not.toBe(years);
   });
 });
