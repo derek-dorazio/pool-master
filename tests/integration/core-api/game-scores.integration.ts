@@ -13,6 +13,7 @@ import { headToHeadScoringFamily } from '../../../packages/core-api/src/modules/
 import { expectDefined } from '../../support/expect-defined';
 import { createRoundRows, createSportEventRow } from '../../support/sport-event-rows';
 import { cleanupTestData, getAppPrisma, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
+import { recordStatements, statementCounts } from '../statement-log';
 
 // A provider's game scores written into a linked bracket against real Postgres (#1496): the
 // head-to-head family's GAME writer, through the admin's result path, with the teams' provider
@@ -126,5 +127,32 @@ describe('game scores from a provider', () => {
 
     await expect(getPrisma().sportEventMatch.updateMany({ where: { sportEventId: event.id, matchNumber: 3 }, data: { externalGameId: 'g1' } }))
       .rejects.toThrow();
+  });
+
+  it('reads the event\'s matches, sides and team mappings once for a batch of finals, and pays only the result path for each', async () => {
+    const { externalId, teamId } = await linkedBracket();
+
+    const { statements } = await recordStatements(() => publish(externalId, [
+      { externalGameId: 'g1', homeTeamExternalId: teamId('Duke'), awayTeamExternalId: teamId('Houston'), state: ProviderGameState.FINAL, homeScore: 70, awayScore: 67 },
+      { externalGameId: 'g2', homeTeamExternalId: teamId('Auburn'), awayTeamExternalId: teamId('Florida'), state: ProviderGameState.FINAL, homeScore: 80, awayScore: 70 },
+    ]));
+
+    // Pinned: a new statement here is a new cost on every sync of a live bracket.
+    expect(statementCounts(statements)).toEqual([
+      ['DELETE sport_event_participant_standings', 1],
+      ['INSERT sport_event_participant_standings', 2],
+      ['SELECT contests', 2],
+      ['SELECT event_series', 3],
+      ['SELECT participant_provider_mappings', 1],
+      ['SELECT sport_event_match_period_scores', 3],
+      ['SELECT sport_event_matches', 3],
+      ['SELECT sport_event_participant_golf_standings', 1],
+      ['SELECT sport_event_participant_standings', 2],
+      ['SELECT sport_event_participants', 1],
+      ['SELECT sport_event_rounds', 3],
+      ['SELECT sport_events', 3],
+      ['SELECT sport_leagues', 3],
+      ['UPDATE sport_event_matches', 4],
+    ]);
   });
 });

@@ -34,7 +34,11 @@ interface MatchResultFromGame {
   awayScore: number;
 }
 
-/** Writes each final game linked to one of the event's matches; any other game writes nothing. */
+/**
+ * Writes each final game linked to one of the event's matches; any other game writes nothing.
+ * Earlier rounds go first, and each result is read against the bracket the last one wrote, so a
+ * semifinal and the final it feeds, both final in one sync, both record.
+ */
 export async function writeGameScores(
   deps: GameScoreWriterDeps,
   sportEventId: string,
@@ -44,15 +48,22 @@ export async function writeGameScores(
   const matchByGame = new Map(
     matches.flatMap((match) => (match.externalGameId === null ? [] : [[match.externalGameId, match] as const])),
   );
-  const finals = games.flatMap((game) => {
-    const match = matchByGame.get(game.externalGameId);
-    return match !== undefined && game.state === ProviderGameState.FINAL ? [{ game, match }] : [];
-  });
+  const finals = games
+    .flatMap((game) => {
+      const match = matchByGame.get(game.externalGameId);
+      return match !== undefined && game.state === ProviderGameState.FINAL ? [{ game, match }] : [];
+    })
+    .sort((left, right) => left.match.roundNumber - right.match.roundNumber || left.match.matchNumber - right.match.matchNumber);
+  // A side a result in this batch fills is a team of the match that fed it, itself a final here.
   const sidesOf = await participantsOfSides(deps, finals.map(({ match }) => match));
   const teamsOf = await participantsOfTeams(deps, finals.map(({ game }) => game));
+  /** Each match as the latest result in this batch wrote it. */
+  const rewritten = new Map<string, SportEventMatch>();
 
   const rows: SyncWriteDetailRow[] = [];
-  for (const { game, match } of finals) {
+  for (const final of finals) {
+    const { game } = final;
+    const match = rewritten.get(final.match.id) ?? final.match;
     const result = resultFromGame(game, match, sidesOf, teamsOf);
     if (result === null) {
       deps.logger?.warn(
@@ -68,8 +79,9 @@ export async function writeGameScores(
       continue;
     }
     try {
-      // One at a time, each reading the bracket the last wrote: a result can fill a later match's side.
-      await deps.results.recordResult(sportEventId, match.matchNumber, result);
+      // One at a time: the bracket each result writes is the one the next is read against.
+      const bracket = await deps.results.recordResult(sportEventId, match.matchNumber, result);
+      for (const each of bracket) rewritten.set(each.id, each);
       rows.push({ ...row, disposition: 'UPDATED' });
     } catch (error) {
       if (!(error instanceof SportEventError)) throw error;

@@ -150,6 +150,26 @@ describe('writeGameScores', () => {
     expect(result).toMatchObject({ updatesPersisted: 1, updatesSkipped: 1 });
   });
 
+  it('records a semifinal and the final it feeds when both are final in one sync, the semifinal first', async () => {
+    const matches = bracket();
+    // The other semifinal was decided in an earlier sync, so the final already has its away side.
+    matches[2] = linked(matches[2], 'g3', { awaySportEventParticipantId: 'sep-PHI' });
+    const { deps, recordResult, logger } = writer(matches);
+    recordResult.mockImplementation(async (_event, matchNumber) => {
+      await Promise.resolve();
+      return matchNumber === 1 ? [{ ...matches[2], homeSportEventParticipantId: 'sep-KC' }] : [];
+    });
+
+    const result = await writeGameScores(deps, EVENT, [game('g3', 'KC', 'PHI', 31, 28), game('g1', 'KC', 'BUF', 27, 24)]);
+
+    expect(recordResult.mock.calls).toEqual([
+      [EVENT, 1, { winnerSide: MatchSide.HOME, homeScore: 27, awayScore: 24 }],
+      [EVENT, 3, { winnerSide: MatchSide.HOME, homeScore: 31, awayScore: 28 }],
+    ]);
+    expect(logger.warn).not.toHaveBeenCalled();
+    expect(result).toMatchObject({ updatesPersisted: 2, updatesSkipped: 0 });
+  });
+
   it('lets any other failure fail the sync rather than report it as a skipped game', async () => {
     const { deps, recordResult } = writer(bracket());
     recordResult.mockRejectedValueOnce(new Error('database unavailable'));
