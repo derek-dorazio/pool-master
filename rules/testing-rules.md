@@ -249,7 +249,9 @@ type-aware rules hold `tests/**` to this.
   `tests/support/balldontlie-fake-api.ts`, which checks every request and every served reply
   against the vendor's vendored OpenAPI document. Its replies are fixtures under
   `tests/fixtures/balldontlie/`, each of which must fit that document; a fixture the vendor
-  could never send proves nothing about the contract.
+  could never send proves nothing about the contract. Each league's contract test compares the
+  adapter's schemas with the document's components through `contractGapsAgainst`
+  (`tests/support/balldontlie-contract-gaps.ts`).
 - **A collaborator typed as a class** (private fields, so no literal can be one) is
   `stubInstance(Class, { method: jest.fn() })` from `tests/support/stub-instance.ts`.
 - **A Fastify request or reply** stays an uncast literal and crosses over once at the call

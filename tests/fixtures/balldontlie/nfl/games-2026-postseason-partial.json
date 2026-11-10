@@ -1,0 +1,101 @@
+{
+  "data": [
+    {
+      "id": 403601,
+      "updated_at": "2027-01-16T21:30:00.000Z",
+      "visitor_team": {
+        "id": 18,
+        "conference": "AFC",
+        "division": "WEST",
+        "location": "Los Angeles",
+        "name": "Chargers",
+        "full_name": "Los Angeles Chargers",
+        "abbreviation": "LAC"
+      },
+      "home_team": {
+        "id": 13,
+        "conference": "AFC",
+        "division": "SOUTH",
+        "location": "Houston",
+        "name": "Texans",
+        "full_name": "Houston Texans",
+        "abbreviation": "HOU"
+      },
+      "summary": "LAC at HOU",
+      "venue": "Stadium",
+      "week": 1,
+      "date": "2027-01-16T21:30:00.000Z",
+      "season": 2026,
+      "postseason": true,
+      "status": "Final",
+      "status_state": "final",
+      "home_team_score": 20,
+      "visitor_team_score": 17
+    },
+    {
+      "id": 403602,
+      "updated_at": "2027-01-17T01:00:00.000Z",
+      "visitor_team": {
+        "id": 8,
+        "conference": "AFC",
+        "division": "NORTH",
+        "location": "Pittsburgh",
+        "name": "Steelers",
+        "full_name": "Pittsburgh Steelers",
+        "abbreviation": "PIT"
+      },
+      "home_team": {
+        "id": 6,
+        "conference": "AFC",
+        "division": "NORTH",
+        "location": "Baltimore",
+        "name": "Ravens",
+        "full_name": "Baltimore Ravens",
+        "abbreviation": "BAL"
+      },
+      "summary": "PIT at BAL",
+      "venue": "Stadium",
+      "week": 1,
+      "date": "2027-01-17T01:00:00.000Z",
+      "season": 2026,
+      "postseason": true,
+      "status": "Final",
+      "status_state": "final",
+      "home_team_score": 24,
+      "visitor_team_score": 21
+    },
+    {
+      "id": 403603,
+      "updated_at": "2027-01-23T21:30:00.000Z",
+      "visitor_team": {
+        "id": 13,
+        "conference": "AFC",
+        "division": "SOUTH",
+        "location": "Houston",
+        "name": "Texans",
+        "full_name": "Houston Texans",
+        "abbreviation": "HOU"
+      },
+      "home_team": {
+        "id": 17,
+        "conference": "AFC",
+        "division": "WEST",
+        "location": "Kansas City",
+        "name": "Chiefs",
+        "full_name": "Kansas City Chiefs",
+        "abbreviation": "KC"
+      },
+      "summary": "HOU at KC",
+      "venue": "Stadium",
+      "week": 2,
+      "date": "2027-01-23T21:30:00.000Z",
+      "season": 2026,
+      "postseason": true,
+      "status": "Scheduled",
+      "status_state": "scheduled"
+    }
+  ],
+  "meta": {
+    "per_page": 100
+  }
+}

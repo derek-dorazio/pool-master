@@ -24,7 +24,9 @@ The target:
    - golf hole-by-hole scores, through the existing `GOLF` live-score category;
    - game scores and winners for brackets and pick'em, through `MatchResultService`, as the
      `GAME` live-score category: a match links to its provider game by `externalGameId`, on
-     its event's own provider;
+     its event's own provider. An NFL event is a scope of the vendor's games, a regular season
+     week (`nfl-2026-week-12`) or a postseason (`nfl-2026-postseason`), and its teams map by
+     prefixed ids (`nfl-team-12`);
    - per-player box scores for Clutch Cards, through `StatLineService`.
 3. **Webhooks as the trigger, not the record.** BALLDONTLIE posts a signed event (period
    ended, game ended, hole completed) to a receiver. The receiver checks the signature,

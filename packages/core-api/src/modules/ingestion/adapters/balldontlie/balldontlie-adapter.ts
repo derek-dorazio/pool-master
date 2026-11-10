@@ -1,10 +1,14 @@
 /**
  * BalldontlieAdapter — the BALLDONTLIE provider behind the `SportDataProvider` port (#1495).
  *
- * PGA TOUR first: the tournament schedule for the catalog browse and the year import, a
+ * PGA TOUR: the tournament schedule for the catalog browse and the year import, a
  * tournament's field with each golfer's world ranking, and live round scores in the GOLF
  * category. Plan tiers, as the vendor documents them: tournaments and players are free,
  * tournament results need ALL-STAR, the field (`tournament_competitors`) needs GOAT.
+ *
+ * NFL (#1496, `nfl-reader.ts`): regular season weeks and the postseason as events, their teams,
+ * and their games' scores in the GAME category. An event id that names an NFL scope
+ * (`nfl-2026-week-12`) is read as one; any other is a PGA TOUR tournament id.
  *
  * Admins author every event; this adapter only reads (ADR 0009).
  */
@@ -24,6 +28,8 @@ import type {
   SportEventDetail,
 } from '../../core/provider-interface';
 import { ProviderPayloadRecorder } from '../provider-payload-recorder';
+import { parseNflScope } from './nfl-mapping';
+import { NflReader } from './nfl-reader';
 import { BALLDONTLIE_MAX_PER_PAGE, BalldontlieClient, type BalldontlieQuery } from './balldontlie-client';
 import {
   PgaCompetitorType,
@@ -59,6 +65,12 @@ export interface BalldontlieAdapterOptions {
  */
 const MAX_SEASONS_FETCHED_ONE_BY_ONE = 3;
 
+/** What the adapter reads for one league: its events in a date range, and everyone who plays in it. */
+interface LeagueReads {
+  events(dateRange?: DateRange): Promise<SportEvent[]>;
+  participants(): Promise<ProviderParticipant[]>;
+}
+
 /** A vendor tournament id: a positive whole number. Anything else cannot name one. */
 const TOURNAMENT_ID_PATTERN = /^[1-9]\d{0,9}$/;
 
@@ -75,12 +87,21 @@ function withFormat(query: BalldontlieQuery): BalldontlieQuery {
 export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDiagnostics {
   readonly providerId = BALLDONTLIE_PROVIDER_ID;
   readonly providerName = 'BALLDONTLIE';
-  readonly sportsCovered: Sport[] = [Sport.GOLF];
+  readonly sportsCovered: Sport[];
   private readonly payloads = new ProviderPayloadRecorder('balldontlie.request');
   private readonly client: BalldontlieClient;
+  private readonly nfl: NflReader;
+  /** Each league's schedule and roster reads, by the sport it serves. */
+  private readonly leagues: ReadonlyMap<Sport, LeagueReads>;
 
   constructor(options: BalldontlieAdapterOptions) {
     this.client = new BalldontlieClient({ ...options, payloads: this.payloads });
+    this.nfl = new NflReader(this.client, options.now ?? Date.now);
+    this.leagues = new Map<Sport, LeagueReads>([
+      [Sport.GOLF, { events: (dateRange) => this.pgaTournaments(dateRange), participants: () => this.pgaPlayers() }],
+      [Sport.AMERICAN_FOOTBALL, { events: (dateRange) => this.nfl.upcomingEvents(dateRange), participants: () => this.nfl.teams() }],
+    ]);
+    this.sportsCovered = [...this.leagues.keys()];
   }
 
   clearProviderPayloads(): void {
@@ -95,15 +116,17 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
     return this.payloads.beginProviderPayloadCapture();
   }
 
+  /** The sport's events starting inside `dateRange`; none for a sport the adapter does not cover. */
+  async getUpcomingEvents(sport: Sport, dateRange?: DateRange): Promise<SportEvent[]> {
+    return await this.leagues.get(sport)?.events(dateRange) ?? [];
+  }
+
   /**
    * PGA TOUR tournaments starting inside `dateRange` (every season when it is open-ended or
    * absent). A tournament whose lifecycle the vendor marks `unknown` is left out: it cannot be
    * shown with an honest status.
    */
-  async getUpcomingEvents(sport: Sport, dateRange?: DateRange): Promise<SportEvent[]> {
-    if (!this.sportsCovered.includes(sport)) {
-      return [];
-    }
+  private async pgaTournaments(dateRange?: DateRange): Promise<SportEvent[]> {
     const tournaments = await this.listTournaments(seasonsFor(dateRange));
     return tournaments
       .filter(isClassifiedTournament)
@@ -112,8 +135,12 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
         || (event.startDate >= dateRange.from && event.startDate <= dateRange.to));
   }
 
-  /** The tournament with its field; null when the vendor has no tournament with this id. */
+  /** The tournament or NFL scope with its field; null when the vendor has no such event. */
   async getEventDetails(eventId: string): Promise<SportEventDetail | null> {
+    const scope = parseNflScope(eventId);
+    if (scope) {
+      return this.nfl.eventDetails(scope);
+    }
     const tournament = await this.findTournament(eventId);
     if (!tournament) {
       return null;
@@ -128,11 +155,12 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
     return { ...toSportEvent(tournament, participants.length), participants };
   }
 
-  /** Every active PGA TOUR golfer. */
+  /** Every active PGA TOUR golfer, or every NFL team; none for a sport the adapter does not cover. */
   async getParticipants(sport: Sport): Promise<ProviderParticipant[]> {
-    if (!this.sportsCovered.includes(sport)) {
-      return [];
-    }
+    return await this.leagues.get(sport)?.participants() ?? [];
+  }
+
+  private async pgaPlayers(): Promise<ProviderParticipant[]> {
     const players = await this.client.getAllPages(
       '/pga/v1/players',
       { active: true },
@@ -142,10 +170,15 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
   }
 
   /**
-   * Every started round of every golfer in a stroke-play tournament. An id the vendor does not
-   * know, or a tournament of another format, fails the sync rather than returning nothing.
+   * An NFL scope's games in the GAME category, or every started round of every golfer in a
+   * stroke-play tournament. A tournament id the vendor does not know, or a tournament of another
+   * format, fails the sync rather than returning nothing.
    */
   async getLiveScores(eventId: string): Promise<LiveScoreResult> {
+    const scope = parseNflScope(eventId);
+    if (scope) {
+      return this.nfl.liveScores(scope);
+    }
     const tournament = await this.findTournament(eventId);
     if (!tournament) {
       throw new Error(`BALLDONTLIE has no PGA TOUR tournament ${eventId}.`);
