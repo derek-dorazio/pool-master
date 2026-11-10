@@ -442,7 +442,7 @@ export class PredictionService {
           eventStatus = ContestEntryStatus.DRAFT;
         }
         // A week that changes status changes the board, so the contest's rebuild rides with it.
-        return { saves: change.saves, clearedMatchIds: change.clearedMatchIds, eventStatus, tiebreakerValue: change.tiebreakerValue, ...(eventStatus && { jobs: rebuild.jobs }) };
+        return { saves: change.saves, clearedMatchIds: change.clearedMatchIds, eventStatus, tiebreakerValue: change.tiebreakerValue, jobs: eventStatus ? rebuild.jobs : [] };
       },
     });
     if (written?.eventStatus === ContestEntryStatus.DRAFT) {

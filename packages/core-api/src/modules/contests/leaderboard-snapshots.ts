@@ -120,7 +120,6 @@ export class JobLeaderboardRebuilds implements LeaderboardRebuilds {
     return this.queue(LeaderboardRebuildSubject.EVENT, sportEventIds);
   }
 
-
   forEvent(sportEventId: string): JobsForWrite {
     return this.forWrite(LeaderboardRebuildSubject.EVENT, sportEventId);
   }
