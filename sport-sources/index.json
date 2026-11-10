@@ -1,145 +1,19 @@
 {
-  "fetchedAt": "2026-11-10T14:33:50.843Z",
+  "fetchedAt": "2026-11-10T14:35:07.300Z",
   "results": [
     {
-      "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard?dates=20261121",
+      "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard?dates=20261229",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
       "file": "01-site.api.espn.com.txt"
     },
     {
-      "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard?dates=20261122",
+      "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard?dates=20261230",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
       "file": "02-site.api.espn.com.txt"
-    },
-    {
-      "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard?dates=20261123",
-      "rendered": false,
-      "status": "OK",
-      "httpStatus": 200,
-      "file": "03-site.api.espn.com.txt"
-    },
-    {
-      "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard?dates=20261128",
-      "rendered": false,
-      "status": "OK",
-      "httpStatus": 200,
-      "file": "04-site.api.espn.com.txt"
-    },
-    {
-      "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard?dates=20261129",
-      "rendered": false,
-      "status": "OK",
-      "httpStatus": 200,
-      "file": "05-site.api.espn.com.txt"
-    },
-    {
-      "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard?dates=20261130",
-      "rendered": false,
-      "status": "OK",
-      "httpStatus": 200,
-      "file": "06-site.api.espn.com.txt"
-    },
-    {
-      "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard?dates=20261202",
-      "rendered": false,
-      "status": "OK",
-      "httpStatus": 200,
-      "file": "07-site.api.espn.com.txt"
-    },
-    {
-      "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard?dates=20261203",
-      "rendered": false,
-      "status": "OK",
-      "httpStatus": 200,
-      "file": "08-site.api.espn.com.txt"
-    },
-    {
-      "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard?dates=20261205",
-      "rendered": false,
-      "status": "OK",
-      "httpStatus": 200,
-      "file": "09-site.api.espn.com.txt"
-    },
-    {
-      "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard?dates=20261206",
-      "rendered": false,
-      "status": "OK",
-      "httpStatus": 200,
-      "file": "10-site.api.espn.com.txt"
-    },
-    {
-      "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard?dates=20261207",
-      "rendered": false,
-      "status": "OK",
-      "httpStatus": 200,
-      "file": "11-site.api.espn.com.txt"
-    },
-    {
-      "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard?dates=20261212",
-      "rendered": false,
-      "status": "OK",
-      "httpStatus": 200,
-      "file": "12-site.api.espn.com.txt"
-    },
-    {
-      "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard?dates=20261213",
-      "rendered": false,
-      "status": "OK",
-      "httpStatus": 200,
-      "file": "13-site.api.espn.com.txt"
-    },
-    {
-      "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard?dates=20261214",
-      "rendered": false,
-      "status": "OK",
-      "httpStatus": 200,
-      "file": "14-site.api.espn.com.txt"
-    },
-    {
-      "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard?dates=20261219",
-      "rendered": false,
-      "status": "OK",
-      "httpStatus": 200,
-      "file": "15-site.api.espn.com.txt"
-    },
-    {
-      "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard?dates=20261220",
-      "rendered": false,
-      "status": "OK",
-      "httpStatus": 200,
-      "file": "16-site.api.espn.com.txt"
-    },
-    {
-      "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard?dates=20261221",
-      "rendered": false,
-      "status": "OK",
-      "httpStatus": 200,
-      "file": "17-site.api.espn.com.txt"
-    },
-    {
-      "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard?dates=20261226",
-      "rendered": false,
-      "status": "OK",
-      "httpStatus": 200,
-      "file": "18-site.api.espn.com.txt"
-    },
-    {
-      "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard?dates=20261227",
-      "rendered": false,
-      "status": "OK",
-      "httpStatus": 200,
-      "file": "19-site.api.espn.com.txt"
-    },
-    {
-      "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard?dates=20261228",
-      "rendered": false,
-      "status": "OK",
-      "httpStatus": 200,
-      "file": "20-site.api.espn.com.txt"
     }
   ]
 }
