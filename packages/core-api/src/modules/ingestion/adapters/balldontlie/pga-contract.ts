@@ -63,7 +63,8 @@ export const pgaTournamentRoundSchema = z.object({
 /** `PGATournamentCourse`: which rounds a course hosts, and its par. */
 export const pgaTournamentCourseSchema = z.object({
   course: z.object({
-    par: z.number().int().nullable(),
+    // The inline course object lists nothing as required.
+    par: z.number().int().nullish(),
   }),
   rounds: z.array(z.number().int()),
 });
@@ -117,16 +118,20 @@ export const pgaTournamentCompetitorListSchema = z.object({
   meta: pgaPaginationSchema.optional(),
 });
 
-/** `PGAPlayer` from `/pga/v1/players`: a golfer, with the world ranking a field's tiers are built from. */
+/**
+ * `PGAPlayer` from `/pga/v1/players`: a golfer, with the world ranking a field's tiers are built
+ * from. The vendor lists no field of it as required, so all but the id and name may be missing:
+ * one golfer without a ranking must not fail a whole field read.
+ */
 export const pgaPlayerSchema = z.object({
   id: z.number().int(),
-  first_name: z.string().nullable(),
-  last_name: z.string().nullable(),
+  first_name: z.string().nullish(),
+  last_name: z.string().nullish(),
   display_name: z.string().min(1),
-  country: z.string().nullable(),
-  country_code: z.string().nullable(),
-  owgr: z.number().int().nullable(),
-  active: z.boolean(),
+  country: z.string().nullish(),
+  country_code: z.string().nullish(),
+  owgr: z.number().int().nullish(),
+  active: z.boolean().optional(),
 });
 export type PgaPlayer = z.infer<typeof pgaPlayerSchema>;
 

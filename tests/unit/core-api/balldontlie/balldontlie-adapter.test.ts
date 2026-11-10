@@ -161,6 +161,18 @@ describe('BalldontlieAdapter (PGA TOUR)', () => {
       ]);
     });
 
+    it('still loads the whole field when a golfer comes back with no world ranking field at all', async () => {
+      const unranked = players.map((player) => (player.id === 75 ? Object.fromEntries(Object.entries(player).filter(([name]) => name !== 'owgr')) : player));
+      const harness = setup({ ...defaultRoutes, '/pga/v1/players': pagedRoute(unranked as typeof players) });
+      restore = harness.restore;
+
+      const detail = await harness.adapter.getEventDetails('41');
+
+      expect(detail?.participants.map((participant) => [participant.externalId, participant.ranking])).toEqual([
+        ['10', 35], ['75', undefined], ['185', 1], ['3', 2],
+      ]);
+    });
+
     it('reads rankings a hundred ids at a time for a large field', async () => {
       const bigField = Array.from({ length: 150 }, (_, index) => ({
         ...competitors[0],
@@ -267,7 +279,7 @@ describe('BalldontlieAdapter (PGA TOUR)', () => {
 
       expect(health).toMatchObject({ providerId: 'balldontlie', status: 'HEALTHY', errorRateLastHour: 0 });
       expect(health.lastSuccessfulPoll).toBeInstanceOf(Date);
-      expect(requestLine(harness.api)).toEqual(['/pga/v2/tournaments?per_page=1']);
+      expect(requestLine(harness.api)).toEqual(['/pga/v2/tournaments?per_page=1&include_format=true']);
     });
 
     it('is DOWN with the vendor\'s reason when the key is refused', async () => {
@@ -279,7 +291,7 @@ describe('BalldontlieAdapter (PGA TOUR)', () => {
 
       const health = await adapter.healthCheck();
 
-      expect(health).toMatchObject({ status: 'DOWN', errorRateLastHour: 1, message: 'BALLDONTLIE request /pga/v2/tournaments?per_page=1 failed: 401 Unauthorized' });
+      expect(health).toMatchObject({ status: 'DOWN', errorRateLastHour: 1, message: 'BALLDONTLIE request /pga/v2/tournaments?per_page=1&include_format=true failed: 401 Unauthorized' });
     });
   });
 
@@ -333,6 +345,17 @@ describe('the spec-checking fake BALLDONTLIE', () => {
     });
     await expect(api.fetch('https://api.balldontlie.io/pga/v2/tournaments', { headers: { Authorization: API_KEY } }))
       .rejects.toThrow('does not fit the vendor document');
+  });
+
+  it('drops format_type from tournaments unless include_format=true is sent, as the vendor documents', async () => {
+    const formatTypes = async (url: string) => {
+      const page = await (await call(url)).json() as { data: Array<Record<string, unknown>> };
+      return page.data.map((row) => row['format_type']);
+    };
+
+    expect((await formatTypes('/pga/v2/tournaments?per_page=2')).every((value) => value === undefined)).toBe(true);
+    expect((await formatTypes('/pga/v2/tournaments?per_page=2&include_format=false')).every((value) => value === undefined)).toBe(true);
+    expect(await formatTypes('/pga/v2/tournaments?per_page=2&include_format=true')).toEqual(['STROKE_PLAY', 'STROKE_PLAY']);
   });
 
   it('answers 404 for a declared path no route serves, and passes a raw body through', async () => {

@@ -9,7 +9,8 @@ import Ajv2020 from 'ajv/dist/2020';
  * - the path is one the document declares for GET;
  * - every query parameter is declared there, each value fits its declared schema, and every
  *   required one is present;
- * - every 200 body a test serves fits the document's response schema.
+ * - every 200 body a test serves fits the document's response schema;
+ * - a field the vendor serves only on request is left out unless the request asked for it.
  *
  * Anything else throws `BalldontlieSpecViolation` and is kept in `violations`. The adapter's
  * client treats a throwing fetch as a network failure and retries, so a test checks
@@ -50,6 +51,25 @@ export interface FakeBalldontlie {
 }
 
 const parameterAjv = new Ajv2020({ strict: false });
+
+/**
+ * Fields the vendor serves only when a request asks for them, by path. The document says
+ * `format_type` is "Present only when include_format=true", so the fake drops it otherwise,
+ * whatever the test's rows hold.
+ */
+const FIELDS_SERVED_ON_REQUEST: Readonly<Partial<Record<string, { parameter: string; field: string }>>> = {
+  '/pga/v2/tournaments': { parameter: 'include_format', field: 'format_type' },
+};
+
+function withoutUnrequestedFields(path: string, query: URLSearchParams, body: unknown): unknown {
+  const onRequest = FIELDS_SERVED_ON_REQUEST[path];
+  if (!onRequest || query.get(onRequest.parameter) === 'true') return body;
+  const page = body as { data: Array<Record<string, unknown>> };
+  return {
+    ...page,
+    data: page.data.map((row) => Object.fromEntries(Object.entries(row).filter(([name]) => name !== onRequest.field))),
+  };
+}
 
 function coerce(value: string, schema: Record<string, unknown>): unknown {
   if (schema['type'] === 'integer' || schema['type'] === 'number') return /^-?\d+(\.\d+)?$/.test(value) ? Number(value) : value;
@@ -124,13 +144,14 @@ export function createFakeBalldontlie(options: {
     if (reply.rawBody !== undefined) {
       return new Response(reply.rawBody, { status, headers: reply.headers });
     }
-    if (status === 200) {
-      const validate = spec.responseValidator(url.pathname);
-      if (!validate(reply.body)) {
-        throw new BalldontlieSpecViolation(`The reply served for GET ${url.pathname} does not fit the vendor document:\n${describeErrors(validate)}`);
-      }
+    if (status !== 200) {
+      return Response.json(reply.body ?? null, { status, headers: reply.headers });
     }
-    return Response.json(reply.body ?? null, { status, headers: reply.headers });
+    const validate = spec.responseValidator(url.pathname);
+    if (!validate(reply.body)) {
+      throw new BalldontlieSpecViolation(`The reply served for GET ${url.pathname} does not fit the vendor document:\n${describeErrors(validate)}`);
+    }
+    return Response.json(withoutUnrequestedFields(url.pathname, url.searchParams, reply.body), { status, headers: reply.headers });
   };
 
   const fakeFetch = async (input: string | URL | Request, init?: RequestInit): Promise<Response> => {

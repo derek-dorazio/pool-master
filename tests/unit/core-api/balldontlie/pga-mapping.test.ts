@@ -140,6 +140,12 @@ describe('BALLDONTLIE PGA field to participants', () => {
     expect(toTourParticipant(player)).toMatchObject({ externalId: '901', name: 'Retired Golfer', active: false, ranking: undefined, metadata: {} });
     expect(toTourParticipant({ ...player, owgr: 12, active: true })).toMatchObject({ active: true, ranking: 12 });
   });
+
+  it('maps a tour golfer the vendor sends with only an id and a name as active, unranked and unnamed beyond that, since the list is read with active=true', () => {
+    expect(toTourParticipant({ id: 902, display_name: 'Bare Golfer' })).toMatchObject({
+      externalId: '902', name: 'Bare Golfer', active: true, ranking: undefined, firstName: undefined, lastName: undefined, nationality: undefined,
+    });
+  });
 });
 
 describe('BALLDONTLIE PGA results to golf round updates', () => {
@@ -185,6 +191,21 @@ describe('BALLDONTLIE PGA results to golf round updates', () => {
     expect(toGolfRoundUpdates(wyndham, [{ ...henley, position: 'DQ' }]).at(-1)?.status).toBe(ParticipantRoundStatus.DSQ);
   });
 
+  it('reads a golfer with no position yet, or a tied place, as still in it', () => {
+    const scheffler = resultFor(liveResults, 185);
+    const statuses = (position: string | null) => toGolfRoundUpdates(bmw, [{ ...scheffler, position }]).map((update) => update.status);
+    expect(statuses(null)).toEqual(statuses('1'));
+    expect(statuses('T12')).toEqual(statuses('1'));
+    expect(statuses(null)).not.toContain(ParticipantRoundStatus.MISSED_CUT);
+  });
+
+  it('refuses a position that is neither a place nor CUT, WD or DQ, rather than reading the golfer as still playing', () => {
+    const scheffler = resultFor(liveResults, 185);
+    for (const position of ['MDF', 'W/D', 'DNS']) {
+      expect(() => toGolfRoundUpdates(bmw, [{ ...scheffler, position }])).toThrow(`position "${position}" is neither a place nor one of CUT, WD, DQ`);
+    }
+  });
+
   it('marks every round COMPLETED once the tournament is final', () => {
     const updates = toGolfRoundUpdates(wyndham, [resultFor(finalResults, 10)]);
     expect(updates.map((update) => [update.round, update.status, update.strokes, update.scoreToPar])).toEqual([
@@ -208,6 +229,8 @@ describe('BALLDONTLIE PGA results to golf round updates', () => {
     expect(() => toGolfRoundUpdates(twoCourses, [noRelative])).toThrow('round 1 has no par_relative_score and no single course par to work it out from');
     const noPar: PgaTournament = { ...bmw, courses: [{ ...bmw.courses[0], course: { par: null } }] };
     expect(() => toGolfRoundUpdates(noPar, [noRelative])).toThrow(BalldontlieContractError);
+    const parMissing: PgaTournament = { ...bmw, courses: [{ ...bmw.courses[0], course: {} }] };
+    expect(() => toGolfRoundUpdates(parMissing, [noRelative])).toThrow(BalldontlieContractError);
   });
 
   it('refuses a thru value that is neither "F" nor a hole count, and one past 18 holes', () => {

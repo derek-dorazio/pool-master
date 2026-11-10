@@ -153,6 +153,16 @@ describe('BalldontlieClient', () => {
     expect(harness.sent).toHaveLength(2);
   });
 
+  it('releases a retryable reply\'s unread body before waiting to retry, so the connection is not held through the back-off', async () => {
+    const throttled = new Response('{"error":"Too many requests"}', { status: 429 });
+    const harness = setup([throttled, Response.json({ data: [] })]);
+    restore = harness.restore;
+
+    await harness.client.get('/a', {}, rowsSchema);
+
+    await expect(throttled.text()).rejects.toThrow();
+  });
+
   it('retries a 5xx with doubling back-off (1 s, 2 s, 4 s) and fails with the vendor\'s error message once retries run out', async () => {
     const harness = setup([
       new Response('{"error":"boom"}', { status: 503 }),

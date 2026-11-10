@@ -118,6 +118,8 @@ function resolveOurs(node: JsonSchema): VendorNode {
  */
 const PRESENT_BY_REQUEST: ReadonlyMap<string, string> = new Map([
   ['PGATournamentV2.format_type', 'present when include_format=true, which every adapter read of /pga/v2/tournaments sends'],
+  ['PGAPlayer.id', 'a player record with no id is not a player; every other player shape requires it'],
+  ['PGAPlayer.display_name', 'the one name a golfer is shown by; PGAPlayerSummaryV2 requires it for the same golfers'],
 ]);
 
 /**
@@ -158,14 +160,15 @@ function contractGaps(ours: JsonSchema, vendor: JsonSchema, at: string): string[
     const ourProperties = (our.schema['properties'] ?? {}) as Record<string, JsonSchema>;
     const theirProperties = (theirs.schema['properties'] ?? {}) as Record<string, JsonSchema>;
     const ourRequired = new Set((our.schema['required'] ?? []) as string[]);
-    const theirRequired = Array.isArray(theirs.schema['required']) ? new Set(theirs.schema['required'] as string[]) : null;
+    // No `required` list means the vendor requires nothing on that component.
+    const theirRequired = new Set((theirs.schema['required'] ?? []) as string[]);
     for (const [name, property] of Object.entries(ourProperties)) {
       const field = `${at}.${name}`;
       if (!(name in theirProperties)) {
         gaps.push(`${field}: the adapter reads it, but the vendor documents no such field`);
         continue;
       }
-      if (ourRequired.has(name) && theirRequired && !theirRequired.has(name) && !PRESENT_BY_REQUEST.has(field)) {
+      if (ourRequired.has(name) && !theirRequired.has(name) && !PRESENT_BY_REQUEST.has(field)) {
         gaps.push(`${field}: the adapter reads it as always present, but the vendor does not list it as required`);
       }
       gaps.push(...contractGaps(property, theirProperties[name], field));
@@ -227,8 +230,10 @@ describe('BALLDONTLIE PGA fields the adapter reads', () => {
 
   it('flags a field read as always present that the vendor does not require', () => {
     const optionalElsewhere = z.toJSONSchema(z.object({ owgr: z.number().int().nullable() })) as JsonSchema;
-    // PGAPlayer declares no required list at all, so presence is not compared there.
-    expect(contractGaps(optionalElsewhere, spec.component('PGAPlayer'), 'PGAPlayer')).toEqual([]);
+    // PGAPlayer declares no required list at all, so the vendor requires none of its fields.
+    expect(contractGaps(optionalElsewhere, spec.component('PGAPlayer'), 'PGAPlayer')).toEqual([
+      'PGAPlayer.owgr: the adapter reads it as always present, but the vendor does not list it as required',
+    ]);
     const shape = { ...spec.component('PGATournamentV2'), required: ['id'] };
     const ours = z.toJSONSchema(z.object({ season: z.number().int() })) as JsonSchema;
     expect(contractGaps(ours, shape, 'PGATournamentV2')).toEqual([

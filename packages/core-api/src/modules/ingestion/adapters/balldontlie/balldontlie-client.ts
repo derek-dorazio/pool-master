@@ -181,6 +181,8 @@ export class BalldontlieClient {
       }
 
       if (RETRYABLE_STATUSES.has(response.status) && attempt < this.maxRetries) {
+        // Release the connection now rather than when the unread body is collected.
+        await response.body?.cancel();
         await this.sleep(retryAfterMs(response) ?? backoffMs(attempt + 1));
         continue;
       }

@@ -106,8 +106,12 @@ function requirePlayer(path: string, player: PgaPlayerSummary | null, competitor
   return player;
 }
 
+/** The name fields a golfer is built from, from either player shape; only the id and name are sure. */
+type GolferNames = Pick<PgaPlayerSummary, 'id' | 'display_name'>
+  & Partial<Pick<PgaPlayerSummary, 'first_name' | 'last_name' | 'country_code'>>;
+
 function toGolfer(
-  player: PgaPlayerSummary,
+  player: GolferNames,
   details: { active: boolean; ranking: number | undefined; metadata: ProviderParticipant['metadata'] },
 ): ProviderParticipant {
   return {
@@ -150,9 +154,12 @@ export function fieldPlayerIds(competitors: readonly PgaTournamentCompetitor[]):
     .map((competitor) => requirePlayer('/pga/v2/tournament_competitors', competitor.player, competitor.id).id);
 }
 
-/** A golfer from the tour's player list. */
+/**
+ * A golfer from the tour's player list. The list is read with `active=true`, so a player whose
+ * `active` flag is missing is active by that request.
+ */
 export function toTourParticipant(player: PgaPlayer): ProviderParticipant {
-  return toGolfer(player, { active: player.active, ranking: player.owgr ?? undefined, metadata: {} });
+  return toGolfer(player, { active: player.active ?? true, ranking: player.owgr ?? undefined, metadata: {} });
 }
 
 /** Positions that mean a golfer is out, and the status their last played round takes. */
@@ -161,6 +168,24 @@ const OUT_STATUS_BY_POSITION: ReadonlyMap<string, ParticipantRoundStatus> = new 
   ['WD', ParticipantRoundStatus.DNF],
   ['DQ', ParticipantRoundStatus.DSQ],
 ]);
+
+/** A place on the leaderboard, tied or not: `1`, `T4`. */
+const PLACE_PATTERN = /^T?\d{1,3}$/;
+
+/**
+ * Why a golfer is out, or undefined while they are still in it (a place, or no position yet).
+ * Any other position is refused rather than read as still playing.
+ */
+function readOutStatus(path: string, position: string | null): ParticipantRoundStatus | undefined {
+  if (position === null || PLACE_PATTERN.test(position)) {
+    return undefined;
+  }
+  const outStatus = OUT_STATUS_BY_POSITION.get(position);
+  if (!outStatus) {
+    throw new BalldontlieContractError(path, [`position "${position}" is neither a place nor one of ${[...OUT_STATUS_BY_POSITION.keys()].join(', ')}`]);
+  }
+  return outStatus;
+}
 
 /** `thru` while a round is played: the holes completed, with a `*` when the golfer started on the back nine. */
 const HOLES_THRU_PATTERN = /^(\d{1,2})\*?$/;
@@ -195,7 +220,7 @@ function readThru(path: string, thru: string | null): RoundProgress {
 function courseParForRound(tournament: PgaTournament, roundNumber: number): number | null {
   const pars = tournament.courses
     .filter((entry) => entry.rounds.includes(roundNumber))
-    .map((entry) => entry.course.par);
+    .map((entry) => entry.course.par ?? null);
   return pars.length === 1 ? pars[0] : null;
 }
 
@@ -237,7 +262,7 @@ export function toGolfRoundUpdates(
     const played = result.rounds
       .filter(isPlayed)
       .sort((a, b) => a.round_number - b.round_number);
-    const outStatus = result.position === null ? undefined : OUT_STATUS_BY_POSITION.get(result.position);
+    const outStatus = readOutStatus(path, result.position);
     const lastPlayed = played.at(-1)?.round_number;
 
     return played.map((round): GolfRoundUpdate => {

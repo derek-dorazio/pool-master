@@ -24,7 +24,7 @@ import type {
   SportEventDetail,
 } from '../../core/provider-interface';
 import { ProviderPayloadRecorder } from '../provider-payload-recorder';
-import { BALLDONTLIE_MAX_PER_PAGE, BalldontlieClient } from './balldontlie-client';
+import { BALLDONTLIE_MAX_PER_PAGE, BalldontlieClient, type BalldontlieQuery } from './balldontlie-client';
 import {
   PgaCompetitorType,
   pgaPlayerListSchema,
@@ -61,6 +61,16 @@ const MAX_SEASONS_FETCHED_ONE_BY_ONE = 3;
 
 /** A vendor tournament id: a positive whole number. Anything else cannot name one. */
 const TOURNAMENT_ID_PATTERN = /^[1-9]\d{0,9}$/;
+
+const TOURNAMENTS_PATH = '/pga/v2/tournaments';
+
+/**
+ * The vendor serves `format_type` only when `include_format=true` is sent, and the tournament
+ * schema requires it, so every tournament read adds the flag here.
+ */
+function withFormat(query: BalldontlieQuery): BalldontlieQuery {
+  return { ...query, include_format: true };
+}
 
 export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDiagnostics {
   readonly providerId = BALLDONTLIE_PROVIDER_ID;
@@ -153,7 +163,7 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
   async healthCheck(): Promise<ProviderHealthStatus> {
     const startedAt = Date.now();
     try {
-      await this.client.get('/pga/v2/tournaments', { per_page: 1 }, pgaTournamentListSchema);
+      await this.readTournamentPage({ per_page: 1 });
       return {
         providerId: this.providerId,
         status: 'HEALTHY',
@@ -172,23 +182,24 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
     }
   }
 
+  /** One page of tournaments. Every tournament read goes through here or `listTournaments`. */
+  private readTournamentPage(query: BalldontlieQuery) {
+    return this.client.get(TOURNAMENTS_PATH, withFormat(query), pgaTournamentListSchema);
+  }
+
   private async findTournament(eventId: string): Promise<PgaTournament | null> {
     if (!TOURNAMENT_ID_PATTERN.test(eventId)) {
       return null;
     }
-    const page = await this.client.get(
-      '/pga/v2/tournaments',
-      { 'tournament_ids[]': [Number(eventId)], include_format: true },
-      pgaTournamentListSchema,
-    );
+    const page = await this.readTournamentPage({ 'tournament_ids[]': [Number(eventId)] });
     return page.data.find((tournament) => tournament.id === Number(eventId)) ?? null;
   }
 
   /** `seasons` empty means every season, in one unfiltered list. */
   private async listTournaments(seasons: readonly number[]): Promise<PgaTournament[]> {
     const read = (season?: number) => this.client.getAllPages(
-      '/pga/v2/tournaments',
-      { season, include_format: true },
+      TOURNAMENTS_PATH,
+      withFormat({ season }),
       pgaTournamentListSchema,
     );
     if (seasons.length === 0) {
@@ -211,7 +222,7 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
         pgaPlayerListSchema,
       );
       for (const player of players) {
-        rankings.set(player.id, player.owgr);
+        rankings.set(player.id, player.owgr ?? null);
       }
     }
     return rankings;

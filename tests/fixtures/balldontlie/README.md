@@ -16,10 +16,21 @@ published OpenAPI document, not from recorded traffic.
   world rankings, and results with a cut, a withdrawal, a back-nine start and a finished round.
   Every one must fit the document's response schema (`pga-contract.test.ts`).
 
-Values the document leaves as free strings are read as follows, and are the first things to
-check against real responses: a result's `position` marks a golfer out with `CUT`, `WD` or `DQ`
-(the first two are documented on the v1 results; `DQ` is assumed), and `thru` is `F`, a hole
-count, or a hole count with `*` for a back-nine start.
+## Assumptions to confirm against the real API
+
+The first things to check once a key exists, each read by `npm run balldontlie:contract-check`:
+
+- A result's `position` is a place (`1`, `T4`), or marks a golfer out with `CUT`, `WD` or
+  `DQ` (the first two are documented on the v1 results; `DQ` is assumed). Any other spelling,
+  such as `MDF`, `W/D` or `DNS`, fails the scores sync rather than being read as still
+  playing; add it to the mapping once seen.
+- `thru` is `F`, a hole count, or a hole count with `*` for a back-nine start.
+- A full field comes back across pages. The client stops at a page shorter than `per_page`,
+  as the document's example does, so an endpoint that caps `per_page` below 100 would end a
+  field after its first page with no error. `--tournament <id>` prints the field size: check
+  it against the tournament's real field by eye.
+- `format_type` is served only when `include_format=true` is sent, which every tournament read
+  does (the fake drops it otherwise).
 
 When an account exists, replace or add fixtures with recorded responses and keep the
 doc-example files: the pair shows where the vendor's document and its API disagree.
