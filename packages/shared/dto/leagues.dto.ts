@@ -264,7 +264,7 @@ export const LeagueInvitationDtoSchema = z.object({
   acceptedAt: DateTimeSchema.nullable().optional().describe('When the invitation was accepted, if applicable.'),
   acceptedBy: z.string().nullable().optional().describe('User ID that accepted the invite, when known.'),
   emailStatus: EmailMessageStatusSchema.nullable().describe(
-    'Where the latest email of an email invite stands; null for a join link, which has no email.',
+    'Where the latest email of an email invite stands; null for a join link, which has no email, and for an email invite whose email is over 30 days old, once the outbox has deleted it.',
   ),
   emailSkipReason: EmailSkipReasonSchema.nullable().describe(
     'Why the latest email of an email invite was not sent; null unless emailStatus is SKIPPED.',
