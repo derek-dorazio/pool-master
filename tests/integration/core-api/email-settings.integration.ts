@@ -171,6 +171,36 @@ describe('league invite by email under the EMAIL_CONFIG setting', () => {
     }
   });
 
+  it('sends nothing already waiting in the outbox to an address an admin then leaves off "Only send to", and records it skipped', async () => {
+    // Queued as an API-only task queues email: recorded, and left for a sender to find.
+    const recipientEmail = `queued-then-not-allowed-${Date.now()}@integration.test`;
+    const { message } = await new PrismaEmailMessageRepository(getAppPrisma()).record({
+      templateKey: 'EVENT_STILL_DRAFT',
+      recipientEmail,
+      idempotencyKey: `email-settings-test:${recipientEmail}`,
+      fromName: 'Primetime Commissioner',
+      fromAddress: 'noreply@integration.test',
+      status: 'QUEUED',
+      subject: 'Still in draft',
+      textBody: 'Still in draft',
+      htmlBody: '<p>Still in draft</p>',
+      dueAt: new Date(),
+    });
+
+    try {
+      await saveEmailConfig((current) => ({ ...current, allowedRecipients: ['@allowed.integration.test'] }));
+      await deliverQueuedIntegrationEmail();
+
+      expect(sentTo(recipientEmail)).toBe(0);
+      expect(await getPrisma().emailMessage.findUniqueOrThrow({ where: { id: message.id } })).toMatchObject({
+        status: 'SKIPPED',
+        skipReason: 'NOT_ALLOWED_IN_ENVIRONMENT',
+      });
+    } finally {
+      await getPrisma().emailMessage.delete({ where: { id: message.id } });
+    }
+  });
+
   it('sends again as soon as an admin switches email back on', async () => {
     await saveEmailConfig((current) => ({ ...current, enabled: false }));
     await saveEmailConfig((current) => ({ ...current, enabled: true }));

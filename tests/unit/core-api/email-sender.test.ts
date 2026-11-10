@@ -179,6 +179,32 @@ describe('email sender', () => {
     expect(outbox.rows[1]).toMatchObject({ status: 'SENT' });
   });
 
+  it('skips, without sending, an email queued for an address an admin then left off "Only send to", and still sends to the addresses still on it', async () => {
+    const time = clock();
+    const outbox = inMemoryEmailMessages(time.now);
+    await outbox.record(queued(1));
+    await outbox.record(queued(2, { recipientEmail: 'tester@poolmaster.dev', idempotencyKey: 'LEAGUE_JOIN_SUCCESS:invite-1:user-2' }));
+    const { transport, sent } = recordingTransport();
+
+    await sender({ outbox, transport, time, config: { allowedRecipients: ['@poolmaster.dev'] } }).drain();
+
+    expect(sent.map((message) => message.to)).toEqual(['tester@poolmaster.dev']);
+    expect(outbox.rows[0]).toMatchObject({ status: 'SKIPPED', skipReason: 'NOT_ALLOWED_IN_ENVIRONMENT', nextAttemptAt: undefined });
+    expect(outbox.rows[1]).toMatchObject({ status: 'SENT' });
+  });
+
+  it('skips, without sending, an email queued for a reserved domain when the transport is SES', async () => {
+    const time = clock();
+    const outbox = inMemoryEmailMessages(time.now);
+    await outbox.record(queued(1, { recipientEmail: 'smoke@e2e.invalid' }));
+    const { transport, sent } = recordingTransport();
+
+    await sender({ outbox, transport, time }).drain();
+
+    expect(sent).toHaveLength(0);
+    expect(outbox.rows[0]).toMatchObject({ status: 'SKIPPED', skipReason: 'NOT_ALLOWED_IN_ENVIRONMENT' });
+  });
+
   it('sends no more than the configured rate a second, waiting out the rest of each second between batches', async () => {
     const time = clock();
     const outbox = inMemoryEmailMessages(time.now);

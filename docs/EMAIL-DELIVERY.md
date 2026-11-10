@@ -291,7 +291,9 @@ holds:
   obey `enabled` and "Only send to".
 - `allowedRecipients` ("Only send to"): when not empty, the only recipients email goes to, each
   a whole address or `@domain`, compared without case. Every other recipient is skipped. Empty
-  (the default) means no limit.
+  (the default) means no limit. Like the switches, the list is checked again just before an
+  email is sent, so tightening it also stops email already waiting in the outbox for an address
+  no longer on it: that email is recorded SKIPPED (`NOT_ALLOWED_IN_ENVIRONMENT`) (#1512).
 - `sendRatePerSecond` ("Emails a second"): the most emails each core-api task sends a second,
   10 by default. Production runs two tasks; keep the total within the SES account's rate
   (14 a second when production access is granted).
