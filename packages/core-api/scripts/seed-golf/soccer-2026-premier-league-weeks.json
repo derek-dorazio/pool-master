@@ -1,0 +1,1645 @@
+{
+  "schemaVersion": 1,
+  "scope": {
+    "sport": "SOCCER",
+    "season": 2026,
+    "sportLeagues": [
+      "Premier League"
+    ],
+    "contents": [
+      "SCHEDULE",
+      "PLAYERS",
+      "FIELDS",
+      "BRACKET"
+    ]
+  },
+  "testData": false,
+  "provenance": {
+    "gatheredAt": "2026-11-10",
+    "gatheredBy": "load-sport-data skill: 2026-27 Premier League matchweeks 11 to 18, each its own event whose matches form no bracket, its field every club playing that week. openfootball and ESPN agree on every pairing and home side. A kickoff is given only where both agree; where openfootball still holds its nominal Saturday 15:00 and ESPN has the broadcast slot, the match carries none until a later load. Two openfootball pairings are not on ESPN for any fetched date (Nottingham Forest v Chelsea, matchweek 12; Coventry City v Ipswich Town, matchweek 13), so they and their clubs are left out of those weeks. Each week runs from the earliest to the latest date either source gives. Matchweek 19 starts 1 January 2027, so it belongs in a 2027 file. Rankings are the table on 2026-11-10 from ESPN alone (a tiering order).",
+    "sources": [
+      {
+        "name": "openfootball, English Premier League 2026/27",
+        "url": "https://raw.githubusercontent.com/openfootball/football.json/master/2026-27/en.1.json"
+      },
+      {
+        "name": "ESPN Premier League standings",
+        "url": "https://site.api.espn.com/apis/v2/sports/soccer/eng.1/standings"
+      },
+      {
+        "name": "ESPN Premier League scoreboard, 20261121",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard?dates=20261121"
+      },
+      {
+        "name": "ESPN Premier League scoreboard, 20261122",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard?dates=20261122"
+      },
+      {
+        "name": "ESPN Premier League scoreboard, 20261123",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard?dates=20261123"
+      },
+      {
+        "name": "ESPN Premier League scoreboard, 20261128",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard?dates=20261128"
+      },
+      {
+        "name": "ESPN Premier League scoreboard, 20261129",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard?dates=20261129"
+      },
+      {
+        "name": "ESPN Premier League scoreboard, 20261130",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard?dates=20261130"
+      },
+      {
+        "name": "ESPN Premier League scoreboard, 20261202",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard?dates=20261202"
+      },
+      {
+        "name": "ESPN Premier League scoreboard, 20261203",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard?dates=20261203"
+      },
+      {
+        "name": "ESPN Premier League scoreboard, 20261205",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard?dates=20261205"
+      },
+      {
+        "name": "ESPN Premier League scoreboard, 20261206",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard?dates=20261206"
+      },
+      {
+        "name": "ESPN Premier League scoreboard, 20261207",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard?dates=20261207"
+      },
+      {
+        "name": "ESPN Premier League scoreboard, 20261212",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard?dates=20261212"
+      },
+      {
+        "name": "ESPN Premier League scoreboard, 20261213",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard?dates=20261213"
+      },
+      {
+        "name": "ESPN Premier League scoreboard, 20261214",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard?dates=20261214"
+      },
+      {
+        "name": "ESPN Premier League scoreboard, 20261219",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard?dates=20261219"
+      },
+      {
+        "name": "ESPN Premier League scoreboard, 20261220",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard?dates=20261220"
+      },
+      {
+        "name": "ESPN Premier League scoreboard, 20261221",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard?dates=20261221"
+      },
+      {
+        "name": "ESPN Premier League scoreboard, 20261226",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard?dates=20261226"
+      },
+      {
+        "name": "ESPN Premier League scoreboard, 20261227",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard?dates=20261227"
+      },
+      {
+        "name": "ESPN Premier League scoreboard, 20261228",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard?dates=20261228"
+      },
+      {
+        "name": "ESPN Premier League scoreboard, 20261229",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard?dates=20261229"
+      },
+      {
+        "name": "ESPN Premier League scoreboard, 20261230",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard?dates=20261230"
+      }
+    ]
+  },
+  "sportLeagues": [
+    {
+      "name": "Premier League",
+      "players": [
+        {
+          "key": "pl-arsenal",
+          "name": "Arsenal",
+          "countryCode": "GB",
+          "ranking": 1
+        },
+        {
+          "key": "pl-brighton-hove-albion",
+          "name": "Brighton & Hove Albion",
+          "countryCode": "GB",
+          "ranking": 2
+        },
+        {
+          "key": "pl-manchester-city",
+          "name": "Manchester City",
+          "countryCode": "GB",
+          "ranking": 3
+        },
+        {
+          "key": "pl-liverpool",
+          "name": "Liverpool",
+          "countryCode": "GB",
+          "ranking": 4
+        },
+        {
+          "key": "pl-chelsea",
+          "name": "Chelsea",
+          "countryCode": "GB",
+          "ranking": 5
+        },
+        {
+          "key": "pl-everton",
+          "name": "Everton",
+          "countryCode": "GB",
+          "ranking": 6
+        },
+        {
+          "key": "pl-bournemouth",
+          "name": "Bournemouth",
+          "countryCode": "GB",
+          "ranking": 7
+        },
+        {
+          "key": "pl-brentford",
+          "name": "Brentford",
+          "countryCode": "GB",
+          "ranking": 8
+        },
+        {
+          "key": "pl-leeds-united",
+          "name": "Leeds United",
+          "countryCode": "GB",
+          "ranking": 9
+        },
+        {
+          "key": "pl-aston-villa",
+          "name": "Aston Villa",
+          "countryCode": "GB",
+          "ranking": 10
+        },
+        {
+          "key": "pl-tottenham-hotspur",
+          "name": "Tottenham Hotspur",
+          "countryCode": "GB",
+          "ranking": 11
+        },
+        {
+          "key": "pl-newcastle-united",
+          "name": "Newcastle United",
+          "countryCode": "GB",
+          "ranking": 12
+        },
+        {
+          "key": "pl-hull-city",
+          "name": "Hull City",
+          "countryCode": "GB",
+          "ranking": 13
+        },
+        {
+          "key": "pl-ipswich-town",
+          "name": "Ipswich Town",
+          "countryCode": "GB",
+          "ranking": 14
+        },
+        {
+          "key": "pl-fulham",
+          "name": "Fulham",
+          "countryCode": "GB",
+          "ranking": 15
+        },
+        {
+          "key": "pl-nottingham-forest",
+          "name": "Nottingham Forest",
+          "countryCode": "GB",
+          "ranking": 16
+        },
+        {
+          "key": "pl-coventry-city",
+          "name": "Coventry City",
+          "countryCode": "GB",
+          "ranking": 17
+        },
+        {
+          "key": "pl-manchester-united",
+          "name": "Manchester United",
+          "countryCode": "GB",
+          "ranking": 18
+        },
+        {
+          "key": "pl-sunderland",
+          "name": "Sunderland",
+          "countryCode": "GB",
+          "ranking": 19
+        },
+        {
+          "key": "pl-crystal-palace",
+          "name": "Crystal Palace",
+          "countryCode": "GB",
+          "ranking": 20
+        }
+      ],
+      "events": [
+        {
+          "key": "premier-league-2026-27-matchweek-11",
+          "name": "Premier League Matchweek 11",
+          "startDate": "2026-11-21",
+          "endDate": "2026-11-23",
+          "venue": null,
+          "location": "England",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "pl-arsenal",
+              "ranking": 1
+            },
+            {
+              "player": "pl-brighton-hove-albion",
+              "ranking": 2
+            },
+            {
+              "player": "pl-manchester-city",
+              "ranking": 3
+            },
+            {
+              "player": "pl-liverpool",
+              "ranking": 4
+            },
+            {
+              "player": "pl-chelsea",
+              "ranking": 5
+            },
+            {
+              "player": "pl-everton",
+              "ranking": 6
+            },
+            {
+              "player": "pl-bournemouth",
+              "ranking": 7
+            },
+            {
+              "player": "pl-brentford",
+              "ranking": 8
+            },
+            {
+              "player": "pl-leeds-united",
+              "ranking": 9
+            },
+            {
+              "player": "pl-aston-villa",
+              "ranking": 10
+            },
+            {
+              "player": "pl-tottenham-hotspur",
+              "ranking": 11
+            },
+            {
+              "player": "pl-newcastle-united",
+              "ranking": 12
+            },
+            {
+              "player": "pl-hull-city",
+              "ranking": 13
+            },
+            {
+              "player": "pl-ipswich-town",
+              "ranking": 14
+            },
+            {
+              "player": "pl-fulham",
+              "ranking": 15
+            },
+            {
+              "player": "pl-nottingham-forest",
+              "ranking": 16
+            },
+            {
+              "player": "pl-coventry-city",
+              "ranking": 17
+            },
+            {
+              "player": "pl-manchester-united",
+              "ranking": 18
+            },
+            {
+              "player": "pl-sunderland",
+              "ranking": 19
+            },
+            {
+              "player": "pl-crystal-palace",
+              "ranking": 20
+            }
+          ],
+          "matches": [
+            {
+              "matchNumber": 1,
+              "roundNumber": 1,
+              "home": "pl-manchester-city",
+              "away": "pl-fulham",
+              "isNeutralSite": false,
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 2,
+              "roundNumber": 1,
+              "home": "pl-bournemouth",
+              "away": "pl-nottingham-forest",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-11-21T15:00:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 3,
+              "roundNumber": 1,
+              "home": "pl-aston-villa",
+              "away": "pl-sunderland",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-11-21T15:00:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 4,
+              "roundNumber": 1,
+              "home": "pl-chelsea",
+              "away": "pl-leeds-united",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-11-21T15:00:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 5,
+              "roundNumber": 1,
+              "home": "pl-coventry-city",
+              "away": "pl-crystal-palace",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-11-21T15:00:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 6,
+              "roundNumber": 1,
+              "home": "pl-tottenham-hotspur",
+              "away": "pl-ipswich-town",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-11-21T15:00:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 7,
+              "roundNumber": 1,
+              "home": "pl-newcastle-united",
+              "away": "pl-arsenal",
+              "isNeutralSite": false,
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 8,
+              "roundNumber": 1,
+              "home": "pl-hull-city",
+              "away": "pl-brighton-hove-albion",
+              "isNeutralSite": false,
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 9,
+              "roundNumber": 1,
+              "home": "pl-liverpool",
+              "away": "pl-manchester-united",
+              "isNeutralSite": false,
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 10,
+              "roundNumber": 1,
+              "home": "pl-brentford",
+              "away": "pl-everton",
+              "isNeutralSite": false,
+              "advancesTo": null
+            }
+          ]
+        },
+        {
+          "key": "premier-league-2026-27-matchweek-12",
+          "name": "Premier League Matchweek 12",
+          "startDate": "2026-11-28",
+          "endDate": "2026-11-29",
+          "venue": null,
+          "location": "England",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "pl-arsenal",
+              "ranking": 1
+            },
+            {
+              "player": "pl-brighton-hove-albion",
+              "ranking": 2
+            },
+            {
+              "player": "pl-manchester-city",
+              "ranking": 3
+            },
+            {
+              "player": "pl-liverpool",
+              "ranking": 4
+            },
+            {
+              "player": "pl-everton",
+              "ranking": 6
+            },
+            {
+              "player": "pl-bournemouth",
+              "ranking": 7
+            },
+            {
+              "player": "pl-brentford",
+              "ranking": 8
+            },
+            {
+              "player": "pl-leeds-united",
+              "ranking": 9
+            },
+            {
+              "player": "pl-aston-villa",
+              "ranking": 10
+            },
+            {
+              "player": "pl-tottenham-hotspur",
+              "ranking": 11
+            },
+            {
+              "player": "pl-newcastle-united",
+              "ranking": 12
+            },
+            {
+              "player": "pl-hull-city",
+              "ranking": 13
+            },
+            {
+              "player": "pl-ipswich-town",
+              "ranking": 14
+            },
+            {
+              "player": "pl-fulham",
+              "ranking": 15
+            },
+            {
+              "player": "pl-coventry-city",
+              "ranking": 17
+            },
+            {
+              "player": "pl-manchester-united",
+              "ranking": 18
+            },
+            {
+              "player": "pl-sunderland",
+              "ranking": 19
+            },
+            {
+              "player": "pl-crystal-palace",
+              "ranking": 20
+            }
+          ],
+          "matches": [
+            {
+              "matchNumber": 1,
+              "roundNumber": 1,
+              "home": "pl-leeds-united",
+              "away": "pl-coventry-city",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-11-28T15:00:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 2,
+              "roundNumber": 1,
+              "home": "pl-manchester-united",
+              "away": "pl-brentford",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-11-28T15:00:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 3,
+              "roundNumber": 1,
+              "home": "pl-ipswich-town",
+              "away": "pl-aston-villa",
+              "isNeutralSite": false,
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 4,
+              "roundNumber": 1,
+              "home": "pl-everton",
+              "away": "pl-liverpool",
+              "isNeutralSite": false,
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 5,
+              "roundNumber": 1,
+              "home": "pl-brighton-hove-albion",
+              "away": "pl-newcastle-united",
+              "isNeutralSite": false,
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 6,
+              "roundNumber": 1,
+              "home": "pl-crystal-palace",
+              "away": "pl-hull-city",
+              "isNeutralSite": false,
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 7,
+              "roundNumber": 1,
+              "home": "pl-fulham",
+              "away": "pl-bournemouth",
+              "isNeutralSite": false,
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 8,
+              "roundNumber": 1,
+              "home": "pl-sunderland",
+              "away": "pl-tottenham-hotspur",
+              "isNeutralSite": false,
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 9,
+              "roundNumber": 1,
+              "home": "pl-arsenal",
+              "away": "pl-manchester-city",
+              "isNeutralSite": false,
+              "advancesTo": null
+            }
+          ]
+        },
+        {
+          "key": "premier-league-2026-27-matchweek-13",
+          "name": "Premier League Matchweek 13",
+          "startDate": "2026-12-02",
+          "endDate": "2026-12-03",
+          "venue": null,
+          "location": "England",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "pl-arsenal",
+              "ranking": 1
+            },
+            {
+              "player": "pl-brighton-hove-albion",
+              "ranking": 2
+            },
+            {
+              "player": "pl-manchester-city",
+              "ranking": 3
+            },
+            {
+              "player": "pl-liverpool",
+              "ranking": 4
+            },
+            {
+              "player": "pl-chelsea",
+              "ranking": 5
+            },
+            {
+              "player": "pl-everton",
+              "ranking": 6
+            },
+            {
+              "player": "pl-bournemouth",
+              "ranking": 7
+            },
+            {
+              "player": "pl-brentford",
+              "ranking": 8
+            },
+            {
+              "player": "pl-leeds-united",
+              "ranking": 9
+            },
+            {
+              "player": "pl-aston-villa",
+              "ranking": 10
+            },
+            {
+              "player": "pl-tottenham-hotspur",
+              "ranking": 11
+            },
+            {
+              "player": "pl-newcastle-united",
+              "ranking": 12
+            },
+            {
+              "player": "pl-hull-city",
+              "ranking": 13
+            },
+            {
+              "player": "pl-fulham",
+              "ranking": 15
+            },
+            {
+              "player": "pl-nottingham-forest",
+              "ranking": 16
+            },
+            {
+              "player": "pl-manchester-united",
+              "ranking": 18
+            },
+            {
+              "player": "pl-sunderland",
+              "ranking": 19
+            },
+            {
+              "player": "pl-crystal-palace",
+              "ranking": 20
+            }
+          ],
+          "matches": [
+            {
+              "matchNumber": 1,
+              "roundNumber": 1,
+              "home": "pl-chelsea",
+              "away": "pl-crystal-palace",
+              "isNeutralSite": false,
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 2,
+              "roundNumber": 1,
+              "home": "pl-hull-city",
+              "away": "pl-nottingham-forest",
+              "isNeutralSite": false,
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 3,
+              "roundNumber": 1,
+              "home": "pl-liverpool",
+              "away": "pl-sunderland",
+              "isNeutralSite": false,
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 4,
+              "roundNumber": 1,
+              "home": "pl-manchester-city",
+              "away": "pl-leeds-united",
+              "isNeutralSite": false,
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 5,
+              "roundNumber": 1,
+              "home": "pl-bournemouth",
+              "away": "pl-brighton-hove-albion",
+              "isNeutralSite": false,
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 6,
+              "roundNumber": 1,
+              "home": "pl-aston-villa",
+              "away": "pl-everton",
+              "isNeutralSite": false,
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 7,
+              "roundNumber": 1,
+              "home": "pl-brentford",
+              "away": "pl-arsenal",
+              "isNeutralSite": false,
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 8,
+              "roundNumber": 1,
+              "home": "pl-newcastle-united",
+              "away": "pl-manchester-united",
+              "isNeutralSite": false,
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 9,
+              "roundNumber": 1,
+              "home": "pl-tottenham-hotspur",
+              "away": "pl-fulham",
+              "isNeutralSite": false,
+              "advancesTo": null
+            }
+          ]
+        },
+        {
+          "key": "premier-league-2026-27-matchweek-14",
+          "name": "Premier League Matchweek 14",
+          "startDate": "2026-12-05",
+          "endDate": "2026-12-06",
+          "venue": null,
+          "location": "England",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "pl-arsenal",
+              "ranking": 1
+            },
+            {
+              "player": "pl-brighton-hove-albion",
+              "ranking": 2
+            },
+            {
+              "player": "pl-manchester-city",
+              "ranking": 3
+            },
+            {
+              "player": "pl-liverpool",
+              "ranking": 4
+            },
+            {
+              "player": "pl-chelsea",
+              "ranking": 5
+            },
+            {
+              "player": "pl-everton",
+              "ranking": 6
+            },
+            {
+              "player": "pl-bournemouth",
+              "ranking": 7
+            },
+            {
+              "player": "pl-brentford",
+              "ranking": 8
+            },
+            {
+              "player": "pl-leeds-united",
+              "ranking": 9
+            },
+            {
+              "player": "pl-aston-villa",
+              "ranking": 10
+            },
+            {
+              "player": "pl-tottenham-hotspur",
+              "ranking": 11
+            },
+            {
+              "player": "pl-newcastle-united",
+              "ranking": 12
+            },
+            {
+              "player": "pl-hull-city",
+              "ranking": 13
+            },
+            {
+              "player": "pl-ipswich-town",
+              "ranking": 14
+            },
+            {
+              "player": "pl-fulham",
+              "ranking": 15
+            },
+            {
+              "player": "pl-nottingham-forest",
+              "ranking": 16
+            },
+            {
+              "player": "pl-coventry-city",
+              "ranking": 17
+            },
+            {
+              "player": "pl-manchester-united",
+              "ranking": 18
+            },
+            {
+              "player": "pl-sunderland",
+              "ranking": 19
+            },
+            {
+              "player": "pl-crystal-palace",
+              "ranking": 20
+            }
+          ],
+          "matches": [
+            {
+              "matchNumber": 1,
+              "roundNumber": 1,
+              "home": "pl-chelsea",
+              "away": "pl-liverpool",
+              "isNeutralSite": false,
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 2,
+              "roundNumber": 1,
+              "home": "pl-bournemouth",
+              "away": "pl-hull-city",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-05T15:00:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 3,
+              "roundNumber": 1,
+              "home": "pl-aston-villa",
+              "away": "pl-crystal-palace",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-05T15:00:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 4,
+              "roundNumber": 1,
+              "home": "pl-leeds-united",
+              "away": "pl-ipswich-town",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-05T15:00:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 5,
+              "roundNumber": 1,
+              "home": "pl-manchester-united",
+              "away": "pl-coventry-city",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-05T15:00:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 6,
+              "roundNumber": 1,
+              "home": "pl-nottingham-forest",
+              "away": "pl-brighton-hove-albion",
+              "isNeutralSite": false,
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 7,
+              "roundNumber": 1,
+              "home": "pl-brentford",
+              "away": "pl-manchester-city",
+              "isNeutralSite": false,
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 8,
+              "roundNumber": 1,
+              "home": "pl-everton",
+              "away": "pl-fulham",
+              "isNeutralSite": false,
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 9,
+              "roundNumber": 1,
+              "home": "pl-newcastle-united",
+              "away": "pl-sunderland",
+              "isNeutralSite": false,
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 10,
+              "roundNumber": 1,
+              "home": "pl-tottenham-hotspur",
+              "away": "pl-arsenal",
+              "isNeutralSite": false,
+              "advancesTo": null
+            }
+          ]
+        },
+        {
+          "key": "premier-league-2026-27-matchweek-15",
+          "name": "Premier League Matchweek 15",
+          "startDate": "2026-12-12",
+          "endDate": "2026-12-14",
+          "venue": null,
+          "location": "England",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "pl-arsenal",
+              "ranking": 1
+            },
+            {
+              "player": "pl-brighton-hove-albion",
+              "ranking": 2
+            },
+            {
+              "player": "pl-manchester-city",
+              "ranking": 3
+            },
+            {
+              "player": "pl-liverpool",
+              "ranking": 4
+            },
+            {
+              "player": "pl-chelsea",
+              "ranking": 5
+            },
+            {
+              "player": "pl-everton",
+              "ranking": 6
+            },
+            {
+              "player": "pl-bournemouth",
+              "ranking": 7
+            },
+            {
+              "player": "pl-brentford",
+              "ranking": 8
+            },
+            {
+              "player": "pl-leeds-united",
+              "ranking": 9
+            },
+            {
+              "player": "pl-aston-villa",
+              "ranking": 10
+            },
+            {
+              "player": "pl-tottenham-hotspur",
+              "ranking": 11
+            },
+            {
+              "player": "pl-newcastle-united",
+              "ranking": 12
+            },
+            {
+              "player": "pl-hull-city",
+              "ranking": 13
+            },
+            {
+              "player": "pl-ipswich-town",
+              "ranking": 14
+            },
+            {
+              "player": "pl-fulham",
+              "ranking": 15
+            },
+            {
+              "player": "pl-nottingham-forest",
+              "ranking": 16
+            },
+            {
+              "player": "pl-coventry-city",
+              "ranking": 17
+            },
+            {
+              "player": "pl-manchester-united",
+              "ranking": 18
+            },
+            {
+              "player": "pl-sunderland",
+              "ranking": 19
+            },
+            {
+              "player": "pl-crystal-palace",
+              "ranking": 20
+            }
+          ],
+          "matches": [
+            {
+              "matchNumber": 1,
+              "roundNumber": 1,
+              "home": "pl-fulham",
+              "away": "pl-brentford",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-12T15:00:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 2,
+              "roundNumber": 1,
+              "home": "pl-ipswich-town",
+              "away": "pl-newcastle-united",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-12T15:00:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 3,
+              "roundNumber": 1,
+              "home": "pl-liverpool",
+              "away": "pl-leeds-united",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-12T15:00:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 4,
+              "roundNumber": 1,
+              "home": "pl-manchester-city",
+              "away": "pl-chelsea",
+              "isNeutralSite": false,
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 5,
+              "roundNumber": 1,
+              "home": "pl-arsenal",
+              "away": "pl-bournemouth",
+              "isNeutralSite": false,
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 6,
+              "roundNumber": 1,
+              "home": "pl-brighton-hove-albion",
+              "away": "pl-everton",
+              "isNeutralSite": false,
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 7,
+              "roundNumber": 1,
+              "home": "pl-sunderland",
+              "away": "pl-nottingham-forest",
+              "isNeutralSite": false,
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 8,
+              "roundNumber": 1,
+              "home": "pl-coventry-city",
+              "away": "pl-aston-villa",
+              "isNeutralSite": false,
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 9,
+              "roundNumber": 1,
+              "home": "pl-crystal-palace",
+              "away": "pl-manchester-united",
+              "isNeutralSite": false,
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 10,
+              "roundNumber": 1,
+              "home": "pl-hull-city",
+              "away": "pl-tottenham-hotspur",
+              "isNeutralSite": false,
+              "advancesTo": null
+            }
+          ]
+        },
+        {
+          "key": "premier-league-2026-27-matchweek-16",
+          "name": "Premier League Matchweek 16",
+          "startDate": "2026-12-19",
+          "endDate": "2026-12-21",
+          "venue": null,
+          "location": "England",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "pl-arsenal",
+              "ranking": 1
+            },
+            {
+              "player": "pl-brighton-hove-albion",
+              "ranking": 2
+            },
+            {
+              "player": "pl-manchester-city",
+              "ranking": 3
+            },
+            {
+              "player": "pl-liverpool",
+              "ranking": 4
+            },
+            {
+              "player": "pl-chelsea",
+              "ranking": 5
+            },
+            {
+              "player": "pl-everton",
+              "ranking": 6
+            },
+            {
+              "player": "pl-bournemouth",
+              "ranking": 7
+            },
+            {
+              "player": "pl-brentford",
+              "ranking": 8
+            },
+            {
+              "player": "pl-leeds-united",
+              "ranking": 9
+            },
+            {
+              "player": "pl-aston-villa",
+              "ranking": 10
+            },
+            {
+              "player": "pl-tottenham-hotspur",
+              "ranking": 11
+            },
+            {
+              "player": "pl-newcastle-united",
+              "ranking": 12
+            },
+            {
+              "player": "pl-hull-city",
+              "ranking": 13
+            },
+            {
+              "player": "pl-ipswich-town",
+              "ranking": 14
+            },
+            {
+              "player": "pl-fulham",
+              "ranking": 15
+            },
+            {
+              "player": "pl-nottingham-forest",
+              "ranking": 16
+            },
+            {
+              "player": "pl-coventry-city",
+              "ranking": 17
+            },
+            {
+              "player": "pl-manchester-united",
+              "ranking": 18
+            },
+            {
+              "player": "pl-sunderland",
+              "ranking": 19
+            },
+            {
+              "player": "pl-crystal-palace",
+              "ranking": 20
+            }
+          ],
+          "matches": [
+            {
+              "matchNumber": 1,
+              "roundNumber": 1,
+              "home": "pl-brentford",
+              "away": "pl-newcastle-united",
+              "isNeutralSite": false,
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 2,
+              "roundNumber": 1,
+              "home": "pl-bournemouth",
+              "away": "pl-coventry-city",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-19T15:00:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 3,
+              "roundNumber": 1,
+              "home": "pl-leeds-united",
+              "away": "pl-fulham",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-19T15:00:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 4,
+              "roundNumber": 1,
+              "home": "pl-manchester-city",
+              "away": "pl-hull-city",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-19T15:00:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 5,
+              "roundNumber": 1,
+              "home": "pl-liverpool",
+              "away": "pl-tottenham-hotspur",
+              "isNeutralSite": false,
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 6,
+              "roundNumber": 1,
+              "home": "pl-brighton-hove-albion",
+              "away": "pl-ipswich-town",
+              "isNeutralSite": false,
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 7,
+              "roundNumber": 1,
+              "home": "pl-nottingham-forest",
+              "away": "pl-everton",
+              "isNeutralSite": false,
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 8,
+              "roundNumber": 1,
+              "home": "pl-sunderland",
+              "away": "pl-crystal-palace",
+              "isNeutralSite": false,
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 9,
+              "roundNumber": 1,
+              "home": "pl-arsenal",
+              "away": "pl-manchester-united",
+              "isNeutralSite": false,
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 10,
+              "roundNumber": 1,
+              "home": "pl-chelsea",
+              "away": "pl-aston-villa",
+              "isNeutralSite": false,
+              "advancesTo": null
+            }
+          ]
+        },
+        {
+          "key": "premier-league-2026-27-matchweek-17",
+          "name": "Premier League Matchweek 17",
+          "startDate": "2026-12-26",
+          "endDate": "2026-12-27",
+          "venue": null,
+          "location": "England",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "pl-arsenal",
+              "ranking": 1
+            },
+            {
+              "player": "pl-brighton-hove-albion",
+              "ranking": 2
+            },
+            {
+              "player": "pl-manchester-city",
+              "ranking": 3
+            },
+            {
+              "player": "pl-liverpool",
+              "ranking": 4
+            },
+            {
+              "player": "pl-chelsea",
+              "ranking": 5
+            },
+            {
+              "player": "pl-everton",
+              "ranking": 6
+            },
+            {
+              "player": "pl-bournemouth",
+              "ranking": 7
+            },
+            {
+              "player": "pl-brentford",
+              "ranking": 8
+            },
+            {
+              "player": "pl-leeds-united",
+              "ranking": 9
+            },
+            {
+              "player": "pl-aston-villa",
+              "ranking": 10
+            },
+            {
+              "player": "pl-tottenham-hotspur",
+              "ranking": 11
+            },
+            {
+              "player": "pl-newcastle-united",
+              "ranking": 12
+            },
+            {
+              "player": "pl-hull-city",
+              "ranking": 13
+            },
+            {
+              "player": "pl-ipswich-town",
+              "ranking": 14
+            },
+            {
+              "player": "pl-fulham",
+              "ranking": 15
+            },
+            {
+              "player": "pl-nottingham-forest",
+              "ranking": 16
+            },
+            {
+              "player": "pl-coventry-city",
+              "ranking": 17
+            },
+            {
+              "player": "pl-manchester-united",
+              "ranking": 18
+            },
+            {
+              "player": "pl-sunderland",
+              "ranking": 19
+            },
+            {
+              "player": "pl-crystal-palace",
+              "ranking": 20
+            }
+          ],
+          "matches": [
+            {
+              "matchNumber": 1,
+              "roundNumber": 1,
+              "home": "pl-aston-villa",
+              "away": "pl-leeds-united",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-26T12:30:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 2,
+              "roundNumber": 1,
+              "home": "pl-everton",
+              "away": "pl-sunderland",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-26T15:00:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 3,
+              "roundNumber": 1,
+              "home": "pl-fulham",
+              "away": "pl-brighton-hove-albion",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-26T15:00:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 4,
+              "roundNumber": 1,
+              "home": "pl-ipswich-town",
+              "away": "pl-brentford",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-26T15:00:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 5,
+              "roundNumber": 1,
+              "home": "pl-tottenham-hotspur",
+              "away": "pl-bournemouth",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-26T15:00:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 6,
+              "roundNumber": 1,
+              "home": "pl-hull-city",
+              "away": "pl-liverpool",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-26T17:30:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 7,
+              "roundNumber": 1,
+              "home": "pl-newcastle-united",
+              "away": "pl-manchester-city",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-26T20:00:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 8,
+              "roundNumber": 1,
+              "home": "pl-coventry-city",
+              "away": "pl-chelsea",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-27T14:00:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 9,
+              "roundNumber": 1,
+              "home": "pl-manchester-united",
+              "away": "pl-nottingham-forest",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-27T16:30:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 10,
+              "roundNumber": 1,
+              "home": "pl-crystal-palace",
+              "away": "pl-arsenal",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-27T19:00:00Z",
+              "advancesTo": null
+            }
+          ]
+        },
+        {
+          "key": "premier-league-2026-27-matchweek-18",
+          "name": "Premier League Matchweek 18",
+          "startDate": "2026-12-29",
+          "endDate": "2026-12-30",
+          "venue": null,
+          "location": "England",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "pl-arsenal",
+              "ranking": 1
+            },
+            {
+              "player": "pl-brighton-hove-albion",
+              "ranking": 2
+            },
+            {
+              "player": "pl-manchester-city",
+              "ranking": 3
+            },
+            {
+              "player": "pl-liverpool",
+              "ranking": 4
+            },
+            {
+              "player": "pl-chelsea",
+              "ranking": 5
+            },
+            {
+              "player": "pl-everton",
+              "ranking": 6
+            },
+            {
+              "player": "pl-bournemouth",
+              "ranking": 7
+            },
+            {
+              "player": "pl-brentford",
+              "ranking": 8
+            },
+            {
+              "player": "pl-leeds-united",
+              "ranking": 9
+            },
+            {
+              "player": "pl-aston-villa",
+              "ranking": 10
+            },
+            {
+              "player": "pl-tottenham-hotspur",
+              "ranking": 11
+            },
+            {
+              "player": "pl-newcastle-united",
+              "ranking": 12
+            },
+            {
+              "player": "pl-hull-city",
+              "ranking": 13
+            },
+            {
+              "player": "pl-ipswich-town",
+              "ranking": 14
+            },
+            {
+              "player": "pl-fulham",
+              "ranking": 15
+            },
+            {
+              "player": "pl-nottingham-forest",
+              "ranking": 16
+            },
+            {
+              "player": "pl-coventry-city",
+              "ranking": 17
+            },
+            {
+              "player": "pl-manchester-united",
+              "ranking": 18
+            },
+            {
+              "player": "pl-sunderland",
+              "ranking": 19
+            },
+            {
+              "player": "pl-crystal-palace",
+              "ranking": 20
+            }
+          ],
+          "matches": [
+            {
+              "matchNumber": 1,
+              "roundNumber": 1,
+              "home": "pl-hull-city",
+              "away": "pl-leeds-united",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-29T19:30:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 2,
+              "roundNumber": 1,
+              "home": "pl-tottenham-hotspur",
+              "away": "pl-brighton-hove-albion",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-29T19:30:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 3,
+              "roundNumber": 1,
+              "home": "pl-everton",
+              "away": "pl-manchester-city",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-29T20:15:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 4,
+              "roundNumber": 1,
+              "home": "pl-coventry-city",
+              "away": "pl-brentford",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-30T19:30:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 5,
+              "roundNumber": 1,
+              "home": "pl-crystal-palace",
+              "away": "pl-bournemouth",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-30T19:30:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 6,
+              "roundNumber": 1,
+              "home": "pl-fulham",
+              "away": "pl-arsenal",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-30T19:30:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 7,
+              "roundNumber": 1,
+              "home": "pl-manchester-united",
+              "away": "pl-sunderland",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-30T19:30:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 8,
+              "roundNumber": 1,
+              "home": "pl-newcastle-united",
+              "away": "pl-nottingham-forest",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-30T19:30:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 9,
+              "roundNumber": 1,
+              "home": "pl-aston-villa",
+              "away": "pl-liverpool",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-30T20:15:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 10,
+              "roundNumber": 1,
+              "home": "pl-ipswich-town",
+              "away": "pl-chelsea",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-30T20:15:00Z",
+              "advancesTo": null
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
