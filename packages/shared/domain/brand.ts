@@ -8,7 +8,7 @@
 export const PRODUCT_NAME = 'Primetime Commissioner';
 
 /** The line under the name in the app bar, on the sign-in page and in the email header. */
-export const PRODUCT_TAGLINE = 'The ultimate office pool manager and other game-day contests';
+export const PRODUCT_TAGLINE = 'The ultimate game-day contest manager';
 
 /**
  * The brand colours that live outside the web app's theme file: system email, link preview
