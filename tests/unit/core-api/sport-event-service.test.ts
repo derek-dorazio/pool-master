@@ -25,6 +25,9 @@ import {
   fakeContestRepo,
 } from '../../support/repo-fakes';
 import { mockFn } from '../../support/mock-fn';
+import { eventChangedJob, recordingSportEventChangedNotice } from '../../support/sport-event-changed-notice';
+import { inMemoryBackgroundJobs } from '../../support/in-memory-background-jobs';
+import { BackgroundJobQueue } from '../../../packages/core-api/src/modules/background-jobs';
 import { fakeLogger } from '../../support/fake-logger';
 
 /** Before every event's start in this file, so the release cutoff never depends on today. */
@@ -49,7 +52,8 @@ function setup(sportName: Sport = Sport.GOLF, sportEventChanged?: SportEventChan
     },
     sportEvents,
     undefined,
-    undefined,
+    // The job queue an event change's jobs are requested from and woken through.
+    sportEventChanged ? new BackgroundJobQueue({ jobs: inMemoryBackgroundJobs() }) : undefined,
     undefined,
     undefined,
     sportEventChanged,
@@ -621,7 +625,7 @@ describe('SportEventService.updateEvent keeps the round schedule in step with th
   });
 
   it('tells the leagues on a released event its previous start when an admin moves it, but not for a draft or an unchanged start', async () => {
-    const notice = { sportEventChanged: mockFn<SportEventChangedNotice['sportEventChanged']>(async () => undefined) };
+    const notice = recordingSportEventChangedNotice();
     const { store, service, sportLeague } = setup(Sport.GOLF, notice);
     const { event: draft } = await service.createEvent({ sportLeagueId: sportLeague.id, eventYear: 2026, ...MANUAL_INPUT });
     const { event: released } = await service.createEvent({ sportLeagueId: sportLeague.id, eventYear: 2026, ...MANUAL_INPUT, name: 'Released Open' });
@@ -632,15 +636,31 @@ describe('SportEventService.updateEvent keeps the round schedule in step with th
     await service.updateEvent(released.id, { startDate: MANUAL_INPUT.startDate, name: 'Renamed Open' }, TELL);
     await service.updateEvent(released.id, { startDate: moved }, TELL);
 
-    expect(notice.sportEventChanged).toHaveBeenCalledTimes(1);
-    expect(notice.sportEventChanged).toHaveBeenCalledWith(
-      expect.objectContaining({ id: released.id, startDate: moved }),
+    expect(notice.sportEventChangedJobs).toHaveBeenCalledTimes(1);
+    expect(notice.sportEventChangedJobs).toHaveBeenCalledWith(
+      { id: released.id, startDate: moved },
       { kind: 'RESCHEDULED', previousStart: MANUAL_INPUT.startDate },
     );
+    // Written with the new start, not queued after it.
+    expect(store.backgroundJobs).toEqual([eventChangedJob(released.id, 'RESCHEDULED')]);
+  });
+
+  it('tells nobody, and moves nothing, when telling the leagues a released event moved fails before the edit is written', async () => {
+    const notice = recordingSportEventChangedNotice();
+    notice.sportEventChangedJobs.mockRejectedValueOnce(new Error('database unavailable'));
+    const { store, service, sportLeague } = setup(Sport.GOLF, notice);
+    const { event: released } = await service.createEvent({ sportLeagueId: sportLeague.id, eventYear: 2026, ...MANUAL_INPUT, rounds: 1 });
+    await store.sportEventRepo().update(released.id, { status: SportEventStatus.SCHEDULED });
+
+    await expect(service.updateEvent(released.id, { startDate: new Date(MANUAL_INPUT.startDate.getTime() + 7 * DAY) }, TELL))
+      .rejects.toThrow('database unavailable');
+
+    expect(store.events.find((event) => event.id === released.id)?.startDate).toEqual(MANUAL_INPUT.startDate);
+    expect(store.backgroundJobs).toEqual([]);
   });
 
   it('moves a released event\'s start and its rounds without telling its leagues when the edit is a data correction', async () => {
-    const notice = { sportEventChanged: mockFn<SportEventChangedNotice['sportEventChanged']>(async () => undefined) };
+    const notice = recordingSportEventChangedNotice();
     const { store, service, sportLeague } = setup(Sport.GOLF, notice);
     const { event: released } = await service.createEvent({ sportLeagueId: sportLeague.id, eventYear: 2026, ...MANUAL_INPUT, rounds: 1 });
     await store.sportEventRepo().update(released.id, { status: SportEventStatus.SCHEDULED });
@@ -649,12 +669,12 @@ describe('SportEventService.updateEvent keeps the round schedule in step with th
 
     await service.updateEvent(released.id, { startDate: realStart }, { tellMembers: false });
 
-    expect(notice.sportEventChanged).not.toHaveBeenCalled();
+    expect(notice.sportEventChangedJobs).not.toHaveBeenCalled();
     expect(roundsOf(store, released.id)).toEqual([{ roundNumber: 1, scheduledDate: '2026-06-04T11:45:00.000Z' }]);
   });
 
   it('refuses a quiet move of a released event that already has a real start time, so its leagues are never left out of a real reschedule', async () => {
-    const notice = { sportEventChanged: mockFn<SportEventChangedNotice['sportEventChanged']>(async () => undefined) };
+    const notice = recordingSportEventChangedNotice();
     const { store, service, sportLeague } = setup(Sport.GOLF, notice);
     const realStart = new Date('2026-06-04T11:45:00.000Z');
     const { event: released } = await service.createEvent({ sportLeagueId: sportLeague.id, eventYear: 2026, ...MANUAL_INPUT, startDate: realStart, rounds: 1 });
@@ -663,7 +683,7 @@ describe('SportEventService.updateEvent keeps the round schedule in step with th
     await expect(service.updateEvent(released.id, { startDate: new Date(realStart.getTime() + DAY) }, { tellMembers: false }))
       .rejects.toMatchObject({ code: 'SPORT_EVENT_START_NOT_PLACEHOLDER', statusCode: 400 });
 
-    expect(notice.sportEventChanged).not.toHaveBeenCalled();
+    expect(notice.sportEventChangedJobs).not.toHaveBeenCalled();
     expect(roundsOf(store, released.id)).toEqual([{ roundNumber: 1, scheduledDate: '2026-06-04T11:45:00.000Z' }]);
   });
 
@@ -694,7 +714,7 @@ describe('PATCH /events/:eventId handler passes tellMembers on to the event serv
   type UpdateEventRequest = Parameters<ReturnType<typeof createEventHandlers>['updateEvent']>[0];
 
   function setupHandlers() {
-    const notice = { sportEventChanged: mockFn<SportEventChangedNotice['sportEventChanged']>(async () => undefined) };
+    const notice = recordingSportEventChangedNotice();
     const { store, service, sportLeague, lifecycle } = setup(Sport.GOLF, notice);
     const handlers = createEventHandlers({
       services: {
@@ -732,7 +752,7 @@ describe('PATCH /events/:eventId handler passes tellMembers on to the event serv
     }));
 
     expect(response.event.startDate).toBe('2026-06-04T11:45:00.000Z');
-    expect(context.notice.sportEventChanged).not.toHaveBeenCalled();
+    expect(context.notice.sportEventChangedJobs).not.toHaveBeenCalled();
   });
 
   it('tells a released event\'s leagues about a moved start when the body leaves tellMembers out', async () => {
@@ -744,10 +764,11 @@ describe('PATCH /events/:eventId handler passes tellMembers on to the event serv
       body: { startDate: '2026-06-04T11:45:00.000Z' },
     }));
 
-    expect(context.notice.sportEventChanged).toHaveBeenCalledWith(
-      expect.objectContaining({ id: event.id, startDate: new Date('2026-06-04T11:45:00.000Z') }),
+    expect(context.notice.sportEventChangedJobs).toHaveBeenCalledWith(
+      { id: event.id, startDate: new Date('2026-06-04T11:45:00.000Z') },
       { kind: 'RESCHEDULED', previousStart: MANUAL_INPUT.startDate },
     );
+    expect(context.store.backgroundJobs).toEqual([eventChangedJob(event.id, 'RESCHEDULED')]);
   });
 });
 

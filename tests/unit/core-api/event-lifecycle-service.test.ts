@@ -15,7 +15,7 @@ import {
   type EventLifecycleContestDeps,
   type ReleasedEditionContests,
 } from '../../../packages/core-api/src/modules/events/event-lifecycle-service';
-import type { SportEventChangedNotice } from '../../../packages/core-api/src/modules/notifications';
+import { eventChangedJob, recordingSportEventChangedNotice } from '../../support/sport-event-changed-notice';
 import { BackgroundJobQueue } from '../../../packages/core-api/src/modules/background-jobs';
 import { inMemoryBackgroundJobs } from '../../support/in-memory-background-jobs';
 import { buildContest } from '../../factories';
@@ -609,23 +609,51 @@ describe('EventLifecycleService settling a decided game\'s squares contests in a
 });
 
 describe('EventLifecycleService event change emails (#845 C6, C7)', () => {
-  /** An event-changed notice that records what it was told, and the order against settlement. */
-  function changedNotice(order: string[] = []): SportEventChangedNotice & { sportEventChanged: jest.Mock } {
-    return {
-      sportEventChanged: mockFn<SportEventChangedNotice['sportEventChanged']>(async (_sportEvent, change) => { order.push(`told ${change.kind}`); }),
-    };
-  }
+  const changedNotice = recordingSportEventChangedNotice;
 
-  it('tells the leagues an event was postponed when it first goes POSTPONED, and not again on a repeated call', async () => {
-    const { sportEvents } = seededEvents({ status: SportEventStatus.SCHEDULED });
+  it('writes the leagues\' postponed-event jobs with the POSTPONED status when the event first goes POSTPONED, and none on a repeated call', async () => {
+    const store = new InMemorySportEvents();
+    store.addEvent({ id: 'sport-event-1', providerId: 'mock-contest-feed', externalId: 'provider-event-1', name: 'Manual Test Golf Tournament', startDate: STARTED_EVENT_START, status: SportEventStatus.SCHEDULED });
     const notice = changedNotice();
-    const service = new EventLifecycleService(contestDeps(), sportEvents, fakeLogger(), undefined, undefined, undefined, notice);
+    const jobs = startedJobs();
+    const service = new EventLifecycleService(contestDeps(), store.sportEventRepo(), fakeLogger(), jobs, undefined, undefined, notice);
 
     await service.applySportEventStatusTransition({ sportEventId: 'sport-event-1', toStatus: SportEventStatus.POSTPONED, actor: { type: 'ROOT_ADMIN' } });
     await service.applySportEventStatusTransition({ sportEventId: 'sport-event-1', toStatus: SportEventStatus.POSTPONED, actor: { type: 'ROOT_ADMIN' } });
 
-    expect(notice.sportEventChanged).toHaveBeenCalledTimes(1);
-    expect(notice.sportEventChanged).toHaveBeenCalledWith(expect.objectContaining({ id: 'sport-event-1', status: SportEventStatus.POSTPONED }), { kind: 'POSTPONED' });
+    expect(notice.sportEventChangedJobs).toHaveBeenCalledTimes(1);
+    expect(notice.sportEventChangedJobs).toHaveBeenCalledWith(expect.objectContaining({ id: 'sport-event-1', startDate: STARTED_EVENT_START }), { kind: 'POSTPONED' });
+    expect(notice.sportEventChanged).not.toHaveBeenCalled();
+    expect(store.backgroundJobs).toEqual([eventChangedJob('sport-event-1', 'POSTPONED')]);
+    expect(jobs.queued).toHaveBeenCalledTimes(1);
+  });
+
+  it('writes no postponed-event job when another caller postponed the event first, since that caller\'s move wrote them', async () => {
+    const store = new InMemorySportEvents();
+    store.addEvent({ id: 'sport-event-1', providerId: 'mock-contest-feed', externalId: 'provider-event-1', name: 'Manual Test Golf Tournament', startDate: STARTED_EVENT_START, status: SportEventStatus.SCHEDULED });
+    const repo = store.sportEventRepo();
+    const sportEvents = { ...repo, transitionStatus: mockFn<typeof repo.transitionStatus>(async () => null) };
+    const jobs = startedJobs();
+    const service = new EventLifecycleService(contestDeps(), sportEvents, fakeLogger(), jobs, undefined, undefined, changedNotice());
+
+    await service.applySportEventStatusTransition({
+      sportEventId: 'sport-event-1', toStatus: SportEventStatus.POSTPONED, fromStatus: SportEventStatus.SCHEDULED, actor: { type: 'SYSTEM' },
+    });
+
+    expect(store.backgroundJobs).toEqual([]);
+    expect(jobs.queued).not.toHaveBeenCalled();
+  });
+
+  it('fails the postponement, leaving the event SCHEDULED, when the contests to tell cannot be read, rather than postponing it with nobody told', async () => {
+    const { sportEvents, storedEvent } = seededEvents({ status: SportEventStatus.SCHEDULED });
+    const notice = changedNotice();
+    notice.sportEventChangedJobs.mockRejectedValueOnce(new Error('database unavailable'));
+    const service = new EventLifecycleService(contestDeps(), sportEvents, fakeLogger(), startedJobs(), undefined, undefined, notice);
+
+    await expect(service.applySportEventStatusTransition({ sportEventId: 'sport-event-1', toStatus: SportEventStatus.POSTPONED, actor: { type: 'ROOT_ADMIN' } }))
+      .rejects.toThrow('database unavailable');
+
+    expect(storedEvent().status).toBe(SportEventStatus.SCHEDULED);
   });
 
   it('tells the leagues an event was cancelled before its job settles its contests', async () => {
@@ -652,24 +680,42 @@ describe('EventLifecycleService event change emails (#845 C6, C7)', () => {
     await service.applySportEventStatusTransition({ sportEventId: 'sport-event-1', toStatus: SportEventStatus.IN_PROGRESS, actor: { type: 'SYSTEM' } });
     await service.applySportEventStatusTransition({ sportEventId: 'sport-event-1', toStatus: SportEventStatus.COMPLETED, actor: { type: 'SYSTEM' } });
 
+    expect(notice.sportEventChangedJobs).not.toHaveBeenCalled();
     expect(notice.sportEventChanged).not.toHaveBeenCalled();
   });
 
-  it('tells the leagues a moved event\'s previous start', async () => {
-    const { sportEvents, storedEvent } = seededEvents();
+  it('hands a moved event\'s edit the jobs that tell its leagues the previous start, and wakes the runner only when told the edit committed', async () => {
+    const { sportEvents } = seededEvents();
     const notice = changedNotice();
+    const jobs = startedJobs();
     const previousStart = new Date('2026-04-25T20:00:00.000Z');
+    const moved = { id: 'sport-event-1', startDate: STARTED_EVENT_START };
 
-    await new EventLifecycleService(contestDeps(), sportEvents, fakeLogger(), undefined, undefined, undefined, notice)
-      .sportEventRescheduled(storedEvent(), previousStart);
+    const told = await new EventLifecycleService(contestDeps(), sportEvents, fakeLogger(), jobs, undefined, undefined, notice)
+      .sportEventRescheduledJobs(moved, previousStart);
 
-    expect(notice.sportEventChanged).toHaveBeenCalledWith(storedEvent(), { kind: 'RESCHEDULED', previousStart });
+    expect(notice.sportEventChangedJobs).toHaveBeenCalledWith(moved, { kind: 'RESCHEDULED', previousStart });
+    expect(told.jobs).toEqual([eventChangedJob('sport-event-1', 'RESCHEDULED')]);
+    expect(jobs.queued).not.toHaveBeenCalled();
+    told.queued();
+    expect(jobs.queued).toHaveBeenCalledTimes(1);
+  });
+
+  it('hands a moved event\'s edit no job when the service has no event-changed notice', async () => {
+    const { sportEvents } = seededEvents();
+
+    const told = await new EventLifecycleService(contestDeps(), sportEvents, fakeLogger())
+      .sportEventRescheduledJobs({ id: 'sport-event-1', startDate: STARTED_EVENT_START }, new Date('2026-04-25T20:00:00.000Z'));
+
+    expect(told.jobs).toEqual([]);
+    told.queued();
   });
 
   it('fails the settle job and settles nothing when a cancelled event\'s email jobs cannot be queued, so the job is retried', async () => {
     const settlement = fakeSettlement();
     const { sportEvents } = seededEvents({ status: SportEventStatus.CANCELLED });
-    const notice = { sportEventChanged: jest.fn().mockRejectedValue(new Error('database unavailable')) };
+    const notice = changedNotice();
+    notice.sportEventChanged.mockRejectedValueOnce(new Error('database unavailable'));
     const service = new EventLifecycleService(contestDeps(), sportEvents, fakeLogger(), startedJobs(), settlement, undefined, notice);
 
     await expect(service.settleFinishedEventContests({ sportEventId: 'sport-event-1', completedAt: new Date().toISOString() }))

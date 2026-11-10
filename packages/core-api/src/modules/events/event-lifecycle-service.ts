@@ -31,13 +31,12 @@ import {
 import { ContestCutoffKind, contestCutoff, cutoffTiming, type EventTiming } from '../contests/entry-window';
 import { hasSportEventStarted } from './operational-timing';
 import { ContestEventChangeKind } from '../email';
-import type { SportEventChange, SportEventChangedNotice } from '../notifications/contest-notices';
+import type { SportEventChangedNotice } from '../notifications/contest-notices';
 import { contestStartedEmailsJob } from '../notifications/contest-email-job-requests';
 import { settleSportEventContestsJob, type SettleSportEventContestsJobPayload } from '../contests/settle-sport-event-job-requests';
 import { settleGameContestsJob, type SettleGameContestsJobPayload } from '../contests/settle-game-job-requests';
 import type { BackgroundJobQueue } from '../background-jobs';
 import type { ApiErrorCode } from '@poolmaster/shared/dto';
-import { errorMessage } from '../../core/error-message';
 
 export interface FinishedSportEventSettlement {
   settleFinishedSportEvent(
@@ -52,11 +51,14 @@ export interface FinishedSportEventSettlement {
   ): Promise<unknown>;
 }
 
-/** The job a decided game's write carries, and what to call once that write has committed. */
-export interface FinishedGameSettlement {
+/** The jobs a write carries, and what to call once that write has committed. */
+export interface JobsForWrite {
   jobs: readonly BackgroundJobRequest[];
   queued(): void;
 }
+
+/** The job a decided game's write carries (#711). */
+export type FinishedGameSettlement = JobsForWrite;
 
 /**
  * The contests a released edition joins: those made from a template covering its series (#714),
@@ -186,7 +188,14 @@ export class EventLifecycleService {
     const releaseJobs = isRelease && this.releasedEditionContests
       ? await this.releasedEditionContests.releasedEditionJobs(before, this.requireJobs('release an edition into its template contests'))
       : [];
-    const jobs = [...(settleJob ? [settleJob] : []), ...releaseJobs];
+    // A first postponement tells the leagues on the event by one job per contest written with the
+    // status (#1464): a postponement that fails or loses a race queues nothing, and one that lands
+    // always has its jobs. Its start does not move, so the jobs read it from the event as it is.
+    const postponing = input.toStatus === SportEventStatus.POSTPONED && fromStatus !== SportEventStatus.POSTPONED;
+    const postponedJobs = postponing && this.sportEventChanged
+      ? await this.sportEventChanged.sportEventChangedJobs(before, { kind: ContestEventChangeKind.POSTPONED })
+      : [];
+    const jobs = [...(settleJob ? [settleJob] : []), ...releaseJobs, ...postponedJobs];
 
     // Written only while the event is still where it was read (#1159): of two callers making the
     // change at once, one writes it and runs the side effects below, and the other stops here.
@@ -217,9 +226,6 @@ export class EventLifecycleService {
     if (input.toStatus === SportEventStatus.IN_PROGRESS) {
       await this.activateContestsPastCutoff(updated);
     }
-    if (input.toStatus === SportEventStatus.POSTPONED && fromStatus !== SportEventStatus.POSTPONED) {
-      await this.tellSportEventChanged(updated, { kind: ContestEventChangeKind.POSTPONED });
-    }
     // The cancellation email (C7) is sent by the settlement job, before it finishes the contests
     // it is about.
     if (jobs.length > 0) this.jobs?.queued();
@@ -231,28 +237,22 @@ export class EventLifecycleService {
     };
   }
 
-  /** C6: a released event's start moved, as an admin's edit reports it. */
-  async sportEventRescheduled(sportEvent: SportEvent, previousStart: Date): Promise<void> {
-    await this.tellSportEventChanged(sportEvent, { kind: ContestEventChangeKind.RESCHEDULED, previousStart });
+  /**
+   * C6 for a released event whose start an admin's edit moves from `previousStart` to
+   * `sportEvent.startDate`: one job per contest on it, for the edit to write with the new start
+   * (#1464), and the wake to call once it has committed. Without a notice, there are none.
+   */
+  async sportEventRescheduledJobs(sportEvent: Pick<SportEvent, 'id' | 'startDate'>, previousStart: Date): Promise<JobsForWrite> {
+    if (!this.sportEventChanged) return { jobs: [], queued: () => undefined };
+    const jobs = await this.sportEventChanged.sportEventChangedJobs(sportEvent, { kind: ContestEventChangeKind.RESCHEDULED, previousStart });
+    const queue = this.requireJobs('tell the leagues an event moved');
+    return { jobs, queued: () => queue.queued() };
   }
 
   /** The job queue, which `what` cannot do without. */
   private requireJobs(what: string): Pick<BackgroundJobQueue, 'request' | 'queued'> {
     if (!this.jobs) throw new Error(`A background job queue is required to ${what}`);
     return this.jobs;
-  }
-
-  /** C6: queued for the leagues on the event, never failing the admin's change. */
-  private async tellSportEventChanged(sportEvent: SportEvent, change: SportEventChange): Promise<void> {
-    try {
-      await this.sportEventChanged?.sportEventChanged(sportEvent, change);
-    } catch (err) {
-      this.logger?.error({
-        sportEventId: sportEvent.id,
-        change: change.kind,
-        error: errorMessage(err),
-      }, 'Failed to queue event changed emails');
-    }
   }
 
   /**

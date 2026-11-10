@@ -172,7 +172,11 @@ export interface SportEventRepository {
    * (eventSeriesId, eventYear) raises, and the caller maps it (plans/147 decision 5).
    */
   createMany(inputs: readonly SportEventCreate[]): Promise<SportEvent[]>;
-  update(id: string, updates: SportEventUpdate): Promise<SportEvent>;
+  /**
+   * `jobs`, when given, are written in the same transaction as the edit, such as a moved start's
+   * "event changed" email jobs (#1464): an edit that fails queues nothing.
+   */
+  update(id: string, updates: SportEventUpdate, options?: { jobs?: readonly BackgroundJobRequest[] }): Promise<SportEvent>;
   /**
    * Moves the event to `to`, but only while it is still in `from`: a guarded single write, so of
    * two callers making the same change at once exactly one wins (#1159). Returns the event as
