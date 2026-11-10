@@ -54,6 +54,8 @@ export interface ProviderSummary {
   latencyMs: number;
   lastEventAt: Date | null;
   sportsCovered: Sport[];
+  /** The covered sports this provider is the default for (catalog browse, new links). */
+  primaryForSports: Sport[];
   activeEventCount: number;
   supportsLiveSimulation: boolean;
 }
@@ -101,8 +103,8 @@ export const DEFAULT_SYNC_RUN_WINDOW_HOURS = 6;
 // ---------------------------------------------------------------------------
 
 export class SportProviderNotFoundError extends Error {
-  constructor(sport: Sport) {
-    super(`No provider is registered for sport ${sport}`);
+  constructor(sport: Sport, providerId: string) {
+    super(`No provider ${providerId} is registered for sport ${sport}`);
     this.name = 'SportProviderNotFoundError';
   }
 }
@@ -292,6 +294,7 @@ export class IngestionService {
     const summaries = await Promise.all(providers.map(async (provider): Promise<ProviderSummary> => {
       const health = await provider.healthCheck();
       const events = eventSummaries.get(provider.providerId);
+      const sportsCovered = await this.getConfiguredSportsForProvider(provider);
       return {
         providerId: provider.providerId,
         providerName: provider.providerName,
@@ -299,7 +302,8 @@ export class IngestionService {
         errorRate: health.errorRateLastHour,
         latencyMs: health.latencyMsP95,
         lastEventAt: events?.lastChangedAt ?? health.lastSuccessfulPoll ?? null,
-        sportsCovered: await this.getConfiguredSportsForProvider(provider),
+        sportsCovered,
+        primaryForSports: sportsCovered.filter((sport) => this.registry.getProvider(sport)?.providerId === provider.providerId),
         activeEventCount: events?.activeEventCount ?? 0,
         supportsLiveSimulation: supportsLiveSimulation(provider),
       };
@@ -336,13 +340,14 @@ export class IngestionService {
       throw new Error('Ingestion scheduler is required for manual event sync');
     }
 
-    const provider = this.registry.getProvider(request.sport);
-    if (!provider) {
+    // The event's own provider, which must serve its sport (#1495).
+    const provider = this.registry.getProviderById(request.providerId);
+    if (!provider?.sportsCovered.includes(request.sport)) {
       this.logger?.error(
-        { sport: request.sport, eventId: request.eventId },
+        { sport: request.sport, providerId: request.providerId, eventId: request.eventId },
         'Manual event sync was requested without a configured provider',
       );
-      throw new SportProviderNotFoundError(request.sport);
+      throw new SportProviderNotFoundError(request.sport, request.providerId);
     }
     await this.assertSportSyncConfigured(request.sport);
     if (request.mockEventState && !supportsMockEventStateControls(provider)) {
@@ -358,6 +363,7 @@ export class IngestionService {
       scope: {
         type: 'EVENT',
         sport: request.sport,
+        providerId: provider.providerId,
         eventId: request.eventId,
         feeds: request.feeds,
         mockEventState: request.mockEventState,
@@ -388,6 +394,7 @@ export class IngestionService {
       job: (runs) => this.jobs.request(BackgroundJobType.MANUAL_EVENT_SYNC, {
         syncRunIds: runs.map((run) => run.id),
         sport: normalizedScope.sport,
+        providerId: normalizedScope.providerId,
         eventId: normalizedScope.eventId,
         mockEventState: normalizedScope.mockEventState,
       }),
@@ -427,7 +434,7 @@ export class IngestionService {
     if (!scheduler) {
       throw new Error('Ingestion scheduler is required for manual event sync');
     }
-    const scope = { sport: payload.sport, eventId: payload.eventId, mockEventState: payload.mockEventState ?? null };
+    const scope = { sport: payload.sport, providerId: payload.providerId, eventId: payload.eventId, mockEventState: payload.mockEventState ?? null };
     this.logger?.debug({ ...scope, syncRunIds: payload.syncRunIds }, 'Executing submitted manual event sync');
     const stored = new Map((await this.syncRuns.findManyByIds(payload.syncRunIds)).map((run) => [run.id, run]));
     // Runs whose outcome the ledger could not write: the job fails after the rest have run.
@@ -456,6 +463,7 @@ export class IngestionService {
         await this.syncRunLedger.executeFeedRun(syncRun, () =>
           scheduler.runEventSync({
             sport: payload.sport,
+            providerId: payload.providerId,
             eventId: payload.eventId,
             feeds: [requestedFeed],
             mockEventState: payload.mockEventState,

@@ -52,7 +52,7 @@ const MASTERS = {
 
 function withSportProvider() {
   listProvidersMock.mockResolvedValue({
-    data: { providers: [{ providerId: 'mock-contest-feed', sportsCovered: ['GOLF'] }] },
+    data: { providers: [{ providerId: 'mock-contest-feed', sportsCovered: ['GOLF'], primaryForSports: ['GOLF'] }] },
   });
 }
 
@@ -84,7 +84,7 @@ describe('SportEventProviderBrowse', () => {
 
   it('says there is no catalog to browse when no provider covers golf', async () => {
     listProvidersMock.mockResolvedValue({
-      data: { providers: [{ providerId: 'nfl-feed', sportsCovered: ['NFL'] }] },
+      data: { providers: [{ providerId: 'nfl-feed', sportsCovered: ['NFL'], primaryForSports: ['NFL'] }] },
     });
     renderBrowse();
 
@@ -160,6 +160,46 @@ describe('SportEventProviderBrowse', () => {
       externalId: 'pga-2026-masters',
     });
     expect(await screen.findByTestId('tournament-home')).toBeInTheDocument();
+  });
+
+  it('offers no provider choice when one provider covers the sport', async () => {
+    withSportProvider();
+    listProviderCatalogEventsMock.mockResolvedValue({ data: { events: [MASTERS] } });
+    renderBrowse();
+
+    await screen.findByTestId('root-admin-sport-event-create-select-pga-2026-masters');
+    expect(screen.queryByTestId('root-admin-sport-event-create-provider')).not.toBeInTheDocument();
+  });
+
+  it('browses the primary provider first when two cover the sport, then browses and links from the one chosen', async () => {
+    listProvidersMock.mockResolvedValue({
+      data: {
+        providers: [
+          { providerId: 'balldontlie', providerName: 'BALLDONTLIE', sportsCovered: ['GOLF'], primaryForSports: [] },
+          { providerId: 'mock-contest-feed', providerName: 'Mock feed', sportsCovered: ['GOLF'], primaryForSports: ['GOLF'] },
+        ],
+      },
+    });
+    listProviderCatalogEventsMock.mockResolvedValue({ data: { events: [MASTERS] } });
+    createEventFromProviderEventMock.mockResolvedValue({ data: { event: sportEventFixture({ id: 'linked-1' }) } });
+    renderBrowse();
+
+    const choice = await screen.findByTestId('root-admin-sport-event-create-provider');
+    expect(choice).toHaveValue('mock-contest-feed');
+    await waitFor(() => expect(listProviderCatalogEventsMock).toHaveBeenCalledWith(
+      expect.objectContaining({ path: { providerId: 'mock-contest-feed' } }),
+    ));
+
+    fireEvent.change(choice, { target: { value: 'balldontlie' } });
+    await waitFor(() => expect(listProviderCatalogEventsMock).toHaveBeenCalledWith(
+      expect.objectContaining({ path: { providerId: 'balldontlie' } }),
+    ));
+    await selectMasters();
+    fireEvent.click(await screen.findByTestId('root-admin-sport-event-create-provider-submit'));
+
+    await waitFor(() => expect(createEventFromProviderEventMock).toHaveBeenCalledTimes(1));
+    expect((createEventFromProviderEventMock.mock.calls[0][0] as { body: Record<string, unknown> }).body)
+      .toMatchObject({ providerId: 'balldontlie', externalId: 'pga-2026-masters' });
   });
 
   it('says the tour already has this year\'s edition when the provider tournament is a duplicate', async () => {

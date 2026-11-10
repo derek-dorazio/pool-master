@@ -34,7 +34,7 @@ const MINUTE = 60_000;
 const DAY_MS = 24 * 60 * MINUTE;
 
 function syncPayload(eventId: string) {
-  return { syncRunIds: [randomUUID()], sport: Sport.GOLF, eventId };
+  return { syncRunIds: [randomUUID()], sport: Sport.GOLF, providerId: 'integration-background-jobs', eventId };
 }
 
 /** A claim time just after the jobs were queued: their run time is the database's clock, not this one's. */
@@ -207,6 +207,7 @@ describe('manual sync runs and their job (#1441)', () => {
       (written) => queue.request(BackgroundJobType.MANUAL_EVENT_SYNC, {
         syncRunIds: written.map((one) => one.id),
         sport: Sport.GOLF,
+        providerId: 'integration-background-jobs',
         eventId: 'jobs-event',
       }),
     );
@@ -214,7 +215,7 @@ describe('manual sync runs and their job (#1441)', () => {
     expect(runs.map((written) => written.payload['requestedFeed'])).toEqual(['EVENTPARTICIPANTS', 'EVENTLIVESCORES']);
     const job = await getPrisma().backgroundJob.findFirstOrThrow();
     expect(job).toMatchObject({ type: BackgroundJobType.MANUAL_EVENT_SYNC, status: BackgroundJobStatus.QUEUED });
-    expect(job.payload).toEqual({ syncRunIds: runs.map((written) => written.id), sport: Sport.GOLF, eventId: 'jobs-event' });
+    expect(job.payload).toEqual({ syncRunIds: runs.map((written) => written.id), sport: Sport.GOLF, providerId: 'integration-background-jobs', eventId: 'jobs-event' });
     await expect(new PrismaProviderSyncRunRepository(getAppPrisma()).findManyByIds(runs.map((written) => written.id)))
       .resolves.toHaveLength(2);
   });
@@ -224,7 +225,7 @@ describe('manual sync runs and their job (#1441)', () => {
 
     await expect(new PrismaProviderSyncRunRepository(getAppPrisma()).createWithJob(
       [run('EVENTPARTICIPANTS')],
-      () => queue.request(BackgroundJobType.MANUAL_EVENT_SYNC, { syncRunIds: [], sport: Sport.GOLF, eventId: 'jobs-event' }),
+      () => queue.request(BackgroundJobType.MANUAL_EVENT_SYNC, { syncRunIds: [], sport: Sport.GOLF, providerId: 'integration-background-jobs', eventId: 'jobs-event' }),
     )).rejects.toThrow(/Invalid MANUAL_EVENT_SYNC job payload/);
 
     await expect(getPrisma().providerSyncRun.count({ where: { providerId: 'integration-background-jobs' } })).resolves.toBe(0);

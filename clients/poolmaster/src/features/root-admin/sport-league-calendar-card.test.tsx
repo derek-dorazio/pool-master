@@ -58,7 +58,7 @@ function renderCard(sportLeague = SPORT_LEAGUE) {
   listEventsMock.mockImplementation(({ query }: { query: { eventYear?: number } }) =>
     Promise.resolve({ data: { events: EVENTS.filter((event) => event.eventYear === query.eventYear) } }));
   listEventYearsMock.mockResolvedValue({ data: { years: [2026, 2025] } });
-  listProvidersMock.mockResolvedValue({ data: { providers: [{ providerId: 'mock-contest-feed', sportsCovered: ['GOLF'] }] } });
+  listProvidersMock.mockResolvedValue({ data: { providers: [{ providerId: 'mock-contest-feed', sportsCovered: ['GOLF'], primaryForSports: ['GOLF'] }] } });
   return render(
     <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
       <MemoryRouter initialEntries={[`/manage/sports/golf/leagues/${sportLeague.id}`]}>

@@ -195,6 +195,19 @@ variable "sport_data_provider_bindings_json" {
   default     = ""
 }
 
+variable "balldontlie_api_key" {
+  description = "BALLDONTLIE API key (#1495). Empty leaves BALLDONTLIE unbound. When set, QA binds BALLDONTLIE beside the mock provider and core-api reads the key from Secrets Manager. Do NOT commit it: set TF_VAR_balldontlie_api_key, reusing the value already in Secrets Manager (apply-terraform skill)."
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "balldontlie_requests_per_minute" {
+  description = "Requests a minute the BALLDONTLIE plan allows: 5 on the free plan, 600 on All-Access. The adapter paces itself to it."
+  type        = number
+  default     = 5
+}
+
 # --- Networking ---
 
 variable "vpc_cidr" {

@@ -24,6 +24,10 @@ afterAll(async () => {
 });
 beforeEach(() => cleanupTestData());
 
+function externalIds(events: Array<{ externalId: string }>): string[] {
+  return events.map((event) => event.externalId);
+}
+
 function reader(provider = fakeSportDataProvider({ providerId: PROVIDER })) {
   return createScheduledEventReader({ prisma: getAppPrisma(), registry: registryWith(provider) });
 }
@@ -65,27 +69,27 @@ describe('ScheduledEventReader — live scores', () => {
     await createEvent('scheduled-with-field', { status: 'SCHEDULED', withField: true });
     await createEvent('completed-with-field', { status: 'COMPLETED', withField: true });
 
-    const eventIds = await reader().listEventIdsForFeed({ sport: Sport.GOLF, feed: 'EVENTLIVESCORES', now });
+    const events = await reader().listEventsForFeed({ sport: Sport.GOLF, feed: 'EVENTLIVESCORES', now });
 
-    expect(eventIds).toEqual(['live-with-field']);
+    expect(externalIds(events)).toEqual(['live-with-field']);
   });
 
   it('polls only the events held by the sport\'s registered provider', async () => {
     await createEvent('ours', { status: 'IN_PROGRESS', withField: true });
     await createEvent('theirs', { status: 'IN_PROGRESS', providerId: 'TEST_PROVIDER', withField: true });
 
-    const eventIds = await reader().listEventIdsForFeed({ sport: Sport.GOLF, feed: 'EVENTLIVESCORES', now });
+    const events = await reader().listEventsForFeed({ sport: Sport.GOLF, feed: 'EVENTLIVESCORES', now });
 
-    expect(eventIds).toEqual(['ours']);
+    expect(externalIds(events)).toEqual(['ours']);
   });
 
   it('polls nothing when no provider is registered for the sport', async () => {
     await createEvent('orphan', { status: 'IN_PROGRESS', withField: true });
 
-    const eventIds = await createScheduledEventReader({ prisma: getAppPrisma(), registry: registryWith(null) })
-      .listEventIdsForFeed({ sport: Sport.GOLF, feed: 'EVENTLIVESCORES', now });
+    const events = await createScheduledEventReader({ prisma: getAppPrisma(), registry: registryWith(null) })
+      .listEventsForFeed({ sport: Sport.GOLF, feed: 'EVENTLIVESCORES', now });
 
-    expect(eventIds).toEqual([]);
+    expect(externalIds(events)).toEqual([]);
   });
 });
 
@@ -99,7 +103,7 @@ describe('ScheduledEventReader — field hydration', () => {
     await createEvent('past-window-event', { status: 'SCHEDULED', startDate: new Date('2026-05-04T12:00:00.000Z') });
     await createEvent('unlinked-event', { status: 'SCHEDULED', syncScope: 'NONE', startDate: new Date('2026-04-29T12:00:00.000Z') });
 
-    const eventIds = await reader().listEventIdsForFeed({
+    const events = await reader().listEventsForFeed({
       sport: Sport.GOLF,
       feed: 'EVENTPARTICIPANTS',
       now,
@@ -107,14 +111,14 @@ describe('ScheduledEventReader — field hydration', () => {
       to: weekLater,
     });
 
-    expect(eventIds).toEqual(['draft-event', 'released-event']);
+    expect(externalIds(events)).toEqual(['draft-event', 'released-event']);
   });
 
   it('never offers an event that starts after the window closes', async () => {
     await createEvent('in-window', { startDate: new Date('2026-05-01T12:00:00.000Z') });
     await createEvent('after-window', { startDate: new Date('2026-05-04T12:00:00.000Z') });
 
-    const eventIds = await reader().listEventIdsForFeed({
+    const events = await reader().listEventsForFeed({
       sport: Sport.GOLF,
       feed: 'EVENTPARTICIPANTS',
       now,
@@ -122,7 +126,7 @@ describe('ScheduledEventReader — field hydration', () => {
       to: weekLater,
     });
 
-    expect(eventIds).toEqual(['in-window']);
+    expect(externalIds(events)).toEqual(['in-window']);
   });
 
   it('offers at most the two soonest events per pass, soonest first', async () => {
@@ -130,7 +134,7 @@ describe('ScheduledEventReader — field hydration', () => {
     await createEvent('first', { startDate: new Date('2026-04-28T12:00:00.000Z') });
     await createEvent('second', { startDate: new Date('2026-04-29T12:00:00.000Z') });
 
-    const eventIds = await reader().listEventIdsForFeed({
+    const events = await reader().listEventsForFeed({
       sport: Sport.GOLF,
       feed: 'EVENTPARTICIPANTS',
       now,
@@ -138,15 +142,52 @@ describe('ScheduledEventReader — field hydration', () => {
       to: weekLater,
     });
 
-    expect(eventIds).toEqual(['first', 'second']);
+    expect(externalIds(events)).toEqual(['first', 'second']);
   });
 
   it('leaves the window open-ended after now when no bounds are given', async () => {
     await createEvent('started', { startDate: new Date('2026-04-20T12:00:00.000Z') });
     await createEvent('next-year', { startDate: new Date('2027-04-20T12:00:00.000Z') });
 
-    const eventIds = await reader().listEventIdsForFeed({ sport: Sport.GOLF, feed: 'EVENTPARTICIPANTS', now });
+    const events = await reader().listEventsForFeed({ sport: Sport.GOLF, feed: 'EVENTPARTICIPANTS', now });
 
-    expect(eventIds).toEqual(['next-year']);
+    expect(externalIds(events)).toEqual(['next-year']);
+  });
+});
+
+describe('ScheduledEventReader — two providers serving the sport', () => {
+  const OTHER = 'integration-test-secondary';
+  const twoProviders = () => {
+    const registry = registryWith(fakeSportDataProvider({ providerId: PROVIDER }));
+    registry.register(Sport.GOLF, fakeSportDataProvider({ providerId: OTHER }), 'SECONDARY');
+    return createScheduledEventReader({ prisma: getAppPrisma(), registry });
+  };
+
+  it('loads each provider\'s own two soonest fields, so one provider\'s earlier events never hold the other\'s back', async () => {
+    await createEvent('ours-first', { startDate: new Date('2026-04-27T12:00:00.000Z') });
+    await createEvent('ours-second', { startDate: new Date('2026-04-28T12:00:00.000Z') });
+    await createEvent('ours-third', { startDate: new Date('2026-04-29T12:00:00.000Z') });
+    await createEvent('theirs-first', { providerId: OTHER, startDate: new Date('2026-05-01T12:00:00.000Z') });
+
+    const events = await twoProviders().listEventsForFeed({ sport: Sport.GOLF, feed: 'EVENTPARTICIPANTS', now, from: now, to: weekLater });
+
+    expect(events).toEqual([
+      { providerId: PROVIDER, externalId: 'ours-first' },
+      { providerId: PROVIDER, externalId: 'ours-second' },
+      { providerId: OTHER, externalId: 'theirs-first' },
+    ]);
+  });
+
+  it('polls the live events of both providers, each named with the provider it is linked to', async () => {
+    await createEvent('shared-id', { status: 'IN_PROGRESS', withField: true });
+    await createEvent('shared-id', { status: 'IN_PROGRESS', providerId: OTHER, withField: true });
+
+    const events = await twoProviders().listEventsForFeed({ sport: Sport.GOLF, feed: 'EVENTLIVESCORES', now });
+
+    expect(events).toEqual(expect.arrayContaining([
+      { providerId: PROVIDER, externalId: 'shared-id' },
+      { providerId: OTHER, externalId: 'shared-id' },
+    ]));
+    expect(events).toHaveLength(2);
   });
 });

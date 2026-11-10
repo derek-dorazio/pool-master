@@ -10,6 +10,8 @@ import { MockEventStateSchema } from '@poolmaster/shared/dto';
 export const ManualEventSyncJobPayloadSchema = z.object({
   syncRunIds: z.array(z.uuid()).min(1),
   sport: z.enum(Sport),
+  /** The provider the event is linked to (#1495). */
+  providerId: z.string().min(1),
   eventId: z.string().min(1),
   mockEventState: MockEventStateSchema.optional(),
 });

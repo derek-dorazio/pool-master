@@ -56,6 +56,7 @@ describe('IngestionService manual sync submission', () => {
 
     await expect(service.syncEventData({
       sport: Sport.GOLF,
+      providerId: 'mock-contest-feed',
       eventId: 'golf-event-1',
       feeds: ['EVENTLIVESCORES'],
     }, 'admin-1', 'admin@example.com')).rejects.toMatchObject({
@@ -110,6 +111,7 @@ describe('IngestionService manual sync submission', () => {
 
     const result = await service.syncEventData({
       sport: Sport.GOLF,
+      providerId: 'mock-contest-feed',
       eventId: '  golf-open-championship-2026  ',
       feeds: ['EVENTLIVESCORES', 'EVENTLIVESCORES'],
       mockEventState: 'live',
@@ -119,6 +121,7 @@ describe('IngestionService manual sync submission', () => {
     expect(result.requestedFeeds).toEqual(['EVENTLIVESCORES']);
     expect(syncRuns.rows).toEqual([expect.objectContaining({
       sport: Sport.GOLF,
+      providerId: 'mock-contest-feed',
       eventId: 'golf-open-championship-2026',
       status: 'SUBMITTED',
       payload: expect.objectContaining({
@@ -148,6 +151,7 @@ describe('IngestionService manual sync submission', () => {
     await runner.drain();
     expect(scheduler.runEventSync).toHaveBeenCalledWith({
       sport: Sport.GOLF,
+      providerId: 'mock-contest-feed',
       eventId: 'golf-open-championship-2026',
       feeds: ['EVENTLIVESCORES'],
       mockEventState: 'live',
@@ -182,7 +186,7 @@ describe('IngestionService manual sync submission', () => {
 
       await expect(
         service.syncEventData(
-          { sport: Sport.GOLF, eventId: 'manual-event-1', feeds: ['EVENTLIVESCORES'] },
+          { sport: Sport.GOLF, providerId: 'mock-contest-feed', eventId: 'manual-event-1', feeds: ['EVENTLIVESCORES'] },
           'admin-1',
           'admin@example.com',
         ),
@@ -199,7 +203,7 @@ describe('IngestionService manual sync submission', () => {
       );
       await expect(
         service.syncEventData(
-          { sport: Sport.GOLF, eventId: 'linked-event', feeds: ['EVENTPARTICIPANTS', 'EVENTLIVESCORES'] },
+          { sport: Sport.GOLF, providerId: 'mock-contest-feed', eventId: 'linked-event', feeds: ['EVENTPARTICIPANTS', 'EVENTLIVESCORES'] },
           'admin-1',
           'admin@example.com',
         ),
@@ -211,7 +215,7 @@ describe('IngestionService manual sync submission', () => {
 
       await expect(
         service.syncEventData(
-          { sport: Sport.GOLF, eventId: 'not-yet-persisted', feeds: ['EVENTPARTICIPANTS'] },
+          { sport: Sport.GOLF, providerId: 'mock-contest-feed', eventId: 'not-yet-persisted', feeds: ['EVENTPARTICIPANTS'] },
           'admin-1',
           'admin@example.com',
         ),

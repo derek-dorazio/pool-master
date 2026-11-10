@@ -941,6 +941,7 @@ describe('Contract verification (root admin)', () => {
         url: '/api/v1/ingestion/sports/GOLF/events/contract-sync-event/sync',
         headers: withoutJsonBodyHeaders(rootAdmin.headers),
         payload: {
+          providerId: 'contract-provider',
           feeds: ['EVENTLIVESCORES'],
         },
       });
@@ -962,6 +963,7 @@ describe('Contract verification (root admin)', () => {
           url: '/api/v1/ingestion/sports/GOLF/events/contract-sync-event/sync',
           headers: withoutJsonBodyHeaders(rootAdmin.headers),
           payload: {
+            providerId: 'contract-provider',
             feeds: [retiredFeed],
           },
         });
@@ -1008,6 +1010,7 @@ describe('Contract verification (root admin)', () => {
         url: '/api/v1/ingestion/sports/GOLF/events/empty-diagnostics-event/sync',
         headers: withoutJsonBodyHeaders(rootAdmin.headers),
         payload: {
+          providerId: 'empty-diagnostics-provider',
           feeds: ['EVENTLIVESCORES'],
         },
       });
@@ -1125,6 +1128,7 @@ describe('Contract verification (root admin)', () => {
           url: '/api/v1/ingestion/sports/GOLF/events/missing-300/sync',
           headers: withoutJsonBodyHeaders(rootAdmin.headers),
           payload: {
+            providerId: 'contract-provider',
             feeds: ['EVENTLIVESCORES'],
           },
         });

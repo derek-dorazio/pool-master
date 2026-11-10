@@ -87,6 +87,7 @@ function createEventRequest(input: {
     scope: {
       type: 'EVENT',
       sport: Sport.GOLF,
+      providerId: 'mock-provider',
       eventId: 'event-1',
       feeds: [input.feed],
     },

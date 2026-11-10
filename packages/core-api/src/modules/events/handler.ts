@@ -274,7 +274,7 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
       }
       try {
         const result = await ingestion.syncEventData(
-          { sport: event.sport, eventId: event.externalId, feeds: ['EVENTPARTICIPANTS'] },
+          { sport: event.sport, providerId: event.providerId, eventId: event.externalId, feeds: ['EVENTPARTICIPANTS'] },
           request.authUser?.userId ?? '',
           request.authUser?.email ?? '',
         );

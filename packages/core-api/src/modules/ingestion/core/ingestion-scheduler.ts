@@ -90,6 +90,8 @@ interface IngestionJobWorkResult {
 
 export interface EventSyncRequest {
   sport: Sport;
+  /** The provider the event is linked to (#1495). */
+  providerId: string;
   eventId: string;
   feeds: EventSyncFeed[];
   mockEventState?: MockEventState;
@@ -105,14 +107,20 @@ export interface IngestionScheduleConfigReader {
   getPerSportConfig(sport: string): Promise<IngestionScheduleConfig>;
 }
 
+/** A linked event a scheduled sweep syncs: the provider it is linked to and its id there. */
+export interface ScheduledEventRef {
+  providerId: string;
+  externalId: string;
+}
+
 export interface IngestionScheduledEventReader {
-  listEventIdsForFeed(input: {
+  listEventsForFeed(input: {
     sport: Sport;
     feed: EventSyncFeed;
     from?: Date;
     now: Date;
     to?: Date;
-  }): Promise<string[]>;
+  }): Promise<ScheduledEventRef[]>;
 }
 
 export interface IngestionSchedulerOptions {
@@ -238,11 +246,11 @@ export class IngestionScheduler {
     const options = buildProviderEventSyncOptions(request.mockEventState);
     for (const feed of dedupe(request.feeds)) {
       if (feed === 'EVENTPARTICIPANTS') {
-        jobs.push(await this.runEventFieldSync(request.sport, request.eventId, options));
+        jobs.push(await this.runEventFieldSync(request.sport, request.providerId, request.eventId, options));
         continue;
       }
 
-      jobs.push(await this.pollLiveScores(request.sport, request.eventId, options));
+      jobs.push(await this.pollLiveScores(request.sport, request.providerId, request.eventId, options));
     }
 
     this.logger?.info({
@@ -256,17 +264,18 @@ export class IngestionScheduler {
     return jobs;
   }
 
-  /** Polls live scores for a specific event. */
+  /** Polls live scores for a specific event from the provider it is linked to. */
   async pollLiveScores(
     sport: Sport,
+    providerId: string,
     eventId: string,
     options?: ProviderEventSyncOptions,
   ): Promise<IngestionJobRecord> {
-    this.logger?.debug({ sport, eventId, mockEventState: options?.mockEventState ?? null }, 'Polling live scores for event');
-    const provider = this.registry.getProvider(sport);
+    this.logger?.debug({ sport, providerId, eventId, mockEventState: options?.mockEventState ?? null }, 'Polling live scores for event');
+    const provider = this.providerServing(sport, providerId);
     if (!provider) {
-      this.logger?.warn({ sport, eventId }, 'No provider registered for live score polling');
-      return createFailedJob('EVENT_LIVE_SCORES_SYNC', 'none', sport, 'No provider registered', eventId);
+      this.logger?.warn({ sport, providerId, eventId }, 'No provider registered for live score polling');
+      return createFailedJob('EVENT_LIVE_SCORES_SYNC', providerId, sport, 'No provider registered', eventId);
     }
     const unsupportedJob = createUnsupportedMockEventStateJob(provider, 'EVENT_LIVE_SCORES_SYNC', sport, eventId, options);
     if (unsupportedJob) {
@@ -372,7 +381,7 @@ export class IngestionScheduler {
       return;
     }
 
-    const eventIds = await eventReader.listEventIdsForFeed({
+    const events = await eventReader.listEventsForFeed({
       sport,
       feed: 'EVENTPARTICIPANTS',
       from: window.from,
@@ -382,19 +391,20 @@ export class IngestionScheduler {
 
     this.logger?.debug({
       sport,
-      eventCount: eventIds.length,
-      eventIds,
+      eventCount: events.length,
+      events,
     }, 'Resolved active event participant sync candidates');
 
-    for (const eventId of eventIds) {
+    for (const event of events) {
       const normalized = this.normalizeScheduledEventSync({
         sport,
-        eventId,
+        providerId: event.providerId,
+        eventId: event.externalId,
         feeds: ['EVENTPARTICIPANTS'],
       });
       const { scope } = normalized;
       await this.executeScheduledSyncRun(normalized, () =>
-        this.runEventFieldSync(scope.sport, scope.eventId, scope.providerOptions),
+        this.runEventFieldSync(scope.sport, scope.providerId, scope.eventId, scope.providerOptions),
       );
     }
   }
@@ -418,7 +428,7 @@ export class IngestionScheduler {
       return;
     }
 
-    const eventIds = await eventReader.listEventIdsForFeed({
+    const events = await eventReader.listEventsForFeed({
       sport,
       feed,
       now: this.getNow(),
@@ -427,26 +437,27 @@ export class IngestionScheduler {
     this.logger?.debug({
       sport,
       feed,
-      eventCount: eventIds.length,
-      eventIds,
+      eventCount: events.length,
+      events,
     }, 'Resolved scheduled event sync candidates');
 
-    for (const eventId of eventIds) {
-      const inFlightKey = buildScheduledEventSyncKey(sport, feed, eventId);
+    for (const event of events) {
+      const inFlightKey = buildScheduledEventSyncKey(sport, feed, event);
       if (this.inFlightScheduledEventSyncs.has(inFlightKey)) {
-        this.logger?.debug({ sport, feed, eventId }, 'Skipping scheduled event sync because a run is already in flight');
+        this.logger?.debug({ sport, feed, ...event }, 'Skipping scheduled event sync because a run is already in flight');
         continue;
       }
       this.inFlightScheduledEventSyncs.add(inFlightKey);
       const normalized = this.normalizeScheduledEventSync({
         sport,
-        eventId,
+        providerId: event.providerId,
+        eventId: event.externalId,
         feeds: [feed],
       });
       const { scope } = normalized;
       try {
         await this.executeScheduledSyncRun(normalized, () =>
-          this.pollLiveScores(scope.sport, scope.eventId, scope.providerOptions),
+          this.pollLiveScores(scope.sport, scope.providerId, scope.eventId, scope.providerOptions),
         );
       } finally {
         this.inFlightScheduledEventSyncs.delete(inFlightKey);
@@ -456,6 +467,7 @@ export class IngestionScheduler {
 
   private normalizeScheduledEventSync(input: {
     sport: Sport;
+    providerId: string;
     eventId: string;
     feeds: readonly EventSyncFeed[];
   }): NormalizedSyncRequest {
@@ -465,6 +477,7 @@ export class IngestionScheduler {
       scope: {
         type: 'EVENT',
         sport: input.sport,
+        providerId: input.providerId,
         eventId: input.eventId,
         feeds: input.feeds,
       },
@@ -480,11 +493,9 @@ export class IngestionScheduler {
       return run();
     }
 
-    const provider = this.registry.getProvider(normalizedRequest.scope.sport);
-    const providerId = provider?.providerId ?? 'none';
     const syncRuns = await syncRunLedger.createSubmissions({
       normalizedRequest,
-      providerId,
+      providerId: normalizedRequest.scope.providerId,
       submittedAt: this.getNow(),
       runType: 'SCHEDULED_EVENT_SYNC',
     });
@@ -499,14 +510,15 @@ export class IngestionScheduler {
 
   private async runEventFieldSync(
     sport: Sport,
+    providerId: string,
     eventId: string,
     options?: ProviderEventSyncOptions,
   ): Promise<IngestionJobRecord> {
-    this.logger?.debug({ sport, eventId, mockEventState: options?.mockEventState ?? null }, 'Running participant sync for event');
-    const provider = this.registry.getProvider(sport);
+    this.logger?.debug({ sport, providerId, eventId, mockEventState: options?.mockEventState ?? null }, 'Running participant sync for event');
+    const provider = this.providerServing(sport, providerId);
     if (!provider) {
-      this.logger?.warn({ sport, eventId }, 'No provider registered for event participant sync');
-      return createFailedJob('EVENT_PARTICIPANTS_SYNC', 'none', sport, 'No provider registered', eventId);
+      this.logger?.warn({ sport, providerId, eventId }, 'No provider registered for event participant sync');
+      return createFailedJob('EVENT_PARTICIPANTS_SYNC', providerId, sport, 'No provider registered', eventId);
     }
     const unsupportedJob = createUnsupportedMockEventStateJob(provider, 'EVENT_PARTICIPANTS_SYNC', sport, eventId, options);
     if (unsupportedJob) {
@@ -726,6 +738,12 @@ export class IngestionScheduler {
     return this.options.configReader.getPerSportConfig(sport);
   }
 
+  /** The registered provider with this id, when it serves the sport. */
+  private providerServing(sport: Sport, providerId: string): SportDataProvider | null {
+    const provider = this.registry.getProviderById(providerId);
+    return provider?.sportsCovered.includes(sport) ? provider : null;
+  }
+
   private getNow(): Date {
     return this.options.now?.() ?? new Date();
   }
@@ -782,9 +800,9 @@ function buildProviderEventSyncOptions(
 function buildScheduledEventSyncKey(
   sport: Sport,
   feed: EventSyncFeed,
-  eventId: string,
+  event: ScheduledEventRef,
 ): string {
-  return `${sport}:${feed}:${eventId}`;
+  return `${sport}:${feed}:${event.providerId}:${event.externalId}`;
 }
 
 function createUnsupportedMockEventStateJob(

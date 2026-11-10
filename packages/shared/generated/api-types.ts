@@ -3330,7 +3330,7 @@ export interface paths {
         put?: never;
         /**
          * Submit a manual event sync
-         * @description Submits one sync run per requested event-level feed for the provider event `eventId`. Refused with 409 when a feed is not allowed by the event's syncScope. The runs execute asynchronously after acceptance.
+         * @description Submits one sync run per requested event-level feed for the provider event `eventId` of the provider `providerId` names, which must serve `sport` (404 otherwise). Refused with 409 when a feed is not allowed by the event's syncScope. The runs execute asynchronously after acceptance.
          */
         post: operations["submitEventSync"];
         delete?: never;
@@ -22091,6 +22091,8 @@ export interface components {
         };
         /** @description Feed-aware event sync request. */
         EventSyncRequest: {
+            /** @description The provider the event is linked to (its SportEvent.providerId). The sync reads that provider only. */
+            providerId: string;
             /** @description Feed types to run for a specific event sync request. */
             feeds: ("EVENTPARTICIPANTS" | "EVENTLIVESCORES")[];
             /**
@@ -22121,6 +22123,8 @@ export interface components {
             lastEventAt: string | null;
             /** @description Sports the provider covers that ingestion is scheduled for. */
             sportsCovered: ("GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS")[];
+            /** @description The covered sports this provider is the default for: catalog browse and new event links start with it. Other providers covering the sport serve only the events linked to them. */
+            primaryForSports: ("GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS")[];
             /** @description The provider's events that are scheduled or in progress. */
             activeEventCount: number;
             /** @description True when the provider can play a linked event's live scoring forward on its own clock (startEventLiveSimulation). Only the QA mock feed can. */
@@ -22149,6 +22153,8 @@ export interface components {
                 lastEventAt: string | null;
                 /** @description Sports the provider covers that ingestion is scheduled for. */
                 sportsCovered: ("GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS")[];
+                /** @description The covered sports this provider is the default for: catalog browse and new event links start with it. Other providers covering the sport serve only the events linked to them. */
+                primaryForSports: ("GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS")[];
                 /** @description The provider's events that are scheduled or in progress. */
                 activeEventCount: number;
                 /** @description True when the provider can play a linked event's live scoring forward on its own clock (startEventLiveSimulation). Only the QA mock feed can. */

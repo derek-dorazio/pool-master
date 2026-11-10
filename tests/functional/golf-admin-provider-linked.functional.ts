@@ -413,7 +413,7 @@ describe('SDK Functional: Golf provider-linked live scoring + settlement (pool-m
     const r1Sync = await submitEventSync({
       client: admin,
       path: { sport: 'GOLF', eventId: MOCK_EVENT_EXTERNAL_ID },
-      body: { feeds: ['EVENTLIVESCORES'], mockEventState: 'golf-r1-complete' },
+      body: { providerId: MOCK_PROVIDER_ID, feeds: ['EVENTLIVESCORES'], mockEventState: 'golf-r1-complete' },
     });
     expect(r1Sync.response?.status).toBe(202);
     await waitForSyncRuns(expectDefined(r1Sync.data).syncRuns.map((r) => r.id));
@@ -464,7 +464,7 @@ describe('SDK Functional: Golf provider-linked live scoring + settlement (pool-m
     const finalSync = await submitEventSync({
       client: admin,
       path: { sport: 'GOLF', eventId: MOCK_EVENT_EXTERNAL_ID },
-      body: { feeds: ['EVENTLIVESCORES'], mockEventState: 'golf-completed' },
+      body: { providerId: MOCK_PROVIDER_ID, feeds: ['EVENTLIVESCORES'], mockEventState: 'golf-completed' },
     });
     expect(finalSync.response?.status).toBe(202);
     await waitForSyncRuns(expectDefined(finalSync.data).syncRuns.map((r) => r.id));
@@ -510,7 +510,7 @@ describe('SDK Functional: Golf provider-linked live scoring + settlement (pool-m
     const staleSync = await submitEventSync({
       client: admin,
       path: { sport: 'GOLF', eventId: MOCK_EVENT_EXTERNAL_ID },
-      body: { feeds: ['EVENTLIVESCORES'], mockEventState: 'golf-late-correction' },
+      body: { providerId: MOCK_PROVIDER_ID, feeds: ['EVENTLIVESCORES'], mockEventState: 'golf-late-correction' },
     });
     expect(staleSync.response?.status).toBe(202);
     await waitForSyncRuns(expectDefined(staleSync.data).syncRuns.map((r) => r.id));
@@ -568,7 +568,7 @@ describe('SDK Functional: Golf provider-linked live scoring + settlement (pool-m
       await submitEventSync({
         client: c,
         path: { sport: 'GOLF', eventId: MOCK_EVENT_EXTERNAL_ID },
-        body: { feeds: ['EVENTLIVESCORES'] },
+        body: { providerId: MOCK_PROVIDER_ID, feeds: ['EVENTLIVESCORES'] },
       }),
       deny,
     );

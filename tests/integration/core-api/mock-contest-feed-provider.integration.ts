@@ -773,20 +773,21 @@ describe('mock contest feed provider event-first verification', () => {
     const linked = await linkProviderGolfEvents(new Date('2026-04-01T00:00:00.000Z'), new Date('2026-06-30T23:59:59.999Z'));
     expect(linked).toBeGreaterThan(0);
 
-    const eligibleEventIds = await eventReader.listEventIdsForFeed({
+    const eligibleEvents = await eventReader.listEventsForFeed({
       sport: Sport.GOLF,
       feed: 'EVENTPARTICIPANTS',
       from: syncVerificationNow,
       to: new Date(syncVerificationNow.getTime() + 7 * 24 * 60 * 60 * 1000),
       now: syncVerificationNow,
     });
-    expect(eligibleEventIds).toEqual([
-      'golf-genesis-scottish-open-2026',
+    expect(eligibleEvents).toEqual([
+      { providerId: 'mock-contest-feed', externalId: 'golf-genesis-scottish-open-2026' },
     ]);
 
     const manualField = await providerService.syncEventData(
       {
         sport: Sport.GOLF,
+        providerId: 'mock-contest-feed',
         eventId: eventExternalId,
         feeds: ['EVENTPARTICIPANTS'],
       },
@@ -809,6 +810,7 @@ describe('mock contest feed provider event-first verification', () => {
     const manualFieldRefresh = await providerService.syncEventData(
       {
         sport: Sport.GOLF,
+        providerId: 'mock-contest-feed',
         eventId: eventExternalId,
         feeds: ['EVENTPARTICIPANTS'],
       },
@@ -924,6 +926,7 @@ describe('mock contest feed provider event-first verification', () => {
     const field = await providerService.syncEventData(
       {
         sport: Sport.GOLF,
+        providerId: 'mock-contest-feed',
         eventId: eventExternalId,
         feeds: ['EVENTPARTICIPANTS'],
         mockEventState: 'locked',
@@ -988,6 +991,7 @@ describe('mock contest feed provider event-first verification', () => {
     const r2Complete = await providerService.syncEventData(
       {
         sport: Sport.GOLF,
+        providerId: 'mock-contest-feed',
         eventId: eventExternalId,
         feeds: ['EVENTLIVESCORES'],
         mockEventState: 'golf-r2-complete',
@@ -1019,6 +1023,7 @@ describe('mock contest feed provider event-first verification', () => {
     const corrected = await providerService.syncEventData(
       {
         sport: Sport.GOLF,
+        providerId: 'mock-contest-feed',
         eventId: eventExternalId,
         feeds: ['EVENTLIVESCORES'],
         mockEventState: 'golf-correction',
@@ -1038,6 +1043,7 @@ describe('mock contest feed provider event-first verification', () => {
     const finalLive = await providerService.syncEventData(
       {
         sport: Sport.GOLF,
+        providerId: 'mock-contest-feed',
         eventId: eventExternalId,
         feeds: ['EVENTLIVESCORES'],
         mockEventState: 'golf-completed',
@@ -1102,18 +1108,19 @@ describe('mock contest feed provider event-first verification', () => {
     });
     const settledOnce = await readSettlement();
 
-    const completedLiveCandidates = await eventReader.listEventIdsForFeed({
+    const completedLiveCandidates = await eventReader.listEventsForFeed({
       sport: Sport.GOLF,
       feed: 'EVENTLIVESCORES',
       from: new Date('2026-04-01T00:00:00.000Z'),
       to: new Date('2026-06-30T23:59:59.999Z'),
       now: new Date('2026-05-31T23:00:00.000Z'),
     });
-    expect(completedLiveCandidates).not.toContain(eventExternalId);
+    expect(completedLiveCandidates.map((event) => event.externalId)).not.toContain(eventExternalId);
 
     const rerunCompletedDetail = await providerService.syncEventData(
       {
         sport: Sport.GOLF,
+        providerId: 'mock-contest-feed',
         eventId: eventExternalId,
         feeds: ['EVENTPARTICIPANTS'],
         mockEventState: 'golf-completed',
@@ -1169,6 +1176,7 @@ describe('mock contest feed provider event-first verification', () => {
     // event's field is loaded on demand.
     const [fieldJob] = await scheduler.runEventSync({
       sport: Sport.GOLF,
+      providerId: 'mock-contest-feed',
       eventId: eventExternalId,
       feeds: ['EVENTPARTICIPANTS'],
     });

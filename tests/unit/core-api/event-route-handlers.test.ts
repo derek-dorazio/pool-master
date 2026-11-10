@@ -269,7 +269,7 @@ describe('field refresh from the provider', () => {
 
     const reply = await callHandler(handlers.refreshEventParticipants, stubRequest({ params, authUser: admin }));
 
-    expect(ingestion.syncEventData).toHaveBeenCalledWith({ sport: 'GOLF', eventId: 'masters-2026', feeds: ['EVENTPARTICIPANTS'] }, 'admin', 'admin@example.test');
+    expect(ingestion.syncEventData).toHaveBeenCalledWith({ sport: 'GOLF', providerId: 'feed', eventId: 'masters-2026', feeds: ['EVENTPARTICIPANTS'] }, 'admin', 'admin@example.test');
     expect(reply).toMatchObject({ statusCode: 202, body: { eventId: 'masters-2026' } });
   });
 
@@ -284,7 +284,7 @@ describe('field refresh from the provider', () => {
   });
 
   it.each([
-    ['no provider with 404 SPORT_PROVIDER_NOT_FOUND', new SportProviderNotFoundError('GOLF'), 404, 'SPORT_PROVIDER_NOT_FOUND'],
+    ['no provider with 404 SPORT_PROVIDER_NOT_FOUND', new SportProviderNotFoundError('GOLF', 'mock-provider'), 404, 'SPORT_PROVIDER_NOT_FOUND'],
     ['a sport ingestion is not set up for with 422 SPORT_SYNC_NOT_CONFIGURED', new SportSyncNotConfiguredError('GOLF'), 422, 'SPORT_SYNC_NOT_CONFIGURED'],
     ['a sync scope that leaves the field out with 409 SPORT_EVENT_SYNC_SCOPE_RESTRICTED', new SportEventSyncScopeError(EVENT_ID, 'SCORES_ONLY', ['EVENTPARTICIPANTS']), 409, 'SPORT_EVENT_SYNC_SCOPE_RESTRICTED'],
   ])('answers a field sync refused for %s, with no session read as no actor', async (_label, error, status, code) => {

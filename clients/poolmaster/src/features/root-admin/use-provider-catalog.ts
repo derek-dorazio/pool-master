@@ -1,23 +1,30 @@
 import type { Sport } from '@poolmaster/shared/domain';
 import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
 import { listProviderCatalogEvents } from '@/lib/api';
 import { QueryKeys } from '@/lib/query-keys';
 import type { ProviderEventDto } from '@/lib/api';
-import { resolveSportProviderId } from './sport-admin-utils';
+import { sportProviderOptions } from './sport-admin-utils';
 import { throwApiError } from '@/lib/errors';
 import { useProvidersQuery } from './use-providers-query';
 
 export type ProviderCatalogEvent = ProviderEventDto;
 
 /**
- * A sport's provider id, resolved from the provider list (the first provider covering the
- * sport); null when none does, as for horse racing today. Shared by the catalog browse below
- * and the sport league year import (#385).
+ * The providers covering a sport (its primary first) and the one chosen, which starts as the
+ * primary; null when none covers it, as for horse racing today. Shared by the catalog browse
+ * below and the sport league year import (#385). Choosing matters only where two providers
+ * cover the sport, as the QA mock and BALLDONTLIE do for golf (#1495).
  */
 export function useSportProviderId(enabled: boolean, sport: Sport) {
   const providersQuery = useProvidersQuery({ enabled });
+  const [chosenProviderId, setProviderId] = useState<string | null>(null);
+  const providers = sportProviderOptions(providersQuery.data, sport);
+  const chosen = providers.find((provider) => provider.providerId === chosenProviderId) ?? providers.at(0);
   return {
-    providerId: resolveSportProviderId(providersQuery.data, sport),
+    providerId: chosen?.providerId ?? null,
+    providers,
+    setProviderId,
     isSuccess: providersQuery.isSuccess,
     isError: providersQuery.isError,
   };
@@ -28,10 +35,9 @@ export function useSportProviderId(enabled: boolean, sport: Sport) {
  * live event catalog. Shared by the tournament-creation "Browse provider events"
  * mode and the Tournament Home score-source link picker so they can't drift.
  *
- * The provider is resolved client-side from the provider-health list (first
- * provider whose sportsCovered includes GOLF) because this slice's dependency
- * set ships no dedicated "provider for this sport" endpoint — see the Beads
- * close note for that recorded deviation from plan §3.4.
+ * The provider is resolved client-side from the provider-health list (the
+ * sport's primary unless another covering provider is chosen) because there is
+ * no dedicated "provider for this sport" endpoint.
  */
 export function useProviderCatalog(params: {
   enabled: boolean;
@@ -77,6 +83,8 @@ export function useProviderCatalog(params: {
 
   return {
     providerId,
+    providers: providersQuery.providers,
+    setProviderId: providersQuery.setProviderId,
     providersLoaded: providersQuery.isSuccess,
     providersError: providersQuery.isError,
     events: catalogQuery.data ?? [],

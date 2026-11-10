@@ -87,7 +87,7 @@ export function ingestionModule(fastify: FastifyInstance, opts: IngestionModuleO
     schema: {
       tags: ['Ingestion'],
       summary: 'Submit a manual event sync',
-      description: 'Submits one sync run per requested event-level feed for the provider event `eventId`. Refused with 409 when a feed is not allowed by the event\'s syncScope. The runs execute asynchronously after acceptance.',
+      description: 'Submits one sync run per requested event-level feed for the provider event `eventId` of the provider `providerId` names, which must serve `sport` (404 otherwise). Refused with 409 when a feed is not allowed by the event\'s syncScope. The runs execute asynchronously after acceptance.',
       operationId: 'submitEventSync',
       params: {
         type: 'object',
