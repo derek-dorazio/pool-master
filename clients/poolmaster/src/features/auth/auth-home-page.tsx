@@ -13,6 +13,7 @@ import {
   FormField,
   Heading,
   Input,
+  PasswordInput,
   SegmentedControl,
   StatusBadge,
   Tile,
@@ -335,11 +336,11 @@ export function AuthHomePage() {
                 error={loginForm.formState.errors.password?.message}
                 label="Password"
               >
-                <Input
+                <PasswordInput
                   {...loginForm.register("password")}
+                  autoComplete="current-password"
                   data-testid="auth-login-password"
                   placeholder="Enter your password"
-                  type="password"
                 />
               </FormField>
               <Link

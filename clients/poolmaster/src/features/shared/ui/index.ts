@@ -29,7 +29,7 @@ export { DisplayPreferencesContext, useDisplayPreferences } from "./display-pref
 export { browserLocale, browserTimeZone } from "./time-zone-options";
 export { TimeZoneSelect } from "./time-zone-select";
 export { Chip, StatusBadge, type ChipProps, type StatusBadgeProps } from "./status-badge";
-export { Checkbox, FormField, Input, Select, Textarea } from "./form-field";
+export { Checkbox, FormField, Input, PasswordInput, Select, Textarea } from "./form-field";
 export { FormPage } from "./form-page";
 export { IconAvatar } from "./icon-avatar";
 export { IconPalette } from "./icon-palette";

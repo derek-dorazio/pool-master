@@ -6,7 +6,7 @@ import { confirmPasswordReset } from "@/lib/api";
 import { extractErrorMessage, hasErrorCode, throwApiError } from "@/lib/errors";
 import { getLogger } from "@/lib/logger";
 import { useInvalidatingMutation } from "@/lib/mutation-hooks";
-import { FormField, FormPage, Input, LinkButton, PanelCard } from "@/features/shared/ui";
+import { FormField, FormPage, LinkButton, PanelCard, PasswordInput } from "@/features/shared/ui";
 import { useAuth } from "./auth-context";
 import { FORGOT_PASSWORD_PATH } from "./auth-paths";
 import { useLinkToken } from "./use-link-token";
@@ -115,19 +115,17 @@ export function ResetPasswordPage() {
         title="Choose a new password"
       >
         <FormField error={form.formState.errors.newPassword?.message} label="New password">
-          <Input
+          <PasswordInput
             {...form.register("newPassword")}
             autoComplete="new-password"
             data-testid="reset-password-new"
-            type="password"
           />
         </FormField>
         <FormField error={form.formState.errors.confirmNewPassword?.message} label="Confirm new password">
-          <Input
+          <PasswordInput
             {...form.register("confirmNewPassword")}
             autoComplete="new-password"
             data-testid="reset-password-confirm"
-            type="password"
           />
         </FormField>
       </FormPage>
