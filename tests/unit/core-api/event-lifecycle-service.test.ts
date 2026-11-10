@@ -714,7 +714,8 @@ describe('EventLifecycleService event change emails (#845 C6, C7)', () => {
   it('fails the settle job and settles nothing when a cancelled event\'s email jobs cannot be queued, so the job is retried', async () => {
     const settlement = fakeSettlement();
     const { sportEvents } = seededEvents({ status: SportEventStatus.CANCELLED });
-    const notice = { sportEventChanged: jest.fn().mockRejectedValue(new Error('database unavailable')) };
+    const notice = changedNotice();
+    notice.sportEventChanged.mockRejectedValueOnce(new Error('database unavailable'));
     const service = new EventLifecycleService(contestDeps(), sportEvents, fakeLogger(), startedJobs(), settlement, undefined, notice);
 
     await expect(service.settleFinishedEventContests({ sportEventId: 'sport-event-1', completedAt: new Date().toISOString() }))
