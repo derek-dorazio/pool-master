@@ -149,10 +149,12 @@ beside the real ones and always lie just ahead (#1524). The rule is
   of the file is on the site, the league starts over with numbered copies ("Test- Super Bowl LX
   (2)"), so a one-event seed can be loaded again and again.
 - **Dates roll with the run**: the events keep their weekdays (an NFL week still starts on a
-  Thursday, a tournament still runs Thursday to Sunday) and are laid a week apart in the order
-  they were played, across the whole file. The first week's land within the week after the
-  run, the next a week later: the conference championships fall this coming Sunday and the
-  Super Bowl the Sunday after; two tours' events of the same real week share a week. An event's
+  Thursday, a tournament still runs Thursday to Sunday) and are laid about a week apart in the
+  order they were played. The first week's land within the week after the run, the next on
+  their weekdays nearest a week later (4 to 10 days). A league with several events (a season
+  tour such as F1 or NASCAR) is laid out on its own, so every tour starts in the coming week.
+  The one-event leagues of a file are the stages of one competition and share one sequence:
+  the conference championships fall this coming Sunday and the Super Bowl the Sunday after. An event's
   start is when contests on it can no longer be created or opened, so a first event landing
   the next day leaves about a day to set one up.
 - **Only the first is released**: each league's first event is released for contests; the

@@ -123,14 +123,15 @@ export interface TestSeedSelection {
  * but left drafts, so an admin can release one early by hand; once the released one has
  * started, the next run moves the first draft into the coming week and releases it.
  *
- * Dates roll with the run, a week at a time across the whole file: the chosen events are
- * grouped by the week (Monday to Sunday) they were really played in, and those weeks are laid
- * one after another from the run. The first week's events land on their own weekdays within
- * the week after `now`; each next week's land on their own weekdays a week or more after the
- * week before's first event (rollingOffsetDays). So a football week still starts on a
- * Thursday, a tournament still runs Thursday to Sunday, the conference championships fall in
- * the coming week with the Super Bowl a week after, and two tours' events of the same real week
- * share a week.
+ * Dates roll with the run, a week at a time: the chosen events are grouped by the week (Monday
+ * to Sunday) they were really played in, and those weeks are laid about a week apart from the
+ * run. The first week's events land on their own weekdays within the week after `now`; each
+ * next week's land on their own weekdays 4 to 10 days after the week before's first event, the
+ * nearest to a week (rollingOffsetDays). A league with several events (a
+ * season tour) is laid out on its own; the one-event leagues (the stages of one competition)
+ * share one sequence. So a football week still starts on a Thursday, a tournament still runs
+ * Thursday to Sunday, every tour starts in the coming week, and the conference championships
+ * fall in the coming week with the Super Bowl a week after.
  *
  * `stored` holds each sport league's events on the site, by lower-cased league name.
  */
@@ -178,14 +179,26 @@ export function selectTestSeedEvents(
   // Day 0 (1 January 1970) was a Thursday, so day + 3 counts weeks from a Monday. A later round
   // of copies comes after every real week of the round before.
   const realWeek = (event: SportDataEvent): number => (copies.get(event) ?? 1) * 1_000_000 + Math.floor((startDay(event) + 3) / 7);
-  const weeks = [...new Set(chosenByLeague.flatMap(({ events }) => events.map(realWeek)))].sort((a, b) => a - b);
-  let notBefore = new Date(now.getTime() + DAY_MS);
-  for (const week of weeks) {
-    const inWeek = chosenByLeague.flatMap(({ events }) => events.filter((event) => realWeek(event) === week));
-    for (const event of inWeek) offsets.set(event, rollingOffsetDays(event, notBefore));
-    const firstStart = Math.min(...inWeek.map((event) => startDay(event) + offsetOf(event)));
-    notBefore = new Date((firstStart + 7) * DAY_MS);
-  }
+  /** Lays the events' real weeks about a week after another, from the run. */
+  const layOut = (events: readonly SportDataEvent[]): void => {
+    const weeks = [...new Set(events.map(realWeek))].sort((a, b) => a - b);
+    let notBefore = new Date(now.getTime() + DAY_MS);
+    for (const week of weeks) {
+      const inWeek = events.filter((event) => realWeek(event) === week);
+      for (const event of inWeek) offsets.set(event, rollingOffsetDays(event, notBefore));
+      const firstStart = Math.min(...inWeek.map((event) => startDay(event) + offsetOf(event)));
+      // The next week's events land on their weekdays closest to a week after this week's first:
+      // from 4 to 10 days after it.
+      notBefore = new Date((firstStart + 4) * DAY_MS);
+    }
+  };
+  // A season tour (a league with several events in the file) rolls on its own, so each tour's
+  // first event lands in the coming week however far apart the tours' seasons started. One-event
+  // leagues are the stages of one competition (the conference championships, then the Super
+  // Bowl), so they share one sequence in the order they were played.
+  const stages = chosenByLeague.filter(({ league }) => league.events.length === 1);
+  for (const { league, events } of chosenByLeague) if (league.events.length > 1) layOut(events);
+  layOut(stages.flatMap(({ events }) => events));
 
   const leagueFile = (league: SportDataLeague, events: SportDataEvent[]): SportDataFile => ({
     ...file,
@@ -194,10 +207,11 @@ export function selectTestSeedEvents(
   });
   const leagues = chosenByLeague.map(({ league, events }) => {
     const shiftedStart = (event: SportDataEvent): number => startDay(event) + offsetOf(event);
-    const first = Math.min(...events.map(shiftedStart));
+    // Exactly one released: the earliest, the first in file order on a tie.
+    const first = events.reduce((earliest, event) => (shiftedStart(event) < shiftedStart(earliest) ? event : earliest));
     return {
       file: leagueFile(league, events),
-      events: events.map((event) => ({ file: leagueFile(league, [event]), offsetDays: offsetOf(event), release: shiftedStart(event) === first })),
+      events: events.map((event) => ({ file: leagueFile(league, [event]), offsetDays: offsetOf(event), release: event === first })),
     };
   });
   return { leagues, waiting };

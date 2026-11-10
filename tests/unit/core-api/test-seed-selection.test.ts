@@ -79,7 +79,24 @@ describe('choosing which test seed events to load', () => {
     ]);
   });
 
-  it('keeps two leagues\' events of the same real week in the same week', () => {
+  it('rolls each season tour from the run on its own, so every tour\'s released event lands within the coming week and its draft a week later, however far apart their real seasons started', () => {
+    const file = seed({
+      'NASCAR Cup Series': [event('Daytona 500', '2026-02-15'), event('Atlanta', '2026-02-22')],
+      IndyCar: [event('St. Petersburg', '2026-03-01'), event('Phoenix', '2026-03-07')],
+      'Formula 1': [event('Australian Grand Prix', '2026-03-08'), event('Chinese Grand Prix', '2026-03-15')],
+    });
+
+    expect(landings(selectTestSeedEvents(file, new Map(), 2, NOW))).toEqual([
+      ['Test- Daytona 500', '2026-11-15'],
+      ['Test- Atlanta', '2026-11-22'],
+      ['Test- St. Petersburg', '2026-11-15'],
+      ['Test- Phoenix', '2026-11-21'],
+      ['Test- Australian Grand Prix', '2026-11-15'],
+      ['Test- Chinese Grand Prix', '2026-11-22'],
+    ]);
+  });
+
+  it('lands a one-event league\'s event in the coming week beside a season tour\'s first event of the same real week', () => {
     const file = seed({
       'PGA TOUR': [event('Sony Open', '2026-01-15', '2026-01-18'), event('American Express', '2026-01-22', '2026-01-25')],
       'LPGA Tour': [event('Tournament of Champions', '2026-01-15', '2026-01-18')],
@@ -131,6 +148,12 @@ describe('choosing which test seed events to load', () => {
       ['Test- NFL Week 1', true],
       ['Test- NFL Week 2', false],
     ]);
+  });
+
+  it('releases exactly one event of a league whose two events land on the same day: the first in file order', () => {
+    const file = seed({ Tour: [event('Morning Race', '2026-03-08'), event('Evening Race', '2026-03-08')] });
+
+    expect(releases(selectTestSeedEvents(file, new Map(), 2, NOW))).toEqual([['Test- Morning Race', true], ['Test- Evening Race', false]]);
   });
 
   it('leaves a league\'s draft alone while its released test event has not started, so the draft is not released early', () => {
