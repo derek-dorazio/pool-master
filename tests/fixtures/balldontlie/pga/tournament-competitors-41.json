@@ -1,0 +1,96 @@
+{
+  "data": [
+    {
+      "id": 5101,
+      "tournament_id": 41,
+      "type": "PLAYER",
+      "display_name": "Michael Brennan",
+      "short_name": "M. Brennan",
+      "country": "United States",
+      "country_code": "USA",
+      "team_name": null,
+      "team_color": null,
+      "parent_competitor_id": null,
+      "player": {
+        "id": 10,
+        "first_name": "Michael",
+        "last_name": "Brennan",
+        "display_name": "Michael Brennan",
+        "country": "United States",
+        "country_code": "USA"
+      },
+      "members": [],
+      "roster": []
+    },
+    {
+      "id": 5102,
+      "tournament_id": 41,
+      "type": "PLAYER",
+      "display_name": "Russell Henley",
+      "short_name": "R. Henley",
+      "country": "United States",
+      "country_code": "USA",
+      "team_name": null,
+      "team_color": null,
+      "parent_competitor_id": null,
+      "player": {
+        "id": 75,
+        "first_name": "Russell",
+        "last_name": "Henley",
+        "display_name": "Russell Henley",
+        "country": "United States",
+        "country_code": "USA"
+      },
+      "members": [],
+      "roster": []
+    },
+    {
+      "id": 5103,
+      "tournament_id": 41,
+      "type": "PLAYER",
+      "display_name": "Scottie Scheffler",
+      "short_name": "S. Scheffler",
+      "country": "United States",
+      "country_code": "USA",
+      "team_name": null,
+      "team_color": null,
+      "parent_competitor_id": null,
+      "player": {
+        "id": 185,
+        "first_name": "Scottie",
+        "last_name": "Scheffler",
+        "display_name": "Scottie Scheffler",
+        "country": "United States",
+        "country_code": "USA"
+      },
+      "members": [],
+      "roster": []
+    },
+    {
+      "id": 5104,
+      "tournament_id": 41,
+      "type": "PLAYER",
+      "display_name": "Rory McIlroy",
+      "short_name": "R. McIlroy",
+      "country": "Northern Ireland",
+      "country_code": "NIR",
+      "team_name": null,
+      "team_color": null,
+      "parent_competitor_id": null,
+      "player": {
+        "id": 3,
+        "first_name": "Rory",
+        "last_name": "McIlroy",
+        "display_name": "Rory McIlroy",
+        "country": "Northern Ireland",
+        "country_code": "NIR"
+      },
+      "members": [],
+      "roster": []
+    }
+  ],
+  "meta": {
+    "next_cursor": 5104,
+    "per_page": 100
+  }
+}

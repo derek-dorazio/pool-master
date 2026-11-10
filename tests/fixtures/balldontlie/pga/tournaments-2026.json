@@ -1,0 +1,273 @@
+{
+  "data": [
+    {
+      "id": 40,
+      "season": 2026,
+      "name": "Wyndham Championship",
+      "start_date": "2026-08-06",
+      "end_date": "2026-08-09",
+      "date_range": "Aug 6 - 9",
+      "city": "Greensboro",
+      "state": "North Carolina",
+      "country": "United States of America",
+      "course_name": "Sedgefield Country Club",
+      "purse": "$8,500,000",
+      "status": "COMPLETED",
+      "status_state": "final",
+      "champion": {
+        "id": 10,
+        "first_name": "Michael",
+        "last_name": "Brennan",
+        "display_name": "Michael Brennan",
+        "country": "United States",
+        "country_code": "USA",
+        "height": "6'1\"",
+        "weight": null,
+        "birth_date": "Feb 9, 2002",
+        "birthplace_city": "Leesburg",
+        "birthplace_state": "Virginia",
+        "birthplace_country": "United States",
+        "turned_pro": "2024",
+        "school": "Wake Forest University",
+        "residence_city": "Jacksonville",
+        "residence_state": "Florida",
+        "residence_country": "United States",
+        "owgr": 35,
+        "active": true
+      },
+      "courses": [
+        {
+          "course": {
+            "id": 18,
+            "name": "Sedgefield Country Club",
+            "city": "Greensboro",
+            "state": "North Carolina",
+            "country": "USA",
+            "par": 70,
+            "yardage": "7,131",
+            "established": "1926",
+            "architect": "Donald Ross",
+            "fairway_grass": "Bermudagrass",
+            "rough_grass": "Bermudagrass",
+            "green_grass": "Bermudagrass"
+          },
+          "rounds": []
+        }
+      ],
+      "rounds": [
+        {
+          "round_number": 1,
+          "status": "OFFICIAL",
+          "status_state": "final"
+        },
+        {
+          "round_number": 2,
+          "status": "OFFICIAL",
+          "status_state": "final"
+        },
+        {
+          "round_number": 3,
+          "status": "OFFICIAL",
+          "status_state": "final"
+        },
+        {
+          "round_number": 4,
+          "status": "OFFICIAL",
+          "status_state": "final"
+        }
+      ],
+      "format_type": "STROKE_PLAY"
+    },
+    {
+      "id": 41,
+      "season": 2026,
+      "name": "BMW Championship",
+      "start_date": "2026-08-13",
+      "end_date": "2026-08-16",
+      "date_range": "Aug 13 - 16",
+      "city": "Newtown Square",
+      "state": "Pennsylvania",
+      "country": "United States of America",
+      "course_name": "Aronimink Golf Club",
+      "purse": "$20,000,000",
+      "status": "IN_PROGRESS",
+      "status_state": "in_progress",
+      "champion": null,
+      "courses": [
+        {
+          "course": {
+            "id": 19,
+            "name": "Aronimink Golf Club",
+            "city": "Newtown Square",
+            "state": "Pennsylvania",
+            "country": "USA",
+            "par": 70,
+            "yardage": "7,267",
+            "established": null,
+            "architect": null,
+            "fairway_grass": null,
+            "rough_grass": null,
+            "green_grass": null
+          },
+          "rounds": [
+            1,
+            2,
+            3,
+            4
+          ]
+        }
+      ],
+      "rounds": [
+        {
+          "round_number": 1,
+          "status": "OFFICIAL",
+          "status_state": "final"
+        },
+        {
+          "round_number": 2,
+          "status": "OFFICIAL",
+          "status_state": "final"
+        },
+        {
+          "round_number": 3,
+          "status": "IN_PROGRESS",
+          "status_state": "in_progress"
+        },
+        {
+          "round_number": 4,
+          "status": "UPCOMING",
+          "status_state": "scheduled"
+        }
+      ],
+      "format_type": "STROKE_PLAY"
+    },
+    {
+      "id": 42,
+      "season": 2026,
+      "name": "TOUR Championship",
+      "start_date": "2026-08-20",
+      "end_date": "2026-08-23",
+      "date_range": "Aug 20 - 23",
+      "city": "Atlanta",
+      "state": "Georgia",
+      "country": "United States of America",
+      "course_name": "East Lake Golf Club",
+      "purse": "$40,000,000",
+      "status": "SCHEDULED",
+      "status_state": "scheduled",
+      "champion": null,
+      "courses": [
+        {
+          "course": {
+            "id": 20,
+            "name": "East Lake Golf Club",
+            "city": "Atlanta",
+            "state": "Georgia",
+            "country": "USA",
+            "par": 70,
+            "yardage": "7,440",
+            "established": null,
+            "architect": null,
+            "fairway_grass": null,
+            "rough_grass": null,
+            "green_grass": null
+          },
+          "rounds": [
+            1,
+            2,
+            3,
+            4
+          ]
+        }
+      ],
+      "rounds": [],
+      "format_type": "STROKE_PLAY"
+    },
+    {
+      "id": 43,
+      "season": 2026,
+      "name": "Barracuda Championship",
+      "start_date": "2026-07-16",
+      "end_date": "2026-07-19",
+      "date_range": "Jul 16 - 19",
+      "city": "Truckee",
+      "state": "California",
+      "country": "United States of America",
+      "course_name": "Tahoe Mountain Club",
+      "purse": null,
+      "status": null,
+      "status_state": "unknown",
+      "champion": null,
+      "courses": [],
+      "rounds": [],
+      "format_type": "UNKNOWN_SPECIAL_FORMAT"
+    },
+    {
+      "id": 44,
+      "season": 2026,
+      "name": "Zurich Classic of New Orleans",
+      "start_date": "2026-04-23",
+      "end_date": "2026-04-26",
+      "date_range": "Apr 23 - 26",
+      "city": "Avondale",
+      "state": "Louisiana",
+      "country": "United States of America",
+      "course_name": "TPC Louisiana",
+      "purse": null,
+      "status": "COMPLETED",
+      "status_state": "final",
+      "champion": null,
+      "courses": [
+        {
+          "course": {
+            "id": 21,
+            "name": "TPC Louisiana",
+            "city": "Avondale",
+            "state": "Louisiana",
+            "country": "USA",
+            "par": 72,
+            "yardage": "7,425",
+            "established": null,
+            "architect": null,
+            "fairway_grass": null,
+            "rough_grass": null,
+            "green_grass": null
+          },
+          "rounds": [
+            1,
+            2,
+            3,
+            4
+          ]
+        }
+      ],
+      "rounds": [
+        {
+          "round_number": 1,
+          "status": "OFFICIAL",
+          "status_state": "final"
+        },
+        {
+          "round_number": 2,
+          "status": "OFFICIAL",
+          "status_state": "final"
+        },
+        {
+          "round_number": 3,
+          "status": "OFFICIAL",
+          "status_state": "final"
+        },
+        {
+          "round_number": 4,
+          "status": "OFFICIAL",
+          "status_state": "final"
+        }
+      ],
+      "format_type": "TEAM_STROKE"
+    }
+  ],
+  "meta": {
+    "next_cursor": 44,
+    "per_page": 100
+  }
+}

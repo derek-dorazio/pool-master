@@ -71,7 +71,8 @@ floor on its own, and a new file in a matched folder falls under it the day it i
 - **Services, module logic, route handlers, mappers, shared domain and shared DTOs**: 90% of
   lines and 80% of branches per file. That is every file under `modules/` except routes,
   `wiring.ts`, `*-job-requests.ts`, repositories, barrels and ingestion's provider `adapters/`
-  and `persistence/`; every mapper in `packages/core-api/src/mappers` but its barrel; and
+  and `persistence/` (but `adapters/balldontlie/`, which no live API reaches in CI, so its unit
+  tests are its proof); every mapper in `packages/core-api/src/mappers` but its barrel; and
   everything under `packages/shared/domain` and `packages/shared/dto`. A mapper's unit tests name
   each of its null, omitted and per-sport cases. A handler's unit tests call it with a stand-in
   service and no Fastify app or database, normally through the request and reply doubles in
@@ -244,6 +245,11 @@ type-aware rules hold `tests/**` to this.
   `FastifyBaseLogger` of `jest.fn()`s, not a local literal of the methods the test expects.
 - **A sport-data provider** is `fakeSportDataProvider(overrides)`, and a `ProviderRegistry`
   holding it is `registryWith(provider)`, both in `tests/support/fake-sport-data-provider.ts`.
+- **A third-party data API** (BALLDONTLIE) is `createFakeBalldontlie` from
+  `tests/support/balldontlie-fake-api.ts`, which checks every request and every served reply
+  against the vendor's vendored OpenAPI document. Its replies are fixtures under
+  `tests/fixtures/balldontlie/`, each of which must fit that document; a fixture the vendor
+  could never send proves nothing about the contract.
 - **A collaborator typed as a class** (private fields, so no literal can be one) is
   `stubInstance(Class, { method: jest.fn() })` from `tests/support/stub-instance.ts`.
 - **A Fastify request or reply** stays an uncast literal and crosses over once at the call

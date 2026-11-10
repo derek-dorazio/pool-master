@@ -1,0 +1,78 @@
+{
+  "data": [
+    {
+      "id": 236228,
+      "tournament": {
+        "id": 94,
+        "name": "Grant Thornton Invitational",
+        "format_type": "TEAM_STROKE"
+      },
+      "competitor": {
+        "id": 62906,
+        "type": "TEAM",
+        "display_name": "Coughlin / Novak",
+        "parent_competitor_id": null,
+        "player": null
+      },
+      "position": "1",
+      "position_numeric": 1,
+      "status": "1",
+      "scoring": {
+        "strokes": 188,
+        "to_par": -28,
+        "points": null,
+        "score_display": "-28"
+      },
+      "earnings": null,
+      "made_cut": null,
+      "thru": null,
+      "current_round": null,
+      "group_number": null,
+      "tee_time": null,
+      "course": null,
+      "result": null,
+      "rounds": [
+        {
+          "id": 732997,
+          "round_number": 1,
+          "round_format": "TEAM_STROKE",
+          "score": 57,
+          "par_relative_score": null,
+          "points": null,
+          "score_display": "57",
+          "status": null,
+          "tee_time": null,
+          "starting_hole": null
+        },
+        {
+          "id": 732998,
+          "round_number": 2,
+          "round_format": "TEAM_STROKE",
+          "score": 68,
+          "par_relative_score": null,
+          "points": null,
+          "score_display": "68",
+          "status": null,
+          "tee_time": null,
+          "starting_hole": null
+        },
+        {
+          "id": 732999,
+          "round_number": 3,
+          "round_format": "TEAM_STROKE",
+          "score": 63,
+          "par_relative_score": null,
+          "points": null,
+          "score_display": "63",
+          "status": null,
+          "tee_time": null,
+          "starting_hole": null
+        }
+      ]
+    }
+  ],
+  "meta": {
+    "next_cursor": 236228,
+    "per_page": 1
+  }
+}

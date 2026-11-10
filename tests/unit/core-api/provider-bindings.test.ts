@@ -269,4 +269,41 @@ describe('provider bindings', () => {
     })).toThrow('Provider "mock-contest-feed" requires a baseUrl binding.');
     expect(registry.getAllProviders()).toEqual([]);
   });
+
+  describe('the BALLDONTLIE binding', () => {
+    const bdlEnv = (binding: Record<string, unknown>, apiKey?: string) => ({
+      ...LOCAL,
+      SPORT_DATA_DEFAULT_PROVIDER: 'balldontlie',
+      SPORT_DATA_PROVIDER_BINDINGS_JSON: JSON.stringify({ providers: { balldontlie: binding } }),
+      ...(apiKey === undefined ? {} : { BALLDONTLIE_API_KEY: apiKey }),
+    });
+    const fullBinding = { baseUrl: 'https://api.balldontlie.io', requestsPerMinute: 5 };
+
+    it('registers BALLDONTLIE as the primary golf provider with its base URL, plan rate limit and the key from the environment', () => {
+      const registry = new ProviderRegistry();
+
+      registerConfiguredProviders(registry, bdlEnv(fullBinding, 'a-key'));
+
+      expect(registry.getProvider(Sport.GOLF)?.providerId).toBe('balldontlie');
+    });
+
+    it('fails startup when the key is missing or blank, rather than calling the vendor unauthenticated', () => {
+      expect(() => registerConfiguredProviders(new ProviderRegistry(), bdlEnv(fullBinding)))
+        .toThrow('Provider "balldontlie" requires the BALLDONTLIE_API_KEY environment variable.');
+      expect(() => registerConfiguredProviders(new ProviderRegistry(), bdlEnv(fullBinding, '  ')))
+        .toThrow('requires the BALLDONTLIE_API_KEY environment variable');
+    });
+
+    it('fails startup without a baseUrl or a rate limit in the binding', () => {
+      expect(() => registerConfiguredProviders(new ProviderRegistry(), bdlEnv({ requestsPerMinute: 5 }, 'a-key')))
+        .toThrow('Provider "balldontlie" requires a baseUrl binding.');
+      expect(() => registerConfiguredProviders(new ProviderRegistry(), bdlEnv({ baseUrl: 'https://api.balldontlie.io' }, 'a-key')))
+        .toThrow('Provider "balldontlie" requires a requestsPerMinute binding: its plan\'s rate limit.');
+    });
+
+    it('fails startup on a rate limit that is not a whole number of at least one', () => {
+      expect(() => registerConfiguredProviders(new ProviderRegistry(), bdlEnv({ ...fullBinding, requestsPerMinute: 0 }, 'a-key')))
+        .toThrow('BALLDONTLIE requestsPerMinute must be a whole number of at least 1, not 0.');
+    });
+  });
 });
