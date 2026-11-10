@@ -63186,6 +63186,11 @@
       "EventSyncRequest": {
         "type": "object",
         "properties": {
+          "providerId": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The provider the event is linked to (its SportEvent.providerId). The sync reads that provider only."
+          },
           "feeds": {
             "minItems": 1,
             "type": "array",
@@ -63220,6 +63225,7 @@
           }
         },
         "required": [
+          "providerId",
           "feeds"
         ],
         "additionalProperties": false,
@@ -63281,6 +63287,26 @@
             },
             "description": "Sports the provider covers that ingestion is scheduled for."
           },
+          "primaryForSports": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "GOLF",
+                "HORSE_RACING",
+                "AUTO_RACING",
+                "CYCLING",
+                "RUNNING",
+                "BASKETBALL",
+                "AMERICAN_FOOTBALL",
+                "HOCKEY",
+                "BASEBALL",
+                "SOCCER",
+                "TENNIS"
+              ]
+            },
+            "description": "The covered sports this provider is the default for: catalog browse and new event links start with it. Other providers covering the sport serve only the events linked to them."
+          },
           "activeEventCount": {
             "type": "integer",
             "minimum": -9007199254740991,
@@ -63300,6 +63326,7 @@
           "latencyMs",
           "lastEventAt",
           "sportsCovered",
+          "primaryForSports",
           "activeEventCount",
           "supportsLiveSimulation"
         ],
@@ -63367,6 +63394,26 @@
                   },
                   "description": "Sports the provider covers that ingestion is scheduled for."
                 },
+                "primaryForSports": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "GOLF",
+                      "HORSE_RACING",
+                      "AUTO_RACING",
+                      "CYCLING",
+                      "RUNNING",
+                      "BASKETBALL",
+                      "AMERICAN_FOOTBALL",
+                      "HOCKEY",
+                      "BASEBALL",
+                      "SOCCER",
+                      "TENNIS"
+                    ]
+                  },
+                  "description": "The covered sports this provider is the default for: catalog browse and new event links start with it. Other providers covering the sport serve only the events linked to them."
+                },
                 "activeEventCount": {
                   "type": "integer",
                   "minimum": -9007199254740991,
@@ -63386,6 +63433,7 @@
                 "latencyMs",
                 "lastEventAt",
                 "sportsCovered",
+                "primaryForSports",
                 "activeEventCount",
                 "supportsLiveSimulation"
               ],
@@ -79786,7 +79834,7 @@
         "tags": [
           "Ingestion"
         ],
-        "description": "Submits one sync run per requested event-level feed for the provider event `eventId`. Refused with 409 when a feed is not allowed by the event's syncScope. The runs execute asynchronously after acceptance.",
+        "description": "Submits one sync run per requested event-level feed for the provider event `eventId` of the provider `providerId` names, which must serve `sport` (404 otherwise). Refused with 409 when a feed is not allowed by the event's syncScope. The runs execute asynchronously after acceptance.",
         "requestBody": {
           "required": true,
           "content": {

@@ -9,6 +9,7 @@ import { QueryKeys } from '@/lib/query-keys';
 import type { ImportSportEventYearFromProviderResponse, SportLeagueDto } from '@/lib/api';
 import { useSportProviderId } from './use-provider-catalog';
 import { useManagedSport } from './use-managed-sport';
+import { SportProviderChoice } from './sport-provider-choice';
 
 /**
  * #385 — one action creates a tour's year of tournaments from the golf provider, each
@@ -23,7 +24,7 @@ export function SportLeagueYearImport({ eventYear, sportLeague }: { eventYear: n
   const { sport, definition } = useManagedSport();
   const { event } = definition.vocabulary;
   const sportLeagueNoun = sportLeagueNounOf(sport, sportLeague.noun);
-  const { providerId, isSuccess: providersLoaded } = useSportProviderId(true, sport);
+  const { providerId, providers, setProviderId, isSuccess: providersLoaded } = useSportProviderId(true, sport);
 
   const importMutation = useInvalidatingMutation({
     mutationFn: async () => {
@@ -104,7 +105,14 @@ export function SportLeagueYearImport({ eventYear, sportLeague }: { eventYear: n
         open={open}
         testId="root-admin-sport-league-calendar-import-modal"
         title={`Import ${eventYear} from provider`}
-      />
+      >
+        <SportProviderChoice
+          onChange={setProviderId}
+          providerId={providerId}
+          providers={providers}
+          testId="root-admin-sport-league-calendar-import-provider"
+        />
+      </ConfirmationModal>
     </>
   );
 }

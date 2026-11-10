@@ -1,6 +1,5 @@
 import { ParticipantInactiveReason, Sport } from '@poolmaster/shared/domain';
 import type { LiveScoreResult, GolfRoundUpdate } from '@poolmaster/shared/dto';
-import { AsyncLocalStorage } from 'node:async_hooks';
 import type {
   DateRange,
   LiveSimulationOptions,
@@ -31,6 +30,7 @@ import type {
   StartMockContestFeedLiveReplayResponse,
 } from '@poolmaster/mock-contest-feed-provider/generated/hey-api/types';
 import { errorMessage } from '../../../core/error-message';
+import { ProviderPayloadRecorder } from './provider-payload-recorder';
 
 type ScenarioSummaryResponse = ListMockContestFeedScenariosResponse;
 type EventListResponse = ListMockContestFeedScenarioEventsResponse;
@@ -50,53 +50,30 @@ type ContestantDelta = NonNullable<
 >[number];
 
 /**
- * #418 — the most response JSON, in characters, one sync run's capture keeps for its ledger
- * row. A response that would take the capture past it is recorded by path and size only. The
- * 2026/2027 tour slates made an unfiltered schedule or ranking sweep about 7.7 MB of detail
- * JSON, and keeping all of it pushed QA's core-api past its 512 MB task limit.
- */
-export const providerPayloadCaptureBudgetBytes = 1024 * 1024;
-
-/**
  * #418 — how many event details a sweep fetches at once. Each detail is reduced to what the
  * caller needs as it arrives, so only this many full detail bodies are in memory together.
  */
 const eventDetailFetchConcurrency = 8;
 
-interface ProviderPayloadCaptureBuffer {
-  readonly entries: ProviderPayloadCapture[];
-  keptBytes: number;
-}
-
 export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloadDiagnostics, ProviderLiveSimulationControls {
   readonly providerId = 'mock-contest-feed';
   readonly providerName = 'Mock Contest Feed Provider';
   readonly sportsCovered: Sport[] = [Sport.GOLF];
-  private readonly providerPayloadCaptureStorage = new AsyncLocalStorage<ProviderPayloadCaptureBuffer>();
+  private readonly payloads = new ProviderPayloadRecorder('mock-contest-feed.request');
   private readonly scenarioIdByEventId = new Map<string, string>();
 
   constructor(private readonly baseUrl: string) {}
 
-  // Raw payloads are kept only inside a capture session (#418). Calls outside one, such as a
-  // catalog browse, keep nothing: nothing drains them, so keeping them grew the heap per call.
-  clearProviderPayloads(): void {}
+  clearProviderPayloads(): void {
+    this.payloads.clearProviderPayloads();
+  }
 
   consumeProviderPayloads(): ProviderPayloadCapture[] {
-    return [];
+    return this.payloads.consumeProviderPayloads();
   }
 
   beginProviderPayloadCapture(): ProviderPayloadCaptureSession {
-    const capture: ProviderPayloadCaptureBuffer = { entries: [], keptBytes: 0 };
-    return {
-      run: async <T>(work: () => Promise<T>): Promise<T> =>
-        this.providerPayloadCaptureStorage.run(capture, work),
-      consumeProviderPayloads: (): ProviderPayloadCapture[] => {
-        const payloads = [...capture.entries];
-        capture.entries.length = 0;
-        capture.keptBytes = 0;
-        return payloads;
-      },
-    };
+    return this.payloads.beginProviderPayloadCapture();
   }
 
   async getUpcomingEvents(sport: Sport, dateRange?: DateRange): Promise<SportEvent[]> {
@@ -366,24 +343,8 @@ export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloa
   private async readJson<T>(path: string, response: Response): Promise<T> {
     const body = await response.text();
     const raw = JSON.parse(body) as T;
-    this.recordProviderPayload(path, body.length, raw);
+    this.payloads.record(path, body.length, raw);
     return raw;
-  }
-
-  private recordProviderPayload(path: string, bytes: number, raw: unknown): void {
-    const capture = this.providerPayloadCaptureStorage.getStore();
-    if (!capture) {
-      return;
-    }
-
-    const entry = { operation: 'mock-contest-feed.request', path, capturedAt: new Date().toISOString(), bytes };
-    if (capture.keptBytes + bytes > providerPayloadCaptureBudgetBytes) {
-      capture.entries.push({ ...entry, rawOmitted: true });
-      return;
-    }
-
-    capture.keptBytes += bytes;
-    capture.entries.push({ ...entry, raw });
   }
 }
 

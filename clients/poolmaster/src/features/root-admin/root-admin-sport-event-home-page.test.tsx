@@ -290,7 +290,7 @@ describe('pool-master-3dg RootAdminSportEventHomePage', () => {
   it('pool-master-3dg opens the score-source picker for an unlinked tournament', async () => {
     seedDefaults();
     listProvidersMock.mockResolvedValue({
-      data: { providers: [{ providerId: 'mock-contest-feed', sportsCovered: ['GOLF'] }] },
+      data: { providers: [{ providerId: 'mock-contest-feed', sportsCovered: ['GOLF'], primaryForSports: ['GOLF'] }] },
     });
     listProviderCatalogEventsMock.mockResolvedValue({
       data: {
@@ -499,7 +499,7 @@ describe('pool-master-3dg RootAdminSportEventHomePage', () => {
         },
       });
       listProvidersMock.mockResolvedValue({
-        data: { providers: [{ providerId: 'mock-contest-feed', sportsCovered: ['GOLF'], supportsLiveSimulation }] },
+        data: { providers: [{ providerId: 'mock-contest-feed', sportsCovered: ['GOLF'], primaryForSports: ['GOLF'], supportsLiveSimulation }] },
       });
       getEventLiveSimulationMock.mockResolvedValue(notRunning);
     }
@@ -554,7 +554,7 @@ describe('pool-master-3dg RootAdminSportEventHomePage', () => {
     it('links an unlinked tournament to its own simulated event, sandbox-<event id>, in one click', async () => {
       seedDefaults();
       listProvidersMock.mockResolvedValue({
-        data: { providers: [{ providerId: 'mock-contest-feed', sportsCovered: ['GOLF'], supportsLiveSimulation: true }] },
+        data: { providers: [{ providerId: 'mock-contest-feed', sportsCovered: ['GOLF'], primaryForSports: ['GOLF'], supportsLiveSimulation: true }] },
       });
       linkEventScoreSourceMock.mockResolvedValue({
         data: { event: tournament({ syncScope: 'SCORES_ONLY', providerId: 'mock-contest-feed', externalId: 'sandbox-tour-1' }) },
@@ -574,7 +574,7 @@ describe('pool-master-3dg RootAdminSportEventHomePage', () => {
     it('offers no simulated-event link when no golf provider can simulate', async () => {
       seedDefaults();
       listProvidersMock.mockResolvedValue({
-        data: { providers: [{ providerId: 'real-golf', sportsCovered: ['GOLF'], supportsLiveSimulation: false }] },
+        data: { providers: [{ providerId: 'real-golf', sportsCovered: ['GOLF'], primaryForSports: ['GOLF'], supportsLiveSimulation: false }] },
       });
       renderPage();
 
@@ -654,7 +654,7 @@ describe('clearing an optional date and refused links on Overview', () => {
   it('shows the server\'s reason inside the picker when linking a provider event is refused', async () => {
     seedDefaults();
     listProvidersMock.mockResolvedValue({
-      data: { providers: [{ providerId: 'mock-contest-feed', sportsCovered: ['GOLF'] }] },
+      data: { providers: [{ providerId: 'mock-contest-feed', sportsCovered: ['GOLF'], primaryForSports: ['GOLF'] }] },
     });
     listProviderCatalogEventsMock.mockResolvedValue({
       data: {
@@ -959,7 +959,7 @@ describe('Overview blocks: empty values, refusals and closing dialogs', () => {
     seedDefaults();
     getEventMock.mockResolvedValue({ data: { event: tournament({ endDate: null }) } });
     listProvidersMock.mockResolvedValue({
-      data: { providers: [{ providerId: 'mock-contest-feed', sportsCovered: ['GOLF'] }] },
+      data: { providers: [{ providerId: 'mock-contest-feed', sportsCovered: ['GOLF'], primaryForSports: ['GOLF'] }] },
     });
     listProviderCatalogEventsMock.mockResolvedValue({ data: { events: [] } });
     renderPage();
@@ -994,7 +994,7 @@ describe('Overview blocks: empty values, refusals and closing dialogs', () => {
   it('shows the server\'s reason under the buttons when linking to a simulated event is refused', async () => {
     seedDefaults();
     listProvidersMock.mockResolvedValue({
-      data: { providers: [{ providerId: 'mock-contest-feed', sportsCovered: ['GOLF'], supportsLiveSimulation: true }] },
+      data: { providers: [{ providerId: 'mock-contest-feed', sportsCovered: ['GOLF'], primaryForSports: ['GOLF'], supportsLiveSimulation: true }] },
     });
     linkEventScoreSourceMock.mockResolvedValue(
       refusal('SPORT_EVENT_ALREADY_LINKED', 'This tournament is already linked to a score source.', 409),
@@ -1017,7 +1017,7 @@ describe('Overview blocks: empty values, refusals and closing dialogs', () => {
         },
       });
       listProvidersMock.mockResolvedValue({
-        data: { providers: [{ providerId: 'mock-contest-feed', sportsCovered: ['GOLF'], supportsLiveSimulation: true }] },
+        data: { providers: [{ providerId: 'mock-contest-feed', sportsCovered: ['GOLF'], primaryForSports: ['GOLF'], supportsLiveSimulation: true }] },
       });
       getEventLiveSimulationMock.mockResolvedValue(
         refusal('LIVE_SIMULATION_NOT_RUNNING', 'No live simulation is running for this event.', 404),
@@ -1123,7 +1123,7 @@ describe('Overview blocks: empty values, refusals and closing dialogs', () => {
   it('opens the provider picker without an earlier simulated-link refusal still showing in it', async () => {
     seedDefaults();
     listProvidersMock.mockResolvedValue({
-      data: { providers: [{ providerId: 'mock-contest-feed', sportsCovered: ['GOLF'], supportsLiveSimulation: true }] },
+      data: { providers: [{ providerId: 'mock-contest-feed', sportsCovered: ['GOLF'], primaryForSports: ['GOLF'], supportsLiveSimulation: true }] },
     });
     listProviderCatalogEventsMock.mockResolvedValue({ data: { events: [] } });
     linkEventScoreSourceMock.mockResolvedValue({

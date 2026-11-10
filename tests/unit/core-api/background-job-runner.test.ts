@@ -20,6 +20,7 @@ function syncPayload(index = 1): SyncPayload {
   return {
     syncRunIds: [`00000000-0000-4000-8000-${String(index).padStart(12, '0')}`],
     sport: Sport.GOLF,
+    providerId: 'mock-provider',
     eventId: `event-${String(index)}`,
   };
 }

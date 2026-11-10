@@ -25401,6 +25401,10 @@ export type PerpetualTrophyListResponse = {
  */
 export type EventSyncRequest = {
     /**
+     * The provider the event is linked to (its SportEvent.providerId). The sync reads that provider only.
+     */
+    providerId: string;
+    /**
      * Feed types to run for a specific event sync request.
      */
     feeds: Array<'EVENTPARTICIPANTS' | 'EVENTLIVESCORES'>;
@@ -25442,6 +25446,10 @@ export type ProviderSummaryDto = {
      * Sports the provider covers that ingestion is scheduled for.
      */
     sportsCovered: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS'>;
+    /**
+     * The covered sports this provider is the default for: catalog browse and new event links start with it. Other providers covering the sport serve only the events linked to them.
+     */
+    primaryForSports: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS'>;
     /**
      * The provider's events that are scheduled or in progress.
      */
@@ -25485,6 +25493,10 @@ export type ProviderListResponse = {
          * Sports the provider covers that ingestion is scheduled for.
          */
         sportsCovered: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS'>;
+        /**
+         * The covered sports this provider is the default for: catalog browse and new event links start with it. Other providers covering the sport serve only the events linked to them.
+         */
+        primaryForSports: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS'>;
         /**
          * The provider's events that are scheduled or in progress.
          */

@@ -56,6 +56,10 @@ export TF_VAR_db_password="$(aws ecs describe-task-definition --region us-east-2
   --query "taskDefinition.containerDefinitions[?name=='core-api'] | [0].environment[?name=='DATABASE_URL'] | [0].value" \
   --output text | sed -E 's#^postgresql://[^:]*:(.*)@[^@]*$#\1#')"
 
+# 3c. Only when the environment already has a BALLDONTLIE key: reuse it
+export TF_VAR_balldontlie_api_key="$(aws secretsmanager get-secret-value --region us-east-2 \
+  --secret-id poolmaster-qa-balldontlie-api-key --query SecretString --output text)"
+
 # 4. Plan into a file, and read it
 terraform plan -var-file=envs/qa.tfvars -out=qa.plan
 
@@ -71,8 +75,8 @@ there is always no.
 
 ## Step 3 — secrets
 
-Both secrets keep the values the environment already has (`rules/workflow-rules.md` §6
-*Applying Terraform*). Neither is in a committed file.
+Every secret keeps the value the environment already has (`rules/workflow-rules.md` §6
+*Applying Terraform*). None is in a committed file.
 
 - **`jwt_secret`** — read from Secrets Manager, `poolmaster-<env>-jwt-secret`, as in step 3
   of the hand-over.
@@ -81,6 +85,12 @@ Both secrets keep the values the environment already has (`rules/workflow-rules.
   their `*.tfvars.example` and keep it out of tfvars, so their hand-over includes step 3b,
   which reads it from `DATABASE_URL` in the latest `poolmaster-<env>-core-api` task
   definition.
+
+- **`balldontlie_api_key`** — optional. Empty leaves BALLDONTLIE unbound, and an apply
+  without it on an environment that has a key deletes the key's secret and unbinds the
+  provider. So once `poolmaster-<env>-balldontlie-api-key` exists, every hand-over includes
+  step 3c. The first apply that adds the key exports the new key from the vendor's
+  dashboard instead.
 
 The one exception is an environment's very first apply (prod, when it is first built): no
 secret exists yet, so that apply creates both. Generate `jwt_secret` with
@@ -101,7 +111,7 @@ plan's resource lines when:
   this checkout, or the state drifted (a console edit). Find which before going on;
 - anything is replaced (`-/+`) or destroyed that the change did not mean to;
 - `aws_db_instance` shows a password change, or `aws_secretsmanager_secret_version.jwt_secret`
-  changes: a secret was not reused (step 3);
+  changes, or a `balldontlie_api_key` secret is destroyed: a secret was not reused (step 3);
 - an ECS service shows a task definition change: the services ignore task definition
   changes, so this means the configuration changed under them.
 

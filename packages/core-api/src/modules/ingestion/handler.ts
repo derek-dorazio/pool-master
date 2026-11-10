@@ -112,6 +112,7 @@ export function createIngestionHandlers(
     try {
       const result = await ingestionService.syncEventData({
         sport: request.params.sport,
+        providerId: request.body.providerId,
         eventId: request.params.eventId,
         feeds: request.body.feeds,
         mockEventState: request.body.mockEventState,

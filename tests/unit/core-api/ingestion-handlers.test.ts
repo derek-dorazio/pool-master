@@ -95,15 +95,15 @@ describe('manual event sync handler', () => {
     const fake = service();
 
     const reply = await callHandler(handlersOver(fake).submitEventSync, stubRequest({
-      params, body: { feeds: ['SCORES'], mockEventState: 'LIVE' }, authUser: admin, contextLogger: false,
+      params, body: { providerId: 'feed', feeds: ['SCORES'], mockEventState: 'LIVE' }, authUser: admin, contextLogger: false,
     }));
 
-    expect(fake.syncEventData).toHaveBeenCalledWith({ sport: Sport.GOLF, eventId: 'e1', feeds: ['SCORES'], mockEventState: 'LIVE' }, 'admin', 'admin@example.test');
+    expect(fake.syncEventData).toHaveBeenCalledWith({ sport: Sport.GOLF, providerId: 'feed', eventId: 'e1', feeds: ['SCORES'], mockEventState: 'LIVE' }, 'admin', 'admin@example.test');
     expect(reply).toMatchObject({ statusCode: 202, body: { eventId: 'e1', submittedAt: AT.toISOString(), syncRuns: [{ id: 'run-1' }] } });
   });
 
   it.each([
-    ['a sport with no provider with 404 SPORT_PROVIDER_NOT_FOUND', new SportProviderNotFoundError(Sport.GOLF), 404, 'SPORT_PROVIDER_NOT_FOUND'],
+    ['a sport with no provider with 404 SPORT_PROVIDER_NOT_FOUND', new SportProviderNotFoundError(Sport.GOLF, 'feed'), 404, 'SPORT_PROVIDER_NOT_FOUND'],
     ['a sport ingestion is not set up for with 422 SPORT_SYNC_NOT_CONFIGURED', new SportSyncNotConfiguredError(Sport.GOLF), 422, 'SPORT_SYNC_NOT_CONFIGURED'],
     ['a mock state the provider cannot play with 422 MOCK_EVENT_STATE_UNSUPPORTED', new MockEventStateUnsupportedError('feed'), 422, 'MOCK_EVENT_STATE_UNSUPPORTED'],
     ['a feed the event\'s sync scope leaves out with 409 SPORT_EVENT_SYNC_SCOPE_RESTRICTED', new SportEventSyncScopeError('e1', 'SCORES_ONLY', ['FIELD']), 409, 'SPORT_EVENT_SYNC_SCOPE_RESTRICTED'],

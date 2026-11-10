@@ -16,6 +16,10 @@ The target:
 
 1. **One BALLDONTLIE adapter** behind the existing port, registered in `provider-bindings`
    beside the mock. It reads the REST API with a key from AWS Secrets Manager (SDP-010).
+   Every bound provider is registered: the default is each sport's primary (catalog browse
+   and new links start with it), and every sync runs against the provider its event is
+   linked to. So on QA the mock and BALLDONTLIE both serve golf, and the admin pages offer
+   a provider choice wherever two cover a sport.
 2. **Three kinds of data** it feeds into the scoring code that already exists:
    - golf hole-by-hole scores, through the existing `GOLF` live-score category;
    - game scores and winners for brackets and pick'em, through `MatchResultService`;

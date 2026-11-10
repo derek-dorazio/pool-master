@@ -147,7 +147,7 @@ describe('pool-master-3dg RootAdminSportEventCreatePage', () => {
 
   it('pool-master-3dg browses provider events, selects one, and creates a linked tournament', async () => {
     listProvidersMock.mockResolvedValue({
-      data: { providers: [{ providerId: 'mock-contest-feed', sportsCovered: ['GOLF'] }] },
+      data: { providers: [{ providerId: 'mock-contest-feed', sportsCovered: ['GOLF'], primaryForSports: ['GOLF'] }] },
     });
     listProviderCatalogEventsMock.mockResolvedValue({
       data: {

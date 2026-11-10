@@ -92,6 +92,7 @@ describe('RootAdminSyncDashboardPage', () => {
             providerName: 'Mock contest feed',
             status: 'HEALTHY',
             sportsCovered: ['GOLF'],
+            primaryForSports: ['GOLF'],
           },
         ],
       },

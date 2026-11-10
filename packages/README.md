@@ -110,9 +110,22 @@ Polls configured sports data providers, upserts normalized event data, and store
 
 | Adapter | Sport(s) | API Key |
 |---------|----------|---------|
-| ESPN | NFL, NBA, MLB, NHL, NCAA | Free |
-| OpenF1 | F1 | Free |
+| BALLDONTLIE (`balldontlie`) | Golf: PGA TOUR | `BALLDONTLIE_API_KEY`, from Secrets Manager; the binding sets `baseUrl` and the plan's `requestsPerMinute` |
 | Mock contest feed | Golf and QA scenarios | Local/QA only |
+
+The BALLDONTLIE adapter was built from the vendor's published OpenAPI document before any account
+existed. Its contract tests (`tests/unit/core-api/balldontlie/`) hold every field it reads, and every
+request it sends, to a vendored copy of that document; `npm run balldontlie:contract-check` compares
+the live document with the copy and, with `BALLDONTLIE_API_KEY` set, runs the adapter against the real
+API so any drift shows up as the field that broke.
+
+`requestsPerMinute` paces requests within one process. The API and the background worker each pace
+on their own, so together they can go over the plan's limit; the client then waits out the vendor's
+429 and retries.
+
+Every bound provider is registered: the default as each of its sports' primary, the others as
+secondaries. An event syncs from the provider it is linked to, so the mock and BALLDONTLIE can
+both serve golf on QA, and a root admin picks the provider wherever more than one serves a sport.
 
 **Routes:** root-admin sync is event-scoped: `POST /api/v1/ingestion/sports/:sport/events/:eventId/sync` runs the event field (`EVENTPARTICIPANTS`) and live-score (`EVENTLIVESCORES`) feeds. Scheduled ingestion uses the internal scheduler directly for the same two feeds. There is no sport-level sync and no scheduled schedule or results pull (#126); events are created and linked by the root admin, and `getUpcomingEvents` is read only on demand.
 

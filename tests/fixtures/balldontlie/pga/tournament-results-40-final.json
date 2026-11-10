@@ -1,0 +1,186 @@
+{
+  "data": [
+    {
+      "id": 60001,
+      "tournament": {
+        "id": 40,
+        "name": "Wyndham Championship",
+        "format_type": "STROKE_PLAY"
+      },
+      "competitor": {
+        "id": 59001,
+        "type": "PLAYER",
+        "display_name": "Michael Brennan",
+        "parent_competitor_id": null,
+        "player": {
+          "id": 10,
+          "first_name": "Michael",
+          "last_name": "Brennan",
+          "display_name": "Michael Brennan",
+          "country": "United States",
+          "country_code": "USA"
+        }
+      },
+      "position": "1",
+      "position_numeric": 1,
+      "status": "1",
+      "scoring": {
+        "strokes": 264,
+        "to_par": -16,
+        "points": null,
+        "score_display": "-16"
+      },
+      "earnings": null,
+      "made_cut": true,
+      "thru": "F",
+      "current_round": 4,
+      "group_number": null,
+      "tee_time": null,
+      "course": null,
+      "result": null,
+      "rounds": [
+        {
+          "id": 900016,
+          "round_number": 1,
+          "round_format": "STROKE_PLAY",
+          "score": 64,
+          "par_relative_score": -6,
+          "points": null,
+          "score_display": "-6",
+          "status": null,
+          "tee_time": null,
+          "starting_hole": null
+        },
+        {
+          "id": 900017,
+          "round_number": 2,
+          "round_format": "STROKE_PLAY",
+          "score": 66,
+          "par_relative_score": -4,
+          "points": null,
+          "score_display": "-4",
+          "status": null,
+          "tee_time": null,
+          "starting_hole": null
+        },
+        {
+          "id": 900018,
+          "round_number": 3,
+          "round_format": "STROKE_PLAY",
+          "score": 67,
+          "par_relative_score": -3,
+          "points": null,
+          "score_display": "-3",
+          "status": null,
+          "tee_time": null,
+          "starting_hole": null
+        },
+        {
+          "id": 900019,
+          "round_number": 4,
+          "round_format": "STROKE_PLAY",
+          "score": 67,
+          "par_relative_score": -3,
+          "points": null,
+          "score_display": "-3",
+          "status": null,
+          "tee_time": null,
+          "starting_hole": null
+        }
+      ]
+    },
+    {
+      "id": 60002,
+      "tournament": {
+        "id": 40,
+        "name": "Wyndham Championship",
+        "format_type": "STROKE_PLAY"
+      },
+      "competitor": {
+        "id": 59002,
+        "type": "PLAYER",
+        "display_name": "Russell Henley",
+        "parent_competitor_id": null,
+        "player": {
+          "id": 75,
+          "first_name": "Russell",
+          "last_name": "Henley",
+          "display_name": "Russell Henley",
+          "country": "United States",
+          "country_code": "USA"
+        }
+      },
+      "position": "WD",
+      "position_numeric": null,
+      "status": "WD",
+      "scoring": {
+        "strokes": 141,
+        "to_par": 1,
+        "points": null,
+        "score_display": "1"
+      },
+      "earnings": null,
+      "made_cut": true,
+      "thru": null,
+      "current_round": null,
+      "group_number": null,
+      "tee_time": null,
+      "course": null,
+      "result": null,
+      "rounds": [
+        {
+          "id": 900020,
+          "round_number": 1,
+          "round_format": "STROKE_PLAY",
+          "score": 70,
+          "par_relative_score": 0,
+          "points": null,
+          "score_display": "E",
+          "status": null,
+          "tee_time": null,
+          "starting_hole": null
+        },
+        {
+          "id": 900021,
+          "round_number": 2,
+          "round_format": "STROKE_PLAY",
+          "score": 71,
+          "par_relative_score": 1,
+          "points": null,
+          "score_display": "+1",
+          "status": null,
+          "tee_time": null,
+          "starting_hole": null
+        },
+        {
+          "id": 900022,
+          "round_number": 3,
+          "round_format": "STROKE_PLAY",
+          "score": null,
+          "par_relative_score": null,
+          "points": null,
+          "score_display": null,
+          "status": null,
+          "tee_time": null,
+          "starting_hole": null
+        },
+        {
+          "id": 900023,
+          "round_number": 4,
+          "round_format": "STROKE_PLAY",
+          "score": null,
+          "par_relative_score": null,
+          "points": null,
+          "score_display": null,
+          "status": null,
+          "tee_time": null,
+          "starting_hole": null
+        }
+      ]
+    }
+  ],
+  "meta": {
+    "next_cursor": 60002,
+    "per_page": 100
+  }
+}

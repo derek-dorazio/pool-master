@@ -31,6 +31,7 @@ export function toProviderSummaryDto(provider: ProviderSummary): ProviderSummary
     latencyMs: provider.latencyMs,
     lastEventAt: provider.lastEventAt?.toISOString() ?? null,
     sportsCovered: provider.sportsCovered,
+    primaryForSports: provider.primaryForSports,
     activeEventCount: provider.activeEventCount,
     supportsLiveSimulation: provider.supportsLiveSimulation,
   };
