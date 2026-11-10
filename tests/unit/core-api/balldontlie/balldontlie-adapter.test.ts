@@ -11,6 +11,7 @@ import {
   type FakeRoute,
 } from '../../../support/balldontlie-fake-api';
 import { readBalldontlieFixture } from '../../../support/balldontlie-vendor-spec';
+import { golfRoundsOf } from '../../../support/live-score-rounds';
 
 /**
  * The adapter against a fake BALLDONTLIE that checks every request it sends, and every reply
@@ -234,8 +235,8 @@ describe('BalldontlieAdapter (PGA TOUR)', () => {
 
       expect(scores.category).toBe('GOLF');
       expect(scores.externalEventId).toBe('41');
-      expect(scores.rounds).toContainEqual({ participantExternalId: '185', round: 3, strokes: 67, scoreToPar: -3, status: ParticipantRoundStatus.IN_PROGRESS, thru: 12 });
-      expect(scores.rounds).toContainEqual({ participantExternalId: '10', round: 2, strokes: 73, scoreToPar: 3, status: ParticipantRoundStatus.MISSED_CUT });
+      expect(golfRoundsOf(scores)).toContainEqual({ participantExternalId: '185', round: 3, strokes: 67, scoreToPar: -3, status: ParticipantRoundStatus.IN_PROGRESS, thru: 12 });
+      expect(golfRoundsOf(scores)).toContainEqual({ participantExternalId: '10', round: 2, strokes: 73, scoreToPar: 3, status: ParticipantRoundStatus.MISSED_CUT });
       expect(requestLine(harness.api)).toEqual([
         '/pga/v2/tournaments?tournament_ids%5B%5D=41&include_format=true',
         '/pga/v2/tournament_results?tournament_id=41&per_page=100',

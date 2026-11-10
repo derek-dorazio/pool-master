@@ -23,6 +23,7 @@ import { parseArgs } from 'node:util';
 import { Sport } from '@poolmaster/shared/domain';
 import { BalldontlieAdapter } from '../src/modules/ingestion/adapters/balldontlie/balldontlie-adapter';
 import { BalldontlieContractError } from '../src/modules/ingestion/adapters/balldontlie/balldontlie-client';
+import { countLiveScoreUpdates } from '../src/modules/ingestion/core/live-score-count';
 import { errorMessageWithCause } from '../src/core/error-message';
 
 const SPEC_URL = 'https://www.balldontlie.io/openapi/pga.yml';
@@ -86,7 +87,7 @@ async function checkLiveApi(apiKey: string): Promise<boolean> {
   if (tournamentId) {
     checks.push(
       [`tournament ${tournamentId} field`, async () => `${String((await adapter.getEventDetails(tournamentId))?.participants.length ?? 'no tournament')} golfers`],
-      [`tournament ${tournamentId} scores`, async () => `${String((await adapter.getLiveScores(tournamentId)).rounds.length)} round updates`],
+      [`tournament ${tournamentId} scores`, async () => `${String(countLiveScoreUpdates(await adapter.getLiveScores(tournamentId)))} round updates`],
     );
   }
 

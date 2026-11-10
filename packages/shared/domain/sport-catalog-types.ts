@@ -254,6 +254,11 @@ export interface SportEventMatch extends DomainEntity {
    */
   homeSpread: number | null;
   /**
+   * The provider game the match takes its score from (#1496), on its event's own provider (the
+   * event's `providerId`); null until an admin links it.
+   */
+  externalGameId: string | null;
+  /**
    * The score at the end of each period entered so far (#772), in period order: the end of each
    * quarter but the last in American football. The final score is `homeScore`/`awayScore`.
    * Empty for a sport without periods (`SportDefinition.matchPeriods`).

@@ -389,6 +389,19 @@ export const ParticipantRoundStatus = {
 export type ParticipantRoundStatus = (typeof ParticipantRoundStatus)[keyof typeof ParticipantRoundStatus];
 
 /**
+ * Where a provider says a game stands (#1496), as a `GAME` live-score update reports it. Only a
+ * FINAL game decides its match; the others write no result.
+ */
+export const ProviderGameState = {
+  SCHEDULED: 'SCHEDULED',
+  IN_PROGRESS: 'IN_PROGRESS',
+  FINAL: 'FINAL',
+  POSTPONED: 'POSTPONED',
+  CANCELLED: 'CANCELLED',
+} as const;
+export type ProviderGameState = (typeof ProviderGameState)[keyof typeof ProviderGameState];
+
+/**
  * Why a SportEventParticipant is inactive for a golf tournament. Meaningful only
  * when `SportEventParticipant.isActive` is false; null covers "inactive, no more
  * specific reason recorded." See plans/124 §4.1.

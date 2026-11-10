@@ -220,6 +220,48 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
     });
   });
 
+  describe('game scores (#1496)', () => {
+    const games: LiveScoreResult = {
+      category: 'GAME',
+      externalEventId: 'nfl-2025-postseason',
+      games: [{ externalGameId: 'g1', homeTeamExternalId: '1', awayTeamExternalId: '2', state: 'FINAL', homeScore: 27, awayScore: 24 }],
+    };
+    const persisted = { updatesReturned: 1, updatesPersisted: 1, updatesSkipped: 0, writeDiagnostics: { summary: { total: 0, unchanged: 0, created: 0, updated: 0, deleted: 0 }, rows: [] } };
+    const inProgressEvent = () => ({ findUnique: jest.fn().mockResolvedValue({ id: 'evt-1', sport: 'NFL', rounds: null, status: 'IN_PROGRESS', eventSeries: { sportLeague: { scoringFamily: null } } }) });
+
+    it('hands a GAME batch to the event\'s family writer when it takes game scores, with the event it resolved', async () => {
+      const persist = jest.fn().mockResolvedValue(persisted);
+
+      const result = await publishLiveScoreUpdate(games, {
+        prisma: asPrismaClient({ sportEvent: inProgressEvent() }),
+        providerId: 'balldontlie',
+        scoringFamilyForEvent: () => ({ ...strokePlayScoringFamily, liveScores: { category: 'GAME', persist } }),
+      });
+
+      expect(result).toBe(persisted);
+      expect(persist).toHaveBeenCalledWith(expect.objectContaining({ providerId: 'balldontlie' }), expect.objectContaining({ id: 'evt-1' }), games);
+    });
+
+    it('warns and writes nothing when the event\'s family takes golf scores, not game scores', async () => {
+      const persist = jest.fn();
+      const logger = fakeLogger();
+
+      const result = await publishLiveScoreUpdate(games, {
+        prisma: asPrismaClient({ sportEvent: inProgressEvent() }),
+        providerId: 'balldontlie',
+        logger,
+        scoringFamilyForEvent: () => ({ ...strokePlayScoringFamily, liveScores: { category: 'GOLF', persist } }),
+      });
+
+      expect(persist).not.toHaveBeenCalled();
+      expect(result).toMatchObject({ updatesReturned: 1, updatesPersisted: 0, updatesSkipped: 1 });
+      expect(logger.warn).toHaveBeenCalledWith(
+        expect.objectContaining({ action: 'liveScore.publish.categoryNotAccepted', data: expect.objectContaining({ category: 'GAME', acceptedCategory: 'GOLF' }) }),
+        expect.any(String),
+      );
+    });
+  });
+
   describe('the event\'s field this container read lately (#1163)', () => {
     const NOW = new Date('2026-10-28T20:00:00.000Z');
     const result: LiveScoreResult = {

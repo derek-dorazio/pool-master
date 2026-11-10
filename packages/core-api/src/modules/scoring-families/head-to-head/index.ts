@@ -3,10 +3,13 @@
  * whom, stored in the event's bracket rather than in a per-participant extension row; the field
  * read attaches each row's matches. A team's contest score is its knockout round points
  * (`KNOCKOUT_ROUND_POINTS`; score-team.ts holds every rule). Results are the admin's (the match
- * result service beside this file), so it takes no live scores.
+ * result service beside this file), or a provider's final for a match linked to its game (#1496),
+ * written through that same service: it takes GAME live scores.
  */
 import { ScoringFamily, UpsetBonusRule } from '@poolmaster/shared/domain';
 import type { ScoringFamilyModule } from '../scoring-family-module';
+import { createGameScoreWriterDeps } from '../../events/wiring';
+import { writeGameScores } from './game-score-writer';
 import { scoreKnockoutField } from './score-team';
 
 export const headToHeadScoringFamily: ScoringFamilyModule = {
@@ -34,5 +37,14 @@ export const headToHeadScoringFamily: ScoringFamilyModule = {
     return scoring.participantScoringDefinitionId === 'KNOCKOUT_ROUND_POINTS' ? 0 : null;
   },
 
-  liveScores: null,
+  liveScores: {
+    category: 'GAME',
+    persist(deps, event, result) {
+      return writeGameScores(
+        createGameScoreWriterDeps(deps.prisma, deps.providerId, deps.logger, deps.leaderboards),
+        event.id,
+        result.games,
+      );
+    },
+  },
 };
