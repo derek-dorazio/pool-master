@@ -138,8 +138,8 @@ describe('deleting in batches', () => {
 });
 
 describe('email retention', () => {
-  it('deletes emails created more than 13 months ago and keeps newer ones', async () => {
-    let now = new Date('2025-09-01T00:00:00.000Z');
+  it('deletes emails created more than 30 days ago and keeps newer ones', async () => {
+    let now = new Date('2026-09-28T00:00:00.000Z');
     const outbox = inMemoryEmailMessages(() => now);
     const base = {
       templateKey: 'LEAGUE_JOIN_SUCCESS' as const,
@@ -153,7 +153,7 @@ describe('email retention', () => {
       dueAt: now,
     };
     await outbox.record({ ...base, idempotencyKey: 'old' });
-    now = new Date('2025-10-01T00:00:00.000Z');
+    now = new Date('2026-09-30T00:00:00.000Z');
     await outbox.record({ ...base, idempotencyKey: 'kept' });
 
     const deleted = await new EmailMessageRetention(outbox).purge(new Date('2026-10-29T08:00:00.000Z'));
