@@ -237,7 +237,7 @@ describe('InvitationService', () => {
       expect(sentMessage.text).toContain('Join league: https://app.primetimecommissioner.com/invite/');
       expect(sentMessage.text).toContain('Message from User One: Join us for the office pool.');
       expect(sentMessage.html).toContain('Primetime Commissioner');
-      expect(sentMessage.html).toContain('The ultimate office pool manager and other game-day contests');
+      expect(sentMessage.html).toContain('The ultimate game-day contest manager');
     });
 
     it('still creates the invitation when the transport refuses its email, leaving the email queued for a retry', async () => {
