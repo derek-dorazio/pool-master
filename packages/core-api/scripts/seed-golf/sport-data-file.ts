@@ -268,6 +268,18 @@ export const TEST_SEED_CONTENTS: readonly SportDataContent[] = [
 ];
 
 /**
+ * What every event a test seed creates is named with: "Test- Super Bowl LX". Test events then
+ * stand apart from real ones on a site holding both, and the loader never matches one with the
+ * other (#1524). A real file's event never carries it.
+ */
+export const TEST_EVENT_NAME_PREFIX = 'Test- ';
+
+/** Whether a stored or file event's name marks it as a test seed's. */
+export function isTestEventName(name: string): boolean {
+  return name.startsWith(TEST_EVENT_NAME_PREFIX);
+}
+
+/**
  * A test slate: test data that holds only PLAYERS and FIELDS. Its one sport league's players,
  * in file order, become the field of the event a run names (`--event`).
  */
@@ -402,6 +414,7 @@ function checkLeague(league: SportDataLeague, file: ParsedSportDataFile, hasPar:
         if (madeUp.length > 0) problems.push(`${where}: ${entry.player} carries ${madeUp.join(', ')}, which only test data may.`);
       }
     }
+    if (!file.testData && isTestEventName(event.name)) problems.push(`${where}: is named like a test event ("${TEST_EVENT_NAME_PREFIX.trim()}"), which only test data may be.`);
     if (!file.testData && event.winner !== undefined) problems.push(`${where}: carries a winner, which only test data may.`);
     if (file.testData && results === SeedResults.STROKE_ROUNDS && event.roundsPar === null) problems.push(`${where}: needs roundsPar in test data, to score its rounds.`);
     if (file.testData && results === SeedResults.FINISHING_ORDER) {

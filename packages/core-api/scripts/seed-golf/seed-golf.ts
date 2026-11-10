@@ -88,8 +88,9 @@ import {
   updateSportLeague,
 } from '@poolmaster/shared/generated/hey-api';
 import { LoadAction, LoadMode, LoadSubject, type LoadRow } from './load-report';
-import { golferRoundScore, seedDateOffsetDays, shiftedEventDates, shiftedMatchTimes } from './seed-golf-data';
+import { golferRoundScore, seedDateOffsetDays, selectTestSeedEvents, shiftedEventDates, shiftedMatchTimes, type StoredTestEvent, type TestSeedSelection } from './seed-golf-data';
 import {
+  isTestEventName,
   isTestSlate,
   SportDataContent,
   type SportDataEvent,
@@ -110,6 +111,8 @@ export interface LoadSportDataOptions {
   event?: string;
   /** A test slate only: remove field rows the slate does not list, rather than withdraw them. */
   replaceField?: boolean;
+  /** A test seed only: the days to move its dates by, in place of the whole-file offset (#1524). */
+  offsetDays?: number;
 }
 
 type StoredEvent = SportEventListResponse['events'][number];
@@ -359,7 +362,7 @@ class Loader {
     this.apply = options.mode === LoadMode.APPLY;
     this.contents = new Set(file.scope.contents);
     this.testSeed = file.testData && this.contents.has(SportDataContent.RESULTS);
-    this.offsetDays = this.testSeed ? seedDateOffsetDays(file, options.now) : 0;
+    this.offsetDays = this.testSeed ? (options.offsetDays ?? seedDateOffsetDays(file, options.now)) : 0;
     // A test seed's game times move with its event dates.
     this.file = shiftedMatchTimes(file, this.offsetDays);
     this.log = options.log ?? (() => {});
@@ -504,7 +507,9 @@ class Loader {
 
   /**
    * Each file event's stored event: same name (any case), else the one unclaimed event whose
-   * start is within a few days, which is how a sponsor's rename is found.
+   * start is within a few days, which is how a sponsor's rename is found. A test event
+   * ("Test- ...") is only ever matched with a test event, and a real one with a real one, so
+   * a real file never renames or rewrites the test events beside it, nor the reverse (#1524).
    */
   private matchEvents(league: SportDataLeague, stored: readonly StoredEvent[]): Map<SportDataEvent, StoredEvent> {
     const matches = new Map<SportDataEvent, StoredEvent>();
@@ -520,6 +525,7 @@ class Loader {
       if (matches.has(event)) continue;
       const start = Date.parse(shiftedEventDates(event, this.offsetDays).startDate);
       const near = stored.filter((candidate) => !claimed.has(candidate.id)
+        && isTestEventName(candidate.name) === isTestEventName(event.name)
         && !league.events.some((other) => other.name.toLowerCase() === candidate.name.toLowerCase())
         && Math.abs(Date.parse(candidate.startDate) - start) <= RENAME_MATCH_DAYS * DAY_MS);
       if (near.length === 1) {
@@ -1013,6 +1019,25 @@ async function enterBracketResultsFor(client: Client, eventId: string, event: Sp
       await must(recordEventMatchResult({ client, path: { eventId, matchNumber }, body }), `Enter the result of match ${matchNumber} of ${event.name}`);
     }
   }
+}
+
+/** selectTestSeedEvents against the site: reads each sport league's events of the seed's season. */
+export async function selectTestSeedEventsOnSite(
+  file: SportDataFile,
+  getClient: () => Promise<Client>,
+  eventsPerLeague: number,
+  now: Date,
+): Promise<TestSeedSelection> {
+  const client = await getClient();
+  const { sportLeagues } = await must(listSportLeagues({ client, query: { sport: file.scope.sport } }), 'List sport leagues');
+  const stored = new Map<string, StoredTestEvent[]>();
+  for (const league of file.sportLeagues) {
+    const existing = sportLeagues.find((row) => row.name.toLowerCase() === league.name.toLowerCase());
+    if (!existing) continue;
+    const { events } = await must(listEvents({ client, query: { sportLeagueId: existing.id, eventYear: file.scope.season } }), `List ${league.name} events`);
+    stored.set(league.name.toLowerCase(), events.map((event) => ({ name: event.name, status: event.status, startDate: event.startDate })));
+  }
+  return selectTestSeedEvents(file, stored, eventsPerLeague, now);
 }
 
 /** Loads the file, or in a dry run reports what loading it would do. Returns one row per subject. */

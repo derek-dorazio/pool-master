@@ -183,6 +183,11 @@ so running again fills in what is missing. `with_participants` also loads test p
 entries in a `<sport league> <sport> test pool` league (`NFL American football test pool`), so a contest can be looked at
 with entries already in it.
 
+A test seed never loads whole: each run gives every sport league its next two events, named
+`Test- ...`, dated from the run a week apart, and only to a league whose test events have all
+started, so test and real events can share a site (`docs/SPORT-DATA-LOADING.md` *A few "Test-"
+events at a time*). Never name a real file's event `Test- ...`; the parser refuses it.
+
 ## Sources per sport
 
 `docs/SPORT-DATA-SOURCES.md` lists the primary and second source for each sport's schedule,

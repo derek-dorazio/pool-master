@@ -7,6 +7,7 @@
  *   POOLMASTER_SEED_ADMIN_PASSWORD=... \
  *   npm run seed:golf -- [--file golf-2026.json] [--mode dry-run|apply] [--allow-test-data] [--report report.md]
  *                        [--event "<event name>"] [--replace-field] [--all-test-data] [--with-participants]
+ *                        [--events-per-league 2]
  *
  * --file is a path inside this folder (default golf-2026.json). --mode defaults to dry-run,
  * which reads the site and reports what applying would change without writing anything.
@@ -24,6 +25,11 @@
  * /version first and refuses anything that is not a test target. Every run is re-entrant, so
  * running again after a failure fills in what is missing.
  *
+ * A test seed (a test data file that is not a slate) loads only a few events of each sport
+ * league, named "Test- ...", with dates rolled from the run: --events-per-league of them
+ * (default 2), and only for a league with no test event still to start. Running it again
+ * later loads the next ones (selectTestSeedEvents in seed-golf.ts, #1524).
+ *
  * The base URL is the site root that serves /api/v1 (the API itself locally, the site on QA).
  * QA runs this through the "Load sport data" workflow, never on deploy.
  */
@@ -34,8 +40,8 @@ import { parseArgs } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import { createClient, createConfig, type Client } from '@poolmaster/shared/generated/hey-api/client';
 import { getVersion, loginUser } from '@poolmaster/shared/generated/hey-api';
-import { formatLoadReport, LoadMode } from './load-report';
-import { loadSportData } from './seed-golf';
+import { formatLoadReport, LoadAction, LoadMode, type LoadRow, LoadSubject, withoutRepeatedRows } from './load-report';
+import { loadSportData, selectTestSeedEventsOnSite } from './seed-golf';
 import { errorMessage } from '../../src/core/error-message';
 import { isTestSlate, parseSportDataFile, type SportDataFile } from './sport-data-file';
 import { loadTestParticipants, refuseUnlessTestTarget } from './test-participants';
@@ -100,10 +106,13 @@ async function main(): Promise<void> {
       'replace-field': { type: 'boolean', default: false },
       'all-test-data': { type: 'boolean', default: false },
       'with-participants': { type: 'boolean', default: false },
+      'events-per-league': { type: 'string', default: '2' },
     },
   });
   const mode = values.mode === 'apply' ? LoadMode.APPLY : values.mode === 'dry-run' ? LoadMode.DRY_RUN : null;
   if (mode === null) throw new Error(`--mode is ${values.mode}; use dry-run or apply.`);
+  const eventsPerLeague = Number(values['events-per-league']);
+  if (!Number.isInteger(eventsPerLeague) || eventsPerLeague < 1) throw new Error(`--events-per-league is ${values['events-per-league']}; give a whole number of 1 or more.`);
   const allTestData = values['all-test-data'];
   const withParticipants = values['with-participants'];
   if (allTestData && (values.file !== undefined || values.event !== undefined || values['replace-field'])) {
@@ -147,16 +156,35 @@ async function main(): Promise<void> {
       const file = readFile(name);
       if (file === null) continue;
       console.log(`${mode === LoadMode.APPLY ? 'Loading' : 'Dry run of'} ${name} into ${baseUrl}.`);
-      const rows = await loadSportData(file, {
-        getClient,
-        now: new Date(),
-        mode,
-        log: (line) => console.log(line),
-        ...(values.event ? { event: values.event } : {}),
-        replaceField: values['replace-field'],
-      });
-      if (withParticipants) {
-        rows.push(...await loadTestParticipants(file, { getClient, signIn: signInPlayer, mode, log: (line) => console.log(line) }));
+      const log = (line: string): void => console.log(line);
+      const participants = { getClient, signIn: signInPlayer, mode, log };
+      let rows: LoadRow[];
+      if (file.testData && !isTestSlate(file)) {
+        // A test seed: a few "Test-" events per sport league, each loaded with its own rolled dates.
+        rows = [];
+        const now = new Date();
+        const selection = await selectTestSeedEventsOnSite(file, getClient, eventsPerLeague, now);
+        for (const league of selection.waiting) {
+          rows.push({ sportLeague: league, subject: LoadSubject.EVENT, action: LoadAction.SKIP, name: 'Next test events', detail: 'a test event of this league has not started yet' });
+          log(`${league}: a test event has not started yet, so no new ones.`);
+        }
+        for (const league of selection.leagues) {
+          for (const event of league.events) {
+            rows.push(...await loadSportData(event.file, { getClient, now, mode, log, offsetDays: event.offsetDays }));
+          }
+          if (withParticipants) rows.push(...await loadTestParticipants(league.file, participants));
+        }
+        rows = withoutRepeatedRows(rows);
+      } else {
+        rows = await loadSportData(file, {
+          getClient,
+          now: new Date(),
+          mode,
+          log,
+          ...(values.event ? { event: values.event } : {}),
+          replaceField: values['replace-field'],
+        });
+        if (withParticipants) rows.push(...await loadTestParticipants(file, participants));
       }
       const report = formatLoadReport(file, mode, rows);
       console.log(report);

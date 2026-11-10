@@ -381,6 +381,40 @@ describe('Loading a real golf schedule and fields through the admin API', () => 
   });
 });
 
+describe('Keeping test events and real events apart on one site', () => {
+  const prefix = `${RUN}-apart`;
+  const tour = `Apart Tour ${prefix}`;
+  const getClient = () => Promise.resolve(admin.client);
+  const realEvent = (key: string, eventName: string, startDate: string) => ({
+    key, name: `${prefix} ${eventName}`, startDate, endDate: startDate, venue: null, location: null, rounds: 4, roundsPar: 72, field: [],
+  });
+  const file = (events: SportDataFile['sportLeagues'][number]['events']): SportDataFile => ({
+    schemaVersion: 1,
+    scope: { sport: Sport.GOLF, season: 2027, sportLeagues: [tour], contents: [SportDataContent.SCHEDULE, SportDataContent.PLAYERS] },
+    testData: false,
+    provenance: provenance(),
+    sportLeagues: [{ name: tour, players: players(prefix, 1), events }],
+  });
+
+  it('adds a real event beside a "Test-" event starting within the rename window, rather than renaming the test event', async () => {
+    const first = realEvent('classic', 'Classic', '2027-05-06');
+    await loadSportData(parsed(file([first])), { getClient, now: NOW, mode: LoadMode.APPLY });
+    const league = expectDefined(await leagueNamed(tour));
+    const testName = `Test- ${prefix} Old Invitational`;
+    expectDefined((await createEvent({
+      client: admin.client,
+      body: { sportLeagueId: league.id, eventYear: 2027, name: testName, startDate: '2027-05-13T12:00:00.000Z', endDate: '2027-05-17T12:00:00.000Z', rounds: 4 },
+    })).data);
+
+    const rows = await loadSportData(parsed(file([first, realEvent('open', 'Open', '2027-05-13')])), { getClient, now: NOW, mode: LoadMode.APPLY });
+
+    expect(changes(rows).filter((row) => row.subject === LoadSubject.EVENT)).toEqual([
+      { sportLeague: tour, subject: LoadSubject.EVENT, action: LoadAction.ADD, name: `${prefix} Open`, detail: null },
+    ]);
+    expect((await eventsOf(league.id, 2027)).map((event) => event.name).sort()).toEqual([`${prefix} Classic`, `${prefix} Open`, testName].sort());
+  });
+});
+
 describe('Loading a real horse racing schedule and field through the admin API', () => {
   const prefix = `${RUN}-race`;
   const circuit = `Circuit ${prefix}`;
