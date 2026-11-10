@@ -23,6 +23,7 @@ import {
   setupIntegrationTests,
   teardownIntegrationTests,
   withoutJsonBodyHeaders,
+  withBackgroundJobsFailing,
 } from '../helpers';
 import {
   recordStatements,
@@ -54,12 +55,13 @@ const TIER_KEYS = ['A', 'B', 'C', 'D', 'E', 'F'];
 
 /**
  * What saving a game's result sends on an event under way (#1460): the game and its standings, the
- * contests on the event a result may start, the job that settles the game's squares contests, and
- * the job that rebuilds the event's leaderboards (#1463). No contest is settled and no board is
- * rebuilt, so the count is the same however many contests the game holds.
+ * contests on the event a result may start, and in one insert written with the game the job that
+ * settles its squares contests and the one that rebuilds the event's leaderboards (#1463, #1466).
+ * No contest is settled and no board is rebuilt, so the count is the same however many contests
+ * the game holds.
  */
 const PINNED_GAME_RESULT_COUNTS: Array<[string, number]> = [
-  ['INSERT background_jobs', 2],
+  ['INSERT background_jobs', 1],
   ['INSERT sport_event_participant_standings', 1],
   ['SELECT contests', 1],
   ['SELECT event_series', 1],
@@ -74,11 +76,12 @@ const PINNED_GAME_RESULT_COUNTS: Array<[string, number]> = [
 
 /**
  * What an event's move to COMPLETED sends (#1448): the event and its answer, the job that settles
- * its contests, and the job that rebuilds its leaderboards (#1463). No contest or board is read or
- * written, so the count is the same however many contests the event holds.
+ * its contests, and the job that rebuilds its leaderboards (#1463), both in the one insert written
+ * with the status (#1466). No contest or board is read or written, so the count is the same
+ * however many contests the event holds.
  */
 const PINNED_TRANSITION_COUNTS: Array<[string, number]> = [
-  ['INSERT background_jobs', 2],
+  ['INSERT background_jobs', 1],
   ['SELECT contest_sport_events', 1],
   ['SELECT event_series', 2],
   ['SELECT sport_event_participants', 3],
@@ -702,12 +705,12 @@ const moveByADay: EventChangeRequest = ({ admin, eventId, startDate }) => ({
 
 /**
  * What an admin's postponement sends (#1458): the event and its answer, then one read of the
- * contests told and one insert of their email jobs, beside the insert of the event's leaderboard
- * rebuild job. No league, member or entry is read, so the count is the same however many
+ * contests told and one insert of their email jobs and the event's leaderboard rebuild job, written
+ * with the status (#1466). No league, member or entry is read, so the count is the same however many
  * contests, in however many leagues, the event holds.
  */
 const PINNED_POSTPONE_COUNTS: Array<[string, number]> = [
-  ['INSERT background_jobs', 2],
+  ['INSERT background_jobs', 1],
   ['SELECT contest_draws', 1],
   ['SELECT contest_sport_events', 2],
   ['SELECT contest_squares_draws', 1],
@@ -726,7 +729,7 @@ const PINNED_POSTPONE_COUNTS: Array<[string, number]> = [
  * shifts the event's rounds and rechecks its contests' entry reminders, in one write for all.
  */
 const PINNED_MOVE_COUNTS: Array<[string, number]> = [
-  ['INSERT background_jobs', 2],
+  ['INSERT background_jobs', 1],
   ['SELECT contest_draws', 1],
   ['SELECT contest_sport_events', 2],
   ['SELECT contest_squares_draws', 1],
@@ -742,27 +745,11 @@ const PINNED_MOVE_COUNTS: Array<[string, number]> = [
   ['UPDATE sport_events', 1],
 ];
 
-/**
- * Fails every insert of an "event changed" email job while `work` runs, as a database error
- * between the event's change and its jobs would: a check constraint added for the test and
- * dropped after it.
- */
-async function withEventChangedJobsFailing<T>(work: () => Promise<T>): Promise<T> {
-  await getPrisma().$executeRawUnsafe(
-    `ALTER TABLE background_jobs ADD CONSTRAINT test_no_event_changed_jobs CHECK (type <> 'CONTEST_EVENT_CHANGED_EMAILS') NOT VALID`,
-  );
-  try {
-    return await work();
-  } finally {
-    await getPrisma().$executeRawUnsafe('ALTER TABLE background_jobs DROP CONSTRAINT test_no_event_changed_jobs');
-  }
-}
-
 describe('Postponing or moving an event whose email jobs cannot be written (#1464)', () => {
   it('leaves the event SCHEDULED, and answers with an error, when its postponement\'s email jobs fail to write, so nobody is left untold', async () => {
     const seeded = await openContestsOnScheduledEvent({ contests: 1 });
 
-    const response = await withEventChangedJobsFailing(() => getApp().inject(postpone(seeded)));
+    const response = await withBackgroundJobsFailing('CONTEST_EVENT_CHANGED_EMAILS', () => getApp().inject(postpone(seeded)));
 
     expect(response.statusCode).toBe(500);
     await expect(getPrisma().sportEvent.findUniqueOrThrow({ where: { id: seeded.eventId }, select: { status: true } }))
@@ -772,7 +759,7 @@ describe('Postponing or moving an event whose email jobs cannot be written (#146
   it('leaves the event\'s start where it was, and answers with an error, when its move\'s email jobs fail to write, so nobody is left untold', async () => {
     const seeded = await openContestsOnScheduledEvent({ contests: 1 });
 
-    const response = await withEventChangedJobsFailing(() => getApp().inject(moveByADay(seeded)));
+    const response = await withBackgroundJobsFailing('CONTEST_EVENT_CHANGED_EMAILS', () => getApp().inject(moveByADay(seeded)));
 
     expect(response.statusCode).toBe(500);
     await expect(getPrisma().sportEvent.findUniqueOrThrow({ where: { id: seeded.eventId }, select: { startDate: true } }))

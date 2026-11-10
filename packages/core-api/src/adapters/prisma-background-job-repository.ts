@@ -114,7 +114,17 @@ export async function insertBackgroundJobs(
   requests: readonly BackgroundJobRequest[],
 ): Promise<number> {
   if (requests.length === 0) return 0;
-  const { count } = await db.backgroundJob.createMany({
+  const { count } = await backgroundJobsInsert(db, requests);
+  return count;
+}
+
+/**
+ * The insert `insertBackgroundJobs` makes, unsent, for an adapter writing its change as a batch
+ * transaction (`$transaction([...])`): appended to the batch, the jobs commit with the change.
+ * Only for a non-empty `requests`.
+ */
+export function backgroundJobsInsert(db: PrismaClient | Prisma.TransactionClient, requests: readonly BackgroundJobRequest[]) {
+  return db.backgroundJob.createMany({
     data: requests.map((request) => ({
       type: request.type,
       payload: request.payload as Prisma.InputJsonValue,
@@ -123,7 +133,6 @@ export async function insertBackgroundJobs(
     })),
     skipDuplicates: true,
   });
-  return count;
 }
 
 function truncateError(error: string): string {

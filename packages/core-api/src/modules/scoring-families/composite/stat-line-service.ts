@@ -18,6 +18,8 @@ import type {
 } from '@poolmaster/shared/db';
 import { eventSportDefinition, ScoringFamily, sportStatValueMin, type SportStat } from '@poolmaster/shared/domain';
 import type { ApiErrorCode } from '@poolmaster/shared/dto';
+import { NO_JOBS_FOR_WRITE } from '../../background-jobs/background-job-queue';
+import type { LeaderboardRebuilds } from '../../contests/leaderboard-snapshots';
 
 export class StatLineError extends Error {
   constructor(
@@ -41,6 +43,8 @@ export interface StatLineServiceDeps {
   rounds: Pick<SportEventRoundRepository, 'findBySportEvent'>;
   field: Pick<SportEventParticipantRepository, 'findBySportEvent'>;
   statLines: Pick<SportEventParticipantStatLineRepository, 'replaceGameLines'>;
+  /** The event's leaderboard rebuild, written with the game's lines (#1466); none without it. */
+  leaderboards?: Pick<LeaderboardRebuilds, 'forEvent'>;
   now?: () => Date;
   logger?: FastifyBaseLogger;
 }
@@ -94,12 +98,14 @@ export class StatLineService {
     }
 
     const completedAt = (this.deps.now ?? (() => new Date()))();
+    const rebuild = this.deps.leaderboards?.forEvent(sportEventId) ?? NO_JOBS_FOR_WRITE;
     await this.deps.statLines.replaceGameLines(rows.map((row) => ({
       sportEventParticipantId: entryIdByParticipantId.get(row.participantId) as string,
       sportEventRoundId: round.id,
       stats: row.stats,
       completedAt,
-    })));
+    })), rebuild.jobs);
+    rebuild.queued();
     this.deps.logger?.info(
       { action: 'statLines.gameApplied', data: { sportEventId, roundNumber, players: rows.length } },
       'Stored a game\'s stat lines',

@@ -5,6 +5,7 @@ import {
 } from '../../../packages/core-api/src/modules/scoring-families/finish-position/race-result-service';
 import { eventStoresRaceResults } from '../../../packages/core-api/src/modules/scoring-families/race-results';
 import { InMemorySportEvents } from '../../support/in-memory-sport-events';
+import { RecordingLeaderboardRebuilds, eventRebuildJob } from '../../support/recording-leaderboard-rebuilds';
 
 // The admin's finishing order against an in-memory store (#622): what a preview reports, that an
 // apply is all or none, how a correction merges, and the standings an apply leaves behind. The
@@ -22,15 +23,17 @@ function setup(sport: Sport = Sport.HORSE_RACING) {
   });
   const scratchedHorse = store.addParticipant(sportRow.id, 'Drift');
   const scratched = store.addToField(event.id, scratchedHorse.id, { isActive: false });
+  const leaderboards = new RecordingLeaderboardRebuilds();
   const service = new RaceResultService({
     events: store.sportEventRepo(),
     field: store.fieldRepo(),
     participants: store.participantRepo(),
     raceResults: store.raceResultRepo(),
     storesRaceResults: eventStoresRaceResults,
+    leaderboards,
     now: () => NOW,
   });
-  return { store, service, event, arrow, bolt, comet, scratched };
+  return { store, service, event, arrow, bolt, comet, scratched, leaderboards };
 }
 
 function row(playerName: string, finishPosition: number | null, overrides: Partial<RaceResultRowInput> = {}): RaceResultRowInput {
@@ -256,5 +259,24 @@ describe('RaceResultService — clock', () => {
     const stamps = store.standingRows.map((row) => row.asOf?.getTime() ?? 0);
     expect(stamps.length).toBeGreaterThan(0);
     expect(stamps.every((stamp) => stamp >= before && stamp <= Date.now())).toBe(true);
+  });
+});
+
+describe('RaceResultService — leaderboard rebuild (#1466)', () => {
+  it('writes the event\'s leaderboard rebuild job with the finishing order and wakes the runner after it', async () => {
+    const { store, service, event, leaderboards } = setup();
+
+    await service.applyResults(event.id, { isOfficial: true, rows: FULL_ORDER });
+
+    expect(store.backgroundJobs).toEqual([eventRebuildJob(event.id)]);
+    expect(leaderboards.sportEventIds).toEqual([event.id]);
+  });
+
+  it('hands out no rebuild for an order refused before anything is written', async () => {
+    const { store, service, event, leaderboards } = setup(Sport.GOLF);
+
+    await expect(service.applyResults(event.id, { isOfficial: true, rows: FULL_ORDER })).rejects.toMatchObject({ code: 'EVENT_SCORING_FAMILY_MISMATCH' });
+    expect(store.backgroundJobs).toEqual([]);
+    expect(leaderboards.sportEventIds).toEqual([]);
   });
 });

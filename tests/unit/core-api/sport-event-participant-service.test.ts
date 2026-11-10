@@ -2,6 +2,8 @@ import { expect, jest } from '@jest/globals';
 import { MatchEnding, MatchStatus, Sport, SportEventStatus } from '@poolmaster/shared/domain';
 import { SportEventParticipantService } from '../../../packages/core-api/src/modules/events/sport-event-participant-service';
 import { InMemorySportEvents } from '../../support/in-memory-sport-events';
+import { expectDefined } from '../../support/expect-defined';
+import { RecordingLeaderboardRebuilds, eventRebuildJob } from '../../support/recording-leaderboard-rebuilds';
 import { standardEventPricing } from '../../support/budget-pricing';
 import { ReadCache } from '../../../packages/core-api/src/core/read-cache';
 import type { SportEventParticipantView } from '@poolmaster/shared/db';
@@ -15,15 +17,17 @@ function setup(sportName: Sport = Sport.GOLF, status: SportEventStatus = SportEv
   const sportLeague = store.addSportLeague(sport.id);
   // A draft, so its prices are still editable (#431); pass a released status to lock them.
   const event = store.addEvent({ sportLeagueId: sportLeague.id, sport: sportName, status });
+  const leaderboards = new RecordingLeaderboardRebuilds();
   const service = new SportEventParticipantService({
     sportEvents: store.sportEventRepo(),
     field: store.fieldRepo(),
     participants: store.participantRepo(),
     affiliations: store.affiliationRepo(),
     matches: store.matchRepo(),
+    leaderboards,
     random: () => 0.5,
   });
-  return { store, service, sport, sportLeague, event };
+  return { store, service, sport, sportLeague, event, leaderboards };
 }
 
 describe('SportEventParticipantService.listEventParticipants', () => {
@@ -217,7 +221,7 @@ describe('SportEventParticipantService — changing the field', () => {
     expect(updateMany).toHaveBeenCalledWith([
       { id: same.id, updates: {}, price: undefined },
       { id: moved.id, updates: { ranking: 2 }, price: undefined },
-    ]);
+    ], []);
     expect([same.ranking, moved.ranking]).toEqual([4, 2]);
   });
 
@@ -474,5 +478,35 @@ describe('SportEventParticipantService — play-in places', () => {
 
     await expect(service.updateParticipants(event.id, [{ sportEventParticipantId: golfer.id, isPlayInPlace: true }]))
       .rejects.toMatchObject({ code: 'SPORT_EVENT_NOT_BRACKET', statusCode: 422 });
+  });
+});
+
+describe('SportEventParticipantService — leaderboard rebuild (#1466)', () => {
+  it('writes the event\'s rebuild job with each field write (seed, add, grid save, removal) and wakes the runner after each', async () => {
+    const { store, service, sport, sportLeague, event, leaderboards } = setup();
+    store.affiliate(sportLeague.id, store.addParticipant(sport.id, 'Seeded').id, 1);
+    const guest = store.addParticipant(sport.id, 'Guest');
+
+    await service.seedFromSportLeague(event.id);
+    await service.addParticipants(event.id, [guest.id]);
+    const added = expectDefined(store.field.find((entry) => entry.participantId === guest.id));
+    await service.updateParticipants(event.id, [{ sportEventParticipantId: added.id, ranking: 3 }]);
+    await service.removeParticipant(event.id, added.id);
+
+    expect(store.backgroundJobs).toEqual(Array.from({ length: 4 }, () => eventRebuildJob(event.id)));
+    expect(leaderboards.sportEventIds).toEqual([event.id, event.id, event.id, event.id]);
+  });
+
+  it('writes no rebuild when an add finds everyone already on the field, and none for a refused removal', async () => {
+    const { store, service, sport, event, leaderboards } = setup();
+    const already = store.addParticipant(sport.id, 'Already');
+    const picked = store.addToField(event.id, already.id);
+    store.picksByEntry.set(picked.id, 1);
+
+    await service.addParticipants(event.id, [already.id]);
+    await expect(service.removeParticipant(event.id, picked.id)).rejects.toMatchObject({ code: 'EVENT_PARTICIPANT_HAS_PICKS' });
+
+    expect(store.backgroundJobs).toEqual([]);
+    expect(leaderboards.handedOut).toEqual([]);
   });
 });

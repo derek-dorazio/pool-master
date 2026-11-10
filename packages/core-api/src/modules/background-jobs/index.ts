@@ -1,4 +1,11 @@
-export { BackgroundJobQueue, InvalidBackgroundJobPayloadError, type BackgroundJobOptions } from './background-job-queue';
+export {
+  BackgroundJobQueue,
+  InvalidBackgroundJobPayloadError,
+  NO_JOBS_FOR_WRITE,
+  combineJobsForWrite,
+  type BackgroundJobOptions,
+  type JobsForWrite,
+} from './background-job-queue';
 export {
   BACKGROUND_JOB_CONCURRENCY,
   BACKGROUND_JOB_LEASE_MS,

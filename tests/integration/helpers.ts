@@ -270,6 +270,7 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
     sportEventChanged: contestNotices,
     contestSettlement: createContestSettlementService(prisma, testApp.log, { jobs: backgroundJobs.queue, leaderboards }),
     releasedEditionContests,
+    leaderboards,
   });
   const ingestionConfigService = new IngestionConfigService(settings);
   const platformSettingsService = new PlatformSettingsService({
@@ -419,6 +420,20 @@ export async function holdingBackgroundJobs<Result>(call: () => Promise<Result>)
     return await call();
   } finally {
     backgroundJobsHeld = false;
+  }
+}
+
+/**
+ * Runs `work` while no background job of `type` can be written, as a failed job insert would
+ * leave it: a write that carries such a job fails, and shows what it leaves behind.
+ */
+export async function withBackgroundJobsFailing<Result>(type: string, work: () => Promise<Result>): Promise<Result> {
+  if (!/^[A-Z_]+$/.test(type)) throw new Error(`Not a background job type: ${type}`);
+  await getPrisma().$executeRawUnsafe(`ALTER TABLE background_jobs ADD CONSTRAINT test_failing_jobs CHECK (type <> '${type}') NOT VALID`);
+  try {
+    return await work();
+  } finally {
+    await getPrisma().$executeRawUnsafe('ALTER TABLE background_jobs DROP CONSTRAINT test_failing_jobs');
   }
 }
 

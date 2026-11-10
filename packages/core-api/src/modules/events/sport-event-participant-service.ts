@@ -41,6 +41,8 @@ import {
   type SportEventParticipant,
 } from '@poolmaster/shared/domain';
 import { BatchedRead } from '../../core/batched-read';
+import { NO_JOBS_FOR_WRITE, type JobsForWrite } from '../background-jobs/background-job-queue';
+import type { LeaderboardRebuilds } from '../contests/leaderboard-snapshots';
 import { ReadCache } from '../../core/read-cache';
 import { deriveSeedNumbersAndOdds } from '../golf/golf-seeding-algorithm';
 import {
@@ -172,6 +174,8 @@ export interface SportEventParticipantServiceDeps {
   matches: Pick<SportEventMatchRepository, 'findBySportEvent'>;
   /** The fields read lately, shared by every instance of this service in the container; a new one when omitted. */
   fieldCache?: EventFieldCache;
+  /** The event's leaderboard rebuild, written with each field write (#1466); none without it. */
+  leaderboards?: Pick<LeaderboardRebuilds, 'forEvent'>;
   now?: () => Date;
   random?: () => number;
   logger?: FastifyBaseLogger;
@@ -263,12 +267,14 @@ export class SportEventParticipantService {
       this.deps.random,
     );
     if (seeded.length > 0) {
+      const rebuild = this.rebuild(sportEventId);
       await this.deps.field.createMany(sportEventId, seeded.map((entry) => ({
         participantId: entry.participantId,
         ranking: entry.ranking,
         seedNumber: entry.seedNumber,
         oddsToWin: entry.oddsToWin,
-      })));
+      })), rebuild.jobs);
+      rebuild.queued();
     }
 
     this.deps.logger?.info(
@@ -290,7 +296,9 @@ export class SportEventParticipantService {
     const onField = new Set((await this.deps.field.findBySportEvent(sportEventId)).map((entry) => entry.participantId));
     const toAdd = [...new Set(participantIds)].filter((participantId) => !onField.has(participantId));
     if (toAdd.length > 0) {
-      await this.deps.field.createMany(sportEventId, toAdd.map((participantId) => ({ participantId })));
+      const rebuild = this.rebuild(sportEventId);
+      await this.deps.field.createMany(sportEventId, toAdd.map((participantId) => ({ participantId })), rebuild.jobs);
+      rebuild.queued();
     }
     this.deps.logger?.info(
       { sportEventId, added: toAdd.length, skipped: participantIds.length - toAdd.length },
@@ -368,10 +376,12 @@ export class SportEventParticipantService {
     // Only the values that change are written, so a grid saved with most rows untouched writes
     // little: the adapter writes one statement per distinct new value (#1252).
     const entryById = new Map(field.map((entry) => [entry.id, entry]));
+    const rebuild = this.rebuild(sportEventId);
     await this.deps.field.updateMany(updates.map(({ sportEventParticipantId, price, ...patch }) => {
       const entry = entryById.get(sportEventParticipantId);
       return { id: sportEventParticipantId, updates: entry ? changedValues(entry, patch) : patch, price };
-    }));
+    }), rebuild.jobs);
+    rebuild.queued();
     return this.listEventParticipants(sportEventId);
   }
 
@@ -498,7 +508,14 @@ export class SportEventParticipantService {
         409,
       );
     }
-    await this.deps.field.delete(sportEventParticipantId);
+    const rebuild = this.rebuild(sportEventId);
+    await this.deps.field.delete(sportEventParticipantId, rebuild.jobs);
+    rebuild.queued();
+  }
+
+  /** The job rebuilding the event's boards, written with a field write that may change them (#1466). */
+  private rebuild(sportEventId: string): JobsForWrite {
+    return this.deps.leaderboards?.forEvent(sportEventId) ?? NO_JOBS_FOR_WRITE;
   }
 
   private async requireEvent(sportEventId: string): Promise<SportEvent> {

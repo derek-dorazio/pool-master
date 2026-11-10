@@ -2,6 +2,8 @@ import { BackgroundJobStatus, BackgroundJobType, Sport } from '@poolmaster/share
 import {
   BackgroundJobQueue,
   InvalidBackgroundJobPayloadError,
+  NO_JOBS_FOR_WRITE,
+  combineJobsForWrite,
   type BackgroundJobPayload,
 } from '../../../packages/core-api/src/modules/background-jobs';
 import { inMemoryBackgroundJobs } from '../../support/in-memory-background-jobs';
@@ -70,5 +72,25 @@ describe('background job queue (#1440)', () => {
     expect(runner.wake).not.toHaveBeenCalled();
     queue.queued();
     expect(runner.wake).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('jobs a write carries (#1466)', () => {
+  it('combines several writes\' jobs in order, and wakes each one\'s runner once the write commits', () => {
+    const first = { jobs: [{ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: 'a' }], queued: jest.fn() };
+    const second = { jobs: [{ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: 'b' }], queued: jest.fn() };
+
+    const combined = combineJobsForWrite(first, NO_JOBS_FOR_WRITE, second);
+
+    expect(combined.jobs.map((job) => job.payload)).toEqual(['a', 'b']);
+    expect(first.queued).not.toHaveBeenCalled();
+    combined.queued();
+    expect(first.queued).toHaveBeenCalledTimes(1);
+    expect(second.queued).toHaveBeenCalledTimes(1);
+  });
+
+  it('carries no job, and its wake does nothing, for a write that needs none', () => {
+    expect(NO_JOBS_FOR_WRITE.jobs).toEqual([]);
+    expect(() => { NO_JOBS_FOR_WRITE.queued(); }).not.toThrow();
   });
 });

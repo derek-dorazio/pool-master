@@ -35,8 +35,9 @@ import type { SportEventChangedNotice } from '../notifications/contest-notices';
 import { contestStartedEmailsJob } from '../notifications/contest-email-job-requests';
 import { settleSportEventContestsJob, type SettleSportEventContestsJobPayload } from '../contests/settle-sport-event-job-requests';
 import { settleGameContestsJob, type SettleGameContestsJobPayload } from '../contests/settle-game-job-requests';
-import type { BackgroundJobQueue } from '../background-jobs';
+import { NO_JOBS_FOR_WRITE, type BackgroundJobQueue, type JobsForWrite } from '../background-jobs';
 import type { ApiErrorCode } from '@poolmaster/shared/dto';
+import type { LeaderboardRebuilds } from '../contests/leaderboard-snapshots';
 
 export interface FinishedSportEventSettlement {
   settleFinishedSportEvent(
@@ -49,12 +50,6 @@ export interface FinishedSportEventSettlement {
     sportEventMatchId: string,
     input?: { completedAt?: Date },
   ): Promise<unknown>;
-}
-
-/** The jobs a write carries, and what to call once that write has committed. */
-export interface JobsForWrite {
-  jobs: readonly BackgroundJobRequest[];
-  queued(): void;
 }
 
 /** The job a decided game's write carries (#711). */
@@ -135,6 +130,8 @@ export class EventLifecycleService {
     private readonly contestSettlement?: FinishedSportEventSettlement,
     private readonly releasedEditionContests?: ReleasedEditionContests,
     private readonly sportEventChanged?: SportEventChangedNotice,
+    /** Rebuilds the event's contests' stored boards, by a job written with each status change (#1466). */
+    private readonly leaderboards?: Pick<LeaderboardRebuilds, 'forEvent'>,
   ) {}
 
   async applySportEventStatusTransition(
@@ -195,7 +192,10 @@ export class EventLifecycleService {
     const postponedJobs = postponing && this.sportEventChanged
       ? await this.sportEventChanged.sportEventChangedJobs(before, { kind: ContestEventChangeKind.POSTPONED })
       : [];
-    const jobs = [...(settleJob ? [settleJob] : []), ...releaseJobs, ...postponedJobs];
+    // A status shows on the event's contests' boards, so they are rebuilt by a job written with
+    // it (#1466).
+    const rebuild = this.leaderboards?.forEvent(input.sportEventId) ?? NO_JOBS_FOR_WRITE;
+    const jobs = [...(settleJob ? [settleJob] : []), ...releaseJobs, ...postponedJobs, ...rebuild.jobs];
 
     // Written only while the event is still where it was read (#1159): of two callers making the
     // change at once, one writes it and runs the side effects below, and the other stops here.
@@ -229,6 +229,7 @@ export class EventLifecycleService {
     // The cancellation email (C7) is sent by the settlement job, before it finishes the contests
     // it is about.
     if (jobs.length > 0) this.jobs?.queued();
+    rebuild.queued();
 
     return {
       sportEvent: updated,
@@ -243,7 +244,7 @@ export class EventLifecycleService {
    * (#1464), and the wake to call once it has committed. Without a notice, there are none.
    */
   async sportEventRescheduledJobs(sportEvent: Pick<SportEvent, 'id' | 'startDate'>, previousStart: Date): Promise<JobsForWrite> {
-    if (!this.sportEventChanged) return { jobs: [], queued: () => undefined };
+    if (!this.sportEventChanged) return NO_JOBS_FOR_WRITE;
     const jobs = await this.sportEventChanged.sportEventChangedJobs(sportEvent, { kind: ContestEventChangeKind.RESCHEDULED, previousStart });
     const queue = this.requireJobs('tell the leagues an event moved');
     return { jobs, queued: () => queue.queued() };
@@ -262,7 +263,7 @@ export class EventLifecycleService {
    * event's contests. Without a job queue and settlement, nothing settles.
    */
   finishedGameSettlement(sportEventId: string, sportEventMatchId: string, now: Date = new Date()): FinishedGameSettlement {
-    if (!this.jobs || !this.contestSettlement) return { jobs: [], queued: () => undefined };
+    if (!this.jobs || !this.contestSettlement) return NO_JOBS_FOR_WRITE;
     const { jobs } = this;
     return {
       jobs: [settleGameContestsJob(jobs, sportEventId, sportEventMatchId, now)],

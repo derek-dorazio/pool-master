@@ -36,6 +36,7 @@ import { eventStoresRaceResults } from '../scoring-families/race-results';
 import { SportLeagueService } from '../sport-catalog/sport-league-service';
 import type { SportEventChangedNotice } from '../notifications/contest-notices';
 import type { BackgroundJobQueue } from '../background-jobs';
+import type { LeaderboardRebuilds } from '../contests/leaderboard-snapshots';
 import { EventLifecycleService, type FinishedSportEventSettlement, type ReleasedEditionContests } from './event-lifecycle-service';
 import { SportEventService } from './service';
 import { SportEventBracketService } from './sport-event-bracket-service';
@@ -55,7 +56,11 @@ export function createSportEventTierService(prisma: PrismaClient, logger?: Fasti
   });
 }
 
-export function createGolfScoreService(prisma: PrismaClient, logger?: FastifyBaseLogger): GolfScoreService {
+export function createGolfScoreService(
+  prisma: PrismaClient,
+  logger?: FastifyBaseLogger,
+  leaderboards?: Pick<LeaderboardRebuilds, 'forEvent'>,
+): GolfScoreService {
   return new GolfScoreService({
     events: new PrismaSportEventRepository(prisma),
     rounds: new PrismaSportEventRoundRepository(prisma),
@@ -65,35 +70,50 @@ export function createGolfScoreService(prisma: PrismaClient, logger?: FastifyBas
     golfRounds: new PrismaSportEventParticipantGolfRoundRepository(prisma),
     golfStandings: new PrismaSportEventParticipantGolfStandingRepository(prisma),
     storesGolfRoundScores: eventStoresGolfRoundScores,
+    leaderboards,
     logger,
   });
 }
 
 /** Each game's box score lines for a stat pool event (#935). */
-export function createStatLineService(prisma: PrismaClient, logger?: FastifyBaseLogger): StatLineService {
+export function createStatLineService(
+  prisma: PrismaClient,
+  logger?: FastifyBaseLogger,
+  leaderboards?: Pick<LeaderboardRebuilds, 'forEvent'>,
+): StatLineService {
   return new StatLineService({
     events: new PrismaSportEventRepository(prisma),
     rounds: new PrismaSportEventRoundRepository(prisma),
     field: new PrismaSportEventParticipantRepository(prisma),
     statLines: new PrismaSportEventParticipantStatLineRepository(prisma),
+    leaderboards,
     logger,
   });
 }
 
 /** The admin finishing order for a finish-position event (#622). */
-export function createRaceResultService(prisma: PrismaClient, logger?: FastifyBaseLogger): RaceResultService {
+export function createRaceResultService(
+  prisma: PrismaClient,
+  logger?: FastifyBaseLogger,
+  leaderboards?: Pick<LeaderboardRebuilds, 'forEvent'>,
+): RaceResultService {
   return new RaceResultService({
     events: new PrismaSportEventRepository(prisma),
     field: new PrismaSportEventParticipantRepository(prisma),
     participants: new PrismaParticipantRepository(prisma),
     raceResults: new PrismaSportEventParticipantRaceResultRepository(prisma),
     storesRaceResults: eventStoresRaceResults,
+    leaderboards,
     logger,
   });
 }
 
 /** An event's bracket of matches (#698), for an event whose sport plays one. */
-export function createSportEventBracketService(prisma: PrismaClient, logger?: FastifyBaseLogger): SportEventBracketService {
+export function createSportEventBracketService(
+  prisma: PrismaClient,
+  logger?: FastifyBaseLogger,
+  leaderboards?: Pick<LeaderboardRebuilds, 'forEvent'>,
+): SportEventBracketService {
   return new SportEventBracketService({
     sportEvents: new PrismaSportEventRepository(prisma),
     sportLeagues: new PrismaSportLeagueRepository(prisma),
@@ -106,6 +126,7 @@ export function createSportEventBracketService(prisma: PrismaClient, logger?: Fa
     valuations: new PrismaSportEventParticipantValuationRepository(prisma),
     predictions: new PrismaContestEntryMatchPredictionRepository(prisma),
     contests: new PrismaContestRepository(prisma),
+    leaderboards,
     logger,
   });
 }
@@ -127,11 +148,13 @@ export function createMatchResultService(
   prisma: PrismaClient,
   logger?: FastifyBaseLogger,
   contestActivation?: Pick<EventLifecycleService, 'activateContestsPastCutoff' | 'finishedGameSettlement'>,
+  leaderboards?: Pick<LeaderboardRebuilds, 'forEvent'>,
 ): MatchResultService {
   return new MatchResultService({
     sportEvents: new PrismaSportEventRepository(prisma),
     matches: new PrismaSportEventMatchRepository(prisma),
     contestActivation,
+    leaderboards,
     logger,
   });
 }
@@ -144,7 +167,11 @@ export function createMatchResultService(
 export const eventFieldCache: EventFieldCache = new ReadCache(readEventFieldCacheTtlMs(process.env));
 
 /** The event's field as every reader sees it — the event admin screens and the contest golf reads alike. */
-export function createSportEventParticipantService(prisma: PrismaClient, logger?: FastifyBaseLogger): SportEventParticipantService {
+export function createSportEventParticipantService(
+  prisma: PrismaClient,
+  logger?: FastifyBaseLogger,
+  leaderboards?: Pick<LeaderboardRebuilds, 'forEvent'>,
+): SportEventParticipantService {
   return new SportEventParticipantService({
     sportEvents: new PrismaSportEventRepository(prisma),
     field: new PrismaSportEventParticipantRepository(prisma),
@@ -152,6 +179,7 @@ export function createSportEventParticipantService(prisma: PrismaClient, logger?
     affiliations: new PrismaParticipantLeagueAffiliationRepository(prisma),
     matches: new PrismaSportEventMatchRepository(prisma),
     fieldCache: eventFieldCache,
+    leaderboards,
     logger,
   });
 }
@@ -165,6 +193,8 @@ export function createSportEventServices(
   prisma: PrismaClient,
   logger?: FastifyBaseLogger,
   lifecycle: EventLifecycleService = createEventLifecycleService(prisma, { logger }),
+  /** Every admin write that changes a board carries its rebuild job (#1466); without it, none are rebuilt. */
+  leaderboards?: Pick<LeaderboardRebuilds, 'forEvent'>,
 ): SportEventServices {
   const sports = new PrismaSportRepository(prisma);
   const sportLeagues = new PrismaSportLeagueRepository(prisma);
@@ -174,7 +204,7 @@ export function createSportEventServices(
 
   const rounds = new SportEventRoundService({ rounds: new PrismaSportEventRoundRepository(prisma), logger });
   const tiers = createSportEventTierService(prisma, logger);
-  const bracket = createSportEventBracketService(prisma, logger);
+  const bracket = createSportEventBracketService(prisma, logger, leaderboards);
   return {
     rounds,
     tiers,
@@ -189,13 +219,14 @@ export function createSportEventServices(
       bracket,
       lifecycle,
       contests: new PrismaContestRepository(prisma),
+      leaderboards,
       logger,
     }),
-    field: createSportEventParticipantService(prisma, logger),
-    golfScores: createGolfScoreService(prisma, logger),
-    raceResults: createRaceResultService(prisma, logger),
-    statLines: createStatLineService(prisma, logger),
-    matchResults: createMatchResultService(prisma, logger, lifecycle),
+    field: createSportEventParticipantService(prisma, logger, leaderboards),
+    golfScores: createGolfScoreService(prisma, logger, leaderboards),
+    raceResults: createRaceResultService(prisma, logger, leaderboards),
+    statLines: createStatLineService(prisma, logger, leaderboards),
+    matchResults: createMatchResultService(prisma, logger, lifecycle, leaderboards),
     sportLeagues: new SportLeagueService({ sports, sportLeagues, sportEvents: events, affiliations, participants, logger }),
   };
 }
@@ -215,6 +246,8 @@ export function createEventLifecycleService(
     sportEventChanged?: SportEventChangedNotice;
     contestSettlement?: FinishedSportEventSettlement;
     releasedEditionContests?: ReleasedEditionContests;
+    /** Rebuilds the event's contests' boards with each status change (#1466); without it, none are. */
+    leaderboards?: Pick<LeaderboardRebuilds, 'forEvent'>;
   } = {},
 ): EventLifecycleService {
   return new EventLifecycleService(
@@ -229,5 +262,6 @@ export function createEventLifecycleService(
     options.contestSettlement,
     options.releasedEditionContests,
     options.sportEventChanged,
+    options.leaderboards,
   );
 }

@@ -26,6 +26,22 @@ const waiting = (jobs: InMemoryBackgroundJobs) => jobs.rows
   .map((row) => ({ type: row.type, payload: row.payload }));
 
 describe('JobLeaderboardRebuilds', () => {
+  it('hands a write the event\'s rebuild job without queuing it, and wakes the runner only when the write says it committed (#1466)', () => {
+    const { jobs, rebuilds, runner } = setup();
+
+    const rebuild = rebuilds.forEvent('event-1');
+
+    expect(rebuild.jobs).toEqual([{
+      type: BackgroundJobType.REBUILD_LEADERBOARDS,
+      payload: { subject: LeaderboardRebuildSubject.EVENT, id: 'event-1' },
+      dedupeKey: `${BackgroundJobType.REBUILD_LEADERBOARDS}:EVENT:event-1`,
+    }]);
+    expect(waiting(jobs)).toEqual([]);
+    expect(runner.wake).not.toHaveBeenCalled();
+    rebuild.queued();
+    expect(runner.wake).toHaveBeenCalledTimes(1);
+  });
+
   it('queues one rebuild job per event and per contest a burst of writes names, however often each is named', async () => {
     const { jobs, rebuilds, runner } = setup();
 

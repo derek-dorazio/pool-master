@@ -5,6 +5,7 @@ import type { EventLifecycleService } from '../../../packages/core-api/src/modul
 import { MatchResultService, describeScoreProblem } from '../../../packages/core-api/src/modules/scoring-families/head-to-head/match-result-service';
 import { InMemorySportEvents, NO_PICKS_ON_EVENT } from '../../support/in-memory-sport-events';
 import { expectDefined } from '../../support/expect-defined';
+import { RecordingLeaderboardRebuilds, eventRebuildJob } from '../../support/recording-leaderboard-rebuilds';
 
 // The admin's match results against an in-memory store (#699): what a result saves (the winner,
 // the next match's side, every team's standing), what it refuses, and the correction lock. The
@@ -893,5 +894,64 @@ describe('MatchResultService on a reseeded bracket', () => {
     expect(standingOf(two.id)).toMatchObject({ position: 1, status: ParticipantStandingStatus.COMPLETE });
     expect(standingOf(one.id)).toMatchObject({ position: 2, status: ParticipantStandingStatus.ELIMINATED });
     expect(standingOf(six.id)?.status).toBe(ParticipantStandingStatus.ELIMINATED);
+  });
+});
+
+describe('MatchResultService — leaderboard rebuild (#1466)', () => {
+  /** The context's store, with a service that hands each write the event's rebuild. */
+  function rebuilding(store: InMemorySportEvents, contestActivation?: ConstructorParameters<typeof MatchResultService>[0]['contestActivation']) {
+    const leaderboards = new RecordingLeaderboardRebuilds();
+    const service = new MatchResultService({ sportEvents: store.sportEventRepo(), matches: store.matchRepo(), contestActivation, leaderboards, now: () => AS_OF });
+    return { service, leaderboards };
+  }
+
+  it('writes the rebuild job with a result, after the game\'s settling job, and wakes both once the result is written', async () => {
+    const { store, event } = await setup();
+    const settlement = gameSettlement();
+    const { service, leaderboards } = rebuilding(store, { activateContestsPastCutoff: async () => undefined, finishedGameSettlement: settlement.finishedGameSettlement });
+
+    await service.recordResult(event.id, 1, homeWins);
+
+    expect(store.backgroundJobs).toEqual([SETTLE_GAME_JOB, eventRebuildJob(event.id)]);
+    expect(settlement.queued).toHaveBeenCalledTimes(1);
+    expect(leaderboards.sportEventIds).toEqual([event.id]);
+  });
+
+  it('writes the rebuild job with a cleared result and with a cancelled game', async () => {
+    const context = await setup();
+    const { service, leaderboards } = rebuilding(context.store);
+    await service.recordResult(context.event.id, 1, homeWins);
+    await service.clearResult(context.event.id, 1);
+    const games = await week();
+    const weekly = rebuilding(games.store);
+    await weekly.service.cancelMatch(games.event.id, 1);
+
+    expect(context.store.backgroundJobs).toEqual([eventRebuildJob(context.event.id), eventRebuildJob(context.event.id)]);
+    expect(leaderboards.sportEventIds).toEqual([context.event.id, context.event.id]);
+    expect(games.store.backgroundJobs).toEqual([eventRebuildJob(games.event.id)]);
+    expect(weekly.leaderboards.sportEventIds).toEqual([games.event.id]);
+  });
+
+  it('writes the rebuild job with a quarter score saved and with one cleared, and none for clearing a quarter never scored', async () => {
+    const { store, event } = await setup({ sport: Sport.AMERICAN_FOOTBALL });
+    const { service, leaderboards } = rebuilding(store);
+
+    await service.recordPeriodScore(event.id, 1, 1, { homeScore: 7, awayScore: 0 });
+    await service.clearPeriodScore(event.id, 1, 1);
+    await service.clearPeriodScore(event.id, 1, 2);
+
+    expect(store.backgroundJobs).toEqual([eventRebuildJob(event.id), eventRebuildJob(event.id)]);
+    expect(leaderboards.sportEventIds).toEqual([event.id, event.id]);
+  });
+
+  it('wakes no runner when the result write carrying the rebuild fails', async () => {
+    const { store, event } = await setup();
+    const matches = { ...store.matchRepo(), applyResult: () => Promise.reject(new Error('result write failed')) };
+    const leaderboards = new RecordingLeaderboardRebuilds();
+    const service = new MatchResultService({ sportEvents: store.sportEventRepo(), matches, leaderboards, now: () => AS_OF });
+
+    await expect(service.recordResult(event.id, 1, homeWins)).rejects.toThrow('result write failed');
+    expect(leaderboards.handedOut).toEqual([event.id]);
+    expect(leaderboards.sportEventIds).toEqual([]);
   });
 });

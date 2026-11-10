@@ -4,7 +4,7 @@
  * flag and each runner's core standing (its place in the event) together, all or none.
  */
 
-import type { ParticipantStandingStatus, RaceResultStatus, SportEventParticipantRaceResult } from '../domain';
+import type { BackgroundJobRequest, ParticipantStandingStatus, RaceResultStatus, SportEventParticipantRaceResult } from '../domain';
 
 /** One runner's result, every value exactly as the admin sent it. */
 export interface RaceResultWrite {
@@ -33,6 +33,8 @@ export interface RaceResultApply {
   isOfficial: boolean;
   /** Created or replaced, one per runner with a result after the write. */
   standings: readonly RaceStandingWrite[];
+  /** Background jobs the result causes (the event's leaderboard rebuild, #1466), written with it. */
+  jobs?: readonly BackgroundJobRequest[];
 }
 
 export interface SportEventParticipantRaceResultRepository {

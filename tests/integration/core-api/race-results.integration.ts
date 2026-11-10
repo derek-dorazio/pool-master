@@ -13,8 +13,10 @@ import {
   getPrisma,
   setupIntegrationTests,
   teardownIntegrationTests,
+  withBackgroundJobsFailing,
 } from '../helpers';
 import { freshEventEdition } from '../../support/event-edition';
+import { eventRebuildJob } from '../../support/recording-leaderboard-rebuilds';
 
 // The finish-position extension (#622) against real Postgres: what the admin's finishing order
 // leaves in the tables, that it is all or none, the constraints the table holds on its own, and a
@@ -159,6 +161,29 @@ describe('SportEventParticipantRaceResultRepository', () => {
     await prisma.sportEventParticipant.delete({ where: { id: arrow.id } });
 
     await expect(prisma.sportEventParticipantRaceResult.count({ where: { sportEventParticipantId: arrow.id } })).resolves.toBe(0);
+  });
+});
+
+describe('SportEventParticipantRaceResultRepository — the leaderboard rebuild a result carries (#1466)', () => {
+  it('commits the rebuild job with the result', async () => {
+    const { prisma, event, arrow } = await seedRace();
+    const repo = new PrismaSportEventParticipantRaceResultRepository(getAppPrisma());
+
+    await repo.applyResults(event.id, { results: [write(arrow.id, 1)], isOfficial: true, standings: [standing(arrow.id, 1)], jobs: [eventRebuildJob(event.id)] });
+
+    await expect(prisma.backgroundJob.count({ where: { dedupeKey: eventRebuildJob(event.id).dedupeKey } })).resolves.toBe(1);
+  });
+
+  it('stores no result and no standing when the rebuild job cannot be written', async () => {
+    const { prisma, event, arrow } = await seedRace();
+    const repo = new PrismaSportEventParticipantRaceResultRepository(getAppPrisma());
+
+    await expect(withBackgroundJobsFailing('REBUILD_LEADERBOARDS', () => repo.applyResults(event.id, {
+      results: [write(arrow.id, 1)], isOfficial: true, standings: [standing(arrow.id, 1)], jobs: [eventRebuildJob(event.id)],
+    }))).rejects.toThrow();
+
+    await expect(repo.findBySportEvent(event.id)).resolves.toEqual([]);
+    await expect(prisma.sportEventParticipantStanding.count({ where: { sportEventParticipantId: arrow.id } })).resolves.toBe(0);
   });
 });
 

@@ -11,6 +11,26 @@ import type { BackgroundJobRepository } from '@poolmaster/shared/db';
 import type { BackgroundJobRequest, BackgroundJobType } from '@poolmaster/shared/domain';
 import { BACKGROUND_JOB_PAYLOADS, type BackgroundJobPayload } from './background-job-payloads';
 
+/**
+ * The jobs a write carries into its own transaction, and what to call once that write has
+ * committed (the runner's wake). A write that fails or is not made leaves `queued` uncalled.
+ */
+export interface JobsForWrite {
+  jobs: readonly BackgroundJobRequest[];
+  queued(): void;
+}
+
+/** No jobs, and nothing to wake: what a write carries when nothing it changes needs one. */
+export const NO_JOBS_FOR_WRITE: JobsForWrite = { jobs: [], queued: () => undefined };
+
+/** Several writes' jobs carried by one write: all of them, and each one's wake once it commits. */
+export function combineJobsForWrite(...writes: readonly JobsForWrite[]): JobsForWrite {
+  return {
+    jobs: writes.flatMap((write) => write.jobs),
+    queued: () => { for (const write of writes) write.queued(); },
+  };
+}
+
 export interface BackgroundJobOptions {
   /** Due at once when omitted. */
   runAt?: Date;
