@@ -145,6 +145,43 @@ describe('ProviderRegistry', () => {
   });
 });
 
+describe('ProviderRegistry with two providers serving one sport', () => {
+  let registry: ProviderRegistry;
+  const mock = createMockProvider({ providerId: 'mock-contest-feed' });
+  const balldontlie = createMockProvider({ providerId: 'balldontlie' });
+
+  beforeEach(() => {
+    registry = new ProviderRegistry();
+  });
+
+  it('keeps the primary as the sport\'s default while a secondary also serves it, whatever order they register in', () => {
+    registry.register('GOLF', balldontlie, 'SECONDARY');
+    registry.register('GOLF', mock, 'PRIMARY');
+
+    expect(registry.getProvider('GOLF')).toBe(mock);
+    expect(registry.getProvidersForSport('GOLF')).toEqual([balldontlie, mock]);
+    expect(registry.getProviderById('balldontlie')).toBe(balldontlie);
+  });
+
+  it('lets a later primary replace the sport\'s earlier one, which no longer serves the sport', () => {
+    registry.register('GOLF', mock, 'PRIMARY');
+    registry.register('GOLF', balldontlie, 'PRIMARY');
+
+    expect(registry.getProvider('GOLF')).toBe(balldontlie);
+    expect(registry.getProvidersForSport('GOLF')).toEqual([balldontlie]);
+    expect(registry.getProviderById('mock-contest-feed')).toBeNull();
+    expect(registry.getAllProviders()).toEqual([balldontlie]);
+  });
+
+  it('has no default and no providers for a sport only secondaries serve, or none does', () => {
+    registry.register('GOLF', balldontlie, 'SECONDARY');
+
+    expect(registry.getProvider('GOLF')).toBeNull();
+    expect(registry.getProvidersForSport('GOLF')).toEqual([balldontlie]);
+    expect(registry.getProvidersForSport('TENNIS')).toEqual([]);
+  });
+});
+
 // ---------------------------------------------------------------------------
 // IngestionScheduler
 // ---------------------------------------------------------------------------
@@ -179,7 +216,7 @@ describe('IngestionScheduler', () => {
       registry.register('GOLF', provider, 'PRIMARY');
 
       const scheduler = new IngestionScheduler(registry, callbacks);
-      const job = await scheduler.pollLiveScores('GOLF', 'evt-1');
+      const job = await scheduler.pollLiveScores('GOLF', 'mock-provider', 'evt-1');
 
       expect(job.status).toBe('COMPLETED');
       expect(job.recordsProcessed).toBe(1);

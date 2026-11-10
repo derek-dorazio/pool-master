@@ -14,6 +14,7 @@ import {
   resolveEventLifecycleStage,
   golfRoundScoreRows,
   resolveSportProviderId,
+  sportProviderOptions,
 } from './sport-admin-utils';
 import { fieldEntryFixture, participantFixture } from './sport-test-fixtures';
 import type { SportEventRoundDto } from '@/lib/api';
@@ -250,13 +251,25 @@ describe('sport-admin-utils: deriveSportEventReadiness', () => {
   });
 });
 
-describe('pool-master-3dg sport-admin-utils: resolveSportProviderId', () => {
-  it('returns the first provider covering the sport asked for, and null when none covers it', () => {
-    const providers = [
-      { providerId: 'espn', sportsCovered: ['NFL'] },
-      { providerId: 'mock-contest-feed', sportsCovered: ['GOLF', 'NBA'] },
-    ];
+describe('sport-admin-utils: provider resolution', () => {
+  const providers = [
+    { providerId: 'balldontlie', providerName: 'BALLDONTLIE', sportsCovered: ['GOLF'], primaryForSports: [] },
+    { providerId: 'espn', providerName: 'ESPN', sportsCovered: ['NFL'], primaryForSports: ['NFL'] },
+    { providerId: 'mock-contest-feed', providerName: 'Mock feed', sportsCovered: ['GOLF', 'NBA'], primaryForSports: ['GOLF', 'NBA'] },
+  ];
+
+  it('lists the providers covering a sport with its primary first, whatever order the list holds them in', () => {
+    expect(sportProviderOptions(providers, 'GOLF')).toEqual([
+      { providerId: 'mock-contest-feed', providerName: 'Mock feed' },
+      { providerId: 'balldontlie', providerName: 'BALLDONTLIE' },
+    ]);
+    expect(sportProviderOptions(providers, 'HORSE_RACING')).toEqual([]);
+    expect(sportProviderOptions(undefined, 'GOLF')).toEqual([]);
+  });
+
+  it('defaults a sport to its primary provider, to the first covering it when none is primary, and to null when none covers it', () => {
     expect(resolveSportProviderId(providers, 'GOLF')).toBe('mock-contest-feed');
+    expect(resolveSportProviderId([providers[0]], 'GOLF')).toBe('balldontlie');
     expect(resolveSportProviderId(providers, 'HORSE_RACING')).toBeNull();
     expect(resolveSportProviderId([], 'GOLF')).toBeNull();
     expect(resolveSportProviderId(undefined, 'GOLF')).toBeNull();

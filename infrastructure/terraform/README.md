@@ -54,6 +54,13 @@ Recommended usage:
 - Staging and prod bind explicitly to approved real providers later.
 - Do not use these variables to introduce silent fallback from real providers to the mock provider.
 
+Every bound provider is registered, not only the default: the default is the primary for its
+sports, and each other provider serves the events linked to it. Setting `balldontlie_api_key`
+on QA binds BALLDONTLIE beside the mock, stores the key as the
+`poolmaster-<env>-balldontlie-api-key` secret, and passes it to core-api as
+`BALLDONTLIE_API_KEY`. Left empty, BALLDONTLIE stays unbound. Once the secret exists, every
+apply must reuse it (the `apply-terraform` skill, step 3c), or the apply deletes it.
+
 ## The ALB Admits CloudFront Only
 
 The ALB security group accepts port 80 from CloudFront's origin-facing prefix list

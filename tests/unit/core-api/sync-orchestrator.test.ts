@@ -32,6 +32,7 @@ describe('SyncOrchestrator request model', () => {
       scope: {
         type: 'EVENT',
         sport: Sport.GOLF,
+        providerId: 'mock-provider',
         eventId: '  golf-open-championship-2026  ',
         feeds: ['EVENTPARTICIPANTS', 'EVENTLIVESCORES', 'EVENTPARTICIPANTS'],
         mockEventState: 'live',
@@ -44,6 +45,7 @@ describe('SyncOrchestrator request model', () => {
     expect(normalized.scope).toEqual({
       type: 'EVENT',
       sport: Sport.GOLF,
+      providerId: 'mock-provider',
       eventId: 'golf-open-championship-2026',
       feeds: ['EVENTPARTICIPANTS', 'EVENTLIVESCORES'],
       mockEventState: 'live',
@@ -61,6 +63,7 @@ describe('SyncOrchestrator request model', () => {
       scope: {
         type: 'EVENT',
         sport: Sport.GOLF,
+        providerId: 'mock-provider',
         eventId: 'golf-masters-2026',
         feeds: ['EVENTLIVESCORES'],
       },
@@ -72,6 +75,7 @@ describe('SyncOrchestrator request model', () => {
       scope: {
         type: 'EVENT',
         sport: Sport.GOLF,
+        providerId: 'mock-provider',
         eventId: 'golf-masters-2026',
         feeds: ['EVENTLIVESCORES'],
         mockEventState: undefined,
@@ -88,6 +92,7 @@ describe('SyncOrchestrator request model', () => {
       scope: {
         type: 'EVENT',
         sport: Sport.GOLF,
+        providerId: 'mock-provider',
         eventId: 'golf-masters-2026',
         feeds: ['EVENTLIVESCORES'],
       },
@@ -99,6 +104,7 @@ describe('SyncOrchestrator request model', () => {
       scope: {
         type: 'EVENT',
         sport: Sport.GOLF,
+        providerId: 'mock-provider',
         eventId: 'golf-masters-2026',
         feeds: ['EVENTLIVESCORES'],
       },
@@ -112,6 +118,7 @@ describe('SyncOrchestrator request model', () => {
       scope: {
         type: 'EVENT',
         sport: Sport.GOLF,
+        providerId: 'mock-provider',
         eventId: 'golf-open-championship-2026',
         feeds: [],
       },
@@ -123,6 +130,7 @@ describe('SyncOrchestrator request model', () => {
       scope: {
         type: 'EVENT',
         sport: Sport.GOLF,
+        providerId: 'mock-provider',
         eventId: 'golf-open-championship-2026',
         // @ts-expect-error -- EVENTSCHEDULE is no longer a member of IngestionFeedType.
         feeds: ['EVENTSCHEDULE'],
@@ -143,6 +151,7 @@ describe('SyncOrchestrator request model', () => {
         scope: {
           type: 'EVENT',
           sport: Sport.GOLF,
+          providerId: 'mock-provider',
           eventId: 'golf-masters-2026',
           feeds: [retired as IngestionFeedType],
         },
@@ -165,6 +174,7 @@ describe('SyncOrchestrator request model', () => {
       scope: {
         type: 'EVENT',
         sport: Sport.GOLF,
+        providerId: 'mock-provider',
         eventId: '   ',
         feeds: ['EVENTLIVESCORES'],
       },
@@ -176,6 +186,7 @@ describe('SyncOrchestrator request model', () => {
       scope: {
         type: 'EVENT',
         sport: Sport.GOLF,
+        providerId: 'mock-provider',
         eventId: 'golf-open-championship-2026',
         feeds: ['EVENTLIVESCORES'],
         mockEventState: 'live',

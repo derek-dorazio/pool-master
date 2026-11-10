@@ -27,6 +27,7 @@ import {
 import type { SportEventDto } from '@/lib/api';
 import { getScoringFamilyAdminUi } from './scoring-family-admin';
 import { useProvidersQuery } from './use-providers-query';
+import { SportProviderChoice } from './sport-provider-choice';
 
 type PickerCatalogEvent = ProviderCatalogEvent & { id: string };
 
@@ -215,6 +216,17 @@ export function SportEventScoreSourceCard({
           linkMutation.isError
             ? extractErrorMessage(linkMutation.error, { fallback: 'The link was rejected.' })
             : undefined
+        }
+        filters={
+          <SportProviderChoice
+            onChange={(chosen) => {
+              catalog.setProviderId(chosen);
+              setSelectedCatalogId(null);
+            }}
+            providerId={providerId}
+            providers={catalog.providers}
+            testId="root-admin-sport-event-link-provider"
+          />
         }
         getItemLabel={(item) => item.name}
         isPending={linkMutation.isPending}

@@ -119,6 +119,14 @@ request it sends, to a vendored copy of that document; `npm run balldontlie:cont
 the live document with the copy and, with `BALLDONTLIE_API_KEY` set, runs the adapter against the real
 API so any drift shows up as the field that broke.
 
+`requestsPerMinute` paces requests within one process. The API and the background worker each pace
+on their own, so together they can go over the plan's limit; the client then waits out the vendor's
+429 and retries.
+
+Every bound provider is registered: the default as each of its sports' primary, the others as
+secondaries. An event syncs from the provider it is linked to, so the mock and BALLDONTLIE can
+both serve golf on QA, and a root admin picks the provider wherever more than one serves a sport.
+
 **Routes:** root-admin sync is event-scoped: `POST /api/v1/ingestion/sports/:sport/events/:eventId/sync` runs the event field (`EVENTPARTICIPANTS`) and live-score (`EVENTLIVESCORES`) feeds. Scheduled ingestion uses the internal scheduler directly for the same two feeds. There is no sport-level sync and no scheduled schedule or results pull (#126); events are created and linked by the root admin, and `getUpcomingEvents` is read only on demand.
 
 ---

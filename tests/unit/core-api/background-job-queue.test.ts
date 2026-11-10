@@ -13,6 +13,7 @@ type SyncPayload = BackgroundJobPayload<typeof BackgroundJobType.MANUAL_EVENT_SY
 const PAYLOAD: SyncPayload = {
   syncRunIds: ['00000000-0000-4000-8000-000000000001'],
   sport: Sport.GOLF,
+  providerId: 'mock-provider',
   eventId: 'golf-open-championship-2026',
 };
 

@@ -180,32 +180,52 @@ export function registerConfiguredProviders(
     throw new Error(message);
   }
 
-  const providerFactory = providerFactories[bindings.defaultProviderId];
+  // Every bound provider is built before any is registered, so one bad binding registers none.
+  // The default serves its sports as PRIMARY; the rest serve the events linked to them (#1495).
+  const bound: Array<[string, ProviderBinding]> = [
+    [bindings.defaultProviderId, binding],
+    ...Object.entries(bindings.providers).flatMap(([providerId, other]): Array<[string, ProviderBinding]> =>
+      providerId !== bindings.defaultProviderId && other ? [[providerId, other]] : []),
+  ];
+  const providers = bound.map(([providerId, providerBinding]) => buildProvider(providerId, providerBinding, env, logger));
+
+  for (const provider of providers) {
+    const priority = provider.providerId === bindings.defaultProviderId ? 'PRIMARY' : 'SECONDARY';
+    for (const sport of provider.sportsCovered) {
+      registry.register(sport, provider, priority);
+    }
+    logger?.info(
+      {
+        action: 'ingestion.providers.registered',
+        providerId: provider.providerId,
+        priority,
+        sportsCovered: provider.sportsCovered,
+      },
+      'Registered configured sport data provider.',
+    );
+  }
+}
+
+function buildProvider(
+  providerId: string,
+  binding: ProviderBinding,
+  env: NodeJS.ProcessEnv,
+  logger?: FastifyBaseLogger,
+): SportDataProvider {
+  const providerFactory = providerFactories[providerId];
   if (!providerFactory) {
-    const message = `Unsupported sport data provider "${bindings.defaultProviderId}" configured for this service runtime.`;
+    const message = `Unsupported sport data provider "${providerId}" configured for this service runtime.`;
     logger?.error(
       {
         action: 'ingestion.providers.unsupported',
-        providerId: bindings.defaultProviderId,
+        providerId,
       },
       message,
     );
     throw new Error(message);
   }
 
-  requireMockProviderAllowed(bindings.defaultProviderId, env, logger);
+  requireMockProviderAllowed(providerId, env, logger);
 
-  const provider = providerFactory(binding, env);
-  for (const sport of provider.sportsCovered) {
-    registry.register(sport, provider, 'PRIMARY');
-  }
-
-  logger?.info(
-    {
-      action: 'ingestion.providers.registered',
-      providerId: provider.providerId,
-      sportsCovered: provider.sportsCovered,
-    },
-    'Registered configured sport data provider.',
-  );
+  return providerFactory(binding, env);
 }

@@ -34,6 +34,7 @@ import {
 } from './use-provider-catalog';
 import { buildSportEventPath, capitalize } from './manage-navigation';
 import { useManagedSport } from './use-managed-sport';
+import { SportProviderChoice } from './sport-provider-choice';
 
 
 function defaultWindowValue(offsetDays: number, timeZone: string): string {
@@ -124,6 +125,12 @@ export function SportEventProviderBrowse({
 
       {!selectedEvent ? (
         <Tile>
+          <SportProviderChoice
+            onChange={catalog.setProviderId}
+            providerId={providerId}
+            providers={catalog.providers}
+            testId="root-admin-sport-event-create-provider"
+          />
           <div className="grid gap-4 sm:grid-cols-3">
             <FormField label="From">
               <DateTimeField

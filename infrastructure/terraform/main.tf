@@ -47,14 +47,22 @@ locals {
   services                             = concat(["core-api"], local.qa_only_services)
   mock_provider_base_url               = "http://mock-contest-feed-provider.${var.environment}.${var.internal_service_discovery_domain}:3105"
   resolved_sport_data_default_provider = trimspace(var.sport_data_default_provider) != "" ? var.sport_data_default_provider : (var.environment == "qa" ? "mock-contest-feed" : "")
+  # #1495 — BALLDONTLIE is bound only once its key is set, since its adapter refuses to start without one.
+  balldontlie_enabled = nonsensitive(trimspace(var.balldontlie_api_key) != "")
+  balldontlie_binding = local.balldontlie_enabled ? {
+    "balldontlie" = {
+      baseUrl           = "https://api.balldontlie.io"
+      requestsPerMinute = var.balldontlie_requests_per_minute
+    }
+  } : {}
   resolved_sport_data_provider_bindings_json = trimspace(var.sport_data_provider_bindings_json) != "" ? var.sport_data_provider_bindings_json : (
     var.environment == "qa"
     ? jsonencode({
-      providers = {
+      providers = merge({
         "mock-contest-feed" = {
           baseUrl = local.mock_provider_base_url
         }
-      }
+      }, local.balldontlie_binding)
     })
     : "{}"
   )
@@ -522,9 +530,29 @@ resource "aws_iam_role_policy" "ecs_execution_jwt_secret" {
     Statement = [{
       Effect   = "Allow"
       Action   = ["secretsmanager:GetSecretValue"]
-      Resource = [aws_secretsmanager_secret.jwt_secret.arn]
+      Resource = concat([aws_secretsmanager_secret.jwt_secret.arn], aws_secretsmanager_secret.balldontlie_api_key[*].arn)
     }]
   })
+}
+
+# #1495 — the BALLDONTLIE API key, only once one is supplied.
+resource "aws_secretsmanager_secret" "balldontlie_api_key" {
+  count = local.balldontlie_enabled ? 1 : 0
+
+  name        = "${local.name_prefix}-balldontlie-api-key"
+  description = "BALLDONTLIE API key for ${local.name_prefix} core-api (#1495)."
+
+  tags = {
+    Service = "core-api"
+    Purpose = "sport-data-provider-key"
+  }
+}
+
+resource "aws_secretsmanager_secret_version" "balldontlie_api_key" {
+  count = local.balldontlie_enabled ? 1 : 0
+
+  secret_id     = aws_secretsmanager_secret.balldontlie_api_key[0].id
+  secret_string = var.balldontlie_api_key
 }
 
 resource "aws_iam_role" "ecs_task" {
@@ -819,9 +847,10 @@ resource "aws_ecs_task_definition" "core_api" {
     # pool-master-rop.76.1 — JWT_SECRET injected from Secrets Manager.
     # ECS resolves the ARN at task start and exposes the value in the
     # container's process.env. The core-api bootstrap throws if unset.
-    secrets = [
-      { name = "JWT_SECRET", valueFrom = aws_secretsmanager_secret.jwt_secret.arn },
-    ]
+    secrets = concat(
+      [{ name = "JWT_SECRET", valueFrom = aws_secretsmanager_secret.jwt_secret.arn }],
+      [for secret in aws_secretsmanager_secret.balldontlie_api_key : { name = "BALLDONTLIE_API_KEY", valueFrom = secret.arn }],
+    )
     logConfiguration = {
       logDriver = "awslogs"
       options = {

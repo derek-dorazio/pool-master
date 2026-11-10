@@ -73,6 +73,7 @@ describe('RootAdminRunEventSyncPage', () => {
             providerName: 'Mock contest feed',
             status: 'HEALTHY',
             sportsCovered: ['GOLF'],
+            primaryForSports: ['GOLF'],
           },
         ],
       },
@@ -90,6 +91,7 @@ describe('RootAdminRunEventSyncPage', () => {
         events: [
           {
             id: 'event-internal-1',
+            providerId: 'mock-contest-feed',
             externalId: 'golf-masters-2026',
             sport: 'GOLF',
             name: 'Manual Test Golf Tournament',
@@ -129,7 +131,7 @@ describe('RootAdminRunEventSyncPage', () => {
     expect(screen.getByTestId('root-admin-event-sync-now')).toBeDisabled();
 
     fireEvent.change(screen.getByTestId('root-admin-event-sync-event-id'), {
-      target: { value: 'golf-masters-2026' },
+      target: { value: 'event-internal-1' },
     });
 
     expect(screen.getByTestId('root-admin-event-sync-now')).toBeEnabled();
@@ -142,6 +144,7 @@ describe('RootAdminRunEventSyncPage', () => {
           eventId: 'golf-masters-2026',
         },
         body: {
+          providerId: 'mock-contest-feed',
           feeds: ['EVENTPARTICIPANTS'],
         },
       });
@@ -223,7 +226,7 @@ describe('RootAdminRunEventSyncPage', () => {
       target: { value: 'live' },
     });
     fireEvent.change(screen.getByTestId('root-admin-event-sync-event-id'), {
-      target: { value: 'golf-masters-2026' },
+      target: { value: 'event-internal-1' },
     });
 
     expect(screen.getByTestId('root-admin-event-sync-now')).toBeEnabled();
@@ -236,6 +239,7 @@ describe('RootAdminRunEventSyncPage', () => {
           eventId: 'golf-masters-2026',
         },
         body: {
+          providerId: 'mock-contest-feed',
           feeds: ['EVENTLIVESCORES'],
           mockEventState: 'live',
         },
@@ -247,7 +251,7 @@ describe('RootAdminRunEventSyncPage', () => {
     listProvidersMock.mockResolvedValue({
       data: {
         providers: [
-          { providerId: 'espn', providerName: 'ESPN', status: 'HEALTHY', sportsCovered: ['BASKETBALL'] },
+          { providerId: 'espn', providerName: 'ESPN', status: 'HEALTHY', sportsCovered: ['BASKETBALL'], primaryForSports: ['BASKETBALL'] },
         ],
       },
     });
@@ -266,7 +270,7 @@ describe('RootAdminRunEventSyncPage', () => {
 
     await screen.findByRole('option', { name: /Manual Test Golf Tournament/ });
     fireEvent.change(screen.getByTestId('root-admin-event-sync-event-id'), {
-      target: { value: 'golf-masters-2026' },
+      target: { value: 'event-internal-1' },
     });
     expect(screen.getByTestId('root-admin-event-sync-now')).toBeEnabled();
 
@@ -283,8 +287,8 @@ describe('RootAdminRunEventSyncPage', () => {
     listProvidersMock.mockResolvedValue({
       data: {
         providers: [
-          { providerId: 'mock-contest-feed', providerName: 'Mock contest feed', status: 'HEALTHY', sportsCovered: ['GOLF'] },
-          { providerId: 'espn', providerName: 'ESPN', status: 'HEALTHY', sportsCovered: ['BASKETBALL'] },
+          { providerId: 'mock-contest-feed', providerName: 'Mock contest feed', status: 'HEALTHY', sportsCovered: ['GOLF'], primaryForSports: ['GOLF'] },
+          { providerId: 'espn', providerName: 'ESPN', status: 'HEALTHY', sportsCovered: ['BASKETBALL'], primaryForSports: ['BASKETBALL'] },
         ],
       },
     });
@@ -292,6 +296,7 @@ describe('RootAdminRunEventSyncPage', () => {
       data: {
         events: [{
           id: `event-${query.sport}`,
+          providerId: query.sport === 'GOLF' ? 'mock-contest-feed' : 'espn',
           externalId: `${query.sport.toLowerCase()}-event`,
           sport: query.sport,
           name: `${query.sport} event`,
@@ -323,15 +328,61 @@ describe('RootAdminRunEventSyncPage', () => {
     expect(screen.queryByText('Mock event state: live')).not.toBeInTheDocument();
     expect(await screen.findByRole('option', { name: /BASKETBALL event/ })).toBeInTheDocument();
     fireEvent.change(screen.getByTestId('root-admin-event-sync-event-id'), {
-      target: { value: 'basketball-event' },
+      target: { value: 'event-BASKETBALL' },
     });
     fireEvent.click(screen.getByTestId('root-admin-event-sync-now'));
 
     await waitFor(() => {
       expect(submitEventSyncMock).toHaveBeenCalledWith({
         path: { sport: 'BASKETBALL', eventId: 'basketball-event' },
-        body: { feeds: ['EVENTPARTICIPANTS'] },
+        body: { providerId: 'espn', feeds: ['EVENTPARTICIPANTS'] },
       });
     });
+  });
+  it('sends the chosen event\'s own provider, and narrows to the mock feed\'s events once a mock state is set', async () => {
+    listProvidersMock.mockResolvedValue({
+      data: {
+        providers: [
+          { providerId: 'balldontlie', providerName: 'BALLDONTLIE', status: 'HEALTHY', sportsCovered: ['GOLF'], primaryForSports: [] },
+          { providerId: 'mock-contest-feed', providerName: 'Mock contest feed', status: 'HEALTHY', sportsCovered: ['GOLF'], primaryForSports: ['GOLF'] },
+        ],
+      },
+    });
+    const linkedEvent = {
+      sport: 'GOLF',
+      venue: 'QA Course',
+      location: 'Test City',
+      status: 'SCHEDULED',
+      startDate: '2026-04-27T16:00:00.000Z',
+      endDate: null,
+      participantCount: 144,
+      readinessStatus: 'CONTEST_ELIGIBLE',
+      readinessReasons: [],
+      contestEligible: true,
+      syncScope: 'SCORES_ONLY',
+    };
+    listEventsMock.mockResolvedValue({
+      data: {
+        events: [
+          { ...linkedEvent, id: 'event-bdl', providerId: 'balldontlie', externalId: '41', name: 'BALLDONTLIE Open' },
+          { ...linkedEvent, id: 'event-mock', providerId: 'mock-contest-feed', externalId: '41', name: 'Mock Open' },
+        ],
+      },
+    });
+    renderPage();
+
+    expect(await screen.findByRole('option', { name: /BALLDONTLIE Open/ })).toBeInTheDocument();
+    fireEvent.change(screen.getByTestId('root-admin-event-sync-event-id'), { target: { value: 'event-bdl' } });
+    fireEvent.click(screen.getByTestId('root-admin-event-sync-now'));
+    await waitFor(() => {
+      expect(submitEventSyncMock).toHaveBeenCalledWith({
+        path: { sport: 'GOLF', eventId: '41' },
+        body: { providerId: 'balldontlie', feeds: ['EVENTPARTICIPANTS'] },
+      });
+    });
+
+    fireEvent.change(screen.getByTestId('root-admin-event-sync-mock-event-state'), { target: { value: 'open' } });
+    expect(screen.queryByRole('option', { name: /BALLDONTLIE Open/ })).not.toBeInTheDocument();
+    expect(screen.getByRole('option', { name: /Mock Open/ })).toBeInTheDocument();
   });
 });

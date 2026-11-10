@@ -317,23 +317,40 @@ export function deriveSportEventReadiness(
   return { label: 'Ready to release', tone: 'info', reasons: [] };
 }
 
-// --- Provider resolution (plans/124 §4.4) ---
+// --- Provider resolution (plans/124 §4.4, #1495) ---
 //
-// listProviderCatalogEvents needs a providerId. There is no dedicated
-// "which provider serves this sport" endpoint in this slice, so the golf
-// provider is resolved from the provider-health list the sync lane already
-// exposes: the first provider whose sportsCovered includes the sport.
+// listProviderCatalogEvents needs a providerId, resolved from the provider-health list the
+// sync lane already exposes. More than one provider can cover a sport (the QA mock beside
+// BALLDONTLIE); the one marked primary for it comes first and is the default.
 
+export type SportProviderOption = {
+  providerId: string;
+  providerName: string;
+};
+
+type ProviderCoverage = SportProviderOption & {
+  sportsCovered: readonly string[];
+  primaryForSports: readonly string[];
+};
+
+/** The providers covering the sport, its primary first; empty when none does. */
+export function sportProviderOptions(
+  providers: ReadonlyArray<ProviderCoverage> | undefined,
+  sport: Sport,
+): SportProviderOption[] {
+  const covering = (providers ?? []).filter((provider) => provider.sportsCovered.includes(sport));
+  return [
+    ...covering.filter((provider) => provider.primaryForSports.includes(sport)),
+    ...covering.filter((provider) => !provider.primaryForSports.includes(sport)),
+  ].map(({ providerId, providerName }) => ({ providerId, providerName }));
+}
+
+/** The sport's default provider: its primary, else the first covering it; null when none does. */
 export function resolveSportProviderId(
-  providers:
-    | ReadonlyArray<{ providerId: string; sportsCovered: readonly string[] }>
-    | undefined,
+  providers: ReadonlyArray<ProviderCoverage> | undefined,
   sport: Sport,
 ): string | null {
-  return (
-    providers?.find((provider) => provider.sportsCovered.includes(sport))
-      ?.providerId ?? null
-  );
+  return sportProviderOptions(providers, sport)[0]?.providerId ?? null;
 }
 
 // --- Player status (Participant.status) ---

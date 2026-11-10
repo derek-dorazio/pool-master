@@ -37,6 +37,8 @@ export type SyncActorContext = SystemSyncActor | RootAdminSyncActor;
 export interface EventSyncScopeInput {
   type: 'EVENT';
   sport: Sport;
+  /** The provider the event is linked to; its sync reads that provider and no other (#1495). */
+  providerId: string;
   eventId: string;
   feeds: readonly IngestionFeedType[];
   mockEventState?: MockEventState;
@@ -53,6 +55,7 @@ export interface SyncOrchestratorRequest {
 export interface NormalizedEventSyncScope {
   type: 'EVENT';
   sport: Sport;
+  providerId: string;
   eventId: string;
   feeds: EventSyncFeed[];
   mockEventState?: MockEventState;
@@ -132,6 +135,7 @@ function normalizeScope(request: SyncOrchestratorRequest): NormalizedSyncScope {
   return {
     type: 'EVENT',
     sport: request.scope.sport,
+    providerId: request.scope.providerId,
     eventId,
     feeds: normalizeEventFeeds(request.scope.feeds),
     mockEventState: request.scope.mockEventState,

@@ -97,6 +97,7 @@ describe('SDK Functional: Root Admin', () => {
         eventId: 'masters-2026',
       },
       body: {
+        providerId: 'mock-contest-feed',
         feeds: ['EVENTLIVESCORES'],
       },
     });

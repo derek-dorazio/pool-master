@@ -103,7 +103,7 @@ describe('ProviderSyncRunLedger', () => {
     const normalizedRequest = new SyncOrchestrator({ now: () => now }).normalizeRequest({
       source: 'MANUAL',
       actor: { type: 'ROOT_ADMIN', userId: 'admin-1', email: 'admin@example.com' },
-      scope: { type: 'EVENT', sport: Sport.GOLF, eventId: 'event-1', feeds: ['EVENTPARTICIPANTS', 'EVENTLIVESCORES'] },
+      scope: { type: 'EVENT', sport: Sport.GOLF, providerId: 'mock-provider', eventId: 'event-1', feeds: ['EVENTPARTICIPANTS', 'EVENTLIVESCORES'] },
     });
     const syncRuns = inMemorySyncRuns();
     const ledger = new ProviderSyncRunLedger(syncRuns);
@@ -132,6 +132,7 @@ describe('ProviderSyncRunLedger', () => {
       scope: {
         type: 'EVENT',
         sport: Sport.GOLF,
+        providerId: 'mock-provider',
         eventId: 'event-1',
         feeds: ['EVENTPARTICIPANTS'],
       },

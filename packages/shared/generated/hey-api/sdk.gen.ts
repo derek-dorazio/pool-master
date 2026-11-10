@@ -2502,7 +2502,7 @@ export const getProviderSyncRun = <ThrowOnError extends boolean = false>(options
 /**
  * Submit a manual event sync
  *
- * Submits one sync run per requested event-level feed for the provider event `eventId`. Refused with 409 when a feed is not allowed by the event's syncScope. The runs execute asynchronously after acceptance.
+ * Submits one sync run per requested event-level feed for the provider event `eventId` of the provider `providerId` names, which must serve `sport` (404 otherwise). Refused with 409 when a feed is not allowed by the event's syncScope. The runs execute asynchronously after acceptance.
  */
 export const submitEventSync = <ThrowOnError extends boolean = false>(options: Options<SubmitEventSyncData, ThrowOnError>): RequestResult<SubmitEventSyncResponses, SubmitEventSyncErrors, ThrowOnError> => (options.client ?? client).post<SubmitEventSyncResponses, SubmitEventSyncErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

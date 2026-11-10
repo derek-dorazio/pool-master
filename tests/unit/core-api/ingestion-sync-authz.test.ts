@@ -96,6 +96,7 @@ describe('pool-master-rop.68.4.1 ingestion sync route authorization', () => {
       url: '/api/v1/ingestion/sports/GOLF/events/event-1/sync',
       headers: authHeaders('member-user', false),
       payload: {
+        providerId: 'mock-provider',
         feeds: ['EVENTLIVESCORES'],
       },
     });
@@ -116,6 +117,7 @@ describe('pool-master-rop.68.4.1 ingestion sync route authorization', () => {
       url: '/api/v1/ingestion/sports/GOLF/events/event-1/sync',
       headers: authHeaders('root-admin-user', true),
       payload: {
+        providerId: 'mock-provider',
         feeds: ['EVENTLIVESCORES'],
       },
     });
@@ -123,9 +125,26 @@ describe('pool-master-rop.68.4.1 ingestion sync route authorization', () => {
     expect(ProviderManualSyncSubmissionResponseSchema.safeParse(eventRes.json()).success).toBe(true);
     expect(providerService.syncEventData).toHaveBeenCalledWith({
       sport: 'GOLF',
+      providerId: 'mock-provider',
       eventId: 'event-1',
       feeds: ['EVENTLIVESCORES'],
     }, 'root-admin-user', 'root-admin-user@example.test');
+
+    await app.close();
+  });
+
+  it('refuses with 400 an event sync that names no provider, since the event is synced from the provider it is linked to', async () => {
+    const { app, providerService } = await buildIngestionSyncApp();
+
+    const eventRes = await app.inject({
+      method: 'POST',
+      url: '/api/v1/ingestion/sports/GOLF/events/event-1/sync',
+      headers: authHeaders('root-admin-user', true),
+      payload: { feeds: ['EVENTLIVESCORES'] },
+    });
+
+    expect(eventRes.statusCode).toBe(400);
+    expect(providerService.syncEventData).not.toHaveBeenCalled();
 
     await app.close();
   });
@@ -141,6 +160,7 @@ describe('pool-master-rop.68.4.1 ingestion sync route authorization', () => {
       url: '/api/v1/ingestion/sports/GOLF/events/event-1/sync',
       headers: authHeaders('root-admin-user', true),
       payload: {
+        providerId: 'mock-provider',
         feeds: ['EVENTLIVESCORES'],
       },
     });

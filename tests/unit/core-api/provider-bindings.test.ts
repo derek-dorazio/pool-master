@@ -305,5 +305,41 @@ describe('provider bindings', () => {
       expect(() => registerConfiguredProviders(new ProviderRegistry(), bdlEnv({ ...fullBinding, requestsPerMinute: 0 }, 'a-key')))
         .toThrow('BALLDONTLIE requestsPerMinute must be a whole number of at least 1, not 0.');
     });
+
+    it('registers BALLDONTLIE beside the mock when both are bound, the default as golf\'s primary and the other as a secondary', () => {
+      const registry = new ProviderRegistry();
+
+      registerConfiguredProviders(registry, {
+        ...LOCAL,
+        SPORT_DATA_DEFAULT_PROVIDER: 'mock-contest-feed',
+        SPORT_DATA_PROVIDER_BINDINGS_JSON: JSON.stringify({
+          providers: {
+            'mock-contest-feed': { baseUrl: 'http://mock-contest-feed-provider.qa.poolmaster.internal:3105' },
+            balldontlie: fullBinding,
+          },
+        }),
+        BALLDONTLIE_API_KEY: 'a-key',
+      });
+
+      expect(registry.getProvider(Sport.GOLF)?.providerId).toBe('mock-contest-feed');
+      expect(registry.getProvidersForSport(Sport.GOLF).map((provider) => provider.providerId).sort()).toEqual(['balldontlie', 'mock-contest-feed']);
+      expect(registry.getProviderById('balldontlie')?.providerId).toBe('balldontlie');
+    });
+  });
+
+  it('fails startup and registers nothing, not even the default, when another bound provider is unsupported', () => {
+    const registry = new ProviderRegistry();
+
+    expect(() => registerConfiguredProviders(registry, {
+      ...LOCAL,
+      SPORT_DATA_DEFAULT_PROVIDER: 'mock-contest-feed',
+      SPORT_DATA_PROVIDER_BINDINGS_JSON: JSON.stringify({
+        providers: {
+          'mock-contest-feed': { baseUrl: 'http://mock-contest-feed-provider.qa.poolmaster.internal:3105' },
+          'retired-feed': { baseUrl: 'https://retired.example.test' },
+        },
+      }),
+    })).toThrow('Unsupported sport data provider "retired-feed" configured for this service runtime.');
+    expect(registry.getAllProviders()).toEqual([]);
   });
 });

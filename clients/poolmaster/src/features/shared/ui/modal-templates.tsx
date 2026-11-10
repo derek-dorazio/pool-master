@@ -191,6 +191,8 @@ export type PickerModalProps<TItem extends PickerModalItem> =
     canApply?: boolean;
     emptyMessage?: ReactNode;
     errorMessage?: ReactNode;
+    /** Fields shown above the search, such as a choice of source. */
+    filters?: ReactNode;
     getItemLabel: (item: TItem) => string;
     isPending?: boolean;
     itemTestIdPrefix?: string;
@@ -212,6 +214,7 @@ export function PickerModal<TItem extends PickerModalItem>({
   description,
   emptyMessage = "No options are available.",
   errorMessage,
+  filters,
   getItemLabel,
   isPending = false,
   itemTestIdPrefix = "picker-modal-item",
@@ -259,6 +262,7 @@ export function PickerModal<TItem extends PickerModalItem>({
       testId={testId}
       title={title}
     >
+      {filters ? <div className={search ? "mb-4" : undefined}>{filters}</div> : null}
       {search ? (
         <FormField label={search.label}>
           <Input
