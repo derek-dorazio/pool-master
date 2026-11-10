@@ -1,12 +1,15 @@
+import { Eye, EyeOff } from "lucide-react";
 import {
   cloneElement,
   isValidElement,
   useEffect,
   useId,
   useRef,
+  useState,
   type ComponentProps,
   type ReactNode,
 } from "react";
+import { Button } from "./button";
 import { cn } from "./class-names";
 
 type FormFieldProps = {
@@ -81,6 +84,43 @@ export type InputProps = ComponentProps<"input">;
 
 export function Input({ className, ...props }: InputProps) {
   return <input className={cn(controlClassName, className)} {...props} />;
+}
+
+export type PasswordInputProps = Omit<InputProps, "type">;
+
+/**
+ * A password box with an eye button inside its right edge that shows or hides what was typed.
+ * It starts hidden. The button's name stays "Show password" and `aria-pressed` says whether it
+ * is on, so a screen reader hears one control with a state rather than a label that flips.
+ */
+export function PasswordInput({ className, id, ...props }: PasswordInputProps) {
+  const generatedId = useId();
+  const inputId = id ?? generatedId;
+  const [isVisible, setIsVisible] = useState(false);
+  const Icon = isVisible ? EyeOff : Eye;
+
+  return (
+    <div className="relative">
+      <Input
+        className={cn("pr-14", className)}
+        id={inputId}
+        {...props}
+        type={isVisible ? "text" : "password"}
+      />
+      <Button
+        aria-controls={inputId}
+        aria-label="Show password"
+        aria-pressed={isVisible}
+        className="absolute right-1 top-1/2 h-10 w-10 -translate-y-1/2 rounded-xl"
+        disabled={props.disabled}
+        onClick={() => setIsVisible((visible) => !visible)}
+        size="icon"
+        variant="ghost"
+      >
+        <Icon aria-hidden className="text-muted-foreground" size={18} />
+      </Button>
+    </div>
+  );
 }
 
 export type CheckboxProps = Omit<
