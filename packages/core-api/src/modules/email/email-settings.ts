@@ -3,7 +3,7 @@
  * to. Root admins change it on /manage/settings; every core-api task sees a save within the
  * settings refresh. Transport and sender address stay in env (`EMAIL_PROVIDER`, `SMTP_*`,
  * `SES_*`), since they describe how the deployment is wired. EmailService reads it on every
- * email it records, and the sender reads the rate and the switches on every batch.
+ * email it records, and the sender reads the rate, the switches and the allow list on every batch.
  */
 
 import { EmailConfigSchema } from '@poolmaster/shared/dto';
@@ -12,6 +12,7 @@ import { EmailSkipReason } from '@poolmaster/shared/domain';
 import { AppEnvironment, readAppEnv } from '../../core/config';
 import { defineSettingsGroup } from '../platform/settings-group';
 import type { EmailService } from './email-service';
+import type { MailDeliveryProviderName } from './mail-delivery';
 import { hasSettingsSwitch, type SystemEmailTemplateKey } from './system-email-templates';
 
 export const EMAIL_SETTINGS = defineSettingsGroup<EmailConfig>({
@@ -61,6 +62,40 @@ export function emailSwitchedOffReason(config: EmailConfig, templateKey: SystemE
   if (!config.enabled) return EmailSkipReason.EMAIL_DISABLED;
   if (hasSettingsSwitch(templateKey) && !config.templates[templateKey]) return EmailSkipReason.TEMPLATE_DISABLED;
   return undefined;
+}
+
+/**
+ * Domains reserved by RFC 2606 and RFC 6761: no mail server answers for them, so a real transport
+ * would only collect hard bounces. The e2e smoke users on QA are `@e2e.invalid`.
+ */
+const RESERVED_TOP_LEVEL_DOMAINS = ['invalid', 'test', 'example', 'localhost'];
+const RESERVED_DOMAINS = ['example.com', 'example.net', 'example.org'];
+
+/**
+ * Whether `address` may be emailed here: on the "Only send to" list when it has one, and not at a
+ * reserved domain on SES. Asked when an email is recorded and again just before it is sent
+ * (#1512), so tightening the list while email waits in the outbox stops it too. Reserved domains
+ * are refused only by SES, which delivers to the internet; Mailpit and the test SMTP sink catch
+ * every address. The list applies on every transport.
+ */
+export function mayReceive(address: string, config: EmailConfig, providerName: MailDeliveryProviderName): boolean {
+  const normalized = address.toLowerCase();
+  if (providerName === 'ses' && isReservedDomain(domainOf(normalized))) return false;
+  if (config.allowedRecipients.length === 0) return true;
+  return config.allowedRecipients.some((pattern) => (
+    pattern.startsWith('@') ? normalized.endsWith(pattern) : normalized === pattern
+  ));
+}
+
+/** The part of an address after its last `@`. */
+export function domainOf(address: string): string {
+  return address.slice(address.lastIndexOf('@') + 1);
+}
+
+function isReservedDomain(domain: string): boolean {
+  const topLevel = domain.slice(domain.lastIndexOf('.') + 1);
+  return RESERVED_TOP_LEVEL_DOMAINS.includes(topLevel)
+    || RESERVED_DOMAINS.some((reserved) => domain === reserved || domain.endsWith(`.${reserved}`));
 }
 
 /** What a route module that sends email is registered with: the app's one email service. */

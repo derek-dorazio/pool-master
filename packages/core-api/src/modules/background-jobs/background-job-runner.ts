@@ -12,6 +12,7 @@
 import type { FastifyBaseLogger } from 'fastify';
 import type { BackgroundJobRepository } from '@poolmaster/shared/db';
 import type { BackgroundJob, BackgroundJobType } from '@poolmaster/shared/domain';
+import { errorMessageWithCause } from '../../core/error-message';
 import { outsideRequest } from '../../core/request-scope';
 import { BACKGROUND_JOB_PAYLOADS, type BackgroundJobPayload } from './background-job-payloads';
 
@@ -147,7 +148,7 @@ export class BackgroundJobRunner {
     } catch (err) {
       this.options.logger?.error({
         action: 'backgroundJobs.runner.failure',
-        data: { error: describeError(err) },
+        data: { error: errorMessageWithCause(err) },
       }, 'Background job pass failed; the next poll tries again');
     } finally {
       this.claiming = false;
@@ -238,7 +239,7 @@ export class BackgroundJobRunner {
   }
 
   private async recordFailure(job: BackgroundJob, err: unknown): Promise<void> {
-    const error = describeError(err);
+    const error = errorMessageWithCause(err);
     const refs = { jobId: job.id, type: job.type, attempt: job.attempts, error };
     try {
       if (job.attempts <= BACKGROUND_JOB_RETRY_DELAYS_MS.length) {
@@ -259,15 +260,8 @@ export class BackgroundJobRunner {
       // The lease lapses and the job is tried again.
       this.options.logger?.error({
         action: 'backgroundJobs.recordFailure',
-        data: { ...refs, recordError: describeError(recordErr) },
+        data: { ...refs, recordError: errorMessageWithCause(recordErr) },
       }, 'Could not record a background job failure');
     }
   }
-}
-
-/** The error and what caused it. */
-function describeError(err: unknown): string {
-  if (!(err instanceof Error)) return String(err);
-  const cause = err.cause instanceof Error ? `: ${err.cause.message}` : '';
-  return `${err.message}${cause}`;
 }

@@ -34,7 +34,7 @@ import {
   type User,
 } from '@poolmaster/shared/domain';
 import type { PlanEntitlementsService } from '../plans/plan-entitlements-service';
-import { emailSwitchedOffReason } from './email-settings';
+import { domainOf, emailSwitchedOffReason, mayReceive } from './email-settings';
 import type { MailAddress, MailDeliveryProviderName } from './mail-delivery';
 import {
   EMAIL_TEMPLATES,
@@ -128,13 +128,6 @@ export const RESERVED_LEAGUE_CODES: ReadonlySet<string> = new Set([
   'HOSTMASTER',
   'WEBMASTER',
 ]);
-
-/**
- * Domains reserved by RFC 2606 and RFC 6761: no mail server answers for them, so a real transport
- * would only collect hard bounces. The e2e smoke users on QA are `@e2e.invalid`.
- */
-const RESERVED_TOP_LEVEL_DOMAINS = ['invalid', 'test', 'example', 'localhost'];
-const RESERVED_DOMAINS = ['example.com', 'example.net', 'example.org'];
 
 const SKIP_LOG_MESSAGES: Record<EmailSkipReason, string> = {
   [EmailSkipReason.EMAIL_DISABLED]: 'Email is switched off in settings; skipped sending email',
@@ -266,7 +259,7 @@ export class EmailService {
       },
       skipped: emailSwitchedOffReason(config, templateKey)
         ?? (this.inPlan(templateKey, league) ? undefined : EmailSkipReason.NOT_IN_PLAN)
-        ?? (this.mayReceive(address, config) ? undefined : EmailSkipReason.NOT_ALLOWED_IN_ENVIRONMENT),
+        ?? (mayReceive(address, config, this.options.providerName) ? undefined : EmailSkipReason.NOT_ALLOWED_IN_ENVIRONMENT),
     };
   }
 
@@ -415,21 +408,6 @@ export class EmailService {
     }, 'Recipient locale is unknown; writing dates in en-US');
     return DEFAULT_DISPLAY_LOCALE;
   }
-
-  /**
-   * Reserved domains are refused only by SES, which delivers to the internet; Mailpit and the
-   * test SMTP sink catch every address. The allow list applies on every transport.
-   */
-  private mayReceive(address: string, config: EmailConfig): boolean {
-    const normalized = address.toLowerCase();
-    if (this.options.providerName === 'ses' && isReservedDomain(domainOf(normalized))) {
-      return false;
-    }
-    if (config.allowedRecipients.length === 0) return true;
-    return config.allowedRecipients.some((pattern) => (
-      pattern.startsWith('@') ? normalized.endsWith(pattern) : normalized === pattern
-    ));
-  }
 }
 
 function logRefs(metadata: { templateKey: string } & EmailRefs & { leagueId?: string }) {
@@ -440,16 +418,6 @@ function logRefs(metadata: { templateKey: string } & EmailRefs & { leagueId?: st
     entryId: metadata.entryId ?? null,
     invitationId: metadata.invitationId ?? null,
   };
-}
-
-function domainOf(address: string): string {
-  return address.slice(address.lastIndexOf('@') + 1);
-}
-
-function isReservedDomain(domain: string): boolean {
-  const topLevel = domain.slice(domain.lastIndexOf('.') + 1);
-  return RESERVED_TOP_LEVEL_DOMAINS.includes(topLevel)
-    || RESERVED_DOMAINS.some((reserved) => domain === reserved || domain.endsWith(`.${reserved}`));
 }
 
 function optionalCategoryOf(templateKey: SystemEmailTemplateKey): OptionalEmailCategory | undefined {

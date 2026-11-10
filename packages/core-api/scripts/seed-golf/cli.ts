@@ -36,6 +36,7 @@ import { createClient, createConfig, type Client } from '@poolmaster/shared/gene
 import { getVersion, loginUser } from '@poolmaster/shared/generated/hey-api';
 import { formatLoadReport, LoadMode } from './load-report';
 import { loadSportData } from './seed-golf';
+import { errorMessage } from '../../src/core/error-message';
 import { isTestSlate, parseSportDataFile, type SportDataFile } from './sport-data-file';
 import { loadTestParticipants, refuseUnlessTestTarget } from './test-participants';
 
@@ -163,7 +164,7 @@ async function main(): Promise<void> {
     } catch (error: unknown) {
       // One file's failure stops only that file when loading them all; a rerun fills it in.
       if (!allTestData) throw error;
-      const reason = error instanceof Error ? error.message : String(error);
+      const reason = errorMessage(error);
       console.error(`${name} failed: ${reason}`);
       failed.push(name);
       reports.push(`## ${name}\n\n### Load sport data failed\n\n\`\`\`\n${reason}\n\`\`\`\n`);
@@ -174,6 +175,6 @@ async function main(): Promise<void> {
 }
 
 main().catch((error: unknown) => {
-  console.error(error instanceof Error ? error.message : error);
+  console.error(errorMessage(error));
   process.exit(1);
 });

@@ -8,10 +8,11 @@
 import type { FastifyBaseLogger } from 'fastify';
 import type { EmailConfig } from '@poolmaster/shared/dto';
 import type { EmailMessageRepository } from '@poolmaster/shared/db';
-import type { EmailMessage, EmailTemplateKey } from '@poolmaster/shared/domain';
-import { emailSwitchedOffReason } from './email-settings';
+import { EmailSkipReason, type EmailMessage, type EmailTemplateKey } from '@poolmaster/shared/domain';
+import { emailSwitchedOffReason, mayReceive } from './email-settings';
 import { MailDeliveryThrottledError, type MailDeliveryProvider } from './mail-delivery';
 import { EMAIL_TEMPLATES } from './system-email-templates';
+import { errorMessageWithCause } from '../../core/error-message';
 import { outsideRequest } from '../../core/request-scope';
 
 /** How long after each failed try the next one is due: 1, 5 and 30 minutes, then FAILED. */
@@ -109,7 +110,7 @@ export class EmailSender {
     } catch (err) {
       this.options.logger?.error({
         action: 'email.sender.failure',
-        data: { error: describeError(err) },
+        data: { error: errorMessageWithCause(err) },
       }, 'Email sender pass failed; the next tick tries again');
     } finally {
       // Cleared in the same step as the last wake check, so a later wake starts a new drain.
@@ -140,14 +141,18 @@ export class EmailSender {
   private async sendOne(message: EmailMessage, config: EmailConfig): Promise<void> {
     const refs = logRefs(message);
     try {
-      // An admin may switch email off while it waits here; the switch stops it as it would a new one (#1503).
-      const switchedOff = emailSwitchedOffReason(config, message.templateKey);
-      if (switchedOff) {
-        await this.options.messages.markSkipped(message.id, switchedOff);
+      // An admin may switch email off or tighten "Only send to" while it waits here; either stops
+      // it as it would a new one (#1503, #1512).
+      const stopped = emailSwitchedOffReason(config, message.templateKey)
+        ?? (mayReceive(message.recipientEmail, config, this.options.transport.providerName)
+          ? undefined
+          : EmailSkipReason.NOT_ALLOWED_IN_ENVIRONMENT);
+      if (stopped) {
+        await this.options.messages.markSkipped(message.id, stopped);
         this.options.logger?.info({
           action: 'email.sender.skip',
-          data: { ...refs, reason: switchedOff },
-        }, 'Email was switched off in settings after it was queued; skipped sending it');
+          data: { ...refs, reason: stopped },
+        }, 'Email settings changed after it was queued so it may no longer go; skipped sending it');
         return;
       }
       if (this.isPastSendBy(message, this.now().getTime())) {
@@ -220,7 +225,7 @@ export class EmailSender {
 
   private async recordFailure(message: EmailMessage, err: unknown): Promise<void> {
     const refs = logRefs(message);
-    const error = describeError(err);
+    const error = errorMessageWithCause(err);
     const now = this.now().getTime();
     try {
       if (err instanceof MailDeliveryThrottledError) {
@@ -254,7 +259,7 @@ export class EmailSender {
       // The claim lapses and the email is tried again.
       this.options.logger?.error({
         action: 'email.sender.recordFailure',
-        data: { ...refs, error, recordError: describeError(recordErr) },
+        data: { ...refs, error, recordError: errorMessageWithCause(recordErr) },
       }, 'Could not record an email send failure');
     }
   }
@@ -273,7 +278,7 @@ export class EmailSender {
     } catch (err) {
       this.options.logger?.error({
         action: 'email.sender.sweepFailure',
-        data: { error: describeError(err) },
+        data: { error: errorMessageWithCause(err) },
       }, 'Could not clear the content of old emails; the next sweep tries again');
     }
   }
@@ -298,11 +303,4 @@ function logRefs(message: EmailMessage) {
     entryId: message.entryId ?? null,
     invitationId: message.invitationId ?? null,
   };
-}
-
-/** The error and what caused it: a transport error's own message is generic. */
-function describeError(err: unknown): string {
-  if (!(err instanceof Error)) return String(err);
-  const cause = err.cause instanceof Error ? `: ${err.cause.message}` : '';
-  return `${err.message}${cause}`;
 }
