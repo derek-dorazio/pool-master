@@ -15,8 +15,10 @@ import {
   getPrisma,
   setupIntegrationTests,
   teardownIntegrationTests,
+  withBackgroundJobsFailing,
 } from '../helpers';
 import { createRoundRows, createSportEventRow } from '../../support/sport-event-rows';
+import { eventRebuildJob } from '../../support/recording-leaderboard-rebuilds';
 
 // An event's bracket against real Postgres (#698): the match port's one read and its writes, what
 // removing a field row or the event does to it, the play-in fill, and every database check the
@@ -434,6 +436,108 @@ describe('PrismaSportEventParticipantRepository.replaceWithdrawn', () => {
     await expect(repos().field.findById(entryOf('Vermont').id)).resolves.toMatchObject({ isActive: true });
     const [unchanged] = await repos().matches.findBySportEvent(event.id);
     expect(expectDefined(unchanged).awaySportEventParticipantId).toBe(entryOf('Vermont').id);
+  });
+});
+
+/**
+ * One bracket or field write, on a fresh event: `write` makes it carrying the given jobs, and
+ * `state` reads what it changes, so a rolled-back write leaves `state` as it was.
+ */
+type JobCarryingWrite = (context: Awaited<ReturnType<typeof createBracketEvent>>) => Promise<{
+  write: (jobs: ReturnType<typeof eventRebuildJob>[]) => Promise<unknown>;
+  state: () => Promise<unknown>;
+}>;
+
+const loadedBracket = async (context: Awaited<ReturnType<typeof createBracketEvent>>) => {
+  await repos().matches.replaceBracket(context.event.id, fourTeamBracket(context.entryOf));
+  return repos().matches.findBySportEvent(context.event.id);
+};
+const matchRows = (sportEventId: string) => getPrisma().sportEventMatch.findMany({ where: { sportEventId }, orderBy: { matchNumber: 'asc' } });
+const fieldRows = (sportEventId: string) => getPrisma().sportEventParticipant.findMany({ where: { sportEventId }, orderBy: { id: 'asc' } });
+
+const JOB_CARRYING_WRITES: ReadonlyArray<[string, JobCarryingWrite]> = [
+  ['a bracket load', async (context) => ({
+    write: (jobs) => repos().matches.replaceBracket(context.event.id, fourTeamBracket(context.entryOf), jobs),
+    state: () => matchRows(context.event.id),
+  })],
+  ['a match edit', async (context) => {
+    const [first] = await loadedBracket(context);
+    return { write: (jobs) => repos().matches.update(expectDefined(first).id, { isNeutralSite: false }, jobs), state: () => matchRows(context.event.id) };
+  }],
+  ['a round\'s matchups placed', async (context) => {
+    const [, , final] = await loadedBracket(context);
+    return {
+      write: (jobs) => repos().matches.placeSides([{ id: expectDefined(final).id, homeSportEventParticipantId: context.entryOf('Duke').id, awaySportEventParticipantId: context.entryOf('Texas').id }], jobs),
+      state: () => matchRows(context.event.id),
+    };
+  }],
+  ['a period score cleared', async (context) => {
+    const [first] = await loadedBracket(context);
+    await repos().matches.savePeriodScore(expectDefined(first).id, { periodNumber: 1, homeScore: 10, awayScore: 8 });
+    return {
+      write: (jobs) => repos().matches.deletePeriodScore(expectDefined(first).id, 1, jobs),
+      state: () => getPrisma().sportEventMatchPeriodScore.findMany({ where: { sportEventMatchId: expectDefined(first).id } }),
+    };
+  }],
+  ['teams added to the field', async (context) => {
+    const team = await getPrisma().participant.create({ data: { sportId: context.sport.id, name: `Added ${randomUUID()}`, participantType: 'TEAM' } });
+    return { write: (jobs) => repos().field.createMany(context.event.id, [{ participantId: team.id }], jobs), state: () => fieldRows(context.event.id) };
+  }],
+  ['a grid save', async (context) => ({
+    write: (jobs) => repos().field.updateMany([{ id: context.entryOf('Duke').id, updates: { ranking: 7 } }], jobs),
+    state: () => fieldRows(context.event.id),
+  })],
+  ['a field row removed', async (context) => ({
+    write: (jobs) => repos().field.delete(context.entryOf('Texas').id, jobs),
+    state: () => fieldRows(context.event.id),
+  })],
+  ['a play-in place filled', async (context) => {
+    const prisma = getPrisma();
+    const pairing = await prisma.participant.create({ data: { sportId: context.sport.id, name: `Pairing ${randomUUID()}`, participantType: 'TEAM' } });
+    const winner = await prisma.participant.create({ data: { sportId: context.sport.id, name: `Winner ${randomUUID()}`, participantType: 'TEAM' } });
+    await repos().field.createMany(context.event.id, [{ participantId: pairing.id, seedNumber: 11 }]);
+    const slot = expectDefined((await repos().field.findBySportEvent(context.event.id)).find((entry) => entry.participantId === pairing.id));
+    return {
+      write: (jobs) => repos().field.fillPlayInSlot({ id: slot.id, winnerParticipantId: winner.id, pairingParticipantId: pairing.id }, jobs),
+      state: () => fieldRows(context.event.id),
+    };
+  }],
+  ['a withdrawn team replaced', async (context) => {
+    const [first] = await loadedBracket(context);
+    const luckyLoser = await getPrisma().participant.create({ data: { sportId: context.sport.id, name: `Lucky ${randomUUID()}`, participantType: 'TEAM' } });
+    return {
+      write: (jobs) => repos().field.replaceWithdrawn({
+        withdrawnId: context.entryOf('Vermont').id, matchId: expectDefined(first).id, side: MatchSide.AWAY, replacementParticipantId: luckyLoser.id, valuation: null,
+      }, jobs),
+      state: () => Promise.all([fieldRows(context.event.id), matchRows(context.event.id)]),
+    };
+  }],
+];
+
+describe('Bracket and field writes carry the event\'s leaderboard rebuild (#1466)', () => {
+  const rebuildJobs = (sportEventId: string) => getPrisma().backgroundJob.findMany({
+    where: { type: BackgroundJobType.REBUILD_LEADERBOARDS, dedupeKey: eventRebuildJob(sportEventId).dedupeKey },
+    select: { type: true },
+  });
+
+  it.each(JOB_CARRYING_WRITES)('commits the rebuild job with %s', async (_write, prepare) => {
+    const context = await createBracketEvent();
+    const { write } = await prepare(context);
+
+    await write([eventRebuildJob(context.event.id)]);
+
+    await expect(rebuildJobs(context.event.id)).resolves.toEqual([{ type: BackgroundJobType.REBUILD_LEADERBOARDS }]);
+  });
+
+  it.each(JOB_CARRYING_WRITES)('rolls back %s when its rebuild job cannot be written, leaving what it would change as it was', async (_write, prepare) => {
+    const context = await createBracketEvent();
+    const { write, state } = await prepare(context);
+    const before = await state();
+
+    await expect(withBackgroundJobsFailing(BackgroundJobType.REBUILD_LEADERBOARDS, () => write([eventRebuildJob(context.event.id)]))).rejects.toThrow();
+
+    await expect(state()).resolves.toEqual(before);
+    await expect(rebuildJobs(context.event.id)).resolves.toEqual([]);
   });
 });
 

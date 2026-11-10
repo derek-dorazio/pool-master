@@ -29,6 +29,7 @@ import { eventChangedJob, recordingSportEventChangedNotice } from '../../support
 import { inMemoryBackgroundJobs } from '../../support/in-memory-background-jobs';
 import { BackgroundJobQueue } from '../../../packages/core-api/src/modules/background-jobs';
 import { fakeLogger } from '../../support/fake-logger';
+import { RecordingLeaderboardRebuilds, eventRebuildJob } from '../../support/recording-leaderboard-rebuilds';
 
 /** Before every event's start in this file, so the release cutoff never depends on today. */
 const NOW = new Date('2026-01-15T12:00:00.000Z');
@@ -37,7 +38,7 @@ const NOW = new Date('2026-01-15T12:00:00.000Z');
 // and what update and delete refuse — against an in-memory store. The adapters behind the
 // same ports are tested against Postgres in sport-event-repositories.integration.
 
-function setup(sportName: Sport = Sport.GOLF, sportEventChanged?: SportEventChangedNotice) {
+function setup(sportName: Sport = Sport.GOLF, sportEventChanged?: SportEventChangedNotice, leaderboards?: RecordingLeaderboardRebuilds) {
   const store = new InMemorySportEvents();
   const reminderRechecks = jest.fn<ContestRepository['recheckReminders']>().mockResolvedValue(undefined);
   const sport = store.addSport(sportName);
@@ -57,6 +58,7 @@ function setup(sportName: Sport = Sport.GOLF, sportEventChanged?: SportEventChan
     undefined,
     undefined,
     sportEventChanged,
+    leaderboards,
   );
   const service = new SportEventService({
     sportEvents,
@@ -80,6 +82,7 @@ function setup(sportName: Sport = Sport.GOLF, sportEventChanged?: SportEventChan
     }),
     lifecycle,
     contests: { recheckReminders: reminderRechecks },
+    leaderboards,
     now: () => NOW,
   });
   return { store, service, sportLeague, lifecycle, sportEvents, reminderRechecks };
@@ -875,5 +878,21 @@ describe('event read handlers count admin numbers for a root admin only (#1198)'
 
     expect(member).toEqual({ years: [2026] });
     expect(admin).toEqual({ years: [2026, 2027] });
+  });
+});
+
+describe('SportEventService — leaderboard rebuild (#1466)', () => {
+  it('writes the event\'s rebuild job with an edit, and with a moved start alongside the leagues\' notice, waking the runner after each', async () => {
+    const leaderboards = new RecordingLeaderboardRebuilds();
+    const notice = recordingSportEventChangedNotice();
+    const { store, service, sportLeague } = setup(Sport.GOLF, notice, leaderboards);
+    const { event } = await service.createEvent({ sportLeagueId: sportLeague.id, eventYear: 2026, ...MANUAL_INPUT, rounds: 1 });
+    await store.sportEventRepo().update(event.id, { status: SportEventStatus.SCHEDULED });
+
+    await service.updateEvent(event.id, { name: 'Renamed Open' }, TELL);
+    await service.updateEvent(event.id, { startDate: new Date(MANUAL_INPUT.startDate.getTime() + 24 * 60 * 60 * 1000) }, TELL);
+
+    expect(store.backgroundJobs).toEqual([eventRebuildJob(event.id), eventChangedJob(event.id, 'RESCHEDULED'), eventRebuildJob(event.id)]);
+    expect(leaderboards.sportEventIds).toEqual([event.id, event.id]);
   });
 });

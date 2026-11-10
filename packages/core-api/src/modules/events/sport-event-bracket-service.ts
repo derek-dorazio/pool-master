@@ -53,6 +53,8 @@ import {
   type SportEventMatch,
 } from '@poolmaster/shared/domain';
 import { SportEventError } from './errors';
+import { NO_JOBS_FOR_WRITE, type JobsForWrite } from '../background-jobs/background-job-queue';
+import type { LeaderboardRebuilds } from '../contests/leaderboard-snapshots';
 import { findReseededPlaceGaps, findRoundMatchupProblems, proposeRoundMatchups, reseededRounds, roundPlacementBlocker, type RoundMatchup } from './bracket-reseed';
 
 /** Where a match's winner moves on to: the next match, by number, and the side it fills there. */
@@ -194,6 +196,8 @@ export interface SportEventBracketServiceDeps {
   predictions: Pick<ContestEntryMatchPredictionRepository, 'hasAnyOnMatch'>;
   /** A game's new time can move its contests' entry reminders (#1170). */
   contests: Pick<ContestRepository, 'recheckReminders'>;
+  /** The event's leaderboard rebuild, written with each bracket write (#1466); none without it. */
+  leaderboards?: Pick<LeaderboardRebuilds, 'forEvent'>;
   newId?: () => string;
   now?: () => Date;
   logger?: FastifyBaseLogger;
@@ -238,7 +242,9 @@ export class SportEventBracketService {
       advancesToMatchId: advancesTo ? idByNumber.get(advancesTo.matchNumber) as string : null,
       advancesToSide: advancesTo?.side ?? null,
     }));
-    await this.deps.matches.replaceBracket(sportEventId, writes);
+    const rebuild = this.rebuild(sportEventId);
+    await this.deps.matches.replaceBracket(sportEventId, writes, rebuild.jobs);
+    rebuild.queued();
     this.deps.logger?.info({ sportEventId, matches: writes.length }, 'Loaded bracket');
     return this.deps.matches.findBySportEvent(sportEventId);
   }
@@ -272,7 +278,9 @@ export class SportEventBracketService {
       this.assertSpreadKept(event, match, edit.homeSpread);
       await this.assertSpreadUnpicked(event, match);
     }
-    await this.deps.matches.update(match.id, edit);
+    const rebuild = this.rebuild(sportEventId);
+    await this.deps.matches.update(match.id, edit, rebuild.jobs);
+    rebuild.queued();
     // A squares grid or a second-chance bracket closes at a game's start (#1170).
     if (edit.scheduledDate !== undefined && edit.scheduledDate?.getTime() !== match.scheduledDate?.getTime()) {
       await this.deps.contests.recheckReminders({ sportEventId }, this.deps.now?.() ?? new Date());
@@ -377,11 +385,13 @@ export class SportEventBracketService {
       throw new SportEventError(`Round ${roundNumber} cannot be set: ${problems.join('; ')}.`, 'BRACKET_INVALID', 422);
     }
     const idByNumber = new Map(bracket.map((match) => [match.matchNumber, match.id]));
+    const rebuild = this.rebuild(sportEventId);
     await this.deps.matches.placeSides(matchups.map((matchup) => ({
       id: idByNumber.get(matchup.matchNumber) as string,
       homeSportEventParticipantId: matchup.homeSportEventParticipantId,
       awaySportEventParticipantId: matchup.awaySportEventParticipantId,
-    })));
+    })), rebuild.jobs);
+    rebuild.queued();
     this.deps.logger?.info({ sportEventId, roundNumber, matches: matchups.length }, 'Placed a reseeded round');
     return this.deps.matches.findBySportEvent(sportEventId);
   }
@@ -477,7 +487,9 @@ export class SportEventBracketService {
         409,
       );
     }
-    await this.deps.field.fillPlayInSlot({ id: entry.id, winnerParticipantId, pairingParticipantId: pairing.id });
+    const rebuild = this.rebuild(sportEventId);
+    await this.deps.field.fillPlayInSlot({ id: entry.id, winnerParticipantId, pairingParticipantId: pairing.id }, rebuild.jobs);
+    rebuild.queued();
     this.deps.logger?.info(
       { sportEventId, sportEventParticipantId, winnerParticipantId, pairingParticipantId: pairing.id },
       'Filled a play-in place with its winner',
@@ -567,13 +579,16 @@ export class SportEventBracketService {
       );
     }
 
+    const valuation = await this.bottomValuation(sportEventId);
+    const rebuild = this.rebuild(sportEventId);
     const replacementId = await this.deps.field.replaceWithdrawn({
       withdrawnId: entry.id,
       matchId: place.match.id,
       side: place.side,
       replacementParticipantId,
-      valuation: await this.bottomValuation(sportEventId),
-    });
+      valuation,
+    }, rebuild.jobs);
+    rebuild.queued();
     this.deps.logger?.info(
       { sportEventId, withdrawnId: entry.id, replacementId, replacementParticipantId, matchNumber: place.match.matchNumber, side: place.side },
       'Replaced a withdrawn participant in the bracket',
@@ -701,6 +716,11 @@ export class SportEventBracketService {
       'PARTICIPANT_NOT_IN_SPORT_LEAGUE',
       409,
     );
+  }
+
+  /** The job rebuilding the event's boards, written with a bracket write that may change them (#1466). */
+  private rebuild(sportEventId: string): JobsForWrite {
+    return this.deps.leaderboards?.forEvent(sportEventId) ?? NO_JOBS_FOR_WRITE;
   }
 
   private async requireBracketEvent(sportEventId: string): Promise<SportEvent> {

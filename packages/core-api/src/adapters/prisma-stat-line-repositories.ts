@@ -5,7 +5,8 @@
 
 import type { Prisma, PrismaClient } from '@prisma/client';
 import type { GameStatLineWrite, SportEventParticipantStatLineRepository } from '@poolmaster/shared/db';
-import { ParticipantRoundStatus, type SportEventParticipantStatLine, type SportStat } from '@poolmaster/shared/domain';
+import { ParticipantRoundStatus, type BackgroundJobRequest, type SportEventParticipantStatLine, type SportStat } from '@poolmaster/shared/domain';
+import { insertBackgroundJobs } from './prisma-background-job-repository';
 
 export class PrismaSportEventParticipantStatLineRepository implements SportEventParticipantStatLineRepository {
   constructor(private readonly prisma: PrismaClient) {}
@@ -15,7 +16,7 @@ export class PrismaSportEventParticipantStatLineRepository implements SportEvent
    * and lines are read at once, an unchanged line is left alone, and the rest are deleted,
    * updated and created in bulk.
    */
-  async replaceGameLines(writes: readonly GameStatLineWrite[]): Promise<void> {
+  async replaceGameLines(writes: readonly GameStatLineWrite[], jobs: readonly BackgroundJobRequest[] = []): Promise<void> {
     if (writes.length === 0) return;
     await this.prisma.$transaction(async (tx) => {
       const stored = await tx.sportEventParticipantRound.findMany({
@@ -73,6 +74,7 @@ export class PrismaSportEventParticipantStatLineRepository implements SportEvent
       if (lines.length > 0) {
         await tx.sportEventParticipantStatLine.createMany({ data: lines });
       }
+      await insertBackgroundJobs(tx, jobs);
     });
   }
 }

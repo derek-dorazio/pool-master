@@ -8,6 +8,7 @@ import {
 } from '../../../packages/core-api/src/modules/events/sport-event-bracket-service';
 import { expectDefined } from '../../support/expect-defined';
 import { InMemorySportEvents, NO_PICKS_ON_EVENT } from '../../support/in-memory-sport-events';
+import { RecordingLeaderboardRebuilds, eventRebuildJob } from '../../support/recording-leaderboard-rebuilds';
 
 // A bracket's rules against an in-memory store: what loading refuses, what a match edit may
 // change before and after release, what release still needs, and the First Four's play-in places.
@@ -35,6 +36,7 @@ function setup({ sport = Sport.BASKETBALL, status = SportEventStatus.DRAFT, pick
   });
   let sequence = 0;
   const reminderRechecks = jest.fn<ContestRepository['recheckReminders']>().mockResolvedValue(undefined);
+  const leaderboards = new RecordingLeaderboardRebuilds();
   const service = new SportEventBracketService({
     sportEvents: store.sportEventRepo(),
     sportLeagues: store.sportLeagueRepo(),
@@ -47,13 +49,14 @@ function setup({ sport = Sport.BASKETBALL, status = SportEventStatus.DRAFT, pick
     valuations: store.valuationRepo(),
     contests: { recheckReminders: reminderRechecks },
     ...picks,
+    leaderboards,
     now: () => NOW,
     newId: () => {
       sequence += 1;
       return `match-${sequence}`;
     },
   });
-  return { store, service, event, sportRow, sportLeague, duke, vermont, houston, texas, reminderRechecks };
+  return { store, service, event, sportRow, sportLeague, duke, vermont, houston, texas, reminderRechecks, leaderboards };
 }
 
 /**
@@ -737,5 +740,66 @@ describe('SportEventBracketService.replaceWithdrawn', () => {
 
     await expect(service.replaceWithdrawn(event.id, 'no-such-row', luckyLoser.id))
       .rejects.toMatchObject({ code: 'EVENT_PARTICIPANT_NOT_FOUND', statusCode: 404 });
+  });
+});
+
+describe('SportEventBracketService — leaderboard rebuild (#1466)', () => {
+  /** What the store kept and the rebuilds woke for, from `from` on: one action's writes. */
+  function since(context: ReturnType<typeof setup>, from: { jobs: number; woken: number }) {
+    return { jobs: context.store.backgroundJobs.slice(from.jobs), woken: context.leaderboards.sportEventIds.slice(from.woken) };
+  }
+  const mark = (context: ReturnType<typeof setup>) => ({ jobs: context.store.backgroundJobs.length, woken: context.leaderboards.sportEventIds.length });
+  const once = (sportEventId: string) => ({ jobs: [eventRebuildJob(sportEventId)], woken: [sportEventId] });
+
+  it('writes the event\'s rebuild job with a loaded bracket and with a match edit, waking the runner after each', async () => {
+    const context = setup();
+    await context.service.loadBracket(context.event.id, bracketOf(context));
+    expect(since(context, { jobs: 0, woken: 0 })).toEqual(once(context.event.id));
+
+    const before = mark(context);
+    await context.service.updateMatch(context.event.id, 1, { isNeutralSite: false });
+    expect(since(context, before)).toEqual(once(context.event.id));
+  });
+
+  it('writes the rebuild job with a filled play-in place and with a withdrawn team\'s replacement', async () => {
+    const context = setup({ status: SportEventStatus.SCHEDULED });
+    const slot = context.store.addToField(context.event.id, context.store.addParticipant(context.sportRow.id, 'Texas / Xavier', { participantType: 'TEAM' }).id, { seedNumber: 11, isPlayInPlace: true });
+    const xavier = context.store.addParticipant(context.sportRow.id, 'Xavier', { participantType: 'TEAM' });
+    await context.service.fillPlayInSlot(context.event.id, slot.id, xavier.id);
+    expect(since(context, { jobs: 0, woken: 0 })).toEqual(once(context.event.id));
+
+    const withBracket = setup({ status: SportEventStatus.DRAFT });
+    await withBracket.service.loadBracket(withBracket.event.id, bracketOf(withBracket));
+    withBracket.event.status = SportEventStatus.SCHEDULED;
+    const luckyLoser = withBracket.store.addParticipant(withBracket.sportRow.id, 'Lucky Loser', { participantType: 'TEAM' });
+    const before = mark(withBracket);
+    await withBracket.service.replaceWithdrawn(withBracket.event.id, withBracket.vermont.id, luckyLoser.id);
+    expect(since(withBracket, before)).toEqual(once(withBracket.event.id));
+  });
+
+  it('writes the rebuild job with a reseeded round\'s matchups', async () => {
+    const context = setup();
+    await context.store.sportLeagueRepo().update(context.event.sportLeagueId, { bracketAdvancement: BracketAdvancement.RESEED_BY_SEED });
+    await context.service.loadBracket(context.event.id, bracketOf(context).map((match) => ({ ...match, advancesTo: null })));
+    context.event.status = SportEventStatus.SCHEDULED;
+    for (const match of context.store.matchRows.filter((row) => row.roundNumber === 1)) {
+      Object.assign(match, { status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME });
+    }
+    const proposal = await context.service.proposeRoundMatchups(context.event.id, 2);
+    const before = mark(context);
+
+    await context.service.setRoundMatchups(context.event.id, 2, proposal);
+
+    expect(since(context, before)).toEqual(once(context.event.id));
+  });
+
+  it('hands out no rebuild for a bracket refused before anything is written', async () => {
+    const context = setup();
+    const [first, second, final] = bracketOf(context);
+
+    await expect(context.service.loadBracket(context.event.id, [first, { ...second, matchNumber: 1 }, final])).rejects.toBeDefined();
+
+    expect(context.store.backgroundJobs).toEqual([]);
+    expect(context.leaderboards.handedOut).toEqual([]);
   });
 });

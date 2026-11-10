@@ -77,11 +77,15 @@ export interface SportEventMatchRepository {
   findBySportEvent(sportEventId: string): Promise<SportEventMatch[]>;
   /** Several events' matches in one read (#762), each event's in match-number order. */
   findBySportEvents(sportEventIds: readonly string[]): Promise<SportEventMatch[]>;
-  /** Replaces every match of the event with `matches`, all or none. Every round named must exist. */
-  replaceBracket(sportEventId: string, matches: readonly SportEventMatchWrite[]): Promise<void>;
-  update(id: string, patch: SportEventMatchPatch): Promise<void>;
+  /**
+   * Replaces every match of the event with `matches`, all or none. Every round named must exist.
+   * Each bracket write takes the background jobs it causes (the event's leaderboard rebuild,
+   * #1466) and writes them with it.
+   */
+  replaceBracket(sportEventId: string, matches: readonly SportEventMatchWrite[], jobs?: readonly BackgroundJobRequest[]): Promise<void>;
+  update(id: string, patch: SportEventMatchPatch, jobs?: readonly BackgroundJobRequest[]): Promise<void>;
   /** Both sides of each match given, all or none: a reseeded round's teams placed (#722). */
-  placeSides(sides: readonly { id: string; homeSportEventParticipantId: string; awaySportEventParticipantId: string }[]): Promise<void>;
+  placeSides(sides: readonly { id: string; homeSportEventParticipantId: string; awaySportEventParticipantId: string }[], jobs?: readonly BackgroundJobRequest[]): Promise<void>;
   /** A result entered or cleared, the side it fills and the standings it leaves, all or none. */
   applyResult(apply: MatchResultApply): Promise<void>;
   /**
@@ -89,6 +93,9 @@ export interface SportEventMatchRepository {
    * jobs it causes in the same transaction.
    */
   savePeriodScore(sportEventMatchId: string, score: SportEventMatchPeriodScore, jobs?: readonly BackgroundJobRequest[]): Promise<void>;
-  /** Removes the score at the end of one period of a match; removing none changes nothing. */
-  deletePeriodScore(sportEventMatchId: string, periodNumber: number): Promise<void>;
+  /**
+   * Removes the score at the end of one period of a match, with any background jobs it causes in
+   * the same transaction; removing none changes nothing but still writes the jobs.
+   */
+  deletePeriodScore(sportEventMatchId: string, periodNumber: number, jobs?: readonly BackgroundJobRequest[]): Promise<void>;
 }

@@ -38,8 +38,11 @@ export interface EventsModuleOptions {
   ingestionService: IngestionService;
   providerRegistry?: ProviderRegistry;
   cdn: CdnInvalidator;
-  /** Told after a write to an event lands (#1435). */
-  leaderboards: Pick<LeaderboardRebuilds, 'eventsChanged'>;
+  /**
+   * Each admin write that changes what the event's contests' boards show writes their rebuild job
+   * in its own transaction (#1466).
+   */
+  leaderboards: Pick<LeaderboardRebuilds, 'forEvent'>;
 }
 
 const TAGS = ['Events'];
@@ -64,7 +67,7 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
   const prisma = getAppPrisma(fastify);
   const eventLifecycle = opts.eventLifecycleService ?? createEventLifecycleService(prisma, { logger: fastify.log });
   const handler = createEventHandlers({
-    services: createSportEventServices(prisma, fastify.log.child({ module: 'events.service' }), eventLifecycle),
+    services: createSportEventServices(prisma, fastify.log.child({ module: 'events.service' }), eventLifecycle, opts.leaderboards),
     eventLifecycle,
     scoreSource: new EventScoreSourceService(prisma, opts.providerRegistry, fastify.log),
     ingestion: opts.ingestionService,
@@ -74,16 +77,14 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
   // A write to an event forgets the field this container last read of it (#1163) before the
   // write answers, so the admin's next read, and every contest's on the event, is current.
   // A write that lands can change which edition an event page offers, and whether it opens now
-  // (#1181), so the public event pages are cleared at the CDN too. A write that lands tells the
-  // leaderboard rebuilds (#1435), which with no delay set rebuild before the write answers.
+  // (#1181), so the public event pages are cleared at the CDN too. The leaderboard rebuild is not
+  // here: each write that changes a board writes its rebuild job with it (#1466).
   fastify.addHook('onSend', async (request, reply, payload) => {
     if (request.method === 'GET' || request.method === 'HEAD') return payload;
     const { eventId } = request.params as { eventId?: string };
     if (eventId !== undefined) eventFieldCache.forget(eventId);
     if (reply.statusCode < 400) {
       opts.cdn.invalidate([PublicReadPath.EVENT_PAGES]);
-      // A score, field or status saved: the event's contests' stored leaderboards are computed again (#1435).
-      if (eventId !== undefined) await opts.leaderboards.eventsChanged([eventId]);
     }
     return payload;
   });

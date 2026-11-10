@@ -17,7 +17,7 @@
 import type { ContestLeaderboardSnapshot } from '@poolmaster/shared/db';
 import { SelectionType, type Contest, type SportEvent, type SportEventMatch } from '@poolmaster/shared/domain';
 import { readMillisecondsSetting } from '../../core/read-cache';
-import type { BackgroundJobQueue } from '../background-jobs/background-job-queue';
+import type { BackgroundJobQueue, JobsForWrite } from '../background-jobs/background-job-queue';
 import { LeaderboardRebuildSubject, rebuildLeaderboardsJob } from './leaderboard-rebuild-job-requests';
 
 /** Which leaderboard a stored board is: each contest has one, by how its entries pick. */
@@ -104,11 +104,17 @@ export interface LeaderboardRebuilds {
   eventsChanged(sportEventIds: readonly string[]): Promise<void>;
   /** These contests changed (a pick saved): their boards are rebuilt soon. */
   contestsChanged(contestIds: readonly string[]): Promise<void>;
+  /**
+   * The job rebuilding the event's contests' boards, for the write changing its scores, field or
+   * status to carry into its own transaction (#1466): a write that fails queues no rebuild, and a
+   * failed insert fails the write rather than leaving it saved with an error answered.
+   */
+  forEvent(sportEventId: string): JobsForWrite;
 }
 
 /** Queues a rebuild job per event or contest a write changed, each one waiting at most once. */
 export class JobLeaderboardRebuilds implements LeaderboardRebuilds {
-  constructor(private readonly jobs: Pick<BackgroundJobQueue, 'request' | 'enqueueAll'>) {}
+  constructor(private readonly jobs: Pick<BackgroundJobQueue, 'request' | 'enqueueAll' | 'queued'>) {}
 
   eventsChanged(sportEventIds: readonly string[]): Promise<void> {
     return this.queue(LeaderboardRebuildSubject.EVENT, sportEventIds);
@@ -116,6 +122,13 @@ export class JobLeaderboardRebuilds implements LeaderboardRebuilds {
 
   contestsChanged(contestIds: readonly string[]): Promise<void> {
     return this.queue(LeaderboardRebuildSubject.CONTEST, contestIds);
+  }
+
+  forEvent(sportEventId: string): JobsForWrite {
+    return {
+      jobs: [rebuildLeaderboardsJob(this.jobs, LeaderboardRebuildSubject.EVENT, sportEventId)],
+      queued: () => this.jobs.queued(),
+    };
   }
 
   private async queue(subject: LeaderboardRebuildSubject, ids: readonly string[]): Promise<void> {

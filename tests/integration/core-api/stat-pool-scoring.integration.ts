@@ -20,6 +20,7 @@ import {
 } from '../../../packages/core-api/src/adapters';
 import { createContestSportEventReader } from '../../../packages/core-api/src/modules/contest-management/wiring';
 import { createContestSettlementService } from '../../../packages/core-api/src/modules/contests/wiring';
+import { eventRebuildJob } from '../../support/recording-leaderboard-rebuilds';
 import {
   cleanupTestData,
   createTestUser,
@@ -28,6 +29,7 @@ import {
   getPrisma,
   setupIntegrationTests,
   teardownIntegrationTests,
+  withBackgroundJobsFailing,
 } from '../helpers';
 import { forgetStoredLeaderboards, passReadCacheTtl, restoreReadCacheClock } from '../../support/read-cache-clock';
 
@@ -129,6 +131,19 @@ describe('SportEventParticipantStatLineRepository', () => {
 // #1183 — a box score is replaced in a fixed handful of statements, and a line already stored
 // exactly as sent is not rewritten.
 describe('SportEventParticipantStatLineRepository — replacing a game\'s lines', () => {
+  it('commits the event\'s leaderboard rebuild job with the game\'s lines, and writes neither when the job cannot be written (#1466)', async () => {
+    const { prisma, event, games, ace } = await seedSeries();
+    const statLines = new PrismaSportEventParticipantStatLineRepository(getAppPrisma());
+    const lines = (value: number) => [{ sportEventParticipantId: ace.id, sportEventRoundId: games[0].id, stats: [{ stat: SportStat.RUNS, value }], completedAt: new Date('2025-10-25T23:00:00.000Z') }];
+
+    await expect(withBackgroundJobsFailing('REBUILD_LEADERBOARDS', () => statLines.replaceGameLines(lines(1), [eventRebuildJob(event.id)]))).rejects.toThrow();
+    await expect(prisma.sportEventParticipantRound.count({ where: { sportEventParticipantId: ace.id } })).resolves.toBe(0);
+
+    await statLines.replaceGameLines(lines(1), [eventRebuildJob(event.id)]);
+    await expect(prisma.sportEventParticipantRound.count({ where: { sportEventParticipantId: ace.id } })).resolves.toBe(1);
+    await expect(prisma.backgroundJob.count({ where: { dedupeKey: eventRebuildJob(event.id).dedupeKey } })).resolves.toBe(1);
+  });
+
   it('creates a new player\'s line, rewrites a corrected one, clears an emptied one, and leaves an unchanged one\'s rows and completion time alone', async () => {
     const { prisma, games, ace, blaze, cruz, dash, line } = await seedSeries();
     const statLines = new PrismaSportEventParticipantStatLineRepository(getAppPrisma());

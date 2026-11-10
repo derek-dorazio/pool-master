@@ -3,6 +3,7 @@ import type { FastifyBaseLogger } from 'fastify';
 import { StatLineService } from '../../../packages/core-api/src/modules/scoring-families/composite/stat-line-service';
 import { expectDefined } from '../../support/expect-defined';
 import { InMemorySportEvents } from '../../support/in-memory-sport-events';
+import { RecordingLeaderboardRebuilds, eventRebuildJob } from '../../support/recording-leaderboard-rebuilds';
 
 // One game's stat lines for a composite-scored event (#935) against an in-memory store: what is
 // refused before anything is written, that a valid game's rows land in one write, and that a
@@ -25,15 +26,17 @@ async function setup(overrides: { scoringFamily?: ScoringFamily | null; sport?: 
   ]);
   const [ace, bat] = ['Ace', 'Bat'].map((name) => store.addToField(event.id, store.addParticipant(sportRow.id, name).id));
   const info = jest.fn();
+  const leaderboards = new RecordingLeaderboardRebuilds();
   const service = new StatLineService({
     events: store.sportEventRepo(),
     rounds: store.roundRepo(),
     field: store.fieldRepo(),
     statLines: store.statLineRepo(),
+    leaderboards,
     now: () => NOW,
     logger: { info } as unknown as FastifyBaseLogger,
   });
-  return { store, service, event, ace: ace, bat: bat, info };
+  return { store, service, event, ace: ace, bat: bat, info, leaderboards };
 }
 
 describe('StatLineService.applyGameLines — refusals', () => {
@@ -129,5 +132,24 @@ describe('StatLineService.applyGameLines — stores the game', () => {
     await service.applyGameLines(event.id, 1, [{ participantId: ace.participantId, stats: [{ stat: SportStat.RUNS, value: 1 }] }]);
 
     expect(expectDefined(store.participantRoundRows[0].completedAt).getTime()).toBeGreaterThanOrEqual(before);
+  });
+});
+
+describe('StatLineService.applyGameLines — leaderboard rebuild (#1466)', () => {
+  it('writes the event\'s leaderboard rebuild job with the game\'s lines and wakes the runner after it', async () => {
+    const { store, service, event, ace, leaderboards } = await setup();
+
+    await service.applyGameLines(event.id, 1, [{ participantId: ace.participantId, stats: [{ stat: SportStat.RUNS, value: 1 }] }]);
+
+    expect(store.backgroundJobs).toEqual([eventRebuildJob(event.id)]);
+    expect(leaderboards.sportEventIds).toEqual([event.id]);
+  });
+
+  it('hands out no rebuild for a game refused before anything is written', async () => {
+    const { store, service, event, leaderboards } = await setup();
+
+    await expect(service.applyGameLines(event.id, 3, [])).rejects.toMatchObject({ code: 'ROUND_BEYOND_SCHEDULE' });
+    expect(store.backgroundJobs).toEqual([]);
+    expect(leaderboards.handedOut).toEqual([]);
   });
 });

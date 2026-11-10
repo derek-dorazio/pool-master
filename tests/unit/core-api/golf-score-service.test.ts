@@ -3,6 +3,7 @@ import { GolfScoreService } from '../../../packages/core-api/src/modules/golf/go
 import { eventStoresGolfRoundScores } from '../../../packages/core-api/src/modules/scoring-families/golf-round-scores';
 import { InMemorySportEvents } from '../../support/in-memory-sport-events';
 import { fakeLogger } from '../../support/fake-logger';
+import { RecordingLeaderboardRebuilds, eventRebuildJob } from '../../support/recording-leaderboard-rebuilds';
 
 // The golf score-correction rules against an in-memory store: what a preview reports, that
 // apply is all or none, how a correction merges, and how a standing is totalled. The sync
@@ -16,6 +17,7 @@ function setup(eventOverrides: { rounds?: number; sport?: Sport } = {}) {
   const ben = store.addParticipant(sport.id, 'Ben Cole');
   const anaEntry = store.addToField(event.id, ana.id);
   const benEntry = store.addToField(event.id, ben.id);
+  const leaderboards = new RecordingLeaderboardRebuilds();
   const service = new GolfScoreService({
     events: store.sportEventRepo(),
     rounds: store.roundRepo(),
@@ -25,8 +27,9 @@ function setup(eventOverrides: { rounds?: number; sport?: Sport } = {}) {
     golfRounds: store.golfRoundRepo(),
     golfStandings: store.golfStandingRepo(),
     storesGolfRoundScores: eventStoresGolfRoundScores,
+    leaderboards,
   });
-  return { store, service, event, anaEntry, benEntry, sport };
+  return { store, service, event, anaEntry, benEntry, sport, leaderboards };
 }
 
 const row = (overrides = {}) => ({ strokes: 70, scoreToPar: -2, thru: 18, status: 'COMPLETED' as const, ...overrides });
@@ -425,7 +428,7 @@ describe('GolfScoreService — provider sync', () => {
 
       expect(roundWrites).toHaveBeenCalledWith([]);
       expect(standingWrites).toHaveBeenCalledWith([]);
-      expect(rankWrites).toHaveBeenCalledWith([]);
+      expect(rankWrites).toHaveBeenCalledWith([], []);
       expect(result.writeDiagnostics.summary).toEqual({ total: 4, unchanged: 4, created: 0, updated: 0, deleted: 0 });
       expect(result.writeDiagnostics.rows.every((row) => row.internalId)).toBe(true);
       expect(store.standingRows).toEqual(standingsAfterFirstTick);
@@ -513,5 +516,36 @@ describe('GolfScoreService — provider sync', () => {
       const [standing] = await store.golfStandingRepo().findBySportEventParticipants([anaEntry.id]);
       expect(standing).toMatchObject({ golf: { eventScoreToPar: -2 }, standing: { displayPosition: '1' } });
     });
+  });
+});
+
+describe('GolfScoreService — leaderboard rebuild (#1466)', () => {
+  it('writes the event\'s leaderboard rebuild job with the ranks, the score write\'s last statement, and wakes the runner after it', async () => {
+    const { store, service, event, anaEntry, leaderboards } = setup();
+
+    await service.applyRoundScores(event.id, 1, [{ participantId: anaEntry.participantId, ...row() }]);
+
+    expect(store.backgroundJobs).toEqual([eventRebuildJob(event.id)]);
+    expect(leaderboards.sportEventIds).toEqual([event.id]);
+  });
+
+  it('wakes no runner when the rank write carrying the rebuild fails, and the failure reaches the caller', async () => {
+    const { store, event, anaEntry, leaderboards } = setup();
+    const golfStandings = store.golfStandingRepo();
+    const failing = new GolfScoreService({
+      events: store.sportEventRepo(),
+      rounds: store.roundRepo(),
+      field: store.fieldRepo(),
+      participants: store.participantRepo(),
+      mappings: store.mappingRepo(),
+      golfRounds: store.golfRoundRepo(),
+      golfStandings: { ...golfStandings, updateRanks: () => Promise.reject(new Error('rank write failed')) },
+      storesGolfRoundScores: eventStoresGolfRoundScores,
+      leaderboards,
+    });
+
+    await expect(failing.applyRoundScores(event.id, 1, [{ participantId: anaEntry.participantId, ...row() }])).rejects.toThrow('rank write failed');
+    expect(leaderboards.handedOut).toEqual([event.id]);
+    expect(leaderboards.sportEventIds).toEqual([]);
   });
 });

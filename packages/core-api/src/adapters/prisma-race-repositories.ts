@@ -8,6 +8,7 @@
 import type { Prisma, PrismaClient } from '@prisma/client';
 import type { RaceResultApply, SportEventParticipantRaceResultRepository } from '@poolmaster/shared/db';
 import type { SportEventParticipantRaceResult } from '@poolmaster/shared/domain';
+import { insertBackgroundJobs } from './prisma-background-job-repository';
 import { rewriteStandings } from './prisma-standing-rewrite';
 
 export class PrismaSportEventParticipantRaceResultRepository implements SportEventParticipantRaceResultRepository {
@@ -48,6 +49,7 @@ export class PrismaSportEventParticipantRaceResultRepository implements SportEve
         data: { isOfficial },
       });
       await rewriteStandings(tx, apply.standings.map(({ sportEventParticipantId, ...standing }) => ({ sportEventParticipantId, standing })));
+      await insertBackgroundJobs(tx, apply.jobs ?? []);
     });
   }
 }

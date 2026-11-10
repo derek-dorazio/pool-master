@@ -3,7 +3,7 @@
  * lines, one per participant round and stat. The loader and the admin stat grid write them (#935).
  */
 
-import type { SportStat } from '../domain';
+import type { BackgroundJobRequest, SportStat } from '../domain';
 
 /** One player's whole line for one game, as it is to be stored. */
 export interface GameStatLineWrite {
@@ -18,7 +18,8 @@ export interface GameStatLineWrite {
 export interface SportEventParticipantStatLineRepository {
   /**
    * Replaces each player's line for the game, all or none. A line that already holds exactly
-   * these stats is left as it is, its round's completedAt included.
+   * these stats is left as it is, its round's completedAt included. `jobs` (the event's
+   * leaderboard rebuild, #1466) are written in the same transaction.
    */
-  replaceGameLines(writes: readonly GameStatLineWrite[]): Promise<void>;
+  replaceGameLines(writes: readonly GameStatLineWrite[], jobs?: readonly BackgroundJobRequest[]): Promise<void>;
 }

@@ -13,11 +13,13 @@ import type {
   SportEventParticipantGolfStandingRepository,
 } from '@poolmaster/shared/db';
 import type {
+  BackgroundJobRequest,
   GolfRoundResult,
   GolfStandingResult,
   SportEventParticipantGolfRound,
   SportEventParticipantGolfStanding,
 } from '@poolmaster/shared/domain';
+import { insertBackgroundJobs } from './prisma-background-job-repository';
 import { rewriteStandingRanks, rewriteStandings } from './prisma-standing-rewrite';
 
 const GOLF_ROUND_INCLUDE = {
@@ -184,9 +186,16 @@ export class PrismaSportEventParticipantGolfStandingRepository implements SportE
   }
 
   /** Every rank in a fixed number of statements, however many golfers (#1252). */
-  async updateRanks(ranks: ReadonlyArray<StandingRankWrite>): Promise<void> {
-    if (ranks.length === 0) return;
-    await this.prisma.$transaction((tx) => rewriteStandingRanks(tx, ranks));
+  async updateRanks(ranks: ReadonlyArray<StandingRankWrite>, jobs: readonly BackgroundJobRequest[] = []): Promise<void> {
+    // With no rank to move, the jobs are the only write: one insert needs no transaction.
+    if (ranks.length === 0) {
+      await insertBackgroundJobs(this.prisma, jobs);
+      return;
+    }
+    await this.prisma.$transaction(async (tx) => {
+      await rewriteStandingRanks(tx, ranks);
+      await insertBackgroundJobs(tx, jobs);
+    });
   }
 }
 

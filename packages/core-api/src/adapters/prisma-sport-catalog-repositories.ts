@@ -58,7 +58,7 @@ import type {
 } from '@poolmaster/shared/domain';
 import { EventPricingConfigSchema, MatchSide, ParticipantInactiveReason, ParticipantStatus, SportEventStatus, ValuationSource } from '@poolmaster/shared/domain';
 import { forgettingReads, memoizedRead, memoizedReadMany, ReadMemoKey } from '../core/request-read-memo';
-import { insertBackgroundJobs } from './prisma-background-job-repository';
+import { backgroundJobsInsert, insertBackgroundJobs } from './prisma-background-job-repository';
 import { toGolfRound, toGolfStanding } from './prisma-golf-repositories';
 import { MATCH_INCLUDE, toSportEventMatch } from './prisma-match-repositories';
 import { mapToParticipant } from './prisma-participant-repository';
@@ -784,10 +784,11 @@ export class PrismaSportEventParticipantRepository implements SportEventParticip
     return rows.length;
   }
 
-  async createMany(sportEventId: string, rows: readonly SportEventParticipantCreate[]): Promise<void> {
-    await this.prisma.sportEventParticipant.createMany({
+  async createMany(sportEventId: string, rows: readonly SportEventParticipantCreate[], jobs: readonly BackgroundJobRequest[] = []): Promise<void> {
+    const create = this.prisma.sportEventParticipant.createMany({
       data: rows.map((row) => ({ sportEventId, participantId: row.participantId, ...fieldPatch(row) })),
     });
+    await (jobs.length === 0 ? create : this.prisma.$transaction([create, backgroundJobsInsert(this.prisma, jobs)]));
   }
 
   /**
@@ -795,7 +796,7 @@ export class PrismaSportEventParticipantRepository implements SportEventParticip
    * manual price is written with the valuations' fixed-count rewrite. A row whose patch is empty
    * writes nothing.
    */
-  async updateMany(entries: readonly SportEventParticipantFieldUpdate[]): Promise<void> {
+  async updateMany(entries: readonly SportEventParticipantFieldUpdate[], jobs: readonly BackgroundJobRequest[] = []): Promise<void> {
     const idsByPatch = new Map<string, { data: ReturnType<typeof fieldPatch>; ids: string[] }>();
     for (const entry of entries) {
       const data = fieldPatch(entry.updates);
@@ -817,10 +818,11 @@ export class PrismaSportEventParticipantRepository implements SportEventParticip
         throw new Error('A field row to update does not exist.');
       }
       await rewriteValuations(tx, prices);
+      await insertBackgroundJobs(tx, jobs);
     });
   }
 
-  async delete(id: string): Promise<void> {
+  async delete(id: string, jobs: readonly BackgroundJobRequest[] = []): Promise<void> {
     const own = { sportEventParticipantId: id };
     await this.prisma.$transaction([
       this.prisma.sportEventParticipantGolfRound.deleteMany({ where: { participantRound: own } }),
@@ -830,6 +832,7 @@ export class PrismaSportEventParticipantRepository implements SportEventParticip
       this.prisma.sportEventParticipantStanding.deleteMany({ where: own }),
       this.prisma.sportEventParticipantValuation.deleteMany({ where: own }),
       this.prisma.sportEventParticipant.delete({ where: { id } }),
+      ...(jobs.length > 0 ? [backgroundJobsInsert(this.prisma, jobs)] : []),
     ]);
   }
 
@@ -837,10 +840,11 @@ export class PrismaSportEventParticipantRepository implements SportEventParticip
     return this.prisma.contestEntryPick.count({ where: { sportEventParticipantId: id } });
   }
 
-  async fillPlayInSlot(input: { id: string; winnerParticipantId: string; pairingParticipantId: string }): Promise<void> {
+  async fillPlayInSlot(input: { id: string; winnerParticipantId: string; pairingParticipantId: string }, jobs: readonly BackgroundJobRequest[] = []): Promise<void> {
     await this.prisma.$transaction([
       this.prisma.sportEventParticipant.update({ where: { id: input.id }, data: { participantId: input.winnerParticipantId, isPlayInPlace: false } }),
       this.prisma.participant.update({ where: { id: input.pairingParticipantId }, data: { status: ParticipantStatus.INACTIVE } }),
+      ...(jobs.length > 0 ? [backgroundJobsInsert(this.prisma, jobs)] : []),
     ]);
   }
 
@@ -850,7 +854,7 @@ export class PrismaSportEventParticipantRepository implements SportEventParticip
     side: MatchSide;
     replacementParticipantId: string;
     valuation: ReplacementValuation | null;
-  }): Promise<string> {
+  }, jobs: readonly BackgroundJobRequest[] = []): Promise<string> {
     return this.prisma.$transaction(async (tx) => {
       const withdrawn = await tx.sportEventParticipant.update({
         where: { id: input.withdrawnId },
@@ -880,6 +884,7 @@ export class PrismaSportEventParticipantRepository implements SportEventParticip
           ? { homeSportEventParticipantId: replacement.id }
           : { awaySportEventParticipantId: replacement.id },
       });
+      await insertBackgroundJobs(tx, jobs);
       return replacement.id;
     });
   }

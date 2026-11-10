@@ -14,6 +14,7 @@ import {
   holdingBackgroundJobs,
   setupIntegrationTests,
   teardownIntegrationTests,
+  withBackgroundJobsFailing,
 } from '../helpers';
 import { integrationPlanEntitlements } from '../plan-entitlements';
 import { recordStatements, statementParams, statementsOn, statementTarget, StatementVerb, type RecordedStatement } from '../statement-log';
@@ -546,6 +547,40 @@ describe('Contest leaderboard snapshots (#1435)', () => {
     expect(await snapshotRows(contest.id)).toMatchObject([{ version: 2 }]);
     const { board } = await serviceOn(getAppPrisma()).getLeaderboard(contest.id, viewerId);
     expect(board.entries.map((entry) => entry.totalScore)).toEqual([-11]);
+  });
+
+
+  const correctRound = (eventId: string, fieldRowId: string, headers: Record<string, string>) => getApp().inject({
+    method: 'PATCH', url: `/api/v1/events/${eventId}/rounds/1/golf-scores/${fieldRowId}`, headers, payload: { strokes: 60, scoreToPar: -12 },
+  });
+  it('writes a score correction\'s rebuild job with the score itself, so the board is rebuilt from it (#1466)', async () => {
+    const { live, contest, viewerId, golfers } = await liveContest();
+    const admin = await createTestUser({ isRootAdmin: true });
+    await serviceOn(getAppPrisma()).getLeaderboard(contest.id, viewerId);
+
+    const response = await holdingBackgroundJobs(() => correctRound(live.event.id, expectDefined(golfers[0]), admin.headers));
+
+    expect(response.statusCode).toBe(200);
+    expect(await rebuildJobs(live.event.id)).toEqual([{ status: 'QUEUED' }]);
+    await drainBackgroundJobs();
+    expect(await snapshotRows(contest.id)).toMatchObject([{ version: 2 }]);
+  });
+
+  it('answers a score correction with an error, queuing no rebuild, when its rebuild job cannot be written, and the admin\'s retry queues it (#1466)', async () => {
+    const { live, golfers } = await liveContest();
+    const admin = await createTestUser({ isRootAdmin: true });
+    const golfer = expectDefined(golfers[0]);
+
+    const failed = await withBackgroundJobsFailing('REBUILD_LEADERBOARDS', () => correctRound(live.event.id, golfer, admin.headers));
+
+    // The ranks, the score write's last statement, roll back with the job; the error tells the
+    // admin the save did not finish, so they save again.
+    expect(failed.statusCode).toBe(500);
+    expect(await rebuildJobs(live.event.id)).toEqual([]);
+
+    const retried = await holdingBackgroundJobs(() => correctRound(live.event.id, golfer, admin.headers));
+    expect(retried.statusCode).toBe(200);
+    expect(await rebuildJobs(live.event.id)).toEqual([{ status: 'QUEUED' }]);
   });
 
   it('queues one more rebuild for a save made while the event\'s rebuild job runs, so the board ends on that save\'s scores (#1463)', async () => {

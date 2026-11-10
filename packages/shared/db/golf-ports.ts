@@ -5,7 +5,7 @@
  * never exists half-scored.
  */
 
-import type { GolfRoundResult, GolfStandingResult, ParticipantRoundStatus, ParticipantStandingStatus } from '../domain';
+import type { BackgroundJobRequest, GolfRoundResult, GolfStandingResult, ParticipantRoundStatus, ParticipantStandingStatus } from '../domain';
 
 export interface GolfRoundWrite {
   sportEventParticipantId: string;
@@ -48,9 +48,10 @@ export interface SportEventParticipantGolfStandingRepository {
   /**
    * Writes the event-side rank onto core standing rows (`position`, `displayPosition`). The
    * ranks are computed from every golfer's score at once, after the standings are written, so
-   * this is a separate write from `upsertMany`.
+   * this is a separate write from `upsertMany`. It is the score write's last, so `jobs` (the
+   * event's leaderboard rebuild, #1466) are written in its transaction, ranks changed or not.
    */
-  updateRanks(ranks: ReadonlyArray<StandingRankWrite>): Promise<void>;
+  updateRanks(ranks: ReadonlyArray<StandingRankWrite>, jobs?: readonly BackgroundJobRequest[]): Promise<void>;
 }
 
 export interface StandingRankWrite {

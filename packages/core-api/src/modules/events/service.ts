@@ -45,6 +45,8 @@ import type { EventLifecycleService } from './event-lifecycle-service';
 import type { SportEventBracketService } from './sport-event-bracket-service';
 import { dailyRoundSchedule, type SportEventRoundService } from './sport-event-round-service';
 import type { SportEventTierService } from './sport-event-tier-service';
+import { NO_JOBS_FOR_WRITE, combineJobsForWrite } from '../background-jobs';
+import type { LeaderboardRebuilds } from '../contests/leaderboard-snapshots';
 
 /**
  * What only a root admin reads of an event: its release readiness and whether it can be deleted.
@@ -137,6 +139,8 @@ export interface SportEventServiceDeps {
   lifecycle: Pick<EventLifecycleService, 'applySportEventStatusTransition' | 'sportEventRescheduledJobs'>;
   /** A new start moves the event's contests' entry reminders (#1170). */
   contests: Pick<ContestRepository, 'recheckReminders'>;
+  /** An edit can move what the event's contests' boards show, so it carries their rebuild (#1466). */
+  leaderboards?: Pick<LeaderboardRebuilds, 'forEvent'>;
   logger?: FastifyBaseLogger;
   now?: () => Date;
 }
@@ -398,13 +402,15 @@ export class SportEventService {
     // commissioners can't see it yet, and a started event's picks are closed.
     const told = shiftMs !== 0 && RESCHEDULE_TOLD.includes(status) && options.tellMembers
       ? await this.deps.lifecycle.sportEventRescheduledJobs({ id: sportEventId, startDate }, startedAt)
-      : undefined;
+      : NO_JOBS_FOR_WRITE;
+    // The edit can change what the event's contests' boards show, so its rebuild rides with it (#1466).
+    const written = combineJobsForWrite(told, this.deps.leaderboards?.forEvent(sportEventId) ?? NO_JOBS_FOR_WRITE);
     // The event and its jobs are one write; the rounds and reminders follow it, not in its
     // transaction: a failure after it leaves the rounds behind the event's new dates. The round
     // writes only reject a round the event lacks, and they read the event's rounds first, so in
     // practice they don't fail here.
-    await this.deps.sportEvents.update(sportEventId, updates, told && { jobs: told.jobs });
-    if (told && told.jobs.length > 0) told.queued();
+    await this.deps.sportEvents.update(sportEventId, updates, written.jobs.length > 0 ? { jobs: written.jobs } : undefined);
+    written.queued();
     if (shiftMs !== 0) {
       await this.deps.rounds.shiftSchedule(sportEventId, shiftMs);
       await this.deps.contests.recheckReminders({ sportEventId }, this.now());

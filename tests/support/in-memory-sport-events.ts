@@ -443,12 +443,14 @@ export class InMemorySportEvents {
       countDistinctParticipants: async (sportEventIds) => new Set(this.field
         .filter((row) => sportEventIds.includes(row.sportEventId))
         .map((row) => row.participantId)).size,
-      createMany: async (sportEventId, rows: readonly SportEventParticipantCreate[]) => {
+      createMany: async (sportEventId, rows: readonly SportEventParticipantCreate[], jobs) => {
+        this.backgroundJobs.push(...(jobs ?? []));
         for (const { participantId, ...patch } of rows) {
           apply(this.addToField(sportEventId, participantId), patch);
         }
       },
-      updateMany: async (entries) => {
+      updateMany: async (entries, jobs) => {
+        this.backgroundJobs.push(...(jobs ?? []));
         if (entries.some((entry) => !this.field.some((row) => row.id === entry.id))) {
           throw new Error('unknown field row');
         }
@@ -457,12 +459,14 @@ export class InMemorySportEvents {
           if (entry.price !== undefined) setPrice(entry.id, entry.price);
         }
       },
-      delete: async (id) => {
+      delete: async (id, jobs) => {
+        this.backgroundJobs.push(...(jobs ?? []));
         this.field = this.field.filter((row) => row.id !== id);
         this.valuationRows = this.valuationRows.filter((row) => row.sportEventParticipantId !== id);
       },
       countPicks: async (id) => this.picksByEntry.get(id) ?? 0,
-      fillPlayInSlot: async ({ id, winnerParticipantId, pairingParticipantId }) => {
+      fillPlayInSlot: async ({ id, winnerParticipantId, pairingParticipantId }, jobs) => {
+        this.backgroundJobs.push(...(jobs ?? []));
         const row = this.field.find((entry) => entry.id === id);
         const pairing = this.participants.find((participant) => participant.id === pairingParticipantId);
         if (!row || !pairing) throw new Error('unknown field row or participant');
@@ -470,7 +474,8 @@ export class InMemorySportEvents {
         row.isPlayInPlace = false;
         pairing.status = ParticipantStatus.INACTIVE;
       },
-      replaceWithdrawn: async ({ withdrawnId, matchId, side, replacementParticipantId, valuation }) => {
+      replaceWithdrawn: async ({ withdrawnId, matchId, side, replacementParticipantId, valuation }, jobs) => {
+        this.backgroundJobs.push(...(jobs ?? []));
         const withdrawn = this.field.find((entry) => entry.id === withdrawnId);
         const match = this.matchRows.find((row) => row.id === matchId);
         if (!withdrawn || !match) throw new Error('unknown field row or match');
@@ -652,7 +657,8 @@ export class InMemorySportEvents {
       },
       findBySportEventParticipants: async (ids) => this.golfStandingResults().filter((result) => ids.includes(result.standing.sportEventParticipantId)),
       upsertMany: async (writes) => writes.map((write) => this.writeGolfStanding(write)),
-      updateRanks: async (ranks) => {
+      updateRanks: async (ranks, jobs) => {
+        this.backgroundJobs.push(...(jobs ?? []));
         for (const rank of ranks) {
           const standing = this.standingRows.find((row) => row.id === rank.standingId);
           if (!standing) throw new Error('unknown standing');
@@ -695,7 +701,8 @@ export class InMemorySportEvents {
       },
       findBySportEvent: async (sportEventId) => findBySportEvents([sportEventId]),
       findBySportEvents,
-      replaceBracket: async (sportEventId, matches) => {
+      replaceBracket: async (sportEventId, matches, jobs) => {
+        this.backgroundJobs.push(...(jobs ?? []));
         const roundNumbers = new Set(this.roundRows.filter((round) => round.sportEventId === sportEventId).map((round) => round.roundNumber));
         if (matches.some((match) => !roundNumbers.has(match.roundNumber))) throw new Error('unknown round');
         this.matchRows = [
@@ -714,19 +721,22 @@ export class InMemorySportEvents {
           })),
         ];
       },
-      placeSides: async (sides) => {
+      placeSides: async (sides, jobs) => {
+        this.backgroundJobs.push(...(jobs ?? []));
         for (const { id, ...placed } of sides) {
           const row = this.matchRows.find((match) => match.id === id);
           if (!row) throw new Error('unknown match');
           Object.assign(row, placed);
         }
       },
-      update: async (id, patch) => {
+      update: async (id, patch, jobs) => {
+        this.backgroundJobs.push(...(jobs ?? []));
         const row = this.matchRows.find((match) => match.id === id);
         if (!row) throw new Error('unknown match');
         Object.assign(row, Object.fromEntries(Object.entries(patch).filter(([, value]) => value !== undefined)));
       },
-      applyResult: async ({ result, sideFill, standings }) => {
+      applyResult: async ({ result, sideFill, standings, jobs }) => {
+        this.backgroundJobs.push(...(jobs ?? []));
         const { id, ...values } = result;
         const row = this.matchRows.find((match) => match.id === id);
         if (!row) throw new Error('unknown match');
@@ -746,11 +756,13 @@ export class InMemorySportEvents {
           Object.assign(stored, standing);
         }
       },
-      savePeriodScore: async (sportEventMatchId, score) => {
+      savePeriodScore: async (sportEventMatchId, score, jobs) => {
+        this.backgroundJobs.push(...(jobs ?? []));
         const row = requireRow(sportEventMatchId);
         row.periodScores = [...row.periodScores.filter((other) => other.periodNumber !== score.periodNumber), { ...score }];
       },
-      deletePeriodScore: async (sportEventMatchId, periodNumber) => {
+      deletePeriodScore: async (sportEventMatchId, periodNumber, jobs) => {
+        this.backgroundJobs.push(...(jobs ?? []));
         const row = requireRow(sportEventMatchId);
         row.periodScores = row.periodScores.filter((other) => other.periodNumber !== periodNumber);
       },
@@ -759,7 +771,8 @@ export class InMemorySportEvents {
 
   statLineRepo(): SportEventParticipantStatLineRepository {
     return {
-      replaceGameLines: async (writes) => {
+      replaceGameLines: async (writes, jobs) => {
+        this.backgroundJobs.push(...(jobs ?? []));
         for (const { sportEventParticipantId, sportEventRoundId, stats, completedAt } of writes) {
           let core = this.participantRoundRows.find((row) => row.sportEventParticipantId === sportEventParticipantId && row.sportEventRoundId === sportEventRoundId);
           const storedLines = core ? this.statLineRows.filter((row) => row.participantRoundId === core?.id) : [];
@@ -797,7 +810,8 @@ export class InMemorySportEvents {
           .sort((left, right) => left.sportEventParticipantId.localeCompare(right.sportEventParticipantId))
           .map((row) => ({ ...row }));
       },
-      applyResults: async (sportEventId, { results, isOfficial, standings }) => {
+      applyResults: async (sportEventId, { results, isOfficial, standings, jobs }) => {
+        this.backgroundJobs.push(...(jobs ?? []));
         const entryIds = entryIdsOf(sportEventId);
         if ([...results, ...standings].some((write) => !entryIds.has(write.sportEventParticipantId))) {
           throw new Error('unknown field row');

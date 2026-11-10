@@ -326,24 +326,27 @@ export interface SportEventParticipantRepository {
   findFieldRow(sportEventId: string, sportEventParticipantId: string, sportLeagueId: string): Promise<SportEventParticipantView | null>;
   /** How many different participants the events' fields hold between them: a season's teams (#836). */
   countDistinctParticipants(sportEventIds: readonly string[]): Promise<number>;
-  /** Adds participants to an event's field, all or none. */
-  createMany(sportEventId: string, rows: readonly SportEventParticipantCreate[]): Promise<void>;
+  /**
+   * Adds participants to an event's field, all or none. Each of these field writes takes the
+   * background jobs it causes (the event's leaderboard rebuild, #1466) and writes them with it.
+   */
+  createMany(sportEventId: string, rows: readonly SportEventParticipantCreate[], jobs?: readonly BackgroundJobRequest[]): Promise<void>;
   /** Patches field rows and their manual prices, all or none. */
-  updateMany(entries: readonly SportEventParticipantFieldUpdate[]): Promise<void>;
+  updateMany(entries: readonly SportEventParticipantFieldUpdate[], jobs?: readonly BackgroundJobRequest[]): Promise<void>;
   /** Removes a field row with its valuation, standing and rounds. The caller guards picks. */
-  delete(id: string): Promise<void>;
+  delete(id: string, jobs?: readonly BackgroundJobRequest[]): Promise<void>;
   /** Contest-entry picks made of this field row. */
   countPicks(id: string): Promise<number>;
   /**
    * Points a play-in slot's field row at the team that won the play-in and inactivates the
    * participant that stood for the pairing, in one transaction (#698). The row keeps its seed,
-   * tier, price and picks, and is no longer a play-in place (#709).
+   * tier, price and picks, and is no longer a play-in place (#709). `jobs` are written with it.
    */
-  fillPlayInSlot(input: { id: string; winnerParticipantId: string; pairingParticipantId: string }): Promise<void>;
+  fillPlayInSlot(input: { id: string; winnerParticipantId: string; pairingParticipantId: string }, jobs?: readonly BackgroundJobRequest[]): Promise<void>;
   /**
    * Replaces a withdrawn field row in its bracket place, in one transaction (#704): adds the
    * replacement's field row (unseeded) with `valuation`, names it on the match's side, and
-   * inactivates the withdrawn row as WITHDRAWN. Returns the replacement's field row id.
+   * inactivates the withdrawn row as WITHDRAWN, with `jobs`. Returns the replacement's field row id.
    */
   replaceWithdrawn(input: {
     withdrawnId: string;
@@ -351,7 +354,7 @@ export interface SportEventParticipantRepository {
     side: MatchSide;
     replacementParticipantId: string;
     valuation: ReplacementValuation | null;
-  }): Promise<string>;
+  }, jobs?: readonly BackgroundJobRequest[]): Promise<string>;
 }
 
 /** A replacement's tier, its place in the tier and its price; each null where the event has none. */

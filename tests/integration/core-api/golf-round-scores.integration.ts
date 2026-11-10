@@ -8,6 +8,7 @@ import {
   getPrisma,
   setupIntegrationTests,
   teardownIntegrationTests,
+  withBackgroundJobsFailing,
 } from '../helpers';
 import { Sport } from '@poolmaster/shared/domain';
 import {
@@ -18,6 +19,8 @@ import { createGolfScoreService, createSportEventServices } from '../../../packa
 import { publishLiveScoreUpdate } from '../../../packages/core-api/src/modules/ingestion/core/score-publisher';
 import { scoringFamilyForEvent } from '../../../packages/core-api/src/modules/scoring-families';
 import { freshEventEdition } from '../../support/event-edition';
+import { eventRebuildJob } from '../../support/recording-leaderboard-rebuilds';
+import { PrismaSportEventParticipantGolfStandingRepository } from '../../../packages/core-api/src/adapters';
 
 // The admin round-score surface against real Postgres. A golfer's round is a core
 // SportEventParticipantRound plus its golf extension, and their standing is a core
@@ -436,5 +439,39 @@ describe('Golf round scores — a live sync writes only what changed', () => {
       [jordan.sep.id]: '1',
       [rory.sep.id]: '2',
     });
+  });
+});
+
+describe('Golf standings ranks — the leaderboard rebuild they carry (#1466)', () => {
+  const rebuildJobCount = (sportEventId: string) => getPrisma().backgroundJob.count({ where: { dedupeKey: eventRebuildJob(sportEventId).dedupeKey } });
+
+  it('writes the rebuild job alone when no rank moved, and with the ranks when one did', async () => {
+    const { event, round1, rory } = await createField('ranks-carry');
+    await createGolfScoreService(getAppPrisma()).applyRoundScores(event.id, round1.roundNumber, [row(rory.participant.id)]);
+    const standings = new PrismaSportEventParticipantGolfStandingRepository(getAppPrisma());
+    const [stored] = await standings.findBySportEvent(event.id);
+
+    await standings.updateRanks([], [eventRebuildJob(event.id)]);
+    await expect(rebuildJobCount(event.id)).resolves.toBe(1);
+
+    await getPrisma().backgroundJob.deleteMany({ where: { dedupeKey: eventRebuildJob(event.id).dedupeKey } });
+    await standings.updateRanks([{ standingId: stored.standing.id, position: 7, displayPosition: 'T7' }], [eventRebuildJob(event.id)]);
+    await expect(rebuildJobCount(event.id)).resolves.toBe(1);
+    await expect(getPrisma().sportEventParticipantStanding.findUniqueOrThrow({ where: { id: stored.standing.id } })).resolves.toMatchObject({ position: 7, displayPosition: 'T7' });
+  });
+
+  it('keeps the ranks as they were when the rebuild job cannot be written', async () => {
+    const { event, round1, rory } = await createField('ranks-fail');
+    await createGolfScoreService(getAppPrisma()).applyRoundScores(event.id, round1.roundNumber, [row(rory.participant.id)]);
+    const standings = new PrismaSportEventParticipantGolfStandingRepository(getAppPrisma());
+    const [stored] = await standings.findBySportEvent(event.id);
+
+    await expect(withBackgroundJobsFailing('REBUILD_LEADERBOARDS', () => standings.updateRanks(
+      [{ standingId: stored.standing.id, position: 7, displayPosition: 'T7' }], [eventRebuildJob(event.id)],
+    ))).rejects.toThrow();
+
+    await expect(getPrisma().sportEventParticipantStanding.findUniqueOrThrow({ where: { id: stored.standing.id } }))
+      .resolves.toMatchObject({ position: stored.standing.position, displayPosition: stored.standing.displayPosition ?? null });
+    await expect(rebuildJobCount(event.id)).resolves.toBe(0);
   });
 });

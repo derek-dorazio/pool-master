@@ -172,6 +172,7 @@ export function buildApp() {
     sportEventChanged: contestNotices,
     contestSettlement,
     releasedEditionContests,
+    leaderboards,
   });
   const memberJoined = createMemberJoinedNotices(prisma, { email, readConfig: () => appSettings.get(EMAIL_SETTINGS), appBaseUrl, logger: app.log });
   // Admin saves, and provider syncs that load an event's field, clear the public reads CloudFront keeps (#1181).

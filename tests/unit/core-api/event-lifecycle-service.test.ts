@@ -24,6 +24,7 @@ import { fakeContestConfigurationRepo, fakeContestRepo } from '../../support/rep
 import { expectDefined } from '../../support/expect-defined';
 import { fakeLogger } from '../../support/fake-logger';
 import { mockFn } from '../../support/mock-fn';
+import { RecordingLeaderboardRebuilds, eventRebuildJob } from '../../support/recording-leaderboard-rebuilds';
 
 const STARTED_EVENT_START = new Date('2026-05-02T20:00:00.000Z');
 
@@ -801,5 +802,38 @@ describe('EventLifecycleService when another caller changes the status first (#1
 
     expect(result.sportEvent.status).toBe(SportEventStatus.CANCELLED);
     expect(settlement.settleFinishedSportEvent).not.toHaveBeenCalled();
+  });
+});
+
+describe('EventLifecycleService — leaderboard rebuild (#1466)', () => {
+  it('writes the event\'s rebuild job with each status change and wakes the runner once the status is written', async () => {
+    const store = new InMemorySportEvents();
+    store.addEvent({ id: 'sport-event-1', status: SportEventStatus.SCHEDULED });
+    const leaderboards = new RecordingLeaderboardRebuilds();
+    const service = new EventLifecycleService(contestDeps(), store.sportEventRepo(), fakeLogger(), undefined, undefined, undefined, undefined, leaderboards);
+
+    await service.applySportEventStatusTransition({ sportEventId: 'sport-event-1', toStatus: SportEventStatus.POSTPONED, actor: { type: 'ROOT_ADMIN' } });
+
+    expect(store.backgroundJobs).toEqual([eventRebuildJob('sport-event-1')]);
+    expect(leaderboards.sportEventIds).toEqual(['sport-event-1']);
+  });
+
+  it('wakes no rebuild when another caller changed the status first, since that change wrote its own', async () => {
+    const store = new InMemorySportEvents();
+    store.addEvent({ id: 'sport-event-1', status: SportEventStatus.SCHEDULED });
+    const repo = store.sportEventRepo();
+    const findById = repo.findById.bind(repo);
+    jest.spyOn(repo, 'findById').mockImplementationOnce(async (id) => {
+      const seen = await findById(id);
+      await repo.transitionStatus(id, { from: SportEventStatus.SCHEDULED, to: SportEventStatus.IN_PROGRESS });
+      return seen;
+    });
+    const leaderboards = new RecordingLeaderboardRebuilds();
+    const service = new EventLifecycleService(contestDeps(), repo, fakeLogger(), undefined, undefined, undefined, undefined, leaderboards);
+
+    await service.applySportEventStatusTransition({ sportEventId: 'sport-event-1', fromStatus: SportEventStatus.SCHEDULED, toStatus: SportEventStatus.IN_PROGRESS, actor: { type: 'SYSTEM' } });
+
+    expect(store.backgroundJobs).toEqual([]);
+    expect(leaderboards.sportEventIds).toEqual([]);
   });
 });
