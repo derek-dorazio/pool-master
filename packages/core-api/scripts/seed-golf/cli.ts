@@ -7,7 +7,7 @@
  *   POOLMASTER_SEED_ADMIN_PASSWORD=... \
  *   npm run seed:golf -- [--file golf-2026.json] [--mode dry-run|apply] [--allow-test-data] [--report report.md]
  *                        [--event "<event name>"] [--replace-field] [--all-test-data] [--with-participants]
- *                        [--events-per-league 2]
+ *                        [--events-per-league 2] [--release]
  *
  * --file is a path inside this folder (default golf-2026.json). --mode defaults to dry-run,
  * which reads the site and reports what applying would change without writing anything.
@@ -29,6 +29,11 @@
  * league, named "Test- ...", with dates rolled from the run: --events-per-league of them
  * (default 2), and only for a league with no test event still to start. Running it again
  * later loads the next ones (selectTestSeedEvents in seed-golf.ts, #1524).
+ *
+ * --release, for a real file, releases each draft event whose field the file carries and that
+ * has not started, with tiers by the field's ranking and default prices where missing, so an
+ * apply leaves it open for contests. Without it a real file's events stay drafts. A test seed
+ * releases as before either way.
  *
  * The base URL is the site root that serves /api/v1 (the API itself locally, the site on QA).
  * QA runs this through the "Load sport data" workflow, never on deploy.
@@ -107,6 +112,7 @@ async function main(): Promise<void> {
       'all-test-data': { type: 'boolean', default: false },
       'with-participants': { type: 'boolean', default: false },
       'events-per-league': { type: 'string', default: '2' },
+      release: { type: 'boolean', default: false },
     },
   });
   const mode = values.mode === 'apply' ? LoadMode.APPLY : values.mode === 'dry-run' ? LoadMode.DRY_RUN : null;
@@ -183,6 +189,7 @@ async function main(): Promise<void> {
           log,
           ...(values.event ? { event: values.event } : {}),
           replaceField: values['replace-field'],
+          release: values.release,
         });
         if (withParticipants) rows.push(...await loadTestParticipants(file, participants));
       }

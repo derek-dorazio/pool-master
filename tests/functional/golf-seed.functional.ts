@@ -404,6 +404,61 @@ describe('Loading a real golf schedule and fields through the admin API', () => 
   });
 });
 
+describe('Releasing a real file\'s events as they load', () => {
+  const prefix = `${RUN}-release`;
+  const tour = `Release Tour ${prefix}`;
+  const name = (event: string) => `${prefix} ${event}`;
+  const getClient = () => Promise.resolve(admin.client);
+  const ranked = (count: number) => Array.from({ length: count }, (_, index) => ({ player: `${prefix}-p${index + 1}`, ranking: index + 1 }));
+  const file = (): SportDataFile => ({
+    schemaVersion: 1,
+    scope: { sport: Sport.GOLF, season: 2027, sportLeagues: [tour], contents: [SportDataContent.SCHEDULE, SportDataContent.PLAYERS, SportDataContent.FIELDS] },
+    testData: false,
+    provenance: provenance(),
+    sportLeagues: [{
+      name: tour,
+      players: players(prefix, 30),
+      events: [
+        { key: 'full', name: name('Full Field'), startDate: '2027-05-06', endDate: '2027-05-09', venue: null, location: null, rounds: 4, roundsPar: 72, field: ranked(30) },
+        { key: 'thin', name: name('Thin Field'), startDate: '2027-05-13', endDate: '2027-05-16', venue: null, location: null, rounds: 4, roundsPar: 72, field: ranked(1) },
+        { key: 'none', name: name('No Field Yet'), startDate: '2027-05-20', endDate: '2027-05-23', venue: null, location: null, rounds: 4, roundsPar: 72, field: [] },
+      ],
+    }],
+  });
+  const eventRows = (rows: LoadRow[]) => rows.filter((row) => row.subject === LoadSubject.EVENT).map(({ action, name: eventName, detail }) => ({ action, name: eventName, detail }));
+
+  it('reports the release in a dry run, then releases an event with its field tiered by ranking and priced, leaves one the site refuses a draft with its reason, and one with no field a draft', async () => {
+    const dryRun = await loadSportData(parsed(file()), { getClient, now: NOW, mode: LoadMode.DRY_RUN, release: true });
+    expect(eventRows(dryRun)).toEqual([
+      { action: LoadAction.ADD, name: name('Full Field'), detail: 'released: tiers by ranking and prices where missing' },
+      { action: LoadAction.ADD, name: name('Thin Field'), detail: 'released: tiers by ranking and prices where missing' },
+      { action: LoadAction.ADD, name: name('No Field Yet'), detail: null },
+    ]);
+    expect(await leagueNamed(tour)).toBeUndefined();
+
+    const applied = await loadSportData(parsed(file()), { getClient, now: NOW, mode: LoadMode.APPLY, release: true });
+
+    expect(eventRows(applied)).toContainEqual({ action: LoadAction.CONFLICT, name: name('Thin Field'), detail: expect.stringContaining('left a draft: ') as unknown });
+    const league = expectDefined(await leagueNamed(tour));
+    const events = await eventsOf(league.id, 2027);
+    const statusOf = (eventName: string) => expectDefined(events.find((event) => event.name === name(eventName))).status;
+    expect([statusOf('Full Field'), statusOf('Thin Field'), statusOf('No Field Yet')]).toEqual(['SCHEDULED', 'DRAFT', 'DRAFT']);
+    const field = await fieldOf(expectDefined(events.find((event) => event.name === name('Full Field'))).id);
+    expect([...field.values()].every((row) => row.valuation?.sportEventTierId && row.valuation.price !== null)).toBe(true);
+  });
+
+  it('skips the released event on a second run and tries the refused draft again', async () => {
+    const second = await loadSportData(parsed(file()), { getClient, now: NOW, mode: LoadMode.APPLY, release: true });
+
+    expect(eventRows(second)).toEqual([
+      { action: LoadAction.SKIP, name: name('Full Field'), detail: null },
+      { action: LoadAction.UPDATE, name: name('Thin Field'), detail: 'released: tiers by ranking and prices where missing' },
+      { action: LoadAction.CONFLICT, name: name('Thin Field'), detail: expect.stringContaining('left a draft: ') as unknown },
+      { action: LoadAction.SKIP, name: name('No Field Yet'), detail: null },
+    ]);
+  });
+});
+
 describe('Keeping test events and real events apart on one site', () => {
   const prefix = `${RUN}-apart`;
   const tour = `Apart Tour ${prefix}`;

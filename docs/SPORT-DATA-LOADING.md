@@ -82,9 +82,18 @@ real file they are written whenever they differ, before or after release: each p
 for a game replaces the stored one, and a stored line for a player the game leaves out is cleared. An
 admin corrects one player's line on the event's Results page.
 
-Running the same file again lists everything as a skip. A real data file never releases an
-event or writes odds, tiers, prices or scores; those stay admin actions
-([`EVENT-SETUP-PROCEDURES.md`](EVENT-SETUP-PROCEDURES.md)).
+**Released as it loads.** With *release* on (the workflow's default; `--release` locally), an
+apply releases each draft event whose field the file carries and that has not started, so a
+"Load" leaves it open for contests with no trip to the Manage screens. With it off, every
+event stays a draft for an admin to release. Where an active player has no tier, the event's tiers are assigned by the field's
+ranking; where one has no price, it gets the default prices. Tiers or prices an admin set by
+hand are kept. An event the site still refuses to release (an incomplete bracket, say) stays a
+draft, and the report lists it as a conflict with the site's reason; the next run tries again.
+An event with no field in the file yet (a schedule only) stays a draft. A real file never
+writes odds or scores ([`EVENT-SETUP-PROCEDURES.md`](EVENT-SETUP-PROCEDURES.md) has the admin
+steps).
+
+Running the same file again lists everything as a skip.
 
 **Any sport.** A real file may be any sport in the registry: rounds are the sport's count
 (1 for a race), and par is golf's alone (`null` for every other sport). An event may give
