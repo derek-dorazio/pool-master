@@ -5617,7 +5617,7 @@ export interface components {
             /** @description User ID that accepted the invite, when known. */
             acceptedBy?: string | null;
             /**
-             * @description Where the latest email of an email invite stands; null for a join link, which has no email.
+             * @description Where the latest email of an email invite stands; null for a join link, which has no email, and for an email invite whose email is over 30 days old, once the outbox has deleted it.
              * @enum {string|null}
              */
             emailStatus: "QUEUED" | "SENDING" | "SENT" | "DELIVERED" | "BOUNCED" | "COMPLAINED" | "FAILED" | "SKIPPED" | null;
@@ -6296,7 +6296,7 @@ export interface components {
                 /** @description User ID that accepted the invite, when known. */
                 acceptedBy?: string | null;
                 /**
-                 * @description Where the latest email of an email invite stands; null for a join link, which has no email.
+                 * @description Where the latest email of an email invite stands; null for a join link, which has no email, and for an email invite whose email is over 30 days old, once the outbox has deleted it.
                  * @enum {string|null}
                  */
                 emailStatus: "QUEUED" | "SENDING" | "SENT" | "DELIVERED" | "BOUNCED" | "COMPLAINED" | "FAILED" | "SKIPPED" | null;
@@ -6362,7 +6362,7 @@ export interface components {
                 /** @description User ID that accepted the invite, when known. */
                 acceptedBy?: string | null;
                 /**
-                 * @description Where the latest email of an email invite stands; null for a join link, which has no email.
+                 * @description Where the latest email of an email invite stands; null for a join link, which has no email, and for an email invite whose email is over 30 days old, once the outbox has deleted it.
                  * @enum {string|null}
                  */
                 emailStatus: "QUEUED" | "SENDING" | "SENT" | "DELIVERED" | "BOUNCED" | "COMPLAINED" | "FAILED" | "SKIPPED" | null;
@@ -6424,7 +6424,7 @@ export interface components {
                 /** @description User ID that accepted the invite, when known. */
                 acceptedBy?: string | null;
                 /**
-                 * @description Where the latest email of an email invite stands; null for a join link, which has no email.
+                 * @description Where the latest email of an email invite stands; null for a join link, which has no email, and for an email invite whose email is over 30 days old, once the outbox has deleted it.
                  * @enum {string|null}
                  */
                 emailStatus: "QUEUED" | "SENDING" | "SENT" | "DELIVERED" | "BOUNCED" | "COMPLAINED" | "FAILED" | "SKIPPED" | null;
@@ -6486,7 +6486,7 @@ export interface components {
                 /** @description User ID that accepted the invite, when known. */
                 acceptedBy?: string | null;
                 /**
-                 * @description Where the latest email of an email invite stands; null for a join link, which has no email.
+                 * @description Where the latest email of an email invite stands; null for a join link, which has no email, and for an email invite whose email is over 30 days old, once the outbox has deleted it.
                  * @enum {string|null}
                  */
                 emailStatus: "QUEUED" | "SENDING" | "SENT" | "DELIVERED" | "BOUNCED" | "COMPLAINED" | "FAILED" | "SKIPPED" | null;
