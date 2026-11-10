@@ -96,6 +96,18 @@ describe('choosing which test seed events to load', () => {
     ]);
   });
 
+  it('keeps the days between stages of the same real week, so the semifinals still come before the final', () => {
+    const file = seed({
+      'Women\'s World Cup Semifinals': [event('Semifinals', '2023-08-15', '2023-08-16')], // Tuesday
+      'Women\'s World Cup Final': [event('Final', '2023-08-20')], // the Sunday after
+    });
+
+    expect(landings(selectTestSeedEvents(file, new Map(), 2, NOW))).toEqual([
+      ['Test- Semifinals', '2026-11-17'],
+      ['Test- Final', '2026-11-22'],
+    ]);
+  });
+
   it('lands a one-event league\'s event in the coming week beside a season tour\'s first event of the same real week', () => {
     const file = seed({
       'PGA TOUR': [event('Sony Open', '2026-01-15', '2026-01-18'), event('American Express', '2026-01-22', '2026-01-25')],

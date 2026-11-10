@@ -125,9 +125,10 @@ export interface TestSeedSelection {
  *
  * Dates roll with the run, a week at a time: the chosen events are grouped by the week (Monday
  * to Sunday) they were really played in, and those weeks are laid about a week apart from the
- * run. The first week's events land on their own weekdays within the week after `now`; each
- * next week's land on their own weekdays 4 to 10 days after the week before's first event, the
- * nearest to a week (rollingOffsetDays). A league with several events (a
+ * run. Every event of a week moves by the same whole weeks, so the days between them stay as
+ * they were. The first week's earliest event lands on its weekday within the week after `now`;
+ * each next week's earliest lands on its weekday 4 to 10 days after the week before's first
+ * event, the nearest to a week (rollingOffsetDays). A league with several events (a
  * season tour) is laid out on its own; the one-event leagues (the stages of one competition)
  * share one sequence. So a football week still starts on a Thursday, a tournament still runs
  * Thursday to Sunday, every tour starts in the coming week, and the conference championships
@@ -185,7 +186,11 @@ export function selectTestSeedEvents(
     let notBefore = new Date(now.getTime() + DAY_MS);
     for (const week of weeks) {
       const inWeek = events.filter((event) => realWeek(event) === week);
-      for (const event of inWeek) offsets.set(event, rollingOffsetDays(event, notBefore));
+      // One offset for the whole week, from its earliest event, so the days between its events
+      // stay as they were: the semifinals still come before the final.
+      const earliest = inWeek.reduce((first, event) => (startDay(event) < startDay(first) ? event : first));
+      const offset = rollingOffsetDays(earliest, notBefore);
+      for (const event of inWeek) offsets.set(event, offset);
       const firstStart = Math.min(...inWeek.map((event) => startDay(event) + offsetOf(event)));
       // The next week's events land on their weekdays closest to a week after this week's first:
       // from 4 to 10 days after it.
