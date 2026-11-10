@@ -459,6 +459,62 @@ describe('Releasing a real file\'s events as they load', () => {
   });
 });
 
+describe('Leaving a real file\'s event a draft rather than releasing it', () => {
+  const prefix = `${RUN}-held`;
+  const tour = `Held Tour ${prefix}`;
+  const name = (event: string) => `${prefix} ${event}`;
+  const getClient = () => Promise.resolve(admin.client);
+  const ranked = (count: number) => Array.from({ length: count }, (_, index) => ({ player: `${prefix}-p${index + 1}`, ranking: index + 1 }));
+  const day = (offsetDays: number) => new Date(NOW.getTime() + offsetDays * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  const file = (events: SportDataFile['sportLeagues'][number]['events'], season = 2027): SportDataFile => ({
+    schemaVersion: 1,
+    scope: { sport: Sport.GOLF, season, sportLeagues: [tour], contents: [SportDataContent.SCHEDULE, SportDataContent.PLAYERS, SportDataContent.FIELDS] },
+    testData: false,
+    provenance: provenance(),
+    sportLeagues: [{ name: tour, players: players(prefix, 30), events }],
+  });
+  const event = (key: string, eventName: string, startDate: string) => ({
+    key, name: name(eventName), startDate, endDate: startDate, venue: null, location: null, rounds: 4, roundsPar: 72, field: ranked(30),
+  });
+
+  it('keeps tiers an admin set by hand on part of the field: no tier or price is re-assigned and the event is left a draft, with the reason', async () => {
+    const handTiered = event('hand', 'Hand Tiered', '2027-06-03');
+    await loadSportData(parsed(file([handTiered])), { getClient, now: NOW, mode: LoadMode.APPLY });
+    const league = expectDefined(await leagueNamed(tour));
+    const stored = expectDefined((await eventsOf(league.id, 2027)).find((candidate) => candidate.name === handTiered.name));
+    const db = getFunctionalPrisma();
+    const tier = await db.sportEventTier.findFirstOrThrow({ where: { sportEventId: stored.id }, orderBy: { tierNumber: 'asc' } });
+    const row = await db.sportEventParticipant.findFirstOrThrow({ where: { sportEventId: stored.id } });
+    await db.sportEventParticipantValuation.upsert({
+      where: { sportEventParticipantId: row.id },
+      create: { sportEventParticipantId: row.id, sportEventTierId: tier.id, tierAssignedSource: 'MANUAL' },
+      update: { sportEventTierId: tier.id, tierAssignedSource: 'MANUAL' },
+    });
+
+    const rows = await loadSportData(parsed(file([handTiered])), { getClient, now: NOW, mode: LoadMode.APPLY, release: true });
+
+    expect(rows).toContainEqual(expect.objectContaining({
+      subject: LoadSubject.EVENT, action: LoadAction.CONFLICT, name: handTiered.name, detail: 'left a draft: 1 of 30 players tiered and 0 priced by hand; finish them on the Manage screen',
+    }));
+    expect(expectDefined((await eventsOf(league.id, 2027)).find((candidate) => candidate.name === handTiered.name)).status).toBe('DRAFT');
+    const tiered = [...(await fieldOf(stored.id)).values()].filter((fieldRow) => fieldRow.valuation?.sportEventTierId);
+    expect(tiered).toHaveLength(1);
+  });
+
+  it('leaves an event that has already started a draft, without trying to release it', async () => {
+    const started = event('started', 'Already Started', day(-2));
+
+    const season = Number(started.startDate.slice(0, 4));
+
+    const rows = await loadSportData(parsed(file([started], season)), { getClient, now: NOW, mode: LoadMode.APPLY, release: true });
+
+    expect(rows).toContainEqual({ sportLeague: tour, subject: LoadSubject.EVENT, action: LoadAction.ADD, name: started.name, detail: null });
+    expect(rows.filter((row) => row.action === LoadAction.CONFLICT)).toEqual([]);
+    const league = expectDefined(await leagueNamed(tour));
+    expect(expectDefined((await eventsOf(league.id, season)).find((candidate) => candidate.name === started.name)).status).toBe('DRAFT');
+  });
+});
+
 describe('Keeping test events and real events apart on one site', () => {
   const prefix = `${RUN}-apart`;
   const tour = `Apart Tour ${prefix}`;

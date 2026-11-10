@@ -85,10 +85,12 @@ admin corrects one player's line on the event's Results page.
 **Released as it loads.** With *release* on (the workflow's default; `--release` locally), an
 apply releases each draft event whose field the file carries and that has not started, so a
 "Load" leaves it open for contests with no trip to the Manage screens. With it off, every
-event stays a draft for an admin to release. Where an active player has no tier, the event's tiers are assigned by the field's
-ranking; where one has no price, it gets the default prices. Tiers or prices an admin set by
-hand are kept. An event the site still refuses to release (an incomplete bracket, say) stays a
-draft, and the report lists it as a conflict with the site's reason; the next run tries again.
+event stays a draft for an admin to release. When no active player has a tier yet, the event's tiers are assigned by the field's
+ranking; when none has a price, it gets the default prices. A field an admin has partly tiered
+or priced by hand is never re-assigned: the event stays a draft and the report says so, for the
+admin to finish on the Manage screen. An event the site still refuses to release (an
+incomplete bracket, say) stays a draft, and the report lists it as a conflict with the site's
+reason; the next run tries again. Any other failure (a lost sign-in) stops the run.
 An event with no field in the file yet (a schedule only) stays a draft. A real file never
 writes odds or scores ([`EVENT-SETUP-PROCEDURES.md`](EVENT-SETUP-PROCEDURES.md) has the admin
 steps).

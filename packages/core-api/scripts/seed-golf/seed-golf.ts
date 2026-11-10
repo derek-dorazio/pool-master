@@ -133,10 +133,10 @@ type BracketMatchWrite = LoadSportEventBracketRequest['matches'][number];
 /** What a field is written from: a file event's field, or a test slate's players. */
 type FieldSource = Pick<SportDataEvent, 'name' | 'field'>;
 
-/** An event that has started, or will not run as scheduled: the loader leaves it alone. */
 /** What a real file's load does to an event whose field it carries: it opens it for contests. */
 const REAL_RELEASE_DETAIL = 'released: tiers by ranking and prices where missing';
 
+/** An event that has started, or will not run as scheduled: the loader leaves it alone. */
 const EDITABLE_STATUSES: ReadonlySet<StoredEvent['status']> = new Set([SportEventStatus.DRAFT, SportEventStatus.SCHEDULED]);
 /** How far a renamed event's start may be from the file's and still be the same event. */
 const RENAME_MATCH_DAYS = 3;
@@ -369,6 +369,8 @@ class Loader {
   private readonly replaceField: boolean;
   /** A test seed's events are released once set up, unless the run holds them back as drafts. */
   private readonly releaseTestEvents: boolean;
+  /** The site's default budget pricing, read once per run when an event is first priced. */
+  private pricing: Promise<AutoAssignSportEventPricesRequest> | null = null;
 
   private readonly file: SportDataFile;
 
@@ -821,29 +823,43 @@ class Loader {
     return !this.file.testData && this.options.release === true && loadsField && Date.parse(shiftedEventDates(event, 0).startDate) > this.options.now.getTime();
   }
 
+  /** The site's default budget pricing, read on first use and kept for the rest of the run. */
+  private defaultPricing(client: Client): Promise<AutoAssignSportEventPricesRequest> {
+    this.pricing ??= defaultPricing(client);
+    return this.pricing;
+  }
+
   /**
    * Readies a real file's draft event and releases it for contests: tiers by the field's ranking
-   * and default prices, each only where some active player lacks one, so tiers an admin set by
-   * hand stay. An event the site still refuses (an incomplete bracket, say) is left a draft and
-   * reported with the site's reason, and the rest of the run goes on.
+   * when no active player has one yet, and default prices when none has a price yet. A field an
+   * admin has partly tiered or priced by hand is never re-assigned: it is left a draft and
+   * reported, for the admin to finish. An event the site refuses to release (409 or 422: an
+   * incomplete bracket, say) is left a draft and reported with the site's reason, and the run
+   * goes on; any other failure stops it.
    */
   private async releaseRealEvent(client: Client, eventId: string, at: { sportLeague: string; name: string }): Promise<void> {
     const path = { eventId };
-    const { participants } = await must(listEventParticipants({ client, path }), `Read the field of ${at.name}`);
-    const active = participants.filter((row) => row.isActive);
+    const leftDraft = (reason: string): void => {
+      this.report({ ...at, subject: LoadSubject.EVENT, action: LoadAction.CONFLICT, detail: `left a draft: ${reason}` });
+    };
     const refused = async (result: Promise<SdkResult<unknown>>, what: string): Promise<boolean> => {
       const { error, response } = await result;
       if (error === undefined) return false;
-      const status = response?.status ?? 0;
-      if (status < 400 || status >= 500) throw new Error(`${what} failed (HTTP ${status || 'none'}): ${JSON.stringify(error)}`);
-      const message = typeof error === 'object' && error !== null && 'message' in error ? String(error.message) : JSON.stringify(error);
-      this.report({ ...at, subject: LoadSubject.EVENT, action: LoadAction.CONFLICT, detail: `left a draft: ${message}` });
+      const status = response?.status;
+      if (status !== 409 && status !== 422) throw new Error(`${what} failed (HTTP ${status ?? 'none'}): ${JSON.stringify(error)}`);
+      leftDraft(typeof error === 'object' && error !== null && 'message' in error ? String(error.message) : JSON.stringify(error));
       return true;
     };
-    if (active.some((row) => !row.valuation?.sportEventTierId)
-      && await refused(autoAssignEventTiers({ client, path, body: { source: 'RANKING' } }), `Assign tiers for ${at.name}`)) return;
-    if (active.some((row) => row.valuation?.price === null || row.valuation?.price === undefined)
-      && await refused(autoAssignEventPrices({ client, path, body: await defaultPricing(client) }), `Assign prices for ${at.name}`)) return;
+    const { participants } = await must(listEventParticipants({ client, path }), `Read the field of ${at.name}`);
+    const active = participants.filter((row) => row.isActive);
+    const tiered = active.filter((row) => row.valuation?.sportEventTierId).length;
+    const priced = active.filter((row) => row.valuation?.price !== null && row.valuation?.price !== undefined).length;
+    if ((tiered > 0 && tiered < active.length) || (priced > 0 && priced < active.length)) {
+      leftDraft(`${tiered} of ${active.length} players tiered and ${priced} priced by hand; finish them on the Manage screen`);
+      return;
+    }
+    if (tiered === 0 && await refused(autoAssignEventTiers({ client, path, body: { source: 'RANKING' } }), `Assign tiers for ${at.name}`)) return;
+    if (priced === 0 && await refused(autoAssignEventPrices({ client, path, body: await this.defaultPricing(client) }), `Assign prices for ${at.name}`)) return;
     await refused(releaseEvent({ client, path }), `Release ${at.name}`);
   }
 
@@ -979,7 +995,7 @@ class Loader {
     const statPool = this.contents.has(SportDataContent.STATS);
     // A stat pool's field is tiered by its ranking, the regular season's composite; any other by its odds.
     await must(autoAssignEventTiers({ client, path, body: { source: statPool ? 'RANKING' : 'ODDS' } }), `Assign tiers for ${event.name}`);
-    await must(autoAssignEventPrices({ client, path, body: await defaultPricing(client) }), `Assign prices for ${event.name}`);
+    await must(autoAssignEventPrices({ client, path, body: await this.defaultPricing(client) }), `Assign prices for ${event.name}`);
     if (statPool) {
       // Box scores before release, so a run that dies between them leaves a draft the rerun finishes.
       const { participants: storedField } = await must(listEventParticipants({ client, path }), `Read the field of ${event.name}`);
