@@ -74,6 +74,7 @@ describe('RootAdminRunEventSyncPage', () => {
             status: 'HEALTHY',
             sportsCovered: ['GOLF'],
             primaryForSports: ['GOLF'],
+            supportsLiveSimulation: true,
           },
         ],
       },
@@ -287,7 +288,7 @@ describe('RootAdminRunEventSyncPage', () => {
     listProvidersMock.mockResolvedValue({
       data: {
         providers: [
-          { providerId: 'mock-contest-feed', providerName: 'Mock contest feed', status: 'HEALTHY', sportsCovered: ['GOLF'], primaryForSports: ['GOLF'] },
+          { providerId: 'mock-contest-feed', providerName: 'Mock contest feed', status: 'HEALTHY', sportsCovered: ['GOLF'], primaryForSports: ['GOLF'], supportsLiveSimulation: true },
           { providerId: 'espn', providerName: 'ESPN', status: 'HEALTHY', sportsCovered: ['BASKETBALL'], primaryForSports: ['BASKETBALL'] },
         ],
       },
@@ -344,7 +345,7 @@ describe('RootAdminRunEventSyncPage', () => {
       data: {
         providers: [
           { providerId: 'balldontlie', providerName: 'BALLDONTLIE', status: 'HEALTHY', sportsCovered: ['GOLF'], primaryForSports: [] },
-          { providerId: 'mock-contest-feed', providerName: 'Mock contest feed', status: 'HEALTHY', sportsCovered: ['GOLF'], primaryForSports: ['GOLF'] },
+          { providerId: 'mock-contest-feed', providerName: 'Mock contest feed', status: 'HEALTHY', sportsCovered: ['GOLF'], primaryForSports: ['GOLF'], supportsLiveSimulation: true },
         ],
       },
     });

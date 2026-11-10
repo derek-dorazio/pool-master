@@ -33,7 +33,6 @@ import { useProvidersQuery } from './use-providers-query';
 type MockEventState = 'open' | 'locked' | 'live' | 'completed';
 
 /** The QA mock feed, the one provider that takes a mock event state. */
-const mockProviderId = 'mock-contest-feed';
 
 const MOCK_EVENT_STATE_OPTIONS: Array<{ value: MockEventState | ''; label: string }> = [
   { value: '', label: 'Use loaded event state' },
@@ -98,14 +97,16 @@ export function RootAdminRunEventSyncPage() {
   const eventSyncSport = supportedSyncSports.includes(chosenSyncSport)
     ? chosenSyncSport
     : supportedSyncSports.at(0) ?? chosenSyncSport;
-  const supportsMockEventState = useMemo(
-    () =>
-      // poolmaster-allow-list-lookup: the handful of data providers, fixed reference data
-      (providersQuery.data ?? []).some((provider) =>
-        provider.providerId === mockProviderId
-        && provider.sportsCovered.includes(eventSyncSport)),
+  // The providers that can play a mock event state for the sport: those reporting live simulation.
+  const mockStateProviderIds = useMemo(
+    () => new Set(
+      (providersQuery.data ?? [])
+        .filter((provider) => provider.supportsLiveSimulation && provider.sportsCovered.includes(eventSyncSport))
+        .map((provider) => provider.providerId),
+    ),
     [eventSyncSport, providersQuery.data],
   );
+  const supportsMockEventState = mockStateProviderIds.size > 0;
 
   // A mock state applies only while the mock feed covers the sport.
   const mockEventState = supportsMockEventState ? chosenMockEventState : '';
@@ -138,13 +139,12 @@ export function RootAdminRunEventSyncPage() {
     );
     // Only an event linked to a provider event can sync; the server refuses an unlinked one.
     // A mock state drives only the mock feed, so it narrows the list to the mock's events (#1495).
-    // poolmaster-allow-list-lookup: the chosen year's events, already listed in the event picker
     return (eventsQuery.data ?? []).filter((event) =>
       event.syncScope !== SportEventSyncScope.NONE
       && validStatuses.includes(event.status)
-      && (mockEventState === '' || event.providerId === mockProviderId),
+      && (mockEventState === '' || mockStateProviderIds.has(event.providerId)),
     );
-  }, [eventSyncPresetId, eventsQuery.data, mockEventState, supportsMockEventState]);
+  }, [eventSyncPresetId, eventsQuery.data, mockEventState, mockStateProviderIds, supportsMockEventState]);
   // Events are chosen by id: two providers' events can share an external id.
   const selectedEvent = selectableEvents.find((event) => event.id === chosenEventId);
   // An event the sport, year, preset or mock state rules out is no longer selected.
@@ -219,7 +219,7 @@ export function RootAdminRunEventSyncPage() {
             data: {
               sport: eventSyncSport,
               providerId: selectedEvent?.providerId ?? null,
-              eventId: selectedEvent?.externalId ?? null,
+            eventId: selectedEvent?.externalId ?? null,
               mockEventState: mockEventState || null,
             },
             err: error,

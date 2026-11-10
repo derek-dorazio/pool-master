@@ -345,14 +345,6 @@ export function sportProviderOptions(
   ].map(({ providerId, providerName }) => ({ providerId, providerName }));
 }
 
-/** The sport's default provider: its primary, else the first covering it; null when none does. */
-export function resolveSportProviderId(
-  providers: ReadonlyArray<ProviderCoverage> | undefined,
-  sport: Sport,
-): string | null {
-  return sportProviderOptions(providers, sport)[0]?.providerId ?? null;
-}
-
 // --- Player status (Participant.status) ---
 
 type BadgeToneLite = 'active' | 'inactive' | 'warning';

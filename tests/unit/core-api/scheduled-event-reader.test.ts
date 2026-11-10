@@ -48,6 +48,17 @@ describe('createScheduledEventReader', () => {
     expect(findMany).toHaveBeenCalledWith(expect.objectContaining({ take: 2, orderBy: [{ startDate: 'asc' }, { externalId: 'asc' }] }));
   });
 
+  it('issues exactly one query per provider for the field feed and exactly one in all for the scores feed, however many events they hold', async () => {
+    const { read, findMany } = reader(['mock', 'bdl']);
+
+    await read.listEventsForFeed({ sport: Sport.GOLF, feed: 'EVENTPARTICIPANTS', now: NOW });
+    expect(findMany).toHaveBeenCalledTimes(2);
+
+    findMany.mockClear();
+    await read.listEventsForFeed({ sport: Sport.GOLF, feed: 'EVENTLIVESCORES', now: NOW });
+    expect(findMany).toHaveBeenCalledTimes(1);
+  });
+
   it('asks once, across every provider, for every event in progress with a field for the scores feed', async () => {
     const { read, findMany } = reader(['mock', 'bdl']);
 
