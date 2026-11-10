@@ -161,7 +161,7 @@ export interface LeagueInvitation extends DomainEntity {
 /**
  * One system email to one person, in the outbox (#844): queued, then sent by the sender, or
  * skipped with the reason. Its content is rendered when it is queued, so what is sent is what was
- * stored; the bodies are cleared after 30 days and the row stays.
+ * stored; the bodies are cleared after 7 days and the row is deleted after 30.
  */
 export interface EmailMessage extends DomainEntity {
   templateKey: EmailTemplateKey;

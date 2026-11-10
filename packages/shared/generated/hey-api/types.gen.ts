@@ -2812,7 +2812,7 @@ export type LeagueInvitationDto = {
      */
     acceptedBy?: string | null;
     /**
-     * Where the latest email of an email invite stands; null for a join link, which has no email.
+     * Where the latest email of an email invite stands; null for a join link, which has no email, and for an email invite whose email is over 30 days old, once the outbox has deleted it.
      */
     emailStatus: 'QUEUED' | 'SENDING' | 'SENT' | 'DELIVERED' | 'BOUNCED' | 'COMPLAINED' | 'FAILED' | 'SKIPPED' | null;
     /**
@@ -3709,7 +3709,7 @@ export type SendLeagueInvitationsResponse = {
          */
         acceptedBy?: string | null;
         /**
-         * Where the latest email of an email invite stands; null for a join link, which has no email.
+         * Where the latest email of an email invite stands; null for a join link, which has no email, and for an email invite whose email is over 30 days old, once the outbox has deleted it.
          */
         emailStatus: 'QUEUED' | 'SENDING' | 'SENT' | 'DELIVERED' | 'BOUNCED' | 'COMPLAINED' | 'FAILED' | 'SKIPPED' | null;
         /**
@@ -3792,7 +3792,7 @@ export type GenerateInviteLinkResponse = {
          */
         acceptedBy?: string | null;
         /**
-         * Where the latest email of an email invite stands; null for a join link, which has no email.
+         * Where the latest email of an email invite stands; null for a join link, which has no email, and for an email invite whose email is over 30 days old, once the outbox has deleted it.
          */
         emailStatus: 'QUEUED' | 'SENDING' | 'SENT' | 'DELIVERED' | 'BOUNCED' | 'COMPLAINED' | 'FAILED' | 'SKIPPED' | null;
         /**
@@ -3867,7 +3867,7 @@ export type ListLeagueInvitationsResponse = {
          */
         acceptedBy?: string | null;
         /**
-         * Where the latest email of an email invite stands; null for a join link, which has no email.
+         * Where the latest email of an email invite stands; null for a join link, which has no email, and for an email invite whose email is over 30 days old, once the outbox has deleted it.
          */
         emailStatus: 'QUEUED' | 'SENDING' | 'SENT' | 'DELIVERED' | 'BOUNCED' | 'COMPLAINED' | 'FAILED' | 'SKIPPED' | null;
         /**
@@ -3942,7 +3942,7 @@ export type ResendLeagueInvitationResponse = {
          */
         acceptedBy?: string | null;
         /**
-         * Where the latest email of an email invite stands; null for a join link, which has no email.
+         * Where the latest email of an email invite stands; null for a join link, which has no email, and for an email invite whose email is over 30 days old, once the outbox has deleted it.
          */
         emailStatus: 'QUEUED' | 'SENDING' | 'SENT' | 'DELIVERED' | 'BOUNCED' | 'COMPLAINED' | 'FAILED' | 'SKIPPED' | null;
         /**

@@ -87,7 +87,7 @@ All 2.x items on hold (Derek 2026-11-07). When picked up: 2.1 waits for prod (QA
 | # | Idea | Ticket | Cost | Issue | Benefit | Pri |
 |---|---|---|---|---|---|---|
 | 4.1 | Core domain (leagues, contests, entries, picks, scores, standings): keep on Postgres | — | — | This data is relational and every query joins within a league. | Postgres keeps integrity and tenant joins; no other store fits better. | Keep |
-| 4.2 | Email outbox and send history: keep on Postgres | — | — | DynamoDB with TTL was considered on 10-30 and set aside. | No change is needed: bodies are cleared at 30 days and rows deleted at 13 months. | Keep |
+| 4.2 | Email outbox and send history: keep on Postgres | — | — | DynamoDB with TTL was considered on 10-30 and set aside. | No change is needed: bodies are cleared at 7 days and rows deleted at 30 days (#1515). | Keep |
 | 4.3 | Raw provider payloads (sync run payload and details JSON): move to S3, with the key on the row | — | S | Raw provider JSON is the largest data per row and is rarely read after the sync. | The database and its backups stay small, and S3 lifecycle rules expire old payloads cheaply. | P2 |
 | 4.4 | Settled season archives: S3 JSON, served by signed URL | — | M | Final boards and history exports are written once and read rarely. | History is cheap to keep forever and pairs with 3.3. | P3 |
 | 4.5 | Admin uploads (field CSVs): S3, then a job | — | S | A large upload is parsed inside the request body. | Big uploads no longer tie up an API request. | P3 |

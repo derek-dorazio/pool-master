@@ -173,7 +173,7 @@ New table `email_message` (one row per recipient per email):
 | `recipientUserId` (nullable), `recipientEmail` | Invites go to addresses with no user yet |
 | `leagueId`, `contestId`, `entryId`, `invitationId` (nullable) | Same refs we log today |
 | `idempotencyKey` (unique) | e.g. `CONTEST_OPENED:<contestId>:<userId>`: template, the subject it is about (contest, event, round, week or invitation) and the recipient, the catalog's "never twice" rule. A retried transition, a second scheduler sweep or a double click never sends twice; a resend the person asked for is a new subject |
-| `subject`, `textBody`, `htmlBody` | Rendered at queue time: what we send is what we stored. Bodies are cleared after 30 days; the row stays |
+| `subject`, `textBody`, `htmlBody` | Rendered at queue time: what we send is what we stored. Bodies are cleared after 7 days; the row stays until it is deleted at 30 days (#1515) |
 | `status` | `QUEUED`, `SENDING`, `SENT`, `DELIVERED`, `BOUNCED`, `COMPLAINED`, `FAILED`, `SKIPPED` |
 | `skipReason` | `EMAIL_DISABLED`, `TEMPLATE_DISABLED`, `SUPPRESSED`, `OPTED_OUT`, `NOT_ALLOWED_IN_ENVIRONMENT` |
 | `attempts`, `nextAttemptAt`, `lastError` | Retry with backoff (1 min, 5 min, 30 min, then `FAILED`) |
