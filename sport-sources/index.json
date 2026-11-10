@@ -1,19 +1,61 @@
 {
-  "fetchedAt": "2026-11-10T14:18:47.057Z",
+  "fetchedAt": "2026-11-10T14:30:02.312Z",
   "results": [
     {
-      "url": "https://site.api.espn.com/apis/v2/sports/football/nfl/standings",
+      "url": "https://fixturedownload.com/feed/json/nfl-2026",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
-      "file": "01-site.api.espn.com.txt"
+      "file": "01-fixturedownload.com.txt"
     },
     {
-      "url": "https://site.api.espn.com/apis/v2/sports/soccer/eng.1/standings",
+      "url": "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?seasontype=2&week=12&dates=2026",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
       "file": "02-site.api.espn.com.txt"
+    },
+    {
+      "url": "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?seasontype=2&week=13&dates=2026",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "03-site.api.espn.com.txt"
+    },
+    {
+      "url": "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?seasontype=2&week=14&dates=2026",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "04-site.api.espn.com.txt"
+    },
+    {
+      "url": "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?seasontype=2&week=15&dates=2026",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "05-site.api.espn.com.txt"
+    },
+    {
+      "url": "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?seasontype=2&week=16&dates=2026",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "06-site.api.espn.com.txt"
+    },
+    {
+      "url": "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?seasontype=2&week=17&dates=2026",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "07-site.api.espn.com.txt"
+    },
+    {
+      "url": "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?seasontype=2&week=18&dates=2026",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "08-site.api.espn.com.txt"
     }
   ]
 }
