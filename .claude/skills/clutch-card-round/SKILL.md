@@ -14,7 +14,7 @@ created by a migration (`add-clutch-card-league` makes a new one). This skill ru
 parts that use one data file:
 
 1. **Set up**, as soon as the round's matchups are announced: the event, its field of stars
-   and their ranking, so an admin can release it before the first game.
+   and their ranking, released for contests as it loads.
 2. **Box scores**, after each game: that game's stat lines, so the leaderboard moves, and
    after the last game the contests settle.
 
@@ -90,9 +90,12 @@ directly (the nflverse files).
 
 Dry-run "Load sport data" on the file and show the user the field: each team's star count, the
 top of the ranking and any player left out, with why. Apply only on the user's explicit yes
-("Load"). A data file never releases an event: an admin then builds tiers and releases it on
-the event's Manage page (`docs/EVENT-SETUP-PROCEDURES.md` *Build tiers* and *Release it for
-contests*), and commissioners can create Clutch Card contests on it.
+("Load"). With the workflow's *release* on (its default), the apply tiers the stars by their
+ranking, prices them and releases the event, so commissioners can create Clutch Card contests
+on it straight away (`docs/SPORT-DATA-LOADING.md` *Released as it loads*). If the report lists
+the event as a conflict, it stayed a draft: fix what the site's reason names, or build tiers
+and release it on the event's Manage page (`docs/EVENT-SETUP-PROCEDURES.md` *Build tiers* and
+*Release it for contests*).
 
 Before the first game, a late injury or a call-up is the same file run again: a player dropped
 from the field is withdrawn, a new one added. After release a new player joins untiered, so
