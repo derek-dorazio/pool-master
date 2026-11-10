@@ -33,6 +33,7 @@ import {
   FormModal,
   Heading,
   Input,
+  PasswordInput,
   LinkButton,
   Modal,
   MutationActionToast,
@@ -841,39 +842,37 @@ export function UserPage() {
             error={passwordForm.formState.errors.currentPassword?.message}
             label="Current password"
           >
-            <Input
+            <PasswordInput
+              autoComplete="current-password"
               data-testid="user-page-current-password"
               disabled={disablePasswordEditing}
               {...passwordForm.register('currentPassword', {
                 onChange: () => passwordMutation.reset(),
               })}
-              type="password"
             />
           </FormField>
           <FormField
             error={passwordForm.formState.errors.newPassword?.message}
             label="New password"
           >
-            <Input
+            <PasswordInput
               data-testid="user-page-new-password"
               disabled={disablePasswordEditing}
               {...passwordForm.register('newPassword', {
                 onChange: () => passwordMutation.reset(),
               })}
-              type="password"
             />
           </FormField>
           <FormField
             error={passwordForm.formState.errors.confirmNewPassword?.message}
             label="Confirm new password"
           >
-            <Input
+            <PasswordInput
               data-testid="user-page-confirm-password"
               disabled={disablePasswordEditing}
               {...passwordForm.register('confirmNewPassword', {
                 onChange: () => passwordMutation.reset(),
               })}
-              type="password"
             />
           </FormField>
         </div>

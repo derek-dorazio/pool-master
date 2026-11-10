@@ -1,6 +1,6 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { Checkbox, FormField, Input, Select, Textarea } from "./form-field";
+import { Checkbox, FormField, Input, PasswordInput, Select, Textarea } from "./form-field";
 
 describe("pool-master-3lo.4: shared form field primitives", () => {
   it("rule: associates labels, helper text, and errors with form controls", () => {
@@ -51,5 +51,48 @@ describe("pool-master-3lo.4: shared form field primitives", () => {
     expect(checkbox).toHaveClass("h-4");
     expect(checkbox).not.toHaveClass("w-full");
     expect(checkbox).not.toHaveClass("px-4");
+  });
+
+  it("starts a password input hidden, and its Show password button reveals and re-hides only its own field", () => {
+    render(
+      <>
+        <FormField label="Password">
+          <PasswordInput />
+        </FormField>
+        <FormField label="Confirm password">
+          <PasswordInput />
+        </FormField>
+      </>,
+    );
+
+    const password = screen.getByLabelText("Password");
+    const confirm = screen.getByLabelText("Confirm password");
+    const [passwordToggle] = screen.getAllByRole("button", { name: "Show password" });
+
+    expect(password).toHaveAttribute("type", "password");
+    expect(passwordToggle).toHaveAttribute("aria-pressed", "false");
+    expect(passwordToggle).toHaveAttribute("aria-controls", password.id);
+
+    fireEvent.click(passwordToggle);
+    expect(password).toHaveAttribute("type", "text");
+    expect(confirm).toHaveAttribute("type", "password");
+    expect(passwordToggle).toHaveAttribute("aria-pressed", "true");
+
+    fireEvent.click(passwordToggle);
+    expect(password).toHaveAttribute("type", "password");
+  });
+
+  it("keeps the field's error wiring on a password input and disables its toggle with the field", () => {
+    render(
+      <FormField error="Password is required" id="pw" label="Password">
+        <PasswordInput disabled />
+      </FormField>,
+    );
+
+    const password = screen.getByLabelText("Password");
+    expect(password).toHaveAttribute("id", "pw");
+    expect(password).toHaveAttribute("aria-describedby", "pw-error");
+    expect(password).toHaveAttribute("aria-invalid", "true");
+    expect(screen.getByRole("button", { name: "Show password" })).toBeDisabled();
   });
 });

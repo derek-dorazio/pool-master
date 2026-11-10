@@ -171,6 +171,24 @@ describe('AuthHomePage', () => {
     expect(screen.queryByRole('link', { name: 'Forgot password?' })).not.toBeInTheDocument();
   });
 
+  it('hides the sign in password until the eye button is pressed, then shows it, and hides it again on a second press', () => {
+    renderAuthHomePage();
+
+    const password = screen.getByTestId('auth-login-password');
+    fireEvent.change(password, { target: { value: 'password123' } });
+    expect(password).toHaveAttribute('type', 'password');
+    expect(password).toHaveAttribute('autocomplete', 'current-password');
+
+    const toggle = screen.getByRole('button', { name: 'Show password' });
+    fireEvent.click(toggle);
+    expect(password).toHaveAttribute('type', 'text');
+    expect(password).toHaveValue('password123');
+    expect(toggle).toHaveAttribute('aria-pressed', 'true');
+
+    fireEvent.click(toggle);
+    expect(password).toHaveAttribute('type', 'password');
+  });
+
   it('signs in successfully and navigates to the destination', async () => {
     loginUserMock.mockResolvedValue({
       data: {
