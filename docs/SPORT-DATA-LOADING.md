@@ -155,11 +155,16 @@ beside the real ones and always lie just ahead (#1524). The rule is
   Super Bowl the Sunday after; two tours' events of the same real week share a week. An event's
   start is when contests on it can no longer be created or opened, so a first event landing
   the next day leaves about a day to set one up.
+- **Only the first is released**: each league's first event is released for contests; the
+  ones after it are set up whole (field, odds, tiers, prices, stored scores) but left drafts.
+  An admin can release one early on the Manage screens. A bracket event's play-in winners,
+  cancellations and results go in only once a run releases it.
 - **Topped up, never piled up**: a league that still has a released test event yet to start is
-  left alone, and the report says so. Run it again once a league's test events have started
-  and it gets its next 2, with fresh dates; a daily run adds nothing in between. Test events
-  already loaded are never changed, so their contests and entries stay. A test event an earlier
-  run left a draft is finished on the next run, moved to that run's dates.
+  left alone, its drafts too, and the report says so. Run it again once that event has started
+  and the league's draft moves into the coming week and is released, and a new event fills the
+  league back to 2 as the next draft; a daily run adds nothing in between. Released test
+  events are never changed, so their contests and entries stay. A draft counts toward the 2,
+  whether a run held it back or stopped part-way through it.
 
 Each section below says what a whole seed holds; a run loads it a few events at a time as
 above. Loading a test seed's file straight through `loadSportData` (the functional tests) still
@@ -216,9 +221,9 @@ stored scores straight away) and *Move to Completed* (the contest settles). The 
 visible on the admin field page before that.
 
 Running it again is safe, including straight after *Reset QA database*: a released
-tournament keeps its dates and is skipped, and each tour gets its next two once its test
-tournaments have started. A tournament a run left a draft part-way is finished on the next
-run: moved to this run's dates, filled in and released. Only `Test-` tournaments count as the
+tournament keeps its dates and is skipped, and once a tour's released test tournament has
+started, its draft moves into the coming week and is released, with a new draft a week after.
+A tournament a run left a draft part-way is finished the same way. Only `Test-` tournaments count as the
 seed's, so a tournament created by hand or imported from the provider is never touched.
 
 The data file is `packages/core-api/scripts/seed-golf/golf-2026.json`, rebuilt by

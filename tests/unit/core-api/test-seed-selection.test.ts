@@ -24,6 +24,11 @@ function stored(league: string, ...events: StoredTestEvent[]): Map<string, Store
   return new Map([[league.toLowerCase(), events]]);
 }
 
+/** Each loaded event's name and whether the run releases it. */
+function releases(selection: ReturnType<typeof selectTestSeedEvents>): Array<[string, boolean]> {
+  return selection.leagues.flatMap((league) => league.events.map(({ file, release }) => [file.sportLeagues[0].events[0].name, release] as [string, boolean]));
+}
+
 /** Each loaded event's name and its start day after the move. */
 function landings(selection: ReturnType<typeof selectTestSeedEvents>): Array<[string, string]> {
   return selection.leagues.flatMap((league) => league.events.map(({ file, offsetDays }) => {
@@ -115,12 +120,45 @@ describe('choosing which test seed events to load', () => {
     expect(landings(selection)).toEqual([['Test- Super Bowl LX (2)', '2026-11-15']]);
   });
 
-  it('finishes a test event an earlier run left a draft, alongside the next new one', () => {
+  it('releases only each league\'s first event for contests and leaves the one a week later a draft', () => {
+    const file = seed({
+      'Championship Weekend': [event('Conference Championships', '2026-01-25')],
+      NFL: WEEKS,
+    });
+
+    expect(releases(selectTestSeedEvents(file, new Map(), 2, NOW))).toEqual([
+      ['Test- Conference Championships', true],
+      ['Test- NFL Week 1', true],
+      ['Test- NFL Week 2', false],
+    ]);
+  });
+
+  it('leaves a league\'s draft alone while its released test event has not started, so the draft is not released early', () => {
+    const selection = selectTestSeedEvents(seed({ NFL: WEEKS }), stored('NFL',
+      { name: 'Test- NFL Week 1', status: SportEventStatus.SCHEDULED, startDate: '2026-11-12T12:00:00Z' },
+      { name: 'Test- NFL Week 2', status: SportEventStatus.DRAFT, startDate: '2026-11-19T12:00:00Z' },
+    ), 2, NOW);
+
+    expect(selection.waiting).toEqual(['NFL']);
+    expect(selection.leagues).toEqual([]);
+  });
+
+  it('once the released event has started, moves the league\'s draft into the coming week and releases it, with one new draft a week later', () => {
+    const selection = selectTestSeedEvents(seed({ NFL: WEEKS }), stored('NFL',
+      { name: 'Test- NFL Week 1', status: SportEventStatus.IN_PROGRESS, startDate: '2026-11-05T12:00:00Z' },
+      { name: 'Test- NFL Week 2', status: SportEventStatus.DRAFT, startDate: '2026-11-12T12:00:00Z' },
+    ), 2, NOW);
+
+    expect(landings(selection)).toEqual([['Test- NFL Week 2', '2026-11-12'], ['Test- NFL Week 3', '2026-11-19']]);
+    expect(releases(selection)).toEqual([['Test- NFL Week 2', true], ['Test- NFL Week 3', false]]);
+  });
+
+  it('finishes and releases a test event an earlier run left a draft, counting it toward the league\'s events', () => {
     const selection = selectTestSeedEvents(seed({ NFL: WEEKS }), stored('NFL',
       { name: 'Test- NFL Week 1', status: SportEventStatus.DRAFT, startDate: '2026-11-12T12:00:00Z' },
     ), 1, NOW);
 
-    expect(landings(selection).map(([name]) => name)).toEqual(['Test- NFL Week 1', 'Test- NFL Week 2']);
+    expect(releases(selection)).toEqual([['Test- NFL Week 1', true]]);
   });
 
   it('ignores real events of the same name in the league: only "Test-" events count as loaded', () => {

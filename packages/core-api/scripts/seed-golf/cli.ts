@@ -170,7 +170,7 @@ async function main(): Promise<void> {
         }
         for (const league of selection.leagues) {
           for (const event of league.events) {
-            rows.push(...await loadSportData(event.file, { getClient, now, mode, log, offsetDays: event.offsetDays }));
+            rows.push(...await loadSportData(event.file, { getClient, now, mode, log, offsetDays: event.offsetDays, release: event.release }));
           }
           if (withParticipants) rows.push(...await loadTestParticipants(league.file, participants));
         }

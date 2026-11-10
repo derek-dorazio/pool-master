@@ -240,6 +240,29 @@ describe('Loading a golf test seed through the admin API', () => {
     expect(stored).toMatchObject({ status: 'SCHEDULED', startDate: finaleStart, roundsPar: 70 });
     expect((await fieldOf(stored.id)).size).toBe(8);
   });
+
+  it('sets up a tournament the run holds back as a draft with its field, tiers, prices and scores, and releases it on a later run', async () => {
+    const league = expectDefined(await leagueNamed(tour));
+    const heldBack = { ...seed.sportLeagues[0].events[1], key: 'held', name: `${prefix} Invitational`, startDate: '2026-02-05', endDate: '2026-02-08' };
+    const file: SportDataFile = { ...seed, sportLeagues: [{ ...seed.sportLeagues[0], events: [heldBack] }] };
+
+    // The whole seed's offset, so it lands three weeks after the Opener rather than on its dates.
+    const offsetDays = seedDateOffsetDays(seed, NOW);
+
+    const held = await loadSportData(parsed(file), { getClient, now: NOW, mode: LoadMode.APPLY, offsetDays, release: false });
+
+    expect(held).toContainEqual(expect.objectContaining({ subject: LoadSubject.EVENT, action: LoadAction.ADD, name: heldBack.name, detail: 'a draft with odds, tiers, prices and scores' }));
+    const draft = expectDefined((await eventsOf(league.id, 2026)).find((event) => event.name === heldBack.name));
+    expect(draft.status).toBe('DRAFT');
+    const field = await fieldOf(draft.id);
+    expect([...field.values()].every((row) => row.valuation?.sportEventTierId && row.valuation.price !== null)).toBe(true);
+    expect(expectDefined(field.get(`${prefix} Golfer 1`)).standing).toMatchObject({ status: 'COMPLETE' });
+
+    const released = await loadSportData(parsed(file), { getClient, now: NOW, mode: LoadMode.APPLY, offsetDays });
+
+    expect(released).toContainEqual(expect.objectContaining({ subject: LoadSubject.EVENT, action: LoadAction.UPDATE, name: heldBack.name, detail: expect.stringContaining('release') as unknown }));
+    expect(expectDefined((await eventsOf(league.id, 2026)).find((event) => event.name === heldBack.name)).status).toBe('SCHEDULED');
+  });
 });
 
 describe('Loading a real golf schedule and fields through the admin API', () => {

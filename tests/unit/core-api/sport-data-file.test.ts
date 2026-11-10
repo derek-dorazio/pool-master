@@ -104,7 +104,7 @@ function problemsOf(json: unknown, allowTestData = false): readonly string[] {
 interface EditableFile {
   scope: { sport: string; season: number; sportLeagues: string[]; contents: string[] };
   testData: boolean;
-  sportLeagues: Array<{ events: Array<{ startDate: string; winner?: string; purse?: number; field: Array<Record<string, unknown>> }> }>;
+  sportLeagues: Array<{ events: Array<{ name: string; startDate: string; winner?: string; purse?: number; field: Array<Record<string, unknown>> }> }>;
 }
 
 function edited(edit: (file: EditableFile) => void): unknown {

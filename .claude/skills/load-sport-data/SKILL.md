@@ -184,8 +184,8 @@ entries in a `<sport league> <sport> test pool` league (`NFL American football t
 with entries already in it.
 
 A test seed never loads whole: each run gives every sport league its next two events, named
-`Test- ...`, dated from the run a week apart, and only to a league whose test events have all
-started, so test and real events can share a site (`docs/SPORT-DATA-LOADING.md` *A few "Test-"
+`Test- ...`, dated from the run a week apart, only the first of each league released, and only
+to a league whose released test event has started, so test and real events can share a site (`docs/SPORT-DATA-LOADING.md` *A few "Test-"
 events at a time*). Never name a real file's event `Test- ...`; the parser refuses it.
 
 ## Sources per sport

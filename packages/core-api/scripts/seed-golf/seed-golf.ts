@@ -113,6 +113,8 @@ export interface LoadSportDataOptions {
   replaceField?: boolean;
   /** A test seed only: the days to move its dates by, in place of the whole-file offset (#1524). */
   offsetDays?: number;
+  /** A test seed only: false sets each event up whole but leaves it a draft (#1524). Default true. */
+  release?: boolean;
 }
 
 type StoredEvent = SportEventListResponse['events'][number];
@@ -355,6 +357,8 @@ class Loader {
   /** A test seed's withdrawals come from its made-up scores, so it never reinstates a player. */
   private readonly testSeed: boolean;
   private readonly replaceField: boolean;
+  /** A test seed's events are released once set up, unless the run holds them back as drafts. */
+  private readonly releaseTestEvents: boolean;
 
   private readonly file: SportDataFile;
 
@@ -367,6 +371,7 @@ class Loader {
     this.file = shiftedMatchTimes(file, this.offsetDays);
     this.log = options.log ?? (() => {});
     this.replaceField = options.replaceField ?? false;
+    this.releaseTestEvents = options.release ?? true;
   }
 
   private get sport(): Sport {
@@ -686,7 +691,7 @@ class Loader {
         this.report({ ...at, subject: LoadSubject.EVENT, action: LoadAction.CONFLICT, detail: 'not on the site, and this file does not carry the schedule' });
         return;
       }
-      this.report({ ...at, subject: LoadSubject.EVENT, action: LoadAction.ADD, detail: this.file.testData ? 'released with odds, tiers, prices and scores' : null });
+      this.report({ ...at, subject: LoadSubject.EVENT, action: LoadAction.ADD, detail: this.file.testData ? `${this.releaseTestEvents ? 'released' : 'a draft'} with odds, tiers, prices and scores` : null });
       if (loadsField) {
         const plan = this.fieldChanges(league, event, participantIds, []);
         this.report({ ...at, subject: LoadSubject.FIELD, action: LoadAction.ADD, detail: `${plan.add.length} players` });
@@ -747,7 +752,7 @@ class Loader {
       return;
     }
 
-    const eventDetail = [...eventPlan.changes, ...(finishesDraft ? ['finishes the draft: odds, tiers, prices, scores, release'] : [])];
+    const eventDetail = [...eventPlan.changes, ...(finishesDraft ? [`finishes the draft: odds, tiers, prices, scores${this.releaseTestEvents ? ', release' : ''}`] : [])];
     this.report({ ...at, subject: LoadSubject.EVENT, action: eventDetail.length > 0 ? LoadAction.UPDATE : LoadAction.SKIP, detail: eventDetail.join('; ') || null });
     const writesField = fieldPlan !== null && fieldPlan.changes.length > 0 && !bracketLocked;
     if (fieldPlan) {
@@ -903,9 +908,16 @@ class Loader {
     }
   }
 
-  /** The made-up parts of a test seed: tiers by odds, default prices, stored scores or results, release. */
+  /**
+   * The made-up parts of a test seed: tiers by odds, default prices, stored scores or results,
+   * release. An event the run holds back stays a draft with what goes in before release; a bracket
+   * event's play-in winners, cancellations and results go in on a later run, after its release.
+   */
   private async finishTestEvent(client: Client, eventId: string, event: SportDataEvent, participantIds: ReadonlyMap<string, string | null>): Promise<void> {
     const path = { eventId };
+    const release = async (): Promise<void> => {
+      if (this.releaseTestEvents) await must(releaseEvent({ client, path }), `Release ${event.name}`);
+    };
     const statPool = this.contents.has(SportDataContent.STATS);
     // A stat pool's field is tiered by its ranking, the regular season's composite; any other by its odds.
     await must(autoAssignEventTiers({ client, path, body: { source: statPool ? 'RANKING' : 'ODDS' } }), `Assign tiers for ${event.name}`);
@@ -914,11 +926,12 @@ class Loader {
       // Box scores before release, so a run that dies between them leaves a draft the rerun finishes.
       const { participants: storedField } = await must(listEventParticipants({ client, path }), `Read the field of ${event.name}`);
       await this.writeStats(client, eventId, event, statChanges(event, participantIds, storedField));
-      await must(releaseEvent({ client, path }), `Release ${event.name}`);
+      await release();
       return;
     }
     if (sportPlaysMatches(this.sport)) {
-      await must(releaseEvent({ client, path }), `Release ${event.name}`);
+      if (!this.releaseTestEvents) return;
+      await release();
       await fillPlayInPlacesFor(client, eventId, event, participantIds);
       await cancelPostponedGamesFor(client, eventId, event);
       await enterBracketResultsFor(client, eventId, event);
@@ -927,7 +940,7 @@ class Loader {
     if (this.resultsEnteredByHand) {
       // Results before release, so a run that dies between them leaves a draft the rerun finishes.
       await enterRaceResultsFor(client, eventId, event, participantIds);
-      await must(releaseEvent({ client, path }), `Release ${event.name}`);
+      await release();
       return;
     }
     for (let roundNumber = 1; roundNumber <= event.rounds; roundNumber += 1) {
@@ -940,7 +953,7 @@ class Loader {
         await must(applyEventGolfRoundScores({ client, path: { eventId, roundNumber }, body: { rows } }), `Store round ${roundNumber} of ${event.name}`);
       }
     }
-    await must(releaseEvent({ client, path }), `Release ${event.name}`);
+    await release();
   }
 }
 

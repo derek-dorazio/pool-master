@@ -92,6 +92,8 @@ export interface StoredTestEvent {
 export interface TestSeedEventLoad {
   file: SportDataFile;
   offsetDays: number;
+  /** Released for contests: the league's first event. Any later one is left a draft. */
+  release: boolean;
 }
 
 /** What a test seed run loads, per sport league: its chosen events together, and each alone. */
@@ -114,7 +116,12 @@ export interface TestSeedSelection {
  * each named "Test- <event name>"; once every event of the file is on the site the league
  * starts over with numbered copies ("Test- Super Bowl LX (2)"), so a one-event seed can be
  * loaded again and again. Any test event an earlier run left a draft is included too, so it is
- * finished. Each event is loaded as its own file with its own offset.
+ * finished, and counts toward the league's `eventsPerLeague`. Each event is loaded as its own
+ * file with its own offset.
+ *
+ * Only each league's first event is released for contests. The ones after it are set up whole
+ * but left drafts, so an admin can release one early by hand; once the released one has
+ * started, the next run moves the first draft into the coming week and releases it.
  *
  * Dates roll with the run, a week at a time across the whole file: the chosen events are
  * grouped by the week (Monday to Sunday) they were really played in, and those weeks are laid
@@ -150,15 +157,17 @@ export function selectTestSeedEvents(
       return named;
     }));
     // The next events not yet on the site, never two copies of one real event in the same run.
+    const drafts = testEvents.filter((event) => event.status === SportEventStatus.DRAFT).length;
     const fresh = new Set<SportDataEvent>();
     const freshKeys = new Set<string>();
     for (const candidate of upcoming ? [] : candidates) {
-      if (fresh.size === eventsPerLeague) break;
+      if (fresh.size + drafts >= eventsPerLeague) break;
       if (statuses.has(candidate.name.toLowerCase()) || freshKeys.has(candidate.key)) continue;
       fresh.add(candidate);
       freshKeys.add(candidate.key);
     }
-    const events = candidates.filter((event) => fresh.has(event) || statuses.get(event.name.toLowerCase()) === SportEventStatus.DRAFT);
+    // A league with a released event to come is left whole, its drafts too: the first is next.
+    const events = upcoming ? [] : candidates.filter((event) => fresh.has(event) || statuses.get(event.name.toLowerCase()) === SportEventStatus.DRAFT);
     if (upcoming) waiting.push(league.name);
     if (events.length > 0) chosenByLeague.push({ league, events });
   }
@@ -183,9 +192,13 @@ export function selectTestSeedEvents(
     scope: { ...file.scope, sportLeagues: [league.name] },
     sportLeagues: [{ ...league, events }],
   });
-  const leagues = chosenByLeague.map(({ league, events }) => ({
-    file: leagueFile(league, events),
-    events: events.map((event) => ({ file: leagueFile(league, [event]), offsetDays: offsetOf(event) })),
-  }));
+  const leagues = chosenByLeague.map(({ league, events }) => {
+    const shiftedStart = (event: SportDataEvent): number => startDay(event) + offsetOf(event);
+    const first = Math.min(...events.map(shiftedStart));
+    return {
+      file: leagueFile(league, events),
+      events: events.map((event) => ({ file: leagueFile(league, [event]), offsetDays: offsetOf(event), release: shiftedStart(event) === first })),
+    };
+  });
   return { leagues, waiting };
 }
