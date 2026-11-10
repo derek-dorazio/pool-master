@@ -1,0 +1,19 @@
+{
+  "fetchedAt": "2026-11-10T14:18:47.057Z",
+  "results": [
+    {
+      "url": "https://site.api.espn.com/apis/v2/sports/football/nfl/standings",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "01-site.api.espn.com.txt"
+    },
+    {
+      "url": "https://site.api.espn.com/apis/v2/sports/soccer/eng.1/standings",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "02-site.api.espn.com.txt"
+    }
+  ]
+}
