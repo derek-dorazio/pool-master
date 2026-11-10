@@ -240,6 +240,29 @@ describe('Loading a golf test seed through the admin API', () => {
     expect(stored).toMatchObject({ status: 'SCHEDULED', startDate: finaleStart, roundsPar: 70 });
     expect((await fieldOf(stored.id)).size).toBe(8);
   });
+
+  it('sets up a tournament the run holds back as a draft with its field, tiers, prices and scores, and releases it on a later run', async () => {
+    const league = expectDefined(await leagueNamed(tour));
+    const heldBack = { ...seed.sportLeagues[0].events[1], key: 'held', name: `${prefix} Invitational`, startDate: '2026-02-05', endDate: '2026-02-08' };
+    const file: SportDataFile = { ...seed, sportLeagues: [{ ...seed.sportLeagues[0], events: [heldBack] }] };
+
+    // The whole seed's offset, so it lands three weeks after the Opener rather than on its dates.
+    const offsetDays = seedDateOffsetDays(seed, NOW);
+
+    const held = await loadSportData(parsed(file), { getClient, now: NOW, mode: LoadMode.APPLY, offsetDays, release: false });
+
+    expect(held).toContainEqual(expect.objectContaining({ subject: LoadSubject.EVENT, action: LoadAction.ADD, name: heldBack.name, detail: 'a draft with odds, tiers, prices and scores' }));
+    const draft = expectDefined((await eventsOf(league.id, 2026)).find((event) => event.name === heldBack.name));
+    expect(draft.status).toBe('DRAFT');
+    const field = await fieldOf(draft.id);
+    expect([...field.values()].every((row) => row.valuation?.sportEventTierId && row.valuation.price !== null)).toBe(true);
+    expect(expectDefined(field.get(`${prefix} Golfer 1`)).standing).toMatchObject({ status: 'COMPLETE' });
+
+    const released = await loadSportData(parsed(file), { getClient, now: NOW, mode: LoadMode.APPLY, offsetDays });
+
+    expect(released).toContainEqual(expect.objectContaining({ subject: LoadSubject.EVENT, action: LoadAction.UPDATE, name: heldBack.name, detail: expect.stringContaining('release') as unknown }));
+    expect(expectDefined((await eventsOf(league.id, 2026)).find((event) => event.name === heldBack.name)).status).toBe('SCHEDULED');
+  });
 });
 
 describe('Loading a real golf schedule and fields through the admin API', () => {
@@ -378,6 +401,40 @@ describe('Loading a real golf schedule and fields through the admin API', () => 
     const heritage = expectDefined((await eventsOf(league.id, 2027)).find((event) => event.name === name('Heritage presented by Sponsor')));
     expect((await fieldOf(heritage.id)).get(`${prefix} Golfer 3`)).toMatchObject({ isActive: true, inactiveReason: null, seedNumber: 4 });
     expect(changes(await loadSportData(parsed(recommitted), { getClient, now: NOW, mode: LoadMode.APPLY })).filter((row) => row.subject === LoadSubject.FIELD)).toEqual([]);
+  });
+});
+
+describe('Keeping test events and real events apart on one site', () => {
+  const prefix = `${RUN}-apart`;
+  const tour = `Apart Tour ${prefix}`;
+  const getClient = () => Promise.resolve(admin.client);
+  const realEvent = (key: string, eventName: string, startDate: string) => ({
+    key, name: `${prefix} ${eventName}`, startDate, endDate: startDate, venue: null, location: null, rounds: 4, roundsPar: 72, field: [],
+  });
+  const file = (events: SportDataFile['sportLeagues'][number]['events']): SportDataFile => ({
+    schemaVersion: 1,
+    scope: { sport: Sport.GOLF, season: 2027, sportLeagues: [tour], contents: [SportDataContent.SCHEDULE, SportDataContent.PLAYERS] },
+    testData: false,
+    provenance: provenance(),
+    sportLeagues: [{ name: tour, players: players(prefix, 1), events }],
+  });
+
+  it('adds a real event beside a "Test-" event starting within the rename window, rather than renaming the test event', async () => {
+    const first = realEvent('classic', 'Classic', '2027-05-06');
+    await loadSportData(parsed(file([first])), { getClient, now: NOW, mode: LoadMode.APPLY });
+    const league = expectDefined(await leagueNamed(tour));
+    const testName = `Test- ${prefix} Old Invitational`;
+    expectDefined((await createEvent({
+      client: admin.client,
+      body: { sportLeagueId: league.id, eventYear: 2027, name: testName, startDate: '2027-05-13T12:00:00.000Z', endDate: '2027-05-17T12:00:00.000Z', rounds: 4 },
+    })).data);
+
+    const rows = await loadSportData(parsed(file([first, realEvent('open', 'Open', '2027-05-13')])), { getClient, now: NOW, mode: LoadMode.APPLY });
+
+    expect(changes(rows).filter((row) => row.subject === LoadSubject.EVENT)).toEqual([
+      { sportLeague: tour, subject: LoadSubject.EVENT, action: LoadAction.ADD, name: `${prefix} Open`, detail: null },
+    ]);
+    expect((await eventsOf(league.id, 2027)).map((event) => event.name).sort()).toEqual([`${prefix} Classic`, `${prefix} Open`, testName].sort());
   });
 });
 

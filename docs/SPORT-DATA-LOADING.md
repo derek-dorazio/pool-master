@@ -132,6 +132,47 @@ Two options on *Load sport data* are for QA only. The run reads the site's envir
   events get no test contest and the report lists them as skipped. Locally it is
   `--with-participants`.
 
+### A few "Test-" events at a time
+
+A test seed holds a whole season or playoff as played, but a run through *Load sport data*
+(one file, or `all_test_data`) loads only a few of its events, so test events stay a handful
+beside the real ones and always lie just ahead (#1524). The rule is
+`selectTestSeedEvents` in `seed-golf-data.ts`:
+
+- **Named "Test- ..."**: every event a test seed creates is named `Test- <event name>`
+  ("Test- Super Bowl LX"), so it reads as test data in every picker. A real file may not name
+  an event that way, and the loader never matches a real file's event with a `Test-` event, by
+  name or by the rename window, nor a test event with a real one: loading the real Premier
+  League weeks never renames a test matchweek.
+- **Two per sport league**: each league gets its next 2 events not yet on the site, in file
+  order (`events_per_league` on the workflow, `--events-per-league` locally). Once every event
+  of the file is on the site, the league starts over with numbered copies ("Test- Super Bowl LX
+  (2)"), so a one-event seed can be loaded again and again.
+- **Dates roll with the run**: the events keep their weekdays (an NFL week still starts on a
+  Thursday, a tournament still runs Thursday to Sunday) and are laid about a week apart in the
+  order they were played. The first week's land within the week after the run, the next on
+  their weekdays nearest a week later (4 to 10 days). A league with several events (a season
+  tour such as F1 or NASCAR) is laid out on its own, so every tour starts in the coming week.
+  The one-event leagues of a file are the stages of one competition and share one sequence:
+  the conference championships fall this coming Sunday and the Super Bowl the Sunday after. An event's
+  start is when contests on it can no longer be created or opened, so a first event landing
+  the next day leaves about a day to set one up.
+- **Only the first is released**: each league's first event is released for contests; the
+  ones after it are set up whole (field, odds, tiers, prices, stored scores) but left drafts.
+  An admin can release one early on the Manage screens. A bracket event's play-in winners,
+  cancellations and results go in only once a run releases it.
+- **Topped up, never piled up**: a league that still has a released test event yet to start is
+  left alone, its drafts too, and the report says so. Run it again once that event has started
+  and the league's draft moves into the coming week and is released, and a new event fills the
+  league back to 2 as the next draft; a daily run adds nothing in between. Released test
+  events are never changed, so their contests and entries stay. A draft counts toward the 2,
+  whether a run held it back or stopped part-way through it.
+
+Each section below says what a whole seed holds; a run loads it a few events at a time as
+above. Loading a test seed's file straight through `loadSportData` (the functional tests) still
+loads all of it, unprefixed, moved by whole weeks so its first event starts at least a week
+after the run.
+
 Both are re-entrant like every load: each step looks first and only adds what is missing, so a
 second run lists everything as a skip, and a run after a failure part-way fills in the rest. A
 draft entry gets the picks it lacks and is submitted; a submitted one is left alone.
@@ -166,9 +207,8 @@ minutes. Because its envelope says `testData`, each tournament also gets made-up
 
 - **Released** (Scheduled) with automatic lifecycle off, on tours named `PGA TOUR` and
   `LPGA Tour`, created if missing.
-- **Dates moved forward by whole weeks** from the 2026 calendar, so the first tournament
-  starts at least a week after the run and the rest keep their order and weekdays. The
-  event year stays 2026.
+- **Dates rolled from the run** (*A few "Test-" events at a time* above), each tournament
+  keeping its weekdays. The event year stays 2026.
 - **A field** of 72 to 144 of the tour's ranked golfers, with rankings, made-up odds, seeds,
   six tiers filled by odds (10 per tier, the last takes the rest) and prices from 1,000 to
   10,000.
@@ -183,10 +223,10 @@ stored scores straight away) and *Move to Completed* (the contest settles). The 
 visible on the admin field page before that.
 
 Running it again is safe, including straight after *Reset QA database*: a released
-tournament keeps its dates and is skipped. A tournament a run left a draft part-way is
-finished on the next run: moved to this run's dates, filled in and released. A tournament
-you already created by hand or imported from the provider with the same tour, name and year
-is treated as the seed's, so reset QA first for a clean set.
+tournament keeps its dates and is skipped, and once a tour's released test tournament has
+started, its draft moves into the coming week and is released, with a new draft a week after.
+A tournament a run left a draft part-way is finished the same way. Only `Test-` tournaments count as the
+seed's, so a tournament created by hand or imported from the provider is never touched.
 
 The data file is `packages/core-api/scripts/seed-golf/golf-2026.json`, rebuilt by
 `npm run seed:golf:build` from the mock provider's tour files (same answer every time).
@@ -199,8 +239,7 @@ and the reseed. Seeds, pairings, kickoffs and scores are real; the odds are made
 with `mode` `apply` like any file. It loads into the `NFL` sport league, which the migrations
 create with its reseed rule. Because its envelope says `testData`:
 
-- **Dates moved forward by whole weeks**, the kickoffs with them, so the Wild Card weekend
-  starts at least a week after the run.
+- **Dates rolled from the run** (*A few "Test-" events at a time* above), the kickoffs with them.
 - **Released** with automatic lifecycle off, its 14 teams tiered by odds (seven tiers of two)
   and priced.
 - **Every result already entered**, round by round through the bracket's own calls: the Wild
@@ -212,7 +251,7 @@ create with its reseed rule. Because its envelope says `testData`:
 
 To test a contest end to end, create and open it and submit entries, then on the event's
 Workflow card *Move to In Progress* and *Move to Completed*, as for the golf seed above.
-Running it again skips everything.
+Running it again tops it up as above.
 
 ## Seeded NFL regular-season weeks
 
@@ -239,14 +278,13 @@ Football Playoff` sport league, which the migrations create with its round names
 Quarterfinals, Semifinals, National Championship) and six tiers. Load it with `mode` `apply`
 like any file. Because its envelope says `testData`:
 
-- **Dates moved forward by whole weeks**, the kickoffs with them, so the first round starts at
-  least a week after the run.
+- **Dates rolled from the run** (*A few "Test-" events at a time* above), the kickoffs with them.
 - **Released** with automatic lifecycle off, its 12 teams tiered by odds (six tiers of two) and
   priced.
 - **Every result already entered**, round by round. Indiana, the 1 seed, comes in on a bye and
   beats Miami, the 10 seed, 27-21 in the National Championship.
 
-Test a contest on it as for the NFL seed above. Running it again skips everything.
+Test a contest on it as for the NFL seed above. Running it again tops it up as above.
 
 ## Seeded NBA and WNBA playoffs
 
@@ -258,8 +296,7 @@ Game 1 tip-offs and series results are real; the odds are made up. They load int
 Conference Semifinals, Conference Finals, NBA Finals; First Round, Semifinals, WNBA Finals).
 Load each with `mode` `apply` like any file. Because their envelopes say `testData`:
 
-- **Dates moved forward by whole weeks**, the tip-offs with them, so the first round starts at
-  least a week after the run.
+- **Dates rolled from the run** (*A few "Test-" events at a time* above), the tip-offs with them.
 - **Released** with automatic lifecycle off, the field tiered by odds (four tiers) and priced.
 - **The NBA's play-in places filled**: each conference's 7 and 8 seeds are play-in places
   ("West 8 seed (play-in)"), and after release each takes the team that won it (Golden State
@@ -269,7 +306,7 @@ Load each with `mode` `apply` like any file. Because their envelopes say `testDa
   Indiana Pacers 4-3 in the NBA Finals; the Las Vegas Aces beat the Phoenix Mercury 4-0 in the
   WNBA Finals.
 
-Test a contest on either as for the NFL seed above. Running a file again skips everything.
+Test a contest on either as for the NFL seed above. Running a file again tops it up as above.
 
 ## Seeded March Madness
 
@@ -280,15 +317,14 @@ seeded 1 to 16 in four regions (East, South, West and Midwest for the men; Fort 
 Sacramento 2 and 4 for the women). Seeds, pairings, tip-offs and scores are real; the odds are made
 up by seed. Load it with `mode` `apply` like any file. Because its envelope says `testData`:
 
-- **Dates moved forward by whole weeks**, the tip-offs with them, so the First Four starts at
-  least a week after the run.
+- **Dates rolled from the run** (*A few "Test-" events at a time* above), the tip-offs with them.
 - **Released** with automatic lifecycle off, the field tiered by odds and priced.
 - **The First Four places filled**: each First Four pairing is a play-in place ("UMBC / Howard"),
   and after release each takes the team that won it, keeping its seed, tier and price.
 - **Every game's result already entered**, round by round. Michigan beat UConn 69-63 for the
   men's title; UCLA beat South Carolina 79-51 for the women's.
 
-Test a contest on either as for the NFL seed above. Running the file again skips everything.
+Test a contest on either as for the NFL seed above. Running the file again tops it up as above.
 
 ## Seeded hockey playoffs
 
@@ -445,8 +481,7 @@ Milano-Sanremo, both Giros and the marathons carry only their leading ten finish
 
 Load one with `mode` `apply` like any file. Because its envelope says `testData`:
 
-- **Dates moved forward by whole weeks**, post times with them, so the first race starts at
-  least a week after the run.
+- **Dates rolled from the run** (*A few "Test-" events at a time* above), post times with them.
 - **Each race released**, with automatic lifecycle off, its field tiered by made-up odds and
   priced. The finishing order goes in just before release, so a run that stops between the two
   leaves a draft that the next run finishes.
@@ -456,4 +491,4 @@ Load one with `mode` `apply` like any file. Because its envelope says `testData`
 
 Then create a contest on a race, enter it, and move the race through *In Progress* and
 *Completed* from its Manage page: it settles on the finishing order already there. Running the
-file again skips everything.
+file again tops it up as above.

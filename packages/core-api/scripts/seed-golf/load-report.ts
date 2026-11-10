@@ -110,3 +110,19 @@ export function formatLoadReport(file: SportDataFile, mode: LoadMode, rows: read
   }
   return `${lines.join('\n')}\n`;
 }
+
+/**
+ * The rows with each repeat of a sport league or player row dropped. A test seed loads one
+ * event at a time (#1524), and every load reports its league and players again; the report
+ * counts each once.
+ */
+export function withoutRepeatedRows(rows: readonly LoadRow[]): LoadRow[] {
+  const seen = new Set<string>();
+  return rows.filter((row) => {
+    if (row.subject !== LoadSubject.SPORT_LEAGUE && row.subject !== LoadSubject.PLAYER) return true;
+    const key = `${row.subject}|${row.sportLeague}|${row.name}|${row.action}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}

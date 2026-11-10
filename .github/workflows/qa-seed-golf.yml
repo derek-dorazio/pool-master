@@ -53,6 +53,10 @@ on:
         description: Also load test players, leagues, contests and entries (QA only)
         type: boolean
         default: false
+      events_per_league:
+        description: Test seeds only, how many "Test-" events each sport league gets per run
+        type: string
+        default: '2'
 
 # It only reads the checkout; QA is written through the API with the admin secrets.
 permissions:
@@ -78,6 +82,7 @@ jobs:
       LOAD_REPLACE_FIELD: ${{ inputs.replace_field }}
       LOAD_ALL_TEST_DATA: ${{ inputs.all_test_data }}
       LOAD_WITH_PARTICIPANTS: ${{ inputs.with_participants }}
+      LOAD_EVENTS_PER_LEAGUE: ${{ inputs.events_per_league }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -92,7 +97,7 @@ jobs:
       - name: Load into QA
         shell: bash
         run: |
-          args=(--mode "$LOAD_MODE" --allow-test-data --report load-report.md)
+          args=(--mode "$LOAD_MODE" --allow-test-data --report load-report.md --events-per-league "$LOAD_EVENTS_PER_LEAGUE")
           if [ "$LOAD_ALL_TEST_DATA" = "true" ]; then
             args+=(--all-test-data)
           else

@@ -88,8 +88,9 @@ import {
   updateSportLeague,
 } from '@poolmaster/shared/generated/hey-api';
 import { LoadAction, LoadMode, LoadSubject, type LoadRow } from './load-report';
-import { golferRoundScore, seedDateOffsetDays, shiftedEventDates, shiftedMatchTimes } from './seed-golf-data';
+import { golferRoundScore, seedDateOffsetDays, selectTestSeedEvents, shiftedEventDates, shiftedMatchTimes, type StoredTestEvent, type TestSeedSelection } from './seed-golf-data';
 import {
+  isTestEventName,
   isTestSlate,
   SportDataContent,
   type SportDataEvent,
@@ -110,6 +111,10 @@ export interface LoadSportDataOptions {
   event?: string;
   /** A test slate only: remove field rows the slate does not list, rather than withdraw them. */
   replaceField?: boolean;
+  /** A test seed only: the days to move its dates by, in place of the whole-file offset (#1524). */
+  offsetDays?: number;
+  /** A test seed only: false sets each event up whole but leaves it a draft (#1524). Default true. */
+  release?: boolean;
 }
 
 type StoredEvent = SportEventListResponse['events'][number];
@@ -352,6 +357,8 @@ class Loader {
   /** A test seed's withdrawals come from its made-up scores, so it never reinstates a player. */
   private readonly testSeed: boolean;
   private readonly replaceField: boolean;
+  /** A test seed's events are released once set up, unless the run holds them back as drafts. */
+  private readonly releaseTestEvents: boolean;
 
   private readonly file: SportDataFile;
 
@@ -359,11 +366,12 @@ class Loader {
     this.apply = options.mode === LoadMode.APPLY;
     this.contents = new Set(file.scope.contents);
     this.testSeed = file.testData && this.contents.has(SportDataContent.RESULTS);
-    this.offsetDays = this.testSeed ? seedDateOffsetDays(file, options.now) : 0;
+    this.offsetDays = this.testSeed ? (options.offsetDays ?? seedDateOffsetDays(file, options.now)) : 0;
     // A test seed's game times move with its event dates.
     this.file = shiftedMatchTimes(file, this.offsetDays);
     this.log = options.log ?? (() => {});
     this.replaceField = options.replaceField ?? false;
+    this.releaseTestEvents = options.release ?? true;
   }
 
   private get sport(): Sport {
@@ -504,7 +512,9 @@ class Loader {
 
   /**
    * Each file event's stored event: same name (any case), else the one unclaimed event whose
-   * start is within a few days, which is how a sponsor's rename is found.
+   * start is within a few days, which is how a sponsor's rename is found. A test event
+   * ("Test- ...") is only ever matched with a test event, and a real one with a real one, so
+   * a real file never renames or rewrites the test events beside it, nor the reverse (#1524).
    */
   private matchEvents(league: SportDataLeague, stored: readonly StoredEvent[]): Map<SportDataEvent, StoredEvent> {
     const matches = new Map<SportDataEvent, StoredEvent>();
@@ -520,6 +530,7 @@ class Loader {
       if (matches.has(event)) continue;
       const start = Date.parse(shiftedEventDates(event, this.offsetDays).startDate);
       const near = stored.filter((candidate) => !claimed.has(candidate.id)
+        && isTestEventName(candidate.name) === isTestEventName(event.name)
         && !league.events.some((other) => other.name.toLowerCase() === candidate.name.toLowerCase())
         && Math.abs(Date.parse(candidate.startDate) - start) <= RENAME_MATCH_DAYS * DAY_MS);
       if (near.length === 1) {
@@ -680,7 +691,7 @@ class Loader {
         this.report({ ...at, subject: LoadSubject.EVENT, action: LoadAction.CONFLICT, detail: 'not on the site, and this file does not carry the schedule' });
         return;
       }
-      this.report({ ...at, subject: LoadSubject.EVENT, action: LoadAction.ADD, detail: this.file.testData ? 'released with odds, tiers, prices and scores' : null });
+      this.report({ ...at, subject: LoadSubject.EVENT, action: LoadAction.ADD, detail: this.file.testData ? `${this.releaseTestEvents ? 'released' : 'a draft'} with odds, tiers, prices and scores` : null });
       if (loadsField) {
         const plan = this.fieldChanges(league, event, participantIds, []);
         this.report({ ...at, subject: LoadSubject.FIELD, action: LoadAction.ADD, detail: `${plan.add.length} players` });
@@ -741,7 +752,7 @@ class Loader {
       return;
     }
 
-    const eventDetail = [...eventPlan.changes, ...(finishesDraft ? ['finishes the draft: odds, tiers, prices, scores, release'] : [])];
+    const eventDetail = [...eventPlan.changes, ...(finishesDraft ? [`finishes the draft: odds, tiers, prices, scores${this.releaseTestEvents ? ', release' : ''}`] : [])];
     this.report({ ...at, subject: LoadSubject.EVENT, action: eventDetail.length > 0 ? LoadAction.UPDATE : LoadAction.SKIP, detail: eventDetail.join('; ') || null });
     const writesField = fieldPlan !== null && fieldPlan.changes.length > 0 && !bracketLocked;
     if (fieldPlan) {
@@ -897,9 +908,16 @@ class Loader {
     }
   }
 
-  /** The made-up parts of a test seed: tiers by odds, default prices, stored scores or results, release. */
+  /**
+   * The made-up parts of a test seed: tiers by odds, default prices, stored scores or results,
+   * release. An event the run holds back stays a draft with what goes in before release; a bracket
+   * event's play-in winners, cancellations and results go in on a later run, after its release.
+   */
   private async finishTestEvent(client: Client, eventId: string, event: SportDataEvent, participantIds: ReadonlyMap<string, string | null>): Promise<void> {
     const path = { eventId };
+    const release = async (): Promise<void> => {
+      if (this.releaseTestEvents) await must(releaseEvent({ client, path }), `Release ${event.name}`);
+    };
     const statPool = this.contents.has(SportDataContent.STATS);
     // A stat pool's field is tiered by its ranking, the regular season's composite; any other by its odds.
     await must(autoAssignEventTiers({ client, path, body: { source: statPool ? 'RANKING' : 'ODDS' } }), `Assign tiers for ${event.name}`);
@@ -908,11 +926,12 @@ class Loader {
       // Box scores before release, so a run that dies between them leaves a draft the rerun finishes.
       const { participants: storedField } = await must(listEventParticipants({ client, path }), `Read the field of ${event.name}`);
       await this.writeStats(client, eventId, event, statChanges(event, participantIds, storedField));
-      await must(releaseEvent({ client, path }), `Release ${event.name}`);
+      await release();
       return;
     }
     if (sportPlaysMatches(this.sport)) {
-      await must(releaseEvent({ client, path }), `Release ${event.name}`);
+      if (!this.releaseTestEvents) return;
+      await release();
       await fillPlayInPlacesFor(client, eventId, event, participantIds);
       await cancelPostponedGamesFor(client, eventId, event);
       await enterBracketResultsFor(client, eventId, event);
@@ -921,7 +940,7 @@ class Loader {
     if (this.resultsEnteredByHand) {
       // Results before release, so a run that dies between them leaves a draft the rerun finishes.
       await enterRaceResultsFor(client, eventId, event, participantIds);
-      await must(releaseEvent({ client, path }), `Release ${event.name}`);
+      await release();
       return;
     }
     for (let roundNumber = 1; roundNumber <= event.rounds; roundNumber += 1) {
@@ -934,7 +953,7 @@ class Loader {
         await must(applyEventGolfRoundScores({ client, path: { eventId, roundNumber }, body: { rows } }), `Store round ${roundNumber} of ${event.name}`);
       }
     }
-    await must(releaseEvent({ client, path }), `Release ${event.name}`);
+    await release();
   }
 }
 
@@ -1013,6 +1032,25 @@ async function enterBracketResultsFor(client: Client, eventId: string, event: Sp
       await must(recordEventMatchResult({ client, path: { eventId, matchNumber }, body }), `Enter the result of match ${matchNumber} of ${event.name}`);
     }
   }
+}
+
+/** selectTestSeedEvents against the site: reads each sport league's events of the seed's season. */
+export async function selectTestSeedEventsOnSite(
+  file: SportDataFile,
+  getClient: () => Promise<Client>,
+  eventsPerLeague: number,
+  now: Date,
+): Promise<TestSeedSelection> {
+  const client = await getClient();
+  const { sportLeagues } = await must(listSportLeagues({ client, query: { sport: file.scope.sport } }), 'List sport leagues');
+  const stored = new Map<string, StoredTestEvent[]>();
+  for (const league of file.sportLeagues) {
+    const existing = sportLeagues.find((row) => row.name.toLowerCase() === league.name.toLowerCase());
+    if (!existing) continue;
+    const { events } = await must(listEvents({ client, query: { sportLeagueId: existing.id, eventYear: file.scope.season } }), `List ${league.name} events`);
+    stored.set(league.name.toLowerCase(), events.map((event) => ({ name: event.name, status: event.status, startDate: event.startDate })));
+  }
+  return selectTestSeedEvents(file, stored, eventsPerLeague, now);
 }
 
 /** Loads the file, or in a dry run reports what loading it would do. Returns one row per subject. */
