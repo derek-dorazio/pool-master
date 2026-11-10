@@ -97,7 +97,7 @@ export class InMemorySportEvents {
   raceResultRows: SportEventParticipantRaceResult[] = [];
   statLineRows: SportEventParticipantStatLine[] = [];
   matchRows: SportEventMatch[] = [];
-  /** The jobs each status move wrote with it (#1448). */
+  /** The jobs each status move or edit wrote with it (#1448, #1464). */
   backgroundJobs: BackgroundJobRequest[] = [];
 
   id(prefix: string): string {
@@ -309,11 +309,12 @@ export class InMemorySportEvents {
           return this.addEvent({ ...input, sportLeagueId: series?.sportLeagueId ?? 'sport-league-unplaced', metadata: {} });
         });
       },
-      update: async (id, updates: SportEventUpdate) => {
+      update: async (id, updates: SportEventUpdate, options) => {
         const row = this.events.find((candidate) => candidate.id === id) as SportEvent;
         for (const [key, value] of Object.entries(updates)) {
           if (value !== undefined) (row as unknown as Record<string, unknown>)[key] = nullable(value);
         }
+        this.backgroundJobs.push(...(options?.jobs ?? []));
         return row;
       },
       transitionStatus: async (id, transition) => {

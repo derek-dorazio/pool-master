@@ -21,6 +21,7 @@ import {
   PARTICIPANT_SCORING_DEFINITIONS,
   SportEventStatus,
   contestEntryEventStatus,
+  type BackgroundJobRequest,
   type Contest,
   type League,
   type SportEvent,
@@ -62,7 +63,7 @@ export interface ContestNoticeDeps extends ContestSummaryDeps, LeagueMemberDeps 
   entries: Pick<ContestEntryRepository, 'findByContest'>;
   squadMemberships: Pick<SquadMembershipRepository, 'findBySquads'>;
   email: Pick<EmailService, 'sendMany'>;
-  /** Where an event change queues each contest's email job (#1458); `sportEventChanged` throws without it. */
+  /** Where an event change queues each contest's email job (#1458); `sportEventChangedJobs` throws without it. */
   jobs?: Pick<BackgroundJobQueue, 'request' | 'enqueueAll'>;
   appBaseUrl: string;
   logger?: FastifyBaseLogger;
@@ -87,6 +88,13 @@ export type SportEventChange =
 
 /** The event-changed seam EventLifecycleService calls. */
 export interface SportEventChangedNotice {
+  /**
+   * C6's job for each contest the change tells, for the caller to write with the change itself
+   * (#1464): a postponement or a moved start that fails, or loses a race, queues nothing, and
+   * one that lands always has its jobs. Only `sportEvent`'s id and start are read.
+   */
+  sportEventChangedJobs(sportEvent: Pick<SportEvent, 'id' | 'startDate'>, change: SportEventChange): Promise<BackgroundJobRequest[]>;
+  /** Queues those jobs now: a cancellation, which its settle job tells before settling. */
   sportEventChanged(sportEvent: SportEvent, change: SportEventChange): Promise<void>;
 }
 
@@ -253,14 +261,23 @@ export class ContestNotices implements ContestOpenedNotice, SportEventChangedNot
    * cancelled) ends it, and its no-scores result (F2) says so instead, so it gets no job. That is
    * decided here, before settlement finishes those contests. A failure throws for the caller.
    */
-  async sportEventChanged(sportEvent: SportEvent, change: SportEventChange): Promise<void> {
-    const { jobs } = this.deps;
-    if (!jobs) throw new Error('A background job queue is required to tell contests their event changed');
+  async sportEventChangedJobs(sportEvent: Pick<SportEvent, 'id' | 'startDate'>, change: SportEventChange): Promise<BackgroundJobRequest[]> {
+    const jobs = this.requireJobs();
     const onEvent = await this.deps.contests.findBySportEvent(sportEvent.id, { statuses: TOLD_OF_EVENT_CHANGES });
     const contests = change.kind === ContestEventChangeKind.CANCELLED
       ? await this.stillToPlay(onEvent, sportEvent.id)
       : onEvent;
-    await jobs.enqueueAll(contests.map((contest) => contestEventChangedEmailsJob(jobs, contest.id, sportEvent, change)));
+    return contests.map((contest) => contestEventChangedEmailsJob(jobs, contest.id, sportEvent, change));
+  }
+
+  async sportEventChanged(sportEvent: SportEvent, change: SportEventChange): Promise<void> {
+    await this.requireJobs().enqueueAll(await this.sportEventChangedJobs(sportEvent, change));
+  }
+
+  private requireJobs(): Pick<BackgroundJobQueue, 'request' | 'enqueueAll'> {
+    const { jobs } = this.deps;
+    if (!jobs) throw new Error('A background job queue is required to tell contests their event changed');
+    return jobs;
   }
 
   /**

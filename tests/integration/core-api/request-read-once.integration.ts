@@ -742,6 +742,44 @@ const PINNED_MOVE_COUNTS: Array<[string, number]> = [
   ['UPDATE sport_events', 1],
 ];
 
+/**
+ * Fails every insert of an "event changed" email job while `work` runs, as a database error
+ * between the event's change and its jobs would: a check constraint added for the test and
+ * dropped after it.
+ */
+async function withEventChangedJobsFailing<T>(work: () => Promise<T>): Promise<T> {
+  await getPrisma().$executeRawUnsafe(
+    `ALTER TABLE background_jobs ADD CONSTRAINT test_no_event_changed_jobs CHECK (type <> 'CONTEST_EVENT_CHANGED_EMAILS') NOT VALID`,
+  );
+  try {
+    return await work();
+  } finally {
+    await getPrisma().$executeRawUnsafe('ALTER TABLE background_jobs DROP CONSTRAINT test_no_event_changed_jobs');
+  }
+}
+
+describe('Postponing or moving an event whose email jobs cannot be written (#1464)', () => {
+  it('leaves the event SCHEDULED, and answers with an error, when its postponement\'s email jobs fail to write, so nobody is left untold', async () => {
+    const seeded = await openContestsOnScheduledEvent({ contests: 1 });
+
+    const response = await withEventChangedJobsFailing(() => getApp().inject(postpone(seeded)));
+
+    expect(response.statusCode).toBe(500);
+    await expect(getPrisma().sportEvent.findUniqueOrThrow({ where: { id: seeded.eventId }, select: { status: true } }))
+      .resolves.toEqual({ status: 'SCHEDULED' });
+  });
+
+  it('leaves the event\'s start where it was, and answers with an error, when its move\'s email jobs fail to write, so nobody is left untold', async () => {
+    const seeded = await openContestsOnScheduledEvent({ contests: 1 });
+
+    const response = await withEventChangedJobsFailing(() => getApp().inject(moveByADay(seeded)));
+
+    expect(response.statusCode).toBe(500);
+    await expect(getPrisma().sportEvent.findUniqueOrThrow({ where: { id: seeded.eventId }, select: { startDate: true } }))
+      .resolves.toEqual({ startDate: seeded.startDate });
+  });
+});
+
 describe('Postponing or moving an event (#1458)', () => {
   it.each([
     ['postpone', postpone, PINNED_POSTPONE_COUNTS],

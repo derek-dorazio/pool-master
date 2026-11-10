@@ -134,7 +134,7 @@ export interface SportEventServiceDeps {
   rounds: SportEventRoundService;
   tiers: SportEventTierService;
   bracket: Pick<SportEventBracketService, 'releaseBlockers'>;
-  lifecycle: Pick<EventLifecycleService, 'applySportEventStatusTransition' | 'sportEventRescheduled'>;
+  lifecycle: Pick<EventLifecycleService, 'applySportEventStatusTransition' | 'sportEventRescheduledJobs'>;
   /** A new start moves the event's contests' entry reminders (#1170). */
   contests: Pick<ContestRepository, 'recheckReminders'>;
   logger?: FastifyBaseLogger;
@@ -391,22 +391,26 @@ export class SportEventService {
         400,
       );
     }
-    // Three writes, not one transaction: a failure after the first leaves the rounds behind the
-    // event's new dates. The round writes only reject a round the event lacks, and they read the
-    // event's rounds first, so in practice they don't fail here.
-    await this.deps.sportEvents.update(sportEventId, updates);
     const startDate = updates.startDate ?? startedAt;
     const shiftMs = startDate.getTime() - startedAt.getTime();
+    // A moved start is told to the leagues on the event by jobs written with the new start
+    // (#1464), so an edit that fails tells nobody and one that lands always tells them. A draft's
+    // commissioners can't see it yet, and a started event's picks are closed.
+    const told = shiftMs !== 0 && RESCHEDULE_TOLD.includes(status) && options.tellMembers
+      ? await this.deps.lifecycle.sportEventRescheduledJobs({ id: sportEventId, startDate }, startedAt)
+      : undefined;
+    // The event and its jobs are one write; the rounds and reminders follow it, not in its
+    // transaction: a failure after it leaves the rounds behind the event's new dates. The round
+    // writes only reject a round the event lacks, and they read the event's rounds first, so in
+    // practice they don't fail here.
+    await this.deps.sportEvents.update(sportEventId, updates, told && { jobs: told.jobs });
+    if (told && told.jobs.length > 0) told.queued();
     if (shiftMs !== 0) {
       await this.deps.rounds.shiftSchedule(sportEventId, shiftMs);
       await this.deps.contests.recheckReminders({ sportEventId }, this.now());
     }
     if (updates.rounds && updates.rounds > (roundCount ?? 0)) {
       await this.deps.rounds.extendTo({ sportEventId, rounds: updates.rounds, startDate });
-    }
-    // A draft's commissioners can't see it yet, and a started event's picks are closed.
-    if (shiftMs !== 0 && RESCHEDULE_TOLD.includes(status) && options.tellMembers) {
-      await this.deps.lifecycle.sportEventRescheduled(await this.requireEvent(sportEventId), startedAt);
     }
     return this.requireAdminSummary(sportEventId);
   }

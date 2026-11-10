@@ -43,6 +43,7 @@ import type {
   TierAssignment,
 } from '@poolmaster/shared/db';
 import type {
+  BackgroundJobRequest,
   EventPricingConfig,
   EventSeries,
   ParticipantLeagueAffiliation,
@@ -364,8 +365,9 @@ export class PrismaSportEventRepository implements SportEventRepository {
     });
   }
 
-  async update(id: string, updates: SportEventUpdate): Promise<SportEvent> {
-    return toSportEvent(await forgettingReads(ReadMemoKey.sportEvent, () => this.prisma.sportEvent.update({
+  async update(id: string, updates: SportEventUpdate, options: { jobs?: readonly BackgroundJobRequest[] } = {}): Promise<SportEvent> {
+    const jobs = options.jobs ?? [];
+    const write = (db: PrismaClient | Prisma.TransactionClient) => db.sportEvent.update({
       where: { id },
       data: {
         ...(updates.name !== undefined && { name: updates.name }),
@@ -382,7 +384,14 @@ export class PrismaSportEventRepository implements SportEventRepository {
         ...(updates.syncScope !== undefined && { syncScope: updates.syncScope }),
       },
       include: SPORT_EVENT_INCLUDE,
-    })));
+    });
+    return toSportEvent(await forgettingReads(ReadMemoKey.sportEvent, () => (jobs.length > 0
+      ? this.prisma.$transaction(async (tx) => {
+        const row = await write(tx);
+        await insertBackgroundJobs(tx, jobs);
+        return row;
+      })
+      : write(this.prisma))));
   }
 
   async transitionStatus(id: string, transition: SportEventStatusTransition): Promise<SportEvent | null> {

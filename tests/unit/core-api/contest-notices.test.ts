@@ -600,7 +600,19 @@ describe('ContestNotices', () => {
       ]);
     });
 
-    it('throws when the jobs cannot be written, so the caller logs that nobody was told', async () => {
+    it('answers one job per open or live contest on the event for the caller to write with its change, writing none itself', async () => {
+      const league = world.addLeague();
+      const masters = world.addSportEvent({ name: 'The Masters', startDate: STARTS_AT });
+      const open = world.addContest(league.id, { sportEventIds: [masters.id] });
+      world.addContest(league.id, { sportEventIds: [masters.id], status: ContestStatus.DRAFT });
+
+      const jobs = await notices().sportEventChangedJobs({ id: masters.id, startDate: STARTS_AT }, { kind: ContestEventChangeKind.POSTPONED });
+
+      expect(jobs.map((job) => (job.payload as ContestEventChangedEmailsJobPayload).contestId)).toEqual([open.id]);
+      expect(jobRows.rows).toEqual([]);
+    });
+
+    it('throws when the jobs cannot be written, so the cancelled event\'s settle job that asked fails and is retried', async () => {
       const masters = world.addSportEvent({ name: 'The Masters', startDate: STARTS_AT, status: SportEventStatus.POSTPONED });
       world.addContest(world.addLeague().id, { sportEventIds: [masters.id] });
       jest.spyOn(jobRows, 'enqueueAll').mockRejectedValueOnce(new Error('database unavailable'));
