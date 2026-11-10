@@ -1,3 +1,4 @@
+import { insertBackgroundJobs } from './prisma-background-job-repository';
 import type { PrismaClient } from '@prisma/client';
 import type {
   ContestEntryMatchPredictionRepository,
@@ -126,7 +127,7 @@ export class PrismaContestEntryMatchPredictionRepository implements ContestEntry
       const change = decide(before);
       if (change === null) return { written: null, week: before };
 
-      const { saves, clearedMatchIds, eventStatus, tiebreakerValue } = change;
+      const { saves, clearedMatchIds, eventStatus, tiebreakerValue, jobs = [] } = change;
       // A saved pick replaces the game's earlier one: both go in one delete, and the saves in one
       // insert, so the write costs the same for one game as for a full slate (#1254).
       const replacedMatchIds = new Set([...clearedMatchIds, ...saves.map((save) => save.sportEventMatchId)]);
@@ -156,6 +157,7 @@ export class PrismaContestEntryMatchPredictionRepository implements ContestEntry
           select: WEEK_EVENT,
         }))
         : before.event;
+      await insertBackgroundJobs(tx, jobs);
       return {
         written: change,
         week: {

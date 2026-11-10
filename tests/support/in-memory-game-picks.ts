@@ -22,6 +22,7 @@ import {
   MatchStatus,
   ParticipantStatus,
   PredictedResult,
+  type BackgroundJobRequest,
   type ContestEntryMatchPrediction,
   type Participant,
   type SportEventMatch,
@@ -39,6 +40,8 @@ export class InMemoryGamePicks {
   readonly field = new Map<string, SportEventParticipant>();
   readonly participants = new Map<string, Participant>();
   readonly predictions = new Map<string, ContestEntryMatchPrediction>();
+  /** The background jobs each save wrote with its picks (#1466), as the adapter inserts them in its transaction. */
+  readonly writtenJobs: BackgroundJobRequest[] = [];
   private sequence = 0;
 
   constructor(private readonly world: InMemoryContestWorld) {}
@@ -216,7 +219,7 @@ export class InMemoryGamePicks {
         });
         const change = decide(week());
         if (change === null) return { written: null, week: week() };
-        const { saves, clearedMatchIds, eventStatus, tiebreakerValue } = change;
+        const { saves, clearedMatchIds, eventStatus, tiebreakerValue, jobs = [] } = change;
         if (saves.some((save) => save.confidence !== null && save.confidence < 1)) {
           throw new Error('violates check constraint contest_entry_match_predictions_confidence_check');
         }
@@ -247,6 +250,7 @@ export class InMemoryGamePicks {
             ],
           });
         }
+        this.writtenJobs.push(...jobs);
         return { written: change, week: week() };
       },
     };

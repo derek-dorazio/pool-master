@@ -13,6 +13,7 @@ import {
 } from '../../../packages/core-api/src/adapters';
 import { expectDefined } from '../../support/expect-defined';
 import { writePicks } from '../../support/prediction-writes';
+import { contestRebuildJob } from '../../support/recording-leaderboard-rebuilds';
 import {
   cleanupTestData,
   createTestUser,
@@ -20,6 +21,7 @@ import {
   getPrisma,
   setupIntegrationTests,
   teardownIntegrationTests,
+  withBackgroundJobsFailing,
 } from '../helpers';
 import { recordStatements, statementCounts, statementsOn, StatementVerb } from '../statement-log';
 import { createRoundRows, createSportEventRow } from '../../support/sport-event-rows';
@@ -397,6 +399,35 @@ describe('PrismaContestEntryMatchPredictionRepository', () => {
 
     await expect(repos().predictions.findByEntryAndEvent(entry.id, event.id)).resolves.toEqual([]);
     expect(weekStatus(expectDefined(await repos().entries.findByIdWithSquad(entry.id)), event.id).status).toBe(ContestEntryStatus.DRAFT);
+  });
+
+  it('writes the contest\'s leaderboard rebuild job in the same change as the submitted week (#1466)', async () => {
+    const { event, game } = await createWeek('Week 1', AT);
+    const { contest, entry } = await createPickEmEntry([event.id]);
+    const job = contestRebuildJob(contest.id);
+
+    await writePicks(repos().predictions, {
+      contestEntryId: entry.id, sportEventId: event.id, clearedMatchIds: [], eventStatus: ContestEntryStatus.SUBMITTED, at: AT, jobs: [job],
+      saves: [{ sportEventMatchId: game(1).id, predictedResult: PredictedResult.TEAM, sportEventParticipantId: expectDefined(game(1).homeSportEventParticipantId), confidence: null }],
+    });
+
+    await expect(getPrisma().backgroundJob.findMany({ where: { dedupeKey: job.dedupeKey }, select: { type: true, payload: true, status: true } }))
+      .resolves.toEqual([{ type: job.type, payload: job.payload, status: 'QUEUED' }]);
+    expect(weekStatus(expectDefined(await repos().entries.findByIdWithSquad(entry.id)), event.id).status).toBe(ContestEntryStatus.SUBMITTED);
+  });
+
+  it('writes none of a submit, picks and status included, when its rebuild job cannot be written (#1466)', async () => {
+    const { event, game } = await createWeek('Week 1', AT);
+    const { contest, entry } = await createPickEmEntry([event.id]);
+
+    await expect(withBackgroundJobsFailing('REBUILD_LEADERBOARDS', () => writePicks(repos().predictions, {
+      contestEntryId: entry.id, sportEventId: event.id, clearedMatchIds: [], eventStatus: ContestEntryStatus.SUBMITTED, at: AT, jobs: [contestRebuildJob(contest.id)],
+      saves: [{ sportEventMatchId: game(1).id, predictedResult: PredictedResult.TEAM, sportEventParticipantId: expectDefined(game(1).homeSportEventParticipantId), confidence: null }],
+    }))).rejects.toThrow();
+
+    await expect(repos().predictions.findByEntryAndEvent(entry.id, event.id)).resolves.toEqual([]);
+    expect(weekStatus(expectDefined(await repos().entries.findByIdWithSquad(entry.id)), event.id).status).toBe(ContestEntryStatus.DRAFT);
+    await expect(getPrisma().backgroundJob.count({ where: { dedupeKey: contestRebuildJob(contest.id).dedupeKey } })).resolves.toBe(0);
   });
 });
 

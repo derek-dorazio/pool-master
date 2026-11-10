@@ -820,6 +820,8 @@ export interface ContestEntryMatchPredictionChange {
   eventStatus: ContestEntryStatus | null;
   /** The entry's tiebreaker guess for the event after the change, when it changes (#717): kept on its row for the event. */
   tiebreakerValue?: number | null;
+  /** Background jobs the change causes (the contest's leaderboard rebuild, #1466), written with it. */
+  jobs?: readonly BackgroundJobRequest[];
 }
 
 /**

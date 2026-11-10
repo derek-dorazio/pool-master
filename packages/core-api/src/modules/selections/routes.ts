@@ -93,9 +93,9 @@ const squaresBoxParams = {
 /** What every squares route answers for a contest it can't serve (#711). */
 const SQUARES_REFUSALS = '404 CONTEST_NOT_FOUND (a draft is shown only to its commissioners); 409 CONTEST_FORMAT_MISMATCH for a contest that is not squares.';
 
-/** Tells the stored leaderboards (#1435) when a prediction week is submitted or sent back to draft. */
+/** The contest's leaderboard rebuild (#1435), written with a prediction week submitted or sent back to draft (#1466). */
 export interface SelectionsModuleOptions {
-  leaderboards: Pick<LeaderboardRebuilds, 'contestsChanged'>;
+  leaderboards: Pick<LeaderboardRebuilds, 'forContest'>;
 }
 
 export function selectionsModule(fastify: FastifyInstance, opts: MailModuleOptions & PlanModuleOptions & SelectionsModuleOptions): void {
