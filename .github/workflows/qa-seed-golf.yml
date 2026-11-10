@@ -16,6 +16,8 @@
 # site, named in `event`, for trying contests before the real field is out. With
 # `replace_field` it removes every field row the slate does not list rather than withdrawing
 # it; a row a contest entry has picked is withdrawn instead.
+# `release` (on by default) releases a real file's events whose field it carries, so a "Load"
+# leaves them open for contests; an event the site refuses stays a draft and is reported.
 # `all_test_data` loads every test data file in the folder in one run, in place of `file`.
 # `with_participants` also loads test players, a league per sport league, contests on its next
 # events and a submitted entry from each player. Both are QA only: the loader reads the site's
@@ -53,6 +55,14 @@ on:
         description: Also load test players, leagues, contests and entries (QA only)
         type: boolean
         default: false
+      release:
+        description: Real files, release each event whose field is loaded (tiers by ranking, default prices)
+        type: boolean
+        default: true
+      events_per_league:
+        description: Test seeds only, how many "Test-" events each sport league gets per run
+        type: string
+        default: '2'
 
 # It only reads the checkout; QA is written through the API with the admin secrets.
 permissions:
@@ -78,6 +88,8 @@ jobs:
       LOAD_REPLACE_FIELD: ${{ inputs.replace_field }}
       LOAD_ALL_TEST_DATA: ${{ inputs.all_test_data }}
       LOAD_WITH_PARTICIPANTS: ${{ inputs.with_participants }}
+      LOAD_EVENTS_PER_LEAGUE: ${{ inputs.events_per_league }}
+      LOAD_RELEASE: ${{ inputs.release }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -92,7 +104,7 @@ jobs:
       - name: Load into QA
         shell: bash
         run: |
-          args=(--mode "$LOAD_MODE" --allow-test-data --report load-report.md)
+          args=(--mode "$LOAD_MODE" --allow-test-data --report load-report.md --events-per-league "$LOAD_EVENTS_PER_LEAGUE")
           if [ "$LOAD_ALL_TEST_DATA" = "true" ]; then
             args+=(--all-test-data)
           else
@@ -101,6 +113,7 @@ jobs:
             if [ "$LOAD_REPLACE_FIELD" = "true" ]; then args+=(--replace-field); fi
           fi
           if [ "$LOAD_WITH_PARTICIPANTS" = "true" ]; then args+=(--with-participants); fi
+          if [ "$LOAD_RELEASE" = "true" ]; then args+=(--release); fi
           npm run seed:golf -- "${args[@]}" 2>&1 | tee load.log
       - name: Summary
         if: always()

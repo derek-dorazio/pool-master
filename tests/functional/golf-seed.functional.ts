@@ -240,6 +240,29 @@ describe('Loading a golf test seed through the admin API', () => {
     expect(stored).toMatchObject({ status: 'SCHEDULED', startDate: finaleStart, roundsPar: 70 });
     expect((await fieldOf(stored.id)).size).toBe(8);
   });
+
+  it('sets up a tournament the run holds back as a draft with its field, tiers, prices and scores, and releases it on a later run', async () => {
+    const league = expectDefined(await leagueNamed(tour));
+    const heldBack = { ...seed.sportLeagues[0].events[1], key: 'held', name: `${prefix} Invitational`, startDate: '2026-02-05', endDate: '2026-02-08' };
+    const file: SportDataFile = { ...seed, sportLeagues: [{ ...seed.sportLeagues[0], events: [heldBack] }] };
+
+    // The whole seed's offset, so it lands three weeks after the Opener rather than on its dates.
+    const offsetDays = seedDateOffsetDays(seed, NOW);
+
+    const held = await loadSportData(parsed(file), { getClient, now: NOW, mode: LoadMode.APPLY, offsetDays, release: false });
+
+    expect(held).toContainEqual(expect.objectContaining({ subject: LoadSubject.EVENT, action: LoadAction.ADD, name: heldBack.name, detail: 'a draft with odds, tiers, prices and scores' }));
+    const draft = expectDefined((await eventsOf(league.id, 2026)).find((event) => event.name === heldBack.name));
+    expect(draft.status).toBe('DRAFT');
+    const field = await fieldOf(draft.id);
+    expect([...field.values()].every((row) => row.valuation?.sportEventTierId && row.valuation.price !== null)).toBe(true);
+    expect(expectDefined(field.get(`${prefix} Golfer 1`)).standing).toMatchObject({ status: 'COMPLETE' });
+
+    const released = await loadSportData(parsed(file), { getClient, now: NOW, mode: LoadMode.APPLY, offsetDays });
+
+    expect(released).toContainEqual(expect.objectContaining({ subject: LoadSubject.EVENT, action: LoadAction.UPDATE, name: heldBack.name, detail: expect.stringContaining('release') as unknown }));
+    expect(expectDefined((await eventsOf(league.id, 2026)).find((event) => event.name === heldBack.name)).status).toBe('SCHEDULED');
+  });
 });
 
 describe('Loading a real golf schedule and fields through the admin API', () => {
@@ -378,6 +401,151 @@ describe('Loading a real golf schedule and fields through the admin API', () => 
     const heritage = expectDefined((await eventsOf(league.id, 2027)).find((event) => event.name === name('Heritage presented by Sponsor')));
     expect((await fieldOf(heritage.id)).get(`${prefix} Golfer 3`)).toMatchObject({ isActive: true, inactiveReason: null, seedNumber: 4 });
     expect(changes(await loadSportData(parsed(recommitted), { getClient, now: NOW, mode: LoadMode.APPLY })).filter((row) => row.subject === LoadSubject.FIELD)).toEqual([]);
+  });
+});
+
+describe('Releasing a real file\'s events as they load', () => {
+  const prefix = `${RUN}-release`;
+  const tour = `Release Tour ${prefix}`;
+  const name = (event: string) => `${prefix} ${event}`;
+  const getClient = () => Promise.resolve(admin.client);
+  const ranked = (count: number) => Array.from({ length: count }, (_, index) => ({ player: `${prefix}-p${index + 1}`, ranking: index + 1 }));
+  const file = (): SportDataFile => ({
+    schemaVersion: 1,
+    scope: { sport: Sport.GOLF, season: 2027, sportLeagues: [tour], contents: [SportDataContent.SCHEDULE, SportDataContent.PLAYERS, SportDataContent.FIELDS] },
+    testData: false,
+    provenance: provenance(),
+    sportLeagues: [{
+      name: tour,
+      players: players(prefix, 30),
+      events: [
+        { key: 'full', name: name('Full Field'), startDate: '2027-05-06', endDate: '2027-05-09', venue: null, location: null, rounds: 4, roundsPar: 72, field: ranked(30) },
+        { key: 'thin', name: name('Thin Field'), startDate: '2027-05-13', endDate: '2027-05-16', venue: null, location: null, rounds: 4, roundsPar: 72, field: ranked(1) },
+        { key: 'none', name: name('No Field Yet'), startDate: '2027-05-20', endDate: '2027-05-23', venue: null, location: null, rounds: 4, roundsPar: 72, field: [] },
+      ],
+    }],
+  });
+  const eventRows = (rows: LoadRow[]) => rows.filter((row) => row.subject === LoadSubject.EVENT).map(({ action, name: eventName, detail }) => ({ action, name: eventName, detail }));
+
+  it('reports the release in a dry run, then releases an event with its field tiered by ranking and priced, leaves one the site refuses a draft with its reason, and one with no field a draft', async () => {
+    const dryRun = await loadSportData(parsed(file()), { getClient, now: NOW, mode: LoadMode.DRY_RUN, release: true });
+    expect(eventRows(dryRun)).toEqual([
+      { action: LoadAction.ADD, name: name('Full Field'), detail: 'released: tiers by ranking and prices where missing' },
+      { action: LoadAction.ADD, name: name('Thin Field'), detail: 'released: tiers by ranking and prices where missing' },
+      { action: LoadAction.ADD, name: name('No Field Yet'), detail: null },
+    ]);
+    expect(await leagueNamed(tour)).toBeUndefined();
+
+    const applied = await loadSportData(parsed(file()), { getClient, now: NOW, mode: LoadMode.APPLY, release: true });
+
+    expect(eventRows(applied)).toContainEqual({ action: LoadAction.CONFLICT, name: name('Thin Field'), detail: expect.stringContaining('left a draft: ') as unknown });
+    const league = expectDefined(await leagueNamed(tour));
+    const events = await eventsOf(league.id, 2027);
+    const statusOf = (eventName: string) => expectDefined(events.find((event) => event.name === name(eventName))).status;
+    expect([statusOf('Full Field'), statusOf('Thin Field'), statusOf('No Field Yet')]).toEqual(['SCHEDULED', 'DRAFT', 'DRAFT']);
+    const field = await fieldOf(expectDefined(events.find((event) => event.name === name('Full Field'))).id);
+    expect([...field.values()].every((row) => row.valuation?.sportEventTierId && row.valuation.price !== null)).toBe(true);
+  });
+
+  it('skips the released event on a second run and tries the refused draft again', async () => {
+    const second = await loadSportData(parsed(file()), { getClient, now: NOW, mode: LoadMode.APPLY, release: true });
+
+    expect(eventRows(second)).toEqual([
+      { action: LoadAction.SKIP, name: name('Full Field'), detail: null },
+      { action: LoadAction.UPDATE, name: name('Thin Field'), detail: 'released: tiers by ranking and prices where missing' },
+      { action: LoadAction.CONFLICT, name: name('Thin Field'), detail: expect.stringContaining('left a draft: ') as unknown },
+      { action: LoadAction.SKIP, name: name('No Field Yet'), detail: null },
+    ]);
+  });
+});
+
+describe('Leaving a real file\'s event a draft rather than releasing it', () => {
+  const prefix = `${RUN}-held`;
+  const tour = `Held Tour ${prefix}`;
+  const name = (event: string) => `${prefix} ${event}`;
+  const getClient = () => Promise.resolve(admin.client);
+  const ranked = (count: number) => Array.from({ length: count }, (_, index) => ({ player: `${prefix}-p${index + 1}`, ranking: index + 1 }));
+  const day = (offsetDays: number) => new Date(NOW.getTime() + offsetDays * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  const file = (events: SportDataFile['sportLeagues'][number]['events'], season = 2027): SportDataFile => ({
+    schemaVersion: 1,
+    scope: { sport: Sport.GOLF, season, sportLeagues: [tour], contents: [SportDataContent.SCHEDULE, SportDataContent.PLAYERS, SportDataContent.FIELDS] },
+    testData: false,
+    provenance: provenance(),
+    sportLeagues: [{ name: tour, players: players(prefix, 30), events }],
+  });
+  const event = (key: string, eventName: string, startDate: string) => ({
+    key, name: name(eventName), startDate, endDate: startDate, venue: null, location: null, rounds: 4, roundsPar: 72, field: ranked(30),
+  });
+
+  it('keeps tiers an admin set by hand on part of the field: no tier or price is re-assigned and the event is left a draft, with the reason', async () => {
+    const handTiered = event('hand', 'Hand Tiered', '2027-06-03');
+    await loadSportData(parsed(file([handTiered])), { getClient, now: NOW, mode: LoadMode.APPLY });
+    const league = expectDefined(await leagueNamed(tour));
+    const stored = expectDefined((await eventsOf(league.id, 2027)).find((candidate) => candidate.name === handTiered.name));
+    const db = getFunctionalPrisma();
+    const tier = await db.sportEventTier.findFirstOrThrow({ where: { sportEventId: stored.id }, orderBy: { tierNumber: 'asc' } });
+    const row = await db.sportEventParticipant.findFirstOrThrow({ where: { sportEventId: stored.id } });
+    await db.sportEventParticipantValuation.upsert({
+      where: { sportEventParticipantId: row.id },
+      create: { sportEventParticipantId: row.id, sportEventTierId: tier.id, tierAssignedSource: 'MANUAL' },
+      update: { sportEventTierId: tier.id, tierAssignedSource: 'MANUAL' },
+    });
+
+    const rows = await loadSportData(parsed(file([handTiered])), { getClient, now: NOW, mode: LoadMode.APPLY, release: true });
+
+    expect(rows).toContainEqual(expect.objectContaining({
+      subject: LoadSubject.EVENT, action: LoadAction.CONFLICT, name: handTiered.name, detail: 'left a draft: 1 of 30 players tiered and 0 priced by hand; finish them on the Manage screen',
+    }));
+    expect(expectDefined((await eventsOf(league.id, 2027)).find((candidate) => candidate.name === handTiered.name)).status).toBe('DRAFT');
+    const tiered = [...(await fieldOf(stored.id)).values()].filter((fieldRow) => fieldRow.valuation?.sportEventTierId);
+    expect(tiered).toHaveLength(1);
+  });
+
+  it('leaves an event that has already started a draft, without trying to release it', async () => {
+    const started = event('started', 'Already Started', day(-2));
+
+    const season = Number(started.startDate.slice(0, 4));
+
+    const rows = await loadSportData(parsed(file([started], season)), { getClient, now: NOW, mode: LoadMode.APPLY, release: true });
+
+    expect(rows).toContainEqual({ sportLeague: tour, subject: LoadSubject.EVENT, action: LoadAction.ADD, name: started.name, detail: null });
+    expect(rows.filter((row) => row.action === LoadAction.CONFLICT)).toEqual([]);
+    const league = expectDefined(await leagueNamed(tour));
+    expect(expectDefined((await eventsOf(league.id, season)).find((candidate) => candidate.name === started.name)).status).toBe('DRAFT');
+  });
+});
+
+describe('Keeping test events and real events apart on one site', () => {
+  const prefix = `${RUN}-apart`;
+  const tour = `Apart Tour ${prefix}`;
+  const getClient = () => Promise.resolve(admin.client);
+  const realEvent = (key: string, eventName: string, startDate: string) => ({
+    key, name: `${prefix} ${eventName}`, startDate, endDate: startDate, venue: null, location: null, rounds: 4, roundsPar: 72, field: [],
+  });
+  const file = (events: SportDataFile['sportLeagues'][number]['events']): SportDataFile => ({
+    schemaVersion: 1,
+    scope: { sport: Sport.GOLF, season: 2027, sportLeagues: [tour], contents: [SportDataContent.SCHEDULE, SportDataContent.PLAYERS] },
+    testData: false,
+    provenance: provenance(),
+    sportLeagues: [{ name: tour, players: players(prefix, 1), events }],
+  });
+
+  it('adds a real event beside a "Test-" event starting within the rename window, rather than renaming the test event', async () => {
+    const first = realEvent('classic', 'Classic', '2027-05-06');
+    await loadSportData(parsed(file([first])), { getClient, now: NOW, mode: LoadMode.APPLY });
+    const league = expectDefined(await leagueNamed(tour));
+    const testName = `Test- ${prefix} Old Invitational`;
+    expectDefined((await createEvent({
+      client: admin.client,
+      body: { sportLeagueId: league.id, eventYear: 2027, name: testName, startDate: '2027-05-13T12:00:00.000Z', endDate: '2027-05-17T12:00:00.000Z', rounds: 4 },
+    })).data);
+
+    const rows = await loadSportData(parsed(file([first, realEvent('open', 'Open', '2027-05-13')])), { getClient, now: NOW, mode: LoadMode.APPLY });
+
+    expect(changes(rows).filter((row) => row.subject === LoadSubject.EVENT)).toEqual([
+      { sportLeague: tour, subject: LoadSubject.EVENT, action: LoadAction.ADD, name: `${prefix} Open`, detail: null },
+    ]);
+    expect((await eventsOf(league.id, 2027)).map((event) => event.name).sort()).toEqual([`${prefix} Classic`, `${prefix} Open`, testName].sort());
   });
 });
 

@@ -104,7 +104,7 @@ function problemsOf(json: unknown, allowTestData = false): readonly string[] {
 interface EditableFile {
   scope: { sport: string; season: number; sportLeagues: string[]; contents: string[] };
   testData: boolean;
-  sportLeagues: Array<{ events: Array<{ startDate: string; winner?: string; purse?: number; field: Array<Record<string, unknown>> }> }>;
+  sportLeagues: Array<{ events: Array<{ name: string; startDate: string; winner?: string; purse?: number; field: Array<Record<string, unknown>> }> }>;
 }
 
 function edited(edit: (file: EditableFile) => void): unknown {
@@ -188,6 +188,14 @@ describe('sport data file envelope', () => {
 
     expect(problemsOf(golf, true)).toEqual(['PGA TOUR, The RSM Classic: pga-a carries raceResult, which only a race\'s test seed has.']);
     expect(problemsOf(real)).toEqual(['US Thoroughbred, Pegasus World Cup: race-a carries raceResult, which only test data may.']);
+  });
+
+  it('refuses a real file whose event is named like a test event, so a real load can never create one', () => {
+    const real = edited((file) => {
+      file.sportLeagues[0].events[0].name = 'Test- The RSM Classic';
+    });
+
+    expect(problemsOf(real)).toEqual(['PGA TOUR, Test- The RSM Classic: is named like a test event ("Test-"), which only test data may be.']);
   });
 
   it('refuses a contents value outside the closed list and a key the shape does not have', () => {

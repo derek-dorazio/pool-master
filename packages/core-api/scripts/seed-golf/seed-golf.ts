@@ -25,7 +25,10 @@
  * before its results go in; a race's finishing order goes in after release, as the admin's
  * official result). A
  * draft that an earlier run stopped part-way through is finished the same way. A real file
- * never releases an event, writes odds, tiers, prices or scores, or deletes anything.
+ * run with `release` releases each draft event whose field it carries and that has not
+ * started, with tiers by the field's ranking and default prices where missing; one the site
+ * refuses stays a draft and is reported. A real file never writes odds or scores, or deletes
+ * anything.
  *
  * A file with BRACKET in its contents also loads each event's bracket, after its field. Before
  * release a bracket that differs anywhere is loaded whole again, as the admin's Load bracket
@@ -88,8 +91,9 @@ import {
   updateSportLeague,
 } from '@poolmaster/shared/generated/hey-api';
 import { LoadAction, LoadMode, LoadSubject, type LoadRow } from './load-report';
-import { golferRoundScore, seedDateOffsetDays, shiftedEventDates, shiftedMatchTimes } from './seed-golf-data';
+import { golferRoundScore, seedDateOffsetDays, selectTestSeedEvents, shiftedEventDates, shiftedMatchTimes, type StoredTestEvent, type TestSeedSelection } from './seed-golf-data';
 import {
+  isTestEventName,
   isTestSlate,
   SportDataContent,
   type SportDataEvent,
@@ -110,6 +114,14 @@ export interface LoadSportDataOptions {
   event?: string;
   /** A test slate only: remove field rows the slate does not list, rather than withdraw them. */
   replaceField?: boolean;
+  /** A test seed only: the days to move its dates by, in place of the whole-file offset (#1524). */
+  offsetDays?: number;
+  /**
+   * Whether events are released for contests as they load (#1524). A test seed's are unless
+   * this is false: each is still set up whole, but left a draft. A real file's are only when
+   * this is true: each draft event whose field the file carries and that has not started.
+   */
+  release?: boolean;
 }
 
 type StoredEvent = SportEventListResponse['events'][number];
@@ -120,6 +132,9 @@ type StatLineRow = GameStatLineUploadRequest['rows'][number];
 type BracketMatchWrite = LoadSportEventBracketRequest['matches'][number];
 /** What a field is written from: a file event's field, or a test slate's players. */
 type FieldSource = Pick<SportDataEvent, 'name' | 'field'>;
+
+/** What a real file's load does to an event whose field it carries: it opens it for contests. */
+const REAL_RELEASE_DETAIL = 'released: tiers by ranking and prices where missing';
 
 /** An event that has started, or will not run as scheduled: the loader leaves it alone. */
 const EDITABLE_STATUSES: ReadonlySet<StoredEvent['status']> = new Set([SportEventStatus.DRAFT, SportEventStatus.SCHEDULED]);
@@ -352,6 +367,10 @@ class Loader {
   /** A test seed's withdrawals come from its made-up scores, so it never reinstates a player. */
   private readonly testSeed: boolean;
   private readonly replaceField: boolean;
+  /** A test seed's events are released once set up, unless the run holds them back as drafts. */
+  private readonly releaseTestEvents: boolean;
+  /** The site's default budget pricing, read once per run when an event is first priced. */
+  private pricing: Promise<AutoAssignSportEventPricesRequest> | null = null;
 
   private readonly file: SportDataFile;
 
@@ -359,11 +378,12 @@ class Loader {
     this.apply = options.mode === LoadMode.APPLY;
     this.contents = new Set(file.scope.contents);
     this.testSeed = file.testData && this.contents.has(SportDataContent.RESULTS);
-    this.offsetDays = this.testSeed ? seedDateOffsetDays(file, options.now) : 0;
+    this.offsetDays = this.testSeed ? (options.offsetDays ?? seedDateOffsetDays(file, options.now)) : 0;
     // A test seed's game times move with its event dates.
     this.file = shiftedMatchTimes(file, this.offsetDays);
     this.log = options.log ?? (() => {});
     this.replaceField = options.replaceField ?? false;
+    this.releaseTestEvents = options.release ?? true;
   }
 
   private get sport(): Sport {
@@ -504,7 +524,9 @@ class Loader {
 
   /**
    * Each file event's stored event: same name (any case), else the one unclaimed event whose
-   * start is within a few days, which is how a sponsor's rename is found.
+   * start is within a few days, which is how a sponsor's rename is found. A test event
+   * ("Test- ...") is only ever matched with a test event, and a real one with a real one, so
+   * a real file never renames or rewrites the test events beside it, nor the reverse (#1524).
    */
   private matchEvents(league: SportDataLeague, stored: readonly StoredEvent[]): Map<SportDataEvent, StoredEvent> {
     const matches = new Map<SportDataEvent, StoredEvent>();
@@ -520,6 +542,7 @@ class Loader {
       if (matches.has(event)) continue;
       const start = Date.parse(shiftedEventDates(event, this.offsetDays).startDate);
       const near = stored.filter((candidate) => !claimed.has(candidate.id)
+        && isTestEventName(candidate.name) === isTestEventName(event.name)
         && !league.events.some((other) => other.name.toLowerCase() === candidate.name.toLowerCase())
         && Math.abs(Date.parse(candidate.startDate) - start) <= RENAME_MATCH_DAYS * DAY_MS);
       if (near.length === 1) {
@@ -680,7 +703,13 @@ class Loader {
         this.report({ ...at, subject: LoadSubject.EVENT, action: LoadAction.CONFLICT, detail: 'not on the site, and this file does not carry the schedule' });
         return;
       }
-      this.report({ ...at, subject: LoadSubject.EVENT, action: LoadAction.ADD, detail: this.file.testData ? 'released with odds, tiers, prices and scores' : null });
+      const releases = this.releasesRealEvent(event, loadsField);
+      this.report({
+        ...at,
+        subject: LoadSubject.EVENT,
+        action: LoadAction.ADD,
+        detail: this.file.testData ? `${this.releaseTestEvents ? 'released' : 'a draft'} with odds, tiers, prices and scores` : releases ? REAL_RELEASE_DETAIL : null,
+      });
       if (loadsField) {
         const plan = this.fieldChanges(league, event, participantIds, []);
         this.report({ ...at, subject: LoadSubject.FIELD, action: LoadAction.ADD, detail: `${plan.add.length} players` });
@@ -708,6 +737,7 @@ class Loader {
       if (loadsBracket) await this.writeBracket(client, created.event.id, event, participantIds, []);
       if (this.file.testData) await this.finishTestEvent(client, created.event.id, event, participantIds);
       else if (loadsStats) await this.writeStats(client, created.event.id, event, statChanges(event, participantIds, []));
+      if (releases) await this.releaseRealEvent(client, created.event.id, at);
       return;
     }
 
@@ -741,7 +771,12 @@ class Loader {
       return;
     }
 
-    const eventDetail = [...eventPlan.changes, ...(finishesDraft ? ['finishes the draft: odds, tiers, prices, scores, release'] : [])];
+    const releasesDraft = stored.status === SportEventStatus.DRAFT && this.releasesRealEvent(event, loadsField);
+    const eventDetail = [
+      ...eventPlan.changes,
+      ...(finishesDraft ? [`finishes the draft: odds, tiers, prices, scores${this.releaseTestEvents ? ', release' : ''}`] : []),
+      ...(releasesDraft ? [REAL_RELEASE_DETAIL] : []),
+    ];
     this.report({ ...at, subject: LoadSubject.EVENT, action: eventDetail.length > 0 ? LoadAction.UPDATE : LoadAction.SKIP, detail: eventDetail.join('; ') || null });
     const writesField = fieldPlan !== null && fieldPlan.changes.length > 0 && !bracketLocked;
     if (fieldPlan) {
@@ -776,6 +811,56 @@ class Loader {
     }
     if (statsPlan) await this.loadStats(client, stored.id, event, statsPlan);
     if (finishesDraft) await this.finishTestEvent(client, stored.id, event, participantIds);
+    if (releasesDraft) await this.releaseRealEvent(client, stored.id, at);
+  }
+
+  /**
+   * Whether a real file's event is released as it loads, when the run asks (`release`): one
+   * whose field the file carries, not yet started. One with no field yet (a schedule only)
+   * stays a draft.
+   */
+  private releasesRealEvent(event: SportDataEvent, loadsField: boolean): boolean {
+    return !this.file.testData && this.options.release === true && loadsField && Date.parse(shiftedEventDates(event, 0).startDate) > this.options.now.getTime();
+  }
+
+  /** The site's default budget pricing, read on first use and kept for the rest of the run. */
+  private defaultPricing(client: Client): Promise<AutoAssignSportEventPricesRequest> {
+    this.pricing ??= defaultPricing(client);
+    return this.pricing;
+  }
+
+  /**
+   * Readies a real file's draft event and releases it for contests: tiers by the field's ranking
+   * when no active player has one yet, and default prices when none has a price yet. A field an
+   * admin has partly tiered or priced by hand is never re-assigned: it is left a draft and
+   * reported, for the admin to finish. An event the site refuses to release (409 or 422: an
+   * incomplete bracket, say) is left a draft and reported with the site's reason, and the run
+   * goes on; any other failure stops it.
+   */
+  private async releaseRealEvent(client: Client, eventId: string, at: { sportLeague: string; name: string }): Promise<void> {
+    const path = { eventId };
+    const leftDraft = (reason: string): void => {
+      this.report({ ...at, subject: LoadSubject.EVENT, action: LoadAction.CONFLICT, detail: `left a draft: ${reason}` });
+    };
+    const refused = async (result: Promise<SdkResult<unknown>>, what: string): Promise<boolean> => {
+      const { error, response } = await result;
+      if (error === undefined) return false;
+      const status = response?.status;
+      if (status !== 409 && status !== 422) throw new Error(`${what} failed (HTTP ${status ?? 'none'}): ${JSON.stringify(error)}`);
+      leftDraft(typeof error === 'object' && error !== null && 'message' in error ? String(error.message) : JSON.stringify(error));
+      return true;
+    };
+    const { participants } = await must(listEventParticipants({ client, path }), `Read the field of ${at.name}`);
+    const active = participants.filter((row) => row.isActive);
+    const tiered = active.filter((row) => row.valuation?.sportEventTierId).length;
+    const priced = active.filter((row) => row.valuation?.price !== null && row.valuation?.price !== undefined).length;
+    if ((tiered > 0 && tiered < active.length) || (priced > 0 && priced < active.length)) {
+      leftDraft(`${tiered} of ${active.length} players tiered and ${priced} priced by hand; finish them on the Manage screen`);
+      return;
+    }
+    if (tiered === 0 && await refused(autoAssignEventTiers({ client, path, body: { source: 'RANKING' } }), `Assign tiers for ${at.name}`)) return;
+    if (priced === 0 && await refused(autoAssignEventPrices({ client, path, body: await this.defaultPricing(client) }), `Assign prices for ${at.name}`)) return;
+    await refused(releaseEvent({ client, path }), `Release ${at.name}`);
   }
 
   /** Reports a stat pool event's box score changes, and in an apply writes them. */
@@ -897,22 +982,30 @@ class Loader {
     }
   }
 
-  /** The made-up parts of a test seed: tiers by odds, default prices, stored scores or results, release. */
+  /**
+   * The made-up parts of a test seed: tiers by odds, default prices, stored scores or results,
+   * release. An event the run holds back stays a draft with what goes in before release; a bracket
+   * event's play-in winners, cancellations and results go in on a later run, after its release.
+   */
   private async finishTestEvent(client: Client, eventId: string, event: SportDataEvent, participantIds: ReadonlyMap<string, string | null>): Promise<void> {
     const path = { eventId };
+    const release = async (): Promise<void> => {
+      if (this.releaseTestEvents) await must(releaseEvent({ client, path }), `Release ${event.name}`);
+    };
     const statPool = this.contents.has(SportDataContent.STATS);
     // A stat pool's field is tiered by its ranking, the regular season's composite; any other by its odds.
     await must(autoAssignEventTiers({ client, path, body: { source: statPool ? 'RANKING' : 'ODDS' } }), `Assign tiers for ${event.name}`);
-    await must(autoAssignEventPrices({ client, path, body: await defaultPricing(client) }), `Assign prices for ${event.name}`);
+    await must(autoAssignEventPrices({ client, path, body: await this.defaultPricing(client) }), `Assign prices for ${event.name}`);
     if (statPool) {
       // Box scores before release, so a run that dies between them leaves a draft the rerun finishes.
       const { participants: storedField } = await must(listEventParticipants({ client, path }), `Read the field of ${event.name}`);
       await this.writeStats(client, eventId, event, statChanges(event, participantIds, storedField));
-      await must(releaseEvent({ client, path }), `Release ${event.name}`);
+      await release();
       return;
     }
     if (sportPlaysMatches(this.sport)) {
-      await must(releaseEvent({ client, path }), `Release ${event.name}`);
+      if (!this.releaseTestEvents) return;
+      await release();
       await fillPlayInPlacesFor(client, eventId, event, participantIds);
       await cancelPostponedGamesFor(client, eventId, event);
       await enterBracketResultsFor(client, eventId, event);
@@ -921,7 +1014,7 @@ class Loader {
     if (this.resultsEnteredByHand) {
       // Results before release, so a run that dies between them leaves a draft the rerun finishes.
       await enterRaceResultsFor(client, eventId, event, participantIds);
-      await must(releaseEvent({ client, path }), `Release ${event.name}`);
+      await release();
       return;
     }
     for (let roundNumber = 1; roundNumber <= event.rounds; roundNumber += 1) {
@@ -934,7 +1027,7 @@ class Loader {
         await must(applyEventGolfRoundScores({ client, path: { eventId, roundNumber }, body: { rows } }), `Store round ${roundNumber} of ${event.name}`);
       }
     }
-    await must(releaseEvent({ client, path }), `Release ${event.name}`);
+    await release();
   }
 }
 
@@ -1013,6 +1106,25 @@ async function enterBracketResultsFor(client: Client, eventId: string, event: Sp
       await must(recordEventMatchResult({ client, path: { eventId, matchNumber }, body }), `Enter the result of match ${matchNumber} of ${event.name}`);
     }
   }
+}
+
+/** selectTestSeedEvents against the site: reads each sport league's events of the seed's season. */
+export async function selectTestSeedEventsOnSite(
+  file: SportDataFile,
+  getClient: () => Promise<Client>,
+  eventsPerLeague: number,
+  now: Date,
+): Promise<TestSeedSelection> {
+  const client = await getClient();
+  const { sportLeagues } = await must(listSportLeagues({ client, query: { sport: file.scope.sport } }), 'List sport leagues');
+  const stored = new Map<string, StoredTestEvent[]>();
+  for (const league of file.sportLeagues) {
+    const existing = sportLeagues.find((row) => row.name.toLowerCase() === league.name.toLowerCase());
+    if (!existing) continue;
+    const { events } = await must(listEvents({ client, query: { sportLeagueId: existing.id, eventYear: file.scope.season } }), `List ${league.name} events`);
+    stored.set(league.name.toLowerCase(), events.map((event) => ({ name: event.name, status: event.status, startDate: event.startDate })));
+  }
+  return selectTestSeedEvents(file, stored, eventsPerLeague, now);
 }
 
 /** Loads the file, or in a dry run reports what loading it would do. Returns one row per subject. */
