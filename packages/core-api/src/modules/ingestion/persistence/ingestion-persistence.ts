@@ -26,6 +26,8 @@ import { summarizeSyncWriteRows } from '../core/sync-write-diagnostics';
 import type { EventFieldCache } from '../../events/event-field-cache';
 import type { CdnInvalidator } from '../../../core/cdn-invalidator';
 import type { LeaderboardRebuilds } from '../../contests/leaderboard-snapshots';
+import { NO_JOBS_FOR_WRITE } from '../../background-jobs/background-job-queue';
+import { backgroundJobsInsert } from '../../../adapters/prisma-background-job-repository';
 import { PublicReadPath } from '../../../core/public-cache';
 import { forgettingReads, ReadMemoKey } from '../../../core/request-read-memo';
 
@@ -39,15 +41,16 @@ export class IngestionPersistence {
   /**
    * `fieldCache`: the event fields this container read lately, an event's forgotten once its field
    * is written (#1163). `cdn`: clears the public event pages once a field is written, since a
-   * loaded field is what turns an offer from NOT_YET to OPEN (#1181). `leaderboards`: told once a
-   * field is written, so the event's contests' stored leaderboards are computed again (#1435).
+   * loaded field is what turns an offer from NOT_YET to OPEN (#1181). `leaderboards`: the event's
+   * rebuild job, written with a field write that changes a row, so the event's contests' stored
+   * leaderboards are computed again (#1435, #1466).
    */
   constructor(
     private readonly prisma: PrismaClient,
     private readonly logger?: FastifyBaseLogger,
     private readonly fieldCache?: Pick<EventFieldCache, 'forget'>,
     private readonly cdn?: CdnInvalidator,
-    private readonly leaderboards?: Pick<LeaderboardRebuilds, 'eventsChanged'>,
+    private readonly leaderboards?: Pick<LeaderboardRebuilds, 'forEvent'>,
   ) {}
 
   async persistEventsWithDiagnostics(
@@ -282,7 +285,6 @@ export class IngestionPersistence {
     } finally {
       this.fieldCache?.forget(persistedEvent.id);
       this.cdn?.invalidate([PublicReadPath.EVENT_PAGES]);
-      await this.leaderboards?.eventsChanged([persistedEvent.id]);
     }
 
     this.logger?.info({
@@ -361,6 +363,8 @@ export class IngestionPersistence {
     const toUpdate = plans.filter((plan) => plan.existing && plan.disposition !== 'UNCHANGED');
     let createdIdByParticipantId = new Map<string, string>();
     if (toCreate.length > 0 || toUpdate.length > 0) {
+      // The field changed, so the event's boards are rebuilt by a job written with it (#1466).
+      const rebuild = this.leaderboards?.forEvent(sportEventId) ?? NO_JOBS_FOR_WRITE;
       const [created] = await this.prisma.$transaction([
         this.prisma.sportEventParticipant.createManyAndReturn({
           data: toCreate.map((plan) => ({ sportEventId, participantId: plan.participantId, ...plan.data })),
@@ -371,7 +375,9 @@ export class IngestionPersistence {
           where: { id: (plan.existing as { id: string }).id },
           data: plan.data,
         })),
+        ...(rebuild.jobs.length > 0 ? [backgroundJobsInsert(this.prisma, rebuild.jobs)] : []),
       ]);
+      rebuild.queued();
       createdIdByParticipantId = new Map(created.map((row) => [row.participantId, row.id]));
     }
 

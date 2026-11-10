@@ -9,7 +9,9 @@ import {
   setupIntegrationTests,
   teardownIntegrationTests,
   withBackgroundJobsFailing,
+  integrationBackgroundJobs,
 } from '../helpers';
+import { JobLeaderboardRebuilds } from '../../../packages/core-api/src/modules/contests/leaderboard-snapshots';
 import { Sport } from '@poolmaster/shared/domain';
 import {
   GolfScoreError,
@@ -473,5 +475,22 @@ describe('Golf standings ranks — the leaderboard rebuild they carry (#1466)', 
     await expect(getPrisma().sportEventParticipantStanding.findUniqueOrThrow({ where: { id: stored.standing.id } }))
       .resolves.toMatchObject({ position: stored.standing.position, displayPosition: stored.standing.displayPosition ?? null });
     await expect(rebuildJobCount(event.id)).resolves.toBe(0);
+  });
+});
+
+describe('Golf round scores — a live tick\'s leaderboard rebuild (#1466)', () => {
+  it('writes the event\'s rebuild job with the tick\'s last write, the ranks', async () => {
+    const { event, rory } = await createField('live-rebuild');
+    const prisma = getPrisma();
+    await prisma.sportEvent.update({ where: { id: event.id }, data: { rounds: 4, syncScope: 'SCORES_ONLY' } });
+    await prisma.participantProviderMapping.create({ data: { providerId: 'integration-test', externalId: 'ext-rory-live', participantId: rory.participant.id } });
+
+    await publishLiveScoreUpdate({
+      category: 'GOLF',
+      externalEventId: event.externalId,
+      rounds: [{ participantExternalId: 'ext-rory-live', round: 1, strokes: 33, scoreToPar: -3, thru: 9, status: 'IN_PROGRESS' as const }],
+    }, { prisma: getAppPrisma(), providerId: 'integration-test', scoringFamilyForEvent, leaderboards: new JobLeaderboardRebuilds(integrationBackgroundJobs().queue) });
+
+    await expect(prisma.backgroundJob.count({ where: { dedupeKey: eventRebuildJob(event.id).dedupeKey } })).resolves.toBe(1);
   });
 });
