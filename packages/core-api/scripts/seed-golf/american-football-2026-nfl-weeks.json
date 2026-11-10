@@ -1,0 +1,1914 @@
+{
+  "schemaVersion": 1,
+  "scope": {
+    "sport": "AMERICAN_FOOTBALL",
+    "season": 2026,
+    "sportLeagues": [
+      "NFL"
+    ],
+    "contents": [
+      "SCHEDULE",
+      "PLAYERS",
+      "FIELDS",
+      "BRACKET"
+    ]
+  },
+  "testData": false,
+  "provenance": {
+    "gatheredAt": "2026-11-10",
+    "gatheredBy": "load-sport-data skill: NFL 2026 regular season weeks 12 to 17, each week its own event whose games form no bracket, its field every team playing that week (teams on a bye left out). Pairings, home sides and kickoffs from ESPN agree with FixtureDownload on every game. Eight Saturday games of weeks 16 and 17 have no kickoff yet (both sources hold a placeholder), so they carry none until the NFL sets them. Week 18 (January 2027, every kickoff still unset) belongs in a 2027 file. Rankings are the standings on 2026-11-10 by win percentage then point differential, from ESPN alone (a tiering order, not a loaded fact a member sees as a result).",
+    "sources": [
+      {
+        "name": "FixtureDownload NFL 2026",
+        "url": "https://fixturedownload.com/feed/json/nfl-2026"
+      },
+      {
+        "name": "ESPN NFL standings",
+        "url": "https://site.api.espn.com/apis/v2/sports/football/nfl/standings"
+      },
+      {
+        "name": "ESPN NFL scoreboard, 2026 week 12",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?seasontype=2&week=12&dates=2026"
+      },
+      {
+        "name": "ESPN NFL scoreboard, 2026 week 13",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?seasontype=2&week=13&dates=2026"
+      },
+      {
+        "name": "ESPN NFL scoreboard, 2026 week 14",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?seasontype=2&week=14&dates=2026"
+      },
+      {
+        "name": "ESPN NFL scoreboard, 2026 week 15",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?seasontype=2&week=15&dates=2026"
+      },
+      {
+        "name": "ESPN NFL scoreboard, 2026 week 16",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?seasontype=2&week=16&dates=2026"
+      },
+      {
+        "name": "ESPN NFL scoreboard, 2026 week 17",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?seasontype=2&week=17&dates=2026"
+      }
+    ]
+  },
+  "sportLeagues": [
+    {
+      "name": "NFL",
+      "bracketAdvancement": "RESEED_BY_SEED",
+      "players": [
+        {
+          "key": "nfl-san-francisco-49ers",
+          "name": "San Francisco 49ers",
+          "countryCode": "US",
+          "ranking": 1
+        },
+        {
+          "key": "nfl-buffalo-bills",
+          "name": "Buffalo Bills",
+          "countryCode": "US",
+          "ranking": 2
+        },
+        {
+          "key": "nfl-chicago-bears",
+          "name": "Chicago Bears",
+          "countryCode": "US",
+          "ranking": 3
+        },
+        {
+          "key": "nfl-denver-broncos",
+          "name": "Denver Broncos",
+          "countryCode": "US",
+          "ranking": 4
+        },
+        {
+          "key": "nfl-jacksonville-jaguars",
+          "name": "Jacksonville Jaguars",
+          "countryCode": "US",
+          "ranking": 5
+        },
+        {
+          "key": "nfl-cincinnati-bengals",
+          "name": "Cincinnati Bengals",
+          "countryCode": "US",
+          "ranking": 6
+        },
+        {
+          "key": "nfl-kansas-city-chiefs",
+          "name": "Kansas City Chiefs",
+          "countryCode": "US",
+          "ranking": 7
+        },
+        {
+          "key": "nfl-pittsburgh-steelers",
+          "name": "Pittsburgh Steelers",
+          "countryCode": "US",
+          "ranking": 8
+        },
+        {
+          "key": "nfl-detroit-lions",
+          "name": "Detroit Lions",
+          "countryCode": "US",
+          "ranking": 9
+        },
+        {
+          "key": "nfl-minnesota-vikings",
+          "name": "Minnesota Vikings",
+          "countryCode": "US",
+          "ranking": 10
+        },
+        {
+          "key": "nfl-new-york-giants",
+          "name": "New York Giants",
+          "countryCode": "US",
+          "ranking": 11
+        },
+        {
+          "key": "nfl-green-bay-packers",
+          "name": "Green Bay Packers",
+          "countryCode": "US",
+          "ranking": 12
+        },
+        {
+          "key": "nfl-seattle-seahawks",
+          "name": "Seattle Seahawks",
+          "countryCode": "US",
+          "ranking": 13
+        },
+        {
+          "key": "nfl-los-angeles-rams",
+          "name": "Los Angeles Rams",
+          "countryCode": "US",
+          "ranking": 14
+        },
+        {
+          "key": "nfl-new-england-patriots",
+          "name": "New England Patriots",
+          "countryCode": "US",
+          "ranking": 15
+        },
+        {
+          "key": "nfl-cleveland-browns",
+          "name": "Cleveland Browns",
+          "countryCode": "US",
+          "ranking": 16
+        },
+        {
+          "key": "nfl-dallas-cowboys",
+          "name": "Dallas Cowboys",
+          "countryCode": "US",
+          "ranking": 17
+        },
+        {
+          "key": "nfl-las-vegas-raiders",
+          "name": "Las Vegas Raiders",
+          "countryCode": "US",
+          "ranking": 18
+        },
+        {
+          "key": "nfl-baltimore-ravens",
+          "name": "Baltimore Ravens",
+          "countryCode": "US",
+          "ranking": 19
+        },
+        {
+          "key": "nfl-houston-texans",
+          "name": "Houston Texans",
+          "countryCode": "US",
+          "ranking": 20
+        },
+        {
+          "key": "nfl-carolina-panthers",
+          "name": "Carolina Panthers",
+          "countryCode": "US",
+          "ranking": 21
+        },
+        {
+          "key": "nfl-new-orleans-saints",
+          "name": "New Orleans Saints",
+          "countryCode": "US",
+          "ranking": 22
+        },
+        {
+          "key": "nfl-tampa-bay-buccaneers",
+          "name": "Tampa Bay Buccaneers",
+          "countryCode": "US",
+          "ranking": 23
+        },
+        {
+          "key": "nfl-atlanta-falcons",
+          "name": "Atlanta Falcons",
+          "countryCode": "US",
+          "ranking": 24
+        },
+        {
+          "key": "nfl-arizona-cardinals",
+          "name": "Arizona Cardinals",
+          "countryCode": "US",
+          "ranking": 25
+        },
+        {
+          "key": "nfl-washington-commanders",
+          "name": "Washington Commanders",
+          "countryCode": "US",
+          "ranking": 26
+        },
+        {
+          "key": "nfl-new-york-jets",
+          "name": "New York Jets",
+          "countryCode": "US",
+          "ranking": 27
+        },
+        {
+          "key": "nfl-indianapolis-colts",
+          "name": "Indianapolis Colts",
+          "countryCode": "US",
+          "ranking": 28
+        },
+        {
+          "key": "nfl-philadelphia-eagles",
+          "name": "Philadelphia Eagles",
+          "countryCode": "US",
+          "ranking": 29
+        },
+        {
+          "key": "nfl-tennessee-titans",
+          "name": "Tennessee Titans",
+          "countryCode": "US",
+          "ranking": 30
+        },
+        {
+          "key": "nfl-miami-dolphins",
+          "name": "Miami Dolphins",
+          "countryCode": "US",
+          "ranking": 31
+        },
+        {
+          "key": "nfl-los-angeles-chargers",
+          "name": "Los Angeles Chargers",
+          "countryCode": "US",
+          "ranking": 32
+        }
+      ],
+      "events": [
+        {
+          "key": "nfl-2026-week-12",
+          "name": "NFL Week 12",
+          "startDate": "2026-11-25",
+          "endDate": "2026-11-30",
+          "venue": null,
+          "location": "United States",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "nfl-san-francisco-49ers",
+              "ranking": 1
+            },
+            {
+              "player": "nfl-buffalo-bills",
+              "ranking": 2
+            },
+            {
+              "player": "nfl-chicago-bears",
+              "ranking": 3
+            },
+            {
+              "player": "nfl-denver-broncos",
+              "ranking": 4
+            },
+            {
+              "player": "nfl-jacksonville-jaguars",
+              "ranking": 5
+            },
+            {
+              "player": "nfl-cincinnati-bengals",
+              "ranking": 6
+            },
+            {
+              "player": "nfl-kansas-city-chiefs",
+              "ranking": 7
+            },
+            {
+              "player": "nfl-pittsburgh-steelers",
+              "ranking": 8
+            },
+            {
+              "player": "nfl-detroit-lions",
+              "ranking": 9
+            },
+            {
+              "player": "nfl-minnesota-vikings",
+              "ranking": 10
+            },
+            {
+              "player": "nfl-new-york-giants",
+              "ranking": 11
+            },
+            {
+              "player": "nfl-green-bay-packers",
+              "ranking": 12
+            },
+            {
+              "player": "nfl-seattle-seahawks",
+              "ranking": 13
+            },
+            {
+              "player": "nfl-los-angeles-rams",
+              "ranking": 14
+            },
+            {
+              "player": "nfl-new-england-patriots",
+              "ranking": 15
+            },
+            {
+              "player": "nfl-cleveland-browns",
+              "ranking": 16
+            },
+            {
+              "player": "nfl-dallas-cowboys",
+              "ranking": 17
+            },
+            {
+              "player": "nfl-las-vegas-raiders",
+              "ranking": 18
+            },
+            {
+              "player": "nfl-baltimore-ravens",
+              "ranking": 19
+            },
+            {
+              "player": "nfl-houston-texans",
+              "ranking": 20
+            },
+            {
+              "player": "nfl-carolina-panthers",
+              "ranking": 21
+            },
+            {
+              "player": "nfl-new-orleans-saints",
+              "ranking": 22
+            },
+            {
+              "player": "nfl-tampa-bay-buccaneers",
+              "ranking": 23
+            },
+            {
+              "player": "nfl-atlanta-falcons",
+              "ranking": 24
+            },
+            {
+              "player": "nfl-arizona-cardinals",
+              "ranking": 25
+            },
+            {
+              "player": "nfl-washington-commanders",
+              "ranking": 26
+            },
+            {
+              "player": "nfl-new-york-jets",
+              "ranking": 27
+            },
+            {
+              "player": "nfl-indianapolis-colts",
+              "ranking": 28
+            },
+            {
+              "player": "nfl-philadelphia-eagles",
+              "ranking": 29
+            },
+            {
+              "player": "nfl-tennessee-titans",
+              "ranking": 30
+            },
+            {
+              "player": "nfl-miami-dolphins",
+              "ranking": 31
+            },
+            {
+              "player": "nfl-los-angeles-chargers",
+              "ranking": 32
+            }
+          ],
+          "matches": [
+            {
+              "matchNumber": 1,
+              "roundNumber": 1,
+              "home": "nfl-los-angeles-rams",
+              "away": "nfl-green-bay-packers",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-11-26T01:00:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 2,
+              "roundNumber": 1,
+              "home": "nfl-detroit-lions",
+              "away": "nfl-chicago-bears",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-11-26T18:00:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 3,
+              "roundNumber": 1,
+              "home": "nfl-dallas-cowboys",
+              "away": "nfl-philadelphia-eagles",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-11-26T21:30:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 4,
+              "roundNumber": 1,
+              "home": "nfl-buffalo-bills",
+              "away": "nfl-kansas-city-chiefs",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-11-27T01:20:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 5,
+              "roundNumber": 1,
+              "home": "nfl-pittsburgh-steelers",
+              "away": "nfl-denver-broncos",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-11-27T20:00:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 6,
+              "roundNumber": 1,
+              "home": "nfl-cincinnati-bengals",
+              "away": "nfl-new-orleans-saints",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-11-29T18:00:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 7,
+              "roundNumber": 1,
+              "home": "nfl-cleveland-browns",
+              "away": "nfl-las-vegas-raiders",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-11-29T18:00:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 8,
+              "roundNumber": 1,
+              "home": "nfl-houston-texans",
+              "away": "nfl-baltimore-ravens",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-11-29T18:00:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 9,
+              "roundNumber": 1,
+              "home": "nfl-indianapolis-colts",
+              "away": "nfl-new-york-giants",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-11-29T18:00:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 10,
+              "roundNumber": 1,
+              "home": "nfl-miami-dolphins",
+              "away": "nfl-new-york-jets",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-11-29T18:00:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 11,
+              "roundNumber": 1,
+              "home": "nfl-minnesota-vikings",
+              "away": "nfl-atlanta-falcons",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-11-29T18:00:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 12,
+              "roundNumber": 1,
+              "home": "nfl-jacksonville-jaguars",
+              "away": "nfl-tennessee-titans",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-11-29T21:05:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 13,
+              "roundNumber": 1,
+              "home": "nfl-arizona-cardinals",
+              "away": "nfl-washington-commanders",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-11-29T21:25:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 14,
+              "roundNumber": 1,
+              "home": "nfl-san-francisco-49ers",
+              "away": "nfl-seattle-seahawks",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-11-29T21:25:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 15,
+              "roundNumber": 1,
+              "home": "nfl-los-angeles-chargers",
+              "away": "nfl-new-england-patriots",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-11-30T01:20:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 16,
+              "roundNumber": 1,
+              "home": "nfl-tampa-bay-buccaneers",
+              "away": "nfl-carolina-panthers",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-01T01:15:00Z",
+              "advancesTo": null
+            }
+          ]
+        },
+        {
+          "key": "nfl-2026-week-13",
+          "name": "NFL Week 13",
+          "startDate": "2026-12-03",
+          "endDate": "2026-12-07",
+          "venue": null,
+          "location": "United States",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "nfl-san-francisco-49ers",
+              "ranking": 1
+            },
+            {
+              "player": "nfl-buffalo-bills",
+              "ranking": 2
+            },
+            {
+              "player": "nfl-chicago-bears",
+              "ranking": 3
+            },
+            {
+              "player": "nfl-denver-broncos",
+              "ranking": 4
+            },
+            {
+              "player": "nfl-jacksonville-jaguars",
+              "ranking": 5
+            },
+            {
+              "player": "nfl-cincinnati-bengals",
+              "ranking": 6
+            },
+            {
+              "player": "nfl-kansas-city-chiefs",
+              "ranking": 7
+            },
+            {
+              "player": "nfl-pittsburgh-steelers",
+              "ranking": 8
+            },
+            {
+              "player": "nfl-detroit-lions",
+              "ranking": 9
+            },
+            {
+              "player": "nfl-minnesota-vikings",
+              "ranking": 10
+            },
+            {
+              "player": "nfl-new-york-giants",
+              "ranking": 11
+            },
+            {
+              "player": "nfl-green-bay-packers",
+              "ranking": 12
+            },
+            {
+              "player": "nfl-seattle-seahawks",
+              "ranking": 13
+            },
+            {
+              "player": "nfl-los-angeles-rams",
+              "ranking": 14
+            },
+            {
+              "player": "nfl-new-england-patriots",
+              "ranking": 15
+            },
+            {
+              "player": "nfl-cleveland-browns",
+              "ranking": 16
+            },
+            {
+              "player": "nfl-dallas-cowboys",
+              "ranking": 17
+            },
+            {
+              "player": "nfl-houston-texans",
+              "ranking": 20
+            },
+            {
+              "player": "nfl-carolina-panthers",
+              "ranking": 21
+            },
+            {
+              "player": "nfl-new-orleans-saints",
+              "ranking": 22
+            },
+            {
+              "player": "nfl-tampa-bay-buccaneers",
+              "ranking": 23
+            },
+            {
+              "player": "nfl-atlanta-falcons",
+              "ranking": 24
+            },
+            {
+              "player": "nfl-arizona-cardinals",
+              "ranking": 25
+            },
+            {
+              "player": "nfl-washington-commanders",
+              "ranking": 26
+            },
+            {
+              "player": "nfl-philadelphia-eagles",
+              "ranking": 29
+            },
+            {
+              "player": "nfl-tennessee-titans",
+              "ranking": 30
+            },
+            {
+              "player": "nfl-miami-dolphins",
+              "ranking": 31
+            },
+            {
+              "player": "nfl-los-angeles-chargers",
+              "ranking": 32
+            }
+          ],
+          "matches": [
+            {
+              "matchNumber": 1,
+              "roundNumber": 1,
+              "home": "nfl-los-angeles-rams",
+              "away": "nfl-kansas-city-chiefs",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-04T01:15:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 2,
+              "roundNumber": 1,
+              "home": "nfl-atlanta-falcons",
+              "away": "nfl-detroit-lions",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-06T18:00:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 3,
+              "roundNumber": 1,
+              "home": "nfl-chicago-bears",
+              "away": "nfl-jacksonville-jaguars",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-06T18:00:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 4,
+              "roundNumber": 1,
+              "home": "nfl-cleveland-browns",
+              "away": "nfl-cincinnati-bengals",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-06T18:00:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 5,
+              "roundNumber": 1,
+              "home": "nfl-new-orleans-saints",
+              "away": "nfl-green-bay-packers",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-06T18:00:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 6,
+              "roundNumber": 1,
+              "home": "nfl-new-york-giants",
+              "away": "nfl-san-francisco-49ers",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-06T18:00:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 7,
+              "roundNumber": 1,
+              "home": "nfl-tampa-bay-buccaneers",
+              "away": "nfl-los-angeles-chargers",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-06T18:00:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 8,
+              "roundNumber": 1,
+              "home": "nfl-tennessee-titans",
+              "away": "nfl-washington-commanders",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-06T18:00:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 9,
+              "roundNumber": 1,
+              "home": "nfl-arizona-cardinals",
+              "away": "nfl-philadelphia-eagles",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-06T21:05:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 10,
+              "roundNumber": 1,
+              "home": "nfl-denver-broncos",
+              "away": "nfl-miami-dolphins",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-06T21:05:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 11,
+              "roundNumber": 1,
+              "home": "nfl-minnesota-vikings",
+              "away": "nfl-carolina-panthers",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-06T21:25:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 12,
+              "roundNumber": 1,
+              "home": "nfl-new-england-patriots",
+              "away": "nfl-buffalo-bills",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-06T21:25:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 13,
+              "roundNumber": 1,
+              "home": "nfl-pittsburgh-steelers",
+              "away": "nfl-houston-texans",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-07T01:20:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 14,
+              "roundNumber": 1,
+              "home": "nfl-seattle-seahawks",
+              "away": "nfl-dallas-cowboys",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-08T01:15:00Z",
+              "advancesTo": null
+            }
+          ]
+        },
+        {
+          "key": "nfl-2026-week-14",
+          "name": "NFL Week 14",
+          "startDate": "2026-12-10",
+          "endDate": "2026-12-14",
+          "venue": null,
+          "location": "United States",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "nfl-san-francisco-49ers",
+              "ranking": 1
+            },
+            {
+              "player": "nfl-buffalo-bills",
+              "ranking": 2
+            },
+            {
+              "player": "nfl-chicago-bears",
+              "ranking": 3
+            },
+            {
+              "player": "nfl-denver-broncos",
+              "ranking": 4
+            },
+            {
+              "player": "nfl-jacksonville-jaguars",
+              "ranking": 5
+            },
+            {
+              "player": "nfl-cincinnati-bengals",
+              "ranking": 6
+            },
+            {
+              "player": "nfl-kansas-city-chiefs",
+              "ranking": 7
+            },
+            {
+              "player": "nfl-pittsburgh-steelers",
+              "ranking": 8
+            },
+            {
+              "player": "nfl-detroit-lions",
+              "ranking": 9
+            },
+            {
+              "player": "nfl-minnesota-vikings",
+              "ranking": 10
+            },
+            {
+              "player": "nfl-new-york-giants",
+              "ranking": 11
+            },
+            {
+              "player": "nfl-green-bay-packers",
+              "ranking": 12
+            },
+            {
+              "player": "nfl-seattle-seahawks",
+              "ranking": 13
+            },
+            {
+              "player": "nfl-los-angeles-rams",
+              "ranking": 14
+            },
+            {
+              "player": "nfl-new-england-patriots",
+              "ranking": 15
+            },
+            {
+              "player": "nfl-cleveland-browns",
+              "ranking": 16
+            },
+            {
+              "player": "nfl-las-vegas-raiders",
+              "ranking": 18
+            },
+            {
+              "player": "nfl-baltimore-ravens",
+              "ranking": 19
+            },
+            {
+              "player": "nfl-houston-texans",
+              "ranking": 20
+            },
+            {
+              "player": "nfl-carolina-panthers",
+              "ranking": 21
+            },
+            {
+              "player": "nfl-new-orleans-saints",
+              "ranking": 22
+            },
+            {
+              "player": "nfl-tampa-bay-buccaneers",
+              "ranking": 23
+            },
+            {
+              "player": "nfl-atlanta-falcons",
+              "ranking": 24
+            },
+            {
+              "player": "nfl-washington-commanders",
+              "ranking": 26
+            },
+            {
+              "player": "nfl-new-york-jets",
+              "ranking": 27
+            },
+            {
+              "player": "nfl-indianapolis-colts",
+              "ranking": 28
+            },
+            {
+              "player": "nfl-philadelphia-eagles",
+              "ranking": 29
+            },
+            {
+              "player": "nfl-tennessee-titans",
+              "ranking": 30
+            },
+            {
+              "player": "nfl-miami-dolphins",
+              "ranking": 31
+            },
+            {
+              "player": "nfl-los-angeles-chargers",
+              "ranking": 32
+            }
+          ],
+          "matches": [
+            {
+              "matchNumber": 1,
+              "roundNumber": 1,
+              "home": "nfl-new-england-patriots",
+              "away": "nfl-minnesota-vikings",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-11T01:15:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 2,
+              "roundNumber": 1,
+              "home": "nfl-baltimore-ravens",
+              "away": "nfl-tampa-bay-buccaneers",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-13T18:00:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 3,
+              "roundNumber": 1,
+              "home": "nfl-carolina-panthers",
+              "away": "nfl-new-orleans-saints",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-13T18:00:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 4,
+              "roundNumber": 1,
+              "home": "nfl-cleveland-browns",
+              "away": "nfl-atlanta-falcons",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-13T18:00:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 5,
+              "roundNumber": 1,
+              "home": "nfl-detroit-lions",
+              "away": "nfl-tennessee-titans",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-13T18:00:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 6,
+              "roundNumber": 1,
+              "home": "nfl-miami-dolphins",
+              "away": "nfl-chicago-bears",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-13T18:00:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 7,
+              "roundNumber": 1,
+              "home": "nfl-new-york-jets",
+              "away": "nfl-denver-broncos",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-13T18:00:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 8,
+              "roundNumber": 1,
+              "home": "nfl-philadelphia-eagles",
+              "away": "nfl-indianapolis-colts",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-13T18:00:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 9,
+              "roundNumber": 1,
+              "home": "nfl-washington-commanders",
+              "away": "nfl-houston-texans",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-13T18:00:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 10,
+              "roundNumber": 1,
+              "home": "nfl-las-vegas-raiders",
+              "away": "nfl-los-angeles-chargers",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-13T21:05:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 11,
+              "roundNumber": 1,
+              "home": "nfl-cincinnati-bengals",
+              "away": "nfl-kansas-city-chiefs",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-13T21:25:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 12,
+              "roundNumber": 1,
+              "home": "nfl-san-francisco-49ers",
+              "away": "nfl-los-angeles-rams",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-13T21:25:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 13,
+              "roundNumber": 1,
+              "home": "nfl-seattle-seahawks",
+              "away": "nfl-new-york-giants",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-13T21:25:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 14,
+              "roundNumber": 1,
+              "home": "nfl-green-bay-packers",
+              "away": "nfl-buffalo-bills",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-14T01:20:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 15,
+              "roundNumber": 1,
+              "home": "nfl-jacksonville-jaguars",
+              "away": "nfl-pittsburgh-steelers",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-15T01:15:00Z",
+              "advancesTo": null
+            }
+          ]
+        },
+        {
+          "key": "nfl-2026-week-15",
+          "name": "NFL Week 15",
+          "startDate": "2026-12-17",
+          "endDate": "2026-12-21",
+          "venue": null,
+          "location": "United States",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "nfl-san-francisco-49ers",
+              "ranking": 1
+            },
+            {
+              "player": "nfl-buffalo-bills",
+              "ranking": 2
+            },
+            {
+              "player": "nfl-chicago-bears",
+              "ranking": 3
+            },
+            {
+              "player": "nfl-denver-broncos",
+              "ranking": 4
+            },
+            {
+              "player": "nfl-jacksonville-jaguars",
+              "ranking": 5
+            },
+            {
+              "player": "nfl-cincinnati-bengals",
+              "ranking": 6
+            },
+            {
+              "player": "nfl-kansas-city-chiefs",
+              "ranking": 7
+            },
+            {
+              "player": "nfl-pittsburgh-steelers",
+              "ranking": 8
+            },
+            {
+              "player": "nfl-detroit-lions",
+              "ranking": 9
+            },
+            {
+              "player": "nfl-minnesota-vikings",
+              "ranking": 10
+            },
+            {
+              "player": "nfl-new-york-giants",
+              "ranking": 11
+            },
+            {
+              "player": "nfl-green-bay-packers",
+              "ranking": 12
+            },
+            {
+              "player": "nfl-seattle-seahawks",
+              "ranking": 13
+            },
+            {
+              "player": "nfl-los-angeles-rams",
+              "ranking": 14
+            },
+            {
+              "player": "nfl-new-england-patriots",
+              "ranking": 15
+            },
+            {
+              "player": "nfl-cleveland-browns",
+              "ranking": 16
+            },
+            {
+              "player": "nfl-dallas-cowboys",
+              "ranking": 17
+            },
+            {
+              "player": "nfl-las-vegas-raiders",
+              "ranking": 18
+            },
+            {
+              "player": "nfl-baltimore-ravens",
+              "ranking": 19
+            },
+            {
+              "player": "nfl-houston-texans",
+              "ranking": 20
+            },
+            {
+              "player": "nfl-carolina-panthers",
+              "ranking": 21
+            },
+            {
+              "player": "nfl-new-orleans-saints",
+              "ranking": 22
+            },
+            {
+              "player": "nfl-tampa-bay-buccaneers",
+              "ranking": 23
+            },
+            {
+              "player": "nfl-atlanta-falcons",
+              "ranking": 24
+            },
+            {
+              "player": "nfl-arizona-cardinals",
+              "ranking": 25
+            },
+            {
+              "player": "nfl-washington-commanders",
+              "ranking": 26
+            },
+            {
+              "player": "nfl-new-york-jets",
+              "ranking": 27
+            },
+            {
+              "player": "nfl-indianapolis-colts",
+              "ranking": 28
+            },
+            {
+              "player": "nfl-philadelphia-eagles",
+              "ranking": 29
+            },
+            {
+              "player": "nfl-tennessee-titans",
+              "ranking": 30
+            },
+            {
+              "player": "nfl-miami-dolphins",
+              "ranking": 31
+            },
+            {
+              "player": "nfl-los-angeles-chargers",
+              "ranking": 32
+            }
+          ],
+          "matches": [
+            {
+              "matchNumber": 1,
+              "roundNumber": 1,
+              "home": "nfl-los-angeles-chargers",
+              "away": "nfl-san-francisco-49ers",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-18T01:15:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 2,
+              "roundNumber": 1,
+              "home": "nfl-philadelphia-eagles",
+              "away": "nfl-seattle-seahawks",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-19T22:00:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 3,
+              "roundNumber": 1,
+              "home": "nfl-buffalo-bills",
+              "away": "nfl-chicago-bears",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-20T01:20:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 4,
+              "roundNumber": 1,
+              "home": "nfl-carolina-panthers",
+              "away": "nfl-cincinnati-bengals",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-20T18:00:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 5,
+              "roundNumber": 1,
+              "home": "nfl-green-bay-packers",
+              "away": "nfl-miami-dolphins",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-20T18:00:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 6,
+              "roundNumber": 1,
+              "home": "nfl-houston-texans",
+              "away": "nfl-jacksonville-jaguars",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-20T18:00:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 7,
+              "roundNumber": 1,
+              "home": "nfl-new-york-giants",
+              "away": "nfl-cleveland-browns",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-20T18:00:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 8,
+              "roundNumber": 1,
+              "home": "nfl-pittsburgh-steelers",
+              "away": "nfl-baltimore-ravens",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-20T18:00:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 9,
+              "roundNumber": 1,
+              "home": "nfl-tampa-bay-buccaneers",
+              "away": "nfl-new-orleans-saints",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-20T18:00:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 10,
+              "roundNumber": 1,
+              "home": "nfl-tennessee-titans",
+              "away": "nfl-indianapolis-colts",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-20T18:00:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 11,
+              "roundNumber": 1,
+              "home": "nfl-washington-commanders",
+              "away": "nfl-atlanta-falcons",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-20T18:00:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 12,
+              "roundNumber": 1,
+              "home": "nfl-arizona-cardinals",
+              "away": "nfl-new-york-jets",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-20T21:05:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 13,
+              "roundNumber": 1,
+              "home": "nfl-las-vegas-raiders",
+              "away": "nfl-denver-broncos",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-20T21:25:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 14,
+              "roundNumber": 1,
+              "home": "nfl-los-angeles-rams",
+              "away": "nfl-dallas-cowboys",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-20T21:25:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 15,
+              "roundNumber": 1,
+              "home": "nfl-minnesota-vikings",
+              "away": "nfl-detroit-lions",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-21T01:20:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 16,
+              "roundNumber": 1,
+              "home": "nfl-kansas-city-chiefs",
+              "away": "nfl-new-england-patriots",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-22T01:15:00Z",
+              "advancesTo": null
+            }
+          ]
+        },
+        {
+          "key": "nfl-2026-week-16",
+          "name": "NFL Week 16",
+          "startDate": "2026-12-24",
+          "endDate": "2026-12-28",
+          "venue": null,
+          "location": "United States",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "nfl-san-francisco-49ers",
+              "ranking": 1
+            },
+            {
+              "player": "nfl-buffalo-bills",
+              "ranking": 2
+            },
+            {
+              "player": "nfl-chicago-bears",
+              "ranking": 3
+            },
+            {
+              "player": "nfl-denver-broncos",
+              "ranking": 4
+            },
+            {
+              "player": "nfl-jacksonville-jaguars",
+              "ranking": 5
+            },
+            {
+              "player": "nfl-cincinnati-bengals",
+              "ranking": 6
+            },
+            {
+              "player": "nfl-kansas-city-chiefs",
+              "ranking": 7
+            },
+            {
+              "player": "nfl-pittsburgh-steelers",
+              "ranking": 8
+            },
+            {
+              "player": "nfl-detroit-lions",
+              "ranking": 9
+            },
+            {
+              "player": "nfl-minnesota-vikings",
+              "ranking": 10
+            },
+            {
+              "player": "nfl-new-york-giants",
+              "ranking": 11
+            },
+            {
+              "player": "nfl-green-bay-packers",
+              "ranking": 12
+            },
+            {
+              "player": "nfl-seattle-seahawks",
+              "ranking": 13
+            },
+            {
+              "player": "nfl-los-angeles-rams",
+              "ranking": 14
+            },
+            {
+              "player": "nfl-new-england-patriots",
+              "ranking": 15
+            },
+            {
+              "player": "nfl-cleveland-browns",
+              "ranking": 16
+            },
+            {
+              "player": "nfl-dallas-cowboys",
+              "ranking": 17
+            },
+            {
+              "player": "nfl-las-vegas-raiders",
+              "ranking": 18
+            },
+            {
+              "player": "nfl-baltimore-ravens",
+              "ranking": 19
+            },
+            {
+              "player": "nfl-houston-texans",
+              "ranking": 20
+            },
+            {
+              "player": "nfl-carolina-panthers",
+              "ranking": 21
+            },
+            {
+              "player": "nfl-new-orleans-saints",
+              "ranking": 22
+            },
+            {
+              "player": "nfl-tampa-bay-buccaneers",
+              "ranking": 23
+            },
+            {
+              "player": "nfl-atlanta-falcons",
+              "ranking": 24
+            },
+            {
+              "player": "nfl-arizona-cardinals",
+              "ranking": 25
+            },
+            {
+              "player": "nfl-washington-commanders",
+              "ranking": 26
+            },
+            {
+              "player": "nfl-new-york-jets",
+              "ranking": 27
+            },
+            {
+              "player": "nfl-indianapolis-colts",
+              "ranking": 28
+            },
+            {
+              "player": "nfl-philadelphia-eagles",
+              "ranking": 29
+            },
+            {
+              "player": "nfl-tennessee-titans",
+              "ranking": 30
+            },
+            {
+              "player": "nfl-miami-dolphins",
+              "ranking": 31
+            },
+            {
+              "player": "nfl-los-angeles-chargers",
+              "ranking": 32
+            }
+          ],
+          "matches": [
+            {
+              "matchNumber": 1,
+              "roundNumber": 1,
+              "home": "nfl-philadelphia-eagles",
+              "away": "nfl-houston-texans",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-25T01:15:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 2,
+              "roundNumber": 1,
+              "home": "nfl-chicago-bears",
+              "away": "nfl-green-bay-packers",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-25T18:00:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 3,
+              "roundNumber": 1,
+              "home": "nfl-denver-broncos",
+              "away": "nfl-buffalo-bills",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-25T21:30:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 4,
+              "roundNumber": 1,
+              "home": "nfl-seattle-seahawks",
+              "away": "nfl-los-angeles-rams",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-26T01:15:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 5,
+              "roundNumber": 1,
+              "home": "nfl-atlanta-falcons",
+              "away": "nfl-tampa-bay-buccaneers",
+              "isNeutralSite": false,
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 6,
+              "roundNumber": 1,
+              "home": "nfl-indianapolis-colts",
+              "away": "nfl-cincinnati-bengals",
+              "isNeutralSite": false,
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 7,
+              "roundNumber": 1,
+              "home": "nfl-minnesota-vikings",
+              "away": "nfl-washington-commanders",
+              "isNeutralSite": false,
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 8,
+              "roundNumber": 1,
+              "home": "nfl-pittsburgh-steelers",
+              "away": "nfl-carolina-panthers",
+              "isNeutralSite": false,
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 9,
+              "roundNumber": 1,
+              "home": "nfl-baltimore-ravens",
+              "away": "nfl-cleveland-browns",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-27T18:00:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 10,
+              "roundNumber": 1,
+              "home": "nfl-miami-dolphins",
+              "away": "nfl-los-angeles-chargers",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-27T18:00:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 11,
+              "roundNumber": 1,
+              "home": "nfl-new-orleans-saints",
+              "away": "nfl-arizona-cardinals",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-27T18:00:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 12,
+              "roundNumber": 1,
+              "home": "nfl-new-york-jets",
+              "away": "nfl-new-england-patriots",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-27T18:00:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 13,
+              "roundNumber": 1,
+              "home": "nfl-las-vegas-raiders",
+              "away": "nfl-tennessee-titans",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-27T21:05:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 14,
+              "roundNumber": 1,
+              "home": "nfl-kansas-city-chiefs",
+              "away": "nfl-san-francisco-49ers",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-27T21:25:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 15,
+              "roundNumber": 1,
+              "home": "nfl-dallas-cowboys",
+              "away": "nfl-jacksonville-jaguars",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-28T01:20:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 16,
+              "roundNumber": 1,
+              "home": "nfl-detroit-lions",
+              "away": "nfl-new-york-giants",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-12-29T01:15:00Z",
+              "advancesTo": null
+            }
+          ]
+        },
+        {
+          "key": "nfl-2026-week-17",
+          "name": "NFL Week 17",
+          "startDate": "2026-12-31",
+          "endDate": "2027-01-04",
+          "venue": null,
+          "location": "United States",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "nfl-san-francisco-49ers",
+              "ranking": 1
+            },
+            {
+              "player": "nfl-buffalo-bills",
+              "ranking": 2
+            },
+            {
+              "player": "nfl-chicago-bears",
+              "ranking": 3
+            },
+            {
+              "player": "nfl-denver-broncos",
+              "ranking": 4
+            },
+            {
+              "player": "nfl-jacksonville-jaguars",
+              "ranking": 5
+            },
+            {
+              "player": "nfl-cincinnati-bengals",
+              "ranking": 6
+            },
+            {
+              "player": "nfl-kansas-city-chiefs",
+              "ranking": 7
+            },
+            {
+              "player": "nfl-pittsburgh-steelers",
+              "ranking": 8
+            },
+            {
+              "player": "nfl-detroit-lions",
+              "ranking": 9
+            },
+            {
+              "player": "nfl-minnesota-vikings",
+              "ranking": 10
+            },
+            {
+              "player": "nfl-new-york-giants",
+              "ranking": 11
+            },
+            {
+              "player": "nfl-green-bay-packers",
+              "ranking": 12
+            },
+            {
+              "player": "nfl-seattle-seahawks",
+              "ranking": 13
+            },
+            {
+              "player": "nfl-los-angeles-rams",
+              "ranking": 14
+            },
+            {
+              "player": "nfl-new-england-patriots",
+              "ranking": 15
+            },
+            {
+              "player": "nfl-cleveland-browns",
+              "ranking": 16
+            },
+            {
+              "player": "nfl-dallas-cowboys",
+              "ranking": 17
+            },
+            {
+              "player": "nfl-las-vegas-raiders",
+              "ranking": 18
+            },
+            {
+              "player": "nfl-baltimore-ravens",
+              "ranking": 19
+            },
+            {
+              "player": "nfl-houston-texans",
+              "ranking": 20
+            },
+            {
+              "player": "nfl-carolina-panthers",
+              "ranking": 21
+            },
+            {
+              "player": "nfl-new-orleans-saints",
+              "ranking": 22
+            },
+            {
+              "player": "nfl-tampa-bay-buccaneers",
+              "ranking": 23
+            },
+            {
+              "player": "nfl-atlanta-falcons",
+              "ranking": 24
+            },
+            {
+              "player": "nfl-arizona-cardinals",
+              "ranking": 25
+            },
+            {
+              "player": "nfl-washington-commanders",
+              "ranking": 26
+            },
+            {
+              "player": "nfl-new-york-jets",
+              "ranking": 27
+            },
+            {
+              "player": "nfl-indianapolis-colts",
+              "ranking": 28
+            },
+            {
+              "player": "nfl-philadelphia-eagles",
+              "ranking": 29
+            },
+            {
+              "player": "nfl-tennessee-titans",
+              "ranking": 30
+            },
+            {
+              "player": "nfl-miami-dolphins",
+              "ranking": 31
+            },
+            {
+              "player": "nfl-los-angeles-chargers",
+              "ranking": 32
+            }
+          ],
+          "matches": [
+            {
+              "matchNumber": 1,
+              "roundNumber": 1,
+              "home": "nfl-cincinnati-bengals",
+              "away": "nfl-baltimore-ravens",
+              "isNeutralSite": false,
+              "scheduledAt": "2027-01-01T01:15:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 2,
+              "roundNumber": 1,
+              "home": "nfl-jacksonville-jaguars",
+              "away": "nfl-washington-commanders",
+              "isNeutralSite": false,
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 3,
+              "roundNumber": 1,
+              "home": "nfl-los-angeles-chargers",
+              "away": "nfl-kansas-city-chiefs",
+              "isNeutralSite": false,
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 4,
+              "roundNumber": 1,
+              "home": "nfl-new-england-patriots",
+              "away": "nfl-denver-broncos",
+              "isNeutralSite": false,
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 5,
+              "roundNumber": 1,
+              "home": "nfl-tampa-bay-buccaneers",
+              "away": "nfl-los-angeles-rams",
+              "isNeutralSite": false,
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 6,
+              "roundNumber": 1,
+              "home": "nfl-atlanta-falcons",
+              "away": "nfl-new-orleans-saints",
+              "isNeutralSite": false,
+              "scheduledAt": "2027-01-03T18:00:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 7,
+              "roundNumber": 1,
+              "home": "nfl-carolina-panthers",
+              "away": "nfl-seattle-seahawks",
+              "isNeutralSite": false,
+              "scheduledAt": "2027-01-03T18:00:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 8,
+              "roundNumber": 1,
+              "home": "nfl-cleveland-browns",
+              "away": "nfl-indianapolis-colts",
+              "isNeutralSite": false,
+              "scheduledAt": "2027-01-03T18:00:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 9,
+              "roundNumber": 1,
+              "home": "nfl-dallas-cowboys",
+              "away": "nfl-new-york-giants",
+              "isNeutralSite": false,
+              "scheduledAt": "2027-01-03T18:00:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 10,
+              "roundNumber": 1,
+              "home": "nfl-miami-dolphins",
+              "away": "nfl-buffalo-bills",
+              "isNeutralSite": false,
+              "scheduledAt": "2027-01-03T18:00:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 11,
+              "roundNumber": 1,
+              "home": "nfl-new-york-jets",
+              "away": "nfl-minnesota-vikings",
+              "isNeutralSite": false,
+              "scheduledAt": "2027-01-03T18:00:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 12,
+              "roundNumber": 1,
+              "home": "nfl-tennessee-titans",
+              "away": "nfl-pittsburgh-steelers",
+              "isNeutralSite": false,
+              "scheduledAt": "2027-01-03T18:00:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 13,
+              "roundNumber": 1,
+              "home": "nfl-arizona-cardinals",
+              "away": "nfl-las-vegas-raiders",
+              "isNeutralSite": false,
+              "scheduledAt": "2027-01-03T21:05:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 14,
+              "roundNumber": 1,
+              "home": "nfl-chicago-bears",
+              "away": "nfl-detroit-lions",
+              "isNeutralSite": false,
+              "scheduledAt": "2027-01-03T21:25:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 15,
+              "roundNumber": 1,
+              "home": "nfl-san-francisco-49ers",
+              "away": "nfl-philadelphia-eagles",
+              "isNeutralSite": false,
+              "scheduledAt": "2027-01-04T01:20:00Z",
+              "advancesTo": null
+            },
+            {
+              "matchNumber": 16,
+              "roundNumber": 1,
+              "home": "nfl-green-bay-packers",
+              "away": "nfl-houston-texans",
+              "isNeutralSite": false,
+              "scheduledAt": "2027-01-05T01:15:00Z",
+              "advancesTo": null
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
