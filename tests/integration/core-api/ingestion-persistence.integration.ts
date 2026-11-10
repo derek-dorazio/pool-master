@@ -1,9 +1,13 @@
 import {
   getAppPrisma,
+  integrationBackgroundJobs,
   setupIntegrationTests,
   teardownIntegrationTests,
   getPrisma,
+  withBackgroundJobsFailing,
 } from '../helpers';
+import { JobLeaderboardRebuilds } from '../../../packages/core-api/src/modules/contests/leaderboard-snapshots';
+import { eventRebuildJob } from '../../support/recording-leaderboard-rebuilds';
 import { IngestionPersistence } from '../../../packages/core-api/src/modules/ingestion/persistence/ingestion-persistence';
 import type { SportEventDetail } from '../../../packages/core-api/src/modules/ingestion/core/provider-interface';
 import { ParticipantInactiveReason, Sport } from '@poolmaster/shared/domain';
@@ -20,6 +24,8 @@ const rankedEventIds = [
   'integration-admin-header-SCORES_ONLY',
   'integration-admin-header-NONE',
   'integration-batched-sync',
+  'integration-rebuild-sync',
+  'integration-rebuild-fail',
 ];
 
 beforeAll(() => setupIntegrationTests());
@@ -69,6 +75,8 @@ afterAll(async () => {
           'ingestion-batch-1',
           'ingestion-batch-2',
           'ingestion-batch-3',
+          'ingestion-rebuild-1',
+          'ingestion-rebuild-2',
         ],
       },
     },
@@ -77,6 +85,48 @@ afterAll(async () => {
 });
 
 describe('IngestionPersistence', () => {
+  /** A one-golfer field for a linked event, as a provider's sync sends it. */
+  async function linkedField(externalId: string, golferId: string): Promise<SportEventDetail> {
+    const detail: SportEventDetail = {
+      externalId,
+      providerId: 'TEST_PROVIDER',
+      sport: Sport.GOLF,
+      name: `Rebuild ${externalId}`,
+      startDate: new Date('2026-04-15T12:00:00.000Z'),
+      status: 'SCHEDULED',
+      fieldLocked: false,
+      metadata: {},
+      participants: [{ externalId: golferId, providerId: 'TEST_PROVIDER', sport: Sport.GOLF, name: `Golfer ${golferId}`, active: true, ranking: 3, metadata: {} }],
+    };
+    await linkedProviderEvent(getPrisma(), { providerId: detail.providerId, externalId, name: detail.name, startDate: detail.startDate });
+    return detail;
+  }
+  const withRebuilds = () => new IngestionPersistence(getAppPrisma(), undefined, undefined, undefined, new JobLeaderboardRebuilds(integrationBackgroundJobs().queue));
+  const eventIdOf = async (externalId: string) => (await getPrisma().sportEvent.findUniqueOrThrow({ where: { providerId_externalId: { providerId: 'TEST_PROVIDER', externalId } } })).id;
+
+  it('writes the event\'s leaderboard rebuild job with the field a sync changes, and none for a sync that changes nothing (#1466)', async () => {
+    const detail = await linkedField('integration-rebuild-sync', 'ingestion-rebuild-1');
+    const persistence = withRebuilds();
+
+    await persistence.persistEventDetailWithDiagnostics(detail);
+    const sportEventId = await eventIdOf(detail.externalId);
+    const rebuildJobs = () => getPrisma().backgroundJob.count({ where: { dedupeKey: eventRebuildJob(sportEventId).dedupeKey } });
+    await expect(rebuildJobs()).resolves.toBe(1);
+
+    await getPrisma().backgroundJob.deleteMany({ where: { dedupeKey: eventRebuildJob(sportEventId).dedupeKey } });
+    await persistence.persistEventDetailWithDiagnostics(detail);
+    await expect(rebuildJobs()).resolves.toBe(0);
+  });
+
+  it('writes none of the field when its rebuild job cannot be written, so the next sync writes it again (#1466)', async () => {
+    const detail = await linkedField('integration-rebuild-fail', 'ingestion-rebuild-2');
+
+    await expect(withBackgroundJobsFailing('REBUILD_LEADERBOARDS', () => withRebuilds().persistEventDetailWithDiagnostics(detail))).rejects.toThrow();
+
+    const sportEventId = await eventIdOf(detail.externalId);
+    await expect(getPrisma().sportEventParticipant.count({ where: { sportEventId } })).resolves.toBe(0);
+  });
+
   it('persists event detail into events, participants, event participants, and source data', async () => {
     const prisma = getPrisma();
     const persistence = new IngestionPersistence(getAppPrisma());

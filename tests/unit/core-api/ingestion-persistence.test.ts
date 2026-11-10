@@ -1,4 +1,4 @@
-import { RecordingLeaderboardRebuilds } from '../../support/recording-leaderboard-rebuilds';
+import { RecordingLeaderboardRebuilds, eventRebuildJob } from '../../support/recording-leaderboard-rebuilds';
 import { expect } from '@jest/globals';
 import { Sport } from '@poolmaster/shared/domain';
 import { IngestionPersistence } from '../../../packages/core-api/src/modules/ingestion/persistence/ingestion-persistence';
@@ -85,6 +85,7 @@ function fieldSyncPrisma(options: {
       update: jest.fn().mockResolvedValue({ id: 'sport-event-participant-1' }),
       createManyAndReturn: options.createField ?? jest.fn().mockResolvedValue([{ id: 'sport-event-participant-1', participantId: 'participant-1' }]),
     },
+    backgroundJob: { createMany: jest.fn().mockResolvedValue({ count: 1 }) },
     $transaction: jest.fn(async (operations: Array<Promise<unknown>>) => Promise.all(operations)),
   };
 }
@@ -400,7 +401,7 @@ describe('IngestionPersistence', () => {
     });
   });
 
-  it('tells the leaderboard rebuilds the event whose field a sync wrote, so its contests\' stored boards are rebuilt (#1435)', async () => {
+  it('writes the event\'s leaderboard rebuild job in the same transaction as a field sync that changes a row, and wakes the runner after it (#1435, #1466)', async () => {
     const detail: SportEventDetail = {
       ...buildInProgressEvent(),
       externalId: 'golf-open-2026',
@@ -461,7 +462,39 @@ describe('IngestionPersistence', () => {
 
     await persistence.persistEventDetailWithDiagnostics(detail);
 
+    expect(prisma.backgroundJob.createMany).toHaveBeenCalledWith(expect.objectContaining({
+      data: [expect.objectContaining({ type: eventRebuildJob('sport-event-1').type, dedupeKey: eventRebuildJob('sport-event-1').dedupeKey })],
+    }));
     expect(leaderboards.sportEventIds).toEqual(['sport-event-1']);
+  });
+
+  it('writes no rebuild job for a field sync that changes no row, since no board can have moved (#1466)', async () => {
+    const detail: SportEventDetail = {
+      ...buildInProgressEvent(),
+      externalId: 'golf-open-2026',
+      status: 'SCHEDULED',
+      participants: [{
+        externalId: 'golfer-01', providerId: 'mock-contest-feed', sport: Sport.GOLF, name: 'Scottie Scheffler', active: true, ranking: 7,
+        metadata: { seed: 1, odds: 8.5, oddsSourceEventId: 'golf-open-2026' },
+      }],
+    };
+    const prisma = fieldSyncPrisma({
+      externalId: 'golfer-01',
+      eventRow: { id: 'sport-event-1', externalId: 'golf-open-2026', providerId: 'mock-contest-feed', sport: Sport.GOLF, name: 'Manual Test Golf Tournament', venue: null, location: null, startDate: detail.startDate, endDate: null, status: 'SCHEDULED', rounds: null, participantCount: null, metadata: detail.metadata },
+      linkedEvent: { id: 'sport-event-1', sport: Sport.GOLF, status: 'SCHEDULED', eventSeries: { sportLeague: { participantType: null, scoringFamily: null } } },
+      fieldRow: {
+        id: 'sport-event-participant-1', isActive: true, inactiveReason: null, ranking: 7, oddsToWin: 8.5, seedNumber: 1,
+        metadata: { seed: 1, odds: 8.5, oddsSourceEventId: 'golf-open-2026' },
+      },
+    });
+    const leaderboards = new RecordingLeaderboardRebuilds();
+    const persistence = new IngestionPersistence(asPrismaClient(prisma), fakeLogger(), undefined, undefined, leaderboards);
+
+    const result = await persistence.persistEventDetailWithDiagnostics(detail);
+
+    expect(result.writeDiagnostics.rows.filter((row) => row.entityType === 'SportEventParticipant').map((row) => row.disposition)).toEqual(['UNCHANGED']);
+    expect(prisma.backgroundJob.createMany).not.toHaveBeenCalled();
+    expect(leaderboards.handedOut).toEqual([]);
   });
 
   it('reads every linked event of a feed in one query and writes only the changed ones in one transaction (#1247)', async () => {

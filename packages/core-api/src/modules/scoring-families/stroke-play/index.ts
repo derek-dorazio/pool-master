@@ -32,7 +32,7 @@ export const strokePlayScoringFamily: ScoringFamilyModule = {
   liveScores: {
     category: 'GOLF',
     persist(deps, event, result) {
-      return createGolfScoreService(deps.prisma, deps.logger).persistRoundUpdatesForSportEvent(
+      return createGolfScoreService(deps.prisma, deps.logger, deps.leaderboards).persistRoundUpdatesForSportEvent(
         event.id,
         result.rounds,
         deps.providerId,

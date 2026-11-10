@@ -14,6 +14,7 @@
  */
 
 import { RecordingLeaderboardRebuilds } from '../../support/recording-leaderboard-rebuilds';
+import { mockFn } from '../../support/mock-fn';
 import {
   publishLiveScoreUpdate,
   LiveScoreValidationError,
@@ -272,17 +273,19 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
       expect(await readsAfresh(fieldCache)).toBe(true);
     });
 
-    it('tells the leaderboard rebuilds the event once its live scores are written, so its contests\' stored boards are rebuilt (#1435)', async () => {
+    it('hands the scoring family\'s writer the leaderboard rebuilds, whose last write carries the event\'s job, and asks for no rebuild itself (#1466)', async () => {
       const leaderboards = new RecordingLeaderboardRebuilds();
+      const persist = mockFn<NonNullable<ScoringFamilyModule['liveScores']>['persist']>(async () => persisted);
 
       await publishLiveScoreUpdate(result, {
         prisma: asPrismaClient({ sportEvent: buildSportEventStub() }),
         providerId: 'mock',
-        scoringFamilyForEvent: () => familyWriting(async () => persisted),
+        scoringFamilyForEvent: () => ({ ...strokePlayScoringFamily, liveScores: { category: 'GOLF', persist } }),
         leaderboards,
       });
 
-      expect(leaderboards.sportEventIds).toEqual(['evt-1']);
+      expect(persist).toHaveBeenCalledWith(expect.objectContaining({ leaderboards }), expect.anything(), expect.anything());
+      expect(leaderboards.handedOut).toEqual([]);
     });
 
     it('asks for no rebuild when the scores are refused unwritten (#1435)', async () => {

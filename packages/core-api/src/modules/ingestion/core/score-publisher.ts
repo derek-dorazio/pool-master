@@ -45,8 +45,11 @@ export interface LiveScorePublisherDeps {
   scoringFamilyForEvent: (event: ScoringFamilyEvent) => ScoringFamilyModule;
   /** The event fields this container read lately: an event's is forgotten once its scores are written (#1163). */
   fieldCache?: Pick<EventFieldCache, 'forget'>;
-  /** Told once an event's scores are written, so its contests' stored leaderboards are computed again (#1435). */
-  leaderboards?: Pick<LeaderboardRebuilds, 'eventsChanged'>;
+  /**
+   * The event's leaderboard rebuild, handed to the scoring family's writer so its last write
+   * carries the job (#1435, #1466): scores that fail to write queue no rebuild.
+   */
+  leaderboards?: Pick<LeaderboardRebuilds, 'forEvent'>;
 }
 
 export interface LiveScorePersistenceResult {
@@ -154,7 +157,6 @@ export async function publishLiveScoreUpdate(
     return await writer.persist(deps, sportEvent, validated);
   } finally {
     deps.fieldCache?.forget(sportEvent.id);
-    await deps.leaderboards?.eventsChanged([sportEvent.id]);
   }
 }
 
