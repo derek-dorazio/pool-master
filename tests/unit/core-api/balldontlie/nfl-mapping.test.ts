@@ -94,6 +94,10 @@ describe('NFL events', () => {
     expect(toNflSportEvent(WEEK_12, [weekFinal, weekScheduled]).status).toBe('IN_PROGRESS');
   });
 
+  it('keeps a week scheduled, its field open, when a game is called off before any kicks off', () => {
+    expect(toNflSportEvent(WEEK_12, [withState(weekLive, NflStatusState.CANCELED), weekScheduled])).toMatchObject({ status: 'SCHEDULED', fieldLocked: false });
+  });
+
   it('completes a week whose games are final or called off, and cancels one whose every game was called off', () => {
     expect(toNflSportEvent(WEEK_12, [weekFinal, withState(weekLive, NflStatusState.CANCELED)]).status).toBe('COMPLETED');
     expect(toNflSportEvent(WEEK_12, [withState(weekLive, NflStatusState.CANCELED), withState(weekScheduled, NflStatusState.ABANDONED)]).status).toBe('CANCELLED');

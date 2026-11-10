@@ -17,7 +17,10 @@ import { BalldontlieContractError } from './balldontlie-client';
 import { NflSeasonType, NflStatusState, type NflGame, type NflTeam } from './nfl-contract';
 import { BALLDONTLIE_PROVIDER_ID } from './pga-mapping';
 
-/** The NFL sport league's own name, so it finds these events with no match keyword set by hand. */
+/**
+ * The tour name events carry in `metadata.tour`, matched against a sport league's match keyword.
+ * The NFL sport league's keyword must be set to this for its year import to find these events.
+ */
 export const NFL_LEAGUE_NAME = 'NFL';
 
 /**
@@ -114,7 +117,8 @@ function eventStatus(scope: NflScope, games: readonly NflGame[]): SportEvent['st
   if (done === games.length && complete) {
     return progress.includes(GameProgress.FINAL) ? 'COMPLETED' : 'CANCELLED';
   }
-  if (done > 0 || progress.includes(GameProgress.LIVE)) return 'IN_PROGRESS';
+  // A game called off counts toward the end of its event, never toward its start.
+  if (progress.some((each) => each === GameProgress.FINAL || each === GameProgress.LIVE)) return 'IN_PROGRESS';
   return progress.every((each) => each === GameProgress.POSTPONED) ? 'POSTPONED' : 'SCHEDULED';
 }
 
