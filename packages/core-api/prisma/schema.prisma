@@ -2030,6 +2030,9 @@ model SportEventMatch {
   /// The points spread from the home team's side (#720): -3.5 has the home team favoured by 3.5.
   /// Null until set; half points at most. A pick'em contest scored against the spread reads it.
   homeSpread                  Decimal?          @map("home_spread") @db.Decimal(4, 1)
+  /// The provider game this match takes its score from (#1496), on its event's own provider; null
+  /// until an admin links it. One game links to at most one match of an event.
+  externalGameId              String?           @map("external_game_id") @db.VarChar(255)
   createdAt                   DateTime          @default(now()) @map("created_at") @db.Timestamptz
   updatedAt                   DateTime          @updatedAt @map("updated_at") @db.Timestamptz
 
@@ -2044,6 +2047,7 @@ model SportEventMatch {
   squaresGames    ContestSquaresGame[]
 
   @@unique([sportEventId, matchNumber])
+  @@unique([sportEventId, externalGameId])
   // Two matches cannot feed the same side of the next one.
   @@unique([advancesToMatchId, advancesToSide])
   @@index([sportEventRoundId])

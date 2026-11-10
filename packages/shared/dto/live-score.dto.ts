@@ -8,11 +8,12 @@
  * malformed adapter payloads fail validation on entry, not inside the
  * persistence path.
  *
- * GOLF is the only member: a category arrives with the scoring code that persists it (#605).
+ * A category arrives with the scoring code that persists it (#605): GOLF for stroke play, GAME
+ * for head-to-head games (#1496).
  */
 
 import { z } from 'zod';
-import { ParticipantRoundStatus } from '@poolmaster/shared/domain';
+import { ParticipantRoundStatus, ProviderGameState } from '@poolmaster/shared/domain';
 
 // ============================================================================
 // Per-category update schemas
@@ -47,6 +48,21 @@ export const GolfRoundUpdateSchema = z.object({
 }).describe('Golf round update emitted by golf adapters per plans/117 §6.1.');
 export type GolfRoundUpdate = z.infer<typeof GolfRoundUpdateSchema>;
 
+/**
+ * GAME — one head-to-head game as the provider reports it (#1496). Each side is the provider's
+ * team id, resolved to the match's side through the team's provider mapping, so a provider that
+ * lists the teams the other way round from the match still scores the right side.
+ */
+export const GameScoreUpdateSchema = z.object({
+  externalGameId: z.string().min(1).describe('Provider-side game identifier; the match linked to it takes its result.'),
+  homeTeamExternalId: z.string().min(1).describe('Provider-side identifier of the team the provider lists at home.'),
+  awayTeamExternalId: z.string().min(1).describe('Provider-side identifier of the team the provider lists away.'),
+  state: z.enum(ProviderGameState),
+  homeScore: z.number().int().min(0).nullable().describe('The home team\'s score; null before the game starts.'),
+  awayScore: z.number().int().min(0).nullable().describe('The away team\'s score; null before the game starts.'),
+}).describe('Head-to-head game update emitted by game adapters.');
+export type GameScoreUpdate = z.infer<typeof GameScoreUpdateSchema>;
+
 // ============================================================================
 // LiveScoreResult discriminated union
 // ============================================================================
@@ -71,6 +87,11 @@ export const LiveScoreResultSchema = z.discriminatedUnion('category', [
     category: z.literal('GOLF'),
     ...sportEventScope,
     rounds: z.array(GolfRoundUpdateSchema),
+  }),
+  z.object({
+    category: z.literal('GAME'),
+    ...sportEventScope,
+    games: z.array(GameScoreUpdateSchema),
   }),
 ]);
 export type LiveScoreResult = z.infer<typeof LiveScoreResultSchema>;

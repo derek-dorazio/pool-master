@@ -28,6 +28,7 @@ import {
   PrismaSportRepository,
 } from '../../adapters';
 import { GolfScoreService } from '../golf/golf-score-service';
+import type { GameScoreWriterDeps } from '../scoring-families/head-to-head/game-score-writer';
 import { RaceResultService } from '../scoring-families/finish-position/race-result-service';
 import { StatLineService } from '../scoring-families/composite/stat-line-service';
 import { MatchResultService } from '../scoring-families/head-to-head/match-result-service';
@@ -157,6 +158,26 @@ export function createMatchResultService(
     leaderboards,
     logger,
   });
+}
+
+/**
+ * What a provider's game scores are written with (#1496): the admin's own result path, so a
+ * result starts contests past their cutoff and settles the squares contests on its game.
+ */
+export function createGameScoreWriterDeps(
+  prisma: PrismaClient,
+  providerId: string,
+  logger?: FastifyBaseLogger,
+  leaderboards?: Pick<LeaderboardRebuilds, 'forEvent'>,
+): GameScoreWriterDeps {
+  return {
+    providerId,
+    matches: new PrismaSportEventMatchRepository(prisma),
+    eventParticipants: new PrismaSportEventParticipantRepository(prisma),
+    mappings: new PrismaParticipantProviderMappingRepository(prisma),
+    results: createMatchResultService(prisma, logger, createEventLifecycleService(prisma, { logger }), leaderboards),
+    logger,
+  };
 }
 
 /**

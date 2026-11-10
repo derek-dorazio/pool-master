@@ -61,6 +61,7 @@ function nflPlayoff(): SportEventMatch[] {
     advancesToSide: spec.advancesTo?.side ?? null,
     regionLabel: spec.region,
     homeSpread: null,
+    externalGameId: null,
     periodScores: [],
     createdAt: new Date('2027-01-01T00:00:00.000Z'),
     updatedAt: new Date('2027-01-01T00:00:00.000Z'),

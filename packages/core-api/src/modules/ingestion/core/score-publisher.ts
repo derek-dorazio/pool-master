@@ -25,7 +25,7 @@ import {
 import { SportEventStatus } from '@poolmaster/shared/domain';
 import type { SyncWriteDiagnostics } from './sync-write-diagnostics';
 import { emptySyncWriteDiagnostics } from './sync-write-diagnostics';
-import type { ScoringFamilyEvent, ScoringFamilyModule } from '../../scoring-families';
+import type { LiveScoreTargetEvent, LiveScoreWriteDeps, LiveScoreWriter, ScoringFamilyEvent, ScoringFamilyModule } from '../../scoring-families';
 import { countLiveScoreUpdates } from './live-score-count';
 import type { EventFieldCache } from '../../events/event-field-cache';
 import type { LeaderboardRebuilds } from '../../contests/leaderboard-snapshots';
@@ -131,7 +131,8 @@ export async function publishLiveScoreUpdate(
     scoringFamily: sportEvent.eventSeries.sportLeague.scoringFamily ?? undefined,
   }).liveScores;
   const acceptedCategory = writer?.category ?? null;
-  if (writer?.category !== validated.category) {
+  const write = writer === null ? null : writeFor(writer, deps, sportEvent, validated);
+  if (write === null) {
     deps.logger?.warn(
       {
         action: 'liveScore.publish.categoryNotAccepted',
@@ -154,10 +155,25 @@ export async function publishLiveScoreUpdate(
     };
   }
   try {
-    return await writer.persist(deps, sportEvent, validated);
+    return await write();
   } finally {
     deps.fieldCache?.forget(sportEvent.id);
   }
+}
+
+/**
+ * The family writer's write of this batch, or null when the writer takes another category. Each
+ * pair is narrowed together, so a writer is only ever handed the result it is typed for.
+ */
+function writeFor(
+  writer: LiveScoreWriter,
+  deps: LiveScoreWriteDeps,
+  event: LiveScoreTargetEvent,
+  result: LiveScoreResult,
+): (() => Promise<LiveScorePersistenceResult>) | null {
+  if (writer.category === 'GOLF' && result.category === 'GOLF') return () => writer.persist(deps, event, result);
+  if (writer.category === 'GAME' && result.category === 'GAME') return () => writer.persist(deps, event, result);
+  return null;
 }
 
 

@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { ParticipantInactiveReason, Sport } from '../../../packages/shared/domain';
 import { MockContestFeedAdapter } from '../../../packages/core-api/src/modules/ingestion/adapters/mock-contest-feed-adapter';
+import { golfRoundsOf } from '../../support/live-score-rounds';
 
 const scenarioResponse = {
   scenarios: [{ scenarioId: 'golf-major-2026', sport: 'GOLF' }],
@@ -187,7 +188,7 @@ describe('MockContestFeedAdapter', () => {
     // the legacy ProviderStatEvent[] shape. plans/117 §10.2.
     const liveScores = await adapter.getLiveScores('golf-masters-2026');
     expect(liveScores.category).toBe('GOLF');
-    expect(liveScores.rounds).toEqual(
+    expect(golfRoundsOf(liveScores)).toEqual(
       expect.arrayContaining([
       expect.objectContaining({
         participantExternalId: 'rory-mcilroy',

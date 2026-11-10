@@ -33,6 +33,7 @@ import {
 } from '../../../packages/core-api/src/adapters';
 import { expectDefined } from '../../support/expect-defined';
 import { forgetStoredLeaderboards, passReadCacheTtl, restoreReadCacheClock } from '../../support/read-cache-clock';
+import { golfRoundsOf } from '../../support/live-score-rounds';
 
 const providerId = 'mock-contest-feed';
 const eventExternalId = 'golf-masters-2026';
@@ -605,8 +606,8 @@ describe('mock contest feed provider event-first verification', () => {
     // per plans/117 §10.2, now driven through explicit mock live-state control.
     const liveScores = await adapter.getLiveScores(eventExternalId, { mockEventState: 'live' });
     expect(liveScores.category).toBe('GOLF');
-    expect(liveScores.rounds.length).toBeGreaterThan(0);
-    expect(liveScores.rounds[0]).toEqual(
+    expect(golfRoundsOf(liveScores).length).toBeGreaterThan(0);
+    expect(golfRoundsOf(liveScores)[0]).toEqual(
       expect.objectContaining({
         participantExternalId: expect.any(String),
         round: expect.any(Number),
@@ -1216,12 +1217,12 @@ describe('mock contest feed provider event-first verification', () => {
 
       const openScores = await adapter.getLiveScores(eventId, { mockEventState: 'open' });
       expect(openScores.category).toBe('GOLF');
-      expect(openScores.rounds).toHaveLength(0);
+      expect(golfRoundsOf(openScores)).toHaveLength(0);
 
       const liveScores = await adapter.getLiveScores(eventId, { mockEventState: 'live' });
       expect(liveScores.category).toBe('GOLF');
-      expect(liveScores.rounds.length).toBeGreaterThan(0);
-      expect(liveScores.rounds[0]).toEqual(
+      expect(golfRoundsOf(liveScores).length).toBeGreaterThan(0);
+      expect(golfRoundsOf(liveScores)[0]).toEqual(
         expect.objectContaining({
           participantExternalId: expect.any(String),
           round: expect.any(Number),

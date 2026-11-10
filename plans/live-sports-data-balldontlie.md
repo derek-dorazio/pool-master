@@ -22,7 +22,9 @@ The target:
    a provider choice wherever two cover a sport.
 2. **Three kinds of data** it feeds into the scoring code that already exists:
    - golf hole-by-hole scores, through the existing `GOLF` live-score category;
-   - game scores and winners for brackets and pick'em, through `MatchResultService`;
+   - game scores and winners for brackets and pick'em, through `MatchResultService`, as the
+     `GAME` live-score category: a match links to its provider game by `externalGameId`, on
+     its event's own provider;
    - per-player box scores for Clutch Cards, through `StatLineService`.
 3. **Webhooks as the trigger, not the record.** BALLDONTLIE posts a signed event (period
    ended, game ended, hole completed) to a receiver. The receiver checks the signature,

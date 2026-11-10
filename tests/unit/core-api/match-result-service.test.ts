@@ -807,7 +807,7 @@ describe('MatchResultService on a reseeded bracket', () => {
       id: `m${matchNumber}`, sportEventId: event.id, roundNumber, matchNumber,
       homeSportEventParticipantId: home, awaySportEventParticipantId: away, isNeutralSite: false,
       scheduledDate: null, status: MatchStatus.SCHEDULED, winnerSide: null, homeScore: null, awayScore: null, homeShootoutScore: null, awayShootoutScore: null, ending: MatchEnding.PLAYED,
-      advancesToMatchId: advancesTo?.[0] ?? null, advancesToSide: advancesTo?.[1] ?? null, regionLabel: null, homeSpread: null, periodScores: [],
+      advancesToMatchId: advancesTo?.[0] ?? null, advancesToSide: advancesTo?.[1] ?? null, regionLabel: null, homeSpread: null, externalGameId: null, periodScores: [],
       createdAt: AS_OF, updatedAt: AS_OF,
     });
     const [first, second, third, fourth, final] = finalFirst ? [3, 4, 5, 2, 1] : [1, 2, 3, 4, 5];

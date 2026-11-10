@@ -60,8 +60,8 @@ describe('stroke play', () => {
 });
 
 describe('head to head', () => {
-  it('accepts no live scores, so the score publisher skips any batch for a bracket event', () => {
-    expect(getScoringFamilyModule(ScoringFamily.HEAD_TO_HEAD).liveScores).toBeNull();
+  it('accepts game scores, and only game scores, so the score publisher skips a golf batch for a bracket event (#1496)', () => {
+    expect(getScoringFamilyModule(ScoringFamily.HEAD_TO_HEAD).liveScores?.category).toBe('GAME');
   });
 });
 
