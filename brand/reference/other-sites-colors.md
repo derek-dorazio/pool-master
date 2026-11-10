@@ -35,7 +35,8 @@ says how far to trust each row:
 - **Scorebug** reads close to ESPN (red with black); **Scorebug Navy** reads close to the
   NFL (navy with red).
 - **CBS Sports** runs a product called *Office Pool Manager*, close to the wording of our
-  tagline, "The ultimate office pool manager".
+  earlier tagline, "The ultimate office pool manager". The current tagline is the
+  `PRODUCT_TAGLINE` constant in `packages/shared/domain/brand.ts`.
 - Splash Sports owns the two biggest office pool sites since 2023; their colors still need a
   look at the live sites.
 
