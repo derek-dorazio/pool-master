@@ -28,7 +28,7 @@ import { expectDefined } from '../../support/expect-defined';
 import { InMemoryContestWorld } from '../../support/in-memory-contest-world';
 import { InMemoryGamePicks } from '../../support/in-memory-game-picks';
 import { fakeLogger } from '../../support/fake-logger';
-import { RecordingLeaderboardRebuilds } from '../../support/recording-leaderboard-rebuilds';
+import { contestRebuildJob, RecordingLeaderboardRebuilds } from '../../support/recording-leaderboard-rebuilds';
 
 const HOUR = 60 * 60 * 1000;
 /** The test's clock starts two hours before the week's first kickoff. */
@@ -507,6 +507,18 @@ describe('PredictionService — rebuilding the stored leaderboard (#1435)', () =
 
     await context.service.submitGamePicks(context.input);
     expect(context.leaderboards.contestIds).toEqual([context.contest.id]);
+  });
+
+  it('writes the contest\'s rebuild job with the submitted week itself, and with a change sending it back to draft, but none with a save that keeps a draft a draft (#1466)', async () => {
+    const context = setup();
+    await context.service.saveGamePicks({ ...context.input, picks: [context.pick(context.games.thursday, 3)] });
+    expect(context.week.writtenJobs).toEqual([]);
+
+    await submitFullWeek(context);
+    expect(context.week.writtenJobs).toEqual([contestRebuildJob(context.contest.id)]);
+
+    await context.service.clearGamePick({ ...context.input, sportEventMatchId: context.games.sunday.id });
+    expect(context.week.writtenJobs).toEqual([contestRebuildJob(context.contest.id), contestRebuildJob(context.contest.id)]);
   });
 
   it('rebuilds the contest\'s board when a change sends a submitted week back to draft, and not for a save that keeps a draft a draft', async () => {

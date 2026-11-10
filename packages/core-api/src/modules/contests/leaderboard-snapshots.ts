@@ -102,14 +102,14 @@ export interface LeaderboardChanges {
 export interface LeaderboardRebuilds {
   /** The fields or statuses of these events changed: their contests' boards are rebuilt soon. */
   eventsChanged(sportEventIds: readonly string[]): Promise<void>;
-  /** These contests changed (a pick saved): their boards are rebuilt soon. */
-  contestsChanged(contestIds: readonly string[]): Promise<void>;
   /**
    * The job rebuilding the event's contests' boards, for the write changing its scores, field or
    * status to carry into its own transaction (#1466): a write that fails queues no rebuild, and a
    * failed insert fails the write rather than leaving it saved with an error answered.
    */
   forEvent(sportEventId: string): JobsForWrite;
+  /** The job rebuilding one contest's boards, for a write that changes only that contest (#1466). */
+  forContest(contestId: string): JobsForWrite;
 }
 
 /** Queues a rebuild job per event or contest a write changed, each one waiting at most once. */
@@ -120,15 +120,17 @@ export class JobLeaderboardRebuilds implements LeaderboardRebuilds {
     return this.queue(LeaderboardRebuildSubject.EVENT, sportEventIds);
   }
 
-  contestsChanged(contestIds: readonly string[]): Promise<void> {
-    return this.queue(LeaderboardRebuildSubject.CONTEST, contestIds);
-  }
 
   forEvent(sportEventId: string): JobsForWrite {
-    return {
-      jobs: [rebuildLeaderboardsJob(this.jobs, LeaderboardRebuildSubject.EVENT, sportEventId)],
-      queued: () => this.jobs.queued(),
-    };
+    return this.forWrite(LeaderboardRebuildSubject.EVENT, sportEventId);
+  }
+
+  forContest(contestId: string): JobsForWrite {
+    return this.forWrite(LeaderboardRebuildSubject.CONTEST, contestId);
+  }
+
+  private forWrite(subject: LeaderboardRebuildSubject, id: string): JobsForWrite {
+    return { jobs: [rebuildLeaderboardsJob(this.jobs, subject, id)], queued: () => this.jobs.queued() };
   }
 
   private async queue(subject: LeaderboardRebuildSubject, ids: readonly string[]): Promise<void> {

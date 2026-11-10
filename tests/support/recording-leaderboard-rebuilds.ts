@@ -4,17 +4,26 @@ import type { LeaderboardRebuilds } from '../../packages/core-api/src/modules/co
 
 /** The rebuild job a recording `forEvent` hands a write: what the real one names, for one event. */
 export function eventRebuildJob(sportEventId: string): BackgroundJobRequest {
+  return rebuildJob('EVENT', sportEventId);
+}
+
+/** The rebuild job a recording `forContest` hands a write, for one contest. */
+export function contestRebuildJob(contestId: string): BackgroundJobRequest {
+  return rebuildJob('CONTEST', contestId);
+}
+
+function rebuildJob(subject: 'EVENT' | 'CONTEST', id: string): BackgroundJobRequest {
   return {
     type: BackgroundJobType.REBUILD_LEADERBOARDS,
-    payload: { subject: 'EVENT', id: sportEventId },
-    dedupeKey: `${BackgroundJobType.REBUILD_LEADERBOARDS}:EVENT:${sportEventId}`,
+    payload: { subject, id },
+    dedupeKey: `${BackgroundJobType.REBUILD_LEADERBOARDS}:${subject}:${id}`,
   };
 }
 
 /**
  * Records what each write told the leaderboard rebuilds (#1435), in place of rebuilding anything.
- * A write carrying its rebuild (`forEvent`, #1466) is recorded only once it calls `queued()`,
- * that is once the write has committed; `handedOut` is every event whose job a write was given.
+ * A write carrying its rebuild (`forEvent`, `forContest`, #1466) is recorded only once it calls `queued()`,
+ * that is once the write has committed; `handedOut` is every event or contest whose job a write was given.
  */
 export class RecordingLeaderboardRebuilds implements LeaderboardRebuilds {
   readonly sportEventIds: string[] = [];
@@ -25,12 +34,13 @@ export class RecordingLeaderboardRebuilds implements LeaderboardRebuilds {
     this.sportEventIds.push(...sportEventIds);
   }
 
-  async contestsChanged(contestIds: readonly string[]): Promise<void> {
-    this.contestIds.push(...contestIds);
-  }
-
   forEvent(sportEventId: string): JobsForWrite {
     this.handedOut.push(sportEventId);
     return { jobs: [eventRebuildJob(sportEventId)], queued: () => { this.sportEventIds.push(sportEventId); } };
+  }
+
+  forContest(contestId: string): JobsForWrite {
+    this.handedOut.push(contestId);
+    return { jobs: [contestRebuildJob(contestId)], queued: () => { this.contestIds.push(contestId); } };
   }
 }

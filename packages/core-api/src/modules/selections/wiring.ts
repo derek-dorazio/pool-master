@@ -74,7 +74,7 @@ export function createDrawReceipts(
 export function createPredictionService(
   prisma: PrismaClient,
   logger: FastifyBaseLogger,
-  options?: { email?: EmailService; appBaseUrl?: string; leaderboards?: Pick<LeaderboardRebuilds, 'contestsChanged'> },
+  options?: { email?: EmailService; appBaseUrl?: string; leaderboards?: Pick<LeaderboardRebuilds, 'forContest'> },
 ): PredictionService {
   return new PredictionService({
     contests: new PrismaContestRepository(prisma),

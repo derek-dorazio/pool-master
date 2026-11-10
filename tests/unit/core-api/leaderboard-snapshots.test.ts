@@ -42,20 +42,33 @@ describe('JobLeaderboardRebuilds', () => {
     expect(runner.wake).toHaveBeenCalledTimes(1);
   });
 
-  it('queues one rebuild job per event and per contest a burst of writes names, however often each is named', async () => {
+  it('hands a pick\'em or survivor write the contest\'s rebuild job without queuing it, and wakes the runner only once it committed (#1466)', () => {
+    const { jobs, rebuilds, runner } = setup();
+
+    const rebuild = rebuilds.forContest('contest-9');
+
+    expect(rebuild.jobs).toEqual([{
+      type: BackgroundJobType.REBUILD_LEADERBOARDS,
+      payload: { subject: LeaderboardRebuildSubject.CONTEST, id: 'contest-9' },
+      dedupeKey: `${BackgroundJobType.REBUILD_LEADERBOARDS}:CONTEST:contest-9`,
+    }]);
+    expect(waiting(jobs)).toEqual([]);
+    expect(runner.wake).not.toHaveBeenCalled();
+    rebuild.queued();
+    expect(runner.wake).toHaveBeenCalledTimes(1);
+  });
+
+  it('queues one rebuild job per event a burst of writes names, however often each is named', async () => {
     const { jobs, rebuilds, runner } = setup();
 
     await rebuilds.eventsChanged(['event-1', 'event-1', 'event-2']);
     await rebuilds.eventsChanged(['event-1']);
-    await rebuilds.contestsChanged(['contest-9']);
-    await rebuilds.contestsChanged(['contest-9']);
 
     expect(waiting(jobs)).toEqual([
       { type: BackgroundJobType.REBUILD_LEADERBOARDS, payload: { subject: LeaderboardRebuildSubject.EVENT, id: 'event-1' } },
       { type: BackgroundJobType.REBUILD_LEADERBOARDS, payload: { subject: LeaderboardRebuildSubject.EVENT, id: 'event-2' } },
-      { type: BackgroundJobType.REBUILD_LEADERBOARDS, payload: { subject: LeaderboardRebuildSubject.CONTEST, id: 'contest-9' } },
     ]);
-    expect(runner.wake).toHaveBeenCalledTimes(4);
+    expect(runner.wake).toHaveBeenCalledTimes(2);
   });
 
   it('queues one more rebuild for a write made while the event\'s rebuild runs, so that write is not missed', async () => {
@@ -70,11 +83,10 @@ describe('JobLeaderboardRebuilds', () => {
     expect(jobs.rows.map((row) => row.status)).toEqual([BackgroundJobStatus.RUNNING, BackgroundJobStatus.QUEUED]);
   });
 
-  it('writes nothing and wakes nothing when a write named no event or contest', async () => {
+  it('writes nothing and wakes nothing when a write named no event', async () => {
     const { jobs, rebuilds, runner } = setup();
 
     await rebuilds.eventsChanged([]);
-    await rebuilds.contestsChanged([]);
 
     expect(jobs.rows).toEqual([]);
     expect(runner.wake).not.toHaveBeenCalled();
