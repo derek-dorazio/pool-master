@@ -29,10 +29,10 @@ describe('pool-master-98i system email templates', () => {
     expect(message.templateKey).toBe('LEAGUE_MEMBER_INVITE');
     expect(message.subject).toBe('Commissioner One invited you to Mathworks');
     expect(message.text).toContain('Primetime Commissioner');
-    expect(message.text).toContain('The ultimate office pool manager and other game-day contests');
+    expect(message.text).toContain('The ultimate game-day contest manager');
     expect(message.text).toContain('Join league: https://app.primetimecommissioner.com/invite/abc123');
     expect(message.html).toContain('Primetime Commissioner');
-    expect(message.html).toContain('The ultimate office pool manager and other game-day contests');
+    expect(message.html).toContain('The ultimate game-day contest manager');
     expect(message.html).toContain('background:#0b1e3f');
     expect(message.html).toContain('background:#f5b800');
   });
