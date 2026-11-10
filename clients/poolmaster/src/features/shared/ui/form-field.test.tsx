@@ -95,4 +95,25 @@ describe("pool-master-3lo.4: shared form field primitives", () => {
     expect(password).toHaveAttribute("aria-invalid", "true");
     expect(screen.getByRole("button", { name: "Show password" })).toBeDisabled();
   });
+
+  it("toggles a password input inside a form without submitting the form", () => {
+    let submitCount = 0;
+    render(
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          submitCount += 1;
+        }}
+      >
+        <PasswordInput aria-label="Password" />
+      </form>,
+    );
+
+    const toggle = screen.getByRole("button", { name: "Show password" });
+    expect(toggle).toHaveAttribute("type", "button");
+
+    fireEvent.click(toggle);
+    expect(screen.getByLabelText("Password")).toHaveAttribute("type", "text");
+    expect(submitCount).toBe(0);
+  });
 });

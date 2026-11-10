@@ -33,10 +33,10 @@ import {
   FormModal,
   Heading,
   Input,
-  PasswordInput,
   LinkButton,
   Modal,
   MutationActionToast,
+  PasswordInput,
   Select,
   Tile,
   TimeZoneSelect,
@@ -856,6 +856,7 @@ export function UserPage() {
             label="New password"
           >
             <PasswordInput
+              autoComplete="new-password"
               data-testid="user-page-new-password"
               disabled={disablePasswordEditing}
               {...passwordForm.register('newPassword', {
@@ -868,6 +869,7 @@ export function UserPage() {
             label="Confirm new password"
           >
             <PasswordInput
+              autoComplete="new-password"
               data-testid="user-page-confirm-password"
               disabled={disablePasswordEditing}
               {...passwordForm.register('confirmNewPassword', {
