@@ -13,6 +13,7 @@
  */
 
 import { z } from 'zod';
+import { balldontliePaginationSchema } from './balldontlie-client';
 
 /** The vendor's normalized lifecycle state (`PGAStatusState`), shared by tournaments and rounds. */
 export const PgaStatusState = {
@@ -48,11 +49,6 @@ export const PgaCompetitorType = {
 export type PgaCompetitorType = (typeof PgaCompetitorType)[keyof typeof PgaCompetitorType];
 
 const statusStateSchema = z.enum(PgaStatusState);
-
-/** `Pagination`: `next_cursor` is absent (or null) on the last page. */
-export const pgaPaginationSchema = z.object({
-  next_cursor: z.number().int().nullable().optional(),
-});
 
 /** `PGATournamentRound`, one round's state inside a tournament. */
 export const pgaTournamentRoundSchema = z.object({
@@ -90,7 +86,7 @@ export type PgaTournament = z.infer<typeof pgaTournamentSchema>;
 
 export const pgaTournamentListSchema = z.object({
   data: z.array(pgaTournamentSchema),
-  meta: pgaPaginationSchema.optional(),
+  meta: balldontliePaginationSchema.optional(),
 });
 
 /** `PGAPlayerSummaryV2`, the player on a competitor or a result. */
@@ -115,7 +111,7 @@ export type PgaTournamentCompetitor = z.infer<typeof pgaTournamentCompetitorSche
 
 export const pgaTournamentCompetitorListSchema = z.object({
   data: z.array(pgaTournamentCompetitorSchema),
-  meta: pgaPaginationSchema.optional(),
+  meta: balldontliePaginationSchema.optional(),
 });
 
 /**
@@ -137,7 +133,7 @@ export type PgaPlayer = z.infer<typeof pgaPlayerSchema>;
 
 export const pgaPlayerListSchema = z.object({
   data: z.array(pgaPlayerSchema),
-  meta: pgaPaginationSchema.optional(),
+  meta: balldontliePaginationSchema.optional(),
 });
 
 /** `PGAResultRoundV2`, one round on a result row. */
@@ -166,5 +162,5 @@ export type PgaTournamentResult = z.infer<typeof pgaTournamentResultSchema>;
 
 export const pgaTournamentResultListSchema = z.object({
   data: z.array(pgaTournamentResultSchema),
-  meta: pgaPaginationSchema.optional(),
+  meta: balldontliePaginationSchema.optional(),
 });

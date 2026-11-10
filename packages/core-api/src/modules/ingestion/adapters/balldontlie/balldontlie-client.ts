@@ -7,13 +7,18 @@
  * `ApiKeyAuth` scheme says (no "Bearer" prefix).
  */
 
-import type { z } from 'zod';
+import { z } from 'zod';
 import { errorMessage } from '../../../../core/error-message';
 import type { ProviderPayloadRecorder } from '../provider-payload-recorder';
 
 /** A query value: arrays are sent once per item, under the key exactly as given (`tournament_ids[]`). */
 export type BalldontlieQueryValue = string | number | boolean | readonly (string | number)[];
 export type BalldontlieQuery = Readonly<Record<string, BalldontlieQueryValue | undefined>>;
+
+/** `Pagination`, on every league's list responses: `next_cursor` is absent (or null) on the last page. */
+export const balldontliePaginationSchema = z.object({
+  next_cursor: z.number().int().nullable().optional(),
+});
 
 /** A list response: its rows and the documented `Pagination` meta. */
 export interface BalldontliePage<Row> {

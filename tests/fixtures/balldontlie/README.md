@@ -4,7 +4,7 @@ What the BALLDONTLIE adapter's tests read, and the vendor document they are held
 adapter was built before any account existed, so everything here comes from the vendor's
 published OpenAPI document, not from recorded traffic.
 
-- `openapi/pga.yml` is the vendor's PGA TOUR document, vendored unchanged below a three-line
+- `openapi/pga.yml` and `openapi/nfl.yml` are the vendor's PGA TOUR and NFL documents, each vendored unchanged below a three-line
   header that names its source, date and hash. `npm run balldontlie:contract-check` says when
   the live document differs; `-- --update-spec` refreshes the copy, and the contract tests then
   show whether anything the adapter reads moved.
@@ -15,6 +15,10 @@ published OpenAPI document, not from recorded traffic.
   whose state the vendor calls `unknown` (43), a team-format one (44), their fields, the players'
   world rankings, and results with a cut, a withdrawal, a back-nine start and a finished round.
   Every one must fit the document's response schema (`pga-contract.test.ts`).
+- `nfl/*.json` are written to the NFL document's schemas, which give no response examples for
+  games or teams: a 2026 regular season week with a final, a live, a scheduled and an `unknown`
+  game; the complete 2025 postseason; the 2026 postseason part way through; and the teams in
+  them. Every one must fit the document (`nfl-contract.test.ts`).
 
 ## Assumptions to confirm against the real API
 
@@ -31,6 +35,13 @@ The first things to check once a key exists, each read by `npm run balldontlie:c
   it against the tournament's real field by eye.
 - `format_type` is served only when `include_format=true` is sent, which every tournament read
   does (the fake drops it otherwise).
+- NFL: `season_types[]=3` returns the 13 playoff games and nothing else (no Pro Bowl), since a
+  postseason is called complete only once it has 13 games done. `--nfl-event nfl-2025-postseason`
+  prints the count.
+- NFL: a game's `id`, `season`, `week`, `postseason`, `date` and both teams' `id` and
+  `full_name` are always sent, though the document requires none of them; a game missing one
+  fails the sync with the field named. A score is sent once a game starts; before kickoff the
+  adapter ignores any.
 
 When an account exists, replace or add fixtures with recorded responses and keep the
 doc-example files: the pair shows where the vendor's document and its API disagree.
