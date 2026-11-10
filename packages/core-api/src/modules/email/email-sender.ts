@@ -24,8 +24,12 @@ const CLAIM_MS = 5 * 60_000;
 const THROTTLED_DELAY_MS = 10_000;
 const TICK_MS = 15_000;
 const SECOND_MS = 1000;
-/** Subjects and bodies are cleared this long after an email is created; the row stays. */
-const CONTENT_KEPT_MS = 30 * 24 * 60 * 60_000;
+/**
+ * Subjects and bodies are cleared this long after an email is created; the row stays. Nearly
+ * every email is about something happening now or within days, so a week is enough to answer
+ * what an email said.
+ */
+const CONTENT_KEPT_MS = 7 * 24 * 60 * 60_000;
 const CONTENT_SWEEP_EVERY_MS = 60 * 60_000;
 /**
  * Each hourly sweep clears the emails that crossed CONTENT_KEPT_MS in the last week, not every

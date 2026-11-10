@@ -51,11 +51,15 @@ Every email is a row in `email_messages` (#844 slice 3), one per recipient:
   would be sent or retried later is marked `FAILED` with its content cleared
   (`email.sender.expired`). Emails with a window are claimed ahead of the rest, so a reset never
   waits behind a large send.
-- **Content is cleared after 30 days**; the row stays, so "why didn't I get it?" still has an
-  answer. The hourly sweep clears the emails that crossed 30 days in the past week, so it reads
-  the `created_at` index rather than every email it already cleared.
-- **The row is deleted after 13 months**, by the nightly cleanup (`core/nightly-cleanup.ts`, the
-  `emailMessages` count in its `nightlyCleanup.completed` log line).
+- **Content is cleared after 7 days**; the row stays, so "why didn't I get it?" still has an
+  answer. Nearly every email is about something happening now or within days, so a week is
+  enough to see what one said. The hourly sweep clears the emails that crossed 7 days in the
+  past week, so it reads the `created_at` index rather than every email it already cleared.
+- **The row is deleted after 30 days**, by the nightly cleanup (`core/nightly-cleanup.ts`, the
+  `emailMessages` count in its `nightlyCleanup.completed` log line). A row must outlive every
+  "already told?" check that reads it, or a sweep sends its email again. The longest is the plan
+  preview's 30-day reminder, checked daily until the 7-day one is due, about 22 days on, so
+  don't shorten this below that.
 - **After it is sent**, SES reports what happened, and the row moves on from `SENT` to
   `DELIVERED`, `BOUNCED` or `COMPLAINED`, or to `FAILED` when SES rejected it (*Bounces and
   Complaints* below).
@@ -453,7 +457,7 @@ Password reset emails (#847) are queued like every other email, from the app's `
 address. Queuing wakes the sender, so the email goes out at once; the link expires 10 minutes
 after it is issued. They have no switch in EMAIL_CONFIG (only the overall one), and because the
 email carries the link, the outbox clears its subject and bodies the moment it is sent or given
-up on instead of keeping them for 30 days. The request route has already answered 202 by then,
+up on instead of keeping them for 7 days. The request route has already answered 202 by then,
 the same answer it gives when no account matches, so a failure is only logged (user id, never
 the address, token or link) and the person asks again.
 

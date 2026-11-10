@@ -14,6 +14,7 @@ import {
   Button,
   FormField,
   Input,
+  PasswordInput,
   TimeZoneSelect,
   browserTimeZone,
 } from "@/features/shared/ui";
@@ -201,16 +202,15 @@ export function SignUpForm({
       </FormField>
 
       <FormField error={form.formState.errors.password?.message} label="Create password">
-        <Input {...form.register("password")} autoComplete="new-password" data-testid="sign-up-password" placeholder="Create a password" type="password" />
+        <PasswordInput {...form.register("password")} autoComplete="new-password" data-testid="sign-up-password" placeholder="Create a password" />
       </FormField>
 
       <FormField error={form.formState.errors.confirmPassword?.message} label="Confirm password">
-        <Input
+        <PasswordInput
           {...form.register("confirmPassword")}
           autoComplete="new-password"
           data-testid="sign-up-confirm-password"
           placeholder="Re-enter your password"
-          type="password"
         />
       </FormField>
 

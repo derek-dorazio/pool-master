@@ -406,7 +406,7 @@ describe('email sender', () => {
     expect(sent).toEqual(['member1@gmail.com', 'member2@gmail.com']);
   });
 
-  it('clears the content of emails that turned 30 days old in the last week, and leaves older emails to the sweeps that already cleared them', async () => {
+  it('clears the content of emails that turned 7 days old in the last week, and leaves older emails to the sweeps that already cleared them', async () => {
     const time = clock();
     const outbox = inMemoryEmailMessages(time.now);
     // Due long after the test, so the drain sends neither and only the sweep touches them.
@@ -414,12 +414,12 @@ describe('email sender', () => {
     await outbox.record(queued(1, later));
     time.advance(8 * DAY);
     await outbox.record(queued(2, later));
-    time.advance(31 * DAY);
+    time.advance(8 * DAY);
     const { transport } = recordingTransport();
 
     await sender({ outbox, transport, time }).drain();
 
-    // The first is 39 days old, past the sweep's 30-to-37-day window; the second is 31 days old.
+    // The first is 16 days old, past the sweep's 7-to-14-day window; the second is 8 days old.
     expect(outbox.rows.map((row) => row.subject)).toEqual(['Welcome to Office League', undefined]);
   });
 
@@ -473,7 +473,7 @@ describe('email sender', () => {
     );
   });
 
-  it('clears the subject and bodies of emails older than 30 days, at most once an hour, keeping the rows', async () => {
+  it('clears the subject and bodies of emails older than 7 days, at most once an hour, keeping the rows', async () => {
     const time = clock();
     const outbox = inMemoryEmailMessages(time.now);
     await outbox.record({ ...queued(1), status: 'SKIPPED', skipReason: 'EMAIL_DISABLED' });
@@ -482,7 +482,7 @@ describe('email sender', () => {
     const emailSender = sender({ outbox, transport, time });
     await emailSender.drain();
 
-    time.advance(30 * 24 * 60 * MINUTE + 1);
+    time.advance(7 * 24 * 60 * MINUTE + 1);
     await outbox.record(queued(3, { dueAt: new Date(time.now().getTime() + MINUTE) }));
     await emailSender.drain();
 

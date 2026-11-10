@@ -26,7 +26,9 @@ The shared UI layer is split into three levels:
    table that needs search or sorting is a `DataGrid`. Copy to clipboard is a
    `CopyButton` (`iconOnly` in a tight spot), which says Copied, shows an inline
    error when the browser refuses and logs it; feature code never calls
-   `navigator.clipboard` itself.
+   `navigator.clipboard` itself. A password box is a `PasswordInput`,
+   which carries its own Show password eye button; never hand-type
+   `type="password"` on an `Input`.
 2. **Templates** compose primitives into repeated page or modal workflows, such
    as `ManagementListPage`, `EntityDetailPage`, `FormModal`, and
    `ConfirmationModal`.
