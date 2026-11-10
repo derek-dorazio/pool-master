@@ -5,7 +5,7 @@ import {
   type NightlyCleanupStep,
   type NightlyCleanupStepName,
 } from '../../../packages/core-api/src/core/nightly-cleanup';
-import { EmailMessageRetention } from '../../../packages/core-api/src/modules/email';
+import { EMAIL_MESSAGES_KEPT_DAYS, EmailMessageRetention, PLAN_PREVIEW_REMINDER_DAYS } from '../../../packages/core-api/src/modules/email';
 import {
   SyncRunDetailsRetention,
   SyncRunRetention,
@@ -138,8 +138,8 @@ describe('deleting in batches', () => {
 });
 
 describe('email retention', () => {
-  it('deletes emails created more than 13 months ago and keeps newer ones', async () => {
-    let now = new Date('2025-09-01T00:00:00.000Z');
+  it('deletes emails created more than 30 days ago and keeps newer ones', async () => {
+    let now = new Date('2026-09-28T00:00:00.000Z');
     const outbox = inMemoryEmailMessages(() => now);
     const base = {
       templateKey: 'LEAGUE_JOIN_SUCCESS' as const,
@@ -153,13 +153,22 @@ describe('email retention', () => {
       dueAt: now,
     };
     await outbox.record({ ...base, idempotencyKey: 'old' });
-    now = new Date('2025-10-01T00:00:00.000Z');
+    now = new Date('2026-09-30T00:00:00.000Z');
     await outbox.record({ ...base, idempotencyKey: 'kept' });
 
     const deleted = await new EmailMessageRetention(outbox).purge(new Date('2026-10-29T08:00:00.000Z'));
 
     expect(deleted).toBe(1);
     expect(outbox.rows.map((row) => row.idempotencyKey)).toEqual(['kept']);
+  });
+});
+
+describe('email retention floor', () => {
+  it('keeps outbox rows at least as long as the plan preview\'s first reminder is checked for, so no league is reminded twice', () => {
+    // The 30-day reminder's row is read by every daily sweep until the 7-day one is due.
+    const [first, second] = PLAN_PREVIEW_REMINDER_DAYS;
+
+    expect(EMAIL_MESSAGES_KEPT_DAYS).toBeGreaterThanOrEqual(first - second);
   });
 });
 

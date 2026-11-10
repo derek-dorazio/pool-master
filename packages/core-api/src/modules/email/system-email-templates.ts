@@ -783,7 +783,7 @@ export interface EmailTemplateDefinition<Key extends SystemEmailTemplateKey> {
    */
   settingsSwitch: boolean;
   /**
-   * Whether the outbox keeps the email's subject and bodies once it is sent (for 30 days). False
+   * Whether the outbox keeps the email's subject and bodies once it is sent (for 7 days). False
    * for an email that carries a secret, such as a password reset link: the outbox clears it the
    * moment the email is sent or given up on.
    */
