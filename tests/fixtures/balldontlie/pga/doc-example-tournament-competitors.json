@@ -1,0 +1,48 @@
+{
+  "data": [
+    {
+      "id": 1836,
+      "tournament_id": 85,
+      "type": "PAIRING",
+      "display_name": "Scottie Scheffler / Russell Henley",
+      "short_name": "S. Scheffler / R. Henley",
+      "country": null,
+      "country_code": null,
+      "team_name": "United States",
+      "team_color": "#ED0000",
+      "parent_competitor_id": 340910,
+      "player": null,
+      "members": [
+        {
+          "player": {
+            "id": 185,
+            "first_name": "Scottie",
+            "last_name": "Scheffler",
+            "display_name": "Scottie Scheffler",
+            "country": "United States",
+            "country_code": "USA"
+          },
+          "display_order": 1,
+          "role": "member"
+        },
+        {
+          "player": {
+            "id": 75,
+            "first_name": "Russell",
+            "last_name": "Henley",
+            "display_name": "Russell Henley",
+            "country": "United States",
+            "country_code": "USA"
+          },
+          "display_order": 2,
+          "role": "member"
+        }
+      ],
+      "roster": []
+    }
+  ],
+  "meta": {
+    "next_cursor": 1836,
+    "per_page": 1
+  }
+}

@@ -73,7 +73,9 @@ function scoringFloors() {
  * logic, route handlers (#1482), core-api's mappers (#1481), shared domain and shared DTOs, each
  * file at 90% lines and 80% branches. Left out, since a unit test is not what proves them: routes,
  * wiring, job-request declarations, repositories, barrels, and ingestion's provider adapters and
- * persistence, which are database and network calls the integration suite covers.
+ * persistence, which are database and network calls the integration suite covers. The BALLDONTLIE
+ * adapter is the exception among adapters: no live API reaches CI, so its unit tests, run against
+ * the vendor's own published document, are what proves it, and it is held to the same floor.
  */
 function logicFloors() {
   const root = path.join(__dirname, '..');
@@ -84,6 +86,7 @@ function logicFloors() {
     path.join(modules, `!(ingestion)/**/${logicFile}`),
     path.join(modules, `ingestion/${logicFile}`),
     path.join(modules, `ingestion/!(adapters|persistence)/**/${logicFile}`),
+    path.join(modules, `ingestion/adapters/balldontlie/${logicFile}`),
     path.join(root, 'packages/core-api/src/mappers/!(index).ts'),
     path.join(root, 'packages/shared/domain/**/*.ts'),
     path.join(root, 'packages/shared/dto/**/*.ts'),

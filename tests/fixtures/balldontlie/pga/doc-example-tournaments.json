@@ -1,0 +1,86 @@
+{
+  "data": [
+    {
+      "id": 40,
+      "season": 2026,
+      "name": "Wyndham Championship",
+      "start_date": "2026-08-06",
+      "end_date": "2026-08-09",
+      "date_range": "Aug 6 - 9",
+      "city": "Greensboro",
+      "state": "North Carolina",
+      "country": "United States of America",
+      "course_name": "Sedgefield Country Club",
+      "purse": "$8,500,000",
+      "status": "COMPLETED",
+      "status_state": "final",
+      "champion": {
+        "id": 10,
+        "first_name": "Michael",
+        "last_name": "Brennan",
+        "display_name": "Michael Brennan",
+        "country": "United States",
+        "country_code": "USA",
+        "height": "6'1\"",
+        "weight": null,
+        "birth_date": "Feb 9, 2002",
+        "birthplace_city": "Leesburg",
+        "birthplace_state": "Virginia",
+        "birthplace_country": "United States",
+        "turned_pro": "2024",
+        "school": "Wake Forest University",
+        "residence_city": "Jacksonville",
+        "residence_state": "Florida",
+        "residence_country": "United States",
+        "owgr": 35,
+        "active": true
+      },
+      "courses": [
+        {
+          "course": {
+            "id": 18,
+            "name": "Sedgefield Country Club",
+            "city": "Greensboro",
+            "state": "North Carolina",
+            "country": "USA",
+            "par": 70,
+            "yardage": "7,131",
+            "established": "1926",
+            "architect": "Donald Ross",
+            "fairway_grass": "Bermudagrass",
+            "rough_grass": "Bermudagrass",
+            "green_grass": "Bermudagrass"
+          },
+          "rounds": []
+        }
+      ],
+      "rounds": [
+        {
+          "round_number": 1,
+          "status": "OFFICIAL",
+          "status_state": "final"
+        },
+        {
+          "round_number": 2,
+          "status": "OFFICIAL",
+          "status_state": "final"
+        },
+        {
+          "round_number": 3,
+          "status": "OFFICIAL",
+          "status_state": "final"
+        },
+        {
+          "round_number": 4,
+          "status": "OFFICIAL",
+          "status_state": "final"
+        }
+      ],
+      "format_type": "STROKE_PLAY"
+    }
+  ],
+  "meta": {
+    "next_cursor": 40,
+    "per_page": 1
+  }
+}

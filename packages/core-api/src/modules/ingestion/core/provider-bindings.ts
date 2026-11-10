@@ -1,12 +1,14 @@
 import type { FastifyBaseLogger } from 'fastify';
 import type { SportDataProvider } from './provider-interface';
 import type { ProviderRegistry } from './provider-registry';
-import { MockContestFeedAdapter } from '../adapters';
+import { BALLDONTLIE_PROVIDER_ID, BalldontlieAdapter, MockContestFeedAdapter } from '../adapters';
 import { AppEnvironment, isDeployedEnvironment, readAppEnv } from '../../../core/config';
 import { errorMessage } from '../../../core/error-message';
 
 export interface ProviderBinding {
   readonly baseUrl?: string;
+  /** The provider plan's request limit, for adapters that pace themselves (BALLDONTLIE). */
+  readonly requestsPerMinute?: number;
 }
 
 export interface ProviderBindingsConfig {
@@ -27,6 +29,20 @@ const providerFactories: Readonly<Partial<Record<string, ProviderFactory>>> = {
       throw new Error('Provider "mock-contest-feed" requires a baseUrl binding.');
     }
     return new MockContestFeedAdapter(binding.baseUrl);
+  },
+  // The key comes from Secrets Manager through the task definition, never from the binding JSON.
+  [BALLDONTLIE_PROVIDER_ID]: (binding, env) => {
+    if (!binding.baseUrl) {
+      throw new Error(`Provider "${BALLDONTLIE_PROVIDER_ID}" requires a baseUrl binding.`);
+    }
+    if (binding.requestsPerMinute === undefined) {
+      throw new Error(`Provider "${BALLDONTLIE_PROVIDER_ID}" requires a requestsPerMinute binding: its plan's rate limit.`);
+    }
+    const apiKey = env['BALLDONTLIE_API_KEY']?.trim();
+    if (!apiKey) {
+      throw new Error(`Provider "${BALLDONTLIE_PROVIDER_ID}" requires the BALLDONTLIE_API_KEY environment variable.`);
+    }
+    return new BalldontlieAdapter({ baseUrl: binding.baseUrl, apiKey, requestsPerMinute: binding.requestsPerMinute });
   },
 };
 
