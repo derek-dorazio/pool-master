@@ -16,9 +16,8 @@ import {
 import { getLogger } from '@/lib/logger';
 import { chooseContestHistoryYear } from './contest-history';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
-import { ContestsPageHeader } from './contests-view-switch';
+import { ContestsPageHeader } from './contests-page-header';
 import { useContestFinishedYearsQuery } from './use-league-contests-query';
-
 
 /**
  * Contest History (#837): one year's completed contests at a time, newest first, each with its
@@ -33,7 +32,6 @@ export function LeagueContestHistoryPage() {
 
   // #202 — one league-context call, shared. Carries the viewer's own edges (A8).
   const { query: leagueQuery, league } = useLeagueContext(leagueCode);
-
 
   useEffect(() => {
     if (!leagueQuery.isError) {
@@ -80,12 +78,21 @@ export function LeagueContestHistoryPage() {
     );
   }
 
-
   return (
     <section className="space-y-6" data-testid="league-contest-history-page">
       <ContestsPageHeader
-        description="Completed contests, with final standings and revealed picks."
         leagueCode={league.leagueCode}
+        tabsEnd={year === null ? undefined : (
+          <Select
+            aria-label="Year"
+            className="w-auto"
+            data-testid="league-contests-history-year"
+            onChange={(event) => setSearchParams({ year: event.target.value }, { replace: true })}
+            value={year}
+          >
+            {years.map((option) => <option key={option} value={option}>{option}</option>)}
+          </Select>
+        )}
         view="past"
       />
 
@@ -98,25 +105,9 @@ export function LeagueContestHistoryPage() {
       ) : (
         <Tile data-testid="league-contests-history">
           <div className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <Heading level={2} variant="card" size="xl">Completed in {year}</Heading>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Open a completed contest to view final standings and revealed picks.
-              </p>
-            </div>
-            <div className="flex items-center gap-3">
-              {/* poolmaster-allow-list-lookup: counts the results listed right below it */}
-              {resultsQuery.data ? <Chip tone="info">{resultsQuery.data.length}</Chip> : null}
-              <Select
-                aria-label="Year"
-                className="w-auto"
-                data-testid="league-contests-history-year"
-                onChange={(event) => setSearchParams({ year: event.target.value }, { replace: true })}
-                value={year}
-              >
-                {years.map((option) => <option key={option} value={option}>{option}</option>)}
-              </Select>
-            </div>
+            <Heading level={2} variant="card" size="xl">Completed in {year}</Heading>
+            {/* poolmaster-allow-list-lookup: counts the results listed right below it */}
+            {resultsQuery.data ? <Chip tone="info">{resultsQuery.data.length}</Chip> : null}
           </div>
 
           <div className="mt-5">

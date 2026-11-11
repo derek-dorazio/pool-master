@@ -65,10 +65,9 @@ export function TeamsPage() {
   return (
     <section className="space-y-6" data-testid="teams-page">
       <PageHeader
-        actions={(
+        search={(
           <Input
             aria-label={SEARCH_LABEL}
-            className="sm:w-72"
             data-testid="teams-search"
             onChange={(event) => setSearchTerm(event.target.value)}
             placeholder={SEARCH_LABEL}

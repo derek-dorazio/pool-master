@@ -79,8 +79,9 @@ with its own buttons, is a plain `Modal`.
 
 Every page starts with one `PageHeader`: its title straight on the page (never in
 a card), an optional `icon` or `avatar`, an optional `meta` fact line ("12 members
-· 2 active contests"), and a right slot (`actions`) for at most two small buttons
-or the page's search box. A `description` is only for a rule the reader needs or
+· 2 active contests"), and a right slot: `actions` for at most two small
+buttons, or `search` for the page's search box, which takes a full-width line on a
+phone. A `description` is only for a rule the reader needs or
 the entity's own words, never a sentence saying what the page is. A page's views
 are `PageTabs` in the header's `tabs` slot — `variant="link"` for views with
 their own address, `variant="state"` inside the page's own `Tabs` root — and a
