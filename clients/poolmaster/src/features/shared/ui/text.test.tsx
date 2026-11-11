@@ -1,14 +1,16 @@
 import { render, screen } from '@testing-library/react';
+import { MemoryRouter, Link } from 'react-router';
 import { describe, expect, it } from 'vitest';
 import { Text } from './text';
 
 describe('Text', () => {
-  it('sets running text small in the foreground colour, as a span by default', () => {
+  it('sets running text small in the colour of the text around it, as a span by default', () => {
     render(<Text>Picks lock at the first tee time.</Text>);
 
     const text = screen.getByText('Picks lock at the first tee time.');
     expect(text.tagName).toBe('SPAN');
-    expect(text).toHaveClass('text-sm', 'text-foreground');
+    expect(text).toHaveClass('text-sm');
+    expect(text.className).not.toMatch(/text-(foreground|muted-foreground)/);
   });
 
   it('sets a meta line small and muted', () => {
@@ -72,10 +74,35 @@ describe('Text', () => {
     expect(screen.getByText('Plain words').className).not.toMatch(/font-/);
   });
 
+  it('keeps the size of the text around it when asked, for a name inside a larger line', () => {
+    render(<Text size="inherit" variant="strong">Casey Crushers</Text>);
+
+    expect(screen.getByText('Casey Crushers').className).not.toMatch(/text-(xs|sm|base|lg)/);
+  });
+
+  it.each(['xs', 'base', 'lg'] as const)('sets the %s size in place of the variant\'s own', (size) => {
+    render(<Text size={size} variant="value">42</Text>);
+
+    expect(screen.getByText('42')).toHaveClass(`text-${size}`);
+    expect(screen.getByText('42')).not.toHaveClass('text-sm');
+  });
+
   it('cuts a long line short with an ellipsis when asked', () => {
     render(<Text truncate>A very long entry name</Text>);
 
     expect(screen.getByText('A very long entry name')).toHaveClass('truncate');
+  });
+
+  it('styles its child instead when asked, so a linked name keeps the look', () => {
+    render(
+      <MemoryRouter>
+        <Text asChild variant="strong" weight="semibold"><Link to="/teams/1">Casey Crushers</Link></Text>
+      </MemoryRouter>,
+    );
+
+    const link = screen.getByRole('link', { name: 'Casey Crushers' });
+    expect(link).toHaveAttribute('href', '/teams/1');
+    expect(link).toHaveClass('font-semibold', 'text-foreground');
   });
 
   it('renders as the element asked for, such as a paragraph', () => {

@@ -1,4 +1,4 @@
-import { cn } from '@/features/shared/ui';
+import { cn, Text } from '@/features/shared/ui';
 import { formatCupPoints, type RaceSeries } from './cup-view';
 
 const WIDTH = 340;
@@ -26,7 +26,7 @@ function linePoints(points: number[], steps: number, max: number) {
 export function CupRaceChart({ focusSquadId, series }: { focusSquadId: string | null; series: RaceSeries[] }) {
   const steps = Math.max(0, ...series.map((line) => line.points.length - 1));
   if (steps === 0) {
-    return <p className="text-sm text-muted-foreground">The chart starts once a contest has counted.</p>;
+    return <Text as="p" variant="meta">The chart starts once a contest has counted.</Text>;
   }
   const max = Math.max(1, ...series.flatMap((line) => line.points));
   const summary = series
@@ -58,11 +58,17 @@ export function CupRaceChart({ focusSquadId, series }: { focusSquadId: string | 
           />
         ))}
       </svg>
-      <figcaption className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+      <figcaption className="flex flex-wrap gap-x-4 gap-y-1">
         {series.map((line, index) => (
           <span className="inline-flex items-center gap-1.5" key={line.squadId}>
             <span aria-hidden className={cn('h-2 w-3 rounded-sm', SERIES_SWATCHES[index % SERIES_SWATCHES.length])} />
-            <span className={line.squadId === focusSquadId ? 'font-semibold text-foreground' : undefined}>{line.squadName}</span>
+            <Text
+              tone={line.squadId === focusSquadId ? 'default' : undefined}
+              variant="caption"
+              weight={line.squadId === focusSquadId ? 'semibold' : undefined}
+            >
+              {line.squadName}
+            </Text>
           </span>
         ))}
       </figcaption>

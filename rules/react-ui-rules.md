@@ -429,12 +429,14 @@ state, stale actions, and unthemeable markup accumulate.
   (running text), `meta` (the muted line under a name: counts, dates, a team line), `caption`
   (a small aside such as a timestamp), `label` (a column header or field caption, the muted
   eyebrow look), `value` (a number, with lined-up digits) or `strong` (a name that leads its
-  row), with an optional `tone` (`muted`, `danger`, `primary`) and `weight` (`normal`,
-  `medium`, `semibold`, `bold`). Where a pattern repeats inside
+  row), with an optional `tone` (`muted`, `danger`, `primary`), `weight` (`normal`,
+  `medium`, `semibold`, `bold`) and `size` (`inherit` keeps a name inside a larger line at that
+  line's size). `asChild` puts the style on a `Link`. An icon is an `Icon`, whose `tone` colours
+  it. Where a pattern repeats inside
   a composite (`SectionRow`, `PageHeader`'s fact line) the composite owns it, and the page
   passes plain content. Pages keep layout classes (flex, gap, margin, width, text alignment and
   wrapping) and never set font size, weight, family, slant, line height, case, tracking,
-  figures or any text colour (icons included, until icons get a tone on a shared part).
+  figures or any text colour (icons included).
   `rules:check:text-styles` counts those classes in each web source file outside
   `features/shared/ui` against `scripts/text-style-baseline.json`: a file over its entry fails,
   and a file under it fails until its entry is lowered (`node scripts/check-text-styles.mjs

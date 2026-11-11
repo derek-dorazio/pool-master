@@ -1,15 +1,15 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { useMemo } from 'react';
 import type { CupProjectedStandingDto, CupStandingRowDto } from '@/lib/api';
-import { cn } from '@/features/shared/ui';
+import { Text } from '@/features/shared/ui';
 import { describeMovement, formatProjectedStanding } from './cup-view';
 import { squadStandingColumns } from './squad-standing-columns';
 import { SquadStandingsGrid } from './squad-standings-grid';
 
-const MOVEMENT_CLASS = {
-  up: 'text-foreground',
-  down: 'text-destructive',
-  none: 'text-muted-foreground',
+const MOVEMENT_TONE = {
+  up: 'default',
+  down: 'danger',
+  none: 'muted',
 } as const;
 
 /** How far a squad moved since the latest counted contest. */
@@ -22,9 +22,9 @@ const MOVEMENT_COLUMN: ColumnDef<CupStandingRowDto, string | number> = {
   cell: ({ row }) => {
     const movement = describeMovement(row.original.movement);
     return (
-      <span aria-label={movement.description} className={cn('text-xs font-bold', MOVEMENT_CLASS[movement.direction])}>
+      <Text aria-label={movement.description} tone={MOVEMENT_TONE[movement.direction]} variant="caption" weight="bold">
         {movement.label}
-      </span>
+      </Text>
     );
   },
 };
@@ -79,9 +79,9 @@ export function CupStandingsGrid({
         cell: ({ row }: { row: { original: CupStandingRowDto } }) => {
           const projected = projection.get(row.original.squadId);
           return projected ? (
-            <span className="tabular-nums text-muted-foreground" data-testid={`cup-projected-${row.original.squadId}`}>
+            <Text data-testid={`cup-projected-${row.original.squadId}`} tone="muted" variant="value" weight="normal">
               {formatProjectedStanding(projected)}
-            </span>
+            </Text>
           ) : null;
         },
       }] : []),

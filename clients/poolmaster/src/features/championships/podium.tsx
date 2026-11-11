@@ -1,4 +1,4 @@
-import { cn } from '@/features/shared/ui';
+import { cn, Text } from '@/features/shared/ui';
 import { formatCupPoints, joinNames } from './cup-view';
 import type { PodiumStep } from './championship-view';
 
@@ -28,10 +28,10 @@ export function Podium({ focusSquadId, steps, testId }: { focusSquadId: string |
         const isFocus = step.squads.some((squad) => squad.squadId === focusSquadId);
         return (
           <li className="flex flex-col items-center gap-1 text-center" data-testid={`${testId}-${place}`} key={place}>
-            <span className={cn('text-sm text-foreground', isFocus ? 'font-bold' : 'font-semibold')}>
+            <Text variant="strong" weight={isFocus ? 'bold' : 'semibold'}>
               {joinNames(step.squads.map((squad) => squad.squadName))}
-            </span>
-            <span className="text-xs text-muted-foreground">{formatCupPoints(step.squads[0]?.points ?? 0)} pts</span>
+            </Text>
+            <Text variant="caption">{formatCupPoints(step.squads[0]?.points ?? 0)} pts</Text>
             <span className={cn('flex w-full items-center justify-center rounded-t-lg text-xl font-black', STEP_CLASS[place])}>
               {place}
             </span>
