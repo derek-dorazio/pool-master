@@ -99,7 +99,7 @@ export function PageHeader({
           className="mb-2 flex items-center justify-between gap-3"
           data-testid={testId ? `${testId}-trail-row` : undefined}
         >
-          <Breadcrumbs className="min-w-0" items={breadcrumbs ?? []} label={breadcrumbLabel} />
+          <Breadcrumbs className="min-w-0" items={breadcrumbs ?? []} label={breadcrumbLabel} singleLine />
           {statusSlot}
         </div>
       ) : null}
@@ -116,7 +116,10 @@ export function PageHeader({
             {titleAside}
           </div>
           {meta ? (
-            <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
+            // Each fact the page passes as its own element is set off from the one before by a dot.
+            <div className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm text-muted-foreground [&>*+*]:before:mr-1.5 [&>*+*]:before:content-['·']"
+              data-testid={testId ? `${testId}-meta` : undefined}
+            >
               {meta}
             </div>
           ) : null}
@@ -153,19 +156,25 @@ export function PageHeader({
   );
 }
 
-/** A trail of links up to the current page, which is marked with `aria-current`. */
+/**
+ * A trail of links up to the current page, which is marked with `aria-current`. `singleLine`
+ * keeps it to one line, shortening long names with an ellipsis, as on a page header's first line
+ * beside its status chip.
+ */
 export function Breadcrumbs({
   className,
   items,
   label = "Breadcrumbs",
+  singleLine = false,
 }: {
   className?: string;
   items: Breadcrumb[];
   label?: string;
+  singleLine?: boolean;
 }) {
   return (
     <nav aria-label={label} className={className}>
-      <ol className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+      <ol className={cn("flex items-center gap-2 text-sm text-muted-foreground", singleLine ? "flex-nowrap" : "flex-wrap")}>
         {items.map((breadcrumb, index) => {
           const isLast = index === items.length - 1;
 
@@ -173,7 +182,11 @@ export function Breadcrumbs({
             <Fragment
               key={`${breadcrumb.label}-${breadcrumb.href ?? index}`}
             >
-              <li>
+              <li
+                // On one line the trail's first step keeps its whole name and later ones shorten.
+                className={singleLine ? (index === 0 ? "shrink-0" : "min-w-0 truncate") : undefined}
+                title={singleLine ? breadcrumb.label : undefined}
+              >
                 {isLast || !breadcrumb.href ? (
                   <span
                     aria-current={isLast ? "page" : undefined}
@@ -193,7 +206,7 @@ export function Breadcrumbs({
               {!isLast ? (
                 <li
                   aria-hidden="true"
-                  className="text-muted-foreground/70"
+                  className="shrink-0 text-muted-foreground/70"
                 >
                   /
                 </li>

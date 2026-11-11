@@ -138,13 +138,15 @@ function ContentConfigurationDetail({ templateKey }: { templateKey: string }) {
             icon={<LayoutTemplate aria-hidden size={22} />}
             meta={(
               <>
-                <StatusBadge tone={draft.active ? 'active' : 'inactive'}>
-                  {draft.active ? 'Active' : 'Inactive'}
-                </StatusBadge>
                 {draft.isDefault ? <StatusBadge tone="info">Default</StatusBadge> : null}
                 <span>{draft.sport} · {draft.contestFormat} · {draft.selectionType}</span>
                 <span className="font-mono">{draft.templateKey}</span>
               </>
+            )}
+            status={(
+              <StatusBadge tone={draft.active ? 'active' : 'inactive'}>
+                {draft.active ? 'Active' : 'Inactive'}
+              </StatusBadge>
             )}
             title={draft.name}
             testId="root-admin-content-configuration-identity"

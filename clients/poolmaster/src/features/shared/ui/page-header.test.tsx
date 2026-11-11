@@ -85,6 +85,13 @@ describe("PageHeader", () => {
     expect(screen.getByText("Users", { selector: "span" })).toHaveAttribute("aria-current", "page");
   });
 
+  it("sets each fact passed as its own element off from the one before with a dot", () => {
+    renderHeader(<PageHeader meta={<><span>Tiered</span><span>Entries: 6 of 100</span></>} testId="contest" title="Masters Pool" />);
+
+    expect(within(screen.getByTestId("contest-meta")).getByText("Tiered")).toBeInTheDocument();
+    expect(screen.getByTestId("contest-meta")).toHaveClass("[&>*+*]:before:content-['·']");
+  });
+
   it("puts the breadcrumb on the header's first line, above the title", () => {
     renderHeader(
       <PageHeader breadcrumbs={[{ href: "/manage", label: "Manage" }, { label: "Users" }]} testId="users" title="Users" />,
@@ -93,6 +100,18 @@ describe("PageHeader", () => {
     const trailRow = screen.getByTestId("users-trail-row");
     expect(within(trailRow).getByRole("navigation", { name: "Breadcrumbs" })).toBeInTheDocument();
     expect(trailRow.compareDocumentPosition(screen.getByTestId("users-title-row")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("keeps the header's breadcrumb to one line, shortening later names but never the first, so the status chip keeps its place", () => {
+    renderHeader(
+      <PageHeader breadcrumbs={[{ href: "/contests", label: "Contests" }, { label: "A very long contest name" }]} title="A very long contest name" />,
+    );
+
+    const current = screen.getByText("A very long contest name", { selector: "span" });
+    expect(within(screen.getByRole("navigation", { name: "Breadcrumbs" })).getByRole("list")).toHaveClass("flex-nowrap");
+    expect(screen.getAllByRole("listitem").find((item) => item.textContent === "A very long contest name")).toHaveClass("truncate");
+    expect(current).toHaveAttribute("aria-current", "page");
+    expect(screen.getAllByRole("listitem").find((item) => item.textContent === "Contests")).toHaveClass("shrink-0");
   });
 
   it("puts the status chip at the right end of the breadcrumb line when there is a trail", () => {
