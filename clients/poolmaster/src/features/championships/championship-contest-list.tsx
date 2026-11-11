@@ -1,7 +1,7 @@
 import { ContestStatus } from '@poolmaster/shared/domain';
 import type { ContestResultSummaryDto } from '@/lib/api';
 import { buildContestLandingPath } from '@/features/leagues/league-routing';
-import { EmptyState, ListStack, StatusBadge } from '@/features/shared/ui';
+import { SectionEmpty, SectionRows, StatusBadge } from '@/features/shared/ui';
 import { ContestRow } from '@/features/contests/contest-row';
 import { formatCupPoints } from './cup-view';
 import { describeContestResult } from './championship-view';
@@ -11,7 +11,7 @@ import { describeContestResult } from './championship-view';
  * and how many entries, and whether it counted. Filtered to a squad, each row also shows that
  * squad's place and points. Every contest here is final, so a row opens it where a final
  * contest opens (#1389): its leaderboard. `focusContestId` tints and scrolls to the contest the
- * viewer came from (#1392).
+ * viewer came from (#1392). It is a section card's body.
  */
 export function ChampionshipContestList({
   contests,
@@ -28,11 +28,11 @@ export function ChampionshipContestList({
   testIdPrefix?: string;
 }) {
   if (!contests.length) {
-    return <EmptyState body={emptyBody} testId={`${testIdPrefix}s-empty`} />;
+    return <SectionEmpty testId={`${testIdPrefix}s-empty`}>{emptyBody}</SectionEmpty>;
   }
 
   return (
-    <ListStack data-testid={`${testIdPrefix}s`}>
+    <SectionRows testId={`${testIdPrefix}s`}>
       {contests.map((contest) => {
         const state = describeContestResult(contest);
         return (
@@ -53,6 +53,6 @@ export function ChampionshipContestList({
           />
         );
       })}
-    </ListStack>
+    </SectionRows>
   );
 }

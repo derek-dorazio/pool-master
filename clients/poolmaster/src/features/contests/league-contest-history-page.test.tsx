@@ -139,12 +139,13 @@ describe('LeagueContestHistoryPage', () => {
     expect(await screen.findByTestId('league-history-contest-contest-1')).not.toHaveAttribute('data-highlighted');
   });
 
-  it('says the league has no completed contests yet, and asks for no year', async () => {
+  it('says in one line under a Past contests title that nothing has completed yet, and asks for no year', async () => {
     prime([]);
 
     renderHistory();
 
-    expect(await screen.findByText('This league does not have any completed contests yet.')).toBeInTheDocument();
+    expect(await screen.findByTestId('league-contests-history-none')).toHaveTextContent('No completed contests yet.');
+    expect(screen.getByRole('heading', { name: 'Past contests' })).toBeInTheDocument();
     expect(listContestResultsMock).not.toHaveBeenCalled();
   });
 

@@ -9,7 +9,7 @@ import {
   ConfirmationModal,
   FormField,
   Input,
-  PanelCard,
+  SectionCard,
   Select,
   SortableList,
   Tile,
@@ -154,7 +154,7 @@ export function TierDefinitionsPanel({
     : 0;
 
   return (
-    <PanelCard
+    <SectionCard
       headingLevel={3}
       padded
       title="Tiers"
@@ -315,6 +315,6 @@ export function TierDefinitionsPanel({
           </FormField>
         ) : null}
       </ConfirmationModal>
-    </PanelCard>
+    </SectionCard>
   );
 }

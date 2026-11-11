@@ -4,7 +4,7 @@ import { Trophy } from 'lucide-react';
 import { PlanFeature } from '@poolmaster/shared/domain';
 import { hasPlanFeature } from '@/features/plans/plan-features';
 import { PlanLockedNotice } from '@/features/plans/plan-locked-notice';
-import { Button, ErrorState, Eyebrow, Heading, LoadingState, MetricGrid, MetricTile, PanelCard, Tile } from '@/features/shared/ui';
+import { Button, ErrorState, Eyebrow, LoadingState, MetricGrid, MetricTile, SectionCard, SectionNote } from '@/features/shared/ui';
 import { describePointsTable } from './cup-settings-view';
 import { joinNames } from './cup-view';
 import { ChampionshipContestList } from './championship-contest-list';
@@ -54,26 +54,28 @@ export function ChampionshipPage() {
 
   return (
     <div className="space-y-6" data-testid="championship">
-      <Tile className="flex flex-col items-center gap-3 text-center" padding="sm" radius="lg">
-        {championship.isOver ? <Trophy aria-hidden className="text-primary" size={56} /> : null}
-        <Heading level={2} variant="card" size="xl" data-testid="championship-name">{championship.name}</Heading>
-        {championship.isOver && podium.length ? (
-          <Eyebrow tone="muted">
-            {(podium[0]?.squads.length ?? 0) > 1 ? 'Champions' : 'Champion'}
-          </Eyebrow>
-        ) : null}
-        <p className="text-sm text-foreground" data-testid="championship-standing">{describeChampionshipStanding(championship)}</p>
-        {!championship.isOver ? (
-          <p className="text-xs text-muted-foreground">
-            The trophy is presented on 1 January. Contests still live then count toward {year + 1}.
-          </p>
-        ) : null}
-        {podium.length ? (
-          <div className="w-full max-w-sm pt-2">
-            <Podium focusSquadId={viewer.mySquadId} steps={podium} testId="championship-podium" />
-          </div>
-        ) : null}
-      </Tile>
+      <SectionCard
+        info={championship.isOver ? undefined : `The trophy is presented on 1 January. Contests still live then count toward ${year + 1}.`}
+        padded
+        testId="championship-summary"
+        title={championship.name}
+        titleTestId="championship-name"
+      >
+        <div className="flex flex-col items-center gap-3 text-center">
+          {championship.isOver ? <Trophy aria-hidden className="text-primary" size={56} /> : null}
+          {championship.isOver && podium.length ? (
+            <Eyebrow tone="muted">
+              {(podium[0]?.squads.length ?? 0) > 1 ? 'Champions' : 'Champion'}
+            </Eyebrow>
+          ) : null}
+          <SectionNote testId="championship-standing" tone="default">{describeChampionshipStanding(championship)}</SectionNote>
+          {podium.length ? (
+            <div className="w-full max-w-sm pt-2">
+              <Podium focusSquadId={viewer.mySquadId} steps={podium} testId="championship-podium" />
+            </div>
+          ) : null}
+        </div>
+      </SectionCard>
 
       <MetricGrid>
         {championship.tiles.map((tile) => (
@@ -87,40 +89,38 @@ export function ChampionshipPage() {
         ))}
       </MetricGrid>
 
-      <PanelCard
+      <SectionCard
+        info={league ? (
+          <>
+            Points table: {describePointsTable({ scale: league.cupPointsScale, customPoints: league.cupCustomPoints })}.
+            Each contest&apos;s weight multiplies it, and a contest keeps the points it earned when it went final.
+          </>
+        ) : undefined}
         padded
         title={`Finishes in ${year}`}
         trailing={(
-          <span className="text-xs text-muted-foreground" data-testid="championship-progress">
+          <span data-testid="championship-progress">
             {championship.contestsCounted} {championship.contestsCounted === 1 ? 'contest' : 'contests'} final
           </span>
         )}
       >
         <ChampionshipStandingsGrid filter={filter} focusSquadId={viewer.mySquadId} onFilter={chooseFilter} rows={championship.standings} />
-        {league ? (
-          <p className="text-xs text-muted-foreground">
-            Points table: {describePointsTable({ scale: league.cupPointsScale, customPoints: league.cupCustomPoints })}.
-            Each contest&apos;s weight multiplies it, and a contest keeps the points it earned when it went final.
-          </p>
-        ) : null}
-      </PanelCard>
+      </SectionCard>
 
-      <PanelCard
-        padded
+      <SectionCard
+        info={filter ? undefined : 'Tap a count in the table to see its contests.'}
         title={describeContestResultFilter(filter, filteredSquadName, year)}
         titleTestId="championship-contests-heading"
         trailing={filter ? (
           <Button data-testid="championship-contests-clear" onClick={() => chooseFilter(null)} size="sm" type="button" variant="subtle">
             Show every contest
           </Button>
-        ) : (
-          <span className="text-xs text-muted-foreground">Tap a count in the table to see its contests.</span>
-        )}
+        ) : null}
       >
         {contestsQuery.isError ? (
-          <ErrorState body="We couldn't load this year's contests." testId="championship-contests-error" />
+          <ErrorState body="We couldn't load this year's contests." size="inline" testId="championship-contests-error" />
         ) : !contestsQuery.data ? (
-          <LoadingState body="Loading the year's contests..." />
+          <LoadingState body="Loading the year's contests..." size="inline" />
         ) : (
           <ChampionshipContestList
             contests={contestsQuery.data}
@@ -128,7 +128,7 @@ export function ChampionshipPage() {
             leagueCode={leagueCode}
           />
         )}
-      </PanelCard>
+      </SectionCard>
     </div>
   );
 }

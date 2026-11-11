@@ -1,12 +1,12 @@
 import { PlanFeature, championshipYear } from '@poolmaster/shared/domain';
 import { Trophy } from 'lucide-react';
-import { Link, useSearchParams } from 'react-router';
+import { useLocation, useSearchParams } from 'react-router';
 import type { SquadDto } from '@/lib/api';
 import { buildLeagueChampionshipsPath, buildLeaguePointsRacePath } from '@/features/leagues/league-routing';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
 import { hasPlanFeature } from '@/features/plans/plan-features';
 import { PlanLockedNotice } from '@/features/plans/plan-locked-notice';
-import { Button, ErrorState, Heading, LoadingState, MetricGrid, MetricTile, PanelCard, YearPicker } from '@/features/shared/ui';
+import { ErrorState, LoadingState, MetricGrid, MetricTile, SectionBody, SectionCard, SectionEmpty, SectionRow, SectionRows, YearPicker } from '@/features/shared/ui';
 import { historyYearTitle } from './championship-view';
 import { SquadPerpetualPlates } from './perpetual-trophies';
 import { SquadRecords } from './record-book';
@@ -34,6 +34,7 @@ export function SquadHistorySection({
   squad: Pick<SquadDto, 'id' | 'name'>;
 }) {
   const [searchParams, setSearchParams] = useSearchParams();
+  const { pathname } = useLocation();
   const { league, viewer } = useLeagueContext(leagueCode);
   const hasShelf = hasPlanFeature(league, PlanFeature.TROPHY_SHELF);
   const hasPastYears = hasPlanFeature(league, PlanFeature.PAST_YEARS);
@@ -47,15 +48,16 @@ export function SquadHistorySection({
   const placedYears = hasPastYears ? squadYearsPlaced(historyQuery.data?.years ?? []) : [];
   const plates = platesWonBy(usePerpetualTrophiesQuery(hasShelf ? leagueId : '').data ?? [], squad.id);
 
+  const trophies = historyQuery.data?.trophies ?? [];
   return (
     <section className="space-y-6" data-testid="squad-history">
-      <div className="space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <Heading level={2} variant="subtitle">{historyYearTitle({ year, isOver: year < currentYear })}</Heading>
-          <YearPicker onChange={chooseYear} testId="squad-history-year" value={year} years={years} />
-        </div>
+      <SectionCard
+        bare
+        title={historyYearTitle({ year, isOver: year < currentYear })}
+        trailing={<YearPicker onChange={chooseYear} testId="squad-history-year" value={year} years={years} />}
+      >
         <SquadYearSection key={year} leagueCode={leagueCode} leagueId={leagueId} mySquadId={viewer.mySquadId} squad={squad} year={year} />
-      </div>
+      </SectionCard>
 
       {!hasShelf ? (
         <PlanLockedNotice feature={PlanFeature.TROPHY_SHELF} isCommissioner={viewer.isCommissioner} leagueCode={leagueCode} />
@@ -65,65 +67,61 @@ export function SquadHistorySection({
         <LoadingState body="Loading this squad's trophies..." />
       ) : (
         <>
-          <PanelCard padded title="Trophy case">
-            <MetricGrid className="grid-cols-3">
-              <div data-testid="squad-history-medal-firsts"><MetricTile label="Contest 1sts" value={historyQuery.data.medals.firsts} /></div>
-              <div data-testid="squad-history-medal-seconds"><MetricTile label="Contest 2nds" value={historyQuery.data.medals.seconds} /></div>
-              <div data-testid="squad-history-medal-thirds"><MetricTile label="Contest 3rds" value={historyQuery.data.medals.thirds} /></div>
-            </MetricGrid>
-            {historyQuery.data.trophies.length ? (
-              <ul className="space-y-1 text-sm" data-testid="squad-history-trophies">
-                {historyQuery.data.trophies.map((trophy) => (
-                  <li key={`${trophy.kind}-${trophy.cupId ?? 'championship'}-${trophy.year}`}>
-                    <Link
-                      className="inline-flex items-center gap-2 text-foreground hover:underline"
-                      data-testid={`squad-history-trophy-${trophy.year}-${trophy.cupId ?? 'championship'}`}
-                      to={trophy.sportLeagueId === null
-                        ? buildLeagueChampionshipsPath(leagueCode, trophy.year)
-                        : buildLeaguePointsRacePath(leagueCode, trophy.year, trophy.sportLeagueId)}
-                    >
-                      <Trophy aria-hidden className={isChampionshipTrophy(trophy) ? 'text-primary' : 'text-muted-foreground'} size={16} />
-                      {describeSquadTrophy(trophy)}
-                    </Link>
-                  </li>
+          <SectionCard
+            info="A podium finish in a crowned cup or a finished championship, or a win in a contest the league runs every year, puts a trophy here."
+            title="Trophy case"
+          >
+            <SectionBody>
+              <MetricGrid className="grid-cols-3">
+                <div data-testid="squad-history-medal-firsts"><MetricTile label="Contest 1sts" value={historyQuery.data.medals.firsts} /></div>
+                <div data-testid="squad-history-medal-seconds"><MetricTile label="Contest 2nds" value={historyQuery.data.medals.seconds} /></div>
+                <div data-testid="squad-history-medal-thirds"><MetricTile label="Contest 3rds" value={historyQuery.data.medals.thirds} /></div>
+              </MetricGrid>
+            </SectionBody>
+            {trophies.length || plates.length ? (
+              <SectionRows testId="squad-history-trophies">
+                {trophies.map((trophy) => (
+                  <SectionRow
+                    key={`${trophy.kind}-${trophy.cupId ?? 'championship'}-${trophy.year}`}
+                    name={(
+                      <>
+                        <Trophy aria-hidden className={`mr-2 inline ${isChampionshipTrophy(trophy) ? 'text-primary' : 'text-muted-foreground'}`} size={16} />
+                        {describeSquadTrophy(trophy)}
+                      </>
+                    )}
+                    testId={`squad-history-trophy-${trophy.year}-${trophy.cupId ?? 'championship'}`}
+                    to={trophy.sportLeagueId === null
+                      ? buildLeagueChampionshipsPath(leagueCode, trophy.year)
+                      : buildLeaguePointsRacePath(leagueCode, trophy.year, trophy.sportLeagueId)}
+                  />
                 ))}
-              </ul>
-            ) : null}
-            <SquadPerpetualPlates plates={plates} />
-            {!historyQuery.data.trophies.length && !plates.length ? (
-              <p className="text-sm text-muted-foreground" data-testid="squad-history-trophies-none">
-                No trophies yet. A podium finish in a crowned cup or a finished championship, or a win in a
-                contest the league runs every year, puts one here.
-              </p>
-            ) : null}
-          </PanelCard>
+                <SquadPerpetualPlates plates={plates} />
+              </SectionRows>
+            ) : (
+              <SectionEmpty testId="squad-history-trophies-none">No trophies yet.</SectionEmpty>
+            )}
+          </SectionCard>
 
           {hasPlanFeature(league, PlanFeature.RECORD_BOOK) ? <SquadRecords leagueId={leagueId} squadId={squad.id} /> : null}
 
           {placedYears.length ? (
-            <PanelCard padded title="All years">
-              <ul className="space-y-1 text-sm" data-testid="squad-history-years">
+            <SectionCard title="All years">
+              <SectionRows testId="squad-history-years">
                 {placedYears.map((row) => {
                   const line = describeSquadYearLine(row, currentYear);
                   return (
-                    <li key={row.year}>
-                      <Button
-                        aria-pressed={row.year === year}
-                        className="min-h-0 flex-wrap justify-between gap-2 px-0 py-0 font-normal"
-                        layout="row"
-                        data-testid={`squad-history-year-${row.year}`}
-                        onClick={() => chooseYear(row.year)}
-                        type="button"
-                        variant="ghost"
-                      >
-                        <span className="font-semibold text-foreground">{line.title}</span>
-                        <span className="text-muted-foreground">{line.detail}</span>
-                      </Button>
-                    </li>
+                    <SectionRow
+                      facts={line.detail}
+                      isSelected={row.year === year}
+                      key={row.year}
+                      name={line.title}
+                      testId={`squad-history-year-${row.year}`}
+                      to={row.year === currentYear ? pathname : `${pathname}?year=${row.year}`}
+                    />
                   );
                 })}
-              </ul>
-            </PanelCard>
+              </SectionRows>
+            </SectionCard>
           ) : null}
         </>
       )}

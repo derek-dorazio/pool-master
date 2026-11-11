@@ -3,7 +3,7 @@ import { useCallback, useMemo } from 'react';
 import { Link, Navigate, useParams } from 'react-router';
 import type { CupDto } from '@/lib/api';
 import { buildLeagueCupSquadPath, buildLeaguePointsRacePath, buildLeagueTrophyCasePath } from '@/features/leagues/league-routing';
-import { Chip, EmptyState, ErrorState, formatDateDisplay, LinkButton, LoadingState, MetricGrid, MetricTile, PanelCard, useDisplayPreferences } from '@/features/shared/ui';
+import { Chip, ErrorState, formatDateDisplay, LoadingState, MetricGrid, MetricTile, SectionCard, SectionEmpty, SectionNote, useDisplayPreferences } from '@/features/shared/ui';
 import { hasPlanFeature } from '@/features/plans/plan-features';
 import { PlanLockedNotice } from '@/features/plans/plan-locked-notice';
 import { buildPodium } from './championship-view';
@@ -129,16 +129,21 @@ export function PointsRacePage() {
   if (!sportLeagueId) {
     return firstCup
       ? <Navigate replace to={buildLeaguePointsRacePath(leagueCode, year, firstCup.sportLeagueId)} />
-      : <EmptyState body={`No sports league has two counted contests in ${year} yet.`} testId="points-race-empty" title="No cups yet" />;
+      : (
+        <SectionCard testId="points-race-empty" title="No cups yet">
+          <SectionEmpty>{`No sports league has two counted contests in ${year} yet.`}</SectionEmpty>
+        </SectionCard>
+      );
   }
   if (!cup) {
     return (
-      <EmptyState
-        action={<LinkButton size="sm" to={buildLeagueTrophyCasePath(leagueCode, year)} variant="secondary">Trophy case</LinkButton>}
-        body={`This league has no cup for that sports league in ${year}.`}
+      <SectionCard
+        footer={{ label: 'Trophy case', testId: 'points-race-trophy-case', to: buildLeagueTrophyCasePath(leagueCode, year) }}
         testId="points-race-no-cup"
         title="Cup not found"
-      />
+      >
+        <SectionEmpty>{`This league has no cup for that sports league in ${year}.`}</SectionEmpty>
+      </SectionCard>
     );
   }
   const progress = cupProgress(cup);
@@ -148,27 +153,28 @@ export function PointsRacePage() {
   return (
     <div className="space-y-6" data-testid="points-race">
       <CupChips cups={cups.includes(cup) ? cups : [...cups, cup]} leagueCode={leagueCode} selectedId={cup.sportLeagueId} year={year} />
-      <PanelCard padded title={cup.name}>
-        <p className="text-sm text-muted-foreground" data-testid="points-race-summary">
-          {cup.sportLeagueName} · {cup.crownedAt
-            ? `Crowned ${formatDateDisplay(cup.crownedAt, displayPreferences)}`
-            : isSeasonOver ? 'Not crowned' : `${progress.final} of ${progress.total} contests final`}
-        </p>
-        {isCrowned ? (
-          hasPlanFeature(league, PlanFeature.CUP_CROWNING)
-            ? <Podium focusSquadId={viewer.mySquadId} steps={buildPodium(cup.standings)} testId="cup-podium" />
-            : null
-        ) : isSeasonOver ? (
-          <p className="text-sm text-muted-foreground" data-testid="cup-not-crowned">
-            {'This cup hasn\'t been crowned, so it has no trophies yet. These are its final standings.'}
-          </p>
-        ) : null}
+      <SectionCard
+        info={isSeasonOver && !isCrowned ? 'This cup hasn\'t been crowned, so it has no trophies yet. These are its final standings.' : undefined}
+        padded
+        title={cup.name}
+        titleTestId="points-race-cup-title"
+        trailing={(
+          <span data-testid="points-race-summary">
+            {cup.sportLeagueName} · {cup.crownedAt
+              ? `Crowned ${formatDateDisplay(cup.crownedAt, displayPreferences)}`
+              : isSeasonOver ? 'Not crowned' : `${progress.final} of ${progress.total} contests final`}
+          </span>
+        )}
+      >
+        {isCrowned && hasPlanFeature(league, PlanFeature.CUP_CROWNING)
+          ? <Podium focusSquadId={viewer.mySquadId} steps={buildPodium(cup.standings)} testId="cup-podium" />
+          : null}
         <CupStatTiles cup={cup} isSeasonOver={isSeasonOver} mySquadId={viewer.mySquadId} />
         {projection && projectedBySquad ? (
-          <p className="text-sm text-muted-foreground" data-testid="cup-projection-note">{describeProjection(projection)}</p>
+          <SectionNote testId="cup-projection-note">{describeProjection(projection)}</SectionNote>
         ) : null}
         {projectionQuery.isError ? (
-          <p className="text-sm text-muted-foreground" data-testid="cup-projection-error">{'We couldn\'t work out where squads would stand if the live contests ended now.'}</p>
+          <ErrorState body="We couldn't work out where squads would stand if the live contests ended now." size="inline" testId="cup-projection-error" />
         ) : null}
         <CupStandingsGrid
           focusSquadId={viewer.mySquadId}
@@ -177,14 +183,13 @@ export function PointsRacePage() {
           showMovement={!isSeasonOver}
           squadPath={squadPath}
         />
-      </PanelCard>
-      <PanelCard padded title="The race so far">
-        <p className="text-sm text-muted-foreground">Top five, after each final contest</p>
+      </SectionCard>
+      <SectionCard info="The top five, after each final contest." padded title="The race so far">
         <CupRaceChart focusSquadId={viewer.mySquadId} series={buildRaceSeries(cup)} />
-      </PanelCard>
-      <PanelCard padded title="Contests in this cup">
+      </SectionCard>
+      <SectionCard title="Contests in this cup">
         <CupContestList contests={cup.contests} leagueCode={leagueCode} />
-      </PanelCard>
+      </SectionCard>
     </div>
   );
 }

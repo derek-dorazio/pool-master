@@ -17,8 +17,9 @@ import {
   DateDisplay,
   InlineError,
   Input,
-  PanelCard,
-  PanelList,
+  SectionCard,
+  SectionRow,
+  SectionRows,
   Select,
   SettingsSectionHeader,
   SimpleTable,
@@ -214,33 +215,33 @@ function FeatureList({ form }: { form: UseFormReturn<PlanSettingsDraft> }) {
         title="Features"
       />
       {Object.values(PlanFeatureGroup).map((featureGroup) => (
-        <PanelCard headingLevel={3} key={featureGroup} testId={`root-admin-plans-features-${featureGroup}`} title={PLAN_FEATURE_GROUP_LABEL[featureGroup]}>
-          <PanelList>
+        <SectionCard headingLevel={3} key={featureGroup} testId={`root-admin-plans-features-${featureGroup}`} title={PLAN_FEATURE_GROUP_LABEL[featureGroup]}>
+          <SectionRows>
             {ALWAYS_INCLUDED[featureGroup].map((label) => (
-              <li className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 text-sm" key={label}>
-                <span className="text-foreground">{label}</span>
-                <span className="text-muted-foreground">Always</span>
-              </li>
+              <SectionRow key={label} name={label} value="Always" />
             ))}
             {Object.values(PlanFeature).filter((feature) => PLAN_FEATURE_GROUP[feature] === featureGroup).map((feature) => (
-              <li className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 text-sm" key={feature}>
-                <span className="text-foreground">{PLAN_FEATURE_LABEL[feature]}</span>
-                <Select
-                  aria-label={`${PLAN_FEATURE_LABEL[feature]} starts at`}
-                  className="w-40"
-                  data-testid={`root-admin-plans-feature-${feature}`}
-                  {...form.register(`features.${feature}`)}
-                >
-                  {LEAGUE_PLANS.map((plan) => (
-                    <option key={plan} value={plan}>
-                      {FEATURE_STARTS_AT_LABEL[plan]}
-                    </option>
-                  ))}
-                </Select>
-              </li>
+              <SectionRow
+                aside={(
+                  <Select
+                    aria-label={`${PLAN_FEATURE_LABEL[feature]} starts at`}
+                    className="w-40"
+                    data-testid={`root-admin-plans-feature-${feature}`}
+                    {...form.register(`features.${feature}`)}
+                  >
+                    {LEAGUE_PLANS.map((plan) => (
+                      <option key={plan} value={plan}>
+                        {FEATURE_STARTS_AT_LABEL[plan]}
+                      </option>
+                    ))}
+                  </Select>
+                )}
+                key={feature}
+                name={PLAN_FEATURE_LABEL[feature]}
+              />
             ))}
-          </PanelList>
-        </PanelCard>
+          </SectionRows>
+        </SectionCard>
       ))}
     </section>
   );

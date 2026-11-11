@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { SportVocabulary } from '@poolmaster/shared/domain';
 import { replaceEventParticipant } from '@/lib/api';
 import type { SportEventDto, SportEventMatchDto, SportEventParticipantDto } from '@/lib/api';
-import { Button, InlineError, Input, PanelCard, Select } from '@/features/shared/ui';
+import { Button, InlineError, Input, SectionCard, Select } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -71,7 +71,7 @@ export function WithdrawalsCard({
   }
 
   return (
-    <PanelCard headingLevel={3} padded testId="root-admin-withdrawals" title="Withdrawals">
+    <SectionCard headingLevel={3} padded testId="root-admin-withdrawals" title="Withdrawals">
       <p className="text-sm text-muted-foreground">
         {`If a ${participant.one} withdraws before playing, name who takes the place. Picks of the withdrawn ${participant.one} stay, and score as a first-round loss. Once their ${noun.one} starts, enter the withdrawal as a walkover instead.`}
       </p>
@@ -130,6 +130,6 @@ export function WithdrawalsCard({
         ) : null}
       </div>
       <p className="text-xs text-muted-foreground">The replacement joins unseeded, last in the last tier, at the lowest price.</p>
-    </PanelCard>
+    </SectionCard>
   );
 }

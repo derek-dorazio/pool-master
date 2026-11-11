@@ -6,7 +6,7 @@ import {
   Button,
   DataGrid,
   Input,
-  PanelCard,
+  SectionCard,
   Select,
   timeZoneGenericName,
   toDateTimeLocalValue,
@@ -310,7 +310,7 @@ export function GolfRoundScoreCorrectionsCard({
   );
 
   return (
-    <PanelCard headingLevel={3} padded title="Corrections">
+    <SectionCard headingLevel={3} padded title="Corrections">
       <p className="text-sm text-muted-foreground">
         Fix one golfer&rsquo;s round result at a time. Enter every value yourself: changing strokes does not change to par, and completing a round does not set its time.
       </p>
@@ -342,6 +342,6 @@ export function GolfRoundScoreCorrectionsCard({
         rowTestId={(row) => `root-admin-golf-scores-row-${row.sportEventParticipantId}`}
         tableTestId="root-admin-golf-scores-corrections-table"
       />
-    </PanelCard>
+    </SectionCard>
   );
 }

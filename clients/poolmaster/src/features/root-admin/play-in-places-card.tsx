@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { SportEventStatus, type SportVocabulary } from '@poolmaster/shared/domain';
 import { setEventPlayInWinner, updateEventParticipants } from '@/lib/api';
 import type { SportEventDto, SportEventParticipantDto } from '@/lib/api';
-import { Button, InlineError, Input, PanelCard, Select } from '@/features/shared/ui';
+import { Button, InlineError, Input, SectionCard, Select } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -46,7 +46,7 @@ export function PlayInPlacesCard({
   }
 
   return (
-    <PanelCard headingLevel={3} padded testId="root-admin-play-in-places" title={`${word.charAt(0).toUpperCase()}${word.slice(1)} places`}>
+    <SectionCard headingLevel={3} padded testId="root-admin-play-in-places" title={`${word.charAt(0).toUpperCase()}${word.slice(1)} places`}>
       <p className="text-sm text-muted-foreground">
         {released
           ? `Name the ${team.one} in each ${word} place. It takes over the place's seed, picks and bracket spot.`
@@ -67,7 +67,7 @@ export function PlayInPlacesCard({
         </ul>
       )}
       {released ? null : <PlayInMarker eventId={event.id} field={field} vocabulary={vocabulary} />}
-    </PanelCard>
+    </SectionCard>
   );
 }
 

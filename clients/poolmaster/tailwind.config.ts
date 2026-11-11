@@ -76,6 +76,8 @@ const config: Config = {
         label: "var(--text-label)",
         "label-on-inverse": "var(--text-label-on-inverse)",
         selected: "var(--surface-selected)",
+        "row-alt": "var(--surface-row-alt)",
+        "row-hover": "var(--table-row-hover-surface)",
         "on-inverse": "var(--text-on-inverse)",
         "on-inverse-muted": "var(--text-on-inverse-muted)",
         "on-inverse-subtle": "var(--surface-on-inverse-subtle)",

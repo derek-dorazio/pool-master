@@ -1,6 +1,6 @@
 import { sportLeagueNounOf } from '@poolmaster/shared/domain';
 import { useMemo, useState } from 'react';
-import { Alert, FormField, LinkButton, PanelCard, Select } from '@/features/shared/ui';
+import { Alert, FormField, LinkButton, SectionCard, Select } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
 import type { SportLeagueDto } from '@/lib/api';
 import { SportLeagueEventCalendar } from './sport-league-event-calendar';
@@ -39,7 +39,7 @@ export function SportLeagueCalendarCard({ sportLeague }: { sportLeague: SportLea
   );
 
   return (
-    <PanelCard
+    <SectionCard
       headingLevel={3}
       padded
       testId="root-admin-sport-league-calendar"
@@ -89,6 +89,6 @@ export function SportLeagueCalendarCard({ sportLeague }: { sportLeague: SportLea
       {eventYear === null ? null : (
         <SportLeagueEventCalendar isError={tournamentsQuery.isError} sportLeague={sportLeagueNounOf(sport, sportLeague.noun)} tournaments={yearTournaments} />
       )}
-    </PanelCard>
+    </SectionCard>
   );
 }

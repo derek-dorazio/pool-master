@@ -11,7 +11,7 @@ import { useAuth } from '@/features/auth/auth-context';
 import { syncLeagueCaches } from '@/features/leagues/league-cache';
 import { buildLeagueAdminPath } from '@/features/leagues/league-routing';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
-import { Alert, Button, Chip, ErrorState, formatDateDisplay, Heading, LoadingState, PageHeader, PanelCard, SectionHeader, Tile, useDisplayPreferences } from '@/features/shared/ui';
+import { Alert, Button, Chip, ErrorState, formatDateDisplay, Heading, LoadingState, PageHeader, SectionCard, SectionHeader, Tile, useDisplayPreferences } from '@/features/shared/ui';
 import { PlanCards } from './plan-cards';
 import { buildCapUsage, buildPlanChangeEffects, NAMED_CONTEST_LIMIT } from './plan-change';
 import { PlanComparisonTable } from './plan-comparison-table';
@@ -218,7 +218,7 @@ function YourLeagueNow({
     null,
   ) ?? null;
   return (
-    <PanelCard headingLevel={3} padded testId="league-plan-now" title="Your league now">
+    <SectionCard headingLevel={3} padded testId="league-plan-now" title="Your league now">
       <dl className="grid gap-3 text-sm sm:grid-cols-3">
         <div>
           <dt className="text-muted-foreground">Plan</dt>
@@ -255,7 +255,7 @@ function YourLeagueNow({
           <p className="text-sm text-muted-foreground sm:col-span-2">Loading what the league uses...</p>
         )}
       </dl>
-    </PanelCard>
+    </SectionCard>
   );
 }
 

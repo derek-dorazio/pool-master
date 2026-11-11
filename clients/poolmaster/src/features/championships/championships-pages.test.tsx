@@ -267,7 +267,8 @@ describe('Championships › Championship', () => {
 
     expect(await screen.findByTestId('championship-name')).toHaveTextContent('2026 Big Dawgs Cup');
     expect(screen.getByTestId('championship-standing')).toHaveTextContent('Birdie Bandits leads by 15 points with 2 contests to go.');
-    expect(screen.getByText('The trophy is presented on 1 January. Contests still live then count toward 2027.')).toBeInTheDocument();
+    fireEvent.click(within(screen.getByTestId('championship-summary')).getByRole('button', { name: 'About this section' }));
+    expect(screen.getByTestId('championship-name-info-callout')).toHaveTextContent('The trophy is presented on 1 January. Contests still live then count toward 2027.');
     expect(screen.queryByTestId('championship-podium')).not.toBeInTheDocument();
   });
 
@@ -322,6 +323,7 @@ describe('Championships › Championship', () => {
     expect(row.getByText('230')).toBeInTheDocument();
     expect(row.getByText('Yours')).toBeInTheDocument();
     expect(screen.getByTestId('championship-progress')).toHaveTextContent('3 contests final');
+    fireEvent.click(within(screen.getByRole('region', { name: 'Finishes in 2026' })).getByRole('button', { name: 'About this section' }));
     expect(screen.getByText(/Points table: Standard\./)).toBeInTheDocument();
   });
 
@@ -471,7 +473,7 @@ describe('Championships › Trophy case', () => {
     const pga = await screen.findByTestId('cup-card-cup-pga');
     expect(pga).toHaveTextContent('2026 PGA Tour Cup');
     expect(pga).toHaveTextContent('Birdie Bandits leads · you are 2nd');
-    expect(within(pga).getByRole('progressbar', { name: '3 of 4 contests final' })).toBeInTheDocument();
+    expect(pga).toHaveTextContent('3 of 4 contests final');
     expect(pga).toHaveAttribute('href', '/league/BIGDAWGS/championships/2026/race/sport-league-pga');
     expect(screen.getByTestId('cup-card-cup-nfl')).toHaveTextContent('Casey Crushers leads · you are 1st');
   });
@@ -483,7 +485,7 @@ describe('Championships › Trophy case', () => {
 
     const card = await screen.findByTestId('cup-card-cup-pga');
     expect(card).toHaveTextContent('2025 PGA Tour Cup');
-    expect(within(card).queryByRole('progressbar')).not.toBeInTheDocument();
+    expect(card).not.toHaveTextContent('contests final');
   });
 
   it('leaves off a cup until two of its contests have counted, explaining so when none has', async () => {
@@ -491,7 +493,9 @@ describe('Championships › Trophy case', () => {
 
     renderChampionships('/league/BIGDAWGS/championships/2026/trophies');
 
-    expect(await screen.findByTestId('trophy-case-empty')).toHaveTextContent('once two of its contests have counted');
+    expect(await screen.findByTestId('trophy-case-empty')).toHaveTextContent('No cups yet.');
+    fireEvent.click(screen.getByRole('button', { name: 'About this section' }));
+    expect(screen.getByRole('region', { name: '2026 cups' })).toHaveTextContent('once two of its contests have counted');
     expect(screen.queryByTestId('cup-card-cup-nba')).not.toBeInTheDocument();
   });
 
@@ -849,13 +853,14 @@ describe('Championships › Points race', () => {
     expect(screen.getByTestId('cup-contest-nfl-3')).toHaveTextContent('After crowning');
   });
 
-  it('shows a past season\'s cup never crowned as not crowned, with no movement and no next contest', async () => {
+  it('shows a past season\'s cup never crowned as not crowned, explaining why behind the info icon, with no movement and no next contest', async () => {
     primeViewer([PAST_PGA_CUP]);
 
     renderChampionships('/league/BIGDAWGS/championships/2025/race/sport-league-pga');
 
-    expect(await screen.findByTestId('cup-not-crowned')).toHaveTextContent('hasn\'t been crowned');
-    expect(screen.getByTestId('points-race-summary')).toHaveTextContent('PGA Tour · Not crowned');
+    expect(await screen.findByTestId('points-race-summary')).toHaveTextContent('PGA Tour · Not crowned');
+    fireEvent.click(screen.getByTestId('points-race-cup-title-info'));
+    expect(screen.getByTestId('points-race-cup-title-info-callout')).toHaveTextContent('hasn\'t been crowned');
     expect(screen.getByTestId('points-race')).toHaveTextContent('Finished 1stBirdie Bandits');
     expect(screen.queryByText('Next to count')).not.toBeInTheDocument();
     expect(screen.queryByRole('columnheader', { name: 'Move' })).not.toBeInTheDocument();
@@ -869,7 +874,7 @@ describe('Championships › Points race', () => {
 
     expect(await screen.findByTestId('points-race')).toHaveTextContent('Next to countPlayoff PicksLive now');
     expect(screen.getByRole('columnheader', { name: 'Move' })).toBeInTheDocument();
-    expect(screen.queryByTestId('cup-not-crowned')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('points-race-cup-title-info')).not.toBeInTheDocument();
   });
 
   it('says the league has no such cup for a sports league it has none in that year', async () => {
@@ -1057,10 +1062,9 @@ describe('Championships › All years', () => {
 
     renderChampionships('/league/BIGDAWGS/history');
 
-    expect(await screen.findByTestId('record-MOST_WINS_IN_A_YEAR')).toHaveTextContent('Most wins in a year4 wins · Birdie Bandits (2025) and Casey Crushers (2024)');
-    expect(screen.getByTestId('record-MOST_WINS_IN_A_YEAR-next')).toHaveTextContent('Next best: 1 win · Casey Crushers (2025)');
+    expect(await screen.findByTestId('record-MOST_WINS_IN_A_YEAR')).toHaveTextContent('Most wins in a yearNext best: 1 win · Casey Crushers (2025)4 wins · Birdie Bandits (2025) and Casey Crushers (2024)');
     expect(screen.getByTestId('record-BIGGEST_FIELD_WON')).toHaveTextContent('Biggest field won48 entries · Casey Crushers, Masters Pick 6 (2025)');
-    expect(screen.queryByTestId('record-BIGGEST_FIELD_WON-next')).not.toBeInTheDocument();
+    expect(screen.getByTestId('record-BIGGEST_FIELD_WON')).not.toHaveTextContent('Next best');
   });
 
   it('shows the Hall of Lame below the record book, each with its own records', async () => {

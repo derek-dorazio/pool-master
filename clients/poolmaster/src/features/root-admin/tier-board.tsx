@@ -2,7 +2,7 @@ import { getSportDefinition, type Sport, type SportNoun } from '@poolmaster/shar
 import { useMemo, useState, type ReactNode } from 'react';
 import { GripVertical } from 'lucide-react';
 import { replaceEventTierAssignments, updateEventParticipants } from '@/lib/api';
-import { Alert, Button, Heading, Input, PanelCard, Select, SortableList, Tile } from '@/features/shared/ui';
+import { Alert, Button, Heading, Input, SectionCard, Select, SortableList, Tile } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -297,7 +297,7 @@ export function TierBoard({
   }
 
   return (
-    <PanelCard
+    <SectionCard
       headingLevel={3}
       padded
       title="Tier assignments"
@@ -357,7 +357,7 @@ export function TierBoard({
           />
         ))}
       </div>
-    </PanelCard>
+    </SectionCard>
   );
 }
 

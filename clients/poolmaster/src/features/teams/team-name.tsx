@@ -6,7 +6,7 @@ import { TeamAvatar } from './team-avatar';
 
 /**
  * A team's name, linking on when there is somewhere to go, marked when it is the viewer's own
- * team or inactive, with an optional line underneath (its owners, say).
+ * team or inactive.
  *
  * The icon is off by default (#1474): today's icons are placeholders, and beside a place in
  * standings they read as a second badge. Lists pass `showIcon` again once real icons exist; the
@@ -18,7 +18,6 @@ export function TeamName({
   isMine = false,
   name,
   showIcon = false,
-  subtitle,
   testId,
   to,
 }: {
@@ -27,7 +26,6 @@ export function TeamName({
   isMine?: boolean;
   name: string;
   showIcon?: boolean;
-  subtitle?: string;
   testId?: string;
   to?: string;
 }) {
@@ -47,7 +45,6 @@ export function TeamName({
           {isMine ? <MineMarker /> : null}
           {!isActive ? <Chip>Inactive</Chip> : null}
         </div>
-        {subtitle ? <div className="truncate text-sm text-muted-foreground">{subtitle}</div> : null}
       </div>
     </div>
   );

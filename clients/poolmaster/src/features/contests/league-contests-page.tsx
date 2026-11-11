@@ -2,7 +2,7 @@ import { useParams, useSearchParams } from "react-router";
 import { useEffect, useMemo } from "react";
 import { useLeagueContextGuard } from "@/features/leagues/league-context-guard";
 import { getLogger } from "@/lib/logger";
-import { ErrorState, LoadingState, PanelCard } from "@/features/shared/ui";
+import { ErrorState, LoadingState, SectionCard } from "@/features/shared/ui";
 import { useLeagueContext } from '@/features/leagues/use-league-context';
 import { ContestsPageHeader } from './contests-page-header';
 import { CurrentContestList } from './current-contest-list';
@@ -68,10 +68,10 @@ export function LeagueContestsPage() {
       ) : contestsQuery.isError ? (
         <ErrorState body="We couldn't load contests for this league." />
       ) : (
-        <PanelCard testId="league-contests-current" title="Current contests">
+        <SectionCard testId="league-contests-current" title="Current contests">
           <CurrentContestList
             contests={contestsQuery.data ?? []}
-            emptyBody="No contests are open or live right now. Finished ones are under Past."
+            emptyBody="No open or live contests."
             entriesByContestId={myEntries.entriesByContestId}
             entriesState={myEntries.state}
             focusContestId={focusContestId}
@@ -81,7 +81,7 @@ export function LeagueContestsPage() {
             showEntryCount
             testIdPrefix="league-contest"
           />
-        </PanelCard>
+        </SectionCard>
       )}
     </section>
   );

@@ -1,21 +1,21 @@
 import { useState } from 'react';
-import { SelectionType, SquadMembershipStatus } from '@poolmaster/shared/domain';
+import { SelectionType } from '@poolmaster/shared/domain';
 import type { ContestDto, ContestEntryDto, SquadDto } from '@/lib/api';
-import { formatUserName } from '@/features/account/user-name';
 import { CurrentContestList } from '@/features/contests/current-contest-list';
 import { ContestStatusBadge } from '@/features/contests/contest-status-badge';
 import { MineMarker } from '@/features/contests/mine-marker';
 import { useBracketLeaderboardQuery, useContestLeaderboardQuery } from '@/features/contests/use-contest-leaderboard';
 import {
   Countdown,
-  EmptyState,
   Eyebrow,
   formatDateTimeDisplay,
   Heading,
   LinkButton,
   LoadingState,
-  PanelCard,
-  PanelList,
+  SectionCard,
+  SectionEmpty,
+  SectionRow,
+  SectionRows,
   QueryState,
   SegmentedControl,
   SimpleTable,
@@ -25,7 +25,7 @@ import {
   Tile,
   useDisplayPreferences,
 } from '@/features/shared/ui';
-import { TeamName } from '@/features/teams/team-name';
+import { formatOwnerCount } from '@/features/teams/team-directory';
 import {
   buildBracketTopStandings,
   buildTopStandings,
@@ -92,29 +92,34 @@ export function UpNextCard({
   );
 }
 
-/** League Home's Live and open card (#1390): the shared current-contest list, less the Up next contest. */
-export function LiveAndOpenCard({
+/**
+ * League Home's Current contests card (#1390, #1561): the shared current-contest list, less the
+ * Up next contest, always shown, with one italic line when nothing else is open or live.
+ */
+export function CurrentContestsCard({
   contests,
+  emptyBody,
   entriesByContestId,
   entriesState,
   hasTeam,
   leagueCode,
 }: {
   contests: readonly ContestDto[];
+  emptyBody: string;
   entriesByContestId: ReadonlyMap<string, readonly ContestEntryDto[]>;
   entriesState: MyEntriesState;
   hasTeam: boolean;
   leagueCode: string;
 }) {
   return (
-    <PanelCard
+    <SectionCard
       footer={{ label: 'All contests', testId: 'league-home-all-contests', to: buildLeagueContestsPath(leagueCode) }}
-      testId="league-home-live-and-open"
-      title="Live and open"
+      testId="league-home-current-contests"
+      title="Current contests"
     >
       <CurrentContestList
         contests={contests}
-        emptyBody="No other contests are open or live right now."
+        emptyBody={emptyBody}
         entriesByContestId={entriesByContestId}
         entriesState={entriesState}
         hasTeam={hasTeam}
@@ -122,7 +127,7 @@ export function LiveAndOpenCard({
         showDrafts={false}
         testIdPrefix="league-home-contest"
       />
-    </PanelCard>
+    </SectionCard>
   );
 }
 
@@ -159,7 +164,7 @@ export function LiveStandingsCard({
   const contest = contests.find((candidate) => candidate.id === chosenId) ?? contests[0];
 
   return (
-    <PanelCard
+    <SectionCard
       footer={{
         label: 'Full leaderboard',
         testId: 'league-home-full-leaderboard',
@@ -184,7 +189,7 @@ export function LiveStandingsCard({
         </div>
       ) : null}
       <TopStandings contest={contest} key={contest.id} mySquadId={mySquadId} />
-    </PanelCard>
+    </SectionCard>
   );
 }
 
@@ -228,29 +233,22 @@ export function YourTeamCard({
   leagueCode: string;
   team: SquadDto | null;
 }) {
-  // No team yet means no owners to name.
-  const owners = team
-    ? team.members
-      .filter((member) => member.status === SquadMembershipStatus.ACTIVE)
-      .map((member) => formatUserName(member.user.firstName, member.user.lastName))
-    : [];
-
   return (
-    <PanelCard
-      footer={{ label: team ? `Go to ${team.name}` : 'Choose your name', testId: 'league-home-my-team', to: buildLeagueTeamPath(leagueCode) }}
+    <SectionCard
+      footer={{ label: team ? 'My team' : 'Choose your name', testId: 'league-home-my-team', to: buildLeagueTeamPath(leagueCode) }}
       testId="league-home-your-team"
       title="Yours"
     >
       {isLoading ? (
         <LoadingState size="inline" />
       ) : team ? (
-        <div className="px-4 py-4">
-          <TeamName iconKey={team.iconKey} name={team.name} subtitle={owners.join(', ')} />
-        </div>
+        <SectionRows>
+          <SectionRow facts={formatOwnerCount(team)} name={team.name} testId="league-home-your-team-row" />
+        </SectionRows>
       ) : (
-        <EmptyState body="You haven't chosen your name in this league yet." size="inline" />
+        <SectionEmpty>You haven&apos;t chosen your name in this league yet.</SectionEmpty>
       )}
-    </PanelCard>
+    </SectionCard>
   );
 }
 
@@ -278,32 +276,25 @@ export function CupsCard({
   }
 
   return (
-    <PanelCard
+    <SectionCard
       footer={{ label: 'Trophy case', testId: 'league-home-trophy-case', to: buildLeagueTrophyCasePath(leagueCode, year) }}
       testId="league-home-cups"
       title={`${year} cups`}
     >
-      <PanelList>
+      <SectionRows>
         {cups.slice(0, HOME_CUPS).map((cup) => {
           const progress = cupProgress(cup);
           return (
-            <li key={cup.id}>
-              <LinkButton
-                className="flex-col items-start gap-0.5 rounded-none px-4 py-3"
-                layout="row"
-                data-testid={`league-home-cup-${cup.id}`}
-                to={buildLeaguePointsRacePath(leagueCode, year, cup.sportLeagueId)}
-                variant="ghost"
-              >
-                <span className="font-semibold text-foreground">{cup.name}</span>
-                <span className="text-sm font-normal text-muted-foreground">
-                  {describeCupStanding(cup, { squadId: mySquadId, isViewer: true })} · {progress.final} of {progress.total} final
-                </span>
-              </LinkButton>
-            </li>
+            <SectionRow
+              facts={`${describeCupStanding(cup, { squadId: mySquadId, isViewer: true })} · ${progress.final} of ${progress.total} final`}
+              key={cup.id}
+              name={cup.name}
+              testId={`league-home-cup-${cup.id}`}
+              to={buildLeaguePointsRacePath(leagueCode, year, cup.sportLeagueId)}
+            />
           );
         })}
-      </PanelList>
-    </PanelCard>
+      </SectionRows>
+    </SectionCard>
   );
 }
