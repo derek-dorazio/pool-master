@@ -722,6 +722,13 @@ export class InMemorySportEvents {
           })),
         ];
       },
+      linkGames: async (links) => {
+        for (const { id, externalGameId } of links) {
+          const row = this.matchRows.find((match) => match.id === id);
+          if (!row) throw new Error('unknown match');
+          row.externalGameId = externalGameId;
+        }
+      },
       placeSides: async (sides, jobs) => {
         this.backgroundJobs.push(...(jobs ?? []));
         for (const { id, ...placed } of sides) {
