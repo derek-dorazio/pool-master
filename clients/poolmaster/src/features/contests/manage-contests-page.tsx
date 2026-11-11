@@ -18,8 +18,10 @@ import {
   LinkButton,
   LoadingState,
   PageHeader,
-  SegmentedControl,
+  PageTabs,
   Select,
+  Tabs,
+  TabsContent,
 } from '@/features/shared/ui';
 import { firstContestEvent, type ContestSportEvent } from './contest-events';
 import { ContestStatusBadge } from './contest-status-badge';
@@ -193,96 +195,110 @@ export function ManageContestsPage() {
     return null;
   }
 
-  return (
-    <section className="space-y-6" data-testid="manage-contests-page">
-      <PageHeader
-        actions={
-          league.isActive ? (
-            <>
-              <LinkButton
-                data-testid="manage-contests-contest-types-link"
-                to={buildLeagueContestTypesPath(league.leagueCode)}
-                variant="secondary"
-              >
-                Browse contest types
-              </LinkButton>
-              <LinkButton
-                data-testid="manage-contests-create-link"
-                to={buildLeagueAdminContestCreatePath(league.leagueCode)}
-              >
-                Create contest
-              </LinkButton>
-            </>
-          ) : (
-            <Chip tone="inactive">League inactive</Chip>
-          )
-        }
-        description="Members see a contest once you open it to the league."
-        title="Contests"
-      />
+  const hasContests = activeContests.length > 0 || years.length > 0;
+  const isLoading = contestsQuery.isLoading || yearsQuery.isLoading;
+  const isError = contestsQuery.isError || yearsQuery.isError;
 
-      {contestsQuery.isLoading || yearsQuery.isLoading ? (
-        <LoadingState body="Loading contests..." />
-      ) : contestsQuery.isError || yearsQuery.isError ? (
-        <ErrorState body="We couldn't load contests for this league." />
-      ) : !activeContests.length && !years.length ? (
-        <EmptyState
-          action={
+  return (
+    // The views' tabs sit in the header and their content below it, so the tabs root is the page.
+    <Tabs
+      asChild
+      onValueChange={(value) => setFilter(value === 'history' ? 'history' : 'active')}
+      value={filter}
+    >
+      <section className="space-y-6" data-testid="manage-contests-page">
+        <PageHeader
+          actions={
             league.isActive ? (
-              <LinkButton to={buildLeagueAdminContestCreatePath(league.leagueCode)} variant="secondary">
-                Create contest
-              </LinkButton>
-            ) : null
+              <>
+                <LinkButton
+                  data-testid="manage-contests-contest-types-link"
+                  size="sm"
+                  to={buildLeagueContestTypesPath(league.leagueCode)}
+                  variant="secondary"
+                >
+                  Contest types
+                </LinkButton>
+                <LinkButton
+                  data-testid="manage-contests-create-link"
+                  size="sm"
+                  to={buildLeagueAdminContestCreatePath(league.leagueCode)}
+                >
+                  Create contest
+                </LinkButton>
+              </>
+            ) : (
+              <Chip tone="inactive">League inactive</Chip>
+            )
           }
-          body="Create the first contest for this league."
-          testId="manage-contests-empty"
-          title="No contests yet"
-        />
-      ) : (
-        <div className="grid gap-3">
-          <SegmentedControl
-            aria-label="Contests to show"
-            onChange={(value) => setFilter(value === 'history' ? 'history' : 'active')}
-            options={[
-              // poolmaster-allow-list-lookup: counts the league's current contests, listed right below it
-              { label: `Active · ${activeContests.length}`, testId: 'manage-contests-filter-active', value: 'active' },
-              { label: 'History', testId: 'manage-contests-filter-history', value: 'history' },
-            ]}
-            value={filter}
-          />
-          {filter === 'history' && year !== null ? (
+          description="Members see a contest once you open it to the league."
+          tabs={!isLoading && !isError && hasContests ? (
+            <PageTabs
+              aria-label="Contests to show"
+              items={[
+                // poolmaster-allow-list-lookup: counts the league's current contests, listed right below it
+                { count: activeContests.length, label: 'Active', testId: 'manage-contests-filter-active', value: 'active' },
+                { label: 'History', testId: 'manage-contests-filter-history', value: 'history' },
+              ]}
+              variant="state"
+            />
+          ) : undefined}
+          tabsEnd={filter === 'history' && year !== null ? (
             <Select
               aria-label="Year"
-              className="w-auto justify-self-start"
+              className="w-auto"
               data-testid="manage-contests-history-year"
               onChange={(event) => setSearchParams({ year: event.target.value }, { replace: true })}
               value={year}
             >
               {years.map((option) => <option key={option} value={option}>{option}</option>)}
             </Select>
-          ) : null}
-          {filter === 'history' && historyQuery.isError ? (
-            <ErrorState body={`We couldn't load the contests finished in ${year}.`} testId="manage-contests-history-error" />
-          ) : filter === 'history' && historyQuery.isLoading ? (
-            <LoadingState body="Loading finished contests..." />
-          ) : (
-          <DataGrid
-            columns={columns}
-            data={rows}
-            emptyMessage={shownContests.length
-              ? 'No contest matches.'
-              : filter === 'active' ? 'No contests are in setup, open or live.' : 'No contest has finished yet.'}
-            getRowId={(row) => row.contest.id}
-            key={filter === 'active' ? filter : `${filter}-${year}`}
-            pageSize={CONTESTS_PER_PAGE}
-            rowTestId={(row) => `manage-contests-row-${row.contest.id}`}
-            search={{ label: 'Find a contest or event', testId: 'manage-contests-search' }}
-            showColumnFilters={false}
-            tableTestId="manage-contests-table"
+          ) : undefined}
+          title="Contests"
+        />
+
+        {isLoading ? (
+          <LoadingState body="Loading contests..." />
+        ) : isError ? (
+          <ErrorState body="We couldn't load contests for this league." />
+        ) : !hasContests ? (
+          <EmptyState
+            action={
+              league.isActive ? (
+                <LinkButton to={buildLeagueAdminContestCreatePath(league.leagueCode)} variant="secondary">
+                  Create contest
+                </LinkButton>
+              ) : null
+            }
+            body="Create the first contest for this league."
+            testId="manage-contests-empty"
+            title="No contests yet"
           />
-          )}
-        </div>
-      )}
-    </section>
+        ) : (
+          <TabsContent className="grid gap-3" value={filter}>
+            {filter === 'history' && historyQuery.isError ? (
+              <ErrorState body={`We couldn't load the contests finished in ${year}.`} testId="manage-contests-history-error" />
+            ) : filter === 'history' && historyQuery.isLoading ? (
+              <LoadingState body="Loading finished contests..." />
+            ) : (
+            <DataGrid
+              columns={columns}
+              data={rows}
+              emptyMessage={shownContests.length
+                ? 'No contest matches.'
+                : filter === 'active' ? 'No contests are in setup, open or live.' : 'No contest has finished yet.'}
+              getRowId={(row) => row.contest.id}
+              key={filter === 'active' ? filter : `${filter}-${year}`}
+              pageSize={CONTESTS_PER_PAGE}
+              rowTestId={(row) => `manage-contests-row-${row.contest.id}`}
+              search={{ label: 'Find a contest or event', testId: 'manage-contests-search' }}
+              showColumnFilters={false}
+              tableTestId="manage-contests-table"
+            />
+            )}
+          </TabsContent>
+        )}
+      </section>
+    </Tabs>
   );
 }

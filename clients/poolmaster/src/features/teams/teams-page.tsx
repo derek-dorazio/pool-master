@@ -1,15 +1,17 @@
 import type { ColumnDef } from '@tanstack/react-table';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router';
 import { useLeagueContextGuard } from '@/features/leagues/league-context-guard';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
-import { DataGrid, ErrorState, formatDateDisplay, LoadingState, PageHeader, useDisplayPreferences } from '@/features/shared/ui';
+import { DataGrid, ErrorState, formatDateDisplay, Input, LoadingState, PageHeader, useDisplayPreferences } from '@/features/shared/ui';
 import { getLogger } from '@/lib/logger';
+import { plural } from '@/lib/plural';
 import { buildTeamDirectoryRows, type TeamDirectoryRow } from './team-directory';
 import { teamNameColumn } from './team-name-column';
 import { useLeagueSquadsQuery } from './use-league-squads-query';
 
 const TEAMS_PER_PAGE = 25;
+const SEARCH_LABEL = 'Find a member or owner';
 
 /** Teams: the league's directory of teams and their owners, for every member. */
 export function TeamsPage() {
@@ -18,6 +20,7 @@ export function TeamsPage() {
   const { leagueCode = '' } = useParams<{ leagueCode: string }>();
   const { query: leagueQuery, league } = useLeagueContext(leagueCode);
   const teamsQuery = useLeagueSquadsQuery(league?.id ?? '');
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     if (!leagueQuery.isError) {
@@ -61,7 +64,27 @@ export function TeamsPage() {
 
   return (
     <section className="space-y-6" data-testid="teams-page">
-      <PageHeader description={`Every member of ${league.name} and the name they play under.`} title="Members" />
+      <PageHeader
+        actions={(
+          <Input
+            aria-label={SEARCH_LABEL}
+            className="sm:w-72"
+            data-testid="teams-search"
+            onChange={(event) => setSearchTerm(event.target.value)}
+            placeholder={SEARCH_LABEL}
+            type="search"
+            value={searchTerm}
+          />
+        )}
+        meta={(
+          <span data-testid="teams-page-counts">
+            {plural(league.memberCount, 'member')}
+            {teamsQuery.data ? ` · ${plural(rows.length, 'team')}` : null}
+          </span>
+        )}
+        testId="teams-page-header"
+        title="Members"
+      />
 
       {teamsQuery.isLoading ? (
         <LoadingState body="Loading members..." testId="teams-page-teams-loading" />
@@ -79,7 +102,7 @@ export function TeamsPage() {
           getRowId={(row) => row.team.id}
           pageSize={TEAMS_PER_PAGE}
           rowTestId={(row) => `league-team-${row.team.id}`}
-          search={{ label: 'Find a member or owner', testId: 'teams-search' }}
+          searchTerm={searchTerm}
           showColumnFilters={false}
           tableTestId="teams-table"
         />

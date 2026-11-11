@@ -227,7 +227,7 @@ describe('Championships', () => {
 
     renderChampionships('/league/BIGDAWGS/championships/2026/trophies');
 
-    const picker = await screen.findByRole('combobox', { name: 'Year' });
+    const picker = await screen.findByRole('combobox', { name: 'Season' });
     await waitFor(() => expect(within(picker).getAllByRole('option').map((option) => option.textContent)).toEqual(['2026', '2025', '2024']));
     fireEvent.change(picker, { target: { value: '2025' } });
 
@@ -240,7 +240,7 @@ describe('Championships', () => {
 
     renderChampionships('/league/BIGDAWGS/championships/2026/race/sport-league-pga');
 
-    const picker = await screen.findByRole('combobox', { name: 'Year' });
+    const picker = await screen.findByRole('combobox', { name: 'Season' });
     // The years arrive with the league's history; 2024 can only be chosen once it is offered.
     await within(picker).findByRole('option', { name: '2024' });
     fireEvent.change(picker, { target: { value: '2024' } });
@@ -917,7 +917,7 @@ describe('Championships › a squad\'s cup points', () => {
       'href',
       '/league/BIGDAWGS/championships/2026/race/sport-league-pga',
     );
-    expect(screen.getByTestId('championships-tab-race')).toBeChecked();
+    expect(screen.getByTestId('championships-tab-race')).toHaveAttribute('aria-current', 'page');
   });
 
   it('says the league has no such cup when the read finds no cup for that season and sports league', async () => {
@@ -973,15 +973,34 @@ const SUMMARY = {
 };
 
 describe('Championships › All years', () => {
-  it('opens from the Championships header', async () => {
+  it('opens from the All years tab under the same header, with that tab selected and no season picker', async () => {
     primeViewer();
     getHistorySummaryMock.mockResolvedValue(apiSuccess({ summary: SUMMARY }));
     renderChampionships('/league/BIGDAWGS/championships/2026');
 
-    fireEvent.click(await screen.findByTestId('championships-all-years'));
+    fireEvent.click(await screen.findByTestId('championships-tab-all-years'));
 
     expect(await screen.findByTestId('all-years-page')).toBeInTheDocument();
     expect(screen.getByTestId('location')).toHaveTextContent('/league/BIGDAWGS/history');
+    expect(screen.getByRole('heading', { level: 1, name: 'All years' })).toBeInTheDocument();
+    expect(screen.getByTestId('championships-tab-all-years')).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByTestId('championships-tab-championship')).not.toHaveAttribute('aria-current');
+    expect(screen.queryByTestId('championships-year')).not.toBeInTheDocument();
+  });
+
+  it('opens the current year\'s Championship, Trophy case and Points race from its tabs', async () => {
+    primeViewer();
+    getHistorySummaryMock.mockResolvedValue(apiSuccess({ summary: SUMMARY }));
+    renderChampionships('/league/BIGDAWGS/history');
+
+    expect(await screen.findByTestId('championships-tab-championship')).toHaveAttribute('href', '/league/BIGDAWGS/championships/2026');
+    expect(screen.getByTestId('championships-tab-trophies')).toHaveAttribute('href', '/league/BIGDAWGS/championships/2026/trophies');
+    expect(screen.getByTestId('championships-tab-race')).toHaveAttribute('href', '/league/BIGDAWGS/championships/2026/race');
+
+    fireEvent.click(screen.getByTestId('championships-tab-trophies'));
+
+    expect(await screen.findByRole('heading', { level: 1, name: '2026 Championship Race' })).toBeInTheDocument();
+    expect(screen.getByTestId('championships-tab-trophies')).toHaveAttribute('aria-current', 'page');
   });
 
   it('shows the most championships and cups won, naming every squad tied, and nobody on a tile nobody has', async () => {

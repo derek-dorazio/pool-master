@@ -29,6 +29,14 @@ describe("Heading", () => {
     expect(heading).not.toHaveClass("title-card");
   });
 
+  it("draws a page header's title in the display face at its heaviest, one step smaller on a phone", () => {
+    render(<Heading level={1} variant="pageTitle">Members</Heading>);
+
+    const heading = screen.getByRole("heading");
+    expect(heading).toHaveClass("font-display", "font-black", "text-2xl", "sm:text-3xl");
+    expect(heading).not.toHaveClass("italic", "uppercase");
+  });
+
   it("keeps page and section titles in normal case, outside the display face", () => {
     render(
       <>

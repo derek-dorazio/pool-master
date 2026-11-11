@@ -4,7 +4,7 @@ import { useParams } from 'react-router';
 import { listParticipantProviderMappings } from '@/lib/api';
 import {
   AsyncPage,
-  IdentityHeading,
+  PageHeader,
   LinkButton,
   QueryState,
   SettingsRow,
@@ -72,7 +72,7 @@ function ParticipantHome({ player }: { player: ParticipantDto }) {
   const { sport } = useManagedSport();
   return (
     <div className="space-y-8">
-      <IdentityHeading
+      <PageHeader
         icon={<UserRound aria-hidden size={22} />}
         meta={(
           <>
@@ -82,7 +82,7 @@ function ParticipantHome({ player }: { player: ParticipantDto }) {
             {player.nationality ? <span>{player.nationality}</span> : null}
           </>
         )}
-        name={player.name}
+        title={player.name}
         testId="root-admin-participant-identity"
       />
 

@@ -38,7 +38,7 @@ import {
   DateDisplay,
   EmptyState,
   ErrorState,
-  IdentityHeading,
+  PageHeader,
   LinkButton,
   LoadingState,
   SettingsRow,
@@ -209,7 +209,7 @@ export function ManageContestPage() {
 
   return (
     <section className="space-y-8" data-testid="manage-contest-page">
-      <IdentityHeading
+      <PageHeader
         icon={<Trophy aria-hidden size={22} />}
         meta={(
           <>
@@ -219,7 +219,7 @@ export function ManageContestPage() {
             </span>
           </>
         )}
-        name={contest.name}
+        title={contest.name}
         testId="manage-contest-identity"
       />
 

@@ -13,6 +13,8 @@ const headingVariants = cva("", {
       hero: "font-display text-3xl font-black italic leading-tight tracking-tight sm:text-4xl lg:text-5xl",
       /** A section title on a landing or event page. */
       display: "font-display text-3xl font-bold tracking-tight",
+      /** The title at the top of a page, in `PageHeader`: navy Archivo at its heaviest. */
+      pageTitle: "font-display text-2xl font-black leading-tight tracking-tight sm:text-3xl",
       /** The title of an app page, in normal case. */
       page: "text-3xl font-semibold tracking-tight",
       /** A section or dialog title that sits on the page, in normal case. */

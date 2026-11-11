@@ -12,7 +12,7 @@ import {
   DangerZoneAction,
   EmptyState,
   ErrorState,
-  IdentityHeading,
+  PageHeader,
   LinkButton,
   LoadingState,
   SettingsRow,
@@ -77,10 +77,10 @@ export function ManageTeamPage() {
 
   return (
     <section className="space-y-8" data-testid="manage-team-page">
-      <IdentityHeading
+      <PageHeader
         avatar={<TeamAvatar iconKey={team.iconKey} label={`${team.name} icon`} size="md" />}
         meta={`${formatOwnerCount(team)} · ${isInactiveTeam ? 'Inactive' : 'Active'}`}
-        name={team.name}
+        title={team.name}
         testId="manage-team-identity"
       />
 

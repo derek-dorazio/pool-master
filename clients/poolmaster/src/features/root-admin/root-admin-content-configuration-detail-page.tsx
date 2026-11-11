@@ -10,7 +10,7 @@ import {
   Checkbox,
   FormEditorSection,
   FormField,
-  IdentityHeading,
+  PageHeader,
   Input,
   StatusBadge,
   Textarea,
@@ -134,7 +134,7 @@ function ContentConfigurationDetail({ templateKey }: { templateKey: string }) {
     >
       {draft && vocabulary ? (
         <>
-          <IdentityHeading
+          <PageHeader
             icon={<LayoutTemplate aria-hidden size={22} />}
             meta={(
               <>
@@ -146,7 +146,7 @@ function ContentConfigurationDetail({ templateKey }: { templateKey: string }) {
                 <span className="font-mono">{draft.templateKey}</span>
               </>
             )}
-            name={draft.name}
+            title={draft.name}
             testId="root-admin-content-configuration-identity"
           />
 

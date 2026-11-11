@@ -1160,14 +1160,15 @@ behind it (a cell to the squad's finishes in that place, Played to every contest
 kept in the link as `?squad=…&place=…`.
 Contests › History reads the same list one year at a time (`?year=2025`, the newest year with a
 completed contest by default), each row naming its winner and opening the contest.
-All years (`/league/:code/history`, linked from the Championships header and from My team)
+All years (`/league/:code/history`, the fourth Championships tab)
 shows the summary's tiles and one line per year, which opens that year's Championship tab; each
 cup line opens its Points race. It shows every crowned cup and an open one once two of its contests
 have counted, and skips a year with neither a champion nor such a cup.
 Below the tiles, the record book lists each record somebody holds, with its holders and the
 next best; it is left out until somebody holds one. The Hall of Lame follows in its own section,
 unless the commissioner hid it on Edit championships (League settings shows which).
-Each squad's page (My team, and another team's page) shows its year under its owners: its
+Each squad's page shows its year, above its owners on My team (how the viewer's own team is doing
+is that page's main job) and under them on another team's page: its
 championship place with the gap to 1st and its movement (opening the Championship tab), its own
 medal counts, its finish matrix row, whose counts narrow its contests below, its place in each cup
 on show (opening its points in that cup), and the counted contests it placed in. A year picker
