@@ -67,23 +67,22 @@ export function LeaderboardFrame({
   settledNote?: ReactNode;
   summary?: ReactNode;
 }) {
+  const isSettled = contest.status === ContestStatus.COMPLETED && Boolean(settledNote);
   return (
     <ContestPageFrame
       contest={contest}
       current="leaderboard"
-      details={(
-        <div className="mt-2 space-y-1 text-sm text-muted-foreground">
-          {notes}
-          {contest.status === ContestStatus.COMPLETED && settledNote ? (
-            <p data-testid="contest-leaderboard-settled-note">{settledNote}</p>
-          ) : null}
-        </div>
-      )}
+      headerTestId="contest-leaderboard-header"
       leagueCode={leagueCode}
+      notes={notes || isSettled ? (
+        <>
+          {notes}
+          {isSettled ? <p data-testid="contest-leaderboard-settled-note">{settledNote}</p> : null}
+        </>
+      ) : undefined}
       picksRevealed
       summary={summary}
       testId="contest-leaderboard"
-      titleTestId="contest-leaderboard-heading"
     >
       {children}
     </ContestPageFrame>

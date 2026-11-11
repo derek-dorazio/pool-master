@@ -77,11 +77,15 @@ send the version the draft came from and offer the newer one on a conflict.
 A dialog that is neither a form nor a confirmation, such as a menu action
 with its own buttons, is a plain `Modal`.
 
-Every page starts with one `PageHeader`: its title straight on the page (never in
-a card), an optional `icon` or `avatar`, an optional `meta` fact line ("12 members
+Every page starts with one `PageHeader`: an optional `breadcrumbs` line, its title
+straight on the page (never in a card) with an optional `titleAside` such as an
+info icon, an optional `icon` or `avatar`, an optional `meta` fact line ("12 members
 · 2 active contests"), and a right slot: `actions` for at most two small
 buttons, or `search` for the page's search box, which takes a full-width line on a
-phone. A `description` is only for a rule the reader needs or
+phone. The `status` slot holds one compact chip, a status, count or summary
+(a contest's Live or Final, "12 entries"), at the far right of the header's first
+line: beside the breadcrumb, or at the end of the title row after any actions. It
+stays on the first line on a phone. A `description` is only for a rule the reader needs or
 the entity's own words, never a sentence saying what the page is. A page's views
 are `PageTabs` in the header's `tabs` slot — `variant="link"` for views with
 their own address, `variant="state"` inside the page's own `Tabs` root — and a

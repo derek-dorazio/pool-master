@@ -11,7 +11,7 @@ type Breadcrumb = {
 
 export type PageHeaderProps = {
   breadcrumbLabel?: string;
-  /** The trail up to this page, for an administration area's nested pages. */
+  /** The trail up to this page, on the header's first line above the title. */
   breadcrumbs?: Breadcrumb[];
   /**
    * A line under the facts for a rule the reader needs ("Members never see which plan it is
@@ -21,6 +21,13 @@ export type PageHeaderProps = {
   description?: ReactNode;
   /** One short muted line of facts, such as "12 members · 2 active contests". */
   meta?: ReactNode;
+  /**
+   * One compact chip at the far right of the header's first line: a status, count or summary,
+   * such as a contest's Live or Final, "12 entries" or "3 members". It sits beside the
+   * breadcrumb when there is one, otherwise at the end of the title row, after any actions, and
+   * stays on the first line on a phone, so it adds no height.
+   */
+  status?: ReactNode;
   /** The page's views, as `PageTabs`, on the header's bottom line. */
   tabs?: ReactNode;
   /**
@@ -30,6 +37,8 @@ export type PageHeaderProps = {
   tabsEnd?: ReactNode;
   testId?: string;
   title: string;
+  /** Beside the title, such as an info icon whose callout holds the subject's status. */
+  titleAside?: ReactNode;
 } & (
   /**
    * The right slot holds at most two small buttons about this page's subject. They sit beside
@@ -46,9 +55,10 @@ export type PageHeaderProps = {
 );
 
 /**
- * The one header at the top of a page: the title straight on the page (no card), an optional
- * icon, fact line and right slot, then the page's views as tabs on a ruled bottom line. Title,
- * facts and tabs stay within about 100px on a desktop and 120px on a phone.
+ * The one header at the top of a page: an optional breadcrumb line, the title straight on the
+ * page (no card), an optional icon, fact line, right slot and status chip, then the page's views
+ * as tabs on a ruled bottom line. Title, facts and tabs stay within about 100px on a desktop and
+ * 120px on a phone.
  */
 export function PageHeader({
   actions,
@@ -59,10 +69,12 @@ export function PageHeader({
   icon,
   meta,
   search,
+  status,
   tabs,
   tabsEnd,
   testId,
   title,
+  titleAside,
 }: PageHeaderProps) {
   const picture = avatar ?? (icon ? (
     <IconAvatar label={`${title} icon`} size="md">
@@ -70,29 +82,55 @@ export function PageHeader({
     </IconAvatar>
   ) : null);
 
+  const hasTrail = Boolean(breadcrumbs?.length);
+  const statusSlot = status ? (
+    <div
+      className={cn("flex shrink-0 items-center", !hasTrail && "sm:order-last")}
+      data-testid={testId ? `${testId}-status-slot` : undefined}
+    >
+      {status}
+    </div>
+  ) : null;
+
   return (
     <header data-testid={testId}>
+      {hasTrail ? (
+        <div
+          className="mb-2 flex items-center justify-between gap-3"
+          data-testid={testId ? `${testId}-trail-row` : undefined}
+        >
+          <Breadcrumbs className="min-w-0" items={breadcrumbs ?? []} label={breadcrumbLabel} singleLine />
+          {statusSlot}
+        </div>
+      ) : null}
       <div
         className={cn("flex flex-wrap items-center gap-x-4 gap-y-3", tabs ? "pb-2" : "border-b border-border pb-3.5")}
         data-testid={testId ? `${testId}-title-row` : undefined}
       >
         {picture}
         <div className="min-w-0 flex-1">
-          <Heading data-testid={testId ? `${testId}-name` : undefined} level={1} variant="pageTitle">
-            {title}
-          </Heading>
+          <div className="flex items-center gap-2">
+            <Heading data-testid={testId ? `${testId}-name` : undefined} level={1} variant="pageTitle">
+              {title}
+            </Heading>
+            {titleAside}
+          </div>
           {meta ? (
-            <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
+            // Each fact the page passes as its own element ends with a dot before the next, so a
+            // line that wraps ends on a dot rather than opening with one.
+            <div className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm text-muted-foreground [&>*:not(:last-child)]:after:ml-1.5 [&>*:not(:last-child)]:after:content-['·']"
+              data-testid={testId ? `${testId}-meta` : undefined}
+            >
               {meta}
             </div>
           ) : null}
           {description ? (
-            <p className="mt-1 max-w-3xl text-sm text-muted-foreground">{description}</p>
-          ) : null}
-          {breadcrumbs?.length ? (
-            <Breadcrumbs className="mt-2" items={breadcrumbs} label={breadcrumbLabel} />
+            <div className="mt-1 max-w-3xl space-y-1 text-sm text-muted-foreground">{description}</div>
           ) : null}
         </div>
+        {/* Without a trail the status ends the title row: beside the title on a phone, so it
+            keeps the first line while actions wrap, and after the actions on a wider screen. */}
+        {hasTrail ? null : statusSlot}
         {search ? (
           <div className="max-sm:basis-full sm:w-72" data-testid={testId ? `${testId}-search` : undefined}>
             {search}
@@ -119,19 +157,25 @@ export function PageHeader({
   );
 }
 
-/** A trail of links up to the current page, which is marked with `aria-current`. */
+/**
+ * A trail of links up to the current page, which is marked with `aria-current`. `singleLine`
+ * keeps it to one line, shortening long names with an ellipsis, as on a page header's first line
+ * beside its status chip.
+ */
 export function Breadcrumbs({
   className,
   items,
   label = "Breadcrumbs",
+  singleLine = false,
 }: {
   className?: string;
   items: Breadcrumb[];
   label?: string;
+  singleLine?: boolean;
 }) {
   return (
     <nav aria-label={label} className={className}>
-      <ol className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+      <ol className={cn("flex items-center gap-2 text-sm text-muted-foreground", singleLine ? "flex-nowrap" : "flex-wrap")}>
         {items.map((breadcrumb, index) => {
           const isLast = index === items.length - 1;
 
@@ -139,7 +183,11 @@ export function Breadcrumbs({
             <Fragment
               key={`${breadcrumb.label}-${breadcrumb.href ?? index}`}
             >
-              <li>
+              <li
+                // On one line the trail's first step keeps its whole name and later ones shorten.
+                className={singleLine ? (index === 0 ? "shrink-0" : "min-w-0 truncate") : undefined}
+                title={singleLine ? breadcrumb.label : undefined}
+              >
                 {isLast || !breadcrumb.href ? (
                   <span
                     aria-current={isLast ? "page" : undefined}
@@ -159,7 +207,7 @@ export function Breadcrumbs({
               {!isLast ? (
                 <li
                   aria-hidden="true"
-                  className="text-muted-foreground/70"
+                  className="shrink-0 text-muted-foreground/70"
                 >
                   /
                 </li>

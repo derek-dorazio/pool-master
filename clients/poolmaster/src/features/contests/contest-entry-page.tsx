@@ -737,7 +737,7 @@ function RosterContestEntryPage() {
           {detailsEditable ? (
             <FormField label="Entry name">
               <Input
-                data-testid="contest-entry-name-input"
+                data-testid="contest-entry-header-name-input"
                 disabled={saveEntryDetailsMutation.isPending}
                 maxLength={100}
                 onChange={(event) => setEntryNameDraft(event.target.value)}

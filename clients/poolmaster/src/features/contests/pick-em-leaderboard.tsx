@@ -95,9 +95,7 @@ export function PickEmLeaderboard({ contest }: { contest: ContestDto }) {
         </>
       )}
       summary={(
-        <p className="mt-2 text-sm text-muted-foreground" data-testid="pick-em-leaderboard-mode">
-          {formatPickEmRulesName(board)}
-        </p>
+        <span data-testid="pick-em-leaderboard-mode">{formatPickEmRulesName(board)}</span>
       )}
     >
       <ScoreboardGrid
