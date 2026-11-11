@@ -1346,7 +1346,7 @@ export interface paths {
         };
         /**
          * List the requester's entries in a league's current contests
-         * @description The requester's own squad's entries, drafts included, in each of the league's OPEN and ACTIVE contests, each with its status in every event of its contest and without its picks (#1197): one read for what league home, the Contests page's My entries and My team show, however many contests are current. Empty without an active squad in the league. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.
+         * @description The requester's own squad's entries, drafts included, in each of the league's OPEN and ACTIVE contests, each with its status in every event of its contest and without its picks (#1197), and the place of each entry an ACTIVE contest's leaderboard ranks, read from the stored board the leaderboard answers from (#1565): one read for what league home, the Contests page and My team show, however many contests are current. Empty without an active squad in the league. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.
          */
         get: operations["listMyContestEntries"];
         put?: never;
@@ -13065,7 +13065,16 @@ export interface components {
                 }[];
             };
         };
-        /** @description The requester's own entries across a league's current contests (#1197). */
+        /** @description One entry's place in a live contest, the same place its leaderboard shows (#1565). */
+        ContestEntryPlaceDto: {
+            /** @description The entry placed: one of the response's `entries`. */
+            entryId: string;
+            /** @description The entry's place in its contest as its leaderboard stands, 1 best in every sport; entries level share it. */
+            position: number;
+            /** @description The place as the leaderboard shows it, "T3" when shared. */
+            displayPosition: string;
+        };
+        /** @description The requester's own entries across a league's current contests (#1197), with each live entry's place (#1565). */
         MyContestEntriesResponse: {
             /** @description The requester's own squad's entries, drafts included, in each of the league's OPEN and ACTIVE contests, in entry-number order within a contest. Without `participants`: an entry's picks are on `getContestEntry`. Empty without an active squad in the league. */
             entries: {
@@ -13121,6 +13130,15 @@ export interface components {
                      */
                     pickedAt: string;
                 }[];
+            }[];
+            /** @description The place of each of `entries` that its ACTIVE contest's leaderboard ranks, read from the same stored board the leaderboard answers from (#1565), so a list of contests needs no leaderboard read per contest. An entry with no place is left out: one in an OPEN contest, one not yet scored, any in a contest whose picks are not revealed yet, and any in a squares contest, whose grid has no places until it settles. */
+            places: {
+                /** @description The entry placed: one of the response's `entries`. */
+                entryId: string;
+                /** @description The entry's place in its contest as its leaderboard stands, 1 best in every sport; entries level share it. */
+                position: number;
+                /** @description The place as the leaderboard shows it, "T3" when shared. */
+                displayPosition: string;
             }[];
         };
         /** @description Contest-entry list response. */
@@ -26727,7 +26745,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description The requester's own entries across a league's current contests (#1197). */
+            /** @description The requester's own entries across a league's current contests (#1197), with each live entry's place (#1565). */
             200: {
                 headers: {
                     [name: string]: unknown;

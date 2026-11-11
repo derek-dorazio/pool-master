@@ -357,7 +357,8 @@ describe('contest entry mappers', () => {
     expect(toContestEntryDetailResponse('contest-1', entry, true)).toEqual({ contestId: 'contest-1', picksRevealed: true, entry });
     expect(toContestEntryListResponse({ contestId: 'contest-1', entries: [entry, entry], picksRevealed: false }))
       .toEqual({ contestId: 'contest-1', total: 2, picksRevealed: false, entries: [entry, entry] });
-    expect(toMyContestEntriesResponse([entry])).toEqual({ entries: [entry] });
+    const place = { entryId: entry.id, position: 2, displayPosition: '2' };
+    expect(toMyContestEntriesResponse({ entries: [entry], places: [place] })).toEqual({ entries: [entry], places: [place] });
   });
 
   it('sends a league\'s finished years as a copy, in the order given', () => {

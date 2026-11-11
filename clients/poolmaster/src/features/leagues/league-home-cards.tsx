@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { SelectionType } from '@poolmaster/shared/domain';
-import type { ContestDto, ContestEntryDto, SquadDto } from '@/lib/api';
+import type { ContestDto, ContestEntryDto, ContestEntryPlaceDto, SquadDto } from '@/lib/api';
 import { CurrentContestList } from '@/features/contests/current-contest-list';
 import { ContestStatusBadge } from '@/features/contests/contest-status-badge';
 import { MineMarker } from '@/features/contests/mine-marker';
@@ -97,6 +97,7 @@ export function UpNextCard({
  * Up next contest, always shown, with one italic line when nothing else is open or live.
  */
 export function CurrentContestsCard({
+  bestPlaceByContestId,
   contests,
   emptyBody,
   entriesByContestId,
@@ -104,6 +105,7 @@ export function CurrentContestsCard({
   hasTeam,
   leagueCode,
 }: {
+  bestPlaceByContestId: ReadonlyMap<string, ContestEntryPlaceDto>;
   contests: readonly ContestDto[];
   emptyBody: string;
   entriesByContestId: ReadonlyMap<string, readonly ContestEntryDto[]>;
@@ -118,6 +120,7 @@ export function CurrentContestsCard({
       title="Current contests"
     >
       <CurrentContestList
+        bestPlaceByContestId={bestPlaceByContestId}
         contests={contests}
         emptyBody={emptyBody}
         entriesByContestId={entriesByContestId}

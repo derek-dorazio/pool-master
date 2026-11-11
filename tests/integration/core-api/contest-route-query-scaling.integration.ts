@@ -154,6 +154,75 @@ async function seedMyEntries({ contests, events }: { contests: number; events: n
 }
 
 /**
+ * A league whose commissioner's team has a submitted entry in each of `contests` ACTIVE golf
+ * contests, each over a major of its own that is played, its standings frozen, and one under way,
+ * with a rival team's entry beside it, so every contest's leaderboard ranks the viewer's entry.
+ * With `stored`, each contest's leaderboard has been read once, so its board is stored.
+ */
+async function seedMyLiveEntries({ contests, stored }: { contests: number; stored: boolean }) {
+  const prisma = getPrisma();
+  const seeded = await seedMyEntries({ contests: 0, events: 0 });
+  const mySquad = await prisma.squad.findFirstOrThrow({ where: { leagueId: seeded.league.id } });
+  const rival = await createTestUser({ displayName: `Scaling Rival ${seeded.suffix}` });
+  await prisma.leagueMembership.create({ data: { leagueId: seeded.league.id, userId: rival.user.id, role: 'MEMBER', status: 'ACTIVE' } });
+  const rivalSquad = await prisma.squad.create({ data: { leagueId: seeded.league.id, createdBy: rival.user.id, name: `Rivals ${seeded.suffix}` } });
+  const contestIds = [];
+  for (let index = 0; index < contests; index += 1) {
+    const played = await seedEventWithField(2, { startsInDays: -8, status: SportEventStatus.COMPLETED });
+    const live = await seedEventWithField(2, { startsInDays: -1, status: SportEventStatus.IN_PROGRESS });
+    const majors = [played, live];
+    for (const major of majors) await seedTiers(major.event.id, major.field, 2);
+    const contest = await prisma.contest.create({
+      data: {
+        leagueId: seeded.league.id,
+        seasonYear: played.event.startDate.getUTCFullYear(),
+        sportEvents: { create: majors.map(({ event }, sequence) => ({ sportEventId: event.id, sequence: sequence + 1 })) },
+        name: `Live ${seeded.suffix} ${index}`,
+        status: ContestStatus.ACTIVE,
+        contestFormat: 'ROSTER',
+        selectionType: SelectionType.TIERED,
+      },
+    });
+    await prisma.contestConfiguration.create({
+      data: {
+        contestId: contest.id,
+        selectionType: SelectionType.TIERED,
+        configJson: { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 2 },
+        participantScoringRules: { create: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 1 } },
+      },
+    });
+    const settledAt = new Date();
+    for (const [place, squad] of [mySquad, rivalSquad].entries()) {
+      const entry = await prisma.contestEntry.create({
+        data: {
+          contestId: contest.id,
+          squadId: squad.id,
+          entryNumber: 1,
+          name: squad.name,
+          events: { create: majors.map(({ event }) => ({ sportEventId: event.id, status: 'SUBMITTED', submittedAt: new Date(event.startDate.getTime() - DAY) })) },
+        },
+      });
+      await prisma.contestEntryPick.createMany({
+        data: majors.flatMap(({ field }) => field.map((row, slot) => ({
+          entryId: entry.id, sportEventParticipantId: row.id, contestFormat: 'ROSTER' as const, slot: slot + 1, pickedAt: settledAt,
+        }))),
+      });
+      await prisma.contestEntryEventStanding.create({
+        data: {
+          contestId: contest.id, contestEntryId: entry.id, sportEventId: played.event.id, position: place + 1, displayPosition: String(place + 1),
+          countingPickLimit: 2, scoredPickCount: 2, asOf: settledAt, settledAt, totalScore: place,
+        },
+      });
+    }
+    contestIds.push(contest.id);
+  }
+  if (stored) {
+    for (const contestId of contestIds) await get(`/api/v1/contests/${contestId}/leaderboard`, seeded.viewer);
+  }
+  return seeded;
+}
+
+/**
  * A league whose commissioner runs `contests` contests of `status`, each on an event of its own in
  * a sports league of its own, `startsInDays` from now, with one entry from the commissioner's team.
  * With `secondChanceBrackets`, every other contest is a bracket starting at round 2, whose window
@@ -472,6 +541,24 @@ describe('contest reads cost the same statements for 2 rows as for 20', () => {
       seed: (contests) => seedMyEntries({ contests, events: 1 }),
       call: ({ league, viewer }) => get(`/api/v1/leagues/${league.id}/contests/my-entries`, viewer),
       rowsShown: (response) => okBody(response, MyContestEntriesResponseSchema).entries.length,
+    });
+  });
+
+  it("GET my entries in a league's current contests: the same statements for my places in 2 live contests as in 20, their boards computed (#1565)", async () => {
+    await expectConstantQueries({
+      route: 'GET /api/v1/leagues/{id}/contests/my-entries',
+      seed: (contests) => seedMyLiveEntries({ contests, stored: false }),
+      call: ({ league, viewer }) => get(`/api/v1/leagues/${league.id}/contests/my-entries`, viewer),
+      rowsShown: (response) => okBody(response, MyContestEntriesResponseSchema).places.length,
+    });
+  });
+
+  it("GET my entries in a league's current contests: the same statements for my places in 2 live contests as in 20, their boards stored (#1565)", async () => {
+    await expectConstantQueries({
+      route: 'GET /api/v1/leagues/{id}/contests/my-entries',
+      seed: (contests) => seedMyLiveEntries({ contests, stored: true }),
+      call: ({ league, viewer }) => get(`/api/v1/leagues/${league.id}/contests/my-entries`, viewer),
+      rowsShown: (response) => okBody(response, MyContestEntriesResponseSchema).places.length,
     });
   });
 

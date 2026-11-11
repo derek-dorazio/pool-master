@@ -45,7 +45,7 @@ export type TopStandings = {
   myRowBelow: StandingRow | null;
 };
 
-/** The top `limit` entries of a leaderboard, in the server's order, marking the viewer's team. */
+/** The top `limit` entries of a leaderboard by entry name, in the server's order, marking the viewer's team. */
 export function buildTopStandings(
   response: ContestLeaderboardResponse,
   mySquadId: string | null,
@@ -55,7 +55,7 @@ export function buildTopStandings(
   return topOf(response.entries.map((entry, index): StandingRow => ({
     entryId: entry.entryId,
     isMine: mySquadId !== null && entry.squadId === mySquadId,
-    name: entry.squadName,
+    name: entry.entryName,
     position: entry.displayPosition,
     total: view.entries[index]?.total ?? null,
   })), limit);
@@ -70,7 +70,7 @@ export function buildBracketTopStandings(
   return topOf(response.entries.map((entry): StandingRow => ({
     entryId: entry.entryId,
     isMine: mySquadId !== null && entry.squadId === mySquadId,
-    name: entry.squadName,
+    name: entry.entryName,
     position: entry.displayPosition,
     total: String(entry.points),
   })), limit);
