@@ -3,7 +3,7 @@ import { Check } from 'lucide-react';
 import type { LeaguePlan } from '@poolmaster/shared/domain';
 import type { LeaguePlanListResponse } from '@/lib/api';
 import { describeExpansionPrices } from '@/features/billing/billing-format';
-import { Eyebrow, Heading, Tile } from '@/features/shared/ui';
+import { Eyebrow, Heading, Tile, useDisplayPreferences } from '@/features/shared/ui';
 import type { ComparedPlan } from './plan-comparison';
 import { buildPlanHighlights } from './plan-highlights';
 import { LEAGUE_PLAN_LABEL, LEAGUE_PLAN_TAGLINE } from './plan-labels';
@@ -25,7 +25,8 @@ interface PlanCardsProps {
  * prices come with payments (#931). A contest expansion's price is shown when given.
  */
 export function PlanCards({ expansion, plans, renderAction }: PlanCardsProps) {
-  const highlights = buildPlanHighlights(plans);
+  const { locale } = useDisplayPreferences();
+  const highlights = buildPlanHighlights(plans, locale);
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" data-testid="plan-cards">
       {highlights.map((card, index) => (
@@ -41,7 +42,7 @@ export function PlanCards({ expansion, plans, renderAction }: PlanCardsProps) {
           {renderAction(card.plan)}
           {expansion && expansion.expansionPrices[card.plan].length > 0 ? (
             <div className="space-y-1 text-sm" data-testid={`plan-card-${card.plan}-expansion`}>
-              <p className="text-foreground">Bigger contests: {describeExpansionPrices(expansion.expansionPrices[card.plan])}</p>
+              <p className="text-foreground">Bigger contests: {describeExpansionPrices(expansion.expansionPrices[card.plan], locale)}</p>
               {expansion.paymentsEnabled ? null : <p className="text-muted-foreground">Expanding is free for now.</p>}
             </div>
           ) : null}

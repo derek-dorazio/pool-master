@@ -10,6 +10,7 @@ import {
   SettingsRow,
   SettingsRows,
   StatusBadge,
+  useDisplayPreferences,
 } from '@/features/shared/ui';
 import { QueryKeys } from '@/lib/query-keys';
 import { throwApiError, extractErrorMessage } from '@/lib/errors';
@@ -61,7 +62,8 @@ export function RootAdminSettingsPage() {
 
 function SettingsGroupSection({ group }: { group: SettingsGroup }) {
   const [showHistory, setShowHistory] = useState(false);
-  const { summary, actions } = groupContent(group);
+  const { locale } = useDisplayPreferences();
+  const { summary, actions } = groupContent(group, locale);
 
   return (
     <SectionCard
@@ -112,7 +114,7 @@ function SettingsGroupSection({ group }: { group: SettingsGroup }) {
   );
 }
 
-function groupContent(group: SettingsGroup): { summary: SettingsSummaryItem[]; actions: ReactNode } {
+function groupContent(group: SettingsGroup, locale: string): { summary: SettingsSummaryItem[]; actions: ReactNode } {
   switch (group.key) {
     case 'INGESTION_SCHEDULE_CONFIG':
       return {
@@ -136,7 +138,7 @@ function groupContent(group: SettingsGroup): { summary: SettingsSummaryItem[]; a
       return { summary: summarizeBudgetPricing(group.value), actions: null };
     case 'PLAN_CONFIG':
       return {
-        summary: summarizePlans(group.value),
+        summary: summarizePlans(group.value, locale),
         actions: (
           <LinkButton data-testid="root-admin-settings-edit-PLAN_CONFIG" to={PLANS_PATH}>
             Edit plans
@@ -145,7 +147,7 @@ function groupContent(group: SettingsGroup): { summary: SettingsSummaryItem[]; a
       };
     case 'BILLING_CONFIG':
       // Edited in place: the section carries the form.
-      return { summary: summarizeBilling(group.value), actions: null };
+      return { summary: summarizeBilling(group.value, locale), actions: null };
   }
 }
 

@@ -24,7 +24,6 @@ import {
   formatSelectionTypeName,
   eventSportDefinition,
   getSportDefinition,
-  pluralize,
   sportAllowsSelectionType,
   suggestContestName,
 } from '@poolmaster/shared/domain';
@@ -57,6 +56,9 @@ import {
   FormPage,
   InlineError,
   Input,
+  formatCount,
+  formatNumber,
+  useDisplayPreferences,
 } from '@/features/shared/ui';
 import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
@@ -200,6 +202,7 @@ function leagueStartingFormatOf(
  * new contest's page, where it can still change until it is opened to the league.
  */
 export function CreateContestPage() {
+  const { locale } = useDisplayPreferences();
   const logger = getLogger().child({ feature: 'create-contest-page' });
   const { leagueCode = '' } = useParams<{ leagueCode: string }>();
   const auth = useAuth();
@@ -728,12 +731,12 @@ export function CreateContestPage() {
         )}
         {sportLeagueCap !== null && selectedEvent ? (
           <p className="text-sm text-muted-foreground" data-testid="create-contest-sport-leagues-used">
-            {`Sports leagues in ${selectedEvent.eventYear}: ${sportLeaguesUsed.get(selectedEvent.eventYear)?.length ?? 0} of ${sportLeagueCap}.`}
+            {`Sports leagues in ${selectedEvent.eventYear}: ${formatNumber(sportLeaguesUsed.get(selectedEvent.eventYear)?.length ?? 0, locale)} of ${formatNumber(sportLeagueCap, locale)}.`}
           </p>
         ) : null}
         {sportLeagueCap !== null && lockedEventIds.length ? (
           <Alert data-testid="create-contest-sport-leagues-locked">
-            Your plan allows {pluralize(sportLeagueCap, 'sports league')} a year, so events in other sports
+            Your plan allows {formatCount(sportLeagueCap, 'sports league', locale)} a year, so events in other sports
             leagues are locked for a year whose contests already use {sportLeagueCap === 1 ? 'it' : 'them all'}.
             {' '}
             <Link

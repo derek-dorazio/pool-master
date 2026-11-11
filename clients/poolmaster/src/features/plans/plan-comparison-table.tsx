@@ -11,6 +11,8 @@ import {
   TableHeaderCell,
   TableRow,
   Tile,
+  formatNumber,
+  useDisplayPreferences,
 } from '@/features/shared/ui';
 import { LEAGUE_PLAN_LABEL } from './plan-labels';
 import { buildPlanComparison, type ComparedPlan, type PlanComparisonSection } from './plan-comparison';
@@ -41,7 +43,8 @@ function foldedCounts(section: PlanComparisonSection, planCount: number): string
  */
 export function PlanComparisonTable({ plans, initiallyFolded = [], currentPlan, capUsage }: PlanComparisonTableProps) {
   const shade = (index: number) => (plans[index]?.plan === currentPlan ? 'bg-primary/10' : null);
-  const sections = buildPlanComparison(plans);
+  const { locale } = useDisplayPreferences();
+  const sections = buildPlanComparison(plans, locale);
   const [folded, setFolded] = useState<ReadonlySet<PlanFeatureGroup>>(() => new Set(initiallyFolded));
   const toggle = (group: PlanFeatureGroup) => setFolded((current) => {
     const next = new Set(current);
@@ -109,7 +112,7 @@ export function PlanComparisonTable({ plans, initiallyFolded = [], currentPlan, 
                           : <Minus aria-label="Not included" className="mx-auto text-muted-foreground" size={16} />}
                         {used !== undefined && limit !== null && used > limit ? (
                           <span className="block text-xs font-semibold text-destructive" data-testid={`plan-comparison-over-${row.key}-${plans[index]?.plan ?? index}`}>
-                            You use {used.toLocaleString('en-US')}
+                            You use {formatNumber(used, locale)}
                           </span>
                         ) : null}
                       </TableCell>

@@ -98,22 +98,22 @@ export function summarizeBudgetPricing(config: BudgetPricingConfig): SettingsSum
 }
 
 /** Each plan cap's limit on every plan, Free to Platinum (#944). */
-export function summarizePlans(config: PlanConfig): SettingsSummaryItem[] {
+export function summarizePlans(config: PlanConfig, locale: string): SettingsSummaryItem[] {
   return Object.values(PlanCap).map((cap) => ({
     id: cap,
     label: PLAN_CAP_LABEL[cap],
-    value: LEAGUE_PLANS.map((plan) => `${LEAGUE_PLAN_LABEL[plan]} ${formatPlanLimit(config.caps[cap][plan])}`).join(' · '),
+    value: LEAGUE_PLANS.map((plan) => `${LEAGUE_PLAN_LABEL[plan]} ${formatPlanLimit(config.caps[cap][plan], locale)}`).join(' · '),
   }));
 }
 
 /** Whether payments are on, then each plan's expansion price list, Free to Platinum (#987). */
-export function summarizeBilling(config: BillingConfig): SettingsSummaryItem[] {
+export function summarizeBilling(config: BillingConfig, locale: string): SettingsSummaryItem[] {
   return [
     { id: 'paymentsEnabled', label: 'Payments', value: describePayments(config) },
     ...LEAGUE_PLANS.map((plan) => ({
       id: `expansionPrices-${plan}`,
       label: `${LEAGUE_PLAN_LABEL[plan]} expansions`,
-      value: describeExpansionPrices(config.expansionPrices[plan]),
+      value: describeExpansionPrices(config.expansionPrices[plan], locale),
     })),
   ];
 }

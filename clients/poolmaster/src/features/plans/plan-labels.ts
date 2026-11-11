@@ -1,5 +1,6 @@
 import { LeaguePlan, PlanCap, PlanFeature, PlanFeatureGroup } from '@poolmaster/shared/domain';
 import { STAT_POOL_CONTEST_TYPE } from '@/features/contests/scoring-family-ui/stat-pool-copy';
+import { formatCount, formatNumber } from '@/features/shared/ui';
 
 /** What each league plan is called on screen (#943). Always "plan", never "tier". */
 export const LEAGUE_PLAN_LABEL: Readonly<Record<LeaguePlan, string>> = {
@@ -41,20 +42,23 @@ export const LEAGUE_PLAN_TAGLINE: Readonly<Record<LeaguePlan, string>> = {
 };
 
 /** A cap as a plan card's highlight (#971): "Up to 50 entries per contest", "3 sports leagues a year". */
-export function formatPlanCapHighlight(cap: PlanCap, limit: number | null): string {
+export function formatPlanCapHighlight(cap: PlanCap, limit: number | null, locale: string): string {
   switch (cap) {
     case PlanCap.ENTRIES_PER_CONTEST:
-      return limit === null ? 'Unlimited entries per contest' : `Up to ${limit.toLocaleString('en-US')} entries per contest`;
+      return limit === null ? 'Unlimited entries per contest' : `Up to ${formatCount(limit, 'entry', locale, 'entries')} per contest`;
     case PlanCap.SPORTS_LEAGUES_PER_YEAR:
       return limit === null
         ? 'Every sports league, every year'
-        : `${limit.toLocaleString('en-US')} ${limit === 1 ? 'sports league' : 'sports leagues'} a year`;
+        : `${formatCount(limit, 'sports league', locale)} a year`;
   }
 }
 
+/** What a cap with no limit shows. */
+export const UNLIMITED_LABEL = 'Unlimited';
+
 /** A cap's limit on screen: the number, or "Unlimited". */
-export function formatPlanLimit(limit: number | null): string {
-  return limit === null ? 'Unlimited' : limit.toLocaleString('en-US');
+export function formatPlanLimit(limit: number | null, locale: string): string {
+  return limit === null ? UNLIMITED_LABEL : formatNumber(limit, locale);
 }
 
 /** What each plan feature is called on screen, in the comparison table and the admin Plans page. */

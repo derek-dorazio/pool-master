@@ -1,9 +1,8 @@
 import { ContestStatus } from '@poolmaster/shared/domain';
 import type { ContestResultSummaryDto } from '@/lib/api';
 import { buildContestLandingPath } from '@/features/leagues/league-routing';
-import { SectionEmpty, SectionRows, StatusBadge } from '@/features/shared/ui';
+import { SectionEmpty, SectionRows, StatusBadge, formatCupPoints, formatPlace, useDisplayPreferences } from '@/features/shared/ui';
 import { ContestRow } from '@/features/contests/contest-row';
-import { formatCupPoints, formatPlace } from './cup-view';
 import { describeContestResult, SquadFinishShown } from './championship-view';
 
 /**
@@ -29,6 +28,7 @@ export function ChampionshipContestList({
   leagueCode: string;
   testIdPrefix?: string;
 }) {
+  const { locale } = useDisplayPreferences();
   if (!contests.length) {
     return <SectionEmpty testId={`${testIdPrefix}s-empty`}>{emptyBody}</SectionEmpty>;
   }
@@ -49,7 +49,7 @@ export function ChampionshipContestList({
             status={state.badge ? <StatusBadge tone="neutral">{state.badge}</StatusBadge> : null}
             testId={`${testIdPrefix}-${contest.contestId}`}
             to={buildContestLandingPath(leagueCode, { id: contest.contestId, status: ContestStatus.COMPLETED })}
-            trailing={contest.squadFinish ? describeSquadFinish(contest.squadFinish, finishShown) : null}
+            trailing={contest.squadFinish ? describeSquadFinish(contest.squadFinish, finishShown, locale) : null}
           />
         );
       })}
@@ -57,9 +57,9 @@ export function ChampionshipContestList({
   );
 }
 
-function describeSquadFinish(finish: NonNullable<ContestResultSummaryDto['squadFinish']>, shown: SquadFinishShown): string {
+function describeSquadFinish(finish: NonNullable<ContestResultSummaryDto['squadFinish']>, shown: SquadFinishShown, locale: string): string {
   if (shown === SquadFinishShown.PLACE) {
     return formatPlace({ displayPosition: finish.displayPlace, position: finish.place });
   }
-  return `${finish.displayPlace} · ${formatCupPoints(finish.points)} pts`;
+  return `${finish.displayPlace} · ${formatCupPoints(finish.points, locale)} pts`;
 }

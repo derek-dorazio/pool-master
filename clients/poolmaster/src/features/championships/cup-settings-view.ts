@@ -3,7 +3,7 @@ import {
   CUP_CUSTOM_POINTS_MAX_PLACES,
 } from '@poolmaster/shared/dto';
 import { CupPointsScale, CupWeight, cupPlacePoints, type CupPointsTable } from '@poolmaster/shared/domain';
-import { formatOrdinalPlace } from './cup-view';
+import { formatNumberList, formatOrdinal } from '@/features/shared/ui';
 
 /** How many places the points preview shows. */
 export const POINTS_PREVIEW_PLACES = 10;
@@ -52,14 +52,9 @@ export const CUP_WEIGHTS = [CupWeight.NORMAL, CupWeight.BONUS, CupWeight.DOUBLE,
 /** A league's points table in one line, as its settings row shows it. */
 export function describePointsTable(table: CupPointsTable): string {
   if (table.scale === CupPointsScale.CUSTOM) {
-    return `Custom: ${table.customPoints.join(', ')}`;
+    return `Custom: ${formatNumberList(table.customPoints)}`;
   }
   return CUP_POINTS_SCALE_COPY[table.scale].label;
-}
-
-/** The commissioner's custom points as the form shows them: "10, 6, 3". */
-export function formatCustomPoints(points: readonly number[]): string {
-  return points.join(', ');
 }
 
 /**
@@ -85,7 +80,7 @@ export function parseCustomPoints(text: string): { points: number[]; error: null
 /** The points each of the first places earns on a table, for the settings preview. */
 export function previewPoints(table: CupPointsTable): { place: string; points: number }[] {
   return Array.from({ length: POINTS_PREVIEW_PLACES }, (_, index) => ({
-    place: formatOrdinalPlace(index + 1),
+    place: formatOrdinal(index + 1),
     points: cupPlacePoints(table, index + 1, POINTS_PREVIEW_FIELD),
   }));
 }

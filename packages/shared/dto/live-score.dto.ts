@@ -60,6 +60,10 @@ export const GameScoreUpdateSchema = z.object({
   state: z.enum(ProviderGameState),
   homeScore: z.number().int().min(0).nullable().describe('The home team\'s score; null before the game starts.'),
   awayScore: z.number().int().min(0).nullable().describe('The away team\'s score; null before the game starts.'),
+  homeShootoutScore: z.number().int().min(0).nullable().optional()
+    .describe('The home team\'s shoot-out score, for a game level after extra time and settled by a shoot-out (#1532); left out or null otherwise.'),
+  awayShootoutScore: z.number().int().min(0).nullable().optional()
+    .describe('The away team\'s shoot-out score, beside `homeShootoutScore`.'),
 }).describe('Head-to-head game update emitted by game adapters.');
 export type GameScoreUpdate = z.infer<typeof GameScoreUpdateSchema>;
 

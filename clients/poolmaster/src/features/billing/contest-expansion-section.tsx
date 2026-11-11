@@ -8,8 +8,7 @@ import {
 import { extractErrorMessage, throwApiError, type ErrorCodeMessages } from '@/lib/errors';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import { Alert, Button, FormField, Input, SectionCard, SettingsRow, SettingsRows } from '@/features/shared/ui';
-import { formatPriceCents } from './billing-format';
+import { Alert, Button, FormField, Input, SectionCard, SettingsRow, SettingsRows, formatCount, formatMoneyCents, formatNumber, useDisplayPreferences } from '@/features/shared/ui';
 import { useContestExpansionQuery } from './use-contest-expansion-query';
 
 /** Copy for the refusals Expand and a root admin's free expansion can meet. */
@@ -21,17 +20,17 @@ const EXPANSION_CODE_MESSAGES: ErrorCodeMessages = {
 };
 
 /** "12 of 50", or "12, no limit". */
-function describeEntries(state: ContestExpansionResponse): string {
+function describeEntries(state: ContestExpansionResponse, locale: string): string {
   return state.entriesPerContest === null
-    ? `${state.entryCount}, no limit`
-    : `${state.entryCount} of ${state.entriesPerContest}`;
+    ? `${formatNumber(state.entryCount, locale)}, no limit`
+    : `${formatNumber(state.entryCount, locale)} of ${formatNumber(state.entriesPerContest, locale)}`;
 }
 
 /** What one band costs, as the commissioner reads it beside its button. */
-function describeOfferPrice(offer: ContestExpansionOffer, paymentsEnabled: boolean): string {
+function describeOfferPrice(offer: ContestExpansionOffer, paymentsEnabled: boolean, locale: string): string {
   return paymentsEnabled
-    ? formatPriceCents(offer.priceCents)
-    : `${formatPriceCents(offer.priceCents)}, free while payments are off`;
+    ? formatMoneyCents(offer.priceCents, locale)
+    : `${formatMoneyCents(offer.priceCents, locale)}, free while payments are off`;
 }
 
 /**
@@ -52,6 +51,7 @@ export function ContestExpansionSection({
   canGrant: boolean;
   isLeagueActive: boolean;
 }) {
+  const { locale } = useDisplayPreferences();
   const expansionQuery = useContestExpansionQuery(leagueId, contestId);
   const invalidates = [
     QueryKeys.contestExpansions.detail(leagueId, contestId),
@@ -104,14 +104,14 @@ export function ContestExpansionSection({
       title="Entries"
     >
       <SettingsRows>
-        <SettingsRow label="Entries" testId="contest-expansion-entries" value={describeEntries(state)} />
+        <SettingsRow label="Entries" testId="contest-expansion-entries" value={describeEntries(state, locale)} />
         {state.expandedTo !== null ? (
-          <SettingsRow label="Expanded to" testId="contest-expansion-expanded-to" value={`${state.expandedTo} entries`} />
+          <SettingsRow label="Expanded to" testId="contest-expansion-expanded-to" value={formatCount(state.expandedTo, 'entry', locale, 'entries')} />
         ) : null}
         {isFull && state.expandable ? (
           <div className="px-4 py-3.5">
             <Alert data-testid="contest-expansion-full" tone="warning">
-              This contest is full at {state.entriesPerContest} entries.
+              {`This contest is full at ${formatCount(state.entriesPerContest ?? 0, 'entry', locale, 'entries')}.`}
             </Alert>
           </div>
         ) : null}
@@ -131,7 +131,7 @@ export function ContestExpansionSection({
             key={offer.entriesPerContest}
             label={`Up to ${offer.entriesPerContest}`}
             testId={`contest-expansion-offer-${offer.entriesPerContest}`}
-            value={describeOfferPrice(offer, state.paymentsEnabled)}
+            value={describeOfferPrice(offer, state.paymentsEnabled, locale)}
           />
         ))}
         {state.paymentsEnabled && state.offers.length > 0 ? (

@@ -2,7 +2,6 @@ import { RaceResultStatus } from '@poolmaster/shared/domain';
 import { describe, expect, it } from 'vitest';
 import {
   describeRaceResult,
-  formatOrdinal,
   parseRaceResultUpload,
   raceResultTemplateRows,
 } from './race-result-upload';
@@ -90,23 +89,6 @@ describe('raceResultTemplateRows', () => {
       ['h-1', 'Sovereignty', '', '', '4', 'J. Alvarado'],
       ['', 'Journalism', '', '', '', ''],
     ]);
-  });
-});
-
-describe('formatOrdinal', () => {
-  it.each([
-    [1, '1st'],
-    [2, '2nd'],
-    [3, '3rd'],
-    [4, '4th'],
-    [11, '11th'],
-    [12, '12th'],
-    [13, '13th'],
-    [21, '21st'],
-    [22, '22nd'],
-    [111, '111th'],
-  ])('writes place %i as "%s"', (place, expected) => {
-    expect(formatOrdinal(place)).toBe(expected);
   });
 });
 

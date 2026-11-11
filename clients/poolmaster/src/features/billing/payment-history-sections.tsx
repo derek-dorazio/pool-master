@@ -3,8 +3,7 @@ import { Link } from 'react-router';
 import type { LeaguePayment, UserPayment } from '@/lib/api';
 import { extractErrorMessage } from '@/lib/errors';
 import { buildContestLandingPath, buildLeaguePath } from '@/features/leagues/league-routing';
-import { DateDisplay, SectionCard, SectionEmpty, SettingsRows } from '@/features/shared/ui';
-import { formatPriceCents } from './billing-format';
+import { DateDisplay, SectionCard, SectionEmpty, SettingsRows, formatMoneyCents, useDisplayPreferences } from '@/features/shared/ui';
 import { useLeaguePaymentsQuery, useMyPaymentsQuery } from './use-payments-queries';
 
 const LEAGUE_DESCRIPTION = 'Every payment made in this league. While payments are off, expanding a contest is free and shows here as $0.';
@@ -28,6 +27,7 @@ function PaymentLine({
   who: string | null;
   amountCents: number;
 }) {
+  const { locale } = useDisplayPreferences();
   return (
     <div
       className="grid gap-x-4 gap-y-1 px-4 py-3.5 text-sm sm:grid-cols-[8rem_minmax(0,1fr)_auto] sm:items-baseline"
@@ -38,7 +38,7 @@ function PaymentLine({
         <div className="text-foreground">{what}</div>
         {who ? <div className="text-xs text-muted-foreground">{who}</div> : null}
       </div>
-      <div className="font-medium tabular-nums text-foreground">{formatPriceCents(amountCents)}</div>
+      <div className="font-medium tabular-nums text-foreground">{formatMoneyCents(amountCents, locale)}</div>
     </div>
   );
 }

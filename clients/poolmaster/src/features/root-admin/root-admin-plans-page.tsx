@@ -33,7 +33,7 @@ import {
   PLAN_CAP_LABEL,
   PLAN_FEATURE_GROUP_LABEL,
   PLAN_FEATURE_LABEL,
-  formatPlanLimit,
+  UNLIMITED_LABEL,
 } from '@/features/plans/plan-labels';
 import { extractErrorMessage } from '@/lib/errors';
 import { ManagePageIntro } from './manage-page-intro';
@@ -172,7 +172,7 @@ function CapsGrid({ form }: { form: UseFormReturn<PlanSettingsDraft> }) {
                     <TableCell className="min-w-40 py-3 align-top" key={plan}>
                       <div className="space-y-2">
                         {caps[cap][plan].unlimited ? (
-                          <p className="py-2 text-foreground">{formatPlanLimit(null)}</p>
+                          <p className="py-2 text-foreground">{UNLIMITED_LABEL}</p>
                         ) : (
                           <Input
                             aria-describedby={error ? errorId : undefined}

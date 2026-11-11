@@ -37,6 +37,17 @@ The shared UI layer is split into three levels:
    business rules. They should compose primitives and templates instead of
    repeating page chrome or modal footers.
 
+## Formatting Values
+
+A value written on screen goes through `format.ts`, exported from the index:
+`formatPlace` / `formatOrdinal` ("T2", "1st"), `formatNumber`, `formatCount`
+("1,000 entries"), `formatCupPoints`, `formatMoneyCents` and `formatNumberList`,
+plus the date formatters from `date-time-format.ts`. Numbers take the viewer's
+locale from `useDisplayPreferences().locale`, so pass it in rather than fixing
+`en-US`. Feature code never calls `toLocaleString`, `toFixed` or `new Intl.*Format`
+itself; `poolmaster/no-inline-display-format` enforces it
+(`rules/react-ui-rules.md` §5 *Environment And Time Discipline*).
+
 ## Where a Reusable Piece Lives
 
 - A **generic** piece, one that knows nothing about the product (a heading, a
