@@ -4,15 +4,16 @@
  *   npm run balldontlie:contract-check -- [--tournament <id>] [--game-event <scope>] [--update-spec]
  *
  * 1. Downloads the vendor's published document for each league the adapter reads (PGA TOUR, NFL,
- *    NCAAB and NCAAW) and compares it with the vendored copy the contract tests run against
+ *    NCAAB, NCAAW and EPL) and compares it with the vendored copy the contract tests run against
  *    (tests/fixtures/balldontlie/openapi/<league>.yml). A difference fails the check;
  *    `--update-spec` writes the new copy instead, and the contract tests then say whether
  *    anything the adapter reads moved.
  * 2. With BALLDONTLIE_API_KEY set, runs the adapter itself against the live API: the health
- *    read, this season's tournaments, NFL events and NCAA men's and women's tournaments, every
- *    NFL and Division I basketball team, men's and women's, for `--tournament` (a finished stroke-play tournament is
+ *    read, this season's tournaments, NFL events, NCAA men's and women's tournaments and Premier
+ *    League matchweeks, every NFL and Division I basketball team, men's and women's, the Premier
+ *    League's teams, for `--tournament` (a finished stroke-play tournament is
  *    best) its field and its scores, and for `--game-event` (`nfl-2025-postseason`,
- *    `ncaab-2025-tournament` or `ncaaw-2025-tournament`, say) its teams and its game scores. Every response is parsed with
+ *    `ncaab-2025-tournament`, `ncaaw-2025-tournament` or `epl-2026-matchweek-11`, say) its teams and its game scores. Every response is parsed with
  *    the same schemas a sync uses, so a field that drifted fails here with the path that broke.
  *
  * Read-only against the vendor. It needs a network that reaches www.balldontlie.io and
@@ -30,7 +31,7 @@ import { countLiveScoreUpdates } from '../src/modules/ingestion/core/live-score-
 import { errorMessageWithCause } from '../src/core/error-message';
 
 /** Each league the adapter reads, by the name of its vendored document, with the name the vendor gives it. */
-const LEAGUES = { pga: 'PGA TOUR', nfl: 'NFL', ncaab: 'NCAAB', ncaaw: 'NCAAW' } as const;
+const LEAGUES = { pga: 'PGA TOUR', nfl: 'NFL', ncaab: 'NCAAB', ncaaw: 'NCAAW', epl: 'EPL' } as const;
 type League = keyof typeof LEAGUES;
 const HEADER_LINES = 3;
 
@@ -96,6 +97,8 @@ async function checkLiveApi(apiKey: string): Promise<boolean> {
     ['NFL teams', async () => `${String((await adapter.getParticipants(Sport.AMERICAN_FOOTBALL)).length)} teams`],
     ['the last and next NCAA men\'s and women\'s tournaments', async () => `${String((await adapter.getUpcomingEvents(Sport.BASKETBALL)).length)} tournaments`],
     ['Division I basketball teams, men\'s and women\'s', async () => `${String((await adapter.getParticipants(Sport.BASKETBALL)).length)} teams`],
+    ['this season\'s and next season\'s Premier League matchweeks', async () => `${String((await adapter.getUpcomingEvents(Sport.SOCCER)).length)} matchweeks`],
+    ['Premier League teams', async () => `${String((await adapter.getParticipants(Sport.SOCCER)).length)} teams`],
   ];
   const tournamentId = values.tournament;
   if (tournamentId) {
