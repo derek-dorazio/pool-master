@@ -730,6 +730,14 @@ export class InMemorySportEvents {
           row.externalGameId = externalGameId;
         }
       },
+      applyLiveScores: async (scores) => {
+        for (const { id, ...values } of scores) {
+          const row = this.matchRows.find((match) => match.id === id);
+          if (!row) throw new Error('unknown match');
+          // As the Prisma adapter does: a match with a result or cancelled keeps it.
+          if (row.status === MatchStatus.SCHEDULED || row.status === MatchStatus.IN_PROGRESS) Object.assign(row, values);
+        }
+      },
       placeSides: async (sides, jobs) => {
         this.backgroundJobs.push(...(jobs ?? []));
         for (const { id, ...placed } of sides) {

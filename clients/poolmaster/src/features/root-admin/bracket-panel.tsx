@@ -1,5 +1,5 @@
-import { getSportDefinition, MatchResultSource, SportEventStatus } from '@poolmaster/shared/domain';
-import type { SportEventDto } from '@/lib/api';
+import { getSportDefinition, MatchResultSource, MatchStatus, SportEventStatus } from '@poolmaster/shared/domain';
+import type { SportEventDto, SportEventMatchDto } from '@/lib/api';
 import { Alert, Heading, PanelCard, SimpleTable, TableBody, TableHead, TableHeaderCell } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
 import { formsNoBracket, matchNoun } from './bracket-copy';
@@ -11,6 +11,11 @@ import { WithdrawalsCard } from './withdrawals-card';
 import { useEventMatchPeriods, useEventRoundLabel } from './use-sport-catalog';
 import { useSportEventBracketQuery, useSportEventFieldQuery } from './use-sport-event';
 import { useProvidersQuery } from './use-providers-query';
+
+/** Whether a match shows a score from the data feed: a synced result, or a live game's score. */
+function showsFeedScore(match: SportEventMatchDto): boolean {
+  return match.resultSource === MatchResultSource.PROVIDER || match.status === MatchStatus.IN_PROGRESS;
+}
 
 /**
  * A bracket event's results page (#698, #700): its matches round by round, each round named by
@@ -26,8 +31,8 @@ export function BracketPanel({ event }: { event: SportEventDto }) {
   const fieldQuery = useSportEventFieldQuery(event.id);
   const roundLabel = useEventRoundLabel(event);
   const periods = useEventMatchPeriods(event);
-  // The feed's name is read only once one of its finals is on the bracket (#1496).
-  const fromFeed = (bracketQuery.data ?? []).some((match) => match.resultSource === MatchResultSource.PROVIDER);
+  // The feed's name is read only once one of its scores is on the bracket (#1496).
+  const fromFeed = (bracketQuery.data ?? []).some(showsFeedScore);
   const providersQuery = useProvidersQuery({ enabled: fromFeed });
   // poolmaster-allow-list-lookup: the few data providers, with no read of one
   const feedName = providersQuery.data?.find((provider) => provider.providerId === event.providerId)?.providerName ?? 'the data feed';

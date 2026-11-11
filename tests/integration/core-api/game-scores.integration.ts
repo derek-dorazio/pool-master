@@ -93,7 +93,7 @@ function publish(externalEventId: string, games: GameScoreUpdate[]) {
 }
 
 describe('game scores from a provider', () => {
-  it('completes each linked match the provider calls final and sends its winner on, scoring the side each team plays', async () => {
+  it('completes each linked match the provider calls final and sends its winner on, and shows a live game\'s score, scoring the side each team plays', async () => {
     const { event, externalId, entryOf, teamId, matches } = await linkedBracket();
 
     const result = await publish(externalId, [
@@ -102,11 +102,27 @@ describe('game scores from a provider', () => {
       { externalGameId: 'g2', homeTeamExternalId: teamId('Auburn'), awayTeamExternalId: teamId('Florida'), state: ProviderGameState.IN_PROGRESS, homeScore: 40, awayScore: 38 },
     ]);
 
-    expect(result).toMatchObject({ updatesReturned: 2, updatesPersisted: 1, updatesSkipped: 1 });
+    expect(result).toMatchObject({ updatesReturned: 2, updatesPersisted: 2, updatesSkipped: 0 });
     const [first, second, final] = await matches.findBySportEvent(event.id);
     expect(first).toMatchObject({ status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME, homeScore: 70, awayScore: 67 });
-    expect(second).toMatchObject({ status: MatchStatus.SCHEDULED, winnerSide: null, homeScore: null });
+    // A live score decides nothing: no winner, no result source.
+    expect(second).toMatchObject({ status: MatchStatus.IN_PROGRESS, winnerSide: null, homeScore: 40, awayScore: 38, resultSource: null });
     expect(final.homeSportEventParticipantId).toBe(entryOf('Duke').id);
+  });
+
+  it('completes a match that was showing a live score once a later sync calls its game final, and sends the winner on as the provider\'s result', async () => {
+    const { event, externalId, entryOf, teamId, matches } = await linkedBracket();
+    const game = { externalGameId: 'g1', homeTeamExternalId: teamId('Duke'), awayTeamExternalId: teamId('Houston') };
+    await publish(externalId, [{ ...game, state: ProviderGameState.IN_PROGRESS, homeScore: 40, awayScore: 44 }]);
+    const live = (await matches.findBySportEvent(event.id)).at(0);
+
+    const result = await publish(externalId, [{ ...game, state: ProviderGameState.FINAL, homeScore: 66, awayScore: 71 }]);
+
+    expect(live).toMatchObject({ status: MatchStatus.IN_PROGRESS, homeScore: 40, awayScore: 44, winnerSide: null });
+    expect(result).toMatchObject({ updatesPersisted: 1, updatesSkipped: 0 });
+    const [first, , final] = await matches.findBySportEvent(event.id);
+    expect(first).toMatchObject({ status: MatchStatus.COMPLETED, homeScore: 66, awayScore: 71, winnerSide: MatchSide.AWAY, resultSource: MatchResultSource.PROVIDER });
+    expect(final.homeSportEventParticipantId).toBe(entryOf('Houston').id);
   });
 
   it('writes nothing when the same final arrives again', async () => {
@@ -159,6 +175,33 @@ describe('game scores from a provider', () => {
 
     await expect(getPrisma().sportEventMatch.updateMany({ where: { sportEventId: event.id, matchNumber: 3 }, data: { externalGameId: 'g1' } }))
       .rejects.toThrow();
+  });
+
+  it('takes a live score back off a match whose game the provider postpones, and writes a batch of live scores in one statement each', async () => {
+    const { event, externalId, teamId, matches } = await linkedBracket();
+    const live = (gameId: string, home: string, away: string, homeScore: number, awayScore: number) => ({
+      externalGameId: gameId, homeTeamExternalId: teamId(home), awayTeamExternalId: teamId(away), state: ProviderGameState.IN_PROGRESS, homeScore, awayScore,
+    });
+
+    const { statements } = await recordStatements(() => publish(externalId, [live('g1', 'Duke', 'Houston', 20, 18), live('g2', 'Auburn', 'Florida', 11, 9)]));
+    await publish(externalId, [{ ...live('g1', 'Duke', 'Houston', 0, 0), state: ProviderGameState.POSTPONED, homeScore: null, awayScore: null }]);
+
+    // Pinned: the event's own reads, then one read of the matches, one of the sides, one of the
+    // team mappings, and one update per live game, with no result path and no rebuild.
+    expect(statementCounts(statements)).toEqual([
+      ['SELECT event_series', 1],
+      ['SELECT participant_provider_mappings', 1],
+      ['SELECT sport_event_match_period_scores', 1],
+      ['SELECT sport_event_matches', 1],
+      ['SELECT sport_event_participants', 1],
+      ['SELECT sport_event_rounds', 1],
+      ['SELECT sport_events', 1],
+      ['SELECT sport_leagues', 1],
+      ['UPDATE sport_event_matches', 2],
+    ]);
+    const [first, second] = await matches.findBySportEvent(event.id);
+    expect(first).toMatchObject({ status: MatchStatus.SCHEDULED, homeScore: null, awayScore: null });
+    expect(second).toMatchObject({ status: MatchStatus.IN_PROGRESS, homeScore: 11, awayScore: 9 });
   });
 
   it('reads the event\'s matches, sides and team mappings once for a batch of finals, and pays only the result path for each', async () => {

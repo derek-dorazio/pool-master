@@ -197,6 +197,11 @@ export function BracketMatchRow({ match, released, context }: { match: SportEven
         <TableCell className="text-muted-foreground">{formatDateTimeDisplay(match.scheduledDate, displayPreferences, 'To be announced')}</TableCell>
         <TableCell>
           <StatusBadge tone={MATCH_STATUS_TONE[match.status]}>{MATCH_STATUS_LABEL[match.status]}</StatusBadge>
+          {match.status === MatchStatus.IN_PROGRESS && match.homeScore !== null && match.awayScore !== null ? (
+            <p className="mt-1 text-xs text-muted-foreground" data-testid={`root-admin-bracket-live-${match.matchNumber}`}>
+              {`${describeSide(match, MatchSide.AWAY, context)} ${match.awayScore}, ${describeSide(match, MatchSide.HOME, context)} ${match.homeScore}, from ${context.feedName}`}
+            </p>
+          ) : null}
           {match.resultSource === MatchResultSource.PROVIDER ? (
             <p className="mt-1 text-xs text-muted-foreground" data-testid={`root-admin-bracket-source-${match.matchNumber}`}>From {context.feedName}</p>
           ) : null}

@@ -43,6 +43,18 @@ export interface MatchResultWrite {
   resultSource: MatchResultSource | null;
 }
 
+/**
+ * A game's score while it is played (#1496), from the provider of its linked game: IN_PROGRESS
+ * with both scores, or SCHEDULED with none once the provider says it has not started after all.
+ * A live score decides nothing; only a result does.
+ */
+export interface MatchLiveScoreWrite {
+  id: string;
+  status: Extract<MatchStatus, 'SCHEDULED' | 'IN_PROGRESS'>;
+  homeScore: number | null;
+  awayScore: number | null;
+}
+
 /** One side of a later match, set to the team that advances into it, or emptied. */
 export interface MatchSideFill {
   id: string;
@@ -88,6 +100,11 @@ export interface SportEventMatchRepository {
   update(id: string, patch: SportEventMatchPatch, jobs?: readonly BackgroundJobRequest[]): Promise<void>;
   /** Each match linked to the provider game whose teams are its own (#1496), all or none. */
   linkGames(links: readonly { id: string; externalGameId: string }[]): Promise<void>;
+  /**
+   * Writes each match's live score, all or none. A match that has since been given a result or
+   * cancelled keeps it: only a scheduled or in-progress match takes a live score.
+   */
+  applyLiveScores(scores: readonly MatchLiveScoreWrite[]): Promise<void>;
   /** Both sides of each match given, all or none: a reseeded round's teams placed (#722). */
   placeSides(sides: readonly { id: string; homeSportEventParticipantId: string; awaySportEventParticipantId: string }[], jobs?: readonly BackgroundJobRequest[]): Promise<void>;
   /** A result entered or cleared, the side it fills and the standings it leaves, all or none. */

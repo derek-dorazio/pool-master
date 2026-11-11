@@ -99,7 +99,8 @@ Derek accepted every recommendation below on 2026-11-09.
   back to the provider. Admin entry is a stop gap for leagues with no feed.
 - **Q2 (decided). Live scores for brackets.** Matches today hold only final results. Decided:
   store and show the in-progress score as well, read-only, so a bracket page can show a game
-  live.
+  live. Built (#1496 part 3b): a live game puts `IN_PROGRESS` and its score on its match with
+  no winner, and the admin's bracket page shows it. Member pages show no game scores yet.
 - **Q3 (decided). Polling cadence once webhooks run.** Decided: every 15 minutes for linked
   in-progress events (from 5), plus one reconciliation sync at each game end.
 - **Q4 (decided). Which webhook events to subscribe to.** Decided: game started, period ended,
