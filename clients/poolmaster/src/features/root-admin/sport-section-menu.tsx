@@ -4,9 +4,9 @@ import {
   buildSportEventListPath,
   buildSportLeagueListPath,
   buildSportParticipantListPath,
-  capitalize,
 } from './manage-navigation';
 import { useManagedSport } from './use-managed-sport';
+import { upperFirst } from '@/lib/upper-first';
 
 const SPORT_LISTS = ['events', 'participants', 'leagues'] as const;
 
@@ -22,9 +22,9 @@ export function SportSectionMenu({ current }: { current: SportList }) {
   const { sport, definition } = useManagedSport();
   const { event, participant, sportLeague } = definition.vocabulary;
   const lists: Record<SportList, { label: string; path: string }> = {
-    events: { label: capitalize(event.many), path: buildSportEventListPath(sport) },
-    participants: { label: capitalize(participant.many), path: buildSportParticipantListPath(sport) },
-    leagues: { label: capitalize(sportLeague.many), path: buildSportLeagueListPath(sport) },
+    events: { label: upperFirst(event.many), path: buildSportEventListPath(sport) },
+    participants: { label: upperFirst(participant.many), path: buildSportParticipantListPath(sport) },
+    leagues: { label: upperFirst(sportLeague.many), path: buildSportLeagueListPath(sport) },
   };
 
   return (

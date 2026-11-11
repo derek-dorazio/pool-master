@@ -2,9 +2,10 @@ import type { SportNoun } from '@poolmaster/shared/domain';
 import { useMemo } from 'react';
 import { DataGrid, useDisplayPreferences, type DisplayPreferences } from '@/features/shared/ui';
 import type { SportEventDto } from '@/lib/api';
-import { buildSportEventPath, capitalize } from './manage-navigation';
+import { buildSportEventPath } from './manage-navigation';
 import { sportEventNameColumn, sportEventScheduleColumns } from './sport-event-columns';
 import { useManagedSport } from './use-managed-sport';
+import { upperFirst } from '@/lib/upper-first';
 
 /** The calendar's columns, the first named for the sport's event ("Tournament", "Race"). */
 const buildCalendarColumns = (eventLabel: string, displayPreferences: DisplayPreferences) => [
@@ -28,7 +29,7 @@ export function SportLeagueEventCalendar({
   const { sport, definition } = useManagedSport();
   const { event } = definition.vocabulary;
   const displayPreferences = useDisplayPreferences();
-  const columns = useMemo(() => buildCalendarColumns(capitalize(event.one), displayPreferences), [event.one, displayPreferences]);
+  const columns = useMemo(() => buildCalendarColumns(upperFirst(event.one), displayPreferences), [event.one, displayPreferences]);
   return (
     <DataGrid
       columns={columns}

@@ -32,9 +32,10 @@ import {
   useProviderCatalog,
   type ProviderCatalogEvent,
 } from './use-provider-catalog';
-import { buildSportEventPath, capitalize } from './manage-navigation';
+import { buildSportEventPath } from './manage-navigation';
 import { useManagedSport } from './use-managed-sport';
 import { SportProviderChoice } from './sport-provider-choice';
+import { upperFirst } from '@/lib/upper-first';
 
 
 function defaultWindowValue(offsetDays: number, timeZone: string): string {
@@ -231,7 +232,7 @@ export function SportEventProviderBrowse({
               <SportEventEditionFields edition={edition} onChange={onEditionChange} sportLeagues={sportLeagues} />
               <FormField
                 helperText={`The provider doesn't report a ${round.one} count; adjust per-${round.one} dates later.`}
-                label={capitalize(round.many)}
+                label={upperFirst(round.many)}
               >
                 <Input
                   data-testid="root-admin-sport-event-create-provider-rounds"

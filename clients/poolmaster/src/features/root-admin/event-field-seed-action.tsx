@@ -1,6 +1,5 @@
 import { getSportDefinition, type Sport, type SportNoun } from '@poolmaster/shared/domain';
 import { useState } from 'react';
-import { capitalize } from './manage-navigation';
 import { seedEventParticipants } from '@/lib/api';
 import { Alert, Button, ConfirmationModal } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
@@ -8,6 +7,7 @@ import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import type { SeedSportEventParticipantsResponse } from '@/lib/api';
 import { fieldWriteKeys } from './use-sport-event';
+import { upperFirst } from '@/lib/upper-first';
 
 type SeedResult = SeedSportEventParticipantsResponse;
 
@@ -80,7 +80,7 @@ export function EventFieldSeedAction({ eventId, sport, sportLeague }: {
       <ConfirmationModal
         confirmLabel="Seed field"
         confirmTestId="root-admin-event-field-seed-confirm"
-        description={`Copies the ${sportLeague.one}'s current roster into this ${event.one}'s field and derives seed numbers and odds-to-win from each ${participant.one}'s ${sportLeague.one} ranking. ${capitalize(participant.many)} already in the field are left untouched.`}
+        description={`Copies the ${sportLeague.one}'s current roster into this ${event.one}'s field and derives seed numbers and odds-to-win from each ${participant.one}'s ${sportLeague.one} ranking. ${upperFirst(participant.many)} already in the field are left untouched.`}
         errorMessage={
           seedMutation.isError
             ? extractErrorMessage(seedMutation.error, {

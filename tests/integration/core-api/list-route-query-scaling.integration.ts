@@ -279,6 +279,18 @@ describe('list routes cost the same statements for 2 rows as for 20', () => {
     });
   });
 
+  it("GET a year's final contests with one team's finish on each: the same statements for 2 contests as for 20 (#1570)", async () => {
+    await expectConstantQueries({
+      route: 'GET /api/v1/leagues/{id}/history/contests',
+      seed: (contestsPerYear) => seedTrophyRoom({ years: 1, contestsPerYear }),
+      call: ({ league, commissioner, squads }) => get(
+        `/api/v1/leagues/${league.id}/history/contests?year=${String(LAST_SEEDED_YEAR)}&finishOf=${expectDefined(squads[0]).id}`,
+        commissioner,
+      ),
+      rowsShown: (response) => okBody(response, ContestResultListResponseSchema).contests.filter((contest) => contest.squadFinish !== null).length,
+    });
+  });
+
   it("GET a season's cups: the same statements for 2 cups as for 20 (#1213)", async () => {
     await expectConstantQueries({
       route: 'GET /api/v1/leagues/{id}/cups/',

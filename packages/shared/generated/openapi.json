@@ -56402,13 +56402,18 @@
             "type": "integer",
             "minimum": 1,
             "maximum": 10
+          },
+          "finishOf": {
+            "description": "The squad whose finish each listed contest carries in squadFinish, without narrowing the list (#1570): any finish of its in the contest, counted or not. Defaults to squadId. A squad outside the league is 404 SQUAD_NOT_FOUND.",
+            "type": "string",
+            "format": "uuid"
           }
         },
         "required": [
           "year"
         ],
         "additionalProperties": false,
-        "description": "Which year's contests to list, and for which squad or matrix cell."
+        "description": "Which year's contests to list, for which squad or matrix cell, and whose finish each carries."
       },
       "ContestResultSquadFinishDto": {
         "type": "object",
@@ -56436,7 +56441,7 @@
           "points"
         ],
         "additionalProperties": false,
-        "description": "The filtered squad's finish in one contest."
+        "description": "A squad's finish in one contest: the filtered squad's, or `finishOf`'s."
       },
       "ContestResultSummaryDto": {
         "type": "object",
@@ -56615,7 +56620,7 @@
             "description": "The squads that finished 1st, several on a tie, in name order; empty when nobody placed."
           },
           "squadFinish": {
-            "description": "With a squadId filter, that squad's finish; null otherwise.",
+            "description": "The finish of `finishOf`, else of the squadId filter's squad; null without either, or when that squad did not place in the contest.",
             "type": [
               "object",
               "null"
@@ -56842,7 +56847,7 @@
                   "description": "The squads that finished 1st, several on a tie, in name order; empty when nobody placed."
                 },
                 "squadFinish": {
-                  "description": "With a squadId filter, that squad's finish; null otherwise.",
+                  "description": "The finish of `finishOf`, else of the squadId filter's squad; null without either, or when that squad did not place in the contest.",
                   "type": [
                     "object",
                     "null"
@@ -73377,7 +73382,7 @@
         "tags": [
           "History"
         ],
-        "description": "Every contest of the league that went final in the championship year (US Eastern), newest first, with its winners and whether it counted. With squadId, only the counted contests that squad placed in; with squadId and place, only those it finished in that place, so each list matches the finish matrix. No paging: a league finishes a few hundred contests a year at most. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.",
+        "description": "Every contest of the league that went final in the championship year (US Eastern), newest first, with its winners and whether it counted. With squadId, only the counted contests that squad placed in; with squadId and place, only those it finished in that place, so each list matches the finish matrix. With finishOf, each contest carries that squad's finish (its place, from its best entry) without the list narrowing: Contests > Past shows the viewer's team's place this way (#1570). No paging: a league finishes a few hundred contests a year at most. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.",
         "parameters": [
           {
             "schema": {
@@ -73410,6 +73415,16 @@
             "name": "place",
             "required": false,
             "description": "With squadId, only the counted contests the squad finished in this place: its matrix cell. Refused without squadId (400 SQUAD_ID_REQUIRED)."
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "query",
+            "name": "finishOf",
+            "required": false,
+            "description": "The squad whose finish each listed contest carries in squadFinish, without narrowing the list (#1570): any finish of its in the contest, counted or not. Defaults to squadId. A squad outside the league is 404 SQUAD_NOT_FOUND."
           },
           {
             "schema": {
