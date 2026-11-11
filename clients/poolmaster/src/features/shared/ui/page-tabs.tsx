@@ -2,6 +2,7 @@ import * as TabsPrimitive from "@radix-ui/react-tabs";
 import type { ReactNode } from "react";
 import { Link } from "react-router";
 import { cn } from "./class-names";
+import { useScrollRow } from "./scroll-row";
 
 type PageTabBase = {
   /** How many things the view holds, shown small after its name. */
@@ -22,10 +23,9 @@ type PageTabsProps = { "aria-label": string } & (
   | { variant: "state"; items: PageStateTab[] }
 );
 
-// On a phone the tabs can run past the edge; the faded right edge says the row scrolls, as the
-// league menu's does.
-const ROW_CLASS_NAME =
-  "flex min-w-0 gap-6 overflow-x-auto max-sm:pr-12 max-sm:[mask-image:linear-gradient(to_right,black_85%,transparent)]";
+// On a phone the tabs can run past the edge: the row scrolls, keeps the selected tab in view and
+// fades the edges with more tabs beyond them, as the league menu does (`useScrollRow`).
+const ROW_CLASS_NAME = "relative flex min-w-0 gap-6 overflow-x-auto";
 
 // The selected-tab blue underline, one level below the league menu's gold one.
 const TAB_CLASS_NAME =
@@ -52,9 +52,10 @@ function TabLabel({ count, label }: PageTabBase) {
  * choosing a value inside a form or panel.
  */
 export function PageTabs(props: PageTabsProps): ReactNode {
+  const { fadeClassName, ref } = useScrollRow<HTMLDivElement>();
   if (props.variant === "link") {
     return (
-      <nav aria-label={props["aria-label"]} className={ROW_CLASS_NAME}>
+      <nav aria-label={props["aria-label"]} className={cn(ROW_CLASS_NAME, fadeClassName)} ref={ref}>
         {props.items.map((item) => (
           <Link
             aria-current={item.isActive ? "page" : undefined}
@@ -71,7 +72,7 @@ export function PageTabs(props: PageTabsProps): ReactNode {
   }
 
   return (
-    <TabsPrimitive.List aria-label={props["aria-label"]} className={ROW_CLASS_NAME}>
+    <TabsPrimitive.List aria-label={props["aria-label"]} className={cn(ROW_CLASS_NAME, fadeClassName)} ref={ref}>
       {props.items.map((item) => (
         <TabsPrimitive.Trigger
           className={cn(TAB_CLASS_NAME, "data-[state=active]:border-selected data-[state=active]:text-foreground")}
