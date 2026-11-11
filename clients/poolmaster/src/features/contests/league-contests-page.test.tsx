@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
@@ -177,7 +177,7 @@ describe('LeagueContestsPage', () => {
 
     renderLeagueContestsPage();
 
-    expect(await screen.findByRole('radio', { name: 'Current' })).toBeChecked();
+    expect(await screen.findByRole('link', { name: 'Current' })).toHaveAttribute('aria-current', 'page');
     expect(await screen.findByTestId('league-contests-current')).toHaveTextContent('Masters Pick 6');
     expect(screen.getByTestId('league-contest-contest-1')).toHaveTextContent('12 entries');
     expect(screen.queryByTestId('league-contests-history')).not.toBeInTheDocument();
@@ -303,17 +303,19 @@ describe('LeagueContestsPage', () => {
 
     expect(await screen.findByTestId('league-contest-contest-1')).toBeInTheDocument();
     expect(screen.getByTestId('league-contest-contest-3')).toBeInTheDocument();
-    expect(screen.getByRole('radio', { name: 'Current' })).toBeChecked();
+    expect(screen.getByRole('link', { name: 'Current' })).toHaveAttribute('aria-current', 'page');
   });
 
-  it('offers only the Current and Past tabs, with no My contests tab', async () => {
+  it('offers only the Current and Past tabs, as links in the header, with no My contests tab and no sentence about the page', async () => {
     primeCommonMocks();
     listContestsMock.mockResolvedValue({ data: { contests: [] } });
 
     renderLeagueContestsPage();
 
-    const radios = await screen.findAllByRole('radio');
-    expect(radios.map((radio) => radio.getAttribute('aria-label') ?? radio.textContent)).toEqual(['Current', 'Past']);
+    const tabs = within(await screen.findByRole('navigation', { name: 'Contests to show' }));
+    expect(tabs.getAllByRole('link').map((link) => link.textContent)).toEqual(['Current', 'Past']);
+    expect(tabs.getByRole('link', { name: 'Past' })).toHaveAttribute('href', '/league/BIGDAWGS/contests/history');
+    expect(screen.queryByText('Live and open contests in this league.')).not.toBeInTheDocument();
   });
 
   it('links to How to play from the page header', async () => {
