@@ -219,7 +219,8 @@ describe('RootAdminSportEventResultsPage for a basketball tournament', () => {
     ], { event: synced });
     renderPage();
 
-    expect(await screen.findByTestId('root-admin-bracket-source-1')).toHaveTextContent('From BALLDONTLIE');
+    // The bracket can draw before the feed list answers, so wait for the feed's name itself.
+    await waitFor(() => expect(screen.getByTestId('root-admin-bracket-source-1')).toHaveTextContent('From BALLDONTLIE'));
     expect(screen.queryByTestId('root-admin-bracket-source-2')).not.toBeInTheDocument();
   });
 
@@ -237,7 +238,7 @@ describe('RootAdminSportEventResultsPage for a basketball tournament', () => {
     seed([match({ id: 'm-1', matchNumber: 1, roundNumber: 1, homeSportEventParticipantId: 'sep-1', awaySportEventParticipantId: 'sep-2', status: 'IN_PROGRESS', homeScore: 40, awayScore: 38 })], { event: synced });
     renderPage();
 
-    expect(await screen.findByTestId('root-admin-bracket-live-1')).toHaveTextContent('(16) Vermont 38, (1) Duke 40, from BALLDONTLIE');
+    await waitFor(() => expect(screen.getByTestId('root-admin-bracket-live-1')).toHaveTextContent('(16) Vermont 38, (1) Duke 40, from BALLDONTLIE'));
     expect(within(screen.getByTestId('root-admin-bracket-match-1')).getByText('In progress')).toBeInTheDocument();
     expect(screen.getByTestId('root-admin-bracket-winner-1-HOME')).toHaveTextContent('Duke wins');
   });
