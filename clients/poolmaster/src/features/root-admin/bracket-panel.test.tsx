@@ -219,7 +219,8 @@ describe('RootAdminSportEventResultsPage for a basketball tournament', () => {
     ], { event: synced });
     renderPage();
 
-    expect(await screen.findByTestId('root-admin-bracket-source-1')).toHaveTextContent('From BALLDONTLIE');
+    // The feed's name arrives with the providers read, after the match: wait for it, not the row.
+    await waitFor(() => expect(screen.getByTestId('root-admin-bracket-source-1')).toHaveTextContent('From BALLDONTLIE'));
     expect(screen.queryByTestId('root-admin-bracket-source-2')).not.toBeInTheDocument();
   });
 

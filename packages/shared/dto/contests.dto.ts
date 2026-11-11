@@ -305,9 +305,17 @@ export const ContestEntryListResponseSchema = z.object({
 }).describe('Contest-entry list response.');
 export type ContestEntryListResponse = z.infer<typeof ContestEntryListResponseSchema>;
 
+export const ContestEntryPlaceDtoSchema = z.object({
+  entryId: z.string().describe('The entry placed: one of the response\'s `entries`.'),
+  position: z.number().int().min(1).describe('The entry\'s place in its contest as its leaderboard stands, 1 best in every sport; entries level share it.'),
+  displayPosition: z.string().describe('The place as the leaderboard shows it, "T3" when shared.'),
+}).describe('One entry\'s place in a live contest, the same place its leaderboard shows (#1565).');
+export type ContestEntryPlaceDto = z.infer<typeof ContestEntryPlaceDtoSchema>;
+
 export const MyContestEntriesResponseSchema = z.object({
   entries: z.array(ContestEntryDtoSchema).describe('The requester\'s own squad\'s entries, drafts included, in each of the league\'s OPEN and ACTIVE contests, in entry-number order within a contest. Without `participants`: an entry\'s picks are on `getContestEntry`. Empty without an active squad in the league.'),
-}).describe('The requester\'s own entries across a league\'s current contests (#1197).');
+  places: z.array(ContestEntryPlaceDtoSchema).describe('The place of each of `entries` that its ACTIVE contest\'s leaderboard ranks, read from the same stored board the leaderboard answers from (#1565), so a list of contests needs no leaderboard read per contest. An entry with no place is left out: one in an OPEN contest, one not yet scored, any in a contest whose picks are not revealed yet, and any in a squares contest, whose grid has no places until it settles.'),
+}).describe('The requester\'s own entries across a league\'s current contests (#1197), with each live entry\'s place (#1565).');
 export type MyContestEntriesResponse = z.infer<typeof MyContestEntriesResponseSchema>;
 
 export const ContestEntryDeletionResponseSchema = z.object({
@@ -343,6 +351,7 @@ registerSchema('ListContestsQuery', ListContestsQuerySchema);
 registerSchema('ContestFinishedYearsResponse', ContestFinishedYearsResponseSchema);
 registerSchema('ContestEntryResponse', ContestEntryResponseSchema);
 registerSchema('ContestEntryDetailResponse', ContestEntryDetailResponseSchema);
+registerSchema('ContestEntryPlaceDto', ContestEntryPlaceDtoSchema);
 registerSchema('MyContestEntriesResponse', MyContestEntriesResponseSchema);
 registerSchema('ContestEntryListResponse', ContestEntryListResponseSchema);
 registerSchema('ContestEntryDeletionResponse', ContestEntryDeletionResponseSchema);

@@ -148,6 +148,7 @@ export function LeagueHomePage() {
               />
             ) : null}
             <CurrentContestsCard
+              bestPlaceByContestId={myEntries.bestPlaceByContestId}
               contests={otherContests}
               emptyBody={upNext ? 'No other open or live contests.' : 'No open or live contests.'}
               entriesByContestId={myEntries.entriesByContestId}
