@@ -50,6 +50,7 @@ export function bracketMatches(sportEventId: string, specs: readonly BracketMatc
     regionLabel: spec.region ?? null,
     homeSpread: null,
     externalGameId: null,
+    resultSource: null,
     periodScores: [],
     createdAt: T0,
     updatedAt: T0,

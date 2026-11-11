@@ -37,6 +37,7 @@ function game(matchNumber: number, overrides: Partial<SportEventMatch> = {}): Sp
     regionLabel: null,
     homeSpread: null,
     externalGameId: null,
+    resultSource: null,
     periodScores: [],
     createdAt: T0,
     updatedAt: T0,

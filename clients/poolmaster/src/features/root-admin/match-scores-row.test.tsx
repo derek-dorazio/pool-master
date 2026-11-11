@@ -64,6 +64,7 @@ function knockoutMatch(overrides: Partial<SportEventMatchDto> = {}): SportEventM
     homeShootoutScore: null,
     awayShootoutScore: null,
     ending: MatchEnding.PLAYED,
+    resultSource: null,
     advancesToMatchId: 'm-2',
     advancesToSide: 'HOME',
     regionLabel: null,
@@ -85,6 +86,7 @@ function renderRow(match: SportEventMatchDto, shootout: BracketContext['shootout
     spreads: false,
     periods: HALVES,
     shootout,
+    feedName: 'BALLDONTLIE',
   };
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(

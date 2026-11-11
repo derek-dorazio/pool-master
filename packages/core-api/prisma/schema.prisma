@@ -386,6 +386,12 @@ enum PrismaMatchEnding {
   DEFAULT
 }
 
+/// Who set a match's result (#1531). Mirrors the domain `MatchResultSource`.
+enum PrismaMatchResultSource {
+  ADMIN
+  PROVIDER
+}
+
 /// What one game pick says happens (#792). Mirrors the domain `PredictedResult`.
 enum PrismaPredictedResult {
   TEAM
@@ -2004,37 +2010,40 @@ model SportEventRound {
 /// exactly when `advancesToMatchId` is, a winner only on a COMPLETED match, scores never negative.
 /// That both sides and the next match belong to the match's own event is the bracket service's check.
 model SportEventMatch {
-  id                          String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  sportEventId                String            @map("sport_event_id") @db.Uuid
-  sportEventRoundId           String            @map("sport_event_round_id") @db.Uuid
-  matchNumber                 Int               @map("match_number")
-  homeSportEventParticipantId String?           @map("home_sport_event_participant_id") @db.Uuid
-  awaySportEventParticipantId String?           @map("away_sport_event_participant_id") @db.Uuid
-  isNeutralSite               Boolean           @map("is_neutral_site")
-  scheduledDate               DateTime?         @map("scheduled_date") @db.Timestamptz
-  status                      PrismaMatchStatus @default(SCHEDULED)
-  winnerSide                  PrismaMatchSide?  @map("winner_side")
-  homeScore                   Int?              @map("home_score")
-  awayScore                   Int?              @map("away_score")
+  id                          String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sportEventId                String                   @map("sport_event_id") @db.Uuid
+  sportEventRoundId           String                   @map("sport_event_round_id") @db.Uuid
+  matchNumber                 Int                      @map("match_number")
+  homeSportEventParticipantId String?                  @map("home_sport_event_participant_id") @db.Uuid
+  awaySportEventParticipantId String?                  @map("away_sport_event_participant_id") @db.Uuid
+  isNeutralSite               Boolean                  @map("is_neutral_site")
+  scheduledDate               DateTime?                @map("scheduled_date") @db.Timestamptz
+  status                      PrismaMatchStatus        @default(SCHEDULED)
+  winnerSide                  PrismaMatchSide?         @map("winner_side")
+  homeScore                   Int?                     @map("home_score")
+  awayScore                   Int?                     @map("away_score")
   /// A knockout match level after extra time is settled by a shoot-out (#791): both sides' kicks
   /// scored, or neither. Not part of the match score (IFAB Law 10); the winner's is the higher.
-  homeShootoutScore           Int?              @map("home_shootout_score")
-  awayShootoutScore           Int?              @map("away_shootout_score")
+  homeShootoutScore           Int?                     @map("home_shootout_score")
+  awayShootoutScore           Int?                     @map("away_shootout_score")
   /// How the match ended (#704): PLAYED unless it stopped early. A walkover has no scores.
-  ending                      PrismaMatchEnding @default(PLAYED)
-  advancesToMatchId           String?           @map("advances_to_match_id") @db.Uuid
-  advancesToSide              PrismaMatchSide?  @map("advances_to_side")
+  ending                      PrismaMatchEnding        @default(PLAYED)
+  advancesToMatchId           String?                  @map("advances_to_match_id") @db.Uuid
+  advancesToSide              PrismaMatchSide?         @map("advances_to_side")
   /// The bracket region or conference the match is in ("East", "AFC"); null where the bracket
   /// has none. A reseeded round pairs the teams of one region (#722).
-  regionLabel                 String?           @map("region_label") @db.VarChar(40)
+  regionLabel                 String?                  @map("region_label") @db.VarChar(40)
   /// The points spread from the home team's side (#720): -3.5 has the home team favoured by 3.5.
   /// Null until set; half points at most. A pick'em contest scored against the spread reads it.
-  homeSpread                  Decimal?          @map("home_spread") @db.Decimal(4, 1)
+  homeSpread                  Decimal?                 @map("home_spread") @db.Decimal(4, 1)
   /// The provider game this match takes its score from (#1496), on its event's own provider; null
   /// until an admin links it. One game links to at most one match of an event.
-  externalGameId              String?           @map("external_game_id") @db.VarChar(255)
-  createdAt                   DateTime          @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt                   DateTime          @updatedAt @map("updated_at") @db.Timestamptz
+  externalGameId              String?                  @map("external_game_id") @db.VarChar(255)
+  /// Who set the result (#1531): an admin, or the linked game's provider; null with no result. A
+  /// provider's final never overwrites an admin's result.
+  resultSource                PrismaMatchResultSource? @map("result_source")
+  createdAt                   DateTime                 @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt                   DateTime                 @updatedAt @map("updated_at") @db.Timestamptz
 
   sportEvent      SportEvent                    @relation(fields: [sportEventId], references: [id])
   sportEventRound SportEventRound               @relation(fields: [sportEventRoundId], references: [id])

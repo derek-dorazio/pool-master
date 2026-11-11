@@ -2,6 +2,7 @@ import { Fragment, type ReactNode } from "react";
 import { Link } from "react-router";
 import { cn } from "./class-names";
 import { Eyebrow } from "./eyebrow";
+import { useScrollRow } from "./scroll-row";
 import { Tile } from "./tile";
 
 export type NavMenuItem = {
@@ -25,11 +26,13 @@ type LeagueMenuProps = {
  * current page is marked with `aria-current` and an accent underline.
  */
 export function LeagueMenu({ action, "aria-label": ariaLabel, items }: LeagueMenuProps) {
+  const { fadeClassName, ref } = useScrollRow<HTMLDivElement>();
   return (
     <nav aria-label={ariaLabel} className="border-b border-border bg-card">
       <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 sm:px-6">
-        {/* On a phone the links can run past the edge; the faded right edge says the row scrolls. */}
-        <div className="flex min-w-0 flex-1 gap-1 overflow-x-auto max-sm:pr-12 max-sm:[mask-image:linear-gradient(to_right,black_85%,transparent)]">
+        {/* On a phone the links can run past the edge: the row keeps the current page in view and
+            fades the edges with more links beyond them. */}
+        <div className={cn("relative flex min-w-0 flex-1 gap-1 overflow-x-auto", fadeClassName)} data-testid="league-menu-links" ref={ref}>
           {items.map((item) => (
             <Link
               aria-current={item.isActive ? "page" : undefined}
