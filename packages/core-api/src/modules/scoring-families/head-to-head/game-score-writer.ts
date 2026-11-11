@@ -10,9 +10,11 @@
  * still scores the right side, and a game whose teams are not the match's is refused.
  *
  * Nobody links a game by hand. A game no match is linked to yet is linked to the one match of the
- * event, unlinked and with both sides known, whose two teams are the game's: two teams meet once
- * in a week or a playoff. A game two matches would fit, or a match two games would, is left for
- * a later sync, never guessed at. A match whose side a result fills is linked on the next sync.
+ * event, unlinked and with both sides known, whose two teams are the game's: in a single-game
+ * round, two teams meet once in a week or a playoff. A best-of series is one match of several
+ * games, which this rule does not fit (#1545). A game two matches would fit, or a match two games
+ * would, is left for a later sync, never guessed at. A match whose side a result fills is linked
+ * on the next sync.
  */
 import { MatchSide, MatchStatus, ProviderGameState, type SportEventMatch } from '@poolmaster/shared/domain';
 import type { GameScoreUpdate } from '@poolmaster/shared/dto';
@@ -53,8 +55,7 @@ export async function writeGameScores(
   const loaded = await deps.matches.findBySportEvent(sportEventId);
   const linkedGameIds = new Set(loaded.flatMap((match) => (match.externalGameId === null ? [] : [match.externalGameId])));
   const unlinkedGames = games.filter((game) => !linkedGameIds.has(game.externalGameId));
-  const openMatches = unlinkedGames.length === 0 ? [] : loaded.filter((match) => match.externalGameId === null
-    && match.homeSportEventParticipantId !== null && match.awaySportEventParticipantId !== null);
+  const openMatches = unlinkedGames.length === 0 ? [] : loaded.filter(isOpenMatch);
   const finalsOfLinked = games.filter((game) => game.state === ProviderGameState.FINAL && linkedGameIds.has(game.externalGameId));
   const finalGameIds = new Set(finalsOfLinked.map((game) => game.externalGameId));
   const linkedMatchesOfFinals = loaded.filter((match) => match.externalGameId !== null && finalGameIds.has(match.externalGameId));
@@ -129,21 +130,28 @@ export async function writeGameScores(
   };
 }
 
+/** A match with no game linked yet and both sides known. */
+type OpenMatch = SportEventMatch & { externalGameId: null; homeSportEventParticipantId: string; awaySportEventParticipantId: string };
+
+function isOpenMatch(match: SportEventMatch): match is OpenMatch {
+  return match.externalGameId === null && match.homeSportEventParticipantId !== null && match.awaySportEventParticipantId !== null;
+}
+
 /**
  * Each unlinked game with the one open match its two teams play, where neither has another
  * candidate. Two games fitting one match, or one game fitting two, link nothing.
  */
 function gamesToLink(
   games: readonly GameScoreUpdate[],
-  matches: readonly SportEventMatch[],
+  matches: readonly OpenMatch[],
   sidesOf: ReadonlyMap<string, string>,
   teamsOf: ReadonlyMap<string, string>,
-): Array<{ game: GameScoreUpdate; match: SportEventMatch }> {
+): Array<{ game: GameScoreUpdate; match: OpenMatch }> {
   const teamsKey = (first: string | undefined, second: string | undefined) =>
     first === undefined || second === undefined ? null : [first, second].sort().join('|');
-  const matchesByTeams = new Map<string, SportEventMatch[]>();
+  const matchesByTeams = new Map<string, OpenMatch[]>();
   for (const match of matches) {
-    const key = teamsKey(sidesOf.get(match.homeSportEventParticipantId as string), sidesOf.get(match.awaySportEventParticipantId as string));
+    const key = teamsKey(sidesOf.get(match.homeSportEventParticipantId), sidesOf.get(match.awaySportEventParticipantId));
     if (key !== null) matchesByTeams.set(key, [...(matchesByTeams.get(key) ?? []), match]);
   }
   const fits = games.flatMap((game) => {
