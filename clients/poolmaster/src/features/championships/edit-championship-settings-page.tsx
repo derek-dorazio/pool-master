@@ -174,7 +174,7 @@ function ChampionshipSettingsForm({ league }: { league: LeagueDto }) {
               testId={`edit-championships-scale-${option}`}
             >
               <span className="min-w-0 flex-1">
-                <span className="font-semibold">{CUP_POINTS_SCALE_COPY[option].label}</span>
+                <Text size="inherit" tone="inherit" weight="semibold">{CUP_POINTS_SCALE_COPY[option].label}</Text>
                 <Text className="block" variant="caption">{CUP_POINTS_SCALE_COPY[option].description}</Text>
               </span>
             </ChoiceCard>
@@ -212,7 +212,7 @@ function ChampionshipSettingsForm({ league }: { league: LeagueDto }) {
       </Text>
 
       {hasPlanFeature(league, PlanFeature.RECORD_BOOK) ? (
-        <label className="flex items-start gap-3 text-muted-foreground">
+        <label className="flex items-start gap-3">
           <Checkbox
             checked={hallOfLameVisible}
             className="mt-1"
@@ -220,8 +220,8 @@ function ChampionshipSettingsForm({ league }: { league: LeagueDto }) {
             disabled={saveMutation.isPending}
             onChange={(event) => form.setValue('hallOfLameVisible', event.target.checked, { shouldDirty: true })}
           />
-          <Text>
-            <strong className="block font-medium text-foreground">Show the Hall of Lame</strong>
+          <Text variant="meta">
+            <Text className="block" variant="strong">Show the Hall of Lame</Text>
             The record book&apos;s lighter side: most 2nd places, most 4th places, most last places and the
             longest run without a win. Turn it off to hide it for everyone in the league.
           </Text>

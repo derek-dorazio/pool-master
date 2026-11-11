@@ -14,7 +14,7 @@
   "clients/poolmaster/src/features/billing/contest-expansion-section.tsx": 8,
   "clients/poolmaster/src/features/billing/payment-history-sections.tsx": 10,
   "clients/poolmaster/src/features/championships/championship-standings-grid.tsx": 3,
-  "clients/poolmaster/src/features/championships/edit-championship-settings-page.tsx": 8,
+  "clients/poolmaster/src/features/championships/edit-championship-settings-page.tsx": 4,
   "clients/poolmaster/src/features/championships/podium.tsx": 5,
   "clients/poolmaster/src/features/contest-types/contest-type-tile.tsx": 13,
   "clients/poolmaster/src/features/contest-types/how-to-play-page.tsx": 32,

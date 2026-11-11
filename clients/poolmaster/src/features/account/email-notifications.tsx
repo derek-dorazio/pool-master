@@ -84,7 +84,7 @@ export function EmailNotificationsDialog({
                   onChange={(event) => updateMutation.mutate({ category, enabled: event.target.checked })}
                 />
                 <Text variant="meta">
-                  <Text as="div" variant="strong">{EMAIL_CATEGORY_LABELS[category].label}</Text>
+                  <Text className="block" variant="strong">{EMAIL_CATEGORY_LABELS[category].label}</Text>
                   {EMAIL_CATEGORY_LABELS[category].description}
                 </Text>
               </label>
