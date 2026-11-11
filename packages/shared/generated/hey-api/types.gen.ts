@@ -19717,6 +19717,10 @@ export type SquaresEntryDto = {
     contestEntryId: string;
     entryName: string;
     /**
+     * The team the entry belongs to.
+     */
+    squadId: string;
+    /**
      * How many boxes the entry holds.
      */
     boxCount: number;
@@ -19949,6 +19953,10 @@ export type SquaresBoardResponse = {
     entries: Array<{
         contestEntryId: string;
         entryName: string;
+        /**
+         * The team the entry belongs to.
+         */
+        squadId: string;
         /**
          * How many boxes the entry holds.
          */

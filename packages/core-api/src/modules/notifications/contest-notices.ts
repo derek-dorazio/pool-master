@@ -232,7 +232,6 @@ export class ContestNotices implements ContestOpenedNotice, SportEventChangedNot
       const lines = final.entries.map((entry): StandingsLine => ({
         place: entry.displayPosition,
         entryName: entry.entryName,
-        squadName: entry.squadName,
         score: entry.score === null ? null : format(entry.score),
         movement: null,
         isYours: squadIds.has(entry.squadId),

@@ -67,7 +67,7 @@ describe('ContestService entries — entering a contest', () => {
 
     const stored = world.entriesOf(contest.id, squad.id);
     expect(stored).toHaveLength(1);
-    expect(stored[0]).toMatchObject({ entryNumber: 1, name: 'Birdie Brigade Entry 1' });
+    expect(stored[0]).toMatchObject({ entryNumber: 1, name: 'Birdie Brigade 1' });
     expect(stored[0].events).toEqual([
       { sportEventId: masters.id, status: 'DRAFT' },
       { sportEventId: pga.id, status: 'DRAFT' },
@@ -288,7 +288,7 @@ describe('ContestService entries — renaming and tiebreakers', () => {
 
     await service.updateEntry(contest.id, created.id, owner.id, { tiebreakerValue: null });
 
-    expect(world.entries.get(created.id)).toMatchObject({ name: 'Birdie Brigade Entry 1', tiebreakerValue: null });
+    expect(world.entries.get(created.id)).toMatchObject({ name: 'Birdie Brigade 1', tiebreakerValue: null });
   });
 
   it('refuses a blank name with CONTEST_ENTRY_NAME_REQUIRED and keeps the old one', async () => {
@@ -298,7 +298,7 @@ describe('ContestService entries — renaming and tiebreakers', () => {
     await expect(service.updateEntry(contest.id, created.id, owner.id, { name: '   ' })).rejects.toMatchObject({
       code: 'CONTEST_ENTRY_NAME_REQUIRED',
     });
-    expect(world.entries.get(created.id)?.name).toBe('Birdie Brigade Entry 1');
+    expect(world.entries.get(created.id)?.name).toBe('Birdie Brigade 1');
   });
 
   it('refuses a name another of the squad\'s entries already has, ignoring case and spaces, with CONTEST_ENTRY_NAME_DUPLICATE', async () => {
@@ -306,7 +306,7 @@ describe('ContestService entries — renaming and tiebreakers', () => {
     await service.createEntry(contest.id, owner.id);
     const second = await service.createEntry(contest.id, owner.id);
 
-    await expect(service.updateEntry(contest.id, second.id, owner.id, { name: ' birdie brigade entry 1 ' }))
+    await expect(service.updateEntry(contest.id, second.id, owner.id, { name: ' birdie brigade 1 ' }))
       .rejects.toMatchObject({ code: 'CONTEST_ENTRY_NAME_DUPLICATE' });
   });
 
@@ -314,9 +314,9 @@ describe('ContestService entries — renaming and tiebreakers', () => {
     const { world, owner, contest, service } = setup();
     const created = await service.createEntry(contest.id, owner.id);
 
-    await service.updateEntry(contest.id, created.id, owner.id, { name: 'BIRDIE BRIGADE ENTRY 1' });
+    await service.updateEntry(contest.id, created.id, owner.id, { name: 'BIRDIE BRIGADE 1' });
 
-    expect(world.entries.get(created.id)?.name).toBe('BIRDIE BRIGADE ENTRY 1');
+    expect(world.entries.get(created.id)?.name).toBe('BIRDIE BRIGADE 1');
   });
 
   it('allows two different squads to use the same entry name', async () => {
@@ -336,7 +336,7 @@ describe('ContestService entries — renaming and tiebreakers', () => {
 
     await expect(service.updateEntry(contest.id, theirs.id, owner.id, { name: 'Hijacked' }))
       .rejects.toBeInstanceOf(ContestEntryNotFoundError);
-    expect(world.entries.get(theirs.id)?.name).toBe('Bogey Bunch Entry 1');
+    expect(world.entries.get(theirs.id)?.name).toBe('Bogey Bunch 1');
   });
 
   it('refuses changes with CONTEST_ENTRY_LOCKED once the contest is underway', async () => {
@@ -405,7 +405,7 @@ describe('ContestService entries — confirmation email', () => {
 
     expect(mail.sent).toHaveLength(1);
     expect(mail.sent[0].to).toBe('olive@example.com');
-    expect(mail.sent[0].text).toContain('Birdie Brigade Entry 1');
+    expect(mail.sent[0].text).toContain('Birdie Brigade 1');
     expect(mail.sent[0].text).toContain('-10');
   });
 
@@ -721,7 +721,7 @@ describe('ContestService entries — the event start closes entries', () => {
     await expect(service.updateEntry(contest.id, created.id, owner.id, { name: 'Late change' }))
       .rejects.toMatchObject({ code: 'CONTEST_ENTRY_LOCKED' });
     await expect(service.deleteMyEntry(contest.id, owner.id)).rejects.toMatchObject({ code: 'CONTEST_ENTRY_LOCKED' });
-    expect(world.entriesOf(contest.id, squad.id)).toMatchObject([{ name: 'Birdie Brigade Entry 1' }]);
+    expect(world.entriesOf(contest.id, squad.id)).toMatchObject([{ name: 'Birdie Brigade 1' }]);
   });
 
   it('accepts an entry on an event that starts later', async () => {
