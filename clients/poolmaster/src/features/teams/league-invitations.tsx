@@ -15,7 +15,7 @@ import {
 import { formatUserName } from '@/features/account/user-name';
 import { buildInvitePath } from '@/features/leagues/league-routing';
 import {
-  Alert,
+  Notice,
   Button,
   CopyButton,
   DataGrid,
@@ -264,11 +264,11 @@ function InvitePeople({ invitationsKey, isInactiveLeague, joinLink, leagueId }: 
             </Button>
           </div>
         </FormField>
-        {inviteResult ? <Alert tone="success">{inviteResult}</Alert> : null}
+        {inviteResult ? <Notice tone="success">{inviteResult}</Notice> : null}
         {sendInviteMutation.isError ? (
-          <Alert tone="danger">
+          <Notice tone="danger">
             {extractErrorMessage(sendInviteMutation.error, { fallback: 'We could not send that invitation.' })}
-          </Alert>
+          </Notice>
         ) : null}
       </form>
 
@@ -312,9 +312,9 @@ function InvitePeople({ invitationsKey, isInactiveLeague, joinLink, leagueId }: 
           </div>
         </FormField>
         {inviteLinkMutation.isError ? (
-          <Alert tone="danger">
+          <Notice tone="danger">
             {extractErrorMessage(inviteLinkMutation.error, { fallback: 'We could not create a join link.' })}
-          </Alert>
+          </Notice>
         ) : null}
         {isInactiveLeague ? (
           <p className="text-sm text-muted-foreground" data-testid="league-invites-inactive">

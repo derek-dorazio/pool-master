@@ -2,7 +2,7 @@ import { useParams } from 'react-router';
 import { PredictedResult, type Sport } from '@poolmaster/shared/domain';
 import type { ContestDto } from '@/lib/api';
 import {
-  Alert,
+  Notice,
   ErrorState,
   Heading,
   LoadingState,
@@ -124,9 +124,9 @@ export function BracketEntryPage({ contest }: { contest: ContestDto }) {
     >
 
       {picksHidden ? (
-        <Alert data-testid="bracket-picks-hidden">
+        <Notice data-testid="bracket-picks-hidden">
           {`This bracket stays hidden until ${closesAt}. Every bracket is revealed then.`}
-        </Alert>
+        </Notice>
       ) : (
         <>
           <Tile>
@@ -149,7 +149,7 @@ export function BracketEntryPage({ contest }: { contest: ContestDto }) {
             </MetricGrid>
           </Tile>
 
-          {pickError ? <Alert data-testid="bracket-pick-error" tone="danger">{pickError}</Alert> : null}
+          {pickError ? <Notice data-testid="bracket-pick-error" tone="danger">{pickError}</Notice> : null}
 
           <Tile>
             <Heading level={3} variant="card" size="xl" tone="inherit" className="mb-5" data-testid="contest-entry-builder-heading">

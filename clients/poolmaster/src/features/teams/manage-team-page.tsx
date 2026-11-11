@@ -6,7 +6,7 @@ import {
 } from '@/features/leagues/league-routing';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
 import {
-  Alert,
+  Notice,
   Button,
   DangerZone,
   DangerZoneAction,
@@ -85,13 +85,13 @@ export function ManageTeamPage() {
       />
 
       {isInactiveLeague ? (
-        <Alert data-testid="manage-team-league-inactive" tone="warning">
+        <Notice data-testid="manage-team-league-inactive" tone="warning">
           This league is inactive, so this page is read-only.
-        </Alert>
+        </Notice>
       ) : isInactiveTeam ? (
-        <Alert data-testid="manage-team-inactive" tone="warning">
+        <Notice data-testid="manage-team-inactive" tone="warning">
           {team.name} is inactive. Inviting a former owner back restores it.
-        </Alert>
+        </Notice>
       ) : null}
 
       <SettingsSection

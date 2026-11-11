@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { EmailMessageStatus, EmailSkipReason, assertNever } from '@poolmaster/shared/domain';
 import { EmailTestRequestSchema } from '@poolmaster/shared/dto';
 import { sendTestEmail, type EmailTestRequest, type EmailTestResponse } from '@/lib/api';
-import { Alert, Button, FormField, Input } from '@/features/shared/ui';
+import { Notice, Button, FormField, Input } from '@/features/shared/ui';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 
@@ -86,12 +86,12 @@ export function EmailTestForm() {
         <Input data-testid="root-admin-email-test-to" inputMode="email" type="email" {...form.register('to')} />
       </FormField>
       {result ? (
-        <Alert data-testid="root-admin-email-test-result" tone={result.tone}>{result.text}</Alert>
+        <Notice data-testid="root-admin-email-test-result" tone={result.tone}>{result.text}</Notice>
       ) : null}
       {sendMutation.isError ? (
-        <Alert data-testid="root-admin-email-test-error" tone="danger">
+        <Notice data-testid="root-admin-email-test-error" tone="danger">
           {extractErrorMessage(sendMutation.error, { fallback: 'We could not send the test email.' })}
-        </Alert>
+        </Notice>
       ) : null}
       <Button data-testid="root-admin-email-test-send" disabled={sendMutation.isPending} type="submit" variant="secondary">
         {sendMutation.isPending ? 'Sending...' : 'Send test email'}

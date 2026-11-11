@@ -1,7 +1,7 @@
 import { getSportDefinition, type SportNoun } from '@poolmaster/shared/domain';
 import { useState } from 'react';
 import { releaseEvent } from '@/lib/api';
-import { Button, Callout, ConfirmationModal } from '@/features/shared/ui';
+import { Button, Notice, ConfirmationModal } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError, type ErrorCodeMessages } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -65,14 +65,14 @@ export function SportEventReleaseAction({
   return (
     <div className="space-y-2" data-testid="root-admin-sport-event-release-panel">
       {blockers.length > 0 ? (
-        <Callout tone="warning">
+        <Notice tone="warning">
           <p>Before this {event.one} can be released for contests:</p>
           <ul className="mt-1 list-disc pl-5" data-testid="root-admin-sport-event-release-missing">
             {blockers.map((blocker) => (
               <li key={blocker}>{blocker}</li>
             ))}
           </ul>
-        </Callout>
+        </Notice>
       ) : null}
       <Button
         data-testid="root-admin-sport-event-release"

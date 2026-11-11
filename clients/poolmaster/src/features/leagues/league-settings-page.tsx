@@ -3,7 +3,7 @@ import { useParams } from 'react-router';
 import { LeagueRole, LeagueMembershipStatus, PlanCap, PlanFeature } from '@poolmaster/shared/domain';
 import { formatUserName } from '@/features/account/user-name';
 import {
-  Alert,
+  Notice,
   formatDateDisplay,
   IconAvatar,
   LinkButton,
@@ -72,10 +72,10 @@ export function LeagueSettingsPage() {
   return (
     <div className="space-y-8" data-testid="league-settings-page">
       {isInactive ? (
-        <Alert data-testid="league-inactive-banner" title="This league is inactive." tone="warning">
+        <Notice data-testid="league-inactive-banner" title="This league is inactive." tone="warning">
           Members can still see standings and history. Activate the league in the danger zone to
           make changes again.
-        </Alert>
+        </Notice>
       ) : null}
 
       <SettingsSection

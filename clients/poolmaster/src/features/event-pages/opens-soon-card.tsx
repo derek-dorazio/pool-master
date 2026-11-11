@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useLocation } from 'react-router';
 import { EventPageOfferState } from '@poolmaster/shared/domain';
-import { Alert, LinkButton } from '@/features/shared/ui';
+import { Notice, LinkButton } from '@/features/shared/ui';
 import { eventPageCopy, eventPageOfferCopy } from './event-page-copy';
 import { buildStartDestination, parseStartRequest } from './start-path';
 import { useEventPageQuery } from './use-event-pages-query';
@@ -26,14 +26,14 @@ export function OpensSoonCard({ leagueCode }: { leagueCode: string }) {
   const offerCopy = eventPageOfferCopy(copy, offer);
 
   return offer.state === EventPageOfferState.OPEN ? (
-    <Alert data-testid="league-opens-soon" title={`${copy.name} is open for contests`} tone="info">
+    <Notice data-testid="league-opens-soon" title={`${copy.name} is open for contests`} tone="info">
       <LinkButton className="mt-3" data-testid="league-opens-soon-set-up" size="sm" to={buildStartDestination(leagueCode, request, offer)}>
         {`Set up your ${offerCopy.contestType}`}
       </LinkButton>
-    </Alert>
+    </Notice>
   ) : (
-    <Alert data-testid="league-opens-soon" title={`${copy.name} opens for contests ${offerCopy.opensWhen}`} tone="info">
+    <Notice data-testid="league-opens-soon" title={`${copy.name} opens for contests ${offerCopy.opensWhen}`} tone="info">
       <p>{`We'll email you when your ${offerCopy.contestType} can be set up.`}</p>
-    </Alert>
+    </Notice>
   );
 }

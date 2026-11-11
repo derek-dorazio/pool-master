@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { EmailConfigSchema, EmailRecipientPatternSchema } from '@poolmaster/shared/dto';
 import type { EmailConfig, SettingsGroup } from '@/lib/api';
-import { Alert, Button, Checkbox, FormField, Input, Textarea } from '@/features/shared/ui';
+import { Notice, Button, Checkbox, FormField, Input, Textarea } from '@/features/shared/ui';
 import { numberFieldErrors } from '@/lib/number-field-errors';
 import { EMAIL_TEMPLATE_LABELS } from './root-admin-settings-utils';
 import { SettingsSaveError } from './settings-save-error';
@@ -108,9 +108,9 @@ export function EmailSettingsForm({ group }: { group: EmailSettingsGroup }) {
       onSubmit={(event) => void submit(event)}
     >
       {enabled ? null : (
-        <Alert data-testid="root-admin-email-settings-off-warning" title="Email is off" tone="warning">
+        <Notice data-testid="root-admin-email-settings-off-warning" title="Email is off" tone="warning">
           No system email is sent: invitations, welcomes, entry confirmations and contest notices are all skipped. Invites by email still succeed.
-        </Alert>
+        </Notice>
       )}
       <label className="flex items-center gap-2 text-sm">
         <Checkbox data-testid="root-admin-email-settings-enabled" {...form.register('enabled')} />

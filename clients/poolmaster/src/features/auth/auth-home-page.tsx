@@ -8,7 +8,7 @@ import { LoginRequestSchema } from "@poolmaster/shared/dto";
 import { loginUser } from "@/lib/api";
 import { InvitationContextCard } from "@/features/leagues/invitation-context-card";
 import {
-  Alert,
+  Notice,
   Button,
   FormField,
   Heading,
@@ -279,16 +279,16 @@ export function AuthHomePage() {
               title="Co-owner invite"
             />
           ) : startRequest ? (
-            <Alert data-testid="auth-start-banner" tone="info">
+            <Notice data-testid="auth-start-banner" tone="info">
               {`You're starting a ${eventPageCopy(startRequest).name} pool`}
-            </Alert>
+            </Notice>
           ) : null}
           {(inviteCode && invitePreviewQuery.isError) ||
           (teamInviteCode && teamInvitePreviewQuery.isError) ? (
-            <Alert data-testid="auth-invite-preview-error" tone="danger">
+            <Notice data-testid="auth-invite-preview-error" tone="danger">
               We couldn&apos;t load the invitation preview. You can still sign
               in or create an account, then return to the invitation link.
-            </Alert>
+            </Notice>
           ) : null}
         </div>
 
@@ -310,9 +310,9 @@ export function AuthHomePage() {
           />
 
           {mode === "login" && serverError ? (
-            <Alert className="mt-4" data-testid="auth-server-error" tone="danger">
+            <Notice className="mt-4" data-testid="auth-server-error" tone="danger">
               {serverError}
-            </Alert>
+            </Notice>
           ) : null}
 
           {mode === "login" ? (

@@ -11,7 +11,7 @@ import { useAuth } from '@/features/auth/auth-context';
 import { syncLeagueCaches } from '@/features/leagues/league-cache';
 import { buildLeagueAdminPath } from '@/features/leagues/league-routing';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
-import { Alert, Button, Chip, ErrorState, formatDateDisplay, Heading, LoadingState, PageHeader, SectionCard, SectionHeader, Tile, useDisplayPreferences } from '@/features/shared/ui';
+import { Notice, Button, Chip, ErrorState, formatDateDisplay, Heading, LoadingState, PageHeader, SectionCard, SectionHeader, Tile, useDisplayPreferences } from '@/features/shared/ui';
 import { PlanCards } from './plan-cards';
 import { buildCapUsage, buildPlanChangeEffects, NAMED_CONTEST_LIMIT } from './plan-change';
 import { PlanComparisonTable } from './plan-comparison-table';
@@ -128,9 +128,9 @@ function LeaguePlanView({ league }: { league: LeagueDto }) {
                 </p>
               ) : null}
               {saveMutation.isError ? (
-                <Alert data-testid="league-plan-confirm-error" tone="danger">
+                <Notice data-testid="league-plan-confirm-error" tone="danger">
                   {extractErrorMessage(saveMutation.error, { fallback: 'We could not change the plan.' })}
-                </Alert>
+                </Notice>
               ) : null}
               <div className="flex flex-wrap gap-3">
                 <Button
@@ -281,7 +281,7 @@ function PlanChangeWarnings({
   return (
     <div className="space-y-3">
       {effects.entriesLimit !== null ? (
-        <Alert data-testid="league-plan-confirm-entries" tone="warning">
+        <Notice data-testid="league-plan-confirm-entries" tone="warning">
           <ul className="space-y-1">
             {named.map((contest) => (
               <li key={contest.contestId}>{`${contest.name} has ${pluralize(contest.entryCount, 'entry', 'entries')}.`}</li>
@@ -291,12 +291,12 @@ function PlanChangeWarnings({
           <p className="mt-2">
             {`On ${label} ${effects.contestsOverEntries.length === 1 ? 'it keeps them' : 'each keeps them'} all, but takes no new entries past ${effects.entriesLimit.toLocaleString('en-US')}.`}
           </p>
-        </Alert>
+        </Notice>
       ) : null}
       {effects.sportLeaguesOver ? (
-        <Alert data-testid="league-plan-confirm-sport-leagues" tone="warning">
+        <Notice data-testid="league-plan-confirm-sport-leagues" tone="warning">
           {`This year's contests use ${pluralize(effects.sportLeaguesOver.used, 'sports league')}: ${usage.sportLeagueIds.map((id) => sportLeagueNames.get(id) ?? 'a sports league').join(', ')}. ${label} allows ${effects.sportLeaguesOver.limit.toLocaleString('en-US')} a year, so new contests this year can use only these.`}
-        </Alert>
+        </Notice>
       ) : null}
       {effects.hiddenFeatures.length ? (
         <div className="text-sm" data-testid="league-plan-confirm-hidden">

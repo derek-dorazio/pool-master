@@ -93,7 +93,7 @@ export function ResetPasswordPage() {
     <div className="mx-auto max-w-md">
       <FormPage
         cancelTo="/"
-        description="Your new password works on every device. You'll sign in again everywhere."
+        help="Your new password works on every device. You'll sign in again everywhere."
         errorMessage={
           confirmMutation.isError
             ? extractErrorMessage(confirmMutation.error, {

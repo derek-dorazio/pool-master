@@ -78,18 +78,18 @@ describe("SectionCard", () => {
 });
 
 describe("SectionTitle", () => {
-  it("shows its explanation behind the info icon, not on the page", () => {
-    render(<SectionTitle info="Finished ones are under Past." testId="title" title="Current contests" />);
+  it("shows how the section works behind a (?) help tip, not on the page", () => {
+    render(<SectionTitle help="Finished ones are under Past." testId="title" title="Current contests" />);
 
     expect(screen.queryByText("Finished ones are under Past.")).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "About this section" }));
-    expect(screen.getByTestId("title-info-callout")).toHaveTextContent("Finished ones are under Past.");
+    fireEvent.click(screen.getByRole("button", { name: "How this section works" }));
+    expect(screen.getByTestId("title-help-callout")).toHaveTextContent("Finished ones are under Past.");
   });
 
-  it("shows no info icon without an explanation", () => {
+  it("shows no (?) without help text", () => {
     render(<SectionTitle title="Yours" />);
 
-    expect(screen.queryByRole("button", { name: "About this section" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "How this section works" })).not.toBeInTheDocument();
   });
 
   it("puts the trailing badge or count in the title bar beside the title", () => {

@@ -54,7 +54,7 @@ export function SquadYearSection({
                   name={championship.name}
                   testId="squad-year-championship"
                   to={buildLeagueChampionshipsPath(leagueCode, year)}
-                  value={<span title={describeMovement(championship.standing.movement).description}>{describeMovement(championship.standing.movement).label}</span>}
+                  value={<span aria-label={describeMovement(championship.standing.movement).description}>{describeMovement(championship.standing.movement).label}</span>}
                 />
               </SectionRows>
               <SectionBody>

@@ -1256,9 +1256,10 @@ describe('Event emails', () => {
 
     const view = renderCommissionerTools('/league/BIGDAWGS/admin/event-emails/edit');
 
-    const page = await screen.findByTestId('edit-event-emails-page');
-    expect(page).toHaveTextContent('Commissioners get an email once an event is ready for contests. Choose the sport leagues you want to hear about.');
-    expect(page).not.toHaveTextContent('10 days');
+    fireEvent.click(await screen.findByTestId('edit-event-emails-page-help'));
+    const help = screen.getByTestId('edit-event-emails-page-help-callout');
+    expect(help).toHaveTextContent('Commissioners get an email once an event is ready for contests. Choose the sport leagues you want to hear about.');
+    expect(help).not.toHaveTextContent('10 days');
     view.unmount();
 
     renderCommissionerTools();
@@ -1270,7 +1271,8 @@ describe('Event emails', () => {
 
     const view = renderCommissionerTools('/league/BIGDAWGS/admin/event-emails/edit');
 
-    expect(await screen.findByTestId('edit-event-emails-page')).toHaveTextContent('Commissioners get an email about 10 days before an event. Choose the sport leagues you want to hear about.');
+    fireEvent.click(await screen.findByTestId('edit-event-emails-page-help'));
+    expect(screen.getByTestId('edit-event-emails-page-help-callout')).toHaveTextContent('Commissioners get an email about 10 days before an event. Choose the sport leagues you want to hear about.');
     view.unmount();
 
     renderCommissionerTools();
@@ -1282,7 +1284,8 @@ describe('Event emails', () => {
 
     renderCommissionerTools('/league/BIGDAWGS/admin/event-emails/edit');
 
-    expect(await screen.findByTestId('edit-event-emails-page')).toHaveTextContent('Commissioners get an email about 10 days before an event, and another once it\'s ready for contests.');
+    fireEvent.click(await screen.findByTestId('edit-event-emails-page-help'));
+    expect(screen.getByTestId('edit-event-emails-page-help-callout')).toHaveTextContent('Commissioners get an email about 10 days before an event, and another once it\'s ready for contests.');
   });
 
   it('sends a commissioner who opens Edit event emails on an inactive league back to the read-only settings', async () => {

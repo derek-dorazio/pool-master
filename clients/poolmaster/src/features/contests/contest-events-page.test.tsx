@@ -240,7 +240,8 @@ describe('Commissioner tools › Contests › one contest › Events', () => {
     expect(lockedOption).toBeChecked();
     expect(lockedOption).toBeDisabled();
     expect(screen.getByText('In the contest')).toBeInTheDocument();
-    expect(screen.getByTestId('contest-events-page')).toHaveTextContent('you can add events but not remove them');
+    fireEvent.click(screen.getByTestId('contest-events-page-help'));
+    expect(screen.getByTestId('contest-events-page-help-callout')).toHaveTextContent('you can add events but not remove them');
 
     // Adding still works, and the save keeps the started event.
     setContestSportEventsMock.mockResolvedValue(apiSuccess({ contest: buildManagedContest() }));

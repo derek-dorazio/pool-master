@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router';
 import { activateLeague, deleteLeague, inactivateLeague, type LeagueDto } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-context';
 import {
-  Alert,
+  Notice,
   Button,
   ConfirmDialog,
   DangerZone,
@@ -114,9 +114,9 @@ export function LeagueDangerZone({ league }: { league: LeagueDto }) {
               <>
                 The league is inactive. Activate it to reopen entries and changes.
                 {activateMutation.isError ? (
-                  <Alert className="mt-2" tone="danger">
+                  <Notice className="mt-2" tone="danger">
                     {extractErrorMessage(activateMutation.error, { fallback: 'We could not activate this league.' })}
-                  </Alert>
+                  </Notice>
                 ) : null}
               </>
             )}
@@ -179,9 +179,9 @@ export function LeagueDangerZone({ league }: { league: LeagueDto }) {
         tone="danger"
       >
         {inactivateMutation.isError ? (
-          <Alert tone="danger">
+          <Notice tone="danger">
             {extractErrorMessage(inactivateMutation.error, { fallback: 'We could not inactivate this league.' })}
-          </Alert>
+          </Notice>
         ) : null}
       </ConfirmDialog>
 
@@ -218,9 +218,9 @@ export function LeagueDangerZone({ league }: { league: LeagueDto }) {
         </FormField>
 
         {deleteMutation.isError ? (
-          <Alert className="mt-4" tone="danger">
+          <Notice className="mt-4" tone="danger">
             {extractErrorMessage(deleteMutation.error, { fallback: 'We could not delete this league.' })}
-          </Alert>
+          </Notice>
         ) : null}
       </ConfirmDialog>
     </>

@@ -5,7 +5,7 @@ import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import { hasPlanFeature } from '@/features/plans/plan-features';
-import { Alert, Button, ConfirmDialog } from '@/features/shared/ui';
+import { Notice, Button, ConfirmDialog } from '@/features/shared/ui';
 import { useYearReviewQuery } from './use-championship-query';
 
 /**
@@ -33,9 +33,9 @@ export function YearReviewBanner({ isCommissioner, league }: { isCommissioner: b
 
   if (sendMutation.isSuccess) {
     return (
-      <Alert data-testid="year-review-sent" tone="success">
+      <Notice data-testid="year-review-sent" tone="success">
         {`The ${sendMutation.data.year} year in review is on its way to every team that placed.`}
-      </Alert>
+      </Notice>
     );
   }
   if (review?.status !== YearReviewStatus.READY) {
@@ -50,7 +50,7 @@ export function YearReviewBanner({ isCommissioner, league }: { isCommissioner: b
 
   return (
     <>
-      <Alert
+      <Notice
         action={(
           <Button data-testid="year-review-send" onClick={() => setIsConfirming(true)} size="sm" type="button">
             {`Send the ${review.year} year in review`}
@@ -60,7 +60,7 @@ export function YearReviewBanner({ isCommissioner, league }: { isCommissioner: b
         title={`Your ${review.year} year in review is ready to send`}
       >
         {`Each team's owners get an email with their team's ${review.year}: its championship place, contest medals, cups and trophies.`}
-      </Alert>
+      </Notice>
       <ConfirmDialog
         confirmLabel="Send"
         description={`Every team that placed in ${review.year} gets its year by email. It can be sent once.`}
@@ -74,7 +74,7 @@ export function YearReviewBanner({ isCommissioner, league }: { isCommissioner: b
         title={`Send the ${review.year} year in review?`}
       >
         {sendMutation.isError ? (
-          <Alert tone="danger">{extractErrorMessage(sendMutation.error, { fallback: 'We could not send the year in review.' })}</Alert>
+          <Notice tone="danger">{extractErrorMessage(sendMutation.error, { fallback: 'We could not send the year in review.' })}</Notice>
         ) : null}
       </ConfirmDialog>
     </>

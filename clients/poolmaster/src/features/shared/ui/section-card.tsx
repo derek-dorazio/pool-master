@@ -1,9 +1,8 @@
-import { Info } from "lucide-react";
 import { useEffect, useId, useRef, type ReactNode } from "react";
 import { Link } from "react-router";
 import { cn } from "./class-names";
 import { Heading } from "./heading";
-import { InfoPopover } from "./info-popover";
+import { HelpTip } from "./help-tip";
 
 /**
  * The one section look (#1561): a title bar with a rule, a body of rows, padded content or one
@@ -16,22 +15,22 @@ type SectionTone = "danger" | "default";
 type SectionFooter = { label: string; testId: string; to: string };
 
 /**
- * A section's title in the house uppercase italic, with an optional info icon that holds the
- * section's explanation (sentences never sit in the body) and an optional trailing slot for one
+ * A section's title in the house uppercase italic, with an optional (?) `HelpTip` that holds how
+ * the section works (sentences never sit in the body) and an optional trailing slot for one
  * badge, count or filter.
  */
 export function SectionTitle({
+  help,
   id,
-  info,
   level = 2,
   testId,
   title,
   tone = "default",
   trailing,
 }: {
+  /** How the section works, in one to three sentences, shown by the title's (?). */
+  help?: ReactNode;
   id?: string;
-  /** The explanation, shown when the info icon is hovered or tapped. */
-  info?: ReactNode;
   level?: 2 | 3;
   testId?: string;
   title: ReactNode;
@@ -51,15 +50,14 @@ export function SectionTitle({
       >
         {title}
       </Heading>
-      {info ? (
-        <InfoPopover
+      {help ? (
+        <HelpTip
           className="-my-2 -ml-2"
-          icon={<Info aria-hidden className="text-muted-foreground" size={16} />}
-          label="About this section"
-          testId={testId ? `${testId}-info` : "section-info"}
+          label="How this section works"
+          testId={testId ? `${testId}-help` : "section-help"}
         >
-          <p className="text-sm text-muted-foreground">{info}</p>
-        </InfoPopover>
+          {help}
+        </HelpTip>
       ) : null}
       {trailing ? <div className="ml-auto flex flex-wrap items-center gap-2 text-xs text-muted-foreground">{trailing}</div> : null}
     </div>
@@ -78,7 +76,7 @@ export function SectionCard({
   className,
   footer,
   headingLevel = 2,
-  info,
+  help,
   padded = false,
   testId,
   title,
@@ -91,7 +89,8 @@ export function SectionCard({
   className?: string;
   footer?: SectionFooter;
   headingLevel?: 2 | 3;
-  info?: ReactNode;
+  /** How the section works, behind the title's (?). */
+  help?: ReactNode;
   padded?: boolean;
   testId?: string;
   /** The section's name, which also names it for screen readers. */
@@ -112,7 +111,7 @@ export function SectionCard({
       data-testid={testId}
     >
       <div className={cn("border-b", tone === "danger" ? "border-destructive/40" : "border-border", bare ? "pb-1" : "px-4 py-1")}>
-        <SectionTitle id={titleId} info={info} level={headingLevel} testId={titleTestId} title={title} tone={tone} trailing={trailing} />
+        <SectionTitle help={help} id={titleId} level={headingLevel} testId={titleTestId} title={title} tone={tone} trailing={trailing} />
       </div>
       {padded && !bare ? <SectionBody testId={testId ? `${testId}-body` : undefined}>{children}</SectionBody> : children}
       {footer ? <SectionFooterLink label={footer.label} testId={footer.testId} to={footer.to} /> : null}

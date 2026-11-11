@@ -1,15 +1,17 @@
 import type { ReactNode, SubmitEventHandler } from "react";
-import { Alert } from "./alert";
+import { Notice } from "./notice";
 import { Button, LinkButton } from "./button";
 import { Tile } from "./tile";
 import { Heading } from "./heading";
+import { HelpTip } from "./help-tip";
 
 type FormPageProps = {
   /** Shown above the footer when the save fails. */
   errorMessage?: string | null;
   cancelTo: string;
   children: ReactNode;
-  description?: ReactNode;
+  /** How the form works, behind a (?) after the title, never a sentence on the page. */
+  help?: ReactNode;
   isPending: boolean;
   isSubmitDisabled?: boolean;
   onSubmit: SubmitEventHandler<HTMLFormElement>;
@@ -27,8 +29,8 @@ type FormPageProps = {
 export function FormPage({
   cancelTo,
   children,
-  description,
   errorMessage,
+  help,
   isPending,
   isSubmitDisabled = false,
   onSubmit,
@@ -40,12 +42,16 @@ export function FormPage({
 }: FormPageProps) {
   return (
     <form className="space-y-5" data-testid={testId} noValidate onSubmit={onSubmit}>
-      <div>
+      <div className="flex items-center">
         <Heading level={2} variant="subtitle">{title}</Heading>
-        {description ? <p className="mt-0.5 text-sm text-muted-foreground">{description}</p> : null}
+        {help ? (
+          <HelpTip className="-my-2" label="How this form works" testId={testId ? `${testId}-help` : "form-page-help"}>
+            {help}
+          </HelpTip>
+        ) : null}
       </div>
       <Tile className="space-y-5 p-5" padding="none" radius="md">{children}</Tile>
-      {errorMessage ? <Alert tone="danger">{errorMessage}</Alert> : null}
+      {errorMessage ? <Notice tone="danger">{errorMessage}</Notice> : null}
       <div className="flex flex-wrap justify-end gap-3">
         <LinkButton isDisabled={isPending} to={cancelTo} variant="secondary">
           Cancel

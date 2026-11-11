@@ -7,7 +7,7 @@ import { formatUserName } from '@/features/account/user-name';
 import { buildUserPath } from '@/features/account/user-routing';
 import { useAuth } from '@/features/auth/auth-context';
 import {
-  Alert,
+  Notice,
   Button,
   ConfirmDialog,
   DangerZone,
@@ -243,9 +243,9 @@ export function RootAdminUserPage() {
       />
 
       {isInactive ? (
-        <Alert data-testid="root-admin-user-inactive-banner" tone="warning">
+        <Notice data-testid="root-admin-user-inactive-banner" tone="warning">
           This account is inactive. You can reactivate it or delete it permanently.
-        </Alert>
+        </Notice>
       ) : null}
 
       <SettingsSection
@@ -304,7 +304,7 @@ export function RootAdminUserPage() {
           )}
           label="Password"
           value={temporaryPassword ? (
-            <Alert tone="success">
+            <Notice tone="success">
               <div className="font-semibold">Temporary password</div>
               <div
                 className="mt-2 rounded-xl border border-[color:var(--status-active-border)] bg-card px-3 py-2 font-mono text-foreground"
@@ -315,7 +315,7 @@ export function RootAdminUserPage() {
               <p className="mt-2 text-xs">
                 Relay this to the user and have them change it after signing in.
               </p>
-            </Alert>
+            </Notice>
           ) : 'Set by the user'}
         />
       </SettingsSection>
@@ -376,9 +376,9 @@ export function RootAdminUserPage() {
         tone={viewedUser.isRootAdmin ? 'danger' : 'default'}
       >
         {roleMutation.isError ? (
-          <Alert tone="danger">
+          <Notice tone="danger">
             {extractAdminError(roleMutation.error, 'We could not update the root-admin role.')}
-          </Alert>
+          </Notice>
         ) : null}
       </ConfirmDialog>
 
@@ -397,9 +397,9 @@ export function RootAdminUserPage() {
         tone="danger"
       >
         {resetPasswordMutation.isError ? (
-          <Alert tone="danger">
+          <Notice tone="danger">
             {extractAdminError(resetPasswordMutation.error, 'We could not reset this password.')}
-          </Alert>
+          </Notice>
         ) : null}
       </ConfirmDialog>
 
@@ -420,9 +420,9 @@ export function RootAdminUserPage() {
         tone={isInactive ? 'default' : 'danger'}
       >
         {lifecycleMutation.isError ? (
-          <Alert tone="danger">
+          <Notice tone="danger">
             {extractAdminError(lifecycleMutation.error, 'We could not update account lifecycle.')}
-          </Alert>
+          </Notice>
         ) : null}
       </ConfirmDialog>
 
@@ -455,9 +455,9 @@ export function RootAdminUserPage() {
             value={deleteEmailConfirmation}
           />
           {deleteMutation.isError ? (
-            <Alert tone="danger">
+            <Notice tone="danger">
               {extractAdminError(deleteMutation.error, 'We could not delete this account.')}
-            </Alert>
+            </Notice>
           ) : null}
         </div>
       </ConfirmDialog>

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { refreshEventParticipants } from '@/lib/api';
-import { Alert, Button, ConfirmationModal } from '@/features/shared/ui';
+import { Notice, Button, ConfirmationModal } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -71,18 +71,18 @@ export function EventFieldRefreshAction({
       </Button>
 
       {started ? (
-        <Alert
+        <Notice
           className="mt-3"
           data-testid="root-admin-event-field-refresh-result"
           tone="info"
         >
           Provider field sync started. The field updates here once the run
           completes.
-        </Alert>
+        </Notice>
       ) : null}
 
       {refreshMutation.isError && !confirmOpen ? (
-        <Alert
+        <Notice
           className="mt-3"
           data-testid="root-admin-event-field-refresh-error"
           tone="danger"
@@ -90,7 +90,7 @@ export function EventFieldRefreshAction({
           {extractErrorMessage(refreshMutation.error, {
             fallback: 'We could not start the provider field sync.',
           })}
-        </Alert>
+        </Notice>
       ) : null}
 
       <ConfirmationModal

@@ -68,7 +68,7 @@ export function SquadHistorySection({
       ) : (
         <>
           <SectionCard
-            info="A podium finish in a crowned cup or a finished championship, or a win in a contest the league runs every year, puts a trophy here."
+            help="A podium finish in a crowned cup or a finished championship, or a win in a contest the league runs every year, puts a trophy here."
             title="Trophy case"
           >
             <SectionBody>

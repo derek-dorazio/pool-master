@@ -1,7 +1,7 @@
 import { Link } from 'react-router';
 import { LeagueRole, SquadOwnerInvitationStatus } from '@poolmaster/shared/domain';
 import type { SquadDto, TeamOwnerInvitationDto } from '@/lib/api';
-import { Alert, Button, Heading, Input, StatusBadge, Tile } from '@/features/shared/ui';
+import { Notice, Button, Heading, Input, StatusBadge, Tile } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
 import { buildUserPath } from '@/features/account/user-routing';
 import { formatUserName } from '@/features/account/user-name';
@@ -81,10 +81,10 @@ export function MyTeamOwnersPanel({
           </Button>
         </div>
         {createOwnerInvitationMutation.isSuccess ? (
-          <Alert className="mt-3" tone="success">Co-owner invite created.</Alert>
+          <Notice className="mt-3" tone="success">Co-owner invite created.</Notice>
         ) : null}
         {createOwnerInvitationMutation.isError ? (
-          <Alert className="mt-3" tone="danger">{extractErrorMessage(createOwnerInvitationMutation.error, { fallback: TEAM_PAGE_FALLBACK_ERROR })}</Alert>
+          <Notice className="mt-3" tone="danger">{extractErrorMessage(createOwnerInvitationMutation.error, { fallback: TEAM_PAGE_FALLBACK_ERROR })}</Notice>
         ) : null}
       </Tile>
 
@@ -224,13 +224,13 @@ export function MyTeamOwnersPanel({
             </Button>
           </div>
           {replaceOwnerMutation.isError ? (
-            <Alert className="mt-3" tone="danger">{extractErrorMessage(replaceOwnerMutation.error, { fallback: TEAM_PAGE_FALLBACK_ERROR })}</Alert>
+            <Notice className="mt-3" tone="danger">{extractErrorMessage(replaceOwnerMutation.error, { fallback: TEAM_PAGE_FALLBACK_ERROR })}</Notice>
           ) : null}
         </Tile>
       ) : null}
 
       {revokeOwnerInvitationMutation.isError ? (
-        <Alert tone="danger">{extractErrorMessage(revokeOwnerInvitationMutation.error, { fallback: TEAM_PAGE_FALLBACK_ERROR })}</Alert>
+        <Notice tone="danger">{extractErrorMessage(revokeOwnerInvitationMutation.error, { fallback: TEAM_PAGE_FALLBACK_ERROR })}</Notice>
       ) : null}
     </div>
   );

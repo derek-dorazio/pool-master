@@ -139,7 +139,7 @@ function ChampionshipSettingsForm({ league }: { league: LeagueDto }) {
   return (
     <FormPage
       cancelTo={settingsPath}
-      description="The championship every contest counts toward, and what each finishing place earns in it and in every sports league cup."
+      help="The championship every contest counts toward, and what each finishing place earns in it and in every sports league cup."
       {...formPageSave(form, saveMutation, 'We could not save the championship settings.')}
       pendingLabel="Saving..."
       submitLabel="Save settings"

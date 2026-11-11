@@ -77,7 +77,7 @@ function CupWeightForm({
   return (
     <FormPage
       cancelTo={contestPath}
-      description={`How much ${contest.name} counts toward its sports league cup and the league championship. It is fixed once the contest is final.`}
+      help={`How much ${contest.name} counts toward its sports league cup and the league championship. It is fixed once the contest is final.`}
       errorMessage={saveMutation.isError
         ? extractErrorMessage(saveMutation.error, { fallback: 'We could not save the cup weight.' })
         : null}

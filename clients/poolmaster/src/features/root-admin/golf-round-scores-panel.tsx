@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react';
 import { getSportDefinition } from '@poolmaster/shared/domain';
 import { listEventRounds } from '@/lib/api';
 import {
-  Alert,
+  Notice,
   SegmentedControl,
   formatDateDisplay,
   useDisplayPreferences,
@@ -79,28 +79,28 @@ export function GolfRoundScoresPanel({ event: tournament }: { event: SportEventD
   return (
     <div className="space-y-6" data-testid="root-admin-golf-tournament-scores-page">
       {sportEventHasScoreSync(tournament.syncScope) ? (
-        <Alert data-testid="root-admin-golf-scores-sync-alert" tone="warning">
+        <Notice data-testid="root-admin-golf-scores-sync-alert" tone="warning">
           Scores for this tournament sync automatically from the linked provider.
           Manual edits here are corrections and may be overwritten by the next sync
           tick.
-        </Alert>
+        </Notice>
       ) : null}
 
       {roundsQuery.isError ? (
-        <Alert data-testid="root-admin-golf-scores-rounds-error" tone="danger">
+        <Notice data-testid="root-admin-golf-scores-rounds-error" tone="danger">
           {extractErrorMessage(roundsQuery.error, {
             fallback:
               'We could not load the round schedule, so round dates are hidden.',
           })}
-        </Alert>
+        </Notice>
       ) : null}
       {fieldQuery.isError ? (
-        <Alert data-testid="root-admin-golf-scores-field-error" tone="danger">
+        <Notice data-testid="root-admin-golf-scores-field-error" tone="danger">
           {extractErrorMessage(fieldQuery.error, {
             fallback:
               'We could not load the field, so the CSV template is not pre-filled with golfers.',
           })}
-        </Alert>
+        </Notice>
       ) : null}
 
       {roundOptions.length > 0 ? (
@@ -111,9 +111,9 @@ export function GolfRoundScoresPanel({ event: tournament }: { event: SportEventD
           value={String(round)}
         />
       ) : (
-        <Alert data-testid="root-admin-golf-scores-no-rounds" tone="info">
+        <Notice data-testid="root-admin-golf-scores-no-rounds" tone="info">
           This tournament has no rounds scheduled yet.
-        </Alert>
+        </Notice>
       )}
 
       {roundOptions.length > 0 ? (

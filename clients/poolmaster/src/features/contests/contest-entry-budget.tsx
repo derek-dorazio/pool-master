@@ -2,7 +2,7 @@ import { formatDollars, type Sport, type SportNoun } from '@poolmaster/shared/do
 import { useState } from 'react';
 import type { SelectionStateResponse } from '@/lib/api';
 import {
-  Alert,
+  Notice,
   Button,
   Checkbox,
   Chip,
@@ -221,7 +221,7 @@ export function BudgetLineupBuilder({
             sport={sport}
           />
         ))}
-        {!listed.length ? <Alert>{`No ${noun.one} matches “${search.trim()}”.`}</Alert> : null}
+        {!listed.length ? <Notice>{`No ${noun.one} matches “${search.trim()}”.`}</Notice> : null}
       </div>
     </div>
   );
@@ -259,7 +259,7 @@ export function LockedBudgetLineup({
           ))}
         </div>
       ) : (
-        <Alert className="mt-3">{`No ${noun.one} was saved on this entry.`}</Alert>
+        <Notice className="mt-3">{`No ${noun.one} was saved on this entry.`}</Notice>
       )}
       {summary ? (
         <p className="mt-3 text-sm text-muted-foreground">

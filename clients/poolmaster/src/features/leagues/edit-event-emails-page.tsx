@@ -107,7 +107,7 @@ function EventEmailsForm({ league, sports }: { league: LeagueDto; sports: EventE
   return (
     <FormPage
       cancelTo={settingsPath}
-      description={describeEventEmailsPage(league)}
+      help={describeEventEmailsPage(league)}
       errorMessage={saveMutation.isError
         ? extractErrorMessage(saveMutation.error, { fallback: 'We could not save the event email settings.' })
         : null}

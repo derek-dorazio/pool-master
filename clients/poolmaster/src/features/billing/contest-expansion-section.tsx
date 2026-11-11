@@ -8,7 +8,7 @@ import {
 import { extractErrorMessage, throwApiError, type ErrorCodeMessages } from '@/lib/errors';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import { Alert, Button, FormField, Input, SettingsRow, SettingsSection } from '@/features/shared/ui';
+import { Notice, Button, FormField, Input, SettingsRow, SettingsSection } from '@/features/shared/ui';
 import { formatPriceCents } from './billing-format';
 import { useContestExpansionQuery } from './use-contest-expansion-query';
 
@@ -105,9 +105,9 @@ export function ContestExpansionSection({
       ) : null}
       {isFull && state.expandable ? (
         <div className="px-5 py-3.5">
-          <Alert data-testid="contest-expansion-full" tone="warning">
+          <Notice data-testid="contest-expansion-full" tone="warning">
             This contest is full at {state.entriesPerContest} entries.
-          </Alert>
+          </Notice>
         </div>
       ) : null}
       {state.offers.map((offer) => (
@@ -136,12 +136,12 @@ export function ContestExpansionSection({
       ) : null}
       {expandMutation.isError ? (
         <div className="px-5 py-3.5">
-          <Alert data-testid="contest-expansion-expand-error" tone="danger">
+          <Notice data-testid="contest-expansion-expand-error" tone="danger">
             {extractErrorMessage(expandMutation.error, {
               codeMessages: EXPANSION_CODE_MESSAGES,
               fallback: 'We could not expand this contest. Please try again.',
             })}
-          </Alert>
+          </Notice>
         </div>
       ) : null}
       {canGrant ? <GrantExpansionForm contestId={contestId} invalidates={invalidates} leagueId={leagueId} /> : null}
@@ -216,12 +216,12 @@ function GrantExpansionForm({
         </Button>
       </div>
       {grantMutation.isError ? (
-        <Alert data-testid="contest-expansion-grant-error" tone="danger">
+        <Notice data-testid="contest-expansion-grant-error" tone="danger">
           {extractErrorMessage(grantMutation.error, {
             codeMessages: EXPANSION_CODE_MESSAGES,
             fallback: 'We could not give that expansion. Please try again.',
           })}
-        </Alert>
+        </Notice>
       ) : null}
     </form>
   );

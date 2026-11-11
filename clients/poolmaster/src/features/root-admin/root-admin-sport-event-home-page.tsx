@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import { useParams } from 'react-router';
 import {
   AsyncPage,
-  Callout,
+  Notice,
   LinkButton,
 } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
@@ -62,7 +62,7 @@ export function RootAdminSportEventHomePage() {
           <SportEventHeader current="overview" tournament={tournament} />
 
           {tournament.syncScope !== SportEventSyncScope.NONE && tournament.loadedParticipantCount === 0 ? (
-            <Callout tone="info">
+            <Notice tone="info">
               <p className="font-medium">The participant field is not loaded yet</p>
               <p className="mt-1 text-sm">
                 {`This ${eventNoun} is linked to a provider event. Open Field and use Load Participant Field to pull the field in.`}
@@ -76,7 +76,7 @@ export function RootAdminSportEventHomePage() {
                   Open Field
                 </LinkButton>
               </div>
-            </Callout>
+            </Notice>
           ) : null}
 
           <SportEventDetailsSection sportLeagueName={sportLeagueName} tournament={tournament} />

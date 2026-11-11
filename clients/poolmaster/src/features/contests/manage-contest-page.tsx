@@ -29,7 +29,7 @@ import {
 import { useLeagueContext } from '@/features/leagues/use-league-context';
 import { hasPlanFeature } from '@/features/plans/plan-features';
 import {
-  Alert,
+  Notice,
   Button,
   Chip,
   ConfirmDialog,
@@ -38,6 +38,7 @@ import {
   DateDisplay,
   EmptyState,
   ErrorState,
+  HelpTip,
   PageHeader,
   LinkButton,
   LoadingState,
@@ -55,9 +56,10 @@ import { useManagedContestQuery } from './use-managed-contest-query';
 
 function FixedNote() {
   return (
-    <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground" title="Set when the contest was created">
+    <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
       <Lock aria-hidden size={13} />
       Fixed
+      <HelpTip className="-my-2 -ml-2" label="Why this is fixed" testId="manage-contest-fixed-help">Set when the contest was created.</HelpTip>
     </span>
   );
 }
@@ -321,9 +323,10 @@ export function ManageContestPage() {
         >
           <SettingsRow
             action={contest.status === ContestStatus.COMPLETED ? (
-              <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground" data-testid="manage-contest-cup-weight-final" title="Fixed when the contest went final">
+              <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground" data-testid="manage-contest-cup-weight-final">
                 <Lock aria-hidden size={13} />
                 Final
+                <HelpTip className="-my-2 -ml-2" label="Why this is final" testId="manage-contest-cup-weight-final-help">Fixed when the contest went final.</HelpTip>
               </span>
             ) : (
               <LinkButton
@@ -392,11 +395,11 @@ export function ManageContestPage() {
         tone="danger"
       >
         {deleteContestMutation.isError ? (
-          <Alert data-testid="contest-delete-error" tone="danger">
+          <Notice data-testid="contest-delete-error" tone="danger">
             {extractErrorMessage(deleteContestMutation.error, {
               fallback: 'We could not delete that contest. Please try again.',
             })}
-          </Alert>
+          </Notice>
         ) : null}
       </ConfirmDialog>
     </section>

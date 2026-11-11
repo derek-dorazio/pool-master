@@ -8,7 +8,7 @@ import {
 import { ContestEntryStatus, ContestStatus, SelectionType, formatDollars, type SportNoun } from '@poolmaster/shared/domain';
 import { getLogger } from '@/lib/logger';
 import {
-  Alert,
+  Notice,
   Button,
   ErrorState,
   FormField,
@@ -640,9 +640,9 @@ function RosterContestEntryPage() {
         ) : (
         <div className="mt-5 space-y-5">
           {picksHidden ? (
-            <Alert data-testid="contest-entry-picks-hidden">
+            <Notice data-testid="contest-entry-picks-hidden">
               This entry&apos;s picks stay hidden until the event starts.
-            </Alert>
+            </Notice>
           ) : null}
           {isBudget ? selectionGroups.map((group) => (isEditable ? (
             <BudgetLineupBuilder
@@ -711,21 +711,21 @@ function RosterContestEntryPage() {
           })}
 
           {pickChangeMutation.isError ? (
-            <Alert tone="danger">
+            <Notice tone="danger">
               {extractErrorMessage(pickChangeMutation.error, {
                 codeMessages: CONTEST_ENTRY_CODE_MESSAGES,
                 fallback: 'We could not save this entry right now.',
               })}
-            </Alert>
+            </Notice>
           ) : null}
         </div>
         )}
       </Tile>
 
       {isMyEntry ? null : (
-        <Alert>
+        <Notice>
           {entrySummary ? `This entry belongs to ${entrySummary.squadName}.` : 'This entry belongs to someone else.'}
-        </Alert>
+        </Notice>
       )}
 
       {showFinish ? (
@@ -756,47 +756,47 @@ function RosterContestEntryPage() {
           ) : null}
 
           {tiebreaker && !detailsEditable ? (
-            <Alert title="Saved tiebreaker">
+            <Notice title="Saved tiebreaker">
               <div data-testid="contest-entry-readonly-tiebreaker">
                 {selectionState.tiebreakerValue === null || selectionState.tiebreakerValue === undefined
                   ? 'No tiebreaker prediction was saved.'
                   : tiebreaker.describe(selectionState.tiebreakerValue)}
               </div>
-            </Alert>
+            </Notice>
           ) : null}
 
           {saveEntryDetailsMutation.isError ? (
-            <Alert tone="danger">
+            <Notice tone="danger">
               {extractErrorMessage(saveEntryDetailsMutation.error, {
                 codeMessages: CONTEST_ENTRY_CODE_MESSAGES,
                 fallback: 'We could not save this entry right now.',
               })}
-            </Alert>
+            </Notice>
           ) : null}
 
           {isEditable && !isSubmitted ? (
-            <Alert data-testid="contest-entry-not-submitted" title="Not submitted" tone="warning">
+            <Notice data-testid="contest-entry-not-submitted" title="Not submitted" tone="warning">
               {lineupComplete
                 ? tiebreaker
                   ? 'Your lineup is complete. Choose a tiebreaker and submit it: an entry only counts once it is submitted.'
                   : 'Your lineup is complete. Submit it: an entry only counts once it is submitted.'
                 : 'This entry only counts once its lineup is complete and submitted. A change that leaves a submitted lineup short needs submitting again.'}
-            </Alert>
+            </Notice>
           ) : null}
 
           {submitEntryMutation.isError ? (
-            <Alert data-testid="contest-entry-submit-error" tone="danger">
+            <Notice data-testid="contest-entry-submit-error" tone="danger">
               {extractErrorMessage(submitEntryMutation.error, {
                 codeMessages: CONTEST_ENTRY_CODE_MESSAGES,
                 fallback: 'We could not submit this entry right now.',
               })}
-            </Alert>
+            </Notice>
           ) : null}
 
           {isEditable && lineupComplete && submitBlockedReason ? (
-            <Alert data-testid="contest-entry-submit-blocked" tone="danger">
+            <Notice data-testid="contest-entry-submit-blocked" tone="danger">
               {submitBlockedReason}
-            </Alert>
+            </Notice>
           ) : null}
 
           {isEditable && lineupComplete ? (
