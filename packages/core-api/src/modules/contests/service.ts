@@ -1992,7 +1992,7 @@ function entriesLockedError(): ContestEntryOperationError {
 }
 
 function buildDefaultEntryName(squadName: string, entryNumber: number): string {
-  return `${squadName} Entry ${entryNumber}`;
+  return `${squadName} ${entryNumber}`;
 }
 
 /** A pick as a contest entry shows it: the pick and the participant it points at. */
