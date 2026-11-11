@@ -137,6 +137,9 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
         events: async (dateRange) => (await Promise.all(ncaaReaders.map((reader) => reader.upcomingEvents(dateRange)))).flat(),
         participants: async () => (await Promise.all(ncaaReaders.map((reader) => reader.teams()))).flat(),
       }],
+      // Read together, so a failed read fails the sport's whole list: the World Cup's matches
+      // need the GOAT tier, which the NCAA brackets need too, so a plan without it loses
+      // soccer's events as well as basketball's, the Premier League's with them.
       [Sport.SOCCER, {
         events: async (dateRange) => (await Promise.all([this.epl.upcomingEvents(dateRange), this.worldCup.upcomingEvents(dateRange)])).flat(),
         participants: async () => (await Promise.all([this.epl.teams(), this.worldCup.teams()])).flat(),
