@@ -9,6 +9,7 @@ import type { Prisma, PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 import {
   getDefaultTournamentFormatForSport,
+  MappingConfidence,
   ParticipantStatus,
   type ParticipantType,
   type Sport,
@@ -208,14 +209,14 @@ export class IngestionPersistence {
             participantId: idBySportAndExternalId.get(`${sportIdOf(participant)}:${participant.externalId}`) as string,
             providerId: participant.providerId,
             externalId: participant.externalId,
-            confidence: 'EXACT' as const,
+            confidence: MappingConfidence.EXACT,
           })),
           // Matched by name, not by an id the provider gave: a strong match, not an exact one.
           ...linked.map(({ participant, existing }) => ({
             participantId: existing.id,
             providerId: participant.providerId,
             externalId: participant.externalId,
-            confidence: 'HIGH' as const,
+            confidence: MappingConfidence.HIGH,
           })),
         ];
         // A participant linked by name keeps what the site already holds for it until the feed's next sync.
@@ -231,7 +232,6 @@ export class IngestionPersistence {
     return { count: latestByKey.size, participantIdByKey };
   }
 
-  /** The provider mappings of these participants, with their participant, in one query per provider. */
   /** The sport events linked to these provider events, in one query grouped by provider. */
   private async findLinkedEvents(events: readonly SportEvent[]) {
     const externalIdsByProvider = new Map<string, string[]>();
@@ -248,7 +248,9 @@ export class IngestionPersistence {
    * The unmapped provider participants the site already has: a participant of the same sport with
    * exactly the same name and no mapping from this provider yet (a team or golfer loaded from a
    * sport data file, say) is linked rather than created a second time. A name two of the site's
-   * participants share, or two of the feed's, is never guessed at: those are created. One query.
+   * participants share, or two of the feed's, is never guessed at: those are created. One read of
+   * the candidates and their mappings from the feed's providers (Prisma loads the mappings with a
+   * second statement).
    */
   private async matchByName(
     unmapped: readonly ProviderParticipant[],
@@ -256,7 +258,9 @@ export class IngestionPersistence {
   ) {
     const namesBySportId = new Map<string, Set<string>>();
     const feedNameCounts = new Map<string, number>();
+    const providerIds = new Set<string>();
     for (const participant of unmapped) {
+      providerIds.add(participant.providerId);
       const sportId = sportIdOf(participant);
       namesBySportId.set(sportId, (namesBySportId.get(sportId) ?? new Set()).add(participant.name));
       const feedKey = `${participant.providerId}:${sportId}:${participant.name}`;
@@ -264,7 +268,12 @@ export class IngestionPersistence {
     }
     const candidates = await this.prisma.participant.findMany({
       where: { OR: [...namesBySportId].map(([sportId, names]) => ({ sportId, name: { in: [...names] } })) },
-      select: { id: true, sportId: true, name: true, providerMappings: { select: { providerId: true } } },
+      select: {
+        id: true,
+        sportId: true,
+        name: true,
+        providerMappings: { where: { providerId: { in: [...providerIds] } }, select: { providerId: true } },
+      },
     });
     const candidatesByName = new Map<string, typeof candidates>();
     for (const candidate of candidates) {
@@ -288,6 +297,7 @@ export class IngestionPersistence {
     return { linked, toCreate };
   }
 
+  /** The provider mappings of these participants, with their participant, in one query. */
   private async findMappings(participants: readonly ProviderParticipant[]) {
     const externalIdsByProvider = new Map<string, string[]>();
     for (const participant of participants) {

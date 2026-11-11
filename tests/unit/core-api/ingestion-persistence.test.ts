@@ -1,6 +1,6 @@
 import { RecordingLeaderboardRebuilds, eventRebuildJob } from '../../support/recording-leaderboard-rebuilds';
 import { expect } from '@jest/globals';
-import { Sport } from '@poolmaster/shared/domain';
+import { MappingConfidence, Sport } from '@poolmaster/shared/domain';
 import { IngestionPersistence } from '../../../packages/core-api/src/modules/ingestion/persistence/ingestion-persistence';
 import type {
   SportEvent,
@@ -588,4 +588,99 @@ describe('IngestionPersistence', () => {
     });
   });
 
+});
+
+/**
+ * A provider participant with no mapping yet (#1496): linked to the site's one of the same sport
+ * and name, or created. The double serves a feed whose event no event is linked to, so the sync
+ * writes participants and stops there.
+ */
+describe('IngestionPersistence: provider participants with no mapping yet', () => {
+  type Candidate = { id: string; sportId: string; name: string; providerMappings: Array<{ providerId: string }> };
+
+  function golfer(externalId: string, name: string, providerId = 'balldontlie') {
+    return { externalId, providerId, sport: Sport.GOLF, name, active: true, metadata: {} };
+  }
+
+  function unmappedPrisma(candidates: Candidate[]) {
+    const double = {
+      sportEvent: { findMany: jest.fn().mockResolvedValue([]), findUnique: jest.fn().mockResolvedValue(null) },
+      sport: { upsert: jest.fn().mockResolvedValue({ id: 'sport-golf', participantType: 'INDIVIDUAL' }) },
+      participant: {
+        findMany: jest.fn().mockResolvedValue(candidates),
+        createManyAndReturn: jest.fn(({ data }: { data: Array<{ sportId: string; externalId: string }> }) => Promise.resolve(
+          data.map((row) => ({ id: `created-${row.externalId}`, sportId: row.sportId, externalId: row.externalId })),
+        )),
+      },
+      participantProviderMapping: { findMany: jest.fn().mockResolvedValue([]), createMany: jest.fn().mockResolvedValue({ count: 0 }) },
+    };
+    // A callback transaction runs on the double itself; a batch runs all, in order.
+    const $transaction = jest.fn((work: unknown): Promise<unknown> => (typeof work === 'function'
+      ? (work as (tx: typeof double) => Promise<unknown>)(double)
+      : Promise.all(work as Array<Promise<unknown>>)));
+    return { ...double, $transaction };
+  }
+
+  async function sync(prisma: ReturnType<typeof unmappedPrisma>, participants: ReturnType<typeof golfer>[]) {
+    const logger = fakeLogger();
+    await new IngestionPersistence(asPrismaClient(prisma), logger).persistEventDetailWithDiagnostics({ ...buildInProgressEvent(), participants });
+    const [[{ data: mappings }]] = prisma.participantProviderMapping.createMany.mock.calls as Array<[{ data: Array<{ participantId: string; externalId: string; confidence: string }> }]>;
+    return { mappings, logger };
+  }
+
+  const createdNames = (prisma: ReturnType<typeof unmappedPrisma>) =>
+    prisma.participant.createManyAndReturn.mock.calls.flatMap(([{ data }]) => data.map((row) => (row as unknown as { name: string }).name));
+
+  it('links a golfer to the site\'s only one of that name and sport, with HIGH confidence, and creates no second one', async () => {
+    const prisma = unmappedPrisma([{ id: 'site-scheffler', sportId: 'sport-golf', name: 'Scottie Scheffler', providerMappings: [] }]);
+
+    const { mappings, logger } = await sync(prisma, [golfer('bdl-1', 'Scottie Scheffler')]);
+
+    expect(mappings).toEqual([{ participantId: 'site-scheffler', providerId: 'balldontlie', externalId: 'bdl-1', confidence: MappingConfidence.HIGH }]);
+    expect(prisma.participant.createManyAndReturn).not.toHaveBeenCalled();
+    expect(logger.info).toHaveBeenCalledWith(expect.objectContaining({ linked: 1, created: 0 }), 'Persisted participants from ingestion');
+  });
+
+  it('reads the candidates by sport and name, with only the mappings from the feed\'s own providers', async () => {
+    const prisma = unmappedPrisma([]);
+
+    await sync(prisma, [golfer('bdl-1', 'Scottie Scheffler'), golfer('mock-1', 'Rory McIlroy', 'mock-contest-feed')]);
+
+    expect(prisma.participant.findMany).toHaveBeenCalledTimes(1);
+    expect(prisma.participant.findMany).toHaveBeenCalledWith({
+      where: { OR: [{ sportId: 'sport-golf', name: { in: ['Scottie Scheffler', 'Rory McIlroy'] } }] },
+      select: {
+        id: true,
+        sportId: true,
+        name: true,
+        providerMappings: { where: { providerId: { in: ['balldontlie', 'mock-contest-feed'] } }, select: { providerId: true } },
+      },
+    });
+  });
+
+  it.each([
+    ['a name two of the site\'s golfers share', [
+      { id: 'site-a', sportId: 'sport-golf', name: 'Tom Kim', providerMappings: [] },
+      { id: 'site-b', sportId: 'sport-golf', name: 'Tom Kim', providerMappings: [] },
+    ], [golfer('bdl-1', 'Tom Kim')]],
+    ['a name the site\'s golfer has from this provider already, under another id', [
+      { id: 'site-a', sportId: 'sport-golf', name: 'Tom Kim', providerMappings: [{ providerId: 'balldontlie' }] },
+    ], [golfer('bdl-1', 'Tom Kim')]],
+    ['a name the feed sends for two golfers', [
+      { id: 'site-a', sportId: 'sport-golf', name: 'Tom Kim', providerMappings: [] },
+    ], [golfer('bdl-1', 'Tom Kim'), golfer('bdl-2', 'Tom Kim')]],
+    ['a name the site has no golfer by', [], [golfer('bdl-1', 'Tom Kim')]],
+  ])('creates the golfer, with an EXACT mapping, for %s', async (_label, candidates, participants) => {
+    const prisma = unmappedPrisma(candidates);
+
+    const { mappings } = await sync(prisma, participants);
+
+    expect(createdNames(prisma)).toEqual(participants.map((participant) => participant.name));
+    expect(mappings).toEqual(participants.map((participant) => ({
+      participantId: `created-${participant.externalId}`,
+      providerId: 'balldontlie',
+      externalId: participant.externalId,
+      confidence: MappingConfidence.EXACT,
+    })));
+  });
 });
