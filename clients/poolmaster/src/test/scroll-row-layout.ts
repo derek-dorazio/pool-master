@@ -28,9 +28,10 @@ export function installScrollRowLayout(initial: { rowWidth: number; tabWidth: nu
     scrollWidth: { get(this: HTMLElement) { return isRow(this) ? this.children.length * tabWidth : 0; } },
   };
 
+  // Only what HTMLElement.prototype itself defined; the rest is inherited from Element.prototype
+  // and comes back once the override is deleted.
   const originals = Object.fromEntries(
-    Object.keys(stubs).map((name) => [name, Object.getOwnPropertyDescriptor(HTMLElement.prototype, name)
-      ?? Object.getOwnPropertyDescriptor(Element.prototype, name)]),
+    Object.keys(stubs).map((name) => [name, Object.getOwnPropertyDescriptor(HTMLElement.prototype, name)]),
   );
   for (const [name, descriptor] of Object.entries(stubs)) {
     Object.defineProperty(HTMLElement.prototype, name, { ...descriptor, configurable: true });

@@ -1,6 +1,10 @@
 import { useCallback, useLayoutEffect, useRef, useState, type RefObject } from "react";
 
-/** How far the faded edge reaches into the row: a selected tab is scrolled clear of it. */
+/**
+ * How far the faded edge reaches into the row: a selected tab is scrolled clear of it. It is the
+ * `3rem` in `FADE_CLASS_NAMES` at the 16px root size; change both together. The classes spell the
+ * width out because Tailwind only generates class names it finds written whole in the source.
+ */
 const FADE_PX = 48;
 
 // Each fade is drawn on a phone only, and only on a side with more tabs beyond it.
