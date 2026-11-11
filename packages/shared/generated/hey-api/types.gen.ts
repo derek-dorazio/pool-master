@@ -4212,7 +4212,7 @@ export type ContestConfigurationRequest = {
      */
     tiersUsed?: number;
     /**
-     * Maximum entries a Team may create. Null means unlimited.
+     * Maximum entries a Squad may create. Null means unlimited.
      */
     maxEntriesPerSquad?: number | null;
     /**
@@ -4278,7 +4278,7 @@ export type ContestConfigurationRequest = {
      */
     countedScores: number;
     /**
-     * Maximum entries a Team may create. Null means unlimited.
+     * Maximum entries a Squad may create. Null means unlimited.
      */
     maxEntriesPerSquad?: number | null;
     /**
@@ -4344,7 +4344,7 @@ export type ContestConfigurationRequest = {
      */
     countedScores: number;
     /**
-     * Maximum entries a Team may create. Null means unlimited.
+     * Maximum entries a Squad may create. Null means unlimited.
      */
     maxEntriesPerSquad?: number | null;
     /**
@@ -4410,7 +4410,7 @@ export type ContestConfigurationRequest = {
      */
     againstTheSpread: boolean;
     /**
-     * Maximum entries a Team may create. Null means unlimited.
+     * Maximum entries a Squad may create. Null means unlimited.
      */
     maxEntriesPerSquad?: number | null;
     /**
@@ -4472,7 +4472,7 @@ export type ContestConfigurationRequest = {
      */
     startsAtRound: number;
     /**
-     * Maximum entries a Team may create. Null means unlimited.
+     * Maximum entries a Squad may create. Null means unlimited.
      */
     maxEntriesPerSquad?: number | null;
     /**
@@ -4534,7 +4534,7 @@ export type ContestConfigurationRequest = {
      */
     maxSquaresPerEntry: number;
     /**
-     * Maximum entries a Team may create. Null means unlimited.
+     * Maximum entries a Squad may create. Null means unlimited.
      */
     maxEntriesPerSquad?: number | null;
     /**
@@ -4596,7 +4596,7 @@ export type ContestConfigurationRequest = {
      */
     reuseTeamsOnceAllUsed?: boolean;
     /**
-     * Maximum entries a Team may create. Null means unlimited.
+     * Maximum entries a Squad may create. Null means unlimited.
      */
     maxEntriesPerSquad?: number | null;
     /**
@@ -4830,7 +4830,7 @@ export type ContestManagementDetailDto = {
          */
         contestId: string;
         /**
-         * Maximum entries a Team may create. Null means unlimited.
+         * Maximum entries a Squad may create. Null means unlimited.
          */
         maxEntriesPerSquad?: number | null;
     } | {
@@ -4856,7 +4856,7 @@ export type ContestManagementDetailDto = {
          */
         contestId: string;
         /**
-         * Maximum entries a Team may create. Null means unlimited.
+         * Maximum entries a Squad may create. Null means unlimited.
          */
         maxEntriesPerSquad?: number | null;
     } | {
@@ -4878,7 +4878,7 @@ export type ContestManagementDetailDto = {
          */
         contestId: string;
         /**
-         * Maximum entries a Team may create. Null means unlimited.
+         * Maximum entries a Squad may create. Null means unlimited.
          */
         maxEntriesPerSquad?: number | null;
     } | {
@@ -4900,7 +4900,7 @@ export type ContestManagementDetailDto = {
          */
         contestId: string;
         /**
-         * Maximum entries a Team may create. Null means unlimited.
+         * Maximum entries a Squad may create. Null means unlimited.
          */
         maxEntriesPerSquad?: number | null;
     } | {
@@ -4918,7 +4918,7 @@ export type ContestManagementDetailDto = {
          */
         contestId: string;
         /**
-         * Maximum entries a Team may create. Null means unlimited.
+         * Maximum entries a Squad may create. Null means unlimited.
          */
         maxEntriesPerSquad?: number | null;
     } | {
@@ -4936,7 +4936,7 @@ export type ContestManagementDetailDto = {
          */
         contestId: string;
         /**
-         * Maximum entries a Team may create. Null means unlimited.
+         * Maximum entries a Squad may create. Null means unlimited.
          */
         maxEntriesPerSquad?: number | null;
     } | {
@@ -4954,7 +4954,7 @@ export type ContestManagementDetailDto = {
          */
         contestId: string;
         /**
-         * Maximum entries a Team may create. Null means unlimited.
+         * Maximum entries a Squad may create. Null means unlimited.
          */
         maxEntriesPerSquad?: number | null;
     };
@@ -5054,7 +5054,7 @@ export type ContestConfigTemplateDto = {
          */
         tiersUsed?: number;
         /**
-         * Maximum entries a Team may create. Null means unlimited.
+         * Maximum entries a Squad may create. Null means unlimited.
          */
         maxEntriesPerSquad?: number | null;
         /**
@@ -5120,7 +5120,7 @@ export type ContestConfigTemplateDto = {
          */
         countedScores: number;
         /**
-         * Maximum entries a Team may create. Null means unlimited.
+         * Maximum entries a Squad may create. Null means unlimited.
          */
         maxEntriesPerSquad?: number | null;
         /**
@@ -5186,7 +5186,7 @@ export type ContestConfigTemplateDto = {
          */
         countedScores: number;
         /**
-         * Maximum entries a Team may create. Null means unlimited.
+         * Maximum entries a Squad may create. Null means unlimited.
          */
         maxEntriesPerSquad?: number | null;
         /**
@@ -5252,7 +5252,7 @@ export type ContestConfigTemplateDto = {
          */
         againstTheSpread: boolean;
         /**
-         * Maximum entries a Team may create. Null means unlimited.
+         * Maximum entries a Squad may create. Null means unlimited.
          */
         maxEntriesPerSquad?: number | null;
         /**
@@ -5314,7 +5314,7 @@ export type ContestConfigTemplateDto = {
          */
         startsAtRound: number;
         /**
-         * Maximum entries a Team may create. Null means unlimited.
+         * Maximum entries a Squad may create. Null means unlimited.
          */
         maxEntriesPerSquad?: number | null;
         /**
@@ -5376,7 +5376,7 @@ export type ContestConfigTemplateDto = {
          */
         maxSquaresPerEntry: number;
         /**
-         * Maximum entries a Team may create. Null means unlimited.
+         * Maximum entries a Squad may create. Null means unlimited.
          */
         maxEntriesPerSquad?: number | null;
         /**
@@ -5438,7 +5438,7 @@ export type ContestConfigTemplateDto = {
          */
         reuseTeamsOnceAllUsed?: boolean;
         /**
-         * Maximum entries a Team may create. Null means unlimited.
+         * Maximum entries a Squad may create. Null means unlimited.
          */
         maxEntriesPerSquad?: number | null;
         /**
@@ -5590,7 +5590,7 @@ export type ContestManagementResponse = {
              */
             contestId: string;
             /**
-             * Maximum entries a Team may create. Null means unlimited.
+             * Maximum entries a Squad may create. Null means unlimited.
              */
             maxEntriesPerSquad?: number | null;
         } | {
@@ -5616,7 +5616,7 @@ export type ContestManagementResponse = {
              */
             contestId: string;
             /**
-             * Maximum entries a Team may create. Null means unlimited.
+             * Maximum entries a Squad may create. Null means unlimited.
              */
             maxEntriesPerSquad?: number | null;
         } | {
@@ -5638,7 +5638,7 @@ export type ContestManagementResponse = {
              */
             contestId: string;
             /**
-             * Maximum entries a Team may create. Null means unlimited.
+             * Maximum entries a Squad may create. Null means unlimited.
              */
             maxEntriesPerSquad?: number | null;
         } | {
@@ -5660,7 +5660,7 @@ export type ContestManagementResponse = {
              */
             contestId: string;
             /**
-             * Maximum entries a Team may create. Null means unlimited.
+             * Maximum entries a Squad may create. Null means unlimited.
              */
             maxEntriesPerSquad?: number | null;
         } | {
@@ -5678,7 +5678,7 @@ export type ContestManagementResponse = {
              */
             contestId: string;
             /**
-             * Maximum entries a Team may create. Null means unlimited.
+             * Maximum entries a Squad may create. Null means unlimited.
              */
             maxEntriesPerSquad?: number | null;
         } | {
@@ -5696,7 +5696,7 @@ export type ContestManagementResponse = {
              */
             contestId: string;
             /**
-             * Maximum entries a Team may create. Null means unlimited.
+             * Maximum entries a Squad may create. Null means unlimited.
              */
             maxEntriesPerSquad?: number | null;
         } | {
@@ -5714,7 +5714,7 @@ export type ContestManagementResponse = {
              */
             contestId: string;
             /**
-             * Maximum entries a Team may create. Null means unlimited.
+             * Maximum entries a Squad may create. Null means unlimited.
              */
             maxEntriesPerSquad?: number | null;
         };
@@ -5838,7 +5838,7 @@ export type ContestConfigTemplateListResponse = {
              */
             tiersUsed?: number;
             /**
-             * Maximum entries a Team may create. Null means unlimited.
+             * Maximum entries a Squad may create. Null means unlimited.
              */
             maxEntriesPerSquad?: number | null;
             /**
@@ -5904,7 +5904,7 @@ export type ContestConfigTemplateListResponse = {
              */
             countedScores: number;
             /**
-             * Maximum entries a Team may create. Null means unlimited.
+             * Maximum entries a Squad may create. Null means unlimited.
              */
             maxEntriesPerSquad?: number | null;
             /**
@@ -5970,7 +5970,7 @@ export type ContestConfigTemplateListResponse = {
              */
             countedScores: number;
             /**
-             * Maximum entries a Team may create. Null means unlimited.
+             * Maximum entries a Squad may create. Null means unlimited.
              */
             maxEntriesPerSquad?: number | null;
             /**
@@ -6036,7 +6036,7 @@ export type ContestConfigTemplateListResponse = {
              */
             againstTheSpread: boolean;
             /**
-             * Maximum entries a Team may create. Null means unlimited.
+             * Maximum entries a Squad may create. Null means unlimited.
              */
             maxEntriesPerSquad?: number | null;
             /**
@@ -6098,7 +6098,7 @@ export type ContestConfigTemplateListResponse = {
              */
             startsAtRound: number;
             /**
-             * Maximum entries a Team may create. Null means unlimited.
+             * Maximum entries a Squad may create. Null means unlimited.
              */
             maxEntriesPerSquad?: number | null;
             /**
@@ -6160,7 +6160,7 @@ export type ContestConfigTemplateListResponse = {
              */
             maxSquaresPerEntry: number;
             /**
-             * Maximum entries a Team may create. Null means unlimited.
+             * Maximum entries a Squad may create. Null means unlimited.
              */
             maxEntriesPerSquad?: number | null;
             /**
@@ -6222,7 +6222,7 @@ export type ContestConfigTemplateListResponse = {
              */
             reuseTeamsOnceAllUsed?: boolean;
             /**
-             * Maximum entries a Team may create. Null means unlimited.
+             * Maximum entries a Squad may create. Null means unlimited.
              */
             maxEntriesPerSquad?: number | null;
             /**
@@ -6323,7 +6323,7 @@ export type UpdateContestConfigTemplateRequest = {
          */
         tiersUsed?: number;
         /**
-         * Maximum entries a Team may create. Null means unlimited.
+         * Maximum entries a Squad may create. Null means unlimited.
          */
         maxEntriesPerSquad?: number | null;
         /**
@@ -6389,7 +6389,7 @@ export type UpdateContestConfigTemplateRequest = {
          */
         countedScores: number;
         /**
-         * Maximum entries a Team may create. Null means unlimited.
+         * Maximum entries a Squad may create. Null means unlimited.
          */
         maxEntriesPerSquad?: number | null;
         /**
@@ -6455,7 +6455,7 @@ export type UpdateContestConfigTemplateRequest = {
          */
         countedScores: number;
         /**
-         * Maximum entries a Team may create. Null means unlimited.
+         * Maximum entries a Squad may create. Null means unlimited.
          */
         maxEntriesPerSquad?: number | null;
         /**
@@ -6521,7 +6521,7 @@ export type UpdateContestConfigTemplateRequest = {
          */
         againstTheSpread: boolean;
         /**
-         * Maximum entries a Team may create. Null means unlimited.
+         * Maximum entries a Squad may create. Null means unlimited.
          */
         maxEntriesPerSquad?: number | null;
         /**
@@ -6583,7 +6583,7 @@ export type UpdateContestConfigTemplateRequest = {
          */
         startsAtRound: number;
         /**
-         * Maximum entries a Team may create. Null means unlimited.
+         * Maximum entries a Squad may create. Null means unlimited.
          */
         maxEntriesPerSquad?: number | null;
         /**
@@ -6645,7 +6645,7 @@ export type UpdateContestConfigTemplateRequest = {
          */
         maxSquaresPerEntry: number;
         /**
-         * Maximum entries a Team may create. Null means unlimited.
+         * Maximum entries a Squad may create. Null means unlimited.
          */
         maxEntriesPerSquad?: number | null;
         /**
@@ -6707,7 +6707,7 @@ export type UpdateContestConfigTemplateRequest = {
          */
         reuseTeamsOnceAllUsed?: boolean;
         /**
-         * Maximum entries a Team may create. Null means unlimited.
+         * Maximum entries a Squad may create. Null means unlimited.
          */
         maxEntriesPerSquad?: number | null;
         /**
@@ -6843,7 +6843,7 @@ export type ContestConfigTemplateResponse = {
              */
             tiersUsed?: number;
             /**
-             * Maximum entries a Team may create. Null means unlimited.
+             * Maximum entries a Squad may create. Null means unlimited.
              */
             maxEntriesPerSquad?: number | null;
             /**
@@ -6909,7 +6909,7 @@ export type ContestConfigTemplateResponse = {
              */
             countedScores: number;
             /**
-             * Maximum entries a Team may create. Null means unlimited.
+             * Maximum entries a Squad may create. Null means unlimited.
              */
             maxEntriesPerSquad?: number | null;
             /**
@@ -6975,7 +6975,7 @@ export type ContestConfigTemplateResponse = {
              */
             countedScores: number;
             /**
-             * Maximum entries a Team may create. Null means unlimited.
+             * Maximum entries a Squad may create. Null means unlimited.
              */
             maxEntriesPerSquad?: number | null;
             /**
@@ -7041,7 +7041,7 @@ export type ContestConfigTemplateResponse = {
              */
             againstTheSpread: boolean;
             /**
-             * Maximum entries a Team may create. Null means unlimited.
+             * Maximum entries a Squad may create. Null means unlimited.
              */
             maxEntriesPerSquad?: number | null;
             /**
@@ -7103,7 +7103,7 @@ export type ContestConfigTemplateResponse = {
              */
             startsAtRound: number;
             /**
-             * Maximum entries a Team may create. Null means unlimited.
+             * Maximum entries a Squad may create. Null means unlimited.
              */
             maxEntriesPerSquad?: number | null;
             /**
@@ -7165,7 +7165,7 @@ export type ContestConfigTemplateResponse = {
              */
             maxSquaresPerEntry: number;
             /**
-             * Maximum entries a Team may create. Null means unlimited.
+             * Maximum entries a Squad may create. Null means unlimited.
              */
             maxEntriesPerSquad?: number | null;
             /**
@@ -7227,7 +7227,7 @@ export type ContestConfigTemplateResponse = {
              */
             reuseTeamsOnceAllUsed?: boolean;
             /**
-             * Maximum entries a Team may create. Null means unlimited.
+             * Maximum entries a Squad may create. Null means unlimited.
              */
             maxEntriesPerSquad?: number | null;
             /**
@@ -10927,7 +10927,7 @@ export type CreateContestRequest = {
          */
         tiersUsed?: number;
         /**
-         * Maximum entries a Team may create. Null means unlimited.
+         * Maximum entries a Squad may create. Null means unlimited.
          */
         maxEntriesPerSquad?: number | null;
         /**
@@ -10993,7 +10993,7 @@ export type CreateContestRequest = {
          */
         countedScores: number;
         /**
-         * Maximum entries a Team may create. Null means unlimited.
+         * Maximum entries a Squad may create. Null means unlimited.
          */
         maxEntriesPerSquad?: number | null;
         /**
@@ -11059,7 +11059,7 @@ export type CreateContestRequest = {
          */
         countedScores: number;
         /**
-         * Maximum entries a Team may create. Null means unlimited.
+         * Maximum entries a Squad may create. Null means unlimited.
          */
         maxEntriesPerSquad?: number | null;
         /**
@@ -11125,7 +11125,7 @@ export type CreateContestRequest = {
          */
         againstTheSpread: boolean;
         /**
-         * Maximum entries a Team may create. Null means unlimited.
+         * Maximum entries a Squad may create. Null means unlimited.
          */
         maxEntriesPerSquad?: number | null;
         /**
@@ -11187,7 +11187,7 @@ export type CreateContestRequest = {
          */
         startsAtRound: number;
         /**
-         * Maximum entries a Team may create. Null means unlimited.
+         * Maximum entries a Squad may create. Null means unlimited.
          */
         maxEntriesPerSquad?: number | null;
         /**
@@ -11249,7 +11249,7 @@ export type CreateContestRequest = {
          */
         maxSquaresPerEntry: number;
         /**
-         * Maximum entries a Team may create. Null means unlimited.
+         * Maximum entries a Squad may create. Null means unlimited.
          */
         maxEntriesPerSquad?: number | null;
         /**
@@ -11311,7 +11311,7 @@ export type CreateContestRequest = {
          */
         reuseTeamsOnceAllUsed?: boolean;
         /**
-         * Maximum entries a Team may create. Null means unlimited.
+         * Maximum entries a Squad may create. Null means unlimited.
          */
         maxEntriesPerSquad?: number | null;
         /**
@@ -21238,7 +21238,7 @@ export type EventPageOfferDto = {
              */
             tiersUsed?: number;
             /**
-             * Maximum entries a Team may create. Null means unlimited.
+             * Maximum entries a Squad may create. Null means unlimited.
              */
             maxEntriesPerSquad?: number | null;
             /**
@@ -21304,7 +21304,7 @@ export type EventPageOfferDto = {
              */
             countedScores: number;
             /**
-             * Maximum entries a Team may create. Null means unlimited.
+             * Maximum entries a Squad may create. Null means unlimited.
              */
             maxEntriesPerSquad?: number | null;
             /**
@@ -21370,7 +21370,7 @@ export type EventPageOfferDto = {
              */
             countedScores: number;
             /**
-             * Maximum entries a Team may create. Null means unlimited.
+             * Maximum entries a Squad may create. Null means unlimited.
              */
             maxEntriesPerSquad?: number | null;
             /**
@@ -21436,7 +21436,7 @@ export type EventPageOfferDto = {
              */
             againstTheSpread: boolean;
             /**
-             * Maximum entries a Team may create. Null means unlimited.
+             * Maximum entries a Squad may create. Null means unlimited.
              */
             maxEntriesPerSquad?: number | null;
             /**
@@ -21498,7 +21498,7 @@ export type EventPageOfferDto = {
              */
             startsAtRound: number;
             /**
-             * Maximum entries a Team may create. Null means unlimited.
+             * Maximum entries a Squad may create. Null means unlimited.
              */
             maxEntriesPerSquad?: number | null;
             /**
@@ -21560,7 +21560,7 @@ export type EventPageOfferDto = {
              */
             maxSquaresPerEntry: number;
             /**
-             * Maximum entries a Team may create. Null means unlimited.
+             * Maximum entries a Squad may create. Null means unlimited.
              */
             maxEntriesPerSquad?: number | null;
             /**
@@ -21622,7 +21622,7 @@ export type EventPageOfferDto = {
              */
             reuseTeamsOnceAllUsed?: boolean;
             /**
-             * Maximum entries a Team may create. Null means unlimited.
+             * Maximum entries a Squad may create. Null means unlimited.
              */
             maxEntriesPerSquad?: number | null;
             /**
@@ -21844,7 +21844,7 @@ export type EventPageDto = {
                  */
                 tiersUsed?: number;
                 /**
-                 * Maximum entries a Team may create. Null means unlimited.
+                 * Maximum entries a Squad may create. Null means unlimited.
                  */
                 maxEntriesPerSquad?: number | null;
                 /**
@@ -21910,7 +21910,7 @@ export type EventPageDto = {
                  */
                 countedScores: number;
                 /**
-                 * Maximum entries a Team may create. Null means unlimited.
+                 * Maximum entries a Squad may create. Null means unlimited.
                  */
                 maxEntriesPerSquad?: number | null;
                 /**
@@ -21976,7 +21976,7 @@ export type EventPageDto = {
                  */
                 countedScores: number;
                 /**
-                 * Maximum entries a Team may create. Null means unlimited.
+                 * Maximum entries a Squad may create. Null means unlimited.
                  */
                 maxEntriesPerSquad?: number | null;
                 /**
@@ -22042,7 +22042,7 @@ export type EventPageDto = {
                  */
                 againstTheSpread: boolean;
                 /**
-                 * Maximum entries a Team may create. Null means unlimited.
+                 * Maximum entries a Squad may create. Null means unlimited.
                  */
                 maxEntriesPerSquad?: number | null;
                 /**
@@ -22104,7 +22104,7 @@ export type EventPageDto = {
                  */
                 startsAtRound: number;
                 /**
-                 * Maximum entries a Team may create. Null means unlimited.
+                 * Maximum entries a Squad may create. Null means unlimited.
                  */
                 maxEntriesPerSquad?: number | null;
                 /**
@@ -22166,7 +22166,7 @@ export type EventPageDto = {
                  */
                 maxSquaresPerEntry: number;
                 /**
-                 * Maximum entries a Team may create. Null means unlimited.
+                 * Maximum entries a Squad may create. Null means unlimited.
                  */
                 maxEntriesPerSquad?: number | null;
                 /**
@@ -22228,7 +22228,7 @@ export type EventPageDto = {
                  */
                 reuseTeamsOnceAllUsed?: boolean;
                 /**
-                 * Maximum entries a Team may create. Null means unlimited.
+                 * Maximum entries a Squad may create. Null means unlimited.
                  */
                 maxEntriesPerSquad?: number | null;
                 /**
@@ -22455,7 +22455,7 @@ export type EventPageResponse = {
                      */
                     tiersUsed?: number;
                     /**
-                     * Maximum entries a Team may create. Null means unlimited.
+                     * Maximum entries a Squad may create. Null means unlimited.
                      */
                     maxEntriesPerSquad?: number | null;
                     /**
@@ -22521,7 +22521,7 @@ export type EventPageResponse = {
                      */
                     countedScores: number;
                     /**
-                     * Maximum entries a Team may create. Null means unlimited.
+                     * Maximum entries a Squad may create. Null means unlimited.
                      */
                     maxEntriesPerSquad?: number | null;
                     /**
@@ -22587,7 +22587,7 @@ export type EventPageResponse = {
                      */
                     countedScores: number;
                     /**
-                     * Maximum entries a Team may create. Null means unlimited.
+                     * Maximum entries a Squad may create. Null means unlimited.
                      */
                     maxEntriesPerSquad?: number | null;
                     /**
@@ -22653,7 +22653,7 @@ export type EventPageResponse = {
                      */
                     againstTheSpread: boolean;
                     /**
-                     * Maximum entries a Team may create. Null means unlimited.
+                     * Maximum entries a Squad may create. Null means unlimited.
                      */
                     maxEntriesPerSquad?: number | null;
                     /**
@@ -22715,7 +22715,7 @@ export type EventPageResponse = {
                      */
                     startsAtRound: number;
                     /**
-                     * Maximum entries a Team may create. Null means unlimited.
+                     * Maximum entries a Squad may create. Null means unlimited.
                      */
                     maxEntriesPerSquad?: number | null;
                     /**
@@ -22777,7 +22777,7 @@ export type EventPageResponse = {
                      */
                     maxSquaresPerEntry: number;
                     /**
-                     * Maximum entries a Team may create. Null means unlimited.
+                     * Maximum entries a Squad may create. Null means unlimited.
                      */
                     maxEntriesPerSquad?: number | null;
                     /**
@@ -22839,7 +22839,7 @@ export type EventPageResponse = {
                      */
                     reuseTeamsOnceAllUsed?: boolean;
                     /**
-                     * Maximum entries a Team may create. Null means unlimited.
+                     * Maximum entries a Squad may create. Null means unlimited.
                      */
                     maxEntriesPerSquad?: number | null;
                     /**
@@ -23081,7 +23081,7 @@ export type EventPageListResponse = {
                      */
                     tiersUsed?: number;
                     /**
-                     * Maximum entries a Team may create. Null means unlimited.
+                     * Maximum entries a Squad may create. Null means unlimited.
                      */
                     maxEntriesPerSquad?: number | null;
                     /**
@@ -23147,7 +23147,7 @@ export type EventPageListResponse = {
                      */
                     countedScores: number;
                     /**
-                     * Maximum entries a Team may create. Null means unlimited.
+                     * Maximum entries a Squad may create. Null means unlimited.
                      */
                     maxEntriesPerSquad?: number | null;
                     /**
@@ -23213,7 +23213,7 @@ export type EventPageListResponse = {
                      */
                     countedScores: number;
                     /**
-                     * Maximum entries a Team may create. Null means unlimited.
+                     * Maximum entries a Squad may create. Null means unlimited.
                      */
                     maxEntriesPerSquad?: number | null;
                     /**
@@ -23279,7 +23279,7 @@ export type EventPageListResponse = {
                      */
                     againstTheSpread: boolean;
                     /**
-                     * Maximum entries a Team may create. Null means unlimited.
+                     * Maximum entries a Squad may create. Null means unlimited.
                      */
                     maxEntriesPerSquad?: number | null;
                     /**
@@ -23341,7 +23341,7 @@ export type EventPageListResponse = {
                      */
                     startsAtRound: number;
                     /**
-                     * Maximum entries a Team may create. Null means unlimited.
+                     * Maximum entries a Squad may create. Null means unlimited.
                      */
                     maxEntriesPerSquad?: number | null;
                     /**
@@ -23403,7 +23403,7 @@ export type EventPageListResponse = {
                      */
                     maxSquaresPerEntry: number;
                     /**
-                     * Maximum entries a Team may create. Null means unlimited.
+                     * Maximum entries a Squad may create. Null means unlimited.
                      */
                     maxEntriesPerSquad?: number | null;
                     /**
@@ -23465,7 +23465,7 @@ export type EventPageListResponse = {
                      */
                     reuseTeamsOnceAllUsed?: boolean;
                     /**
-                     * Maximum entries a Team may create. Null means unlimited.
+                     * Maximum entries a Squad may create. Null means unlimited.
                      */
                     maxEntriesPerSquad?: number | null;
                     /**

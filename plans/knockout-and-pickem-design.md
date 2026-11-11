@@ -663,6 +663,9 @@ entry, never for a team: "Pick 8 teams for your entry", "Derek's Great Golf Guys
 In basketball and football "team" then means only the participant (the sport vocabulary's
 word). The web ticket (4) sweeps the picker, entry and leaderboard copy for squad-as-"team"
 wording.
+*Superseded by Derek 2026-11-11 (#1566):* a squad is "team" on screen again ("My team"), and copy
+rewords any sentence where "team" could mean either (`rules/poolmaster-webapp-rules.md` §1 *A
+Squad Is a Team On Screen*).
 
 **Q3.13 Which event pilots the foundation?** *Decided by Derek 2026-10-16:* there is no live
 release date; knockout is tested in QA only. The NFL playoffs are the **QA test data**: a
@@ -1404,7 +1407,7 @@ data once 1 to 4 and 6 are in.
 Recorded here so the tickets carry them (docs ride with code, `rules/workflow-rules.md` §6):
 
 - `rules/domain-model-concepts.md`: the match, bracket words ("bye", "upset bonus", "seed"),
-  the squad shown by its name and picks made for an entry, never "your team" (Q3.12), and, in the pick'em phase, the prediction contest,
+  the squad shown by its name and picks made for an entry (Q3.12, since superseded: a squad is "team" on screen, #1566), and, in the pick'em phase, the prediction contest,
   `ACTIVE` accepting picks, and **release a round** as a verb (section 5.3).
 - `rules/poolmaster-webapp-rules.md` §1: today it makes "Team" the screen name for a squad.
   Ticket 4 rewrites it to Derek's Q3.12 decision: the squad is shown by its name, and picks are

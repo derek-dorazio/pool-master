@@ -151,7 +151,7 @@ export const ContestSelectionConfigSchema = z.discriminatedUnion('selectionType'
 export type ContestSelectionConfig = z.infer<typeof ContestSelectionConfigSchema>;
 
 const maxEntriesPerSquadSchema = z.number().int().min(1).nullable().optional()
-  .describe('Maximum entries a Team may create. Null means unlimited.');
+  .describe('Maximum entries a Squad may create. Null means unlimited.');
 
 const scoringSchema = ContestScoringSettingsSchema.optional()
   .describe("The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.");

@@ -338,7 +338,7 @@ describe('Commissioner tools › Edit team', () => {
 
     renderAdmin('/league/BIGDAWGS/admin/teams/team-2/edit');
 
-    fireEvent.change(await screen.findByRole('textbox', { name: 'Name in this league' }), { target: { value: '   ' } });
+    fireEvent.change(await screen.findByRole('textbox', { name: 'Team name' }), { target: { value: '   ' } });
     fireEvent.click(screen.getByTestId('edit-team-save'));
 
     expect(await screen.findByText('Name is required')).toBeInTheDocument();

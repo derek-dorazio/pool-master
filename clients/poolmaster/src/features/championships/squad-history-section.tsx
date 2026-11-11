@@ -62,9 +62,9 @@ export function SquadHistorySection({
       {!hasShelf ? (
         <PlanLockedNotice feature={PlanFeature.TROPHY_SHELF} isCommissioner={viewer.isCommissioner} leagueCode={leagueCode} />
       ) : historyQuery.isError ? (
-        <ErrorState body="We couldn't load this squad's trophies and past years." testId="squad-history-error" />
+        <ErrorState body="We couldn't load this team's trophies and past years." testId="squad-history-error" />
       ) : !historyQuery.data ? (
-        <LoadingState body="Loading this squad's trophies..." />
+        <LoadingState body="Loading this team's trophies..." />
       ) : (
         <>
           <SectionCard

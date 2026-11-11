@@ -62,7 +62,7 @@ describe('useMyTeamOwners', () => {
 
     await act(async () => {
       await expect(result.current.createOwnerInvitationMutation.mutateAsync('friend@example.com')).rejects.toThrow(
-        'Choose your name in this league before inviting a co-owner.',
+        'Create your team before inviting a co-owner.',
       );
     });
     expect(createSquadOwnerInvitationMock).not.toHaveBeenCalled();
@@ -74,7 +74,7 @@ describe('useMyTeamOwners', () => {
     await act(async () => {
       await expect(
         result.current.replaceOwnerMutation.mutateAsync({ userId: 'user-2', email: 'new@example.com' }),
-      ).rejects.toThrow('Choose your name in this league before replacing an owner.');
+      ).rejects.toThrow('Create your team before replacing an owner.');
     });
     expect(replaceSquadOwnerMock).not.toHaveBeenCalled();
   });

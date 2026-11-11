@@ -238,7 +238,7 @@ export function YourTeamCard({
 }) {
   return (
     <SectionCard
-      footer={{ label: team ? 'My team' : 'Choose your name', testId: 'league-home-my-team', to: buildLeagueTeamPath(leagueCode) }}
+      footer={{ label: team ? 'My team' : 'Create your team', testId: 'league-home-my-team', to: buildLeagueTeamPath(leagueCode) }}
       testId="league-home-your-team"
       title="Yours"
     >
@@ -249,7 +249,7 @@ export function YourTeamCard({
           <SectionRow facts={formatOwnerCount(team)} name={team.name} testId="league-home-your-team-row" />
         </SectionRows>
       ) : (
-        <SectionEmpty>You haven&apos;t chosen your name in this league yet.</SectionEmpty>
+        <SectionEmpty>You haven&apos;t created your team in this league yet.</SectionEmpty>
       )}
     </SectionCard>
   );

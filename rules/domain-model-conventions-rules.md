@@ -432,7 +432,7 @@ rules the model holds them to. Do not introduce synonyms or sub-concepts for the
 
 Route paths, DTO fields and variable names use **Squad**. `teams[]` as a field name for
 squads is wrong. The reasoning, and the UI-side half of the rule, is
-`rules/poolmaster-webapp-rules.md` §1 *A Squad Is Shown By Its Name*.
+`rules/poolmaster-webapp-rules.md` §1 *A Squad Is a Team On Screen*.
 
 ### Squad member and squad owner are the same thing
 

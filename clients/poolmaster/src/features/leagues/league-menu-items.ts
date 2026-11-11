@@ -9,15 +9,17 @@ import {
 } from './league-routing';
 
 /**
- * The member pages' menu for one league: Home, Contests, Championships, the viewer's own squad,
- * Members. Contest types lives in Commissioner tools (#1392). Each item is active on its own page
- * and on the pages under it, so a contest's leaderboard keeps Contests lit. The viewer's squad is shown by its name; until that name is known, or when the
- * viewer has no squad in the league, the entry reads "Yours".
+ * The member pages' menu for one league: Home, Contests, Championships, My team, Members.
+ * Contest types lives in Commissioner tools (#1392). Each item is active on its own page and on
+ * the pages under it, so a contest's leaderboard keeps Contests lit. The viewer's own squad is
+ * "My team" (rules/poolmaster-webapp-rules.md §1 *A Squad Is a Team On Screen*), a fixed label
+ * whatever the team is called; while the league is loading, or when the viewer has no squad in
+ * the league, the entry reads "Yours".
  */
 export function buildLeagueMenuItems(
   leagueCode: string,
   pathname: string,
-  mySquadName?: string | null,
+  hasSquad = false,
 ): NavMenuItem[] {
   const homePath = buildLeaguePath(leagueCode);
   const contestsPath = buildLeagueContestsPath(leagueCode);
@@ -36,7 +38,7 @@ export function buildLeagueMenuItems(
     },
     {
       isActive: isUnder(myTeamPath),
-      label: mySquadName || 'Yours',
+      label: hasSquad ? 'My team' : 'Yours',
       testId: 'league-menu-my-team',
       to: myTeamPath,
     },
