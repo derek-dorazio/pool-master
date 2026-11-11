@@ -41,11 +41,21 @@ describe("SectionCard", () => {
     expect(screen.getByRole("heading", { name: "Owners" })).toBeVisible();
   });
 
-  it("marks a danger zone with a red border and red title", () => {
-    render(<SectionCard testId="card" title="Danger zone" tone="danger"><p>Body</p></SectionCard>);
+  it("marks a danger zone with a red border and a red title that defaults to Danger zone", () => {
+    render(<SectionCard testId="card" tone="danger"><p>Body</p></SectionCard>);
 
     expect(screen.getByTestId("card")).toHaveClass("border-destructive/40");
     expect(screen.getByRole("heading", { name: "Danger zone" })).toHaveClass("text-destructive");
+  });
+
+  it("tells a danger zone's reader that its actions confirm first, unless the zone says otherwise", () => {
+    const { rerender } = render(<SectionCard testId="card" tone="danger"><p>Body</p></SectionCard>);
+    fireEvent.click(screen.getByTestId("card-info"));
+    expect(screen.getByTestId("card-info-callout")).toHaveTextContent("Each of these asks you to confirm.");
+
+    rerender(<SectionCard info="Leaving asks you to confirm." testId="card" title="Leave" tone="danger"><p>Body</p></SectionCard>);
+    expect(screen.getByRole("heading", { name: "Leave" })).toBeVisible();
+    expect(screen.getByTestId("card-info-callout")).toHaveTextContent("Leaving asks you to confirm.");
   });
 
   it("renders an h3 heading with its test id when asked for heading level 3", () => {

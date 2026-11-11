@@ -8,6 +8,8 @@ import {
   PageHeader,
   QueryState,
   SectionCard,
+  SectionRow,
+  SectionRows,
   SettingsRow,
   SettingsRows,
   StatusBadge,
@@ -44,30 +46,29 @@ function ParticipantMappingsSection({ participantId }: { participantId: string }
       // poolmaster-allow-list-lookup: counts the mappings listed right below it
       title={`Provider mappings (${providerMappings.length})`}
     >
-      <SettingsRows>
-        <QueryState
-          empty="No provider mappings recorded."
-          error={extractErrorMessage(mappingsQuery.error, {
-            fallback: `We could not load this ${participant.one}’s provider mappings.`,
-          })}
-          isEmpty={(mappings) => mappings.length === 0}
-          loading="Loading provider mappings..."
-          query={mappingsQuery}
-          testId="root-admin-participant-home-mappings-state"
-        >
-          {(mappings) => (
-            <ul className="divide-y divide-border" data-testid="root-admin-participant-home-mappings">
-              {mappings.map((mapping) => (
-                <li className="flex flex-wrap items-center gap-3 px-5 py-3 text-sm" key={mapping.id}>
-                  <span className="font-medium text-foreground">{mapping.providerId}</span>
-                  <span className="text-muted-foreground">{mapping.externalId}</span>
-                  <StatusBadge tone="neutral">{mapping.confidence}</StatusBadge>
-                </li>
-              ))}
-            </ul>
-          )}
-        </QueryState>
-      </SettingsRows>
+      <QueryState
+        empty="No provider mappings recorded."
+        error={extractErrorMessage(mappingsQuery.error, {
+          fallback: `We could not load this ${participant.one}’s provider mappings.`,
+        })}
+        isEmpty={(mappings) => mappings.length === 0}
+        loading="Loading provider mappings..."
+        query={mappingsQuery}
+        testId="root-admin-participant-home-mappings-state"
+      >
+        {(mappings) => (
+          <SectionRows testId="root-admin-participant-home-mappings">
+            {mappings.map((mapping) => (
+              <SectionRow
+                aside={<StatusBadge tone="neutral">{mapping.confidence}</StatusBadge>}
+                facts={mapping.externalId}
+                key={mapping.id}
+                name={mapping.providerId}
+              />
+            ))}
+          </SectionRows>
+        )}
+      </QueryState>
     </SectionCard>
   );
 }

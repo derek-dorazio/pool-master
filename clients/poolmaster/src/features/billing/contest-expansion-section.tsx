@@ -75,7 +75,7 @@ export function ContestExpansionSection({
     return (
       <SectionCard testId="contest-expansion" title="Entries">
         <SettingsRows>
-          <div className="px-5 py-3.5 text-sm text-muted-foreground">Loading entries...</div>
+          <div className="px-4 py-3.5 text-sm text-muted-foreground">Loading entries...</div>
         </SettingsRows>
       </SectionCard>
     );
@@ -84,7 +84,7 @@ export function ContestExpansionSection({
     return (
       <SectionCard testId="contest-expansion" title="Entries">
         <SettingsRows>
-          <div className="px-5 py-3.5 text-sm text-muted-foreground" data-testid="contest-expansion-error">
+          <div className="px-4 py-3.5 text-sm text-muted-foreground" data-testid="contest-expansion-error">
             {extractErrorMessage(expansionQuery.error, { fallback: 'We could not load this contest\'s entries right now.' })}
           </div>
         </SettingsRows>
@@ -109,7 +109,7 @@ export function ContestExpansionSection({
           <SettingsRow label="Expanded to" testId="contest-expansion-expanded-to" value={`${state.expandedTo} entries`} />
         ) : null}
         {isFull && state.expandable ? (
-          <div className="px-5 py-3.5">
+          <div className="px-4 py-3.5">
             <Alert data-testid="contest-expansion-full" tone="warning">
               This contest is full at {state.entriesPerContest} entries.
             </Alert>
@@ -135,12 +135,12 @@ export function ContestExpansionSection({
           />
         ))}
         {state.paymentsEnabled && state.offers.length > 0 ? (
-          <div className="px-5 py-3.5 text-sm text-muted-foreground" data-testid="contest-expansion-checkout-unavailable">
+          <div className="px-4 py-3.5 text-sm text-muted-foreground" data-testid="contest-expansion-checkout-unavailable">
             Paying for an expansion isn&apos;t available yet.
           </div>
         ) : null}
         {expandMutation.isError ? (
-          <div className="px-5 py-3.5">
+          <div className="px-4 py-3.5">
             <Alert data-testid="contest-expansion-expand-error" tone="danger">
               {extractErrorMessage(expandMutation.error, {
                 codeMessages: EXPANSION_CODE_MESSAGES,
@@ -189,7 +189,7 @@ function GrantExpansionForm({
 
   return (
     <form
-      className="space-y-3 px-5 py-4"
+      className="space-y-3 px-4 py-4"
       data-testid="contest-expansion-grant"
       noValidate
       onSubmit={(event) => {

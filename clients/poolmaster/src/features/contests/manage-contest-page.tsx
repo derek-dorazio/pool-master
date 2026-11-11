@@ -41,6 +41,7 @@ import {
   LoadingState,
   PageHeader,
   SectionCard,
+  SectionEmpty,
   SettingsRow,
   SettingsRows,
 } from '@/features/shared/ui';
@@ -78,7 +79,7 @@ function ContestTiersSection({
 
   return (
     <SectionCard
-      info={`From the event, top tier first. Every contest on ${eventName} uses the same tiers.`}
+      info={`From the event, top tier first. Every contest on ${eventName} uses the same tiers. An admin sets them before the event is released.`}
       testId="contest-tiers"
       title={title}
     >
@@ -93,9 +94,7 @@ function ContestTiersSection({
             />
           ))
         ) : (
-          <div className="px-5 py-3.5 text-sm text-muted-foreground" data-testid="contest-tiers-empty">
-            The event has no tiers yet. An admin sets them before the event is released.
-          </div>
+          <SectionEmpty testId="contest-tiers-empty">No tiers yet.</SectionEmpty>
         )}
       </SettingsRows>
     </SectionCard>
@@ -360,7 +359,7 @@ export function ManageContestPage() {
       )) : null}
 
       {isNotOpen ? (
-        <SectionCard info="Each of these asks you to confirm." testId="manage-contest-danger-zone" title="Danger zone" tone="danger">
+        <SectionCard testId="manage-contest-danger-zone" tone="danger">
           <SettingsRows>
             <DangerZoneAction
               action={(

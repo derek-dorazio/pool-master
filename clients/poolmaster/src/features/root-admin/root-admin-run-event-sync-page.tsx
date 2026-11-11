@@ -254,7 +254,7 @@ export function RootAdminRunEventSyncPage() {
         Use this action when a linked event needs a targeted refresh of its field or live scores.
       </ManagePageIntro>
 
-      <SectionCard padded title="Event sync">
+      <SectionCard padded title="Event to sync">
         <div className="space-y-3">
           <FormField label="Preset">
             <Select
@@ -326,10 +326,10 @@ export function RootAdminRunEventSyncPage() {
             </FormField>
           ) : null}
 
-          <SectionCard headingLevel={3} padded title="Requested feeds">
-            <p>{selectedPreset.feeds.map((feed) => FEED_LABELS[feed]).join(' · ')}</p>
-            {mockEventState ? <SectionNote>{`Mock event state: ${mockEventState}`}</SectionNote> : null}
-          </SectionCard>
+          <SectionNote>
+            {`Requested feeds: ${selectedPreset.feeds.map((feed) => FEED_LABELS[feed]).join(' · ')}`}
+          </SectionNote>
+          {mockEventState ? <SectionNote>{`Mock event state: ${mockEventState}`}</SectionNote> : null}
 
           {providersQuery.isError ? (
             <Alert>
@@ -381,16 +381,16 @@ export function RootAdminRunEventSyncPage() {
               )}
             </Alert>
           ) : null}
-
-          {eventSyncMutation.isSuccess ? (
-            <SectionCard headingLevel={3} padded testId="root-admin-event-sync-response" title="Latest API payload">
-              <pre className="overflow-x-auto whitespace-pre-wrap break-words text-xs">
-                {formatJsonPayload(eventSyncMutation.data)}
-              </pre>
-            </SectionCard>
-          ) : null}
         </div>
       </SectionCard>
+
+      {eventSyncMutation.isSuccess ? (
+        <SectionCard padded testId="root-admin-event-sync-response" title="Latest API payload">
+          <pre className="overflow-x-auto whitespace-pre-wrap break-words text-xs">
+            {formatJsonPayload(eventSyncMutation.data)}
+          </pre>
+        </SectionCard>
+      ) : null}
     </section>
   );
 }

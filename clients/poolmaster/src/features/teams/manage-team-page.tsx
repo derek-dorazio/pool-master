@@ -128,7 +128,7 @@ export function ManageTeamPage() {
 
       <MyTeamLifecycleNotices lifecycle={lifecycle} />
 
-      <SectionCard testId="manage-team-danger-zone" info="Each of these asks you to confirm." title="Danger zone" tone="danger">
+      <SectionCard testId="manage-team-danger-zone" tone="danger">
         <SettingsRows>
           {isInactiveTeam ? (
             <DangerZoneAction

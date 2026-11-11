@@ -3,10 +3,11 @@
  * (rules/ux-rules.md §12 item 13, *One section look*).
  *
  * This check finds every `Tile` in web app source outside `features/shared/ui` whose content
- * holds a title: a `Heading`, an `Eyebrow` or an `<h1>`–`<h6>`, short of a `Tile` nested inside
- * it. It compares each file's count with `scripts/titled-tile-baseline.json`, the titled tiles
- * member and event pages still hold until their own cleanup tickets reach them. Commissioner
- * tools, billing and site admin hold none, and the baseline never lists them.
+ * holds a title: a `Heading`, an `Eyebrow`, a `SectionTitle` or an `<h1>`–`<h6>`, short of a
+ * `Tile` nested inside it. It compares each file's count with `scripts/titled-tile-baseline.json`, the titled tiles
+ * member and event pages still hold until their own cleanup tickets reach them. Billing and site
+ * admin hold none. Commissioner tools hold one: `contests/contest-status-card.tsx`, the contest
+ * lifecycle panel that #1609 replaces; no other Commissioner tools file is ever listed.
  *
  * Like the text-style check it fails both ways: a file over its baseline has a new titled tile
  * (use `SectionCard`), and a file under it has been cleaned up, so its entry comes down in the
@@ -20,7 +21,7 @@ import ts from 'typescript';
 import { compareWithBaseline, isCheckedSource, ratchetBaseline } from './check-text-styles.mjs';
 
 export const BASELINE_FILE = 'scripts/titled-tile-baseline.json';
-const TITLE_TAG = /^(Heading|Eyebrow|h[1-6])$/;
+const TITLE_TAG = /^(Heading|Eyebrow|SectionTitle|h[1-6])$/;
 
 /** How many `Tile`s in a source file hold their own title. */
 export function countTitledTiles(text, fileName = 'page.tsx') {

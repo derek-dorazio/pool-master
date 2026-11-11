@@ -3,7 +3,7 @@ import { Link } from 'react-router';
 import type { LeaguePayment, UserPayment } from '@/lib/api';
 import { extractErrorMessage } from '@/lib/errors';
 import { buildContestLandingPath, buildLeaguePath } from '@/features/leagues/league-routing';
-import { DateDisplay, SectionCard, SettingsRows } from '@/features/shared/ui';
+import { DateDisplay, SectionCard, SectionEmpty, SettingsRows } from '@/features/shared/ui';
 import { formatPriceCents } from './billing-format';
 import { useLeaguePaymentsQuery, useMyPaymentsQuery } from './use-payments-queries';
 
@@ -11,7 +11,7 @@ const LEAGUE_DESCRIPTION = 'Every payment made in this league. While payments ar
 const MINE_DESCRIPTION = 'What you have paid in your leagues. While payments are off, expanding a contest is free and shows here as $0.';
 
 function PaymentsState({ testId, children }: { testId: string; children: string }) {
-  return <div className="px-5 py-3.5 text-sm text-muted-foreground" data-testid={testId}>{children}</div>;
+  return <div className="px-4 py-3.5 text-sm text-muted-foreground" data-testid={testId}>{children}</div>;
 }
 
 /** One line: when, what for (linking to its contest or league), who, and how much. */
@@ -30,7 +30,7 @@ function PaymentLine({
 }) {
   return (
     <div
-      className="grid gap-x-4 gap-y-1 px-5 py-3.5 text-sm sm:grid-cols-[8rem_minmax(0,1fr)_auto] sm:items-baseline"
+      className="grid gap-x-4 gap-y-1 px-4 py-3.5 text-sm sm:grid-cols-[8rem_minmax(0,1fr)_auto] sm:items-baseline"
       data-testid={testId}
     >
       <DateDisplay className="text-muted-foreground" timeStyle={null} value={paidAt} />
@@ -58,7 +58,7 @@ export function LeaguePaymentsSection({ leagueId, leagueCode }: { leagueId: stri
             {extractErrorMessage(paymentsQuery.error, { fallback: 'We could not load the payments right now.' })}
           </PaymentsState>
         ) : null}
-        {paymentsQuery.data?.length === 0 ? <PaymentsState testId="league-payments-empty">No payments yet.</PaymentsState> : null}
+        {paymentsQuery.data?.length === 0 ? <SectionEmpty testId="league-payments-empty">No payments yet.</SectionEmpty> : null}
         {paymentsQuery.data?.map((payment: LeaguePayment) => (
           <PaymentLine
             amountCents={payment.amountCents}
@@ -88,7 +88,7 @@ export function MyPaymentsSection() {
             {extractErrorMessage(paymentsQuery.error, { fallback: 'We could not load your payments right now.' })}
           </PaymentsState>
         ) : null}
-        {paymentsQuery.data?.length === 0 ? <PaymentsState testId="my-payments-empty">No payments yet.</PaymentsState> : null}
+        {paymentsQuery.data?.length === 0 ? <SectionEmpty testId="my-payments-empty">No payments yet.</SectionEmpty> : null}
         {paymentsQuery.data?.map((payment: UserPayment) => (
           <PaymentLine
             amountCents={payment.amountCents}

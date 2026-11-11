@@ -327,7 +327,6 @@ export function RootAdminUserPage() {
       <SectionCard
         info="Actions that stop or remove this account. Each asks you to confirm."
         testId="root-admin-user-danger-zone"
-        title="Danger zone"
         tone="danger"
       >
         <SettingsRows>

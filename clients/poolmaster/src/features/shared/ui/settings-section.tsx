@@ -19,7 +19,7 @@ type SettingsRowProps = {
 export function SettingsRow({ action, label, testId, value }: SettingsRowProps) {
   return (
     <div
-      className="grid gap-x-4 gap-y-1 px-5 py-3.5 sm:grid-cols-[10rem_minmax(0,1fr)_auto] sm:items-center"
+      className="grid gap-x-4 gap-y-1 px-4 py-3.5 sm:grid-cols-[10rem_minmax(0,1fr)_auto] sm:items-center"
       data-testid={testId}
     >
       <div className="text-sm font-medium text-muted-foreground">{label}</div>
@@ -39,7 +39,7 @@ type DangerZoneActionProps = {
 /** One destructive action in a danger zone (`SectionCard` with `tone="danger"`): what it does, and its button, which confirms before it runs. */
 export function DangerZoneAction({ action, description, testId, title }: DangerZoneActionProps) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-4 px-5 py-4" data-testid={testId}>
+    <div className="flex flex-wrap items-center justify-between gap-4 px-4 py-4" data-testid={testId}>
       <div className="max-w-xl">
         <div className="font-semibold text-foreground">{title}</div>
         <p className="mt-0.5 text-sm text-muted-foreground">{description}</p>

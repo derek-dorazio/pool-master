@@ -78,7 +78,7 @@ function SettingsGroupSection({ group }: { group: SettingsGroup }) {
         {summary.map((item) => (
           <SettingsRow key={item.id} label={item.label} value={item.value} />
         ))}
-        <div className="space-y-5 px-5 py-4">
+        <div className="space-y-5 px-4 py-4">
           {group.key === 'EMAIL_CONFIG' ? (
             <>
               <EmailSettingsForm group={group} />

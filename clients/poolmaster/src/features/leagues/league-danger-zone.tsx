@@ -98,7 +98,6 @@ export function LeagueDangerZone({ league }: { league: LeagueDto }) {
       <SectionCard
         info="Actions that stop or remove the league. Each asks you to confirm."
         testId="league-danger-zone"
-        title="Danger zone"
         tone="danger"
       >
         <SettingsRows>

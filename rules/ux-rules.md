@@ -387,10 +387,13 @@ administration area (root admin included), reusing the same shared components.
     danger zone is the same card with `tone="danger"`.
 
     `npm run rules:check:titled-tiles` finds every `Tile` outside
-    `features/shared/ui` that holds its own `Heading`, `Eyebrow` or `<h1>`–`<h6>`.
-    Its baseline, `scripts/titled-tile-baseline.json`, lists the member and
-    event pages still waiting for their cleanup and only ever shrinks; a new
-    titled tile, or one in Commissioner tools, billing or site admin, fails.
+    `features/shared/ui` that holds its own `Heading`, `Eyebrow`, `SectionTitle`
+    or `<h1>`–`<h6>`. Its baseline, `scripts/titled-tile-baseline.json`, lists
+    the member and event pages still waiting for their cleanup and only ever
+    shrinks; a new titled tile fails. Billing and site admin are not in it.
+    Commissioner tools has one exception, `contests/contest-status-card.tsx`,
+    the contest lifecycle panel that #1609 replaces; no other Commissioner
+    tools file may be added.
 
 ## 13. Event Pages
 

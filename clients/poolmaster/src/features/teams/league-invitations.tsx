@@ -244,7 +244,7 @@ function InvitePeople({ invitationsKey, isInactiveLeague, joinLink, leagueId }: 
   return (
     <SectionCard testId="league-invite-people" title="Invite people">
       <SettingsRows>
-        <form className="space-y-3 px-5 py-4" onSubmit={(event) => void handleSendInvite(event)}>
+        <form className="space-y-3 px-4 py-4" onSubmit={(event) => void handleSendInvite(event)}>
           <FormField helperText="They get their own link by email." label="Invite by email">
             <div className="flex flex-wrap gap-3">
               <Input
@@ -274,7 +274,7 @@ function InvitePeople({ invitationsKey, isInactiveLeague, joinLink, leagueId }: 
           ) : null}
         </form>
 
-        <div className="space-y-3 px-5 py-4">
+        <div className="space-y-3 px-4 py-4">
           <FormField
             helperText={joinLink
               ? `Anyone with the link can join. ${joinedCount(joinLink.currentUses)}.`

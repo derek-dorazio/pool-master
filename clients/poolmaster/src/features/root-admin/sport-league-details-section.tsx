@@ -93,7 +93,7 @@ export function SportLeagueDangerZone({ sportLeague }: { sportLeague: SportLeagu
 
   return (
     <>
-      <SectionCard testId="root-admin-sport-league-danger-zone" info="Each of these asks you to confirm." title="Danger zone" tone="danger">
+      <SectionCard testId="root-admin-sport-league-danger-zone" tone="danger">
         <SettingsRows>
           <DangerZoneAction
             action={(

@@ -69,26 +69,10 @@ export function SectionTitle({
   );
 }
 
-/**
- * A titled section: its title bar, its body and an optional footer link. The body is unpadded,
- * for `SectionRows` or a `SectionEmpty` line; `padded` gives other content the card's padding.
- * `bare` keeps the title and rule but drops the box, for long page content such as Owners;
- * `tone="danger"` is a danger zone.
- */
-export function SectionCard({
-  bare = false,
-  children,
-  className,
-  footer,
-  headingLevel = 2,
-  info,
-  padded = false,
-  testId,
-  title,
-  titleTestId,
-  tone = "default",
-  trailing,
-}: {
+const DANGER_ZONE_TITLE = "Danger zone";
+const DANGER_ZONE_INFO = "Each of these asks you to confirm.";
+
+type SectionCardBaseProps = {
   bare?: boolean;
   children: ReactNode;
   className?: string;
@@ -97,12 +81,46 @@ export function SectionCard({
   info?: ReactNode;
   padded?: boolean;
   testId?: string;
-  /** The section's name, which also names it for screen readers. */
-  title: ReactNode;
   titleTestId?: string;
-  tone?: SectionTone;
   trailing?: ReactNode;
-}) {
+};
+
+type SectionCardProps = SectionCardBaseProps &
+  (
+    | {
+        /** The section's name, which also names it for screen readers. */
+        title: ReactNode;
+        tone?: "default";
+      }
+    | {
+        /** A danger zone's title and info default to "Danger zone" and that its actions confirm first. */
+        title?: ReactNode;
+        tone: "danger";
+      }
+  );
+
+/**
+ * A titled section: its title bar, its body and an optional footer link. The body is unpadded,
+ * for `SectionRows` or a `SectionEmpty` line; `padded` gives other content the card's padding.
+ * `bare` keeps the title and rule but drops the box, for long page content such as Owners;
+ * `tone="danger"` is a danger zone, titled "Danger zone" unless it says otherwise.
+ */
+export function SectionCard(props: SectionCardProps) {
+  const {
+    bare = false,
+    children,
+    className,
+    footer,
+    headingLevel = 2,
+    padded = false,
+    testId,
+    titleTestId,
+    tone = "default",
+    trailing,
+  } = props;
+  // A danger zone is always called that, and always says its actions confirm first.
+  const title = props.title ?? DANGER_ZONE_TITLE;
+  const info = props.info ?? (tone === "danger" ? DANGER_ZONE_INFO : undefined);
   const titleId = useId();
   return (
     <section
