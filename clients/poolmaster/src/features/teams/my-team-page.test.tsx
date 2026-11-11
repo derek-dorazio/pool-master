@@ -451,9 +451,11 @@ describe('My team › Trophies and past years', () => {
     fireEvent.click(past);
 
     await waitFor(() => expect(getSquadYearMock).toHaveBeenCalledWith(expect.objectContaining({ query: { year: 2025 } })));
-    expect(screen.getByTestId('squad-history-year')).toHaveValue('2025');
-    fireEvent.change(screen.getByTestId('squad-history-year'), { target: { value: String(YEAR) } });
-    await waitFor(() => expect(screen.getByTestId('squad-history-year')).toHaveValue(String(YEAR)));
+    const season = screen.getByRole('combobox', { name: 'Season' });
+    expect(season).toBe(screen.getByTestId('squad-history-year'));
+    expect(season).toHaveValue('2025');
+    fireEvent.change(season, { target: { value: String(YEAR) } });
+    await waitFor(() => expect(screen.getByRole('combobox', { name: 'Season' })).toHaveValue(String(YEAR)));
   });
 
   it('shows the records the squad holds, with when it set each, and leaves out the ones another squad holds', async () => {

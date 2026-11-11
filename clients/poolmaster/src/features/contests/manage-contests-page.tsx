@@ -19,9 +19,9 @@ import {
   LoadingState,
   PageHeader,
   PageTabs,
-  Select,
   Tabs,
   TabsContent,
+  YearPicker,
 } from '@/features/shared/ui';
 import { firstContestEvent, type ContestSportEvent } from './contest-events';
 import { ContestStatusBadge } from './contest-status-badge';
@@ -244,15 +244,12 @@ export function ManageContestsPage() {
             />
           ) : undefined}
           tabsEnd={filter === 'history' && year !== null ? (
-            <Select
-              aria-label="Year"
-              className="w-auto"
-              data-testid="manage-contests-history-year"
-              onChange={(event) => setSearchParams({ year: event.target.value }, { replace: true })}
+            <YearPicker
+              onChange={(next) => setSearchParams({ year: String(next) }, { replace: true })}
+              testId="manage-contests-history-year"
               value={year}
-            >
-              {years.map((option) => <option key={option} value={option}>{option}</option>)}
-            </Select>
+              years={years}
+            />
           ) : undefined}
           title="Contests"
         />
