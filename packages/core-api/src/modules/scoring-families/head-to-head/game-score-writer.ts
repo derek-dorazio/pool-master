@@ -8,6 +8,13 @@
  * The provider lists its own home and away teams. Each is matched to a side of the match through
  * the team's provider mapping, so a game the provider lists the other way round from the match
  * still scores the right side, and a game whose teams are not the match's is refused.
+ *
+ * Nobody links a game by hand. A game no match is linked to yet is linked to the one match of the
+ * event, unlinked and with both sides known, whose two teams are the game's: in a single-game
+ * round, two teams meet once in a week or a playoff. A best-of series is one match of several
+ * games, which this rule does not fit (#1545). A game two matches would fit, or a match two games
+ * would, is left for a later sync, never guessed at. A match whose side a result fills is linked
+ * on the next sync.
  */
 import { MatchSide, MatchStatus, ProviderGameState, type SportEventMatch } from '@poolmaster/shared/domain';
 import type { GameScoreUpdate } from '@poolmaster/shared/dto';
@@ -20,7 +27,7 @@ import type { MatchResultService } from './match-result-service';
 
 export interface GameScoreWriterDeps {
   providerId: string;
-  matches: Pick<SportEventMatchRepository, 'findBySportEvent'>;
+  matches: Pick<SportEventMatchRepository, 'findBySportEvent' | 'linkGames'>;
   eventParticipants: Pick<SportEventParticipantRepository, 'findByIds'>;
   mappings: Pick<ParticipantProviderMappingRepository, 'findByProviderExternalIds'>;
   results: Pick<MatchResultService, 'recordResult'>;
@@ -35,7 +42,8 @@ interface MatchResultFromGame {
 }
 
 /**
- * Writes each final game linked to one of the event's matches; any other game writes nothing.
+ * Links each game that fits one match, then writes each final game linked to one of the event's
+ * matches; any other game writes nothing.
  * Earlier rounds go first, and each result is read against the bracket the last one wrote, so a
  * semifinal and the final it feeds, both final in one sync, both record.
  */
@@ -44,7 +52,31 @@ export async function writeGameScores(
   sportEventId: string,
   games: readonly GameScoreUpdate[],
 ): Promise<LiveScorePersistenceResult> {
-  const matches = await deps.matches.findBySportEvent(sportEventId);
+  const loaded = await deps.matches.findBySportEvent(sportEventId);
+  const linkedGameIds = new Set(loaded.flatMap((match) => (match.externalGameId === null ? [] : [match.externalGameId])));
+  const unlinkedGames = games.filter((game) => !linkedGameIds.has(game.externalGameId));
+  const openMatches = unlinkedGames.length === 0 ? [] : loaded.filter(isOpenMatch);
+  const finalsOfLinked = games.filter((game) => game.state === ProviderGameState.FINAL && linkedGameIds.has(game.externalGameId));
+  const finalGameIds = new Set(finalsOfLinked.map((game) => game.externalGameId));
+  const linkedMatchesOfFinals = loaded.filter((match) => match.externalGameId !== null && finalGameIds.has(match.externalGameId));
+  // One read of the sides and one of the team mappings for the whole batch.
+  const sidesOf = await participantsOfSides(deps, [...linkedMatchesOfFinals, ...openMatches]);
+  const teamsOf = await participantsOfTeams(deps, [...finalsOfLinked, ...(openMatches.length === 0 ? [] : unlinkedGames)]);
+
+  const links = gamesToLink(unlinkedGames, openMatches, sidesOf, teamsOf);
+  await deps.matches.linkGames(links.map(({ game, match }) => ({ id: match.id, externalGameId: game.externalGameId })));
+  for (const { game, match } of links) {
+    deps.logger?.info(
+      { action: 'liveScore.game.linked', data: { sportEventId, matchNumber: match.matchNumber, externalGameId: game.externalGameId } },
+      'Linked a provider game to the match its teams play',
+    );
+  }
+  const linkedGameOf = new Map(links.map(({ game, match }) => [match.id, game.externalGameId]));
+  const matches = loaded.map((match) => {
+    const externalGameId = linkedGameOf.get(match.id);
+    return externalGameId === undefined ? match : { ...match, externalGameId };
+  });
+
   const matchByGame = new Map(
     matches.flatMap((match) => (match.externalGameId === null ? [] : [[match.externalGameId, match] as const])),
   );
@@ -54,9 +86,6 @@ export async function writeGameScores(
       return match !== undefined && game.state === ProviderGameState.FINAL ? [{ game, match }] : [];
     })
     .sort((left, right) => left.match.roundNumber - right.match.roundNumber || left.match.matchNumber - right.match.matchNumber);
-  // A side a result in this batch fills is a team of the match that fed it, itself a final here.
-  const sidesOf = await participantsOfSides(deps, finals.map(({ match }) => match));
-  const teamsOf = await participantsOfTeams(deps, finals.map(({ game }) => game));
   /** Each match as the latest result in this batch wrote it. */
   const rewritten = new Map<string, SportEventMatch>();
 
@@ -99,6 +128,40 @@ export async function writeGameScores(
     updatesSkipped: games.length - persisted,
     writeDiagnostics: summarizeSyncWriteRows(rows),
   };
+}
+
+/** A match with no game linked yet and both sides known. */
+type OpenMatch = SportEventMatch & { externalGameId: null; homeSportEventParticipantId: string; awaySportEventParticipantId: string };
+
+function isOpenMatch(match: SportEventMatch): match is OpenMatch {
+  return match.externalGameId === null && match.homeSportEventParticipantId !== null && match.awaySportEventParticipantId !== null;
+}
+
+/**
+ * Each unlinked game with the one open match its two teams play, where neither has another
+ * candidate. Two games fitting one match, or one game fitting two, link nothing.
+ */
+function gamesToLink(
+  games: readonly GameScoreUpdate[],
+  matches: readonly OpenMatch[],
+  sidesOf: ReadonlyMap<string, string>,
+  teamsOf: ReadonlyMap<string, string>,
+): Array<{ game: GameScoreUpdate; match: OpenMatch }> {
+  const teamsKey = (first: string | undefined, second: string | undefined) =>
+    first === undefined || second === undefined ? null : [first, second].sort().join('|');
+  const matchesByTeams = new Map<string, OpenMatch[]>();
+  for (const match of matches) {
+    const key = teamsKey(sidesOf.get(match.homeSportEventParticipantId), sidesOf.get(match.awaySportEventParticipantId));
+    if (key !== null) matchesByTeams.set(key, [...(matchesByTeams.get(key) ?? []), match]);
+  }
+  const fits = games.flatMap((game) => {
+    const key = teamsKey(teamsOf.get(game.homeTeamExternalId), teamsOf.get(game.awayTeamExternalId));
+    const candidates = key === null ? [] : matchesByTeams.get(key) ?? [];
+    return candidates.length === 1 ? [{ game, match: candidates[0] }] : [];
+  });
+  const gamesPerMatch = new Map<string, number>();
+  for (const { match } of fits) gamesPerMatch.set(match.id, (gamesPerMatch.get(match.id) ?? 0) + 1);
+  return fits.filter(({ match }) => gamesPerMatch.get(match.id) === 1);
 }
 
 /** The participant behind each match side, by event-participant id. */

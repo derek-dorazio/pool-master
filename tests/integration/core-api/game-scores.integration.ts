@@ -79,7 +79,7 @@ async function linkedBracket() {
     { id: randomUUID(), roundNumber: 1, matchNumber: 2, homeSportEventParticipantId: entryOf('Auburn').id, awaySportEventParticipantId: entryOf('Florida').id, isNeutralSite: true, scheduledDate: null, advancesToMatchId: finalId, advancesToSide: MatchSide.AWAY, regionLabel: null },
     { id: finalId, roundNumber: 2, matchNumber: 3, homeSportEventParticipantId: null, awaySportEventParticipantId: null, isNeutralSite: true, scheduledDate: null, advancesToMatchId: null, advancesToSide: null, regionLabel: null },
   ]);
-  // Linking is the admin's action (a later part of #1496); here the rows are linked directly.
+  // Linked directly here; the sync links games itself, which the auto-linking test covers.
   await prisma.sportEventMatch.updateMany({ where: { sportEventId: event.id, matchNumber: 1 }, data: { externalGameId: 'g1' } });
   await prisma.sportEventMatch.updateMany({ where: { sportEventId: event.id, matchNumber: 2 }, data: { externalGameId: 'g2' } });
   return { event, externalId, entryOf, teamId, matches };
@@ -120,6 +120,23 @@ describe('game scores from a provider', () => {
     expect(again).toMatchObject({ updatesPersisted: 0, updatesSkipped: 1 });
     expect(again.writeDiagnostics.summary).toMatchObject({ total: 1, unchanged: 1 });
     expect((await matches.findBySportEvent(event.id)).at(0)?.updatedAt).toEqual(written.updatedAt);
+  });
+
+  it('links each game nobody linked to the match its teams play, records the final, and keeps the link for the next sync', async () => {
+    const { event, externalId, entryOf, teamId, matches } = await linkedBracket();
+    await getPrisma().sportEventMatch.updateMany({ where: { sportEventId: event.id }, data: { externalGameId: null } });
+
+    const result = await publish(externalId, [
+      { externalGameId: 'p-1', homeTeamExternalId: teamId('Houston'), awayTeamExternalId: teamId('Duke'), state: ProviderGameState.FINAL, homeScore: 67, awayScore: 70 },
+      { externalGameId: 'p-2', homeTeamExternalId: teamId('Auburn'), awayTeamExternalId: teamId('Florida'), state: ProviderGameState.SCHEDULED, homeScore: null, awayScore: null },
+    ]);
+
+    expect(result).toMatchObject({ updatesPersisted: 1 });
+    const [first, second, final] = await matches.findBySportEvent(event.id);
+    expect(first).toMatchObject({ externalGameId: 'p-1', status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME, homeScore: 70, awayScore: 67 });
+    expect(second).toMatchObject({ externalGameId: 'p-2', status: MatchStatus.SCHEDULED });
+    // The final's away side is still to be decided, so nothing links to it yet.
+    expect(final).toMatchObject({ externalGameId: null, homeSportEventParticipantId: entryOf('Duke').id });
   });
 
   it('refuses a second match of the event linked to a game another of its matches already takes', async () => {
