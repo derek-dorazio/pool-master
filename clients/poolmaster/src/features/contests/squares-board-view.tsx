@@ -43,6 +43,24 @@ const SQUARES_CODE_MESSAGES: ErrorCodeMessages = {
   ENTRY_ACCESS_DENIED: 'Only that entry\'s owners or a commissioner can change its boxes.',
 };
 
+/** A quarter's winning entry by name, with the (i) for its team once there is a winner to name. */
+function WinnerEntry({ entryName, leagueCode, leagueId, squadId, testId }: {
+  entryName: string | null;
+  leagueCode: string;
+  leagueId: string;
+  squadId: string | undefined;
+  testId: string;
+}) {
+  return (
+    <div className="flex items-center font-semibold">
+      {entryName ?? 'No winner'}
+      {entryName !== null && squadId ? (
+        <EntryDetailsPeek className="-my-2" entryName={entryName} leagueCode={leagueCode} leagueId={leagueId} squadId={squadId} testId={testId} />
+      ) : null}
+    </div>
+  );
+}
+
 /**
  * A squares contest's board (#711, design §4.2): the winners of each quarter above the grid, then
  * the grid. While claiming is open, a member taps an empty box to claim it for their entry and
@@ -152,7 +170,7 @@ export function SquaresBoardView({
   const moments = squaresMomentRows(board);
   // A winning box's entry's team, for the winner's (i) (#1564).
   const squadIdByEntryId = new Map(board.entries.map((entry) => [entry.contestEntryId, entry.squadId]));
-  const winnerSquadId = (contestEntryId: string | null) => (contestEntryId === null ? null : squadIdByEntryId.get(contestEntryId) ?? null);
+  const winnerSquadId = (contestEntryId: string | null) => (contestEntryId === null ? undefined : squadIdByEntryId.get(contestEntryId));
 
   const actionFor = (box: SquaresBoxDto | null): SquaresBoxAction => {
     if (!board.claimsOpen) {
@@ -186,19 +204,13 @@ export function SquaresBoardView({
                 <Eyebrow tone="muted">{moment.label}</Eyebrow>
                 {moment.winner ? (
                   <>
-                    <div className="flex items-center font-semibold">
-                      {moment.winner.entryName ?? 'No winner'}
-                      {winnerSquadId(moment.winner.contestEntryId) ? (
-                        <EntryDetailsPeek
-                          className="-my-2"
-                          entryName={moment.winner.entryName ?? ''}
-                          leagueCode={leagueCode}
-                          leagueId={contest.leagueId}
-                          squadId={winnerSquadId(moment.winner.contestEntryId) ?? ''}
-                          testId={`squares-winner-${moment.periodNumber}-peek`}
-                        />
-                      ) : null}
-                    </div>
+                    <WinnerEntry
+                      entryName={moment.winner.entryName}
+                      leagueCode={leagueCode}
+                      leagueId={contest.leagueId}
+                      squadId={winnerSquadId(moment.winner.contestEntryId)}
+                      testId={`squares-winner-${moment.periodNumber}-peek`}
+                    />
                     <div className="text-muted-foreground">
                       {`${board.awayTeamName ?? 'Away'} ${moment.winner.awayScore}, ${board.homeTeamName ?? 'Home'} ${moment.winner.homeScore}`}
                     </div>

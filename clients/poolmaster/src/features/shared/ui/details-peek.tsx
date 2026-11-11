@@ -1,6 +1,6 @@
 import { Info } from "lucide-react";
 import type { ReactNode } from "react";
-import { DETAILS_PEEK_HOVER_DELAY_MS } from "./details-peek-delay";
+import { DETAILS_PEEK_HOVER_DELAY_MS } from "./popover-timing";
 import { InfoPopover } from "./info-popover";
 import { SectionFooterLink } from "./section-card";
 
@@ -49,7 +49,7 @@ export type PeekFact = { label: string; value: ReactNode };
 
 /**
  * A peek card: the thing's name, a short subtitle, two to four label and value facts, and an
- * optional link on to its full page.
+ * optional link on to its full page. Each fact's label must be unique within the card.
  */
 export function PeekCard({
   facts,

@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { cn } from "./class-names";
+import { HOVER_CLOSE_GRACE_MS } from "./popover-timing";
 import { Tile } from "./tile";
 
 const CALLOUT_WIDTH = 288;
@@ -9,7 +10,8 @@ const SCREEN_GUTTER = 16;
  * A small icon button that keeps secondary facts out of the way: hovering it with a mouse, or
  * tapping or pressing it, shows them in a callout. Leaving it, tapping it again, tapping elsewhere or Escape
  * hides them. Tap is the phone's way in, since a phone has no hover. The pointer can move from
- * the icon into the callout, to reach a link there, without it closing. The callout's content
+ * the icon into the callout, to reach a link there, without it closing: the space between them is
+ * part of the callout, and the callout waits a moment after the mouse leaves before it closes. The callout's content
  * mounts only while it is open, so content that reads data reads it when first opened.
  */
 export function InfoPopover({
@@ -48,10 +50,13 @@ export function InfoPopover({
   const panelId = useId();
   const rootRef = useRef<HTMLSpanElement>(null);
   const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cancelHover = () => {
-    if (hoverTimer.current !== null) {
-      clearTimeout(hoverTimer.current);
-      hoverTimer.current = null;
+    for (const timer of [hoverTimer, closeTimer]) {
+      if (timer.current !== null) {
+        clearTimeout(timer.current);
+        timer.current = null;
+      }
     }
   };
   useEffect(() => cancelHover, []);
@@ -88,9 +93,13 @@ export function InfoPopover({
         if (event.pointerType !== "mouse") {
           return;
         }
+        cancelHover();
+        if (isHovered) {
+          // Back from a short trip outside: the callout never closed, so it does not wait again.
+          return;
+        }
         onHoverStart?.();
         placeCallout();
-        cancelHover();
         if (hoverDelayMs > 0) {
           hoverTimer.current = setTimeout(() => setIsHovered(true), hoverDelayMs);
         } else {
@@ -99,7 +108,7 @@ export function InfoPopover({
       }}
       onPointerLeave={() => {
         cancelHover();
-        setIsHovered(false);
+        closeTimer.current = setTimeout(() => setIsHovered(false), HOVER_CLOSE_GRACE_MS);
       }}
       ref={rootRef}
     >
@@ -129,16 +138,22 @@ export function InfoPopover({
         {icon}
       </button>
       {isOpen ? (
-        <Tile
-          className={cn("absolute top-full z-40 mt-2 shadow-xl", padding === "none" && "overflow-hidden")}
+        // The gap above the card is padding on this wrapper, not margin, so it belongs to the
+        // callout's hit area and a mouse crossing it never leaves.
+        <span
+          className="absolute top-full z-40 block pt-2"
           data-testid={`${testId}-callout`}
           id={panelId}
-          padding={padding}
-          radius="lg"
           style={{ left: -shiftLeft, width: `min(${CALLOUT_WIDTH}px, calc(100vw - ${2 * SCREEN_GUTTER}px))` }}
         >
-          {children}
-        </Tile>
+          <Tile
+            className={cn("shadow-xl", padding === "none" && "overflow-hidden")}
+            padding={padding}
+            radius="lg"
+          >
+            {children}
+          </Tile>
+        </span>
       ) : null}
     </span>
   );

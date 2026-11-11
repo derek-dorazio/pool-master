@@ -2,7 +2,7 @@ import { act, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { DetailsPeek, PeekCard, PeekMessage } from "./details-peek";
-import { DETAILS_PEEK_HOVER_DELAY_MS } from "./details-peek-delay";
+import { DETAILS_PEEK_HOVER_DELAY_MS, HOVER_CLOSE_GRACE_MS } from "./popover-timing";
 
 function drawPeek(onHoverStart = vi.fn()) {
   render(
@@ -53,7 +53,30 @@ describe("DetailsPeek", () => {
     expect(screen.queryByTestId("peek-card")).not.toBeInTheDocument();
   });
 
-  it("stays open while the mouse moves from the icon onto the card, so its link can be reached", () => {
+  it("stays open when the mouse leaves the icon and arrives on the card a moment later, so its link can be reached", () => {
+    vi.useFakeTimers();
+    const { button, onHoverStart } = drawPeek();
+
+    fireEvent.pointerEnter(button, { pointerType: "mouse" });
+    act(() => {
+      vi.advanceTimersByTime(DETAILS_PEEK_HOVER_DELAY_MS);
+    });
+    // The mouse leaves for somewhere outside the peek, as when it crosses a gap, then lands on the card.
+    fireEvent.pointerLeave(button, { pointerType: "mouse" });
+    act(() => {
+      vi.advanceTimersByTime(HOVER_CLOSE_GRACE_MS - 1);
+    });
+    fireEvent.pointerEnter(screen.getByTestId("peek-card"), { pointerType: "mouse" });
+    act(() => {
+      vi.advanceTimersByTime(HOVER_CLOSE_GRACE_MS + DETAILS_PEEK_HOVER_DELAY_MS);
+    });
+
+    expect(screen.getByTestId("peek-link")).toHaveAttribute("href", "/team/1");
+    // Coming back is not a new arrival: no second read and no second wait.
+    expect(onHoverStart).toHaveBeenCalledTimes(1);
+  });
+
+  it("closes once the mouse has been gone from the icon and the card for a moment", () => {
     vi.useFakeTimers();
     const { button } = drawPeek();
 
@@ -61,9 +84,12 @@ describe("DetailsPeek", () => {
     act(() => {
       vi.advanceTimersByTime(DETAILS_PEEK_HOVER_DELAY_MS);
     });
-    fireEvent.pointerLeave(button, { pointerType: "mouse", relatedTarget: screen.getByTestId("peek-card") });
+    fireEvent.pointerLeave(button, { pointerType: "mouse" });
+    act(() => {
+      vi.advanceTimersByTime(HOVER_CLOSE_GRACE_MS);
+    });
 
-    expect(screen.getByTestId("peek-link")).toHaveAttribute("href", "/team/1");
+    expect(screen.queryByTestId("peek-card")).not.toBeInTheDocument();
   });
 
   it("opens at once on a tap, with no mouse to wait for, and starts no hover read", () => {
