@@ -1,4 +1,4 @@
-import { DefinitionList, Eyebrow, Tile } from "@/features/shared/ui";
+import { DefinitionList, Tile } from "@/features/shared/ui";
 
 export type UserAccountSummaryProps = {
   email: string;
@@ -22,9 +22,9 @@ export function UserAccountSummary({
   return (
     <>
       <Tile data-testid="user-page-identity-summary" radius="lg">
-        <Eyebrow tone="muted">
+        <div className="text-xs uppercase text-muted-foreground">
           Account summary
-        </Eyebrow>
+        </div>
         <DefinitionList
           className="mt-4 sm:grid-cols-1"
           items={[
@@ -36,9 +36,9 @@ export function UserAccountSummary({
       </Tile>
 
       <Tile data-testid="user-page-account-details" radius="lg">
-        <Eyebrow tone="muted">
+        <div className="text-xs uppercase text-muted-foreground">
           Account details
-        </Eyebrow>
+        </div>
         <DefinitionList
           className="mt-4"
           items={[
