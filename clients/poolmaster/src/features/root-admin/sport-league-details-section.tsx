@@ -7,7 +7,7 @@ import {
   ConfirmDialog,
   DangerZone,
   DangerZoneAction,
-  IdentityHeading,
+  PageHeader,
   InlineError,
   LinkButton,
   SettingsRow,
@@ -23,7 +23,7 @@ import { useUpdateSportLeague } from './use-update-sport-league';
 export function SportLeagueHeading({ sportLeague }: { sportLeague: SportLeagueDto }) {
   const { participant, event } = useManagedSport().definition.vocabulary;
   return (
-    <IdentityHeading
+    <PageHeader
       icon={<Route aria-hidden size={22} />}
       meta={(
         <>
@@ -35,7 +35,7 @@ export function SportLeagueHeading({ sportLeague }: { sportLeague: SportLeagueDt
           </span>
         </>
       )}
-      name={sportLeague.name}
+      title={sportLeague.name}
       testId="root-admin-sport-league-identity"
     />
   );

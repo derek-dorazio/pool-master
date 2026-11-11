@@ -12,7 +12,7 @@
  * (a `:eventId` / `:participantId` UUID) for the loaded entity's name. The layout
  * only knows static labels; the child page knows the name.
  *
- * An entity's home page shows its own `IdentityHeading`, so it tells the layout to leave out
+ * An entity's home page shows its own `PageHeader`, so it tells the layout to leave out
  * the page title and keep only the trail (`useManagePageOwnsHeading`).
  */
 import { createContext, useContext, useEffect } from "react";

@@ -1,5 +1,6 @@
 import { RecordType } from '@poolmaster/shared/domain';
 import type { RecordDto, RecordHolderDto, RecordStandDto } from '@/lib/api';
+import { plural } from '@/lib/plural';
 import { joinNames } from './cup-view';
 
 /**
@@ -20,9 +21,6 @@ export const RECORD_WORDING: Record<RecordType, { title: string; value: (value: 
   [RecordType.LONGEST_DROUGHT]: { title: 'Longest drought', value: (value) => `${plural(value, 'contest')} without a win` },
 };
 
-function plural(count: number, one: string, many = `${one}s`): string {
-  return `${count} ${count === 1 ? one : many}`;
-}
 
 /** A run's length: "3 podiums in a row", but just "1 podium", since one alone is no run. */
 function inARow(count: number, one: string, many: string): string {

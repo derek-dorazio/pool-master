@@ -7,12 +7,13 @@ import {
   Alert,
   EmptyState,
   ErrorState,
-  IdentityHeading,
+  PageHeader,
   LinkButton,
   LoadingState,
 } from '@/features/shared/ui';
 import { useLeagueSquadQuery } from '@/features/teams/use-league-squad-query';
 import { getLogger } from '@/lib/logger';
+import { plural } from '@/lib/plural';
 import { parseRouteState } from '@/routes/route-state';
 import { useLeagueContextGuard } from './league-context-guard';
 import { pickUpNextContest } from './league-home';
@@ -36,9 +37,6 @@ function useMinuteClock() {
   return now;
 }
 
-function plural(count: number, one: string, many: string) {
-  return `${count} ${count === 1 ? one : many}`;
-}
 
 /**
  * League Home: the league's identity once, then what needs the member now: the contest that
@@ -120,24 +118,19 @@ export function LeagueHomePage() {
       {viewer.isCommissioner ? <OpensSoonCard leagueCode={leagueCode} /> : null}
       <YearReviewBanner isCommissioner={viewer.isCommissioner} league={league} />
 
-      <div className="space-y-1">
-        <IdentityHeading
-          code={{ label: 'league code', value: league.leagueCode }}
-          icon={<LeagueIcon iconKey={league.iconKey} size="lg" />}
-          meta={(
-            <span data-testid="league-home-counts">
-              {plural(league.memberCount, 'member', 'members')} · {plural(league.activeContestCount, 'active contest', 'active contests')}
-            </span>
-          )}
-          name={league.name}
-          testId="league-home-identity"
-        />
-        {league.description?.trim() ? (
-          <p className="max-w-3xl pl-16 text-sm text-muted-foreground" data-testid="league-home-description">
-            {league.description}
-          </p>
-        ) : null}
-      </div>
+      <PageHeader
+        description={league.description?.trim() ? (
+          <span data-testid="league-home-description">{league.description}</span>
+        ) : undefined}
+        icon={<LeagueIcon iconKey={league.iconKey} size="lg" />}
+        meta={(
+          <span data-testid="league-home-counts">
+            {plural(league.memberCount, 'member', 'members')} · {plural(league.activeContestCount, 'active contest', 'active contests')}
+          </span>
+        )}
+        testId="league-home-identity"
+        title={league.name}
+      />
 
       {contestsQuery.isLoading ? (
         <LoadingState body="Loading contests..." />

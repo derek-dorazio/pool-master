@@ -2,7 +2,7 @@ import { getSportDefinition } from '@poolmaster/shared/domain';
 import { Flag } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import type { SportEventDto } from '@/lib/api';
-import { IdentityHeading, SegmentedControl, StatusBadge } from '@/features/shared/ui';
+import { PageHeader, SegmentedControl, StatusBadge } from '@/features/shared/ui';
 import { formatSportEventStatus, sportEventStatusTone } from './sport-admin-utils';
 import { buildSportEventPath, capitalize } from './manage-navigation';
 import { getScoringFamilyAdminUi } from './scoring-family-admin';
@@ -42,7 +42,7 @@ export function SportEventHeader({
 
   return (
     <div className="space-y-4">
-      <IdentityHeading
+      <PageHeader
         icon={<Flag aria-hidden size={22} />}
         meta={(
           <>
@@ -55,7 +55,7 @@ export function SportEventHeader({
             </span>
           </>
         )}
-        name={tournament.name}
+        title={tournament.name}
         testId="root-admin-sport-event-identity"
       />
       <nav aria-label={`${capitalize(vocabulary.event.one)} pages`} data-testid="root-admin-sport-event-menu">

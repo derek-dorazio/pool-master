@@ -71,7 +71,6 @@ export function AllYearsPage() {
             Championships
           </LinkButton>
         )}
-        description="Every year's champions, the league's records, and who has won the most."
         title="All years"
       />
       {!hasSummary ? (

@@ -138,6 +138,22 @@ describe('Members directory', () => {
     expect(second.getByText('No owners')).toBeInTheDocument();
   });
 
+  it('heads the page with member and team counts and no sentence about the page, with the search in the title row', async () => {
+    primeMemberViewer();
+    listLeagueSquadsMock.mockResolvedValue(apiSuccess(listLeagueSquadsData([
+      buildLeagueSquad(),
+      buildLeagueSquad({ id: 'team-2', name: 'Second Team' }),
+    ])));
+
+    renderTeamsPage();
+
+    await screen.findByTestId('league-team-team-2');
+    expect(screen.getByTestId('teams-page-counts')).toHaveTextContent('2 members · 2 teams');
+    expect(screen.queryByText(/and the name they play under/)).not.toBeInTheDocument();
+    const header = screen.getByRole('banner');
+    expect(within(header).getByRole('searchbox', { name: 'Find a member or owner' })).toBeInTheDocument();
+  });
+
   it('finds a member by an owner\'s name and offers no management actions to a member', async () => {
     primeMemberViewer();
     listLeagueSquadsMock.mockResolvedValue(apiSuccess(listLeagueSquadsData([

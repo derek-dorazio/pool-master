@@ -15,7 +15,7 @@ import {
   EmptyState,
   ErrorState,
   Heading,
-  IdentityHeading,
+  PageHeader,
   LinkButton,
   LoadingState,
 } from '@/features/shared/ui';
@@ -64,14 +64,8 @@ export function TeamPage() {
 
   return (
     <section className="space-y-8" data-testid="team-page">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <IdentityHeading
-          avatar={<TeamAvatar iconKey={team.iconKey} label={`${team.name} icon`} size="md" />}
-          meta={`${formatOwnerCount(team)}${team.isActive ? '' : ' · Inactive'}`}
-          name={team.name}
-          testId="team-page-identity"
-        />
-        {viewer.isCommissioner || viewer.isRootAdmin ? (
+      <PageHeader
+        actions={viewer.isCommissioner || viewer.isRootAdmin ? (
           <LinkButton
             data-testid="team-page-manage"
             size="sm"
@@ -80,8 +74,12 @@ export function TeamPage() {
           >
             Manage
           </LinkButton>
-        ) : null}
-      </div>
+        ) : undefined}
+        avatar={<TeamAvatar iconKey={team.iconKey} label={`${team.name} icon`} size="md" />}
+        meta={`${formatOwnerCount(team)}${team.isActive ? '' : ' · Inactive'}`}
+        testId="team-page-identity"
+        title={team.name}
+      />
 
       <section className="space-y-3" data-testid="team-page-owners">
         <Heading level={2} variant="subtitle">Owners</Heading>

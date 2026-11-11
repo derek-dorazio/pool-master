@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { cn } from "./class-names";
 import { DataGrid, type DataGridProps } from "./data-grid";
 import { DetailsActionsLayout } from "./details-actions-layout";
-import { PageHeader } from "./page-header";
+import { PageHeader, type PageHeaderProps } from "./page-header";
 import { ServerErrorBar } from "./server-error";
 import { EmptyState, ErrorState, LoadingState } from "./state";
 import { LOADING_TEXT } from "./state-copy";
@@ -18,18 +18,6 @@ const SHARED_ERROR_STATE_TEST_ID = "shared-error-state";
 // The permission state is its own id, not the load-failure one: "you may not see this" and
 // "this did not load" fail a spec for different reasons and should not report as one.
 const SHARED_FORBIDDEN_STATE_TEST_ID = "shared-forbidden-state";
-
-type HeaderConfig = {
-  actions?: ReactNode;
-  breadcrumbLabel?: string;
-  breadcrumbs?: Array<{
-    href?: string;
-    label: string;
-  }>;
-  description?: ReactNode;
-  eyebrow?: ReactNode;
-  title: ReactNode;
-};
 
 type AsyncPageStateProps = {
   emptyAction?: ReactNode;
@@ -122,7 +110,7 @@ type TemplatePageShellProps = AsyncPageStateProps & {
   children: ReactNode;
   className?: string;
   contentClassName?: string;
-  header?: HeaderConfig;
+  header?: PageHeaderProps;
   testId?: string;
 };
 
@@ -169,7 +157,7 @@ export type ManagementListPageProps<TData> = AsyncPageStateProps & Pick<
 > & {
   className?: string;
   contentClassName?: string;
-  header?: HeaderConfig;
+  header?: PageHeaderProps;
   testId?: string;
 };
 
@@ -233,7 +221,7 @@ export type EntityDetailPageProps = AsyncPageStateProps & {
   className?: string;
   details: ReactNode;
   detailsClassName?: string;
-  header?: HeaderConfig;
+  header?: PageHeaderProps;
   layoutClassName?: string;
   summary?: ReactNode;
   summaryClassName?: string;
