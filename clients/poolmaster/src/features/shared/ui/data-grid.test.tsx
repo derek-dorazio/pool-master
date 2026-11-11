@@ -183,6 +183,39 @@ describe("pool-master-dn4.1: shared DataGrid primitive", () => {
     expect(screen.getByRole("navigation", { name: "Pages" })).toHaveTextContent("1–2 of 5");
   });
 
+  it("narrows to a term from the page's own search box, drawing no box itself, and starts again from the first page", async () => {
+    const data = Array.from({ length: 5 }, (_, index) => ({
+      id: `row-${index + 1}`,
+      lifecycle: "Active",
+      name: `Name ${index + 1}`,
+    }));
+    const grid = (searchTerm: string) => (
+      <DataGrid
+        columns={columns}
+        data={data}
+        emptyMessage="No rows matched."
+        getRowId={(row) => row.id}
+        pageSize={2}
+        rowTestId={(row) => `test-row-${row.id}`}
+        searchTerm={searchTerm}
+        showColumnFilters={false}
+      />
+    );
+    const { rerender } = render(grid(""));
+
+    expect(screen.queryByRole("searchbox")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    expect(screen.getByRole("navigation", { name: "Pages" })).toHaveTextContent("3–4 of 5");
+
+    rerender(grid("Name"));
+    expect(await screen.findByTestId("test-row-row-1")).toBeInTheDocument();
+    expect(screen.getByRole("navigation", { name: "Pages" })).toHaveTextContent("1–2 of 5");
+
+    rerender(grid("Name 4"));
+    expect(screen.getByTestId("test-row-row-4")).toBeInTheDocument();
+    expect(screen.queryByTestId("test-row-row-1")).not.toBeInTheDocument();
+  });
+
   it("shows no pager when every row fits on one page", () => {
     render(
       <DataGrid
