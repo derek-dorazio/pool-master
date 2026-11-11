@@ -1,6 +1,7 @@
 import { useParams, useSearchParams } from 'react-router';
 import { useEffect } from 'react';
 import { ChampionshipContestList } from '@/features/championships/championship-contest-list';
+import { SquadFinishShown } from '@/features/championships/championship-view';
 import { useChampionshipContestsQuery } from '@/features/championships/use-championship-query';
 import { getLeagueLoadErrorCopy } from '@/features/leagues/league-load-error';
 import {
@@ -20,7 +21,7 @@ import { useContestFinishedYearsQuery } from './use-league-contests-query';
 
 /**
  * Contest History (#837): one year's completed contests at a time, newest first, each with its
- * winner. The year is in the link (`?year=2025`); without one, the newest year with a final contest.
+ * winner and the viewer's team's place (#1570). The year is in the link (`?year=2025`); without one, the newest year with a final contest.
  * `?focus={contestId}` tints and scrolls to the contest a contest page's breadcrumb came from.
  */
 export function LeagueContestHistoryPage() {
@@ -30,7 +31,7 @@ export function LeagueContestHistoryPage() {
   });
 
   // #202 — one league-context call, shared. Carries the viewer's own edges (A8).
-  const { query: leagueQuery, league } = useLeagueContext(leagueCode);
+  const { query: leagueQuery, league, viewer } = useLeagueContext(leagueCode);
 
   useEffect(() => {
     if (!leagueQuery.isError) {
@@ -55,7 +56,8 @@ export function LeagueContestHistoryPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const years = yearsQuery.data ?? [];
   const year = chooseContestHistoryYear(years, searchParams.get('year'));
-  const resultsQuery = useChampionshipContestsQuery(leagueId, year, null);
+  // #1570 — each row carries the viewer's team's finish, so the row shows their place.
+  const resultsQuery = useChampionshipContestsQuery(leagueId, year, null, viewer.mySquadId);
 
   if (leagueQuery.isLoading) {
     return <LoadingState body="Loading contest history..." />;
@@ -115,6 +117,7 @@ export function LeagueContestHistoryPage() {
             <ChampionshipContestList
               contests={resultsQuery.data}
               emptyBody={`No contest was completed in ${year}.`}
+              finishShown={SquadFinishShown.PLACE}
               focusContestId={searchParams.get('focus')}
               leagueCode={league.leagueCode}
               testIdPrefix="league-history-contest"

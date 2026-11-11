@@ -66,6 +66,15 @@ export function describeChampionshipStanding(championship: ChampionshipDto): str
   return toGo ? `${lead} with ${toGo} ${toGo === 1 ? 'contest' : 'contests'} to go.` : `${lead}.`;
 }
 
+/** What a row's trailing slot shows of the squad finish it carries. */
+export const SquadFinishShown = {
+  /** "T2 · 800 pts": a squad's filtered list on the Championship page. */
+  PLACE_AND_POINTS: 'PLACE_AND_POINTS',
+  /** "3rd": the viewer's own place on the Past tab (#1570). */
+  PLACE: 'PLACE',
+} as const;
+export type SquadFinishShown = (typeof SquadFinishShown)[keyof typeof SquadFinishShown];
+
 /** What narrows a year's contest list: one squad's counted contests, or with a place one cell of its matrix row. */
 export type ContestResultFilter = { squadId: string; place: number | null };
 

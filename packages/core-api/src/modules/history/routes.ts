@@ -170,7 +170,7 @@ export function historyModule(fastify: FastifyInstance, opts: MailModuleOptions 
     schema: {
       tags: ['History'],
       summary: 'List a year\'s final contests',
-      description: `Every contest of the league that went final in the championship year (US Eastern), newest first, with its winners and whether it counted. With squadId, only the counted contests that squad placed in; with squadId and place, only those it finished in that place, so each list matches the finish matrix. No paging: a league finishes a few hundred contests a year at most. ${MEMBERS_ONLY}`,
+      description: `Every contest of the league that went final in the championship year (US Eastern), newest first, with its winners and whether it counted. With squadId, only the counted contests that squad placed in; with squadId and place, only those it finished in that place, so each list matches the finish matrix. With finishOf, each contest carries that squad's finish (its place, from its best entry) without the list narrowing: Contests > Past shows the viewer's team's place this way (#1570). No paging: a league finishes a few hundred contests a year at most. ${MEMBERS_ONLY}`,
       operationId: 'listContestResults',
       querystring: schemaRef('ListContestResultsQuery'),
       response: {
