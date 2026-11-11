@@ -1,8 +1,7 @@
-import { formatSelectionTypeName, pluralize } from '@poolmaster/shared/domain';
+import { formatSelectionTypeName } from '@poolmaster/shared/domain';
 import type { ContestDto, ContestEntryDto, ContestEntryPlaceDto } from '@/lib/api';
-import { formatPlace } from '@/features/championships/cup-view';
 import { buildContestLandingPath } from '@/features/leagues/league-routing';
-import { Eyebrow, SectionEmpty, SectionRows } from '@/features/shared/ui';
+import { Eyebrow, SectionEmpty, SectionRows, formatCount, formatNumber, formatPlace, useDisplayPreferences } from '@/features/shared/ui';
 import { ContestRow } from './contest-row';
 import { CURRENT_CONTEST_GROUP_LABEL, groupCurrentContests } from './current-contests';
 import { describeMyEntry, type MyEntriesState } from './my-contest-entry';
@@ -46,6 +45,7 @@ export function CurrentContestList({
   showEntryCount?: boolean;
   testIdPrefix: string;
 }) {
+  const { locale } = useDisplayPreferences();
   const sections = groupCurrentContests(contests, { showDrafts });
   if (!sections.length) {
     return <SectionEmpty testId={`${testIdPrefix}-empty`}>{emptyBody}</SectionEmpty>;
@@ -62,7 +62,7 @@ export function CurrentContestList({
               const bestPlace = bestPlaceByContestId.get(contest.id);
               return (
                 <ContestRow
-                  details={describeContestFacts(contest, showEntryCount, myEntries?.length ?? 0)}
+                  details={describeContestFacts(contest, showEntryCount, myEntries?.length ?? 0, locale)}
                   isHighlighted={contest.id === focusContestId}
                   key={contest.id}
                   name={contest.name}
@@ -85,10 +85,10 @@ export function CurrentContestList({
  * A row's fact line after its date: the contest's kind, its entry count on the full list, and how
  * many entries the viewer has when they have more than one (#1565).
  */
-function describeContestFacts(contest: ContestDto, showEntryCount: boolean, myEntryCount: number): string {
+function describeContestFacts(contest: ContestDto, showEntryCount: boolean, myEntryCount: number, locale: string): string {
   return [
     formatSelectionTypeName(contest.selectionType),
-    ...(showEntryCount ? [pluralize(contest.entryCount ?? 0, 'entry', 'entries')] : []),
-    ...(myEntryCount > 1 ? [`Your ${String(myEntryCount)} entries`] : []),
+    ...(showEntryCount ? [formatCount(contest.entryCount ?? 0, 'entry', locale, 'entries')] : []),
+    ...(myEntryCount > 1 ? [`Your ${formatNumber(myEntryCount, locale)} entries`] : []),
   ].join(' · ');
 }

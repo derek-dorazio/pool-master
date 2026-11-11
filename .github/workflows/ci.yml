@@ -699,6 +699,18 @@ jobs:
       - name: poolmaster - typecheck
         run: npm run typecheck:webapp
       - run: npm run build:poolmaster
+      # The component gallery (#1615): a story that no longer builds against its component
+      # fails here, and the static copy is kept with the run so it can be opened or published
+      # (clients/poolmaster/README.md, Component gallery).
+      - name: poolmaster - build component gallery
+        run: npm run gallery:build --workspace @poolmaster/poolmaster
+      - name: Keep the component gallery
+        uses: actions/upload-artifact@v7
+        with:
+          name: component-gallery
+          path: clients/poolmaster/storybook-static
+          if-no-files-found: error
+          retention-days: 14
 
   # Browser e2e against a local stack (#278): the production build served by
   # `vite preview`, whose proxy routes /api to a core-api on a throwaway

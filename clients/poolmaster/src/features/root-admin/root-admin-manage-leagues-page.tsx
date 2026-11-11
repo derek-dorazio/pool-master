@@ -8,8 +8,8 @@ import { LEAGUE_PLAN_LABEL } from "@/features/plans/plan-labels";
 import { ExtendRunningGifts } from "@/features/plans/extend-running-gifts";
 import {
   ManagementListPage,
+  SectionCard,
   StatusBadge,
-  Tile,
   formatDateDisplay,
   useDisplayPreferences,
 } from "@/features/shared/ui";
@@ -124,9 +124,9 @@ export function RootAdminManageLeaguesPage() {
 
   return (
     <div className="space-y-4">
-      <Tile>
+      <SectionCard padded title="Premium preview periods">
         <ExtendRunningGifts />
-      </Tile>
+      </SectionCard>
       <ManagementListPage
         columns={columns}
         // An error shows in the grid rather than in place of it, so the search box stays to retry.

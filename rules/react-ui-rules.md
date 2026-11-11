@@ -233,6 +233,15 @@ Rules:
   or action-card rendering should be extracted once and reused.
 - The `poolmaster/no-bare-ui-controls` ESLint rule records the current bare-control
   baseline. New work should drive that count down, not add to it.
+- **A new pattern replaces the old one everywhere, in the same epic** (#1615). A ticket that
+  introduces a shared component or paradigm in place of an older one converts every call
+  site and deletes the old component before its epic closes; "migrate as touched" is not
+  allowed, because the untouched pages keep the old look and new work copies them. When the
+  conversion is too big for one PR, the follow-up tickets are opened under the same epic when
+  the pattern lands, and the old component stays marked as retiring in the gallery and the
+  catalog until the last one merges. Each new pattern also lands with a check that keeps it in
+  place (an ESLint rule or a scanner with a baseline that only shrinks, like
+  `rules:check:text-styles`) and with its gallery story (*Component Gallery*, below).
 
 ### Server Data Form-State Hazard
 
@@ -377,6 +386,20 @@ state, stale actions, and unthemeable markup accumulate.
 - If a shared primitive is almost right, extend the primitive. Do not create a
   near-duplicate just to get one extra class string.
 
+### Component Gallery
+
+- Every component file in `features/shared/ui` has a Storybook story file beside it,
+  `<name>.stories.tsx`, showing each variant and state a page may use (#1615). A new shared
+  component lands with its story; a deleted one takes its story with it.
+  `rules:check:gallery-stories` fails on either gap.
+- Stories are dev code, like tests: their example content stays in the story file
+  (`rules/testing-rules.md` §1B), nothing under `src` imports one, and coverage leaves them out.
+  A story shows the component as a page would use it, with no local styles beyond layout.
+  `rules:check:text-styles` skips `features/shared/ui`, stories included, so review enforces
+  this half (`rules/review-triggers.md` §8 *Reviewing for UI conformance*).
+- When a shared component's look or props change, its story changes in the same PR, and
+  screenshots for review are compared with the story as well as with the page's before.
+
 ### Theme And Styling Discipline
 
 - The active theme is expressed through CSS variables and semantic Tailwind
@@ -458,6 +481,20 @@ state, stale actions, and unthemeable markup accumulate.
 
 - Runtime environment reads belong in a small config module. Feature components
   should not read `import.meta.env` directly.
+- Display formatting lives in one module, `features/shared/ui/format.ts`
+  (exported from `@/features/shared/ui`), and nowhere else (#1587). It writes
+  places (`formatOrdinal` "1st", `formatPlace` "T2"), whole numbers
+  (`formatNumber`), counts with their noun (`formatCount` "1,000 entries"),
+  cup points in tenths (`formatCupPoints`), US-dollar prices (`formatMoneyCents`),
+  a list a form box reads back (`formatNumberList`), and re-exports the date
+  formatters. Numbers follow the viewer's locale, `useDisplayPreferences().locale`
+  (en-US when they have none): a German viewer sees "1.000". A view function
+  that writes a number takes the `locale` as an argument rather than fixing one.
+  Golf to-par ("-36", "E") stays with the sport scoring definitions. The
+  `poolmaster/no-inline-display-format` ESLint rule rejects `toLocaleString`,
+  `toLocaleDateString`, `toFixed` and `new Intl.*Format` anywhere else in the app.
+  A number that is never shown (an SVG coordinate, a computed width) rounds with
+  `Math.round(x * 10) / 10` rather than `toFixed`, so the rule needs no exception.
 - Date/time formatting should use the shared `formatDateDisplay` and
   `formatDateTimeDisplay` utilities with the member's `useDisplayPreferences`:
   their time zone, their clock, and English words in their locale's region

@@ -31,12 +31,12 @@ export function buildFeatureLines(features: readonly PlanFeature[], isAddition: 
  * The lowest plan lists its caps, every contest type and its features; each plan above lists
  * the caps that differ from the plan below and the features it adds.
  */
-export function buildPlanHighlights(plans: readonly ComparedPlan[]): PlanHighlights[] {
+export function buildPlanHighlights(plans: readonly ComparedPlan[], locale: string): PlanHighlights[] {
   return plans.map((plan, index) => {
     const below = index > 0 ? plans[index - 1] : undefined;
     const caps = Object.values(PlanCap)
       .filter((cap) => !below || below.caps[cap] !== plan.caps[cap])
-      .map((cap) => formatPlanCapHighlight(cap, plan.caps[cap]));
+      .map((cap) => formatPlanCapHighlight(cap, plan.caps[cap], locale));
     if (!below) {
       return {
         plan: plan.plan,

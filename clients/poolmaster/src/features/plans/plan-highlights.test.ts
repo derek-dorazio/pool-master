@@ -14,7 +14,7 @@ describe('buildPlanHighlights', () => {
   it('lists the lowest plan\'s caps, every contest type and its features, with three or more emails as one counted line', () => {
     const [free] = buildPlanHighlights([
       buildPlanEntitlements({ plan: LeaguePlan.FREE, caps: { ENTRIES_PER_CONTEST: 20, SPORTS_LEAGUES_PER_YEAR: 1 }, features: [...FREE_EMAILS, PlanFeature.PAST_YEARS] }),
-    ]);
+    ], 'en-US');
 
     expect(free).toEqual({
       plan: LeaguePlan.FREE,
@@ -31,7 +31,7 @@ describe('buildPlanHighlights', () => {
         caps: { ENTRIES_PER_CONTEST: 50, SPORTS_LEAGUES_PER_YEAR: 3 },
         features: [...FREE_EMAILS, PlanFeature.EMAIL_CONTEST_ENTRY_REMINDER, PlanFeature.EMAIL_CONTEST_STANDINGS, PlanFeature.CHAMPIONSHIP],
       }),
-    ]);
+    ], 'en-US');
 
     expect(pro).toEqual({
       plan: LeaguePlan.PRO,
@@ -51,11 +51,11 @@ describe('buildPlanHighlights', () => {
       buildPlanEntitlements({ plan: LeaguePlan.PLATINUM, features: [PlanFeature.ALL_TIME_SUMMARY, PlanFeature.RECORD_BOOK] }),
     ];
 
-    const onPremium = buildPlanHighlights(plans(LeaguePlan.PREMIUM));
+    const onPremium = buildPlanHighlights(plans(LeaguePlan.PREMIUM), 'en-US');
     expect(onPremium[1]?.lines).toContain('All years');
     expect(onPremium[2]?.lines).toEqual(['Unlimited entries per contest', 'Every sports league, every year', 'Record book']);
 
-    const onPlatinum = buildPlanHighlights(plans(LeaguePlan.PLATINUM));
+    const onPlatinum = buildPlanHighlights(plans(LeaguePlan.PLATINUM), 'en-US');
     expect(onPlatinum[1]?.lines).not.toContain('All years');
     expect(onPlatinum[2]?.lines).toContain('All years');
   });
