@@ -5,7 +5,6 @@ import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import type { SportEventParticipantDto } from '@/lib/api';
-import { capitalize } from './manage-navigation';
 import {
   EVENT_FIELD_UPLOAD_HEADERS,
   formatEventFieldUploadValues,
@@ -16,6 +15,7 @@ import {
   type EventFieldUploadRow,
 } from './event-field-upload';
 import { fieldWriteKeys } from './use-sport-event';
+import { upperFirst } from '@/lib/upper-first';
 
 const RESOLUTION_TONE: Record<EventFieldUploadPreviewRow['resolution'], 'active' | 'warning' | 'danger'> = {
   MATCHED: 'active',
@@ -98,7 +98,7 @@ export function EventFieldUploadCard({
     >
       <p className="text-sm text-muted-foreground">
         Adjust rankings, odds, seeds and withdrawals for {participant.many} already on this
-        field. {capitalize(participant.many)} must be on the field first — add them to the field to adjust them.
+        field. {upperFirst(participant.many)} must be on the field first — add them to the field to adjust them.
       </p>
       <BulkUploadPanel<EventFieldUploadRow, EventFieldUploadPreviewRow>
         apply={(rows) => applyMutation.mutateAsync(rows).then(() => undefined)}
@@ -147,7 +147,7 @@ export function EventFieldUploadCard({
                   ) : null}
                 </>
               )}
-              matchHeader={capitalize(participant.one)}
+              matchHeader={upperFirst(participant.one)}
               resolution={(entry) => <StatusBadge tone={RESOLUTION_TONE[entry.resolution]}>{entry.resolution}</StatusBadge>}
               rowTestId={(index) => `root-admin-event-field-upload-row-${index}`}
               rows={rows}

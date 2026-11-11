@@ -22,9 +22,10 @@ import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import { useDebouncedValue } from '@/lib/use-debounced-value';
 import type { ParticipantLeagueAffiliationDto } from '@/lib/api';
-import { capitalize, SEARCH_DEBOUNCE_MS } from './manage-navigation';
+import { SEARCH_DEBOUNCE_MS } from './manage-navigation';
 import { useParticipantsQuery, useSportLeagueNoun } from './use-sport-catalog';
 import { useManagedSport } from './use-managed-sport';
+import { upperFirst } from '@/lib/upper-first';
 
 const columnHelper = createColumnHelper<ParticipantLeagueAffiliationDto>();
 
@@ -137,7 +138,7 @@ export function SportLeagueRosterGridCard({
   const { sport, definition } = useManagedSport();
   const { participant } = definition.vocabulary;
   const sportLeague = useSportLeagueNoun(sport, leagueId);
-  const rosterColumns = useMemo(() => buildRosterColumns(capitalize(participant.one)), [participant.one]);
+  const rosterColumns = useMemo(() => buildRosterColumns(upperFirst(participant.one)), [participant.one]);
 
   const [draft, setDraft] = useState<Partial<Record<string, string>>>({});
   const [draftLeagueId, setDraftLeagueId] = useState(leagueId);

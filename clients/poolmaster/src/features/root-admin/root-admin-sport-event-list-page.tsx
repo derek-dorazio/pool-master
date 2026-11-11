@@ -18,13 +18,13 @@ import type { SportEventDto } from '@/lib/api';
 import {
   buildSportEventListPath,
   buildSportEventPath,
-  capitalize,
   MANAGE_LIST_PAGE_SIZE,
 } from './manage-navigation';
 import { EventYearSelect } from './event-year-select';
 import { sportEventNameColumn, sportEventScheduleColumns } from './sport-event-columns';
 import { useManagedSport } from './use-managed-sport';
 import { SportSectionMenu } from './sport-section-menu';
+import { upperFirst } from '@/lib/upper-first';
 
 const columnHelper = createColumnHelper<SportEventDto>();
 
@@ -51,7 +51,7 @@ export function RootAdminSportEventListPage() {
 
   const columns = useMemo(
     () => [
-      sportEventNameColumn(capitalize(event.one)),
+      sportEventNameColumn(upperFirst(event.one)),
       columnHelper.accessor('syncScope', {
         header: 'Sync',
         cell: ({ getValue }) => (

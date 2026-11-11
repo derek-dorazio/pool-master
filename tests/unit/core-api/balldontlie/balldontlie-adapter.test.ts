@@ -79,12 +79,12 @@ describe('BalldontlieAdapter (PGA TOUR)', () => {
   let restore: (() => void) | undefined;
   afterEach(() => restore?.());
 
-  it('identifies itself as the balldontlie provider covering golf, american football and basketball', () => {
+  it('identifies itself as the balldontlie provider covering golf, american football, basketball and soccer', () => {
     const harness = setup();
     restore = harness.restore;
     expect(harness.adapter.providerId).toBe('balldontlie');
     expect(harness.adapter.providerName).toBe('BALLDONTLIE');
-    expect(harness.adapter.sportsCovered).toEqual([Sport.GOLF, Sport.AMERICAN_FOOTBALL, Sport.BASKETBALL]);
+    expect(harness.adapter.sportsCovered).toEqual([Sport.GOLF, Sport.AMERICAN_FOOTBALL, Sport.BASKETBALL, Sport.SOCCER]);
   });
 
   describe('getUpcomingEvents', () => {

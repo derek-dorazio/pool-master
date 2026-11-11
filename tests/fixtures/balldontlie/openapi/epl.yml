@@ -1,0 +1,2144 @@
+# Vendored copy of BALLDONTLIE's published EPL OpenAPI document, unchanged below this header.
+# Source: https://www.balldontlie.io/openapi/epl.yml, fetched 2026-11-11 (sha256 5587bc243a9aa30d8ea903bfe31beda0655a10a1f7e2afc7e0e149b4ccf1718b).
+# The contract tests hold the adapter to it. Refresh it with `npm run balldontlie:contract-check -- --update-spec`.
+openapi: 3.1.0
+info:
+  title: BALLDONTLIE - EPL (English Premier League) API
+  version: 1.0.0
+  description: EPL (English Premier League) endpoints for the BallDontLie API.
+servers:
+  - url: https://api.balldontlie.io
+    description: Production server
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: Authorization
+  schemas:
+    OddsLink:
+      type: object
+      additionalProperties: false
+      required: [url, url_template]
+      description: Exactly one of url and url_template is non-null. Templates may contain {state}, {pickType}, or {wagerAmount}; the consuming application supplies these values before navigation.
+      properties:
+        url:
+          type: [string, "null"]
+          description: A complete HTTPS sportsbook URL.
+        url_template:
+          type: [string, "null"]
+          description: An HTTPS sportsbook URL requiring placeholder substitution. Use the sportsbook state code for {state}; BetRivers coupon links also require its pick type and wager amount.
+      oneOf:
+        - properties:
+            url: {type: string}
+            url_template: {type: "null"}
+        - properties:
+            url: {type: "null"}
+            url_template: {type: string}
+    OddsDeeplinks:
+      type: [object, "null"]
+      additionalProperties: false
+      required: [event, selections]
+      description: Available event and selection links, or null when unavailable. Coverage varies by sportsbook, event, and selection. Opening links do not preserve the historical price.
+      properties:
+        event:
+          oneOf:
+            - $ref: "#/components/schemas/OddsLink"
+            - type: "null"
+        selections:
+          type: object
+          description: Available links keyed by the corresponding selection. Missing links are omitted.
+          additionalProperties:
+            $ref: "#/components/schemas/OddsLink"
+      example:
+        event:
+          url: null
+          url_template: https://{state}.betrivers.com/?page=sportsbook#event/1028589932
+        selections: {}
+    CompetitionStatusState:
+      type: string
+      description: Normalized lifecycle state for cross-sport integrations. Classification may use the sport-specific lifecycle field and other available lifecycle context. `unknown` means the available lifecycle data cannot be safely classified.
+      enum:
+        - scheduled
+        - in_progress
+        - final
+        - postponed
+        - canceled
+        - delayed
+        - suspended
+        - abandoned
+        - unknown
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+    Pagination:
+      type: object
+      properties:
+        next_cursor:
+          type: integer
+          description: Cursor for the next page of results
+        prev_cursor:
+          type: integer
+          nullable: true
+          description: Cursor for the previous page of results
+        per_page:
+          type: integer
+          description: Number of results per page
+    PlayerPropMeta:
+      type: object
+      description: Metadata for player prop responses (no pagination - all results returned in single response)
+      properties:
+        per_page:
+          type: integer
+          description: Total number of results returned
+    SoccerBettingOdd:
+      type: object
+      required: [deeplinks]
+      properties:
+        deeplinks:
+          $ref: "#/components/schemas/OddsDeeplinks"
+          description: "Available sportsbook links. Selection keys: moneyline_home, moneyline_away, moneyline_draw; only keys corresponding to returned prices and available links are included. Supported books: BetMGM, BetRivers, and Caesars."
+        id:
+          type: integer
+          description: Betting odd ID
+        match_id:
+          type: integer
+          description: Match ID
+        vendor:
+          type: string
+          description: Sportsbook vendor name
+        moneyline_home_odds:
+          type: integer
+          nullable: true
+          description: Home team moneyline odds
+        moneyline_away_odds:
+          type: integer
+          nullable: true
+          description: Away team moneyline odds
+        moneyline_draw_odds:
+          type: integer
+          nullable: true
+          description: Draw moneyline odds
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+    SoccerOpeningPlayerProp:
+      type: object
+      description: Soccer player prop betting data
+      required:
+        - deeplinks
+        - id
+        - match_id
+        - player_id
+        - vendor
+        - prop_type
+        - line_value
+        - market
+        - opened_at
+      properties:
+        deeplinks:
+          $ref: "#/components/schemas/OddsDeeplinks"
+          description: "Available sportsbook links. Selection keys: over and under for over/under props; yes for milestone props; only keys corresponding to returned prices and available links are included. Supported books: BetMGM and BetRivers."
+        id:
+          type: integer
+          format: int64
+          description: Unique player prop ID
+        match_id:
+          type: integer
+          description: Match ID
+        player_id:
+          type: integer
+          description: Player ID
+        vendor:
+          type: string
+          description: Sportsbook vendor name
+          enum:
+            - betrivers
+            - betmgm
+            - draftkings
+            - fanduel
+            - caesars
+        prop_type:
+          type: string
+          description: Type of player prop
+          enum:
+            - anytime_goal
+            - assists
+            - first_goal
+            - first_half_goal
+            - goals_assists
+            - header_goal
+            - last_goal
+            - outside_box_goal
+            - saves
+            - second_half_goal
+            - shots
+            - shots_on_target
+            - tackles
+          example: anytime_goal
+        line_value:
+          type: string
+          description: The line value for the prop
+          example: "0.5"
+        market:
+          oneOf:
+            - $ref: "#/components/schemas/SoccerPlayerPropMarketOverUnder"
+            - $ref: "#/components/schemas/SoccerPlayerPropMarketMilestone"
+          description: Market information - either over_under or milestone type
+        opened_at:
+          type: string
+          format: date-time
+          description: ISO 8601 timestamp of when this prop was last updated
+    SoccerOpeningBettingOdd:
+      type: object
+      required: [deeplinks]
+      properties:
+        deeplinks:
+          $ref: "#/components/schemas/OddsDeeplinks"
+          description: "Available sportsbook links. Selection keys: moneyline_home, moneyline_away, moneyline_draw; only keys corresponding to returned prices and available links are included. Supported books: BetMGM, BetRivers, and Caesars."
+        id:
+          type: integer
+          description: Betting odd ID
+        match_id:
+          type: integer
+          description: Match ID
+        vendor:
+          type: string
+          description: Sportsbook vendor name
+        moneyline_home_odds:
+          type: integer
+          nullable: true
+          description: Home team moneyline odds
+        moneyline_away_odds:
+          type: integer
+          nullable: true
+          description: Away team moneyline odds
+        moneyline_draw_odds:
+          type: integer
+          nullable: true
+          description: Draw moneyline odds
+        opened_at:
+          type: string
+          format: date-time
+          description: Opening odds timestamp
+    SoccerMatch:
+      type: object
+      required:
+        - status_state
+      properties:
+        id:
+          type: integer
+        season:
+          type: integer
+        home_team_id:
+          type: integer
+          nullable: true
+        away_team_id:
+          type: integer
+          nullable: true
+        date:
+          type: string
+          format: date-time
+        name:
+          type: string
+          nullable: true
+        short_name:
+          type: string
+          nullable: true
+        status:
+          type: string
+          nullable: true
+        status_state:
+          allOf:
+            - $ref: "#/components/schemas/CompetitionStatusState"
+          description: Normalized lifecycle state derived from `status` and other available lifecycle context; `status` remains unchanged.
+        status_detail:
+          type: string
+          nullable: true
+        home_score:
+          type: integer
+          nullable: true
+        away_score:
+          type: integer
+          nullable: true
+        venue_name:
+          type: string
+          nullable: true
+        venue_city:
+          type: string
+          nullable: true
+        attendance:
+          type: integer
+          nullable: true
+        referee_name:
+          type: string
+          nullable: true
+        referee_country:
+          type: string
+          nullable: true
+        round_number:
+          type: integer
+          nullable: true
+        venue_latitude:
+          type: number
+          nullable: true
+        venue_longitude:
+          type: number
+          nullable: true
+        venue_capacity:
+          type: integer
+          nullable: true
+        venue_stadium_name:
+          type: string
+          nullable: true
+        home_formation:
+          type: string
+          nullable: true
+        away_formation:
+          type: string
+          nullable: true
+        home_manager_name:
+          type: string
+          nullable: true
+        away_manager_name:
+          type: string
+          nullable: true
+        first_half_home_score:
+          type: integer
+          nullable: true
+        first_half_away_score:
+          type: integer
+          nullable: true
+        second_half_home_score:
+          type: integer
+          nullable: true
+        second_half_away_score:
+          type: integer
+          nullable: true
+    SoccerMatchEvent:
+      type: object
+      properties:
+        id:
+          type: integer
+        match_id:
+          type: integer
+        team_id:
+          type: integer
+          nullable: true
+        event_type:
+          type: string
+          description: Type of event (e.g., goal, yellow_card, red_card, substitution)
+        event_time:
+          type: integer
+          nullable: true
+          description: Time in minutes when the event occurred
+        period:
+          type: integer
+          nullable: true
+          description: Period/half when the event occurred
+        player:
+          $ref: "#/components/schemas/SoccerPlayer"
+          nullable: true
+        secondary_player:
+          $ref: "#/components/schemas/SoccerPlayer"
+          nullable: true
+          description: Second player involved (e.g., substitute coming in, assisting player)
+        goal_type:
+          type: string
+          nullable: true
+        is_own_goal:
+          type: boolean
+    SoccerMatchLineup:
+      type: object
+      properties:
+        match_id:
+          type: integer
+        team_id:
+          type: integer
+        player:
+          $ref: "#/components/schemas/SoccerPlayer"
+        is_starter:
+          type: boolean
+        position:
+          type: string
+          nullable: true
+        position_abbreviation:
+          type: string
+          nullable: true
+        formation_position:
+          type: string
+          nullable: true
+        jersey_number:
+          type: string
+          nullable: true
+    SoccerPlayer:
+      type: object
+      properties:
+        id:
+          type: integer
+        first_name:
+          type: string
+          nullable: true
+        last_name:
+          type: string
+          nullable: true
+        display_name:
+          type: string
+        short_name:
+          type: string
+          nullable: true
+        date_of_birth:
+          type: string
+          format: date
+          nullable: true
+        age:
+          type: integer
+          nullable: true
+        height:
+          type: string
+          nullable: true
+        weight:
+          type: string
+          nullable: true
+        citizenship:
+          type: string
+          nullable: true
+        team_ids:
+          type: array
+          nullable: true
+          items:
+            type: integer
+        preferred_foot:
+          type: string
+          nullable: true
+          description: Preferred kicking foot (left/right/both)
+    SoccerPlayerInjury:
+      type: object
+      description: Current soccer player injury report
+      properties:
+        id:
+          type: integer
+          description: Injury report ID
+        player:
+          $ref: "#/components/schemas/SoccerPlayer"
+        team:
+          $ref: "#/components/schemas/SoccerTeam"
+        position:
+          type: string
+          nullable: true
+          description: Player position from the injury source
+        injury_type:
+          type: string
+          nullable: true
+          description: Injury or absence type
+        status:
+          type: string
+          description: Injury status, such as OUT, GTD, or SUS
+        updated_at:
+          type: string
+          format: date-time
+          description: Timestamp when the current injury snapshot was refreshed
+    SoccerPlayerMatchStats:
+      type: object
+      properties:
+        match_id:
+          type: integer
+        player_id:
+          type: integer
+        team_id:
+          type: integer
+        appearances:
+          type: integer
+        goals:
+          type: integer
+        assists:
+          type: integer
+        shots_total:
+          type: integer
+          nullable: true
+        shots_on_target:
+          type: integer
+          nullable: true
+        fouls_committed:
+          type: integer
+          nullable: true
+        fouls_suffered:
+          type: integer
+          nullable: true
+        offsides:
+          type: integer
+          nullable: true
+        saves:
+          type: integer
+          nullable: true
+        yellow_cards:
+          type: integer
+        red_cards:
+          type: integer
+        own_goals:
+          type: integer
+        rating:
+          type: number
+          nullable: true
+          description: Match rating on a 0-10 scale
+        minutes_played:
+          type: integer
+          nullable: true
+        expected_goals:
+          type: number
+          nullable: true
+        expected_assists:
+          type: number
+          nullable: true
+        key_passes:
+          type: integer
+          nullable: true
+        passes_total:
+          type: integer
+          nullable: true
+        passes_accurate:
+          type: integer
+          nullable: true
+        long_balls_total:
+          type: integer
+          nullable: true
+        long_balls_accurate:
+          type: integer
+          nullable: true
+        crosses_total:
+          type: integer
+          nullable: true
+        crosses_accurate:
+          type: integer
+          nullable: true
+        dribbles_attempted:
+          type: integer
+          nullable: true
+        dribbles_completed:
+          type: integer
+          nullable: true
+        duels_won:
+          type: integer
+          nullable: true
+        duels_lost:
+          type: integer
+          nullable: true
+        aerial_duels_won:
+          type: integer
+          nullable: true
+        aerial_duels_lost:
+          type: integer
+          nullable: true
+        tackles:
+          type: integer
+          nullable: true
+        tackles_won:
+          type: integer
+          nullable: true
+        interceptions:
+          type: integer
+          nullable: true
+        clearances:
+          type: integer
+          nullable: true
+        ball_recoveries:
+          type: integer
+          nullable: true
+        touches:
+          type: integer
+          nullable: true
+        possession_lost:
+          type: integer
+          nullable: true
+        was_fouled:
+          type: integer
+          nullable: true
+        big_chances_created:
+          type: integer
+          nullable: true
+        big_chances_missed:
+          type: integer
+          nullable: true
+        blocked_shots:
+          type: integer
+          nullable: true
+        hit_woodwork:
+          type: integer
+          nullable: true
+        total_progression:
+          type: number
+          nullable: true
+        ball_carries_count:
+          type: integer
+          nullable: true
+        ball_carries_distance:
+          type: number
+          nullable: true
+        goalkeeper_saves:
+          type: integer
+          nullable: true
+        saves_inside_box:
+          type: integer
+          nullable: true
+        penalty_saves:
+          type: integer
+          nullable: true
+        punches:
+          type: integer
+          nullable: true
+        keeper_sweeper_total:
+          type: integer
+          nullable: true
+        keeper_sweeper_accurate:
+          type: integer
+          nullable: true
+        shirt_number:
+          type: integer
+          nullable: true
+        lineup_position:
+          type: string
+          nullable: true
+        was_substitute:
+          type: boolean
+          nullable: true
+    SoccerPlayerProp:
+      type: object
+      description: Soccer player prop betting data
+      required:
+        - deeplinks
+        - id
+        - match_id
+        - player_id
+        - vendor
+        - prop_type
+        - line_value
+        - market
+        - updated_at
+      properties:
+        deeplinks:
+          $ref: "#/components/schemas/OddsDeeplinks"
+          description: "Available sportsbook links. Selection keys: over and under for over/under props; yes for milestone props; only keys corresponding to returned prices and available links are included. Supported books: BetMGM and BetRivers."
+        id:
+          type: integer
+          description: Unique player prop ID
+        match_id:
+          type: integer
+          description: Match ID
+        player_id:
+          type: integer
+          description: Player ID
+        vendor:
+          type: string
+          description: Sportsbook vendor name
+          enum:
+            - betrivers
+            - betmgm
+            - draftkings
+            - fanduel
+            - caesars
+        prop_type:
+          type: string
+          description: Type of player prop
+          enum:
+            - anytime_goal
+            - assists
+            - first_goal
+            - first_half_goal
+            - goals_assists
+            - header_goal
+            - last_goal
+            - outside_box_goal
+            - saves
+            - second_half_goal
+            - shots
+            - shots_on_target
+            - tackles
+          example: anytime_goal
+        line_value:
+          type: string
+          description: The line value for the prop
+          example: "0.5"
+        market:
+          oneOf:
+            - $ref: "#/components/schemas/SoccerPlayerPropMarketOverUnder"
+            - $ref: "#/components/schemas/SoccerPlayerPropMarketMilestone"
+          description: Market information - either over_under or milestone type
+        updated_at:
+          type: string
+          format: date-time
+          description: ISO 8601 timestamp of when this prop was last updated
+    SoccerPlayerPropMarketMilestone:
+      type: object
+      description: Milestone market type for soccer player props
+      required:
+        - type
+        - odds
+      properties:
+        type:
+          type: string
+          enum:
+            - milestone
+          description: Market type identifier
+        odds:
+          type: integer
+          description: American odds for milestone bet
+    SoccerPlayerPropMarketOverUnder:
+      type: object
+      description: Over/under market type for soccer player props
+      required:
+        - type
+        - over_odds
+        - under_odds
+      properties:
+        type:
+          type: string
+          enum:
+            - over_under
+          description: Market type identifier
+        over_odds:
+          type: integer
+          description: American odds for over bet
+        under_odds:
+          type: integer
+          description: American odds for under bet
+    SoccerRoster:
+      type: object
+      properties:
+        team_id:
+          type: integer
+        player:
+          $ref: "#/components/schemas/SoccerPlayer"
+        season:
+          type: integer
+        jersey_number:
+          type: string
+          nullable: true
+        position:
+          type: string
+          nullable: true
+        position_abbreviation:
+          type: string
+          nullable: true
+        is_active:
+          type: boolean
+    SoccerStanding:
+      type: object
+      properties:
+        team:
+          $ref: "#/components/schemas/SoccerTeam"
+        season:
+          type: integer
+        rank:
+          type: integer
+        rank_change:
+          type: integer
+          nullable: true
+        group_name:
+          type: string
+          nullable: true
+          description: Group identifier for tournament-style leagues (e.g., UCL Group A)
+        note:
+          type: string
+          nullable: true
+        games_played:
+          type: integer
+        wins:
+          type: integer
+        losses:
+          type: integer
+        draws:
+          type: integer
+        points:
+          type: integer
+        goals_for:
+          type: integer
+        goals_against:
+          type: integer
+        goal_differential:
+          type: integer
+        points_per_game:
+          type: number
+          nullable: true
+    SoccerTeam:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        short_name:
+          type: string
+          nullable: true
+        abbreviation:
+          type: string
+          nullable: true
+        location:
+          type: string
+          nullable: true
+    SoccerTeamMatchStats:
+      type: object
+      properties:
+        match_id:
+          type: integer
+        team_id:
+          type: integer
+        possession_pct:
+          type: number
+          nullable: true
+        shots:
+          type: integer
+          nullable: true
+        shots_on_target:
+          type: integer
+          nullable: true
+        fouls:
+          type: integer
+          nullable: true
+        yellow_cards:
+          type: integer
+          nullable: true
+        red_cards:
+          type: integer
+          nullable: true
+        corners:
+          type: integer
+          nullable: true
+        passes:
+          type: integer
+          nullable: true
+        pass_accuracy_pct:
+          type: number
+          nullable: true
+        expected_goals:
+          type: number
+          nullable: true
+        big_chances:
+          type: integer
+          nullable: true
+        big_chances_missed:
+          type: integer
+          nullable: true
+        shots_off_target:
+          type: integer
+          nullable: true
+        shots_blocked:
+          type: integer
+          nullable: true
+        shots_inside_box:
+          type: integer
+          nullable: true
+        shots_outside_box:
+          type: integer
+          nullable: true
+        hit_woodwork:
+          type: integer
+          nullable: true
+        offsides:
+          type: integer
+          nullable: true
+        throw_ins:
+          type: integer
+          nullable: true
+        goal_kicks:
+          type: integer
+          nullable: true
+        free_kicks:
+          type: integer
+          nullable: true
+        long_balls_total:
+          type: integer
+          nullable: true
+        long_balls_accurate:
+          type: integer
+          nullable: true
+        crosses_total:
+          type: integer
+          nullable: true
+        crosses_accurate:
+          type: integer
+          nullable: true
+        ground_duels_won:
+          type: integer
+          nullable: true
+        ground_duels_total:
+          type: integer
+          nullable: true
+        aerial_duels_won:
+          type: integer
+          nullable: true
+        aerial_duels_total:
+          type: integer
+          nullable: true
+        dribbles_completed:
+          type: integer
+          nullable: true
+        dribbles_total:
+          type: integer
+          nullable: true
+        tackles:
+          type: integer
+          nullable: true
+        interceptions:
+          type: integer
+          nullable: true
+        clearances:
+          type: integer
+          nullable: true
+        saves:
+          type: integer
+          nullable: true
+        big_saves:
+          type: integer
+          nullable: true
+    SoccerMatchShot:
+      type: object
+      properties:
+        id:
+          type: integer
+        match_id:
+          type: integer
+        player_id:
+          type: integer
+        team_id:
+          type: integer
+        is_home:
+          type: boolean
+        shot_type:
+          type: string
+          description: One of goal, save, miss, block, post
+        situation:
+          type: string
+          nullable: true
+        body_part:
+          type: string
+          nullable: true
+        goal_type:
+          type: string
+          nullable: true
+        xg:
+          type: number
+          nullable: true
+        xgot:
+          type: number
+          nullable: true
+        player_x:
+          type: number
+          nullable: true
+        player_y:
+          type: number
+          nullable: true
+        goal_mouth_x:
+          type: number
+          nullable: true
+        goal_mouth_y:
+          type: number
+          nullable: true
+        block_x:
+          type: number
+          nullable: true
+        block_y:
+          type: number
+          nullable: true
+        time_minute:
+          type: integer
+        added_time:
+          type: integer
+          nullable: true
+        time_seconds:
+          type: integer
+          nullable: true
+    SoccerMatchMomentumPoint:
+      type: object
+      properties:
+        match_id:
+          type: integer
+        minute:
+          type: number
+        value:
+          type: number
+    SoccerMatchBestPlayer:
+      type: object
+      properties:
+        match_id:
+          type: integer
+        player_id:
+          type: integer
+        team_id:
+          type: integer
+        is_home:
+          type: boolean
+        side_rank:
+          type: integer
+        is_man_of_match:
+          type: boolean
+        rating:
+          type: number
+          nullable: true
+    SoccerMatchAvgPosition:
+      type: object
+      properties:
+        match_id:
+          type: integer
+        player_id:
+          type: integer
+        team_id:
+          type: integer
+        is_home:
+          type: boolean
+        avg_x:
+          type: number
+        avg_y:
+          type: number
+    SoccerMatchHeatmap:
+      type: object
+      description: |
+        Per-player heatmap dots for a match. Heatmap data is published only after a
+        match concludes; in-progress matches return zero heatmap rows.
+      properties:
+        match_id:
+          type: integer
+        player_id:
+          type: integer
+        team_id:
+          type: integer
+          nullable: true
+        dots:
+          type: array
+          items:
+            type: object
+            properties:
+              x:
+                type: integer
+              y:
+                type: integer
+        dot_count:
+          type: integer
+    SoccerMatchPregameForm:
+      type: object
+      description: Pre-match team-form summary
+      properties:
+        match_id:
+          type: integer
+        team_id:
+          type: integer
+        is_home:
+          type: boolean
+        avg_rating:
+          type: number
+          nullable: true
+        position:
+          type: integer
+          nullable: true
+        value:
+          type: string
+          nullable: true
+          description: Recent-points summary string
+        form:
+          type: array
+          nullable: true
+          minItems: 0
+          maxItems: 5
+          items:
+            type: string
+            enum:
+              - W
+              - D
+              - L
+          description: Up to 5 of the team's most-recent results (newest first)
+  parameters:
+    CursorParam:
+      name: cursor
+      in: query
+      required: false
+      schema:
+        type: integer
+      description: The cursor for pagination
+    PerPageParam:
+      name: per_page
+      in: query
+      required: false
+      schema:
+        type: integer
+        maximum: 100
+        default: 25
+      description: Number of results per page
+  responses:
+    UnauthorizedError:
+      description: Unauthorized - Missing or invalid API key
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    BadRequestError:
+      description: Bad Request - Invalid parameters
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    NotFoundError:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    RateLimitError:
+      description: Too many requests
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    ServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+security:
+  - ApiKeyAuth: []
+paths:
+  /epl/v2/teams:
+    get:
+      summary: Get EPL teams
+      description: Get all teams participating in the English Premier League for a given season
+      tags:
+        - EPL
+      parameters:
+        - name: season
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: Filter by season year. Defaults to the current season if omitted.
+      responses:
+        "200":
+          description: List of EPL teams
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/SoccerTeam"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "429":
+          $ref: "#/components/responses/RateLimitError"
+        "500":
+          $ref: "#/components/responses/ServerError"
+  /epl/v2/rosters:
+    get:
+      summary: Get EPL team rosters
+      description: Get player roster information for a specific team and season
+      tags:
+        - EPL
+      parameters:
+        - name: team_id
+          in: query
+          required: true
+          schema:
+            type: integer
+          description: Team ID
+        - name: season
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: Filter by season year
+      responses:
+        "200":
+          description: Team roster
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/SoccerRoster"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "429":
+          $ref: "#/components/responses/RateLimitError"
+        "500":
+          $ref: "#/components/responses/ServerError"
+  /epl/v2/players:
+    get:
+      summary: Get EPL players
+      description: Get players with optional filtering by team or search term. Supports pagination.
+      tags:
+        - EPL
+      parameters:
+        - $ref: "#/components/parameters/CursorParam"
+        - $ref: "#/components/parameters/PerPageParam"
+        - name: team_ids
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: integer
+          style: form
+          explode: true
+          description: Filter by team IDs
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Search players by name
+      responses:
+        "200":
+          description: List of EPL players
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/SoccerPlayer"
+                  meta:
+                    $ref: "#/components/schemas/Pagination"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "429":
+          $ref: "#/components/responses/RateLimitError"
+        "500":
+          $ref: "#/components/responses/ServerError"
+  /epl/v2/player_injuries:
+    get:
+      summary: Get EPL player injuries
+      description: Retrieve the current EPL player injury snapshot. Supports filtering by player IDs, team IDs, or injury status. Requires GOAT tier access.
+      tags:
+        - EPL
+      parameters:
+        - $ref: "#/components/parameters/CursorParam"
+        - $ref: "#/components/parameters/PerPageParam"
+        - name: player_ids
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: integer
+          style: form
+          explode: true
+          description: Filter by player IDs
+        - name: team_ids
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: integer
+          style: form
+          explode: true
+          description: Filter by team IDs
+        - name: statuses
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+          style: form
+          explode: true
+          description: Filter by injury statuses, such as OUT, GTD, or SUS
+      responses:
+        "200":
+          description: List of EPL player injuries
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/SoccerPlayerInjury"
+                  meta:
+                    $ref: "#/components/schemas/Pagination"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "429":
+          $ref: "#/components/responses/RateLimitError"
+        "500":
+          $ref: "#/components/responses/ServerError"
+  /epl/v2/standings:
+    get:
+      summary: Get EPL standings
+      description: Get league standings for a specific season
+      tags:
+        - EPL
+      parameters:
+        - name: season
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: Filter by season year
+      responses:
+        "200":
+          description: League standings
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/SoccerStanding"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "429":
+          $ref: "#/components/responses/RateLimitError"
+        "500":
+          $ref: "#/components/responses/ServerError"
+  /epl/v2/matches:
+    get:
+      summary: Get EPL matches
+      description: Get matches with optional filtering by season, dates, or teams. Supports pagination.
+      tags:
+        - EPL
+      parameters:
+        - $ref: "#/components/parameters/CursorParam"
+        - $ref: "#/components/parameters/PerPageParam"
+        - name: season
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: Filter by season year
+        - name: dates
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              format: date
+          style: form
+          explode: true
+          description: Filter by specific dates (YYYY-MM-DD format)
+        - name: team_ids
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: integer
+          style: form
+          explode: true
+          description: Filter by team IDs
+      responses:
+        "200":
+          description: List of matches
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/SoccerMatch"
+                  meta:
+                    $ref: "#/components/schemas/Pagination"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "429":
+          $ref: "#/components/responses/RateLimitError"
+        "500":
+          $ref: "#/components/responses/ServerError"
+  /epl/v2/match_events:
+    get:
+      summary: Get EPL match events
+      description: Get events (goals, cards, substitutions) for matches. Supports pagination.
+      tags:
+        - EPL
+      parameters:
+        - $ref: "#/components/parameters/CursorParam"
+        - $ref: "#/components/parameters/PerPageParam"
+        - name: match_ids
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: integer
+          style: form
+          explode: true
+          description: Filter by match IDs
+      responses:
+        "200":
+          description: List of match events
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/SoccerMatchEvent"
+                  meta:
+                    $ref: "#/components/schemas/Pagination"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "429":
+          $ref: "#/components/responses/RateLimitError"
+        "500":
+          $ref: "#/components/responses/ServerError"
+  /epl/v2/match_lineups:
+    get:
+      summary: Get EPL match lineups
+      description: Get player lineups for matches. Supports pagination.
+      tags:
+        - EPL
+      parameters:
+        - $ref: "#/components/parameters/CursorParam"
+        - $ref: "#/components/parameters/PerPageParam"
+        - name: match_ids
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: integer
+          style: form
+          explode: true
+          description: Filter by match IDs
+      responses:
+        "200":
+          description: Match lineups
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/SoccerMatchLineup"
+                  meta:
+                    $ref: "#/components/schemas/Pagination"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "429":
+          $ref: "#/components/responses/RateLimitError"
+        "500":
+          $ref: "#/components/responses/ServerError"
+  /epl/v2/player_match_stats:
+    get:
+      summary: Get EPL player match statistics
+      description: Get individual player statistics for matches. Supports pagination.
+      tags:
+        - EPL
+      parameters:
+        - $ref: "#/components/parameters/CursorParam"
+        - $ref: "#/components/parameters/PerPageParam"
+        - name: match_ids
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: integer
+          style: form
+          explode: true
+          description: Filter by match IDs
+        - name: player_ids
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: integer
+          style: form
+          explode: true
+          description: Filter by player IDs
+      responses:
+        "200":
+          description: Player match statistics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/SoccerPlayerMatchStats"
+                  meta:
+                    $ref: "#/components/schemas/Pagination"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "429":
+          $ref: "#/components/responses/RateLimitError"
+        "500":
+          $ref: "#/components/responses/ServerError"
+  /epl/v2/team_match_stats:
+    get:
+      summary: Get EPL team match statistics
+      description: Get team-level statistics for matches. Supports pagination.
+      tags:
+        - EPL
+      parameters:
+        - $ref: "#/components/parameters/CursorParam"
+        - $ref: "#/components/parameters/PerPageParam"
+        - name: match_ids
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: integer
+          style: form
+          explode: true
+          description: Filter by match IDs
+        - name: team_ids
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: integer
+          style: form
+          explode: true
+          description: Filter by team IDs
+      responses:
+        "200":
+          description: Team match statistics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/SoccerTeamMatchStats"
+                  meta:
+                    $ref: "#/components/schemas/Pagination"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "429":
+          $ref: "#/components/responses/RateLimitError"
+        "500":
+          $ref: "#/components/responses/ServerError"
+  /epl/v2/odds:
+    get:
+      summary: Get EPL betting odds
+      description: Get betting odds for EPL matches. Filter by match IDs or dates. Supports pagination.
+      tags:
+        - EPL
+      parameters:
+        - $ref: "#/components/parameters/CursorParam"
+        - $ref: "#/components/parameters/PerPageParam"
+        - name: match_ids
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: integer
+          style: form
+          explode: true
+          description: Filter by match IDs
+        - name: dates
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              format: date
+          style: form
+          explode: true
+          description: Filter by specific dates (YYYY-MM-DD format)
+      responses:
+        "200":
+          description: Betting odds
+          content:
+            application/json:
+              example:
+                data:
+                  - id: 89549453
+                    match_id: 1773
+                    vendor: betrivers
+                    deeplinks:
+                      event:
+                        url: https://pa.betrivers.com/?page=sportsbook#event/1028589932
+                        url_template: null
+                      selections:
+                        moneyline_home:
+                          url: null
+                          url_template: >-
+                            https://{state}.betrivers.com/?page=sportsbook#event/1028589932?coupon={pickType}|4365195318|{wagerAmount}
+                        moneyline_away:
+                          url: null
+                          url_template: >-
+                            https://{state}.betrivers.com/?page=sportsbook#event/1028589932?coupon={pickType}|4365195319|{wagerAmount}
+                    moneyline_home_odds: -110
+                    moneyline_away_odds: 260
+                    moneyline_draw_odds: 280
+                    updated_at: '2026-01-17T15:01:00.387Z'
+                meta:
+                  next_cursor: 89548959
+                  per_page: 3
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/SoccerBettingOdd"
+                  meta:
+                    $ref: "#/components/schemas/Pagination"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "429":
+          $ref: "#/components/responses/RateLimitError"
+        "500":
+          $ref: "#/components/responses/ServerError"
+  /epl/v2/odds/opening:
+    get:
+      summary: Get EPL opening betting odds
+      description: Retrieve historical opening betting odds. Coverage is limited to the most recently completed season and ongoing seasons where available. Requires GOAT tier.
+      tags:
+        - EPL
+      parameters:
+        - $ref: "#/components/parameters/CursorParam"
+        - $ref: "#/components/parameters/PerPageParam"
+        - name: match_ids
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: integer
+          style: form
+          explode: true
+          description: Filter by match IDs
+        - name: dates
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              format: date
+          style: form
+          explode: true
+          description: Filter by match dates
+      responses:
+        "200":
+          description: Opening odds
+          content:
+            application/json:
+              example:
+                data:
+                  - id: 97909455
+                    match_id: 1562
+                    vendor: betrivers
+                    deeplinks:
+                      event:
+                        url: https://pa.betrivers.com/?page=sportsbook#event/1028589932
+                        url_template: null
+                      selections:
+                        moneyline_home:
+                          url: null
+                          url_template: >-
+                            https://{state}.betrivers.com/?page=sportsbook#event/1028589932?coupon={pickType}|4365195318|{wagerAmount}
+                        moneyline_away:
+                          url: null
+                          url_template: >-
+                            https://{state}.betrivers.com/?page=sportsbook#event/1028589932?coupon={pickType}|4365195319|{wagerAmount}
+                    moneyline_home_odds: 135
+                    moneyline_away_odds: 220
+                    moneyline_draw_odds: 225
+                    opened_at: '2025-08-18T16:00:00.000Z'
+                meta:
+                  next_cursor: 97909455
+                  per_page: 1
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/SoccerOpeningBettingOdd"
+                  meta:
+                    $ref: "#/components/schemas/Pagination"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "429":
+          $ref: "#/components/responses/RateLimitError"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+  /epl/v2/odds/player_props:
+    get:
+      summary: Get EPL player prop betting odds
+      description: |
+        Retrieve live player prop betting data for EPL matches. Player prop data is LIVE and updated in real-time.
+        We do not store historical data. As matches near completion, many (or all) player props may be removed from sportsbooks.
+
+        **Note:** This endpoint returns all player props for the specified match in a single response. Pagination is not supported.
+
+        The API supports two market types:
+        - **over_under**: Traditional over/under markets where users can bet on whether a player will go over or under a specific line value
+        - **milestone**: Milestone markets where users bet on whether a player will reach a specific achievement
+
+        Available vendors: draftkings, fanduel, caesars (more coming soon!)
+      tags:
+        - EPL
+      parameters:
+        - name: match_id
+          in: query
+          required: true
+          schema:
+            type: integer
+          description: The match ID to retrieve player props for (required)
+      responses:
+        "200":
+          description: Player prop betting odds
+          content:
+            application/json:
+              example:
+                data:
+                  - id: 1125005626
+                    match_id: 2410
+                    player_id: 1240
+                    vendor: betrivers
+                    deeplinks:
+                      event:
+                        url: https://pa.betrivers.com/?page=sportsbook#event/1028589932
+                        url_template: null
+                      selections:
+                        'yes':
+                          url: null
+                          url_template: >-
+                            https://{state}.betrivers.com/?page=sportsbook#event/1028589932?coupon={pickType}|4365195318|{wagerAmount}
+                    prop_type: anytime_goal
+                    line_value: '1'
+                    market:
+                      type: milestone
+                      odds: 5000
+                    updated_at: '2025-12-22T21:54:02.301Z'
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/SoccerPlayerProp"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "429":
+          $ref: "#/components/responses/RateLimitError"
+        "500":
+          $ref: "#/components/responses/ServerError"
+  /epl/v2/odds/player_props/opening:
+    get:
+      summary: Get EPL opening player prop odds
+      description: Retrieve historical opening player prop betting odds. Coverage is limited to the most recently completed season and ongoing seasons where available. Requires GOAT tier.
+      tags:
+        - EPL
+      parameters:
+        - name: match_id
+          in: query
+          required: true
+          schema:
+            type: integer
+          description: The match ID to retrieve opening player props for
+        - name: player_id
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: Filter props for a specific player
+        - name: prop_type
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter by prop type
+        - name: vendors
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+          style: form
+          explode: true
+          description: Filter by sportsbook vendors
+      responses:
+        "200":
+          description: Opening odds
+          content:
+            application/json:
+              example:
+                data:
+                  - id: 2250903461
+                    match_id: 1562
+                    player_id: 208
+                    vendor: betrivers
+                    deeplinks:
+                      event:
+                        url: https://pa.betrivers.com/?page=sportsbook#event/1028589932
+                        url_template: null
+                      selections:
+                        'yes':
+                          url: null
+                          url_template: >-
+                            https://{state}.betrivers.com/?page=sportsbook#event/1028589932?coupon={pickType}|4365195318|{wagerAmount}
+                    prop_type: anytime_goal
+                    line_value: '0.5'
+                    market:
+                      type: milestone
+                      odds: 300
+                    opened_at: '2025-08-18T16:00:00.000Z'
+                meta:
+                  per_page: 1
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/SoccerOpeningPlayerProp"
+                  meta:
+                    $ref: "#/components/schemas/PlayerPropMeta"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "429":
+          $ref: "#/components/responses/RateLimitError"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+  /epl/v2/match_shots:
+    get:
+      summary: Get EPL match shots
+      description: |
+        Retrieve shot-map entries with expected goals (xG / xGoT) and pitch
+        coordinates. Available for matches in the current and future seasons
+        only; older matches return empty results. Requires GOAT tier.
+      tags:
+        - EPL
+      parameters:
+        - $ref: "#/components/parameters/CursorParam"
+        - $ref: "#/components/parameters/PerPageParam"
+        - name: match_ids
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: integer
+          style: form
+          explode: true
+        - name: player_ids
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: integer
+          style: form
+          explode: true
+      responses:
+        "200":
+          description: Match shot entries
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/SoccerMatchShot"
+                  meta:
+                    $ref: "#/components/schemas/Pagination"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "429":
+          $ref: "#/components/responses/RateLimitError"
+        "500":
+          $ref: "#/components/responses/ServerError"
+  /epl/v2/match_momentum:
+    get:
+      summary: Get EPL match attack momentum
+      description: |
+        Retrieve per-minute attack momentum values. Positive values favor the
+        home side, negative values favor the away side. Available for matches
+        in the current and future seasons only. Requires GOAT tier.
+      tags:
+        - EPL
+      parameters:
+        - $ref: "#/components/parameters/CursorParam"
+        - $ref: "#/components/parameters/PerPageParam"
+        - name: match_ids
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: integer
+          style: form
+          explode: true
+      responses:
+        "200":
+          description: Per-minute momentum points
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/SoccerMatchMomentumPoint"
+                  meta:
+                    $ref: "#/components/schemas/Pagination"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "429":
+          $ref: "#/components/responses/RateLimitError"
+        "500":
+          $ref: "#/components/responses/ServerError"
+  /epl/v2/match_best_players:
+    get:
+      summary: Get EPL match top performers
+      description: |
+        Retrieve the top-rated players for each match (best XI per side and
+        the man of the match). Available for matches in the current and
+        future seasons only. Requires GOAT tier.
+      tags:
+        - EPL
+      parameters:
+        - $ref: "#/components/parameters/CursorParam"
+        - $ref: "#/components/parameters/PerPageParam"
+        - name: match_ids
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: integer
+          style: form
+          explode: true
+      responses:
+        "200":
+          description: Match best player entries
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/SoccerMatchBestPlayer"
+                  meta:
+                    $ref: "#/components/schemas/Pagination"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "429":
+          $ref: "#/components/responses/RateLimitError"
+        "500":
+          $ref: "#/components/responses/ServerError"
+  /epl/v2/match_avg_positions:
+    get:
+      summary: Get EPL player average positions
+      description: |
+        Retrieve each player's average pitch position (heatmap centroid) for
+        a match. Coordinates are normalized 0-100. Available for matches in
+        the current and future seasons only. Requires GOAT tier.
+      tags:
+        - EPL
+      parameters:
+        - $ref: "#/components/parameters/CursorParam"
+        - $ref: "#/components/parameters/PerPageParam"
+        - name: match_ids
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: integer
+          style: form
+          explode: true
+        - name: team_ids
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: integer
+          style: form
+          explode: true
+      responses:
+        "200":
+          description: Player average position entries
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/SoccerMatchAvgPosition"
+                  meta:
+                    $ref: "#/components/schemas/Pagination"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "429":
+          $ref: "#/components/responses/RateLimitError"
+        "500":
+          $ref: "#/components/responses/ServerError"
+  /epl/v2/match_heatmaps:
+    get:
+      summary: Get EPL player heatmaps
+      description: |
+        Retrieve per-player heatmap dots for a match. Heatmap data is
+        published only after a match concludes; in-progress matches return
+        zero heatmap rows, with data landing within ~20 minutes of full-time.
+        Requires GOAT tier.
+      tags:
+        - EPL
+      parameters:
+        - $ref: "#/components/parameters/CursorParam"
+        - $ref: "#/components/parameters/PerPageParam"
+        - name: match_ids
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: integer
+          style: form
+          explode: true
+        - name: player_ids
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: integer
+          style: form
+          explode: true
+      responses:
+        "200":
+          description: Per-player heatmap entries
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/SoccerMatchHeatmap"
+                  meta:
+                    $ref: "#/components/schemas/Pagination"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "429":
+          $ref: "#/components/responses/RateLimitError"
+        "500":
+          $ref: "#/components/responses/ServerError"
+  /epl/v2/match_pregame_forms:
+    get:
+      summary: Get EPL pre-match team form
+      description: |
+        Retrieve a pre-match team-form summary for each side - recent
+        average rating, league position entering the match, and a list of
+        the team's most-recent results. Available for matches in the current
+        and future seasons only. Requires GOAT tier.
+      tags:
+        - EPL
+      parameters:
+        - $ref: "#/components/parameters/CursorParam"
+        - $ref: "#/components/parameters/PerPageParam"
+        - name: match_ids
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: integer
+          style: form
+          explode: true
+      responses:
+        "200":
+          description: Pre-match team form entries
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/SoccerMatchPregameForm"
+                  meta:
+                    $ref: "#/components/schemas/Pagination"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "429":
+          $ref: "#/components/responses/RateLimitError"
+        "500":
+          $ref: "#/components/responses/ServerError"

@@ -8,9 +8,10 @@ import {
 import { SportEventManualCreateForm } from './sport-event-manual-create-form';
 import { SportEventProviderBrowse } from './sport-event-provider-browse';
 import type { SportEventEdition } from './sport-event-edition';
-import { buildSportLeagueListPath, capitalize } from './manage-navigation';
+import { buildSportLeagueListPath } from './manage-navigation';
 import { useSportLeaguesQuery } from './use-sport-catalog';
 import { useManagedSport } from './use-managed-sport';
+import { upperFirst } from '@/lib/upper-first';
 
 type CreateMode = 'manual' | 'provider';
 
@@ -70,7 +71,7 @@ export function RootAdminSportEventCreatePage() {
               to={buildSportLeagueListPath(sport)}
               variant="secondary"
             >
-              Go to {capitalize(sportLeagueNoun.many)}
+              Go to {upperFirst(sportLeagueNoun.many)}
             </LinkButton>
           </div>
         </Callout>
@@ -84,7 +85,7 @@ export function RootAdminSportEventCreatePage() {
       data-testid="root-admin-sport-event-create-page"
     >
       <SegmentedControl
-        aria-label={`${capitalize(event.one)} creation mode`}
+        aria-label={`${upperFirst(event.one)} creation mode`}
         onChange={(value) => setMode(value as CreateMode)}
         options={[
           { label: 'Build manually', value: 'manual' },

@@ -30,8 +30,8 @@ import {
   type RaceResultPreviewRow,
   type RaceResultUploadRow,
 } from './race-result-upload';
-import { capitalize } from './manage-navigation';
 import { useSportEventFieldQuery } from './use-sport-event';
+import { upperFirst } from '@/lib/upper-first';
 
 const RESOLUTION_TONE: Record<RaceResultPreviewRow['resolution'], 'active' | 'warning' | 'danger'> = {
   MATCHED: 'active',
@@ -140,7 +140,7 @@ function StoredFinishingOrder({ event, field }: { event: SportEventDto; field: r
               <TableHead>
                 <tr>
                   <TableHeaderCell>Finish</TableHeaderCell>
-                  <TableHeaderCell>{capitalize(vocabulary.participant.one)}</TableHeaderCell>
+                  <TableHeaderCell>{upperFirst(vocabulary.participant.one)}</TableHeaderCell>
                   <TableHeaderCell>Start</TableHeaderCell>
                   {vocabulary.rider !== undefined ? <TableHeaderCell>{vocabulary.rider}</TableHeaderCell> : null}
                 </tr>
@@ -222,7 +222,7 @@ function FinishingOrderUploadCard({ event, field }: { event: SportEventDto; fiel
   return (
     <SectionCard headingLevel={3} padded title="Finishing order">
       <p className="text-sm text-muted-foreground">
-        {`Paste or upload the ${vocabulary.round.one}'s result: a place for each ${vocabulary.participant.one} that finished, or DNF, DQ or DNS. Preview it, then apply. ${capitalize(vocabulary.participant.many)} you leave out keep the result they have.`}
+        {`Paste or upload the ${vocabulary.round.one}'s result: a place for each ${vocabulary.participant.one} that finished, or DNF, DQ or DNS. Preview it, then apply. ${upperFirst(vocabulary.participant.many)} you leave out keep the result they have.`}
       </p>
       <label className="mt-4 flex items-center gap-2 text-sm text-foreground">
         <Checkbox
@@ -274,7 +274,7 @@ function FinishingOrderUploadCard({ event, field }: { event: SportEventDto; fiel
                 }}
                 describeRow={(entry) => describeRow(entry.row)}
                 match={(entry) => entry.participantName ?? '—'}
-                matchHeader={capitalize(vocabulary.participant.one)}
+                matchHeader={upperFirst(vocabulary.participant.one)}
                 resolution={(entry) => <StatusBadge tone={RESOLUTION_TONE[entry.resolution]}>{RESOLUTION_LABEL[entry.resolution]}</StatusBadge>}
                 resolutionHeader="Match"
                 rows={rows}

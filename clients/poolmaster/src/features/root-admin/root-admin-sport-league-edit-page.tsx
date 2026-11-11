@@ -6,10 +6,11 @@ import { z } from 'zod';
 import type { SportLeagueDto } from '@/lib/api';
 import { FormField, FormPage, Input } from '@/features/shared/ui';
 import { formPageSave } from '@/lib/form-page-save';
-import { buildSportLeaguePath, capitalize } from './manage-navigation';
+import { buildSportLeaguePath } from './manage-navigation';
 import { useManagedSport } from './use-managed-sport';
 import { SportLeaguePage } from './sport-league-page';
 import { useUpdateSportLeague } from './use-update-sport-league';
+import { upperFirst } from '@/lib/upper-first';
 
 const editSchema = z.object({
   name: z.string().trim().min(1, 'A name is required'),
@@ -49,7 +50,7 @@ function SportLeagueEditForm({ sportLeague }: { sportLeague: SportLeagueDto }) {
       testId="root-admin-sport-league-edit-page"
       title="Edit details"
     >
-      <FormField error={form.formState.errors.name?.message} label={`${capitalize(sportLeagueNoun.one)} name`}>
+      <FormField error={form.formState.errors.name?.message} label={`${upperFirst(sportLeagueNoun.one)} name`}>
         <Input data-testid="root-admin-sport-league-edit-name" {...form.register('name')} />
       </FormField>
       <FormField
