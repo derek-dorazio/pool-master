@@ -481,6 +481,20 @@ state, stale actions, and unthemeable markup accumulate.
 
 - Runtime environment reads belong in a small config module. Feature components
   should not read `import.meta.env` directly.
+- Display formatting lives in one module, `features/shared/ui/format.ts`
+  (exported from `@/features/shared/ui`), and nowhere else (#1587). It writes
+  places (`formatOrdinal` "1st", `formatPlace` "T2"), whole numbers
+  (`formatNumber`), counts with their noun (`formatCount` "1,000 entries"),
+  cup points in tenths (`formatCupPoints`), US-dollar prices (`formatMoneyCents`),
+  a list a form box reads back (`formatNumberList`), and re-exports the date
+  formatters. Numbers follow the viewer's locale, `useDisplayPreferences().locale`
+  (en-US when they have none): a German viewer sees "1.000". A view function
+  that writes a number takes the `locale` as an argument rather than fixing one.
+  Golf to-par ("-36", "E") stays with the sport scoring definitions. The
+  `poolmaster/no-inline-display-format` ESLint rule rejects `toLocaleString`,
+  `toLocaleDateString`, `toFixed` and `new Intl.*Format` anywhere else in the app.
+  A number that is never shown (an SVG coordinate, a computed width) rounds with
+  `Math.round(x * 10) / 10` rather than `toFixed`, so the rule needs no exception.
 - Date/time formatting should use the shared `formatDateDisplay` and
   `formatDateTimeDisplay` utilities with the member's `useDisplayPreferences`:
   their time zone, their clock, and English words in their locale's region

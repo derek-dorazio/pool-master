@@ -1,0 +1,285 @@
+{
+  "data": [
+    {
+      "id": 2201,
+      "match_number": 1,
+      "datetime": "2022-11-20T16:00:00.000Z",
+      "status": "completed",
+      "status_state": "final",
+      "clock_display": null,
+      "clock_seconds": null,
+      "season": {
+        "id": 2,
+        "year": 2022
+      },
+      "stage": {
+        "id": 1,
+        "name": "Group Stage",
+        "order": 1
+      },
+      "group": {
+        "id": 1,
+        "name": "A"
+      },
+      "stadium": null,
+      "home_team": {
+        "id": 29,
+        "name": "Qatar",
+        "abbreviation": "QAT",
+        "country_code": "QA",
+        "confederation": "AFC"
+      },
+      "away_team": {
+        "id": 13,
+        "name": "Ecuador",
+        "abbreviation": "ECU",
+        "country_code": "EC",
+        "confederation": "CONMEBOL"
+      },
+      "home_team_source": null,
+      "away_team_source": null,
+      "home_score": 0,
+      "away_score": 2,
+      "home_score_penalties": null,
+      "away_score_penalties": null,
+      "first_half_home_score": null,
+      "first_half_away_score": null,
+      "second_half_home_score": null,
+      "second_half_away_score": null,
+      "extra_time_home_score": null,
+      "extra_time_away_score": null,
+      "has_extra_time": false,
+      "has_penalty_shootout": false,
+      "round_number": null,
+      "round_name": null,
+      "home_formation": null,
+      "away_formation": null,
+      "referee": null,
+      "home_manager": null,
+      "away_manager": null
+    },
+    {
+      "id": 2249,
+      "match_number": 49,
+      "datetime": "2022-12-03T15:00:00.000Z",
+      "status": "completed",
+      "status_state": "final",
+      "clock_display": null,
+      "clock_seconds": null,
+      "season": {
+        "id": 2,
+        "year": 2022
+      },
+      "stage": {
+        "id": 2,
+        "name": "Round of 16",
+        "order": 2
+      },
+      "group": null,
+      "stadium": null,
+      "home_team": {
+        "id": 25,
+        "name": "Netherlands",
+        "abbreviation": "NED",
+        "country_code": "NL",
+        "confederation": "UEFA"
+      },
+      "away_team": {
+        "id": 38,
+        "name": "United States",
+        "abbreviation": "USA",
+        "country_code": "US",
+        "confederation": "CONCACAF"
+      },
+      "home_team_source": null,
+      "away_team_source": null,
+      "home_score": 3,
+      "away_score": 1,
+      "home_score_penalties": null,
+      "away_score_penalties": null,
+      "first_half_home_score": null,
+      "first_half_away_score": null,
+      "second_half_home_score": null,
+      "second_half_away_score": null,
+      "extra_time_home_score": null,
+      "extra_time_away_score": null,
+      "has_extra_time": false,
+      "has_penalty_shootout": false,
+      "round_number": null,
+      "round_name": null,
+      "home_formation": null,
+      "away_formation": null,
+      "referee": null,
+      "home_manager": null,
+      "away_manager": null
+    },
+    {
+      "id": 2253,
+      "match_number": 53,
+      "datetime": "2022-12-05T15:00:00.000Z",
+      "status": "completed",
+      "status_state": "final",
+      "clock_display": null,
+      "clock_seconds": null,
+      "season": {
+        "id": 2,
+        "year": 2022
+      },
+      "stage": {
+        "id": 2,
+        "name": "Round of 16",
+        "order": 2
+      },
+      "group": null,
+      "stadium": null,
+      "home_team": {
+        "id": 20,
+        "name": "Japan",
+        "abbreviation": "JPN",
+        "country_code": "JP",
+        "confederation": "AFC"
+      },
+      "away_team": {
+        "id": 11,
+        "name": "Croatia",
+        "abbreviation": "CRO",
+        "country_code": "HR",
+        "confederation": "UEFA"
+      },
+      "home_team_source": null,
+      "away_team_source": null,
+      "home_score": 1,
+      "away_score": 1,
+      "home_score_penalties": 1,
+      "away_score_penalties": 3,
+      "first_half_home_score": null,
+      "first_half_away_score": null,
+      "second_half_home_score": null,
+      "second_half_away_score": null,
+      "extra_time_home_score": null,
+      "extra_time_away_score": null,
+      "has_extra_time": true,
+      "has_penalty_shootout": true,
+      "round_number": null,
+      "round_name": null,
+      "home_formation": null,
+      "away_formation": null,
+      "referee": null,
+      "home_manager": null,
+      "away_manager": null
+    },
+    {
+      "id": 2263,
+      "match_number": 63,
+      "datetime": "2022-12-17T15:00:00.000Z",
+      "status": "completed",
+      "status_state": "final",
+      "clock_display": null,
+      "clock_seconds": null,
+      "season": {
+        "id": 2,
+        "year": 2022
+      },
+      "stage": {
+        "id": 6,
+        "name": "Third Place",
+        "order": 5
+      },
+      "group": null,
+      "stadium": null,
+      "home_team": {
+        "id": 11,
+        "name": "Croatia",
+        "abbreviation": "CRO",
+        "country_code": "HR",
+        "confederation": "UEFA"
+      },
+      "away_team": {
+        "id": 23,
+        "name": "Morocco",
+        "abbreviation": "MAR",
+        "country_code": "MA",
+        "confederation": "CAF"
+      },
+      "home_team_source": null,
+      "away_team_source": null,
+      "home_score": 2,
+      "away_score": 1,
+      "home_score_penalties": null,
+      "away_score_penalties": null,
+      "first_half_home_score": null,
+      "first_half_away_score": null,
+      "second_half_home_score": null,
+      "second_half_away_score": null,
+      "extra_time_home_score": null,
+      "extra_time_away_score": null,
+      "has_extra_time": false,
+      "has_penalty_shootout": false,
+      "round_number": null,
+      "round_name": null,
+      "home_formation": null,
+      "away_formation": null,
+      "referee": null,
+      "home_manager": null,
+      "away_manager": null
+    },
+    {
+      "id": 2264,
+      "match_number": 64,
+      "datetime": "2022-12-18T15:00:00.000Z",
+      "status": "completed",
+      "status_state": "final",
+      "clock_display": null,
+      "clock_seconds": null,
+      "season": {
+        "id": 2,
+        "year": 2022
+      },
+      "stage": {
+        "id": 7,
+        "name": "Final",
+        "order": 6
+      },
+      "group": null,
+      "stadium": null,
+      "home_team": {
+        "id": 9,
+        "name": "Argentina",
+        "abbreviation": "ARG",
+        "country_code": "AR",
+        "confederation": "CONMEBOL"
+      },
+      "away_team": {
+        "id": 14,
+        "name": "France",
+        "abbreviation": "FRA",
+        "country_code": "FR",
+        "confederation": "UEFA"
+      },
+      "home_team_source": null,
+      "away_team_source": null,
+      "home_score": 3,
+      "away_score": 3,
+      "home_score_penalties": 4,
+      "away_score_penalties": 2,
+      "first_half_home_score": null,
+      "first_half_away_score": null,
+      "second_half_home_score": null,
+      "second_half_away_score": null,
+      "extra_time_home_score": null,
+      "extra_time_away_score": null,
+      "has_extra_time": true,
+      "has_penalty_shootout": true,
+      "round_number": null,
+      "round_name": null,
+      "home_formation": null,
+      "away_formation": null,
+      "referee": null,
+      "home_manager": null,
+      "away_manager": null
+    }
+  ],
+  "meta": {
+    "per_page": 100
+  }
+}

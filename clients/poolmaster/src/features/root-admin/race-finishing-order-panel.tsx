@@ -4,6 +4,7 @@ import { applyEventRaceResults, previewEventRaceResults } from '@/lib/api';
 import type { SportEventDto, SportEventParticipantDto } from '@/lib/api';
 import {
   Alert,
+  formatOrdinal,
   BulkUploadPanel,
   Checkbox,
   SectionCard,
@@ -24,7 +25,6 @@ import {
   RACE_RESULT_STATUS_LABELS,
   RACE_RESULT_UPLOAD_HEADERS,
   describeRaceResult,
-  formatOrdinal,
   parseRaceResultUpload,
   raceResultTemplateRows,
   type RaceResultPreviewRow,

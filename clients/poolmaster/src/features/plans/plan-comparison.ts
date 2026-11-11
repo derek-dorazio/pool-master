@@ -40,7 +40,7 @@ export interface PlanComparisonSection {
  * features, one column per plan in the order given. Built from what the API says each plan has,
  * never from the plan's name.
  */
-export function buildPlanComparison(plans: readonly ComparedPlan[]): PlanComparisonSection[] {
+export function buildPlanComparison(plans: readonly ComparedPlan[], locale: string): PlanComparisonSection[] {
   const limits: PlanComparisonSection = {
     key: 'limits',
     title: 'Limits',
@@ -50,7 +50,7 @@ export function buildPlanComparison(plans: readonly ComparedPlan[]): PlanCompari
       cap,
       label: PLAN_CAP_LABEL[cap],
       description: PLAN_CAP_DESCRIPTION[cap],
-      cells: plans.map((plan) => formatPlanLimit(plan.caps[cap])),
+      cells: plans.map((plan) => formatPlanLimit(plan.caps[cap], locale)),
     })),
   };
   const included: PlanComparisonSection = {

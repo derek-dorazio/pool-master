@@ -12,7 +12,7 @@ import {
   FormField,
   InlineError,
   Input,
-  Tile,
+  SectionCard,
   useDisplayPreferences,
 } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
@@ -113,7 +113,7 @@ export function SportEventManualCreateForm({
   });
 
   return (
-    <Tile>
+    <SectionCard padded title="Event details">
       <form
         className="space-y-4"
         data-testid="root-admin-sport-event-create-manual-form"
@@ -199,6 +199,6 @@ export function SportEventManualCreateForm({
           </InlineError>
         ) : null}
       </form>
-    </Tile>
+    </SectionCard>
   );
 }

@@ -23,6 +23,7 @@ type SectionFooter = { label: string; testId: string; to: string };
 export function SectionTitle({
   id,
   info,
+  infoTestId,
   level = 2,
   testId,
   title,
@@ -32,6 +33,8 @@ export function SectionTitle({
   id?: string;
   /** The explanation, shown when the info icon is hovered or tapped. */
   info?: ReactNode;
+  /** The info icon's test id, when the title has none to derive it from. */
+  infoTestId?: string;
   level?: 2 | 3;
   testId?: string;
   title: ReactNode;
@@ -56,7 +59,7 @@ export function SectionTitle({
           className="-my-2 -ml-2"
           icon={<Info aria-hidden className="text-muted-foreground" size={16} />}
           label="About this section"
-          testId={testId ? `${testId}-info` : "section-info"}
+          testId={infoTestId ?? (testId ? `${testId}-info` : "section-info")}
         >
           <p className="text-sm text-muted-foreground">{info}</p>
         </InfoPopover>
@@ -66,26 +69,10 @@ export function SectionTitle({
   );
 }
 
-/**
- * A titled section: its title bar, its body and an optional footer link. The body is unpadded,
- * for `SectionRows` or a `SectionEmpty` line; `padded` gives other content the card's padding.
- * `bare` keeps the title and rule but drops the box, for long page content such as Owners;
- * `tone="danger"` is a danger zone.
- */
-export function SectionCard({
-  bare = false,
-  children,
-  className,
-  footer,
-  headingLevel = 2,
-  info,
-  padded = false,
-  testId,
-  title,
-  titleTestId,
-  tone = "default",
-  trailing,
-}: {
+const DANGER_ZONE_TITLE = "Danger zone";
+const DANGER_ZONE_INFO = "Each of these asks you to confirm.";
+
+type SectionCardBaseProps = {
   bare?: boolean;
   children: ReactNode;
   className?: string;
@@ -94,12 +81,46 @@ export function SectionCard({
   info?: ReactNode;
   padded?: boolean;
   testId?: string;
-  /** The section's name, which also names it for screen readers. */
-  title: ReactNode;
   titleTestId?: string;
-  tone?: SectionTone;
   trailing?: ReactNode;
-}) {
+};
+
+type SectionCardProps = SectionCardBaseProps &
+  (
+    | {
+        /** The section's name, which also names it for screen readers. */
+        title: ReactNode;
+        tone?: "default";
+      }
+    | {
+        /** A danger zone's title and info default to "Danger zone" and that its actions confirm first. */
+        title?: ReactNode;
+        tone: "danger";
+      }
+  );
+
+/**
+ * A titled section: its title bar, its body and an optional footer link. The body is unpadded,
+ * for `SectionRows` or a `SectionEmpty` line; `padded` gives other content the card's padding.
+ * `bare` keeps the title and rule but drops the box, for long page content such as Owners;
+ * `tone="danger"` is a danger zone, titled "Danger zone" unless it says otherwise.
+ */
+export function SectionCard(props: SectionCardProps) {
+  const {
+    bare = false,
+    children,
+    className,
+    footer,
+    headingLevel = 2,
+    padded = false,
+    testId,
+    titleTestId,
+    tone = "default",
+    trailing,
+  } = props;
+  // A danger zone is always called that, and always says its actions confirm first.
+  const title = props.title ?? DANGER_ZONE_TITLE;
+  const info = props.info ?? (tone === "danger" ? DANGER_ZONE_INFO : undefined);
   const titleId = useId();
   return (
     <section
@@ -112,7 +133,7 @@ export function SectionCard({
       data-testid={testId}
     >
       <div className={cn("border-b", tone === "danger" ? "border-destructive/40" : "border-border", bare ? "pb-1" : "px-4 py-1")}>
-        <SectionTitle id={titleId} info={info} level={headingLevel} testId={titleTestId} title={title} tone={tone} trailing={trailing} />
+        <SectionTitle id={titleId} info={info} infoTestId={!titleTestId && testId ? `${testId}-info` : undefined} level={headingLevel} testId={titleTestId} title={title} tone={tone} trailing={trailing} />
       </div>
       {padded && !bare ? <SectionBody testId={testId ? `${testId}-body` : undefined}>{children}</SectionBody> : children}
       {footer ? <SectionFooterLink label={footer.label} testId={footer.testId} to={footer.to} /> : null}

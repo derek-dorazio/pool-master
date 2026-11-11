@@ -37,7 +37,10 @@ The target:
      men's and women's teams share a name, so a provider team that names its league (its
      match keyword) links only to the site's team affiliated with that league. Premier League
      matchweeks are events too (`epl-2026-matchweek-11`), a season's matches grouped by round
-     number; a matchweek forms no bracket, so a draw is a result. The College Football Playoff
+     number; a matchweek forms no bracket, so a draw is a result. The World Cup's
+     knockout bracket is an event per edition (`fifa-wc-2026-knockout`); a knockout game level
+     after extra time carries its shoot-out's scores, and the writer names the winner by them
+     (#1532). The College Football Playoff
      is not read yet: the vendor's college football games carry nothing that marks the
      postseason or the playoff. Only leagues whose bracket games are single games sync
      game scores: a best-of series (the NBA, WNBA, MLB and NHL playoffs) is one match of

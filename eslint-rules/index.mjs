@@ -19,6 +19,7 @@ import noDuplicateExtractErrorMessage from './no-duplicate-extract-error-message
 import noEnvFallbacks from './no-env-fallbacks.mjs';
 import noWidenedEnumFields from './no-widened-enum-fields.mjs';
 import noParallelApiTypes from './no-parallel-api-types.mjs';
+import noInlineDisplayFormat from './no-inline-display-format.mjs';
 import noInlineQueryKeys from './no-inline-query-keys.mjs';
 import noInlineThemeStyles from './no-inline-theme-styles.mjs';
 import noListLookup from './no-list-lookup.mjs';
@@ -40,6 +41,7 @@ export default {
     'no-disabled-tests': noDisabledTests,
     'no-duplicate-extract-error-message': noDuplicateExtractErrorMessage,
     'no-env-fallbacks': noEnvFallbacks,
+    'no-inline-display-format': noInlineDisplayFormat,
     'no-inline-query-keys': noInlineQueryKeys,
     'no-parallel-api-types': noParallelApiTypes,
     'no-widened-enum-fields': noWidenedEnumFields,

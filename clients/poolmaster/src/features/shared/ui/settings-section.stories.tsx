@@ -1,20 +1,20 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Button } from "./button";
-import { DangerZone, DangerZoneAction, SettingsRow, SettingsSection, SettingsSectionHeader } from "./settings-section";
+import { SectionCard } from "./section-card";
+import { DangerZoneAction, SettingsRow, SettingsRows } from "./settings-section";
 
 const meta = {
-  title: "Sections/SettingsSection",
-  component: SettingsSection,
-  args: { title: "League details", children: null },
-} satisfies Meta<typeof SettingsSection>;
+  title: "Sections/SettingsRows",
+  component: SettingsRows,
+  args: { children: null },
+} satisfies Meta<typeof SettingsRows>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** "See it, then Edit": each setting's current value, with the edit action beside it. */
+/** "See it, then Edit": each setting's current value in a SectionCard, the edit action beside it. */
 export const SeeItThenEdit: Story = {
   args: {
-    action: <Button size="sm" variant="secondary">Edit</Button>,
     children: (
       <>
         <SettingsRow label="Name" value="Weekend Warriors" />
@@ -23,20 +23,23 @@ export const SeeItThenEdit: Story = {
       </>
     ),
   },
+  decorators: [(Story) => (
+    <SectionCard title="League details" trailing={<Button size="sm" variant="secondary">Edit</Button>}>
+      <Story />
+    </SectionCard>
+  )],
 };
 
-export const HeaderAlone: StoryObj = {
-  render: () => <SettingsSectionHeader action={<Button size="sm">Add</Button>} title="Members" />,
-};
-
-export const Danger: StoryObj = {
-  render: () => (
-    <DangerZone>
+/** A danger zone: a SectionCard with `tone="danger"` holding DangerZoneAction rows. */
+export const DangerZone: Story = {
+  args: {
+    children: (
       <DangerZoneAction
         action={<Button variant="danger">Delete league</Button>}
         description="Removes every contest, entry and member. This cannot be undone."
         title="Delete this league"
       />
-    </DangerZone>
-  ),
+    ),
+  },
+  decorators: [(Story) => <SectionCard tone="danger"><Story /></SectionCard>],
 };
