@@ -34,6 +34,8 @@ const statusBadgeVariants = cva(
         brand: "border-primary bg-primary font-semibold text-primary-foreground",
         /** An outlined pill in the display face, in the colour of the text around it or the caller's. */
         brandOutline: "border-current bg-transparent font-display font-bold",
+        /** The tagline pill in the header's dark band: gold, outlined, in the display face. */
+        brandTagline: "border-current bg-transparent font-display font-bold tracking-normal text-primary",
         /** A gold-tinted pill for something open or on offer, such as a playable round. */
         brandTint: "border-primary bg-primary/10 font-semibold text-foreground",
         /** A dashed pill for something not here yet, such as a round still to come. */

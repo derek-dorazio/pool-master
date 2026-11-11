@@ -102,7 +102,7 @@ its `searchTerm`.
 Text that is not a title (`Heading`) or the line over one (`Eyebrow`) is a `Text`:
 `variant` is `body`, `meta`, `caption`, `label`, `value` or `strong`, `tone`, `weight` and `size`
 are optional (`size="inherit"` for a name inside a larger line), `truncate` cuts a long line,
-`as` picks `span` (the default), `p` or `div`, and `asChild` styles a `Link` in place. An icon
+`as` picks `span` (the default), `p` or `div`, and `asChild` styles a `Link` in place. The header's brand type is a `Text` too: `wordmark`, `nav` (its links), `displayLabel` (the "League" caption) and `display` (the league name), with the dark band's tones `onInverse`, `onInverseMuted` and `onInverseLabel`; `hoverTone` sets a link's hover colour. An icon
 is an `Icon` (`icon={Award} tone="muted"`), hidden from screen readers. Pages never
 type font size, weight, case or text colour classes (`rules/react-ui-rules.md` §5 *Theme And
 Styling Discipline*).

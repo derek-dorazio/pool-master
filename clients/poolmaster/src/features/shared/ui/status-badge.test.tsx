@@ -30,6 +30,14 @@ describe("pool-master-3lo.5: shared StatusBadge and Chip primitives", () => {
     expect(pill).toHaveClass("border-current", "bg-transparent", "font-display", "uppercase", "text-primary");
   });
 
+  it("draws the header tagline as a gold outlined pill in the display face with normal letter spacing", () => {
+    render(<StatusBadge tone="brandTagline">The ultimate game-day contest manager.</StatusBadge>);
+
+    const pill = screen.getByText("The ultimate game-day contest manager.");
+    expect(pill).toHaveClass("border-current", "bg-transparent", "font-display", "text-primary", "tracking-normal");
+    expect(pill).not.toHaveClass("tracking-eyebrow");
+  });
+
   it("draws an open round as a gold-tinted pill and a round still to come as a dashed one", () => {
     render(
       <>
