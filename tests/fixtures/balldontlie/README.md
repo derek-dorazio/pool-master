@@ -4,8 +4,9 @@ What the BALLDONTLIE adapter's tests read, and the vendor document they are held
 adapter was built before any account existed, so everything here comes from the vendor's
 published OpenAPI document, not from recorded traffic.
 
-- `openapi/pga.yml`, `openapi/nfl.yml`, `openapi/ncaab.yml` and `openapi/ncaaw.yml` are the
-  vendor's PGA TOUR, NFL and NCAA men's and women's basketball documents, each vendored unchanged below a three-line header that
+- `openapi/pga.yml`, `openapi/nfl.yml`, `openapi/ncaab.yml`, `openapi/ncaaw.yml` and
+  `openapi/epl.yml` are the vendor's PGA TOUR, NFL, NCAA men's and women's basketball and
+  Premier League documents, each vendored unchanged below a three-line header that
   names its source, date and hash. `npm run balldontlie:contract-check` says when the live
   document differs; `-- --update-spec` refreshes the copy, and the contract tests then
   show whether anything the adapter reads moved.
@@ -31,6 +32,11 @@ published OpenAPI document, not from recorded traffic.
   women's tournament as a round 0 First Four game, two round 1 games and the round 6
   championship, all final, and two teams. Duke's men's and women's teams share the vendor id 150
   and the name, as a school's teams do, which the adapter keeps apart by league.
+
+- `epl/*.json` are written to the EPL document's schemas, which give no response examples: the
+  2026 season's matchweek 11 with two finals (one a draw), a live, a scheduled and a postponed
+  match, matchweek 12 with a scheduled and an `unknown` match, a match with no round number, and
+  the ten teams playing them. Every one must fit the document (`epl-contract.test.ts`).
 
 ## Assumptions to confirm against the real API
 
@@ -72,6 +78,16 @@ The first things to check once a key exists, each read by `npm run balldontlie:c
   import links them rather than adding new ones. The women's teams carry the same names, so a
   team links only to the site's team affiliated with its own league (NCAA Division I Men or
   Women, by match keyword).
+
+- EPL: a match's `round_number` is its matchweek (1 to 38). The document does not say so; the
+  adapter groups a season's matches into matchweek events by it, and leaves out a match with
+  none. `--game-event epl-2026-matchweek-11` prints the match count: a full matchweek has 10.
+- EPL: `season` is the year a season starts (2026 for 2026-27), as the NCAA documents number
+  theirs.
+- EPL: a team's `name` is the name the site's Premier League teams are loaded under
+  ("Manchester City", "Brighton & Hove Albion"), so the first import links them rather than
+  adding new ones. A team the vendor names otherwise is added beside the site's: rename one of
+  them once seen.
 
 When an account exists, replace or add fixtures with recorded responses and keep the
 doc-example files: the pair shows where the vendor's document and its API disagree.

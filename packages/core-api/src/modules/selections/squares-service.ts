@@ -90,6 +90,8 @@ export interface SquaresBoardWinner extends SquaresWinner {
 export interface SquaresBoardEntry {
   contestEntryId: string;
   entryName: string;
+  /** The team the entry belongs to, which the entry's (i) peek reads on demand (#1564). */
+  squadId: string;
   boxCount: number;
   periodsWon: number;
   displayPosition: string | null;
@@ -289,6 +291,7 @@ export class SquaresService {
     const boardEntries = entries.map((entry) => ({
       contestEntryId: entry.id,
       entryName: entry.name,
+      squadId: entry.squadId,
       boxCount: squares.filter((square) => square.contestEntryId === entry.id).length,
       periodsWon: winners.filter((winner) => winner.contestEntryId === entry.id).length,
       displayPosition: positionOf.get(entry.id)?.displayPosition ?? null,

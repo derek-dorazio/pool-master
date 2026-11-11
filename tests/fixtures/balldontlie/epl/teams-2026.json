@@ -1,0 +1,74 @@
+{
+  "data": [
+    {
+      "id": 1,
+      "name": "Arsenal",
+      "short_name": "Arsenal",
+      "abbreviation": "ARS",
+      "location": "London"
+    },
+    {
+      "id": 2,
+      "name": "Aston Villa",
+      "short_name": "Aston Villa",
+      "abbreviation": "AVL",
+      "location": "Birmingham"
+    },
+    {
+      "id": 4,
+      "name": "Brentford",
+      "short_name": "Brentford",
+      "abbreviation": "BRE",
+      "location": "London"
+    },
+    {
+      "id": 6,
+      "name": "Chelsea",
+      "short_name": "Chelsea",
+      "abbreviation": "CHE",
+      "location": "London"
+    },
+    {
+      "id": 8,
+      "name": "Everton",
+      "short_name": "Everton",
+      "abbreviation": "EVE",
+      "location": "Liverpool"
+    },
+    {
+      "id": 9,
+      "name": "Fulham",
+      "short_name": "Fulham",
+      "abbreviation": "FUL",
+      "location": "London"
+    },
+    {
+      "id": 10,
+      "name": "Leeds United",
+      "short_name": "Leeds",
+      "abbreviation": "LEE",
+      "location": "Leeds"
+    },
+    {
+      "id": 11,
+      "name": "Liverpool",
+      "short_name": "Liverpool",
+      "abbreviation": "LIV",
+      "location": "Liverpool"
+    },
+    {
+      "id": 12,
+      "name": "Manchester City",
+      "short_name": "Man City",
+      "abbreviation": "MCI",
+      "location": "Manchester"
+    },
+    {
+      "id": 17,
+      "name": "Tottenham Hotspur",
+      "short_name": "Spurs",
+      "abbreviation": "TOT",
+      "location": "London"
+    }
+  ]
+}

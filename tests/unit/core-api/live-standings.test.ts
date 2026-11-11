@@ -323,8 +323,8 @@ describe('LiveStandings.queueDue', () => {
     expect(toAna.templateKey).toBe('CONTEST_STANDINGS');
     expect(toAna.subject).toBe('After round 1: Masters Pick 6');
     expect(toAna.textBody).toContain('Round 1 standings\nThe Masters (PGA Tour), Masters Pick 6 · 2 entries');
-    expect(toAna.textBody).toContain('1. Entry e1 (Ana\'s Squad), yours, -6');
-    expect(toAna.textBody).toContain('2. Entry e2 (Ben\'s Squad), -3');
+    expect(toAna.textBody).toContain('1. Entry e1, yours, -6');
+    expect(toAna.textBody).toContain('2. Entry e2, -3');
     expect(toAna.textBody).toContain(`Full leaderboard: https://app.example.test/league/OFFICE24/contests/${contest.id}/leaderboard`);
   });
 
@@ -384,8 +384,8 @@ describe('LiveStandings.queueDue', () => {
     await standings().queueDue(after(ROUND_2_DONE, 31));
 
     const [round2] = emailsTo(ana.user.id).filter((email) => email.subject?.startsWith('After round 2'));
-    expect(round2.textBody).toContain('1. Entry e2 (Ben\'s Squad), -9, up 1');
-    expect(round2.textBody).toContain('2. Entry e1 (Ana\'s Squad), yours, -7, down 1');
+    expect(round2.textBody).toContain('1. Entry e2, -9, up 1');
+    expect(round2.textBody).toContain('2. Entry e1, yours, -7, down 1');
     expect(positions).toEqual(new Map([['e1', 2], ['e2', 1]]));
   });
 
@@ -431,9 +431,9 @@ describe('LiveStandings.queueDue', () => {
 
     const [toAna] = emailsTo(ana.user.id);
     expect(toAna.textBody).toContain('Top 11 of 13:');
-    expect(toAna.textBody).toContain('T10. Entry T10b (Ben\'s Squad), E');
+    expect(toAna.textBody).toContain('T10. Entry T10b, E');
     expect(toAna.textBody).not.toContain('Entry L12');
-    expect(toAna.textBody).toContain('Your entry:\n13. Entry mine (Ana\'s Squad), yours, +2');
+    expect(toAna.textBody).toContain('Your entry:\n13. Entry mine, yours, +2');
   });
 
   it('tells a reader which of their golfers missed the cut in the round', async () => {
@@ -484,7 +484,7 @@ describe('LiveStandings.queueDue', () => {
 
     const [toAna] = emailsTo(ana.user.id);
     expect(toAna.subject).toBe('After The Masters: Majors Pool');
-    expect(toAna.textBody).toContain('1. Entry e1 (Ana\'s Squad), yours, -9, this event T2, -9');
+    expect(toAna.textBody).toContain('1. Entry e1, yours, -9, this event T2, -9');
     expect(toAna.textBody).toContain('Next event: PGA Championship');
     expect(toAna.textBody).toContain('Picks close: ');
     expect(toAna.idempotencyKey).toBe(`CONTEST_STANDINGS:${contest.id}:${masters.id}:event:${ana.user.id}`);
@@ -600,9 +600,9 @@ describe('LiveStandings.queueDue', () => {
     const [toBen] = emailsTo(ben.user.id);
     expect(toBen.subject).toBe('After Week 1: NFL Pick\'em');
     expect(toBen.idempotencyKey).toBe(`CONTEST_STANDINGS:${contest.id}:${week1.id}:week:${ben.user.id}`);
-    expect(toBen.textBody).toContain('Week 1 is done. Entry e1 (Ana\'s Squad) won the week.');
-    expect(toBen.textBody).toContain('Week 1, everyone:\n1. Entry e1 (Ana\'s Squad), 12\n2. Entry e2 (Ben\'s Squad), yours, 9\n');
-    expect(toBen.textBody).toContain('Season standings, by points:\n1. Entry e1 (Ana\'s Squad), 12\n2. Entry e2 (Ben\'s Squad), yours, 9\n3. Entry e3 (Ben\'s Squad), yours, 0');
+    expect(toBen.textBody).toContain('Week 1 is done. Entry e1 won the week.');
+    expect(toBen.textBody).toContain('Week 1, everyone:\n1. Entry e1, 12\n2. Entry e2, yours, 9\n');
+    expect(toBen.textBody).toContain('Season standings, by points:\n1. Entry e1, 12\n2. Entry e2, yours, 9\n3. Entry e3, yours, 0');
     expect(toBen.textBody).toContain('Next week: Week 2, first kickoff');
     expect(toBen.textBody).toContain(`Make picks for next week: https://app.example.test/league/OFFICE24/contests/${contest.id}\n`);
     const [toCasey] = emailsTo(casey.user.id);
@@ -689,7 +689,7 @@ describe('LiveStandings.queueDue', () => {
     expect(toBen.textBody).toContain('Week 1 is done. 1 of 3 entries is still in Last One Standing.');
     expect(toBen.textBody).toContain('Entry e2 is out: Chicago Bears didn\'t win in Week 1.');
     expect(toBen.textBody).toContain('Entry e3 is out: it had no pick in Week 1.');
-    expect(toBen.textBody).toContain('Standings, by weeks survived:\n1. Entry e1 (Ana\'s Squad), 1\nT2. Entry e2 (Ben\'s Squad), yours, 0, out');
+    expect(toBen.textBody).toContain('Standings, by weeks survived:\n1. Entry e1, 1\nT2. Entry e2, yours, 0, out');
     expect(toBen.textBody).not.toContain('Make picks for next week');
     const [toAna] = emailsTo(ana.user.id);
     expect(toAna.textBody).not.toContain(' is out:');
@@ -765,7 +765,7 @@ describe('LiveStandings.queueDue', () => {
     expect(toBen.textBody).toContain('First Round of NCAA Tournament is done.');
     expect(toBen.textBody).toContain('Entry e2: your champion, Kansas, is out, with 120 points possible.');
     expect(toBen.textBody).not.toContain('Duke');
-    expect(toBen.textBody).toContain('Standings, by points:\n1. Entry e1 (Ana\'s Squad), 30\n2. Entry e2 (Ben\'s Squad), yours, 20');
+    expect(toBen.textBody).toContain('Standings, by points:\n1. Entry e1, 30\n2. Entry e2, yours, 20');
     expect(toBen.textBody).toContain('Next round: Second Round, Sat, Mar 21, 2026');
     const [toAna] = emailsTo(ana.user.id);
     expect(toAna.textBody).toContain('Entry e1: your champion, Duke, is still alive, with 190 points possible.');
@@ -837,7 +837,7 @@ describe('LiveStandings.queueDue', () => {
     await standings().queueDue(after(ROUND_2_DONE, 36));
 
     const [round2] = emailsTo(ana.user.id).filter((email) => email.subject?.startsWith('After round 2'));
-    expect(round2.textBody).toContain('2. Entry e1 (Ana\'s Squad), yours, -7, down 1');
+    expect(round2.textBody).toContain('2. Entry e1, yours, -7, down 1');
     expect(positions).toEqual(new Map([['e1', 2], ['e2', 1]]));
   });
 
@@ -920,8 +920,8 @@ describe('LiveStandings.queueDue', () => {
     await standings().queueDue(after(settledAt, 31));
 
     const [toAna] = emailsTo(ana.user.id);
-    expect(toAna.textBody).toContain('Entry e1 (Ana\'s Squad), yours');
-    expect(toAna.textBody).not.toContain('Entry e1 (Ana\'s Squad), yours, -');
+    expect(toAna.textBody).toContain('Entry e1, yours');
+    expect(toAna.textBody).not.toContain('Entry e1, yours, -');
     expect(toAna.textBody).not.toContain('Next event: PGA Championship, picks close');
   });
 
@@ -938,8 +938,8 @@ describe('LiveStandings.queueDue', () => {
     await standings().queueDue(after(settledAt, 31));
 
     const [toAna] = emailsTo(ana.user.id);
-    expect(toAna.textBody).toContain('Week 1, everyone:\n1. Entry e1 (Ana\'s Squad), yours, no score yet');
-    expect(toAna.textBody).toContain('Season standings, by points:\n-. Entry e1 (Ana\'s Squad), yours, no score yet');
+    expect(toAna.textBody).toContain('Week 1, everyone:\n1. Entry e1, yours, no score yet');
+    expect(toAna.textBody).toContain('Season standings, by points:\n-. Entry e1, yours, no score yet');
   });
 
   it('names the round a survivor entry went out in when its week has more than one, and counts entries still in when the board has no week for the event', async () => {
