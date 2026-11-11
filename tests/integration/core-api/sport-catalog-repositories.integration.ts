@@ -107,6 +107,16 @@ describe('Sport and SportLeague repositories', () => {
     await expect(leagueOf(Sport.HOCKEY)).resolves.toMatchObject({ matchKeyword: null });
   });
 
+  it('seeds basketball\'s NCAA Division I Women sport league with the match keyword NCAAW, and no other sport\'s league of that name', async () => {
+    const sports = new PrismaSportRepository(getAppPrisma());
+    const leagues = new PrismaSportLeagueRepository(getAppPrisma());
+    const leagueOf = async (sport: Sport) => leagues.findBySportAndName((await sports.findBySport(sport))?.id ?? '', 'NCAA Division I Women');
+
+    await expect(leagueOf(Sport.BASKETBALL)).resolves.toMatchObject({ matchKeyword: 'NCAAW' });
+    await expect(leagueOf(Sport.HOCKEY)).resolves.toMatchObject({ matchKeyword: null });
+    await expect(leagueOf(Sport.SOCCER)).resolves.toMatchObject({ matchKeyword: null });
+  });
+
   it('finds a sport by its sport value and lists sport leagues filtered by sport and activity, ordered by name', async () => {
     const sport = await golfSport();
     const sports = new PrismaSportRepository(getAppPrisma());
