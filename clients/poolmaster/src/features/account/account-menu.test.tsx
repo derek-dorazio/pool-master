@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
 import { AccountMenu } from './account-menu';
@@ -66,5 +67,28 @@ describe('AccountMenu', () => {
     fireEvent.click(screen.getByTestId('account-menu-logout'));
     expect(screen.queryByTestId('account-menu-panel')).not.toBeInTheDocument();
     expect(onLogout).toHaveBeenCalledTimes(1);
+  });
+
+  it('closes the open account menu when the user clicks outside it', async () => {
+    const user = userEvent.setup();
+    renderMenu();
+    await user.click(screen.getByTestId('account-menu-trigger'));
+    expect(screen.getByTestId('account-menu-panel')).toBeVisible();
+
+    await user.click(document.body);
+
+    expect(screen.queryByTestId('account-menu-panel')).not.toBeInTheDocument();
+  });
+
+  it('closes the open account menu on Escape and returns focus to its trigger', async () => {
+    const user = userEvent.setup();
+    renderMenu();
+    await user.click(screen.getByTestId('account-menu-trigger'));
+    expect(screen.getByTestId('account-menu-panel')).toBeVisible();
+
+    await user.keyboard('{Escape}');
+
+    expect(screen.queryByTestId('account-menu-panel')).not.toBeInTheDocument();
+    expect(screen.getByTestId('account-menu-trigger')).toHaveFocus();
   });
 });
