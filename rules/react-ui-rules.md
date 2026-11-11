@@ -233,6 +233,15 @@ Rules:
   or action-card rendering should be extracted once and reused.
 - The `poolmaster/no-bare-ui-controls` ESLint rule records the current bare-control
   baseline. New work should drive that count down, not add to it.
+- **A new pattern replaces the old one everywhere, in the same epic** (#1615). A ticket that
+  introduces a shared component or paradigm in place of an older one converts every call
+  site and deletes the old component before its epic closes; "migrate as touched" is not
+  allowed, because the untouched pages keep the old look and new work copies them. When the
+  conversion is too big for one PR, the follow-up tickets are opened under the same epic when
+  the pattern lands, and the old component stays marked as retiring in the gallery and the
+  catalog until the last one merges. Each new pattern also lands with a check that keeps it in
+  place (an ESLint rule or a scanner with a baseline that only shrinks, like
+  `rules:check:text-styles`) and with its gallery story (*Component Gallery*, below).
 
 ### Server Data Form-State Hazard
 
@@ -376,6 +385,19 @@ state, stale actions, and unthemeable markup accumulate.
   or feature-level component and import it.
 - If a shared primitive is almost right, extend the primitive. Do not create a
   near-duplicate just to get one extra class string.
+
+### Component Gallery
+
+- Every component file in `features/shared/ui` has a Storybook story file beside it,
+  `<name>.stories.tsx`, showing each variant and state a page may use (#1615). A new shared
+  component lands with its story; a deleted one takes its story with it.
+  `rules:check:gallery-stories` fails on either gap.
+- Stories are dev code, like tests: their example content stays in the story file
+  (`rules/testing-rules.md` §1B), nothing under `src` imports one, and coverage leaves them out.
+  They follow the same lint and text-style rules as the components, so a story shows the
+  component as a page would use it, with no local styles beyond layout.
+- When a shared component's look or props change, its story changes in the same PR, and
+  screenshots for review are compared with the story as well as with the page's before.
 
 ### Theme And Styling Discipline
 
