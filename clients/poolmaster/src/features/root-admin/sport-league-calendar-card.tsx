@@ -6,9 +6,10 @@ import type { SportLeagueDto } from '@/lib/api';
 import { SportLeagueEventCalendar } from './sport-league-event-calendar';
 import { SportLeagueYearActions } from './sport-league-year-actions';
 import { SportLeagueYearImport } from './sport-league-year-import';
-import { buildSportEventListPath, capitalize } from './manage-navigation';
+import { buildSportEventListPath } from './manage-navigation';
 import { useSportLeagueEventsQuery, useSportLeagueEventYearsQuery } from './use-sport-catalog';
 import { useManagedSport } from './use-managed-sport';
+import { upperFirst } from '@/lib/upper-first';
 
 /**
  * plans/147 — a sport league's events (a tour's tournaments), one event year at a time. It replaced the season
@@ -43,7 +44,7 @@ export function SportLeagueCalendarCard({ sportLeague }: { sportLeague: SportLea
       headingLevel={3}
       padded
       testId="root-admin-sport-league-calendar"
-      title={`${capitalize(eventNoun.one)} calendar`}
+      title={`${upperFirst(eventNoun.one)} calendar`}
     >
       <p className="text-sm text-muted-foreground">
         {`${sportLeague.name}’s ${eventNoun.many} in one year, earliest first.`}

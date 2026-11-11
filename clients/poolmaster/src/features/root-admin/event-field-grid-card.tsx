@@ -35,7 +35,8 @@ import {
   type EventFieldPatch,
   type EventFieldRowDraft,
 } from './event-field-patch';
-import { buildSportEventPath, capitalize } from './manage-navigation';
+import { buildSportEventPath } from './manage-navigation';
+import { upperFirst } from '@/lib/upper-first';
 
 export type { EventFieldEntry } from './event-field-patch';
 
@@ -115,7 +116,7 @@ const fieldColumns = [
   columnHelper.accessor((entry) => entry.participant.name, {
     id: 'participantName',
     header: ({ table }) =>
-      capitalize(getSportDefinition((table.options.meta as FieldGridMeta).sport).vocabulary.participant.one),
+      upperFirst(getSportDefinition((table.options.meta as FieldGridMeta).sport).vocabulary.participant.one),
     cell: ({ row }) => (
       <div className="flex items-center gap-2">
         <span className="font-medium text-foreground">

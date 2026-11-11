@@ -429,14 +429,16 @@ state, stale actions, and unthemeable markup accumulate.
   (running text), `meta` (the muted line under a name: counts, dates, a team line), `caption`
   (a small aside such as a timestamp), `label` (a column header or field caption, the muted
   eyebrow look), `value` (a number, with lined-up digits) or `strong` (a name that leads its
-  row), with an optional `tone` (`muted`, `danger`, `primary`). Where a pattern repeats inside
+  row), with an optional `tone` (`muted`, `danger`, `primary`) and `weight` (`normal`,
+  `medium`, `semibold`, `bold`). Where a pattern repeats inside
   a composite (`SectionRow`, `PageHeader`'s fact line) the composite owns it, and the page
-  passes plain content. Pages keep layout classes (flex, gap, margin, width) and never set font
-  size, weight, case, tracking, figures or text colour. `rules:check:text-styles` counts those
-  classes in each web source file outside `features/shared/ui` against
-  `scripts/text-style-baseline.json`: a file over its entry fails, and a file under it fails
-  until its entry is lowered (`node scripts/check-text-styles.mjs --update`), so the baseline
-  only shrinks. A look no variant covers gets a variant in `shared/ui`, never a class on the page.
+  passes plain content. Pages keep layout classes (flex, gap, margin, width, text alignment and
+  wrapping) and never set font size, weight, family, slant, line height, case, tracking,
+  figures or any text colour (icons included, until icons get a tone on a shared part).
+  `rules:check:text-styles` counts those classes in each web source file outside
+  `features/shared/ui` against `scripts/text-style-baseline.json`: a file over its entry fails,
+  and a file under it fails until its entry is lowered (`node scripts/check-text-styles.mjs
+  --update`, which only ever lowers entries), so the baseline only shrinks. A look no variant covers gets a variant in `shared/ui`, never a class on the page.
 
 ### Frontend Logging Discipline
 

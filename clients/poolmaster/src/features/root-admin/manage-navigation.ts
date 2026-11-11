@@ -1,5 +1,6 @@
 import { SUPPORTED_SPORTS, getSportDefinition, sportPathSegment, type Sport } from '@poolmaster/shared/domain';
 import type { NavMenuItem } from '@/features/shared/ui';
+import { upperFirst } from '@/lib/upper-first';
 
 export type ManageSectionGroup = 'platform' | 'sports' | 'operations';
 
@@ -62,10 +63,6 @@ export function buildSportLeaguePath(sport: Sport, sportLeagueId: string) {
 export const SPORTS_LANDING_PATH = buildSportEventListPath(SUPPORTED_SPORTS[0]);
 
 /** "tournaments" as a heading or breadcrumb reads it: "Tournaments". */
-export function capitalize(word: string) {
-  return word.charAt(0).toUpperCase() + word.slice(1);
-}
-
 /** The Manage side menu, in order; items of one group sit together under its heading. */
 const MANAGE_SECTION_DEFINITIONS: ManageSectionDefinition[] = [
   { key: 'leagues', group: 'platform', title: 'Leagues', to: '/manage/leagues' },
@@ -146,9 +143,9 @@ const STATIC_BREADCRUMB_LABELS: Record<string, string> = {
 
 /** A sport's three lists, labelled in the sport's own words: "Tournaments", "Golfers", "Tours". */
 const SPORT_LIST_LABELS = {
-  events: (sport: Sport) => capitalize(getSportDefinition(sport).vocabulary.event.many),
-  participants: (sport: Sport) => capitalize(getSportDefinition(sport).vocabulary.participant.many),
-  leagues: (sport: Sport) => capitalize(getSportDefinition(sport).vocabulary.sportLeague.many),
+  events: (sport: Sport) => upperFirst(getSportDefinition(sport).vocabulary.event.many),
+  participants: (sport: Sport) => upperFirst(getSportDefinition(sport).vocabulary.participant.many),
+  leagues: (sport: Sport) => upperFirst(getSportDefinition(sport).vocabulary.sportLeague.many),
 } as const satisfies Record<string, (sport: Sport) => string>;
 
 function isSportListSegment(segment: string): segment is keyof typeof SPORT_LIST_LABELS {

@@ -7,9 +7,10 @@ import {
   formatDateTimeDisplay,
   useDisplayPreferences,
 } from '@/features/shared/ui';
-import { buildSportEventPath, buildSportLeaguePath, capitalize } from './manage-navigation';
+import { buildSportEventPath, buildSportLeaguePath } from './manage-navigation';
 import { getScoringFamilyAdminUi } from './scoring-family-admin';
 import { useSportLeagueNoun } from './use-sport-catalog';
+import { upperFirst } from '@/lib/upper-first';
 
 /**
  * The event's properties as labelled rows, with one Edit for all of them
@@ -46,12 +47,12 @@ export function SportEventDetailsSection({
       <SettingsRow label="Location" value={tournament.location || 'Not set'} />
       <SettingsRow label="Starts" value={formatDateTimeDisplay(tournament.startDate, displayPreferences)} />
       <SettingsRow label="Ends" value={formatDateTimeDisplay(tournament.endDate, displayPreferences)} />
-      <SettingsRow label={capitalize(vocabulary.round.many)} value={tournament.rounds ?? 'Not set'} />
+      <SettingsRow label={upperFirst(vocabulary.round.many)} value={tournament.rounds ?? 'Not set'} />
       {scoresUnplayedRoundsAgainstPar ? (
         <SettingsRow label="Par per round" value={tournament.roundsPar ?? 'From scores'} />
       ) : null}
       <SettingsRow
-        label={capitalize(sportLeagueNoun.one)}
+        label={upperFirst(sportLeagueNoun.one)}
         value={(
           <LinkButton
             data-testid="root-admin-sport-event-home-tour-link"

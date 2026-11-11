@@ -45,7 +45,7 @@ describe('Text', () => {
     ['danger', 'text-destructive'],
     ['primary', 'text-primary'],
     ['default', 'text-foreground'],
-  ] as const)('colours a muted line in the %s tone in place of its own muted colour', (tone, className) => {
+  ] as const)("replaces the meta line's muted colour with the %s tone", (tone, className) => {
     render(<Text tone={tone} variant="meta">Line</Text>);
 
     expect(screen.getByText('Line')).toHaveClass(className);
@@ -57,6 +57,19 @@ describe('Text', () => {
 
     expect(screen.getByText('Quiet line')).toHaveClass('text-muted-foreground');
     expect(screen.getByText('Quiet line')).not.toHaveClass('text-foreground');
+  });
+
+  it.each(['semibold', 'bold', 'normal'] as const)('sets a %s weight in place of the variant\'s own, for names and points that stand out', (weight) => {
+    render(<Text variant="strong" weight={weight}>Casey Crushers</Text>);
+
+    expect(screen.getByText('Casey Crushers')).toHaveClass(`font-${weight}`);
+    expect(screen.getByText('Casey Crushers')).not.toHaveClass('font-medium');
+  });
+
+  it('gives running text no weight class of its own, so it reads at the normal weight', () => {
+    render(<Text>Plain words</Text>);
+
+    expect(screen.getByText('Plain words').className).not.toMatch(/font-/);
   });
 
   it('cuts a long line short with an ellipsis when asked', () => {

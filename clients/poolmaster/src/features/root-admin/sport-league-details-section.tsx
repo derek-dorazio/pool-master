@@ -15,9 +15,10 @@ import {
   StatusBadge,
 } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
-import { buildSportLeaguePath, capitalize } from './manage-navigation';
+import { buildSportLeaguePath } from './manage-navigation';
 import { useManagedSport } from './use-managed-sport';
 import { useUpdateSportLeague } from './use-update-sport-league';
+import { upperFirst } from '@/lib/upper-first';
 
 /** The sport league's identity heading: name, active state, roster size and event count. */
 export function SportLeagueHeading({ sportLeague }: { sportLeague: SportLeagueDto }) {
@@ -61,7 +62,7 @@ export function SportLeagueDetailsSection({ sportLeague }: { sportLeague: SportL
     >
       <SettingsRow label="Match keyword" value={sportLeague.matchKeyword || 'Not set'} />
       <SettingsRow label="Roster size" value={sportLeague.affiliationCount} />
-      <SettingsRow label={capitalize(definition.vocabulary.event.many)} value={sportLeague.sportEventCount} />
+      <SettingsRow label={upperFirst(definition.vocabulary.event.many)} value={sportLeague.sportEventCount} />
       <SettingsRow label="Current year" value={sportLeague.currentEventYear ?? 'Not set'} />
     </SettingsSection>
   );

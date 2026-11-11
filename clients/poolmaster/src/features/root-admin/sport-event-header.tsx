@@ -3,8 +3,9 @@ import { Flag } from 'lucide-react';
 import type { SportEventDto } from '@/lib/api';
 import { PageHeader, PageTabs, StatusBadge } from '@/features/shared/ui';
 import { formatSportEventStatus, sportEventStatusTone } from './sport-admin-utils';
-import { buildSportEventPath, capitalize } from './manage-navigation';
+import { buildSportEventPath } from './manage-navigation';
 import { getScoringFamilyAdminUi } from './scoring-family-admin';
+import { upperFirst } from '@/lib/upper-first';
 
 const VIEWS = ['overview', 'field', 'tiers', 'results'] as const;
 
@@ -56,7 +57,7 @@ export function SportEventHeader({
       )}
       tabs={(
         <PageTabs
-          aria-label={`${capitalize(vocabulary.event.one)} pages`}
+          aria-label={`${upperFirst(vocabulary.event.one)} pages`}
           items={VIEWS.map((view) => ({
             isActive: view === current,
             label: labels[view],

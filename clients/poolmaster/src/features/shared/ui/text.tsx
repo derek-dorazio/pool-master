@@ -15,15 +15,22 @@ const textVariants = cva("", {
       /** A column header or field caption: the muted uppercase eyebrow look. */
       label: EYEBROW_TYPE_CLASS_NAME,
       /** A number or score, its digits lined up in a column. */
-      value: "text-sm font-medium tabular-nums",
+      value: "text-sm tabular-nums",
       /** A name that leads its row. */
-      strong: "text-sm font-medium",
+      strong: "text-sm",
     },
     tone: {
       default: "text-foreground",
       muted: "text-muted-foreground",
       danger: "text-destructive",
       primary: "text-primary",
+    },
+    /** Emphasis: names and points that stand out in a row (`semibold`) or a total (`bold`). */
+    weight: {
+      normal: "font-normal",
+      medium: "font-medium",
+      semibold: "font-semibold",
+      bold: "font-bold",
     },
     truncate: {
       true: "truncate",
@@ -48,6 +55,12 @@ const DEFAULT_TONES = {
 
 type TextVariant = keyof typeof DEFAULT_TONES;
 
+/** The variants that carry a weight of their own, which `weight` overrides. */
+const DEFAULT_WEIGHTS: Partial<Record<TextVariant, "medium">> = {
+  strong: "medium",
+  value: "medium",
+};
+
 export type TextProps = HTMLAttributes<HTMLElement> &
   Omit<VariantProps<typeof textVariants>, "variant"> & {
     /** The element: a `span` inside a line, a `p` for a paragraph, a `div` for a block. */
@@ -58,12 +71,14 @@ export type TextProps = HTMLAttributes<HTMLElement> &
 /**
  * Every piece of text that is not a title (`Heading`) or the line over one (`Eyebrow`): body,
  * meta and caption lines, column labels, numbers and leading names. Pages pick a variant and,
- * at most, a tone; the font, size, weight, case and colour live here.
+ * at most, a tone and a weight; the font, size, weight, case and colour live here.
  */
-export function Text({ as: Element = "span", className, tone, truncate, variant = "body", ...props }: TextProps) {
+export function Text({ as: Element = "span", className, tone, truncate, variant = "body", weight, ...props }: TextProps) {
   return (
     <Element
-      className={cn(textVariants({ className, tone: tone ?? DEFAULT_TONES[variant], truncate, variant }))}
+      className={cn(
+        textVariants({ className, tone: tone ?? DEFAULT_TONES[variant], truncate, variant, weight: weight ?? DEFAULT_WEIGHTS[variant] }),
+      )}
       {...props}
     />
   );
