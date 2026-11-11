@@ -5,8 +5,8 @@ on:
     branches: [main]
   pull_request:
     # UI batch branches (rules/workflow-rules.md §6 *UI batch branches*): web-app PRs into a
-    # batch get the quick check (lint, typecheck, unit tests); the batch's own PR into main gets
-    # everything. A push to a batch branch runs nothing: the batch PR into main tests its tip.
+    # batch get the quick check (lint, typecheck, unit tests); the landing PR into main gets
+    # everything. A push to a batch branch runs nothing: the landing PR tests it.
     branches: [main, 'ui-batch/**']
 
 # #328 — cancellation is scoped to pull requests, and the asymmetry is the point.
@@ -710,7 +710,7 @@ jobs:
     timeout-minutes: 25
     needs: [all-contract-gates, changes]
     # #300 — see docs/CI-AND-QUALITY-GATES.md. Gated on `code`, not `client`: it runs the whole stack, core-api included.
-    # Skipped on a PR into a UI batch branch: the batch's PR into main runs it once for the batch.
+    # Skipped on a PR into a UI batch branch: the batch's landing PR into main runs it once.
     # `!cancelled()` is load-bearing, not decoration (#350). A job whose `needs:` did not
     # succeed is skipped by default unless its `if` uses a status function, and `changes`
     # is a job that can be cancelled before it starts: twice on 2026-10-05 it waited 15

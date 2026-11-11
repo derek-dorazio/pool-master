@@ -163,7 +163,7 @@ describe('ci-changed-areas: UI batch pull requests', () => {
     ]), []);
   });
 
-  it('refuses shared, service, test, script and dependency changes, which need the full suites', () => {
+  it('refuses shared, service, test, script and dependency changes (the web app\'s package.json too), which need the full suites', () => {
     const refused = [
       'packages/shared/domain/brand.ts',
       'packages/core-api/src/index.ts',
@@ -172,6 +172,7 @@ describe('ci-changed-areas: UI batch pull requests', () => {
       'package-lock.json',
       '.github/workflows/ci.yml',
       'infrastructure/terraform/main.tf',
+      'clients/poolmaster/package.json',
     ];
     assert.deepEqual(uiBatchViolations(['clients/poolmaster/src/main.tsx', ...refused]), refused);
   });

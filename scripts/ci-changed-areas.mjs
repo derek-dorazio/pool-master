@@ -20,7 +20,7 @@
 //
 // A pull request into a UI batch branch (`ui-batch/<n>`, rules/workflow-rules.md §6 *UI batch
 // branches*) is classified with `--ui-batch`. Its PR run is the quick check only, and the batch's
-// own PR into main runs everything, so a batch may carry web-app changes alone: any change that
+// landing PR into main runs everything, so a batch may carry web-app changes alone: any change that
 // would run the service suites, or that forces every area on, is refused here with a failing
 // `changes` job, and belongs in its own PR to main.
 //
@@ -151,11 +151,13 @@ function classifyFiles(files) {
 
 /**
  * The files a UI batch pull request may not carry: everything that is neither documentation nor
- * web-app only. Empty means the change may go into a batch.
+ * web-app only, and any package.json (a dependency change goes to main). Empty means the change
+ * may go into a batch.
  */
 export function uiBatchViolations(files) {
   if (!files || files.length === 0) return ['(no file list)'];
-  return files.filter((f) => !isDocOnly(f) && (!isClient(f) || isService(f)));
+  return files.filter((f) => !isDocOnly(f)
+    && (!isClient(f) || isService(f) || f.endsWith('/package.json')));
 }
 
 function main(argv) {
@@ -184,7 +186,9 @@ function main(argv) {
     const refused = uiBatchViolations(files);
     if (refused.length > 0) {
       console.error('A UI batch pull request carries web-app changes only (rules/workflow-rules.md §6 *UI batch branches*).');
-      console.error('These files need the full suites, so open them as their own pull request to main:');
+      console.error('These files need the full suites, so open them as their own pull request to main.');
+      console.error('If they are main\'s, not yours, the branch was cut from main: restart it with');
+      console.error('`git checkout -B <branch> origin/ui-batch/<n>` and cherry-pick your commits.');
       for (const f of refused.slice(0, 20)) console.error(`    ${f}`);
       process.exitCode = 1;
     }

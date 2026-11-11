@@ -337,9 +337,11 @@ jobs only. Every other file under `scripts/` still runs everything.
 (`rules/workflow-rules.md` §6 *UI batch branches*). There `changes` runs the classifier with
 `--ui-batch`: it sets `batch=true`, which skips the local browser e2e, and it **fails** when
 the PR carries anything that is not web app, docs or a rule baseline, because the batch's
-quick check never runs the service suites. The batch's own PR into `main` is an ordinary PR
-and runs every job its files need, browser e2e included; the push to `main` then runs
-everything. A push to a batch branch runs nothing.
+quick check never runs the service suites. A batch lands through an ordinary PR into `main`
+from the landing thread's branch, which runs every job its files need, browser e2e
+included; the push to `main` then runs everything. A push to a batch branch runs nothing.
+A ticket branch must start from the batch tip: `changes` diffs from the merge base with
+the batch, so a branch cut from `main` drags in `main`'s newer commits.
 
 Three properties hold this together, and each is load-bearing:
 
