@@ -10,6 +10,7 @@ import {
   DropdownMenuTriggerSlot,
   InlineError,
   Modal,
+  Text,
 } from '@/features/shared/ui';
 import { buildLeagueAdminTeamPath } from '@/features/leagues/league-routing';
 import { QueryKeys } from '@/lib/query-keys';
@@ -171,9 +172,9 @@ export function TeamOwnerActionMenu({
       >
         {activeAction === 'promote' ? (
           <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">
+            <Text as="p" variant="meta">
               This change is league-scoped and does not alter the user&apos;s account-level permissions.
-            </p>
+            </Text>
             {roleError ? <InlineError>{roleError}</InlineError> : null}
             <Button
               className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
@@ -189,9 +190,9 @@ export function TeamOwnerActionMenu({
 
         {activeAction === 'demote' ? (
           <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">
+            <Text as="p" variant="meta">
               A league must keep at least one active commissioner.
-            </p>
+            </Text>
             {roleError ? <InlineError>{roleError}</InlineError> : null}
             <Button
               className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
@@ -210,9 +211,9 @@ export function TeamOwnerActionMenu({
             {removeRequiresInactivation ? (
               canManageLeagueRole ? (
                 <>
-                  <p className="text-sm text-muted-foreground">
+                  <Text as="p" variant="meta">
                     {ownerName} is the only active owner, so removing them means inactivating. Use Inactivate in the Danger zone on the Manage page.
-                  </p>
+                  </Text>
                   <Link
                     className="inline-flex rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground transition hover:bg-muted/40"
                     onClick={() => setActiveAction(null)}
@@ -222,9 +223,9 @@ export function TeamOwnerActionMenu({
                   </Link>
                 </>
               ) : (
-                <p className="text-sm text-muted-foreground">
+                <Text as="p" variant="meta">
                   {ownerName} is the only active owner, so they can&apos;t be removed. To step away from this league, use Leave league.
-                </p>
+                </Text>
               )
             ) : (
               <>
@@ -233,10 +234,10 @@ export function TeamOwnerActionMenu({
                   * being true: removal now also ends their league membership, because a member
                   * with no squad is invisible on every surface that lists people in the league.
                   */}
-                <p className="text-sm text-muted-foreground">
+                <Text as="p" variant="meta">
                   This removes them as an owner and from the league. Contest history stays intact,
                   and a commissioner can invite them back — rejoining restores everything they had.
-                </p>
+                </Text>
                 {removeError ? <InlineError>{removeError}</InlineError> : null}
                 <Button
                   className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"

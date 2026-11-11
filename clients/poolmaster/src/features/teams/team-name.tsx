@@ -1,7 +1,7 @@
 import type { TeamIconKey } from '@poolmaster/shared/domain';
 import { Link } from 'react-router';
 import { MineMarker } from '@/features/contests/mine-marker';
-import { Chip } from '@/features/shared/ui';
+import { Chip, Text } from '@/features/shared/ui';
 import { TeamAvatar } from './team-avatar';
 
 /**
@@ -29,18 +29,17 @@ export function TeamName({
   testId?: string;
   to?: string;
 }) {
-  const nameClass = 'truncate font-semibold text-foreground';
   return (
     <div className="flex min-w-0 items-center gap-3">
       {showIcon ? <TeamAvatar iconKey={iconKey} label={`${name} icon`} /> : null}
       <div className="min-w-0">
         <div className="flex min-w-0 items-center gap-2">
           {to ? (
-            <Link className={`${nameClass} hover:underline`} data-testid={testId} to={to}>
-              {name}
-            </Link>
+            <Text asChild size="inherit" truncate variant="strong" weight="semibold">
+              <Link className="hover:underline" data-testid={testId} to={to}>{name}</Link>
+            </Text>
           ) : (
-            <span className={nameClass} data-testid={testId}>{name}</span>
+            <Text data-testid={testId} size="inherit" truncate variant="strong" weight="semibold">{name}</Text>
           )}
           {isMine ? <MineMarker /> : null}
           {!isActive ? <Chip>Inactive</Chip> : null}

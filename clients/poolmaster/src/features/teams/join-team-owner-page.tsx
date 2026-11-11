@@ -9,9 +9,11 @@ import { describeUnusableInvitation } from '@/features/leagues/unusable-invitati
 import {
   Button,
   Chip,
+  Eyebrow,
   Heading,
   LinkButton,
   PublicInviteJoinPage,
+  Text,
 } from '@/features/shared/ui';
 import { getLogger } from '@/lib/logger';
 import {
@@ -178,7 +180,7 @@ export function JoinTeamOwnerPage() {
       <PublicInviteJoinPage
         title={invitationQuery.data ? `Join ${invitationQuery.data.team.name} as a co-owner` : 'Join as a co-owner'}
       >
-        <p className="mt-3 text-sm text-muted-foreground">{unusableInvitationMessage ?? redirectMessage}</p>
+        <Text as="p" className="mt-3" variant="meta">{unusableInvitationMessage ?? redirectMessage}</Text>
         {invitationQuery.data ? (
           <div className="mt-5 space-y-5">
             <InvitationContextCard
@@ -192,10 +194,10 @@ export function JoinTeamOwnerPage() {
                 <TeamAvatar iconKey={invitationQuery.data.team.iconKey} size="lg" />
                 <div>
                   <Heading level={3} variant="card" size="sm">What you&apos;re joining</Heading>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    You&apos;ll join <span className="font-medium text-foreground">{invitationQuery.data.team.name}</span> as a co-owner inside{' '}
-                    <span className="font-medium text-foreground">{invitationQuery.data.league.name}</span>.
-                  </p>
+                  <Text as="p" className="mt-1" variant="meta">
+                    You&apos;ll join <Text size="inherit" variant="strong">{invitationQuery.data.team.name}</Text> as a co-owner inside{' '}
+                    <Text size="inherit" variant="strong">{invitationQuery.data.league.name}</Text>.
+                  </Text>
                 </div>
               </div>
             </div>
@@ -271,15 +273,13 @@ export function JoinTeamOwnerPage() {
             <div className="flex items-center gap-4 rounded-2xl border border-border bg-card p-4">
               <TeamAvatar iconKey={invitationQuery.data.team.iconKey} size="lg" />
               <div className="min-w-0">
-                <div className="text-xs uppercase text-muted-foreground">
-                  You&apos;ll co-own
-                </div>
-                <div className="truncate text-base font-semibold text-foreground">
+                <Eyebrow tone="muted">You&apos;ll co-own</Eyebrow>
+                <Text as="div" size="base" truncate variant="strong" weight="semibold">
                   {invitationQuery.data.team.name}
-                </div>
-                <div className="text-sm text-muted-foreground">
+                </Text>
+                <Text as="div" variant="meta">
                   League homepage: {buildLeaguePath(invitationQuery.data.league.leagueCode)}
-                </div>
+                </Text>
               </div>
             </div>
           </div>
