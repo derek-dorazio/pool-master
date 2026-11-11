@@ -45001,6 +45001,11 @@
           "entryName": {
             "type": "string"
           },
+          "squadId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The team the entry belongs to."
+          },
           "boxCount": {
             "type": "integer",
             "minimum": 0,
@@ -45024,6 +45029,7 @@
         "required": [
           "contestEntryId",
           "entryName",
+          "squadId",
           "boxCount",
           "periodsWon",
           "displayPosition"
@@ -45465,6 +45471,11 @@
                 "entryName": {
                   "type": "string"
                 },
+                "squadId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "The team the entry belongs to."
+                },
                 "boxCount": {
                   "type": "integer",
                   "minimum": 0,
@@ -45488,6 +45499,7 @@
               "required": [
                 "contestEntryId",
                 "entryName",
+                "squadId",
                 "boxCount",
                 "periodsWon",
                 "displayPosition"
