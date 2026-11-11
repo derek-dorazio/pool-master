@@ -4,6 +4,11 @@
  * matches endpoint filters by season, dates or teams but not by matchweek, so a matchweek is read
  * as its season's matches (about four pages) and picked out by round number. The matches and
  * teams endpoints name no paid tier in the vendor's document.
+ *
+ * A postponed match keeps its round number when it is replayed weeks later, so its matchweek's
+ * end date stretches to the replay and the matchweek stays under way until then. A linked
+ * event takes no status from the feed, so this holds up no settlement: an admin settles a match
+ * that is never replayed by cancelling it, as with loaded data.
  */
 
 import type { LiveScoreResult } from '@poolmaster/shared/dto';
