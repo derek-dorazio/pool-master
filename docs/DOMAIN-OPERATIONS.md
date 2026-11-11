@@ -1160,7 +1160,7 @@ behind it (a cell to the squad's finishes in that place, Played to every contest
 kept in the link as `?squad=…&place=…`.
 Contests › History reads the same list one year at a time (`?year=2025`, the newest year with a
 completed contest by default), each row naming its winner and opening the contest.
-All years (`/league/:code/history`, linked from the Championships header)
+All years (`/league/:code/history`, the fourth Championships tab)
 shows the summary's tiles and one line per year, which opens that year's Championship tab; each
 cup line opens its Points race. It shows every crowned cup and an open one once two of its contests
 have counted, and skips a year with neither a champion nor such a cup.
