@@ -37,7 +37,7 @@ function SeasonCups() {
     return <LoadingState body="Loading cups..." />;
   }
   if (cupsQuery.isError) {
-    return <ErrorState onRetry={() => void cupsQuery.refetch()} body="We couldn't load this year's cups." testId="trophy-case-error" />;
+    return <ErrorState body="We couldn't load this year's cups." onRetry={() => void cupsQuery.refetch()} testId="trophy-case-error" />;
   }
   const cups = cupsOnShow(cupsQuery.data ?? []);
   const title = `${year} cups`;

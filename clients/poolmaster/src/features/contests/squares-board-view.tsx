@@ -126,10 +126,10 @@ export function SquaresBoardView({
   }
   if (boardQuery.isError || !boardQuery.data) {
     return (
-      <ErrorState onRetry={() => void boardQuery.refetch()}
-        body="Try refreshing or return to the contest board."
+      <ErrorState
+        body="We couldn't load this grid."
+        onRetry={() => void boardQuery.refetch()}
         testId="squares-board-error"
-        title="We couldn't load this grid."
       />
     );
   }

@@ -16,10 +16,10 @@ export function ContestEntryLeagueRedirect() {
 
   if (contestQuery.isError || leagueQuery.isError) {
     return (
-      <ErrorState onRetry={refetchFailed(contestQuery, leagueQuery)}
-        body="Try refreshing or return to the contest board."
+      <ErrorState
+        body="We couldn't load this contest entry."
+        onRetry={refetchFailed(contestQuery, leagueQuery)}
         testId="contest-entry-redirect-error"
-        title="We couldn't load this contest entry."
       />
     );
   }

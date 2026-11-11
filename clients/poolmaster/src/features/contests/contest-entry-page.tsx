@@ -501,9 +501,9 @@ function RosterContestEntryPage() {
     || entryQuery.isError
   ) {
     return (
-      <ErrorState onRetry={refetchFailed(contestQuery, selectionStateQuery, entryQuery)}
-        body="Try refreshing or return to the contest board."
-        title="We couldn't load this contest entry."
+      <ErrorState
+        body="We couldn't load this contest entry."
+        onRetry={refetchFailed(contestQuery, selectionStateQuery, entryQuery)}
       />
     );
   }

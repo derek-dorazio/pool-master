@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { ErrorState, LinkButton, LoadingState } from "@/features/shared/ui";
-import { getLeagueLoadErrorCopy } from "./league-load-error";
+import { getLeagueLoadErrorCopy, isLeagueAccessError } from "./league-load-error";
 
 /**
  * #202 — generic over the query's DATA rather than over a league.
@@ -51,13 +51,14 @@ export function useLeagueContextGuard<TData>(
 
     return {
       element: (
-        <ErrorState onRetry={() => void query.refetch()}
+        <ErrorState
           action={(
             <LinkButton to="/welcome" variant="subtle">
               Back to welcome
             </LinkButton>
           )}
           body={copy.body}
+          onRetry={isLeagueAccessError(query.error) ? null : () => void query.refetch()}
           title={copy.title}
         />
       ),

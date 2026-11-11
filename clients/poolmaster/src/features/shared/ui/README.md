@@ -23,7 +23,7 @@ The shared UI layer is split into three levels:
    placeholder rows. A query's loading, error, empty and data branches are one
    `QueryState`, whose error offers Retry from the query's own `refetch`; a
    hand-drawn `ErrorState` takes `onRetry` (`refetchFailed(...)` when it waits on
-   several reads). A one-line failure beside what failed, such as a refused save, is
+   several reads, `null` for a failure reading again cannot fix, such as no access). A one-line failure beside what failed, such as a refused save, is
    an `InlineError`. Never hand-type a `text-destructive` or "Loading..." paragraph;
    `poolmaster/no-hand-written-query-states` fails one in feature code. A small table is a
    `SimpleTable` built from its parts (`density="compact"` inside a card,

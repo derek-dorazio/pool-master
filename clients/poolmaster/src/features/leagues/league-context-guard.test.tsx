@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router";
+import { ApiError } from "@/lib/errors";
 import { useLeagueContextGuard } from "./league-context-guard";
 
 function GuardHarness({
@@ -60,6 +61,21 @@ describe("pool-master-pjr.9: league context guard", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: "Retry" }));
     expect(refetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("rule: offers no Retry when the viewer has no access, since reading again cannot grant it", () => {
+    render(
+      <MemoryRouter>
+        <GuardHarness
+          error={new ApiError({ error: { code: "LEAGUE_MEMBERSHIP_REQUIRED", message: "Members only." } })}
+          isError
+        />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText("You do not have access to this league.")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Back to welcome" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Retry" })).not.toBeInTheDocument();
   });
 
   it("rule: exposes the loaded league when context is ready", () => {

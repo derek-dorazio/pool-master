@@ -88,8 +88,9 @@ export function TeamsPage() {
       {teamsQuery.isLoading ? (
         <LoadingState rows={3} body="Loading members..." testId="teams-page-teams-loading" />
       ) : teamsQuery.isError ? (
-        <ErrorState onRetry={() => void teamsQuery.refetch()}
+        <ErrorState
           body="We couldn't load this league's members."
+          onRetry={() => void teamsQuery.refetch()}
           testId="teams-page-teams-error"
           title="Members unavailable"
         />

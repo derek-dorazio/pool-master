@@ -57,7 +57,7 @@ export function ManageTeamPage() {
     return <LoadingState body="Loading this member..." testId="manage-team-loading" />;
   }
   if (teamQuery.isError && !hasErrorCode(teamQuery.error, 'SQUAD_NOT_FOUND')) {
-    return <ErrorState onRetry={() => void teamQuery.refetch()} body="We couldn't load this member." title="Member unavailable" />;
+    return <ErrorState body="We couldn't load this member." onRetry={() => void teamQuery.refetch()} title="Member unavailable" />;
   }
   if (!team) {
     return (

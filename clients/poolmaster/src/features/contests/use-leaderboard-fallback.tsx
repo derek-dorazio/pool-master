@@ -1,7 +1,8 @@
+import { isApiErrorCode } from '@poolmaster/shared/dto';
 import type { UseQueryResult } from '@tanstack/react-query';
 import { useEffect, type ReactElement } from 'react';
 import { ErrorState, LoadingState } from '@/features/shared/ui';
-import { ApiError, extractErrorMessage } from '@/lib/errors';
+import { ApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { LEADERBOARD_ERROR_MESSAGES } from './contest-leaderboard';
 
@@ -28,13 +29,14 @@ export function useLeaderboardFallback(
     return <LoadingState body="Loading contest leaderboard..." />;
   }
   if (isError || query.data === undefined) {
+    // A refusal (picks hidden, not a member) will not change on a second read, so it offers no Retry.
+    const refusal = error instanceof ApiError && error.code !== undefined && isApiErrorCode(error.code)
+      ? LEADERBOARD_ERROR_MESSAGES[error.code]
+      : undefined;
     return (
       <ErrorState
-        body={extractErrorMessage(error, {
-          codeMessages: LEADERBOARD_ERROR_MESSAGES,
-          fallback: 'Try refreshing, or return to the contest board.',
-        })}
-        onRetry={() => void query.refetch()}
+        body={refusal}
+        onRetry={refusal ? null : () => void query.refetch()}
         testId={error instanceof ApiError && error.code ? `contest-leaderboard-error-${error.code}` : 'contest-leaderboard-error'}
         title="We couldn't load this leaderboard."
       />

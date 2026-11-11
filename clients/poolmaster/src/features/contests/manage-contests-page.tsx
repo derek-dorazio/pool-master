@@ -275,7 +275,7 @@ export function ManageContestsPage() {
         ) : (
           <TabsContent className="grid gap-3" value={filter}>
             {filter === 'history' && historyQuery.isError ? (
-              <ErrorState onRetry={() => void historyQuery.refetch()} body={`We couldn't load the contests finished in ${year}.`} testId="manage-contests-history-error" />
+              <ErrorState body={`We couldn't load the contests finished in ${year}.`} onRetry={() => void historyQuery.refetch()} testId="manage-contests-history-error" />
             ) : filter === 'history' && historyQuery.isLoading ? (
               <LoadingState rows={3} body="Loading finished contests..." />
             ) : (

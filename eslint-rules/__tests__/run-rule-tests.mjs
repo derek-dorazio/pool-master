@@ -1077,6 +1077,14 @@ ruleTester.run('no-hand-written-query-states', noHandWrittenQueryStates, {
     'const a = <AsyncPage header={header}>{children}</AsyncPage>;',
     // A spread may carry onRetry.
     'const a = <ErrorState {...props} />;',
+    // A paging button's label and an accessible label are not page states.
+    'const a = <Button onClick={more}>Loading more...</Button>;',
+    'const a = <LinkButton to={to}>{"Loading more..."}</LinkButton>;',
+    'const a = <span aria-label="Loading more..." />;',
+    // "Loading" that is not a loading line.
+    'const a = <p>Loading is fast</p>;',
+    // A permanent failure (not found, no access) says so with onRetry={null}.
+    'const a = <ErrorState onRetry={null} title="League not found." />;',
   ],
   invalid: [
     {

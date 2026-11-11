@@ -232,9 +232,9 @@ export function ContestDetailPage() {
 
   if (contestQuery.isError || !contestQuery.data) {
     return (
-      <ErrorState onRetry={() => void contestQuery.refetch()}
-        body="Try refreshing or return to League Home."
-        title="We couldn't load this contest."
+      <ErrorState
+        body="We couldn't load this contest."
+        onRetry={() => void contestQuery.refetch()}
       />
     );
   }
@@ -381,7 +381,7 @@ export function ContestDetailPage() {
           {contestEntriesQuery.isLoading ? (
             <LoadingState rows={3} body="Loading contest entries..." />
           ) : contestEntriesQuery.isError ? (
-            <ErrorState onRetry={() => void contestEntriesQuery.refetch()} body="We couldn't load the current contest entries." />
+            <ErrorState body="We couldn't load the current contest entries." onRetry={() => void contestEntriesQuery.refetch()} />
           ) : visibleEntries.length === 0 ? (
             <EmptyState
               body={

@@ -11,7 +11,10 @@
  * - an `ErrorState`, or a page template given a `state` (which may be "error"), with no
  *   `onRetry`, since every failed read offers Retry.
  *
- * A button's pending label ("Saving...") is not a page state and never matches.
+ * Not a page state, so never reported: a button's label ("Saving...", "Loading more..."), anything
+ * inside a `Button` or `LinkButton`, and an `aria-label`. Out of scope: copy kept in `.ts` modules
+ * (this rule reads `.tsx` feature code) and a mutation's own "could not load" refusal, which is a
+ * save failing rather than a read.
  */
 const STATE_COMPONENTS = new Set([
   'AsyncPage',
@@ -26,11 +29,13 @@ const STATE_COMPONENTS = new Set([
 // Calls whose arguments carry state words to a shared state, or only to the log.
 const ALLOWED_CALLS = new Set(['useLeagueContextGuard']);
 const LOGGER_OBJECTS = new Set(['logger', 'log']);
+// Controls whose labels may say "Loading more..." without being a page state.
+const BUTTON_COMPONENTS = new Set(['Button', 'LinkButton', 'button']);
+const LABEL_ATTRIBUTES = new Set(['aria-label']);
 // Page templates that draw an error state when their `state` prop says so.
 const STATE_TEMPLATES = new Set(['AsyncPage', 'DataGridPage', 'EntityDetailPage', 'ManagementListPage']);
 
 const LOADING_WORDS = /^\s*Loading\b.*(?:\.\.\.|…)\s*$/s;
-// JSX text is cut at every {expression}, so "Loading {year} events..." arrives as "Loading ".
 const LOADING_JSX_TEXT = /^\s*Loading\s/;
 const FAILED_LOAD_WORDS = /\b(?:couldn['’]t|could not|unable to) load\b/i;
 
@@ -38,6 +43,31 @@ function calleeName(callee) {
   if (callee.type === 'Identifier') return callee.name;
   if (callee.type === 'MemberExpression' && callee.object.type === 'Identifier') return callee.object.name;
   return null;
+}
+
+function elementName(element) {
+  const name = element.openingElement?.name ?? element.name;
+  return name?.type === 'JSXIdentifier' ? name.name : null;
+}
+
+/** Whether the words are a button's label or an accessible label, not a page state. */
+function isControlLabel(node) {
+  for (let current = node.parent; current; current = current.parent) {
+    if (current.type === 'JSXAttribute' && LABEL_ATTRIBUTES.has(current.name.name)) return true;
+    if (current.type === 'JSXElement' && BUTTON_COMPONENTS.has(elementName(current))) return true;
+    if (current.type === 'Program') return false;
+  }
+  return false;
+}
+
+/**
+ * JSX text is cut at every {expression}, so "Loading {year} events..." arrives as "Loading ".
+ * It reads as a loading line only when the element's text ends in an ellipsis.
+ */
+function endsInEllipsis(node) {
+  const texts = (node.parent?.children ?? []).filter((child) => child.type === 'JSXText' && child.value.trim());
+  const last = texts[texts.length - 1];
+  return Boolean(last) && /(?:\.\.\.|…)\s*$/.test(last.value);
 }
 
 /** Whether the words sit in a state component's prop, an allowed call or a log line. */
@@ -84,7 +114,9 @@ export default {
   },
   create(context) {
     function check(node, text, isJsxText = false) {
-      if ((LOADING_WORDS.test(text) || (isJsxText && LOADING_JSX_TEXT.test(text))) && !isInSharedState(node)) {
+      if (isControlLabel(node)) return;
+      const loading = LOADING_WORDS.test(text) || (isJsxText && LOADING_JSX_TEXT.test(text) && endsInEllipsis(node));
+      if (loading && !isInSharedState(node)) {
         context.report({ node, messageId: 'handWrittenLoading', data: { text: text.trim() } });
       } else if (FAILED_LOAD_WORDS.test(text) && !isInSharedState(node)) {
         context.report({ node, messageId: 'handWrittenError', data: { text: text.trim() } });
@@ -109,6 +141,7 @@ export default {
         );
         const needsRetry = component === 'ErrorState' || (STATE_TEMPLATES.has(component) && named('state'));
         if (!needsRetry) return;
+        // `onRetry={null}` is an explicit "this failure is permanent" and counts as a choice.
         const hasRetry = named('onRetry') || element.attributes.some((attribute) => attribute.type === 'JSXSpreadAttribute');
         if (!hasRetry) context.report({ node: element, messageId: 'errorWithoutRetry', data: { component } });
       },

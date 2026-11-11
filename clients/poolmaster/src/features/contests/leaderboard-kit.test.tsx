@@ -161,10 +161,19 @@ describe('useLeaderboardFallback', () => {
     expect(screen.getByText('Loading contest leaderboard...')).toBeInTheDocument();
   });
 
-  it('names a refusal by its code, so picks-hidden reads apart from a server failure', () => {
+  it('names a refusal by its code and explains it, with no Retry, since reading again cannot lift it', () => {
     fallbackFor({ ...settled, error: new ApiError({ error: { code: 'CONTEST_LEADERBOARD_PICKS_HIDDEN', message: 'Picks are hidden.' } }), isError: true });
 
-    expect(screen.getByTestId('contest-leaderboard-error-CONTEST_LEADERBOARD_PICKS_HIDDEN')).toHaveTextContent("We couldn't load this leaderboard.");
+    const error = screen.getByTestId('contest-leaderboard-error-CONTEST_LEADERBOARD_PICKS_HIDDEN');
+    expect(error).toHaveTextContent("We couldn't load this leaderboard. Scores appear once picks are revealed.");
+    expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument();
+  });
+
+  it('offers Retry for a coded failure that is not a refusal, such as a server error', () => {
+    fallbackFor({ ...settled, error: new ApiError({ error: { code: 'INTERNAL_ERROR', message: 'Down.' } }), isError: true });
+
+    expect(screen.getByTestId('contest-leaderboard-error-INTERNAL_ERROR')).toHaveTextContent("We couldn't load this leaderboard.");
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
   });
 
   it('shows the plain error state for a failure without a code, whose Retry reads the board again', () => {

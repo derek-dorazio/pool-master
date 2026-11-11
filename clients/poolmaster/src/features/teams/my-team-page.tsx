@@ -63,8 +63,9 @@ export function MyTeamPage() {
   }
   if (myTeamQuery.isError) {
     return (
-      <ErrorState onRetry={() => void myTeamQuery.refetch()}
+      <ErrorState
         body={extractErrorMessage(myTeamQuery.error, { fallback: TEAM_PAGE_FALLBACK_ERROR })}
+        onRetry={() => void myTeamQuery.refetch()}
         testId="my-team-error"
         title="This page is unavailable"
       />

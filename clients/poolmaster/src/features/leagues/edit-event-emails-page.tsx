@@ -49,8 +49,9 @@ export function EditEventEmailsPage() {
   }
   if (sportLeaguesQuery.isError) {
     return (
-      <ErrorState onRetry={() => void sportLeaguesQuery.refetch()}
+      <ErrorState
         body={extractErrorMessage(sportLeaguesQuery.error, { fallback: 'We could not load the sport leagues.' })}
+        onRetry={() => void sportLeaguesQuery.refetch()}
         testId="edit-event-emails-error"
         title="Sport leagues unavailable"
       />

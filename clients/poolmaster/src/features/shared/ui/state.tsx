@@ -8,7 +8,7 @@ import { LOADING_TEXT, QUERY_ERROR_TEXT, RETRY_LABEL } from "./state-copy";
  * `inline` is one line inside a card that already has its title, such as a section whose list is
  * still loading. `tile` is the same line in a card of its own, for a page body below a header
  * that stays put. `plain` is the line with no padding of its own, for a body that is already
- * padded (a `padded` section card, a form). Either way the page header never gives way to a state.
+ * padded (a `padded` section card, a form).
  */
 type StateSize = "tile" | "inline" | "plain";
 
@@ -65,8 +65,11 @@ type ErrorStateProps = {
   /** Another way out besides Retry, such as a link back to the welcome page. */
   action?: ReactNode;
   body?: ReactNode;
-  /** Runs the failed read again. Every query error offers it. */
-  onRetry?: () => void;
+  /**
+   * Runs the failed read again. Every failed read offers it; `null` says the failure is permanent
+   * (not found, no access), where reading again cannot help, and draws no Retry.
+   */
+  onRetry?: (() => void) | null;
   retryLabel?: string;
   size?: StateSize;
   testId?: string;
@@ -78,7 +81,6 @@ type ErrorStateProps = {
 export function ErrorState({ action, body, onRetry, retryLabel = RETRY_LABEL, size = "tile", testId, title }: ErrorStateProps) {
   return (
     <div
-      aria-live="assertive"
       className={cn("flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-destructive", linePadding(size), frame(size))}
       data-testid={testId}
       role="alert"

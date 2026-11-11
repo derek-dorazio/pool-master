@@ -647,10 +647,10 @@ export function CreateContestPage() {
 
   if (templatesQuery.isError) {
     return (
-      <ErrorState onRetry={() => void templatesQuery.refetch()}
-        body="Try again in a moment."
+      <ErrorState
+        body="We couldn't load this contest's setup."
+        onRetry={() => void templatesQuery.refetch()}
         testId="create-contest-page-error"
-        title="We couldn't load this contest's setup."
       />
     );
   }

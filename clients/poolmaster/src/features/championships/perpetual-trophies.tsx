@@ -11,7 +11,7 @@ export function PerpetualTrophies({ leagueId }: { leagueId: string }) {
   const trophiesQuery = usePerpetualTrophiesQuery(leagueId);
 
   if (trophiesQuery.isError) {
-    return <ErrorState onRetry={() => void trophiesQuery.refetch()} body="We couldn't load the perpetual trophies." testId="perpetual-trophies-error" />;
+    return <ErrorState body="We couldn't load the perpetual trophies." onRetry={() => void trophiesQuery.refetch()} testId="perpetual-trophies-error" />;
   }
   const trophies = trophiesQuery.data ?? [];
   if (!trophies.length) {

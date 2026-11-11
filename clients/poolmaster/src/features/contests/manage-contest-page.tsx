@@ -158,10 +158,10 @@ export function ManageContestPage() {
     || (contest !== null && contest.leagueId !== league.id);
   if ((contestQuery.isError && !isContestMissing) || managedContestQuery.isError || eventQuery.isError) {
     return (
-      <ErrorState onRetry={refetchFailed(contestQuery, managedContestQuery, eventQuery)}
-        body="Try again in a moment."
+      <ErrorState
+        body="We couldn't load this contest."
+        onRetry={refetchFailed(contestQuery, managedContestQuery, eventQuery)}
         testId="manage-contest-error"
-        title="We couldn't load this contest."
       />
     );
   }

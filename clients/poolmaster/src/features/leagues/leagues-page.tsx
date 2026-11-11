@@ -39,10 +39,10 @@ export function WelcomePage() {
 
   if (leaguesQuery.isError) {
     return (
-      <ErrorState onRetry={() => void leaguesQuery.refetch()}
-        body="Try refreshing after signing in again."
+      <ErrorState
+        body="We couldn't load your leagues."
+        onRetry={() => void leaguesQuery.refetch()}
         testId="authenticated-landing-error"
-        title="We couldn't load your leagues."
       />
     );
   }

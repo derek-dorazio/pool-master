@@ -168,7 +168,7 @@ export function EventPage() {
     return <LoadingState body="Loading the event..." />;
   }
   if (pageQuery.isError || !pageQuery.data) {
-    return <ErrorState onRetry={() => void pageQuery.refetch()} body="We couldn't load this event. Try again in a moment." testId="event-page-error" title="Event unavailable" />;
+    return <ErrorState body="We couldn't load this event." onRetry={() => void pageQuery.refetch()} testId="event-page-error" />;
   }
   const page = pageQuery.data;
   if (!page.isActive) {

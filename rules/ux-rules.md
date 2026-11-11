@@ -146,8 +146,10 @@ Use those conventions as the starting point, but bias toward a consumer app:
   - use league selector
   - retry
 - A read's loading, error and empty states have one look everywhere: a spinner line (with
-  faint placeholder rows for a list), a red line with Retry, and an italic empty line. Only the
-  part that is loading changes; the page header stays put. Every failed read offers Retry. A
+  faint placeholder rows for a list), a red line with Retry, and an italic empty line. A header
+  that doesn't depend on the read stays put; a page whose header names the thing being loaded
+  shows the state in place of the page until it arrives. Every failed read offers Retry, except
+  a failure reading again cannot fix (not found, no access), which passes `onRetry={null}`. A
   button's pending label ("Saving...") is not a page state. The shared parts are named in
   `clients/poolmaster/src/features/shared/ui/README.md`, and
   `poolmaster/no-hand-written-query-states` fails a hand-drawn state in feature code (root

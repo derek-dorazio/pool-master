@@ -25,6 +25,6 @@ export function getLeagueLoadErrorCopy(error: Error | null | undefined) {
   return {
     title: "We couldn't load this league.",
     body:
-      'Use the league selector in the header to switch to one of your active leagues, or return to your welcome page and try again.',
+      'Use the league selector in the header to switch to one of your active leagues, or return to your welcome page.',
   };
 }
