@@ -1,8 +1,7 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { useMemo } from 'react';
 import type { ChampionshipStandingRowDto } from '@/lib/api';
-import { Button, cn } from '@/features/shared/ui';
-import { formatOrdinalPlace } from './cup-view';
+import { Button, cn, formatOrdinal, useDisplayPreferences } from '@/features/shared/ui';
 import { FINISH_MATRIX_PLACES, type ContestResultFilter } from './championship-view';
 import { squadStandingColumns } from './squad-standing-columns';
 import { SquadStandingsGrid } from './squad-standings-grid';
@@ -27,12 +26,13 @@ export function ChampionshipStandingsGrid({
   rows: ChampionshipStandingRowDto[];
   searchable?: boolean;
 }) {
+  const { locale } = useDisplayPreferences();
   const columns = useMemo<ColumnDef<ChampionshipStandingRowDto, string | number>[]>(
     () => [
-      ...squadStandingColumns<ChampionshipStandingRowDto>({ focusSquadId, testIdPrefix: 'championship' }),
+      ...squadStandingColumns<ChampionshipStandingRowDto>({ focusSquadId, locale, testIdPrefix: 'championship' }),
       ...Array.from({ length: FINISH_MATRIX_PLACES }, (_, index): ColumnDef<ChampionshipStandingRowDto, string | number> => ({
         id: `finish-${index + 1}`,
-        header: formatOrdinalPlace(index + 1),
+        header: formatOrdinal(index + 1),
         accessorFn: (row) => row.finishes[index] ?? 0,
         enableGlobalFilter: false,
         cell: ({ row }) => {
@@ -42,7 +42,7 @@ export function ChampionshipStandingsGrid({
                 <CountButton
                   count={count}
                   isActive={filter?.squadId === row.original.squadId && filter.place === index + 1}
-                  label={`Show the contests ${row.original.squadName} finished ${formatOrdinalPlace(index + 1)}`}
+                  label={`Show the contests ${row.original.squadName} finished ${formatOrdinal(index + 1)}`}
                   onClick={() => onFilter({ squadId: row.original.squadId, place: index + 1 })}
                   testId={`championship-cell-${row.original.squadId}-${index + 1}`}
                 />
@@ -68,7 +68,7 @@ export function ChampionshipStandingsGrid({
           : <span className="tabular-nums">0</span>),
       },
     ],
-    [filter, focusSquadId, onFilter],
+    [filter, focusSquadId, locale, onFilter],
   );
 
   return (

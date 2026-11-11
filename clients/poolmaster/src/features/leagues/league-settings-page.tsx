@@ -257,7 +257,7 @@ export function LeagueSettingsPage() {
             key={cap}
             label={PLAN_CAP_LABEL[cap]}
             testId={`league-settings-plan-cap-${cap}`}
-            value={formatPlanLimit(league.planEntitlements.caps[cap])}
+            value={formatPlanLimit(league.planEntitlements.caps[cap], displayPreferences.locale)}
           />
         ))}
         {isRootAdmin ? <ExtendLeagueGift league={league} /> : null}

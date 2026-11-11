@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Navigate, useParams } from 'react-router';
-import { PlanCap, PlanFeatureGroup, pluralize, type LeaguePlan } from '@poolmaster/shared/domain';
+import { PlanCap, PlanFeatureGroup, type LeaguePlan } from '@poolmaster/shared/domain';
 import { updateLeaguePlan, type LeagueDto, type LeaguePlanUsageResponse, type PlanEntitlementsDto } from '@/lib/api';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -11,7 +11,7 @@ import { useAuth } from '@/features/auth/auth-context';
 import { syncLeagueCaches } from '@/features/leagues/league-cache';
 import { buildLeagueAdminPath } from '@/features/leagues/league-routing';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
-import { Alert, Button, Chip, ErrorState, formatDateDisplay, Heading, LoadingState, PageHeader, SectionCard, SectionHeader, Tile, useDisplayPreferences } from '@/features/shared/ui';
+import { Alert, Button, Chip, ErrorState, formatDateDisplay, Heading, LoadingState, PageHeader, SectionCard, SectionHeader, Tile, formatCount, formatNumber, useDisplayPreferences } from '@/features/shared/ui';
 import { PlanCards } from './plan-cards';
 import { buildCapUsage, buildPlanChangeEffects, NAMED_CONTEST_LIMIT } from './plan-change';
 import { PlanComparisonTable } from './plan-comparison-table';
@@ -198,8 +198,8 @@ function LeaguePlanView({ league }: { league: LeagueDto }) {
 }
 
 /** A cap's use against its limit: "2 of 3", or the count alone when the plan has no limit. */
-function formatUse(used: number, limit: number | null): string {
-  return limit === null ? used.toLocaleString('en-US') : `${used.toLocaleString('en-US')} of ${limit.toLocaleString('en-US')}`;
+function formatUse(used: number, limit: number | null, locale: string): string {
+  return limit === null ? formatNumber(used, locale) : `${formatNumber(used, locale)} of ${formatNumber(limit, locale)}`;
 }
 
 function YourLeagueNow({
@@ -213,6 +213,7 @@ function YourLeagueNow({
   sportLeagueNames: ReadonlyMap<string, string>;
   usage: LeaguePlanUsageResponse | undefined;
 }) {
+  const { locale } = useDisplayPreferences();
   const fullest = usage?.openContests.reduce<LeaguePlanUsageResponse['openContests'][number] | null>(
     (most, contest) => (most === null || contest.entryCount > most.entryCount ? contest : most),
     null,
@@ -229,7 +230,7 @@ function YourLeagueNow({
             <div>
               <dt className="text-muted-foreground">{`Sports leagues in ${usage.seasonYear}`}</dt>
               <dd className="text-foreground" data-testid="league-plan-now-sport-leagues">
-                <span className="font-semibold">{formatUse(usage.sportLeagueIds.length, current.caps[PlanCap.SPORTS_LEAGUES_PER_YEAR])}</span>
+                <span className="font-semibold">{formatUse(usage.sportLeagueIds.length, current.caps[PlanCap.SPORTS_LEAGUES_PER_YEAR], locale)}</span>
                 {usage.sportLeagueIds.length ? (
                   <span className="block text-muted-foreground">
                     {usage.sportLeagueIds.map((id) => sportLeagueNames.get(id) ?? 'A sports league').join(', ')}
@@ -242,7 +243,7 @@ function YourLeagueNow({
               <dd className="text-foreground" data-testid="league-plan-now-entries">
                 {fullest ? (
                   <>
-                    <span className="font-semibold">{`${formatUse(fullest.entryCount, current.caps[PlanCap.ENTRIES_PER_CONTEST])} entries`}</span>
+                    <span className="font-semibold">{`${formatUse(fullest.entryCount, current.caps[PlanCap.ENTRIES_PER_CONTEST], locale)} entries`}</span>
                     <span className="block text-muted-foreground">{fullest.name}</span>
                   </>
                 ) : 'No contest is taking entries'}
@@ -271,6 +272,7 @@ function PlanChangeWarnings({
   target: PlanEntitlementsDto;
   usage: LeaguePlanUsageResponse;
 }) {
+  const { locale } = useDisplayPreferences();
   const effects = buildPlanChangeEffects(current, target, usage);
   const label = LEAGUE_PLAN_LABEL[target.plan];
   const named = effects.contestsOverEntries.slice(0, NAMED_CONTEST_LIMIT);
@@ -284,18 +286,18 @@ function PlanChangeWarnings({
         <Alert data-testid="league-plan-confirm-entries" tone="warning">
           <ul className="space-y-1">
             {named.map((contest) => (
-              <li key={contest.contestId}>{`${contest.name} has ${pluralize(contest.entryCount, 'entry', 'entries')}.`}</li>
+              <li key={contest.contestId}>{`${contest.name} has ${formatCount(contest.entryCount, 'entry', locale, 'entries')}.`}</li>
             ))}
             {more > 0 ? <li>{`And ${more} more.`}</li> : null}
           </ul>
           <p className="mt-2">
-            {`On ${label} ${effects.contestsOverEntries.length === 1 ? 'it keeps them' : 'each keeps them'} all, but takes no new entries past ${effects.entriesLimit.toLocaleString('en-US')}.`}
+            {`On ${label} ${effects.contestsOverEntries.length === 1 ? 'it keeps them' : 'each keeps them'} all, but takes no new entries past ${formatNumber(effects.entriesLimit, locale)}.`}
           </p>
         </Alert>
       ) : null}
       {effects.sportLeaguesOver ? (
         <Alert data-testid="league-plan-confirm-sport-leagues" tone="warning">
-          {`This year's contests use ${pluralize(effects.sportLeaguesOver.used, 'sports league')}: ${usage.sportLeagueIds.map((id) => sportLeagueNames.get(id) ?? 'a sports league').join(', ')}. ${label} allows ${effects.sportLeaguesOver.limit.toLocaleString('en-US')} a year, so new contests this year can use only these.`}
+          {`This year's contests use ${formatCount(effects.sportLeaguesOver.used, 'sports league', locale)}: ${usage.sportLeagueIds.map((id) => sportLeagueNames.get(id) ?? 'a sports league').join(', ')}. ${label} allows ${formatNumber(effects.sportLeaguesOver.limit, locale)} a year, so new contests this year can use only these.`}
         </Alert>
       ) : null}
       {effects.hiddenFeatures.length ? (

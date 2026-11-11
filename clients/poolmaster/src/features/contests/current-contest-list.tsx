@@ -1,8 +1,7 @@
 import { formatSelectionTypeName, pluralize } from '@poolmaster/shared/domain';
 import type { ContestDto, ContestEntryDto, ContestEntryPlaceDto } from '@/lib/api';
-import { formatPlace } from '@/features/championships/cup-view';
 import { buildContestLandingPath } from '@/features/leagues/league-routing';
-import { Eyebrow, SectionEmpty, SectionRows } from '@/features/shared/ui';
+import { Eyebrow, SectionEmpty, SectionRows, formatPlace } from '@/features/shared/ui';
 import { ContestRow } from './contest-row';
 import { CURRENT_CONTEST_GROUP_LABEL, groupCurrentContests } from './current-contests';
 import { describeMyEntry, type MyEntriesState } from './my-contest-entry';

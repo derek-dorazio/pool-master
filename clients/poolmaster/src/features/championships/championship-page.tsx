@@ -4,7 +4,7 @@ import { Trophy } from 'lucide-react';
 import { PlanFeature } from '@poolmaster/shared/domain';
 import { hasPlanFeature } from '@/features/plans/plan-features';
 import { PlanLockedNotice } from '@/features/plans/plan-locked-notice';
-import { Button, ErrorState, Eyebrow, LoadingState, MetricGrid, MetricTile, SectionCard, SectionNote } from '@/features/shared/ui';
+import { Button, ErrorState, Eyebrow, LoadingState, MetricGrid, MetricTile, SectionCard, SectionNote, useDisplayPreferences } from '@/features/shared/ui';
 import { describePointsTable } from './cup-settings-view';
 import { joinNames } from './cup-view';
 import { ChampionshipContestList } from './championship-contest-list';
@@ -29,6 +29,7 @@ import { useChampionshipsRoute } from './use-championships-route';
  */
 export function ChampionshipPage() {
   const { league, leagueCode, leagueId, viewer, year } = useChampionshipsRoute();
+  const { locale } = useDisplayPreferences();
   const isInPlan = hasPlanFeature(league, PlanFeature.CHAMPIONSHIP);
   const championshipQuery = useChampionshipQuery(isInPlan ? leagueId : '', year);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -68,7 +69,7 @@ export function ChampionshipPage() {
               {(podium[0]?.squads.length ?? 0) > 1 ? 'Champions' : 'Champion'}
             </Eyebrow>
           ) : null}
-          <SectionNote testId="championship-standing" tone="default">{describeChampionshipStanding(championship)}</SectionNote>
+          <SectionNote testId="championship-standing" tone="default">{describeChampionshipStanding(championship, locale)}</SectionNote>
           {podium.length ? (
             <div className="w-full max-w-sm pt-2">
               <Podium focusSquadId={viewer.mySquadId} steps={podium} testId="championship-podium" />

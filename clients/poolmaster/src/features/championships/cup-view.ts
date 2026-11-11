@@ -1,15 +1,9 @@
 import { ContestStatus, CupContestCount, CupStatus, CupWeight, championshipYear } from '@poolmaster/shared/domain';
 import type { CupContestRowDto, CupDto, CupProjectedStandingDto, CupProjectionDto, CupStandingRowDto } from '@/lib/api';
+import { formatCupPoints, formatPlace } from '@/features/shared/ui';
 
 /** How many squads the race chart draws. */
 export const RACE_CHART_SQUADS = 5;
-
-const POINTS_FORMAT = new Intl.NumberFormat('en-US', { maximumFractionDigits: 1, minimumFractionDigits: 0 });
-
-/** Cup points arrive in tenths of a point: 6125 reads "612.5", 6000 reads "600". */
-export function formatCupPoints(tenths: number): string {
-  return POINTS_FORMAT.format(tenths / 10);
-}
 
 /**
  * A cup weight as a contest row shows it: nothing for an ordinary contest, the multiplier for a
@@ -36,24 +30,6 @@ export function describeMovement(movement: number | null): Movement {
     : { label: `▼${places}`, description: `Down ${places} ${noun}`, direction: 'down' };
 }
 
-function ordinalSuffix(position: number) {
-  const lastTwo = position % 100;
-  if (lastTwo >= 11 && lastTwo <= 13) {
-    return 'th';
-  }
-  return ({ 1: 'st', 2: 'nd', 3: 'rd' } as Record<number, string>)[position % 10] ?? 'th';
-}
-
-/** A place as an ordinal: "1st", "12th". */
-export function formatOrdinalPlace(position: number): string {
-  return `${position}${ordinalSuffix(position)}`;
-}
-
-/** A place as a sentence reads it: "6th", or "T2" for a shared 2nd. */
-export function formatPlace(row: Pick<CupStandingRowDto, 'displayPosition' | 'position'>): string {
-  return row.displayPosition.startsWith('T') ? row.displayPosition : formatOrdinalPlace(row.position);
-}
-
 /** Whether a cup has a projection to show: it is open and a contest it counts is live. */
 export function hasLiveContest(cup: CupDto): boolean {
   return cup.status === CupStatus.OPEN
@@ -61,8 +37,11 @@ export function hasLiveContest(cup: CupDto): boolean {
 }
 
 /** What the greyed "If it ended now" column shows for a squad: "2nd · 25", "T1 · 72.5". */
-export function formatProjectedStanding(row: Pick<CupProjectedStandingDto, 'displayPosition' | 'position' | 'points'>): string {
-  return `${formatPlace(row)} · ${formatCupPoints(row.points)}`;
+export function formatProjectedStanding(
+  row: Pick<CupProjectedStandingDto, 'displayPosition' | 'position' | 'points'>,
+  locale: string,
+): string {
+  return `${formatPlace(row)} · ${formatCupPoints(row.points, locale)}`;
 }
 
 /** The line over the standings that says what the greyed column is. */
