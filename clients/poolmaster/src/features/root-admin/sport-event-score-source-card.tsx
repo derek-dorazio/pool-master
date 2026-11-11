@@ -6,7 +6,7 @@ import {
   ConfirmationModal,
   formatDateTimeDisplay,
   InlineError,
-  PanelCard,
+  SectionCard,
   PickerModal,
   StatusBadge,
   useDisplayPreferences,
@@ -133,7 +133,7 @@ export function SportEventScoreSourceCard({
   });
 
   return (
-    <PanelCard padded title="Score source">
+    <SectionCard padded title="Score source">
       <div className="flex flex-wrap items-center gap-3">
         <StatusBadge tone={syncScopeTone(tournament.syncScope)}>
           {syncScopeLabel(tournament.syncScope)}
@@ -283,6 +283,6 @@ export function SportEventScoreSourceCard({
         testId="root-admin-sport-event-unlink-modal"
         title="Unlink score source"
       />
-    </PanelCard>
+    </SectionCard>
   );
 }

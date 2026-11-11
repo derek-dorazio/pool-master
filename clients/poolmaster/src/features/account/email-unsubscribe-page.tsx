@@ -5,7 +5,7 @@ import { extractErrorMessage, hasErrorCode, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import { Alert, Button, LinkButton, PanelCard } from '@/features/shared/ui';
+import { Alert, Button, LinkButton, SectionCard } from '@/features/shared/ui';
 import { EMAIL_CATEGORY_LABELS } from './email-preferences';
 import { SELF_USER_ID } from './user-routing';
 
@@ -39,30 +39,30 @@ export function EmailUnsubscribePage() {
 
   if (!token || hasErrorCode(unsubscribeMutation.error, 'EMAIL_UNSUBSCRIBE_LINK_INVALID')) {
     return (
-      <PanelCard className="mx-auto max-w-md" padded testId="email-unsubscribe-invalid" title="This link doesn't work">
+      <SectionCard className="mx-auto max-w-md" padded testId="email-unsubscribe-invalid" title="This link doesn't work">
         <p className="text-sm text-muted-foreground">
           Sign in and open Email notifications on your profile to choose which emails you get.
         </p>
         <LinkButton to="/my-account" variant="secondary">Email notifications</LinkButton>
-      </PanelCard>
+      </SectionCard>
     );
   }
 
   if (unsubscribeMutation.isSuccess) {
     const { label } = EMAIL_CATEGORY_LABELS[unsubscribeMutation.data.category];
     return (
-      <PanelCard className="mx-auto max-w-md" padded testId="email-unsubscribe-done" title="You're unsubscribed">
+      <SectionCard className="mx-auto max-w-md" padded testId="email-unsubscribe-done" title="You're unsubscribed">
         <p className="text-sm text-muted-foreground">
           You won&apos;t get {label.toLowerCase()} emails from any of your leagues. You can turn them
           back on, or change other emails, in Email notifications on your profile.
         </p>
         <LinkButton to="/my-account" variant="secondary">Email notifications</LinkButton>
-      </PanelCard>
+      </SectionCard>
     );
   }
 
   return (
-    <PanelCard className="mx-auto max-w-md" padded title="Stop these emails?">
+    <SectionCard className="mx-auto max-w-md" padded title="Stop these emails?">
       <p className="text-sm text-muted-foreground">
         This turns off this kind of email from all your leagues. Invitations and account emails are
         always sent.
@@ -78,6 +78,6 @@ export function EmailUnsubscribePage() {
       >
         Stop these emails
       </Button>
-    </PanelCard>
+    </SectionCard>
   );
 }

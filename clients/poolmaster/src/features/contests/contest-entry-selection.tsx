@@ -10,7 +10,6 @@ import {
   cn,
   FormField,
   Heading,
-  ListStack,
   Select,
   StatusBadge,
   Tile,
@@ -233,7 +232,7 @@ export function EditableSelectionGroup({
       </Button>
 
       {isExpanded ? (
-        <ListStack className="mt-4">
+        <div className="mt-4 space-y-3">
           {group.participants.map((participant) => (
             <SelectionParticipantCard
               canSelect={canSelect}
@@ -246,7 +245,7 @@ export function EditableSelectionGroup({
               sport={sport}
             />
           ))}
-        </ListStack>
+        </div>
       ) : null}
     </Tile>
   );

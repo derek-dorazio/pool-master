@@ -5,7 +5,6 @@ import { useMyContestEntries } from '@/features/contests/use-contest-entries';
 import { useLeagueContestsQuery } from '@/features/contests/use-league-contests-query';
 import {
   Alert,
-  EmptyState,
   ErrorState,
   PageHeader,
   LinkButton,
@@ -17,9 +16,9 @@ import { plural } from '@/lib/plural';
 import { parseRouteState } from '@/routes/route-state';
 import { useLeagueContextGuard } from './league-context-guard';
 import { pickUpNextContest } from './league-home';
-import { CupsCard, LiveAndOpenCard, LiveStandingsCard, UpNextCard, YourTeamCard } from './league-home-cards';
+import { CupsCard, CurrentContestsCard, LiveStandingsCard, UpNextCard, YourTeamCard } from './league-home-cards';
 import { LeagueIcon } from './league-icon';
-import { buildLeagueContestsPath, buildLeagueTeamPath } from './league-routing';
+import { buildLeagueTeamPath } from './league-routing';
 import { useLeagueContext } from './use-league-context';
 import { YearReviewBanner } from '@/features/championships/year-review-banner';
 import { hasPlanFeature } from '@/features/plans/plan-features';
@@ -148,25 +147,14 @@ export function LeagueHomePage() {
                 upNext={upNext}
               />
             ) : null}
-            {currentContests.length ? (
-              <LiveAndOpenCard
-                contests={otherContests}
-                entriesByContestId={myEntries.entriesByContestId}
-                entriesState={entriesState}
-                hasTeam={hasTeam}
-                leagueCode={leagueCode}
-              />
-            ) : (
-              <EmptyState
-                action={(
-                  <LinkButton size="sm" to={buildLeagueContestsPath(leagueCode)} variant="secondary">
-                    All contests
-                  </LinkButton>
-                )}
-                body="No contests are open or live right now. Past contests are under Contests."
-                testId="league-home-no-contests"
-              />
-            )}
+            <CurrentContestsCard
+              contests={otherContests}
+              emptyBody={upNext ? 'No other open or live contests.' : 'No open or live contests.'}
+              entriesByContestId={myEntries.entriesByContestId}
+              entriesState={entriesState}
+              hasTeam={hasTeam}
+              leagueCode={leagueCode}
+            />
           </div>
           <div className="grid gap-5">
             {liveContests.length ? (

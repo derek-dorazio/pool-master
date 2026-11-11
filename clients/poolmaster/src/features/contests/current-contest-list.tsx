@@ -1,7 +1,7 @@
 import { formatSelectionTypeName, pluralize } from '@poolmaster/shared/domain';
 import type { ContestDto, ContestEntryDto } from '@/lib/api';
 import { buildContestLandingPath } from '@/features/leagues/league-routing';
-import { EmptyState, Eyebrow, PanelList } from '@/features/shared/ui';
+import { Eyebrow, SectionEmpty, SectionRows } from '@/features/shared/ui';
 import { ContestRow } from './contest-row';
 import { CURRENT_CONTEST_GROUP_LABEL, groupCurrentContests } from './current-contests';
 import { describeMyEntry, type MyEntriesState } from './my-contest-entry';
@@ -12,7 +12,7 @@ import { listedContestStartsAt } from './use-contest-schedule';
  * grouped Live, Open for entries, then Draft (commissioners only), each row saying where the
  * viewer's entry stands in the same words everywhere and opening the contest by the one link rule.
  * The group heading names the status, so a row carries no badge of its own, which leaves a phone
- * row room for the contest's name. Drawn as a panel card's body; `focusContestId` tints and
+ * row room for the contest's name. Drawn as a section card's body; `focusContestId` tints and
  * scrolls to the contest the viewer came from.
  */
 export function CurrentContestList({
@@ -42,11 +42,7 @@ export function CurrentContestList({
 }) {
   const sections = groupCurrentContests(contests, { showDrafts });
   if (!sections.length) {
-    return (
-      <div className="p-4">
-        <EmptyState body={emptyBody} size="inline" testId={`${testIdPrefix}-empty`} />
-      </div>
-    );
+    return <SectionEmpty testId={`${testIdPrefix}-empty`}>{emptyBody}</SectionEmpty>;
   }
 
   return (
@@ -54,24 +50,22 @@ export function CurrentContestList({
       {sections.map(({ contests: grouped, group }) => (
         <section aria-label={CURRENT_CONTEST_GROUP_LABEL[group]} data-testid={`${testIdPrefix}-group-${group}`} key={group}>
           <Eyebrow className="px-4 pb-1 pt-3" tone="muted">{CURRENT_CONTEST_GROUP_LABEL[group]}</Eyebrow>
-          <PanelList>
+          <SectionRows>
             {grouped.map((contest) => (
-              <li key={contest.id}>
-                <ContestRow
-                  density="compact"
-                  details={showEntryCount
-                    ? `${formatSelectionTypeName(contest.selectionType)} · ${pluralize(contest.entryCount ?? 0, 'entry', 'entries')}`
-                    : formatSelectionTypeName(contest.selectionType)}
-                  isHighlighted={contest.id === focusContestId}
-                  name={contest.name}
-                  note={describeMyEntry(leagueCode, contest, entriesByContestId.get(contest.id), entriesState, hasTeam).note}
-                  startsAt={listedContestStartsAt(contest)}
-                  testId={`${testIdPrefix}-${contest.id}`}
-                  to={buildContestLandingPath(leagueCode, contest)}
-                />
-              </li>
+              <ContestRow
+                details={showEntryCount
+                  ? `${formatSelectionTypeName(contest.selectionType)} · ${pluralize(contest.entryCount ?? 0, 'entry', 'entries')}`
+                  : formatSelectionTypeName(contest.selectionType)}
+                isHighlighted={contest.id === focusContestId}
+                key={contest.id}
+                name={contest.name}
+                note={describeMyEntry(leagueCode, contest, entriesByContestId.get(contest.id), entriesState, hasTeam).note}
+                startsAt={listedContestStartsAt(contest)}
+                testId={`${testIdPrefix}-${contest.id}`}
+                to={buildContestLandingPath(leagueCode, contest)}
+              />
             ))}
-          </PanelList>
+          </SectionRows>
         </section>
       ))}
     </div>

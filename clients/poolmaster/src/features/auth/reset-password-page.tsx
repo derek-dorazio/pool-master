@@ -6,7 +6,7 @@ import { confirmPasswordReset } from "@/lib/api";
 import { extractErrorMessage, hasErrorCode, throwApiError } from "@/lib/errors";
 import { getLogger } from "@/lib/logger";
 import { useInvalidatingMutation } from "@/lib/mutation-hooks";
-import { FormField, FormPage, LinkButton, PanelCard, PasswordInput } from "@/features/shared/ui";
+import { FormField, FormPage, LinkButton, SectionCard, PasswordInput } from "@/features/shared/ui";
 import { useAuth } from "./auth-context";
 import { FORGOT_PASSWORD_PATH } from "./auth-paths";
 import { useLinkToken } from "./use-link-token";
@@ -25,14 +25,14 @@ type ResetPasswordFormValues = z.infer<typeof resetPasswordFormSchema>;
 
 function DeadLinkState() {
   return (
-    <PanelCard className="mx-auto max-w-md" padded title="Choose a new password">
+    <SectionCard className="mx-auto max-w-md" padded title="Choose a new password">
       <p className="text-sm text-muted-foreground" data-testid="reset-password-link-invalid">
         This reset link has expired or has already been used.
       </p>
       <LinkButton data-testid="reset-password-send-new-link" to={FORGOT_PASSWORD_PATH}>
         Send a new link
       </LinkButton>
-    </PanelCard>
+    </SectionCard>
   );
 }
 
@@ -78,14 +78,14 @@ export function ResetPasswordPage() {
 
   if (confirmMutation.isSuccess) {
     return (
-      <PanelCard className="mx-auto max-w-md" padded title="Password reset">
+      <SectionCard className="mx-auto max-w-md" padded title="Password reset">
         <p className="text-sm text-muted-foreground" data-testid="reset-password-done">
           Your password is reset. Sign in with your new password.
         </p>
         <LinkButton data-testid="reset-password-sign-in" to="/">
           Sign in
         </LinkButton>
-      </PanelCard>
+      </SectionCard>
     );
   }
 

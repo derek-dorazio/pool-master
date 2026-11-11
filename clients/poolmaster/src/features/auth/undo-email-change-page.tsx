@@ -3,16 +3,16 @@ import { undoEmailChange } from "@/lib/api";
 import { extractErrorMessage, hasErrorCode, throwApiError } from "@/lib/errors";
 import { getLogger } from "@/lib/logger";
 import { useInvalidatingMutation } from "@/lib/mutation-hooks";
-import { Alert, Button, LinkButton, PanelCard } from "@/features/shared/ui";
+import { Alert, Button, LinkButton, SectionCard } from "@/features/shared/ui";
 import { useAuth } from "./auth-context";
 import { FORGOT_PASSWORD_PATH } from "./auth-paths";
 import { useLinkToken } from "./use-link-token";
 
 function UndoTile({ children, title }: { children: ReactNode; title: string }) {
   return (
-    <PanelCard className="mx-auto max-w-md" padded title={title}>
+    <SectionCard className="mx-auto max-w-md" padded title={title}>
       {children}
-    </PanelCard>
+    </SectionCard>
   );
 }
 

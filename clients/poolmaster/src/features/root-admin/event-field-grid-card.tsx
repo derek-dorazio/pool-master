@@ -15,7 +15,7 @@ import {
   DataGrid,
   Input,
   LinkButton,
-  PanelCard,
+  SectionCard,
   Select,
   StatusBadge,
 } from '@/features/shared/ui';
@@ -256,7 +256,7 @@ export function EventFieldGridCard({
   const { event, participant } = getSportDefinition(sport).vocabulary;
 
   return (
-    <PanelCard
+    <SectionCard
       headingLevel={3}
       padded
       title={`Field (${entries.length})`}
@@ -337,6 +337,6 @@ export function EventFieldGridCard({
           })}
         </Alert>
       ) : null}
-    </PanelCard>
+    </SectionCard>
   );
 }
