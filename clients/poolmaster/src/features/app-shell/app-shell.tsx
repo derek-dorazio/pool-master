@@ -11,7 +11,7 @@ import { useAuth } from "@/features/auth/auth-context";
 import { getLogger } from "@/lib/logger";
 import { AccountMenu } from "@/features/account/account-menu";
 import { buildUserPath } from "@/features/account/user-routing";
-import { formatUserName } from "@/features/account/user-name";
+import { formatUserInitials, formatUserName } from "@/features/account/user-name";
 import { CreateLeagueModal } from "@/features/leagues/create-league-modal";
 import { buildCreateLeagueDestination } from "@/features/leagues/create-league-form";
 import { buildLeagueAdminPath } from "@/features/leagues/league-routing";
@@ -138,7 +138,7 @@ export function AppShell() {
         {/* On a phone the title and account share the first row and the league selector takes
             the full second row, so the header never runs wider than the screen. */}
         <div className="mx-auto grid max-w-6xl grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-3 px-4 py-4 sm:px-6 sm:py-5 lg:flex lg:justify-between">
-          <div className="flex min-w-0 items-center gap-4 max-lg:contents">
+          <div className="flex min-w-0 flex-1 items-center gap-5 max-lg:contents">
             {/* The brand goes home (#1395): `/` lands a signed-out visitor on the welcome page and
                 a member on their league's home, so every page has a way back there. */}
             <Link aria-label="Home" className="group block min-w-0 space-y-1" data-testid="app-shell-home" to="/">
@@ -153,7 +153,7 @@ export function AppShell() {
             {shouldLoadLeagueShell ? (
               <LeagueSelector
                 activeLeagueCode={activeLeagueCode}
-                className="col-span-2 sm:justify-self-start"
+                className="col-span-2 w-full"
                 commissionerLeagueIds={commissionerLeagueIds}
                 leagues={leagues ?? []}
                 onCreateLeague={openCreateLeague}
@@ -178,6 +178,7 @@ export function AppShell() {
             {auth.isAuthenticated ? (
               <>
                 <AccountMenu
+                  initials={formatUserInitials(auth.user?.firstName, auth.user?.lastName)}
                   isRootAdmin={auth.isRootAdmin}
                   profilePath={
                     auth.user?.id ? buildUserPath(auth.user.id) : "/"
