@@ -207,10 +207,10 @@ export function JoinTeamOwnerPage() {
           <div className="mt-5 space-y-4 rounded-3xl border border-border bg-background p-5" data-testid="team-invite-register">
             <div>
               <Heading level={3} variant="card" size="sm">Create your account</Heading>
-              <Text as="p" className="mt-1" variant="meta">
+              <p className="mt-1 text-sm text-muted-foreground">
                 Your account uses the email this invitation was sent to, so there is nothing to
                 confirm — you&apos;ll land straight in the league.
-              </Text>
+              </p>
             </div>
             <SignUpForm
               errorMessages={{
@@ -255,9 +255,9 @@ export function JoinTeamOwnerPage() {
       testId="team-owner-invite-page"
       title={invitationQuery.data ? `Join ${invitationQuery.data.team.name} as a co-owner` : 'Accept your co-owner invite'}
     >
-      <Text as="p" className="mt-2" variant="meta">
+      <p className="mt-2 text-sm text-muted-foreground">
         This invitation makes you a co-owner alongside the people already playing under this name.
-      </Text>
+      </p>
 
       <div className="mt-6 rounded-3xl border border-border bg-background p-5 text-sm text-muted-foreground">
         {invitationQuery.isLoading ? 'Loading invitation...' : null}

@@ -1,5 +1,6 @@
 {
   "clients/poolmaster/src/features/account/account-menu.tsx": 9,
+  "clients/poolmaster/src/features/account/user-page.tsx": 4,
   "clients/poolmaster/src/features/app-shell/app-shell.tsx": 31,
   "clients/poolmaster/src/features/app-shell/error-boundary.tsx": 10,
   "clients/poolmaster/src/features/app-shell/league-selector.tsx": 15,
@@ -114,7 +115,7 @@
   "clients/poolmaster/src/features/root-admin/stat-lines-panel.tsx": 8,
   "clients/poolmaster/src/features/root-admin/tier-board.tsx": 11,
   "clients/poolmaster/src/features/root-admin/withdrawals-card.tsx": 10,
-  "clients/poolmaster/src/features/teams/join-team-owner-page.tsx": 2,
+  "clients/poolmaster/src/features/teams/join-team-owner-page.tsx": 6,
   "clients/poolmaster/src/features/teams/league-invitations.tsx": 8,
   "clients/poolmaster/src/features/teams/team-owner-action-menu.tsx": 12,
   "clients/poolmaster/src/routes/route-guards.tsx": 2

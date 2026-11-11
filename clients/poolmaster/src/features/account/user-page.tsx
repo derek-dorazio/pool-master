@@ -359,10 +359,10 @@ export function UserPage() {
         </Tile>
 
         <Tile>
-          <Text as="p" variant="meta">
+          <p className="text-sm text-muted-foreground">
             Your own user page has your profile, preferences, password, and account
             settings.
-          </Text>
+          </p>
           <LinkButton
             className="mt-5"
             data-testid="user-page-self-link"
@@ -434,9 +434,9 @@ export function UserPage() {
         <Heading level={1} variant="page">
           My profile
         </Heading>
-        <Text as="p" className="mt-3 max-w-3xl" variant="meta">
+        <p className="mt-3 max-w-3xl text-sm text-muted-foreground">
           Manage your user profile, preferences, login, and account information.
-        </Text>
+        </p>
         {isInactive ? (
           <Alert
             className="mt-5"
