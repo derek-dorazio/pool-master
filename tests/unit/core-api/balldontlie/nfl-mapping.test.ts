@@ -1,6 +1,7 @@
 import { ProviderGameState, Sport } from '../../../../packages/shared/domain';
 import { BalldontlieContractError } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/balldontlie-client';
-import { NflStatusState, nflGameListSchema, type NflGame } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/nfl-contract';
+import { CompetitionStatusState } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/competition-status';
+import { nflGameListSchema, type NflGame } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/nfl-contract';
 import {
   NflScopeKind,
   nflScopeId,
@@ -23,7 +24,7 @@ const postseason2026 = gamesIn('games-2026-postseason-partial.json');
 const WEEK_12 = { kind: NflScopeKind.WEEK, season: 2026, week: 12 } as const;
 const POSTSEASON_2025 = { kind: NflScopeKind.POSTSEASON, season: 2025 } as const;
 
-function withState(game: NflGame, status_state: NflStatusState): NflGame {
+function withState(game: NflGame, status_state: CompetitionStatusState): NflGame {
   return { ...game, status_state };
 }
 
@@ -84,23 +85,23 @@ describe('NFL events', () => {
 
   it('calls a week scheduled until a game starts, and postponed only when every game is', () => {
     expect(toNflSportEvent(WEEK_12, [weekScheduled, weekUnknown])).toMatchObject({ status: 'SCHEDULED', fieldLocked: false });
-    expect(toNflSportEvent(WEEK_12, [withState(weekScheduled, NflStatusState.POSTPONED)])).toMatchObject({ status: 'POSTPONED', fieldLocked: false });
-    expect(toNflSportEvent(WEEK_12, [withState(weekScheduled, NflStatusState.POSTPONED), weekScheduled])).toMatchObject({ status: 'SCHEDULED' });
+    expect(toNflSportEvent(WEEK_12, [withState(weekScheduled, CompetitionStatusState.POSTPONED)])).toMatchObject({ status: 'POSTPONED', fieldLocked: false });
+    expect(toNflSportEvent(WEEK_12, [withState(weekScheduled, CompetitionStatusState.POSTPONED), weekScheduled])).toMatchObject({ status: 'SCHEDULED' });
   });
 
   it('calls a week live while a game is delayed or suspended, or once any game is done', () => {
-    expect(toNflSportEvent(WEEK_12, [withState(weekLive, NflStatusState.DELAYED), weekScheduled]).status).toBe('IN_PROGRESS');
-    expect(toNflSportEvent(WEEK_12, [withState(weekLive, NflStatusState.SUSPENDED)]).status).toBe('IN_PROGRESS');
+    expect(toNflSportEvent(WEEK_12, [withState(weekLive, CompetitionStatusState.DELAYED), weekScheduled]).status).toBe('IN_PROGRESS');
+    expect(toNflSportEvent(WEEK_12, [withState(weekLive, CompetitionStatusState.SUSPENDED)]).status).toBe('IN_PROGRESS');
     expect(toNflSportEvent(WEEK_12, [weekFinal, weekScheduled]).status).toBe('IN_PROGRESS');
   });
 
   it('keeps a week scheduled, its field open, when a game is called off before any kicks off', () => {
-    expect(toNflSportEvent(WEEK_12, [withState(weekLive, NflStatusState.CANCELED), weekScheduled])).toMatchObject({ status: 'SCHEDULED', fieldLocked: false });
+    expect(toNflSportEvent(WEEK_12, [withState(weekLive, CompetitionStatusState.CANCELED), weekScheduled])).toMatchObject({ status: 'SCHEDULED', fieldLocked: false });
   });
 
   it('completes a week whose games are final or called off, and cancels one whose every game was called off', () => {
-    expect(toNflSportEvent(WEEK_12, [weekFinal, withState(weekLive, NflStatusState.CANCELED)]).status).toBe('COMPLETED');
-    expect(toNflSportEvent(WEEK_12, [withState(weekLive, NflStatusState.CANCELED), withState(weekScheduled, NflStatusState.ABANDONED)]).status).toBe('CANCELLED');
+    expect(toNflSportEvent(WEEK_12, [weekFinal, withState(weekLive, CompetitionStatusState.CANCELED)]).status).toBe('COMPLETED');
+    expect(toNflSportEvent(WEEK_12, [withState(weekLive, CompetitionStatusState.CANCELED), withState(weekScheduled, CompetitionStatusState.ABANDONED)]).status).toBe('CANCELLED');
   });
 
   it('refuses a game with no date', () => {
@@ -152,17 +153,17 @@ describe('NFL game scores', () => {
   });
 
   it.each([
-    [NflStatusState.DELAYED, ProviderGameState.IN_PROGRESS],
-    [NflStatusState.SUSPENDED, ProviderGameState.IN_PROGRESS],
-    [NflStatusState.POSTPONED, ProviderGameState.POSTPONED],
-    [NflStatusState.CANCELED, ProviderGameState.CANCELLED],
-    [NflStatusState.ABANDONED, ProviderGameState.CANCELLED],
+    [CompetitionStatusState.DELAYED, ProviderGameState.IN_PROGRESS],
+    [CompetitionStatusState.SUSPENDED, ProviderGameState.IN_PROGRESS],
+    [CompetitionStatusState.POSTPONED, ProviderGameState.POSTPONED],
+    [CompetitionStatusState.CANCELED, ProviderGameState.CANCELLED],
+    [CompetitionStatusState.ABANDONED, ProviderGameState.CANCELLED],
   ])('reads a %s game as %s', (vendorState, state) => {
     expect(toGameScoreUpdates([withState(weekLive, vendorState)])[0].state).toBe(state);
   });
 
   it('drops a score sent before kickoff, and passes on a final with no score as having none', () => {
-    expect(toGameScoreUpdates([withState(weekLive, NflStatusState.POSTPONED)])[0]).toMatchObject({ homeScore: null, awayScore: null });
+    expect(toGameScoreUpdates([withState(weekLive, CompetitionStatusState.POSTPONED)])[0]).toMatchObject({ homeScore: null, awayScore: null });
     expect(toGameScoreUpdates([{ ...weekFinal, home_team_score: undefined, visitor_team_score: undefined }])[0]).toMatchObject({ homeScore: null, awayScore: null });
   });
 

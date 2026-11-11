@@ -96,6 +96,17 @@ describe('Sport and SportLeague repositories', () => {
       .resolves.toMatchObject({ name: 'NFL', matchKeyword: 'NFL' });
   });
 
+  // Likewise basketball's NCAA Division I Men (metadata.tour 'NCAAM'); hockey's and soccer's
+  // leagues of the same name keep none.
+  it('seeds basketball\'s NCAA Division I Men sport league with the match keyword NCAAM, and no other sport\'s league of that name', async () => {
+    const sports = new PrismaSportRepository(getAppPrisma());
+    const leagues = new PrismaSportLeagueRepository(getAppPrisma());
+    const leagueOf = async (sport: Sport) => leagues.findBySportAndName((await sports.findBySport(sport))?.id ?? '', 'NCAA Division I Men');
+
+    await expect(leagueOf(Sport.BASKETBALL)).resolves.toMatchObject({ matchKeyword: 'NCAAM' });
+    await expect(leagueOf(Sport.HOCKEY)).resolves.toMatchObject({ matchKeyword: null });
+  });
+
   it('finds a sport by its sport value and lists sport leagues filtered by sport and activity, ordered by name', async () => {
     const sport = await golfSport();
     const sports = new PrismaSportRepository(getAppPrisma());

@@ -8,7 +8,14 @@
  *
  * NFL (#1496, `nfl-reader.ts`): regular season weeks and the postseason as events, their teams,
  * and their games' scores in the GAME category. An event id that names an NFL scope
- * (`nfl-2026-week-12`) is read as one; any other is a PGA TOUR tournament id.
+ * (`nfl-2026-week-12`) is read as one.
+ *
+ * NCAA men's basketball (#1496, `ncaab-reader.ts`): each season's tournament as an event
+ * (`ncaab-2025-tournament`), from the vendor's bracket (GOAT tier), its teams with their seeds,
+ * and its games' scores in the GAME category. Any other event id is a PGA TOUR tournament id.
+ *
+ * Only leagues whose bracket games are single games are read: a best-of series is one match of
+ * several games, which the GAME writer cannot link yet (#1545).
  *
  * Admins author every event; this adapter only reads (ADR 0009).
  */
@@ -28,6 +35,8 @@ import type {
   SportEventDetail,
 } from '../../core/provider-interface';
 import { ProviderPayloadRecorder } from '../provider-payload-recorder';
+import { parseNcaabScope } from './ncaab-mapping';
+import { NcaabReader } from './ncaab-reader';
 import { parseNflScope } from './nfl-mapping';
 import { NflReader } from './nfl-reader';
 import { BALLDONTLIE_MAX_PER_PAGE, BalldontlieClient, type BalldontlieQuery } from './balldontlie-client';
@@ -91,15 +100,18 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
   private readonly payloads = new ProviderPayloadRecorder('balldontlie.request');
   private readonly client: BalldontlieClient;
   private readonly nfl: NflReader;
+  private readonly ncaab: NcaabReader;
   /** Each league's schedule and roster reads, by the sport it serves. */
   private readonly leagues: ReadonlyMap<Sport, LeagueReads>;
 
   constructor(options: BalldontlieAdapterOptions) {
     this.client = new BalldontlieClient({ ...options, payloads: this.payloads });
     this.nfl = new NflReader(this.client, options.now ?? Date.now);
+    this.ncaab = new NcaabReader(this.client, options.now ?? Date.now);
     this.leagues = new Map<Sport, LeagueReads>([
       [Sport.GOLF, { events: (dateRange) => this.pgaTournaments(dateRange), participants: () => this.pgaPlayers() }],
       [Sport.AMERICAN_FOOTBALL, { events: (dateRange) => this.nfl.upcomingEvents(dateRange), participants: () => this.nfl.teams() }],
+      [Sport.BASKETBALL, { events: (dateRange) => this.ncaab.upcomingEvents(dateRange), participants: () => this.ncaab.teams() }],
     ]);
     this.sportsCovered = [...this.leagues.keys()];
   }
@@ -135,11 +147,15 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
         || (event.startDate >= dateRange.from && event.startDate <= dateRange.to));
   }
 
-  /** The tournament or NFL scope with its field; null when the vendor has no such event. */
+  /** The tournament, NFL scope or NCAA tournament with its field; null when the vendor has no such event. */
   async getEventDetails(eventId: string): Promise<SportEventDetail | null> {
     const scope = parseNflScope(eventId);
     if (scope) {
       return this.nfl.eventDetails(scope);
+    }
+    const ncaabScope = parseNcaabScope(eventId);
+    if (ncaabScope) {
+      return this.ncaab.eventDetails(ncaabScope);
     }
     const tournament = await this.findTournament(eventId);
     if (!tournament) {
@@ -155,7 +171,7 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
     return { ...toSportEvent(tournament, participants.length), participants };
   }
 
-  /** Every active PGA TOUR golfer, or every NFL team; none for a sport the adapter does not cover. */
+  /** Every active PGA TOUR golfer, every NFL team, or every Division I men's basketball team; none for a sport the adapter does not cover. */
   async getParticipants(sport: Sport): Promise<ProviderParticipant[]> {
     return await this.leagues.get(sport)?.participants() ?? [];
   }
@@ -170,7 +186,7 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
   }
 
   /**
-   * An NFL scope's games in the GAME category, or every started round of every golfer in a
+   * An NFL scope's or an NCAA tournament's games in the GAME category, or every started round of every golfer in a
    * stroke-play tournament. A tournament id the vendor does not know, or a tournament of another
    * format, fails the sync rather than returning nothing.
    */
@@ -178,6 +194,10 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
     const scope = parseNflScope(eventId);
     if (scope) {
       return this.nfl.liveScores(scope);
+    }
+    const ncaabScope = parseNcaabScope(eventId);
+    if (ncaabScope) {
+      return this.ncaab.liveScores(ncaabScope);
     }
     const tournament = await this.findTournament(eventId);
     if (!tournament) {
