@@ -54,7 +54,7 @@ export function SquadRecords({ leagueId, squadId }: { leagueId: string; squadId:
   const recordsQuery = useRecordsQuery(leagueId);
 
   if (recordsQuery.isError) {
-    return <ErrorState body="We couldn't load this squad's records." testId="squad-records-error" />;
+    return <ErrorState body="We couldn't load this team's records." testId="squad-records-error" />;
   }
   const held = recordsHeldBy(recordsQuery.data ?? [], squadId);
   if (!held.length) {

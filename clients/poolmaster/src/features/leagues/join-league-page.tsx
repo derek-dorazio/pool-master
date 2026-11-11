@@ -290,7 +290,7 @@ function JoinLeagueByInvite({ inviteCode }: { inviteCode: string }) {
       title={invitationQuery.data ? `Join ${invitationQuery.data.league.name}` : 'Accept your league invite'}
     >
       <p className="mt-2 text-sm text-muted-foreground">
-        Review the invitation, choose your name and icon in this league, and join when you&apos;re ready.
+        Review the invitation, create your team, and join when you&apos;re ready.
       </p>
 
       {/* One column at every width: the page is a narrow card, so a side-by-side split
@@ -303,7 +303,7 @@ function JoinLeagueByInvite({ inviteCode }: { inviteCode: string }) {
             <InvitationContextCard
               inviteCode={invitationQuery.data.inviteCode}
               leagueName={invitationQuery.data.league.name}
-              message="Choose your name in this league and select Join League when you're ready."
+              message="Name your team and select Join League when you're ready."
               title="Ready to join"
             />
           ) : null}
@@ -314,13 +314,13 @@ function JoinLeagueByInvite({ inviteCode }: { inviteCode: string }) {
         </div>
 
         <div className="rounded-3xl border border-border bg-background p-4 sm:p-5">
-          <Heading level={3} variant="card" size="base">Your name and icon</Heading>
+          <Heading level={3} variant="card" size="base">Your team</Heading>
           <p className="mt-2 text-sm text-muted-foreground">
-            Every member plays in the league under a name and an icon. Choose yours now; you can change both later.
+            Every member plays in the league as a team, with a name and an icon. Choose yours now; you can change both later.
           </p>
 
           <div className="mt-5 space-y-4">
-            <FormField label="Your name in this league">
+            <FormField label="Your team name">
               <Input
                 data-testid="join-league-team-name"
                 maxLength={100}

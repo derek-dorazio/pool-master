@@ -93,7 +93,7 @@ describe('LiveStandingsCard', () => {
   const masters = buildContest({ id: 'live-1', name: 'Masters Tiers', status: ContestStatus.ACTIVE });
   const nba = buildContest({ id: 'live-2', name: 'NBA Finals Stars', status: ContestStatus.ACTIVE });
 
-  function leaderboardOf(contestId: string, squadName: string) {
+  function leaderboardOf(contestId: string, entryName: string) {
     return {
       data: {
         contestId,
@@ -104,7 +104,7 @@ describe('LiveStandingsCard', () => {
         participants: [],
         asOf: null,
         entries: [{
-          entryId: `entry-${contestId}`, entryName: `${squadName} entry`, entryNumber: 1, squadId: `squad-${contestId}`, squadName,
+          entryId: `entry-${contestId}`, entryName, entryNumber: 1, squadId: `squad-${contestId}`, squadName: `${entryName}'s team`,
           position: 1, displayPosition: '1', countingPickLimit: 4, scoredPickCount: 4, totalScore: -5,
           events: [{ sportEventId: 'event-1', totalScore: -5, position: 1, displayPosition: '1' }], picks: [],
         }],

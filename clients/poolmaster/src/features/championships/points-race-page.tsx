@@ -174,7 +174,7 @@ export function PointsRacePage() {
           <SectionNote testId="cup-projection-note">{describeProjection(projection)}</SectionNote>
         ) : null}
         {projectionQuery.isError ? (
-          <ErrorState body="We couldn't work out where squads would stand if the live contests ended now." size="inline" testId="cup-projection-error" />
+          <ErrorState body="We couldn't work out where teams would stand if the live contests ended now." size="inline" testId="cup-projection-error" />
         ) : null}
         <CupStandingsGrid
           focusSquadId={viewer.mySquadId}

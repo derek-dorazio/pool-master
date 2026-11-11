@@ -1,0 +1,20 @@
+{
+  "data": [
+    {
+      "id": 41,
+      "conference_id": 4,
+      "name": "Huskies",
+      "full_name": "UConn Huskies",
+      "college": "UConn",
+      "abbreviation": "CONN"
+    },
+    {
+      "id": 150,
+      "conference_id": 2,
+      "name": "Blue Devils",
+      "full_name": "Duke Blue Devils",
+      "college": "Duke",
+      "abbreviation": "DUKE"
+    }
+  ]
+}

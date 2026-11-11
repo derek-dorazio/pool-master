@@ -5,9 +5,10 @@ import { createFakeBalldontlie, type FakeBalldontlie, type FakeRoute } from '../
 import { readBalldontlieFixture } from '../../../support/balldontlie-vendor-spec';
 
 /**
- * The adapter's NCAA men's basketball reads against a fake BALLDONTLIE that checks every request
- * it sends, and every reply it is given, against the vendor's published NCAAB document (see
- * balldontlie-fake-api.ts). The replies are the fixtures in tests/fixtures/balldontlie/ncaab.
+ * The adapter's NCAA basketball tournament reads, men's and women's, against a fake BALLDONTLIE
+ * that checks every request it sends, and every reply it is given, against the vendor's
+ * published NCAAB and NCAAW documents (see balldontlie-fake-api.ts). The replies are the
+ * fixtures in tests/fixtures/balldontlie/ncaab and ncaaw.
  */
 
 const API_KEY = 'test-api-key';
@@ -15,8 +16,9 @@ const NOW = Date.UTC(2026, 10, 10);
 
 const bracketRow = z.looseObject({ season: z.number() });
 type BracketRow = z.infer<typeof bracketRow>;
-const bracketIn = (file: string) => z.object({ data: z.array(bracketRow) }).parse(readBalldontlieFixture('ncaab', file)).data;
+const bracketIn = (file: string, league = 'ncaab') => z.object({ data: z.array(bracketRow) }).parse(readBalldontlieFixture(league, file)).data;
 const brackets = [...bracketIn('bracket-2025.json'), ...bracketIn('bracket-2026-partial.json')];
+const womensBrackets = bracketIn('bracket-2025.json', 'ncaaw');
 
 /** A season's bracket games as the vendor pages them: `cursor` is how many rows came before. */
 function bracketRoute(rows: readonly BracketRow[]): FakeRoute {
@@ -33,10 +35,12 @@ function bracketRoute(rows: readonly BracketRow[]): FakeRoute {
 const defaultRoutes: Record<string, FakeRoute> = {
   '/ncaab/v1/bracket': bracketRoute(brackets),
   '/ncaab/v1/teams': () => ({ body: readBalldontlieFixture('ncaab', 'teams.json') }),
+  '/ncaaw/v1/bracket': bracketRoute(womensBrackets),
+  '/ncaaw/v1/teams': () => ({ body: readBalldontlieFixture('ncaaw', 'teams.json') }),
 };
 
 function setup(routes: Record<string, FakeRoute> = defaultRoutes, now = NOW): { adapter: BalldontlieAdapter; api: FakeBalldontlie; restore: () => void } {
-  const api = createFakeBalldontlie({ league: 'ncaab', apiKey: API_KEY, routes });
+  const api = createFakeBalldontlie({ league: ['ncaab', 'ncaaw'], apiKey: API_KEY, routes });
   const originalFetch = global.fetch;
   global.fetch = api.fetch;
   let clock = now;
@@ -59,13 +63,14 @@ function setup(routes: Record<string, FakeRoute> = defaultRoutes, now = NOW): { 
 }
 
 const requestLine = (api: FakeBalldontlie) => api.requests.map((request) => `${request.path}?${decodeURIComponent(request.query.toString())}`);
+const seasonsRead = (api: FakeBalldontlie, league: string) => requestLine(api).filter((line) => line.startsWith(`/${league}/`)).map((line) => /season=(\d+)/.exec(line)?.[1]);
 
-describe('BalldontlieAdapter (NCAA men\'s basketball)', () => {
+describe('BalldontlieAdapter (NCAA basketball tournaments)', () => {
   let restore: (() => void) | undefined;
   afterEach(() => restore?.());
 
   describe('getUpcomingEvents', () => {
-    it('lists each tournament starting in the range, reading the season that starts the year before', async () => {
+    it('lists each league\'s tournament starting in the range, men\'s then women\'s, reading the season that starts the year before', async () => {
       const harness = setup();
       restore = harness.restore;
 
@@ -73,8 +78,9 @@ describe('BalldontlieAdapter (NCAA men\'s basketball)', () => {
 
       expect(events.map((event) => [event.externalId, event.name, event.status])).toEqual([
         ['ncaab-2025-tournament', 'NCAA Men\'s Tournament', 'COMPLETED'],
+        ['ncaaw-2025-tournament', 'NCAA Women\'s Tournament', 'COMPLETED'],
       ]);
-      expect(requestLine(harness.api)).toEqual(['/ncaab/v1/bracket?season=2025&per_page=100']);
+      expect([...requestLine(harness.api)].sort()).toEqual(['/ncaab/v1/bracket?season=2025&per_page=100', '/ncaaw/v1/bracket?season=2025&per_page=100']);
     });
 
     it('reads the last tournament and the next when the range is open-ended, not every season ever played', async () => {
@@ -83,8 +89,9 @@ describe('BalldontlieAdapter (NCAA men\'s basketball)', () => {
 
       const events = await harness.adapter.getUpcomingEvents(Sport.BASKETBALL, { from: new Date('1900-01-01T00:00:00Z'), to: new Date('2999-12-31T00:00:00Z') });
 
-      expect(events.map((event) => event.externalId)).toEqual(['ncaab-2025-tournament', 'ncaab-2026-tournament']);
-      expect(requestLine(harness.api).map((line) => /season=(\d+)/.exec(line)?.[1])).toEqual(['2025', '2026']);
+      expect(events.map((event) => event.externalId)).toEqual(['ncaab-2025-tournament', 'ncaab-2026-tournament', 'ncaaw-2025-tournament']);
+      expect(seasonsRead(harness.api, 'ncaab')).toEqual(['2025', '2026']);
+      expect(seasonsRead(harness.api, 'ncaaw')).toEqual(['2025', '2026']);
     });
 
     it('takes the season that started last November as the one under way before the next November, and lists nothing for a season with no bracket', async () => {
@@ -93,8 +100,9 @@ describe('BalldontlieAdapter (NCAA men\'s basketball)', () => {
 
       const events = await harness.adapter.getUpcomingEvents(Sport.BASKETBALL);
 
-      expect(events.map((event) => event.externalId)).toEqual(['ncaab-2025-tournament']);
-      expect(requestLine(harness.api).map((line) => /season=(\d+)/.exec(line)?.[1])).toEqual(['2024', '2025']);
+      expect(events.map((event) => event.externalId)).toEqual(['ncaab-2025-tournament', 'ncaaw-2025-tournament']);
+      expect(seasonsRead(harness.api, 'ncaab')).toEqual(['2024', '2025']);
+      expect(seasonsRead(harness.api, 'ncaaw')).toEqual(['2024', '2025']);
     });
   });
 
@@ -107,8 +115,19 @@ describe('BalldontlieAdapter (NCAA men\'s basketball)', () => {
 
       expect(detail).toMatchObject({ externalId: 'ncaab-2025-tournament', sport: Sport.BASKETBALL, participantCount: 5, rounds: 6, status: 'COMPLETED' });
       expect(detail?.participants.map((team) => team.name)).not.toContain('Texas Longhorns');
-      expect(detail?.participants.find((team) => team.name === 'Duke Blue Devils')?.metadata).toEqual({ seed: 1 });
+      expect(detail?.participants.find((team) => team.name === 'Duke Blue Devils')?.metadata).toEqual({ tour: 'NCAAM', seed: 1 });
       expect(requestLine(harness.api)).toEqual(['/ncaab/v1/bracket?season=2025&per_page=100']);
+    });
+
+    it('gives a women\'s tournament from the women\'s bracket, its teams under the women\'s ids', async () => {
+      const harness = setup();
+      restore = harness.restore;
+
+      const detail = await harness.adapter.getEventDetails('ncaaw-2025-tournament');
+
+      expect(detail).toMatchObject({ externalId: 'ncaaw-2025-tournament', name: 'NCAA Women\'s Tournament', participantCount: 5, rounds: 6, metadata: { tour: 'NCAAW', season: 2025 } });
+      expect(detail?.participants.map((team) => team.externalId)).toEqual(['ncaaw-team-41', 'ncaaw-team-2636', 'ncaaw-team-150', 'ncaaw-team-2655', 'ncaaw-team-2579']);
+      expect(requestLine(harness.api)).toEqual(['/ncaaw/v1/bracket?season=2025&per_page=100']);
     });
 
     it('gives nothing for a season whose bracket the vendor has not published', async () => {
@@ -119,7 +138,7 @@ describe('BalldontlieAdapter (NCAA men\'s basketball)', () => {
     });
   });
 
-  it('lists every Division I team as a participant', async () => {
+  it('lists every Division I team in both leagues as a participant, a school\'s men\'s and women\'s teams apart', async () => {
     const harness = setup();
     restore = harness.restore;
 
@@ -129,8 +148,11 @@ describe('BalldontlieAdapter (NCAA men\'s basketball)', () => {
       ['ncaab-team-150', 'Duke Blue Devils'],
       ['ncaab-team-57', 'Florida Gators'],
       ['ncaab-team-2561', 'Siena Saints'],
+      ['ncaaw-team-41', 'UConn Huskies'],
+      ['ncaaw-team-150', 'Duke Blue Devils'],
     ]);
-    expect(requestLine(harness.api)).toEqual(['/ncaab/v1/teams?']);
+    expect(teams.map((team) => team.metadata.tour)).toEqual(['NCAAM', 'NCAAM', 'NCAAM', 'NCAAW', 'NCAAW']);
+    expect([...requestLine(harness.api)].sort()).toEqual(['/ncaab/v1/teams?', '/ncaaw/v1/teams?']);
   });
 
   it('gives a tournament\'s game scores in the GAME category, under the tournament\'s id', async () => {
@@ -145,6 +167,17 @@ describe('BalldontlieAdapter (NCAA men\'s basketball)', () => {
       ['401900102', ProviderGameState.IN_PROGRESS],
       ['401900103', ProviderGameState.SCHEDULED],
     ]);
+  });
+
+  it('gives a women\'s tournament\'s game scores from the women\'s bracket', async () => {
+    const harness = setup();
+    restore = harness.restore;
+
+    const result = await harness.adapter.getLiveScores('ncaaw-2025-tournament');
+
+    expect(result).toMatchObject({ category: 'GAME', externalEventId: 'ncaaw-2025-tournament' });
+    expect(result.category === 'GAME' ? result.games.map((game) => game.externalGameId) : []).toEqual(['401856710', '401856711', '401856772']);
+    expect(requestLine(harness.api)).toEqual(['/ncaaw/v1/bracket?season=2025&per_page=100']);
   });
 
   it('reads every page of a tournament\'s bracket', async () => {

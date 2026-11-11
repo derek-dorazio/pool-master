@@ -677,6 +677,16 @@ describe('ContestLeaderboardPage', () => {
     );
   });
 
+  it('says the settled note\'s live scores are the picks\', never a "team" score that could read as a member\'s team', async () => {
+    primeMocks({ contestStatus: 'COMPLETED' });
+
+    renderLeaderboard();
+
+    const note = await screen.findByTestId('contest-leaderboard-settled-note');
+    expect(note).toHaveTextContent("each pick's score shows current event data and can differ after a late score correction.");
+    expect(note).not.toHaveTextContent(/team/i);
+  });
+
   it('labels a live contest "Live" in the live colour beside its name', async () => {
     primeMocks({ contestStatus: 'ACTIVE' });
 

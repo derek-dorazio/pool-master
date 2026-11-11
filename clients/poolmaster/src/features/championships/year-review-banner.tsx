@@ -34,7 +34,7 @@ export function YearReviewBanner({ isCommissioner, league }: { isCommissioner: b
   if (sendMutation.isSuccess) {
     return (
       <Alert data-testid="year-review-sent" tone="success">
-        {`The ${sendMutation.data.year} year in review is on its way to every squad that placed.`}
+        {`The ${sendMutation.data.year} year in review is on its way to every team that placed.`}
       </Alert>
     );
   }
@@ -59,11 +59,11 @@ export function YearReviewBanner({ isCommissioner, league }: { isCommissioner: b
         data-testid="year-review-ready"
         title={`Your ${review.year} year in review is ready to send`}
       >
-        {`Each squad's owners get an email with their squad's ${review.year}: its championship place, contest medals, cups and trophies.`}
+        {`Each team's owners get an email with their team's ${review.year}: its championship place, contest medals, cups and trophies.`}
       </Alert>
       <ConfirmDialog
         confirmLabel="Send"
-        description={`Every squad that placed in ${review.year} gets its year by email. It can be sent once.`}
+        description={`Every team that placed in ${review.year} gets its year by email. It can be sent once.`}
         isPending={sendMutation.isPending}
         onCancel={close}
         onConfirm={() => sendMutation.mutate(review.year)}

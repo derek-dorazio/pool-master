@@ -74,7 +74,7 @@ export function useCupSquadPointsQuery(leagueId: string, seasonYear: number, spo
       const response = await getCupSquadPoints({ path: { id: leagueId, squadId }, query: { seasonYear, sportLeagueId } });
 
       if (!response.data?.squadPoints) {
-        throwApiError(response.error, 'Cup squad points response is missing data.');
+        throwApiError(response.error, 'Cup team points response is missing data.');
       }
 
       return response.data.squadPoints;
