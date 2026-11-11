@@ -14,10 +14,10 @@ type BracketRow = BracketLeaderboardResponse['entries'][number];
 const TEST_ID = 'bracket-leaderboard';
 
 /** The bracket board's columns: its points, the most it can still reach, correct picks and the tiebreaker. */
-function bracketColumns(contestId: string, leagueCode: string, mySquadId: string | null, gameCount: number): ColumnDef<BracketRow>[] {
+function bracketColumns(contestId: string, leagueCode: string, leagueId: string, mySquadId: string | null, gameCount: number): ColumnDef<BracketRow>[] {
   return [
     placeColumn(TEST_ID),
-    entryColumn(TEST_ID, { contestId, isMine: isMySquadsEntry(mySquadId), leagueCode }),
+    entryColumn(TEST_ID, { contestId, isMine: isMySquadsEntry(mySquadId), leagueCode, leagueId }),
     totalColumn(TEST_ID, { format: formatPoints, header: 'Points', id: 'points', value: (row) => row.points }),
     {
       id: 'max-possible',
@@ -47,7 +47,7 @@ function bracketColumns(contestId: string, leagueCode: string, mySquadId: string
 }
 
 /**
- * A bracket contest's leaderboard (#721): place, the entry and its group, points, the most it can
+ * A bracket contest's leaderboard (#721): place, the entry, points, the most it can
  * still reach, correct picks and the tiebreaker, each entry linked to its filled bracket. It
  * opens when the event starts, like every contest board; before then the server refuses it and
  * the page says picks are not revealed yet. Polled while the contest is live, so places move
@@ -87,7 +87,7 @@ export function BracketLeaderboard({ contest }: { contest: ContestDto }) {
       settledNote={board.eventCancelled ? null : SETTLED_NOTE}
     >
       <ScoreboardGrid
-        columns={bracketColumns(contestId, leagueCode, mySquadId, board.gameCount)}
+        columns={bracketColumns(contestId, leagueCode, contest.leagueId, mySquadId, board.gameCount)}
         data={board.entries}
         emptyMessage="No brackets were submitted in this contest."
         rowTestIdPrefix="bracket-leaderboard-row"

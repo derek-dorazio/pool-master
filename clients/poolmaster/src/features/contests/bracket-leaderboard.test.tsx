@@ -91,7 +91,7 @@ describe('Bracket contest leaderboard', () => {
     }
   });
 
-  it('ranks a bracket contest\'s entries from the bracket board with place, entry and its group\'s name, points, max possible, correct picks and tiebreaker, and never reads the roster board', async () => {
+  it('ranks a bracket contest\'s entries from the bracket board with place, entry name with its (i), points, max possible, correct picks and tiebreaker, and never reads the roster board', async () => {
     primeMocks();
     getBracketLeaderboardMock.mockResolvedValue({ data: bracketLeaderboardFixture() });
     renderLeaderboard();
@@ -99,7 +99,8 @@ describe('Bracket contest leaderboard', () => {
     const leader = await screen.findByTestId('bracket-leaderboard-row-entry-2');
     expect(within(leader).getByTestId('bracket-leaderboard-place-entry-2')).toHaveTextContent('1');
     expect(leader).toHaveTextContent('Chalk All The Way');
-    expect(leader).toHaveTextContent('Derek’s Great Golf Guys');
+    expect(leader).not.toHaveTextContent('Derek’s Great Golf Guys');
+    expect(within(leader).getByRole('button', { name: 'About Chalk All The Way' })).toBeInTheDocument();
     expect(within(leader).getByTestId('bracket-leaderboard-points-entry-2')).toHaveTextContent('12 pts');
     expect(within(leader).getByTestId('bracket-leaderboard-max-entry-2')).toHaveTextContent('20 pts');
     expect(within(leader).getByTestId('bracket-leaderboard-correct-entry-2')).toHaveTextContent('5 of 7');

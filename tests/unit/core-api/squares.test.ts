@@ -182,6 +182,12 @@ describe('SquaresService claiming boxes', () => {
     expect(board.entries.find((entry) => entry.contestEntryId === context.alice.id)?.boxCount).toBe(1);
   });
 
+  it('names each board entry\'s team, so the entry\'s (i) can read it on demand', async () => {
+    const context = setup();
+    const board = await context.service.getBoard(context.contest.id, context.actor('Alice'));
+    expect(board.entries.find((entry) => entry.contestEntryId === context.alice.id)?.squadId).toBe(context.alice.squadId);
+  });
+
   it('refuses a member claiming a box for another squad\'s entry, and stores nothing', async () => {
     const context = setup();
     await expectRefused(context.service.claim(context.contest.id, 0, 0, context.bob.id, context.actor('Alice')), 'ENTRY_ACCESS_DENIED', 403);

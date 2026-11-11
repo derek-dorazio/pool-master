@@ -151,6 +151,7 @@ describe('buildTopStandings', () => {
       isMine: false,
       name: 'Entry 1',
       position: '1',
+      squadId: 'squad-1',
       total: '-5',
     });
     expect(result.rows[4]?.total).toBe('-1');
@@ -191,6 +192,7 @@ describe('buildTopStandings', () => {
       isMine: true,
       name: 'Entry 7',
       position: '7',
+      squadId: 'squad-7',
       total: '+1',
     });
   });
@@ -231,8 +233,8 @@ describe('buildBracketTopStandings', () => {
     const result = buildBracketTopStandings(bracketLeaderboardFixture(), 'squad-1');
 
     expect(result.rows).toEqual([
-      { entryId: 'entry-2', isMine: false, name: 'Chalk All The Way', position: '1', total: '12' },
-      { entryId: 'entry-1', isMine: true, name: 'Derek’s Bracket', position: '2', total: '8' },
+      { entryId: 'entry-2', isMine: false, name: 'Chalk All The Way', position: '1', squadId: 'squad-2', total: '12' },
+      { entryId: 'entry-1', isMine: true, name: 'Derek’s Bracket', position: '2', squadId: 'squad-1', total: '8' },
     ]);
     expect(result.myRowBelow).toBeNull();
   });

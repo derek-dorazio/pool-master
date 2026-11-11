@@ -112,6 +112,21 @@ describe('LiveStandingsCard', () => {
     };
   }
 
+  it('names each Top 5 row by its entry alone, with an (i) that says whose it is', async () => {
+    getContestLeaderboardMock.mockImplementation(({ path }: { path: { contestId: string } }) => leaderboardOf(path.contestId, 'Bogey Men'));
+    render(
+      <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+        <MemoryRouter>
+          <LiveStandingsCard contests={[masters]} leagueCode="BIGDAWGS" mySquadId={null} />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    expect(await screen.findByText('Bogey Men')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'About Bogey Men' })).toBeInTheDocument();
+    expect(screen.getByTestId('league-home-live-standings')).not.toHaveTextContent("Bogey Men's team");
+  });
+
   it('falls back to the first live contest when the chosen one goes final and leaves the list', async () => {
     getContestLeaderboardMock.mockImplementation(({ path }: { path: { contestId: string } }) =>
       leaderboardOf(path.contestId, path.contestId === 'live-1' ? 'Bogey Men' : 'Net Gains'));

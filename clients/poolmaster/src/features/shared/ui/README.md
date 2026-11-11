@@ -132,7 +132,12 @@ days, hours and minutes as one timer. The event page kit (`StartButton`, `Landin
 lives in `features/event-pages/components`.
 
 `InfoPopover` keeps secondary facts out of a page's way: an icon button whose
-callout opens on mouse hover or on a tap, for a phone.
+callout opens on mouse hover or on a tap, for a phone. It is the base the "show
+more" parts build on, never used on a page by itself. `DetailsPeek` is the (i) after
+the name of one thing (an entry, an event, a golfer): it opens a `PeekCard` after a
+short hover delay, so scanning a list does not flash every row, and mounts the card
+only when it opens, so a peek that reads data reads it then (`EntryDetailsPeek` in
+`features/contests` reads an entry's team and owners this way).
 
 Feature pages should keep route-specific copy and generated-SDK calls local, but
 they should not duplicate header, grid-shell, detail/actions, or

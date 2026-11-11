@@ -151,12 +151,12 @@ export const EMAIL_TEMPLATE_FIXTURES: { [Key in SystemEmailTemplateKey]: SystemE
     event: MASTERS_CONTEST_EVENT,
     moment: { kind: StandingsMomentKind.ROUND, eventName: 'The Masters', roundNumber: 2 },
     top: [
-      { place: '1', entryName: 'Amen Corner', squadName: 'Casey & Co', score: '-12', movement: 2, isYours: false },
-      { place: 'T2', entryName: 'Green Jackets', squadName: 'Morgan Member', score: '-9', movement: 0, isYours: true },
-      { place: 'T2', entryName: 'Azalea', squadName: 'The Fourballs', score: '-9', movement: -1, isYours: false },
+      { place: '1', entryName: 'Amen Corner', score: '-12', movement: 2, isYours: false },
+      { place: 'T2', entryName: 'Green Jackets', score: '-9', movement: 0, isYours: true },
+      { place: 'T2', entryName: 'Azalea', score: '-9', movement: -1, isYours: false },
     ],
     yours: [
-      { place: '14', entryName: 'Long Shots', squadName: 'Morgan Member', score: '+3', movement: -4, isYours: true },
+      { place: '14', entryName: 'Long Shots', score: '+3', movement: -4, isYours: true },
     ],
     entryCount: 18,
     cut: [{ entryName: 'Long Shots', names: ['Danny Willett', 'Mike Weir'] }],
@@ -172,12 +172,12 @@ export const EMAIL_TEMPLATE_FIXTURES: { [Key in SystemEmailTemplateKey]: SystemE
       kind: ContestResultsKind.SCORED,
       winners: [{ entryName: 'Green Jackets', squadName: 'Morgan Member' }],
       top: [
-        { place: '1', entryName: 'Green Jackets', squadName: 'Morgan Member', score: '-14', movement: null, isYours: true },
-        { place: '2', entryName: 'Amen Corner', squadName: 'Casey & Co', score: '-12', movement: null, isYours: false },
-        { place: '3', entryName: 'Azalea', squadName: 'The Fourballs', score: '-9', movement: null, isYours: false },
+        { place: '1', entryName: 'Green Jackets', score: '-14', movement: null, isYours: true },
+        { place: '2', entryName: 'Amen Corner', score: '-12', movement: null, isYours: false },
+        { place: '3', entryName: 'Azalea', score: '-9', movement: null, isYours: false },
       ],
       yours: [
-        { place: '14', entryName: 'Long Shots', squadName: 'Morgan Member', score: '+3', movement: null, isYours: true },
+        { place: '14', entryName: 'Long Shots', score: '+3', movement: null, isYours: true },
       ],
       entryCount: 18,
       yourWins: [{ entryName: 'Green Jackets', squadName: 'Morgan Member' }],
