@@ -26,7 +26,10 @@ The target:
      `GAME` live-score category: a match links to its provider game by `externalGameId`, on
      its event's own provider. An NFL event is a scope of the vendor's games, a regular season
      week (`nfl-2026-week-12`) or a postseason (`nfl-2026-postseason`), and its teams map by
-     prefixed ids (`nfl-team-12`);
+     prefixed ids (`nfl-team-12`). A provider participant with no mapping yet is linked to the
+     site's one participant of the same sport and name (a team loaded from a data file), not
+     created twice. NFL events take the calendar year they are played in as their event year,
+     as the NFL data files do, so the 2025 season's playoffs are 2026 events;
    - per-player box scores for Clutch Cards, through `StatLineService`.
 3. **Webhooks as the trigger, not the record.** BALLDONTLIE posts a signed event (period
    ended, game ended, hole completed) to a receiver. The receiver checks the signature,

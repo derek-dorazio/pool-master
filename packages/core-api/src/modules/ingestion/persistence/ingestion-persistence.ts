@@ -134,7 +134,8 @@ export class IngestionPersistence {
    * Upserts participants by external ID through the provider mapping table, and returns each
    * one's internal id by provider identity (#1183). The mappings are read in one query; a
    * mapped participant is updated only when a value changed, all in one transaction; an
-   * unmapped one is created with its mapping, both sets in one transaction.
+   * unmapped one is linked to the site's participant of the same name (`matchByName`, #1496) or
+   * created, with its mapping, all in one transaction.
    */
   private async persistParticipants(participants: readonly ProviderParticipant[]): Promise<{ count: number; participantIdByKey: Map<string, string> }> {
     this.logger?.debug({
@@ -173,6 +174,8 @@ export class IngestionPersistence {
       await this.prisma.$transaction(updates);
     }
 
+    let linkedCount = 0;
+    let createdCount = 0;
     if (unmapped.length > 0) {
       const sportBySport = new Map<Sport, { id: string; participantType: ParticipantType }>();
       for (const sport of new Set(unmapped.map((participant) => participant.sport))) {
@@ -189,28 +192,42 @@ export class IngestionPersistence {
           select: { id: true, participantType: true },
         }));
       }
+      const sportIdOf = (participant: ProviderParticipant) => (sportBySport.get(participant.sport) as { id: string }).id;
+      const { linked, toCreate } = await this.matchByName(unmapped, sportIdOf);
       const created = await this.prisma.$transaction(async (tx) => {
-        const rows = await tx.participant.createManyAndReturn({
-          data: unmapped.map((participant) => {
+        const rows = toCreate.length === 0 ? [] : await tx.participant.createManyAndReturn({
+          data: toCreate.map((participant) => {
             const sport = sportBySport.get(participant.sport) as { id: string; participantType: ParticipantType };
             return { sportId: sport.id, participantType: sport.participantType, externalId: participant.externalId, ...participantValues(participant) };
           }),
           select: { id: true, sportId: true, externalId: true },
         });
         const idBySportAndExternalId = new Map(rows.map((row) => [`${row.sportId}:${row.externalId}`, row.id]));
-        const createdMappings = unmapped.map((participant) => ({
-          participantId: idBySportAndExternalId.get(`${sportBySport.get(participant.sport)?.id}:${participant.externalId}`) as string,
-          providerId: participant.providerId,
-          externalId: participant.externalId,
-          confidence: 'EXACT' as const,
-        }));
+        const createdMappings = [
+          ...toCreate.map((participant) => ({
+            participantId: idBySportAndExternalId.get(`${sportIdOf(participant)}:${participant.externalId}`) as string,
+            providerId: participant.providerId,
+            externalId: participant.externalId,
+            confidence: 'EXACT' as const,
+          })),
+          // Matched by name, not by an id the provider gave: a strong match, not an exact one.
+          ...linked.map(({ participant, existing }) => ({
+            participantId: existing.id,
+            providerId: participant.providerId,
+            externalId: participant.externalId,
+            confidence: 'HIGH' as const,
+          })),
+        ];
+        // A participant linked by name keeps what the site already holds for it until the feed's next sync.
         await tx.participantProviderMapping.createMany({ data: createdMappings });
         return createdMappings;
       });
       for (const mapping of created) participantIdByKey.set(providerKey(mapping), mapping.participantId);
+      linkedCount = linked.length;
+      createdCount = toCreate.length;
     }
 
-    this.logger?.info({ count: latestByKey.size, updated: updates.length, created: unmapped.length }, 'Persisted participants from ingestion');
+    this.logger?.info({ count: latestByKey.size, updated: updates.length, linked: linkedCount, created: createdCount }, 'Persisted participants from ingestion');
     return { count: latestByKey.size, participantIdByKey };
   }
 
@@ -225,6 +242,50 @@ export class IngestionPersistence {
     return this.prisma.sportEvent.findMany({
       where: { OR: [...externalIdsByProvider].map(([providerId, externalIds]) => ({ providerId, externalId: { in: externalIds } })) },
     });
+  }
+
+  /**
+   * The unmapped provider participants the site already has: a participant of the same sport with
+   * exactly the same name and no mapping from this provider yet (a team or golfer loaded from a
+   * sport data file, say) is linked rather than created a second time. A name two of the site's
+   * participants share, or two of the feed's, is never guessed at: those are created. One query.
+   */
+  private async matchByName(
+    unmapped: readonly ProviderParticipant[],
+    sportIdOf: (participant: ProviderParticipant) => string,
+  ) {
+    const namesBySportId = new Map<string, Set<string>>();
+    const feedNameCounts = new Map<string, number>();
+    for (const participant of unmapped) {
+      const sportId = sportIdOf(participant);
+      namesBySportId.set(sportId, (namesBySportId.get(sportId) ?? new Set()).add(participant.name));
+      const feedKey = `${participant.providerId}:${sportId}:${participant.name}`;
+      feedNameCounts.set(feedKey, (feedNameCounts.get(feedKey) ?? 0) + 1);
+    }
+    const candidates = await this.prisma.participant.findMany({
+      where: { OR: [...namesBySportId].map(([sportId, names]) => ({ sportId, name: { in: [...names] } })) },
+      select: { id: true, sportId: true, name: true, providerMappings: { select: { providerId: true } } },
+    });
+    const candidatesByName = new Map<string, typeof candidates>();
+    for (const candidate of candidates) {
+      const key = `${candidate.sportId}:${candidate.name}`;
+      candidatesByName.set(key, [...(candidatesByName.get(key) ?? []), candidate]);
+    }
+
+    const linked: Array<{ participant: ProviderParticipant; existing: (typeof candidates)[number] }> = [];
+    const toCreate: ProviderParticipant[] = [];
+    for (const participant of unmapped) {
+      const sportId = sportIdOf(participant);
+      const sameName = candidatesByName.get(`${sportId}:${participant.name}`) ?? [];
+      const unique = sameName.length === 1 && feedNameCounts.get(`${participant.providerId}:${sportId}:${participant.name}`) === 1;
+      const existing = unique ? sameName[0] : undefined;
+      if (existing && !existing.providerMappings.some((mapping) => mapping.providerId === participant.providerId)) {
+        linked.push({ participant, existing });
+      } else {
+        toCreate.push(participant);
+      }
+    }
+    return { linked, toCreate };
   }
 
   private async findMappings(participants: readonly ProviderParticipant[]) {

@@ -26,6 +26,7 @@ const rankedEventIds = [
   'integration-batched-sync',
   'integration-rebuild-sync',
   'integration-rebuild-fail',
+  'integration-linked-by-name',
 ];
 
 beforeAll(() => setupIntegrationTests());
@@ -61,6 +62,7 @@ afterAll(async () => {
   await prisma.participantProviderMapping.deleteMany({
     where: { providerId: 'TEST_PROVIDER' },
   });
+  await prisma.participant.deleteMany({ where: { name: { startsWith: 'Linkable ' } } });
   await prisma.participant.deleteMany({
     where: {
       externalId: {
@@ -564,6 +566,46 @@ describe('IngestionPersistence', () => {
     expect(participantAt).not.toBe(afterWithdrawal.get('ingestion-batch-1')?.[1]);
     expect(afterReaffiliation.get('ingestion-batch-2')).toEqual(afterWithdrawal.get('ingestion-batch-2'));
     await expect(prisma.participant.findFirstOrThrow({ where: { externalId: 'ingestion-batch-1' } })).resolves.toMatchObject({ teamAffiliation: 'Team Europe' });
+  });
+
+  it('links a provider participant to the site\'s one of the same name and sport instead of creating it twice, and never guesses at a shared name', async () => {
+    const prisma = getPrisma();
+    const golf = await prisma.sport.findUniqueOrThrow({ where: { sport: Sport.GOLF } });
+    const sitePlayer = (name: string) => prisma.participant.create({ data: { sportId: golf.id, name, participantType: 'INDIVIDUAL' } });
+    // Loaded from a sport data file: no mapping from the provider.
+    const loaded = await sitePlayer('Linkable Loaded');
+    // Two of the site's golfers share a name, so neither is the provider's.
+    await sitePlayer('Linkable Twin');
+    await sitePlayer('Linkable Twin');
+    // Already mapped from this provider under another id, so a second id is someone else.
+    const mapped = await sitePlayer('Linkable Mapped');
+    await prisma.participantProviderMapping.create({ data: { participantId: mapped.id, providerId: 'TEST_PROVIDER', externalId: 'ingestion-link-mapped-old', confidence: 'EXACT' } });
+    const golfer = (externalId: string, name: string) => ({ ...rankedGolfer(externalId), name });
+    const detail = rankedFieldDetail('integration-linked-by-name', [
+      golfer('ingestion-link-loaded', 'Linkable Loaded'),
+      golfer('ingestion-link-twin', 'Linkable Twin'),
+      golfer('ingestion-link-mapped-new', 'Linkable Mapped'),
+      // The feed itself names two golfers alike: neither is guessed to be the site's one.
+      golfer('ingestion-link-pair-1', 'Linkable Pair'),
+      golfer('ingestion-link-pair-2', 'Linkable Pair'),
+      golfer('ingestion-link-new', 'Linkable New'),
+    ]);
+    await sitePlayer('Linkable Pair');
+    await linkedProviderEvent(prisma, { providerId: 'TEST_PROVIDER', externalId: detail.externalId, name: detail.name, startDate: detail.startDate });
+
+    await new IngestionPersistence(getAppPrisma()).persistEventDetailWithDiagnostics(detail);
+
+    const mappingOf = (externalId: string) => prisma.participantProviderMapping.findUniqueOrThrow({ where: { providerId_externalId: { providerId: 'TEST_PROVIDER', externalId } } });
+    await expect(mappingOf('ingestion-link-loaded')).resolves.toMatchObject({ participantId: loaded.id, confidence: 'HIGH' });
+    const countNamed = (name: string) => prisma.participant.count({ where: { sportId: golf.id, name } });
+    await expect(countNamed('Linkable Loaded')).resolves.toBe(1);
+    await expect(countNamed('Linkable Twin')).resolves.toBe(3);
+    await expect(countNamed('Linkable Mapped')).resolves.toBe(2);
+    await expect(countNamed('Linkable Pair')).resolves.toBe(3);
+    await expect(countNamed('Linkable New')).resolves.toBe(1);
+    for (const externalId of ['ingestion-link-twin', 'ingestion-link-mapped-new', 'ingestion-link-pair-1', 'ingestion-link-new']) {
+      await expect(mappingOf(externalId)).resolves.toMatchObject({ confidence: 'EXACT' });
+    }
   });
 
   // #205 — the `pool-master-8yh` job-completion case went with `persistIngestionJob` and the
