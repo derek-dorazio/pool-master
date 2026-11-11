@@ -267,9 +267,11 @@ administration area (root admin included), reusing the same shared components.
 5. **One edit for all properties.** An entity's editable properties are edited
    together on one form page with one Save, never a dialog per property.
 6. **Danger zone.** Destructive actions sit in their own marked section at the
-   bottom of the settings page (`DangerZone`), each with a confirm step, never
-   beside everyday actions. Settings themselves are shown as labelled rows
-   (`SettingsSection`, `SettingsRow`) with one Edit for the group.
+   bottom of the settings page (a `SectionCard` with `tone="danger"` holding
+   `DangerZoneAction`s), each with a confirm step, never beside everyday
+   actions. Settings themselves are shown as labelled rows (a `SectionCard`
+   holding `SettingsRows` of `SettingsRow`) with one Edit for the group, in the
+   title bar's trailing slot.
 7. **Lists scale.** Member, owner and leaderboard lists have search and paging,
    assuming hundreds of rows: tables through `DataGrid`, other lists through
    the same `Pager`. A long ranked list also offers a way to jump to the
@@ -383,6 +385,15 @@ administration area (root admin included), reusing the same shared components.
     colour classes, and a new look is a variant of the shared part. Long page
     content such as Owners uses the same title as a `bare` section, and a
     danger zone is the same card with `tone="danger"`.
+
+    `npm run rules:check:titled-tiles` finds every `Tile` outside
+    `features/shared/ui` that holds its own `Heading`, `Eyebrow`, `SectionTitle`
+    or `<h1>`–`<h6>`. Its baseline, `scripts/titled-tile-baseline.json`, lists
+    the member and event pages still waiting for their cleanup and only ever
+    shrinks; a new titled tile fails. Billing and site admin are not in it.
+    Commissioner tools has one exception, `contests/contest-status-card.tsx`,
+    the contest lifecycle panel that #1609 replaces; no other Commissioner
+    tools file may be added.
 
 ## 13. Event Pages
 

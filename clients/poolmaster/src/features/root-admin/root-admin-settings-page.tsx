@@ -6,9 +6,11 @@ import {
   Button,
   DateDisplay,
   LinkButton,
+  SectionCard,
   SettingsRow,
-  SettingsSection,
+  SettingsRows,
   StatusBadge,
+  useDisplayPreferences,
 } from '@/features/shared/ui';
 import { QueryKeys } from '@/lib/query-keys';
 import { throwApiError, extractErrorMessage } from '@/lib/errors';
@@ -60,56 +62,59 @@ export function RootAdminSettingsPage() {
 
 function SettingsGroupSection({ group }: { group: SettingsGroup }) {
   const [showHistory, setShowHistory] = useState(false);
-  const { summary, actions } = groupContent(group);
+  const { locale } = useDisplayPreferences();
+  const { summary, actions } = groupContent(group, locale);
 
   return (
-    <SettingsSection
-      action={(
+    <SectionCard
+      trailing={(
         <StatusBadge tone={group.source === 'stored' ? 'info' : 'neutral'}>
           {group.source === 'stored' ? 'Saved' : 'Defaults'}
         </StatusBadge>
       )}
-      description={group.description}
+      help={group.description}
       testId={`root-admin-settings-group-${group.key}`}
       title={group.title}
     >
-      {summary.map((item) => (
-        <SettingsRow key={item.id} label={item.label} value={item.value} />
-      ))}
-      <div className="space-y-5 px-5 py-4">
-        {group.key === 'EMAIL_CONFIG' ? (
-          <>
-            <EmailSettingsForm group={group} />
-            <EmailTestForm />
-          </>
-        ) : null}
-        {group.key === 'BUDGET_PRICING_CONFIG' ? <BudgetPricingSettingsForm group={group} /> : null}
-        {group.key === 'BILLING_CONFIG' ? <BillingSettingsForm group={group} /> : null}
-        <p className="text-sm text-muted-foreground" data-testid={`root-admin-settings-last-change-${group.key}`}>
-          {group.updatedAt ? (
+      <SettingsRows>
+        {summary.map((item) => (
+          <SettingsRow key={item.id} label={item.label} value={item.value} />
+        ))}
+        <div className="space-y-5 px-4 py-4">
+          {group.key === 'EMAIL_CONFIG' ? (
             <>
-              Last changed by {group.updatedBy?.name ?? 'an unknown admin'} on <DateDisplay value={group.updatedAt} />
+              <EmailSettingsForm group={group} />
+              <EmailTestForm />
             </>
-          ) : 'Never changed: using the defaults.'}
-        </p>
-        <div className="flex flex-wrap gap-3">
-          {actions}
-          <Button
-            data-testid={`root-admin-settings-history-toggle-${group.key}`}
-            onClick={() => setShowHistory((open) => !open)}
-            type="button"
-            variant="secondary"
-          >
-            {showHistory ? 'Hide recent changes' : 'Show recent changes'}
-          </Button>
+          ) : null}
+          {group.key === 'BUDGET_PRICING_CONFIG' ? <BudgetPricingSettingsForm group={group} /> : null}
+          {group.key === 'BILLING_CONFIG' ? <BillingSettingsForm group={group} /> : null}
+          <p className="text-sm text-muted-foreground" data-testid={`root-admin-settings-last-change-${group.key}`}>
+            {group.updatedAt ? (
+              <>
+                Last changed by {group.updatedBy?.name ?? 'an unknown admin'} on <DateDisplay value={group.updatedAt} />
+              </>
+            ) : 'Never changed: using the defaults.'}
+          </p>
+          <div className="flex flex-wrap gap-3">
+            {actions}
+            <Button
+              data-testid={`root-admin-settings-history-toggle-${group.key}`}
+              onClick={() => setShowHistory((open) => !open)}
+              type="button"
+              variant="secondary"
+            >
+              {showHistory ? 'Hide recent changes' : 'Show recent changes'}
+            </Button>
+          </div>
+          {showHistory ? <SettingsHistory groupKey={group.key} /> : null}
         </div>
-        {showHistory ? <SettingsHistory groupKey={group.key} /> : null}
-      </div>
-    </SettingsSection>
+      </SettingsRows>
+    </SectionCard>
   );
 }
 
-function groupContent(group: SettingsGroup): { summary: SettingsSummaryItem[]; actions: ReactNode } {
+function groupContent(group: SettingsGroup, locale: string): { summary: SettingsSummaryItem[]; actions: ReactNode } {
   switch (group.key) {
     case 'INGESTION_SCHEDULE_CONFIG':
       return {
@@ -133,7 +138,7 @@ function groupContent(group: SettingsGroup): { summary: SettingsSummaryItem[]; a
       return { summary: summarizeBudgetPricing(group.value), actions: null };
     case 'PLAN_CONFIG':
       return {
-        summary: summarizePlans(group.value),
+        summary: summarizePlans(group.value, locale),
         actions: (
           <LinkButton data-testid="root-admin-settings-edit-PLAN_CONFIG" to={PLANS_PATH}>
             Edit plans
@@ -142,7 +147,7 @@ function groupContent(group: SettingsGroup): { summary: SettingsSummaryItem[]; a
       };
     case 'BILLING_CONFIG':
       // Edited in place: the section carries the form.
-      return { summary: summarizeBilling(group.value), actions: null };
+      return { summary: summarizeBilling(group.value, locale), actions: null };
   }
 }
 

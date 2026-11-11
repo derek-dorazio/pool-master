@@ -14,12 +14,11 @@ import { buildLeagueAdminPath } from '@/features/leagues/league-routing';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
 import { hasPlanFeature } from '@/features/plans/plan-features';
 import { PlanLockedNotice } from '@/features/plans/plan-locked-notice';
-import { Checkbox, ChoiceCard, FormField, FormPage, Input, Text } from '@/features/shared/ui';
+import { Checkbox, ChoiceCard, FormField, FormPage, Input, Text, formatNumberList } from '@/features/shared/ui';
 import {
   CUP_POINTS_SCALES,
   CUP_POINTS_SCALE_COPY,
   POINTS_PREVIEW_FIELD,
-  formatCustomPoints,
   parseCustomPoints,
   previewPoints,
 } from './cup-settings-view';
@@ -101,7 +100,7 @@ function ChampionshipSettingsForm({ league }: { league: LeagueDto }) {
     defaultValues: {
       cupName: league.cupName,
       cupPointsScale: league.cupPointsScale,
-      customPoints: formatCustomPoints(league.cupCustomPoints),
+      customPoints: formatNumberList(league.cupCustomPoints),
       hallOfLameVisible: league.hallOfLameVisible,
     },
   });

@@ -16,7 +16,23 @@ npm run dev --workspace=@poolmaster/poolmaster
 npm run build --workspace=@poolmaster/poolmaster
 npm run test --workspace=@poolmaster/poolmaster
 npm run test:coverage --workspace=@poolmaster/poolmaster
+npm run gallery --workspace=@poolmaster/poolmaster        # component gallery on :6006
+npm run gallery:build --workspace=@poolmaster/poolmaster  # static copy in storybook-static/
 ```
+
+## Component Gallery
+
+- Every shared UI component has a Storybook story beside it (`button.stories.tsx` next to
+  `button.tsx` and `button.test.tsx`). The toolbar switches Light and Dark and the viewport
+  menu Phone 390 and Desktop 1280. The rule is `rules/react-ui-rules.md` *Component Gallery*.
+- Dev only: `src` never imports a story, so the app bundle carries none, and stories are left
+  out of coverage.
+- CI builds the gallery in `poolmaster-build`, so a story that no longer fits its component
+  fails there, and keeps the build as the run's `component-gallery` artifact.
+- The published copy is a private Artifact,
+  https://claude.ai/artifact/6TLWdXH5ggputdaXaxD9BS. To refresh it, run `gallery:build`, then
+  `node scripts/prepare-gallery-copy.mjs <out-dir>` here, and publish `<out-dir>/index.html` to
+  that URL with `root` `<out-dir>` and the `files` listed in `<out-dir>/files.json`.
 
 ## Build Metadata
 

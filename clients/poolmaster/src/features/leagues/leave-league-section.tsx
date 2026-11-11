@@ -59,7 +59,7 @@ export function LeaveLeagueSection({ league }: { league: LeagueDto }) {
 
   return (
     <>
-      <SectionCard testId="leave-league-section" title="Danger zone" tone="danger">
+      <SectionCard testId="leave-league-section" tone="danger">
         <SectionRows>
           <SectionRow
             aside={(

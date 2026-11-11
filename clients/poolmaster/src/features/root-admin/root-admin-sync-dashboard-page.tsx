@@ -12,12 +12,12 @@ import {
   MetricGrid,
   MetricTile,
   ReadOnlyDetailModal,
+  SectionCard,
   StatusBadge,
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-  Tile,
   useDisplayPreferences,
 } from '@/features/shared/ui';
 import {
@@ -379,7 +379,7 @@ export function RootAdminSyncDashboardPage() {
       className="space-y-6"
       data-testid="root-admin-sync-dashboard-page"
     >
-      <Tile padding="lg">
+      <SectionCard padded title="Sync status">
         <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-start">
           <div className="flex flex-wrap gap-2" data-testid="root-admin-sync-workflow-sequence">
             {WORKFLOW_STEPS.map((step) => (
@@ -435,9 +435,9 @@ export function RootAdminSyncDashboardPage() {
             still shown below.
           </Notice>
         ) : null}
-      </Tile>
+      </SectionCard>
 
-      <Tile>
+      <SectionCard bare title="Recent runs">
         {syncRunsQuery.isError ? (
           <Notice tone="danger">
             {extractErrorMessage(
@@ -458,7 +458,7 @@ export function RootAdminSyncDashboardPage() {
             tableTestId="root-admin-sync-history-table"
           />
         ) : null}
-      </Tile>
+      </SectionCard>
       <ReadOnlyDetailModal
         description="Provider sync run outcome, stats, warnings, and payload drill-downs."
         detailContent={

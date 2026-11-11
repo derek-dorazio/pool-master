@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router';
 import { buildEventPagePath, type Sport } from '@poolmaster/shared/domain';
-import { Eyebrow, Heading, SectionHeader, Tile } from '@/features/shared/ui';
+import { Eyebrow, Heading, SectionCard, Tile } from '@/features/shared/ui';
 import { eventPageCopy, eventPageOfferCopy, formatStartsIn } from './event-page-copy';
 import { withPrimaryOffer } from './event-page-offers';
 import { useEventPagesQuery } from './use-event-pages-query';
@@ -22,8 +22,7 @@ export function ComingUpRow({ sport, testId = 'coming-up' }: { sport?: Sport; te
     return null;
   }
   return (
-    <section className="space-y-3" data-testid={testId}>
-      <SectionHeader title="Coming up" />
+    <SectionCard bare testId={testId} title="Coming up">
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {upcoming.map(({ page, primary }, index) => {
           const copy = eventPageCopy(page);
@@ -44,6 +43,6 @@ export function ComingUpRow({ sport, testId = 'coming-up' }: { sport?: Sport; te
           );
         })}
       </div>
-    </section>
+    </SectionCard>
   );
 }

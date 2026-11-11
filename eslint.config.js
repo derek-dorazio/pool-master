@@ -320,6 +320,23 @@ export default tseslint.config(
     },
   },
   {
+    // #1587: values on screen are written by the shared format module, in the viewer's locale.
+    // The module and the date helpers it re-exports are where the Intl calls live; the time
+    // zone options read the browser's settings rather than format. Tests may build expected
+    // strings however they like.
+    files: ['clients/poolmaster/src/**/*.{ts,tsx}'],
+    ignores: [
+      'clients/poolmaster/src/features/shared/ui/format.ts',
+      'clients/poolmaster/src/features/shared/ui/date-time-format.ts',
+      'clients/poolmaster/src/features/shared/ui/date-time.tsx',
+      'clients/poolmaster/src/features/shared/ui/time-zone-options.ts',
+      '**/*.test.{ts,tsx}',
+      '**/*.spec.{ts,tsx}',
+    ],
+    plugins: { poolmaster },
+    rules: { 'poolmaster/no-inline-display-format': 'error' },
+  },
+  {
     // lib/errors.ts is the canonical definition; tests may build local stand-ins.
     files: ['clients/poolmaster/src/**/*.{ts,tsx}'],
     ignores: [

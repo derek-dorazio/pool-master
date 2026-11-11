@@ -4,11 +4,14 @@ import { useParams } from 'react-router';
 import { listParticipantProviderMappings } from '@/lib/api';
 import {
   AsyncPage,
-  PageHeader,
   LinkButton,
+  PageHeader,
   QueryState,
+  SectionCard,
+  SectionRow,
+  SectionRows,
   SettingsRow,
-  SettingsSection,
+  SettingsRows,
   StatusBadge,
 } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
@@ -37,8 +40,8 @@ function ParticipantMappingsSection({ participantId }: { participantId: string }
   const providerMappings = mappingsQuery.data ?? [];
 
   return (
-    <SettingsSection
-      description={`How this ${participant.one} is matched in each provider’s feed. Read-only.`}
+    <SectionCard
+      help={`How this ${participant.one} is matched in each provider’s feed. Read-only.`}
       testId="root-admin-participant-home-mappings-section"
       // poolmaster-allow-list-lookup: counts the mappings listed right below it
       title={`Provider mappings (${providerMappings.length})`}
@@ -54,18 +57,19 @@ function ParticipantMappingsSection({ participantId }: { participantId: string }
         testId="root-admin-participant-home-mappings-state"
       >
         {(mappings) => (
-          <ul className="divide-y divide-border" data-testid="root-admin-participant-home-mappings">
+          <SectionRows testId="root-admin-participant-home-mappings">
             {mappings.map((mapping) => (
-              <li className="flex flex-wrap items-center gap-3 px-5 py-3 text-sm" key={mapping.id}>
-                <span className="font-medium text-foreground">{mapping.providerId}</span>
-                <span className="text-muted-foreground">{mapping.externalId}</span>
-                <StatusBadge tone="neutral">{mapping.confidence}</StatusBadge>
-              </li>
+              <SectionRow
+                aside={<StatusBadge tone="neutral">{mapping.confidence}</StatusBadge>}
+                facts={mapping.externalId}
+                key={mapping.id}
+                name={mapping.providerId}
+              />
             ))}
-          </ul>
+          </SectionRows>
         )}
       </QueryState>
-    </SettingsSection>
+    </SectionCard>
   );
 }
 
@@ -85,8 +89,8 @@ function ParticipantHome({ player }: { player: ParticipantDto }) {
         testId="root-admin-participant-identity"
       />
 
-      <SettingsSection
-        action={(
+      <SectionCard
+        trailing={(
           <LinkButton
             data-testid="root-admin-participant-home-edit"
             size="sm"
@@ -99,19 +103,21 @@ function ParticipantHome({ player }: { player: ParticipantDto }) {
         testId="root-admin-participant-details"
         title="Details"
       >
-        <SettingsRow label="First name" value={player.firstName || 'Not set'} />
-        <SettingsRow label="Last name" value={player.lastName || 'Not set'} />
-        <SettingsRow label="Short name" value={player.shortName || 'Not set'} />
-        <SettingsRow label="Nationality" value={player.nationality || 'Not set'} />
-        <SettingsRow label="Role" value={player.role || 'Not set'} />
-        <SettingsRow label="Team affiliation" value={player.teamAffiliation || 'Not set'} />
-        <SettingsRow label="External ID" value={player.externalId || 'Not set'} />
-        <SettingsRow
-          label="Status"
-          testId="root-admin-participant-status-row"
-          value={participantStatusLabel(player.status)}
-        />
-      </SettingsSection>
+        <SettingsRows>
+          <SettingsRow label="First name" value={player.firstName || 'Not set'} />
+          <SettingsRow label="Last name" value={player.lastName || 'Not set'} />
+          <SettingsRow label="Short name" value={player.shortName || 'Not set'} />
+          <SettingsRow label="Nationality" value={player.nationality || 'Not set'} />
+          <SettingsRow label="Role" value={player.role || 'Not set'} />
+          <SettingsRow label="Team affiliation" value={player.teamAffiliation || 'Not set'} />
+          <SettingsRow label="External ID" value={player.externalId || 'Not set'} />
+          <SettingsRow
+            label="Status"
+            testId="root-admin-participant-status-row"
+            value={participantStatusLabel(player.status)}
+          />
+        </SettingsRows>
+      </SectionCard>
 
       <ParticipantMappingsSection participantId={player.id} />
     </div>

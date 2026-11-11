@@ -16,6 +16,7 @@ import noButtonRowOverride from '../no-button-row-override.mjs';
 import noDisabledTests from '../no-disabled-tests.mjs';
 import noDuplicateExtractErrorMessage from '../no-duplicate-extract-error-message.mjs';
 import noEnvFallbacks from '../no-env-fallbacks.mjs';
+import noInlineDisplayFormat from '../no-inline-display-format.mjs';
 import noInlineQueryKeys from '../no-inline-query-keys.mjs';
 import noParallelApiTypes from '../no-parallel-api-types.mjs';
 import noWidenedEnumFields from '../no-widened-enum-fields.mjs';
@@ -1071,6 +1072,31 @@ typedRuleTester.run('no-list-lookup (typed)', noListLookup, {
       filename: typedFixture,
       errors: [{ messageId: 'lookupInList' }],
     },
+  ],
+});
+
+ruleTester.run('no-inline-display-format', noInlineDisplayFormat, {
+  valid: [
+    // The shared formatters are the intended route.
+    "formatNumber(limit, locale);",
+    "formatCupPoints(points, locale);",
+    // Reading the browser's settings is not formatting.
+    "Intl.supportedValuesOf('timeZone');",
+    // A computed member is somebody else's method, not the built-in.
+    "x['toFixed'](1);",
+    // Other number methods are unrelated.
+    "value.toString();",
+  ],
+  invalid: [
+    { code: "limit.toLocaleString('en-US');", errors: [{ messageId: 'inlineMethod' }] },
+    { code: "date.toLocaleDateString(locale);", errors: [{ messageId: 'inlineMethod' }] },
+    { code: "date.toLocaleTimeString();", errors: [{ messageId: 'inlineMethod' }] },
+    { code: "points.toFixed(1);", errors: [{ messageId: 'inlineMethod' }] },
+    { code: "points.toPrecision(3);", errors: [{ messageId: 'inlineMethod' }] },
+    { code: "new Intl.NumberFormat('en-US');", errors: [{ messageId: 'inlineIntl' }] },
+    { code: "new Intl.DateTimeFormat(locale, { dateStyle: 'medium' });", errors: [{ messageId: 'inlineIntl' }] },
+    { code: "Intl.NumberFormat(locale).format(1);", errors: [{ messageId: 'inlineIntl' }] },
+    { code: "new Intl.PluralRules('en-US');", errors: [{ messageId: 'inlineIntl' }] },
   ],
 });
 

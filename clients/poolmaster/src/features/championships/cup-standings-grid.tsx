@@ -1,7 +1,7 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { useMemo } from 'react';
 import type { CupProjectedStandingDto, CupStandingRowDto } from '@/lib/api';
-import { Text } from '@/features/shared/ui';
+import { Text, useDisplayPreferences } from '@/features/shared/ui';
 import { describeMovement, formatProjectedStanding } from './cup-view';
 import { squadStandingColumns } from './squad-standing-columns';
 import { SquadStandingsGrid } from './squad-standings-grid';
@@ -51,11 +51,13 @@ export function CupStandingsGrid({
   showMovement?: boolean;
   squadPath: (squadId: string) => string;
 }) {
+  const { locale } = useDisplayPreferences();
   const columns = useMemo<ColumnDef<CupStandingRowDto, string | number>[]>(
     () => [
       ...squadStandingColumns<CupStandingRowDto>({
         afterPlace: showMovement ? [MOVEMENT_COLUMN] : [],
         focusSquadId,
+        locale,
         squadPath,
         testIdPrefix: 'cup',
       }),
@@ -80,13 +82,13 @@ export function CupStandingsGrid({
           const projected = projection.get(row.original.squadId);
           return projected ? (
             <Text data-testid={`cup-projected-${row.original.squadId}`} tone="muted" variant="value" weight="normal">
-              {formatProjectedStanding(projected)}
+              {formatProjectedStanding(projected, locale)}
             </Text>
           ) : null;
         },
       }] : []),
     ],
-    [focusSquadId, projection, showMovement, squadPath],
+    [focusSquadId, locale, projection, showMovement, squadPath],
   );
 
   return <SquadStandingsGrid columns={columns} focusSquadId={focusSquadId} rows={rows} testIdPrefix="cup" />;

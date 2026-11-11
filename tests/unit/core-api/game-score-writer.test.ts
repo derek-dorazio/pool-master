@@ -207,6 +207,47 @@ describe('writeGameScores', () => {
     expect(linkGames).toHaveBeenCalledWith([]);
   });
 
+  it('records a level bracket game settled by a shoot-out as the shoot-out\'s winner, keeping the shoot-out apart from the score', async () => {
+    const { deps, recordResult } = writer(bracket());
+
+    await writeGameScores(deps, EVENT, [
+      { ...game('g1', 'KC', 'BUF', 1, 1), homeShootoutScore: 2, awayShootoutScore: 4 },
+      { ...game('g2', 'DAL', 'PHI', 0, 0), homeShootoutScore: 3, awayShootoutScore: 5 },
+    ]);
+
+    expect(recordResult).toHaveBeenCalledWith(EVENT, 1, { winnerSide: MatchSide.AWAY, homeScore: 1, awayScore: 1, homeShootoutScore: 2, awayShootoutScore: 4 }, MatchResultSource.PROVIDER);
+    // The provider lists match 2's teams the other way round: its shoot-out turns with its score.
+    expect(recordResult).toHaveBeenCalledWith(EVENT, 2, { winnerSide: MatchSide.HOME, homeScore: 0, awayScore: 0, homeShootoutScore: 5, awayShootoutScore: 3 }, MatchResultSource.PROVIDER);
+  });
+
+  it('reads a shoot-out only for a level game with both of its scores, leaving a level game without one a tie', async () => {
+    const { deps, recordResult } = writer(bracket());
+
+    await writeGameScores(deps, EVENT, [
+      { ...game('g1', 'KC', 'BUF', 2, 1), homeShootoutScore: 3, awayShootoutScore: 4 },
+      { ...game('g2', 'PHI', 'DAL', 1, 1), homeShootoutScore: 4, awayShootoutScore: null },
+    ]);
+
+    expect(recordResult).toHaveBeenCalledWith(EVENT, 1, { winnerSide: MatchSide.HOME, homeScore: 2, awayScore: 1 }, MatchResultSource.PROVIDER);
+    expect(recordResult).toHaveBeenCalledWith(EVENT, 2, { winnerSide: null, homeScore: 1, awayScore: 1 }, MatchResultSource.PROVIDER);
+  });
+
+  it('writes nothing for a match that already holds a shoot-out result, and corrects one whose shoot-out score changed', async () => {
+    const matches = bracket();
+    const settled = { status: MatchStatus.COMPLETED, winnerSide: MatchSide.AWAY, homeScore: 1, awayScore: 1, homeShootoutScore: 2, awayShootoutScore: 4, resultSource: MatchResultSource.PROVIDER };
+    matches[0] = linked(matches[0], 'g1', settled);
+    matches[1] = linked(matches[1], 'g2', { ...settled, homeShootoutScore: 3, awayShootoutScore: 4 });
+    const { deps, recordResult } = writer(matches);
+
+    await writeGameScores(deps, EVENT, [
+      { ...game('g1', 'KC', 'BUF', 1, 1), homeShootoutScore: 2, awayShootoutScore: 4 },
+      { ...game('g2', 'PHI', 'DAL', 1, 1), homeShootoutScore: 2, awayShootoutScore: 4 },
+    ]);
+
+    expect(recordResult).toHaveBeenCalledTimes(1);
+    expect(recordResult).toHaveBeenCalledWith(EVENT, 2, { winnerSide: MatchSide.AWAY, homeScore: 1, awayScore: 1, homeShootoutScore: 2, awayShootoutScore: 4 }, MatchResultSource.PROVIDER);
+  });
+
   it('writes nothing, and says so, for a match that already holds the final result', async () => {
     const matches = bracket();
     matches[0] = linked(matches[0], 'g1', { status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME, homeScore: 27, awayScore: 24 });
@@ -244,7 +285,7 @@ describe('writeGameScores', () => {
         sportEventId: EVENT,
         matchNumber: 1,
         externalGameId: 'g1',
-        before: { winnerSide: MatchSide.AWAY, homeScore: 20, awayScore: 24 },
+        before: { winnerSide: MatchSide.AWAY, homeScore: 20, awayScore: 24, homeShootoutScore: null, awayShootoutScore: null },
         provider: { winnerSide: MatchSide.HOME, homeScore: 27, awayScore: 24 },
       },
     }, expect.any(String));

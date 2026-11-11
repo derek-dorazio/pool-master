@@ -3,7 +3,7 @@ import { useCallback, useMemo } from 'react';
 import { Link, Navigate, useParams } from 'react-router';
 import type { CupDto } from '@/lib/api';
 import { buildLeagueCupSquadPath, buildLeaguePointsRacePath, buildLeagueTrophyCasePath } from '@/features/leagues/league-routing';
-import { Chip, ErrorState, formatDateDisplay, LoadingState, MetricGrid, MetricTile, SectionCard, SectionEmpty, useDisplayPreferences } from '@/features/shared/ui';
+import { Chip, ErrorState, formatCupPoints, formatDateDisplay, formatNumber, formatPlace, LoadingState, MetricGrid, MetricTile, SectionCard, SectionEmpty, useDisplayPreferences } from '@/features/shared/ui';
 import { hasPlanFeature } from '@/features/plans/plan-features';
 import { PlanLockedNotice } from '@/features/plans/plan-locked-notice';
 import { buildPodium } from './championship-view';
@@ -16,8 +16,6 @@ import {
   cupProgress,
   cupsOnShow,
   describeProjection,
-  formatCupPoints,
-  formatPlace,
   hasLiveContest,
   isCupSeasonOver,
   nextContestToCount,
@@ -60,7 +58,7 @@ function CupStatTiles({ cup, isSeasonOver, mySquadId }: { cup: CupDto; isSeasonO
   return (
     <MetricGrid>
       <MetricTile
-        helperText={leaders.length ? `${formatCupPoints(leaderPoints)} pts` : undefined}
+        helperText={leaders.length ? `${formatCupPoints(leaderPoints, displayPreferences.locale)} pts` : undefined}
         label={isCrowned ? (leaders.length > 1 ? 'Champions' : 'Champion') : isSeasonOver ? 'Finished 1st' : 'Leader'}
         value={leaders.length ? leaders.map((row) => row.squadName).join(', ') : 'Nobody yet'}
       />
@@ -68,7 +66,7 @@ function CupStatTiles({ cup, isSeasonOver, mySquadId }: { cup: CupDto; isSeasonO
         <MetricTile
           helperText={!leaders.length
             ? undefined
-            : mine.position === 1 ? 'In the lead' : `${formatCupPoints(leaderPoints - mine.points)} behind`}
+            : mine.position === 1 ? 'In the lead' : `${formatCupPoints(leaderPoints - mine.points, displayPreferences.locale)} behind`}
           label="You"
           value={formatPlace(mine)}
         />
@@ -165,7 +163,7 @@ export function PointsRacePage() {
           <span data-testid="points-race-summary">
             {cup.sportLeagueName} · {cup.crownedAt
               ? `Crowned ${formatDateDisplay(cup.crownedAt, displayPreferences)}`
-              : isSeasonOver ? 'Not crowned' : `${progress.final} of ${progress.total} contests final`}
+              : isSeasonOver ? 'Not crowned' : `${formatNumber(progress.final, displayPreferences.locale)} of ${formatNumber(progress.total, displayPreferences.locale)} contests final`}
           </span>
         )}
       >

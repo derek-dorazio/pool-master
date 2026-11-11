@@ -28,6 +28,17 @@ export {
   type DisplayPreferences,
 } from "./date-time-format";
 export { DisplayPreferencesContext, useDisplayPreferences } from "./display-preferences";
+export {
+  formatCount,
+  formatCupPoints,
+  formatCupPointsCount,
+  formatMoneyCents,
+  formatNumber,
+  formatNumberList,
+  formatOrdinal,
+  formatPlace,
+  type PlaceRow,
+} from "./format";
 export { browserLocale, browserTimeZone } from "./time-zone-options";
 export { TimeZoneSelect } from "./time-zone-select";
 export { Chip, StatusBadge, type ChipProps, type StatusBadgeProps } from "./status-badge";
@@ -51,8 +62,7 @@ export {
 } from "./simple-table";
 export { SortableList } from "./sortable-list";
 export { ServerErrorBar } from "./server-error";
-export { SectionHeader } from "./section";
-export { DangerZone, DangerZoneAction, SettingsRow, SettingsSection, SettingsSectionHeader } from "./settings-section";
+export { DangerZoneAction, SettingsRow, SettingsRows } from "./settings-section";
 export { EmptyState, ErrorState, InlineError, LoadingState, QueryState } from "./state";
 export { LOADING_TEXT } from "./state-copy";
 export { ProgressIndicator } from "./progress";

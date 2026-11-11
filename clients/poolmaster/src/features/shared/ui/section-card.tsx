@@ -21,6 +21,7 @@ type SectionFooter = { label: string; testId: string; to: string };
  */
 export function SectionTitle({
   help,
+  helpTestId,
   id,
   level = 2,
   testId,
@@ -30,6 +31,8 @@ export function SectionTitle({
 }: {
   /** How the section works, in one to three sentences, shown by the title's (?). */
   help?: ReactNode;
+  /** The (?)'s test id, when the title has none to derive it from. */
+  helpTestId?: string;
   id?: string;
   level?: 2 | 3;
   testId?: string;
@@ -56,7 +59,7 @@ export function SectionTitle({
           <HelpTip
             className="-my-2 shrink-0"
             label="How this section works"
-            testId={testId ? `${testId}-help` : "section-help"}
+            testId={helpTestId ?? (testId ? `${testId}-help` : "section-help")}
           >
             {help}
           </HelpTip>
@@ -67,26 +70,10 @@ export function SectionTitle({
   );
 }
 
-/**
- * A titled section: its title bar, its body and an optional footer link. The body is unpadded,
- * for `SectionRows` or a `SectionEmpty` line; `padded` gives other content the card's padding.
- * `bare` keeps the title and rule but drops the box, for long page content such as Owners;
- * `tone="danger"` is a danger zone.
- */
-export function SectionCard({
-  bare = false,
-  children,
-  className,
-  footer,
-  headingLevel = 2,
-  help,
-  padded = false,
-  testId,
-  title,
-  titleTestId,
-  tone = "default",
-  trailing,
-}: {
+const DANGER_ZONE_TITLE = "Danger zone";
+const DANGER_ZONE_HELP = "Each of these asks you to confirm.";
+
+type SectionCardBaseProps = {
   bare?: boolean;
   children: ReactNode;
   className?: string;
@@ -96,12 +83,46 @@ export function SectionCard({
   help?: ReactNode;
   padded?: boolean;
   testId?: string;
-  /** The section's name, which also names it for screen readers. */
-  title: ReactNode;
   titleTestId?: string;
-  tone?: SectionTone;
   trailing?: ReactNode;
-}) {
+};
+
+type SectionCardProps = SectionCardBaseProps &
+  (
+    | {
+        /** The section's name, which also names it for screen readers. */
+        title: ReactNode;
+        tone?: "default";
+      }
+    | {
+        /** A danger zone's title and help default to "Danger zone" and that its actions confirm first. */
+        title?: ReactNode;
+        tone: "danger";
+      }
+  );
+
+/**
+ * A titled section: its title bar, its body and an optional footer link. The body is unpadded,
+ * for `SectionRows` or a `SectionEmpty` line; `padded` gives other content the card's padding.
+ * `bare` keeps the title and rule but drops the box, for long page content such as Owners;
+ * `tone="danger"` is a danger zone, titled "Danger zone" unless it says otherwise.
+ */
+export function SectionCard(props: SectionCardProps) {
+  const {
+    bare = false,
+    children,
+    className,
+    footer,
+    headingLevel = 2,
+    padded = false,
+    testId,
+    titleTestId,
+    tone = "default",
+    trailing,
+  } = props;
+  // A danger zone is always called that, and always says its actions confirm first.
+  const title = props.title ?? DANGER_ZONE_TITLE;
+  const help = props.help ?? (tone === "danger" ? DANGER_ZONE_HELP : undefined);
   const titleId = useId();
   return (
     <section
@@ -114,7 +135,7 @@ export function SectionCard({
       data-testid={testId}
     >
       <div className={cn("border-b", tone === "danger" ? "border-destructive/40" : "border-border", bare ? "pb-1" : "px-4 py-1")}>
-        <SectionTitle help={help} id={titleId} level={headingLevel} testId={titleTestId} title={title} tone={tone} trailing={trailing} />
+        <SectionTitle help={help} helpTestId={!titleTestId && testId ? `${testId}-help` : undefined} id={titleId} level={headingLevel} testId={titleTestId} title={title} tone={tone} trailing={trailing} />
       </div>
       {padded && !bare ? <SectionBody testId={testId ? `${testId}-body` : undefined}>{children}</SectionBody> : children}
       {footer ? <SectionFooterLink label={footer.label} testId={footer.testId} to={footer.to} /> : null}

@@ -33,6 +33,8 @@ import {
   LinkButton,
   LoadingState,
   Tile,
+  formatNumber,
+  useDisplayPreferences,
 } from '@/features/shared/ui';
 import { currentContestEvent, entryEventStatus } from './contest-events';
 import { ContestPageFrame } from './contest-header';
@@ -125,6 +127,7 @@ export function ContestDetailPage() {
     feature: 'contest-board',
   });
   const { contestId = '' } = useParams<{ contestId: string }>();
+  const { locale } = useDisplayPreferences();
   const [expandedEntryId, setExpandedEntryId] = useState<string | null>(null);
   // My entries (#1392) opens this page with `?mine=1`; the checkbox keeps the link in step.
   const [searchParams, setSearchParams] = useSearchParams();
@@ -295,7 +298,7 @@ export function ContestDetailPage() {
             </span>
           ) : null}
           <span data-testid="contest-board-total-count">
-            Entries: {entryCap === null ? totalCount : `${totalCount} of ${formatPlanLimit(entryCap)}`}
+            Entries: {entryCap === null ? formatNumber(totalCount, locale) : `${formatNumber(totalCount, locale)} of ${formatPlanLimit(entryCap, locale)}`}
           </span>
           <span data-testid="contest-board-my-count">My entries: {myCount}</span>
         </>

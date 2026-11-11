@@ -344,3 +344,26 @@ The failure mode worth naming: an architectural finding is usually not *wrong co
 code that is right locally and inconsistent globally. That makes it easy to wave through in
 a diff review and expensive to unpick later — which is the whole reason for reading at this
 altitude at all.
+
+## 8. Reviewing for UI conformance
+
+Apply when the diff adds or changes web app UI. Skip it for a diff with no screen in it.
+
+- **Patterns, not look-alikes** — every section, row, header, dialog, notice and state on the
+  changed screens is a shared component from `features/shared/ui` (or the feature folder that
+  owns the concept), used as its `README.md` says. A hand-built card, row or dialog that
+  matches one is a finding; name the component. See `react-ui-rules.md` §5 *Shared-Component
+  and Helper Adoption Gate*.
+- **No local styles** — the page sets layout only (flex, gap, margin, width, alignment). A
+  text style, radius, colour or size override on a shared part, including through
+  `className`, is a finding, even where no scanner caught it: a look no variant covers gets a
+  variant in `shared/ui`. See `react-ui-rules.md` §5 *Theme And Styling Discipline*.
+- **Compared with the gallery** — the PR's screenshots are checked against the component's
+  gallery story, not only against the page's own before, so a page cannot drift by staying
+  close to how it already looked. A changed shared component changes its story in the same
+  diff. See `react-ui-rules.md` §5 *Component Gallery*.
+- **Old patterns retire** — a diff that brings in a new pattern either converts every call
+  site of the one it replaces or names the follow-up tickets that do. A diff that adds a new
+  use of a component marked retiring is a finding.
+- **No explainer text** — a sentence that says how something works sits behind the (?) help
+  icon, not in the page body or in a `description` prop.
