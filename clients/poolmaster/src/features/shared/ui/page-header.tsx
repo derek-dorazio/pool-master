@@ -10,11 +10,6 @@ type Breadcrumb = {
 };
 
 export type PageHeaderProps = {
-  /**
-   * The right slot: at most two small buttons, or the page's search box, about this page's
-   * subject only. On a phone it drops to its own full-width line.
-   */
-  actions?: ReactNode;
   breadcrumbLabel?: string;
   /** The trail up to this page, for an administration area's nested pages. */
   breadcrumbs?: Breadcrumb[];
@@ -36,6 +31,14 @@ export type PageHeaderProps = {
   testId?: string;
   title: string;
 } & (
+  /**
+   * The right slot holds at most two small buttons about this page's subject. They sit beside
+   * the title while they fit, and wrap under it on a phone when they don't.
+   */
+  | { actions?: ReactNode; search?: never }
+  /** Or the page's search box: beside the title on a desktop, a full-width line on a phone. */
+  | { search: ReactNode; actions?: never }
+) & (
   /** An icon, drawn in the standard avatar square and named `<title> icon`. */
   | { icon?: ReactNode; avatar?: never }
   /** A whole avatar of the caller's own, such as a team's in its icon colours. */
@@ -55,6 +58,7 @@ export function PageHeader({
   description,
   icon,
   meta,
+  search,
   tabs,
   tabsEnd,
   testId,
@@ -89,8 +93,13 @@ export function PageHeader({
             <Breadcrumbs className="mt-2" items={breadcrumbs} label={breadcrumbLabel} />
           ) : null}
         </div>
+        {search ? (
+          <div className="max-sm:basis-full sm:w-72" data-testid={testId ? `${testId}-search` : undefined}>
+            {search}
+          </div>
+        ) : null}
         {actions ? (
-          <div className="flex flex-wrap items-center gap-2 max-sm:basis-full" data-testid={testId ? `${testId}-actions` : undefined}>
+          <div className="flex flex-wrap items-center gap-2" data-testid={testId ? `${testId}-actions` : undefined}>
             {actions}
           </div>
         ) : null}

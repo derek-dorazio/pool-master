@@ -4,7 +4,7 @@ import { useLeagueContextGuard } from "@/features/leagues/league-context-guard";
 import { getLogger } from "@/lib/logger";
 import { ErrorState, LoadingState, PanelCard } from "@/features/shared/ui";
 import { useLeagueContext } from '@/features/leagues/use-league-context';
-import { ContestsPageHeader } from './contests-view-switch';
+import { ContestsPageHeader } from './contests-page-header';
 import { CurrentContestList } from './current-contest-list';
 import { useMyContestEntries } from './use-contest-entries';
 import { useLeagueContestsQuery } from './use-league-contests-query';
@@ -61,11 +61,7 @@ export function LeagueContestsPage() {
 
   return (
     <section className="space-y-6" data-testid="league-contests-page">
-      <ContestsPageHeader
-        description="Live and open contests in this league."
-        leagueCode={league.leagueCode}
-        view="current"
-      />
+      <ContestsPageHeader leagueCode={league.leagueCode} view="current" />
 
       {contestsQuery.isLoading ? (
         <LoadingState body="Loading contests..." />
