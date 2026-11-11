@@ -71,9 +71,11 @@ export class NcaabReader {
 
   private seasonsFor(dateRange?: DateRange): number[] {
     if (dateRange) {
+      // Season s's tournament is played in calendar year s + 1, so the years from..to are
+      // seasons from - 1 to to - 1.
       const first = dateRange.from.getUTCFullYear() - 1;
-      const count = dateRange.to.getUTCFullYear() - first;
-      if (count <= MAX_SEASONS_READ) return Array.from({ length: count }, (_, index) => first + index);
+      const seasonCount = dateRange.to.getUTCFullYear() - first;
+      if (seasonCount <= MAX_SEASONS_READ) return Array.from({ length: seasonCount }, (_, index) => first + index);
     }
     const today = new Date(this.now());
     const current = today.getUTCMonth() >= SEASON_START_MONTH ? today.getUTCFullYear() : today.getUTCFullYear() - 1;

@@ -96,17 +96,25 @@ describe('NCAA men\'s basketball teams', () => {
     expect(() => toNcaabTeamParticipant({ id: 150 })).toThrow('team 150 has no full_name');
   });
 
-  it('lists the bracket\'s decided teams once each, First Four teams included, each with its seed', () => {
+  it('lists the bracket\'s decided teams once each, each with its seed, leaving out both First Four teams', () => {
     const field = toNcaabFieldParticipants(bracket2025);
     expect(field.map((team) => [team.externalId, team.name, team.metadata])).toEqual([
-      ['ncaab-team-251', 'Texas Longhorns', { seed: 11 }],
-      ['ncaab-team-152', 'NC State Wolfpack', { seed: 11 }],
       ['ncaab-team-150', 'Duke Blue Devils', { seed: 1 }],
       ['ncaab-team-2561', 'Siena Saints', { seed: 16 }],
       ['ncaab-team-194', 'Ohio State Buckeyes', { seed: 8 }],
       ['ncaab-team-2628', 'TCU Horned Frogs', { seed: 9 }],
       ['ncaab-team-57', 'Florida Gators', { seed: 1 }],
     ]);
+  });
+
+  it('leaves out a First Four team before its game is played, while it shows only in the First Four', () => {
+    const scheduledFirstFour = withState(firstFour2025, CompetitionStatusState.SCHEDULED);
+    expect(toNcaabFieldParticipants([scheduledFirstFour, duke2025]).map((team) => team.externalId)).toEqual(['ncaab-team-150', 'ncaab-team-2561']);
+  });
+
+  it('leaves out a First Four winner after it plays, though it now shows in a round of 64 game too', () => {
+    const texasInRoundOf64: NcaabBracketGame = { ...duke2025, away_team: firstFour2025.home_team };
+    expect(toNcaabFieldParticipants([firstFour2025, texasInRoundOf64]).map((team) => team.externalId)).toEqual(['ncaab-team-150']);
   });
 
   it('names no team for a side still to be decided, and takes the short name or no seed when that is all the bracket gives', () => {

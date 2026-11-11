@@ -55,6 +55,9 @@ The first things to check once a key exists, each read by `npm run balldontlie:c
   Sunday on, with later rounds' sides null until they are decided. A tournament is called
   complete once its championship (round 7) is listed and every listed game is done.
   `--game-event ncaab-2025-tournament` prints the game count: a full tournament has 67.
+- NCAAB: `/ncaab/v1/teams` returns every Division I team (about 360) in one response, as the
+  document shows it with no paging. A cut-off list fails no check here, so count the teams
+  `npm run balldontlie:contract-check` prints against the real number.
 - NCAAB: a decided bracket side's `full_name` is the name the teams list gives ("Duke Blue
   Devils"), which is what the site's teams loaded from data files are called, so the first
   import links them rather than adding new ones.

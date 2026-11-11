@@ -8,8 +8,9 @@
  * the season starts, as the vendor numbers it.
  *
  * The First Four is the vendor's round 1. PoolMaster's bracket starts at the round of 64, with
- * each First Four winner filling its place through one field member, so First Four games carry
- * no score here: no match is theirs. Their teams are in the field.
+ * each First Four pairing one play-in place an admin fills with its winner. So First Four games
+ * carry no score here, since no match is theirs, and their teams are left out of the field
+ * before and after they play: the play-in place stands for them.
  *
  * Team ids are prefixed (`ncaab-team-150`), as the NFL's are, so they cannot collide with
  * another sport's.
@@ -111,14 +112,19 @@ function decidedTeam(team: NcaabBracketTeam | null | undefined): (NcaabBracketTe
 
 /**
  * The teams in a season's bracket, each once, in the order they first appear, with their seed.
- * A side still to be decided names no team yet.
+ * A side still to be decided names no team yet. A team that plays in the First Four is left out
+ * in every round, its winner too: the admin's play-in place stands for it, and a row of its own
+ * beside that place would make the place unfillable.
  */
 export function toNcaabFieldParticipants(games: readonly NcaabBracketGame[]): ProviderParticipant[] {
+  const playIn = new Set(games
+    .filter((game) => game.round === NcaabBracketRound.FIRST_FOUR)
+    .flatMap((game) => [decidedTeam(game.home_team)?.id, decidedTeam(game.away_team)?.id]));
   const teams = new Map<string, ProviderParticipant>();
   for (const game of games) {
     for (const side of [game.home_team, game.away_team]) {
       const team = decidedTeam(side);
-      if (!team) continue;
+      if (!team || playIn.has(team.id)) continue;
       const externalId = ncaabTeamExternalId(team.id);
       if (teams.has(externalId)) continue;
       const seed = team.seed ? Number.parseInt(team.seed, 10) : Number.NaN;

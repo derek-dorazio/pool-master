@@ -99,13 +99,14 @@ describe('BalldontlieAdapter (NCAA men\'s basketball)', () => {
   });
 
   describe('getEventDetails', () => {
-    it('gives a tournament with every team its bracket has decided so far, each with its seed', async () => {
+    it('gives a tournament with every team its bracket has decided so far, each with its seed, and no First Four team', async () => {
       const harness = setup();
       restore = harness.restore;
 
       const detail = await harness.adapter.getEventDetails('ncaab-2025-tournament');
 
-      expect(detail).toMatchObject({ externalId: 'ncaab-2025-tournament', sport: Sport.BASKETBALL, participantCount: 7, rounds: 6, status: 'COMPLETED' });
+      expect(detail).toMatchObject({ externalId: 'ncaab-2025-tournament', sport: Sport.BASKETBALL, participantCount: 5, rounds: 6, status: 'COMPLETED' });
+      expect(detail?.participants.map((team) => team.name)).not.toContain('Texas Longhorns');
       expect(detail?.participants.find((team) => team.name === 'Duke Blue Devils')?.metadata).toEqual({ seed: 1 });
       expect(requestLine(harness.api)).toEqual(['/ncaab/v1/bracket?season=2025&per_page=100']);
     });
