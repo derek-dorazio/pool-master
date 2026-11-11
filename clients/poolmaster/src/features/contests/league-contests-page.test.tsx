@@ -361,15 +361,15 @@ describe('LeagueContestsPage, beyond the default list', () => {
     expect(screen.queryByRole('link', { name: /Create contest/i })).not.toBeInTheDocument();
   });
 
-  it('says no contest is open or live, pointing to Past, when the list returns none current', async () => {
+  it('says in one italic line, with no pointer to Past, that no contest is open or live when the list returns none current', async () => {
     primeCommonMocks();
     listContestsMock.mockResolvedValue({ data: { contests: [] } });
 
     renderLeagueContestsPage();
 
-    expect(await screen.findByTestId('league-contest-empty')).toHaveTextContent(
-      'No contests are open or live right now. Finished ones are under Past.',
-    );
+    expect(await screen.findByTestId('league-contest-empty')).toHaveTextContent('No open or live contests.');
+    expect(screen.getByTestId('league-contest-empty')).toHaveClass('italic');
+    expect(screen.getByTestId('league-contest-empty')).not.toHaveTextContent('Past');
   });
 
   it('shows an error instead of an empty list when the contest list fails to load', async () => {

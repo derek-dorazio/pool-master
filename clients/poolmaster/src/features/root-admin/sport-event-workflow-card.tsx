@@ -6,7 +6,7 @@ import {
   ConfirmationModal,
   formatDateTimeDisplay,
   LinkButton,
-  PanelCard,
+  SectionCard,
   StatusBadge,
   useDisplayPreferences,
 } from '@/features/shared/ui';
@@ -99,7 +99,7 @@ export function SportEventWorkflowCard({
   });
 
   return (
-    <PanelCard
+    <SectionCard
       padded
       title="Workflow"
       trailing={(
@@ -155,7 +155,7 @@ export function SportEventWorkflowCard({
         </span>
       </div>
 
-      <PanelCard
+      <SectionCard
         headingLevel={3}
         padded
         title={capitalize(roundNoun.many)}
@@ -184,7 +184,7 @@ export function SportEventWorkflowCard({
                   )
                   .join(' · ')}
         </p>
-      </PanelCard>
+      </SectionCard>
 
       <ConfirmationModal
         confirmLabel={
@@ -234,6 +234,6 @@ export function SportEventWorkflowCard({
         testId="root-admin-sport-event-auto-modal"
         title="Automatic lifecycle"
       />
-    </PanelCard>
+    </SectionCard>
   );
 }

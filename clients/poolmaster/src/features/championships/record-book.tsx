@@ -1,6 +1,6 @@
 import { isHallOfLameRecord } from '@poolmaster/shared/domain';
 import type { RecordDto } from '@/lib/api';
-import { ErrorState, PanelCard } from '@/features/shared/ui';
+import { ErrorState, SectionCard, SectionRow, SectionRows } from '@/features/shared/ui';
 import { RECORD_WORDING, describeHeldRecord, describeRecordStand, recordsHeldBy } from './record-book-view';
 import { useRecordsQuery } from './use-championship-query';
 
@@ -29,23 +29,19 @@ export function RecordBook({ leagueId }: { leagueId: string }) {
 
 function RecordList({ records, testId, title }: { records: RecordDto[]; testId: string; title: string }) {
   return (
-    <PanelCard padded testId={testId} title={title}>
-      <ul className="space-y-3 text-sm">
+    <SectionCard testId={testId} title={title}>
+      <SectionRows>
         {records.map((record) => (
-          <li className="space-y-0.5" data-testid={`record-${record.type}`} key={record.type}>
-            <div className="flex flex-wrap justify-between gap-2">
-              <span className="font-medium text-foreground">{RECORD_WORDING[record.type].title}</span>
-              <span className="text-foreground">{describeRecordStand(record.type, record.best)}</span>
-            </div>
-            {record.nextBest ? (
-              <p className="text-muted-foreground" data-testid={`record-${record.type}-next`}>
-                {`Next best: ${describeRecordStand(record.type, record.nextBest)}`}
-              </p>
-            ) : null}
-          </li>
+          <SectionRow
+            facts={record.nextBest ? `Next best: ${describeRecordStand(record.type, record.nextBest)}` : undefined}
+            key={record.type}
+            name={RECORD_WORDING[record.type].title}
+            testId={`record-${record.type}`}
+            value={describeRecordStand(record.type, record.best)}
+          />
         ))}
-      </ul>
-    </PanelCard>
+      </SectionRows>
+    </SectionCard>
   );
 }
 
@@ -66,15 +62,17 @@ export function SquadRecords({ leagueId, squadId }: { leagueId: string; squadId:
   }
 
   return (
-    <PanelCard padded testId="squad-records" title="Records">
-      <ul className="space-y-2 text-sm">
+    <SectionCard testId="squad-records" title="Records">
+      <SectionRows>
         {held.map((record) => (
-          <li className="flex flex-wrap justify-between gap-2" data-testid={`squad-record-${record.type}`} key={record.type}>
-            <span className="font-medium text-foreground">{RECORD_WORDING[record.type].title}</span>
-            <span className="text-foreground">{describeHeldRecord(record)}</span>
-          </li>
+          <SectionRow
+            key={record.type}
+            name={RECORD_WORDING[record.type].title}
+            testId={`squad-record-${record.type}`}
+            value={describeHeldRecord(record)}
+          />
         ))}
-      </ul>
-    </PanelCard>
+      </SectionRows>
+    </SectionCard>
   );
 }

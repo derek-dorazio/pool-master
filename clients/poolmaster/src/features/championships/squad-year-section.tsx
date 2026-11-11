@@ -1,9 +1,8 @@
 import { championshipYear } from '@poolmaster/shared/domain';
 import { useMemo, useState } from 'react';
-import { Link } from 'react-router';
 import type { SquadDto } from '@/lib/api';
 import { buildLeagueChampionshipsPath, buildLeagueCupSquadPath } from '@/features/leagues/league-routing';
-import { Button, ErrorState, LoadingState, MetricGrid, MetricTile, PanelCard, Tile } from '@/features/shared/ui';
+import { Button, ErrorState, LoadingState, MetricGrid, MetricTile, SectionCard, SectionRow, SectionRows } from '@/features/shared/ui';
 import { ChampionshipContestList } from './championship-contest-list';
 import { ChampionshipStandingsGrid } from './championship-standings-grid';
 import { describeContestResultFilter, historyCupsOnShow, type ContestResultFilter } from './championship-view';
@@ -48,68 +47,56 @@ export function SquadYearSection({
       ) : (
         <>
           {championship ? (
-            <>
-              <Tile className="space-y-1" padding="sm" radius="lg">
-                <Link
-                  className="flex flex-wrap items-baseline justify-between gap-2 hover:underline"
-                  data-testid="squad-year-championship"
+            <SectionCard headingLevel={3} title="Championship">
+              <SectionRows>
+                <SectionRow
+                  facts={<span data-testid="squad-year-championship-standing">{describeSquadChampionship(championship)}</span>}
+                  name={championship.name}
+                  testId="squad-year-championship"
                   to={buildLeagueChampionshipsPath(leagueCode, year)}
-                >
-                  <span className="font-semibold text-foreground">{championship.name}</span>
-                  <span className="text-sm text-muted-foreground" title={describeMovement(championship.standing.movement).description}>
-                    {describeMovement(championship.standing.movement).label}
-                  </span>
-                </Link>
-                <p className="text-sm text-foreground" data-testid="squad-year-championship-standing">
-                  {describeSquadChampionship(championship)}
-                </p>
-              </Tile>
+                  value={<span title={describeMovement(championship.standing.movement).description}>{describeMovement(championship.standing.movement).label}</span>}
+                />
+              </SectionRows>
+              <div className="space-y-4 border-t border-border p-4">
+                <MetricGrid className="grid-cols-3 sm:grid-cols-6">
+                  {SQUAD_MEDAL_TILES.map((tile) => (
+                    <div data-testid={`squad-year-tile-${tile.key}`} key={tile.key}>
+                      <MetricTile label={tile.label} value={tile.count(championship.standing)} />
+                    </div>
+                  ))}
+                </MetricGrid>
 
-              <MetricGrid className="grid-cols-3 sm:grid-cols-6">
-                {SQUAD_MEDAL_TILES.map((tile) => (
-                  <div data-testid={`squad-year-tile-${tile.key}`} key={tile.key}>
-                    <MetricTile label={tile.label} value={tile.count(championship.standing)} />
-                  </div>
-                ))}
-              </MetricGrid>
-
-              <ChampionshipStandingsGrid
-                filter={filter}
-                focusSquadId={mySquadId}
-                onFilter={(next) => setPlace(next.place)}
-                rows={[championship.standing]}
-                searchable={false}
-              />
-            </>
+                <ChampionshipStandingsGrid
+                  filter={filter}
+                  focusSquadId={mySquadId}
+                  onFilter={(next) => setPlace(next.place)}
+                  rows={[championship.standing]}
+                  searchable={false}
+                />
+              </div>
+            </SectionCard>
           ) : null}
 
           {cups.length ? (
-            <PanelCard headingLevel={3} padded title="Cups">
-              <ul className="space-y-1 text-sm" data-testid="squad-year-cups">
+            <SectionCard headingLevel={3} title="Cups">
+              <SectionRows testId="squad-year-cups">
                 {cups.map((cup) => (
-                  <li key={cup.cupId}>
-                    <Link
-                      className="flex flex-wrap justify-between gap-2 hover:underline"
-                      data-testid={`squad-year-cup-${cup.cupId}`}
-                      to={buildLeagueCupSquadPath(leagueCode, year, cup.sportLeagueId, squad.id)}
-                    >
-                      <span className="text-foreground">{cup.name}</span>
-                      <span className="text-muted-foreground">
-                        {describeSquadCup(cup)}
-                        {cup.standing.movement === null ? null : ` · ${describeMovement(cup.standing.movement).label}`}
-                      </span>
-                    </Link>
-                  </li>
+                  <SectionRow
+                    facts={cup.standing.movement === null ? describeSquadCup(cup) : `${describeSquadCup(cup)} · ${describeMovement(cup.standing.movement).label}`}
+                    key={cup.cupId}
+                    name={cup.name}
+                    testId={`squad-year-cup-${cup.cupId}`}
+                    to={buildLeagueCupSquadPath(leagueCode, year, cup.sportLeagueId, squad.id)}
+                  />
                 ))}
-              </ul>
-            </PanelCard>
+              </SectionRows>
+            </SectionCard>
           ) : null}
         </>
       )}
 
-      <PanelCard
+      <SectionCard
         headingLevel={3}
-        padded
         title={describeContestResultFilter(filter, squad.name, year)}
         titleTestId="squad-year-contests-heading"
         trailing={place === null ? null : (
@@ -119,9 +106,9 @@ export function SquadYearSection({
         )}
       >
         {contestsQuery.isError ? (
-          <ErrorState body="We couldn't load this squad's contests." testId="squad-year-contests-error" />
+          <ErrorState body="We couldn't load this squad's contests." size="inline" testId="squad-year-contests-error" />
         ) : !contestsQuery.data ? (
-          <LoadingState body="Loading this squad's contests..." />
+          <LoadingState body="Loading this squad's contests..." size="inline" />
         ) : (
           <ChampionshipContestList
             contests={contestsQuery.data}
@@ -130,7 +117,7 @@ export function SquadYearSection({
             testIdPrefix="squad-year-contest"
           />
         )}
-      </PanelCard>
+      </SectionCard>
     </div>
   );
 }

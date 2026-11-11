@@ -3,12 +3,11 @@ import { ContestStatus, PlanFeature } from '@poolmaster/shared/domain';
 import { buildContestLandingPath, buildLeaguePointsRacePath } from '@/features/leagues/league-routing';
 import {
   Breadcrumbs,
-  EmptyState,
   ErrorState,
-  Heading,
-  ListStack,
   LoadingState,
-  Tile,
+  SectionCard,
+  SectionEmpty,
+  SectionRows,
 } from '@/features/shared/ui';
 import { hasPlanFeature } from '@/features/plans/plan-features';
 import { PlanLockedNotice } from '@/features/plans/plan-locked-notice';
@@ -38,47 +37,50 @@ export function CupSquadPointsPage() {
     return <ErrorState body="We couldn't load this squad's cup points." testId="cup-squad-points-error" />;
   }
   if (!pointsQuery.data) {
-    return <EmptyState body={`This league has no cup for that sports league in ${year}.`} testId="cup-squad-points-no-cup" title="Cup not found" />;
+    return (
+      <SectionCard testId="cup-squad-points-no-cup" title="Cup not found">
+        <SectionEmpty>{`This league has no cup for that sports league in ${year}.`}</SectionEmpty>
+      </SectionCard>
+    );
   }
   const squadPoints = pointsQuery.data;
 
   return (
-    <Tile className="space-y-5" data-testid="cup-squad-points" padding="sm" radius="lg">
+    <div className="space-y-4" data-testid="cup-squad-points">
       <Breadcrumbs
         items={[
           { href: buildLeaguePointsRacePath(leagueCode, year, sportLeagueId), label: squadPoints.cupName },
           { label: squadPoints.squadName },
         ]}
       />
-      <div className="flex flex-wrap items-baseline justify-between gap-3">
-        <Heading level={2} variant="subtitle">{squadPoints.squadName}</Heading>
-        <p className="text-lg font-semibold tabular-nums text-foreground" data-testid="cup-squad-points-total">
-          {formatCupPoints(squadPoints.points)} pts
-        </p>
-      </div>
-      {squadPoints.contests.length ? (
-        <ListStack>
-          {squadPoints.contests.map((contest) => {
-            const weight = CUP_WEIGHT_LABELS[contest.cupWeight];
-            return (
-              <ContestRow
-                completedAt={contest.completedAt}
-                key={contest.contestId}
-                name={contest.name}
-                note={contest.displayPlace
-                  ? `${contest.displayPlace} of ${contest.rankedEntryCount}${weight ? ` · ${weight}` : ''}`
-                  : 'No entry'}
-                startsAt={null}
-                testId={`cup-squad-contest-${contest.contestId}`}
-                to={buildContestLandingPath(leagueCode, { id: contest.contestId, status: ContestStatus.COMPLETED })}
-                trailing={`${formatCupPoints(contest.points)} pts`}
-              />
-            );
-          })}
-        </ListStack>
-      ) : (
-        <EmptyState body="No contest in this cup has counted yet." />
-      )}
-    </Tile>
+      <SectionCard
+        title={squadPoints.squadName}
+        trailing={<span data-testid="cup-squad-points-total">{formatCupPoints(squadPoints.points)} pts</span>}
+      >
+        {squadPoints.contests.length ? (
+          <SectionRows>
+            {squadPoints.contests.map((contest) => {
+              const weight = CUP_WEIGHT_LABELS[contest.cupWeight];
+              return (
+                <ContestRow
+                  completedAt={contest.completedAt}
+                  key={contest.contestId}
+                  name={contest.name}
+                  note={contest.displayPlace
+                    ? `${contest.displayPlace} of ${contest.rankedEntryCount}${weight ? ` · ${weight}` : ''}`
+                    : 'No entry'}
+                  startsAt={null}
+                  testId={`cup-squad-contest-${contest.contestId}`}
+                  to={buildContestLandingPath(leagueCode, { id: contest.contestId, status: ContestStatus.COMPLETED })}
+                  trailing={`${formatCupPoints(contest.points)} pts`}
+                />
+              );
+            })}
+          </SectionRows>
+        ) : (
+          <SectionEmpty>No contest in this cup has counted yet.</SectionEmpty>
+        )}
+      </SectionCard>
+    </div>
   );
 }

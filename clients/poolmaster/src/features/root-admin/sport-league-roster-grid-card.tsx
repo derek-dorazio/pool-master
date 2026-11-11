@@ -12,7 +12,7 @@ import {
   DataGrid,
   InlineError,
   Input,
-  PanelCard,
+  SectionCard,
   PickerModal,
   StatusBadge,
 } from '@/features/shared/ui';
@@ -285,7 +285,7 @@ export function SportLeagueRosterGridCard({
   );
 
   return (
-    <PanelCard
+    <SectionCard
       headingLevel={3}
       padded
       title="Roster"
@@ -429,6 +429,6 @@ export function SportLeagueRosterGridCard({
         title={`Remove ${participant.one}`}
         tone="danger"
       />
-    </PanelCard>
+    </SectionCard>
   );
 }

@@ -1,5 +1,5 @@
 import { Award } from 'lucide-react';
-import { ErrorState, Heading, PanelCard } from '@/features/shared/ui';
+import { ErrorState, SectionCard, SectionRow, SectionRows } from '@/features/shared/ui';
 import { describePlateWinners, describeWonPlate, perpetualTrophyName, type WonPlate } from './perpetual-trophy-view';
 import { usePerpetualTrophiesQuery } from './use-championship-query';
 
@@ -19,13 +19,11 @@ export function PerpetualTrophies({ leagueId }: { leagueId: string }) {
   }
 
   return (
-    <section className="space-y-3" data-testid="perpetual-trophies">
-      <Heading level={2} variant="subtitle">Perpetual trophies</Heading>
+    <SectionCard bare testId="perpetual-trophies" title="Perpetual trophies">
       {trophies.map((trophy) => (
-        <PanelCard
+        <SectionCard
           headingLevel={3}
           key={`${trophy.eventSeriesId}-${trophy.selectionType}`}
-          padded
           testId={`perpetual-trophy-${trophy.eventSeriesId}-${trophy.selectionType}`}
           title={(
             <>
@@ -33,36 +31,36 @@ export function PerpetualTrophies({ leagueId }: { leagueId: string }) {
               {perpetualTrophyName(trophy)}
             </>
           )}
+          trailing={trophy.sportLeagueName}
         >
-          <p className="text-xs text-muted-foreground">{trophy.sportLeagueName}</p>
-          <ul className="space-y-1 text-sm">
+          <SectionRows>
             {trophy.plates.map((plate) => (
-              <li className="flex flex-wrap justify-between gap-2" data-testid={`perpetual-plate-${plate.contestId}`} key={plate.contestId}>
-                <span className="font-medium text-foreground">{plate.year}</span>
-                <span className={plate.winners.length ? 'text-foreground' : 'text-muted-foreground'}>{describePlateWinners(plate)}</span>
-              </li>
+              <SectionRow
+                facts={describePlateWinners(plate)}
+                key={plate.contestId}
+                name={plate.year}
+                testId={`perpetual-plate-${plate.contestId}`}
+              />
             ))}
-          </ul>
-        </PanelCard>
+          </SectionRows>
+        </SectionCard>
       ))}
-    </section>
+    </SectionCard>
   );
 }
 
-/** The perpetual trophy plates a squad's name is on, in its trophy case (#874). */
+/** The perpetual trophy plates a squad's name is on, as rows of its trophy case (#874). */
 export function SquadPerpetualPlates({ plates }: { plates: WonPlate[] }) {
-  if (!plates.length) {
-    return null;
-  }
-
-  return (
-    <ul className="space-y-1 text-sm" data-testid="squad-history-plates">
-      {plates.map((won) => (
-        <li className="inline-flex w-full items-center gap-2 text-foreground" data-testid={`squad-history-plate-${won.plate.contestId}`} key={won.plate.contestId}>
-          <Award aria-hidden className="text-muted-foreground" size={16} />
+  return plates.map((won) => (
+    <SectionRow
+      key={won.plate.contestId}
+      name={(
+        <>
+          <Award aria-hidden className="mr-2 inline text-muted-foreground" size={16} />
           {describeWonPlate(won)}
-        </li>
-      ))}
-    </ul>
-  );
+        </>
+      )}
+      testId={`squad-history-plate-${won.plate.contestId}`}
+    />
+  ));
 }

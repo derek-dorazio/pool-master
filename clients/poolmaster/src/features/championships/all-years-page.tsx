@@ -1,6 +1,6 @@
 import { PlanFeature } from '@poolmaster/shared/domain';
 import { useEffect, useMemo } from 'react';
-import { Link, useParams } from 'react-router';
+import { useParams } from 'react-router';
 import { useLeagueContextGuard } from '@/features/leagues/league-context-guard';
 import {
   buildLeagueChampionshipsPath,
@@ -8,13 +8,14 @@ import {
 } from '@/features/leagues/league-routing';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
 import {
-  EmptyState,
   ErrorState,
-  Heading,
   LoadingState,
   MetricGrid,
   MetricTile,
-  Tile,
+  SectionCard,
+  SectionEmpty,
+  SectionRow,
+  SectionRows,
 } from '@/features/shared/ui';
 import { getLogger } from '@/lib/logger';
 import { hasPlanFeature } from '@/features/plans/plan-features';
@@ -92,38 +93,37 @@ export function AllYearsPage() {
           {recordBook}
 
           {years.length ? (
-            <div className="space-y-3" data-testid="all-years-list">
+            <div className="space-y-5" data-testid="all-years-list">
               {years.map((year) => (
-                <Tile className="space-y-2" data-testid={`all-years-year-${year.year}`} key={year.year} padding="sm" radius="lg">
-                  <Link
-                    className="flex flex-wrap items-baseline justify-between gap-2 hover:underline"
-                    data-testid={`all-years-year-link-${year.year}`}
-                    to={buildLeagueChampionshipsPath(leagueCode, year.year)}
-                  >
-                    <Heading level={2} variant="card" size="lg">{historyYearTitle(year)}</Heading>
-                    <span className="text-sm text-muted-foreground">{describeHistoryChampions(year)}</span>
-                  </Link>
+                <SectionCard
+                  footer={{ label: 'Championship', testId: `all-years-year-link-${year.year}`, to: buildLeagueChampionshipsPath(leagueCode, year.year) }}
+                  key={year.year}
+                  testId={`all-years-year-${year.year}`}
+                  title={historyYearTitle(year)}
+                  trailing={describeHistoryChampions(year)}
+                >
                   {year.cups.length ? (
-                    <ul className="space-y-1 text-sm">
+                    <SectionRows>
                       {year.cups.map((cup) => (
-                        <li key={cup.cupId}>
-                          <Link
-                            className="flex flex-wrap justify-between gap-2 hover:underline"
-                            data-testid={`all-years-cup-${cup.cupId}`}
-                            to={buildLeaguePointsRacePath(leagueCode, year.year, cup.sportLeagueId)}
-                          >
-                            <span className="text-foreground">{cup.name}</span>
-                            <span className="text-muted-foreground">{describeHistoryCup(cup)}</span>
-                          </Link>
-                        </li>
+                        <SectionRow
+                          facts={describeHistoryCup(cup)}
+                          key={cup.cupId}
+                          name={cup.name}
+                          testId={`all-years-cup-${cup.cupId}`}
+                          to={buildLeaguePointsRacePath(leagueCode, year.year, cup.sportLeagueId)}
+                        />
                       ))}
-                    </ul>
-                  ) : null}
-                </Tile>
+                    </SectionRows>
+                  ) : (
+                    <SectionEmpty>No cups this year.</SectionEmpty>
+                  )}
+                </SectionCard>
               ))}
             </div>
           ) : (
-            <EmptyState body="Nothing has counted yet. Each year's champions show here once contests go final." testId="all-years-empty" />
+            <SectionCard info="Each year's champions show here once contests go final." title="Every year">
+              <SectionEmpty testId="all-years-empty">Nothing has counted yet.</SectionEmpty>
+            </SectionCard>
           )}
         </>
       )}

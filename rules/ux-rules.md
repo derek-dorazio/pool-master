@@ -360,6 +360,25 @@ administration area (root admin included), reusing the same shared components.
     rewrites its sport's line in the same PR and reads both pages for that
     sport before review: every league and format it added appears, and the
     line still describes what the sport offers.
+13. **One section look.** A section of a page is a `SectionCard`: its title in
+    a ruled bar, then rows, padded content or one empty line, then an optional
+    footer link (#1561). Four rules hold everywhere:
+    - Every section has a title. No untitled cards, and no `Tile` with its own
+      heading.
+    - No explanatory sentences in a section's body. An explanation goes behind
+      the title's info icon, or is removed.
+    - Going to another page is the footer link (blue small caps, an arrow,
+      right-aligned), never a button. Buttons only do things: make picks,
+      create, save.
+    - An empty section shows one short italic line and, if useful, the footer
+      link. No button and no second sentence.
+
+    Rows are `SectionRow`s: every row's name and fact line use the same type,
+    rows alternate a very light shade and tint on hover. The parts own their
+    fonts and colours: a page passes content only, never text size, weight or
+    colour classes, and a new look is a variant of the shared part. Long page
+    content such as Owners uses the same title as a `bare` section, and a
+    danger zone is the same card with `tone="danger"`.
 
 ## 13. Event Pages
 

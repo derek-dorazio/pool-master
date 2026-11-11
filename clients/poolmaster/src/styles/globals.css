@@ -128,6 +128,8 @@
     --status-warning-text: var(--text-primary);
     --table-header-surface: color-mix(in srgb, var(--tint-base) 4%, transparent);
     --table-row-hover-surface: color-mix(in srgb, var(--accent-primary) 8%, transparent);
+    /* Every other row of a section card (#1561): a very light shade, so rows read as rows. */
+    --surface-row-alt: color-mix(in srgb, var(--tint-base) 3%, transparent);
     --workflow-default-surface: var(--surface-raised);
     --workflow-default-hover-surface: var(--surface-quiet-hover);
     --workflow-primary-surface: color-mix(in srgb, var(--accent-primary) 12%, transparent);

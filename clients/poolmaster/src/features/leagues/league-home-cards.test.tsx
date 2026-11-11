@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { ContestDto } from '@/lib/api';
 import { bindApiMocks } from '@/test/msw-api';
 import { buildContest, buildContestEntry } from '@/features/contests/test/contest-admin-fixtures';
-import { LiveAndOpenCard, LiveStandingsCard } from './league-home-cards';
+import { CurrentContestsCard, LiveStandingsCard } from './league-home-cards';
 
 const getContestLeaderboardMock = vi.fn();
 bindApiMocks({ getContestLeaderboard: getContestLeaderboardMock });
@@ -19,8 +19,9 @@ const draft = buildContest({ id: 'contest-draft', name: 'US Open Draft', status:
 function drawCard(contests = [live, open]) {
   render(
     <MemoryRouter>
-      <LiveAndOpenCard
+      <CurrentContestsCard
         contests={contests}
+        emptyBody="No other open or live contests."
         entriesByContestId={new Map([[open.id, [buildContestEntry({ contestId: open.id })]]])}
         entriesState="ready"
         hasTeam
@@ -30,11 +31,12 @@ function drawCard(contests = [live, open]) {
   );
 }
 
-describe('LiveAndOpenCard', () => {
-  it('is titled Live and open and links to every contest', () => {
+describe('CurrentContestsCard', () => {
+  it('is titled Current contests and its footer link, not a button, goes to every contest', () => {
     drawCard();
 
-    expect(within(screen.getByTestId('league-home-live-and-open')).getByRole('heading', { name: 'Live and open' })).toBeInTheDocument();
+    expect(within(screen.getByTestId('league-home-current-contests')).getByRole('heading', { name: 'Current contests' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /All contests/ })).toBe(screen.getByTestId('league-home-all-contests'));
     expect(screen.getByTestId('league-home-all-contests')).toHaveAttribute('href', '/league/BIGDAWGS/contests');
   });
 
@@ -54,7 +56,7 @@ describe('LiveAndOpenCard', () => {
   it('offers no separate View or Leaderboard button beside a row', () => {
     drawCard();
 
-    const card = screen.getByTestId('league-home-live-and-open');
+    const card = screen.getByTestId('league-home-current-contests');
     expect(within(card).queryByRole('button')).not.toBeInTheDocument();
     expect(within(card).queryByRole('link', { name: /^(View|Leaderboard)$/i })).not.toBeInTheDocument();
   });
@@ -72,10 +74,11 @@ describe('LiveAndOpenCard', () => {
     expect(screen.queryByTestId('league-home-contest-contest-draft')).not.toBeInTheDocument();
   });
 
-  it('says so when no other contest is open or live', () => {
+  it('says so in the one italic line it is given when no other contest is open or live', () => {
     drawCard([]);
 
-    expect(screen.getByTestId('league-home-contest-empty')).toHaveTextContent('No other contests are open or live right now.');
+    expect(screen.getByTestId('league-home-contest-empty')).toHaveTextContent('No other open or live contests.');
+    expect(screen.getByTestId('league-home-contest-empty')).toHaveClass('italic');
   });
 });
 

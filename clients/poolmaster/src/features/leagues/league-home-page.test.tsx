@@ -275,7 +275,7 @@ describe('League Home', () => {
       'href',
       '/league/BIGDAWGS/contests/sooner',
     );
-    expect(within(screen.getByTestId('league-home-live-and-open')).getByText('US Open Pick 6')).toBeInTheDocument();
+    expect(within(screen.getByTestId('league-home-current-contests')).getByText('US Open Pick 6')).toBeInTheDocument();
   });
 
   it('offers View entry up next once the team has submitted its entry', async () => {
@@ -329,7 +329,7 @@ describe('League Home', () => {
     expect(await upNext.findByText('Checking your entry...')).toBeInTheDocument();
     expect(upNext.getByRole('link', { name: 'View contest' })).toHaveAttribute('href', '/league/BIGDAWGS/contests/open-1');
     expect(upNext.queryByRole('link', { name: 'Make your picks' })).not.toBeInTheDocument();
-    expect(screen.getByTestId('league-home-live-and-open')).not.toHaveTextContent('You have not entered yet.');
+    expect(screen.getByTestId('league-home-current-contests')).not.toHaveTextContent('You have not entered yet.');
   });
 
   it('says it could not check the entry, rather than offering picks, when the entries cannot be loaded', async () => {
@@ -344,7 +344,7 @@ describe('League Home', () => {
     expect(await upNext.findByText("We couldn't check your entry.")).toBeInTheDocument();
     expect(upNext.getByRole('link', { name: 'View contest' })).toBeInTheDocument();
     expect(upNext.queryByRole('link', { name: 'Make your picks' })).not.toBeInTheDocument();
-    expect(screen.getByTestId('league-home-live-and-open')).not.toHaveTextContent('You have not entered yet.');
+    expect(screen.getByTestId('league-home-current-contests')).not.toHaveTextContent('You have not entered yet.');
   });
 
   it('puts nothing up next once a contest\'s cutoff has passed, even while it still reads open', async () => {
@@ -355,7 +355,7 @@ describe('League Home', () => {
 
     renderLeagueHome();
 
-    expect(await within(await screen.findByTestId('league-home-live-and-open')).findByText('RBC Heritage Tiers')).toBeInTheDocument();
+    expect(await within(await screen.findByTestId('league-home-current-contests')).findByText('RBC Heritage Tiers')).toBeInTheDocument();
     expect(screen.queryByTestId('league-home-up-next')).not.toBeInTheDocument();
   });
 
@@ -441,7 +441,7 @@ describe('League Home', () => {
     expect(standings.getByRole('heading', { name: 'Masters Pick 6 · Top 5' })).toBeInTheDocument();
   });
 
-  it('lists the other live and open contests under Live and open, live first, leaving out the one up next', async () => {
+  it('lists the other live and open contests under Current contests, live first, leaving out the one up next', async () => {
     primeMocks({
       contests: [contest('open-1', 'RBC Heritage Tiers', 'OPEN'), contest('open-2', 'US Open Pick 6', 'OPEN'), contest('live-1', 'Masters Pick 6', 'ACTIVE')],
       eventStarts: { 'event-open-1': '2026-04-20T12:00:00.000Z', 'event-open-2': '2026-06-18T12:00:00.000Z' },
@@ -449,7 +449,7 @@ describe('League Home', () => {
 
     renderLeagueHome();
 
-    const card = await screen.findByTestId('league-home-live-and-open');
+    const card = await screen.findByTestId('league-home-current-contests');
     expect(await within(card).findByTestId('league-home-contest-group-live')).toHaveTextContent('Masters Pick 6');
     expect(within(card).getByTestId('league-home-contest-group-open')).toHaveTextContent('US Open Pick 6');
     expect(within(card).queryByTestId('league-home-contest-open-1')).not.toBeInTheDocument();
@@ -486,20 +486,20 @@ describe('League Home', () => {
 
     renderLeagueHome();
 
-    expect(await within(await screen.findByTestId('league-home-live-and-open')).findByText('You have not entered yet.')).toBeInTheDocument();
+    expect(await within(await screen.findByTestId('league-home-current-contests')).findByText('You have not entered yet.')).toBeInTheDocument();
     expect(screen.queryByTestId('league-home-live-standings')).not.toBeInTheDocument();
     expect(getContestLeaderboardMock).not.toHaveBeenCalled();
   });
 
-  it('shows the member\'s squad by its name with its owners, linking to it by that name', async () => {
+  it('shows the member\'s squad as a row with its owner count, not its owners\' names, and a My team footer link', async () => {
     primeMocks();
 
     renderLeagueHome();
 
     const team = within(await screen.findByTestId('league-home-your-team'));
-    expect(await team.findByText('Casey Crushers')).toBeInTheDocument();
-    expect(team.getByText('Casey Commissioner')).toBeInTheDocument();
-    expect(team.getByRole('link', { name: /Go to Casey Crushers/ })).toHaveAttribute('href', '/league/BIGDAWGS/team');
+    expect(await team.findByTestId('league-home-your-team-row')).toHaveTextContent('Casey Crushers1 owner');
+    expect(team.queryByText('Casey Commissioner')).not.toBeInTheDocument();
+    expect(team.getByRole('link', { name: /My team/ })).toHaveAttribute('href', '/league/BIGDAWGS/team');
     // One read of the viewer's own team, not the league's whole team list.
     expect(getLeagueSquadMock).toHaveBeenCalledWith(expect.objectContaining({ path: { id: 'league-1', squadId: 'team-1' } }));
   });
@@ -559,14 +559,16 @@ describe('League Home', () => {
     expect(listMyContestEntriesMock).not.toHaveBeenCalled();
   });
 
-  it('says so when no contest is open or live, and points to all contests', async () => {
+  it('keeps the titled Current contests card with one italic line and an All contests link when no contest is open or live', async () => {
     primeMocks({ contests: [contest('done', 'Players Championship', 'COMPLETED'), contest('draft', 'Draft', 'DRAFT')] });
 
     renderLeagueHome();
 
-    const empty = within(await screen.findByTestId('league-home-no-contests'));
-    expect(empty.getByText(/No contests are open or live right now/)).toBeInTheDocument();
-    expect(empty.getByRole('link', { name: 'All contests' })).toHaveAttribute('href', '/league/BIGDAWGS/contests');
+    const card = within(await screen.findByTestId('league-home-current-contests'));
+    expect(card.getByRole('heading', { name: 'Current contests' })).toBeInTheDocument();
+    expect(card.getByTestId('league-home-contest-empty')).toHaveTextContent('No open or live contests.');
+    expect(card.queryByRole('button')).not.toBeInTheDocument();
+    expect(card.getByRole('link', { name: /All contests/ })).toHaveAttribute('href', '/league/BIGDAWGS/contests');
   });
 
   it('shows an error instead of an empty page when the contests cannot be loaded', async () => {
@@ -576,7 +578,7 @@ describe('League Home', () => {
     renderLeagueHome();
 
     expect(await screen.findByText("We couldn't load this league's contests.")).toBeInTheDocument();
-    expect(screen.queryByTestId('league-home-no-contests')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('league-home-current-contests')).not.toBeInTheDocument();
   });
 
   it('explains that an inactive league is read-only', async () => {

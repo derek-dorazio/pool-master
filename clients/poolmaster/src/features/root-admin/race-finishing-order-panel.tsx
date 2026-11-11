@@ -6,7 +6,7 @@ import {
   Alert,
   BulkUploadPanel,
   Checkbox,
-  PanelCard,
+  SectionCard,
   SimpleTable,
   StatusBadge,
   TableBody,
@@ -114,7 +114,7 @@ function StoredFinishingOrder({ event, field }: { event: SportEventDto; field: r
   const hasResults = field.some((entry) => entry.race !== null);
 
   return (
-    <PanelCard
+    <SectionCard
       headingLevel={3}
       padded
       title="Result"
@@ -169,7 +169,7 @@ function StoredFinishingOrder({ event, field }: { event: SportEventDto; field: r
           </div>
         </>
       )}
-    </PanelCard>
+    </SectionCard>
   );
 }
 
@@ -220,7 +220,7 @@ function FinishingOrderUploadCard({ event, field }: { event: SportEventDto; fiel
   const orderErrors = previewMutation.data?.orderErrors ?? [];
 
   return (
-    <PanelCard headingLevel={3} padded title="Finishing order">
+    <SectionCard headingLevel={3} padded title="Finishing order">
       <p className="text-sm text-muted-foreground">
         {`Paste or upload the ${vocabulary.round.one}'s result: a place for each ${vocabulary.participant.one} that finished, or DNF, DQ or DNS. Preview it, then apply. ${capitalize(vocabulary.participant.many)} you leave out keep the result they have.`}
       </p>
@@ -290,7 +290,7 @@ function FinishingOrderUploadCard({ event, field }: { event: SportEventDto; fiel
           unresolvedNotice={() => 'Fix the rows and problems marked below, then preview again before applying.'}
         />
       </div>
-    </PanelCard>
+    </SectionCard>
   );
 }
 

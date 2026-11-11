@@ -11,7 +11,6 @@ import {
   Heading,
   InlineError,
   Input,
-  ListStack,
   ProgressIndicator,
   StatusBadge,
   Tile,
@@ -209,7 +208,7 @@ export function BudgetLineupBuilder({
           value={search}
         />
       </FormField>
-      <ListStack>
+      <div className="space-y-3">
         {listed.map((participant) => (
           <BudgetParticipantRow
             canSelect={canSelect}
@@ -223,7 +222,7 @@ export function BudgetLineupBuilder({
           />
         ))}
         {!listed.length ? <Alert>{`No ${noun.one} matches “${search.trim()}”.`}</Alert> : null}
-      </ListStack>
+      </div>
     </div>
   );
 }

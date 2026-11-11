@@ -17,7 +17,7 @@ this plan. Nothing here is built.
   the web app's `globals.css` is generated from it, and the phone app gets the same roles,
   light and dark, as plain values. Same fonts, same icons (Lucide), same drawings.
 - **Same primitives, same names.** The phone gets its own `Button`, `Tile`, `Heading`,
-  `Eyebrow`, `Chip`, `StatusBadge`, `PanelCard`, `SimpleTable`, `QueryState` and friends,
+  `Eyebrow`, `Chip`, `StatusBadge`, `SectionCard`, `SimpleTable`, `QueryState` and friends,
   with the web props wherever they make sense, so a screen reads the same in both apps.
 - **Sign-in uses the Bearer path the API already has.** Login already returns the tokens in
   the body and refresh already takes the token in the body; the app keeps the refresh token
@@ -228,7 +228,7 @@ reads alike in both apps and `shared/ui/README.md` describes both:
 - Text: `Heading` (same `variant`s: hero, display, page, section, subtitle, label, eyebrow,
   card), `Eyebrow`, `Text` with the theme's sizes. Caps and italics follow the house type
   style in `react-ui-rules.md` §5.
-- Surfaces: `Tile` (default, inverse, inverseDeep), `PanelCard`, `Section`, `SettingsSection`.
+- Surfaces: `Tile` (default, inverse, inverseDeep), `SectionCard`, `Section`, `SettingsSection`.
 - Actions: `Button` and `LinkButton` (variants and `layout="row"`), `MenuItem`, `CopyButton`
   (the system share sheet as well as copy).
 - Status: `Chip`, `StatusBadge`, `Countdown`, `Progress`.

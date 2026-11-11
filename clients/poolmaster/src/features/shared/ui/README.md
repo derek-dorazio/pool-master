@@ -95,11 +95,18 @@ end of its section's title row. A
 switching a page's views. A search box in the header feeds a `DataGrid` through
 its `searchTerm`.
 
-A titled card is a `PanelCard`: its title in a ruled bar, with an optional
-slot on the right such as a badge or a clear button, then its body and an
-optional footer link under a rule. Its body is unpadded for a `PanelList` of
-divided rows, and `padded` gives prose, forms or metric grids the card's own
-padding. Don't hand-build a heading inside a `Tile` for this.
+A section of a page is a `SectionCard` (`rules/ux-rules.md` §12 item 13): its
+`SectionTitle` in a ruled bar (house uppercase italic, an optional `info` icon
+that holds the section's explanation, and an optional `trailing` slot for one
+badge, count or filter), then its body, then an optional footer link
+(`SectionFooterLink`, blue small caps with an arrow). The body is unpadded for
+`SectionRows` of `SectionRow`s (a name, a muted fact line and note, one figure
+as `value`, one badge or action as `aside`; `to` makes the whole row a link) or
+a `SectionEmpty` italic line; `padded` gives forms, charts or metric grids the
+card's padding. `bare` keeps the title and rule without the box, and
+`tone="danger"` is a danger zone. The parts own their type and colours: pass
+content, never text classes, and add a variant here for a new look. Don't
+hand-build a heading inside a `Tile`.
 
 A team's icon and name come from `features/teams`, not this folder, because they
 are a product piece: `TeamAvatar` draws the icon in its coloured square, and

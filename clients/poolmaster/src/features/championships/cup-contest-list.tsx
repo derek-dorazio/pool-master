@@ -1,20 +1,20 @@
 import type { CupContestRowDto } from '@/lib/api';
 import { buildContestLandingPath } from '@/features/leagues/league-routing';
-import { EmptyState, ListStack, StatusBadge } from '@/features/shared/ui';
+import { SectionEmpty, SectionRows, StatusBadge } from '@/features/shared/ui';
 import { ContestRow } from '@/features/contests/contest-row';
 import { CUP_WEIGHT_LABELS, describeCupContest } from './cup-view';
 
 /**
  * Every contest in a cup with its weight, its state and why: who won it, or why it doesn't count.
- * Each row opens where every contest list opens it (#1389).
+ * Each row opens where every contest list opens it (#1389). It is a section card's body.
  */
 export function CupContestList({ contests, leagueCode }: { contests: CupContestRowDto[]; leagueCode: string }) {
   if (!contests.length) {
-    return <EmptyState body="No contests in this cup yet." />;
+    return <SectionEmpty>No contests in this cup yet.</SectionEmpty>;
   }
 
   return (
-    <ListStack data-testid="cup-contests">
+    <SectionRows testId="cup-contests">
       {contests.map((contest) => {
         const state = describeCupContest(contest);
         const weight = CUP_WEIGHT_LABELS[contest.cupWeight];
@@ -32,6 +32,6 @@ export function CupContestList({ contests, leagueCode }: { contests: CupContestR
           />
         );
       })}
-    </ListStack>
+    </SectionRows>
   );
 }

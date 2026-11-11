@@ -1,6 +1,6 @@
 import { getSportDefinition, sportPathSegment, type Sport } from '@poolmaster/shared/domain';
 import { applyEventParticipantUpload, previewEventParticipantUpload } from '@/lib/api';
-import { BulkUploadPanel, Button, PanelCard, StatusBadge, UploadPreviewTable } from '@/features/shared/ui';
+import { BulkUploadPanel, Button, SectionCard, StatusBadge, UploadPreviewTable } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -85,7 +85,7 @@ export function EventFieldUploadCard({
   const rollup = previewMutation.data?.rollup;
 
   return (
-    <PanelCard
+    <SectionCard
       headingLevel={3}
       padded
       testId="root-admin-event-field-upload-card"
@@ -166,6 +166,6 @@ export function EventFieldUploadCard({
           } before applying.`
         }
       />
-    </PanelCard>
+    </SectionCard>
   );
 }

@@ -5,9 +5,10 @@ import { leaveLeague, type LeagueDto } from '@/lib/api';
 import {
   Alert,
   Button,
-  DangerZone,
-  DangerZoneAction,
   Modal,
+  SectionCard,
+  SectionRow,
+  SectionRows,
 } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError, type ErrorCodeMessages } from '@/lib/errors';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -58,29 +59,31 @@ export function LeaveLeagueSection({ league }: { league: LeagueDto }) {
 
   return (
     <>
-      <DangerZone description="Leaving asks you to confirm." testId="leave-league-section">
-        <DangerZoneAction
-          action={(
-            <Button
-              data-testid="league-leave-open"
-              disabled={isInactive}
-              onClick={() => {
-                leaveMutation.reset();
-                setHasLeft(false);
-                setIsDialogOpen(true);
-              }}
-              size="sm"
-              variant="danger"
-            >
-              Leave league
-            </Button>
-          )}
-          description={isInactive
-            ? 'You cannot leave while the league is inactive.'
-            : "You'll lose access to this league and your contest history in it."}
-          title="Leave league"
-        />
-      </DangerZone>
+      <SectionCard info="Leaving asks you to confirm." testId="leave-league-section" title="Danger zone" tone="danger">
+        <SectionRows>
+          <SectionRow
+            aside={(
+              <Button
+                data-testid="league-leave-open"
+                disabled={isInactive}
+                onClick={() => {
+                  leaveMutation.reset();
+                  setHasLeft(false);
+                  setIsDialogOpen(true);
+                }}
+                size="sm"
+                variant="danger"
+              >
+                Leave league
+              </Button>
+            )}
+            facts={isInactive
+              ? 'You cannot leave while the league is inactive.'
+              : "You'll lose access to this league and your contest history in it."}
+            name="Leave league"
+          />
+        </SectionRows>
+      </SectionCard>
 
       <Modal
         description="Leaving removes your membership from the active roster. If you are the last commissioner, appoint another commissioner before leaving."

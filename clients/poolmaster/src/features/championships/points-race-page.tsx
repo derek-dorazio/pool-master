@@ -3,7 +3,7 @@ import { useCallback, useMemo } from 'react';
 import { Link, Navigate, useParams } from 'react-router';
 import type { CupDto } from '@/lib/api';
 import { buildLeagueCupSquadPath, buildLeaguePointsRacePath, buildLeagueTrophyCasePath } from '@/features/leagues/league-routing';
-import { Chip, EmptyState, ErrorState, formatDateDisplay, LinkButton, LoadingState, MetricGrid, MetricTile, PanelCard, useDisplayPreferences } from '@/features/shared/ui';
+import { Chip, ErrorState, formatDateDisplay, LoadingState, MetricGrid, MetricTile, SectionCard, SectionEmpty, useDisplayPreferences } from '@/features/shared/ui';
 import { hasPlanFeature } from '@/features/plans/plan-features';
 import { PlanLockedNotice } from '@/features/plans/plan-locked-notice';
 import { buildPodium } from './championship-view';
@@ -129,16 +129,21 @@ export function PointsRacePage() {
   if (!sportLeagueId) {
     return firstCup
       ? <Navigate replace to={buildLeaguePointsRacePath(leagueCode, year, firstCup.sportLeagueId)} />
-      : <EmptyState body={`No sports league has two counted contests in ${year} yet.`} testId="points-race-empty" title="No cups yet" />;
+      : (
+        <SectionCard testId="points-race-empty" title="No cups yet">
+          <SectionEmpty>{`No sports league has two counted contests in ${year} yet.`}</SectionEmpty>
+        </SectionCard>
+      );
   }
   if (!cup) {
     return (
-      <EmptyState
-        action={<LinkButton size="sm" to={buildLeagueTrophyCasePath(leagueCode, year)} variant="secondary">Trophy case</LinkButton>}
-        body={`This league has no cup for that sports league in ${year}.`}
+      <SectionCard
+        footer={{ label: 'Trophy case', testId: 'points-race-trophy-case', to: buildLeagueTrophyCasePath(leagueCode, year) }}
         testId="points-race-no-cup"
         title="Cup not found"
-      />
+      >
+        <SectionEmpty>{`This league has no cup for that sports league in ${year}.`}</SectionEmpty>
+      </SectionCard>
     );
   }
   const progress = cupProgress(cup);
@@ -148,7 +153,7 @@ export function PointsRacePage() {
   return (
     <div className="space-y-6" data-testid="points-race">
       <CupChips cups={cups.includes(cup) ? cups : [...cups, cup]} leagueCode={leagueCode} selectedId={cup.sportLeagueId} year={year} />
-      <PanelCard padded title={cup.name}>
+      <SectionCard padded title={cup.name}>
         <p className="text-sm text-muted-foreground" data-testid="points-race-summary">
           {cup.sportLeagueName} · {cup.crownedAt
             ? `Crowned ${formatDateDisplay(cup.crownedAt, displayPreferences)}`
@@ -177,14 +182,13 @@ export function PointsRacePage() {
           showMovement={!isSeasonOver}
           squadPath={squadPath}
         />
-      </PanelCard>
-      <PanelCard padded title="The race so far">
-        <p className="text-sm text-muted-foreground">Top five, after each final contest</p>
+      </SectionCard>
+      <SectionCard info="The top five, after each final contest." padded title="The race so far">
         <CupRaceChart focusSquadId={viewer.mySquadId} series={buildRaceSeries(cup)} />
-      </PanelCard>
-      <PanelCard padded title="Contests in this cup">
+      </SectionCard>
+      <SectionCard title="Contests in this cup">
         <CupContestList contests={cup.contests} leagueCode={leagueCode} />
-      </PanelCard>
+      </SectionCard>
     </div>
   );
 }

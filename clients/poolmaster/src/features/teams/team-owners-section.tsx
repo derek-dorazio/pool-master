@@ -1,6 +1,6 @@
 import type { SquadDto } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-context';
-import { Alert, Heading } from '@/features/shared/ui';
+import { Alert, SectionCard } from '@/features/shared/ui';
 import { MyTeamOwnersPanel } from './my-team-owners-panel';
 import { getActiveOwners } from './team-directory';
 import { useTeamOwnerInvitationsQuery } from './use-team-owner-invitations-query';
@@ -37,8 +37,7 @@ export function TeamOwnersSection({
   const teamOwnerInvitations = (invitationsQuery.data ?? []).filter((invitation) => invitation.squadId === team.id);
 
   return (
-    <section className="space-y-3" data-testid={testId}>
-      <Heading level={2} variant="subtitle">Owners</Heading>
+    <SectionCard bare testId={testId} title="Owners">
       {invitationsQuery.isError ? (
         <Alert
           data-testid={`${testId}-invitations-error`}
@@ -62,6 +61,6 @@ export function TeamOwnersSection({
         teamOwnerInvitations={teamOwnerInvitations}
         viewerUserId={auth.user?.id}
       />
-    </section>
+    </SectionCard>
   );
 }

@@ -5,12 +5,11 @@ import { useChampionshipContestsQuery } from '@/features/championships/use-champ
 import { getLeagueLoadErrorCopy } from '@/features/leagues/league-load-error';
 import {
   Chip,
-  EmptyState,
   ErrorState,
-  Heading,
   LinkButton,
   LoadingState,
-  Tile,
+  SectionCard,
+  SectionEmpty,
   YearPicker,
 } from '@/features/shared/ui';
 import { getLogger } from '@/lib/logger';
@@ -98,31 +97,30 @@ export function LeagueContestHistoryPage() {
       ) : yearsQuery.isError ? (
         <ErrorState body="We couldn't load contest history for this league." />
       ) : year === null ? (
-        <EmptyState body="This league does not have any completed contests yet." />
+        <SectionCard testId="league-contests-history" title="Past contests">
+          <SectionEmpty testId="league-contests-history-none">No completed contests yet.</SectionEmpty>
+        </SectionCard>
       ) : (
-        <Tile data-testid="league-contests-history">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <Heading level={2} variant="card" size="xl">Completed in {year}</Heading>
-            {/* poolmaster-allow-list-lookup: counts the results listed right below it */}
-            {resultsQuery.data ? <Chip tone="info">{resultsQuery.data.length}</Chip> : null}
-          </div>
-
-          <div className="mt-5">
-            {resultsQuery.isError ? (
-              <ErrorState body={`We couldn't load the contests completed in ${year}.`} testId="league-contests-history-error" />
-            ) : !resultsQuery.data ? (
-              <LoadingState body="Loading contest history..." />
-            ) : (
-              <ChampionshipContestList
-                contests={resultsQuery.data}
-                emptyBody={`No contest was completed in ${year}.`}
-                focusContestId={searchParams.get('focus')}
-                leagueCode={league.leagueCode}
-                testIdPrefix="league-history-contest"
-              />
-            )}
-          </div>
-        </Tile>
+        <SectionCard
+          testId="league-contests-history"
+          title={`Completed in ${year}`}
+          // poolmaster-allow-list-lookup: counts the results listed right below it
+          trailing={resultsQuery.data ? <Chip tone="info">{resultsQuery.data.length}</Chip> : null}
+        >
+          {resultsQuery.isError ? (
+            <ErrorState body={`We couldn't load the contests completed in ${year}.`} size="inline" testId="league-contests-history-error" />
+          ) : !resultsQuery.data ? (
+            <LoadingState body="Loading contest history..." size="inline" />
+          ) : (
+            <ChampionshipContestList
+              contests={resultsQuery.data}
+              emptyBody={`No contest was completed in ${year}.`}
+              focusContestId={searchParams.get('focus')}
+              leagueCode={league.leagueCode}
+              testIdPrefix="league-history-contest"
+            />
+          )}
+        </SectionCard>
       )}
     </section>
   );

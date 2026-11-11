@@ -2,7 +2,7 @@ import {
   applyParticipantLeagueAffiliationUpload,
   previewParticipantLeagueAffiliationUpload,
 } from '@/lib/api';
-import { BulkUploadPanel, PanelCard, StatusBadge, UploadPreviewTable } from '@/features/shared/ui';
+import { BulkUploadPanel, SectionCard, StatusBadge, UploadPreviewTable } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -92,7 +92,7 @@ export function SportLeagueRosterUploadCard({ leagueId }: { leagueId: string }) 
   });
 
   return (
-    <PanelCard headingLevel={3} padded title="Bulk-update rankings">
+    <SectionCard headingLevel={3} padded title="Bulk-update rankings">
       <p className="text-sm text-muted-foreground">
         {`Paste or upload the current rankings, preview how each row resolves to a ${participant.one}, then apply.`}
       </p>
@@ -140,6 +140,6 @@ export function SportLeagueRosterUploadCard({ leagueId }: { leagueId: string }) 
           } before applying.`
         }
       />
-    </PanelCard>
+    </SectionCard>
   );
 }
