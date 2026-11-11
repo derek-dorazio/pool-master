@@ -40,8 +40,8 @@ function revealSelected(row: HTMLElement) {
 
 /**
  * A row of tabs or links that scrolls sideways on a phone. On open, and whenever the selected
- * item changes (a link's `aria-current` or a Radix tab's `data-state`), the selected item is
- * scrolled into view; the edges fade only where more items sit beyond them. The row must be
+ * item changes (a link's `aria-current` or a Radix tab's `data-state`) or the items change size,
+ * the selected item is scrolled into view; the edges fade only where more items sit beyond them. The row must be
  * `relative`, so its items' offsets are measured from it.
  */
 export function useScrollRow<T extends HTMLElement>(): { fadeClassName: string; ref: RefObject<T | null> } {
@@ -61,14 +61,25 @@ export function useScrollRow<T extends HTMLElement>(): { fadeClassName: string; 
     };
     revealAndUpdate();
 
-    const observer = new MutationObserver(revealAndUpdate);
-    observer.observe(row, { attributeFilter: ["aria-current", "data-state"], childList: true, subtree: true });
+    // A label or font that changes an item's width moves the selected item, so watch every item.
+    const resizeObserver = new ResizeObserver(revealAndUpdate);
+    const observeSizes = () => {
+      resizeObserver.disconnect();
+      resizeObserver.observe(row);
+      for (const item of Array.from(row.children)) resizeObserver.observe(item);
+    };
+    observeSizes();
+
+    const mutationObserver = new MutationObserver(() => {
+      observeSizes();
+      revealAndUpdate();
+    });
+    mutationObserver.observe(row, { attributeFilter: ["aria-current", "data-state"], childList: true, subtree: true });
     row.addEventListener("scroll", update, { passive: true });
-    window.addEventListener("resize", revealAndUpdate);
     return () => {
-      observer.disconnect();
+      mutationObserver.disconnect();
+      resizeObserver.disconnect();
       row.removeEventListener("scroll", update);
-      window.removeEventListener("resize", revealAndUpdate);
     };
   }, [update]);
 
