@@ -31,6 +31,7 @@ const {
   listParticipantsMock,
   listSportLeaguesMock,
   listParticipantLeagueAffiliationsMock,
+  listProvidersMock,
   mockLogger,
 } = vi.hoisted(() => {
   const logger = {
@@ -59,6 +60,7 @@ const {
     listParticipantsMock: vi.fn(),
     listSportLeaguesMock: vi.fn(),
     listParticipantLeagueAffiliationsMock: vi.fn(),
+    listProvidersMock: vi.fn(),
     mockLogger: logger,
   };
 });
@@ -80,6 +82,7 @@ bindApiMocks({
   listParticipants: listParticipantsMock,
   listSportLeagues: listSportLeaguesMock,
   listParticipantLeagueAffiliations: listParticipantLeagueAffiliationsMock,
+  listProviders: listProvidersMock,
 });
 
 vi.mock('@/lib/logger', () => ({
@@ -117,6 +120,7 @@ function match(overrides: Partial<SportEventMatchDto> & Pick<SportEventMatchDto,
     homeShootoutScore: null,
     awayShootoutScore: null,
     ending: MatchEnding.PLAYED,
+    resultSource: null,
     advancesToMatchId: null,
     advancesToSide: null,
     regionLabel: null,
@@ -204,6 +208,36 @@ describe('RootAdminSportEventResultsPage for a basketball tournament', () => {
 
     await waitFor(() => expect(within(screen.getByTestId('root-admin-bracket-round-1')).getByRole('heading')).toHaveTextContent('Conference Finals'));
     expect(within(screen.getByTestId('root-admin-bracket-round-2')).getByRole('heading')).toHaveTextContent('NBA Finals');
+  });
+
+  it('names the data feed a synced result came from, and reads the feed\'s name only when a result came from it', async () => {
+    const synced = sportEventFixture({ ...tournament, providerId: 'balldontlie' });
+    listProvidersMock.mockResolvedValue({ data: { providers: [{ providerId: 'balldontlie', providerName: 'BALLDONTLIE', status: 'HEALTHY', sportsCovered: ['BASKETBALL'], primaryForSports: [] }] } });
+    seed([
+      match({ id: 'm-1', matchNumber: 1, roundNumber: 1, homeSportEventParticipantId: 'sep-1', awaySportEventParticipantId: 'sep-2', status: 'COMPLETED', winnerSide: 'HOME', homeScore: 80, awayScore: 61, resultSource: 'PROVIDER' }),
+      match({ id: 'm-2', matchNumber: 2, roundNumber: 1, homeSportEventParticipantId: 'sep-3', awaySportEventParticipantId: 'sep-4', status: 'COMPLETED', winnerSide: 'AWAY', homeScore: 70, awayScore: 72, resultSource: 'ADMIN' }),
+    ], { event: synced });
+    renderPage();
+
+    expect(await screen.findByTestId('root-admin-bracket-source-1')).toHaveTextContent('From BALLDONTLIE');
+    expect(screen.queryByTestId('root-admin-bracket-source-2')).not.toBeInTheDocument();
+  });
+
+  it('says a synced result came from the data feed while the feed\'s name is unknown', async () => {
+    listProvidersMock.mockResolvedValue({ data: { providers: [] } });
+    seed([match({ id: 'm-1', matchNumber: 1, roundNumber: 1, homeSportEventParticipantId: 'sep-1', awaySportEventParticipantId: 'sep-2', status: 'COMPLETED', winnerSide: 'HOME', resultSource: 'PROVIDER' })]);
+    renderPage();
+
+    expect(await screen.findByTestId('root-admin-bracket-source-1')).toHaveTextContent('From the data feed');
+  });
+
+  it('reads no provider list for a bracket whose results an admin entered', async () => {
+    seed([match({ id: 'm-1', matchNumber: 1, roundNumber: 1, homeSportEventParticipantId: 'sep-1', awaySportEventParticipantId: 'sep-2', status: 'COMPLETED', winnerSide: 'HOME', resultSource: 'ADMIN' })]);
+    renderPage();
+
+    await screen.findByTestId('root-admin-bracket-winner-1-HOME');
+    expect(screen.queryByTestId('root-admin-bracket-source-1')).not.toBeInTheDocument();
+    expect(listProvidersMock).not.toHaveBeenCalled();
   });
 
   it('records the tapped team as a game\'s winner, with no scores, and reloads the bracket', async () => {

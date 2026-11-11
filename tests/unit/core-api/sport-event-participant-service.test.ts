@@ -266,7 +266,7 @@ describe('SportEventParticipantService — changing the field', () => {
       id: 'match-1', sportEventId: event.id, roundNumber: 1, matchNumber: 1,
       homeSportEventParticipantId: null, awaySportEventParticipantId: duke.id, isNeutralSite: true,
       scheduledDate: null, status: MatchStatus.SCHEDULED, winnerSide: null, homeScore: null, awayScore: null, homeShootoutScore: null, awayShootoutScore: null, ending: MatchEnding.PLAYED,
-      advancesToMatchId: null, advancesToSide: null, regionLabel: null, homeSpread: null, externalGameId: null, periodScores: [], createdAt: new Date(), updatedAt: new Date(),
+      advancesToMatchId: null, advancesToSide: null, regionLabel: null, homeSpread: null, externalGameId: null, resultSource: null, periodScores: [], createdAt: new Date(), updatedAt: new Date(),
     });
 
     await expect(service.removeParticipant(event.id, duke.id)).rejects.toMatchObject({ code: 'EVENT_PARTICIPANT_IN_BRACKET', statusCode: 409 });

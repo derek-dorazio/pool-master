@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MatchEnding, MatchSide, MatchStatus, formatSpread, type SportMatchPeriods, type SportShootout, type SportVocabulary } from '@poolmaster/shared/domain';
+import { MatchEnding, MatchResultSource, MatchSide, MatchStatus, formatSpread, type SportMatchPeriods, type SportShootout, type SportVocabulary } from '@poolmaster/shared/domain';
 import { cancelEventMatch, clearEventMatchResult, recordEventMatchResult, updateEventBracketMatch } from '@/lib/api';
 import type { SportEventMatchDto, SportEventParticipantDto } from '@/lib/api';
 import { tieWord } from '@/features/contests/contest-sport';
@@ -60,6 +60,8 @@ export type BracketContext = {
   periods?: SportMatchPeriods;
   /** How a level bracket match is settled, for a sport that holds shoot-outs (#791); null otherwise. */
   shootout: SportShootout | null;
+  /** The provider an event's synced results come from ("BALLDONTLIE"), named beside each of its results. */
+  feedName: string;
 };
 
 /** A side's team, with its seed, or who fills it while that is still to be decided. */
@@ -195,6 +197,9 @@ export function BracketMatchRow({ match, released, context }: { match: SportEven
         <TableCell className="text-muted-foreground">{formatDateTimeDisplay(match.scheduledDate, displayPreferences, 'To be announced')}</TableCell>
         <TableCell>
           <StatusBadge tone={MATCH_STATUS_TONE[match.status]}>{MATCH_STATUS_LABEL[match.status]}</StatusBadge>
+          {match.resultSource === MatchResultSource.PROVIDER ? (
+            <p className="mt-1 text-xs text-muted-foreground" data-testid={`root-admin-bracket-source-${match.matchNumber}`}>From {context.feedName}</p>
+          ) : null}
         </TableCell>
         <TableCell>
           {pairingEditable && !editing ? (

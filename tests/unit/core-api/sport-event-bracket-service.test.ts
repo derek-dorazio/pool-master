@@ -508,7 +508,7 @@ describe('SportEventBracketService.fillPlayInSlot', () => {
       id: 'match-started', sportEventId: event.id, roundNumber: 1, matchNumber: 1,
       homeSportEventParticipantId: duke.id, awaySportEventParticipantId: slot.id, isNeutralSite: true,
       scheduledDate: null, status: MatchStatus.IN_PROGRESS, winnerSide: null, homeScore: null, awayScore: null, homeShootoutScore: null, awayShootoutScore: null, ending: MatchEnding.PLAYED,
-      advancesToMatchId: null, advancesToSide: null, regionLabel: null, homeSpread: null, externalGameId: null, periodScores: [], createdAt: new Date(), updatedAt: new Date(),
+      advancesToMatchId: null, advancesToSide: null, regionLabel: null, homeSpread: null, externalGameId: null, resultSource: null, periodScores: [], createdAt: new Date(), updatedAt: new Date(),
     });
 
     await expect(service.fillPlayInSlot(event.id, slot.id, xavier.id))

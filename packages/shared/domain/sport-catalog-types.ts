@@ -8,7 +8,7 @@
 import type { ScoringFamily } from './sports/scoring-family';
 import type { SportStat } from './sports/sport-stats';
 import type { DomainEntity, Participant } from './types';
-import type { BracketAdvancement, MatchEnding, MatchPeriodLayout, MatchSide, MatchStatus, ParticipantRoundStatus, ParticipantType, ParticipantStandingStatus, RaceResultStatus, SportLeagueNoun, ValuationSource } from './enums';
+import type { BracketAdvancement, MatchEnding, MatchPeriodLayout, MatchResultSource, MatchSide, MatchStatus, ParticipantRoundStatus, ParticipantType, ParticipantStandingStatus, RaceResultStatus, SportLeagueNoun, ValuationSource } from './enums';
 
 /** A real-world league, tour or conference within a sport — the PGA Tour, the NBA. Never the product's League. */
 export interface SportLeague extends DomainEntity {
@@ -258,6 +258,11 @@ export interface SportEventMatch extends DomainEntity {
    * event's `providerId`); null until an admin links it.
    */
   externalGameId: string | null;
+  /**
+   * Who set the result (#1531): an admin, or the provider of the linked game; null while the
+   * match has none. A cancelled match was cancelled by an admin.
+   */
+  resultSource: MatchResultSource | null;
   /**
    * The score at the end of each period entered so far (#772), in period order: the end of each
    * quarter but the last in American football. The final score is `homeScore`/`awayScore`.

@@ -34,6 +34,7 @@ import {
   ContestEntryStatus,
   ContestFormat,
   ContestStatus,
+  MatchResultSource,
   MatchSide,
   PickOutcome,
   PredictedResult,
@@ -376,6 +377,8 @@ describe('SDK Functional: a bracket pool (#721)', () => {
       const [homeScore, awayScore] = winnerSide === MatchSide.HOME ? [winnerScore, loserScore] : [loserScore, winnerScore];
       const result = await recordEventMatchResult({ client: a, path: { eventId, matchNumber }, body: { winnerSide, homeScore, awayScore } });
       expect([result.error, result.response?.status]).toEqual([undefined, 200]);
+      // A result entered on the admin's route is the admin's, which a provider's final never overwrites (#1531).
+      expect(result.data?.matches.find((match) => match.matchNumber === matchNumber)?.resultSource).toBe(MatchResultSource.ADMIN);
     };
     // Round 1: chalk, except 9 beats 8 in game 2.
     for (const [matchNumber, seed] of [[1, 1], [2, 9], [3, 5], [4, 4], [5, 6], [6, 3], [7, 7], [8, 2]]) await win(matchNumber, seed);

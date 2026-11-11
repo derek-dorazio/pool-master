@@ -52,7 +52,7 @@ import type {
   SportEventRoundMatchupsResponse,
   UpdateSportEventMatchRequest,
 } from '@poolmaster/shared/dto/bracket.dto';
-import { OFFERABLE_SPORT_EVENT_STATUSES, SportEventSyncScope } from '@poolmaster/shared/domain';
+import { MatchResultSource, OFFERABLE_SPORT_EVENT_STATUSES, SportEventSyncScope } from '@poolmaster/shared/domain';
 import { sendError } from '../../core/error-handler';
 import {
   mapFieldUploadPreviewToDto,
@@ -463,7 +463,7 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
     recordEventMatchResult: async (
       request: FastifyRequest<{ Params: { eventId: string; matchNumber: number }; Body: RecordSportEventMatchResultRequest }>,
     ): Promise<SportEventBracketResponse> => {
-      const matches = await matchResults.recordResult(request.params.eventId, request.params.matchNumber, request.body);
+      const matches = await matchResults.recordResult(request.params.eventId, request.params.matchNumber, request.body, MatchResultSource.ADMIN);
       return { matches: matches.map(mapSportEventMatchToDto) };
     },
 
