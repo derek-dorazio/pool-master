@@ -13,6 +13,7 @@ const listMyContestEntriesMock = vi.fn();
 const listContestsMock = vi.fn();
 const logoutUserMock = vi.fn();
 const refreshTokenMock = vi.fn();
+const getContestLeaderboardMock = vi.fn();
 
 bindApiMocks({
   getUser: getCurrentUserMock,
@@ -21,6 +22,7 @@ bindApiMocks({
   listContests: listContestsMock,
   logoutUser: logoutUserMock,
   refreshToken: refreshTokenMock,
+  getContestLeaderboard: getContestLeaderboardMock,
 });
 
 function renderLeagueContestsPage(path = '/league/BIGDAWGS/contests') {
@@ -123,7 +125,7 @@ function primeCommonMocks({
 
 /** A contest's entry list holding one entry for each of `squadIds`. */
 /** The viewer's team's entries across the league's current contests, as the my-entries read returns them (#1197). */
-function myEntries(contestIds: string[]) {
+function myEntries(contestIds: string[], places: Array<{ entryId: string; position: number; displayPosition: string }> = []) {
   return {
     data: {
       entries: contestIds.map((contestId) => ({
@@ -138,6 +140,7 @@ function myEntries(contestIds: string[]) {
         createdAt: '2026-04-15T00:00:00.000Z',
         updatedAt: '2026-04-15T00:00:00.000Z',
       })),
+      places,
     },
   };
 }
@@ -214,6 +217,27 @@ describe('LeagueContestsPage', () => {
     expect(listContestsMock).toHaveBeenCalledTimes(1);
     expect(listMyContestEntriesMock).toHaveBeenCalledTimes(1);
     expect(listMyContestEntriesMock).toHaveBeenCalledWith(expect.objectContaining({ path: { id: 'league-1' } }));
+  });
+
+  it('shows the best place of the team\'s two entries on a live row, and how many it has, with no leaderboard read per row', async () => {
+    primeCommonMocks();
+    listContestsMock.mockResolvedValue({
+      data: { contests: [contest('contest-1', 'Masters Pick 6'), contest('contest-3', 'US Open Pick 6', 'ACTIVE')] },
+    });
+    const response = myEntries(['contest-3'], [
+      { entryId: 'contest-3-entry-1', position: 7, displayPosition: '7' },
+      { entryId: 'contest-3-entry-2', position: 3, displayPosition: '3' },
+    ]);
+    const [first] = response.data.entries;
+    response.data.entries.push({ ...first, id: 'contest-3-entry-2', entryNumber: 2, name: 'Team team-1 Entry 2' });
+    listMyContestEntriesMock.mockResolvedValue(response);
+
+    renderLeagueContestsPage();
+
+    expect(await screen.findByTestId('league-contest-contest-3-trailing')).toHaveTextContent('3rd');
+    expect(screen.getByTestId('league-contest-contest-3')).toHaveTextContent(/Your 2 entries/);
+    expect(screen.queryByTestId('league-contest-contest-1-trailing')).not.toBeInTheDocument();
+    expect(getContestLeaderboardMock).not.toHaveBeenCalled();
   });
 
   it('says it could not check the entry, rather than that there is none, when the entries cannot be read', async () => {
