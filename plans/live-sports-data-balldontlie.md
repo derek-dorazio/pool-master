@@ -35,7 +35,11 @@ The target:
      the vendor's bracket: PoolMaster's bracket starts at the round of 64, and First Four games
      carry no score, since their winners fill a place rather than play a match. A school's
      men's and women's teams share a name, so a provider team that names its league (its
-     match keyword) links only to the site's team affiliated with that league. Only leagues whose bracket games are single games sync
+     match keyword) links only to the site's team affiliated with that league. Premier League
+     matchweeks are events too (`epl-2026-matchweek-11`), a season's matches grouped by round
+     number; a matchweek forms no bracket, so a draw is a result. The College Football Playoff
+     is not read yet: the vendor's college football games carry nothing that marks the
+     postseason or the playoff. Only leagues whose bracket games are single games sync
      game scores: a best-of series (the NBA, WNBA, MLB and NHL playoffs) is one match of
      several games, which the link from a game's two teams does not fit (#1545);
    - per-player box scores for Clutch Cards, through `StatLineService`.

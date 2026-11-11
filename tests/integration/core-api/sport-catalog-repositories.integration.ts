@@ -117,6 +117,14 @@ describe('Sport and SportLeague repositories', () => {
     await expect(leagueOf(Sport.SOCCER)).resolves.toMatchObject({ matchKeyword: null });
   });
 
+  it('seeds soccer\'s Premier League sport league with the match keyword EPL', async () => {
+    const sports = new PrismaSportRepository(getAppPrisma());
+    const leagues = new PrismaSportLeagueRepository(getAppPrisma());
+
+    await expect(leagues.findBySportAndName((await sports.findBySport(Sport.SOCCER))?.id ?? '', 'Premier League'))
+      .resolves.toMatchObject({ matchKeyword: 'EPL' });
+  });
+
   it('finds a sport by its sport value and lists sport leagues filtered by sport and activity, ordered by name', async () => {
     const sport = await golfSport();
     const sports = new PrismaSportRepository(getAppPrisma());
