@@ -1,7 +1,7 @@
 import type { ColumnDef } from '@tanstack/react-table';
-import { SportEventStatus, SurvivorWeekOutcome, describeSurvivorRules, pluralize } from '@poolmaster/shared/domain';
+import { SportEventStatus, SurvivorWeekOutcome, describeSurvivorRules } from '@poolmaster/shared/domain';
 import type { ContestDto, SurvivorLeaderboardResponse } from '@/lib/api';
-import { Chip, type StatusBadgeProps } from '@/features/shared/ui';
+import { Chip, formatCount, useDisplayPreferences, type StatusBadgeProps } from '@/features/shared/ui';
 import { entryColumn, isMySquadsEntry, placeColumn, totalColumn } from './leaderboard-columns';
 import { LeaderboardFrame, ScoreboardGrid } from './leaderboard-kit';
 import { useLeaderboardFallback } from './use-leaderboard-fallback';
@@ -115,6 +115,7 @@ function survivorColumns(
  */
 export function SurvivorLeaderboard({ contest }: { contest: ContestDto }) {
   const contestId = contest.id;
+  const { locale } = useDisplayPreferences();
   const leaderboardQuery = useSurvivorLeaderboardQuery(contestId, contest.status);
   const { leagueCode, viewer } = useContestLeague(contest.leagueId);
   // A playoff's rounds (#785) are named as its bracket names them.
@@ -138,7 +139,7 @@ export function SurvivorLeaderboard({ contest }: { contest: ContestDto }) {
       notes={(
         <>
           {board.entries.length ? (
-            <p data-testid="survivor-leaderboard-still-in">{`${pluralize(stillIn, 'entry', 'entries')} still in.`}</p>
+            <p data-testid="survivor-leaderboard-still-in">{`${formatCount(stillIn, 'entry', locale, 'entries')} still in.`}</p>
           ) : null}
           {isUnderWay ? null : (
             <p data-testid="survivor-leaderboard-not-started">Picks show from each game&apos;s kickoff. Entries are listed once they submit a week.</p>

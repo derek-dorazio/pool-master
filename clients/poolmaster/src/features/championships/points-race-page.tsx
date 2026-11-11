@@ -3,7 +3,7 @@ import { useCallback, useMemo } from 'react';
 import { Link, Navigate, useParams } from 'react-router';
 import type { CupDto } from '@/lib/api';
 import { buildLeagueCupSquadPath, buildLeaguePointsRacePath, buildLeagueTrophyCasePath } from '@/features/leagues/league-routing';
-import { Chip, ErrorState, formatCupPoints, formatDateDisplay, formatPlace, LoadingState, MetricGrid, MetricTile, SectionCard, SectionEmpty, SectionNote, useDisplayPreferences } from '@/features/shared/ui';
+import { Chip, ErrorState, formatCupPoints, formatDateDisplay, formatNumber, formatPlace, LoadingState, MetricGrid, MetricTile, SectionCard, SectionEmpty, SectionNote, useDisplayPreferences } from '@/features/shared/ui';
 import { hasPlanFeature } from '@/features/plans/plan-features';
 import { PlanLockedNotice } from '@/features/plans/plan-locked-notice';
 import { buildPodium } from './championship-view';
@@ -160,7 +160,7 @@ export function PointsRacePage() {
           <span data-testid="points-race-summary">
             {cup.sportLeagueName} · {cup.crownedAt
               ? `Crowned ${formatDateDisplay(cup.crownedAt, displayPreferences)}`
-              : isSeasonOver ? 'Not crowned' : `${progress.final} of ${progress.total} contests final`}
+              : isSeasonOver ? 'Not crowned' : `${formatNumber(progress.final, displayPreferences.locale)} of ${formatNumber(progress.total, displayPreferences.locale)} contests final`}
           </span>
         )}
       >

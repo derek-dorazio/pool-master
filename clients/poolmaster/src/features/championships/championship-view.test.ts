@@ -26,6 +26,17 @@ describe('describeChampionshipStanding', () => {
     expect(describeChampionshipStanding(buildRunningChampionship({ contestsToGo: 1 }), 'en-US')).toBe('Birdie Bandits leads by 15 points with 1 contest to go.');
   });
 
+  it('says a lead of exactly one point in the singular', () => {
+    const championship = buildRunningChampionship({
+      contestsToGo: 0,
+      standings: [
+        buildChampionshipStanding({ squadId: 'a', squadName: 'Aces', position: 1, points: 110 }),
+        buildChampionshipStanding({ squadId: 'b', squadName: 'Birdies', position: 2, points: 100 }),
+      ],
+    });
+    expect(describeChampionshipStanding(championship, 'en-US')).toBe('Aces leads by 1 point.');
+  });
+
   it('names every squad sharing the lead', () => {
     const championship = buildRunningChampionship({
       contestsToGo: 0,

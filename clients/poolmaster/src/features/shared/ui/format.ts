@@ -23,8 +23,10 @@ const NUMBER_FORMAT_OPTIONS = {
   whole: { maximumFractionDigits: 0 },
   /** Points to one decimal place when there is one: "612.5", "600". */
   tenths: { minimumFractionDigits: 0, maximumFractionDigits: 1 },
-  /** US dollars, cents only when there are some: "$49", "$12.5". */
-  dollars: { style: "currency", currency: "USD", minimumFractionDigits: 0, maximumFractionDigits: 2 },
+  /** Whole US dollars: "$49". */
+  dollars: { style: "currency", currency: "USD", minimumFractionDigits: 0, maximumFractionDigits: 0 },
+  /** US dollars and cents, both digits: "$12.50". */
+  dollarsAndCents: { style: "currency", currency: "USD", minimumFractionDigits: 2, maximumFractionDigits: 2 },
 } as const satisfies Record<string, Intl.NumberFormatOptions>;
 
 type NumberKind = keyof typeof NUMBER_FORMAT_OPTIONS;
@@ -46,7 +48,11 @@ export function formatNumber(value: number, locale: string): string {
   return numberFormat("whole", locale).format(value);
 }
 
-/** A count with its noun, the count in the viewer's locale: "1 entry", "1,000 entries". */
+/**
+ * A count with its noun, the count in the viewer's locale: "1 entry", "1,000 entries". Screens use
+ * this one; `pluralize` in `@poolmaster/shared/domain` is the locale-free twin for server text
+ * such as emails and rules copy. Don't add a third.
+ */
 export function formatCount(count: number, singular: string, locale: string, plural = `${singular}s`): string {
   return `${formatNumber(count, locale)} ${count === 1 ? singular : plural}`;
 }
@@ -56,9 +62,14 @@ export function formatCupPoints(tenths: number, locale: string): string {
   return numberFormat("tenths", locale).format(tenths / 10);
 }
 
-/** A price in US cents, in the viewer's locale: "$10", "$12.5" (en-US), "US$10" (en-GB). */
+/** Cup points with their noun: "1 point", "612.5 points". */
+export function formatCupPointsCount(tenths: number, locale: string): string {
+  return `${formatCupPoints(tenths, locale)} ${tenths === 10 ? "point" : "points"}`;
+}
+
+/** A price in US cents, in the viewer's locale: "$10", "$12.50" (en-US), "US$10" (en-GB). */
 export function formatMoneyCents(cents: number, locale: string): string {
-  return numberFormat("dollars", locale).format(cents / 100);
+  return numberFormat(cents % 100 === 0 ? "dollars" : "dollarsAndCents", locale).format(cents / 100);
 }
 
 /**

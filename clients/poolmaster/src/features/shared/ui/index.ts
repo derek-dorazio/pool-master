@@ -31,6 +31,7 @@ export { DisplayPreferencesContext, useDisplayPreferences } from "./display-pref
 export {
   formatCount,
   formatCupPoints,
+  formatCupPointsCount,
   formatMoneyCents,
   formatNumber,
   formatNumberList,

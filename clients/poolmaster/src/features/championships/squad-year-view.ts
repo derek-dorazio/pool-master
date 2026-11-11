@@ -1,7 +1,7 @@
 import { CupTrophy, TrophyKind } from '@poolmaster/shared/domain';
 import type { ChampionshipStandingRowDto, SquadChampionshipDto, SquadCupDto, SquadTrophyDto, SquadYearDto } from '@/lib/api';
 import { historyCupsOnShow, historyYearTitle } from './championship-view';
-import { formatCupPoints, formatPlace } from '@/features/shared/ui';
+import { formatCupPoints, formatCupPointsCount, formatPlace } from '@/features/shared/ui';
 
 /** The squad's own counts, as the Championship tab's tiles count them for every squad. */
 export const SQUAD_MEDAL_TILES: { key: string; label: string; count: (row: ChampionshipStandingRowDto) => number }[] = [
@@ -26,7 +26,7 @@ export function describeSquadChampionship(championship: SquadChampionshipDto, lo
     return 'No championship contest has counted yet';
   }
   const { standing } = championship;
-  const place = `${formatPlace(standing)} of ${championship.squadCount} · ${formatCupPoints(standing.points, locale)} points`;
+  const place = `${formatPlace(standing)} of ${championship.squadCount} · ${formatCupPointsCount(standing.points, locale)}`;
   if (championship.pointsBehindLeader > 0) {
     return `${place} · ${formatCupPoints(championship.pointsBehindLeader, locale)} behind 1st`;
   }
@@ -39,7 +39,7 @@ export function describeSquadChampionship(championship: SquadChampionshipDto, lo
 
 /** A squad's cup line: its place of N and points, and its trophy once crowned. */
 export function describeSquadCup(cup: SquadCupDto, locale: string): string {
-  const line = `${formatPlace(cup.standing)} of ${cup.squadCount} · ${formatCupPoints(cup.standing.points, locale)} points`;
+  const line = `${formatPlace(cup.standing)} of ${cup.squadCount} · ${formatCupPointsCount(cup.standing.points, locale)}`;
   return cup.standing.trophy === null ? line : `${line} · ${CUP_TROPHY_LABELS[cup.standing.trophy]}`;
 }
 

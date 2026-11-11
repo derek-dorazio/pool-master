@@ -1,6 +1,6 @@
 import { CHAMPIONSHIP_MATRIX_PLACES, ChampionshipTile, ContestResultCount, CupStatus, SummaryTile } from '@poolmaster/shared/domain';
 import type { ChampionshipDto, ChampionshipStandingRowDto, ContestResultSummaryDto, HistoryCupDto, HistoryYearDto } from '@/lib/api';
-import { formatCupPoints, formatOrdinal } from '@/features/shared/ui';
+import { formatCupPointsCount, formatOrdinal } from '@/features/shared/ui';
 import { CUP_SHOWN_FROM_COUNTED, joinNames } from './cup-view';
 
 /** How many finishing places the finish matrix counts: 1st to 10th. */
@@ -55,13 +55,13 @@ export function describeChampionshipStanding(championship: ChampionshipDto, loca
   }
   const names = joinNames(leaders.map((row) => row.squadName));
   if (championship.isOver) {
-    return leaders.length === 1 ? `${names} won with ${formatCupPoints(leaders[0]?.points ?? 0, locale)} points.` : `${names} share the championship.`;
+    return leaders.length === 1 ? `${names} won with ${formatCupPointsCount(leaders[0]?.points ?? 0, locale)}.` : `${names} share the championship.`;
   }
   const chaser = championship.standings.find((row) => row.position > 1);
   const lead = leaders.length > 1
     ? `${names} share the lead`
     : chaser
-      ? `${names} leads by ${formatCupPoints((leaders[0]?.points ?? 0) - chaser.points, locale)} points`
+      ? `${names} leads by ${formatCupPointsCount((leaders[0]?.points ?? 0) - chaser.points, locale)}`
       : `${names} leads`;
   const toGo = championship.contestsToGo;
   return toGo ? `${lead} with ${toGo} ${toGo === 1 ? 'contest' : 'contests'} to go.` : `${lead}.`;

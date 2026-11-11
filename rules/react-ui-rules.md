@@ -453,6 +453,8 @@ state, stale actions, and unthemeable markup accumulate.
   Golf to-par ("-36", "E") stays with the sport scoring definitions. The
   `poolmaster/no-inline-display-format` ESLint rule rejects `toLocaleString`,
   `toLocaleDateString`, `toFixed` and `new Intl.*Format` anywhere else in the app.
+  A number that is never shown (an SVG coordinate, a computed width) rounds with
+  `Math.round(x * 10) / 10` rather than `toFixed`, so the rule needs no exception.
 - Date/time formatting should use the shared `formatDateDisplay` and
   `formatDateTimeDisplay` utilities with the member's `useDisplayPreferences`:
   their time zone, their clock, and English words in their locale's region

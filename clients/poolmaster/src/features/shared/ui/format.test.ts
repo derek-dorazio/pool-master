@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   formatCount,
   formatCupPoints,
+  formatCupPointsCount,
   formatMoneyCents,
   formatNumber,
   formatNumberList,
@@ -73,9 +74,17 @@ describe('formatCupPoints', () => {
   });
 });
 
+describe('formatCupPointsCount', () => {
+  it('says one point in the singular and any other amount in the plural', () => {
+    expect([formatCupPointsCount(10, 'en-US'), formatCupPointsCount(15, 'en-US'), formatCupPointsCount(0, 'en-US'), formatCupPointsCount(12345, 'en-DE')])
+      .toEqual(['1 point', '1.5 points', '0 points', '1.234,5 points']);
+  });
+});
+
 describe('formatMoneyCents', () => {
-  it('shows whole dollars without cents and cents only when there are some', () => {
-    expect([formatMoneyCents(4900, 'en-US'), formatMoneyCents(1250, 'en-US'), formatMoneyCents(0, 'en-US')]).toEqual(['$49', '$12.5', '$0']);
+  it('shows whole dollars without cents, and cents with both digits when there are some', () => {
+    expect([formatMoneyCents(4900, 'en-US'), formatMoneyCents(1250, 'en-US'), formatMoneyCents(1205, 'en-US'), formatMoneyCents(0, 'en-US')])
+      .toEqual(['$49', '$12.50', '$12.05', '$0']);
   });
 
   it('marks the price as US dollars for a viewer outside the US', () => {
