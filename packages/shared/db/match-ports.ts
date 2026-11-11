@@ -4,7 +4,7 @@
  * the head-to-head family.
  */
 
-import type { BackgroundJobRequest, MatchEnding, MatchSide, MatchStatus, ParticipantStandingStatus, SportEventMatch, SportEventMatchPeriodScore } from '../domain';
+import type { BackgroundJobRequest, MatchEnding, MatchResultSource, MatchSide, MatchStatus, ParticipantStandingStatus, SportEventMatch, SportEventMatchPeriodScore } from '../domain';
 
 /** One match of a bracket being loaded. `id` is chosen by the caller so links can name it. */
 export interface SportEventMatchWrite {
@@ -39,6 +39,8 @@ export interface MatchResultWrite {
   homeShootoutScore: number | null;
   awayShootoutScore: number | null;
   ending: MatchEnding;
+  /** Who set the result (#1531); null when the match is cleared. */
+  resultSource: MatchResultSource | null;
 }
 
 /** One side of a later match, set to the team that advances into it, or emptied. */

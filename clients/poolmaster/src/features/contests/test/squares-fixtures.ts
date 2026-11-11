@@ -45,6 +45,7 @@ export function squaresGameFixture(overrides: Partial<SportEventMatchDto> = {}):
     homeShootoutScore: null,
     awayShootoutScore: null,
     ending: MatchEnding.PLAYED,
+    resultSource: null,
     advancesToMatchId: null,
     advancesToSide: null,
     regionLabel: null,

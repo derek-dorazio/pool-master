@@ -90,11 +90,14 @@ Stroke play accepts `GOLF`; head to head accepts `GAME` (#1496), writing a provi
 each match linked to its game (`externalGameId`, on the event's own provider) through
 `MatchResultService`, the admin's result path, with the teams' provider mappings deciding which
 side won. The sync links a game nobody has linked to the one open match of the event whose two
-teams it is, so nobody links games by hand. The golf round-score admin routes refuse an event
-whose family does not keep golf rounds (422 `EVENT_SCORING_FAMILY_MISMATCH`). The leaderboard
-response carries the event's `sport`, so the web resolves the same family for its own
-presentation (`SCORING_FAMILY_UI`). Two families are built: `STROKE_PLAY` (golf) and
-`FINISH_POSITION` (horse racing, #622). Finish position keeps a race result per field row
+teams it is, so nobody links games by hand. Each match records who set its result
+(`resultSource`, #1531): a provider's later final never overwrites an admin's result, and is
+logged instead, and the admin's bracket page names the feed a synced result came from. The golf
+round-score admin routes refuse an event whose family does not keep golf rounds (422
+`EVENT_SCORING_FAMILY_MISMATCH`). The leaderboard response carries the event's `sport`, so the
+web resolves the same family for its own presentation (`SCORING_FAMILY_UI`). Two families are
+built: `STROKE_PLAY` (golf) and `FINISH_POSITION` (horse racing, #622). Finish position keeps a
+race result per field row
 (`SportEventParticipantRaceResult`); an entry's settled points, like golf's to-par total, are `ContestEntryStanding.totalScore`;
 the admin enters the finishing order through `previewEventRaceResults` and
 `applyEventRaceResults` (`scoring-families/finish-position/race-result-service.ts`), and a

@@ -712,6 +712,7 @@ export class InMemorySportEvents {
             sportEventId,
             homeSpread: null,
             externalGameId: null,
+            resultSource: null,
             periodScores: [],
             status: MatchStatus.SCHEDULED,
             winnerSide: null,

@@ -1,9 +1,11 @@
 /**
  * Writes a provider's game scores into an event's matches (#1496). A match takes its result from
- * the provider game an admin linked it to (`externalGameId`), and only once the provider calls
- * the game final. Every result goes through `MatchResultService.recordResult`, the admin's own
- * path, so its checks hold for a provider's result too: both teams known, scores that fit the
- * winner, no tie in a bracket, and a locked result once the next match has one.
+ * the provider game it is linked to (`externalGameId`), and only once the provider calls the game
+ * final. Every result goes through `MatchResultService.recordResult`, the admin's own path, so its
+ * checks hold for a provider's result too: both teams known, scores that fit the winner, no tie in
+ * a bracket, and a locked result once the next match has one. A result an admin entered stands
+ * (#1531): a provider's different final is logged and not written. An admin who clears it hands
+ * the match back to the provider.
  *
  * The provider lists its own home and away teams. Each is matched to a side of the match through
  * the team's provider mapping, so a game the provider lists the other way round from the match
@@ -16,7 +18,7 @@
  * would, is left for a later sync, never guessed at. A match whose side a result fills is linked
  * on the next sync.
  */
-import { MatchSide, MatchStatus, ProviderGameState, type SportEventMatch } from '@poolmaster/shared/domain';
+import { MatchResultSource, MatchSide, MatchStatus, ProviderGameState, type SportEventMatch } from '@poolmaster/shared/domain';
 import type { GameScoreUpdate } from '@poolmaster/shared/dto';
 import type { FastifyBaseLogger } from 'fastify';
 import type { ParticipantProviderMappingRepository, SportEventMatchRepository, SportEventParticipantRepository } from '@poolmaster/shared/db';
@@ -107,9 +109,18 @@ export async function writeGameScores(
       rows.push({ ...row, disposition: 'UNCHANGED' });
       continue;
     }
+    // An admin's result stands (#1531): the provider's different final is logged, not written.
+    if (match.resultSource === MatchResultSource.ADMIN) {
+      deps.logger?.warn(
+        { action: 'liveScore.game.adminResultKept', data: { sportEventId, matchNumber: match.matchNumber, externalGameId: game.externalGameId, before, provider: result } },
+        'Kept an admin\'s match result that the provider\'s final disagrees with',
+      );
+      rows.push({ ...row, disposition: 'UNCHANGED' });
+      continue;
+    }
     try {
       // One at a time: the bracket each result writes is the one the next is read against.
-      const bracket = await deps.results.recordResult(sportEventId, match.matchNumber, result);
+      const bracket = await deps.results.recordResult(sportEventId, match.matchNumber, result, MatchResultSource.PROVIDER);
       for (const each of bracket) rewritten.set(each.id, each);
       rows.push({ ...row, disposition: 'UPDATED' });
     } catch (error) {

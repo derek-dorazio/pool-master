@@ -2,6 +2,7 @@ import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
 import {
   MatchEnding,
+  MatchResultSource,
   MatchSide,
   MatchStatus,
   ParticipantRoundStatus,
@@ -314,7 +315,7 @@ describe('Entering a bracket match\'s result (#1252)', () => {
       });
 
       await measure(() => new PrismaSportEventMatchRepository(getAppPrisma()).applyResult({
-        result: { id: match.id, status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME, homeScore: 70, awayScore: 60, homeShootoutScore: null, awayShootoutScore: null, ending: MatchEnding.PLAYED },
+        result: { id: match.id, status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME, homeScore: 70, awayScore: 60, homeShootoutScore: null, awayShootoutScore: null, ending: MatchEnding.PLAYED, resultSource: MatchResultSource.ADMIN },
         sideFill: null,
         standings: field.map((row, index) => ({ sportEventParticipantId: row.id, position: index + 1, displayPosition: `${index + 1}`, status: ParticipantStandingStatus.ACTIVE, currentRound: 1, asOf: AS_OF })),
       }));
