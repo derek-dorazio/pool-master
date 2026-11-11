@@ -5,7 +5,7 @@ import type { StorybookConfig } from '@storybook/react-vite';
  * test (`button.stories.tsx` next to `button.test.tsx`), so example content stays out of
  * application code (rules/testing-rules.md §1B). Dev-only: nothing in `src` imports a story, so
  * the app bundle never carries one. `npm run gallery` serves it; `npm run gallery:build` writes
- * the static copy CI builds and `scripts/publish-gallery.mjs` publishes.
+ * the static copy CI builds, which `scripts/prepare-gallery-copy.mjs` readies for publishing.
  */
 const config: StorybookConfig = {
   stories: ['../src/**/*.stories.tsx'],

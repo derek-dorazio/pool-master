@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "./button";
 import { SortableList } from "./sortable-list";
 import { Text } from "./text";
+import { Tile } from "./tile";
 
 function SortableDemo() {
   const [items, setItems] = useState([
@@ -18,10 +19,11 @@ function SortableDemo() {
       items={items}
       onReorder={(ids) => setItems(ids.flatMap((id) => items.filter((item) => item.id === id)))}
       renderItem={(item, { dragHandleProps }) => (
-        <div className="flex items-center gap-2 rounded-md border border-border p-2">
+        // The row is the caller's content; a tier list draws it as a small Tile.
+        <Tile className="flex items-center gap-2" padding="sm" radius="md">
           <Button aria-label={`Move ${item.name}`} {...dragHandleProps} size="xs" variant="ghost"><GripVertical aria-hidden size={16} /></Button>
           <Text>{item.name}</Text>
-        </div>
+        </Tile>
       )}
     />
   );

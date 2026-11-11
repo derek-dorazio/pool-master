@@ -394,8 +394,9 @@ state, stale actions, and unthemeable markup accumulate.
   `rules:check:gallery-stories` fails on either gap.
 - Stories are dev code, like tests: their example content stays in the story file
   (`rules/testing-rules.md` §1B), nothing under `src` imports one, and coverage leaves them out.
-  They follow the same lint and text-style rules as the components, so a story shows the
-  component as a page would use it, with no local styles beyond layout.
+  A story shows the component as a page would use it, with no local styles beyond layout.
+  `rules:check:text-styles` skips `features/shared/ui`, stories included, so review enforces
+  this half (`rules/review-triggers.md` §8 *Reviewing for UI conformance*).
 - When a shared component's look or props change, its story changes in the same PR, and
   screenshots for review are compared with the story as well as with the page's before.
 
