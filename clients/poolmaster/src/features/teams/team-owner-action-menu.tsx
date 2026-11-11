@@ -1,7 +1,16 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
 import { changeMemberRole, removeSquadOwner } from '@/lib/api';
-import { Button, InlineError, MenuItem, Modal } from '@/features/shared/ui';
+import {
+  Button,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuItemText,
+  DropdownMenuTriggerSlot,
+  InlineError,
+  Modal,
+} from '@/features/shared/ui';
 import { buildLeagueAdminTeamPath } from '@/features/leagues/league-routing';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -30,7 +39,6 @@ export function TeamOwnerActionMenu({
   ownerUserId: string;
   teamId: string;
 }) {
-  const [menuOpen, setMenuOpen] = useState(false);
   const [activeAction, setActiveAction] = useState<ActiveAction>(null);
 
   const canPromote = canManageLeagueRole && ownerRole === 'MEMBER';
@@ -63,7 +71,6 @@ export function TeamOwnerActionMenu({
     },
     onSuccess: () => {
       setActiveAction(null);
-      setMenuOpen(false);
     },
     invalidates: ownerViewKeys,
   });
@@ -82,7 +89,6 @@ export function TeamOwnerActionMenu({
     },
     onSuccess: () => {
       setActiveAction(null);
-      setMenuOpen(false);
     },
     invalidates: ownerViewKeys,
   });
@@ -104,58 +110,42 @@ export function TeamOwnerActionMenu({
 
   return (
     <>
-      <div className="relative">
-        <Button
-          className="rounded-2xl px-4 py-2"
-          data-testid={`${testPrefix}-trigger-${teamId}-${ownerUserId}`}
-          onClick={() => setMenuOpen((current) => !current)}
-          type="button"
-          variant="secondary"
-        >
-          Owner actions
-        </Button>
-        {menuOpen ? (
-          <div
-            className="absolute right-0 top-full z-20 mt-2 min-w-[14rem] rounded-2xl border border-border bg-card p-2 shadow-xl"
-            data-testid={`${testPrefix}-menu-${teamId}-${ownerUserId}`}
+      <DropdownMenu>
+        <DropdownMenuTriggerSlot>
+          <Button
+            className="rounded-2xl px-4 py-2"
+            data-testid={`${testPrefix}-trigger-${teamId}-${ownerUserId}`}
+            type="button"
+            variant="secondary"
           >
-            {canPromote ? (
-              <MenuItem
-                data-testid={`${testPrefix}-promote-${teamId}-${ownerUserId}`}
-                onClick={() => {
-                  setActiveAction('promote');
-                  setMenuOpen(false);
-                }}
-                type="button"
-              >
-                Promote to commissioner
-              </MenuItem>
-            ) : null}
-            {canDemote ? (
-              <MenuItem
-                data-testid={`${testPrefix}-demote-${teamId}-${ownerUserId}`}
-                onClick={() => {
-                  setActiveAction('demote');
-                  setMenuOpen(false);
-                }}
-                type="button"
-              >
-                Demote to member
-              </MenuItem>
-            ) : null}
-            <MenuItem
-              data-testid={`${testPrefix}-remove-${teamId}-${ownerUserId}`}
-              onClick={() => {
-                setActiveAction('remove');
-                setMenuOpen(false);
-              }}
-              type="button"
+            Owner actions
+          </Button>
+        </DropdownMenuTriggerSlot>
+        <DropdownMenuContent align="end" testId={`${testPrefix}-menu-${teamId}-${ownerUserId}`} width="md">
+          {canPromote ? (
+            <DropdownMenuItem
+              data-testid={`${testPrefix}-promote-${teamId}-${ownerUserId}`}
+              onSelect={() => setActiveAction('promote')}
             >
-              Remove owner
-            </MenuItem>
-          </div>
-        ) : null}
-      </div>
+              <DropdownMenuItemText name="Promote to commissioner" />
+            </DropdownMenuItem>
+          ) : null}
+          {canDemote ? (
+            <DropdownMenuItem
+              data-testid={`${testPrefix}-demote-${teamId}-${ownerUserId}`}
+              onSelect={() => setActiveAction('demote')}
+            >
+              <DropdownMenuItemText name="Demote to member" />
+            </DropdownMenuItem>
+          ) : null}
+          <DropdownMenuItem
+            data-testid={`${testPrefix}-remove-${teamId}-${ownerUserId}`}
+            onSelect={() => setActiveAction('remove')}
+          >
+            <DropdownMenuItemText name="Remove owner" />
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
 
       <Modal
         closeLabel={`Close ${dialogTitle}`}

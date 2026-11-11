@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import type { ComponentProps } from 'react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import { describe, expect, it } from 'vitest';
 import { mockApi } from '@/test/msw-api';
@@ -32,44 +33,44 @@ function renderMenu(overrides: Partial<MenuProps> = {}) {
   );
 }
 
-function openMenu() {
-  fireEvent.click(screen.getByRole('button', { name: 'Owner actions' }));
+async function openMenu() {
+  await userEvent.click(screen.getByRole('button', { name: 'Owner actions' }));
 }
 
 async function chooseAction(name: string) {
-  openMenu();
-  fireEvent.click(screen.getByRole('button', { name }));
+  await openMenu();
+  await userEvent.click(screen.getByRole('menuitem', { name }));
   await screen.findByRole('dialog', { name });
 }
 
 describe('TeamOwnerActionMenu by viewer role', () => {
-  it('offers promote and remove, but not demote, for an owner who is a league member', () => {
+  it('offers promote and remove, but not demote, for an owner who is a league member', async () => {
     renderMenu({ ownerRole: 'MEMBER' });
 
-    openMenu();
+    await openMenu();
 
-    expect(screen.getByRole('button', { name: 'Promote to commissioner' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Remove owner' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Demote to member' })).not.toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Promote to commissioner' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Remove owner' })).toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: 'Demote to member' })).not.toBeInTheDocument();
   });
 
-  it('offers demote, but not promote, for an owner who is a commissioner', () => {
+  it('offers demote, but not promote, for an owner who is a commissioner', async () => {
     renderMenu({ ownerRole: 'COMMISSIONER' });
 
-    openMenu();
+    await openMenu();
 
-    expect(screen.getByRole('button', { name: 'Demote to member' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Promote to commissioner' })).not.toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Demote to member' })).toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: 'Promote to commissioner' })).not.toBeInTheDocument();
   });
 
-  it('offers only removal when the viewer may remove owners but not change league roles', () => {
+  it('offers only removal when the viewer may remove owners but not change league roles', async () => {
     renderMenu({ canManageLeagueRole: false, ownerRole: 'MEMBER' });
 
-    openMenu();
+    await openMenu();
 
-    expect(screen.getByRole('button', { name: 'Remove owner' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Promote to commissioner' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Demote to member' })).not.toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Remove owner' })).toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: 'Promote to commissioner' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: 'Demote to member' })).not.toBeInTheDocument();
   });
 
   it('promotes the owner to commissioner in this league and closes the confirmation', async () => {

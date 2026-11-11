@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
@@ -40,9 +41,13 @@ function renderMenu(overrides: Partial<MenuProps> = {}) {
   return { ...view, invalidateSpy };
 }
 
-function openAction(action: 'promote' | 'demote' | 'remove') {
-  fireEvent.click(screen.getByTestId('team-home-owner-actions-trigger-team-1-user-2'));
-  fireEvent.click(screen.getByTestId(`team-home-owner-actions-${action}-team-1-user-2`));
+async function openOwnerMenu() {
+  await userEvent.click(screen.getByTestId('team-home-owner-actions-trigger-team-1-user-2'));
+}
+
+async function openAction(action: 'promote' | 'demote' | 'remove') {
+  await openOwnerMenu();
+  await userEvent.click(screen.getByTestId(`team-home-owner-actions-${action}-team-1-user-2`));
 }
 
 function membership(role: 'COMMISSIONER' | 'MEMBER') {
@@ -80,10 +85,10 @@ describe('TeamOwnerActionMenu', () => {
     expect(trigger).not.toHaveClass('bg-primary');
   });
 
-  it('offers a plain owner only Remove owner, with no league role changes', () => {
+  it('offers a plain owner only Remove owner, with no league role changes', async () => {
     renderMenu({ canManageLeagueRole: false });
 
-    fireEvent.click(screen.getByTestId('team-home-owner-actions-trigger-team-1-user-2'));
+    await openOwnerMenu();
 
     expect(screen.getByTestId('team-home-owner-actions-remove-team-1-user-2')).toBeInTheDocument();
     expect(screen.queryByTestId('team-home-owner-actions-promote-team-1-user-2')).not.toBeInTheDocument();
@@ -91,10 +96,10 @@ describe('TeamOwnerActionMenu', () => {
   });
 
 
-  it('offers demotion but not promotion for an owner who is already a commissioner', () => {
+  it('offers demotion but not promotion for an owner who is already a commissioner', async () => {
     renderMenu({ ownerRole: 'COMMISSIONER' });
 
-    fireEvent.click(screen.getByTestId('team-home-owner-actions-trigger-team-1-user-2'));
+    await openOwnerMenu();
 
     expect(screen.getByTestId('team-home-owner-actions-demote-team-1-user-2')).toBeInTheDocument();
     expect(screen.queryByTestId('team-home-owner-actions-promote-team-1-user-2')).not.toBeInTheDocument();
@@ -106,7 +111,7 @@ describe('TeamOwnerActionMenu', () => {
     });
     renderMenu();
 
-    openAction('promote');
+    await openAction('promote');
     fireEvent.click(await screen.findByTestId('team-home-owner-actions-confirm-promote-team-1-user-2'));
 
     expect(await screen.findByText('Only a commissioner can change roles.')).toBeInTheDocument();
@@ -124,7 +129,7 @@ describe('TeamOwnerActionMenu', () => {
     });
     renderMenu({ ownerRole: 'COMMISSIONER' });
 
-    openAction('demote');
+    await openAction('demote');
     fireEvent.click(await screen.findByTestId('team-home-owner-actions-confirm-demote-team-1-user-2'));
 
     expect(await screen.findByText(/Appoint another active commissioner/)).toBeInTheDocument();
@@ -139,7 +144,7 @@ describe('TeamOwnerActionMenu', () => {
     changeMemberRoleMock.mockResolvedValue(membership('MEMBER'));
     const { invalidateSpy } = renderMenu({ ownerRole: 'COMMISSIONER' });
 
-    openAction('demote');
+    await openAction('demote');
     fireEvent.click(await screen.findByTestId('team-home-owner-actions-confirm-demote-team-1-user-2'));
 
     await waitFor(() =>
@@ -157,7 +162,7 @@ describe('TeamOwnerActionMenu', () => {
   it('tells a plain owner who is the team\'s last one to use Leave league, and offers no removal', async () => {
     renderMenu({ activeOwnerCount: 1, canManageLeagueRole: false });
 
-    openAction('remove');
+    await openAction('remove');
 
     expect(await screen.findByText(/use Leave league/)).toBeInTheDocument();
     expect(screen.queryByRole('link')).not.toBeInTheDocument();
@@ -191,7 +196,7 @@ describe('TeamOwnerActionMenu', () => {
     });
     const { invalidateSpy } = renderMenu();
 
-    openAction('remove');
+    await openAction('remove');
     fireEvent.click(await screen.findByTestId('team-home-owner-actions-confirm-remove-team-1-user-2'));
 
     await waitFor(() =>
@@ -215,7 +220,7 @@ describe('TeamOwnerActionMenu', () => {
     });
     renderMenu();
 
-    openAction('remove');
+    await openAction('remove');
     fireEvent.click(await screen.findByTestId('team-home-owner-actions-confirm-remove-team-1-user-2'));
     expect(await screen.findByText('Only an active owner can do this')).toBeInTheDocument();
 
@@ -223,16 +228,27 @@ describe('TeamOwnerActionMenu', () => {
     await waitFor(() =>
       expect(screen.queryByTestId('team-home-owner-actions-dialog-team-1-user-2')).not.toBeInTheDocument(),
     );
-    openAction('remove');
+    await openAction('remove');
 
     expect(await screen.findByTestId('team-home-owner-actions-confirm-remove-team-1-user-2')).toBeInTheDocument();
     expect(screen.queryByText('Only an active owner can do this')).not.toBeInTheDocument();
   });
 
+  it('closes the owner menu on a click outside it, without opening a dialog', async () => {
+    renderMenu();
+    await openOwnerMenu();
+    expect(screen.getByTestId('team-home-owner-actions-menu-team-1-user-2')).toBeVisible();
+
+    await userEvent.click(document.body);
+
+    expect(screen.queryByTestId('team-home-owner-actions-menu-team-1-user-2')).not.toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
   it('opens each action as a titled dialog that names the owner in its description', async () => {
     renderMenu();
 
-    openAction('remove');
+    await openAction('remove');
 
     const dialog = await screen.findByRole('dialog', { name: 'Remove owner' });
     expect(dialog).toHaveAccessibleDescription(expect.stringContaining('will stop being an owner and will leave this league'));
