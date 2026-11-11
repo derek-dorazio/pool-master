@@ -95,7 +95,7 @@ export function contestsModule(fastify: FastifyInstance, opts: MailModuleOptions
       tags: ['Contests'],
       summary: "List the requester's entries in a league's current contests",
       description:
-        "The requester's own squad's entries, drafts included, in each of the league's OPEN and ACTIVE contests, each with its status in every event of its contest and without its picks (#1197): one read for what league home, the Contests page's My entries and My team show, however many contests are current. Empty without an active squad in the league. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.",
+        "The requester's own squad's entries, drafts included, in each of the league's OPEN and ACTIVE contests, each with its status in every event of its contest and without its picks (#1197), and the place of each entry an ACTIVE contest's leaderboard ranks, read from the stored board the leaderboard answers from (#1565): one read for what league home, the Contests page and My team show, however many contests are current. Empty without an active squad in the league. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.",
       operationId: 'listMyContestEntries',
       response: {
         200: schemaRef('MyContestEntriesResponse'),

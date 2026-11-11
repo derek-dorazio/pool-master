@@ -12757,7 +12757,25 @@ export type ContestEntryDetailResponse = {
 };
 
 /**
- * The requester's own entries across a league's current contests (#1197).
+ * One entry's place in a live contest, the same place its leaderboard shows (#1565).
+ */
+export type ContestEntryPlaceDto = {
+    /**
+     * The entry placed: one of the response's `entries`.
+     */
+    entryId: string;
+    /**
+     * The entry's place in its contest as its leaderboard stands, 1 best in every sport; entries level share it.
+     */
+    position: number;
+    /**
+     * The place as the leaderboard shows it, "T3" when shared.
+     */
+    displayPosition: string;
+};
+
+/**
+ * The requester's own entries across a league's current contests (#1197), with each live entry's place (#1565).
  */
 export type MyContestEntriesResponse = {
     /**
@@ -12823,6 +12841,23 @@ export type MyContestEntriesResponse = {
              */
             pickedAt: string;
         }>;
+    }>;
+    /**
+     * The place of each of `entries` that its ACTIVE contest's leaderboard ranks, read from the same stored board the leaderboard answers from (#1565), so a list of contests needs no leaderboard read per contest. An entry with no place is left out: one in an OPEN contest, one not yet scored, any in a contest whose picks are not revealed yet, and any in a squares contest, whose grid has no places until it settles.
+     */
+    places: Array<{
+        /**
+         * The entry placed: one of the response's `entries`.
+         */
+        entryId: string;
+        /**
+         * The entry's place in its contest as its leaderboard stands, 1 best in every sport; entries level share it.
+         */
+        position: number;
+        /**
+         * The place as the leaderboard shows it, "T3" when shared.
+         */
+        displayPosition: string;
     }>;
 };
 
@@ -29078,7 +29113,7 @@ export type ListMyContestEntriesError = ListMyContestEntriesErrors[keyof ListMyC
 
 export type ListMyContestEntriesResponses = {
     /**
-     * The requester's own entries across a league's current contests (#1197).
+     * The requester's own entries across a league's current contests (#1197), with each live entry's place (#1565).
      */
     200: MyContestEntriesResponse;
 };

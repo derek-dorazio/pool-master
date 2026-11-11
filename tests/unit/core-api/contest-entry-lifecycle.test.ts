@@ -18,6 +18,7 @@ import {
   type Contest,
   LeagueMembershipStatus,
   LeagueRole,
+  SelectionType,
   SquadMembershipStatus,
 } from '@poolmaster/shared/domain';
 import type { MailDeliveryProvider } from '../../../packages/core-api/src/modules/email/mail-delivery';
@@ -603,12 +604,39 @@ describe('ContestService entries — the viewer\'s own entries and the counts a 
     world.contests.set(live.id, { ...live, status: ContestStatus.ACTIVE });
     world.contests.set(finished.id, { ...finished, status: ContestStatus.COMPLETED });
 
-    const entries = await service.listMyLeagueEntries(league.id, owner.id);
+    const { entries } = await service.listMyLeagueEntries(league.id, owner.id);
 
     expect(entries.map((entry) => entry.id).sort()).toEqual([mineOpen.id, mineLive.id].sort());
     expect(entries.find((entry) => entry.id === mineOpen.id)).toMatchObject({ contestId: contest.id, squadName: 'Birdie Brigade', picksCount: 1 });
     expect(entries.every((entry) => entry.participants === undefined)).toBe(true);
-    expect(await service.listMyLeagueEntries(league.id, commissioner.id)).toEqual([]);
+    expect(await service.listMyLeagueEntries(league.id, commissioner.id)).toEqual({ entries: [], places: [] });
+  });
+
+  it('gives no place to the viewer\'s entry in a live squares contest, whose grid has no places until it settles', async () => {
+    const { world, league, owner, service } = setup();
+    const live = world.addContest(league.id, { status: ContestStatus.OPEN });
+    world.addConfiguration(live.id);
+    const mine = await service.createEntry(live.id, owner.id);
+    world.contests.set(live.id, { ...live, status: ContestStatus.ACTIVE, selectionType: SelectionType.SQUARES });
+
+    const result = await service.listMyLeagueEntries(league.id, owner.id);
+
+    expect(result.entries.map((entry) => entry.id)).toEqual([mine.id]);
+    expect(result.places).toEqual([]);
+  });
+
+  it('lists the viewer\'s live entry with no place, and still lists it, when its contest\'s leaderboard cannot be shown', async () => {
+    const { world, league, owner, service } = setup();
+    // A live contest with no event has no leaderboard: CONTEST_LEADERBOARD_EVENT_REQUIRED.
+    const live = world.addContest(league.id, { status: ContestStatus.OPEN });
+    world.addConfiguration(live.id);
+    const mine = await service.createEntry(live.id, owner.id);
+    world.contests.set(live.id, { ...live, status: ContestStatus.ACTIVE });
+
+    const result = await service.listMyLeagueEntries(league.id, owner.id);
+
+    expect(result.entries.map((entry) => entry.id)).toEqual([mine.id]);
+    expect(result.places).toEqual([]);
   });
 });
 
