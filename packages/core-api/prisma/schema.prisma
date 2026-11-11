@@ -1094,6 +1094,11 @@ model SportLeague {
   /// is one match with no half-time score). Null: every round. Reference data, set by the
   /// migration that seeds the league.
   squaresFromRound   Int?                     @map("squares_from_round")
+  /// Each round's best-of length, first to final, lined up with the event's last round as
+  /// `roundNames` is (#1545: the NBA's 7, 7, 7, 7). Empty, or a round with no entry, plays single
+  /// games. Reference data, set where the league is seeded; a game-score sync reads it to count a
+  /// series' wins.
+  roundSeriesLengths Int[]                    @default([]) @map("round_series_lengths")
   /// What screens call the sport league, when not what its sport calls one (#834: the NCAA's
   /// tennis championships are leagues, not tours). Null: the sport's noun. Reference data, set by
   /// the migration that seeds the league.

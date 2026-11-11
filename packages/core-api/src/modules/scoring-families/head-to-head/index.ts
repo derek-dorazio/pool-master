@@ -42,7 +42,7 @@ export const headToHeadScoringFamily: ScoringFamilyModule = {
     persist(deps, event, result) {
       return writeGameScores(
         createGameScoreWriterDeps(deps.prisma, deps.providerId, deps.logger, deps.leaderboards),
-        event.id,
+        event,
         result.games,
       );
     },
