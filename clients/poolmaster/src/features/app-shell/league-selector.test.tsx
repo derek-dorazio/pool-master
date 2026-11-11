@@ -1,4 +1,5 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
+import userEvent, { type UserEvent } from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { LeagueSelector } from './league-selector';
@@ -33,60 +34,23 @@ describe('LeagueSelector', () => {
     mockLogger.child.mockClear();
   });
 
-  it('navigates to the selected league and logs the happy path', () => {
+  it('navigates to the selected league and logs the happy path', async () => {
     const onNavigate = vi.fn();
-
-    render(
-      <MemoryRouter>
-        <LeagueSelector
-          activeLeagueCode="LEAGUE1"
-          commissionerLeagueIds={new Set()}
-          leagues={[
-            {
-              id: 'league-1',
-              leagueCode: 'LEAGUE1',
-              name: 'League One',
-              isActive: true,
-              iconKey: 'GOLF_FLAG',
-              memberCount: 12,
-              activeContestCount: 3,
-              cupName: 'League One Cup',
-              cupPointsScale: 'STANDARD',
-              cupCustomPoints: [],
-              hallOfLameVisible: true,
-              planEntitlements: buildPlanEntitlements(),
-              planRenewsAt: '2027-04-24T00:00:00.000Z',
-              mutedSportLeagueIds: [],
-              eventEmailDelivery: 'PER_EVENT',
-            },
-            {
-              id: 'league-2',
-              leagueCode: 'LEAGUE2',
-              name: 'League Two',
-              isActive: true,
-              iconKey: 'FOOTBALL',
-              memberCount: 10,
-              activeContestCount: 1,
-              cupName: 'League Two Cup',
-              cupPointsScale: 'STANDARD',
-              cupCustomPoints: [],
-              hallOfLameVisible: true,
-              planEntitlements: buildPlanEntitlements(),
-              planRenewsAt: '2027-04-24T00:00:00.000Z',
-              mutedSportLeagueIds: [],
-              eventEmailDelivery: 'PER_EVENT',
-            },
-          ]}
-          onCreateLeague={() => undefined}
-          onNavigate={onNavigate}
-        />
-      </MemoryRouter>,
+    const { user } = renderSelector(
+      [
+        buildLeague({ id: 'league-1', leagueCode: 'LEAGUE1', name: 'League One' }),
+        buildLeague({ id: 'league-2', leagueCode: 'LEAGUE2', name: 'League Two', iconKey: 'FOOTBALL' }),
+      ],
+      'LEAGUE1',
+      new Set(),
+      { onNavigate },
     );
 
-    fireEvent.click(screen.getByTestId('league-selector-toggle'));
-    fireEvent.click(screen.getByTestId('league-selector-option-LEAGUE2'));
+    await user.click(screen.getByTestId('league-selector-toggle'));
+    await user.click(screen.getByTestId('league-selector-option-LEAGUE2'));
 
     expect(onNavigate).toHaveBeenCalledWith('/league/LEAGUE2');
+    expect(screen.queryByTestId('league-selector-menu')).not.toBeInTheDocument();
     expect(mockLogger.info).toHaveBeenCalledWith(
       expect.objectContaining({
         action: 'leagueSelector.navigate',
@@ -95,25 +59,15 @@ describe('LeagueSelector', () => {
     );
   });
 
-  it('logs the create-league request branch', () => {
+  it('logs the create-league request branch and closes the menu', async () => {
     const onCreateLeague = vi.fn();
+    const { user } = renderSelector([], null, new Set(), { onCreateLeague });
 
-    render(
-      <MemoryRouter>
-        <LeagueSelector
-          activeLeagueCode={null}
-          commissionerLeagueIds={new Set()}
-          leagues={[]}
-          onCreateLeague={onCreateLeague}
-          onNavigate={() => undefined}
-        />
-      </MemoryRouter>,
-    );
-
-    fireEvent.click(screen.getByTestId('league-selector-toggle'));
-    fireEvent.click(screen.getByTestId('league-selector-create'));
+    await user.click(screen.getByTestId('league-selector-toggle'));
+    await user.click(screen.getByTestId('league-selector-create'));
 
     expect(onCreateLeague).toHaveBeenCalledTimes(1);
+    expect(screen.queryByTestId('league-selector-menu')).not.toBeInTheDocument();
     expect(mockLogger.info).toHaveBeenCalledWith(
       expect.objectContaining({
         action: 'leagueSelector.createRequested',
@@ -122,41 +76,95 @@ describe('LeagueSelector', () => {
     );
   });
 
-  it.each([
-    ['a click outside the menu', () => fireEvent.mouseDown(document.body)],
-    ['the Escape key', () => fireEvent.keyDown(window, { key: 'Escape' })],
-  ])('closes the open league menu on %s', (_trigger, closeMenu) => {
-    renderSelector([buildLeague({ leagueCode: 'LEAGUE1', name: 'League One' })]);
+  it('marks the current league with a check and the selected accent, and no other league', async () => {
+    const { user } = renderSelector([
+      buildLeague({ id: 'league-1', leagueCode: 'LEAGUE1', name: 'League One' }),
+      buildLeague({ id: 'league-2', leagueCode: 'LEAGUE2', name: 'League Two' }),
+    ]);
 
-    fireEvent.click(screen.getByTestId('league-selector-toggle'));
+    await user.click(screen.getByTestId('league-selector-toggle'));
+
+    const current = screen.getByTestId('league-selector-option-LEAGUE1');
+    const other = screen.getByTestId('league-selector-option-LEAGUE2');
+    expect(current).toHaveAttribute('aria-current', 'true');
+    expect(within(current).getByTestId('dropdown-menu-check')).toBeInTheDocument();
+    expect(other).not.toHaveAttribute('aria-current');
+    expect(within(other).queryByTestId('dropdown-menu-check')).not.toBeInTheDocument();
+  });
+
+  it('shows the league code and, for a league the viewer runs, Commissioner under its name', async () => {
+    const { user } = renderSelector(
+      [
+        buildLeague({ id: 'league-1', leagueCode: 'LEAGUE1', name: 'League One' }),
+        buildLeague({ id: 'league-2', leagueCode: 'LEAGUE2', name: 'League Two' }),
+      ],
+      'LEAGUE1',
+      new Set(['league-1']),
+    );
+
+    await user.click(screen.getByTestId('league-selector-toggle'));
+
+    expect(screen.getByTestId('league-selector-option-LEAGUE1')).toHaveTextContent('LEAGUE1 · Commissioner');
+    expect(screen.getByTestId('league-selector-option-LEAGUE2')).toHaveTextContent('LEAGUE2');
+    expect(screen.getByTestId('league-selector-option-LEAGUE2')).not.toHaveTextContent('Commissioner');
+  });
+
+  it('puts Create league below a divider when the viewer has leagues', async () => {
+    const { user } = renderSelector([buildLeague()]);
+
+    await user.click(screen.getByTestId('league-selector-toggle'));
+
+    const menu = within(screen.getByTestId('league-selector-menu'));
+    expect(menu.getAllByRole('separator')).toHaveLength(1);
+    expect(menu.getAllByRole('menuitem').at(-1)).toBe(screen.getByTestId('league-selector-create'));
+  });
+
+  it('shows no divider above Create league when the viewer has no leagues yet', async () => {
+    const { user } = renderSelector([], null);
+
+    await user.click(screen.getByTestId('league-selector-toggle'));
+
+    expect(within(screen.getByTestId('league-selector-menu')).queryByRole('separator')).not.toBeInTheDocument();
+  });
+
+  it.each([
+    ['a click outside the menu', (user: UserEvent) => user.click(document.body)],
+    ['the Escape key', (user: UserEvent) => user.keyboard('{Escape}')],
+    ['a second click on its button', (user: UserEvent) => user.click(screen.getByTestId('league-selector-toggle'))],
+  ])('closes the open league menu on %s', async (_trigger, closeMenu) => {
+    const { user } = renderSelector([buildLeague({ leagueCode: 'LEAGUE1', name: 'League One' })]);
+
+    await user.click(screen.getByTestId('league-selector-toggle'));
     expect(screen.getByTestId('league-selector-option-LEAGUE1')).toBeVisible();
-    closeMenu();
+    await closeMenu(user);
 
     expect(screen.queryByTestId('league-selector-option-LEAGUE1')).not.toBeInTheDocument();
   });
 
-  it('keeps the league menu open when a click lands inside it, and ignores other keys', () => {
-    renderSelector([buildLeague({ leagueCode: 'LEAGUE1', name: 'League One' })]);
+  it('keeps the league menu open when the pointer moves off it', async () => {
+    const { user } = renderSelector([buildLeague({ leagueCode: 'LEAGUE1', name: 'League One' })]);
 
-    fireEvent.click(screen.getByTestId('league-selector-toggle'));
-    fireEvent.mouseDown(screen.getByTestId('league-selector-option-LEAGUE1'));
-    fireEvent.keyDown(window, { key: 'Enter' });
+    await user.click(screen.getByTestId('league-selector-toggle'));
+    await user.hover(screen.getByTestId('league-selector-option-LEAGUE1'));
+    await user.unhover(screen.getByTestId('league-selector-menu'));
+    await user.hover(document.body);
 
     expect(screen.getByTestId('league-selector-option-LEAGUE1')).toBeVisible();
   });
 
-  it('shows its commissioner an inactive league marked not currently active in place of its league code', () => {
-    renderSelector(
+  it('shows its commissioner an inactive league, muted and marked not currently active in place of its league code', async () => {
+    const { user } = renderSelector(
       [buildLeague({ id: 'league-9', leagueCode: 'OLDLEAGUE', name: 'Old League', isActive: false })],
       'LEAGUE1',
       new Set(['league-9']),
     );
 
-    fireEvent.click(screen.getByTestId('league-selector-toggle'));
+    await user.click(screen.getByTestId('league-selector-toggle'));
 
     const option = screen.getByTestId('league-selector-option-OLDLEAGUE');
     expect(option).toHaveTextContent('Not currently active');
     expect(option).not.toHaveTextContent('OLDLEAGUE');
+    expect(screen.getByText('Old League')).toHaveClass('text-muted-foreground');
   });
 
   it('asks the member to select a league when no league is active', () => {
@@ -193,16 +201,19 @@ function renderSelector(
   leagues: SelectorLeague[],
   activeLeagueCode: string | null = 'LEAGUE1',
   commissionerLeagueIds: ReadonlySet<string> = new Set(),
+  handlers: { onCreateLeague?: () => void; onNavigate?: (path: string) => void } = {},
 ) {
-  return render(
+  const user = userEvent.setup();
+  const utils = render(
     <MemoryRouter>
       <LeagueSelector
         activeLeagueCode={activeLeagueCode}
         commissionerLeagueIds={commissionerLeagueIds}
         leagues={leagues}
-        onCreateLeague={() => undefined}
-        onNavigate={() => undefined}
+        onCreateLeague={handlers.onCreateLeague ?? (() => undefined)}
+        onNavigate={handlers.onNavigate ?? (() => undefined)}
       />
     </MemoryRouter>,
   );
+  return { ...utils, user };
 }

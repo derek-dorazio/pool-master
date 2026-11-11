@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { describe, expect, it } from "vitest";
-import { Button, LinkButton, MenuItem } from "./button";
+import { Button, LinkButton } from "./button";
 
 describe("pool-master-3lo.1: shared Button primitives", () => {
   it("rule: renders semantic button variants without losing native button behavior", () => {
@@ -61,22 +61,6 @@ describe("pool-master-3lo.1: shared Button primitives", () => {
     expect(screen.getByRole("link", { name: "See all cups" })).toHaveClass("normal-case", "w-full", "justify-start");
   });
 
-  it("draws a menu item as a quiet sentence-case row, tinted only when it is the current entry", () => {
-    render(
-      <>
-        <MenuItem>Remove owner</MenuItem>
-        <MenuItem isSelected>Math Works</MenuItem>
-      </>,
-    );
-
-    const plain = screen.getByRole("button", { name: "Remove owner" });
-    const current = screen.getByRole("button", { name: "Math Works" });
-
-    expect(plain).toHaveAttribute("type", "button");
-    expect(plain).toHaveClass("normal-case", "w-full", "text-left", "hover:bg-muted/50");
-    expect(plain).not.toHaveClass("bg-primary", "bg-primary/10");
-    expect(current).toHaveClass("bg-primary/10");
-  });
 
   it("rule: marks loading buttons disabled for pending actions", () => {
     render(<Button isLoading>Saving</Button>);

@@ -108,21 +108,3 @@ export function LinkButton({
     </Link>
   );
 }
-
-export type MenuItemProps = Omit<ButtonProps, "layout" | "size" | "variant"> & {
-  /** The entry that is current, such as the league being viewed. */
-  isSelected?: boolean;
-};
-
-/** One entry in a dropdown menu: a quiet full-width row that tints when it is the current one. */
-export function MenuItem({ className, isSelected = false, ...props }: MenuItemProps) {
-  return (
-    <Button
-      className={cn("gap-3 rounded-xl px-3 font-medium", className)}
-      layout="row"
-      size="sm"
-      variant={isSelected ? "subtle" : "ghost"}
-      {...props}
-    />
-  );
-}

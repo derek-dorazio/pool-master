@@ -4,7 +4,7 @@ export { AdminAreaLayout, LeagueMenu } from "./nav-menus";
 export type { NavMenuItem } from "./nav-menus";
 export { BulkUploadPanel } from "./bulk-upload-panel";
 export { UploadPreviewTable } from "./upload-preview-table";
-export { Button, LinkButton, type LinkButtonProps, MenuItem } from "./button";
+export { Button, LinkButton, type LinkButtonProps } from "./button";
 export { CopyButton } from "./copy-button";
 export { Breadcrumbs, PageHeader, type PageHeaderProps } from "./page-header";
 export { PageTabs, type PageLinkTab, type PageStateTab } from "./page-tabs";
@@ -61,6 +61,17 @@ export {
   TabsList,
   TabsTrigger,
 } from "./tabs";
+export {
+  DropdownMenu,
+  DropdownMenuCheck,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuItemText,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  DropdownMenuTriggerSlot,
+} from "./dropdown-menu";
 export { Modal } from "./modal";
 export { MutationActionToast } from "./mutation-action-toast";
 export { useMutationActionWorkflow } from "./mutation-action-workflow";
