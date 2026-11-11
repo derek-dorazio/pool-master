@@ -56,12 +56,12 @@ function renderHistory(path = '/league/BIGDAWGS/contests/history') {
 /** The server's years with a finished contest: 2026, and 2025 (one final at 11pm New York on New Year's Eve). */
 const YEARS = [2026, 2025];
 
-function prime(years = YEARS) {
+function prime(years = YEARS, squadMembership: ReturnType<typeof buildLeagueSquadMember> | null = buildLeagueSquadMember()) {
   getCurrentUserMock.mockResolvedValue(apiSuccess({ user: buildCurrentUser() }));
   refreshTokenMock.mockResolvedValue({ data: null });
   getLeagueByCodeMock.mockResolvedValue(apiSuccess(getLeagueByCodeData(
     buildLeague(),
-    { membership: buildLeagueMembership(), squadMembership: buildLeagueSquadMember() },
+    { membership: buildLeagueMembership(), squadMembership },
   )));
   listContestFinishedYearsMock.mockResolvedValue(apiSuccess({ years }));
   listContestResultsMock.mockImplementation(({ query }: { query: { year: number } }) => Promise.resolve(apiSuccess({
@@ -82,6 +82,32 @@ describe('LeagueContestHistoryPage', () => {
     expect(row).toHaveTextContent('Won by Birdie Bandits · 12 entries');
     expect(row).toHaveAttribute('href', '/league/BIGDAWGS/contests/contest-1/leaderboard');
     expect(screen.getByTestId('league-contests-history')).toHaveTextContent('Completed in 2026');
+    expect(listContestResultsMock).toHaveBeenCalledWith(expect.objectContaining({ query: { year: 2026, finishOf: 'team-1' } }));
+  });
+
+  it('shows the viewer\'s team\'s place at the end of each row it finished, "3rd" or a shared "T2", and nothing on a row it had no entry in', async () => {
+    prime();
+    listContestResultsMock.mockResolvedValue(apiSuccess({
+      contests: [
+        buildContestResult({ contestId: 'contest-3', squadFinish: { place: 3, displayPlace: '3', points: 600 } }),
+        buildContestResult({ contestId: 'contest-2', squadFinish: { place: 2, displayPlace: 'T2', points: 725 } }),
+        buildContestResult({ contestId: 'contest-1' }),
+      ],
+    }));
+
+    renderHistory();
+
+    expect(await screen.findByTestId('league-history-contest-contest-3-trailing')).toHaveTextContent(/^3rd$/);
+    expect(screen.getByTestId('league-history-contest-contest-2-trailing')).toHaveTextContent(/^T2$/);
+    expect(screen.queryByTestId('league-history-contest-contest-1-trailing')).not.toBeInTheDocument();
+  });
+
+  it('asks for no team\'s finish when the viewer has no team in the league', async () => {
+    prime(YEARS, null);
+
+    renderHistory();
+
+    await screen.findByTestId('league-history-contest-contest-1');
     expect(listContestResultsMock).toHaveBeenCalledWith(expect.objectContaining({ query: { year: 2026 } }));
   });
 

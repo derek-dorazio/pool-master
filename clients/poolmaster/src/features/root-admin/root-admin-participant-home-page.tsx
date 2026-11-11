@@ -74,13 +74,11 @@ function ParticipantHome({ player }: { player: ParticipantDto }) {
     <div className="space-y-8">
       <PageHeader
         icon={<UserRound aria-hidden size={22} />}
-        meta={(
-          <>
-            <StatusBadge tone={participantStatusTone(player.status)}>
-              {participantStatusLabel(player.status)}
-            </StatusBadge>
-            {player.nationality ? <span>{player.nationality}</span> : null}
-          </>
+        meta={player.nationality ? <span>{player.nationality}</span> : undefined}
+        status={(
+          <StatusBadge tone={participantStatusTone(player.status)}>
+            {participantStatusLabel(player.status)}
+          </StatusBadge>
         )}
         title={player.name}
         testId="root-admin-participant-identity"

@@ -113,8 +113,8 @@ describe('LeaderboardFrame', () => {
   it('frames the board on the Leaderboard option with its notes under the title', () => {
     renderFrame();
 
-    expect(screen.getByTestId('contest-leaderboard-heading')).toHaveTextContent('Masters Pool');
-    expect(screen.getByTestId('contest-menu-leaderboard')).toBeChecked();
+    expect(screen.getByTestId('contest-leaderboard-header-name')).toHaveTextContent('Masters Pool');
+    expect(screen.getByTestId('contest-menu-leaderboard')).toHaveAttribute('aria-current', 'page');
     expect(screen.getByTestId('contest-leaderboard')).toHaveTextContent('Your best: T1');
     expect(screen.getByTestId('contest-leaderboard')).toHaveTextContent('The board');
   });

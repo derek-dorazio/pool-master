@@ -250,6 +250,32 @@ describe('HistoryService (#837)', () => {
 
     await expect(service.listYearContests(LEAGUE, 2026, { squadId: 'elsewhere' })).rejects.toBeInstanceOf(HistorySquadNotFoundError);
   });
+
+  it('lists every contest with one squad\'s finish on each, counted or not, and none where it did not place, without narrowing the list', async () => {
+    const { contest, finish, service } = build();
+    contest('masters', '2026-04-13T22:00:00.000Z');
+    finish('masters', 2026, [['eagles', 1, 1], ['bogeys', 2, 2], ['birdies', 2, 2]]);
+    contest('open', '2026-07-20T22:00:00.000Z');
+    finish('open', 2026, [['bogeys', 1, 1]], CupWeight.NOT_COUNTED);
+    contest('pga', '2026-05-20T22:00:00.000Z');
+    finish('pga', 2026, [['eagles', 1, 1]]);
+
+    const contests = await service.listYearContests(LEAGUE, 2026, { finishOf: 'bogeys' });
+
+    expect(contests.map((row) => [row.contestId, row.squadFinish])).toEqual([
+      ['open', { place: 1, tiedCount: 1, points: 0 }],
+      ['pga', null],
+      ['masters', { place: 2, tiedCount: 2, points: 800 }],
+    ]);
+  });
+
+  it('refuses the finish of a squad of another league as not found', async () => {
+    const { contest, finish, service } = build();
+    contest('masters', '2026-04-13T22:00:00.000Z');
+    finish('masters', 2026, [['eagles', 1, 1]]);
+
+    await expect(service.listYearContests(LEAGUE, 2026, { finishOf: 'elsewhere' })).rejects.toBeInstanceOf(HistorySquadNotFoundError);
+  });
 });
 
 /** A cup of `seasonYear`: its standings as [squad, position, points, trophy] and how many contests counted. */

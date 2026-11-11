@@ -26,14 +26,14 @@ export function SportLeagueHeading({ sportLeague }: { sportLeague: SportLeagueDt
     <PageHeader
       icon={<Route aria-hidden size={22} />}
       meta={(
-        <>
-          <StatusBadge tone={sportLeague.isActive ? 'active' : 'inactive'}>
-            {sportLeague.isActive ? 'Active' : 'Inactive'}
-          </StatusBadge>
-          <span data-testid="root-admin-sport-league-counts">
-            {`${sportLeague.affiliationCount} ${sportLeague.affiliationCount === 1 ? participant.one : participant.many} · ${sportLeague.sportEventCount} ${sportLeague.sportEventCount === 1 ? event.one : event.many}`}
-          </span>
-        </>
+        <span data-testid="root-admin-sport-league-counts">
+          {`${sportLeague.affiliationCount} ${sportLeague.affiliationCount === 1 ? participant.one : participant.many} · ${sportLeague.sportEventCount} ${sportLeague.sportEventCount === 1 ? event.one : event.many}`}
+        </span>
+      )}
+      status={(
+        <StatusBadge tone={sportLeague.isActive ? 'active' : 'inactive'}>
+          {sportLeague.isActive ? 'Active' : 'Inactive'}
+        </StatusBadge>
       )}
       title={sportLeague.name}
       testId="root-admin-sport-league-identity"

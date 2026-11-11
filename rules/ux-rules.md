@@ -251,8 +251,11 @@ administration area (root admin included), reusing the same shared components.
    its landing page's `PageHeader`. No page repeats them as an editable detail
    panel, and a code the viewer cannot use (a league code, which members never
    need: they join by invite link) is not shown. Every page opens with the same
-   `PageHeader`: the title straight on the page with no card, an optional icon, one short fact line, and at most
-   two small actions or the page's search at the right. No sentence says what
+   `PageHeader`: an optional breadcrumb line, the title straight on the page with no card, an optional icon, one short fact line, and at most
+   two small actions or the page's search at the right. Its status slot holds one
+   compact chip (a contest's Live or Final, "12 entries", "3 members") at the far
+   right of the header's first line, beside the breadcrumb or at the end of the
+   title row, and stays on that line on a phone, so it adds no height. No sentence says what
    the page is; a helper line stays only when it states a rule the reader needs.
    A page's views are underlined `PageTabs` on the header's bottom line, with a
    filter that applies to every tab alone at the row's right end. Title, facts
@@ -275,11 +278,12 @@ administration area (root admin included), reusing the same shared components.
    next contest to enter, with its cutoff), then live standings, then their own
    squad.
 9. **One header per entity's pages.** Pages that show one entity from
-   different angles share one header and a segmented sub-menu between them,
+   different angles share one header and link `PageTabs` between them,
    not "Back to" and "View" links on each page. A contest's pages share
-   `ContestPageFrame`: a breadcrumb (Contests / contest, and / entry on an entry
+   `ContestPageFrame`, the plain `PageHeader` with no card: a breadcrumb (Contests / contest, and / entry on an entry
    page) whose Contests opens the league's contests on that contest's tab,
-   scrolled to it and tinted (`?focus=`), then the sub-menu Leaderboard once
+   scrolled to it and tinted (`?focus=`), the contest's status badge in the
+   status slot, then the tabs Leaderboard once
    picks are revealed, Entries, and My entry once the viewer has one (My
    entries, opening Entries on only theirs, once they have two or more). A
    contest page shows its way to play in words and links to How to Play opened
