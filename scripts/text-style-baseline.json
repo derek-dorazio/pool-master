@@ -30,6 +30,7 @@
   "clients/poolmaster/src/features/contests/contest-entry-selection.tsx": 30,
   "clients/poolmaster/src/features/contests/contest-events-page.tsx": 20,
   "clients/poolmaster/src/features/contests/contest-leaderboard-page.tsx": 34,
+  "clients/poolmaster/src/features/contests/contest-row.tsx": 2,
   "clients/poolmaster/src/features/contests/contest-rules-fields.tsx": 7,
   "clients/poolmaster/src/features/contests/contest-status-card.tsx": 25,
   "clients/poolmaster/src/features/contests/create-contest-page.tsx": 21,
