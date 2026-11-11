@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { DateDisplay, SectionRow } from '@/features/shared/ui';
+import { DateDisplay, SectionRow, Text } from '@/features/shared/ui';
 
 /**
  * One contest in a list (#1279), drawn the same way on the contests page, a cup, a championship
@@ -41,11 +41,11 @@ export function ContestRow({
 }) {
   const date = completedAt ? (
     <span data-testid={`${testId}-date`}>
-      Finished <DateDisplay className="text-muted-foreground" timeStyle={null} value={completedAt} />
+      Finished <Text size="inherit" tone="muted"><DateDisplay timeStyle={null} value={completedAt} /></Text>
     </span>
   ) : startsAt ? (
     <span data-testid={`${testId}-date`}>
-      Starts <DateDisplay className="text-muted-foreground" value={startsAt} />
+      Starts <Text size="inherit" tone="muted"><DateDisplay value={startsAt} /></Text>
     </span>
   ) : null;
   const facts = date || details ? (

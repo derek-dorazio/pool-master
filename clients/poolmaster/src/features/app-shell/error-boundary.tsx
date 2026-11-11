@@ -1,6 +1,6 @@
 import type { ErrorInfo, ReactNode } from 'react';
 import { Component } from 'react';
-import { Button, Heading } from '@/features/shared/ui';
+import { Button, Heading, Text } from '@/features/shared/ui';
 import { logger } from '@/lib/logger';
 import { PRODUCT_NAME } from '@poolmaster/shared/domain';
 
@@ -44,17 +44,15 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     if (this.state.hasError) {
       return (
         <section className="rounded-4xl border border-destructive/30 bg-card p-8 shadow-sm">
-          <span className="text-xs font-medium uppercase text-destructive">
-            Application Error
-          </span>
+          <Text tone="danger" variant="label">Application Error</Text>
           <div className="mt-4 space-y-4">
             <div className="space-y-3">
               <Heading level={2} tone="inherit" variant="page">
                 {PRODUCT_NAME} hit an unexpected problem.
               </Heading>
-              <p className="max-w-2xl text-base leading-7 text-muted-foreground">
+              <Text as="p" className="max-w-2xl leading-7" size="base" variant="meta">
                 Try reloading the page. If the problem keeps happening, try again later.
-              </p>
+              </Text>
             </div>
             <Button
               className="inline-flex rounded-full bg-primary px-5 py-2 text-sm font-medium text-primary-foreground transition hover:opacity-90"

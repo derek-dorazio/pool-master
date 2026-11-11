@@ -8,6 +8,7 @@ import { LeaderboardFrame, ScoreboardGrid, YourBestNote } from './leaderboard-ki
 import { useLeaderboardFallback } from './use-leaderboard-fallback';
 import { useContestLeague } from './use-contest-league';
 import { usePickEmLeaderboardQuery } from './use-contest-leaderboard';
+import { Text } from '@/features/shared/ui';
 
 type PickEmRow = PickEmLeaderboardResponse['entries'][number];
 type PickEmWeek = PickEmLeaderboardResponse['weeks'][number];
@@ -31,7 +32,7 @@ function WeekCell({ entryId, week }: { entryId: string; week: PickEmRow['weeks']
   return (
     <span className="inline-flex items-center gap-1.5" data-testid={`pick-em-leaderboard-week-${week.sportEventId}-${entryId}`}>
       {week.points === null ? '—' : formatPoints(week.points)}
-      {week.displayPosition ? <span className="text-xs text-muted-foreground">{week.displayPosition}</span> : null}
+      {week.displayPosition ? <Text variant="caption">{week.displayPosition}</Text> : null}
       {week.weeklyWinner ? (
         <Trophy aria-label="Weekly winner" className="text-primary" data-testid={`pick-em-leaderboard-winner-${week.sportEventId}-${entryId}`} size={14} />
       ) : null}

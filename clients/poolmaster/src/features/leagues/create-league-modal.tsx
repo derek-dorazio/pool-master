@@ -11,6 +11,7 @@ import {
   FormField,
   Input,
   Modal,
+  Text,
   Textarea,
   Tile,
 } from "@/features/shared/ui";
@@ -256,7 +257,7 @@ export function CreateLeagueModal({
         <Chip>
           Commissioner setup
         </Chip>
-        <div className="flex items-center gap-2 text-xs font-medium uppercase text-muted-foreground">
+        <Text as="div" className="flex items-center gap-2" variant="label">
           <span
             className={`rounded-full border px-3 py-1 ${
               step === WIZARD_STEP_DETAILS
@@ -275,11 +276,11 @@ export function CreateLeagueModal({
           >
             2 Review
           </span>
-        </div>
+        </Text>
         {nextStep ? (
-          <p className="rounded-lg bg-muted px-3 py-2 text-sm text-foreground" data-testid="create-league-next-step">
+          <Text as="p" className="rounded-lg bg-muted px-3 py-2" data-testid="create-league-next-step" tone="default">
             {`Next: ${nextStep}`}
-          </p>
+          </Text>
         ) : null}
       </div>
 
@@ -355,20 +356,20 @@ export function CreateLeagueModal({
         ) : (
           <section className="space-y-4">
             <Tile padding="sm" radius="lg" variant="subtle">
-              <div className="text-xs font-medium uppercase text-muted-foreground">
+              <Text as="div" variant="label">
                 Review
-              </div>
+              </Text>
               <div className="mt-4 grid gap-4 sm:grid-cols-2">
                 <div>
-                  <div className="text-xs uppercase text-muted-foreground">
+                  <Text as="div" variant="label">
                     League name
-                  </div>
-                  <div className="mt-1 text-base font-medium">{name}</div>
+                  </Text>
+                  <Text as="div" className="mt-1" size="base" tone="inherit" variant="strong">{name}</Text>
                 </div>
                 <div>
-                  <div className="text-xs uppercase text-muted-foreground">
+                  <Text as="div" variant="label">
                     League code
-                  </div>
+                  </Text>
                   <div className="mt-1 font-mono text-base font-medium uppercase">
                     {leagueCode}
                   </div>
@@ -376,23 +377,25 @@ export function CreateLeagueModal({
               </div>
               {description?.trim() ? (
                 <div className="mt-4">
-                  <div className="text-xs uppercase text-muted-foreground">
+                  <Text as="div" variant="label">
                     Description
-                  </div>
-                  <div className="mt-1 text-sm text-foreground">
+                  </Text>
+                  <Text as="div" className="mt-1" tone="default">
                     {description}
-                  </div>
+                  </Text>
                 </div>
               ) : null}
             </Tile>
 
             <Tile
-              className="bg-muted/30 text-sm text-muted-foreground"
+              className="bg-muted/30"
               padding="sm"
               radius="lg"
             >
-              Your league is private. After it is created, invite members from
-              League Home by email or with a shareable invite link.
+              <Text as="p" variant="meta">
+                Your league is private. After it is created, invite members from
+                League Home by email or with a shareable invite link.
+              </Text>
             </Tile>
           </section>
         )}

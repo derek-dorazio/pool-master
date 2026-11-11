@@ -1,6 +1,6 @@
 import { Check } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { Button, cn } from '@/features/shared/ui';
+import { Button, cn, Text } from '@/features/shared/ui';
 
 /**
  * One choice on a pick screen (#1278): a team in a pick'em, survivor or bracket game, or a pick'em
@@ -44,7 +44,7 @@ export function PickOption({
     >
       {children}
       {isPicked ? <Check aria-label="Your pick" size={16} /> : null}
-      {isUsed && !isPicked ? <span className="text-xs text-muted-foreground">Used</span> : null}
+      {isUsed && !isPicked ? <Text variant="caption">Used</Text> : null}
     </Button>
   );
 }

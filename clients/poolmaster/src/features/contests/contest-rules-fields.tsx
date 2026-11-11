@@ -13,7 +13,7 @@ import {
   getTieredRosterSize,
   isSecondChanceBracket,
 } from '@poolmaster/shared/domain';
-import { Checkbox, FormField, Input, SegmentedControl, Select } from '@/features/shared/ui';
+import { Checkbox, FormField, Input, SegmentedControl, Select, Text } from '@/features/shared/ui';
 import type { BracketStartRoundOption } from './bracket-start-round';
 import { defaultCountedScoresFor, perEntryLabel, tiersInPlayFor, type ContestRulesValues, type EditableSelectionType } from './contest-rules-form';
 
@@ -122,16 +122,16 @@ function BudgetRulesInputs({
           />
         </FormField>
       </div>
-      <div className="rounded-xl bg-muted/40 px-4 py-3 text-sm" data-testid="contest-budget-salary-cap">
-        <span className="font-semibold">
+      <Text as="div" className="rounded-xl bg-muted/40 px-4 py-3" data-testid="contest-budget-salary-cap">
+        <Text size="inherit" weight="semibold">
           {salaryCap === null ? 'Salary cap not set' : `${formatDollars(salaryCap)} salary cap`}
-        </span>
-        <span className="block text-xs text-muted-foreground">
+        </Text>
+        <Text className="block" variant="caption">
           {salaryCap === null
             ? `The event’s ${participant.many} have no prices yet.`
             : 'Set by the event’s prices, the same for every budget contest on it.'}
-        </span>
-      </div>
+        </Text>
+      </Text>
     </div>
   );
 }
@@ -213,7 +213,7 @@ function PickEmRulesInputs({
           value={values.pickEmMode}
         />
       </FormField>
-      <div className="space-y-1 text-sm">
+      <Text as="div" className="space-y-1">
         <label className="flex items-center gap-3 font-medium text-foreground">
           <Checkbox
             aria-describedby="contest-pick-em-against-the-spread-hint"
@@ -223,8 +223,8 @@ function PickEmRulesInputs({
           />
           <span>Against the spread</span>
         </label>
-        <p className="text-muted-foreground" id="contest-pick-em-against-the-spread-hint">{AGAINST_THE_SPREAD_HINT}</p>
-      </div>
+        <Text as="p" id="contest-pick-em-against-the-spread-hint" size="inherit" tone="muted">{AGAINST_THE_SPREAD_HINT}</Text>
+      </Text>
     </div>
   );
 }
@@ -264,7 +264,7 @@ function BracketRulesInputs({
           </Select>
         </FormField>
       ) : null}
-      <p className="text-sm text-muted-foreground" data-testid="contest-bracket-rules">{describeBracketRules(startRoundName)}</p>
+      <Text as="p" data-testid="contest-bracket-rules" variant="meta">{describeBracketRules(startRoundName)}</Text>
     </div>
   );
 }
@@ -297,8 +297,8 @@ const RULES_INPUTS: Record<EditableSelectionType, (props: RulesInputsProps) => R
   ),
   [SelectionType.SURVIVOR]: ({ onChange, values }: RulesInputsProps) => (
     <div className="space-y-4">
-      <p className="text-sm text-muted-foreground" data-testid="contest-survivor-rules">{describeSurvivorRules(values.survivorReuseTeams)}</p>
-      <div className="space-y-1 text-sm">
+      <Text as="p" data-testid="contest-survivor-rules" variant="meta">{describeSurvivorRules(values.survivorReuseTeams)}</Text>
+      <Text as="div" className="space-y-1">
         <label className="flex items-center gap-3 font-medium text-foreground">
           <Checkbox
             aria-describedby="contest-survivor-reuse-teams-hint"
@@ -308,8 +308,8 @@ const RULES_INPUTS: Record<EditableSelectionType, (props: RulesInputsProps) => R
           />
           <span>Teams can be picked again once every team is used</span>
         </label>
-        <p className="text-muted-foreground" id="contest-survivor-reuse-teams-hint">{SURVIVOR_REUSE_TEAMS_HINT}</p>
-      </div>
+        <Text as="p" id="contest-survivor-reuse-teams-hint" size="inherit" tone="muted">{SURVIVOR_REUSE_TEAMS_HINT}</Text>
+      </Text>
     </div>
   ),
   [SelectionType.SQUARES]: ({ onChange, values }: RulesInputsProps) => (
@@ -358,7 +358,7 @@ export function ContestRulesFields({
       {RULES_INPUTS[selectionType]({ bracketStartRounds, onChange, participant, salaryCap, tierCount, values })}
       {selectionType === SelectionType.SQUARES ? (
         // The box limit is per entry, so a squares contest takes one entry per member (#711).
-        <p className="text-sm text-muted-foreground" data-testid="contest-squares-one-entry">One entry per member, which holds their boxes.</p>
+        <Text as="p" data-testid="contest-squares-one-entry" variant="meta">One entry per member, which holds their boxes.</Text>
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
           <FormField label="Entries per member">

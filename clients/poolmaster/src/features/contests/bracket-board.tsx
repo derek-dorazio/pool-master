@@ -1,4 +1,4 @@
-import { Chip, Heading } from '@/features/shared/ui';
+import { Chip, Heading, Text } from '@/features/shared/ui';
 import {
   describeOpenSide,
   describePickOutcome,
@@ -32,12 +32,12 @@ function GameCard({
       className="space-y-2 rounded-2xl border border-border bg-background p-3"
       data-testid={`bracket-game-${game.matchNumber}`}
     >
-      <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
+      <Text as="div" className="flex items-center justify-between gap-2" variant="caption">
         <span>{`Game ${game.matchNumber}`}</span>
         {outcome ? (
           <Chip data-testid={`bracket-game-${game.matchNumber}-outcome`} tone={outcome.tone}>{outcome.label}</Chip>
         ) : null}
-      </div>
+      </Text>
       {offeredTeams(game).map((team, index) => {
         if (!team) {
           return (

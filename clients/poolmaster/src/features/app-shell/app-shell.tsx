@@ -19,7 +19,7 @@ import { LeagueMenuBar } from "@/features/leagues/league-menu-bar";
 import { useLeaguesQuery } from "@/features/leagues/use-leagues-query";
 import { LeagueSelector } from "./league-selector";
 import { PRODUCT_NAME, PRODUCT_TAGLINE } from "@poolmaster/shared/domain";
-import { StatusBadge } from "@/features/shared/ui";
+import { StatusBadge, Text } from "@/features/shared/ui";
 
 /** The public How to Play page (#803): linked from the signed-out header and from every page's footer. */
 const HOW_TO_PLAY_PATH = "/how-to-play";
@@ -243,14 +243,14 @@ export function AppShell() {
       </div>
 
       <footer className="border-t border-border">
-        <div className="mx-auto flex max-w-6xl flex-wrap gap-4 px-4 py-6 text-sm text-muted-foreground sm:px-6">
+        <Text as="div" className="mx-auto flex max-w-6xl flex-wrap gap-4 px-4 py-6 sm:px-6" variant="meta">
           <Link className="hover:text-foreground" data-testid="app-shell-footer-how-to-play" to={HOW_TO_PLAY_PATH}>
             How to Play
           </Link>
           <Link className="hover:text-foreground" data-testid="app-shell-footer-plans" to={PLANS_PATH}>
             Plans
           </Link>
-        </div>
+        </Text>
       </footer>
 
       {shouldLoadLeagueShell ? (
