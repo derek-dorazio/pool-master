@@ -84,7 +84,7 @@ type DropdownMenuContentProps = {
 
 /**
  * The open menu: a fixed width whatever the items say, so long names end in an ellipsis inside
- * it. On a phone it never runs past the screen's side margins.
+ * it. On a phone it takes the screen's width less the side margins.
  */
 export function DropdownMenuContent({ align = "start", children, testId, width }: DropdownMenuContentProps) {
   return (
@@ -92,7 +92,7 @@ export function DropdownMenuContent({ align = "start", children, testId, width }
       <RadixMenu.Content
         align={align}
         className={cn(
-          "z-50 grid max-w-[calc(100vw-2rem)] gap-0.5 rounded-lg border border-border bg-popover p-1.5 text-popover-foreground shadow-lg",
+          "z-50 grid max-w-[calc(100vw-2rem)] gap-0.5 max-sm:w-[calc(100vw-2rem)] rounded-lg border border-border bg-popover p-1.5 text-popover-foreground shadow-lg",
           contentWidthClassNames[width],
         )}
         collisionPadding={16}
