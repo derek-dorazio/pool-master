@@ -98,9 +98,9 @@ export function createHistoryHandlers(
     request: FastifyRequest<{ Params: { id: string }; Querystring: ListContestResultsQuery }>,
     reply: FastifyReply,
   ): Promise<void> {
-    const { year, squadId, place } = request.query;
+    const { year, squadId, place, finishOf } = request.query;
     try {
-      const contests = await service.listYearContests(request.params.id, year, { squadId, place });
+      const contests = await service.listYearContests(request.params.id, year, { squadId, place, finishOf });
       return reply.send({ contests: contests.map(toContestResultSummaryDto) });
     } catch (error) {
       if (error instanceof HistorySquadRequiredError) {

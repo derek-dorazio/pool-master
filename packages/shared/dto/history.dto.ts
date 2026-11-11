@@ -15,14 +15,15 @@ export const ListContestResultsQuerySchema = z.object({
   year: z.number().int().min(2000).max(9999).describe('The championship year, US Eastern, the contests went final in, such as 2026.'),
   squadId: z.uuid().optional().describe('Only the counted contests this squad placed in: its Played count.'),
   place: z.number().int().min(1).max(CHAMPIONSHIP_MATRIX_PLACES).optional().describe('With squadId, only the counted contests the squad finished in this place: its matrix cell. Refused without squadId (400 SQUAD_ID_REQUIRED).'),
-}).describe('Which year\'s contests to list, and for which squad or matrix cell.');
+  finishOf: z.uuid().optional().describe('The squad whose finish each listed contest carries in squadFinish, without narrowing the list (#1570): any finish of its in the contest, counted or not. Defaults to squadId. A squad outside the league is 404 SQUAD_NOT_FOUND.'),
+}).describe('Which year\'s contests to list, for which squad or matrix cell, and whose finish each carries.');
 export type ListContestResultsQuery = z.infer<typeof ListContestResultsQuerySchema>;
 
 export const ContestResultSquadFinishDtoSchema = z.object({
   place: z.number().int().min(1).describe('The squad\'s place from its best entry, 1 best.'),
   displayPlace: z.string().describe('The place as shown: "T2" for a shared 2nd.'),
   points: z.number().int().describe('Championship points in tenths of a point, as earned at settlement: 725 is 72.5.'),
-}).describe('The filtered squad\'s finish in one contest.');
+}).describe('A squad\'s finish in one contest: the filtered squad\'s, or `finishOf`\'s.');
 export type ContestResultSquadFinishDto = z.infer<typeof ContestResultSquadFinishDtoSchema>;
 
 export const ContestResultSummaryDtoSchema = z.object({
@@ -34,7 +35,7 @@ export const ContestResultSummaryDtoSchema = z.object({
   rankedEntryCount: z.number().int().describe('Entries ranked in it; 0 when nobody placed.'),
   count: z.enum(ContestResultCount).describe('COUNTED: squads placed and earned championship points. NOT_COUNTED: its weight is not counted, so its places earn nothing. NO_RESULT: nobody placed, every event cancelled.'),
   winners: z.array(ChampionshipSquadDtoSchema).describe('The squads that finished 1st, several on a tie, in name order; empty when nobody placed.'),
-  squadFinish: ContestResultSquadFinishDtoSchema.nullable().describe('With a squadId filter, that squad\'s finish; null otherwise.'),
+  squadFinish: ContestResultSquadFinishDtoSchema.nullable().describe('The finish of `finishOf`, else of the squadId filter\'s squad; null without either, or when that squad did not place in the contest.'),
 }).describe('One contest that went final in the year, with who won it.');
 export type ContestResultSummaryDto = z.infer<typeof ContestResultSummaryDtoSchema>;
 
