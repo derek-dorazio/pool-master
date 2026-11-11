@@ -17643,6 +17643,11 @@ export interface components {
              */
             ending: "PLAYED" | "RETIREMENT" | "WALKOVER" | "DEFAULT";
             /**
+             * @description Who set the result: ADMIN, or PROVIDER for the data feed of the game the match is linked to; null while the match has no result. A provider's later final never overwrites an admin's result.
+             * @enum {string|null}
+             */
+            resultSource: "ADMIN" | "PROVIDER" | null;
+            /**
              * Format: uuid
              * @description The match the winner moves on to; null for the final.
              */
@@ -17718,6 +17723,11 @@ export interface components {
                  * @enum {string}
                  */
                 ending: "PLAYED" | "RETIREMENT" | "WALKOVER" | "DEFAULT";
+                /**
+                 * @description Who set the result: ADMIN, or PROVIDER for the data feed of the game the match is linked to; null while the match has no result. A provider's later final never overwrites an admin's result.
+                 * @enum {string|null}
+                 */
+                resultSource: "ADMIN" | "PROVIDER" | null;
                 /**
                  * Format: uuid
                  * @description The match the winner moves on to; null for the final.
@@ -17795,6 +17805,11 @@ export interface components {
                  * @enum {string}
                  */
                 ending: "PLAYED" | "RETIREMENT" | "WALKOVER" | "DEFAULT";
+                /**
+                 * @description Who set the result: ADMIN, or PROVIDER for the data feed of the game the match is linked to; null while the match has no result. A provider's later final never overwrites an admin's result.
+                 * @enum {string|null}
+                 */
+                resultSource: "ADMIN" | "PROVIDER" | null;
                 /**
                  * Format: uuid
                  * @description The match the winner moves on to; null for the final.
@@ -18089,6 +18104,11 @@ export interface components {
                  * @enum {string}
                  */
                 ending: "PLAYED" | "RETIREMENT" | "WALKOVER" | "DEFAULT";
+                /**
+                 * @description Who set the result: ADMIN, or PROVIDER for the data feed of the game the match is linked to; null while the match has no result. A provider's later final never overwrites an admin's result.
+                 * @enum {string|null}
+                 */
+                resultSource: "ADMIN" | "PROVIDER" | null;
                 /**
                  * Format: uuid
                  * @description The match the winner moves on to; null for the final.

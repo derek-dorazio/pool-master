@@ -93,7 +93,10 @@ Derek accepted every recommendation below on 2026-11-09.
   match advances the winner and moves standings. Decided: yes, apply it when the
   provider marks the game final, since the admin can still correct or clear a result under
   the existing lock rules, and waiting for an admin brings back the person in the loop this
-  work removes. Show the source ("from BALLDONTLIE") on the admin's results page.
+  work removes. Show the source ("from BALLDONTLIE") on the admin's results page. Each match
+  records who set its result (#1531, 2026-11-11): an admin's correction stands, and a
+  provider's later final that disagrees is logged, not written. Clearing it hands the match
+  back to the provider. Admin entry is a stop gap for leagues with no feed.
 - **Q2 (decided). Live scores for brackets.** Matches today hold only final results. Decided:
   store and show the in-progress score as well, read-only, so a bracket page can show a game
   live.

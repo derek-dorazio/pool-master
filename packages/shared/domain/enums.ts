@@ -389,6 +389,16 @@ export const ParticipantRoundStatus = {
 export type ParticipantRoundStatus = (typeof ParticipantRoundStatus)[keyof typeof ParticipantRoundStatus];
 
 /**
+ * Who set a match's result (#1496, #1531): an admin, or the provider its game is linked to. A
+ * provider's later final never overwrites an admin's result; the sync logs the disagreement.
+ */
+export const MatchResultSource = {
+  ADMIN: 'ADMIN',
+  PROVIDER: 'PROVIDER',
+} as const;
+export type MatchResultSource = (typeof MatchResultSource)[keyof typeof MatchResultSource];
+
+/**
  * Where a provider says a game stands (#1496), as a `GAME` live-score update reports it. Only a
  * FINAL game decides its match; the others write no result.
  */

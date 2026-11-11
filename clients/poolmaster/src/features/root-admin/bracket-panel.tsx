@@ -1,4 +1,4 @@
-import { getSportDefinition, SportEventStatus } from '@poolmaster/shared/domain';
+import { getSportDefinition, MatchResultSource, SportEventStatus } from '@poolmaster/shared/domain';
 import type { SportEventDto } from '@/lib/api';
 import { Alert, Heading, PanelCard, SimpleTable, TableBody, TableHead, TableHeaderCell } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
@@ -10,6 +10,7 @@ import { ReseedRoundsCard } from './reseed-rounds-card';
 import { WithdrawalsCard } from './withdrawals-card';
 import { useEventMatchPeriods, useEventRoundLabel } from './use-sport-catalog';
 import { useSportEventBracketQuery, useSportEventFieldQuery } from './use-sport-event';
+import { useProvidersQuery } from './use-providers-query';
 
 /**
  * A bracket event's results page (#698, #700): its matches round by round, each round named by
@@ -25,6 +26,11 @@ export function BracketPanel({ event }: { event: SportEventDto }) {
   const fieldQuery = useSportEventFieldQuery(event.id);
   const roundLabel = useEventRoundLabel(event);
   const periods = useEventMatchPeriods(event);
+  // The feed's name is read only once one of its finals is on the bracket (#1496).
+  const fromFeed = (bracketQuery.data ?? []).some((match) => match.resultSource === MatchResultSource.PROVIDER);
+  const providersQuery = useProvidersQuery({ enabled: fromFeed });
+  // poolmaster-allow-list-lookup: the few data providers, with no read of one
+  const feedName = providersQuery.data?.find((provider) => provider.providerId === event.providerId)?.providerName ?? 'the data feed';
 
   if (bracketQuery.isError || fieldQuery.isError) {
     return (
@@ -51,6 +57,7 @@ export function BracketPanel({ event }: { event: SportEventDto }) {
     periods,
     // A week of games forms no bracket, so none of its games goes to a shoot-out (#791).
     shootout: bracket.length > 0 && !formsNoBracket(bracket) ? definition.shootout : null,
+    feedName,
   };
   const roundCount = Math.max(event.rounds ?? 0, ...bracket.map((match) => match.roundNumber));
   const roundNumbers = [...new Set(bracket.map((match) => match.roundNumber))].sort((left, right) => left - right);

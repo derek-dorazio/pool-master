@@ -30,12 +30,14 @@
 import type { FastifyBaseLogger } from 'fastify';
 import type {
   BracketStandingWrite,
+  MatchResultWrite,
   MatchSideFill,
   SportEventMatchRepository,
   SportEventRepository,
 } from '@poolmaster/shared/db';
 import {
   MatchEnding,
+  MatchResultSource,
   MatchSide,
   MatchStatus,
   type SportShootout,
@@ -182,9 +184,9 @@ export class MatchResultService {
    * MATCH_SIDES_NOT_SET while a side still waits for its team; 422 MATCH_RESULT_INVALID for one
    * score without the other, scores the winner did not win by, a tie that does not fit, a
    * shoot-out that does not fit, or an early ending that does not (`describeScoreProblem`); 409 SPORT_EVENT_MATCH_RESULT_LOCKED for
-   * a new winner once the next match has a result.
+   * a new winner once the next match has a result. `source` records who set it (#1531).
    */
-  async recordResult(sportEventId: string, matchNumber: number, input: MatchResultInput): Promise<SportEventMatch[]> {
+  async recordResult(sportEventId: string, matchNumber: number, input: MatchResultInput, source: MatchResultSource): Promise<SportEventMatch[]> {
     const sportEvent = await this.requireReleasedBracketEvent(sportEventId);
     const bracket = await this.deps.matches.findBySportEvent(sportEventId);
     const match = this.requireMatch(sportEventId, bracket, matchNumber);
@@ -214,7 +216,7 @@ export class MatchResultService {
       this.assertNextMatchOpen(sportEventId, bracket, match);
     }
 
-    const result = { id: match.id, status: MatchStatus.COMPLETED, winnerSide: input.winnerSide, homeScore: input.homeScore, awayScore: input.awayScore, ...shootout, ending };
+    const result = { id: match.id, status: MatchStatus.COMPLETED, winnerSide: input.winnerSide, homeScore: input.homeScore, awayScore: input.awayScore, ...shootout, ending, resultSource: source };
     // A tie sends nobody on: only a game that forms no bracket can end level.
     const sideFill = input.winnerSide === null ? null : this.advance(bracket, match, sideRowId(match, input.winnerSide));
     const now = this.deps.now?.() ?? new Date();
@@ -244,7 +246,7 @@ export class MatchResultService {
       return bracket;
     }
     this.assertNextMatchOpen(sportEventId, bracket, match);
-    const result = { id: match.id, status: MatchStatus.SCHEDULED, winnerSide: null, homeScore: null, awayScore: null, ...NO_RESULT_DETAILS };
+    const result = { id: match.id, status: MatchStatus.SCHEDULED, winnerSide: null, homeScore: null, awayScore: null, ...NO_RESULT_DETAILS, resultSource: null };
     const rebuild = this.rebuild(sportEventId);
     const after = await this.write(sportEventId, bracket, result, this.advance(bracket, match, null), rebuild.jobs);
     rebuild.queued();
@@ -284,7 +286,8 @@ export class MatchResultService {
         422,
       );
     }
-    const result = { id: match.id, status: MatchStatus.CANCELLED, winnerSide: null, homeScore: null, awayScore: null, ...NO_RESULT_DETAILS };
+    // Only an admin cancels a match.
+    const result = { id: match.id, status: MatchStatus.CANCELLED, winnerSide: null, homeScore: null, awayScore: null, ...NO_RESULT_DETAILS, resultSource: MatchResultSource.ADMIN };
     // A squares contest on the game ends Final with no scores (#711, #743), in a job written with it.
     const jobs = combineJobsForWrite(this.gameSettlement(sportEventId, match.id, this.deps.now?.() ?? new Date()), this.rebuild(sportEventId));
     const after = await this.write(sportEventId, bracket, result, null, jobs.jobs);
@@ -399,7 +402,7 @@ export class MatchResultService {
   private async write(
     sportEventId: string,
     bracket: readonly SportEventMatch[],
-    result: Pick<SportEventMatch, 'id' | 'status' | 'winnerSide' | 'homeScore' | 'awayScore' | 'homeShootoutScore' | 'awayShootoutScore' | 'ending'>,
+    result: MatchResultWrite,
     sideFill: MatchSideFill | null,
     jobs: readonly BackgroundJobRequest[] = [],
   ): Promise<SportEventMatch[]> {

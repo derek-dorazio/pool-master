@@ -4,7 +4,7 @@
  * bracket at once and edits one match at a time; results are entered separately (#699).
  */
 import { z } from 'zod';
-import { MatchEnding, MatchSide, MatchStatus } from '@poolmaster/shared/domain';
+import { MatchEnding, MatchResultSource, MatchSide, MatchStatus } from '@poolmaster/shared/domain';
 import { registerSchema } from './schema-registry';
 
 /** The most matches one bracket holds: a 128-place draw has 127. */
@@ -37,6 +37,7 @@ export const SportEventMatchDtoSchema = z.object({
   homeShootoutScore: z.number().int().nullable().describe('The home side\'s kicks scored in the shoot-out that settled a knockout match level after extra time; null with the away side\'s when there was none. Not part of the match score.'),
   awayShootoutScore: z.number().int().nullable().describe('The away side\'s kicks scored in the shoot-out; null with the home side\'s.'),
   ending: MatchEndingDtoSchema.describe('How the match ended; PLAYED for a match without a result. A WALKOVER has no scores.'),
+  resultSource: z.enum(MatchResultSource).nullable().describe('Who set the result: ADMIN, or PROVIDER for the data feed of the game the match is linked to; null while the match has no result. A provider\'s later final never overwrites an admin\'s result.'),
   advancesToMatchId: z.uuid().nullable().describe('The match the winner moves on to; null for the final.'),
   advancesToSide: MatchSideDtoSchema.nullable().describe('The side of that match the winner fills; null for the final.'),
   regionLabel: z.string().nullable().describe('The region or conference the match is played in ("AFC", "East"); null when the bracket has none. In a reseeded round each team stays in its region.'),

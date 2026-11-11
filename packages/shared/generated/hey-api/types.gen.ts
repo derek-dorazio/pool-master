@@ -19149,6 +19149,10 @@ export type SportEventMatchDto = {
      */
     ending: 'PLAYED' | 'RETIREMENT' | 'WALKOVER' | 'DEFAULT';
     /**
+     * Who set the result: ADMIN, or PROVIDER for the data feed of the game the match is linked to; null while the match has no result. A provider's later final never overwrites an admin's result.
+     */
+    resultSource: 'ADMIN' | 'PROVIDER' | null;
+    /**
      * The match the winner moves on to; null for the final.
      */
     advancesToMatchId: string | null;
@@ -19245,6 +19249,10 @@ export type SportEventBracketResponse = {
          * How the match ended; PLAYED for a match without a result. A WALKOVER has no scores.
          */
         ending: 'PLAYED' | 'RETIREMENT' | 'WALKOVER' | 'DEFAULT';
+        /**
+         * Who set the result: ADMIN, or PROVIDER for the data feed of the game the match is linked to; null while the match has no result. A provider's later final never overwrites an admin's result.
+         */
+        resultSource: 'ADMIN' | 'PROVIDER' | null;
         /**
          * The match the winner moves on to; null for the final.
          */
@@ -19343,6 +19351,10 @@ export type SportEventMatchResponse = {
          * How the match ended; PLAYED for a match without a result. A WALKOVER has no scores.
          */
         ending: 'PLAYED' | 'RETIREMENT' | 'WALKOVER' | 'DEFAULT';
+        /**
+         * Who set the result: ADMIN, or PROVIDER for the data feed of the game the match is linked to; null while the match has no result. A provider's later final never overwrites an admin's result.
+         */
+        resultSource: 'ADMIN' | 'PROVIDER' | null;
         /**
          * The match the winner moves on to; null for the final.
          */
@@ -19755,6 +19767,10 @@ export type SquaresBoardResponse = {
          * How the match ended; PLAYED for a match without a result. A WALKOVER has no scores.
          */
         ending: 'PLAYED' | 'RETIREMENT' | 'WALKOVER' | 'DEFAULT';
+        /**
+         * Who set the result: ADMIN, or PROVIDER for the data feed of the game the match is linked to; null while the match has no result. A provider's later final never overwrites an admin's result.
+         */
+        resultSource: 'ADMIN' | 'PROVIDER' | null;
         /**
          * The match the winner moves on to; null for the final.
          */
