@@ -6,7 +6,7 @@ import { buildLeagueChampionshipsPath, buildLeaguePointsRacePath } from '@/featu
 import { useLeagueContext } from '@/features/leagues/use-league-context';
 import { hasPlanFeature } from '@/features/plans/plan-features';
 import { PlanLockedNotice } from '@/features/plans/plan-locked-notice';
-import { Button, ErrorState, Heading, LoadingState, MetricGrid, MetricTile, PanelCard, Select } from '@/features/shared/ui';
+import { Button, ErrorState, Heading, LoadingState, MetricGrid, MetricTile, PanelCard, YearPicker } from '@/features/shared/ui';
 import { historyYearTitle } from './championship-view';
 import { SquadPerpetualPlates } from './perpetual-trophies';
 import { SquadRecords } from './record-book';
@@ -52,15 +52,7 @@ export function SquadHistorySection({
       <div className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <Heading level={2} variant="subtitle">{historyYearTitle({ year, isOver: year < currentYear })}</Heading>
-          <Select
-            aria-label="Year"
-            className="w-auto"
-            data-testid="squad-history-year"
-            onChange={(event) => chooseYear(Number(event.target.value))}
-            value={year}
-          >
-            {years.map((option) => <option key={option} value={option}>{option}</option>)}
-          </Select>
+          <YearPicker onChange={chooseYear} testId="squad-history-year" value={year} years={years} />
         </div>
         <SquadYearSection key={year} leagueCode={leagueCode} leagueId={leagueId} mySquadId={viewer.mySquadId} squad={squad} year={year} />
       </div>

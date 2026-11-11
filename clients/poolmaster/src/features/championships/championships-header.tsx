@@ -1,7 +1,6 @@
 import { championshipYear } from '@poolmaster/shared/domain';
-import { useId } from 'react';
 import { buildLeagueHistoryPath } from '@/features/leagues/league-routing';
-import { PageHeader, PageTabs, Select } from '@/features/shared/ui';
+import { PageHeader, PageTabs, YearPicker } from '@/features/shared/ui';
 import { type ChampionshipsYearTab, championshipsYearTabPaths } from './championship-year';
 
 type SeasonPicker = {
@@ -27,7 +26,6 @@ type ChampionshipsHeaderProps = {
  */
 export function ChampionshipsHeader(props: ChampionshipsHeaderProps) {
   const { leagueCode, tab, title } = props;
-  const seasonId = useId();
   const paths = championshipsYearTabPaths(leagueCode, props.year ?? championshipYear(new Date()));
   const items = [
     { label: 'Championship', testId: 'championships-tab-championship', to: paths.championship, isActive: tab === 'championship' },
@@ -40,18 +38,7 @@ export function ChampionshipsHeader(props: ChampionshipsHeaderProps) {
     <PageHeader
       tabs={<PageTabs aria-label="Championship views" items={items} variant="link" />}
       tabsEnd={props.season ? (
-        <>
-          <label htmlFor={seasonId}>Season</label>
-          <Select
-            className="w-auto"
-            data-testid="championships-year"
-            id={seasonId}
-            onChange={(event) => props.season.onChange(Number(event.target.value))}
-            value={props.year}
-          >
-            {props.season.years.map((option) => <option key={option} value={option}>{option}</option>)}
-          </Select>
-        </>
+        <YearPicker onChange={props.season.onChange} testId="championships-year" value={props.year} years={props.season.years} />
       ) : undefined}
       testId="championships-header"
       title={title}
