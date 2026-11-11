@@ -74,8 +74,9 @@ export default defineConfig({
       // Every app source file counts, loaded by a test or not: without `include`, Vitest reports
       // only files some test imports, so an untested file or folder would pass every floor.
       include: ['src/**/*.{ts,tsx}'],
-      // The Playwright suite's helpers and the unit tests' own MSW harness are test code, not app code.
-      exclude: ['e2e/**', 'src/test/**'],
+      // The Playwright suite's helpers, the unit tests' own MSW harness and the gallery's stories
+      // (#1615) are test and dev code, not app code.
+      exclude: ['e2e/**', 'src/test/**', 'src/**/*.stories.tsx'],
       // The whole-suite floor sits about 1 point under its measurement on 2026-11-09 (#1478):
       // 94.97 / 88.77 / 95.55 / 94.94 (statements / branches / functions / lines). Raise it as
       // coverage grows; never lower it to pass.

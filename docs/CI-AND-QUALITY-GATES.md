@@ -854,7 +854,8 @@ hardening epic.
 - **`service-build`** — backend service Docker build verification.
 - **`service-mock-provider-build`** — mock contest feed provider lint,
   typecheck, `tsc` build and its own test suite (see *Test suites* §6).
-- **`poolmaster-build`** — webapp build verification.
+- **`poolmaster-build`** — webapp lint, typecheck and build, then the component gallery build
+  (Storybook, #1615), kept as the run's `component-gallery` artifact.
 - **`deploy-publish-images`** (push to `main` only) — builds and pushes
   Docker images to ECR and registers ECS task definitions. Deploys nothing.
   Hands each task definition to later jobs as `family:revision`, never as an

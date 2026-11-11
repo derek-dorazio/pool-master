@@ -97,13 +97,14 @@ an issue, an ADR, or a source line number — all four disappear or drift, and
 
 ### Reviewing
 
-Review is one pass with up to three lenses, applied only when the diff has the matching
+Review is one pass with up to four lenses, applied only when the diff has the matching
 surface:
 
 - `/code-review` — correctness, the general pass
 - `review-triggers.md` §5 — performance cost
 - `review-triggers.md` §6 — security
 - `review-triggers.md` §7 — architectural fit
+- `review-triggers.md` §8 — UI conformance, for a diff that adds or changes a screen
 
 `/security-review` covers general security classes; §6 covers what is specific to this
 codebase. What a PR must *disclose* is `review-triggers.md` §1–§4, which is a different
