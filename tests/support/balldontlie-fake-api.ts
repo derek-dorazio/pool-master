@@ -110,11 +110,12 @@ function checkQuery(path: string, query: URLSearchParams, declared: readonly Ven
  *   answers 404, as an unknown resource would.
  */
 export function createFakeBalldontlie(options: {
-  league: string;
+  /** The vendored document, or documents, whose paths the fake serves: one league's, or several leagues' of one sport. */
+  league: string | readonly string[];
   apiKey: string;
   routes: Readonly<Partial<Record<string, FakeRoute>>>;
 }): FakeBalldontlie {
-  const spec = loadVendorSpec(options.league);
+  const specs = (typeof options.league === 'string' ? [options.league] : options.league).map(loadVendorSpec);
   const requests: FakeRequest[] = [];
   const violations: string[] = [];
 
@@ -127,7 +128,8 @@ export function createFakeBalldontlie(options: {
     if ((init?.method ?? 'GET') !== 'GET') {
       throw new BalldontlieSpecViolation(`${init?.method ?? ''} ${url.pathname}: the adapter only reads`);
     }
-    if (!spec.paths.includes(url.pathname)) {
+    const spec = specs.find((each) => each.paths.includes(url.pathname));
+    if (!spec) {
       throw new BalldontlieSpecViolation(`GET ${url.pathname} is not a path the vendor document declares`);
     }
     checkQuery(url.pathname, url.searchParams, spec.queryParameters(url.pathname));

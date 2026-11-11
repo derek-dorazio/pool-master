@@ -3,6 +3,7 @@ import { expect } from '@jest/globals';
 import { MappingConfidence, Sport } from '@poolmaster/shared/domain';
 import { IngestionPersistence } from '../../../packages/core-api/src/modules/ingestion/persistence/ingestion-persistence';
 import type {
+  ProviderParticipant,
   SportEvent,
   SportEventDetail,
 } from '../../../packages/core-api/src/modules/ingestion/core/provider-interface';
@@ -596,18 +597,35 @@ describe('IngestionPersistence', () => {
  * writes participants and stops there.
  */
 describe('IngestionPersistence: provider participants with no mapping yet', () => {
-  type Candidate = { id: string; sportId: string; name: string; providerMappings: Array<{ providerId: string }> };
+  type Candidate = {
+    id: string;
+    sportId: string;
+    name: string;
+    providerMappings: Array<{ providerId: string }>;
+    /** The sport leagues it is affiliated with, by match keyword; none when left out. */
+    leagueAffiliations?: Array<{ sportLeague: { matchKeyword: string | null } }>;
+  };
 
-  function golfer(externalId: string, name: string, providerId = 'balldontlie') {
+  function golfer(externalId: string, name: string, providerId = 'balldontlie'): ProviderParticipant {
     return { externalId, providerId, sport: Sport.GOLF, name, active: true, metadata: {} };
+  }
+
+  /** A college basketball team as a provider sends it, naming its league by match keyword. */
+  function collegeTeam(externalId: string, name: string, tour: string): ProviderParticipant {
+    return { externalId, providerId: 'balldontlie', sport: Sport.BASKETBALL, name, active: true, metadata: { tour } };
+  }
+
+  /** The site's team of a name, affiliated with the leagues whose keywords are given. */
+  function siteTeam(id: string, name: string, keywords: Array<string | null>): Candidate {
+    return { id, sportId: 'sport-basketball', name, providerMappings: [], leagueAffiliations: keywords.map((matchKeyword) => ({ sportLeague: { matchKeyword } })) };
   }
 
   function unmappedPrisma(candidates: Candidate[]) {
     const double = {
       sportEvent: { findMany: jest.fn().mockResolvedValue([]), findUnique: jest.fn().mockResolvedValue(null) },
-      sport: { upsert: jest.fn().mockResolvedValue({ id: 'sport-golf', participantType: 'INDIVIDUAL' }) },
+      sport: { upsert: jest.fn(({ where }: { where: { sport: Sport } }) => Promise.resolve({ id: `sport-${where.sport.toLowerCase()}`, participantType: 'INDIVIDUAL' })) },
       participant: {
-        findMany: jest.fn().mockResolvedValue(candidates),
+        findMany: jest.fn().mockResolvedValue(candidates.map((candidate) => ({ leagueAffiliations: [], ...candidate }))),
         createManyAndReturn: jest.fn(({ data }: { data: Array<{ sportId: string; externalId: string }> }) => Promise.resolve(
           data.map((row) => ({ id: `created-${row.externalId}`, sportId: row.sportId, externalId: row.externalId })),
         )),
@@ -621,7 +639,7 @@ describe('IngestionPersistence: provider participants with no mapping yet', () =
     return { ...double, $transaction };
   }
 
-  async function sync(prisma: ReturnType<typeof unmappedPrisma>, participants: ReturnType<typeof golfer>[]) {
+  async function sync(prisma: ReturnType<typeof unmappedPrisma>, participants: ProviderParticipant[]) {
     const logger = fakeLogger();
     await new IngestionPersistence(asPrismaClient(prisma), logger).persistEventDetailWithDiagnostics({ ...buildInProgressEvent(), participants });
     const [[{ data: mappings }]] = prisma.participantProviderMapping.createMany.mock.calls as Array<[{ data: Array<{ participantId: string; externalId: string; confidence: string }> }]>;
@@ -641,7 +659,7 @@ describe('IngestionPersistence: provider participants with no mapping yet', () =
     expect(logger.info).toHaveBeenCalledWith(expect.objectContaining({ linked: 1, created: 0 }), 'Persisted participants from ingestion');
   });
 
-  it('reads the candidates by sport and name, with only the mappings from the feed\'s own providers', async () => {
+  it('reads the candidates by sport and name, with only the mappings from the feed\'s own providers and the keywords of their leagues', async () => {
     const prisma = unmappedPrisma([]);
 
     await sync(prisma, [golfer('bdl-1', 'Scottie Scheffler'), golfer('mock-1', 'Rory McIlroy', 'mock-contest-feed')]);
@@ -654,8 +672,57 @@ describe('IngestionPersistence: provider participants with no mapping yet', () =
         sportId: true,
         name: true,
         providerMappings: { where: { providerId: { in: ['balldontlie', 'mock-contest-feed'] } }, select: { providerId: true } },
+        leagueAffiliations: { select: { sportLeague: { select: { matchKeyword: true } } } },
       },
     });
+  });
+
+  it('links a school\'s men\'s and women\'s teams, which share a name, each to the site\'s team in its own league', async () => {
+    const prisma = unmappedPrisma([siteTeam('site-duke-men', 'Duke Blue Devils', ['NCAAM']), siteTeam('site-duke-women', 'Duke Blue Devils', ['NCAAW'])]);
+
+    const { mappings } = await sync(prisma, [collegeTeam('ncaab-team-150', 'Duke Blue Devils', 'NCAAM'), collegeTeam('ncaaw-team-150', 'Duke Blue Devils', 'NCAAW')]);
+
+    expect(mappings).toEqual([
+      { participantId: 'site-duke-men', providerId: 'balldontlie', externalId: 'ncaab-team-150', confidence: MappingConfidence.HIGH },
+      { participantId: 'site-duke-women', providerId: 'balldontlie', externalId: 'ncaaw-team-150', confidence: MappingConfidence.HIGH },
+    ]);
+    expect(prisma.participant.createManyAndReturn).not.toHaveBeenCalled();
+  });
+
+  it('matches a league\'s keyword whatever its case and spacing, as an event\'s tour is matched', async () => {
+    const prisma = unmappedPrisma([siteTeam('site-duke-women', 'Duke Blue Devils', [null, ' ncaaw '])]);
+
+    const { mappings } = await sync(prisma, [collegeTeam('ncaaw-team-150', 'Duke Blue Devils', 'NCAAW')]);
+
+    expect(mappings).toEqual([{ participantId: 'site-duke-women', providerId: 'balldontlie', externalId: 'ncaaw-team-150', confidence: MappingConfidence.HIGH }]);
+  });
+
+  it('creates a team whose name the site has only in the other league, rather than linking it across leagues', async () => {
+    const prisma = unmappedPrisma([siteTeam('site-duke-men', 'Duke Blue Devils', ['NCAAM']), siteTeam('site-unaffiliated', 'Duke Blue Devils', [])]);
+
+    const { mappings } = await sync(prisma, [collegeTeam('ncaaw-team-150', 'Duke Blue Devils', 'NCAAW')]);
+
+    expect(createdNames(prisma)).toEqual(['Duke Blue Devils']);
+    expect(mappings).toEqual([{ participantId: 'created-ncaaw-team-150', providerId: 'balldontlie', externalId: 'ncaaw-team-150', confidence: MappingConfidence.EXACT }]);
+  });
+
+  it('counts a name the feed sends in two leagues once per league, so neither blocks the other\'s link', async () => {
+    const prisma = unmappedPrisma([siteTeam('site-duke-men', 'Duke Blue Devils', ['NCAAM'])]);
+
+    const { mappings } = await sync(prisma, [collegeTeam('ncaab-team-150', 'Duke Blue Devils', 'NCAAM'), collegeTeam('ncaaw-team-150', 'Duke Blue Devils', 'NCAAW')]);
+
+    expect(mappings).toEqual([
+      { participantId: 'created-ncaaw-team-150', providerId: 'balldontlie', externalId: 'ncaaw-team-150', confidence: MappingConfidence.EXACT },
+      { participantId: 'site-duke-men', providerId: 'balldontlie', externalId: 'ncaab-team-150', confidence: MappingConfidence.HIGH },
+    ]);
+  });
+
+  it('creates a team the feed sends twice in one league, though the site has one of that name there', async () => {
+    const prisma = unmappedPrisma([siteTeam('site-duke-men', 'Duke Blue Devils', ['NCAAM'])]);
+
+    await sync(prisma, [collegeTeam('ncaab-team-150', 'Duke Blue Devils', 'NCAAM'), collegeTeam('ncaab-team-999', 'Duke Blue Devils', 'NCAAM')]);
+
+    expect(createdNames(prisma)).toEqual(['Duke Blue Devils', 'Duke Blue Devils']);
   });
 
   it.each([

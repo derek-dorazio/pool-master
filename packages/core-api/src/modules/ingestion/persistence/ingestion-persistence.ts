@@ -24,6 +24,7 @@ import type {
 } from '../core/provider-interface';
 import type { SyncWriteDetailRow, SyncWriteDiagnostics } from '../core/sync-write-diagnostics';
 import { summarizeSyncWriteRows } from '../core/sync-write-diagnostics';
+import { isLeagueTour } from '../core/league-keyword';
 import type { EventFieldCache } from '../../events/event-field-cache';
 import type { CdnInvalidator } from '../../../core/cdn-invalidator';
 import type { LeaderboardRebuilds } from '../../contests/leaderboard-snapshots';
@@ -248,9 +249,14 @@ export class IngestionPersistence {
    * The unmapped provider participants the site already has: a participant of the same sport with
    * exactly the same name and no mapping from this provider yet (a team or golfer loaded from a
    * sport data file, say) is linked rather than created a second time. A name two of the site's
-   * participants share, or two of the feed's, is never guessed at: those are created. One read of
-   * the candidates and their mappings from the feed's providers (Prisma loads the mappings with a
-   * second statement).
+   * participants share, or two of the feed's, is never guessed at: those are created.
+   *
+   * A provider participant that names its sport league (`metadata.tour`, the league's match
+   * keyword: a college team is a men's or a women's team) is matched only among the site's
+   * participants affiliated with that league, and counted against the feed's names in that
+   * league alone, so the men's and women's teams of one school each link to their own. One read
+   * of the candidates, their mappings from the feed's providers and their leagues' keywords
+   * (Prisma loads each relation with its own statement).
    */
   private async matchByName(
     unmapped: readonly ProviderParticipant[],
@@ -259,11 +265,13 @@ export class IngestionPersistence {
     const namesBySportId = new Map<string, Set<string>>();
     const feedNameCounts = new Map<string, number>();
     const providerIds = new Set<string>();
+    const feedKeyOf = (participant: ProviderParticipant) =>
+      `${participant.providerId}:${sportIdOf(participant)}:${tourOf(participant) ?? ''}:${participant.name}`;
     for (const participant of unmapped) {
       providerIds.add(participant.providerId);
       const sportId = sportIdOf(participant);
       namesBySportId.set(sportId, (namesBySportId.get(sportId) ?? new Set()).add(participant.name));
-      const feedKey = `${participant.providerId}:${sportId}:${participant.name}`;
+      const feedKey = feedKeyOf(participant);
       feedNameCounts.set(feedKey, (feedNameCounts.get(feedKey) ?? 0) + 1);
     }
     const candidates = await this.prisma.participant.findMany({
@@ -273,6 +281,7 @@ export class IngestionPersistence {
         sportId: true,
         name: true,
         providerMappings: { where: { providerId: { in: [...providerIds] } }, select: { providerId: true } },
+        leagueAffiliations: { select: { sportLeague: { select: { matchKeyword: true } } } },
       },
     });
     const candidatesByName = new Map<string, typeof candidates>();
@@ -284,9 +293,10 @@ export class IngestionPersistence {
     const linked: Array<{ participant: ProviderParticipant; existing: (typeof candidates)[number] }> = [];
     const toCreate: ProviderParticipant[] = [];
     for (const participant of unmapped) {
-      const sportId = sportIdOf(participant);
-      const sameName = candidatesByName.get(`${sportId}:${participant.name}`) ?? [];
-      const unique = sameName.length === 1 && feedNameCounts.get(`${participant.providerId}:${sportId}:${participant.name}`) === 1;
+      const tour = tourOf(participant);
+      const sameName = (candidatesByName.get(`${sportIdOf(participant)}:${participant.name}`) ?? [])
+        .filter((candidate) => tour === undefined || candidate.leagueAffiliations.some(({ sportLeague }) => isLeagueTour(tour, sportLeague.matchKeyword)));
+      const unique = sameName.length === 1 && feedNameCounts.get(feedKeyOf(participant)) === 1;
       const existing = unique ? sameName[0] : undefined;
       if (existing && !existing.providerMappings.some((mapping) => mapping.providerId === participant.providerId)) {
         linked.push({ participant, existing });
@@ -468,6 +478,11 @@ export class IngestionPersistence {
     }
     return plans.length;
   }
+}
+
+/** The sport league a provider participant names by its match keyword, when it names one. */
+function tourOf(participant: ProviderParticipant): string | undefined {
+  return participant.metadata.tour;
 }
 
 /** A participant's provider identity. */

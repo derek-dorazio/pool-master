@@ -1,23 +1,24 @@
 /**
- * The BALLDONTLIE NCAA men's basketball reads behind the adapter (#1496): each season's
- * tournament as an event, its teams with their seeds, every Division I team, and the
- * tournament's game scores. The bracket endpoint needs the GOAT tier; teams name no paid tier.
+ * The BALLDONTLIE NCAA basketball tournament reads behind the adapter (#1496), for one league,
+ * men's or women's: each season's tournament as an event, its teams with their seeds, every
+ * Division I team, and the tournament's game scores. The bracket endpoints need the GOAT tier;
+ * the teams lists name no paid tier.
  */
 
 import type { LiveScoreResult } from '@poolmaster/shared/dto';
 import type { DateRange, ProviderParticipant, SportEvent, SportEventDetail } from '../../core/provider-interface';
 import type { BalldontlieClient } from './balldontlie-client';
-import { ncaabBracketListSchema, ncaabTeamListSchema, type NcaabBracketGame } from './ncaab-contract';
+import { ncaaBracketListSchema, ncaaTeamListSchema, type NcaaBracketGame } from './ncaa-tournament-contract';
 import {
-  BRACKET_PATH,
-  ncaabScopeId,
-  TEAMS_PATH,
-  toNcaabFieldParticipants,
-  toNcaabGameScoreUpdates,
-  toNcaabSportEvent,
-  toNcaabTeamParticipant,
-  type NcaabScope,
-} from './ncaab-mapping';
+  bracketPathOf,
+  ncaaTournamentScopeId,
+  teamsPathOf,
+  toNcaaFieldParticipants,
+  toNcaaGameScoreUpdates,
+  toNcaaTeamParticipant,
+  toNcaaTournamentEvent,
+  type NcaaTournamentLeague,
+} from './ncaa-tournament-mapping';
 
 /** A range spanning more seasons than this reads the last tournament and the next instead. */
 const MAX_SEASONS_READ = 3;
@@ -25,9 +26,10 @@ const MAX_SEASONS_READ = 3;
 /** The month (0-based) a new college basketball season is under way: November. */
 const SEASON_START_MONTH = 10;
 
-export class NcaabReader {
+export class NcaaTournamentReader {
   constructor(
     private readonly client: BalldontlieClient,
+    private readonly league: NcaaTournamentLeague,
     private readonly now: () => number,
   ) {}
 
@@ -39,34 +41,38 @@ export class NcaabReader {
   async upcomingEvents(dateRange?: DateRange): Promise<SportEvent[]> {
     const events: SportEvent[] = [];
     for (const season of this.seasonsFor(dateRange)) {
-      const games = await this.bracketOf({ season });
-      if (games.length > 0) events.push(toNcaabSportEvent({ season }, games));
+      const games = await this.bracketOf(season);
+      if (games.length > 0) events.push(toNcaaTournamentEvent({ league: this.league, season }, games));
     }
     return events.filter((event) => !dateRange || (event.startDate >= dateRange.from && event.startDate <= dateRange.to));
   }
 
-  /** The tournament with its teams; null when the vendor has no bracket for the season yet. */
-  async eventDetails(scope: NcaabScope): Promise<SportEventDetail | null> {
-    const games = await this.bracketOf(scope);
+  /** The season's tournament with its teams; null when the vendor has no bracket for it yet. */
+  async eventDetails(season: number): Promise<SportEventDetail | null> {
+    const games = await this.bracketOf(season);
     if (games.length === 0) return null;
-    const participants = toNcaabFieldParticipants(games);
-    return { ...toNcaabSportEvent(scope, games, participants.length), participants };
+    const participants = toNcaaFieldParticipants(this.league, games);
+    return { ...toNcaaTournamentEvent({ league: this.league, season }, games, participants.length), participants };
   }
 
-  /** Every Division I team. */
+  /** Every Division I team in the league. */
   async teams(): Promise<ProviderParticipant[]> {
-    const page = await this.client.get(TEAMS_PATH, {}, ncaabTeamListSchema);
-    return page.data.map(toNcaabTeamParticipant);
+    const page = await this.client.get(teamsPathOf(this.league), {}, ncaaTeamListSchema);
+    return page.data.map((team) => toNcaaTeamParticipant(this.league, team));
   }
 
   /** Every bracket game with its teams decided, with its state and score. */
-  async liveScores(scope: NcaabScope): Promise<LiveScoreResult> {
-    const games = await this.bracketOf(scope);
-    return { category: 'GAME', externalEventId: ncaabScopeId(scope), games: toNcaabGameScoreUpdates(games) };
+  async liveScores(season: number): Promise<LiveScoreResult> {
+    const games = await this.bracketOf(season);
+    return {
+      category: 'GAME',
+      externalEventId: ncaaTournamentScopeId({ league: this.league, season }),
+      games: toNcaaGameScoreUpdates(this.league, games),
+    };
   }
 
-  private bracketOf(scope: NcaabScope): Promise<NcaabBracketGame[]> {
-    return this.client.getAllPages(BRACKET_PATH, { season: scope.season }, ncaabBracketListSchema);
+  private bracketOf(season: number): Promise<NcaaBracketGame[]> {
+    return this.client.getAllPages(bracketPathOf(this.league), { season }, ncaaBracketListSchema);
   }
 
   private seasonsFor(dateRange?: DateRange): number[] {

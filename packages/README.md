@@ -120,7 +120,7 @@ Polls configured sports data providers, upserts normalized event data, and store
 
 | Adapter | Sport(s) | API Key |
 |---------|----------|---------|
-| BALLDONTLIE (`balldontlie`) | Golf: PGA TOUR. Game scores: NFL weeks and playoffs, the NCAA men's basketball tournament | `BALLDONTLIE_API_KEY`, from Secrets Manager; the binding sets `baseUrl` and the plan's `requestsPerMinute` |
+| BALLDONTLIE (`balldontlie`) | Golf: PGA TOUR. Game scores: NFL weeks and playoffs, the NCAA men's and women's basketball tournaments | `BALLDONTLIE_API_KEY`, from Secrets Manager; the binding sets `baseUrl` and the plan's `requestsPerMinute` |
 | Mock contest feed | Golf and QA scenarios | Local/QA only |
 
 The BALLDONTLIE adapter was built from the vendor's published OpenAPI document before any account

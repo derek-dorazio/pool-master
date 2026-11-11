@@ -196,6 +196,12 @@ export interface ProviderParticipant {
  * ones something reads back.
  */
 export interface ProviderParticipantMetadata {
+  /**
+   * The sport league the participant plays in, by its match keyword, when the provider's sport
+   * covers more than one (a college team is a men's or a women's team). A same-name link looks
+   * only among the site's participants affiliated with that league.
+   */
+  tour?: string;
   seed?: number;
   /** Odds to win, valid only for the event named by `oddsSourceEventId`. */
   odds?: number;
