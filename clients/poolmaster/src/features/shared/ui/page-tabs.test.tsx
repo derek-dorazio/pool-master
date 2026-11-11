@@ -112,7 +112,7 @@ describe("PageTabs", () => {
 describe("PageTabs on a row too narrow for its tabs", () => {
   let restoreLayout: () => void;
   beforeEach(() => {
-    restoreLayout = installScrollRowLayout({ rowWidth: 250, tabWidth: 100 });
+    restoreLayout = installScrollRowLayout({ rowWidth: 250, tabWidth: 100 }).restore;
   });
   afterEach(() => restoreLayout());
 

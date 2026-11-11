@@ -1,6 +1,7 @@
 import { render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { describe, expect, it, vi } from "vitest";
+import { resizeAll } from "@/test/resize-observer";
 import { installScrollRowLayout } from "@/test/scroll-row-layout";
 import { AdminAreaLayout, LeagueMenu, type NavMenuItem } from "./nav-menus";
 
@@ -79,7 +80,7 @@ describe("LeagueMenu on a phone too narrow for its links", () => {
 
   it("scrolls the current page's link fully into view on open and when the page changes", async () => {
     // A 250px row of five 100px links: Members (400-500) starts well off the right edge.
-    const restoreLayout = installScrollRowLayout({ rowWidth: 250, tabWidth: 100 });
+    const { restore: restoreLayout } = installScrollRowLayout({ rowWidth: 250, tabWidth: 100 });
     try {
       const { rerender } = render(
         <MemoryRouter>
@@ -96,6 +97,27 @@ describe("LeagueMenu on a phone too narrow for its links", () => {
         </MemoryRouter>,
       );
       await vi.waitFor(() => expect(row.scrollLeft).toBe(0));
+    } finally {
+      restoreLayout();
+    }
+  });
+
+  it("scrolls the current page's link back into view when the links grow, as when the team's name loads", () => {
+    const { restore: restoreLayout, setLayout } = installScrollRowLayout({ rowWidth: 250, tabWidth: 100 });
+    try {
+      render(
+        <MemoryRouter>
+          <LeagueMenu aria-label="League" items={items("Members")} />
+        </MemoryRouter>,
+      );
+      const row = screen.getByTestId("league-menu-links");
+      expect(row.scrollLeft).toBe(250);
+
+      // Every link widens to 120px: Members now spans 480-600 and the row can scroll to 350.
+      setLayout({ rowWidth: 250, tabWidth: 120 });
+      resizeAll();
+
+      expect(row.scrollLeft).toBe(350);
     } finally {
       restoreLayout();
     }

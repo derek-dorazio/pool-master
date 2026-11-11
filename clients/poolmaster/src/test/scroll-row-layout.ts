@@ -2,9 +2,11 @@
  * jsdom does no layout, so every width and scroll offset reads 0. This stands in for a phone:
  * any element whose classes include `overflow-x-auto` is a scrolling row `rowWidth` wide, and
  * each of its children is a tab `tabWidth` wide laid end to end. The row's `scrollLeft` keeps
- * what is written to it, clamped as a browser clamps it. Call the returned function to undo.
+ * what is written to it, clamped as a browser clamps it. `setLayout` changes the sizes, as a
+ * loading font or a longer label would; `restore` undoes the stand-in.
  */
-export function installScrollRowLayout({ rowWidth, tabWidth }: { rowWidth: number; tabWidth: number }) {
+export function installScrollRowLayout(initial: { rowWidth: number; tabWidth: number }) {
+  let { rowWidth, tabWidth } = initial;
   const scrollLefts = new WeakMap<HTMLElement, number>();
   const isRow = (element: HTMLElement) => element.classList.contains('overflow-x-auto');
   const tabIndex = (element: HTMLElement) =>
@@ -34,10 +36,14 @@ export function installScrollRowLayout({ rowWidth, tabWidth }: { rowWidth: numbe
     Object.defineProperty(HTMLElement.prototype, name, { ...descriptor, configurable: true });
   }
 
-  return () => {
+  const restore = () => {
     for (const [name, original] of Object.entries(originals)) {
       if (original) Object.defineProperty(HTMLElement.prototype, name, original);
       else delete (HTMLElement.prototype as unknown as Record<string, unknown>)[name];
     }
   };
+  const setLayout = (next: { rowWidth: number; tabWidth: number }) => {
+    ({ rowWidth, tabWidth } = next);
+  };
+  return { restore, setLayout };
 }
