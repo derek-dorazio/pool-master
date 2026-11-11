@@ -1,10 +1,18 @@
 import { describe, expect, it } from 'vitest';
-import { championshipsTitle, championshipYearsOffered, parseChampionshipYearParam } from './championship-year';
+import { championshipsTitle, championshipsYearTabPaths, championshipYearsOffered, parseChampionshipYearParam } from './championship-year';
 
 describe('championship year', () => {
   it('offers the current year and every championship year and cup season once, newest first', () => {
     expect(championshipYearsOffered([2026, 2024], [2025, 2024], 2026)).toEqual([2026, 2025, 2024]);
     expect(championshipYearsOffered([], [], 2027)).toEqual([2027]);
+  });
+
+  it('opens each year-based Championships tab at its own address for the year', () => {
+    expect(championshipsYearTabPaths('BIGDAWGS', 2025)).toEqual({
+      championship: '/league/BIGDAWGS/championships/2025',
+      trophies: '/league/BIGDAWGS/championships/2025/trophies',
+      race: '/league/BIGDAWGS/championships/2025/race',
+    });
   });
 
   it('reads a four-digit year from the route and nothing else', () => {
