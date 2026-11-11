@@ -21,7 +21,7 @@
 import { MatchResultSource, MatchSide, MatchStatus, ProviderGameState, type SportEventMatch } from '@poolmaster/shared/domain';
 import type { GameScoreUpdate } from '@poolmaster/shared/dto';
 import type { FastifyBaseLogger } from 'fastify';
-import type { ParticipantProviderMappingRepository, SportEventMatchRepository, SportEventParticipantRepository } from '@poolmaster/shared/db';
+import type { MatchLiveScoreWrite, ParticipantProviderMappingRepository, SportEventMatchRepository, SportEventParticipantRepository } from '@poolmaster/shared/db';
 import { SportEventError } from '../../events/errors';
 import type { LiveScorePersistenceResult } from '../../ingestion/core/score-publisher';
 import { summarizeSyncWriteRows, type SyncWriteDetailRow } from '../../ingestion/core/sync-write-diagnostics';
@@ -29,7 +29,7 @@ import type { MatchResultService } from './match-result-service';
 
 export interface GameScoreWriterDeps {
   providerId: string;
-  matches: Pick<SportEventMatchRepository, 'findBySportEvent' | 'linkGames'>;
+  matches: Pick<SportEventMatchRepository, 'findBySportEvent' | 'linkGames' | 'applyLiveScores'>;
   eventParticipants: Pick<SportEventParticipantRepository, 'findByIds'>;
   mappings: Pick<ParticipantProviderMappingRepository, 'findByProviderExternalIds'>;
   results: Pick<MatchResultService, 'recordResult'>;
@@ -45,7 +45,9 @@ interface MatchResultFromGame {
 
 /**
  * Links each game that fits one match, then writes each final game linked to one of the event's
- * matches; any other game writes nothing.
+ * matches, then each live game's score on a match with no result yet (read-only: it decides
+ * nothing). A game the provider says has not started, or was postponed or cancelled, takes a
+ * live score back off its match; only an admin cancels a match.
  * Earlier rounds go first, and each result is read against the bracket the last one wrote, so a
  * semifinal and the final it feeds, both final in one sync, both record.
  */
@@ -58,12 +60,13 @@ export async function writeGameScores(
   const linkedGameIds = new Set(loaded.flatMap((match) => (match.externalGameId === null ? [] : [match.externalGameId])));
   const unlinkedGames = games.filter((game) => !linkedGameIds.has(game.externalGameId));
   const openMatches = unlinkedGames.length === 0 ? [] : loaded.filter(isOpenMatch);
-  const finalsOfLinked = games.filter((game) => game.state === ProviderGameState.FINAL && linkedGameIds.has(game.externalGameId));
-  const finalGameIds = new Set(finalsOfLinked.map((game) => game.externalGameId));
-  const linkedMatchesOfFinals = loaded.filter((match) => match.externalGameId !== null && finalGameIds.has(match.externalGameId));
+  // A final or live game has a score to place on its match's sides.
+  const scoredOfLinked = games.filter((game) => SCORED_STATES.has(game.state) && linkedGameIds.has(game.externalGameId));
+  const scoredGameIds = new Set(scoredOfLinked.map((game) => game.externalGameId));
+  const linkedMatchesOfScored = loaded.filter((match) => match.externalGameId !== null && scoredGameIds.has(match.externalGameId));
   // One read of the sides and one of the team mappings for the whole batch.
-  const sidesOf = await participantsOfSides(deps, [...linkedMatchesOfFinals, ...openMatches]);
-  const teamsOf = await participantsOfTeams(deps, [...finalsOfLinked, ...(openMatches.length === 0 ? [] : unlinkedGames)]);
+  const sidesOf = await participantsOfSides(deps, [...linkedMatchesOfScored, ...openMatches]);
+  const teamsOf = await participantsOfTeams(deps, [...scoredOfLinked, ...(openMatches.length === 0 ? [] : unlinkedGames)]);
 
   const links = gamesToLink(unlinkedGames, openMatches, sidesOf, teamsOf);
   await deps.matches.linkGames(links.map(({ game, match }) => ({ id: match.id, externalGameId: game.externalGameId })));
@@ -131,6 +134,23 @@ export async function writeGameScores(
       );
     }
   }
+
+  const live: MatchLiveScoreWrite[] = [];
+  for (const game of games) {
+    const linkedMatch = game.state === ProviderGameState.FINAL ? undefined : matchByGame.get(game.externalGameId);
+    if (linkedMatch === undefined) continue;
+    const match = rewritten.get(linkedMatch.id) ?? linkedMatch;
+    const score = liveScoreOf(game, match, sidesOf, teamsOf);
+    if (score === null) continue;
+    const before = { status: match.status, homeScore: match.homeScore, awayScore: match.awayScore };
+    const unchanged = before.status === score.status && before.homeScore === score.homeScore && before.awayScore === score.awayScore;
+    if (!unchanged) live.push({ id: match.id, ...score });
+    rows.push({
+      id: match.id, entityType: 'SportEventMatch', providerId: deps.providerId, externalId: game.externalGameId, internalId: match.id, name: `Match ${match.matchNumber}`,
+      before, after: { ...score }, disposition: unchanged ? 'UNCHANGED' : 'UPDATED',
+    });
+  }
+  await deps.matches.applyLiveScores(live);
 
   const persisted = rows.filter((row) => row.disposition === 'UPDATED').length;
   return {
@@ -220,6 +240,28 @@ function resultFromGame(
   }
   const winnerSide = homeScore > awayScore ? MatchSide.HOME : awayScore > homeScore ? MatchSide.AWAY : null;
   return { winnerSide, homeScore, awayScore };
+}
+
+const SCORED_STATES: ReadonlySet<ProviderGameState> = new Set([ProviderGameState.FINAL, ProviderGameState.IN_PROGRESS]);
+
+/**
+ * The live score a game puts on a match that has no result: its score from the match's sides
+ * while it is played, or none once the provider says it has not started. Null when there is
+ * nothing to write: the match has a result or was cancelled, a live game has no score yet or
+ * teams that are not the match's, or a game not under way meets a match with no live score.
+ */
+function liveScoreOf(
+  game: GameScoreUpdate,
+  match: SportEventMatch,
+  sidesOf: ReadonlyMap<string, string>,
+  teamsOf: ReadonlyMap<string, string>,
+): Omit<MatchLiveScoreWrite, 'id'> | null {
+  if (match.status !== MatchStatus.SCHEDULED && match.status !== MatchStatus.IN_PROGRESS) return null;
+  if (game.state !== ProviderGameState.IN_PROGRESS) {
+    return match.status === MatchStatus.IN_PROGRESS ? { status: MatchStatus.SCHEDULED, homeScore: null, awayScore: null } : null;
+  }
+  const score = resultFromGame(game, match, sidesOf, teamsOf);
+  return score === null ? null : { status: MatchStatus.IN_PROGRESS, homeScore: score.homeScore, awayScore: score.awayScore };
 }
 
 /** Whether the match already holds this result, so a repeated sync writes nothing. */

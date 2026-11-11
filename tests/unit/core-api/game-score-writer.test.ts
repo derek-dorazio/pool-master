@@ -1,5 +1,6 @@
 import { MatchResultSource, MatchSide, MatchStatus, ProviderGameState, type SportEventMatch } from '@poolmaster/shared/domain';
 import type { GameScoreUpdate } from '@poolmaster/shared/dto';
+import type { MatchLiveScoreWrite } from '@poolmaster/shared/db';
 import { writeGameScores, type GameScoreWriterDeps } from '../../../packages/core-api/src/modules/scoring-families/head-to-head/game-score-writer';
 import { SportEventError } from '../../../packages/core-api/src/modules/events/errors';
 import { bracketMatches } from '../../support/bracket-fixtures';
@@ -36,15 +37,16 @@ function writer(matches: SportEventMatch[], unmappedTeams: readonly string[] = [
     .map((externalId) => ({ id: `map-${externalId}`, providerId, externalId, participantId: externalId.replace('bdl-', 'p-') })));
   const logger = fakeLogger();
   const linkGames = jest.fn<Promise<void>, [readonly { id: string; externalGameId: string }[]]>().mockResolvedValue();
+  const applyLiveScores = jest.fn<Promise<void>, [readonly MatchLiveScoreWrite[]]>().mockResolvedValue();
   const deps = {
     providerId: 'balldontlie',
-    matches: { findBySportEvent: jest.fn(async () => matches), linkGames },
+    matches: { findBySportEvent: jest.fn(async () => matches), linkGames, applyLiveScores },
     eventParticipants: { findByIds },
     mappings: { findByProviderExternalIds },
     results: { recordResult },
     logger,
   } as unknown as GameScoreWriterDeps;
-  return { deps, recordResult, findByIds, findByProviderExternalIds, linkGames, logger };
+  return { deps, recordResult, findByIds, findByProviderExternalIds, linkGames, applyLiveScores, logger };
 }
 
 describe('writeGameScores', () => {
@@ -79,25 +81,86 @@ describe('writeGameScores', () => {
     expect(recordResult).toHaveBeenCalledWith(EVENT, 2, { winnerSide: null, homeScore: 20, awayScore: 20 }, MatchResultSource.PROVIDER);
   });
 
-  it('writes nothing for a game that is not final, or that no match fits, and reads nothing while every game is linked', async () => {
-    const { deps, recordResult, findByIds, findByProviderExternalIds, linkGames } = writer(bracket());
+  it('writes nothing for games not under way on matches with no live score, and reads nothing while every game is linked', async () => {
+    const { deps, recordResult, findByIds, findByProviderExternalIds, linkGames, applyLiveScores } = writer(bracket());
 
     const result = await writeGameScores(deps, EVENT, [
-      game('g1', 'KC', 'BUF', 7, 3, ProviderGameState.IN_PROGRESS),
-      game('g2', 'PHI', 'DAL', 30, 10, ProviderGameState.SCHEDULED),
+      game('g1', 'KC', 'BUF', null, null, ProviderGameState.SCHEDULED),
+      game('g2', 'PHI', 'DAL', null, null, ProviderGameState.POSTPONED),
     ]);
 
     expect(recordResult).not.toHaveBeenCalled();
     expect(findByIds).not.toHaveBeenCalled();
     expect(findByProviderExternalIds).not.toHaveBeenCalled();
     expect(linkGames).toHaveBeenCalledWith([]);
+    expect(applyLiveScores).toHaveBeenCalledWith([]);
     expect(result).toMatchObject({ updatesReturned: 2, updatesPersisted: 0, updatesSkipped: 2 });
     expect(result.writeDiagnostics.summary.total).toBe(0);
   });
 
-  it('links a game no match is linked to yet to the match its two teams play, in either order, and records its final', async () => {
+  it('puts a live game\'s score on its match from the match\'s sides, deciding nothing, and writes it once', async () => {
+    const matches = bracket();
+    const { deps, recordResult, applyLiveScores } = writer(matches);
+
+    // The provider lists Buffalo at home; the match has Kansas City at home.
+    const result = await writeGameScores(deps, EVENT, [game('g1', 'BUF', 'KC', 3, 7, ProviderGameState.IN_PROGRESS)]);
+    matches[0] = { ...matches[0], status: MatchStatus.IN_PROGRESS, homeScore: 7, awayScore: 3 };
+    const again = await writeGameScores(deps, EVENT, [game('g1', 'BUF', 'KC', 3, 7, ProviderGameState.IN_PROGRESS)]);
+
+    expect(recordResult).not.toHaveBeenCalled();
+    expect(applyLiveScores.mock.calls).toEqual([
+      [[{ id: 'm1', status: MatchStatus.IN_PROGRESS, homeScore: 7, awayScore: 3 }]],
+      [[]],
+    ]);
+    expect(result).toMatchObject({ updatesPersisted: 1, updatesSkipped: 0 });
+    expect(result.writeDiagnostics.rows[0]).toMatchObject({
+      name: 'Match 1',
+      disposition: 'UPDATED',
+      before: { status: MatchStatus.SCHEDULED, homeScore: null, awayScore: null },
+      after: { status: MatchStatus.IN_PROGRESS, homeScore: 7, awayScore: 3 },
+    });
+    expect(again.writeDiagnostics.rows[0]).toMatchObject({ disposition: 'UNCHANGED' });
+  });
+
+  it('takes a live score back off a match once the provider says its game has not started, was postponed or was cancelled', async () => {
+    const matches = bracket();
+    matches[0] = { ...matches[0], status: MatchStatus.IN_PROGRESS, homeScore: 7, awayScore: 3 };
+    matches[1] = { ...matches[1], status: MatchStatus.IN_PROGRESS, homeScore: 0, awayScore: 0 };
+    const { deps, applyLiveScores } = writer(matches);
+
+    await writeGameScores(deps, EVENT, [
+      game('g1', 'KC', 'BUF', null, null, ProviderGameState.POSTPONED),
+      game('g2', 'PHI', 'DAL', null, null, ProviderGameState.CANCELLED),
+    ]);
+
+    expect(applyLiveScores).toHaveBeenCalledWith([
+      { id: 'm1', status: MatchStatus.SCHEDULED, homeScore: null, awayScore: null },
+      { id: 'm2', status: MatchStatus.SCHEDULED, homeScore: null, awayScore: null },
+    ]);
+  });
+
+  it('puts no live score on a match with a result or cancelled, from a live game with no score yet, or from one whose teams are not the match\'s', async () => {
+    const matches = bracket();
+    matches[0] = { ...matches[0], status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME, homeScore: 27, awayScore: 24 };
+    matches[1] = { ...matches[1], status: MatchStatus.CANCELLED };
+    matches[2] = linked(matches[2], 'g3', { homeSportEventParticipantId: 'sep-KC', awaySportEventParticipantId: 'sep-PHI' });
+    const extra = linked(bracketMatches(EVENT, [{ matchNumber: 4, round: 2, home: 'sep-BUF', away: 'sep-DAL' }])[0], 'g4');
+    const { deps, applyLiveScores } = writer([...matches, extra]);
+
+    const result = await writeGameScores(deps, EVENT, [
+      game('g1', 'KC', 'BUF', 30, 24, ProviderGameState.IN_PROGRESS),
+      game('g2', 'PHI', 'DAL', 7, 0, ProviderGameState.IN_PROGRESS),
+      game('g3', 'KC', 'PHI', null, null, ProviderGameState.IN_PROGRESS),
+      game('g4', 'BUF', 'KC', 3, 0, ProviderGameState.IN_PROGRESS),
+    ]);
+
+    expect(applyLiveScores).toHaveBeenCalledWith([]);
+    expect(result.writeDiagnostics.summary.total).toBe(0);
+  });
+
+  it('links a game no match is linked to yet to the match its two teams play, in either order, and records its final or live score', async () => {
     const matches = bracket().map((match) => linked(match, null));
-    const { deps, recordResult, linkGames, logger } = writer(matches);
+    const { deps, recordResult, linkGames, applyLiveScores, logger } = writer(matches);
 
     const result = await writeGameScores(deps, EVENT, [
       game('p-1', 'BUF', 'KC', 24, 27),
@@ -108,7 +171,8 @@ describe('writeGameScores', () => {
     expect(linkGames).toHaveBeenCalledWith([{ id: 'm1', externalGameId: 'p-1' }, { id: 'm2', externalGameId: 'p-2' }]);
     expect(logger.info).toHaveBeenCalledWith({ action: 'liveScore.game.linked', data: { sportEventId: EVENT, matchNumber: 1, externalGameId: 'p-1' } }, expect.any(String));
     expect(recordResult.mock.calls).toEqual([[EVENT, 1, { winnerSide: MatchSide.HOME, homeScore: 27, awayScore: 24 }, MatchResultSource.PROVIDER]]);
-    expect(result).toMatchObject({ updatesPersisted: 1, updatesSkipped: 2 });
+    expect(applyLiveScores).toHaveBeenCalledWith([{ id: 'm2', status: MatchStatus.IN_PROGRESS, homeScore: 14, awayScore: 10 }]);
+    expect(result).toMatchObject({ updatesPersisted: 2, updatesSkipped: 1 });
   });
 
   it('links nothing it would have to guess: two games for one match, a match with a side to come, a team not mapped, or a side with no field row', async () => {

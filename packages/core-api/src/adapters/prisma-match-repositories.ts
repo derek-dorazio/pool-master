@@ -6,12 +6,13 @@
 
 import type { Prisma, PrismaClient } from '@prisma/client';
 import type {
+  MatchLiveScoreWrite,
   MatchResultApply,
   SportEventMatchPatch,
   SportEventMatchRepository,
   SportEventMatchWrite,
 } from '@poolmaster/shared/db';
-import { MatchSide } from '@poolmaster/shared/domain';
+import { MatchSide, MatchStatus } from '@poolmaster/shared/domain';
 import type { BackgroundJobRequest, SportEventMatch, SportEventMatchPeriodScore } from '@poolmaster/shared/domain';
 import { rewriteStandings } from './prisma-standing-rewrite';
 import { backgroundJobsInsert, insertBackgroundJobs } from './prisma-background-job-repository';
@@ -106,6 +107,18 @@ export class PrismaSportEventMatchRepository implements SportEventMatchRepositor
     await this.prisma.$transaction(
       // poolmaster-allow-query-in-loop: the games one sync linked (per-row values, one transaction)
       links.map(({ id, externalGameId }) => this.prisma.sportEventMatch.update({ where: { id }, data: { externalGameId } })),
+    );
+  }
+
+  async applyLiveScores(scores: readonly MatchLiveScoreWrite[]): Promise<void> {
+    if (scores.length === 0) return;
+    await this.prisma.$transaction(
+      // poolmaster-allow-query-in-loop: the games one sync found live (per-row values, one transaction)
+      scores.map(({ id, ...values }) => this.prisma.sportEventMatch.updateMany({
+        // A result entered since the sync read the match stands.
+        where: { id, status: { in: [MatchStatus.SCHEDULED, MatchStatus.IN_PROGRESS] } },
+        data: values,
+      })),
     );
   }
 

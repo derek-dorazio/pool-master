@@ -359,6 +359,26 @@ describe('PrismaSportEventMatchRepository.applyResult', () => {
     expect(cleared).toMatchObject({ status: MatchStatus.SCHEDULED, ending: MatchEnding.PLAYED, resultSource: null });
   });
 
+  it('writes a live score on a match with no result, and leaves a match that has one as it is', async () => {
+    const { event, entryOf } = await createBracketEvent();
+    await repos().matches.replaceBracket(event.id, fourTeamBracket(entryOf));
+    const [first, second] = await repos().matches.findBySportEvent(event.id);
+    await repos().matches.applyResult({
+      result: { id: second.id, status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME, homeScore: 75, awayScore: 70, ...NO_SHOOTOUT, resultSource: MatchResultSource.ADMIN },
+      sideFill: null,
+      standings: [],
+    });
+
+    await repos().matches.applyLiveScores([
+      { id: first.id, status: MatchStatus.IN_PROGRESS, homeScore: 30, awayScore: 28 },
+      { id: second.id, status: MatchStatus.IN_PROGRESS, homeScore: 1, awayScore: 0 },
+    ]);
+
+    const [live, decided] = await repos().matches.findBySportEvent(event.id);
+    expect(live).toMatchObject({ status: MatchStatus.IN_PROGRESS, homeScore: 30, awayScore: 28, winnerSide: null });
+    expect(decided).toMatchObject({ status: MatchStatus.COMPLETED, homeScore: 75, awayScore: 70 });
+  });
+
   it('writes nothing when one part of the result is refused by the database', async () => {
     const { event, entryOf } = await createBracketEvent();
     await repos().matches.replaceBracket(event.id, fourTeamBracket(entryOf));

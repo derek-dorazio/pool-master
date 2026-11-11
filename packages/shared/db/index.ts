@@ -100,6 +100,7 @@ export type {
 export type {
   BracketStandingWrite,
   MatchResultApply,
+  MatchLiveScoreWrite,
   MatchResultWrite,
   MatchSideFill,
   SportEventMatchPatch,
