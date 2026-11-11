@@ -171,20 +171,48 @@ afterEach(() => {
 });
 
 describe('My team', () => {
-  it('shows the viewer\'s squad by its name with Edit, an All years link, its owners and Leave league', async () => {
+  it('shows the viewer\'s squad by its name, says it is their team in the league with its owner count, and lists its owners and Leave league', async () => {
     primeTeam();
 
     renderTeamRoutes();
 
     const identity = await screen.findByTestId('my-team-identity');
     expect(identity).toHaveTextContent('Casey Crushers');
-    expect(identity).toHaveTextContent('1 owner');
-    expect(screen.getByTestId('my-team-edit')).toHaveTextContent('Edit');
-    expect(screen.getByTestId('my-team-edit')).toHaveAttribute('href', '/league/BIGDAWGS/team/edit');
-    expect(screen.getByTestId('my-team-history-link')).toHaveAttribute('href', '/league/BIGDAWGS/history');
-    expect(screen.getByTestId('my-team-history-link')).toHaveTextContent('All years');
+    expect(identity).toHaveTextContent('Your team in Big Dawgs · 1 owner');
     expect(within(screen.getByTestId('my-team-owners')).getByText('Casey Commissioner')).toBeInTheDocument();
     expect(screen.getByTestId('leave-league-section')).toBeInTheDocument();
+  });
+
+  it('labels the team name-and-icon button Edit team, so it does not read as editing the account, and opens the team edit page', async () => {
+    primeTeam();
+
+    renderTeamRoutes();
+
+    const edit = await screen.findByTestId('my-team-edit');
+    expect(edit).toHaveTextContent(/^Edit team$/);
+    expect(edit).toHaveAttribute('href', '/league/BIGDAWGS/team/edit');
+  });
+
+  it('offers no link to the league\'s All years page, which is about the league, not this team', async () => {
+    primeTeam();
+
+    renderTeamRoutes();
+
+    await screen.findByTestId('my-team-identity');
+    expect(screen.queryByTestId('my-team-history-link')).not.toBeInTheDocument();
+    expect(screen.getAllByRole('link').map((link) => link.getAttribute('href'))).not.toContain('/league/BIGDAWGS/history');
+  });
+
+  it('shows the team\'s season results before its owners, then Leave league last', async () => {
+    primeTeam();
+
+    renderTeamRoutes();
+
+    const season = await screen.findByTestId('squad-history');
+    const owners = screen.getByTestId('my-team-owners');
+    const leave = screen.getByTestId('leave-league-section');
+    expect(season.compareDocumentPosition(owners) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(owners.compareDocumentPosition(leave) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it('makes the team read-only while the league is inactive', async () => {
@@ -193,6 +221,7 @@ describe('My team', () => {
     renderTeamRoutes();
 
     expect(await screen.findByTestId('my-team-league-inactive')).toBeInTheDocument();
+    expect(screen.getByTestId('my-team-edit')).toHaveTextContent('Edit team');
     expect(screen.getByTestId('my-team-edit')).toHaveAttribute('aria-disabled', 'true');
     expect(screen.getByRole('textbox', { name: 'Co-owner email' })).toBeDisabled();
   });
