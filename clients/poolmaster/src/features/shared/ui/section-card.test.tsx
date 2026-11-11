@@ -2,7 +2,7 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { MemoryRouter } from "react-router";
 import { describe, expect, it, vi } from "vitest";
-import { SectionCard, SectionEmpty, SectionFooterLink, SectionRow, SectionRows, SectionTitle } from "./section-card";
+import { SectionBody, SectionCard, SectionEmpty, SectionFooterLink, SectionNote, SectionRow, SectionRows, SectionTitle } from "./section-card";
 
 function inRouter(node: ReactNode) {
   return render(<MemoryRouter>{node}</MemoryRouter>);
@@ -177,6 +177,26 @@ describe("SectionRow", () => {
     expect(screen.getByTestId("row")).not.toHaveAttribute("data-highlighted");
     expect(screen.getByTestId("row")).not.toHaveAttribute("aria-current");
     expect(screen.queryByTestId("value")).not.toBeInTheDocument();
+  });
+});
+
+describe("SectionBody", () => {
+  it("pads a grid or chart that sits beside rows in the same card", () => {
+    render(<SectionBody testId="body"><p>Grid</p></SectionBody>);
+
+    expect(screen.getByTestId("body")).toHaveClass("p-4");
+    expect(screen.getByText("Grid")).toBeVisible();
+  });
+});
+
+describe("SectionNote", () => {
+  it("draws a line about the data muted, and in the body colour when it leads the section", () => {
+    const { rerender } = render(<SectionNote testId="note">If the live contests ended now…</SectionNote>);
+    expect(screen.getByTestId("note")).toHaveClass("text-sm", "text-muted-foreground");
+
+    rerender(<SectionNote testId="note" tone="default">Birdie Bandits leads by 15 points.</SectionNote>);
+    expect(screen.getByTestId("note")).toHaveClass("text-sm", "text-foreground");
+    expect(screen.getByTestId("note")).not.toHaveClass("text-muted-foreground");
   });
 });
 

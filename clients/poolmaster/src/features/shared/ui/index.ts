@@ -94,4 +94,4 @@ export { Countdown } from "./countdown";
 export { ExpandableTile } from "./expandable-tile";
 export { FaqList, type FaqItem } from "./faq-list";
 export { NumberedSteps, type NumberedStep } from "./numbered-steps";
-export { SectionCard, SectionEmpty, SectionFooterLink, SectionRow, SectionRows, SectionTitle } from "./section-card";
+export { SectionBody, SectionCard, SectionEmpty, SectionFooterLink, SectionNote, SectionRow, SectionRows, SectionTitle } from "./section-card";

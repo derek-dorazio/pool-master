@@ -3,7 +3,7 @@ import { useCallback, useMemo } from 'react';
 import { Link, Navigate, useParams } from 'react-router';
 import type { CupDto } from '@/lib/api';
 import { buildLeagueCupSquadPath, buildLeaguePointsRacePath, buildLeagueTrophyCasePath } from '@/features/leagues/league-routing';
-import { Chip, ErrorState, formatDateDisplay, LoadingState, MetricGrid, MetricTile, SectionCard, SectionEmpty, useDisplayPreferences } from '@/features/shared/ui';
+import { Chip, ErrorState, formatDateDisplay, LoadingState, MetricGrid, MetricTile, SectionCard, SectionEmpty, SectionNote, useDisplayPreferences } from '@/features/shared/ui';
 import { hasPlanFeature } from '@/features/plans/plan-features';
 import { PlanLockedNotice } from '@/features/plans/plan-locked-notice';
 import { buildPodium } from './championship-view';
@@ -153,27 +153,28 @@ export function PointsRacePage() {
   return (
     <div className="space-y-6" data-testid="points-race">
       <CupChips cups={cups.includes(cup) ? cups : [...cups, cup]} leagueCode={leagueCode} selectedId={cup.sportLeagueId} year={year} />
-      <SectionCard padded title={cup.name}>
-        <p className="text-sm text-muted-foreground" data-testid="points-race-summary">
-          {cup.sportLeagueName} · {cup.crownedAt
-            ? `Crowned ${formatDateDisplay(cup.crownedAt, displayPreferences)}`
-            : isSeasonOver ? 'Not crowned' : `${progress.final} of ${progress.total} contests final`}
-        </p>
-        {isCrowned ? (
-          hasPlanFeature(league, PlanFeature.CUP_CROWNING)
-            ? <Podium focusSquadId={viewer.mySquadId} steps={buildPodium(cup.standings)} testId="cup-podium" />
-            : null
-        ) : isSeasonOver ? (
-          <p className="text-sm text-muted-foreground" data-testid="cup-not-crowned">
-            {'This cup hasn\'t been crowned, so it has no trophies yet. These are its final standings.'}
-          </p>
-        ) : null}
+      <SectionCard
+        info={isSeasonOver && !isCrowned ? 'This cup hasn\'t been crowned, so it has no trophies yet. These are its final standings.' : undefined}
+        padded
+        title={cup.name}
+        titleTestId="points-race-cup-title"
+        trailing={(
+          <span data-testid="points-race-summary">
+            {cup.sportLeagueName} · {cup.crownedAt
+              ? `Crowned ${formatDateDisplay(cup.crownedAt, displayPreferences)}`
+              : isSeasonOver ? 'Not crowned' : `${progress.final} of ${progress.total} contests final`}
+          </span>
+        )}
+      >
+        {isCrowned && hasPlanFeature(league, PlanFeature.CUP_CROWNING)
+          ? <Podium focusSquadId={viewer.mySquadId} steps={buildPodium(cup.standings)} testId="cup-podium" />
+          : null}
         <CupStatTiles cup={cup} isSeasonOver={isSeasonOver} mySquadId={viewer.mySquadId} />
         {projection && projectedBySquad ? (
-          <p className="text-sm text-muted-foreground" data-testid="cup-projection-note">{describeProjection(projection)}</p>
+          <SectionNote testId="cup-projection-note">{describeProjection(projection)}</SectionNote>
         ) : null}
         {projectionQuery.isError ? (
-          <p className="text-sm text-muted-foreground" data-testid="cup-projection-error">{'We couldn\'t work out where squads would stand if the live contests ended now.'}</p>
+          <ErrorState body="We couldn't work out where squads would stand if the live contests ended now." size="inline" testId="cup-projection-error" />
         ) : null}
         <CupStandingsGrid
           focusSquadId={viewer.mySquadId}

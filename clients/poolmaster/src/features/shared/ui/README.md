@@ -103,7 +103,8 @@ badge, count or filter), then its body, then an optional footer link
 `SectionRows` of `SectionRow`s (a name, a muted fact line and note, one figure
 as `value`, one badge or action as `aside`; `to` makes the whole row a link) or
 a `SectionEmpty` italic line; `padded` gives forms, charts or metric grids the
-card's padding. `bare` keeps the title and rule without the box, and
+card's padding (`SectionBody` is that padded block on its own, beside rows, and
+`SectionNote` a muted line about the data inside it). `bare` keeps the title and rule without the box, and
 `tone="danger"` is a danger zone. The parts own their type and colours: pass
 content, never text classes, and add a variant here for a new look. Don't
 hand-build a heading inside a `Tile`.

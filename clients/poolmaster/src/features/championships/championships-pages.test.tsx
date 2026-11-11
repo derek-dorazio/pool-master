@@ -853,13 +853,14 @@ describe('Championships › Points race', () => {
     expect(screen.getByTestId('cup-contest-nfl-3')).toHaveTextContent('After crowning');
   });
 
-  it('shows a past season\'s cup never crowned as not crowned, with no movement and no next contest', async () => {
+  it('shows a past season\'s cup never crowned as not crowned, explaining why behind the info icon, with no movement and no next contest', async () => {
     primeViewer([PAST_PGA_CUP]);
 
     renderChampionships('/league/BIGDAWGS/championships/2025/race/sport-league-pga');
 
-    expect(await screen.findByTestId('cup-not-crowned')).toHaveTextContent('hasn\'t been crowned');
-    expect(screen.getByTestId('points-race-summary')).toHaveTextContent('PGA Tour · Not crowned');
+    expect(await screen.findByTestId('points-race-summary')).toHaveTextContent('PGA Tour · Not crowned');
+    fireEvent.click(screen.getByTestId('points-race-cup-title-info'));
+    expect(screen.getByTestId('points-race-cup-title-info-callout')).toHaveTextContent('hasn\'t been crowned');
     expect(screen.getByTestId('points-race')).toHaveTextContent('Finished 1stBirdie Bandits');
     expect(screen.queryByText('Next to count')).not.toBeInTheDocument();
     expect(screen.queryByRole('columnheader', { name: 'Move' })).not.toBeInTheDocument();
@@ -873,7 +874,7 @@ describe('Championships › Points race', () => {
 
     expect(await screen.findByTestId('points-race')).toHaveTextContent('Next to countPlayoff PicksLive now');
     expect(screen.getByRole('columnheader', { name: 'Move' })).toBeInTheDocument();
-    expect(screen.queryByTestId('cup-not-crowned')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('points-race-cup-title-info')).not.toBeInTheDocument();
   });
 
   it('says the league has no such cup for a sports league it has none in that year', async () => {

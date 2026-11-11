@@ -2,7 +2,7 @@ import { championshipYear } from '@poolmaster/shared/domain';
 import { useMemo, useState } from 'react';
 import type { SquadDto } from '@/lib/api';
 import { buildLeagueChampionshipsPath, buildLeagueCupSquadPath } from '@/features/leagues/league-routing';
-import { Button, ErrorState, LoadingState, MetricGrid, MetricTile, SectionCard, SectionRow, SectionRows } from '@/features/shared/ui';
+import { Button, ErrorState, LoadingState, MetricGrid, MetricTile, SectionBody, SectionCard, SectionRow, SectionRows } from '@/features/shared/ui';
 import { ChampionshipContestList } from './championship-contest-list';
 import { ChampionshipStandingsGrid } from './championship-standings-grid';
 import { describeContestResultFilter, historyCupsOnShow, type ContestResultFilter } from './championship-view';
@@ -57,7 +57,7 @@ export function SquadYearSection({
                   value={<span title={describeMovement(championship.standing.movement).description}>{describeMovement(championship.standing.movement).label}</span>}
                 />
               </SectionRows>
-              <div className="space-y-4 border-t border-border p-4">
+              <SectionBody>
                 <MetricGrid className="grid-cols-3 sm:grid-cols-6">
                   {SQUAD_MEDAL_TILES.map((tile) => (
                     <div data-testid={`squad-year-tile-${tile.key}`} key={tile.key}>
@@ -73,7 +73,7 @@ export function SquadYearSection({
                   rows={[championship.standing]}
                   searchable={false}
                 />
-              </div>
+              </SectionBody>
             </SectionCard>
           ) : null}
 

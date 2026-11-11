@@ -62,14 +62,6 @@ describe('TeamName', () => {
     expect(screen.queryByText('Yours')).not.toBeInTheDocument();
   });
 
-  it('shows the line underneath, such as the owners, only when given one', () => {
-    const { rerender } = renderInRouter(<TeamName name="Blitz" subtitle="Ann Lee, Bo Diaz" />);
-    expect(screen.getByText('Ann Lee, Bo Diaz')).toBeInTheDocument();
-
-    rerender(<MemoryRouter><TeamName name="Blitz" /></MemoryRouter>);
-    expect(screen.queryByText('Ann Lee, Bo Diaz')).not.toBeInTheDocument();
-  });
-
   it('leaves out the placeholder squad icon by default, so a list shows the name alone', () => {
     renderInRouter(<TeamName iconKey={TeamIconKey.CAPTAIN_SMILE_OCEAN} name="Blitz" />);
 

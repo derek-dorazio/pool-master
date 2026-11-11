@@ -6,7 +6,7 @@ import { buildLeagueChampionshipsPath, buildLeaguePointsRacePath } from '@/featu
 import { useLeagueContext } from '@/features/leagues/use-league-context';
 import { hasPlanFeature } from '@/features/plans/plan-features';
 import { PlanLockedNotice } from '@/features/plans/plan-locked-notice';
-import { ErrorState, LoadingState, MetricGrid, MetricTile, SectionCard, SectionEmpty, SectionRow, SectionRows, YearPicker } from '@/features/shared/ui';
+import { ErrorState, LoadingState, MetricGrid, MetricTile, SectionBody, SectionCard, SectionEmpty, SectionRow, SectionRows, YearPicker } from '@/features/shared/ui';
 import { historyYearTitle } from './championship-view';
 import { SquadPerpetualPlates } from './perpetual-trophies';
 import { SquadRecords } from './record-book';
@@ -71,13 +71,13 @@ export function SquadHistorySection({
             info="A podium finish in a crowned cup or a finished championship, or a win in a contest the league runs every year, puts a trophy here."
             title="Trophy case"
           >
-            <div className="p-4">
+            <SectionBody>
               <MetricGrid className="grid-cols-3">
                 <div data-testid="squad-history-medal-firsts"><MetricTile label="Contest 1sts" value={historyQuery.data.medals.firsts} /></div>
                 <div data-testid="squad-history-medal-seconds"><MetricTile label="Contest 2nds" value={historyQuery.data.medals.seconds} /></div>
                 <div data-testid="squad-history-medal-thirds"><MetricTile label="Contest 3rds" value={historyQuery.data.medals.thirds} /></div>
               </MetricGrid>
-            </div>
+            </SectionBody>
             {trophies.length || plates.length ? (
               <SectionRows testId="squad-history-trophies">
                 {trophies.map((trophy) => (

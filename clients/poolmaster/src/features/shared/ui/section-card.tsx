@@ -114,7 +114,7 @@ export function SectionCard({
       <div className={cn("border-b", tone === "danger" ? "border-destructive/40" : "border-border", bare ? "pb-1" : "px-4 py-1")}>
         <SectionTitle id={titleId} info={info} level={headingLevel} testId={titleTestId} title={title} tone={tone} trailing={trailing} />
       </div>
-      {padded && !bare ? <div className="space-y-3 p-4" data-testid={testId ? `${testId}-body` : undefined}>{children}</div> : children}
+      {padded && !bare ? <SectionBody testId={testId ? `${testId}-body` : undefined}>{children}</SectionBody> : children}
       {footer ? <SectionFooterLink label={footer.label} testId={footer.testId} to={footer.to} /> : null}
     </section>
   );
@@ -206,6 +206,22 @@ export function SectionRow({
       )}
     </li>
   );
+}
+
+/**
+ * A padded block inside a section card, for a grid, chart or form beside rows in the same card
+ * (a `padded` card wraps its whole body in one).
+ */
+export function SectionBody({ children, testId }: { children: ReactNode; testId?: string }) {
+  return <div className="space-y-3 p-4" data-testid={testId}>{children}</div>;
+}
+
+/**
+ * A line of words about the section's data inside a padded body, such as a standing or a
+ * projection: muted by default, `tone="default"` for the one line the section leads with.
+ */
+export function SectionNote({ children, testId, tone = "muted" }: { children: ReactNode; testId?: string; tone?: "default" | "muted" }) {
+  return <p className={cn("text-sm", tone === "default" ? "text-foreground" : "text-muted-foreground")} data-testid={testId}>{children}</p>;
 }
 
 /** A section with nothing to show: one short muted line in italics, so it never reads as data. */
