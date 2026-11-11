@@ -59,12 +59,21 @@ describe("PageHeader", () => {
     expect(screen.getByText("Members never see which plan it is on.")).toBeInTheDocument();
   });
 
-  it("puts actions in the right slot, which takes its own line on a phone", () => {
+  it("puts actions in the right slot beside the title, wrapping under it only when they don't fit", () => {
     renderHeader(<PageHeader actions={<Button>Edit team</Button>} testId="team" title="Casey Crushers" />);
 
     const slot = screen.getByTestId("team-actions");
     expect(within(slot).getByRole("button", { name: "Edit team" })).toBeInTheDocument();
-    expect(slot).toHaveClass("max-sm:basis-full");
+    expect(slot).not.toHaveClass("max-sm:basis-full");
+  });
+
+  it("puts the page's search in the right slot, taking a full-width line on a phone", () => {
+    renderHeader(<PageHeader search={<input aria-label="Find a member" type="search" />} testId="members" title="Members" />);
+
+    const slot = screen.getByTestId("members-search");
+    expect(within(slot).getByRole("searchbox", { name: "Find a member" })).toBeInTheDocument();
+    expect(slot).toHaveClass("max-sm:basis-full", "sm:w-72");
+    expect(screen.queryByTestId("members-actions")).not.toBeInTheDocument();
   });
 
   it("links each breadcrumb up the trail and marks the current page", () => {
