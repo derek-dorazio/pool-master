@@ -21,7 +21,6 @@ export const RECORD_WORDING: Record<RecordType, { title: string; value: (value: 
   [RecordType.LONGEST_DROUGHT]: { title: 'Longest drought', value: (value) => `${plural(value, 'contest')} without a win` },
 };
 
-
 /** A run's length: "3 podiums in a row", but just "1 podium", since one alone is no run. */
 function inARow(count: number, one: string, many: string): string {
   return count === 1 ? `1 ${one}` : `${count} ${many} in a row`;

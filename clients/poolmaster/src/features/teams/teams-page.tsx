@@ -13,7 +13,6 @@ import { useLeagueSquadsQuery } from './use-league-squads-query';
 const TEAMS_PER_PAGE = 25;
 const SEARCH_LABEL = 'Find a member or owner';
 
-
 /** Teams: the league's directory of teams and their owners, for every member. */
 export function TeamsPage() {
   const displayPreferences = useDisplayPreferences();
@@ -79,10 +78,11 @@ export function TeamsPage() {
         )}
         meta={(
           <span data-testid="teams-page-counts">
-            {plural(league.memberCount, 'member', 'members')}
-            {teamsQuery.data ? ` · ${plural(rows.length, 'team', 'teams')}` : null}
+            {plural(league.memberCount, 'member')}
+            {teamsQuery.data ? ` · ${plural(rows.length, 'team')}` : null}
           </span>
         )}
+        testId="teams-page-header"
         title="Members"
       />
 

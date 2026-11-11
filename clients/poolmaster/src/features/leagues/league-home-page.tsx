@@ -37,7 +37,6 @@ function useMinuteClock() {
   return now;
 }
 
-
 /**
  * League Home: the league's identity once, then what needs the member now: the contest that
  * closes soonest, live standings for each contest they are in, and their own team.
@@ -125,7 +124,7 @@ export function LeagueHomePage() {
         icon={<LeagueIcon iconKey={league.iconKey} size="lg" />}
         meta={(
           <span data-testid="league-home-counts">
-            {plural(league.memberCount, 'member', 'members')} · {plural(league.activeContestCount, 'active contest', 'active contests')}
+            {plural(league.memberCount, 'member')} · {plural(league.activeContestCount, 'active contest')}
           </span>
         )}
         testId="league-home-identity"

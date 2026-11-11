@@ -66,21 +66,30 @@ export type DataGridProps<TData> = {
    * roster / field).
    */
   meta?: Record<string, unknown>;
-  /** A search box above the grid matching any text column. Off by default. */
-  search?: DataGridSearch;
-  /**
-   * The term from a search box the page draws itself, such as in its `PageHeader`'s right slot.
-   * The grid then narrows to it as it would to its own box; pass it instead of `search`.
-   */
-  searchTerm?: string;
   /** Rows per page; omitted, every row shows on one page. */
   pageSize?: number;
   /** Whether each filterable column gets its own filter box. On by default. */
   showColumnFilters?: boolean;
-  jumpToRow?: DataGridJumpToRow;
   /** `scoreboard`: a leaderboard's header row, navy with gold column names. */
   headerTone?: "plain" | "scoreboard";
-};
+} & (
+  | {
+      /** A search box above the grid matching any text column. Off by default. */
+      search?: DataGridSearch;
+      searchTerm?: never;
+      jumpToRow?: DataGridJumpToRow;
+    }
+  | {
+      /**
+       * The term from a search box the page draws itself, such as in its `PageHeader`'s right
+       * slot. The grid narrows to it as it would to its own box. A jump to a row can't clear a
+       * box the grid doesn't own, so the two never go together.
+       */
+      searchTerm: string;
+      search?: never;
+      jumpToRow?: never;
+    }
+);
 
 function getSortIndicator(direction: false | "asc" | "desc") {
   if (direction === "asc") {

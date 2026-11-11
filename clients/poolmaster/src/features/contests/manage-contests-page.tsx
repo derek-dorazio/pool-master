@@ -195,8 +195,9 @@ export function ManageContestsPage() {
     return null;
   }
 
-  const isLoaded = !contestsQuery.isLoading && !yearsQuery.isLoading && !contestsQuery.isError && !yearsQuery.isError;
-  const hasContests = isLoaded && (activeContests.length > 0 || years.length > 0);
+  const hasContests = activeContests.length > 0 || years.length > 0;
+  const isLoading = contestsQuery.isLoading || yearsQuery.isLoading;
+  const isError = contestsQuery.isError || yearsQuery.isError;
 
   return (
     // The views' tabs sit in the header and their content below it, so the tabs root is the page.
@@ -212,13 +213,15 @@ export function ManageContestsPage() {
               <>
                 <LinkButton
                   data-testid="manage-contests-contest-types-link"
+                  size="sm"
                   to={buildLeagueContestTypesPath(league.leagueCode)}
                   variant="secondary"
                 >
-                  Browse contest types
+                  Contest types
                 </LinkButton>
                 <LinkButton
                   data-testid="manage-contests-create-link"
+                  size="sm"
                   to={buildLeagueAdminContestCreatePath(league.leagueCode)}
                 >
                   Create contest
@@ -229,7 +232,7 @@ export function ManageContestsPage() {
             )
           }
           description="Members see a contest once you open it to the league."
-          tabs={hasContests ? (
+          tabs={!isLoading && !isError && hasContests ? (
             <PageTabs
               aria-label="Contests to show"
               items={[
@@ -254,11 +257,11 @@ export function ManageContestsPage() {
           title="Contests"
         />
 
-        {contestsQuery.isLoading || yearsQuery.isLoading ? (
+        {isLoading ? (
           <LoadingState body="Loading contests..." />
-        ) : contestsQuery.isError || yearsQuery.isError ? (
+        ) : isError ? (
           <ErrorState body="We couldn't load contests for this league." />
-        ) : !activeContests.length && !years.length ? (
+        ) : !hasContests ? (
           <EmptyState
             action={
               league.isActive ? (
