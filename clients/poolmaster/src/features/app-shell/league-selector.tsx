@@ -11,6 +11,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  Text,
 } from "@/features/shared/ui";
 import {
   buildLeaguePath,
@@ -64,12 +65,12 @@ export function LeagueSelector({
         <span className="flex h-7 w-7 flex-none items-center justify-center rounded-md bg-primary text-primary-foreground">
           <LeagueIcon iconKey={activeLeague?.iconKey} size="sm" />
         </span>
-        <span className="flex-none font-display text-xs font-bold uppercase tracking-label text-label-on-inverse">
+        <Text className="flex-none" variant="displayLabel">
           League
-        </span>
-        <span className="min-w-0 flex-1 truncate font-display text-base font-bold">
+        </Text>
+        <Text className="min-w-0 flex-1" size="base" truncate variant="display">
           {activeLeague?.name ?? "Select league"}
-        </span>
+        </Text>
         <ChevronDown aria-hidden="true" className="h-4 w-4 flex-none opacity-70" strokeWidth={2.5} />
       </DropdownMenuTrigger>
 
@@ -132,9 +133,13 @@ export function LeagueSelector({
             onCreateLeague();
           }}
         >
-          <span className="flex h-8 w-8 flex-none items-center justify-center rounded-md border border-dashed border-muted-foreground text-lg text-muted-foreground">
+          <Text
+            className="flex h-8 w-8 flex-none items-center justify-center rounded-md border border-dashed border-muted-foreground"
+            size="lg"
+            tone="muted"
+          >
             +
-          </span>
+          </Text>
           <DropdownMenuItemText name="Create league" />
         </DropdownMenuItem>
       </DropdownMenuContent>
