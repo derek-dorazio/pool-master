@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useParams } from 'react-router';
-import { buildLeagueHistoryPath, buildLeagueTeamEditPath, buildLeagueTeamsPath } from '@/features/leagues/league-routing';
+import { buildLeagueTeamEditPath, buildLeagueTeamsPath } from '@/features/leagues/league-routing';
 import { useLeagueContextGuard } from '@/features/leagues/league-context-guard';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
 import { LeaveLeagueSection } from '@/features/leagues/leave-league-section';
@@ -24,10 +24,12 @@ import { useLeagueSquadQuery } from './use-league-squad-query';
 import { useMyTeamOwners } from './use-my-team-owners';
 
 /**
- * Yours: the viewer's own team in this league, and nothing else: its name and icon with Edit and
- * All years, its owners, its year in the championship and cups (#872), and Leave league as the
- * member's one danger action. Contests and the team's entries in them are on League Home and the
- * Contests page (#1394). A member with no team yet creates one here.
+ * Yours: the viewer's own team in this league, and nothing else: its name and icon with Edit team,
+ * then its year in the championship and cups (#872) first, since how the team is doing is the
+ * page's main job, then its owners, and Leave league as the member's one danger action. The
+ * league's all-years view lives on Championships, not here (#1544). Contests and the team's
+ * entries in them are on League Home and the Contests page (#1394). A member with no team yet
+ * creates one here.
  */
 export function MyTeamPage() {
   const { leagueCode = '' } = useParams<{ leagueCode: string }>();
@@ -97,28 +99,18 @@ export function MyTeamPage() {
     <section className="space-y-8" data-testid="my-team-page">
       <PageHeader
         actions={(
-          <>
-            <LinkButton
-              data-testid="my-team-edit"
-              isDisabled={isInactiveLeague}
-              size="sm"
-              to={buildLeagueTeamEditPath(leagueCode)}
-              variant="secondary"
-            >
-              Edit
-            </LinkButton>
-            <LinkButton
-              data-testid="my-team-history-link"
-              size="sm"
-              to={buildLeagueHistoryPath(leagueCode)}
-              variant="secondary"
-            >
-              All years
-            </LinkButton>
-          </>
+          <LinkButton
+            data-testid="my-team-edit"
+            isDisabled={isInactiveLeague}
+            size="sm"
+            to={buildLeagueTeamEditPath(leagueCode)}
+            variant="secondary"
+          >
+            Edit team
+          </LinkButton>
         )}
         avatar={<TeamAvatar iconKey={myTeam.iconKey} label={`${myTeam.name} icon`} size="md" />}
-        meta={formatOwnerCount(myTeam)}
+        meta={`Your team in ${league.name} · ${formatOwnerCount(myTeam)}`}
         testId="my-team-identity"
         title={myTeam.name}
       />
@@ -128,6 +120,8 @@ export function MyTeamPage() {
           This league is inactive, so this page is read-only.
         </Alert>
       ) : null}
+
+      <SquadHistorySection leagueCode={leagueCode} leagueId={leagueId} squad={myTeam} />
 
       <TeamOwnersSection
         canManageAnyTeam={viewer.isCommissioner || viewer.isRootAdmin}
@@ -139,8 +133,6 @@ export function MyTeamPage() {
         team={myTeam}
         testId="my-team-owners"
       />
-
-      <SquadHistorySection leagueCode={leagueCode} leagueId={leagueId} squad={myTeam} />
 
       {viewer.isMember ? <LeaveLeagueSection league={league} /> : null}
     </section>
