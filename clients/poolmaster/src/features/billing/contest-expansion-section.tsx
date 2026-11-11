@@ -8,7 +8,7 @@ import {
 import { extractErrorMessage, throwApiError, type ErrorCodeMessages } from '@/lib/errors';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import { Alert, Button, FormField, Input, SettingsRow, SettingsSection } from '@/features/shared/ui';
+import { Alert, Button, FormField, Input, SectionCard, SettingsRow, SettingsRows } from '@/features/shared/ui';
 import { formatPriceCents } from './billing-format';
 import { useContestExpansionQuery } from './use-contest-expansion-query';
 
@@ -73,18 +73,22 @@ export function ContestExpansionSection({
 
   if (expansionQuery.isLoading) {
     return (
-      <SettingsSection testId="contest-expansion" title="Entries">
-        <div className="px-5 py-3.5 text-sm text-muted-foreground">Loading entries...</div>
-      </SettingsSection>
+      <SectionCard testId="contest-expansion" title="Entries">
+        <SettingsRows>
+          <div className="px-5 py-3.5 text-sm text-muted-foreground">Loading entries...</div>
+        </SettingsRows>
+      </SectionCard>
     );
   }
   if (!expansionQuery.data) {
     return (
-      <SettingsSection testId="contest-expansion" title="Entries">
-        <div className="px-5 py-3.5 text-sm text-muted-foreground" data-testid="contest-expansion-error">
-          {extractErrorMessage(expansionQuery.error, { fallback: 'We could not load this contest\'s entries right now.' })}
-        </div>
-      </SettingsSection>
+      <SectionCard testId="contest-expansion" title="Entries">
+        <SettingsRows>
+          <div className="px-5 py-3.5 text-sm text-muted-foreground" data-testid="contest-expansion-error">
+            {extractErrorMessage(expansionQuery.error, { fallback: 'We could not load this contest\'s entries right now.' })}
+          </div>
+        </SettingsRows>
+      </SectionCard>
     );
   }
 
@@ -92,60 +96,62 @@ export function ContestExpansionSection({
   const isFull = state.entriesPerContest !== null && state.entryCount >= state.entriesPerContest;
 
   return (
-    <SettingsSection
-      description={state.expandable
+    <SectionCard
+      info={state.expandable
         ? 'Every entry counts, drafts included. Expand the contest to take more.'
         : 'Every entry counts, drafts included.'}
       testId="contest-expansion"
       title="Entries"
     >
-      <SettingsRow label="Entries" testId="contest-expansion-entries" value={describeEntries(state)} />
-      {state.expandedTo !== null ? (
-        <SettingsRow label="Expanded to" testId="contest-expansion-expanded-to" value={`${state.expandedTo} entries`} />
-      ) : null}
-      {isFull && state.expandable ? (
-        <div className="px-5 py-3.5">
-          <Alert data-testid="contest-expansion-full" tone="warning">
-            This contest is full at {state.entriesPerContest} entries.
-          </Alert>
-        </div>
-      ) : null}
-      {state.offers.map((offer) => (
-        <SettingsRow
-          action={(
-            <Button
-              data-testid={`contest-expansion-expand-${offer.entriesPerContest}`}
-              disabled={!isLeagueActive || state.paymentsEnabled || expandMutation.isPending}
-              onClick={() => expandMutation.mutate(offer.entriesPerContest)}
-              size="sm"
-              variant="secondary"
-            >
-              Expand
-            </Button>
-          )}
-          key={offer.entriesPerContest}
-          label={`Up to ${offer.entriesPerContest}`}
-          testId={`contest-expansion-offer-${offer.entriesPerContest}`}
-          value={describeOfferPrice(offer, state.paymentsEnabled)}
-        />
-      ))}
-      {state.paymentsEnabled && state.offers.length > 0 ? (
-        <div className="px-5 py-3.5 text-sm text-muted-foreground" data-testid="contest-expansion-checkout-unavailable">
-          Paying for an expansion isn&apos;t available yet.
-        </div>
-      ) : null}
-      {expandMutation.isError ? (
-        <div className="px-5 py-3.5">
-          <Alert data-testid="contest-expansion-expand-error" tone="danger">
-            {extractErrorMessage(expandMutation.error, {
-              codeMessages: EXPANSION_CODE_MESSAGES,
-              fallback: 'We could not expand this contest. Please try again.',
-            })}
-          </Alert>
-        </div>
-      ) : null}
-      {canGrant ? <GrantExpansionForm contestId={contestId} invalidates={invalidates} leagueId={leagueId} /> : null}
-    </SettingsSection>
+      <SettingsRows>
+        <SettingsRow label="Entries" testId="contest-expansion-entries" value={describeEntries(state)} />
+        {state.expandedTo !== null ? (
+          <SettingsRow label="Expanded to" testId="contest-expansion-expanded-to" value={`${state.expandedTo} entries`} />
+        ) : null}
+        {isFull && state.expandable ? (
+          <div className="px-5 py-3.5">
+            <Alert data-testid="contest-expansion-full" tone="warning">
+              This contest is full at {state.entriesPerContest} entries.
+            </Alert>
+          </div>
+        ) : null}
+        {state.offers.map((offer) => (
+          <SettingsRow
+            action={(
+              <Button
+                data-testid={`contest-expansion-expand-${offer.entriesPerContest}`}
+                disabled={!isLeagueActive || state.paymentsEnabled || expandMutation.isPending}
+                onClick={() => expandMutation.mutate(offer.entriesPerContest)}
+                size="sm"
+                variant="secondary"
+              >
+                Expand
+              </Button>
+            )}
+            key={offer.entriesPerContest}
+            label={`Up to ${offer.entriesPerContest}`}
+            testId={`contest-expansion-offer-${offer.entriesPerContest}`}
+            value={describeOfferPrice(offer, state.paymentsEnabled)}
+          />
+        ))}
+        {state.paymentsEnabled && state.offers.length > 0 ? (
+          <div className="px-5 py-3.5 text-sm text-muted-foreground" data-testid="contest-expansion-checkout-unavailable">
+            Paying for an expansion isn&apos;t available yet.
+          </div>
+        ) : null}
+        {expandMutation.isError ? (
+          <div className="px-5 py-3.5">
+            <Alert data-testid="contest-expansion-expand-error" tone="danger">
+              {extractErrorMessage(expandMutation.error, {
+                codeMessages: EXPANSION_CODE_MESSAGES,
+                fallback: 'We could not expand this contest. Please try again.',
+              })}
+            </Alert>
+          </div>
+        ) : null}
+        {canGrant ? <GrantExpansionForm contestId={contestId} invalidates={invalidates} leagueId={leagueId} /> : null}
+      </SettingsRows>
+    </SectionCard>
   );
 }
 

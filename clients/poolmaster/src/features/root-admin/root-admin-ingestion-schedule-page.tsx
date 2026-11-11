@@ -5,9 +5,10 @@ import {
   AsyncPage,
   Button,
   Checkbox,
-  FormField,
   FormEditorSection,
+  FormField,
   Input,
+  SectionCard,
   Tile,
 } from '@/features/shared/ui';
 import {
@@ -172,10 +173,9 @@ export function RootAdminIngestionSchedulePage() {
                 'extraLabel' in field ? field.extraLabel : undefined;
 
               return (
-                <Tile key={field.key} padding="sm" radius="lg" variant="subtle">
+                <SectionCard headingLevel={3} key={field.key} padded title={field.label}>
                   <div className="grid gap-3 md:grid-cols-4">
                     <div className="space-y-2">
-                      <div className="text-sm font-medium">{field.label}</div>
                       <Tile
                         padding="sm"
                         radius="md"
@@ -227,7 +227,7 @@ export function RootAdminIngestionSchedulePage() {
                       <div />
                     )}
                   </div>
-                </Tile>
+                </SectionCard>
               );
             })}
           </div>

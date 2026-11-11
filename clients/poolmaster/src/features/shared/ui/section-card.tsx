@@ -23,6 +23,7 @@ type SectionFooter = { label: string; testId: string; to: string };
 export function SectionTitle({
   id,
   info,
+  infoTestId,
   level = 2,
   testId,
   title,
@@ -32,6 +33,8 @@ export function SectionTitle({
   id?: string;
   /** The explanation, shown when the info icon is hovered or tapped. */
   info?: ReactNode;
+  /** The info icon's test id, when the title has none to derive it from. */
+  infoTestId?: string;
   level?: 2 | 3;
   testId?: string;
   title: ReactNode;
@@ -56,7 +59,7 @@ export function SectionTitle({
           className="-my-2 -ml-2"
           icon={<Info aria-hidden className="text-muted-foreground" size={16} />}
           label="About this section"
-          testId={testId ? `${testId}-info` : "section-info"}
+          testId={infoTestId ?? (testId ? `${testId}-info` : "section-info")}
         >
           <p className="text-sm text-muted-foreground">{info}</p>
         </InfoPopover>
@@ -112,7 +115,7 @@ export function SectionCard({
       data-testid={testId}
     >
       <div className={cn("border-b", tone === "danger" ? "border-destructive/40" : "border-border", bare ? "pb-1" : "px-4 py-1")}>
-        <SectionTitle id={titleId} info={info} level={headingLevel} testId={titleTestId} title={title} tone={tone} trailing={trailing} />
+        <SectionTitle id={titleId} info={info} infoTestId={!titleTestId && testId ? `${testId}-info` : undefined} level={headingLevel} testId={titleTestId} title={title} tone={tone} trailing={trailing} />
       </div>
       {padded && !bare ? <SectionBody testId={testId ? `${testId}-body` : undefined}>{children}</SectionBody> : children}
       {footer ? <SectionFooterLink label={footer.label} testId={footer.testId} to={footer.to} /> : null}

@@ -21,14 +21,12 @@ import {
   SectionRow,
   SectionRows,
   Select,
-  SettingsSectionHeader,
   SimpleTable,
   TableBody,
   TableCell,
   TableHead,
   TableHeaderCell,
   TableRow,
-  Tile,
 } from '@/features/shared/ui';
 import {
   LEAGUE_PLAN_LABEL,
@@ -147,12 +145,12 @@ function CapsGrid({ form }: { form: UseFormReturn<PlanSettingsDraft> }) {
   const caps = form.watch('caps');
 
   return (
-    <section className="space-y-3">
-      <SettingsSectionHeader
-        description="The most each plan allows. Entries per contest counts drafts; sports leagues a year counts the different sports leagues of the league's contests this calendar year."
-        title="Caps"
-      />
-      <Tile className="overflow-x-auto" data-testid="root-admin-plans-caps" padding="none" radius="md">
+    <SectionCard
+      info="The most each plan allows. Entries per contest counts drafts; sports leagues a year counts the different sports leagues of the league's contests this calendar year."
+      testId="root-admin-plans-caps"
+      title="Caps"
+    >
+      <div className="overflow-x-auto">
         <SimpleTable className="min-w-full">
           <TableHead>
             <tr>
@@ -202,18 +200,14 @@ function CapsGrid({ form }: { form: UseFormReturn<PlanSettingsDraft> }) {
             ))}
           </TableBody>
         </SimpleTable>
-      </Tile>
-    </section>
+      </div>
+    </SectionCard>
   );
 }
 
 function FeatureList({ form }: { form: UseFormReturn<PlanSettingsDraft> }) {
   return (
-    <section className="space-y-3">
-      <SettingsSectionHeader
-        description="The first plan that has each feature; every plan above it has it too."
-        title="Features"
-      />
+    <SectionCard bare info="The first plan that has each feature; every plan above it has it too." title="Features">
       {Object.values(PlanFeatureGroup).map((featureGroup) => (
         <SectionCard headingLevel={3} key={featureGroup} testId={`root-admin-plans-features-${featureGroup}`} title={PLAN_FEATURE_GROUP_LABEL[featureGroup]}>
           <SectionRows>
@@ -243,6 +237,6 @@ function FeatureList({ form }: { form: UseFormReturn<PlanSettingsDraft> }) {
           </SectionRows>
         </SectionCard>
       ))}
-    </section>
+    </SectionCard>
   );
 }

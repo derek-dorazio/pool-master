@@ -6,8 +6,9 @@ import {
   Button,
   DateDisplay,
   LinkButton,
+  SectionCard,
   SettingsRow,
-  SettingsSection,
+  SettingsRows,
   StatusBadge,
 } from '@/features/shared/ui';
 import { QueryKeys } from '@/lib/query-keys';
@@ -63,49 +64,51 @@ function SettingsGroupSection({ group }: { group: SettingsGroup }) {
   const { summary, actions } = groupContent(group);
 
   return (
-    <SettingsSection
-      action={(
+    <SectionCard
+      trailing={(
         <StatusBadge tone={group.source === 'stored' ? 'info' : 'neutral'}>
           {group.source === 'stored' ? 'Saved' : 'Defaults'}
         </StatusBadge>
       )}
-      description={group.description}
+      info={group.description}
       testId={`root-admin-settings-group-${group.key}`}
       title={group.title}
     >
-      {summary.map((item) => (
-        <SettingsRow key={item.id} label={item.label} value={item.value} />
-      ))}
-      <div className="space-y-5 px-5 py-4">
-        {group.key === 'EMAIL_CONFIG' ? (
-          <>
-            <EmailSettingsForm group={group} />
-            <EmailTestForm />
-          </>
-        ) : null}
-        {group.key === 'BUDGET_PRICING_CONFIG' ? <BudgetPricingSettingsForm group={group} /> : null}
-        {group.key === 'BILLING_CONFIG' ? <BillingSettingsForm group={group} /> : null}
-        <p className="text-sm text-muted-foreground" data-testid={`root-admin-settings-last-change-${group.key}`}>
-          {group.updatedAt ? (
+      <SettingsRows>
+        {summary.map((item) => (
+          <SettingsRow key={item.id} label={item.label} value={item.value} />
+        ))}
+        <div className="space-y-5 px-5 py-4">
+          {group.key === 'EMAIL_CONFIG' ? (
             <>
-              Last changed by {group.updatedBy?.name ?? 'an unknown admin'} on <DateDisplay value={group.updatedAt} />
+              <EmailSettingsForm group={group} />
+              <EmailTestForm />
             </>
-          ) : 'Never changed: using the defaults.'}
-        </p>
-        <div className="flex flex-wrap gap-3">
-          {actions}
-          <Button
-            data-testid={`root-admin-settings-history-toggle-${group.key}`}
-            onClick={() => setShowHistory((open) => !open)}
-            type="button"
-            variant="secondary"
-          >
-            {showHistory ? 'Hide recent changes' : 'Show recent changes'}
-          </Button>
+          ) : null}
+          {group.key === 'BUDGET_PRICING_CONFIG' ? <BudgetPricingSettingsForm group={group} /> : null}
+          {group.key === 'BILLING_CONFIG' ? <BillingSettingsForm group={group} /> : null}
+          <p className="text-sm text-muted-foreground" data-testid={`root-admin-settings-last-change-${group.key}`}>
+            {group.updatedAt ? (
+              <>
+                Last changed by {group.updatedBy?.name ?? 'an unknown admin'} on <DateDisplay value={group.updatedAt} />
+              </>
+            ) : 'Never changed: using the defaults.'}
+          </p>
+          <div className="flex flex-wrap gap-3">
+            {actions}
+            <Button
+              data-testid={`root-admin-settings-history-toggle-${group.key}`}
+              onClick={() => setShowHistory((open) => !open)}
+              type="button"
+              variant="secondary"
+            >
+              {showHistory ? 'Hide recent changes' : 'Show recent changes'}
+            </Button>
+          </div>
+          {showHistory ? <SettingsHistory groupKey={group.key} /> : null}
         </div>
-        {showHistory ? <SettingsHistory groupKey={group.key} /> : null}
-      </div>
-    </SettingsSection>
+      </SettingsRows>
+    </SectionCard>
   );
 }
 

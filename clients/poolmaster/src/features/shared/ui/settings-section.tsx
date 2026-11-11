@@ -1,48 +1,11 @@
 import type { ReactNode } from "react";
-import { Tile } from "./tile";
-import { Heading } from "./heading";
 
-type SettingsSectionProps = {
-  action?: ReactNode;
-  children: ReactNode;
-  description?: ReactNode;
-  testId?: string;
-  title: ReactNode;
-};
-
-/** A titled group of settings rows, with one optional action (usually Edit) for the group. */
-export function SettingsSection({ action, children, description, testId, title }: SettingsSectionProps) {
-  return (
-    <section className="space-y-3" data-testid={testId}>
-      <SettingsSectionHeader action={action} description={description} title={title} />
-      <Tile className="divide-y divide-border" padding="none" radius="md">{children}</Tile>
-    </section>
-  );
-}
-
-/** A settings-style section title, for a section whose body is not a card of rows (a table). */
-export function SettingsSectionHeader({
-  action,
-  description,
-  title,
-  tone = "default",
-}: {
-  action?: ReactNode;
-  description?: ReactNode;
-  title: ReactNode;
-  tone?: "danger" | "default";
-}) {
-  return (
-    <div className="flex flex-wrap items-end justify-between gap-3">
-      <div>
-        <Heading className={tone === "danger" ? "text-destructive" : undefined} level={2} variant="subtitle">
-          {title}
-        </Heading>
-        {description ? <p className="mt-0.5 text-sm text-muted-foreground">{description}</p> : null}
-      </div>
-      {action}
-    </div>
-  );
+/**
+ * A `SectionCard`'s settings rows, or a danger zone's actions: divided, each a `SettingsRow` or
+ * `DangerZoneAction`. The section itself is the `SectionCard` (#1562).
+ */
+export function SettingsRows({ children, testId }: { children: ReactNode; testId?: string }) {
+  return <div className="divide-y divide-border" data-testid={testId}>{children}</div>;
 }
 
 type SettingsRowProps = {
@@ -66,31 +29,6 @@ export function SettingsRow({ action, label, testId, value }: SettingsRowProps) 
   );
 }
 
-type DangerZoneProps = {
-  children: ReactNode;
-  description?: ReactNode;
-  testId?: string;
-  title?: ReactNode;
-};
-
-/**
- * Destructive actions, kept in their own marked section at the bottom of a settings page and
- * never beside everyday actions. Each action confirms before it runs.
- */
-export function DangerZone({
-  children,
-  description = "Each of these asks you to confirm.",
-  testId,
-  title = "Danger zone",
-}: DangerZoneProps) {
-  return (
-    <section className="space-y-3" data-testid={testId}>
-      <SettingsSectionHeader description={description} title={title} tone="danger" />
-      <div className="divide-y divide-border rounded-2xl border border-destructive/40 bg-card">{children}</div>
-    </section>
-  );
-}
-
 type DangerZoneActionProps = {
   action: ReactNode;
   description: ReactNode;
@@ -98,6 +36,7 @@ type DangerZoneActionProps = {
   title: ReactNode;
 };
 
+/** One destructive action in a danger zone (`SectionCard` with `tone="danger"`): what it does, and its button, which confirms before it runs. */
 export function DangerZoneAction({ action, description, testId, title }: DangerZoneActionProps) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-4 px-5 py-4" data-testid={testId}>

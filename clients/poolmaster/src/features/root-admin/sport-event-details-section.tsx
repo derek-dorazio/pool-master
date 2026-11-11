@@ -1,10 +1,11 @@
 import { getSportDefinition } from '@poolmaster/shared/domain';
 import type { SportEventDto } from '@/lib/api';
 import {
-  LinkButton,
-  SettingsRow,
-  SettingsSection,
   formatDateTimeDisplay,
+  LinkButton,
+  SectionCard,
+  SettingsRow,
+  SettingsRows,
   useDisplayPreferences,
 } from '@/features/shared/ui';
 import { buildSportEventPath, buildSportLeaguePath } from './manage-navigation';
@@ -29,8 +30,8 @@ export function SportEventDetailsSection({
   const sportLeagueNoun = useSportLeagueNoun(tournament.sport, tournament.sportLeagueId);
   const { scoresUnplayedRoundsAgainstPar } = getScoringFamilyAdminUi(tournament);
   return (
-    <SettingsSection
-      action={(
+    <SectionCard
+      trailing={(
         <LinkButton
           data-testid="root-admin-sport-event-home-edit"
           size="sm"
@@ -43,28 +44,30 @@ export function SportEventDetailsSection({
       testId="root-admin-sport-event-details"
       title="Details"
     >
-      <SettingsRow label="Venue" value={tournament.venue || 'Not set'} />
-      <SettingsRow label="Location" value={tournament.location || 'Not set'} />
-      <SettingsRow label="Starts" value={formatDateTimeDisplay(tournament.startDate, displayPreferences)} />
-      <SettingsRow label="Ends" value={formatDateTimeDisplay(tournament.endDate, displayPreferences)} />
-      <SettingsRow label={upperFirst(vocabulary.round.many)} value={tournament.rounds ?? 'Not set'} />
-      {scoresUnplayedRoundsAgainstPar ? (
-        <SettingsRow label="Par per round" value={tournament.roundsPar ?? 'From scores'} />
-      ) : null}
-      <SettingsRow
-        label={upperFirst(sportLeagueNoun.one)}
-        value={(
-          <LinkButton
-            data-testid="root-admin-sport-event-home-tour-link"
-            size="sm"
-            to={buildSportLeaguePath(tournament.sport, tournament.sportLeagueId)}
-            variant="ghost"
-          >
-            {sportLeagueName ?? `Open ${sportLeagueNoun.one}`}
-          </LinkButton>
-        )}
-      />
-      <SettingsRow label="Event year" value={tournament.eventYear} />
-    </SettingsSection>
+      <SettingsRows>
+        <SettingsRow label="Venue" value={tournament.venue || 'Not set'} />
+        <SettingsRow label="Location" value={tournament.location || 'Not set'} />
+        <SettingsRow label="Starts" value={formatDateTimeDisplay(tournament.startDate, displayPreferences)} />
+        <SettingsRow label="Ends" value={formatDateTimeDisplay(tournament.endDate, displayPreferences)} />
+        <SettingsRow label={upperFirst(vocabulary.round.many)} value={tournament.rounds ?? 'Not set'} />
+        {scoresUnplayedRoundsAgainstPar ? (
+          <SettingsRow label="Par per round" value={tournament.roundsPar ?? 'From scores'} />
+        ) : null}
+        <SettingsRow
+          label={upperFirst(sportLeagueNoun.one)}
+          value={(
+            <LinkButton
+              data-testid="root-admin-sport-event-home-tour-link"
+              size="sm"
+              to={buildSportLeaguePath(tournament.sport, tournament.sportLeagueId)}
+              variant="ghost"
+            >
+              {sportLeagueName ?? `Open ${sportLeagueNoun.one}`}
+            </LinkButton>
+          )}
+        />
+        <SettingsRow label="Event year" value={tournament.eventYear} />
+      </SettingsRows>
+    </SectionCard>
   );
 }

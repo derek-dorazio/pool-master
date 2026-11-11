@@ -77,6 +77,21 @@ describe("SectionCard", () => {
   });
 });
 
+describe("SectionCard info", () => {
+  it("names the info icon after the section's test id, so two sections on a page keep apart", () => {
+    render(
+      <>
+        <SectionCard info="What members see." testId="general" title="General"><p>a</p></SectionCard>
+        <SectionCard info="What each place earns." testId="cups" title="Championships"><p>b</p></SectionCard>
+      </>,
+    );
+
+    fireEvent.click(screen.getByTestId("cups-info"));
+    expect(screen.getByTestId("cups-info-callout")).toHaveTextContent("What each place earns.");
+    expect(screen.queryByTestId("general-info-callout")).not.toBeInTheDocument();
+  });
+});
+
 describe("SectionTitle", () => {
   it("shows its explanation behind the info icon, not on the page", () => {
     render(<SectionTitle info="Finished ones are under Past." testId="title" title="Current contests" />);
