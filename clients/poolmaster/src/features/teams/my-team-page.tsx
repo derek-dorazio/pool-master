@@ -27,8 +27,9 @@ import { useMyTeamOwners } from './use-my-team-owners';
  * Yours: the viewer's own team in this league, and nothing else: its name and icon with Edit team,
  * then its year in the championship and cups (#872) first, since how the team is doing is the
  * page's main job, then its owners, and Leave league as the member's one danger action. The
- * league's all-years view lives on Championships, not here (#1544). Contests and the team's entries in them are on League Home and the
- * Contests page (#1394). A member with no team yet creates one here.
+ * league's all-years view lives on Championships, not here (#1544). Contests and the team's
+ * entries in them are on League Home and the Contests page (#1394). A member with no team yet
+ * creates one here.
  */
 export function MyTeamPage() {
   const { leagueCode = '' } = useParams<{ leagueCode: string }>();
