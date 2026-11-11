@@ -194,10 +194,11 @@ columns the history had built as `varchar(255)`.
 
 ## Squashing The Migration History
 
-The history was squashed once, on 2026-11-04 (#1429): 217 migrations became
-`20270107000000_baseline_schema` and `20270107000100_baseline_reference_data`. A squash is only
-free while no environment holds data worth keeping; today that is true because QA is
-disposable and stage and prod have never had a database. Once one does, a squash means marking
+The history was squashed on 2026-11-04 (#1429), 217 migrations into two baselines, and again on
+2026-11-11, just before the last QA reset, folding the 12 migrations added since into
+`20271114000000_baseline_schema` and `20271114000100_baseline_reference_data`. A squash is only
+free while no environment holds data worth keeping. That stopped being true after the 2026-11-11
+QA reset, when early users began running real leagues on QA. From then on a squash means marking
 the baseline applied there (`prisma migrate resolve --applied`) after proving its schema
 matches, and the QA reset must never be pointed at it.
 
@@ -209,7 +210,8 @@ matches, and the QA reset must never be pointed at it.
   builds everything the schema declares. It does not build what the schema cannot say: the
   `pg_trgm` extension, CHECK constraints, partial unique indexes, and NOT NULL on scalar lists
   (Prisma never emits it for them). Take those from the database the old history builds, and
-  append them in a section of their own.
+  append them in a section of their own. Prisma also writes each enum's labels in the order
+  `schema.prisma` lists them; keep the order the history added them in.
 - **Reference rows are dumped, never copied from the old `INSERT`s.** Later migrations update and
   delete rows earlier ones inserted. `pg_dump --data-only --column-inserts` of an empty database
   after the whole old history is the truth, and every row there is reference data because test

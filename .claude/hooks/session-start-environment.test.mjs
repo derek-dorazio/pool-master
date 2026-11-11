@@ -15,7 +15,7 @@ import { isRunAsHook, migrationPlan, parseMigrationRows, parseSchemaProbe, readD
  * database built by the old history counted as ready (217 >= 2) while holding none of the
  * baselines, so DB-backed gates ran against the old schema. The plan compares names instead.
  */
-const baselines = ['20270107000000_baseline_schema', '20270107000100_baseline_reference_data'];
+const baselines = ['20271114000000_baseline_schema', '20271114000100_baseline_reference_data'];
 const applied = (name) => ({ migration_name: name, finished_at: '2026-11-01 10:00:00+00', rolled_back_at: null });
 const migrated = (recorded) => ({ recorded, publicTables: 1 });
 const oldHistory = Array.from({ length: 217 }, (_, i) => `2025${String(i).padStart(10, '0')}_old_${i}`);
@@ -76,13 +76,13 @@ describe('session-start hook migration plan', () => {
 describe('session-start hook _prisma_migrations parsing', () => {
   it('reads psql unaligned rows, treating an empty column as null', () => {
     const stdout = [
-      '20270107000000_baseline_schema|2026-11-01 10:00:00+00|',
-      '20270107000100_baseline_reference_data||',
+      '20271114000000_baseline_schema|2026-11-01 10:00:00+00|',
+      '20271114000100_baseline_reference_data||',
       '20260101000000_x|2026-11-01 10:00:00+00|2026-11-01 11:00:00+00',
     ].join('\n');
     assert.deepEqual(parseMigrationRows(stdout), [
-      { migration_name: '20270107000000_baseline_schema', finished_at: '2026-11-01 10:00:00+00', rolled_back_at: null },
-      { migration_name: '20270107000100_baseline_reference_data', finished_at: null, rolled_back_at: null },
+      { migration_name: '20271114000000_baseline_schema', finished_at: '2026-11-01 10:00:00+00', rolled_back_at: null },
+      { migration_name: '20271114000100_baseline_reference_data', finished_at: null, rolled_back_at: null },
       { migration_name: '20260101000000_x', finished_at: '2026-11-01 10:00:00+00', rolled_back_at: '2026-11-01 11:00:00+00' },
     ]);
   });
