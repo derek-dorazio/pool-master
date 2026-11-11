@@ -24,7 +24,7 @@ The target:
    - golf hole-by-hole scores, through the existing `GOLF` live-score category;
    - game scores and winners for brackets and pick'em, through `MatchResultService`, as the
      `GAME` live-score category: a match links to its provider game by `externalGameId`, on
-     its event's own provider. An NFL event is a scope of the vendor's games, a regular season
+     its event's own provider, and the sync makes that link itself, from the game's two teams. An NFL event is a scope of the vendor's games, a regular season
      week (`nfl-2026-week-12`) or a postseason (`nfl-2026-postseason`), and its teams map by
      prefixed ids (`nfl-team-12`). A provider participant with no mapping yet is linked to the
      site's one participant of the same sport and name (a team loaded from a data file), not

@@ -88,7 +88,8 @@ declares the one live-score category it accepts, or none; the score publisher sk
 a batch its event's family does not accept. Stroke play accepts `GOLF`; head to head accepts
 `GAME` (#1496), writing a provider's final for each match linked to its game (`externalGameId`,
 on the event's own provider) through `MatchResultService`, the admin's result path, with the
-teams' provider mappings deciding which side won. The golf round-score admin routes refuse an event
+teams' provider mappings deciding which side won. The sync links a game nobody has linked to the
+one open match of the event whose two teams it is, so nobody links games by hand. The golf round-score admin routes refuse an event
 whose family does not keep golf rounds (422 `EVENT_SCORING_FAMILY_MISMATCH`). The leaderboard
 response carries the event's `sport`, so the web resolves the same family for its own
 presentation (`SCORING_FAMILY_UI`). Two families are built: `STROKE_PLAY` (golf) and

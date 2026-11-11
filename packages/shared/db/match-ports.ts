@@ -84,6 +84,8 @@ export interface SportEventMatchRepository {
    */
   replaceBracket(sportEventId: string, matches: readonly SportEventMatchWrite[], jobs?: readonly BackgroundJobRequest[]): Promise<void>;
   update(id: string, patch: SportEventMatchPatch, jobs?: readonly BackgroundJobRequest[]): Promise<void>;
+  /** Each match linked to the provider game whose teams are its own (#1496), all or none. */
+  linkGames(links: readonly { id: string; externalGameId: string }[]): Promise<void>;
   /** Both sides of each match given, all or none: a reseeded round's teams placed (#722). */
   placeSides(sides: readonly { id: string; homeSportEventParticipantId: string; awaySportEventParticipantId: string }[], jobs?: readonly BackgroundJobRequest[]): Promise<void>;
   /** A result entered or cleared, the side it fills and the standings it leaves, all or none. */

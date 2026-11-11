@@ -35,15 +35,16 @@ function writer(matches: SportEventMatch[], unmappedTeams: readonly string[] = [
     .filter((id) => !unmappedTeams.includes(id))
     .map((externalId) => ({ id: `map-${externalId}`, providerId, externalId, participantId: externalId.replace('bdl-', 'p-') })));
   const logger = fakeLogger();
+  const linkGames = jest.fn<Promise<void>, [readonly { id: string; externalGameId: string }[]]>().mockResolvedValue();
   const deps = {
     providerId: 'balldontlie',
-    matches: { findBySportEvent: jest.fn(async () => matches) },
+    matches: { findBySportEvent: jest.fn(async () => matches), linkGames },
     eventParticipants: { findByIds },
     mappings: { findByProviderExternalIds },
     results: { recordResult },
     logger,
   } as unknown as GameScoreWriterDeps;
-  return { deps, recordResult, findByIds, findByProviderExternalIds, logger };
+  return { deps, recordResult, findByIds, findByProviderExternalIds, linkGames, logger };
 }
 
 describe('writeGameScores', () => {
@@ -78,22 +79,68 @@ describe('writeGameScores', () => {
     expect(recordResult).toHaveBeenCalledWith(EVENT, 2, { winnerSide: null, homeScore: 20, awayScore: 20 });
   });
 
-  it('writes nothing for a game that is not final, or that no match is linked to', async () => {
-    const matches = bracket();
-    matches[1] = linked(matches[1], null);
-    const { deps, recordResult, findByIds, findByProviderExternalIds } = writer(matches);
+  it('writes nothing for a game that is not final, or that no match fits, and reads nothing while every game is linked', async () => {
+    const { deps, recordResult, findByIds, findByProviderExternalIds, linkGames } = writer(bracket());
 
     const result = await writeGameScores(deps, EVENT, [
       game('g1', 'KC', 'BUF', 7, 3, ProviderGameState.IN_PROGRESS),
-      game('g2', 'PHI', 'DAL', 30, 10),
-      game('other', 'NYJ', 'MIA', 3, 0),
+      game('g2', 'PHI', 'DAL', 30, 10, ProviderGameState.SCHEDULED),
     ]);
 
     expect(recordResult).not.toHaveBeenCalled();
     expect(findByIds).not.toHaveBeenCalled();
     expect(findByProviderExternalIds).not.toHaveBeenCalled();
-    expect(result).toMatchObject({ updatesReturned: 3, updatesPersisted: 0, updatesSkipped: 3 });
+    expect(linkGames).toHaveBeenCalledWith([]);
+    expect(result).toMatchObject({ updatesReturned: 2, updatesPersisted: 0, updatesSkipped: 2 });
     expect(result.writeDiagnostics.summary.total).toBe(0);
+  });
+
+  it('links a game no match is linked to yet to the match its two teams play, in either order, and records its final', async () => {
+    const matches = bracket().map((match) => linked(match, null));
+    const { deps, recordResult, linkGames, logger } = writer(matches);
+
+    const result = await writeGameScores(deps, EVENT, [
+      game('p-1', 'BUF', 'KC', 24, 27),
+      game('p-2', 'PHI', 'DAL', 14, 10, ProviderGameState.IN_PROGRESS),
+      game('p-3', 'NYJ', 'MIA', 3, 0),
+    ]);
+
+    expect(linkGames).toHaveBeenCalledWith([{ id: 'm1', externalGameId: 'p-1' }, { id: 'm2', externalGameId: 'p-2' }]);
+    expect(logger.info).toHaveBeenCalledWith({ action: 'liveScore.game.linked', data: { sportEventId: EVENT, matchNumber: 1, externalGameId: 'p-1' } }, expect.any(String));
+    expect(recordResult.mock.calls).toEqual([[EVENT, 1, { winnerSide: MatchSide.HOME, homeScore: 27, awayScore: 24 }]]);
+    expect(result).toMatchObject({ updatesPersisted: 1, updatesSkipped: 2 });
+  });
+
+  it('links nothing it would have to guess: two games for one match, a match with a side to come, a team not mapped, or a side with no field row', async () => {
+    const twoGames = writer(bracket().map((match) => linked(match, null)));
+    await writeGameScores(twoGames.deps, EVENT, [game('p-1', 'KC', 'BUF', 1, 0), game('p-1b', 'BUF', 'KC', 0, 1)]);
+    expect(twoGames.linkGames).toHaveBeenCalledWith([]);
+
+    const sideToCome = bracket().map((match) => linked(match, null));
+    sideToCome[2] = { ...sideToCome[2], homeSportEventParticipantId: 'sep-KC' };
+    const undecided = writer(sideToCome);
+    await writeGameScores(undecided.deps, EVENT, [game('p-3', 'KC', 'PHI', 1, 0)]);
+    expect(undecided.linkGames).toHaveBeenCalledWith([]);
+
+    const unmapped = writer(bracket().map((match) => linked(match, null)), ['bdl-BUF']);
+    await writeGameScores(unmapped.deps, EVENT, [game('p-1', 'KC', 'BUF', 1, 0)]);
+    expect(unmapped.linkGames).toHaveBeenCalledWith([]);
+    expect(unmapped.recordResult).not.toHaveBeenCalled();
+
+    const noFieldRow = writer(bracket().map((match) => linked(match, null)));
+    noFieldRow.findByIds.mockResolvedValue([]);
+    await writeGameScores(noFieldRow.deps, EVENT, [game('p-1', 'KC', 'BUF', 1, 0)]);
+    expect(noFieldRow.linkGames).toHaveBeenCalledWith([]);
+  });
+
+  it('links nothing when a game\'s two teams play two of the event\'s open matches', async () => {
+    const rematch = bracket().map((match) => linked(match, null));
+    rematch[2] = { ...rematch[2], homeSportEventParticipantId: 'sep-BUF', awaySportEventParticipantId: 'sep-KC' };
+    const { deps, linkGames } = writer(rematch);
+
+    await writeGameScores(deps, EVENT, [game('p-1', 'KC', 'BUF', 1, 0)]);
+
+    expect(linkGames).toHaveBeenCalledWith([]);
   });
 
   it('writes nothing, and says so, for a match that already holds the final result', async () => {
