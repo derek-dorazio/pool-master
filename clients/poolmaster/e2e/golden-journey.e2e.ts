@@ -498,7 +498,7 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
     await test.step('the contest is on the board with no entries, and on the league\'s contest list', async () => {
       await page.goto(`/league/${run.leagueCode}/contests/${state.contestId}`);
       await expect(page.getByTestId('contest-board')).toBeVisible();
-      await expect(page.getByTestId('contest-detail-heading')).toHaveText(run.contestName);
+      await expect(page.getByTestId('contest-detail-header-name')).toHaveText(run.contestName);
       // The contest is this run's own and seconds old: zero entries is a fact about it, not
       // about anything else in the database. The new league is on its Premium gift, whose cap of
       // 100 entries per contest the board shows beside the count.

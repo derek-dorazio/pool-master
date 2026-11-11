@@ -317,7 +317,7 @@ describe('Bracket contest entry page', () => {
     });
     renderBracketEntry('entry-2');
 
-    expect(await screen.findByTestId('contest-entry-heading')).toHaveTextContent('Chalk All The Way');
+    expect(await screen.findByTestId('contest-entry-header-name')).toHaveTextContent('Chalk All The Way');
     expect(screen.getByTestId('contest-entry-summary')).toHaveTextContent('Derek’s Great Golf Guys');
     expect(team(7, TEAMS.duke.sportEventParticipantId)).toHaveAttribute('data-picked', 'true');
     expect(screen.queryByTestId('bracket-submit-panel')).not.toBeInTheDocument();

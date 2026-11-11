@@ -831,7 +831,7 @@ describe('ContestLeaderboardPage', () => {
 
     renderLeaderboard();
 
-    expect(await screen.findByTestId('contest-menu-leaderboard')).toBeChecked();
+    expect(await screen.findByTestId('contest-menu-leaderboard')).toHaveAttribute('aria-current', 'page');
     fireEvent.click(screen.getByTestId('contest-menu-entries'));
 
     expect(await screen.findByTestId('contest-board')).toBeInTheDocument();

@@ -39,14 +39,14 @@ describe('pool-master-3dg RootAdminSportEventListPage', () => {
     listEventsMock.mockReset();
   });
 
-  it('marks Tournaments in the golf sub-menu and moves to the Golfers list from it', async () => {
+  it('marks Tournaments as the current golf tab and moves to the Golfers list from it', async () => {
     listEventsMock.mockResolvedValue({ data: { events: [] } });
     renderPage();
 
     const menu = await screen.findByRole('navigation', { name: 'Golf lists' });
-    expect(within(menu).getByRole('radio', { name: 'Tournaments' })).toBeChecked();
-    expect(within(menu).getByRole('radio', { name: 'Tours' })).not.toBeChecked();
-    fireEvent.click(within(menu).getByRole('radio', { name: 'Golfers' }));
+    expect(within(menu).getByRole('link', { name: 'Tournaments' })).toHaveAttribute('aria-current', 'page');
+    expect(within(menu).getByRole('link', { name: 'Tours' })).not.toHaveAttribute('aria-current');
+    fireEvent.click(within(menu).getByRole('link', { name: 'Golfers' }));
 
     expect(await screen.findByTestId('golf-players-list')).toBeInTheDocument();
   });

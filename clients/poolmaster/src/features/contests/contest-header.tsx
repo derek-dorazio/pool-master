@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import type { ContestEntryStatus } from '@poolmaster/shared/domain';
-import { Navigate, useLocation, useNavigate } from 'react-router';
+import { Navigate, useLocation } from 'react-router';
 import type { ContestDto } from '@/lib/api';
 import {
   buildContestLandingPath,
@@ -10,7 +10,7 @@ import {
   buildLeagueContestPath,
 } from '@/features/leagues/league-routing';
 import { useLeagueContextById } from '@/features/leagues/use-league-context';
-import { Breadcrumbs, Heading, SegmentedControl, Tile } from '@/features/shared/ui';
+import { PageHeader, PageTabs } from '@/features/shared/ui';
 import { buildMyContestEntriesPath, entryPageView, type ContestView } from './contest-page-view';
 import { ContestStatusBadge } from './contest-status-badge';
 import { EntryStatusCallout, type EntryStatusFact } from './entry-status-callout';
@@ -37,7 +37,6 @@ function ContestSubMenu({
   myEntryIds: readonly string[];
   picksRevealed: boolean;
 }) {
-  const navigate = useNavigate();
   const [onlyEntryId] = myEntryIds;
   const hasSeveral = myEntryIds.length > 1;
   const paths: Partial<Record<ContestView, string>> = {
@@ -52,22 +51,18 @@ function ContestSubMenu({
     leaderboard: 'Leaderboard',
     'my-entry': hasSeveral ? 'My entries' : 'My entry',
   };
-  const views = (['leaderboard', 'entries', 'my-entry'] as const).filter((view) => paths[view] !== undefined);
 
   return (
-    <nav aria-label="Contest pages" data-testid="contest-menu">
-      <SegmentedControl
-        aria-label="Contest page"
-        onChange={(next) => {
-          const path = paths[next as ContestView];
-          if (path) {
-            void navigate(path);
-          }
-        }}
-        options={views.map((view) => ({ label: labels[view], testId: `contest-menu-${view}`, value: view }))}
-        value={current ?? ''}
-      />
-    </nav>
+    <PageTabs
+      aria-label="Contest pages"
+      items={(['leaderboard', 'entries', 'my-entry'] as const).flatMap((view) => {
+        const to = paths[view];
+        return to === undefined
+          ? []
+          : [{ isActive: current === view, label: labels[view], testId: `contest-menu-${view}`, to }];
+      })}
+      variant="link"
+    />
   );
 }
 
@@ -92,98 +87,51 @@ function useOwnLeagueAddress(leagueId: string, leagueCode: string): string | nul
 }
 
 /**
- * The header every contest page shares: the trail back to the league's contests, badges, a title with anything beside it and a summary
- * line on the left, the page's own actions on the right, and the contest sub-menu underneath.
- */
-function ContestHeader({
-  actions,
-  badges,
-  breadcrumbs,
-  children,
-  menu,
-  summary,
-  title,
-  titleAside,
-  titleTestId,
-}: {
-  actions?: ReactNode;
-  badges: ReactNode;
-  breadcrumbs: ReactNode;
-  /** Anything the page shows under the title, such as its schedule or counts. */
-  children?: ReactNode;
-  menu: ReactNode;
-  summary?: ReactNode;
-  title: string;
-  titleAside?: ReactNode;
-  titleTestId: string;
-}) {
-  return (
-    <Tile padding="lg">
-      {breadcrumbs}
-      <div className="mt-4 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div className="space-y-3">
-          {badges ? <div className="flex flex-wrap gap-2">{badges}</div> : null}
-          <div>
-            <div className="flex items-center gap-2">
-              <Heading data-testid={titleTestId} level={2} tone="inherit" variant="page">
-                {title}
-              </Heading>
-              {titleAside}
-            </div>
-            {summary}
-            {children}
-          </div>
-        </div>
-        {actions ? <div className="flex flex-wrap gap-3">{actions}</div> : null}
-      </div>
-      {menu ? <div className="mt-5">{menu}</div> : null}
-    </Tile>
-  );
-}
-
-/**
- * Every contest page's frame: the header with the trail Contests / contest (/ entry), the
- * contest's status badge, name and the Leaderboard / Entries / My entry sub-menu built from the
- * contest, then the page's body. Contests opens the league's contests on this contest (#1392).
- * A URL naming another league is replaced with the contest's own league's (#1412).
+ * Every contest page's frame: the shared `PageHeader` with the trail Contests / contest (/ entry),
+ * the contest's status badge in its status slot, the name, the summary as its fact line, and the
+ * Leaderboard / Entries / My entry tabs built from the contest, then the page's body. Contests
+ * opens the league's contests on this contest (#1392). A URL naming another league is replaced
+ * with the contest's own league's (#1412).
  */
 export function ContestPageFrame({
   actions,
-  badges,
   children,
   contest,
   current,
-  details,
   entryName,
+  headerTestId,
   leagueCode,
+  notes,
   picksRevealed,
+  status,
   summary,
   testId,
   title,
   titleAside,
-  titleTestId,
 }: {
   actions?: ReactNode;
-  /** The header's badges: the contest's status badge unless the page says more, none for null. */
-  badges?: ReactNode;
   /** The page's body, under the header. */
   children?: ReactNode;
   contest: FramedContest;
   current: ContestView | null;
-  /** Anything the header shows under the title and summary, such as a schedule or notes. */
-  details?: ReactNode;
   /** On an entry's page, the entry's name, the trail's last step ('' while it loads). */
   entryName?: string;
+  /** The header's test id; its heading is `<headerTestId>-name`. */
+  headerTestId: string;
   leagueCode: string;
-  /** Whether the Leaderboard option shows: its endpoint refuses until picks are revealed. */
+  /** Lines under the fact line, such as a leaderboard's notes. */
+  notes?: ReactNode;
+  /** Whether the Leaderboard tab shows: its endpoint refuses until picks are revealed. */
   picksRevealed: boolean;
+  /** The status slot: the contest's status badge unless the page says otherwise, none for null. */
+  status?: ReactNode;
+  /** The fact line: the contest's way to play, its schedule or counts, as plain text spans. */
   summary?: ReactNode;
   testId?: string;
   /** The heading; the contest's name unless the page is about one entry. */
   title?: string;
   /** Beside the heading, such as an entry page's status. */
   titleAside?: ReactNode;
-  titleTestId: string;
 }) {
   const ownLeagueAddress = useOwnLeagueAddress(contest.leagueId, leagueCode);
   if (ownLeagueAddress) {
@@ -200,11 +148,14 @@ export function ContestPageFrame({
 
   return (
     <section className="space-y-6" data-testid={testId}>
-      <ContestHeader
+      <PageHeader
         actions={actions}
-        badges={badges === undefined ? <ContestStatusBadge status={contest.status} /> : badges}
-        breadcrumbs={<Breadcrumbs items={trail} label="Contest breadcrumbs" />}
-        menu={(
+        breadcrumbLabel="Contest breadcrumbs"
+        breadcrumbs={trail}
+        description={notes}
+        meta={summary}
+        status={status === undefined ? <ContestStatusBadge status={contest.status} /> : status}
+        tabs={(
           <ContestSubMenu
             contestId={contest.id}
             current={current}
@@ -213,13 +164,10 @@ export function ContestPageFrame({
             picksRevealed={picksRevealed}
           />
         )}
-        summary={summary}
+        testId={headerTestId}
         title={title ?? contest.name}
         titleAside={titleAside}
-        titleTestId={titleTestId}
-      >
-        {details}
-      </ContestHeader>
+      />
       {children}
     </section>
   );
@@ -264,21 +212,21 @@ export function ContestEntryFrame({
 }) {
   return (
     <ContestPageFrame
-      badges={null}
       contest={contest}
       current={entryPageView(contest, entryId)}
       entryName={title}
+      headerTestId="contest-entry-header"
       leagueCode={leagueCode}
       picksRevealed={picksRevealed}
+      status={null}
       summary={(
-        <p className="mt-2 text-sm text-muted-foreground" data-testid="contest-entry-summary">
+        <span data-testid="contest-entry-summary">
           {[contest.name, ...rules, ...(entry ? [entry.squadName, `Entry ${entry.entryNumber}`] : [])].join(' · ')}
-        </p>
+        </span>
       )}
       testId={testId}
       title={title}
       titleAside={<EntryStatusCallout entry={entry} facts={statusFacts} phase={phase} status={status} />}
-      titleTestId="contest-entry-heading"
     >
       {children}
     </ContestPageFrame>

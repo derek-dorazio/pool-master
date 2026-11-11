@@ -335,7 +335,7 @@ describe('ContestDetailPage (Contest Board)', () => {
     );
   });
 
-  // pool-master-dxd.13 — header summary counts ('My Entries: N · Total Entries: M').
+  // pool-master-dxd.13 — header summary counts ('My Entries: N · Entries: M').
   it('renders header counts for my entries and total entries', async () => {
     primeMocks({
       entries: [
@@ -350,9 +350,9 @@ describe('ContestDetailPage (Contest Board)', () => {
     // The viewer's squad comes from the league-context read, which resolves after the initial
     // render. Wait for the count to update from the initial 0 to 2.
     await waitFor(() => {
-      expect(screen.getByTestId('contest-board-my-count')).toHaveTextContent('My Entries: 2');
+      expect(screen.getByTestId('contest-board-my-count')).toHaveTextContent('My entries: 2');
     });
-    expect(screen.getByTestId('contest-board-total-count')).toHaveTextContent('Total Entries: 3');
+    expect(screen.getByTestId('contest-board-total-count')).toHaveTextContent('Entries: 3');
   });
 
   // pool-master-dxd.13 — MY filter is client-side; total count stays unfiltered.
@@ -377,7 +377,7 @@ describe('ContestDetailPage (Contest Board)', () => {
     expect(screen.getByTestId('contest-board-entry-entry-1')).toBeInTheDocument();
 
     // Header counts must NOT change with the toggle.
-    expect(screen.getByTestId('contest-board-total-count')).toHaveTextContent('Total Entries: 2');
+    expect(screen.getByTestId('contest-board-total-count')).toHaveTextContent('Entries: 2');
   });
 
   it('opens on only the viewer\'s entries, with My entries chosen in the menu, from a My entries link', async () => {
@@ -394,13 +394,13 @@ describe('ContestDetailPage (Contest Board)', () => {
     expect(await screen.findByTestId('contest-board-entry-entry-2')).toBeInTheDocument();
     await waitFor(() => expect(screen.queryByTestId('contest-board-entry-entry-3')).not.toBeInTheDocument());
     expect(screen.getByTestId('contest-board-my-only-toggle')).toBeChecked();
-    expect(screen.getByTestId('contest-menu-my-entry')).toBeChecked();
+    expect(screen.getByTestId('contest-menu-my-entry')).toHaveAttribute('aria-current', 'page');
     expect(screen.getByTestId('contest-menu-my-entry')).toHaveAccessibleName('My entries');
 
     fireEvent.click(screen.getByTestId('contest-board-my-only-toggle'));
 
     expect(await screen.findByTestId('contest-board-entry-entry-3')).toBeInTheDocument();
-    expect(screen.getByTestId('contest-menu-entries')).toBeChecked();
+    expect(screen.getByTestId('contest-menu-entries')).toHaveAttribute('aria-current', 'page');
   });
 
   it('changes only its own param in the link when My entries only is ticked and unticked, keeping any other', async () => {
@@ -621,7 +621,7 @@ describe('ContestDetailPage (Contest Board)', () => {
     const { unmount } = renderContestBoard();
 
     await screen.findByTestId('contest-board-total-count');
-    expect(screen.getByTestId('contest-menu-entries')).toBeChecked();
+    expect(screen.getByTestId('contest-menu-entries')).toHaveAttribute('aria-current', 'page');
     expect(screen.queryByTestId('contest-menu-leaderboard')).not.toBeInTheDocument();
     unmount();
 
@@ -721,7 +721,7 @@ describe('ContestDetailPage (Contest Board)', () => {
         },
       });
       renderContestBoard();
-      await screen.findByText(/Total Entries/);
+      await screen.findByTestId('contest-board-total-count');
       const entryCallsWhileOpen = listContestEntriesMock.mock.calls.length;
 
       // The contest read that sees ACTIVE reads the entries straight away, not one interval on.
@@ -805,7 +805,7 @@ describe('ContestDetailPage (Contest Board)', () => {
       renderContestBoard();
 
       expect(await screen.findByTestId('contest-board-create-entry')).toBeInTheDocument();
-      await waitFor(() => expect(screen.getByTestId('contest-board-total-count')).toHaveTextContent('Total Entries: 1 of 2'));
+      await waitFor(() => expect(screen.getByTestId('contest-board-total-count')).toHaveTextContent('Entries: 1 of 2'));
       expect(screen.queryByTestId('contest-board-full')).not.toBeInTheDocument();
     });
 
@@ -815,7 +815,7 @@ describe('ContestDetailPage (Contest Board)', () => {
       renderContestBoard();
 
       expect(await screen.findByTestId('contest-board-full')).toHaveTextContent(/^This contest is full\.$/);
-      expect(screen.getByTestId('contest-board-total-count')).toHaveTextContent('Total Entries: 2 of 2');
+      expect(screen.getByTestId('contest-board-total-count')).toHaveTextContent('Entries: 2 of 2');
       expect(screen.queryByTestId('contest-board-create-entry')).not.toBeInTheDocument();
       expect(screen.queryByTestId('contest-board-full-expand-link')).not.toBeInTheDocument();
     });
@@ -838,7 +838,7 @@ describe('ContestDetailPage (Contest Board)', () => {
       renderContestBoard();
 
       expect(await screen.findByTestId('contest-board-create-entry')).toBeInTheDocument();
-      expect(screen.getByTestId('contest-board-total-count')).toHaveTextContent('Total Entries: 2 of 50');
+      expect(screen.getByTestId('contest-board-total-count')).toHaveTextContent('Entries: 2 of 50');
       expect(screen.queryByTestId('contest-board-full')).not.toBeInTheDocument();
     });
 
@@ -848,7 +848,7 @@ describe('ContestDetailPage (Contest Board)', () => {
       renderContestBoard();
 
       expect(await screen.findByTestId('contest-board-create-entry')).toBeInTheDocument();
-      expect(screen.getByTestId('contest-board-total-count')).toHaveTextContent(/^Total Entries: 2$/);
+      expect(screen.getByTestId('contest-board-total-count')).toHaveTextContent(/^Entries: 2$/);
       expect(screen.queryByTestId('contest-board-full')).not.toBeInTheDocument();
     });
   });

@@ -84,7 +84,7 @@ function renderFrame({
       picksRevealed={picksRevealed}
       testId="frame"
       title={title}
-      titleTestId="frame-heading"
+      headerTestId="frame-header"
     >
       <p>Page body</p>
     </ContestPageFrame>,
@@ -97,30 +97,39 @@ function breadcrumbs() {
 }
 
 describe('ContestPageFrame', () => {
-  it('heads the page with the contest name and its status badge, with the body underneath', () => {
+  it('heads the page with the contest name in the plain page header, with no card around it, and the body underneath', () => {
     renderFrame();
 
-    expect(screen.getByTestId('frame-heading')).toHaveTextContent('Masters Pool');
-    expect(screen.getByText('Live')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'Masters Pool' })).toHaveAttribute('data-testid', 'frame-header-name');
+    expect(screen.getByTestId('frame-header').tagName).toBe('HEADER');
+    expect(screen.getByTestId('frame-header-title-row')).not.toHaveClass('bg-card', 'rounded-lg');
     expect(screen.getByTestId('frame')).toHaveTextContent('Page body');
+  });
+
+  it('shows the contest\'s status badge in the header\'s status slot, on the breadcrumb line', () => {
+    renderFrame();
+
+    const status = screen.getByTestId('frame-header-status-slot');
+    expect(status).toHaveTextContent('Live');
+    expect(screen.getByTestId('frame-header-trail-row')).toContainElement(status);
   });
 
   it('heads the page with its own title when it is about one entry', () => {
     renderFrame({ title: 'Casey Crushers 1' });
 
-    expect(screen.getByTestId('frame-heading')).toHaveTextContent('Casey Crushers 1');
+    expect(screen.getByTestId('frame-header-name')).toHaveTextContent('Casey Crushers 1');
   });
 
   it('offers Leaderboard, Entries and My entry in that order once picks are revealed and the viewer has one entry, on the current page', () => {
     renderFrame({ current: 'leaderboard' });
 
-    const options = within(screen.getByTestId('contest-menu')).getAllByRole('radio');
+    const options = within(screen.getByRole('navigation', { name: 'Contest pages' })).getAllByRole('link');
     expect(options.map((option) => option.getAttribute('data-testid'))).toEqual([
       'contest-menu-leaderboard',
       'contest-menu-entries',
       'contest-menu-my-entry',
     ]);
-    expect(screen.getByTestId('contest-menu-leaderboard')).toBeChecked();
+    expect(screen.getByTestId('contest-menu-leaderboard')).toHaveAttribute('aria-current', 'page');
     expect(screen.getByText('My entry')).toBeInTheDocument();
   });
 
@@ -153,16 +162,23 @@ describe('ContestPageFrame', () => {
   it('leaves out Leaderboard until picks are revealed, since its read is refused before then', () => {
     renderFrame({ picksRevealed: false });
 
-    expect(screen.getByTestId('contest-menu-entries')).toBeChecked();
+    expect(screen.getByTestId('contest-menu-entries')).toHaveAttribute('aria-current', 'page');
     expect(screen.queryByTestId('contest-menu-leaderboard')).not.toBeInTheDocument();
     expect(screen.getByTestId('contest-menu-my-entry')).toBeInTheDocument();
+  });
+
+  it('links each tab to its page, Leaderboard to the board and Entries to the contest', () => {
+    renderFrame();
+
+    expect(screen.getByTestId('contest-menu-leaderboard')).toHaveAttribute('href', '/league/BIGDAWGS/contests/contest-1/leaderboard');
+    expect(screen.getByTestId('contest-menu-entries')).toHaveAttribute('href', '/league/BIGDAWGS/contests/contest-1');
   });
 
   it('selects no option on another team\'s entry page', () => {
     renderFrame({ current: null });
 
-    expect(screen.getByTestId('contest-menu-entries')).not.toBeChecked();
-    expect(screen.getByTestId('contest-menu-my-entry')).not.toBeChecked();
+    expect(screen.getByTestId('contest-menu-entries')).not.toHaveAttribute('aria-current');
+    expect(screen.getByTestId('contest-menu-my-entry')).not.toHaveAttribute('aria-current');
   });
 });
 
@@ -223,7 +239,7 @@ describe('A contest page under the wrong league', () => {
     renderFrame();
 
     await vi.waitFor(() => expect(getLeagueMock).toHaveBeenCalled());
-    expect(screen.getByTestId('frame-heading')).toHaveTextContent('Masters Pool');
+    expect(screen.getByTestId('frame-header-name')).toHaveTextContent('Masters Pool');
     expect(screen.getByTestId('location')).toHaveTextContent('/league/BIGDAWGS/contests/contest-1');
   });
 });
@@ -253,12 +269,13 @@ describe('ContestEntryFrame', () => {
   it('heads an entry page with the entry\'s name, its status icon instead of badges, and the contest, rules and squad in one line', () => {
     drawEntryFrame();
 
-    expect(screen.getByTestId('contest-entry-heading')).toHaveTextContent('Birdie Hunters 2');
+    expect(screen.getByTestId('contest-entry-header-name')).toHaveTextContent('Birdie Hunters 2');
     expect(screen.getByTestId('contest-entry-status')).toHaveAccessibleName('Entry status: Not submitted');
     expect(screen.queryByText('Live')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('contest-entry-header-status-slot')).not.toBeInTheDocument();
     expect(screen.getByTestId('contest-entry-summary')).toHaveTextContent('Masters Pool · Confidence · Birdie Hunters · Entry 2');
     expect(screen.getByText('The picks')).toBeInTheDocument();
-    expect(screen.getByTestId('contest-menu-my-entry')).toBeChecked();
+    expect(screen.getByTestId('contest-menu-my-entry')).toHaveAttribute('aria-current', 'page');
   });
 
   it('puts the contest\'s phase and the entry\'s dates in the status callout', () => {

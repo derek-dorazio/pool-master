@@ -36,16 +36,16 @@ export function SquaresEntryPage({ contest }: { contest: ContestDto }) {
       contest={contest}
       current={entryPageView(contest, entryId)}
       entryName={entry?.name ?? ''}
+      headerTestId="contest-entry-header"
       leagueCode={leagueCode}
       picksRevealed={entryQuery.data?.picksRevealed ?? false}
       summary={(
-        <p className="mt-2 text-sm text-muted-foreground" data-testid="contest-entry-summary">
+        <span data-testid="contest-entry-summary">
           {[contest.name, squaresRules(boardQuery.data)].filter((part) => part !== null).join(' · ')}
-        </p>
+        </span>
       )}
       testId="squares-entry-page"
       title={entry?.name ?? contest.name}
-      titleTestId="contest-entry-heading"
     >
       <SquaresBoardView
         canManage={viewer.isCommissioner || viewer.isRootAdmin}
@@ -85,7 +85,7 @@ export function SquaresLeaderboard({ contest }: { contest: ContestDto }) {
       leagueCode={leagueCode}
       settledNote="Final result: the winners are frozen at settlement."
       summary={(
-        <p className="mt-2 text-sm text-muted-foreground" data-testid="squares-leaderboard-rules">{squaresRules(boardQuery.data)}</p>
+        <span data-testid="squares-leaderboard-rules">{squaresRules(boardQuery.data)}</span>
       )}
     >
       <SquaresBoardView canManage={viewer.isCommissioner || viewer.isRootAdmin} contest={contest} myEntryIds={contest.myEntryIds ?? []} />

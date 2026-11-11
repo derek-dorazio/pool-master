@@ -153,7 +153,7 @@ describe('pool-master-3dg RootAdminSportEventHomePage', () => {
     mockLogger.child.mockReturnValue(mockLogger);
   });
 
-  it('shows the tournament header and sub-menu, details, workflow rail and auto-lifecycle hint, and the sub-menu opens Tiers', async () => {
+  it('shows the tournament header and tabs, details, workflow rail and auto-lifecycle hint, and the Tiers tab opens Tiers', async () => {
     seedDefaults();
     renderPage();
 
@@ -175,10 +175,10 @@ describe('pool-master-3dg RootAdminSportEventHomePage', () => {
       screen.getByTestId('root-admin-sport-event-auto-hint'),
     ).toHaveTextContent('In Progress');
 
-    // One header for every tournament page: name, status, year and counts, then the sub-menu.
+    // One header for every tournament page: name, status, year and counts, then the tabs.
     expect(screen.getByRole('heading', { name: 'Rolling Weekend Invitational', level: 1 })).toBeInTheDocument();
     expect(screen.getByTestId('root-admin-sport-event-counts')).toHaveTextContent('120 golfers · 6 tiers');
-    expect(screen.getByTestId('root-admin-sport-event-menu-overview')).toBeChecked();
+    expect(screen.getByTestId('root-admin-sport-event-menu-overview')).toHaveAttribute('aria-current', 'page');
     fireEvent.click(screen.getByTestId('root-admin-sport-event-menu-tiers'));
     expect(await screen.findByTestId('tournament-subpage')).toBeInTheDocument();
   });

@@ -1,5 +1,4 @@
-import { useNavigate } from 'react-router';
-import { SegmentedControl } from '@/features/shared/ui';
+import { PageTabs } from '@/features/shared/ui';
 import {
   buildSportEventListPath,
   buildSportLeagueListPath,
@@ -17,7 +16,6 @@ type SportList = (typeof SPORT_LISTS)[number];
  * Tours); the side menu has one entry per sport.
  */
 export function SportSectionMenu({ current }: { current: SportList }) {
-  const navigate = useNavigate();
   const { sport, definition } = useManagedSport();
   const { event, participant, sportLeague } = definition.vocabulary;
   const lists: Record<SportList, { label: string; path: string }> = {
@@ -26,23 +24,19 @@ export function SportSectionMenu({ current }: { current: SportList }) {
     leagues: { label: capitalize(sportLeague.many), path: buildSportLeagueListPath(sport) },
   };
 
+  // The area's own PageHeader titles the sport; these tabs sit on a ruled line under it.
   return (
-    <nav aria-label={`${definition.name} lists`} data-testid="root-admin-sport-menu">
-      <SegmentedControl
-        aria-label={`${definition.name} list`}
-        onChange={(next) => {
-          const list = SPORT_LISTS.find((candidate) => candidate === next);
-          if (list) {
-            void navigate(lists[list].path);
-          }
-        }}
-        options={SPORT_LISTS.map((list) => ({
+    <div className="border-b border-border" data-testid="root-admin-sport-menu">
+      <PageTabs
+        aria-label={`${definition.name} lists`}
+        items={SPORT_LISTS.map((list) => ({
+          isActive: list === current,
           label: lists[list].label,
           testId: `root-admin-sport-menu-${list}`,
-          value: list,
+          to: lists[list].path,
         }))}
-        value={current}
+        variant="link"
       />
-    </nav>
+    </div>
   );
 }
