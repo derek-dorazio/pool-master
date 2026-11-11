@@ -254,7 +254,8 @@ export class IngestionPersistence {
    * A provider participant that names its sport league (`metadata.tour`, the league's match
    * keyword: a college team is a men's or a women's team) is matched only among the site's
    * participants affiliated with that league, and counted against the feed's names in that
-   * league alone, so the men's and women's teams of one school each link to their own. One read
+   * league alone, so the men's and women's teams of one school each link to their own. A school
+   * the site keeps as one row affiliated with both leagues takes both links. One read
    * of the candidates, their mappings from the feed's providers and their leagues' keywords
    * (Prisma loads each relation with its own statement).
    */

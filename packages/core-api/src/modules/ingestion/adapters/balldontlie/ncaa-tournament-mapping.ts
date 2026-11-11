@@ -17,7 +17,8 @@
  * Team ids are prefixed by league (`ncaab-team-150`, `ncaaw-team-150`): the vendor numbers each
  * league's teams on its own, and a bare number would collide with another sport's. Each team
  * carries its league's keyword in `metadata.tour`, so a school's men's and women's teams, which
- * share a name, each link to the site's own.
+ * share a name, each link to the site's own. Where the site keeps one row for the school,
+ * affiliated with both leagues (as a sport data file loads it), that row takes both links.
  */
 
 import { Sport } from '@poolmaster/shared/domain';
@@ -75,7 +76,7 @@ export interface NcaaTournamentScope {
   season: number;
 }
 
-const SCOPE_ID_PATTERN = /^(ncaab|ncaaw)-(\d{4})-tournament$/;
+const SCOPE_ID_PATTERN = new RegExp(`^(${NCAA_TOURNAMENT_LEAGUES.map((league) => league.key).join('|')})-(\\d{4})-tournament$`);
 
 export function ncaaTournamentScopeId(scope: NcaaTournamentScope): string {
   return `${scope.league.key}-${String(scope.season)}-tournament`;

@@ -689,6 +689,18 @@ describe('IngestionPersistence: provider participants with no mapping yet', () =
     expect(prisma.participant.createManyAndReturn).not.toHaveBeenCalled();
   });
 
+  it('links a school\'s men\'s and women\'s teams both to the site\'s one row for the school, affiliated with both leagues, and creates none', async () => {
+    const prisma = unmappedPrisma([siteTeam('site-duke', 'Duke Blue Devils', ['NCAAM', 'NCAAW'])]);
+
+    const { mappings } = await sync(prisma, [collegeTeam('ncaab-team-150', 'Duke Blue Devils', 'NCAAM'), collegeTeam('ncaaw-team-150', 'Duke Blue Devils', 'NCAAW')]);
+
+    expect(mappings).toEqual([
+      { participantId: 'site-duke', providerId: 'balldontlie', externalId: 'ncaab-team-150', confidence: MappingConfidence.HIGH },
+      { participantId: 'site-duke', providerId: 'balldontlie', externalId: 'ncaaw-team-150', confidence: MappingConfidence.HIGH },
+    ]);
+    expect(prisma.participant.createManyAndReturn).not.toHaveBeenCalled();
+  });
+
   it('matches a league\'s keyword whatever its case and spacing, as an event\'s tour is matched', async () => {
     const prisma = unmappedPrisma([siteTeam('site-duke-women', 'Duke Blue Devils', [null, ' ncaaw '])]);
 
