@@ -5,7 +5,7 @@ import { extractErrorMessage, hasErrorCode, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import { Alert, Button, LinkButton, SectionCard } from '@/features/shared/ui';
+import { Alert, Button, LinkButton, SectionCard, Text } from '@/features/shared/ui';
 import { EMAIL_CATEGORY_LABELS } from './email-preferences';
 import { SELF_USER_ID } from './user-routing';
 
@@ -40,9 +40,9 @@ export function EmailUnsubscribePage() {
   if (!token || hasErrorCode(unsubscribeMutation.error, 'EMAIL_UNSUBSCRIBE_LINK_INVALID')) {
     return (
       <SectionCard className="mx-auto max-w-md" padded testId="email-unsubscribe-invalid" title="This link doesn't work">
-        <p className="text-sm text-muted-foreground">
+        <Text as="p" variant="meta">
           Sign in and open Email notifications on your profile to choose which emails you get.
-        </p>
+        </Text>
         <LinkButton to="/my-account" variant="secondary">Email notifications</LinkButton>
       </SectionCard>
     );
@@ -52,10 +52,10 @@ export function EmailUnsubscribePage() {
     const { label } = EMAIL_CATEGORY_LABELS[unsubscribeMutation.data.category];
     return (
       <SectionCard className="mx-auto max-w-md" padded testId="email-unsubscribe-done" title="You're unsubscribed">
-        <p className="text-sm text-muted-foreground">
+        <Text as="p" variant="meta">
           You won&apos;t get {label.toLowerCase()} emails from any of your leagues. You can turn them
           back on, or change other emails, in Email notifications on your profile.
-        </p>
+        </Text>
         <LinkButton to="/my-account" variant="secondary">Email notifications</LinkButton>
       </SectionCard>
     );
@@ -63,10 +63,10 @@ export function EmailUnsubscribePage() {
 
   return (
     <SectionCard className="mx-auto max-w-md" padded title="Stop these emails?">
-      <p className="text-sm text-muted-foreground">
+      <Text as="p" variant="meta">
         This turns off this kind of email from all your leagues. Invitations and account emails are
         always sent.
-      </p>
+      </Text>
       {unsubscribeMutation.isError ? (
         <Alert tone="danger">{extractErrorMessage(unsubscribeMutation.error, { fallback: 'We could not unsubscribe you. Try again.' })}</Alert>
       ) : null}

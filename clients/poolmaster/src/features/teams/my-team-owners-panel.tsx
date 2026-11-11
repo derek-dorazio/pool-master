@@ -1,7 +1,7 @@
 import { Link } from 'react-router';
 import { LeagueRole, SquadOwnerInvitationStatus } from '@poolmaster/shared/domain';
 import type { SquadDto, TeamOwnerInvitationDto } from '@/lib/api';
-import { Alert, Button, Heading, Input, StatusBadge, Tile } from '@/features/shared/ui';
+import { Alert, Button, Heading, Input, StatusBadge, Text, Tile } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
 import { buildUserPath } from '@/features/account/user-routing';
 import { formatUserName } from '@/features/account/user-name';
@@ -58,9 +58,9 @@ export function MyTeamOwnersPanel({
     <div className="space-y-5" data-testid="my-team-owners-panel">
       <Tile radius="lg">
         <Heading level={4} variant="label">Add co-owner</Heading>
-        <p className="mt-2 text-sm text-muted-foreground">
+        <Text as="p" className="mt-2" variant="meta">
           Invite another person to co-own {selectedTeam.name}. People already in this league can&apos;t be invited.
-        </p>
+        </Text>
         <div className="mt-4 flex gap-3">
           <Input
             aria-label="Co-owner email"
@@ -90,9 +90,9 @@ export function MyTeamOwnersPanel({
 
       <div className="space-y-3">
         {activeMembers.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
+          <Text as="p" variant="meta">
             {selectedTeam.name} does not have any active owners yet.
-          </p>
+          </Text>
         ) : (
           activeMembers.map((member: TeamMember) => (
             <Tile
@@ -103,13 +103,15 @@ export function MyTeamOwnersPanel({
             >
               <div>
                 <div className="flex flex-wrap items-center gap-3">
-                  <Link
-                    className="font-medium text-foreground hover:underline"
-                    data-testid={`my-team-member-link-${member.userId}`}
-                    to={buildUserPath(member.userId)}
-                  >
-                    {formatUserName(member.user.firstName, member.user.lastName)}
-                  </Link>
+                  <Text asChild size="inherit" variant="strong">
+                    <Link
+                      className="hover:underline"
+                      data-testid={`my-team-member-link-${member.userId}`}
+                      to={buildUserPath(member.userId)}
+                    >
+                      {formatUserName(member.user.firstName, member.user.lastName)}
+                    </Link>
+                  </Text>
                   <StatusBadge>Active owner</StatusBadge>
                   {member.leagueRole ? (
                     <StatusBadge>
@@ -161,11 +163,11 @@ export function MyTeamOwnersPanel({
                 radius="lg"
               >
                 <div>
-                  <div className="font-medium text-foreground">{invitation.email}</div>
-                  <div className="text-sm text-muted-foreground">
+                  <Text as="div" size="inherit" variant="strong">{invitation.email}</Text>
+                  <Text as="div" variant="meta">
                     {OWNER_INVITATION_STATUS_LABELS[invitation.status]}
                     {invitation.replacementForUserId ? ' · Replacement invite' : ''}
-                  </div>
+                  </Text>
                 </div>
                 {invitation.status === SquadOwnerInvitationStatus.PENDING ? (
                   <Button
@@ -188,9 +190,9 @@ export function MyTeamOwnersPanel({
       {replaceTargetUserId ? (
         <Tile radius="lg">
           <Heading level={4} variant="label">Replace owner</Heading>
-          <p className="mt-2 text-sm text-muted-foreground">
+          <Text as="p" className="mt-2" variant="meta">
             Replacing an owner removes them from {selectedTeam.name} and the league, and invites the replacement email to take their place.
-          </p>
+          </Text>
           <div className="mt-4 flex gap-3">
             <Input
               aria-label="Replacement owner email"
