@@ -245,7 +245,7 @@ describe('A contest page under the wrong league', () => {
 });
 
 describe('ContestEntryFrame', () => {
-  const entry = { createdAt: '2026-10-20T15:00:00.000Z', entryNumber: 2, squadName: 'Birdie Hunters', updatedAt: '2026-10-29T15:00:00.000Z' };
+  const entry = { createdAt: '2026-10-20T15:00:00.000Z', updatedAt: '2026-10-29T15:00:00.000Z' };
 
   function drawEntryFrame(status: ContestEntryStatus | null = ContestEntryStatus.DRAFT) {
     renderAt(
@@ -266,14 +266,14 @@ describe('ContestEntryFrame', () => {
     );
   }
 
-  it('heads an entry page with the entry\'s name, its status icon instead of badges, and the contest, rules and squad in one line', () => {
+  it('heads an entry page with the entry\'s name, its status icon instead of badges, and only the contest and rules in one line', () => {
     drawEntryFrame();
 
     expect(screen.getByTestId('contest-entry-header-name')).toHaveTextContent('Birdie Hunters 2');
     expect(screen.getByTestId('contest-entry-status')).toHaveAccessibleName('Entry status: Not submitted');
     expect(screen.queryByText('Live')).not.toBeInTheDocument();
     expect(screen.queryByTestId('contest-entry-header-status-slot')).not.toBeInTheDocument();
-    expect(screen.getByTestId('contest-entry-summary')).toHaveTextContent('Masters Pool · Confidence · Birdie Hunters · Entry 2');
+    expect(screen.getByTestId('contest-entry-summary')).toHaveTextContent(/^Masters Pool · Confidence$/);
     expect(screen.getByText('The picks')).toBeInTheDocument();
     expect(screen.getByTestId('contest-menu-my-entry')).toHaveAttribute('aria-current', 'page');
   });

@@ -1,0 +1,131 @@
+{
+  "data": [
+    {
+      "game_id": 401856700,
+      "season": 2025,
+      "round": 0,
+      "bracket_location": 1,
+      "date": "2026-03-18T23:00:00.000Z",
+      "location": "Pauley Pavilion, Los Angeles, CA",
+      "status": "post",
+      "status_state": "final",
+      "status_detail": "Final",
+      "home_team": {
+        "id": 2390,
+        "conference_id": 30,
+        "name": "Spartans",
+        "full_name": "Norfolk State Spartans",
+        "abbreviation": "NORF",
+        "seed": "16",
+        "score": 62,
+        "winner": true
+      },
+      "away_team": {
+        "id": 2569,
+        "conference_id": 31,
+        "name": "Wildcats",
+        "full_name": "Bethune-Cookman Wildcats",
+        "abbreviation": "BCU",
+        "seed": "16",
+        "score": 55,
+        "winner": false
+      }
+    },
+    {
+      "game_id": 401856710,
+      "season": 2025,
+      "round": 1,
+      "bracket_location": 2,
+      "date": "2026-03-20T19:00:00.000Z",
+      "location": "Gampel Pavilion, Storrs, CT",
+      "status": "post",
+      "status_state": "final",
+      "status_detail": "Final",
+      "home_team": {
+        "id": 41,
+        "conference_id": 4,
+        "name": "Huskies",
+        "full_name": "UConn Huskies",
+        "abbreviation": "CONN",
+        "seed": "1",
+        "score": 88,
+        "winner": true
+      },
+      "away_team": {
+        "id": 2636,
+        "conference_id": 26,
+        "name": "Roadrunners",
+        "full_name": "UTSA Roadrunners",
+        "abbreviation": "UTSA",
+        "seed": "16",
+        "score": 50,
+        "winner": false
+      }
+    },
+    {
+      "game_id": 401856711,
+      "season": 2025,
+      "round": 1,
+      "bracket_location": 3,
+      "date": "2026-03-20T21:30:00.000Z",
+      "location": "Cameron Indoor Stadium, Durham, NC",
+      "status": "post",
+      "status_state": "final",
+      "status_detail": "Final",
+      "home_team": {
+        "id": 150,
+        "conference_id": 2,
+        "name": "Blue Devils",
+        "full_name": "Duke Blue Devils",
+        "abbreviation": "DUKE",
+        "seed": "3",
+        "score": 74,
+        "winner": true
+      },
+      "away_team": {
+        "id": 2655,
+        "conference_id": 27,
+        "name": "Bulldogs",
+        "full_name": "Drake Bulldogs",
+        "abbreviation": "DRKE",
+        "seed": "14",
+        "score": 61,
+        "winner": false
+      }
+    },
+    {
+      "game_id": 401856772,
+      "season": 2025,
+      "round": 6,
+      "bracket_location": 63,
+      "date": "2026-04-05T19:00:00.000Z",
+      "location": "Mortgage Matchup Center, Phoenix, AZ",
+      "status": "post",
+      "status_state": "final",
+      "status_detail": "Final",
+      "home_team": {
+        "id": 41,
+        "conference_id": 4,
+        "name": "Huskies",
+        "full_name": "UConn Huskies",
+        "abbreviation": "CONN",
+        "seed": "1",
+        "score": 72,
+        "winner": true
+      },
+      "away_team": {
+        "id": 2579,
+        "conference_id": 23,
+        "name": "Gamecocks",
+        "full_name": "South Carolina Gamecocks",
+        "abbreviation": "SC",
+        "seed": "1",
+        "score": 66,
+        "winner": false
+      }
+    }
+  ],
+  "meta": {
+    "per_page": 100
+  }
+}

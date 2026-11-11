@@ -42,7 +42,7 @@ function contestService(overrides: Record<string, unknown> = {}) {
     findEventsForContests: jest.fn((..._args: unknown[]) => Promise.resolve(new Map([['event-1', masters]]))),
     findEntryCaps: jest.fn((..._args: unknown[]) => Promise.resolve(new Map([['contest-1', 50]]))),
     listFinishedYears: jest.fn((..._args: unknown[]) => Promise.resolve([2026, 2025])),
-    listMyLeagueEntries: jest.fn((..._args: unknown[]) => Promise.resolve([entry])),
+    listMyLeagueEntries: jest.fn((..._args: unknown[]) => Promise.resolve({ entries: [entry], places: [{ entryId: entry.id, position: 3, displayPosition: 'T3' }] })),
     getContest: jest.fn((..._args: unknown[]) => Promise.resolve(contest)),
     getContestEntrySummary: jest.fn((..._args: unknown[]) => Promise.resolve({ totals, myEntryIds: ['entry-1'] })),
     listEntries: jest.fn((..._args: unknown[]) => Promise.resolve({ entries: [entry], picksRevealed: false })),
@@ -93,7 +93,7 @@ describe('contest read handlers', () => {
 
     expect(years.body).toEqual({ years: [2026, 2025] });
     expect(fake.listMyLeagueEntries).toHaveBeenCalledWith('league-1', 'user-1');
-    expect(mine.body).toEqual({ entries: [entry] });
+    expect(mine.body).toEqual({ entries: [entry], places: [{ entryId: entry.id, position: 3, displayPosition: 'T3' }] });
   });
 
   it('answers a contest with its events, entry cap and the reader\'s entry summary', async () => {

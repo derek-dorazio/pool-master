@@ -4,8 +4,8 @@ What the BALLDONTLIE adapter's tests read, and the vendor document they are held
 adapter was built before any account existed, so everything here comes from the vendor's
 published OpenAPI document, not from recorded traffic.
 
-- `openapi/pga.yml`, `openapi/nfl.yml` and `openapi/ncaab.yml` are the vendor's PGA TOUR, NFL
-  and NCAA men's basketball documents, each vendored unchanged below a three-line header that
+- `openapi/pga.yml`, `openapi/nfl.yml`, `openapi/ncaab.yml` and `openapi/ncaaw.yml` are the
+  vendor's PGA TOUR, NFL and NCAA men's and women's basketball documents, each vendored unchanged below a three-line header that
   names its source, date and hash. `npm run balldontlie:contract-check` says when the live
   document differs; `-- --update-spec` refreshes the copy, and the contract tests then
   show whether anything the adapter reads moved.
@@ -25,8 +25,12 @@ published OpenAPI document, not from recorded traffic.
   and the championship); the 2026 season's part way through, with a final, a live, a scheduled
   and an `unknown` game, a second round game with one side to be decided, and an undated
   championship with neither; and three teams. Every one must fit the document
-  (`ncaab-contract.test.ts`). The document marks a bracket side nullable as
+  (`ncaa-tournament-contract.test.ts`). The document marks a bracket side nullable as
   `allOf: [{ $ref }, { nullable: true }]`, which the test support reads as that `$ref` or null.
+- `ncaaw/*.json` are written to the NCAAW document's schemas the same way: the 2025 season's
+  women's tournament as a round 0 First Four game, two round 1 games and the round 6
+  championship, all final, and two teams. Duke's men's and women's teams share the vendor id 150
+  and the name, as a school's teams do, which the adapter keeps apart by league.
 
 ## Assumptions to confirm against the real API
 
@@ -58,9 +62,16 @@ The first things to check once a key exists, each read by `npm run balldontlie:c
 - NCAAB: `/ncaab/v1/teams` returns every Division I team (about 360) in one response, as the
   document shows it with no paging. A cut-off list fails no check here, so count the teams
   `npm run balldontlie:contract-check` prints against the real number.
+- NCAAW: `/ncaaw/v1/bracket` works as the men's does, but numbers the First Four round 0 and the
+  championship round 6 (the document's own description). `--game-event ncaaw-2025-tournament`
+  prints the game count: a full tournament has 67.
+- NCAAW: `/ncaaw/v1/teams` returns every Division I women's team in one response, as the men's
+  does.
 - NCAAB: a decided bracket side's `full_name` is the name the teams list gives ("Duke Blue
   Devils"), which is what the site's teams loaded from data files are called, so the first
-  import links them rather than adding new ones.
+  import links them rather than adding new ones. The women's teams carry the same names, so a
+  team links only to the site's team affiliated with its own league (NCAA Division I Men or
+  Women, by match keyword).
 
 When an account exists, replace or add fixtures with recorded responses and keep the
 doc-example files: the pair shows where the vendor's document and its API disagree.

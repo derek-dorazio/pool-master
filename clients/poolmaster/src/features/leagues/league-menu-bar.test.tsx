@@ -69,7 +69,7 @@ describe('LeagueMenuBar', () => {
     refreshTokenMock.mockReset();
   });
 
-  it('gives members Home, Contests, Championships, their own squad by its name, and Members, with Contest types left to Commissioner tools', async () => {
+  it('gives members Home, Contests, Championships, My team and Members, with Contest types left to Commissioner tools', async () => {
     renderMenu();
 
     const menu = within(await screen.findByRole('navigation', { name: 'League' }));
@@ -77,16 +77,16 @@ describe('LeagueMenuBar', () => {
     expect(menu.getByRole('link', { name: 'Contests' })).toHaveAttribute('href', '/league/BIGDAWGS/contests');
     expect(menu.getByRole('link', { name: 'Championships' })).toHaveAttribute('href', '/league/BIGDAWGS/championships');
     expect(menu.queryByRole('link', { name: 'Contest types' })).not.toBeInTheDocument();
-    expect(await menu.findByRole('link', { name: "Derek's Great Golf Guys" })).toHaveAttribute('href', '/league/BIGDAWGS/team');
+    expect(await menu.findByRole('link', { name: 'My team' })).toHaveAttribute('href', '/league/BIGDAWGS/team');
     expect(menu.getByRole('link', { name: 'Members' })).toHaveAttribute('href', '/league/BIGDAWGS/teams');
-    expect(menu.queryByRole('link', { name: /team/i })).not.toBeInTheDocument();
   });
 
-  it('names the viewer\'s squad from the league context alone, reading no team list', async () => {
+  it('labels the viewer\'s own tab "My team", never the team\'s name, reading no team list', async () => {
     renderMenu();
 
     const menu = within(await screen.findByRole('navigation', { name: 'League' }));
-    await menu.findByRole('link', { name: "Derek's Great Golf Guys" });
+    await menu.findByRole('link', { name: 'My team' });
+    expect(menu.queryByRole('link', { name: "Derek's Great Golf Guys" })).not.toBeInTheDocument();
     expect(getLeagueByCodeMock).toHaveBeenCalledTimes(1);
     expect(listLeagueSquadsMock).not.toHaveBeenCalled();
   });
@@ -97,7 +97,7 @@ describe('LeagueMenuBar', () => {
     const menu = within(await screen.findByRole('navigation', { name: 'League' }));
     await vi.waitFor(() => expect(getLeagueByCodeMock).toHaveBeenCalled());
     expect(menu.getByTestId('league-menu-my-team')).toHaveTextContent('Yours');
-    expect(menu.queryByRole('link', { name: "Derek's Great Golf Guys" })).not.toBeInTheDocument();
+    expect(menu.queryByRole('link', { name: 'My team' })).not.toBeInTheDocument();
   });
 
   it('labels the viewer\'s own entry "Yours" while the league is still loading', async () => {
@@ -164,12 +164,12 @@ describe('buildLeagueMenuItems', () => {
     expect(activeLabel('/league/BIGDAWGS/teams/team-2')).toEqual(['Members']);
   });
 
-  it('labels the viewer\'s own entry with their squad\'s name when one is given, and "Yours" otherwise', () => {
-    const labelOf = (name?: string | null) => buildLeagueMenuItems('BIGDAWGS', '/league/BIGDAWGS', name)
+  it('labels the viewer\'s own entry "My team" when the viewer has a squad, and "Yours" otherwise', () => {
+    const labelOf = (hasSquad?: boolean) => buildLeagueMenuItems('BIGDAWGS', '/league/BIGDAWGS', hasSquad)
       .find((item) => item.testId === 'league-menu-my-team')?.label;
 
-    expect(labelOf("Derek's Great Golf Guys")).toBe("Derek's Great Golf Guys");
-    expect(labelOf(null)).toBe('Yours');
+    expect(labelOf(true)).toBe('My team');
+    expect(labelOf(false)).toBe('Yours');
     expect(labelOf()).toBe('Yours');
   });
 });

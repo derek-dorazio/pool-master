@@ -65,6 +65,7 @@ import {
   type ApiErrorCode,
   type BracketLeaderboardResponse,
   type ContestEntryDto,
+  type ContestEntryPlaceDto,
   type ContestLeaderboardResponse,
   type OpenContestUsageDto,
   type PickEmLeaderboardResponse,
@@ -517,21 +518,68 @@ export class ContestService {
    * contests (#1197), without their picks: what league home, the Contests page's "My entries"
    * and My team show, in a fixed number of reads however many contests are current.
    */
-  async listMyLeagueEntries(leagueId: string, userId: string): Promise<ContestEntryDto[]> {
+  async listMyLeagueEntries(leagueId: string, userId: string): Promise<{ entries: ContestEntryDto[]; places: ContestEntryPlaceDto[] }> {
     const squadId = await this.findActiveSquadId(leagueId, userId);
     if (!squadId) {
-      return [];
+      return { entries: [], places: [] };
     }
     const contests = await this.deps.contests.findByLeague(leagueId, [ContestStatus.OPEN, ContestStatus.ACTIVE]);
     const rows = await this.deps.entries.findBySquadAndContests(squadId, contests.map((contest) => contest.id));
-    const pickCounts = await this.deps.picks.countByEntries(rows.map((row) => row.id));
     const contestsById = new Map(contests.map((contest) => [contest.id, contest]));
-    return rows.flatMap((row) => {
+    const enteredLive = contests.filter((contest) => contest.status === ContestStatus.ACTIVE && rows.some((row) => row.contestId === contest.id));
+    const [pickCounts, places] = await Promise.all([
+      this.deps.picks.countByEntries(rows.map((row) => row.id)),
+      this.placesOfEntries(enteredLive, new Set(rows.map((row) => row.id))),
+    ]);
+    const entries = rows.flatMap((row) => {
       const contest = contestsById.get(row.contestId);
       return contest
         ? [toContestEntryDto({ ...withContestEventOrder(row, contest), picksCount: pickCounts.get(row.id) ?? 0 }, { name: row.squadName })]
         : [];
     });
+    return { entries, places };
+  }
+
+  /**
+   * The places of `entryIds` in the live contests named, as each contest's leaderboard stands
+   * (#1565): read from the stored boards the leaderboards answer from, together, and the ones not
+   * current computed side by side on reads batched across them (#1315), as a cup's projection
+   * does. Those are not stored, so the read costs the same statements however many contests it
+   * names. An entry the board does not rank is left out.
+   */
+  private async placesOfEntries(contests: readonly Contest[], entryIds: ReadonlySet<string>): Promise<ContestEntryPlaceDto[]> {
+    if (contests.length === 0) return [];
+    const batched = new ContestService({ ...batchedLeaderboardDeps(this.deps), logger: this.logger, now: this.now });
+    const boards = await Promise.all(contests.map((contest) => batched.boardPlacesOf(contest)));
+    return boards.flat().filter((place) => entryIds.has(place.entryId));
+  }
+
+  /**
+   * Every ranked entry's place on the contest's leaderboard: its stored board when current, else
+   * the board computed now. None for squares, whose grid has no places until it settles, nor while
+   * no picks are revealed. A board that cannot be shown for another reason is logged and places
+   * nobody, so one broken contest leaves the rest listed.
+   */
+  private async boardPlacesOf(contest: Contest): Promise<ContestEntryPlaceDto[]> {
+    const kind = leaderboardKindOf(contest);
+    if (!kind) return [];
+    let rows: readonly { entryId: string; position: number | null; displayPosition: string | null }[];
+    try {
+      const stored = await this.deps.leaderboardSnapshots.find(contest.id, DEFAULT_SHOWN_EVENT);
+      const board = stored && isSnapshotCurrent(stored, contest, this.now(), this.snapshotMaxAgeMs) ? boardOfKind(stored.board, kind) : null;
+      rows = board ? board.entries : (await this.computeStoredLeaderboard(contest, kind, DEFAULT_SHOWN_EVENT)).board.board.entries;
+    } catch (error) {
+      if (!(error instanceof ContestOperationError)) throw error;
+      if (error.code === 'CONTEST_LEADERBOARD_PICKS_HIDDEN') {
+        this.logger.debug({ contestId: contest.id }, 'entry places: picks are not revealed yet, so nothing is ranked');
+      } else {
+        this.logger.warn({ contestId: contest.id, code: error.code }, 'entry places: the leaderboard cannot be shown, so its entries have no place');
+      }
+      return [];
+    }
+    return rows.flatMap(({ entryId, position, displayPosition }) => (
+      position === null || displayPosition === null ? [] : [{ entryId, position, displayPosition }]
+    ));
   }
 
   /**

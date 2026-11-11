@@ -390,7 +390,7 @@ export function AuthHomePage() {
               and invite their members.
             </Tile>
             <Tile padding="sm" radius="md" variant="subtle">
-              Members join by invitation, choose the name they play under,
+              Members join by invitation, create their team,
               and enter contests.
             </Tile>
           </div>

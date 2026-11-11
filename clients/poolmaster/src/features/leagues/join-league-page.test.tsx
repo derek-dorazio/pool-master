@@ -361,7 +361,7 @@ describe('Joining a league from an invite link', () => {
     renderJoinLeaguePage();
 
     const joinButton = await screen.findByRole('button', { name: 'Join league' });
-    fireEvent.change(screen.getByRole('textbox', { name: 'Your name in this league' }), { target: { value: '   ' } });
+    fireEvent.change(screen.getByRole('textbox', { name: 'Your team name' }), { target: { value: '   ' } });
     expect(joinButton).toBeDisabled();
   });
 
@@ -373,7 +373,7 @@ describe('Joining a league from an invite link', () => {
 
     renderJoinLeaguePage();
 
-    await waitFor(() => expect(screen.getByRole('textbox', { name: 'Your name in this league' })).toHaveValue("Derek Dorazio"));
+    await waitFor(() => expect(screen.getByRole('textbox', { name: 'Your team name' })).toHaveValue("Derek Dorazio"));
     fireEvent.click(screen.getByRole('button', { name: 'Join league' }));
 
     expect(await screen.findByTestId('league-destination')).toBeInTheDocument();
@@ -393,7 +393,7 @@ describe('Joining a league from an invite link', () => {
 
     renderJoinLeaguePage();
 
-    fireEvent.change(await screen.findByRole('textbox', { name: 'Your name in this league' }), { target: { value: 'Taken Name' } });
+    fireEvent.change(await screen.findByRole('textbox', { name: 'Your team name' }), { target: { value: 'Taken Name' } });
     fireEvent.click(screen.getByRole('button', { name: 'Join league' }));
 
     expect(await screen.findByTestId('league-destination')).toBeInTheDocument();
@@ -411,7 +411,7 @@ describe('Joining a league from an invite link', () => {
 
     renderJoinLeaguePage();
 
-    fireEvent.change(await screen.findByRole('textbox', { name: 'Your name in this league' }), { target: { value: 'Taken Name' } });
+    fireEvent.change(await screen.findByRole('textbox', { name: 'Your team name' }), { target: { value: 'Taken Name' } });
     fireEvent.click(screen.getByRole('button', { name: 'Join league' }));
 
     expect(await screen.findByTestId('league-destination')).toHaveAttribute('data-team-setup-failed', 'true');
@@ -425,7 +425,7 @@ describe('Joining a league from an invite link', () => {
 
     renderJoinLeaguePage();
 
-    fireEvent.change(await screen.findByRole('textbox', { name: 'Your name in this league' }), { target: { value: 'Fresh Name' } });
+    fireEvent.change(await screen.findByRole('textbox', { name: 'Your team name' }), { target: { value: 'Fresh Name' } });
     fireEvent.click(screen.getByRole('button', { name: 'Join league' }));
 
     expect(await screen.findByTestId('league-destination')).toHaveAttribute('data-team-setup-failed', 'true');
@@ -440,7 +440,7 @@ describe('Joining a league from an invite link', () => {
 
     renderJoinLeaguePage();
 
-    fireEvent.change(await screen.findByRole('textbox', { name: 'Your name in this league' }), { target: { value: 'Fresh Name' } });
+    fireEvent.change(await screen.findByRole('textbox', { name: 'Your team name' }), { target: { value: 'Fresh Name' } });
     fireEvent.click(screen.getByRole('button', { name: 'Join league' }));
 
     expect(await screen.findByTestId('league-destination')).toHaveAttribute('data-team-setup-failed', 'true');
@@ -456,7 +456,7 @@ describe('Joining a league from an invite link', () => {
 
     renderJoinLeaguePage();
 
-    fireEvent.change(await screen.findByRole('textbox', { name: 'Your name in this league' }), { target: { value: 'Fresh Name' } });
+    fireEvent.change(await screen.findByRole('textbox', { name: 'Your team name' }), { target: { value: 'Fresh Name' } });
     fireEvent.click(screen.getByRole('button', { name: 'Join league' }));
 
     expect(await screen.findByTestId('league-destination')).toHaveAttribute('data-team-setup-failed', 'true');
@@ -474,7 +474,7 @@ describe('Joining a league from an invite link', () => {
 
     renderJoinLeaguePage();
 
-    fireEvent.change(await screen.findByRole('textbox', { name: 'Your name in this league' }), { target: { value: 'Fresh Name' } });
+    fireEvent.change(await screen.findByRole('textbox', { name: 'Your team name' }), { target: { value: 'Fresh Name' } });
     fireEvent.click(screen.getByRole('button', { name: 'Join league' }));
 
     expect(await screen.findByTestId('league-destination')).toHaveAttribute('data-team-setup-failed', 'false');
@@ -493,7 +493,7 @@ describe('Joining a league from an invite link', () => {
 
     renderJoinLeaguePage();
 
-    fireEvent.change(await screen.findByRole('textbox', { name: 'Your name in this league' }), { target: { value: 'Fresh Name' } });
+    fireEvent.change(await screen.findByRole('textbox', { name: 'Your team name' }), { target: { value: 'Fresh Name' } });
     fireEvent.click(screen.getByRole('button', { name: 'Join league' }));
 
     expect(await screen.findByTestId('league-destination')).toHaveAttribute('data-team-setup-failed', 'false');

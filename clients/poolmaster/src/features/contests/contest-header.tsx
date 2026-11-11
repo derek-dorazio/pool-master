@@ -175,7 +175,8 @@ export function ContestPageFrame({
 
 /**
  * A pick entry page's frame (#1296): the entry's name with its status icon beside it, a summary
- * line of the contest, any rules the page names and the entry's squad, then the page's picks.
+ * line of the contest and any rules the page names (the title already names the entry), then the
+ * page's picks.
  * The status, contest phase and dates sit in the icon's callout so the page opens on its picks.
  */
 export function ContestEntryFrame({
@@ -194,8 +195,8 @@ export function ContestEntryFrame({
 }: {
   children: ReactNode;
   contest: FramedContest;
-  /** The entry's own read: its squad, number and dates; null until it loads. */
-  entry: { createdAt?: string | null; entryNumber: number; squadName: string; updatedAt?: string | null } | null;
+  /** The entry's own read, for its dates; null until it loads. */
+  entry: { createdAt?: string | null; updatedAt?: string | null } | null;
   entryId: string;
   leagueCode: string;
   /** The contest's phase as the page words it. */
@@ -220,9 +221,7 @@ export function ContestEntryFrame({
       picksRevealed={picksRevealed}
       status={null}
       summary={(
-        <span data-testid="contest-entry-summary">
-          {[contest.name, ...rules, ...(entry ? [entry.squadName, `Entry ${entry.entryNumber}`] : [])].join(' · ')}
-        </span>
+        <span data-testid="contest-entry-summary">{[contest.name, ...rules].join(' · ')}</span>
       )}
       testId={testId}
       title={title}

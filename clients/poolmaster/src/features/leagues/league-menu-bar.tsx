@@ -12,9 +12,9 @@ import { useLeagueContext } from './use-league-context';
 export function LeagueMenuBar({ leagueCode }: { leagueCode: string }) {
   const { pathname } = useLocation();
   // The league context every league page reads: one cache entry, so this adds no request.
-  const { query, viewer } = useLeagueContext(leagueCode);
-  // The context names the viewer's squad too (#1165), so the menu reads no team list.
-  const mySquadName = viewer.mySquadId ? query.data?.squadName ?? null : null;
+  const { viewer } = useLeagueContext(leagueCode);
+  // The context says whether the viewer has a squad (#1165), so the menu reads no team list.
+  const hasSquad = Boolean(viewer.mySquadId);
   const canOpenCommissionerTools = viewer.isCommissioner || viewer.isRootAdmin;
 
   return (
@@ -34,7 +34,7 @@ export function LeagueMenuBar({ leagueCode }: { leagueCode: string }) {
         </LinkButton>
       ) : null}
       aria-label="League"
-      items={buildLeagueMenuItems(leagueCode, pathname, mySquadName)}
+      items={buildLeagueMenuItems(leagueCode, pathname, hasSquad)}
     />
   );
 }

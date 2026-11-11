@@ -8,6 +8,7 @@ import type {
   ContestFinishedYearsResponse,
   ContestListResponse,
   ContestEntryDto,
+  ContestEntryPlaceDto,
   ContestEntryParticipantDetailDto,
   ContestEntryListResponse,
   ContestEntryDetailResponse,
@@ -300,8 +301,8 @@ export function toContestEntryListResponse(input: {
 }
 
 /** The viewer's own squad's entries across a league's current contests (#1197). */
-export function toMyContestEntriesResponse(entries: ContestEntryDto[]): MyContestEntriesResponse {
-  return { entries };
+export function toMyContestEntriesResponse(mine: { entries: ContestEntryDto[]; places: ContestEntryPlaceDto[] }): MyContestEntriesResponse {
+  return { entries: mine.entries, places: mine.places };
 }
 
 type LeaderboardEntryDto = ContestLeaderboardResponse['entries'][number];

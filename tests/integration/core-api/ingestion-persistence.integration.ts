@@ -27,6 +27,7 @@ const rankedEventIds = [
   'integration-rebuild-sync',
   'integration-rebuild-fail',
   'integration-linked-by-name',
+  'integration-linked-by-league',
 ];
 
 beforeAll(() => setupIntegrationTests());
@@ -62,7 +63,9 @@ afterAll(async () => {
   await prisma.participantProviderMapping.deleteMany({
     where: { providerId: 'TEST_PROVIDER' },
   });
+  await prisma.participantLeagueAffiliation.deleteMany({ where: { participant: { name: { startsWith: 'Linkable ' } } } });
   await prisma.participant.deleteMany({ where: { name: { startsWith: 'Linkable ' } } });
+  await prisma.sportLeague.deleteMany({ where: { name: { startsWith: 'Linkable ' } } });
   await prisma.participant.deleteMany({
     where: {
       externalId: {
@@ -589,6 +592,31 @@ describe('IngestionPersistence', () => {
     const countNamed = (name: string) => prisma.participant.count({ where: { sportId: golf.id, name } });
     await expect(countNamed('Linkable Loaded')).resolves.toBe(1);
     await expect(countNamed('Linkable New')).resolves.toBe(1);
+  });
+
+  // The league narrowing against real Postgres: the candidates' leagues are read through their
+  // affiliations. Two of the site's golfers share a name, each in its own sport league.
+  it('links a provider participant naming its sport league to the site\'s one of that name in that league, where the name alone is shared', async () => {
+    const prisma = getPrisma();
+    const golf = await prisma.sport.findUniqueOrThrow({ where: { sport: Sport.GOLF } });
+    const inLeague = async (keyword: string) => {
+      const league = await prisma.sportLeague.create({ data: { sportId: golf.id, name: `Linkable ${keyword}`, matchKeyword: keyword } });
+      return prisma.participant.create({
+        data: { sportId: golf.id, name: 'Linkable Twin', participantType: 'INDIVIDUAL', leagueAffiliations: { create: { sportLeagueId: league.id } } },
+      });
+    };
+    const first = await inLeague('LINKTEST-A');
+    const second = await inLeague('LINKTEST-B');
+    const golfer = (externalId: string, tour: string) => ({ ...rankedGolfer(externalId), name: 'Linkable Twin', metadata: { tour } });
+    const detail = rankedFieldDetail('integration-linked-by-league', [golfer('ingestion-league-a', 'LINKTEST-A'), golfer('ingestion-league-b', 'linktest-b')]);
+    await linkedProviderEvent(prisma, { providerId: 'TEST_PROVIDER', externalId: detail.externalId, name: detail.name, startDate: detail.startDate });
+
+    await new IngestionPersistence(getAppPrisma()).persistEventDetailWithDiagnostics(detail);
+
+    const mappingOf = (externalId: string) => prisma.participantProviderMapping.findUniqueOrThrow({ where: { providerId_externalId: { providerId: 'TEST_PROVIDER', externalId } } });
+    await expect(mappingOf('ingestion-league-a')).resolves.toMatchObject({ participantId: first.id, confidence: 'HIGH' });
+    await expect(mappingOf('ingestion-league-b')).resolves.toMatchObject({ participantId: second.id, confidence: 'HIGH' });
+    await expect(prisma.participant.count({ where: { sportId: golf.id, name: 'Linkable Twin' } })).resolves.toBe(2);
   });
 
   // #205 — the `pool-master-8yh` job-completion case went with `persistIngestionJob` and the

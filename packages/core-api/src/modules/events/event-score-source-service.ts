@@ -21,6 +21,7 @@ import { randomUUID } from 'node:crypto';
 import type { PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 import { MANUAL_ADMIN_PROVIDER_ID, SportEventSyncScope, type Sport } from '@poolmaster/shared/domain';
+import { isLeagueTour } from '../ingestion/core/league-keyword';
 import { ProviderRegistry } from '../ingestion/core/provider-registry';
 import {
   supportsLiveSimulation,
@@ -54,14 +55,10 @@ export interface ProviderEventDetailSummary {
 const EARLIEST_DATE = new Date(-8.64e15);
 const LATEST_DATE = new Date(8.64e15);
 
-/**
- * #385 — whether a provider event belongs to the tour a sport league's matchKeyword names:
- * its `metadata.tour` equals the keyword, ignoring case and surrounding space. Exact, so
- * "PGA TOUR" never matches "LPGA Tour".
- */
+/** #385 — whether a provider event belongs to the tour a sport league's matchKeyword names (`isLeagueTour`). */
 function isTourEvent(event: ProviderCatalogSportEvent, keyword: string): boolean {
   const tour = event.metadata.tour;
-  return typeof tour === 'string' && tour.trim().toLowerCase() === keyword.trim().toLowerCase();
+  return typeof tour === 'string' && isLeagueTour(tour, keyword);
 }
 
 export class EventScoreSourceService {

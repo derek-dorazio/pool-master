@@ -23,6 +23,7 @@ function drawList(props: Partial<ComponentProps<typeof CurrentContestList>> = {}
   render(
     <MemoryRouter>
       <CurrentContestList
+        bestPlaceByContestId={new Map()}
         contests={[draft, unsubmitted, live, submitted]}
         emptyBody="Nothing current."
         entriesByContestId={entries}
@@ -82,7 +83,7 @@ describe('CurrentContestList', () => {
   it('asks a viewer without a team to choose their name before entering', () => {
     drawList({ hasTeam: false });
 
-    expect(rowNote('submitted')).toContain('Choose your name in this league to enter.');
+    expect(rowNote('submitted')).toContain('Create your team to enter.');
   });
 
   it('says it is checking while the entries load', () => {
@@ -122,5 +123,32 @@ describe('CurrentContestList', () => {
     drawList({ contests: [] });
 
     expect(screen.getByTestId('list-empty')).toHaveTextContent('Nothing current.');
+  });
+
+  it('shows the viewer\'s best place on a live row, the place as its leaderboard reads it', () => {
+    drawList({ bestPlaceByContestId: new Map([[live.id, { entryId: 'mine-1', position: 3, displayPosition: '3' }]]) });
+
+    expect(screen.getByTestId('list-live-trailing')).toHaveTextContent(/^3rd$/);
+  });
+
+  it('shows a shared place as the leaderboard does, "T2"', () => {
+    drawList({ bestPlaceByContestId: new Map([[live.id, { entryId: 'mine-1', position: 2, displayPosition: 'T2' }]]) });
+
+    expect(screen.getByTestId('list-live-trailing')).toHaveTextContent(/^T2$/);
+  });
+
+  it('shows no place on a row the viewer has no ranked entry in', () => {
+    drawList();
+
+    expect(screen.queryByTestId('list-live-trailing')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('list-submitted-trailing')).not.toBeInTheDocument();
+  });
+
+  it('says how many entries the viewer has in its fact line when they have more than one, after the contest\'s count', () => {
+    const two = new Map([...entries, [live.id, [buildContestEntry({ contestId: live.id, id: 'mine-1' }), buildContestEntry({ contestId: live.id, id: 'mine-2', entryNumber: 2 })]]]);
+    drawList({ entriesByContestId: two, showEntryCount: true });
+
+    expect(screen.getByTestId('list-live')).toHaveTextContent(/Tiered\s*·\s*24 entries\s*·\s*Your 2 entries/);
+    expect(screen.getByTestId('list-submitted')).not.toHaveTextContent(/Your \d+ entries/);
   });
 });

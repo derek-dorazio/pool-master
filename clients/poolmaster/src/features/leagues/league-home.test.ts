@@ -149,11 +149,22 @@ describe('buildTopStandings', () => {
     expect(result.rows[0]).toEqual({
       entryId: 'entry-1',
       isMine: false,
-      name: 'Squad 1',
+      name: 'Entry 1',
       position: '1',
       total: '-5',
     });
     expect(result.rows[4]?.total).toBe('-1');
+  });
+
+  it('labels each row with its entry name, so two entries from one team stay distinct', () => {
+    const sameTeam = [
+      entryFixture(1, { entryName: 'Birdie Bandits 1', squadId: 'squad-1', squadName: 'Birdie Bandits' }),
+      entryFixture(2, { entryName: 'Birdie Bandits 2', squadId: 'squad-1', squadName: 'Birdie Bandits' }),
+    ];
+
+    const result = buildTopStandings(leaderboardFixture(sameTeam), null);
+
+    expect(result.rows.map((row) => row.name)).toEqual(['Birdie Bandits 1', 'Birdie Bandits 2']);
   });
 
   it('does not re-sort entries the server ranked', () => {
@@ -178,7 +189,7 @@ describe('buildTopStandings', () => {
     expect(result.myRowBelow).toEqual({
       entryId: 'entry-7',
       isMine: true,
-      name: 'Squad 7',
+      name: 'Entry 7',
       position: '7',
       total: '+1',
     });
@@ -216,12 +227,12 @@ describe('buildTopStandings', () => {
 });
 
 describe('buildBracketTopStandings', () => {
-  it('lists a bracket contest\'s entries in the server\'s order with their points, marking the viewer\'s group', () => {
+  it('lists a bracket contest\'s entries by entry name in the server\'s order with their points, marking the viewer\'s team', () => {
     const result = buildBracketTopStandings(bracketLeaderboardFixture(), 'squad-1');
 
     expect(result.rows).toEqual([
-      { entryId: 'entry-2', isMine: false, name: 'Derek’s Great Golf Guys', position: '1', total: '12' },
-      { entryId: 'entry-1', isMine: true, name: 'Morgan’s Madness', position: '2', total: '8' },
+      { entryId: 'entry-2', isMine: false, name: 'Chalk All The Way', position: '1', total: '12' },
+      { entryId: 'entry-1', isMine: true, name: 'Derek’s Bracket', position: '2', total: '8' },
     ]);
     expect(result.myRowBelow).toBeNull();
   });

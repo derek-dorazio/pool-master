@@ -30,10 +30,12 @@ The target:
      provider participant with no mapping yet is linked to the site's one participant of the
      same sport and name (a team loaded from a data file), not created twice. NFL events take
      the calendar year they are played in as their event year, as the NFL data files do, so the
-     2025 season's playoffs are 2026 events. The NCAA men's basketball tournament is one event
-     per season (`ncaab-2025-tournament`), read from the vendor's bracket: its round of 64 is
-     the bracket's first round, and First Four games carry no score, since their winners fill
-     a place rather than play a match. Only leagues whose bracket games are single games sync
+     2025 season's playoffs are 2026 events. The NCAA men's and women's basketball tournaments are
+     each one event per season (`ncaab-2025-tournament`, `ncaaw-2025-tournament`), read from
+     the vendor's bracket: PoolMaster's bracket starts at the round of 64, and First Four games
+     carry no score, since their winners fill a place rather than play a match. A school's
+     men's and women's teams share a name, so a provider team that names its league (its
+     match keyword) links only to the site's team affiliated with that league. Only leagues whose bracket games are single games sync
      game scores: a best-of series (the NBA, WNBA, MLB and NHL playoffs) is one match of
      several games, which the link from a game's two teams does not fit (#1545);
    - per-player box scores for Clutch Cards, through `StatLineService`.
