@@ -35,7 +35,7 @@ export { Checkbox, FormField, Input, PasswordInput, Select, Textarea } from "./f
 export { FormPage } from "./form-page";
 export { IconAvatar } from "./icon-avatar";
 export { IconPalette } from "./icon-palette";
-export { DetailsPeek, PeekCard, PeekMessage, type PeekFact } from "./details-peek";
+export { DetailsPeek, PeekCard, type PeekFact } from "./details-peek";
 export { DETAILS_PEEK_HOVER_DELAY_MS } from "./popover-timing";
 export { InfoPopover } from "./info-popover";
 export { SplitContentLayout } from "./layout-presets";
