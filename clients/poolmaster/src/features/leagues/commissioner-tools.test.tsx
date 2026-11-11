@@ -854,6 +854,21 @@ describe('League plan', () => {
       .toEqual(['Not included', 'Included', 'Included', 'Included']);
   });
 
+  it('says what the league uses now could not load, in red with Retry, and reads it again on Retry', async () => {
+    primeMocks({ league: { planEntitlements: PRO_PLAN } });
+    primePlanList();
+    getLeaguePlanUsageMock.mockResolvedValue({ error: { error: { code: 'INTERNAL_ERROR', message: 'Down' } }, status: 500 });
+
+    renderCommissionerTools('/league/BIGDAWGS/admin/plan');
+
+    const error = await screen.findByTestId('league-plan-now-error');
+    expect(error).toHaveTextContent("We couldn't load what the league uses now.");
+    primeUsage();
+    fireEvent.click(within(error).getByRole('button', { name: 'Retry' }));
+
+    expect(await screen.findByTestId('league-plan-now-entries')).toHaveTextContent('34 of 50 entries');
+  });
+
   it('shows what the league uses now: its plan, this year\'s sports leagues by name, and its fullest open contest against the plan\'s limits', async () => {
     primeMocks({ league: { planEntitlements: PRO_PLAN } });
     primePlanList();
@@ -996,7 +1011,8 @@ describe('League plan', () => {
 
     renderCommissionerTools('/league/BIGDAWGS/admin/plan');
 
-    expect(await screen.findByText('Plans unavailable')).toBeInTheDocument();
+    expect(await screen.findByText("We couldn't load the plans.")).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
     expect(screen.queryByTestId('league-plan-card-FREE-move')).not.toBeInTheDocument();
   });
 

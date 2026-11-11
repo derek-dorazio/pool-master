@@ -13,7 +13,7 @@ export function RecordBook({ leagueId }: { leagueId: string }) {
   const recordsQuery = useRecordsQuery(leagueId);
 
   if (recordsQuery.isError) {
-    return <ErrorState body="We couldn't load the record book." testId="record-book-error" />;
+    return <ErrorState onRetry={() => void recordsQuery.refetch()} body="We couldn't load the record book." testId="record-book-error" />;
   }
   const records = recordsQuery.data ?? [];
   const book = records.filter((record) => !isHallOfLameRecord(record.type));
@@ -54,7 +54,7 @@ export function SquadRecords({ leagueId, squadId }: { leagueId: string; squadId:
   const recordsQuery = useRecordsQuery(leagueId);
 
   if (recordsQuery.isError) {
-    return <ErrorState body="We couldn't load this team's records." testId="squad-records-error" />;
+    return <ErrorState onRetry={() => void recordsQuery.refetch()} body="We couldn't load this team's records." testId="squad-records-error" />;
   }
   const held = recordsHeldBy(recordsQuery.data ?? [], squadId);
   if (!held.length) {

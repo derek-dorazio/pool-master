@@ -19,6 +19,7 @@ import {
   LoadingState,
   PageHeader,
   PageTabs,
+  refetchFailed,
   Tabs,
   TabsContent,
   YearPicker,
@@ -255,9 +256,9 @@ export function ManageContestsPage() {
         />
 
         {isLoading ? (
-          <LoadingState body="Loading contests..." />
+          <LoadingState rows={3} body="Loading contests..." />
         ) : isError ? (
-          <ErrorState body="We couldn't load contests for this league." />
+          <ErrorState body="We couldn't load contests for this league." onRetry={refetchFailed(contestsQuery, yearsQuery)} />
         ) : !hasContests ? (
           <EmptyState
             action={
@@ -274,9 +275,9 @@ export function ManageContestsPage() {
         ) : (
           <TabsContent className="grid gap-3" value={filter}>
             {filter === 'history' && historyQuery.isError ? (
-              <ErrorState body={`We couldn't load the contests finished in ${year}.`} testId="manage-contests-history-error" />
+              <ErrorState onRetry={() => void historyQuery.refetch()} body={`We couldn't load the contests finished in ${year}.`} testId="manage-contests-history-error" />
             ) : filter === 'history' && historyQuery.isLoading ? (
-              <LoadingState body="Loading finished contests..." />
+              <LoadingState rows={3} body="Loading finished contests..." />
             ) : (
             <DataGrid
               columns={columns}

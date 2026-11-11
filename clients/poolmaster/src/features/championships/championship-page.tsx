@@ -46,7 +46,7 @@ export function ChampionshipPage() {
     return <LoadingState body="Loading the championship..." />;
   }
   if (championshipQuery.isError || !championshipQuery.data) {
-    return <ErrorState body="We couldn't load this year's championship." testId="championship-error" />;
+    return <ErrorState onRetry={() => void championshipQuery.refetch()} body="We couldn't load this year's championship." testId="championship-error" />;
   }
   const championship = championshipQuery.data;
   const filteredSquadName = championship.standings.find((row) => row.squadId === filter?.squadId)?.squadName ?? '';
@@ -118,9 +118,9 @@ export function ChampionshipPage() {
         ) : null}
       >
         {contestsQuery.isError ? (
-          <ErrorState body="We couldn't load this year's contests." size="inline" testId="championship-contests-error" />
+          <ErrorState onRetry={() => void contestsQuery.refetch()} body="We couldn't load this year's contests." size="inline" testId="championship-contests-error" />
         ) : !contestsQuery.data ? (
-          <LoadingState body="Loading the year's contests..." size="inline" />
+          <LoadingState rows={3} body="Loading the year's contests..." size="inline" />
         ) : (
           <ChampionshipContestList
             contests={contestsQuery.data}

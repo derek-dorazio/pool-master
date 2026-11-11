@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, renderHook, screen, within } from '@testing-library/react';
+import { fireEvent, render, renderHook, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ColumnDef } from '@tanstack/react-table';
 import { MemoryRouter } from 'react-router';
@@ -144,9 +144,10 @@ describe('LeaderboardFrame', () => {
 });
 
 describe('useLeaderboardFallback', () => {
-  const settled = { data: undefined, error: null, isError: false, isLoading: false };
+  const refetch = vi.fn();
+  const settled = { data: undefined, error: null, isError: false, isLoading: false, refetch };
 
-  function fallbackFor(query: typeof settled | { data: unknown; error: Error | null; isError: boolean; isLoading: boolean }) {
+  function fallbackFor(query: typeof settled | { data: unknown; error: Error | null; isError: boolean; isLoading: boolean; refetch: typeof refetch }) {
     const { result } = renderHook(() => useLeaderboardFallback(query, { action: 'board.load.failed', contestId: 'contest-1' }));
     if (result.current) {
       render(result.current);
@@ -166,10 +167,12 @@ describe('useLeaderboardFallback', () => {
     expect(screen.getByTestId('contest-leaderboard-error-CONTEST_LEADERBOARD_PICKS_HIDDEN')).toHaveTextContent("We couldn't load this leaderboard.");
   });
 
-  it('shows the plain error state for a failure without a code', () => {
+  it('shows the plain error state for a failure without a code, whose Retry reads the board again', () => {
     fallbackFor({ ...settled, error: new Error('boom'), isError: true });
 
     expect(screen.getByTestId('contest-leaderboard-error')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    expect(refetch).toHaveBeenCalled();
   });
 
   it('steps aside once the board is there', () => {

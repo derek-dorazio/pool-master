@@ -4,7 +4,7 @@ import { SelectionType, formatSelectionTypeName, getSportDefinition, type Sport 
 import type { ContestConfigTemplateDto, LeagueDto } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-context';
 import { useActiveContestTemplatesQuery } from '@/features/contests/use-active-contest-templates-query';
-import { Button, cn, ErrorState, ExpandableTile, Heading, LinkButton, LoadingState, NumberedSteps, PageHeader, SectionHeader, Tile } from '@/features/shared/ui';
+import { Button, cn, ErrorState, ExpandableTile, Heading, LinkButton, LoadingState, NumberedSteps, PageHeader, refetchFailed, SectionHeader, Tile } from '@/features/shared/ui';
 import { getLogger } from '@/lib/logger';
 import { buildPublicContestCatalog, type ContestTypeTile, type PublicCatalogLeague, type PublicCatalogSport } from './contest-catalog';
 import { FORMAT_GUIDES } from './format-guides';
@@ -355,7 +355,7 @@ export function HowToPlayPage() {
       {templatesQuery.isLoading || sportLeaguesQuery.isLoading ? (
         <LoadingState body="Loading the ways to play..." />
       ) : isError ? (
-        <ErrorState body="We couldn't load the contest types. Try again in a moment." title="Contest types unavailable" />
+        <ErrorState body="We couldn't load the contest types." onRetry={refetchFailed(templatesQuery, sportLeaguesQuery)} />
       ) : (
         <section className="space-y-4" data-testid="how-to-play-formats">
           <SectionHeader

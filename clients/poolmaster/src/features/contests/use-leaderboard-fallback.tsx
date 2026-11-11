@@ -11,7 +11,7 @@ import { LEADERBOARD_ERROR_MESSAGES } from './contest-leaderboard';
  * tell picks-hidden from a membership refusal or a server failure.
  */
 export function useLeaderboardFallback(
-  query: Pick<UseQueryResult, 'data' | 'error' | 'isError' | 'isLoading'>,
+  query: Pick<UseQueryResult, 'data' | 'error' | 'isError' | 'isLoading' | 'refetch'>,
   { action, contestId }: { action: string; contestId: string },
 ): ReactElement | null {
   const { error, isError } = query;
@@ -34,6 +34,7 @@ export function useLeaderboardFallback(
           codeMessages: LEADERBOARD_ERROR_MESSAGES,
           fallback: 'Try refreshing, or return to the contest board.',
         })}
+        onRetry={() => void query.refetch()}
         testId={error instanceof ApiError && error.code ? `contest-leaderboard-error-${error.code}` : 'contest-leaderboard-error'}
         title="We couldn't load this leaderboard."
       />

@@ -38,9 +38,10 @@ import {
   DateDisplay,
   EmptyState,
   ErrorState,
-  PageHeader,
   LinkButton,
   LoadingState,
+  PageHeader,
+  refetchFailed,
   SettingsRow,
   SettingsSection,
 } from '@/features/shared/ui';
@@ -157,7 +158,7 @@ export function ManageContestPage() {
     || (contest !== null && contest.leagueId !== league.id);
   if ((contestQuery.isError && !isContestMissing) || managedContestQuery.isError || eventQuery.isError) {
     return (
-      <ErrorState
+      <ErrorState onRetry={refetchFailed(contestQuery, managedContestQuery, eventQuery)}
         body="Try again in a moment."
         testId="manage-contest-error"
         title="We couldn't load this contest."

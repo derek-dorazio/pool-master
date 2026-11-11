@@ -14,6 +14,7 @@ import {
   LinkButton,
   LoadingState,
   NumberedSteps,
+  refetchFailed,
   SimpleTable,
   TableBody,
   TableCell,
@@ -193,7 +194,7 @@ function RoundChip({ round }: { round: CalendarRound }) {
   );
 }
 
-function Calendar({ rounds }: { rounds: ReadonlyMap<string, CalendarRound> | null }) {
+function Calendar({ onRetry, rounds }: { onRetry: () => void; rounds: ReadonlyMap<string, CalendarRound> | null }) {
   const copy = CLUTCH_CARD_PAGE.calendar;
   return (
     <LandingSection eyebrow={copy.eyebrow} id="calendar" intro={copy.intro} testId="clutch-card-calendar" title={copy.title}>
@@ -219,7 +220,7 @@ function Calendar({ rounds }: { rounds: ReadonlyMap<string, CalendarRound> | nul
           </div>
         </>
       ) : (
-        <ErrorState body="We couldn't load the championship calendar. Try again in a moment." testId="clutch-card-calendar-error" title="Calendar unavailable" />
+        <ErrorState body="We couldn't load the championship calendar." onRetry={onRetry} testId="clutch-card-calendar-error" />
       )}
     </LandingSection>
   );
@@ -321,7 +322,7 @@ export function ClutchCardPage() {
         <Hero startRequest={startRequest} />
       </div>
       <CardTypes />
-      <Calendar rounds={rounds} />
+      <Calendar onRetry={refetchFailed(sportLeaguesQuery, eventPagesQuery)} rounds={rounds} />
       <Why />
       <HowItPlays />
       <Faq />

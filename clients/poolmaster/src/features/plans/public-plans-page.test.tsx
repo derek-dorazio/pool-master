@@ -161,7 +161,8 @@ describe('PublicPlansPage', () => {
 
     renderPage();
 
-    expect(await screen.findByText('Plans unavailable')).toBeInTheDocument();
+    expect(await screen.findByText("We couldn't load the plans.")).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
     expect(screen.queryByTestId('plan-cards')).not.toBeInTheDocument();
   });
 });

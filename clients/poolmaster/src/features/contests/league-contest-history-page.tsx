@@ -67,7 +67,7 @@ export function LeagueContestHistoryPage() {
     const copy = getLeagueLoadErrorCopy(leagueQuery.error);
 
     return (
-      <ErrorState
+      <ErrorState onRetry={() => void leagueQuery.refetch()}
         action={(
           <LinkButton to="/welcome" variant="subtle">
             Back to welcome
@@ -95,9 +95,9 @@ export function LeagueContestHistoryPage() {
       />
 
       {yearsQuery.isLoading ? (
-        <LoadingState body="Loading contest history..." />
+        <LoadingState rows={3} body="Loading contest history..." />
       ) : yearsQuery.isError ? (
-        <ErrorState body="We couldn't load contest history for this league." />
+        <ErrorState onRetry={() => void yearsQuery.refetch()} body="We couldn't load contest history for this league." />
       ) : year === null ? (
         <SectionCard testId="league-contests-history" title="Past contests">
           <SectionEmpty testId="league-contests-history-none">No completed contests yet.</SectionEmpty>
@@ -110,9 +110,9 @@ export function LeagueContestHistoryPage() {
           trailing={resultsQuery.data ? <Chip tone="info">{resultsQuery.data.length}</Chip> : null}
         >
           {resultsQuery.isError ? (
-            <ErrorState body={`We couldn't load the contests completed in ${year}.`} size="inline" testId="league-contests-history-error" />
+            <ErrorState onRetry={() => void resultsQuery.refetch()} body={`We couldn't load the contests completed in ${year}.`} size="inline" testId="league-contests-history-error" />
           ) : !resultsQuery.data ? (
-            <LoadingState body="Loading contest history..." size="inline" />
+            <LoadingState rows={3} body="Loading contest history..." size="inline" />
           ) : (
             <ChampionshipContestList
               contests={resultsQuery.data}

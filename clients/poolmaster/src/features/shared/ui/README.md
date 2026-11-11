@@ -17,10 +17,15 @@ The shared UI layer is split into three levels:
    `layout="row"`, and a menu that opens from a button is a `DropdownMenu` built
    from its parts (`DropdownMenuItem` rows, `isSelected` for the current one); never hand-type
    `normal-case tracking-normal` onto a button. A loading, empty or error state
-   is `LoadingState`, `EmptyState` or `ErrorState` (`size="inline"` for one line
-   inside a card), a one-line failure beside what failed is an `InlineError`, and
-   a query's loading, error, empty and data branches are one `QueryState`; never
-   hand-type a `text-destructive` or "Loading..." paragraph. A small table is a
+   is `LoadingState`, `EmptyState` or `ErrorState`: a card of its own by default,
+   `size="inline"` for one line inside a card, `size="plain"` inside a body that is
+   already padded; a list's `LoadingState` (or `QueryState`) takes `rows` for faint
+   placeholder rows. A query's loading, error, empty and data branches are one
+   `QueryState`, whose error offers Retry from the query's own `refetch`; a
+   hand-drawn `ErrorState` takes `onRetry` (`refetchFailed(...)` when it waits on
+   several reads). A one-line failure beside what failed, such as a refused save, is
+   an `InlineError`. Never hand-type a `text-destructive` or "Loading..." paragraph;
+   `poolmaster/no-hand-written-query-states` fails one in feature code. A small table is a
    `SimpleTable` built from its parts (`density="compact"` inside a card,
    `surface="inverse"` on a navy panel, `isHighlighted` for the viewer's row,
    `numeric` for figures); an upload preview is an `UploadPreviewTable`; a

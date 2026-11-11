@@ -52,7 +52,8 @@ export { ServerErrorBar } from "./server-error";
 export { SectionHeader } from "./section";
 export { DangerZone, DangerZoneAction, SettingsRow, SettingsSection, SettingsSectionHeader } from "./settings-section";
 export { EmptyState, ErrorState, InlineError, LoadingState, QueryState } from "./state";
-export { LOADING_TEXT } from "./state-copy";
+export { refetchFailed } from "./refetch-failed";
+export { LOADING_TEXT, QUERY_ERROR_TEXT, RETRY_LABEL } from "./state-copy";
 export { ProgressIndicator } from "./progress";
 export {
   SegmentedControl,

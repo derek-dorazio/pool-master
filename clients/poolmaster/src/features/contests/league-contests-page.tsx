@@ -64,9 +64,9 @@ export function LeagueContestsPage() {
       <ContestsPageHeader leagueCode={league.leagueCode} view="current" />
 
       {contestsQuery.isLoading ? (
-        <LoadingState body="Loading contests..." />
+        <LoadingState rows={3} body="Loading contests..." />
       ) : contestsQuery.isError ? (
-        <ErrorState body="We couldn't load contests for this league." />
+        <ErrorState onRetry={() => void contestsQuery.refetch()} body="We couldn't load contests for this league." />
       ) : (
         <SectionCard testId="league-contests-current" title="Current contests">
           <CurrentContestList

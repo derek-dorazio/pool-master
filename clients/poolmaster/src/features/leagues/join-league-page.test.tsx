@@ -336,6 +336,7 @@ describe('Joining a league from an invite link', () => {
     renderJoinLeaguePage();
 
     expect(await screen.findByText('We could not load this invitation.')).toBeInTheDocument();
+    expect(screen.getByTestId('join-league-invitation-error')).toContainElement(screen.getByRole('button', { name: 'Retry' }));
     expect(screen.queryByRole('button', { name: 'Join league' })).not.toBeInTheDocument();
   });
 

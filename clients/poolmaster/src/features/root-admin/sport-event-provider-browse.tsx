@@ -171,7 +171,7 @@ export function SportEventProviderBrowse({
               })}
               isEmpty={(events) => events.length === 0}
               loading="Loading provider events..."
-              query={{ data: catalog.isLoading ? undefined : catalog.events, isError: catalog.isError }}
+              query={{ data: catalog.isLoading ? undefined : catalog.events, isError: catalog.isError, refetch: catalog.refetch }}
             >
               {(events) => (
                 events.map((event) => (

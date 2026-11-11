@@ -8,11 +8,13 @@ import { getLogger } from '@/lib/logger';
 import {
   Button,
   Chip,
+  ErrorState,
   FormField,
   Heading,
   IconPalette,
   Input,
   LinkButton,
+  LoadingState,
   PublicInviteJoinPage,
 } from '@/features/shared/ui';
 import { InvitationContextCard } from './invitation-context-card';
@@ -297,8 +299,15 @@ function JoinLeagueByInvite({ inviteCode }: { inviteCode: string }) {
           squeezed the icon palette into tiles too small for their labels. */}
       <div className="mt-6 space-y-5">
         <div className="space-y-4 text-sm text-muted-foreground">
-          {invitationQuery.isLoading ? <p>Loading invitation...</p> : null}
-          {invitationQuery.isError ? <p>We could not load this invitation.</p> : null}
+          {invitationQuery.isLoading ? <LoadingState body="Loading invitation..." size="plain" testId="join-league-invitation-loading" /> : null}
+          {invitationQuery.isError ? (
+            <ErrorState
+              body="We could not load this invitation."
+              onRetry={() => void invitationQuery.refetch()}
+              size="plain"
+              testId="join-league-invitation-error"
+            />
+          ) : null}
           {invitationQuery.data ? (
             <InvitationContextCard
               inviteCode={invitationQuery.data.inviteCode}

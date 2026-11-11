@@ -21,6 +21,7 @@ import {
   Heading,
   LinkButton,
   LoadingState,
+  refetchFailed,
   Tile,
 } from '@/features/shared/ui';
 import { EVENT_PAGE_ACTIONS, eventPageCopy, eventPageOfferCopy } from './event-page-copy';
@@ -118,7 +119,7 @@ function StartForUser({ request }: { request: StartRequest }) {
     return <IncompleteLink />;
   }
   if (pageQuery.isError || leaguesQuery.isError) {
-    return <ErrorState body="Try again in a moment." testId="start-error" title="We couldn't load this page." />;
+    return <ErrorState onRetry={refetchFailed(pageQuery, leaguesQuery)} body="Try again in a moment." testId="start-error" title="We couldn't load this page." />;
   }
   if (!pageQuery.data || !leagues) {
     return <LoadingState body="Getting your league ready..." testId="start-loading" />;

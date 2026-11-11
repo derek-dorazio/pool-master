@@ -36,6 +36,14 @@ describe("pool-master-3lo.1: shared Button primitives", () => {
     expect(row).not.toHaveClass("justify-center", "h-12");
   });
 
+  it("draws the link variant as quiet blue small caps with no box, for an action at the end of a line such as Retry", () => {
+    render(<Button size="xs" variant="link">Retry</Button>);
+
+    const button = screen.getByRole("button", { name: "Retry" });
+    expect(button).toHaveClass("text-label", "text-xs", "font-bold", "uppercase");
+    expect(button).not.toHaveClass("border");
+  });
+
   it("keeps the colour of the chosen variant on a row button, so a picked row can still look pressed", () => {
     render(<Button layout="row" variant="subtle">Ravens</Button>);
 

@@ -135,7 +135,7 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
   }
   if (gamePicksQuery.isError || !gamePicksQuery.data) {
     return (
-      <ErrorState
+      <ErrorState onRetry={() => void gamePicksQuery.refetch()}
         body="Try refreshing or return to the contest board."
         testId="pick-em-entry-error"
         title="We couldn't load these picks."

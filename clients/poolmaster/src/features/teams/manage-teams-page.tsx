@@ -113,9 +113,9 @@ export function ManageTeamsPage() {
       />
 
       {teamsQuery.isLoading ? (
-        <LoadingState body="Loading members..." testId="admin-teams-loading" />
+        <LoadingState rows={3} body="Loading members..." testId="admin-teams-loading" />
       ) : teamsQuery.isError ? (
-        <ErrorState body="We couldn't load this league's members." title="Members unavailable" />
+        <ErrorState onRetry={() => void teamsQuery.refetch()} body="We couldn't load this league's members." title="Members unavailable" />
       ) : (
         <div className="grid gap-3">
           <SegmentedControl

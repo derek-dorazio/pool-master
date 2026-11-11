@@ -73,7 +73,7 @@ export function BracketEntryPage({ contest }: { contest: ContestDto }) {
   }
   if (gamePicksQuery.isError || !gamePicksQuery.data) {
     return (
-      <ErrorState
+      <ErrorState onRetry={() => void gamePicksQuery.refetch()}
         body="Try refreshing or return to the contest board."
         testId="bracket-entry-error"
         title="We couldn't load this bracket."

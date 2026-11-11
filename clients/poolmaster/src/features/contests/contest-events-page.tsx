@@ -19,6 +19,7 @@ import {
   Button,
   Checkbox,
   DateDisplay,
+  ErrorState,
   FormField,
   FormPage,
   Heading,
@@ -231,12 +232,15 @@ function ContestEventsForm({
 
       <ul className="divide-y divide-border rounded-xl border border-border" data-testid="contest-events-options">
         {yearEventsQuery.isLoading ? (
-          <li className="px-4 py-3 text-sm text-muted-foreground" data-testid="contest-events-year-loading">
-            Loading {year} events...
-          </li>
+          <li><LoadingState body={`Loading ${year} events...`} rows={3} size="inline" testId="contest-events-year-loading" /></li>
         ) : yearEventsQuery.isError ? (
-          <li className="px-4 py-3 text-sm text-destructive" data-testid="contest-events-year-error">
-            We couldn&apos;t load the {year} events. Please try again.
+          <li>
+            <ErrorState
+              body={`We couldn't load the ${year} events.`}
+              onRetry={() => void yearEventsQuery.refetch()}
+              size="inline"
+              testId="contest-events-year-error"
+            />
           </li>
         ) : yearEvents.length ? yearEvents.map((event) => {
           const isChosen = selected.has(event.id);

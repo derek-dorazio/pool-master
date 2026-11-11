@@ -131,9 +131,9 @@ export function LeagueHomePage() {
       />
 
       {contestsQuery.isLoading ? (
-        <LoadingState body="Loading contests..." />
+        <LoadingState rows={3} body="Loading contests..." />
       ) : contestsQuery.isError ? (
-        <ErrorState body="We couldn't load this league's contests." />
+        <ErrorState onRetry={() => void contestsQuery.refetch()} body="We couldn't load this league's contests." />
       ) : (
         <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
           <div className="grid gap-5">

@@ -11,7 +11,7 @@ import { useLeagueContext } from '@/features/leagues/use-league-context';
 import { contestEventsForTemplate } from '@/features/contests/contest-template-events';
 import { sportEventsQueryOptions } from '@/features/contests/sport-events-query';
 import { useActiveContestTemplatesQuery } from '@/features/contests/use-active-contest-templates-query';
-import { ErrorState, Heading, LoadingState, PageHeader, SectionHeader } from '@/features/shared/ui';
+import { ErrorState, Heading, LoadingState, PageHeader, refetchFailed, SectionHeader } from '@/features/shared/ui';
 import { getLogger } from '@/lib/logger';
 import { buildLeagueContestCatalog } from './contest-catalog';
 import { ContestTypeTileCard } from './contest-type-tile';
@@ -85,7 +85,7 @@ export function LeagueContestTypesPage() {
       {templatesQuery.isLoading || sportLeaguesQuery.isLoading ? (
         <LoadingState body="Loading contest types..." />
       ) : isError ? (
-        <ErrorState body="We couldn't load the contest types." title="Contest types unavailable" />
+        <ErrorState body="We couldn't load the contest types." onRetry={refetchFailed(templatesQuery, sportLeaguesQuery)} />
       ) : (
         <div className="space-y-10">
           {catalog.map((sport) => (

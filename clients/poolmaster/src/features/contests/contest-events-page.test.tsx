@@ -137,6 +137,21 @@ describe('Commissioner tools › Contests › one contest › Events', () => {
     expect(within(screen.getByTestId('contest-events-year')).getAllByRole('option').map((year) => year.textContent)).toEqual(['2099', '2100']);
   });
 
+  it('says the season\'s events could not load, in red with Retry, and lists them once Retry succeeds', async () => {
+    primeMocks();
+    const listSeason = listEventsMock.getMockImplementation() as (options: unknown) => unknown;
+    listEventsMock.mockResolvedValue({ error: { error: { code: 'INTERNAL_ERROR', message: 'Down' } }, status: 500 });
+
+    renderAt(EVENTS_PATH);
+
+    const error = await screen.findByTestId('contest-events-year-error');
+    expect(error).toHaveTextContent("We couldn't load the 2099 events.");
+    listEventsMock.mockImplementation(listSeason);
+    fireEvent.click(within(error).getByRole('button', { name: 'Retry' }));
+
+    expect(await screen.findByTestId(`contest-events-option-${masters.id}`)).toBeInTheDocument();
+  });
+
   it('reads another season\'s events when it is picked, keeping the events chosen in the first season in the order list', async () => {
     primeMocks();
 

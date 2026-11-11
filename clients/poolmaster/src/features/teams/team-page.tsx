@@ -50,7 +50,7 @@ export function TeamPage() {
   }
   const team = teamQuery.data;
   if (teamQuery.isError && !hasErrorCode(teamQuery.error, 'SQUAD_NOT_FOUND')) {
-    return <ErrorState body="We couldn't load this member." testId="team-page-error" title="Member unavailable" />;
+    return <ErrorState onRetry={() => void teamQuery.refetch()} body="We couldn't load this member." testId="team-page-error" title="Member unavailable" />;
   }
   if (!team) {
     return (

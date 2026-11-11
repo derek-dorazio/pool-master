@@ -129,6 +129,15 @@ describe('route guards', () => {
     );
   });
 
+  it('shows the shared loading line while the session is still being read, before deciding where to send the visitor', () => {
+    authState.isLoading = true;
+
+    renderMemberGuard(['/league/LEAGUE1']);
+
+    expect(screen.getByTestId('member-route-loading')).toHaveTextContent(/^Loading your .+ session\.\.\.$/);
+    expect(screen.queryByTestId('member-guard-allowed')).not.toBeInTheDocument();
+  });
+
   it('creates the member guard logger once rather than on every render', () => {
     authState.isAuthenticated = true;
     authState.user = { id: 'user-1' };

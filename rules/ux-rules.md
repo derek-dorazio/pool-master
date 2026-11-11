@@ -145,6 +145,14 @@ Use those conventions as the starting point, but bias toward a consumer app:
   - return to welcome
   - use league selector
   - retry
+- A read's loading, error and empty states have one look everywhere: a spinner line (with
+  faint placeholder rows for a list), a red line with Retry, and an italic empty line. Only the
+  part that is loading changes; the page header stays put. Every failed read offers Retry. A
+  button's pending label ("Saving...") is not a page state. The shared parts are named in
+  `clients/poolmaster/src/features/shared/ui/README.md`, and
+  `poolmaster/no-hand-written-query-states` fails a hand-drawn state in feature code (root
+  admin files still on the old look sit on a shrink-only list in
+  `eslint-rules/query-states-baseline.mjs`).
 
 ## 7. Forms And Validation
 

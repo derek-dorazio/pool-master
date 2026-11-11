@@ -15,6 +15,7 @@ type LeagueContextQuery<TData> = {
   error: Error | null;
   isError: boolean;
   isLoading: boolean;
+  refetch: () => unknown;
 };
 
 type LeagueContextGuardOptions = {
@@ -50,7 +51,7 @@ export function useLeagueContextGuard<TData>(
 
     return {
       element: (
-        <ErrorState
+        <ErrorState onRetry={() => void query.refetch()}
           action={(
             <LinkButton to="/welcome" variant="subtle">
               Back to welcome

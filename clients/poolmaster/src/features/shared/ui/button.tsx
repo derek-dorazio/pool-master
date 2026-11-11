@@ -18,6 +18,8 @@ const buttonVariants = cva(
         danger:
           "border border-destructive/40 bg-destructive/10 text-destructive hover:bg-destructive/15",
         icon: "border border-border bg-background text-muted-foreground hover:bg-muted/40",
+        /** A quiet text action in blue small caps, such as Retry at the end of an error line. */
+        link: "font-display text-xs font-bold text-label hover:underline",
       },
       size: {
         auto: "min-h-12 px-4 py-3",

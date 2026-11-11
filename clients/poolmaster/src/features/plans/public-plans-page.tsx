@@ -77,7 +77,7 @@ export function PublicPlansPage() {
       {plansQuery.isLoading ? (
         <LoadingState body="Loading the plans..." />
       ) : plansQuery.isError || !plansQuery.data ? (
-        <ErrorState body="We couldn't load the plans. Try again in a moment." title="Plans unavailable" />
+        <ErrorState body="We couldn't load the plans." onRetry={() => void plansQuery.refetch()} />
       ) : (
         <>
           <PlanCards

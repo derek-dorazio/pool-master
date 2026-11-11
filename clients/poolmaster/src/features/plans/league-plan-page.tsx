@@ -99,6 +99,7 @@ function LeaguePlanView({ league }: { league: LeagueDto }) {
       <YourLeagueNow
         current={current}
         isError={usageQuery.isError}
+        onRetry={() => void usageQuery.refetch()}
         sportLeagueNames={sportLeagueNames}
         usage={usageQuery.data}
       />
@@ -106,7 +107,7 @@ function LeaguePlanView({ league }: { league: LeagueDto }) {
       {plansQuery.isLoading ? (
         <LoadingState body="Loading the plans..." />
       ) : plansQuery.isError || !plans ? (
-        <ErrorState body="We couldn't load the plans. Try again in a moment." title="Plans unavailable" />
+        <ErrorState body="We couldn't load the plans." onRetry={() => void plansQuery.refetch()} />
       ) : (
         <>
           {chosen ? (
@@ -205,11 +206,13 @@ function formatUse(used: number, limit: number | null): string {
 function YourLeagueNow({
   current,
   isError,
+  onRetry,
   sportLeagueNames,
   usage,
 }: {
   current: PlanEntitlementsDto;
   isError: boolean;
+  onRetry: () => void;
   sportLeagueNames: ReadonlyMap<string, string>;
   usage: LeaguePlanUsageResponse | undefined;
 }) {
@@ -250,9 +253,13 @@ function YourLeagueNow({
             </div>
           </>
         ) : isError ? (
-          <p className="text-sm text-muted-foreground sm:col-span-2" data-testid="league-plan-now-error">We couldn&apos;t load what the league uses now.</p>
+          <div className="sm:col-span-2">
+            <ErrorState body="We couldn't load what the league uses now." onRetry={onRetry} size="plain" testId="league-plan-now-error" />
+          </div>
         ) : (
-          <p className="text-sm text-muted-foreground sm:col-span-2">Loading what the league uses...</p>
+          <div className="sm:col-span-2">
+            <LoadingState body="Loading what the league uses..." size="plain" testId="league-plan-now-loading" />
+          </div>
         )}
       </dl>
     </SectionCard>

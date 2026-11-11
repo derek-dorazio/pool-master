@@ -4,7 +4,7 @@ import { updateUserEmailPreference } from '@/lib/api';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
-import { Alert, Checkbox, Modal } from '@/features/shared/ui';
+import { Alert, Checkbox, ErrorState, Modal } from '@/features/shared/ui';
 import { EMAIL_CATEGORY_LABELS, SELF_EMAIL_PREFERENCES_KEY, useOwnEmailPreferences } from './email-preferences';
 import { SELF_USER_ID } from './user-routing';
 
@@ -67,7 +67,11 @@ export function EmailNotificationsDialog({
       <div className="space-y-4">
         <EmailSuppressionBanner reason={preferencesQuery.data?.emailSuppression} />
         {preferencesQuery.isError ? (
-          <Alert tone="danger">{extractErrorMessage(preferencesQuery.error, { fallback: 'We could not load your email settings.' })}</Alert>
+          <ErrorState
+            body={extractErrorMessage(preferencesQuery.error, { fallback: 'We could not load your email settings.' })}
+            onRetry={() => void preferencesQuery.refetch()}
+            testId="email-notifications-load-error"
+          />
         ) : null}
         {updateMutation.isError ? (
           <Alert tone="danger">{extractErrorMessage(updateMutation.error, { fallback: 'We could not save that change.' })}</Alert>

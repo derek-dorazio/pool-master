@@ -15,6 +15,7 @@ import noButtonRowOverride from '../no-button-row-override.mjs';
 import noDisabledTests from '../no-disabled-tests.mjs';
 import noDuplicateExtractErrorMessage from '../no-duplicate-extract-error-message.mjs';
 import noEnvFallbacks from '../no-env-fallbacks.mjs';
+import noHandWrittenQueryStates from '../no-hand-written-query-states.mjs';
 import noInlineQueryKeys from '../no-inline-query-keys.mjs';
 import noParallelApiTypes from '../no-parallel-api-types.mjs';
 import noWidenedEnumFields from '../no-widened-enum-fields.mjs';
@@ -1051,6 +1052,62 @@ typedRuleTester.run('no-list-lookup (typed)', noListLookup, {
         function c(id: string) { const q = useLeaguesQuery(); const leagues = q.data?.leagues ?? []; return leagues.find((league) => league.id === id); }`,
       filename: typedFixture,
       errors: [{ messageId: 'lookupInList' }],
+    },
+  ],
+});
+
+ruleTester.run('no-hand-written-query-states', noHandWrittenQueryStates, {
+  valid: [
+    // The words belong to a shared state's props.
+    'const a = <LoadingState body="Loading members..." rows={3} />;',
+    'const a = <QueryState error="We couldn\'t load the standings." loading="Loading standings..." query={q}>{render}</QueryState>;',
+    // A computed body, a template literal and a conditional all stay inside the prop.
+    'const a = <LoadingState body={`Loading ${year} events...`} />;',
+    'const a = <ErrorState body={extractErrorMessage(e, { fallback: "We could not load the payments." })} onRetry={retry} />;',
+    'const a = <ErrorState body={isYear ? "We couldn\'t load the year." : "We couldn\'t load it."} onRetry={retry} />;',
+    // The league guard draws the shared loading state from its options.
+    "useLeagueContextGuard(query, { loadingBody: 'Loading members...' });",
+    // A log line says what failed for the reader of the logs, not the screen.
+    "logger.warn({ err }, 'Start could not load the page');",
+    // A button's pending label is not a page state.
+    'const a = <Button isLoading>Saving...</Button>;',
+    // A template given a state passes Retry along.
+    'const a = <ManagementListPage onRetry={retry} state={state} />;',
+    // A template with no state never draws an error.
+    'const a = <AsyncPage header={header}>{children}</AsyncPage>;',
+    // A spread may carry onRetry.
+    'const a = <ErrorState {...props} />;',
+  ],
+  invalid: [
+    {
+      code: "const a = <p>{query.isLoading ? 'Loading invitation...' : null}</p>;",
+      errors: [{ messageId: 'handWrittenLoading' }],
+    },
+    {
+      // JSX text cut by an expression still reads as loading words.
+      code: 'const a = <li>Loading {year} events...</li>;',
+      errors: [{ messageId: 'handWrittenLoading' }],
+    },
+    {
+      code: 'const a = <Alert tone="danger">{extractErrorMessage(e, { fallback: "We could not load your settings." })}</Alert>;',
+      errors: [{ messageId: 'handWrittenError' }],
+    },
+    {
+      code: 'const a = <p>We couldn&apos;t load the games.</p>;',
+      errors: [{ messageId: 'handWrittenError' }],
+    },
+    {
+      // Words in another component's props are still hand-written.
+      code: 'const a = <InlineError>{"We couldn\'t load pending invites."}</InlineError>;',
+      errors: [{ messageId: 'handWrittenError' }],
+    },
+    {
+      code: 'const a = <ErrorState body="We couldn\'t load the plans." />;',
+      errors: [{ messageId: 'errorWithoutRetry', data: { component: 'ErrorState' } }],
+    },
+    {
+      code: 'const a = <AsyncPage state={state}>{children}</AsyncPage>;',
+      errors: [{ messageId: 'errorWithoutRetry', data: { component: 'AsyncPage' } }],
     },
   ],
 });
