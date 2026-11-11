@@ -14,7 +14,8 @@ The shared UI layer is split into three levels:
    `hero`, `display`, `page`, `section`, `subtitle`, `label`, `eyebrow`, or `card` with a `size`); letter spacing comes from the theme's `tracking-eyebrow` and
    `tracking-label`, never a hand-typed `tracking-[…]`. A button drawn as a line of content
    (a list row, a card toggle, a pick) is a `Button` or `LinkButton` with
-   `layout="row"`, and a dropdown entry is a `MenuItem`; never hand-type
+   `layout="row"`, and a menu that opens from a button is a `DropdownMenu` built
+   from its parts (`DropdownMenuItem` rows, `isSelected` for the current one); never hand-type
    `normal-case tracking-normal` onto a button. A loading, empty or error state
    is `LoadingState`, `EmptyState` or `ErrorState` (`size="inline"` for one line
    inside a card), a one-line failure beside what failed is an `InlineError`, and
