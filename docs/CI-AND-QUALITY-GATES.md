@@ -323,9 +323,25 @@ documentation-only PR runs `all-contract-gates` and `changes` and nothing else.
 
 | Output | Gates |
 |---|---|
-| `code` | `service-lint-typecheck`, `poolmaster-build`, `poolmaster-browser-e2e-local` (and so `service-build` / `service-mock-provider-build`, which need lint) |
-| `service` | `service-unit-tests`, `service-integration-tests`, `service-functional-api-tests`, `schema-migration-drift` |
+| `code` | `service-lint-typecheck`, `poolmaster-build`, `poolmaster-browser-e2e-local` |
+| `service` | `service-unit-tests`, `service-integration-tests`, `service-functional-api-tests`, `schema-migration-drift`, and `service-build` / `service-image-smoke` / `service-mock-provider-build` (which also need lint) |
 | `client` | `poolmaster-unit-tests` |
+| `batch` | `poolmaster-browser-e2e-local` skips when it is `true` |
+
+The two rule-scanner baselines, `scripts/text-style-baseline.json` and
+`scripts/duplicate-baseline.json`, count as documentation: only `rules:check` reads them, and
+`all-contract-gates` runs that on every PR. A web-app sweep that shrinks one runs the client
+jobs only. Every other file under `scripts/` still runs everything.
+
+**UI batch branches.** CI also runs on pull requests into `ui-batch/**`
+(`rules/workflow-rules.md` §6 *UI batch branches*). There `changes` runs the classifier with
+`--ui-batch`: it sets `batch=true`, which skips the local browser e2e, and it **fails** when
+the PR carries anything that is not web app, docs or a rule baseline, because the batch's
+quick check never runs the service suites. A batch lands through an ordinary PR into `main`
+from the landing thread's branch, which runs every job its files need, browser e2e
+included; the push to `main` then runs everything. A push to a batch branch runs nothing.
+A ticket branch must start from the batch tip: `changes` diffs from the merge base with
+the batch, so a branch cut from `main` drags in `main`'s newer commits.
 
 Three properties hold this together, and each is load-bearing:
 

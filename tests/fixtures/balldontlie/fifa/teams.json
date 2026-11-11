@@ -1,0 +1,32 @@
+{
+  "data": [
+    {
+      "id": 9,
+      "name": "Argentina",
+      "abbreviation": "ARG",
+      "country_code": "AR",
+      "confederation": "CONMEBOL"
+    },
+    {
+      "id": 14,
+      "name": "France",
+      "abbreviation": "FRA",
+      "country_code": "FR",
+      "confederation": "UEFA"
+    },
+    {
+      "id": 23,
+      "name": "Morocco",
+      "abbreviation": "MAR",
+      "country_code": "MA",
+      "confederation": "CAF"
+    },
+    {
+      "id": 33,
+      "name": "Spain",
+      "abbreviation": "ESP",
+      "country_code": "ES",
+      "confederation": "UEFA"
+    }
+  ]
+}

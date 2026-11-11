@@ -16,8 +16,12 @@
  * Basketball's events and teams are both leagues', one after the other.
  *
  * Premier League (#1496, `epl-reader.ts`): each season's matchweeks as events
- * (`epl-2026-matchweek-11`), their teams, and their matches' scores in the GAME category. Any
- * other event id is a PGA TOUR tournament id.
+ * (`epl-2026-matchweek-11`), their teams, and their matches' scores in the GAME category.
+ *
+ * FIFA World Cup (#1496, `fifa-world-cup-reader.ts`): each edition's knockout bracket as an event
+ * (`fifa-wc-2026-knockout`, GOAT tier), its teams, and its matches' scores in the GAME category,
+ * with a shoot-out's scores (#1532). Soccer's events and teams are both leagues', one after the
+ * other. Any other event id is a PGA TOUR tournament id.
  *
  * Only leagues whose bracket games are single games are read: a best-of series is one match of
  * several games, which the GAME writer cannot link yet (#1545).
@@ -44,6 +48,8 @@ import { NCAA_MEN, NCAA_WOMEN, parseNcaaTournamentScope, type NcaaTournamentLeag
 import { NcaaTournamentReader } from './ncaa-tournament-reader';
 import { parseEplScope } from './epl-mapping';
 import { EplReader } from './epl-reader';
+import { parseWorldCupScope } from './fifa-world-cup-mapping';
+import { WorldCupReader } from './fifa-world-cup-reader';
 import { parseNflScope } from './nfl-mapping';
 import { NflReader } from './nfl-reader';
 import { BALLDONTLIE_MAX_PER_PAGE, BalldontlieClient, type BalldontlieQuery } from './balldontlie-client';
@@ -108,6 +114,7 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
   private readonly client: BalldontlieClient;
   private readonly nfl: NflReader;
   private readonly epl: EplReader;
+  private readonly worldCup: WorldCupReader;
   /** Each NCAA tournament league's reads, by its key. */
   private readonly ncaa: Readonly<Record<NcaaTournamentLeague['key'], NcaaTournamentReader>>;
   /** Each league's schedule and roster reads, by the sport it serves. */
@@ -117,6 +124,7 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
     this.client = new BalldontlieClient({ ...options, payloads: this.payloads });
     this.nfl = new NflReader(this.client, options.now ?? Date.now);
     this.epl = new EplReader(this.client, options.now ?? Date.now);
+    this.worldCup = new WorldCupReader(this.client);
     this.ncaa = {
       ncaab: new NcaaTournamentReader(this.client, NCAA_MEN, options.now ?? Date.now),
       ncaaw: new NcaaTournamentReader(this.client, NCAA_WOMEN, options.now ?? Date.now),
@@ -129,7 +137,13 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
         events: async (dateRange) => (await Promise.all(ncaaReaders.map((reader) => reader.upcomingEvents(dateRange)))).flat(),
         participants: async () => (await Promise.all(ncaaReaders.map((reader) => reader.teams()))).flat(),
       }],
-      [Sport.SOCCER, { events: (dateRange) => this.epl.upcomingEvents(dateRange), participants: () => this.epl.teams() }],
+      // Read together, so a failed read fails the sport's whole list: the World Cup's matches
+      // need the GOAT tier, which the NCAA brackets need too, so a plan without it loses
+      // soccer's events as well as basketball's, the Premier League's with them.
+      [Sport.SOCCER, {
+        events: async (dateRange) => (await Promise.all([this.epl.upcomingEvents(dateRange), this.worldCup.upcomingEvents(dateRange)])).flat(),
+        participants: async () => (await Promise.all([this.epl.teams(), this.worldCup.teams()])).flat(),
+      }],
     ]);
     this.sportsCovered = [...this.leagues.keys()];
   }
@@ -165,7 +179,7 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
         || (event.startDate >= dateRange.from && event.startDate <= dateRange.to));
   }
 
-  /** The tournament, NFL scope, NCAA tournament or Premier League matchweek with its field; null when the vendor has no such event. */
+  /** The tournament, NFL scope, NCAA tournament, Premier League matchweek or World Cup bracket with its field; null when the vendor has no such event. */
   async getEventDetails(eventId: string): Promise<SportEventDetail | null> {
     const scope = parseNflScope(eventId);
     if (scope) {
@@ -178,6 +192,10 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
     const eplScope = parseEplScope(eventId);
     if (eplScope) {
       return this.epl.eventDetails(eplScope);
+    }
+    const worldCupScope = parseWorldCupScope(eventId);
+    if (worldCupScope) {
+      return this.worldCup.eventDetails(worldCupScope);
     }
     const tournament = await this.findTournament(eventId);
     if (!tournament) {
@@ -193,7 +211,7 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
     return { ...toSportEvent(tournament, participants.length), participants };
   }
 
-  /** Every active PGA TOUR golfer, every NFL team, every Division I men's and women's basketball team, or the Premier League's teams; none for a sport the adapter does not cover. */
+  /** Every active PGA TOUR golfer, every NFL team, every Division I men's and women's basketball team, or the Premier League's and the World Cup's teams; none for a sport the adapter does not cover. */
   async getParticipants(sport: Sport): Promise<ProviderParticipant[]> {
     return await this.leagues.get(sport)?.participants() ?? [];
   }
@@ -208,7 +226,7 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
   }
 
   /**
-   * An NFL scope's, an NCAA tournament's or a Premier League matchweek's games in the GAME category, or every started round of every golfer in a
+   * An NFL scope's, an NCAA tournament's, a Premier League matchweek's or a World Cup bracket's games in the GAME category, or every started round of every golfer in a
    * stroke-play tournament. A tournament id the vendor does not know, or a tournament of another
    * format, fails the sync rather than returning nothing.
    */
@@ -224,6 +242,10 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
     const eplScope = parseEplScope(eventId);
     if (eplScope) {
       return this.epl.liveScores(eplScope);
+    }
+    const worldCupScope = parseWorldCupScope(eventId);
+    if (worldCupScope) {
+      return this.worldCup.liveScores(worldCupScope);
     }
     const tournament = await this.findTournament(eventId);
     if (!tournament) {
