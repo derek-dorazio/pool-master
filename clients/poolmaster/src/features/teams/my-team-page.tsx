@@ -78,7 +78,7 @@ export function MyTeamPage() {
       <section className="space-y-6" data-testid="my-team-page">
         {viewer.isMember && isInactiveLeague ? (
           <Alert data-testid="my-team-league-inactive" tone="warning">
-            This league is inactive, so you can&apos;t choose your name in it.
+            This league is inactive, so you can&apos;t create a team in it.
           </Alert>
         ) : null}
         {viewer.isMember ? (
@@ -86,7 +86,7 @@ export function MyTeamPage() {
         ) : (
           <EmptyState
             action={<LinkButton to={buildLeagueTeamsPath(leagueCode)} variant="secondary">See every member</LinkButton>}
-            body="Only league members play under a name here."
+            body="Only league members have a team here."
             testId="my-team-none"
             title="You aren't playing in this league"
           />

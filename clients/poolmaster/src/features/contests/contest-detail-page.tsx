@@ -275,10 +275,14 @@ export function ContestDetailPage() {
     <ContestPageFrame
       contest={contest}
       current={myOnly && (contest.myEntryIds?.length ?? 0) > 1 ? 'my-entry' : 'entries'}
-      details={(
+      headerTestId="contest-detail-header"
+      leagueCode={leagueCode}
+      picksRevealed={picksRevealed}
+      summary={(
         <>
+          <span data-testid="contest-detail-summary">{formatSelectionTypeName(contest.selectionType)}</span>
           {schedule ? (
-            <p className="mt-1 text-sm text-muted-foreground" data-testid="contest-detail-schedule">
+            <span data-testid="contest-detail-schedule">
               <span data-testid="contest-detail-starts">
                 Starts <DateDisplay className="text-muted-foreground" value={schedule.startsAt} />
               </span>
@@ -287,35 +291,15 @@ export function ContestDetailPage() {
                   {' · '}Ends <DateDisplay className="text-muted-foreground" value={schedule.endsAt} />
                 </span>
               ) : null}
-            </p>
+            </span>
           ) : null}
-          <div className="mt-4 flex flex-wrap gap-3 text-sm">
-            <Chip
-              data-testid="contest-board-my-count"
-              tone="info"
-            >
-              My Entries: <span className="font-semibold text-foreground">{myCount}</span>
-            </Chip>
-            <Chip
-              data-testid="contest-board-total-count"
-              tone="info"
-            >
-              Total Entries: <span className="font-semibold text-foreground">
-                {entryCap === null ? totalCount : `${totalCount} of ${formatPlanLimit(entryCap)}`}
-              </span>
-            </Chip>
-          </div>
+          <span data-testid="contest-board-total-count">
+            Entries: {entryCap === null ? totalCount : `${totalCount} of ${formatPlanLimit(entryCap)}`}
+          </span>
+          <span data-testid="contest-board-my-count">My entries: {myCount}</span>
         </>
       )}
-      leagueCode={leagueCode}
-      picksRevealed={picksRevealed}
-      summary={(
-        <p className="mt-2 text-sm text-muted-foreground" data-testid="contest-detail-summary">
-          {formatSelectionTypeName(contest.selectionType)}
-        </p>
-      )}
       testId="contest-board"
-      titleTestId="contest-detail-heading"
     >
 
       {isDraft ? (

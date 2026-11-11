@@ -9,22 +9,27 @@ this file does not repeat them. The one-application prohibition itself is
 
 ---
 
-## 1. A Squad Is Shown By Its Name
+## 1. A Squad Is a Team On Screen
 
-Screens never need a word for a **Squad**. A squad is shown by its own name ("Derek's Great
-Golf Guys"); copy about the viewer's own squad speaks to the viewer ("You don't have an entry
-in this contest yet", a **Yours** chip, "Entries per member"); and picking is always for a
-contest entry, never for a squad: "Pick 8 teams for your entry", "Derek's Great Golf Guys
-picked Duke".
+On screen a **Squad** is a **team**: "My team", "Your team", "Edit team", "Create your team",
+a "Team" column. A specific team is still shown by its own name ("Derek's Great Golf Guys"),
+and the viewer's own team is "My team" wherever the screen names it in general — the league
+menu's tab is that fixed label, never the team's name, so it reads the same for every member.
+Copy says "team" plainly rather than talking around it ("the name you play under", "choose
+your name in this league"). Picking is always for a contest entry, never for a team: "Pick 8
+golfers for your entry", "Derek's Great Golf Guys picked Duke".
 
-On screen, **team** then means only a sport participant: the sport vocabulary's word for a
-basketball or football participant (Duke, the Chiefs). **Squad** is never shown either; it is
-the contract word.
-
-Keep that boundary in both directions: use **Squad** in anything contract-shaped — schema,
+**Squad is never shown.** It is the contract word: use it in anything contract-shaped — schema,
 domain types, DTOs, mappers, route names, SDK calls — and never introduce "team" into the
-contract layer. `features/teams/` predates this rule and calls `*Squad*` SDK operations
-throughout.
+contract layer (`domain-model-conventions-rules.md` §12 *Squad, never team, in the contract
+layer*). `features/teams/` is the screen side and calls `*Squad*` SDK operations throughout.
+
+**A sport's teams share the word.** A basketball or football participant (Duke, the Chiefs) is
+shown by its name; where copy needs a generic word for one, the sport vocabulary's word
+("team") stays when the sentence can only mean a sport team — one picked, playing a game,
+scoring or covering a spread. Where a sentence could be read as either kind of team, reword
+it: name the sport's teams by what they are in that sentence (the field, the picks, both
+sides) rather than leave "team" to mean two things on one screen.
 
 The entity relationships behind this — and the vocabulary for the rest of the domain — are
 [domain-model-concepts.md](domain-model-concepts.md). This file states only the UI-label

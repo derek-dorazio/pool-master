@@ -108,7 +108,7 @@ export function ManageTeamsPage() {
             Invite members
           </LinkButton>
         )}
-        description="Every member of the league and the name they play under. Choose Manage to change a name, icon or owners."
+        description="Every team in the league and its owners. Choose Manage to change a team's name, icon or owners."
         title="Members and owners"
       />
 

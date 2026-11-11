@@ -6743,7 +6743,7 @@ export interface components {
             countedScores: number;
             /** @description How many of the event's tiers an entry picks from, the first ones in tier order (tennis's "Seeds only": the first four). Left out, every tier. The event owns its tiers (#249), so this is the contest's rule, not a second tier layout. */
             tiersUsed?: number;
-            /** @description Maximum entries a Team may create. Null means unlimited. */
+            /** @description Maximum entries a Squad may create. Null means unlimited. */
             maxEntriesPerSquad?: number | null;
             /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
             scoring?: {
@@ -6790,7 +6790,7 @@ export interface components {
             rosterSize: number;
             /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
             countedScores: number;
-            /** @description Maximum entries a Team may create. Null means unlimited. */
+            /** @description Maximum entries a Squad may create. Null means unlimited. */
             maxEntriesPerSquad?: number | null;
             /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
             scoring?: {
@@ -6837,7 +6837,7 @@ export interface components {
             picksPerEntry: number;
             /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
             countedScores: number;
-            /** @description Maximum entries a Team may create. Null means unlimited. */
+            /** @description Maximum entries a Squad may create. Null means unlimited. */
             maxEntriesPerSquad?: number | null;
             /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
             scoring?: {
@@ -6887,7 +6887,7 @@ export interface components {
             mode: "STRAIGHT_UP" | "CONFIDENCE";
             /** @description Picks are scored against each game's spread (#720): a pick is right when its team covers, and a game that lands exactly on the spread (a push) scores nothing. Every game needs its spread before the week is released. */
             againstTheSpread: boolean;
-            /** @description Maximum entries a Team may create. Null means unlimited. */
+            /** @description Maximum entries a Squad may create. Null means unlimited. */
             maxEntriesPerSquad?: number | null;
             /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
             scoring?: {
@@ -6932,7 +6932,7 @@ export interface components {
             selectionType: "BRACKET";
             /** @description The round the bracket starts at: 1 for a full bracket; a later round (the Sweet 16) for a second-chance bracket, picked from that round on and closing at its first game. The event's round values score each round from it on. */
             startsAtRound: number;
-            /** @description Maximum entries a Team may create. Null means unlimited. */
+            /** @description Maximum entries a Squad may create. Null means unlimited. */
             maxEntriesPerSquad?: number | null;
             /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
             scoring?: {
@@ -6977,7 +6977,7 @@ export interface components {
             selectionType: "SQUARES";
             /** @description How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away. */
             maxSquaresPerEntry: number;
-            /** @description Maximum entries a Team may create. Null means unlimited. */
+            /** @description Maximum entries a Squad may create. Null means unlimited. */
             maxEntriesPerSquad?: number | null;
             /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
             scoring?: {
@@ -7022,7 +7022,7 @@ export interface components {
             selectionType: "SURVIVOR";
             /** @description Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes. */
             reuseTeamsOnceAllUsed?: boolean;
-            /** @description Maximum entries a Team may create. Null means unlimited. */
+            /** @description Maximum entries a Squad may create. Null means unlimited. */
             maxEntriesPerSquad?: number | null;
             /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
             scoring?: {
@@ -7157,7 +7157,7 @@ export interface components {
                 id: string;
                 /** @description Contest that owns the configuration. */
                 contestId: string;
-                /** @description Maximum entries a Team may create. Null means unlimited. */
+                /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
             } | {
                 /** @enum {string} */
@@ -7172,7 +7172,7 @@ export interface components {
                 id: string;
                 /** @description Contest that owns the configuration. */
                 contestId: string;
-                /** @description Maximum entries a Team may create. Null means unlimited. */
+                /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
             } | {
                 /** @enum {string} */
@@ -7185,7 +7185,7 @@ export interface components {
                 id: string;
                 /** @description Contest that owns the configuration. */
                 contestId: string;
-                /** @description Maximum entries a Team may create. Null means unlimited. */
+                /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
             } | {
                 /** @enum {string} */
@@ -7201,7 +7201,7 @@ export interface components {
                 id: string;
                 /** @description Contest that owns the configuration. */
                 contestId: string;
-                /** @description Maximum entries a Team may create. Null means unlimited. */
+                /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
             } | {
                 /** @enum {string} */
@@ -7212,7 +7212,7 @@ export interface components {
                 id: string;
                 /** @description Contest that owns the configuration. */
                 contestId: string;
-                /** @description Maximum entries a Team may create. Null means unlimited. */
+                /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
             } | {
                 /** @enum {string} */
@@ -7223,7 +7223,7 @@ export interface components {
                 id: string;
                 /** @description Contest that owns the configuration. */
                 contestId: string;
-                /** @description Maximum entries a Team may create. Null means unlimited. */
+                /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
             } | {
                 /** @enum {string} */
@@ -7234,7 +7234,7 @@ export interface components {
                 id: string;
                 /** @description Contest that owns the configuration. */
                 contestId: string;
-                /** @description Maximum entries a Team may create. Null means unlimited. */
+                /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
             };
             /**
@@ -7316,7 +7316,7 @@ export interface components {
                 countedScores: number;
                 /** @description How many of the event's tiers an entry picks from, the first ones in tier order (tennis's "Seeds only": the first four). Left out, every tier. The event owns its tiers (#249), so this is the contest's rule, not a second tier layout. */
                 tiersUsed?: number;
-                /** @description Maximum entries a Team may create. Null means unlimited. */
+                /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
                 /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                 scoring?: {
@@ -7363,7 +7363,7 @@ export interface components {
                 rosterSize: number;
                 /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
                 countedScores: number;
-                /** @description Maximum entries a Team may create. Null means unlimited. */
+                /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
                 /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                 scoring?: {
@@ -7410,7 +7410,7 @@ export interface components {
                 picksPerEntry: number;
                 /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
                 countedScores: number;
-                /** @description Maximum entries a Team may create. Null means unlimited. */
+                /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
                 /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                 scoring?: {
@@ -7460,7 +7460,7 @@ export interface components {
                 mode: "STRAIGHT_UP" | "CONFIDENCE";
                 /** @description Picks are scored against each game's spread (#720): a pick is right when its team covers, and a game that lands exactly on the spread (a push) scores nothing. Every game needs its spread before the week is released. */
                 againstTheSpread: boolean;
-                /** @description Maximum entries a Team may create. Null means unlimited. */
+                /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
                 /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                 scoring?: {
@@ -7505,7 +7505,7 @@ export interface components {
                 selectionType: "BRACKET";
                 /** @description The round the bracket starts at: 1 for a full bracket; a later round (the Sweet 16) for a second-chance bracket, picked from that round on and closing at its first game. The event's round values score each round from it on. */
                 startsAtRound: number;
-                /** @description Maximum entries a Team may create. Null means unlimited. */
+                /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
                 /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                 scoring?: {
@@ -7550,7 +7550,7 @@ export interface components {
                 selectionType: "SQUARES";
                 /** @description How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away. */
                 maxSquaresPerEntry: number;
-                /** @description Maximum entries a Team may create. Null means unlimited. */
+                /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
                 /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                 scoring?: {
@@ -7595,7 +7595,7 @@ export interface components {
                 selectionType: "SURVIVOR";
                 /** @description Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes. */
                 reuseTeamsOnceAllUsed?: boolean;
-                /** @description Maximum entries a Team may create. Null means unlimited. */
+                /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
                 /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                 scoring?: {
@@ -7688,7 +7688,7 @@ export interface components {
                     id: string;
                     /** @description Contest that owns the configuration. */
                     contestId: string;
-                    /** @description Maximum entries a Team may create. Null means unlimited. */
+                    /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
                 } | {
                     /** @enum {string} */
@@ -7703,7 +7703,7 @@ export interface components {
                     id: string;
                     /** @description Contest that owns the configuration. */
                     contestId: string;
-                    /** @description Maximum entries a Team may create. Null means unlimited. */
+                    /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
                 } | {
                     /** @enum {string} */
@@ -7716,7 +7716,7 @@ export interface components {
                     id: string;
                     /** @description Contest that owns the configuration. */
                     contestId: string;
-                    /** @description Maximum entries a Team may create. Null means unlimited. */
+                    /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
                 } | {
                     /** @enum {string} */
@@ -7732,7 +7732,7 @@ export interface components {
                     id: string;
                     /** @description Contest that owns the configuration. */
                     contestId: string;
-                    /** @description Maximum entries a Team may create. Null means unlimited. */
+                    /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
                 } | {
                     /** @enum {string} */
@@ -7743,7 +7743,7 @@ export interface components {
                     id: string;
                     /** @description Contest that owns the configuration. */
                     contestId: string;
-                    /** @description Maximum entries a Team may create. Null means unlimited. */
+                    /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
                 } | {
                     /** @enum {string} */
@@ -7754,7 +7754,7 @@ export interface components {
                     id: string;
                     /** @description Contest that owns the configuration. */
                     contestId: string;
-                    /** @description Maximum entries a Team may create. Null means unlimited. */
+                    /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
                 } | {
                     /** @enum {string} */
@@ -7765,7 +7765,7 @@ export interface components {
                     id: string;
                     /** @description Contest that owns the configuration. */
                     contestId: string;
-                    /** @description Maximum entries a Team may create. Null means unlimited. */
+                    /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
                 };
                 /**
@@ -7869,7 +7869,7 @@ export interface components {
                     countedScores: number;
                     /** @description How many of the event's tiers an entry picks from, the first ones in tier order (tennis's "Seeds only": the first four). Left out, every tier. The event owns its tiers (#249), so this is the contest's rule, not a second tier layout. */
                     tiersUsed?: number;
-                    /** @description Maximum entries a Team may create. Null means unlimited. */
+                    /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
                     /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                     scoring?: {
@@ -7916,7 +7916,7 @@ export interface components {
                     rosterSize: number;
                     /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
                     countedScores: number;
-                    /** @description Maximum entries a Team may create. Null means unlimited. */
+                    /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
                     /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                     scoring?: {
@@ -7963,7 +7963,7 @@ export interface components {
                     picksPerEntry: number;
                     /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
                     countedScores: number;
-                    /** @description Maximum entries a Team may create. Null means unlimited. */
+                    /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
                     /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                     scoring?: {
@@ -8013,7 +8013,7 @@ export interface components {
                     mode: "STRAIGHT_UP" | "CONFIDENCE";
                     /** @description Picks are scored against each game's spread (#720): a pick is right when its team covers, and a game that lands exactly on the spread (a push) scores nothing. Every game needs its spread before the week is released. */
                     againstTheSpread: boolean;
-                    /** @description Maximum entries a Team may create. Null means unlimited. */
+                    /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
                     /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                     scoring?: {
@@ -8058,7 +8058,7 @@ export interface components {
                     selectionType: "BRACKET";
                     /** @description The round the bracket starts at: 1 for a full bracket; a later round (the Sweet 16) for a second-chance bracket, picked from that round on and closing at its first game. The event's round values score each round from it on. */
                     startsAtRound: number;
-                    /** @description Maximum entries a Team may create. Null means unlimited. */
+                    /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
                     /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                     scoring?: {
@@ -8103,7 +8103,7 @@ export interface components {
                     selectionType: "SQUARES";
                     /** @description How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away. */
                     maxSquaresPerEntry: number;
-                    /** @description Maximum entries a Team may create. Null means unlimited. */
+                    /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
                     /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                     scoring?: {
@@ -8148,7 +8148,7 @@ export interface components {
                     selectionType: "SURVIVOR";
                     /** @description Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes. */
                     reuseTeamsOnceAllUsed?: boolean;
-                    /** @description Maximum entries a Team may create. Null means unlimited. */
+                    /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
                     /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                     scoring?: {
@@ -8213,7 +8213,7 @@ export interface components {
                 countedScores: number;
                 /** @description How many of the event's tiers an entry picks from, the first ones in tier order (tennis's "Seeds only": the first four). Left out, every tier. The event owns its tiers (#249), so this is the contest's rule, not a second tier layout. */
                 tiersUsed?: number;
-                /** @description Maximum entries a Team may create. Null means unlimited. */
+                /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
                 /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                 scoring?: {
@@ -8260,7 +8260,7 @@ export interface components {
                 rosterSize: number;
                 /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
                 countedScores: number;
-                /** @description Maximum entries a Team may create. Null means unlimited. */
+                /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
                 /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                 scoring?: {
@@ -8307,7 +8307,7 @@ export interface components {
                 picksPerEntry: number;
                 /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
                 countedScores: number;
-                /** @description Maximum entries a Team may create. Null means unlimited. */
+                /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
                 /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                 scoring?: {
@@ -8357,7 +8357,7 @@ export interface components {
                 mode: "STRAIGHT_UP" | "CONFIDENCE";
                 /** @description Picks are scored against each game's spread (#720): a pick is right when its team covers, and a game that lands exactly on the spread (a push) scores nothing. Every game needs its spread before the week is released. */
                 againstTheSpread: boolean;
-                /** @description Maximum entries a Team may create. Null means unlimited. */
+                /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
                 /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                 scoring?: {
@@ -8402,7 +8402,7 @@ export interface components {
                 selectionType: "BRACKET";
                 /** @description The round the bracket starts at: 1 for a full bracket; a later round (the Sweet 16) for a second-chance bracket, picked from that round on and closing at its first game. The event's round values score each round from it on. */
                 startsAtRound: number;
-                /** @description Maximum entries a Team may create. Null means unlimited. */
+                /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
                 /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                 scoring?: {
@@ -8447,7 +8447,7 @@ export interface components {
                 selectionType: "SQUARES";
                 /** @description How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away. */
                 maxSquaresPerEntry: number;
-                /** @description Maximum entries a Team may create. Null means unlimited. */
+                /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
                 /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                 scoring?: {
@@ -8492,7 +8492,7 @@ export interface components {
                 selectionType: "SURVIVOR";
                 /** @description Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes. */
                 reuseTeamsOnceAllUsed?: boolean;
-                /** @description Maximum entries a Team may create. Null means unlimited. */
+                /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
                 /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                 scoring?: {
@@ -8592,7 +8592,7 @@ export interface components {
                     countedScores: number;
                     /** @description How many of the event's tiers an entry picks from, the first ones in tier order (tennis's "Seeds only": the first four). Left out, every tier. The event owns its tiers (#249), so this is the contest's rule, not a second tier layout. */
                     tiersUsed?: number;
-                    /** @description Maximum entries a Team may create. Null means unlimited. */
+                    /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
                     /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                     scoring?: {
@@ -8639,7 +8639,7 @@ export interface components {
                     rosterSize: number;
                     /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
                     countedScores: number;
-                    /** @description Maximum entries a Team may create. Null means unlimited. */
+                    /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
                     /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                     scoring?: {
@@ -8686,7 +8686,7 @@ export interface components {
                     picksPerEntry: number;
                     /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
                     countedScores: number;
-                    /** @description Maximum entries a Team may create. Null means unlimited. */
+                    /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
                     /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                     scoring?: {
@@ -8736,7 +8736,7 @@ export interface components {
                     mode: "STRAIGHT_UP" | "CONFIDENCE";
                     /** @description Picks are scored against each game's spread (#720): a pick is right when its team covers, and a game that lands exactly on the spread (a push) scores nothing. Every game needs its spread before the week is released. */
                     againstTheSpread: boolean;
-                    /** @description Maximum entries a Team may create. Null means unlimited. */
+                    /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
                     /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                     scoring?: {
@@ -8781,7 +8781,7 @@ export interface components {
                     selectionType: "BRACKET";
                     /** @description The round the bracket starts at: 1 for a full bracket; a later round (the Sweet 16) for a second-chance bracket, picked from that round on and closing at its first game. The event's round values score each round from it on. */
                     startsAtRound: number;
-                    /** @description Maximum entries a Team may create. Null means unlimited. */
+                    /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
                     /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                     scoring?: {
@@ -8826,7 +8826,7 @@ export interface components {
                     selectionType: "SQUARES";
                     /** @description How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away. */
                     maxSquaresPerEntry: number;
-                    /** @description Maximum entries a Team may create. Null means unlimited. */
+                    /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
                     /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                     scoring?: {
@@ -8871,7 +8871,7 @@ export interface components {
                     selectionType: "SURVIVOR";
                     /** @description Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes. */
                     reuseTeamsOnceAllUsed?: boolean;
-                    /** @description Maximum entries a Team may create. Null means unlimited. */
+                    /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
                     /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                     scoring?: {
@@ -11724,7 +11724,7 @@ export interface components {
                 countedScores: number;
                 /** @description How many of the event's tiers an entry picks from, the first ones in tier order (tennis's "Seeds only": the first four). Left out, every tier. The event owns its tiers (#249), so this is the contest's rule, not a second tier layout. */
                 tiersUsed?: number;
-                /** @description Maximum entries a Team may create. Null means unlimited. */
+                /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
                 /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                 scoring?: {
@@ -11771,7 +11771,7 @@ export interface components {
                 rosterSize: number;
                 /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
                 countedScores: number;
-                /** @description Maximum entries a Team may create. Null means unlimited. */
+                /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
                 /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                 scoring?: {
@@ -11818,7 +11818,7 @@ export interface components {
                 picksPerEntry: number;
                 /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
                 countedScores: number;
-                /** @description Maximum entries a Team may create. Null means unlimited. */
+                /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
                 /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                 scoring?: {
@@ -11868,7 +11868,7 @@ export interface components {
                 mode: "STRAIGHT_UP" | "CONFIDENCE";
                 /** @description Picks are scored against each game's spread (#720): a pick is right when its team covers, and a game that lands exactly on the spread (a push) scores nothing. Every game needs its spread before the week is released. */
                 againstTheSpread: boolean;
-                /** @description Maximum entries a Team may create. Null means unlimited. */
+                /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
                 /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                 scoring?: {
@@ -11913,7 +11913,7 @@ export interface components {
                 selectionType: "BRACKET";
                 /** @description The round the bracket starts at: 1 for a full bracket; a later round (the Sweet 16) for a second-chance bracket, picked from that round on and closing at its first game. The event's round values score each round from it on. */
                 startsAtRound: number;
-                /** @description Maximum entries a Team may create. Null means unlimited. */
+                /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
                 /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                 scoring?: {
@@ -11958,7 +11958,7 @@ export interface components {
                 selectionType: "SQUARES";
                 /** @description How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away. */
                 maxSquaresPerEntry: number;
-                /** @description Maximum entries a Team may create. Null means unlimited. */
+                /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
                 /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                 scoring?: {
@@ -12003,7 +12003,7 @@ export interface components {
                 selectionType: "SURVIVOR";
                 /** @description Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes. */
                 reuseTeamsOnceAllUsed?: boolean;
-                /** @description Maximum entries a Team may create. Null means unlimited. */
+                /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
                 /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                 scoring?: {
@@ -19150,7 +19150,7 @@ export interface components {
                     countedScores: number;
                     /** @description How many of the event's tiers an entry picks from, the first ones in tier order (tennis's "Seeds only": the first four). Left out, every tier. The event owns its tiers (#249), so this is the contest's rule, not a second tier layout. */
                     tiersUsed?: number;
-                    /** @description Maximum entries a Team may create. Null means unlimited. */
+                    /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
                     /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                     scoring?: {
@@ -19197,7 +19197,7 @@ export interface components {
                     rosterSize: number;
                     /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
                     countedScores: number;
-                    /** @description Maximum entries a Team may create. Null means unlimited. */
+                    /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
                     /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                     scoring?: {
@@ -19244,7 +19244,7 @@ export interface components {
                     picksPerEntry: number;
                     /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
                     countedScores: number;
-                    /** @description Maximum entries a Team may create. Null means unlimited. */
+                    /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
                     /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                     scoring?: {
@@ -19294,7 +19294,7 @@ export interface components {
                     mode: "STRAIGHT_UP" | "CONFIDENCE";
                     /** @description Picks are scored against each game's spread (#720): a pick is right when its team covers, and a game that lands exactly on the spread (a push) scores nothing. Every game needs its spread before the week is released. */
                     againstTheSpread: boolean;
-                    /** @description Maximum entries a Team may create. Null means unlimited. */
+                    /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
                     /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                     scoring?: {
@@ -19339,7 +19339,7 @@ export interface components {
                     selectionType: "BRACKET";
                     /** @description The round the bracket starts at: 1 for a full bracket; a later round (the Sweet 16) for a second-chance bracket, picked from that round on and closing at its first game. The event's round values score each round from it on. */
                     startsAtRound: number;
-                    /** @description Maximum entries a Team may create. Null means unlimited. */
+                    /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
                     /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                     scoring?: {
@@ -19384,7 +19384,7 @@ export interface components {
                     selectionType: "SQUARES";
                     /** @description How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away. */
                     maxSquaresPerEntry: number;
-                    /** @description Maximum entries a Team may create. Null means unlimited. */
+                    /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
                     /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                     scoring?: {
@@ -19429,7 +19429,7 @@ export interface components {
                     selectionType: "SURVIVOR";
                     /** @description Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes. */
                     reuseTeamsOnceAllUsed?: boolean;
-                    /** @description Maximum entries a Team may create. Null means unlimited. */
+                    /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
                     /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                     scoring?: {
@@ -19596,7 +19596,7 @@ export interface components {
                         countedScores: number;
                         /** @description How many of the event's tiers an entry picks from, the first ones in tier order (tennis's "Seeds only": the first four). Left out, every tier. The event owns its tiers (#249), so this is the contest's rule, not a second tier layout. */
                         tiersUsed?: number;
-                        /** @description Maximum entries a Team may create. Null means unlimited. */
+                        /** @description Maximum entries a Squad may create. Null means unlimited. */
                         maxEntriesPerSquad?: number | null;
                         /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                         scoring?: {
@@ -19643,7 +19643,7 @@ export interface components {
                         rosterSize: number;
                         /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
                         countedScores: number;
-                        /** @description Maximum entries a Team may create. Null means unlimited. */
+                        /** @description Maximum entries a Squad may create. Null means unlimited. */
                         maxEntriesPerSquad?: number | null;
                         /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                         scoring?: {
@@ -19690,7 +19690,7 @@ export interface components {
                         picksPerEntry: number;
                         /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
                         countedScores: number;
-                        /** @description Maximum entries a Team may create. Null means unlimited. */
+                        /** @description Maximum entries a Squad may create. Null means unlimited. */
                         maxEntriesPerSquad?: number | null;
                         /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                         scoring?: {
@@ -19740,7 +19740,7 @@ export interface components {
                         mode: "STRAIGHT_UP" | "CONFIDENCE";
                         /** @description Picks are scored against each game's spread (#720): a pick is right when its team covers, and a game that lands exactly on the spread (a push) scores nothing. Every game needs its spread before the week is released. */
                         againstTheSpread: boolean;
-                        /** @description Maximum entries a Team may create. Null means unlimited. */
+                        /** @description Maximum entries a Squad may create. Null means unlimited. */
                         maxEntriesPerSquad?: number | null;
                         /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                         scoring?: {
@@ -19785,7 +19785,7 @@ export interface components {
                         selectionType: "BRACKET";
                         /** @description The round the bracket starts at: 1 for a full bracket; a later round (the Sweet 16) for a second-chance bracket, picked from that round on and closing at its first game. The event's round values score each round from it on. */
                         startsAtRound: number;
-                        /** @description Maximum entries a Team may create. Null means unlimited. */
+                        /** @description Maximum entries a Squad may create. Null means unlimited. */
                         maxEntriesPerSquad?: number | null;
                         /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                         scoring?: {
@@ -19830,7 +19830,7 @@ export interface components {
                         selectionType: "SQUARES";
                         /** @description How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away. */
                         maxSquaresPerEntry: number;
-                        /** @description Maximum entries a Team may create. Null means unlimited. */
+                        /** @description Maximum entries a Squad may create. Null means unlimited. */
                         maxEntriesPerSquad?: number | null;
                         /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                         scoring?: {
@@ -19875,7 +19875,7 @@ export interface components {
                         selectionType: "SURVIVOR";
                         /** @description Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes. */
                         reuseTeamsOnceAllUsed?: boolean;
-                        /** @description Maximum entries a Team may create. Null means unlimited. */
+                        /** @description Maximum entries a Squad may create. Null means unlimited. */
                         maxEntriesPerSquad?: number | null;
                         /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                         scoring?: {
@@ -20045,7 +20045,7 @@ export interface components {
                             countedScores: number;
                             /** @description How many of the event's tiers an entry picks from, the first ones in tier order (tennis's "Seeds only": the first four). Left out, every tier. The event owns its tiers (#249), so this is the contest's rule, not a second tier layout. */
                             tiersUsed?: number;
-                            /** @description Maximum entries a Team may create. Null means unlimited. */
+                            /** @description Maximum entries a Squad may create. Null means unlimited. */
                             maxEntriesPerSquad?: number | null;
                             /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                             scoring?: {
@@ -20092,7 +20092,7 @@ export interface components {
                             rosterSize: number;
                             /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
                             countedScores: number;
-                            /** @description Maximum entries a Team may create. Null means unlimited. */
+                            /** @description Maximum entries a Squad may create. Null means unlimited. */
                             maxEntriesPerSquad?: number | null;
                             /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                             scoring?: {
@@ -20139,7 +20139,7 @@ export interface components {
                             picksPerEntry: number;
                             /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
                             countedScores: number;
-                            /** @description Maximum entries a Team may create. Null means unlimited. */
+                            /** @description Maximum entries a Squad may create. Null means unlimited. */
                             maxEntriesPerSquad?: number | null;
                             /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                             scoring?: {
@@ -20189,7 +20189,7 @@ export interface components {
                             mode: "STRAIGHT_UP" | "CONFIDENCE";
                             /** @description Picks are scored against each game's spread (#720): a pick is right when its team covers, and a game that lands exactly on the spread (a push) scores nothing. Every game needs its spread before the week is released. */
                             againstTheSpread: boolean;
-                            /** @description Maximum entries a Team may create. Null means unlimited. */
+                            /** @description Maximum entries a Squad may create. Null means unlimited. */
                             maxEntriesPerSquad?: number | null;
                             /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                             scoring?: {
@@ -20234,7 +20234,7 @@ export interface components {
                             selectionType: "BRACKET";
                             /** @description The round the bracket starts at: 1 for a full bracket; a later round (the Sweet 16) for a second-chance bracket, picked from that round on and closing at its first game. The event's round values score each round from it on. */
                             startsAtRound: number;
-                            /** @description Maximum entries a Team may create. Null means unlimited. */
+                            /** @description Maximum entries a Squad may create. Null means unlimited. */
                             maxEntriesPerSquad?: number | null;
                             /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                             scoring?: {
@@ -20279,7 +20279,7 @@ export interface components {
                             selectionType: "SQUARES";
                             /** @description How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away. */
                             maxSquaresPerEntry: number;
-                            /** @description Maximum entries a Team may create. Null means unlimited. */
+                            /** @description Maximum entries a Squad may create. Null means unlimited. */
                             maxEntriesPerSquad?: number | null;
                             /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                             scoring?: {
@@ -20324,7 +20324,7 @@ export interface components {
                             selectionType: "SURVIVOR";
                             /** @description Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes. */
                             reuseTeamsOnceAllUsed?: boolean;
-                            /** @description Maximum entries a Team may create. Null means unlimited. */
+                            /** @description Maximum entries a Squad may create. Null means unlimited. */
                             maxEntriesPerSquad?: number | null;
                             /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                             scoring?: {
@@ -20505,7 +20505,7 @@ export interface components {
                             countedScores: number;
                             /** @description How many of the event's tiers an entry picks from, the first ones in tier order (tennis's "Seeds only": the first four). Left out, every tier. The event owns its tiers (#249), so this is the contest's rule, not a second tier layout. */
                             tiersUsed?: number;
-                            /** @description Maximum entries a Team may create. Null means unlimited. */
+                            /** @description Maximum entries a Squad may create. Null means unlimited. */
                             maxEntriesPerSquad?: number | null;
                             /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                             scoring?: {
@@ -20552,7 +20552,7 @@ export interface components {
                             rosterSize: number;
                             /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
                             countedScores: number;
-                            /** @description Maximum entries a Team may create. Null means unlimited. */
+                            /** @description Maximum entries a Squad may create. Null means unlimited. */
                             maxEntriesPerSquad?: number | null;
                             /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                             scoring?: {
@@ -20599,7 +20599,7 @@ export interface components {
                             picksPerEntry: number;
                             /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
                             countedScores: number;
-                            /** @description Maximum entries a Team may create. Null means unlimited. */
+                            /** @description Maximum entries a Squad may create. Null means unlimited. */
                             maxEntriesPerSquad?: number | null;
                             /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                             scoring?: {
@@ -20649,7 +20649,7 @@ export interface components {
                             mode: "STRAIGHT_UP" | "CONFIDENCE";
                             /** @description Picks are scored against each game's spread (#720): a pick is right when its team covers, and a game that lands exactly on the spread (a push) scores nothing. Every game needs its spread before the week is released. */
                             againstTheSpread: boolean;
-                            /** @description Maximum entries a Team may create. Null means unlimited. */
+                            /** @description Maximum entries a Squad may create. Null means unlimited. */
                             maxEntriesPerSquad?: number | null;
                             /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                             scoring?: {
@@ -20694,7 +20694,7 @@ export interface components {
                             selectionType: "BRACKET";
                             /** @description The round the bracket starts at: 1 for a full bracket; a later round (the Sweet 16) for a second-chance bracket, picked from that round on and closing at its first game. The event's round values score each round from it on. */
                             startsAtRound: number;
-                            /** @description Maximum entries a Team may create. Null means unlimited. */
+                            /** @description Maximum entries a Squad may create. Null means unlimited. */
                             maxEntriesPerSquad?: number | null;
                             /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                             scoring?: {
@@ -20739,7 +20739,7 @@ export interface components {
                             selectionType: "SQUARES";
                             /** @description How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away. */
                             maxSquaresPerEntry: number;
-                            /** @description Maximum entries a Team may create. Null means unlimited. */
+                            /** @description Maximum entries a Squad may create. Null means unlimited. */
                             maxEntriesPerSquad?: number | null;
                             /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                             scoring?: {
@@ -20784,7 +20784,7 @@ export interface components {
                             selectionType: "SURVIVOR";
                             /** @description Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes. */
                             reuseTeamsOnceAllUsed?: boolean;
-                            /** @description Maximum entries a Team may create. Null means unlimited. */
+                            /** @description Maximum entries a Squad may create. Null means unlimited. */
                             maxEntriesPerSquad?: number | null;
                             /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                             scoring?: {

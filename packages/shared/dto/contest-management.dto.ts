@@ -33,7 +33,7 @@ const nullablePositiveIntSchema = z
   .min(1)
   .nullable()
   .optional()
-  .describe('Maximum entries a Team may create. Null means unlimited.');
+  .describe('Maximum entries a Squad may create. Null means unlimited.');
 
 export const GolfFixedCutRuleSchema = z.object({
   type: z.enum([GolfCutRuleType.FIXED_SCORE]),

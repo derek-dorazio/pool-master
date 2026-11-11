@@ -422,7 +422,7 @@ export function ContestLeaderboardPage() {
       // #246 — an entry's standing is frozen at settlement while each participant's own score
       // stays live, so a late correction can make the two disagree on this very page. Say so
       // rather than let it read as a bug.
-      settledNote={`Final result, settled ${formatDateTimeDisplay(contest.endsAt, displayPreferences, 'at the end of the event')}. Entry standings are frozen at settlement; ${participantNoun.one} scores show current event data and can differ after a late score correction.`}
+      settledNote={`Final result, settled ${formatDateTimeDisplay(contest.endsAt, displayPreferences, 'at the end of the event')}. Entry standings are frozen at settlement; each pick's score shows current event data and can differ after a late score correction.`}
     >
       <ContestEventSwitcher
         events={revealedEvents}

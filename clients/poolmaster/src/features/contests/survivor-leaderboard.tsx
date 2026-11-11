@@ -147,9 +147,7 @@ export function SurvivorLeaderboard({ contest }: { contest: ContestDto }) {
         </>
       )}
       summary={(
-        <p className="mt-2 text-sm text-muted-foreground" data-testid="survivor-leaderboard-rules">
-          {describeSurvivorRules(null)}
-        </p>
+        <span data-testid="survivor-leaderboard-rules">{describeSurvivorRules(null)}</span>
       )}
     >
       <ScoreboardGrid

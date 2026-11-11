@@ -461,7 +461,7 @@ describe('ContestEntryPage', () => {
     expect(screen.queryByText('Selection progress')).not.toBeInTheDocument();
     expect(screen.getByTestId('contest-entry-group-tier-1')).toHaveClass('bg-muted/30');
     expect(screen.getByTestId('contest-menu-entries')).toBeInTheDocument();
-    expect(screen.getByTestId('contest-menu-my-entry')).toBeChecked();
+    expect(screen.getByTestId('contest-menu-my-entry')).toHaveAttribute('aria-current', 'page');
     expect(screen.queryByTestId('contest-entry-view-team-link')).not.toBeInTheDocument();
     expect(screen.queryByTestId('contest-entry-tiebreaker-select')).not.toBeInTheDocument();
     expect(screen.getByTestId('contest-entry-group-toggle-tier-1')).toBeInTheDocument();
@@ -481,7 +481,7 @@ describe('ContestEntryPage', () => {
     fireEvent.click(screen.getByTestId('contest-entry-participant-sep-2'));
     expect(await screen.findByTestId('contest-entry-tiebreaker-select')).toBeInTheDocument();
 
-    fireEvent.change(screen.getByTestId('contest-entry-name-input'), {
+    fireEvent.change(screen.getByTestId('contest-entry-header-name-input'), {
       target: { value: 'Sunday Charge' },
     });
     fireEvent.change(screen.getByTestId('contest-entry-tiebreaker-select'), {
@@ -617,8 +617,8 @@ describe('ContestEntryPage', () => {
 
     const { queryClient } = renderContestEntryPage();
 
-    await screen.findByTestId('contest-entry-name-input');
-    fireEvent.change(screen.getByTestId('contest-entry-name-input'), {
+    await screen.findByTestId('contest-entry-header-name-input');
+    fireEvent.change(screen.getByTestId('contest-entry-header-name-input'), {
       target: { value: 'Unsaved Sunday Charge' },
     });
     fireEvent.change(screen.getByTestId('contest-entry-tiebreaker-select'), {
@@ -643,7 +643,7 @@ describe('ContestEntryPage', () => {
       }),
     );
 
-    expect(screen.getByTestId('contest-entry-name-input')).toHaveValue('Unsaved Sunday Charge');
+    expect(screen.getByTestId('contest-entry-header-name-input')).toHaveValue('Unsaved Sunday Charge');
     expect(screen.getByTestId('contest-entry-tiebreaker-select')).toHaveValue('-12');
   });
 
@@ -748,7 +748,7 @@ describe('ContestEntryPage', () => {
     await waitFor(() =>
       expect(screen.getByTestId('contest-entry-builder-heading')).toHaveTextContent('Saved lineup detail'),
     );
-    expect(screen.queryByTestId('contest-entry-name-input')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('contest-entry-header-name-input')).not.toBeInTheDocument();
     expect(screen.queryByText('Editable until the event starts')).not.toBeInTheDocument();
   });
 
@@ -1116,7 +1116,7 @@ describe('ContestEntryPage — selection rules the server enforces', () => {
     getSelectionStateMock.mockResolvedValue({ data: buildSelectionState(twoOnePickTiers([], [])) });
     const { queryClient } = renderContestEntryPage();
 
-    const nameInput = await screen.findByTestId('contest-entry-name-input');
+    const nameInput = await screen.findByTestId('contest-entry-header-name-input');
     expect(nameInput).toHaveValue('Birdie Hunters Entry 1');
     fireEvent.change(nameInput, { target: { value: 'Sunday Charge' } });
 
@@ -1126,7 +1126,7 @@ describe('ContestEntryPage — selection rules the server enforces', () => {
     await queryClient.refetchQueries();
 
     expect(getSelectionStateMock).toHaveBeenCalledTimes(2);
-    expect(screen.getByTestId('contest-entry-name-input')).toHaveValue('Sunday Charge');
+    expect(screen.getByTestId('contest-entry-header-name-input')).toHaveValue('Sunday Charge');
   });
 
   it('opens the earlier tier still short of picks once the last short tier is filled', async () => {
@@ -1211,7 +1211,7 @@ describe('ContestEntryPage — selection rules the server enforces', () => {
     expect(await screen.findByTestId('contest-entry-picks-hidden')).toHaveTextContent(
       'picks stay hidden until the event starts',
     );
-    expect(screen.getByTestId('contest-entry-heading')).toHaveTextContent('Other Team Entry 1');
+    expect(screen.getByTestId('contest-entry-header-name')).toHaveTextContent('Other Team Entry 1');
     expect(screen.queryByText('Scottie Scheffler')).not.toBeInTheDocument();
     // The page reads the one entry it shows, not the contest's whole entry list (#1197).
     expect(getContestEntryMock).toHaveBeenCalledWith(expect.objectContaining({ path: { contestId: 'contest-1', entryId: 'entry-1' } }));
@@ -1316,7 +1316,7 @@ describe('ContestEntryPage — selection rules the server enforces', () => {
 
       const submit = await screen.findByTestId('contest-entry-submit');
       const picks = screen.getByTestId('contest-entry-builder-heading');
-      const name = screen.getByTestId('contest-entry-name-input');
+      const name = screen.getByTestId('contest-entry-header-name-input');
       const tiebreaker = screen.getByTestId('contest-entry-tiebreaker-select');
       const follows = (earlier: Element, later: Element) =>
         Boolean(earlier.compareDocumentPosition(later) & Node.DOCUMENT_POSITION_FOLLOWING);
@@ -1333,7 +1333,7 @@ describe('ContestEntryPage — selection rules the server enforces', () => {
 
       renderContestEntryPage();
 
-      expect(await screen.findByTestId('contest-entry-heading')).toHaveTextContent('Birdie Hunters Entry 1');
+      expect(await screen.findByTestId('contest-entry-header-name')).toHaveTextContent('Birdie Hunters Entry 1');
       expect(screen.queryByText('Contest phase')).not.toBeInTheDocument();
 
       const callout = within(await openStatusCallout());
@@ -1670,7 +1670,7 @@ describe('ContestEntryPage — a random-draw entry', () => {
     expect(screen.queryByText('Scottie Scheffler')).not.toBeInTheDocument();
     expect(screen.queryByTestId('contest-entry-submit')).not.toBeInTheDocument();
     expect(screen.queryByTestId('contest-entry-not-submitted')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('contest-entry-name-input')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('contest-entry-header-name-input')).not.toBeInTheDocument();
   });
 
   it('after the draw, lists only the golfers the entry was dealt, read-only, with entries closed', async () => {
@@ -1789,7 +1789,7 @@ describe('ContestEntryPage — a contest of two events', () => {
 
     expect(await screen.findByTestId('contest-entry-not-submitted')).toHaveTextContent('only counts once its lineup is complete and submitted');
     // The entry's name locked with the first event, so only the warning is left to show.
-    expect(screen.queryByTestId('contest-entry-name-input')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('contest-entry-header-name-input')).not.toBeInTheDocument();
     expect(screen.queryByTestId('contest-entry-submit')).not.toBeInTheDocument();
   });
 
@@ -1799,7 +1799,7 @@ describe('ContestEntryPage — a contest of two events', () => {
 
     renderContestEntryPage();
 
-    await screen.findByTestId('contest-entry-heading');
+    await screen.findByTestId('contest-entry-header-name');
     expect(screen.queryByTestId('contest-entry-event-switcher')).not.toBeInTheDocument();
   });
 
