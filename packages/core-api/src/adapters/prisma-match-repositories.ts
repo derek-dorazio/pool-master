@@ -101,6 +101,14 @@ export class PrismaSportEventMatchRepository implements SportEventMatchRepositor
     });
   }
 
+  async linkGames(links: readonly { id: string; externalGameId: string }[]): Promise<void> {
+    if (links.length === 0) return;
+    await this.prisma.$transaction(
+      // poolmaster-allow-query-in-loop: the games one sync linked (per-row values, one transaction)
+      links.map(({ id, externalGameId }) => this.prisma.sportEventMatch.update({ where: { id }, data: { externalGameId } })),
+    );
+  }
+
   async placeSides(sides: readonly { id: string; homeSportEventParticipantId: string; awaySportEventParticipantId: string }[], jobs: readonly BackgroundJobRequest[] = []): Promise<void> {
     await this.prisma.$transaction([
       // poolmaster-allow-query-in-loop: one round's matches (per-row values, one transaction)
