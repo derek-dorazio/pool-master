@@ -55,6 +55,11 @@ export interface ContestResultFilter {
   squadId?: string;
   /** 1st to 10th; only with `squadId`. */
   place?: number;
+  /**
+   * The squad whose finish each listed contest carries, without narrowing the list (#1570): the
+   * viewer's team on Contests > Past. Defaults to `squadId`.
+   */
+  finishOf?: string;
 }
 
 export interface ContestResultSquadFinishView {
@@ -369,10 +374,12 @@ export class HistoryService {
   /**
    * The contests that went final in a championship year, newest first. Unfiltered, every one,
    * counted or not. For a squad, only the counted contests it placed in (its Played count); with a
-   * place, only those it finished in that place (its matrix cell).
+   * place, only those it finished in that place (its matrix cell). Each contest carries the finish
+   * of `finishOf`, else of the filtered squad: any finish of `finishOf` in it, counted or not.
    */
   async listYearContests(leagueId: string, year: number, filter: ContestResultFilter = {}): Promise<ContestResultView[]> {
     const { squadId, place } = filter;
+    const finishOf = filter.finishOf ?? squadId;
     if (squadId === undefined && place !== undefined) {
       this.deps.logger?.warn({ action: 'history.contests.squadRequired', data: { leagueId, year, place } }, 'Year contests asked for a place without a squad');
       throw new HistorySquadRequiredError('A place filter needs a squadId.');
@@ -401,13 +408,21 @@ export class HistoryService {
       this.deps.squads.findByLeague(leagueId, true),
     ]);
     const squadById = new Map(squads.map((squad) => [squad.id, squad]));
+    if (finishOf !== undefined && !squadById.has(finishOf)) {
+      this.deps.logger?.warn({ action: 'history.contests.finishSquadNotFound', data: { leagueId, year, finishOf } }, 'Year contests asked for the finish of a squad outside the league');
+      throw new HistorySquadNotFoundError(`Squad ${finishOf} is not in this league.`);
+    }
+    // The filtered squad's finishes are its counted ones; another squad's are all of its own.
+    const finishRows = finishOf === squadId
+      ? squadRows
+      : new Map(finishes.filter((finish) => finish.squadId === finishOf).map((finish) => [finish.contestId, finish]));
 
     const views = contests.flatMap((contest): ContestResultView[] => {
       if (squadId !== undefined && !squadRows.has(contest.id)) return [];
       const rows = byContest.get(contest.id) ?? [];
       const completedAt = contest.completedAt ?? rows.at(0)?.settledAt;
       if (completedAt === undefined) return [];
-      const squadRow = squadRows.get(contest.id);
+      const squadRow = finishRows.get(contest.id);
       return [{
         contestId: contest.id,
         name: contest.name,
