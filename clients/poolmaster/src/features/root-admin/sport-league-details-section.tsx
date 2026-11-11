@@ -5,13 +5,13 @@ import type { SportLeagueDto } from '@/lib/api';
 import {
   Button,
   ConfirmDialog,
-  DangerZone,
   DangerZoneAction,
-  PageHeader,
   InlineError,
   LinkButton,
+  PageHeader,
+  SectionCard,
   SettingsRow,
-  SettingsSection,
+  SettingsRows,
   StatusBadge,
 } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
@@ -46,8 +46,8 @@ export function SportLeagueHeading({ sportLeague }: { sportLeague: SportLeagueDt
 export function SportLeagueDetailsSection({ sportLeague }: { sportLeague: SportLeagueDto }) {
   const { sport, definition } = useManagedSport();
   return (
-    <SettingsSection
-      action={(
+    <SectionCard
+      trailing={(
         <LinkButton
           data-testid="root-admin-sport-league-home-edit"
           size="sm"
@@ -60,11 +60,13 @@ export function SportLeagueDetailsSection({ sportLeague }: { sportLeague: SportL
       testId="root-admin-sport-league-details"
       title="Details"
     >
-      <SettingsRow label="Match keyword" value={sportLeague.matchKeyword || 'Not set'} />
-      <SettingsRow label="Roster size" value={sportLeague.affiliationCount} />
-      <SettingsRow label={upperFirst(definition.vocabulary.event.many)} value={sportLeague.sportEventCount} />
-      <SettingsRow label="Current year" value={sportLeague.currentEventYear ?? 'Not set'} />
-    </SettingsSection>
+      <SettingsRows>
+        <SettingsRow label="Match keyword" value={sportLeague.matchKeyword || 'Not set'} />
+        <SettingsRow label="Roster size" value={sportLeague.affiliationCount} />
+        <SettingsRow label={upperFirst(definition.vocabulary.event.many)} value={sportLeague.sportEventCount} />
+        <SettingsRow label="Current year" value={sportLeague.currentEventYear ?? 'Not set'} />
+      </SettingsRows>
+    </SectionCard>
   );
 }
 
@@ -91,24 +93,26 @@ export function SportLeagueDangerZone({ sportLeague }: { sportLeague: SportLeagu
 
   return (
     <>
-      <DangerZone testId="root-admin-sport-league-danger-zone">
-        <DangerZoneAction
-          action={(
-            <Button
-              data-testid="root-admin-sport-league-home-toggle-active"
-              onClick={() => setConfirmOpen(true)}
-              size="sm"
-              variant={sportLeague.isActive ? 'danger' : 'primary'}
-            >
-              {actionLabel}
-            </Button>
-          )}
-          description={sportLeague.isActive
-            ? `Marks the ${sportLeagueNoun.one} inactive. Its roster and ${event.many} stay as they are.`
-            : `Marks the ${sportLeagueNoun.one} active again.`}
-          title={actionLabel}
-        />
-      </DangerZone>
+      <SectionCard testId="root-admin-sport-league-danger-zone" tone="danger">
+        <SettingsRows>
+          <DangerZoneAction
+            action={(
+              <Button
+                data-testid="root-admin-sport-league-home-toggle-active"
+                onClick={() => setConfirmOpen(true)}
+                size="sm"
+                variant={sportLeague.isActive ? 'danger' : 'primary'}
+              >
+                {actionLabel}
+              </Button>
+            )}
+            description={sportLeague.isActive
+              ? `Marks the ${sportLeagueNoun.one} inactive. Its roster and ${event.many} stay as they are.`
+              : `Marks the ${sportLeagueNoun.one} active again.`}
+            title={actionLabel}
+          />
+        </SettingsRows>
+      </SectionCard>
 
       <ConfirmDialog
         confirmLabel={actionLabel}

@@ -76,9 +76,10 @@ that is not a table pages through `Pager`, the same Previous/Next control.
 
 League pages and administration areas use the pieces named in
 `rules/ux-rules.md` §12 *League Pages and Commissioner Tools*: `LeagueMenu`,
-`AdminAreaLayout`, `PageHeader`, `SettingsSection` / `SettingsRow`
-(`SettingsSectionHeader` alone titles a section whose body is a `DataGrid`),
-`DangerZone` / `DangerZoneAction`, and `FormPage` for a full-page edit
+`AdminAreaLayout`, `PageHeader`, a `SectionCard` of `SettingsRows` /
+`SettingsRow` for settings (a `bare` `SectionCard` titles a section whose body
+is a `DataGrid`), a `SectionCard` with `tone="danger"` of `DangerZoneAction`s
+for a danger zone, and `FormPage` for a full-page edit
 (with `IconPalette` when the form picks an icon). A `FormPage` saved by one
 mutation takes its submit, pending state and error from `formPageSave` in
 `@/lib/form-page-save`. A root admin settings group's form is built on

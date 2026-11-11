@@ -1262,7 +1262,8 @@ describe('Event emails', () => {
     view.unmount();
 
     renderCommissionerTools();
-    expect(await screen.findByTestId('league-settings-event-emails')).toHaveTextContent('Emails to commissioners when an event is ready for contests.');
+    fireEvent.click(await screen.findByTestId('league-settings-event-emails-info'));
+    expect(screen.getByTestId('league-settings-event-emails-info-callout')).toHaveTextContent('Emails to commissioners when an event is ready for contests.');
   });
 
   it('promises only the "Coming up soon" email on a plan without "Ready for contests"', async () => {
@@ -1274,7 +1275,8 @@ describe('Event emails', () => {
     view.unmount();
 
     renderCommissionerTools();
-    expect(await screen.findByTestId('league-settings-event-emails')).toHaveTextContent('Emails to commissioners when an event is coming up.');
+    fireEvent.click(await screen.findByTestId('league-settings-event-emails-info'));
+    expect(screen.getByTestId('league-settings-event-emails-info-callout')).toHaveTextContent('Emails to commissioners when an event is coming up.');
   });
 
   it('promises both emails on a plan with both', async () => {

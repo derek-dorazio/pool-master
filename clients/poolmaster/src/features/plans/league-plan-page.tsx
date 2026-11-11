@@ -11,7 +11,7 @@ import { useAuth } from '@/features/auth/auth-context';
 import { syncLeagueCaches } from '@/features/leagues/league-cache';
 import { buildLeagueAdminPath } from '@/features/leagues/league-routing';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
-import { Alert, Button, Chip, ErrorState, formatDateDisplay, Heading, LoadingState, PageHeader, SectionCard, SectionHeader, Tile, formatCount, formatNumber, useDisplayPreferences } from '@/features/shared/ui';
+import { Alert, Button, Chip, ErrorState, formatCount, formatDateDisplay, formatNumber, LoadingState, PageHeader, SectionCard, SectionNote, useDisplayPreferences } from '@/features/shared/ui';
 import { PlanCards } from './plan-cards';
 import { buildCapUsage, buildPlanChangeEffects, NAMED_CONTEST_LIMIT } from './plan-change';
 import { PlanComparisonTable } from './plan-comparison-table';
@@ -110,46 +110,45 @@ function LeaguePlanView({ league }: { league: LeagueDto }) {
       ) : (
         <>
           {chosen ? (
-            <Tile className="space-y-4" data-testid="league-plan-confirm" padding="md" radius="md">
-              <div className="space-y-1">
-                <Heading level={3} variant="card">{`Move to ${LEAGUE_PLAN_LABEL[chosen.plan]}?`}</Heading>
-                <p className="text-sm text-muted-foreground">Plan changes are free for now, so this takes effect at once and costs nothing.</p>
+            <SectionCard headingLevel={3} padded testId="league-plan-confirm" title={`Move to ${LEAGUE_PLAN_LABEL[chosen.plan]}?`}>
+              <div className="space-y-4">
+                <SectionNote tone="default">Plan changes are free for now, so this takes effect at once and costs nothing.</SectionNote>
+                {usageQuery.data ? (
+                  <PlanChangeWarnings
+                    current={current}
+                    sportLeagueNames={sportLeagueNames}
+                    target={chosen}
+                    usage={usageQuery.data}
+                  />
+                ) : usageQuery.isError ? (
+                  <SectionNote testId="league-plan-confirm-unchecked">
+                    We couldn&apos;t check what this plan would stop. A lower plan never removes anything.
+                  </SectionNote>
+                ) : null}
+                {saveMutation.isError ? (
+                  <Alert data-testid="league-plan-confirm-error" tone="danger">
+                    {extractErrorMessage(saveMutation.error, { fallback: 'We could not change the plan.' })}
+                  </Alert>
+                ) : null}
+                <div className="flex flex-wrap gap-3">
+                  <Button
+                    data-testid="league-plan-confirm-save"
+                    disabled={saveMutation.isPending}
+                    onClick={() => saveMutation.mutate(chosen.plan)}
+                  >
+                    {saveMutation.isPending ? 'Saving...' : `Move to ${LEAGUE_PLAN_LABEL[chosen.plan]}`}
+                  </Button>
+                  <Button
+                    data-testid="league-plan-confirm-cancel"
+                    disabled={saveMutation.isPending}
+                    onClick={() => setChoice(null)}
+                    variant="secondary"
+                  >
+                    {`Keep ${LEAGUE_PLAN_LABEL[current.plan]}`}
+                  </Button>
+                </div>
               </div>
-              {usageQuery.data ? (
-                <PlanChangeWarnings
-                  current={current}
-                  sportLeagueNames={sportLeagueNames}
-                  target={chosen}
-                  usage={usageQuery.data}
-                />
-              ) : usageQuery.isError ? (
-                <p className="text-sm text-muted-foreground" data-testid="league-plan-confirm-unchecked">
-                  We couldn&apos;t check what this plan would stop. A lower plan never removes anything.
-                </p>
-              ) : null}
-              {saveMutation.isError ? (
-                <Alert data-testid="league-plan-confirm-error" tone="danger">
-                  {extractErrorMessage(saveMutation.error, { fallback: 'We could not change the plan.' })}
-                </Alert>
-              ) : null}
-              <div className="flex flex-wrap gap-3">
-                <Button
-                  data-testid="league-plan-confirm-save"
-                  disabled={saveMutation.isPending}
-                  onClick={() => saveMutation.mutate(chosen.plan)}
-                >
-                  {saveMutation.isPending ? 'Saving...' : `Move to ${LEAGUE_PLAN_LABEL[chosen.plan]}`}
-                </Button>
-                <Button
-                  data-testid="league-plan-confirm-cancel"
-                  disabled={saveMutation.isPending}
-                  onClick={() => setChoice(null)}
-                  variant="secondary"
-                >
-                  {`Keep ${LEAGUE_PLAN_LABEL[current.plan]}`}
-                </Button>
-              </div>
-            </Tile>
+            </SectionCard>
           ) : null}
 
           <PlanCards
@@ -176,15 +175,14 @@ function LeaguePlanView({ league }: { league: LeagueDto }) {
             }}
           />
 
-          <section className="space-y-4" data-testid="league-plan-compare">
-            <SectionHeader description="Your plan is shaded. Where a plan's limit is below what your league uses now, it says so." title="Compare plans" />
+          <SectionCard bare info="Your plan is shaded. Where a plan's limit is below what your league uses now, it says so." testId="league-plan-compare" title="Compare plans">
             <PlanComparisonTable
               capUsage={usageQuery.data ? buildCapUsage(usageQuery.data) : undefined}
               currentPlan={current.plan}
               initiallyFolded={[PlanFeatureGroup.EMAILS]}
               plans={plans}
             />
-          </section>
+          </SectionCard>
         </>
       )}
 

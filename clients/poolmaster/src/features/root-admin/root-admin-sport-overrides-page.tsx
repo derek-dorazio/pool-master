@@ -6,8 +6,8 @@ import {
   ErrorState,
   FormField,
   LoadingState,
+  SectionCard,
   Select,
-  Tile,
 } from '@/features/shared/ui';
 import { ALL_SYNC_SPORT_OPTIONS, type SyncSport } from './root-admin-sync-utils';
 import {
@@ -104,7 +104,7 @@ export function RootAdminSportOverridesPage() {
         global cadence for every other sport.
       </ManagePageIntro>
 
-      <Tile>
+      <SectionCard padded testId="root-admin-sport-overrides-section" title="Sport override">
         <FormField label="Sport">
           <Select
             data-testid="root-admin-sport-overrides-sport"
@@ -182,7 +182,7 @@ export function RootAdminSportOverridesPage() {
             </div>
           </>
         )}
-      </Tile>
+      </SectionCard>
     </section>
   );
 }
