@@ -1,53 +1,112 @@
 import { Fragment, type ReactNode } from "react";
 import { Link } from "react-router";
-import { Eyebrow } from "./eyebrow";
-import { Tile } from "./tile";
+import { cn } from "./class-names";
 import { Heading } from "./heading";
+import { IconAvatar } from "./icon-avatar";
 
 type Breadcrumb = {
   href?: string;
   label: string;
 };
 
-type PageHeaderProps = {
+export type PageHeaderProps = {
+  /**
+   * The right slot: at most two small buttons, or the page's search box, about this page's
+   * subject only. On a phone it drops to its own full-width line.
+   */
   actions?: ReactNode;
   breadcrumbLabel?: string;
+  /** The trail up to this page, for an administration area's nested pages. */
   breadcrumbs?: Breadcrumb[];
+  /**
+   * A line under the facts for a rule the reader needs ("Members never see which plan it is
+   * on"), or the entity's own words, such as a league's description. Never a sentence saying
+   * what the page is: the title and the tab name already say it.
+   */
   description?: ReactNode;
-  eyebrow?: ReactNode;
-  title: ReactNode;
-};
+  /** One short muted line of facts, such as "12 members · 2 active contests". */
+  meta?: ReactNode;
+  /** The page's views, as `PageTabs`, on the header's bottom line. */
+  tabs?: ReactNode;
+  /**
+   * A filter that changes every tab, such as a season picker, alone at the tab row's right end
+   * (on a phone, its own line under the tabs). Shown only with `tabs`.
+   */
+  tabsEnd?: ReactNode;
+  testId?: string;
+  title: string;
+} & (
+  /** An icon, drawn in the standard avatar square and named `<title> icon`. */
+  | { icon?: ReactNode; avatar?: never }
+  /** A whole avatar of the caller's own, such as a team's in its icon colours. */
+  | { avatar: ReactNode; icon?: never }
+);
 
+/**
+ * The one header at the top of a page: the title straight on the page (no card), an optional
+ * icon, fact line and right slot, then the page's views as tabs on a ruled bottom line. Title,
+ * facts and tabs stay within about 100px on a desktop and 120px on a phone.
+ */
 export function PageHeader({
   actions,
+  avatar,
   breadcrumbLabel = "Breadcrumbs",
   breadcrumbs,
   description,
-  eyebrow,
+  icon,
+  meta,
+  tabs,
+  tabsEnd,
+  testId,
   title,
 }: PageHeaderProps) {
+  const picture = avatar ?? (icon ? (
+    <IconAvatar label={`${title} icon`} size="md">
+      {icon}
+    </IconAvatar>
+  ) : null);
+
   return (
-    <Tile padding="sm" radius="lg">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          {eyebrow ? (
-            <Eyebrow className="mb-2">{eyebrow}</Eyebrow>
-          ) : null}
-          <Heading level={1} variant="page">
+    <header data-testid={testId}>
+      <div
+        className={cn("flex flex-wrap items-center gap-x-4 gap-y-3", tabs ? "pb-2" : "border-b border-border pb-3.5")}
+        data-testid={testId ? `${testId}-title-row` : undefined}
+      >
+        {picture}
+        <div className="min-w-0 flex-1">
+          <Heading data-testid={testId ? `${testId}-name` : undefined} level={1} variant="pageTitle">
             {title}
           </Heading>
+          {meta ? (
+            <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
+              {meta}
+            </div>
+          ) : null}
           {description ? (
-            <p className="mt-3 max-w-3xl text-sm text-muted-foreground">
-              {description}
-            </p>
+            <p className="mt-1 max-w-3xl text-sm text-muted-foreground">{description}</p>
           ) : null}
           {breadcrumbs?.length ? (
-            <Breadcrumbs className="mt-3" items={breadcrumbs} label={breadcrumbLabel} />
+            <Breadcrumbs className="mt-2" items={breadcrumbs} label={breadcrumbLabel} />
           ) : null}
         </div>
-        {actions ? <div className="flex flex-wrap gap-3">{actions}</div> : null}
+        {actions ? (
+          <div className="flex flex-wrap items-center gap-2 max-sm:basis-full" data-testid={testId ? `${testId}-actions` : undefined}>
+            {actions}
+          </div>
+        ) : null}
       </div>
-    </Tile>
+      {tabs ? (
+        // The rule runs under the whole tab row; on a phone it runs under the tabs alone, and the
+        // filter drops below it.
+        <div
+          className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3 sm:border-b sm:border-border"
+          data-testid={testId ? `${testId}-tab-row` : undefined}
+        >
+          <div className="min-w-0 max-sm:basis-full max-sm:border-b max-sm:border-border">{tabs}</div>
+          {tabsEnd ? <div className="flex items-center gap-2 text-sm text-muted-foreground sm:pb-2">{tabsEnd}</div> : null}
+        </div>
+      ) : null}
+    </header>
   );
 }
 

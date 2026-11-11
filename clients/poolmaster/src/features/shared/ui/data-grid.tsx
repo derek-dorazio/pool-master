@@ -66,16 +66,30 @@ export type DataGridProps<TData> = {
    * roster / field).
    */
   meta?: Record<string, unknown>;
-  /** A search box above the grid matching any text column. Off by default. */
-  search?: DataGridSearch;
   /** Rows per page; omitted, every row shows on one page. */
   pageSize?: number;
   /** Whether each filterable column gets its own filter box. On by default. */
   showColumnFilters?: boolean;
-  jumpToRow?: DataGridJumpToRow;
   /** `scoreboard`: a leaderboard's header row, navy with gold column names. */
   headerTone?: "plain" | "scoreboard";
-};
+} & (
+  | {
+      /** A search box above the grid matching any text column. Off by default. */
+      search?: DataGridSearch;
+      searchTerm?: never;
+      jumpToRow?: DataGridJumpToRow;
+    }
+  | {
+      /**
+       * The term from a search box the page draws itself, such as in its `PageHeader`'s right
+       * slot. The grid narrows to it as it would to its own box. A jump to a row can't clear a
+       * box the grid doesn't own, so the two never go together.
+       */
+      searchTerm: string;
+      search?: never;
+      jumpToRow?: never;
+    }
+);
 
 function getSortIndicator(direction: false | "asc" | "desc") {
   if (direction === "asc") {
@@ -101,13 +115,15 @@ export function DataGrid<TData>({
   tableTestId,
   meta,
   search,
+  searchTerm,
   pageSize,
   showColumnFilters = true,
   jumpToRow,
   headerTone = "plain",
 }: DataGridProps<TData>) {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [globalFilter, setGlobalFilter] = useState("");
+  const [ownSearchTerm, setOwnSearchTerm] = useState("");
+  const globalFilter = searchTerm ?? ownSearchTerm;
   const [sorting, setSorting] = useState<SortingState>([]);
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
@@ -120,6 +136,13 @@ export function DataGrid<TData>({
 
   const resetPageIndex = () =>
     setPagination((current) => ({ ...current, pageIndex: 0 }));
+
+  // A new term from the page's own box starts again from the first page, as the grid's box does.
+  const [pagedSearchTerm, setPagedSearchTerm] = useState(searchTerm);
+  if (searchTerm !== pagedSearchTerm) {
+    setPagedSearchTerm(searchTerm);
+    resetPageIndex();
+  }
 
   const table = useReactTable({
     data,
@@ -142,7 +165,7 @@ export function DataGrid<TData>({
       resetPageIndex();
     },
     onGlobalFilterChange: (updater: string) => {
-      setGlobalFilter(updater);
+      setOwnSearchTerm(updater);
       resetPageIndex();
     },
     onPaginationChange: setPagination,
@@ -166,7 +189,7 @@ export function DataGrid<TData>({
   // and that page is in the table to scroll to. A repeat jump scrolls again; a sort or page never does.
   const jump = (rowId: string) => {
     flushSync(() => {
-      setGlobalFilter("");
+      setOwnSearchTerm("");
       setColumnFilters([]);
     });
     const index = table.getSortedRowModel().rows.findIndex((row) => row.id === rowId);

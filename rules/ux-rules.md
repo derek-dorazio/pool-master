@@ -245,11 +245,18 @@ administration area (root admin included), reusing the same shared components.
    app bar. An administration area has its own header with a way back and a side
    menu (`AdminAreaLayout`) instead of the league menu. Each of its pages has one
    heading: the area titles the page, or an entity's landing page shows its
-   `IdentityHeading`. A page never adds a second header or "Back to" link of its
+   `PageHeader` with the entity's icon. A page never adds a second header or "Back to" link of its
    own; the trail leads back up.
-3. **Compact identity, once.** An entity's icon, name and shareable code appear
-   once, as a compact heading (`IdentityHeading`) on its landing page. No page
-   repeats them as an editable detail panel.
+3. **Compact identity, once.** An entity's icon, name and facts appear once, in
+   its landing page's `PageHeader`. No page repeats them as an editable detail
+   panel, and a code the viewer cannot use (a league code, which members never
+   need: they join by invite link) is not shown. Every page opens with the same
+   `PageHeader`: the title straight on the page with no card, an optional icon, one short fact line, and at most
+   two small actions or the page's search at the right. No sentence says what
+   the page is; a helper line stays only when it states a rule the reader needs.
+   A page's views are underlined `PageTabs` on the header's bottom line, with a
+   filter that applies to every tab alone at the row's right end. Title, facts
+   and tabs fit in about 100px on a desktop and 120px on a phone.
 4. **Full pages, not dialogs.** Editing and managing are full pages with their
    own route, so Back and links work (`FormPage`). Dialogs are only for
    confirming a destructive or irreversible action: inactivate, delete, leave,

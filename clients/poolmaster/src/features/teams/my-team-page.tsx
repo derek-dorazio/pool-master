@@ -9,7 +9,7 @@ import {
   Alert,
   EmptyState,
   ErrorState,
-  IdentityHeading,
+  PageHeader,
   LinkButton,
   LoadingState,
 } from '@/features/shared/ui';
@@ -95,33 +95,33 @@ export function MyTeamPage() {
 
   return (
     <section className="space-y-8" data-testid="my-team-page">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <IdentityHeading
-          avatar={<TeamAvatar iconKey={myTeam.iconKey} label={`${myTeam.name} icon`} size="md" />}
-          meta={formatOwnerCount(myTeam)}
-          name={myTeam.name}
-          testId="my-team-identity"
-        />
-        <div className="flex flex-wrap gap-2">
-          <LinkButton
-            data-testid="my-team-edit"
-            isDisabled={isInactiveLeague}
-            size="sm"
-            to={buildLeagueTeamEditPath(leagueCode)}
-            variant="secondary"
-          >
-            Edit
-          </LinkButton>
-          <LinkButton
-            data-testid="my-team-history-link"
-            size="sm"
-            to={buildLeagueHistoryPath(leagueCode)}
-            variant="secondary"
-          >
-            All years
-          </LinkButton>
-        </div>
-      </div>
+      <PageHeader
+        actions={(
+          <>
+            <LinkButton
+              data-testid="my-team-edit"
+              isDisabled={isInactiveLeague}
+              size="sm"
+              to={buildLeagueTeamEditPath(leagueCode)}
+              variant="secondary"
+            >
+              Edit
+            </LinkButton>
+            <LinkButton
+              data-testid="my-team-history-link"
+              size="sm"
+              to={buildLeagueHistoryPath(leagueCode)}
+              variant="secondary"
+            >
+              All years
+            </LinkButton>
+          </>
+        )}
+        avatar={<TeamAvatar iconKey={myTeam.iconKey} label={`${myTeam.name} icon`} size="md" />}
+        meta={formatOwnerCount(myTeam)}
+        testId="my-team-identity"
+        title={myTeam.name}
+      />
 
       {isInactiveLeague ? (
         <Alert data-testid="my-team-league-inactive" tone="warning">

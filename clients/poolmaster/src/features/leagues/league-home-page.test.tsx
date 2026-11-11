@@ -154,7 +154,9 @@ function primeMocks({
   hasTeam = true,
   role = 'MEMBER',
   features = Object.values(PlanFeature),
+  description = null,
 }: {
+  description?: string | null;
   features?: PlanFeature[];
   contests?: ReturnType<typeof contest>[];
   cups?: CupDto[];
@@ -167,7 +169,7 @@ function primeMocks({
   getCurrentUserMock.mockResolvedValue(apiSuccess({ user: buildCurrentUser() }));
   refreshTokenMock.mockResolvedValue({ data: null });
   getLeagueByCodeMock.mockResolvedValue(apiSuccess(getLeagueByCodeData(
-    buildLeague({ isActive, memberCount: 12, activeContestCount: 2, planEntitlements: buildPlanEntitlements({ features }) }),
+    buildLeague({ description, isActive, memberCount: 12, activeContestCount: 2, planEntitlements: buildPlanEntitlements({ features }) }),
     {
       membership: buildLeagueMembership({ role }),
       squadMembership: hasTeam ? buildLeagueSquadMember() : null,
@@ -222,16 +224,34 @@ describe('League Home', () => {
     expect(screen.queryByTestId('year-review-ready')).not.toBeInTheDocument();
   });
 
-  it('shows the league once, compactly: name, code and counts', async () => {
+  it('shows the league once, compactly: name and counts, with no league code members could not use', async () => {
     primeMocks();
 
     renderLeagueHome();
 
     const identity = within(await screen.findByTestId('league-home-identity'));
     expect(identity.getByRole('heading', { name: 'Big Dawgs' })).toBeInTheDocument();
-    expect(identity.getByText('BIGDAWGS')).toBeInTheDocument();
-    expect(identity.getByRole('button', { name: 'Copy league code' })).toBeInTheDocument();
+    expect(screen.queryByText('BIGDAWGS')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Copy league code' })).not.toBeInTheDocument();
     expect(identity.getByText('12 members · 2 active contests')).toBeInTheDocument();
+  });
+
+  it("shows the commissioner's league description in the header, under the counts", async () => {
+    primeMocks({ description: 'Saturday golf and Sunday football since 2009.' });
+
+    renderLeagueHome();
+
+    const identity = within(await screen.findByTestId('league-home-identity'));
+    expect(identity.getByTestId('league-home-description')).toHaveTextContent('Saturday golf and Sunday football since 2009.');
+  });
+
+  it('shows no description line when the league has none', async () => {
+    primeMocks({ description: '   ' });
+
+    renderLeagueHome();
+
+    await screen.findByTestId('league-home-identity');
+    expect(screen.queryByTestId('league-home-description')).not.toBeInTheDocument();
   });
 
   it('puts the open contest that closes soonest up next, with a countdown to its cutoff', async () => {

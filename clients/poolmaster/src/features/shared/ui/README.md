@@ -65,7 +65,7 @@ that is not a table pages through `Pager`, the same Previous/Next control.
 
 League pages and administration areas use the pieces named in
 `rules/ux-rules.md` §12 *League Pages and Commissioner Tools*: `LeagueMenu`,
-`AdminAreaLayout`, `IdentityHeading`, `SettingsSection` / `SettingsRow`
+`AdminAreaLayout`, `PageHeader`, `SettingsSection` / `SettingsRow`
 (`SettingsSectionHeader` alone titles a section whose body is a `DataGrid`),
 `DangerZone` / `DangerZoneAction`, and `FormPage` for a full-page edit
 (with `IconPalette` when the form picks an icon). A `FormPage` saved by one
@@ -76,6 +76,18 @@ send the version the draft came from and offer the newer one on a conflict.
 `ConfirmDialog` and `FormModal` share one footer, `DialogActions`.
 A dialog that is neither a form nor a confirmation, such as a menu action
 with its own buttons, is a plain `Modal`.
+
+Every page starts with one `PageHeader`: its title straight on the page (never in
+a card), an optional `icon` or `avatar`, an optional `meta` fact line ("12 members
+· 2 active contests"), and a right slot (`actions`) for at most two small buttons
+or the page's search box. A `description` is only for a rule the reader needs or
+the entity's own words, never a sentence saying what the page is. A page's views
+are `PageTabs` in the header's `tabs` slot — `variant="link"` for views with
+their own address, `variant="state"` inside the page's own `Tabs` root — and a
+filter that changes every tab, such as a season, goes in `tabsEnd`. A
+`SegmentedControl` is only for choosing a value inside a form or panel, never for
+switching a page's views. A search box in the header feeds a `DataGrid` through
+its `searchTerm`.
 
 A titled card is a `PanelCard`: its title in a ruled bar, with an optional
 slot on the right such as a badge or a clear button, then its body and an

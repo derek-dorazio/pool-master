@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
@@ -174,7 +175,7 @@ describe('ManageContestsPage', () => {
     renderManageContestsPage();
 
     expect(await within(await screen.findByTestId('manage-contests-row-draft-heritage')).findByText('RBC Heritage')).toBeInTheDocument();
-    fireEvent.click(screen.getByTestId('manage-contests-filter-history'));
+    await userEvent.click(screen.getByTestId('manage-contests-filter-history'));
     expect(await within(await screen.findByTestId('manage-contests-row-final-players')).findByText('The Players')).toBeInTheDocument();
     expect(getEventMock).not.toHaveBeenCalled();
   });
@@ -203,10 +204,10 @@ describe('ManageContestsPage', () => {
 
     expect(await screen.findByTestId('manage-contests-row-contest-open')).toBeInTheDocument();
     expect(screen.queryByTestId('manage-contests-row-contest-final')).not.toBeInTheDocument();
-    expect(screen.getByTestId('manage-contests-filter-active')).toHaveTextContent('Active · 1');
+    expect(screen.getByTestId('manage-contests-filter-active')).toHaveTextContent('Active 1');
     expect(listContestsMock.mock.calls.map((call: unknown[]) => (call[0] as { query?: unknown }).query)).toEqual([undefined]);
 
-    fireEvent.click(screen.getByTestId('manage-contests-filter-history'));
+    await userEvent.click(screen.getByTestId('manage-contests-filter-history'));
 
     expect(await screen.findByTestId('manage-contests-row-contest-final')).toHaveTextContent('Final');
     expect(screen.queryByTestId('manage-contests-row-contest-open')).not.toBeInTheDocument();
@@ -222,7 +223,7 @@ describe('ManageContestsPage', () => {
 
     renderManageContestsPage();
 
-    fireEvent.click(await screen.findByTestId('manage-contests-filter-history'));
+    await userEvent.click(await screen.findByTestId('manage-contests-filter-history'));
     const picker = await screen.findByTestId('manage-contests-history-year');
     expect(within(picker).getAllByRole('option').map((option) => option.textContent)).toEqual(['2099', '2098']);
     expect(await screen.findByTestId('manage-contests-row-contest-newer')).toBeInTheDocument();
@@ -242,7 +243,7 @@ describe('ManageContestsPage', () => {
 
     renderManageContestsPage();
 
-    fireEvent.click(await screen.findByTestId('manage-contests-filter-history'));
+    await userEvent.click(await screen.findByTestId('manage-contests-filter-history'));
 
     expect(await screen.findByTestId('manage-contests-history-error')).toHaveTextContent('We couldn\'t load the contests finished in 2099.');
   });

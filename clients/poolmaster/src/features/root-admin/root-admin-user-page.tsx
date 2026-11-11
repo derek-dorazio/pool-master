@@ -14,7 +14,7 @@ import {
   DangerZoneAction,
   ErrorState,
   formatDateDisplay,
-  IdentityHeading,
+  PageHeader,
   Input,
   LoadingState,
   SettingsRow,
@@ -235,10 +235,10 @@ export function RootAdminUserPage() {
 
   return (
     <div className="space-y-8" data-testid="root-admin-user-page">
-      <IdentityHeading
+      <PageHeader
         icon={<UserRound aria-hidden size={22} />}
         meta={<span>@{viewedUser.username}</span>}
-        name={displayName}
+        title={displayName}
         testId="root-admin-user-identity"
       />
 
