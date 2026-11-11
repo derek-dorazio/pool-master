@@ -110,7 +110,9 @@ export function InfoPopover({
 
   return (
     <span
-      className={cn("relative inline-flex", className)}
+      // Auto, so the icon and its callout stay live inside a summary that passes taps through
+      // to its row (an ExpandableRow).
+      className={cn("pointer-events-auto relative inline-flex", className)}
       onPointerEnter={(event) => {
         if (event.pointerType !== "mouse") {
           return;
@@ -163,7 +165,7 @@ export function InfoPopover({
         // The gap above the card is padding on this wrapper, not margin, so it belongs to the
         // callout's hit area and a mouse crossing it never leaves.
         <span
-          className="fixed z-40 block pt-2"
+          className="pointer-events-auto fixed z-40 block pt-2"
           data-testid={`${testId}-callout`}
           id={panelId}
           style={{ left: place.left, top: place.top, width: `min(${CALLOUT_WIDTH}px, calc(100vw - ${2 * SCREEN_GUTTER}px))` }}

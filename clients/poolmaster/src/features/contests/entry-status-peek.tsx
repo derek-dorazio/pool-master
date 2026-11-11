@@ -18,19 +18,17 @@ const STATUS_TEST_ID = 'contest-entry-status';
 /**
  * An entry page's status, kept beside the entry's name so the page can open on its picks: the
  * Details pattern (`rules/ux-rules.md` §15 *Showing More*) with the entry's status glyph in place
- * of the (i). Its peek card lists the status, the contest's phase, any facts the page adds and
- * the entry's dates. `status` is null while another team's entry is hidden.
+ * of the (i). Its peek card leads with the status and the contest's phase, then any facts the
+ * page adds and the entry's dates. `status` is null while another team's entry is hidden.
  */
 export function EntryStatusPeek({
   entry,
-  entryName,
   facts = [],
   phase,
   status,
 }: {
   /** The entry's own read, for when it was created and last changed; null until it loads. */
   entry: { createdAt?: string | null; updatedAt?: string | null } | null;
-  entryName: string;
   /** The page's own lines, after the contest's phase. */
   facts?: EntryStatusFact[];
   /** The contest's phase as the page words it. */
@@ -39,12 +37,12 @@ export function EntryStatusPeek({
 }) {
   const displayPreferences = useDisplayPreferences();
   const statusLabel = status ? CONTEST_ENTRY_STATUS_LABELS[status] : HIDDEN_STATUS_LABEL;
+  // The card leads with the status and the contest's phase; the entry's name is right above it.
+  // Short labels keep each date on one line on a phone.
   const lines: EntryStatusFact[] = [
-    { id: 'entry-status', label: 'Entry status', value: statusLabel },
-    { id: 'contest-phase', label: 'Contest phase', value: phase },
     ...facts,
     { id: 'created', label: 'Created', value: formatDateTimeDisplay(entry?.createdAt, displayPreferences) },
-    { id: 'last-updated', label: 'Last updated', value: formatDateTimeDisplay(entry?.updatedAt, displayPreferences) },
+    { id: 'last-updated', label: 'Updated', value: formatDateTimeDisplay(entry?.updatedAt, displayPreferences) },
   ];
   const peekFacts: PeekFact[] = lines.map((line) => ({ label: line.label, testId: `${STATUS_TEST_ID}-${line.id}`, value: line.value }));
 
@@ -54,7 +52,11 @@ export function EntryStatusPeek({
       label={`Entry status: ${statusLabel}`}
       testId={STATUS_TEST_ID}
     >
-      <PeekCard facts={peekFacts} title={entryName} />
+      <PeekCard
+        facts={peekFacts}
+        subtitle={<span data-testid={`${STATUS_TEST_ID}-contest-phase`}>{phase}</span>}
+        title={<span data-testid={`${STATUS_TEST_ID}-entry-status`}>{statusLabel}</span>}
+      />
     </DetailsPeek>
   );
 }

@@ -1,7 +1,9 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
+import { MemoryRouter } from "react-router";
 import { describe, expect, it, vi } from "vitest";
+import { DetailsPeek, PeekCard } from "./details-peek";
 import { ExpandableRow } from "./expandable-row";
 
 function Row({ defaultOpen }: { defaultOpen?: boolean }) {
@@ -113,5 +115,34 @@ describe("ExpandableRow", () => {
     fireEvent.click(screen.getByRole("button", { name: "About" }));
     expect(onPeek).toHaveBeenCalledTimes(1);
     expect(screen.getByRole("button", { name: "Row" })).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("a peek opened from the summary stays live: its callout takes clicks, not the row beneath it", () => {
+    render(
+      <MemoryRouter>
+        <ExpandableRow
+          label="Picks for Incubus 1"
+          summary={(
+            <span>
+              Incubus 1
+              <DetailsPeek label="About Incubus 1" testId="peek">
+                <PeekCard facts={[{ label: "Owners", value: "Sam Lee" }]} title="Incubus" />
+              </DetailsPeek>
+            </span>
+          )}
+        >
+          picks
+        </ExpandableRow>
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "About Incubus 1" }));
+    const callout = screen.getByTestId("peek-callout");
+    // The summary passes taps through to the row's toggle; the peek takes them back, callout included.
+    expect(callout).toHaveClass("pointer-events-auto");
+    fireEvent.click(screen.getByText("Sam Lee"));
+
+    expect(screen.getByTestId("peek-callout")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Picks for Incubus 1" })).toHaveAttribute("aria-expanded", "false");
   });
 });

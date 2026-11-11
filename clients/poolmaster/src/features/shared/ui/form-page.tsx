@@ -4,6 +4,7 @@ import { Button, LinkButton } from "./button";
 import { Tile } from "./tile";
 import { Heading } from "./heading";
 import { HelpTip } from "./help-tip";
+import { Text } from "./text";
 
 type FormPageProps = {
   /** Shown above the footer when the save fails. */
@@ -13,6 +14,8 @@ type FormPageProps = {
   /** How the form works, behind a (?) after the title, never a sentence on the page. */
   help?: ReactNode;
   isPending: boolean;
+  /** One fact line under the title: the facts the form acts on, never how it works. */
+  meta?: ReactNode;
   isSubmitDisabled?: boolean;
   onSubmit: SubmitEventHandler<HTMLFormElement>;
   pendingLabel: string;
@@ -33,6 +36,7 @@ export function FormPage({
   help,
   isPending,
   isSubmitDisabled = false,
+  meta,
   onSubmit,
   pendingLabel,
   submitLabel,
@@ -42,13 +46,16 @@ export function FormPage({
 }: FormPageProps) {
   return (
     <form className="space-y-5" data-testid={testId} noValidate onSubmit={onSubmit}>
-      <div className="flex items-center">
-        <Heading level={2} variant="subtitle">{title}</Heading>
-        {help ? (
-          <HelpTip className="-my-2" label="How this form works" testId={testId ? `${testId}-help` : "form-page-help"}>
-            {help}
-          </HelpTip>
-        ) : null}
+      <div>
+        <div className="flex items-center">
+          <Heading level={2} variant="subtitle">{title}</Heading>
+          {help ? (
+            <HelpTip className="-my-2" label="How this form works" testId={testId ? `${testId}-help` : "form-page-help"}>
+              {help}
+            </HelpTip>
+          ) : null}
+        </div>
+        {meta ? <Text as="p" variant="meta">{meta}</Text> : null}
       </div>
       <Tile className="space-y-5 p-5" padding="none" radius="md">{children}</Tile>
       {errorMessage ? <Notice tone="danger">{errorMessage}</Notice> : null}

@@ -225,7 +225,7 @@ export function ContestEntryFrame({
       )}
       testId={testId}
       title={title}
-      titleAside={<EntryStatusPeek entry={entry} entryName={title} facts={statusFacts} phase={phase} status={status} />}
+      titleAside={<EntryStatusPeek entry={entry} facts={statusFacts} phase={phase} status={status} />}
     >
       {children}
     </ContestPageFrame>

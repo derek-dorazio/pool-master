@@ -1341,7 +1341,7 @@ describe('ContestEntryPage — selection rules the server enforces', () => {
       expect(callout.getByTestId('contest-entry-status-contest-phase')).toHaveTextContent('Editable until the event starts');
       expect(callout.getByTestId('contest-entry-status-entries-close')).toHaveTextContent('When the event starts');
       expect(callout.getByText('Created')).toBeInTheDocument();
-      expect(callout.getByText('Last updated')).toBeInTheDocument();
+      expect(callout.getByText('Updated')).toBeInTheDocument();
 
       fireEvent.click(screen.getByTestId('contest-entry-status'));
       expect(screen.queryByTestId('contest-entry-status-callout')).not.toBeInTheDocument();

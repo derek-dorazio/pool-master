@@ -39,6 +39,12 @@ describe("FormPage", () => {
     expect(screen.getByLabelText("League name")).toHaveValue("Saturday Golf League");
   });
 
+  it("shows the facts the form acts on as a line under the title", () => {
+    renderFormPage({ meta: "ESPN reports Tiger Woods (1234) · GOLF" });
+
+    expect(screen.getByText("ESPN reports Tiger Woods (1234) · GOLF")).toBeInTheDocument();
+  });
+
   it("keeps how the form works behind a (?) after the title, not on the page", () => {
     renderFormPage({ help: "Change how the league appears." });
 

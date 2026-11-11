@@ -39,26 +39,29 @@ export function SectionTitle({
 }) {
   return (
     <div className="flex min-h-11 flex-wrap items-center gap-x-2 gap-y-2">
-      <Heading
-        className={cn("flex items-center gap-2", tone === "danger" ? "text-destructive" : undefined)}
-        data-testid={testId}
-        id={id}
-        level={level}
-        size="sm"
-        tone={tone === "danger" ? "inherit" : "default"}
-        variant="card"
-      >
-        {title}
-      </Heading>
-      {help ? (
-        <HelpTip
-          className="-my-2 -ml-2"
-          label="How this section works"
-          testId={testId ? `${testId}-help` : "section-help"}
+      {/* The title and its (?) never part: on a phone a long title wraps with the (?) beside it. */}
+      <span className="flex min-w-0 items-center">
+        <Heading
+          className={cn("flex items-center gap-2", tone === "danger" ? "text-destructive" : undefined)}
+          data-testid={testId}
+          id={id}
+          level={level}
+          size="sm"
+          tone={tone === "danger" ? "inherit" : "default"}
+          variant="card"
         >
-          {help}
-        </HelpTip>
-      ) : null}
+          {title}
+        </Heading>
+        {help ? (
+          <HelpTip
+            className="-my-2 shrink-0"
+            label="How this section works"
+            testId={testId ? `${testId}-help` : "section-help"}
+          >
+            {help}
+          </HelpTip>
+        ) : null}
+      </span>
       {trailing ? <div className="ml-auto flex flex-wrap items-center gap-2 text-xs text-muted-foreground">{trailing}</div> : null}
     </div>
   );
