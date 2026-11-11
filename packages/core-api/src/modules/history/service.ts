@@ -413,7 +413,7 @@ export class HistoryService {
       throw new HistorySquadNotFoundError(`Squad ${finishOf} is not in this league.`);
     }
     // The filtered squad's finishes are its counted ones; another squad's are all of its own.
-    const finishRows = finishOf === squadId
+    const finishRows = filter.finishOf === undefined
       ? squadRows
       : new Map(finishes.filter((finish) => finish.squadId === finishOf).map((finish) => [finish.contestId, finish]));
 

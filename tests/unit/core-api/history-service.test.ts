@@ -263,7 +263,7 @@ describe('HistoryService (#837)', () => {
     const contests = await service.listYearContests(LEAGUE, 2026, { finishOf: 'bogeys' });
 
     expect(contests.map((row) => [row.contestId, row.squadFinish])).toEqual([
-      ['open', { place: 1, tiedCount: 1, points: expect.any(Number) as number }],
+      ['open', { place: 1, tiedCount: 1, points: 0 }],
       ['pga', null],
       ['masters', { place: 2, tiedCount: 2, points: 800 }],
     ]);
