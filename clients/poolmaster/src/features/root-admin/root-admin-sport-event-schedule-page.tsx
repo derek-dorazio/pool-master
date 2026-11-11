@@ -19,10 +19,11 @@ import { formPageSave } from '@/lib/form-page-save';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import { useManageBreadcrumbOverride } from './manage-breadcrumb-context';
-import { buildSportEventPath, capitalize } from './manage-navigation';
+import { buildSportEventPath } from './manage-navigation';
 import { useManagedSport } from './use-managed-sport';
 import { useSportEventRoundsQuery, useSportEventQuery } from './use-sport-event';
 import { useEventRoundLabel } from './use-sport-catalog';
+import { upperFirst } from '@/lib/upper-first';
 
 const roundsFormSchema = z.object({
   rounds: z
@@ -117,7 +118,7 @@ function SportEventScheduleForm({
       submitLabel="Save schedule"
       submitTestId="root-admin-sport-event-rounds-save"
       testId="root-admin-sport-event-schedule-page"
-      title={`${capitalize(round.one)} schedule`}
+      title={`${upperFirst(round.one)} schedule`}
     >
       {fields.map((field, index) => (
         <div className="grid gap-3 sm:grid-cols-2" key={field.id}>

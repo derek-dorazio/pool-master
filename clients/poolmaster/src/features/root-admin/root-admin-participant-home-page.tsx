@@ -16,9 +16,10 @@ import { QueryKeys } from '@/lib/query-keys';
 import type { ParticipantDto, ParticipantProviderMappingDto } from '@/lib/api';
 import { useManageBreadcrumbOverride, useManagePageOwnsHeading } from './manage-breadcrumb-context';
 import { participantStatusLabel, participantStatusTone } from './sport-admin-utils';
-import { buildSportParticipantPath, capitalize } from './manage-navigation';
+import { buildSportParticipantPath } from './manage-navigation';
 import { useParticipantQuery } from './use-sport-catalog';
 import { useManagedSport } from './use-managed-sport';
+import { upperFirst } from '@/lib/upper-first';
 
 function ParticipantMappingsSection({ participantId }: { participantId: string }) {
   const { participant } = useManagedSport().definition.vocabulary;
@@ -142,7 +143,7 @@ export function RootAdminParticipantHomePage() {
   return (
     <AsyncPage
       emptyBody={`This ${participant.one} does not exist or has been removed.`}
-      emptyTitle={`${capitalize(participant.one)} not found`}
+      emptyTitle={`${upperFirst(participant.one)} not found`}
       errorBody={extractErrorMessage(playerQuery.error, {
         fallback: `We could not load this ${participant.one} right now.`,
       })}

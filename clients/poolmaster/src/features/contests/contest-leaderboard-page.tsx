@@ -37,6 +37,7 @@ import { MineMarker } from './mine-marker';
 import { useLeaderboardFallback } from './use-leaderboard-fallback';
 import { ContestEventSwitcher } from './contest-event-switcher';
 import { hasContestEventStarted } from './contest-events';
+import { upperFirst } from '@/lib/upper-first';
 
 /**
  * The member-facing contest leaderboard (#110, #111, #112).
@@ -87,11 +88,6 @@ function matchesSearch(entry: LeaderboardEntryRow, search: string) {
   return !needle
     || entry.entryName.toLowerCase().includes(needle)
     || entry.squadName.toLowerCase().includes(needle);
-}
-
-/** "golfer" as a column header: "Golfer". */
-function capitalize(word: string) {
-  return word.charAt(0).toUpperCase() + word.slice(1);
 }
 
 /** Position, name and total take fixed tracks (the name takes the slack); the family's columns follow. */
@@ -456,7 +452,7 @@ export function ContestLeaderboardPage() {
           style={{ gridTemplateColumns }}
         >
           <span>Pos</span>
-          <span>{capitalize(participantNoun.one)}</span>
+          <span>{upperFirst(participantNoun.one)}</span>
           <span className="text-right">Tot</span>
           {view.detailColumns.map((column) => (
             <span className="text-right" data-testid={column.testId} key={column.key}>

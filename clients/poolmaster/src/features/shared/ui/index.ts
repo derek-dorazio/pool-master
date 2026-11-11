@@ -95,3 +95,4 @@ export { ExpandableTile } from "./expandable-tile";
 export { FaqList, type FaqItem } from "./faq-list";
 export { NumberedSteps, type NumberedStep } from "./numbered-steps";
 export { SectionBody, SectionCard, SectionEmpty, SectionFooterLink, SectionNote, SectionRow, SectionRows, SectionTitle } from "./section-card";
+export { Text, type TextProps } from "./text";

@@ -10,8 +10,8 @@ import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import { describeEntry, matchNoun, ReseedAction, reseededRounds, reseedErrorMessages, roundStarted, unfinishedBefore } from './bracket-copy';
 import type { BracketContext } from './bracket-match-row';
-import { capitalize } from './manage-navigation';
 import { useSportLeaguesQuery } from './use-sport-catalog';
+import { upperFirst } from '@/lib/upper-first';
 
 const logger = getLogger().child({ feature: 'root-admin-reseed' });
 
@@ -155,12 +155,12 @@ function ReseedRound({
       <Heading level={4} variant="label">{roundLabel(roundNumber, roundCount)}</Heading>
       {ready ? null : (
         <p className="mt-1 text-sm text-muted-foreground" data-testid={`root-admin-reseed-waiting-${roundNumber}`}>
-          {`Enter the result of every ${before} ${noun.one} first. ${capitalize(unfinishedNoun)} ${listNumbers(unfinished.map((match) => match.matchNumber))} ${unfinished.length === 1 ? 'has' : 'have'} no result yet.`}
+          {`Enter the result of every ${before} ${noun.one} first. ${upperFirst(unfinishedNoun)} ${listNumbers(unfinished.map((match) => match.matchNumber))} ${unfinished.length === 1 ? 'has' : 'have'} no result yet.`}
         </p>
       )}
       {saved && !requested ? (
         <p className="mt-1 text-sm text-muted-foreground" data-testid={`root-admin-reseed-saved-${roundNumber}`} role="status">
-          {`${capitalize(noun.many)} saved. They can change until the round starts.`}
+          {`${upperFirst(noun.many)} saved. They can change until the round starts.`}
         </p>
       ) : null}
       {!requested || !ready ? (
@@ -197,7 +197,7 @@ function ReseedRound({
           <ul className="space-y-2">
             {matchups.map((matchup) => (
               <li className="flex flex-wrap items-end gap-3" data-testid={`root-admin-reseed-match-${matchup.matchNumber}`} key={matchup.matchNumber}>
-                <span className="min-w-20 text-sm font-medium">{`${capitalize(noun.one)} ${matchup.matchNumber}`}</span>
+                <span className="min-w-20 text-sm font-medium">{`${upperFirst(noun.one)} ${matchup.matchNumber}`}</span>
                 {SIDES.map((side) => (
                   <label className="flex flex-col gap-1 text-xs text-muted-foreground" key={side}>
                     {side === MatchSide.HOME ? 'Home' : 'Away'}

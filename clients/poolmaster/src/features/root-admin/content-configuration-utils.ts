@@ -1,6 +1,6 @@
 import { SelectionType, isRosterSelectionType, type RosterSelectionType, type SportVocabulary } from '@poolmaster/shared/domain';
-import { capitalize } from './manage-navigation';
 import type { ContestConfigTemplateDto } from '@/lib/api';
+import { upperFirst } from '@/lib/upper-first';
 
 export type ContestConfigTemplate = ContestConfigTemplateDto;
 
@@ -88,13 +88,13 @@ export function templateSizeFields(
     [SelectionType.BUDGET_PICK]: {
       helperText: `Every budget contest's salary cap is its ${vocabulary.event.one}'s.`,
       key: 'rosterSize',
-      label: `${capitalize(vocabulary.participant.many)} per entry`,
+      label: `${upperFirst(vocabulary.participant.many)} per entry`,
       testId: 'root-admin-content-config-roster-size',
     },
     [SelectionType.RANDOM_DRAW]: {
       helperText: `The draw deals each entry this many ${vocabulary.participant.many} at random.`,
       key: 'picksPerEntry',
-      label: `${capitalize(vocabulary.participant.many)} per entry`,
+      label: `${upperFirst(vocabulary.participant.many)} per entry`,
       testId: 'root-admin-content-config-picks-per-entry',
     },
   };

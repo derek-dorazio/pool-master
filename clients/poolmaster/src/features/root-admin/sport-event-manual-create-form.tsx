@@ -26,8 +26,9 @@ import {
   parseEventYear,
   type SportEventEdition,
 } from './sport-event-edition';
-import { buildSportEventPath, capitalize } from './manage-navigation';
+import { buildSportEventPath } from './manage-navigation';
 import { useManagedSport } from './use-managed-sport';
+import { upperFirst } from '@/lib/upper-first';
 
 
 const manualFormSchema = z.object({
@@ -144,7 +145,7 @@ export function SportEventManualCreateForm({
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <FormField error={form.formState.errors.rounds?.message} label={capitalize(round.many)}>
+          <FormField error={form.formState.errors.rounds?.message} label={upperFirst(round.many)}>
             <Input
               data-testid="root-admin-sport-event-create-rounds"
               min={1}

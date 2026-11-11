@@ -99,6 +99,12 @@ end of its section's title row. A
 switching a page's views. A search box in the header feeds a `DataGrid` through
 its `searchTerm`.
 
+Text that is not a title (`Heading`) or the line over one (`Eyebrow`) is a `Text`:
+`variant` is `body`, `meta`, `caption`, `label`, `value` or `strong`, `tone` and `weight` are optional,
+`truncate` cuts a long line, and `as` picks `span` (the default), `p` or `div`. Pages never
+type font size, weight, case or text colour classes (`rules/react-ui-rules.md` §5 *Theme And
+Styling Discipline*).
+
 A section of a page is a `SectionCard` (`rules/ux-rules.md` §12 item 13): its
 `SectionTitle` in a ruled bar (house uppercase italic, an optional `info` icon
 that holds the section's explanation, and an optional `trailing` slot for one
