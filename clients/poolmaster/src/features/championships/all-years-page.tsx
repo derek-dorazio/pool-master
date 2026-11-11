@@ -32,10 +32,11 @@ import {
 import { useHistorySummaryQuery } from './use-championship-query';
 
 /**
- * All years (#837, mockup C), the Championships header's All years tab (#1543): tiles for the most championships and cups won, the record book
- * (#873), then each year newest first with its champion and cup champions ("2026 so far" while
- * the year runs). A year opens that year's Championship tab; a cup opens its Points race. The
- * summary and the record book each show the locked note on a plan without them (#948).
+ * All years (#837, mockup C), the Championships header's All years tab (#1543): tiles for the
+ * most championships and cups won, the record book (#873), then each year newest first with its
+ * champion and cup champions ("2026 so far" while the year runs). A year opens that year's
+ * Championship tab; a cup opens its Points race. The summary and the record book each show the
+ * locked note on a plan without them (#948).
  */
 export function AllYearsPage() {
   const { leagueCode = '' } = useParams<{ leagueCode: string }>();
