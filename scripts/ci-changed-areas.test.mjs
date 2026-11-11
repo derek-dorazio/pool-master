@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { classifyChanges } from './ci-changed-areas.mjs';
+import { classifyChanges, uiBatchViolations } from './ci-changed-areas.mjs';
 
 // #300 — the cases that matter are the ones where skipping would be wrong, so most of these assert
 // that something runs rather than that it is skipped.
@@ -127,5 +127,56 @@ describe('ci-changed-areas on a push to main (#778)', () => {
   it('runs everything when the file list could not be built', () => {
     assert.deepEqual(areas(classifyChanges([], { allOrNothing: true })),
       { code: true, service: true, client: true });
+  });
+});
+
+describe('ci-changed-areas: rule-scanner baselines', () => {
+  it('runs only the client suites when a web-app sweep also shrinks a rule baseline', () => {
+    const r = classifyChanges([
+      'clients/poolmaster/src/features/leagues/league-detail-page.tsx',
+      'scripts/text-style-baseline.json',
+      'scripts/duplicate-baseline.json',
+    ]);
+    assert.deepEqual({ code: r.code, service: r.service, client: r.client },
+      { code: true, service: false, client: true });
+  });
+
+  it('still runs everything when the scanner script beside a baseline changes', () => {
+    const r = classifyChanges(['scripts/text-style-baseline.json', 'scripts/check-text-styles.mjs']);
+    assert.deepEqual({ code: r.code, service: r.service, client: r.client },
+      { code: true, service: true, client: true });
+  });
+
+  it('still runs everything when the coverage floors change, since the suites read them', () => {
+    const r = classifyChanges(['scripts/coverage-floors.json']);
+    assert.deepEqual({ code: r.code, service: r.service, client: r.client },
+      { code: true, service: true, client: true });
+  });
+});
+
+describe('ci-changed-areas: UI batch pull requests', () => {
+  it('accepts web-app files, docs and rule baselines', () => {
+    assert.deepEqual(uiBatchViolations([
+      'clients/poolmaster/src/features/shared/ui/text.tsx',
+      'scripts/text-style-baseline.json',
+      'rules/ux-rules.md',
+    ]), []);
+  });
+
+  it('refuses shared, service, test, script and dependency changes, which need the full suites', () => {
+    const refused = [
+      'packages/shared/domain/brand.ts',
+      'packages/core-api/src/index.ts',
+      'tests/integration/helpers.ts',
+      'scripts/check-text-styles.mjs',
+      'package-lock.json',
+      '.github/workflows/ci.yml',
+      'infrastructure/terraform/main.tf',
+    ];
+    assert.deepEqual(uiBatchViolations(['clients/poolmaster/src/main.tsx', ...refused]), refused);
+  });
+
+  it('refuses a pull request whose file list could not be built', () => {
+    assert.deepEqual(uiBatchViolations([]), ['(no file list)']);
   });
 });

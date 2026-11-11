@@ -915,9 +915,10 @@ So:
 
 - **Open the next PR as soon as its local gates pass**, without waiting for the PR it builds
   on to merge. Branch it from the earlier slice's branch and **target `main`**, never the
-  earlier branch: CI runs only on pull requests into `main`, so a PR aimed at another branch
-  gets no verdict. Its diff carries the earlier slice's commits until that merges; say so in
-  the body, naming the PR it builds on, and review only the commits that are new. Once the
+  earlier branch: CI runs only on pull requests into `main` and into a UI batch branch, so a
+  PR aimed at another branch gets no verdict. Its diff carries the earlier slice's commits until that merges; say so in
+  the body, naming the PR it builds on, and review only the commits that are new. (A UI
+  batch branch, below, is the one other base CI runs on.) Once the
   earlier PR merges, merge `main` into the branch, re-run the gates and push.
 - **Combine tiny related tickets into one PR** when each is a small change in the same area,
   with `Closes #NN` for each. The cost is a larger diff and a coarser revert, so keep
@@ -927,6 +928,46 @@ So:
   queued run, and the commit it replaced loses its own verdict (see
   `docs/CI-AND-QUALITY-GATES.md` *Trigger model*). So don't wait for a deploy to finish
   before merging the next PR, but don't merge three inside one `main` run either.
+
+### UI batch branches
+
+Web-app-only tickets in a UI epic land through a **batch branch**
+instead of one `main` merge each. A `main` merge costs a full run plus the spacing above;
+a run of mechanical UI sweeps pays that per ticket for changes that cannot touch the
+service, the model or the scoring. The owner opts an epic in; everything else, provider and
+service work included, stays on the normal flow to `main`.
+
+- **The branch** is `ui-batch/<n>`, numbered upward, created from `main` by the coordinator
+  (GitHub's *create branch*, nothing pushed). One batch is open at a time.
+- **A ticket PR targets the open batch branch**, not `main`. Its CI is the quick check:
+  `changes`, `all-contract-gates`, `service-lint-typecheck`, `poolmaster-build` and
+  `poolmaster-unit-tests`; the service suites and `poolmaster-browser-e2e-local` skip. It is
+  reviewed as usual (for a mechanical sweep, the diff and the screenshots), and once the
+  review approves it is squash-merged into the batch at once: no merge spacing and no
+  trial merge of `main`, since nothing deploys from a batch.
+- **Web app only.** `changes` fails a batch PR that carries anything outside
+  `clients/` and the docs and rule baselines (`scripts/ci-changed-areas.mjs`): a change to
+  `packages/shared`, the service, `tests/`, a script, a migration or a dependency needs the
+  full suites and goes to `main` as its own PR. Split the ticket if it must.
+- **Ticket PR bodies say `Part of #<epic>` and `Refs #<ticket>`, not `Closes`.** A closing
+  keyword only acts on a merge into `main`, and the ticket is not done until it is there.
+- **Landing a batch, about twice a day**, when the coordinator calls it: open a PR from
+  `ui-batch/<n>` to `main` (only then; an open batch PR would re-run the full suite on every
+  ticket merge). Create `ui-batch/<n+1>` from `main` first and retarget any open ticket PRs
+  to it, so none is caught by the batch branch's deletion on merge. The batch PR gets the
+  full CI, the `land-a-pr` trial merge and the normal merge spacing. Its squash title is
+  `UI batch <n>: <the tickets in a few words> (#PR)`, and its body carries `Part of #<epic>`,
+  one `Closes #NN` for each ticket the batch finishes, and the list of ticket PRs. No second
+  review: each ticket was reviewed on its way in. A conflict resolution that changed code
+  gets a quick re-check as on any PR.
+- **Staying current with `main`.** A batch branch is not kept up to date while it fills.
+  The batch PR merges `main` in when it is opened (GitHub's *Update branch*), and again if
+  `main` moves before it lands. A ticket that needs something just merged to `main` waits
+  for the next batch.
+- **A red batch run** is fixed by a small PR into the same batch (or, for a failure that is
+  not the web app's, on `main`); the batch does not land red. The tradeoff accepted: a
+  web-app break can sit on a batch for a few hours before the batch run's browser e2e
+  catches it, and never reaches QA.
 
 ### Review triggers in the PR body
 

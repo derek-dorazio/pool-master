@@ -4,7 +4,10 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
+    # UI batch branches (rules/workflow-rules.md §6 *UI batch branches*): web-app PRs into a
+    # batch get the quick check (lint, typecheck, unit tests); the batch's own PR into main gets
+    # everything. A push to a batch branch runs nothing: the batch PR into main tests its tip.
+    branches: [main, 'ui-batch/**']
 
 # #328 — cancellation is scoped to pull requests, and the asymmetry is the point.
 #
@@ -60,6 +63,7 @@ jobs:
       code: ${{ steps.classify.outputs.code }}
       service: ${{ steps.classify.outputs.service }}
       client: ${{ steps.classify.outputs.client }}
+      batch: ${{ steps.classify.outputs.batch }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -96,8 +100,12 @@ jobs:
           wc -l < changed-files.txt
       - name: Classify the changed areas
         id: classify
-        # On main, only a documentation-only push skips anything (#778).
-        run: node scripts/ci-changed-areas.mjs changed-files.txt ${{ github.event_name == 'push' && '--all-or-nothing' || '' }}
+        # On main, only a documentation-only push skips anything (#778). A PR into a UI batch
+        # branch is refused here unless it is web-app only, and skips the browser e2e.
+        run: >-
+          node scripts/ci-changed-areas.mjs changed-files.txt
+          ${{ github.event_name == 'push' && '--all-or-nothing' || '' }}
+          ${{ startsWith(github.base_ref, 'ui-batch/') && '--ui-batch' || '' }}
 
   # Repo-wide gates: the published contract and the model/rule guards. Scope is the
   # whole repository, so this blocks both service and web work.
@@ -583,7 +591,11 @@ jobs:
     name: service-build
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: service-lint-typecheck
+    needs: [service-lint-typecheck, changes]
+    # A web-app-only change cannot change what this builds, so it is skipped with the service
+    # suites (`service`); on main it always runs (#778). Lint must still have passed.
+    if: ${{ !cancelled() && needs.service-lint-typecheck.result == 'success'
+        && needs.changes.outputs.service != 'false' }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -604,7 +616,10 @@ jobs:
     name: service-image-smoke
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    needs: service-lint-typecheck
+    needs: [service-lint-typecheck, changes]
+    # Skipped with the service suites for a web-app-only change; see service-build.
+    if: ${{ !cancelled() && needs.service-lint-typecheck.result == 'success'
+        && needs.changes.outputs.service != 'false' }}
     services:
       postgres:
         image: postgres:16
@@ -636,7 +651,11 @@ jobs:
     name: service-mock-provider-build
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: service-lint-typecheck
+    needs: [service-lint-typecheck, changes]
+    # A web-app-only change cannot change what this builds, so it is skipped with the service
+    # suites (`service`); on main it always runs (#778). Lint must still have passed.
+    if: ${{ !cancelled() && needs.service-lint-typecheck.result == 'success'
+        && needs.changes.outputs.service != 'false' }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -691,6 +710,7 @@ jobs:
     timeout-minutes: 25
     needs: [all-contract-gates, changes]
     # #300 — see docs/CI-AND-QUALITY-GATES.md. Gated on `code`, not `client`: it runs the whole stack, core-api included.
+    # Skipped on a PR into a UI batch branch: the batch's PR into main runs it once for the batch.
     # `!cancelled()` is load-bearing, not decoration (#350). A job whose `needs:` did not
     # succeed is skipped by default unless its `if` uses a status function, and `changes`
     # is a job that can be cancelled before it starts: twice on 2026-10-05 it waited 15
@@ -700,7 +720,7 @@ jobs:
     # `changes` that did not finish leaves its outputs empty, and `!= 'false'` runs the job
     # rather than skipping it (#778). `all-contract-gates` stays a real gate.
     if: ${{ !cancelled() && needs.all-contract-gates.result == 'success'
-        && needs.changes.outputs.code != 'false' }}
+        && needs.changes.outputs.code != 'false' && needs.changes.outputs.batch != 'true' }}
     services:
       postgres:
         image: postgres:16

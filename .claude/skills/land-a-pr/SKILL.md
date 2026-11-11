@@ -13,6 +13,10 @@ PR's own diff. This skill is the merge, done so that main stays green. The merge
 is `rules/workflow-rules.md` §6 *Branching, Review, and Merge Cadence*; read *Slice closeout
 protocol* and *Slices in a series* there.
 
+A ticket PR into a UI batch branch skips this skill: once approved it squash-merges into the
+batch straight away. The batch's own PR into main is landed with this skill. Both are in
+`rules/workflow-rules.md` §6 *UI batch branches*.
+
 ## Step 0 — the go
 
 Merge only with the approval and the go to merge the project's process gives

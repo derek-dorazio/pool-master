@@ -18,8 +18,15 @@
 // the last successful main run rather than the previous commit, so a commit whose own run was
 // replaced or failed is still in the list and still gets tested and deployed.
 //
-// CLI: node scripts/ci-changed-areas.mjs <file-list-path> [--all-or-nothing]
-// Writes `code=`, `service=` and `client=` lines to $GITHUB_OUTPUT, and a human summary to stdout.
+// A pull request into a UI batch branch (`ui-batch/<n>`, rules/workflow-rules.md §6 *UI batch
+// branches*) is classified with `--ui-batch`. Its PR run is the quick check only, and the batch's
+// own PR into main runs everything, so a batch may carry web-app changes alone: any change that
+// would run the service suites, or that forces every area on, is refused here with a failing
+// `changes` job, and belongs in its own PR to main.
+//
+// CLI: node scripts/ci-changed-areas.mjs <file-list-path> [--all-or-nothing] [--ui-batch]
+// Writes `code=`, `service=`, `client=` and `batch=` lines to $GITHUB_OUTPUT, and a human summary
+// to stdout. Exits 1 when a UI batch pull request carries a change that is not web-app only.
 import fs from 'node:fs';
 import { pathToFileURL } from 'node:url';
 
@@ -36,6 +43,12 @@ const DOC_ONLY_PREFIXES = [
 ];
 
 const DOC_ONLY_FILES = [
+  // Rule-scanner baselines. Only the scanners in `npm run rules:check` read them, and
+  // all-contract-gates runs those on every pull request whatever this script decides; no suite,
+  // build or lint reads them. A web-app sweep that shrinks a baseline must not run the service
+  // suites because of it. Scripts that are code stay in EVERYTHING_PREFIXES below.
+  'scripts/text-style-baseline.json',
+  'scripts/duplicate-baseline.json',
   'AGENTS.md',
   'CLAUDE.md',
   'README.md',
@@ -81,7 +94,8 @@ function matches(file, prefixes, files) {
 }
 
 const isDocOnly = (file) => matches(file, DOC_ONLY_PREFIXES, DOC_ONLY_FILES);
-const forcesEverything = (file) => matches(file, EVERYTHING_PREFIXES, EVERYTHING_FILES);
+// A doc-only file under an everything prefix (a rule baseline in scripts/) stays doc-only.
+const forcesEverything = (file) => !isDocOnly(file) && matches(file, EVERYTHING_PREFIXES, EVERYTHING_FILES);
 const isService = (file) => matches(file, SERVICE_PREFIXES, []);
 const isClient = (file) => matches(file, CLIENT_PREFIXES, []);
 
@@ -135,8 +149,18 @@ function classifyFiles(files) {
   };
 }
 
+/**
+ * The files a UI batch pull request may not carry: everything that is neither documentation nor
+ * web-app only. Empty means the change may go into a batch.
+ */
+export function uiBatchViolations(files) {
+  if (!files || files.length === 0) return ['(no file list)'];
+  return files.filter((f) => !isDocOnly(f) && (!isClient(f) || isService(f)));
+}
+
 function main(argv) {
   const allOrNothing = argv.includes('--all-or-nothing');
+  const uiBatch = argv.includes('--ui-batch');
   const listPath = argv.find((a) => !a.startsWith('--'));
   let files = [];
   if (listPath && fs.existsSync(listPath)) {
@@ -153,7 +177,17 @@ function main(argv) {
 
   const out = process.env.GITHUB_OUTPUT;
   if (out) {
-    fs.appendFileSync(out, `code=${code}\nservice=${service}\nclient=${client}\n`);
+    fs.appendFileSync(out, `code=${code}\nservice=${service}\nclient=${client}\nbatch=${uiBatch}\n`);
+  }
+
+  if (uiBatch) {
+    const refused = uiBatchViolations(files);
+    if (refused.length > 0) {
+      console.error('A UI batch pull request carries web-app changes only (rules/workflow-rules.md §6 *UI batch branches*).');
+      console.error('These files need the full suites, so open them as their own pull request to main:');
+      for (const f of refused.slice(0, 20)) console.error(`    ${f}`);
+      process.exitCode = 1;
+    }
   }
 }
 
