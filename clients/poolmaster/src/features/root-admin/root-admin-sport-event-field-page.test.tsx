@@ -181,12 +181,12 @@ describe('pool-master-za4 RootAdminSportEventFieldPage', () => {
     expect(screen.queryByTestId('root-admin-event-field-refresh')).not.toBeInTheDocument();
   });
 
-  it('shows the shared tournament header with Field marked in its sub-menu, in place of a back link', async () => {
+  it('shows the shared tournament header with Field marked as its current tab, in place of a back link', async () => {
     seed();
     renderPage();
 
     expect(await screen.findByTestId('root-admin-sport-event-identity')).toBeInTheDocument();
-    expect(screen.getByTestId('root-admin-sport-event-menu-field')).toBeChecked();
+    expect(screen.getByTestId('root-admin-sport-event-menu-field')).toHaveAttribute('aria-current', 'page');
     expect(screen.queryByTestId('root-admin-event-field-back')).not.toBeInTheDocument();
   });
 

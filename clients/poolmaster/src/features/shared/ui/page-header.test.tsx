@@ -85,6 +85,86 @@ describe("PageHeader", () => {
     expect(screen.getByText("Users", { selector: "span" })).toHaveAttribute("aria-current", "page");
   });
 
+  it("ends each fact but the last with a dot, so a wrapped fact line never opens with one", () => {
+    renderHeader(<PageHeader meta={<><span>Tiered</span><span>Entries: 6 of 100</span></>} testId="contest" title="Masters Pool" />);
+
+    expect(within(screen.getByTestId("contest-meta")).getByText("Tiered")).toBeInTheDocument();
+    expect(screen.getByTestId("contest-meta")).toHaveClass("[&>*:not(:last-child)]:after:content-['·']");
+    expect(screen.getByTestId("contest-meta")).not.toHaveClass("[&>*+*]:before:content-['·']");
+  });
+
+  it("puts the breadcrumb on the header's first line, above the title", () => {
+    renderHeader(
+      <PageHeader breadcrumbs={[{ href: "/manage", label: "Manage" }, { label: "Users" }]} testId="users" title="Users" />,
+    );
+
+    const trailRow = screen.getByTestId("users-trail-row");
+    expect(within(trailRow).getByRole("navigation", { name: "Breadcrumbs" })).toBeInTheDocument();
+    expect(trailRow.compareDocumentPosition(screen.getByTestId("users-title-row")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("keeps the header's breadcrumb to one line, shortening later names but never the first, so the status chip keeps its place", () => {
+    renderHeader(
+      <PageHeader breadcrumbs={[{ href: "/contests", label: "Contests" }, { label: "A very long contest name" }]} title="A very long contest name" />,
+    );
+
+    const current = screen.getByText("A very long contest name", { selector: "span" });
+    expect(within(screen.getByRole("navigation", { name: "Breadcrumbs" })).getByRole("list")).toHaveClass("flex-nowrap");
+    expect(screen.getAllByRole("listitem").find((item) => item.textContent === "A very long contest name")).toHaveClass("truncate");
+    expect(current).toHaveAttribute("aria-current", "page");
+    expect(screen.getAllByRole("listitem").find((item) => item.textContent === "Contests")).toHaveClass("shrink-0");
+  });
+
+  it("puts the status chip at the right end of the breadcrumb line when there is a trail", () => {
+    renderHeader(
+      <PageHeader
+        actions={<Button>Edit</Button>}
+        breadcrumbs={[{ href: "/contests", label: "Contests" }, { label: "Masters Pool" }]}
+        status={<span>Live</span>}
+        testId="contest"
+        title="Masters Pool"
+      />,
+    );
+
+    const slot = screen.getByTestId("contest-status-slot");
+    expect(slot).toHaveTextContent("Live");
+    expect(screen.getByTestId("contest-trail-row")).toContainElement(slot);
+    expect(screen.getByTestId("contest-title-row")).not.toContainElement(slot);
+  });
+
+  it("ends the title row with the status chip, after the actions on a wide screen, when there is no trail", () => {
+    renderHeader(
+      <PageHeader actions={<Button>Edit team</Button>} status={<span>12 entries</span>} testId="team" title="Casey Crushers" />,
+    );
+
+    const slot = screen.getByTestId("team-status-slot");
+    expect(slot).toHaveTextContent("12 entries");
+    expect(screen.getByTestId("team-title-row")).toContainElement(slot);
+    expect(slot).toHaveClass("sm:order-last");
+    expect(screen.queryByTestId("team-trail-row")).not.toBeInTheDocument();
+  });
+
+  it("shows no status slot when the page has no status", () => {
+    renderHeader(<PageHeader testId="members" title="Members" />);
+
+    expect(screen.queryByTestId("members-status-slot")).not.toBeInTheDocument();
+  });
+
+  it("shows what the page puts beside the title, such as an info icon", () => {
+    renderHeader(<PageHeader testId="entry" title="Birdie Hunters 2" titleAside={<button aria-label="Entry status">i</button>} />);
+
+    const titleRow = within(screen.getByTestId("entry-title-row"));
+    expect(titleRow.getByRole("heading", { level: 1, name: "Birdie Hunters 2" })).toBeInTheDocument();
+    expect(titleRow.getByRole("button", { name: "Entry status" })).toBeInTheDocument();
+  });
+
+  it("takes several lines under the fact line, each its own paragraph", () => {
+    renderHeader(<PageHeader description={<><p>Your best: 3rd.</p><p>Final standings.</p></>} title="Masters Pool" />);
+
+    expect(screen.getByText("Your best: 3rd.").tagName).toBe("P");
+    expect(screen.getByText("Final standings.")).toBeInTheDocument();
+  });
+
   it("puts the tabs on the header's ruled bottom line with the filter at its right end", () => {
     renderHeader(
       <PageHeader

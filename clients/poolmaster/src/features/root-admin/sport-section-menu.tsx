@@ -1,5 +1,5 @@
-import { useNavigate } from 'react-router';
-import { SegmentedControl } from '@/features/shared/ui';
+import { PageHeader, PageTabs } from '@/features/shared/ui';
+import { useManagePageOwnsHeading } from './manage-breadcrumb-context';
 import {
   buildSportEventListPath,
   buildSportLeagueListPath,
@@ -13,11 +13,12 @@ const SPORT_LISTS = ['events', 'participants', 'leagues'] as const;
 type SportList = (typeof SPORT_LISTS)[number];
 
 /**
- * Moves between a sport's three lists, named in its own words (golf: Tournaments, Golfers,
- * Tours); the side menu has one entry per sport.
+ * The header of a sport's three lists: the sport's name as the title and tabs between the lists,
+ * named in its own words (golf: Tournaments, Golfers, Tours), so no list's name shows twice. The
+ * side menu has one entry per sport; the area keeps only its trail above it.
  */
 export function SportSectionMenu({ current }: { current: SportList }) {
-  const navigate = useNavigate();
+  useManagePageOwnsHeading();
   const { sport, definition } = useManagedSport();
   const { event, participant, sportLeague } = definition.vocabulary;
   const lists: Record<SportList, { label: string; path: string }> = {
@@ -27,22 +28,21 @@ export function SportSectionMenu({ current }: { current: SportList }) {
   };
 
   return (
-    <nav aria-label={`${definition.name} lists`} data-testid="root-admin-sport-menu">
-      <SegmentedControl
-        aria-label={`${definition.name} list`}
-        onChange={(next) => {
-          const list = SPORT_LISTS.find((candidate) => candidate === next);
-          if (list) {
-            void navigate(lists[list].path);
-          }
-        }}
-        options={SPORT_LISTS.map((list) => ({
-          label: lists[list].label,
-          testId: `root-admin-sport-menu-${list}`,
-          value: list,
-        }))}
-        value={current}
-      />
-    </nav>
+    <PageHeader
+      tabs={(
+        <PageTabs
+          aria-label={`${definition.name} lists`}
+          items={SPORT_LISTS.map((list) => ({
+            isActive: list === current,
+            label: lists[list].label,
+            testId: `root-admin-sport-menu-${list}`,
+            to: lists[list].path,
+          }))}
+          variant="link"
+        />
+      )}
+      testId="root-admin-sport-menu"
+      title={definition.name}
+    />
   );
 }
