@@ -110,6 +110,21 @@ describe('game scores from a provider', () => {
     expect(final.homeSportEventParticipantId).toBe(entryOf('Duke').id);
   });
 
+  it('completes a match that was showing a live score once a later sync calls its game final, and sends the winner on as the provider\'s result', async () => {
+    const { event, externalId, entryOf, teamId, matches } = await linkedBracket();
+    const game = { externalGameId: 'g1', homeTeamExternalId: teamId('Duke'), awayTeamExternalId: teamId('Houston') };
+    await publish(externalId, [{ ...game, state: ProviderGameState.IN_PROGRESS, homeScore: 40, awayScore: 44 }]);
+    const live = (await matches.findBySportEvent(event.id)).at(0);
+
+    const result = await publish(externalId, [{ ...game, state: ProviderGameState.FINAL, homeScore: 66, awayScore: 71 }]);
+
+    expect(live).toMatchObject({ status: MatchStatus.IN_PROGRESS, homeScore: 40, awayScore: 44, winnerSide: null });
+    expect(result).toMatchObject({ updatesPersisted: 1, updatesSkipped: 0 });
+    const [first, , final] = await matches.findBySportEvent(event.id);
+    expect(first).toMatchObject({ status: MatchStatus.COMPLETED, homeScore: 66, awayScore: 71, winnerSide: MatchSide.AWAY, resultSource: MatchResultSource.PROVIDER });
+    expect(final.homeSportEventParticipantId).toBe(entryOf('Houston').id);
+  });
+
   it('writes nothing when the same final arrives again', async () => {
     const { event, externalId, teamId, matches } = await linkedBracket();
     const final = { externalGameId: 'g1', homeTeamExternalId: teamId('Duke'), awayTeamExternalId: teamId('Houston'), state: ProviderGameState.FINAL, homeScore: 70, awayScore: 67 };
