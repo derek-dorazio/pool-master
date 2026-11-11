@@ -466,6 +466,19 @@ describe('writeGameScores', () => {
       );
     });
 
+    it('leaves alone a series in which a side has won more games than it takes, a game counted after the series was over', async () => {
+      const { deps, recordResult, logger } = writer(series());
+      const fiveNil = ['s1', 's2', 's3', 's4', 's5'].map((id) => game(id, 'KC', 'BUF', 3, 1));
+
+      await writeGameScores(deps, SEVENS, fiveNil);
+
+      expect(recordResult).not.toHaveBeenCalled();
+      expect(logger.warn).toHaveBeenCalledWith(
+        { action: 'liveScore.series.tooManyGames', data: { sportEventId: EVENT_ID, matchNumber: 1, externalGameIds: 's1,s2,s3,s4,s5', length: 7 } },
+        expect.any(String),
+      );
+    });
+
     it('plays single games in a round the league names no length for, lining the lengths up with the final', async () => {
       const matches = series();
       matches[2] = { ...matches[2], homeSportEventParticipantId: 'sep-KC', awaySportEventParticipantId: 'sep-PHI' };

@@ -140,6 +140,7 @@ describe('Sport and SportLeague repositories', () => {
     await expect(lengthsOf('NBA')).resolves.toEqual([7, 7, 7, 7]);
     await expect(lengthsOf('NHL')).resolves.toEqual([7, 7, 7, 7]);
     await expect(lengthsOf('WNBA')).resolves.toEqual([3, 7, 7]);
+    await expect(lengthsOf('MLB')).resolves.toEqual([3, 5, 7, 7]);
     await expect(lengthsOf('MLS')).resolves.toEqual([1, 3, 1, 1, 1]);
     await expect(lengthsOf('NFL')).resolves.toEqual([]);
     await expect(getPrisma().sportLeague.updateMany({ where: { name: 'NBA' }, data: { roundSeriesLengths: [6] } })).rejects.toThrow();

@@ -15,6 +15,11 @@ WHERE name = 'NHL' AND sport_id = (SELECT id FROM sports WHERE sport = 'HOCKEY')
 -- WNBA (from 2025): First Round best of three, Semifinals and WNBA Finals best of seven.
 UPDATE sport_leagues SET round_series_lengths = ARRAY[3, 7, 7], updated_at = now()
 WHERE name = 'WNBA' AND sport_id = (SELECT id FROM sports WHERE sport = 'BASKETBALL');
+-- MLB: Wild Card Series best of three, Division Series best of five, League Championship Series
+-- and World Series best of seven. The league names no rounds of its own; the lengths still line
+-- up with the final.
+UPDATE sport_leagues SET round_series_lengths = ARRAY[3, 5, 7, 7], updated_at = now()
+WHERE name = 'MLB' AND sport_id = (SELECT id FROM sports WHERE sport = 'BASEBALL');
 -- MLS Cup Playoffs: Round One best of three; the Wild Card and every later round one game.
 UPDATE sport_leagues SET round_series_lengths = ARRAY[1, 3, 1, 1, 1], updated_at = now()
 WHERE name = 'MLS' AND sport_id = (SELECT id FROM sports WHERE sport = 'SOCCER');

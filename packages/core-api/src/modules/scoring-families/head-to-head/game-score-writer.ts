@@ -227,7 +227,8 @@ interface SeriesStanding {
 /**
  * Each series match's standing from the batch's games between its two teams. A series two matches
  * share the teams of is left alone, never guessed at, as is one with more decided games than it
- * has: the feed and the bracket disagree, and an admin settles it.
+ * can have (more than its length, or a side past the wins it takes): the feed and the bracket
+ * disagree, and an admin settles it.
  */
 function seriesStandings(
   deps: GameScoreWriterDeps,
@@ -250,16 +251,17 @@ function seriesStandings(
       return result?.winnerSide ? [result.winnerSide] : [];
     });
     const externalId = seriesGames.map((game) => game.externalGameId).join(',');
-    if (winners.length > length) {
-      deps.logger?.warn(
-        { action: 'liveScore.series.tooManyGames', data: { sportEventId, matchNumber: match.matchNumber, externalGameIds: externalId, length } },
-        'Skipped a series whose feed has more decided games than the series is long',
-      );
-      return [];
-    }
     const homeWins = winners.filter((side) => side === MatchSide.HOME).length;
     const awayWins = winners.length - homeWins;
     const needed = seriesWinsNeeded(length);
+    // A game counted after the series was won (5-0 in a best of seven) is as wrong as one too many.
+    if (winners.length > length || Math.max(homeWins, awayWins) > needed) {
+      deps.logger?.warn(
+        { action: 'liveScore.series.tooManyGames', data: { sportEventId, matchNumber: match.matchNumber, externalGameIds: externalId, length } },
+        'Skipped a series whose feed has more decided games than the series can have',
+      );
+      return [];
+    }
     const winnerSide = homeWins >= needed ? MatchSide.HOME : awayWins >= needed ? MatchSide.AWAY : null;
     const started = seriesGames.some((game) => SCORED_STATES.has(game.state));
     return [{ match, externalId, homeWins, awayWins, winnerSide, started }];
