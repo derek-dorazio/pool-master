@@ -8978,7 +8978,7 @@
                 "maximum": 9007199254740991
               },
               "maxEntriesPerSquad": {
-                "description": "Maximum entries a Team may create. Null means unlimited.",
+                "description": "Maximum entries a Squad may create. Null means unlimited.",
                 "type": [
                   "integer",
                   "null"
@@ -9188,7 +9188,7 @@
                 "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
               },
               "maxEntriesPerSquad": {
-                "description": "Maximum entries a Team may create. Null means unlimited.",
+                "description": "Maximum entries a Squad may create. Null means unlimited.",
                 "type": [
                   "integer",
                   "null"
@@ -9398,7 +9398,7 @@
                 "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
               },
               "maxEntriesPerSquad": {
-                "description": "Maximum entries a Team may create. Null means unlimited.",
+                "description": "Maximum entries a Squad may create. Null means unlimited.",
                 "type": [
                   "integer",
                   "null"
@@ -9608,7 +9608,7 @@
                 "description": "Picks are scored against each game's spread (#720): a pick is right when its team covers, and a game that lands exactly on the spread (a push) scores nothing. Every game needs its spread before the week is released."
               },
               "maxEntriesPerSquad": {
-                "description": "Maximum entries a Team may create. Null means unlimited.",
+                "description": "Maximum entries a Squad may create. Null means unlimited.",
                 "type": [
                   "integer",
                   "null"
@@ -9812,7 +9812,7 @@
                 "description": "The round the bracket starts at: 1 for a full bracket; a later round (the Sweet 16) for a second-chance bracket, picked from that round on and closing at its first game. The event's round values score each round from it on."
               },
               "maxEntriesPerSquad": {
-                "description": "Maximum entries a Team may create. Null means unlimited.",
+                "description": "Maximum entries a Squad may create. Null means unlimited.",
                 "type": [
                   "integer",
                   "null"
@@ -10015,7 +10015,7 @@
                 "description": "How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away."
               },
               "maxEntriesPerSquad": {
-                "description": "Maximum entries a Team may create. Null means unlimited.",
+                "description": "Maximum entries a Squad may create. Null means unlimited.",
                 "type": [
                   "integer",
                   "null"
@@ -10216,7 +10216,7 @@
                 "type": "boolean"
               },
               "maxEntriesPerSquad": {
-                "description": "Maximum entries a Team may create. Null means unlimited.",
+                "description": "Maximum entries a Squad may create. Null means unlimited.",
                 "type": [
                   "integer",
                   "null"
@@ -10714,7 +10714,7 @@
                     "description": "Contest that owns the configuration."
                   },
                   "maxEntriesPerSquad": {
-                    "description": "Maximum entries a Team may create. Null means unlimited.",
+                    "description": "Maximum entries a Squad may create. Null means unlimited.",
                     "type": [
                       "integer",
                       "null"
@@ -10769,7 +10769,7 @@
                     "description": "Contest that owns the configuration."
                   },
                   "maxEntriesPerSquad": {
-                    "description": "Maximum entries a Team may create. Null means unlimited.",
+                    "description": "Maximum entries a Squad may create. Null means unlimited.",
                     "type": [
                       "integer",
                       "null"
@@ -10819,7 +10819,7 @@
                     "description": "Contest that owns the configuration."
                   },
                   "maxEntriesPerSquad": {
-                    "description": "Maximum entries a Team may create. Null means unlimited.",
+                    "description": "Maximum entries a Squad may create. Null means unlimited.",
                     "type": [
                       "integer",
                       "null"
@@ -10868,7 +10868,7 @@
                     "description": "Contest that owns the configuration."
                   },
                   "maxEntriesPerSquad": {
-                    "description": "Maximum entries a Team may create. Null means unlimited.",
+                    "description": "Maximum entries a Squad may create. Null means unlimited.",
                     "type": [
                       "integer",
                       "null"
@@ -10911,7 +10911,7 @@
                     "description": "Contest that owns the configuration."
                   },
                   "maxEntriesPerSquad": {
-                    "description": "Maximum entries a Team may create. Null means unlimited.",
+                    "description": "Maximum entries a Squad may create. Null means unlimited.",
                     "type": [
                       "integer",
                       "null"
@@ -10953,7 +10953,7 @@
                     "description": "Contest that owns the configuration."
                   },
                   "maxEntriesPerSquad": {
-                    "description": "Maximum entries a Team may create. Null means unlimited.",
+                    "description": "Maximum entries a Squad may create. Null means unlimited.",
                     "type": [
                       "integer",
                       "null"
@@ -10993,7 +10993,7 @@
                     "description": "Contest that owns the configuration."
                   },
                   "maxEntriesPerSquad": {
-                    "description": "Maximum entries a Team may create. Null means unlimited.",
+                    "description": "Maximum entries a Squad may create. Null means unlimited.",
                     "type": [
                       "integer",
                       "null"
@@ -11194,7 +11194,7 @@
                     "maximum": 9007199254740991
                   },
                   "maxEntriesPerSquad": {
-                    "description": "Maximum entries a Team may create. Null means unlimited.",
+                    "description": "Maximum entries a Squad may create. Null means unlimited.",
                     "type": [
                       "integer",
                       "null"
@@ -11404,7 +11404,7 @@
                     "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
                   },
                   "maxEntriesPerSquad": {
-                    "description": "Maximum entries a Team may create. Null means unlimited.",
+                    "description": "Maximum entries a Squad may create. Null means unlimited.",
                     "type": [
                       "integer",
                       "null"
@@ -11614,7 +11614,7 @@
                     "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
                   },
                   "maxEntriesPerSquad": {
-                    "description": "Maximum entries a Team may create. Null means unlimited.",
+                    "description": "Maximum entries a Squad may create. Null means unlimited.",
                     "type": [
                       "integer",
                       "null"
@@ -11824,7 +11824,7 @@
                     "description": "Picks are scored against each game's spread (#720): a pick is right when its team covers, and a game that lands exactly on the spread (a push) scores nothing. Every game needs its spread before the week is released."
                   },
                   "maxEntriesPerSquad": {
-                    "description": "Maximum entries a Team may create. Null means unlimited.",
+                    "description": "Maximum entries a Squad may create. Null means unlimited.",
                     "type": [
                       "integer",
                       "null"
@@ -12028,7 +12028,7 @@
                     "description": "The round the bracket starts at: 1 for a full bracket; a later round (the Sweet 16) for a second-chance bracket, picked from that round on and closing at its first game. The event's round values score each round from it on."
                   },
                   "maxEntriesPerSquad": {
-                    "description": "Maximum entries a Team may create. Null means unlimited.",
+                    "description": "Maximum entries a Squad may create. Null means unlimited.",
                     "type": [
                       "integer",
                       "null"
@@ -12231,7 +12231,7 @@
                     "description": "How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away."
                   },
                   "maxEntriesPerSquad": {
-                    "description": "Maximum entries a Team may create. Null means unlimited.",
+                    "description": "Maximum entries a Squad may create. Null means unlimited.",
                     "type": [
                       "integer",
                       "null"
@@ -12432,7 +12432,7 @@
                     "type": "boolean"
                   },
                   "maxEntriesPerSquad": {
-                    "description": "Maximum entries a Team may create. Null means unlimited.",
+                    "description": "Maximum entries a Squad may create. Null means unlimited.",
                     "type": [
                       "integer",
                       "null"
@@ -12797,7 +12797,7 @@
                         "description": "Contest that owns the configuration."
                       },
                       "maxEntriesPerSquad": {
-                        "description": "Maximum entries a Team may create. Null means unlimited.",
+                        "description": "Maximum entries a Squad may create. Null means unlimited.",
                         "type": [
                           "integer",
                           "null"
@@ -12852,7 +12852,7 @@
                         "description": "Contest that owns the configuration."
                       },
                       "maxEntriesPerSquad": {
-                        "description": "Maximum entries a Team may create. Null means unlimited.",
+                        "description": "Maximum entries a Squad may create. Null means unlimited.",
                         "type": [
                           "integer",
                           "null"
@@ -12902,7 +12902,7 @@
                         "description": "Contest that owns the configuration."
                       },
                       "maxEntriesPerSquad": {
-                        "description": "Maximum entries a Team may create. Null means unlimited.",
+                        "description": "Maximum entries a Squad may create. Null means unlimited.",
                         "type": [
                           "integer",
                           "null"
@@ -12951,7 +12951,7 @@
                         "description": "Contest that owns the configuration."
                       },
                       "maxEntriesPerSquad": {
-                        "description": "Maximum entries a Team may create. Null means unlimited.",
+                        "description": "Maximum entries a Squad may create. Null means unlimited.",
                         "type": [
                           "integer",
                           "null"
@@ -12994,7 +12994,7 @@
                         "description": "Contest that owns the configuration."
                       },
                       "maxEntriesPerSquad": {
-                        "description": "Maximum entries a Team may create. Null means unlimited.",
+                        "description": "Maximum entries a Squad may create. Null means unlimited.",
                         "type": [
                           "integer",
                           "null"
@@ -13036,7 +13036,7 @@
                         "description": "Contest that owns the configuration."
                       },
                       "maxEntriesPerSquad": {
-                        "description": "Maximum entries a Team may create. Null means unlimited.",
+                        "description": "Maximum entries a Squad may create. Null means unlimited.",
                         "type": [
                           "integer",
                           "null"
@@ -13076,7 +13076,7 @@
                         "description": "Contest that owns the configuration."
                       },
                       "maxEntriesPerSquad": {
-                        "description": "Maximum entries a Team may create. Null means unlimited.",
+                        "description": "Maximum entries a Squad may create. Null means unlimited.",
                         "type": [
                           "integer",
                           "null"
@@ -13330,7 +13330,7 @@
                           "maximum": 9007199254740991
                         },
                         "maxEntriesPerSquad": {
-                          "description": "Maximum entries a Team may create. Null means unlimited.",
+                          "description": "Maximum entries a Squad may create. Null means unlimited.",
                           "type": [
                             "integer",
                             "null"
@@ -13540,7 +13540,7 @@
                           "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
                         },
                         "maxEntriesPerSquad": {
-                          "description": "Maximum entries a Team may create. Null means unlimited.",
+                          "description": "Maximum entries a Squad may create. Null means unlimited.",
                           "type": [
                             "integer",
                             "null"
@@ -13750,7 +13750,7 @@
                           "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
                         },
                         "maxEntriesPerSquad": {
-                          "description": "Maximum entries a Team may create. Null means unlimited.",
+                          "description": "Maximum entries a Squad may create. Null means unlimited.",
                           "type": [
                             "integer",
                             "null"
@@ -13960,7 +13960,7 @@
                           "description": "Picks are scored against each game's spread (#720): a pick is right when its team covers, and a game that lands exactly on the spread (a push) scores nothing. Every game needs its spread before the week is released."
                         },
                         "maxEntriesPerSquad": {
-                          "description": "Maximum entries a Team may create. Null means unlimited.",
+                          "description": "Maximum entries a Squad may create. Null means unlimited.",
                           "type": [
                             "integer",
                             "null"
@@ -14164,7 +14164,7 @@
                           "description": "The round the bracket starts at: 1 for a full bracket; a later round (the Sweet 16) for a second-chance bracket, picked from that round on and closing at its first game. The event's round values score each round from it on."
                         },
                         "maxEntriesPerSquad": {
-                          "description": "Maximum entries a Team may create. Null means unlimited.",
+                          "description": "Maximum entries a Squad may create. Null means unlimited.",
                           "type": [
                             "integer",
                             "null"
@@ -14367,7 +14367,7 @@
                           "description": "How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away."
                         },
                         "maxEntriesPerSquad": {
-                          "description": "Maximum entries a Team may create. Null means unlimited.",
+                          "description": "Maximum entries a Squad may create. Null means unlimited.",
                           "type": [
                             "integer",
                             "null"
@@ -14568,7 +14568,7 @@
                           "type": "boolean"
                         },
                         "maxEntriesPerSquad": {
-                          "description": "Maximum entries a Team may create. Null means unlimited.",
+                          "description": "Maximum entries a Squad may create. Null means unlimited.",
                           "type": [
                             "integer",
                             "null"
@@ -14843,7 +14843,7 @@
                     "maximum": 9007199254740991
                   },
                   "maxEntriesPerSquad": {
-                    "description": "Maximum entries a Team may create. Null means unlimited.",
+                    "description": "Maximum entries a Squad may create. Null means unlimited.",
                     "type": [
                       "integer",
                       "null"
@@ -15053,7 +15053,7 @@
                     "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
                   },
                   "maxEntriesPerSquad": {
-                    "description": "Maximum entries a Team may create. Null means unlimited.",
+                    "description": "Maximum entries a Squad may create. Null means unlimited.",
                     "type": [
                       "integer",
                       "null"
@@ -15263,7 +15263,7 @@
                     "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
                   },
                   "maxEntriesPerSquad": {
-                    "description": "Maximum entries a Team may create. Null means unlimited.",
+                    "description": "Maximum entries a Squad may create. Null means unlimited.",
                     "type": [
                       "integer",
                       "null"
@@ -15473,7 +15473,7 @@
                     "description": "Picks are scored against each game's spread (#720): a pick is right when its team covers, and a game that lands exactly on the spread (a push) scores nothing. Every game needs its spread before the week is released."
                   },
                   "maxEntriesPerSquad": {
-                    "description": "Maximum entries a Team may create. Null means unlimited.",
+                    "description": "Maximum entries a Squad may create. Null means unlimited.",
                     "type": [
                       "integer",
                       "null"
@@ -15677,7 +15677,7 @@
                     "description": "The round the bracket starts at: 1 for a full bracket; a later round (the Sweet 16) for a second-chance bracket, picked from that round on and closing at its first game. The event's round values score each round from it on."
                   },
                   "maxEntriesPerSquad": {
-                    "description": "Maximum entries a Team may create. Null means unlimited.",
+                    "description": "Maximum entries a Squad may create. Null means unlimited.",
                     "type": [
                       "integer",
                       "null"
@@ -15880,7 +15880,7 @@
                     "description": "How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away."
                   },
                   "maxEntriesPerSquad": {
-                    "description": "Maximum entries a Team may create. Null means unlimited.",
+                    "description": "Maximum entries a Squad may create. Null means unlimited.",
                     "type": [
                       "integer",
                       "null"
@@ -16081,7 +16081,7 @@
                     "type": "boolean"
                   },
                   "maxEntriesPerSquad": {
-                    "description": "Maximum entries a Team may create. Null means unlimited.",
+                    "description": "Maximum entries a Squad may create. Null means unlimited.",
                     "type": [
                       "integer",
                       "null"
@@ -16406,7 +16406,7 @@
                         "maximum": 9007199254740991
                       },
                       "maxEntriesPerSquad": {
-                        "description": "Maximum entries a Team may create. Null means unlimited.",
+                        "description": "Maximum entries a Squad may create. Null means unlimited.",
                         "type": [
                           "integer",
                           "null"
@@ -16616,7 +16616,7 @@
                         "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
                       },
                       "maxEntriesPerSquad": {
-                        "description": "Maximum entries a Team may create. Null means unlimited.",
+                        "description": "Maximum entries a Squad may create. Null means unlimited.",
                         "type": [
                           "integer",
                           "null"
@@ -16826,7 +16826,7 @@
                         "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
                       },
                       "maxEntriesPerSquad": {
-                        "description": "Maximum entries a Team may create. Null means unlimited.",
+                        "description": "Maximum entries a Squad may create. Null means unlimited.",
                         "type": [
                           "integer",
                           "null"
@@ -17036,7 +17036,7 @@
                         "description": "Picks are scored against each game's spread (#720): a pick is right when its team covers, and a game that lands exactly on the spread (a push) scores nothing. Every game needs its spread before the week is released."
                       },
                       "maxEntriesPerSquad": {
-                        "description": "Maximum entries a Team may create. Null means unlimited.",
+                        "description": "Maximum entries a Squad may create. Null means unlimited.",
                         "type": [
                           "integer",
                           "null"
@@ -17240,7 +17240,7 @@
                         "description": "The round the bracket starts at: 1 for a full bracket; a later round (the Sweet 16) for a second-chance bracket, picked from that round on and closing at its first game. The event's round values score each round from it on."
                       },
                       "maxEntriesPerSquad": {
-                        "description": "Maximum entries a Team may create. Null means unlimited.",
+                        "description": "Maximum entries a Squad may create. Null means unlimited.",
                         "type": [
                           "integer",
                           "null"
@@ -17443,7 +17443,7 @@
                         "description": "How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away."
                       },
                       "maxEntriesPerSquad": {
-                        "description": "Maximum entries a Team may create. Null means unlimited.",
+                        "description": "Maximum entries a Squad may create. Null means unlimited.",
                         "type": [
                           "integer",
                           "null"
@@ -17644,7 +17644,7 @@
                         "type": "boolean"
                       },
                       "maxEntriesPerSquad": {
-                        "description": "Maximum entries a Team may create. Null means unlimited.",
+                        "description": "Maximum entries a Squad may create. Null means unlimited.",
                         "type": [
                           "integer",
                           "null"
@@ -25501,7 +25501,7 @@
                     "maximum": 9007199254740991
                   },
                   "maxEntriesPerSquad": {
-                    "description": "Maximum entries a Team may create. Null means unlimited.",
+                    "description": "Maximum entries a Squad may create. Null means unlimited.",
                     "type": [
                       "integer",
                       "null"
@@ -25711,7 +25711,7 @@
                     "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
                   },
                   "maxEntriesPerSquad": {
-                    "description": "Maximum entries a Team may create. Null means unlimited.",
+                    "description": "Maximum entries a Squad may create. Null means unlimited.",
                     "type": [
                       "integer",
                       "null"
@@ -25921,7 +25921,7 @@
                     "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
                   },
                   "maxEntriesPerSquad": {
-                    "description": "Maximum entries a Team may create. Null means unlimited.",
+                    "description": "Maximum entries a Squad may create. Null means unlimited.",
                     "type": [
                       "integer",
                       "null"
@@ -26131,7 +26131,7 @@
                     "description": "Picks are scored against each game's spread (#720): a pick is right when its team covers, and a game that lands exactly on the spread (a push) scores nothing. Every game needs its spread before the week is released."
                   },
                   "maxEntriesPerSquad": {
-                    "description": "Maximum entries a Team may create. Null means unlimited.",
+                    "description": "Maximum entries a Squad may create. Null means unlimited.",
                     "type": [
                       "integer",
                       "null"
@@ -26335,7 +26335,7 @@
                     "description": "The round the bracket starts at: 1 for a full bracket; a later round (the Sweet 16) for a second-chance bracket, picked from that round on and closing at its first game. The event's round values score each round from it on."
                   },
                   "maxEntriesPerSquad": {
-                    "description": "Maximum entries a Team may create. Null means unlimited.",
+                    "description": "Maximum entries a Squad may create. Null means unlimited.",
                     "type": [
                       "integer",
                       "null"
@@ -26538,7 +26538,7 @@
                     "description": "How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away."
                   },
                   "maxEntriesPerSquad": {
-                    "description": "Maximum entries a Team may create. Null means unlimited.",
+                    "description": "Maximum entries a Squad may create. Null means unlimited.",
                     "type": [
                       "integer",
                       "null"
@@ -26739,7 +26739,7 @@
                     "type": "boolean"
                   },
                   "maxEntriesPerSquad": {
-                    "description": "Maximum entries a Team may create. Null means unlimited.",
+                    "description": "Maximum entries a Squad may create. Null means unlimited.",
                     "type": [
                       "integer",
                       "null"
@@ -49419,7 +49419,7 @@
                         "maximum": 9007199254740991
                       },
                       "maxEntriesPerSquad": {
-                        "description": "Maximum entries a Team may create. Null means unlimited.",
+                        "description": "Maximum entries a Squad may create. Null means unlimited.",
                         "type": [
                           "integer",
                           "null"
@@ -49629,7 +49629,7 @@
                         "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
                       },
                       "maxEntriesPerSquad": {
-                        "description": "Maximum entries a Team may create. Null means unlimited.",
+                        "description": "Maximum entries a Squad may create. Null means unlimited.",
                         "type": [
                           "integer",
                           "null"
@@ -49839,7 +49839,7 @@
                         "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
                       },
                       "maxEntriesPerSquad": {
-                        "description": "Maximum entries a Team may create. Null means unlimited.",
+                        "description": "Maximum entries a Squad may create. Null means unlimited.",
                         "type": [
                           "integer",
                           "null"
@@ -50049,7 +50049,7 @@
                         "description": "Picks are scored against each game's spread (#720): a pick is right when its team covers, and a game that lands exactly on the spread (a push) scores nothing. Every game needs its spread before the week is released."
                       },
                       "maxEntriesPerSquad": {
-                        "description": "Maximum entries a Team may create. Null means unlimited.",
+                        "description": "Maximum entries a Squad may create. Null means unlimited.",
                         "type": [
                           "integer",
                           "null"
@@ -50253,7 +50253,7 @@
                         "description": "The round the bracket starts at: 1 for a full bracket; a later round (the Sweet 16) for a second-chance bracket, picked from that round on and closing at its first game. The event's round values score each round from it on."
                       },
                       "maxEntriesPerSquad": {
-                        "description": "Maximum entries a Team may create. Null means unlimited.",
+                        "description": "Maximum entries a Squad may create. Null means unlimited.",
                         "type": [
                           "integer",
                           "null"
@@ -50456,7 +50456,7 @@
                         "description": "How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away."
                       },
                       "maxEntriesPerSquad": {
-                        "description": "Maximum entries a Team may create. Null means unlimited.",
+                        "description": "Maximum entries a Squad may create. Null means unlimited.",
                         "type": [
                           "integer",
                           "null"
@@ -50657,7 +50657,7 @@
                         "type": "boolean"
                       },
                       "maxEntriesPerSquad": {
-                        "description": "Maximum entries a Team may create. Null means unlimited.",
+                        "description": "Maximum entries a Squad may create. Null means unlimited.",
                         "type": [
                           "integer",
                           "null"
@@ -51175,7 +51175,7 @@
                               "maximum": 9007199254740991
                             },
                             "maxEntriesPerSquad": {
-                              "description": "Maximum entries a Team may create. Null means unlimited.",
+                              "description": "Maximum entries a Squad may create. Null means unlimited.",
                               "type": [
                                 "integer",
                                 "null"
@@ -51385,7 +51385,7 @@
                               "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
                             },
                             "maxEntriesPerSquad": {
-                              "description": "Maximum entries a Team may create. Null means unlimited.",
+                              "description": "Maximum entries a Squad may create. Null means unlimited.",
                               "type": [
                                 "integer",
                                 "null"
@@ -51595,7 +51595,7 @@
                               "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
                             },
                             "maxEntriesPerSquad": {
-                              "description": "Maximum entries a Team may create. Null means unlimited.",
+                              "description": "Maximum entries a Squad may create. Null means unlimited.",
                               "type": [
                                 "integer",
                                 "null"
@@ -51805,7 +51805,7 @@
                               "description": "Picks are scored against each game's spread (#720): a pick is right when its team covers, and a game that lands exactly on the spread (a push) scores nothing. Every game needs its spread before the week is released."
                             },
                             "maxEntriesPerSquad": {
-                              "description": "Maximum entries a Team may create. Null means unlimited.",
+                              "description": "Maximum entries a Squad may create. Null means unlimited.",
                               "type": [
                                 "integer",
                                 "null"
@@ -52009,7 +52009,7 @@
                               "description": "The round the bracket starts at: 1 for a full bracket; a later round (the Sweet 16) for a second-chance bracket, picked from that round on and closing at its first game. The event's round values score each round from it on."
                             },
                             "maxEntriesPerSquad": {
-                              "description": "Maximum entries a Team may create. Null means unlimited.",
+                              "description": "Maximum entries a Squad may create. Null means unlimited.",
                               "type": [
                                 "integer",
                                 "null"
@@ -52212,7 +52212,7 @@
                               "description": "How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away."
                             },
                             "maxEntriesPerSquad": {
-                              "description": "Maximum entries a Team may create. Null means unlimited.",
+                              "description": "Maximum entries a Squad may create. Null means unlimited.",
                               "type": [
                                 "integer",
                                 "null"
@@ -52413,7 +52413,7 @@
                               "type": "boolean"
                             },
                             "maxEntriesPerSquad": {
-                              "description": "Maximum entries a Team may create. Null means unlimited.",
+                              "description": "Maximum entries a Squad may create. Null means unlimited.",
                               "type": [
                                 "integer",
                                 "null"
@@ -52949,7 +52949,7 @@
                                   "maximum": 9007199254740991
                                 },
                                 "maxEntriesPerSquad": {
-                                  "description": "Maximum entries a Team may create. Null means unlimited.",
+                                  "description": "Maximum entries a Squad may create. Null means unlimited.",
                                   "type": [
                                     "integer",
                                     "null"
@@ -53159,7 +53159,7 @@
                                   "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
                                 },
                                 "maxEntriesPerSquad": {
-                                  "description": "Maximum entries a Team may create. Null means unlimited.",
+                                  "description": "Maximum entries a Squad may create. Null means unlimited.",
                                   "type": [
                                     "integer",
                                     "null"
@@ -53369,7 +53369,7 @@
                                   "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
                                 },
                                 "maxEntriesPerSquad": {
-                                  "description": "Maximum entries a Team may create. Null means unlimited.",
+                                  "description": "Maximum entries a Squad may create. Null means unlimited.",
                                   "type": [
                                     "integer",
                                     "null"
@@ -53579,7 +53579,7 @@
                                   "description": "Picks are scored against each game's spread (#720): a pick is right when its team covers, and a game that lands exactly on the spread (a push) scores nothing. Every game needs its spread before the week is released."
                                 },
                                 "maxEntriesPerSquad": {
-                                  "description": "Maximum entries a Team may create. Null means unlimited.",
+                                  "description": "Maximum entries a Squad may create. Null means unlimited.",
                                   "type": [
                                     "integer",
                                     "null"
@@ -53783,7 +53783,7 @@
                                   "description": "The round the bracket starts at: 1 for a full bracket; a later round (the Sweet 16) for a second-chance bracket, picked from that round on and closing at its first game. The event's round values score each round from it on."
                                 },
                                 "maxEntriesPerSquad": {
-                                  "description": "Maximum entries a Team may create. Null means unlimited.",
+                                  "description": "Maximum entries a Squad may create. Null means unlimited.",
                                   "type": [
                                     "integer",
                                     "null"
@@ -53986,7 +53986,7 @@
                                   "description": "How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away."
                                 },
                                 "maxEntriesPerSquad": {
-                                  "description": "Maximum entries a Team may create. Null means unlimited.",
+                                  "description": "Maximum entries a Squad may create. Null means unlimited.",
                                   "type": [
                                     "integer",
                                     "null"
@@ -54187,7 +54187,7 @@
                                   "type": "boolean"
                                 },
                                 "maxEntriesPerSquad": {
-                                  "description": "Maximum entries a Team may create. Null means unlimited.",
+                                  "description": "Maximum entries a Squad may create. Null means unlimited.",
                                   "type": [
                                     "integer",
                                     "null"
@@ -54760,7 +54760,7 @@
                                     "maximum": 9007199254740991
                                   },
                                   "maxEntriesPerSquad": {
-                                    "description": "Maximum entries a Team may create. Null means unlimited.",
+                                    "description": "Maximum entries a Squad may create. Null means unlimited.",
                                     "type": [
                                       "integer",
                                       "null"
@@ -54970,7 +54970,7 @@
                                     "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
                                   },
                                   "maxEntriesPerSquad": {
-                                    "description": "Maximum entries a Team may create. Null means unlimited.",
+                                    "description": "Maximum entries a Squad may create. Null means unlimited.",
                                     "type": [
                                       "integer",
                                       "null"
@@ -55180,7 +55180,7 @@
                                     "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
                                   },
                                   "maxEntriesPerSquad": {
-                                    "description": "Maximum entries a Team may create. Null means unlimited.",
+                                    "description": "Maximum entries a Squad may create. Null means unlimited.",
                                     "type": [
                                       "integer",
                                       "null"
@@ -55390,7 +55390,7 @@
                                     "description": "Picks are scored against each game's spread (#720): a pick is right when its team covers, and a game that lands exactly on the spread (a push) scores nothing. Every game needs its spread before the week is released."
                                   },
                                   "maxEntriesPerSquad": {
-                                    "description": "Maximum entries a Team may create. Null means unlimited.",
+                                    "description": "Maximum entries a Squad may create. Null means unlimited.",
                                     "type": [
                                       "integer",
                                       "null"
@@ -55594,7 +55594,7 @@
                                     "description": "The round the bracket starts at: 1 for a full bracket; a later round (the Sweet 16) for a second-chance bracket, picked from that round on and closing at its first game. The event's round values score each round from it on."
                                   },
                                   "maxEntriesPerSquad": {
-                                    "description": "Maximum entries a Team may create. Null means unlimited.",
+                                    "description": "Maximum entries a Squad may create. Null means unlimited.",
                                     "type": [
                                       "integer",
                                       "null"
@@ -55797,7 +55797,7 @@
                                     "description": "How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away."
                                   },
                                   "maxEntriesPerSquad": {
-                                    "description": "Maximum entries a Team may create. Null means unlimited.",
+                                    "description": "Maximum entries a Squad may create. Null means unlimited.",
                                     "type": [
                                       "integer",
                                       "null"
@@ -55998,7 +55998,7 @@
                                     "type": "boolean"
                                   },
                                   "maxEntriesPerSquad": {
-                                    "description": "Maximum entries a Team may create. Null means unlimited.",
+                                    "description": "Maximum entries a Squad may create. Null means unlimited.",
                                     "type": [
                                       "integer",
                                       "null"

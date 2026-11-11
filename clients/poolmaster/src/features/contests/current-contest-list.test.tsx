@@ -82,7 +82,7 @@ describe('CurrentContestList', () => {
   it('asks a viewer without a team to choose their name before entering', () => {
     drawList({ hasTeam: false });
 
-    expect(rowNote('submitted')).toContain('Choose your name in this league to enter.');
+    expect(rowNote('submitted')).toContain('Create your team to enter.');
   });
 
   it('says it is checking while the entries load', () => {

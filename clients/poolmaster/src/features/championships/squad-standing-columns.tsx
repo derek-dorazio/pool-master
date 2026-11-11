@@ -44,7 +44,7 @@ export function squadStandingColumns<Row extends SquadStandingRow>({
     ...afterPlace,
     {
       id: 'squad',
-      header: 'Squad',
+      header: 'Team',
       accessorFn: (row) => row.squadName,
       cell: ({ row }) => (
         <TeamName

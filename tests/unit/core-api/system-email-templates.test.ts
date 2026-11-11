@@ -37,6 +37,33 @@ describe('pool-master-98i system email templates', () => {
     expect(message.html).toContain('background:#f5b800');
   });
 
+  it('calls the co-owned squad a "team" in both owner emails, never a "squad", whether shared or sole-owned', () => {
+    for (const soleOwner of [false, true]) {
+      const invite = renderSystemEmailTemplate('SQUAD_OWNER_INVITE', {
+        ...EMAIL_TEMPLATE_FIXTURES.SQUAD_OWNER_INVITE,
+        squadName: 'Birdie Hunters',
+        soleOwner,
+      }, UTC);
+      const added = renderSystemEmailTemplate('SQUAD_OWNER_ADDED', {
+        ...EMAIL_TEMPLATE_FIXTURES.SQUAD_OWNER_ADDED,
+        squadName: 'Birdie Hunters',
+        soleOwner,
+      }, UTC);
+
+      for (const message of [invite, added]) {
+        expect(message.text).not.toMatch(/squad/i);
+        expect(message.html).not.toMatch(/squad/i);
+      }
+      if (soleOwner) {
+        expect(invite.html).toContain('Team invitation');
+        expect(added.html).toContain('You own a team');
+      } else {
+        expect(invite.text).toContain('Co-owners share the team: its entries, picks and results.');
+        expect(added.text).toContain('You share the team with its other owners: its entries, picks and results.');
+      }
+    }
+  });
+
   it('renders the registration and league join success email', () => {
     const message = renderSystemEmailTemplate('LEAGUE_JOIN_SUCCESS', {
       userName: 'Derek Dorazio',

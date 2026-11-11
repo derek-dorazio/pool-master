@@ -41,9 +41,9 @@ export function SquadYearSection({
   return (
     <div className="space-y-4" data-testid="squad-year">
       {squadYearQuery.isError ? (
-        <ErrorState body="We couldn't load this squad's year." testId="squad-year-error" />
+        <ErrorState body="We couldn't load this team's year." testId="squad-year-error" />
       ) : !squadYearQuery.data ? (
-        <LoadingState body="Loading this squad's year..." />
+        <LoadingState body="Loading this team's year..." />
       ) : (
         <>
           {championship ? (
@@ -106,9 +106,9 @@ export function SquadYearSection({
         )}
       >
         {contestsQuery.isError ? (
-          <ErrorState body="We couldn't load this squad's contests." size="inline" testId="squad-year-contests-error" />
+          <ErrorState body="We couldn't load this team's contests." size="inline" testId="squad-year-contests-error" />
         ) : !contestsQuery.data ? (
-          <LoadingState body="Loading this squad's contests..." size="inline" />
+          <LoadingState body="Loading this team's contests..." size="inline" />
         ) : (
           <ChampionshipContestList
             contests={contestsQuery.data}

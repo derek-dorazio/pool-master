@@ -22,7 +22,7 @@ export function TeamFormFields({
 
   return (
     <>
-      <FormField error={form.formState.errors.name?.message} id={`${idPrefix}-name`} label={isViewerOwn ? 'Your name in this league' : 'Name in this league'}>
+      <FormField error={form.formState.errors.name?.message} id={`${idPrefix}-name`} label={isViewerOwn ? 'Your team name' : 'Team name'}>
         <Input
           data-testid={`${idPrefix}-name`}
           disabled={disabled}

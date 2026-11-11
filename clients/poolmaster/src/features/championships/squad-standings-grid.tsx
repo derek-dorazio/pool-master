@@ -29,12 +29,12 @@ export function SquadStandingsGrid<Row extends SquadStandingRow>({
       headerTone="scoreboard"
       columns={columns}
       data={rows}
-      emptyMessage={rows.length ? 'No squad matches that search.' : 'No squads in this league yet.'}
+      emptyMessage={rows.length ? 'No team matches that search.' : 'No teams in this league yet.'}
       getRowId={(row) => row.squadId}
       jumpToRow={focusRow ? { rowId: focusRow.squadId, label: `Jump to ${focusRow.squadName}`, testId: `${testIdPrefix}-standings-jump` } : undefined}
       pageSize={STANDINGS_PER_PAGE}
       rowTestId={(row) => `${testIdPrefix}-standing-${row.squadId}`}
-      search={searchable ? { label: 'Find a squad', testId: `${testIdPrefix}-standings-search` } : undefined}
+      search={searchable ? { label: 'Find a team', testId: `${testIdPrefix}-standings-search` } : undefined}
       showColumnFilters={false}
       tableTestId={`${testIdPrefix}-standings`}
     />

@@ -138,7 +138,7 @@ tenant-scoped, and which are global and shared by every league).
 
 "On screen" is the webapp's word where it differs from the model. The model word is the one
 for code, contracts and prompts about code — `rules/poolmaster-webapp-rules.md` §1 *A Squad Is
-Shown By Its Name*.
+a Team On Screen*.
 
 ### People and leagues
 
@@ -147,7 +147,7 @@ Shown By Its Name*.
 | `User` | account, owner | A person who can sign in. Global; belongs to no league | A league member — that is the `LeagueMembership` edge |
 | `League` | league | A private office pool: a group of people who run contests together. Has a short `leagueCode` used in URLs | `SportLeague`, a real-world tour |
 | `LeagueMembership` | member, commissioner | A user's place in one league, with `role` `COMMISSIONER` or `MEMBER`. **Commissioner is a role on this edge**, not a separate kind of user | Root admin, which is `User.isRootAdmin` and spans every league |
-| `Squad` | its name | A user's entrant vehicle in one league: a name, an icon and its owners. It enters contests | A sports team (a `Participant`), and "team" in plain English |
+| `Squad` | team, "My team", or its name | A user's entrant vehicle in one league: a name, an icon and its owners. It enters contests | A sports team (a `Participant`), which shares the word on screen |
 | `SquadMembership` | owner, co-owner | A user owning one squad. Every member of a squad is an owner; there is no primary owner | `LeagueMembership`, which carries the role |
 | `LeagueInvitation` | invite, invite link | An email invite or a reusable link into a league | `SquadOwnerInvitation` |
 | `SquadOwnerInvitation` | co-owner invite | An invite to become a co-owner of one squad, optionally replacing an owner | A league invite: it does not create a squad |
@@ -188,9 +188,10 @@ Shown By Its Name*.
 
 ### Words that mean more than one thing
 
-- **Team**: on screen, a `Participant` whose `participantType` is `TEAM` (the sport
-  vocabulary's word); a `Squad` is shown by its name instead. In code and contracts, the
-  user's group is a `Squad`.
+- **Team**: on screen, a `Squad` ("My team") and also a `Participant` whose `participantType`
+  is `TEAM` (the sport vocabulary's word). Copy keeps the two apart by context, and rewords a
+  sentence that could mean either. In code and contracts, the user's group is always a
+  `Squad`, never a team.
 - **League**: the office pool is `League`; a real-world tour is `SportLeague`.
 - **Selection, pick, draft** (#544): **selection** is the process and its configuration
   (`SelectionType`, `SelectionStatus`, the `selections` module and `/api/v1/selections`
@@ -252,8 +253,8 @@ Shown By Its Name*.
 
 ## 3. League Membership Is Squad Ownership
 
-On screen a squad is shown by its name, never as "team" or "squad"
-(`rules/poolmaster-webapp-rules.md` §1 *A Squad Is Shown By Its Name*); this section says
+On screen a squad is a "team", never a "squad"
+(`rules/poolmaster-webapp-rules.md` §1 *A Squad Is a Team On Screen*); this section says
 "squad" because it describes the model.
 
 A user is in a league **because** they own a squad in it. The edges are one unit: every active
