@@ -472,6 +472,21 @@ describe('ContestDetailPage (Contest Board)', () => {
     expect(screen.queryByTestId(/contest-entry-pick-entry-3-/)).not.toBeInTheDocument();
   });
 
+  it('names each entry alone with an (i) for its team, and counts its picks without repeating the team or entry number', async () => {
+    primeMocks({
+      contestStatus: 'OPEN',
+      picksRevealed: false,
+      entries: [buildEntry({ id: 'entry-3', squadId: 'squad-other', squadName: 'Other Team', name: 'Dead Left 1', picksCount: 5 })],
+    });
+
+    renderContestBoard();
+
+    const peek = await screen.findByRole('button', { name: 'About Dead Left 1' });
+    expect(peek).toBeInTheDocument();
+    expect(screen.queryByText(/Other Team/)).not.toBeInTheDocument();
+    expect(screen.getByText('5 picks made')).toBeInTheDocument();
+  });
+
   // pool-master-dxd.13 — pre-event-start + owner: expand reveals owner's own picks.
   it('renders the owner’s own picks even when picks are not yet revealed league-wide', async () => {
     primeMocks({

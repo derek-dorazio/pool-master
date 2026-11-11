@@ -28,6 +28,8 @@ import { QueryKeys } from '@/lib/query-keys';
 import { formatClaimedCount, formatGridTaken, squaresMomentRows } from './squares-board';
 import { SquaresGrid, type SquaresBoxAction } from './squares-grid';
 import { useSquaresBoardQuery } from './use-squares-board';
+import { useContestLeagueCode } from './use-contest-league';
+import { EntryDetailsPeek } from './entry-details-peek';
 import { entryWriteKeys } from './use-contest-entries';
 
 /** Copy for the refusals a claim, a clear and the draw can meet (#711). The codes are the contract. */
@@ -66,6 +68,7 @@ export function SquaresBoardView({
   const contestId = contest.id;
   const boardKey = QueryKeys.contests.squaresBoard(contestId);
   const boardQuery = useSquaresBoardQuery(contest);
+  const leagueCode = useContestLeagueCode();
   // The entry a commissioner claims for; null is the entry on screen, else their own, else the first entry.
   const [claimForEntryId, setClaimForEntryId] = useState<string | null>(null);
   const [isDrawConfirmOpen, setIsDrawConfirmOpen] = useState(false);
@@ -147,6 +150,9 @@ export function SquaresBoardView({
   const claimingEntry = board.entries.find((entry) => entry.contestEntryId === claimingEntryId) ?? null;
   const isFinal = board.contestStatus === ContestStatus.COMPLETED;
   const moments = squaresMomentRows(board);
+  // A winning box's entry's team, for the winner's (i) (#1564).
+  const squadIdByEntryId = new Map(board.entries.map((entry) => [entry.contestEntryId, entry.squadId]));
+  const winnerSquadId = (contestEntryId: string | null) => (contestEntryId === null ? null : squadIdByEntryId.get(contestEntryId) ?? null);
 
   const actionFor = (box: SquaresBoxDto | null): SquaresBoxAction => {
     if (!board.claimsOpen) {
@@ -180,7 +186,19 @@ export function SquaresBoardView({
                 <Eyebrow tone="muted">{moment.label}</Eyebrow>
                 {moment.winner ? (
                   <>
-                    <div className="font-semibold">{moment.winner.entryName ?? 'No winner'}</div>
+                    <div className="flex items-center font-semibold">
+                      {moment.winner.entryName ?? 'No winner'}
+                      {winnerSquadId(moment.winner.contestEntryId) ? (
+                        <EntryDetailsPeek
+                          className="-my-2"
+                          entryName={moment.winner.entryName ?? ''}
+                          leagueCode={leagueCode}
+                          leagueId={contest.leagueId}
+                          squadId={winnerSquadId(moment.winner.contestEntryId) ?? ''}
+                          testId={`squares-winner-${moment.periodNumber}-peek`}
+                        />
+                      ) : null}
+                    </div>
                     <div className="text-muted-foreground">
                       {`${board.awayTeamName ?? 'Away'} ${moment.winner.awayScore}, ${board.homeTeamName ?? 'Home'} ${moment.winner.homeScore}`}
                     </div>

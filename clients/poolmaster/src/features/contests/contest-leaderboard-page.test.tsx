@@ -287,7 +287,7 @@ function leaderboardWithTwoEntries() {
       {
         ...base.entries[0],
         entryId: 'entry-2',
-        entryName: 'Eagle Eyes Entry 1',
+        entryName: 'Chalk Talk',
         entryNumber: 1,
         squadId: 'squad-2',
         squadName: 'Eagle Eyes',
@@ -465,6 +465,20 @@ describe('ContestLeaderboardPage', () => {
 
     fireEvent.click(toggle);
     expect(screen.getByTestId('contest-leaderboard-pick-entry-1-pick-1')).toBeInTheDocument();
+  });
+
+  it('names each entry alone on its bar with an (i) for its team, and opening the (i) leaves the picks open', async () => {
+    primeMocks({ leaderboard: leaderboardWithTwoEntries() });
+
+    renderLeaderboard();
+
+    const bar = await screen.findByTestId('contest-leaderboard-entry-entry-2');
+    expect(bar).toHaveTextContent('Chalk Talk');
+    expect(bar).not.toHaveTextContent('Eagle Eyes');
+    fireEvent.click(within(bar).getByRole('button', { name: 'About Chalk Talk' }));
+
+    expect(screen.getByTestId('contest-leaderboard-entry-toggle-entry-2')).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByTestId('contest-leaderboard-entry-peek-entry-2-callout')).toBeInTheDocument();
   });
 
   it('collapses every entry with Hide Details, expands them with Show Details, and still lets one bar toggle afterwards', async () => {
@@ -856,16 +870,20 @@ describe('ContestLeaderboardPage', () => {
     expect(screen.queryByTestId('contest-menu-my-entry')).not.toBeInTheDocument();
   });
 
-  it('finds an entry by its entry name or its squad\'s name, and says so when nothing matches', async () => {
+  it('finds an entry by its entry name or its team\'s name, and says so when nothing matches', async () => {
     primeMocks({ leaderboard: leaderboardWithTwoEntries() });
 
     renderLeaderboard();
 
     const search = await screen.findByRole('searchbox', { name: 'Find an entry' });
+    // "Chalk Talk" belongs to Eagle Eyes, a name the row no longer shows: search still knows it.
     fireEvent.change(search, { target: { value: 'eagle' } });
 
     expect(screen.getByTestId('contest-leaderboard-entry-entry-2')).toBeInTheDocument();
     expect(screen.queryByTestId('contest-leaderboard-entry-entry-1')).not.toBeInTheDocument();
+
+    fireEvent.change(search, { target: { value: 'chalk' } });
+    expect(screen.getByTestId('contest-leaderboard-entry-entry-2')).toBeInTheDocument();
 
     fireEvent.change(search, { target: { value: 'Nobody' } });
 

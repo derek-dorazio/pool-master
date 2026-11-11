@@ -33,6 +33,7 @@ import { useContestLeague } from './use-contest-league';
 import { useLiveContestQuery } from './use-contest-query';
 import { LEADERBOARD_PAGE_SIZE, isMySquadsEntry } from './leaderboard-columns';
 import { LeaderboardFrame } from './leaderboard-kit';
+import { EntryDetailsPeek } from './entry-details-peek';
 import { MineMarker } from './mine-marker';
 import { useLeaderboardFallback } from './use-leaderboard-fallback';
 import { ContestEventSwitcher } from './contest-event-switcher';
@@ -174,9 +175,12 @@ function EntryBlock({
   gridTemplateColumns,
   isCollapsed,
   isMine,
+  league,
   onToggle,
 }: {
   entry: LeaderboardEntryRow;
+  /** The contest's league, for the entry's (i) peek at its team. */
+  league: { code: string; id: string };
   /** The contest's events by id when it covers several, for the per-event line; else null. */
   contestEvents: ReadonlyMap<string, ContestDto['sportEvents'][number]> | null;
   gridTemplateColumns: string;
@@ -195,34 +199,51 @@ function EntryBlock({
       radius="lg"
       variant="subtle"
     >
-      {/* #389 — the grey entry bar is the toggle for its own participant rows. */}
-      <Button
-        aria-controls={picksId}
-        aria-expanded={!isCollapsed}
+      {/*
+        #389: the grey entry bar is the toggle for its own participant rows. The toggle button
+        stretches over the whole bar, and the bar's text lets taps through to it, so all of the
+        bar toggles while the entry's (i) (#1564), a button of its own, sits above it.
+      */}
+      <div
         className={cn(
-          'flex-wrap items-baseline justify-between gap-3 rounded-none bg-muted px-4 py-3 font-normal',
+          'relative flex flex-wrap items-baseline justify-between gap-3 bg-muted px-4 py-3',
           isCollapsed ? 'rounded-[inherit]' : 'rounded-t-[inherit] border-b border-border',
         )}
-        data-testid={`contest-leaderboard-entry-toggle-${entry.entryId}`}
-        layout="row"
-        onClick={onToggle}
-        size="auto"
-        variant="ghost"
       >
-        <span className="block min-w-0">
-          <span className="flex flex-wrap items-baseline gap-2">
+        <Button
+          aria-controls={picksId}
+          aria-expanded={!isCollapsed}
+          aria-label={`Picks for ${entry.entryName}`}
+          className="absolute inset-0 h-auto rounded-[inherit]"
+          data-testid={`contest-leaderboard-entry-toggle-${entry.entryId}`}
+          layout="row"
+          onClick={onToggle}
+          size="auto"
+          variant="ghost"
+        />
+        <span className="pointer-events-none relative block min-w-0">
+          <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <span
               className="text-sm font-semibold text-muted-foreground"
               data-testid={`contest-leaderboard-position-${entry.entryId}`}
             >
               {entry.displayPosition ?? NO_SCORE}
             </span>
-            <span className="font-medium text-foreground">{entry.entryName}</span>
+            <span className="flex items-center">
+              <span className="font-medium text-foreground">{entry.entryName}</span>
+              <EntryDetailsPeek
+                className="pointer-events-auto -my-2"
+                entryName={entry.entryName}
+                leagueCode={league.code}
+                leagueId={league.id}
+                squadId={entry.squadId}
+                testId={`contest-leaderboard-entry-peek-${entry.entryId}`}
+              />
+            </span>
             {isMine ? <MineMarker /> : null}
           </span>
           <span className="mt-1 block text-xs text-muted-foreground">
-            {entry.squadName} · best {entry.countingPickLimit} of {entry.picks.length} count ·{' '}
-            {entry.scoredPickCount} scored
+            best {entry.countingPickLimit} of {entry.picks.length} count · {entry.scoredPickCount} scored
           </span>
           {contestEvents && entry.events.length > 0 ? (
             <span className="mt-1 block text-xs text-muted-foreground" data-testid={`contest-leaderboard-events-${entry.entryId}`}>
@@ -245,12 +266,12 @@ function EntryBlock({
           ) : null}
         </span>
         <span
-          className="score-total text-foreground"
+          className="score-total pointer-events-none relative text-foreground"
           data-testid={`contest-leaderboard-total-${entry.entryId}`}
         >
           {entry.total ?? NO_SCORE}
         </span>
-      </Button>
+      </div>
 
       {isCollapsed ? null : entry.picks.length === 0 ? (
         <p className="px-4 py-3 text-sm text-muted-foreground" id={picksId}>
@@ -479,6 +500,7 @@ export function ContestLeaderboardPage() {
                 isCollapsed={collapsedEntryIds.has(entry.entryId)}
                 isMine={isMySquadsEntry(mySquadId)(entry)}
                 key={entry.entryId}
+                league={{ code: leagueCode, id: contest.leagueId }}
                 onToggle={() => toggleEntry(entry.entryId)}
               />
             ))

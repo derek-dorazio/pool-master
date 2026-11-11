@@ -70,10 +70,11 @@ function WeekCell({ entryId, week, weekId }: { entryId: string; week: SurvivorRo
   );
 }
 
-/** The board's columns: place, the entry and its group, whether it is still in, weeks survived, then one per week. */
+/** The board's columns: place, the entry, whether it is still in, weeks survived, then one per week. */
 function survivorColumns(
   contestId: string,
   leagueCode: string,
+  leagueId: string,
   mySquadId: string | null,
   weeks: readonly SurvivorWeek[],
   weekName: WeekName,
@@ -82,7 +83,7 @@ function survivorColumns(
     row.weeks.find((cell) => cell.sportEventId === week.sportEventId && cell.roundNumber === week.roundNumber);
   return [
     placeColumn(TEST_ID),
-    entryColumn(TEST_ID, { contestId, isMine: isMySquadsEntry(mySquadId), leagueCode }),
+    entryColumn(TEST_ID, { contestId, isMine: isMySquadsEntry(mySquadId), leagueCode, leagueId }),
     {
       id: 'standing',
       header: 'Status',
@@ -107,7 +108,7 @@ function survivorColumns(
 }
 
 /**
- * A survivor contest's leaderboard (#719): place, the entry and its group, whether it is still in
+ * A survivor contest's leaderboard (#719): place, the entry, whether it is still in
  * or the week it went out, its weeks survived, and a column for every week with the team it picked
  * (shown from that game's kickoff) and how the week went. On a playoff bracket (#785) each round
  * is a column of its own, named as the bracket names it. Polled while the contest is live, so
@@ -152,7 +153,7 @@ export function SurvivorLeaderboard({ contest }: { contest: ContestDto }) {
       )}
     >
       <ScoreboardGrid
-        columns={survivorColumns(contestId, leagueCode, viewer.mySquadId, board.weeks, weekName)}
+        columns={survivorColumns(contestId, leagueCode, contest.leagueId, viewer.mySquadId, board.weeks, weekName)}
         data={board.entries}
         emptyMessage="No entry has submitted a week yet."
         rowTestIdPrefix="survivor-leaderboard-row"

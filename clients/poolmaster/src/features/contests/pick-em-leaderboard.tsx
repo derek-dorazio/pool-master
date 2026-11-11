@@ -39,16 +39,17 @@ function WeekCell({ entryId, week }: { entryId: string; week: PickEmRow['weeks']
   );
 }
 
-/** The season board's columns: place, the entry and its group, the season total, then one per week. */
+/** The season board's columns: place, the entry, the season total, then one per week. */
 function pickEmColumns(
   contestId: string,
   leagueCode: string,
+  leagueId: string,
   mySquadId: string | null,
   weeks: readonly PickEmWeek[],
 ): ColumnDef<PickEmRow>[] {
   return [
     placeColumn(TEST_ID),
-    entryColumn(TEST_ID, { contestId, isMine: isMySquadsEntry(mySquadId), leagueCode }),
+    entryColumn(TEST_ID, { contestId, isMine: isMySquadsEntry(mySquadId), leagueCode, leagueId }),
     totalColumn(TEST_ID, { format: formatPoints, header: 'Season', id: 'total', value: (row) => row.totalPoints }),
     ...weeks.map((week): ColumnDef<PickEmRow> => ({
       id: `week-${week.sportEventId}`,
@@ -63,7 +64,7 @@ function pickEmColumns(
 }
 
 /**
- * A pick'em contest's season leaderboard (#718): place, the entry and its group, the season total,
+ * A pick'em contest's season leaderboard (#718): place, the entry, the season total,
  * and a column for every week with the entry's points and place in it, each week's winners marked
  * with a trophy. A week under way is scored live from the games played; a settled week is frozen.
  * Polled while the contest is live, so places move with the results.
@@ -101,7 +102,7 @@ export function PickEmLeaderboard({ contest }: { contest: ContestDto }) {
       )}
     >
       <ScoreboardGrid
-        columns={pickEmColumns(contestId, leagueCode, mySquadId, board.weeks)}
+        columns={pickEmColumns(contestId, leagueCode, contest.leagueId, mySquadId, board.weeks)}
         data={board.entries}
         emptyMessage="No entry has submitted a week yet."
         rowTestIdPrefix="pick-em-leaderboard-row"

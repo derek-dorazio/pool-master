@@ -3,6 +3,7 @@ import { SelectionType } from '@poolmaster/shared/domain';
 import type { ContestDto, ContestEntryDto, ContestEntryPlaceDto, SquadDto } from '@/lib/api';
 import { CurrentContestList } from '@/features/contests/current-contest-list';
 import { ContestStatusBadge } from '@/features/contests/contest-status-badge';
+import { EntryDetailsPeek } from '@/features/contests/entry-details-peek';
 import { MineMarker } from '@/features/contests/mine-marker';
 import { useBracketLeaderboardQuery, useContestLeaderboardQuery } from '@/features/contests/use-contest-leaderboard';
 import {
@@ -134,13 +135,23 @@ export function CurrentContestsCard({
   );
 }
 
-function StandingsRow({ row }: { row: StandingRow }) {
+function StandingsRow({ leagueCode, leagueId, row }: { leagueCode: string; leagueId: string; row: StandingRow }) {
   return (
     <TableRow className="first:border-t-0" isHighlighted={row.isMine}>
       <TableCell className="w-10 text-muted-foreground" numeric align="left">{row.position ?? '–'}</TableCell>
       <TableCell className="px-2 font-semibold text-foreground">
-        {row.name}
-        {row.isMine ? <span className="ml-2 inline-block"><MineMarker /></span> : null}
+        <span className="inline-flex flex-wrap items-center gap-x-1">
+          {row.name}
+          <EntryDetailsPeek
+            className="-my-2"
+            entryName={row.name}
+            leagueCode={leagueCode}
+            leagueId={leagueId}
+            squadId={row.squadId}
+            testId={`league-home-standing-peek-${row.entryId}`}
+          />
+          {row.isMine ? <span className="ml-1 inline-block"><MineMarker /></span> : null}
+        </span>
       </TableCell>
       <TableCell numeric>{row.total ?? '–'}</TableCell>
     </TableRow>
@@ -191,13 +202,13 @@ export function LiveStandingsCard({
           />
         </div>
       ) : null}
-      <TopStandings contest={contest} key={contest.id} mySquadId={mySquadId} />
+      <TopStandings contest={contest} key={contest.id} leagueCode={leagueCode} mySquadId={mySquadId} />
     </SectionCard>
   );
 }
 
 /** One live contest's top five, read from its own leaderboard. */
-function TopStandings({ contest, mySquadId }: { contest: ContestDto; mySquadId: string | null }) {
+function TopStandings({ contest, leagueCode, mySquadId }: { contest: ContestDto; leagueCode: string; mySquadId: string | null }) {
   // A bracket contest's standings are their own read (#721).
   const isBracket = contest.selectionType === SelectionType.BRACKET;
   const rosterQuery = useContestLeaderboardQuery(contest.id, contest.status, { enabled: !isBracket });
@@ -218,8 +229,8 @@ function TopStandings({ contest, mySquadId }: { contest: ContestDto; mySquadId: 
       {(top) => (
         <SimpleTable>
           <TableBody>
-            {top.rows.map((row) => <StandingsRow key={row.entryId} row={row} />)}
-            {top.myRowBelow ? <StandingsRow row={top.myRowBelow} /> : null}
+            {top.rows.map((row) => <StandingsRow key={row.entryId} leagueCode={leagueCode} leagueId={contest.leagueId} row={row} />)}
+            {top.myRowBelow ? <StandingsRow leagueCode={leagueCode} leagueId={contest.leagueId} row={top.myRowBelow} /> : null}
           </TableBody>
         </SimpleTable>
       )}
