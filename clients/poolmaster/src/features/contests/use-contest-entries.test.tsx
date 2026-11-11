@@ -6,11 +6,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { QueryKeys } from '@/lib/query-keys';
 import { CONTEST_POLL_INTERVAL_MS } from './contest-status';
-import { useContestEntriesQuery } from './use-contest-entries';
+import { buildContestEntry } from './test/contest-admin-fixtures';
+import { useContestEntriesQuery, useMyContestEntries } from './use-contest-entries';
 
 const listContestEntriesMock = vi.fn();
+const listMyContestEntriesMock = vi.fn();
 
-bindApiMocks({ listContestEntries: listContestEntriesMock });
+bindApiMocks({ listContestEntries: listContestEntriesMock, listMyContestEntries: listMyContestEntriesMock });
 
 function renderEntries(contestId: string, status: ContestStatus | undefined) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -57,5 +59,52 @@ describe('useContestEntriesQuery', () => {
 
     await waitFor(() => expect(result.current.isError).toBe(true));
     expect(result.current.data).toBeUndefined();
+  });
+});
+
+describe('useMyContestEntries', () => {
+  function renderMine() {
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+    return renderHook(() => useMyContestEntries('league-1', true), { wrapper });
+  }
+
+  it('groups the viewer\'s entries by contest and keeps each contest\'s best place, the lowest position', async () => {
+    listMyContestEntriesMock.mockResolvedValue({
+      data: {
+        entries: [
+          buildContestEntry({ id: 'a-1', contestId: 'contest-a' }),
+          buildContestEntry({ id: 'a-2', contestId: 'contest-a', entryNumber: 2 }),
+          buildContestEntry({ id: 'b-1', contestId: 'contest-b' }),
+        ],
+        places: [
+          { entryId: 'a-1', position: 7, displayPosition: '7' },
+          { entryId: 'a-2', position: 3, displayPosition: 'T3' },
+          { entryId: 'b-1', position: 1, displayPosition: '1' },
+          // A place for an entry the response does not list belongs to no contest here.
+          { entryId: 'elsewhere', position: 1, displayPosition: '1' },
+        ],
+      },
+    });
+
+    const { result } = renderMine();
+
+    await waitFor(() => expect(result.current.state).toBe('ready'));
+    expect(result.current.entriesByContestId.get('contest-a')?.map((entry) => entry.id)).toEqual(['a-1', 'a-2']);
+    expect(Object.fromEntries(result.current.bestPlaceByContestId)).toEqual({
+      'contest-a': { entryId: 'a-2', position: 3, displayPosition: 'T3' },
+      'contest-b': { entryId: 'b-1', position: 1, displayPosition: '1' },
+    });
+  });
+
+  it('has no places before the entries are read', () => {
+    listMyContestEntriesMock.mockImplementation(() => new Promise(() => undefined));
+
+    const { result } = renderMine();
+
+    expect(result.current.state).toBe('loading');
+    expect(result.current.bestPlaceByContestId.size).toBe(0);
   });
 });

@@ -15,14 +15,14 @@ export function TeamFormFields({
   form: UseFormReturn<TeamFormValues>;
   /** Prefixes the field ids and test ids, e.g. `edit-team`. */
   idPrefix: string;
-  /** Whether the viewer is naming their own squad ("Your name") or a commissioner someone else's. */
+  /** Whether the viewer is naming their own squad ("Your team name") or a commissioner someone else's. */
   isViewerOwn: boolean;
 }) {
   const iconKey = form.watch('iconKey');
 
   return (
     <>
-      <FormField error={form.formState.errors.name?.message} id={`${idPrefix}-name`} label={isViewerOwn ? 'Your name in this league' : 'Name in this league'}>
+      <FormField error={form.formState.errors.name?.message} id={`${idPrefix}-name`} label={isViewerOwn ? 'Your team name' : 'Team name'}>
         <Input
           data-testid={`${idPrefix}-name`}
           disabled={disabled}

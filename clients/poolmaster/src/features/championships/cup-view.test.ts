@@ -150,7 +150,7 @@ describe('cup view', () => {
     expect(describeProjection({
       ...projection,
       contests: [...projection.contests, { contestId: 'contest-5', name: 'Wyndham Budget', cupWeight: 'BONUS' }],
-    })).toBe('The greyed column shows where each squad would stand if Tour Championship Tiers and Wyndham Budget ended now.');
+    })).toBe('The greyed column shows where each team would stand if Tour Championship Tiers and Wyndham Budget ended now.');
   });
 
   it('ends a cup\'s season once its year is past and no contest of it is open or live, but not while one still is', () => {

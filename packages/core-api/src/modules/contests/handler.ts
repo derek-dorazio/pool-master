@@ -119,9 +119,9 @@ export function createContestHandlers(contestService: ContestService) {
     const logger = createRequestContextLogger(request);
     const userId = request.authUser?.userId as string;
     logger.debug({ leagueId: request.params.id, userId }, 'my contest entries route start');
-    const entries = await contestService.listMyLeagueEntries(request.params.id, userId);
-    logger.info({ leagueId: request.params.id, userId, entryCount: entries.length }, 'my contest entries route completed');
-    return toMyContestEntriesResponse(entries);
+    const mine = await contestService.listMyLeagueEntries(request.params.id, userId);
+    logger.info({ leagueId: request.params.id, userId, entryCount: mine.entries.length, placedCount: mine.places.length }, 'my contest entries route completed');
+    return toMyContestEntriesResponse(mine);
   }
 
   async function getContest(

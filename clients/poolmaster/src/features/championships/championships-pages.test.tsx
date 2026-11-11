@@ -656,10 +656,10 @@ describe('Championships › Year in review', () => {
 
     renderChampionships('/league/BIGDAWGS/championships/2026');
     fireEvent.click(await screen.findByTestId('year-review-send'));
-    expect(screen.getByText('Every squad that placed in 2025 gets its year by email. It can be sent once.')).toBeInTheDocument();
+    expect(screen.getByText('Every team that placed in 2025 gets its year by email. It can be sent once.')).toBeInTheDocument();
     fireEvent.click(screen.getByTestId('year-review-dialog-confirm'));
 
-    expect(await screen.findByTestId('year-review-sent')).toHaveTextContent('The 2025 year in review is on its way to every squad that placed.');
+    expect(await screen.findByTestId('year-review-sent')).toHaveTextContent('The 2025 year in review is on its way to every team that placed.');
     expect(sendYearReviewMock).toHaveBeenCalledWith(expect.objectContaining({ path: { id: 'league-1', year: '2025' } }));
   });
 
@@ -739,7 +739,7 @@ describe('Championships › Points race', () => {
     expect(screen.getByTestId('cup-standing-team-2')).not.toHaveAttribute('aria-current');
   });
 
-  it('greys where each squad would stand if the live contest ended now beside its place, naming the contest', async () => {
+  it('greys where each team would stand if the live contest ended now beside its place, naming the contest', async () => {
     primeViewer();
 
     renderChampionships('/league/BIGDAWGS/championships/2026/race/sport-league-pga');
@@ -748,7 +748,7 @@ describe('Championships › Points race', () => {
     expect(screen.getByTestId('cup-projected-team-2')).toHaveTextContent('2nd · 260');
     expect(screen.getByRole('columnheader', { name: /If it ended now/ })).toBeInTheDocument();
     expect(screen.getByTestId('cup-projection-note')).toHaveTextContent(
-      'The greyed column shows where each squad would stand if Tour Championship Tiers ended now.',
+      'The greyed column shows where each team would stand if Tour Championship Tiers ended now.',
     );
     expect(getCupProjectionMock).toHaveBeenCalledWith(expect.objectContaining({ path: { id: 'league-1', cupId: 'cup-pga' } }));
   });

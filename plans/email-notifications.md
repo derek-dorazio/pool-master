@@ -68,9 +68,9 @@ These hold for every row below, so the tables don't repeat them.
    round or invitation) and recipient: the SES design's outbox row and its idempotency key. A scheduler sweep that runs again, or a second server
    task, finds the record and skips. A resend the person asked for (Resend Invite, a new reset
    link) is a new subject, so it still sends.
-3. **Squads by name.** Entries and standings show the squad's name and the entry name, never
-   "team" or "squad" (`rules/poolmaster-webapp-rules.md` §1 *A Squad Is Shown By Its Name*). A
-   real team is called by the sport's word.
+3. **Teams by name.** Entries and standings show the team's name and the entry name, never
+   "squad" (`rules/poolmaster-webapp-rules.md` §1 *A Squad Is a Team On Screen*). A real
+   sports team is called by the sport's word.
 4. **The sport's words.** Tournament, race, week, round, golfer, horse, driver, team: from the
    sport definition's vocabulary, the same words the screens use.
 5. **Product copy only.** No ids, no developer notes, no status enum names in the body.

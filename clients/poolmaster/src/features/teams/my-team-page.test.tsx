@@ -544,8 +544,8 @@ describe('My team › Create team', () => {
 
     renderTeamRoutes();
 
-    expect(await screen.findByRole('heading', { name: 'Choose your name and icon' })).toBeInTheDocument();
-    const name = screen.getByRole('textbox', { name: 'Your name in this league' });
+    expect(await screen.findByRole('heading', { name: 'Create your team' })).toBeInTheDocument();
+    const name = screen.getByRole('textbox', { name: 'Your team name' });
     expect(name).toHaveValue("Casey Commissioner");
     fireEvent.change(name, { target: { value: 'Ocean Winkers' } });
     fireEvent.click(screen.getByTestId(`team-icon-${TeamIconKey.CAPTAIN_WINK_OCEAN}`));
@@ -587,7 +587,7 @@ describe('My team › Create team', () => {
 
     renderTeamRoutes();
 
-    expect(await screen.findByTestId('my-team-league-inactive')).toHaveTextContent('you can\'t choose your name in it');
+    expect(await screen.findByTestId('my-team-league-inactive')).toHaveTextContent('you can\'t create a team in it');
     expect(screen.getByTestId('create-team-save')).toBeDisabled();
   });
 

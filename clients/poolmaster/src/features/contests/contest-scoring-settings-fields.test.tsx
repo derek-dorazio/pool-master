@@ -63,6 +63,14 @@ describe('KnockoutRoundPointsFields', () => {
     expect(screen.getByTestId('contest-scoring-upset-bonus-multiplier')).toHaveValue(1);
   });
 
+  it('says a win\'s points go to the entry holding the picked team, so "team" cannot be read as the member\'s own team', () => {
+    render(
+      <KnockoutRoundPointsFields onChange={vi.fn()} selectionType="TIERED" values={EMPTY_SCORING_SETTINGS_VALUES} vocabulary={vocabulary} />,
+    );
+
+    expect(screen.getByText('What a picked team earns the entry for a win in each round, first round first: one value for every round of the bracket.')).toBeInTheDocument();
+  });
+
   it('asks a bracket for the points of a correct pick in each round, since its picks score rather than its teams', () => {
     render(
       <KnockoutRoundPointsFields onChange={vi.fn()} selectionType="BRACKET" values={EMPTY_SCORING_SETTINGS_VALUES} vocabulary={vocabulary} />,

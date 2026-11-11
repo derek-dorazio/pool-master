@@ -400,3 +400,76 @@ describe('ContestService.livePositionsOf — pick\'em', () => {
     ]);
   });
 });
+
+describe('ContestService.listMyLeagueEntries — a live contest\'s places', () => {
+  /** A member of Alice's team, with a second entry of the team's that only entered week 2. */
+  function onAlicesTeam(context: Context) {
+    const { world, games, contest, week1Games: { g1 } } = context;
+    const alice = expectDefined(world.entries.get('entry-alice'));
+    const teammate = world.addUser({ email: 'teammate@example.com' });
+    world.addMember(contest.leagueId, teammate.id);
+    world.addSquadMember(alice.squadId, teammate.id);
+    const second: ContestEntry = {
+      ...alice,
+      id: 'entry-alice-2',
+      entryNumber: 2,
+      name: 'Alice 2',
+      events: [{ sportEventId: context.week1.id, status: ContestEntryStatus.SUBMITTED, tiebreakerValue: 45 }],
+    };
+    world.entries.set(second.id, second);
+    games.predictions.set(`${second.id}:${g1.id}`, {
+      id: `prediction-${second.id}-${g1.id}`, contestEntryId: second.id, sportEventMatchId: g1.id,
+      predictedResult: PredictedResult.TEAM,
+      sportEventParticipantId: expectDefined(g1.awaySportEventParticipantId),
+      confidence: null, pickedAt: T0, createdAt: T0, updatedAt: T0,
+    });
+    const thirdId = 'entry-alice-3';
+    world.entries.set(thirdId, {
+      ...alice, id: thirdId, entryNumber: 3, name: 'Alice 3',
+      events: [{ sportEventId: context.week2.id, status: ContestEntryStatus.SUBMITTED }],
+    });
+    return { teammate, entryIds: [alice.id, second.id, thirdId] };
+  }
+
+  it('places none of the viewer\'s entries before the first kickoff, and still lists them', async () => {
+    const context = setup();
+    context.setNow(BEFORE_KICKOFF);
+    const { teammate, entryIds } = onAlicesTeam(context);
+
+    const mine = await context.contestService.listMyLeagueEntries(context.contest.leagueId, teammate.id);
+
+    expect(mine.entries.map((entry) => entry.id).sort()).toEqual([...entryIds].sort());
+    expect(mine.places).toEqual([]);
+  });
+
+  it('gives each of the viewer\'s ranked entries the place its leaderboard shows, ties as "T1", and leaves out an entry not ranked yet and other teams\' entries', async () => {
+    const context = setup();
+    context.play(context.week1Games.g1, MatchSide.HOME, 24, 17);
+    const { teammate } = onAlicesTeam(context);
+
+    const mine = await context.contestService.listMyLeagueEntries(context.contest.leagueId, teammate.id);
+    const board = await context.leaderboard();
+
+    expect(mine.places).toEqual([
+      { entryId: 'entry-alice', position: 1, displayPosition: 'T1' },
+      { entryId: 'entry-alice-2', position: 3, displayPosition: 'T3' },
+    ]);
+    const shown = board.entries.filter((entry) => entry.entryId === 'entry-alice' || entry.entryId === 'entry-alice-2');
+    expect(shown.map((entry) => [entry.entryId, entry.displayPosition])).toEqual([['entry-alice', 'T1'], ['entry-alice-2', 'T3']]);
+  });
+
+  it('answers from the leaderboard\'s stored board while it is current, so a row shows the place the leaderboard shows', async () => {
+    const context = setup();
+    context.play(context.week1Games.g1, MatchSide.HOME, 24, 17);
+    const { teammate } = onAlicesTeam(context);
+    await context.leaderboard();
+    // A result the stored board has not been rebuilt for yet: the leaderboard still shows T1.
+    context.play(context.week1Games.g2, MatchSide.AWAY, 10, 13);
+
+    const mine = await context.contestService.listMyLeagueEntries(context.contest.leagueId, teammate.id);
+    const board = await context.leaderboard();
+
+    expect(mine.places.find((place) => place.entryId === 'entry-alice')).toEqual({ entryId: 'entry-alice', position: 1, displayPosition: 'T1' });
+    expect(board.entries.find((entry) => entry.entryId === 'entry-alice')?.displayPosition).toBe('T1');
+  });
+});

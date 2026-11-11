@@ -7,6 +7,8 @@ import {
   type ContestEntryDetailResponse,
   type ContestEntryDto,
   type ContestEntryListResponse,
+  type ContestEntryPlaceDto,
+  type MyContestEntriesResponse,
 } from '@/lib/api';
 import { throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
@@ -67,6 +69,8 @@ export function useContestEntryQuery(contestId: string, entryId: string) {
 }
 
 export type MyContestEntries = {
+  /** The best place among the viewer's entries in each live contest whose leaderboard ranks one, by contest id (#1565). */
+  bestPlaceByContestId: ReadonlyMap<string, ContestEntryPlaceDto>;
   /** The viewer's team's entries in each of the league's open and live contests, by contest id. */
   entriesByContestId: ReadonlyMap<string, ContestEntryDto[]>;
   isError: boolean;
@@ -76,26 +80,28 @@ export type MyContestEntries = {
 };
 
 /**
- * The viewer's team's entries across the league's open and live contests, in one read however
- * many there are (#1197). The server answers for the viewer's own team, never another's: `enabled`
- * only says whether to read, false for a viewer without a team, who has nothing to read.
+ * The viewer's team's entries across the league's open and live contests, with each live entry's
+ * place, in one read however many there are (#1197, #1565). The server answers for the viewer's
+ * own team, never another's: `enabled` only says whether to read, false for a viewer without a
+ * team, who has nothing to read.
  */
 export function useMyContestEntries(leagueId: string, enabled: boolean): MyContestEntries {
   const query = useQuery({
     queryKey: QueryKeys.contestEntries.mine(leagueId),
-    queryFn: async (): Promise<ContestEntryDto[]> => {
+    queryFn: async (): Promise<MyContestEntriesResponse> => {
       const response = await listMyContestEntries({ path: { id: leagueId } });
       if (!response.data) {
         throwApiError(response.error, 'My contest entries response is missing data.');
       }
-      return response.data.entries;
+      return response.data;
     },
     enabled: enabled && Boolean(leagueId),
     retry: false,
     select: groupByContest,
   });
   return {
-    entriesByContestId: query.data ?? EMPTY,
+    bestPlaceByContestId: query.data?.bestPlaceByContestId ?? NO_PLACES,
+    entriesByContestId: query.data?.entriesByContestId ?? EMPTY,
     isError: query.isError,
     isLoading: query.isLoading,
     state: query.isError ? 'failed' : query.isLoading ? 'loading' : 'ready',
@@ -103,11 +109,21 @@ export function useMyContestEntries(leagueId: string, enabled: boolean): MyConte
 }
 
 const EMPTY: ReadonlyMap<string, ContestEntryDto[]> = new Map();
+const NO_PLACES: ReadonlyMap<string, ContestEntryPlaceDto> = new Map();
 
-function groupByContest(entries: ContestEntryDto[]): ReadonlyMap<string, ContestEntryDto[]> {
-  const byContest = new Map<string, ContestEntryDto[]>();
+function groupByContest({ entries, places }: MyContestEntriesResponse) {
+  const entriesByContestId = new Map<string, ContestEntryDto[]>();
   for (const entry of entries) {
-    byContest.set(entry.contestId, [...(byContest.get(entry.contestId) ?? []), entry]);
+    entriesByContestId.set(entry.contestId, [...(entriesByContestId.get(entry.contestId) ?? []), entry]);
   }
-  return byContest;
+  const contestOf = new Map(entries.map((entry) => [entry.id, entry.contestId]));
+  const bestPlaceByContestId = new Map<string, ContestEntryPlaceDto>();
+  for (const place of places) {
+    const contestId = contestOf.get(place.entryId);
+    const best = contestId === undefined ? undefined : bestPlaceByContestId.get(contestId);
+    if (contestId !== undefined && (best === undefined || place.position < best.position)) {
+      bestPlaceByContestId.set(contestId, place);
+    }
+  }
+  return { bestPlaceByContestId, entriesByContestId };
 }

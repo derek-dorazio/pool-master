@@ -149,7 +149,7 @@ describe('Members directory', () => {
 
     await screen.findByTestId('league-team-team-2');
     expect(screen.getByTestId('teams-page-counts')).toHaveTextContent('2 members · 2 teams');
-    expect(screen.queryByText(/and the name they play under/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/and its owners/)).not.toBeInTheDocument();
     const titleRow = within(screen.getByTestId('teams-page-header-title-row'));
     expect(titleRow.getByRole('searchbox', { name: 'Find a member or owner' })).toBeInTheDocument();
   });

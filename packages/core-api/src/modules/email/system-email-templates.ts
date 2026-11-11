@@ -1307,7 +1307,7 @@ function renderSquadOwnerInviteEmail(
   const expiresLine = formatOptionalDay(data.expiresAt, context);
   const own = data.soleOwner ? 'own' : 'co-own';
   const intro = `${data.inviterName} invited you to ${own} ${data.squadName} in ${data.leagueName}.`;
-  const shared = data.soleOwner ? [] : ['Co-owners share the squad: its entries, picks and results.'];
+  const shared = data.soleOwner ? [] : ['Co-owners share the team: its entries, picks and results.'];
   const details: Array<[string, string]> = [
     ['League code', data.leagueCode],
     ['Invite email', data.recipientEmail],
@@ -1318,7 +1318,7 @@ function renderSquadOwnerInviteEmail(
     leagueName: data.leagueName,
     subject: `${data.inviterName} invited you to ${own} ${data.squadName}`,
     preheader: intro,
-    title: data.soleOwner ? 'Squad invitation' : 'Co-owner invitation',
+    title: data.soleOwner ? 'Team invitation' : 'Co-owner invitation',
     bodyBlocks: [
       paragraph(`${escapeHtml(data.inviterName)} invited you to ${own} ${strong(data.squadName)} in ${strong(data.leagueName)}.`),
       ...shared.map((line) => paragraph(escapeHtml(line))),
@@ -1340,13 +1340,13 @@ function renderSquadOwnerAddedEmail(
 ): SystemEmailMessage {
   const role = data.soleOwner ? 'made you the owner of' : 'added you as a co-owner of';
   const added = `${data.inviterName} ${role} ${data.squadName} in ${data.leagueName}.`;
-  const shared = data.soleOwner ? [] : ['You share the squad with its other owners: its entries, picks and results.'];
+  const shared = data.soleOwner ? [] : ['You share the team with its other owners: its entries, picks and results.'];
   return buildMessage(context, {
     templateKey: 'SQUAD_OWNER_ADDED',
     leagueName: data.leagueName,
     subject: data.soleOwner ? `You own ${data.squadName}` : `You're a co-owner of ${data.squadName}`,
     preheader: added,
-    title: data.soleOwner ? 'You own a squad' : 'You are a co-owner',
+    title: data.soleOwner ? 'You own a team' : 'You are a co-owner',
     bodyBlocks: [
       paragraph(`Hi ${escapeHtml(data.userName)},`),
       paragraph(`${escapeHtml(data.inviterName)} ${role} ${strong(data.squadName)} in ${strong(data.leagueName)}.`),

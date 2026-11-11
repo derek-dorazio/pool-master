@@ -48,7 +48,7 @@ export function KnockoutRoundPointsFields({ onChange, selectionType, values, voc
       <FormField
         helperText={scoresPicks
           ? `What a correct pick scores in each ${round}, first ${round} first: one value for every ${round} of the bracket.`
-          : `What a ${team} scores for a win in each ${round}, first ${round} first: one value for every ${round} of the bracket.`}
+          : `What a picked ${team} earns the entry for a win in each ${round}, first ${round} first: one value for every ${round} of the bracket.`}
         label={scoresPicks ? 'Points for a correct pick' : 'Points for a win'}
       >
         <Input

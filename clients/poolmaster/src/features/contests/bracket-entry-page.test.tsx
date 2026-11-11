@@ -300,12 +300,13 @@ describe('Bracket contest entry page', () => {
     expect(screen.getByTestId('bracket-tiebreaker-summary')).toHaveTextContent('Tiebreaker: 141 total points in the final.');
   });
 
-  it('keeps another member\'s bracket hidden before the opening tip-off, under its group\'s name', async () => {
+  it('keeps another member\'s bracket hidden before the opening tip-off, under its entry name only', async () => {
     primeMocks({ gamePicks: gamePicksFixture({ entryId: 'entry-2', entryName: 'Chalk All The Way', ownEntry: false, games: emptyBracketGames(), points: null, maxPossiblePoints: null }) });
     renderBracketEntry('entry-2');
 
     expect(await screen.findByTestId('bracket-picks-hidden')).toHaveTextContent('This bracket stays hidden until the opening tip-off.');
-    expect(screen.getByTestId('contest-entry-summary')).toHaveTextContent('Derek’s Great Golf Guys');
+    expect(screen.getByTestId('contest-entry-heading')).toHaveTextContent('Chalk All The Way');
+    expect(screen.getByTestId('contest-entry-summary')).not.toHaveTextContent('Derek’s Great Golf Guys');
     expect(screen.queryByTestId('bracket-board')).not.toBeInTheDocument();
   });
 
@@ -318,7 +319,7 @@ describe('Bracket contest entry page', () => {
     renderBracketEntry('entry-2');
 
     expect(await screen.findByTestId('contest-entry-heading')).toHaveTextContent('Chalk All The Way');
-    expect(screen.getByTestId('contest-entry-summary')).toHaveTextContent('Derek’s Great Golf Guys');
+    expect(screen.getByTestId('contest-entry-summary')).not.toHaveTextContent('Derek’s Great Golf Guys');
     expect(team(7, TEAMS.duke.sportEventParticipantId)).toHaveAttribute('data-picked', 'true');
     expect(screen.queryByTestId('bracket-submit-panel')).not.toBeInTheDocument();
     expect(saveGamePicksMock).not.toHaveBeenCalled();

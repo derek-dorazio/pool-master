@@ -132,7 +132,7 @@ export function useSquadYearQuery(leagueId: string, squadId: string, year: numbe
       const response = await getSquadYear({ path: { id: leagueId, squadId }, query: { year } });
 
       if (!response.data?.squadYear) {
-        throwApiError(response.error, 'Squad year response is missing data.');
+        throwApiError(response.error, 'Team year response is missing data.');
       }
 
       return response.data.squadYear;
@@ -150,7 +150,7 @@ export function useSquadHistoryQuery(leagueId: string, squadId: string) {
       const response = await getSquadHistory({ path: { id: leagueId, squadId } });
 
       if (!response.data?.squadHistory) {
-        throwApiError(response.error, 'Squad history response is missing data.');
+        throwApiError(response.error, 'Team history response is missing data.');
       }
 
       return response.data.squadHistory;

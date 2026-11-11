@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { SelectionType } from '@poolmaster/shared/domain';
-import type { ContestDto, ContestEntryDto, SquadDto } from '@/lib/api';
+import type { ContestDto, ContestEntryDto, ContestEntryPlaceDto, SquadDto } from '@/lib/api';
 import { CurrentContestList } from '@/features/contests/current-contest-list';
 import { ContestStatusBadge } from '@/features/contests/contest-status-badge';
 import { MineMarker } from '@/features/contests/mine-marker';
@@ -97,6 +97,7 @@ export function UpNextCard({
  * Up next contest, always shown, with one italic line when nothing else is open or live.
  */
 export function CurrentContestsCard({
+  bestPlaceByContestId,
   contests,
   emptyBody,
   entriesByContestId,
@@ -104,6 +105,7 @@ export function CurrentContestsCard({
   hasTeam,
   leagueCode,
 }: {
+  bestPlaceByContestId: ReadonlyMap<string, ContestEntryPlaceDto>;
   contests: readonly ContestDto[];
   emptyBody: string;
   entriesByContestId: ReadonlyMap<string, readonly ContestEntryDto[]>;
@@ -118,6 +120,7 @@ export function CurrentContestsCard({
       title="Current contests"
     >
       <CurrentContestList
+        bestPlaceByContestId={bestPlaceByContestId}
         contests={contests}
         emptyBody={emptyBody}
         entriesByContestId={entriesByContestId}
@@ -235,7 +238,7 @@ export function YourTeamCard({
 }) {
   return (
     <SectionCard
-      footer={{ label: team ? 'My team' : 'Choose your name', testId: 'league-home-my-team', to: buildLeagueTeamPath(leagueCode) }}
+      footer={{ label: team ? 'My team' : 'Create your team', testId: 'league-home-my-team', to: buildLeagueTeamPath(leagueCode) }}
       testId="league-home-your-team"
       title="Yours"
     >
@@ -246,7 +249,7 @@ export function YourTeamCard({
           <SectionRow facts={formatOwnerCount(team)} name={team.name} testId="league-home-your-team-row" />
         </SectionRows>
       ) : (
-        <SectionEmpty>You haven&apos;t chosen your name in this league yet.</SectionEmpty>
+        <SectionEmpty>You haven&apos;t created your team in this league yet.</SectionEmpty>
       )}
     </SectionCard>
   );

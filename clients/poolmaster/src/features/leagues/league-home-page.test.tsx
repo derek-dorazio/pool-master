@@ -115,13 +115,13 @@ function entry(contestId: string, squadId: string, status: 'DRAFT' | 'SUBMITTED'
 }
 
 
-function standing(position: number, squadId: string, squadName: string, totalScore: number) {
+function standing(position: number, squadId: string, entryName: string, totalScore: number) {
   return {
     entryId: `entry-${squadId}`,
-    entryName: `${squadName} entry`,
+    entryName,
     entryNumber: 1,
     squadId,
-    squadName,
+    squadName: `${entryName}'s team`,
     position,
     displayPosition: String(position),
     countingPickLimit: 4,
@@ -191,7 +191,7 @@ function primeMocks({
   listCupsMock.mockResolvedValue(apiSuccess({ cups }));
   getYearReviewMock.mockResolvedValue(apiSuccess({ yearReview: { year: 2025, status: 'READY', sentAt: null, sentByName: null } }));
   // The viewer's team's entries across the league's current contests, in one read (#1197).
-  listMyContestEntriesMock.mockResolvedValue(apiSuccess({ entries: Object.values(entriesByContest).flat() }));
+  listMyContestEntriesMock.mockResolvedValue(apiSuccess({ entries: Object.values(entriesByContest).flat(), places: [] }));
 }
 
 beforeEach(() => {
@@ -547,15 +547,15 @@ describe('League Home', () => {
     expect(screen.queryByTestId('league-home-cups')).not.toBeInTheDocument();
   });
 
-  it('asks a member with no squad to choose their name in this league, rather than offering picks', async () => {
+  it('asks a member with no team to create their team, rather than offering picks', async () => {
     primeMocks({ hasTeam: false, contests: [contest('open-1', 'RBC Heritage Tiers', 'OPEN')] });
 
     renderLeagueHome();
 
-    expect(await within(await screen.findByTestId('league-home-your-team')).findByRole('link', { name: /Choose your name/ })).toBeInTheDocument();
+    expect(await within(await screen.findByTestId('league-home-your-team')).findByRole('link', { name: /Create your team/ })).toBeInTheDocument();
     const upNext = within(await screen.findByTestId('league-home-up-next'));
     expect(upNext.getByRole('link', { name: 'View contest' })).toBeInTheDocument();
-    expect(upNext.getByText(/Choose your name in this league to enter/)).toBeInTheDocument();
+    expect(upNext.getByText('Create your team to enter.')).toBeInTheDocument();
     expect(listMyContestEntriesMock).not.toHaveBeenCalled();
   });
 
@@ -605,14 +605,14 @@ describe('League Home', () => {
 describe('League Home after joining', () => {
   const joinedWithFailedTeamSetup = { pathname: '/league/BIGDAWGS', state: { teamSetupFailed: true } };
 
-  it('tells a member who just joined that the name and icon they chose did not save, linking to where they can set them', async () => {
+  it('tells a member who just joined that their team\'s name and icon did not save, linking to where they can set them', async () => {
     primeMocks();
 
     renderLeagueHome(joinedWithFailedTeamSetup);
 
     const notice = await screen.findByTestId('league-team-setup-failed');
-    expect(notice).toHaveTextContent("we couldn't save the name and icon you chose.");
-    expect(within(notice).getByRole('link', { name: 'Set your name and icon' })).toHaveAttribute('href', '/league/BIGDAWGS/team');
+    expect(notice).toHaveTextContent("we couldn't save your team's name and icon.");
+    expect(within(notice).getByRole('link', { name: 'Set up your team' })).toHaveAttribute('href', '/league/BIGDAWGS/team');
   });
 
   it('shows the team-setup notice once, clearing it from history so Back or a reload does not bring it back', async () => {

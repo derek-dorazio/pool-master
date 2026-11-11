@@ -68,7 +68,7 @@ export function formatProjectedStanding(row: Pick<CupProjectedStandingDto, 'disp
 /** The line over the standings that says what the greyed column is. */
 export function describeProjection(projection: CupProjectionDto): string {
   const names = joinNames(projection.contests.map((contest) => contest.name));
-  return `The greyed column shows where each squad would stand if ${names} ended now.`;
+  return `The greyed column shows where each team would stand if ${names} ended now.`;
 }
 
 /** Names as a sentence lists them: "A", "A and B", "A, B and C". */
