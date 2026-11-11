@@ -11,6 +11,10 @@
  * the team's provider mapping, so a game the provider lists the other way round from the match
  * still scores the right side, and a game whose teams are not the match's is refused.
  *
+ * A bracket game level after extra time is settled by its shoot-out (#1532): a provider that
+ * reports the shoot-out's scores names the winner by them, and the match keeps them apart from
+ * its score, as an admin's result does.
+ *
  * Nobody links a game by hand. A game no match is linked to yet is linked to the one match of the
  * event, unlinked and with both sides known, whose two teams are the game's: in a single-game
  * round, two teams meet once in a week or a playoff. A best-of series is one match of several
@@ -41,6 +45,9 @@ interface MatchResultFromGame {
   winnerSide: MatchSide | null;
   homeScore: number;
   awayScore: number;
+  /** Both or neither (left out is neither): a level game's shoot-out, from the match's side. */
+  homeShootoutScore?: number;
+  awayShootoutScore?: number;
 }
 
 /**
@@ -106,7 +113,13 @@ export async function writeGameScores(
       );
       continue;
     }
-    const before = { winnerSide: match.winnerSide, homeScore: match.homeScore, awayScore: match.awayScore };
+    const before = {
+      winnerSide: match.winnerSide,
+      homeScore: match.homeScore,
+      awayScore: match.awayScore,
+      homeShootoutScore: match.homeShootoutScore,
+      awayShootoutScore: match.awayShootoutScore,
+    };
     const row = { id: match.id, entityType: 'SportEventMatch', providerId: deps.providerId, externalId: game.externalGameId, internalId: match.id, name: `Match ${match.matchNumber}`, before, after: { ...result } };
     if (hasResult(match, result)) {
       rows.push({ ...row, disposition: 'UNCHANGED' });
@@ -213,8 +226,9 @@ async function participantsOfTeams(deps: GameScoreWriterDeps, games: readonly Ga
 
 /**
  * The game's result from the match's side, or null when its teams are not the match's two (a side
- * still to be decided, an unmapped team, or a link to the wrong game). Level scores are a tie,
- * which only a game that forms no bracket accepts.
+ * still to be decided, an unmapped team, or a link to the wrong game). Level scores with a
+ * shoot-out go to the shoot-out's winner; level scores without one are a tie, which only a game
+ * that forms no bracket accepts.
  */
 function resultFromGame(
   game: GameScoreUpdate,
@@ -229,17 +243,33 @@ function resultFromGame(
   const gameAway = teamsOf.get(game.awayTeamExternalId);
   if (matchHome === undefined || matchAway === undefined || gameHome === undefined || gameAway === undefined) return null;
 
+  const gameShootout = game.homeShootoutScore === undefined || game.homeShootoutScore === null
+    || game.awayShootoutScore === undefined || game.awayShootoutScore === null
+    ? null
+    : [game.homeShootoutScore, game.awayShootoutScore] as const;
   let homeScore: number;
   let awayScore: number;
+  let shootout: readonly [number, number] | null;
   if (gameHome === matchHome && gameAway === matchAway) {
     [homeScore, awayScore] = [game.homeScore, game.awayScore];
+    shootout = gameShootout;
   } else if (gameHome === matchAway && gameAway === matchHome) {
     [homeScore, awayScore] = [game.awayScore, game.homeScore];
+    shootout = gameShootout && [gameShootout[1], gameShootout[0]];
   } else {
     return null;
   }
-  const winnerSide = homeScore > awayScore ? MatchSide.HOME : awayScore > homeScore ? MatchSide.AWAY : null;
-  return { winnerSide, homeScore, awayScore };
+  // A shoot-out decides only a level game; a provider's shoot-out beside a decided score is ignored.
+  if (homeScore === awayScore && shootout) {
+    const [homeShootoutScore, awayShootoutScore] = shootout;
+    return { winnerSide: sideAhead(homeShootoutScore, awayShootoutScore), homeScore, awayScore, homeShootoutScore, awayShootoutScore };
+  }
+  return { winnerSide: sideAhead(homeScore, awayScore), homeScore, awayScore };
+}
+
+/** The side with more, or null when level. */
+function sideAhead(home: number, away: number): MatchSide | null {
+  return home > away ? MatchSide.HOME : away > home ? MatchSide.AWAY : null;
 }
 
 const SCORED_STATES: ReadonlySet<ProviderGameState> = new Set([ProviderGameState.FINAL, ProviderGameState.IN_PROGRESS]);
@@ -269,5 +299,7 @@ function hasResult(match: SportEventMatch, result: MatchResultFromGame): boolean
   return match.status === MatchStatus.COMPLETED
     && match.winnerSide === result.winnerSide
     && match.homeScore === result.homeScore
-    && match.awayScore === result.awayScore;
+    && match.awayScore === result.awayScore
+    && match.homeShootoutScore === (result.homeShootoutScore ?? null)
+    && match.awayShootoutScore === (result.awayShootoutScore ?? null);
 }
