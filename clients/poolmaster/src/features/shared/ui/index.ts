@@ -1,6 +1,6 @@
 export { ActionList, ActionTile } from "./action-list";
 export { Alert, Callout } from "./alert";
-export { AdminAreaLayout, LeagueMenu } from "./nav-menus";
+export { AdminAreaLayout, LeagueMenu, ToolsArea } from "./nav-menus";
 export type { NavMenuItem } from "./nav-menus";
 export { BulkUploadPanel } from "./bulk-upload-panel";
 export { UploadPreviewTable } from "./upload-preview-table";

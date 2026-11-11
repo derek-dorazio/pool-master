@@ -11,6 +11,7 @@ import { useManagedSport } from './use-managed-sport';
 import { SportLeaguePage } from './sport-league-page';
 import { useUpdateSportLeague } from './use-update-sport-league';
 import { upperFirst } from '@/lib/upper-first';
+import { useManagePageOwnsHeading } from './manage-breadcrumb-context';
 
 const editSchema = z.object({
   name: z.string().trim().min(1, 'A name is required'),
@@ -20,6 +21,7 @@ const editSchema = z.object({
 type EditValues = z.infer<typeof editSchema>;
 
 function SportLeagueEditForm({ sportLeague }: { sportLeague: SportLeagueDto }) {
+  useManagePageOwnsHeading();
   const navigate = useNavigate();
   const { sport } = useManagedSport();
   const sportLeagueNoun = sportLeagueNounOf(sport, sportLeague.noun);

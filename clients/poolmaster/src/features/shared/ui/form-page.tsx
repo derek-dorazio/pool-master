@@ -2,7 +2,7 @@ import type { ReactNode, SubmitEventHandler } from "react";
 import { Alert } from "./alert";
 import { Button, LinkButton } from "./button";
 import { Tile } from "./tile";
-import { Heading } from "./heading";
+import { PageHeader } from "./page-header";
 
 type FormPageProps = {
   /** Shown above the footer when the save fails. */
@@ -17,12 +17,13 @@ type FormPageProps = {
   submitLabel: string;
   submitTestId?: string;
   testId?: string;
-  title: ReactNode;
+  title: string;
 };
 
 /**
- * A full-page edit: a heading, the fields, and one Cancel/Save footer. Every property the
- * entity lets you edit sits on the one form with one Save, rather than a dialog per property.
+ * A full-page edit: the page's `PageHeader`, the fields, and one Cancel/Save footer. Every
+ * property the entity lets you edit sits on the one form with one Save. A root admin page that
+ * uses it claims the heading, so the Manage header shows only its breadcrumbs.
  */
 export function FormPage({
   cancelTo,
@@ -40,10 +41,7 @@ export function FormPage({
 }: FormPageProps) {
   return (
     <form className="space-y-5" data-testid={testId} noValidate onSubmit={onSubmit}>
-      <div>
-        <Heading level={2} variant="subtitle">{title}</Heading>
-        {description ? <p className="mt-0.5 text-sm text-muted-foreground">{description}</p> : null}
-      </div>
+      <PageHeader description={description} title={title} />
       <Tile className="space-y-5 p-5" padding="none" radius="md">{children}</Tile>
       {errorMessage ? <Alert tone="danger">{errorMessage}</Alert> : null}
       <div className="flex flex-wrap justify-end gap-3">

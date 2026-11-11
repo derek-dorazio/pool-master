@@ -11,7 +11,7 @@ import { formPageSave } from '@/lib/form-page-save';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import { PARTICIPANT_STATUSES, participantStatusLabel } from './sport-admin-utils';
-import { useManageBreadcrumbOverride } from './manage-breadcrumb-context';
+import { useManageBreadcrumbOverride, useManagePageOwnsHeading } from './manage-breadcrumb-context';
 import { buildSportParticipantPath } from './manage-navigation';
 import { useParticipantQuery } from './use-sport-catalog';
 import { useManagedSport } from './use-managed-sport';
@@ -59,6 +59,7 @@ function toBody(values: EditValues): UpdateParticipantData['body'] {
 }
 
 function ParticipantEditForm({ player }: { player: ParticipantDto }) {
+  useManagePageOwnsHeading();
   const logger = getLogger().child({
     feature: 'root-admin-participant-edit-page',
   });

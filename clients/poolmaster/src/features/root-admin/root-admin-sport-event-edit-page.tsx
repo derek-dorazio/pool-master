@@ -21,7 +21,7 @@ import { getLogger } from '@/lib/logger';
 import { formPageSave } from '@/lib/form-page-save';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import { useManageBreadcrumbOverride } from './manage-breadcrumb-context';
+import { useManageBreadcrumbOverride, useManagePageOwnsHeading } from './manage-breadcrumb-context';
 import { buildSportEventPath } from './manage-navigation';
 import { getScoringFamilyAdminUi } from './scoring-family-admin';
 import { useSportLeagueNoun } from './use-sport-catalog';
@@ -78,6 +78,7 @@ function toRequestBody(values: EditFormValues, sendsRoundsPar: boolean, timeZone
 }
 
 function SportEventEditForm({ tournament }: { tournament: SportEventDto }) {
+  useManagePageOwnsHeading();
   const logger = getLogger().child({
     feature: 'root-admin-sport-event-edit-page',
   });

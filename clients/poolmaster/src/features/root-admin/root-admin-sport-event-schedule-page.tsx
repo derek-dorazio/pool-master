@@ -18,7 +18,7 @@ import { getLogger } from '@/lib/logger';
 import { formPageSave } from '@/lib/form-page-save';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import { useManageBreadcrumbOverride } from './manage-breadcrumb-context';
+import { useManageBreadcrumbOverride, useManagePageOwnsHeading } from './manage-breadcrumb-context';
 import { buildSportEventPath } from './manage-navigation';
 import { useManagedSport } from './use-managed-sport';
 import { useSportEventRoundsQuery, useSportEventQuery } from './use-sport-event';
@@ -61,6 +61,7 @@ function SportEventScheduleForm({
   sportEvent: SportEventDto;
   rounds: readonly SportEventRoundDto[];
 }) {
+  useManagePageOwnsHeading();
   const eventId = sportEvent.id;
   const logger = getLogger().child({
     feature: 'root-admin-sport-event-schedule-page',

@@ -15,8 +15,10 @@ import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import { UNMAPPED_COMPETITORS_PATH } from './manage-navigation';
 import { useUnmappedCompetitorQuery } from './use-unmapped-competitors';
+import { useManagePageOwnsHeading } from './manage-breadcrumb-context';
 
 function MapCompetitorForm({ competitor }: { competitor: UnmappedProviderParticipantDto }) {
+  useManagePageOwnsHeading();
   const logger = getLogger().child({ feature: 'root-admin-map-competitor-page' });
   const navigate = useNavigate();
   // Seeded from the provider's spelling, the likeliest match.

@@ -10,6 +10,8 @@ const eyebrowVariants = cva(EYEBROW_TYPE_CLASS_NAME, {
       muted: "text-muted-foreground",
       /** On a navy panel, where the label blue would be too dark to read. */
       inverse: "text-label-on-inverse",
+      /** The gold name of a tools area on its navy band: you are somewhere other than the member pages. */
+      highlight: "text-primary",
     },
   },
   defaultVariants: {
