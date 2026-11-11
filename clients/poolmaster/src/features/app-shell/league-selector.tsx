@@ -1,7 +1,17 @@
-import { useEffect, useRef, useState } from "react";
+import { ChevronDown } from "lucide-react";
 import type { LeagueDto } from '@/lib/api';
 import { getLogger } from "@/lib/logger";
-import { Button, cn, MenuItem, Tile } from "@/features/shared/ui";
+import {
+  cn,
+  DropdownMenu,
+  DropdownMenuCheck,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuItemText,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/features/shared/ui";
 import {
   buildLeaguePath,
   getLeagueSelectorOptions,
@@ -22,6 +32,11 @@ type LeagueSelectorProps = {
   onNavigate: (path: string) => void;
 };
 
+/**
+ * The league picker in the app bar: a wide, squared control whose width never follows the
+ * league's name (a long name ends in an ellipsis inside it), opening the list of the viewer's
+ * leagues with the current one checked, then Create league.
+ */
 export function LeagueSelector({
   activeLeagueCode,
   className,
@@ -33,129 +48,96 @@ export function LeagueSelector({
   const logger = getLogger().child({
     feature: "league-selector",
   });
-  const [isOpen, setIsOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement | null>(null);
   const activeLeague =
     leagues.find((league) => league.leagueCode === activeLeagueCode) ?? null;
   const selectorLeagues = getLeagueSelectorOptions(leagues, commissionerLeagueIds);
 
-  useEffect(() => {
-    if (!isOpen) {
-      return undefined;
-    }
-
-    function handlePointerDown(event: MouseEvent) {
-      if (!containerRef.current?.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    }
-
-    function handleEscape(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        setIsOpen(false);
-      }
-    }
-
-    window.addEventListener("mousedown", handlePointerDown);
-    window.addEventListener("keydown", handleEscape);
-    return () => {
-      window.removeEventListener("mousedown", handlePointerDown);
-      window.removeEventListener("keydown", handleEscape);
-    };
-  }, [isOpen]);
-
   return (
-    <div className={cn("relative min-w-0", className)} ref={containerRef}>
-      <Button
-        aria-expanded={isOpen}
-        aria-haspopup="menu"
-        className="cursor-pointer gap-3 rounded-3xl border border-inverse-border bg-on-inverse-subtle px-4 py-3 shadow-sm sm:w-auto sm:max-w-xs lg:max-w-none"
-        data-testid="league-selector-toggle"
-        layout="row"
-        onClick={() => setIsOpen((current) => !current)}
-        size="auto"
-        type="button"
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        className={cn(
+          "flex h-12 min-w-0 items-center gap-2.5 rounded-md border border-inverse-border bg-on-inverse-subtle px-3.5 text-left text-on-inverse transition hover:bg-on-inverse-hover data-[state=open]:bg-on-inverse-hover lg:max-w-[34rem] lg:flex-1",
+          className,
+        )}
+        testId="league-selector-toggle"
       >
-        <div className="flex h-11 w-11 flex-none items-center justify-center rounded-full bg-primary text-primary-foreground">
-          <LeagueIcon iconKey={activeLeague?.iconKey} size="md" />
-        </div>
-        <div className="min-w-0">
-          <div className="font-display text-xs font-bold uppercase text-on-inverse-muted">
-            League
-          </div>
-          <div className="truncate text-sm font-semibold text-on-inverse">
-            {activeLeague?.name ?? "Select league"}
-          </div>
-        </div>
-      </Button>
+        <span className="flex h-7 w-7 flex-none items-center justify-center rounded-md bg-primary text-primary-foreground">
+          <LeagueIcon iconKey={activeLeague?.iconKey} size="sm" />
+        </span>
+        <span className="flex-none font-display text-xs font-bold uppercase tracking-label text-label-on-inverse">
+          League
+        </span>
+        <span className="min-w-0 flex-1 truncate font-display text-base font-bold">
+          {activeLeague?.name ?? "Select league"}
+        </span>
+        <ChevronDown aria-hidden="true" className="h-4 w-4 flex-none opacity-70" strokeWidth={2.5} />
+      </DropdownMenuTrigger>
 
-      {isOpen ? (
-        <Tile
-          className="absolute left-0 z-20 mt-3 w-72 max-w-[calc(100vw-2rem)] shadow-xl lg:left-auto lg:right-0"
-          padding="sm"
-          radius="lg"
-        >
-          <div className="space-y-2">
-            {selectorLeagues.map((league) => (
-              <MenuItem
-                className={league.isActive || league.leagueCode === activeLeagueCode ? undefined : "border border-border bg-muted/30"}
-                data-testid={`league-selector-option-${league.leagueCode}`}
-                isSelected={league.leagueCode === activeLeagueCode}
-                key={league.id}
-                onClick={() => {
-                  rememberRecentLeagueCode(league.leagueCode);
-                  setIsOpen(false);
-                  logger.info(
-                    {
-                      action: "leagueSelector.navigate",
-                      data: {
-                        leagueCode: league.leagueCode,
-                      },
-                    },
-                    "Selected league from the league selector",
-                  );
-                  onNavigate(buildLeaguePath(league.leagueCode));
-                }}
-                type="button"
-              >
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
-                  <LeagueIcon iconKey={league.iconKey} size="sm" />
-                </div>
-                <div className="min-w-0">
-                  <div className="truncate font-medium text-foreground">
-                    {league.name}
-                  </div>
-                  <div className="truncate text-xs uppercase text-muted-foreground">
-                    {league.isActive
-                      ? league.leagueCode
-                      : "Not currently active"}
-                  </div>
-                </div>
-              </MenuItem>
-            ))}
-
-            <MenuItem
-              data-testid="league-selector-create"
-              onClick={() => {
-                setIsOpen(false);
+      <DropdownMenuContent testId="league-selector-menu" width="lg">
+        <DropdownMenuLabel>Your leagues</DropdownMenuLabel>
+        {selectorLeagues.map((league) => {
+          const isCurrent = league.leagueCode === activeLeagueCode;
+          const isCommissioner = commissionerLeagueIds.has(league.id);
+          return (
+            <DropdownMenuItem
+              data-testid={`league-selector-option-${league.leagueCode}`}
+              isSelected={isCurrent}
+              key={league.id}
+              onSelect={() => {
+                rememberRecentLeagueCode(league.leagueCode);
                 logger.info(
                   {
-                    action: "leagueSelector.createRequested",
+                    action: "leagueSelector.navigate",
+                    data: {
+                      leagueCode: league.leagueCode,
+                    },
                   },
-                  "Requested league creation from the selector",
+                  "Selected league from the league selector",
                 );
-                onCreateLeague();
+                onNavigate(buildLeaguePath(league.leagueCode));
               }}
-              type="button"
             >
-              <div className="flex h-10 w-10 items-center justify-center rounded-full border border-dashed border-border text-lg text-muted-foreground">
-                +
-              </div>
-              <div className="font-medium text-foreground">Create league</div>
-            </MenuItem>
-          </div>
-        </Tile>
-      ) : null}
-    </div>
+              <span
+                className={cn(
+                  "flex h-8 w-8 flex-none items-center justify-center rounded-md",
+                  isCurrent ? "bg-primary text-primary-foreground" : "bg-muted text-foreground",
+                )}
+              >
+                <LeagueIcon iconKey={league.iconKey} size="sm" />
+              </span>
+              <DropdownMenuItemText
+                detail={
+                  league.isActive
+                    ? [league.leagueCode, isCommissioner ? "Commissioner" : null].filter(Boolean).join(" · ")
+                    : "Not currently active"
+                }
+                isMuted={!league.isActive}
+                name={league.name}
+              />
+              {isCurrent ? <DropdownMenuCheck /> : null}
+            </DropdownMenuItem>
+          );
+        })}
+
+        {selectorLeagues.length > 0 ? <DropdownMenuSeparator /> : null}
+        <DropdownMenuItem
+          data-testid="league-selector-create"
+          onSelect={() => {
+            logger.info(
+              {
+                action: "leagueSelector.createRequested",
+              },
+              "Requested league creation from the selector",
+            );
+            onCreateLeague();
+          }}
+        >
+          <span className="flex h-8 w-8 flex-none items-center justify-center rounded-md border border-dashed border-muted-foreground text-lg text-muted-foreground">
+            +
+          </span>
+          <DropdownMenuItemText name="Create league" />
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
