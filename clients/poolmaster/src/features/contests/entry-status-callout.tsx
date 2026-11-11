@@ -1,7 +1,7 @@
 import { CircleCheck, CircleDashed, EyeOff } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { ContestEntryStatus } from '@poolmaster/shared/domain';
-import { formatDateTimeDisplay, InfoPopover, useDisplayPreferences } from '@/features/shared/ui';
+import { formatDateTimeDisplay, Icon, InfoPopover, Text, useDisplayPreferences } from '@/features/shared/ui';
 import { CONTEST_ENTRY_STATUS_LABELS } from './contest-status';
 
 const HIDDEN_STATUS_LABEL = 'Hidden until the event starts';
@@ -44,15 +44,15 @@ export function EntryStatusCallout({
 
   return (
     <InfoPopover
-      icon={status ? STATUS_ICONS[status] : <EyeOff aria-hidden className="size-6 text-muted-foreground" />}
+      icon={status ? STATUS_ICONS[status] : <Icon icon={EyeOff} size={24} tone="muted" />}
       label={`Entry status: ${statusLabel}`}
       testId="contest-entry-status"
     >
-      <dl className="space-y-2 text-sm">
+      <dl className="space-y-2">
         {lines.map((fact) => (
           <div className="flex justify-between gap-4" data-testid={`contest-entry-status-${fact.id}`} key={fact.id}>
-            <dt className="shrink-0 text-muted-foreground">{fact.label}</dt>
-            <dd className="text-right font-medium text-foreground">{fact.value}</dd>
+            <Text asChild variant="meta"><dt className="shrink-0">{fact.label}</dt></Text>
+            <Text asChild variant="strong"><dd className="text-right">{fact.value}</dd></Text>
           </div>
         ))}
       </dl>

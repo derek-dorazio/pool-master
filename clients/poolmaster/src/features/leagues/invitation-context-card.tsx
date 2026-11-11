@@ -1,5 +1,5 @@
 import { getLeagueInitials } from './league-routing';
-import { Heading } from '@/features/shared/ui';
+import { Heading, Text } from '@/features/shared/ui';
 
 type InvitationContextCardProps = {
   leagueName: string;
@@ -25,15 +25,15 @@ export function InvitationContextCard({
         </div>
         <div className="min-w-0">
           <Heading level={3} variant="eyebrow">{title}</Heading>
-          <div className="truncate text-base font-semibold text-foreground">{leagueName}</div>
+          <Text as="div" size="base" truncate variant="strong" weight="semibold">{leagueName}</Text>
           {inviteCode ? (
-            <div className="truncate font-mono text-xs uppercase text-muted-foreground">
+            <Text as="div" className="font-mono uppercase" truncate variant="caption">
               Invite code {inviteCode}
-            </div>
+            </Text>
           ) : null}
         </div>
       </div>
-      <p className="mt-4 text-sm text-muted-foreground">{message}</p>
+      <Text as="p" className="mt-4" variant="meta">{message}</Text>
     </div>
   );
 }

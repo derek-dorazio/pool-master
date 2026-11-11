@@ -10,6 +10,7 @@ import {
   InlineError,
   Input,
   Select,
+  Text,
   useDisplayPreferences,
 } from '@/features/shared/ui';
 import type { GamePicksResponse } from '@/lib/api';
@@ -57,9 +58,9 @@ function TeamName({ game, spread, team }: { game: PickEmGame; spread: string | n
     <span className="flex min-w-0 items-baseline gap-2">
       <span className="truncate">{team.name}</span>
       {spread === null ? null : (
-        <span className="shrink-0 text-xs tabular-nums text-muted-foreground" data-testid={`pick-em-game-${game.matchNumber}-spread-${team.sportEventParticipantId}`}>
+        <Text className="shrink-0 tabular-nums" data-testid={`pick-em-game-${game.matchNumber}-spread-${team.sportEventParticipantId}`} variant="caption">
           {spread}
-        </span>
+        </Text>
       )}
     </span>
   );
@@ -114,9 +115,9 @@ function ConfidenceValue({
   const value = game.pick?.confidence ?? null;
   if (!canChange || !game.pick) {
     return game.pick ? (
-      <p className="text-sm" data-testid={`pick-em-game-${game.matchNumber}-confidence-value`}>
+      <Text as="p" data-testid={`pick-em-game-${game.matchNumber}-confidence-value`}>
         {value === null ? 'Not ranked' : `Confidence ${value}`}
-      </p>
+      </Text>
     ) : null;
   }
   return (
@@ -180,9 +181,9 @@ function TiebreakerField({ game, gamePicks, tiebreaker }: { game: PickEmGame; ga
         </Button>
       </div>
       {gamePicks.tiebreakerValue !== null ? (
-        <p className="text-sm text-muted-foreground" data-testid="pick-em-tiebreaker-saved">
+        <Text as="p" data-testid="pick-em-tiebreaker-saved" variant="meta">
           {`Saved tiebreaker: ${gamePicks.tiebreakerValue} total points.`}
-        </p>
+        </Text>
       ) : null}
       {tiebreaker.saveError ? (
         <InlineError testId="pick-em-tiebreaker-error">{tiebreaker.saveError}</InlineError>
@@ -221,7 +222,7 @@ function GameCard({
   const tiebreakerShown = gamePicks.tiebreakerValue !== null;
   return (
     <li className="space-y-3 rounded-2xl border border-border bg-background p-4" data-testid={`pick-em-game-${game.matchNumber}`}>
-      <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+      <Text as="div" className="flex flex-wrap items-center justify-between gap-2" variant="caption">
         <span data-testid={`pick-em-game-${game.matchNumber}-kickoff`}>{formatDateTimeDisplay(game.kickoff, displayPreferences)}</span>
         <span className="flex flex-wrap items-center gap-2">
           {isTiebreakerGame ? <Chip tone="info">Tiebreaker game</Chip> : null}
@@ -233,7 +234,7 @@ function GameCard({
           ) : null}
           {outcome ? <Chip data-testid={`pick-em-game-${game.matchNumber}-outcome`} tone={outcome.tone}>{outcome.label}</Chip> : null}
         </span>
-      </div>
+      </Text>
       <div className={cn('grid gap-2', gamePicks.tiePicksOffered ? 'sm:grid-cols-3' : 'sm:grid-cols-2')}>
         {gameTeams(game).flatMap((team, index) => {
           // A pool that takes tie picks offers the tie between the two teams (#792).
@@ -250,9 +251,9 @@ function GameCard({
           )] : [];
           if (!team) {
             return [...tieChoice, (
-              <div className="flex h-9 items-center rounded-2xl border border-dashed border-border px-3 text-sm text-muted-foreground" key={index}>
+              <Text as="div" className="flex h-9 items-center rounded-2xl border border-dashed border-border px-3" key={index} variant="meta">
                 To be decided
-              </div>
+              </Text>
             )];
           }
           const isPicked = !isHidden && team.sportEventParticipantId === pickedId;
@@ -277,9 +278,9 @@ function GameCard({
         })}
       </div>
       {isHidden ? (
-        <p className="text-sm text-muted-foreground" data-testid={`pick-em-game-${game.matchNumber}-hidden`}>
+        <Text as="p" data-testid={`pick-em-game-${game.matchNumber}-hidden`} variant="meta">
           This pick is shown at kickoff.
-        </p>
+        </Text>
       ) : null}
       {gamePicks.mode === PickEmMode.CONFIDENCE && !isHidden ? (
         <ConfidenceValue canChange={choosable} game={game} gamePicks={gamePicks} isBusy={isBusy} onChange={onConfidence} />
@@ -287,9 +288,9 @@ function GameCard({
       {isTiebreakerGame && choosable ? (
         <TiebreakerField game={game} gamePicks={gamePicks} tiebreaker={tiebreaker} />
       ) : isTiebreakerGame && (gamePicks.ownEntry || tiebreakerShown) ? (
-        <p className="text-sm" data-testid="pick-em-tiebreaker-summary">
+        <Text as="p" data-testid="pick-em-tiebreaker-summary">
           {tiebreakerShown ? `Tiebreaker: ${gamePicks.tiebreakerValue} total points.` : 'No tiebreaker was saved.'}
-        </p>
+        </Text>
       ) : null}
     </li>
   );
@@ -326,7 +327,7 @@ export function PickEmGames({
     (left, right) => Date.parse(left.kickoff) - Date.parse(right.kickoff) || left.matchNumber - right.matchNumber,
   );
   if (games.length === 0) {
-    return <p className="text-sm text-muted-foreground" data-testid="pick-em-no-games">This week has no games to pick.</p>;
+    return <Text as="p" data-testid="pick-em-no-games" variant="meta">This week has no games to pick.</Text>;
   }
   return (
     <ul className="grid gap-3 lg:grid-cols-2" data-testid="pick-em-games">
