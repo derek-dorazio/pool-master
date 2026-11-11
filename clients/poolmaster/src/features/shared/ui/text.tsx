@@ -37,8 +37,6 @@ const textVariants = cva("", {
       primary: "text-primary",
       /** Text on the header's dark band. */
       onInverse: "text-on-inverse",
-      /** Secondary text on the dark band. */
-      onInverseMuted: "text-on-inverse-muted",
       /** A caption on the dark band. */
       onInverseLabel: "text-label-on-inverse",
     },
