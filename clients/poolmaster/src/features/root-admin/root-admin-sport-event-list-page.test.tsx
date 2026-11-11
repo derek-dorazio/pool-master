@@ -39,6 +39,14 @@ describe('pool-master-3dg RootAdminSportEventListPage', () => {
     listEventsMock.mockReset();
   });
 
+  it('titles the lists with the sport, so Tournaments shows once, as the current tab', async () => {
+    listEventsMock.mockResolvedValue({ data: { events: [] } });
+    renderPage();
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Golf' })).toBeInTheDocument();
+    expect(screen.getAllByText('Tournaments')).toHaveLength(1);
+  });
+
   it('marks Tournaments as the current golf tab and moves to the Golfers list from it', async () => {
     listEventsMock.mockResolvedValue({ data: { events: [] } });
     renderPage();

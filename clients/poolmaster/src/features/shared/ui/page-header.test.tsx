@@ -85,11 +85,12 @@ describe("PageHeader", () => {
     expect(screen.getByText("Users", { selector: "span" })).toHaveAttribute("aria-current", "page");
   });
 
-  it("sets each fact passed as its own element off from the one before with a dot", () => {
+  it("ends each fact but the last with a dot, so a wrapped fact line never opens with one", () => {
     renderHeader(<PageHeader meta={<><span>Tiered</span><span>Entries: 6 of 100</span></>} testId="contest" title="Masters Pool" />);
 
     expect(within(screen.getByTestId("contest-meta")).getByText("Tiered")).toBeInTheDocument();
-    expect(screen.getByTestId("contest-meta")).toHaveClass("[&>*+*]:before:content-['·']");
+    expect(screen.getByTestId("contest-meta")).toHaveClass("[&>*:not(:last-child)]:after:content-['·']");
+    expect(screen.getByTestId("contest-meta")).not.toHaveClass("[&>*+*]:before:content-['·']");
   });
 
   it("puts the breadcrumb on the header's first line, above the title", () => {

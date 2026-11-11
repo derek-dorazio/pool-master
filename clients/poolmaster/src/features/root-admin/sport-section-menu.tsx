@@ -13,9 +13,9 @@ const SPORT_LISTS = ['events', 'participants', 'leagues'] as const;
 type SportList = (typeof SPORT_LISTS)[number];
 
 /**
- * The header of a sport's three lists: the current list's name as the title and tabs between
- * the lists, named in its own words (golf: Tournaments, Golfers, Tours); the side menu has one
- * entry per sport. The area keeps only its trail above it.
+ * The header of a sport's three lists: the sport's name as the title and tabs between the lists,
+ * named in its own words (golf: Tournaments, Golfers, Tours), so no list's name shows twice. The
+ * side menu has one entry per sport; the area keeps only its trail above it.
  */
 export function SportSectionMenu({ current }: { current: SportList }) {
   useManagePageOwnsHeading();
@@ -42,7 +42,7 @@ export function SportSectionMenu({ current }: { current: SportList }) {
         />
       )}
       testId="root-admin-sport-menu"
-      title={lists[current].label}
+      title={definition.name}
     />
   );
 }

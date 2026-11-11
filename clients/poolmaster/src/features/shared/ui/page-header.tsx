@@ -116,8 +116,9 @@ export function PageHeader({
             {titleAside}
           </div>
           {meta ? (
-            // Each fact the page passes as its own element is set off from the one before by a dot.
-            <div className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm text-muted-foreground [&>*+*]:before:mr-1.5 [&>*+*]:before:content-['·']"
+            // Each fact the page passes as its own element ends with a dot before the next, so a
+            // line that wraps ends on a dot rather than opening with one.
+            <div className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm text-muted-foreground [&>*:not(:last-child)]:after:ml-1.5 [&>*:not(:last-child)]:after:content-['·']"
               data-testid={testId ? `${testId}-meta` : undefined}
             >
               {meta}
