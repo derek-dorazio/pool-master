@@ -1,8 +1,9 @@
 import { cva, type VariantProps } from "class-variance-authority";
 import { type HTMLAttributes } from "react";
 import { cn } from "./class-names";
+import { EYEBROW_TYPE_CLASS_NAME } from "./type-styles";
 
-const eyebrowVariants = cva("text-xs font-semibold uppercase tracking-eyebrow", {
+const eyebrowVariants = cva(EYEBROW_TYPE_CLASS_NAME, {
   variants: {
     tone: {
       accent: "text-label",

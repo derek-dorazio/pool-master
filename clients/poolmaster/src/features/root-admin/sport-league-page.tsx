@@ -4,9 +4,9 @@ import type { SportLeagueDto } from '@/lib/api';
 import { AsyncPage } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
 import { useManageBreadcrumbOverride } from './manage-breadcrumb-context';
-import { capitalize } from './manage-navigation';
 import { useSportLeagueNoun, useSportLeaguesQuery } from './use-sport-catalog';
 import { useManagedSport } from './use-managed-sport';
+import { upperFirst } from '@/lib/upper-first';
 
 /**
  * A page about the sport league in the route (`:leagueId`): it finds the league among the
@@ -35,7 +35,7 @@ export function SportLeaguePage({
   return (
     <AsyncPage
       emptyBody={`This ${sportLeagueNoun.one} does not exist or has been removed.`}
-      emptyTitle={`${capitalize(sportLeagueNoun.one)} not found`}
+      emptyTitle={`${upperFirst(sportLeagueNoun.one)} not found`}
       errorBody={extractErrorMessage(leaguesQuery.error, {
         fallback: `We could not load this ${sportLeagueNoun.one} right now.`,
       })}

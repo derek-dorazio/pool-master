@@ -22,10 +22,11 @@ import { formPageSave } from '@/lib/form-page-save';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import { useManageBreadcrumbOverride } from './manage-breadcrumb-context';
-import { buildSportEventPath, capitalize } from './manage-navigation';
+import { buildSportEventPath } from './manage-navigation';
 import { getScoringFamilyAdminUi } from './scoring-family-admin';
 import { useSportLeagueNoun } from './use-sport-catalog';
 import { useSportEventQuery } from './use-sport-event';
+import { upperFirst } from '@/lib/upper-first';
 
 const editFormSchema = z.object({
   name: z.string().trim().min(1, 'Name is required'),
@@ -149,7 +150,7 @@ function SportEventEditForm({ tournament }: { tournament: SportEventDto }) {
           <DateTimeField data-testid="root-admin-sport-event-edit-end" {...form.register('endDate')} />
         </FormField>
       </div>
-      <FormField error={form.formState.errors.rounds?.message} label={capitalize(vocabulary.round.many)}>
+      <FormField error={form.formState.errors.rounds?.message} label={upperFirst(vocabulary.round.many)}>
         <Input min={1} type="number" {...form.register('rounds')} />
       </FormField>
       {scoresUnplayedRoundsAgainstPar ? (

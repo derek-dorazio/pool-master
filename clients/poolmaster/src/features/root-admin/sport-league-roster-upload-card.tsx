@@ -14,9 +14,9 @@ import {
   parseRosterUpload,
   type RosterUploadRow,
 } from './sport-admin-utils';
-import { capitalize } from './manage-navigation';
 import { useSportLeagueNoun } from './use-sport-catalog';
 import { useManagedSport } from './use-managed-sport';
+import { upperFirst } from '@/lib/upper-first';
 
 type RosterPreviewRow = ParticipantLeagueAffiliationUploadPreviewResponse['rows'][number];
 
@@ -122,7 +122,7 @@ export function SportLeagueRosterUploadCard({ leagueId }: { leagueId: string }) 
           <UploadPreviewTable
             describeRow={(row) => describeRow(row.row)}
             match={(row) => row.participantName || '—'}
-            matchHeader={capitalize(participant.one)}
+            matchHeader={upperFirst(participant.one)}
             resolution={(row) => <StatusBadge tone={RESOLUTION_TONE[row.resolution]}>{row.resolution}</StatusBadge>}
             rows={rows}
             testId="root-admin-sport-league-roster-upload-preview-table"

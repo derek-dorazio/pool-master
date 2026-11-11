@@ -4,9 +4,10 @@ import { DataGridPage, LinkButton, StatusBadge } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
 import type { SportLeagueDto } from '@/lib/api';
 import { useSportLeaguesQuery } from './use-sport-catalog';
-import { MANAGE_LIST_PAGE_SIZE, buildSportLeagueListPath, buildSportLeaguePath, capitalize } from './manage-navigation';
+import { MANAGE_LIST_PAGE_SIZE, buildSportLeagueListPath, buildSportLeaguePath } from './manage-navigation';
 import { SportSectionMenu } from './sport-section-menu';
 import { useManagedSport } from './use-managed-sport';
+import { upperFirst } from '@/lib/upper-first';
 
 const columnHelper = createColumnHelper<SportLeagueDto>();
 
@@ -23,7 +24,7 @@ export function RootAdminSportLeagueListPage() {
   const columns = useMemo(
     () => [
       columnHelper.accessor('name', {
-        header: capitalize(sportLeague.one),
+        header: upperFirst(sportLeague.one),
         cell: ({ getValue }) => (
           <span className="font-medium text-foreground">{getValue()}</span>
         ),
@@ -37,7 +38,7 @@ export function RootAdminSportLeagueListPage() {
         cell: ({ getValue }) => getValue(),
       }),
       columnHelper.accessor('sportEventCount', {
-        header: capitalize(event.many),
+        header: upperFirst(event.many),
         cell: ({ getValue }) => getValue(),
       }),
       columnHelper.accessor('currentEventYear', {

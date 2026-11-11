@@ -4,8 +4,8 @@ import {
   parseEventYear,
   type SportEventEdition,
 } from './sport-event-edition';
-import { capitalize } from './manage-navigation';
 import { useManagedSport } from './use-managed-sport';
+import { upperFirst } from '@/lib/upper-first';
 
 /**
  * plans/147 — the tour and event year a tournament is created into, shared by both
@@ -28,7 +28,7 @@ export function SportEventEditionFields({
       <FormField
         error={edition.sportLeagueId === '' ? `Choose the ${sportLeagueNoun.one} this ${event.one} runs on.` : undefined}
         helperText="Required. Fixed at creation."
-        label={`${capitalize(sportLeagueNoun.one)} *`}
+        label={`${upperFirst(sportLeagueNoun.one)} *`}
       >
         <Select
           data-testid="root-admin-sport-event-create-tour"
