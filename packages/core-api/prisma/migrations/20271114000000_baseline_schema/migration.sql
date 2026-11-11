@@ -1,19 +1,23 @@
--- Baseline: the whole migration history squashed on 2026-11-04 (#1429). The history before it is in
--- git at 7bff210 (packages/core-api/prisma/migrations). Generated from schema.prisma with
--- `prisma migrate diff --from-empty --to-schema-datamodel`, plus the section at the end that the
--- schema cannot declare. Reference rows are in the next migration.
+-- Baseline: the whole migration history squashed on 2026-11-04 (#1429) and again on 2026-11-11,
+-- before the last QA reset. The history before each squash is in git (at 7bff210, and at the
+-- parent of the commit that added this file) under packages/core-api/prisma/migrations. Generated
+-- from schema.prisma with `prisma migrate diff --from-empty --to-schema-datamodel`, enum labels
+-- kept in the order the history added them, plus the section at the end that the schema cannot
+-- declare. Reference rows are in the next migration.
 
 -- CreateSchema
 CREATE SCHEMA IF NOT EXISTS "public";
 -- Trigram search indexes need pg_trgm; schema.prisma cannot declare an extension.
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
-
 -- CreateEnum
 CREATE TYPE "UserAuthProvider" AS ENUM ('email', 'google', 'apple');
 
 -- CreateEnum
 CREATE TYPE "UserTimeFormat" AS ENUM ('12H', '24H');
+
+-- CreateEnum
+CREATE TYPE "UserColorScheme" AS ENUM ('DEVICE', 'LIGHT', 'DARK');
 
 -- CreateEnum
 CREATE TYPE "PrismaLeagueIconKey" AS ENUM ('GOLF_FLAG', 'GOLF_BALL', 'FOOTBALL', 'FOOTBALL_HELMET', 'BASKETBALL', 'BASKETBALL_HOOP', 'CHECKERED_FLAG', 'RACING_WHEEL', 'TENNIS_BALL', 'TENNIS_RACKET', 'HORSESHOE', 'SOCCER_BALL', 'HOCKEY_STICK', 'HOCKEY_PUCK', 'BASEBALL', 'BASEBALL_BAT', 'FIGHT_GLOVE', 'TROPHY', 'WHISTLE', 'STOPWATCH');
@@ -41,6 +45,12 @@ CREATE TYPE "PrismaEmailTemplateKey" AS ENUM ('LEAGUE_MEMBER_INVITE', 'LEAGUE_JO
 
 -- CreateEnum
 CREATE TYPE "PrismaEmailMessageStatus" AS ENUM ('QUEUED', 'SENDING', 'SENT', 'FAILED', 'SKIPPED', 'DELIVERED', 'BOUNCED', 'COMPLAINED');
+
+-- CreateEnum
+CREATE TYPE "PrismaBackgroundJobType" AS ENUM ('MANUAL_EVENT_SYNC', 'CONTEST_STARTED_EMAILS', 'CONTEST_SETTLED_EMAILS', 'SETTLE_SPORT_EVENT_CONTESTS', 'SETTLE_GAME_CONTESTS', 'REBUILD_LEADERBOARDS', 'CONTEST_EVENT_CHANGED_EMAILS', 'ADD_RELEASED_EDITION_TO_CONTEST');
+
+-- CreateEnum
+CREATE TYPE "PrismaBackgroundJobStatus" AS ENUM ('QUEUED', 'RUNNING', 'SUCCEEDED', 'FAILED');
 
 -- CreateEnum
 CREATE TYPE "PrismaEmailSkipReason" AS ENUM ('EMAIL_DISABLED', 'TEMPLATE_DISABLED', 'NOT_ALLOWED_IN_ENVIRONMENT', 'SUPPRESSED', 'OPTED_OUT', 'NOT_IN_PLAN');
@@ -95,6 +105,9 @@ CREATE TYPE "PrismaMatchSide" AS ENUM ('HOME', 'AWAY');
 
 -- CreateEnum
 CREATE TYPE "PrismaMatchEnding" AS ENUM ('PLAYED', 'RETIREMENT', 'WALKOVER', 'DEFAULT');
+
+-- CreateEnum
+CREATE TYPE "PrismaMatchResultSource" AS ENUM ('ADMIN', 'PROVIDER');
 
 -- CreateEnum
 CREATE TYPE "PrismaPredictedResult" AS ENUM ('TEAM', 'TIE');
@@ -180,6 +193,7 @@ CREATE TABLE "users" (
     "timezone" VARCHAR(50),
     "locale" VARCHAR(10) DEFAULT 'en-US',
     "time_format" "UserTimeFormat" DEFAULT '12H',
+    "color_scheme" "UserColorScheme",
     "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMPTZ NOT NULL,
 
@@ -797,6 +811,20 @@ CREATE TABLE "contest_entry_event_standings" (
 );
 
 -- CreateTable
+CREATE TABLE "contest_leaderboard_snapshots" (
+    "contest_id" UUID NOT NULL,
+    "shown_event" VARCHAR(36) NOT NULL,
+    "version" INTEGER NOT NULL DEFAULT 1,
+    "computed_from" TIMESTAMPTZ NOT NULL,
+    "contest_updated_at" TIMESTAMPTZ NOT NULL,
+    "valid_until" TIMESTAMPTZ,
+    "board" JSONB NOT NULL,
+    "updated_at" TIMESTAMPTZ NOT NULL,
+
+    CONSTRAINT "contest_leaderboard_snapshots_pkey" PRIMARY KEY ("contest_id","shown_event")
+);
+
+-- CreateTable
 CREATE TABLE "contest_draws" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "contest_id" UUID NOT NULL,
@@ -961,6 +989,8 @@ CREATE TABLE "sport_event_matches" (
     "advances_to_side" "PrismaMatchSide",
     "region_label" VARCHAR(40),
     "home_spread" DECIMAL(4,1),
+    "external_game_id" VARCHAR(255),
+    "result_source" "PrismaMatchResultSource",
     "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMPTZ NOT NULL,
 
@@ -1115,6 +1145,23 @@ CREATE TABLE "platform_runtime_configs" (
     "updated_at" TIMESTAMPTZ NOT NULL,
 
     CONSTRAINT "platform_runtime_configs_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "background_jobs" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "type" "PrismaBackgroundJobType" NOT NULL,
+    "payload" JSONB NOT NULL,
+    "status" "PrismaBackgroundJobStatus" NOT NULL DEFAULT 'QUEUED',
+    "run_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "attempts" INTEGER NOT NULL DEFAULT 0,
+    "lease_until" TIMESTAMPTZ,
+    "last_error" TEXT,
+    "dedupe_key" VARCHAR(200),
+    "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "completed_at" TIMESTAMPTZ,
+
+    CONSTRAINT "background_jobs_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -1560,6 +1607,9 @@ CREATE INDEX "sport_event_matches_away_sport_event_participant_id_idx" ON "sport
 CREATE UNIQUE INDEX "sport_event_matches_sport_event_id_match_number_key" ON "sport_event_matches"("sport_event_id", "match_number");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "sport_event_matches_sport_event_id_external_game_id_key" ON "sport_event_matches"("sport_event_id", "external_game_id");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "sport_event_matches_advances_to_match_id_advances_to_side_key" ON "sport_event_matches"("advances_to_match_id", "advances_to_side");
 
 -- CreateIndex
@@ -1612,6 +1662,18 @@ CREATE INDEX "provider_sync_runs_status_created_at_idx" ON "provider_sync_runs"(
 
 -- CreateIndex
 CREATE UNIQUE INDEX "platform_runtime_configs_config_key_key" ON "platform_runtime_configs"("config_key");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "background_jobs_dedupe_key_key" ON "background_jobs"("dedupe_key");
+
+-- CreateIndex
+CREATE INDEX "background_jobs_status_run_at_idx" ON "background_jobs"("status", "run_at");
+
+-- CreateIndex
+CREATE INDEX "background_jobs_status_lease_until_idx" ON "background_jobs"("status", "lease_until");
+
+-- CreateIndex
+CREATE INDEX "background_jobs_status_completed_at_idx" ON "background_jobs"("status", "completed_at");
 
 -- CreateIndex
 CREATE INDEX "platform_runtime_config_history_config_key_changed_at_idx" ON "platform_runtime_config_history"("config_key", "changed_at" DESC);
@@ -1833,6 +1895,9 @@ ALTER TABLE "contest_entry_event_standings" ADD CONSTRAINT "contest_entry_event_
 ALTER TABLE "contest_entry_event_standings" ADD CONSTRAINT "contest_entry_event_standings_sport_event_id_fkey" FOREIGN KEY ("sport_event_id") REFERENCES "sport_events"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "contest_leaderboard_snapshots" ADD CONSTRAINT "contest_leaderboard_snapshots_contest_id_fkey" FOREIGN KEY ("contest_id") REFERENCES "contests"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "contest_draws" ADD CONSTRAINT "contest_draws_contest_id_fkey" FOREIGN KEY ("contest_id") REFERENCES "contests"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -1955,6 +2020,8 @@ CREATE UNIQUE INDEX uq_pick_roster_participant ON contest_entry_picks USING btre
 CREATE UNIQUE INDEX event_page_offers_one_primary_key ON event_page_offers USING btree (event_page_id) WHERE is_primary;
 
 -- CHECK constraints.
+ALTER TABLE "background_jobs" ADD CONSTRAINT background_jobs_completed_when_finished CHECK (((status <> ALL (ARRAY['SUCCEEDED'::"PrismaBackgroundJobStatus", 'FAILED'::"PrismaBackgroundJobStatus"])) OR (completed_at IS NOT NULL)));
+ALTER TABLE "background_jobs" ADD CONSTRAINT background_jobs_leased_when_running CHECK (((status <> 'RUNNING'::"PrismaBackgroundJobStatus") OR (lease_until IS NOT NULL)));
 ALTER TABLE "contest_entry_match_predictions" ADD CONSTRAINT contest_entry_match_predictions_confidence_positive CHECK (((confidence IS NULL) OR (confidence >= 1)));
 ALTER TABLE "contest_entry_match_predictions" ADD CONSTRAINT contest_entry_match_predictions_team_with_team_result CHECK (((predicted_result = 'TEAM'::"PrismaPredictedResult") = (sport_event_participant_id IS NOT NULL)));
 ALTER TABLE "contest_entry_squares" ADD CONSTRAINT contest_entry_squares_position_check CHECK ((((row_index >= 0) AND (row_index <= 9)) AND ((column_index >= 0) AND (column_index <= 9))));
