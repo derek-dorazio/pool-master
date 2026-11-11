@@ -87,6 +87,15 @@ describe('Sport and SportLeague repositories', () => {
       .toEqual([Sport.AMERICAN_FOOTBALL, Sport.BASEBALL, Sport.BASKETBALL, Sport.HOCKEY, Sport.SOCCER, Sport.TENNIS]);
   });
 
+  // The NFL sport league is reference data the migrations seed; #1496 set its keyword so a
+  // BALLDONTLIE year import finds the NFL's events (metadata.tour 'NFL').
+  it('seeds the NFL sport league with the match keyword NFL, so its year import finds the provider\'s NFL events', async () => {
+    const football = await new PrismaSportRepository(getAppPrisma()).findBySport(Sport.AMERICAN_FOOTBALL);
+
+    await expect(new PrismaSportLeagueRepository(getAppPrisma()).findBySportAndName(football?.id ?? '', 'NFL'))
+      .resolves.toMatchObject({ name: 'NFL', matchKeyword: 'NFL' });
+  });
+
   it('finds a sport by its sport value and lists sport leagues filtered by sport and activity, ordered by name', async () => {
     const sport = await golfSport();
     const sports = new PrismaSportRepository(getAppPrisma());
