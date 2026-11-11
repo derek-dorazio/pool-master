@@ -70,6 +70,7 @@ export function LeagueContestsPage() {
       ) : (
         <SectionCard testId="league-contests-current" title="Current contests">
           <CurrentContestList
+            bestPlaceByContestId={myEntries.bestPlaceByContestId}
             contests={contestsQuery.data ?? []}
             emptyBody="No open or live contests."
             entriesByContestId={myEntries.entriesByContestId}

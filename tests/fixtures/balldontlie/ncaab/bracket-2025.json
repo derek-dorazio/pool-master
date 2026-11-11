@@ -1,0 +1,151 @@
+{
+  "data": [
+    {
+      "game_id": 401856478,
+      "season": 2025,
+      "round": 1,
+      "region_id": 1,
+      "region_label": "East",
+      "bracket_location": 1,
+      "date": "2026-03-17T23:40:00.000Z",
+      "location": "UD Arena, Dayton, OH",
+      "status": "post",
+      "status_state": "final",
+      "status_detail": "Final",
+      "broadcasts": [
+        "CBS"
+      ],
+      "home_team": {
+        "id": 251,
+        "conference_id": 23,
+        "name": "Longhorns",
+        "full_name": "Texas Longhorns",
+        "abbreviation": "TEX",
+        "seed": "11",
+        "score": 68,
+        "winner": true
+      },
+      "away_team": {
+        "id": 152,
+        "conference_id": 7,
+        "name": "Wolfpack",
+        "full_name": "NC State Wolfpack",
+        "abbreviation": "NCSU",
+        "seed": "11",
+        "score": 59,
+        "winner": false
+      }
+    },
+    {
+      "game_id": 401856490,
+      "season": 2025,
+      "round": 2,
+      "region_id": 1,
+      "region_label": "East",
+      "bracket_location": 2,
+      "date": "2026-03-19T19:00:00.000Z",
+      "location": "Spectrum Center, Charlotte, NC",
+      "status": "post",
+      "status_state": "final",
+      "status_detail": "Final",
+      "broadcasts": [
+        "CBS"
+      ],
+      "home_team": {
+        "id": 150,
+        "conference_id": 7,
+        "name": "Blue Devils",
+        "full_name": "Duke Blue Devils",
+        "abbreviation": "DUKE",
+        "seed": "1",
+        "score": 71,
+        "winner": true
+      },
+      "away_team": {
+        "id": 2561,
+        "conference_id": 24,
+        "name": "Saints",
+        "full_name": "Siena Saints",
+        "abbreviation": "SIE",
+        "seed": "16",
+        "score": 65,
+        "winner": false
+      }
+    },
+    {
+      "game_id": 401856491,
+      "season": 2025,
+      "round": 2,
+      "region_id": 1,
+      "region_label": "East",
+      "bracket_location": 3,
+      "date": "2026-03-19T16:15:00.000Z",
+      "location": "Spectrum Center, Charlotte, NC",
+      "status": "post",
+      "status_state": "final",
+      "status_detail": "Final",
+      "broadcasts": [
+        "CBS"
+      ],
+      "home_team": {
+        "id": 194,
+        "conference_id": 5,
+        "name": "Buckeyes",
+        "full_name": "Ohio State Buckeyes",
+        "abbreviation": "OSU",
+        "seed": "8",
+        "score": 64,
+        "winner": false
+      },
+      "away_team": {
+        "id": 2628,
+        "conference_id": 8,
+        "name": "Horned Frogs",
+        "full_name": "TCU Horned Frogs",
+        "abbreviation": "TCU",
+        "seed": "9",
+        "score": 66,
+        "winner": true
+      }
+    },
+    {
+      "game_id": 401856550,
+      "season": 2025,
+      "round": 7,
+      "region_id": null,
+      "region_label": null,
+      "bracket_location": 63,
+      "date": "2026-04-07T01:20:00.000Z",
+      "location": "Lucas Oil Stadium, Indianapolis, IN",
+      "status": "post",
+      "status_state": "final",
+      "status_detail": "Final",
+      "broadcasts": [
+        "CBS"
+      ],
+      "home_team": {
+        "id": 150,
+        "conference_id": 7,
+        "name": "Blue Devils",
+        "full_name": "Duke Blue Devils",
+        "abbreviation": "DUKE",
+        "seed": "1",
+        "score": 70,
+        "winner": true
+      },
+      "away_team": {
+        "id": 57,
+        "conference_id": 23,
+        "name": "Gators",
+        "full_name": "Florida Gators",
+        "abbreviation": "FLA",
+        "seed": "1",
+        "score": 65,
+        "winner": false
+      }
+    }
+  ],
+  "meta": {
+    "per_page": 100
+  }
+}

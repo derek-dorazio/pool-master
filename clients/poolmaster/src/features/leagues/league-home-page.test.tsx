@@ -191,7 +191,7 @@ function primeMocks({
   listCupsMock.mockResolvedValue(apiSuccess({ cups }));
   getYearReviewMock.mockResolvedValue(apiSuccess({ yearReview: { year: 2025, status: 'READY', sentAt: null, sentByName: null } }));
   // The viewer's team's entries across the league's current contests, in one read (#1197).
-  listMyContestEntriesMock.mockResolvedValue(apiSuccess({ entries: Object.values(entriesByContest).flat() }));
+  listMyContestEntriesMock.mockResolvedValue(apiSuccess({ entries: Object.values(entriesByContest).flat(), places: [] }));
 }
 
 beforeEach(() => {

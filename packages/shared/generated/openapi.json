@@ -30110,6 +30110,32 @@
         "additionalProperties": false,
         "description": "Expanded contest-entry detail response."
       },
+      "ContestEntryPlaceDto": {
+        "type": "object",
+        "properties": {
+          "entryId": {
+            "type": "string",
+            "description": "The entry placed: one of the response's `entries`."
+          },
+          "position": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991,
+            "description": "The entry's place in its contest as its leaderboard stands, 1 best in every sport; entries level share it."
+          },
+          "displayPosition": {
+            "type": "string",
+            "description": "The place as the leaderboard shows it, \"T3\" when shared."
+          }
+        },
+        "required": [
+          "entryId",
+          "position",
+          "displayPosition"
+        ],
+        "additionalProperties": false,
+        "description": "One entry's place in a live contest, the same place its leaderboard shows (#1565)."
+      },
       "MyContestEntriesResponse": {
         "type": "object",
         "properties": {
@@ -30274,13 +30300,44 @@
               "description": "A contest entry: the one shape every entry read and write returns (#248 collapsed the summary and detail variants, which differed by `participants`)."
             },
             "description": "The requester's own squad's entries, drafts included, in each of the league's OPEN and ACTIVE contests, in entry-number order within a contest. Without `participants`: an entry's picks are on `getContestEntry`. Empty without an active squad in the league."
+          },
+          "places": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "entryId": {
+                  "type": "string",
+                  "description": "The entry placed: one of the response's `entries`."
+                },
+                "position": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991,
+                  "description": "The entry's place in its contest as its leaderboard stands, 1 best in every sport; entries level share it."
+                },
+                "displayPosition": {
+                  "type": "string",
+                  "description": "The place as the leaderboard shows it, \"T3\" when shared."
+                }
+              },
+              "required": [
+                "entryId",
+                "position",
+                "displayPosition"
+              ],
+              "additionalProperties": false,
+              "description": "One entry's place in a live contest, the same place its leaderboard shows (#1565)."
+            },
+            "description": "The place of each of `entries` that its ACTIVE contest's leaderboard ranks, read from the same stored board the leaderboard answers from (#1565), so a list of contests needs no leaderboard read per contest. An entry with no place is left out: one in an OPEN contest, one not yet scored, any in a contest whose picks are not revealed yet, and any in a squares contest, whose grid has no places until it settles."
           }
         },
         "required": [
-          "entries"
+          "entries",
+          "places"
         ],
         "additionalProperties": false,
-        "description": "The requester's own entries across a league's current contests (#1197)."
+        "description": "The requester's own entries across a league's current contests (#1197), with each live entry's place (#1565)."
       },
       "ContestEntryListResponse": {
         "type": "object",
@@ -70704,7 +70761,7 @@
         "tags": [
           "Contests"
         ],
-        "description": "The requester's own squad's entries, drafts included, in each of the league's OPEN and ACTIVE contests, each with its status in every event of its contest and without its picks (#1197): one read for what league home, the Contests page's My entries and My team show, however many contests are current. Empty without an active squad in the league. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.",
+        "description": "The requester's own squad's entries, drafts included, in each of the league's OPEN and ACTIVE contests, each with its status in every event of its contest and without its picks (#1197), and the place of each entry an ACTIVE contest's leaderboard ranks, read from the stored board the leaderboard answers from (#1565): one read for what league home, the Contests page and My team show, however many contests are current. Empty without an active squad in the league. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.",
         "parameters": [
           {
             "schema": {
@@ -70717,7 +70774,7 @@
         ],
         "responses": {
           "200": {
-            "description": "The requester's own entries across a league's current contests (#1197).",
+            "description": "The requester's own entries across a league's current contests (#1197), with each live entry's place (#1565).",
             "content": {
               "application/json": {
                 "schema": {

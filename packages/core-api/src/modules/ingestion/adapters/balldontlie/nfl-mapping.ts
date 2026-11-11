@@ -10,11 +10,12 @@
  * its sports, and a bare number would collide with a golfer's.
  */
 
-import { ProviderGameState, Sport } from '@poolmaster/shared/domain';
+import { Sport } from '@poolmaster/shared/domain';
 import type { GameScoreUpdate } from '@poolmaster/shared/dto';
 import type { ProviderParticipant, SportEvent } from '../../core/provider-interface';
 import { BalldontlieContractError } from './balldontlie-client';
-import { NflSeasonType, NflStatusState, type NflGame, type NflTeam } from './nfl-contract';
+import { CompetitionStatusState, eventStatusOf, GAME_STATE_BY_STATUS, hasStarted, PROGRESS_BY_STATE } from './competition-status';
+import { NflSeasonType, type NflGame, type NflTeam } from './nfl-contract';
 import { BALLDONTLIE_PROVIDER_ID } from './pga-mapping';
 
 /**
@@ -86,40 +87,9 @@ export function scopeOfGame(game: NflGame): NflScope {
     : { kind: NflScopeKind.WEEK, season, week: required(game.week, game.id, 'week') };
 }
 
-/** What a game's state says about the event it is part of. */
-const GameProgress = {
-  NOT_STARTED: 'NOT_STARTED',
-  POSTPONED: 'POSTPONED',
-  LIVE: 'LIVE',
-  FINAL: 'FINAL',
-  CALLED_OFF: 'CALLED_OFF',
-} as const;
-type GameProgress = (typeof GameProgress)[keyof typeof GameProgress];
-
-const PROGRESS_BY_STATE: Readonly<Record<NflStatusState, GameProgress>> = {
-  [NflStatusState.SCHEDULED]: GameProgress.NOT_STARTED,
-  // `unknown` "cannot be safely classified": such a game neither starts nor finishes its event.
-  [NflStatusState.UNKNOWN]: GameProgress.NOT_STARTED,
-  [NflStatusState.POSTPONED]: GameProgress.POSTPONED,
-  // A delay or suspension pauses a game that has started; it resumes, so it is live.
-  [NflStatusState.IN_PROGRESS]: GameProgress.LIVE,
-  [NflStatusState.DELAYED]: GameProgress.LIVE,
-  [NflStatusState.SUSPENDED]: GameProgress.LIVE,
-  [NflStatusState.FINAL]: GameProgress.FINAL,
-  [NflStatusState.CANCELED]: GameProgress.CALLED_OFF,
-  [NflStatusState.ABANDONED]: GameProgress.CALLED_OFF,
-};
-
 function eventStatus(scope: NflScope, games: readonly NflGame[]): SportEvent['status'] {
-  const progress = games.map((game) => PROGRESS_BY_STATE[game.status_state]);
-  const done = progress.filter((each) => each === GameProgress.FINAL || each === GameProgress.CALLED_OFF).length;
   const complete = scope.kind === NflScopeKind.WEEK || games.length >= NFL_POSTSEASON_GAMES;
-  if (done === games.length && complete) {
-    return progress.includes(GameProgress.FINAL) ? 'COMPLETED' : 'CANCELLED';
-  }
-  // A game called off counts toward the end of its event, never toward its start.
-  if (progress.some((each) => each === GameProgress.FINAL || each === GameProgress.LIVE)) return 'IN_PROGRESS';
-  return progress.every((each) => each === GameProgress.POSTPONED) ? 'POSTPONED' : 'SCHEDULED';
+  return eventStatusOf(games.map((game) => PROGRESS_BY_STATE[game.status_state]), complete);
 }
 
 /** One event for a scope's games, which must be at least one. */
@@ -183,27 +153,15 @@ export function toNflFieldParticipants(games: readonly NflGame[]): ProviderParti
   return [...teams.values()];
 }
 
-/** The game state each vendor state reports; `unknown` has none, and its game is left out. */
-const GAME_STATE_BY_STATUS: Readonly<Record<Exclude<NflStatusState, 'unknown'>, ProviderGameState>> = {
-  [NflStatusState.SCHEDULED]: ProviderGameState.SCHEDULED,
-  [NflStatusState.IN_PROGRESS]: ProviderGameState.IN_PROGRESS,
-  [NflStatusState.DELAYED]: ProviderGameState.IN_PROGRESS,
-  [NflStatusState.SUSPENDED]: ProviderGameState.IN_PROGRESS,
-  [NflStatusState.FINAL]: ProviderGameState.FINAL,
-  [NflStatusState.POSTPONED]: ProviderGameState.POSTPONED,
-  [NflStatusState.CANCELED]: ProviderGameState.CANCELLED,
-  [NflStatusState.ABANDONED]: ProviderGameState.CANCELLED,
-};
-
 /** Each game's teams, state and score, for the GAME live-score category. */
 export function toGameScoreUpdates(games: readonly NflGame[]): GameScoreUpdate[] {
   return games.flatMap((game) => {
-    if (game.status_state === NflStatusState.UNKNOWN) return [];
+    if (game.status_state === CompetitionStatusState.UNKNOWN) return [];
     const home = required(required(game.home_team, game.id, 'home_team').id, game.id, 'home_team.id');
     const visitor = required(required(game.visitor_team, game.id, 'visitor_team').id, game.id, 'visitor_team.id');
     const state = GAME_STATE_BY_STATUS[game.status_state];
-    // A score before kickoff means nothing; a final with no score is passed on as one, and skipped there.
-    const started = state === ProviderGameState.IN_PROGRESS || state === ProviderGameState.FINAL;
+    // A final with no score is passed on as one, and skipped there.
+    const started = hasStarted(state);
     return [{
       externalGameId: String(required(game.id, game.id, 'id')),
       homeTeamExternalId: nflTeamExternalId(home),

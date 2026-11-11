@@ -3,7 +3,7 @@ import { fireEvent, render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { ContestStatus } from '@poolmaster/shared/domain';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { ContestDto } from '@/lib/api';
+import type { ContestDto, ContestEntryPlaceDto } from '@/lib/api';
 import { bindApiMocks } from '@/test/msw-api';
 import { buildContest, buildContestEntry } from '@/features/contests/test/contest-admin-fixtures';
 import { CurrentContestsCard, LiveStandingsCard } from './league-home-cards';
@@ -16,10 +16,11 @@ const live = buildContest({ id: 'contest-live', name: 'Masters Tiers', status: C
 const open = buildContest({ id: 'contest-open', name: 'PGA Championship Budget', status: ContestStatus.OPEN });
 const draft = buildContest({ id: 'contest-draft', name: 'US Open Draft', status: ContestStatus.DRAFT });
 
-function drawCard(contests = [live, open]) {
+function drawCard(contests = [live, open], bestPlaceByContestId: ReadonlyMap<string, ContestEntryPlaceDto> = new Map()) {
   render(
     <MemoryRouter>
       <CurrentContestsCard
+        bestPlaceByContestId={bestPlaceByContestId}
         contests={contests}
         emptyBody="No other open or live contests."
         entriesByContestId={new Map([[open.id, [buildContestEntry({ contestId: open.id })]]])}
@@ -66,6 +67,12 @@ describe('CurrentContestsCard', () => {
 
     expect(screen.getByTestId('league-home-contest-contest-open')).toHaveTextContent('Your entry is submitted.');
     expect(screen.getByTestId('league-home-contest-contest-live')).toHaveTextContent('You have not entered yet.');
+  });
+
+  it('shows the viewer\'s best place on a live contest\'s row', () => {
+    drawCard([live, open], new Map([[live.id, { entryId: 'entry-1', position: 7, displayPosition: '7' }]]));
+
+    expect(screen.getByTestId('league-home-contest-contest-live-trailing')).toHaveTextContent('7th');
   });
 
   it('never shows a draft, even to a commissioner, because Home is about live and open contests', () => {
