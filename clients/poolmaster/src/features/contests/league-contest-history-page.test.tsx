@@ -85,11 +85,11 @@ describe('LeagueContestHistoryPage', () => {
     expect(listContestResultsMock).toHaveBeenCalledWith(expect.objectContaining({ query: { year: 2026 } }));
   });
 
-  it('marks Past as the open tab and puts the year picker at the tab row\'s end, with no sentence about the page', async () => {
+  it('marks Past as the open tab and puts the Season picker at the tab row\'s end, with no sentence about the page', async () => {
     prime();
     renderHistory();
 
-    const picker = await screen.findByTestId('league-contests-history-year');
+    const picker = await screen.findByRole('combobox', { name: 'Season' });
     expect(screen.getByRole('link', { name: 'Past' })).toHaveAttribute('aria-current', 'page');
     expect(screen.getByRole('link', { name: 'Current' })).not.toHaveAttribute('aria-current');
     expect(within(screen.getByTestId('contests-page-header-tab-row')).getByTestId('league-contests-history-year')).toBe(picker);
@@ -100,7 +100,7 @@ describe('LeagueContestHistoryPage', () => {
   it('offers the years the server names as having finished contests, in its order, and shows the year chosen, kept in the link', async () => {
     prime();
     renderHistory();
-    const picker = await screen.findByTestId('league-contests-history-year');
+    const picker = await screen.findByRole('combobox', { name: 'Season' });
 
     expect(within(picker).getAllByRole('option').map((option) => option.textContent)).toEqual(['2026', '2025']);
 

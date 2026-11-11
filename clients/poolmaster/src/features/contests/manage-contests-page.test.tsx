@@ -224,7 +224,8 @@ describe('ManageContestsPage', () => {
     renderManageContestsPage();
 
     await userEvent.click(await screen.findByTestId('manage-contests-filter-history'));
-    const picker = await screen.findByTestId('manage-contests-history-year');
+    const picker = await screen.findByRole('combobox', { name: 'Season' });
+    expect(picker).toBe(screen.getByTestId('manage-contests-history-year'));
     expect(within(picker).getAllByRole('option').map((option) => option.textContent)).toEqual(['2099', '2098']);
     expect(await screen.findByTestId('manage-contests-row-contest-newer')).toBeInTheDocument();
 

@@ -10,8 +10,8 @@ import {
   Heading,
   LinkButton,
   LoadingState,
-  Select,
   Tile,
+  YearPicker,
 } from '@/features/shared/ui';
 import { getLogger } from '@/lib/logger';
 import { chooseContestHistoryYear } from './contest-history';
@@ -83,15 +83,12 @@ export function LeagueContestHistoryPage() {
       <ContestsPageHeader
         leagueCode={league.leagueCode}
         tabsEnd={year === null ? undefined : (
-          <Select
-            aria-label="Year"
-            className="w-auto"
-            data-testid="league-contests-history-year"
-            onChange={(event) => setSearchParams({ year: event.target.value }, { replace: true })}
+          <YearPicker
+            onChange={(next) => setSearchParams({ year: String(next) }, { replace: true })}
+            testId="league-contests-history-year"
             value={year}
-          >
-            {years.map((option) => <option key={option} value={option}>{option}</option>)}
-          </Select>
+            years={years}
+          />
         )}
         view="past"
       />

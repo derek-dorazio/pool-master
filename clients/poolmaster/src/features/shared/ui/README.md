@@ -88,7 +88,9 @@ their own address, `variant="state"` inside the page's own `Tabs` root — and a
 filter that changes every tab, such as a season, goes in `tabsEnd`. On a phone
 `PageTabs` and `LeagueMenu` scroll sideways through `useScrollRow`: the selected
 tab is scrolled fully into view on open and whenever it changes, and an edge fades
-only while more tabs sit beyond it. A
+only while more tabs sit beyond it. A page that reads one year at a time picks it
+with `YearPicker`, labelled "Season": in `tabsEnd` on a page with tabs, else at the
+end of its section's title row. A
 `SegmentedControl` is only for choosing a value inside a form or panel, never for
 switching a page's views. A search box in the header feeds a `DataGrid` through
 its `searchTerm`.
