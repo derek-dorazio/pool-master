@@ -1,0 +1,205 @@
+{
+  "data": [
+    {
+      "game_id": 401900101,
+      "season": 2026,
+      "round": 2,
+      "region_id": 2,
+      "region_label": "South",
+      "bracket_location": 10,
+      "date": "2027-03-18T16:15:00.000Z",
+      "location": "Rupp Arena, Lexington, KY",
+      "status": "post",
+      "status_state": "final",
+      "status_detail": "Final",
+      "broadcasts": [
+        "CBS"
+      ],
+      "home_team": {
+        "id": 57,
+        "conference_id": 23,
+        "name": "Gators",
+        "full_name": "Florida Gators",
+        "abbreviation": "FLA",
+        "seed": "1",
+        "score": 81,
+        "winner": true
+      },
+      "away_team": {
+        "id": 2390,
+        "conference_id": 30,
+        "name": "Bulldogs",
+        "full_name": "Norfolk State Spartans",
+        "abbreviation": "NORF",
+        "seed": "16",
+        "score": 58,
+        "winner": false
+      }
+    },
+    {
+      "game_id": 401900102,
+      "season": 2026,
+      "round": 2,
+      "region_id": 2,
+      "region_label": "South",
+      "bracket_location": 11,
+      "date": "2027-03-18T18:45:00.000Z",
+      "location": "Rupp Arena, Lexington, KY",
+      "status": "in",
+      "status_state": "in_progress",
+      "status_detail": "2nd Half - 12:31",
+      "broadcasts": [
+        "CBS"
+      ],
+      "home_team": {
+        "id": 194,
+        "conference_id": 5,
+        "name": "Buckeyes",
+        "full_name": "Ohio State Buckeyes",
+        "abbreviation": "OSU",
+        "seed": "8",
+        "score": 44,
+        "winner": null
+      },
+      "away_team": {
+        "id": 2628,
+        "conference_id": 8,
+        "name": "Horned Frogs",
+        "full_name": "TCU Horned Frogs",
+        "abbreviation": "TCU",
+        "seed": "9",
+        "score": 47,
+        "winner": null
+      }
+    },
+    {
+      "game_id": 401900103,
+      "season": 2026,
+      "round": 2,
+      "region_id": 3,
+      "region_label": "West",
+      "bracket_location": 12,
+      "date": "2027-03-19T02:10:00.000Z",
+      "location": "Climate Pledge Arena, Seattle, WA",
+      "status": "pre",
+      "status_state": "scheduled",
+      "status_detail": "Thu, March 18th at 10:10 PM EDT",
+      "broadcasts": [
+        "CBS"
+      ],
+      "home_team": {
+        "id": 150,
+        "conference_id": 7,
+        "name": "Blue Devils",
+        "full_name": "Duke Blue Devils",
+        "abbreviation": "DUKE",
+        "seed": "2",
+        "score": null,
+        "winner": null
+      },
+      "away_team": {
+        "id": 2561,
+        "conference_id": 24,
+        "name": "Saints",
+        "full_name": "Siena Saints",
+        "abbreviation": "SIE",
+        "seed": "16",
+        "score": null,
+        "winner": null
+      }
+    },
+    {
+      "game_id": 401900104,
+      "season": 2026,
+      "round": 2,
+      "region_id": 3,
+      "region_label": "West",
+      "bracket_location": 13,
+      "date": "2027-03-19T04:40:00.000Z",
+      "location": "Climate Pledge Arena, Seattle, WA",
+      "status": null,
+      "status_state": "unknown",
+      "status_detail": null,
+      "broadcasts": [
+        "CBS"
+      ],
+      "home_team": {
+        "id": 251,
+        "conference_id": 23,
+        "name": "Longhorns",
+        "full_name": "Texas Longhorns",
+        "abbreviation": "TEX",
+        "seed": "11",
+        "score": null,
+        "winner": null
+      },
+      "away_team": {
+        "id": 152,
+        "conference_id": 7,
+        "name": "Wolfpack",
+        "full_name": "NC State Wolfpack",
+        "abbreviation": "NCSU",
+        "seed": "11",
+        "score": null,
+        "winner": null
+      }
+    },
+    {
+      "game_id": null,
+      "season": 2026,
+      "round": 3,
+      "region_id": 2,
+      "region_label": "South",
+      "bracket_location": 40,
+      "date": "2027-03-20T17:00:00.000Z",
+      "location": null,
+      "status": "pre",
+      "status_state": "scheduled",
+      "status_detail": null,
+      "broadcasts": [
+        "CBS"
+      ],
+      "home_team": {
+        "id": 57,
+        "conference_id": 23,
+        "name": "Gators",
+        "full_name": "Florida Gators",
+        "abbreviation": "FLA",
+        "seed": "1",
+        "score": null,
+        "winner": null
+      },
+      "away_team": {
+        "id": null,
+        "conference_id": null,
+        "name": "TBD",
+        "full_name": null,
+        "abbreviation": null,
+        "seed": null,
+        "score": null,
+        "winner": null
+      }
+    },
+    {
+      "game_id": null,
+      "season": 2026,
+      "round": 7,
+      "region_id": null,
+      "region_label": null,
+      "bracket_location": 63,
+      "date": null,
+      "location": null,
+      "status": "pre",
+      "status_state": "scheduled",
+      "status_detail": null,
+      "broadcasts": [
+        "CBS"
+      ],
+      "home_team": null,
+      "away_team": null
+    }
+  ],
+  "meta": {
+    "per_page": 100
+  }
+}

@@ -14,20 +14,7 @@
 
 import { z } from 'zod';
 import { balldontliePaginationSchema } from './balldontlie-client';
-
-/** The vendor's normalized lifecycle state (`CompetitionStatusState`). */
-export const NflStatusState = {
-  SCHEDULED: 'scheduled',
-  IN_PROGRESS: 'in_progress',
-  FINAL: 'final',
-  POSTPONED: 'postponed',
-  CANCELED: 'canceled',
-  DELAYED: 'delayed',
-  SUSPENDED: 'suspended',
-  ABANDONED: 'abandoned',
-  UNKNOWN: 'unknown',
-} as const;
-export type NflStatusState = (typeof NflStatusState)[keyof typeof NflStatusState];
+import { competitionStatusStateSchema } from './competition-status';
 
 /** The `season_types[]` values of `/nfl/v1/games`: 1 is the preseason, which no event covers. */
 export const NflSeasonType = {
@@ -61,7 +48,7 @@ export const nflGameSchema = z.object({
   date: z.iso.datetime({ offset: true }).optional(),
   season: z.number().int().optional(),
   postseason: z.boolean().optional(),
-  status_state: z.enum(NflStatusState),
+  status_state: competitionStatusStateSchema,
   home_team_score: z.number().int().optional(),
   visitor_team_score: z.number().int().optional(),
 });

@@ -79,12 +79,12 @@ describe('BalldontlieAdapter (PGA TOUR)', () => {
   let restore: (() => void) | undefined;
   afterEach(() => restore?.());
 
-  it('identifies itself as the balldontlie provider covering golf and american football', () => {
+  it('identifies itself as the balldontlie provider covering golf, american football and basketball', () => {
     const harness = setup();
     restore = harness.restore;
     expect(harness.adapter.providerId).toBe('balldontlie');
     expect(harness.adapter.providerName).toBe('BALLDONTLIE');
-    expect(harness.adapter.sportsCovered).toEqual([Sport.GOLF, Sport.AMERICAN_FOOTBALL]);
+    expect(harness.adapter.sportsCovered).toEqual([Sport.GOLF, Sport.AMERICAN_FOOTBALL, Sport.BASKETBALL]);
   });
 
   describe('getUpcomingEvents', () => {
@@ -136,7 +136,7 @@ describe('BalldontlieAdapter (PGA TOUR)', () => {
       const harness = setup();
       restore = harness.restore;
 
-      expect(await harness.adapter.getUpcomingEvents(Sport.BASKETBALL)).toEqual([]);
+      expect(await harness.adapter.getUpcomingEvents(Sport.HOCKEY)).toEqual([]);
       expect(harness.api.requests).toEqual([]);
     });
   });

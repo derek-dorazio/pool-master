@@ -44,9 +44,19 @@ function isObject(value: JsonValue | undefined): value is JsonObject {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
+/** A bare `{ nullable: true }` branch, which is how the vendor marks a described `$ref` nullable. */
+function isNullableMarker(node: JsonValue): boolean {
+  return isObject(node) && Object.keys(node).length === 1 && node['nullable'] === true;
+}
+
 function rewriteNullable(node: JsonValue): JsonValue {
   if (Array.isArray(node)) return node.map(rewriteNullable);
   if (!isObject(node)) return node;
+  // `allOf: [{ $ref }, { nullable: true }]` (NCAAB's bracket sides) is that `$ref`, or null.
+  const allOf = node['allOf'];
+  if (Array.isArray(allOf) && allOf.some(isNullableMarker)) {
+    return rewriteNullable({ ...node, allOf: allOf.filter((branch) => !isNullableMarker(branch)), nullable: true });
+  }
   const out: JsonObject = {};
   for (const [key, value] of Object.entries(node)) {
     if (key !== 'nullable') out[key] = rewriteNullable(value);
@@ -55,6 +65,10 @@ function rewriteNullable(node: JsonValue): JsonValue {
   if (typeof out['$ref'] === 'string') {
     const { $ref, ...rest } = out;
     return { ...rest, anyOf: [{ $ref }, { type: 'null' }] };
+  }
+  if (Array.isArray(out['allOf'])) {
+    const { allOf: branches, ...rest } = out;
+    return { ...rest, anyOf: [{ allOf: branches }, { type: 'null' }] };
   }
   if (typeof out['type'] === 'string') out['type'] = [out['type'], 'null'];
   if (Array.isArray(out['enum'])) out['enum'] = [...out['enum'], null];

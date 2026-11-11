@@ -30,7 +30,12 @@ The target:
      provider participant with no mapping yet is linked to the site's one participant of the
      same sport and name (a team loaded from a data file), not created twice. NFL events take
      the calendar year they are played in as their event year, as the NFL data files do, so the
-     2025 season's playoffs are 2026 events;
+     2025 season's playoffs are 2026 events. The NCAA men's basketball tournament is one event
+     per season (`ncaab-2025-tournament`), read from the vendor's bracket: its round of 64 is
+     the bracket's first round, and First Four games carry no score, since their winners fill
+     a place rather than play a match. Only leagues whose bracket games are single games sync
+     game scores: a best-of series (the NBA, WNBA, MLB and NHL playoffs) is one match of
+     several games, which the link from a game's two teams does not fit (#1545);
    - per-player box scores for Clutch Cards, through `StatLineService`.
 3. **Webhooks as the trigger, not the record.** BALLDONTLIE posts a signed event (period
    ended, game ended, hole completed) to a receiver. The receiver checks the signature,

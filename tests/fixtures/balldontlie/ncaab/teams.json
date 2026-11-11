@@ -1,0 +1,28 @@
+{
+  "data": [
+    {
+      "id": 150,
+      "conference_id": 7,
+      "name": "Blue Devils",
+      "full_name": "Duke Blue Devils",
+      "college": "Duke",
+      "abbreviation": "DUKE"
+    },
+    {
+      "id": 57,
+      "conference_id": 23,
+      "name": "Gators",
+      "full_name": "Florida Gators",
+      "college": "Florida",
+      "abbreviation": "FLA"
+    },
+    {
+      "id": 2561,
+      "conference_id": 24,
+      "name": "Saints",
+      "full_name": "Siena Saints",
+      "college": "Siena",
+      "abbreviation": null
+    }
+  ]
+}
