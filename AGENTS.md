@@ -124,6 +124,7 @@ Important:
 - When a refactor changes architecture, testing patterns, or developer workflow, update the matching `rules/*.md` files in the same effort.
 - Do not maintain competing instruction sets across `AGENTS.md`, `CLAUDE.md`, `rules/`, and `.claude/skills/`.
 - Treat `requirements/` and `tech-specs/` as design inputs and handoff artifacts; GitHub Issues is the live execution/refinement tracker and `plans/` remain the narrative execution context.
+- **Web-app-only tickets in an opted-in UI epic target the open `ui-batch/<n>` branch, not `main`**, and land on `main` in batches, per `rules/workflow-rules.md` §6 *UI batch branches*.
 - **Every change goes through a PR; not every PR needs a review.** `main` refuses direct pushes (no bypass). Narrative plan updates during execution, research docs and trivial doc fixes take the fast lane: a PR the author merges once green (about two minutes), with no review, per `rules/workflow-rules.md §6` *What skips the PR flow*. Substantive plan, rule, ADR, or persona changes go through review — and when in doubt, the agent asks the user (per *Substantive plan or rule change — ask before fast-laning*).
 
 ## Documentation Expectations
