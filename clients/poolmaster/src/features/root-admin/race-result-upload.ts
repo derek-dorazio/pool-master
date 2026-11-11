@@ -1,6 +1,7 @@
 import { RaceResultStatus } from '@poolmaster/shared/domain';
 import { z } from 'zod';
 import type { RaceResultPreviewResponse, RaceResultUploadRequest, SportEventParticipantDto } from '@/lib/api';
+import { formatOrdinal } from '@/features/shared/ui';
 import { parseDelimitedRecords, type BulkUploadFormat } from '@/features/shared/ui/bulk-upload-parse';
 
 /**
@@ -121,14 +122,6 @@ export function raceResultTemplateRows(field: readonly SportEventParticipantDto[
     entry.race?.startPosition === null || entry.race?.startPosition === undefined ? '' : String(entry.race.startPosition),
     entry.race?.riderName ?? '',
   ]);
-}
-
-/** "1st", "2nd", "3rd", "11th", "22nd". */
-export function formatOrdinal(place: number): string {
-  const lastTwo = place % 100;
-  if (lastTwo >= 11 && lastTwo <= 13) return `${place}th`;
-  const suffix: Readonly<Record<number, string>> = { 1: 'st', 2: 'nd', 3: 'rd' };
-  return `${place}${suffix[place % 10] ?? 'th'}`;
 }
 
 /** How the race ended for a runner, in words. */

@@ -8,8 +8,6 @@ import {
   describeCupStanding,
   describeMovement,
   describeProjection,
-  formatCupPoints,
-  formatPlace,
   formatProjectedStanding,
   hasLiveContest,
   isCupSeasonOver,
@@ -19,24 +17,11 @@ import {
 import { buildCup, buildCupContest, buildCupStanding, buildRunningCup, buildRunningCupProjection } from './test/fixtures';
 
 describe('cup view', () => {
-  it('reads tenths of a point to one decimal, and whole points without one', () => {
-    expect([formatCupPoints(6125), formatCupPoints(6000), formatCupPoints(0), formatCupPoints(12345)]).toEqual([
-      '612.5', '600', '0', '1,234.5',
-    ]);
-  });
-
   it('shows movement as places up or down, with words for a screen reader, and a dash for none', () => {
     expect(describeMovement(2)).toEqual({ label: '▲2', description: 'Up 2 places', direction: 'up' });
     expect(describeMovement(-1)).toEqual({ label: '▼1', description: 'Down 1 place', direction: 'down' });
     expect(describeMovement(0)).toMatchObject({ label: '–', description: 'No change' });
     expect(describeMovement(null)).toMatchObject({ label: '–', description: 'No movement yet' });
-  });
-
-  it('reads a place as an ordinal, keeping a shared place as T2', () => {
-    expect([1, 2, 3, 4, 11, 12, 13, 21, 22, 103].map((position) => formatPlace({ position, displayPosition: String(position) }))).toEqual([
-      '1st', '2nd', '3rd', '4th', '11th', '12th', '13th', '21st', '22nd', '103rd',
-    ]);
-    expect(formatPlace({ position: 2, displayPosition: 'T2' })).toBe('T2');
   });
 
   it('says a counted contest was won by its winners, and why the others do not count yet or at all', () => {
@@ -145,8 +130,8 @@ describe('cup view', () => {
   it('shows a projected place with its points, and names every live contest the projection counts', () => {
     const projection = buildRunningCupProjection();
 
-    expect(formatProjectedStanding({ position: 2, displayPosition: 'T2', points: 725 })).toBe('T2 · 72.5');
-    expect(formatProjectedStanding({ position: 3, displayPosition: '3', points: 2000 })).toBe('3rd · 200');
+    expect(formatProjectedStanding({ position: 2, displayPosition: 'T2', points: 725 }, 'en-US')).toBe('T2 · 72.5');
+    expect(formatProjectedStanding({ position: 3, displayPosition: '3', points: 2000 }, 'en-US')).toBe('3rd · 200');
     expect(describeProjection({
       ...projection,
       contests: [...projection.contests, { contestId: 'contest-5', name: 'Wyndham Budget', cupWeight: 'BONUS' }],

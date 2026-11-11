@@ -14,7 +14,7 @@ function renderGrid({ focusSquadId = null, searchable, squadPath }: { focusSquad
   render(
     <MemoryRouter>
       <SquadStandingsGrid
-        columns={squadStandingColumns<SquadStandingRow>({ focusSquadId, squadPath, testIdPrefix: 'board' })}
+        columns={squadStandingColumns<SquadStandingRow>({ focusSquadId, locale: 'en-US', squadPath, testIdPrefix: 'board' })}
         focusSquadId={focusSquadId}
         rows={rows}
         searchable={searchable}
