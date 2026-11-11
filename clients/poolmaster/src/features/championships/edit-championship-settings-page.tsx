@@ -14,7 +14,7 @@ import { buildLeagueAdminPath } from '@/features/leagues/league-routing';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
 import { hasPlanFeature } from '@/features/plans/plan-features';
 import { PlanLockedNotice } from '@/features/plans/plan-locked-notice';
-import { Checkbox, ChoiceCard, FormField, FormPage, Input } from '@/features/shared/ui';
+import { Checkbox, ChoiceCard, FormField, FormPage, Input, Text } from '@/features/shared/ui';
 import {
   CUP_POINTS_SCALES,
   CUP_POINTS_SCALE_COPY,
@@ -71,7 +71,7 @@ export function EditChampionshipSettingsPage() {
 function PointsPreview({ scale, customPoints }: { scale: CupPointsScale; customPoints: string }) {
   const custom = scale === CupPointsScale.CUSTOM ? parseCustomPoints(customPoints) : null;
   if (custom?.error) {
-    return <p className="text-sm text-muted-foreground" data-testid="championship-points-preview-empty">Enter the custom points to see what each place earns.</p>;
+    return <Text as="p" data-testid="championship-points-preview-empty" variant="meta">Enter the custom points to see what each place earns.</Text>;
   }
   const rows = previewPoints({ scale, customPoints: custom?.points ?? [] });
   return (
@@ -79,15 +79,15 @@ function PointsPreview({ scale, customPoints }: { scale: CupPointsScale; customP
       <ol className="grid grid-cols-5 gap-2 text-center text-sm">
         {rows.map((row) => (
           <li className="rounded-xl bg-muted/40 px-2 py-2" data-testid={`championship-points-preview-${row.place}`} key={row.place}>
-            <span className="block text-xs text-muted-foreground">{row.place}</span>
-            <span className="font-semibold tabular-nums text-foreground">{row.points}</span>
+            <Text className="block" variant="caption">{row.place}</Text>
+            <Text size="inherit" variant="value" weight="semibold">{row.points}</Text>
           </li>
         ))}
       </ol>
-      <p className="text-xs text-muted-foreground">
+      <Text as="p" variant="caption">
         {scale === CupPointsScale.FIELD_BEATEN ? `In a contest of ${POINTS_PREVIEW_FIELD} entries. ` : ''}
         Bonus contests earn x1.5 and double contests x2. Squads tied on a place share its points.
-      </p>
+      </Text>
     </div>
   );
 }
@@ -174,8 +174,8 @@ function ChampionshipSettingsForm({ league }: { league: LeagueDto }) {
               testId={`edit-championships-scale-${option}`}
             >
               <span className="min-w-0 flex-1">
-                <span className="font-semibold">{CUP_POINTS_SCALE_COPY[option].label}</span>
-                <span className="block text-xs text-muted-foreground">{CUP_POINTS_SCALE_COPY[option].description}</span>
+                <Text size="inherit" tone="inherit" weight="semibold">{CUP_POINTS_SCALE_COPY[option].label}</Text>
+                <Text className="block" variant="caption">{CUP_POINTS_SCALE_COPY[option].description}</Text>
               </span>
             </ChoiceCard>
           ))}
@@ -201,18 +201,18 @@ function ChampionshipSettingsForm({ league }: { league: LeagueDto }) {
       ) : null}
 
       <div className="space-y-2">
-        <div className="text-sm font-medium text-foreground">What each place earns</div>
+        <Text as="div" variant="strong">What each place earns</Text>
         <PointsPreview customPoints={customPoints} scale={scale} />
       </div>
 
-      <p className="text-xs text-muted-foreground" data-testid="championship-points-change-note">
+      <Text as="p" data-testid="championship-points-change-note" variant="caption">
         A new table rescores open cups at once, every contest in them included. The championship and
         crowned cups keep the points their contests earned when they went final, so after a change an
         open cup and this year&apos;s championship can show different totals for the same contests.
-      </p>
+      </Text>
 
       {hasPlanFeature(league, PlanFeature.RECORD_BOOK) ? (
-        <label className="flex items-start gap-3 text-muted-foreground">
+        <label className="flex items-start gap-3">
           <Checkbox
             checked={hallOfLameVisible}
             className="mt-1"
@@ -220,11 +220,11 @@ function ChampionshipSettingsForm({ league }: { league: LeagueDto }) {
             disabled={saveMutation.isPending}
             onChange={(event) => form.setValue('hallOfLameVisible', event.target.checked, { shouldDirty: true })}
           />
-          <span className="text-sm">
-            <strong className="block font-medium text-foreground">Show the Hall of Lame</strong>
+          <Text variant="meta">
+            <Text className="block" variant="strong">Show the Hall of Lame</Text>
             The record book&apos;s lighter side: most 2nd places, most 4th places, most last places and the
             longest run without a win. Turn it off to hide it for everyone in the league.
-          </span>
+          </Text>
         </label>
       ) : null}
     </FormPage>

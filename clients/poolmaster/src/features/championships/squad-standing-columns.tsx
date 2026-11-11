@@ -2,6 +2,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import type { TeamIconKey } from '@poolmaster/shared/domain';
 import { TeamName } from '@/features/teams/team-name';
 import { formatCupPoints } from './cup-view';
+import { Text } from '@/features/shared/ui';
 
 /** A standings row: one squad, placed, with its points. */
 export type SquadStandingRow = {
@@ -39,7 +40,7 @@ export function squadStandingColumns<Row extends SquadStandingRow>({
       header: 'Place',
       accessorFn: (row) => row.position,
       enableGlobalFilter: false,
-      cell: ({ row }) => <span className="font-semibold tabular-nums">{row.original.displayPosition}</span>,
+      cell: ({ row }) => <Text variant="value" weight="semibold">{row.original.displayPosition}</Text>,
     },
     ...afterPlace,
     {

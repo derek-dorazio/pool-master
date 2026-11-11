@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
@@ -519,7 +519,9 @@ describe('Joining a team as a co-owner from an invite link', () => {
 
     renderJoinTeamOwnerPage();
 
-    expect(await screen.findByText(message)).toBeInTheDocument();
+    // The signed-out page shows the same message while the session loads; wait for the signed-in page.
+    const page = await screen.findByTestId('team-owner-invite-page');
+    expect(within(page).getByText(message)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Join as co-owner' })).not.toBeInTheDocument();
   });
 
