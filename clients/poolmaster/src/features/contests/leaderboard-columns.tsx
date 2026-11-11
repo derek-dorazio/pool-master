@@ -1,6 +1,7 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { Link } from 'react-router';
 import { buildLeagueContestEntryPath } from '@/features/leagues/league-routing';
+import { EntryDetailsPeek } from './entry-details-peek';
 import { MineMarker } from './mine-marker';
 
 /** The columns every contest leaderboard shares (#1277), each test id under the board's prefix. */
@@ -41,30 +42,37 @@ export function isMySquadsEntry(mySquadId: string | null) {
 }
 
 /**
- * The entry: its name, linking to its page, the viewer's own marked
- * (`isMine` says which those are), and its squad's name underneath. Searched by both names.
+ * The entry: its name, linking to its page, then the (i) that says whose it is (#1564), and the
+ * viewer's own marked (`isMine` says which those are). Searched by the entry's and team's names.
  */
 export function entryColumn<Row extends BoardRow>(
   testIdPrefix: string,
-  { contestId, isMine, leagueCode }: { contestId: string; isMine: (row: NoInfer<Row>) => boolean; leagueCode: string },
+  { contestId, isMine, leagueCode, leagueId }: { contestId: string; isMine: (row: NoInfer<Row>) => boolean; leagueCode: string; leagueId: string },
 ): ColumnDef<Row> {
   return {
     id: 'entry',
     header: 'Entry',
     accessorFn: (row) => [row.entryName, row.squadName].filter(Boolean).join(' '),
     cell: ({ row }) => (
-      <span className="block min-w-0">
-        <span className="flex flex-wrap items-center gap-2">
-          <Link
-            className="font-medium text-foreground hover:underline"
-            data-testid={`${testIdPrefix}-entry-link-${row.original.entryId}`}
-            to={buildLeagueContestEntryPath(leagueCode, contestId, row.original.entryId)}
-          >
-            {row.original.entryName}
-          </Link>
-          {isMine(row.original) ? <MineMarker /> : null}
-        </span>
-        {row.original.squadName ? <span className="block text-xs text-muted-foreground">{row.original.squadName}</span> : null}
+      <span className="flex min-w-0 flex-wrap items-center gap-x-1 gap-y-2">
+        <Link
+          className="font-medium text-foreground hover:underline"
+          data-testid={`${testIdPrefix}-entry-link-${row.original.entryId}`}
+          to={buildLeagueContestEntryPath(leagueCode, contestId, row.original.entryId)}
+        >
+          {row.original.entryName}
+        </Link>
+        {row.original.squadId ? (
+          <EntryDetailsPeek
+            className="-my-2"
+            entryName={row.original.entryName}
+            leagueCode={leagueCode}
+            leagueId={leagueId}
+            squadId={row.original.squadId}
+            testId={`${testIdPrefix}-entry-peek-${row.original.entryId}`}
+          />
+        ) : null}
+        {isMine(row.original) ? <span className="ml-1"><MineMarker /></span> : null}
       </span>
     ),
   };

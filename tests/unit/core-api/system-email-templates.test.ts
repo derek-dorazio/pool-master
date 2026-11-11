@@ -421,9 +421,9 @@ describe('pool-master-98i system email templates', () => {
       expect(message.text).toContain('Round 2 standings');
       expect(message.text).toContain('Here\'s where Masters Pick 6 stands after round 2 of The Masters.');
       expect(message.text).toContain('Top 3 of 18:');
-      expect(message.text).toContain('1. Amen Corner (Casey & Co), -12, up 2');
-      expect(message.text).toContain('T2. Green Jackets (Morgan Member), yours, -9, no change');
-      expect(message.text).toContain('T2. Azalea (The Fourballs), -9, down 1');
+      expect(message.text).toContain('1. Amen Corner, -12, up 2');
+      expect(message.text).toContain('T2. Green Jackets, yours, -9, no change');
+      expect(message.text).toContain('T2. Azalea, -9, down 1');
       expect(message.html).toContain('▲2');
       expect(message.html).toContain('▼1');
       expect(message.text).toContain('Full leaderboard: https://qa.ultimateofficepoolmanager.com/league/OFFICE24/contests/contest-1/leaderboard');
@@ -432,20 +432,20 @@ describe('pool-master-98i system email templates', () => {
     it('lists the reader\'s entries placed below the leaders, and their golfers who missed the cut', () => {
       const message = renderSystemEmailTemplate('CONTEST_STANDINGS', standings, UTC);
 
-      expect(message.text).toContain('Your entry:\n14. Long Shots (Morgan Member), yours, +3, down 4');
+      expect(message.text).toContain('Your entry:\n14. Long Shots, yours, +3, down 4');
       expect(message.text).toContain('Missed the cut from Long Shots: Danny Willett, Mike Weir.');
     });
 
     it('shows no movement for an entry with no earlier standings email, and a dash for an entry with nothing scored', () => {
       const message = renderSystemEmailTemplate('CONTEST_STANDINGS', {
         ...standings,
-        top: [{ place: null, entryName: 'Late Entry', squadName: 'Pat', score: null, movement: null, isYours: false }],
+        top: [{ place: null, entryName: 'Late Entry', score: null, movement: null, isYours: false }],
         yours: [],
         entryCount: 1,
         cut: [],
       }, UTC);
 
-      expect(message.text).toContain('Standings:\n-. Late Entry (Pat), no score yet\n');
+      expect(message.text).toContain('Standings:\n-. Late Entry, no score yet\n');
       expect(message.text).not.toContain('Your entr');
       expect(message.text).not.toContain('Missed the cut');
     });
@@ -458,7 +458,7 @@ describe('pool-master-98i system email templates', () => {
           eventName: 'The Masters',
           nextEvent: { name: 'PGA Championship', startsAt: new Date('2026-05-14T11:00:00.000Z'), picksCloseAt: new Date('2026-05-14T11:00:00.000Z') },
         },
-        top: [{ place: '1', entryName: 'Amen Corner', squadName: 'Casey & Co', score: '-20', movement: null, isYours: false, eventResult: { place: 'T2', score: '-9' } }],
+        top: [{ place: '1', entryName: 'Amen Corner', score: '-20', movement: null, isYours: false, eventResult: { place: 'T2', score: '-9' } }],
         yours: [],
         entryCount: 1,
         cut: [],
@@ -467,7 +467,7 @@ describe('pool-master-98i system email templates', () => {
       expect(message.subject).toBe('After The Masters: Masters Pick 6');
       expect(message.text).toContain('The Masters results');
       expect(message.text).toContain('The Masters is done. Here\'s where Masters Pick 6 stands.');
-      expect(message.text).toContain('1. Amen Corner (Casey & Co), -20, this event T2, -9');
+      expect(message.text).toContain('1. Amen Corner, -20, this event T2, -9');
       expect(message.text).toContain('Next event: PGA Championship, Thu, May 14, 2026');
       expect(message.text).toContain('Picks close: Thu, May 14, 2026');
     });
@@ -481,13 +481,13 @@ describe('pool-master-98i system email templates', () => {
           eventName: 'Week 3',
           winners: [{ entryName: 'Upset City', squadName: 'Casey & Co' }, { entryName: 'Chalk', squadName: 'Pat' }],
           weekLeaders: [
-            { place: 'T1', entryName: 'Upset City', squadName: 'Casey & Co', score: '13', movement: null, isYours: false },
-            { place: 'T1', entryName: 'Chalk', squadName: 'Pat', score: '13', movement: null, isYours: false },
+            { place: 'T1', entryName: 'Upset City', score: '13', movement: null, isYours: false },
+            { place: 'T1', entryName: 'Chalk', score: '13', movement: null, isYours: false },
           ],
           weekEntryCount: 9,
           nextWeek: { name: 'Week 4', firstKickoffAt: new Date('2026-09-25T00:15:00.000Z') },
         },
-        top: [{ place: '1', entryName: 'Chalk', squadName: 'Pat', score: '38', movement: 1, isYours: false }],
+        top: [{ place: '1', entryName: 'Chalk', score: '38', movement: 1, isYours: false }],
         yours: [],
         entryCount: 9,
         cut: [],
@@ -495,9 +495,9 @@ describe('pool-master-98i system email templates', () => {
       }, { timeZone: 'America/New_York' });
 
       expect(message.subject).toBe('After Week 3: NFL Pick\'em');
-      expect(message.text).toContain('Week 3 is done. Upset City (Casey & Co) and Chalk (Pat) tied for the week. Here\'s where NFL Pick\'em stands.');
-      expect(message.text).toContain('Week 3, top 2 of 9:\nT1. Upset City (Casey & Co), 13\nT1. Chalk (Pat), 13');
-      expect(message.text).toContain('Season top 1 of 9, by points:\n1. Chalk (Pat), 38, up 1');
+      expect(message.text).toContain('Week 3 is done. Upset City and Chalk tied for the week. Here\'s where NFL Pick\'em stands.');
+      expect(message.text).toContain('Week 3, top 2 of 9:\nT1. Upset City, 13\nT1. Chalk, 13');
+      expect(message.text).toContain('Season top 1 of 9, by points:\n1. Chalk, 38, up 1');
       expect(message.text).toContain('Next week: Week 4, first kickoff Thu, Sep 24, 2026');
       expect(message.text).toContain('Make picks for next week: https://qa.ultimateofficepoolmanager.com/league/OFFICE24/contests/contest-1');
       expect(message.html).toContain('Make picks for next week');
@@ -510,7 +510,7 @@ describe('pool-master-98i system email templates', () => {
         cut: [],
       }, UTC);
 
-      expect(message.text).toContain('Week 3 is done. Chalk (Pat) won the week.');
+      expect(message.text).toContain('Week 3 is done. Chalk won the week.');
       expect(message.text).not.toContain('Make picks for next week');
     });
 
@@ -520,9 +520,9 @@ describe('pool-master-98i system email templates', () => {
         contestName: 'Last One Standing',
         moment: { kind: StandingsMomentKind.SURVIVOR_WEEK, eventName: 'Week 5', stillIn: 1, nextWeek: { name: 'Week 6', firstKickoffAt: new Date('2026-10-09T00:15:00.000Z') } },
         top: [
-          { place: '1', entryName: 'Iron Man', squadName: 'Casey & Co', score: '5', movement: 0, isYours: false },
-          { place: 'T2', entryName: 'Bears Believer', squadName: 'Morgan Member', score: '4', movement: null, isYours: true, isOut: true },
-          { place: 'T2', entryName: 'Sleepy', squadName: 'Morgan Member', score: '4', movement: null, isYours: true, isOut: true },
+          { place: '1', entryName: 'Iron Man', score: '5', movement: 0, isYours: false },
+          { place: 'T2', entryName: 'Bears Believer', score: '4', movement: null, isYours: true, isOut: true },
+          { place: 'T2', entryName: 'Sleepy', score: '4', movement: null, isYours: true, isOut: true },
         ],
         yours: [],
         entryCount: 3,
@@ -537,7 +537,7 @@ describe('pool-master-98i system email templates', () => {
       expect(message.text).toContain('Week 5 is done. 1 of 3 entries is still in Last One Standing.');
       expect(message.text).toContain('Bears Believer is out: Chicago Bears didn\'t win in Week 5.');
       expect(message.text).toContain('Sleepy is out: it had no pick in Week 5.');
-      expect(message.text).toContain('Standings, by weeks survived:\n1. Iron Man (Casey & Co), 5, no change\nT2. Bears Believer (Morgan Member), yours, 4, out');
+      expect(message.text).toContain('Standings, by weeks survived:\n1. Iron Man, 5, no change\nT2. Bears Believer, yours, 4, out');
       expect(message.text).toContain('Next week: Week 6, first kickoff');
       expect(message.text).not.toContain('Make picks for next week');
     });
@@ -547,7 +547,7 @@ describe('pool-master-98i system email templates', () => {
         ...standings,
         contestName: 'March Madness',
         moment: { kind: StandingsMomentKind.BRACKET_ROUND, eventName: 'NCAA Tournament', roundName: 'Sweet 16', nextRound: { name: 'Elite Eight', startsAt: new Date('2026-03-28T22:09:00.000Z') } },
-        top: [{ place: '1', entryName: 'Chalk', squadName: 'Pat', score: '120', movement: 2, isYours: false }],
+        top: [{ place: '1', entryName: 'Chalk', score: '120', movement: 2, isYours: false }],
         yours: [],
         entryCount: 1,
         cut: [],
@@ -562,7 +562,7 @@ describe('pool-master-98i system email templates', () => {
       expect(message.text).toContain('Sweet 16 of NCAA Tournament is done. Here\'s where March Madness stands.');
       expect(message.text).toContain('Blue Devils: your champion, Duke, is still alive, with 280 points possible.');
       expect(message.text).toContain('Long Shot: your champion, Saint Peter\'s, is out, with 90 points possible.');
-      expect(message.text).toContain('Standings, by points:\n1. Chalk (Pat), 120, up 2');
+      expect(message.text).toContain('Standings, by points:\n1. Chalk, 120, up 2');
       expect(message.text).toContain('Next round: Elite Eight, Sat, Mar 28, 2026');
     });
 

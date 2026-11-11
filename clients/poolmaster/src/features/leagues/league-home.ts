@@ -34,8 +34,11 @@ export function pickUpNextContest(
 export type StandingRow = {
   entryId: string;
   isMine: boolean;
+  /** The entry's name; its (i) says whose it is. */
   name: string;
   position: string | null;
+  /** The entry's team, which the (i) reads when opened. */
+  squadId: string;
   total: string | null;
 };
 
@@ -57,6 +60,7 @@ export function buildTopStandings(
     isMine: mySquadId !== null && entry.squadId === mySquadId,
     name: entry.entryName,
     position: entry.displayPosition,
+    squadId: entry.squadId,
     total: view.entries[index]?.total ?? null,
   })), limit);
 }
@@ -72,6 +76,7 @@ export function buildBracketTopStandings(
     isMine: mySquadId !== null && entry.squadId === mySquadId,
     name: entry.entryName,
     position: entry.displayPosition,
+    squadId: entry.squadId,
     total: String(entry.points),
   })), limit);
 }

@@ -52,6 +52,7 @@ export type SquaresWinnerDto = z.infer<typeof SquaresWinnerDtoSchema>;
 export const SquaresEntryDtoSchema = z.object({
   contestEntryId: z.uuid(),
   entryName: z.string(),
+  squadId: z.uuid().describe('The team the entry belongs to.'),
   boxCount: z.number().int().min(0).describe('How many boxes the entry holds.'),
   periodsWon: z.number().int().min(0).describe('How many scoring moments its boxes won so far.'),
   displayPosition: z.string().nullable().describe('Its settled place, "T1" when shared; null until the contest is Final.'),

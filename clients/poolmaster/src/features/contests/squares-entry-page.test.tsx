@@ -223,7 +223,7 @@ describe('Squares contest leaderboard', () => {
     }
   });
 
-  it('lists Q1, Halftime, Q3 and Final with each winner or No winner, outlines the winning boxes, and places the entries once Final', async () => {
+  it('lists Q1, Halftime, Q3 and Final with each winner and its (i) or No winner, outlines the winning boxes, and places the entries once Final', async () => {
     primeMocks({
       contest: squaresContestFixture({ status: 'COMPLETED' }),
       board: squaresBoardFixture({
@@ -238,8 +238,8 @@ describe('Squares contest leaderboard', () => {
           { periodNumber: 4, homeScore: 23, awayScore: 10, rowIndex: 0, columnIndex: 0, contestEntryId: 'entry-1', entryName: 'Morgan’s Madness' },
         ],
         entries: [
-          { contestEntryId: 'entry-1', entryName: 'Morgan’s Madness', boxCount: 1, periodsWon: 2, displayPosition: '1' },
-          { contestEntryId: 'entry-2', entryName: 'Derek’s Great Golf Guys', boxCount: 1, periodsWon: 1, displayPosition: '2' },
+          { contestEntryId: 'entry-1', entryName: 'Morgan’s Madness', squadId: 'squad-1', boxCount: 1, periodsWon: 2, displayPosition: '1' },
+          { contestEntryId: 'entry-2', entryName: 'Derek’s Great Golf Guys', squadId: 'squad-2', boxCount: 1, periodsWon: 1, displayPosition: '2' },
         ],
       }),
     });
@@ -252,6 +252,9 @@ describe('Squares contest leaderboard', () => {
       'Q3No winnerChiefs 7, Eagles 17',
       'FinalMorgan’s MadnessChiefs 10, Eagles 23',
     ]);
+    // Each winner has its (i) for its team; a box nobody held has none.
+    expect(within(screen.getByTestId('squares-winner-1')).getByRole('button', { name: 'About Morgan’s Madness' })).toBeInTheDocument();
+    expect(within(screen.getByTestId('squares-winner-3')).queryByRole('button')).not.toBeInTheDocument();
     expect(box(0, 0)).toHaveAttribute('data-winner', 'true');
     expect(box(7, 9)).toHaveAttribute('data-winner', 'true');
     expect(box(5, 5)).not.toHaveAttribute('data-winner');

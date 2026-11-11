@@ -377,17 +377,17 @@ describe('ContestNotices', () => {
       expect(recipientIds()).toEqual([nora.user.id, dana.user.id, onlooker.user.id].sort());
       expect(outbox.rows.every((row) => row.templateKey === 'CONTEST_RESULTS' && row.fromName === 'Office League')).toBe(true);
       const toDana = textTo(dana.user.id);
-      expect(toDana).toContain('Masters Pick 6 is over. Green Jackets (Nora\'s Squad) won.');
+      expect(toDana).toContain('Masters Pick 6 is over. Green Jackets won.');
       expect(toDana).toContain('Final top 10 of 12:');
-      expect(toDana).toContain('1. Green Jackets (Nora\'s Squad), -14');
+      expect(toDana).toContain('1. Green Jackets, -14');
       expect(toDana).not.toContain('Long Shots');
-      expect(toDana).toContain('Your entry:\n11. Dana 10 (Dana\'s Squad), yours, E');
+      expect(toDana).toContain('Your entry:\n11. Dana 10, yours, E');
       expect(toDana).not.toContain('Congratulations');
       expect(toDana).toContain(`Final leaderboard: https://app.example.test/league/OFFICE24/contests/${contest.id}/leaderboard`);
       const toNora = textTo(nora.user.id);
       expect(toNora).toContain('Congratulations, Nora\'s Squad won Masters Pick 6 with Green Jackets!');
       expect(toNora).toContain('Your entry:');
-      expect(toNora).toContain('12. Long Shots (Nora\'s Squad), yours, +3');
+      expect(toNora).toContain('12. Long Shots, yours, +3');
       expect(textTo(onlooker.user.id)).not.toContain('Your entr');
     });
 
@@ -405,9 +405,9 @@ describe('ContestNotices', () => {
 
       await notices().contestSettled(contest, final);
 
-      expect(textTo(sam.user.id)).toContain('Week 1 Pick\'em is over. Chalk (Nora\'s Squad) and Upsets (Dana\'s Squad) tied for first.');
+      expect(textTo(sam.user.id)).toContain('Week 1 Pick\'em is over. Chalk and Upsets tied for first.');
       expect(textTo(sam.user.id)).toContain('Final standings:');
-      expect(textTo(sam.user.id)).toContain('3. Coin Flip (Sam\'s Squad), yours, 9');
+      expect(textTo(sam.user.id)).toContain('3. Coin Flip, yours, 9');
       expect(textTo(sam.user.id)).not.toContain('Congratulations');
       expect(textTo(nora.user.id)).toContain('Congratulations, Nora\'s Squad tied for first in Week 1 Pick\'em with Chalk!');
       expect(textTo(dana.user.id)).toContain('Congratulations, Dana\'s Squad tied for first in Week 1 Pick\'em with Upsets!');

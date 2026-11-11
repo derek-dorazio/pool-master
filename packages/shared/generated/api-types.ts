@@ -18052,6 +18052,11 @@ export interface components {
             /** Format: uuid */
             contestEntryId: string;
             entryName: string;
+            /**
+             * Format: uuid
+             * @description The team the entry belongs to.
+             */
+            squadId: string;
             /** @description How many boxes the entry holds. */
             boxCount: number;
             /** @description How many scoring moments its boxes won so far. */
@@ -18208,6 +18213,11 @@ export interface components {
                 /** Format: uuid */
                 contestEntryId: string;
                 entryName: string;
+                /**
+                 * Format: uuid
+                 * @description The team the entry belongs to.
+                 */
+                squadId: string;
                 /** @description How many boxes the entry holds. */
                 boxCount: number;
                 /** @description How many scoring moments its boxes won so far. */

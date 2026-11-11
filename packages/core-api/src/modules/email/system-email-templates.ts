@@ -320,7 +320,6 @@ export interface StandingsLine {
   /** "1", "T3"; null for an entry with nothing scored yet. */
   place: string | null;
   entryName: string;
-  squadName: string;
   /** The entry's total as the leaderboard shows it, such as "-8"; null with nothing scored. */
   score: string | null;
   /** Places gained (positive) or lost since the last standings email; null when there is none to compare with. */
@@ -1722,9 +1721,9 @@ function standingsWording(data: ContestStandingsEmailData): { subject: string; t
   }
 }
 
-/** "Eagle Eyes (The Birdies) won the week."; null when nobody did. */
+/** "Eagle Eyes won the week."; null when nobody did. Entries go by their names alone (#1564). */
 function describeWeekWinners(winners: readonly StandingsEntryName[]): string | null {
-  const names = winners.map((winner) => `${winner.entryName} (${winner.squadName})`);
+  const names = winners.map((winner) => winner.entryName);
   if (names.length === 0) return null;
   if (names.length === 1) return `${names[0]} won the week.`;
   return `${names.slice(0, -1).join(', ')} and ${names.at(-1) ?? ''} tied for the week.`;
@@ -1781,7 +1780,7 @@ function formatEventResult(result: { place: string | null; score: string | null 
 function standingsTextLine(line: StandingsLine): string {
   const movement = describeMovement(line.movement);
   return [
-    `${line.place ?? '-'}. ${line.entryName} (${line.squadName})${line.isYours ? ', yours' : ''}`,
+    `${line.place ?? '-'}. ${line.entryName}${line.isYours ? ', yours' : ''}`,
     line.score ?? 'no score yet',
     ...(line.isOut ? ['out'] : []),
     ...(line.eventResult ? [`this event ${formatEventResult(line.eventResult)}`] : []),
@@ -1803,7 +1802,7 @@ function standingsTable(lines: StandingsLine[]): string {
     const you = line.isYours ? ` <span style="font-size:12px;font-weight:700;color:${EMAIL_THEME.goldInk};">YOU</span>` : '';
     return `<tr>
         <td style="${row}font-weight:700;">${escapeHtml(line.place ?? '-')}</td>
-        <td style="${row}">${strong(line.entryName)}${you}<br><span style="font-size:12px;color:${EMAIL_THEME.muted};">${escapeHtml(line.squadName)}${line.eventResult ? ` · This event ${escapeHtml(formatEventResult(line.eventResult))}` : ''}</span></td>
+        <td style="${row}">${strong(line.entryName)}${you}${line.eventResult ? `<br><span style="font-size:12px;color:${EMAIL_THEME.muted};">This event ${escapeHtml(formatEventResult(line.eventResult))}</span>` : ''}</td>
         <td style="${row}text-align:right;font-weight:700;">${escapeHtml(line.score ?? '-')}${line.isOut ? `<br><span style="font-size:12px;font-weight:400;color:${EMAIL_THEME.muted};">out</span>` : ''}</td>
         <td style="${row}text-align:right;font-weight:700;color:${movementColor(line.movement)};">${escapeHtml(movementMark(line.movement))}</td>
       </tr>`;
@@ -1886,9 +1885,9 @@ function renderContestStandingsEmail(
   });
 }
 
-/** "Chalk (Pat) won." or "Chalk (Pat) and Upsets (Sam) tied for first."; null with no winner. */
+/** "Chalk won." or "Chalk and Upsets tied for first."; null with no winner. Entries go by their names alone (#1564). */
 function describeWinners(winners: readonly StandingsEntryName[]): string | null {
-  const names = winners.map((winner) => `${winner.entryName} (${winner.squadName})`);
+  const names = winners.map((winner) => winner.entryName);
   if (names.length === 0) return null;
   if (names.length === 1) return `${names[0]} won.`;
   return `${names.slice(0, -1).join(', ')} and ${names.at(-1) ?? ''} tied for first.`;
