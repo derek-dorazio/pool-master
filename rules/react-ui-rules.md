@@ -424,6 +424,23 @@ state, stale actions, and unthemeable markup accumulate.
   `layout="row"` (sentence case, full width, left aligned, wraps; colour still comes from
   `variant`), and a dropdown menu entry is a `MenuItem`. The `poolmaster/no-button-row-override`
   ESLint rule flags a hand-typed `normal-case` or `tracking-normal` in their `className`.
+- **Text styles live in the shared parts; pages pick a part.** A title is a `Heading`, the small
+  uppercase line over one is an `Eyebrow`, and every other piece of text is a `Text`: `body`
+  (running text), `meta` (the muted line under a name: counts, dates, a team line), `caption`
+  (a small aside such as a timestamp), `label` (a column header or field caption, the muted
+  eyebrow look), `value` (a number, with lined-up digits) or `strong` (a name that leads its
+  row), with an optional `tone` (`muted`, `danger`, `primary`), `weight` (`normal`,
+  `medium`, `semibold`, `bold`) and `size` (`inherit` keeps a name inside a larger line at that
+  line's size). `asChild` puts the style on a `Link`. An icon is an `Icon`, whose `tone` colours
+  it. Where a pattern repeats inside
+  a composite (`SectionRow`, `PageHeader`'s fact line) the composite owns it, and the page
+  passes plain content. Pages keep layout classes (flex, gap, margin, width, text alignment and
+  wrapping) and never set font size, weight, family, slant, line height, case, tracking,
+  figures or any text colour (icons included).
+  `rules:check:text-styles` counts those classes in each web source file outside
+  `features/shared/ui` against `scripts/text-style-baseline.json`: a file over its entry fails,
+  and a file under it fails until its entry is lowered (`node scripts/check-text-styles.mjs
+  --update`, which only ever lowers entries), so the baseline only shrinks. A look no variant covers gets a variant in `shared/ui`, never a class on the page.
 
 ### Frontend Logging Discipline
 

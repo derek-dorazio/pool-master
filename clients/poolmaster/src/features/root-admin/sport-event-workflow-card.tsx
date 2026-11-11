@@ -21,10 +21,11 @@ import {
 } from './sport-admin-utils';
 import { SportEventReleaseAction } from './sport-event-release-action';
 import { SportEventWorkflowRail } from './sport-event-workflow-rail';
-import { buildSportEventPath, capitalize } from './manage-navigation';
+import { buildSportEventPath } from './manage-navigation';
 import { useEventRoundLabel } from './use-sport-catalog';
 import type { SportEventDto, SportEventRoundDto } from '@/lib/api';
 import { SportEventStatus, getSportDefinition } from '@poolmaster/shared/domain';
+import { upperFirst } from '@/lib/upper-first';
 
 /**
  * plans/124 §6.3 block 2 — the workflow rail, "Release for contests" while the tournament
@@ -158,7 +159,7 @@ export function SportEventWorkflowCard({
       <SectionCard
         headingLevel={3}
         padded
-        title={capitalize(roundNoun.many)}
+        title={upperFirst(roundNoun.many)}
         trailing={(
           <LinkButton
             data-testid="root-admin-sport-event-rounds-edit"
@@ -173,7 +174,7 @@ export function SportEventWorkflowCard({
         <p className="text-sm text-muted-foreground">
           {roundsError
             ? extractErrorMessage(roundsError, {
-                fallback: `${capitalize(roundNoun.one)} schedule is unavailable.`,
+                fallback: `${upperFirst(roundNoun.one)} schedule is unavailable.`,
               })
             : rounds.length === 0
               ? `No ${roundNoun.many} recorded yet.`

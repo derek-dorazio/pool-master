@@ -27,6 +27,7 @@ import {
   SegmentedControl,
   SettingsSection,
   SettingsSectionHeader,
+  Text,
 } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
@@ -317,9 +318,9 @@ function InvitePeople({ invitationsKey, isInactiveLeague, joinLink, leagueId }: 
           </Alert>
         ) : null}
         {isInactiveLeague ? (
-          <p className="text-sm text-muted-foreground" data-testid="league-invites-inactive">
+          <Text as="p" data-testid="league-invites-inactive" variant="meta">
             This league is inactive, so nobody new can be invited.
-          </p>
+          </Text>
         ) : null}
       </div>
     </SettingsSection>
@@ -422,9 +423,9 @@ function WaitingInvites({
           const { invitation, isEmail, label } = row.original;
           return (
             <div className="min-w-0 space-y-1">
-              <div className="font-medium text-foreground">{label}</div>
+              <Text as="div" size="inherit" variant="strong">{label}</Text>
               {isEmail ? null : (
-                <div className="text-xs text-muted-foreground">{String(invitation.currentUses)} joined</div>
+                <Text as="div" variant="caption">{String(invitation.currentUses)} joined</Text>
               )}
               {invitation.emailStatus ? (
                 <div
@@ -459,7 +460,7 @@ function WaitingInvites({
           const { expiresAt } = row.original.invitation;
           return expiresAt
             ? <DateDisplay timeStyle={null} value={expiresAt} />
-            : <span className="text-muted-foreground">Never</span>;
+            : <Text size="inherit" tone="muted">Never</Text>;
         },
       },
       {
@@ -562,9 +563,9 @@ function WaitingInvites({
         </div>
       )}
       {resendMutation.isSuccess ? (
-        <p className="text-sm text-muted-foreground" data-testid="league-invitation-resent">
+        <Text as="p" data-testid="league-invitation-resent" variant="meta">
           Invite resent with a new link. The old link no longer works.
-        </p>
+        </Text>
       ) : null}
       {resendMutation.isError ? (
         <InlineError testId="league-invitation-resend-error">

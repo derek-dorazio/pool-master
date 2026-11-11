@@ -24,9 +24,11 @@ const rows: Row[] = [
 
 function renderBoard(columns: ColumnDef<Row>[], data: Row[] = rows) {
   render(
-    <MemoryRouter>
-      <ScoreboardGrid columns={columns} data={data} emptyMessage="Nobody yet." rowTestIdPrefix="board-row" tableTestId="board" />
-    </MemoryRouter>,
+    <QueryClientProvider client={new QueryClient()}>
+      <MemoryRouter>
+        <ScoreboardGrid columns={columns} data={data} emptyMessage="Nobody yet." rowTestIdPrefix="board-row" tableTestId="board" />
+      </MemoryRouter>
+    </QueryClientProvider>,
   );
 }
 
@@ -40,28 +42,38 @@ describe('placeColumn', () => {
 });
 
 describe('entryColumn', () => {
-  it('links each entry to its page in the league and names its squad underneath', () => {
-    renderBoard([entryColumn('board', { contestId: 'contest-1', leagueCode: 'BIGDAWGS', isMine: () => false })]);
+  it('links each entry to its page in the league by its name alone, with an (i) that says whose it is', () => {
+    renderBoard([entryColumn('board', { contestId: 'contest-1', leagueCode: 'BIGDAWGS', leagueId: 'league-1', isMine: () => false })]);
 
     expect(screen.getByTestId('board-entry-link-entry-1')).toHaveAttribute('href', '/league/BIGDAWGS/contests/contest-1/entries/entry-1');
-    expect(screen.getByTestId('board-row-entry-1')).toHaveTextContent('Casey Crushers');
+    expect(screen.getByTestId('board-row-entry-1')).not.toHaveTextContent('Casey Crushers');
+    expect(screen.getByRole('button', { name: 'About Crushers 1' })).toBeInTheDocument();
+  });
+
+  it('shows no (i) for an entry the board names no team for', () => {
+    renderBoard(
+      [entryColumn('board', { contestId: 'contest-1', leagueCode: 'BIGDAWGS', leagueId: 'league-1', isMine: () => false })],
+      [{ ...rows[0], squadId: '' }],
+    );
+
+    expect(screen.queryByRole('button', { name: 'About Crushers 1' })).not.toBeInTheDocument();
   });
 
   it('marks only the viewer\'s squad\'s entries Yours', () => {
-    renderBoard([entryColumn('board', { contestId: 'contest-1', leagueCode: 'BIGDAWGS', isMine: isMySquadsEntry('squad-1') })]);
+    renderBoard([entryColumn('board', { contestId: 'contest-1', leagueCode: 'BIGDAWGS', leagueId: 'league-1', isMine: isMySquadsEntry('squad-1') })]);
 
     expect(within(screen.getByTestId('board-row-entry-1')).getByText('Yours')).toBeInTheDocument();
     expect(within(screen.getByTestId('board-row-entry-2')).queryByText('Yours')).not.toBeInTheDocument();
   });
 
   it('marks nothing Yours for a viewer without a squad', () => {
-    renderBoard([entryColumn('board', { contestId: 'contest-1', leagueCode: 'BIGDAWGS', isMine: isMySquadsEntry(null) })]);
+    renderBoard([entryColumn('board', { contestId: 'contest-1', leagueCode: 'BIGDAWGS', leagueId: 'league-1', isMine: isMySquadsEntry(null) })]);
 
     expect(screen.queryByText('Yours')).not.toBeInTheDocument();
   });
 
   it('finds an entry by its squad\'s name in the board\'s search', async () => {
-    renderBoard([entryColumn('board', { contestId: 'contest-1', leagueCode: 'BIGDAWGS', isMine: () => false })]);
+    renderBoard([entryColumn('board', { contestId: 'contest-1', leagueCode: 'BIGDAWGS', leagueId: 'league-1', isMine: () => false })]);
 
     await userEvent.type(screen.getByTestId('contest-leaderboard-search'), 'Bandits');
 

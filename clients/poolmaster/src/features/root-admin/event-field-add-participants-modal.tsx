@@ -19,8 +19,8 @@ import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import type { AddSportEventParticipantsResponse, ParticipantLeagueAffiliationDto } from '@/lib/api';
 import { useLeagueRosterQuery, useParticipantsQuery, useSportLeaguesQuery } from './use-sport-catalog';
-import { capitalize } from './manage-navigation';
 import { fieldWriteKeys } from './use-sport-event';
+import { upperFirst } from '@/lib/upper-first';
 
 type BulkAddResult = AddSportEventParticipantsResponse;
 
@@ -145,7 +145,7 @@ export function EventFieldAddParticipantsModal({
 
   return (
     <Modal
-      description={`Pick a ${sportLeague.one} to browse its current roster, or search every ${participant.one} by name. ${capitalize(participant.many)} already in this field are hidden.`}
+      description={`Pick a ${sportLeague.one} to browse its current roster, or search every ${participant.one} by name. ${upperFirst(participant.many)} already in this field are hidden.`}
       footer={
         result ? (
           <Button data-testid="root-admin-event-field-add-done" onClick={onClose} type="button">
@@ -190,12 +190,12 @@ export function EventFieldAddParticipantsModal({
           </Alert>
         ) : null}
 
-        <FormField label={capitalize(sportLeague.one)}>
+        <FormField label={upperFirst(sportLeague.one)}>
           {leaguesQuery.isError ? (
             <ServerErrorBar
               error={leaguesQuery.error}
               fallback={`We could not load the ${sportLeague.one} list. Use the search below instead.`}
-              title={`${capitalize(sportLeague.many)} unavailable`}
+              title={`${upperFirst(sportLeague.many)} unavailable`}
             />
           ) : (
             <Select

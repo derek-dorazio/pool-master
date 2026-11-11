@@ -1,5 +1,5 @@
 import type { UseFormReturn } from 'react-hook-form';
-import { FormField, IconPalette, Input } from '@/features/shared/ui';
+import { FormField, IconPalette, Input, Text } from '@/features/shared/ui';
 import type { TeamFormValues } from './team-form-schema';
 import { TEAM_ICON_OPTIONS } from './team-icon-catalog';
 import { TeamAvatar } from './team-avatar';
@@ -34,7 +34,7 @@ export function TeamFormFields({
       </FormField>
 
       <fieldset className="space-y-2">
-        <legend className="text-sm font-medium text-foreground">{isViewerOwn ? 'Your icon' : 'Icon'}</legend>
+        <legend><Text variant="strong">{isViewerOwn ? 'Your icon' : 'Icon'}</Text></legend>
         <IconPalette
           aria-label={isViewerOwn ? 'Your icon' : 'Icon'}
           disabled={disabled}

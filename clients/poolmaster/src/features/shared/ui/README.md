@@ -110,6 +110,14 @@ end of its section's title row. A
 switching a page's views. A search box in the header feeds a `DataGrid` through
 its `searchTerm`.
 
+Text that is not a title (`Heading`) or the line over one (`Eyebrow`) is a `Text`:
+`variant` is `body`, `meta`, `caption`, `label`, `value` or `strong`, `tone`, `weight` and `size`
+are optional (`size="inherit"` for a name inside a larger line), `truncate` cuts a long line,
+`as` picks `span` (the default), `p` or `div`, and `asChild` styles a `Link` in place. An icon
+is an `Icon` (`icon={Award} tone="muted"`), hidden from screen readers. Pages never
+type font size, weight, case or text colour classes (`rules/react-ui-rules.md` §5 *Theme And
+Styling Discipline*).
+
 A section of a page is a `SectionCard` (`rules/ux-rules.md` §12 item 13): its
 `SectionTitle` in a ruled bar (house uppercase italic, an optional `info` icon
 that holds the section's explanation, and an optional `trailing` slot for one
@@ -137,7 +145,12 @@ days, hours and minutes as one timer. The event page kit (`StartButton`, `Landin
 lives in `features/event-pages/components`.
 
 `InfoPopover` keeps secondary facts out of a page's way: an icon button whose
-callout opens on mouse hover or on a tap, for a phone.
+callout opens on mouse hover or on a tap, for a phone. It is the base the "show
+more" parts build on, never used on a page by itself. `DetailsPeek` is the (i) after
+the name of one thing (an entry, an event, a golfer): it opens a `PeekCard` after a
+short hover delay, so scanning a list does not flash every row, and mounts the card
+only when it opens, so a peek that reads data reads it then (`EntryDetailsPeek` in
+`features/contests` reads an entry's team and owners this way).
 
 Feature pages should keep route-specific copy and generated-SDK calls local, but
 they should not duplicate header, grid-shell, detail/actions, or

@@ -9,8 +9,9 @@ import { getLogger } from '@/lib/logger';
 import { formPageSave } from '@/lib/form-page-save';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import { buildSportLeagueListPath, capitalize } from './manage-navigation';
+import { buildSportLeagueListPath } from './manage-navigation';
 import { useManagedSport } from './use-managed-sport';
+import { upperFirst } from '@/lib/upper-first';
 
 const newTourSchema = z.object({
   name: z.string().trim().min(1, 'A name is required'),
@@ -73,7 +74,7 @@ export function RootAdminSportLeagueCreatePage() {
       testId="root-admin-sport-league-create-page"
       title={`New ${definition.name.toLowerCase()} ${sportLeague.one}`}
     >
-      <FormField error={form.formState.errors.name?.message} label={`${capitalize(sportLeague.one)} name`}>
+      <FormField error={form.formState.errors.name?.message} label={`${upperFirst(sportLeague.one)} name`}>
         <Input
           data-testid="root-admin-sport-league-list-new-name"
           {...form.register('name')}

@@ -61,11 +61,11 @@ export function SquaresEntryPage({ contest }: { contest: ContestDto }) {
 type StandingRow = SquaresEntryDto & { entryId: string };
 
 /** The standings' columns: place once Final, the entry, its boxes and the quarters it won. */
-function standingsColumns(contestId: string, leagueCode: string, myEntryIds: readonly string[]): ColumnDef<StandingRow>[] {
+function standingsColumns(contestId: string, leagueCode: string, leagueId: string, myEntryIds: readonly string[]): ColumnDef<StandingRow>[] {
   return [
     placeColumn(TEST_ID),
     // A squares entry names no squad, so the viewer's own are the entries the contest says are theirs.
-    entryColumn(TEST_ID, { contestId, isMine: (row) => myEntryIds.includes(row.entryId), leagueCode }),
+    entryColumn(TEST_ID, { contestId, isMine: (row) => myEntryIds.includes(row.entryId), leagueCode, leagueId }),
     { id: 'boxes', header: 'Boxes', accessorFn: (row) => row.boxCount },
     totalColumn(TEST_ID, { header: 'Quarters won', id: 'won', value: (row) => row.periodsWon }),
   ];
@@ -91,7 +91,7 @@ export function SquaresLeaderboard({ contest }: { contest: ContestDto }) {
       <SquaresBoardView canManage={viewer.isCommissioner || viewer.isRootAdmin} contest={contest} myEntryIds={contest.myEntryIds ?? []} />
       {boardQuery.data ? (
         <ScoreboardGrid
-          columns={standingsColumns(contest.id, leagueCode, contest.myEntryIds ?? [])}
+          columns={standingsColumns(contest.id, leagueCode, contest.leagueId, contest.myEntryIds ?? [])}
           data={boardQuery.data.entries.map((row) => ({ ...row, entryId: row.contestEntryId }))}
           emptyMessage="No entry holds a box yet."
           rowTestIdPrefix="squares-standing-row"

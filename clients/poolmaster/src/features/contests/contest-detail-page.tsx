@@ -37,6 +37,7 @@ import {
 } from '@/features/shared/ui';
 import { currentContestEvent, entryEventStatus } from './contest-events';
 import { ContestPageFrame } from './contest-header';
+import { EntryDetailsPeek } from './entry-details-peek';
 import { MY_ENTRIES_PARAM } from './contest-page-view';
 import {
   areContestEntriesOpen,
@@ -419,7 +420,17 @@ export function ContestDetailPage() {
                             ★
                           </span>
                         ) : null}
-                        <span className="font-medium text-foreground">{entry.name}</span>
+                        <span className="flex items-center">
+                          <span className="font-medium text-foreground">{entry.name}</span>
+                          <EntryDetailsPeek
+                            className="-my-2"
+                            entryName={entry.name}
+                            leagueCode={leagueCode}
+                            leagueId={contest.leagueId}
+                            squadId={entry.squadId}
+                            testId={`contest-board-entry-peek-${entry.id}`}
+                          />
+                        </span>
                         {isOwnEntry ? (
                           <Chip tone="active">
                             Yours
@@ -436,7 +447,7 @@ export function ContestDetailPage() {
                         )}
                       </div>
                       <div className="mt-1 text-sm text-muted-foreground">
-                        {entry.squadName} · Entry {entry.entryNumber} · {entry.picksCount} picks made
+                        {entry.picksCount} picks made
                       </div>
                     </div>
                     <div className="flex items-start gap-3">

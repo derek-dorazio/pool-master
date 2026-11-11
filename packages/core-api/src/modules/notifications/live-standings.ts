@@ -409,7 +409,6 @@ export class LiveStandings implements DueNotifications {
         weekLeaders: weekLeaders.map(({ entry, week }) => ({
           place: week.displayPosition,
           entryName: entry.entryName,
-          squadName: entry.squadName,
           score: week.points === null ? null : String(week.points),
           movement: null,
           isYours: ownsSquad(entry.squadId),
@@ -424,7 +423,6 @@ export class LiveStandings implements DueNotifications {
         line: {
           place: entry.displayPosition,
           entryName: entry.entryName,
-          squadName: entry.squadName,
           score: entry.position === null ? null : String(entry.totalPoints),
           movement: movementOf(entry.entryId, entry.position, lastPositions),
           isYours: false,
@@ -456,7 +454,6 @@ export class LiveStandings implements DueNotifications {
         line: {
           place: entry.displayPosition,
           entryName: entry.entryName,
-          squadName: entry.squadName,
           score: String(entry.points),
           movement: movementOf(entry.entryId, entry.position, lastPositions),
           isYours: false,
@@ -512,7 +509,6 @@ export class LiveStandings implements DueNotifications {
         line: {
           place: entry.displayPosition,
           entryName: entry.entryName,
-          squadName: entry.squadName,
           score: String(entry.weeksSurvived),
           movement: movementOf(entry.entryId, entry.position, lastPositions),
           isYours: false,
@@ -625,7 +621,6 @@ function toLine(
   return {
     place: row.displayPosition,
     entryName: row.entryName,
-    squadName: row.squadName,
     score: row.score === null ? null : format(row.score),
     movement: movementOf(row.entryId, row.position, lastPositions),
     isYours: false,

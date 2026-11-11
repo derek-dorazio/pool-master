@@ -4,7 +4,7 @@ import { Trophy } from 'lucide-react';
 import { PlanFeature } from '@poolmaster/shared/domain';
 import { hasPlanFeature } from '@/features/plans/plan-features';
 import { PlanLockedNotice } from '@/features/plans/plan-locked-notice';
-import { Button, ErrorState, Eyebrow, LoadingState, MetricGrid, MetricTile, SectionCard, SectionNote, useDisplayPreferences } from '@/features/shared/ui';
+import { Button, ErrorState, Eyebrow, Icon, LoadingState, MetricGrid, MetricTile, SectionCard, SectionNote, useDisplayPreferences } from '@/features/shared/ui';
 import { describePointsTable } from './cup-settings-view';
 import { joinNames } from './cup-view';
 import { ChampionshipContestList } from './championship-contest-list';
@@ -63,7 +63,7 @@ export function ChampionshipPage() {
         titleTestId="championship-name"
       >
         <div className="flex flex-col items-center gap-3 text-center">
-          {championship.isOver ? <Trophy aria-hidden className="text-primary" size={56} /> : null}
+          {championship.isOver ? <Icon icon={Trophy} size={56} tone="primary" /> : null}
           {championship.isOver && podium.length ? (
             <Eyebrow tone="muted">
               {(podium[0]?.squads.length ?? 0) > 1 ? 'Champions' : 'Champion'}

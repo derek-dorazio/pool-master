@@ -1,6 +1,7 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { InfoPopover } from "./info-popover";
+import { HOVER_CLOSE_GRACE_MS } from "./popover-timing";
 
 function drawPopover() {
   render(
@@ -13,6 +14,7 @@ function drawPopover() {
 
 describe("InfoPopover", () => {
   afterEach(() => {
+    vi.useRealTimers();
     vi.restoreAllMocks();
   });
 
@@ -41,14 +43,27 @@ describe("InfoPopover", () => {
     expect(screen.queryByTestId("status-callout")).not.toBeInTheDocument();
   });
 
-  it("opens the callout while a mouse hovers the icon and closes it when the mouse leaves", () => {
+  it("opens the callout while a mouse hovers the icon and closes it a moment after the mouse leaves", () => {
+    vi.useFakeTimers();
     const button = drawPopover();
 
     fireEvent.pointerEnter(button, { pointerType: "mouse" });
     expect(screen.getByTestId("status-callout")).toHaveTextContent("Entries close when the event starts");
 
     fireEvent.pointerLeave(button, { pointerType: "mouse" });
+    expect(screen.getByTestId("status-callout")).toBeInTheDocument();
+    act(() => {
+      vi.advanceTimersByTime(HOVER_CLOSE_GRACE_MS);
+    });
     expect(screen.queryByTestId("status-callout")).not.toBeInTheDocument();
+  });
+
+  it("puts the space between the icon and the callout inside the callout, so a mouse crossing it never leaves", () => {
+    fireEvent.click(drawPopover());
+
+    const callout = screen.getByTestId("status-callout");
+    expect(callout).toHaveClass("pt-2");
+    expect(callout).not.toHaveClass("mt-2");
   });
 
   it("opens on a tap and closes on a second tap, since a phone's tap must not open and close it at once", () => {

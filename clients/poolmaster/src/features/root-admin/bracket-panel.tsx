@@ -4,13 +4,13 @@ import { Alert, Heading, SectionCard, SimpleTable, TableBody, TableHead, TableHe
 import { extractErrorMessage } from '@/lib/errors';
 import { formsNoBracket, matchNoun } from './bracket-copy';
 import { BracketMatchRow, type BracketContext } from './bracket-match-row';
-import { capitalize } from './manage-navigation';
 import { PlayInPlacesCard } from './play-in-places-card';
 import { ReseedRoundsCard } from './reseed-rounds-card';
 import { WithdrawalsCard } from './withdrawals-card';
 import { useEventMatchPeriods, useEventRoundLabel } from './use-sport-catalog';
 import { useSportEventBracketQuery, useSportEventFieldQuery } from './use-sport-event';
 import { useProvidersQuery } from './use-providers-query';
+import { upperFirst } from '@/lib/upper-first';
 
 /** Whether a match shows a score from the data feed: a synced result, or a live game's score. */
 function showsFeedScore(match: SportEventMatchDto): boolean {
@@ -88,7 +88,7 @@ export function BracketPanel({ event }: { event: SportEventDto }) {
               <SimpleTable className="min-w-full">
                 <TableHead>
                   <tr>
-                    <TableHeaderCell>{capitalize(noun.one)}</TableHeaderCell>
+                    <TableHeaderCell>{upperFirst(noun.one)}</TableHeaderCell>
                     <TableHeaderCell>Pairing</TableHeaderCell>
                     {context.spreads ? <TableHeaderCell>Spread</TableHeaderCell> : null}
                     <TableHeaderCell>Time</TableHeaderCell>

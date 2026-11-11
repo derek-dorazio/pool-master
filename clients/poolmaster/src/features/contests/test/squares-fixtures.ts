@@ -74,8 +74,8 @@ export function squaresBoardFixture(overrides: Partial<SquaresBoardResponse> = {
     digits: null,
     winners: [],
     entries: [
-      { contestEntryId: 'entry-2', entryName: 'Derek’s Great Golf Guys', boxCount: 1, periodsWon: 0, displayPosition: null },
-      { contestEntryId: 'entry-1', entryName: 'Morgan’s Madness', boxCount: 1, periodsWon: 0, displayPosition: null },
+      { contestEntryId: 'entry-2', entryName: 'Derek’s Great Golf Guys', squadId: 'squad-2', boxCount: 1, periodsWon: 0, displayPosition: null },
+      { contestEntryId: 'entry-1', entryName: 'Morgan’s Madness', squadId: 'squad-1', boxCount: 1, periodsWon: 0, displayPosition: null },
     ],
     ...overrides,
   };
