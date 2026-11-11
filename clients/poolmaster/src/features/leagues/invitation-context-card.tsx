@@ -27,7 +27,7 @@ export function InvitationContextCard({
           <Heading level={3} variant="eyebrow">{title}</Heading>
           <Text as="div" size="base" truncate variant="strong" weight="semibold">{leagueName}</Text>
           {inviteCode ? (
-            <Text as="div" className="truncate font-mono uppercase" variant="caption">
+            <Text as="div" className="font-mono uppercase" truncate variant="caption">
               Invite code {inviteCode}
             </Text>
           ) : null}

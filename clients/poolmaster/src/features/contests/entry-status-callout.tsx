@@ -51,8 +51,8 @@ export function EntryStatusCallout({
       <dl className="space-y-2">
         {lines.map((fact) => (
           <div className="flex justify-between gap-4" data-testid={`contest-entry-status-${fact.id}`} key={fact.id}>
-            <dt className="shrink-0"><Text variant="meta">{fact.label}</Text></dt>
-            <dd className="text-right"><Text variant="strong">{fact.value}</Text></dd>
+            <Text asChild variant="meta"><dt className="shrink-0">{fact.label}</dt></Text>
+            <Text asChild variant="strong"><dd className="text-right">{fact.value}</dd></Text>
           </div>
         ))}
       </dl>
