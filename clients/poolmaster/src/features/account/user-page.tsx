@@ -28,6 +28,7 @@ import {
   ConfirmationModal,
   DEFAULT_DISPLAY_PREFERENCES,
   EntityDetailPage,
+  Eyebrow,
   formatDateDisplay,
   FormField,
   FormModal,
@@ -38,6 +39,7 @@ import {
   MutationActionToast,
   PasswordInput,
   Select,
+  Text,
   Tile,
   TimeZoneSelect,
   useDisplayPreferences,
@@ -347,22 +349,20 @@ export function UserPage() {
     return (
       <section className="space-y-6" data-testid="user-page-non-self-placeholder">
         <Tile padding="lg">
-          <p className="text-xs font-medium uppercase text-muted-foreground">
-            User
-          </p>
+          <Eyebrow tone="muted">User</Eyebrow>
           <Heading className="mt-3" level={1} variant="page">
             User profile unavailable
           </Heading>
-          <p className="mt-3 max-w-3xl text-sm text-muted-foreground">
+          <Text as="p" className="mt-3 max-w-3xl" variant="meta">
             You do not have access to view this user profile.
-          </p>
+          </Text>
         </Tile>
 
         <Tile>
-          <p className="text-sm text-muted-foreground">
+          <Text as="p" variant="meta">
             Your own user page has your profile, preferences, password, and account
             settings.
-          </p>
+          </Text>
           <LinkButton
             className="mt-5"
             data-testid="user-page-self-link"
@@ -434,9 +434,9 @@ export function UserPage() {
         <Heading level={1} variant="page">
           My profile
         </Heading>
-        <p className="mt-3 max-w-3xl text-sm text-muted-foreground">
+        <Text as="p" className="mt-3 max-w-3xl" variant="meta">
           Manage your user profile, preferences, login, and account information.
-        </p>
+        </Text>
         {isInactive ? (
           <Alert
             className="mt-5"
@@ -463,7 +463,7 @@ export function UserPage() {
           tone="success"
           title="Your account was deleted."
         >
-          <p className="mt-2 text-sm">You no longer have access to {PRODUCT_NAME} with this account.</p>
+          <Text as="p" className="mt-2">You no longer have access to {PRODUCT_NAME} with this account.</Text>
           <Button
             className="mt-4"
             onClick={() =>
@@ -925,11 +925,11 @@ export function UserPage() {
         title={isInactive ? 'Reactivate account' : 'Inactivate account'}
       >
         <div className="space-y-4">
-          <p className="text-sm text-muted-foreground">
+          <Text as="p" variant="meta">
             {isInactive
               ? `Reactivating your account restores normal ${PRODUCT_NAME} usage immediately.`
               : 'Inactivating your account signs you out everywhere and hides you from your leagues. You can still edit your details, and reactivate or permanently delete the account later.'}
-          </p>
+          </Text>
           {activeLifecycleAction.isError ? (
             <Alert tone="danger">
               {extractErrorMessage(activeLifecycleAction.error, { fallback: 'We could not complete that account action. Please try again.' })}
@@ -996,10 +996,10 @@ export function UserPage() {
         tone="danger"
       >
         <div className="space-y-4">
-          <p className="text-sm text-muted-foreground">
+          <Text as="p" variant="meta">
             This action will delete your account and related data permanently. Enter{' '}
-            <span className="font-medium text-foreground">{user.email}</span> to continue.
-          </p>
+            <Text size="inherit" variant="strong">{user.email}</Text> to continue.
+          </Text>
           {deleteAccountAction.isError ? (
             <Alert tone="danger">
               {extractErrorMessage(deleteAccountAction.error, { fallback: 'We could not complete that account action. Please try again.' })}

@@ -1,7 +1,7 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { useMemo } from 'react';
 import type { ChampionshipStandingRowDto } from '@/lib/api';
-import { Button, cn } from '@/features/shared/ui';
+import { Button, cn, Text } from '@/features/shared/ui';
 import { formatOrdinalPlace } from './cup-view';
 import { FINISH_MATRIX_PLACES, type ContestResultFilter } from './championship-view';
 import { squadStandingColumns } from './squad-standing-columns';
@@ -47,7 +47,7 @@ export function ChampionshipStandingsGrid({
                   testId={`championship-cell-${row.original.squadId}-${index + 1}`}
                 />
               )
-            : <span aria-label="None" className="text-muted-foreground">·</span>;
+            : <Text aria-label="None" variant="meta">·</Text>;
         },
       })),
       {
@@ -65,7 +65,7 @@ export function ChampionshipStandingsGrid({
                 testId={`championship-played-${row.original.squadId}`}
               />
             )
-          : <span className="tabular-nums">0</span>),
+          : <Text variant="value" weight="normal">0</Text>),
       },
     ],
     [filter, focusSquadId, onFilter],
