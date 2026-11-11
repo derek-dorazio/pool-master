@@ -115,13 +115,13 @@ function entry(contestId: string, squadId: string, status: 'DRAFT' | 'SUBMITTED'
 }
 
 
-function standing(position: number, squadId: string, squadName: string, totalScore: number) {
+function standing(position: number, squadId: string, entryName: string, totalScore: number) {
   return {
     entryId: `entry-${squadId}`,
-    entryName: `${squadName} entry`,
+    entryName,
     entryNumber: 1,
     squadId,
-    squadName,
+    squadName: `${entryName}'s team`,
     position,
     displayPosition: String(position),
     countingPickLimit: 4,
