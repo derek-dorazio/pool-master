@@ -44,7 +44,7 @@ function SeasonCups() {
   const title = `${year} cups`;
   if (!cups.length) {
     return (
-      <SectionCard info="Every sports league the league runs contests in gets its own cup, shown here once two of its contests have counted." title={title}>
+      <SectionCard help="Every sports league the league runs contests in gets its own cup, shown here once two of its contests have counted." title={title}>
         <SectionEmpty testId="trophy-case-empty">No cups yet.</SectionEmpty>
       </SectionCard>
     );

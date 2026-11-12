@@ -5,7 +5,7 @@ import { extractErrorMessage, hasErrorCode, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import { Alert, Button, LinkButton, SectionCard, Text } from '@/features/shared/ui';
+import { Notice, Button, LinkButton, SectionCard, Text } from '@/features/shared/ui';
 import { EMAIL_CATEGORY_LABELS } from './email-preferences';
 import { SELF_USER_ID } from './user-routing';
 
@@ -68,7 +68,7 @@ export function EmailUnsubscribePage() {
         always sent.
       </Text>
       {unsubscribeMutation.isError ? (
-        <Alert tone="danger">{extractErrorMessage(unsubscribeMutation.error, { fallback: 'We could not unsubscribe you. Try again.' })}</Alert>
+        <Notice tone="danger">{extractErrorMessage(unsubscribeMutation.error, { fallback: 'We could not unsubscribe you. Try again.' })}</Notice>
       ) : null}
       <Button
         data-testid="email-unsubscribe-confirm"

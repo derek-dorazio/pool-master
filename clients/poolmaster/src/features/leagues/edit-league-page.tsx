@@ -90,7 +90,7 @@ function EditLeagueForm({ league }: { league: LeagueDto }) {
   return (
     <FormPage
       cancelTo={settingsPath}
-      description="Members see these at the top of League Home."
+      help="Members see these at the top of League Home."
       {...formPageSave(form, saveMutation, 'We could not save the league.')}
       pendingLabel="Saving..."
       submitLabel="Save league"

@@ -1,7 +1,7 @@
 import { getSportDefinition, type Sport, type SportNoun } from '@poolmaster/shared/domain';
 import { useState } from 'react';
 import { seedEventParticipants } from '@/lib/api';
-import { Alert, Button, ConfirmationModal } from '@/features/shared/ui';
+import { Notice, Button, ConfirmationModal } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -66,7 +66,7 @@ export function EventFieldSeedAction({ eventId, sport, sportLeague }: {
       </Button>
 
       {result ? (
-        <Alert
+        <Notice
           className="mt-3"
           data-testid="root-admin-event-field-seed-result"
           tone="success"
@@ -74,7 +74,7 @@ export function EventFieldSeedAction({ eventId, sport, sportLeague }: {
           Added {result.added} {result.added === 1 ? participant.one : participant.many} ({result.skipped}{' '}
           already in the field). Derived {result.seedNumbersDerived} seed number
           {result.seedNumbersDerived === 1 ? '' : 's'} and {result.oddsDerived} odds.
-        </Alert>
+        </Notice>
       ) : null}
 
       <ConfirmationModal

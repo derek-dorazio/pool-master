@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
@@ -127,6 +127,16 @@ describe('League › Contest types', () => {
     expect(tiered).toHaveTextContent('nfl-tiered-doubling description.');
     expect(within(tiered).getByTestId('contest-type-nfl-tiered-doubling-variations')).toHaveTextContent('nfl-tiered-doubling-upset-bonus name');
     expect(screen.getByTestId('contest-types-sport-BASKETBALL')).toHaveTextContent('NBA');
+  });
+
+  it('keeps a variation\'s description behind its (?) help tip, shown on a tap, not in a title tooltip', async () => {
+    primeMocks('MEMBER');
+    renderPage();
+
+    const variations = await screen.findByTestId('contest-type-nfl-tiered-doubling-variations');
+    expect(variations).not.toHaveTextContent('nfl-tiered-doubling-upset-bonus description.');
+    fireEvent.click(within(variations).getByRole('button', { name: 'How nfl-tiered-doubling-upset-bonus name works' }));
+    expect(screen.getByTestId('contest-type-nfl-tiered-doubling-upset-bonus-help-callout')).toHaveTextContent('nfl-tiered-doubling-upset-bonus description.');
   });
 
   it('says a stat pool league\'s group is a Clutch Card and how its players score, and nothing of the kind on its sport\'s own league', async () => {

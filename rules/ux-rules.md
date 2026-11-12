@@ -309,8 +309,8 @@ administration area (root admin included), reusing the same shared components.
    `SquadStandingsGrid` in `features/championships` that starts from the shared
    Place, Squad and Points columns. An entry page opens on its picks: the entry's status
    is an icon beside its name (`ContestEntryFrame` draws it with
-   `EntryStatusCallout`, with the status, the contest's phase and the entry's
-   dates in a callout on hover or tap), not badges and a details panel above
+   `EntryStatusPeek`, a `DetailsPeek` whose card holds the status, the contest's
+   phase and the entry's dates, §15 *Showing More*), not badges and a details panel above
    the picks, and the entry's name, its tiebreaker and the one Submit for the
    whole entry come after the picks. A team or tie to pick in a pick'em,
    survivor or bracket game is a `PickOption` (pressed and marked "Your pick",
@@ -381,8 +381,8 @@ administration area (root admin included), reusing the same shared components.
     footer link (#1561). Four rules hold everywhere:
     - Every section has a title. No untitled cards, and no `Tile` with its own
       heading.
-    - No explanatory sentences in a section's body. An explanation goes behind
-      the title's info icon, or is removed.
+    - No explanatory sentences in a section's body. An explanation goes in the
+      title's `HelpTip` (?), or is removed (§15 *Showing More*).
     - Going to another page is the footer link (blue small caps, an arrow,
       right-aligned), never a button. Buttons only do things: make picks,
       create, save.
@@ -501,3 +501,41 @@ tested is `docs/EMAIL-DELIVERY.md`; this section is what an email looks like and
    the site's wordmark is. Small uppercase labels are label blue on white and navy haze on a
    navy band, as the site's eyebrows are. Email keeps to Archivo and Inter with Arial behind
    them; the site's condensed number face is not used, since most mail clients would fall back.
+
+## 15. Showing More
+
+Every "there's more to say here" moment uses one of four patterns, each with one
+icon, one trigger and one component from `features/shared/ui` (#1585, design
+`designs/more-info-patterns.html` in the project files). Pick by the question the
+extra text answers:
+
+| Question | Component | Icon and place | Opens on |
+|---|---|---|---|
+| "How does this work?" | `HelpTip` | **?** right after a page title, section title or form label | Mouse hover, or Enter on its button; tap on a phone |
+| "Who or what is this?" | `DetailsPeek` | **i** right after one thing's name (entry, event, golfer, team, contest), or its status glyph | Mouse hover after a short delay, Enter on its button, or a tap |
+| "Show me the breakdown." | `ExpandableRow` | Chevron at the row's right end | Click or tap only; stays open |
+| "You must know this now." | `Notice` | **!** with its tone, right above what it affects | Always visible |
+
+1. **No inline explainer text.** No sentence in a page, section or form body says
+   what the page, section or setting is or how it works. It goes in a `HelpTip`
+   (1 to 3 plain sentences, at most one link on), or it is removed. A section
+   takes it as `SectionCard`'s `help`, a form page as `FormPage`'s `help`, and a
+   page header in its `titleAside`.
+2. **Facts stay when they serve the page.** A fact line, a row's fact or a value
+   that the page exists to show stays inline; secondary facts about one thing go in
+   its `DetailsPeek`, so the page is not distracted from its job.
+3. **A `Notice` is for now.** A deadline, a draft, a lock, an error, a plan limit:
+   one sentence plus at most one action, gone when it no longer applies. It never
+   explains a page.
+4. **`ExpandableRow` never opens on hover**, and several rows may be open at once
+   so they can be compared. One-line facts are a `DetailsPeek`, not a row to open.
+5. **No reading modals, no hover-only content, no native `title=` tooltips.** Every
+   callout also opens by tap and keyboard and closes on Escape or a tap elsewhere;
+   a dialog only confirms an action.
+6. **`InfoPopover` is internal.** It is the base `HelpTip` and `DetailsPeek` are
+   built on; feature code never uses it. A product's own peek is a wrapper over
+   `DetailsPeek` in the feature folder that owns the thing (`EntryDetailsPeek`,
+   `EntryStatusPeek`).
+
+The `poolmaster/no-ad-hoc-more-info` ESLint rule fails feature code that imports
+`InfoPopover` or sets a `title=` attribute on a DOM element.

@@ -4,7 +4,7 @@ import { updateUserEmailPreference } from '@/lib/api';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
-import { Alert, Checkbox, ErrorState, Modal, Text } from '@/features/shared/ui';
+import { Checkbox, ErrorState, Modal, Notice, Text } from '@/features/shared/ui';
 import { EMAIL_CATEGORY_LABELS, SELF_EMAIL_PREFERENCES_KEY, useOwnEmailPreferences } from './email-preferences';
 import { SELF_USER_ID } from './user-routing';
 
@@ -19,9 +19,9 @@ export function EmailSuppressionBanner({ reason }: { reason: EmailSuppressionRea
     return null;
   }
   return (
-    <Alert data-testid="email-suppression-banner" title="We can't email you" tone="warning">
+    <Notice data-testid="email-suppression-banner" title="We can't email you" tone="warning">
       <Text as="p" className="mt-1">{SUPPRESSION_MESSAGES[reason]}</Text>
-    </Alert>
+    </Notice>
   );
 }
 
@@ -74,7 +74,7 @@ export function EmailNotificationsDialog({
           />
         ) : null}
         {updateMutation.isError ? (
-          <Alert tone="danger">{extractErrorMessage(updateMutation.error, { fallback: 'We could not save that change.' })}</Alert>
+          <Notice tone="danger">{extractErrorMessage(updateMutation.error, { fallback: 'We could not save that change.' })}</Notice>
         ) : null}
         <ul className="space-y-3">
           {preferences.map(({ category, enabled }) => (

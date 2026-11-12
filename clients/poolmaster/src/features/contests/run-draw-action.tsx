@@ -5,7 +5,7 @@ import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import { Alert, Button, ConfirmDialog } from '@/features/shared/ui';
+import { Notice, Button, ConfirmDialog } from '@/features/shared/ui';
 import { CONTEST_DRAW_CODE_MESSAGES } from './use-contest-draw';
 import { entryWriteKeys } from './use-contest-entries';
 
@@ -95,12 +95,12 @@ export function RunDrawAction({
         title="Run the draw?"
       >
         {runDrawMutation.isError ? (
-          <Alert data-testid="contest-run-draw-error" tone="danger">
+          <Notice data-testid="contest-run-draw-error" tone="danger">
             {extractErrorMessage(runDrawMutation.error, {
               codeMessages: CONTEST_DRAW_CODE_MESSAGES,
               fallback: 'We could not run the draw. Please try again.',
             })}
-          </Alert>
+          </Notice>
         ) : null}
       </ConfirmDialog>
     </>

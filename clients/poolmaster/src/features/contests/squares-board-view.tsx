@@ -10,7 +10,7 @@ import {
   type SquaresBoxDto,
 } from '@/lib/api';
 import {
-  Alert,
+  Notice,
   Button,
   ConfirmDialog,
   ErrorState,
@@ -267,7 +267,7 @@ export function SquaresBoardView({
           <span className="text-muted-foreground" data-testid="squares-grid-taken">{formatGridTaken(board.boxes.length)}</span>
         </div>
 
-        {boxError ? <Alert className="mb-4" data-testid="squares-box-error" tone="danger">{boxError}</Alert> : null}
+        {boxError ? <Notice className="mb-4" data-testid="squares-box-error" tone="danger">{boxError}</Notice> : null}
 
         <SquaresGrid
           actionFor={actionFor}
@@ -302,9 +302,9 @@ export function SquaresBoardView({
         title="Draw the numbers?"
       >
         {drawMutation.isError ? (
-          <Alert data-testid="squares-draw-error" tone="danger">
+          <Notice data-testid="squares-draw-error" tone="danger">
             {extractErrorMessage(drawMutation.error, { codeMessages: SQUARES_CODE_MESSAGES, fallback: 'We could not draw the numbers. Please try again.' })}
-          </Alert>
+          </Notice>
         ) : null}
       </ConfirmDialog>
     </div>

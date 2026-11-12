@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { resetIngestionSchedule, updateIngestionSchedule } from '@/lib/api';
 import {
-  Alert,
+  Notice,
   AsyncPage,
   Button,
   Checkbox,
@@ -133,7 +133,7 @@ export function RootAdminIngestionSchedulePage() {
         sports before per-sport overrides apply.
       </ManagePageIntro>
       {ingestionConfigMutation.isError || resetIngestionConfigMutation.isError ? (
-        <Alert
+        <Notice
           className="mb-4"
           data-testid="root-admin-ingestion-page-error"
           tone="danger"
@@ -145,7 +145,7 @@ export function RootAdminIngestionSchedulePage() {
             : extractErrorMessage(resetIngestionConfigMutation.error, {
                 fallback: 'We could not reset the ingestion schedule.',
               })}
-        </Alert>
+        </Notice>
       ) : null}
       {draft ? (
         <FormEditorSection

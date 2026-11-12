@@ -87,7 +87,7 @@ export function PublicPlansPage() {
               <Chip className="self-start" data-testid={`public-plans-card-${plan}-coming-soon`}>Coming soon</Chip>
             ) : action(`public-plans-card-${plan}-start`)}
           />
-          <SectionCard bare info="Each row lines up across the plans. Open a group to see every item in it." testId="public-plans-compare" title="Compare every plan">
+          <SectionCard bare help="Each row lines up across the plans. Open a group to see every item in it." testId="public-plans-compare" title="Compare every plan">
             <PlanComparisonTable initiallyFolded={[PlanFeatureGroup.EMAILS]} plans={plansQuery.data.plans} />
           </SectionCard>
         </>

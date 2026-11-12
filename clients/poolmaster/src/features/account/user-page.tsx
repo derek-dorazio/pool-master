@@ -23,7 +23,7 @@ import {
 import {
   ActionList,
   ActionTile,
-  Alert,
+  Notice,
   Button,
   ConfirmationModal,
   DEFAULT_DISPLAY_PREFERENCES,
@@ -437,14 +437,14 @@ export function UserPage() {
           Manage your user profile, preferences, login, and account information.
         </p>
         {isInactive ? (
-          <Alert
+          <Notice
             className="mt-5"
             data-testid="user-page-inactive-banner"
             tone="warning"
           >
             Your account is inactive, so you are hidden from your leagues. You can still sign in,
             update your details here, and reactivate or permanently delete the account.
-          </Alert>
+          </Notice>
         ) : null}
         <div className="mt-5 empty:hidden">
           <EmailSuppressionBanner reason={emailPreferencesQuery.data?.emailSuppression} />
@@ -457,7 +457,7 @@ export function UserPage() {
       />
 
       {deleteSuccess ? (
-        <Alert
+        <Notice
           data-testid="user-page-delete-success"
           tone="success"
           title="Your account was deleted."
@@ -474,7 +474,7 @@ export function UserPage() {
           >
             Exit and sign out
           </Button>
-        </Alert>
+        </Notice>
       ) : null}
 
       <EntityDetailPage
@@ -629,9 +629,9 @@ export function UserPage() {
         </div>
 
         {profileMutation.isSuccess ? (
-          <Alert className="mt-4" tone="success">
+          <Notice className="mt-4" tone="success">
             Your profile was updated.
-          </Alert>
+          </Notice>
         ) : null}
       </FormModal>
 
@@ -676,9 +676,9 @@ export function UserPage() {
         </FormField>
 
         {usernameMutation.isSuccess ? (
-          <Alert className="mt-4" tone="success">
+          <Notice className="mt-4" tone="success">
             Your username was updated.
-          </Alert>
+          </Notice>
         ) : null}
       </FormModal>
 
@@ -816,9 +816,9 @@ export function UserPage() {
         </div>
 
         {preferencesMutation.isSuccess ? (
-          <Alert className="mt-4" tone="success">
+          <Notice className="mt-4" tone="success">
             Your preferences were updated.
-          </Alert>
+          </Notice>
         ) : null}
       </FormModal>
 
@@ -879,14 +879,14 @@ export function UserPage() {
         </div>
 
         {passwordMutation.isError ? (
-          <Alert className="mt-4" tone="danger">
+          <Notice className="mt-4" tone="danger">
             {extractErrorMessage(passwordMutation.error, { fallback: 'We could not complete that account action. Please try again.' })}
-          </Alert>
+          </Notice>
         ) : null}
         {passwordMutation.isSuccess ? (
-          <Alert className="mt-4" tone="success">
+          <Notice className="mt-4" tone="success">
             Your password was changed.
-          </Alert>
+          </Notice>
         ) : null}
 
         <div className="mt-5 flex justify-end">
@@ -930,9 +930,9 @@ export function UserPage() {
               : 'Inactivating your account signs you out everywhere and hides you from your leagues. You can still edit your details, and reactivate or permanently delete the account later.'}
           </p>
           {activeLifecycleAction.isError ? (
-            <Alert tone="danger">
+            <Notice tone="danger">
               {extractErrorMessage(activeLifecycleAction.error, { fallback: 'We could not complete that account action. Please try again.' })}
-            </Alert>
+            </Notice>
           ) : null}
         </div>
 
@@ -1000,9 +1000,9 @@ export function UserPage() {
             <span className="font-medium text-foreground">{user.email}</span> to continue.
           </p>
           {deleteAccountAction.isError ? (
-            <Alert tone="danger">
+            <Notice tone="danger">
               {extractErrorMessage(deleteAccountAction.error, { fallback: 'We could not complete that account action. Please try again.' })}
-            </Alert>
+            </Notice>
           ) : null}
         </div>
       </ConfirmationModal>

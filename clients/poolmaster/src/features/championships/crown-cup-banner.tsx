@@ -4,7 +4,7 @@ import { crownCup, type CupDto } from '@/lib/api';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import { Alert, Button, ConfirmDialog } from '@/features/shared/ui';
+import { Notice, Button, ConfirmDialog } from '@/features/shared/ui';
 import { cupLeaders, joinNames } from './cup-view';
 
 /**
@@ -37,7 +37,7 @@ export function CrownCupBanner({ cup, leagueId }: { cup: CupDto; leagueId: strin
 
   return (
     <>
-      <Alert
+      <Notice
         action={(
           <Button data-testid={`crown-cup-${cup.id}`} onClick={() => setIsConfirming(true)} size="sm" type="button">
             Crown
@@ -47,7 +47,7 @@ export function CrownCupBanner({ cup, leagueId }: { cup: CupDto; leagueId: strin
         title={`${cup.name} is ready to crown`}
       >
         {final === 1 ? `Its ${cup.sportLeagueName} contest is final.` : `All ${final} ${cup.sportLeagueName} contests are final.`}
-      </Alert>
+      </Notice>
       <ConfirmDialog
         confirmLabel="Crown"
         description={`${winners} ${leaders.length === 1 ? 'takes' : 'share'} the cup. Crowning fixes the standings and hands out the trophies for 1st, 2nd and 3rd. It can't be undone, and a contest that goes final later won't count.`}
@@ -61,7 +61,7 @@ export function CrownCupBanner({ cup, leagueId }: { cup: CupDto; leagueId: strin
         title={`Crown the ${cup.name}?`}
       >
         {crownMutation.isError ? (
-          <Alert tone="danger">{extractErrorMessage(crownMutation.error, { fallback: 'We could not crown the cup.' })}</Alert>
+          <Notice tone="danger">{extractErrorMessage(crownMutation.error, { fallback: 'We could not crown the cup.' })}</Notice>
         ) : null}
       </ConfirmDialog>
     </>

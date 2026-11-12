@@ -46,7 +46,7 @@ function PaymentLine({
 export function LeaguePaymentsSection({ leagueId, leagueCode }: { leagueId: string; leagueCode: string }) {
   const paymentsQuery = useLeaguePaymentsQuery(leagueId);
   return (
-    <SectionCard info={LEAGUE_DESCRIPTION} testId="league-payments" title="Payments">
+    <SectionCard help={LEAGUE_DESCRIPTION} testId="league-payments" title="Payments">
       <SettingsRows>
         <QueryState
           empty="No payments yet."
@@ -79,7 +79,7 @@ export function LeaguePaymentsSection({ leagueId, leagueCode }: { leagueId: stri
 export function MyPaymentsSection() {
   const paymentsQuery = useMyPaymentsQuery();
   return (
-    <SectionCard info={MINE_DESCRIPTION} testId="my-payments" title="Payments">
+    <SectionCard help={MINE_DESCRIPTION} testId="my-payments" title="Payments">
       <SettingsRows>
         <QueryState
           empty="No payments yet."

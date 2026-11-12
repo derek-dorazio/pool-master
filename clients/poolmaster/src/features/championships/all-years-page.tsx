@@ -121,7 +121,7 @@ export function AllYearsPage() {
               ))}
             </div>
           ) : (
-            <SectionCard info="Each year's champions show here once contests go final." title="Every year">
+            <SectionCard help="Each year's champions show here once contests go final." title="Every year">
               <SectionEmpty testId="all-years-empty">Nothing has counted yet.</SectionEmpty>
             </SectionCard>
           )}

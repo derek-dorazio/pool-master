@@ -267,8 +267,8 @@ describe('Championships › Championship', () => {
 
     expect(await screen.findByTestId('championship-name')).toHaveTextContent('2026 Big Dawgs Cup');
     expect(screen.getByTestId('championship-standing')).toHaveTextContent('Birdie Bandits leads by 15 points with 2 contests to go.');
-    fireEvent.click(within(screen.getByTestId('championship-summary')).getByRole('button', { name: 'About this section' }));
-    expect(screen.getByTestId('championship-name-info-callout')).toHaveTextContent('The trophy is presented on 1 January. Contests still live then count toward 2027.');
+    fireEvent.click(within(screen.getByTestId('championship-summary')).getByRole('button', { name: 'How this section works' }));
+    expect(screen.getByTestId('championship-name-help-callout')).toHaveTextContent('The trophy is presented on 1 January. Contests still live then count toward 2027.');
     expect(screen.queryByTestId('championship-podium')).not.toBeInTheDocument();
   });
 
@@ -323,7 +323,7 @@ describe('Championships › Championship', () => {
     expect(row.getByText('230')).toBeInTheDocument();
     expect(row.getByText('Yours')).toBeInTheDocument();
     expect(screen.getByTestId('championship-progress')).toHaveTextContent('3 contests final');
-    fireEvent.click(within(screen.getByRole('region', { name: 'Finishes in 2026' })).getByRole('button', { name: 'About this section' }));
+    fireEvent.click(within(screen.getByRole('region', { name: 'Finishes in 2026' })).getByRole('button', { name: 'How this section works' }));
     expect(screen.getByText(/Points table: Standard\./)).toBeInTheDocument();
   });
 
@@ -494,7 +494,7 @@ describe('Championships › Trophy case', () => {
     renderChampionships('/league/BIGDAWGS/championships/2026/trophies');
 
     expect(await screen.findByTestId('trophy-case-empty')).toHaveTextContent('No cups yet.');
-    fireEvent.click(screen.getByRole('button', { name: 'About this section' }));
+    fireEvent.click(screen.getByRole('button', { name: 'How this section works' }));
     expect(screen.getByRole('region', { name: '2026 cups' })).toHaveTextContent('once two of its contests have counted');
     expect(screen.queryByTestId('cup-card-cup-nba')).not.toBeInTheDocument();
   });
@@ -739,7 +739,7 @@ describe('Championships › Points race', () => {
     expect(screen.getByTestId('cup-standing-team-2')).not.toHaveAttribute('aria-current');
   });
 
-  it('greys where each team would stand if the live contest ended now beside its place, naming the contest', async () => {
+  it('greys where each team would stand if the live contest ended now beside its place, and names the contest in the title\'s (?) help', async () => {
     primeViewer();
 
     renderChampionships('/league/BIGDAWGS/championships/2026/race/sport-league-pga');
@@ -747,7 +747,9 @@ describe('Championships › Points race', () => {
     expect(await screen.findByTestId('cup-projected-team-1')).toHaveTextContent('1st · 265');
     expect(screen.getByTestId('cup-projected-team-2')).toHaveTextContent('2nd · 260');
     expect(screen.getByRole('columnheader', { name: /If it ended now/ })).toBeInTheDocument();
-    expect(screen.getByTestId('cup-projection-note')).toHaveTextContent(
+    expect(screen.queryByText(/The greyed column shows/)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('points-race-cup-title-help'));
+    expect(screen.getByTestId('points-race-cup-title-help-callout')).toHaveTextContent(
       'The greyed column shows where each team would stand if Tour Championship Tiers ended now.',
     );
     expect(getCupProjectionMock).toHaveBeenCalledWith(expect.objectContaining({ path: { id: 'league-1', cupId: 'cup-pga' } }));
@@ -859,8 +861,8 @@ describe('Championships › Points race', () => {
     renderChampionships('/league/BIGDAWGS/championships/2025/race/sport-league-pga');
 
     expect(await screen.findByTestId('points-race-summary')).toHaveTextContent('PGA Tour · Not crowned');
-    fireEvent.click(screen.getByTestId('points-race-cup-title-info'));
-    expect(screen.getByTestId('points-race-cup-title-info-callout')).toHaveTextContent('hasn\'t been crowned');
+    fireEvent.click(screen.getByTestId('points-race-cup-title-help'));
+    expect(screen.getByTestId('points-race-cup-title-help-callout')).toHaveTextContent('hasn\'t been crowned');
     expect(screen.getByTestId('points-race')).toHaveTextContent('Finished 1stBirdie Bandits');
     expect(screen.queryByText('Next to count')).not.toBeInTheDocument();
     expect(screen.queryByRole('columnheader', { name: 'Move' })).not.toBeInTheDocument();
@@ -874,7 +876,7 @@ describe('Championships › Points race', () => {
 
     expect(await screen.findByTestId('points-race')).toHaveTextContent('Next to countPlayoff PicksLive now');
     expect(screen.getByRole('columnheader', { name: 'Move' })).toBeInTheDocument();
-    expect(screen.queryByTestId('points-race-cup-title-info')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('points-race-cup-title-help')).not.toBeInTheDocument();
   });
 
   it('says the league has no such cup for a sports league it has none in that year', async () => {

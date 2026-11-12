@@ -1,16 +1,21 @@
 import type { ReactNode, SubmitEventHandler } from "react";
-import { Alert } from "./alert";
+import { Notice } from "./notice";
 import { Button, LinkButton } from "./button";
 import { Tile } from "./tile";
 import { Heading } from "./heading";
+import { HelpTip } from "./help-tip";
+import { Text } from "./text";
 
 type FormPageProps = {
   /** Shown above the footer when the save fails. */
   errorMessage?: string | null;
   cancelTo: string;
   children: ReactNode;
-  description?: ReactNode;
+  /** How the form works, behind a (?) after the title, never a sentence on the page. */
+  help?: ReactNode;
   isPending: boolean;
+  /** One fact line under the title: the facts the form acts on, never how it works. */
+  meta?: ReactNode;
   isSubmitDisabled?: boolean;
   onSubmit: SubmitEventHandler<HTMLFormElement>;
   pendingLabel: string;
@@ -27,10 +32,11 @@ type FormPageProps = {
 export function FormPage({
   cancelTo,
   children,
-  description,
   errorMessage,
+  help,
   isPending,
   isSubmitDisabled = false,
+  meta,
   onSubmit,
   pendingLabel,
   submitLabel,
@@ -41,11 +47,18 @@ export function FormPage({
   return (
     <form className="space-y-5" data-testid={testId} noValidate onSubmit={onSubmit}>
       <div>
-        <Heading level={2} variant="subtitle">{title}</Heading>
-        {description ? <p className="mt-0.5 text-sm text-muted-foreground">{description}</p> : null}
+        <div className="flex items-center">
+          <Heading level={2} variant="subtitle">{title}</Heading>
+          {help ? (
+            <HelpTip className="-my-2" label="How this form works" testId={testId ? `${testId}-help` : "form-page-help"}>
+              {help}
+            </HelpTip>
+          ) : null}
+        </div>
+        {meta ? <Text as="p" variant="meta">{meta}</Text> : null}
       </div>
       <Tile className="space-y-5 p-5" padding="none" radius="md">{children}</Tile>
-      {errorMessage ? <Alert tone="danger">{errorMessage}</Alert> : null}
+      {errorMessage ? <Notice tone="danger">{errorMessage}</Notice> : null}
       <div className="flex flex-wrap justify-end gap-3">
         <LinkButton isDisabled={isPending} to={cancelTo} variant="secondary">
           Cancel

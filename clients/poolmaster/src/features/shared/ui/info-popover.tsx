@@ -20,6 +20,7 @@ export function InfoPopover({
   hoverDelayMs = 0,
   icon,
   label,
+  look = "card",
   onHoverStart,
   padding = "sm",
   testId,
@@ -33,6 +34,8 @@ export function InfoPopover({
   icon: ReactNode;
   /** The button's accessible name, which also says what the callout is about. */
   label: string;
+  /** `card` is the light peek card; `tooltip` is the small navy tooltip a HelpTip shows. */
+  look?: "card" | "tooltip";
   /** Called as soon as a mouse reaches the icon, before any delay: the moment to start reading what the callout shows. */
   onHoverStart?: () => void;
   /** The callout's padding: `none` for content that draws its own sections. */
@@ -43,9 +46,11 @@ export function InfoPopover({
   // Only a mouse hovers: a phone's tap also fires enter, which would fight the tap's toggle.
   const [isHovered, setIsHovered] = useState(false);
   const [isPinned, setIsPinned] = useState(false);
-  // How far left the callout shifts so it ends inside the screen when its icon sits near the
-  // right edge, as it does beside a long title on a phone.
-  const [shiftLeft, setShiftLeft] = useState(0);
+  // Where the callout sits on screen. It is fixed to the viewport, below its icon, so a card
+  // that clips its own overflow (a SectionCard's rounded corners) cannot cut it off; it shifts
+  // left to end inside the screen when its icon sits near the right edge, as it does beside a
+  // long title on a phone.
+  const [place, setPlace] = useState({ left: 0, top: 0 });
   const isOpen = isHovered || isPinned;
   const panelId = useId();
   const rootRef = useRef<HTMLSpanElement>(null);
@@ -61,15 +66,32 @@ export function InfoPopover({
   };
   useEffect(() => cancelHover, []);
   const placeCallout = () => {
-    const left = rootRef.current?.getBoundingClientRect().left ?? 0;
+    const rect = rootRef.current?.getBoundingClientRect();
+    const left = rect?.left ?? 0;
     const width = Math.min(CALLOUT_WIDTH, window.innerWidth - 2 * SCREEN_GUTTER);
-    setShiftLeft(Math.max(0, left + width - (window.innerWidth - SCREEN_GUTTER)));
+    setPlace({
+      left: left - Math.max(0, left + width - (window.innerWidth - SCREEN_GUTTER)),
+      top: rect?.bottom ?? 0,
+    });
   };
   const close = () => {
     cancelHover();
     setIsHovered(false);
     setIsPinned(false);
   };
+
+  // A fixed callout stays put while the page moves, so it follows its icon on scroll and resize.
+  useEffect(() => {
+    if (!isOpen) {
+      return undefined;
+    }
+    window.addEventListener("scroll", placeCallout, true);
+    window.addEventListener("resize", placeCallout);
+    return () => {
+      window.removeEventListener("scroll", placeCallout, true);
+      window.removeEventListener("resize", placeCallout);
+    };
+  }, [isOpen]);
 
   // A tap elsewhere closes a pinned callout. Blur alone misses it: Safari does not focus a
   // tapped button, so it never blurs.
@@ -88,7 +110,9 @@ export function InfoPopover({
 
   return (
     <span
-      className={cn("relative inline-flex", className)}
+      // Auto, so the icon and its callout stay live inside a summary that passes taps through
+      // to its row (an ExpandableRow).
+      className={cn("pointer-events-auto relative inline-flex", className)}
       onPointerEnter={(event) => {
         if (event.pointerType !== "mouse") {
           return;
@@ -141,15 +165,16 @@ export function InfoPopover({
         // The gap above the card is padding on this wrapper, not margin, so it belongs to the
         // callout's hit area and a mouse crossing it never leaves.
         <span
-          className="absolute top-full z-40 block pt-2"
+          className="pointer-events-auto fixed z-40 block pt-2"
           data-testid={`${testId}-callout`}
           id={panelId}
-          style={{ left: -shiftLeft, width: `min(${CALLOUT_WIDTH}px, calc(100vw - ${2 * SCREEN_GUTTER}px))` }}
+          style={{ left: place.left, top: place.top, width: `min(${CALLOUT_WIDTH}px, calc(100vw - ${2 * SCREEN_GUTTER}px))` }}
         >
           <Tile
-            className={cn("shadow-xl", padding === "none" && "overflow-hidden")}
+            className={cn("shadow-xl", padding === "none" && "overflow-hidden", look === "tooltip" && "rounded-lg")}
             padding={padding}
             radius="lg"
+            variant={look === "tooltip" ? "inverse" : "default"}
           >
             {children}
           </Tile>

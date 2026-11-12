@@ -9,7 +9,7 @@ import { createColumnHelper } from '@tanstack/react-table';
 import { useMemo, useState, type Dispatch, type SetStateAction } from 'react';
 import { updateEventParticipants } from '@/lib/api';
 import {
-  Alert,
+  Notice,
   Button,
   Checkbox,
   DataGrid,
@@ -276,9 +276,9 @@ export function EventFieldGridCard({
       </p>
 
       {fieldError ? (
-        <Alert data-testid="root-admin-event-field-load-error" tone="danger">
+        <Notice data-testid="root-admin-event-field-load-error" tone="danger">
           {fieldError}
-        </Alert>
+        </Notice>
       ) : null}
 
       <DataGrid
@@ -329,14 +329,14 @@ export function EventFieldGridCard({
       ) : null}
 
       {saveMutation.isError ? (
-        <Alert data-testid="root-admin-event-field-save-error" tone="danger">
+        <Notice data-testid="root-admin-event-field-save-error" tone="danger">
           {extractErrorMessage(saveMutation.error, {
             codeMessages: {
               SPORT_EVENT_TIERS_LOCKED: `This ${event.one} has been released for contests, so its prices are locked.`,
             },
             fallback: 'We could not save these field changes.',
           })}
-        </Alert>
+        </Notice>
       ) : null}
     </SectionCard>
   );

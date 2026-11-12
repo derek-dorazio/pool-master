@@ -1,5 +1,5 @@
 import type { SportEventDto } from '@/lib/api';
-import { Alert, ErrorState, formatDateTimeDisplay, FormField, LoadingState, Select, useDisplayPreferences } from '@/features/shared/ui';
+import { ErrorState, FormField, LoadingState, Notice, Select, formatDateTimeDisplay, useDisplayPreferences } from '@/features/shared/ui';
 import { bracketRoundCount } from './bracket-start-round';
 import { formatSquaresGameTeams } from './squares-board';
 import { useSportLeagueRoundLabel } from './use-bracket-round-label';
@@ -28,9 +28,9 @@ export function SquaresGamePicker({
   }
   if (!choices.games.length) {
     return (
-      <Alert data-testid="contest-squares-no-games">
+      <Notice data-testid="contest-squares-no-games">
         Every game of this event has kicked off. Choose another event for a squares contest.
-      </Alert>
+      </Notice>
     );
   }
   return (

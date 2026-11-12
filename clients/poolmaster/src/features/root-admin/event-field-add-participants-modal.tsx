@@ -4,7 +4,7 @@ import { createColumnHelper } from '@tanstack/react-table';
 import { useMemo, useState } from 'react';
 import { addEventParticipants } from '@/lib/api';
 import {
-  Alert,
+  Notice,
   Button,
   Checkbox,
   FormField,
@@ -182,12 +182,12 @@ export function EventFieldAddParticipantsModal({
     >
       <div className="space-y-4">
         {result ? (
-          <Alert data-testid="root-admin-event-field-add-result" tone="success">
+          <Notice data-testid="root-admin-event-field-add-result" tone="success">
             Added {result.added} {result.added === 1 ? participant.one : participant.many} to the field
             {result.skipped > 0
               ? ` (${result.skipped} were already in it).`
               : '.'}
-          </Alert>
+          </Notice>
         ) : null}
 
         <FormField label={upperFirst(sportLeague.one)}>

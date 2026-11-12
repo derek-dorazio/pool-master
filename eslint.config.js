@@ -314,7 +314,11 @@ export default tseslint.config(
       '**/*.spec.tsx',
     ],
     plugins: { poolmaster },
-    rules: { 'poolmaster/no-bare-ui-controls': 'error', 'poolmaster/no-button-row-override': 'error' },
+    rules: {
+      'poolmaster/no-ad-hoc-more-info': 'error',
+      'poolmaster/no-bare-ui-controls': 'error',
+      'poolmaster/no-button-row-override': 'error',
+    },
   },
   {
     // #1588: one loading, error and empty look. Shared primitives are where the states are

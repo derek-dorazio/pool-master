@@ -1,5 +1,5 @@
 export { ActionList, ActionTile } from "./action-list";
-export { Alert, Callout } from "./alert";
+export { Notice } from "./notice";
 export { AdminAreaLayout, LeagueMenu } from "./nav-menus";
 export type { NavMenuItem } from "./nav-menus";
 export { BulkUploadPanel } from "./bulk-upload-panel";
@@ -48,7 +48,7 @@ export { IconAvatar } from "./icon-avatar";
 export { IconPalette } from "./icon-palette";
 export { DetailsPeek, PeekCard, type PeekFact } from "./details-peek";
 export { DETAILS_PEEK_HOVER_DELAY_MS } from "./popover-timing";
-export { InfoPopover } from "./info-popover";
+export { HelpTip } from "./help-tip";
 export { SplitContentLayout } from "./layout-presets";
 export { DefinitionList, MetricGrid, MetricTile } from "./metric-grid";
 export { SelectableDataGrid } from "./selectable-data-grid";
@@ -104,6 +104,7 @@ export {
 } from "./page-templates";
 export { Tile } from "./tile";
 export { Countdown } from "./countdown";
+export { ExpandableRow } from "./expandable-row";
 export { ExpandableTile } from "./expandable-tile";
 export { FaqList, type FaqItem } from "./faq-list";
 export { NumberedSteps, type NumberedStep } from "./numbered-steps";

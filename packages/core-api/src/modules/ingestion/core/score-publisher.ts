@@ -87,7 +87,7 @@ export async function publishLiveScoreUpdate(
   // to one event, then dispatch to the per-category persistence path.
   const sportEvent = await deps.prisma.sportEvent.findUnique({
     where: { providerId_externalId: { providerId: deps.providerId, externalId: validated.externalEventId } },
-    select: { id: true, sport: true, rounds: true, status: true, eventSeries: { select: { sportLeague: { select: { scoringFamily: true } } } } },
+    select: { id: true, sport: true, rounds: true, status: true, eventSeries: { select: { sportLeague: { select: { scoringFamily: true, roundSeriesLengths: true } } } } },
   });
   if (!sportEvent) {
     deps.logger?.warn(
@@ -131,7 +131,12 @@ export async function publishLiveScoreUpdate(
     scoringFamily: sportEvent.eventSeries.sportLeague.scoringFamily ?? undefined,
   }).liveScores;
   const acceptedCategory = writer?.category ?? null;
-  const write = writer === null ? null : writeFor(writer, deps, sportEvent, validated);
+  const target: LiveScoreTargetEvent = {
+    id: sportEvent.id,
+    rounds: sportEvent.rounds,
+    roundSeriesLengths: sportEvent.eventSeries.sportLeague.roundSeriesLengths,
+  };
+  const write = writer === null ? null : writeFor(writer, deps, target, validated);
   if (write === null) {
     deps.logger?.warn(
       {

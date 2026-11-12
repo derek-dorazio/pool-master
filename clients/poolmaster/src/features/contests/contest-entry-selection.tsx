@@ -3,7 +3,7 @@ import { participantAffiliation, selectionParticipantLabel, unavailableParticipa
 import type { EntryTiebreakerUi } from "./scoring-family-ui/types";
 import type { SelectionStateResponse } from "@/lib/api";
 import {
-  Alert,
+  Notice,
   Button,
   Checkbox,
   Chip,
@@ -318,9 +318,9 @@ export function LockedSelectionGroup({
               </div>
             ))
           ) : (
-            <Alert className="m-4">
+            <Notice className="m-4">
               No {noun.one} was saved from this tier.
-            </Alert>
+            </Notice>
           )}
         </div>
       </Tile>
