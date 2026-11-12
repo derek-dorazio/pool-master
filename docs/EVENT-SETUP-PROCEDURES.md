@@ -78,7 +78,8 @@ pick the year on its tournament calendar, and choose *Import {year} from provide
 event the mock lists for that tour and year is created and linked for scores; ones the tour
 already has are skipped, so it is safe to run again. The tour's match keyword must be the
 mock's tour name exactly, `PGA TOUR` or `LPGA Tour` (#385). The single-event browse
-accepts that keyword too, as well as a substring of event names.
+matches an event that names its tour by that tour alone; a substring of the event's name
+counts only for an event that names no tour.
 
 ## 3. Check the rounds
 

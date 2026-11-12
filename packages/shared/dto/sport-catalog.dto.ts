@@ -39,7 +39,7 @@ export const SportLeagueDtoSchema = z.object({
   sportId: z.uuid().describe('The sport this sport league belongs to.'),
   sport: z.enum(Sport).describe('The sport this sport league belongs to, as the sport enum.'),
   name: z.string().describe('Sport league name, e.g. "PGA Tour".'),
-  matchKeyword: z.string().nullable().describe('The provider\'s tour name for this sport league (e.g. "PGA TOUR"), or a substring its event names carry. Catalog browse keeps an event that matches either way; the event-year import (importEventYearFromProvider) needs the tour name, ignoring case. null when none is set.'),
+  matchKeyword: z.string().nullable().describe('The provider\'s tour name for this sport league (e.g. "PGA TOUR"), or, for events that name no tour, a substring of their names. Catalog browse keeps an event whose tour equals the keyword, or one with no tour whose name contains it; the event-year import (importEventYearFromProvider) needs the tour name, ignoring case. null when none is set.'),
   currentEventYear: z.number().int().nullable().describe('The event year the sport league is currently on, if one is set. Always a year the sport league has events in when it was set.'),
   isActive: z.boolean().describe('Whether the sport league is in use; a read filter, not a write lock.'),
   bracketAdvancement: z.enum(BracketAdvancement).describe('How the sport league\'s bracket winners reach their next match: FIXED by each match\'s link, or RESEED_BY_SEED, where after a round whose matches link nowhere the admin places the teams left in each region, the best seed hosting the worst (the NFL). FIXED for a sport not played as a bracket.'),
