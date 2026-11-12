@@ -1,5 +1,6 @@
 import { CompetitionStatusState } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/competition-status';
-import { toNbaPlayoffGame, toNbaPlayoffTeam } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/nba-mapping';
+import { nbaTeamListSchema } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/nba-contract';
+import { toNbaPlayoffGame, toNbaPlayoffTeam, toNbaPlayoffTeams } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/nba-mapping';
 
 /**
  * The NBA normalizers' refusals: the vendor's document leaves every field but the state optional,
@@ -37,5 +38,20 @@ describe('NBA playoffs normalizers', () => {
 
   it('reads a game with no score yet as having none, not 0-0', () => {
     expect(toNbaPlayoffGame({ ...GAME, home_team_score: undefined, visitor_team_score: undefined })).toMatchObject({ homeScore: null, awayScore: null });
+  });
+
+  it('reads a teams list holding a defunct franchise with a blank conference and division, keeping only the teams in the East or West', () => {
+    // The vendor's document gives both as enums, so this row breaks it and cannot be served by the
+    // fake API; the live list is thought to hold such rows (ids above 30) and must not fail on them.
+    const page = nbaTeamListSchema.parse({
+      data: [
+        OKC,
+        { id: 37, conference: '', division: '', full_name: 'Chicago Stags', abbreviation: 'CHS' },
+        { id: 38, full_name: 'Baltimore Bullets', abbreviation: 'BAL' },
+        IND,
+      ],
+    });
+
+    expect(toNbaPlayoffTeams(page.data).map((team) => team.name)).toEqual(['Oklahoma City Thunder', 'Indiana Pacers']);
   });
 });

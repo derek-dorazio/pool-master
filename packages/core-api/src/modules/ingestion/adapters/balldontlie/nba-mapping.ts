@@ -7,7 +7,7 @@
 
 import { Sport } from '@poolmaster/shared/domain';
 import { BalldontlieContractError, type BalldontlieClient } from './balldontlie-client';
-import { NBA_PLAYOFFS_SEASON_TYPE, nbaGameListSchema, nbaTeamListSchema, type NbaGame, type NbaTeam } from './nba-contract';
+import { NBA_CONFERENCES, NBA_PLAYOFFS_SEASON_TYPE, nbaGameListSchema, nbaTeamListSchema, type NbaGame, type NbaTeam } from './nba-contract';
 import type { PlayoffGame, PlayoffsLeague, PlayoffTeam } from './series-playoffs';
 import type { PlayoffsSource } from './series-playoffs-reader';
 
@@ -41,9 +41,19 @@ export function toNbaPlayoffTeam(team: NbaTeam, path: string): PlayoffTeam {
   };
 }
 
+/** The league's current teams from the teams list, leaving out any franchise in no conference now. */
+export function toNbaPlayoffTeams(teams: readonly NbaTeam[]): PlayoffTeam[] {
+  return teams
+    .filter((team) => team.conference !== undefined && NBA_CONFERENCES.includes(team.conference))
+    .map((team) => toNbaPlayoffTeam(team, TEAMS_PATH));
+}
+
 export function toNbaPlayoffGame(game: NbaGame): PlayoffGame {
   const row = `game ${game.id === undefined ? '(no id)' : String(game.id)}`;
-  // A game's tip-off, or its day where the league has not set the time yet.
+  // A game's tip-off, or its day where the league has not set the time yet. A day alone parses as
+  // midnight UTC, so such a game sorts before that day's timed games. A day is enough for what reads
+  // it: the event's first and last days, and which series starts last, the final starting days
+  // after the last conference final.
   const start = game.datetime ?? required(game.date, GAMES_PATH, row, 'date');
   return {
     id: required(game.id, GAMES_PATH, row, 'id'),
@@ -67,7 +77,7 @@ export function nbaPlayoffsSource(client: BalldontlieClient): PlayoffsSource {
     },
     async teams() {
       const page = await client.get(TEAMS_PATH, {}, nbaTeamListSchema);
-      return page.data.map((team) => toNbaPlayoffTeam(team, TEAMS_PATH));
+      return toNbaPlayoffTeams(page.data);
     },
   };
 }

@@ -22,11 +22,19 @@ import { competitionStatusStateSchema } from './competition-status';
  */
 export const NBA_PLAYOFFS_SEASON_TYPE = 'playoffs';
 
-/** `NBATeam`, from `/nba/v1/teams` and on each side of a game. */
+/** The conferences of the league as it is now; a team in neither is no longer playing. */
+export const NBA_CONFERENCES: readonly string[] = ['East', 'West'];
+
+/**
+ * `NBATeam`, from `/nba/v1/teams` and on each side of a game. The document gives `conference`
+ * and `division` as enums, but they are read as any string: the teams list may also hold defunct
+ * franchises with neither set, which must not fail the whole page (and with it every basketball
+ * team read). `nba-mapping.ts` keeps only a team in a current conference.
+ */
 export const nbaTeamSchema = z.object({
   id: z.number().int().optional(),
-  conference: z.enum(['East', 'West']).optional(),
-  division: z.enum(['Atlantic', 'Central', 'Southeast', 'Northwest', 'Pacific', 'Southwest']).optional(),
+  conference: z.string().optional(),
+  division: z.string().optional(),
   full_name: z.string().optional(),
   abbreviation: z.string().optional(),
 });

@@ -97,6 +97,12 @@ The first things to check once a key exists, each read by `npm run balldontlie:c
   to 7 games.
 - NBA: `season` is the year a season starts (2025 for 2025-26, whose playoffs run in 2026), and
   `datetime` is a game's tip-off, null until the league sets it; the adapter then takes `date`.
+- NBA: `/nba/v1/teams` may list defunct franchises (ids above 30) with a blank `conference` and
+  `division`, which the document's enums do not allow. The adapter reads both as any string and
+  keeps only East and West teams, so either way passes; count the teams the check prints (30).
+- NBA: the playoffs need no paid tier, but basketball's lists read the NCAA brackets in the same
+  call, which need GOAT; on a lower plan that read fails and the NBA playoffs are not listed
+  either. Confirm the plan in use reads both.
 - NBA: a game's `id`, `season`, `date` and both teams' `id` and `full_name` are always sent,
   though the document requires none of them; a game missing one fails the sync with the field
   named. A team's `full_name` is the name the site's NBA teams are loaded under ("Oklahoma City
