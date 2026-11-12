@@ -224,7 +224,8 @@ matches, and the QA reset must never be pointed at it.
   are equivalent; nothing else may differ. Then `npm run db:drift:check` and the full gate set.
 - **Roll it out on QA with a reset.** QA records the old names, so the deploy's migrate step
   stops and names the Reset QA database workflow (`run-migrations.mjs`). The order after merge:
-  Reset QA database (the owner's approval), re-run the deploy's failed jobs, Load sport data.
+  Reset QA database (the owner's approval), deploy QA (`docs/CI-AND-QUALITY-GATES.md` *Deploying
+  QA*), Load sport data.
 - **Tests that replayed a deleted migration go with it.** A test that reads an old
   `migration.sql` to check its one-time backfill has nothing left to test.
 

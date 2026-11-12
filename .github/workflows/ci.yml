@@ -8,25 +8,35 @@ on:
     # batch get the quick check (lint, typecheck, unit tests); the landing PR into main gets
     # everything. A push to a batch branch runs nothing: the landing PR tests it.
     branches: [main, 'ui-batch/**']
+  # Deploying QA is on demand: a push to main runs every test and build job,
+  # local browser e2e included, and stops there. "Run workflow" on main runs the same jobs and
+  # then publishes the images, migrates QA, rolls the release out and runs the QA smoke. Main's
+  # red or green is then about the code alone, and a batch of merges reaches QA once, when
+  # someone is ready to test it.
+  workflow_dispatch:
 
 # #328 — cancellation is scoped to pull requests, and the asymmetry is the point.
 #
 # On a pull request a new push supersedes the old run and nobody is waiting on the old run's
-# artifacts, so cancelling it saves a cycle. On main every run is a release: the deploy stages
+# artifacts, so cancelling it saves a cycle. A deploy run on main is a release: the deploy stages
 # below publish images, migrate QA and roll the release out. Cancelling one of those does not
 # stop the ECS task it was waiting on — it only stops watching — so what gets destroyed is the
 # deploy's own record of what happened, and `deploy-qa` cancelled after `deploy-migrate-qa` is
 # the one window where QA's schema is new and its running image is old. Two merges minutes
 # apart hit exactly that, twice.
 #
-# With cancellation off, at most one run per group is in progress and a second main run stays
-# `pending` until the first finishes, so main's deploy chains serialise rather than racing each
-# other to QA. One run per group can be `pending`, so a third merge arriving while the first is
-# still deploying replaces the queued second one instead of lining up behind it — nothing in
-# flight is lost and the replaced commit still ships in the run that goes out, it just does not
-# get its own main verdict.
+# With cancellation off, at most one run per group is in progress and a second one stays
+# `pending` until the first finishes, so deploys serialise rather than racing each other to QA.
+# One run per group can be `pending`, so a third merge arriving while the first is still running
+# replaces the queued second one instead of lining up behind it — nothing in flight is lost and
+# the replaced commit is still tested by the run that goes out, it just does not get its own main
+# verdict.
+#
+# A deploy (workflow_dispatch) has a group of its own. Pushes no longer deploy, so a push run and
+# a deploy run never race each other to QA; sharing a group would only let a merge's push replace
+# a deploy that is still pending. Two deploys still serialise in their group.
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.event_name == 'workflow_dispatch' && 'deploy-' || '' }}${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
@@ -47,10 +57,11 @@ jobs:
   # that `needs:` a skipped job is itself skipped, so skipping this one would cascade into
   # skipping the suites and then the deploy; and the gating below reads its outputs.
   #
-  # On a push to main it is all-or-nothing (#778): a documentation-only push skips the code jobs
-  # and so the deploy, and any other push runs every job. main is diffed against the last
-  # successful main run, not the previous commit, so a commit whose own run was replaced or
-  # failed is still tested and deployed -- deploying untested code was #281's failure.
+  # On a push to main it is all-or-nothing (#778): a documentation-only push skips the code jobs,
+  # and any other push runs every job. main is diffed against the last successful main run, not
+  # the previous commit, so a commit whose own run was replaced or failed is still tested. A
+  # deploy (workflow_dispatch) always runs every job, so it never ships untested code -- deploying
+  # untested code was #281's failure.
   changes:
     name: changes
     runs-on: ubuntu-latest
@@ -98,13 +109,17 @@ jobs:
             : > changed-files.txt
           fi
           wc -l < changed-files.txt
+      # A deploy tests everything it ships: an empty list runs every job.
+      - name: List no files, so a deploy runs every job
+        if: github.event_name == 'workflow_dispatch'
+        run: ': > changed-files.txt'
       - name: Classify the changed areas
         id: classify
         # On main, only a documentation-only push skips anything (#778). A PR into a UI batch
         # branch is refused here unless it is web-app only, and skips the browser e2e.
         run: >-
           node scripts/ci-changed-areas.mjs changed-files.txt
-          ${{ github.event_name == 'push' && '--all-or-nothing' || '' }}
+          ${{ github.event_name != 'pull_request' && '--all-or-nothing' || '' }}
           ${{ startsWith(github.base_ref, 'ui-batch/') && '--ui-batch' || '' }}
 
   # Repo-wide gates: the published contract and the model/rule guards. Scope is the
@@ -899,9 +914,12 @@ jobs:
     timeout-minutes: 20
     # The three service suite jobs; coverage reporting gates nothing and is not here (#294, #302).
     # service-lint-typecheck is also reached through service-build; it is listed so the lint
-    # gate stays visible now that the test jobs no longer wait on it.
-    needs: [service-unit-tests, service-integration-tests, service-functional-api-tests, service-lint-typecheck, poolmaster-unit-tests, service-build, service-image-smoke, service-mock-provider-build, poolmaster-build]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    # gate stays visible now that the test jobs no longer wait on it. A deploy is a separate
+    # decision on main's current state, so every required check gates it, the contract gates,
+    # the migration drift check and the local browser e2e included: a main that two clashing
+    # merges turned red does not reach QA.
+    needs: [all-contract-gates, schema-migration-drift, service-unit-tests, service-integration-tests, service-functional-api-tests, service-lint-typecheck, poolmaster-unit-tests, service-build, service-image-smoke, service-mock-provider-build, poolmaster-build, poolmaster-browser-e2e-local]
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
     permissions:
       contents: read
     outputs:
@@ -990,9 +1008,25 @@ jobs:
             exit 1
           }
 
+      # ECR tags are immutable, so a second deploy of the same commit cannot push its tag again.
+      # It reuses the image the first deploy pushed, found by tag, and builds only what is missing.
+      - name: Find images this commit already published
+        id: published
+        run: |
+          for REPO in core-api mock-contest-feed-provider; do
+            DIGEST=$(aws ecr describe-images \
+              --repository-name "poolmaster-qa/${REPO}" \
+              --image-ids imageTag="${{ steps.tags.outputs.sha_tag }}" \
+              --query 'imageDetails[0].imageDigest' --output text 2>/dev/null || true)
+            if [ "$DIGEST" = "None" ]; then DIGEST=""; fi
+            KEY=$(echo "$REPO" | tr '-' '_')
+            echo "${KEY}_digest=${DIGEST}" >> $GITHUB_OUTPUT
+            echo "${REPO}: ${DIGEST:-not published yet, building}"
+          done
+
       - name: Build & push core-api
         id: build-core-api
-        if: steps.ecr-check.outputs.core_api_exists == 'true'
+        if: steps.ecr-check.outputs.core_api_exists == 'true' && steps.published.outputs.core_api_digest == ''
         uses: docker/build-push-action@v7
         with:
           context: .
@@ -1011,7 +1045,7 @@ jobs:
 
       - name: Build & push mock contest feed provider
         id: build-mock-provider
-        if: steps.ecr-check.outputs.mock_provider_exists == 'true'
+        if: steps.ecr-check.outputs.mock_provider_exists == 'true' && steps.published.outputs.mock_contest_feed_provider_digest == ''
         uses: docker/build-push-action@v7
         with:
           context: .
@@ -1027,13 +1061,13 @@ jobs:
         if: steps.ecr-check.outputs.core_api_exists == 'true' || steps.ecr-check.outputs.mock_provider_exists == 'true'
         run: |
           if [ "${{ steps.ecr-check.outputs.core_api_exists }}" = "true" ]; then
-            CORE_API_IMAGE="${{ steps.tags.outputs.prefix }}/core-api@${{ steps.build-core-api.outputs.digest }}"
+            CORE_API_IMAGE="${{ steps.tags.outputs.prefix }}/core-api@${{ steps.published.outputs.core_api_digest || steps.build-core-api.outputs.digest }}"
             echo "core_api_image=${CORE_API_IMAGE}" >> $GITHUB_OUTPUT
             echo "Using immutable core-api image: ${CORE_API_IMAGE}"
           fi
 
           if [ "${{ steps.ecr-check.outputs.mock_provider_exists }}" = "true" ]; then
-            MOCK_PROVIDER_IMAGE="${{ steps.tags.outputs.prefix }}/mock-contest-feed-provider@${{ steps.build-mock-provider.outputs.digest }}"
+            MOCK_PROVIDER_IMAGE="${{ steps.tags.outputs.prefix }}/mock-contest-feed-provider@${{ steps.published.outputs.mock_contest_feed_provider_digest || steps.build-mock-provider.outputs.digest }}"
             echo "mock_provider_image=${MOCK_PROVIDER_IMAGE}" >> $GITHUB_OUTPUT
             echo "Using immutable mock provider image: ${MOCK_PROVIDER_IMAGE}"
           fi
@@ -1251,7 +1285,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     needs: deploy-publish-images
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -1331,7 +1365,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     needs: [deploy-publish-images, deploy-migrate-qa]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -1730,7 +1764,7 @@ jobs:
     # stops the rollout, so there is nothing new to check and this is skipped;
     # deploy-health-issue is what reports that failure.
     needs: deploy-qa
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
     env:
       POOLMASTER_E2E_BASE_URL: https://qa.ultimateofficepoolmanager.com
       POOLMASTER_E2E_ADMIN_IDENTIFIER: ${{ secrets.POOLMASTER_E2E_ADMIN_IDENTIFIER }}
@@ -1821,7 +1855,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs: [deploy-publish-images, deploy-migrate-qa, deploy-qa, poolmaster-browser-e2e]
-    if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: always() && github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
     permissions:
       issues: write
       # Reading the failed jobs' logs through the Actions API.
@@ -1869,7 +1903,8 @@ jobs:
       - poolmaster-unit-tests
       - poolmaster-build
       - poolmaster-browser-e2e-local
-    if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+    # A deploy run tests too, so its failures report here like a push's.
+    if: always() && github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     permissions:
       issues: write
       actions: read

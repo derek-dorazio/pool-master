@@ -86,8 +86,8 @@ copy has none. Redrawing it later, and the other pictures, is the `update-pictur
 
 ## Step 6 — gates, PR, QA
 
-Run the `release-check` skill. After the merge, the QA deploy writes the page's shell on its
-own; no Terraform apply is needed. Then check:
+Run the `release-check` skill. A merge does not deploy QA: after it, run CI by hand on `main`.
+That deploy writes the page's shell on its own; no Terraform apply is needed. Then check:
 
 ```bash
 curl -s -A "facebookexternalhit/1.1" https://qa.ultimateofficepoolmanager.com/play/<sport>/<slug> | grep og:title

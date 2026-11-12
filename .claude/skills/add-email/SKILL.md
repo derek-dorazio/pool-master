@@ -98,7 +98,8 @@ Patterns*). Wire new dependencies in the module's `wiring.ts`.
    at phone width (390 px) and desktop, and check long names do not wrap badly.
 2. Update `docs/EMAIL-DELIVERY.md` where it lists emails, times or categories, in the same PR
    (`rules/workflow-rules.md` §6 *Docs ride with code*).
-3. After the PR merges and QA has deployed (about 20 minutes, so the pictures are there), run the
+3. After the PR merges, deploy QA (Actions -> CI -> Run workflow on `main`, about 30 minutes, so
+   the pictures are there), then run the
    **Send email previews** workflow (Actions, manual, ref `main`), which sends every template to
    one address through QA's SES. A thread can dispatch it through the GitHub tools' workflow
    trigger, with inputs `to` and `category`. Send only the category the email is in; `ALL` sends
