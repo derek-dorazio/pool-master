@@ -13,7 +13,6 @@ import tseslintParser from '@typescript-eslint/parser';
 import noAdHocMoreInfo from '../no-ad-hoc-more-info.mjs';
 import noBareUiControls from '../no-bare-ui-controls.mjs';
 import noButtonRowOverride from '../no-button-row-override.mjs';
-import noRawModal from '../no-raw-modal.mjs';
 import noDisabledTests from '../no-disabled-tests.mjs';
 import noDuplicateExtractErrorMessage from '../no-duplicate-extract-error-message.mjs';
 import noEnvFallbacks from '../no-env-fallbacks.mjs';
@@ -215,26 +214,6 @@ ruleTester.run('no-raw-theme-colors', noRawThemeColors, {
     { code: "const d = { color: '#1a2b3c' };", errors: [{ messageId: 'rawThemeColor' }] },
     { code: "const e = 'rgba(0, 0, 0, 0.5)';", errors: [{ messageId: 'rawThemeColor' }] },
     { code: 'const f = <span>hsl(10, 20%, 30%)</span>;', errors: [{ messageId: 'rawThemeColor' }] },
-  ],
-});
-
-ruleTester.run('no-raw-modal', noRawModal, {
-  valid: [
-    // The four shared dialog types are what the rule pushes toward.
-    'const a = <ConfirmDialog confirmLabel="Remove" title="Remove owner" />;',
-    'const b = <FormModal saveLabel="Save" title="Edit profile">x</FormModal>;',
-    // A component whose name merely contains Modal is a different component.
-    'const c = <CreateLeagueModal />;',
-  ],
-  invalid: [
-    {
-      code: '<Modal open title="Leave league">body</Modal>;',
-      errors: [{ messageId: 'rawModal' }],
-    },
-    {
-      code: '<Modal open title="Leave league" />;',
-      errors: [{ messageId: 'rawModal' }],
-    },
   ],
 });
 

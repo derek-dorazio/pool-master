@@ -72,7 +72,7 @@ Use those conventions as the starting point, but bias toward a consumer app:
 - Dialogs should stay focused on a single task with clear primary and secondary
   actions.
 - **Dialogs and save feedback** (#1599). Every dialog is one of four shared
-  types, never a hand-built `Modal` (`poolmaster/no-raw-modal` enforces it):
+  types, never a hand-built `Modal`:
   - **`FormModal`** to edit something; **`ConfirmDialog`** for yes/no, danger
     toned when the action destroys or removes, with an optional type-to-confirm
     box; **`PickerModal`** to choose from a list; **`ReadOnlyDetailModal`** to

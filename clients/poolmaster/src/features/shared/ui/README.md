@@ -100,7 +100,7 @@ mutation takes its submit, pending state and error from `formPageSave` in
 send the version the draft came from and offer the newer one on a conflict.
 `ConfirmDialog` and `FormModal` share one footer, `DialogActions`. Feature code
 never opens the raw `Modal`: every dialog is one of the four types under
-*Modal Templates*, and `poolmaster/no-raw-modal` fails one that isn't.
+*Modal Templates*.
 
 Commissioner tools frames its pages with `ToolsArea`: a slim navy band naming
 the area, the league and the way back, then the tools as one row of link
