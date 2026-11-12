@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { vi } from "vitest";
-import { MutationActionToast } from "./mutation-action-toast";
+import { Toaster } from "./toaster";
 import {
   useMutationActionWorkflow,
   type MutationActionWorkflowOptions,
@@ -38,10 +38,6 @@ function renderWorkflow<TData, TVariables = void>(
         </button>
         <span data-testid="pending">{workflow.isPending ? "pending" : "idle"}</span>
         {workflow.isError ? <span role="alert">Action failed</span> : null}
-        <MutationActionToast
-          onDismiss={workflow.dismissToast}
-          toast={workflow.toast}
-        />
       </div>
     );
   }
@@ -49,6 +45,7 @@ function renderWorkflow<TData, TVariables = void>(
   render(
     <QueryClientProvider client={queryClient}>
       <Harness />
+      <Toaster />
     </QueryClientProvider>,
   );
 
@@ -98,6 +95,28 @@ describe("pool-master-pjr.4: shared mutation action workflow", () => {
     await waitFor(() => expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: QueryKeys.leagues.list }));
     expect(cancelSpy).toHaveBeenCalledWith({ queryKey: QueryKeys.leagues.list });
     expect(cancelSpy.mock.invocationCallOrder[0]).toBeLessThan(invalidateSpy.mock.invocationCallOrder[0]);
+  });
+
+  it("keeps the success toast on screen after the component that saved unmounts, as when a save closes its dialog", async () => {
+    const queryClient = new QueryClient();
+    function Saver() {
+      const workflow = useMutationActionWorkflow({ action: () => Promise.resolve("ok"), successToast: { title: "Profile saved" } });
+      return <button onClick={() => void workflow.run()} type="button">Save</button>;
+    }
+    function Page({ showSaver }: { showSaver: boolean }) {
+      return (
+        <QueryClientProvider client={queryClient}>
+          {showSaver ? <Saver /> : null}
+          <Toaster />
+        </QueryClientProvider>
+      );
+    }
+    const { rerender } = render(<Page showSaver />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    expect(await screen.findByText("Profile saved")).toBeInTheDocument();
+    rerender(<Page showSaver={false} />);
+    expect(screen.getByText("Profile saved")).toBeInTheDocument();
   });
 
   it("rule: preserves error state and emits the configured error toast without closing", async () => {

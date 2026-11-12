@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { Toaster } from '@/features/shared/ui';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { LeagueInvitationDto, LeagueMembershipDto } from '@/lib/api';
@@ -57,6 +58,7 @@ function renderInvitations({ isInactiveLeague = false } = {}) {
   render(
     <QueryClientProvider client={queryClient}>
       <LeagueInvitations isInactiveLeague={isInactiveLeague} leagueId="league-1" membersByUserId={membersByUserId} />
+      <Toaster />
     </QueryClientProvider>,
   );
 }
@@ -430,7 +432,8 @@ describe('Commissioner tools › Invites: invite people', () => {
         body: { emails: ['friend@example.com'] },
       }),
     );
-    expect(await screen.findByText('Invitation sent to friend@example.com.')).toBeInTheDocument();
+    // A sent invite confirms with a toast; nothing stays on the page.
+    expect(await screen.findByTestId('app-toast')).toHaveTextContent('Invitation sent to friend@example.com');
     await waitFor(() => expect(listLeagueInvitationsMock).toHaveBeenCalledTimes(2));
     expect(screen.getByRole('textbox', { name: 'Invite by email' })).toHaveValue('');
   });

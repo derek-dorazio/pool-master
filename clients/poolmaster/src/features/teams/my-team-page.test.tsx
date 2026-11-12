@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { PlanFeature, TeamIconKey, championshipYear } from '@poolmaster/shared/domain';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { Toaster } from '@/features/shared/ui';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
@@ -83,6 +84,7 @@ function renderTeamRoutes(path = '/league/BIGDAWGS/team') {
               <Route element={<div data-testid="league-home-destination" />} path="/league/:leagueCode" />
             </Route>
           </Routes>
+          <Toaster />
         </MemoryRouter>
       </AuthProvider>
     </QueryClientProvider>,
@@ -613,7 +615,7 @@ describe('My team › Owners', () => {
     fireEvent.change(emailField, { target: { value: ' friend@example.com ' } });
     fireEvent.click(screen.getByRole('button', { name: 'Invite' }));
 
-    expect(await screen.findByText('Co-owner invite created.')).toBeInTheDocument();
+    expect(await screen.findByTestId('app-toast')).toHaveTextContent(/^Co-owner invite sent to /);
     expect(createSquadOwnerInvitationMock).toHaveBeenCalledWith(expect.objectContaining({
       path: { id: 'league-1', squadId: 'team-1' },
       body: { email: 'friend@example.com' },

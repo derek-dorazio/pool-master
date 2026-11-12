@@ -43,7 +43,7 @@ The shared UI layer is split into three levels:
    `type="password"` on an `Input`.
 2. **Templates** compose primitives into repeated page or modal workflows, such
    as `ManagementListPage`, `EntityDetailPage`, `FormModal`, and
-   `ConfirmationModal`.
+   `ConfirmDialog`.
 3. **Feature pages** own product-specific data fetching, mutations, copy, and
    business rules. They should compose primitives and templates instead of
    repeating page chrome or modal footers.
@@ -98,9 +98,9 @@ mutation takes its submit, pending state and error from `formPageSave` in
 `@/lib/form-page-save`. A root admin settings group's form is built on
 `useSettingsGroupForm` and `SettingsSaveError` in `features/root-admin`, which
 send the version the draft came from and offer the newer one on a conflict.
-`ConfirmDialog` and `FormModal` share one footer, `DialogActions`.
-A dialog that is neither a form nor a confirmation, such as a menu action
-with its own buttons, is a plain `Modal`.
+`ConfirmDialog` and `FormModal` share one footer, `DialogActions`. Feature code
+never opens the raw `Modal`: every dialog is one of the four types under
+*Modal Templates*.
 
 Commissioner tools frames its pages with `ToolsArea`: a slim navy band naming
 the area, the league and the way back, then the tools as one row of link
@@ -192,11 +192,13 @@ public-join layout code when a template fits.
 
 Use modal templates when the modal follows one of the common workflows:
 
-- `FormModal` for edit/create forms.
-- `ConfirmationModal` for destructive or lifecycle confirmations, including
-  exact-match confirmation inputs.
-- `PickerModal` for selecting an item from a constrained list.
-- `ReadOnlyDetailModal` for payloads and operational metadata.
+- `FormModal` to edit or create something.
+- `ConfirmDialog` for yes/no: `tone="danger"` when the action destroys or removes,
+  `confirmationInput` for type-to-confirm, and `error` for why the last attempt
+  failed (a red `Notice` above the buttons; the dialog stays open).
+- `PickerModal` to choose an item from a list.
+- `ReadOnlyDetailModal` to look only: payloads and metadata, or (`size="sm"`) a
+  sentence on why an action isn't available.
 
 Modals should use the templates for predictable footer ordering, pending state,
 scroll behavior, and error placement. Add a new template only when a workflow
@@ -204,8 +206,11 @@ shape repeats across multiple features or materially improves accessibility.
 
 ## Mutation Feedback
 
-Use `useMutationActionWorkflow` with `MutationActionToast` for repeated
-action-tile and modal mutation workflows. The hook centralizes pending state,
+A save that succeeds closes its dialog and confirms with a toast: call
+`showToast` (from `toast-store.ts`), or give `useMutationActionWorkflow` a
+`successToast`. Both show in the app's one `Toaster`, mounted at the root, so
+the toast outlives the dialog it closed or the page it left. Use
+`useMutationActionWorkflow` for repeated action-tile and modal mutation workflows. The hook centralizes pending state,
 success and error feedback, query invalidation, modal close behavior, optional
 navigation, and lifecycle logging so pages do not each re-create the same
 mutation ceremony.
@@ -214,8 +219,8 @@ Use inline `Notice`, `ServerErrorBar`, or `FormModal` errors for blocking form
 validation that the user must fix before submitting. Use mutation action toasts
 for completed create, update, lifecycle, copy, invite, and delete outcomes where
 the page can keep the user oriented after the mutation finishes. Avoid raw
-`alert()` calls or page-local toast wiring when the workflow fits the shared
-mutation action pattern.
+`alert()` calls or page-local toast wiring. Tests that assert a toast render
+`<Toaster />` beside the component; the test setup clears toasts after each test.
 
 ## Theme Rules
 

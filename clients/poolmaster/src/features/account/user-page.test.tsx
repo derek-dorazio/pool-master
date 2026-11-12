@@ -10,7 +10,7 @@ import {
   type AuthSessionUser,
 } from '@/features/auth/auth-session-cache';
 import { AuthProvider } from '@/features/auth/auth-provider';
-import { DEFAULT_DISPLAY_PREFERENCES } from '@/features/shared/ui';
+import { DEFAULT_DISPLAY_PREFERENCES, Toaster } from '@/features/shared/ui';
 import { UserPage } from './user-page';
 
 /**
@@ -106,6 +106,7 @@ function renderUserPage(initialEntry = '/users/user-1') {
             <Route element={<div data-testid="root-route" />} path="/" />
             <Route element={<LocationProbe />} path="/manage/users/:userId" />
           </Routes>
+          <Toaster />
         </MemoryRouter>
       </AuthProvider>
     </QueryClientProvider>,
@@ -324,7 +325,9 @@ describe('UserPage', () => {
         },
       }),
     );
-    await waitFor(() => expect(screen.getByText('Your profile was updated.')).toBeVisible());
+    // The save closes the dialog and confirms with a toast.
+    expect(await screen.findByText('Profile saved')).toBeVisible();
+    expect(screen.queryByTestId('user-page-profile-dialog')).not.toBeInTheDocument();
     await waitFor(() =>
       expect(queryClient.getQueryData<AuthSessionUser>(AUTH_ME_QUERY_KEY)).toMatchObject({
         email: 'updated@example.com',
@@ -387,7 +390,8 @@ describe('UserPage', () => {
         },
       }),
     );
-    expect(await screen.findByText('Your username was updated.')).toBeVisible();
+    expect(await screen.findByText('Username saved')).toBeVisible();
+    expect(screen.queryByTestId('user-page-username-dialog')).not.toBeInTheDocument();
     await waitFor(() =>
       expect(queryClient.getQueryData<AuthSessionUser>(AUTH_ME_QUERY_KEY)).toMatchObject({
         username: 'derekd',
@@ -441,7 +445,8 @@ describe('UserPage', () => {
         },
       }),
     );
-    expect(await screen.findByText('Your preferences were updated.')).toBeVisible();
+    expect(await screen.findByText('Preferences saved')).toBeVisible();
+    expect(screen.queryByTestId('user-page-preferences-dialog')).not.toBeInTheDocument();
     await waitFor(() =>
       expect(queryClient.getQueryData<AuthSessionUser>(AUTH_ME_QUERY_KEY)).toMatchObject({
         timezone: 'America/Chicago',
@@ -644,7 +649,7 @@ describe('UserPage', () => {
     expect(await screen.findByTestId('location')).toHaveTextContent('/manage/users/user-2');
   });
 
-  it('sends the password change with the three fields the user typed', async () => {
+  it('sends the password change with the three fields the user typed, then closes the dialog and confirms with a toast', async () => {
     primeCurrentUser();
     changeUserPasswordMock.mockResolvedValue({ data: { success: true } });
 
@@ -664,6 +669,8 @@ describe('UserPage', () => {
         body: { currentPassword: 'OldPassword1', newPassword: 'NewPassword1', confirmNewPassword: 'NewPassword1' },
       }),
     );
+    expect(await screen.findByText('Password changed')).toBeVisible();
+    expect(screen.queryByTestId('user-page-password-dialog')).not.toBeInTheDocument();
   });
 
   it('shows the server refusal when the current password is wrong', async () => {
@@ -683,22 +690,6 @@ describe('UserPage', () => {
     fireEvent.click(screen.getByTestId('user-page-save-password'));
 
     expect(await within(dialog).findByText('Current password is incorrect.')).toBeVisible();
-  });
-
-  it('deletes an inactive account with its own email and shows the deleted confirmation', async () => {
-    primeCurrentUser({ isActive: false });
-    deleteUserMock.mockResolvedValue({ data: { success: true } });
-
-    renderUserPage();
-
-    await screen.findByTestId('user-page-inactive-banner');
-    fireEvent.click(screen.getByTestId('user-page-open-delete'));
-    await screen.findByTestId('user-page-delete-dialog');
-    fireEvent.change(screen.getByTestId('user-page-delete-confirmation'), { target: { value: 'derek@example.com' } });
-    fireEvent.click(screen.getByTestId('user-page-delete-submit'));
-
-    expect(await screen.findByTestId('user-page-delete-success')).toBeVisible();
-    expect(deleteUserMock).toHaveBeenCalledWith({ path: { userId: 'me' }, body: { email: 'derek@example.com' } });
   });
 
   it('keeps the delete dialog open with the reason when league data still blocks the delete', async () => {
@@ -721,10 +712,10 @@ describe('UserPage', () => {
     fireEvent.click(screen.getByTestId('user-page-delete-submit'));
 
     expect(await within(dialog).findByText(/league-scoped data/)).toBeVisible();
-    expect(screen.queryByTestId('user-page-delete-success')).not.toBeInTheDocument();
+    expect(screen.queryByText('Your account was deleted')).not.toBeInTheDocument();
   });
 
-  it('signs out and returns to the home page when a deleted user picks Exit and sign out', async () => {
+  it('deletes an inactive account with its own email, then signs out, returns home and confirms with a toast', async () => {
     primeCurrentUser({ isActive: false });
     deleteUserMock.mockResolvedValue({ data: { success: true } });
     logoutUserMock.mockResolvedValue({ data: { success: true } });
@@ -733,14 +724,16 @@ describe('UserPage', () => {
 
     await screen.findByTestId('user-page-inactive-banner');
     fireEvent.click(screen.getByTestId('user-page-open-delete'));
-    await screen.findByTestId('user-page-delete-dialog');
+    const dialog = await screen.findByTestId('user-page-delete-dialog');
+    // The box says which address to type.
+    expect(dialog).toHaveTextContent('Enter derek@example.com exactly to confirm.');
     fireEvent.change(screen.getByTestId('user-page-delete-confirmation'), { target: { value: 'derek@example.com' } });
     fireEvent.click(screen.getByTestId('user-page-delete-submit'));
-    const success = await screen.findByTestId('user-page-delete-success');
-    fireEvent.click(within(success).getByRole('button', { name: 'Exit and sign out' }));
 
     expect(await screen.findByTestId('root-route')).toBeInTheDocument();
+    expect(deleteUserMock).toHaveBeenCalledWith({ path: { userId: 'me' }, body: { email: 'derek@example.com' } });
     expect(logoutUserMock).toHaveBeenCalledTimes(1);
+    expect(screen.getByText('Your account was deleted')).toBeVisible();
   });
 
   it.each([
@@ -814,7 +807,7 @@ describe('UserPage', () => {
     fireEvent.click(screen.getByTestId('user-page-save-profile'));
 
     expect(await within(dialog).findByText('That email is already in use.')).toBeVisible();
-    expect(screen.queryByText('Your profile was updated.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Profile saved')).not.toBeInTheDocument();
   });
 
   it('keeps the preferences dialog open with the server reason when saving preferences fails', async () => {
@@ -831,7 +824,7 @@ describe('UserPage', () => {
     fireEvent.click(screen.getByTestId('user-page-save-preferences'));
 
     expect(await within(dialog).findByText('That locale is not supported.')).toBeVisible();
-    expect(screen.queryByText('Your preferences were updated.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Preferences saved')).not.toBeInTheDocument();
   });
 
   it('sends no locale or clock when the user clears the locale and picks the system default clock', async () => {
