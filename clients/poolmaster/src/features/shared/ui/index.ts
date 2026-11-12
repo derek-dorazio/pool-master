@@ -50,7 +50,9 @@ export { DetailsPeek, PeekCard, type PeekFact } from "./details-peek";
 export { DETAILS_PEEK_HOVER_DELAY_MS } from "./popover-timing";
 export { HelpTip } from "./help-tip";
 export { SplitContentLayout } from "./layout-presets";
-export { DefinitionList, MetricGrid, MetricTile } from "./metric-grid";
+export { MetricGrid, MetricTile } from "./metric-grid";
+export { FactList, type Fact, type FactListDensity, type FactListLayout } from "./fact-list";
+export { CheckList, type CheckItem } from "./check-list";
 export { SelectableDataGrid } from "./selectable-data-grid";
 export {
   SimpleTable,
@@ -109,5 +111,6 @@ export { ExpandableTile } from "./expandable-tile";
 export { FaqList, type FaqItem } from "./faq-list";
 export { NumberedSteps, type NumberedStep } from "./numbered-steps";
 export { SectionBody, SectionCard, SectionEmpty, SectionFooterLink, SectionNote, SectionRow, SectionRows, SectionTitle } from "./section-card";
+export { LockedSection } from "./locked-section";
 export { Text, type TextProps } from "./text";
 export { Icon, type IconProps } from "./icon";

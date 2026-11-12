@@ -1,6 +1,7 @@
 import { Info } from "lucide-react";
 import type { ReactNode } from "react";
 import { DETAILS_PEEK_HOVER_DELAY_MS } from "./popover-timing";
+import { FactList } from "./fact-list";
 import { InfoPopover } from "./info-popover";
 import { SectionFooterLink } from "./section-card";
 
@@ -70,14 +71,11 @@ export function PeekCard({
         <span className="font-display text-base font-bold text-foreground">{title}</span>
         {subtitle ? <span className="text-muted-foreground">{subtitle}</span> : null}
       </div>
-      <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 px-4 py-3">
-        {facts.map((fact) => (
-          <div className="contents" data-testid={fact.testId} key={fact.label}>
-            <dt className="text-muted-foreground">{fact.label}</dt>
-            <dd className="m-0 font-semibold text-foreground">{fact.value}</dd>
-          </div>
-        ))}
-      </dl>
+      <FactList
+        className="px-4 py-2"
+        density="compact"
+        facts={facts.map((fact) => ({ id: fact.label, label: fact.label, testId: fact.testId, value: fact.value }))}
+      />
       {link ? <SectionFooterLink label={link.label} testId={link.testId} to={link.to} /> : null}
     </div>
   );
