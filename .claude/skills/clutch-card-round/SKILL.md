@@ -138,8 +138,10 @@ can take its stars and box scores from the feed instead of Steps 5 and 6. Load t
 file first as above (its ranking is what tiers come from, and the feed has none), then link the
 event to the provider's round on its Manage page and press *Load Participant Field*. Each star
 already loaded is linked to their provider player by name within the stat pool sport league, so
-the league needs its match keyword set to the round's name; the rest of both rosters joins
-unranked, and a name the two spell differently comes in as a second player to merge by hand.
+the league needs its match keyword set to the round's name. Accents, case, punctuation and a
+trailing Jr. or III don't stop a link; the rest of both rosters joins unranked. A name the two spell
+differently past that comes in as a second player: the sync run's warning names each ranked star
+the feed left unlinked, so merge each into its feed player by hand before the first game.
 Box scores then sync while the round is live, a live game's lines held in progress, and the
 event is not completed while one is. A line an admin corrects on the Results page is replaced
 by the next sync.
