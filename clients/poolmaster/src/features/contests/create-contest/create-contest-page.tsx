@@ -176,7 +176,7 @@ export function CreateContestPage() {
       }}
       pendingLabel="Creating..."
       preview={selectedEvent && draft.memberRules !== null ? (
-        <MemberPreview eventName={selectedEvent.name} name={values.contestName} rules={draft.memberRules} />
+        <MemberPreview eventName={selectedEvent.name} name={values.contestName} rules={draft.memberRules} selectionType={values.selectionType} />
       ) : null}
       submitLabel="Create contest"
       submitTestId="create-contest-submit"

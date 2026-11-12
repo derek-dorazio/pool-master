@@ -152,7 +152,8 @@ export function SectionRows({ children, testId }: { children: ReactNode; testId?
  * One row of a section: a name, up to two muted fact lines, and at the right one figure
  * (`value`) and one badge or action (`aside`). With `to` the whole row is a link; with `control`
  * (a checkbox) the control leads the row and the whole row is its label, so a tap anywhere on it
- * toggles it. Rows tint on hover; `isHighlighted` tints the row the viewer came from and scrolls
+ * toggles it. `picture` puts a small drawing at the row's start (a contest type's picture), 64×40
+ * on a phone and 96×60 from the small breakpoint up. Rows tint on hover; `isHighlighted` tints the row the viewer came from and scrolls
  * it into view, and `isSelected` tints the one a list has chosen (a year, say) and marks it
  * current.
  */
@@ -165,6 +166,7 @@ export function SectionRow({
   name,
   nameAddon,
   note,
+  picture,
   testId,
   to,
   value,
@@ -183,6 +185,8 @@ export function SectionRow({
   nameAddon?: ReactNode;
   /** A second muted line. */
   note?: ReactNode;
+  /** A small decorative picture at the row's start, drawn to fill a 16:10 frame. */
+  picture?: ReactNode;
   testId?: string;
   to?: string;
   /** The row's figure: a place, a total, a count. */
@@ -205,6 +209,7 @@ export function SectionRow({
   const content = (
     <>
       {control ? <span className="flex flex-none items-center">{control}</span> : null}
+      {picture ? <span className="block aspect-[16/10] w-16 flex-none self-start overflow-hidden rounded-md sm:w-24 sm:self-center" data-testid={testId ? `${testId}-picture` : undefined}>{picture}</span> : null}
       <span className="min-w-0 flex-1">
         <span className="flex min-w-0 items-center gap-2">
           <span className="truncate font-semibold text-foreground">{name}</span>

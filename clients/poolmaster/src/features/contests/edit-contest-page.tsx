@@ -193,7 +193,7 @@ function EditContestForm({
       }}
       pendingLabel="Saving..."
       preview={previewRules === null ? null : (
-        <MemberPreview eventName={event.name} name={values.contestName} rules={previewRules} />
+        <MemberPreview eventName={event.name} name={values.contestName} rules={previewRules} selectionType={selectionType} />
       )}
       submitLabel="Save"
       submitTestId="edit-contest-save"
