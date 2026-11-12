@@ -717,12 +717,13 @@ describe('Commissioner tools › Contests › one contest › Edit', () => {
     expect(await screen.findByTestId('contest-name')).toHaveValue('Masters One-and-Done');
     expect(screen.getByTestId('contest-max-entries')).toHaveValue(2);
     expect(screen.getByTestId('edit-contest-event')).toHaveTextContent('The Masters');
-    expect(screen.getByTestId('contest-members-will-see-name')).toHaveTextContent('Masters One-and-Done · The Masters');
+    expect(screen.getByTestId('contest-members-will-see-name')).toHaveTextContent('Masters One-and-Done');
+    expect(screen.getByTestId('contest-members-will-see-event')).toHaveTextContent('The Masters');
     const rulesBefore = screen.getByTestId('contest-members-will-see-rules').textContent;
     fireEvent.change(screen.getByTestId('contest-name'), { target: { value: 'Masters Best Four' } });
     fireEvent.change(screen.getByTestId('contest-tiered-counted-scores'), { target: { value: '3' } });
     fireEvent.click(screen.getByTestId('contest-max-entries-unlimited'));
-    expect(screen.getByTestId('contest-members-will-see-name')).toHaveTextContent('Masters Best Four · The Masters');
+    expect(screen.getByTestId('contest-members-will-see-name')).toHaveTextContent('Masters Best Four');
     expect(screen.getByTestId('contest-members-will-see-rules')).not.toHaveTextContent(rulesBefore);
     fireEvent.click(screen.getByTestId('edit-contest-save'));
 

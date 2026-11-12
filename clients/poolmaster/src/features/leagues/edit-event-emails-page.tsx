@@ -15,9 +15,9 @@ import {
   FormPage,
   FormSection,
   QueryState,
-  SectionCard,
   SectionRow,
   SectionRows,
+  Text,
   formatNumber,
   useDisplayPreferences,
 } from '@/features/shared/ui';
@@ -171,25 +171,28 @@ function EventEmailsForm({ league, sports }: { league: LeagueDto; sports: EventE
           const ids = sport.sportLeagues.map((sportLeague) => sportLeague.id);
           const heardCount = ids.filter((id) => !muted.has(id)).length;
           return (
-            <SectionCard
-              headingLevel={4}
+            // A sport's header row, its all-box and count, over its sport leagues' rows: no card
+            // inside the form's card.
+            <div
+              aria-label={sport.name}
+              data-testid={`edit-event-emails-sport-${sport.sport}`}
               key={sport.sport}
-              testId={`edit-event-emails-sport-${sport.sport}`}
-              title={sport.name}
-              trailing={(
-                <>
-                  <span data-testid={`edit-event-emails-sport-${sport.sport}-count`}>{`${formatNumber(heardCount, locale)} chosen`}</span>
-                  <Checkbox
-                    aria-label={`All ${sport.name}`}
-                    checked={heardCount === ids.length}
-                    data-testid={`edit-event-emails-sport-${sport.sport}-all`}
-                    disabled={isPending}
-                    indeterminate={heardCount > 0 && heardCount < ids.length}
-                    onChange={(event) => setHeard(ids, event.target.checked)}
-                  />
-                </>
-              )}
+              role="group"
             >
+              <label className="flex cursor-pointer items-center gap-3 border-b border-border px-4 py-2">
+                <Checkbox
+                  aria-label={`All ${sport.name}`}
+                  checked={heardCount === ids.length}
+                  data-testid={`edit-event-emails-sport-${sport.sport}-all`}
+                  disabled={isPending}
+                  indeterminate={heardCount > 0 && heardCount < ids.length}
+                  onChange={(event) => setHeard(ids, event.target.checked)}
+                />
+                <Text variant="label">{sport.name}</Text>
+                <Text className="ml-auto" data-testid={`edit-event-emails-sport-${sport.sport}-count`} variant="caption">
+                  {`${formatNumber(heardCount, locale)} chosen`}
+                </Text>
+              </label>
               <SectionRows>
                 {sport.sportLeagues.map((sportLeague) => (
                   <SectionRow
@@ -209,7 +212,7 @@ function EventEmailsForm({ league, sports }: { league: LeagueDto; sports: EventE
                   />
                 ))}
               </SectionRows>
-            </SectionCard>
+            </div>
           );
         })}
       </FormSection>
