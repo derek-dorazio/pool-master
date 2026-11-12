@@ -94,7 +94,7 @@ the order it happens.
 | Table | Row | Why the sync needs it |
 |---|---|---|
 | `sports` | One per sport (baseline). | Participants and events hang off it. |
-| `sport_leagues` | One per league or Clutch Card league (baseline `20271114000100_baseline_reference_data`). Carries `scoring_family`, `round_names`, `round_series_lengths` and `match_keyword`. | `scoring_family` picks the writer. `match_keyword` is how the year import and the participant name link find the league's provider events and teams. |
+| `sport_leagues` | One per league or Clutch Card league (baseline `20271114000100_baseline_reference_data`). Carries `scoring_family`, `round_names` and `match_keyword` (`round_series_lengths` is added by the next row's migration). | The scoring family, which picks the writer, is the sport's own unless the league overrides it to `COMPOSITE` (a stat pool, such as a Clutch Card league); the column is `NULL` for every other league, and a new league needs nothing set there. `match_keyword` is how the year import and the participant name link find the league's provider events and teams. |
 | `sport_leagues.match_keyword` | Set per league by a small migration, only where `NULL`, so an admin's own keyword is never overwritten. | Must equal the `metadata.tour` the adapter puts on that league's events and participants, ignoring case (`core/league-keyword.ts`, `isLeagueTour`). |
 | `sport_leagues.round_series_lengths` | `20271117000200_add_round_series_lengths`: NBA and NHL `[7,7,7,7]`, WNBA `[3,7,7]`, MLB `[3,5,7,7]`, MLS `[1,3,1,1,1]`. | The GAME writer counts a series' wins against it (#1545). Empty means single games. |
 | `background_jobs` enum | `20271118000000_add_provider_event_sync_job_type` adds `PROVIDER_EVENT_SYNC`. | The webhook's job type. |
@@ -111,7 +111,7 @@ The keyword migrations on `main`, and the tour each matches:
 | NBA | `NBA` | `20271117000300_set_nba_match_keyword` | `NBA_PLAYOFFS.tour` (`nba-mapping.ts`) |
 | NBA Finals, NBA Conference Finals (Clutch Card) | the league's own name | `20271117000500_set_nba_clutch_card_match_keywords` | the round's `name` in `NBA_PLAYOFFS.rounds` |
 | PGA TOUR | `NULL` in the seed (see *Gaps* below) | none | `PGA_TOUR_NAME` (`pga-mapping.ts`) |
-| NHL | `NHL` | `20271117000400_set_nhl_match_keyword` (in PR #1662) | `NHL_PLAYOFFS.tour` (in PR #1662) |
+| NHL | `NHL` | `20271117000400_set_nhl_match_keyword` in PR #1662, likely renamed to a newer timestamp when it lands, since it sorts before a migration already on `main` | `NHL_PLAYOFFS.tour` (in PR #1662) |
 
 ### 2b. Event rows, by an admin action
 
@@ -133,7 +133,7 @@ the usual way. For a Clutch Card, the event's rounds are its games (game N is ro
 ### 2c. Participant rows, by the field load
 
 "Load Participant Field" (`POST /api/v1/events/:eventId/participants/refresh`, or the scheduled
-field loop when it is on) runs `runEventFieldSync` → `provider.getEventDetails(externalId)` →
+field loop when it is on). The route queues a `MANUAL_EVENT_SYNC` job for the participants feed, and that job runs `runEventFieldSync` → `provider.getEventDetails(externalId)` →
 `IngestionPersistence.persistEventDetailWithDiagnostics`
 (`ingestion/persistence/ingestion-persistence.ts`):
 
@@ -176,7 +176,7 @@ checks the source and actor agree.
 | Scheduled sweep | `SCHEDULED` / `SYSTEM:scheduler` | `SCHEDULED_EVENT_SYNC` | `IngestionScheduler.runConfiguredLiveScoreSweep`, one loop per scheduled sport, under the job lock `ingestion:<sport>:live-scores` | Lists events with `createScheduledEventReader` (`core/scheduled-event-reader.ts`): linked to a provider serving the sport, `status = IN_PROGRESS`, `sync_scope = SCORES_ONLY`, at least one field row. Every interval (default 300 s). |
 | Manual sync | `MANUAL` / `ROOT_ADMIN` | `MANUAL_EVENT_SYNC` | `POST /api/v1/ingestion/sports/:sport/events/:eventId/sync` → `IngestionService.syncEventData` → `MANUAL_EVENT_SYNC` job → `runManualEventSync` | Either feed. The field refresh button uses the same path. |
 | Webhook | `WEBHOOK` / `SYSTEM:webhook` | `WEBHOOK_EVENT_SYNC` | `POST /api/v1/provider-webhooks/balldontlie` → `ProviderNotificationService.receive` → `PROVIDER_EVENT_SYNC` job → `IngestionScheduler.runNotifiedEventSync` | See below. |
-| Field loop | `SCHEDULED` | `SCHEDULED_EVENT_SYNC` | `runConfiguredSportFieldSync`, off by default | Each provider's next two `DRAFT` or `SCHEDULED` linked events starting from now. |
+| Field loop | `SCHEDULED` | `SCHEDULED_EVENT_SYNC` | `runConfiguredSportFieldSync`, off by default | Each provider's next two `DRAFT` or `SCHEDULED` events with `sync_scope = SCORES_ONLY`, starting inside the lookahead window (default 14 days). |
 
 ### The webhook path (#1498)
 
@@ -215,7 +215,7 @@ The subscribed types are in `BALLDONTLIE_WEBHOOK_EVENT_TYPES`: `game.started`,
 `game.period_ended` (`game.halftime` for soccer) and `game.ended` for each league in
 `BALLDONTLIE_WEBHOOK_GAME_LEAGUES`, and for golf `pga.tournament.started`,
 `pga.tournament.round_started`, `pga.player.round_completed` and `pga.tournament.ended`. Not each
-hole: golf polls every 2 minutes during a round instead (#1499).
+hole: once #1499 lands, golf will poll every 2 minutes during a round instead.
 
 ## 4. The one sync path
 
@@ -238,9 +238,12 @@ sequenceDiagram
   F-->>P: rows written + REBUILD_LEADERBOARDS job in the same transaction
 ```
 
-`publishLiveScoreUpdate` is `ingestion/core/score-publisher.ts`. The family is picked from the
-event's `event_series → sport_leagues.scoring_family`
-(`scoring-families/registry.ts`). Each family accepts exactly one category:
+`publishLiveScoreUpdate` is `ingestion/core/score-publisher.ts`. The family is the event's sport's own, unless its sport league
+(`event_series → sport_leagues.scoring_family`) overrides it to `COMPOSITE`
+(`scoringFamilyForEvent`, `shared/domain/sports/sport-league-definition.ts`,
+`scoring-families/registry.ts`). Each family that takes live scores accepts exactly one category;
+finish position (racing) accepts none, and its batches are skipped with
+`liveScore.publish.categoryNotAccepted`:
 
 | Category | Family | Writer | Tables written |
 |---|---|---|---|
