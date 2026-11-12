@@ -24,7 +24,9 @@ import type {
 } from '../core/provider-interface';
 import type { SyncWriteDetailRow, SyncWriteDiagnostics } from '../core/sync-write-diagnostics';
 import { summarizeSyncWriteRows } from '../core/sync-write-diagnostics';
+import type { EventDetailPersisted, UnlinkedRankedParticipant } from '../core/ingestion-scheduler';
 import { isLeagueTour } from '../core/league-keyword';
+import { foldParticipantName, participantNameKey, sameParticipantName } from '../core/participant-name-key';
 import type { EventFieldCache } from '../../events/event-field-cache';
 import type { CdnInvalidator } from '../../../core/cdn-invalidator';
 import type { LeaderboardRebuilds } from '../../contests/leaderboard-snapshots';
@@ -246,37 +248,68 @@ export class IngestionPersistence {
   }
 
   /**
-   * The unmapped provider participants the site already has: a participant of the same sport with
-   * exactly the same name and no mapping from this provider yet (a team or golfer loaded from a
-   * sport data file, say) is linked rather than created a second time. A name two of the site's
-   * participants share, or two of the feed's, is never guessed at: those are created.
+   * The unmapped provider participants the site already has: a participant of the same sport and
+   * name with no mapping from this provider yet (a team or golfer loaded from a sport data file,
+   * say) is linked rather than created a second time. A name two of the site's participants
+   * share, or two of the feed's, is never guessed at: those are created.
    *
    * A provider participant that names its sport league (`metadata.tour`, the league's match
    * keyword: a college team is a men's or a women's team) is matched only among the site's
    * participants affiliated with that league, and counted against the feed's names in that
    * league alone, so the men's and women's teams of one school each link to their own. A school
-   * the site keeps as one row affiliated with both leagues takes both links. One read
-   * of the candidates, their mappings from the feed's providers and their leagues' keywords
-   * (Prisma loads each relation with its own statement).
+   * the site keeps as one row affiliated with both leagues takes both links. Within a league the
+   * names are compared folded (`sameParticipantName`, #1664), so the feed's "Luka Doncic" links
+   * to a data file's "Luka Dončić" and "Jaren Jackson" to "Jaren Jackson Jr." (never a Jr. to a
+   * Sr.): every participant
+   * affiliated with the league is read, so a folded name two of them share is seen, and then
+   * only the one spelled exactly as the feed spells it is linked. A participant naming no league
+   * is matched by its exact name alone, since the sport's every spelling of it is not read.
+   *
+   * One read of the sports' keyed leagues, when the feed names any, then one of the candidates,
+   * by exact name and by league, with their mappings from the feed's providers and their leagues'
+   * keywords (Prisma loads each relation with its own statement).
    */
   private async matchByName(
     unmapped: readonly ProviderParticipant[],
     sportIdOf: (participant: ProviderParticipant) => string,
   ) {
     const namesBySportId = new Map<string, Set<string>>();
+    const toursBySportId = new Map<string, Set<string>>();
     const feedNameCounts = new Map<string, number>();
     const providerIds = new Set<string>();
     const feedKeyOf = (participant: ProviderParticipant) =>
-      `${participant.providerId}:${sportIdOf(participant)}:${tourOf(participant) ?? ''}:${participant.name}`;
+      `${participant.providerId}:${sportIdOf(participant)}:${tourOf(participant) ?? ''}:${matchNameOf(participant)}`;
     for (const participant of unmapped) {
       providerIds.add(participant.providerId);
       const sportId = sportIdOf(participant);
       namesBySportId.set(sportId, (namesBySportId.get(sportId) ?? new Set()).add(participant.name));
+      const tour = tourOf(participant);
+      if (tour !== undefined) toursBySportId.set(sportId, (toursBySportId.get(sportId) ?? new Set()).add(tour.trim()));
       const feedKey = feedKeyOf(participant);
       feedNameCounts.set(feedKey, (feedNameCounts.get(feedKey) ?? 0) + 1);
     }
+    // The leagues the feed names, so the candidates read finds their members through the
+    // affiliations' sport league index rather than joining every affiliation to its league. The
+    // sports' keyed leagues are read (a reference table) and named in memory by `isLeagueTour`,
+    // which ignores the stored keyword's case and surrounding space as every tour match does.
+    const keyedLeagues = toursBySportId.size === 0 ? [] : await this.prisma.sportLeague.findMany({
+      where: { sportId: { in: [...toursBySportId.keys()] }, matchKeyword: { not: null } },
+      select: { id: true, sportId: true, matchKeyword: true },
+    });
+    const leagueIdsBySportId = new Map<string, string[]>();
+    for (const league of keyedLeagues) {
+      const tours = toursBySportId.get(league.sportId) ?? new Set<string>();
+      if ([...tours].some((tour) => isLeagueTour(tour, league.matchKeyword))) {
+        leagueIdsBySportId.set(league.sportId, [...(leagueIdsBySportId.get(league.sportId) ?? []), league.id]);
+      }
+    }
     const candidates = await this.prisma.participant.findMany({
-      where: { OR: [...namesBySportId].map(([sportId, names]) => ({ sportId, name: { in: [...names] } })) },
+      where: {
+        OR: [
+          ...[...namesBySportId].map(([sportId, names]) => ({ sportId, name: { in: [...names] } })),
+          ...[...leagueIdsBySportId].map(([sportId, sportLeagueIds]) => ({ sportId, leagueAffiliations: { some: { sportLeagueId: { in: sportLeagueIds } } } })),
+        ],
+      },
       select: {
         id: true,
         sportId: true,
@@ -285,20 +318,22 @@ export class IngestionPersistence {
         leagueAffiliations: { select: { sportLeague: { select: { matchKeyword: true } } } },
       },
     });
-    const candidatesByName = new Map<string, typeof candidates>();
+    const candidatesBySportId = new Map<string, typeof candidates>();
     for (const candidate of candidates) {
-      const key = `${candidate.sportId}:${candidate.name}`;
-      candidatesByName.set(key, [...(candidatesByName.get(key) ?? []), candidate]);
+      candidatesBySportId.set(candidate.sportId, [...(candidatesBySportId.get(candidate.sportId) ?? []), candidate]);
     }
 
     const linked: Array<{ participant: ProviderParticipant; existing: (typeof candidates)[number] }> = [];
     const toCreate: ProviderParticipant[] = [];
     for (const participant of unmapped) {
       const tour = tourOf(participant);
-      const sameName = (candidatesByName.get(`${sportIdOf(participant)}:${participant.name}`) ?? [])
-        .filter((candidate) => tour === undefined || candidate.leagueAffiliations.some(({ sportLeague }) => isLeagueTour(tour, sportLeague.matchKeyword)));
-      const unique = sameName.length === 1 && feedNameCounts.get(feedKeyOf(participant)) === 1;
-      const existing = unique ? sameName[0] : undefined;
+      const folded = foldParticipantName(participant.name);
+      const sameName = (candidatesBySportId.get(sportIdOf(participant)) ?? []).filter((candidate) => tour === undefined
+        ? candidate.name === participant.name
+        : sameParticipantName(foldParticipantName(candidate.name), folded) && candidate.leagueAffiliations.some(({ sportLeague }) => isLeagueTour(tour, sportLeague.matchKeyword)));
+      const spelledAlike = sameName.length === 1 ? sameName : sameName.filter((candidate) => candidate.name === participant.name);
+      const unique = spelledAlike.length === 1 && feedNameCounts.get(feedKeyOf(participant)) === 1;
+      const existing = unique ? spelledAlike[0] : undefined;
       if (existing && !existing.providerMappings.some((mapping) => mapping.providerId === participant.providerId)) {
         linked.push({ participant, existing });
       } else {
@@ -325,7 +360,7 @@ export class IngestionPersistence {
     eventsPersisted: number;
     participantsPersisted: number;
     sportEventParticipantsPersisted: number;
-  }>> {
+  }> & Pick<EventDetailPersisted, 'unlinkedRankedParticipants'>> {
     this.logger?.debug({
       providerId: detail.providerId,
       externalId: detail.externalId,
@@ -354,6 +389,7 @@ export class IngestionPersistence {
         count: 0,
         value: { eventsPersisted, participantsPersisted, sportEventParticipantsPersisted: 0 },
         writeDiagnostics: summarizeSyncWriteRows(detailRows),
+        unlinkedRankedParticipants: [],
       };
     }
 
@@ -369,6 +405,8 @@ export class IngestionPersistence {
       this.cdn?.invalidate([PublicReadPath.EVENT_PAGES]);
     }
 
+    const unlinkedRankedParticipants = await this.findUnlinkedRankedParticipants(persistedEvent.id, detail.providerId);
+
     this.logger?.info({
       providerId: detail.providerId,
       externalId: detail.externalId,
@@ -376,6 +414,7 @@ export class IngestionPersistence {
       eventsPersisted,
       participantsPersisted,
       sportEventParticipantsPersisted,
+      unlinkedRankedCount: unlinkedRankedParticipants.length,
     }, 'Persisted event detail from ingestion');
 
     const value = {
@@ -387,7 +426,24 @@ export class IngestionPersistence {
       count: sportEventParticipantsPersisted,
       value,
       writeDiagnostics: summarizeSyncWriteRows(detailRows),
+      unlinkedRankedParticipants,
     };
+  }
+
+  /**
+   * The event's ranked participants with no mapping from its provider, best rank first (#1664): a
+   * star loaded from a data file whom the provider's field named some other way, or not at all.
+   * The provider's scores never reach them, so the sync run lists them for the root admin to merge
+   * or map by hand. One read.
+   */
+  private async findUnlinkedRankedParticipants(sportEventId: string, providerId: string): Promise<UnlinkedRankedParticipant[]> {
+    const rows = await this.prisma.sportEventParticipant.findMany({
+      where: { sportEventId, ranking: { not: null }, participant: { providerMappings: { none: { providerId } } } },
+      select: { ranking: true, participant: { select: { id: true, name: true } } },
+      orderBy: [{ ranking: 'asc' }, { participant: { name: 'asc' } }],
+    });
+    // The read takes ranked rows only; the check narrows the type.
+    return rows.flatMap((row) => (row.ranking === null ? [] : [{ participantId: row.participant.id, name: row.participant.name, ranking: row.ranking }]));
   }
 
   /**
@@ -484,6 +540,11 @@ export class IngestionPersistence {
 /** The sport league a provider participant names by its match keyword, when it names one. */
 function tourOf(participant: ProviderParticipant): string | undefined {
   return participant.metadata.tour;
+}
+
+/** The name a participant is matched by: folded within the league it names, else as spelled (`matchByName`). */
+function matchNameOf(participant: ProviderParticipant): string {
+  return tourOf(participant) === undefined ? participant.name : participantNameKey(participant.name);
 }
 
 /** A participant's provider identity. */
