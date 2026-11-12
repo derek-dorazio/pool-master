@@ -29,7 +29,7 @@ import {
 import { useLeagueContext } from '@/features/leagues/use-league-context';
 import { hasPlanFeature } from '@/features/plans/plan-features';
 import {
-  Alert,
+  Notice,
   Button,
   Chip,
   ConfirmDialog,
@@ -37,13 +37,18 @@ import {
   DateDisplay,
   EmptyState,
   ErrorState,
+  HelpTip,
   LinkButton,
   LoadingState,
   PageHeader,
+  refetchFailed,
   SectionCard,
   SectionEmpty,
+  SectionRow,
+  SectionRows,
   SettingsRow,
   SettingsRows,
+  Text,
 } from '@/features/shared/ui';
 import { coversOneEvent, firstContestEvent } from './contest-events';
 import { ContestStatusBadge } from './contest-status-badge';
@@ -56,9 +61,10 @@ import { useManagedContestQuery } from './use-managed-contest-query';
 
 function FixedNote() {
   return (
-    <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground" title="Set when the contest was created">
+    <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
       <Lock aria-hidden size={13} />
       Fixed
+      <HelpTip className="-my-2 -ml-2" label="Why this is fixed" testId="manage-contest-fixed-help">Set when the contest was created.</HelpTip>
     </span>
   );
 }
@@ -79,7 +85,7 @@ function ContestTiersSection({
 
   return (
     <SectionCard
-      info={`From the event, top tier first. Every contest on ${eventName} uses the same tiers. An admin sets them before the event is released.`}
+      help={`From the event, top tier first. Every contest on ${eventName} uses the same tiers. An admin sets them before the event is released.`}
       testId="contest-tiers"
       title={title}
     >
@@ -159,9 +165,9 @@ export function ManageContestPage() {
   if ((contestQuery.isError && !isContestMissing) || managedContestQuery.isError || eventQuery.isError) {
     return (
       <ErrorState
-        body="Try again in a moment."
+        body="We couldn't load this contest."
+        onRetry={refetchFailed(contestQuery, managedContestQuery, eventQuery)}
         testId="manage-contest-error"
-        title="We couldn't load this contest."
       />
     );
   }
@@ -216,7 +222,7 @@ export function ManageContestPage() {
           <>
             <ContestStatusBadge status={contest.status} />
             <span data-testid="manage-contest-event">
-              {event.name} · Starts <DateDisplay className="text-muted-foreground" value={event.startDate} />
+              {event.name} · Starts <DateDisplay tone="inherit" value={event.startDate} />
             </span>
           </>
         )}
@@ -249,7 +255,7 @@ export function ManageContestPage() {
             Locked
           </span>
         )}
-        info={isNotOpen
+        help={isNotOpen
           ? 'What members will see when they enter.'
           : 'Settings locked when you opened it to the league.'}
         testId="manage-contest-settings"
@@ -268,29 +274,18 @@ export function ManageContestPage() {
                 {isMultiEvent ? 'Change events' : 'Add events'}
               </LinkButton>
             ) : isNotOpen ? <FixedNote /> : undefined}
-            label={isMultiEvent ? `Events (${contest.sportEvents.length})` : 'Event'}
+            label={isMultiEvent ? 'Events' : 'Event'}
             testId="manage-contest-event-row"
             value={(
               <>
-                {isMultiEvent ? (
-                  <ol className="space-y-0.5" data-testid="manage-contest-event-list">
-                    {contest.sportEvents.map((sportEvent) => (
-                      <li key={sportEvent.sportEventId}>
-                        {sportEvent.name}
-                        <span className="text-xs text-muted-foreground">
-                          {' · '}<DateDisplay className="text-muted-foreground" value={sportEvent.startDate} />
-                        </span>
-                      </li>
-                    ))}
-                  </ol>
-                ) : eventLabel}
-                <div className="text-xs text-muted-foreground">
+                {isMultiEvent ? `${contest.sportEvents.length} events, listed below` : eventLabel}
+                <Text as="div" variant="caption">
                   {isMultiEvent ? 'The first event starts ' : 'Starts '}
-                  <DateDisplay className="text-muted-foreground" value={event.startDate} />.
+                  <DateDisplay tone="inherit" value={event.startDate} />.
                   {contest.selectionType === SelectionType.RANDOM_DRAW
                     ? ' Entries close when you run the draw, which must be before then.'
                     : ' Entries close then.'}
-                </div>
+                </Text>
               </>
             )}
           />
@@ -309,6 +304,22 @@ export function ManageContestPage() {
         </SettingsRows>
       </SectionCard>
 
+      {isMultiEvent ? (
+        <SectionCard testId="manage-contest-event-list" title="Events, in order">
+          <SectionRows>
+            {contest.sportEvents.map((sportEvent, index) => (
+              <SectionRow
+                facts={<DateDisplay tone="inherit" value={sportEvent.startDate} />}
+                key={sportEvent.sportEventId}
+                name={sportEvent.name}
+                testId={`manage-contest-event-${sportEvent.sportEventId}`}
+                value={index + 1}
+              />
+            ))}
+          </SectionRows>
+        </SectionCard>
+      ) : null}
+
       <ContestExpansionSection
         canGrant={viewer.isRootAdmin}
         contestId={contest.id}
@@ -318,16 +329,17 @@ export function ManageContestPage() {
 
       {hasPlanFeature(league, PlanFeature.CUP_SETTINGS) ? (
         <SectionCard
-          info="How much this contest counts toward its sports league cup and the league championship."
+          help="How much this contest counts toward its sports league cup and the league championship."
           testId="manage-contest-championships"
           title="Championships"
         >
           <SettingsRows>
             <SettingsRow
               action={contest.status === ContestStatus.COMPLETED ? (
-                <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground" data-testid="manage-contest-cup-weight-final" title="Fixed when the contest went final">
+                <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground" data-testid="manage-contest-cup-weight-final">
                   <Lock aria-hidden size={13} />
                   Final
+                  <HelpTip className="-my-2 -ml-2" label="Why this is final" testId="manage-contest-cup-weight-final-help">Fixed when the contest went final.</HelpTip>
                 </span>
               ) : (
                 <LinkButton
@@ -399,11 +411,11 @@ export function ManageContestPage() {
         tone="danger"
       >
         {deleteContestMutation.isError ? (
-          <Alert data-testid="contest-delete-error" tone="danger">
+          <Notice data-testid="contest-delete-error" tone="danger">
             {extractErrorMessage(deleteContestMutation.error, {
               fallback: 'We could not delete that contest. Please try again.',
             })}
-          </Alert>
+          </Notice>
         ) : null}
       </ConfirmDialog>
     </section>

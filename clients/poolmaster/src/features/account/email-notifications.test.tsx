@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { EmailNotificationsDialog, EmailSuppressionBanner } from './email-notifications';
@@ -49,6 +49,29 @@ describe('EmailNotificationsDialog', () => {
     expect(screen.getByLabelText(/^Results/)).not.toBeChecked();
     expect(screen.getAllByRole('checkbox')).toHaveLength(5);
     expect(screen.queryByTestId('email-suppression-banner')).not.toBeInTheDocument();
+  });
+
+  it('says the email settings could not load, in red with Retry, and shows the switches once Retry succeeds', async () => {
+    getUserEmailPreferencesMock.mockResolvedValue({ error: { error: { code: 'INTERNAL_ERROR', message: 'Down' } }, status: 500 });
+    renderDialog();
+
+    const error = await screen.findByTestId('email-notifications-load-error');
+    getUserEmailPreferencesMock.mockResolvedValue({ data: { preferences: ALL_ON, emailSuppression: null } });
+    fireEvent.click(within(error).getByRole('button', { name: 'Retry' }));
+
+    expect(await screen.findByLabelText(/Live standings/)).toBeChecked();
+    expect(screen.queryByTestId('email-notifications-load-error')).not.toBeInTheDocument();
+  });
+
+  it('lists the categories as rows of a League emails section, each row the label of its checkbox', async () => {
+    getUserEmailPreferencesMock.mockResolvedValue({ data: { preferences: ALL_ON, emailSuppression: null } });
+    renderDialog();
+
+    const section = await screen.findByRole('region', { name: 'League emails' });
+    const rows = within(section).getAllByRole('listitem');
+    expect(rows).toHaveLength(ALL_ON.length);
+    expect(screen.getByTestId('email-notifications-row-RESULTS').tagName).toBe('LABEL');
+    expect(within(screen.getByTestId('email-notifications-row-RESULTS')).getByRole('checkbox')).toBe(screen.getByTestId('email-notifications-RESULTS'));
   });
 
   it('turns a category off for the member\'s own account and shows the switches the API answers with', async () => {

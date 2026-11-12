@@ -278,10 +278,12 @@ describe('ContestEntryFrame', () => {
     expect(screen.getByTestId('contest-menu-my-entry')).toHaveAttribute('aria-current', 'page');
   });
 
-  it('puts the contest\'s phase and the entry\'s dates in the status callout', () => {
+  it('leads the status peek with the status and the contest\'s phase, not the entry\'s name again, then the entry\'s dates', () => {
     drawEntryFrame(ContestEntryStatus.SUBMITTED);
 
     fireEvent.click(screen.getByTestId('contest-entry-status'));
+
+    expect(screen.getByTestId('contest-entry-status-callout')).not.toHaveTextContent('Birdie Hunters 2');
 
     expect(screen.getByTestId('contest-entry-status-entry-status')).toHaveTextContent('Submitted');
     expect(screen.getByTestId('contest-entry-status-contest-phase')).toHaveTextContent('Open until the first game');

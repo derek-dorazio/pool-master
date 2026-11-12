@@ -209,9 +209,8 @@ describe('pool-master-rop.23: WelcomePage generated DTO fixtures', () => {
     expect(screen.getByTestId('shared-error-state')).toBeInTheDocument();
     expect(sharedStateCalls.error).toHaveBeenCalledWith(
       expect.objectContaining({
-        body: 'Try refreshing after signing in again.',
+        body: "We couldn't load your leagues.",
         testId: 'authenticated-landing-error',
-        title: "We couldn't load your leagues.",
       }),
     );
     await waitFor(() => expect(mockApi.listLeagues).toHaveBeenCalledTimes(1));

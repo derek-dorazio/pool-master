@@ -11,7 +11,9 @@ import { useAuth } from '@/features/auth/auth-context';
 import { syncLeagueCaches } from '@/features/leagues/league-cache';
 import { buildLeagueAdminPath } from '@/features/leagues/league-routing';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
-import { Alert, Button, Chip, ErrorState, formatCount, formatDateDisplay, formatNumber, LoadingState, PageHeader, SectionCard, SectionNote, useDisplayPreferences } from '@/features/shared/ui';
+import { Notice, Button, Chip, ErrorState, FactList, formatCount, formatDateDisplay, formatNumber, HelpTip, LoadingState, PageHeader, SectionBody, SectionCard, SectionNote, SectionRow, SectionRows, useDisplayPreferences } from '@/features/shared/ui';
+import { FeatureList } from './feature-list';
+import { FeatureMark } from './feature-mark';
 import { PlanCards } from './plan-cards';
 import { buildCapUsage, buildPlanChangeEffects, NAMED_CONTEST_LIMIT } from './plan-change';
 import { PlanComparisonTable } from './plan-comparison-table';
@@ -99,6 +101,7 @@ function LeaguePlanView({ league }: { league: LeagueDto }) {
       <YourLeagueNow
         current={current}
         isError={usageQuery.isError}
+        onRetry={() => void usageQuery.refetch()}
         sportLeagueNames={sportLeagueNames}
         usage={usageQuery.data}
       />
@@ -106,7 +109,7 @@ function LeaguePlanView({ league }: { league: LeagueDto }) {
       {plansQuery.isLoading ? (
         <LoadingState body="Loading the plans..." />
       ) : plansQuery.isError || !plans ? (
-        <ErrorState body="We couldn't load the plans. Try again in a moment." title="Plans unavailable" />
+        <ErrorState body="We couldn't load the plans." onRetry={() => void plansQuery.refetch()} />
       ) : (
         <>
           {chosen ? (
@@ -126,9 +129,9 @@ function LeaguePlanView({ league }: { league: LeagueDto }) {
                   </SectionNote>
                 ) : null}
                 {saveMutation.isError ? (
-                  <Alert data-testid="league-plan-confirm-error" tone="danger">
+                  <Notice data-testid="league-plan-confirm-error" tone="danger">
                     {extractErrorMessage(saveMutation.error, { fallback: 'We could not change the plan.' })}
-                  </Alert>
+                  </Notice>
                 ) : null}
                 <div className="flex flex-wrap gap-3">
                   <Button
@@ -175,7 +178,7 @@ function LeaguePlanView({ league }: { league: LeagueDto }) {
             }}
           />
 
-          <SectionCard bare info="Your plan is shaded. Where a plan's limit is below what your league uses now, it says so." testId="league-plan-compare" title="Compare plans">
+          <SectionCard bare help="Your plan is shaded. Where a plan's limit is below what your league uses now, it says so." testId="league-plan-compare" title="Compare plans">
             <PlanComparisonTable
               capUsage={usageQuery.data ? buildCapUsage(usageQuery.data) : undefined}
               currentPlan={current.plan}
@@ -203,11 +206,13 @@ function formatUse(used: number, limit: number | null, locale: string): string {
 function YourLeagueNow({
   current,
   isError,
+  onRetry,
   sportLeagueNames,
   usage,
 }: {
   current: PlanEntitlementsDto;
   isError: boolean;
+  onRetry: () => void;
   sportLeagueNames: ReadonlyMap<string, string>;
   usage: LeaguePlanUsageResponse | undefined;
 }) {
@@ -218,42 +223,39 @@ function YourLeagueNow({
   ) ?? null;
   return (
     <SectionCard headingLevel={3} padded testId="league-plan-now" title="Your league now">
-      <dl className="grid gap-3 text-sm sm:grid-cols-3">
-        <div>
-          <dt className="text-muted-foreground">Plan</dt>
-          <dd className="font-semibold text-foreground" data-testid="league-plan-now-plan">{LEAGUE_PLAN_LABEL[current.plan]}</dd>
-        </div>
-        {usage ? (
-          <>
-            <div>
-              <dt className="text-muted-foreground">{`Sports leagues in ${usage.seasonYear}`}</dt>
-              <dd className="text-foreground" data-testid="league-plan-now-sport-leagues">
-                <span className="font-semibold">{formatUse(usage.sportLeagueIds.length, current.caps[PlanCap.SPORTS_LEAGUES_PER_YEAR], locale)}</span>
-                {usage.sportLeagueIds.length ? (
-                  <span className="block text-muted-foreground">
-                    {usage.sportLeagueIds.map((id) => sportLeagueNames.get(id) ?? 'A sports league').join(', ')}
-                  </span>
-                ) : null}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-muted-foreground">Biggest open contest</dt>
-              <dd className="text-foreground" data-testid="league-plan-now-entries">
-                {fullest ? (
-                  <>
-                    <span className="font-semibold">{`${formatUse(fullest.entryCount, current.caps[PlanCap.ENTRIES_PER_CONTEST], locale)} entries`}</span>
-                    <span className="block text-muted-foreground">{fullest.name}</span>
-                  </>
-                ) : 'No contest is taking entries'}
-              </dd>
-            </div>
-          </>
-        ) : isError ? (
-          <p className="text-sm text-muted-foreground sm:col-span-2" data-testid="league-plan-now-error">We couldn&apos;t load what the league uses now.</p>
-        ) : (
-          <p className="text-sm text-muted-foreground sm:col-span-2">Loading what the league uses...</p>
-        )}
-      </dl>
+      <FactList
+        facts={[
+          { id: 'plan', label: 'Plan', testId: 'league-plan-now-plan', value: LEAGUE_PLAN_LABEL[current.plan] },
+          ...(usage
+            ? [
+                {
+                  id: 'sport-leagues',
+                  label: `Sports leagues in ${usage.seasonYear}`,
+                  testId: 'league-plan-now-sport-leagues',
+                  value: formatUse(usage.sportLeagueIds.length, current.caps[PlanCap.SPORTS_LEAGUES_PER_YEAR], locale),
+                  detail: usage.sportLeagueIds.length
+                    ? usage.sportLeagueIds.map((id) => sportLeagueNames.get(id) ?? 'A sports league').join(', ')
+                    : undefined,
+                },
+                {
+                  id: 'entries',
+                  label: 'Biggest open contest',
+                  testId: 'league-plan-now-entries',
+                  value: fullest
+                    ? `${formatUse(fullest.entryCount, current.caps[PlanCap.ENTRIES_PER_CONTEST], locale)} entries`
+                    : 'No contest is taking entries',
+                  detail: fullest?.name,
+                },
+              ]
+            : []),
+        ]}
+        layout="columns"
+      />
+      {usage ? null : isError ? (
+        <ErrorState body="We couldn't load what the league uses now." onRetry={onRetry} size="plain" testId="league-plan-now-error" />
+      ) : (
+        <LoadingState body="Loading what the league uses..." size="plain" testId="league-plan-now-loading" />
+      )}
     </SectionCard>
   );
 }
@@ -281,30 +283,46 @@ function PlanChangeWarnings({
   return (
     <div className="space-y-3">
       {effects.entriesLimit !== null ? (
-        <Alert data-testid="league-plan-confirm-entries" tone="warning">
-          <ul className="space-y-1">
-            {named.map((contest) => (
-              <li key={contest.contestId}>{`${contest.name} has ${formatCount(contest.entryCount, 'entry', locale, 'entries')}.`}</li>
-            ))}
-            {more > 0 ? <li>{`And ${more} more.`}</li> : null}
-          </ul>
-          <p className="mt-2">
-            {`On ${label} ${effects.contestsOverEntries.length === 1 ? 'it keeps them' : 'each keeps them'} all, but takes no new entries past ${formatNumber(effects.entriesLimit, locale)}.`}
-          </p>
-        </Alert>
+        <>
+          <Notice data-testid="league-plan-confirm-entries" tone="warning">
+            {`On ${label} ${effects.contestsOverEntries.length === 1 ? 'this contest keeps its entries' : 'these contests keep their entries'}, but ${effects.contestsOverEntries.length === 1 ? 'it takes' : 'each takes'} no new entries past ${formatNumber(effects.entriesLimit, locale)}.`}
+          </Notice>
+          <SectionCard headingLevel={4} testId="league-plan-confirm-contests" title={`Over ${formatNumber(effects.entriesLimit, locale)} entries`}>
+            <SectionRows>
+              {named.map((contest) => (
+                <SectionRow
+                  key={contest.contestId}
+                  name={contest.name}
+                  testId={`league-plan-confirm-contest-${contest.contestId}`}
+                  value={formatCount(contest.entryCount, 'entry', locale, 'entries')}
+                />
+              ))}
+            </SectionRows>
+            {more > 0 ? (
+              <SectionBody>
+                <SectionNote testId="league-plan-confirm-contests-more">{`And ${more} more.`}</SectionNote>
+              </SectionBody>
+            ) : null}
+          </SectionCard>
+        </>
       ) : null}
       {effects.sportLeaguesOver ? (
-        <Alert data-testid="league-plan-confirm-sport-leagues" tone="warning">
+        <Notice data-testid="league-plan-confirm-sport-leagues" tone="warning">
           {`This year's contests use ${formatCount(effects.sportLeaguesOver.used, 'sports league', locale)}: ${usage.sportLeagueIds.map((id) => sportLeagueNames.get(id) ?? 'a sports league').join(', ')}. ${label} allows ${formatNumber(effects.sportLeaguesOver.limit, locale)} a year, so new contests this year can use only these.`}
-        </Alert>
+        </Notice>
       ) : null}
       {effects.hiddenFeatures.length ? (
-        <div className="text-sm" data-testid="league-plan-confirm-hidden">
-          <p className="text-foreground">{`Hidden on ${label}, and back as they were when you move up again:`}</p>
-          <ul className="mt-1 list-disc pl-5 text-muted-foreground">
-            {buildFeatureLines(effects.hiddenFeatures, false).map((line) => <li key={line}>{line}</li>)}
-          </ul>
-        </div>
+        <FeatureList
+          features={buildFeatureLines(effects.hiddenFeatures, false)}
+          label={`Hidden on ${label}`}
+          labelAside={(
+            <HelpTip className="-my-2" label={`About features hidden on ${label}`} testId="league-plan-confirm-hidden-help">
+              They come back as they were when you move up again.
+            </HelpTip>
+          )}
+          mark={FeatureMark.REMOVED}
+          testId="league-plan-confirm-hidden"
+        />
       ) : null}
     </div>
   );

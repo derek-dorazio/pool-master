@@ -124,8 +124,6 @@ describe('pool-master-rop.23: CreateLeagueModal generated DTO fixtures', () => {
     fireEvent.change(screen.getByTestId('create-league-description'), {
       target: { value: 'Neighborhood commissioner league' },
     });
-    fireEvent.click(screen.getByTestId('create-league-next'));
-    await waitFor(() => expect(screen.getByTestId('create-league-submit')).toBeVisible());
     fireEvent.click(screen.getByTestId('create-league-submit'));
 
     await waitFor(() =>
@@ -235,16 +233,81 @@ describe('pool-master-rop.23: CreateLeagueModal generated DTO fixtures', () => {
       target: { value: 'Big Dawgs' },
     });
     fireEvent.blur(screen.getByTestId('create-league-name'));
-    fireEvent.click(screen.getByTestId('create-league-next'));
-    await screen.findByTestId('create-league-submit');
     fireEvent.click(screen.getByTestId('create-league-submit'));
 
     await screen.findByText('League code is already taken.');
+    // A save error is the shared danger Notice above the buttons, and the dialog stays open.
+    expect(screen.getByRole('alert')).toHaveTextContent('League not created');
+    expect(screen.getByRole('alert')).toHaveTextContent('League code is already taken.');
+    expect(screen.getByTestId('create-league-modal')).toBeInTheDocument();
     expect(mockLogger.warn).toHaveBeenCalledWith(
       expect.objectContaining({
         action: 'league.create.failed',
       }),
       expect.any(String),
+    );
+  });
+
+  function renderModal(props: Partial<{ nextStep: string }> = {}) {
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={queryClient}>
+        <CreateLeagueModal isOpen onClose={vi.fn()} onCreated={vi.fn()} {...props} />
+      </QueryClientProvider>,
+    );
+  }
+
+  it('asks for everything on one step: name, web address and an optional description, with Cancel and Create league', () => {
+    renderModal();
+
+    expect(screen.getByRole('textbox', { name: 'League name' })).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'League web address' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Description (optional)')).toBe(screen.getByTestId('create-league-description'));
+    expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument();
+    expect(screen.getByTestId('create-league-submit')).toHaveTextContent('Create league');
+    expect(screen.queryByText(/Review/)).not.toBeInTheDocument();
+    expect(screen.queryByText('Commissioner setup')).not.toBeInTheDocument();
+    expect(screen.getByTestId('create-league-code-help')).toBeInTheDocument();
+  });
+
+  it('shows the full web address under the field as you type, from the site\'s own origin, not opening until the league exists', async () => {
+    renderModal();
+
+    expect(screen.queryByTestId('create-league-address')).not.toBeInTheDocument();
+    fireEvent.change(screen.getByTestId('create-league-code'), { target: { value: 'big dawgs' } });
+
+    const address = await screen.findByTestId('create-league-address-link');
+    expect(address).toHaveTextContent(`${window.location.host}/league/bigdawgs`);
+    expect(address).toHaveAttribute('aria-disabled', 'true');
+    expect(screen.queryByRole('link')).not.toBeInTheDocument();
+
+    fireEvent.change(screen.getByTestId('create-league-code'), { target: { value: 'BIGDAWGS2' } });
+    expect(await screen.findByTestId('create-league-address-link')).toHaveTextContent('/league/bigdawgs2');
+  });
+
+  it('shows a taken web address as an error under the field, not as a save error, and clears it once the address changes', async () => {
+    createLeagueMock.mockResolvedValue({
+      error: { error: { code: 'LEAGUE_CODE_CONFLICT', message: 'League code already exists' } },
+    });
+    renderModal();
+
+    fireEvent.change(screen.getByTestId('create-league-name'), { target: { value: 'Big Dawgs' } });
+    fireEvent.blur(screen.getByTestId('create-league-name'));
+    fireEvent.click(screen.getByTestId('create-league-submit'));
+
+    expect(await screen.findByText('That web address is taken. Try another.')).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'League web address' })).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+
+    fireEvent.change(screen.getByTestId('create-league-code'), { target: { value: 'BIGDAWGS7' } });
+    await waitFor(() => expect(screen.queryByText('That web address is taken. Try another.')).not.toBeInTheDocument());
+  });
+
+  it('says in one line what comes next when the league is a step on the way to a contest', () => {
+    renderModal({ nextStep: 'your Squares for Championship Weekend' });
+
+    expect(screen.getByRole('dialog', { name: 'Create your league' })).toHaveAccessibleDescription(
+      "Then you'll set up your Squares for Championship Weekend.",
     );
   });
 });

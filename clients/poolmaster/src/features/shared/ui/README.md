@@ -17,14 +17,25 @@ The shared UI layer is split into three levels:
    `layout="row"`, and a menu that opens from a button is a `DropdownMenu` built
    from its parts (`DropdownMenuItem` rows, `isSelected` for the current one); never hand-type
    `normal-case tracking-normal` onto a button. A loading, empty or error state
-   is `LoadingState`, `EmptyState` or `ErrorState` (`size="inline"` for one line
-   inside a card), a one-line failure beside what failed is an `InlineError`, and
-   a query's loading, error, empty and data branches are one `QueryState`; never
-   hand-type a `text-destructive` or "Loading..." paragraph. A small table is a
+   is `LoadingState`, `EmptyState` or `ErrorState`: a card of its own by default,
+   `size="inline"` for one line inside a card, `size="plain"` inside a body that is
+   already padded; a list's `LoadingState` (or `QueryState`) takes `rows` for faint
+   placeholder rows. A query's loading, error, empty and data branches are one
+   `QueryState`, whose error offers Retry from the query's own `refetch`; a
+   hand-drawn `ErrorState` takes `onRetry` (`refetchFailed(...)` when it waits on
+   several reads, `null` for a failure reading again cannot fix, such as no access). A one-line failure beside what failed, such as a refused save, is
+   an `InlineError`. Never hand-type a `text-destructive` or "Loading..." paragraph;
+   `poolmaster/no-hand-written-query-states` fails one in feature code. A small table is a
    `SimpleTable` built from its parts (`density="compact"` inside a card,
    `surface="inverse"` on a navy panel, `isHighlighted` for the viewer's row,
    `numeric` for figures); an upload preview is an `UploadPreviewTable`; a
-   table that needs search or sorting is a `DataGrid`. Copy to clipboard is a
+   table that needs search or sorting is a `DataGrid`. Labels beside their values are a
+   `FactList` (`layout="inline"` by default; `"inset"` under a row that opened
+   it; `"columns"` for a few facts side by side, stacking on a phone;
+   `density="compact"` in a popover or peek card), never a hand-built `<dl>`;
+   a page's headline numbers are a `MetricGrid` instead, and rows with columns
+   of their own a `SimpleTable`. Requirements met or not are a `CheckList`
+   (missing first, `surface="inverse"` on a navy panel). Copy to clipboard is a
    `CopyButton` (`iconOnly` in a tight spot), which says Copied, shows an inline
    error when the browser refuses and logs it; feature code never calls
    `navigator.clipboard` itself. A password box is a `PasswordInput`,
@@ -42,7 +53,9 @@ The shared UI layer is split into three levels:
 A value written on screen goes through `format.ts`, exported from the index:
 `formatPlace` / `formatOrdinal` ("T2", "1st"), `formatNumber`, `formatCount`
 ("1,000 entries"), `formatCupPoints`, `formatMoneyCents` and `formatNumberList`,
-plus the date formatters from `date-time-format.ts`. Numbers take the viewer's
+plus the date formatters from `date-time-format.ts`. `DateDisplay` draws a date in the
+body colour; `tone="inherit"` takes the colour of the line around it, such as a row's
+muted fact line, so pages never pass it a colour class. Numbers take the viewer's
 locale from `useDisplayPreferences().locale`, so pass it in rather than fixing
 `en-US`. Feature code never calls `toLocaleString`, `toFixed` or `new Intl.*Format`
 itself; `poolmaster/no-inline-display-format` enforces it
@@ -62,6 +75,10 @@ itself; `poolmaster/no-inline-display-format` enforces it
 Use page templates when a page matches an existing workflow shape:
 
 - `ManagementListPage` for admin list screens backed by `DataGrid`.
+- `StatusPage` for a page that is only a status: not found, a crash, a dead or
+  expired link, or the done or confirm step after a link from an email. A
+  symbol (`kind`), a title, one plain line and one primary action, centred in
+  the 8px card; a failed try's `Notice` goes in as children above the action.
 - `EntityDetailPage` for profile/entity details with a summary above, details
   on the left and less frequent actions on the right.
 - `FormEditorSection` for repeated editable configuration sections with
@@ -89,9 +106,14 @@ send the version the draft came from and offer the newer one on a conflict.
 A dialog that is neither a form nor a confirmation, such as a menu action
 with its own buttons, is a plain `Modal`.
 
+Commissioner tools frames its pages with `ToolsArea`: a slim navy band naming
+the area, the league and the way back, then the tools as one row of link
+`PageTabs`. Manage keeps `AdminAreaLayout` until it moves to the same frame. A
+`FormPage` opens with its own `PageHeader`.
+
 Every page starts with one `PageHeader`: an optional `breadcrumbs` line, its title
-straight on the page (never in a card) with an optional `titleAside` such as an
-info icon, an optional `icon` or `avatar`, an optional `meta` fact line ("12 members
+straight on the page (never in a card) with an optional `titleAside` such as a
+`HelpTip`, an optional `icon` or `avatar`, an optional `meta` fact line ("12 members
 · 2 active contests"), and a right slot: `actions` for at most two small
 buttons, or `search` for the page's search box, which takes a full-width line on a
 phone. The `status` slot holds one compact chip, a status, count or summary
@@ -112,26 +134,40 @@ switching a page's views. A search box in the header feeds a `DataGrid` through
 its `searchTerm`.
 
 Text that is not a title (`Heading`) or the line over one (`Eyebrow`) is a `Text`:
-`variant` is `body`, `meta`, `caption`, `label`, `value` or `strong`, `tone`, `weight` and `size`
+`variant` is `body`, `meta`, `caption`, `label`, `value`, `strong` or `numeral` (a big
+place figure in the display face, in the colour of what it sits on, such as a podium step), `tone`, `weight` and `size`
 are optional (`size="inherit"` for a name inside a larger line), `truncate` cuts a long line,
-`as` picks `span` (the default), `p` or `div`, and `asChild` styles a `Link` in place. An icon
+`as` picks `span` (the default), `p` or `div`, and `asChild` styles a `Link` in place.
+The header's brand type is a `Text` too: `wordmark`, `nav` (its links), `displayLabel`
+(the "League" caption) and `display` (the league name), with the dark band's tones
+`onInverse` and `onInverseLabel`; `hoverTone` sets a link's hover colour. An icon
 is an `Icon` (`icon={Award} tone="muted"`), hidden from screen readers. Pages never
 type font size, weight, case or text colour classes (`rules/react-ui-rules.md` §5 *Theme And
 Styling Discipline*).
 
 A section of a page is a `SectionCard` (`rules/ux-rules.md` §12 item 13): its
-`SectionTitle` in a ruled bar (house uppercase italic, an optional `info` icon
-that holds the section's explanation, and an optional `trailing` slot for one
+`SectionTitle` in a ruled bar (house uppercase italic, an optional `help` (?)
+`HelpTip` that holds how the section works, and an optional `trailing` slot for one
 badge, count or filter), then its body, then an optional footer link
 (`SectionFooterLink`, blue small caps with an arrow). The body is unpadded for
 `SectionRows` of `SectionRow`s (a name, a muted fact line and note, one figure
-as `value`, one badge or action as `aside`; `to` makes the whole row a link) or
+as `value`, one badge or action as `aside`; `to` makes the whole row a link, and
+`control` puts a checkbox at its start with the whole row as its label) or
 a `SectionEmpty` italic line; `padded` gives forms, charts or metric grids the
 card's padding (`SectionBody` is that padded block on its own, beside rows, and
 `SectionNote` a muted line about the data inside it). `bare` keeps the title and rule without the box, and
-`tone="danger"` is a danger zone. The parts own their type and colours: pass
+`tone="danger"` is a danger zone. A section the league's plan leaves out is a
+`LockedSection`: the same title in the same place, a lock, one line naming the plan
+that includes it, and a "See plans" footer link. The parts own their type and colours: pass
 content, never text classes, and add a variant here for a new look. Don't
-hand-build a heading inside a `Tile`.
+hand-build a heading inside a `Tile`. A section inside another section's padded
+body titles itself one level down (`headingLevel={4}` under a level 3). Data is
+never a raw `ul`/`li`: rows are `SectionRow`s, and a list that is not rows is a
+named composite in its feature folder, such as `FeatureList` in `features/plans`
+for a plan's ticked or hidden features (`rules/ux-rules.md` §12 item 13). A box
+inside a section (a selected icon, the team you'll co-own) is a `Tile` with
+`radius="sm"`, the same 8px corner as `SectionCard` and `Notice`; a page never
+types `rounded-2xl`, `rounded-3xl` or `rounded-4xl` itself.
 
 A team's icon and name come from `features/teams`, not this folder, because they
 are a product piece: `TeamAvatar` draws the icon in its coloured square, and
@@ -145,13 +181,14 @@ days, hours and minutes as one timer. The event page kit (`StartButton`, `Landin
 `PhotoHero`, `StickyActionBar`, `NextUpCard`, `LandingDisclaimer`) is a product piece, so it
 lives in `features/event-pages/components`.
 
-`InfoPopover` keeps secondary facts out of a page's way: an icon button whose
-callout opens on mouse hover or on a tap, for a phone. It is the base the "show
-more" parts build on, never used on a page by itself. `DetailsPeek` is the (i) after
-the name of one thing (an entry, an event, a golfer): it opens a `PeekCard` after a
-short hover delay, so scanning a list does not flash every row, and mounts the card
-only when it opens, so a peek that reads data reads it then (`EntryDetailsPeek` in
-`features/contests` reads an entry's team and owners this way).
+Extra information is one of the four more-info pieces, chosen by the question it
+answers (`rules/ux-rules.md` §15 *Showing More*): `HelpTip` (?) says how something
+works, `DetailsPeek` (i) with its `PeekCard` says who or what one thing is,
+`ExpandableRow` opens a row's breakdown on a click, and `Notice` holds what the reader
+must know now. `InfoPopover` is their internal base and is not exported.
+`DetailsPeek` opens after a short hover delay, so scanning a list does not flash every
+row, and mounts its card only when it opens, so a peek that reads data reads it then
+(`EntryDetailsPeek` in `features/contests` reads an entry's team and owners this way).
 
 Feature pages should keep route-specific copy and generated-SDK calls local, but
 they should not duplicate header, grid-shell, detail/actions, or
@@ -179,7 +216,7 @@ success and error feedback, query invalidation, modal close behavior, optional
 navigation, and lifecycle logging so pages do not each re-create the same
 mutation ceremony.
 
-Use inline `Alert`, `ServerErrorBar`, or `FormModal` errors for blocking form
+Use inline `Notice`, `ServerErrorBar`, or `FormModal` errors for blocking form
 validation that the user must fix before submitting. Use mutation action toasts
 for completed create, update, lifecycle, copy, invite, and delete outcomes where
 the page can keep the user oriented after the mutation finishes. Avoid raw

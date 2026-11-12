@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState, type ReactNode } from "react";
 import { cn } from "./class-names";
-import { Alert } from "./alert";
+import { Notice } from "./notice";
 import { Button } from "./button";
 import { FileInput } from "./file-input";
 import { FormField, Textarea } from "./form-field";
@@ -217,15 +217,15 @@ export function BulkUploadPanel<TRow, TPreviewRow>({
       </FormField>
 
       {parseError ? (
-        <Alert tone="danger" data-testid={`${testId}-parse-error`}>
+        <Notice tone="danger" data-testid={`${testId}-parse-error`}>
           {parseError}
-        </Alert>
+        </Notice>
       ) : null}
 
       {previewError ? (
-        <Alert tone="danger" data-testid={`${testId}-preview-error`}>
+        <Notice tone="danger" data-testid={`${testId}-preview-error`}>
           {previewError}
-        </Alert>
+        </Notice>
       ) : null}
 
       <div className="flex flex-wrap gap-3">
@@ -251,18 +251,18 @@ export function BulkUploadPanel<TRow, TPreviewRow>({
       {previewRows ? (
         <div className="space-y-3" data-testid={`${testId}-preview-result`}>
           {unresolved > 0 ? (
-            <Alert tone="warning" data-testid={`${testId}-unresolved`}>
+            <Notice tone="warning" data-testid={`${testId}-unresolved`}>
               {unresolvedNotice(unresolved)}
-            </Alert>
+            </Notice>
           ) : null}
           {renderPreview(previewRows)}
         </div>
       ) : null}
 
       {applyError ? (
-        <Alert tone="danger" data-testid={`${testId}-apply-error`}>
+        <Notice tone="danger" data-testid={`${testId}-apply-error`}>
           {applyError}
-        </Alert>
+        </Notice>
       ) : null}
     </div>
   );

@@ -47,7 +47,7 @@ export function ChampionshipPage() {
     return <LoadingState body="Loading the championship..." />;
   }
   if (championshipQuery.isError || !championshipQuery.data) {
-    return <ErrorState body="We couldn't load this year's championship." testId="championship-error" />;
+    return <ErrorState body="We couldn't load this year's championship." onRetry={() => void championshipQuery.refetch()} testId="championship-error" />;
   }
   const championship = championshipQuery.data;
   const filteredSquadName = championship.standings.find((row) => row.squadId === filter?.squadId)?.squadName ?? '';
@@ -56,7 +56,7 @@ export function ChampionshipPage() {
   return (
     <div className="space-y-6" data-testid="championship">
       <SectionCard
-        info={championship.isOver ? undefined : `The trophy is presented on 1 January. Contests still live then count toward ${year + 1}.`}
+        help={championship.isOver ? undefined : `The trophy is presented on 1 January. Contests still live then count toward ${year + 1}.`}
         padded
         testId="championship-summary"
         title={championship.name}
@@ -91,7 +91,7 @@ export function ChampionshipPage() {
       </MetricGrid>
 
       <SectionCard
-        info={league ? (
+        help={league ? (
           <>
             Points table: {describePointsTable({ scale: league.cupPointsScale, customPoints: league.cupCustomPoints })}.
             Each contest&apos;s weight multiplies it, and a contest keeps the points it earned when it went final.
@@ -109,7 +109,7 @@ export function ChampionshipPage() {
       </SectionCard>
 
       <SectionCard
-        info={filter ? undefined : 'Tap a count in the table to see its contests.'}
+        help={filter ? undefined : 'Tap a count in the table to see its contests.'}
         title={describeContestResultFilter(filter, filteredSquadName, year)}
         titleTestId="championship-contests-heading"
         trailing={filter ? (
@@ -119,9 +119,9 @@ export function ChampionshipPage() {
         ) : null}
       >
         {contestsQuery.isError ? (
-          <ErrorState body="We couldn't load this year's contests." size="inline" testId="championship-contests-error" />
+          <ErrorState body="We couldn't load this year's contests." onRetry={() => void contestsQuery.refetch()} size="inline" testId="championship-contests-error" />
         ) : !contestsQuery.data ? (
-          <LoadingState body="Loading the year's contests..." size="inline" />
+          <LoadingState rows={3} body="Loading the year's contests..." size="inline" />
         ) : (
           <ChampionshipContestList
             contests={contestsQuery.data}

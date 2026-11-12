@@ -1,6 +1,7 @@
 import { Info } from "lucide-react";
 import type { ReactNode } from "react";
 import { DETAILS_PEEK_HOVER_DELAY_MS } from "./popover-timing";
+import { FactList } from "./fact-list";
 import { InfoPopover } from "./info-popover";
 import { SectionFooterLink } from "./section-card";
 
@@ -45,7 +46,7 @@ export function DetailsPeek({
   );
 }
 
-export type PeekFact = { label: string; value: ReactNode };
+export type PeekFact = { label: string; testId?: string; value: ReactNode };
 
 /**
  * A peek card: the thing's name, a short subtitle, two to four label and value facts, and an
@@ -70,20 +71,12 @@ export function PeekCard({
         <span className="font-display text-base font-bold text-foreground">{title}</span>
         {subtitle ? <span className="text-muted-foreground">{subtitle}</span> : null}
       </div>
-      <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 px-4 py-3">
-        {facts.map((fact) => (
-          <div className="contents" key={fact.label}>
-            <dt className="text-muted-foreground">{fact.label}</dt>
-            <dd className="m-0 font-semibold text-foreground">{fact.value}</dd>
-          </div>
-        ))}
-      </dl>
+      <FactList
+        className="px-4 py-2"
+        density="compact"
+        facts={facts.map((fact) => ({ id: fact.label, label: fact.label, testId: fact.testId, value: fact.value }))}
+      />
       {link ? <SectionFooterLink label={link.label} testId={link.testId} to={link.to} /> : null}
     </div>
   );
-}
-
-/** A peek card's stand-in while its data loads, or when it could not be read. */
-export function PeekMessage({ children, testId }: { children: ReactNode; testId?: string }) {
-  return <p className="px-4 py-3 text-sm italic text-muted-foreground" data-testid={testId}>{children}</p>;
 }

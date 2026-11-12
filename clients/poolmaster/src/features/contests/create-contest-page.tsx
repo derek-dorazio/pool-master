@@ -48,7 +48,7 @@ import { SquaresGamePicker } from './squares-game-picker';
 import { useSquaresGameChoices } from './use-squares-game-choices';
 import { STAT_POOL_STARS, statPoolContestName, statPoolScoringLine } from './scoring-family-ui/stat-pool-copy';
 import {
-  Alert,
+  Notice,
   ChoiceCard,
   ErrorState,
   Eyebrow,
@@ -56,6 +56,7 @@ import {
   FormPage,
   InlineError,
   Input,
+  LoadingState,
   formatCount,
   formatNumber,
   useDisplayPreferences,
@@ -650,9 +651,9 @@ export function CreateContestPage() {
   if (templatesQuery.isError) {
     return (
       <ErrorState
-        body="Try again in a moment."
+        body="We couldn't load this contest's setup."
+        onRetry={() => void templatesQuery.refetch()}
         testId="create-contest-page-error"
-        title="We couldn't load this contest's setup."
       />
     );
   }
@@ -670,7 +671,7 @@ export function CreateContestPage() {
   return (
     <FormPage
       cancelTo={buildLeagueAdminContestsPath(league.leagueCode)}
-      description="Only commissioners see it until you open it to the league."
+      help="Only commissioners see it until you open it to the league."
       errorMessage={errorMessage}
       isPending={createMutation.isPending}
       // The event's presets are still loading: a contest sent now would skip its default preset.
@@ -706,13 +707,13 @@ export function CreateContestPage() {
       >
         <SportPicker onChange={selectSport} value={sport} />
         {eventsQuery.isLoading ? (
-          <p className="text-sm text-muted-foreground" data-testid="create-contest-events-loading">
-            Loading events...
-          </p>
+          <LoadingState body="Loading events..." rows={3} testId="create-contest-events-loading" />
         ) : eventsQuery.isError ? (
-          <Alert tone="danger">
-            We couldn&apos;t load {sportDefinition.name.toLowerCase()} events. Try again in a moment.
-          </Alert>
+          <ErrorState
+            body={`We couldn't load ${sportDefinition.name.toLowerCase()} events.`}
+            onRetry={() => void eventsQuery.refetch()}
+            testId="create-contest-events-error"
+          />
         ) : !contestEvents.length ? (
           <NoEligibleEventsAlert sport={sportDefinition} />
         ) : (
@@ -735,7 +736,7 @@ export function CreateContestPage() {
           </p>
         ) : null}
         {sportLeagueCap !== null && lockedEventIds.length ? (
-          <Alert data-testid="create-contest-sport-leagues-locked">
+          <Notice data-testid="create-contest-sport-leagues-locked">
             Your plan allows {formatCount(sportLeagueCap, 'sports league', locale)} a year, so events in other sports
             leagues are locked for a year whose contests already use {sportLeagueCap === 1 ? 'it' : 'them all'}.
             {' '}
@@ -746,7 +747,7 @@ export function CreateContestPage() {
             >
               Change plan
             </Link>
-          </Alert>
+          </Notice>
         ) : null}
         {selectionType === SelectionType.SQUARES && selectedEvent ? (
           <SquaresGamePicker

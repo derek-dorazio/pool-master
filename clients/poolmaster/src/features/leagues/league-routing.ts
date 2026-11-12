@@ -5,6 +5,15 @@ import { readCookie } from '@/lib/cookies';
 
 export const RECENT_LEAGUE_COOKIE = 'poolmaster_recent_league';
 
+/**
+ * A league's full web address on this site, for people to open or share. The code is shown in
+ * lower case, which reads better in a message; the league page takes it in any case
+ * (`CanonicalLeagueCode`).
+ */
+export function buildLeagueWebAddress(leagueCode: string) {
+  return `${window.location.origin}${buildLeaguePath(leagueCode.toLowerCase())}`;
+}
+
 export function buildLeaguePath(leagueCode: string) {
   return `/league/${leagueCode}`;
 }
@@ -153,8 +162,22 @@ export function buildLeagueAdminInvitesPath(leagueCode: string) {
   return `/league/${leagueCode}/admin/invites`;
 }
 
+/** League settings with General's Edit dialog open; the query keeps it open on reload and Back closes it. */
+export const LEAGUE_SETTINGS_EDIT_PARAM = 'edit';
+
+/**
+ * Router state the in-app Edit link carries, so closing the dialog steps Back over the entry the
+ * link pushed instead of leaving a second League settings entry in history. A dialog reached by
+ * an old link or a reload has no such entry to step over.
+ */
+export const LEAGUE_SETTINGS_EDIT_OPENED_IN_APP_STATE = { leagueSettingsEditOpenedInApp: true } as const;
+
+export function isLeagueSettingsEditOpenedInApp(state: unknown): boolean {
+  return typeof state === 'object' && state !== null && 'leagueSettingsEditOpenedInApp' in state;
+}
+
 export function buildLeagueAdminEditPath(leagueCode: string) {
-  return `/league/${leagueCode}/admin/edit`;
+  return `/league/${leagueCode}/admin?${LEAGUE_SETTINGS_EDIT_PARAM}=general`;
 }
 
 /** The league's championship name and points table (#841, #863). */

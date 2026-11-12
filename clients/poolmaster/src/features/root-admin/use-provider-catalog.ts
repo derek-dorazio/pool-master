@@ -90,6 +90,7 @@ export function useProviderCatalog(params: {
     events: catalogQuery.data ?? [],
     isLoading: catalogQuery.isLoading,
     isError: catalogQuery.isError,
+    refetch: catalogQuery.refetch,
     error: catalogQuery.error,
   };
 }

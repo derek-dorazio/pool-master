@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getProviderSyncRun, listProviderSyncRuns } from '@/lib/api';
 import {
-  Alert,
+  Notice,
   Button,
   DataGrid,
   formatDateTimeDisplay,
@@ -430,21 +430,21 @@ export function RootAdminSyncDashboardPage() {
         ) : null}
 
         {providersQuery.isError ? (
-          <Alert className="mt-4">
+          <Notice className="mt-4">
             Provider health context is temporarily unavailable, but sync runs are
             still shown below.
-          </Alert>
+          </Notice>
         ) : null}
       </SectionCard>
 
       <SectionCard bare title="Recent runs">
         {syncRunsQuery.isError ? (
-          <Alert tone="danger">
+          <Notice tone="danger">
             {extractErrorMessage(
               syncRunsQuery.error,
               { fallback: 'We could not load provider sync runs right now.' },
             )}
-          </Alert>
+          </Notice>
         ) : null}
 
         {!syncRunsQuery.isError ? (
@@ -477,9 +477,9 @@ export function RootAdminSyncDashboardPage() {
                   {payloadWarnings.length > 0 ? (
                     <div className="mt-3 space-y-2">
                       {payloadWarnings.map((warning, index) => (
-                        <Alert key={`${warning.code}-${index}`} tone="warning">
+                        <Notice key={`${warning.code}-${index}`} tone="warning">
                           {warning.message}
-                        </Alert>
+                        </Notice>
                       ))}
                     </div>
                   ) : null}
@@ -503,12 +503,12 @@ export function RootAdminSyncDashboardPage() {
               </TabsContent>
               <TabsContent className="mt-4" value="details">
                 {runDetailQuery.isError ? (
-                  <Alert className="mb-4" tone="danger">
+                  <Notice className="mb-4" tone="danger">
                     {extractErrorMessage(
                       runDetailQuery.error,
                       { fallback: 'We could not load this run\'s details right now.' },
                     )}
-                  </Alert>
+                  </Notice>
                 ) : null}
                 {runDetailQuery.isPending ? (
                   <p className="text-sm text-muted-foreground">Loading details…</p>

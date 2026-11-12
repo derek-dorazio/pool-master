@@ -253,4 +253,38 @@ describe('TeamOwnerActionMenu', () => {
     const dialog = await screen.findByRole('dialog', { name: 'Remove owner' });
     expect(dialog).toHaveAccessibleDescription(expect.stringContaining('will stop being an owner and will leave this league'));
   });
+
+  it('confirms a removal with Cancel and a red Remove button, and Cancel closes without removing', async () => {
+    renderMenu();
+
+    await openAction('remove');
+
+    const confirm = await screen.findByTestId('team-home-owner-actions-confirm-remove-team-1-user-2');
+    expect(confirm).toHaveClass('text-destructive');
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    await waitFor(() =>
+      expect(screen.queryByTestId('team-home-owner-actions-dialog-team-1-user-2')).not.toBeInTheDocument(),
+    );
+    expect(removeSquadOwnerMock).not.toHaveBeenCalled();
+  });
+
+  it('confirms a promotion with Cancel and a primary Promote button', async () => {
+    renderMenu();
+
+    await openAction('promote');
+
+    expect(await screen.findByTestId('team-home-owner-actions-confirm-promote-team-1-user-2')).not.toHaveClass('text-destructive');
+    expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument();
+  });
+
+  it('gives a plain owner who is the last one only a Close button, since there is nothing to confirm', async () => {
+    renderMenu({ activeOwnerCount: 1, canManageLeagueRole: false });
+
+    await openAction('remove');
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Close' }));
+    await waitFor(() =>
+      expect(screen.queryByTestId('team-home-owner-actions-dialog-team-1-user-2')).not.toBeInTheDocument(),
+    );
+  });
 });

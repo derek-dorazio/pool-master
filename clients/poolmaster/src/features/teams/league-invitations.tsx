@@ -15,11 +15,12 @@ import {
 import { formatUserName } from '@/features/account/user-name';
 import { buildInvitePath } from '@/features/leagues/league-routing';
 import {
-  Alert,
+  Notice,
   Button,
   CopyButton,
   DataGrid,
   DateDisplay,
+  ErrorState,
   FormField,
   InlineError,
   Input,
@@ -183,6 +184,7 @@ export function LeagueInvitations({ isInactiveLeague, leagueId, membersByUserId 
         isLoading={invitationsQuery.isLoading}
         leagueId={leagueId}
         membersByUserId={membersByUserId}
+        onRetry={() => void invitationsQuery.refetch()}
       />
     </div>
   );
@@ -266,11 +268,11 @@ function InvitePeople({ invitationsKey, isInactiveLeague, joinLink, leagueId }: 
               </Button>
             </div>
           </FormField>
-          {inviteResult ? <Alert tone="success">{inviteResult}</Alert> : null}
+          {inviteResult ? <Notice tone="success">{inviteResult}</Notice> : null}
           {sendInviteMutation.isError ? (
-            <Alert tone="danger">
+            <Notice tone="danger">
               {extractErrorMessage(sendInviteMutation.error, { fallback: 'We could not send that invitation.' })}
-            </Alert>
+            </Notice>
           ) : null}
         </form>
 
@@ -314,9 +316,9 @@ function InvitePeople({ invitationsKey, isInactiveLeague, joinLink, leagueId }: 
             </div>
           </FormField>
           {inviteLinkMutation.isError ? (
-            <Alert tone="danger">
+            <Notice tone="danger">
               {extractErrorMessage(inviteLinkMutation.error, { fallback: 'We could not create a join link.' })}
-            </Alert>
+            </Notice>
           ) : null}
           {isInactiveLeague ? (
             <Text as="p" data-testid="league-invites-inactive" variant="meta">
@@ -337,6 +339,7 @@ type WaitingInvitesProps = {
   isLoading: boolean;
   leagueId: string;
   membersByUserId: Map<string, LeagueMembershipDto>;
+  onRetry: () => void;
 };
 
 /** "Waiting on an answer": the invites not yet accepted or cancelled, searchable and paged. */
@@ -348,6 +351,7 @@ function WaitingInvites({
   isLoading,
   leagueId,
   membersByUserId,
+  onRetry,
 }: WaitingInvitesProps) {
   const logger = getLogger().child({ feature: 'league-invitations' });
   const [filter, setFilter] = useState<InviteFilter>('pending');
@@ -525,16 +529,14 @@ function WaitingInvites({
   return (
     <SectionCard
       bare
-      info="Accepted invites leave this list; the new member shows on Members."
+      help="Accepted invites leave this list; the new member shows on Members."
       testId="league-waiting-invites"
       title="Waiting on an answer"
     >
       {isLoading ? (
-        <LoadingState body="Loading invites..." size="inline" />
+        <LoadingState body="Loading invites..." rows={2} size="plain" testId="league-invitations-loading" />
       ) : isError ? (
-        <InlineError testId="league-invitations-error">
-          We couldn&apos;t load pending invites right now.
-        </InlineError>
+        <ErrorState body="We couldn't load pending invites right now." onRetry={onRetry} size="plain" testId="league-invitations-error" />
       ) : (
         <div className="grid gap-3">
           <SegmentedControl

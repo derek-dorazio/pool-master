@@ -1,7 +1,7 @@
 import { CircleCheck, CircleDashed, EyeOff } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { ContestEntryStatus } from '@poolmaster/shared/domain';
-import { formatDateTimeDisplay, InfoPopover, useDisplayPreferences } from '@/features/shared/ui';
+import { DetailsPeek, formatDateTimeDisplay, Icon, PeekCard, useDisplayPreferences, type PeekFact } from '@/features/shared/ui';
 import { CONTEST_ENTRY_STATUS_LABELS } from './contest-status';
 
 const HIDDEN_STATUS_LABEL = 'Hidden until the event starts';
@@ -13,12 +13,15 @@ const STATUS_ICONS: Record<ContestEntryStatus, ReactNode> = {
 
 export type EntryStatusFact = { id: string; label: string; value: ReactNode };
 
+const STATUS_TEST_ID = 'contest-entry-status';
+
 /**
- * An entry page's status, kept beside the entry's name so the page can open on its picks: an
- * icon for submitted or not, and a callout with the status, the contest's phase, any facts the
+ * An entry page's status, kept beside the entry's name so the page can open on its picks: the
+ * Details pattern (`rules/ux-rules.md` §15 *Showing More*) with the entry's status glyph in place
+ * of the (i). Its peek card leads with the status and the contest's phase, then any facts the
  * page adds and the entry's dates. `status` is null while another team's entry is hidden.
  */
-export function EntryStatusCallout({
+export function EntryStatusPeek({
   entry,
   facts = [],
   phase,
@@ -34,28 +37,26 @@ export function EntryStatusCallout({
 }) {
   const displayPreferences = useDisplayPreferences();
   const statusLabel = status ? CONTEST_ENTRY_STATUS_LABELS[status] : HIDDEN_STATUS_LABEL;
+  // The card leads with the status and the contest's phase; the entry's name is right above it.
+  // Short labels keep each date on one line on a phone.
   const lines: EntryStatusFact[] = [
-    { id: 'entry-status', label: 'Entry status', value: statusLabel },
-    { id: 'contest-phase', label: 'Contest phase', value: phase },
     ...facts,
     { id: 'created', label: 'Created', value: formatDateTimeDisplay(entry?.createdAt, displayPreferences) },
-    { id: 'last-updated', label: 'Last updated', value: formatDateTimeDisplay(entry?.updatedAt, displayPreferences) },
+    { id: 'last-updated', label: 'Updated', value: formatDateTimeDisplay(entry?.updatedAt, displayPreferences) },
   ];
+  const peekFacts: PeekFact[] = lines.map((line) => ({ label: line.label, testId: `${STATUS_TEST_ID}-${line.id}`, value: line.value }));
 
   return (
-    <InfoPopover
-      icon={status ? STATUS_ICONS[status] : <EyeOff aria-hidden className="size-6 text-muted-foreground" />}
+    <DetailsPeek
+      icon={status ? STATUS_ICONS[status] : <Icon icon={EyeOff} size={24} tone="muted" />}
       label={`Entry status: ${statusLabel}`}
-      testId="contest-entry-status"
+      testId={STATUS_TEST_ID}
     >
-      <dl className="space-y-2 text-sm">
-        {lines.map((fact) => (
-          <div className="flex justify-between gap-4" data-testid={`contest-entry-status-${fact.id}`} key={fact.id}>
-            <dt className="shrink-0 text-muted-foreground">{fact.label}</dt>
-            <dd className="text-right font-medium text-foreground">{fact.value}</dd>
-          </div>
-        ))}
-      </dl>
-    </InfoPopover>
+      <PeekCard
+        facts={peekFacts}
+        subtitle={<span data-testid={`${STATUS_TEST_ID}-contest-phase`}>{phase}</span>}
+        title={<span data-testid={`${STATUS_TEST_ID}-entry-status`}>{statusLabel}</span>}
+      />
+    </DetailsPeek>
   );
 }

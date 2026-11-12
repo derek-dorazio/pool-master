@@ -41,11 +41,11 @@ export function ContestRow({
 }) {
   const date = completedAt ? (
     <span data-testid={`${testId}-date`}>
-      Finished <DateDisplay className="text-muted-foreground" timeStyle={null} value={completedAt} />
+      Finished <DateDisplay tone="inherit" timeStyle={null} value={completedAt} />
     </span>
   ) : startsAt ? (
     <span data-testid={`${testId}-date`}>
-      Starts <DateDisplay className="text-muted-foreground" value={startsAt} />
+      Starts <DateDisplay tone="inherit" value={startsAt} />
     </span>
   ) : null;
   const facts = date || details ? (

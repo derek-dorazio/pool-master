@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -6,23 +6,19 @@ import { useQueryClient } from "@tanstack/react-query";
 import { createLeague } from "@/lib/api";
 import { getLogger } from "@/lib/logger";
 import {
-  Button,
-  Chip,
   FormField,
+  FormModal,
   Input,
-  Modal,
   Textarea,
-  Tile,
+  WebAddressBox,
 } from "@/features/shared/ui";
-import { rememberRecentLeagueCode } from "./league-routing";
+import { buildLeagueWebAddress, rememberRecentLeagueCode } from "./league-routing";
 import { suggestLeagueCode } from "./create-league-form";
 import { seedLeagueContext, syncLeagueCaches } from "./league-cache";
-import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
+import { ApiError, hasErrorCode, throwApiError } from '@/lib/errors';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
 const LEAGUE_CODE_PATTERN = /^[A-Z0-9]{3,16}$/;
-const WIZARD_STEP_DETAILS = "details";
-const WIZARD_STEP_REVIEW = "review";
 
 const createLeagueFormSchema = z.object({
   name: z
@@ -35,7 +31,7 @@ const createLeagueFormSchema = z.object({
     .trim()
     .regex(
       LEAGUE_CODE_PATTERN,
-      "League code must be 3 to 16 uppercase letters or numbers.",
+      "Use 3 to 16 letters or numbers.",
     ),
   description: z
     .string()
@@ -57,7 +53,7 @@ type CreateLeagueModalProps = {
   isOpen: boolean;
   onClose: () => void;
   onCreated: (leagueCode: string) => void;
-  /** What comes once the league exists, when the league is a step on the way to it (#1008). */
+  /** What comes once the league exists, when the league is a step on the way to it (#1008): the dialog's one line. */
   nextStep?: string;
 };
 
@@ -71,9 +67,6 @@ export function CreateLeagueModal({
     feature: "create-league-modal",
   });
   const queryClient = useQueryClient();
-  const [step, setStep] = useState<
-    typeof WIZARD_STEP_DETAILS | typeof WIZARD_STEP_REVIEW
-  >(WIZARD_STEP_DETAILS);
   const hasEditedLeagueCodeRef = useRef(false);
   const form = useForm<CreateLeagueFormValues>({
     resolver: zodResolver(createLeagueFormSchema),
@@ -86,8 +79,6 @@ export function CreateLeagueModal({
   const registeredName = form.register("name");
   const registeredDescription = form.register("description");
   const leagueCode = form.watch("leagueCode");
-  const description = form.watch("description");
-  const name = form.watch("name");
 
   function seedLeagueCodeFromName(nameValue: string) {
     if (hasEditedLeagueCodeRef.current) {
@@ -152,7 +143,6 @@ export function CreateLeagueModal({
       seedLeagueContext(queryClient, context);
       rememberRecentLeagueCode(league.leagueCode);
       hasEditedLeagueCodeRef.current = false;
-      setStep(WIZARD_STEP_DETAILS);
       form.reset();
       onCreated(league.leagueCode);
     },
@@ -184,41 +174,10 @@ export function CreateLeagueModal({
       return;
     }
 
-    setStep(WIZARD_STEP_DETAILS);
     form.reset();
     createLeagueMutation.reset();
     hasEditedLeagueCodeRef.current = false;
     onClose();
-  }
-
-  async function handleNextStep() {
-    seedLeagueCodeFromName(form.getValues("name"));
-    const isValid = await form.trigger(["name", "leagueCode", "description"]);
-    if (isValid) {
-      logger.info(
-        {
-          action: "league.create.reviewReady",
-          data: {
-            leagueCode: form.getValues("leagueCode"),
-            hasDescription: Boolean(form.getValues("description")?.trim()),
-          },
-        },
-        "League create flow advanced to review step",
-      );
-      setStep(WIZARD_STEP_REVIEW);
-    } else {
-      logger.warn(
-        {
-          action: "league.create.reviewBlocked",
-          data: {
-            hasNameError: Boolean(form.formState.errors.name),
-            hasLeagueCodeError: Boolean(form.formState.errors.leagueCode),
-            hasDescriptionError: Boolean(form.formState.errors.description),
-          },
-        },
-        "League create flow could not advance to review",
-      );
-    }
   }
 
   async function handleSubmit(values: CreateLeagueFormValues) {
@@ -229,229 +188,104 @@ export function CreateLeagueModal({
     }
   }
 
+  const isTakenAddress =
+    hasErrorCode(createLeagueMutation.error, "LEAGUE_CODE_CONFLICT") ||
+    hasErrorCode(createLeagueMutation.error, "LEAGUE_CODE_RESERVED");
+  const leagueCodeError = form.formState.errors.leagueCode?.message
+    ?? (isTakenAddress ? "That web address is taken. Try another." : undefined);
+
   if (!isOpen) {
     return null;
   }
 
   return (
-    <Modal
-      closeLabel="Close create league modal"
-      description={
-        <>
-          Create a private league with a bookmarkable league code, then review
-          the details before you launch.
-        </>
-      }
-      descriptionId="create-league-modal-description"
-      isCloseDisabled={createLeagueMutation.isPending}
-      onClose={handleClose}
-      onOpenChange={() => undefined}
+    <FormModal
+      description={nextStep ? `Then you'll set up ${nextStep}.` : undefined}
+      error={createLeagueMutation.isError && !isTakenAddress ? createLeagueMutation.error : null}
+      errorFallback="We could not create your league. Please try again."
+      errorTitle="League not created"
+      isPending={createLeagueMutation.isPending}
+      onCancel={handleClose}
+      onOpenChange={(open) => {
+        if (!open) handleClose();
+      }}
+      onSave={() => void form.handleSubmit(handleSubmit)()}
       open={isOpen}
-      size="md"
+      pendingLabel="Creating..."
+      saveLabel="Create league"
+      saveTestId="create-league-submit"
       testId="create-league-modal"
       title="Create your league"
-      titleId="create-league-modal-title"
     >
-      <div className="space-y-3">
-        <Chip>
-          Commissioner setup
-        </Chip>
-        <div className="flex items-center gap-2 text-xs font-medium uppercase text-muted-foreground">
-          <span
-            className={`rounded-full border px-3 py-1 ${
-              step === WIZARD_STEP_DETAILS
-                ? "border-primary bg-primary/10 text-foreground"
-                : "border-border"
-            }`}
-          >
-            1 Details
-          </span>
-          <span
-            className={`rounded-full border px-3 py-1 ${
-              step === WIZARD_STEP_REVIEW
-                ? "border-primary bg-primary/10 text-foreground"
-                : "border-border"
-            }`}
-          >
-            2 Review
-          </span>
-        </div>
-        {nextStep ? (
-          <p className="rounded-lg bg-muted px-3 py-2 text-sm text-foreground" data-testid="create-league-next-step">
-            {`Next: ${nextStep}`}
-          </p>
-        ) : null}
-      </div>
-
-      <form
-        className="mt-6 space-y-5"
-        onSubmit={(e) => void form.handleSubmit(handleSubmit)(e)}
-      >
-        {step === WIZARD_STEP_DETAILS ? (
-          <>
-            <FormField
-              error={form.formState.errors.name?.message}
-              id="create-league-name"
-              label="League name"
-            >
-              <Input
-                data-testid="create-league-name"
-                disabled={createLeagueMutation.isPending}
-                id="create-league-name"
-                {...registeredName}
-                onBlur={(event) => {
-                  void registeredName.onBlur(event);
-                  seedLeagueCodeFromName(event.target.value);
-                }}
-                placeholder="Big Dawgs"
-                type="text"
-              />
-            </FormField>
-
-            <FormField
-              error={form.formState.errors.leagueCode?.message}
-              helperText="Suggested from the league name, but fully editable before you create."
-              id="create-league-code"
-              label="League code"
-              labelAddon="Used in your league URL"
-            >
-              <Input
-                className="font-mono uppercase"
-                data-testid="create-league-code"
-                disabled={createLeagueMutation.isPending}
-                id="create-league-code"
-                onChange={(event) => {
-                  hasEditedLeagueCodeRef.current = true;
-                  form.setValue(
-                    "leagueCode",
-                    normalizeLeagueCode(event.target.value),
-                    {
-                      shouldDirty: true,
-                      shouldValidate: true,
-                    },
-                  );
-                }}
-                placeholder="BIGDAWGS"
-                type="text"
-                value={leagueCode}
-              />
-            </FormField>
-
-            <FormField
-              error={form.formState.errors.description?.message}
-              helperText="Optional. You can update league details after creation."
-              id="create-league-description"
-              label="Description"
-            >
-              <Textarea
-                data-testid="create-league-description"
-                disabled={createLeagueMutation.isPending}
-                id="create-league-description"
-                {...registeredDescription}
-                placeholder="Weekend pool for the neighborhood group chat."
-              />
-            </FormField>
-          </>
-        ) : (
-          <section className="space-y-4">
-            <Tile padding="sm" radius="lg" variant="subtle">
-              <div className="text-xs font-medium uppercase text-muted-foreground">
-                Review
-              </div>
-              <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                <div>
-                  <div className="text-xs uppercase text-muted-foreground">
-                    League name
-                  </div>
-                  <div className="mt-1 text-base font-medium">{name}</div>
-                </div>
-                <div>
-                  <div className="text-xs uppercase text-muted-foreground">
-                    League code
-                  </div>
-                  <div className="mt-1 font-mono text-base font-medium uppercase">
-                    {leagueCode}
-                  </div>
-                </div>
-              </div>
-              {description?.trim() ? (
-                <div className="mt-4">
-                  <div className="text-xs uppercase text-muted-foreground">
-                    Description
-                  </div>
-                  <div className="mt-1 text-sm text-foreground">
-                    {description}
-                  </div>
-                </div>
-              ) : null}
-            </Tile>
-
-            <Tile
-              className="bg-muted/30 text-sm text-muted-foreground"
-              padding="sm"
-              radius="lg"
-            >
-              Your league is private. After it is created, invite members from
-              League Home by email or with a shareable invite link.
-            </Tile>
-          </section>
-        )}
-
-        {createLeagueMutation.isError ? (
-          <div
-            className="rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"
-            role="alert"
-          >
-            {extractErrorMessage(createLeagueMutation.error, { fallback: 'We could not create your league. Please try again.' })}
-          </div>
-        ) : null}
-
-        <div className="flex flex-wrap justify-end gap-3">
-          <Button
+      <div className="space-y-5">
+        <FormField
+          error={form.formState.errors.name?.message}
+          id="create-league-name"
+          label="League name"
+        >
+          <Input
+            data-testid="create-league-name"
             disabled={createLeagueMutation.isPending}
-            onClick={handleClose}
-            type="button"
-            variant="secondary"
-          >
-            Cancel
-          </Button>
+            id="create-league-name"
+            {...registeredName}
+            onBlur={(event) => {
+              void registeredName.onBlur(event);
+              seedLeagueCodeFromName(event.target.value);
+            }}
+            placeholder="Big Dawgs"
+            type="text"
+          />
+        </FormField>
 
-          {step === WIZARD_STEP_DETAILS ? (
-            <Button
-              data-testid="create-league-next"
+        <div className="space-y-3">
+          <FormField
+            error={leagueCodeError}
+            help="Your league's address on the site, suggested from its name. Letters and numbers only. It can't be changed after the league is created."
+            id="create-league-code"
+            label="League web address"
+          >
+            <Input
+              className="font-mono uppercase"
+              data-testid="create-league-code"
               disabled={createLeagueMutation.isPending}
-              onClick={() => {
-                void handleNextStep();
+              id="create-league-code"
+              onChange={(event) => {
+                hasEditedLeagueCodeRef.current = true;
+                if (isTakenAddress) createLeagueMutation.reset();
+                form.setValue(
+                  "leagueCode",
+                  normalizeLeagueCode(event.target.value),
+                  {
+                    shouldDirty: true,
+                    shouldValidate: true,
+                  },
+                );
               }}
-              type="button"
-            >
-              Next
-            </Button>
-          ) : (
-            <>
-              <Button
-                data-testid="create-league-back"
-                disabled={createLeagueMutation.isPending}
-                onClick={() => setStep(WIZARD_STEP_DETAILS)}
-                type="button"
-                variant="secondary"
-              >
-                Back
-              </Button>
-              <Button
-                data-testid="create-league-submit"
-                disabled={createLeagueMutation.isPending}
-                isLoading={createLeagueMutation.isPending}
-                type="submit"
-              >
-                {createLeagueMutation.isPending
-                  ? "Creating league..."
-                  : "Create league"}
-              </Button>
-            </>
-          )}
+              placeholder="BIGDAWGS"
+              type="text"
+              value={leagueCode}
+            />
+          </FormField>
+          {leagueCode ? (
+            <WebAddressBox isLive={false} notLiveHint="Opens once the league is created" testId="create-league-address" url={buildLeagueWebAddress(leagueCode)} />
+          ) : null}
         </div>
-      </form>
-    </Modal>
+
+        <FormField
+          error={form.formState.errors.description?.message}
+          id="create-league-description"
+          label="Description"
+          optional
+        >
+          <Textarea
+            data-testid="create-league-description"
+            disabled={createLeagueMutation.isPending}
+            id="create-league-description"
+            {...registeredDescription}
+            placeholder="Weekend pool for the neighborhood group chat."
+          />
+        </FormField>
+      </div>
+    </FormModal>
   );
 }

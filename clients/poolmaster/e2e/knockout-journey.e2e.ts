@@ -376,7 +376,6 @@ test('act 2: a new commissioner creates a basketball contest on the playoffs, on
     await page.getByTestId('welcome-create-league').click();
     await page.getByTestId('create-league-code').fill(run.leagueCode);
     await page.getByTestId('create-league-name').fill(run.leagueName);
-    await page.getByTestId('create-league-next').click();
     const created = await submitAndRead<{ league: { id: string } }>(page, 'create-league-submit', 'POST', '/api/v1/leagues');
     state.leagueId = created.league.id;
     await expect(page.getByTestId('league-home')).toBeVisible();

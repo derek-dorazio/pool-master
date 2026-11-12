@@ -1,5 +1,5 @@
 import type { SquadDto } from '@/lib/api';
-import { Alert, ConfirmDialog } from '@/features/shared/ui';
+import { Notice, ConfirmDialog } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
 import { type ActiveTeamDialog, TEAM_PAGE_FALLBACK_ERROR } from './my-team-shared';
 import type { MyTeamLifecycle } from './use-my-team-lifecycle';
@@ -11,13 +11,13 @@ export function MyTeamLifecycleNotices({ lifecycle }: { lifecycle: MyTeamLifecyc
   return (
     <>
       {teamInactivationNotice ? (
-        <Alert tone="success">{teamInactivationNotice}</Alert>
+        <Notice tone="success">{teamInactivationNotice}</Notice>
       ) : null}
       {inactivateTeamMutation.isError ? (
-        <Alert tone="danger">{extractErrorMessage(inactivateTeamMutation.error, { fallback: TEAM_PAGE_FALLBACK_ERROR })}</Alert>
+        <Notice tone="danger">{extractErrorMessage(inactivateTeamMutation.error, { fallback: TEAM_PAGE_FALLBACK_ERROR })}</Notice>
       ) : null}
       {deleteTeamMutation.isError ? (
-        <Alert tone="danger">{extractErrorMessage(deleteTeamMutation.error, { fallback: TEAM_PAGE_FALLBACK_ERROR })}</Alert>
+        <Notice tone="danger">{extractErrorMessage(deleteTeamMutation.error, { fallback: TEAM_PAGE_FALLBACK_ERROR })}</Notice>
       ) : null}
     </>
   );

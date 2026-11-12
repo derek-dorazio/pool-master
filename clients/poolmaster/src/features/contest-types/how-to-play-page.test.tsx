@@ -381,7 +381,8 @@ describe('How to Play', () => {
     listContestConfigTemplatesMock.mockResolvedValue({ error: { error: { code: 'INTERNAL_ERROR', message: 'boom' } }, response: { status: 500 } });
     renderPage();
 
-    expect(await screen.findByText('Contest types unavailable')).toBeInTheDocument();
+    expect(await screen.findByText("We couldn't load the contest types.")).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
   });
 
   it('says the contest types could not be loaded when the sport league list fails', async () => {
@@ -389,6 +390,7 @@ describe('How to Play', () => {
     listSportLeaguesMock.mockResolvedValue({ error: { error: { code: 'INTERNAL_ERROR', message: 'boom' } }, response: { status: 500 } });
     renderPage();
 
-    expect(await screen.findByText('Contest types unavailable')).toBeInTheDocument();
+    expect(await screen.findByText("We couldn't load the contest types.")).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
   });
 });

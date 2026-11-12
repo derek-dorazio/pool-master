@@ -3,7 +3,7 @@ import { useCallback, useMemo } from 'react';
 import { Link, Navigate, useParams } from 'react-router';
 import type { CupDto } from '@/lib/api';
 import { buildLeagueCupSquadPath, buildLeaguePointsRacePath, buildLeagueTrophyCasePath } from '@/features/leagues/league-routing';
-import { Chip, ErrorState, formatCupPoints, formatDateDisplay, formatNumber, formatPlace, LoadingState, MetricGrid, MetricTile, SectionCard, SectionEmpty, SectionNote, useDisplayPreferences } from '@/features/shared/ui';
+import { Chip, ErrorState, formatCupPoints, formatDateDisplay, formatNumber, formatPlace, LoadingState, MetricGrid, MetricTile, SectionCard, SectionEmpty, useDisplayPreferences } from '@/features/shared/ui';
 import { hasPlanFeature } from '@/features/plans/plan-features';
 import { PlanLockedNotice } from '@/features/plans/plan-locked-notice';
 import { buildPodium } from './championship-view';
@@ -118,7 +118,7 @@ export function PointsRacePage() {
     return <LoadingState body="Loading the points race..." />;
   }
   if (cupsQuery.isError) {
-    return <ErrorState body="We couldn't load this year's cups." testId="points-race-error" />;
+    return <ErrorState body="We couldn't load this year's cups." onRetry={() => void cupsQuery.refetch()} testId="points-race-error" />;
   }
   // The chips offer the cups on show; a link straight to another cup still opens it.
   const allCups = cupsQuery.data ?? [];
@@ -152,7 +152,10 @@ export function PointsRacePage() {
     <div className="space-y-6" data-testid="points-race">
       <CupChips cups={cups.includes(cup) ? cups : [...cups, cup]} leagueCode={leagueCode} selectedId={cup.sportLeagueId} year={year} />
       <SectionCard
-        info={isSeasonOver && !isCrowned ? 'This cup hasn\'t been crowned, so it has no trophies yet. These are its final standings.' : undefined}
+        help={isSeasonOver && !isCrowned
+          ? 'This cup hasn\'t been crowned, so it has no trophies yet. These are its final standings.'
+          // How to read the greyed projected column, while contests are live.
+          : projection && projectedBySquad ? describeProjection(projection) : undefined}
         padded
         title={cup.name}
         titleTestId="points-race-cup-title"
@@ -168,11 +171,8 @@ export function PointsRacePage() {
           ? <Podium focusSquadId={viewer.mySquadId} steps={buildPodium(cup.standings)} testId="cup-podium" />
           : null}
         <CupStatTiles cup={cup} isSeasonOver={isSeasonOver} mySquadId={viewer.mySquadId} />
-        {projection && projectedBySquad ? (
-          <SectionNote testId="cup-projection-note">{describeProjection(projection)}</SectionNote>
-        ) : null}
         {projectionQuery.isError ? (
-          <ErrorState body="We couldn't work out where teams would stand if the live contests ended now." size="inline" testId="cup-projection-error" />
+          <ErrorState body="We couldn't work out where teams would stand if the live contests ended now." onRetry={() => void projectionQuery.refetch()} size="inline" testId="cup-projection-error" />
         ) : null}
         <CupStandingsGrid
           focusSquadId={viewer.mySquadId}
@@ -182,7 +182,7 @@ export function PointsRacePage() {
           squadPath={squadPath}
         />
       </SectionCard>
-      <SectionCard info="The top five, after each final contest." padded title="The race so far">
+      <SectionCard help="The top five, after each final contest." padded title="The race so far">
         <CupRaceChart focusSquadId={viewer.mySquadId} series={buildRaceSeries(cup)} />
       </SectionCard>
       <SectionCard title="Contests in this cup">

@@ -32,37 +32,3 @@ export function MetricTile({ helperText, label, value }: MetricTileProps) {
     </div>
   );
 }
-
-type DefinitionItem = {
-  id: string;
-  label: ReactNode;
-  value: ReactNode;
-};
-
-type DefinitionListProps = {
-  className?: string;
-  items: DefinitionItem[];
-};
-
-export function DefinitionList({ className, items }: DefinitionListProps) {
-  return (
-    <dl
-      className={cn(
-        "grid gap-3 text-sm text-muted-foreground sm:grid-cols-2",
-        className,
-      )}
-    >
-      {items.map((item) => (
-        <div
-          className="rounded-2xl bg-background px-4 py-4"
-          key={item.id}
-        >
-          <dt className="text-xs uppercase text-muted-foreground">
-            {item.label}
-          </dt>
-          <dd className="mt-1 font-medium text-foreground">{item.value}</dd>
-        </div>
-      ))}
-    </dl>
-  );
-}

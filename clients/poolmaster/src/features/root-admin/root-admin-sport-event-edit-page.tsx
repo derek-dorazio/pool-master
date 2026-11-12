@@ -21,7 +21,7 @@ import { getLogger } from '@/lib/logger';
 import { formPageSave } from '@/lib/form-page-save';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import { useManageBreadcrumbOverride } from './manage-breadcrumb-context';
+import { useManageBreadcrumbOverride, useManagePageOwnsHeading } from './manage-breadcrumb-context';
 import { buildSportEventPath } from './manage-navigation';
 import { getScoringFamilyAdminUi } from './scoring-family-admin';
 import { useSportLeagueNoun } from './use-sport-catalog';
@@ -122,7 +122,7 @@ function SportEventEditForm({ tournament }: { tournament: SportEventDto }) {
   return (
     <FormPage
       cancelTo={homePath}
-      description={`The ${sportLeagueNoun.one} and event year are fixed at creation and cannot be changed.`}
+      help={`The ${sportLeagueNoun.one} and event year are fixed at creation and cannot be changed.`}
       {...formPageSave(form, updateMutation, 'We could not save these details.')}
       isSubmitDisabled={!form.formState.isValid}
       pendingLabel="Saving..."
@@ -178,6 +178,8 @@ function SportEventEditForm({ tournament }: { tournament: SportEventDto }) {
  * unplayed rounds against it, par per round, with one Save.
  */
 export function RootAdminSportEventEditPage() {
+  // Claimed at once, so Manage never shows its own title while the page loads.
+  useManagePageOwnsHeading();
   const { eventId = '' } = useParams<{ eventId: string }>();
   const tournamentQuery = useSportEventQuery(eventId);
   const tournament = tournamentQuery.data;

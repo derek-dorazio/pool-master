@@ -161,6 +161,6 @@ describe('Event page', () => {
     getEventPageMock.mockResolvedValue({ error: { error: { code: 'INTERNAL_ERROR', message: 'Down.' } }, status: 500 });
     renderPage();
 
-    expect(await screen.findByTestId('event-page-error')).toHaveTextContent('Event unavailable');
+    expect(await screen.findByTestId('event-page-error')).toHaveTextContent("We couldn't load this event.");
   });
 });

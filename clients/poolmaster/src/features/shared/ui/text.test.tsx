@@ -37,6 +37,14 @@ describe('Text', () => {
     expect(screen.getByText('-12')).toHaveClass('tabular-nums', 'font-medium', 'text-foreground');
   });
 
+  it('sets a place numeral large and heaviest in the display face, in the colour of what it sits on', () => {
+    render(<Text variant="numeral">1</Text>);
+
+    const numeral = screen.getByText('1');
+    expect(numeral).toHaveClass('font-display', 'font-black', 'text-xl');
+    expect(numeral.className).not.toMatch(/text-(foreground|muted)/);
+  });
+
   it('sets a leading name medium weight in the foreground colour', () => {
     render(<Text variant="strong">Birdie Hunters 2</Text>);
 
@@ -109,5 +117,42 @@ describe('Text', () => {
     render(<Text as="p">A paragraph</Text>);
 
     expect(screen.getByText('A paragraph').tagName).toBe('P');
+  });
+  it('sets the brand wordmark in the display face, black italic capitals on the dark band', () => {
+    render(<Text variant="wordmark">Primetime</Text>);
+
+    expect(screen.getByText('Primetime')).toHaveClass('font-display', 'font-black', 'italic', 'uppercase', 'text-on-inverse');
+  });
+
+  it('sets header links and the "League" caption in display capitals on the dark band', () => {
+    render(
+      <>
+        <Text variant="nav">Plans</Text>
+        <Text variant="displayLabel">League</Text>
+      </>,
+    );
+
+    expect(screen.getByText('Plans')).toHaveClass('font-display', 'font-bold', 'uppercase', 'tracking-button', 'text-on-inverse');
+    expect(screen.getByText('League')).toHaveClass('font-display', 'text-xs', 'tracking-label', 'text-label-on-inverse');
+  });
+
+  it('sets a display-face name in the colour of the text around it', () => {
+    render(<Text size="base" variant="display">Office Pool</Text>);
+
+    const name = screen.getByText('Office Pool');
+    expect(name).toHaveClass('font-display', 'font-bold', 'text-base');
+    expect(name.className).not.toMatch(/text-(foreground|muted|on-inverse)/);
+  });
+
+  it('turns gold on hover, or on hover or focus of its group link, when given a primary hover tone', () => {
+    render(<Text hoverTone="primary" variant="wordmark">Primetime</Text>);
+
+    expect(screen.getByText('Primetime')).toHaveClass('hover:text-primary', 'group-hover:text-primary', 'group-focus-visible:text-primary');
+  });
+
+  it('sets no hover colour unless asked', () => {
+    render(<Text variant="meta">Plans</Text>);
+
+    expect(screen.getByText('Plans').className).not.toMatch(/hover:/);
   });
 });

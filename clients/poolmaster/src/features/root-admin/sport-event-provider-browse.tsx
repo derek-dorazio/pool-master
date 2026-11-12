@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { createEventFromProviderEvent } from '@/lib/api';
 import {
-  Alert,
+  Notice,
   Button,
   DateTimeField,
   dateTimeLocalValueToIso,
@@ -121,10 +121,10 @@ export function SportEventProviderBrowse({
   return (
     <div className="space-y-4">
       {catalog.providersError || (catalog.providersLoaded && providerId === null) ? (
-        <Alert tone="warning">
+        <Notice tone="warning">
           No provider is registered for {definition.name.toLowerCase()}, so there is no catalog
           to browse. Build the {eventNoun.one} manually instead.
-        </Alert>
+        </Notice>
       ) : null}
 
       {!selectedEvent ? (
@@ -173,7 +173,7 @@ export function SportEventProviderBrowse({
               })}
               isEmpty={(events) => events.length === 0}
               loading="Loading provider events..."
-              query={{ data: catalog.isLoading ? undefined : catalog.events, isError: catalog.isError }}
+              query={{ data: catalog.isLoading ? undefined : catalog.events, isError: catalog.isError, refetch: catalog.refetch }}
             >
               {(events) => (
                 <SectionRows>
@@ -233,10 +233,10 @@ export function SportEventProviderBrowse({
               </FormField>
             </div>
 
-            <Alert tone="info">
+            <Notice tone="info">
               The field is not imported now. After creating, open the {eventNoun.one} and use
               Load Participant Field.
-            </Alert>
+            </Notice>
 
             <div className="flex justify-end">
               <Button

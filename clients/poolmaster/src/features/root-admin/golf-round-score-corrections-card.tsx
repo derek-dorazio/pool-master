@@ -2,7 +2,7 @@ import { createColumnHelper } from '@tanstack/react-table';
 import { useMemo, type Dispatch, type SetStateAction } from 'react';
 import { updateEventParticipantGolfRoundScore } from '@/lib/api';
 import {
-  Alert,
+  Notice,
   Button,
   DataGrid,
   Input,
@@ -316,17 +316,17 @@ export function GolfRoundScoreCorrectionsCard({
       </p>
 
       {rowsError ? (
-        <Alert data-testid="root-admin-golf-scores-corrections-error" tone="danger">
+        <Notice data-testid="root-admin-golf-scores-corrections-error" tone="danger">
           {rowsError}
-        </Alert>
+        </Notice>
       ) : null}
 
       {saveError ? (
-        <Alert data-testid="root-admin-golf-scores-correction-save-error" tone="danger">
+        <Notice data-testid="root-admin-golf-scores-correction-save-error" tone="danger">
           {extractErrorMessage(saveError, {
             fallback: 'We could not save that correction.',
           })}
-        </Alert>
+        </Notice>
       ) : null}
 
       <DataGrid

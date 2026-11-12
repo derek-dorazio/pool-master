@@ -36,13 +36,15 @@ test.describe('unauthenticated guards', { tag: '@smoke' }, () => {
     await expect(page.getByTestId('auth-login-identifier')).toBeVisible();
   });
 
-  test('an invite link with an unknown code surfaces the invalid-invite state on sign-in', async ({ page }) => {
+  test('an invite link with an unknown code shows the dead-link page, whose Sign in leads to sign-in', async ({ page }) => {
     await page.goto(`/invite/E2E-NO-SUCH-${unique().toUpperCase()}`);
-    // Signed out, the invite page only offers sign-in; the preview failure shows on the
-    // sign-in page the invite hands the visitor to.
-    await page.getByTestId('invite-sign-in').click();
+    // A code that matches no invitation is a dead link: its status page shows before any
+    // sign-in hand-off, and its one action takes a signed-out visitor to sign-in.
+    const deadLink = page.getByTestId('invitation-status-page');
+    await expect(deadLink).toBeVisible();
+    await expect(deadLink).toHaveAttribute('data-kind', 'notFound');
+    await page.getByTestId('invitation-status-action').click();
     await expect(page.getByTestId('auth-login-identifier')).toBeVisible();
-    await expect(page.getByTestId('auth-invite-preview-error')).toBeVisible();
   });
 
   test('an unknown path renders the not-found page rather than a blank or server error', async ({ page }) => {

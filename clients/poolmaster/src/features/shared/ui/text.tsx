@@ -19,6 +19,16 @@ const textVariants = cva("", {
       value: "tabular-nums",
       /** A name that leads its row. */
       strong: "",
+      /** The brand wordmark: the display face, black italic capitals. */
+      wordmark: "font-display text-xl font-black uppercase italic tracking-normal sm:text-2xl",
+      /** A link in the header's dark band: display face, bold capitals spaced like a button. */
+      nav: "font-display text-sm font-bold uppercase tracking-button",
+      /** A small display-face caption in the header's dark band, such as "League". */
+      displayLabel: "font-display text-xs font-bold uppercase tracking-label",
+      /** A name set in the display face, such as the league in the header. */
+      display: "font-display font-bold",
+      /** A big place numeral in the display face, such as the 1 on a podium step. */
+      numeral: "font-display font-black",
     },
     tone: {
       /** The colour of the text around it, such as an alert's. */
@@ -27,6 +37,16 @@ const textVariants = cva("", {
       muted: "text-muted-foreground",
       danger: "text-destructive",
       primary: "text-primary",
+      /** Text on the header's dark band. */
+      onInverse: "text-on-inverse",
+      /** A caption on the dark band. */
+      onInverseLabel: "text-label-on-inverse",
+    },
+    /** The colour on hover, or on hover or focus of the enclosing `group` link. */
+    hoverTone: {
+      none: "",
+      primary: "hover:text-primary group-hover:text-primary group-focus-visible:text-primary",
+      default: "hover:text-foreground",
     },
     /** The size, from the variant unless given; `inherit` keeps the size of the text around it. */
     size: {
@@ -35,6 +55,7 @@ const textVariants = cva("", {
       sm: "text-sm",
       base: "text-base",
       lg: "text-lg",
+      xl: "text-xl",
     },
     /** Emphasis: names and points that stand out in a row (`semibold`) or a total (`bold`). */
     weight: {
@@ -60,8 +81,13 @@ const DEFAULT_TONES = {
   caption: "muted",
   label: "muted",
   meta: "muted",
+  numeral: "inherit",
   strong: "default",
   value: "default",
+  wordmark: "onInverse",
+  nav: "onInverse",
+  displayLabel: "onInverseLabel",
+  display: "inherit",
 } as const;
 
 type TextVariant = keyof typeof DEFAULT_TONES;
@@ -72,8 +98,13 @@ const DEFAULT_SIZES = {
   caption: "xs",
   label: "inherit",
   meta: "sm",
+  numeral: "xl",
   strong: "sm",
   value: "sm",
+  wordmark: "inherit",
+  nav: "inherit",
+  displayLabel: "inherit",
+  display: "inherit",
 } as const;
 
 /** The variants that carry a weight of their own, which `weight` overrides. */
@@ -93,16 +124,29 @@ export type TextProps = HTMLAttributes<HTMLElement> &
 
 /**
  * Every piece of text that is not a title (`Heading`) or the line over one (`Eyebrow`): body,
- * meta and caption lines, column labels, numbers and leading names. Pages pick a variant and,
- * at most, a tone and a weight; the font, size, weight, case and colour live here.
+ * meta and caption lines, column labels, numbers and leading names, and the brand's display
+ * type in the header. Pages pick a variant and, at most, a tone, a hover tone, a size and a
+ * weight; the font, size, weight, case and colour live here.
  */
-export function Text({ as = "span", asChild = false, className, size, tone, truncate, variant = "body", weight, ...props }: TextProps) {
+export function Text({
+  as = "span",
+  asChild = false,
+  className,
+  hoverTone,
+  size,
+  tone,
+  truncate,
+  variant = "body",
+  weight,
+  ...props
+}: TextProps) {
   const Element = asChild ? Slot : as;
   return (
     <Element
       className={cn(
         textVariants({
           className,
+          hoverTone,
           size: size ?? DEFAULT_SIZES[variant],
           tone: tone ?? DEFAULT_TONES[variant],
           truncate,

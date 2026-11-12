@@ -300,7 +300,7 @@ describe('AppShell', () => {
     clearSessionMock.mockResolvedValue(undefined);
     listLeaguesMock.mockResolvedValue({ data: { leagues: [], memberships: [] } });
 
-    renderAppShell(['/league/LEAGUE1/admin/edit']);
+    renderAppShell(['/league/LEAGUE1/admin']);
 
     await screen.findByTestId('mock-outlet');
     expect(screen.queryByTestId('mock-league-menu')).not.toBeInTheDocument();

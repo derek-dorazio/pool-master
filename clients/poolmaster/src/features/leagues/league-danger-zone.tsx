@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router';
 import { activateLeague, deleteLeague, inactivateLeague, type LeagueDto } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-context';
 import {
-  Alert,
+  Notice,
   Button,
   ConfirmDialog,
   DangerZoneAction,
@@ -22,7 +22,7 @@ type ActiveDialog = 'delete' | 'inactivate' | null;
 
 /**
  * The league's lifecycle: inactivate (or activate again) and delete. Delete is open only to an
- * inactive league and asks for the league code typed back.
+ * inactive league and asks for the end of its web address (the league code) typed back.
  */
 export function LeagueDangerZone({ league }: { league: LeagueDto }) {
   const auth = useAuth();
@@ -96,7 +96,7 @@ export function LeagueDangerZone({ league }: { league: LeagueDto }) {
   return (
     <>
       <SectionCard
-        info="Actions that stop or remove the league. Each asks you to confirm."
+        help="Actions that stop or remove the league. Each asks you to confirm."
         testId="league-danger-zone"
         tone="danger"
       >
@@ -117,9 +117,9 @@ export function LeagueDangerZone({ league }: { league: LeagueDto }) {
                 <>
                   The league is inactive. Activate it to reopen entries and changes.
                   {activateMutation.isError ? (
-                    <Alert className="mt-2" tone="danger">
+                    <Notice className="mt-2" tone="danger">
                       {extractErrorMessage(activateMutation.error, { fallback: 'We could not activate this league.' })}
-                    </Alert>
+                    </Notice>
                   ) : null}
                 </>
               )}
@@ -183,16 +183,16 @@ export function LeagueDangerZone({ league }: { league: LeagueDto }) {
         tone="danger"
       >
         {inactivateMutation.isError ? (
-          <Alert tone="danger">
+          <Notice tone="danger">
             {extractErrorMessage(inactivateMutation.error, { fallback: 'We could not inactivate this league.' })}
-          </Alert>
+          </Notice>
         ) : null}
       </ConfirmDialog>
 
       <ConfirmDialog
         confirmLabel="Delete league"
         confirmTestId="league-delete-submit"
-        description="Enter the league code to permanently delete this inactive league."
+        description="Type the end of the league web address to permanently delete this inactive league."
         isConfirmDisabled={!isDeleteConfirmed}
         isPending={deleteMutation.isPending}
         onCancel={closeDeleteDialog}
@@ -208,7 +208,7 @@ export function LeagueDangerZone({ league }: { league: LeagueDto }) {
         title="Delete league"
         tone="danger"
       >
-        <FormField id="league-delete-confirmation" label="League code">
+        <FormField id="league-delete-confirmation" label={`Type ${league.leagueCode}`}>
           <Input
             className="font-mono uppercase"
             data-testid="league-delete-confirmation"
@@ -222,9 +222,9 @@ export function LeagueDangerZone({ league }: { league: LeagueDto }) {
         </FormField>
 
         {deleteMutation.isError ? (
-          <Alert className="mt-4" tone="danger">
+          <Notice className="mt-4" tone="danger">
             {extractErrorMessage(deleteMutation.error, { fallback: 'We could not delete this league.' })}
-          </Alert>
+          </Notice>
         ) : null}
       </ConfirmDialog>
     </>

@@ -1,6 +1,6 @@
 import type { SquadDto } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-context';
-import { Alert, SectionCard } from '@/features/shared/ui';
+import { Notice, SectionCard } from '@/features/shared/ui';
 import { MyTeamOwnersPanel } from './my-team-owners-panel';
 import { getActiveOwners } from './team-directory';
 import { useTeamOwnerInvitationsQuery } from './use-team-owner-invitations-query';
@@ -39,14 +39,14 @@ export function TeamOwnersSection({
   return (
     <SectionCard bare testId={testId} title="Owners">
       {invitationsQuery.isError ? (
-        <Alert
+        <Notice
           data-testid={`${testId}-invitations-error`}
           title="Owner invitations are temporarily unavailable"
           tone="warning"
         >
           Active owners are still shown below, but pending owner invitations for {team.name}
           could not be loaded right now.
-        </Alert>
+        </Notice>
       ) : null}
       <MyTeamOwnersPanel
         activeMembers={activeMembers}

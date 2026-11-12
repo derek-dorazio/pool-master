@@ -1,7 +1,7 @@
 import type { ContestConfigTemplateDto } from '@/lib/api';
 import { formatSelectionTypeName } from '@poolmaster/shared/domain';
 import { SELECTION_TYPE_ICONS } from '@/features/contests/selection-type-icons';
-import { Heading, LinkButton, Tile } from '@/features/shared/ui';
+import { Eyebrow, Heading, HelpTip, LinkButton, Text, Tile } from '@/features/shared/ui';
 import type { ContestTypeTile } from './contest-catalog';
 
 interface ContestTypeTileCardProps {
@@ -20,23 +20,28 @@ export function ContestTypeTileCard({ tile, createPathFor }: ContestTypeTileCard
   const featuredPath = createPathFor?.(featured);
   return (
     <Tile className="flex h-full flex-col gap-3" data-testid={`contest-type-${featured.templateKey}`} padding="sm" radius="md">
-      <div className="flex items-center gap-2 text-xs font-semibold uppercase text-muted-foreground">
+      <Eyebrow className="flex items-center gap-2" tone="muted">
         <Icon aria-hidden="true" className="h-4 w-4" />
         {formatSelectionTypeName(tile.selectionType)}
-      </div>
+      </Eyebrow>
       <div className="space-y-1">
         <Heading level={4} variant="subtitle">{featured.name}</Heading>
-        <p className="text-sm text-muted-foreground">{featured.description}</p>
+        <Text as="p" variant="meta">{featured.description}</Text>
       </div>
       {variations.length ? (
         <div className="space-y-2 border-t border-border pt-3" data-testid={`contest-type-${featured.templateKey}-variations`}>
-          <p className="text-xs font-semibold uppercase text-muted-foreground">Also try</p>
+          <Eyebrow tone="muted">Also try</Eyebrow>
           <ul className="space-y-2">
             {variations.map((variation) => {
               const variationPath = createPathFor?.(variation);
               return (
-                <li className="flex flex-wrap items-center justify-between gap-2 text-sm" key={variation.id}>
-                  <span title={variation.description}>{variation.name}</span>
+                <li className="flex flex-wrap items-center justify-between gap-2" key={variation.id}>
+                  <span className="flex items-center">
+                    <Text>{variation.name}</Text>
+                    <HelpTip className="-my-2" label={`How ${variation.name} works`} testId={`contest-type-${variation.templateKey}-help`}>
+                      {variation.description}
+                    </HelpTip>
+                  </span>
                   {variationPath ? (
                     <LinkButton
                       data-testid={`contest-type-create-${variation.templateKey}`}
@@ -60,9 +65,9 @@ export function ContestTypeTileCard({ tile, createPathFor }: ContestTypeTileCard
               Create this contest
             </LinkButton>
           ) : (
-            <p className="text-sm text-muted-foreground" data-testid={`contest-type-no-events-${featured.templateKey}`}>
+            <Text as="p" data-testid={`contest-type-no-events-${featured.templateKey}`} variant="meta">
               No upcoming events yet
-            </p>
+            </Text>
           )}
         </div>
       ) : null}

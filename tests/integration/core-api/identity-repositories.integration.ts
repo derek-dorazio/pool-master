@@ -509,6 +509,21 @@ describe('identity cluster repositories (#202)', () => {
     });
   });
 
+  describe('LeagueRepository.update keeps the league code', () => {
+    it('leaves the league web address as created when an update carries a league code', async () => {
+      const prisma = getPrisma();
+      const repo = new PrismaLeagueRepository(getAppPrisma());
+      const league = await createLeague(prisma, `${LEAGUE_CODE_PREFIX}K1`, 'Kept Code');
+
+      // @ts-expect-error -- a league update cannot name a league code; the code never changes.
+      const updated = await repo.update(league.id, { name: 'Renamed', leagueCode: `${LEAGUE_CODE_PREFIX}K2` });
+
+      expect(updated.name).toBe('Renamed');
+      expect(updated.leagueCode).toBe(`${LEAGUE_CODE_PREFIX}K1`);
+      expect((await repo.findById(league.id))?.leagueCode).toBe(`${LEAGUE_CODE_PREFIX}K1`);
+    });
+  });
+
   describe('LeagueMembershipRepository.countActiveByLeagues', () => {
     it('counts active members per league and omits leagues with none', async () => {
       const prisma = getPrisma();

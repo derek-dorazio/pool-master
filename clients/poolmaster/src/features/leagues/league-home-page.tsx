@@ -4,7 +4,7 @@ import { championshipYear, ContestStatus, PlanFeature } from '@poolmaster/shared
 import { useMyContestEntries } from '@/features/contests/use-contest-entries';
 import { useLeagueContestsQuery } from '@/features/contests/use-league-contests-query';
 import {
-  Alert,
+  Notice,
   ErrorState,
   PageHeader,
   LinkButton,
@@ -101,17 +101,17 @@ export function LeagueHomePage() {
   return (
     <section className="space-y-6" data-testid="league-home">
       {teamSetupFailed ? (
-        <Alert data-testid="league-team-setup-failed" tone="warning">
+        <Notice data-testid="league-team-setup-failed" tone="warning">
           <p>You&apos;re in the league, but we couldn&apos;t save your team&apos;s name and icon. You can set them now.</p>
           <LinkButton className="mt-3" size="sm" to={buildLeagueTeamPath(leagueCode)} variant="subtle">
             Set up your team
           </LinkButton>
-        </Alert>
+        </Notice>
       ) : null}
       {!league.isActive ? (
-        <Alert data-testid="league-inactive-banner" title="This league is not currently active." tone="warning">
+        <Notice data-testid="league-inactive-banner" title="This league is not currently active." tone="warning">
           <p>You can still see standings and history. Entries and changes are closed while the league is inactive.</p>
-        </Alert>
+        </Notice>
       ) : null}
       {viewer.isCommissioner ? <OpensSoonCard leagueCode={leagueCode} /> : null}
       <YearReviewBanner isCommissioner={viewer.isCommissioner} league={league} />
@@ -131,9 +131,9 @@ export function LeagueHomePage() {
       />
 
       {contestsQuery.isLoading ? (
-        <LoadingState body="Loading contests..." />
+        <LoadingState rows={3} body="Loading contests..." />
       ) : contestsQuery.isError ? (
-        <ErrorState body="We couldn't load this league's contests." />
+        <ErrorState body="We couldn't load this league's contests." onRetry={() => void contestsQuery.refetch()} />
       ) : (
         <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
           <div className="grid gap-5">

@@ -15,6 +15,7 @@ import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import { UNMAPPED_COMPETITORS_PATH } from './manage-navigation';
 import { useUnmappedCompetitorQuery } from './use-unmapped-competitors';
+import { useManagePageOwnsHeading } from './manage-breadcrumb-context';
 
 function MapCompetitorForm({ competitor }: { competitor: UnmappedProviderParticipantDto }) {
   const logger = getLogger().child({ feature: 'root-admin-map-competitor-page' });
@@ -76,7 +77,8 @@ function MapCompetitorForm({ competitor }: { competitor: UnmappedProviderPartici
   return (
     <FormPage
       cancelTo={UNMAPPED_COMPETITORS_PATH}
-      description={`${competitor.providerName} reports ${competitor.externalName} (${competitor.externalId}). Choose the ${competitor.sport} participant they are.`}
+      help={`Choose the ${competitor.sport} participant this ${competitor.providerName} competitor is.`}
+      meta={`${competitor.providerName} reports ${competitor.externalName} (${competitor.externalId}) · ${competitor.sport}`}
       errorMessage={bindMutation.isError
         ? extractErrorMessage(bindMutation.error, { fallback: 'We could not map this competitor.' })
         : undefined}
@@ -141,6 +143,8 @@ function MapCompetitorForm({ competitor }: { competitor: UnmappedProviderPartici
  * query string; once mapped it leaves the unmapped list, so the page then says so.
  */
 export function RootAdminMapCompetitorPage() {
+  // Claimed at once, so Manage never shows its own title while the page loads.
+  useManagePageOwnsHeading();
   const [searchParams] = useSearchParams();
   const providerId = searchParams.get('provider') ?? '';
   const externalId = searchParams.get('competitor') ?? '';

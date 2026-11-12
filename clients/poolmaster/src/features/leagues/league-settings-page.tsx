@@ -1,28 +1,32 @@
 import { useMemo } from 'react';
-import { useParams } from 'react-router';
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router';
 import { LeagueRole, LeagueMembershipStatus, PlanCap, PlanFeature } from '@poolmaster/shared/domain';
 import { formatUserName } from '@/features/account/user-name';
 import {
-  Alert,
+  Notice,
   formatDateDisplay,
+  PageHeader,
   IconAvatar,
   LinkButton,
   LOADING_TEXT,
   SectionBody,
   SectionCard,
-  SectionEmpty,
+  LockedSection,
   SettingsRow,
   SettingsRows,
   useDisplayPreferences,
+  WebAddressBox,
 } from '@/features/shared/ui';
 import { describePointsTable } from '@/features/championships/cup-settings-view';
 import { LeaguePaymentsSection } from '@/features/billing/payment-history-sections';
-import { hasPlanFeature } from '@/features/plans/plan-features';
+import { hasPlanFeature, lowestPlanIncluding } from '@/features/plans/plan-features';
+import { useLeaguePlansQuery } from '@/features/plans/use-league-plans-query';
 import { ExtendLeagueGift } from '@/features/plans/extend-league-gift';
 import { useAuth } from '@/features/auth/auth-context';
 import { useSportLeaguesQuery } from '@/features/contest-types/use-sport-leagues-query';
 import {
   EVENT_EMAIL_DELIVERY_COPY,
+  EVENT_EMAIL_FEATURES,
   describeEventEmailSportLeagues,
   describeEventEmailsSection,
   hasEventEmails,
@@ -34,12 +38,17 @@ import { LEAGUE_PLAN_LABEL, PLAN_CAP_LABEL, formatPlanLimit } from '@/features/p
 import {
   buildLeagueAdminChampionshipsEditPath,
   buildLeagueAdminEditPath,
+  isLeagueSettingsEditOpenedInApp,
+  LEAGUE_SETTINGS_EDIT_OPENED_IN_APP_STATE,
+  LEAGUE_SETTINGS_EDIT_PARAM,
   buildLeagueAdminEventEmailsEditPath,
   buildLeagueAdminPlanPath,
   buildLeagueAdminTeamsPath,
+  buildLeagueWebAddress,
 } from './league-routing';
 import { useLeagueContext } from './use-league-context';
 import { useLeagueMembersQuery } from './use-league-members-query';
+import { EditLeagueDialog } from './edit-league-dialog';
 
 /**
  * League settings, the first page of Commissioner tools: the league's properties with one Edit
@@ -54,7 +63,13 @@ export function LeagueSettingsPage() {
   const leagueId = league?.id ?? '';
   const { members } = useLeagueMembersQuery(leagueId);
   const sportLeaguesQuery = useSportLeaguesQuery();
+  // Only a locked section names a plan, so the plan list is read only when one shows.
+  const hasLockedSection = league !== undefined && (!hasPlanFeature(league, PlanFeature.CUP_SETTINGS) || !hasEventEmails(league));
+  const plansQuery = useLeaguePlansQuery({ enabled: hasLockedSection });
   const { isRootAdmin } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
+  const navigate = useNavigate();
 
   // A commissioner is a membership role, and the membership carries the member (#1202).
   const commissionerNames = useMemo(() => {
@@ -64,20 +79,62 @@ export function LeagueSettingsPage() {
     return [...new Set(names)].sort((left, right) => left.localeCompare(right));
   }, [members]);
 
+  // A locked section names the lowest plan that unlocks it, holding a loading line until the
+  // plans arrive so it never changes its mind. If they can't be read, or no plan has it, it says
+  // only that this plan leaves it out.
+  const includedWith = (features: readonly PlanFeature[]) => {
+    if (plansQuery.isPending) {
+      return LOADING_TEXT;
+    }
+    const plan = plansQuery.data ? lowestPlanIncluding(plansQuery.data.plans, features) : null;
+    return plan ? `Included with ${LEAGUE_PLAN_LABEL[plan]}.` : 'Not included in your league\'s plan.';
+  };
+
+  const activeMemberCount = members
+    ? members.filter((member) => member.status === LeagueMembershipStatus.ACTIVE).length
+    : null;
+
   // The guard above this page has already loaded the league context.
   if (!league) {
     return null;
   }
 
   const isInactive = !league.isActive;
+  // An inactive league is read-only, so its Edit never opens, even from an old link.
+  const isEditingGeneral = !isInactive && searchParams.get(LEAGUE_SETTINGS_EDIT_PARAM) === 'general';
+  const closeGeneralEdit = () => {
+    // Opened by the Edit link: step back over the entry it pushed. Opened by an old link or a
+    // reload: there is nothing behind it to return to, so drop the query in place.
+    if (isLeagueSettingsEditOpenedInApp(location.state)) {
+      void navigate(-1);
+      return;
+    }
+    setSearchParams((params) => {
+      params.delete(LEAGUE_SETTINGS_EDIT_PARAM);
+      return params;
+    }, { replace: true });
+  };
 
   return (
     <div className="space-y-8" data-testid="league-settings-page">
+      <PageHeader
+        meta={(
+          <>
+            <span>{`${LEAGUE_PLAN_LABEL[league.planEntitlements.plan]} plan`}</span>
+            {activeMemberCount === null ? null : (
+              <span>{`${activeMemberCount} ${activeMemberCount === 1 ? 'member' : 'members'}`}</span>
+            )}
+            <span>{`Created ${formatDateDisplay(league.createdAt, displayPreferences, 'Unknown')}`}</span>
+          </>
+        )}
+        testId="league-settings-header"
+        title="League settings"
+      />
       {isInactive ? (
-        <Alert data-testid="league-inactive-banner" title="This league is inactive." tone="warning">
+        <Notice data-testid="league-inactive-banner" title="This league is inactive." tone="warning">
           Members can still see standings and history. Activate the league in the danger zone to
           make changes again.
-        </Alert>
+        </Notice>
       ) : null}
 
       <SectionCard
@@ -86,13 +143,14 @@ export function LeagueSettingsPage() {
             data-testid="league-settings-edit"
             isDisabled={isInactive}
             size="sm"
+            state={LEAGUE_SETTINGS_EDIT_OPENED_IN_APP_STATE}
             to={buildLeagueAdminEditPath(league.leagueCode)}
             variant="secondary"
           >
             Edit
           </LinkButton>
         )}
-        info="What members see at the top of League Home."
+        help="What members see at the top of League Home."
         testId="league-settings-general"
         title="General"
       >
@@ -115,11 +173,10 @@ export function LeagueSettingsPage() {
             value={league.description?.trim() || <span className="text-muted-foreground">No description</span>}
           />
           <SettingsRow
-            action={<span className="text-xs text-muted-foreground">Permanent</span>}
-            label="League code"
-            value={<span className="font-mono">{league.leagueCode}</span>}
+            label="League web address"
+            testId="league-settings-web-address"
+            value={<WebAddressBox isLive testId="league-settings-address" url={buildLeagueWebAddress(league.leagueCode)} />}
           />
-          <SettingsRow label="Created" value={formatDateDisplay(league.createdAt, displayPreferences, 'Unknown')} />
           <SettingsRow
             action={(
               <LinkButton size="sm" to={buildLeagueAdminTeamsPath(league.leagueCode)} variant="ghost">
@@ -148,7 +205,7 @@ export function LeagueSettingsPage() {
               Edit
             </LinkButton>
           )}
-          info="What each finishing place earns toward the championship and every sports league cup."
+          help="What each finishing place earns toward the championship and every sports league cup."
           testId="league-settings-championships"
           title="Championships"
         >
@@ -173,13 +230,9 @@ export function LeagueSettingsPage() {
           </SettingsRows>
         </SectionCard>
       ) : (
-        <SectionCard
-          footer={{ label: 'Change plan', testId: 'league-settings-championships-plan', to: buildLeagueAdminPlanPath(league.leagueCode) }}
-          testId="league-settings-championships"
-          title="Championships"
-        >
-          <SectionEmpty>Your league&apos;s plan doesn&apos;t include championship settings.</SectionEmpty>
-        </SectionCard>
+        <LockedSection plansTo={buildLeagueAdminPlanPath(league.leagueCode)} testId="league-settings-championships" title="Championships">
+          {includedWith([PlanFeature.CUP_SETTINGS])}
+        </LockedSection>
       )}
 
       {hasEventEmails(league) ? (
@@ -195,7 +248,7 @@ export function LeagueSettingsPage() {
               Edit
             </LinkButton>
           )}
-          info={describeEventEmailsSection(league)}
+          help={describeEventEmailsSection(league)}
           testId="league-settings-event-emails"
           title="Event emails"
         >
@@ -217,13 +270,9 @@ export function LeagueSettingsPage() {
           </SettingsRows>
         </SectionCard>
       ) : (
-        <SectionCard
-          footer={{ label: 'Change plan', testId: 'league-settings-event-emails-plan', to: buildLeagueAdminPlanPath(league.leagueCode) }}
-          testId="league-settings-event-emails"
-          title="Event emails"
-        >
-          <SectionEmpty>Your league&apos;s plan doesn&apos;t include event emails.</SectionEmpty>
-        </SectionCard>
+        <LockedSection plansTo={buildLeagueAdminPlanPath(league.leagueCode)} testId="league-settings-event-emails" title="Event emails">
+          {includedWith(EVENT_EMAIL_FEATURES)}
+        </LockedSection>
       )}
 
       <SectionCard
@@ -238,7 +287,7 @@ export function LeagueSettingsPage() {
             Change
           </LinkButton>
         )}
-        info="What the league can do. Every plan is free for now, and members never see which plan it is."
+        help="What the league can do. Every plan is free for now, and members never see which plan it is."
         testId="league-settings-plan"
         title="Plan"
       >
@@ -268,6 +317,8 @@ export function LeagueSettingsPage() {
       <LeaguePaymentsSection leagueCode={league.leagueCode} leagueId={league.id} />
 
       <LeagueDangerZone league={league} />
+
+      <EditLeagueDialog league={league} onClose={closeGeneralEdit} open={isEditingGeneral} />
     </div>
   );
 }

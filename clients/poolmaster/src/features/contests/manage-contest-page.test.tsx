@@ -192,6 +192,10 @@ describe('Commissioner tools › Contests › one contest', () => {
     expect(await screen.findByText('Not ready to open yet')).toBeInTheDocument();
     expect(screen.getByTestId('contest-readiness-not-started')).toHaveAttribute('data-met', 'false');
     expect(screen.getByTestId('contest-readiness-not-started')).toHaveTextContent('Event has started');
+    // The missing check leads the list, ahead of the ones already met.
+    const checks = within(screen.getByTestId('contest-readiness-checks')).getAllByRole('listitem');
+    expect(checks[0]).toHaveAttribute('data-testid', 'contest-readiness-not-started');
+    expect(checks.slice(1).every((check) => check.getAttribute('data-met') === 'true')).toBe(true);
   });
 
   it('deletes a contest only after the confirm, then returns to the contest list', async () => {
@@ -342,6 +346,20 @@ describe('Commissioner tools › Contests › one contest', () => {
 });
 
 describe('Commissioner tools › Contests › one contest › Entries', () => {
+  it('says the entries could not load, in red with Retry, and reads them again on Retry', async () => {
+    primeMocks();
+    const loaded = await (getContestExpansionMock() as Promise<unknown>);
+    getContestExpansionMock.mockResolvedValue({ error: { error: { code: 'INTERNAL_ERROR', message: 'Down' } }, status: 500 });
+
+    renderAt('/league/BIGDAWGS/admin/contests/contest-1');
+
+    const error = await screen.findByTestId('contest-expansion-error');
+    getContestExpansionMock.mockResolvedValue(loaded);
+    fireEvent.click(within(error).getByRole('button', { name: 'Retry' }));
+
+    expect(await screen.findByTestId('contest-expansion-entries')).toHaveTextContent('12 of 20');
+  });
+
   it('shows the entries against the cap and each larger size with its price, free while payments are off', async () => {
     primeMocks();
 
@@ -564,9 +582,21 @@ describe('Commissioner tools › Contests › one contest › its events', () =>
 
     expect(await screen.findByTestId('manage-contest-events-edit')).toHaveTextContent('Change events');
     const row = screen.getByTestId('manage-contest-event-row');
-    expect(row).toHaveTextContent('Events (2)');
-    const listed = within(screen.getByTestId('manage-contest-event-list')).getAllByRole('listitem');
-    expect(listed.map((item) => item.textContent.split(' · ')[0])).toEqual(['The Masters', 'PGA Championship']);
+    expect(row).toHaveTextContent('2 events, listed below');
+    const listed = within(screen.getByRole('region', { name: 'Events, in order' })).getAllByRole('listitem');
+    expect(listed.map((item) => item.textContent)).toEqual([
+      expect.stringMatching(/^The Masters.*1$/),
+      expect.stringMatching(/^PGA Championship.*2$/),
+    ]);
+  });
+
+  it('lists no separate events section for a contest on one event', async () => {
+    primeMocks();
+
+    renderAt('/league/BIGDAWGS/admin/contests/contest-1');
+
+    expect(await screen.findByTestId('manage-contest-event-row')).toHaveTextContent('The Masters');
+    expect(screen.queryByTestId('manage-contest-event-list')).not.toBeInTheDocument();
   });
 
   it('offers no way to add or change events once the contest is final', async () => {

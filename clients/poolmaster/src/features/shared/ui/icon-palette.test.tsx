@@ -12,13 +12,15 @@ const options = [
 
 function renderPalette({
   disabled,
+  iconTone,
   onSelect = vi.fn(),
   value = "trophy",
-}: { disabled?: boolean; onSelect?: (key: IconKey) => void; value?: IconKey } = {}) {
+}: { disabled?: boolean; iconTone?: "primary"; onSelect?: (key: IconKey) => void; value?: IconKey } = {}) {
   render(
     <IconPalette<IconKey, (typeof options)[number]>
       aria-label="League icon"
       disabled={disabled}
+      iconTone={iconTone}
       onSelect={onSelect}
       optionTestIdPrefix="league-icon"
       options={options}
@@ -72,5 +74,15 @@ describe("IconPalette", () => {
     const group = screen.getByRole("group", { name: "League icon" });
     expect(group).toHaveClass("grid-cols-[repeat(auto-fill,minmax(5.5rem,1fr))]");
     expect(group.className).not.toMatch(/\b(sm|md|lg|xl):grid-cols-/);
+  });
+
+  it("draws each icon in the brand colour when iconTone is primary", () => {
+    renderPalette({ iconTone: "primary" });
+    expect(screen.getByTestId("league-icon-flag-icon")).toHaveClass("text-primary");
+  });
+
+  it("leaves each icon's own colour alone when no iconTone is given", () => {
+    renderPalette();
+    expect(screen.getByTestId("league-icon-flag-icon")).not.toHaveClass("text-primary");
   });
 });

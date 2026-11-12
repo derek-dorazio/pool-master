@@ -34,8 +34,9 @@ export interface LeaderboardDetailCell {
   /**
    * Set when the participant did not play this cell's part of the event and it counts at a
    * fixed value instead: the cell is set apart, and the explanation is named for a screen reader.
+   * The board's footnote explains it on screen.
    */
-  unplayed?: { ariaLabel: string; title: string };
+  unplayed?: { ariaLabel: string };
 }
 
 /** A note under the board that explains something the family's cells show. */

@@ -3,15 +3,11 @@ import { Link } from 'react-router';
 import type { LeaguePayment, UserPayment } from '@/lib/api';
 import { extractErrorMessage } from '@/lib/errors';
 import { buildContestLandingPath, buildLeaguePath } from '@/features/leagues/league-routing';
-import { DateDisplay, SectionCard, SectionEmpty, SettingsRows, formatMoneyCents, useDisplayPreferences } from '@/features/shared/ui';
+import { DateDisplay, QueryState, SectionCard, SettingsRows, formatMoneyCents, useDisplayPreferences } from '@/features/shared/ui';
 import { useLeaguePaymentsQuery, useMyPaymentsQuery } from './use-payments-queries';
 
 const LEAGUE_DESCRIPTION = 'Every payment made in this league. While payments are off, expanding a contest is free and shows here as $0.';
 const MINE_DESCRIPTION = 'What you have paid in your leagues. While payments are off, expanding a contest is free and shows here as $0.';
-
-function PaymentsState({ testId, children }: { testId: string; children: string }) {
-  return <div className="px-4 py-3.5 text-sm text-muted-foreground" data-testid={testId}>{children}</div>;
-}
 
 /** One line: when, what for (linking to its contest or league), who, and how much. */
 function PaymentLine({
@@ -50,27 +46,30 @@ function PaymentLine({
 export function LeaguePaymentsSection({ leagueId, leagueCode }: { leagueId: string; leagueCode: string }) {
   const paymentsQuery = useLeaguePaymentsQuery(leagueId);
   return (
-    <SectionCard info={LEAGUE_DESCRIPTION} testId="league-payments" title="Payments">
+    <SectionCard help={LEAGUE_DESCRIPTION} testId="league-payments" title="Payments">
       <SettingsRows>
-        {paymentsQuery.isLoading ? <PaymentsState testId="league-payments-loading">Loading payments...</PaymentsState> : null}
-        {paymentsQuery.isError ? (
-          <PaymentsState testId="league-payments-error">
-            {extractErrorMessage(paymentsQuery.error, { fallback: 'We could not load the payments right now.' })}
-          </PaymentsState>
-        ) : null}
-        {paymentsQuery.data?.length === 0 ? <SectionEmpty testId="league-payments-empty">No payments yet.</SectionEmpty> : null}
-        {paymentsQuery.data?.map((payment: LeaguePayment) => (
-          <PaymentLine
-            amountCents={payment.amountCents}
-            key={payment.id}
-            paidAt={payment.paidAt}
-            testId={`league-payment-${payment.id}`}
-            what={payment.contest
-              ? <Link className="hover:underline" to={buildContestLandingPath(leagueCode, payment.contest)}>{payment.description}</Link>
-              : payment.description}
-            who={payment.payer?.name ?? null}
-          />
-        ))}
+        <QueryState
+          empty="No payments yet."
+          error={extractErrorMessage(paymentsQuery.error, { fallback: 'We could not load the payments right now.' })}
+          isEmpty={(payments) => payments.length === 0}
+          loading="Loading payments..."
+          query={paymentsQuery}
+          rows={3}
+          testId="league-payments"
+        >
+          {(payments) => payments.map((payment: LeaguePayment) => (
+            <PaymentLine
+              amountCents={payment.amountCents}
+              key={payment.id}
+              paidAt={payment.paidAt}
+              testId={`league-payment-${payment.id}`}
+              what={payment.contest
+                ? <Link className="hover:underline" to={buildContestLandingPath(leagueCode, payment.contest)}>{payment.description}</Link>
+                : payment.description}
+              who={payment.payer?.name ?? null}
+            />
+          ))}
+        </QueryState>
       </SettingsRows>
     </SectionCard>
   );
@@ -80,25 +79,28 @@ export function LeaguePaymentsSection({ leagueId, leagueCode }: { leagueId: stri
 export function MyPaymentsSection() {
   const paymentsQuery = useMyPaymentsQuery();
   return (
-    <SectionCard info={MINE_DESCRIPTION} testId="my-payments" title="Payments">
+    <SectionCard help={MINE_DESCRIPTION} testId="my-payments" title="Payments">
       <SettingsRows>
-        {paymentsQuery.isLoading ? <PaymentsState testId="my-payments-loading">Loading payments...</PaymentsState> : null}
-        {paymentsQuery.isError ? (
-          <PaymentsState testId="my-payments-error">
-            {extractErrorMessage(paymentsQuery.error, { fallback: 'We could not load your payments right now.' })}
-          </PaymentsState>
-        ) : null}
-        {paymentsQuery.data?.length === 0 ? <SectionEmpty testId="my-payments-empty">No payments yet.</SectionEmpty> : null}
-        {paymentsQuery.data?.map((payment: UserPayment) => (
-          <PaymentLine
-            amountCents={payment.amountCents}
-            key={payment.id}
-            paidAt={payment.paidAt}
-            testId={`my-payment-${payment.id}`}
-            what={<Link className="hover:underline" to={buildLeaguePath(payment.league.leagueCode)}>{payment.description}</Link>}
-            who={payment.league.name}
-          />
-        ))}
+        <QueryState
+          empty="No payments yet."
+          error={extractErrorMessage(paymentsQuery.error, { fallback: 'We could not load your payments right now.' })}
+          isEmpty={(payments) => payments.length === 0}
+          loading="Loading payments..."
+          query={paymentsQuery}
+          rows={3}
+          testId="my-payments"
+        >
+          {(payments) => payments.map((payment: UserPayment) => (
+            <PaymentLine
+              amountCents={payment.amountCents}
+              key={payment.id}
+              paidAt={payment.paidAt}
+              testId={`my-payment-${payment.id}`}
+              what={<Link className="hover:underline" to={buildLeaguePath(payment.league.leagueCode)}>{payment.description}</Link>}
+              who={payment.league.name}
+            />
+          ))}
+        </QueryState>
       </SettingsRows>
     </SectionCard>
   );

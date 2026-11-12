@@ -146,7 +146,7 @@ function CapsGrid({ form }: { form: UseFormReturn<PlanSettingsDraft> }) {
 
   return (
     <SectionCard
-      info="The most each plan allows. Entries per contest counts drafts; sports leagues a year counts the different sports leagues of the league's contests this calendar year."
+      help="The most each plan allows. Entries per contest counts drafts; sports leagues a year counts the different sports leagues of the league's contests this calendar year."
       testId="root-admin-plans-caps"
       title="Caps"
     >
@@ -207,7 +207,7 @@ function CapsGrid({ form }: { form: UseFormReturn<PlanSettingsDraft> }) {
 
 function FeatureList({ form }: { form: UseFormReturn<PlanSettingsDraft> }) {
   return (
-    <SectionCard bare info="The first plan that has each feature; every plan above it has it too." title="Features">
+    <SectionCard bare help="The first plan that has each feature; every plan above it has it too." title="Features">
       {Object.values(PlanFeatureGroup).map((featureGroup) => (
         <SectionCard headingLevel={3} key={featureGroup} testId={`root-admin-plans-features-${featureGroup}`} title={PLAN_FEATURE_GROUP_LABEL[featureGroup]}>
           <SectionRows>

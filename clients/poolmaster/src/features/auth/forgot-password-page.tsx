@@ -6,7 +6,7 @@ import { requestPasswordReset } from "@/lib/api";
 import { extractErrorMessage, throwApiError } from "@/lib/errors";
 import { getLogger } from "@/lib/logger";
 import { useInvalidatingMutation } from "@/lib/mutation-hooks";
-import { FormField, FormPage, Input, LinkButton, SectionCard } from "@/features/shared/ui";
+import { FormField, FormPage, Input, LinkButton, StatusPage } from "@/features/shared/ui";
 
 const forgotPasswordFormSchema = PasswordResetRequestSchema.extend({
   identifier: z.string().trim().min(1, "Enter your email or username").max(255),
@@ -43,15 +43,18 @@ export function ForgotPasswordPage() {
 
   if (requestMutation.isSuccess) {
     return (
-      <SectionCard className="mx-auto max-w-md" padded title="Check your email">
-        <p className="text-sm text-muted-foreground" data-testid="forgot-password-sent">
-          If an account matches, we&apos;ve sent a link to reset your password. The link works
-          once and expires in {PASSWORD_RESET_LINK_MINUTES} minutes.
-        </p>
-        <LinkButton data-testid="forgot-password-back-to-sign-in" to="/" variant="secondary">
-          Back to sign in
-        </LinkButton>
-      </SectionCard>
+      <StatusPage
+        action={(
+          <LinkButton data-testid="forgot-password-back-to-sign-in" to="/" variant="secondary">
+            Back to sign in
+          </LinkButton>
+        )}
+        body={`If an account matches, a reset link is on its way. It works once, for ${PASSWORD_RESET_LINK_MINUTES} minutes.`}
+        bodyTestId="forgot-password-sent"
+        kind="done"
+        testId="forgot-password-done"
+        title="Check your email"
+      />
     );
   }
 
@@ -59,7 +62,7 @@ export function ForgotPasswordPage() {
     <div className="mx-auto max-w-md">
       <FormPage
         cancelTo="/"
-        description="Enter the email or username you sign in with. We'll email you a link to choose a new password."
+        help="Enter the email or username you sign in with. We'll email you a link to choose a new password."
         errorMessage={
           requestMutation.isError
             ? extractErrorMessage(requestMutation.error, {

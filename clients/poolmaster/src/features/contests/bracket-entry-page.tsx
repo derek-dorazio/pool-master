@@ -2,7 +2,7 @@ import { useParams } from 'react-router';
 import { PredictedResult, type Sport } from '@poolmaster/shared/domain';
 import type { ContestDto } from '@/lib/api';
 import {
-  Alert,
+  Notice,
   ErrorState,
   Heading,
   LoadingState,
@@ -74,9 +74,9 @@ export function BracketEntryPage({ contest }: { contest: ContestDto }) {
   if (gamePicksQuery.isError || !gamePicksQuery.data) {
     return (
       <ErrorState
-        body="Try refreshing or return to the contest board."
+        body="We couldn't load this bracket."
+        onRetry={() => void gamePicksQuery.refetch()}
         testId="bracket-entry-error"
-        title="We couldn't load this bracket."
       />
     );
   }
@@ -124,9 +124,9 @@ export function BracketEntryPage({ contest }: { contest: ContestDto }) {
     >
 
       {picksHidden ? (
-        <Alert data-testid="bracket-picks-hidden">
+        <Notice data-testid="bracket-picks-hidden">
           {`This bracket stays hidden until ${closesAt}. Every bracket is revealed then.`}
-        </Alert>
+        </Notice>
       ) : (
         <>
           <Tile>
@@ -149,7 +149,7 @@ export function BracketEntryPage({ contest }: { contest: ContestDto }) {
             </MetricGrid>
           </Tile>
 
-          {pickError ? <Alert data-testid="bracket-pick-error" tone="danger">{pickError}</Alert> : null}
+          {pickError ? <Notice data-testid="bracket-pick-error" tone="danger">{pickError}</Notice> : null}
 
           <Tile>
             <Heading level={3} variant="card" size="xl" tone="inherit" className="mb-5" data-testid="contest-entry-builder-heading">

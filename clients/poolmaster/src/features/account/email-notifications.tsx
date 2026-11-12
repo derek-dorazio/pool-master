@@ -4,7 +4,7 @@ import { updateUserEmailPreference } from '@/lib/api';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
-import { Alert, Checkbox, Modal, Text } from '@/features/shared/ui';
+import { Checkbox, ErrorState, Modal, Notice, SectionCard, SectionRow, SectionRows, Text } from '@/features/shared/ui';
 import { EMAIL_CATEGORY_LABELS, SELF_EMAIL_PREFERENCES_KEY, useOwnEmailPreferences } from './email-preferences';
 import { SELF_USER_ID } from './user-routing';
 
@@ -19,9 +19,9 @@ export function EmailSuppressionBanner({ reason }: { reason: EmailSuppressionRea
     return null;
   }
   return (
-    <Alert data-testid="email-suppression-banner" title="We can't email you" tone="warning">
+    <Notice data-testid="email-suppression-banner" title="We can't email you" tone="warning">
       <Text as="p" className="mt-1">{SUPPRESSION_MESSAGES[reason]}</Text>
-    </Alert>
+    </Notice>
   );
 }
 
@@ -52,7 +52,6 @@ export function EmailNotificationsDialog({
     // The answer is the whole set of switches, written into the cache above.
     invalidates: [],
   });
-  const preferences = preferencesQuery.data?.preferences ?? [];
 
   return (
     <Modal
@@ -67,30 +66,37 @@ export function EmailNotificationsDialog({
       <div className="space-y-4">
         <EmailSuppressionBanner reason={preferencesQuery.data?.emailSuppression} />
         {preferencesQuery.isError ? (
-          <Alert tone="danger">{extractErrorMessage(preferencesQuery.error, { fallback: 'We could not load your email settings.' })}</Alert>
+          <ErrorState
+            body={extractErrorMessage(preferencesQuery.error, { fallback: 'We could not load your email settings.' })}
+            onRetry={() => void preferencesQuery.refetch()}
+            testId="email-notifications-load-error"
+          />
         ) : null}
         {updateMutation.isError ? (
-          <Alert tone="danger">{extractErrorMessage(updateMutation.error, { fallback: 'We could not save that change.' })}</Alert>
+          <Notice tone="danger">{extractErrorMessage(updateMutation.error, { fallback: 'We could not save that change.' })}</Notice>
         ) : null}
-        <ul className="space-y-3">
-          {preferences.map(({ category, enabled }) => (
-            <li key={category}>
-              <label className="flex items-start gap-3">
-                <Checkbox
-                  checked={enabled}
-                  className="mt-1"
-                  data-testid={`email-notifications-${category}`}
-                  disabled={updateMutation.isPending}
-                  onChange={(event) => updateMutation.mutate({ category, enabled: event.target.checked })}
+        {preferencesQuery.data ? (
+          <SectionCard testId="email-notifications-list" title="League emails">
+            <SectionRows>
+              {preferencesQuery.data.preferences.map(({ category, enabled }) => (
+                <SectionRow
+                  control={(
+                    <Checkbox
+                      checked={enabled}
+                      data-testid={`email-notifications-${category}`}
+                      disabled={updateMutation.isPending}
+                      onChange={(event) => updateMutation.mutate({ category, enabled: event.target.checked })}
+                    />
+                  )}
+                  facts={EMAIL_CATEGORY_LABELS[category].description}
+                  key={category}
+                  name={EMAIL_CATEGORY_LABELS[category].label}
+                  testId={`email-notifications-row-${category}`}
                 />
-                <Text variant="meta">
-                  <Text className="block" variant="strong">{EMAIL_CATEGORY_LABELS[category].label}</Text>
-                  {EMAIL_CATEGORY_LABELS[category].description}
-                </Text>
-              </label>
-            </li>
-          ))}
-        </ul>
+              ))}
+            </SectionRows>
+          </SectionCard>
+        ) : null}
       </div>
     </Modal>
   );

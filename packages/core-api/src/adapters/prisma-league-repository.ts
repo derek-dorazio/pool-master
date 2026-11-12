@@ -3,7 +3,7 @@
  */
 
 import type { League as PrismaLeague, Prisma, PrismaClient } from '@prisma/client';
-import type { LeaguePlanChange, LeagueRepository, LeagueSearch, LeagueSearchFilters } from '@poolmaster/shared/db';
+import type { LeaguePlanChange, LeagueRepository, LeagueSearch, LeagueUpdates, LeagueSearchFilters } from '@poolmaster/shared/db';
 import type { League, LeaguePlan } from '@poolmaster/shared/domain';
 import { LeagueMembershipStatus as MembershipStatus, LeaguePlanChangeReason } from '@poolmaster/shared/domain';
 import { forgettingReads, memoizedRead, ReadMemoKey } from '../core/request-read-memo';
@@ -200,11 +200,10 @@ export class PrismaLeagueRepository implements LeagueRepository {
     }));
   }
 
-  async update(id: string, updates: Partial<League>): Promise<League> {
+  async update(id: string, updates: LeagueUpdates): Promise<League> {
     const row = await forgettingReads(ReadMemoKey.league, () => this.prisma.league.update({
       where: { id },
       data: {
-        ...(updates.leagueCode !== undefined && { leagueCode: updates.leagueCode }),
         ...(updates.name !== undefined && { name: updates.name }),
         ...(updates.description !== undefined && { description: updates.description }),
         ...(updates.isActive !== undefined && { isActive: updates.isActive }),

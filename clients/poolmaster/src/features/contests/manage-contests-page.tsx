@@ -19,6 +19,7 @@ import {
   LoadingState,
   PageHeader,
   PageTabs,
+  refetchFailed,
   Tabs,
   TabsContent,
   YearPicker,
@@ -77,7 +78,7 @@ function EventCell({ contest, event }: { contest: ContestDto; event: ContestSpor
         {contest.sportEvents.length > 1 ? <span className="text-muted-foreground">{` and ${contest.sportEvents.length - 1} more`}</span> : null}
       </div>
       <div className="text-xs text-muted-foreground">
-        {when} <DateDisplay className="text-muted-foreground" value={event.startDate} />
+        {when} <DateDisplay tone="inherit" value={event.startDate} />
       </div>
     </div>
   );
@@ -258,9 +259,9 @@ export function ManageContestsPage() {
         />
 
         {isLoading ? (
-          <LoadingState body="Loading contests..." />
+          <LoadingState rows={3} body="Loading contests..." />
         ) : isError ? (
-          <ErrorState body="We couldn't load contests for this league." />
+          <ErrorState body="We couldn't load contests for this league." onRetry={refetchFailed(contestsQuery, yearsQuery)} />
         ) : !hasContests ? (
           <EmptyState
             action={
@@ -277,9 +278,9 @@ export function ManageContestsPage() {
         ) : (
           <TabsContent className="grid gap-3" value={filter}>
             {filter === 'history' && historyQuery.isError ? (
-              <ErrorState body={`We couldn't load the contests finished in ${year}.`} testId="manage-contests-history-error" />
+              <ErrorState body={`We couldn't load the contests finished in ${year}.`} onRetry={() => void historyQuery.refetch()} testId="manage-contests-history-error" />
             ) : filter === 'history' && historyQuery.isLoading ? (
-              <LoadingState body="Loading finished contests..." />
+              <LoadingState rows={3} body="Loading finished contests..." />
             ) : (
             <DataGrid
               columns={columns}

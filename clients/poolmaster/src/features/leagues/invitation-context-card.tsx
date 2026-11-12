@@ -1,5 +1,5 @@
 import { getLeagueInitials } from './league-routing';
-import { Heading } from '@/features/shared/ui';
+import { SectionCard, Text } from '@/features/shared/ui';
 
 type InvitationContextCardProps = {
   leagueName: string;
@@ -8,6 +8,7 @@ type InvitationContextCardProps = {
   title?: string;
 };
 
+/** The league an invitation leads to: a titled section with its initials, name and invite code. */
 export function InvitationContextCard({
   leagueName,
   inviteCode,
@@ -15,25 +16,21 @@ export function InvitationContextCard({
   title = 'League invitation',
 }: InvitationContextCardProps) {
   return (
-    <div
-      className="rounded-3xl border border-border bg-background p-5"
-      data-testid="invitation-context-card"
-    >
+    <SectionCard headingLevel={3} padded testId="invitation-context-card" title={title}>
       <div className="flex items-center gap-3">
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
           {getLeagueInitials(leagueName)}
         </div>
         <div className="min-w-0">
-          <Heading level={3} variant="eyebrow">{title}</Heading>
-          <div className="truncate text-base font-semibold text-foreground">{leagueName}</div>
+          <Text as="div" size="base" truncate variant="strong" weight="semibold">{leagueName}</Text>
           {inviteCode ? (
-            <div className="truncate font-mono text-xs uppercase text-muted-foreground">
+            <Text as="div" className="font-mono uppercase" truncate variant="caption">
               Invite code {inviteCode}
-            </div>
+            </Text>
           ) : null}
         </div>
       </div>
-      <p className="mt-4 text-sm text-muted-foreground">{message}</p>
-    </div>
+      <Text as="p" className="mt-4" variant="meta">{message}</Text>
+    </SectionCard>
   );
 }

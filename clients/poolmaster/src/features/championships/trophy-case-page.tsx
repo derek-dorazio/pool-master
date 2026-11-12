@@ -38,13 +38,13 @@ function SeasonCups() {
     return <LoadingState body="Loading cups..." />;
   }
   if (cupsQuery.isError) {
-    return <ErrorState body="We couldn't load this year's cups." testId="trophy-case-error" />;
+    return <ErrorState body="We couldn't load this year's cups." onRetry={() => void cupsQuery.refetch()} testId="trophy-case-error" />;
   }
   const cups = cupsOnShow(cupsQuery.data ?? []);
   const title = `${year} cups`;
   if (!cups.length) {
     return (
-      <SectionCard info="Every sports league the league runs contests in gets its own cup, shown here once two of its contests have counted." title={title}>
+      <SectionCard help="Every sports league the league runs contests in gets its own cup, shown here once two of its contests have counted." title={title}>
         <SectionEmpty testId="trophy-case-empty">No cups yet.</SectionEmpty>
       </SectionCard>
     );

@@ -454,7 +454,9 @@ state, stale actions, and unthemeable markup accumulate.
   eyebrow look), `value` (a number, with lined-up digits) or `strong` (a name that leads its
   row), with an optional `tone` (`muted`, `danger`, `primary`), `weight` (`normal`,
   `medium`, `semibold`, `bold`) and `size` (`inherit` keeps a name inside a larger line at that
-  line's size). `asChild` puts the style on a `Link`. An icon is an `Icon`, whose `tone` colours
+  line's size). The header's display type (`wordmark`, `nav`, `displayLabel`,
+  `display`) and its dark-band tones are `Text` variants too, and `hoverTone` gives a link its
+  hover colour. `asChild` puts the style on a `Link`. An icon is an `Icon`, whose `tone` colours
   it. Where a pattern repeats inside
   a composite (`SectionRow`, `PageHeader`'s fact line) the composite owns it, and the page
   passes plain content. Pages keep layout classes (flex, gap, margin, width, text alignment and

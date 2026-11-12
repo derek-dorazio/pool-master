@@ -10,7 +10,7 @@ import { getLogger } from "@/lib/logger";
 import { useInvalidatingMutation } from "@/lib/mutation-hooks";
 import { QueryKeys } from "@/lib/query-keys";
 import {
-  Alert,
+  Notice,
   Button,
   FormField,
   Input,
@@ -168,12 +168,12 @@ export function SignUpForm({
       }}
     >
       {mutation.isError ? (
-        <Alert data-testid="sign-up-error" tone="danger">
+        <Notice data-testid="sign-up-error" tone="danger">
           {extractErrorMessage(mutation.error, {
             fallback: "We could not create your account. Please try again.",
             codeMessages: errorMessages,
           })}
-        </Alert>
+        </Notice>
       ) : null}
 
       <div className="grid gap-4 sm:grid-cols-2">
@@ -202,7 +202,7 @@ export function SignUpForm({
       </FormField>
 
       <FormField error={form.formState.errors.password?.message} label="Create password">
-        <PasswordInput {...form.register("password")} autoComplete="new-password" data-testid="sign-up-password" placeholder="Create a password" />
+        <PasswordInput {...form.register("password")} autoComplete="new-password" data-testid="sign-up-password" />
       </FormField>
 
       <FormField error={form.formState.errors.confirmPassword?.message} label="Confirm password">
@@ -210,13 +210,12 @@ export function SignUpForm({
           {...form.register("confirmPassword")}
           autoComplete="new-password"
           data-testid="sign-up-confirm-password"
-          placeholder="Re-enter your password"
         />
       </FormField>
 
       <FormField
         error={form.formState.errors.timezone?.message}
-        helperText="Dates and times are shown in this zone. You can change it later in your account."
+        help="Dates and times are shown in this zone. You can change it later in your account."
         id="sign-up-time-zone"
         label="Time zone"
       >

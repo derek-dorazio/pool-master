@@ -83,6 +83,17 @@ Use those conventions as the starting point, but bias toward a consumer app:
   - list tiles
   - settings/manage pages
   - full league detail/home panels
+- Labels beside values, facts, checks and tables each have one shared part:
+  - **`FactList`** for label/value pairs about one thing: an entry's status
+    facts, a peek card, a plan's usage, a pick's breakdown. `inline` (label
+    left, value right) by default, `inset` under a row that opened it,
+    `columns` for a few side-by-side facts that stack on a phone.
+  - **`MetricGrid`** for a page's few headline numbers as big-figure tiles.
+  - **`SimpleTable`** (or `DataGrid` with search or sorting) when each row is
+    a thing of its own with several columns, such as an entry's picks.
+  - **`CheckList`** for requirements met or not: what is missing first at
+    full contrast, then what is done, dimmed.
+  Never a hand-built `<dl>`, a check/cross `<ul>` or a `grid-cols-[…]` table.
 - Prefer card/list/tile layouts for consumer league browsing before reaching
   for tables. A list that can run to hundreds of rows (teams, owners, standings)
   is the exception: §12 rule 7.
@@ -145,6 +156,16 @@ Use those conventions as the starting point, but bias toward a consumer app:
   - return to welcome
   - use league selector
   - retry
+- A read's loading, error and empty states have one look everywhere: a spinner line (with
+  faint placeholder rows for a list), a red line with Retry, and an italic empty line. A header
+  that doesn't depend on the read stays put; a page whose header names the thing being loaded
+  shows the state in place of the page until it arrives. Every failed read offers Retry, except
+  a failure reading again cannot fix (not found, no access), which passes `onRetry={null}`. A
+  button's pending label ("Saving...") is not a page state. The shared parts are named in
+  `clients/poolmaster/src/features/shared/ui/README.md`, and
+  `poolmaster/no-hand-written-query-states` fails a hand-drawn state in feature code (root
+  admin files still on the old look sit on a shrink-only list in
+  `eslint-rules/query-states-baseline.mjs`).
 
 ## 7. Forms And Validation
 
@@ -157,6 +178,29 @@ Use those conventions as the starting point, but bias toward a consumer app:
 - Preserve consistent button ordering within the same modal or form pattern.
 - For modal tasks, keep the primary action in the predictable confirmation
   position and keep cancellation visually quieter.
+
+Form rules (#1598), for every member and signed-out form:
+
+- Helper text (`FormField helperText`) is one short line about format or
+  result ("They get their own link by email."). How a field works goes behind
+  a (?) on its label (`FormField help`), never as a sentence on the form.
+- An optional field says "(optional)" in its label (`FormField optional`); a
+  required field carries no mark.
+- Field errors go under the field, including a server refusal that is about
+  one field (a taken league web address). A save error is a red `Notice`
+  above the buttons, and the dialog stays open.
+- Buttons are the shared `DialogActions` (in `FormModal`, `ConfirmDialog`) or
+  the `FormPage` footer: Cancel, then the action named for what it does
+  ("Create league", "Send reset link"). Its pending label reads "Creating...".
+- A placeholder is an example value only ("you@example.com"), never an
+  instruction ("Enter your password").
+- A page that is only a status (not found, a crash, a dead or expired link,
+  the done or confirm step after a link from an email) is the shared
+  `StatusPage` (#1600): a symbol, a title, one plain line and one action.
+  Not found offers "Go to my leagues" when signed in and "Sign in" when not.
+- A league's code is called "League web address" on screen and shows in the
+  shared `WebAddressBox`: the full address from the site's own origin, bold
+  and underlined, opening in a new tab once the league exists, with Copy.
 
 ## 8. Accessibility Expectations
 
@@ -242,11 +286,15 @@ administration area (root admin included), reusing the same shared components.
    Contests, Championships, the viewer's own squad by its
    name — **Yours** until they have one — and Members; `LeagueMenu`). Commissioners also see a
    Commissioner tools button at its right end. The league selector stays in the
-   app bar. An administration area has its own header with a way back and a side
-   menu (`AdminAreaLayout`) instead of the league menu. Each of its pages has one
-   heading: the area titles the page, or an entity's landing page shows its
-   `PageHeader` with the entity's icon. A page never adds a second header or "Back to" link of its
-   own; the trail leads back up.
+   app bar. An administration area replaces the league menu with its own frame.
+   Commissioner tools (`ToolsArea`) is a slim navy band naming the area, the
+   league and the way back, then its tools as one row of `PageTabs` on every
+   width, with no side menu; a tool's sub-pages keep its tab lit. Manage, the
+   root admin area, still has its header and side menu (`AdminAreaLayout`) until
+   it moves to the same frame. Each page in an area opens with one `PageHeader`
+   (a `FormPage` brings its own); an entity's landing page shows the entity's
+   icon in it. A page never adds a second header or "Back to" link of its own;
+   the trail leads back up.
 3. **Compact identity, once.** An entity's icon, name and facts appear once, in
    its landing page's `PageHeader`. No page repeats them as an editable detail
    panel, and a code the viewer cannot use (a league code, which members never
@@ -260,12 +308,15 @@ administration area (root admin included), reusing the same shared components.
    A page's views are underlined `PageTabs` on the header's bottom line, with a
    filter that applies to every tab alone at the row's right end. Title, facts
    and tabs fit in about 100px on a desktop and 120px on a phone.
-4. **Full pages, not dialogs.** Editing and managing are full pages with their
-   own route, so Back and links work (`FormPage`). Dialogs are only for
-   confirming a destructive or irreversible action: inactivate, delete, leave,
+4. **Small edits in a dialog, bigger ones on a page.** An edit of up to three
+   simple fields with no sub-sections opens a dialog (`FormModal`) over the page
+   it edits, opened by a query parameter so Back and links still work; a save
+   closes it and confirms with a toast, never a success box. Anything
+   bigger is a full page with its own route (`FormPage`). Other dialogs only
+   confirm a destructive or irreversible action: inactivate, delete, leave,
    remove.
 5. **One edit for all properties.** An entity's editable properties are edited
-   together on one form page with one Save, never a dialog per property.
+   together on one form with one Save, never a dialog per property.
 6. **Danger zone.** Destructive actions sit in their own marked section at the
    bottom of the settings page (a `SectionCard` with `tone="danger"` holding
    `DangerZoneAction`s), each with a confirm step, never beside everyday
@@ -299,8 +350,8 @@ administration area (root admin included), reusing the same shared components.
    `SquadStandingsGrid` in `features/championships` that starts from the shared
    Place, Squad and Points columns. An entry page opens on its picks: the entry's status
    is an icon beside its name (`ContestEntryFrame` draws it with
-   `EntryStatusCallout`, with the status, the contest's phase and the entry's
-   dates in a callout on hover or tap), not badges and a details panel above
+   `EntryStatusPeek`, a `DetailsPeek` whose card holds the status, the contest's
+   phase and the entry's dates, §15 *Showing More*), not badges and a details panel above
    the picks, and the entry's name, its tiebreaker and the one Submit for the
    whole entry come after the picks. A team or tie to pick in a pick'em,
    survivor or bracket game is a `PickOption` (pressed and marked "Your pick",
@@ -371,8 +422,8 @@ administration area (root admin included), reusing the same shared components.
     footer link (#1561). Four rules hold everywhere:
     - Every section has a title. No untitled cards, and no `Tile` with its own
       heading.
-    - No explanatory sentences in a section's body. An explanation goes behind
-      the title's info icon, or is removed.
+    - No explanatory sentences in a section's body. An explanation goes in the
+      title's `HelpTip` (?), or is removed (§15 *Showing More*).
     - Going to another page is the footer link (blue small caps, an arrow,
       right-aligned), never a button. Buttons only do things: make picks,
       create, save.
@@ -386,6 +437,23 @@ administration area (root admin included), reusing the same shared components.
     content such as Owners uses the same title as a `bare` section, and a
     danger zone is the same card with `tone="danger"`.
 
+    A section the league's plan doesn't include stays in its place with its
+    own title, as a `LockedSection`: a lock, one line naming the lowest plan
+    that includes it ("Included with Premium."), and a "See plans" footer link
+    to the league's plan page. It is never hidden, and never a sentence on why
+    the plan leaves it out.
+
+    Data is never a raw `ul`/`li`/`ol` (#1590). Anything that is a row (a
+    name, maybe a fact line, a figure or an action: a contest's events, a
+    setting with its checkbox, a contest over a limit) is a `SectionRow` in a
+    titled `SectionCard`, with `SectionEmpty` when there is none. When no slot
+    fits, add one to `SectionRow` rather than hand-building a row. A list that
+    is not data rows gets a named composite in the feature folder that owns
+    the concept, which owns its markup and styles: a plan's features are a
+    `FeatureList` (`features/plans`), and one-of-a-kind blocks such as the
+    `Podium`, the contest type tile and the squares winners are their own
+    components. A page never styles around them.
+
     `npm run rules:check:titled-tiles` finds every `Tile` outside
     `features/shared/ui` that holds its own `Heading`, `Eyebrow`, `SectionTitle`
     or `<h1>`–`<h6>`. Its baseline, `scripts/titled-tile-baseline.json`, lists
@@ -394,6 +462,17 @@ administration area (root admin included), reusing the same shared components.
     Commissioner tools has one exception, `contests/contest-status-card.tsx`,
     the contest lifecycle panel that #1609 replaces; no other Commissioner
     tools file may be added.
+
+    Pages never draw their own rounded box (#1591). A box that holds content
+    is a `SectionCard` (titled) or a `Tile` (untitled, `radius="sm"` for the
+    shared 8px corner inside a section), a box telling the user something
+    they must know is a `Notice`, and a clickable box is a `Button` or a link
+    row; a choice in a dialog is a `ConfirmDialog` with Cancel and its one
+    action. `npm run rules:check:card-corners` counts `rounded-2xl`,
+    `rounded-3xl` and `rounded-4xl` outside `features/shared/ui`; its
+    baseline, `scripts/card-corner-baseline.json`, lists the pages still
+    waiting for their cleanup (the picks pages #1579 rebuilds among them) and
+    only ever shrinks.
 
 ## 13. Event Pages
 
@@ -491,3 +570,41 @@ tested is `docs/EMAIL-DELIVERY.md`; this section is what an email looks like and
    the site's wordmark is. Small uppercase labels are label blue on white and navy haze on a
    navy band, as the site's eyebrows are. Email keeps to Archivo and Inter with Arial behind
    them; the site's condensed number face is not used, since most mail clients would fall back.
+
+## 15. Showing More
+
+Every "there's more to say here" moment uses one of four patterns, each with one
+icon, one trigger and one component from `features/shared/ui` (#1585, design
+`designs/more-info-patterns.html` in the project files). Pick by the question the
+extra text answers:
+
+| Question | Component | Icon and place | Opens on |
+|---|---|---|---|
+| "How does this work?" | `HelpTip` | **?** right after a page title, section title or form label | Mouse hover, or Enter on its button; tap on a phone |
+| "Who or what is this?" | `DetailsPeek` | **i** right after one thing's name (entry, event, golfer, team, contest), or its status glyph | Mouse hover after a short delay, Enter on its button, or a tap |
+| "Show me the breakdown." | `ExpandableRow` | Chevron at the row's right end | Click or tap only; stays open |
+| "You must know this now." | `Notice` | **!** with its tone, right above what it affects | Always visible |
+
+1. **No inline explainer text.** No sentence in a page, section or form body says
+   what the page, section or setting is or how it works. It goes in a `HelpTip`
+   (1 to 3 plain sentences, at most one link on), or it is removed. A section
+   takes it as `SectionCard`'s `help`, a form page as `FormPage`'s `help`, and a
+   page header in its `titleAside`.
+2. **Facts stay when they serve the page.** A fact line, a row's fact or a value
+   that the page exists to show stays inline; secondary facts about one thing go in
+   its `DetailsPeek`, so the page is not distracted from its job.
+3. **A `Notice` is for now.** A deadline, a draft, a lock, an error, a plan limit:
+   one sentence plus at most one action, gone when it no longer applies. It never
+   explains a page.
+4. **`ExpandableRow` never opens on hover**, and several rows may be open at once
+   so they can be compared. One-line facts are a `DetailsPeek`, not a row to open.
+5. **No reading modals, no hover-only content, no native `title=` tooltips.** Every
+   callout also opens by tap and keyboard and closes on Escape or a tap elsewhere;
+   a dialog only confirms an action.
+6. **`InfoPopover` is internal.** It is the base `HelpTip` and `DetailsPeek` are
+   built on; feature code never uses it. A product's own peek is a wrapper over
+   `DetailsPeek` in the feature folder that owns the thing (`EntryDetailsPeek`,
+   `EntryStatusPeek`).
+
+The `poolmaster/no-ad-hoc-more-info` ESLint rule fails feature code that imports
+`InfoPopover` or sets a `title=` attribute on a DOM element.

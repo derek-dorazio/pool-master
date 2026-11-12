@@ -123,6 +123,12 @@ describe('JoinTeamOwnerPage', () => {
     // Signing in stays available for somebody who already has an account; what is gone is the
     // "create an account and come back" round trip.
     expect(screen.getByTestId('team-invite-sign-in')).toHaveAttribute('href', '/');
+    // The registration form and the team being joined are titled sections, not hand-drawn boxes,
+    // and the note about the invited email sits behind the section's (?).
+    expect(screen.getByRole('region', { name: 'Create your account' })).toHaveAttribute('data-testid', 'team-invite-register');
+    expect(screen.getByTestId('team-invite-register-help')).toBeInTheDocument();
+    expect(screen.queryByText(/uses the email this invitation was sent to/)).not.toBeInTheDocument();
+    expect(screen.getByRole('region', { name: "What you're joining" })).toHaveClass('rounded-lg');
     expect(screen.queryByTestId('team-invite-create-account')).not.toBeInTheDocument();
     // No email field: the account uses the invited address, which the server reads off the
     // invitation. That is the security property, so its absence is asserted.
@@ -453,12 +459,14 @@ describe('JoinTeamOwnerPage', () => {
     it('tells a signed-in visitor the invitation could not be loaded and offers no join button', async () => {
       signedIn();
       getTeamOwnerInvitationPreviewMock.mockResolvedValue({
-        error: { error: { code: 'SQUAD_OWNER_INVITATION_NOT_FOUND', message: 'Co-owner invitation not found' } },
+        // A failure other than an unknown code, which has its own dead-link page.
+        error: { error: { code: 'INTERNAL_ERROR', message: 'Something broke' } },
       });
 
       renderJoinTeamOwnerPage();
 
       expect(await screen.findByText('We could not load this co-owner invitation.')).toBeInTheDocument();
+      expect(screen.getByTestId('team-owner-invite-error')).toContainElement(screen.getByRole('button', { name: 'Retry' }));
       expect(screen.queryByTestId('team-invite-accept')).not.toBeInTheDocument();
       expect(mockLogger.warn).toHaveBeenCalledWith(
         expect.objectContaining({ action: 'teamInvite.preview.failed' }),
@@ -510,29 +518,44 @@ describe('Joining a team as a co-owner from an invite link', () => {
   }
 
   it.each([
-    ['EXPIRED', 'This invitation has expired. Ask the commissioner for a new one.'],
-    ['REVOKED', 'This invitation was withdrawn. Ask the commissioner for a new one.'],
-    ['ACCEPTED', 'This invitation has already been used.'],
-  ] as const)('explains to a signed-in viewer that a %s team invite cannot be used, with no join button', async (status, message) => {
+    ['EXPIRED', 'This invitation has expired', 'Ask the commissioner for a new one.'],
+    ['REVOKED', 'This invitation was withdrawn', 'Ask the commissioner for a new one.'],
+    ['ACCEPTED', 'This invitation was already used', 'Open your leagues to reach it.'],
+  ] as const)('shows a signed-in viewer a dead-link page for a %s team invite, with no join button', async (status, title, body) => {
     signIn();
     getTeamOwnerInvitationPreviewMock.mockResolvedValue(preview(status));
 
     renderJoinTeamOwnerPage();
 
-    // The signed-out page shows the same message while the session loads; wait for the signed-in page.
-    const page = await screen.findByTestId('team-owner-invite-page');
-    expect(within(page).getByText(message)).toBeInTheDocument();
+    const page = await screen.findByTestId('invitation-status-page');
+    expect(within(page).getByRole('heading', { name: title })).toBeInTheDocument();
+    expect(within(page).getByText(body)).toBeInTheDocument();
+    expect(page).toHaveAttribute('data-kind', 'expired');
+    await waitFor(() => expect(within(page).getByRole('link', { name: 'Go to my leagues' })).toHaveAttribute('href', '/welcome'));
     expect(screen.queryByRole('button', { name: 'Join as co-owner' })).not.toBeInTheDocument();
   });
 
-  it('does not offer a signed-out visitor the registration form for an expired team invite', async () => {
+  it('shows a signed-out visitor the dead-link page with Sign in, not the registration form, for an expired team invite', async () => {
     signOut();
     getTeamOwnerInvitationPreviewMock.mockResolvedValue(preview('EXPIRED'));
 
     renderJoinTeamOwnerPage();
 
-    expect(await screen.findByText('This invitation has expired. Ask the commissioner for a new one.')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'This invitation has expired' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Sign in' })).toHaveAttribute('href', '/');
     expect(screen.queryByRole('button', { name: 'Create account and join' })).not.toBeInTheDocument();
+  });
+
+  it('shows the not-found dead-link page for a co-owner invite code the server does not know', async () => {
+    signIn();
+    getTeamOwnerInvitationPreviewMock.mockResolvedValue({ error: { error: { code: 'SQUAD_OWNER_INVITATION_NOT_FOUND', message: 'Not found.' } }, status: 404 });
+
+    renderJoinTeamOwnerPage();
+
+    const page = await screen.findByTestId('invitation-status-page');
+    expect(page).toHaveAttribute('data-kind', 'notFound');
+    expect(within(page).getByRole('heading', { name: "This invitation link doesn't work" })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Join as co-owner' })).not.toBeInTheDocument();
   });
 
   it('says the co-owner invitation could not be loaded and offers no join button when the preview fails', async () => {

@@ -953,7 +953,8 @@ service work included, stays on the normal flow to `main`.
   review approves it is squash-merged into the batch at once: no merge spacing and no
   trial merge of `main`, since nothing deploys from a batch.
 - **Web app only.** `changes` fails a batch PR that carries anything outside
-  `clients/` and the docs and rule baselines (`scripts/ci-changed-areas.mjs`): a change to
+  `clients/` and the docs and rule baselines, the lint rules' query-states baseline among
+  them (`scripts/ci-changed-areas.mjs`): a change to
   `packages/shared`, the service, `tests/`, a script, a migration or a dependency (a
   `package.json` anywhere included) needs the full suites and goes to `main` as its own PR.
   Split the ticket if it must. Browser e2e specs under `clients/` may change in a batch;

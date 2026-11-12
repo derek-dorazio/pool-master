@@ -1,17 +1,17 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Alert } from "./alert";
 import { Button } from "./button";
+import { Notice } from "./notice";
 
 const meta = {
-  title: "Feedback/Alert",
-  component: Alert,
+  title: "More info/Notice",
+  component: Notice,
   args: { title: "Picks close at 7:00 AM ET", children: "Make your picks before the first tee time." },
-} satisfies Meta<typeof Alert>;
+} satisfies Meta<typeof Notice>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** Becomes the Notice (!) pattern (#1585): must-know, always visible. */
+/** The Notice (!) pattern: what the reader must know now, always visible. */
 export const Info: Story = {};
 export const Warning: Story = { args: { tone: "warning" } };
 export const Danger: Story = { args: { tone: "danger", title: "We couldn't save your picks" } };

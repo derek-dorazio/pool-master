@@ -10,15 +10,15 @@ import {
   type SquaresBoxDto,
 } from '@/lib/api';
 import {
-  Alert,
+  Notice,
   Button,
   ConfirmDialog,
   ErrorState,
-  Eyebrow,
   FormField,
   Heading,
   LoadingState,
   Select,
+  Text,
   Tile,
 } from '@/features/shared/ui';
 import { ApiError, extractErrorMessage, throwApiError, type ErrorCodeMessages } from '@/lib/errors';
@@ -29,7 +29,7 @@ import { formatClaimedCount, formatGridTaken, squaresMomentRows } from './square
 import { SquaresGrid, type SquaresBoxAction } from './squares-grid';
 import { useSquaresBoardQuery } from './use-squares-board';
 import { useContestLeagueCode } from './use-contest-league';
-import { EntryDetailsPeek } from './entry-details-peek';
+import { SquaresWinners } from './squares-winners';
 import { entryWriteKeys } from './use-contest-entries';
 
 /** Copy for the refusals a claim, a clear and the draw can meet (#711). The codes are the contract. */
@@ -42,24 +42,6 @@ const SQUARES_CODE_MESSAGES: ErrorCodeMessages = {
   SQUARES_DRAW_CLOSED: 'The numbers can no longer be drawn: the first quarter\'s score is in.',
   ENTRY_ACCESS_DENIED: 'Only that entry\'s owners or a commissioner can change its boxes.',
 };
-
-/** A quarter's winning entry by name, with the (i) for its team once there is a winner to name. */
-function WinnerEntry({ entryName, leagueCode, leagueId, squadId, testId }: {
-  entryName: string | null;
-  leagueCode: string;
-  leagueId: string;
-  squadId: string | undefined;
-  testId: string;
-}) {
-  return (
-    <div className="flex items-center font-semibold">
-      {entryName ?? 'No winner'}
-      {entryName !== null && squadId ? (
-        <EntryDetailsPeek className="-my-2" entryName={entryName} leagueCode={leagueCode} leagueId={leagueId} squadId={squadId} testId={testId} />
-      ) : null}
-    </div>
-  );
-}
 
 /**
  * A squares contest's board (#711, design §4.2): the winners of each quarter above the grid, then
@@ -148,9 +130,9 @@ export function SquaresBoardView({
   if (boardQuery.isError || !boardQuery.data) {
     return (
       <ErrorState
-        body="Try refreshing or return to the contest board."
+        body="We couldn't load this grid."
+        onRetry={() => void boardQuery.refetch()}
         testId="squares-board-error"
-        title="We couldn't load this grid."
       />
     );
   }
@@ -192,43 +174,22 @@ export function SquaresBoardView({
   return (
     <div className="space-y-6" data-testid="squares-board">
       {board.digits ? (
-        <Tile data-testid="squares-winners">
-          <Heading level={3} variant="card" size="lg" tone="inherit" className="mb-3">{isFinal ? 'Winners' : 'Winners so far'}</Heading>
-          <ul className="grid gap-2 sm:grid-cols-2 md:grid-cols-4">
-            {moments.map((moment) => (
-              <li
-                className="rounded-xl border border-border px-3 py-2 text-sm"
-                data-testid={`squares-winner-${moment.periodNumber}`}
-                key={moment.periodNumber}
-              >
-                <Eyebrow tone="muted">{moment.label}</Eyebrow>
-                {moment.winner ? (
-                  <>
-                    <WinnerEntry
-                      entryName={moment.winner.entryName}
-                      leagueCode={leagueCode}
-                      leagueId={contest.leagueId}
-                      squadId={winnerSquadId(moment.winner.contestEntryId)}
-                      testId={`squares-winner-${moment.periodNumber}-peek`}
-                    />
-                    <div className="text-muted-foreground">
-                      {`${board.awayTeamName ?? 'Away'} ${moment.winner.awayScore}, ${board.homeTeamName ?? 'Home'} ${moment.winner.homeScore}`}
-                    </div>
-                  </>
-                ) : (
-                  <div className="text-muted-foreground">Not scored yet</div>
-                )}
-              </li>
-            ))}
-          </ul>
-        </Tile>
+        <SquaresWinners
+          awayTeamName={board.awayTeamName}
+          homeTeamName={board.homeTeamName}
+          isFinal={isFinal}
+          leagueCode={leagueCode}
+          leagueId={contest.leagueId}
+          moments={moments}
+          squadIdOf={winnerSquadId}
+        />
       ) : null}
 
       <Tile>
         <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
           <div>
             <Heading level={3} variant="card" size="xl" tone="inherit">{board.claimsOpen ? 'Claim your boxes' : 'The grid'}</Heading>
-            <p className="text-sm text-muted-foreground" data-testid="squares-claim-help">
+            <Text as="p" data-testid="squares-claim-help" variant="meta">
               {board.claimsOpen
                 ? claimingEntryId === null
                   ? 'Enter the contest to claim boxes.'
@@ -236,7 +197,7 @@ export function SquaresBoardView({
                 : board.digits
                   ? 'The numbers are drawn. Each quarter is won by the box matching the last digit of each team\'s score.'
                   : 'Boxes can no longer be claimed.'}
-            </p>
+            </Text>
           </div>
           {board.drawOpen && canManage ? (
             <Button data-testid="squares-draw" onClick={() => setIsDrawConfirmOpen(true)}>
@@ -245,7 +206,7 @@ export function SquaresBoardView({
           ) : null}
         </div>
 
-        <div className="mb-4 flex flex-wrap items-end gap-4 text-sm">
+        <div className="mb-4 flex flex-wrap items-end gap-4">
           {canManage && board.claimsOpen && board.entries.length > 0 ? (
             <FormField label="Claim for">
               <Select
@@ -260,14 +221,14 @@ export function SquaresBoardView({
             </FormField>
           ) : null}
           {claimingEntry ? (
-            <span className="font-semibold" data-testid="squares-claimed-count">
+            <Text data-testid="squares-claimed-count" weight="semibold">
               {`${canManage && claimingEntry.contestEntryId !== myEntryId ? `${claimingEntry.entryName}: ` : ''}${formatClaimedCount(myBoxCount, board.maxSquaresPerEntry)}`}
-            </span>
+            </Text>
           ) : null}
-          <span className="text-muted-foreground" data-testid="squares-grid-taken">{formatGridTaken(board.boxes.length)}</span>
+          <Text data-testid="squares-grid-taken" variant="meta">{formatGridTaken(board.boxes.length)}</Text>
         </div>
 
-        {boxError ? <Alert className="mb-4" data-testid="squares-box-error" tone="danger">{boxError}</Alert> : null}
+        {boxError ? <Notice className="mb-4" data-testid="squares-box-error" tone="danger">{boxError}</Notice> : null}
 
         <SquaresGrid
           actionFor={actionFor}
@@ -302,9 +263,9 @@ export function SquaresBoardView({
         title="Draw the numbers?"
       >
         {drawMutation.isError ? (
-          <Alert data-testid="squares-draw-error" tone="danger">
+          <Notice data-testid="squares-draw-error" tone="danger">
             {extractErrorMessage(drawMutation.error, { codeMessages: SQUARES_CODE_MESSAGES, fallback: 'We could not draw the numbers. Please try again.' })}
-          </Alert>
+          </Notice>
         ) : null}
       </ConfirmDialog>
     </div>

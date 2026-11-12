@@ -10,6 +10,8 @@ type DateDisplayProps = {
   emptyLabel?: string;
   /** `null` shows the date alone. */
   timeStyle?: Intl.DateTimeFormatOptions["timeStyle"] | null;
+  /** `inherit` takes the colour of the line around it, such as a row's muted fact line. */
+  tone?: "default" | "inherit";
   value: Date | string | null | undefined;
 };
 
@@ -18,6 +20,7 @@ export function DateDisplay({
   dateStyle = "medium",
   emptyLabel = "Unavailable",
   timeStyle = "short",
+  tone = "default",
   value,
 }: DateDisplayProps) {
   const preferences = useDisplayPreferences();
@@ -32,7 +35,7 @@ export function DateDisplay({
       }).format(date) + (timeStyle ? ` ${timeZoneAbbreviation(date, preferences)}` : "")
     : emptyLabel;
 
-  return <span className={cn("text-foreground", className)}>{formatted}</span>;
+  return <span className={cn(tone === "default" ? "text-foreground" : undefined, className)}>{formatted}</span>;
 }
 
 type DateTimeFieldProps = Omit<ComponentProps<"input">, "type">;

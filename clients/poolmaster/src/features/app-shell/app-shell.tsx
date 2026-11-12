@@ -19,7 +19,7 @@ import { LeagueMenuBar } from "@/features/leagues/league-menu-bar";
 import { useLeaguesQuery } from "@/features/leagues/use-leagues-query";
 import { LeagueSelector } from "./league-selector";
 import { PRODUCT_NAME, PRODUCT_TAGLINE } from "@poolmaster/shared/domain";
-import { StatusBadge } from "@/features/shared/ui";
+import { StatusBadge, Text } from "@/features/shared/ui";
 
 /** The public How to Play page (#803): linked from the signed-out header and from every page's footer. */
 const HOW_TO_PLAY_PATH = "/how-to-play";
@@ -142,12 +142,12 @@ export function AppShell() {
             {/* The brand goes home (#1395): `/` lands a signed-out visitor on the welcome page and
                 a member on their league's home, so every page has a way back there. */}
             <Link aria-label="Home" className="group block min-w-0 space-y-1" data-testid="app-shell-home" to="/">
-              <StatusBadge className="hidden text-primary tracking-normal sm:inline-flex" tone="brandOutline">
+              <StatusBadge className="hidden sm:inline-flex" tone="brandTagline">
                 {PRODUCT_TAGLINE}
               </StatusBadge>
-              <span className="block font-display text-xl font-black uppercase italic tracking-normal text-on-inverse group-hover:text-primary group-focus-visible:text-primary sm:text-2xl">
+              <Text as="span" className="block" hoverTone="primary" variant="wordmark">
                 {PRODUCT_NAME}
-              </span>
+              </Text>
             </Link>
 
             {shouldLoadLeagueShell ? (
@@ -214,20 +214,16 @@ export function AppShell() {
               </>
             ) : (
               <>
-                <Link
-                  className="font-display text-sm font-bold uppercase tracking-button text-on-inverse hover:text-primary"
-                  data-testid="app-shell-how-to-play"
-                  to={HOW_TO_PLAY_PATH}
-                >
-                  How to Play
-                </Link>
-                <Link
-                  className="font-display text-sm font-bold uppercase tracking-button text-on-inverse hover:text-primary"
-                  data-testid="app-shell-plans"
-                  to={PLANS_PATH}
-                >
-                  Plans
-                </Link>
+                <Text asChild hoverTone="primary" variant="nav">
+                  <Link data-testid="app-shell-how-to-play" to={HOW_TO_PLAY_PATH}>
+                    How to Play
+                  </Link>
+                </Text>
+                <Text asChild hoverTone="primary" variant="nav">
+                  <Link data-testid="app-shell-plans" to={PLANS_PATH}>
+                    Plans
+                  </Link>
+                </Text>
               </>
             )}
           </div>
@@ -243,14 +239,18 @@ export function AppShell() {
       </div>
 
       <footer className="border-t border-border">
-        <div className="mx-auto flex max-w-6xl flex-wrap gap-4 px-4 py-6 text-sm text-muted-foreground sm:px-6">
-          <Link className="hover:text-foreground" data-testid="app-shell-footer-how-to-play" to={HOW_TO_PLAY_PATH}>
-            How to Play
-          </Link>
-          <Link className="hover:text-foreground" data-testid="app-shell-footer-plans" to={PLANS_PATH}>
-            Plans
-          </Link>
-        </div>
+        <Text as="div" className="mx-auto flex max-w-6xl flex-wrap gap-4 px-4 py-6 sm:px-6" variant="meta">
+          <Text asChild hoverTone="default" size="inherit" tone="inherit">
+            <Link data-testid="app-shell-footer-how-to-play" to={HOW_TO_PLAY_PATH}>
+              How to Play
+            </Link>
+          </Text>
+          <Text asChild hoverTone="default" size="inherit" tone="inherit">
+            <Link data-testid="app-shell-footer-plans" to={PLANS_PATH}>
+              Plans
+            </Link>
+          </Text>
+        </Text>
       </footer>
 
       {shouldLoadLeagueShell ? (

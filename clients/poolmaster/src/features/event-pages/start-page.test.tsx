@@ -184,7 +184,9 @@ describe('Start from an event page', () => {
 
     renderStart(SQUARES);
 
-    expect(await screen.findByTestId('create-league-next-step')).toHaveTextContent('Next: your Squares for Championship Weekend');
+    expect(await screen.findByRole('dialog', { name: 'Create your league' })).toHaveAccessibleDescription(
+      "Then you'll set up your Squares for Championship Weekend.",
+    );
     expect(screen.queryByTestId('start-share-with-commissioner')).not.toBeInTheDocument();
   });
 

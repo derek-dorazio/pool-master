@@ -137,6 +137,21 @@ describe('Commissioner tools › Contests › one contest › Events', () => {
     expect(within(screen.getByTestId('contest-events-year')).getAllByRole('option').map((year) => year.textContent)).toEqual(['2099', '2100']);
   });
 
+  it('says the season\'s events could not load, in red with Retry, and lists them once Retry succeeds', async () => {
+    primeMocks();
+    const listSeason = listEventsMock.getMockImplementation() as (options: unknown) => unknown;
+    listEventsMock.mockResolvedValue({ error: { error: { code: 'INTERNAL_ERROR', message: 'Down' } }, status: 500 });
+
+    renderAt(EVENTS_PATH);
+
+    const error = await screen.findByTestId('contest-events-year-error');
+    expect(error).toHaveTextContent("We couldn't load the 2099 events.");
+    listEventsMock.mockImplementation(listSeason);
+    fireEvent.click(within(error).getByRole('button', { name: 'Retry' }));
+
+    expect(await screen.findByTestId(`contest-events-option-${masters.id}`)).toBeInTheDocument();
+  });
+
   it('reads another season\'s events when it is picked, keeping the events chosen in the first season in the order list', async () => {
     primeMocks();
 
@@ -169,6 +184,32 @@ describe('Commissioner tools › Contests › one contest › Events', () => {
     // An event whose field is not loaded can't be added yet, and says why.
     expect(option('event-4')).toBeDisabled();
     expect(options.getByText(/Field not loaded yet/)).toBeInTheDocument();
+  });
+
+  it('numbers the chosen events in play order in their own section, and asks for one when none is chosen', async () => {
+    primeMocks();
+
+    renderAt(EVENTS_PATH);
+
+    fireEvent.click(await screen.findByTestId('contest-events-option-event-2'));
+    const chosen = within(screen.getByRole('region', { name: '2 events, in order' }));
+    expect(chosen.getAllByRole('listitem').map((item) => item.textContent)).toEqual([
+      expect.stringMatching(/^The Masters.*1$/),
+      expect.stringMatching(/^PGA Championship.*2$/),
+    ]);
+    fireEvent.click(option('event-1'));
+    fireEvent.click(option('event-2'));
+    expect(screen.getByTestId('contest-events-chosen-empty')).toHaveTextContent('Choose at least one event.');
+  });
+
+  it('shows a season that could not load inside that season\'s section', async () => {
+    primeMocks();
+    listEventsMock.mockImplementation(() => Promise.resolve({ error: { error: { code: 'INTERNAL_ERROR', message: 'Boom' } }, status: 500 }));
+
+    renderAt(EVENTS_PATH);
+
+    const error = await screen.findByTestId('contest-events-year-error');
+    expect(within(screen.getByRole('region', { name: '2099 events' })).getByTestId('contest-events-year-error')).toBe(error);
   });
 
   it('reads the one contest by id and goes back to the contest page for a contest of another league', async () => {
@@ -207,7 +248,7 @@ describe('Commissioner tools › Contests › one contest › Events', () => {
     fireEvent.click(await screen.findByTestId('contest-events-option-event-3'));
     fireEvent.click(option('event-2'));
     const chosen = within(screen.getByTestId('contest-events-chosen')).getAllByRole('listitem');
-    expect(chosen.map((item) => item.textContent.split(' · ')[0])).toEqual(['The Masters', 'PGA Championship', 'U.S. Open']);
+    expect(chosen.map((item) => within(item).getByText(/^(The Masters|PGA Championship|U\.S\. Open)$/).textContent)).toEqual(['The Masters', 'PGA Championship', 'U.S. Open']);
     fireEvent.click(screen.getByTestId('contest-events-save'));
 
     await waitFor(() => expect(setContestSportEventsMock).toHaveBeenCalledWith({
@@ -240,7 +281,8 @@ describe('Commissioner tools › Contests › one contest › Events', () => {
     expect(lockedOption).toBeChecked();
     expect(lockedOption).toBeDisabled();
     expect(screen.getByText('In the contest')).toBeInTheDocument();
-    expect(screen.getByTestId('contest-events-page')).toHaveTextContent('you can add events but not remove them');
+    fireEvent.click(screen.getByTestId('contest-events-page-help'));
+    expect(screen.getByTestId('contest-events-page-help-callout')).toHaveTextContent('you can add events but not remove them');
 
     // Adding still works, and the save keeps the started event.
     setContestSportEventsMock.mockResolvedValue(apiSuccess({ contest: buildManagedContest() }));

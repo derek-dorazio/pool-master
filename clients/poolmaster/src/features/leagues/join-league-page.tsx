@@ -8,15 +8,20 @@ import { getLogger } from '@/lib/logger';
 import {
   Button,
   Chip,
+  ErrorState,
   FormField,
-  Heading,
   IconPalette,
   Input,
   LinkButton,
+  LoadingState,
   PublicInviteJoinPage,
+  SectionCard,
+  Text,
+  Tile,
 } from '@/features/shared/ui';
 import { InvitationContextCard } from './invitation-context-card';
-import { describeUnusableInvitation } from './unusable-invitation';
+import { describeUnusableInvitation, UNKNOWN_INVITATION } from './unusable-invitation';
+import { InvitationStatusPage } from './invitation-status-page';
 import {
   buildInvitePath,
   buildLeaguePath,
@@ -31,7 +36,7 @@ import { getTeamIconOption, TEAM_ICON_OPTIONS } from '@/features/teams/team-icon
 import { TeamAvatar } from '@/features/teams/team-avatar';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
-import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
+import { ApiError, extractErrorMessage, hasErrorCode, throwApiError } from '@/lib/errors';
 import type { ParsedRouteState } from '@/routes/route-state';
 
 export function JoinLeaguePage() {
@@ -237,7 +242,13 @@ function JoinLeagueByInvite({ inviteCode }: { inviteCode: string }) {
   }, [inviteCode, isAuthenticated]);
 
   const selectedIcon = getTeamIconOption(selectedIconKey);
-  const unusableInvitationMessage = describeUnusableInvitation(invitationQuery.data?.status);
+  const unusableInvitation = hasErrorCode(invitationQuery.error, 'LEAGUE_INVITATION_NOT_FOUND')
+    ? UNKNOWN_INVITATION
+    : describeUnusableInvitation(invitationQuery.data?.status);
+
+  if (unusableInvitation) {
+    return <InvitationStatusPage invitation={unusableInvitation} />;
+  }
 
   if (redirectMessage) {
     return (
@@ -297,8 +308,15 @@ function JoinLeagueByInvite({ inviteCode }: { inviteCode: string }) {
           squeezed the icon palette into tiles too small for their labels. */}
       <div className="mt-6 space-y-5">
         <div className="space-y-4 text-sm text-muted-foreground">
-          {invitationQuery.isLoading ? <p>Loading invitation...</p> : null}
-          {invitationQuery.isError ? <p>We could not load this invitation.</p> : null}
+          {invitationQuery.isLoading ? <LoadingState body="Loading invitation..." size="plain" testId="join-league-invitation-loading" /> : null}
+          {invitationQuery.isError ? (
+            <ErrorState
+              body="We could not load this invitation."
+              onRetry={() => void invitationQuery.refetch()}
+              size="plain"
+              testId="join-league-invitation-error"
+            />
+          ) : null}
           {invitationQuery.data ? (
             <InvitationContextCard
               inviteCode={invitationQuery.data.inviteCode}
@@ -307,19 +325,19 @@ function JoinLeagueByInvite({ inviteCode }: { inviteCode: string }) {
               title="Ready to join"
             />
           ) : null}
-          {unusableInvitationMessage ? <p>{unusableInvitationMessage}</p> : null}
           {acceptMutation.isPending ? <p>Accepting invitation...</p> : null}
           {acceptMutation.isError ? <p>{extractErrorMessage(acceptMutation.error, { fallback: 'We could not accept this invitation. Please try again.' })}</p> : null}
           {acceptMutation.isSuccess ? <p>Invitation accepted. Redirecting you to the league...</p> : null}
         </div>
 
-        <div className="rounded-3xl border border-border bg-background p-4 sm:p-5">
-          <Heading level={3} variant="card" size="base">Your team</Heading>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Every member plays in the league as a team, with a name and an icon. Choose yours now; you can change both later.
-          </p>
-
-          <div className="mt-5 space-y-4">
+        <SectionCard
+          headingLevel={3}
+          help="Every member plays in the league as a team, with a name and an icon. Choose yours now; you can change both later."
+          padded
+          testId="join-league-your-team"
+          title="Your team"
+        >
+          <div className="space-y-4">
             <FormField label="Your team name">
               <Input
                 data-testid="join-league-team-name"
@@ -331,34 +349,28 @@ function JoinLeagueByInvite({ inviteCode }: { inviteCode: string }) {
 
             <fieldset className="space-y-3">
               <legend className="text-sm font-medium text-foreground">Your icon</legend>
-              <div className="flex items-center gap-4 rounded-2xl border border-border bg-card px-4 py-4">
+              <Tile className="flex items-center gap-4" data-testid="join-league-selected-icon" padding="sm" radius="sm">
                 <TeamAvatar iconKey={selectedIconKey} size="lg" />
                 <div className="min-w-0">
-                  <div className="text-xs uppercase text-muted-foreground">
-                    Selected icon
-                  </div>
-                  <div className="mt-1 text-base font-medium text-foreground">{selectedIcon.label}</div>
+                  <Text as="div" variant="caption">Selected icon</Text>
+                  <Text as="div" size="base" variant="strong">{selectedIcon.label}</Text>
                 </div>
-              </div>
+              </Tile>
               <IconPalette
                 aria-label="Your icon"
                 onSelect={setSelectedIconKey}
                 optionTestIdPrefix="join-league-team-icon"
                 options={TEAM_ICON_OPTIONS}
-                renderOptionIcon={(icon) => (
-                  <div className="flex justify-center">
-                    <TeamAvatar iconKey={icon.key} />
-                  </div>
-                )}
+                renderOptionIcon={(icon) => <TeamAvatar iconKey={icon.key} />}
                 testId="join-league-icon-palette"
                 value={selectedIconKey}
               />
             </fieldset>
           </div>
-        </div>
+        </SectionCard>
       </div>
 
-      {invitationQuery.data && !unusableInvitationMessage ? (
+      {invitationQuery.data ? (
         <div className="mt-5 flex gap-3">
           <Button
             data-testid="invite-accept"

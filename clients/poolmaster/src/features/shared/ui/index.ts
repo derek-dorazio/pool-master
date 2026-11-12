@@ -1,6 +1,9 @@
 export { ActionList, ActionTile } from "./action-list";
-export { Alert, Callout } from "./alert";
-export { AdminAreaLayout, LeagueMenu } from "./nav-menus";
+export { Notice } from "./notice";
+export { StatusPage } from "./status-page";
+export { WebAddressBox } from "./web-address-box";
+export type { StatusPageKind } from "./status-page";
+export { AdminAreaLayout, LeagueMenu, ToolsArea } from "./nav-menus";
 export type { NavMenuItem } from "./nav-menus";
 export { BulkUploadPanel } from "./bulk-upload-panel";
 export { UploadPreviewTable } from "./upload-preview-table";
@@ -46,11 +49,13 @@ export { Checkbox, FormField, Input, PasswordInput, Select, Textarea } from "./f
 export { FormPage } from "./form-page";
 export { IconAvatar } from "./icon-avatar";
 export { IconPalette } from "./icon-palette";
-export { DetailsPeek, PeekCard, PeekMessage, type PeekFact } from "./details-peek";
+export { DetailsPeek, PeekCard, type PeekFact } from "./details-peek";
 export { DETAILS_PEEK_HOVER_DELAY_MS } from "./popover-timing";
-export { InfoPopover } from "./info-popover";
+export { HelpTip } from "./help-tip";
 export { SplitContentLayout } from "./layout-presets";
-export { DefinitionList, MetricGrid, MetricTile } from "./metric-grid";
+export { MetricGrid, MetricTile } from "./metric-grid";
+export { FactList, type Fact, type FactListDensity, type FactListLayout } from "./fact-list";
+export { CheckList, type CheckItem } from "./check-list";
 export { SelectableDataGrid } from "./selectable-data-grid";
 export {
   SimpleTable,
@@ -64,7 +69,8 @@ export { SortableList } from "./sortable-list";
 export { ServerErrorBar } from "./server-error";
 export { DangerZoneAction, SettingsRow, SettingsRows } from "./settings-section";
 export { EmptyState, ErrorState, InlineError, LoadingState, QueryState } from "./state";
-export { LOADING_TEXT } from "./state-copy";
+export { refetchFailed } from "./refetch-failed";
+export { LOADING_TEXT, QUERY_ERROR_TEXT, RETRY_LABEL } from "./state-copy";
 export { ProgressIndicator } from "./progress";
 export {
   SegmentedControl,
@@ -86,7 +92,7 @@ export {
 } from "./dropdown-menu";
 export { Modal } from "./modal";
 export { MutationActionToast } from "./mutation-action-toast";
-export { useMutationActionWorkflow } from "./mutation-action-workflow";
+export { useMutationActionWorkflow, type MutationActionWorkflowResult } from "./mutation-action-workflow";
 export {
   ConfirmationModal,
   FormModal,
@@ -103,9 +109,11 @@ export {
 } from "./page-templates";
 export { Tile } from "./tile";
 export { Countdown } from "./countdown";
+export { ExpandableRow } from "./expandable-row";
 export { ExpandableTile } from "./expandable-tile";
 export { FaqList, type FaqItem } from "./faq-list";
 export { NumberedSteps, type NumberedStep } from "./numbered-steps";
 export { SectionBody, SectionCard, SectionEmpty, SectionFooterLink, SectionNote, SectionRow, SectionRows, SectionTitle } from "./section-card";
+export { LockedSection } from "./locked-section";
 export { Text, type TextProps } from "./text";
 export { Icon, type IconProps } from "./icon";

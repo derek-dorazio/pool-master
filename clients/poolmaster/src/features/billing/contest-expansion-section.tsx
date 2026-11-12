@@ -8,7 +8,7 @@ import {
 import { extractErrorMessage, throwApiError, type ErrorCodeMessages } from '@/lib/errors';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import { Alert, Button, FormField, Input, SectionCard, SettingsRow, SettingsRows, formatCount, formatMoneyCents, formatNumber, useDisplayPreferences } from '@/features/shared/ui';
+import { Button, ErrorState, FormField, Input, LoadingState, Notice, SectionCard, SettingsRow, SettingsRows, formatCount, formatMoneyCents, formatNumber, useDisplayPreferences } from '@/features/shared/ui';
 import { useContestExpansionQuery } from './use-contest-expansion-query';
 
 /** Copy for the refusals Expand and a root admin's free expansion can meet. */
@@ -74,20 +74,19 @@ export function ContestExpansionSection({
   if (expansionQuery.isLoading) {
     return (
       <SectionCard testId="contest-expansion" title="Entries">
-        <SettingsRows>
-          <div className="px-4 py-3.5 text-sm text-muted-foreground">Loading entries...</div>
-        </SettingsRows>
+        <LoadingState body="Loading entries..." size="inline" testId="contest-expansion-loading" />
       </SectionCard>
     );
   }
   if (!expansionQuery.data) {
     return (
       <SectionCard testId="contest-expansion" title="Entries">
-        <SettingsRows>
-          <div className="px-4 py-3.5 text-sm text-muted-foreground" data-testid="contest-expansion-error">
-            {extractErrorMessage(expansionQuery.error, { fallback: 'We could not load this contest\'s entries right now.' })}
-          </div>
-        </SettingsRows>
+        <ErrorState
+          body={extractErrorMessage(expansionQuery.error, { fallback: 'We could not load this contest\'s entries right now.' })}
+          onRetry={() => void expansionQuery.refetch()}
+          size="inline"
+          testId="contest-expansion-error"
+        />
       </SectionCard>
     );
   }
@@ -97,7 +96,7 @@ export function ContestExpansionSection({
 
   return (
     <SectionCard
-      info={state.expandable
+      help={state.expandable
         ? 'Every entry counts, drafts included. Expand the contest to take more.'
         : 'Every entry counts, drafts included.'}
       testId="contest-expansion"
@@ -110,9 +109,9 @@ export function ContestExpansionSection({
         ) : null}
         {isFull && state.expandable ? (
           <div className="px-4 py-3.5">
-            <Alert data-testid="contest-expansion-full" tone="warning">
+            <Notice data-testid="contest-expansion-full" tone="warning">
               {`This contest is full at ${formatCount(state.entriesPerContest ?? 0, 'entry', locale, 'entries')}.`}
-            </Alert>
+            </Notice>
           </div>
         ) : null}
         {state.offers.map((offer) => (
@@ -141,12 +140,12 @@ export function ContestExpansionSection({
         ) : null}
         {expandMutation.isError ? (
           <div className="px-4 py-3.5">
-            <Alert data-testid="contest-expansion-expand-error" tone="danger">
+            <Notice data-testid="contest-expansion-expand-error" tone="danger">
               {extractErrorMessage(expandMutation.error, {
                 codeMessages: EXPANSION_CODE_MESSAGES,
                 fallback: 'We could not expand this contest. Please try again.',
               })}
-            </Alert>
+            </Notice>
           </div>
         ) : null}
         {canGrant ? <GrantExpansionForm contestId={contestId} invalidates={invalidates} leagueId={leagueId} /> : null}
@@ -222,12 +221,12 @@ function GrantExpansionForm({
         </Button>
       </div>
       {grantMutation.isError ? (
-        <Alert data-testid="contest-expansion-grant-error" tone="danger">
+        <Notice data-testid="contest-expansion-grant-error" tone="danger">
           {extractErrorMessage(grantMutation.error, {
             codeMessages: EXPANSION_CODE_MESSAGES,
             fallback: 'We could not give that expansion. Please try again.',
           })}
-        </Alert>
+        </Notice>
       ) : null}
     </form>
   );

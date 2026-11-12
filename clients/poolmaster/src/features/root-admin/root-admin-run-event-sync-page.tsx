@@ -4,7 +4,7 @@ import { getSportDefinition, SportEventSyncScope } from '@poolmaster/shared/doma
 import { submitEventSync, listEvents, type SportEventDto } from '@/lib/api';
 import { getLogger } from '@/lib/logger';
 import {
-  Alert,
+  Notice,
   Button,
   formatDateTimeDisplay,
   FormField,
@@ -332,28 +332,28 @@ export function RootAdminRunEventSyncPage() {
           {mockEventState ? <SectionNote>{`Mock event state: ${mockEventState}`}</SectionNote> : null}
 
           {providersQuery.isError ? (
-            <Alert>
+            <Notice>
               {extractErrorMessage(
                 providersQuery.error,
                 { fallback: 'Provider health context is unavailable, so the sport list is using fallback options.' },
               )}
-            </Alert>
+            </Notice>
           ) : null}
 
           {eventsQuery.isError ? (
-            <Alert>
+            <Notice>
               {extractErrorMessage(
                 eventsQuery.error,
                 { fallback: 'Loaded events are unavailable right now.' },
               )}
-            </Alert>
+            </Notice>
           ) : null}
 
           {!eventsQuery.isLoading && !eventsQuery.isError && selectableEvents.length === 0 ? (
-            <Alert>
+            <Notice>
               No linked {getSportDefinition(eventSyncSport).name.toLowerCase()} events match this preset. Link an event to a score
               source on its page first; an unlinked event has nothing to sync.
-            </Alert>
+            </Notice>
           ) : null}
 
           <Button
@@ -374,12 +374,12 @@ export function RootAdminRunEventSyncPage() {
           </Button>
 
           {eventSyncMutation.isError ? (
-            <Alert tone="danger">
+            <Notice tone="danger">
               {extractErrorMessage(
                 eventSyncMutation.error,
                 { fallback: 'We could not submit the event sync right now.' },
               )}
-            </Alert>
+            </Notice>
           ) : null}
         </div>
       </SectionCard>

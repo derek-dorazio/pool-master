@@ -1,6 +1,6 @@
 import { sportLeagueNounOf } from '@poolmaster/shared/domain';
 import { useMemo, useState } from 'react';
-import { Alert, FormField, LinkButton, SectionCard, Select } from '@/features/shared/ui';
+import { Notice, FormField, LinkButton, SectionCard, Select } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
 import type { SportLeagueDto } from '@/lib/api';
 import { SportLeagueEventCalendar } from './sport-league-event-calendar';
@@ -50,9 +50,9 @@ export function SportLeagueCalendarCard({ sportLeague }: { sportLeague: SportLea
         {`${sportLeague.name}’s ${eventNoun.many} in one year, earliest first.`}
       </p>
       {yearsQuery.isError ? (
-        <Alert data-testid="root-admin-sport-league-calendar-years-error" tone="danger">
+        <Notice data-testid="root-admin-sport-league-calendar-years-error" tone="danger">
           {extractErrorMessage(yearsQuery.error, { fallback: `We could not load ${sportLeague.name}’s years right now.` })}
-        </Alert>
+        </Notice>
       ) : eventYear === null ? (
         <p className="text-sm text-muted-foreground" data-testid="root-admin-sport-league-calendar-loading">Loading years...</p>
       ) : (

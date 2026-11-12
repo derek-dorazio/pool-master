@@ -363,6 +363,21 @@ describe('Commissioner tools › Contests › Create contest', () => {
     expect(screen.getByTestId('create-contest-submit')).toHaveTextContent('Create contest');
   });
 
+  it('says the events could not load, in red with Retry, and lists them once Retry succeeds', async () => {
+    primeCommonMocks();
+    const loadEvents = listEventsMock.getMockImplementation();
+    listEventsMock.mockResolvedValue({ error: { error: { code: 'INTERNAL_ERROR', message: 'Down' } }, status: 500 });
+
+    renderCreateContestPage();
+
+    const error = await screen.findByTestId('create-contest-events-error');
+    expect(error).toHaveTextContent("We couldn't load golf events.");
+    if (loadEvents) listEventsMock.mockImplementation(loadEvents);
+    fireEvent.click(within(error).getByRole('button', { name: 'Retry' }));
+
+    await waitFor(() => expect(screen.getByTestId('contest-event-event-1')).toBeChecked());
+  });
+
   it('creates the contest from the chosen event, preset and rules, then lands on the new contest\'s page', async () => {
     primeCommonMocks();
     createContestMock.mockResolvedValue({ data: { contest: { id: 'contest-90' } } });
@@ -1662,6 +1677,24 @@ describe('Commissioner tools › Contests › Create contest › Squares format'
       sportEventMatchId: 'game-afc',
       configuration: { selectionType: 'SQUARES', maxSquaresPerEntry: 10, maxEntriesPerSquad: 1 },
     });
+  });
+
+  it('says the games could not load, in red with Retry, and offers them once Retry succeeds', async () => {
+    primeFootballMocks();
+    const bracket = await (getEventBracketMock() as Promise<unknown>);
+    getEventBracketMock.mockResolvedValue({ error: { error: { code: 'INTERNAL_ERROR', message: 'Down' } }, status: 500 });
+    renderCreateContestPage();
+    await waitForStartingChoices();
+
+    fireEvent.click(screen.getByTestId('contest-sport-AMERICAN_FOOTBALL'));
+    fireEvent.click(await screen.findByTestId('contest-format-SQUARES'));
+
+    const error = await screen.findByTestId('contest-squares-games-error');
+    expect(error).toHaveTextContent("We couldn't load this event's games.");
+    getEventBracketMock.mockResolvedValue(bracket);
+    fireEvent.click(within(error).getByRole('button', { name: 'Retry' }));
+
+    expect(await screen.findByTestId('contest-squares-game')).toBeInTheDocument();
   });
 });
 

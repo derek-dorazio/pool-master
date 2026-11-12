@@ -48,7 +48,13 @@ const DOC_ONLY_FILES = [
   // build or lint reads them. A web-app sweep that shrinks a baseline must not run the service
   // suites because of it. Scripts that are code stay in EVERYTHING_PREFIXES below.
   'scripts/text-style-baseline.json',
+  'scripts/titled-tile-baseline.json',
+  'scripts/card-corner-baseline.json',
   'scripts/duplicate-baseline.json',
+  // The same for the lint rule's grandfathered files (`poolmaster/no-hand-written-query-states`):
+  // ESLint reads it, but it only shrinks, and a PR that cleans a file changes that file too, so
+  // lint still runs on it. The rule itself (eslint-rules/*) stays a service change.
+  'eslint-rules/query-states-baseline.mjs',
   'AGENTS.md',
   'CLAUDE.md',
   'README.md',
@@ -96,7 +102,8 @@ function matches(file, prefixes, files) {
 const isDocOnly = (file) => matches(file, DOC_ONLY_PREFIXES, DOC_ONLY_FILES);
 // A doc-only file under an everything prefix (a rule baseline in scripts/) stays doc-only.
 const forcesEverything = (file) => !isDocOnly(file) && matches(file, EVERYTHING_PREFIXES, EVERYTHING_FILES);
-const isService = (file) => matches(file, SERVICE_PREFIXES, []);
+// A doc-only file under a service prefix (the query-states baseline in eslint-rules/) stays doc-only.
+const isService = (file) => !isDocOnly(file) && matches(file, SERVICE_PREFIXES, []);
 const isClient = (file) => matches(file, CLIENT_PREFIXES, []);
 
 /**

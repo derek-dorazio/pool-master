@@ -1,9 +1,8 @@
-import { Info } from "lucide-react";
-import { useEffect, useId, useRef, type ReactNode } from "react";
+import { useEffect, useId, useRef, type ReactNode, type RefObject } from "react";
 import { Link } from "react-router";
 import { cn } from "./class-names";
 import { Heading } from "./heading";
-import { InfoPopover } from "./info-popover";
+import { HelpTip } from "./help-tip";
 
 /**
  * The one section look (#1561): a title bar with a rule, a body of rows, padded content or one
@@ -16,26 +15,26 @@ type SectionTone = "danger" | "default";
 type SectionFooter = { label: string; testId: string; to: string };
 
 /**
- * A section's title in the house uppercase italic, with an optional info icon that holds the
- * section's explanation (sentences never sit in the body) and an optional trailing slot for one
+ * A section's title in the house uppercase italic, with an optional (?) `HelpTip` that holds how
+ * the section works (sentences never sit in the body) and an optional trailing slot for one
  * badge, count or filter.
  */
 export function SectionTitle({
+  help,
+  helpTestId,
   id,
-  info,
-  infoTestId,
   level = 2,
   testId,
   title,
   tone = "default",
   trailing,
 }: {
+  /** How the section works, in one to three sentences, shown by the title's (?). */
+  help?: ReactNode;
+  /** The (?)'s test id, when the title has none to derive it from. */
+  helpTestId?: string;
   id?: string;
-  /** The explanation, shown when the info icon is hovered or tapped. */
-  info?: ReactNode;
-  /** The info icon's test id, when the title has none to derive it from. */
-  infoTestId?: string;
-  level?: 2 | 3;
+  level?: 2 | 3 | 4;
   testId?: string;
   title: ReactNode;
   tone?: SectionTone;
@@ -43,42 +42,45 @@ export function SectionTitle({
 }) {
   return (
     <div className="flex min-h-11 flex-wrap items-center gap-x-2 gap-y-2">
-      <Heading
-        className={cn("flex items-center gap-2", tone === "danger" ? "text-destructive" : undefined)}
-        data-testid={testId}
-        id={id}
-        level={level}
-        size="sm"
-        tone={tone === "danger" ? "inherit" : "default"}
-        variant="card"
-      >
-        {title}
-      </Heading>
-      {info ? (
-        <InfoPopover
-          className="-my-2 -ml-2"
-          icon={<Info aria-hidden className="text-muted-foreground" size={16} />}
-          label="About this section"
-          testId={infoTestId ?? (testId ? `${testId}-info` : "section-info")}
+      {/* The title and its (?) never part: on a phone a long title wraps with the (?) beside it. */}
+      <span className="flex min-w-0 items-center">
+        <Heading
+          className={cn("flex items-center gap-2", tone === "danger" ? "text-destructive" : undefined)}
+          data-testid={testId}
+          id={id}
+          level={level}
+          size="sm"
+          tone={tone === "danger" ? "inherit" : "default"}
+          variant="card"
         >
-          <p className="text-sm text-muted-foreground">{info}</p>
-        </InfoPopover>
-      ) : null}
+          {title}
+        </Heading>
+        {help ? (
+          <HelpTip
+            className="-my-2 shrink-0"
+            label="How this section works"
+            testId={helpTestId ?? (testId ? `${testId}-help` : "section-help")}
+          >
+            {help}
+          </HelpTip>
+        ) : null}
+      </span>
       {trailing ? <div className="ml-auto flex flex-wrap items-center gap-2 text-xs text-muted-foreground">{trailing}</div> : null}
     </div>
   );
 }
 
 const DANGER_ZONE_TITLE = "Danger zone";
-const DANGER_ZONE_INFO = "Each of these asks you to confirm.";
+const DANGER_ZONE_HELP = "Each of these asks you to confirm.";
 
 type SectionCardBaseProps = {
   bare?: boolean;
   children: ReactNode;
   className?: string;
   footer?: SectionFooter;
-  headingLevel?: 2 | 3;
-  info?: ReactNode;
+  headingLevel?: 2 | 3 | 4;
+  /** How the section works, behind the title's (?). */
+  help?: ReactNode;
   padded?: boolean;
   testId?: string;
   titleTestId?: string;
@@ -93,7 +95,7 @@ type SectionCardProps = SectionCardBaseProps &
         tone?: "default";
       }
     | {
-        /** A danger zone's title and info default to "Danger zone" and that its actions confirm first. */
+        /** A danger zone's title and help default to "Danger zone" and that its actions confirm first. */
         title?: ReactNode;
         tone: "danger";
       }
@@ -120,7 +122,7 @@ export function SectionCard(props: SectionCardProps) {
   } = props;
   // A danger zone is always called that, and always says its actions confirm first.
   const title = props.title ?? DANGER_ZONE_TITLE;
-  const info = props.info ?? (tone === "danger" ? DANGER_ZONE_INFO : undefined);
+  const help = props.help ?? (tone === "danger" ? DANGER_ZONE_HELP : undefined);
   const titleId = useId();
   return (
     <section
@@ -133,7 +135,7 @@ export function SectionCard(props: SectionCardProps) {
       data-testid={testId}
     >
       <div className={cn("border-b", tone === "danger" ? "border-destructive/40" : "border-border", bare ? "pb-1" : "px-4 py-1")}>
-        <SectionTitle id={titleId} info={info} infoTestId={!titleTestId && testId ? `${testId}-info` : undefined} level={headingLevel} testId={titleTestId} title={title} tone={tone} trailing={trailing} />
+        <SectionTitle help={help} helpTestId={!titleTestId && testId ? `${testId}-help` : undefined} id={titleId} level={headingLevel} testId={titleTestId} title={title} tone={tone} trailing={trailing} />
       </div>
       {padded && !bare ? <SectionBody testId={testId ? `${testId}-body` : undefined}>{children}</SectionBody> : children}
       {footer ? <SectionFooterLink label={footer.label} testId={footer.testId} to={footer.to} /> : null}
@@ -148,12 +150,15 @@ export function SectionRows({ children, testId }: { children: ReactNode; testId?
 
 /**
  * One row of a section: a name, up to two muted fact lines, and at the right one figure
- * (`value`) and one badge or action (`aside`). With `to` the whole row is a link. Rows tint on
- * hover; `isHighlighted` tints the row the viewer came from and scrolls it into view, and
- * `isSelected` tints the one a list has chosen (a year, say) and marks it current.
+ * (`value`) and one badge or action (`aside`). With `to` the whole row is a link; with `control`
+ * (a checkbox) the control leads the row and the whole row is its label, so a tap anywhere on it
+ * toggles it. Rows tint on hover; `isHighlighted` tints the row the viewer came from and scrolls
+ * it into view, and `isSelected` tints the one a list has chosen (a year, say) and marks it
+ * current.
  */
 export function SectionRow({
   aside,
+  control,
   facts,
   isHighlighted = false,
   isSelected = false,
@@ -167,6 +172,8 @@ export function SectionRow({
 }: {
   /** A status badge or one action, drawn as given. */
   aside?: ReactNode;
+  /** A checkbox at the row's start, which the whole row labels. Not with `to`. */
+  control?: ReactNode;
   /** The row's muted fact line. */
   facts?: ReactNode;
   isHighlighted?: boolean;
@@ -183,7 +190,7 @@ export function SectionRow({
   valueTestId?: string;
 }) {
   const linkRef = useRef<HTMLAnchorElement>(null);
-  const rowRef = useRef<HTMLDivElement>(null);
+  const rowRef = useRef<HTMLElement>(null);
   useEffect(() => {
     if (isHighlighted) {
       (linkRef.current ?? rowRef.current)?.scrollIntoView({ block: "center", behavior: "smooth" });
@@ -197,6 +204,7 @@ export function SectionRow({
   const ariaCurrent = isSelected ? "true" : undefined;
   const content = (
     <>
+      {control ? <span className="flex flex-none items-center">{control}</span> : null}
       <span className="min-w-0 flex-1">
         <span className="flex min-w-0 items-center gap-2">
           <span className="truncate font-semibold text-foreground">{name}</span>
@@ -220,8 +228,18 @@ export function SectionRow({
         <Link aria-current={ariaCurrent} className={className} data-highlighted={isHighlighted || undefined} data-testid={testId} ref={linkRef} to={to}>
           {content}
         </Link>
+      ) : control ? (
+        <label
+          aria-current={ariaCurrent}
+          className={cn(className, "cursor-pointer")}
+          data-highlighted={isHighlighted || undefined}
+          data-testid={testId}
+          ref={rowRef as RefObject<HTMLLabelElement>}
+        >
+          {content}
+        </label>
       ) : (
-        <div aria-current={ariaCurrent} className={className} data-highlighted={isHighlighted || undefined} data-testid={testId} ref={rowRef}>
+        <div aria-current={ariaCurrent} className={className} data-highlighted={isHighlighted || undefined} data-testid={testId} ref={rowRef as RefObject<HTMLDivElement>}>
           {content}
         </div>
       )}

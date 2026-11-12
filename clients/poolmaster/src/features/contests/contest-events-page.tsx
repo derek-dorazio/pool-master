@@ -21,9 +21,17 @@ import {
   DateDisplay,
   FormField,
   FormPage,
-  Heading,
+  Icon,
   LoadingState,
+  QueryState,
+  SectionBody,
+  SectionCard,
+  SectionEmpty,
+  SectionNote,
+  SectionRow,
+  SectionRows,
   Select,
+  Text,
 } from '@/features/shared/ui';
 import { coversOneEvent, firstContestEvent, hasContestEventStarted } from './contest-events';
 import { CONTEST_RELEASE_CODE_MESSAGES } from './contest-release-messages';
@@ -185,7 +193,7 @@ function ContestEventsForm({
   return (
     <FormPage
       cancelTo={contestPath}
-      description={removalsLocked
+      help={removalsLocked
         ? 'The contest has started, so you can add events but not remove them. Entries make picks for each event before it starts.'
         : 'Choose the events this contest covers. Entries make picks for each event before it starts, and the contest is final when the last one ends.'}
       errorMessage={saveMutation.isError
@@ -229,77 +237,82 @@ function ContestEventsForm({
         </Button>
       </div>
 
-      <ul className="divide-y divide-border rounded-xl border border-border" data-testid="contest-events-options">
-        {yearEventsQuery.isLoading ? (
-          <li className="px-4 py-3 text-sm text-muted-foreground" data-testid="contest-events-year-loading">
-            Loading {year} events...
-          </li>
-        ) : yearEventsQuery.isError ? (
-          <li className="px-4 py-3 text-sm text-destructive" data-testid="contest-events-year-error">
-            We couldn&apos;t load the {year} events. Please try again.
-          </li>
-        ) : yearEvents.length ? yearEvents.map((event) => {
-          const isChosen = selected.has(event.id);
-          const inContest = contestEventIds.has(event.id);
-          const locked = inContest && removalsLocked;
-          const reason = inContest ? null : unavailableReason(event);
-          return (
-            <li key={event.id}>
-              <label className="flex items-center gap-3 px-4 py-3 text-sm">
-                <Checkbox
-                  aria-label={event.name}
-                  checked={isChosen}
-                  data-testid={`contest-events-option-${event.id}`}
-                  disabled={locked || (!isChosen && reason !== null)}
-                  onChange={() => toggle(event)}
-                />
-                <span className="min-w-0 flex-1">
-                  <span className="font-medium">{event.name}</span>
-                  <span className="block text-xs text-muted-foreground">
-                    <DateDisplay className="text-muted-foreground" value={event.startDate} />
-                    {reason ? ` · ${reason}` : ''}
-                  </span>
-                </span>
-                {locked ? (
-                  <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <Lock aria-hidden size={13} />
-                    In the contest
-                  </span>
-                ) : null}
-              </label>
-            </li>
-          );
-        }) : (
-          <li className="px-4 py-3 text-sm text-muted-foreground" data-testid="contest-events-none">
-            No events in {year} yet.
-          </li>
-        )}
-      </ul>
+      <SectionCard testId="contest-events-options" title={`${year} events`}>
+        <QueryState
+          empty={`No events in ${year} yet.`}
+          error={`We couldn't load the ${year} events.`}
+          isEmpty={(events) => events.length === 0}
+          loading={`Loading ${year} events...`}
+          query={yearEventsQuery}
+          rows={3}
+          testId="contest-events-year"
+        >
+          {() => (
+            <SectionRows>
+              {yearEvents.map((event) => {
+                const isChosen = selected.has(event.id);
+                const inContest = contestEventIds.has(event.id);
+                const locked = inContest && removalsLocked;
+                const reason = inContest ? null : unavailableReason(event);
+                return (
+                  <SectionRow
+                    aside={locked ? (
+                      <Text className="inline-flex items-center gap-1.5" variant="caption">
+                        <Icon icon={Lock} size={13} />
+                        In the contest
+                      </Text>
+                    ) : undefined}
+                    control={(
+                      <Checkbox
+                        aria-label={event.name}
+                        checked={isChosen}
+                        data-testid={`contest-events-option-${event.id}`}
+                        disabled={locked || (!isChosen && reason !== null)}
+                        onChange={() => toggle(event)}
+                      />
+                    )}
+                    facts={(
+                      <>
+                        <DateDisplay tone="inherit" value={event.startDate} />
+                        {reason ? ` · ${reason}` : ''}
+                      </>
+                    )}
+                    key={event.id}
+                    name={event.name}
+                    testId={`contest-events-row-${event.id}`}
+                  />
+                );
+              })}
+            </SectionRows>
+          )}
+        </QueryState>
+      </SectionCard>
 
-      <div className="space-y-2" data-testid="contest-events-chosen">
-        <Heading level={3} variant="card" size="base" tone="inherit">
-          {chosen.length === 1 ? '1 event, in order' : `${chosen.length} events, in order`}
-        </Heading>
+      <SectionCard
+        testId="contest-events-chosen"
+        title={chosen.length === 1 ? '1 event, in order' : `${chosen.length} events, in order`}
+      >
         {chosen.length ? (
-          <ol className="list-decimal space-y-1 pl-5 text-sm">
-            {chosen.map((event) => (
-              <li key={event.id}>
-                {event.name}
-                <span className="text-muted-foreground">
-                  {' · '}<DateDisplay className="text-muted-foreground" value={event.startDate} />
-                </span>
-              </li>
+          <SectionRows>
+            {chosen.map((event, index) => (
+              <SectionRow
+                facts={<DateDisplay tone="inherit" value={event.startDate} />}
+                key={event.id}
+                name={event.name}
+                testId={`contest-events-chosen-${event.id}`}
+                value={index + 1}
+              />
             ))}
-          </ol>
+          </SectionRows>
         ) : (
-          <p className="text-sm text-muted-foreground">Choose at least one event.</p>
+          <SectionEmpty testId="contest-events-chosen-empty">Choose at least one event.</SectionEmpty>
         )}
         {removedCount > 0 ? (
-          <p className="text-sm text-muted-foreground" data-testid="contest-events-removal-note">
-            Picks already made for a removed event are deleted.
-          </p>
+          <SectionBody>
+            <SectionNote testId="contest-events-removal-note">Picks already made for a removed event are deleted.</SectionNote>
+          </SectionBody>
         ) : null}
-      </div>
+      </SectionCard>
     </FormPage>
   );
 }

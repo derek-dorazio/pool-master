@@ -5,15 +5,18 @@ import { acceptTeamOwnerInvitation } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-context';
 import { SignUpForm } from '@/features/auth/sign-up-form';
 import { InvitationContextCard } from '@/features/leagues/invitation-context-card';
-import { describeUnusableInvitation } from '@/features/leagues/unusable-invitation';
+import { describeUnusableInvitation, UNKNOWN_INVITATION } from '@/features/leagues/unusable-invitation';
+import { InvitationStatusPage } from '@/features/leagues/invitation-status-page';
 import {
   Button,
   Chip,
-  Eyebrow,
-  Heading,
+  ErrorState,
   LinkButton,
+  LoadingState,
   PublicInviteJoinPage,
+  SectionCard,
   Text,
+  Tile,
 } from '@/features/shared/ui';
 import { getLogger } from '@/lib/logger';
 import {
@@ -29,7 +32,7 @@ import {
 } from './team-owner-invitation-preview';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
-import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
+import { ApiError, extractErrorMessage, hasErrorCode, throwApiError } from '@/lib/errors';
 
 export function JoinTeamOwnerPage() {
   // Memoised: `child()` returns a new logger on every call, and the effects below depend on it,
@@ -173,14 +176,20 @@ export function JoinTeamOwnerPage() {
     return null;
   }, [inviteCode, isAuthenticated]);
 
-  const unusableInvitationMessage = describeUnusableInvitation(invitationQuery.data?.status);
+  const unusableInvitation = hasErrorCode(invitationQuery.error, 'SQUAD_OWNER_INVITATION_NOT_FOUND')
+    ? UNKNOWN_INVITATION
+    : describeUnusableInvitation(invitationQuery.data?.status);
+
+  if (unusableInvitation) {
+    return <InvitationStatusPage invitation={unusableInvitation} />;
+  }
 
   if (redirectMessage) {
     return (
       <PublicInviteJoinPage
         title={invitationQuery.data ? `Join ${invitationQuery.data.team.name} as a co-owner` : 'Join as a co-owner'}
       >
-        <Text as="p" className="mt-3" variant="meta">{unusableInvitationMessage ?? redirectMessage}</Text>
+        <Text as="p" className="mt-3" variant="meta">{redirectMessage}</Text>
         {invitationQuery.data ? (
           <div className="mt-5 space-y-5">
             <InvitationContextCard
@@ -189,29 +198,26 @@ export function JoinTeamOwnerPage() {
               message={`This invitation adds you as a co-owner of ${invitationQuery.data.team.name}. Create your account below to join straight away, or sign in if you already have one.`}
               title="Co-owner invite"
             />
-            <div className="rounded-3xl border border-border bg-background p-5">
+            <SectionCard headingLevel={3} padded testId="team-invite-joining" title="What you're joining">
               <div className="flex items-center gap-4">
                 <TeamAvatar iconKey={invitationQuery.data.team.iconKey} size="lg" />
-                <div>
-                  <Heading level={3} variant="card" size="sm">What you&apos;re joining</Heading>
-                  <Text as="p" className="mt-1" variant="meta">
-                    You&apos;ll join <Text size="inherit" variant="strong">{invitationQuery.data.team.name}</Text> as a co-owner inside{' '}
-                    <Text size="inherit" variant="strong">{invitationQuery.data.league.name}</Text>.
-                  </Text>
-                </div>
+                <Text as="p" variant="meta">
+                  You&apos;ll join <Text size="inherit" variant="strong">{invitationQuery.data.team.name}</Text> as a co-owner inside{' '}
+                  <Text size="inherit" variant="strong">{invitationQuery.data.league.name}</Text>.
+                </Text>
               </div>
-            </div>
+            </SectionCard>
           </div>
         ) : null}
-        {inviteCode && invitationQuery.data && !unusableInvitationMessage ? (
-          <div className="mt-5 space-y-4 rounded-3xl border border-border bg-background p-5" data-testid="team-invite-register">
-            <div>
-              <Heading level={3} variant="card" size="sm">Create your account</Heading>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Your account uses the email this invitation was sent to, so there is nothing to
-                confirm — you&apos;ll land straight in the league.
-              </p>
-            </div>
+        {inviteCode && invitationQuery.data ? (
+          <SectionCard
+            className="mt-5"
+            headingLevel={3}
+            help="Your account uses the email this invitation was sent to, so there is nothing to confirm. You'll land straight in the league."
+            padded
+            testId="team-invite-register"
+            title="Create your account"
+          >
             <SignUpForm
               errorMessages={{
                 // The one case worth its own words: the invited address already has an
@@ -226,7 +232,7 @@ export function JoinTeamOwnerPage() {
               submitLabel="Create account and join"
               mode={{ kind: 'teamInvite', inviteCode }}
             />
-          </div>
+          </SectionCard>
         ) : null}
         <div className="mt-5 flex flex-wrap gap-3">
           <LinkButton
@@ -259,9 +265,16 @@ export function JoinTeamOwnerPage() {
         This invitation makes you a co-owner alongside the people already playing under this name.
       </p>
 
-      <div className="mt-6 rounded-3xl border border-border bg-background p-5 text-sm text-muted-foreground">
-        {invitationQuery.isLoading ? 'Loading invitation...' : null}
-        {invitationQuery.isError ? 'We could not load this co-owner invitation.' : null}
+      <div className="mt-6 space-y-4 text-sm text-muted-foreground">
+        {invitationQuery.isLoading ? <LoadingState body="Loading invitation..." size="plain" testId="team-owner-invite-loading" /> : null}
+        {invitationQuery.isError ? (
+          <ErrorState
+            body="We could not load this co-owner invitation."
+            onRetry={() => void invitationQuery.refetch()}
+            size="plain"
+            testId="team-owner-invite-error"
+          />
+        ) : null}
         {invitationQuery.data ? (
           <div className="space-y-5">
             <InvitationContextCard
@@ -270,10 +283,10 @@ export function JoinTeamOwnerPage() {
               message={`Welcome to ${invitationQuery.data.league.name}. You are about to become a co-owner of ${invitationQuery.data.team.name}.`}
               title="Ready to join"
             />
-            <div className="flex items-center gap-4 rounded-2xl border border-border bg-card p-4">
+            <Tile className="flex items-center gap-4" data-testid="team-invite-co-own" padding="sm" radius="sm">
               <TeamAvatar iconKey={invitationQuery.data.team.iconKey} size="lg" />
               <div className="min-w-0">
-                <Eyebrow tone="muted">You&apos;ll co-own</Eyebrow>
+                <Text as="div" variant="caption">You&apos;ll co-own</Text>
                 <Text as="div" size="base" truncate variant="strong" weight="semibold">
                   {invitationQuery.data.team.name}
                 </Text>
@@ -281,16 +294,15 @@ export function JoinTeamOwnerPage() {
                   League homepage: {buildLeaguePath(invitationQuery.data.league.leagueCode)}
                 </Text>
               </div>
-            </div>
+            </Tile>
           </div>
         ) : null}
-        {unusableInvitationMessage ? <p className="mt-4">{unusableInvitationMessage}</p> : null}
         {acceptMutation.isPending ? <p>Accepting invitation...</p> : null}
         {acceptMutation.isError ? <p>{extractErrorMessage(acceptMutation.error, { fallback: 'We could not accept this co-owner invitation. Please try again.' })}</p> : null}
         {acceptMutation.isSuccess ? <p>Invitation accepted. Taking you to the league...</p> : null}
       </div>
 
-      {invitationQuery.data && !unusableInvitationMessage ? (
+      {invitationQuery.data ? (
         <div className="mt-5 flex gap-3">
           <Button
             data-testid="team-invite-accept"

@@ -11,7 +11,7 @@ import { formPageSave } from '@/lib/form-page-save';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import { PARTICIPANT_STATUSES, participantStatusLabel } from './sport-admin-utils';
-import { useManageBreadcrumbOverride } from './manage-breadcrumb-context';
+import { useManageBreadcrumbOverride, useManagePageOwnsHeading } from './manage-breadcrumb-context';
 import { buildSportParticipantPath } from './manage-navigation';
 import { useParticipantQuery } from './use-sport-catalog';
 import { useManagedSport } from './use-managed-sport';
@@ -161,6 +161,8 @@ function ParticipantEditForm({ player }: { player: ParticipantDto }) {
 
 /** Edit a participant's details and status, with one Save. */
 export function RootAdminParticipantEditPage() {
+  // Claimed at once, so Manage never shows its own title while the page loads.
+  useManagePageOwnsHeading();
   const { participant } = useManagedSport().definition.vocabulary;
   const { participantId = '' } = useParams<{ participantId: string }>();
   const playerQuery = useParticipantQuery(participantId);

@@ -22,4 +22,10 @@ describe('Eyebrow', () => {
     expect(screen.getByText('Open for entries')).toHaveClass('text-label-on-inverse');
     expect(screen.getByText('Open for entries')).not.toHaveClass('text-label');
   });
+
+  it('sets a tools area name on its navy band in gold, so the area stands out from member pages', () => {
+    render(<Eyebrow tone="highlight">Commissioner tools</Eyebrow>);
+
+    expect(screen.getByText('Commissioner tools')).toHaveClass('text-primary');
+  });
 });

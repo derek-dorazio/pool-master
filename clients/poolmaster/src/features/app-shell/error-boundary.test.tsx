@@ -24,10 +24,10 @@ describe('ErrorBoundary', () => {
       </ErrorBoundary>,
     );
 
-    expect(
-      screen.getByText(/primetime commissioner hit an unexpected problem/i),
-    ).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /reload page/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'Something went wrong' })).toBeInTheDocument();
+    expect(screen.getByText('Reload to try again.')).toBeInTheDocument();
+    expect(screen.getByTestId('error-boundary')).toHaveAttribute('data-kind', 'error');
+    expect(screen.getByRole('button', { name: 'Reload' })).toBeInTheDocument();
     expect(loggerSpy).toHaveBeenCalledWith(
       expect.objectContaining({
         action: 'app.errorBoundary.caught',
@@ -66,7 +66,7 @@ describe('ErrorBoundary', () => {
       </ErrorBoundary>,
     );
 
-    await user.click(screen.getByRole('button', { name: /reload page/i }));
+    await user.click(screen.getByRole('button', { name: 'Reload' }));
 
     expect(reloadSpy).toHaveBeenCalledTimes(1);
 

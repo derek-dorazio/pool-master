@@ -4,7 +4,7 @@ import { GripVertical } from 'lucide-react';
 import { replaceEventTiers } from '@/lib/api';
 import { reorderById } from './tier-board-utils';
 import {
-  Alert,
+  Notice,
   Button,
   ConfirmationModal,
   FormField,
@@ -171,7 +171,7 @@ export function TierDefinitionsPanel({
       )}
     >
       {saveMutation.isError && !deleteTarget ? (
-        <Alert data-testid="root-admin-tier-def-error" tone="danger">
+        <Notice data-testid="root-admin-tier-def-error" tone="danger">
           {extractErrorMessage(saveMutation.error, {
             codeMessages: {
               SPORT_EVENT_TIERS_LOCKED:
@@ -179,7 +179,7 @@ export function TierDefinitionsPanel({
             },
             fallback: 'We could not save the tier definitions.',
           })}
-        </Alert>
+        </Notice>
       ) : null}
 
       <SortableList

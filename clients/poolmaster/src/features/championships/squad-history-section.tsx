@@ -62,13 +62,13 @@ export function SquadHistorySection({
       {!hasShelf ? (
         <PlanLockedNotice feature={PlanFeature.TROPHY_SHELF} isCommissioner={viewer.isCommissioner} leagueCode={leagueCode} />
       ) : historyQuery.isError ? (
-        <ErrorState body="We couldn't load this team's trophies and past years." testId="squad-history-error" />
+        <ErrorState body="We couldn't load this team's trophies and past years." onRetry={() => void historyQuery.refetch()} testId="squad-history-error" />
       ) : !historyQuery.data ? (
         <LoadingState body="Loading this team's trophies..." />
       ) : (
         <>
           <SectionCard
-            info="A podium finish in a crowned cup or a finished championship, or a win in a contest the league runs every year, puts a trophy here."
+            help="A podium finish in a crowned cup or a finished championship, or a win in a contest the league runs every year, puts a trophy here."
             title="Trophy case"
           >
             <SectionBody>

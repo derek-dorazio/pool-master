@@ -1,5 +1,4 @@
 import { ContestStatus, SelectionType, getSportDefinition } from '@poolmaster/shared/domain';
-import { Check, X } from 'lucide-react';
 import type { ReactNode } from 'react';
 import type { ContestDto, SportEventDto } from '@/lib/api';
 import {
@@ -7,6 +6,7 @@ import {
   buildLeagueContestPath,
 } from '@/features/leagues/league-routing';
 import {
+  CheckList,
   DateDisplay,
   Eyebrow,
   formatDateTimeDisplay,
@@ -89,19 +89,16 @@ function NotOpenCard({
       eyebrow="Not open yet · only commissioners can see it"
       title={isReady ? 'Ready to open to the league' : 'Not ready to open yet'}
     >
-      <ul className="flex flex-wrap gap-x-5 gap-y-1.5 text-sm" data-testid="contest-readiness-checks">
-        {checks.map((check) => (
-          <li
-            className="inline-flex items-center gap-1.5"
-            data-met={check.isMet}
-            data-testid={`contest-readiness-${check.id}`}
-            key={check.id}
-          >
-            {check.isMet ? <Check aria-hidden size={14} /> : <X aria-hidden size={14} />}
-            {check.label}
-          </li>
-        ))}
-      </ul>
+      <CheckList
+        items={checks.map((check) => ({
+          id: check.id,
+          isMet: check.isMet,
+          label: check.label,
+          testId: `contest-readiness-${check.id}`,
+        }))}
+        surface="inverse"
+        testId="contest-readiness-checks"
+      />
       <p className="text-sm text-on-inverse-muted">
         Once it&apos;s open, members can enter until {entriesCloseAt(event, secondChanceRoundName)}, and these settings can&apos;t change.
       </p>

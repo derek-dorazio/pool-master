@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { leaveLeague, type LeagueDto } from '@/lib/api';
 import {
-  Alert,
+  Notice,
   Button,
   Modal,
   SectionCard,
@@ -59,7 +59,7 @@ export function LeaveLeagueSection({ league }: { league: LeagueDto }) {
 
   return (
     <>
-      <SectionCard info="Leaving asks you to confirm." testId="leave-league-section" tone="danger">
+      <SectionCard testId="leave-league-section" tone="danger">
         <SectionRows>
           <SectionRow
             aside={(
@@ -99,9 +99,9 @@ export function LeaveLeagueSection({ league }: { league: LeagueDto }) {
       >
         {hasLeft ? (
           <>
-            <Alert className="mt-5" tone="success">
+            <Notice className="mt-5" tone="success">
               You left {league.name}.
-            </Alert>
+            </Notice>
             <div className="mt-6 flex justify-end">
               <Button data-testid="league-leave-ok" onClick={handleAcknowledgeLeft}>
                 OK
@@ -111,12 +111,12 @@ export function LeaveLeagueSection({ league }: { league: LeagueDto }) {
         ) : (
           <>
             {leaveMutation.isError ? (
-              <Alert className="mt-4" data-testid="league-leave-error" tone="danger">
+              <Notice className="mt-4" data-testid="league-leave-error" tone="danger">
                 {extractErrorMessage(leaveMutation.error, {
                   fallback: 'We could not complete that leave request right now.',
                   codeMessages: LEAVE_LEAGUE_ERROR_CODE_MESSAGES,
                 })}
-              </Alert>
+              </Notice>
             ) : null}
             <div className="mt-6 flex justify-end gap-3">
               <Button
