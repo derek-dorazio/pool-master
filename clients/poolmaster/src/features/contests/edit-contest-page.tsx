@@ -44,6 +44,7 @@ import { sportEventQueryOptions } from './use-contest-schedule';
 import { useContestQuery } from './use-contest-query';
 import { useManagedContestQuery } from './use-managed-contest-query';
 import { MemberPreview } from './member-preview';
+import { PickPreviewAction } from './pick-preview-dialog';
 import { membersWillSeeRules } from './members-will-see';
 
 const editContestFormSchema = z.object({
@@ -179,6 +180,18 @@ function EditContestForm({
     <FormPage
       cancelTo={contestPath}
       errorMessage={errorMessage}
+      extraAction={(
+        <PickPreviewAction
+          configuration={parsedPreview.configuration}
+          contestName={values.contestName}
+          event={event}
+          leagueId={leagueId}
+          participant={participant}
+          rulesError={parsedPreview.error}
+          selectionType={selectionType}
+          tierCount={tierCount}
+        />
+      )}
       isPending={saveMutation.isPending}
       onSubmit={(submitEvent) => {
         setRulesError(null);

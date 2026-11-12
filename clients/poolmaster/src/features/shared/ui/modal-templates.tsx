@@ -249,8 +249,13 @@ export type ReadOnlyDetailModalProps = BaseModalTemplateProps & {
   detailContent: ReactNode;
   /** What Copy puts on the clipboard; without it the modal has no Copy button. */
   copyText?: string;
-  /** `sm` for a sentence or two, such as why an action isn't available. */
-  size?: "sm" | "lg";
+  /** Fills a phone's screen, for a dialog that holds a whole page. */
+  isFullScreenOnPhone?: boolean;
+  /**
+   * `sm` for a sentence or two, such as why an action isn't available. `xl` for a whole page,
+   * such as a pick screen's preview: the content sits unboxed and the dialog itself scrolls.
+   */
+  size?: "sm" | "lg" | "xl";
 };
 
 export function ReadOnlyDetailModal({
@@ -259,6 +264,7 @@ export function ReadOnlyDetailModal({
   description,
   detailContent,
   details,
+  isFullScreenOnPhone = false,
   onCancel,
   onOpenChange,
   open,
@@ -277,6 +283,7 @@ export function ReadOnlyDetailModal({
           </Button>
         </>
       }
+      isFullScreenOnPhone={isFullScreenOnPhone}
       onClose={onCancel}
       onOpenChange={onOpenChange}
       open={open}
@@ -289,9 +296,12 @@ export function ReadOnlyDetailModal({
       ) : null}
       <div
         className={cn(
-          "max-h-96 overflow-auto rounded-lg border border-border bg-background p-4 text-sm text-foreground",
+          size === "xl"
+            ? null
+            : "max-h-96 overflow-auto rounded-lg border border-border bg-background p-4 text-sm text-foreground",
           details?.length ? "mt-4" : null,
         )}
+        data-testid={testId ? `${testId}-content` : undefined}
       >
         {detailContent}
       </div>

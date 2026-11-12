@@ -5,6 +5,9 @@ import { participantAffiliation, selectionParticipantLabel } from './contest-spo
 import { ParticipantLine } from './participant-line';
 import type { SelectionGroup } from './contest-entry-selection';
 
+/** What the draw's panels read from the room: when it ran, how many it deals, and the field. */
+export type DrawState = Pick<SelectionStateResponse, 'drawnAt' | 'rosterSize' | 'selectionGroups'>;
+
 /**
  * The entry page for a random-draw contest (a sweepstake). Nobody picks: the commissioner's draw
  * deals every entry its golfers, submits it and closes entries. Before the draw the page says so;
@@ -25,7 +28,7 @@ export function DrawEntryMetrics({
   isEditable: boolean;
   /** What the event's sport calls a participant: "golfer", "horse". */
   noun: SportNoun;
-  selectionState: SelectionStateResponse;
+  selectionState: DrawState;
 }) {
   const displayPreferences = useDisplayPreferences();
   const { drawnAt, rosterSize } = selectionState;
@@ -57,7 +60,7 @@ export function DrawEntryMetrics({
  * The lineup panel. Before the draw: what will happen and that there is nothing to pick. After
  * it: the dealt golfers, read-only.
  */
-export function DrawLineup({ noun, selectionState }: { noun: SportNoun; selectionState: SelectionStateResponse }) {
+export function DrawLineup({ noun, selectionState }: { noun: SportNoun; selectionState: DrawState }) {
   const displayPreferences = useDisplayPreferences();
   const { drawnAt, rosterSize } = selectionState;
   const dealtGolfers = getDealtGolfers(selectionState.selectionGroups ?? []);

@@ -18,6 +18,7 @@ import { CONTEST_RELEASE_CODE_MESSAGES } from '../contest-release-messages';
 import { parseContestRules } from '../contest-rules-form';
 import { scoringSettingsUiFor } from '../contest-scoring-settings';
 import { MemberPreview } from '../member-preview';
+import { PickPreviewAction } from '../pick-preview-dialog';
 import type { CreateContestFormValues } from './create-contest-helpers';
 import { CreateContestEventSection } from './create-contest-event-section';
 import { CreateContestFormatSection } from './create-contest-format-section';
@@ -160,6 +161,18 @@ export function CreateContestPage() {
       cancelTo={buildLeagueAdminContestsPath(league.leagueCode)}
       help="Only commissioners see it until you open it to the league."
       errorMessage={errorMessage}
+      extraAction={(
+        <PickPreviewAction
+          configuration={draft.rulesConfiguration}
+          contestName={values.contestName}
+          event={selectedEvent}
+          leagueId={league.id}
+          participant={draft.sportDefinition.vocabulary.participant}
+          rulesError={draft.rulesError}
+          selectionType={values.selectionType}
+          tierCount={draft.tierCount}
+        />
+      )}
       isPending={createMutation.isPending}
       // The event's presets are still loading: a contest sent now would skip its default preset.
       isSubmitDisabled={!selectedEvent

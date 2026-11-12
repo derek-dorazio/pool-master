@@ -10,6 +10,8 @@ type FormPageProps = {
   errorMessage?: string | null;
   cancelTo: string;
   children: ReactNode;
+  /** One more action beside Cancel and Save, first in the row: a check, never a second save. */
+  extraAction?: ReactNode;
   /** How the form works, behind a (?) after the title, never a sentence on the page. */
   help?: ReactNode;
   isPending: boolean;
@@ -38,6 +40,7 @@ export function FormPage({
   cancelTo,
   children,
   errorMessage,
+  extraAction,
   help,
   isPending,
   isSubmitDisabled = false,
@@ -64,7 +67,8 @@ export function FormPage({
       <Tile className="space-y-5 p-5" data-testid={testId ? `${testId}-fields` : undefined} padding="none" radius="md">{children}</Tile>
       {preview}
       {errorMessage ? <Notice tone="danger">{errorMessage}</Notice> : null}
-      <div className="flex flex-wrap justify-end gap-3">
+      <div className="flex flex-wrap items-center justify-end gap-3">
+        {extraAction}
         <LinkButton isDisabled={isPending} to={cancelTo} variant="secondary">
           Cancel
         </LinkButton>
