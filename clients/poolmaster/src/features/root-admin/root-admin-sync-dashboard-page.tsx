@@ -8,8 +8,6 @@ import {
   DataGrid,
   formatDateTimeDisplay,
   LinkButton,
-  MetricGrid,
-  MetricTile,
   PageHeader,
   ReadOnlyDetailModal,
   SectionCard,
@@ -37,6 +35,7 @@ import { PRODUCT_NAME, ProviderSyncRunStatus } from '@poolmaster/shared/domain';
 import { MANAGE_LIST_PAGE_SIZE, SYNC_PATH, UNMAPPED_COMPETITORS_PATH } from './manage-navigation';
 import { SyncRunDetail, type SyncRunEvidenceRow } from './sync-run-detail';
 import { useProvidersQuery } from './use-providers-query';
+import { plural } from '@/lib/plural';
 
 const syncRunColumnHelper = createColumnHelper<ProviderSyncRun>();
 
@@ -304,24 +303,9 @@ export function RootAdminSyncDashboardPage() {
       className="space-y-6"
       data-testid="root-admin-sync-dashboard-page"
     >
-      <PageHeader testId="root-admin-sync-header" title="Sync" />
-      <SectionCard padded title="Sync status">
-        <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-start">
-          <div className="flex flex-wrap gap-2" data-testid="root-admin-sync-workflow-sequence">
-            {WORKFLOW_STEPS.map((step) => (
-              <StatusBadge key={step} tone="neutral">
-                {step}
-              </StatusBadge>
-            ))}
-          </div>
-          <div className="flex flex-wrap gap-3">
-            <LinkButton
-              data-testid="root-admin-open-run-event-sync-page"
-              to={`${SYNC_PATH}/run-event-sync`}
-              variant="primary"
-            >
-              Run event sync
-            </LinkButton>
+      <PageHeader
+        actions={(
+          <>
             <LinkButton
               data-testid="root-admin-open-unmapped-participants-page"
               to={UNMAPPED_COMPETITORS_PATH}
@@ -329,16 +313,37 @@ export function RootAdminSyncDashboardPage() {
             >
               Unmapped competitors
             </LinkButton>
-          </div>
+            <LinkButton
+              data-testid="root-admin-open-run-event-sync-page"
+              to={`${SYNC_PATH}/run-event-sync`}
+              variant="primary"
+            >
+              Run event sync
+            </LinkButton>
+          </>
+        )}
+        meta={summary.lastStartedAt ? (
+          <span data-testid="root-admin-sync-latest-start">
+            Latest start {formatDateTimeDisplay(summary.lastStartedAt, displayPreferences)}
+          </span>
+        ) : undefined}
+        status={syncRunsQuery.data ? (
+          <span data-testid="root-admin-sync-counts">
+            {plural(recentRuns.length, 'recent run')} · {summary.completed} completed · {summary.running} in progress · {summary.submitted} submitted
+            {summary.failed > 0 ? ` · ${summary.failed} failed` : null}
+          </span>
+        ) : undefined}
+        testId="root-admin-sync-header"
+        title="Sync"
+      />
+      <SectionCard padded title="Sync status">
+        <div className="flex flex-wrap gap-2" data-testid="root-admin-sync-workflow-sequence">
+          {WORKFLOW_STEPS.map((step) => (
+            <StatusBadge key={step} tone="neutral">
+              {step}
+            </StatusBadge>
+          ))}
         </div>
-        <MetricGrid className="mt-6 md:grid-cols-5">
-          {/* poolmaster-allow-list-lookup: the runs listed on this screen, capped by the server's six-hour window */}
-          <MetricTile label="Recent runs" value={recentRuns.length} />
-          <MetricTile label="Submitted" value={summary.submitted} />
-          <MetricTile label="Completed" value={summary.completed} />
-          <MetricTile label="In progress" value={summary.running} />
-          <MetricTile label="Latest start" value={formatDateTimeDisplay(summary.lastStartedAt, displayPreferences)} />
-        </MetricGrid>
 
         {providersQuery.data && providersQuery.data.length > 0 ? (
           <div className="mt-6 flex flex-wrap gap-3">

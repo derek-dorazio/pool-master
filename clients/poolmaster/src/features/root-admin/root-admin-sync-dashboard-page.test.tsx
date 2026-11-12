@@ -149,6 +149,9 @@ describe('RootAdminSyncDashboardPage', () => {
       screen.getByTestId('root-admin-open-run-event-sync-page'),
     ).toHaveAttribute('href', '/manage/sync/run-event-sync');
     expect(screen.getByText('Completed successfully')).toBeInTheDocument();
+    // The counts sit in the header's status slot; a failed count shows only when there is one.
+    expect(screen.getByTestId('root-admin-sync-counts')).toHaveTextContent('1 recent run · 1 completed · 0 in progress · 0 submitted');
+    expect(screen.getByTestId('root-admin-sync-counts')).not.toHaveTextContent('failed');
     // #205 — no row limit: the server's default time window bounds the list.
     expect(listProviderSyncRunsMock).toHaveBeenLastCalledWith({});
   });
