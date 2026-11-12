@@ -8,8 +8,8 @@ import {
   type SelectionGroup,
 } from './contest-entry-selection';
 import { BudgetLineupBuilder, LockedBudgetLineup } from './contest-entry-budget';
-import { DrawLineup } from './contest-entry-draw';
-import { buildPickedAtById, getNextSelectedParticipantIds } from './contest-entry-lineup';
+import { DrawLineup, type DrawState } from './contest-entry-draw';
+import { getNextSelectedParticipantIds } from './contest-entry-lineup';
 
 /** One tap on a field row: `isSelected` is whether the entry held it before the tap. */
 export type PickChange = { participantId: string; isSelected: boolean };
@@ -19,33 +19,35 @@ export type PickChange = { participantId: string; isSelected: boolean };
  * group) to pick from, open for picks while the event has not started and read-only after.
  */
 export function RosterContestEntryLineupSection({
-  entryId,
+  drawState,
   expandedGroupId,
   groupToggleRefs,
   isBudget,
   isBusy,
   isEditable,
   isMyEntry,
-  isRandomDraw,
+  isPreview = false,
   lineupSummary,
   noun,
   onExpandGroup,
   onPick,
   pickError,
+  pickedAtById,
   picksHidden,
   progressNote,
   selectionGroups,
-  selectionState,
   sport,
 }: {
-  entryId: string;
+  /** A random draw's room, whose dealt field replaces the picking; null for every other format. */
+  drawState: DrawState | null;
   expandedGroupId: string | null;
   groupToggleRefs: RefObject<Record<string, HTMLButtonElement | null>>;
   isBudget: boolean;
   isBusy: boolean;
   isEditable: boolean;
   isMyEntry: boolean;
-  isRandomDraw: boolean;
+  /** A setup's preview (#1612): nothing is saved, so the tiers count what is picked. */
+  isPreview?: boolean;
   lineupSummary: NonNullable<SelectionStateResponse['lineupSummary']> | null;
   noun: SportNoun;
   /** Opens a tier, closes every tier (null), or hands on to the next short tier (undefined). */
@@ -54,15 +56,16 @@ export function RosterContestEntryLineupSection({
   onPick: (change: PickChange) => Promise<unknown>;
   /** Why the last pick was refused. */
   pickError: string | null;
+  /** When each picked participant was picked, so a full tier's swap drops the newest. */
+  pickedAtById: ReadonlyMap<string, string>;
   picksHidden: boolean;
   progressNote: string | null;
   selectionGroups: SelectionGroup[];
-  selectionState: SelectionStateResponse;
   sport: Sport | null;
 }) {
   const many = noun.many;
-  const title = isRandomDraw
-    ? `${selectionState.drawnAt ? 'Dealt ' : ''}${selectionState.drawnAt ? many : many.charAt(0).toUpperCase() + many.slice(1)}`
+  const title = drawState
+    ? `${drawState.drawnAt ? 'Dealt ' : ''}${drawState.drawnAt ? many : many.charAt(0).toUpperCase() + many.slice(1)}`
     : isEditable ? 'Build your lineup' : 'Saved lineup detail';
 
   return (
@@ -70,8 +73,8 @@ export function RosterContestEntryLineupSection({
       {progressNote ? (
         <Text as="p" data-testid="contest-entry-progress" size="sm" variant="meta">{progressNote}</Text>
       ) : null}
-      {isRandomDraw ? (
-        <DrawLineup noun={noun} selectionState={selectionState} />
+      {drawState ? (
+        <DrawLineup noun={noun} selectionState={drawState} />
       ) : (
         <div className="space-y-5">
           {picksHidden ? (
@@ -112,6 +115,7 @@ export function RosterContestEntryLineupSection({
                 group={group}
                 isBusy={isBusy}
                 isExpanded={isExpanded}
+                isPreview={isPreview}
                 key={group.groupId}
                 noun={noun}
                 onParticipantSelect={(nextParticipant) => {
@@ -121,7 +125,7 @@ export function RosterContestEntryLineupSection({
                   const nextSelectedIds = getNextSelectedParticipantIds(
                     group,
                     participantId,
-                    buildPickedAtById(selectionState, entryId),
+                    pickedAtById,
                   );
                   if (nextSelectedIds.length >= group.picksFromGroup) {
                     const currentIndex = selectionGroups.findIndex((candidate) => candidate.groupId === group.groupId);

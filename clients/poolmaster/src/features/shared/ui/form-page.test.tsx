@@ -44,6 +44,14 @@ describe("FormPage", () => {
     expect(screen.getByTestId("edit-league-fields")).not.toContainElement(preview);
   });
 
+  it("puts an extra action first in the button row, before Cancel and Save", () => {
+    renderFormPage({ extraAction: <button type="button">Preview picks page</button> });
+
+    const extra = screen.getByRole("button", { name: "Preview picks page" });
+    const cancel = screen.getByRole("link", { name: "Cancel" });
+    expect(extra.compareDocumentPosition(cancel) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
   it("opens with the page header, its title the page heading, and renders its fields", () => {
     renderFormPage();
 
