@@ -285,16 +285,17 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
       // The free-text search spans every participant, so the players need no tour roster.
       await page.getByTestId('root-admin-event-field-add-search').fill(runId);
       for (const id of playerIds) {
-        await page.getByTestId(`root-admin-event-field-add-search-select-${id}`).check();
+        const candidate = page.getByTestId(`root-admin-event-field-add-candidate-${id}`);
+        await candidate.click();
+        await expect(candidate).toHaveAttribute('aria-pressed', 'true');
       }
       await submitAndRead(
         page,
-        'root-admin-event-field-add-submit',
+        'root-admin-event-field-add-modal-apply',
         'POST',
         `/api/v1/events/${eventId}/participants`,
       );
-      await expect(page.getByTestId('root-admin-event-field-add-result')).toBeVisible();
-      await page.getByTestId('root-admin-event-field-add-done').click();
+      await expect(page.getByTestId('root-admin-event-field-add-modal')).toBeHidden();
     });
 
     journey.fieldEntryIds = await test.step('place one player in each default tier and save', async () => {
@@ -1428,10 +1429,12 @@ async function buildReleasedTournament(
   await page.getByTestId('root-admin-event-field-add').click();
   await page.getByTestId('root-admin-event-field-add-search').fill(runId);
   for (const id of playerIds) {
-    await page.getByTestId(`root-admin-event-field-add-search-select-${id}`).check();
+    const candidate = page.getByTestId(`root-admin-event-field-add-candidate-${id}`);
+    await candidate.click();
+    await expect(candidate).toHaveAttribute('aria-pressed', 'true');
   }
-  await submitAndRead(page, 'root-admin-event-field-add-submit', 'POST', `/api/v1/events/${eventId}/participants`);
-  await page.getByTestId('root-admin-event-field-add-done').click();
+  await submitAndRead(page, 'root-admin-event-field-add-modal-apply', 'POST', `/api/v1/events/${eventId}/participants`);
+  await expect(page.getByTestId('root-admin-event-field-add-modal')).toBeHidden();
 
   const fieldResponse = await page.request.get(`/api/v1/events/${eventId}/participants`);
   expect(fieldResponse.ok(), `GET the field answered ${fieldResponse.status()}`).toBe(true);
