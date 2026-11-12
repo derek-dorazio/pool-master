@@ -4,11 +4,11 @@ import type { ContestDto } from '@/lib/api';
 import {
   Notice,
   ErrorState,
-  Heading,
   LoadingState,
   MetricGrid,
   MetricTile,
-  Tile,
+  SectionCard,
+  Text,
 } from '@/features/shared/ui';
 import { extractErrorMessage, type ErrorCodeMessages } from '@/lib/errors';
 import { BracketBoard } from './bracket-board';
@@ -129,7 +129,7 @@ export function BracketEntryPage({ contest }: { contest: ContestDto }) {
         </Notice>
       ) : (
         <>
-          <Tile>
+          <SectionCard headingLevel={3} padded testId="bracket-scorecard" title="Your bracket">
             <MetricGrid className="md:grid-cols-3">
               <MetricTile
                 helperText={gamePicks.ownEntry && isOpen ? `Picks lock at ${closesAt}.` : 'Every pick is locked.'}
@@ -147,21 +147,24 @@ export function BracketEntryPage({ contest }: { contest: ContestDto }) {
                 value={<span data-testid="bracket-max-possible">{formatScore(gamePicks.maxPossiblePoints)}</span>}
               />
             </MetricGrid>
-          </Tile>
+          </SectionCard>
 
           {pickError ? <Notice data-testid="bracket-pick-error" tone="danger">{pickError}</Notice> : null}
 
-          <Tile>
-            <Heading level={3} variant="card" size="xl" tone="inherit" className="mb-5" data-testid="contest-entry-builder-heading">
-              {canPick ? 'Fill in your bracket' : 'Bracket'}
-            </Heading>
+          <SectionCard
+            headingLevel={3}
+            padded
+            testId="bracket-picks"
+            title={canPick ? 'Fill in your bracket' : 'Bracket'}
+            titleTestId="contest-entry-builder-heading"
+          >
             {canPick ? (
-              <p className="mb-5 text-sm text-muted-foreground">
+              <Text as="p" size="sm" variant="meta">
                 {`Pick the winner of each ${match.one}. A later ${match.one} offers the ${participant.many} you picked to get there, and changing a pick clears the later picks that depended on it.`}
-              </p>
+              </Text>
             ) : null}
             <BracketBoard canPick={canPick} isBusy={saveMutation.isPending} onPick={pick} rounds={rounds} />
-          </Tile>
+          </SectionCard>
 
           {canPick ? (
             <BracketSubmitPanel
@@ -183,13 +186,13 @@ export function BracketEntryPage({ contest }: { contest: ContestDto }) {
               tiebreakerText={tiebreakerDraft ?? (gamePicks.tiebreakerValue === null ? '' : String(gamePicks.tiebreakerValue))}
             />
           ) : (
-            <Tile data-testid="bracket-tiebreaker-summary">
-              <p className="text-sm">
+            <SectionCard headingLevel={3} padded testId="bracket-tiebreaker-summary" title="Tiebreaker">
+              <Text as="p" size="sm">
                 {gamePicks.tiebreakerValue === null
                   ? 'No tiebreaker was saved.'
                   : `Tiebreaker: ${gamePicks.tiebreakerValue} total ${contestScoreUnit(contest.sport)} in the final.`}
-              </p>
-            </Tile>
+              </Text>
+            </SectionCard>
           )}
         </>
       )}

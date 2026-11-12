@@ -15,6 +15,11 @@ type FormPageProps = {
   isPending: boolean;
   /** One fact line under the title: the facts the form acts on, never how it works. */
   meta?: ReactNode;
+  /**
+   * What the form will make, drawn as the reader will meet it (a contest's "Members will see"):
+   * outside the form's card, just above its buttons, as the last check before saving.
+   */
+  preview?: ReactNode;
   isSubmitDisabled?: boolean;
   onSubmit: SubmitEventHandler<HTMLFormElement>;
   pendingLabel: string;
@@ -39,6 +44,7 @@ export function FormPage({
   meta,
   onSubmit,
   pendingLabel,
+  preview,
   submitLabel,
   submitTestId,
   testId,
@@ -55,7 +61,8 @@ export function FormPage({
           </HelpTip>
         ) : null}
       />
-      <Tile className="space-y-5 p-5" padding="none" radius="md">{children}</Tile>
+      <Tile className="space-y-5 p-5" data-testid={testId ? `${testId}-fields` : undefined} padding="none" radius="md">{children}</Tile>
+      {preview}
       {errorMessage ? <Notice tone="danger">{errorMessage}</Notice> : null}
       <div className="flex flex-wrap justify-end gap-3">
         <LinkButton isDisabled={isPending} to={cancelTo} variant="secondary">

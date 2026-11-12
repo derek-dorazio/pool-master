@@ -8,8 +8,11 @@ import {
   displayPreferencesOf,
   formatDateDisplay,
   formatDateTimeDisplay,
+  formatMonthYearDisplay,
+  localeDisplayName,
   toDateTimeLocalValue,
 } from "./date-time-format";
+import { timeZoneLabel } from "./time-zone-options";
 import { DisplayPreferencesContext } from "./display-preferences";
 
 const user: UserDto = {
@@ -119,5 +122,33 @@ describe("pool-master-3lo.18: shared DateTimeField and DateDisplay primitives", 
 
     expect(screen.getByText("Apr 23, 2026, 8:30 PM PDT")).toBeInTheDocument();
     expect(screen.getByText("Apr 23, 2026")).toBeInTheDocument();
+  });
+});
+
+describe("formatMonthYearDisplay", () => {
+  it("shows the month and year in the member's zone, so a late-night sign-up keeps its own month", () => {
+    const eastern = { ...DEFAULT_DISPLAY_PREFERENCES, locale: "en-US", timeZone: "America/New_York" };
+    expect(formatMonthYearDisplay("2026-05-01T02:00:00.000Z", eastern)).toBe("Apr 2026");
+  });
+
+  it("shows the empty label when there is no date", () => {
+    expect(formatMonthYearDisplay(null, DEFAULT_DISPLAY_PREFERENCES, "Unknown")).toBe("Unknown");
+  });
+});
+
+describe("localeDisplayName", () => {
+  it("names a locale in the member's own language", () => {
+    expect(localeDisplayName("en-GB", { ...DEFAULT_DISPLAY_PREFERENCES, locale: "en-US" })).toBe("British English");
+  });
+
+  it("shows the code itself when it is not a locale", () => {
+    expect(localeDisplayName("not a locale", DEFAULT_DISPLAY_PREFERENCES)).toBe("not a locale");
+  });
+});
+
+describe("timeZoneLabel", () => {
+  it("calls a US zone by its everyday name and spaces out any other zone's id", () => {
+    expect(timeZoneLabel("America/Chicago")).toBe("Central (Chicago)");
+    expect(timeZoneLabel("America/Argentina/Buenos_Aires")).toBe("America/Argentina/Buenos Aires");
   });
 });

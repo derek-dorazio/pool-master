@@ -14,7 +14,7 @@ import { buildLeagueAdminPath } from '@/features/leagues/league-routing';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
 import { hasPlanFeature } from '@/features/plans/plan-features';
 import { PlanLockedNotice } from '@/features/plans/plan-locked-notice';
-import { Checkbox, ChoiceCard, FormField, FormPage, Input, Text, formatNumberList } from '@/features/shared/ui';
+import { Checkbox, ChoiceCard, ChoiceCardText, FormField, FormPage, FormSection, Input, Notice, Text, formatNumberList } from '@/features/shared/ui';
 import {
   CUP_POINTS_SCALES,
   CUP_POINTS_SCALE_COPY,
@@ -83,10 +83,6 @@ function PointsPreview({ scale, customPoints }: { scale: CupPointsScale; customP
           </li>
         ))}
       </ol>
-      <Text as="p" variant="caption">
-        {scale === CupPointsScale.FIELD_BEATEN ? `In a contest of ${POINTS_PREVIEW_FIELD} entries. ` : ''}
-        Bonus contests earn x1.5 and double contests x2. Squads tied on a place share its points.
-      </Text>
     </div>
   );
 }
@@ -138,7 +134,6 @@ function ChampionshipSettingsForm({ league }: { league: LeagueDto }) {
   return (
     <FormPage
       cancelTo={settingsPath}
-      help="The championship every contest counts toward, and what each finishing place earns in it and in every sports league cup."
       {...formPageSave(form, saveMutation, 'We could not save the championship settings.')}
       pendingLabel="Saving..."
       submitLabel="Save settings"
@@ -146,23 +141,27 @@ function ChampionshipSettingsForm({ league }: { league: LeagueDto }) {
       testId="edit-championships-page"
       title="Edit championships"
     >
-      <FormField
-        error={form.formState.errors.cupName?.message}
-        helperText={cupName ? `Members see it with the year in front: ${championshipYear(new Date())} ${cupName}.` : undefined}
-        id="edit-championships-name"
-        label="Championship name"
+      <FormSection
+        help={`The championship every contest counts toward. Members see it with the year in front${cupName ? `: ${championshipYear(new Date())} ${cupName}` : ''}.`}
+        testId="edit-championships-name-section"
+        title="Name"
       >
-        <Input
-          data-testid="edit-championships-name"
-          disabled={saveMutation.isPending}
-          id="edit-championships-name"
-          type="text"
-          {...form.register('cupName')}
-        />
-      </FormField>
+        <FormField error={form.formState.errors.cupName?.message} id="edit-championships-name" label="Championship name">
+          <Input
+            data-testid="edit-championships-name"
+            disabled={saveMutation.isPending}
+            id="edit-championships-name"
+            type="text"
+            {...form.register('cupName')}
+          />
+        </FormField>
+      </FormSection>
 
-      <fieldset className="space-y-2">
-        <legend className="text-sm font-medium text-foreground">Points table</legend>
+      <FormSection
+        help={`What each finishing place earns in the championship and in every sports league cup. ${scale === CupPointsScale.FIELD_BEATEN ? `The preview is a contest of ${POINTS_PREVIEW_FIELD} entries. ` : ''}Bonus contests earn x1.5 and double contests x2. Squads tied on a place share its points.`}
+        testId="edit-championships-points-section"
+        title="Points table"
+      >
         <div aria-label="Points table" className="grid gap-2" role="radiogroup">
           {CUP_POINTS_SCALES.map((option) => (
             <ChoiceCard
@@ -172,59 +171,57 @@ function ChampionshipSettingsForm({ league }: { league: LeagueDto }) {
               onSelect={() => form.setValue('cupPointsScale', option, { shouldDirty: true })}
               testId={`edit-championships-scale-${option}`}
             >
-              <span className="min-w-0 flex-1">
-                <Text size="inherit" tone="inherit" weight="semibold">{CUP_POINTS_SCALE_COPY[option].label}</Text>
-                <Text className="block" variant="caption">{CUP_POINTS_SCALE_COPY[option].description}</Text>
-              </span>
+              <ChoiceCardText description={CUP_POINTS_SCALE_COPY[option].description} label={CUP_POINTS_SCALE_COPY[option].label} />
             </ChoiceCard>
           ))}
         </div>
-      </fieldset>
 
-      {scale === CupPointsScale.CUSTOM ? (
-        <FormField
-          error={form.formState.errors.customPoints?.message}
-          helperText="1st place first, separated by commas: 10, 6, 4, 3, 2, 1."
-          id="edit-championships-custom-points"
-          label="Custom points"
-        >
-          <Input
-            data-testid="edit-championships-custom-points"
-            disabled={saveMutation.isPending}
+        {scale === CupPointsScale.CUSTOM ? (
+          <FormField
+            error={form.formState.errors.customPoints?.message}
             id="edit-championships-custom-points"
-            inputMode="numeric"
-            type="text"
-            {...form.register('customPoints')}
-          />
-        </FormField>
-      ) : null}
+            label="Custom points"
+          >
+            <Input
+              data-testid="edit-championships-custom-points"
+              disabled={saveMutation.isPending}
+              id="edit-championships-custom-points"
+              inputMode="numeric"
+              placeholder="10, 6, 4, 3, 2, 1"
+              type="text"
+              {...form.register('customPoints')}
+            />
+          </FormField>
+        ) : null}
 
-      <div className="space-y-2">
-        <Text as="div" variant="strong">What each place earns</Text>
-        <PointsPreview customPoints={customPoints} scale={scale} />
-      </div>
+        <div className="space-y-2">
+          <Text as="div" variant="strong">What each place earns</Text>
+          <PointsPreview customPoints={customPoints} scale={scale} />
+        </div>
 
-      <Text as="p" data-testid="championship-points-change-note" variant="caption">
-        A new table rescores open cups at once, every contest in them included. The championship and
-        crowned cups keep the points their contests earned when they went final, so after a change an
-        open cup and this year&apos;s championship can show different totals for the same contests.
-      </Text>
+        <Notice data-testid="championship-points-change-note">
+          A new table rescores open cups at once, every contest in them included. The championship and
+          crowned cups keep the points their contests earned when they went final, so after a change an
+          open cup and this year&apos;s championship can show different totals for the same contests.
+        </Notice>
+      </FormSection>
 
       {hasPlanFeature(league, PlanFeature.RECORD_BOOK) ? (
-        <label className="flex items-start gap-3">
-          <Checkbox
-            checked={hallOfLameVisible}
-            className="mt-1"
-            data-testid="edit-championships-hall-of-lame"
-            disabled={saveMutation.isPending}
-            onChange={(event) => form.setValue('hallOfLameVisible', event.target.checked, { shouldDirty: true })}
-          />
-          <Text variant="meta">
-            <Text className="block" variant="strong">Show the Hall of Lame</Text>
-            The record book&apos;s lighter side: most 2nd places, most 4th places, most last places and the
-            longest run without a win. Turn it off to hide it for everyone in the league.
-          </Text>
-        </label>
+        <FormSection
+          help="The record book's lighter side: most 2nd places, most 4th places, most last places and the longest run without a win. Turn it off to hide it for everyone in the league."
+          testId="edit-championships-record-book-section"
+          title="Record book"
+        >
+          <label className="flex items-center gap-3">
+            <Checkbox
+              checked={hallOfLameVisible}
+              data-testid="edit-championships-hall-of-lame"
+              disabled={saveMutation.isPending}
+              onChange={(event) => form.setValue('hallOfLameVisible', event.target.checked, { shouldDirty: true })}
+            />
+            <Text variant="strong">Show the Hall of Lame</Text>
+          </label>
+        </FormSection>
       ) : null}
     </FormPage>
   );

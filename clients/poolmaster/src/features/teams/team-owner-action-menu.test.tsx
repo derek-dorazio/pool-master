@@ -42,7 +42,7 @@ function renderMenu(overrides: Partial<MenuProps> = {}) {
 }
 
 async function openOwnerMenu() {
-  await userEvent.click(screen.getByTestId('team-home-owner-actions-trigger-team-1-user-2'));
+  await userEvent.click(screen.getByTestId('team-home-owner-actions-team-1-user-2'));
 }
 
 async function openAction(action: 'promote' | 'demote' | 'remove') {
@@ -77,11 +77,11 @@ describe('TeamOwnerActionMenu', () => {
     removeSquadOwnerMock.mockReset();
   });
 
-  it('draws the Owner actions trigger as an outline button, not a gold one with light text in dark mode', () => {
+  it('opens the owner\'s actions from a quiet "⋯" button named for the owner, not a gold one', () => {
     renderMenu();
 
-    const trigger = screen.getByTestId('team-home-owner-actions-trigger-team-1-user-2');
-    expect(trigger).toHaveClass('bg-background', 'text-foreground', 'border-border');
+    const trigger = screen.getByRole('button', { name: 'Actions for Olive Owner' });
+    expect(trigger).toHaveAttribute('data-testid', 'team-home-owner-actions-team-1-user-2');
     expect(trigger).not.toHaveClass('bg-primary');
   });
 
@@ -237,11 +237,11 @@ describe('TeamOwnerActionMenu', () => {
   it('closes the owner menu on a click outside it, without opening a dialog', async () => {
     renderMenu();
     await openOwnerMenu();
-    expect(screen.getByTestId('team-home-owner-actions-menu-team-1-user-2')).toBeVisible();
+    expect(screen.getByTestId('team-home-owner-actions-team-1-user-2-menu')).toBeVisible();
 
     await userEvent.click(document.body);
 
-    expect(screen.queryByTestId('team-home-owner-actions-menu-team-1-user-2')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('team-home-owner-actions-team-1-user-2-menu')).not.toBeInTheDocument();
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
@@ -268,7 +268,7 @@ describe('TeamOwnerActionMenu', () => {
     expect(removeSquadOwnerMock).not.toHaveBeenCalled();
   });
 
-  it('confirms a promotion with Cancel and a primary Promote button', async () => {
+  it('confirms a promotion with Cancel and a primary Make commissioner button', async () => {
     renderMenu();
 
     await openAction('promote');

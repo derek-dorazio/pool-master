@@ -2,10 +2,10 @@ import { Check } from "lucide-react";
 import type { ReactNode } from "react";
 import { Button } from "./button";
 import { cn } from "./class-names";
-import { ConfirmDialog } from "./confirm-dialog";
 import { CopyButton } from "./copy-button";
 import { DialogActions } from "./dialog-actions";
 import { FormField, Input } from "./form-field";
+import { Notice } from "./notice";
 import { FactList } from "./fact-list";
 import { Modal } from "./modal";
 import { ServerErrorBar } from "./server-error";
@@ -89,97 +89,11 @@ export function FormModal({
           title={errorTitle ?? "Save failed"}
         />
       ) : errorMessage ? (
-        <p className="mt-4 text-sm font-medium text-destructive">
+        <Notice className="mt-4" tone="danger">
           {errorMessage}
-        </p>
+        </Notice>
       ) : null}
     </Modal>
-  );
-}
-
-type ConfirmationInput = {
-  expectedValue: string;
-  helperText?: ReactNode;
-  label: string;
-  onChange: (value: string) => void;
-  testId?: string;
-  value: string;
-};
-
-export type ConfirmationModalProps = BaseModalTemplateProps & {
-  cancelLabel?: string;
-  children?: ReactNode;
-  confirmLabel: string;
-  confirmTestId?: string;
-  confirmationInput?: ConfirmationInput;
-  errorMessage?: ReactNode;
-  isConfirmDisabled?: boolean;
-  isPending?: boolean;
-  onConfirm: () => void;
-  pendingLabel?: string;
-  tone?: "default" | "danger";
-};
-
-export function ConfirmationModal({
-  cancelLabel,
-  children,
-  confirmLabel,
-  confirmTestId,
-  confirmationInput,
-  description,
-  errorMessage,
-  isConfirmDisabled = false,
-  isPending = false,
-  onCancel,
-  onConfirm,
-  onOpenChange,
-  open,
-  pendingLabel,
-  testId,
-  title,
-  tone,
-}: ConfirmationModalProps) {
-  const confirmationMatches = confirmationInput
-    ? confirmationInput.value === confirmationInput.expectedValue
-    : true;
-
-  return (
-    <ConfirmDialog
-      cancelLabel={cancelLabel}
-      confirmLabel={confirmLabel}
-      confirmTestId={confirmTestId}
-      description={description}
-      isConfirmDisabled={isConfirmDisabled || !confirmationMatches}
-      isPending={isPending}
-      onCancel={onCancel}
-      onConfirm={onConfirm}
-      onOpenChange={onOpenChange}
-      open={open}
-      pendingLabel={pendingLabel}
-      testId={testId}
-      title={title}
-      tone={tone}
-    >
-      {confirmationInput ? (
-        <FormField
-          helperText={confirmationInput.helperText}
-          label={confirmationInput.label}
-        >
-          <Input
-            data-testid={confirmationInput.testId}
-            disabled={isPending}
-            onChange={(event) => confirmationInput.onChange(event.target.value)}
-            value={confirmationInput.value}
-          />
-        </FormField>
-      ) : null}
-      {children}
-      {errorMessage ? (
-        <p className="mt-4 text-sm font-medium text-destructive">
-          {errorMessage}
-        </p>
-      ) : null}
-    </ConfirmDialog>
   );
 }
 
@@ -317,9 +231,9 @@ export function PickerModal<TItem extends PickerModalItem>({
         )}
       </div>
       {errorMessage ? (
-        <p className="mt-4 text-sm font-medium text-destructive" role="alert">
+        <Notice className="mt-4" tone="danger">
           {errorMessage}
-        </p>
+        </Notice>
       ) : null}
     </Modal>
   );
@@ -335,6 +249,8 @@ export type ReadOnlyDetailModalProps = BaseModalTemplateProps & {
   detailContent: ReactNode;
   /** What Copy puts on the clipboard; without it the modal has no Copy button. */
   copyText?: string;
+  /** `sm` for a sentence or two, such as why an action isn't available. */
+  size?: "sm" | "lg";
 };
 
 export function ReadOnlyDetailModal({
@@ -346,6 +262,7 @@ export function ReadOnlyDetailModal({
   onCancel,
   onOpenChange,
   open,
+  size = "lg",
   testId,
   title,
 }: ReadOnlyDetailModalProps) {
@@ -363,7 +280,7 @@ export function ReadOnlyDetailModal({
       onClose={onCancel}
       onOpenChange={onOpenChange}
       open={open}
-      size="lg"
+      size={size}
       testId={testId}
       title={title}
     >

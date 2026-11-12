@@ -1,7 +1,8 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Button } from "./button";
 import { SectionCard } from "./section-card";
-import { DangerZoneAction, SettingsRow, SettingsRows } from "./settings-section";
+import { DangerZoneAction, SettingsRow, SettingsRows, SettingsSection } from "./settings-section";
+import { Switch } from "./switch";
 
 const meta = {
   title: "Sections/SettingsRows",
@@ -42,4 +43,26 @@ export const DangerZone: Story = {
     ),
   },
   decorators: [(Story) => <SectionCard tone="danger"><Story /></SectionCard>],
+};
+
+/** A settings section: values left to right on one line, Edit in the title, a row's own action at its end. */
+export const Section: Story = {
+  args: { children: null },
+  render: () => (
+    <div className="max-w-xl space-y-4">
+      <SettingsSection onEdit={() => undefined} title="Profile">
+        <SettingsRow label="Name" value="Sam Lee" />
+        <SettingsRow label="Email" value="sam@example.com" />
+        <SettingsRow label="Username" value="samlee" />
+      </SettingsSection>
+      <SettingsSection help="Invitations and account emails are always sent." title="Email notifications">
+        <SettingsRow action={<Switch checked label="Results" onCheckedChange={() => undefined} />} label="Results" />
+        <SettingsRow action={<Switch checked={false} label="Live standings" onCheckedChange={() => undefined} />} label="Live standings" />
+      </SettingsSection>
+      <SettingsSection title="Account" tone="danger">
+        <SettingsRow action={<Button size="sm" variant="secondary">Inactivate</Button>} label="Hide me from my leagues" />
+        <SettingsRow action={<Button disabled size="sm" variant="danger">Delete</Button>} label="Delete account" />
+      </SettingsSection>
+    </div>
+  ),
 };

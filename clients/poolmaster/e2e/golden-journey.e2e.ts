@@ -750,10 +750,11 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
 
     await test.step('change a preference on the account page', async () => {
       await page.goto('/my-account');
-      await expect(page.getByTestId('user-page')).toBeVisible();
-      await page.getByTestId('user-page-open-preferences').click();
-      await page.getByTestId('user-page-timezone').selectOption('America/Chicago');
-      await submitAndRead(page, 'user-page-save-preferences', 'PUT', '/api/v1/users/me/preferences');
+      await expect(page.getByTestId('my-account-page')).toBeVisible();
+      await page.getByTestId('my-account-preferences-edit').click();
+      await page.getByTestId('my-account-time-zone').selectOption('America/Chicago');
+      await submitAndRead(page, 'my-account-preferences-save', 'PUT', '/api/v1/users/me/preferences');
+      await expect(page.getByTestId('my-account-preferences-time-zone')).toHaveText(/Central \(Chicago\)/);
     });
 
     await test.step('open the league All years page', async () => {

@@ -3,6 +3,7 @@ import { fireEvent, render, screen, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useParams } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
+import { Toaster } from '@/features/shared/ui';
 import { QueryKeys } from '@/lib/query-keys';
 import { LeaveLeagueSection } from './leave-league-section';
 import { apiSuccess, buildLeague, listLeaguesData } from './test/fixtures';
@@ -34,6 +35,7 @@ function renderLeaveLeague({
           <Route element={<LeagueDestination />} path="/league/:leagueCode" />
           <Route element={<div data-testid="welcome-page" />} path="/welcome" />
         </Routes>
+        <Toaster />
       </MemoryRouter>
     </QueryClientProvider>,
   );
@@ -42,7 +44,7 @@ function renderLeaveLeague({
 
 async function confirmLeave() {
   fireEvent.click(screen.getByRole('button', { name: 'Leave league' }));
-  const dialog = within(await screen.findByRole('dialog', { name: 'Leave league' }));
+  const dialog = within(await screen.findByRole('dialog', { name: 'Leave Big Dawgs?' }));
   fireEvent.click(dialog.getByRole('button', { name: 'Leave league' }));
   return dialog;
 }
@@ -57,11 +59,11 @@ describe('Leave league', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Leave league' }));
 
-    expect(await screen.findByRole('dialog', { name: 'Leave league' })).toBeInTheDocument();
+    expect(await screen.findByRole('dialog', { name: 'Leave Big Dawgs?' })).toBeInTheDocument();
     expect(leaveLeagueMock).not.toHaveBeenCalled();
   });
 
-  it('after leaving, takes the member to their next active league rather than an inactive one', async () => {
+  it('after leaving, takes the member to their next active league rather than an inactive one, and confirms with a toast', async () => {
     leaveLeagueMock.mockResolvedValue(apiSuccess({ success: true }));
     const { queryClient } = renderLeaveLeague({
       remainingLeagues: [
@@ -70,11 +72,11 @@ describe('Leave league', () => {
       ],
     });
 
-    const dialog = await confirmLeave();
-    expect(await dialog.findByText('You left Big Dawgs.')).toBeInTheDocument();
-    fireEvent.click(dialog.getByRole('button', { name: 'OK' }));
+    await confirmLeave();
 
     expect(await screen.findByTestId('league-destination')).toHaveTextContent('AWAKE');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.getByText('You left Big Dawgs')).toBeInTheDocument();
     expect(queryClient.getQueryData(QueryKeys.leagues.list)).toMatchObject({
       leagues: [expect.objectContaining({ leagueCode: 'ASLEEP' }), expect.objectContaining({ leagueCode: 'AWAKE' })],
     });
@@ -86,8 +88,7 @@ describe('Leave league', () => {
       remainingLeagues: [buildLeague({ id: 'league-2', leagueCode: 'ASLEEP', isActive: false })],
     });
 
-    const dialog = await confirmLeave();
-    fireEvent.click(await dialog.findByRole('button', { name: 'OK' }));
+    await confirmLeave();
 
     expect(await screen.findByTestId('welcome-page')).toBeInTheDocument();
   });

@@ -32,6 +32,8 @@ import {
   SectionRows,
   Select,
   Text,
+  formatNumber,
+  useDisplayPreferences,
 } from '@/features/shared/ui';
 import { coversOneEvent, firstContestEvent, hasContestEventStarted } from './contest-events';
 import { CONTEST_RELEASE_CODE_MESSAGES } from './contest-release-messages';
@@ -137,6 +139,8 @@ function ContestEventsForm({
 
   // The chosen events in the order the contest will play them: by start, as the server keeps them.
   const chosen = useMemo(() => [...selected.values()].sort(byStartDate), [selected]);
+  const chosenThisYear = yearEvents.filter((event) => selected.has(event.id)).length;
+  const { locale } = useDisplayPreferences();
 
   function toggle(event: SportEventDto) {
     setSelected((current) => {
@@ -237,7 +241,11 @@ function ContestEventsForm({
         </Button>
       </div>
 
-      <SectionCard testId="contest-events-options" title={`${year} events`}>
+      <SectionCard
+        testId="contest-events-options"
+        title={`${year} events`}
+        trailing={<span data-testid="contest-events-chosen-count">{`${formatNumber(chosenThisYear, locale)} chosen`}</span>}
+      >
         <QueryState
           empty={`No events in ${year} yet.`}
           error={`We couldn't load the ${year} events.`}
@@ -277,6 +285,7 @@ function ContestEventsForm({
                         {reason ? ` · ${reason}` : ''}
                       </>
                     )}
+                    isSelected={isChosen}
                     key={event.id}
                     name={event.name}
                     testId={`contest-events-row-${event.id}`}

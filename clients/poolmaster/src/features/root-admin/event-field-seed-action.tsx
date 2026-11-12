@@ -1,7 +1,7 @@
 import { getSportDefinition, type Sport, type SportNoun } from '@poolmaster/shared/domain';
 import { useState } from 'react';
 import { seedEventParticipants } from '@/lib/api';
-import { Notice, Button, ConfirmationModal } from '@/features/shared/ui';
+import { Notice, Button, ConfirmDialog } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -77,11 +77,11 @@ export function EventFieldSeedAction({ eventId, sport, sportLeague }: {
         </Notice>
       ) : null}
 
-      <ConfirmationModal
+      <ConfirmDialog
         confirmLabel="Seed field"
         confirmTestId="root-admin-event-field-seed-confirm"
         description={`Copies the ${sportLeague.one}'s current roster into this ${event.one}'s field and derives seed numbers and odds-to-win from each ${participant.one}'s ${sportLeague.one} ranking. ${upperFirst(participant.many)} already in the field are left untouched.`}
-        errorMessage={
+        error={
           seedMutation.isError
             ? extractErrorMessage(seedMutation.error, {
                 fallback: `We could not seed the field from the ${sportLeague.one} roster.`,

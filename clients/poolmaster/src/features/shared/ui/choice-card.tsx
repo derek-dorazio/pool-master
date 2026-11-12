@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { cn } from "./class-names";
+import { Text } from "./text";
 
 /**
  * One choice drawn as a card, for a radio group whose options need more than a label: a radio
@@ -44,5 +45,18 @@ export function ChoiceCard({
       </span>
       {children}
     </button>
+  );
+}
+
+/**
+ * A choice card's usual content: its name in bold over a one-line description. The name may
+ * carry an icon before it.
+ */
+export function ChoiceCardText({ description, label }: { description: ReactNode; label: ReactNode }) {
+  return (
+    <span className="min-w-0 flex-1">
+      <Text as="span" className="flex items-center gap-2" size="inherit" tone="inherit" weight="semibold">{label}</Text>
+      <Text as="span" className="block" variant="caption">{description}</Text>
+    </span>
   );
 }

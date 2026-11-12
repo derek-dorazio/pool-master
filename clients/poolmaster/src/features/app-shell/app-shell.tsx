@@ -10,7 +10,7 @@ import {
 import { useAuth } from "@/features/auth/auth-context";
 import { getLogger } from "@/lib/logger";
 import { AccountMenu } from "@/features/account/account-menu";
-import { buildUserPath } from "@/features/account/user-routing";
+import { MY_ACCOUNT_PATH } from "@/features/account/user-routing";
 import { formatUserInitials, formatUserName } from "@/features/account/user-name";
 import { CreateLeagueModal } from "@/features/leagues/create-league-modal";
 import { buildCreateLeagueDestination } from "@/features/leagues/create-league-form";
@@ -180,9 +180,7 @@ export function AppShell() {
                 <AccountMenu
                   initials={formatUserInitials(auth.user?.firstName, auth.user?.lastName)}
                   isRootAdmin={auth.isRootAdmin}
-                  profilePath={
-                    auth.user?.id ? buildUserPath(auth.user.id) : "/"
-                  }
+                  profilePath={MY_ACCOUNT_PATH}
                   userName={formatUserName(
                     auth.user?.firstName,
                     auth.user?.lastName,
