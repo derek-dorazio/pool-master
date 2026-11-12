@@ -224,7 +224,8 @@ function TopStandings({ contest, leagueCode, mySquadId }: { contest: ContestDto;
       error="We couldn't load the standings."
       isEmpty={(top) => !top.rows.length}
       loading="Loading standings..."
-      query={{ data: standings ?? undefined, isError: leaderboardQuery.isError }}
+      query={{ data: standings ?? undefined, isError: leaderboardQuery.isError, refetch: leaderboardQuery.refetch }}
+      rows={3}
     >
       {(top) => (
         <SimpleTable>

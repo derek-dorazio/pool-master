@@ -35,7 +35,7 @@ export function EditContestCupWeightPage() {
     return <LoadingState body="Loading contest..." />;
   }
   if (managedContestQuery.isError || !managedContestQuery.data) {
-    return <ErrorState body="Try again in a moment." testId="edit-cup-weight-error" title="We couldn't load this contest." />;
+    return <ErrorState body="We couldn't load this contest." onRetry={() => void managedContestQuery.refetch()} testId="edit-cup-weight-error" />;
   }
   const contest = managedContestQuery.data;
   if (!league.isActive || contest.status === ContestStatus.COMPLETED) {

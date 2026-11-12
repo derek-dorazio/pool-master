@@ -167,7 +167,8 @@ describe('Clutch Card page', () => {
     renderPage();
 
     const calendar = await screen.findByTestId('clutch-card-calendar');
-    expect(await within(calendar).findByText('Calendar unavailable')).toBeInTheDocument();
+    expect(await within(calendar).findByText("We couldn't load the championship calendar.")).toBeInTheDocument();
+    expect(within(calendar).getByRole('button', { name: 'Retry' })).toBeInTheDocument();
     expect(screen.queryByTestId('clutch-card-round-BASKETBALL:NBA Finals')).not.toBeInTheDocument();
     expect(mockLogger.warn).toHaveBeenCalledWith(expect.objectContaining({ action: 'clutchCardPage.sportLeagues.failed' }), 'Sport leagues failed to load');
   });

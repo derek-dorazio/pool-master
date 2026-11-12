@@ -82,8 +82,3 @@ export function PeekCard({
     </div>
   );
 }
-
-/** A peek card's stand-in while its data loads, or when it could not be read. */
-export function PeekMessage({ children, testId }: { children: ReactNode; testId?: string }) {
-  return <p className="px-4 py-3 text-sm italic text-muted-foreground" data-testid={testId}>{children}</p>;
-}

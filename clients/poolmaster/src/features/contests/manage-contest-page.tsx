@@ -41,6 +41,7 @@ import {
   LinkButton,
   LoadingState,
   PageHeader,
+  refetchFailed,
   SectionCard,
   SectionEmpty,
   SettingsRow,
@@ -161,9 +162,9 @@ export function ManageContestPage() {
   if ((contestQuery.isError && !isContestMissing) || managedContestQuery.isError || eventQuery.isError) {
     return (
       <ErrorState
-        body="Try again in a moment."
+        body="We couldn't load this contest."
+        onRetry={refetchFailed(contestQuery, managedContestQuery, eventQuery)}
         testId="manage-contest-error"
-        title="We couldn't load this contest."
       />
     );
   }

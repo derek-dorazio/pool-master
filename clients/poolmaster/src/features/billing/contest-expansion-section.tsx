@@ -8,7 +8,7 @@ import {
 import { extractErrorMessage, throwApiError, type ErrorCodeMessages } from '@/lib/errors';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import { Notice, Button, FormField, Input, SectionCard, SettingsRow, SettingsRows, formatCount, formatMoneyCents, formatNumber, useDisplayPreferences } from '@/features/shared/ui';
+import { Button, ErrorState, FormField, Input, LoadingState, Notice, SectionCard, SettingsRow, SettingsRows, formatCount, formatMoneyCents, formatNumber, useDisplayPreferences } from '@/features/shared/ui';
 import { useContestExpansionQuery } from './use-contest-expansion-query';
 
 /** Copy for the refusals Expand and a root admin's free expansion can meet. */
@@ -74,20 +74,19 @@ export function ContestExpansionSection({
   if (expansionQuery.isLoading) {
     return (
       <SectionCard testId="contest-expansion" title="Entries">
-        <SettingsRows>
-          <div className="px-4 py-3.5 text-sm text-muted-foreground">Loading entries...</div>
-        </SettingsRows>
+        <LoadingState body="Loading entries..." size="inline" testId="contest-expansion-loading" />
       </SectionCard>
     );
   }
   if (!expansionQuery.data) {
     return (
       <SectionCard testId="contest-expansion" title="Entries">
-        <SettingsRows>
-          <div className="px-4 py-3.5 text-sm text-muted-foreground" data-testid="contest-expansion-error">
-            {extractErrorMessage(expansionQuery.error, { fallback: 'We could not load this contest\'s entries right now.' })}
-          </div>
-        </SettingsRows>
+        <ErrorState
+          body={extractErrorMessage(expansionQuery.error, { fallback: 'We could not load this contest\'s entries right now.' })}
+          onRetry={() => void expansionQuery.refetch()}
+          size="inline"
+          testId="contest-expansion-error"
+        />
       </SectionCard>
     );
   }

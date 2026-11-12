@@ -369,6 +369,19 @@ describe('Commissioner tools › Invites: waiting on an answer', () => {
     await waitFor(() => expect(writeTextMock).toHaveBeenCalledWith(`${window.location.origin}/invite/link-code`));
   });
 
+  it('says the waiting invites could not load, in red with Retry, and reads them again on Retry', async () => {
+    listLeagueInvitationsMock.mockResolvedValue({ error: { error: { code: 'INTERNAL_ERROR', message: 'Down' } }, status: 500 });
+
+    renderInvitations();
+
+    const error = await screen.findByTestId('league-invitations-error');
+    expect(error).toHaveTextContent("We couldn't load pending invites right now.");
+    listLeagueInvitationsMock.mockResolvedValue({ data: { invitations: [emailInvite()] } });
+    fireEvent.click(within(error).getByRole('button', { name: 'Retry' }));
+
+    expect(await screen.findByTestId('league-invitation-resend-email-1')).toBeInTheDocument();
+  });
+
   it('disables inviting and resending while the league is inactive, and says why, but still allows cancelling', async () => {
     listLeagueInvitationsMock.mockResolvedValue({ data: { invitations: [emailInvite()] } });
 

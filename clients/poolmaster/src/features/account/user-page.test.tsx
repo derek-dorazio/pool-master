@@ -201,6 +201,15 @@ describe('UserPage', () => {
     mockLogger.child.mockClear();
   });
 
+  it('shows the shared loading line while the account is still loading', () => {
+    primeCurrentUser();
+    getUserMock.mockReturnValue(new Promise(() => undefined));
+
+    renderUserPage();
+
+    expect(screen.getByTestId('user-page-loading')).toHaveTextContent('Loading your account...');
+  });
+
   it('pool-master-mj2 shows user-focused My Profile copy without the implementation eyebrow', async () => {
     primeCurrentUser();
 

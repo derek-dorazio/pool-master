@@ -34,6 +34,7 @@ import {
   Heading,
   Input,
   LinkButton,
+  LoadingState,
   Modal,
   MutationActionToast,
   PasswordInput,
@@ -330,10 +331,8 @@ export function UserPage() {
 
   if (!user) {
     return (
-      <section className="space-y-6" data-testid="user-page-loading">
-        <Tile>
-          Loading user page...
-        </Tile>
+      <section className="space-y-6">
+        <LoadingState body="Loading your account..." testId="user-page-loading" />
       </section>
     );
   }

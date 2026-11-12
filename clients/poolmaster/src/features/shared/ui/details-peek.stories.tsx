@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { DetailsPeek, PeekCard, PeekMessage } from "./details-peek";
+import { DetailsPeek, PeekCard } from "./details-peek";
+import { LoadingState } from "./state";
 import { Text } from "./text";
 
 const meta = {
@@ -28,4 +29,4 @@ type Story = StoryObj<typeof meta>;
 
 /** (i) About a thing: an entry, event or team. Hover on a desktop, tap on a phone. */
 export const Entry: Story = {};
-export const Message: Story = { args: { children: <PeekMessage>No details yet.</PeekMessage> } };
+export const Loading: Story = { args: { children: <LoadingState body="Loading team..." size="inline" /> } };

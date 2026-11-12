@@ -56,6 +56,7 @@ import {
   FormPage,
   InlineError,
   Input,
+  LoadingState,
   formatCount,
   formatNumber,
   useDisplayPreferences,
@@ -650,9 +651,9 @@ export function CreateContestPage() {
   if (templatesQuery.isError) {
     return (
       <ErrorState
-        body="Try again in a moment."
+        body="We couldn't load this contest's setup."
+        onRetry={() => void templatesQuery.refetch()}
         testId="create-contest-page-error"
-        title="We couldn't load this contest's setup."
       />
     );
   }
@@ -706,13 +707,13 @@ export function CreateContestPage() {
       >
         <SportPicker onChange={selectSport} value={sport} />
         {eventsQuery.isLoading ? (
-          <p className="text-sm text-muted-foreground" data-testid="create-contest-events-loading">
-            Loading events...
-          </p>
+          <LoadingState body="Loading events..." rows={3} testId="create-contest-events-loading" />
         ) : eventsQuery.isError ? (
-          <Notice tone="danger">
-            We couldn&apos;t load {sportDefinition.name.toLowerCase()} events. Try again in a moment.
-          </Notice>
+          <ErrorState
+            body={`We couldn't load ${sportDefinition.name.toLowerCase()} events.`}
+            onRetry={() => void eventsQuery.refetch()}
+            testId="create-contest-events-error"
+          />
         ) : !contestEvents.length ? (
           <NoEligibleEventsAlert sport={sportDefinition} />
         ) : (

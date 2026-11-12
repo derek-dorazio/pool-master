@@ -1,9 +1,9 @@
 import type { ReactNode } from "react";
+import { extractErrorMessage } from "@/lib/errors";
 import { cn } from "./class-names";
 import { DataGrid, type DataGridProps } from "./data-grid";
 import { DetailsActionsLayout } from "./details-actions-layout";
 import { PageHeader, type PageHeaderProps } from "./page-header";
-import { ServerErrorBar } from "./server-error";
 import { EmptyState, ErrorState, LoadingState } from "./state";
 import { LOADING_TEXT } from "./state-copy";
 import { Tile } from "./tile";
@@ -55,28 +55,18 @@ function renderAsyncState({
   }
 
   if (state === "error") {
-    if (error) {
-      return (
-        <ServerErrorBar
-          action={errorAction}
-          error={error}
-          fallback={
-            typeof errorBody === "string"
-              ? errorBody
-              : "We could not load this information right now."
-          }
-          onRetry={onRetry}
-          retryLabel={retryLabel}
-          testId={SHARED_ERROR_STATE_TEST_ID}
-          title={typeof errorTitle === "string" ? errorTitle : "Unable to load"}
-        />
-      );
-    }
-
     return (
       <ErrorState
         action={errorAction}
-        body={errorBody ?? "We could not load this information right now."}
+        body={
+          error
+            ? extractErrorMessage(error, {
+                fallback: typeof errorBody === "string" ? errorBody : "We could not load this information right now.",
+              })
+            : errorBody ?? "We could not load this information right now."
+        }
+        onRetry={onRetry}
+        retryLabel={retryLabel}
         testId={SHARED_ERROR_STATE_TEST_ID}
         title={errorTitle}
       />

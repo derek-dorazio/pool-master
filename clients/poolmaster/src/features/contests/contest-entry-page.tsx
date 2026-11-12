@@ -15,6 +15,7 @@ import {
   Heading,
   Input,
   LoadingState,
+  refetchFailed,
   Tile,
 } from '@/features/shared/ui';
 import {
@@ -501,8 +502,8 @@ function RosterContestEntryPage() {
   ) {
     return (
       <ErrorState
-        body="Try refreshing or return to the contest board."
-        title="We couldn't load this contest entry."
+        body="We couldn't load this contest entry."
+        onRetry={refetchFailed(contestQuery, selectionStateQuery, entryQuery)}
       />
     );
   }

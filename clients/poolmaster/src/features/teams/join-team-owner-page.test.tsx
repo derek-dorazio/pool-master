@@ -459,6 +459,7 @@ describe('JoinTeamOwnerPage', () => {
       renderJoinTeamOwnerPage();
 
       expect(await screen.findByText('We could not load this co-owner invitation.')).toBeInTheDocument();
+      expect(screen.getByTestId('team-owner-invite-error')).toContainElement(screen.getByRole('button', { name: 'Retry' }));
       expect(screen.queryByTestId('team-invite-accept')).not.toBeInTheDocument();
       expect(mockLogger.warn).toHaveBeenCalledWith(
         expect.objectContaining({ action: 'teamInvite.preview.failed' }),

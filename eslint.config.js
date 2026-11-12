@@ -13,6 +13,7 @@ import testingLibrary from 'eslint-plugin-testing-library';
 import vitest from '@vitest/eslint-plugin';
 import { createRequire } from 'node:module';
 import poolmaster from './eslint-rules/index.mjs';
+import { QUERY_STATES_BASELINE } from './eslint-rules/query-states-baseline.mjs';
 
 // eslint-plugin-react's `version: 'detect'` calls `context.getFilename()`, which
 // ESLint 10 removed (#1384). Read the installed React version here instead.
@@ -318,6 +319,19 @@ export default tseslint.config(
       'poolmaster/no-bare-ui-controls': 'error',
       'poolmaster/no-button-row-override': 'error',
     },
+  },
+  {
+    // #1588: one loading, error and empty look. Shared primitives are where the states are
+    // drawn; root admin files still on the old look sit on a shrink-only baseline.
+    files: ['clients/poolmaster/src/features/**/*.tsx', 'clients/poolmaster/src/routes/**/*.tsx'],
+    ignores: [
+      'clients/poolmaster/src/features/shared/ui/**',
+      '**/*.test.tsx',
+      '**/*.spec.tsx',
+      ...QUERY_STATES_BASELINE,
+    ],
+    plugins: { poolmaster },
+    rules: { 'poolmaster/no-hand-written-query-states': 'error' },
   },
   {
     // #1587: values on screen are written by the shared format module, in the viewer's locale.

@@ -9,9 +9,11 @@ import { describeUnusableInvitation } from '@/features/leagues/unusable-invitati
 import {
   Button,
   Chip,
+  ErrorState,
   Eyebrow,
   Heading,
   LinkButton,
+  LoadingState,
   PublicInviteJoinPage,
   Text,
 } from '@/features/shared/ui';
@@ -260,8 +262,15 @@ export function JoinTeamOwnerPage() {
       </p>
 
       <div className="mt-6 rounded-3xl border border-border bg-background p-5 text-sm text-muted-foreground">
-        {invitationQuery.isLoading ? 'Loading invitation...' : null}
-        {invitationQuery.isError ? 'We could not load this co-owner invitation.' : null}
+        {invitationQuery.isLoading ? <LoadingState body="Loading invitation..." size="plain" testId="team-owner-invite-loading" /> : null}
+        {invitationQuery.isError ? (
+          <ErrorState
+            body="We could not load this co-owner invitation."
+            onRetry={() => void invitationQuery.refetch()}
+            size="plain"
+            testId="team-owner-invite-error"
+          />
+        ) : null}
         {invitationQuery.data ? (
           <div className="space-y-5">
             <InvitationContextCard

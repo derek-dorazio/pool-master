@@ -5,6 +5,7 @@ import { getLastSignedInUserId } from '@/features/auth/signed-in-user';
 import { useLeagueContextGuard } from '@/features/leagues/league-context-guard';
 import { buildLeaguePath } from '@/features/leagues/league-routing';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
+import { LoadingState } from '@/features/shared/ui';
 import { getLogger } from '@/lib/logger';
 import { PRODUCT_NAME } from '@poolmaster/shared/domain';
 
@@ -62,9 +63,7 @@ export function MemberRouteGuard() {
 
   if (auth.isLoading) {
     return (
-      <div className="rounded-4xl border border-border bg-card p-8 text-sm text-muted-foreground">
-        Loading your {PRODUCT_NAME} session...
-      </div>
+      <LoadingState body={`Loading your ${PRODUCT_NAME} session...`} testId="member-route-loading" />
     );
   }
 

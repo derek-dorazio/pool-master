@@ -1,5 +1,5 @@
 import type { SportEventDto } from '@/lib/api';
-import { Notice, FormField, Select, formatDateTimeDisplay, useDisplayPreferences } from '@/features/shared/ui';
+import { ErrorState, FormField, LoadingState, Notice, Select, formatDateTimeDisplay, useDisplayPreferences } from '@/features/shared/ui';
 import { bracketRoundCount } from './bracket-start-round';
 import { formatSquaresGameTeams } from './squares-board';
 import { useSportLeagueRoundLabel } from './use-bracket-round-label';
@@ -21,10 +21,10 @@ export function SquaresGamePicker({
   const roundLabel = useSportLeagueRoundLabel(event.sport, event.sportLeagueId);
   const roundCount = bracketRoundCount(event);
   if (choices.isLoading) {
-    return <p className="text-sm text-muted-foreground" data-testid="contest-squares-games-loading">Loading games...</p>;
+    return <LoadingState body="Loading games..." testId="contest-squares-games-loading" />;
   }
   if (choices.isError) {
-    return <Notice tone="danger">We couldn&apos;t load this event&apos;s games. Try again in a moment.</Notice>;
+    return <ErrorState body="We couldn't load this event's games." onRetry={choices.retry} testId="contest-squares-games-error" />;
   }
   if (!choices.games.length) {
     return (

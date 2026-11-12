@@ -37,7 +37,7 @@ export function CupSquadPointsPage() {
     return <LoadingState body="Loading cup points..." />;
   }
   if (pointsQuery.isError && !hasErrorCode(pointsQuery.error, 'CUP_NOT_FOUND')) {
-    return <ErrorState body="We couldn't load this team's cup points." testId="cup-squad-points-error" />;
+    return <ErrorState body="We couldn't load this team's cup points." onRetry={() => void pointsQuery.refetch()} testId="cup-squad-points-error" />;
   }
   if (!pointsQuery.data) {
     return (

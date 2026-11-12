@@ -118,7 +118,7 @@ export function PointsRacePage() {
     return <LoadingState body="Loading the points race..." />;
   }
   if (cupsQuery.isError) {
-    return <ErrorState body="We couldn't load this year's cups." testId="points-race-error" />;
+    return <ErrorState body="We couldn't load this year's cups." onRetry={() => void cupsQuery.refetch()} testId="points-race-error" />;
   }
   // The chips offer the cups on show; a link straight to another cup still opens it.
   const allCups = cupsQuery.data ?? [];
@@ -172,7 +172,7 @@ export function PointsRacePage() {
           : null}
         <CupStatTiles cup={cup} isSeasonOver={isSeasonOver} mySquadId={viewer.mySquadId} />
         {projectionQuery.isError ? (
-          <ErrorState body="We couldn't work out where teams would stand if the live contests ended now." size="inline" testId="cup-projection-error" />
+          <ErrorState body="We couldn't work out where teams would stand if the live contests ended now." onRetry={() => void projectionQuery.refetch()} size="inline" testId="cup-projection-error" />
         ) : null}
         <CupStandingsGrid
           focusSquadId={viewer.mySquadId}

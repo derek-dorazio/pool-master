@@ -73,7 +73,7 @@ export function AllYearsPage() {
           {recordBook}
         </>
       ) : summaryQuery.isError ? (
-        <ErrorState body="We couldn't load the league's history." testId="all-years-error" />
+        <ErrorState body="We couldn't load the league's history." onRetry={() => void summaryQuery.refetch()} testId="all-years-error" />
       ) : !summaryQuery.data ? (
         <LoadingState body="Loading league history..." />
       ) : (

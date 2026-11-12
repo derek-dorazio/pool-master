@@ -10,10 +10,12 @@ import { InvitationContextCard } from "@/features/leagues/invitation-context-car
 import {
   Notice,
   Button,
+  ErrorState,
   FormField,
   Heading,
   Input,
   PasswordInput,
+  refetchFailed,
   SegmentedControl,
   StatusBadge,
   Tile,
@@ -285,10 +287,11 @@ export function AuthHomePage() {
           ) : null}
           {(inviteCode && invitePreviewQuery.isError) ||
           (teamInviteCode && teamInvitePreviewQuery.isError) ? (
-            <Notice data-testid="auth-invite-preview-error" tone="danger">
-              We couldn&apos;t load the invitation preview. You can still sign
-              in or create an account, then return to the invitation link.
-            </Notice>
+            <ErrorState
+              body="We couldn't load the invitation preview. You can still sign in or create an account, then return to the invitation link."
+              onRetry={refetchFailed(invitePreviewQuery, teamInvitePreviewQuery)}
+              testId="auth-invite-preview-error"
+            />
           ) : null}
         </div>
 

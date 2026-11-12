@@ -1,7 +1,7 @@
 import { Navigate, useParams } from 'react-router';
 import { buildLeagueContestEntryPath } from '@/features/leagues/league-routing';
 import { useLeagueContextById } from '@/features/leagues/use-league-context';
-import { ErrorState, LoadingState } from '@/features/shared/ui';
+import { ErrorState, LoadingState, refetchFailed } from '@/features/shared/ui';
 import { useContestQuery } from './use-contest-query';
 
 /**
@@ -17,9 +17,9 @@ export function ContestEntryLeagueRedirect() {
   if (contestQuery.isError || leagueQuery.isError) {
     return (
       <ErrorState
-        body="Try refreshing or return to the contest board."
+        body="We couldn't load this contest entry."
+        onRetry={refetchFailed(contestQuery, leagueQuery)}
         testId="contest-entry-redirect-error"
-        title="We couldn't load this contest entry."
       />
     );
   }

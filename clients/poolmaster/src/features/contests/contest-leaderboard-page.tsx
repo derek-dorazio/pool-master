@@ -312,8 +312,8 @@ export function ContestLeaderboardPage() {
   if (contestQuery.isError || !contestQuery.data) {
     return (
       <ErrorState
-        body="Try refreshing or return to League Home."
-        title="We couldn't load this contest."
+        body="We couldn't load this contest."
+        onRetry={() => void contestQuery.refetch()}
       />
     );
   }

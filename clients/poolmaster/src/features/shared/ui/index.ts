@@ -46,7 +46,7 @@ export { Checkbox, FormField, Input, PasswordInput, Select, Textarea } from "./f
 export { FormPage } from "./form-page";
 export { IconAvatar } from "./icon-avatar";
 export { IconPalette } from "./icon-palette";
-export { DetailsPeek, PeekCard, PeekMessage, type PeekFact } from "./details-peek";
+export { DetailsPeek, PeekCard, type PeekFact } from "./details-peek";
 export { DETAILS_PEEK_HOVER_DELAY_MS } from "./popover-timing";
 export { HelpTip } from "./help-tip";
 export { SplitContentLayout } from "./layout-presets";
@@ -64,7 +64,8 @@ export { SortableList } from "./sortable-list";
 export { ServerErrorBar } from "./server-error";
 export { DangerZoneAction, SettingsRow, SettingsRows } from "./settings-section";
 export { EmptyState, ErrorState, InlineError, LoadingState, QueryState } from "./state";
-export { LOADING_TEXT } from "./state-copy";
+export { refetchFailed } from "./refetch-failed";
+export { LOADING_TEXT, QUERY_ERROR_TEXT, RETRY_LABEL } from "./state-copy";
 export { ProgressIndicator } from "./progress";
 export {
   SegmentedControl,

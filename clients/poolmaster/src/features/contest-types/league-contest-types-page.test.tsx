@@ -228,6 +228,7 @@ describe('League › Contest types', () => {
     listContestConfigTemplatesMock.mockResolvedValue({ error: { error: { code: 'INTERNAL_ERROR', message: 'boom' } }, response: { status: 500 } });
     renderPage();
 
-    expect(await screen.findByText('Contest types unavailable')).toBeInTheDocument();
+    expect(await screen.findByText("We couldn't load the contest types.")).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
   });
 });
