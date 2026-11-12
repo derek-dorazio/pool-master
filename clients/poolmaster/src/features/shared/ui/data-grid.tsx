@@ -10,8 +10,9 @@ import {
   type SortingState,
   useReactTable,
 } from "@tanstack/react-table";
-import { useMemo, useRef, useState, type AnchorHTMLAttributes } from "react";
+import { useMemo, useRef, useState, type AnchorHTMLAttributes, type MouseEvent } from "react";
 import { flushSync } from "react-dom";
+import { Link } from "react-router";
 import { Button } from "./button";
 import { cn } from "./class-names";
 import { Input } from "./form-field";
@@ -53,6 +54,10 @@ export type DataGridProps<TData> = {
   emptyMessage: string;
   filterTestIdPrefix?: string;
   getRowId?: (row: TData, index: number) => string;
+  /**
+   * Where a row leads: the whole row opens it (rules/ux-rules.md §12), and its first cell is the
+   * link a keyboard reaches. Buttons, links and menus inside the row keep their own clicks.
+   */
   getRowLink?: (row: TData) => string;
   getRowLinkProps?: (
     row: TData,
@@ -90,6 +95,26 @@ export type DataGridProps<TData> = {
       jumpToRow?: never;
     }
 );
+
+/** Something in a row that takes its own click, so a click on it never opens the row. */
+const OWN_CLICK_SELECTOR = "a, button, input, select, textarea, label, [role='menuitem']";
+
+/**
+ * A click on a linked row opens it through the row's link, as if the link were clicked: the
+ * router moves, and the link's own `onClick` runs. A click on a control in the row, one that
+ * reaches the row from a dialog or menu drawn elsewhere on the page, or the end of selecting the
+ * row's text does not.
+ */
+function openRowFromClick(event: MouseEvent<HTMLTableRowElement>) {
+  const target = event.target;
+  if (!(target instanceof Element) || !event.currentTarget.contains(target)) {
+    return;
+  }
+  if (target.closest(OWN_CLICK_SELECTOR) || window.getSelection()?.toString()) {
+    return;
+  }
+  event.currentTarget.querySelector<HTMLAnchorElement>("a[data-row-link]")?.click();
+}
 
 function getSortIndicator(direction: false | "asc" | "desc") {
   if (direction === "asc") {
@@ -337,26 +362,29 @@ export function DataGrid<TData>({
                     aria-current={row.id === jumpedRowId ? "true" : undefined}
                     className={cn(
                       "border-b border-border/70 align-top text-foreground transition hover:bg-[var(--table-row-hover-surface)]",
+                      link && "cursor-pointer",
                       row.id === jumpedRowId && "bg-[var(--status-active-surface)]",
                     )}
                     data-row-id={row.id}
                     data-testid={rowTestId?.(row.original, index)}
                     key={row.id}
+                    onClick={link ? openRowFromClick : undefined}
                   >
                     {row.getVisibleCells().map((cell) => (
                       <td className="px-4 py-4" key={cell.id}>
                         {link &&
                         cell.column.id === row.getVisibleCells()[0]?.column.id ? (
-                          <a
+                          <Link
                             {...linkProps}
                             className={linkClassName}
-                            href={link}
+                            data-row-link=""
+                            to={link}
                           >
                             {flexRender(
                               cell.column.columnDef.cell,
                               cell.getContext(),
                             )}
-                          </a>
+                          </Link>
                         ) : (
                           flexRender(cell.column.columnDef.cell, cell.getContext())
                         )}

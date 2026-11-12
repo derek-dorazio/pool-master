@@ -5,6 +5,7 @@ import { useParams } from 'react-router';
 import {
   buildLeagueAdminInvitesPath,
   buildLeagueAdminTeamPath,
+  buildLeagueTeamHomePath,
 } from '@/features/leagues/league-routing';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
 import {
@@ -14,6 +15,7 @@ import {
   LinkButton,
   LoadingState,
   PageHeader,
+  RowActionsMenu,
   SegmentedControl,
 } from '@/features/shared/ui';
 import { buildTeamDirectoryRows, type TeamDirectoryRow } from './team-directory';
@@ -38,7 +40,7 @@ function isTeamFilter(value: string): value is TeamFilter {
 
 type ManagedTeamRow = TeamDirectoryRow & { hasCommissioner: boolean };
 
-/** Commissioner tools › Teams: every team and its owners, each with Manage. */
+/** Commissioner tools › Teams: every team and its owners; a row opens the team's Manage page. */
 export function ManageTeamsPage() {
   const { leagueCode = '' } = useParams<{ leagueCode: string }>();
   // `CommissionerRouteGuard` has loaded the league and admitted the viewer before this renders.
@@ -64,7 +66,7 @@ export function ManageTeamsPage() {
   );
   const columns = useMemo<ColumnDef<ManagedTeamRow, string>[]>(
     () => [
-      teamNameColumn<ManagedTeamRow>(leagueCode),
+      teamNameColumn<ManagedTeamRow>(leagueCode, { link: 'row' }),
       {
         id: 'owners',
         header: 'Owners',
@@ -77,19 +79,20 @@ export function ManageTeamsPage() {
         ),
       },
       {
-        id: 'manage',
+        id: 'actions',
         header: '',
         enableSorting: false,
         enableGlobalFilter: false,
         cell: ({ row }) => (
-          <LinkButton
-            data-testid={`admin-team-manage-${row.original.team.id}`}
-            size="sm"
-            to={buildLeagueAdminTeamPath(leagueCode, row.original.team.id)}
-            variant="secondary"
-          >
-            Manage
-          </LinkButton>
+          <RowActionsMenu
+            actions={[{
+              label: 'View team page',
+              testId: `admin-team-actions-${row.original.team.id}-view`,
+              to: buildLeagueTeamHomePath(leagueCode, row.original.team.id),
+            }]}
+            label={`Actions for ${row.original.team.name}`}
+            testId={`admin-team-actions-${row.original.team.id}`}
+          />
         ),
       },
     ],
@@ -108,7 +111,6 @@ export function ManageTeamsPage() {
             Invite members
           </LinkButton>
         )}
-        description="Every team in the league and its owners. Choose Manage to change a team's name, icon or owners."
         title="Members and owners"
       />
 
@@ -133,6 +135,7 @@ export function ManageTeamsPage() {
             data={visibleRows}
             emptyMessage={rows.length ? 'No members match.' : 'No one has joined this league yet.'}
             getRowId={(row) => row.team.id}
+            getRowLink={(row) => buildLeagueAdminTeamPath(leagueCode, row.team.id)}
             pageSize={TEAMS_PER_PAGE}
             rowTestId={(row) => `admin-team-${row.team.id}`}
             search={{ label: 'Find a member or owner', testId: 'admin-teams-search' }}

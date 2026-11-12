@@ -19,8 +19,44 @@ export function OpenContestAction({
   contestId: string;
   leagueId: string;
 }) {
-  const logger = getLogger().child({ feature: 'open-contest-action' });
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+
+  return (
+    <>
+      <Button
+        data-testid="contest-open-to-league"
+        onClick={() => setIsConfirmOpen(true)}
+      >
+        Open to league
+      </Button>
+      <OpenContestDialog
+        contestId={contestId}
+        leagueId={leagueId}
+        onOpenChange={setIsConfirmOpen}
+        open={isConfirmOpen}
+      />
+    </>
+  );
+}
+
+/**
+ * The question "Open to league" asks, and the release once the commissioner confirms, wherever
+ * they start it: the contest's own page or the "⋯" on its row in the contests list.
+ */
+export function OpenContestDialog({
+  contestId,
+  leagueId,
+  onOpenChange,
+  onOpened,
+  open,
+}: {
+  contestId: string;
+  leagueId: string;
+  onOpenChange: (open: boolean) => void;
+  onOpened?: () => void;
+  open: boolean;
+}) {
+  const logger = getLogger().child({ feature: 'open-contest-action' });
 
   const openContestMutation = useInvalidatingMutation({
     mutationFn: async () => {
@@ -41,7 +77,8 @@ export function OpenContestAction({
         { action: 'contest.open.succeeded', data: { leagueId, contestId } },
         'Opened contest to the league',
       );
-      setIsConfirmOpen(false);
+      onOpenChange(false);
+      onOpened?.();
     },
     invalidates: [
       QueryKeys.contests.list({ leagueId }),
@@ -61,46 +98,38 @@ export function OpenContestAction({
   function closeDialog() {
     if (!openContestMutation.isPending) {
       openContestMutation.reset();
-      setIsConfirmOpen(false);
+      onOpenChange(false);
     }
   }
 
   return (
-    <>
-      <Button
-        data-testid="contest-open-to-league"
-        onClick={() => setIsConfirmOpen(true)}
-      >
-        Open to league
-      </Button>
-      <ConfirmDialog
-        confirmLabel="Open to league"
-        confirmTestId="contest-open-confirm"
-        description="League members will be able to see this contest and enter it. Its name and settings can't change afterwards, and it can't be deleted or returned to a draft."
-        isPending={openContestMutation.isPending}
-        onCancel={closeDialog}
-        onConfirm={() => void openContestMutation.mutateAsync().catch(() => undefined)}
-        onOpenChange={(open) => {
-          if (open) {
-            setIsConfirmOpen(true);
-            return;
-          }
-          closeDialog();
-        }}
-        open={isConfirmOpen}
-        pendingLabel="Opening..."
-        testId="contest-open-dialog"
-        title="Open this contest to the league?"
-      >
-        {openContestMutation.isError ? (
-          <Notice data-testid="contest-open-error" tone="danger">
-            {extractErrorMessage(openContestMutation.error, {
-              codeMessages: CONTEST_RELEASE_CODE_MESSAGES,
-              fallback: 'We could not open that contest. Please try again.',
-            })}
-          </Notice>
-        ) : null}
-      </ConfirmDialog>
-    </>
+    <ConfirmDialog
+      confirmLabel="Open to league"
+      confirmTestId="contest-open-confirm"
+      description="League members will be able to see this contest and enter it. Its name and settings can't change afterwards, and it can't be deleted or returned to a draft."
+      isPending={openContestMutation.isPending}
+      onCancel={closeDialog}
+      onConfirm={() => void openContestMutation.mutateAsync().catch(() => undefined)}
+      onOpenChange={(nextOpen) => {
+        if (nextOpen) {
+          onOpenChange(true);
+          return;
+        }
+        closeDialog();
+      }}
+      open={open}
+      pendingLabel="Opening..."
+      testId="contest-open-dialog"
+      title="Open this contest to the league?"
+    >
+      {openContestMutation.isError ? (
+        <Notice data-testid="contest-open-error" tone="danger">
+          {extractErrorMessage(openContestMutation.error, {
+            codeMessages: CONTEST_RELEASE_CODE_MESSAGES,
+            fallback: 'We could not open that contest. Please try again.',
+          })}
+        </Notice>
+      ) : null}
+    </ConfirmDialog>
   );
 }

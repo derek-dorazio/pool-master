@@ -36,7 +36,7 @@ function renderMenu(overrides: Partial<MenuProps> = {}) {
 }
 
 async function openMenu() {
-  await userEvent.click(screen.getByRole('button', { name: 'Owner actions' }));
+  await userEvent.click(screen.getByRole('button', { name: /^Actions for / }));
 }
 
 async function chooseAction(name: string) {

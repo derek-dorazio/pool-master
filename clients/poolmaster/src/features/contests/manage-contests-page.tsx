@@ -28,6 +28,7 @@ import {
 } from '@/features/shared/ui';
 import { firstContestEvent, type ContestSportEvent } from './contest-events';
 import { ContestStatusBadge } from './contest-status-badge';
+import { ManageContestsRowActions } from './manage-contests-row-actions';
 import { chooseContestHistoryYear } from './contest-history';
 import {
   useContestFinishedYearsQuery,
@@ -100,7 +101,7 @@ function EntriesCell({ contest, teamCount }: { contest: ContestDto; teamCount: n
 
 /**
  * Commissioner tools › Contests: the league's contests in one table with search, an Active /
- * History switch and paging, and one action per row naming the next step. History shows one
+ * History switch and paging. A row opens the contest; its "⋯" holds the quick actions. History shows one
  * year's finished contests at a time (#1161), the year in the link (`?year=2025`), else the newest.
  */
 export function ManageContestsPage() {
@@ -135,6 +136,7 @@ export function ManageContestsPage() {
   }, [filter, shownContests]);
 
   const teamCount = leagueQuery.data?.activeTeamCount ?? 0;
+  const isLeagueActive = league?.isActive ?? false;
 
   const columns = useMemo<ColumnDef<ContestRow, string>[]>(
     () => [
@@ -176,23 +178,17 @@ export function ManageContestsPage() {
         header: '',
         enableSorting: false,
         enableGlobalFilter: false,
-        cell: ({ row }) => {
-          const { contest } = row.original;
-          const isNotOpen = contest.status === ContestStatus.DRAFT;
-          return (
-            <LinkButton
-              data-testid={`manage-contests-action-${contest.id}`}
-              size="sm"
-              to={buildLeagueAdminContestPath(leagueCode, contest.id)}
-              variant={isNotOpen ? 'primary' : 'secondary'}
-            >
-              {isNotOpen ? 'Finish setup' : 'Manage'}
-            </LinkButton>
-          );
-        },
+        cell: ({ row }) => (
+          <ManageContestsRowActions
+            contest={row.original.contest}
+            isLeagueActive={isLeagueActive}
+            leagueCode={leagueCode}
+            leagueId={leagueId}
+          />
+        ),
       },
     ],
-    [leagueCode, teamCount],
+    [isLeagueActive, leagueCode, leagueId, teamCount],
   );
 
   if (!league) {
@@ -235,7 +231,6 @@ export function ManageContestsPage() {
               <Chip tone="inactive">League inactive</Chip>
             )
           }
-          description="Members see a contest once you open it to the league."
           tabs={!isLoading && !isError && hasContests ? (
             <PageTabs
               aria-label="Contests to show"
@@ -289,6 +284,7 @@ export function ManageContestsPage() {
                 ? 'No contest matches.'
                 : filter === 'active' ? 'No contests are in setup, open or live.' : 'No contest has finished yet.'}
               getRowId={(row) => row.contest.id}
+              getRowLink={(row) => buildLeagueAdminContestPath(leagueCode, row.contest.id)}
               key={filter === 'active' ? filter : `${filter}-${year}`}
               pageSize={CONTESTS_PER_PAGE}
               rowTestId={(row) => `manage-contests-row-${row.contest.id}`}
