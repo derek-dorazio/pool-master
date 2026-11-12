@@ -1,4 +1,4 @@
-import { DefinitionList, Tile } from "@/features/shared/ui";
+import { FactList, Tile } from "@/features/shared/ui";
 
 export type UserAccountSummaryProps = {
   email: string;
@@ -25,9 +25,9 @@ export function UserAccountSummary({
         <div className="text-xs uppercase text-muted-foreground">
           Account summary
         </div>
-        <DefinitionList
-          className="mt-4 sm:grid-cols-1"
-          items={[
+        <FactList
+          className="mt-2"
+          facts={[
             { id: "name", label: "Name", value: name },
             { id: "email", label: "Email", value: email },
             { id: "username", label: "Username", value: username },
@@ -39,9 +39,9 @@ export function UserAccountSummary({
         <div className="text-xs uppercase text-muted-foreground">
           Account details
         </div>
-        <DefinitionList
-          className="mt-4"
-          items={[
+        <FactList
+          className="mt-2"
+          facts={[
             { id: "member-since", label: "Member since", value: memberSince },
             { id: "status", label: "Status", value: status },
             { id: "role", label: "Role", value: role },

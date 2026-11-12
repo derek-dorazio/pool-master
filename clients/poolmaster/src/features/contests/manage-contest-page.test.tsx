@@ -192,6 +192,10 @@ describe('Commissioner tools › Contests › one contest', () => {
     expect(await screen.findByText('Not ready to open yet')).toBeInTheDocument();
     expect(screen.getByTestId('contest-readiness-not-started')).toHaveAttribute('data-met', 'false');
     expect(screen.getByTestId('contest-readiness-not-started')).toHaveTextContent('Event has started');
+    // The missing check leads the list, ahead of the ones already met.
+    const checks = within(screen.getByTestId('contest-readiness-checks')).getAllByRole('listitem');
+    expect(checks[0]).toHaveAttribute('data-testid', 'contest-readiness-not-started');
+    expect(checks.slice(1).every((check) => check.getAttribute('data-met') === 'true')).toBe(true);
   });
 
   it('deletes a contest only after the confirm, then returns to the contest list', async () => {

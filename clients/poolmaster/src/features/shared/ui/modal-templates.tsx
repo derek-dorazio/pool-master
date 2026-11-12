@@ -6,6 +6,7 @@ import { ConfirmDialog } from "./confirm-dialog";
 import { CopyButton } from "./copy-button";
 import { DialogActions } from "./dialog-actions";
 import { FormField, Input } from "./form-field";
+import { FactList } from "./fact-list";
 import { Modal } from "./modal";
 import { ServerErrorBar } from "./server-error";
 import { StatusBadge } from "./status-badge";
@@ -367,18 +368,7 @@ export function ReadOnlyDetailModal({
       title={title}
     >
       {details?.length ? (
-        <dl className="grid gap-3 rounded-2xl border border-border bg-background p-4 sm:grid-cols-2">
-          {details.map((detail) => (
-            <div key={detail.id}>
-              <dt className="text-xs uppercase text-muted-foreground">
-                {detail.label}
-              </dt>
-              <dd className="mt-1 text-sm font-medium text-foreground">
-                {detail.value}
-              </dd>
-            </div>
-          ))}
-        </dl>
+        <FactList columns={2} facts={details} layout="columns" />
       ) : null}
       <div
         className={cn(
