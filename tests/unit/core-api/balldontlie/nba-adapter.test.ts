@@ -1,59 +1,27 @@
-import { z } from 'zod';
 import { ProviderGameState, Sport } from '../../../../packages/shared/domain';
 import { BalldontlieAdapter } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/balldontlie-adapter';
 import { EventScoreSourceService } from '../../../../packages/core-api/src/modules/events/event-score-source-service';
 import { registryWith } from '../../../support/fake-sport-data-provider';
 import { asPrismaClient } from '../../../support/prisma-double';
 import { createFakeBalldontlie, pagedRoute, type FakeBalldontlie, type FakeRoute } from '../../../support/balldontlie-fake-api';
-import { readBalldontlieFixture } from '../../../support/balldontlie-vendor-spec';
+import { nbaGames, nbaRoutes, nbaStatRows } from '../../../support/balldontlie-nba-routes';
 
 /**
  * The adapter's NBA playoffs reads against a fake BALLDONTLIE that checks every request it
  * sends, and every reply it is given, against the vendor's published NBA document (see
- * balldontlie-fake-api.ts). The replies are the fixtures in tests/fixtures/balldontlie/nba: the
- * 2025 Finals (the 2024 season's), Oklahoma City over Indiana in seven, the 2025 season's first
- * round under way, and a whole 2023 bracket written to the vendor's schema whose Finals (Boston v
- * Dallas) are two games in, with the third live, for a Clutch Card's box scores and stars (#1497).
- * Fixtures holding only a round's games read as that season's first round. The basketball lists
- * also read the NCAA tournaments, served empty here.
+ * balldontlie-fake-api.ts), from the NBA fixtures balldontlie-nba-routes.ts serves: the 2025
+ * Finals (the 2024 season's), Oklahoma City over Indiana in seven, the 2025 season's first round
+ * under way, and a whole 2023 bracket whose Finals are two games in, with the third live, for a
+ * Clutch Card's box scores and stars (#1497). Fixtures holding only a round's games read as that
+ * season's first round.
  */
 
 const API_KEY = 'test-api-key';
 const NOW = Date.UTC(2026, 10, 12);
 
-const gameRow = z.looseObject({ id: z.number(), season: z.number(), postseason: z.boolean() });
-const gamesIn = (file: string) => z.object({ data: z.array(gameRow) }).parse(readBalldontlieFixture('nba', file)).data;
-const games = [...gamesIn('games-2024-finals.json'), ...gamesIn('games-2025-first-round-partial.json'), ...gamesIn('games-2023-playoffs.json')];
-
-/** Games as the vendor filters them: by season, and by season type (every fixture is a playoff game). */
-const gamesRoute: FakeRoute = pagedRoute(games, (row, query) => {
-  const seasons = query.getAll('seasons[]').map(Number);
-  return (seasons.length === 0 || seasons.includes(row.season)) && query.get('season_type') === 'playoffs';
-});
-
-const statRow = z.looseObject({ id: z.number(), game: z.looseObject({ id: z.number() }) });
-const statRows = z.object({ data: z.array(statRow) }).parse(readBalldontlieFixture('nba', 'stats-2023-finals.json')).data;
-const playerRow = z.looseObject({ id: z.number(), team: z.looseObject({ id: z.number() }) });
-const activePlayers = z.object({ data: z.array(playerRow) }).parse(readBalldontlieFixture('nba', 'players-active-finals-teams.json')).data;
-
-/** Stat rows as the vendor filters them, by game. */
-const statsRoute: FakeRoute = pagedRoute(statRows, (row, query) => query.getAll('game_ids[]').map(Number).includes(row.game.id));
-/** Active players as the vendor filters them, by team. */
-const playersRoute: FakeRoute = pagedRoute(activePlayers, (row, query) => query.getAll('team_ids[]').map(Number).includes(row.team.id));
-
-const emptyBracket: FakeRoute = () => ({ body: { data: [], meta: { per_page: 100 } } });
-const emptyTeams: FakeRoute = () => ({ body: { data: [] } });
-
-const defaultRoutes: Record<string, FakeRoute> = {
-  '/nba/v1/games': gamesRoute,
-  '/nba/v1/teams': () => ({ body: readBalldontlieFixture('nba', 'teams.json') }),
-  '/nba/v1/stats': statsRoute,
-  '/nba/v1/players/active': playersRoute,
-  '/ncaab/v1/bracket': emptyBracket,
-  '/ncaab/v1/teams': emptyTeams,
-  '/ncaaw/v1/bracket': emptyBracket,
-  '/ncaaw/v1/teams': emptyTeams,
-};
+const games = nbaGames;
+const statRows = nbaStatRows;
+const defaultRoutes: Record<string, FakeRoute> = nbaRoutes;
 
 function setup(routes: Record<string, FakeRoute> = defaultRoutes, now = NOW): { adapter: BalldontlieAdapter; api: FakeBalldontlie; restore: () => void } {
   const api = createFakeBalldontlie({ league: ['nba', 'ncaab', 'ncaaw'], apiKey: API_KEY, routes });
