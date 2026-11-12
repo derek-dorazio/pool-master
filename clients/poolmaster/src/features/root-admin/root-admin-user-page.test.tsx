@@ -50,7 +50,7 @@ function renderUserPage(initialEntry: string) {
       <AuthProvider>
         <MemoryRouter initialEntries={[initialEntry]}>
           <Routes>
-            <Route element={<div data-testid="own-user-page" />} path="/users/:userId" />
+            <Route element={<div data-testid="own-user-page" />} path="/my-account" />
             <Route element={<RootAdminManageLayout />} path="/manage">
               <Route element={<div data-testid="users-list" />} path="users" />
               <Route element={<RootAdminUserPage />} path="users/:userId" />

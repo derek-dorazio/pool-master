@@ -101,7 +101,8 @@ function matchesSearch(entry: LeaderboardEntryRow, search: string) {
  */
 function leaderboardGridColumns(view: LeaderboardView) {
   return [
-    'minmax(36px,0.3fr)',
+    // Pos's minimum is the board's --pos-width, which the pinned name column also reads.
+    'minmax(var(--pos-width),0.3fr)',
     'minmax(6rem,1.5fr)',
     'minmax(48px,0.4fr)',
     ...view.detailColumns.map((column) => column.width),
@@ -117,8 +118,13 @@ function leaderboardGridColumns(view: LeaderboardView) {
 const VISIBLE_WIDTH = 'sticky left-0 w-[calc(100cqw-2px)]';
 /** The Pos column: pinned to the left, its background reaching back over the row's padding. */
 const PINNED_POSITION = 'sticky left-0 z-[1] -ml-4 pl-4';
-/** The name column: pinned just right of Pos (16px padding, Pos's 36px minimum, an 8px gap). */
-const PINNED_NAME = 'sticky left-[60px] z-[1] -mr-2 pr-2';
+/** The name column: pinned just right of Pos (the row's 16px padding, Pos's width, an 8px gap). */
+const PINNED_NAME = 'sticky left-[calc(var(--pos-width)+24px)] z-[1] -mr-2 pr-2';
+/** Pos's width while the board scrolls, set once on the board for its grid and the pinned name. */
+const POS_WIDTH = '[--pos-width:36px]';
+/** A pinned cell is opaque so the columns slide under it, and takes the row's hover tint on top. */
+const PINNED_CELL_SURFACE =
+  'bg-background group-hover/pick:[background-image:linear-gradient(var(--table-row-hover-surface),var(--table-row-hover-surface))]';
 
 /**
  * One participant under an entry. Where the family breaks a score into parts (a stat pool
@@ -130,9 +136,9 @@ function PickRow({ entryId, gridTemplateColumns, pick }: { entryId: string; grid
   const testId = `contest-leaderboard-pick-${entryId}-${pick.pickId}`;
   const cells = (
     <div className="grid gap-2 text-sm" style={{ gridTemplateColumns }}>
-      <span className={cn(PINNED_POSITION, 'bg-background text-muted-foreground')} data-testid={`${testId}-position`}>{pick.position ?? NO_SCORE}</span>
+      <span className={cn(PINNED_POSITION, PINNED_CELL_SURFACE, 'text-muted-foreground')} data-testid={`${testId}-position`}>{pick.position ?? NO_SCORE}</span>
       {/* The worst M - N picks: visibly present, visibly excluded from the total. */}
-      <span className={cn(PINNED_NAME, 'min-w-0 truncate bg-background', isDroppedClass)} data-testid={`${testId}-name`}>{pick.participantName}</span>
+      <span className={cn(PINNED_NAME, PINNED_CELL_SURFACE, 'min-w-0 truncate', isDroppedClass)} data-testid={`${testId}-name`}>{pick.participantName}</span>
       <span className={cn('text-right font-medium', isDroppedClass)}>
         {pick.total ?? NO_SCORE}
       </span>
@@ -156,7 +162,13 @@ function PickRow({ entryId, gridTemplateColumns, pick }: { entryId: string; grid
   }
   return (
     <div data-testid={testId}>
-      <ExpandableRow label={`Game by game for ${pick.participantName}`} summary={cells} toggleTestId={`${breakdown.testId}-toggle`}>
+      <ExpandableRow
+        label={`Game by game for ${pick.participantName}`}
+        rowClassName="group/pick"
+        rowTestId={`${breakdown.testId}-row`}
+        summary={cells}
+        toggleTestId={`${breakdown.testId}-toggle`}
+      >
         <div className={VISIBLE_WIDTH} data-testid={`${breakdown.testId}-frame`}>
           <FactList
             density="compact"
@@ -469,7 +481,7 @@ export function ContestLeaderboardPage() {
           The column heads and the entries scroll sideways together, inside the board, when the
           columns' minimum widths are wider than the screen; the page itself never widens.
         */}
-        <div className="overflow-x-auto [container-type:inline-size]" data-testid="contest-leaderboard-board">
+        <div className={cn('overflow-x-auto [container-type:inline-size]', POS_WIDTH)} data-testid="contest-leaderboard-board">
           <div className="min-w-min" data-testid="contest-leaderboard-board-content">
             <div
               // A board whose pick rows open (a stat pool's games) keeps room for their chevron.

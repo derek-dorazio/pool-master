@@ -10,7 +10,7 @@ import { buildLeagueAdminContestPath } from '@/features/leagues/league-routing';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
 import { hasPlanFeature } from '@/features/plans/plan-features';
 import { PlanLockedNotice } from '@/features/plans/plan-locked-notice';
-import { ChoiceCard, ErrorState, FormPage, LoadingState } from '@/features/shared/ui';
+import { ChoiceCard, ChoiceCardText, ErrorState, FormPage, FormSection, LoadingState } from '@/features/shared/ui';
 import { useManagedContestQuery } from './use-managed-contest-query';
 
 /**
@@ -77,7 +77,6 @@ function CupWeightForm({
   return (
     <FormPage
       cancelTo={contestPath}
-      help={`How much ${contest.name} counts toward its sports league cup and the league championship. It is fixed once the contest is final.`}
       errorMessage={saveMutation.isError
         ? extractErrorMessage(saveMutation.error, { fallback: 'We could not save the cup weight.' })
         : null}
@@ -92,22 +91,25 @@ function CupWeightForm({
       testId="edit-cup-weight-page"
       title="Cup weight"
     >
-      <div aria-label="Cup weight" className="grid gap-2" role="radiogroup">
-        {CUP_WEIGHTS.map((option) => (
-          <ChoiceCard
-            isDisabled={saveMutation.isPending}
-            isSelected={option === cupWeight}
-            key={option}
-            onSelect={() => setCupWeight(option)}
-            testId={`edit-cup-weight-${option}`}
-          >
-            <span className="min-w-0 flex-1">
-              <span className="font-semibold">{CUP_WEIGHT_COPY[option].label}</span>
-              <span className="block text-xs text-muted-foreground">{CUP_WEIGHT_COPY[option].description}</span>
-            </span>
-          </ChoiceCard>
-        ))}
-      </div>
+      <FormSection
+        help={`How much ${contest.name} counts toward its sports league cup and the league championship. It is fixed once the contest is final.`}
+        testId="edit-cup-weight-section"
+        title="How much it counts"
+      >
+        <div aria-label="Cup weight" className="grid gap-2" role="radiogroup">
+          {CUP_WEIGHTS.map((option) => (
+            <ChoiceCard
+              isDisabled={saveMutation.isPending}
+              isSelected={option === cupWeight}
+              key={option}
+              onSelect={() => setCupWeight(option)}
+              testId={`edit-cup-weight-${option}`}
+            >
+              <ChoiceCardText description={CUP_WEIGHT_COPY[option].description} label={CUP_WEIGHT_COPY[option].label} />
+            </ChoiceCard>
+          ))}
+        </div>
+      </FormSection>
     </FormPage>
   );
 }

@@ -3,7 +3,7 @@
 The shared UI layer is split into three levels:
 
 1. **Primitives** own a single reusable control or visual pattern, such as
-   `Button`, `Tile`, `Modal`, `DataGrid`, `ActionTile`, `StatusBadge` and
+   `Button`, `Tile`, `Modal`, `DataGrid`, `Switch`, `StatusBadge` and
    `Eyebrow`. A bordered card box is a `Tile` (`padding="none"` plus your own
    padding when it needs less), and the small uppercase line over a title is an
    `Eyebrow`; a navy panel is a `Tile` with `variant="inverse"` (or
@@ -35,7 +35,8 @@ The shared UI layer is split into three levels:
    `density="compact"` in a popover or peek card), never a hand-built `<dl>`;
    a page's headline numbers are a `MetricGrid` instead, and rows with columns
    of their own a `SimpleTable`. Requirements met or not are a `CheckList`
-   (missing first, `surface="inverse"` on a navy panel). Copy to clipboard is a
+   (missing first, `surface="inverse"` on a navy panel); a fixed run of stages is a
+   `StageTrack` (`surface="inverse"` on a navy panel). Copy to clipboard is a
    `CopyButton` (`iconOnly` in a tight spot), which says Copied, shows an inline
    error when the browser refuses and logs it; feature code never calls
    `navigator.clipboard` itself. A password box is a `PasswordInput`,
@@ -43,7 +44,7 @@ The shared UI layer is split into three levels:
    `type="password"` on an `Input`.
 2. **Templates** compose primitives into repeated page or modal workflows, such
    as `ManagementListPage`, `EntityDetailPage`, `FormModal`, and
-   `ConfirmationModal`.
+   `ConfirmDialog`.
 3. **Feature pages** own product-specific data fetching, mutations, copy, and
    business rules. They should compose primitives and templates instead of
    repeating page chrome or modal footers.
@@ -93,8 +94,11 @@ that is not a table pages through `Pager`, the same Previous/Next control.
 
 League pages and administration areas use the pieces named in
 `rules/ux-rules.md` §12 *League Pages and Commissioner Tools*: `LeagueMenu`,
-`AdminAreaLayout`, `PageHeader`, a `SectionCard` of `SettingsRows` /
-`SettingsRow` for settings (a `bare` `SectionCard` titles a section whose body
+`AdminAreaLayout`, `PageHeader`, a `SettingsSection` of `SettingsRow`s for
+settings, "see it, then Edit": label left and value right, one Edit in the title
+opening the group's `FormModal`, and a `Switch` in a row for a setting that saves
+the moment it is flipped (pages not yet moved over use a `SectionCard` of
+`SettingsRows`; a `bare` `SectionCard` titles a section whose body
 is a `DataGrid`), a `SectionCard` with `tone="danger"` of `DangerZoneAction`s
 for a danger zone, and `FormPage` for a full-page edit
 (with `IconPalette` when the form picks an icon). A `FormPage` saved by one
@@ -102,9 +106,9 @@ mutation takes its submit, pending state and error from `formPageSave` in
 `@/lib/form-page-save`. A root admin settings group's form is built on
 `useSettingsGroupForm` and `SettingsSaveError` in `features/root-admin`, which
 send the version the draft came from and offer the newer one on a conflict.
-`ConfirmDialog` and `FormModal` share one footer, `DialogActions`.
-A dialog that is neither a form nor a confirmation, such as a menu action
-with its own buttons, is a plain `Modal`.
+`ConfirmDialog` and `FormModal` share one footer, `DialogActions`. Feature code
+never opens the raw `Modal`: every dialog is one of the four types under
+*Modal Templates*.
 
 Commissioner tools frames its pages with `ToolsArea`: a slim navy band naming
 the area, the league and the way back, then the tools as one row of link
@@ -123,12 +127,13 @@ stays on the first line on a phone. A `description` is only for a rule the reade
 the entity's own words, never a sentence saying what the page is. A page's views
 are `PageTabs` in the header's `tabs` slot — `variant="link"` for views with
 their own address, `variant="state"` inside the page's own `Tabs` root — and a
-filter that changes every tab, such as a season, goes in `tabsEnd`. On a phone
+filter that changes every tab or the whole page, such as a season or a sport, is a
+`FilterPicker` in `tabsEnd` (with no tabs it has the bottom line to itself). On a phone
 `PageTabs` and `LeagueMenu` scroll sideways through `useScrollRow`: the selected
 tab is scrolled fully into view on open and whenever it changes, and an edge fades
 only while more tabs sit beyond it. A page that reads one year at a time picks it
-with `YearPicker`, labelled "Season": in `tabsEnd` on a page with tabs, else at the
-end of its section's title row. A
+with `YearPicker`, the `FilterPicker` labelled "Season": in `tabsEnd` on a page with
+tabs, else at the end of its section's title row. A
 `SegmentedControl` is only for choosing a value inside a form or panel, never for
 switching a page's views. A search box in the header feeds a `DataGrid` through
 its `searchTerm`.
@@ -152,7 +157,8 @@ badge, count or filter), then its body, then an optional footer link
 (`SectionFooterLink`, blue small caps with an arrow). The body is unpadded for
 `SectionRows` of `SectionRow`s (a name, a muted fact line and note, one figure
 as `value`, one badge or action as `aside`; `to` makes the whole row a link, and
-`control` puts a checkbox at its start with the whole row as its label) or
+`control` puts a checkbox at its start with the whole row as its label, and
+`picture` a small 16:10 drawing at its start) or
 a `SectionEmpty` italic line; `padded` gives forms, charts or metric grids the
 card's padding (`SectionBody` is that padded block on its own, beside rows, and
 `SectionNote` a muted line about the data inside it). `bare` keeps the title and rule without the box, and
@@ -177,9 +183,11 @@ markers and an optional line underneath.
 Public and landing pages share four more pieces. `NumberedSteps` shows steps in tiles under one
 gold numeral style, with an optional picture. `FaqList` shows questions that open to their
 answers. `ExpandableTile` is a tile whose face opens it across its grid row. `Countdown` shows
-days, hours and minutes as one timer. The event page kit (`StartButton`, `LandingSection`,
-`PhotoHero`, `StickyActionBar`, `NextUpCard`, `LandingDisclaimer`) is a product piece, so it
-lives in `features/event-pages/components`.
+days, hours and minutes as one timer. `StickyActionBar` is the slim bar a phone keeps at the
+bottom while the block it stands in for is out of view: an event page's hero button, or a pick
+page's submit section. The event page kit (`StartButton`, `LandingSection`, `PhotoHero`,
+`NextUpCard`, `LandingDisclaimer`) is a product piece, so it lives in
+`features/event-pages/components`.
 
 Extra information is one of the four more-info pieces, chosen by the question it
 answers (`rules/ux-rules.md` §15 *Showing More*): `HelpTip` (?) says how something
@@ -198,11 +206,13 @@ public-join layout code when a template fits.
 
 Use modal templates when the modal follows one of the common workflows:
 
-- `FormModal` for edit/create forms.
-- `ConfirmationModal` for destructive or lifecycle confirmations, including
-  exact-match confirmation inputs.
-- `PickerModal` for selecting an item from a constrained list.
-- `ReadOnlyDetailModal` for payloads and operational metadata.
+- `FormModal` to edit or create something.
+- `ConfirmDialog` for yes/no: `tone="danger"` when the action destroys or removes,
+  `confirmationInput` for type-to-confirm, and `error` for why the last attempt
+  failed (a red `Notice` above the buttons; the dialog stays open).
+- `PickerModal` to choose an item from a list.
+- `ReadOnlyDetailModal` to look only: payloads and metadata, or (`size="sm"`) a
+  sentence on why an action isn't available.
 
 Modals should use the templates for predictable footer ordering, pending state,
 scroll behavior, and error placement. Add a new template only when a workflow
@@ -210,8 +220,11 @@ shape repeats across multiple features or materially improves accessibility.
 
 ## Mutation Feedback
 
-Use `useMutationActionWorkflow` with `MutationActionToast` for repeated
-action-tile and modal mutation workflows. The hook centralizes pending state,
+A save that succeeds closes its dialog and confirms with a toast: call
+`showToast` (from `toast-store.ts`), or give `useMutationActionWorkflow` a
+`successToast`. Both show in the app's one `Toaster`, mounted at the root, so
+the toast outlives the dialog it closed or the page it left. Use
+`useMutationActionWorkflow` for repeated action-tile and modal mutation workflows. The hook centralizes pending state,
 success and error feedback, query invalidation, modal close behavior, optional
 navigation, and lifecycle logging so pages do not each re-create the same
 mutation ceremony.
@@ -220,8 +233,8 @@ Use inline `Notice`, `ServerErrorBar`, or `FormModal` errors for blocking form
 validation that the user must fix before submitting. Use mutation action toasts
 for completed create, update, lifecycle, copy, invite, and delete outcomes where
 the page can keep the user oriented after the mutation finishes. Avoid raw
-`alert()` calls or page-local toast wiring when the workflow fits the shared
-mutation action pattern.
+`alert()` calls or page-local toast wiring. Tests that assert a toast render
+`<Toaster />` beside the component; the test setup clears toasts after each test.
 
 ## Theme Rules
 

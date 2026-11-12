@@ -140,6 +140,31 @@ describe("pool-master-dn4.7: contest entry selection components", () => {
     ).toHaveTextContent("Scottie Scheffler");
   });
 
+  it("titles a tier's section with its name, its saved count and status in the title row, and says when a locked tier saved no one", () => {
+    const { unmount } = render(
+      <EditableSelectionGroup
+        noun={GOLFER} sport="GOLF"
+        canSelect
+        group={buildGroup(["sep-1"])}
+        isBusy={false}
+        isExpanded={false}
+        onParticipantSelect={vi.fn()}
+        onToggle={vi.fn()}
+        setToggleRef={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole("heading", { name: "Tier A" })).toBeInTheDocument();
+    expect(screen.getByTestId("contest-entry-group-count-tier-a")).toHaveTextContent("1/2 saved");
+    expect(screen.getByTestId("contest-entry-group-tier-a")).toHaveTextContent("In progress");
+    expect(screen.getByTestId("contest-entry-group-summary-tier-a")).toHaveTextContent("Choose 2 golfers from this tier.");
+    unmount();
+
+    render(<LockedSelectionGroup noun={GOLFER} sport="GOLF" group={buildGroup([])} />);
+    expect(screen.getByRole("heading", { name: "Tier A" })).toBeInTheDocument();
+    expect(screen.getByTestId("contest-entry-group-tier-a")).toHaveTextContent("No golfer was saved from this tier.");
+  });
+
   it("offers the scoring family's tiebreaker predictions and reports the one picked", async () => {
     const user = userEvent.setup();
     const handleChange = vi.fn();

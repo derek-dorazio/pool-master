@@ -154,18 +154,13 @@ export class PrismaSportLeagueRepository implements SportLeagueRepository {
       const locked = await tx.$queryRaw<{ id: string }[]>`SELECT id FROM "sport_leagues" WHERE id = ${id}::uuid FOR UPDATE`;
       if (locked.length === 0) return null;
       await tx.$queryRaw`SELECT id FROM "event_series" WHERE sport_league_id = ${id}::uuid ORDER BY id FOR UPDATE`;
-      const row = await tx.sportLeague.findUniqueOrThrow({
-        where: { id },
-        select: {
-          _count: { select: { contestConfigTemplates: true, eventPageOffers: true, cups: true } },
-          eventSeries: { select: { _count: { select: { sportEvents: true } } } },
-        },
-      });
+      // Each use is counted where its sport league is: a relation `_count` would group every row of
+      // the child table and join the groups back, reading the whole sport event catalog.
       const uses: SportLeagueUses = {
-        sportEventCount: row.eventSeries.reduce((total, series) => total + series._count.sportEvents, 0),
-        contestTemplateCount: row._count.contestConfigTemplates,
-        eventPageOfferCount: row._count.eventPageOffers,
-        cupCount: row._count.cups,
+        sportEventCount: await tx.sportEvent.count({ where: { eventSeries: { sportLeagueId: id } } }),
+        contestTemplateCount: await tx.contestConfigTemplate.count({ where: { sportLeagueId: id } }),
+        eventPageOfferCount: await tx.eventPageOffer.count({ where: { sportLeagueId: id } }),
+        cupCount: await tx.cup.count({ where: { sportLeagueId: id } }),
       };
       if (Object.values(uses).some((count) => count > 0)) return uses;
       await tx.participantLeagueAffiliation.deleteMany({ where: { sportLeagueId: id } });

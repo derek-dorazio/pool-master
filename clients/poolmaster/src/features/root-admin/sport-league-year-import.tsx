@@ -1,7 +1,7 @@
 import { sportLeagueNounOf } from '@poolmaster/shared/domain';
 import { useState } from 'react';
 import { importEventYearFromProvider } from '@/lib/api';
-import { Button, ConfirmationModal } from '@/features/shared/ui';
+import { Button, ConfirmDialog } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -84,11 +84,11 @@ export function SportLeagueYearImport({ eventYear, sportLeague }: { eventYear: n
         </p>
       ) : null}
 
-      <ConfirmationModal
+      <ConfirmDialog
         confirmLabel={`Import ${eventYear}`}
         confirmTestId="root-admin-sport-league-calendar-import-confirm"
         description={`Every ${eventYear} ${event.one} the provider lists for ${sportLeague.name} that isn’t here yet is created and linked for results. ${event.many.charAt(0).toUpperCase()}${event.many.slice(1)} already here are skipped, and no fields are loaded.`}
-        errorMessage={
+        error={
           importMutation.isError
             ? extractErrorMessage(importMutation.error, {
                 codeMessages: {
@@ -112,7 +112,7 @@ export function SportLeagueYearImport({ eventYear, sportLeague }: { eventYear: n
           providers={providers}
           testId="root-admin-sport-league-calendar-import-provider"
         />
-      </ConfirmationModal>
+      </ConfirmDialog>
     </>
   );
 }

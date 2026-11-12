@@ -10,8 +10,9 @@ import {
   type SortingState,
   useReactTable,
 } from "@tanstack/react-table";
-import { useMemo, useRef, useState, type AnchorHTMLAttributes } from "react";
+import { useMemo, useRef, useState, type AnchorHTMLAttributes, type MouseEvent, type ReactNode } from "react";
 import { flushSync } from "react-dom";
+import { Link } from "react-router";
 import { Button } from "./button";
 import { cn } from "./class-names";
 import { Input } from "./form-field";
@@ -53,11 +54,21 @@ export type DataGridProps<TData> = {
   emptyMessage: string;
   filterTestIdPrefix?: string;
   getRowId?: (row: TData, index: number) => string;
+  /**
+   * Where a row leads: the whole row opens it (rules/ux-rules.md §12), and its first cell is the
+   * link a keyboard reaches. Buttons, links and menus inside the row keep their own clicks.
+   */
   getRowLink?: (row: TData) => string;
   getRowLinkProps?: (
     row: TData,
   ) => Omit<AnchorHTMLAttributes<HTMLAnchorElement>, "href">;
   rowTestId?: (row: TData, index: number) => string;
+  /**
+   * The row's quick actions, a `RowActionsMenu` ("⋯"), in a last column of its own. That column
+   * stays pinned to the grid's right edge while a wide table scrolls sideways, so the "⋯" is in
+   * reach on a phone without scrolling to it.
+   */
+  rowActions?: (row: TData) => ReactNode;
   tableTestId?: string;
   /**
    * Forwarded to `useReactTable({ meta })`. Lets a caller keep its column
@@ -91,6 +102,32 @@ export type DataGridProps<TData> = {
     }
 );
 
+/** The row actions' column: pinned to the right edge, over the cells scrolling under it. */
+const PINNED_END_CELL = "sticky right-0 z-[1] text-right";
+/** The header's tint laid over the card, so the pinned header cell is solid in both themes. */
+const PINNED_PLAIN_HEADER_SURFACE =
+  "bg-card [background-image:linear-gradient(var(--table-header-surface),var(--table-header-surface))]";
+
+/** Something in a row that takes its own click, so a click on it never opens the row. */
+const OWN_CLICK_SELECTOR = "a, button, input, select, textarea, label, [role='menuitem']";
+
+/**
+ * A click on a linked row opens it through the row's link, as if the link were clicked: the
+ * router moves, and the link's own `onClick` runs. A click on a control in the row, one that
+ * reaches the row from a dialog or menu drawn elsewhere on the page, or the end of selecting the
+ * row's text does not.
+ */
+function openRowFromClick(event: MouseEvent<HTMLTableRowElement>) {
+  const target = event.target;
+  if (!(target instanceof Element) || !event.currentTarget.contains(target)) {
+    return;
+  }
+  if (target.closest(OWN_CLICK_SELECTOR) || window.getSelection()?.toString()) {
+    return;
+  }
+  event.currentTarget.querySelector<HTMLAnchorElement>("a[data-row-link]")?.click();
+}
+
 function getSortIndicator(direction: false | "asc" | "desc") {
   if (direction === "asc") {
     return "▲";
@@ -112,6 +149,7 @@ export function DataGrid<TData>({
   getRowLink,
   getRowLinkProps,
   rowTestId,
+  rowActions,
   tableTestId,
   meta,
   search,
@@ -176,11 +214,13 @@ export function DataGrid<TData>({
     getRowId,
   });
 
+  // The pinned header cell needs a solid fill, or the column names scroll through it.
+  const pinnedHeaderSurface = headerTone === "scoreboard" ? "bg-surface-inverse" : PINNED_PLAIN_HEADER_SURFACE;
   const headerGroups = table.getHeaderGroups();
   const rows = table.getRowModel().rows;
   const visibleColumnCount = useMemo(
-    () => table.getVisibleLeafColumns().length,
-    [table],
+    () => table.getVisibleLeafColumns().length + (rowActions ? 1 : 0),
+    [rowActions, table],
   );
 
   const canJump = jumpToRow !== undefined && table.getCoreRowModel().rows.some((row) => row.id === jumpToRow.rowId);
@@ -293,6 +333,11 @@ export function DataGrid<TData>({
                     </th>
                   );
                 })}
+                {rowActions ? (
+                  <th className={cn(PINNED_END_CELL, "w-px px-2 py-3", pinnedHeaderSurface)} key="row-actions">
+                    <span className="sr-only">Actions</span>
+                  </th>
+                ) : null}
               </tr>
             ))}
             {showColumnFilters ? headerGroups.map((headerGroup) => (
@@ -319,6 +364,7 @@ export function DataGrid<TData>({
                     )}
                   </th>
                 ))}
+                {rowActions ? <th className={cn(PINNED_END_CELL, PINNED_PLAIN_HEADER_SURFACE)} key="row-actions-filter" /> : null}
               </tr>
             )) : null}
           </thead>
@@ -336,32 +382,46 @@ export function DataGrid<TData>({
                   <tr
                     aria-current={row.id === jumpedRowId ? "true" : undefined}
                     className={cn(
-                      "border-b border-border/70 align-top text-foreground transition hover:bg-[var(--table-row-hover-surface)]",
+                      "group border-b border-border/70 align-top text-foreground transition hover:bg-[var(--table-row-hover-surface)]",
+                      link && "cursor-pointer",
                       row.id === jumpedRowId && "bg-[var(--status-active-surface)]",
                     )}
                     data-row-id={row.id}
                     data-testid={rowTestId?.(row.original, index)}
                     key={row.id}
+                    onClick={link ? openRowFromClick : undefined}
                   >
                     {row.getVisibleCells().map((cell) => (
                       <td className="px-4 py-4" key={cell.id}>
                         {link &&
                         cell.column.id === row.getVisibleCells()[0]?.column.id ? (
-                          <a
+                          <Link
                             {...linkProps}
                             className={linkClassName}
-                            href={link}
+                            data-row-link=""
+                            to={link}
                           >
                             {flexRender(
                               cell.column.columnDef.cell,
                               cell.getContext(),
                             )}
-                          </a>
+                          </Link>
                         ) : (
                           flexRender(cell.column.columnDef.cell, cell.getContext())
                         )}
                       </td>
                     ))}
+                    {rowActions ? (
+                      <td
+                        className={cn(
+                          PINNED_END_CELL,
+                          "w-px bg-card px-2 py-3 group-hover:[background-image:linear-gradient(var(--table-row-hover-surface),var(--table-row-hover-surface))]",
+                        )}
+                        data-testid="data-grid-row-actions"
+                      >
+                        {rowActions(row.original)}
+                      </td>
+                    ) : null}
                   </tr>
                 );
               })

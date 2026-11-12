@@ -812,7 +812,7 @@ describe('Overview blocks: empty values, refusals and closing dialogs', () => {
     fireEvent.click(await screen.findByTestId('root-admin-sport-event-transition-CANCELLED'));
     const modal = await screen.findByTestId('root-admin-sport-event-transition-modal');
     expect(within(modal).getByTestId('root-admin-sport-event-transition-confirm')).toHaveTextContent('Move to Cancelled');
-    fireEvent.click(within(modal).getByRole('button', { name: 'Close modal' }));
+    fireEvent.click(within(modal).getByRole('button', { name: /^Close / }));
 
     await waitFor(() =>
       expect(screen.queryByTestId('root-admin-sport-event-transition-modal')).not.toBeInTheDocument(),
@@ -859,7 +859,7 @@ describe('Overview blocks: empty values, refusals and closing dialogs', () => {
 
     fireEvent.click(await screen.findByTestId('root-admin-sport-event-auto-toggle'));
     const modal = await screen.findByTestId('root-admin-sport-event-auto-modal');
-    fireEvent.click(within(modal).getByRole('button', { name: 'Close modal' }));
+    fireEvent.click(within(modal).getByRole('button', { name: /^Close / }));
 
     await waitFor(() =>
       expect(screen.queryByTestId('root-admin-sport-event-auto-modal')).not.toBeInTheDocument(),
@@ -947,7 +947,7 @@ describe('Overview blocks: empty values, refusals and closing dialogs', () => {
 
     fireEvent.click(await screen.findByTestId('root-admin-sport-event-release'));
     const modal = await screen.findByTestId('root-admin-sport-event-release-modal');
-    fireEvent.click(within(modal).getByRole('button', { name: 'Close modal' }));
+    fireEvent.click(within(modal).getByRole('button', { name: /^Close / }));
 
     await waitFor(() =>
       expect(screen.queryByTestId('root-admin-sport-event-release-modal')).not.toBeInTheDocument(),
@@ -983,7 +983,7 @@ describe('Overview blocks: empty values, refusals and closing dialogs', () => {
     fireEvent.click(await screen.findByTestId('root-admin-sport-event-link-open'));
     const modal = await screen.findByTestId('root-admin-sport-event-link-modal');
     expect(await within(modal).findByText('No provider is registered for golf.')).toBeInTheDocument();
-    fireEvent.click(within(modal).getByRole('button', { name: 'Close modal' }));
+    fireEvent.click(within(modal).getByRole('button', { name: /^Close / }));
 
     await waitFor(() =>
       expect(screen.queryByTestId('root-admin-sport-event-link-modal')).not.toBeInTheDocument(),
@@ -1043,7 +1043,7 @@ describe('Overview blocks: empty values, refusals and closing dialogs', () => {
 
       fireEvent.click(await screen.findByTestId('root-admin-sport-event-unlink-open'));
       const modal = await screen.findByTestId('root-admin-sport-event-unlink-modal');
-      fireEvent.click(within(modal).getByRole('button', { name: 'Close modal' }));
+      fireEvent.click(within(modal).getByRole('button', { name: /^Close / }));
 
       await waitFor(() =>
         expect(screen.queryByTestId('root-admin-sport-event-unlink-modal')).not.toBeInTheDocument(),
