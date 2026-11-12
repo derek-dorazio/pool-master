@@ -222,7 +222,7 @@ export function ManageContestPage() {
           <>
             <ContestStatusBadge status={contest.status} />
             <span data-testid="manage-contest-event">
-              {event.name} · Starts <DateDisplay className="text-muted-foreground" value={event.startDate} />
+              {event.name} · Starts <DateDisplay tone="inherit" value={event.startDate} />
             </span>
           </>
         )}

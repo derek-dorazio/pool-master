@@ -78,7 +78,7 @@ function EventCell({ contest, event }: { contest: ContestDto; event: ContestSpor
         {contest.sportEvents.length > 1 ? <span className="text-muted-foreground">{` and ${contest.sportEvents.length - 1} more`}</span> : null}
       </div>
       <div className="text-xs text-muted-foreground">
-        {when} <DateDisplay className="text-muted-foreground" value={event.startDate} />
+        {when} <DateDisplay tone="inherit" value={event.startDate} />
       </div>
     </div>
   );
