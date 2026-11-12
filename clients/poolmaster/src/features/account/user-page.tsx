@@ -6,7 +6,7 @@ import {
   useWatch,
 } from 'react-hook-form';
 import { type z } from 'zod';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router';
 import {
   UserPasswordChangeRequestSchema,
@@ -24,8 +24,7 @@ import {
   ActionList,
   ActionTile,
   Notice,
-  Button,
-  ConfirmationModal,
+  ConfirmDialog,
   DEFAULT_DISPLAY_PREFERENCES,
   EntityDetailPage,
   formatDateDisplay,
@@ -35,8 +34,7 @@ import {
   Input,
   LinkButton,
   LoadingState,
-  Modal,
-  MutationActionToast,
+  showToast,
   PasswordInput,
   Select,
   Tile,
@@ -55,7 +53,7 @@ import { formatUserName } from './user-name';
 import { buildUserPath, SELF_USER_ID } from './user-routing';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
-import { ColorScheme, PRODUCT_NAME } from '@poolmaster/shared/domain';
+import { ColorScheme } from '@poolmaster/shared/domain';
 
 type UserProfileFormValues = z.infer<typeof UserProfileUpdateRequestSchema>;
 type UserUsernameFormValues = z.infer<typeof UserUsernameUpdateRequestSchema>;
@@ -63,36 +61,6 @@ type UserPreferencesFormValues = z.infer<typeof UserPreferencesUpdateRequestSche
 type UserPasswordFormValues = z.infer<typeof UserPasswordChangeRequestSchema>;
 
 type ActiveDialog = 'profile' | 'username' | 'preferences' | 'email' | 'password' | 'lifecycle' | 'delete' | null;
-
-function UserActionDialog({
-  open,
-  onOpenChange,
-  title,
-  description,
-  children,
-  testId,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  title: string;
-  description: string;
-  children: ReactNode;
-  testId: string;
-}) {
-  return (
-    <Modal
-      closeLabel={`Close ${title}`}
-      description={description}
-      descriptionId={`${testId}-description`}
-      onOpenChange={onOpenChange}
-      open={open}
-      testId={testId}
-      title={title}
-    >
-      {children}
-    </Modal>
-  );
-}
 
 export function UserPage() {
   const displayPreferences = useDisplayPreferences();
@@ -105,7 +73,6 @@ export function UserPage() {
   const { userId = '' } = useParams<{ userId: string }>();
   const [activeDialog, setActiveDialog] = useState<ActiveDialog>(null);
   const [emailConfirmation, setEmailConfirmation] = useState('');
-  const [deleteSuccess, setDeleteSuccess] = useState(false);
   const profileForm = useForm<UserProfileFormValues>({
     resolver: zodResolver(UserProfileUpdateRequestSchema),
     mode: 'onSubmit',
@@ -196,6 +163,8 @@ export function UserPage() {
     },
     onSuccess: (updatedUser) => {
       setAuthSessionUser(queryClient, updatedUser);
+      setActiveDialog(null);
+      showToast({ title: 'Profile saved', tone: 'success' });
     },
     // A new email address is not suppressed, so the "we can't email you" banner may go.
     invalidates: [AUTH_ME_QUERY_KEY, QueryKeys.emailPreferences.detail(SELF_USER_ID)],
@@ -216,6 +185,8 @@ export function UserPage() {
     },
     onSuccess: (updatedUser) => {
       setAuthSessionUser(queryClient, updatedUser);
+      setActiveDialog(null);
+      showToast({ title: 'Username saved', tone: 'success' });
     },
     invalidates: [AUTH_ME_QUERY_KEY],
   });
@@ -240,6 +211,8 @@ export function UserPage() {
     },
     onSuccess: (updatedUser) => {
       setAuthSessionUser(queryClient, updatedUser);
+      setActiveDialog(null);
+      showToast({ title: 'Preferences saved', tone: 'success' });
     },
     invalidates: [AUTH_ME_QUERY_KEY],
   });
@@ -265,6 +238,8 @@ export function UserPage() {
         newPassword: '',
         confirmNewPassword: '',
       });
+      setActiveDialog(null);
+      showToast({ title: 'Password changed', tone: 'success' });
     },
     invalidates: [],
   });
@@ -282,11 +257,7 @@ export function UserPage() {
     },
     invalidateQueries: [AUTH_ME_QUERY_KEY],
     onClose: () => setActiveDialog(null),
-    successToast: {
-      title: 'Account inactive',
-      description: 'Your account was inactivated.',
-      tone: 'success',
-    },
+    successToast: { title: 'Account inactivated', tone: 'success' },
   });
 
   const reactivateAccountAction = useMutationActionWorkflow({
@@ -302,11 +273,7 @@ export function UserPage() {
     },
     invalidateQueries: [AUTH_ME_QUERY_KEY],
     onClose: () => setActiveDialog(null),
-    successToast: {
-      title: 'Account active',
-      description: 'Your account was reactivated.',
-      tone: 'success',
-    },
+    successToast: { title: 'Account reactivated', tone: 'success' },
   });
 
   const deleteAccountAction = useMutationActionWorkflow({
@@ -323,10 +290,12 @@ export function UserPage() {
       return response.data;
     },
     onSuccess: () => {
-      setDeleteSuccess(true);
       setEmailConfirmation('');
     },
     onClose: () => setActiveDialog(null),
+    successToast: { title: 'Your account was deleted', tone: 'success' },
+    // The account is gone, so its session is too: sign out and go home.
+    navigate: () => auth.clearSession().then(() => navigate('/', { replace: true })),
   });
 
   if (!user) {
@@ -386,6 +355,11 @@ export function UserPage() {
   const disablePreferencesEditing = preferencesMutation.isPending;
   const disablePasswordEditing = passwordMutation.isPending;
   const activeLifecycleAction = isInactive ? reactivateAccountAction : inactivateAccountAction;
+  const closeLifecycleDialog = () => {
+    setActiveDialog(null);
+    inactivateAccountAction.reset();
+    reactivateAccountAction.reset();
+  };
 
   function openProfileDialog() {
     profileForm.reset({
@@ -455,27 +429,6 @@ export function UserPage() {
         onOpenChange={(open) => setActiveDialog(open ? 'email' : null)}
         open={activeDialog === 'email'}
       />
-
-      {deleteSuccess ? (
-        <Notice
-          data-testid="user-page-delete-success"
-          tone="success"
-          title="Your account was deleted."
-        >
-          <p className="mt-2 text-sm">You no longer have access to {PRODUCT_NAME} with this account.</p>
-          <Button
-            className="mt-4"
-            onClick={() =>
-              void auth.clearSession().then(() => {
-                void navigate('/', { replace: true });
-              })
-            }
-            type="button"
-          >
-            Exit and sign out
-          </Button>
-        </Notice>
-      ) : null}
 
       <EntityDetailPage
         actions={(
@@ -562,7 +515,6 @@ export function UserPage() {
           && profileFirstName.trim().length > 0
           && profileLastName.trim().length > 0
         }
-        description="Update your name and email."
         error={profileMutation.isError ? profileMutation.error : null}
         errorFallback="We could not save your profile."
         isPending={profileMutation.isPending}
@@ -627,17 +579,10 @@ export function UserPage() {
             />
           </FormField>
         </div>
-
-        {profileMutation.isSuccess ? (
-          <Notice className="mt-4" tone="success">
-            Your profile was updated.
-          </Notice>
-        ) : null}
       </FormModal>
 
       <FormModal
         canSave={!disableUsernameEditing && usernameValue.trim().length >= 3}
-        description="Choose a unique username for signing in and identifying your account."
         error={usernameMutation.isError ? usernameMutation.error : null}
         errorFallback="We could not save your username."
         isPending={usernameMutation.isPending}
@@ -674,17 +619,10 @@ export function UserPage() {
             })}
           />
         </FormField>
-
-        {usernameMutation.isSuccess ? (
-          <Notice className="mt-4" tone="success">
-            Your username was updated.
-          </Notice>
-        ) : null}
       </FormModal>
 
       <FormModal
         canSave={!disablePreferencesEditing}
-        description="Choose how dates and times appear for you, and whether the site is light or dark."
         error={preferencesMutation.isError ? preferencesMutation.error : null}
         errorFallback="We could not save your preferences."
         isPending={preferencesMutation.isPending}
@@ -814,16 +752,21 @@ export function UserPage() {
             />
           </FormField>
         </div>
-
-        {preferencesMutation.isSuccess ? (
-          <Notice className="mt-4" tone="success">
-            Your preferences were updated.
-          </Notice>
-        ) : null}
       </FormModal>
 
-      <UserActionDialog
-        description="Changing your password keeps you signed in here and signs you out on your other devices."
+      <FormModal
+        canSave={
+          !disablePasswordEditing
+          && currentPassword.length > 0
+          && newPassword.length >= 8
+          && confirmNewPassword.length >= 8
+        }
+        description="You'll stay signed in here and be signed out on your other devices."
+        errorMessage={passwordMutation.isError
+          ? extractErrorMessage(passwordMutation.error, { fallback: 'We could not complete that account action. Please try again.' })
+          : null}
+        isPending={passwordMutation.isPending}
+        onCancel={() => setActiveDialog(null)}
         onOpenChange={(open) => {
           if (open) {
             openPasswordDialog();
@@ -832,7 +775,16 @@ export function UserPage() {
 
           setActiveDialog(null);
         }}
+        onSave={() =>
+          void passwordForm.handleSubmit((values) =>
+            passwordMutation.mutateAsync(values).catch(() => undefined),
+          )()
+        }
         open={activeDialog === 'password'}
+        pendingLabel="Saving..."
+        saveLabel="Change password"
+        saveTestId="user-page-save-password"
+        size="sm"
         testId="user-page-password-dialog"
         title="Change password"
       >
@@ -877,92 +829,35 @@ export function UserPage() {
             />
           </FormField>
         </div>
+      </FormModal>
 
-        {passwordMutation.isError ? (
-          <Notice className="mt-4" tone="danger">
-            {extractErrorMessage(passwordMutation.error, { fallback: 'We could not complete that account action. Please try again.' })}
-          </Notice>
-        ) : null}
-        {passwordMutation.isSuccess ? (
-          <Notice className="mt-4" tone="success">
-            Your password was changed.
-          </Notice>
-        ) : null}
-
-        <div className="mt-5 flex justify-end">
-          <Button
-            data-testid="user-page-save-password"
-            disabled={
-              disablePasswordEditing
-              || currentPassword.length === 0
-              || newPassword.length < 8
-              || confirmNewPassword.length < 8
-            }
-            onClick={() =>
-              void passwordForm.handleSubmit((values) =>
-                passwordMutation.mutateAsync(values).catch(() => undefined),
-              )()
-            }
-            type="button"
-          >
-            {passwordMutation.isPending ? 'Saving...' : 'Change password'}
-          </Button>
-        </div>
-      </UserActionDialog>
-
-      <UserActionDialog
-        description="Inactivate first, then delete permanently only after the account is inactive."
+      <ConfirmDialog
+        confirmLabel={isInactive ? 'Reactivate account' : 'Inactivate account'}
+        confirmTestId={isInactive ? 'user-page-reactivate' : 'user-page-inactivate'}
+        description={isInactive
+          ? `Your account will be active again straight away, and your leagues will see you.`
+          : "You'll be signed out everywhere and hidden from your leagues. You can reactivate or delete the account later."}
+        error={activeLifecycleAction.isError
+          ? extractErrorMessage(activeLifecycleAction.error, { fallback: 'We could not complete that account action. Please try again.' })
+          : null}
+        isConfirmDisabled={deleteAccountAction.isPending}
+        isPending={activeLifecycleAction.isPending}
+        onCancel={closeLifecycleDialog}
+        onConfirm={() => void activeLifecycleAction.run().catch(() => undefined)}
         onOpenChange={(open) => {
-          setActiveDialog(open ? 'lifecycle' : null);
-          if (!open) {
-            inactivateAccountAction.reset();
-            reactivateAccountAction.reset();
+          if (open) {
+            setActiveDialog('lifecycle');
+            return;
           }
+          closeLifecycleDialog();
         }}
         open={activeDialog === 'lifecycle'}
+        pendingLabel={isInactive ? 'Reactivating...' : 'Inactivating...'}
         testId="user-page-lifecycle-dialog"
         title={isInactive ? 'Reactivate account' : 'Inactivate account'}
-      >
-        <div className="space-y-4">
-          <p className="text-sm text-muted-foreground">
-            {isInactive
-              ? `Reactivating your account restores normal ${PRODUCT_NAME} usage immediately.`
-              : 'Inactivating your account signs you out everywhere and hides you from your leagues. You can still edit your details, and reactivate or permanently delete the account later.'}
-          </p>
-          {activeLifecycleAction.isError ? (
-            <Notice tone="danger">
-              {extractErrorMessage(activeLifecycleAction.error, { fallback: 'We could not complete that account action. Please try again.' })}
-            </Notice>
-          ) : null}
-        </div>
+      />
 
-        <div className="mt-5 flex justify-end">
-          {isInactive ? (
-            <Button
-              data-testid="user-page-reactivate"
-              disabled={reactivateAccountAction.isPending || deleteAccountAction.isPending}
-              isLoading={reactivateAccountAction.isPending}
-              onClick={() => void reactivateAccountAction.run().catch(() => undefined)}
-              type="button"
-            >
-              {reactivateAccountAction.isPending ? 'Reactivating...' : 'Reactivate account'}
-            </Button>
-          ) : (
-            <Button
-              data-testid="user-page-inactivate"
-              disabled={inactivateAccountAction.isPending || deleteAccountAction.isPending}
-              isLoading={inactivateAccountAction.isPending}
-              onClick={() => void inactivateAccountAction.run().catch(() => undefined)}
-              variant="secondary"
-              type="button"
-            >
-              {inactivateAccountAction.isPending ? 'Inactivating...' : 'Inactivate account'}
-            </Button>
-          )}
-        </div>
-      </UserActionDialog>
-
-      <ConfirmationModal
+      <ConfirmDialog
         confirmLabel="Delete account"
         confirmTestId="user-page-delete-submit"
         confirmationInput={{
@@ -973,7 +868,10 @@ export function UserPage() {
           testId: "user-page-delete-confirmation",
           value: emailConfirmation,
         }}
-        description="Delete permanently only after the account is inactive and the email confirmation matches exactly."
+        description="Your account and its data will be deleted permanently."
+        error={deleteAccountAction.isError
+          ? extractErrorMessage(deleteAccountAction.error, { fallback: 'We could not complete that account action. Please try again.' })
+          : null}
         isPending={deleteAccountAction.isPending}
         onCancel={() => {
           setActiveDialog(null);
@@ -993,28 +891,8 @@ export function UserPage() {
         testId="user-page-delete-dialog"
         title="Delete account"
         tone="danger"
-      >
-        <div className="space-y-4">
-          <p className="text-sm text-muted-foreground">
-            This action will delete your account and related data permanently. Enter{' '}
-            <span className="font-medium text-foreground">{user.email}</span> to continue.
-          </p>
-          {deleteAccountAction.isError ? (
-            <Notice tone="danger">
-              {extractErrorMessage(deleteAccountAction.error, { fallback: 'We could not complete that account action. Please try again.' })}
-            </Notice>
-          ) : null}
-        </div>
-      </ConfirmationModal>
+      />
 
-      <MutationActionToast
-        onDismiss={inactivateAccountAction.dismissToast}
-        toast={inactivateAccountAction.toast}
-      />
-      <MutationActionToast
-        onDismiss={reactivateAccountAction.dismissToast}
-        toast={reactivateAccountAction.toast}
-      />
     </section>
   );
 }

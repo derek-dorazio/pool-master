@@ -80,9 +80,6 @@ export function MyTeamOwnersPanel({
             Invite
           </Button>
         </div>
-        {createOwnerInvitationMutation.isSuccess ? (
-          <Notice className="mt-3" tone="success">Co-owner invite created.</Notice>
-        ) : null}
         {createOwnerInvitationMutation.isError ? (
           <Notice className="mt-3" tone="danger">{extractErrorMessage(createOwnerInvitationMutation.error, { fallback: TEAM_PAGE_FALLBACK_ERROR })}</Notice>
         ) : null}

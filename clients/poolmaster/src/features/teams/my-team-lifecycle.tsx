@@ -4,15 +4,12 @@ import { extractErrorMessage } from '@/lib/errors';
 import { type ActiveTeamDialog, TEAM_PAGE_FALLBACK_ERROR } from './my-team-shared';
 import type { MyTeamLifecycle } from './use-my-team-lifecycle';
 
-/** The inactivate and delete outcomes. */
+/** Why an inactivate or delete failed. Success closes the dialog and shows a toast. */
 export function MyTeamLifecycleNotices({ lifecycle }: { lifecycle: MyTeamLifecycle }) {
-  const { teamInactivationNotice, inactivateTeamMutation, deleteTeamMutation } = lifecycle;
+  const { inactivateTeamMutation, deleteTeamMutation } = lifecycle;
 
   return (
     <>
-      {teamInactivationNotice ? (
-        <Notice tone="success">{teamInactivationNotice}</Notice>
-      ) : null}
       {inactivateTeamMutation.isError ? (
         <Notice tone="danger">{extractErrorMessage(inactivateTeamMutation.error, { fallback: TEAM_PAGE_FALLBACK_ERROR })}</Notice>
       ) : null}

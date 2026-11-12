@@ -16,6 +16,7 @@ import { formatUserName } from '@/features/account/user-name';
 import { buildInvitePath } from '@/features/leagues/league-routing';
 import {
   Notice,
+  showToast,
   Button,
   CopyButton,
   DataGrid,
@@ -84,23 +85,27 @@ function isExpiredInvitation(invitation: LeagueInvitationDto): boolean {
  * belongs to the league or already has a pending invitation, and says so; without this the field
  * just cleared and read as "sent".
  */
-function describeInviteResult(result: SendLeagueInvitationsResponse): string | null {
+/** What an invite by email came to: a toast when it was sent, a notice when there is more to do. */
+type InviteOutcome = { kind: 'sent'; message: string } | { kind: 'notice'; tone: 'info' | 'warning'; message: string };
+
+function describeInviteResult(result: SendLeagueInvitationsResponse): InviteOutcome | null {
   const sent = result.sent.at(0);
   if (sent) {
+    // No email went out, so the commissioner has to share the link themselves: that stays on the page.
     if (sent.emailSkipReason === EmailSkipReason.SUPPRESSED) {
-      return `Invitation made for ${sent.email}, but we can't email that address. Copy its link below to share it.`;
+      return { kind: 'notice', tone: 'warning', message: `Invitation made for ${sent.email}, but we can't email that address. Copy its link below to share it.` };
     }
     return sent.emailStatus === EmailMessageStatus.SKIPPED
-      ? `Invitation made for ${sent.email}, but no email was sent. Copy its link below to share it.`
-      : `Invitation sent to ${sent.email}.`;
+      ? { kind: 'notice', tone: 'warning', message: `Invitation made for ${sent.email}, but no email was sent. Copy its link below to share it.` }
+      : { kind: 'sent', message: `Invitation sent to ${sent.email}` };
   }
   const [member] = result.skippedMembers;
   if (member) {
-    return `${member} is already a member of this league.`;
+    return { kind: 'notice', tone: 'info', message: `${member} is already a member of this league.` };
   }
   const [duplicate] = result.skippedDuplicates;
   if (duplicate) {
-    return `${duplicate} already has a pending invitation.`;
+    return { kind: 'notice', tone: 'info', message: `${duplicate} already has a pending invitation.` };
   }
   return null;
 }
@@ -213,6 +218,12 @@ function InvitePeople({ invitationsKey, isInactiveLeague, joinLink, leagueId }: 
       }
       return response.data;
     },
+    onSuccess: (result) => {
+      const outcome = describeInviteResult(result);
+      if (outcome?.kind === 'sent') {
+        showToast({ title: outcome.message, tone: 'success' });
+      }
+    },
     invalidates: [invitationsKey],
   });
 
@@ -268,7 +279,7 @@ function InvitePeople({ invitationsKey, isInactiveLeague, joinLink, leagueId }: 
               </Button>
             </div>
           </FormField>
-          {inviteResult ? <Notice tone="success">{inviteResult}</Notice> : null}
+          {inviteResult?.kind === 'notice' ? <Notice tone={inviteResult.tone}>{inviteResult.message}</Notice> : null}
           {sendInviteMutation.isError ? (
             <Notice tone="danger">
               {extractErrorMessage(sendInviteMutation.error, { fallback: 'We could not send that invitation.' })}

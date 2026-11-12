@@ -3,7 +3,7 @@ import { transitionEvent, updateEvent } from '@/lib/api';
 import {
   Button,
   Notice,
-  ConfirmationModal,
+  ConfirmDialog,
   formatDateTimeDisplay,
   LinkButton,
   SectionCard,
@@ -187,7 +187,7 @@ export function SportEventWorkflowCard({
         </p>
       </SectionCard>
 
-      <ConfirmationModal
+      <ConfirmDialog
         confirmLabel={
           transitionTarget
             ? `Move to ${formatSportEventStatus(transitionTarget)}`
@@ -195,7 +195,7 @@ export function SportEventWorkflowCard({
         }
         confirmTestId="root-admin-sport-event-transition-confirm"
         description="This can activate or settle contests downstream and is hard to reverse."
-        errorMessage={
+        error={
           transitionMutation.isError
             ? extractErrorMessage(transitionMutation.error, {
                 fallback: 'The transition was rejected.',
@@ -212,7 +212,7 @@ export function SportEventWorkflowCard({
         tone="danger"
       />
 
-      <ConfirmationModal
+      <ConfirmDialog
         confirmLabel={
           tournament.autoLifecycleEnabled
             ? 'Turn off automatic lifecycle'
@@ -220,7 +220,7 @@ export function SportEventWorkflowCard({
         }
         confirmTestId="root-admin-sport-event-auto-confirm"
         description={`The background scheduler only advances a ${event.one} while automatic lifecycle is on.`}
-        errorMessage={
+        error={
           autoMutation.isError
             ? extractErrorMessage(autoMutation.error, {
                 fallback: 'The change was rejected.',

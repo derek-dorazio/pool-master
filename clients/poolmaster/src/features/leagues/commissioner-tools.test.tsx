@@ -4,6 +4,7 @@ import { MemoryRouter, Route, Routes, useLocation, useNavigate } from 'react-rou
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { AuthProvider } from '@/features/auth/auth-provider';
+import { Toaster } from '@/features/shared/ui';
 import { QueryKeys } from '@/lib/query-keys';
 import { CommissionerRouteGuard, MemberRouteGuard } from '@/routes/route-guards';
 import { EditChampionshipSettingsPage } from '@/features/championships/edit-championship-settings-page';
@@ -106,6 +107,7 @@ function renderCommissionerTools(path: string | string[] = '/league/BIGDAWGS/adm
             <Route element={<div data-testid="manage-leagues-page" />} path="/manage/leagues" />
             <Route element={<div data-testid="welcome-page" />} path="/welcome" />
           </Routes>
+          <Toaster />
         </MemoryRouter>
       </AuthProvider>
     </QueryClientProvider>,

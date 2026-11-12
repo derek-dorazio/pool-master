@@ -71,6 +71,22 @@ Use those conventions as the starting point, but bias toward a consumer app:
 - Menus should contain quick actions or quick switching, not miniature pages.
 - Dialogs should stay focused on a single task with clear primary and secondary
   actions.
+- **Dialogs and save feedback** (#1599). Every dialog is one of four shared
+  types, never a hand-built `Modal` (`poolmaster/no-raw-modal` enforces it):
+  - **`FormModal`** to edit something; **`ConfirmDialog`** for yes/no, danger
+    toned when the action destroys or removes, with an optional type-to-confirm
+    box; **`PickerModal`** to choose from a list; **`ReadOnlyDetailModal`** to
+    look only.
+  - A successful save closes the dialog, the page shows the new value at once
+    (the cache is updated, no reload), and a short toast confirms it ("Profile
+    saved"). No green success box on the page or in the dialog.
+  - The exception is a result the person must use next, such as an invite whose
+    email could not be sent: it stays on the page as a `Notice` (info or
+    warning) or a row with a `CopyButton`, never a green box.
+  - A failure stays inside the dialog as a red `Notice` above the buttons, and
+    the dialog stays open.
+  - No description line under a dialog's title unless it says what will happen
+    ("Sam Lee will no longer be an owner of Incubus").
 - Do not overload compact selector rows with extra icons or multiple competing
   status indicators when space is tight.
 - In constrained navigation components, use subtle visual treatment for status:

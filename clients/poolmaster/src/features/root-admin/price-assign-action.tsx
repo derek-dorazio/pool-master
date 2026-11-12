@@ -13,7 +13,7 @@ import {
 import { autoAssignEventPrices } from '@/lib/api';
 import {
   Button,
-  ConfirmationModal,
+  ConfirmDialog,
   FormField,
   Input,
   Select,
@@ -157,11 +157,11 @@ export function PriceAssignAction({
       >
         Auto-assign prices
       </Button>
-      <ConfirmationModal
+      <ConfirmDialog
         confirmLabel={current ? 'Replace prices' : 'Assign prices'}
         confirmTestId="root-admin-tier-auto-prices-confirm"
         description={`Every active ${participant.one} is priced from the best seed down, ${participant.many} with no seed last. Manual prices are replaced; tiers are untouched. You can price again until the ${event.one} is released.`}
-        errorMessage={
+        error={
           mutation.isError
             ? extractErrorMessage(mutation.error, { fallback: 'We could not assign prices.' })
             : parsed?.error ?? undefined
@@ -207,7 +207,7 @@ export function PriceAssignAction({
             </p>
           ) : null}
         </div>
-      </ConfirmationModal>
+      </ConfirmDialog>
     </>
   );
 }
