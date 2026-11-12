@@ -8,7 +8,7 @@
  *
  * Follows the import, not the name: `Modal` imported under any local name from the shared UI
  * (or its `modal` module), and Radix's dialog parts used directly (`Dialog.Root`, or `Root`
- * imported from `@radix-ui/react-dialog`) are all caught.
+ * or its alias `Dialog` imported from `@radix-ui/react-dialog`) are all caught.
  */
 const SHARED_UI_SOURCE = /(?:^|\/)shared\/ui(?:\/modal)?$|^\.\/modal$/;
 const RADIX_DIALOG_SOURCE = '@radix-ui/react-dialog';
@@ -45,7 +45,7 @@ export default {
           for (const specifier of node.specifiers) {
             if (specifier.type === 'ImportNamespaceSpecifier' || specifier.type === 'ImportDefaultSpecifier') {
               radixNamespaces.add(specifier.local.name);
-            } else if (specifier.type === 'ImportSpecifier' && specifier.imported.name === 'Root') {
+            } else if (specifier.type === 'ImportSpecifier' && (specifier.imported.name === 'Root' || specifier.imported.name === 'Dialog')) {
               radixRoots.add(specifier.local.name);
             }
           }

@@ -253,6 +253,11 @@ ruleTester.run('no-raw-modal', noRawModal, {
       code: "import { Root as DialogRoot } from '@radix-ui/react-dialog';\n<DialogRoot open>x</DialogRoot>;",
       errors: [{ messageId: 'rawModal' }],
     },
+    {
+      // Radix also exports its Root as `Dialog`.
+      code: "import { Dialog } from '@radix-ui/react-dialog';\n<Dialog open>x</Dialog>;",
+      errors: [{ messageId: 'rawModal' }],
+    },
   ],
 });
 
