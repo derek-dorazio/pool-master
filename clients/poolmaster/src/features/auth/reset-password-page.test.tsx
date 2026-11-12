@@ -72,7 +72,8 @@ describe('ResetPasswordPage', () => {
 
     fillAndSubmit('Recovered-Pass2', 'Recovered-Pass2');
 
-    expect(await screen.findByText('Your password is reset. Sign in with your new password.')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Password reset' })).toBeInTheDocument();
+    expect(screen.getByTestId('reset-password-done')).toHaveTextContent('Sign in with your new password.');
     expect(confirmPasswordResetMock).toHaveBeenCalledWith(expect.objectContaining({
       body: { token: 'link-token-123', newPassword: 'Recovered-Pass2', confirmNewPassword: 'Recovered-Pass2' },
     }));
@@ -93,7 +94,8 @@ describe('ResetPasswordPage', () => {
 
     fillAndSubmit('Recovered-Pass2', 'Recovered-Pass2');
 
-    expect(await screen.findByText('Your password is reset. Sign in with your new password.')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Password reset' })).toBeInTheDocument();
+    expect(screen.getByTestId('reset-password-done')).toHaveTextContent('Sign in with your new password.');
     expect(authState.clearSession).toHaveBeenCalledTimes(1);
   });
 
@@ -105,14 +107,15 @@ describe('ResetPasswordPage', () => {
 
     fillAndSubmit('Recovered-Pass2', 'Recovered-Pass2');
 
-    expect(await screen.findByText('This reset link has expired or has already been used.')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'This link has expired' })).toBeInTheDocument();
+    expect(screen.getByTestId('reset-password-dead-link')).toHaveAttribute('data-kind', 'expired');
     expect(screen.getByRole('link', { name: 'Send a new link' })).toHaveAttribute('href', '/forgot-password');
   });
 
   it('shows the dead-link state straight away when the link carries no token', () => {
     renderPage('/reset-password');
 
-    expect(screen.getByText('This reset link has expired or has already been used.')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'This link has expired' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Set new password' })).not.toBeInTheDocument();
   });
 

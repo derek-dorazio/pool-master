@@ -11,25 +11,33 @@ import {
 } from "react";
 import { Button } from "./button";
 import { cn } from "./class-names";
+import { HelpTip } from "./help-tip";
 
 type FormFieldProps = {
   children: ReactNode;
   className?: string;
   error?: ReactNode;
+  /** How the field works, behind a (?) after the label: never a sentence under the field. */
+  help?: ReactNode;
+  /** One short line about format or result only. */
   helperText?: ReactNode;
   id?: string;
   label: ReactNode;
   labelAddon?: ReactNode;
+  /** Says "(optional)" after the label. A required field carries no mark. */
+  optional?: boolean;
 };
 
 export function FormField({
   children,
   className,
   error,
+  help,
   helperText,
   id,
   label,
   labelAddon,
+  optional = false,
 }: FormFieldProps) {
   const generatedId = useId();
   const fieldId = id ?? generatedId;
@@ -55,9 +63,17 @@ export function FormField({
   return (
     <div className={cn("space-y-2", className)}>
       <div className="flex items-center justify-between gap-3">
-        <label className="text-sm font-medium" htmlFor={fieldId}>
-          {label}
-        </label>
+        <span className="flex items-center gap-1.5">
+          <label className="text-sm font-medium" htmlFor={fieldId}>
+            {label}
+            {optional ? <span className="font-normal text-muted-foreground"> (optional)</span> : null}
+          </label>
+          {help ? (
+            <HelpTip label={`About ${typeof label === "string" ? label : "this field"}`} testId={`${fieldId}-help`}>
+              {help}
+            </HelpTip>
+          ) : null}
+        </span>
         {labelAddon ? (
           <div className="text-xs text-muted-foreground">{labelAddon}</div>
         ) : null}

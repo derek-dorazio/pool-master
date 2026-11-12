@@ -15,6 +15,7 @@ import {
   SettingsRow,
   SettingsRows,
   useDisplayPreferences,
+  WebAddressBox,
 } from '@/features/shared/ui';
 import { describePointsTable } from '@/features/championships/cup-settings-view';
 import { LeaguePaymentsSection } from '@/features/billing/payment-history-sections';
@@ -43,6 +44,7 @@ import {
   buildLeagueAdminEventEmailsEditPath,
   buildLeagueAdminPlanPath,
   buildLeagueAdminTeamsPath,
+  buildLeagueWebAddress,
 } from './league-routing';
 import { useLeagueContext } from './use-league-context';
 import { useLeagueMembersQuery } from './use-league-members-query';
@@ -171,9 +173,9 @@ export function LeagueSettingsPage() {
             value={league.description?.trim() || <span className="text-muted-foreground">No description</span>}
           />
           <SettingsRow
-            action={<span className="text-xs text-muted-foreground">Permanent</span>}
-            label="League code"
-            value={<span className="font-mono">{league.leagueCode}</span>}
+            label="League web address"
+            testId="league-settings-web-address"
+            value={<WebAddressBox isLive testId="league-settings-address" url={buildLeagueWebAddress(league.leagueCode)} />}
           />
           <SettingsRow
             action={(

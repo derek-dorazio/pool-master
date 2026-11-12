@@ -74,7 +74,8 @@ describe('UndoEmailChangePage', () => {
 
     putBack();
 
-    expect(await screen.findByTestId('undo-email-change-done')).toHaveTextContent('Your account uses your old email address again. Everyone is signed out of it, and its old password no longer works. Set a new password to sign in.');
+    expect(await screen.findByTestId('undo-email-change-done')).toHaveTextContent('Everyone is signed out and the old password no longer works. Set a new one to sign in.');
+    expect(screen.getByRole('heading', { name: 'Your email address is back' })).toBeInTheDocument();
     expect(undoEmailChangeMock).toHaveBeenCalledWith(expect.objectContaining({ body: { token: 'undo-token-123' } }));
     expect(screen.getByRole('link', { name: 'Set a new password' })).toHaveAttribute('href', '/forgot-password');
   });
@@ -98,14 +99,15 @@ describe('UndoEmailChangePage', () => {
 
     putBack();
 
-    expect(await screen.findByText('This link has expired or has already been used.')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'This link has expired' })).toBeInTheDocument();
+    expect(screen.getByTestId('undo-email-change-dead-link')).toHaveAttribute('data-kind', 'expired');
     expect(screen.queryByRole('button', { name: 'Put my address back' })).not.toBeInTheDocument();
   });
 
   it('shows the dead-link state straight away when the link carries no token', () => {
     renderPage('/undo-email-change');
 
-    expect(screen.getByText('This link has expired or has already been used.')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'This link has expired' })).toBeInTheDocument();
   });
 
   it('says so, and keeps the button, when another account has the old address now', async () => {

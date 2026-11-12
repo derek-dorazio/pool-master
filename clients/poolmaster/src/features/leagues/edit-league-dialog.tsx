@@ -129,9 +129,9 @@ function EditLeagueForm({ league, onCancel, save }: { league: LeagueDto; onCance
 
         <FormField
           error={form.formState.errors.description?.message}
-          helperText="Optional."
           id="edit-league-description"
           label="Description"
+          optional
         >
           <Textarea
             data-testid="edit-league-description"

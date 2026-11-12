@@ -124,7 +124,6 @@ test('an owner renames their squad, changes its icon and adds a co-owner by invi
       // the name field makes when it loses focus.
       await commissioner.getByTestId('create-league-code').fill(run.leagueCode);
       await commissioner.getByTestId('create-league-name').fill(run.leagueName);
-      await commissioner.getByTestId('create-league-next').click();
       const created = await submitAndRead<{ league: { id: string } }>(
         commissioner,
         'create-league-submit',

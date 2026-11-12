@@ -249,7 +249,7 @@ describe('League settings', () => {
     const general = within(await screen.findByTestId('league-settings-general'));
     expect(general.getByText('Big Dawgs')).toBeInTheDocument();
     expect(general.getByText('A test league')).toBeInTheDocument();
-    expect(general.getByText('BIGDAWGS')).toBeInTheDocument();
+    expect(general.getByText(`${window.location.host}/league/BIGDAWGS`)).toBeInTheDocument();
     expect(await general.findByText('Casey Commissioner')).toBeInTheDocument();
     expect(general.queryByText('Morgan Member')).not.toBeInTheDocument();
     expect(general.getByRole('link', { name: 'Edit' })).toHaveAttribute('href', '/league/BIGDAWGS/admin?edit=general');
@@ -282,6 +282,18 @@ describe('League settings', () => {
     await waitFor(() => expect(commissioners).toHaveTextContent('Avery Teamless, Casey Commissioner'));
     expect(commissioners).not.toHaveTextContent('Former Commissioner');
     expect(listLeagueSquadsMock).not.toHaveBeenCalled();
+  });
+
+  it('shows the league web address as a live link that opens in a new tab, with Copy', async () => {
+    primeMocks();
+    renderCommissionerTools();
+
+    const row = within(await screen.findByTestId('league-settings-web-address'));
+    expect(row.getByText('League web address')).toBeInTheDocument();
+    const link = row.getByRole('link', { name: /\/league\/BIGDAWGS$/ });
+    expect(link).toHaveAttribute('href', `${window.location.origin}/league/BIGDAWGS`);
+    expect(link).toHaveAttribute('target', '_blank');
+    expect(row.getByRole('button', { name: 'Copy' })).toBeInTheDocument();
   });
 
   it('inactivates the league only after the commissioner confirms', async () => {

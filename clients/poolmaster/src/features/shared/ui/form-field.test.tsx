@@ -29,6 +29,35 @@ describe("pool-master-3lo.4: shared form field primitives", () => {
     );
   });
 
+  it("marks an optional field (optional) in its label, and a required one not at all", () => {
+    render(
+      <>
+        <FormField id="description" label="Description" optional>
+          <Input />
+        </FormField>
+        <FormField id="name" label="League name">
+          <Input />
+        </FormField>
+      </>,
+    );
+
+    expect(screen.getByLabelText("Description (optional)")).toBeInTheDocument();
+    expect(screen.getByLabelText("League name")).toBeInTheDocument();
+    expect(screen.queryByText(/League name \(optional\)/)).not.toBeInTheDocument();
+  });
+
+  it("puts how a field works behind a (?) after its label, not under the field", () => {
+    render(
+      <FormField help="It can't be changed later." id="code" label="League web address">
+        <Input />
+      </FormField>,
+    );
+
+    expect(screen.getByTestId("code-help")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "About League web address" })).toBeInTheDocument();
+    expect(screen.queryByText("It can't be changed later.")).not.toBeInTheDocument();
+  });
+
   it("rule: shares control styling across input, select, and textarea", () => {
     render(
       <>

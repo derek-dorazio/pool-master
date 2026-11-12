@@ -46,7 +46,8 @@ describe('EmailUnsubscribePage', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Stop these emails' }));
 
-    expect(await screen.findByText(/You won't get live standings emails from any of your leagues/)).toBeInTheDocument();
+    expect(await screen.findByText('No more live standings emails from any of your leagues.')).toBeInTheDocument();
+    expect(screen.getByTestId('email-unsubscribe-done')).toHaveAttribute('data-kind', 'done');
     expect(unsubscribeFromEmailMock).toHaveBeenCalledWith(expect.objectContaining({ query: { token: 'link-token-123' } }));
     expect(screen.getByRole('link', { name: 'Email notifications' })).toHaveAttribute('href', '/my-account');
   });

@@ -1,20 +1,11 @@
-import { type ReactNode } from "react";
 import { undoEmailChange } from "@/lib/api";
 import { extractErrorMessage, hasErrorCode, throwApiError } from "@/lib/errors";
 import { getLogger } from "@/lib/logger";
 import { useInvalidatingMutation } from "@/lib/mutation-hooks";
-import { Notice, Button, LinkButton, SectionCard } from "@/features/shared/ui";
+import { Button, LinkButton, Notice, StatusPage } from "@/features/shared/ui";
 import { useAuth } from "./auth-context";
 import { FORGOT_PASSWORD_PATH } from "./auth-paths";
 import { useLinkToken } from "./use-link-token";
-
-function UndoTile({ children, title }: { children: ReactNode; title: string }) {
-  return (
-    <SectionCard className="mx-auto max-w-md" padded title={title}>
-      {children}
-    </SectionCard>
-  );
-}
 
 /**
  * Puts back an account's old email address from the link in the "your email address was changed"
@@ -52,33 +43,49 @@ export function UndoEmailChangePage() {
 
   if (!token || hasErrorCode(undoMutation.error, "EMAIL_CHANGE_UNDO_LINK_INVALID")) {
     return (
-      <UndoTile title="Put your email address back">
-        <p className="text-sm text-muted-foreground" data-testid="undo-email-change-link-invalid">
-          This link has expired or has already been used.
-        </p>
-      </UndoTile>
+      <StatusPage
+        body="Links to put an address back work once, for a short time."
+        bodyTestId="undo-email-change-link-invalid"
+        kind="expired"
+        testId="undo-email-change-dead-link"
+        title="This link has expired"
+      />
     );
   }
 
   if (undoMutation.isSuccess) {
     return (
-      <UndoTile title="Your email address is back">
-        <p className="text-sm text-muted-foreground" data-testid="undo-email-change-done">
-          {"Your account uses your old email address again. Everyone is signed out of it, and its old password no longer works. Set a new password to sign in."}
-        </p>
-        <LinkButton data-testid="undo-email-change-reset-password" to={FORGOT_PASSWORD_PATH}>
-          Set a new password
-        </LinkButton>
-      </UndoTile>
+      <StatusPage
+        action={(
+          <LinkButton data-testid="undo-email-change-reset-password" to={FORGOT_PASSWORD_PATH}>
+            Set a new password
+          </LinkButton>
+        )}
+        body="Everyone is signed out and the old password no longer works. Set a new one to sign in."
+        bodyTestId="undo-email-change-done"
+        kind="done"
+        testId="undo-email-change-done-page"
+        title="Your email address is back"
+      />
     );
   }
 
   return (
-    <UndoTile title="Put your email address back">
-      <p className="text-sm text-muted-foreground">
-        Your account goes back to the email address this link was sent to. Everyone is signed out of
-        it, you included, and its password is cleared, so you&apos;ll set a new one.
-      </p>
+    <StatusPage
+      action={(
+        <Button
+          data-testid="undo-email-change-submit"
+          disabled={undoMutation.isPending}
+          onClick={() => undoMutation.mutate(token)}
+        >
+          {undoMutation.isPending ? "Putting it back..." : "Put my address back"}
+        </Button>
+      )}
+      body="Everyone is signed out, you included, and you'll set a new password."
+      kind="confirm"
+      testId="undo-email-change-confirm"
+      title="Put your email address back"
+    >
       {undoMutation.isError ? (
         <Notice data-testid="undo-email-change-error" tone="danger">
           {extractErrorMessage(undoMutation.error, {
@@ -90,13 +97,6 @@ export function UndoEmailChangePage() {
           })}
         </Notice>
       ) : null}
-      <Button
-        data-testid="undo-email-change-submit"
-        disabled={undoMutation.isPending}
-        onClick={() => undoMutation.mutate(token)}
-      >
-        {undoMutation.isPending ? "Putting it back..." : "Put my address back"}
-      </Button>
-    </UndoTile>
+    </StatusPage>
   );
 }

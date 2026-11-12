@@ -110,7 +110,6 @@ test('a commissioner signs up, creates a league and starts a contest on a phone 
     await expectNoZoomingFields(page);
     await page.getByTestId('create-league-code').fill(leagueCode);
     await page.getByTestId('create-league-name').fill(leagueName);
-    await page.getByTestId('create-league-next').click();
     await page.getByTestId('create-league-submit').click();
     await expect(page.getByTestId('league-home')).toBeVisible();
     await expect(page.getByTestId('league-selector-toggle')).toBeVisible();

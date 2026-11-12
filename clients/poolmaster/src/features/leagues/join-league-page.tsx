@@ -20,7 +20,8 @@ import {
   Tile,
 } from '@/features/shared/ui';
 import { InvitationContextCard } from './invitation-context-card';
-import { describeUnusableInvitation } from './unusable-invitation';
+import { describeUnusableInvitation, UNKNOWN_INVITATION } from './unusable-invitation';
+import { InvitationStatusPage } from './invitation-status-page';
 import {
   buildInvitePath,
   buildLeaguePath,
@@ -35,7 +36,7 @@ import { getTeamIconOption, TEAM_ICON_OPTIONS } from '@/features/teams/team-icon
 import { TeamAvatar } from '@/features/teams/team-avatar';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
-import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
+import { ApiError, extractErrorMessage, hasErrorCode, throwApiError } from '@/lib/errors';
 import type { ParsedRouteState } from '@/routes/route-state';
 
 export function JoinLeaguePage() {
@@ -241,7 +242,13 @@ function JoinLeagueByInvite({ inviteCode }: { inviteCode: string }) {
   }, [inviteCode, isAuthenticated]);
 
   const selectedIcon = getTeamIconOption(selectedIconKey);
-  const unusableInvitationMessage = describeUnusableInvitation(invitationQuery.data?.status);
+  const unusableInvitation = hasErrorCode(invitationQuery.error, 'LEAGUE_INVITATION_NOT_FOUND')
+    ? UNKNOWN_INVITATION
+    : describeUnusableInvitation(invitationQuery.data?.status);
+
+  if (unusableInvitation) {
+    return <InvitationStatusPage invitation={unusableInvitation} />;
+  }
 
   if (redirectMessage) {
     return (
@@ -318,7 +325,6 @@ function JoinLeagueByInvite({ inviteCode }: { inviteCode: string }) {
               title="Ready to join"
             />
           ) : null}
-          {unusableInvitationMessage ? <p>{unusableInvitationMessage}</p> : null}
           {acceptMutation.isPending ? <p>Accepting invitation...</p> : null}
           {acceptMutation.isError ? <p>{extractErrorMessage(acceptMutation.error, { fallback: 'We could not accept this invitation. Please try again.' })}</p> : null}
           {acceptMutation.isSuccess ? <p>Invitation accepted. Redirecting you to the league...</p> : null}
@@ -364,7 +370,7 @@ function JoinLeagueByInvite({ inviteCode }: { inviteCode: string }) {
         </SectionCard>
       </div>
 
-      {invitationQuery.data && !unusableInvitationMessage ? (
+      {invitationQuery.data ? (
         <div className="mt-5 flex gap-3">
           <Button
             data-testid="invite-accept"

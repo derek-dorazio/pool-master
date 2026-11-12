@@ -343,7 +343,6 @@ export function AuthHomePage() {
                   {...loginForm.register("password")}
                   autoComplete="current-password"
                   data-testid="auth-login-password"
-                  placeholder="Enter your password"
                 />
               </FormField>
               <Link

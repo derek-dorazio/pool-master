@@ -16,6 +16,12 @@ const { mockLogger } = vi.hoisted(() => {
   return { mockLogger };
 });
 
+const { authState } = vi.hoisted(() => ({ authState: { isAuthenticated: false } }));
+
+vi.mock('@/features/auth/auth-context', () => ({
+  useAuth: () => authState,
+}));
+
 vi.mock('@/lib/logger', () => ({
   getOrCreateClientTraceId: () => 'test-trace-id',
   logger: mockLogger,
@@ -32,20 +38,35 @@ describe('NotFoundPage', () => {
     mockLogger.child.mockClear();
   });
 
-  it('renders the fallback route and logs the page-load milestone', () => {
+  it('tells a signed-out visitor the page was not found, offers Sign in, and logs the page load', () => {
+    authState.isAuthenticated = false;
     render(
       <MemoryRouter>
         <NotFoundPage />
       </MemoryRouter>,
     );
 
-    expect(screen.getByText("We couldn't find that page.")).toBeVisible();
-    expect(screen.getByRole('link', { name: 'Back to sign in' })).toHaveAttribute('href', '/');
+    expect(screen.getByRole('heading', { level: 1, name: 'Page not found' })).toBeVisible();
+    expect(screen.getByText('The link may be old or mistyped.')).toBeVisible();
+    expect(screen.getByTestId('not-found-page')).toHaveAttribute('data-kind', 'notFound');
+    expect(screen.getByRole('link', { name: 'Sign in' })).toHaveAttribute('href', '/');
     expect(mockLogger.info).toHaveBeenCalledWith(
       expect.objectContaining({
         action: 'route.notFound.loaded',
       }),
       expect.any(String),
     );
+  });
+
+  it('sends a signed-in member to their leagues instead of to sign in', () => {
+    authState.isAuthenticated = true;
+    render(
+      <MemoryRouter>
+        <NotFoundPage />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole('link', { name: 'Go to my leagues' })).toHaveAttribute('href', '/welcome');
+    expect(screen.queryByRole('link', { name: 'Sign in' })).not.toBeInTheDocument();
   });
 });
