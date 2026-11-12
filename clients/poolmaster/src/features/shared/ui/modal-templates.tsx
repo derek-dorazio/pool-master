@@ -287,7 +287,7 @@ export function PickerModal<TItem extends PickerModalItem>({
             return (
               <button
                 className={cn(
-                  "flex items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-left transition",
+                  "flex items-center justify-between gap-3 rounded-lg border px-4 py-3 text-left transition",
                   selected
                     ? "border-primary bg-primary/10 text-foreground"
                     : "border-border bg-card text-foreground hover:bg-muted/40",
@@ -310,7 +310,7 @@ export function PickerModal<TItem extends PickerModalItem>({
             );
           })
         ) : (
-          <p className="rounded-2xl border border-border bg-background px-4 py-5 text-sm text-muted-foreground">
+          <p className="rounded-lg border border-border bg-background px-4 py-5 text-sm text-muted-foreground">
             {emptyMessage}
           </p>
         )}
@@ -367,7 +367,7 @@ export function ReadOnlyDetailModal({
       title={title}
     >
       {details?.length ? (
-        <dl className="grid gap-3 rounded-2xl border border-border bg-background p-4 sm:grid-cols-2">
+        <dl className="grid gap-3 rounded-lg border border-border bg-background p-4 sm:grid-cols-2">
           {details.map((detail) => (
             <div key={detail.id}>
               <dt className="text-xs uppercase text-muted-foreground">
@@ -382,7 +382,7 @@ export function ReadOnlyDetailModal({
       ) : null}
       <div
         className={cn(
-          "max-h-96 overflow-auto rounded-2xl border border-border bg-background p-4 text-sm text-foreground",
+          "max-h-96 overflow-auto rounded-lg border border-border bg-background p-4 text-sm text-foreground",
           details?.length ? "mt-4" : null,
         )}
       >

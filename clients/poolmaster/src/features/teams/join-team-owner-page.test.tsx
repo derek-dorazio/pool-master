@@ -123,6 +123,12 @@ describe('JoinTeamOwnerPage', () => {
     // Signing in stays available for somebody who already has an account; what is gone is the
     // "create an account and come back" round trip.
     expect(screen.getByTestId('team-invite-sign-in')).toHaveAttribute('href', '/');
+    // The registration form and the team being joined are titled sections, not hand-drawn boxes,
+    // and the note about the invited email sits behind the section's (?).
+    expect(screen.getByRole('region', { name: 'Create your account' })).toHaveAttribute('data-testid', 'team-invite-register');
+    expect(screen.getByTestId('team-invite-register-help')).toBeInTheDocument();
+    expect(screen.queryByText(/uses the email this invitation was sent to/)).not.toBeInTheDocument();
+    expect(screen.getByRole('region', { name: "What you're joining" })).toHaveClass('rounded-lg');
     expect(screen.queryByTestId('team-invite-create-account')).not.toBeInTheDocument();
     // No email field: the account uses the invited address, which the server reads off the
     // invitation. That is the security property, so its absence is asserted.

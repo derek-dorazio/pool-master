@@ -11,6 +11,7 @@ import {
   FormField,
   Input,
   Modal,
+  Notice,
   Text,
   Textarea,
   Tile,
@@ -355,7 +356,7 @@ export function CreateLeagueModal({
           </>
         ) : (
           <section className="space-y-4">
-            <Tile padding="sm" radius="lg" variant="subtle">
+            <Tile padding="sm" radius="sm" variant="subtle">
               <Text as="div" variant="label">
                 Review
               </Text>
@@ -390,7 +391,7 @@ export function CreateLeagueModal({
             <Tile
               className="bg-muted/30"
               padding="sm"
-              radius="lg"
+              radius="sm"
             >
               <Text as="p" variant="meta">
                 Your league is private. After it is created, invite members from
@@ -401,12 +402,9 @@ export function CreateLeagueModal({
         )}
 
         {createLeagueMutation.isError ? (
-          <div
-            className="rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"
-            role="alert"
-          >
+          <Notice tone="danger">
             {extractErrorMessage(createLeagueMutation.error, { fallback: 'We could not create your league. Please try again.' })}
-          </div>
+          </Notice>
         ) : null}
 
         <div className="flex flex-wrap justify-end gap-3">

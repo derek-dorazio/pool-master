@@ -1,6 +1,6 @@
 import * as Dialog from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useId, useRef, type ReactNode } from "react";
 import { Button } from "./button";
 import { cn } from "./class-names";
 import { Heading } from "./heading";
@@ -48,6 +48,10 @@ export function Modal({
   titleId,
 }: ModalProps) {
   const returnFocusRef = useRef<HTMLElement | null>(null);
+  // Without an id of its own the description still has to name the dialog for screen readers:
+  // `aria-describedby` below replaces Radix's own link to it.
+  const generatedDescriptionId = useId();
+  const resolvedDescriptionId = descriptionId ?? generatedDescriptionId;
 
   useEffect(() => {
     if (!open || typeof document === "undefined") {
@@ -90,7 +94,7 @@ export function Modal({
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-background/70 backdrop-blur-sm" />
         <Dialog.Content
-          aria-describedby={description ? descriptionId : undefined}
+          aria-describedby={description ? resolvedDescriptionId : undefined}
           className={cn(
             // dvh, not vh: on iOS Safari 100vh counts the area under the toolbar, so a tall dialog's
             // buttons would sit behind it.
@@ -110,7 +114,7 @@ export function Modal({
               {description ? (
                 <Dialog.Description
                   className="text-sm text-muted-foreground"
-                  id={descriptionId}
+                  id={resolvedDescriptionId}
                 >
                   {description}
                 </Dialog.Description>

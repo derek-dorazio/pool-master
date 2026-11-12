@@ -49,6 +49,7 @@ const DOC_ONLY_FILES = [
   // suites because of it. Scripts that are code stay in EVERYTHING_PREFIXES below.
   'scripts/text-style-baseline.json',
   'scripts/titled-tile-baseline.json',
+  'scripts/card-corner-baseline.json',
   'scripts/duplicate-baseline.json',
   'AGENTS.md',
   'CLAUDE.md',

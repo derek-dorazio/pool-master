@@ -1,14 +1,15 @@
 import { useState } from 'react';
-import { Link } from 'react-router';
 import { changeMemberRole, removeSquadOwner } from '@/lib/api';
 import {
   Button,
+  ConfirmDialog,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuItemText,
   DropdownMenuTriggerSlot,
   InlineError,
+  LinkButton,
   Modal,
   Text,
 } from '@/features/shared/ui';
@@ -100,7 +101,6 @@ export function TeamOwnerActionMenu({
   const removeError = removeOwnerMutation.error
     ? extractErrorMessage(removeOwnerMutation.error, { fallback: 'We could not remove that owner right now.' })
     : null;
-  const actionIsPending = changeRoleMutation.isPending || removeOwnerMutation.isPending;
   const dialogTitle =
     activeAction === 'promote'
       ? 'Promote to commissioner'
@@ -108,13 +108,35 @@ export function TeamOwnerActionMenu({
         ? 'Demote to member'
         : 'Remove owner';
   const dialogTestId = `${testPrefix}-dialog-${teamId}-${ownerUserId}`;
+  const dialogDescription =
+    activeAction === 'promote'
+      ? `${ownerName} will gain commissioner authority for this league.`
+      : activeAction === 'demote'
+        ? `${ownerName} will lose commissioner authority and return to member status in this league.`
+        : `${ownerName} will stop being an owner and will leave this league.`;
+
+  function closeDialog() {
+    setActiveAction(null);
+    changeRoleMutation.reset();
+    removeOwnerMutation.reset();
+  }
+
+  const sharedDialogProps = {
+    closeLabel: `Close ${dialogTitle}`,
+    description: dialogDescription,
+    onOpenChange: (open: boolean) => {
+      if (!open) closeDialog();
+    },
+    open: activeAction !== null,
+    testId: dialogTestId,
+    title: dialogTitle,
+  };
 
   return (
     <>
       <DropdownMenu>
         <DropdownMenuTriggerSlot>
           <Button
-            className="rounded-2xl px-4 py-2"
             data-testid={`${testPrefix}-trigger-${teamId}-${ownerUserId}`}
             type="button"
             variant="secondary"
@@ -148,111 +170,82 @@ export function TeamOwnerActionMenu({
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <Modal
-        closeLabel={`Close ${dialogTitle}`}
-        descriptionId={`${dialogTestId}-description`}
-        description={
-          activeAction === 'promote'
-            ? `${ownerName} will gain commissioner authority for this league.`
-            : activeAction === 'demote'
-              ? `${ownerName} will lose commissioner authority and return to member status in this league.`
-              : `${ownerName} will stop being an owner and will leave this league.`
-        }
-        onOpenChange={(open) => {
-          if (!open) {
-            setActiveAction(null);
-            changeRoleMutation.reset();
-            removeOwnerMutation.reset();
-          }
-        }}
-        open={activeAction !== null}
-        size="sm"
-        testId={dialogTestId}
-        title={dialogTitle}
-      >
-        {activeAction === 'promote' ? (
+      {activeAction === 'promote' || activeAction === 'demote' ? (
+        <ConfirmDialog
+          {...sharedDialogProps}
+          confirmLabel={activeAction === 'promote' ? 'Promote' : 'Demote'}
+          confirmTestId={`${testPrefix}-confirm-${activeAction}-${teamId}-${ownerUserId}`}
+          isPending={changeRoleMutation.isPending}
+          onCancel={closeDialog}
+          onConfirm={() =>
+            void changeRoleMutation.mutateAsync(activeAction === 'promote' ? 'COMMISSIONER' : 'MEMBER').catch(() => undefined)}
+          pendingLabel={activeAction === 'promote' ? 'Promoting...' : 'Demoting...'}
+        >
           <div className="space-y-4">
             <Text as="p" variant="meta">
-              This change is league-scoped and does not alter the user&apos;s account-level permissions.
+              {activeAction === 'promote'
+                ? 'This change is league-scoped and does not alter the user\'s account-level permissions.'
+                : 'A league must keep at least one active commissioner.'}
             </Text>
             {roleError ? <InlineError>{roleError}</InlineError> : null}
-            <Button
-              className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
-              data-testid={`${testPrefix}-confirm-promote-${teamId}-${ownerUserId}`}
-              disabled={actionIsPending}
-              onClick={() => void changeRoleMutation.mutateAsync('COMMISSIONER').catch(() => undefined)}
-              type="button"
-            >
-              {changeRoleMutation.isPending ? 'Promoting...' : 'Promote'}
-            </Button>
           </div>
-        ) : null}
+        </ConfirmDialog>
+      ) : null}
 
-        {activeAction === 'demote' ? (
+      {activeAction === 'remove' && !removeRequiresInactivation ? (
+        <ConfirmDialog
+          {...sharedDialogProps}
+          confirmLabel="Remove as co-owner and from the league"
+          confirmTestId={`${testPrefix}-confirm-remove-${teamId}-${ownerUserId}`}
+          isPending={removeOwnerMutation.isPending}
+          onCancel={closeDialog}
+          onConfirm={() => void removeOwnerMutation.mutateAsync().catch(() => undefined)}
+          pendingLabel="Removing..."
+          tone="danger"
+        >
           <div className="space-y-4">
+            {/*
+              * #218 — this copy said "removes the owner relationship only", which stopped
+              * being true: removal now also ends their league membership, because a member
+              * with no squad is invisible on every surface that lists people in the league.
+              */}
             <Text as="p" variant="meta">
-              A league must keep at least one active commissioner.
+              This removes them as an owner and from the league. Contest history stays intact,
+              and a commissioner can invite them back — rejoining restores everything they had.
             </Text>
-            {roleError ? <InlineError>{roleError}</InlineError> : null}
-            <Button
-              className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
-              data-testid={`${testPrefix}-confirm-demote-${teamId}-${ownerUserId}`}
-              disabled={actionIsPending}
-              onClick={() => void changeRoleMutation.mutateAsync('MEMBER').catch(() => undefined)}
-              type="button"
-            >
-              {changeRoleMutation.isPending ? 'Demoting...' : 'Demote'}
-            </Button>
+            {removeError ? <InlineError>{removeError}</InlineError> : null}
           </div>
-        ) : null}
+        </ConfirmDialog>
+      ) : null}
 
-        {activeAction === 'remove' ? (
-          <div className="space-y-4">
-            {removeRequiresInactivation ? (
-              canManageLeagueRole ? (
-                <>
-                  <Text as="p" variant="meta">
-                    {ownerName} is the only active owner, so removing them means inactivating. Use Inactivate in the Danger zone on the Manage page.
-                  </Text>
-                  <Link
-                    className="inline-flex rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground transition hover:bg-muted/40"
-                    onClick={() => setActiveAction(null)}
-                    to={buildLeagueAdminTeamPath(leagueCode, teamId)}
-                  >
-                    Open the Manage page
-                  </Link>
-                </>
-              ) : (
-                <Text as="p" variant="meta">
-                  {ownerName} is the only active owner, so they can&apos;t be removed. To step away from this league, use Leave league.
-                </Text>
-              )
-            ) : (
-              <>
-                {/*
-                  * #218 — this copy said "removes the owner relationship only", which stopped
-                  * being true: removal now also ends their league membership, because a member
-                  * with no squad is invisible on every surface that lists people in the league.
-                  */}
-                <Text as="p" variant="meta">
-                  This removes them as an owner and from the league. Contest history stays intact,
-                  and a commissioner can invite them back — rejoining restores everything they had.
-                </Text>
-                {removeError ? <InlineError>{removeError}</InlineError> : null}
-                <Button
-                  className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
-                  data-testid={`${testPrefix}-confirm-remove-${teamId}-${ownerUserId}`}
-                  disabled={actionIsPending}
-                  onClick={() => void removeOwnerMutation.mutateAsync().catch(() => undefined)}
-                  type="button"
-                >
-                  {removeOwnerMutation.isPending ? 'Removing...' : 'Remove as co-owner and from the league'}
-                </Button>
-              </>
-            )}
-          </div>
-        ) : null}
-      </Modal>
+      {/*
+        * A team's only owner can't be removed here, so this dialog has nothing to confirm: a
+        * commissioner is sent to the Manage page to inactivate the team, and an owner is told to
+        * leave the league instead.
+        */}
+      {activeAction === 'remove' && removeRequiresInactivation ? (
+        <Modal
+          {...sharedDialogProps}
+          footer={canManageLeagueRole ? (
+            <>
+              <Button onClick={closeDialog} type="button" variant="secondary">Cancel</Button>
+              <LinkButton onClick={closeDialog} to={buildLeagueAdminTeamPath(leagueCode, teamId)}>
+                Open the Manage page
+              </LinkButton>
+            </>
+          ) : (
+            <Button onClick={closeDialog} type="button" variant="secondary">Close</Button>
+          )}
+          onClose={closeDialog}
+          size="sm"
+        >
+          <Text as="p" variant="meta">
+            {canManageLeagueRole
+              ? `${ownerName} is the only active owner, so removing them means inactivating. Use Inactivate in the Danger zone on the Manage page.`
+              : `${ownerName} is the only active owner, so they can't be removed. To step away from this league, use Leave league.`}
+          </Text>
+        </Modal>
+      ) : null}
     </>
   );
 }
