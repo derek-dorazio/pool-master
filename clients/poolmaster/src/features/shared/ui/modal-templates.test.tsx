@@ -118,6 +118,36 @@ describe("pool-master-3ew: shared modal templates", () => {
     await waitFor(() => expect(writeText).toHaveBeenCalledWith("{ \"status\": \"COMPLETED\" }"));
   });
 
+  it("shows a whole page unboxed in an xl read-only modal that fills a phone's screen, and boxes a payload otherwise", () => {
+    const { rerender } = render(
+      <ReadOnlyDetailModal
+        detailContent={<p>Payload</p>}
+        onCancel={vi.fn()}
+        onOpenChange={vi.fn()}
+        open
+        testId="detail"
+        title="Sync payload"
+      />,
+    );
+    expect(screen.getByTestId("detail-content")).toHaveClass("max-h-96");
+    expect(screen.getByTestId("detail")).not.toHaveClass("max-sm:h-dvh");
+
+    rerender(
+      <ReadOnlyDetailModal
+        detailContent={<p>Pick screen</p>}
+        isFullScreenOnPhone
+        onCancel={vi.fn()}
+        onOpenChange={vi.fn()}
+        open
+        size="xl"
+        testId="detail"
+        title="Preview"
+      />,
+    );
+    expect(screen.getByTestId("detail-content")).not.toHaveClass("max-h-96");
+    expect(screen.getByTestId("detail")).toHaveClass("max-sm:h-dvh", "max-w-5xl");
+  });
+
   it("pool-master-rop.62: keeps read-only detail values keyed by item identity after reorder", () => {
     const buildDetails = (order: Array<"status" | "duration">) =>
       order.map((id) => ({

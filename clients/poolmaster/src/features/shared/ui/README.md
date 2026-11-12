@@ -211,8 +211,9 @@ Use modal templates when the modal follows one of the common workflows:
   `confirmationInput` for type-to-confirm, and `error` for why the last attempt
   failed (a red `Notice` above the buttons; the dialog stays open).
 - `PickerModal` to choose an item from a list.
-- `ReadOnlyDetailModal` to look only: payloads and metadata, or (`size="sm"`) a
-  sentence on why an action isn't available.
+- `ReadOnlyDetailModal` to look only: payloads and metadata, (`size="sm"`) a
+  sentence on why an action isn't available, or (`size="xl"`, `isFullScreenOnPhone`)
+  a whole page shown unboxed, such as a pick screen's preview.
 
 Modals should use the templates for predictable footer ordering, pending state,
 scroll behavior, and error placement. Add a new template only when a workflow

@@ -1,4 +1,5 @@
 import type { ContestTemplateEventType } from '@poolmaster/shared/domain';
+import type { GamePickPreviewRequest, RosterPickPreviewRequest } from '@poolmaster/shared/dto';
 
 type QueryKeyId = string | null | undefined;
 
@@ -104,6 +105,16 @@ export const QueryKeys = {
     all: ['poolmaster', 'game-picks'] as const,
     detail: (contestId: QueryKeyId, entryId: QueryKeyId, sportEventId: QueryKeyId) =>
       ['poolmaster', 'game-picks', contestId, entryId, sportEventId] as const,
+  },
+  /**
+   * A setup's pick screen before it is saved (#1612): its rules and trial picks are the key, so
+   * each tap and each change to the form reads afresh. Nothing is written, so nothing invalidates it.
+   */
+  pickPreviews: {
+    roster: (leagueId: QueryKeyId, request: RosterPickPreviewRequest) =>
+      ['poolmaster', 'pick-preview', leagueId, 'roster', request] as const,
+    games: (leagueId: QueryKeyId, request: GamePickPreviewRequest) =>
+      ['poolmaster', 'pick-preview', leagueId, 'games', request] as const,
   },
   /** One sport league: a bracket's own round names (#706). */
   sportLeagues: {

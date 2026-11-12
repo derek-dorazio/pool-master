@@ -62,7 +62,7 @@ export function getNextSelectedParticipantIds(
 }
 
 /** A budget roster's picks after a tap: unselect a held golfer; a full roster takes no one new. */
-function getNextBudgetSelectedParticipantIds(group: SelectionGroup, participantId: string) {
+export function getNextBudgetSelectedParticipantIds(group: SelectionGroup, participantId: string) {
   if (group.selectedParticipantIds.includes(participantId)) {
     return group.selectedParticipantIds.filter((selectedParticipantId) => selectedParticipantId !== participantId);
   }

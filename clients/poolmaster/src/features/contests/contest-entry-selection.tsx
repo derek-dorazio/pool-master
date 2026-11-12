@@ -180,6 +180,7 @@ export function EditableSelectionGroup({
   group,
   isBusy,
   isExpanded,
+  isPreview = false,
   noun,
   onParticipantSelect,
   onToggle,
@@ -190,6 +191,8 @@ export function EditableSelectionGroup({
   group: SelectionGroup;
   isBusy: boolean;
   isExpanded: boolean;
+  /** A setup's preview, whose trial picks are never saved: the count says "picked". */
+  isPreview?: boolean;
   noun: SportNoun;
   onParticipantSelect: (participant: SelectionParticipant) => void;
   onToggle: () => void;
@@ -207,7 +210,7 @@ export function EditableSelectionGroup({
       trailing={(
         <>
           <Text data-testid={`contest-entry-group-count-${group.groupId}`} variant="meta">
-            {group.selectedParticipantIds.length}/{group.picksFromGroup} saved
+            {group.selectedParticipantIds.length}/{group.picksFromGroup} {isPreview ? "picked" : "saved"}
           </Text>
           <StatusBadge tone={isComplete ? "neutral" : "warning"}>{statusLabel}</StatusBadge>
         </>

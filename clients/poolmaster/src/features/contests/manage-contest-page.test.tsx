@@ -35,6 +35,7 @@ const grantContestExpansionMock = vi.fn();
 const getContestConfigurationMock = vi.fn();
 const getCurrentUserMock = vi.fn();
 const getEventMock = vi.fn();
+const previewRosterPicksMock = vi.fn();
 const getLeagueByCodeMock = vi.fn();
 const getSelectionStateMock = vi.fn();
 const getSportLeagueMock = vi.fn();
@@ -63,6 +64,7 @@ bindApiMocks({
   getContest: getContestMock,
   listLeagueSquads: listLeagueSquadsMock,
   openContest: openContestMock,
+  previewRosterPicks: previewRosterPicksMock,
   refreshToken: refreshTokenMock,
   updateContest: updateContestMock,
   updateContestConfiguration: updateContestConfigurationMock,
@@ -139,7 +141,7 @@ afterEach(() => {
   for (const mock of [
     deleteContestMock, expandContestMock, getContestExpansionMock, grantContestExpansionMock, getContestConfigurationMock, getCurrentUserMock, getEventMock, getLeagueByCodeMock,
     getSelectionStateMock, getSportLeagueMock, runContestDrawMock, setContestCupWeightMock,
-    getContestMock, listLeagueSquadsMock, openContestMock, refreshTokenMock,
+    getContestMock, listLeagueSquadsMock, openContestMock, previewRosterPicksMock, refreshTokenMock,
     updateContestConfigurationMock, updateContestMock,
   ]) {
     mock.mockReset();
@@ -779,6 +781,32 @@ describe('Commissioner tools › Contests › one contest › Edit', () => {
       expect.objectContaining({ path: { contestId: 'contest-1' }, body: { name: 'Masters Best Four' } }),
     );
     expect(await screen.findByTestId('manage-contest-page')).toBeInTheDocument();
+  });
+
+  it('previews the picks page from the rules as edited, unsaved, beside the form\'s buttons, and saves nothing', async () => {
+    primeMocks({
+      managedContest: buildManagedContest({
+        configuration: { id: 'config-1', contestId: 'contest-1', maxEntriesPerSquad: 2, selectionType: 'TIERED', picksPerTier: 1, countedScores: 4 },
+      }),
+    });
+    previewRosterPicksMock.mockResolvedValue(apiSuccess({
+      sportEventId: 'event-1', selectionType: 'TIERED', rosterSize: 6, selectionGroups: [], availableParticipantIds: [], pickCount: 0, isComplete: false, lineupSummary: null,
+    }));
+
+    renderAt('/league/BIGDAWGS/admin/contests/contest-1/edit');
+
+    fireEvent.change(await screen.findByTestId('contest-tiered-counted-scores'), { target: { value: '3' } });
+    const preview = screen.getByRole('button', { name: 'Preview picks page' });
+    expect(preview.compareDocumentPosition(screen.getByTestId('edit-contest-save')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    fireEvent.click(preview);
+
+    expect(await screen.findByTestId('pick-preview-ribbon')).toBeInTheDocument();
+    await waitFor(() => expect(previewRosterPicksMock).toHaveBeenCalledWith(expect.objectContaining({
+      path: { id: 'league-1' },
+      body: expect.objectContaining({ rules: { selectionType: 'TIERED', picksPerTier: 1, countedScores: 3 }, sportEventParticipantIds: [] }) as unknown,
+    })));
+    expect(updateContestConfigurationMock).not.toHaveBeenCalled();
+    expect(updateContestMock).not.toHaveBeenCalled();
   });
 
   it('edits a budget contest\'s golfers per entry under the event\'s cap, which it shows but does not send', async () => {

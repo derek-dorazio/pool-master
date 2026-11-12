@@ -431,6 +431,8 @@ export function useCreateContestForm(league: Pick<LeagueDto, 'id' | 'planEntitle
     parsedScoring,
     presets,
     rulesError,
+    /** The rules as they stand, or null while they don't read: what the picks preview draws. */
+    rulesConfiguration: rulesError === null ? parsedRules.configuration : null,
     salaryCap,
     scoringSettingsUi,
     selectFormat,

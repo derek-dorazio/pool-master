@@ -13,6 +13,8 @@ type ModalProps = {
   description?: ReactNode;
   descriptionId?: string;
   footer?: ReactNode;
+  /** Fills a phone's screen, for a dialog that holds a whole page (a pick screen's preview). */
+  isFullScreenOnPhone?: boolean;
   isCloseDisabled?: boolean;
   onClose?: () => void;
   onOpenChange: (open: boolean) => void;
@@ -38,6 +40,7 @@ export function Modal({
   description,
   descriptionId,
   footer,
+  isFullScreenOnPhone = false,
   isCloseDisabled = false,
   onClose,
   onOpenChange,
@@ -100,6 +103,9 @@ export function Modal({
             // buttons would sit behind it.
             "fixed left-1/2 top-1/2 z-50 max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-3xl border border-border bg-card p-5 shadow-2xl sm:rounded-4xl sm:p-6",
             modalSizeClassNames[size],
+            isFullScreenOnPhone
+              ? "max-sm:left-0 max-sm:top-0 max-sm:h-dvh max-sm:max-h-none max-sm:w-full max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-none max-sm:border-0"
+              : null,
             className,
           )}
           data-testid={testId}
