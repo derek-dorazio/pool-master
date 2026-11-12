@@ -11,7 +11,9 @@ import { useAuth } from '@/features/auth/auth-context';
 import { syncLeagueCaches } from '@/features/leagues/league-cache';
 import { buildLeagueAdminPath } from '@/features/leagues/league-routing';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
-import { Notice, Button, Chip, ErrorState, FactList, formatCount, formatDateDisplay, formatNumber, LoadingState, PageHeader, SectionCard, SectionNote, useDisplayPreferences } from '@/features/shared/ui';
+import { Notice, Button, Chip, ErrorState, FactList, formatCount, formatDateDisplay, formatNumber, HelpTip, LoadingState, PageHeader, SectionBody, SectionCard, SectionNote, SectionRow, SectionRows, useDisplayPreferences } from '@/features/shared/ui';
+import { FeatureList } from './feature-list';
+import { FeatureMark } from './feature-mark';
 import { PlanCards } from './plan-cards';
 import { buildCapUsage, buildPlanChangeEffects, NAMED_CONTEST_LIMIT } from './plan-change';
 import { PlanComparisonTable } from './plan-comparison-table';
@@ -281,17 +283,28 @@ function PlanChangeWarnings({
   return (
     <div className="space-y-3">
       {effects.entriesLimit !== null ? (
-        <Notice data-testid="league-plan-confirm-entries" tone="warning">
-          <ul className="space-y-1">
-            {named.map((contest) => (
-              <li key={contest.contestId}>{`${contest.name} has ${formatCount(contest.entryCount, 'entry', locale, 'entries')}.`}</li>
-            ))}
-            {more > 0 ? <li>{`And ${more} more.`}</li> : null}
-          </ul>
-          <p className="mt-2">
-            {`On ${label} ${effects.contestsOverEntries.length === 1 ? 'it keeps them' : 'each keeps them'} all, but takes no new entries past ${formatNumber(effects.entriesLimit, locale)}.`}
-          </p>
-        </Notice>
+        <>
+          <Notice data-testid="league-plan-confirm-entries" tone="warning">
+            {`On ${label} ${effects.contestsOverEntries.length === 1 ? 'this contest keeps its entries' : 'these contests keep their entries'}, but ${effects.contestsOverEntries.length === 1 ? 'it takes' : 'each takes'} no new entries past ${formatNumber(effects.entriesLimit, locale)}.`}
+          </Notice>
+          <SectionCard headingLevel={4} testId="league-plan-confirm-contests" title={`Over ${formatNumber(effects.entriesLimit, locale)} entries`}>
+            <SectionRows>
+              {named.map((contest) => (
+                <SectionRow
+                  key={contest.contestId}
+                  name={contest.name}
+                  testId={`league-plan-confirm-contest-${contest.contestId}`}
+                  value={formatCount(contest.entryCount, 'entry', locale, 'entries')}
+                />
+              ))}
+            </SectionRows>
+            {more > 0 ? (
+              <SectionBody>
+                <SectionNote testId="league-plan-confirm-contests-more">{`And ${more} more.`}</SectionNote>
+              </SectionBody>
+            ) : null}
+          </SectionCard>
+        </>
       ) : null}
       {effects.sportLeaguesOver ? (
         <Notice data-testid="league-plan-confirm-sport-leagues" tone="warning">
@@ -299,12 +312,17 @@ function PlanChangeWarnings({
         </Notice>
       ) : null}
       {effects.hiddenFeatures.length ? (
-        <div className="text-sm" data-testid="league-plan-confirm-hidden">
-          <p className="text-foreground">{`Hidden on ${label}, and back as they were when you move up again:`}</p>
-          <ul className="mt-1 list-disc pl-5 text-muted-foreground">
-            {buildFeatureLines(effects.hiddenFeatures, false).map((line) => <li key={line}>{line}</li>)}
-          </ul>
-        </div>
+        <FeatureList
+          features={buildFeatureLines(effects.hiddenFeatures, false)}
+          label={`Hidden on ${label}`}
+          labelAside={(
+            <HelpTip className="-my-2" label={`About features hidden on ${label}`} testId="league-plan-confirm-hidden-help">
+              They come back as they were when you move up again.
+            </HelpTip>
+          )}
+          mark={FeatureMark.REMOVED}
+          testId="league-plan-confirm-hidden"
+        />
       ) : null}
     </div>
   );

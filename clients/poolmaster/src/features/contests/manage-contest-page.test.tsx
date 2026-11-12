@@ -582,9 +582,21 @@ describe('Commissioner tools › Contests › one contest › its events', () =>
 
     expect(await screen.findByTestId('manage-contest-events-edit')).toHaveTextContent('Change events');
     const row = screen.getByTestId('manage-contest-event-row');
-    expect(row).toHaveTextContent('Events (2)');
-    const listed = within(screen.getByTestId('manage-contest-event-list')).getAllByRole('listitem');
-    expect(listed.map((item) => item.textContent.split(' · ')[0])).toEqual(['The Masters', 'PGA Championship']);
+    expect(row).toHaveTextContent('2 events, listed below');
+    const listed = within(screen.getByRole('region', { name: 'Events, in order' })).getAllByRole('listitem');
+    expect(listed.map((item) => item.textContent)).toEqual([
+      expect.stringMatching(/^The Masters.*1$/),
+      expect.stringMatching(/^PGA Championship.*2$/),
+    ]);
+  });
+
+  it('lists no separate events section for a contest on one event', async () => {
+    primeMocks();
+
+    renderAt('/league/BIGDAWGS/admin/contests/contest-1');
+
+    expect(await screen.findByTestId('manage-contest-event-row')).toHaveTextContent('The Masters');
+    expect(screen.queryByTestId('manage-contest-event-list')).not.toBeInTheDocument();
   });
 
   it('offers no way to add or change events once the contest is final', async () => {

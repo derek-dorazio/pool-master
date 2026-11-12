@@ -63,6 +63,17 @@ describe('EmailNotificationsDialog', () => {
     expect(screen.queryByTestId('email-notifications-load-error')).not.toBeInTheDocument();
   });
 
+  it('lists the categories as rows of a League emails section, each row the label of its checkbox', async () => {
+    getUserEmailPreferencesMock.mockResolvedValue({ data: { preferences: ALL_ON, emailSuppression: null } });
+    renderDialog();
+
+    const section = await screen.findByRole('region', { name: 'League emails' });
+    const rows = within(section).getAllByRole('listitem');
+    expect(rows).toHaveLength(ALL_ON.length);
+    expect(screen.getByTestId('email-notifications-row-RESULTS').tagName).toBe('LABEL');
+    expect(within(screen.getByTestId('email-notifications-row-RESULTS')).getByRole('checkbox')).toBe(screen.getByTestId('email-notifications-RESULTS'));
+  });
+
   it('turns a category off for the member\'s own account and shows the switches the API answers with', async () => {
     getUserEmailPreferencesMock.mockResolvedValue({ data: { preferences: ALL_ON, emailSuppression: null } });
     updateUserEmailPreferenceMock.mockResolvedValue({

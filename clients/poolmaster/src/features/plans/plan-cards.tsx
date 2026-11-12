@@ -1,9 +1,10 @@
 import type { ReactNode } from 'react';
-import { Check } from 'lucide-react';
 import type { LeaguePlan } from '@poolmaster/shared/domain';
 import type { LeaguePlanListResponse } from '@/lib/api';
 import { describeExpansionPrices } from '@/features/billing/billing-format';
-import { Eyebrow, Heading, Tile, useDisplayPreferences } from '@/features/shared/ui';
+import { Heading, Tile, useDisplayPreferences } from '@/features/shared/ui';
+import { FeatureList } from './feature-list';
+import { FeatureMark } from './feature-mark';
 import type { ComparedPlan } from './plan-comparison';
 import { buildPlanHighlights } from './plan-highlights';
 import { LEAGUE_PLAN_LABEL, LEAGUE_PLAN_TAGLINE } from './plan-labels';
@@ -46,18 +47,13 @@ export function PlanCards({ expansion, plans, renderAction }: PlanCardsProps) {
               {expansion.paymentsEnabled ? null : <p className="text-muted-foreground">Expanding is free for now.</p>}
             </div>
           ) : null}
-          <div className="space-y-2 border-t border-border pt-4">
-            <Eyebrow tone="muted">
-              {card.adds === null ? 'Included' : `Everything in ${LEAGUE_PLAN_LABEL[card.adds]}, plus`}
-            </Eyebrow>
-            <ul className="space-y-2 text-sm" data-testid={`plan-card-${card.plan}-highlights`}>
-              {card.lines.map((line) => (
-                <li className="flex gap-2" key={line}>
-                  <Check aria-hidden className="mt-0.5 shrink-0 text-primary" size={16} />
-                  <span>{line}</span>
-                </li>
-              ))}
-            </ul>
+          <div className="border-t border-border pt-4">
+            <FeatureList
+              features={card.lines}
+              label={card.adds === null ? 'Included' : `Everything in ${LEAGUE_PLAN_LABEL[card.adds]}, plus`}
+              mark={FeatureMark.INCLUDED}
+              testId={`plan-card-${card.plan}-highlights`}
+            />
           </div>
         </Tile>
       ))}

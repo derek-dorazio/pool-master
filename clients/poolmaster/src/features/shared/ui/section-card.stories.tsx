@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Button } from "./button";
+import { Checkbox } from "./form-field";
 import {
   SectionBody,
   SectionCard,
@@ -70,4 +71,17 @@ export const TitleAndFooterLinkAlone: StoryObj = {
       <SectionFooterLink label="See all" testId="story-link" to="/all" />
     </div>
   ),
+};
+
+/** Rows that each lead with a checkbox: the whole row is its label, as on Email notifications. */
+export const WithCheckboxRows: Story = {
+  args: {
+    title: "League emails",
+    children: (
+      <SectionRows>
+        <SectionRow control={<Checkbox defaultChecked />} facts="Every Monday, what happened in your leagues." name="Weekly digest" />
+        <SectionRow control={<Checkbox />} facts="When a contest you entered is final." name="Contest results" />
+      </SectionRows>
+    ),
+  },
 };

@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, type ReactNode } from "react";
+import { useEffect, useId, useRef, type ReactNode, type RefObject } from "react";
 import { Link } from "react-router";
 import { cn } from "./class-names";
 import { Heading } from "./heading";
@@ -34,7 +34,7 @@ export function SectionTitle({
   /** The (?)'s test id, when the title has none to derive it from. */
   helpTestId?: string;
   id?: string;
-  level?: 2 | 3;
+  level?: 2 | 3 | 4;
   testId?: string;
   title: ReactNode;
   tone?: SectionTone;
@@ -78,7 +78,7 @@ type SectionCardBaseProps = {
   children: ReactNode;
   className?: string;
   footer?: SectionFooter;
-  headingLevel?: 2 | 3;
+  headingLevel?: 2 | 3 | 4;
   /** How the section works, behind the title's (?). */
   help?: ReactNode;
   padded?: boolean;
@@ -150,12 +150,15 @@ export function SectionRows({ children, testId }: { children: ReactNode; testId?
 
 /**
  * One row of a section: a name, up to two muted fact lines, and at the right one figure
- * (`value`) and one badge or action (`aside`). With `to` the whole row is a link. Rows tint on
- * hover; `isHighlighted` tints the row the viewer came from and scrolls it into view, and
- * `isSelected` tints the one a list has chosen (a year, say) and marks it current.
+ * (`value`) and one badge or action (`aside`). With `to` the whole row is a link; with `control`
+ * (a checkbox) the control leads the row and the whole row is its label, so a tap anywhere on it
+ * toggles it. Rows tint on hover; `isHighlighted` tints the row the viewer came from and scrolls
+ * it into view, and `isSelected` tints the one a list has chosen (a year, say) and marks it
+ * current.
  */
 export function SectionRow({
   aside,
+  control,
   facts,
   isHighlighted = false,
   isSelected = false,
@@ -169,6 +172,8 @@ export function SectionRow({
 }: {
   /** A status badge or one action, drawn as given. */
   aside?: ReactNode;
+  /** A checkbox at the row's start, which the whole row labels. Not with `to`. */
+  control?: ReactNode;
   /** The row's muted fact line. */
   facts?: ReactNode;
   isHighlighted?: boolean;
@@ -185,7 +190,7 @@ export function SectionRow({
   valueTestId?: string;
 }) {
   const linkRef = useRef<HTMLAnchorElement>(null);
-  const rowRef = useRef<HTMLDivElement>(null);
+  const rowRef = useRef<HTMLElement>(null);
   useEffect(() => {
     if (isHighlighted) {
       (linkRef.current ?? rowRef.current)?.scrollIntoView({ block: "center", behavior: "smooth" });
@@ -199,6 +204,7 @@ export function SectionRow({
   const ariaCurrent = isSelected ? "true" : undefined;
   const content = (
     <>
+      {control ? <span className="flex flex-none items-center">{control}</span> : null}
       <span className="min-w-0 flex-1">
         <span className="flex min-w-0 items-center gap-2">
           <span className="truncate font-semibold text-foreground">{name}</span>
@@ -222,8 +228,18 @@ export function SectionRow({
         <Link aria-current={ariaCurrent} className={className} data-highlighted={isHighlighted || undefined} data-testid={testId} ref={linkRef} to={to}>
           {content}
         </Link>
+      ) : control ? (
+        <label
+          aria-current={ariaCurrent}
+          className={cn(className, "cursor-pointer")}
+          data-highlighted={isHighlighted || undefined}
+          data-testid={testId}
+          ref={rowRef as RefObject<HTMLLabelElement>}
+        >
+          {content}
+        </label>
       ) : (
-        <div aria-current={ariaCurrent} className={className} data-highlighted={isHighlighted || undefined} data-testid={testId} ref={rowRef}>
+        <div aria-current={ariaCurrent} className={className} data-highlighted={isHighlighted || undefined} data-testid={testId} ref={rowRef as RefObject<HTMLDivElement>}>
           {content}
         </div>
       )}
