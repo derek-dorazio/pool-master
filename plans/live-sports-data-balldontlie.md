@@ -47,7 +47,9 @@ The target:
      each round's length (`roundSeriesLengths`, the NBA's 7, 7, 7, 7), and each sync counts
      the final games between the series' two teams as wins, writing the wins so far as its
      live score and its result once a side has won more than half (#1545). A series league's
-     reader therefore hands over every game of the event on each sync;
+     reader therefore hands over every game of the event on each sync. The NBA's playoffs are
+     the first (`nba-2025-postseason`, one event a season); the four series leagues share one
+     mapping and reader (`series-playoffs.ts`), each supplying only its own reads;
    - per-player box scores for Clutch Cards, through `StatLineService`.
 3. **Webhooks as the trigger, not the record.** BALLDONTLIE posts a signed event (period
    ended, game ended, hole completed) to a receiver. The receiver checks the signature,
