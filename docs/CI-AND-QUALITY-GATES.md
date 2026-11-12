@@ -56,7 +56,9 @@ one cost an image build, a migration and a rollout per merge, and tied `main`'s
 red or green to QA's health rather than to the code. A push to `main` now runs
 every test and build job, `poolmaster-browser-e2e-local` included, so two merges
 that clash still turn `main` red (with *require branches to be up to date* off,
-that red run is how a clash shows).
+that red run is how a clash shows). A deploy waits for every required check, the
+local browser e2e, the contract gates and the migration drift check included, so
+a red `main` never reaches QA.
 
 To deploy: **Actions -> CI -> Run workflow**, branch `main`. The run tests
 everything first (`changes` hands the classifier an empty list, which runs every
@@ -67,6 +69,9 @@ on `main`.
 ECR tags are immutable, so a second deploy of the same commit reuses the images
 the first pushed (found by tag in `deploy-publish-images`) instead of building
 and failing to push them again.
+
+A deploy run whose tests fail reports on the "CI is failing on main" issue, as a
+push run does: `main-ci-health-issue` runs on both.
 
 ### Why the gated jobs carry `!cancelled()`
 
@@ -325,11 +330,11 @@ database — a different problem with a different fix. It reuses the same
 `postgres:16` service the suites use, needs no generated Prisma client, and the
 whole history applies in about three seconds.
 
-It is not in the `deploy-publish-images` dependency list. Drift does not break a
-deploy: QA is built from the migrations, so it gets the real schema either way. What
-drift breaks is anyone who *generates* from `schema.prisma` — above all a history
-squash (#1429) — which is why the gate blocks the pull request that would introduce it
-rather than the deploy that would carry it.
+Drift does not break a deploy: QA is built from the migrations, so it gets the real
+schema either way. What drift breaks is anyone who *generates* from `schema.prisma` —
+above all a history squash (#1429) — which is why the gate blocks the pull request that
+would introduce it. It is also in the `deploy-publish-images` dependency list, since a
+deploy is run by hand on `main` and waits for every required check.
 
 Two backend jobs collect coverage in this workflow. `service-unit-tests` has the unit
 suite's coverage threshold (#302). The four integration shards each collect Babel

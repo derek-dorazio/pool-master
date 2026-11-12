@@ -914,8 +914,11 @@ jobs:
     timeout-minutes: 20
     # The three service suite jobs; coverage reporting gates nothing and is not here (#294, #302).
     # service-lint-typecheck is also reached through service-build; it is listed so the lint
-    # gate stays visible now that the test jobs no longer wait on it.
-    needs: [service-unit-tests, service-integration-tests, service-functional-api-tests, service-lint-typecheck, poolmaster-unit-tests, service-build, service-image-smoke, service-mock-provider-build, poolmaster-build]
+    # gate stays visible now that the test jobs no longer wait on it. A deploy is a separate
+    # decision on main's current state, so every required check gates it, the contract gates,
+    # the migration drift check and the local browser e2e included: a main that two clashing
+    # merges turned red does not reach QA.
+    needs: [all-contract-gates, schema-migration-drift, service-unit-tests, service-integration-tests, service-functional-api-tests, service-lint-typecheck, poolmaster-unit-tests, service-build, service-image-smoke, service-mock-provider-build, poolmaster-build, poolmaster-browser-e2e-local]
     if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
     permissions:
       contents: read
@@ -1900,7 +1903,8 @@ jobs:
       - poolmaster-unit-tests
       - poolmaster-build
       - poolmaster-browser-e2e-local
-    if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+    # A deploy run tests too, so its failures report here like a push's.
+    if: always() && github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     permissions:
       issues: write
       actions: read
