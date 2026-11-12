@@ -241,13 +241,13 @@ const FORMAT_SCENES: Record<SelectionType, Scene> = {
     background: tint,
     art: (
       <>
-        {['A', 'B', 'C'].map((tier, row) => (
-          <g key={tier}>
-            <text className="font-display" fill={ink} fontSize="13" fontWeight="900" x="16" y={30 + row * 24}>{tier}</text>
-            {[0, 1, 2, 3].map((column) => pill(34 + column * 30, 20 + row * 24, 26, column === [1, 3, 0][row] ? gold : chip, column))}
+        {/* Three tiers of four, one pick in each. */}
+        {[1, 3, 0].map((pick, row) => (
+          <g key={pick}>
+            {[0, 1, 2, 3].map((column) => pill(22 + column * 30, 20 + row * 24, 26, column === pick ? gold : chip, column))}
           </g>
         ))}
-        <path d="M73 26 l4 4 l7 -8" fill="none" stroke={goldInk} strokeWidth="2" />
+        <path d="M61 26 l4 4 l7 -8" fill="none" stroke={goldInk} strokeWidth="2" />
       </>
     ),
   },

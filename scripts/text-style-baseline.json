@@ -12,7 +12,7 @@
   "clients/poolmaster/src/features/billing/contest-expansion-section.tsx": 4,
   "clients/poolmaster/src/features/championships/championship-standings-grid.tsx": 3,
   "clients/poolmaster/src/features/championships/edit-championship-settings-page.tsx": 1,
-  "clients/poolmaster/src/features/contest-types/illustrations.tsx": 7,
+  "clients/poolmaster/src/features/contest-types/illustrations.tsx": 6,
   "clients/poolmaster/src/features/contests/bracket-board.tsx": 2,
   "clients/poolmaster/src/features/contests/bracket-entry-page.tsx": 3,
   "clients/poolmaster/src/features/contests/bracket-entry-submit.tsx": 6,
