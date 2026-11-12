@@ -822,13 +822,19 @@ export class IngestionScheduler {
   }
 }
 
+/** How many unlinked ranked participants the warning names before counting the rest, so a large field's warning stays readable. */
+export const UNLINKED_RANKED_NAMES_SHOWN = 20;
+
 /**
  * The warning a field sync gives when ranked participants of the field have no mapping from the
  * event's provider (#1664): the provider's box scores and results never reach them, so the root
- * admin merges or maps each by hand. Listed best rank first.
+ * admin merges or maps each by hand. Listed best rank first, the first `UNLINKED_RANKED_NAMES_SHOWN`
+ * by name.
  */
 function unlinkedRankedWarning(providerId: string, participants: readonly UnlinkedRankedParticipant[]): IngestionJobWarning {
-  const names = participants.map((participant) => `${participant.name} (rank ${String(participant.ranking)})`).join(', ');
+  const named = participants.slice(0, UNLINKED_RANKED_NAMES_SHOWN).map((participant) => `${participant.name} (rank ${String(participant.ranking)})`).join(', ');
+  const more = participants.length - UNLINKED_RANKED_NAMES_SHOWN;
+  const names = more > 0 ? `${named} and ${String(more)} more` : named;
   return {
     code: 'RANKED_PARTICIPANTS_UNLINKED',
     message: `${String(participants.length)} ranked participant${participants.length === 1 ? ' has' : 's have'} no ${providerId} mapping, so its scores will not reach ${participants.length === 1 ? 'it' : 'them'}: ${names}. Merge or map each by hand.`,

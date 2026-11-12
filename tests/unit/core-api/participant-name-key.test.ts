@@ -1,5 +1,5 @@
 import { describe, expect, it } from '@jest/globals';
-import { participantNameKey } from '../../../packages/core-api/src/modules/ingestion/core/participant-name-key';
+import { foldParticipantName, participantNameKey, sameParticipantName } from '../../../packages/core-api/src/modules/ingestion/core/participant-name-key';
 
 // The folded name two sources' spellings of one player share, for linking by name (#1664).
 describe('participantNameKey', () => {
@@ -35,5 +35,22 @@ describe('participantNameKey', () => {
 
   it('keeps a letter that is its own letter rather than one with a mark', () => {
     expect(participantNameKey('Søren Kjeldsen')).toBe('søren kjeldsen');
+  });
+});
+
+describe('sameParticipantName', () => {
+  it('keeps the suffix the fold leaves off beside the key, and none when the name has none', () => {
+    expect(foldParticipantName('Jaren Jackson Jr.')).toEqual({ key: 'jaren jackson', suffix: 'jr' });
+    expect(foldParticipantName('Jaren Jackson')).toEqual({ key: 'jaren jackson', suffix: null });
+  });
+
+  it.each([
+    ['a suffix only one side carries', 'Jaren Jackson Jr.', 'Jaren Jackson', true],
+    ['the same suffix, spelled with and without its point', 'Jaren Jackson Jr.', 'jaren jackson jr', true],
+    ['a Jr. against a Sr. of the same name', 'Larry Nance Jr.', 'Larry Nance Sr.', false],
+    ['a II against a III of the same name', 'Gary Payton II', 'Gary Payton III', false],
+    ['two different folded names', 'Jalen Williams', 'Jaylin Williams', false],
+  ])('reads %s as the same participant: %s', (_label, one, other, same) => {
+    expect(sameParticipantName(foldParticipantName(one), foldParticipantName(other))).toBe(same);
   });
 });

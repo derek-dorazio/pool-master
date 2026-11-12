@@ -26,7 +26,7 @@ import type { SyncWriteDetailRow, SyncWriteDiagnostics } from '../core/sync-writ
 import { summarizeSyncWriteRows } from '../core/sync-write-diagnostics';
 import type { EventDetailPersisted, UnlinkedRankedParticipant } from '../core/ingestion-scheduler';
 import { isLeagueTour } from '../core/league-keyword';
-import { participantNameKey } from '../core/participant-name-key';
+import { foldParticipantName, participantNameKey, sameParticipantName } from '../core/participant-name-key';
 import type { EventFieldCache } from '../../events/event-field-cache';
 import type { CdnInvalidator } from '../../../core/cdn-invalidator';
 import type { LeaderboardRebuilds } from '../../contests/leaderboard-snapshots';
@@ -258,13 +258,14 @@ export class IngestionPersistence {
    * participants affiliated with that league, and counted against the feed's names in that
    * league alone, so the men's and women's teams of one school each link to their own. A school
    * the site keeps as one row affiliated with both leagues takes both links. Within a league the
-   * names are compared folded (`participantNameKey`, #1664), so the feed's "Luka Doncic" links
-   * to a data file's "Luka Dončić" and "Jaren Jackson" to "Jaren Jackson Jr.": every participant
+   * names are compared folded (`sameParticipantName`, #1664), so the feed's "Luka Doncic" links
+   * to a data file's "Luka Dončić" and "Jaren Jackson" to "Jaren Jackson Jr." (never a Jr. to a
+   * Sr.): every participant
    * affiliated with the league is read, so a folded name two of them share is seen, and then
    * only the one spelled exactly as the feed spells it is linked. A participant naming no league
    * is matched by its exact name alone, since the sport's every spelling of it is not read.
    *
-   * One read of the named leagues by keyword, when the feed names any, then one of the candidates,
+   * One read of the sports' keyed leagues, when the feed names any, then one of the candidates,
    * by exact name and by league, with their mappings from the feed's providers and their leagues'
    * keywords (Prisma loads each relation with its own statement).
    */
@@ -287,14 +288,21 @@ export class IngestionPersistence {
       const feedKey = feedKeyOf(participant);
       feedNameCounts.set(feedKey, (feedNameCounts.get(feedKey) ?? 0) + 1);
     }
-    // The leagues the feed names, by keyword, so the candidates read finds their members through
-    // the affiliations' sport league index rather than joining every affiliation to its league.
-    const namedLeagues = toursBySportId.size === 0 ? [] : await this.prisma.sportLeague.findMany({
-      where: { OR: [...toursBySportId].map(([sportId, tours]) => ({ sportId, matchKeyword: { in: [...tours], mode: 'insensitive' as const } })) },
-      select: { id: true, sportId: true },
+    // The leagues the feed names, so the candidates read finds their members through the
+    // affiliations' sport league index rather than joining every affiliation to its league. The
+    // sports' keyed leagues are read (a reference table) and named in memory by `isLeagueTour`,
+    // which ignores the stored keyword's case and surrounding space as every tour match does.
+    const keyedLeagues = toursBySportId.size === 0 ? [] : await this.prisma.sportLeague.findMany({
+      where: { sportId: { in: [...toursBySportId.keys()] }, matchKeyword: { not: null } },
+      select: { id: true, sportId: true, matchKeyword: true },
     });
     const leagueIdsBySportId = new Map<string, string[]>();
-    for (const league of namedLeagues) leagueIdsBySportId.set(league.sportId, [...(leagueIdsBySportId.get(league.sportId) ?? []), league.id]);
+    for (const league of keyedLeagues) {
+      const tours = toursBySportId.get(league.sportId) ?? new Set<string>();
+      if ([...tours].some((tour) => isLeagueTour(tour, league.matchKeyword))) {
+        leagueIdsBySportId.set(league.sportId, [...(leagueIdsBySportId.get(league.sportId) ?? []), league.id]);
+      }
+    }
     const candidates = await this.prisma.participant.findMany({
       where: {
         OR: [
@@ -319,10 +327,10 @@ export class IngestionPersistence {
     const toCreate: ProviderParticipant[] = [];
     for (const participant of unmapped) {
       const tour = tourOf(participant);
-      const name = matchNameOf(participant);
+      const folded = foldParticipantName(participant.name);
       const sameName = (candidatesBySportId.get(sportIdOf(participant)) ?? []).filter((candidate) => tour === undefined
         ? candidate.name === participant.name
-        : participantNameKey(candidate.name) === name && candidate.leagueAffiliations.some(({ sportLeague }) => isLeagueTour(tour, sportLeague.matchKeyword)));
+        : sameParticipantName(foldParticipantName(candidate.name), folded) && candidate.leagueAffiliations.some(({ sportLeague }) => isLeagueTour(tour, sportLeague.matchKeyword)));
       const spelledAlike = sameName.length === 1 ? sameName : sameName.filter((candidate) => candidate.name === participant.name);
       const unique = spelledAlike.length === 1 && feedNameCounts.get(feedKeyOf(participant)) === 1;
       const existing = unique ? spelledAlike[0] : undefined;

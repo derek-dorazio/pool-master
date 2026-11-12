@@ -162,13 +162,15 @@ The name link is what stops a team loaded from a data file being created twice. 
 participant narrows the match to the league's own affiliated participants, so a school's men's and
 women's teams each link to their own row. Within that league the name is compared folded
 (`participantNameKey`, #1664): accents, case and punctuation dropped and a trailing Jr., Sr., II,
-III or IV left off, so the feed's "Luka Doncic" links to a data file's "Luka Dončić". A participant
+III or IV left off, so the feed's "Luka Doncic" links to a data file's "Luka Dončić". A suffix
+only one side carries is forgiven; a Jr. never links to a Sr. of the same name. A participant
 naming no league links by its exact name only, since the sport's every spelling of it is not read.
 A name two candidates share is never guessed; it is created, and an admin merges by hand. Where two
 of a league's candidates fold to one name, only the one spelled exactly as the feed spells it links.
 
 After the field is written, its ranked rows with no mapping from the event's provider are listed,
-best rank first, in a `RANKED_PARTICIPANTS_UNLINKED` warning on the sync run (#1664). Those are the
+best rank first, in a `RANKED_PARTICIPANTS_UNLINKED` warning on the sync run (#1664), which names
+the first 20 and counts the rest. Those are the
 stars the feed named some other way or not at all: its scores never reach them, so the root admin
 merges or maps each by hand.
 

@@ -280,7 +280,10 @@ describe('IngestionScheduler', () => {
         '1 ranked participant has no mock-provider mapping, so its scores will not reach it: Luka Dončić (rank 2). Merge or map each by hand.'],
       ['two ranked participants, best rank first', [{ participantId: 'p-1', name: 'Jayson Tatum', ranking: 1 }, { participantId: 'p-2', name: 'Luka Dončić', ranking: 2 }],
         '2 ranked participants have no mock-provider mapping, so its scores will not reach them: Jayson Tatum (rank 1), Luka Dončić (rank 2). Merge or map each by hand.'],
-    ])('warns, naming each, when a field sync leaves %s of the field unlinked from the provider (#1664)', async (_label, unlinkedRankedParticipants, message) => {
+      ['more ranked participants than the warning names, counting the rest',
+        Array.from({ length: 22 }, (_, index) => ({ participantId: `p-${String(index + 1)}`, name: `Golfer ${String(index + 1)}`, ranking: index + 1 })),
+        `22 ranked participants have no mock-provider mapping, so its scores will not reach them: ${Array.from({ length: 20 }, (_, index) => `Golfer ${String(index + 1)} (rank ${String(index + 1)})`).join(', ')} and 2 more. Merge or map each by hand.`],
+    ])('warns, naming them, when a field sync leaves %s of the field unlinked from the provider (#1664)', async (_label, unlinkedRankedParticipants, message) => {
       const detail: SportEventDetail = {
         externalId: 'evt-1', providerId: 'mock-provider', sport: 'GOLF', name: 'The Masters', startDate: new Date('2026-04-10T12:00:00.000Z'),
         status: 'SCHEDULED', fieldLocked: false, metadata: {},
