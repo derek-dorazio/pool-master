@@ -157,6 +157,16 @@ Derek accepted every recommendation below on 2026-11-09.
   ends, end) and a golf tournament a few hundred (each player's round, about 70 to 150 a
   round), so a full season of every covered league stays well under All-Access's 500,000
   deliveries a month.
+- **Safety net (decided and built, #1499).** Decided (2026-11-12): while the webhook secret is
+  set, each BALLDONTLIE event polls every 15 minutes, golf every 2 minutes while a round is
+  under way; a game or tournament ending queues a reconciling sync 10 minutes later; and an
+  event in play with no notification for longer than its league's normal gap (a period or half
+  plus its break, 75 to 90 minutes, World Cup 150, MLB 210; 6 hours for a golf round before its first finisher) logs a
+  warning that a CloudWatch alarm raises. A flat 20 minutes was dropped in review: a quarter
+  alone runs longer. A weather delay or other long stoppage also sets off the warning. Start notifications also sync an event still `SCHEDULED` past its start, waiting six
+  minutes for the lifecycle sweep, since a live score is only written to an event in progress.
+  Not covered: a reconciling sync that runs after the lifecycle sweep has completed the event
+  writes nothing, so a correction after the scheduled end still needs an admin.
 - **Q5 (decided). LPGA.** BALLDONTLIE has no LPGA. Decided: LPGA stays on the pipeline (results
   after each round) for launch. Revisit Goalserve golf if LPGA live leaderboards matter.
 

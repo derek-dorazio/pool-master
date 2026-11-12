@@ -229,7 +229,33 @@ The subscribed types are in `BALLDONTLIE_WEBHOOK_EVENT_TYPES`: `game.started`,
 `game.period_ended` (`game.halftime` for soccer) and `game.ended` for each league in
 `BALLDONTLIE_WEBHOOK_GAME_LEAGUES`, and for golf `pga.tournament.started`,
 `pga.tournament.round_started`, `pga.player.round_completed` and `pga.tournament.ended`. Not each
-hole: once #1499 lands, golf will poll every 2 minutes during a round instead.
+hole: golf polls every 2 minutes during a round instead (see *The safety net* below).
+
+### The safety net (#1499)
+
+While `BALLDONTLIE_WEBHOOK_SECRET` is set, the webhook carries BALLDONTLIE's live scores and the
+scheduled sweep only backs it up (`NotifiedProviderCadence`, read by
+`notified-provider-cadence.ts`):
+
+- **Pace.** The live-score sweep ticks once a minute and syncs each BALLDONTLIE event that is due:
+  every 15 minutes, or a golf event every 2 minutes while a round is under way. Other providers'
+  events keep the admin's interval. With no secret set, every event polls every sweep as before.
+  The pace is kept in memory by the task holding the sweep's job lock.
+- **Start before the lifecycle.** A start notification (`game.started`, `tournament.started`,
+  `round_started`) also finds a linked event still `SCHEDULED` past its start with auto lifecycle
+  on, and syncs it six minutes out, once the lifecycle sweep has moved it in progress.
+- **Reconciliation.** An end notification also queues a second sync ten minutes out under
+  `provider-event-reconcile:<provider>:<externalId>`, for the vendor's late corrections. It writes
+  nothing once the lifecycle sweep has completed the event.
+- **Quiet alert.** Each notification sets `sport_events.last_provider_notification_at` on the
+  events it is about. When an event is in play (golf's latest round under way, or a match in
+  progress since its scheduled start) with no notification for longer than its league's
+  `quietAfterMinutes` in `BALLDONTLIE_WEBHOOK_GAME_LEAGUES` (75 to 90 minutes, a period or half
+  plus its break; World Cup 150, for extra time and penalties; MLB 210, in case innings are not
+  notified), or 6 hours for a golf round, the sweep logs `ingestion.providerNotifications.quiet`
+  at most once per window, and a CloudWatch alarm (`monitoring.tf`) sends it to the alerts topic.
+  A long stoppage, such as a weather delay, sets off the warning too, since nothing is notified
+  while play is stopped.
 
 ## 4. The one sync path
 
@@ -315,8 +341,8 @@ vendored OpenAPI document and fixtures under `tests/fixtures/balldontlie/` (see 
 | PGA TOUR | the vendor's tournament id (`18`) | golfer, bare vendor id | `/pga/v2/tournaments`, `/pga/v2/tournament_competitors` (GOAT), `/pga/v1/players` (OWGR), `/pga/v2/tournament_results` (ALL-STAR) | `GOLF` | `pga-contract.ts`, `pga-mapping.ts`, the PGA half of `balldontlie-adapter.ts` | 4 tournament events |
 | NFL | `nfl-<season>-week-<n>`, `nfl-<season>-postseason` | `nfl-team-<id>` | `/nfl/v1/games`, `/nfl/v1/teams` | `GAME` | `nfl-contract.ts`, `nfl-mapping.ts`, `nfl-reader.ts` | `nfl.game.*` |
 | NCAA men / women | `ncaab-<season>-tournament`, `ncaaw-<season>-tournament` | `ncaab-team-<id>`, `ncaaw-team-<id>` | `/ncaab/v1/bracket` (GOAT), `/ncaab/v1/teams` (and `ncaaw`) | `GAME` | `ncaa-tournament-contract.ts`, `-mapping.ts`, `-reader.ts` | `ncaab.game.*`, `ncaaw.game.*` |
-| NBA playoffs (bracket) | `nba-<season>-postseason` | `nba-team-<id>` | `/nba/v1/games` (postseason), `/nba/v1/teams` | `GAME`, as series | `nba-contract.ts`, `nba-mapping.ts`, shared `series-playoffs.ts`, `series-playoffs-reader.ts` | not yet (see *Gaps*) |
-| NBA round (Clutch Card) | `nba-<season>-postseason-round-<r>` | `nba-player-<id>` | `/nba/v1/games`, `/nba/v1/stats` (`game_ids[]`), `/nba/v1/players/active` (`team_ids[]`) | `STAT_LINE` | the above plus `series-playoff-rounds.ts` | not yet |
+| NBA playoffs (bracket) | `nba-<season>-postseason` | `nba-team-<id>` | `/nba/v1/games` (postseason), `/nba/v1/teams` | `GAME`, as series | `nba-contract.ts`, `nba-mapping.ts`, shared `series-playoffs.ts`, `series-playoffs-reader.ts` | `nba.game.*` (#1667) |
+| NBA round (Clutch Card) | `nba-<season>-postseason-round-<r>` | `nba-player-<id>` | `/nba/v1/games`, `/nba/v1/stats` (`game_ids[]`), `/nba/v1/players/active` (`team_ids[]`) | `STAT_LINE` | the above plus `series-playoff-rounds.ts` | `nba.game.*` (the `nba-` prefix covers both) |
 | NHL playoffs (bracket) | `nhl-<season>-postseason` | `nhl-team-<id>` | `/nhl/v1/games` (`seasons`, postseason), `/nhl/v1/teams` | `GAME`, as series | `nhl-contract.ts`, `nhl-mapping.ts`, shared `series-playoffs.ts`, `series-playoffs-reader.ts` | `nhl.game.*` (names assumed, see below) |
 | MLB postseason (bracket) | `mlb-<season>-postseason` | `mlb-team-<id>` | `/mlb/v1/games` (`seasons[]`, postseason), `/mlb/v1/teams` | `GAME`, as series | `mlb-contract.ts`, `mlb-mapping.ts`, shared `series-playoffs.ts`, `series-playoffs-reader.ts` | `mlb.game.*` (names assumed, see below) |
 | WNBA playoffs (bracket) | `wnba-<season>-postseason` | `wnba-team-<id>` | `/wnba/v1/games` (the whole season: no postseason filter), `/wnba/v1/teams` | `GAME`, as series | `wnba-contract.ts`, `wnba-mapping.ts`, shared `series-playoffs.ts`, `series-playoffs-reader.ts` | `wnba.game.*` (names assumed) |
@@ -452,7 +478,6 @@ vendored OpenAPI document and fixtures under `tests/fixtures/balldontlie/` (see 
 
 | Work | Where | What it adds |
 |---|---|---|
-| Safety-net poll, reconciliation, quiet alert | #1499 | Per-event cadence (golf 2 min during a round, else 15 min), a second sync 10 minutes after `game.ended` / `tournament.ended` under its own dedupe key, and a new `sport_events.last_provider_notification_at` set by the receiver for a quiet-feed alarm. |
 | Not read yet | | College Football Playoff (the vendor marks no postseason), UCL two-leg ties, MLS best-of-three. |
 
 ## 7. Reviewing a provider PR: what a new league should touch
@@ -471,8 +496,9 @@ A new league usually touches all of these, and nothing in the core:
    fallback, and the league's events and teams added to its sport in the `leagues` map.
 6. **Migration**: `match_keyword` on the sport league, only where `NULL`; `round_series_lengths`
    for a series league.
-7. **Webhooks**: an entry in `BALLDONTLIE_WEBHOOK_GAME_LEAGUES` with the scope prefix, or its
-   notifications are acknowledged and dropped. The vendor dashboard's subscribed list follows
+7. **Webhooks**: an entry in `BALLDONTLIE_WEBHOOK_GAME_LEAGUES` with the scope prefix and its
+   `quietAfterMinutes` (the longest normal gap between its notifications), or its notifications
+   are acknowledged and dropped. The vendor dashboard's subscribed list follows
    `BALLDONTLIE_WEBHOOK_EVENT_TYPES`.
 8. **Docs**: the tables in this page and the plan's narrative.
 
@@ -485,10 +511,8 @@ its description.
 These are on `main` as of the NBA Clutch Card merge (#1661) and the webhook receiver (#1657).
 None is fixed here; each is for the owning thread to confirm.
 
-- **NBA has no webhook entry.** `BALLDONTLIE_WEBHOOK_GAME_LEAGUES` lists `nfl`, `ncaab`, `ncaaw`,
-  `epl` and `worldcup`, not `nba`, so an NBA notification is acknowledged and dropped and NBA
-  events sync on the scheduled sweep alone. The prefix `nba-` would cover both the bracket and the
-  round events. NHL has its entry (#1662).
+- **NBA had no webhook entry.** Fixed by #1667: `nba` is in `BALLDONTLIE_WEBHOOK_GAME_LEAGUES`
+  with the prefix `nba-`, which covers both the bracket and the round events.
 - **NHL, MLB and WNBA webhook event names are assumed.** Their entries subscribe to `game.started`,
   `game.period_ended` and `game.ended`, the NFL and NCAA names. The vendor's webhook document
   has not been checked for hockey, baseball or the WNBA (an inning may not be a "period"); confirm the

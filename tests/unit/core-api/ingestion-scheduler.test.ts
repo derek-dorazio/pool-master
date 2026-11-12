@@ -7,9 +7,14 @@
 
 import { expect } from '@jest/globals';
 import { emptySyncWriteDiagnostics } from '../../../packages/core-api/src/modules/ingestion/core/sync-write-diagnostics';
-import { IngestionScheduler } from '../../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';
+import { IngestionScheduler, LIVE_SCORE_SWEEP_TICK_MS } from '../../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';
 import { ProviderRegistry } from '../../../packages/core-api/src/modules/ingestion/core/provider-registry';
-import type { EventSyncRequest, IngestionCallbacks } from '../../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';
+import type {
+  EventSyncRequest,
+  IngestionCallbacks,
+  LiveScoreEventRef,
+  ScheduledEventRef,
+} from '../../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';
 import { fakeSportDataProvider } from '../../support/fake-sport-data-provider';
 import { fakeLogger } from '../../support/fake-logger';
 import { heldElsewhere, heldHere } from '../../support/job-locks';
@@ -28,6 +33,19 @@ import type { LiveScoreResult } from '@poolmaster/shared/dto';
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
+
+/** An event reader listing these events to load fields for, and these in progress for scores. */
+function readerOf({ fields = [], live = [] }: { fields?: ScheduledEventRef[]; live?: Array<ScheduledEventRef & Partial<LiveScoreEventRef>> }) {
+  return {
+    listEventsForFeed: jest.fn().mockResolvedValue(fields),
+    listLiveScoreEvents: jest.fn().mockResolvedValue(live.map((event): LiveScoreEventRef => ({
+      playedInRounds: true,
+      playUnderwaySince: null,
+      lastProviderNotificationAt: null,
+      ...event,
+    }))),
+  };
+}
 
 function createMockCallbacks(): IngestionCallbacks {
   return {
@@ -695,9 +713,7 @@ describe('IngestionScheduler', () => {
         getConfig: jest.fn().mockResolvedValue(config),
         getPerSportConfig: jest.fn().mockResolvedValue(config),
       };
-      const eventReader = {
-        listEventsForFeed: jest.fn().mockResolvedValue([{ providerId: 'mock-provider', externalId: 'live-event' }]),
-      };
+      const eventReader = readerOf({ live: [{ providerId: 'mock-provider', externalId: 'live-event' }] });
       const syncRun = {
         id: 'scheduled-event-sync-run-1',
         providerId: 'mock-provider',
@@ -777,9 +793,7 @@ describe('IngestionScheduler', () => {
         getConfig: jest.fn().mockResolvedValue(config),
         getPerSportConfig: jest.fn().mockResolvedValue(config),
       };
-      const eventReader = {
-        listEventsForFeed: jest.fn().mockResolvedValue([{ providerId: 'mock-provider', externalId: 'live-event' }]),
-      };
+      const eventReader = readerOf({ live: [{ providerId: 'mock-provider', externalId: 'live-event' }] });
       const scheduler = new IngestionScheduler(
         createMockRegistry(provider, ['GOLF']),
         mockCallbacks,
@@ -827,12 +841,10 @@ describe('IngestionScheduler', () => {
         getConfig: jest.fn().mockResolvedValue(config),
         getPerSportConfig: jest.fn().mockResolvedValue(config),
       };
-      const eventReader = {
-        listEventsForFeed: jest.fn(async ({ feed }: { feed: string }) => {
-          if (feed === 'EVENTPARTICIPANTS') return [{ providerId: 'mock-provider', externalId: 'active-event' }];
-          return [{ providerId: 'mock-provider', externalId: 'live-event' }];
-        }),
-      };
+      const eventReader = readerOf({
+        fields: [{ providerId: 'mock-provider', externalId: 'active-event' }],
+        live: [{ providerId: 'mock-provider', externalId: 'live-event' }],
+      });
       const syncOrchestrator = createSyncOrchestratorSpy(now);
       const scheduler = new IngestionScheduler(
         createMockRegistry(provider, ['GOLF']),
@@ -916,9 +928,7 @@ describe('IngestionScheduler', () => {
           perSportOverrides: {},
         }),
       };
-      const eventReader = {
-        listEventsForFeed: jest.fn().mockResolvedValue([{ providerId: 'mock-provider', externalId: 'field-available-event' }]),
-      };
+      const eventReader = readerOf({ fields: [{ providerId: 'mock-provider', externalId: 'field-available-event' }] });
       const scheduler = new IngestionScheduler(registry, mockCallbacks, undefined, {
         configReader,
         eventReader,
@@ -993,9 +1003,10 @@ describe('IngestionScheduler', () => {
         }),
       });
       const registry = createMockRegistry(provider, ['GOLF']);
-      const eventReader = {
-        listEventsForFeed: jest.fn().mockResolvedValue([{ providerId: 'mock-provider', externalId: 'evt-1' }]),
-      };
+      const eventReader = readerOf({
+        fields: [{ providerId: 'mock-provider', externalId: 'evt-1' }],
+        live: [{ providerId: 'mock-provider', externalId: 'evt-1' }],
+      });
       const configReader = {
         getConfig: jest.fn().mockResolvedValue(createEnabledScheduleConfig()),
         getPerSportConfig: jest.fn().mockResolvedValue(createEnabledScheduleConfig()),
@@ -1025,9 +1036,10 @@ describe('IngestionScheduler', () => {
         getUpcomingEvents: jest.fn().mockResolvedValue([]),
       });
       const registry = createMockRegistry(provider, ['GOLF']);
-      const eventReader = {
-        listEventsForFeed: jest.fn().mockResolvedValue([{ providerId: 'mock-provider', externalId: 'evt-1' }]),
-      };
+      const eventReader = readerOf({
+        fields: [{ providerId: 'mock-provider', externalId: 'evt-1' }],
+        live: [{ providerId: 'mock-provider', externalId: 'evt-1' }],
+      });
       const scheduler = new IngestionScheduler(registry, mockCallbacks, undefined, { eventReader });
 
       scheduler.start();
@@ -1037,21 +1049,15 @@ describe('IngestionScheduler', () => {
       await jest.runOnlyPendingTimersAsync();
 
       expect(provider.getUpcomingEvents).not.toHaveBeenCalled();
-      expect(eventReader.listEventsForFeed).toHaveBeenCalledWith(expect.objectContaining({
-        feed: 'EVENTLIVESCORES',
-      }));
-      expect(eventReader.listEventsForFeed).not.toHaveBeenCalledWith(expect.objectContaining({
-        feed: 'EVENTPARTICIPANTS',
-      }));
+      expect(eventReader.listLiveScoreEvents).toHaveBeenCalledWith(expect.objectContaining({ sport: 'GOLF' }));
+      expect(eventReader.listEventsForFeed).not.toHaveBeenCalled();
       expect(provider.getEventDetails).not.toHaveBeenCalled();
       expect(mockCallbacks.onEventDetail).not.toHaveBeenCalled();
     });
 
     it('schedules no feed for a covered sport the ingestion sync config does not enable', async () => {
       const provider = fakeSportDataProvider();
-      const eventReader = {
-        listEventsForFeed: jest.fn().mockResolvedValue([]),
-      };
+      const eventReader = readerOf({});
       const registry = createMockRegistry(provider, [Sport.GOLF]);
       const configReader = {
         getConfig: jest.fn().mockResolvedValue({
@@ -1081,6 +1087,7 @@ describe('IngestionScheduler', () => {
       await jest.runOnlyPendingTimersAsync();
 
       expect(eventReader.listEventsForFeed).not.toHaveBeenCalled();
+      expect(eventReader.listLiveScoreEvents).not.toHaveBeenCalled();
     });
 
     it('start() is idempotent — calling twice does not double timers', () => {
@@ -1144,7 +1151,7 @@ describe('IngestionScheduler provider health checks', () => {
     };
     const scheduler = new IngestionScheduler(registry, createMockCallbacks(), undefined, {
       configReader,
-      eventReader: { listEventsForFeed: jest.fn().mockResolvedValue([]) },
+      eventReader: readerOf({}),
     });
 
     scheduler.start();
@@ -1164,7 +1171,7 @@ describe('IngestionScheduler provider health checks', () => {
     };
     const scheduler = new IngestionScheduler(registry, createMockCallbacks(), undefined, {
       configReader,
-      eventReader: { listEventsForFeed: jest.fn().mockResolvedValue([]) },
+      eventReader: readerOf({}),
     });
 
     scheduler.start();
@@ -1247,7 +1254,7 @@ describe('IngestionScheduler scheduled loops', () => {
     const logger = fakeLogger();
     const config = { ...createEnabledScheduleConfig(), scheduledSports: ['GOLF', 'TENNIS'] };
     const configReader = { getConfig: jest.fn().mockResolvedValue(config), getPerSportConfig: jest.fn().mockResolvedValue(config) };
-    const eventReader = { listEventsForFeed: jest.fn().mockResolvedValue([]) };
+    const eventReader = readerOf({});
     const scheduler = new IngestionScheduler(createMockRegistry(fakeSportDataProvider(), ['GOLF']), createMockCallbacks(), logger, { configReader, eventReader });
 
     scheduler.start();
@@ -1259,6 +1266,7 @@ describe('IngestionScheduler scheduled loops', () => {
       'Configured scheduled ingestion sports have no registered provider',
     );
     expect(eventReader.listEventsForFeed).not.toHaveBeenCalledWith(expect.objectContaining({ sport: 'TENNIS' }));
+    expect(eventReader.listLiveScoreEvents).not.toHaveBeenCalledWith(expect.objectContaining({ sport: 'TENNIS' }));
   });
 
   it('warns about the same unregistered scheduled sports once, logs repeats at debug, and warns again when the set changes', async () => {
@@ -1320,7 +1328,7 @@ describe('IngestionScheduler scheduled loops', () => {
     const provider = fakeSportDataProvider();
     const config = { ...createEnabledScheduleConfig(), eventLiveScores: { enabled: true, intervalMinutes: 10 } };
     const configReader = { getConfig: jest.fn().mockResolvedValue(config), getPerSportConfig: jest.fn().mockResolvedValue(config) };
-    const eventReader = { listEventsForFeed: jest.fn().mockImplementation(async ({ feed }) => (feed === 'EVENTLIVESCORES' ? [{ providerId: 'mock-provider', externalId: 'evt-1' }] : [])) };
+    const eventReader = readerOf({ live: [{ providerId: 'mock-provider', externalId: 'evt-1' }] });
     const scheduler = new IngestionScheduler(createMockRegistry(provider, ['GOLF']), createMockCallbacks(), undefined, { configReader, eventReader });
 
     scheduler.start();
@@ -1347,7 +1355,10 @@ describe('IngestionScheduler loops across server tasks (#1159)', () => {
     const provider = fakeSportDataProvider();
     const config = createEnabledScheduleConfig();
     const configReader = { getConfig: jest.fn().mockResolvedValue(config), getPerSportConfig: jest.fn().mockResolvedValue(config) };
-    const eventReader = { listEventsForFeed: jest.fn().mockResolvedValue([{ providerId: 'mock-provider', externalId: 'evt-1' }]) };
+    const eventReader = readerOf({
+      fields: [{ providerId: 'mock-provider', externalId: 'evt-1' }],
+      live: [{ providerId: 'mock-provider', externalId: 'evt-1' }],
+    });
     const scheduler = new IngestionScheduler(createMockRegistry(provider, ['GOLF']), createMockCallbacks(), undefined, { configReader, eventReader, jobLock });
     return { provider, scheduler };
   }
@@ -1430,12 +1441,12 @@ describe('IngestionScheduler with two providers serving one sport', () => {
     const config = createEnabledScheduleConfig();
     const scheduler = new IngestionScheduler(registry, createMockCallbacks(), undefined, {
       configReader: { getConfig: jest.fn().mockResolvedValue(config), getPerSportConfig: jest.fn().mockResolvedValue(config) },
-      eventReader: {
-        listEventsForFeed: jest.fn().mockResolvedValue([
+      eventReader: readerOf({
+        live: [
           { providerId: 'mock-contest-feed', externalId: '41' },
           { providerId: 'balldontlie', externalId: '41' },
-        ]),
-      },
+        ],
+      }),
     });
 
     await scheduler['runConfiguredLiveScoreSweep']('GOLF');
@@ -1509,5 +1520,208 @@ describe('IngestionScheduler webhook-triggered event syncs (#1498)', () => {
 
     expect(await scheduler.runNotifiedEventSync(notified)).toBeNull();
     expect(provider.getLiveScores).not.toHaveBeenCalled();
+  });
+});
+
+describe('IngestionScheduler pace for providers that send webhook notifications (#1499)', () => {
+  const T0 = new Date('2026-11-15T18:00:00.000Z');
+  const MINUTE = 60_000;
+  const cadence = {
+    providerIds: ['balldontlie'],
+    pollIntervalMs: 15 * MINUTE,
+    roundPollIntervalMs: 2 * MINUTE,
+    // A 20-minute window for every event but `six-hour-round`, whose league's gap is longer.
+    quietAfterMs: (_sport: Sport, quietEvent: { externalId: string }) => (quietEvent.externalId === 'six-hour-round' ? 360 : 20) * MINUTE,
+  };
+  const adminConfig = {
+    ...createEnabledScheduleConfig(),
+    scheduledSports: ['GOLF', 'AMERICAN_FOOTBALL'],
+    eventLiveScores: { enabled: true, intervalSeconds: 5 * 60 },
+  };
+
+  function paced(options: { cadence?: typeof cadence; config?: typeof adminConfig } = {}) {
+    const clock = { now: T0 };
+    let live: LiveScoreEventRef[] = [];
+    const notified = fakeSportDataProvider({
+      providerId: 'balldontlie',
+      sportsCovered: [Sport.GOLF, Sport.AMERICAN_FOOTBALL],
+      getLiveScores: jest.fn().mockResolvedValue({ category: 'GOLF', externalEventId: 'x', rounds: [] } satisfies LiveScoreResult),
+    });
+    const polled = fakeSportDataProvider({
+      providerId: 'mock-contest-feed',
+      sportsCovered: [Sport.GOLF, Sport.AMERICAN_FOOTBALL],
+      getLiveScores: jest.fn().mockResolvedValue({ category: 'GOLF', externalEventId: 'x', rounds: [] } satisfies LiveScoreResult),
+    });
+    const registry = new ProviderRegistry();
+    for (const sport of [Sport.GOLF, Sport.AMERICAN_FOOTBALL]) {
+      registry.register(sport, polled, 'PRIMARY');
+      registry.register(sport, notified, 'SECONDARY');
+    }
+    const config = options.config ?? adminConfig;
+    const logger = fakeLogger();
+    const scheduler = new IngestionScheduler(registry, createMockCallbacks(), logger, {
+      configReader: { getConfig: jest.fn().mockResolvedValue(config), getPerSportConfig: jest.fn().mockResolvedValue(config) },
+      eventReader: { listEventsForFeed: jest.fn().mockResolvedValue([]), listLiveScoreEvents: jest.fn(async () => live) },
+      now: () => clock.now,
+      notifiedProviderCadence: 'cadence' in options ? options.cadence : cadence,
+    });
+    const sweepAt = async (sport: Sport, minutes: number, events: LiveScoreEventRef[]) => {
+      clock.now = new Date(T0.getTime() + minutes * MINUTE);
+      live = events;
+      await scheduler['runConfiguredLiveScoreSweep'](sport);
+    };
+    const pollsOf = (provider: SportDataProvider, eventId: string) =>
+      (provider.getLiveScores as jest.Mock<unknown, [string]>).mock.calls.filter(([id]) => id === eventId).length;
+    const quietWarnings = () => (logger.warn as unknown as jest.Mock<void, [{ action?: string }, string]>).mock.calls
+      .filter(([fields]) => fields.action === 'ingestion.providerNotifications.quiet');
+    return { scheduler, sweepAt, pollsOf, quietWarnings, notified, polled };
+  }
+
+  const event = (providerId: string, externalId: string, live: Partial<LiveScoreEventRef> = {}): LiveScoreEventRef => ({
+    providerId,
+    externalId,
+    playedInRounds: false,
+    playUnderwaySince: null,
+    lastProviderNotificationAt: null,
+    ...live,
+  });
+
+  it('keeps the admin\'s live-score interval for the sweep with no notified provider, and ticks every minute with one', async () => {
+    expect(await paced({ cadence: undefined }).scheduler['getLiveScoreSweepDelayMs'](Sport.GOLF)).toBe(5 * MINUTE);
+    expect(await paced().scheduler['getLiveScoreSweepDelayMs'](Sport.GOLF)).toBe(LIVE_SCORE_SWEEP_TICK_MS);
+    const fast = { ...adminConfig, eventLiveScores: { enabled: true, intervalSeconds: 30 } };
+    expect(await paced({ config: fast }).scheduler['getLiveScoreSweepDelayMs'](Sport.GOLF)).toBe(30_000);
+  });
+
+  it('polls a notified provider\'s game event only every 15 minutes, even while a match is in play, and another provider\'s every admin interval, on a one-minute tick', async () => {
+    const { sweepAt, pollsOf, notified, polled } = paced();
+    const events = [event('balldontlie', 'nfl-week-11', { playUnderwaySince: T0, lastProviderNotificationAt: T0 }), event('mock-contest-feed', 'mock-week-11')];
+
+    for (let minute = 0; minute <= 30; minute += 1) {
+      await sweepAt(Sport.AMERICAN_FOOTBALL, minute, events);
+    }
+
+    expect(pollsOf(notified, 'nfl-week-11')).toBe(3); // 0, 15, 30
+    expect(pollsOf(polled, 'mock-week-11')).toBe(7); // 0, 5, ..., 30
+  });
+
+  it('polls a notified golf event every 2 minutes while a round is under way, and every 15 minutes between rounds', async () => {
+    const { sweepAt, pollsOf, notified } = paced();
+    const inRound = event('balldontlie', '1133', { playedInRounds: true, playUnderwaySince: T0, lastProviderNotificationAt: T0 });
+    const betweenRounds = event('balldontlie', '1133', { playedInRounds: true });
+
+    for (let minute = 0; minute < 10; minute += 1) {
+      await sweepAt(Sport.GOLF, minute, [inRound]);
+    }
+    expect(pollsOf(notified, '1133')).toBe(5); // 0, 2, 4, 6, 8
+
+    for (let minute = 10; minute < 30; minute += 1) {
+      await sweepAt(Sport.GOLF, minute, [betweenRounds]);
+    }
+    expect(pollsOf(notified, '1133')).toBe(6); // 8 + 15 = 23
+  });
+
+  it('polls an event at its interval even when the tick runs a few seconds early', async () => {
+    const { sweepAt, pollsOf, notified } = paced();
+    const events = [event('balldontlie', 'nfl-week-11')];
+
+    await sweepAt(Sport.AMERICAN_FOOTBALL, 0, events);
+    await sweepAt(Sport.AMERICAN_FOOTBALL, 15 - 4 / 60, events);
+
+    expect(pollsOf(notified, 'nfl-week-11')).toBe(2);
+  });
+
+  it('polls an event again at once when it drops out of the sweep and comes back, since it keeps no pace for events no longer listed', async () => {
+    const { sweepAt, pollsOf, notified } = paced();
+    const events = [event('balldontlie', 'nfl-week-11')];
+
+    await sweepAt(Sport.AMERICAN_FOOTBALL, 0, events);
+    await sweepAt(Sport.AMERICAN_FOOTBALL, 1, []);
+    await sweepAt(Sport.AMERICAN_FOOTBALL, 2, events);
+
+    expect(pollsOf(notified, 'nfl-week-11')).toBe(2);
+  });
+
+  it('warns once per quiet window about a notified event in play with no notification for its window (here 20 minutes)', async () => {
+    const { sweepAt, quietWarnings } = paced();
+    const quiet = event('balldontlie', 'nfl-week-11', {
+      playUnderwaySince: new Date(T0.getTime() - 60 * MINUTE),
+      lastProviderNotificationAt: new Date(T0.getTime() - 25 * MINUTE),
+    });
+
+    await sweepAt(Sport.AMERICAN_FOOTBALL, 0, [quiet]);
+    await sweepAt(Sport.AMERICAN_FOOTBALL, 1, [quiet]);
+    await sweepAt(Sport.AMERICAN_FOOTBALL, 19, [quiet]);
+    expect(quietWarnings()).toHaveLength(1);
+    expect(quietWarnings()[0]?.[0]).toEqual({
+      action: 'ingestion.providerNotifications.quiet',
+      data: {
+        sport: Sport.AMERICAN_FOOTBALL,
+        providerId: 'balldontlie',
+        eventId: 'nfl-week-11',
+        playUnderwaySince: new Date(T0.getTime() - 60 * MINUTE).toISOString(),
+        lastProviderNotificationAt: new Date(T0.getTime() - 25 * MINUTE).toISOString(),
+        quietMinutes: 25,
+      },
+    });
+
+    await sweepAt(Sport.AMERICAN_FOOTBALL, 20, [quiet]);
+    expect(quietWarnings()).toHaveLength(2);
+  });
+
+  it('counts quiet from when play began while no notification has arrived yet, so play just starting is not quiet', async () => {
+    const { sweepAt, quietWarnings } = paced();
+    const starting = event('balldontlie', '1133', { playUnderwaySince: new Date(T0.getTime() - 19 * MINUTE) });
+
+    await sweepAt(Sport.GOLF, 0, [starting]);
+    expect(quietWarnings()).toHaveLength(0);
+    await sweepAt(Sport.GOLF, 1, [starting]);
+    expect(quietWarnings()).toEqual([[expect.objectContaining({ data: expect.objectContaining({ lastProviderNotificationAt: null, quietMinutes: 20 }) }), expect.any(String)]]);
+  });
+
+  it('takes each event\'s own quiet window, so an event whose league is quiet for hours in normal play is not warned about early', async () => {
+    const { sweepAt, quietWarnings } = paced();
+    const round = event('balldontlie', 'six-hour-round', { playUnderwaySince: new Date(T0.getTime() - 300 * MINUTE) });
+
+    await sweepAt(Sport.GOLF, 0, [round]);
+    await sweepAt(Sport.GOLF, 59, [round]);
+    expect(quietWarnings()).toHaveLength(0);
+    await sweepAt(Sport.GOLF, 60, [round]);
+    expect(quietWarnings()).toEqual([[expect.objectContaining({ data: expect.objectContaining({ eventId: 'six-hour-round', quietMinutes: 360 }) }), expect.any(String)]]);
+  });
+
+  it('does not warn about an event out of play, one notified recently, or one whose provider sends no notifications', async () => {
+    const { sweepAt, quietWarnings } = paced();
+    const longAgo = new Date(T0.getTime() - 120 * MINUTE);
+
+    await sweepAt(Sport.AMERICAN_FOOTBALL, 0, [
+      event('balldontlie', 'between-games', { lastProviderNotificationAt: longAgo }),
+      event('balldontlie', 'recently-heard', { playUnderwaySince: longAgo, lastProviderNotificationAt: new Date(T0.getTime() - 5 * MINUTE) }),
+      event('mock-contest-feed', 'polled-only', { playUnderwaySince: longAgo }),
+    ]);
+
+    expect(quietWarnings()).toHaveLength(0);
+  });
+
+  it('warns about nothing and polls every event each sweep while no provider sends notifications', async () => {
+    const { sweepAt, pollsOf, quietWarnings, notified } = paced({ cadence: undefined });
+    const quiet = event('balldontlie', 'nfl-week-11', { playUnderwaySince: new Date(T0.getTime() - 60 * MINUTE) });
+
+    await sweepAt(Sport.AMERICAN_FOOTBALL, 0, [quiet]);
+    await sweepAt(Sport.AMERICAN_FOOTBALL, 1, [quiet]);
+
+    expect(pollsOf(notified, 'nfl-week-11')).toBe(2);
+    expect(quietWarnings()).toHaveLength(0);
+  });
+
+  it('forgets every event\'s pace when stopped', async () => {
+    const { scheduler, sweepAt, pollsOf, notified } = paced();
+    const events = [event('balldontlie', 'nfl-week-11')];
+
+    await sweepAt(Sport.AMERICAN_FOOTBALL, 0, events);
+    scheduler.stop();
+    await sweepAt(Sport.AMERICAN_FOOTBALL, 1, events);
+
+    expect(pollsOf(notified, 'nfl-week-11')).toBe(2);
   });
 });

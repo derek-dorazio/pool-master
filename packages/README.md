@@ -159,6 +159,24 @@ one endpoint at `https://<environment host>/api/v1/provider-webhooks/balldontlie
 types, send its test event (it answers 200 and is dropped), and pass the signing secret it shows
 once to Terraform as `balldontlie_webhook_secret` (the `apply-terraform` skill).
 
+**Safety net (#1499):** once the webhook secret is set, notifications carry BALLDONTLIE's live
+scores and the live-score sweep only backs them up. It ticks every minute and polls each
+BALLDONTLIE event every 15 minutes, or a golf event every 2 minutes while a round is under way
+(golf is not notified hole by hole); events of other providers keep the admin's interval. Without
+the secret nothing changes. A game or tournament starting also syncs a linked event still
+`SCHEDULED` past its start, six minutes out so the lifecycle sweep has moved it in progress first.
+A game or tournament ending queues a second, reconciling sync ten minutes later for the provider's
+late corrections. Each notification sets `last_provider_notification_at` on the events it is
+about. While one is in play (a golf round under way, or a match in progress) with no
+notification for longer than its league's normal gap between notifications, the sweep warns with
+action `ingestion.providerNotifications.quiet`, which a CloudWatch alarm sends to the alerts
+topic. Each league's gap is in the webhook table (`balldontlie-webhooks.ts`): a period or half plus
+its break with room for overtime, from 75 minutes (NBA) to 90, 150 for the World Cup's extra time
+and penalties, 210 for MLB, and 6 hours for a golf round, whose first notification after the start
+is the first group finishing. A weather delay or other long stoppage sets off the warning too.
+`PROVIDER_WEBHOOK_POLL_SECONDS` and `PROVIDER_WEBHOOK_ROUND_POLL_SECONDS` override the two poll
+paces (`notified-provider-cadence.ts`).
+
 **Routes:** root-admin sync is event-scoped: `POST /api/v1/ingestion/sports/:sport/events/:eventId/sync` runs the event field (`EVENTPARTICIPANTS`) and live-score (`EVENTLIVESCORES`) feeds. Scheduled ingestion uses the internal scheduler directly for the same two feeds. There is no sport-level sync and no scheduled schedule or results pull (#126); events are created and linked by the root admin, and `getUpcomingEvents` is read only on demand.
 
 ---

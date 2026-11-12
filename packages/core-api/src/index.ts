@@ -50,6 +50,7 @@ import { PlatformSettingsService } from './modules/platform/platform-settings-se
 import { ingestionModule } from './modules/ingestion/routes';
 import { providerWebhooksModule, readBalldontlieWebhookSecret } from './modules/ingestion/provider-webhook-routes';
 import { ProviderNotificationService } from './modules/ingestion/provider-notifications';
+import { readNotifiedProviderCadence } from './modules/ingestion/notified-provider-cadence';
 import { IngestionService } from './modules/ingestion/ingestion-service';
 import { plansModule } from './modules/plans/routes';
 import { PlanEntitlementsService } from './modules/plans/plan-entitlements-service';
@@ -283,6 +284,7 @@ export function buildApp() {
     eventReader: createScheduledEventReader({ prisma, registry, logger: app.log }),
     syncRunLedger: providerSyncRunLedger,
     jobLock,
+    notifiedProviderCadence: readNotifiedProviderCadence(process.env),
   });
   const ingestionService = new IngestionService({
     registry,
