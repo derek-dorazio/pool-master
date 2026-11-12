@@ -367,6 +367,17 @@ export class InMemorySportEvents {
           lastChangedAt: changed.length > 0 ? new Date(Math.max(...changed)) : null,
         }];
       })),
+      findLiveNotifiedEvents: async (query) => this.events
+        .filter((row) => row.providerId === query.providerId && row.sport === query.sport
+          && row.status === 'IN_PROGRESS' && row.syncScope === 'SCORES_ONLY'
+          && ('externalId' in query ? row.externalId === query.externalId : row.externalId.startsWith(query.externalIdPrefix)))
+        .map((row) => ({
+          sport: row.sport,
+          providerId: row.providerId,
+          externalId: row.externalId,
+          holdsGame: query.gameId !== undefined
+            && this.matchRows.some((match) => match.sportEventId === row.id && match.externalGameId === query.gameId),
+        })),
       findAutoLifecycleCandidates: async () => this.events.filter((row) => (
         row.autoLifecycleEnabled
         && (row.status === 'SCHEDULED' || row.status === 'IN_PROGRESS')

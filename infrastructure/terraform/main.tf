@@ -49,6 +49,8 @@ locals {
   resolved_sport_data_default_provider = trimspace(var.sport_data_default_provider) != "" ? var.sport_data_default_provider : (var.environment == "qa" ? "mock-contest-feed" : "")
   # #1495 — BALLDONTLIE is bound only once its key is set, since its adapter refuses to start without one.
   balldontlie_enabled = nonsensitive(trimspace(var.balldontlie_api_key) != "")
+  # #1498 — the webhook receiver verifies deliveries only once the endpoint's signing secret is set.
+  balldontlie_webhook_enabled = nonsensitive(trimspace(var.balldontlie_webhook_secret) != "")
   balldontlie_binding = local.balldontlie_enabled ? {
     "balldontlie" = {
       baseUrl           = "https://api.balldontlie.io"
@@ -530,7 +532,7 @@ resource "aws_iam_role_policy" "ecs_execution_jwt_secret" {
     Statement = [{
       Effect   = "Allow"
       Action   = ["secretsmanager:GetSecretValue"]
-      Resource = concat([aws_secretsmanager_secret.jwt_secret.arn], aws_secretsmanager_secret.balldontlie_api_key[*].arn)
+      Resource = concat([aws_secretsmanager_secret.jwt_secret.arn], aws_secretsmanager_secret.balldontlie_api_key[*].arn, aws_secretsmanager_secret.balldontlie_webhook_secret[*].arn)
     }]
   })
 }
@@ -553,6 +555,26 @@ resource "aws_secretsmanager_secret_version" "balldontlie_api_key" {
 
   secret_id     = aws_secretsmanager_secret.balldontlie_api_key[0].id
   secret_string = var.balldontlie_api_key
+}
+
+# #1498 — the BALLDONTLIE webhook endpoint's signing secret, only once one is supplied.
+resource "aws_secretsmanager_secret" "balldontlie_webhook_secret" {
+  count = local.balldontlie_webhook_enabled ? 1 : 0
+
+  name        = "${local.name_prefix}-balldontlie-webhook-secret"
+  description = "BALLDONTLIE webhook signing secret for ${local.name_prefix} core-api (#1498)."
+
+  tags = {
+    Service = "core-api"
+    Purpose = "sport-data-provider-webhook-secret"
+  }
+}
+
+resource "aws_secretsmanager_secret_version" "balldontlie_webhook_secret" {
+  count = local.balldontlie_webhook_enabled ? 1 : 0
+
+  secret_id     = aws_secretsmanager_secret.balldontlie_webhook_secret[0].id
+  secret_string = var.balldontlie_webhook_secret
 }
 
 resource "aws_iam_role" "ecs_task" {
@@ -850,6 +872,7 @@ resource "aws_ecs_task_definition" "core_api" {
     secrets = concat(
       [{ name = "JWT_SECRET", valueFrom = aws_secretsmanager_secret.jwt_secret.arn }],
       [for secret in aws_secretsmanager_secret.balldontlie_api_key : { name = "BALLDONTLIE_API_KEY", valueFrom = secret.arn }],
+      [for secret in aws_secretsmanager_secret.balldontlie_webhook_secret : { name = "BALLDONTLIE_WEBHOOK_SECRET", valueFrom = secret.arn }],
     )
     logConfiguration = {
       logDriver = "awslogs"

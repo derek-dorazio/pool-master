@@ -330,6 +330,7 @@ export function fakeSportEventRepo(overrides: Partial<SportEventRepository> = {}
     countBySportLeagues: noCounts(),
     sportLeagueHasLoadedBracket: jest.fn().mockResolvedValue(false),
     summarizeByProviders: noCounts(),
+    findLiveNotifiedEvents: many(),
     findAutoLifecycleCandidates: many(),
     ...overrides,
   };
