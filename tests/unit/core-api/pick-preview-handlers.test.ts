@@ -28,7 +28,6 @@ const LINEUP: LineupPreview = {
     groupName: 'Tier 1',
     groupNumber: 1,
     picksFromGroup: 1,
-    selectedParticipantIds: [],
     participants: [{
       sportEventParticipantId: HOME, participantId: HOME, participantName: 'Golfer', isAvailable: true, isSelected: true, seedNumber: null,
     }],

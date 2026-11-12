@@ -133,6 +133,17 @@ describe('POST /leagues/:id/pick-preview/games', () => {
     expect(await storedRows()).toEqual(before);
   });
 
+  it('refuses a league member who is not its commissioner a game setup\'s preview with 403', async () => {
+    const { league } = await seedLeagueWithTeams(1);
+    const { event } = await seedFootballWeek({ games: 2, startDate: new Date(Date.now() + 7 * DAY), status: SportEventStatus.SCHEDULED });
+    const member = await createTestUser({ displayName: 'Games Preview Member' });
+    await getPrisma().leagueMembership.create({ data: { leagueId: league.id, userId: member.user.id, role: 'MEMBER', status: 'ACTIVE' } });
+
+    const response = await preview('games', league.id, member, { sportEventId: event.id, rules: CONFIDENCE, picks: [] });
+
+    expect(response.statusCode).toBe(403);
+  });
+
   it('costs the same statements for a week of 2 games as of 20, every game picked', async () => {
     await expectSameStatementCount({
       seed: async (games) => ({

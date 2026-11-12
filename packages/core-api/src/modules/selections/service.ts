@@ -39,6 +39,7 @@ import {
   type ContestEntry,
   type Participant,
   type SportEvent,
+  type SportEventParticipant,
   type TieredContestRules,
 } from '@poolmaster/shared/domain';
 import type {
@@ -201,16 +202,7 @@ export class SelectionService {
     const configuration = previewConfiguration(rules, sportEvent);
 
     const field = await this.deps.field.findBySportEvent(sportEvent.id);
-    const [participants, { tiers: tierGroups, valuations }] = await Promise.all([
-      this.deps.participants.findByIds(field.map((entry) => entry.participantId)),
-      this.deps.tiers.getEffectiveTiersAndValuations(sportEvent.id, field),
-    ]);
-    const selectionParticipants = buildSelectionParticipants({
-      field,
-      participantsById: new Map(participants.map((participant: Participant) => [participant.id, participant])),
-      valuationBySportEventParticipantId: buildValuationLookup(valuations),
-      event: sportEvent,
-    });
+    const { selectionParticipants, tierGroups } = await this.readEventField(sportEvent, field);
     const participantByRowId = new Map(selectionParticipants.map((row) => [row.sportEventParticipantId, row]));
     const picked = input.sportEventParticipantIds.map((rowId) => {
       const row = participantByRowId.get(rowId);
@@ -228,19 +220,19 @@ export class SelectionService {
       tiers,
       picks: picked.map((row) => ({ participantId: row.participantId, price: row.price })),
     };
-    const available = selectionParticipants.filter((row) => row.isAvailable);
+    const available = buildAvailableParticipantIds({ selectionParticipants });
 
     return {
       sportEventId: sportEvent.id,
       selectionType: rules.selectionType,
       rosterSize,
       selectionGroups: buildSelectionGroups({ tiers, selectionParticipants }, engine, rosterSize, pickedIds),
-      availableSportEventParticipantIds: available.map((row) => row.sportEventParticipantId),
+      availableSportEventParticipantIds: [...available],
       pickCount: picked.length,
       isComplete: rosterSize > 0 && engine.findLineupIssues(lineup).length === 0,
       lineupSummary: engine.summarizeLineup({
         ...lineup,
-        openField: available.filter((row) => !pickedIds.has(row.sportEventParticipantId)),
+        openField: openFieldOf({ selectionParticipants }, available, pickedIds),
       }),
     };
   }
@@ -481,8 +473,7 @@ export class SelectionService {
           participantId: pick.participant.participantId,
           price: priceBySportEventParticipantId.get(pick.sportEventParticipantId),
         })),
-        openField: context.selectionParticipants.filter((participant) =>
-          available.has(participant.sportEventParticipantId) && !held.has(participant.sportEventParticipantId)),
+        openField: openFieldOf(context, available, held),
       }),
     };
   }
@@ -738,10 +729,9 @@ export class SelectionService {
     ]);
 
     const squadIds = Array.from(new Set(entries.map((entry) => entry.squadId)));
-    const [squadMemberships, participants, { tiers: tierGroups, valuations }] = await Promise.all([
+    const [squadMemberships, { selectionParticipants, tierGroups, valuations }] = await Promise.all([
       this.deps.squadMemberships.findBySquads(squadIds),
-      this.deps.participants.findByIds(field.map((entry) => entry.participantId)),
-      this.deps.tiers.getEffectiveTiersAndValuations(sportEventId, field),
+      this.readEventField(sportEvent, field),
     ]);
 
     return {
@@ -756,9 +746,26 @@ export class SelectionService {
       // One rule for every pick change: see contests/entry-window.
       acceptsPicks: areEventPicksOpen(contest, sportEvent, now),
       picksRevealed: areEventPicksRevealed(contest, sportEvent, now),
+      selectionParticipants,
+    };
+  }
+
+  /**
+   * An event's field as members pick from it: each row with its participant, price and ranking,
+   * and the event's tiers and valuations. The room and a setup's preview both read it here, in
+   * two parallel batches whatever the field's size; the field is read once and handed in (#1196).
+   */
+  private async readEventField(sportEvent: SportEvent, field: readonly SportEventParticipant[]) {
+    const [participants, { tiers: tierGroups, valuations }] = await Promise.all([
+      this.deps.participants.findByIds(field.map((entry) => entry.participantId)),
+      this.deps.tiers.getEffectiveTiersAndValuations(sportEvent.id, field),
+    ]);
+    return {
+      tierGroups,
+      valuations,
       selectionParticipants: buildSelectionParticipants({
         field,
-        participantsById: new Map(participants.map((p: Participant) => [p.id, p])),
+        participantsById: new Map(participants.map((participant: Participant) => [participant.id, participant])),
         valuationBySportEventParticipantId: buildValuationLookup(valuations),
         event: sportEvent,
       }),
@@ -885,9 +892,7 @@ export class SelectionService {
             participantId: pick.participant.participantId,
             price: priceBySportEventParticipantId.get(pick.sportEventParticipantId),
           })),
-          openField: context.selectionParticipants.filter((participant) =>
-            availableSportEventParticipantIds.has(participant.sportEventParticipantId)
-            && !selectedSportEventParticipantIds.has(participant.sportEventParticipantId)),
+          openField: openFieldOf(context, availableSportEventParticipantIds, selectedSportEventParticipantIds),
         })
         : null,
     };
@@ -995,10 +1000,20 @@ function selectionTiersOf(configuration: EngineRules, tierGroups: readonly Sport
 }
 
 /** What is still selectable: every field row that is itself available. */
-function buildAvailableParticipantIds(context: SelectionContext): Set<string> {
+function buildAvailableParticipantIds(context: Pick<SelectionContext, 'selectionParticipants'>): Set<string> {
   return new Set(context.selectionParticipants
     .filter((participant) => participant.isAvailable)
     .map((participant) => participant.sportEventParticipantId));
+}
+
+/** The field a lineup could still add: available rows it does not hold, for a budget's cheapest fill. */
+function openFieldOf(
+  context: Pick<SelectionContext, 'selectionParticipants'>,
+  available: ReadonlySet<string>,
+  held: ReadonlySet<string>,
+): SelectionContext['selectionParticipants'] {
+  return context.selectionParticipants.filter((participant) =>
+    available.has(participant.sportEventParticipantId) && !held.has(participant.sportEventParticipantId));
 }
 
 /** The shape an engine reasons over: a pick's id, whom it points at, and its place. */

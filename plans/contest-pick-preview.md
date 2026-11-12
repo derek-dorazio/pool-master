@@ -49,6 +49,15 @@ Both endpoints read only: they create no contest, entry or pick, and say so in t
   listed in the PR.
 - The golf picks look stays exactly as it is.
 
+## Plan gates
+
+The preview checks no plan gate, on purpose. No plan feature gates a format: every plan offers
+every selection type. The plan limit that touches contest setup is the number of sport leagues a
+league may play each year, and Create contest enforces it when the contest is created. A preview
+creates nothing, so it uses up no sport league and has nothing to refuse. If a format is ever
+gated by plan, the gate belongs on the form and on contest creation, and the preview should not
+be what refuses it.
+
 ## Where it lands
 
 The endpoints and the service split change `packages/`, which a UI batch refuses, so they go
