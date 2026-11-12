@@ -2,7 +2,7 @@ import { SelectionType } from '@poolmaster/shared/domain';
 import { useQuery } from '@tanstack/react-query';
 import type { ContestDto } from '@/lib/api';
 import { CheckList, ErrorState, LoadingState, refetchFailed } from '@/features/shared/ui';
-import { secondChanceRoundName } from './bracket-start-round';
+import { contestSecondChanceRoundName } from './bracket-start-round';
 import { firstContestEvent } from './contest-events';
 import { getContestReadinessChecks } from './contest-readiness';
 import { OpenContestDialog } from './open-contest-action';
@@ -31,10 +31,7 @@ export function OpenContestFromListDialog({
   const managedContestQuery = useManagedContestQuery(open && isBracket ? contest.leagueId : undefined, contest.id);
   const roundName = useEventRoundName(isBracket ? eventQuery.data ?? null : null);
 
-  const configuration = managedContestQuery.data?.configuration;
-  const bracketStartRoundName = configuration?.selectionType === SelectionType.BRACKET
-    ? secondChanceRoundName(configuration.startsAtRound, roundName)
-    : null;
+  const bracketStartRoundName = contestSecondChanceRoundName(managedContestQuery.data?.configuration, roundName);
   const isLoading = eventQuery.isLoading || managedContestQuery.isLoading;
   const isError = eventQuery.isError || managedContestQuery.isError;
   const checks = eventQuery.data && !isLoading && !isError
