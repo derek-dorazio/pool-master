@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { Sport, getSportDefinition } from "@poolmaster/shared/domain";
@@ -310,6 +310,21 @@ describe("contest entry selection: withdrawn golfers and card details", () => {
     expect(card).toHaveTextContent("USA");
     expect(card).toHaveTextContent("3200 salary");
     expect(card).toHaveTextContent("Ranking #1");
+  });
+
+  it("draws each locked pick as a row whose name, ranks and status read at any width, with no column table to scroll", () => {
+    render(<LockedSelectionGroup noun={GOLFER} sport="GOLF" group={buildGroup(["sep-1", "sep-2"])} />);
+
+    const tier = screen.getByTestId("contest-entry-group-tier-a");
+    expect(within(tier).queryByRole("table")).not.toBeInTheDocument();
+    expect(within(tier).queryByRole("columnheader")).not.toBeInTheDocument();
+
+    const row = screen.getByTestId("contest-entry-locked-participant-tier-a-sep-2");
+    expect(row.tagName).not.toBe("TR");
+    expect(within(row).getByText("Rory McIlroy")).toBeInTheDocument();
+    // Each rank keeps its words together, so a phone wraps between facts, never inside one.
+    expect(within(row).getByText(/Contest\u00a0rank\u00a0#2 · Ranking\u00a0#2$/, { normalizer: (text) => text })).toBeInTheDocument();
+    expect(within(row).getByTestId("contest-entry-locked-participant-tier-a-sep-2-status")).toHaveTextContent("Active");
   });
 
   it("says no golfer was saved for a locked tier the entry left empty", () => {
