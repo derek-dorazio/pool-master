@@ -71,6 +71,7 @@ import { versionModule } from './modules/version/routes';
 
 // Draft module
 import { selectionsModule } from './modules/selections/routes';
+import { pickPreviewModule } from './modules/selections/preview-routes';
 import { createDrawReceipts } from './modules/selections/wiring';
 
 // Ingestion module
@@ -368,6 +369,7 @@ export function buildApp() {
   // Draft module
   // =========================================================================
   app.register(selectionsModule, { prefix: '/api/v1/selections', email, planEntitlements, leaderboards });
+  app.register(pickPreviewModule, { prefix: '/api/v1/leagues/:id/pick-preview', planEntitlements });
 
   // =========================================================================
   // Lifecycle hooks

@@ -164,6 +164,24 @@ export interface SelectionView {
 }
 
 /**
+ * A roster setup's pick screen before its contest is saved (#1612): the field as the rules group
+ * it, with the commissioner's trial picks marked. No contest, entry or pick stands behind it.
+ */
+export interface LineupPreview {
+  sportEventId: string;
+  selectionType: typeof SelectionType.TIERED | typeof SelectionType.BUDGET_PICK;
+  rosterSize: number;
+  selectionGroups: SelectionGroup[];
+  availableSportEventParticipantIds: string[];
+  /** How many trial picks there are; each is in the event's field. */
+  pickCount: number;
+  /** Whether the trial picks make a lineup an entry could submit. */
+  isComplete: boolean;
+  /** A budget setup's spend of the trial picks; null in a tiered setup. */
+  lineupSummary: LineupSummary | null;
+}
+
+/**
  * Why a lineup cannot be submitted yet (#481): how many picks it holds against the roster, and
  * which tiers are short of their picks (empty for a budget-pick roster, which has no tiers).
  * What `ENTRY_LINEUP_INCOMPLETE` reports.

@@ -28,6 +28,22 @@ export const selectionErrors = {
   contestNotFound: (contestId: string) =>
     new SelectionError(`Contest ${contestId} was not found`, 'CONTEST_NOT_FOUND', 404),
 
+  /** A pick preview (#1612) names its event, not a contest, so an unknown one is refused by its own id. */
+  sportEventNotFound: (sportEventId: string) =>
+    new SelectionError(`Sport event ${sportEventId} was not found`, 'SPORT_EVENT_NOT_FOUND', 404),
+
+  /** A budget setup's preview (#1612) on an event whose field has no prices, so no salary cap. */
+  eventNotPriced: (sportEventId: string) =>
+    new SelectionError(`Sport event ${sportEventId} has not been priced for budget contests`, 'CONTEST_EVENT_NOT_PRICED', 409),
+
+  /** A pick preview's trial pick (#1612) of a field row of another event. */
+  previewPickNotInEvent: (sportEventParticipantId: string, sportEventId: string) =>
+    new SelectionError(
+      `SportEventParticipant ${sportEventParticipantId} is not in event ${sportEventId}'s field`,
+      'PARTICIPANT_NOT_IN_EVENT',
+      400,
+    ),
+
   eventNotInContest: (sportEventId: string, contestId: string) =>
     new SelectionError(`Event ${sportEventId} is not one contest ${contestId} covers`, 'CONTEST_EVENT_NOT_IN_CONTEST', 404),
 
