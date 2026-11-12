@@ -148,13 +148,16 @@ describe('How to Play', () => {
     expect(screen.queryByTestId('how-to-play-format-SQUARES')).not.toBeInTheDocument();
   });
 
-  it('narrows the page to the sport its link names: that sport\'s picture and line, only its ways to play, and its default template inside each', async () => {
+  it('narrows the page to the sport its link names: that sport\'s picture with its line behind the (?), only its ways to play, and its default template inside each', async () => {
     listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: GOLF_AND_FOOTBALL } });
     renderPage('/how-to-play?sport=american-football');
 
     const banner = await screen.findByTestId('how-to-play-sport-banner');
-    expect(banner).toHaveTextContent('American football');
-    expect(banner).toHaveTextContent('Weekly pick\'em and survivor');
+    expect(within(banner).getByRole('heading', { name: 'American football' })).toBeInTheDocument();
+    // The sport's line sits behind the section's (?), never as a sentence in it.
+    expect(banner).not.toHaveTextContent('Weekly pick\'em and survivor');
+    fireEvent.click(within(banner).getByRole('button', { name: 'How this section works' }));
+    expect(screen.getByTestId('how-to-play-sport-banner-help-callout')).toHaveTextContent('Weekly pick\'em and survivor');
     expect(screen.getByTestId('how-to-play-format-SQUARES')).toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId('how-to-play-format-SQUARES-toggle'));

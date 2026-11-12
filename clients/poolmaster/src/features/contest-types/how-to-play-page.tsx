@@ -4,7 +4,7 @@ import { SelectionType, formatSelectionTypeName, getSportDefinition, type Sport 
 import type { ContestConfigTemplateDto, LeagueDto } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-context';
 import { useActiveContestTemplatesQuery } from '@/features/contests/use-active-contest-templates-query';
-import { Button, cn, ErrorState, ExpandableTile, Heading, LinkButton, LoadingState, NumberedSteps, PageHeader, refetchFailed, SectionCard, Tile } from '@/features/shared/ui';
+import { Button, cn, ExpandableTile, LinkButton, NumberedSteps, PageHeader, QueryState, refetchFailed, SectionCard, Text } from '@/features/shared/ui';
 import { getLogger } from '@/lib/logger';
 import { buildPublicContestCatalog, type ContestTypeTile, type PublicCatalogLeague, type PublicCatalogSport } from './contest-catalog';
 import { FORMAT_GUIDES } from './format-guides';
@@ -15,6 +15,7 @@ import { buildLeagueAdminContestCreateFromTemplatePath } from '@/features/league
 import { useLeaguesQuery } from '@/features/leagues/use-leagues-query';
 import { useSportLeaguesQuery } from './use-sport-leagues-query';
 import { ComingUpRow } from '@/features/event-pages/coming-up-row';
+import { LandingSection } from '@/features/event-pages/components/landing-section';
 import { CLUTCH_CARD_PAGE_PATH, howToPlayFormatAnchor } from '@/features/event-pages/event-page-paths';
 
 /** How a pool runs, in three steps, each with its picture. */
@@ -45,6 +46,17 @@ function SportThumb({ sport, className }: { sport: Sport; className?: string }) 
   return <SportIllustration className={cn('shrink-0 rounded-full', className)} decorative sport={sport} />;
 }
 
+/** A way to play's steps, numbered, in the words around them. */
+function StepList({ steps }: { steps: readonly string[] }) {
+  return (
+    <Text asChild size="inherit" tone="default">
+      <ol className="list-decimal space-y-1 pl-5">
+        {steps.map((step) => <li key={step}>{step}</li>)}
+      </ol>
+    </Text>
+  );
+}
+
 /**
  * Create contest on a way to play's template (#1104), for a viewer who runs a league: one league
  * opens straight on it, several are each a button. Nothing for anyone else.
@@ -62,7 +74,7 @@ function CreateContestAction({ leagues, template, testId }: { leagues: readonly 
   }
   return (
     <div className="flex flex-wrap items-center gap-2" data-testid={`${testId}-create`}>
-      <span className="text-muted-foreground">Create contest in</span>
+      <Text size="inherit" tone="muted">Create contest in</Text>
       {leagues.map((league) => (
         <LinkButton
           data-testid={`${testId}-create-${league.leagueCode}`}
@@ -104,8 +116,8 @@ function FormatCard({ selectionType, sports, chosen, isOpen, onToggle, onChooseS
       face={(
         <>
           <FormatIllustration className={cn('aspect-[16/10] w-full rounded-xl', isOpen ? 'max-h-48' : null)} selectionType={selectionType} />
-          <span className="px-1 font-display text-base font-bold text-foreground">{formatSelectionTypeName(selectionType)}</span>
-          <span className="px-1 text-sm text-muted-foreground">{guide.summary}</span>
+          <Text className="px-1" size="base" tone="default" variant="display">{formatSelectionTypeName(selectionType)}</Text>
+          <Text className="px-1" variant="meta">{guide.summary}</Text>
           {isOpen || chosen ? null : (
             <span aria-label={`On ${sports.map((sport) => sport.name).join(', ')}`} className="flex flex-wrap gap-1 px-1" role="img">
               {sports.map((sport) => <SportThumb className="h-5 w-5" key={sport.sport} sport={sport.sport} />)}
@@ -118,16 +130,14 @@ function FormatCard({ selectionType, sports, chosen, isOpen, onToggle, onChooseS
       onToggle={onToggle}
       testId={`how-to-play-format-${selectionType}`}
     >
-      <ol className="list-decimal space-y-1 pl-5 text-foreground">
-        {guide.steps.map((step) => <li key={step}>{step}</li>)}
-      </ol>
+      <StepList steps={guide.steps} />
       {featured ? (
-        <p className="text-muted-foreground">
-          <span className="font-semibold text-foreground">{featured.name}.</span> {featured.description}
-        </p>
+        <Text as="p" size="inherit" tone="muted">
+          <Text size="inherit" variant="strong" weight="semibold">{`${featured.name}.`}</Text> {featured.description}
+        </Text>
       ) : (
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-muted-foreground">Play it on</span>
+          <Text size="inherit" tone="muted">Play it on</Text>
           {sports.map((sport) => (
             <Button
               className="gap-1.5 rounded-full pl-1"
@@ -176,24 +186,22 @@ function ClutchCardTile({ leagues, isOpen, onToggle, createLeagues }: {
         <>
           {/* The card fills its whole picture, so an open tile keeps its shape rather than cropping it. */}
           <ClutchCardIllustration className={cn('aspect-[16/10] w-full rounded-xl', isOpen ? 'max-h-48 w-auto self-center' : null)} />
-          <span className="px-1 font-display text-base font-bold text-foreground">{STAT_POOL_CONTEST_TYPE}</span>
-          <span className="px-1 text-sm text-muted-foreground">{STAT_POOL_GUIDE.summary}</span>
+          <Text className="px-1" size="base" tone="default" variant="display">{STAT_POOL_CONTEST_TYPE}</Text>
+          <Text className="px-1" variant="meta">{STAT_POOL_GUIDE.summary}</Text>
         </>
       )}
       isOpen={isOpen}
       onToggle={onToggle}
       testId="how-to-play-clutch-card"
     >
-      <ol className="list-decimal space-y-1 pl-5 text-foreground">
-        {STAT_POOL_GUIDE.steps.map((step) => <li key={step}>{step}</li>)}
-      </ol>
+      <StepList steps={STAT_POOL_GUIDE.steps} />
       <ul aria-label="Stat lines" className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
         {statLines.map(({ sport, name }) => (
           <li className="flex items-center gap-2 rounded-lg border border-border bg-background p-2" data-testid={`how-to-play-clutch-card-stat-${sport}`} key={sport}>
             <SportThumb className="h-7 w-7" sport={sport} />
             <span className="min-w-0">
-              <span className="block font-semibold text-foreground">{name}</span>
-              <span className="block text-xs text-muted-foreground">{getSportDefinition(sport).name}</span>
+              <Text as="div" size="inherit" variant="strong" weight="semibold">{name}</Text>
+              <Text as="div" variant="caption">{getSportDefinition(sport).name}</Text>
             </span>
           </li>
         ))}
@@ -335,11 +343,7 @@ export function HowToPlayPage() {
 
   return (
     <section className="space-y-8" data-testid="how-to-play-page">
-      <PageHeader
-        actions={callToAction}
-        description="Office pools for the events you already follow: pick your players, teams or horses, and see where you stand as it plays out."
-        title="How to Play"
-      />
+      <PageHeader actions={callToAction} title="How to Play" />
 
       <NumberedSteps
         className="-mx-1 auto-cols-[78%] grid-flow-col gap-3 overflow-x-auto px-1 pb-1 sm:auto-cols-[45%] md:grid-flow-row md:overflow-visible"
@@ -352,11 +356,14 @@ export function HowToPlayPage() {
 
       <ComingUpRow key={chosenSport?.sport ?? 'all'} sport={chosenSport?.sport} testId="how-to-play-coming-up" />
 
-      {templatesQuery.isLoading || sportLeaguesQuery.isLoading ? (
-        <LoadingState body="Loading the ways to play..." />
-      ) : isError ? (
-        <ErrorState body="We couldn't load the contest types." onRetry={refetchFailed(templatesQuery, sportLeaguesQuery)} />
-      ) : (
+      <QueryState
+        error="We couldn't load the contest types."
+        loading="Loading the ways to play..."
+        query={{ data: catalogLoaded ? catalog : undefined, isError, refetch: refetchFailed(templatesQuery, sportLeaguesQuery) }}
+        size="tile"
+        testId="how-to-play-catalog"
+      >
+        {() => (
         <SectionCard
           bare
           help={chosenLeague
@@ -368,13 +375,9 @@ export function HowToPlayPage() {
           <SportLeagueChips catalog={catalog} chosenLeague={chosenLeague} chosenSport={chosenSport} onChoose={choose} />
 
           {chosenSport ? (
-            <Tile className="overflow-hidden md:flex" data-testid="how-to-play-sport-banner" padding="none" radius="md">
-              <SportIllustration className="aspect-[16/10] w-full md:w-80" sport={chosenSport.sport} />
-              <div className="p-4">
-                <Heading level={3} variant="card" size="xl">{chosenName}</Heading>
-                <p className="mt-1 text-sm text-muted-foreground">{SPORT_BLURBS[chosenSport.sport]}</p>
-              </div>
-            </Tile>
+            <SectionCard headingLevel={3} help={SPORT_BLURBS[chosenSport.sport]} testId="how-to-play-sport-banner" title={chosenName}>
+              <SportIllustration className="aspect-[16/10] w-full md:mx-auto md:max-w-md" sport={chosenSport.sport} />
+            </SectionCard>
           ) : null}
 
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
@@ -398,16 +401,13 @@ export function HowToPlayPage() {
             />
           </div>
         </SectionCard>
-      )}
+        )}
+      </QueryState>
 
       {auth.isAuthenticated ? null : (
-        <Tile className="flex flex-wrap items-center justify-between gap-4" padding="md" radius="md">
-          <div>
-            <Heading level={3} variant="card">Ready to run your pool?</Heading>
-            <p className="text-sm text-muted-foreground">Create an account, start a league, and set up your first contest.</p>
-          </div>
+        <LandingSection intro="Create an account, start a league, and set up your first contest." testId="how-to-play-cta" title="Ready to run your pool?">
           {callToAction}
-        </Tile>
+        </LandingSection>
       )}
 
     </section>
