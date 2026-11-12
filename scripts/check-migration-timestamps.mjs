@@ -6,6 +6,10 @@
  * different tables, silently wrong once they touch the same one. Parallel sessions cannot see
  * each other's choice, so a collision only exists once both branches reach `main`.
  *
+ * #1670 — and no migration a branch adds may be dated before the base's latest
+ * (`findAddedBeforeBase`): a fresh database would apply it before that one, an environment that
+ * has applied that one after it.
+ *
  * WHY ONLY ADDED MIGRATIONS. The fix for a collision that has shipped is not a rename: Prisma
  * records applied migrations by name, so renaming one an environment has applied makes the old
  * name read as applied-but-missing and the new one as unapplied, and the next `migrate deploy`
@@ -57,6 +61,23 @@ export function findAddedCollisions({ added, known }) {
   return [...collisions.entries()].map(([prefix, names]) => ({ prefix, names }));
 }
 
+/**
+ * Each added migration dated before the latest of the base's migrations (#1670), with that latest
+ * one. Prisma applies migrations in name order, so a fresh database (CI's, a test reset) runs such
+ * a migration before the base's later ones, while an environment that has applied those runs it
+ * after them: two orders, which diverge silently once both touch one table. A migration sharing
+ * the latest's timestamp is left to `findAddedCollisions`.
+ */
+export function findAddedBeforeBase({ added, base }) {
+  const latest = [...base].filter((name) => timestampPrefix(name)).sort().at(-1);
+  if (latest === undefined) return [];
+  const latestPrefix = timestampPrefix(latest);
+  return added
+    .filter((name) => timestampPrefix(name) && timestampPrefix(name) < latestPrefix)
+    .sort()
+    .map((name) => ({ name, latest }));
+}
+
 function git(args) {
   const result = spawnSync('git', args, { encoding: 'utf8' });
   return result.status === 0 ? result.stdout.trim() : null;
@@ -74,14 +95,19 @@ function migrationsInWorkingTree() {
   );
 }
 
-function resolveBase() {
-  if (process.env.MIGRATION_BASE_REF) {
-    return { ref: process.env.MIGRATION_BASE_REF, alsoKnown: null };
+/**
+ * The base the added migrations are measured against, and a ref whose migrations also count as
+ * the base's (see WHAT "ADDED" IS MEASURED AGAINST), or null when no merge-base with
+ * `origin/main` resolves. `mergeBaseWith` answers `git merge-base HEAD <ref>`, or null.
+ */
+export function resolveBase(env = process.env, mergeBaseWith = (ref) => git(['merge-base', 'HEAD', ref])) {
+  if (env.MIGRATION_BASE_REF) {
+    return { ref: env.MIGRATION_BASE_REF, alsoKnown: null };
   }
-  if (process.env.CI) {
+  if (env.CI) {
     return { ref: 'HEAD^1', alsoKnown: null };
   }
-  const mergeBase = git(['merge-base', 'HEAD', 'origin/main']);
+  const mergeBase = mergeBaseWith('origin/main');
   return mergeBase ? { ref: mergeBase, alsoKnown: 'origin/main' } : null;
 }
 
@@ -106,8 +132,9 @@ function main() {
   const added = current.filter((name) => !baseSet.has(name));
   const alsoKnown = base.alsoKnown ? migrationsAt(base.alsoKnown) ?? [] : [];
   const collisions = findAddedCollisions({ added, known: [...current, ...alsoKnown] });
+  const early = findAddedBeforeBase({ added, base: [...baseMigrations, ...alsoKnown] });
 
-  if (collisions.length === 0) {
+  if (collisions.length === 0 && early.length === 0) {
     console.log(`Migration timestamp check OK (${added.length} added against ${base.ref}).`);
     return;
   }
@@ -115,9 +142,12 @@ function main() {
     console.error(`duplicate migration timestamp ${prefix}:`);
     for (const name of names) console.error(`  ${name}`);
   }
+  for (const { name, latest } of early) {
+    console.error(`${name} is dated before ${latest}, which main already has. Re-date it after ${latest}.`);
+  }
   console.error(
-    '\nGive the migration this change adds a timestamp no other migration uses. Never rename one '
-    + 'that is already on main: environments record applied migrations by name.',
+    '\nGive the migration this change adds a timestamp after every migration on main, used by no '
+    + 'other. Never rename one that is already on main: environments record applied migrations by name.',
   );
   process.exit(1);
 }

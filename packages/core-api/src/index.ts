@@ -260,7 +260,7 @@ export function buildApp() {
       }, 'Ingested event detail');
       const persisted = await ingestionPersistence.persistEventDetailWithDiagnostics(detail);
       app.log.info({ persisted: persisted.value }, 'Persisted event detail');
-      return persisted.writeDiagnostics;
+      return persisted;
     },
     async onLiveScores(result: LiveScoreResult, providerId: string) {
       app.log.info({

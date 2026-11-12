@@ -143,24 +143,36 @@ field loop when it is on). The route queues a `MANUAL_EVENT_SYNC` job for the pa
 flowchart TD
   D[getEventDetails: event + participants] --> M{participant_provider_mappings<br/>has provider_id + external_id?}
   M -- yes --> U[update participants row if a value changed]
-  M -- no --> N{one site participant of this sport<br/>with exactly this name, no mapping<br/>from this provider, and in the league<br/>whose keyword = metadata.tour?}
+  M -- no --> N{one site participant of this sport<br/>with this name, no mapping from this<br/>provider, and in the league whose<br/>keyword = metadata.tour? Within a<br/>league the name is folded}
   N -- yes --> LK[link it: new mapping, confidence HIGH]
   N -- no or ambiguous --> CR[create participants row + mapping, confidence EXACT]
   U & LK & CR --> F[upsert sport_event_participants<br/>active, ranking, seed, odds, metadata]
   F --> J[REBUILD_LEADERBOARDS job in the same transaction]
+  J --> W[list the field's ranked rows with no mapping<br/>from this provider: RANKED_PARTICIPANTS_UNLINKED warning]
 ```
 
 | Table | Key | Written |
 |---|---|---|
-| `participants` | `id` | Created only when no mapping and no unique same-name match exists. |
+| `participants` | `id` | Created only when no mapping and no unique same-name match exists. The same-name match reads through `participants_sport_id_name_idx` (#1537). |
 | `participant_provider_mappings` | `@@unique([provider_id, external_id])` | One per provider participant. `EXACT` when created, `HIGH` when linked by name. This mapping is how every later sync finds the participant. |
 | `sport_event_participants` | `(sport_event_id, participant_id)` | The event's field row. A released bracket's seeds are kept as they were (#698). |
 | `sport_events.participant_count` | | Updated if the provider's count changed. |
 
 The name link is what stops a team loaded from a data file being created twice. A tour on the
 participant narrows the match to the league's own affiliated participants, so a school's men's and
-women's teams each link to their own row. A name two candidates share is never guessed; it is
-created, and an admin merges by hand.
+women's teams each link to their own row. Within that league the name is compared folded
+(`participantNameKey`, #1664): accents, case and punctuation dropped and a trailing Jr., Sr., II,
+III or IV left off, so the feed's "Luka Doncic" links to a data file's "Luka Dončić". A suffix
+only one side carries is forgiven; a Jr. never links to a Sr. of the same name. A participant
+naming no league links by its exact name only, since the sport's every spelling of it is not read.
+A name two candidates share is never guessed; it is created, and an admin merges by hand. Where two
+of a league's candidates fold to one name, only the one spelled exactly as the feed spells it links.
+
+After the field is written, its ranked rows with no mapping from the event's provider are listed,
+best rank first, in a `RANKED_PARTICIPANTS_UNLINKED` warning on the sync run (#1664), which names
+the first 20 and counts the rest. Those are the
+stars the feed named some other way or not at all: its scores never reach them, so the root admin
+merges or maps each by hand.
 
 Participant external ids are prefixed by league (`nfl-team-12`, `nba-player-3202`) because one
 provider's ids share one namespace. PGA TOUR golfers are the exception: their id is the vendor's
@@ -439,8 +451,8 @@ vendored OpenAPI document and fixtures under `tests/fixtures/balldontlie/` (see 
   (`20271117000500`), so each league's import finds only its round, and the NBA league's import
   finds only the season. Rounds 1 and 2 are listed but no sport league imports them. The field is
   the round's teams' active players, `nba-player-<id>`, toured by the round name so they link by
-  name to the stars already loaded from the round's data file. PR #1663 (open) proves the existing
-  Load Participant Field does this, so no "load stars" endpoint is needed.
+  name to the stars already loaded from the round's data file. The existing Load Participant Field
+  does this, so no "load stars" endpoint is needed.
 - **Round numbering.** The vendor names no round, so `playoffSeries` works it out: a team's first
   series is round 1, and each later series is one past the later of its two teams' previous
   series. That puts MLB's bye teams in round 2. Each series' games are numbered by start time, and
@@ -466,7 +478,6 @@ vendored OpenAPI document and fixtures under `tests/fixtures/balldontlie/` (see 
 
 | Work | Where | What it adds |
 |---|---|---|
-| Clutch Card stars from the provider | PR #1663 (open) | Proves the field load links stars by name; adds `ScoreSyncNotice` on the stat pool results page. |
 | Not read yet | | College Football Playoff (the vendor marks no postseason), UCL two-leg ties, MLS best-of-three. |
 
 ## 7. Reviewing a provider PR: what a new league should touch

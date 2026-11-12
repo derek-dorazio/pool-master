@@ -68,8 +68,8 @@ Required apply flags:
   --apply
   --confirm-qa-reset
 
-Afterwards the current main commit's deploy still needs to roll out: migrations gate the
-rollout, so deploy-qa was skipped when the migration failed. Re-run that run's failed jobs.
+Afterwards QA still runs the previous release. Deploy current main (Actions -> CI -> Run
+workflow on main), or re-run the failed jobs of the deploy run whose migrate step failed.
 `);
 }
 
@@ -203,8 +203,8 @@ async function main() {
   }
 
   console.log(
-    'QA reset complete. Migrations gate the rollout, so the current main commit\'s deploy-qa was '
-    + 'skipped — re-run that run\'s failed jobs to roll the release out.',
+    'QA reset complete. QA still runs the previous release: deploy current main (Actions -> CI -> '
+    + 'Run workflow on main), or re-run the failed jobs of the deploy run whose migrate step failed.',
   );
 }
 
