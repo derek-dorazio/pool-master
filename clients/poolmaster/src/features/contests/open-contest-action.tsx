@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { openContest } from '@/lib/api';
 import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
@@ -45,17 +45,23 @@ export function OpenContestAction({
 /**
  * The question "Open to league" asks, and the release once the commissioner confirms, wherever
  * they start it: the contest's own page or the "⋯" on its row in the contests list. A release
- * ends in a toast; a refusal shows inside the dialog, which stays open.
+ * ends in a toast; a refusal shows inside the dialog, which stays open. Started from the list, it
+ * shows the contest's readiness checks as `children` and holds Open until they pass.
  */
 export function OpenContestDialog({
+  children,
   contestId,
   contestName,
+  isConfirmDisabled = false,
   leagueId,
   onOpenChange,
   open,
 }: {
+  /** Drawn under the question: the readiness checks when the dialog starts from the list. */
+  children?: ReactNode;
   contestId: string;
   contestName: string;
+  isConfirmDisabled?: boolean;
   leagueId: string;
   onOpenChange: (open: boolean) => void;
   open: boolean;
@@ -117,6 +123,7 @@ export function OpenContestDialog({
         })
         : null}
       description="League members will be able to see this contest and enter it. Its name and settings can't change afterwards, and it can't be deleted or returned to a draft."
+      isConfirmDisabled={isConfirmDisabled}
       isPending={openContestMutation.isPending}
       onCancel={closeDialog}
       onConfirm={() => void openContestMutation.mutateAsync().catch(() => undefined)}
@@ -131,6 +138,8 @@ export function OpenContestDialog({
       pendingLabel="Opening..."
       testId="contest-open-dialog"
       title="Open this contest to the league?"
-    />
+    >
+      {children}
+    </ConfirmDialog>
   );
 }

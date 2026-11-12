@@ -323,8 +323,9 @@ describe('ManageContestsPage', () => {
     expect(await screen.findByTestId('manage-contest-destination')).toBeInTheDocument();
   });
 
-  it('opens a contest in setup to the league from its "⋯" once the commissioner confirms, and says so', async () => {
+  it('opens a contest in setup to the league from its "⋯" once the commissioner confirms, showing its readiness checks first, and says so', async () => {
     primeCommonMocks();
+    getEventMock.mockResolvedValue(apiSuccess({ event: masters }));
     listContestsMock.mockResolvedValue(apiSuccess({
       contests: [buildContest({ id: 'contest-1', name: 'Masters One-and-Done', status: 'DRAFT', ...onEvent(masters) })],
     }));
@@ -334,6 +335,7 @@ describe('ManageContestsPage', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Actions for Masters One-and-Done' }));
     await userEvent.click(screen.getByRole('menuitem', { name: 'Open to league' }));
     expect(await screen.findByRole('dialog', { name: 'Open this contest to the league?' })).toBeInTheDocument();
+    expect(await screen.findByTestId('contest-open-readiness-checks')).toHaveTextContent('Event released');
     expect(openContestMock).not.toHaveBeenCalled();
     await userEvent.click(screen.getByTestId('contest-open-confirm'));
 
