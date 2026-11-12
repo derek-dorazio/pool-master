@@ -662,8 +662,20 @@ describe('IngestionPersistence: provider participants with no mapping yet', () =
     return { id, sportId: 'sport-basketball', name, providerMappings: [], leagueAffiliations: keywords.map((matchKeyword) => ({ sportLeague: { matchKeyword } })) };
   }
 
+  /** The site's sport leagues the feed's tours may name, by id and match keyword. */
+  const LEAGUES = [
+    { id: 'league-nba-finals', sportId: 'sport-basketball', matchKeyword: 'NBA Finals' },
+    { id: 'league-ncaam', sportId: 'sport-basketball', matchKeyword: 'NCAAM' },
+  ];
+
   function unmappedPrisma(candidates: Candidate[]) {
     const double = {
+      // The leagues whose keyword one of the asked-for tours names, ignoring case, as the database answers.
+      sportLeague: {
+        findMany: jest.fn(({ where }: { where: { OR: Array<{ sportId: string; matchKeyword: { in: string[]; mode?: string } }> }; select?: unknown }) => Promise.resolve(LEAGUES
+          .filter((league) => where.OR.some((asked) => asked.sportId === league.sportId && asked.matchKeyword.in.some((tour) => tour.toLowerCase() === league.matchKeyword.toLowerCase())))
+          .map(({ id, sportId }) => ({ id, sportId })))),
+      },
       sportEvent: { findMany: jest.fn().mockResolvedValue([]), findUnique: jest.fn().mockResolvedValue(null) },
       sport: { upsert: jest.fn(({ where }: { where: { sport: Sport } }) => Promise.resolve({ id: `sport-${where.sport.toLowerCase()}`, participantType: 'INDIVIDUAL' })) },
       participant: {
@@ -845,18 +857,39 @@ describe('IngestionPersistence: provider participants with no mapping yet', () =
     expect(createdNames(prisma)).toEqual(['Ludvig Aberg']);
   });
 
-  it('reads, with the exact names, every participant of the sport affiliated with a league the feed names, so a folded name is matched among them all', async () => {
+  it('reads, with the exact names, every participant of the sport affiliated with a league the feed names, found by keyword first, so a folded name is matched among them all', async () => {
     const prisma = unmappedPrisma([]);
 
-    await sync(prisma, [finalsPlayer('nba-player-132', 'Luka Doncic'), collegeTeam('ncaab-team-150', 'Duke Blue Devils', 'NCAAM')]);
+    await sync(prisma, [finalsPlayer('nba-player-132', 'Luka Doncic'), collegeTeam('ncaab-team-150', 'Duke Blue Devils', ' NCAAM ')]);
 
+    expect(prisma.sportLeague.findMany).toHaveBeenCalledWith({
+      where: { OR: [{ sportId: 'sport-basketball', matchKeyword: { in: ['NBA Finals', 'NCAAM'], mode: 'insensitive' } }] },
+      select: { id: true, sportId: true },
+    });
     expect(prisma.participant.findMany).toHaveBeenCalledTimes(1);
     expect(prisma.participant.findMany).toHaveBeenCalledWith(expect.objectContaining({
       where: { OR: [
         { sportId: 'sport-basketball', name: { in: ['Luka Doncic', 'Duke Blue Devils'] } },
-        { sportId: 'sport-basketball', leagueAffiliations: { some: { sportLeague: { matchKeyword: { in: ['NBA Finals', 'NCAAM'], mode: 'insensitive' } } } } },
+        { sportId: 'sport-basketball', leagueAffiliations: { some: { sportLeagueId: { in: ['league-nba-finals', 'league-ncaam'] } } } },
       ] },
     }));
+  });
+
+  it('reads no league for a feed that names none, and reads its candidates by exact name alone', async () => {
+    const prisma = unmappedPrisma([]);
+
+    await sync(prisma, [golfer('bdl-1', 'Scottie Scheffler')]);
+
+    expect(prisma.sportLeague.findMany).not.toHaveBeenCalled();
+    expect(prisma.participant.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { OR: [{ sportId: 'sport-golf', name: { in: ['Scottie Scheffler'] } }] } }));
+  });
+
+  it('reads by exact name alone when no league has the keyword the feed names', async () => {
+    const prisma = unmappedPrisma([]);
+
+    await sync(prisma, [collegeTeam('ncaaw-team-150', 'Duke Blue Devils', 'NCAAW')]);
+
+    expect(prisma.participant.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { OR: [{ sportId: 'sport-basketball', name: { in: ['Duke Blue Devils'] } }] } }));
   });
 
   it.each([

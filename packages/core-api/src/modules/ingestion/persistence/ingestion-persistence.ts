@@ -264,8 +264,9 @@ export class IngestionPersistence {
    * only the one spelled exactly as the feed spells it is linked. A participant naming no league
    * is matched by its exact name alone, since the sport's every spelling of it is not read.
    *
-   * One read of the candidates, by exact name and by league, with their mappings from the feed's
-   * providers and their leagues' keywords (Prisma loads each relation with its own statement).
+   * One read of the named leagues by keyword, when the feed names any, then one of the candidates,
+   * by exact name and by league, with their mappings from the feed's providers and their leagues'
+   * keywords (Prisma loads each relation with its own statement).
    */
   private async matchByName(
     unmapped: readonly ProviderParticipant[],
@@ -286,14 +287,19 @@ export class IngestionPersistence {
       const feedKey = feedKeyOf(participant);
       feedNameCounts.set(feedKey, (feedNameCounts.get(feedKey) ?? 0) + 1);
     }
+    // The leagues the feed names, by keyword, so the candidates read finds their members through
+    // the affiliations' sport league index rather than joining every affiliation to its league.
+    const namedLeagues = toursBySportId.size === 0 ? [] : await this.prisma.sportLeague.findMany({
+      where: { OR: [...toursBySportId].map(([sportId, tours]) => ({ sportId, matchKeyword: { in: [...tours], mode: 'insensitive' as const } })) },
+      select: { id: true, sportId: true },
+    });
+    const leagueIdsBySportId = new Map<string, string[]>();
+    for (const league of namedLeagues) leagueIdsBySportId.set(league.sportId, [...(leagueIdsBySportId.get(league.sportId) ?? []), league.id]);
     const candidates = await this.prisma.participant.findMany({
       where: {
         OR: [
           ...[...namesBySportId].map(([sportId, names]) => ({ sportId, name: { in: [...names] } })),
-          ...[...toursBySportId].map(([sportId, tours]) => ({
-            sportId,
-            leagueAffiliations: { some: { sportLeague: { matchKeyword: { in: [...tours], mode: 'insensitive' as const } } } },
-          })),
+          ...[...leagueIdsBySportId].map(([sportId, sportLeagueIds]) => ({ sportId, leagueAffiliations: { some: { sportLeagueId: { in: sportLeagueIds } } } })),
         ],
       },
       select: {
