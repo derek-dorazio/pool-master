@@ -16,8 +16,8 @@
  * partial box score, and the live sync, which reads only in-progress events, would never bring
  * the final line. The sweep logs the hold and completes the event once the line is final; an
  * admin can still complete it by hand if a feed never sends final. A game suspended mid-play
- * leaves its lines in progress for good, so a hold past `LONG_HOLD_MS` logs a warning, which the
- * alarms surface, rather than an info line every sweep.
+ * leaves its lines in progress for good, so every sweep's line for a hold past `LONG_HOLD_MS` is
+ * a warning rather than info, to stand out in the logs for an admin to finish the event.
  *
  * A DRAFT event is never touched: only an admin's release moves it (#431). This
  * scheduler's job is the two status writes below, and, while an event is in progress, starting
