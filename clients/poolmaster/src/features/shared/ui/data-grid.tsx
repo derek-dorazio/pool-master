@@ -205,6 +205,13 @@ export function DataGrid<TData>({
     resetPageIndex();
   }
 
+  // Another view starts again from the first page and keeps what was typed in the search.
+  const [pagedView, setPagedView] = useState(views?.value);
+  if (views?.value !== pagedView) {
+    setPagedView(views?.value);
+    resetPageIndex();
+  }
+
   const table = useReactTable({
     data,
     columns,

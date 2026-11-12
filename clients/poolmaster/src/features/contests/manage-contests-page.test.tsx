@@ -263,6 +263,22 @@ describe('ManageContestsPage', () => {
     expect(screen.queryByTestId('manage-contests-table')).not.toBeInTheDocument();
   });
 
+  it('keeps what was typed in the search when the list moves from Active to History', async () => {
+    primeCommonMocks();
+    primeContests(
+      [buildContest({ id: 'contest-open', name: 'Heritage Tiers', status: 'OPEN', ...onEvent(heritage) })],
+      { 2099: [buildContest({ id: 'contest-final', name: 'Players Pick 6', status: 'COMPLETED', ...onEvent(players) })] },
+    );
+
+    renderManageContestsPage();
+
+    await userEvent.type(await screen.findByTestId('manage-contests-search'), 'Players');
+    await userEvent.click(screen.getByTestId('manage-contests-filter-history'));
+
+    expect(await screen.findByTestId('manage-contests-row-contest-final')).toBeInTheDocument();
+    expect(screen.getByTestId('manage-contests-search')).toHaveValue('Players');
+  });
+
   it('finds a contest by its event\'s name as well as its own', async () => {
     primeCommonMocks();
     listContestsMock.mockResolvedValue(apiSuccess({

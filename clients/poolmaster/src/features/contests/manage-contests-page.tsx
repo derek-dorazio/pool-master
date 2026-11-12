@@ -240,7 +240,6 @@ export function ManageContestsPage() {
             : filter === 'active' ? 'No contests are in setup, open or live.' : 'No contest has finished yet.'}
           getRowId={(row) => row.contest.id}
           getRowLink={(row) => buildLeagueAdminContestPath(leagueCode, row.contest.id)}
-          key={filter === 'active' ? filter : `${filter}-${year}`}
           pageSize={CONTESTS_PER_PAGE}
           rowActions={(row) => (
             <ManageContestsRowActions

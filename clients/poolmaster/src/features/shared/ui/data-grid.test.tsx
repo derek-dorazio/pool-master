@@ -517,4 +517,36 @@ describe("pool-master-dn4.1: shared DataGrid primitive", () => {
     expect(screen.queryByTestId("grid-table")).not.toBeInTheDocument();
     expect(screen.queryByRole("navigation")).not.toBeInTheDocument();
   });
+
+  it("starts another view from its first page and keeps what was typed in the search", () => {
+    const rows = (prefix: string) => Array.from({ length: 5 }, (_, index) => ({ id: `${prefix}-${index + 1}`, lifecycle: "Active", name: `${prefix} ${index + 1}` }));
+    function Grid({ view }: { view: string }) {
+      return (
+        <DataGrid
+          columns={columns}
+          data={rows(view)}
+          emptyMessage="No rows matched."
+          getRowId={(row) => row.id}
+          pageSize={2}
+          search={{ label: "Find a row" }}
+          views={{
+            label: "Rows to show",
+            onChange: () => undefined,
+            options: [{ label: "Current", value: "Current" }, { label: "History", value: "History" }],
+            value: view,
+          }}
+        />
+      );
+    }
+    const { rerender } = render(<Grid view="Current" />);
+    // Every row's lifecycle reads "Active", so the term keeps all five in either view.
+    fireEvent.change(screen.getByRole("searchbox", { name: "Find a row" }), { target: { value: "Active" } });
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    expect(screen.getByRole("navigation", { name: "Pages" })).toHaveTextContent("3–4 of 5");
+
+    rerender(<Grid view="History" />);
+
+    expect(screen.getByRole("searchbox", { name: "Find a row" })).toHaveValue("Active");
+    expect(screen.getByRole("navigation", { name: "Pages" })).toHaveTextContent("1–2 of 5");
+  });
 });
