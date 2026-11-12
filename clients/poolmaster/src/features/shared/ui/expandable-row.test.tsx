@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { MemoryRouter } from "react-router";
@@ -34,6 +34,20 @@ describe("ExpandableRow", () => {
     fireEvent.click(toggle);
     expect(toggle).toHaveAttribute("aria-expanded", "false");
     expect(screen.queryByTestId("row-details")).not.toBeInTheDocument();
+  });
+
+  it("puts a row layout class on the clickable row only, never on its breakdown", () => {
+    render(
+      <ExpandableRow defaultOpen label="Picks for Incubus 1" rowClassName="sticky left-0" summary={<span>Incubus 1</span>} testId="row">
+        <p>J.B. Holmes −14</p>
+      </ExpandableRow>,
+    );
+
+    const row = screen.getByTestId("row-row");
+    expect(within(row).getByRole("button", { name: "Picks for Incubus 1" })).toBeInTheDocument();
+    expect(row).toHaveClass("sticky", "left-0");
+    expect(row).not.toHaveClass("relative");
+    expect(screen.getByTestId("row-details")).not.toHaveClass("sticky");
   });
 
   it("opens from the keyboard with Enter and with Space", async () => {
