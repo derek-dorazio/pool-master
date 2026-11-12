@@ -208,9 +208,6 @@ export function ManageContestsPage() {
             <Chip tone="inactive">League inactive</Chip>
           )
         }
-        tabsEnd={filter === 'history' && year !== null ? (
-          <ContestHistoryYearPicker testId="manage-contests-history-year" year={year} years={years} />
-        ) : undefined}
         title="Contests"
       />
 
@@ -266,6 +263,10 @@ export function ManageContestsPage() {
               <ErrorState body={`We couldn't load the contests finished in ${year}.`} onRetry={() => void historyQuery.refetch()} size="inline" testId="manage-contests-history-error" />
             ) : historyQuery.isLoading ? (
               <LoadingState rows={3} body="Loading finished contests..." size="inline" />
+            ) : undefined,
+            // History's season sits beside History, the view it narrows.
+            end: filter === 'history' && year !== null ? (
+              <ContestHistoryYearPicker testId="manage-contests-history-year" year={year} years={years} />
             ) : undefined,
             value: filter,
           }}

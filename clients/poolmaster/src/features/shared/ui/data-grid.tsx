@@ -57,6 +57,11 @@ export type DataGridViews = {
   options: ViewFilterOption[];
   value: string;
   /**
+   * A filter that belongs to the chosen view, drawn just after the views, such as History's
+   * season (a `FilterPicker`). A filter for the whole page stays in the `PageHeader`.
+   */
+  end?: ReactNode;
+  /**
    * Drawn in the card in place of the table while the chosen view's rows load or fail to load
    * (a `LoadingState` or `ErrorState` of `size="inline"`),
    * so the views and search stay where they are.
@@ -321,7 +326,10 @@ export function DataGrid<TData>({
           // The views read from the left and the search sits at the right; on a phone the search
           // takes its own line under the views.
           <div className="flex flex-wrap items-end justify-between gap-x-4 border-b border-border px-4">
-            <ViewFilter aria-label={views.label} onChange={views.onChange} options={views.options} value={views.value} />
+            <div className="flex min-w-0 flex-wrap items-end gap-x-4">
+              <ViewFilter aria-label={views.label} onChange={views.onChange} options={views.options} value={views.value} />
+              {views.end ? <div className="flex items-center pb-1.5" data-testid={tableTestId ? `${tableTestId}-views-end` : undefined}>{views.end}</div> : null}
+            </div>
             {searchBox || jumpButton ? (
               <div className="flex w-full items-center gap-2 pb-2 sm:w-auto sm:pt-2 max-sm:pt-1">
                 {searchBox ? <div className="min-w-0 flex-1 sm:w-64 sm:flex-none">{searchBox}</div> : null}

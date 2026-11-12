@@ -245,6 +245,25 @@ describe('ManageContestsPage', () => {
     expect(screen.queryByTestId('manage-contests-row-contest-newer')).not.toBeInTheDocument();
   });
 
+  it('puts History\'s season beside History in the list\'s header, before the search, and offers none on Active', async () => {
+    primeCommonMocks();
+    primeContests(
+      [buildContest({ id: 'contest-open', status: 'OPEN', ...onEvent(heritage) })],
+      { 2099: [buildContest({ id: 'contest-final', status: 'COMPLETED', ...onEvent(players) })] },
+    );
+
+    renderManageContestsPage();
+    await screen.findByTestId('manage-contests-row-contest-open');
+    expect(screen.queryByRole('combobox', { name: 'Season' })).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByTestId('manage-contests-filter-history'));
+    const season = await screen.findByRole('combobox', { name: 'Season' });
+
+    expect(screen.getByTestId('manage-contests-table-views-end')).toContainElement(season);
+    expect(screen.getByRole('radio', { name: 'History' }).compareDocumentPosition(season) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(season.compareDocumentPosition(screen.getByTestId('manage-contests-search')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
   it('says a year\'s finished contests could not be loaded rather than showing none, keeping the views and search above it', async () => {
     primeCommonMocks();
     primeContests([buildContest({ id: 'contest-open', status: 'OPEN', ...onEvent(heritage) })], { 2099: [] });

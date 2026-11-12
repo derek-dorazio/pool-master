@@ -549,4 +549,30 @@ describe("pool-master-dn4.1: shared DataGrid primitive", () => {
     expect(screen.getByRole("searchbox", { name: "Find a row" })).toHaveValue("Active");
     expect(screen.getByRole("navigation", { name: "Pages" })).toHaveTextContent("1–2 of 5");
   });
+
+  it("draws a filter for the chosen view just after the views, before the search", () => {
+    render(
+      <DataGrid
+        columns={columns}
+        data={[{ id: "row-1", lifecycle: "Final", name: "Alpha" }]}
+        emptyMessage="No rows matched."
+        search={{ label: "Find a row", testId: "grid-search" }}
+        showColumnFilters={false}
+        tableTestId="grid-table"
+        views={{
+          end: <label>Season <select aria-label="Season"><option>2099</option></select></label>,
+          label: "Rows to show",
+          onChange: () => undefined,
+          options: [{ label: "Active", value: "active" }, { label: "History", value: "history" }],
+          value: "history",
+        }}
+      />,
+    );
+
+    const history = screen.getByRole("radio", { name: "History" });
+    const season = screen.getByRole("combobox", { name: "Season" });
+    expect(history.compareDocumentPosition(season) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(season.compareDocumentPosition(screen.getByTestId("grid-search")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getByTestId("grid-table-views-end")).toContainElement(season);
+  });
 });
