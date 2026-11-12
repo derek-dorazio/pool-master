@@ -130,7 +130,7 @@ describe('how long a BALLDONTLIE event may stay in play with no notification (#1
     expect(quietMinutes(Sport.BASEBALL, 'mlb-2026-postseason')).toBe(210);
     expect(quietMinutes(Sport.BASKETBALL, 'wnba-2026-postseason')).toBe(75);
     expect(quietMinutes(Sport.SOCCER, 'epl-2026-matchweek-12')).toBe(90);
-    expect(quietMinutes(Sport.SOCCER, 'fifa-wc-2026-knockout')).toBe(120);
+    expect(quietMinutes(Sport.SOCCER, 'fifa-wc-2026-knockout')).toBe(150);
     for (const league of Object.values(BALLDONTLIE_WEBHOOK_GAME_LEAGUES)) {
       expect(league.quietAfterMinutes).toBeGreaterThanOrEqual(75);
     }

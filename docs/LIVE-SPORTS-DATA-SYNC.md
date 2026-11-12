@@ -238,10 +238,12 @@ scheduled sweep only backs it up (`NotifiedProviderCadence`, read by
 - **Quiet alert.** Each notification sets `sport_events.last_provider_notification_at` on the
   events it is about. When an event is in play (golf's latest round under way, or a match in
   progress since its scheduled start) with no notification for longer than its league's
-  `quietAfterMinutes` in `BALLDONTLIE_WEBHOOK_GAME_LEAGUES` (75 to 120 minutes, a period or half
-  plus its break; MLB 210, in case innings are not notified), or 6 hours for a golf round, the sweep logs
-  `ingestion.providerNotifications.quiet` at most once per window, and a CloudWatch alarm
-  (`monitoring.tf`) sends it to the alerts topic.
+  `quietAfterMinutes` in `BALLDONTLIE_WEBHOOK_GAME_LEAGUES` (75 to 90 minutes, a period or half
+  plus its break; World Cup 150, for extra time and penalties; MLB 210, in case innings are not
+  notified), or 6 hours for a golf round, the sweep logs `ingestion.providerNotifications.quiet`
+  at most once per window, and a CloudWatch alarm (`monitoring.tf`) sends it to the alerts topic.
+  A long stoppage, such as a weather delay, sets off the warning too, since nothing is notified
+  while play is stopped.
 
 ## 4. The one sync path
 

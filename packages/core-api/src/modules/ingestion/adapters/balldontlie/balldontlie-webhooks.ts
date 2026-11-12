@@ -58,8 +58,9 @@ export const BALLDONTLIE_WEBHOOK_GAME_LEAGUES: Readonly<Record<string, GameLeagu
   wnba: { sport: Sport.BASKETBALL, eventIdPrefix: 'wnba-', gameEvents: GAME_EVENTS, quietAfterMinutes: 75 },
   // Halftime comes about 50 minutes in; the end about 65 after it, with the break.
   epl: { sport: Sport.SOCCER, eventIdPrefix: 'epl-', gameEvents: SOCCER_GAME_EVENTS, quietAfterMinutes: 90 },
-  // As the EPL, and a knockout match adds extra time and penalties after the second half.
-  worldcup: { sport: Sport.SOCCER, eventIdPrefix: 'fifa-wc-', gameEvents: SOCCER_GAME_EVENTS, quietAfterMinutes: 120 },
+  // As the EPL, and a knockout match adds a break, 30 minutes of extra time and penalties after
+  // the second half, with no notification until it ends.
+  worldcup: { sport: Sport.SOCCER, eventIdPrefix: 'fifa-wc-', gameEvents: SOCCER_GAME_EVENTS, quietAfterMinutes: 150 },
 };
 
 /** Where in play each subscribed game event falls (#1499). */

@@ -171,8 +171,9 @@ about. While one is in play (a golf round under way, or a match in progress) wit
 notification for longer than its league's normal gap between notifications, the sweep warns with
 action `ingestion.providerNotifications.quiet`, which a CloudWatch alarm sends to the alerts
 topic. Each league's gap is in the webhook table (`balldontlie-webhooks.ts`): a period or half plus
-its break with room for overtime, from 75 minutes (NBA) to 120 (World Cup) and 210 for MLB, and 6 hours for a golf
-round, whose first notification after the start is the first group finishing.
+its break with room for overtime, from 75 minutes (NBA) to 90, 150 for the World Cup's extra time
+and penalties, 210 for MLB, and 6 hours for a golf round, whose first notification after the start
+is the first group finishing. A weather delay or other long stoppage sets off the warning too.
 `PROVIDER_WEBHOOK_POLL_SECONDS` and `PROVIDER_WEBHOOK_ROUND_POLL_SECONDS` override the two poll
 paces (`notified-provider-cadence.ts`).
 
