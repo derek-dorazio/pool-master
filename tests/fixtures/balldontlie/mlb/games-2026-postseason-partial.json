@@ -1,0 +1,175 @@
+{
+  "data": [
+    {
+      "id": 5066001,
+      "home_team_name": "New York Yankees",
+      "away_team_name": "Detroit Tigers",
+      "home_team": {
+        "id": 10,
+        "slug": "new-york-yankees",
+        "abbreviation": "NYY",
+        "display_name": "New York Yankees",
+        "short_display_name": "Yankees",
+        "name": "Yankees",
+        "location": "New York",
+        "league": "American",
+        "division": "East"
+      },
+      "away_team": {
+        "id": 7,
+        "slug": "detroit-tigers",
+        "abbreviation": "DET",
+        "display_name": "Detroit Tigers",
+        "short_display_name": "Tigers",
+        "name": "Tigers",
+        "location": "Detroit",
+        "league": "American",
+        "division": "Central"
+      },
+      "season": 2026,
+      "postseason": true,
+      "season_type": "postseason",
+      "date": "2026-09-29T18:08:00.000Z",
+      "status": "STATUS_FINAL",
+      "status_state": "final",
+      "home_team_data": {
+        "hits": 7,
+        "runs": 4,
+        "errors": 0,
+        "inning_scores": []
+      },
+      "away_team_data": {
+        "hits": 4,
+        "runs": 1,
+        "errors": 0,
+        "inning_scores": []
+      }
+    },
+    {
+      "id": 5066002,
+      "home_team_name": "Los Angeles Dodgers",
+      "away_team_name": "San Diego Padres",
+      "home_team": {
+        "id": 18,
+        "slug": "los-angeles-dodgers",
+        "abbreviation": "LAD",
+        "display_name": "Los Angeles Dodgers",
+        "short_display_name": "Dodgers",
+        "name": "Dodgers",
+        "location": "Los Angeles",
+        "league": "National",
+        "division": "West"
+      },
+      "away_team": {
+        "id": 24,
+        "slug": "san-diego-padres",
+        "abbreviation": "SD",
+        "display_name": "San Diego Padres",
+        "short_display_name": "Padres",
+        "name": "Padres",
+        "location": "San Diego",
+        "league": "National",
+        "division": "West"
+      },
+      "season": 2026,
+      "postseason": true,
+      "season_type": "postseason",
+      "date": "2026-09-29T22:08:00.000Z",
+      "status": "STATUS_IN_PROGRESS",
+      "status_state": "in_progress",
+      "home_team_data": {
+        "hits": 5,
+        "runs": 2,
+        "errors": 0,
+        "inning_scores": []
+      },
+      "away_team_data": {
+        "hits": 5,
+        "runs": 2,
+        "errors": 0,
+        "inning_scores": []
+      }
+    },
+    {
+      "id": 5066003,
+      "home_team_name": "Philadelphia Phillies",
+      "away_team_name": "Cincinnati Reds",
+      "home_team": {
+        "id": 22,
+        "slug": "philadelphia-phillies",
+        "abbreviation": "PHI",
+        "display_name": "Philadelphia Phillies",
+        "short_display_name": "Phillies",
+        "name": "Phillies",
+        "location": "Philadelphia",
+        "league": "National",
+        "division": "East"
+      },
+      "away_team": {
+        "id": 17,
+        "slug": "cincinnati-reds",
+        "abbreviation": "CIN",
+        "display_name": "Cincinnati Reds",
+        "short_display_name": "Reds",
+        "name": "Reds",
+        "location": "Cincinnati",
+        "league": "National",
+        "division": "Central"
+      },
+      "season": 2026,
+      "postseason": true,
+      "season_type": "postseason",
+      "date": "2026-09-30T00:08:00.000Z",
+      "status": "STATUS_SCHEDULED",
+      "status_state": "scheduled"
+    },
+    {
+      "id": 5066004,
+      "home_team_name": "Seattle Mariners",
+      "away_team_name": "Boston Red Sox",
+      "home_team": {
+        "id": 25,
+        "slug": "seattle-mariners",
+        "abbreviation": "SEA",
+        "display_name": "Seattle Mariners",
+        "short_display_name": "Mariners",
+        "name": "Mariners",
+        "location": "Seattle",
+        "league": "American",
+        "division": "West"
+      },
+      "away_team": {
+        "id": 2,
+        "slug": "boston-red-sox",
+        "abbreviation": "BOS",
+        "display_name": "Boston Red Sox",
+        "short_display_name": "Sox",
+        "name": "Sox",
+        "location": "Boston Red",
+        "league": "American",
+        "division": "East"
+      },
+      "season": 2026,
+      "postseason": true,
+      "season_type": "postseason",
+      "date": "2026-09-30T00:08:00.000Z",
+      "status": "STATUS_UNKNOWN",
+      "status_state": "unknown",
+      "home_team_data": {
+        "hits": 3,
+        "runs": 0,
+        "errors": 0,
+        "inning_scores": []
+      },
+      "away_team_data": {
+        "hits": 3,
+        "runs": 0,
+        "errors": 0,
+        "inning_scores": []
+      }
+    }
+  ],
+  "meta": {
+    "per_page": 100
+  }
+}
