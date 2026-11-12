@@ -45,6 +45,12 @@ export function getStatusTone(status: string) {
 }
 
 export function getRunStatusTone(run: ProviderSyncRun) {
+  // A failed run stays red: its warnings never soften the badge to amber.
+  const statusTone = getStatusTone(run.status);
+  if (statusTone === 'danger') {
+    return statusTone;
+  }
+
   const warnings = getPayloadWarnings(run.payload);
   const severity = getPayloadSeverity(run.payload);
   if (severity === 'WARNING' || warnings.length > 0) {
@@ -54,7 +60,7 @@ export function getRunStatusTone(run: ProviderSyncRun) {
     return 'danger';
   }
 
-  return getStatusTone(run.status);
+  return statusTone;
 }
 
 export function getRunStatusLabel(run: ProviderSyncRun) {
