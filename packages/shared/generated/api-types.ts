@@ -9462,7 +9462,7 @@ export interface components {
             sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
             /** @description Sport league name, e.g. "PGA Tour". */
             name: string;
-            /** @description The provider's tour name for this sport league (e.g. "PGA TOUR"), or, for events that name no tour, a substring of their names. Catalog browse keeps an event whose tour equals the keyword, or one with no tour whose name contains it; the event-year import (importEventYearFromProvider) needs the tour name, ignoring case. null when none is set. */
+            /** @description The provider's tour name for this sport league (e.g. "PGA TOUR"), or words its event names carry. Catalog browse keeps an event that matches either way, a name matching only on whole words ("NBA" does not match "WNBA Playoffs"); the event-year import (importEventYearFromProvider) needs the tour name, ignoring case. null when none is set. */
             matchKeyword: string | null;
             /** @description The event year the sport league is currently on, if one is set. Always a year the sport league has events in when it was set. */
             currentEventYear: number | null;
@@ -9547,7 +9547,7 @@ export interface components {
                 sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
                 /** @description Sport league name, e.g. "PGA Tour". */
                 name: string;
-                /** @description The provider's tour name for this sport league (e.g. "PGA TOUR"), or, for events that name no tour, a substring of their names. Catalog browse keeps an event whose tour equals the keyword, or one with no tour whose name contains it; the event-year import (importEventYearFromProvider) needs the tour name, ignoring case. null when none is set. */
+                /** @description The provider's tour name for this sport league (e.g. "PGA TOUR"), or words its event names carry. Catalog browse keeps an event that matches either way, a name matching only on whole words ("NBA" does not match "WNBA Playoffs"); the event-year import (importEventYearFromProvider) needs the tour name, ignoring case. null when none is set. */
                 matchKeyword: string | null;
                 /** @description The event year the sport league is currently on, if one is set. Always a year the sport league has events in when it was set. */
                 currentEventYear: number | null;
@@ -9623,7 +9623,7 @@ export interface components {
                 sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
                 /** @description Sport league name, e.g. "PGA Tour". */
                 name: string;
-                /** @description The provider's tour name for this sport league (e.g. "PGA TOUR"), or, for events that name no tour, a substring of their names. Catalog browse keeps an event whose tour equals the keyword, or one with no tour whose name contains it; the event-year import (importEventYearFromProvider) needs the tour name, ignoring case. null when none is set. */
+                /** @description The provider's tour name for this sport league (e.g. "PGA TOUR"), or words its event names carry. Catalog browse keeps an event that matches either way, a name matching only on whole words ("NBA" does not match "WNBA Playoffs"); the event-year import (importEventYearFromProvider) needs the tour name, ignoring case. null when none is set. */
                 matchKeyword: string | null;
                 /** @description The event year the sport league is currently on, if one is set. Always a year the sport league has events in when it was set. */
                 currentEventYear: number | null;

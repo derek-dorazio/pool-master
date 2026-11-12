@@ -134,7 +134,7 @@ describe('EventScoreSourceService.listCandidateEvents', () => {
     expect(result.map((event) => event.externalId)).toEqual(['pga-1']);
   });
 
-  it('leaves out an event that names another tour even when its name holds the keyword, so the NBA\'s picker lists no WNBA playoffs', async () => {
+  it('leaves out an event whose name holds the keyword only inside a longer word, so the NBA\'s picker lists no WNBA playoffs', async () => {
     const provider = buildProvider({
       getUpcomingEvents: jest.fn().mockResolvedValue([
         buildProviderEvent({ externalId: 'nba-2025-postseason', name: 'NBA Playoffs', metadata: { tour: 'NBA' } }),
@@ -149,6 +149,23 @@ describe('EventScoreSourceService.listCandidateEvents', () => {
     const result = await service.listCandidateEvents('mock-golf', Sport.BASKETBALL, { sportLeagueId: 'league-1' });
 
     expect(result.map((event) => event.externalId)).toEqual(['nba-2025-postseason']);
+  });
+
+  it('keeps an event whose name holds the keyword as whole words even when it names another tour, so a league keyed "U.S. Open" lists that PGA TOUR event', async () => {
+    const provider = buildProvider({
+      getUpcomingEvents: jest.fn().mockResolvedValue([
+        buildProviderEvent({ externalId: 'pga-us-open', name: 'U.S. Open Championship', metadata: { tour: 'PGA TOUR' } }),
+        buildProviderEvent({ externalId: 'pga-masters', name: 'Masters Tournament', metadata: { tour: 'PGA TOUR' } }),
+      ]),
+    });
+    const prisma = {
+      sportLeague: { findUnique: jest.fn().mockResolvedValue({ matchKeyword: 'U.S. Open' }) },
+    };
+    const service = new EventScoreSourceService(asPrismaClient(prisma), registryWith(provider));
+
+    const result = await service.listCandidateEvents('mock-golf', Sport.GOLF, { sportLeagueId: 'league-1' });
+
+    expect(result.map((event) => event.externalId)).toEqual(['pga-us-open']);
   });
 
   it('pool-master-753 applies no filter when the league has no matchKeyword set', async () => {

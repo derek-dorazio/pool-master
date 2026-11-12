@@ -386,8 +386,8 @@ vendored OpenAPI document and fixtures under `tests/fixtures/balldontlie/` (see 
   is listed until the WNBA reads box scores.
 - **Sync.** As the NBA bracket's. The vendor's WNBA games endpoint documents no postseason filter,
   so the whole season is read (about three pages) and the shared reader keeps the playoffs by each
-  game's `postseason` flag. The event picker matches an event that names its tour by that tour
-  alone, so the NBA league, whose keyword "WNBA" contains, never lists WNBA events.
+  game's `postseason` flag. The event picker matches a keyword in an event's name only as whole
+  words, so the NBA league, whose keyword "WNBA" contains, never lists WNBA events.
 - **Key code.** `wnba-contract.ts`; `wnba-mapping.ts` `WNBA_PLAYOFFS`, `wnbaPlayoffsSource`,
   `toWnbaPlayoffGame`, `isWnbaFranchise`; `isLeagueEvent` in `event-score-source-service.ts`.
 

@@ -56,8 +56,7 @@ The target:
      (`nhl-2025-postseason`, played in 2026) are four rounds of best-of-seven series, read
      without box scores, so no NHL round is listed as an event until a Clutch Card needs one. The WNBA's
      (`wnba-2026-postseason`) shares basketball with the NBA, whose keyword its name holds, so
-     the event picker matches an event that names its tour by that tour alone, and a name
-     substring only for an event that names none;
+     the event picker matches a keyword in an event's name only as whole words;
    - per-player box scores for Clutch Cards, through `StatLineService`, as the `STAT_LINE`
      live-score category (#1497). The adapter numbers each game within the Clutch Card event
      (game N is round N, and each series' Game N shares it in a round of several series) and maps

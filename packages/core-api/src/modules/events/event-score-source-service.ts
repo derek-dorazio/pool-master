@@ -62,14 +62,20 @@ function isTourEvent(event: ProviderCatalogSportEvent, keyword: string): boolean
 }
 
 /**
- * #385 — whether an event belongs to the league whose match keyword this is. An event that names
- * its tour belongs only to that tour's league ("WNBA Playoffs" is no NBA event, though its name
- * holds "NBA"); one that names none is matched by a name substring.
+ * #385 — whether an event belongs to the league whose match keyword this is: its tour is the
+ * keyword, or its name holds the keyword as whole words. A keyword inside a longer word is no
+ * match, so "NBA" does not take "WNBA Playoffs", while a fragment such as "U.S. Open" still takes
+ * "U.S. Open Championship".
  */
 function isLeagueEvent(event: ProviderCatalogSportEvent, keyword: string): boolean {
-  return typeof event.metadata.tour === 'string'
-    ? isTourEvent(event, keyword)
-    : event.name.toLowerCase().includes(keyword.toLowerCase());
+  if (isTourEvent(event, keyword)) return true;
+  const name = event.name.toLowerCase();
+  const sought = keyword.toLowerCase();
+  const isWordCharacter = (character: string | undefined) => character !== undefined && /[\p{L}\p{N}]/u.test(character);
+  for (let at = name.indexOf(sought); at !== -1; at = name.indexOf(sought, at + 1)) {
+    if (!isWordCharacter(name[at - 1]) && !isWordCharacter(name[at + sought.length])) return true;
+  }
+  return false;
 }
 
 export class EventScoreSourceService {
