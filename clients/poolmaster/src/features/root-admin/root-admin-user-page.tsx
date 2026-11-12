@@ -26,7 +26,7 @@ import { getLogger } from '@/lib/logger';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
-import { useManageBreadcrumbOverride, useManagePageOwnsHeading } from './manage-breadcrumb-context';
+import { useManageBreadcrumbOverride } from './manage-breadcrumb-context';
 
 type ActiveDialog = 'role' | 'reset-password' | 'lifecycle' | 'delete' | null;
 
@@ -60,7 +60,6 @@ export function RootAdminUserPage() {
   const [deleteEmailConfirmation, setDeleteEmailConfirmation] = useState('');
   const [temporaryPassword, setTemporaryPassword] = useState<string | null>(null);
 
-  useManagePageOwnsHeading();
 
   const userDetailQuery = useQuery({
     queryKey: QueryKeys.users.detail(userId),

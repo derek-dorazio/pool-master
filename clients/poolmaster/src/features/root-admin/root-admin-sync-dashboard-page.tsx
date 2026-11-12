@@ -11,6 +11,7 @@ import {
   LinkButton,
   MetricGrid,
   MetricTile,
+  PageHeader,
   ReadOnlyDetailModal,
   SectionCard,
   StatusBadge,
@@ -379,6 +380,7 @@ export function RootAdminSyncDashboardPage() {
       className="space-y-6"
       data-testid="root-admin-sync-dashboard-page"
     >
+      <PageHeader testId="root-admin-sync-header" title="Sync" />
       <SectionCard padded title="Sync status">
         <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-start">
           <div className="flex flex-wrap gap-2" data-testid="root-admin-sync-workflow-sequence">

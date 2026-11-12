@@ -28,7 +28,7 @@ import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import { useContestConfigTemplatesQuery } from './use-contest-config-templates-query';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
-import { useManageBreadcrumbOverride, useManagePageOwnsHeading } from './manage-breadcrumb-context';
+import { useManageBreadcrumbOverride } from './manage-breadcrumb-context';
 
 type ContestConfigTemplateUpdateResult = ContestConfigTemplateDto;
 
@@ -103,7 +103,6 @@ function ContentConfigurationDetail({ templateKey }: { templateKey: string }) {
     });
   }
 
-  useManagePageOwnsHeading();
   useManageBreadcrumbOverride(templateKey || undefined, template?.name);
 
   const pageState = templatesQuery.isError

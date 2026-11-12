@@ -8,6 +8,8 @@ import {
   Button,
   formatDateTimeDisplay,
   FormField,
+  HelpTip,
+  PageHeader,
   SectionCard,
   SectionNote,
   Select,
@@ -28,7 +30,6 @@ import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { EventYearSelect } from './event-year-select';
-import { ManagePageIntro } from './manage-page-intro';
 import { useProvidersQuery } from './use-providers-query';
 
 type MockEventState = 'open' | 'locked' | 'live' | 'completed';
@@ -250,9 +251,16 @@ export function RootAdminRunEventSyncPage() {
       className="space-y-6"
       data-testid="root-admin-run-event-sync-page"
     >
-      <ManagePageIntro>
-        Use this action when a linked event needs a targeted refresh of its field or live scores.
-      </ManagePageIntro>
+      <PageHeader
+        testId="root-admin-run-event-sync-header"
+        title="Run Event Sync"
+        titleAside={(
+          <HelpTip label="About running an event sync" testId="root-admin-run-event-sync-help">
+            Use this action when a linked event needs a targeted refresh of its field or live
+            scores.
+          </HelpTip>
+        )}
+      />
 
       <SectionCard padded title="Event to sync">
         <div className="space-y-3">

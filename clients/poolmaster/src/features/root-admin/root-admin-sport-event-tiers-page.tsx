@@ -8,7 +8,7 @@ import {
 } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
 import { SportEventHeader } from './sport-event-header';
-import { useManageBreadcrumbOverride, useManagePageOwnsHeading } from './manage-breadcrumb-context';
+import { useManageBreadcrumbOverride } from './manage-breadcrumb-context';
 import { describeBudgetPricing } from './budget-pricing-format';
 import { PriceAssignAction } from './price-assign-action';
 import { TierAutoAssignActions } from './tier-auto-assign-actions';
@@ -36,7 +36,6 @@ export function RootAdminSportEventTiersPage() {
   const fieldQuery = useSportEventFieldQuery(eventId);
 
   const tournament = tournamentQuery.data;
-  useManagePageOwnsHeading();
   useManageBreadcrumbOverride(eventId || undefined, tournament?.name);
 
   const tiers = useMemo(() => tiersQuery.data ?? [], [tiersQuery.data]);

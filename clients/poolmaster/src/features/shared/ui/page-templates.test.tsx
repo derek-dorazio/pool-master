@@ -1,32 +1,12 @@
-import { createColumnHelper } from "@tanstack/react-table";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import {
   AsyncPage,
-  DataGridPage,
   EntityDetailPage,
   FormEditorSection,
   PublicInviteJoinPage,
 } from "./page-templates";
 import { ApiError } from "@/lib/errors";
-
-type TestRow = {
-  id: string;
-  name: string;
-  status: string;
-};
-
-const columnHelper = createColumnHelper<TestRow>();
-const columns = [
-  columnHelper.accessor("name", {
-    header: "Name",
-    cell: ({ getValue }) => getValue(),
-  }),
-  columnHelper.accessor("status", {
-    header: "Status",
-    cell: ({ getValue }) => getValue(),
-  }),
-];
 
 describe("pool-master-3ew: shared page templates", () => {
   it("pool-master-3ew.1: renders the page header over the loading state instead of the children", () => {
@@ -48,30 +28,6 @@ describe("pool-master-3ew: shared page templates", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("Loading ingestion configuration...")).toBeInTheDocument();
     expect(screen.queryByText("Loaded settings")).not.toBeInTheDocument();
-  });
-
-  it("pool-master-3ew.2: renders a management grid with client-side filters", () => {
-    render(
-      <DataGridPage
-        columns={columns}
-        data={[
-          { id: "one", name: "Alpha", status: "Active" },
-          { id: "two", name: "Beta", status: "Inactive" },
-        ]}
-        emptyMessage="No rows matched."
-        getRowId={(row) => row.id}
-        rowTestId={(row) => `row-${row.id}`}
-        tableTestId="management-grid"
-      />,
-    );
-
-    fireEvent.change(screen.getByTestId("data-grid-filter-name"), {
-      target: { value: "Beta" },
-    });
-
-    expect(screen.queryByTestId("row-one")).not.toBeInTheDocument();
-    expect(screen.getByTestId("row-two")).toBeInTheDocument();
-    expect(screen.getByTestId("management-grid")).toBeInTheDocument();
   });
 
   it("pool-master-pjr.1: renders async empty, forbidden, and server-error states", () => {

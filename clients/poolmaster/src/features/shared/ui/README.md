@@ -43,7 +43,7 @@ The shared UI layer is split into three levels:
    which carries its own Show password eye button; never hand-type
    `type="password"` on an `Input`.
 2. **Templates** compose primitives into repeated page or modal workflows, such
-   as `ManagementListPage`, `EntityDetailPage`, `FormModal`, and
+   as `EntityDetailPage`, `FormModal`, and
    `ConfirmDialog`.
 3. **Feature pages** own product-specific data fetching, mutations, copy, and
    business rules. They should compose primitives and templates instead of
@@ -75,7 +75,9 @@ itself; `poolmaster/no-inline-display-format` enforces it
 
 Use page templates when a page matches an existing workflow shape:
 
-- `ManagementListPage` for admin list screens backed by `DataGrid`.
+- An admin list is no template: a `PageHeader` (with the search box, or one
+  action and the grid's own search), then `DataGrid`, with `QueryState` for its
+  loading and error states.
 - `StatusPage` for a page that is only a status: not found, a crash, a dead or
   expired link, or the done or confirm step after a link from an email. A
   symbol (`kind`), a title, one plain line and one primary action, centred in
@@ -94,7 +96,7 @@ that is not a table pages through `Pager`, the same Previous/Next control.
 
 League pages and administration areas use the pieces named in
 `rules/ux-rules.md` §12 *League Pages and Commissioner Tools*: `LeagueMenu`,
-`AdminAreaLayout`, `PageHeader`, a `SettingsSection` of `SettingsRow`s for
+`ToolsArea`, `PageHeader`, a `SettingsSection` of `SettingsRow`s for
 settings, "see it, then Edit": label left and value right, one Edit in the title
 opening the group's `FormModal`, and a `Switch` in a row for a setting that saves
 the moment it is flipped (pages not yet moved over use a `SectionCard` of
@@ -110,10 +112,11 @@ send the version the draft came from and offer the newer one on a conflict.
 never opens the raw `Modal`: every dialog is one of the four types under
 *Modal Templates*.
 
-Commissioner tools frames its pages with `ToolsArea`: a slim navy band naming
-the area, the league and the way back, then the tools as one row of link
-`PageTabs`. Manage keeps `AdminAreaLayout` until it moves to the same frame. A
-`FormPage` opens with its own `PageHeader`.
+Commissioner tools and Manage frame their pages with `ToolsArea`: a slim navy
+band naming the area, what it acts on and the way back, then the tools as one
+row of link `PageTabs`, with an optional `subTabs` second row for the open
+tool's own choices (Manage's sports). A `FormPage` opens with its own
+`PageHeader`.
 
 Every page starts with one `PageHeader`: an optional `breadcrumbs` line, its title
 straight on the page (never in a card) with an optional `titleAside` such as a

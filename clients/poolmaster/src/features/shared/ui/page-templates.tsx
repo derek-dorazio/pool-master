@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import { extractErrorMessage } from "@/lib/errors";
 import { cn } from "./class-names";
-import { DataGrid, type DataGridProps } from "./data-grid";
 import { DetailsActionsLayout } from "./details-actions-layout";
 import { PageHeader, type PageHeaderProps } from "./page-header";
 import { EmptyState, ErrorState, LoadingState } from "./state";
@@ -128,78 +127,6 @@ export type AsyncPageProps = TemplatePageShellProps;
 
 export function AsyncPage(props: AsyncPageProps) {
   return <TemplatePageShell {...props} />;
-}
-
-/** A page of one grid: the grid's own props, plus the page around it. */
-export type ManagementListPageProps<TData> = AsyncPageStateProps & Pick<
-  DataGridProps<TData>,
-  | "columns"
-  | "data"
-  | "emptyMessage"
-  | "filterTestIdPrefix"
-  | "getRowId"
-  | "getRowLink"
-  | "getRowLinkProps"
-  | "pageSize"
-  | "rowTestId"
-  | "search"
-  | "tableTestId"
-> & {
-  className?: string;
-  contentClassName?: string;
-  header?: PageHeaderProps;
-  testId?: string;
-};
-
-export type DataGridPageProps<TData> = ManagementListPageProps<TData>;
-
-export function DataGridPage<TData>({
-  className,
-  columns,
-  contentClassName,
-  data,
-  emptyMessage,
-  filterTestIdPrefix,
-  getRowId,
-  getRowLink,
-  getRowLinkProps,
-  header,
-  pageSize,
-  rowTestId,
-  search,
-  tableTestId,
-  testId,
-  ...stateProps
-}: ManagementListPageProps<TData>) {
-  return (
-    <TemplatePageShell
-      className={className}
-      contentClassName={contentClassName}
-      header={header}
-      testId={testId}
-      {...stateProps}
-    >
-      <Tile>
-        <DataGrid
-          columns={columns}
-          data={data}
-          emptyMessage={emptyMessage}
-          filterTestIdPrefix={filterTestIdPrefix}
-          getRowId={getRowId}
-          getRowLink={getRowLink}
-          getRowLinkProps={getRowLinkProps}
-          pageSize={pageSize}
-          rowTestId={rowTestId}
-          search={search}
-          tableTestId={tableTestId}
-        />
-      </Tile>
-    </TemplatePageShell>
-  );
-}
-
-export function ManagementListPage<TData>(props: ManagementListPageProps<TData>) {
-  return <DataGridPage {...props} />;
 }
 
 export type EntityDetailPageProps = AsyncPageStateProps & {

@@ -11,7 +11,7 @@ import { SportEventDetailsSection } from './sport-event-details-section';
 import { SportEventHeader } from './sport-event-header';
 import { SportEventScoreSourceCard } from './sport-event-score-source-card';
 import { SportEventWorkflowCard } from './sport-event-workflow-card';
-import { useManageBreadcrumbOverride, useManagePageOwnsHeading } from './manage-breadcrumb-context';
+import { useManageBreadcrumbOverride } from './manage-breadcrumb-context';
 import { buildSportEventPath } from './manage-navigation';
 import { useSportLeaguesQuery } from './use-sport-catalog';
 import { useSportEventRoundsQuery, useSportEventQuery } from './use-sport-event';
@@ -37,7 +37,6 @@ export function RootAdminSportEventHomePage() {
   // poolmaster-allow-list-lookup: sport leagues are reference data, a few dozen rows that do not grow with history
   const sportLeagueName = sportLeaguesQuery.data?.find((sportLeague) => sportLeague.id === tournament?.sportLeagueId)?.name;
 
-  useManagePageOwnsHeading();
   useManageBreadcrumbOverride(eventId || undefined, tournament?.name);
 
   const rounds = useMemo(() => roundsQuery.data ?? [], [roundsQuery.data]);

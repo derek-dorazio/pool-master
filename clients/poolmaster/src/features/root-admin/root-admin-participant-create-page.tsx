@@ -11,7 +11,6 @@ import { QueryKeys } from '@/lib/query-keys';
 import { buildSportParticipantListPath } from './manage-navigation';
 import { useSportQuery } from './use-sport-catalog';
 import { useManagedSport } from './use-managed-sport';
-import { useManagePageOwnsHeading } from './manage-breadcrumb-context';
 
 const newPlayerSchema = z.object({
   name: z.string().trim().min(1, 'Name is required'),
@@ -24,7 +23,6 @@ type NewPlayerValues = z.infer<typeof newPlayerSchema>;
 
 /** Add a participant (a golfer, a horse) to the sport's master roster, then return to the list. */
 export function RootAdminParticipantCreatePage() {
-  useManagePageOwnsHeading();
   const logger = getLogger().child({
     feature: 'root-admin-participant-create-page',
   });

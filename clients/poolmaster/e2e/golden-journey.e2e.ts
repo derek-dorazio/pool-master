@@ -184,7 +184,7 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
       await expect(page.getByTestId('account-menu-trigger')).toBeVisible();
       await page.goto('/manage');
       await expect(page).toHaveURL(/\/manage\/leagues$/);
-      await expect(page.getByTestId('root-admin-manage-menu-golf')).toBeVisible();
+      await expect(page.getByTestId('root-admin-manage-menu-sports')).toBeVisible();
       await expectListPageLoaded(page, '/manage/events', 'root-admin-events-page', 'root-admin-events-table');
       await expectListPageLoaded(page, '/manage/leagues', 'root-admin-manage-leagues-page', 'root-admin-manage-leagues-table');
       await expectListPageLoaded(page, '/manage/users', 'root-admin-manage-users-page', 'root-admin-manage-users-table');

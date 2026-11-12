@@ -1,7 +1,10 @@
 import { createColumnHelper } from '@tanstack/react-table';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import {
-  DataGridPage,
+  DataGrid,
+  Input,
+  PageHeader,
+  QueryState,
   StatusBadge,
 } from '@/features/shared/ui';
 import { getLogger } from '@/lib/logger';
@@ -17,13 +20,7 @@ export function RootAdminContentConfigurationListPage() {
   });
 
   const templatesQuery = useContestConfigTemplatesQuery();
-
-  const templates = [...(templatesQuery.data ?? [])].sort((left, right) => {
-    if (left.sortOrder !== right.sortOrder) {
-      return left.sortOrder - right.sortOrder;
-    }
-    return left.name.localeCompare(right.name);
-  });
+  const [searchTerm, setSearchTerm] = useState('');
 
   const columns = useMemo(
     () => [
@@ -87,42 +84,54 @@ export function RootAdminContentConfigurationListPage() {
   );
 
   return (
-    <DataGridPage
-      columns={columns}
-      data={templates}
-      emptyMessage="No contest templates are configured yet."
-      error={templatesQuery.error}
-      errorBody="We could not load contest templates right now."
-      getRowId={(template) => template.id}
-      getRowLink={(template) =>
-        `/manage/content-configuration/${template.templateKey}`
-      }
-      getRowLinkProps={(template) => ({
-        'data-testid': `root-admin-content-config-link-${template.templateKey}`,
-        onClick: () => {
-          logger.info(
-            {
-              action: 'rootAdmin.contentConfiguration.openTemplate',
-              data: {
-                templateId: template.id,
-                templateKey: template.templateKey,
+    <section className="space-y-6" data-testid="root-admin-content-configuration-list-page">
+      <PageHeader
+        search={(
+          <Input
+            aria-label="Find a template"
+            data-testid="root-admin-content-config-search"
+            onChange={(event) => setSearchTerm(event.target.value)}
+            placeholder="Find a template"
+            type="search"
+            value={searchTerm}
+          />
+        )}
+        testId="root-admin-content-configuration-header"
+        title="Content"
+      />
+      <QueryState
+        error="We could not load contest templates right now."
+        loading="Loading contest templates..."
+        query={templatesQuery}
+        testId="root-admin-content-configuration"
+      >
+        {(loaded) => (
+          <DataGrid
+            columns={columns}
+            data={[...loaded].sort((left, right) => left.sortOrder - right.sortOrder || left.name.localeCompare(right.name))}
+            emptyMessage="No contest templates are configured yet."
+            getRowId={(template) => template.id}
+            getRowLink={(template) => `/manage/content-configuration/${template.templateKey}`}
+            getRowLinkProps={(template) => ({
+              'data-testid': `root-admin-content-config-link-${template.templateKey}`,
+              onClick: () => {
+                logger.info(
+                  {
+                    action: 'rootAdmin.contentConfiguration.openTemplate',
+                    data: {
+                      templateId: template.id,
+                      templateKey: template.templateKey,
+                    },
+                  },
+                  'Opened root-admin content configuration detail page',
+                );
               },
-            },
-            'Opened root-admin content configuration detail page',
-          );
-        },
-      })}
-      loadingBody="Loading contest templates..."
-      pageSize={MANAGE_LIST_PAGE_SIZE}
-      search={{ label: 'Find a template', testId: 'root-admin-content-config-search' }}
-      state={
-        templatesQuery.isLoading
-          ? 'loading'
-          : templatesQuery.isError
-            ? 'error'
-            : 'ready'
-      }
-      testId="root-admin-content-configuration-list-page"
-    />
+            })}
+            pageSize={MANAGE_LIST_PAGE_SIZE}
+            searchTerm={searchTerm}
+          />
+        )}
+      </QueryState>
+    </section>
   );
 }
