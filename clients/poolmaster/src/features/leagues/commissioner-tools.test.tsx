@@ -764,16 +764,54 @@ describe('Championship settings', () => {
     );
   });
 
-  it('says on League settings that the plan lacks championship settings, linking to the plan instead of Edit', async () => {
+  it('keeps Championships on League settings as a locked section naming the lowest plan with it, linking to the plans instead of Edit', async () => {
     primeMocks({ league: { planEntitlements: buildPlanEntitlements({ features: ['EMAIL_CONTEST_OPENED'] }) } });
+    primeLockedPlanList();
 
     renderCommissionerTools();
 
     const championships = within(await screen.findByTestId('league-settings-championships'));
-    expect(championships.getByText('Your league\'s plan doesn\'t include championship settings.')).toBeInTheDocument();
-    expect(championships.getByRole('link', { name: 'Change plan' })).toHaveAttribute('href', '/league/BIGDAWGS/admin/plan');
+    expect(championships.getByRole('heading', { name: 'Championships' })).toBeInTheDocument();
+    expect(await championships.findByText('Included with Premium.')).toBeInTheDocument();
+    expect(championships.getByRole('link', { name: /See plans/ })).toHaveAttribute('href', '/league/BIGDAWGS/admin/plan');
     expect(championships.queryByRole('link', { name: 'Edit' })).not.toBeInTheDocument();
     expect(championships.queryByTestId('league-settings-points-table')).not.toBeInTheDocument();
+  });
+
+  it('reads no plan list on League settings when the plan includes every section, since nothing is locked', async () => {
+    primeMocks();
+
+    renderCommissionerTools();
+
+    expect(await screen.findByTestId('league-settings-championships-edit')).toBeInTheDocument();
+    expect(screen.getByTestId('league-settings-event-emails-edit')).toBeInTheDocument();
+    expect(listLeaguePlansMock).not.toHaveBeenCalled();
+  });
+
+  it('holds a loading line in a locked section until the plans arrive, never saying first that no plan names it', async () => {
+    primeMocks({ league: { planEntitlements: buildPlanEntitlements({ features: ['EMAIL_CONTEST_OPENED'] }) } });
+    let answer: (value: unknown) => void = () => undefined;
+    listLeaguePlansMock.mockReturnValue(new Promise((resolve) => { answer = resolve; }));
+
+    renderCommissionerTools();
+
+    const championships = within(await screen.findByTestId('league-settings-championships'));
+    expect(championships.getByText('Loading...')).toBeInTheDocument();
+    expect(championships.queryByText('Not included in your league\'s plan.')).not.toBeInTheDocument();
+    answer(lockedPlanList());
+
+    expect(await championships.findByText('Included with Premium.')).toBeInTheDocument();
+  });
+
+  it('says only that the plan leaves Championships out when the plans cannot be read', async () => {
+    primeMocks({ league: { planEntitlements: buildPlanEntitlements({ features: ['EMAIL_CONTEST_OPENED'] }) } });
+    listLeaguePlansMock.mockResolvedValue({ error: { error: { code: 'INTERNAL_ERROR', message: 'Down' } } });
+
+    renderCommissionerTools();
+
+    const championships = within(await screen.findByTestId('league-settings-championships'));
+    expect(await championships.findByText('Not included in your league\'s plan.')).toBeInTheDocument();
+    expect(championships.getByRole('link', { name: /See plans/ })).toBeInTheDocument();
   });
 
   it('shows the locked note on Edit championships on a plan without championship settings', async () => {
@@ -831,6 +869,20 @@ function primeUsage(overrides: { openContests?: Array<{ contestId: string; name:
       { contestId: 'c-2', name: 'Masters Tiers Pool', entryCount: 34 },
     ],
   }));
+}
+
+/** Plans where Pro first sends "Ready for contests" and Premium first has championship settings. */
+function lockedPlanList() {
+  return apiSuccess(buildPlanListResponse([
+    buildPlanEntitlements({ plan: 'FREE', features: ['EMAIL_CONTEST_OPENED'] }),
+    buildPlanEntitlements({ plan: 'PRO', features: ['EMAIL_CONTEST_OPENED', 'EMAIL_EVENT_READY_FOR_CONTESTS'] }),
+    buildPlanEntitlements({ plan: 'PREMIUM', features: ['EMAIL_CONTEST_OPENED', 'EMAIL_EVENT_READY_FOR_CONTESTS', 'CUP_SETTINGS'] }),
+    buildPlanEntitlements(),
+  ]));
+}
+
+function primeLockedPlanList() {
+  listLeaguePlansMock.mockResolvedValue(lockedPlanList());
 }
 
 function primePlanList() {
@@ -1356,14 +1408,15 @@ describe('Event emails', () => {
     expect(screen.queryByTestId('edit-event-emails-page')).not.toBeInTheDocument();
   });
 
-  it('says on League settings that the plan lacks event emails, linking to the plan instead of Edit, and Edit shows the locked note', async () => {
+  it('keeps Event emails on League settings as a locked section naming the lowest plan with either email, linking to the plans instead of Edit, and Edit shows the locked note', async () => {
     primeMocks({ league: { planEntitlements: buildPlanEntitlements({ features: ['EMAIL_CONTEST_OPENED'] }) } });
+    primeLockedPlanList();
 
     const view = renderCommissionerTools();
 
     const eventEmails = within(await screen.findByTestId('league-settings-event-emails'));
-    expect(eventEmails.getByText('Your league\'s plan doesn\'t include event emails.')).toBeInTheDocument();
-    expect(eventEmails.getByRole('link', { name: 'Change plan' })).toHaveAttribute('href', '/league/BIGDAWGS/admin/plan');
+    expect(await eventEmails.findByText('Included with Pro.')).toBeInTheDocument();
+    expect(eventEmails.getByRole('link', { name: /See plans/ })).toHaveAttribute('href', '/league/BIGDAWGS/admin/plan');
     expect(eventEmails.queryByRole('link', { name: 'Edit' })).not.toBeInTheDocument();
     view.unmount();
 
