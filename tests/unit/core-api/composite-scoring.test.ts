@@ -1,3 +1,4 @@
+import type { PrismaClient } from '@prisma/client';
 import {
   ParticipantRoundStatus,
   ScoringFamily,
@@ -76,8 +77,22 @@ describe('composite — a stat pool player\'s score', () => {
     expect(family.scoreMissedLineup([], WORLD_SERIES, COMPOSITE_TOTAL, 4)).toBe(0);
   });
 
-  it('accepts no live scores until a stat provider is chosen', () => {
-    expect(family.liveScores).toBeNull();
+  it('accepts STAT_LINE live scores, a provider\'s box scores, and no other category (#1497)', () => {
+    expect(family.liveScores?.category).toBe('STAT_LINE');
+  });
+
+  it('writes a STAT_LINE batch with no game under way as nothing written, reading nothing', async () => {
+    const writer = family.liveScores;
+    if (writer?.category !== 'STAT_LINE') throw new Error('the composite family takes STAT_LINE live scores');
+    const prisma = {} as unknown as PrismaClient;
+
+    const result = await writer.persist(
+      { prisma, providerId: 'balldontlie' },
+      { id: 'event-1', rounds: 7, roundSeriesLengths: [] },
+      { category: 'STAT_LINE', externalEventId: 'nba-2025-finals', games: [{ externalGameId: 'g1', gameNumber: 1, state: 'SCHEDULED', lines: [] }] },
+    );
+
+    expect(result).toMatchObject({ updatesReturned: 1, updatesPersisted: 0, updatesSkipped: 1 });
   });
 
   it('refuses to score an event whose sport has no composite', () => {

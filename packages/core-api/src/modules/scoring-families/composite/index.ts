@@ -3,11 +3,14 @@
  * the sport's composite of their stats in it (`SportComposite`: Box Score for baseball). A
  * player's contest score is their games summed, more is better (`COMPOSITE_TOTAL`), and a game
  * they did not play scores 0. Results are the stat lines extending each participant round. Its
- * one scoring definition takes no contest settings, so `scoreField` reads none. It takes no live
- * scores until a stat provider is chosen (plans/championship-stat-pools.md Q10).
+ * one scoring definition takes no contest settings, so `scoreField` reads none. It takes STAT_LINE
+ * live scores, a provider's box scores, written through the stat line service beside this file
+ * (#1497).
  */
 import { ScoringFamily } from '@poolmaster/shared/domain';
 import type { ScoringFamilyModule } from '../scoring-family-module';
+import { createStatLineWriterDeps } from '../../events/wiring';
+import { writeStatLineGames } from './stat-line-writer';
 import { compositeOf, scorePlayerGames } from './score-games';
 
 export const compositeScoringFamily: ScoringFamilyModule = {
@@ -33,5 +36,14 @@ export const compositeScoringFamily: ScoringFamilyModule = {
     return 0;
   },
 
-  liveScores: null,
+  liveScores: {
+    category: 'STAT_LINE',
+    persist(deps, event, result) {
+      return writeStatLineGames(
+        createStatLineWriterDeps(deps.prisma, deps.providerId, deps.logger, deps.leaderboards),
+        event,
+        result.games,
+      );
+    },
+  },
 };

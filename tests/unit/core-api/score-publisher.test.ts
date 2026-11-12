@@ -262,6 +262,60 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
     });
   });
 
+  describe('box scores (#1497)', () => {
+    const boxScores: LiveScoreResult = {
+      category: 'STAT_LINE',
+      externalEventId: 'nba-2025-finals',
+      games: [{ externalGameId: 'g1', gameNumber: 1, state: 'FINAL', lines: [{ participantExternalId: '237', stats: [{ stat: 'POINTS', value: 31 }] }] }],
+    };
+    const persisted = { updatesReturned: 1, updatesPersisted: 1, updatesSkipped: 0, writeDiagnostics: { summary: { total: 0, unchanged: 0, created: 0, updated: 0, deleted: 0 }, rows: [] } };
+    const inProgressEvent = () => ({ findUnique: jest.fn().mockResolvedValue({ id: 'evt-1', sport: 'BASKETBALL', rounds: 7, status: 'IN_PROGRESS', eventSeries: { sportLeague: { scoringFamily: 'COMPOSITE', roundSeriesLengths: [] } } }) });
+
+    it('hands a STAT_LINE batch to the event\'s family writer when it takes box scores, with the event it resolved', async () => {
+      const persist = jest.fn().mockResolvedValue(persisted);
+
+      const result = await publishLiveScoreUpdate(boxScores, {
+        prisma: asPrismaClient({ sportEvent: inProgressEvent() }),
+        providerId: 'balldontlie',
+        scoringFamilyForEvent: () => ({ ...strokePlayScoringFamily, liveScores: { category: 'STAT_LINE', persist } }),
+      });
+
+      expect(result).toBe(persisted);
+      expect(persist).toHaveBeenCalledWith(expect.objectContaining({ providerId: 'balldontlie' }), expect.objectContaining({ id: 'evt-1', rounds: 7 }), boxScores);
+    });
+
+    it('warns and writes nothing when the event\'s family takes game scores, not box scores', async () => {
+      const persist = jest.fn();
+      const logger = fakeLogger();
+
+      const result = await publishLiveScoreUpdate(boxScores, {
+        prisma: asPrismaClient({ sportEvent: inProgressEvent() }),
+        providerId: 'balldontlie',
+        logger,
+        scoringFamilyForEvent: () => ({ ...strokePlayScoringFamily, liveScores: { category: 'GAME', persist } }),
+      });
+
+      expect(persist).not.toHaveBeenCalled();
+      expect(result).toMatchObject({ updatesReturned: 1, updatesPersisted: 0, updatesSkipped: 1 });
+      expect(logger.warn).toHaveBeenCalledWith(
+        expect.objectContaining({ action: 'liveScore.publish.categoryNotAccepted', data: expect.objectContaining({ category: 'STAT_LINE', acceptedCategory: 'GAME' }) }),
+        expect.any(String),
+      );
+    });
+
+    it('rejects a box score whose stat is not a stat the site knows, before any persistence', async () => {
+      const persist = jest.fn();
+      const malformed = { ...boxScores, games: [{ ...boxScores.games[0], lines: [{ participantExternalId: '237', stats: [{ stat: 'BLOCKS', value: 2 }] }] }] } as unknown as LiveScoreResult;
+
+      await expect(publishLiveScoreUpdate(malformed, {
+        prisma: asPrismaClient({ sportEvent: inProgressEvent() }),
+        providerId: 'balldontlie',
+        scoringFamilyForEvent: () => ({ ...strokePlayScoringFamily, liveScores: { category: 'STAT_LINE', persist } }),
+      })).rejects.toThrow('schema mismatch');
+      expect(persist).not.toHaveBeenCalled();
+    });
+  });
+
   describe('the event\'s field this container read lately (#1163)', () => {
     const NOW = new Date('2026-10-28T20:00:00.000Z');
     const result: LiveScoreResult = {
