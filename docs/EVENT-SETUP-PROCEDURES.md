@@ -311,6 +311,13 @@ squares round (`squaresFromRound`): the Champions League's final (round 5) and M
 semifinals (round 3). A squares contest is refused on an earlier game, and the create form does
 not offer one. Every other league takes squares on any round.
 
+**Series rounds.** A sport league whose playoff rounds are best-of series names each round's
+length, first to final (`roundSeriesLengths`, set by migration): the NBA and NHL 7, 7, 7, 7, MLB
+3, 5, 7, 7, the WNBA 3, 7, 7, MLS 1, 3, 1, 1, 1. A series is still one bracket match whose score is games won; a
+synced event counts its games' winners against the length and records the series once a side has
+won more than half. An admin who enters a series' result by hand enters the games won (4-2).
+When a league changes its format, change its lengths by migration before the playoffs start.
+
 Tennis (#704) has two sport leagues, the ATP (men's singles) and the WTA (women's singles), each
 holding the four Grand Slams; every bracket is fixed. A Slam singles draw is 128 players in seven
 rounds, First round to Final, with the tournament's 32 seeds as seeds 1 to 32 and everyone else
