@@ -45,7 +45,7 @@ async function seedFixtureForFormat(contestFormat: string): Promise<FormatFixtur
 
   const user = await prisma.user.create({
     data: {
-      email: `pick-invariant-${suffix}@example.com`,
+      email: `pick-invariant-${suffix}@integration.test`,
       username: `pick-invariant-${suffix}`,
       firstName: 'Invariant',
       lastName: 'Pick',
