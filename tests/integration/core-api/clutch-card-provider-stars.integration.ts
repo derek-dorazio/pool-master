@@ -28,6 +28,13 @@ const API_KEY = 'test-api-key';
 let restoreFetch: (() => void) | undefined;
 afterEach(() => restoreFetch?.());
 
+/** The round's event details from the provider, which has the round. */
+async function roundDetail(provider: BalldontlieAdapter) {
+  const detail = await provider.getEventDetails(ROUND);
+  if (detail === null) throw new Error(`The fake provider has no ${ROUND}`);
+  return detail;
+}
+
 function adapter() {
   const api = createFakeBalldontlie({ league: ['nba', 'ncaab', 'ncaaw'], apiKey: API_KEY, routes: nbaRoutes });
   const originalFetch = global.fetch;
@@ -83,9 +90,9 @@ async function finalsWithLoadedStar() {
 describe('a Clutch Card\'s stars and box scores from the provider', () => {
   it('loads the round\'s field, linking the star already loaded to his provider player and keeping his ranking, and adding the rest of both rosters', async () => {
     const { event, tatum, tatumEntry } = await finalsWithLoadedStar();
-    const detail = await adapter().getEventDetails(ROUND);
+    const detail = await roundDetail(adapter());
 
-    await new IngestionPersistence(getAppPrisma()).persistEventDetailWithDiagnostics(detail as NonNullable<typeof detail>);
+    await new IngestionPersistence(getAppPrisma()).persistEventDetailWithDiagnostics(detail);
 
     const prisma = getPrisma();
     await expect(prisma.participantProviderMapping.findUniqueOrThrow({ where: { providerId_externalId: { providerId: PROVIDER, externalId: 'nba-player-3202' } } }))
@@ -105,8 +112,7 @@ describe('a Clutch Card\'s stars and box scores from the provider', () => {
   it('then writes each played game\'s lines from a live sync, the live game\'s in progress, under the stars the load linked', async () => {
     const { event, tatumEntry } = await finalsWithLoadedStar();
     const provider = adapter();
-    const detail = await provider.getEventDetails(ROUND);
-    await new IngestionPersistence(getAppPrisma()).persistEventDetailWithDiagnostics(detail as NonNullable<typeof detail>);
+    await new IngestionPersistence(getAppPrisma()).persistEventDetailWithDiagnostics(await roundDetail(provider));
 
     const result = await publishLiveScoreUpdate(await provider.getLiveScores(ROUND), { prisma: getAppPrisma(), providerId: PROVIDER, scoringFamilyForEvent });
 

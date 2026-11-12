@@ -19,11 +19,7 @@ import { nbaGames, nbaRoutes, nbaStatRows } from '../../../support/balldontlie-n
 const API_KEY = 'test-api-key';
 const NOW = Date.UTC(2026, 10, 12);
 
-const games = nbaGames;
-const statRows = nbaStatRows;
-const defaultRoutes: Record<string, FakeRoute> = nbaRoutes;
-
-function setup(routes: Record<string, FakeRoute> = defaultRoutes, now = NOW): { adapter: BalldontlieAdapter; api: FakeBalldontlie; restore: () => void } {
+function setup(routes: Record<string, FakeRoute> = nbaRoutes, now = NOW): { adapter: BalldontlieAdapter; api: FakeBalldontlie; restore: () => void } {
   const api = createFakeBalldontlie({ league: ['nba', 'ncaab', 'ncaaw'], apiKey: API_KEY, routes });
   const originalFetch = global.fetch;
   global.fetch = api.fetch;
@@ -96,7 +92,7 @@ describe('BalldontlieAdapter (NBA playoffs)', () => {
     });
 
     it('takes the season that opened last autumn as the one under way before September, so its playoffs are read in spring', async () => {
-      const harness = setup(defaultRoutes, Date.UTC(2026, 3, 20));
+      const harness = setup(nbaRoutes, Date.UTC(2026, 3, 20));
       restore = harness.restore;
 
       const events = await harness.adapter.getUpcomingEvents(Sport.BASKETBALL);
@@ -191,8 +187,8 @@ describe('BalldontlieAdapter (NBA playoffs)', () => {
   });
 
   it('reads every page of a season\'s playoff games', async () => {
-    const many = Array.from({ length: 101 }, (_, index) => ({ ...games[0], id: 500000 + index }));
-    const harness = setup({ ...defaultRoutes, '/nba/v1/games': pagedRoute(many) });
+    const many = Array.from({ length: 101 }, (_, index) => ({ ...nbaGames[0], id: 500000 + index }));
+    const harness = setup({ ...nbaRoutes, '/nba/v1/games': pagedRoute(many) });
     restore = harness.restore;
 
     const result = await harness.adapter.getLiveScores('nba-2024-postseason');
@@ -203,7 +199,7 @@ describe('BalldontlieAdapter (NBA playoffs)', () => {
 
   it('refuses a game the vendor sends without the teams it is between, naming the game', async () => {
     // Sent as JSON, a side left undefined is a game with no `home_team` at all.
-    const harness = setup({ ...defaultRoutes, '/nba/v1/games': pagedRoute([{ ...games[0], home_team: undefined }]) });
+    const harness = setup({ ...nbaRoutes, '/nba/v1/games': pagedRoute([{ ...nbaGames[0], home_team: undefined }]) });
     restore = harness.restore;
 
     await expect(harness.adapter.getLiveScores('nba-2024-postseason')).rejects.toThrow('game 18444001 has no home_team');
@@ -330,7 +326,7 @@ describe('BalldontlieAdapter (NBA playoffs)', () => {
     });
 
     it('refuses a played stat row without the points Triple Threat scores, naming the player', async () => {
-      const harness = setup({ ...defaultRoutes, '/nba/v1/stats': pagedRoute([{ ...statRows[0], pts: undefined }]) });
+      const harness = setup({ ...nbaRoutes, '/nba/v1/stats': pagedRoute([{ ...nbaStatRows[0], pts: undefined }]) });
       restore = harness.restore;
 
       await expect(harness.adapter.getLiveScores('nba-2023-postseason-round-4')).rejects.toThrow('player 3202\'s stat row has no pts');
