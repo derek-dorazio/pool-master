@@ -14,6 +14,7 @@ import {
   buildLeagueAdminContestCreatePath,
   buildLeagueAdminContestPath,
   buildLeagueAdminContestsPath,
+  buildLeagueAdminEditPath,
   buildLeagueContestTypesPath,
 } from '@/features/leagues/league-routing';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
@@ -84,4 +85,10 @@ export function LegacyGolfManageRedirect() {
   }
   const movedRest = rest.map((segment, index) => (index === rest.length - 1 && segment === 'scores' ? 'results' : segment));
   return <Navigate replace to={`${[golfPath, movedList, ...movedRest].join('/')}${search}`} />;
+}
+
+/** The old Edit league page: General's Edit is now a dialog on League settings. */
+export function LegacyEditLeagueRedirect() {
+  const { leagueCode = '' } = useParams<{ leagueCode: string }>();
+  return <Navigate replace to={buildLeagueAdminEditPath(leagueCode)} />;
 }

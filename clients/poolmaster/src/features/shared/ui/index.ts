@@ -76,7 +76,7 @@ export {
 } from "./dropdown-menu";
 export { Modal } from "./modal";
 export { MutationActionToast } from "./mutation-action-toast";
-export { useMutationActionWorkflow } from "./mutation-action-workflow";
+export { useMutationActionWorkflow, type MutationActionWorkflowResult } from "./mutation-action-workflow";
 export {
   ConfirmationModal,
   FormModal,

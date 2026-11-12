@@ -10,6 +10,9 @@ type IconPaletteProps<Key extends string, Option extends IconPaletteOption<Key>>
   "aria-label": string;
   className?: string;
   disabled?: boolean;
+  /** `primary` draws each option's icon in the brand colour, for line icons that take the
+   *  current text colour (a league icon); left out, the icon keeps its own colours. */
+  iconTone?: "primary";
   onSelect: (key: Key) => void;
   optionTestIdPrefix: string;
   options: readonly Option[];
@@ -24,6 +27,7 @@ export function IconPalette<Key extends string, Option extends IconPaletteOption
   "aria-label": ariaLabel,
   className,
   disabled = false,
+  iconTone,
   onSelect,
   optionTestIdPrefix,
   options,
@@ -55,7 +59,12 @@ export function IconPalette<Key extends string, Option extends IconPaletteOption
             onClick={() => onSelect(icon.key)}
             type="button"
           >
-            {renderOptionIcon(icon)}
+            <div
+              className={cn("flex justify-center", iconTone === "primary" ? "text-primary" : null)}
+              data-testid={`${optionTestIdPrefix}-${icon.key}-icon`}
+            >
+              {renderOptionIcon(icon)}
+            </div>
             <div className="mt-2 break-words text-xs font-medium">{icon.label}</div>
           </button>
         );

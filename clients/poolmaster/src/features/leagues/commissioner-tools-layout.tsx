@@ -5,7 +5,6 @@ import {
   buildLeagueAdminEventEmailsEditPath,
   buildLeagueAdminPlanPath,
   buildLeagueAdminContestsPath,
-  buildLeagueAdminEditPath,
   buildLeagueAdminInvitesPath,
   buildLeagueAdminPath,
   buildLeagueAdminTeamsPath,
@@ -40,7 +39,6 @@ export function CommissionerToolsLayout() {
       tabs={[
         {
           isActive: pathname === settingsPath
-            || pathname === buildLeagueAdminEditPath(leagueCode)
             || pathname === buildLeagueAdminChampionshipsEditPath(leagueCode)
             || pathname === buildLeagueAdminEventEmailsEditPath(leagueCode)
             || pathname === buildLeagueAdminPlanPath(leagueCode),
