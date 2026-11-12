@@ -203,8 +203,6 @@ export const QueryKeys = {
   },
   rootAdmin: {
     all: ['poolmaster', 'root-admin'] as const,
-    eventParticipants: (eventId: QueryKeyId) =>
-      ['poolmaster', 'root-admin', 'events', eventId, 'participants'] as const,
     eventSyncEvents: (sport: QueryKeyId, eventYear: number) =>
       ['poolmaster', 'root-admin', 'event-sync-events', sport, eventYear] as const,
     eventsByYear: (eventYear: number) => ['poolmaster', 'root-admin', 'events', 'year', eventYear] as const,

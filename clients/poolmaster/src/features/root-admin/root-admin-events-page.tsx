@@ -1,21 +1,12 @@
 import { createColumnHelper } from '@tanstack/react-table';
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { PARTICIPANT_SCORING_DEFINITIONS, formatParticipantStatusLabel } from '@poolmaster/shared/domain';
+import { listEvents, type SportEventDto } from '@/lib/api';
 import {
-  listEventParticipants,
-  listEventTiers,
-  listEvents,
-  type SportEventDto,
-  type SportEventParticipantDto,
-  type SportEventTierDto,
-} from '@/lib/api';
-import {
-  Button,
   DataGrid,
   Input,
   formatDateTimeDisplay,
-  Modal,
+  LinkButton,
   PageHeader,
   QueryState,
   StatusBadge,
@@ -28,22 +19,11 @@ import {
   sportEventStatusTone,
 } from './sport-admin-utils';
 import { EventYearFilter } from './event-year-select';
-import { MANAGE_LIST_PAGE_SIZE } from './manage-navigation';
+import { buildSportEventPath, MANAGE_LIST_PAGE_SIZE } from './manage-navigation';
 
 type AdminEvent = SportEventDto;
 
 const eventColumnHelper = createColumnHelper<AdminEvent>();
-const participantColumnHelper = createColumnHelper<SportEventParticipantDto>();
-
-function formatOptionalText(value: string | number | null | undefined) {
-  return value === undefined || value === null || value === '' ? 'Unknown' : String(value);
-}
-
-/** The standing's status once scoring has started, else whether the golfer is still in the field. */
-function participantStatus(participant: SportEventParticipantDto): string {
-  return participant.standing?.status
-    ?? (participant.isActive ? 'ACTIVE' : participant.inactiveReason ?? 'INACTIVE');
-}
 
 // Shared SCREAMING_SNAKE -> Title Case formatter, lifted to sport-admin-utils so
 // the golf-admin screens and this browser use one implementation (plans/124 §6.4).
@@ -56,13 +36,6 @@ function readinessTone(status: AdminEvent['readinessStatus']) {
   return 'neutral';
 }
 
-function formatScoreToPar(value: number | undefined) {
-  if (value === undefined) {
-    return 'Unknown';
-  }
-  return PARTICIPANT_SCORING_DEFINITIONS.GOLF_RELATIVE_TO_PAR_TOTAL.format(value);
-}
-
 function formatFieldCount(event: AdminEvent) {
   const providerCount = event.participantCount ?? 'unknown';
   return `${event.loadedParticipantCount} loaded / ${providerCount} provider`;
@@ -70,7 +43,6 @@ function formatFieldCount(event: AdminEvent) {
 
 export function RootAdminEventsPage() {
   const displayPreferences = useDisplayPreferences();
-  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [eventYear, setEventYear] = useState(() => new Date().getFullYear());
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -89,41 +61,6 @@ export function RootAdminEventsPage() {
     },
     retry: false,
   });
-
-  // #235/#236 — the event's field is the shared listEventParticipants read; the admin
-  // projection of it is gone. Tier labels come from the event's tiers.
-  const participantsQuery = useQuery({
-    enabled: selectedEventId !== null,
-    queryKey: QueryKeys.rootAdmin.eventParticipants(selectedEventId),
-    queryFn: async (): Promise<{ participants: SportEventParticipantDto[]; tiers: SportEventTierDto[] }> => {
-      if (!selectedEventId) {
-        throw new Error('Select an event before loading participants.');
-      }
-
-      const [participantsResponse, tiersResponse] = await Promise.all([
-        listEventParticipants({ path: { eventId: selectedEventId } }),
-        listEventTiers({ path: { eventId: selectedEventId } }),
-      ]);
-
-      if (!participantsResponse.data?.participants) {
-        throwApiError(participantsResponse.error, 'Event participant response is missing data.');
-      }
-      if (!tiersResponse.data?.tiers) {
-        throwApiError(tiersResponse.error, 'Event tier response is missing data.');
-      }
-
-      return { participants: participantsResponse.data.participants, tiers: tiersResponse.data.tiers };
-    },
-    retry: false,
-  });
-
-  // poolmaster-allow-list-lookup: the selected row of the list on screen
-  const selectedSport = eventsQuery.data?.find((event) => event.id === selectedEventId)?.sport;
-
-  const tierLabelById = useMemo(
-    () => new Map((participantsQuery.data?.tiers ?? []).map((tier) => [tier.id, tier.label])),
-    [participantsQuery.data?.tiers],
-  );
 
   const eventColumns = useMemo(
     () => [
@@ -193,16 +130,16 @@ export function RootAdminEventsPage() {
       eventColumnHelper.display({
         id: 'participants',
         header: 'Participants',
+        // The field lives on the event's own Field page, in its sport's Manage section.
         cell: ({ row }) => (
-          <Button
+          <LinkButton
             data-testid={`root-admin-event-participants-${row.original.id}`}
-            onClick={() => setSelectedEventId(row.original.id)}
             size="sm"
-            type="button"
+            to={`${buildSportEventPath(row.original.sport, row.original.id)}/field`}
             variant="secondary"
           >
-            View
-          </Button>
+            Field
+          </LinkButton>
         ),
         enableColumnFilter: false,
         enableSorting: false,
@@ -210,85 +147,6 @@ export function RootAdminEventsPage() {
     ],
     [displayPreferences],
   );
-
-  const participantColumns = useMemo(
-    () => [
-      participantColumnHelper.accessor((participant) => participant.participant.name, {
-        id: 'participant',
-        header: 'Participant',
-        cell: ({ row }) => (
-          <div>
-            <div className="font-medium text-foreground">
-              {row.original.participant.name}
-            </div>
-            <div className="mt-1 text-xs text-muted-foreground">
-              {formatOptionalText(row.original.participant.shortName)}
-            </div>
-          </div>
-        ),
-      }),
-      participantColumnHelper.accessor(participantStatus, {
-        id: 'status',
-        header: 'Status',
-        cell: ({ getValue }) => (
-          <StatusBadge tone={getValue() === 'ACTIVE' ? 'active' : 'neutral'}>
-            {formatParticipantStatusLabel(getValue(), selectedSport)}
-          </StatusBadge>
-        ),
-      }),
-      participantColumnHelper.accessor('ranking', {
-        header: 'Ranking',
-        cell: ({ getValue }) => formatOptionalText(getValue()),
-      }),
-      participantColumnHelper.accessor('oddsToWin', {
-        header: 'Odds',
-        cell: ({ getValue }) => formatOptionalText(getValue()),
-      }),
-      participantColumnHelper.accessor(
-        (participant) => tierLabelById.get(participant.valuation?.sportEventTierId ?? '') ?? null,
-        {
-          id: 'tier',
-          header: 'Tier',
-          cell: ({ getValue, row }) => (
-            <div>
-              <div className="font-medium text-foreground">
-                {formatOptionalText(getValue())}
-              </div>
-              <div className="mt-1 text-xs text-muted-foreground">
-                Price {formatOptionalText(row.original.valuation?.price)}
-              </div>
-            </div>
-          ),
-        },
-      ),
-      participantColumnHelper.accessor((participant) => participant.standing?.golf?.eventScoreToPar, {
-        id: 'score',
-        header: 'Score',
-        cell: ({ getValue, row }) => (
-          <div>
-            <div className="font-medium text-foreground">
-              {formatScoreToPar(getValue())}
-            </div>
-            <div className="mt-1 text-xs text-muted-foreground">
-              {row.original.rounds.length} rounds, strokes {formatOptionalText(row.original.standing?.golf?.eventStrokes)}
-            </div>
-          </div>
-        ),
-      }),
-      participantColumnHelper.accessor('updatedAt', {
-        header: 'Updated',
-        cell: ({ getValue }) => formatDateTimeDisplay(getValue(), displayPreferences),
-      }),
-    ],
-    [displayPreferences, selectedSport, tierLabelById],
-  );
-
-  // poolmaster-allow-list-lookup: the selected row of the list on screen
-  const selectedEvent = eventsQuery.data?.find((event) => event.id === selectedEventId);
-  const participantModalTitle = selectedEvent?.name ?? 'Event participants';
-  const participantModalDescription = selectedEvent
-    ? `Participants from ${selectedEvent.providerId}`
-    : 'Participants in this event.';
 
   return (
     <section className="space-y-6" data-testid="root-admin-events-page">
@@ -329,46 +187,6 @@ export function RootAdminEventsPage() {
         )}
       </QueryState>
 
-      <Modal
-        description={participantModalDescription}
-        footer={
-          <Button onClick={() => setSelectedEventId(null)} type="button">
-            Close
-          </Button>
-        }
-        onClose={() => setSelectedEventId(null)}
-        onOpenChange={(open) => {
-          if (!open) {
-            setSelectedEventId(null);
-          }
-        }}
-        open={selectedEventId !== null}
-        size="lg"
-        testId="root-admin-event-participants-modal"
-        title={participantModalTitle}
-      >
-        {participantsQuery.isLoading ? (
-          <p className="text-sm text-muted-foreground">Loading participants...</p>
-        ) : participantsQuery.isError ? (
-          <p className="text-sm text-[color:var(--status-danger-text)]">
-            {extractErrorMessage(participantsQuery.error, {
-              fallback: 'We could not load event participants right now.',
-            })}
-          </p>
-        ) : (
-          <DataGrid
-            columns={participantColumns}
-            data={participantsQuery.data?.participants ?? []}
-            emptyMessage="No participants are currently loaded for this event."
-            filterTestIdPrefix="root-admin-event-participants-filter"
-            getRowId={(participant) => participant.id}
-            rowTestId={(participant) =>
-              `root-admin-event-participant-row-${participant.id}`
-            }
-            tableTestId="root-admin-event-participants-table"
-          />
-        )}
-      </Modal>
     </section>
   );
 }
