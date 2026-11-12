@@ -464,6 +464,10 @@ describe('writeGameScores', () => {
         { action: 'liveScore.series.tooManyGames', data: { sportEventId: EVENT_ID, matchNumber: 1, externalGameIds: 's1,s2,s3,s4', length: 3 } },
         expect.any(String),
       );
+      expect(logger.warn).toHaveBeenCalledWith(
+        { action: 'liveScore.series.ambiguous', data: { sportEventId: EVENT_ID, matchNumbers: [2, 3] } },
+        expect.any(String),
+      );
     });
 
     it('leaves alone a series in which a side has won more games than it takes, a game counted after the series was over', async () => {

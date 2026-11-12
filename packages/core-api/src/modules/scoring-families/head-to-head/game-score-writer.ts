@@ -243,7 +243,14 @@ function seriesStandings(
   const gamesByTeams = groupByTeams(games, (game) => [teamsOf.get(game.homeTeamExternalId), teamsOf.get(game.awayTeamExternalId)]);
   return [...matchesByTeams].flatMap(([teams, candidates]) => {
     const seriesGames = gamesByTeams.get(teams) ?? [];
-    if (candidates.length !== 1 || seriesGames.length === 0) return [];
+    if (seriesGames.length === 0) return [];
+    if (candidates.length > 1) {
+      deps.logger?.warn(
+        { action: 'liveScore.series.ambiguous', data: { sportEventId, matchNumbers: candidates.map((match) => match.matchNumber) } },
+        'Skipped a series whose two teams two matches share: an admin settles which one the games score',
+      );
+      return [];
+    }
     const [match] = candidates;
     const length = seriesLengthOf(match);
     const winners = seriesGames.flatMap((game) => {
