@@ -49,7 +49,8 @@ The target:
      live score and its result once a side has won more than half (#1545). A series league's
      reader therefore hands over every game of the event on each sync. The NBA's playoffs are
      the first (`nba-2025-postseason`, one event a season); the four series leagues share one
-     mapping and reader (`series-playoffs.ts`), each supplying only its own reads;
+     mapping and reader (`series-playoffs.ts`), each supplying only its own reads. The NHL's
+     (`nhl-2025-postseason`, played in 2026) are four rounds of best-of-seven series;
    - per-player box scores for Clutch Cards, through `StatLineService`.
 3. **Webhooks as the trigger, not the record.** BALLDONTLIE posts a signed event (period
    ended, game ended, hole completed) to a receiver. The receiver checks the signature,

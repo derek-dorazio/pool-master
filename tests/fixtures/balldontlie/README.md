@@ -5,8 +5,8 @@ adapter was built before any account existed, so everything here comes from the 
 published OpenAPI document, not from recorded traffic.
 
 - `openapi/pga.yml`, `openapi/nfl.yml`, `openapi/ncaab.yml`, `openapi/ncaaw.yml`,
-  `openapi/nba.yml`, `openapi/epl.yml` and `openapi/fifa.yml` are the vendor's PGA TOUR, NFL,
-  NCAA men's and women's basketball, NBA, Premier League and FIFA World Cup documents, each vendored unchanged below a three-line header that
+  `openapi/nba.yml`, `openapi/nhl.yml`, `openapi/epl.yml` and `openapi/fifa.yml` are the vendor's PGA TOUR, NFL,
+  NCAA men's and women's basketball, NBA, NHL, Premier League and FIFA World Cup documents, each vendored unchanged below a three-line header that
   names its source, date and hash. `npm run balldontlie:contract-check` says when the live
   document differs; `-- --update-spec` refreshes the copy, and the contract tests then
   show whether anything the adapter reads moved.
@@ -48,6 +48,12 @@ published OpenAPI document, not from recorded traffic.
   edition part way through its round of 16, with a shoot-out final, a live, a scheduled and an
   `unknown` match and a quarter-final with one side to be decided; and four nations. Every one
   must fit the document (`fifa-world-cup-contract.test.ts`).
+- `nhl/*.json` are written to the NHL document's schemas, which give no response examples: the
+  2024 season's playoffs (played in 2025) as all fifteen series of that year's bracket, sixteen
+  teams to a final Florida won four games to two, each series' games in a made-up order and
+  score; the 2025 season's playoffs just begun, with a final, a live, a scheduled and an
+  `unknown` game; and the sixteen teams with a moved franchise in no conference. Every one must
+  fit the document (`nhl-contract.test.ts`).
 
 ## Assumptions to confirm against the real API
 
@@ -126,6 +132,21 @@ The first things to check once a key exists, each read by `npm run balldontlie:c
   set only when a shoot-out was taken.
 - FIFA: a nation's `name` is the name the site's World Cup teams are loaded under ("United
   States", "Netherlands"); one the vendor names otherwise is added beside the site's.
+
+- NHL: `/nhl/v1/games` takes its season filter as `seasons`, as the document declares it, not
+  `seasons[]` as the other leagues' documents do; `postseason=true` returns the playoffs and
+  nothing else. `--game-event nhl-2024-postseason` prints the game count (a full NHL postseason
+  has 15 series, about 85 games), and a postseason is called complete only once its final
+  series has a side at four wins.
+- NHL: a game's `id`, `season`, `game_date` and both teams' `id` and `full_name` are always
+  sent, though the document requires none of them; a game missing one fails the sync with the
+  field named. `start_time_utc` is not read, since the document gives no format for it.
+- NHL: `/nhl/v1/teams` may keep folded or moved franchises (the Arizona Coyotes, say) with a
+  null `conference_name`; the adapter keeps only teams in a conference. Count the teams the
+  contract check prints: 32.
+- NHL: a team's `full_name` is the name the site's NHL teams are loaded under ("Florida
+  Panthers"); one the vendor names otherwise ("Montréal Canadiens" with its accent, say) is
+  added beside the site's: rename one of them once seen.
 
 When an account exists, replace or add fixtures with recorded responses and keep the
 doc-example files: the pair shows where the vendor's document and its API disagree.
