@@ -3,7 +3,7 @@ import { MatchStatus } from '@poolmaster/shared/domain';
 import { recordEventMatchResult } from '@/lib/api';
 import type { SportEventMatchDto } from '@/lib/api';
 import { tieWord } from '@/features/contests/contest-sport';
-import { Button, InlineError, Input } from '@/features/shared/ui';
+import { Button, InlineError, Input, Text } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
 import { bracketErrorMessages } from './bracket-copy';
 import { type BracketContext, useMatchWrite } from './bracket-match-write';
@@ -49,8 +49,8 @@ export function TieResult({ match, context }: { match: SportEventMatchDto; conte
   }
   return (
     <div className="flex flex-wrap items-end gap-2" data-testid={`${testId}-editor`}>
-      <label className="flex w-36 flex-col gap-1 text-xs text-muted-foreground">
-        Each side scored
+      <label className="flex w-36 flex-col gap-1">
+        <Text variant="caption">Each side scored</Text>
         <Input
           data-testid={`${testId}-score`}
           inputMode="numeric"

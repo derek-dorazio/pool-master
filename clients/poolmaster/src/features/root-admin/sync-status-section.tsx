@@ -1,5 +1,5 @@
 import type { ProviderSummaryDto } from '@/lib/api';
-import { Notice, SectionCard, StatusBadge } from '@/features/shared/ui';
+import { Notice, SectionCard, StatusBadge, Text } from '@/features/shared/ui';
 import { getStatusTone } from './sync-run-status';
 
 const WORKFLOW_STEPS = [
@@ -30,9 +30,7 @@ export function SyncStatusSection({
         <div className="mt-6 flex flex-wrap gap-3">
           {providers.map((provider) => (
             <StatusBadge key={provider.providerId} tone="neutral">
-              <span className="font-medium text-foreground">
-                {provider.providerName}
-              </span>
+              <Text variant="strong">{provider.providerName}</Text>
               <StatusBadge className="ml-2 px-2 py-0.5" tone={getStatusTone(provider.status)}>
                 {provider.status}
               </StatusBadge>

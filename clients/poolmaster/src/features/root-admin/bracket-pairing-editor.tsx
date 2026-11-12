@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { MatchSide } from '@poolmaster/shared/domain';
 import { updateEventBracketMatch } from '@/lib/api';
 import type { SportEventMatchDto } from '@/lib/api';
-import { Button, InlineError, Select } from '@/features/shared/ui';
+import { Button, InlineError, Select, Text } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
 import { bracketErrorMessages, describeEntry, matchNoun } from './bracket-copy';
 import { type BracketContext, describeSide, useMatchWrite } from './bracket-match-write';
@@ -59,8 +59,8 @@ export function PairingEditor({
       ? `${side === MatchSide.HOME ? 'First' : 'Second'} ${team.one}`
       : `${side === MatchSide.HOME ? 'Home' : 'Away'} ${team.one}`;
     return (
-      <label className="flex flex-col gap-1 text-xs text-muted-foreground">
-        {label}
+      <label className="flex flex-col gap-1">
+        <Text variant="caption">{label}</Text>
         <Select
           data-testid={`root-admin-bracket-side-${match.matchNumber}-${side}`}
           onChange={(change) => onChange(change.target.value)}
@@ -77,8 +77,8 @@ export function PairingEditor({
 
   return (
     <div className="flex flex-col gap-2">
-      {homeFed ? <p className="text-sm">{describeSide(match, MatchSide.HOME, context)}</p> : sideSelect(MatchSide.HOME, homeId, setHomeId)}
-      {awayFed ? <p className="text-sm">{describeSide(match, MatchSide.AWAY, context)}</p> : sideSelect(MatchSide.AWAY, awayId, setAwayId)}
+      {homeFed ? <Text as="p">{describeSide(match, MatchSide.HOME, context)}</Text> : sideSelect(MatchSide.HOME, homeId, setHomeId)}
+      {awayFed ? <Text as="p">{describeSide(match, MatchSide.AWAY, context)}</Text> : sideSelect(MatchSide.AWAY, awayId, setAwayId)}
       <div className="flex gap-2">
         <Button
           data-testid={`root-admin-bracket-save-${match.matchNumber}`}

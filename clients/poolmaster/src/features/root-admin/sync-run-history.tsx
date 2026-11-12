@@ -1,15 +1,7 @@
 import { createColumnHelper } from '@tanstack/react-table';
 import { useMemo } from 'react';
 import type { ProviderSummaryDto } from '@/lib/api';
-import {
-  Button,
-  DataGrid,
-  formatDateTimeDisplay,
-  QueryState,
-  SectionCard,
-  StatusBadge,
-  useDisplayPreferences,
-} from '@/features/shared/ui';
+import { Button, DataGrid, formatDateTimeDisplay, QueryState, SectionCard, StatusBadge, Text, useDisplayPreferences } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
 import {
   buildCompactStatsSummary,
@@ -47,7 +39,7 @@ export function SyncRunHistory({
             toSortableTimestamp(left.original.startedAt ?? left.original.createdAt)
             - toSortableTimestamp(right.original.startedAt ?? right.original.createdAt),
           cell: ({ getValue }) => (
-            <span className="text-foreground">{getValue()}</span>
+            <Text>{getValue()}</Text>
           ),
         },
       ),
@@ -60,7 +52,7 @@ export function SyncRunHistory({
             toSortableTimestamp(left.original.completedAt)
             - toSortableTimestamp(right.original.completedAt),
           cell: ({ getValue }) => (
-            <span className="text-muted-foreground">{getValue()}</span>
+            <Text tone="muted">{getValue()}</Text>
           ),
         },
       ),
@@ -70,13 +62,9 @@ export function SyncRunHistory({
           id: 'provider',
           header: 'Provider',
           cell: ({ row }) => (
-            <div>
-              <div className="font-medium text-foreground">
-                {getProviderName(row.original.providerId, providers)}
-              </div>
-              <div className="mt-1 text-xs text-muted-foreground">
-                {row.original.providerId}
-              </div>
+            <div className="flex flex-col gap-1">
+              <Text variant="strong">{getProviderName(row.original.providerId, providers)}</Text>
+              <Text variant="caption">{row.original.providerId}</Text>
             </div>
           ),
         },
@@ -84,21 +72,21 @@ export function SyncRunHistory({
       syncRunColumnHelper.accessor('sport', {
         header: 'Sport',
         cell: ({ getValue }) => (
-          <span className="text-foreground">{getValue()}</span>
+          <Text>{getValue()}</Text>
         ),
       }),
       syncRunColumnHelper.accessor((run) => formatRequestedFeed(run.payload), {
         id: 'feed',
         header: 'Feed',
         cell: ({ getValue }) => (
-          <span className="text-foreground">{getValue()}</span>
+          <Text>{getValue()}</Text>
         ),
       }),
       syncRunColumnHelper.accessor((run) => formatEventValue(run.eventId), {
         id: 'event',
         header: 'Event',
         cell: ({ getValue }) => (
-          <span className="text-muted-foreground">{getValue()}</span>
+          <Text tone="muted">{getValue()}</Text>
         ),
       }),
       syncRunColumnHelper.accessor('status', {
@@ -113,24 +101,22 @@ export function SyncRunHistory({
         id: 'summary',
         header: 'Summary',
         cell: ({ row }) => (
-          <div className="text-muted-foreground">
-            <div>{buildPayloadSummary(row.original.payload)}</div>
-            <div className="mt-1 text-xs">
-              {buildCompactStatsSummary(row.original.payload)}
-            </div>
+          <div className="flex flex-col items-start gap-1">
+            <Text tone="muted">{buildPayloadSummary(row.original.payload)}</Text>
+            <Text variant="caption">{buildCompactStatsSummary(row.original.payload)}</Text>
             {getPayloadWarnings(row.original.payload).length > 0 ? (
-              <div className="mt-1 text-xs text-[color:var(--status-warning-text)]">
+              <StatusBadge tone="warning">
                 {getPayloadWarnings(row.original.payload).length} warning
                 {getPayloadWarnings(row.original.payload).length === 1 ? '' : 's'}
-              </div>
+              </StatusBadge>
             ) : null}
             <Button
-              className="mt-2 h-auto rounded-none p-0 text-xs uppercase"
+              className="mt-1"
               onClick={() => onOpenRun(row.original)}
               type="button"
-              variant="ghost"
+              variant="link"
             >
-                View details
+              View details
             </Button>
           </div>
         ),

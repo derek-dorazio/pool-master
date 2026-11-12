@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { MatchEnding, MatchSide } from '@poolmaster/shared/domain';
 import { recordEventMatchResult } from '@/lib/api';
 import type { SportEventMatchDto, SportEventParticipantDto } from '@/lib/api';
-import { Button, InlineError, Select } from '@/features/shared/ui';
+import { Button, InlineError, Select, Text } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
 import { bracketErrorMessages, matchNoun } from './bracket-copy';
 import { type BracketContext, useMatchWrite } from './bracket-match-write';
@@ -64,16 +64,16 @@ export function EarlyEndingResult({
   }
   return (
     <div className="flex w-full flex-wrap items-end gap-2" data-testid={`${testId}-editor`}>
-      <label className="flex flex-col gap-1 text-xs text-muted-foreground">
-        How it ended
+      <label className="flex flex-col gap-1">
+        <Text variant="caption">How it ended</Text>
         <Select data-testid={`${testId}-ending`} onChange={(change) => setEnding(change.target.value as keyof typeof EARLY_ENDING_LABEL)} value={ending}>
           {Object.entries(EARLY_ENDING_LABEL).map(([value, label]) => (
             <option key={value} value={value}>{label}</option>
           ))}
         </Select>
       </label>
-      <label className="flex flex-col gap-1 text-xs text-muted-foreground">
-        Winner
+      <label className="flex flex-col gap-1">
+        <Text variant="caption">Winner</Text>
         <Select data-testid={`${testId}-winner`} onChange={(change) => setWinnerSide(change.target.value as MatchSide)} value={winnerSide}>
           <option value={MatchSide.HOME}>{home.participant.name}</option>
           <option value={MatchSide.AWAY}>{away.participant.name}</option>

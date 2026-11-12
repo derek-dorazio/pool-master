@@ -17,6 +17,7 @@ import {
   useDisplayPreferences,
 } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
+import { upperFirst } from '@/lib/upper-first';
 import { getLogger } from '@/lib/logger';
 import { formPageSave } from '@/lib/form-page-save';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -26,7 +27,6 @@ import { buildSportEventPath } from './manage-navigation';
 import { getScoringFamilyAdminUi } from './scoring-family-admin';
 import { useSportLeagueNoun } from './use-sport-catalog';
 import { useSportEventQuery } from './use-sport-event';
-import { upperFirst } from '@/lib/upper-first';
 
 const editFormSchema = z.object({
   name: z.string().trim().min(1, 'Name is required'),

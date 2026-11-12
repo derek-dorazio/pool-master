@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { MatchSide, MatchStatus, formatSpread } from '@poolmaster/shared/domain';
 import { updateEventBracketMatch } from '@/lib/api';
 import type { SportEventMatchDto } from '@/lib/api';
-import { Button, InlineError, Input } from '@/features/shared/ui';
+import { Button, InlineError, Input, Text } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
 import { bracketErrorMessages, sideEntry } from './bracket-copy';
 import { type BracketContext, useMatchWrite } from './bracket-match-write';
@@ -44,7 +44,7 @@ export function SpreadCell({ match, released, context }: { match: SportEventMatc
   if (!editing) {
     return (
       <div className="flex flex-col items-start gap-1">
-        <span className={match.homeSpread === null ? 'text-muted-foreground' : undefined}>{describeSpread(match, context)}</span>
+        <Text tone={match.homeSpread === null ? 'muted' : 'inherit'}>{describeSpread(match, context)}</Text>
         {match.status !== MatchStatus.CANCELLED ? (
           <Button
             data-testid={`root-admin-bracket-spread-edit-${match.matchNumber}`}
@@ -65,8 +65,8 @@ export function SpreadCell({ match, released, context }: { match: SportEventMatc
 
   return (
     <div className="flex flex-col gap-2">
-      <label className="flex flex-col gap-1 text-xs text-muted-foreground">
-        {`${home ? home.participant.name : 'Home'} spread`}
+      <label className="flex flex-col gap-1">
+        <Text variant="caption">{`${home ? home.participant.name : 'Home'} spread`}</Text>
         <Input
           data-testid={`root-admin-bracket-spread-input-${match.matchNumber}`}
           inputMode="decimal"
