@@ -8,14 +8,15 @@
  * index could serve a read the planner walked is tested on fixed plans, since on test-sized tables
  * which plan Postgres picks depends on the statistics other files leave.
  */
+import { randomUUID } from 'node:crypto';
 import type { Prisma } from '@prisma/client';
+import { Sport } from '@poolmaster/shared/domain';
 import { cleanupTestData, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
 import {
   describeUnindexedScans,
   findUnindexedScans,
   findWholeScans,
   indexCheck,
-  planOf,
   planWholeScans,
   readIndexLeads,
   REFERENCE_TABLES,
@@ -298,15 +299,31 @@ function nodesOf(plan: PlanNode): PlanNode[] {
   return [plan, ...(plan.Plans ?? []).flatMap(nodesOf)];
 }
 
-// As Prisma sends the provider name match's `participant.findMany({ where: { OR: [{ sportId, name: { in } }] } })`.
-const PARTICIPANTS_BY_SPORT_AND_NAMES = 'SELECT "public"."participants"."id" FROM "public"."participants" WHERE (("public"."participants"."sport_id" = $1 AND "public"."participants"."name" IN ($2,$3,$4)))';
-
 describe('the provider name match\'s read of participants', () => {
-  it('looks a sport\'s participants up by sport and name together, through the (sport_id, name) index rather than the (sport_id, status) one', async () => {
-    const plan = await planOf(getPrisma(), PARTICIPANTS_BY_SPORT_AND_NAMES);
+  // On empty tables the (sport_id, status) and (sport_id, name) indexes cost the same, so this
+  // plans against a sport with a roster and fresh statistics, as production has.
+  it('reads a sport\'s participants by sport and name together through the (sport_id, name) index once the sport has a roster', async () => {
+    const prisma = getPrisma();
+    const sport = await prisma.sport.upsert({
+      where: { sport: Sport.BASKETBALL },
+      create: { sport: Sport.BASKETBALL, participantType: 'TEAM', tournamentFormat: 'MATCHES' },
+      update: {},
+    });
+    const tag = randomUUID().slice(0, 8);
+    const names = Array.from({ length: 400 }, (_, index) => `Team ${tag} ${String(index)}`);
+    await prisma.participant.createMany({ data: names.map((name) => ({ sportId: sport.id, name, participantType: 'TEAM' })) });
+    await prisma.$executeRawUnsafe('ANALYZE participants');
+    // As Prisma sends the name match's `participant.findMany({ where: { OR: [{ sportId, name: { in } }] } })`, with its values.
+    const sought = names.slice(0, 3).map((name) => `'${name}'`).join(',');
+    const sql = `SELECT "public"."participants"."id" FROM "public"."participants" WHERE (("public"."participants"."sport_id" = '${sport.id}' AND "public"."participants"."name" IN (${sought})))`;
 
-    const reads = nodesOf(plan).filter((node) => node['Index Name'] !== undefined).map((node) => node['Index Name']);
-    expect(reads).toEqual(['participants_sport_id_name_idx']);
+    const plan = await prisma.$transaction(async (tx) => {
+      await tx.$executeRawUnsafe('SET LOCAL enable_seqscan = off');
+      const [row] = await tx.$queryRawUnsafe<Array<{ 'QUERY PLAN': Array<{ Plan: PlanNode }> }>>(`EXPLAIN (FORMAT JSON) ${sql}`);
+      return row['QUERY PLAN'][0].Plan;
+    });
+
+    const reads = nodesOf(plan).filter((node) => node['Index Name'] !== undefined).map((node) => [node['Index Name'], node['Index Cond']]);
+    expect(reads).toEqual([['participants_sport_id_name_idx', expect.stringMatching(/sport_id = .*name = ANY/)]]);
   });
 });
-
