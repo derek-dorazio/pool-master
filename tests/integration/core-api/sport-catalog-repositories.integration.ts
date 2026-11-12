@@ -166,6 +166,14 @@ describe('Sport and SportLeague repositories', () => {
     await expect(leagues.findBySportAndName(basketballId, 'NBA Conference Finals')).resolves.toMatchObject({ matchKeyword: 'NBA Conference Finals' });
   });
 
+  it('seeds baseball\'s MLB sport league with the match keyword MLB', async () => {
+    const sports = new PrismaSportRepository(getAppPrisma());
+    const leagues = new PrismaSportLeagueRepository(getAppPrisma());
+
+    await expect(leagues.findBySportAndName((await sports.findBySport(Sport.BASEBALL))?.id ?? '', 'MLB'))
+      .resolves.toMatchObject({ matchKeyword: 'MLB' });
+  });
+
   it('seeds each series league\'s best-of lengths by round, first to final, and refuses an even length (#1545)', async () => {
     const lengthsOf = async (name: string) =>
       (await getPrisma().sportLeague.findFirstOrThrow({ where: { name }, select: { roundSeriesLengths: true } })).roundSeriesLengths;
