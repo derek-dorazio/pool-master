@@ -2,7 +2,7 @@ import { ContestStatus } from '@poolmaster/shared/domain';
 import { useState } from 'react';
 import type { ContestDto } from '@/lib/api';
 import { buildContestLandingPath } from '@/features/leagues/league-routing';
-import { RowActionsMenu, showToast, type RowAction } from '@/features/shared/ui';
+import { RowActionsMenu, type RowAction } from '@/features/shared/ui';
 import { DeleteContestDialog } from './delete-contest-dialog';
 import { OpenContestDialog } from './open-contest-action';
 
@@ -45,8 +45,8 @@ export function ManageContestsRowActions({
         <>
           <OpenContestDialog
             contestId={contest.id}
+            contestName={contest.name}
             leagueId={leagueId}
-            onOpened={() => showToast({ title: `${contest.name} is open to the league`, tone: 'success' })}
             onOpenChange={setDialogOpen('open')}
             open={dialog === 'open'}
           />
@@ -55,7 +55,6 @@ export function ManageContestsRowActions({
             contestName={contest.name}
             leagueCode={leagueCode}
             leagueId={leagueId}
-            onDeleted={() => showToast({ title: `${contest.name} deleted`, tone: 'success' })}
             onOpenChange={setDialogOpen('delete')}
             open={dialog === 'delete'}
           />

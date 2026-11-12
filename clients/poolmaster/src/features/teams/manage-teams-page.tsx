@@ -78,23 +78,6 @@ export function ManageTeamsPage() {
           </div>
         ),
       },
-      {
-        id: 'actions',
-        header: '',
-        enableSorting: false,
-        enableGlobalFilter: false,
-        cell: ({ row }) => (
-          <RowActionsMenu
-            actions={[{
-              label: 'View team page',
-              testId: `admin-team-actions-${row.original.team.id}-view`,
-              to: buildLeagueTeamHomePath(leagueCode, row.original.team.id),
-            }]}
-            label={`Actions for ${row.original.team.name}`}
-            testId={`admin-team-actions-${row.original.team.id}`}
-          />
-        ),
-      },
     ],
     [leagueCode],
   );
@@ -137,6 +120,17 @@ export function ManageTeamsPage() {
             getRowId={(row) => row.team.id}
             getRowLink={(row) => buildLeagueAdminTeamPath(leagueCode, row.team.id)}
             pageSize={TEAMS_PER_PAGE}
+            rowActions={(row) => (
+              <RowActionsMenu
+                actions={[{
+                  label: 'View team page',
+                  testId: `admin-team-actions-${row.team.id}-view`,
+                  to: buildLeagueTeamHomePath(leagueCode, row.team.id),
+                }]}
+                label={`Actions for ${row.team.name}`}
+                testId={`admin-team-actions-${row.team.id}`}
+              />
+            )}
             rowTestId={(row) => `admin-team-${row.team.id}`}
             search={{ label: 'Find a member or owner', testId: 'admin-teams-search' }}
             showColumnFilters={false}

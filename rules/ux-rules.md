@@ -335,7 +335,8 @@ administration area (root admin included), reusing the same shared components.
    In a manage list, the row opens the item (`DataGrid`'s `getRowLink`: the whole row
    clicks, its first cell is the link a keyboard reaches), with no per-row Manage
    button. Quick actions that need no page of their own sit in a `RowActionsMenu`
-   ("⋯") at the row's end; a destructive one confirms with `ConfirmDialog` and
+   ("⋯") in `DataGrid`'s `rowActions` column, pinned to the right edge so a phone
+   reaches it without scrolling sideways; a destructive one confirms with `ConfirmDialog` and
    ends with a toast. A row with no quick actions shows no "⋯".
 8. **Summary first.** A landing page leads with what needs the member now (the
    next contest to enter, with its cutoff), then live standings, then their own

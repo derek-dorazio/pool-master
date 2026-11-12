@@ -4,7 +4,7 @@ import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import { Notice, Button, ConfirmDialog } from '@/features/shared/ui';
+import { Button, ConfirmDialog, showToast } from '@/features/shared/ui';
 import { CONTEST_RELEASE_CODE_MESSAGES } from './contest-release-messages';
 import { entryWriteKeys } from './use-contest-entries';
 
@@ -14,9 +14,11 @@ import { entryWriteKeys } from './use-contest-entries';
  */
 export function OpenContestAction({
   contestId,
+  contestName,
   leagueId,
 }: {
   contestId: string;
+  contestName: string;
   leagueId: string;
 }) {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
@@ -31,6 +33,7 @@ export function OpenContestAction({
       </Button>
       <OpenContestDialog
         contestId={contestId}
+        contestName={contestName}
         leagueId={leagueId}
         onOpenChange={setIsConfirmOpen}
         open={isConfirmOpen}
@@ -41,19 +44,20 @@ export function OpenContestAction({
 
 /**
  * The question "Open to league" asks, and the release once the commissioner confirms, wherever
- * they start it: the contest's own page or the "⋯" on its row in the contests list.
+ * they start it: the contest's own page or the "⋯" on its row in the contests list. A release
+ * ends in a toast; a refusal shows inside the dialog, which stays open.
  */
 export function OpenContestDialog({
   contestId,
+  contestName,
   leagueId,
   onOpenChange,
-  onOpened,
   open,
 }: {
   contestId: string;
+  contestName: string;
   leagueId: string;
   onOpenChange: (open: boolean) => void;
-  onOpened?: () => void;
   open: boolean;
 }) {
   const logger = getLogger().child({ feature: 'open-contest-action' });
@@ -78,7 +82,7 @@ export function OpenContestDialog({
         'Opened contest to the league',
       );
       onOpenChange(false);
-      onOpened?.();
+      showToast({ title: `${contestName} is open to the league`, tone: 'success' });
     },
     invalidates: [
       QueryKeys.contests.list({ leagueId }),
@@ -106,6 +110,12 @@ export function OpenContestDialog({
     <ConfirmDialog
       confirmLabel="Open to league"
       confirmTestId="contest-open-confirm"
+      error={openContestMutation.isError
+        ? extractErrorMessage(openContestMutation.error, {
+          codeMessages: CONTEST_RELEASE_CODE_MESSAGES,
+          fallback: 'We could not open that contest. Please try again.',
+        })
+        : null}
       description="League members will be able to see this contest and enter it. Its name and settings can't change afterwards, and it can't be deleted or returned to a draft."
       isPending={openContestMutation.isPending}
       onCancel={closeDialog}
@@ -121,15 +131,6 @@ export function OpenContestDialog({
       pendingLabel="Opening..."
       testId="contest-open-dialog"
       title="Open this contest to the league?"
-    >
-      {openContestMutation.isError ? (
-        <Notice data-testid="contest-open-error" tone="danger">
-          {extractErrorMessage(openContestMutation.error, {
-            codeMessages: CONTEST_RELEASE_CODE_MESSAGES,
-            fallback: 'We could not open that contest. Please try again.',
-          })}
-        </Notice>
-      ) : null}
-    </ConfirmDialog>
+    />
   );
 }

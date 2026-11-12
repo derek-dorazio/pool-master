@@ -141,21 +141,7 @@ export function InvitesPageWaitingInvitesSection({
           : <Text size="inherit" tone="muted">Never</Text>;
       },
     },
-    {
-      id: 'actions',
-      header: '',
-      enableSorting: false,
-      enableGlobalFilter: false,
-      cell: ({ row }) => (
-        <InvitesPageRowActions
-          invitationsKey={invitationsKey}
-          isInactiveLeague={isInactiveLeague}
-          leagueId={leagueId}
-          row={row.original}
-        />
-      ),
-    },
-  ], [invitationsKey, isInactiveLeague, leagueId]);
+  ], []);
 
   return (
     <SectionCard
@@ -191,6 +177,14 @@ export function InvitesPageWaitingInvitesSection({
               : 'No invites are waiting on an answer.'}
             getRowId={(row) => row.invitation.id}
             pageSize={INVITES_PER_PAGE}
+            rowActions={(row) => (
+              <InvitesPageRowActions
+                invitationsKey={invitationsKey}
+                isInactiveLeague={isInactiveLeague}
+                leagueId={leagueId}
+                row={row}
+              />
+            )}
             rowTestId={(row) => `league-invitation-${row.invitation.id}`}
             search={{ label: 'Find an email', testId: 'league-invites-search' }}
             showColumnFilters={false}

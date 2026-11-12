@@ -3,12 +3,12 @@ import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import { ConfirmDialog, Notice } from '@/features/shared/ui';
+import { ConfirmDialog, showToast } from '@/features/shared/ui';
 
 /**
  * "Delete this contest?": removes a contest that was never opened to the league, for good, once
- * the commissioner confirms. The contest's own page and the "⋯" on its row in the contests list
- * both ask with it.
+ * the commissioner confirms, and says so in a toast. The contest's own page and the "⋯" on its
+ * row in the contests list both ask with it; a refusal shows inside it, which stays open.
  */
 export function DeleteContestDialog({
   contestId,
@@ -23,7 +23,8 @@ export function DeleteContestDialog({
   contestName: string;
   leagueCode: string;
   leagueId: string;
-  onDeleted: () => void;
+  /** Where to go once it is gone, such as back to the list from the contest's own page. */
+  onDeleted?: () => void;
   onOpenChange: (open: boolean) => void;
   open: boolean;
 }) {
@@ -38,7 +39,8 @@ export function DeleteContestDialog({
     onSuccess: () => {
       logger.info({ action: 'contest.delete.succeeded', data: { leagueCode, contestId } }, 'Deleted contest');
       onOpenChange(false);
-      onDeleted();
+      showToast({ title: `${contestName} deleted`, tone: 'success' });
+      onDeleted?.();
     },
     invalidates: [QueryKeys.contests.list({ leagueId }), QueryKeys.managedContests.all],
     onError: (error) => {
@@ -61,6 +63,11 @@ export function DeleteContestDialog({
   return (
     <ConfirmDialog
       confirmLabel="Delete contest"
+      error={deleteContestMutation.isError
+        ? extractErrorMessage(deleteContestMutation.error, {
+          fallback: 'We could not delete that contest. Please try again.',
+        })
+        : null}
       description={`${contestName} will be removed for good. Members never saw it.`}
       isPending={deleteContestMutation.isPending}
       onCancel={closeDialog}
@@ -77,14 +84,6 @@ export function DeleteContestDialog({
       testId="contest-delete-dialog"
       title="Delete this contest?"
       tone="danger"
-    >
-      {deleteContestMutation.isError ? (
-        <Notice data-testid="contest-delete-error" tone="danger">
-          {extractErrorMessage(deleteContestMutation.error, {
-            fallback: 'We could not delete that contest. Please try again.',
-          })}
-        </Notice>
-      ) : null}
-    </ConfirmDialog>
+    />
   );
 }

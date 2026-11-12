@@ -1,5 +1,5 @@
 import { createColumnHelper } from "@tanstack/react-table";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 import { DataGrid } from "./data-grid";
@@ -171,6 +171,28 @@ describe("pool-master-dn4.1: shared DataGrid primitive", () => {
       expect(screen.queryByTestId("where")).not.toBeInTheDocument();
       getSelection.mockRestore();
     });
+  });
+
+  it("puts each row's quick actions in a last column pinned to the grid's right edge, named for screen readers", () => {
+    render(
+      <DataGrid
+        columns={columns}
+        data={[{ id: "row-1", lifecycle: "Active", name: "Alpha" }]}
+        emptyMessage="None"
+        rowActions={(row) => <button type="button">{`Actions for ${row.name}`}</button>}
+      />,
+    );
+
+    const cell = screen.getByTestId("data-grid-row-actions");
+    expect(within(cell).getByRole("button", { name: "Actions for Alpha" })).toBeInTheDocument();
+    expect(cell).toHaveClass("sticky", "right-0");
+    expect(screen.getByRole("columnheader", { name: "Actions" })).toHaveClass("sticky", "right-0");
+  });
+
+  it("spans the empty message across the quick actions column too", () => {
+    render(<DataGrid columns={columns} data={[]} emptyMessage="None" rowActions={() => null} />);
+
+    expect(screen.getByText("None")).toHaveAttribute("colspan", "3");
   });
 
   it("leaves a row without a link unclickable", () => {

@@ -10,7 +10,7 @@ import {
   type SortingState,
   useReactTable,
 } from "@tanstack/react-table";
-import { useMemo, useRef, useState, type AnchorHTMLAttributes, type MouseEvent } from "react";
+import { useMemo, useRef, useState, type AnchorHTMLAttributes, type MouseEvent, type ReactNode } from "react";
 import { flushSync } from "react-dom";
 import { Link } from "react-router";
 import { Button } from "./button";
@@ -63,6 +63,12 @@ export type DataGridProps<TData> = {
     row: TData,
   ) => Omit<AnchorHTMLAttributes<HTMLAnchorElement>, "href">;
   rowTestId?: (row: TData, index: number) => string;
+  /**
+   * The row's quick actions, a `RowActionsMenu` ("⋯"), in a last column of its own. That column
+   * stays pinned to the grid's right edge while a wide table scrolls sideways, so the "⋯" is in
+   * reach on a phone without scrolling to it.
+   */
+  rowActions?: (row: TData) => ReactNode;
   tableTestId?: string;
   /**
    * Forwarded to `useReactTable({ meta })`. Lets a caller keep its column
@@ -95,6 +101,12 @@ export type DataGridProps<TData> = {
       jumpToRow?: never;
     }
 );
+
+/** The row actions' column: pinned to the right edge, over the cells scrolling under it. */
+const PINNED_END_CELL = "sticky right-0 z-[1] text-right";
+/** The header's tint laid over the card, so the pinned header cell is solid in both themes. */
+const PINNED_PLAIN_HEADER_SURFACE =
+  "bg-card [background-image:linear-gradient(var(--table-header-surface),var(--table-header-surface))]";
 
 /** Something in a row that takes its own click, so a click on it never opens the row. */
 const OWN_CLICK_SELECTOR = "a, button, input, select, textarea, label, [role='menuitem']";
@@ -137,6 +149,7 @@ export function DataGrid<TData>({
   getRowLink,
   getRowLinkProps,
   rowTestId,
+  rowActions,
   tableTestId,
   meta,
   search,
@@ -201,11 +214,13 @@ export function DataGrid<TData>({
     getRowId,
   });
 
+  // The pinned header cell needs a solid fill, or the column names scroll through it.
+  const pinnedHeaderSurface = headerTone === "scoreboard" ? "bg-surface-inverse" : PINNED_PLAIN_HEADER_SURFACE;
   const headerGroups = table.getHeaderGroups();
   const rows = table.getRowModel().rows;
   const visibleColumnCount = useMemo(
-    () => table.getVisibleLeafColumns().length,
-    [table],
+    () => table.getVisibleLeafColumns().length + (rowActions ? 1 : 0),
+    [rowActions, table],
   );
 
   const canJump = jumpToRow !== undefined && table.getCoreRowModel().rows.some((row) => row.id === jumpToRow.rowId);
@@ -318,6 +333,11 @@ export function DataGrid<TData>({
                     </th>
                   );
                 })}
+                {rowActions ? (
+                  <th className={cn(PINNED_END_CELL, "w-px px-2 py-3", pinnedHeaderSurface)} key="row-actions">
+                    <span className="sr-only">Actions</span>
+                  </th>
+                ) : null}
               </tr>
             ))}
             {showColumnFilters ? headerGroups.map((headerGroup) => (
@@ -344,6 +364,7 @@ export function DataGrid<TData>({
                     )}
                   </th>
                 ))}
+                {rowActions ? <th className={cn(PINNED_END_CELL, PINNED_PLAIN_HEADER_SURFACE)} key="row-actions-filter" /> : null}
               </tr>
             )) : null}
           </thead>
@@ -361,7 +382,7 @@ export function DataGrid<TData>({
                   <tr
                     aria-current={row.id === jumpedRowId ? "true" : undefined}
                     className={cn(
-                      "border-b border-border/70 align-top text-foreground transition hover:bg-[var(--table-row-hover-surface)]",
+                      "group border-b border-border/70 align-top text-foreground transition hover:bg-[var(--table-row-hover-surface)]",
                       link && "cursor-pointer",
                       row.id === jumpedRowId && "bg-[var(--status-active-surface)]",
                     )}
@@ -390,6 +411,17 @@ export function DataGrid<TData>({
                         )}
                       </td>
                     ))}
+                    {rowActions ? (
+                      <td
+                        className={cn(
+                          PINNED_END_CELL,
+                          "w-px bg-card px-2 py-3 group-hover:[background-image:linear-gradient(var(--table-row-hover-surface),var(--table-row-hover-surface))]",
+                        )}
+                        data-testid="data-grid-row-actions"
+                      >
+                        {rowActions(row.original)}
+                      </td>
+                    ) : null}
                   </tr>
                 );
               })

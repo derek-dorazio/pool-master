@@ -109,7 +109,9 @@ export function PageHeader({
         data-testid={testId ? `${testId}-title-row` : undefined}
       >
         {picture}
-        <div className="min-w-0 flex-1">
+        {/* The title never gets narrower than 12rem: on a phone the actions wrap under it
+            instead of squeezing it to a couple of letters. */}
+        <div className="min-w-0 flex-[1_1_12rem]" data-testid={testId ? `${testId}-title-block` : undefined}>
           <div className="flex items-center gap-2">
             <Heading data-testid={testId ? `${testId}-name` : undefined} level={1} variant="pageTitle">
               {title}

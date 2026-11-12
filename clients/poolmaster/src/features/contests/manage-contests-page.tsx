@@ -173,22 +173,8 @@ export function ManageContestsPage() {
         enableGlobalFilter: false,
         cell: ({ row }) => <EntriesCell contest={row.original.contest} teamCount={teamCount} />,
       },
-      {
-        id: 'action',
-        header: '',
-        enableSorting: false,
-        enableGlobalFilter: false,
-        cell: ({ row }) => (
-          <ManageContestsRowActions
-            contest={row.original.contest}
-            isLeagueActive={isLeagueActive}
-            leagueCode={leagueCode}
-            leagueId={leagueId}
-          />
-        ),
-      },
     ],
-    [isLeagueActive, leagueCode, leagueId, teamCount],
+    [teamCount],
   );
 
   if (!league) {
@@ -287,6 +273,14 @@ export function ManageContestsPage() {
               getRowLink={(row) => buildLeagueAdminContestPath(leagueCode, row.contest.id)}
               key={filter === 'active' ? filter : `${filter}-${year}`}
               pageSize={CONTESTS_PER_PAGE}
+              rowActions={(row) => (
+                <ManageContestsRowActions
+                  contest={row.contest}
+                  isLeagueActive={isLeagueActive}
+                  leagueCode={leagueCode}
+                  leagueId={leagueId}
+                />
+              )}
               rowTestId={(row) => `manage-contests-row-${row.contest.id}`}
               search={{ label: 'Find a contest or event', testId: 'manage-contests-search' }}
               showColumnFilters={false}
