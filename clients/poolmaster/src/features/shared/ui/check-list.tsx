@@ -24,11 +24,11 @@ export type CheckListProps = {
 
 const MARK: Record<CheckListSurface, { met: string; unmet: string }> = {
   default: {
-    met: "bg-[var(--status-active-text)] text-background",
+    met: "bg-primary text-primary-foreground",
     unmet: "border-[1.5px] border-current text-foreground",
   },
   inverse: {
-    met: "bg-[var(--status-active-border)] text-surface-inverse",
+    met: "bg-primary text-primary-foreground",
     unmet: "border-[1.5px] border-current text-on-inverse",
   },
 };

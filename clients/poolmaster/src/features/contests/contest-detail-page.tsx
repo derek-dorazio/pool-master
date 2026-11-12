@@ -105,8 +105,8 @@ function ParticipantsTable({
               data-testid={`contest-entry-pick-${entryId}-${participant.participantId}`}
               key={participant.pickId}
             >
-              <TableCell className="max-w-0 w-1/2">
-                <Text as="div" truncate variant="strong">{participant.participantName}</Text>
+              <TableCell>
+                <Text as="div" variant="strong">{participant.participantName}</Text>
                 <Text as="div" variant="caption">
                   {participant.participantStatus
                     ? `Status: ${formatParticipantStatusLabel(participant.participantStatus, sport)}`
