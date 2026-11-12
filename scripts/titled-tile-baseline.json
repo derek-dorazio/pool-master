@@ -2,6 +2,7 @@
   "clients/poolmaster/src/features/account/user-page.tsx": 2,
   "clients/poolmaster/src/features/auth/auth-home-page.tsx": 1,
   "clients/poolmaster/src/features/contest-types/contest-type-tile.tsx": 1,
+  "clients/poolmaster/src/features/contest-types/how-to-play-page.tsx": 2,
   "clients/poolmaster/src/features/contests/bracket-entry-page.tsx": 1,
   "clients/poolmaster/src/features/contests/bracket-entry-submit.tsx": 1,
   "clients/poolmaster/src/features/contests/contest-detail-page.tsx": 2,

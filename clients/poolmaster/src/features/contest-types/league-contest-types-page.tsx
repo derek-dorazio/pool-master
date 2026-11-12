@@ -11,7 +11,7 @@ import { useLeagueContext } from '@/features/leagues/use-league-context';
 import { contestEventsForTemplate } from '@/features/contests/contest-template-events';
 import { sportEventsQueryOptions } from '@/features/contests/sport-events-query';
 import { useActiveContestTemplatesQuery } from '@/features/contests/use-active-contest-templates-query';
-import { Heading, Notice, PageHeader, QueryState, refetchFailed, SectionCard, Text } from '@/features/shared/ui';
+import { ErrorState, Heading, LoadingState, PageHeader, refetchFailed, SectionCard, SectionNote } from '@/features/shared/ui';
 import { getLogger } from '@/lib/logger';
 import { buildLeagueContestCatalog } from './contest-catalog';
 import { ContestTypeTileCard } from './contest-type-tile';
@@ -75,35 +75,29 @@ export function LeagueContestTypesPage() {
 
   return (
     <section className="space-y-8" data-testid="league-contest-types-page">
-      <PageHeader title="Contest types" />
-      {canCreate ? null : (
-        <Notice data-testid="contest-types-inactive" tone="warning">
-          {`${league.name} can run these once the league is active again.`}
-        </Notice>
-      )}
+      <PageHeader
+        description={canCreate
+          ? `Every contest you can run in ${league.name}. Pick one to start setting it up.`
+          : `Every contest ${league.name} can run, once the league is active again.`}
+        title="Contest types"
+      />
 
-      <QueryState
-        error="We couldn't load the contest types."
-        loading="Loading contest types..."
-        query={{
-          data: templatesQuery.isSuccess && sportLeaguesQuery.isSuccess ? catalog : undefined,
-          isError,
-          refetch: refetchFailed(templatesQuery, sportLeaguesQuery),
-        }}
-        size="tile"
-        testId="contest-types-catalog"
-      >
-        {() => (
+      {templatesQuery.isLoading || sportLeaguesQuery.isLoading ? (
+        <LoadingState body="Loading contest types..." />
+      ) : isError ? (
+        <ErrorState body="We couldn't load the contest types." onRetry={refetchFailed(templatesQuery, sportLeaguesQuery)} />
+      ) : (
         <div className="space-y-10">
           {catalog.map((sport) => (
-            <SectionCard bare help={SPORT_BLURBS[sport.sport]} key={sport.sport} testId={`contest-types-sport-${sport.sport}`} title={sport.name}>
+            <SectionCard bare key={sport.sport} testId={`contest-types-sport-${sport.sport}`} title={sport.name}>
+              <SectionNote>{SPORT_BLURBS[sport.sport]}</SectionNote>
               {sport.groups.map((group) => (
                 <div className="space-y-3" key={group.sportLeagueId ?? 'every-event'}>
                   <Heading level={4} variant="eyebrow">{group.name}</Heading>
                   {group.sportLeagueId !== null && statPoolLines.has(group.sportLeagueId) ? (
-                    <Text as="p" data-testid={`contest-types-stat-pool-${group.sportLeagueId}`} variant="meta">
+                    <p className="text-sm text-muted-foreground" data-testid={`contest-types-stat-pool-${group.sportLeagueId}`}>
                       {statPoolLines.get(group.sportLeagueId)}
-                    </Text>
+                    </p>
                   ) : null}
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {group.tiles.map((tile) => <ContestTypeTileCard createPathFor={createPathFor} key={tile.key} tile={tile} />)}
@@ -113,8 +107,7 @@ export function LeagueContestTypesPage() {
             </SectionCard>
           ))}
         </div>
-        )}
-      </QueryState>
+      )}
     </section>
   );
 }
