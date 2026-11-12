@@ -3,6 +3,7 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
+import { SPORT_BLURBS } from './sport-blurbs';
 import { LeagueContestTypesPage } from './league-contest-types-page';
 
 const { getLeagueByCodeMock, listContestConfigTemplatesMock, listEventsMock, listSportLeaguesMock, mockLogger } = vi.hoisted(() => {
@@ -129,6 +130,17 @@ describe('League › Contest types', () => {
     expect(screen.getByTestId('contest-types-sport-BASKETBALL')).toHaveTextContent('NBA');
   });
 
+  it('keeps each sport\'s line behind its section\'s (?), and shows no inactive notice on an active league', async () => {
+    primeMocks('COMMISSIONER');
+    renderPage();
+
+    const football = await screen.findByTestId('contest-types-sport-AMERICAN_FOOTBALL');
+    expect(football).not.toHaveTextContent(SPORT_BLURBS.AMERICAN_FOOTBALL);
+    fireEvent.click(within(football).getByRole('button', { name: 'How this section works' }));
+    expect(screen.getByTestId('contest-types-sport-AMERICAN_FOOTBALL-help-callout')).toHaveTextContent(SPORT_BLURBS.AMERICAN_FOOTBALL);
+    expect(screen.queryByTestId('contest-types-inactive')).not.toBeInTheDocument();
+  });
+
   it('keeps a variation\'s description behind its (?) help tip, shown on a tap, not in a title tooltip', async () => {
     primeMocks('MEMBER');
     renderPage();
@@ -153,12 +165,12 @@ describe('League › Contest types', () => {
     expect(screen.queryByTestId(`contest-types-stat-pool-${NBA}`)).not.toBeInTheDocument();
   });
 
-  it('gives the commissioner of an inactive league the menu without any create links, saying it can run them once active again', async () => {
+  it('gives the commissioner of an inactive league the menu without any create links, with a notice that it can run them once active again', async () => {
     primeMocks('COMMISSIONER', { isActive: false });
     renderPage();
 
     await screen.findByTestId('contest-type-nfl-tiered-doubling');
-    expect(screen.getByTestId('league-contest-types-page')).toHaveTextContent('once the league is active again');
+    expect(screen.getByTestId('contest-types-inactive')).toHaveTextContent('once the league is active again');
     expect(screen.queryByText('Create this contest')).not.toBeInTheDocument();
     expect(screen.queryByText('No upcoming events yet')).not.toBeInTheDocument();
     expect(listEventsMock).not.toHaveBeenCalled();
