@@ -111,7 +111,7 @@ The keyword migrations on `main`, and the tour each matches:
 | NBA | `NBA` | `20271117000300_set_nba_match_keyword` | `NBA_PLAYOFFS.tour` (`nba-mapping.ts`) |
 | NBA Finals, NBA Conference Finals (Clutch Card) | the league's own name | `20271117000500_set_nba_clutch_card_match_keywords` | the round's `name` in `NBA_PLAYOFFS.rounds` |
 | PGA TOUR | `NULL` in the seed (see *Gaps* below) | none | `PGA_TOUR_NAME` (`pga-mapping.ts`) |
-| NHL | `NHL` | `20271117000400_set_nhl_match_keyword` in PR #1662, likely renamed to a newer timestamp when it lands, since it sorts before a migration already on `main` | `NHL_PLAYOFFS.tour` (in PR #1662) |
+| NHL | `NHL` | `20271118001000_set_nhl_match_keyword` | `NHL_PLAYOFFS.tour` (`nhl-mapping.ts`) |
 
 ### 2b. Event rows, by an admin action
 
@@ -303,6 +303,7 @@ vendored OpenAPI document and fixtures under `tests/fixtures/balldontlie/` (see 
 | NCAA men / women | `ncaab-<season>-tournament`, `ncaaw-<season>-tournament` | `ncaab-team-<id>`, `ncaaw-team-<id>` | `/ncaab/v1/bracket` (GOAT), `/ncaab/v1/teams` (and `ncaaw`) | `GAME` | `ncaa-tournament-contract.ts`, `-mapping.ts`, `-reader.ts` | `ncaab.game.*`, `ncaaw.game.*` |
 | NBA playoffs (bracket) | `nba-<season>-postseason` | `nba-team-<id>` | `/nba/v1/games` (postseason), `/nba/v1/teams` | `GAME`, as series | `nba-contract.ts`, `nba-mapping.ts`, shared `series-playoffs.ts`, `series-playoffs-reader.ts` | not yet (see *Gaps*) |
 | NBA round (Clutch Card) | `nba-<season>-postseason-round-<r>` | `nba-player-<id>` | `/nba/v1/games`, `/nba/v1/stats` (`game_ids[]`), `/nba/v1/players/active` (`team_ids[]`) | `STAT_LINE` | the above plus `series-playoff-rounds.ts` | not yet |
+| NHL playoffs (bracket) | `nhl-<season>-postseason` | `nhl-team-<id>` | `/nhl/v1/games` (`seasons`, postseason), `/nhl/v1/teams` | `GAME`, as series | `nhl-contract.ts`, `nhl-mapping.ts`, shared `series-playoffs.ts`, `series-playoffs-reader.ts` | `nhl.game.*` |
 | Premier League | `epl-<season>-matchweek-<n>` | `epl-team-<id>` | `/epl/v2/matches`, `/epl/v2/teams` | `GAME` (a draw is a result) | `soccer-contract.ts`, `epl-mapping.ts`, `epl-reader.ts` | `epl.game.*` |
 | FIFA World Cup | `fifa-wc-<year>-knockout` | `fifa-wc-team-<id>` | `/fifa/worldcup/v1/matches` (GOAT), `/fifa/worldcup/v1/teams` | `GAME` with shoot-outs | `fifa-world-cup-contract.ts`, `-mapping.ts`, `-reader.ts` | `worldcup.game.*` |
 
@@ -349,11 +350,30 @@ vendored OpenAPI document and fixtures under `tests/fixtures/balldontlie/` (see 
 - **The shared shape.** `series-playoffs.ts` defines `PlayoffsLeague`: `key`, `tour`, `sport`,
   `eventName`, `rounds[]` (`{ name, seriesLength, seriesCount }` per round, first to final),
   `playoffYearOffset` and `seasonRolloverMonth`. A league supplies a `PlayoffsSource`
-  (`series-playoffs-reader.ts`): its config plus four reads already normalized into
-  `PlayoffGame`, `PlayoffTeam`, `PlayoffStatLine` and `PlayoffPlayer`. Everything else is shared.
+  (`series-playoffs-reader.ts`): its config plus its games and teams, already normalized into
+  `PlayoffGame` and `PlayoffTeam`, read by `PlayoffsReader`. A league whose rounds are Clutch Card
+  events supplies a `PlayoffRoundsSource` instead, adding `PlayoffStatLine` and `PlayoffPlayer`
+  reads, and is read by `PlayoffRoundsReader`. Only that reader lists round events, so a league
+  without box scores lists none it could not answer for. Either reader keeps only the games the
+  vendor marks `postseason` for the asked `season`, whatever the query's filters did, so every
+  normalizer must read the flag.
 - **Key code.** `nba-mapping.ts` `NBA_PLAYOFFS`, `nbaPlayoffsSource`, `toNbaPlayoffGame`;
   `series-playoffs.ts` `toPlayoffsEvent`, `toPlayoffsGameScoreUpdates`, `isComplete`;
-  `series-playoffs-reader.ts` `PlayoffsReader`.
+  `series-playoffs-reader.ts` `PlayoffsReader`, `PlayoffRoundsReader`.
+
+### NHL playoffs bracket (#1496, PR #1662)
+
+- **Registration.** NHL sport league, keyword `NHL` (`20271118001000`), `round_series_lengths
+  [7,7,7,7]` (`20271117000200`). One event per season (`nhl-2025-postseason`, played in 2026:
+  `playoffYearOffset: 1`). `NHL_PLAYOFFS.rounds` names the four rounds a future NHL Clutch Card
+  league would key to (*NHL First Round*, *NHL Second Round*, *NHL Conference Finals*, *Stanley
+  Cup Final*), but the NHL reads no box scores yet, so it is a `PlayoffsReader` and lists no round.
+- **Sync.** As the NBA bracket's. The vendor's NHL games endpoint declares its season filter as
+  `seasons`, not `seasons[]`; a game is placed on its `game_date`, since `start_time_utc` has no
+  documented format. The teams list keeps only teams in a conference, leaving out a moved or folded
+  franchise.
+- **Key code.** `nhl-contract.ts`; `nhl-mapping.ts` `NHL_PLAYOFFS`, `nhlPlayoffsSource`,
+  `toNhlPlayoffGame`, `isNhlFranchise`.
 
 ### NBA Clutch Card rounds (#1497, PRs #1659, #1661, #1663)
 
@@ -369,7 +389,7 @@ vendored OpenAPI document and fixtures under `tests/fixtures/balldontlie/` (see 
   series is round 1, and each later series is one past the later of its two teams' previous
   series. That puts MLB's bye teams in round 2. Each series' games are numbered by start time, and
   each series' Game N is the event's game N.
-- **Sync.** `PlayoffsReader.roundLiveScores(season, round)` reads the season's games, keeps the
+- **Sync.** `PlayoffRoundsReader.roundLiveScores(season, round)` reads the season's games, keeps the
   round's series, reads stats for every game live or final in one call, and maps each player who
   played (non-zero minutes) to points, rebounds and assists (`toNbaStatLine`, Triple Threat).
 - **Key code.** `series-playoff-rounds.ts` `parsePlayoffRoundScope`, `playoffSeries`,
@@ -390,7 +410,6 @@ vendored OpenAPI document and fixtures under `tests/fixtures/balldontlie/` (see 
 
 | Work | Where | What it adds |
 |---|---|---|
-| NHL playoffs | PR #1662 (open) | `nhl-contract.ts`, `nhl-mapping.ts` with `NHL_PLAYOFFS` and an `nhlPlayoffsSource`; migration `20271117000400_set_nhl_match_keyword`. Everything else is the shared series reader. The vendor's NHL season filter is `seasons`, not `seasons[]`. The NHL's `rounds[]` is needed before an NHL Clutch Card round can be read. |
 | MLB, WNBA playoffs | next in #1496 part 4 | The same shape: a `PlayoffsLeague` (MLB `playoffYearOffset: 0`, rounds of 3, 5, 7, 7; WNBA 3, 7, 7) and a source. `round_series_lengths` is already seeded. |
 | Clutch Card stars from the provider | PR #1663 (open) | Proves the field load links stars by name; adds `ScoreSyncNotice` on the stat pool results page. |
 | Safety-net poll, reconciliation, quiet alert | #1499 | Per-event cadence (golf 2 min during a round, else 15 min), a second sync 10 minutes after `game.ended` / `tournament.ended` under its own dedupe key, and a new `sport_events.last_provider_notification_at` set by the receiver for a quiet-feed alarm. |
@@ -429,7 +448,7 @@ None is fixed here; each is for the owning thread to confirm.
 - **NBA has no webhook entry.** `BALLDONTLIE_WEBHOOK_GAME_LEAGUES` lists `nfl`, `ncaab`, `ncaaw`,
   `epl` and `worldcup`, not `nba`, so an NBA notification is acknowledged and dropped and NBA
   events sync on the scheduled sweep alone. The prefix `nba-` would cover both the bracket and the
-  round events. NHL (#1662) will need the same.
+  round events. NHL has its entry (#1662).
 - **PGA TOUR's `match_keyword` is seeded `NULL`.** The comment on `PGA_TOUR_NAME` says the league
   finds these events "with no keyword set by hand", but `listTourEventsForYear` refuses a league
   with no keyword (422), and the browse with a league filter falls back to no filter. Either an
