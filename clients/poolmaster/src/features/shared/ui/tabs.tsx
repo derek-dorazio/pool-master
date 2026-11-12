@@ -1,6 +1,7 @@
 import * as TabsPrimitive from "@radix-ui/react-tabs";
 import type { ComponentPropsWithoutRef } from "react";
 import { cn } from "./class-names";
+import { handleRadioGroupKeyDown, radioTabStop } from "./radio-group-keys";
 
 export const Tabs = TabsPrimitive.Root;
 
@@ -56,6 +57,7 @@ export function SegmentedControl({
   options,
   value,
 }: SegmentedControlProps) {
+  const tabStop = radioTabStop(options, value);
   return (
     <div
       aria-label={ariaLabel}
@@ -75,7 +77,9 @@ export function SegmentedControl({
           disabled={option.disabled}
           key={option.value}
           onClick={() => onChange(option.value)}
+          onKeyDown={(event) => handleRadioGroupKeyDown(event, options, value, onChange)}
           role="radio"
+          tabIndex={option.value === tabStop ? 0 : -1}
           type="button"
         >
           {option.label}

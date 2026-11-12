@@ -1,4 +1,5 @@
 import { cn } from "./class-names";
+import { handleRadioGroupKeyDown, radioTabStop } from "./radio-group-keys";
 import { useScrollRow } from "./scroll-row";
 
 export type ViewFilterOption = {
@@ -19,13 +20,20 @@ export type ViewFilterProps = {
 /**
  * Which rows a list shows (Active / History, Pending / Expired), as quiet underlined choices with
  * a small count: the look of `PageTabs`, but a radio group, because it narrows one list rather
- * than opening another view. It sits in a `DataGrid`'s header through `views`. On a phone the row
- * scrolls sideways and keeps the chosen view in sight (`useScrollRow`).
+ * than opening another view: one Tab stop, the arrow keys moving between views. It sits in a
+ * `DataGrid`'s header through `views`. On a phone the row scrolls sideways and keeps the chosen
+ * view in sight (`useScrollRow`).
  */
 export function ViewFilter({ "aria-label": ariaLabel, onChange, options, value }: ViewFilterProps) {
   const { fadeClassName, ref } = useScrollRow<HTMLDivElement>();
+  const tabStop = radioTabStop(options, value);
   return (
-    <div aria-label={ariaLabel} className={cn("relative flex min-w-0 gap-5 overflow-x-auto", fadeClassName)} ref={ref} role="radiogroup">
+    <div
+      aria-label={ariaLabel}
+      className={cn("relative flex min-w-0 gap-5 overflow-x-auto", fadeClassName)}
+      ref={ref}
+      role="radiogroup"
+    >
       {options.map((option) => {
         const isChosen = option.value === value;
         return (
@@ -38,7 +46,9 @@ export function ViewFilter({ "aria-label": ariaLabel, onChange, options, value }
             data-testid={option.testId}
             key={option.value}
             onClick={() => onChange(option.value)}
+            onKeyDown={(event) => handleRadioGroupKeyDown(event, options, value, onChange)}
             role="radio"
+            tabIndex={option.value === tabStop ? 0 : -1}
             type="button"
           >
             {option.label}
