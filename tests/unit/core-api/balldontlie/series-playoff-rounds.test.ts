@@ -41,7 +41,7 @@ const team = (id: number): PlayoffTeam => ({ id, name: `Team ${String(id)}`, met
 
 let nextId = 1;
 function game(day: number, home: number, away: number, homeScore: number | null, awayScore: number | null, state: CompetitionStatusState = CompetitionStatusState.FINAL): PlayoffGame {
-  return { id: nextId++, season: 2025, start: Date.UTC(2026, 3, day), home: team(home), away: team(away), state, homeScore, awayScore };
+  return { id: nextId++, season: 2025, postseason: true, start: Date.UTC(2026, 3, day), home: team(home), away: team(away), state, homeScore, awayScore };
 }
 
 /** Semifinals 1 v 4 and 2 v 3, each won 2-0 by the home side. */

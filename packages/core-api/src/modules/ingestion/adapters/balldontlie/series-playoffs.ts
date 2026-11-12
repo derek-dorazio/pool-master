@@ -54,6 +54,8 @@ export interface PlayoffTeam {
 export interface PlayoffGame {
   id: number;
   season: number;
+  /** Whether the vendor marks it a playoff game; the reader keeps only those. */
+  postseason: boolean;
   /** When it starts, in epoch milliseconds. */
   start: number;
   home: PlayoffTeam;

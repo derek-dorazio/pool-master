@@ -131,6 +131,19 @@ from the event's Manage page once the last box score is in. Open a PR for the da
 next year's round starts from it, and add the round's sources to `docs/SPORT-DATA-SOURCES.md`
 if they changed.
 
+## With a provider link
+
+A round the data provider covers (BALLDONTLIE's NBA rounds, `nba-<season>-postseason-round-<r>`)
+can take its stars and box scores from the feed instead of Steps 5 and 6. Load the round's data
+file first as above (its ranking is what tiers come from, and the feed has none), then link the
+event to the provider's round on its Manage page and press *Load Participant Field*. Each star
+already loaded is linked to their provider player by name within the stat pool sport league, so
+the league needs its match keyword set to the round's name; the rest of both rosters joins
+unranked, and a name the two spell differently comes in as a second player to merge by hand.
+Box scores then sync while the round is live, a live game's lines held in progress, and the
+event is not completed while one is. A line an admin corrects on the Results page is replaced
+by the next sync.
+
 ## Where this goes wrong
 
 - **An end date that comes too soon.** The event completes on its own at noon UTC the day

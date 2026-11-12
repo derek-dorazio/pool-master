@@ -110,7 +110,7 @@ describe('BalldontlieAdapter (NFL)', () => {
       const harness = setup();
       restore = harness.restore;
 
-      await expect(harness.adapter.getUpcomingEvents(Sport.HOCKEY)).resolves.toEqual([]);
+      await expect(harness.adapter.getUpcomingEvents(Sport.TENNIS)).resolves.toEqual([]);
       expect(harness.api.requests).toEqual([]);
     });
   });
@@ -162,7 +162,7 @@ describe('BalldontlieAdapter (NFL)', () => {
     const harness = setup();
     restore = harness.restore;
 
-    await expect(harness.adapter.getParticipants(Sport.HOCKEY)).resolves.toEqual([]);
+    await expect(harness.adapter.getParticipants(Sport.TENNIS)).resolves.toEqual([]);
   });
 
   it('gives a scope\'s game scores in the GAME category, under the scope\'s id', async () => {
