@@ -49,7 +49,7 @@ import { coversOneEvent, firstContestEvent } from './contest-events';
 import { ContestStatusBadge } from './contest-status-badge';
 import { ContestStatusCard } from './contest-status-card';
 import { DeleteContestDialog } from './delete-contest-dialog';
-import { secondChanceRoundName } from './bracket-start-round';
+import { contestSecondChanceRoundName } from './bracket-start-round';
 import { useEventRoundName } from './use-bracket-round-label';
 import { sportEventQueryOptions } from './use-contest-schedule';
 import { useContestQuery } from './use-contest-query';
@@ -168,9 +168,7 @@ export function ManageContestPage() {
     configuration.selectionType === SelectionType.BUDGET_PICK ? configuration.salaryCap : null,
     roundName,
   );
-  const bracketStartRoundName = configuration.selectionType === SelectionType.BRACKET
-    ? secondChanceRoundName(configuration.startsAtRound, roundName)
-    : null;
+  const bracketStartRoundName = contestSecondChanceRoundName(configuration, roundName);
   const eventLabel = event.venue ? `${event.name} · ${event.venue}` : event.name;
   const isMultiEvent = contest.sportEvents.length > 1;
   // Events can change until the contest is final; a random draw deals one event, once, and a

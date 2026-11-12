@@ -1,7 +1,13 @@
-import { Sport, getSportDefinition } from '@poolmaster/shared/domain';
+import { SelectionType, Sport, getSportDefinition } from '@poolmaster/shared/domain';
 import { describe, expect, it } from 'vitest';
-import { bracketRoundCount, bracketStartRoundOptions, hasSecondChanceRound, secondChanceRoundName } from './bracket-start-round';
-import { buildSportEvent } from './test/contest-admin-fixtures';
+import {
+  bracketRoundCount,
+  bracketStartRoundOptions,
+  contestSecondChanceRoundName,
+  hasSecondChanceRound,
+  secondChanceRoundName,
+} from './bracket-start-round';
+import { buildManagedContest, buildSportEvent } from './test/contest-admin-fixtures';
 
 const MARCH_MADNESS_ROUND = (roundNumber: number) => getSportDefinition(Sport.BASKETBALL).roundLabel(roundNumber, 6);
 
@@ -36,5 +42,16 @@ describe('where a bracket can start', () => {
   it('names a second-chance bracket\'s starting round, and no round for a full bracket', () => {
     expect(secondChanceRoundName(3, MARCH_MADNESS_ROUND)).toBe('Sweet 16');
     expect(secondChanceRoundName(1, MARCH_MADNESS_ROUND)).toBeNull();
+  });
+
+  it('names a contest\'s second-chance starting round from its configuration, and none for a full bracket, another format or a configuration not read yet', () => {
+    const bracket = (startsAtRound: number) => buildManagedContest({
+      configuration: { id: 'config-1', contestId: 'contest-1', maxEntriesPerSquad: 1, selectionType: SelectionType.BRACKET, startsAtRound },
+    }).configuration;
+
+    expect(contestSecondChanceRoundName(bracket(3), MARCH_MADNESS_ROUND)).toBe('Sweet 16');
+    expect(contestSecondChanceRoundName(bracket(1), MARCH_MADNESS_ROUND)).toBeNull();
+    expect(contestSecondChanceRoundName(buildManagedContest().configuration, MARCH_MADNESS_ROUND)).toBeNull();
+    expect(contestSecondChanceRoundName(undefined, MARCH_MADNESS_ROUND)).toBeNull();
   });
 });
