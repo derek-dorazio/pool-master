@@ -33054,6 +33054,51 @@
         "additionalProperties": false,
         "description": "A message from Amazon SNS, as posted to an HTTPS subscription."
       },
+      "BalldontlieWebhookNotification": {
+        "type": "object",
+        "properties": {
+          "event_type": {
+            "description": "What happened, as `<league>.<subject>.<event>`, such as `nfl.game.ended` or `pga.tournament.round_started`. The vendor's dashboard test event carries none, and is acknowledged and dropped.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "game": {
+            "description": "The game it happened in, for a game's event.",
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991,
+                "description": "The vendor's game id."
+              }
+            },
+            "required": [
+              "id"
+            ],
+            "additionalProperties": {}
+          },
+          "tournament": {
+            "description": "The tournament it happened in, for a golf event.",
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991,
+                "description": "The vendor's tournament id."
+              }
+            },
+            "required": [
+              "id"
+            ],
+            "additionalProperties": {}
+          }
+        },
+        "additionalProperties": {},
+        "description": "A BALLDONTLIE webhook notification. Other fields the vendor sends (the play, the player, a best-effort score) are accepted and ignored."
+      },
       "OptionalEmailCategory": {
         "type": "string",
         "enum": [
@@ -64396,7 +64441,7 @@
             "type": "object",
             "properties": {
               "runType": {
-                "description": "Sync run source: a manual or scheduled event sync.",
+                "description": "Sync run source: a manual, scheduled or webhook-triggered event sync.",
                 "type": "string"
               },
               "requestedFeeds": {
@@ -64447,9 +64492,10 @@
                     "type": "string",
                     "enum": [
                       "SCHEDULED",
-                      "MANUAL"
+                      "MANUAL",
+                      "WEBHOOK"
                     ],
-                    "description": "Whether the scheduler or a root admin asked for the sync."
+                    "description": "Who asked for the sync: the scheduler, a root admin, or a provider's webhook saying something happened in the event (#1498)."
                   },
                   "actor": {
                     "description": "Who asked for a sync.",
@@ -64466,8 +64512,10 @@
                           "name": {
                             "type": "string",
                             "enum": [
-                              "scheduler"
-                            ]
+                              "scheduler",
+                              "webhook"
+                            ],
+                            "description": "`scheduler` for a SCHEDULED sync, `webhook` for a WEBHOOK sync."
                           }
                         },
                         "required": [
@@ -64475,7 +64523,7 @@
                           "name"
                         ],
                         "additionalProperties": false,
-                        "description": "The scheduler, for a SCHEDULED sync."
+                        "description": "The system: the scheduler, or the provider webhook receiver."
                       },
                       {
                         "type": "object",
@@ -64704,7 +64752,7 @@
             "type": "object",
             "properties": {
               "runType": {
-                "description": "Sync run source: a manual or scheduled event sync.",
+                "description": "Sync run source: a manual, scheduled or webhook-triggered event sync.",
                 "type": "string"
               },
               "requestedFeeds": {
@@ -64755,9 +64803,10 @@
                     "type": "string",
                     "enum": [
                       "SCHEDULED",
-                      "MANUAL"
+                      "MANUAL",
+                      "WEBHOOK"
                     ],
-                    "description": "Whether the scheduler or a root admin asked for the sync."
+                    "description": "Who asked for the sync: the scheduler, a root admin, or a provider's webhook saying something happened in the event (#1498)."
                   },
                   "actor": {
                     "description": "Who asked for a sync.",
@@ -64774,8 +64823,10 @@
                           "name": {
                             "type": "string",
                             "enum": [
-                              "scheduler"
-                            ]
+                              "scheduler",
+                              "webhook"
+                            ],
+                            "description": "`scheduler` for a SCHEDULED sync, `webhook` for a WEBHOOK sync."
                           }
                         },
                         "required": [
@@ -64783,7 +64834,7 @@
                           "name"
                         ],
                         "additionalProperties": false,
-                        "description": "The scheduler, for a SCHEDULED sync."
+                        "description": "The system: the scheduler, or the provider webhook receiver."
                       },
                       {
                         "type": "object",
@@ -65345,7 +65396,7 @@
                   "type": "object",
                   "properties": {
                     "runType": {
-                      "description": "Sync run source: a manual or scheduled event sync.",
+                      "description": "Sync run source: a manual, scheduled or webhook-triggered event sync.",
                       "type": "string"
                     },
                     "requestedFeeds": {
@@ -65396,9 +65447,10 @@
                           "type": "string",
                           "enum": [
                             "SCHEDULED",
-                            "MANUAL"
+                            "MANUAL",
+                            "WEBHOOK"
                           ],
-                          "description": "Whether the scheduler or a root admin asked for the sync."
+                          "description": "Who asked for the sync: the scheduler, a root admin, or a provider's webhook saying something happened in the event (#1498)."
                         },
                         "actor": {
                           "description": "Who asked for a sync.",
@@ -65415,8 +65467,10 @@
                                 "name": {
                                   "type": "string",
                                   "enum": [
-                                    "scheduler"
-                                  ]
+                                    "scheduler",
+                                    "webhook"
+                                  ],
+                                  "description": "`scheduler` for a SCHEDULED sync, `webhook` for a WEBHOOK sync."
                                 }
                               },
                               "required": [
@@ -65424,7 +65478,7 @@
                                 "name"
                               ],
                               "additionalProperties": false,
-                              "description": "The scheduler, for a SCHEDULED sync."
+                              "description": "The system: the scheduler, or the provider webhook receiver."
                             },
                             {
                               "type": "object",
@@ -65702,7 +65756,7 @@
                   "type": "object",
                   "properties": {
                     "runType": {
-                      "description": "Sync run source: a manual or scheduled event sync.",
+                      "description": "Sync run source: a manual, scheduled or webhook-triggered event sync.",
                       "type": "string"
                     },
                     "requestedFeeds": {
@@ -65753,9 +65807,10 @@
                           "type": "string",
                           "enum": [
                             "SCHEDULED",
-                            "MANUAL"
+                            "MANUAL",
+                            "WEBHOOK"
                           ],
-                          "description": "Whether the scheduler or a root admin asked for the sync."
+                          "description": "Who asked for the sync: the scheduler, a root admin, or a provider's webhook saying something happened in the event (#1498)."
                         },
                         "actor": {
                           "description": "Who asked for a sync.",
@@ -65772,8 +65827,10 @@
                                 "name": {
                                   "type": "string",
                                   "enum": [
-                                    "scheduler"
-                                  ]
+                                    "scheduler",
+                                    "webhook"
+                                  ],
+                                  "description": "`scheduler` for a SCHEDULED sync, `webhook` for a WEBHOOK sync."
                                 }
                               },
                               "required": [
@@ -65781,7 +65838,7 @@
                                 "name"
                               ],
                               "additionalProperties": false,
-                              "description": "The scheduler, for a SCHEDULED sync."
+                              "description": "The system: the scheduler, or the provider webhook receiver."
                             },
                             {
                               "type": "object",
@@ -81056,6 +81113,58 @@
             }
           },
           "429": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/provider-webhooks/balldontlie": {
+      "post": {
+        "operationId": "receiveBalldontlieWebhook",
+        "summary": "Receive a BALLDONTLIE webhook notification",
+        "tags": [
+          "Ingestion"
+        ],
+        "description": "Public; called by BALLDONTLIE, never by the app. The delivery must carry X-BDL-Webhook-Timestamp (Unix seconds, within 5 minutes of now) and X-BDL-Webhook-Signature (`v1=` and the hex HMAC-SHA256 of `{timestamp}.{body}` under this environment's endpoint secret; several, separated by commas or spaces, while the secret rotates, any one of which may match), or the answer is 403 PROVIDER_WEBHOOK_UNVERIFIED, as it is for every delivery while no secret is configured. A verified notification about a game or tournament linked to an in-progress event queues one live-score sync of that event, due about a minute later; notifications arriving while it waits queue nothing more. The sync reads the provider's current scores, so the notification's own contents are never written. A notification about nothing linked, or of a type PoolMaster does not act on, is acknowledged and dropped. Every verified delivery answers 200, so the provider does not retry it.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BalldontlieWebhookNotification"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Minimal success response envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
             "description": "Standard API error envelope.",
             "content": {
               "application/json": {

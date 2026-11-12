@@ -73,6 +73,9 @@ import {
 } from '../../packages/core-api/src/modules/email';
 import { snsSigner, TEST_TOPIC_ARN } from '../support/sns-messages';
 import { ingestionModule } from '../../packages/core-api/src/modules/ingestion/routes';
+import { providerWebhooksModule } from '../../packages/core-api/src/modules/ingestion/provider-webhook-routes';
+import { ProviderNotificationService } from '../../packages/core-api/src/modules/ingestion/provider-notifications';
+import { TEST_BALLDONTLIE_WEBHOOK_SECRET } from '../support/balldontlie-webhooks';
 import { createContestEmailJobs, createContestExpandedNotices, createContestNotices, createMemberJoinedNotices } from '../../packages/core-api/src/modules/notifications';
 import { jobHandlers } from '../support/in-memory-background-jobs';
 import { createEventLifecycleService } from '../../packages/core-api/src/modules/events/wiring';
@@ -350,6 +353,16 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
     },
   });
   testApp.register(emailUnsubscribeModule, { prefix: '/api/v1/email', preferences: outbox.preferences });
+  // BALLDONTLIE webhooks (#1498), signed with the test secret; the syncs they queue are due a
+  // minute out, so a drain leaves them waiting, as a burst's coalescing needs.
+  testApp.register(providerWebhooksModule, {
+    prefix: '/api/v1/provider-webhooks',
+    notifications: new ProviderNotificationService({
+      sportEvents: new PrismaSportEventRepository(prisma),
+      jobs: backgroundJobs.queue,
+    }),
+    balldontlieSigningSecret: TEST_BALLDONTLIE_WEBHOOK_SECRET,
+  });
   testApp.register(emailTestModule, { prefix: '/api/v1/platform/email', emailTest: outbox.test });
 
   await testApp.ready();

@@ -23,7 +23,8 @@ export type EventSyncFeed = typeof EVENT_SYNC_FEEDS[number];
 
 export interface SystemSyncActor {
   type: 'SYSTEM';
-  name: 'scheduler';
+  /** The scheduler for a SCHEDULED sync, the provider webhook receiver for a WEBHOOK one (#1498). */
+  name: 'scheduler' | 'webhook';
 }
 
 export interface RootAdminSyncActor {
@@ -74,6 +75,7 @@ export interface NormalizedSyncRequest {
 export type SyncRequestValidationCode =
   | 'MANUAL_REQUIRES_ROOT_ADMIN_ACTOR'
   | 'SCHEDULED_REQUIRES_SYSTEM_ACTOR'
+  | 'WEBHOOK_REQUIRES_WEBHOOK_ACTOR'
   | 'EMPTY_FEED_LIST'
   | 'INVALID_EVENT_FEED'
   | 'INVALID_EVENT_ID'
@@ -157,6 +159,13 @@ function assertActorMatchesSource(source: SyncRequestSource, actor: SyncActorCon
     throw new SyncRequestValidationError(
       'SCHEDULED_REQUIRES_SYSTEM_ACTOR',
       'Scheduled sync requests require a system actor context.',
+    );
+  }
+
+  if (source === 'WEBHOOK' && (actor.type !== 'SYSTEM' || actor.name !== 'webhook')) {
+    throw new SyncRequestValidationError(
+      'WEBHOOK_REQUIRES_WEBHOOK_ACTOR',
+      'Webhook sync requests require the webhook receiver as their actor.',
     );
   }
 }

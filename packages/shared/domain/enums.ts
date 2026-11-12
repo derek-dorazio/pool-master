@@ -1009,6 +1009,8 @@ export type EmailMessageStatus = (typeof EmailMessageStatus)[keyof typeof EmailM
 export const BackgroundJobType = {
   /** Runs a root admin's submitted sync of one event's feeds (#1441). */
   MANUAL_EVENT_SYNC: 'MANUAL_EVENT_SYNC',
+  /** Syncs one linked event's live scores because its provider said something happened in it (#1498). */
+  PROVIDER_EVENT_SYNC: 'PROVIDER_EVENT_SYNC',
   /** Queues "Contest is live" (E1) to the league of one contest that just went live for an event (#1387). */
   CONTEST_STARTED_EMAILS: 'CONTEST_STARTED_EMAILS',
   /** Queues "Final results" (F1 to F3) to the league of one contest that just completed (#1387). */
