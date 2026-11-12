@@ -24,8 +24,9 @@ describe('contest status helpers', () => {
     expect(unreadable).toEqual([]);
   });
 
-  it('labels open contests "Open for entries", live ones "Live" and settled ones "Final"', () => {
-    expect(contestStatusLabel('OPEN')).toBe('Open for entries');
+  it('labels contests by their lifecycle stage: "Set up", "Open", "Live" and "Final"', () => {
+    expect(contestStatusLabel('DRAFT')).toBe('Set up');
+    expect(contestStatusLabel('OPEN')).toBe('Open');
     expect(contestStatusLabel('ACTIVE')).toBe('Live');
     expect(contestStatusLabel('COMPLETED')).toBe('Final');
   });

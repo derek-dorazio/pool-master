@@ -348,7 +348,7 @@ function primeMocks(opts?: {
 }
 
 describe('ContestLeaderboardPage', () => {
-  it('shows a stat pool\'s players with one column per game, and a player\'s name opens their stats in each game', async () => {
+  it('shows a stat pool\'s players with one column per game, a player\'s name opens their stats in each game, and a hovered row tints its pinned cells too', async () => {
     const base = leaderboardResponse().data;
     const ohtani = {
       ...participant({ id: 'sep-1', name: 'Shohei Ohtani' }),
@@ -386,6 +386,11 @@ describe('ContestLeaderboardPage', () => {
     expect(screen.getByTestId('contest-leaderboard-pick-breakdown-entry-1-pick-1')).toHaveTextContent('Game 15 (4 TB, 1 R)');
     // A board scrolled sideways on a phone keeps the breakdown, stat lines and all, in view.
     expect(screen.getByTestId('contest-leaderboard-pick-breakdown-entry-1-pick-1-frame')).toHaveClass('sticky', 'left-0', 'w-[calc(100cqw-2px)]');
+    // Hovering the row tints its pinned Pos and name cells too, over their opaque background.
+    const hoverTint = 'group-hover/pick:[background-image:linear-gradient(var(--table-row-hover-surface),var(--table-row-hover-surface))]';
+    expect(screen.getByTestId('contest-leaderboard-pick-breakdown-entry-1-pick-1-row')).toHaveClass('group/pick');
+    expect(screen.getByTestId('contest-leaderboard-pick-entry-1-pick-1-position')).toHaveClass('bg-background', hoverTint);
+    expect(screen.getByTestId('contest-leaderboard-pick-entry-1-pick-1-name')).toHaveClass('bg-background', hoverTint);
   });
 
   it('renders each entry\'s standing with a row per golfer, a total and one cell per round', async () => {
@@ -461,11 +466,14 @@ describe('ContestLeaderboardPage', () => {
 
     await screen.findByTestId('contest-leaderboard-pick-entry-1-pick-1');
     expect(screen.getByTestId('contest-leaderboard-pick-entry-1-pick-1-position')).toHaveClass('sticky', 'left-0');
-    expect(screen.getByTestId('contest-leaderboard-pick-entry-1-pick-1-name')).toHaveClass('sticky', 'left-[60px]');
+    // The name sits right of Pos by Pos's own width, which the board sets once for its grid too.
+    expect(screen.getByTestId('contest-leaderboard-board')).toHaveClass('[--pos-width:36px]');
+    expect(screen.getByTestId('contest-leaderboard-column-headers').style.gridTemplateColumns).toMatch(/^minmax\(var\(--pos-width\),/);
+    expect(screen.getByTestId('contest-leaderboard-pick-entry-1-pick-1-name')).toHaveClass('sticky', 'left-[calc(var(--pos-width)+24px)]');
     expect(screen.getByTestId('contest-leaderboard-pick-entry-1-pick-1-name')).toHaveTextContent('Rory McIlroy');
     const heads = within(screen.getByTestId('contest-leaderboard-column-headers'));
     expect(heads.getByText('Pos')).toHaveClass('sticky', 'left-0');
-    expect(heads.getByText('Golfer')).toHaveClass('sticky', 'left-[60px]');
+    expect(heads.getByText('Golfer')).toHaveClass('sticky', 'left-[calc(var(--pos-width)+24px)]');
   });
 
   it('shows each golfer\'s own tournament position under POS, apart from the entry\'s position', async () => {

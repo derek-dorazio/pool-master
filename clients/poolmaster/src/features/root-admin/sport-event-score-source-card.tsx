@@ -3,7 +3,7 @@ import { SportEventSyncScope, getSportDefinition } from '@poolmaster/shared/doma
 import { linkEventScoreSource, unlinkEventScoreSource } from '@/lib/api';
 import {
   Button,
-  ConfirmationModal,
+  ConfirmDialog,
   formatDateTimeDisplay,
   InlineError,
   SectionCard,
@@ -264,11 +264,11 @@ export function SportEventScoreSourceCard({
         title="Link score source"
       />
 
-      <ConfirmationModal
+      <ConfirmDialog
         confirmLabel="Unlink score source"
         confirmTestId="root-admin-sport-event-unlink-confirm"
         description="Scores already synced are kept. New scores will need to be entered manually."
-        errorMessage={
+        error={
           unlinkMutation.isError
             ? extractErrorMessage(unlinkMutation.error, {
                 fallback: 'The unlink was rejected.',

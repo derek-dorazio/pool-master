@@ -1,7 +1,8 @@
 import { countParticipants, type SportNoun } from '@poolmaster/shared/domain';
 import type { SelectionStateResponse } from '@/lib/api';
-import { Notice, formatDateTimeDisplay, MetricGrid, MetricTile, Tile, useDisplayPreferences } from '@/features/shared/ui';
+import { Notice, formatDateTimeDisplay, MetricGrid, MetricTile, Text, Tile, useDisplayPreferences } from '@/features/shared/ui';
 import { participantAffiliation, selectionParticipantLabel } from './contest-sport';
+import { ParticipantLine } from './participant-line';
 import type { SelectionGroup } from './contest-entry-selection';
 
 /**
@@ -72,15 +73,18 @@ export function DrawLineup({ noun, selectionState }: { noun: SportNoun; selectio
 
   return (
     <div className="space-y-3">
-      <p className="text-sm text-muted-foreground" data-testid="contest-entry-draw-done">
+      <Text as="p" data-testid="contest-entry-draw-done" variant="meta">
         {`Dealt by the commissioner’s draw on ${formatDateTimeDisplay(drawnAt, displayPreferences)}. The draw is final.`}
-      </p>
+      </Text>
       <Tile padding="none" radius="lg">
         <ul aria-label={`Dealt ${noun.many}`} className="divide-y divide-border">
           {dealtGolfers.map((golfer) => (
-            <li className="px-4 py-3 text-sm" key={golfer.sportEventParticipantId}>
-              <div className="font-medium text-foreground">{selectionParticipantLabel(golfer)}</div>
-              {golfer.team ? <div className="mt-1 text-xs text-muted-foreground">{participantAffiliation(golfer)}</div> : null}
+            <li className="px-4 py-3" key={golfer.sportEventParticipantId}>
+              <ParticipantLine
+                affiliation={golfer.team ? participantAffiliation(golfer) : null}
+                density="compact"
+                name={selectionParticipantLabel(golfer)}
+              />
             </li>
           ))}
         </ul>

@@ -25,16 +25,20 @@ type ToastProps = Omit<ComponentPropsWithoutRef<typeof ToastPrimitive.Root>, "ti
   tone?: "default" | "danger" | "success";
 };
 
+/**
+ * A toast floats over the page, so it is opaque: the card colour, with the tone's status tint
+ * laid over it as a background image.
+ */
 function toastToneClassName(tone: ToastProps["tone"]) {
   if (tone === "danger") {
-    return "border-destructive/40 bg-destructive/10";
+    return "border-[color:var(--status-danger-border)] [background-image:linear-gradient(var(--status-danger-surface),var(--status-danger-surface))]";
   }
 
   if (tone === "success") {
-    return "border-primary/30 bg-primary/10";
+    return "border-[color:var(--status-active-border)] [background-image:linear-gradient(var(--status-active-surface),var(--status-active-surface))]";
   }
 
-  return "border-border bg-card";
+  return "border-border";
 }
 
 export function Toast({
@@ -47,7 +51,7 @@ export function Toast({
   return (
     <ToastPrimitive.Root
       className={cn(
-        "rounded-2xl border p-4 text-sm shadow-xl",
+        "rounded-2xl border bg-card p-4 text-sm shadow-xl",
         toastToneClassName(tone),
         className,
       )}

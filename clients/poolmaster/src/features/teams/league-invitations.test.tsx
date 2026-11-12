@@ -1,6 +1,8 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { Toaster } from '@/features/shared/ui';
 import userEvent from '@testing-library/user-event';
+import { MemoryRouter } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { LeagueInvitationDto, LeagueMembershipDto } from '@/lib/api';
 import { bindApiMocks } from '@/test/msw-api';
@@ -56,9 +58,38 @@ function renderInvitations({ isInactiveLeague = false } = {}) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
     <QueryClientProvider client={queryClient}>
-      <LeagueInvitations isInactiveLeague={isInactiveLeague} leagueId="league-1" membersByUserId={membersByUserId} />
+      <MemoryRouter>
+        <LeagueInvitations isInactiveLeague={isInactiveLeague} leagueId="league-1" membersByUserId={membersByUserId} />
+        <Toaster />
+      </MemoryRouter>
     </QueryClientProvider>,
   );
+}
+
+type RowActionName = 'copy' | 'resend' | 'cancel';
+
+async function openRowActions(invitationId: string) {
+  await userEvent.click(await screen.findByTestId(`league-invitation-actions-${invitationId}`));
+  await screen.findByRole('menu');
+}
+
+/** The quick actions a row's "⋯" offers, by test id suffix, closing the menu again after. */
+async function rowActionsOffered(invitationId: string): Promise<RowActionName[]> {
+  await openRowActions(invitationId);
+  const offered = (['copy', 'resend', 'cancel'] as const).filter((action) =>
+    screen.queryByTestId(`league-invitation-actions-${invitationId}-${action}`));
+  await userEvent.keyboard('{Escape}');
+  return offered;
+}
+
+async function chooseRowAction(invitationId: string, action: RowActionName) {
+  await openRowActions(invitationId);
+  await userEvent.click(screen.getByTestId(`league-invitation-actions-${invitationId}-${action}`));
+}
+
+async function cancelInvite(invitationId: string) {
+  await chooseRowAction(invitationId, 'cancel');
+  await userEvent.click(await screen.findByRole('button', { name: 'Cancel invite' }));
 }
 
 describe('Commissioner tools › Invites: waiting on an answer', () => {
@@ -70,7 +101,7 @@ describe('Commissioner tools › Invites: waiting on an answer', () => {
     sendLeagueInvitationsMock.mockReset();
   });
 
-  it('lists each pending invite with who sent it, and offers Resend only on email invites while both get Cancel', async () => {
+  it('lists each pending invite with who sent it and a Pending badge, and offers Resend only on email invites while both get Copy and Cancel', async () => {
     listLeagueInvitationsMock.mockResolvedValue({ data: { invitations: [emailInvite(), joinLink()] } });
 
     renderInvitations();
@@ -78,15 +109,15 @@ describe('Commissioner tools › Invites: waiting on an answer', () => {
     const email = await screen.findByTestId('league-invitation-email-1');
     expect(email).toHaveTextContent('friend@example.com');
     expect(email).toHaveTextContent('Derek Dorazio');
-    expect(within(email).getByTestId('league-invitation-resend-email-1')).toHaveTextContent('Resend');
-    expect(within(email).getByTestId('league-invitation-cancel-email-1')).toHaveTextContent('Cancel');
+    expect(within(email).getByTestId('league-invitation-status-email-1')).toHaveTextContent('Pending');
+    expect(within(email).getByRole('button', { name: 'Actions for friend@example.com' })).toBeInTheDocument();
+    expect(await rowActionsOffered('email-1')).toEqual(['copy', 'resend', 'cancel']);
 
     const link = screen.getByTestId('league-invitation-link-1');
     expect(link).toHaveTextContent('Join link');
     expect(link).toHaveTextContent('2 joined');
     expect(link).toHaveTextContent('Never');
-    expect(within(link).queryByTestId('league-invitation-resend-link-1')).not.toBeInTheDocument();
-    expect(within(link).getByTestId('league-invitation-cancel-link-1')).toBeInTheDocument();
+    expect(await rowActionsOffered('link-1')).toEqual(['copy', 'cancel']);
   });
 
   it('says where each email invite\'s email stands, warns when it could not be sent, and says nothing on a join link', async () => {
@@ -161,7 +192,8 @@ describe('Commissioner tools › Invites: waiting on an answer', () => {
     fireEvent.click(screen.getByRole('radio', { name: 'Expired · 1' }));
 
     const email = await screen.findByTestId('league-invitation-email-1');
-    expect(within(email).getByTestId('league-invitation-resend-email-1')).toBeEnabled();
+    expect(within(email).getByTestId('league-invitation-status-email-1')).toHaveTextContent('Expired');
+    expect(await rowActionsOffered('email-1')).toContain('resend');
     expect(screen.queryByTestId('league-invitation-link-1')).not.toBeInTheDocument();
   });
 
@@ -173,9 +205,8 @@ describe('Commissioner tools › Invites: waiting on an answer', () => {
     renderInvitations();
     fireEvent.click(await screen.findByRole('radio', { name: 'Expired · 1' }));
 
-    const email = await screen.findByTestId('league-invitation-email-1');
-    expect(within(email).queryByTestId('league-invitation-copy-email-1')).not.toBeInTheDocument();
-    expect(within(email).getByTestId('league-invitation-resend-email-1')).toBeEnabled();
+    await screen.findByTestId('league-invitation-email-1');
+    expect(await rowActionsOffered('email-1')).toEqual(['resend', 'cancel']);
   });
 
   it('says there are no pending invites when every invite has expired, rather than that nothing matches', async () => {
@@ -238,28 +269,48 @@ describe('Commissioner tools › Invites: waiting on an answer', () => {
     resendLeagueInvitationMock.mockResolvedValue({ data: { invitation: emailInvite({ inviteCode: 'new-code' }) } });
 
     renderInvitations();
-    fireEvent.click(await screen.findByTestId('league-invitation-resend-email-1'));
+    await chooseRowAction('email-1', 'resend');
 
     await waitFor(() =>
       expect(resendLeagueInvitationMock).toHaveBeenCalledWith({ path: { id: 'league-1', invitationId: 'email-1' } }),
     );
-    expect(await screen.findByTestId('league-invitation-resent')).toHaveTextContent('The old link no longer works.');
+    const toast = await screen.findByTestId('app-toast');
+    expect(toast).toHaveTextContent('Invite resent to friend@example.com with a new link');
+    expect(toast).toHaveTextContent('The old link no longer works.');
     await waitFor(() => expect(listLeagueInvitationsMock).toHaveBeenCalledTimes(2));
   });
 
-  it('cancels an invite by its code and drops it from the list', async () => {
+  it('cancels an invite by its code once the commissioner confirms, says so, and drops it from the list', async () => {
     listLeagueInvitationsMock
       .mockResolvedValueOnce({ data: { invitations: [joinLink()] } })
       .mockResolvedValue({ data: { invitations: [] } });
     revokeInviteLinkMock.mockResolvedValue({ data: { success: true } });
 
     renderInvitations();
-    fireEvent.click(await screen.findByTestId('league-invitation-cancel-link-1'));
+    await chooseRowAction('link-1', 'cancel');
+    expect(await screen.findByRole('dialog', { name: 'Cancel this invite?' })).toHaveTextContent('The join link will stop working.');
+    expect(revokeInviteLinkMock).not.toHaveBeenCalled();
+    await userEvent.click(screen.getByRole('button', { name: 'Cancel invite' }));
 
     await waitFor(() =>
       expect(revokeInviteLinkMock).toHaveBeenCalledWith({ path: { id: 'league-1', code: 'link-code' } }),
     );
+    expect(await screen.findByTestId('app-toast')).toHaveTextContent('Invite for Join link cancelled');
     expect(await screen.findByText('No invites are waiting on an answer.')).toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('keeps the invite when the commissioner backs out of cancelling it', async () => {
+    listLeagueInvitationsMock.mockResolvedValue({ data: { invitations: [emailInvite()] } });
+
+    renderInvitations();
+    await chooseRowAction('email-1', 'cancel');
+    expect(await screen.findByRole('dialog', { name: 'Cancel this invite?' })).toHaveTextContent('The link sent to friend@example.com will stop working.');
+    await userEvent.click(screen.getByRole('button', { name: 'Keep it' }));
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(revokeInviteLinkMock).not.toHaveBeenCalled();
+    expect(screen.getByTestId('league-invitation-email-1')).toBeInTheDocument();
   });
 
   it('shows the reason when a resend fails', async () => {
@@ -270,9 +321,9 @@ describe('Commissioner tools › Invites: waiting on an answer', () => {
     });
 
     renderInvitations();
-    fireEvent.click(await screen.findByTestId('league-invitation-resend-email-1'));
+    await chooseRowAction('email-1', 'resend');
 
-    expect(await screen.findByTestId('league-invitation-resend-error')).toHaveTextContent('Only an outstanding email invitation can be resent.');
+    expect(await screen.findByTestId('app-toast')).toHaveTextContent('Only an outstanding email invitation can be resent.');
   });
 
   it('reloads the list after a failed resend, since the server may already have replaced the invite code', async () => {
@@ -283,9 +334,9 @@ describe('Commissioner tools › Invites: waiting on an answer', () => {
     });
 
     renderInvitations();
-    fireEvent.click(await screen.findByTestId('league-invitation-resend-email-1'));
+    await chooseRowAction('email-1', 'resend');
 
-    await screen.findByTestId('league-invitation-resend-error');
+    await screen.findByTestId('app-toast');
     await waitFor(() => expect(listLeagueInvitationsMock).toHaveBeenCalledTimes(2));
   });
 
@@ -299,9 +350,9 @@ describe('Commissioner tools › Invites: waiting on an answer', () => {
     });
 
     renderInvitations();
-    fireEvent.click(await screen.findByTestId('league-invitation-cancel-email-1'));
+    await cancelInvite('email-1');
 
-    expect(await screen.findByTestId('league-invitation-cancel-error')).toBeInTheDocument();
+    expect(await screen.findByTestId('app-toast')).toHaveTextContent('Only an outstanding invitation can be cancelled.');
     expect(await screen.findByText('No invites are waiting on an answer.')).toBeInTheDocument();
   });
 
@@ -311,11 +362,10 @@ describe('Commissioner tools › Invites: waiting on an answer', () => {
     Object.assign(navigator, { clipboard: { writeText: writeTextMock } });
 
     renderInvitations();
-    fireEvent.click(await screen.findByRole('button', { name: 'Copy invite link for friend@example.com' }));
+    await chooseRowAction('email-1', 'copy');
 
     await waitFor(() => expect(writeTextMock).toHaveBeenCalledWith(`${window.location.origin}/invite/email-code`));
-    const row = screen.getByTestId('league-invitation-email-1');
-    expect(await within(row).findByRole('status')).toHaveTextContent('Copied');
+    expect(await screen.findByTestId('app-toast')).toHaveTextContent('Invite link copied');
   });
 
   it('copies the new link after a resend replaces the invite code, not the one that stopped working', async () => {
@@ -327,23 +377,22 @@ describe('Commissioner tools › Invites: waiting on an answer', () => {
     Object.assign(navigator, { clipboard: { writeText: writeTextMock } });
 
     renderInvitations();
-    fireEvent.click(await screen.findByTestId('league-invitation-resend-email-1'));
+    await chooseRowAction('email-1', 'resend');
     await waitFor(() => expect(listLeagueInvitationsMock).toHaveBeenCalledTimes(2));
-    fireEvent.click(screen.getByRole('button', { name: 'Copy invite link for friend@example.com' }));
+    await chooseRowAction('email-1', 'copy');
 
     await waitFor(() => expect(writeTextMock).toHaveBeenCalledWith(`${window.location.origin}/invite/new-code`));
   });
 
-  it('disables copying while a resend is replacing the invite code, so the dying link cannot be copied', async () => {
+  it('offers no Copy or second Resend while a resend is replacing the invite code, so the dying link cannot be copied', async () => {
     listLeagueInvitationsMock.mockResolvedValue({ data: { invitations: [emailInvite()] } });
     resendLeagueInvitationMock.mockReturnValue(new Promise(() => undefined));
 
     renderInvitations();
-    fireEvent.click(await screen.findByTestId('league-invitation-resend-email-1'));
+    await chooseRowAction('email-1', 'resend');
 
-    await waitFor(() =>
-      expect(screen.getByRole('button', { name: 'Copy invite link for friend@example.com' })).toBeDisabled(),
-    );
+    await waitFor(() => expect(resendLeagueInvitationMock).toHaveBeenCalledTimes(1));
+    expect(await rowActionsOffered('email-1')).toEqual(['cancel']);
   });
 
   it('shows an invite\'s link for manual copy when the clipboard refuses the write', async () => {
@@ -351,8 +400,9 @@ describe('Commissioner tools › Invites: waiting on an answer', () => {
     Object.assign(navigator, { clipboard: { writeText: vi.fn().mockRejectedValue(new Error('Clipboard blocked')) } });
 
     renderInvitations();
-    fireEvent.click(await screen.findByRole('button', { name: 'Copy invite link for friend@example.com' }));
+    await chooseRowAction('email-1', 'copy');
 
+    expect(await screen.findByTestId('app-toast')).toHaveTextContent("Couldn't copy. The link is");
     expect(await screen.findByTestId('league-invitation-link-email-1')).toHaveTextContent(
       `${window.location.origin}/invite/email-code`,
     );
@@ -364,7 +414,7 @@ describe('Commissioner tools › Invites: waiting on an answer', () => {
     Object.assign(navigator, { clipboard: { writeText: writeTextMock } });
 
     renderInvitations();
-    fireEvent.click(await screen.findByRole('button', { name: 'Copy invite link for Join link' }));
+    await chooseRowAction('link-1', 'copy');
 
     await waitFor(() => expect(writeTextMock).toHaveBeenCalledWith(`${window.location.origin}/invite/link-code`));
   });
@@ -379,19 +429,19 @@ describe('Commissioner tools › Invites: waiting on an answer', () => {
     listLeagueInvitationsMock.mockResolvedValue({ data: { invitations: [emailInvite()] } });
     fireEvent.click(within(error).getByRole('button', { name: 'Retry' }));
 
-    expect(await screen.findByTestId('league-invitation-resend-email-1')).toBeInTheDocument();
+    expect(await screen.findByTestId('league-invitation-email-1')).toBeInTheDocument();
   });
 
-  it('disables inviting and resending while the league is inactive, and says why, but still allows cancelling', async () => {
+  it('disables inviting and offers no resend while the league is inactive, and says why, but still allows copying and cancelling', async () => {
     listLeagueInvitationsMock.mockResolvedValue({ data: { invitations: [emailInvite()] } });
 
     renderInvitations({ isInactiveLeague: true });
 
-    expect(await screen.findByTestId('league-invitation-resend-email-1')).toBeDisabled();
+    await screen.findByTestId('league-invitation-email-1');
     expect(screen.getByTestId('league-invite-email')).toBeDisabled();
     expect(screen.getByTestId('league-create-join-url')).toBeDisabled();
     expect(screen.getByTestId('league-invites-inactive')).toHaveTextContent('nobody new can be invited');
-    expect(screen.getByTestId('league-invitation-cancel-email-1')).toBeEnabled();
+    expect(await rowActionsOffered('email-1')).toEqual(['copy', 'cancel']);
   });
 });
 
@@ -430,7 +480,8 @@ describe('Commissioner tools › Invites: invite people', () => {
         body: { emails: ['friend@example.com'] },
       }),
     );
-    expect(await screen.findByText('Invitation sent to friend@example.com.')).toBeInTheDocument();
+    // A sent invite confirms with a toast; nothing stays on the page.
+    expect(await screen.findByTestId('app-toast')).toHaveTextContent('Invitation sent to friend@example.com');
     await waitFor(() => expect(listLeagueInvitationsMock).toHaveBeenCalledTimes(2));
     expect(screen.getByRole('textbox', { name: 'Invite by email' })).toHaveValue('');
   });

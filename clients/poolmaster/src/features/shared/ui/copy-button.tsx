@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Check, Copy } from "lucide-react";
-import { getLogger } from "@/lib/logger";
 import { Button, type ButtonProps } from "./button";
+import { copyToClipboard } from "./clipboard";
 import { InlineError } from "./state";
 
 /** How long "Copied" shows before the button goes back to its label. */
@@ -51,18 +51,7 @@ export function CopyButton({
   }, [copyState]);
 
   async function handleCopy() {
-    try {
-      // Missing on a plain-http origin, though the DOM types say it never is.
-      const clipboard = navigator.clipboard as Clipboard | undefined;
-      if (!clipboard) {
-        throw new Error("The Clipboard API is not available on this page.");
-      }
-      await clipboard.writeText(text);
-      setCopyState("copied");
-    } catch (err) {
-      getLogger().warn({ action: "clipboard.copy.failed", err }, "Copy to clipboard was refused");
-      setCopyState("failed");
-    }
+    setCopyState((await copyToClipboard(text)) ? "copied" : "failed");
   }
 
   const isCopied = copyState === "copied";

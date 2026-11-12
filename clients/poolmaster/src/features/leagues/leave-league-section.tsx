@@ -3,12 +3,12 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { leaveLeague, type LeagueDto } from '@/lib/api';
 import {
-  Notice,
   Button,
-  Modal,
+  ConfirmDialog,
   SectionCard,
   SectionRow,
   SectionRows,
+  showToast,
 } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError, type ErrorCodeMessages } from '@/lib/errors';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -21,12 +21,14 @@ const LEAVE_LEAGUE_ERROR_CODE_MESSAGES: ErrorCodeMessages = {
     'Appoint another commissioner before the last commissioner leaves or steps down.',
 };
 
-/** Leave league: a member's one danger action, with a confirm step and a done step. */
+/**
+ * Leave league: a member's one danger action. Confirming leaves, moves the member to their next
+ * active league (or welcome) and says so in a toast.
+ */
 export function LeaveLeagueSection({ league }: { league: LeagueDto }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [hasLeft, setHasLeft] = useState(false);
   const isInactive = !league.isActive;
 
   const leaveMutation = useInvalidatingMutation({
@@ -38,24 +40,19 @@ export function LeaveLeagueSection({ league }: { league: LeagueDto }) {
       return response.data;
     },
     onSuccess: () => {
-      setHasLeft(true);
-      queryClient.setQueryData<LeagueListCache>(QueryKeys.leagues.list, (current) =>
+      const remainingLeagues = queryClient.setQueryData<LeagueListCache>(QueryKeys.leagues.list, (current) =>
         removeLeague(current, league.id),
-      );
+      )?.leagues ?? [];
+      const nextLeague = remainingLeagues.find((candidate) => candidate.isActive);
+
+      setIsDialogOpen(false);
+      showToast({ title: `You left ${league.name}`, tone: 'success' });
+      // With no active league left the viewer is still signed in: welcome either lands them on a
+      // league they can select or shows the zero-league page.
+      void navigate(nextLeague ? buildLeaguePath(nextLeague.leagueCode) : '/welcome', { replace: true });
     },
     invalidates: [],
   });
-
-  function handleAcknowledgeLeft() {
-    const remainingLeagues = queryClient.getQueryData<LeagueListCache>(QueryKeys.leagues.list)?.leagues ?? [];
-    const nextLeague = remainingLeagues.find((candidate) => candidate.isActive);
-
-    setIsDialogOpen(false);
-    setHasLeft(false);
-    // With no active league left the viewer is still signed in: welcome either lands them on a
-    // league they can select or shows the zero-league page.
-    void navigate(nextLeague ? buildLeaguePath(nextLeague.leagueCode) : '/welcome', { replace: true });
-  }
 
   return (
     <>
@@ -68,7 +65,6 @@ export function LeaveLeagueSection({ league }: { league: LeagueDto }) {
                 disabled={isInactive}
                 onClick={() => {
                   leaveMutation.reset();
-                  setHasLeft(false);
                   setIsDialogOpen(true);
                 }}
                 size="sm"
@@ -85,59 +81,30 @@ export function LeaveLeagueSection({ league }: { league: LeagueDto }) {
         </SectionRows>
       </SectionCard>
 
-      <Modal
-        description="Leaving removes your membership from the active roster. If you are the last commissioner, appoint another commissioner before leaving."
-        descriptionId="league-leave-modal-description"
+      <ConfirmDialog
+        confirmLabel="Leave league"
+        confirmTestId="league-leave"
+        description={`You'll lose access to ${league.name} and your contest history in it.`}
+        error={leaveMutation.isError
+          ? extractErrorMessage(leaveMutation.error, {
+            fallback: 'We could not complete that leave request right now.',
+            codeMessages: LEAVE_LEAGUE_ERROR_CODE_MESSAGES,
+          })
+          : null}
+        isPending={leaveMutation.isPending}
+        onCancel={() => setIsDialogOpen(false)}
+        onConfirm={() => leaveMutation.mutate()}
         onOpenChange={(open) => {
-          if (!open && !leaveMutation.isPending && !hasLeft) {
+          if (!open) {
             setIsDialogOpen(false);
           }
         }}
         open={isDialogOpen}
+        pendingLabel="Leaving..."
         testId="league-leave-modal"
-        title="Leave league"
-      >
-        {hasLeft ? (
-          <>
-            <Notice className="mt-5" tone="success">
-              You left {league.name}.
-            </Notice>
-            <div className="mt-6 flex justify-end">
-              <Button data-testid="league-leave-ok" onClick={handleAcknowledgeLeft}>
-                OK
-              </Button>
-            </div>
-          </>
-        ) : (
-          <>
-            {leaveMutation.isError ? (
-              <Notice className="mt-4" data-testid="league-leave-error" tone="danger">
-                {extractErrorMessage(leaveMutation.error, {
-                  fallback: 'We could not complete that leave request right now.',
-                  codeMessages: LEAVE_LEAGUE_ERROR_CODE_MESSAGES,
-                })}
-              </Notice>
-            ) : null}
-            <div className="mt-6 flex justify-end gap-3">
-              <Button
-                disabled={leaveMutation.isPending}
-                onClick={() => setIsDialogOpen(false)}
-                variant="secondary"
-              >
-                Cancel
-              </Button>
-              <Button
-                data-testid="league-leave"
-                disabled={leaveMutation.isPending}
-                onClick={() => leaveMutation.mutate()}
-                variant="danger"
-              >
-                {leaveMutation.isPending ? 'Leaving...' : 'Leave league'}
-              </Button>
-            </div>
-          </>
-        )}
-      </Modal>
+        title={`Leave ${league.name}?`}
+        tone="danger"
+      />
     </>
   );
 }

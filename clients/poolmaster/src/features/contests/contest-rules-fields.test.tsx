@@ -70,3 +70,22 @@ describe('contest rules fields for a survivor contest', () => {
     expect(onChange).toHaveBeenCalledWith({ survivorReuseTeams: false });
   });
 });
+
+describe('contest rules fields for a tiered contest', () => {
+  it('puts how "Tiers to pick from" works behind its (?), not under the field', () => {
+    render(
+      <ContestRulesFields
+        onChange={vi.fn()}
+        participant={getSportDefinition(Sport.GOLF).vocabulary.participant}
+        salaryCap={null}
+        selectionType={SelectionType.TIERED}
+        tierCount={6}
+        values={DEFAULT_CONTEST_RULES}
+      />,
+    );
+
+    expect(screen.queryByText(/The first tiers only/)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('contest-tiered-tiers-used-help'));
+    expect(screen.getByTestId('contest-tiered-tiers-used-help-callout')).toHaveTextContent('The first tiers only, in tier order. Leave empty for all 6.');
+  });
+});

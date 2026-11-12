@@ -1,12 +1,9 @@
 import { useQueryClient, type QueryKey } from "@tanstack/react-query";
-import { useCallback, useState, type ReactNode } from "react";
+import { useCallback, useState } from "react";
 import { refreshAfterWrite } from "@/lib/mutation-hooks";
+import { showToast, type ToastMessage } from "./toast-store";
 
-export type MutationActionToast = {
-  description?: ReactNode;
-  title: ReactNode;
-  tone?: "default" | "danger" | "success";
-};
+type MutationActionToast = ToastMessage;
 
 type MutationActionToastFactory<TData, TVariables> =
   | MutationActionToast
@@ -41,13 +38,11 @@ export type MutationActionWorkflowOptions<TData, TVariables = void> = {
 
 export type MutationActionWorkflowResult<TData, TVariables = void> = {
   data: TData | null;
-  dismissToast: () => void;
   error: Error | null;
   isError: boolean;
   isPending: boolean;
   reset: () => void;
   run: MutationActionRun<TVariables, TData>;
-  toast: MutationActionToast | null;
 };
 
 function resolveSuccessToast<TData, TVariables>(
@@ -97,15 +92,11 @@ export function useMutationActionWorkflow<TData, TVariables = void>({
   const [data, setData] = useState<TData | null>(null);
   const [error, setError] = useState<Error | null>(null);
   const [isPending, setIsPending] = useState(false);
-  const [toast, setToast] = useState<MutationActionToast | null>(null);
 
   const reset = useCallback(() => {
     setData(null);
     setError(null);
-    setToast(null);
   }, []);
-
-  const dismissToast = useCallback(() => setToast(null), []);
 
   const run = useCallback(
     async (variables?: TVariables) => {
@@ -126,7 +117,11 @@ export function useMutationActionWorkflow<TData, TVariables = void>({
 
         await onSuccess?.(result, actionVariables);
         setData(result);
-        setToast(resolveSuccessToast(successToast, result, actionVariables));
+        const shownSuccess = resolveSuccessToast(successToast, result, actionVariables);
+        if (shownSuccess) {
+          // The app's one Toaster shows it, so it outlives the dialog this closes.
+          showToast(shownSuccess);
+        }
 
         if (closeOnSuccess) {
           onClose?.();
@@ -141,7 +136,10 @@ export function useMutationActionWorkflow<TData, TVariables = void>({
         // than dropped, keeping `isError` true.
         const failure = caughtError instanceof Error ? caughtError : new Error(String(caughtError));
         setError(failure);
-        setToast(resolveErrorToast(errorToast, failure, actionVariables));
+        const shownError = resolveErrorToast(errorToast, failure, actionVariables);
+        if (shownError) {
+          showToast(shownError);
+        }
         await onError?.(failure, actionVariables);
         throw caughtError;
       } finally {
@@ -164,12 +162,10 @@ export function useMutationActionWorkflow<TData, TVariables = void>({
 
   return {
     data,
-    dismissToast,
     error,
     isError: error !== null,
     isPending,
     reset,
     run,
-    toast,
   };
 }

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router';
 import { deleteUser, disableUser, enableUser, getUser, resetUserPassword, setUserRootAdmin, type UserDto } from '@/lib/api';
 import { formatUserName } from '@/features/account/user-name';
-import { buildUserPath } from '@/features/account/user-routing';
+import { MY_ACCOUNT_PATH } from '@/features/account/user-routing';
 import { useAuth } from '@/features/auth/auth-context';
 import {
   Notice,
@@ -206,7 +206,7 @@ export function RootAdminUserPage() {
   }
 
   if (isSelf) {
-    return <Navigate replace to={buildUserPath(userId)} />;
+    return <Navigate replace to={MY_ACCOUNT_PATH} />;
   }
 
   if (userDetailQuery.isLoading) {
