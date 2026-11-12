@@ -1,8 +1,8 @@
 import { ChevronDown } from "lucide-react";
-import { useId, useState, type ReactNode } from "react";
+import { useId, useState, type ReactNode, type Ref } from "react";
 import { cn } from "./class-names";
 
-type ExpandableRowLook = "bar" | "row";
+type ExpandableRowLook = "bar" | "card" | "row";
 
 /**
  * Expand (more-info pattern 3): "show me the breakdown". A row with a chevron at its right end;
@@ -27,6 +27,7 @@ export function ExpandableRow({
   rowTestId,
   summary,
   testId,
+  toggleRef,
   toggleTestId,
 }: {
   /** The breakdown, shown only while open. */
@@ -36,7 +37,10 @@ export function ExpandableRow({
   isOpen?: boolean;
   /** The toggle's accessible name: what opens, such as "Picks for Incubus 1". */
   label: string;
-  /** `row` is a plain section row; `bar` is the shaded bar that heads a leaderboard entry. */
+  /**
+   * `row` is a plain section row; `bar` is the shaded bar that heads a leaderboard entry; `card`
+   * is the roomier head of a card that opens, such as a tier of the picks.
+   */
   look?: ExpandableRowLook;
   onToggle?: () => void;
   /**
@@ -49,6 +53,8 @@ export function ExpandableRow({
   /** What the row shows open or closed: its name, facts and figure. */
   summary: ReactNode;
   testId?: string;
+  /** The toggle button itself, for a page that moves focus to the row it opens next. */
+  toggleRef?: Ref<HTMLButtonElement>;
   /** The toggle button's test id; `<testId>-toggle` when left out. */
   toggleTestId?: string;
 }) {
@@ -67,7 +73,7 @@ export function ExpandableRow({
       <div
         className={cn(
           "relative flex items-center gap-3 px-4 transition hover:bg-row-hover",
-          look === "bar" ? "bg-muted py-3" : "py-2",
+          look === "bar" ? "bg-muted py-3" : look === "card" ? "py-4" : "py-2",
           isOpen ? "border-b border-border" : undefined,
           rowClassName,
         )}
@@ -80,6 +86,7 @@ export function ExpandableRow({
           className="absolute inset-0 rounded-[inherit] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
           data-testid={toggleTestId ?? (testId ? `${testId}-toggle` : undefined)}
           onClick={toggle}
+          ref={toggleRef}
           type="button"
         />
         {/* Taps on the summary fall through to the toggle; its own buttons and links stay live. */}

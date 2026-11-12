@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 import { FormField, Input } from "./form-field";
-import { ConfirmationModal, FormModal, PickerModal, ReadOnlyDetailModal } from "./modal-templates";
+import { FormModal, PickerModal, ReadOnlyDetailModal } from "./modal-templates";
 import { Text } from "./text";
 
 const meta = {
@@ -29,22 +29,6 @@ type Story = StoryObj<typeof meta>;
 /** An edit of three fields or fewer. Saving closes it and shows a toast. */
 export const Default: Story = {};
 export const Failed: Story = { args: { errorMessage: "We couldn't save the team." } };
-
-/** Being retired: `ConfirmDialog` replaces it (#1599). */
-export const RetiringConfirmationModal: StoryObj = {
-  render: () => (
-    <ConfirmationModal
-      confirmLabel="Delete"
-      description="Type the league's name to delete it."
-      onCancel={() => undefined}
-      onConfirm={() => undefined}
-      onOpenChange={() => undefined}
-      open
-      title="Delete league"
-      tone="danger"
-    />
-  ),
-};
 
 const GOLFERS = [
   { id: "1", name: "Scottie Scheffler" },

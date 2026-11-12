@@ -429,7 +429,7 @@ describe('Field editor header actions: refusals, singular counts and closing dia
 
       await userEvent.click(await screen.findByTestId('root-admin-event-field-seed'));
       const modal = await screen.findByTestId('root-admin-event-field-seed-modal');
-      await userEvent.click(within(modal).getByRole('button', { name: 'Close modal' }));
+      await userEvent.click(within(modal).getByRole('button', { name: /^Close / }));
 
       await waitFor(() =>
         expect(screen.queryByTestId('root-admin-event-field-seed-modal')).not.toBeInTheDocument(),
@@ -493,7 +493,7 @@ describe('Field editor header actions: refusals, singular counts and closing dia
 
       await userEvent.click(await screen.findByTestId('root-admin-event-field-refresh'));
       const modal = await screen.findByTestId('root-admin-event-field-refresh-modal');
-      await userEvent.click(within(modal).getByRole('button', { name: 'Close modal' }));
+      await userEvent.click(within(modal).getByRole('button', { name: /^Close / }));
 
       await waitFor(() =>
         expect(screen.queryByTestId('root-admin-event-field-refresh-modal')).not.toBeInTheDocument(),
@@ -710,7 +710,7 @@ describe('Field editor header actions: refusals, singular counts and closing dia
       renderPage();
 
       const modal = await openAddModal();
-      await userEvent.click(within(modal).getByRole('button', { name: 'Close modal' }));
+      await userEvent.click(within(modal).getByRole('button', { name: /^Close / }));
 
       await waitFor(() =>
         expect(screen.queryByTestId('root-admin-event-field-add-modal')).not.toBeInTheDocument(),

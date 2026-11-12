@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { ChoiceCard } from "./choice-card";
+import { ChoiceCard, ChoiceCardText } from "./choice-card";
 
 describe("ChoiceCard", () => {
   it("reads as a checked radio only when selected, and reports a click as the choice", () => {
@@ -28,5 +28,16 @@ describe("ChoiceCard", () => {
     expect(screen.getByRole("radio", { name: "Budget" })).toBeDisabled();
     fireEvent.click(screen.getByTestId("choice-budget"));
     expect(onSelect).not.toHaveBeenCalled();
+  });
+
+  it("names a card by its bold label and reads its description after it", () => {
+    render(
+      <ChoiceCard isSelected onSelect={() => undefined} testId="choice-tiered">
+        <ChoiceCardText description="Pick one golfer from each tier." label="Tiered picks" />
+      </ChoiceCard>,
+    );
+
+    expect(screen.getByRole("radio", { name: /^Tiered picks\s*Pick one golfer from each tier\.$/ })).toBeChecked();
+    expect(screen.getByText("Tiered picks")).toHaveClass("font-semibold");
   });
 });

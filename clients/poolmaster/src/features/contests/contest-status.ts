@@ -11,12 +11,13 @@ import type { StatusBadgeProps } from '@/features/shared/ui';
 export const CONTEST_POLL_INTERVAL_MS = 30_000;
 
 /**
- * What members read for each contest status. A `Record` over the enum, so adding a status without
- * a label fails the typecheck.
+ * What members read for each contest status, which is also its stage on Manage contest's
+ * lifecycle track (Set up › Open › Live › Final). A `Record` over the enum, so adding a status
+ * without a label fails the typecheck.
  */
 export const CONTEST_STATUS_LABELS: Record<ContestStatus, string> = {
-  DRAFT: 'Draft',
-  OPEN: 'Open for entries',
+  DRAFT: 'Set up',
+  OPEN: 'Open',
   ACTIVE: 'Live',
   COMPLETED: 'Final',
 };

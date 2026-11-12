@@ -3,7 +3,6 @@ import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { ApiError } from "@/lib/errors";
 import {
-  ConfirmationModal,
   FormModal,
   PickerModal,
   ReadOnlyDetailModal,
@@ -65,36 +64,6 @@ describe("pool-master-3ew: shared modal templates", () => {
     expect(screen.getByRole("alert")).toHaveTextContent(
       "Username is already taken.",
     );
-  });
-
-  it("pool-master-3ew.8: gates confirmation on exact typed input", () => {
-    const handleConfirm = vi.fn();
-
-    render(
-      <ConfirmationModal
-        confirmationInput={{
-          expectedValue: "MATHWORKS",
-          label: "League code",
-          onChange: vi.fn(),
-          testId: "confirm-code",
-          value: "MATH",
-        }}
-        confirmLabel="Delete league"
-        description="This permanently deletes the league."
-        onCancel={vi.fn()}
-        onConfirm={handleConfirm}
-        onOpenChange={vi.fn()}
-        open
-        testId="confirmation-modal"
-        title="Delete league"
-        tone="danger"
-      />,
-    );
-
-    expect(screen.getByTestId("confirm-code")).toHaveValue("MATH");
-    expect(
-      screen.getByRole("button", { name: "Delete league" }),
-    ).toBeDisabled();
   });
 
   it("pool-master-3ew.10: renders picker items with selected state and apply", () => {

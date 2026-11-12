@@ -153,13 +153,23 @@ type DropdownMenuItemTextProps = {
   /** A quieter name, such as a league that is not currently active. */
   isMuted?: boolean;
   name: ReactNode;
+  /** `danger`: a choice that removes or ends something, such as Delete, in the danger colour. */
+  tone?: "default" | "danger";
 };
 
 /** A row's text: a name and an optional second line, each ending in an ellipsis when too long. */
-export function DropdownMenuItemText({ detail, isMuted = false, name }: DropdownMenuItemTextProps) {
+export function DropdownMenuItemText({ detail, isMuted = false, name, tone = "default" }: DropdownMenuItemTextProps) {
   return (
     <span className="block min-w-0 flex-1">
-      <span className={cn("block truncate font-semibold", isMuted && "text-muted-foreground")}>{name}</span>
+      <span
+        className={cn(
+          "block truncate font-semibold",
+          isMuted && "text-muted-foreground",
+          tone === "danger" && "text-destructive",
+        )}
+      >
+        {name}
+      </span>
       {detail ? <span className="block truncate text-xs text-muted-foreground">{detail}</span> : null}
     </span>
   );
