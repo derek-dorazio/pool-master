@@ -11,10 +11,10 @@ import {
   LoadingState,
   SectionCard,
   SectionEmpty,
-  YearPicker,
 } from '@/features/shared/ui';
 import { getLogger } from '@/lib/logger';
 import { chooseContestHistoryYear } from './contest-history';
+import { ContestHistoryYearPicker } from './contest-history-year-picker';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
 import { ContestsPageHeader } from './contests-page-header';
 import { useContestFinishedYearsQuery } from './use-league-contests-query';
@@ -53,7 +53,7 @@ export function LeagueContestHistoryPage() {
   const leagueId = league?.id ?? '';
   const yearsQuery = useContestFinishedYearsQuery(leagueId);
 
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const years = yearsQuery.data ?? [];
   const year = chooseContestHistoryYear(years, searchParams.get('year'));
   // #1570 — each row carries the viewer's team's finish, so the row shows their place.
@@ -85,12 +85,7 @@ export function LeagueContestHistoryPage() {
       <ContestsPageHeader
         leagueCode={league.leagueCode}
         tabsEnd={year === null ? undefined : (
-          <YearPicker
-            onChange={(next) => setSearchParams({ year: String(next) }, { replace: true })}
-            testId="league-contests-history-year"
-            value={year}
-            years={years}
-          />
+          <ContestHistoryYearPicker testId="league-contests-history-year" year={year} years={years} />
         )}
         view="past"
       />

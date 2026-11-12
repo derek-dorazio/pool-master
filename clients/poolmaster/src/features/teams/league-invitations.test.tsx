@@ -186,10 +186,10 @@ describe('Commissioner tools › Invites: waiting on an answer', () => {
     renderInvitations();
 
     await screen.findByTestId('league-invitation-link-1');
-    expect(screen.getByRole('radio', { name: 'Pending · 1' })).toBeChecked();
+    expect(screen.getByRole('radio', { name: 'Pending 1' })).toBeChecked();
     expect(screen.queryByTestId('league-invitation-email-1')).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('radio', { name: 'Expired · 1' }));
+    fireEvent.click(screen.getByRole('radio', { name: 'Expired 1' }));
 
     const email = await screen.findByTestId('league-invitation-email-1');
     expect(within(email).getByTestId('league-invitation-status-email-1')).toHaveTextContent('Expired');
@@ -203,7 +203,7 @@ describe('Commissioner tools › Invites: waiting on an answer', () => {
     });
 
     renderInvitations();
-    fireEvent.click(await screen.findByRole('radio', { name: 'Expired · 1' }));
+    fireEvent.click(await screen.findByRole('radio', { name: 'Expired 1' }));
 
     await screen.findByTestId('league-invitation-email-1');
     expect(await rowActionsOffered('email-1')).toEqual(['resend', 'cancel']);
@@ -225,7 +225,7 @@ describe('Commissioner tools › Invites: waiting on an answer', () => {
     });
 
     renderInvitations();
-    fireEvent.click(await screen.findByRole('radio', { name: 'Expired · 1' }));
+    fireEvent.click(await screen.findByRole('radio', { name: 'Expired 1' }));
     fireEvent.change(screen.getByRole('searchbox', { name: 'Find an email' }), { target: { value: 'nobody' } });
 
     expect(await screen.findByText('No expired invites.')).toBeInTheDocument();
