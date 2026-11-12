@@ -153,7 +153,8 @@ badge, count or filter), then its body, then an optional footer link
 (`SectionFooterLink`, blue small caps with an arrow). The body is unpadded for
 `SectionRows` of `SectionRow`s (a name, a muted fact line and note, one figure
 as `value`, one badge or action as `aside`; `to` makes the whole row a link, and
-`control` puts a checkbox at its start with the whole row as its label) or
+`control` puts a checkbox at its start with the whole row as its label, and
+`picture` a small 16:10 drawing at its start) or
 a `SectionEmpty` italic line; `padded` gives forms, charts or metric grids the
 card's padding (`SectionBody` is that padded block on its own, beside rows, and
 `SectionNote` a muted line about the data inside it). `bare` keeps the title and rule without the box, and

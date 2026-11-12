@@ -85,3 +85,20 @@ export const WithCheckboxRows: Story = {
     ),
   },
 };
+
+/** A row that leads with a small picture, as on the "Members will see" preview. */
+export const WithPictureRow: Story = {
+  args: {
+    title: "Members will see",
+    children: (
+      <SectionRows>
+        <SectionRow
+          facts="The Masters"
+          name="Masters Pool"
+          note="Pick 6 golfers, one from each tier."
+          picture={<svg aria-hidden className="block h-full w-full" viewBox="0 0 160 100"><rect className="fill-primary" height="100" width="160" /></svg>}
+        />
+      </SectionRows>
+    ),
+  },
+};

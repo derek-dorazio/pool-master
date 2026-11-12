@@ -1,10 +1,20 @@
+import { SelectionType } from '@poolmaster/shared/domain';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { renderToStaticMarkup } from 'react-dom/server';
 import { MemoryRouter, Route, Routes, useParams } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { buildPlanEntitlements } from '@/features/plans/test/fixtures';
+import { FormatIllustration } from '@/features/contest-types/illustrations';
 import { CreateContestPage } from './create-contest-page';
+
+/** The drawing How to Play shows for a format, to compare the preview's picture against. */
+function formatPictureMarkup(selectionType: SelectionType) {
+  const host = document.createElement('div');
+  host.innerHTML = renderToStaticMarkup(<FormatIllustration selectionType={selectionType} />);
+  return host.firstElementChild?.innerHTML;
+}
 
 const {
   createContestMock,
@@ -342,7 +352,7 @@ describe('Commissioner tools › Contests › Create contest', () => {
     mockLogger.error.mockReset();
   });
 
-  it('starts with the soonest contest-ready event, the default preset, and a name suggested from them', async () => {
+  it('starts with the soonest contest-ready event, the default preset, and a name suggested from them, previewed without repeating the event the name already says', async () => {
     primeCommonMocks();
 
     renderCreateContestPage();
@@ -358,7 +368,7 @@ describe('Commissioner tools › Contests › Create contest', () => {
     expect(screen.getByTestId('contest-template-golf-tiered-pick-6')).toHaveTextContent('Select one from each tier, 4 count');
     await waitFor(() => expect(screen.getByTestId('contest-name')).toHaveValue('Masters Tournament Pick 6'));
     expect(screen.getByTestId('contest-members-will-see')).toHaveTextContent(
-      'Masters Tournament Pick 6Masters TournamentPick 1 golfer from each of 6 tiers. The best 4 scores count. 1 entry per member.',
+      'Masters Tournament Pick 6Pick 1 golfer from each of 6 tiers. The best 4 scores count. 1 entry per member.',
     );
     expect(screen.getByTestId('create-contest-submit')).toHaveTextContent('Create contest');
   });
@@ -635,6 +645,20 @@ describe('Commissioner tools › Contests › Create contest', () => {
     fireEvent.click(screen.getByTestId('contest-sport-BASKETBALL'));
 
     await waitFor(() => expect(screen.getByTestId('contest-name')).toHaveValue('NBA Finals Stars'));
+  });
+
+  it('leads the "Members will see" preview with the chosen format\'s picture, and swaps it when the format changes', async () => {
+    primeBasketballMocks([basketballEvent({ id: 'week-1', name: 'Week 1', rounds: 1 })]);
+    renderCreateContestPage();
+    await waitForStartingChoices();
+
+    fireEvent.click(screen.getByTestId('contest-sport-BASKETBALL'));
+    await waitFor(() => expect(screen.getByTestId('contest-event-week-1')).toBeChecked());
+    const before = (await screen.findByTestId('contest-members-will-see-picture')).innerHTML;
+    fireEvent.click(screen.getByTestId('contest-format-PICK_EM'));
+
+    await waitFor(() => expect(screen.getByTestId('contest-members-will-see-picture').innerHTML).toBe(formatPictureMarkup(SelectionType.PICK_EM)));
+    expect(before).not.toBe(formatPictureMarkup(SelectionType.PICK_EM));
   });
 
   it('creates a confidence pick\'em on its first week as a prediction contest with the mode chosen and no scoring settings, since the mode alone scores it', async () => {
