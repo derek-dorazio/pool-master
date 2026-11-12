@@ -2,6 +2,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   Controller,
+  type RefCallBack,
   useForm,
   useWatch,
 } from 'react-hook-form';
@@ -215,6 +216,20 @@ export function UserPage() {
       showToast({ title: 'Preferences saved', tone: 'success' });
     },
     invalidates: [AUTH_ME_QUERY_KEY],
+  });
+
+  // A preferences field: editing it clears the last save's failure, then stores the typed value.
+  const bindPreference = <TValue,>(
+    field: { name: string; onBlur: () => void; onChange: (value: TValue) => void; ref: RefCallBack },
+    toValue: (value: string) => TValue,
+  ) => ({
+    name: field.name,
+    onBlur: field.onBlur,
+    onChange: (event: { target: { value: string } }) => {
+      preferencesMutation.reset();
+      field.onChange(toValue(event.target.value));
+    },
+    ref: field.ref,
   });
 
   const passwordMutation = useInvalidatingMutation({
@@ -661,13 +676,7 @@ export function UserPage() {
                   data-testid="user-page-timezone"
                   disabled={disablePreferencesEditing}
                   id="user-page-timezone"
-                  name={field.name}
-                  onBlur={field.onBlur}
-                  onChange={(event) => {
-                    preferencesMutation.reset();
-                    field.onChange(event.target.value);
-                  }}
-                  ref={field.ref}
+                  {...bindPreference(field, (value) => value)}
                   value={field.value ?? DEFAULT_DISPLAY_PREFERENCES.timeZone}
                 />
               )}
@@ -684,14 +693,8 @@ export function UserPage() {
                 <Input
                   data-testid="user-page-locale"
                   disabled={disablePreferencesEditing}
-                  name={field.name}
-                  onBlur={field.onBlur}
-                  onChange={(event) => {
-                    preferencesMutation.reset();
-                    field.onChange(event.target.value.trim() ? event.target.value : null);
-                  }}
+                  {...bindPreference(field, (value) => (value.trim() ? value : null))}
                   placeholder="en-US"
-                  ref={field.ref}
                   value={field.value ?? ''}
                 />
               )}
@@ -708,13 +711,7 @@ export function UserPage() {
                 <Select
                   data-testid="user-page-time-format"
                   disabled={disablePreferencesEditing}
-                  name={field.name}
-                  onBlur={field.onBlur}
-                  onChange={(event) => {
-                    preferencesMutation.reset();
-                    field.onChange(event.target.value || null);
-                  }}
-                  ref={field.ref}
+                  {...bindPreference(field, (value) => value || null)}
                   value={field.value ?? ''}
                 >
                   <option value="">System default</option>
@@ -735,13 +732,7 @@ export function UserPage() {
                 <Select
                   data-testid="user-page-color-scheme"
                   disabled={disablePreferencesEditing}
-                  name={field.name}
-                  onBlur={field.onBlur}
-                  onChange={(event) => {
-                    preferencesMutation.reset();
-                    field.onChange(event.target.value);
-                  }}
-                  ref={field.ref}
+                  {...bindPreference(field, (value) => value)}
                   value={field.value ?? ColorScheme.DEVICE}
                 >
                   <option value={ColorScheme.DEVICE}>Match my device</option>
