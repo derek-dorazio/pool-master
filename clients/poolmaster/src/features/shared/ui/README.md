@@ -142,7 +142,9 @@ as `value`, one badge or action as `aside`; `to` makes the whole row a link) or
 a `SectionEmpty` italic line; `padded` gives forms, charts or metric grids the
 card's padding (`SectionBody` is that padded block on its own, beside rows, and
 `SectionNote` a muted line about the data inside it). `bare` keeps the title and rule without the box, and
-`tone="danger"` is a danger zone. The parts own their type and colours: pass
+`tone="danger"` is a danger zone. A section the league's plan leaves out is a
+`LockedSection`: the same title in the same place, a lock, one line naming the plan
+that includes it, and a "See plans" footer link. The parts own their type and colours: pass
 content, never text classes, and add a variant here for a new look. Don't
 hand-build a heading inside a `Tile`.
 

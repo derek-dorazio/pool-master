@@ -403,6 +403,12 @@ administration area (root admin included), reusing the same shared components.
     content such as Owners uses the same title as a `bare` section, and a
     danger zone is the same card with `tone="danger"`.
 
+    A section the league's plan doesn't include stays in its place with its
+    own title, as a `LockedSection`: a lock, one line naming the lowest plan
+    that includes it ("Included with Premium."), and a "See plans" footer link
+    to the league's plan page. It is never hidden, and never a sentence on why
+    the plan leaves it out.
+
     `npm run rules:check:titled-tiles` finds every `Tile` outside
     `features/shared/ui` that holds its own `Heading`, `Eyebrow`, `SectionTitle`
     or `<h1>`–`<h6>`. Its baseline, `scripts/titled-tile-baseline.json`, lists
