@@ -352,7 +352,7 @@ describe('Commissioner tools › Contests › Create contest', () => {
     mockLogger.error.mockReset();
   });
 
-  it('starts with the soonest contest-ready event, the default preset, and a name suggested from them', async () => {
+  it('starts with the soonest contest-ready event, the default preset, and a name suggested from them, previewed without repeating the event the name already says', async () => {
     primeCommonMocks();
 
     renderCreateContestPage();
@@ -368,7 +368,7 @@ describe('Commissioner tools › Contests › Create contest', () => {
     expect(screen.getByTestId('contest-template-golf-tiered-pick-6')).toHaveTextContent('Select one from each tier, 4 count');
     await waitFor(() => expect(screen.getByTestId('contest-name')).toHaveValue('Masters Tournament Pick 6'));
     expect(screen.getByTestId('contest-members-will-see')).toHaveTextContent(
-      'Masters Tournament Pick 6Masters TournamentPick 1 golfer from each of 6 tiers. The best 4 scores count. 1 entry per member.',
+      'Masters Tournament Pick 6Pick 1 golfer from each of 6 tiers. The best 4 scores count. 1 entry per member.',
     );
     expect(screen.getByTestId('create-contest-submit')).toHaveTextContent('Create contest');
   });

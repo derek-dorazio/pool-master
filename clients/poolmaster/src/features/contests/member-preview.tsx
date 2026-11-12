@@ -3,10 +3,12 @@ import { FormatIllustration } from '@/features/contest-types/illustrations';
 import { SectionCard, SectionRow, SectionRows } from '@/features/shared/ui';
 
 /**
- * "Members will see": a contest drawn as its row reads to members, its name, then its event, then
- * its rules in a sentence, led by the contest type's picture, the same drawing How to Play shows. The event has a line of its own, so a long name never hides it. A
- * setup form shows it above its buttons, outside the form's card, as the commissioner's last
- * check, and it follows every change to the form.
+ * "Members will see": a contest drawn as its row reads to members, led by the contest type's
+ * picture (the same drawing How to Play shows): its name, then its event, then its rules in a
+ * sentence. The event has a line of its own, so a long name never hides it, unless the name
+ * already says it (as the default name does), so the event never reads twice. A setup form
+ * shows it above its buttons, outside the form's card, as the commissioner's last check, and it
+ * follows every change to the form.
  */
 export function MemberPreview({
   eventName,
@@ -22,12 +24,14 @@ export function MemberPreview({
   /** The contest's format, whose picture leads the row and follows a change of format. */
   selectionType: SelectionType;
 }) {
+  const shownName = name.trim() || 'Untitled contest';
+  const namesEvent = shownName.toLowerCase().includes(eventName.trim().toLowerCase());
   return (
     <SectionCard testId="contest-members-will-see" title="Members will see">
       <SectionRows>
         <SectionRow
-          facts={<span data-testid="contest-members-will-see-event">{eventName}</span>}
-          name={<span data-testid="contest-members-will-see-name">{name.trim() || 'Untitled contest'}</span>}
+          facts={namesEvent ? undefined : <span data-testid="contest-members-will-see-event">{eventName}</span>}
+          name={<span data-testid="contest-members-will-see-name">{shownName}</span>}
           note={<span data-testid="contest-members-will-see-rules">{rules}</span>}
           picture={<FormatIllustration className="h-full w-full" selectionType={selectionType} testId="contest-members-will-see-picture" />}
         />
