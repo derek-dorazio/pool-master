@@ -446,16 +446,19 @@ jobs:
       - name: Check schema.prisma against the migration history
         run: npm run db:drift:check
 
-  # #778 -- two shards, for the same reason and in the same way as the integration suite: each
-  # shard runs its own server against its own Postgres, and every file must pass in either.
+  # #778 -- shards, for the same reason and in the same way as the integration suite: each
+  # shard runs its own server against its own Postgres, and every file must pass in any shard.
+  # Three since 2026-11-12: with two, Jest's path-hash split put the two slowest files
+  # (prediction-scenarios, sport-selection-scenarios) in shard 1, at 9.5 min of tests against
+  # 5.6 for shard 2. With three they land apart, and the slowest shard ties integration.
   service-functional-api-test-shards:
-    name: service-functional-api-tests (${{ matrix.shard }}/2)
+    name: service-functional-api-tests (${{ matrix.shard }}/3)
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2]
+        shard: [1, 2, 3]
     needs: [all-contract-gates, changes]
     # `!cancelled()` is load-bearing, not decoration (#350). A job whose `needs:` did not
     # succeed is skipped by default unless its `if` uses a status function, and `changes`
@@ -502,7 +505,7 @@ jobs:
         run: npx prisma migrate deploy --schema=packages/core-api/prisma/schema.prisma
 
       - name: Run service functional API tests
-        run: npm run test:service:functional-api -- --shard=${{ matrix.shard }}/2
+        run: npm run test:service:functional-api -- --shard=${{ matrix.shard }}/3
 
   # The required check and deploy-publish-images' dependency keep this name, as with
   # service-integration-tests above.
@@ -1919,5 +1922,5 @@ jobs:
         run: |
           node scripts/ci-failure-report.mjs \
             --title "CI is failing on main" \
-            --jobs "changes,all-contract-gates,service-lint-typecheck,service-unit-tests,service-integration-tests (1/4),service-integration-tests (2/4),service-integration-tests (3/4),service-integration-tests (4/4),service-integration-tests,service-functional-api-tests (1/2),service-functional-api-tests (2/2),service-functional-api-tests,service-build,service-image-smoke,service-mock-provider-build,poolmaster-unit-tests,poolmaster-build,poolmaster-browser-e2e-local" \
+            --jobs "changes,all-contract-gates,service-lint-typecheck,service-unit-tests,service-integration-tests (1/4),service-integration-tests (2/4),service-integration-tests (3/4),service-integration-tests (4/4),service-integration-tests,service-functional-api-tests (1/3),service-functional-api-tests (2/3),service-functional-api-tests (3/3),service-functional-api-tests,service-build,service-image-smoke,service-mock-provider-build,poolmaster-unit-tests,poolmaster-build,poolmaster-browser-e2e-local" \
             --managed-note "This issue is managed by the \`main-ci-health-issue\` CI job: it is commented on, with log excerpts, for every further failed build on main and closed automatically by the next green one."

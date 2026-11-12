@@ -106,7 +106,7 @@ with a ten-minute floor:
 | `changes`, `all-contract-gates`, `service-lint-typecheck`, `service-unit-tests`, `schema-migration-drift`, `service-build`, `service-mock-provider-build`, health-issue jobs | under 2 min | 10 |
 | `poolmaster-unit-tests` | 2 min | 15 |
 | `service-image-smoke` | not yet measured | 15 |
-| `service-integration-tests (1/4)`–`(4/4)` and `service-functional-api-tests (1/2)`, `(2/2)` shards | 3–5 min (7 each before #778 split them further) | 20 |
+| `service-integration-tests (1/4)`–`(4/4)` and `service-functional-api-tests (1/3)`–`(3/3)` shards | 5.5–7.5 min (functional 1/2 took 10.5 when there were two shards, 2026-11-12) | 20 |
 | `poolmaster-browser-e2e-local` | 4–9 min | 25 |
 | `poolmaster-build` | 1–12 min | 30 |
 | `deploy-publish-images` | 4–5 min | 20 |
@@ -1015,7 +1015,7 @@ release, and the mock contest feed provider has its own suite.
 - **Local commands:**
   - `npm run test:service:functional-api` — run the suite (requires `DATABASE_URL`)
   - `npm run test:service:functional-api:fresh` — reset DB then run
-- **CI job:** two shards, `service-functional-api-tests (1/2)` and `(2/2)`, each with its own Postgres service container and its own server, run `npm run test:service:functional-api -- --shard=k/2` with no coverage (#302, #778). As with integration, every file must pass in either shard, and a `service-functional-api-tests` job turns the shard results into the one required verdict.
+- **CI job:** three shards, `service-functional-api-tests (1/3)`–`(3/3)`, each with its own Postgres service container and its own server, run `npm run test:service:functional-api -- --shard=k/3` with no coverage (#302, #778). Jest splits files by a hash of their path, not by run time; with two shards both of the slowest files landed in shard 1, so the suite went to three. As with integration, every file must pass in either shard, and a `service-functional-api-tests` job turns the shard results into the one required verdict.
 - **Required pre-push gate:** `DATABASE_URL=... npm run test:service:functional-api` (per `AGENTS.md` Quality Gates).
 - **Coverage policy:** No threshold and no coverage collected. The functional suite proves wiring and contracts; per-file floors belong to the unit and integration suites.
 
