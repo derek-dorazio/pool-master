@@ -46,7 +46,7 @@ import {
   Text,
 } from '@/features/shared/ui';
 import { coversOneEvent, firstContestEvent } from './contest-events';
-import { ContestStageBadge } from './contest-status-badge';
+import { ContestStatusBadge } from './contest-status-badge';
 import { ContestStatusCard } from './contest-status-card';
 import { DeleteContestDialog } from './delete-contest-dialog';
 import { secondChanceRoundName } from './bracket-start-round';
@@ -190,7 +190,7 @@ export function ManageContestPage() {
           </span>
         )}
         // The stage the lifecycle panel's track shows as current.
-        status={<ContestStageBadge data-testid="manage-contest-stage" status={contest.status} />}
+        status={<ContestStatusBadge data-testid="manage-contest-stage" status={contest.status} />}
         title={contest.name}
         testId="manage-contest-identity"
       />

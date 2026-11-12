@@ -9,7 +9,7 @@ import { listedContestStartsAt } from './use-contest-schedule';
 
 /**
  * A league's current contests (#1390), the one list League Home and the Contests page share:
- * grouped Live, Open for entries, then Draft (commissioners only), each row saying where the
+ * grouped Live, Open, then Set up (commissioners only), each row saying where the
  * viewer's entry stands in the same words everywhere and opening the contest by the one link rule.
  * The group heading names the status, so a row carries no badge of its own, which leaves a phone
  * row room for the contest's name. A live contest's row shows the place of the viewer's best

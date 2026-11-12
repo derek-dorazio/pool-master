@@ -7,7 +7,7 @@ import {
 import {
   CheckList,
   LinkButton,
-  Text,
+  Notice,
   formatCount,
   formatDateTimeDisplay,
   formatNumber,
@@ -119,7 +119,7 @@ function OpenCard({
         ]
         : undefined}
       status={contest.status}
-      title={entered ? `${formatNumber(entered.teamCount, locale)} of ${formatNumber(teamCount, locale)} members have entered` : 'Open for entries'}
+      title={entered ? `${formatNumber(entered.teamCount, locale)} of ${formatNumber(teamCount, locale)} members have entered` : 'Members can enter now'}
     />
   );
 }
@@ -191,12 +191,12 @@ function DrawOpenCard({
         ? undefined
         : [{ label: 'Entries', testId: 'contest-stat-entries', value: formatNumber(entryCount, displayPreferences.locale) }, untilStart]}
       status={contest.status}
-      title={entryCount === undefined ? 'Open for entries' : `${formatCount(entryCount, 'entry', displayPreferences.locale, 'entries')} waiting for the draw`}
+      title={entryCount === undefined ? 'Members can enter now' : `${formatCount(entryCount, 'entry', displayPreferences.locale, 'entries')} waiting for the draw`}
     >
       {drawState.isError ? (
-        <Text as="p" data-testid="contest-draw-state-error" tone="onInverse" variant="meta">
+        <Notice data-testid="contest-draw-state-error" tone="danger">
           We couldn&apos;t check whether the draw has run. Try again in a moment.
-        </Text>
+        </Notice>
       ) : null}
     </LifecyclePanel>
   );

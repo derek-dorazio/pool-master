@@ -196,8 +196,8 @@ describe('LeagueContestsPage', () => {
 
     renderLeagueContestsPage();
 
-    const groups = await screen.findAllByRole('region', { name: /^(Live|Open for entries)$/ });
-    expect(groups.map((group) => group.getAttribute('aria-label'))).toEqual(['Live', 'Open for entries']);
+    const groups = await screen.findAllByRole('region', { name: /^(Live|Open)$/ });
+    expect(groups.map((group) => group.getAttribute('aria-label'))).toEqual(['Live', 'Open']);
     expect(screen.getByTestId('league-contest-contest-3')).toHaveAttribute('href', '/league/BIGDAWGS/contests/contest-3/leaderboard');
     expect(screen.getByTestId('league-contest-contest-1')).toHaveAttribute('href', '/league/BIGDAWGS/contests/contest-1');
   });
@@ -254,7 +254,7 @@ describe('LeagueContestsPage', () => {
     expect(screen.queryByText('You have not entered yet.')).not.toBeInTheDocument();
   });
 
-  it('shows a commissioner their drafts under Draft, after the open contests', async () => {
+  it('shows a commissioner their contests still being set up under Set up, after the open contests', async () => {
     primeCommonMocks({ leagueRole: 'COMMISSIONER' });
     listContestsMock.mockResolvedValue({
       data: { contests: [{ ...contest('contest-2', 'PGA Draft'), status: 'DRAFT' }, contest('contest-1', 'Masters Pick 6')] },
@@ -263,8 +263,8 @@ describe('LeagueContestsPage', () => {
 
     renderLeagueContestsPage();
 
-    const groups = await screen.findAllByRole('region', { name: /^(Open for entries|Draft)$/ });
-    expect(groups.map((group) => group.getAttribute('aria-label'))).toEqual(['Open for entries', 'Draft']);
+    const groups = await screen.findAllByRole('region', { name: /^(Open|Set up)$/ });
+    expect(groups.map((group) => group.getAttribute('aria-label'))).toEqual(['Open', 'Set up']);
     expect(screen.getByTestId('league-contest-contest-2')).toHaveAttribute('href', '/league/BIGDAWGS/contests/contest-2');
   });
 

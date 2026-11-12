@@ -1,5 +1,5 @@
 import type { ContestStatus } from '@poolmaster/shared/domain';
-import type { ReactNode } from 'react';
+import { useId, type ReactNode } from 'react';
 import { Heading, HelpTip, StageTrack, Text, Tile } from '@/features/shared/ui';
 import { CONTEST_LIFECYCLE_STAGES, contestLifecycleStage } from './contest-lifecycle';
 
@@ -29,10 +29,11 @@ export function LifecyclePanel({
   status: ContestStatus;
   title: ReactNode;
 }) {
+  const titleId = useId();
   return (
     <Tile
       as="section"
-      aria-labelledby="contest-status-card-title"
+      aria-labelledby={titleId}
       className="grid gap-4 px-5 py-5"
       data-testid="contest-status-card"
       padding="none"
@@ -46,7 +47,7 @@ export function LifecyclePanel({
         testId="contest-stage-track"
       />
       <div className="flex items-center gap-2">
-        <Heading data-testid="contest-status-card-title" id="contest-status-card-title" level={2} size="xl" tone="inherit" variant="card">
+        <Heading data-testid="contest-status-card-title" id={titleId} level={2} size="xl" tone="inherit" variant="card">
           {title}
         </Heading>
         {help ? (
