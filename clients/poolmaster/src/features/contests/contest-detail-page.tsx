@@ -23,15 +23,22 @@ import {
   Checkbox,
   Chip,
   DateDisplay,
-  DefinitionList,
   EmptyState,
   ErrorState,
+  FactList,
   FormField,
   Heading,
   HelpTip,
   Input,
   LinkButton,
   LoadingState,
+  SimpleTable,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeaderCell,
+  TableRow,
+  Text,
   Tile,
   formatNumber,
   useDisplayPreferences,
@@ -84,39 +91,42 @@ function ParticipantsTable({
 
   return (
     <Tile className="mt-4 overflow-x-auto" padding="none" radius="lg">
-      <div className="grid grid-cols-[minmax(0,1.5fr)_minmax(120px,0.8fr)_minmax(120px,0.8fr)] gap-2 border-b border-border px-4 py-3 text-xs font-medium uppercase text-muted-foreground">
-        <span>Participant</span>
-        <span>Status</span>
-        <span>Affiliation</span>
-      </div>
-      <div className="divide-y divide-border">
-        {sorted.map((participant) => {
-          return (
-            <div
-              className="grid grid-cols-[minmax(0,1.5fr)_minmax(120px,0.8fr)_minmax(120px,0.8fr)] gap-2 px-4 py-3 text-sm"
+      <SimpleTable data-testid={`contest-entry-picks-${entryId}`}>
+        <TableHead>
+          <tr>
+            <TableHeaderCell>Participant</TableHeaderCell>
+            <TableHeaderCell>Status</TableHeaderCell>
+            <TableHeaderCell>Affiliation</TableHeaderCell>
+          </tr>
+        </TableHead>
+        <TableBody>
+          {sorted.map((participant) => (
+            <TableRow
               data-testid={`contest-entry-pick-${entryId}-${participant.participantId}`}
               key={participant.pickId}
             >
-              <div className="min-w-0">
-                <div className="truncate font-medium text-foreground">{participant.participantName}</div>
-                <div className="mt-1 text-xs text-muted-foreground">
+              <TableCell>
+                <Text as="div" variant="strong">{participant.participantName}</Text>
+                <Text as="div" variant="caption">
                   {participant.participantStatus
                     ? `Status: ${formatParticipantStatusLabel(participant.participantStatus, sport)}`
                     : participant.teamAffiliation ?? participant.role ?? 'Contest participant'}
-                </div>
-              </div>
-              <span className="text-muted-foreground">
-                {participant.participantStatus
-                  ? formatParticipantStatusLabel(participant.participantStatus, sport)
-                  : 'Active'}
-              </span>
-              <span className="text-muted-foreground">
-                {participant.teamAffiliation ?? participant.role ?? '—'}
-              </span>
-            </div>
-          );
-        })}
-      </div>
+                </Text>
+              </TableCell>
+              <TableCell>
+                <Text tone="muted">
+                  {participant.participantStatus
+                    ? formatParticipantStatusLabel(participant.participantStatus, sport)
+                    : 'Active'}
+                </Text>
+              </TableCell>
+              <TableCell>
+                <Text tone="muted">{participant.teamAffiliation ?? participant.role ?? '—'}</Text>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </SimpleTable>
     </Tile>
   );
 }
@@ -558,9 +568,9 @@ export function ContestDetailPage() {
 
       <Tile data-testid="contest-how-to-play">
         <Heading level={3} variant="card" size="xl" tone="inherit">How to play</Heading>
-        <DefinitionList
+        <FactList
           className="mt-5"
-          items={[
+          facts={[
             { id: 'way-to-play', label: 'Way to play', value: formatSelectionTypeName(contest.selectionType) },
             {
               id: 'events',

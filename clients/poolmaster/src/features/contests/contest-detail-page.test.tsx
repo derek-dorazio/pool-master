@@ -520,6 +520,45 @@ describe('ContestDetailPage (Contest Board)', () => {
     expect(screen.queryByTestId('contest-board-picks-hidden-entry-1')).not.toBeInTheDocument();
   });
 
+  it('shows an entry\'s picks as a table with Participant, Status and Affiliation columns, one row per pick', async () => {
+    primeMocks({
+      contestStatus: 'ACTIVE',
+      picksRevealed: true,
+      entries: [
+        buildEntry({
+          id: 'entry-3',
+          squadId: 'squad-other',
+          squadName: 'Other Team',
+          name: 'Other Team Entry 1',
+          picksCount: 1,
+          participants: [
+            {
+              pickId: 'pick-3',
+              sportEventParticipantId: 'sep-3',
+              participantId: 'participant-3',
+              participantName: 'Phil Mickelson',
+              pickedAt: '2026-04-15T00:00:00.000Z',
+            },
+          ],
+        }),
+      ],
+    });
+
+    renderContestBoard();
+    fireEvent.click(await screen.findByTestId('contest-board-toggle-entry-3'));
+
+    const table = await screen.findByTestId('contest-entry-picks-entry-3');
+    expect(table.tagName).toBe('TABLE');
+    expect(within(table).getAllByRole('columnheader').map((header) => header.textContent)).toEqual([
+      'Participant',
+      'Status',
+      'Affiliation',
+    ]);
+    const row = within(table).getByTestId('contest-entry-pick-entry-3-participant-3');
+    expect(within(row).getAllByRole('cell')).toHaveLength(3);
+    expect(row).toHaveTextContent('Phil Mickelson');
+  });
+
   // pool-master-dxd.13 — post-event-start: picks are revealed for every row.
   it('reveals participant picks on every row once contest status moves past OPEN', async () => {
     primeMocks({
