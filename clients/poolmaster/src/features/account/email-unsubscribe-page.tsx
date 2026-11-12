@@ -41,7 +41,7 @@ export function EmailUnsubscribePage() {
     return (
       <SectionCard className="mx-auto max-w-md" padded testId="email-unsubscribe-invalid" title="This link doesn't work">
         <Text as="p" variant="meta">
-          Sign in and open Email notifications on your profile to choose which emails you get.
+          Choose which emails you get under Email notifications on My account.
         </Text>
         <LinkButton to="/my-account" variant="secondary">Email notifications</LinkButton>
       </SectionCard>
@@ -53,8 +53,7 @@ export function EmailUnsubscribePage() {
     return (
       <SectionCard className="mx-auto max-w-md" padded testId="email-unsubscribe-done" title="You're unsubscribed">
         <Text as="p" variant="meta">
-          You won&apos;t get {label.toLowerCase()} emails from any of your leagues. You can turn them
-          back on, or change other emails, in Email notifications on your profile.
+          You won&apos;t get {label.toLowerCase()} emails from any of your leagues.
         </Text>
         <LinkButton to="/my-account" variant="secondary">Email notifications</LinkButton>
       </SectionCard>
@@ -64,8 +63,7 @@ export function EmailUnsubscribePage() {
   return (
     <SectionCard className="mx-auto max-w-md" padded title="Stop these emails?">
       <Text as="p" variant="meta">
-        This turns off this kind of email from all your leagues. Invitations and account emails are
-        always sent.
+        This turns off this kind of email from all your leagues.
       </Text>
       {unsubscribeMutation.isError ? (
         <Notice tone="danger">{extractErrorMessage(unsubscribeMutation.error, { fallback: 'We could not unsubscribe you. Try again.' })}</Notice>

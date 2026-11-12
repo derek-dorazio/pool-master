@@ -3,13 +3,13 @@ import { Link } from 'react-router';
 import type { LeaguePayment, UserPayment } from '@/lib/api';
 import { extractErrorMessage } from '@/lib/errors';
 import { buildContestLandingPath, buildLeaguePath } from '@/features/leagues/league-routing';
-import { DateDisplay, QueryState, SectionCard, SettingsRows, formatMoneyCents, useDisplayPreferences } from '@/features/shared/ui';
+import { DateDisplay, QueryState, SectionCard, SectionRow, SectionRows, formatMoneyCents, useDisplayPreferences } from '@/features/shared/ui';
 import { useLeaguePaymentsQuery, useMyPaymentsQuery } from './use-payments-queries';
 
 const LEAGUE_DESCRIPTION = 'Every payment made in this league. While payments are off, expanding a contest is free and shows here as $0.';
 const MINE_DESCRIPTION = 'What you have paid in your leagues. While payments are off, expanding a contest is free and shows here as $0.';
 
-/** One line: when, what for (linking to its contest or league), who, and how much. */
+/** One payment row: what it was for (linking to its contest or league), when and who, and how much. */
 function PaymentLine({
   testId,
   paidAt,
@@ -25,17 +25,17 @@ function PaymentLine({
 }) {
   const { locale } = useDisplayPreferences();
   return (
-    <div
-      className="grid gap-x-4 gap-y-1 px-4 py-3.5 text-sm sm:grid-cols-[8rem_minmax(0,1fr)_auto] sm:items-baseline"
-      data-testid={testId}
-    >
-      <DateDisplay className="text-muted-foreground" timeStyle={null} value={paidAt} />
-      <div className="min-w-0">
-        <div className="text-foreground">{what}</div>
-        {who ? <div className="text-xs text-muted-foreground">{who}</div> : null}
-      </div>
-      <div className="font-medium tabular-nums text-foreground">{formatMoneyCents(amountCents, locale)}</div>
-    </div>
+    <SectionRow
+      facts={(
+        <>
+          <DateDisplay timeStyle={null} tone="inherit" value={paidAt} />
+          {who ? ` · ${who}` : null}
+        </>
+      )}
+      name={what}
+      testId={testId}
+      value={formatMoneyCents(amountCents, locale)}
+    />
   );
 }
 
@@ -47,8 +47,7 @@ export function LeaguePaymentsSection({ leagueId, leagueCode }: { leagueId: stri
   const paymentsQuery = useLeaguePaymentsQuery(leagueId);
   return (
     <SectionCard help={LEAGUE_DESCRIPTION} testId="league-payments" title="Payments">
-      <SettingsRows>
-        <QueryState
+      <QueryState
           empty="No payments yet."
           error={extractErrorMessage(paymentsQuery.error, { fallback: 'We could not load the payments right now.' })}
           isEmpty={(payments) => payments.length === 0}
@@ -57,7 +56,9 @@ export function LeaguePaymentsSection({ leagueId, leagueCode }: { leagueId: stri
           rows={3}
           testId="league-payments"
         >
-          {(payments) => payments.map((payment: LeaguePayment) => (
+          {(payments) => (
+            <SectionRows>
+              {payments.map((payment: LeaguePayment) => (
             <PaymentLine
               amountCents={payment.amountCents}
               key={payment.id}
@@ -69,19 +70,19 @@ export function LeaguePaymentsSection({ leagueId, leagueCode }: { leagueId: stri
               who={payment.payer?.name ?? null}
             />
           ))}
+            </SectionRows>
+          )}
         </QueryState>
-      </SettingsRows>
     </SectionCard>
   );
 }
 
-/** My profile › Payments (#987): what the signed-in user paid, in any of their leagues. */
+/** My account › Payments (#987): what the signed-in user paid, in any of their leagues. */
 export function MyPaymentsSection() {
   const paymentsQuery = useMyPaymentsQuery();
   return (
     <SectionCard help={MINE_DESCRIPTION} testId="my-payments" title="Payments">
-      <SettingsRows>
-        <QueryState
+      <QueryState
           empty="No payments yet."
           error={extractErrorMessage(paymentsQuery.error, { fallback: 'We could not load your payments right now.' })}
           isEmpty={(payments) => payments.length === 0}
@@ -90,7 +91,9 @@ export function MyPaymentsSection() {
           rows={3}
           testId="my-payments"
         >
-          {(payments) => payments.map((payment: UserPayment) => (
+          {(payments) => (
+            <SectionRows>
+              {payments.map((payment: UserPayment) => (
             <PaymentLine
               amountCents={payment.amountCents}
               key={payment.id}
@@ -100,8 +103,9 @@ export function MyPaymentsSection() {
               who={payment.league.name}
             />
           ))}
+            </SectionRows>
+          )}
         </QueryState>
-      </SettingsRows>
     </SectionCard>
   );
 }

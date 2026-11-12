@@ -5,8 +5,8 @@ import { ForgotPasswordPage } from '@/features/auth/forgot-password-page';
 import { ResetPasswordPage } from '@/features/auth/reset-password-page';
 import { UndoEmailChangePage } from '@/features/auth/undo-email-change-page';
 import { EmailUnsubscribePage } from '@/features/account/email-unsubscribe-page';
-import { MyAccountPage } from '@/features/account/my-account-page';
-import { UserPage } from '@/features/account/user-page';
+import { MyAccountPage } from '@/features/account/my-account/my-account-page';
+import { UserPageRedirect } from '@/features/account/user-page-redirect';
 import { AppShell } from '@/features/app-shell/app-shell';
 import { NotFoundPage } from '@/features/app-shell/not-found-page';
 import { AllYearsPage } from '@/features/championships/all-years-page';
@@ -174,7 +174,7 @@ export const router = createBrowserRouter([
           },
           {
             path: 'users/:userId',
-            element: <UserPage />,
+            element: <UserPageRedirect />,
           },
           {
             path: 'league/:leagueCode',

@@ -3,7 +3,7 @@
 The shared UI layer is split into three levels:
 
 1. **Primitives** own a single reusable control or visual pattern, such as
-   `Button`, `Tile`, `Modal`, `DataGrid`, `ActionTile`, `StatusBadge` and
+   `Button`, `Tile`, `Modal`, `DataGrid`, `Switch`, `StatusBadge` and
    `Eyebrow`. A bordered card box is a `Tile` (`padding="none"` plus your own
    padding when it needs less), and the small uppercase line over a title is an
    `Eyebrow`; a navy panel is a `Tile` with `variant="inverse"` (or
@@ -89,8 +89,11 @@ that is not a table pages through `Pager`, the same Previous/Next control.
 
 League pages and administration areas use the pieces named in
 `rules/ux-rules.md` §12 *League Pages and Commissioner Tools*: `LeagueMenu`,
-`AdminAreaLayout`, `PageHeader`, a `SectionCard` of `SettingsRows` /
-`SettingsRow` for settings (a `bare` `SectionCard` titles a section whose body
+`AdminAreaLayout`, `PageHeader`, a `SettingsSection` of `SettingsRow`s for
+settings, "see it, then Edit": label left and value right, one Edit in the title
+opening the group's `FormModal`, and a `Switch` in a row for a setting that saves
+the moment it is flipped (pages not yet moved over use a `SectionCard` of
+`SettingsRows`; a `bare` `SectionCard` titles a section whose body
 is a `DataGrid`), a `SectionCard` with `tone="danger"` of `DangerZoneAction`s
 for a danger zone, and `FormPage` for a full-page edit
 (with `IconPalette` when the form picks an icon). A `FormPage` saved by one

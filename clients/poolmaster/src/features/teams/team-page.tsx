@@ -1,7 +1,6 @@
 import { LeagueRole } from '@poolmaster/shared/domain';
 import { Navigate, useParams } from 'react-router';
 import { formatUserName } from '@/features/account/user-name';
-import { buildUserPath } from '@/features/account/user-routing';
 import { SquadHistorySection } from '@/features/championships/squad-history-section';
 import {
   buildLeagueAdminTeamPath,
@@ -92,7 +91,6 @@ export function TeamPage() {
                 aside={owner.leagueRole === LeagueRole.COMMISSIONER ? <Chip>Commissioner</Chip> : null}
                 key={owner.userId}
                 name={formatUserName(owner.user.firstName, owner.user.lastName)}
-                to={buildUserPath(owner.userId)}
               />
             ))}
           </SectionRows>
