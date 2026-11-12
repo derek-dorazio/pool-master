@@ -22,15 +22,13 @@ export type CheckListProps = {
   testId?: string;
 };
 
-const MARK: Record<CheckListSurface, { met: string; unmet: string }> = {
-  default: {
-    met: "bg-primary text-primary-foreground",
-    unmet: "border-[1.5px] border-current text-foreground",
-  },
-  inverse: {
-    met: "bg-primary text-primary-foreground",
-    unmet: "border-[1.5px] border-current text-on-inverse",
-  },
+/** A met item's filled check: the brand fill, on a card and on a navy panel alike. */
+const MET_MARK = "bg-primary text-primary-foreground";
+
+/** A missing item's outlined cross, in the surface's full-contrast text colour. */
+const UNMET_MARK: Record<CheckListSurface, string> = {
+  default: "border-[1.5px] border-current text-foreground",
+  inverse: "border-[1.5px] border-current text-on-inverse",
 };
 
 /** Done items dim; missing ones stay at full contrast. */
@@ -54,7 +52,7 @@ export function CheckList({ className, items, surface = "default", testId }: Che
             aria-hidden
             className={cn(
               "inline-grid size-[18px] shrink-0 place-items-center rounded-full",
-              item.isMet ? MARK[surface].met : MARK[surface].unmet,
+              item.isMet ? MET_MARK : UNMET_MARK[surface],
             )}
           >
             {item.isMet ? <Check size={12} strokeWidth={3} /> : <X size={11} strokeWidth={3} />}
