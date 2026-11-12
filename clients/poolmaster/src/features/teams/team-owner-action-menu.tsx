@@ -105,9 +105,9 @@ export function TeamOwnerActionMenu({
   const actionIsPending = changeRoleMutation.isPending || removeOwnerMutation.isPending;
   const dialogTitle =
     activeAction === 'promote'
-      ? 'Promote to commissioner'
+      ? 'Make commissioner'
       : activeAction === 'demote'
-        ? 'Demote to member'
+        ? 'Remove as commissioner'
         : 'Remove owner';
   const dialogTestId = `${testPrefix}-dialog-${teamId}-${ownerUserId}`;
   const closeDialog = () => {
@@ -122,10 +122,10 @@ export function TeamOwnerActionMenu({
       <RowActionsMenu
         actions={[
           ...(canPromote
-            ? [{ label: 'Promote to commissioner', onSelect: () => setActiveAction('promote'), testId: `${testPrefix}-promote-${ownerKey}` }]
+            ? [{ label: 'Make commissioner', onSelect: () => setActiveAction('promote'), testId: `${testPrefix}-promote-${ownerKey}` }]
             : []),
           ...(canDemote
-            ? [{ label: 'Demote to member', onSelect: () => setActiveAction('demote'), testId: `${testPrefix}-demote-${ownerKey}` }]
+            ? [{ label: 'Remove as commissioner', onSelect: () => setActiveAction('demote'), testId: `${testPrefix}-demote-${ownerKey}` }]
             : []),
           { label: 'Remove owner', onSelect: () => setActiveAction('remove'), testId: `${testPrefix}-remove-${ownerKey}`, tone: 'danger' },
         ]}
@@ -166,13 +166,13 @@ export function TeamOwnerActionMenu({
         />
       ) : (
         <ConfirmDialog
-          confirmLabel={activeAction === 'promote' ? 'Promote' : activeAction === 'demote' ? 'Demote' : 'Remove'}
+          confirmLabel={activeAction === 'promote' ? 'Make commissioner' : activeAction === 'demote' ? 'Remove as commissioner' : 'Remove'}
           confirmTestId={activeAction ? `${testPrefix}-confirm-${activeAction}-${teamId}-${ownerUserId}` : undefined}
           description={
             activeAction === 'promote'
-              ? `${ownerName} will gain commissioner authority for this league.`
+              ? `${ownerName} will help you run this league, with the same Commissioner tools you have.`
               : activeAction === 'demote'
-                ? `${ownerName} will lose commissioner authority and return to member status in this league.`
+                ? `${ownerName} stays in this league as a member, without the Commissioner tools.`
                 // #218: removal also ends their league membership, because a member with no
                 // squad is invisible on every surface that lists people in the league.
                 : `${ownerName} will stop being an owner and will leave this league. Their contest history stays, and rejoining restores it.`
@@ -192,7 +192,7 @@ export function TeamOwnerActionMenu({
             if (!open) closeDialog();
           }}
           open={activeAction !== null}
-          pendingLabel={activeAction === 'promote' ? 'Promoting...' : activeAction === 'demote' ? 'Demoting...' : 'Removing...'}
+          pendingLabel={activeAction === 'remove' ? 'Removing...' : 'Saving...'}
           testId={dialogTestId}
           title={dialogTitle}
           tone={activeAction === 'remove' ? 'danger' : 'default'}
