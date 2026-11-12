@@ -27,6 +27,8 @@ const textVariants = cva("", {
       displayLabel: "font-display text-xs font-bold uppercase tracking-label",
       /** A name set in the display face, such as the league in the header. */
       display: "font-display font-bold",
+      /** A big place numeral in the display face, such as the 1 on a podium step. */
+      numeral: "font-display font-black",
     },
     tone: {
       /** The colour of the text around it, such as an alert's. */
@@ -53,6 +55,7 @@ const textVariants = cva("", {
       sm: "text-sm",
       base: "text-base",
       lg: "text-lg",
+      xl: "text-xl",
     },
     /** Emphasis: names and points that stand out in a row (`semibold`) or a total (`bold`). */
     weight: {
@@ -78,6 +81,7 @@ const DEFAULT_TONES = {
   caption: "muted",
   label: "muted",
   meta: "muted",
+  numeral: "inherit",
   strong: "default",
   value: "default",
   wordmark: "onInverse",
@@ -94,6 +98,7 @@ const DEFAULT_SIZES = {
   caption: "xs",
   label: "inherit",
   meta: "sm",
+  numeral: "xl",
   strong: "sm",
   value: "sm",
   wordmark: "inherit",

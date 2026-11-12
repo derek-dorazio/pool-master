@@ -403,6 +403,17 @@ administration area (root admin included), reusing the same shared components.
     content such as Owners uses the same title as a `bare` section, and a
     danger zone is the same card with `tone="danger"`.
 
+    Data is never a raw `ul`/`li`/`ol` (#1590). Anything that is a row (a
+    name, maybe a fact line, a figure or an action: a contest's events, a
+    setting with its checkbox, a contest over a limit) is a `SectionRow` in a
+    titled `SectionCard`, with `SectionEmpty` when there is none. When no slot
+    fits, add one to `SectionRow` rather than hand-building a row. A list that
+    is not data rows gets a named composite in the feature folder that owns
+    the concept, which owns its markup and styles: a plan's features are a
+    `FeatureList` (`features/plans`), and one-of-a-kind blocks such as the
+    `Podium`, the contest type tile and the squares winners are their own
+    components. A page never styles around them.
+
     `npm run rules:check:titled-tiles` finds every `Tile` outside
     `features/shared/ui` that holds its own `Heading`, `Eyebrow`, `SectionTitle`
     or `<h1>`–`<h6>`. Its baseline, `scripts/titled-tile-baseline.json`, lists

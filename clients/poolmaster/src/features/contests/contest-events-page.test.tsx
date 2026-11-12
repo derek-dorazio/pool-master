@@ -186,6 +186,32 @@ describe('Commissioner tools › Contests › one contest › Events', () => {
     expect(options.getByText(/Field not loaded yet/)).toBeInTheDocument();
   });
 
+  it('numbers the chosen events in play order in their own section, and asks for one when none is chosen', async () => {
+    primeMocks();
+
+    renderAt(EVENTS_PATH);
+
+    fireEvent.click(await screen.findByTestId('contest-events-option-event-2'));
+    const chosen = within(screen.getByRole('region', { name: '2 events, in order' }));
+    expect(chosen.getAllByRole('listitem').map((item) => item.textContent)).toEqual([
+      expect.stringMatching(/^The Masters.*1$/),
+      expect.stringMatching(/^PGA Championship.*2$/),
+    ]);
+    fireEvent.click(option('event-1'));
+    fireEvent.click(option('event-2'));
+    expect(screen.getByTestId('contest-events-chosen-empty')).toHaveTextContent('Choose at least one event.');
+  });
+
+  it('shows a season that could not load inside that season\'s section', async () => {
+    primeMocks();
+    listEventsMock.mockImplementation(() => Promise.resolve({ error: { error: { code: 'INTERNAL_ERROR', message: 'Boom' } }, status: 500 }));
+
+    renderAt(EVENTS_PATH);
+
+    const error = await screen.findByTestId('contest-events-year-error');
+    expect(within(screen.getByRole('region', { name: '2099 events' })).getByTestId('contest-events-year-error')).toBe(error);
+  });
+
   it('reads the one contest by id and goes back to the contest page for a contest of another league', async () => {
     primeMocks({ contest: { ...contestOnMasters, leagueId: 'league-elsewhere' } });
 
@@ -222,7 +248,7 @@ describe('Commissioner tools › Contests › one contest › Events', () => {
     fireEvent.click(await screen.findByTestId('contest-events-option-event-3'));
     fireEvent.click(option('event-2'));
     const chosen = within(screen.getByTestId('contest-events-chosen')).getAllByRole('listitem');
-    expect(chosen.map((item) => item.textContent.split(' · ')[0])).toEqual(['The Masters', 'PGA Championship', 'U.S. Open']);
+    expect(chosen.map((item) => within(item).getByText(/^(The Masters|PGA Championship|U\.S\. Open)$/).textContent)).toEqual(['The Masters', 'PGA Championship', 'U.S. Open']);
     fireEvent.click(screen.getByTestId('contest-events-save'));
 
     await waitFor(() => expect(setContestSportEventsMock).toHaveBeenCalledWith({

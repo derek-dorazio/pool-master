@@ -35,6 +35,18 @@ describe("pool-master-3lo.18: shared DateTimeField and DateDisplay primitives", 
     expect(screen.getByText("Unavailable")).toBeInTheDocument();
   });
 
+  it("draws a date in the body colour, and in the colour around it when it sits in a muted line", () => {
+    render(
+      <>
+        <DateDisplay value={null} />
+        <DateDisplay emptyLabel="No date" tone="inherit" value={null} />
+      </>,
+    );
+
+    expect(screen.getByText("Unavailable")).toHaveClass("text-foreground");
+    expect(screen.getByText("No date")).not.toHaveClass("text-foreground");
+  });
+
   it("fills an entry box with the wall clock in the member's zone and names the zone beside it", () => {
     const pacific = displayPreferencesOf({ ...user, timezone: "America/Los_Angeles" });
     const value = toDateTimeLocalValue("2026-04-30T12:30:00.000Z", pacific.timeZone);

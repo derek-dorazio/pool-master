@@ -2,11 +2,11 @@ import { cn, formatCupPoints, Text, useDisplayPreferences } from '@/features/sha
 import { joinNames } from './cup-view';
 import type { PodiumStep } from './championship-view';
 
-/** Each step's colors and height, 1st tallest. */
+/** Each step's colours (in the stylesheet) and height, 1st tallest. */
 const STEP_CLASS: Record<PodiumStep['place'], string> = {
-  1: 'h-16 bg-podium-1 text-podium-1-foreground',
-  2: 'h-12 bg-podium-2 text-podium-2-foreground',
-  3: 'h-8 bg-podium-3 text-podium-3-foreground',
+  1: 'h-16 podium-step-1',
+  2: 'h-12 podium-step-2',
+  3: 'h-8 podium-step-3',
 };
 
 /** Left to right as a podium stands: 2nd, 1st, 3rd. */
@@ -33,8 +33,8 @@ export function Podium({ focusSquadId, steps, testId }: { focusSquadId: string |
               {joinNames(step.squads.map((squad) => squad.squadName))}
             </Text>
             <Text variant="caption">{formatCupPoints(step.squads[0]?.points ?? 0, locale)} pts</Text>
-            <span className={cn('flex w-full items-center justify-center rounded-t-lg text-xl font-black', STEP_CLASS[place])}>
-              {place}
+            <span className={cn('flex w-full items-center justify-center rounded-t-lg', STEP_CLASS[place])} data-testid={`${testId}-${place}-step`}>
+              <Text variant="numeral">{place}</Text>
             </span>
           </li>
         );

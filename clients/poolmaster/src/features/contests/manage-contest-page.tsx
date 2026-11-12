@@ -44,8 +44,11 @@ import {
   refetchFailed,
   SectionCard,
   SectionEmpty,
+  SectionRow,
+  SectionRows,
   SettingsRow,
   SettingsRows,
+  Text,
 } from '@/features/shared/ui';
 import { coversOneEvent, firstContestEvent } from './contest-events';
 import { ContestStatusBadge } from './contest-status-badge';
@@ -271,29 +274,18 @@ export function ManageContestPage() {
                 {isMultiEvent ? 'Change events' : 'Add events'}
               </LinkButton>
             ) : isNotOpen ? <FixedNote /> : undefined}
-            label={isMultiEvent ? `Events (${contest.sportEvents.length})` : 'Event'}
+            label={isMultiEvent ? 'Events' : 'Event'}
             testId="manage-contest-event-row"
             value={(
               <>
-                {isMultiEvent ? (
-                  <ol className="space-y-0.5" data-testid="manage-contest-event-list">
-                    {contest.sportEvents.map((sportEvent) => (
-                      <li key={sportEvent.sportEventId}>
-                        {sportEvent.name}
-                        <span className="text-xs text-muted-foreground">
-                          {' · '}<DateDisplay className="text-muted-foreground" value={sportEvent.startDate} />
-                        </span>
-                      </li>
-                    ))}
-                  </ol>
-                ) : eventLabel}
-                <div className="text-xs text-muted-foreground">
+                {isMultiEvent ? `${contest.sportEvents.length} events, listed below` : eventLabel}
+                <Text as="div" variant="caption">
                   {isMultiEvent ? 'The first event starts ' : 'Starts '}
-                  <DateDisplay className="text-muted-foreground" value={event.startDate} />.
+                  <DateDisplay tone="inherit" value={event.startDate} />.
                   {contest.selectionType === SelectionType.RANDOM_DRAW
                     ? ' Entries close when you run the draw, which must be before then.'
                     : ' Entries close then.'}
-                </div>
+                </Text>
               </>
             )}
           />
@@ -311,6 +303,22 @@ export function ManageContestPage() {
           />
         </SettingsRows>
       </SectionCard>
+
+      {isMultiEvent ? (
+        <SectionCard testId="manage-contest-event-list" title="Events, in order">
+          <SectionRows>
+            {contest.sportEvents.map((sportEvent, index) => (
+              <SectionRow
+                facts={<DateDisplay tone="inherit" value={sportEvent.startDate} />}
+                key={sportEvent.sportEventId}
+                name={sportEvent.name}
+                testId={`manage-contest-event-${sportEvent.sportEventId}`}
+                value={index + 1}
+              />
+            ))}
+          </SectionRows>
+        </SectionCard>
+      ) : null}
 
       <ContestExpansionSection
         canGrant={viewer.isRootAdmin}
