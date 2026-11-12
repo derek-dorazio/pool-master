@@ -76,7 +76,10 @@ Use page templates when a page matches an existing workflow shape:
 
 - An admin list is no template: a `PageHeader` (with the search box, or one
   action and the grid's own search), then `DataGrid`, with `QueryState` for its
-  loading and error states.
+  loading and error states. A manage list with views (Active / History, Pending /
+  Expired) passes them to the grid's `views`: a `ViewFilter` with counts at the
+  left of a header inside the grid's card and the search at its right, never a
+  second row of `PageTabs` or a `SegmentedControl` above the grid.
 - `StatusPage` for a page that is only a status: not found, a crash, a dead or
   expired link, or the done or confirm step after a link from an email. A
   symbol (`kind`), a title, one plain line and one primary action, centred in
@@ -86,6 +89,8 @@ Use page templates when a page matches an existing workflow shape:
 - `PublicInviteJoinPage` for public invitation or join surfaces.
 
 `DataGrid` takes an optional `search` (one box matching every text column),
+`views` (a `ViewFilter` in the card's header, whose `status` stands in for the
+table while the chosen view loads or fails),
 `pageSize` (rows per page, with a Previous/Next pager once there is more than
 one page) and `showColumnFilters` (on by default). A list that can grow to
 hundreds of rows uses `search` and `pageSize` (`rules/ux-rules.md` §12). A list

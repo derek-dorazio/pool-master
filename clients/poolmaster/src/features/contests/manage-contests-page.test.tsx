@@ -245,7 +245,7 @@ describe('ManageContestsPage', () => {
     expect(screen.queryByTestId('manage-contests-row-contest-newer')).not.toBeInTheDocument();
   });
 
-  it('says a year\'s finished contests could not be loaded rather than showing none', async () => {
+  it('says a year\'s finished contests could not be loaded rather than showing none, keeping the views and search above it', async () => {
     primeCommonMocks();
     primeContests([buildContest({ id: 'contest-open', status: 'OPEN', ...onEvent(heritage) })], { 2099: [] });
     listContestsMock.mockImplementation(({ query }: { query?: { finishedYear?: number } }) => Promise.resolve(query?.finishedYear === undefined
@@ -257,6 +257,10 @@ describe('ManageContestsPage', () => {
     await userEvent.click(await screen.findByTestId('manage-contests-filter-history'));
 
     expect(await screen.findByTestId('manage-contests-history-error')).toHaveTextContent('We couldn\'t load the contests finished in 2099.');
+    expect(screen.getByRole('radio', { name: 'Active 1' })).not.toBeChecked();
+    expect(screen.getByRole('radio', { name: 'History' })).toBeChecked();
+    expect(screen.getByTestId('manage-contests-search')).toBeInTheDocument();
+    expect(screen.queryByTestId('manage-contests-table')).not.toBeInTheDocument();
   });
 
   it('finds a contest by its event\'s name as well as its own', async () => {

@@ -18,6 +18,7 @@ import { cn } from "./class-names";
 import { Input } from "./form-field";
 import { Pager } from "./pager";
 import { Tile } from "./tile";
+import { ViewFilter, type ViewFilterOption } from "./view-filter";
 
 /** One search box across the grid's text columns (rules/ux-rules.md §12 rule 7). */
 export type DataGridSearch = {
@@ -42,6 +43,25 @@ export type DataGridJumpToRow = {
   /** The button's text, e.g. "Jump to Casey Crushers". */
   label: string;
   testId?: string;
+};
+
+/**
+ * The list's views (Active / History, Pending / Expired) as a `ViewFilter` in the grid's own
+ * header, with the search box beside it at the right (rules/ux-rules.md §12 rule 7). The page
+ * picks which rows to pass for the chosen view.
+ */
+export type DataGridViews = {
+  /** Accessible name of the choice, e.g. "Contests to show". */
+  label: string;
+  onChange: (value: string) => void;
+  options: ViewFilterOption[];
+  value: string;
+  /**
+   * Drawn in the card in place of the table while the chosen view's rows load or fail to load
+   * (a `LoadingState` or `ErrorState` of `size="inline"`),
+   * so the views and search stay where they are.
+   */
+  status?: ReactNode;
 };
 
 export type DataGridProps<TData> = {
@@ -83,6 +103,8 @@ export type DataGridProps<TData> = {
   showColumnFilters?: boolean;
   /** `scoreboard`: a leaderboard's header row, navy with gold column names. */
   headerTone?: "plain" | "scoreboard";
+  /** The list's views, which put the views and the search in a header inside the grid's card. */
+  views?: DataGridViews;
 } & (
   | {
       /** A search box above the grid matching any text column. Off by default. */
@@ -158,6 +180,7 @@ export function DataGrid<TData>({
   showColumnFilters = true,
   jumpToRow,
   headerTone = "plain",
+  views,
 }: DataGridProps<TData>) {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [ownSearchTerm, setOwnSearchTerm] = useState("");
@@ -253,192 +276,212 @@ export function DataGrid<TData>({
     setPagination({ ...pagination, pageIndex: Math.max(pageCount - 1, 0) });
   }
 
+  const searchBox = search ? (
+    <Input
+      aria-label={search.label}
+      className={views ? undefined : "max-w-sm"}
+      data-testid={search.testId}
+      onChange={(event) => {
+        table.setGlobalFilter(event.target.value);
+        search.onChange?.(event.target.value);
+      }}
+      placeholder={search.placeholder ?? search.label}
+      type="search"
+      value={globalFilter}
+    />
+  ) : null;
+  const jumpButton = jumpToRow && canJump ? (
+    <Button
+      data-testid={jumpToRow.testId}
+      onClick={() => jump(jumpToRow.rowId)}
+      size="sm"
+      variant="secondary"
+    >
+      {jumpToRow.label}
+    </Button>
+  ) : null;
+
   return (
     <div className="grid gap-3">
-      {search || canJump ? (
+      {!views && (search || canJump) ? (
         <div className="flex flex-wrap items-center gap-3">
-          {search ? (
-            <Input
-              aria-label={search.label}
-              className="max-w-sm"
-              data-testid={search.testId}
-              onChange={(event) => {
-                table.setGlobalFilter(event.target.value);
-                search.onChange?.(event.target.value);
-              }}
-              placeholder={search.placeholder ?? search.label}
-              type="search"
-              value={globalFilter}
-            />
-          ) : null}
-          {jumpToRow && canJump ? (
-            <Button
-              data-testid={jumpToRow.testId}
-              onClick={() => jump(jumpToRow.rowId)}
-              size="sm"
-              variant="secondary"
-            >
-              {jumpToRow.label}
-            </Button>
-          ) : null}
+          {searchBox}
+          {jumpButton}
         </div>
       ) : null}
-      <Tile className="overflow-x-auto" padding="none" radius="md">
-        <table
-          className="min-w-full border-collapse text-left text-sm"
-          data-testid={tableTestId}
-          ref={tableRef}
-        >
-          <thead>
-            {headerGroups.map((headerGroup) => (
-              <tr
-                className={cn(
-                  "border-b border-border text-xs uppercase",
-                  headerTone === "scoreboard"
-                    ? "bg-surface-inverse text-primary"
-                    : "bg-[var(--table-header-surface)] text-muted-foreground",
-                )}
-                key={headerGroup.id}
-              >
-                {headerGroup.headers.map((header) => {
-                  const canSort = header.column.getCanSort();
+      <Tile className="overflow-hidden" padding="none" radius="md">
+        {views ? (
+          // The views read from the left and the search sits at the right; on a phone the search
+          // takes its own line under the views.
+          <div className="flex flex-wrap items-end justify-between gap-x-4 border-b border-border px-4">
+            <ViewFilter aria-label={views.label} onChange={views.onChange} options={views.options} value={views.value} />
+            {searchBox || jumpButton ? (
+              <div className="flex w-full items-center gap-2 pb-2 sm:w-auto sm:pt-2 max-sm:pt-1">
+                {searchBox ? <div className="min-w-0 flex-1 sm:w-64 sm:flex-none">{searchBox}</div> : null}
+                {jumpButton}
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+        {views?.status ? views.status : (
+        <div className="overflow-x-auto">
+          <table
+            className="min-w-full border-collapse text-left text-sm"
+            data-testid={tableTestId}
+            ref={tableRef}
+          >
+            <thead>
+              {headerGroups.map((headerGroup) => (
+                <tr
+                  className={cn(
+                    "border-b border-border text-xs uppercase",
+                    headerTone === "scoreboard"
+                      ? "bg-surface-inverse text-primary"
+                      : "bg-[var(--table-header-surface)] text-muted-foreground",
+                  )}
+                  key={headerGroup.id}
+                >
+                  {headerGroup.headers.map((header) => {
+                    const canSort = header.column.getCanSort();
 
-                  return (
-                    <th className="px-4 py-3 font-medium" key={header.id}>
-                      {header.isPlaceholder ? null : canSort ? (
-                        <button
-                          className={cn(
-                            "inline-flex items-center gap-2 text-left text-inherit transition",
-                            headerTone === "scoreboard" ? "hover:text-on-inverse" : "hover:text-foreground",
-                          )}
-                          onClick={header.column.getToggleSortingHandler()}
-                          type="button"
-                        >
-                          <span>
-                            {flexRender(
-                              header.column.columnDef.header,
-                              header.getContext(),
+                    return (
+                      <th className="px-4 py-3 font-medium" key={header.id}>
+                        {header.isPlaceholder ? null : canSort ? (
+                          <button
+                            className={cn(
+                              "inline-flex items-center gap-2 text-left text-inherit transition",
+                              headerTone === "scoreboard" ? "hover:text-on-inverse" : "hover:text-foreground",
                             )}
-                          </span>
-                          <span aria-hidden="true" className="text-[10px]">
-                            {getSortIndicator(header.column.getIsSorted())}
-                          </span>
-                        </button>
-                      ) : (
-                        flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )
+                            onClick={header.column.getToggleSortingHandler()}
+                            type="button"
+                          >
+                            <span>
+                              {flexRender(
+                                header.column.columnDef.header,
+                                header.getContext(),
+                              )}
+                            </span>
+                            <span aria-hidden="true" className="text-[10px]">
+                              {getSortIndicator(header.column.getIsSorted())}
+                            </span>
+                          </button>
+                        ) : (
+                          flexRender(
+                            header.column.columnDef.header,
+                            header.getContext(),
+                          )
+                        )}
+                      </th>
+                    );
+                  })}
+                  {rowActions ? (
+                    <th className={cn(PINNED_END_CELL, "w-px px-2 py-3", pinnedHeaderSurface)} key="row-actions">
+                      <span className="sr-only">Actions</span>
+                    </th>
+                  ) : null}
+                </tr>
+              ))}
+              {showColumnFilters ? headerGroups.map((headerGroup) => (
+                <tr
+                  className="border-b border-border bg-[var(--table-header-surface)] text-xs text-muted-foreground"
+                  key={`${headerGroup.id}-filters`}
+                >
+                  {headerGroup.headers.map((header) => (
+                    <th className="px-4 py-3 font-medium" key={`${header.id}-filter`}>
+                      {header.isPlaceholder || !header.column.getCanFilter() ? null : (
+                        <input
+                          className="w-full rounded-xl border border-border bg-card px-3 py-2 text-base normal-case sm:text-xs tracking-normal text-foreground placeholder:text-muted-foreground focus:border-[color:var(--status-active-border)]"
+                          data-testid={`${filterTestIdPrefix}-${header.column.id}`}
+                          onChange={(event) =>
+                            header.column.setFilterValue(event.target.value)
+                          }
+                          placeholder={`Filter ${
+                            header.column.columnDef.header?.toString() ??
+                            header.column.id
+                          }`}
+                          type="search"
+                          value={(header.column.getFilterValue() ?? "") as string}
+                        />
                       )}
                     </th>
+                  ))}
+                  {rowActions ? <th className={cn(PINNED_END_CELL, PINNED_PLAIN_HEADER_SURFACE)} key="row-actions-filter" /> : null}
+                </tr>
+              )) : null}
+            </thead>
+            <tbody>
+              {rows.length > 0 ? (
+                rows.map((row, index) => {
+                  const link = getRowLink?.(row.original);
+                  const linkProps = getRowLinkProps?.(row.original);
+                  const linkClassName = cn(
+                    "inline-flex text-left hover:underline",
+                    linkProps?.className,
                   );
-                })}
-                {rowActions ? (
-                  <th className={cn(PINNED_END_CELL, "w-px px-2 py-3", pinnedHeaderSurface)} key="row-actions">
-                    <span className="sr-only">Actions</span>
-                  </th>
-                ) : null}
-              </tr>
-            ))}
-            {showColumnFilters ? headerGroups.map((headerGroup) => (
-              <tr
-                className="border-b border-border bg-[var(--table-header-surface)] text-xs text-muted-foreground"
-                key={`${headerGroup.id}-filters`}
-              >
-                {headerGroup.headers.map((header) => (
-                  <th className="px-4 py-3 font-medium" key={`${header.id}-filter`}>
-                    {header.isPlaceholder || !header.column.getCanFilter() ? null : (
-                      <input
-                        className="w-full rounded-xl border border-border bg-card px-3 py-2 text-base normal-case sm:text-xs tracking-normal text-foreground placeholder:text-muted-foreground focus:border-[color:var(--status-active-border)]"
-                        data-testid={`${filterTestIdPrefix}-${header.column.id}`}
-                        onChange={(event) =>
-                          header.column.setFilterValue(event.target.value)
-                        }
-                        placeholder={`Filter ${
-                          header.column.columnDef.header?.toString() ??
-                          header.column.id
-                        }`}
-                        type="search"
-                        value={(header.column.getFilterValue() ?? "") as string}
-                      />
-                    )}
-                  </th>
-                ))}
-                {rowActions ? <th className={cn(PINNED_END_CELL, PINNED_PLAIN_HEADER_SURFACE)} key="row-actions-filter" /> : null}
-              </tr>
-            )) : null}
-          </thead>
-          <tbody>
-            {rows.length > 0 ? (
-              rows.map((row, index) => {
-                const link = getRowLink?.(row.original);
-                const linkProps = getRowLinkProps?.(row.original);
-                const linkClassName = cn(
-                  "inline-flex text-left hover:underline",
-                  linkProps?.className,
-                );
 
-                return (
-                  <tr
-                    aria-current={row.id === jumpedRowId ? "true" : undefined}
-                    className={cn(
-                      "group border-b border-border/70 align-top text-foreground transition hover:bg-[var(--table-row-hover-surface)]",
-                      link && "cursor-pointer",
-                      row.id === jumpedRowId && "bg-[var(--status-active-surface)]",
-                    )}
-                    data-row-id={row.id}
-                    data-testid={rowTestId?.(row.original, index)}
-                    key={row.id}
-                    onClick={link ? openRowFromClick : undefined}
+                  return (
+                    <tr
+                      aria-current={row.id === jumpedRowId ? "true" : undefined}
+                      className={cn(
+                        "group border-b border-border/70 align-top text-foreground transition hover:bg-[var(--table-row-hover-surface)]",
+                        link && "cursor-pointer",
+                        row.id === jumpedRowId && "bg-[var(--status-active-surface)]",
+                      )}
+                      data-row-id={row.id}
+                      data-testid={rowTestId?.(row.original, index)}
+                      key={row.id}
+                      onClick={link ? openRowFromClick : undefined}
+                    >
+                      {row.getVisibleCells().map((cell) => (
+                        <td className="px-4 py-4" key={cell.id}>
+                          {link &&
+                          cell.column.id === row.getVisibleCells()[0]?.column.id ? (
+                            <Link
+                              {...linkProps}
+                              className={linkClassName}
+                              data-row-link=""
+                              to={link}
+                            >
+                              {flexRender(
+                                cell.column.columnDef.cell,
+                                cell.getContext(),
+                              )}
+                            </Link>
+                          ) : (
+                            flexRender(cell.column.columnDef.cell, cell.getContext())
+                          )}
+                        </td>
+                      ))}
+                      {rowActions ? (
+                        <td
+                          className={cn(
+                            PINNED_END_CELL,
+                            "w-px bg-card px-2 py-3 group-hover:[background-image:linear-gradient(var(--table-row-hover-surface),var(--table-row-hover-surface))]",
+                          )}
+                          data-testid="data-grid-row-actions"
+                        >
+                          {rowActions(row.original)}
+                        </td>
+                      ) : null}
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td
+                    className="px-4 py-6 text-muted-foreground"
+                    colSpan={visibleColumnCount}
                   >
-                    {row.getVisibleCells().map((cell) => (
-                      <td className="px-4 py-4" key={cell.id}>
-                        {link &&
-                        cell.column.id === row.getVisibleCells()[0]?.column.id ? (
-                          <Link
-                            {...linkProps}
-                            className={linkClassName}
-                            data-row-link=""
-                            to={link}
-                          >
-                            {flexRender(
-                              cell.column.columnDef.cell,
-                              cell.getContext(),
-                            )}
-                          </Link>
-                        ) : (
-                          flexRender(cell.column.columnDef.cell, cell.getContext())
-                        )}
-                      </td>
-                    ))}
-                    {rowActions ? (
-                      <td
-                        className={cn(
-                          PINNED_END_CELL,
-                          "w-px bg-card px-2 py-3 group-hover:[background-image:linear-gradient(var(--table-row-hover-surface),var(--table-row-hover-surface))]",
-                        )}
-                        data-testid="data-grid-row-actions"
-                      >
-                        {rowActions(row.original)}
-                      </td>
-                    ) : null}
-                  </tr>
-                );
-              })
-            ) : (
-              <tr>
-                <td
-                  className="px-4 py-6 text-muted-foreground"
-                  colSpan={visibleColumnCount}
-                >
-                  {emptyMessage}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+                    {emptyMessage}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+        )}
       </Tile>
-      {pageSize ? (
+      {pageSize && !views?.status ? (
         <Pager
           onNext={() => table.nextPage()}
           onPrevious={() => table.previousPage()}

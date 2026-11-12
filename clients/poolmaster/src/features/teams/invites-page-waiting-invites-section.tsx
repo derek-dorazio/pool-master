@@ -10,7 +10,6 @@ import {
   ErrorState,
   LoadingState,
   SectionCard,
-  SegmentedControl,
   StatusBadge,
   Text,
 } from '@/features/shared/ui';
@@ -155,42 +154,40 @@ export function InvitesPageWaitingInvitesSection({
       ) : isError ? (
         <ErrorState body="We couldn't load pending invites right now." onRetry={onRetry} size="plain" testId="league-invitations-error" />
       ) : (
-        <div className="grid gap-3">
-          <SegmentedControl
-            aria-label="Invites to show"
-            onChange={(value) => {
+        <DataGrid
+          columns={columns}
+          data={visibleRows}
+          emptyMessage={rows.length
+            ? (filter === 'expired' ? 'No expired invites.' : 'No pending invites.')
+            : 'No invites are waiting on an answer.'}
+          getRowId={(row) => row.invitation.id}
+          pageSize={INVITES_PER_PAGE}
+          rowActions={(row) => (
+            <InvitesPageRowActions
+              invitationsKey={invitationsKey}
+              isInactiveLeague={isInactiveLeague}
+              leagueId={leagueId}
+              row={row}
+            />
+          )}
+          rowTestId={(row) => `league-invitation-${row.invitation.id}`}
+          search={{ label: 'Find an email', testId: 'league-invites-search' }}
+          showColumnFilters={false}
+          tableTestId="league-invitations-table"
+          views={{
+            label: 'Invites to show',
+            onChange: (value) => {
               if (isInviteFilter(value)) {
                 setFilter(value);
               }
-            }}
-            options={[
-              { label: `Pending · ${String(rows.length - expiredCount)}`, testId: 'league-invites-pending', value: 'pending' },
-              { label: `Expired · ${String(expiredCount)}`, testId: 'league-invites-expired', value: 'expired' },
-            ]}
-            value={filter}
-          />
-          <DataGrid
-            columns={columns}
-            data={visibleRows}
-            emptyMessage={rows.length
-              ? (filter === 'expired' ? 'No expired invites.' : 'No pending invites.')
-              : 'No invites are waiting on an answer.'}
-            getRowId={(row) => row.invitation.id}
-            pageSize={INVITES_PER_PAGE}
-            rowActions={(row) => (
-              <InvitesPageRowActions
-                invitationsKey={invitationsKey}
-                isInactiveLeague={isInactiveLeague}
-                leagueId={leagueId}
-                row={row}
-              />
-            )}
-            rowTestId={(row) => `league-invitation-${row.invitation.id}`}
-            search={{ label: 'Find an email', testId: 'league-invites-search' }}
-            showColumnFilters={false}
-            tableTestId="league-invitations-table"
-          />
-        </div>
+            },
+            options: [
+              { count: rows.length - expiredCount, label: 'Pending', testId: 'league-invites-pending', value: 'pending' },
+              { count: expiredCount, label: 'Expired', testId: 'league-invites-expired', value: 'expired' },
+            ],
+            value: filter,
+          }}
+        />
       )}
     </SectionCard>
   );

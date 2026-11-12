@@ -456,4 +456,65 @@ describe("pool-master-dn4.1: shared DataGrid primitive", () => {
       expect(screen.queryByTestId("test-jump")).not.toBeInTheDocument();
     });
   });
+
+  it("puts the views and the search in one header inside the grid's card, above the table", () => {
+    const onChange = vi.fn();
+    render(
+      <DataGrid
+        columns={columns}
+        data={[{ id: "row-1", lifecycle: "Active", name: "Alpha" }]}
+        emptyMessage="No rows matched."
+        search={{ label: "Find a row", testId: "grid-search" }}
+        showColumnFilters={false}
+        tableTestId="grid-table"
+        views={{
+          label: "Rows to show",
+          onChange,
+          options: [
+            { count: 1, label: "Active", value: "active" },
+            { label: "History", value: "history" },
+          ],
+          value: "active",
+        }}
+      />,
+    );
+
+    // The views come first, then the search, then the table, all in the one card.
+    const views = screen.getByRole("radiogroup", { name: "Rows to show" });
+    const search = screen.getByTestId("grid-search");
+    const grid = screen.getByTestId("grid-table");
+    expect(views.compareDocumentPosition(search) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(search.compareDocumentPosition(grid) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getByRole("radio", { name: "Active 1" })).toBeChecked();
+
+    fireEvent.click(screen.getByRole("radio", { name: "History" }));
+    expect(onChange).toHaveBeenCalledWith("history");
+  });
+
+  it("draws a view's loading or error state in the card in place of the table and pager, keeping the views", () => {
+    render(
+      <DataGrid
+        columns={columns}
+        data={[
+          { id: "row-1", lifecycle: "Active", name: "Alpha" },
+          { id: "row-2", lifecycle: "Active", name: "Beta" },
+        ]}
+        emptyMessage="No rows matched."
+        pageSize={1}
+        tableTestId="grid-table"
+        views={{
+          label: "Rows to show",
+          onChange: () => undefined,
+          options: [{ label: "History", value: "history" }],
+          status: <p data-testid="grid-status">Loading history...</p>,
+          value: "history",
+        }}
+      />,
+    );
+
+    expect(screen.getByTestId("grid-status")).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: "History" })).toBeChecked();
+    expect(screen.queryByTestId("grid-table")).not.toBeInTheDocument();
+    expect(screen.queryByRole("navigation")).not.toBeInTheDocument();
+  });
 });

@@ -173,18 +173,19 @@ describe('Commissioner tools › Teams', () => {
     expect(screen.getByRole('menuitem', { name: 'View team page' })).toHaveAttribute('href', '/league/BIGDAWGS/teams/team-1');
   });
 
-  it('narrows the list to teams with a commissioner, or to inactive teams', async () => {
+  it('narrows the list to teams with a commissioner, or to inactive teams, each choice counting its teams', async () => {
     primeMocks();
 
     renderAdmin('/league/BIGDAWGS/admin/teams');
     await within(await screen.findByTestId('admin-team-team-1')).findByText('Commissioner');
 
-    fireEvent.click(screen.getByRole('radio', { name: 'With a commissioner' }));
+    expect(screen.getByRole('radio', { name: 'All 3' })).toBeChecked();
+    fireEvent.click(screen.getByRole('radio', { name: 'With a commissioner 1' }));
     expect(screen.getByTestId('admin-team-team-1')).toBeInTheDocument();
     expect(screen.queryByTestId('admin-team-team-2')).not.toBeInTheDocument();
     expect(screen.queryByTestId('admin-team-team-3')).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('radio', { name: 'Inactive' }));
+    fireEvent.click(screen.getByRole('radio', { name: 'Inactive 1' }));
     expect(screen.getByTestId('admin-team-team-3')).toBeInTheDocument();
     expect(screen.queryByTestId('admin-team-team-1')).not.toBeInTheDocument();
   });

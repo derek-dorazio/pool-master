@@ -370,7 +370,11 @@ administration area (root admin included), reusing the same shared components.
    button. Quick actions that need no page of their own sit in a `RowActionsMenu`
    ("⋯") in `DataGrid`'s `rowActions` column, pinned to the right edge so a phone
    reaches it without scrolling sideways; a destructive one confirms with `ConfirmDialog` and
-   ends with a toast. A row with no quick actions shows no "⋯".
+   ends with a toast. A row with no quick actions shows no "⋯". A manage list's
+   views (Active / History, Pending / Expired), each with its count, sit with its
+   search in one header inside the grid's card (`DataGrid`'s `views`); the page's
+   main action stays in its `PageHeader`, and the views are never a second row of
+   `PageTabs` under the area's own.
 8. **Summary first.** A landing page leads with what needs the member now (the
    next contest to enter, with its cutoff), then live standings, then their own
    squad.
