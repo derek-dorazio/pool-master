@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
+import { Toaster } from '@/features/shared/ui';
 import { RootAdminSportEventFieldPage } from './root-admin-sport-event-field-page';
 import {
   affiliationFixture,
@@ -157,6 +158,7 @@ function renderPage() {
             path="/manage/sports/:sport/events/:eventId/field"
           />
         </Routes>
+        <Toaster />
       </MemoryRouter>
     </QueryClientProvider>,
   );
@@ -358,14 +360,14 @@ describe('pool-master-za4 RootAdminSportEventFieldPage', () => {
       'liv',
     );
 
-    // Rory is already in the field -> excluded from the browse grid.
-    expect(await screen.findByTestId('root-admin-event-field-add-roster-row-p-jon')).toBeInTheDocument();
+    // Rory is already in the field -> not offered.
+    expect(await screen.findByTestId('root-admin-event-field-add-candidate-p-jon')).toBeInTheDocument();
     expect(
-      screen.queryByTestId('root-admin-event-field-add-roster-row-p-rory'),
+      screen.queryByTestId('root-admin-event-field-add-candidate-p-rory'),
     ).not.toBeInTheDocument();
 
-    await userEvent.click(screen.getByTestId('root-admin-event-field-add-roster-select-p-jon'));
-    await userEvent.click(screen.getByTestId('root-admin-event-field-add-submit'));
+    await userEvent.click(screen.getByTestId('root-admin-event-field-add-candidate-p-jon'));
+    await userEvent.click(screen.getByTestId('root-admin-event-field-add-modal-apply'));
 
     await waitFor(() =>
       expect(addEventParticipantsMock).toHaveBeenCalledWith(
@@ -375,10 +377,9 @@ describe('pool-master-za4 RootAdminSportEventFieldPage', () => {
         }),
       ),
     );
-    // The modal reports the {added, skipped} result rather than closing silently.
-    expect(
-      await screen.findByTestId('root-admin-event-field-add-result'),
-    ).toHaveTextContent('Added 1 golfer');
+    // A save closes the picker and says what was added.
+    expect(await screen.findByTestId('app-toast')).toHaveTextContent('Added 1 golfer to the field');
+    expect(screen.queryByTestId('root-admin-event-field-add-modal')).not.toBeInTheDocument();
   });
 });
 
@@ -541,25 +542,25 @@ describe('Field editor header actions: refusals, singular counts and closing dia
 
       await openAddModal();
       await userEvent.selectOptions(await screen.findByTestId('root-admin-event-field-add-league'), 'liv');
-      await screen.findByTestId('root-admin-event-field-add-roster-row-p-jon');
+      await screen.findByTestId('root-admin-event-field-add-candidate-p-jon');
 
       await userEvent.click(screen.getByTestId('root-admin-event-field-add-roster-select-all'));
-      expect(screen.getByTestId('root-admin-event-field-add-submit')).toHaveTextContent('Add selected (2)');
+      expect(screen.getByTestId('root-admin-event-field-add-modal-apply')).toHaveTextContent('Add selected (2)');
       await userEvent.click(screen.getByTestId('root-admin-event-field-add-roster-select-all'));
-      expect(screen.getByTestId('root-admin-event-field-add-submit')).toHaveTextContent('Add selected (0)');
-      expect(screen.getByTestId('root-admin-event-field-add-submit')).toBeDisabled();
+      expect(screen.getByTestId('root-admin-event-field-add-modal-apply')).toHaveTextContent('Add selected (0)');
+      expect(screen.getByTestId('root-admin-event-field-add-modal-apply')).toBeDisabled();
 
       await userEvent.click(screen.getByTestId('root-admin-event-field-add-roster-select-all'));
-      await userEvent.click(screen.getByTestId('root-admin-event-field-add-submit'));
+      await userEvent.click(screen.getByTestId('root-admin-event-field-add-modal-apply'));
 
       await waitFor(() => expect(addEventParticipantsMock).toHaveBeenCalledTimes(1));
       expect(
         (addEventParticipantsMock.mock.calls[0][0] as { body: { participantIds: string[] } }).body.participantIds,
       ).toEqual(['p-jon', 'p-cam']);
-      expect(await screen.findByTestId('root-admin-event-field-add-result')).toHaveTextContent(
-        'Added 2 golfers to the field (1 were already in it).',
-      );
-      expect(screen.getByTestId('root-admin-event-field-add-league')).toBeDisabled();
+      const toast = await screen.findByTestId('app-toast');
+      expect(toast).toHaveTextContent('Added 2 golfers to the field');
+      expect(toast).toHaveTextContent('1 were already in it.');
+      expect(screen.queryByTestId('root-admin-event-field-add-modal')).not.toBeInTheDocument();
     });
 
     it('unticks a golfer that was ticked, so it is not added', async () => {
@@ -570,13 +571,13 @@ describe('Field editor header actions: refusals, singular counts and closing dia
 
       await openAddModal();
       await userEvent.selectOptions(await screen.findByTestId('root-admin-event-field-add-league'), 'liv');
-      const select = await screen.findByTestId('root-admin-event-field-add-roster-select-p-jon');
+      const select = await screen.findByTestId('root-admin-event-field-add-candidate-p-jon');
       await userEvent.click(select);
-      expect(screen.getByTestId('root-admin-event-field-add-submit')).toHaveTextContent('Add selected (1)');
+      expect(screen.getByTestId('root-admin-event-field-add-modal-apply')).toHaveTextContent('Add selected (1)');
       await userEvent.click(select);
 
-      expect(screen.getByTestId('root-admin-event-field-add-submit')).toHaveTextContent('Add selected (0)');
-      expect(screen.getByTestId('root-admin-event-field-add-submit')).toBeDisabled();
+      expect(screen.getByTestId('root-admin-event-field-add-modal-apply')).toHaveTextContent('Add selected (0)');
+      expect(screen.getByTestId('root-admin-event-field-add-modal-apply')).toBeDisabled();
     });
 
     it('says every roster golfer is already in the field when the browsed roster adds no one new', async () => {
@@ -604,8 +605,7 @@ describe('Field editor header actions: refusals, singular counts and closing dia
       await openAddModal();
       await userEvent.selectOptions(await screen.findByTestId('root-admin-event-field-add-league'), 'liv');
 
-      expect(await screen.findByText('Roster unavailable')).toBeInTheDocument();
-      expect(screen.getByText('Sport league liv was not found.')).toBeInTheDocument();
+      expect(await screen.findByText('Sport league liv was not found.')).toBeInTheDocument();
     });
 
     it('falls back to the name search when the league list cannot be loaded', async () => {
@@ -637,24 +637,21 @@ describe('Field editor header actions: refusals, singular counts and closing dia
       await openAddModal();
       fireEvent.change(screen.getByTestId('root-admin-event-field-add-search'), { target: { value: 'Rory' } });
 
-      const results = await screen.findByTestId('root-admin-event-field-add-search-results');
-      expect(within(results).getByText('Rory Sabbatini')).toBeInTheDocument();
-      expect(within(results).queryByText('Rory McIlroy')).not.toBeInTheDocument();
+      expect(await screen.findByTestId('root-admin-event-field-add-candidate-p-off')).toHaveTextContent('Rory Sabbatini');
+      expect(screen.queryByTestId('root-admin-event-field-add-candidate-p-rory')).not.toBeInTheDocument();
       expect(listParticipantsMock).toHaveBeenCalledWith(
         expect.objectContaining({ query: { sportId: 'sport-golf', status: 'ACTIVE', q: 'Rory' } }),
       );
 
-      await userEvent.click(screen.getByTestId('root-admin-event-field-add-search-select-p-off'));
-      await userEvent.click(screen.getByTestId('root-admin-event-field-add-submit'));
+      await userEvent.click(screen.getByTestId('root-admin-event-field-add-candidate-p-off'));
+      await userEvent.click(screen.getByTestId('root-admin-event-field-add-modal-apply'));
 
       await waitFor(() =>
         expect(addEventParticipantsMock).toHaveBeenCalledWith(
           expect.objectContaining({ body: { participantIds: ['p-off'] } }),
         ),
       );
-      expect(await screen.findByTestId('root-admin-event-field-add-result')).toHaveTextContent(
-        'Added 1 golfer to the field.',
-      );
+      expect(await screen.findByTestId('app-toast')).toHaveTextContent('Added 1 golfer to the field');
     });
 
     it('says no new golfers matched when the search finds only golfers already in the field', async () => {
@@ -680,8 +677,7 @@ describe('Field editor header actions: refusals, singular counts and closing dia
       await openAddModal();
       fireEvent.change(screen.getByTestId('root-admin-event-field-add-search'), { target: { value: 'Ro' } });
 
-      expect(await screen.findByText('Search failed')).toBeInTheDocument();
-      expect(screen.getByText('Participant search is unavailable.')).toBeInTheDocument();
+      expect(await screen.findByText('Participant search is unavailable.')).toBeInTheDocument();
     });
 
     it('shows the server\'s reason and keeps the selection when adding golfers is refused', async () => {
@@ -695,13 +691,33 @@ describe('Field editor header actions: refusals, singular counts and closing dia
 
       await openAddModal();
       await userEvent.selectOptions(await screen.findByTestId('root-admin-event-field-add-league'), 'liv');
-      await userEvent.click(await screen.findByTestId('root-admin-event-field-add-roster-select-p-jon'));
-      await userEvent.click(screen.getByTestId('root-admin-event-field-add-submit'));
+      await userEvent.click(await screen.findByTestId('root-admin-event-field-add-candidate-p-jon'));
+      await userEvent.click(screen.getByTestId('root-admin-event-field-add-modal-apply'));
 
-      expect(await screen.findByText('Add failed')).toBeInTheDocument();
-      expect(screen.getByText('The field is locked for this tournament.')).toBeInTheDocument();
-      expect(screen.getByTestId('root-admin-event-field-add-submit')).toHaveTextContent('Add selected (1)');
-      expect(screen.queryByTestId('root-admin-event-field-add-result')).not.toBeInTheDocument();
+      expect(await screen.findByText('The field is locked for this tournament.')).toBeInTheDocument();
+      expect(screen.getByTestId('root-admin-event-field-add-modal-apply')).toHaveTextContent('Add selected (1)');
+      expect(screen.queryByTestId('app-toast')).not.toBeInTheDocument();
+    });
+
+    it('asks for a tour or a name before offering anyone, then narrows the browsed roster to the typed name', async () => {
+      seed();
+      seedLeagues();
+      listParticipantLeagueAffiliationsMock.mockResolvedValue(
+        rosterOf({ id: 'p-jon', name: 'Jon Rahm' }, { id: 'p-cam', name: 'Cameron Smith' }),
+      );
+      listParticipantsMock.mockResolvedValue({ data: { participants: [] } });
+      renderPage();
+
+      await openAddModal();
+      expect(await screen.findByText('Pick a tour or search by name.')).toBeInTheDocument();
+
+      await userEvent.selectOptions(await screen.findByTestId('root-admin-event-field-add-league'), 'liv');
+      expect(await screen.findByTestId('root-admin-event-field-add-candidate-p-jon')).toHaveTextContent('Ranking 1');
+      fireEvent.change(screen.getByTestId('root-admin-event-field-add-search'), { target: { value: 'cam' } });
+
+      expect(await screen.findByTestId('root-admin-event-field-add-candidate-p-cam')).toBeInTheDocument();
+      expect(screen.queryByTestId('root-admin-event-field-add-candidate-p-jon')).not.toBeInTheDocument();
+      expect(screen.getByTestId('root-admin-event-field-add-roster-select-all')).toHaveTextContent('Select all 1');
     });
 
     it('closes the add dialog from its close button without adding anyone', async () => {

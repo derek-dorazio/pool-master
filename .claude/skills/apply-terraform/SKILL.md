@@ -24,8 +24,7 @@ what each resource is for.
   reverts that change.
 - **Say what needs a deploy.** An IAM, DNS, SES, security-group or S3 change is live when the
   apply finishes. A core-api environment change only registers a new task definition
-  revision; the running service picks it up on the next deploy, which is the next merge to
-  `main` (or a re-run of the latest deploy). A change that needs a second apply after a
+  revision; the running service picks it up on the next deploy, a manual run of CI on `main`. A change that needs a second apply after a
   deploy, like `ses_events_subscribed`, says so and gives both rounds.
 
 ## Step 2 — the hand-over message
@@ -98,7 +97,8 @@ Every secret keeps the value the environment already has (`rules/workflow-rules.
 - **`balldontlie_webhook_secret`** — optional, the same way: empty leaves the webhook route
   refusing every delivery. Once `poolmaster-<env>-balldontlie-webhook-secret` exists, every
   hand-over includes step 3d. The first apply that adds it exports the secret the vendor showed
-  when the webhook endpoint was created.
+  when the webhook endpoint was created, and its plan also adds the quiet-notification log
+  metric filter and alarm.
 
 The one exception is an environment's very first apply (prod, when it is first built): no
 secret exists yet, so that apply creates both. Generate `jwt_secret` with

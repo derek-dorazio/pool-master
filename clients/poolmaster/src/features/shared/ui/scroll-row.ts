@@ -16,7 +16,7 @@ const FADE_CLASS_NAMES = {
 
 type Overflow = "none" | keyof typeof FADE_CLASS_NAMES;
 
-const SELECTED_SELECTOR = '[aria-current="page"], [role="tab"][data-state="active"]';
+const SELECTED_SELECTOR = '[aria-current="page"], [role="tab"][data-state="active"], [role="radio"][aria-checked="true"]';
 
 function readOverflow(row: HTMLElement): Overflow {
   const hasBefore = row.scrollLeft > 1;

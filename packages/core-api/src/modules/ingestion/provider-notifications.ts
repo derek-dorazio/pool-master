@@ -6,6 +6,12 @@
  * Bursts coalesce: each event's job is due a short while out under a dedupe key, so every
  * notification that arrives while it waits queues nothing. The key is released when a worker
  * claims the job, so a notification during or after the sync queues the next one.
+ *
+ * #1499 adds three things. Play starting also finds the events still SCHEDULED past their start,
+ * whose sync waits until the lifecycle sweep has moved them in progress (a live score is written
+ * only then). Play ending queues a second, reconciling sync a while later, for the corrections a
+ * provider makes after the final whistle. And every notification records when it arrived on the
+ * events it is about, so the scheduler can tell when an event in play has gone quiet.
  */
 
 import { createHash } from 'node:crypto';
@@ -14,12 +20,16 @@ import type { ProviderNotifiedEvent, SportEventRepository } from '@poolmaster/sh
 import { BackgroundJobType, type Sport } from '@poolmaster/shared/domain';
 import type { BackgroundJobQueue } from '../background-jobs/background-job-queue';
 
+/** Where in play a notification falls: play starting, under way, or ended. */
+export type ProviderNotificationPhase = 'START' | 'PROGRESS' | 'END';
+
 /** What a notification is about, once the provider's adapter has read it. */
 export type ProviderNotification = {
   providerId: string;
   sport: Sport;
   /** The provider's own name for what happened, for the log. */
   notificationType: string;
+  phase: ProviderNotificationPhase;
 } & (
   /** A game's notification: the provider's events whose ids start with `eventIdPrefix` may hold it. */
   | { subject: 'GAME'; gameId: string; eventIdPrefix: string }
@@ -30,27 +40,44 @@ export type ProviderNotification = {
 /** How long a notified event's sync waits for the rest of a burst, by default. */
 export const PROVIDER_NOTIFICATION_COALESCE_MS = 60_000;
 
+/**
+ * How long the sync of an event still SCHEDULED when play started waits, by default: one event
+ * lifecycle sweep (every 5 minutes) and a minute more, so the event is in progress when it runs.
+ */
+export const PROVIDER_NOTIFICATION_STARTING_SYNC_DELAY_MS = 6 * 60_000;
+
+/** How long after play ends the reconciling sync runs, by default. */
+export const PROVIDER_NOTIFICATION_RECONCILE_DELAY_MS = 10 * 60_000;
+
 export interface ProviderNotificationOutcome {
-  /** The linked in-progress events the notification is about. */
+  /** The linked events the notification is about. */
   events: number;
-  /** The syncs it queued: fewer than `events` where one was already waiting. */
+  /** The syncs it queued, reconciling ones included: fewer where one was already waiting. */
   queued: number;
 }
 
 export interface ProviderNotificationServiceDependencies {
-  sportEvents: Pick<SportEventRepository, 'findLiveNotifiedEvents'>;
+  sportEvents: Pick<SportEventRepository, 'findLiveNotifiedEvents' | 'recordProviderNotification'>;
   jobs: Pick<BackgroundJobQueue, 'request' | 'enqueueAll'>;
   /** How long a sync waits for the rest of a burst; PROVIDER_NOTIFICATION_COALESCE_MS by default. */
   coalesceMs?: number;
+  /** PROVIDER_NOTIFICATION_STARTING_SYNC_DELAY_MS by default. */
+  startingSyncDelayMs?: number;
+  /** PROVIDER_NOTIFICATION_RECONCILE_DELAY_MS by default. */
+  reconcileDelayMs?: number;
   now?: () => Date;
   logger?: FastifyBaseLogger;
 }
 
 export class ProviderNotificationService {
   private readonly coalesceMs: number;
+  private readonly startingSyncDelayMs: number;
+  private readonly reconcileDelayMs: number;
 
   constructor(private readonly deps: ProviderNotificationServiceDependencies) {
     this.coalesceMs = deps.coalesceMs ?? PROVIDER_NOTIFICATION_COALESCE_MS;
+    this.startingSyncDelayMs = deps.startingSyncDelayMs ?? PROVIDER_NOTIFICATION_STARTING_SYNC_DELAY_MS;
+    this.reconcileDelayMs = deps.reconcileDelayMs ?? PROVIDER_NOTIFICATION_RECONCILE_DELAY_MS;
   }
 
   /**
@@ -61,38 +88,53 @@ export class ProviderNotificationService {
    * queues nothing.
    */
   async receive(notification: ProviderNotification): Promise<ProviderNotificationOutcome> {
-    const events = await this.notifiedEvents(notification);
-    const runAt = new Date((this.deps.now?.() ?? new Date()).getTime() + this.coalesceMs);
-    const queued = await this.deps.jobs.enqueueAll(events.map((event) => this.deps.jobs.request(
+    const now = this.deps.now?.() ?? new Date();
+    const events = await this.notifiedEvents(notification, now);
+    await this.deps.sportEvents.recordProviderNotification({
+      providerId: notification.providerId,
+      externalIds: events.map((event) => event.externalId),
+      receivedAt: now,
+    });
+    const after = (ms: number) => new Date(now.getTime() + ms);
+    const syncs = events.map((event) => this.deps.jobs.request(
       BackgroundJobType.PROVIDER_EVENT_SYNC,
       { sport: event.sport, providerId: event.providerId, eventId: event.externalId },
-      { runAt, dedupeKey: providerEventSyncKey(event) },
-    )));
+      { runAt: after(event.inProgress ? this.coalesceMs : this.startingSyncDelayMs), dedupeKey: providerEventSyncKey(event) },
+    ));
+    const reconciles = notification.phase !== 'END' ? [] : events.map((event) => this.deps.jobs.request(
+      BackgroundJobType.PROVIDER_EVENT_SYNC,
+      { sport: event.sport, providerId: event.providerId, eventId: event.externalId },
+      { runAt: after(this.reconcileDelayMs), dedupeKey: providerEventReconcileKey(event) },
+    ));
+    const queued = await this.deps.jobs.enqueueAll([...syncs, ...reconciles]);
     this.deps.logger?.debug({
       action: 'ingestion.providerNotification.received',
       data: {
         providerId: notification.providerId,
         notificationType: notification.notificationType,
+        phase: notification.phase,
         subject: notification.subject,
         events: events.map((event) => event.externalId),
         queued,
       },
     }, events.length === 0
-      ? 'A provider notification is about no linked in-progress event; nothing to sync'
+      ? 'A provider notification is about no linked event in play; nothing to sync'
       : 'Queued syncs for the events a provider notification is about');
     return { events: events.length, queued };
   }
 
-  private async notifiedEvents(notification: ProviderNotification): Promise<ProviderNotifiedEvent[]> {
+  private async notifiedEvents(notification: ProviderNotification, now: Date): Promise<ProviderNotifiedEvent[]> {
     const { providerId, sport } = notification;
+    const startedBy = notification.phase === 'START' ? { startedBy: now } : {};
     if (notification.subject === 'EVENT') {
-      return this.deps.sportEvents.findLiveNotifiedEvents({ providerId, sport, externalId: notification.eventId });
+      return this.deps.sportEvents.findLiveNotifiedEvents({ providerId, sport, externalId: notification.eventId, ...startedBy });
     }
     const candidates = await this.deps.sportEvents.findLiveNotifiedEvents({
       providerId,
       sport,
       externalIdPrefix: notification.eventIdPrefix,
       gameId: notification.gameId,
+      ...startedBy,
     });
     const holding = candidates.filter((event) => event.holdsGame);
     return holding.length > 0 ? holding : candidates;
@@ -107,8 +149,17 @@ const DEDUPE_KEY_MAX_LENGTH = 200;
  * fits the column; an id too long for it is keyed by its hash instead.
  */
 export function providerEventSyncKey(event: Pick<ProviderNotifiedEvent, 'providerId' | 'externalId'>): string {
-  const key = `provider-event-sync:${event.providerId}:${event.externalId}`;
+  return eventDedupeKey('provider-event-sync', event);
+}
+
+/** One waiting reconciling sync per event (#1499), apart from the event's coalesced sync. */
+export function providerEventReconcileKey(event: Pick<ProviderNotifiedEvent, 'providerId' | 'externalId'>): string {
+  return eventDedupeKey('provider-event-reconcile', event);
+}
+
+function eventDedupeKey(kind: string, event: Pick<ProviderNotifiedEvent, 'providerId' | 'externalId'>): string {
+  const key = `${kind}:${event.providerId}:${event.externalId}`;
   return key.length <= DEDUPE_KEY_MAX_LENGTH
     ? key
-    : `provider-event-sync:sha256:${createHash('sha256').update(`${event.providerId}:${event.externalId}`).digest('hex')}`;
+    : `${kind}:sha256:${createHash('sha256').update(`${event.providerId}:${event.externalId}`).digest('hex')}`;
 }

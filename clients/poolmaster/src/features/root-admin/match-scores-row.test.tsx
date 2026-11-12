@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { MatchEnding, getSportDefinition, Sport, type SportMatchPeriods } from '@poolmaster/shared/domain';
 import type { SportEventMatchDto } from '@/lib/api';
 import { bindApiMocks } from '@/test/msw-api';
-import type { BracketContext } from './bracket-match-row';
+import type { BracketContext } from './bracket-match-write';
 import { MatchScoresRow } from './match-scores-row';
 import { fieldEntryFixture, participantFixture } from './sport-test-fixtures';
 

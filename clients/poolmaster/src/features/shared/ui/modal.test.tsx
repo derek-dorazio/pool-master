@@ -49,4 +49,20 @@ describe("pool-master-3lo.3: shared Modal primitive", () => {
 
     expect(screen.getByRole("dialog", { name: "Remove owner" })).toHaveAccessibleDescription("They will leave the league.");
   });
+
+  it("fills a phone's screen only when asked to", () => {
+    const { rerender } = render(
+      <Modal onOpenChange={vi.fn()} open testId="page-modal" title="Preview">
+        <p>Whole page</p>
+      </Modal>,
+    );
+    expect(screen.getByTestId("page-modal")).not.toHaveClass("max-sm:h-dvh");
+
+    rerender(
+      <Modal isFullScreenOnPhone onOpenChange={vi.fn()} open testId="page-modal" title="Preview">
+        <p>Whole page</p>
+      </Modal>,
+    );
+    expect(screen.getByTestId("page-modal")).toHaveClass("max-sm:h-dvh");
+  });
 });

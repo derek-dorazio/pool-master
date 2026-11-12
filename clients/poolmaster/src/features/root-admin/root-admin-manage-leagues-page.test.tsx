@@ -262,7 +262,7 @@ describe('RootAdminManageLeaguesPage', () => {
     expect(await screen.findByText('No leagues matched the current filters.')).toBeInTheDocument();
   });
 
-  it('shows the error in the grid and keeps the search box when the admin list call fails', async () => {
+  it('shows the error in red with Retry and keeps the search box when the admin list call fails', async () => {
     listLeaguesMock.mockResolvedValue({
       data: null,
       error: { error: { code: 'INTERNAL_ERROR', message: 'Boom' } },
@@ -271,7 +271,8 @@ describe('RootAdminManageLeaguesPage', () => {
     renderPage();
     searchFor('League');
 
-    expect(await screen.findByText('Boom')).toBeInTheDocument();
+    expect(await screen.findByTestId('root-admin-manage-leagues-error')).toHaveTextContent('Boom');
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
     expect(screen.getByRole('searchbox', { name: 'Find a league' })).toHaveValue('League');
   });
 

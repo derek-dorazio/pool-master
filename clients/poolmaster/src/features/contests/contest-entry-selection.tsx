@@ -12,14 +12,10 @@ import {
   ExpandableRow,
   SectionCard,
   SectionEmpty,
+  SectionRow,
+  SectionRows,
   Select,
-  SimpleTable,
   StatusBadge,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeaderCell,
-  TableRow,
   Text,
 } from "@/features/shared/ui";
 
@@ -180,6 +176,7 @@ export function EditableSelectionGroup({
   group,
   isBusy,
   isExpanded,
+  isPreview = false,
   noun,
   onParticipantSelect,
   onToggle,
@@ -190,6 +187,8 @@ export function EditableSelectionGroup({
   group: SelectionGroup;
   isBusy: boolean;
   isExpanded: boolean;
+  /** A setup's preview, whose trial picks are never saved: the count says "picked". */
+  isPreview?: boolean;
   noun: SportNoun;
   onParticipantSelect: (participant: SelectionParticipant) => void;
   onToggle: () => void;
@@ -207,7 +206,7 @@ export function EditableSelectionGroup({
       trailing={(
         <>
           <Text data-testid={`contest-entry-group-count-${group.groupId}`} variant="meta">
-            {group.selectedParticipantIds.length}/{group.picksFromGroup} saved
+            {group.selectedParticipantIds.length}/{group.picksFromGroup} {isPreview ? "picked" : "saved"}
           </Text>
           <StatusBadge tone={isComplete ? "neutral" : "warning"}>{statusLabel}</StatusBadge>
         </>
@@ -248,13 +247,17 @@ export function EditableSelectionGroup({
   );
 }
 
-/** The locked tier's columns, each width written once. */
-const LOCKED_TIER_COLUMNS = [
-  { id: "participant", label: "", align: "left", width: "" },
-  { id: "contest-rank", label: "Contest rank", align: "right", width: "w-[120px]" },
-  { id: "ranking", label: "Ranking", align: "right", width: "w-[110px]" },
-  { id: "status", label: "Status", align: "right", width: "w-[90px]" },
-] as const;
+/**
+ * A locked pick's fact line: who they play for, then their contest rank and ranking. Each rank
+ * keeps its words together (non-breaking spaces), so a phone wraps between facts, not inside one.
+ */
+function getLockedParticipantFacts(participant: SelectionParticipant) {
+  return [
+    participantAffiliation(participant) ?? participant.role ?? "In the field",
+    participant.orderIndex ? `Contest\u00a0rank\u00a0#${participant.orderIndex}` : null,
+    participant.ranking !== undefined && participant.ranking !== null ? `Ranking\u00a0#${participant.ranking}` : null,
+  ].filter((part) => part !== null).join(" · ");
+}
 
 export function LockedSelectionGroup({
   group,
@@ -274,56 +277,26 @@ export function LockedSelectionGroup({
       title={group.groupName}
       trailing={<StatusBadge tone="locked">Locked</StatusBadge>}
     >
-      <div className="overflow-x-auto">
-        <SimpleTable className="min-w-[32rem] table-fixed">
-            <colgroup>
-              {LOCKED_TIER_COLUMNS.map((column) => <col className={column.width} key={column.id} />)}
-            </colgroup>
-            <TableHead tone="plain">
-              <tr className="border-b border-border">
-                {LOCKED_TIER_COLUMNS.map((column) => (
-                  <TableHeaderCell align={column.align} className="py-3" key={column.id}>
-                    <Text className={cn("whitespace-nowrap", column.id === "participant" ? "capitalize" : undefined)} variant="label">
-                      {column.id === "participant" ? noun.one : column.label}
-                    </Text>
-                  </TableHeaderCell>
-                ))}
-              </tr>
-            </TableHead>
-            <TableBody>
-              {selectedParticipants.map((participant, index) => (
-                <TableRow
-                  className={index === 0 ? "border-t-0" : undefined}
-                  data-testid={`contest-entry-locked-participant-${group.groupId}-${participant.sportEventParticipantId}`}
-                  key={participant.sportEventParticipantId}
-                >
-                  <TableCell className="py-3">
-                    <ParticipantLine
-                      affiliation={participantAffiliation(participant) ?? participant.role ?? "In the field"}
-                      density="compact"
-                      name={selectionParticipantLabel(participant)}
-                      truncate
-                    />
-                  </TableCell>
-                  <TableCell align="right" className="py-3">
-                    <Text tone="default">{participant.orderIndex ? `#${participant.orderIndex}` : "-"}</Text>
-                  </TableCell>
-                  <TableCell align="right" className="py-3">
-                    <Text variant="meta">
-                      {participant.ranking !== undefined && participant.ranking !== null
-                        ? `#${participant.ranking}`
-                        : "-"}
-                    </Text>
-                  </TableCell>
-                  <TableCell align="right" className="py-3">
-                    <Text variant="meta">{formatParticipantStatusLabel(participant.status ?? "ACTIVE", sport)}</Text>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-        </SimpleTable>
-      </div>
-      {selectedParticipants.length ? null : (
+      {selectedParticipants.length ? (
+        <SectionRows>
+          {selectedParticipants.map((participant) => {
+            const testId = `contest-entry-locked-participant-${group.groupId}-${participant.sportEventParticipantId}`;
+            return (
+              <SectionRow
+                aside={(
+                  <StatusBadge data-testid={`${testId}-status`} tone="neutral">
+                    {formatParticipantStatusLabel(participant.status ?? "ACTIVE", sport)}
+                  </StatusBadge>
+                )}
+                facts={getLockedParticipantFacts(participant)}
+                key={participant.sportEventParticipantId}
+                name={selectionParticipantLabel(participant)}
+                testId={testId}
+              />
+            );
+          })}
+        </SectionRows>
+      ) : (
         <SectionEmpty>{`No ${noun.one} was saved from this tier.`}</SectionEmpty>
       )}
     </SectionCard>

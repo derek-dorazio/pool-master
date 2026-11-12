@@ -4,14 +4,14 @@ import { useNavigate, useParams } from 'react-router';
 import { z } from 'zod';
 import { updateParticipant } from '@/lib/api';
 import type { ParticipantDto, UpdateParticipantData } from '@/lib/api';
-import { AsyncPage, FormField, FormPage, Input, Select } from '@/features/shared/ui';
+import { FormField, FormPage, Input, QueryState, Select } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { formPageSave } from '@/lib/form-page-save';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import { PARTICIPANT_STATUSES, participantStatusLabel } from './sport-admin-utils';
-import { useManageBreadcrumbOverride, useManagePageOwnsHeading } from './manage-breadcrumb-context';
+import { useManageBreadcrumbOverride } from './manage-breadcrumb-context';
 import { buildSportParticipantPath } from './manage-navigation';
 import { useParticipantQuery } from './use-sport-catalog';
 import { useManagedSport } from './use-managed-sport';
@@ -162,7 +162,6 @@ function ParticipantEditForm({ player }: { player: ParticipantDto }) {
 /** Edit a participant's details and status, with one Save. */
 export function RootAdminParticipantEditPage() {
   // Claimed at once, so Manage never shows its own title while the page loads.
-  useManagePageOwnsHeading();
   const { participant } = useManagedSport().definition.vocabulary;
   const { participantId = '' } = useParams<{ participantId: string }>();
   const playerQuery = useParticipantQuery(participantId);
@@ -171,14 +170,16 @@ export function RootAdminParticipantEditPage() {
   useManageBreadcrumbOverride(participantId || undefined, player?.name);
 
   return (
-    <AsyncPage
-      errorBody={extractErrorMessage(playerQuery.error, {
+    <QueryState
+      error={extractErrorMessage(playerQuery.error, {
         fallback: `We could not load this ${participant.one} right now.`,
       })}
-      loadingBody={`Loading ${participant.one}...`}
-      state={playerQuery.isLoading ? 'loading' : playerQuery.isError ? 'error' : 'ready'}
+      loading={`Loading ${participant.one}...`}
+      query={playerQuery}
+      size="tile"
+      testId="root-admin-participant-edit"
     >
-      {player ? <ParticipantEditForm player={player} /> : null}
-    </AsyncPage>
+      {(loaded) => <ParticipantEditForm player={loaded} />}
+    </QueryState>
   );
 }

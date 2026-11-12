@@ -710,7 +710,7 @@ describe('Overview blocks: empty values, refusals and closing dialogs', () => {
     listProvidersMock.mockResolvedValue({ data: { providers: [] } });
     renderPage();
 
-    expect(await screen.findByText('The participant field is not loaded yet')).toBeInTheDocument();
+    expect(await screen.findByText('Field not loaded')).toBeInTheDocument();
     expect(screen.getByTestId('root-admin-sport-event-home-load-field')).toHaveAttribute(
       'href',
       '/manage/sports/golf/events/tour-1/field',
@@ -931,7 +931,7 @@ describe('Overview blocks: empty values, refusals and closing dialogs', () => {
     listEventRoundsMock.mockResolvedValue(refusal('INTERNAL_ERROR', 'The round store is unavailable.', 500));
     renderPage('/manage/sports/golf/events/tour-1/schedule');
 
-    const alert = await screen.findByTestId('shared-error-state');
+    const alert = await screen.findByTestId('root-admin-sport-event-schedule-error');
     expect(within(alert).getByText('The round store is unavailable.')).toBeInTheDocument();
     expect(screen.queryByTestId('root-admin-sport-event-rounds-save')).not.toBeInTheDocument();
   });

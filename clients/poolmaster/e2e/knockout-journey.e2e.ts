@@ -179,6 +179,7 @@ test('act 1: the root admin builds the 2025 WNBA playoffs — league, eight team
   await test.step('root admin signs in, and Manage lists basketball', async () => {
     await adminSignIn(page, credentials);
     await page.goto('/manage');
+    await page.getByTestId('root-admin-manage-menu-sports').click();
     await page.getByTestId('root-admin-manage-menu-basketball').click();
     await expect(page).toHaveURL(/\/manage\/sports\/basketball\/events$/);
     await expect(page.getByTestId('root-admin-sport-event-list-page')).toBeVisible();
@@ -249,11 +250,12 @@ test('act 1: the root admin builds the 2025 WNBA playoffs — league, eight team
     await page.getByTestId('root-admin-event-field-add').click();
     await page.getByTestId('root-admin-event-field-add-search').fill(runId);
     for (const id of teamIds) {
-      await page.getByTestId(`root-admin-event-field-add-search-select-${id}`).check();
+      const candidate = page.getByTestId(`root-admin-event-field-add-candidate-${id}`);
+      await candidate.click();
+      await expect(candidate).toHaveAttribute('aria-pressed', 'true');
     }
-    await submitAndRead(page, 'root-admin-event-field-add-submit', 'POST', `/api/v1/events/${eventId}/participants`);
-    await expect(page.getByTestId('root-admin-event-field-add-result')).toBeVisible();
-    await page.getByTestId('root-admin-event-field-add-done').click();
+    await submitAndRead(page, 'root-admin-event-field-add-modal-apply', 'POST', `/api/v1/events/${eventId}/participants`);
+    await expect(page.getByTestId('root-admin-event-field-add-modal')).toBeHidden();
   });
 
   const fieldEntryIds = await test.step('set each team\'s seed and odds to win in the field grid', async () => {

@@ -2,12 +2,13 @@ import { useState } from 'react';
 import { resetIngestionSchedule, updateIngestionSchedule } from '@/lib/api';
 import {
   Notice,
-  AsyncPage,
   Button,
   Checkbox,
-  FormEditorSection,
   FormField,
+  HelpTip,
   Input,
+  PageHeader,
+  QueryState,
   SectionCard,
   Tile,
 } from '@/features/shared/ui';
@@ -21,7 +22,6 @@ import {
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
-import { ManagePageIntro } from './manage-page-intro';
 import { useIngestionScheduleQuery } from './use-ingestion-schedule-query';
 
 type IngestionEditableField =
@@ -99,42 +99,35 @@ export function RootAdminIngestionSchedulePage() {
     });
   }
 
-  const pageState = ingestionConfigQuery.isError
-    ? 'error'
-    : ingestionConfigQuery.isLoading || !draft
-      ? 'loading'
-      : 'ready';
-
   return (
-    <AsyncPage
-      errorBody={extractErrorMessage(ingestionConfigQuery.error, { fallback: 'We could not load ingestion schedule configuration right now.' })}
-      loadingBody="Loading ingestion schedule configuration..."
-      state={pageState}
-      testId="root-admin-ingestion-schedule-page"
-    >
-      <ManagePageIntro
+    <section className="space-y-6" data-testid="root-admin-ingestion-schedule-page">
+      <PageHeader
         actions={(
-          <Button
-            disabled={resetIngestionConfigMutation.isPending}
-            onClick={() => {
-              ingestionConfigMutation.reset();
-              resetIngestionConfigMutation.mutate();
-            }}
-            type="button"
-            variant="secondary"
-          >
-            {resetIngestionConfigMutation.isPending
-              ? 'Resetting...'
-              : 'Reset ingestion schedule'}
-          </Button>
+        <Button
+          disabled={resetIngestionConfigMutation.isPending}
+          onClick={() => {
+            ingestionConfigMutation.reset();
+            resetIngestionConfigMutation.mutate();
+          }}
+          type="button"
+          variant="secondary"
+        >
+          {resetIngestionConfigMutation.isPending
+            ? 'Resetting...'
+            : 'Reset ingestion schedule'}
+        </Button>
         )}
-      >
-        Control the default cadence and lifecycle windows that scheduled ingestion uses across
-        sports before per-sport overrides apply.
-      </ManagePageIntro>
+        testId="root-admin-ingestion-schedule-header"
+        title="Global Ingestion Schedule"
+        titleAside={(
+          <HelpTip label="About the ingestion schedule" testId="root-admin-ingestion-schedule-help">
+            Control the default cadence and lifecycle windows that scheduled ingestion uses across
+            sports before per-sport overrides apply.
+          </HelpTip>
+        )}
+      />
       {ingestionConfigMutation.isError || resetIngestionConfigMutation.isError ? (
         <Notice
-          className="mb-4"
           data-testid="root-admin-ingestion-page-error"
           tone="danger"
         >
@@ -147,25 +140,20 @@ export function RootAdminIngestionSchedulePage() {
               })}
         </Notice>
       ) : null}
-      {draft ? (
-        <FormEditorSection
-          footer={(
-            <Button
-              data-testid="root-admin-ingestion-page-save"
-              disabled={ingestionConfigMutation.isPending}
-              onClick={() => {
-                resetIngestionConfigMutation.reset();
-                ingestionConfigMutation.mutate(draft);
-              }}
-              type="button"
-            >
-              {ingestionConfigMutation.isPending
-                ? 'Saving...'
-                : 'Save ingestion schedule'}
-            </Button>
-          )}
-          title="Schedule policies"
-        >
+      <QueryState
+        error={extractErrorMessage(ingestionConfigQuery.error, { fallback: 'We could not load ingestion schedule configuration right now.' })}
+        loading="Loading ingestion schedule configuration..."
+        query={{
+          data: draft ?? undefined,
+          isError: ingestionConfigQuery.isError,
+          refetch: ingestionConfigQuery.refetch,
+        }}
+        size="tile"
+        testId="root-admin-ingestion-schedule"
+      >
+        {(loadedDraft) => (
+        <SectionCard padded title="Schedule policies">
+          <div className="space-y-4">
           <div className="space-y-3">
             {INGESTION_POLICY_FIELDS.map((field) => {
               const extraKey = 'extraKey' in field ? field.extraKey : undefined;
@@ -184,7 +172,7 @@ export function RootAdminIngestionSchedulePage() {
                         <label className="flex h-5 items-center justify-between gap-3 text-sm text-foreground">
                           <span>Enabled</span>
                           <Checkbox
-                            checked={draft[field.key].enabled}
+                            checked={loadedDraft[field.key].enabled}
                             data-testid={`root-admin-ingestion-page-${field.key}-enabled`}
                             onChange={(event) =>
                               updateDraftValue(
@@ -206,7 +194,7 @@ export function RootAdminIngestionSchedulePage() {
                             event.target.value,
                           )}
                         type="number"
-                        value={draft[field.key][field.intervalKey] ?? ''}
+                        value={loadedDraft[field.key][field.intervalKey] ?? ''}
                       />
                     </FormField>
                     {extraKey ? (
@@ -220,7 +208,7 @@ export function RootAdminIngestionSchedulePage() {
                               event.target.value,
                             )}
                           type="number"
-                          value={draft[field.key][extraKey] ?? ''}
+                          value={loadedDraft[field.key][extraKey] ?? ''}
                         />
                       </FormField>
                     ) : (
@@ -231,8 +219,25 @@ export function RootAdminIngestionSchedulePage() {
               );
             })}
           </div>
-        </FormEditorSection>
-      ) : null}
-    </AsyncPage>
+            <div className="flex flex-wrap gap-3">
+              <Button
+                data-testid="root-admin-ingestion-page-save"
+                disabled={ingestionConfigMutation.isPending}
+                onClick={() => {
+                  resetIngestionConfigMutation.reset();
+                  ingestionConfigMutation.mutate(loadedDraft);
+                }}
+                type="button"
+              >
+                {ingestionConfigMutation.isPending
+                  ? 'Saving...'
+                  : 'Save ingestion schedule'}
+              </Button>
+            </div>
+          </div>
+        </SectionCard>
+        )}
+      </QueryState>
+    </section>
   );
 }

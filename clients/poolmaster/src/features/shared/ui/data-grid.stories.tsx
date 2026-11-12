@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import type { ColumnDef } from "@tanstack/react-table";
+import { useState } from "react";
 import { DataGrid } from "./data-grid";
 
 type Member = { id: string; name: string; role: string; entries: number };
@@ -43,3 +44,31 @@ type Story = StoryObj<typeof meta>;
 /** A table that needs search, sorting or paging. A list that can grow pages and searches. */
 export const SearchAndPages: Story = {};
 export const ColumnFilters: Story = { args: { showColumnFilters: true, withSearch: false } };
+
+function MembersWithViews() {
+  const [view, setView] = useState("all");
+  const owners = MEMBERS.filter((member) => member.role === "Owner");
+  return (
+    <DataGrid
+      columns={COLUMNS}
+      data={view === "owners" ? owners : MEMBERS}
+      emptyMessage="No members match."
+      getRowId={(member) => member.id}
+      pageSize={10}
+      search={{ label: "Find a member" }}
+      showColumnFilters={false}
+      views={{
+        label: "Members to show",
+        onChange: setView,
+        options: [
+          { count: MEMBERS.length, label: "All", value: "all" },
+          { count: owners.length, label: "Owners", value: "owners" },
+        ],
+        value: view,
+      }}
+    />
+  );
+}
+
+/** A manage list: the views at the left of the card's header, the search at its right. */
+export const ViewsAndSearch: StoryObj = { render: () => <MembersWithViews /> };

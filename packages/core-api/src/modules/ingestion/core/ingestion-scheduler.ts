@@ -126,14 +126,56 @@ export interface ScheduledEventRef {
   externalId: string;
 }
 
+/** A linked event the live-score sweep syncs, with what its pace and quiet check read (#1499). */
+export interface LiveScoreEventRef extends ScheduledEventRef {
+  /** Whether its sport is played in rounds, such as golf, rather than in matches. */
+  playedInRounds: boolean;
+  /** When the play now under way began (a round, or a match); null when none is. */
+  playUnderwaySince: Date | null;
+  /** When its provider last sent a webhook notification about it; null before the first. */
+  lastProviderNotificationAt: Date | null;
+}
+
 export interface IngestionScheduledEventReader {
+  /** The next events per provider whose fields a participant sync loads. */
   listEventsForFeed(input: {
     sport: Sport;
-    feed: EventSyncFeed;
+    feed: 'EVENTPARTICIPANTS';
     from?: Date;
     now: Date;
     to?: Date;
   }): Promise<ScheduledEventRef[]>;
+  /** Every in-progress event the live-score sweep syncs. */
+  listLiveScoreEvents(input: { sport: Sport; now: Date }): Promise<LiveScoreEventRef[]>;
+}
+
+/**
+ * How the live-score sweep paces the events of providers that send webhook notifications
+ * (#1499). Each notification syncs its event within a minute, so the sweep is only their safety
+ * net: it polls each such event every `pollIntervalMs`, one played in rounds (golf) every
+ * `roundPollIntervalMs` while a round is under way, and warns when play has gone on for the
+ * event's `quietAfterMs` with no notification. Other providers' events keep the admin's interval.
+ */
+export interface NotifiedProviderCadence {
+  providerIds: readonly string[];
+  pollIntervalMs: number;
+  roundPollIntervalMs: number;
+  /**
+   * How long an event may stay in play with no notification before the sweep warns: the longest
+   * gap its league's notifications have in normal play, such as a quarter and halftime.
+   */
+  quietAfterMs: (sport: Sport, event: ScheduledEventRef) => number;
+}
+
+/** How often the live-score sweep looks for due events while a provider's cadence is set. */
+export const LIVE_SCORE_SWEEP_TICK_MS = 60_000;
+/** How early within a tick an event's poll may come due, so a tick's own lag never skips one. */
+const LIVE_POLL_DUE_SLACK_MS = 5_000;
+
+/** What the live-score sweep remembers about one sport's events between ticks (#1499). */
+interface LiveScorePacing {
+  lastPolledAt: Map<string, number>;
+  quietWarnedAt: Map<string, number>;
 }
 
 export interface IngestionSchedulerOptions {
@@ -144,6 +186,8 @@ export interface IngestionSchedulerOptions {
   syncRunLedger?: Pick<ProviderSyncRunLedger, 'createSubmissions' | 'executeFeedRun'>;
   /** Keeps each provider loop to one server task; omitted, each loop runs on this task. */
   jobLock?: JobLock;
+  /** Set while a provider sends webhook notifications; omitted, every event polls each sweep. */
+  notifiedProviderCadence?: NotifiedProviderCadence;
 }
 
 const SCHEDULED_SYNC_SOURCE: SyncRequestSource = 'SCHEDULED';
@@ -169,6 +213,7 @@ export class IngestionScheduler {
   private running = false;
   private readonly startedSportLoops = new Set<Sport>();
   private readonly inFlightScheduledEventSyncs = new Set<string>();
+  private readonly liveScorePacing = new Map<Sport, LiveScorePacing>();
   /** The unregistered scheduled sports last warned about, so an unchanged set is not re-warned every cycle. */
   private lastWarnedUnregisteredSports: string | null = null;
   private readonly syncOrchestrator: Pick<SyncOrchestrator, 'normalizeRequest'>;
@@ -226,7 +271,7 @@ export class IngestionScheduler {
         this.startRecurringLoop(
           `${sport} live score sync`,
           async () => this.runConfiguredLiveScoreSweep(sport),
-          async () => this.getSportDelayMs(sport, 'eventLiveScores'),
+          async () => this.getLiveScoreSweepDelayMs(sport),
           `ingestion:${sport}:live-scores`,
         );
         this.startedSportLoops.add(sport);
@@ -251,6 +296,7 @@ export class IngestionScheduler {
     this.timers = [];
     this.startedSportLoops.clear();
     this.inFlightScheduledEventSyncs.clear();
+    this.liveScorePacing.clear();
     this.logger?.info('Ingestion scheduler stopped');
   }
 
@@ -453,11 +499,9 @@ export class IngestionScheduler {
       return;
     }
 
-    const events = await eventReader.listEventsForFeed({
-      sport,
-      feed,
-      now: this.getNow(),
-    });
+    const now = this.getNow();
+    const listed = await eventReader.listLiveScoreEvents({ sport, now });
+    const events = this.dueLiveScoreEvents(sport, listed, now, toDelayMs(config.eventLiveScores));
 
     this.logger?.debug({
       sport,
@@ -488,6 +532,79 @@ export class IngestionScheduler {
         this.inFlightScheduledEventSyncs.delete(inFlightKey);
       }
     }
+  }
+
+  /**
+   * The listed events whose poll is due (#1499). With no notified provider cadence every event
+   * is due each sweep, at the admin's interval. With one, the sweep ticks every minute and each
+   * event comes due at its own interval: a notified provider's at its safety-net pace, any other
+   * at the admin's. The sweep also warns about each notified provider's event in play that has
+   * gone quiet. What it remembers is kept for the events still listed only.
+   */
+  private dueLiveScoreEvents(sport: Sport, listed: LiveScoreEventRef[], now: Date, adminIntervalMs: number): LiveScoreEventRef[] {
+    const cadence = this.options.notifiedProviderCadence;
+    if (!cadence) return listed;
+
+    const previous = this.liveScorePacing.get(sport);
+    const pacing: LiveScorePacing = { lastPolledAt: new Map(), quietWarnedAt: new Map() };
+    this.liveScorePacing.set(sport, pacing);
+    const nowMs = now.getTime();
+    const due: LiveScoreEventRef[] = [];
+    for (const event of listed) {
+      const key = `${event.providerId}:${event.externalId}`;
+      const notified = cadence.providerIds.includes(event.providerId);
+      const quietWarnedAt = previous?.quietWarnedAt.get(key);
+      if (quietWarnedAt !== undefined) pacing.quietWarnedAt.set(key, quietWarnedAt);
+      if (notified) this.warnIfQuiet(sport, event, key, nowMs, cadence, pacing);
+
+      const intervalMs = !notified
+        ? adminIntervalMs
+        : event.playedInRounds && event.playUnderwaySince !== null
+          ? cadence.roundPollIntervalMs
+          : cadence.pollIntervalMs;
+      const lastPolledAt = previous?.lastPolledAt.get(key);
+      if (lastPolledAt === undefined || nowMs - lastPolledAt >= intervalMs - LIVE_POLL_DUE_SLACK_MS) {
+        pacing.lastPolledAt.set(key, nowMs);
+        due.push(event);
+      } else {
+        pacing.lastPolledAt.set(key, lastPolledAt);
+      }
+    }
+    return due;
+  }
+
+  /**
+   * Warns, at most once per quiet stretch of the event's `quietAfterMs`, when a notified provider's event has
+   * been in play that long with no notification about it: its webhook may have stopped, and
+   * until it is fixed the event's scores move only at the safety-net pace. The warning's action
+   * is what the log alarm counts (infrastructure/terraform).
+   */
+  private warnIfQuiet(
+    sport: Sport,
+    event: LiveScoreEventRef,
+    key: string,
+    nowMs: number,
+    cadence: NotifiedProviderCadence,
+    pacing: LiveScorePacing,
+  ): void {
+    if (event.playUnderwaySince === null) return;
+    const quietAfterMs = cadence.quietAfterMs(sport, event);
+    const heardFromAt = Math.max(event.playUnderwaySince.getTime(), event.lastProviderNotificationAt?.getTime() ?? 0);
+    if (nowMs - heardFromAt < quietAfterMs) return;
+    const warnedAt = pacing.quietWarnedAt.get(key);
+    if (warnedAt !== undefined && nowMs - warnedAt < quietAfterMs) return;
+    pacing.quietWarnedAt.set(key, nowMs);
+    this.logger?.warn({
+      action: 'ingestion.providerNotifications.quiet',
+      data: {
+        sport,
+        providerId: event.providerId,
+        eventId: event.externalId,
+        playUnderwaySince: event.playUnderwaySince.toISOString(),
+        lastProviderNotificationAt: event.lastProviderNotificationAt?.toISOString() ?? null,
+        quietMinutes: Math.floor((nowMs - heardFromAt) / 60_000),
+      },
+    }, 'An event in play has had no webhook notification from its provider for a while; its webhook may have stopped');
   }
 
   /**
@@ -757,6 +874,12 @@ export class IngestionScheduler {
   ): Promise<number> {
     const config = await this.getSportConfig(sport);
     return toDelayMs(config[feed]);
+  }
+
+  /** The admin's live-score interval, shortened to a tick while a notified provider's cadence is set. */
+  private async getLiveScoreSweepDelayMs(sport: Sport): Promise<number> {
+    const adminDelayMs = await this.getSportDelayMs(sport, 'eventLiveScores');
+    return this.options.notifiedProviderCadence ? Math.min(adminDelayMs, LIVE_SCORE_SWEEP_TICK_MS) : adminDelayMs;
   }
 
   private async getGlobalConfig(): Promise<IngestionScheduleConfig> {

@@ -22,6 +22,7 @@ import type {
   SportEventParticipantGolfStandingRepository,
   SportEventParticipantPatch,
   SportEventParticipantRaceResultRepository,
+  ProviderNotificationReceipt,
   SportEventParticipantRepository,
   SportEventParticipantValuationRepository,
   SportEventParticipantView,
@@ -97,6 +98,8 @@ export class InMemorySportEvents {
   raceResultRows: SportEventParticipantRaceResult[] = [];
   statLineRows: SportEventParticipantStatLine[] = [];
   matchRows: SportEventMatch[] = [];
+  /** Each provider notification recorded against events (#1499). */
+  readonly providerNotifications: ProviderNotificationReceipt[] = [];
   /** The jobs each status move or edit wrote with it (#1448, #1464). */
   backgroundJobs: BackgroundJobRequest[] = [];
 
@@ -369,7 +372,9 @@ export class InMemorySportEvents {
       })),
       findLiveNotifiedEvents: async (query) => this.events
         .filter((row) => row.providerId === query.providerId && row.sport === query.sport
-          && row.status === 'IN_PROGRESS' && row.syncScope === 'SCORES_ONLY'
+          && row.syncScope === 'SCORES_ONLY'
+          && (row.status === 'IN_PROGRESS' || (query.startedBy !== undefined && row.status === 'SCHEDULED'
+            && row.autoLifecycleEnabled && row.startDate <= query.startedBy))
           && ('externalId' in query ? row.externalId === query.externalId : row.externalId.startsWith(query.externalIdPrefix)))
         .map((row) => ({
           sport: row.sport,
@@ -377,7 +382,11 @@ export class InMemorySportEvents {
           externalId: row.externalId,
           holdsGame: query.gameId !== undefined
             && this.matchRows.some((match) => match.sportEventId === row.id && match.externalGameId === query.gameId),
+          inProgress: row.status === 'IN_PROGRESS',
         })),
+      recordProviderNotification: async (receipt) => {
+        this.providerNotifications.push(receipt);
+      },
       findAutoLifecycleCandidates: async () => this.events.filter((row) => (
         row.autoLifecycleEnabled
         && (row.status === 'SCHEDULED' || row.status === 'IN_PROGRESS')

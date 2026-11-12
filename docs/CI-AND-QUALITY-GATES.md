@@ -1,7 +1,7 @@
 # CI Workflow and Quality Gates
 
 This document describes the GitHub Actions workflow that runs on every push to
-`main` and every pull request targeting `main`, and the eight quality gates
+`main` and every pull request targeting `main`, and deploys QA when run by hand, and the eight quality gates
 that fire inside the early `lint-typecheck` job. It also documents how to run
 the same checks locally and how to remediate each failure mode.
 
@@ -11,12 +11,15 @@ The authoritative workflow file is `.github/workflows/ci.yml`.
 
 The workflow runs on:
 
-- `push` to `main`
+- `push` to `main`: every test and build job, the local browser e2e included. No deploy.
 - `pull_request` targeting `main`
+- `workflow_dispatch` on `main`: the same jobs, then the deploy track. See *Deploying QA*.
 
-The concurrency group is `ci-${{ github.ref }}`, so runs on the same ref never
-overlap: at most one run per group is in progress, and a newer run on the same
-ref waits as `pending` until the in-flight one finishes.
+The concurrency group is `ci-${{ github.ref }}`, with a `deploy-` prefix for a
+`workflow_dispatch` run, so runs of the same kind on the same ref never overlap:
+at most one run per group is in progress, and a newer one waits as `pending`
+until the in-flight one finishes. A deploy has its own group so a merge pushed
+while it is pending cannot replace it.
 
 **Cancellation of the superseded run is asymmetric, and deliberately so** —
 `cancel-in-progress` is `${{ github.event_name == 'pull_request' }}`, so it is
@@ -42,8 +45,33 @@ hazard is that it stays approvable indefinitely, so a second dispatch must
 disarm the first. See *Resetting the QA database* below.
 
 The deploy stages (`deploy-publish-images`, `deploy-migrate-qa`, `deploy-qa`,
-`poolmaster-browser-e2e`, `deploy-health-issue`) are gated to push events on
-`main` only — they do not run for pull requests.
+`poolmaster-browser-e2e`, `deploy-health-issue`) run only on a `workflow_dispatch`
+of `main` — never for a pull request, and never for a push.
+
+### Deploying QA
+
+QA is deployed on demand, not on every merge. A large batch of work merges to
+`main` ticket by ticket, and nobody tests QA between those merges; deploying each
+one cost an image build, a migration and a rollout per merge, and tied `main`'s
+red or green to QA's health rather than to the code. A push to `main` now runs
+every test and build job, `poolmaster-browser-e2e-local` included, so two merges
+that clash still turn `main` red (with *require branches to be up to date* off,
+that red run is how a clash shows). A deploy waits for every required check, the
+local browser e2e, the contract gates and the migration drift check included, so
+a red `main` never reaches QA.
+
+To deploy: **Actions -> CI -> Run workflow**, branch `main`. The run tests
+everything first (`changes` hands the classifier an empty list, which runs every
+job) and then publishes, migrates, rolls out and runs the QA `@smoke` lane. A
+thread dispatches it through the GitHub tools' workflow trigger with `ci.yml`
+on `main`.
+
+ECR tags are immutable, so a second deploy of the same commit reuses the images
+the first pushed (found by tag in `deploy-publish-images`) instead of building
+and failing to push them again.
+
+A deploy run whose tests fail reports on the "CI is failing on main" issue, as a
+push run does: `main-ci-health-issue` runs on both.
 
 ### Why the gated jobs carry `!cancelled()`
 
@@ -78,7 +106,7 @@ with a ten-minute floor:
 | `changes`, `all-contract-gates`, `service-lint-typecheck`, `service-unit-tests`, `schema-migration-drift`, `service-build`, `service-mock-provider-build`, health-issue jobs | under 2 min | 10 |
 | `poolmaster-unit-tests` | 2 min | 15 |
 | `service-image-smoke` | not yet measured | 15 |
-| `service-integration-tests (1/4)`–`(4/4)` and `service-functional-api-tests (1/2)`, `(2/2)` shards | 3–5 min (7 each before #778 split them further) | 20 |
+| `service-integration-tests (1/4)`–`(4/4)` and `service-functional-api-tests (1/3)`–`(3/3)` shards | 5.5–7.5 min (functional 1/2 took 10.5 when there were two shards, 2026-11-12) | 20 |
 | `poolmaster-browser-e2e-local` | 4–9 min | 25 |
 | `poolmaster-build` | 1–12 min | 30 |
 | `deploy-publish-images` | 4–5 min | 20 |
@@ -232,7 +260,7 @@ the check; its value now depends on the warning being read.
 
 ```mermaid
 flowchart TD
-  T[push to main / PR to main] --> CG[all-contract-gates]
+  T[push to main / PR to main / deploy run] --> CG[all-contract-gates]
   T --> CH[changes]
 
   CH --> LT
@@ -255,7 +283,7 @@ flowchart TD
   LT --> MB[service-mock-provider-build]
   LT --> IS[service-image-smoke]
 
-  SU --> PI[deploy-publish-images]
+  SU -->|deploy run only| PI[deploy-publish-images]
   SI --> PI
   SF --> PI
   LT --> PI
@@ -302,11 +330,11 @@ database — a different problem with a different fix. It reuses the same
 `postgres:16` service the suites use, needs no generated Prisma client, and the
 whole history applies in about three seconds.
 
-It is not in the `deploy-publish-images` dependency list. Drift does not break a
-deploy: QA is built from the migrations, so it gets the real schema either way. What
-drift breaks is anyone who *generates* from `schema.prisma` — above all a history
-squash (#1429) — which is why the gate blocks the pull request that would introduce it
-rather than the deploy that would carry it.
+Drift does not break a deploy: QA is built from the migrations, so it gets the real
+schema either way. What drift breaks is anyone who *generates* from `schema.prisma` —
+above all a history squash (#1429) — which is why the gate blocks the pull request that
+would introduce it. It is also in the `deploy-publish-images` dependency list, since a
+deploy is run by hand on `main` and waits for every required check.
 
 Two backend jobs collect coverage in this workflow. `service-unit-tests` has the unit
 suite's coverage threshold (#302). The four integration shards each collect Babel
@@ -392,7 +420,7 @@ PR that could hit the gap did hit it. Widened rather than re-documented, with a
 regression test in `scripts/ci-changed-areas.test.mjs`.
 
 The deploy track (`deploy-publish-images` → `deploy-migrate-qa` → `deploy-qa`
-→ `poolmaster-browser-e2e`) is push-to-main-only and additionally requires all
+→ `poolmaster-browser-e2e`) runs only on a manual run of `main` and additionally requires all
 the test and build jobs to pass. Migrations gate the rollout: nothing reaches
 QA until `deploy-migrate-qa` succeeds, so a failed migration leaves the
 previous release running rather than new code on an old schema.
@@ -856,17 +884,17 @@ hardening epic.
   typecheck, `tsc` build and its own test suite (see *Test suites* §6).
 - **`poolmaster-build`** — webapp lint, typecheck and build, then the component gallery build
   (Storybook, #1615), kept as the run's `component-gallery` artifact.
-- **`deploy-publish-images`** (push to `main` only) — builds and pushes
+- **`deploy-publish-images`** (manual run of `main` only) — builds and pushes
   Docker images to ECR and registers ECS task definitions. Deploys nothing.
   Hands each task definition to later jobs as `family:revision`, never as an
   ARN: an ARN contains the masked AWS account id, and Actions silently drops
   any job output containing a masked value (#281).
-- **`deploy-migrate-qa`** (push to `main` only) — runs the migration ECS task
+- **`deploy-migrate-qa`** (manual run of `main` only) — runs the migration ECS task
   on the revision this run registered and prints its CloudWatch logs, pass or
   fail, via `scripts/ecs-task-wait-and-print-logs.mjs`. A missing task
   definition, missing network secrets, or a task ECS would not start fails the
   job; none of them is a skip.
-- **`deploy-qa`** (push to `main` only) — rolls this run's task definitions out
+- **`deploy-qa`** (manual run of `main` only) — rolls this run's task definitions out
   to the QA services and fails if either value is missing. It then asserts
   that the core-api service and its PRIMARY deployment are on that revision,
   requires `desiredCount >= 1` before waiting for stabilization (a zero-task
@@ -874,7 +902,7 @@ hardening epic.
   asserts again that the rollout `COMPLETED` on that revision, so a
   circuit-breaker rollback fails the job. Then it syncs the webapp to S3 and
   invalidates CloudFront.
-- **`deploy-health-issue`** (push to `main` only) — opens, comments on, or
+- **`deploy-health-issue`** (manual run of `main` only) — opens, comments on, or
   closes the "QA deploy is failing on main" issue from the deploy jobs'
   results.
 - The `all-contract-gates` job also runs `npm run test:scripts`: the
@@ -902,14 +930,16 @@ answers P3009 to every later deploy, so fixing the rows is not enough on its own
 how the Season collapse migration (#315) stopped QA deploys until the database was reset.
 
 QA holds no data worth preserving — there is no staging or production database, and the
-deployed journey creates and tears down everything it needs on every push — so a reset is
+deployed journey creates and tears down everything it needs on every deploy — so a reset is
 usually faster than any targeted repair:
 
 1. **Actions -> Reset QA database -> Run workflow**, and type `reset qa` to confirm.
 2. **Approve the deployment** when it pauses on the `qa-reset` environment.
 3. The job prints the container's log: the rows destroyed, and a verification that the
    migration history came back clean.
-4. **Re-run the latest `main` run's failed jobs**, so `deploy-qa` rolls the release out.
+4. **Deploy QA** (*Deploying QA* above), so the current `main` rolls out. If the reset
+   followed a deploy run whose migrate step failed, re-running that run's failed jobs does
+   the same without testing again.
 5. Optionally, **Actions -> Load sport data -> Run workflow** with mode `apply` to load the
    2026 tournaments for manual league and contest testing (`docs/SPORT-DATA-LOADING.md`, *Seeded 2026
    tournaments*). A reset leaves none.
@@ -985,7 +1015,7 @@ release, and the mock contest feed provider has its own suite.
 - **Local commands:**
   - `npm run test:service:functional-api` — run the suite (requires `DATABASE_URL`)
   - `npm run test:service:functional-api:fresh` — reset DB then run
-- **CI job:** two shards, `service-functional-api-tests (1/2)` and `(2/2)`, each with its own Postgres service container and its own server, run `npm run test:service:functional-api -- --shard=k/2` with no coverage (#302, #778). As with integration, every file must pass in either shard, and a `service-functional-api-tests` job turns the shard results into the one required verdict.
+- **CI job:** three shards, `service-functional-api-tests (1/3)`–`(3/3)`, each with its own Postgres service container and its own server, run `npm run test:service:functional-api -- --shard=k/3` with no coverage (#302, #778). Jest splits files by a hash of their path, not by run time; with two shards both of the slowest files landed in shard 1, so the suite went to three. As with integration, every file must pass in any shard, and a `service-functional-api-tests` job turns the shard results into the one required verdict.
 - **Required pre-push gate:** `DATABASE_URL=... npm run test:service:functional-api` (per `AGENTS.md` Quality Gates).
 - **Coverage policy:** No threshold and no coverage collected. The functional suite proves wiring and contracts; per-file floors belong to the unit and integration suites.
 
@@ -1019,7 +1049,7 @@ release, and the mock contest feed provider has its own suite.
     - Act 5 (untagged, pre-merge only): the root admin bulk-loads round 2 and then round 3, and the contest leaderboard is re-read after each upload and after two one-golfer corrections. Each read is asserted against the read before it — the entry's total, the order the field is placed in and which of its picks count all move — and the counted/dropped asymmetry of best-4-of-6 is proven both ways: a penalty on a dropped pick moves that golfer alone, the same correction on a counting pick moves the entry's total by exactly its own change. It writes scores, so it is untagged for the same reason act 4 is.
     - Act 6 (untagged, pre-merge only): the root admin loads the round that completes the card — read off the event's own schedule, not assumed — then moves the tournament to `COMPLETED`, which is what settles its contests: there is no settle operation, settlement is a consequence of the event reaching that status. The frozen standing is asserted to be the last live leaderboard read before the transition, field by field; and a late score correction moves the golfer's own event total while the settled entry's total, position and displayed position do not. It drives the event to a terminal status, so it is untagged for the reason acts 4 and 5 are, and more so.
     - Act 7 (untagged, pre-merge only): a contest over two tournaments (#713, #749). The root admin builds and releases two more one-round tournaments on act 1's tour, the same day a week out, through the same Manage pages. The commissioner signs back in (acts 2 and 3 keep the commissioner's and member's generated passwords for this), creates a tiered contest on the first, adds the second on the contest's Events page and opens it. The member signs back in, submits a roster for the first tournament, then switches the entry page to the second (its option reads "Not submitted") and submits a roster there. The root admin starts both and loads round 1 of each; the member's leaderboard switches between them, each showing that tournament's picks, while the entry's contest total is the sum of both tournaments' scores.
-    - Acts 1–3 **write to QA on every main push**. `afterAll` removes every attempt's data through the API with the admin token, in dependency order: the league (with its contest, entry, squads, memberships and invite link), the tournaments (act 1's and act 7's two, each with field, rounds, scores and tiers), then the tour (with its roster and the `event_series` rows the tournaments made) and the players (#1400), then both users. A completed teardown leaves nothing behind.
+    - Acts 1–3 **write to QA on every deploy**. `afterAll` removes every attempt's data through the API with the admin token, in dependency order: the league (with its contest, entry, squads, memberships and invite link), the tournaments (act 1's and act 7's two, each with field, rounds, scores and tiers), then the tour (with its roster and the `event_series` rows the tournaments made) and the players (#1400), then both users. A completed teardown leaves nothing behind.
   - `squad-management.e2e.ts` (untagged, pre-merge only) — squad management against the real API (#363). A fresh commissioner creates a run-named league and join URL; a fresh member joins and, on their own page › Edit, renames the squad and changes its icon in one save (checked on their own page and the Members directory), then invites a co-owner from their own page by a brand-new `@e2e.invalid` address, reading the pending invite code from the response. The co-owner registers through `/team-invite/<code>` and lands on the squad as their own. The commissioner then inactivates the squad from Commissioner tools › Members › Manage, and the root admin deletes it from the same Manage page — delete is root-admin only and requires an inactive squad. Each role keeps its own browser context, because a registered user's password is never kept. It is its own file, not a journey act, because deleting a squad deletes its contest entries. `afterAll` removes the league and the three users through the API.
   - `racing-journey.e2e.ts` (untagged, pre-merge only) — horse racing end to end on the shared Manage pages (#623), in the golden journey's serial, one-`test()`-per-act shape. Act 1: the root admin creates a run-named circuit, eight horses and a race under `/manage/sports/horse-racing`, enters the field, sets each horse's odds in the field grid, tiers the field from those odds (3, 3 and 2), prices it and releases it. Act 2: a fresh commissioner creates a league and, on Create contest, picks horse racing and the race; the Win / Place / Show preset fills the points table with 5, 3, 1, which the commissioner replaces with 10, 6, 4, 2 before creating and opening the contest. Act 3: a fresh member joins by link and submits one horse from each tier, with no tiebreaker offered. Act 4: the root admin starts the race, pastes its official finishing order into the race Results card (one horse did not finish), completes the race, and reads the settled standing: the entry scores 16, which only the edited table gives (the preset would give 6). Teardown is the golden journey's, finding the circuit by the run's sport.
   - `knockout-journey.e2e.ts` (untagged, pre-merge only) — a knockout contest end to end on the 2025 WNBA playoffs as they were played (#749), in the same serial shape. Act 1: the root admin creates a run-named basketball league, the eight teams and a three-round tournament a week out, sets each team's seed and odds in the field grid, tiers the field from its odds (two a tier), prices it, loads the bracket through the API (Manage has no bracket upload; a bracket arrives from a sport data file) with the 2 seed's opponent left open, completes that pairing on the bracket tab and releases the tournament. Act 2: a fresh commissioner creates a basketball contest on it, one team a tier with all four counting, scored 1, 2, 4 a round with the seed-difference upset bonus. Act 3: a fresh member joins by link and picks the 2, 4, 6 and 7 seeds, each offered with its seed, with no tiebreaker. Act 4: the root admin starts the tournament and names each series' winner on the bracket tab; after the first round the leaderboard shows 6 (the Fever's upset bonus of 3, the Storm eliminated), and after the final and completion the settled entry scores 17 with the Aces as champions (11 without the bonus). The bracket's games carry no times, so nothing depends on the date.
@@ -1038,7 +1068,7 @@ release, and the mock contest feed provider has its own suite.
 - **Running against a local stack:** start Postgres, migrate, seed a root admin with `packages/core-api/scripts/bootstrap-users.mjs` (`FIXTURE_JSON` you compose), `npm run build:poolmaster`, start core-api on port 3000, then `npx vite preview` in `clients/poolmaster` — it serves the production build on port 4175 and proxies `/api` to core-api. Insert the `GOLF` row into `sports` (the journey reads it by name, and only provider ingestion creates it; the CI job's seed step has the statement). The contest configuration templates the contest form offers come from migrations, so they need no seed — and the form can create a contest without one. Set `POOLMASTER_E2E_BASE_URL=http://localhost:4175` plus the two admin variables. The `poolmaster-browser-e2e-local` job in `ci.yml` is the reference sequence.
 - **CI jobs:**
   - `poolmaster-browser-e2e-local` — every PR and every main push. All specs against the local stack above on a throwaway Postgres; seeds its own admin with a password generated for the run, so it needs no secrets, no AWS and no deploy.
-  - `poolmaster-browser-e2e` — push-to-main only, after `deploy-qa` succeeds. `@smoke` only, against the deployed QA frontend at `qa.ultimateofficepoolmanager.com`. Reads the `POOLMASTER_E2E_ADMIN_IDENTIFIER` and `POOLMASTER_E2E_ADMIN_PASSWORD` repository secrets.
+  - `poolmaster-browser-e2e` — manual deploy runs of `main` only, after `deploy-qa` succeeds. `@smoke` only, against the deployed QA frontend at `qa.ultimateofficepoolmanager.com`. Reads the `POOLMASTER_E2E_ADMIN_IDENTIFIER` and `POOLMASTER_E2E_ADMIN_PASSWORD` repository secrets.
 - **Required pre-push gate:** none. E2E is a **CI-only** signal; per `AGENTS.md` Quality Gates, browser E2E falls under "CI-only follow-up signals" and isn't required pre-push.
 - **Coverage policy:** N/A. E2E doesn't produce coverage artifacts.
 

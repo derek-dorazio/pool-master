@@ -3,7 +3,8 @@ import { createColumnHelper } from '@tanstack/react-table';
 import { useMemo, useState } from 'react';
 import { listEvents } from '@/lib/api';
 import {
-  DataGridPage,
+  DataGrid,
+  QueryState,
   LinkButton,
   StatusBadge,
   useDisplayPreferences,
@@ -20,7 +21,7 @@ import {
   buildSportEventPath,
   MANAGE_LIST_PAGE_SIZE,
 } from './manage-navigation';
-import { EventYearSelect } from './event-year-select';
+import { EventYearFilter } from './event-year-select';
 import { sportEventNameColumn, sportEventScheduleColumns } from './sport-event-columns';
 import { useManagedSport } from './use-managed-sport';
 import { SportSectionMenu } from './sport-section-menu';
@@ -79,42 +80,43 @@ export function RootAdminSportEventListPage() {
   );
 
   return (
-    <div className="space-y-4">
-      <SportSectionMenu current="events" />
-      <div className="flex items-end justify-between gap-4">
-        <EventYearSelect onChange={setEventYear} testId="root-admin-sport-event-list-year" value={eventYear} />
-        <LinkButton
-          data-testid="root-admin-sport-event-list-new"
-          to={`${buildSportEventListPath(sport)}/new`}
-        >
-          New {event.one}
-        </LinkButton>
-      </div>
+    <section className="space-y-6" data-testid="root-admin-sport-event-list-page">
+      <SportSectionMenu
+        actions={(
+          <LinkButton
+            data-testid="root-admin-sport-event-list-new"
+            to={`${buildSportEventListPath(sport)}/new`}
+          >
+            New {event.one}
+          </LinkButton>
+        )}
+        current="events"
+        tabsEnd={<EventYearFilter onChange={setEventYear} testId="root-admin-sport-event-list-year" value={eventYear} />}
+      />
 
-      <DataGridPage
-        columns={columns}
-        data={tournamentsQuery.data ?? []}
-        emptyMessage={`No ${sportName} ${event.many} in ${eventYear}.`}
-        errorBody={extractErrorMessage(tournamentsQuery.error, {
+      <QueryState
+        error={extractErrorMessage(tournamentsQuery.error, {
           fallback: `We could not load ${sportName} ${event.many} right now.`,
         })}
-        filterTestIdPrefix="root-admin-sport-event-list-filter"
-        getRowId={(tournament) => tournament.id}
-        getRowLink={(tournament) => buildSportEventPath(sport, tournament.id)}
-        loadingBody={`Loading ${sportName} ${event.many}...`}
-        pageSize={MANAGE_LIST_PAGE_SIZE}
-        rowTestId={(tournament) => `root-admin-sport-event-row-${tournament.id}`}
-        search={{ label: `Find a ${event.one}`, testId: 'root-admin-sport-event-list-search' }}
-        state={
-          tournamentsQuery.isLoading
-            ? 'loading'
-            : tournamentsQuery.isError
-              ? 'error'
-              : 'ready'
-        }
-        tableTestId="root-admin-sport-event-list-table"
-        testId="root-admin-sport-event-list-page"
-      />
-    </div>
+        loading={`Loading ${sportName} ${event.many}...`}
+        query={tournamentsQuery}
+        testId="root-admin-sport-event-list"
+      >
+        {(tournaments) => (
+          <DataGrid
+            columns={columns}
+            data={tournaments}
+            emptyMessage={`No ${sportName} ${event.many} in ${eventYear}.`}
+            filterTestIdPrefix="root-admin-sport-event-list-filter"
+            getRowId={(tournament) => tournament.id}
+            getRowLink={(tournament) => buildSportEventPath(sport, tournament.id)}
+            pageSize={MANAGE_LIST_PAGE_SIZE}
+            rowTestId={(tournament) => `root-admin-sport-event-row-${tournament.id}`}
+            search={{ label: `Find a ${event.one}`, testId: 'root-admin-sport-event-list-search' }}
+            tableTestId="root-admin-sport-event-list-table"
+          />
+        )}
+      </QueryState>
+    </section>
   );
 }

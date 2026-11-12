@@ -3,6 +3,7 @@ import { BalldontlieWebhookNotificationSchema } from '@poolmaster/shared/dto';
 import {
   BALLDONTLIE_WEBHOOK_EVENT_TYPES,
   BALLDONTLIE_WEBHOOK_GAME_LEAGUES,
+  balldontlieQuietAfterMs,
   checkBalldontlieSignature,
   readBalldontlieNotification,
 } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/balldontlie-webhooks';
@@ -10,7 +11,9 @@ import { parseEplScope } from '../../../../packages/core-api/src/modules/ingesti
 import { parseWorldCupScope } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/fifa-world-cup-mapping';
 import { parseNcaaTournamentScope } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/ncaa-tournament-mapping';
 import { parseNflScope } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/nfl-mapping';
+import { NBA_PLAYOFFS } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/nba-mapping';
 import { NHL_PLAYOFFS } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/nhl-mapping';
+import { parsePlayoffRoundScope } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/series-playoff-rounds';
 import { MLB_POSTSEASON } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/mlb-mapping';
 import { WNBA_PLAYOFFS } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/wnba-mapping';
 import { parsePlayoffsScope } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/series-playoffs';
@@ -28,6 +31,7 @@ describe('reading BALLDONTLIE webhook notifications (#1498)', () => {
       providerId: 'balldontlie',
       sport: Sport.AMERICAN_FOOTBALL,
       notificationType: 'nfl.game.ended',
+      phase: 'END',
       subject: 'GAME',
       gameId: '424095',
       eventIdPrefix: 'nfl-',
@@ -36,7 +40,8 @@ describe('reading BALLDONTLIE webhook notifications (#1498)', () => {
     expect(read(PAYLOADS.nflGamePeriodEnded)).toMatchObject({ subject: 'GAME', gameId: '424095' });
   });
 
-  it('reads each NCAA tournament\'s, the Premier League\'s and the World Cup\'s game events with their own league\'s event prefix', () => {
+  it('reads the NBA\'s, each NCAA tournament\'s, the Premier League\'s and the World Cup\'s game events with their own league\'s event prefix', () => {
+    expect(read(PAYLOADS.nbaGameEnded)).toMatchObject({ sport: Sport.BASKETBALL, eventIdPrefix: 'nba-', gameId: '21707974', phase: 'END' });
     expect(read(PAYLOADS.ncaabGameEnded)).toMatchObject({ sport: Sport.BASKETBALL, eventIdPrefix: 'ncaab-', gameId: '2798627' });
     expect(read(PAYLOADS.ncaawGameEnded)).toMatchObject({ sport: Sport.BASKETBALL, eventIdPrefix: 'ncaaw-', gameId: '6100' });
     expect(read(PAYLOADS.eplGameHalftime)).toMatchObject({ sport: Sport.SOCCER, eventIdPrefix: 'epl-', gameId: '1922' });
@@ -51,15 +56,27 @@ describe('reading BALLDONTLIE webhook notifications (#1498)', () => {
       providerId: 'balldontlie',
       sport: Sport.GOLF,
       notificationType: 'pga.player.round_completed',
+      phase: 'PROGRESS',
       subject: 'EVENT',
       eventId: '24',
     });
   });
 
+  it('places each notification in play: a game or tournament or round starting, play under way, or a game or tournament ending (#1499)', () => {
+    expect(read(PAYLOADS.nflGameStarted)?.phase).toBe('START');
+    expect(read(PAYLOADS.nflGamePeriodEnded)?.phase).toBe('PROGRESS');
+    expect(read(PAYLOADS.eplGameHalftime)?.phase).toBe('PROGRESS');
+    expect(read(PAYLOADS.worldCupGameEnded)?.phase).toBe('END');
+    expect(read(PAYLOADS.pgaTournamentStarted)?.phase).toBe('START');
+    expect(read(PAYLOADS.pgaRoundStarted)?.phase).toBe('START');
+    expect(read(PAYLOADS.pgaPlayerRoundCompleted)?.phase).toBe('PROGRESS');
+    expect(read(PAYLOADS.pgaTournamentEnded)?.phase).toBe('END');
+  });
+
   it('acts on no per-play event, no golf hole, no league without a reader, and no event type it cannot split', () => {
     expect(read(PAYLOADS.nflTouchdown)).toBeNull();
     expect(read(PAYLOADS.pgaHoleCompleted)).toBeNull();
-    expect(read(PAYLOADS.nbaGameEnded)).toBeNull();
+    expect(read({ event_type: 'mls.game.ended', game: { id: 1 } })).toBeNull();
     expect(read({ event_type: 'test' })).toBeNull();
     expect(read({ type: 'test', sport: 'test' })).toBeNull();
     expect(read({ event_type: 'toString.game.ended', game: { id: 1 } })).toBeNull();
@@ -87,7 +104,9 @@ describe('reading BALLDONTLIE webhook notifications (#1498)', () => {
   });
 
   it('names each league\'s events by the prefix its reader\'s event ids really start with', () => {
-    const { nfl, ncaab, ncaaw, nhl, mlb, wnba, epl, worldcup } = BALLDONTLIE_WEBHOOK_GAME_LEAGUES;
+    const { nfl, nba, ncaab, ncaaw, nhl, mlb, wnba, epl, worldcup } = BALLDONTLIE_WEBHOOK_GAME_LEAGUES;
+    expect(parsePlayoffsScope(NBA_PLAYOFFS, `${nba.eventIdPrefix}2025-postseason`)).toBe(2025);
+    expect(parsePlayoffRoundScope(NBA_PLAYOFFS, `${nba.eventIdPrefix}2025-postseason-round-1`)).not.toBeNull();
     expect(parseNflScope(`${nfl.eventIdPrefix}2026-week-11`)).not.toBeNull();
     expect(parseNcaaTournamentScope(`${ncaab.eventIdPrefix}2025-tournament`)?.league.key).toBe('ncaab');
     expect(parseNcaaTournamentScope(`${ncaaw.eventIdPrefix}2025-tournament`)?.league.key).toBe('ncaaw');
@@ -96,6 +115,33 @@ describe('reading BALLDONTLIE webhook notifications (#1498)', () => {
     expect(parsePlayoffsScope(WNBA_PLAYOFFS, `${wnba.eventIdPrefix}2026-postseason`)).toBe(2026);
     expect(parseEplScope(`${epl.eventIdPrefix}2026-matchweek-11`)).not.toBeNull();
     expect(parseWorldCupScope(`${worldcup.eventIdPrefix}2026-knockout`)).not.toBeNull();
+  });
+});
+
+describe('how long a BALLDONTLIE event may stay in play with no notification (#1499)', () => {
+  const quietMinutes = (sport: Sport, externalId: string) => balldontlieQuietAfterMs(sport, externalId) / 60_000;
+
+  it('allows each league its longest normal gap between notifications, a period or half plus its break, never as short as one quarter', () => {
+    expect(quietMinutes(Sport.AMERICAN_FOOTBALL, 'nfl-2026-week-11')).toBe(90);
+    expect(quietMinutes(Sport.BASKETBALL, 'nba-2025-postseason')).toBe(75);
+    expect(quietMinutes(Sport.BASKETBALL, 'ncaab-2026-tournament')).toBe(90);
+    expect(quietMinutes(Sport.BASKETBALL, 'ncaaw-2026-tournament')).toBe(75);
+    expect(quietMinutes(Sport.HOCKEY, 'nhl-2025-postseason')).toBe(90);
+    expect(quietMinutes(Sport.BASEBALL, 'mlb-2026-postseason')).toBe(210);
+    expect(quietMinutes(Sport.BASKETBALL, 'wnba-2026-postseason')).toBe(75);
+    expect(quietMinutes(Sport.SOCCER, 'epl-2026-matchweek-12')).toBe(90);
+    expect(quietMinutes(Sport.SOCCER, 'fifa-wc-2026-knockout')).toBe(150);
+    for (const league of Object.values(BALLDONTLIE_WEBHOOK_GAME_LEAGUES)) {
+      expect(league.quietAfterMinutes).toBeGreaterThanOrEqual(75);
+    }
+  });
+
+  it('allows a golf round six hours, since its first notification after the start is the first group finishing', () => {
+    expect(quietMinutes(Sport.GOLF, '1133')).toBe(360);
+  });
+
+  it('allows an event no league claims the longest gap of any, so it is never warned about early', () => {
+    expect(quietMinutes(Sport.SOCCER, 'mls-2026-cup')).toBe(360);
   });
 });
 

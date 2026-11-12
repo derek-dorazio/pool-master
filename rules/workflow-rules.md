@@ -958,7 +958,10 @@ service work included, stays on the normal flow to `main`.
   `packages/shared`, the service, `tests/`, a script, a migration or a dependency (a
   `package.json` anywhere included) needs the full suites and goes to `main` as its own PR.
   Split the ticket if it must. Browser e2e specs under `clients/` may change in a batch;
-  they first run when the batch lands.
+  they first run when the batch lands. So a ticket that changes a test id or a dialog's
+  structure first greps `clients/poolmaster/e2e` for the old ids and runs every journey that
+  uses them on the local stack (the `run-local-stack` skill) before it merges into the
+  batch; otherwise the break first shows on the landing PR.
 - **Ticket PR bodies say `Part of #<epic>` and `Refs #<ticket>`, not `Closes`.** A closing
   keyword only acts on a merge into `main`, and the ticket is not done until it is there.
 - **Landing a batch, about twice a day, from the landing thread's own branch.** When the
@@ -1035,7 +1038,10 @@ When an agent finishes a slice:
    the failing test was observed to fail before the fix landed.
 6. **Report and stop.** Summarize the change and what the triggers flag. Do not merge.
 
-Merge happens when the owner asks. At that point the agent runs
+Merge happens when the owner asks. Before squashing, merge `main` into the branch and run the
+migration order check locally (`npm run rules:check:migration-timestamps`): a green run from
+before `main` gained a later migration would otherwise merge one that sorts too early, wherever
+`main` does not require a branch to be up to date. At that point the agent runs
 `gh pr merge --squash --delete-branch`. The `Closes #NN` keyword closes the issue on merge;
 the agent still adds the closing comment per §1, since the keyword records *that* it closed,
 not *what happened*.

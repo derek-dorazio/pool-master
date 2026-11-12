@@ -1,11 +1,12 @@
 import {
   KNOCKOUT_ROUND_VALUES_MAX_ROUNDS,
+  SelectionType,
   type RoundName,
   formatBracketStartLabel,
   getSportDefinition,
   isSecondChanceBracket,
 } from '@poolmaster/shared/domain';
-import type { SportEventDto } from '@/lib/api';
+import type { ContestManagementDetailDto, SportEventDto } from '@/lib/api';
 
 /** One round a bracket can start at, as the commissioner chooses it. */
 export interface BracketStartRoundOption {
@@ -60,4 +61,18 @@ export function bracketStartRoundOptions(
 /** A second-chance bracket's starting round by name, or null for a full bracket. */
 export function secondChanceRoundName(startsAtRound: number, roundName: RoundName) {
   return isSecondChanceBracket(startsAtRound) ? roundName(startsAtRound) : null;
+}
+
+/**
+ * The round a contest's second-chance bracket starts at, by name: null for a full bracket, any
+ * other format, or a configuration not read yet. The contest page and the list's Open to league
+ * both name it in the readiness checks.
+ */
+export function contestSecondChanceRoundName(
+  configuration: ContestManagementDetailDto['configuration'] | undefined,
+  roundName: RoundName,
+) {
+  return configuration?.selectionType === SelectionType.BRACKET
+    ? secondChanceRoundName(configuration.startsAtRound, roundName)
+    : null;
 }

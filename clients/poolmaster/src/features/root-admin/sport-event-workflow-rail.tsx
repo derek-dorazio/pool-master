@@ -1,7 +1,7 @@
 import { getSportDefinition } from '@poolmaster/shared/domain';
 import {
-  ProgressIndicator,
-  StatusBadge,
+  StageTrack,
+  Text,
   formatDateTimeDisplay,
   useDisplayPreferences,
 } from '@/features/shared/ui';
@@ -14,9 +14,8 @@ import {
 import type { SportEventDto, SportEventRoundDto } from '@/lib/api';
 
 /**
- * plans/124 §6.3 block 2 — the horizontal lifecycle rail
- * (Draft → Released for contests → Live → Completed, #431) with the current stage
- * marked, plus the auto-lifecycle hint when the scheduler will advance it.
+ * An event's lifecycle (Draft → Released for contests → Live → Completed) on the shared stage
+ * track, the one a contest's Manage page uses, plus the hint when the scheduler will advance it.
  */
 export function SportEventWorkflowRail({
   rounds,
@@ -35,61 +34,29 @@ export function SportEventWorkflowRail({
     rounds,
   });
 
+  const { event, round } = getSportDefinition(tournament.sport).vocabulary;
+
   return (
     <div className="space-y-3">
-      <ol
-        className="flex flex-wrap gap-2"
-        data-testid="root-admin-sport-event-workflow-rail"
-      >
-        {EVENT_LIFECYCLE_STAGES.map((railStage, index) => {
-          const state = !stage
-            ? 'off the rail'
-            : index === stage.index
-              ? 'current'
-              : index < stage.index
-                ? 'done'
-                : 'upcoming';
-          const tone = !stage
-            ? 'neutral'
-            : index === stage.index
-              ? 'active'
-              : index < stage.index
-                ? 'success'
-                : 'inactive';
-          return (
-            <li key={railStage.key}>
-              <StatusBadge aria-current={state === 'current' ? 'step' : undefined} tone={tone}>
-                {railStage.label}
-                <span className="sr-only"> — {state}</span>
-              </StatusBadge>
-            </li>
-          );
-        })}
-      </ol>
-
       {stage ? (
-        <ProgressIndicator
-          label={`Current stage: ${stage.label}`}
-          max={EVENT_LIFECYCLE_STAGES.length - 1}
-          value={stage.index}
+        <StageTrack
+          currentIndex={stage.index}
+          stages={EVENT_LIFECYCLE_STAGES.map((railStage) => railStage.label)}
+          testId="root-admin-sport-event-workflow-rail"
         />
       ) : (
-        <p className="text-sm text-muted-foreground">
-          This {getSportDefinition(tournament.sport).vocabulary.event.one} is{' '}
-          {formatSportEventStatus(tournament.status)}.
-        </p>
+        // Off the track (cancelled, postponed): say where it is instead.
+        <Text as="p" data-testid="root-admin-sport-event-workflow-off-track" variant="meta">
+          This {event.one} is {formatSportEventStatus(tournament.status)}.
+        </Text>
       )}
 
       {auto ? (
-        <p
-          className="text-xs text-muted-foreground"
-          data-testid="root-admin-sport-event-auto-hint"
-        >
+        <Text as="p" data-testid="root-admin-sport-event-auto-hint" variant="meta">
           Will move to {formatSportEventStatus(auto.toStatus)} automatically around{' '}
-          {formatDateTimeDisplay(auto.at, displayPreferences)} from the{' '}
-          {getSportDefinition(tournament.sport).vocabulary.round.one} schedule. Manual transitions stay
-          available.
-        </p>
+          {formatDateTimeDisplay(auto.at, displayPreferences)} from the {round.one} schedule. Manual
+          transitions stay available.
+        </Text>
       ) : null}
     </div>
   );

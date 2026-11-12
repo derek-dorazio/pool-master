@@ -1891,46 +1891,49 @@ model ContestEntryPick {
 // =============================================================================
 
 model SportEvent {
-  id                   String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  externalId           String                    @map("external_id") @db.VarChar(255)
-  providerId           String                    @map("provider_id") @db.VarChar(100)
-  sport                PrismaSport
-  name                 String                    @db.VarChar(500)
-  venue                String?                   @db.VarChar(500)
-  location             String?                   @db.VarChar(500)
-  startDate            DateTime                  @map("start_date") @db.Timestamptz
-  endDate              DateTime?                 @map("end_date") @db.Timestamptz
-  status               PrismaSportEventStatus    @default(SCHEDULED)
-  rounds               Int?
+  id                         String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  externalId                 String                    @map("external_id") @db.VarChar(255)
+  providerId                 String                    @map("provider_id") @db.VarChar(100)
+  sport                      PrismaSport
+  name                       String                    @db.VarChar(500)
+  venue                      String?                   @db.VarChar(500)
+  location                   String?                   @db.VarChar(500)
+  startDate                  DateTime                  @map("start_date") @db.Timestamptz
+  endDate                    DateTime?                 @map("end_date") @db.Timestamptz
+  status                     PrismaSportEventStatus    @default(SCHEDULED)
+  rounds                     Int?
   // Par for every round of the event (#478), set by an admin. Null derives each
   // round's par from the field's finished rounds (strokes minus to-par). Read
   // only by contest scoring, to turn an unplayed round's 80 strokes into to-par.
-  roundsPar            Int?                      @map("rounds_par")
-  participantCount     Int?                      @map("participant_count")
-  metadata             Json                      @default("{}")
+  roundsPar                  Int?                      @map("rounds_par")
+  participantCount           Int?                      @map("participant_count")
+  metadata                   Json                      @default("{}")
   // The series this is one edition of — the event's only parent, and its only
   // path to a sport league (plans/147). Auto-resolved by find-or-create on
   // (sportLeagueId, name) at tournament creation, never an admin decision
   // (plans/124 §4.3a).
-  eventSeriesId        String                    @map("event_series_id") @db.Uuid
+  eventSeriesId              String                    @map("event_series_id") @db.Uuid
   // The year the edition is branded with — "the 2026 Masters" — which is not
   // always the year it starts in; startDate carries the real dates (plans/147
   // decision 3).
-  eventYear            Int                       @map("event_year")
+  eventYear                  Int                       @map("event_year")
   // Sync eligibility, separate from providerId/externalId identity: NONE for an
   // unlinked event, SCORES_ONLY once an admin links it to a provider event. Every
   // event is admin-owned; a provider never owns one (ADR-0009, #435).
-  syncScope            PrismaSportEventSyncScope @default(NONE) @map("sync_scope")
+  syncScope                  PrismaSportEventSyncScope @default(NONE) @map("sync_scope")
   // Admin escape hatch: false stops the lifecycle scheduler (plans/124 §3.6)
   // from ever touching this event's status, no matter what the recorded
   // round schedule says — a rain delay, a dispute, etc.
-  autoLifecycleEnabled Boolean                   @default(true) @map("auto_lifecycle_enabled")
+  autoLifecycleEnabled       Boolean                   @default(true) @map("auto_lifecycle_enabled")
   // The values the field was last priced with for budget contests (#93), typed by
   // EventPricingConfigSchema. Null until prices are assigned; written with the
   // prices in one transaction and locked with them at release.
-  pricingConfig        Json?                     @map("pricing_config")
-  createdAt            DateTime                  @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt            DateTime                  @updatedAt @map("updated_at") @db.Timestamptz
+  pricingConfig              Json?                     @map("pricing_config")
+  // When the event's provider last sent a webhook notification about it (#1499). Null until one
+  // arrives. The scheduler warns when play is underway and none has arrived for a while.
+  lastProviderNotificationAt DateTime?                 @map("last_provider_notification_at") @db.Timestamptz
+  createdAt                  DateTime                  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt                  DateTime                  @updatedAt @map("updated_at") @db.Timestamptz
 
   contests                   ContestSportEvent[]
   contestEntryEvents         ContestEntryEvent[]

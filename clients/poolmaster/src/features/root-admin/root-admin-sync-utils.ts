@@ -45,7 +45,7 @@ export const FEED_LABELS = {
 
 export function getProviderName(
   providerId: string,
-  providers: ProviderSummary[] | undefined,
+  providers: readonly ProviderSummary[] | undefined,
 ) {
   return providers?.find((provider) => provider.providerId === providerId)?.providerName ?? providerId;
 }

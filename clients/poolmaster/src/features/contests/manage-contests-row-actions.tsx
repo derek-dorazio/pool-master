@@ -4,7 +4,7 @@ import type { ContestDto } from '@/lib/api';
 import { buildContestLandingPath } from '@/features/leagues/league-routing';
 import { RowActionsMenu, type RowAction } from '@/features/shared/ui';
 import { DeleteContestDialog } from './delete-contest-dialog';
-import { OpenContestDialog } from './open-contest-action';
+import { OpenContestFromListDialog } from './open-contest-from-list-dialog';
 
 type RowDialog = 'open' | 'delete' | null;
 
@@ -43,10 +43,8 @@ export function ManageContestsRowActions({
       <RowActionsMenu actions={actions} label={`Actions for ${contest.name}`} testId={testPrefix} />
       {isNotOpen ? (
         <>
-          <OpenContestDialog
-            contestId={contest.id}
-            contestName={contest.name}
-            leagueId={leagueId}
+          <OpenContestFromListDialog
+            contest={contest}
             onOpenChange={setDialogOpen('open')}
             open={dialog === 'open'}
           />

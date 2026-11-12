@@ -147,7 +147,7 @@ describe('pool-master-rfy RootAdminParticipantListPage', () => {
     expect(await screen.findByText('No retired golfers matched the search.')).toBeInTheDocument();
   });
 
-  it('keeps the search box and shows the load error in the grid when the search fails', async () => {
+  it('keeps the search box and shows the load error in red with Retry above the grid when the search fails', async () => {
     listParticipantsMock.mockResolvedValue({
       error: { error: { code: 'INTERNAL', message: 'Player index offline' } },
       response: { status: 500 },
@@ -155,7 +155,8 @@ describe('pool-master-rfy RootAdminParticipantListPage', () => {
     renderPage();
     searchFor('Rory');
 
-    expect(await screen.findByText('Player index offline')).toBeInTheDocument();
+    expect(await screen.findByTestId('root-admin-participant-list-error')).toHaveTextContent('Player index offline');
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
     expect(screen.getByTestId('root-admin-participant-list-search')).toHaveValue('Rory');
   });
 

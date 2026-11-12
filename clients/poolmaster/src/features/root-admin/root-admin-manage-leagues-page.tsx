@@ -7,7 +7,10 @@ import { buildLeaguePath } from "@/features/leagues/league-routing";
 import { LEAGUE_PLAN_LABEL } from "@/features/plans/plan-labels";
 import { ExtendRunningGifts } from "@/features/plans/extend-running-gifts";
 import {
-  ManagementListPage,
+  DataGrid,
+  ErrorState,
+  Input,
+  PageHeader,
   SectionCard,
   StatusBadge,
   formatDateDisplay,
@@ -28,8 +31,7 @@ export function RootAdminManageLeaguesPage() {
   const leaguesQuery = useQuery({
     queryKey: QueryKeys.rootAdmin.manageLeaguesSearch(term),
     enabled: canSearch,
-    // The search box sits in the grid: keeping the last rows keeps the grid, and the box, mounted
-    // while the next term loads.
+    // Keeping the last rows keeps the grid steady while the next term loads.
     placeholderData: keepPreviousData,
     queryFn: async (): Promise<LeagueDto[]> => {
       // #202 — one league list, scope as a parameter. `scope: 'all'` is access rule A1's
@@ -123,31 +125,50 @@ export function RootAdminManageLeaguesPage() {
   );
 
   return (
-    <div className="space-y-4">
-      <SectionCard padded title="Premium preview periods">
-        <ExtendRunningGifts />
-      </SectionCard>
-      <ManagementListPage
-        columns={columns}
-        // An error shows in the grid rather than in place of it, so the search box stays to retry.
-        data={canSearch && !leaguesQuery.isError ? (leaguesQuery.data ?? []) : []}
-        emptyMessage={
-          !canSearch
-            ? `Type at least ${PLATFORM_SEARCH_MIN_LENGTH} characters of a league's name to find it.`
-            : leaguesQuery.isError
-              ? extractErrorMessage(leaguesQuery.error, { fallback: "We could not load leagues right now." })
+    <section className="space-y-6" data-testid="root-admin-manage-leagues-page">
+      <PageHeader
+        search={(
+          <Input
+            aria-label="Find a league"
+            data-testid="root-admin-manage-leagues-search"
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Find a league"
+            type="search"
+            value={search}
+          />
+        )}
+        testId="root-admin-manage-leagues-header"
+        title="Leagues"
+      />
+      {leaguesQuery.isError ? (
+        <ErrorState
+          body={extractErrorMessage(leaguesQuery.error, { fallback: "We could not load leagues right now." })}
+          onRetry={() => void leaguesQuery.refetch()}
+          testId="root-admin-manage-leagues-error"
+        />
+      ) : (
+        <DataGrid
+          columns={columns}
+          // The server searched; the grid narrows the last rows as the term grows.
+          data={canSearch ? (leaguesQuery.data ?? []) : []}
+          emptyMessage={
+            !canSearch
+              ? `Type at least ${PLATFORM_SEARCH_MIN_LENGTH} characters of a league's name to find it.`
               : leaguesQuery.isFetching
                 ? "Searching leagues..."
                 : "No leagues matched the current filters."
-        }
-        getRowId={(league) => league.id}
-        getRowLink={(league) => buildLeaguePath(league.leagueCode)}
-        pageSize={MANAGE_LIST_PAGE_SIZE}
-        rowTestId={(league) => `root-admin-manage-leagues-link-${league.id}`}
-        search={{ label: "Find a league", testId: "root-admin-manage-leagues-search", onChange: setSearch }}
-        tableTestId="root-admin-manage-leagues-table"
-        testId="root-admin-manage-leagues-page"
-      />
-    </div>
+          }
+          getRowId={(league) => league.id}
+          getRowLink={(league) => buildLeaguePath(league.leagueCode)}
+          pageSize={MANAGE_LIST_PAGE_SIZE}
+          rowTestId={(league) => `root-admin-manage-leagues-link-${league.id}`}
+          searchTerm={search}
+          tableTestId="root-admin-manage-leagues-table"
+        />
+      )}
+      <SectionCard padded title="Premium preview periods">
+        <ExtendRunningGifts />
+      </SectionCard>
+    </section>
   );
 }

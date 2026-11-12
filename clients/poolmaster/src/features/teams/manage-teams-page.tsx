@@ -16,7 +16,6 @@ import {
   LoadingState,
   PageHeader,
   RowActionsMenu,
-  SegmentedControl,
 } from '@/features/shared/ui';
 import { buildTeamDirectoryRows, type TeamDirectoryRow } from './team-directory';
 import { teamNameColumn } from './team-name-column';
@@ -32,13 +31,19 @@ const TEAM_FILTER_LABELS: Record<TeamFilter, string> = {
   inactive: 'Inactive',
 };
 
-const TEAM_FILTER_OPTIONS = Object.entries(TEAM_FILTER_LABELS).map(([value, label]) => ({ label, value }));
+const TEAM_FILTERS = Object.keys(TEAM_FILTER_LABELS).filter(isTeamFilter);
 
 function isTeamFilter(value: string): value is TeamFilter {
   return Object.hasOwn(TEAM_FILTER_LABELS, value);
 }
 
 type ManagedTeamRow = TeamDirectoryRow & { hasCommissioner: boolean };
+
+function matchesTeamFilter(row: ManagedTeamRow, filter: TeamFilter) {
+  return filter === 'commissioners' ? row.hasCommissioner
+    : filter === 'inactive' ? !row.team.isActive
+      : true;
+}
 
 /** Commissioner tools › Teams: every team and its owners; a row opens the team's Manage page. */
 export function ManageTeamsPage() {
@@ -57,12 +62,17 @@ export function ManageTeamsPage() {
     [teamsQuery.data],
   );
   const visibleRows = useMemo(
-    () => rows.filter((row) => (
-      filter === 'commissioners' ? row.hasCommissioner
-        : filter === 'inactive' ? !row.team.isActive
-          : true
-    )),
+    () => rows.filter((row) => matchesTeamFilter(row, filter)),
     [filter, rows],
+  );
+  const filterOptions = useMemo(
+    () => TEAM_FILTERS.map((value) => ({
+      count: rows.filter((row) => matchesTeamFilter(row, value)).length,
+      label: TEAM_FILTER_LABELS[value],
+      testId: `admin-teams-filter-${value}`,
+      value,
+    })),
+    [rows],
   );
   const columns = useMemo<ColumnDef<ManagedTeamRow, string>[]>(
     () => [
@@ -102,41 +112,39 @@ export function ManageTeamsPage() {
       ) : teamsQuery.isError ? (
         <ErrorState body="We couldn't load this league's members." onRetry={() => void teamsQuery.refetch()} title="Members unavailable" />
       ) : (
-        <div className="grid gap-3">
-          <SegmentedControl
-            aria-label="Members to show"
-            onChange={(value) => {
+        <DataGrid
+          columns={columns}
+          data={visibleRows}
+          emptyMessage={rows.length ? 'No members match.' : 'No one has joined this league yet.'}
+          getRowId={(row) => row.team.id}
+          getRowLink={(row) => buildLeagueAdminTeamPath(leagueCode, row.team.id)}
+          pageSize={TEAMS_PER_PAGE}
+          rowActions={(row) => (
+            <RowActionsMenu
+              actions={[{
+                label: 'View team page',
+                testId: `admin-team-actions-${row.team.id}-view`,
+                to: buildLeagueTeamHomePath(leagueCode, row.team.id),
+              }]}
+              label={`Actions for ${row.team.name}`}
+              testId={`admin-team-actions-${row.team.id}`}
+            />
+          )}
+          rowTestId={(row) => `admin-team-${row.team.id}`}
+          search={{ label: 'Find a member or owner', testId: 'admin-teams-search' }}
+          showColumnFilters={false}
+          tableTestId="admin-teams-table"
+          views={{
+            label: 'Members to show',
+            onChange: (value) => {
               if (isTeamFilter(value)) {
                 setFilter(value);
               }
-            }}
-            options={TEAM_FILTER_OPTIONS}
-            value={filter}
-          />
-          <DataGrid
-            columns={columns}
-            data={visibleRows}
-            emptyMessage={rows.length ? 'No members match.' : 'No one has joined this league yet.'}
-            getRowId={(row) => row.team.id}
-            getRowLink={(row) => buildLeagueAdminTeamPath(leagueCode, row.team.id)}
-            pageSize={TEAMS_PER_PAGE}
-            rowActions={(row) => (
-              <RowActionsMenu
-                actions={[{
-                  label: 'View team page',
-                  testId: `admin-team-actions-${row.team.id}-view`,
-                  to: buildLeagueTeamHomePath(leagueCode, row.team.id),
-                }]}
-                label={`Actions for ${row.team.name}`}
-                testId={`admin-team-actions-${row.team.id}`}
-              />
-            )}
-            rowTestId={(row) => `admin-team-${row.team.id}`}
-            search={{ label: 'Find a member or owner', testId: 'admin-teams-search' }}
-            showColumnFilters={false}
-            tableTestId="admin-teams-table"
-          />
-        </div>
+            },
+            options: filterOptions,
+            value: filter,
+          }}
+        />
       )}
     </section>
   );

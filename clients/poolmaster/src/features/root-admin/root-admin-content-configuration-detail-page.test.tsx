@@ -276,7 +276,7 @@ describe('RootAdminContentConfigurationDetailPage', () => {
     seedTemplates();
     renderPage('no-such-template');
 
-    expect(await screen.findByText('Template not found')).toBeInTheDocument();
+    expect(await screen.findByText('Template not found: no contest template matched no-such-template.')).toBeInTheDocument();
     expect(screen.queryByTestId('root-admin-content-config-save')).not.toBeInTheDocument();
   });
 });

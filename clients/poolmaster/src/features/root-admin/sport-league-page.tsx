@@ -1,7 +1,7 @@
 import { useMemo, type ReactNode } from 'react';
 import { useParams } from 'react-router';
 import type { SportLeagueDto } from '@/lib/api';
-import { AsyncPage } from '@/features/shared/ui';
+import { QueryState } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
 import { useManageBreadcrumbOverride } from './manage-breadcrumb-context';
 import { useSportLeagueNoun, useSportLeaguesQuery } from './use-sport-catalog';
@@ -33,17 +33,20 @@ export function SportLeaguePage({
   useManageBreadcrumbOverride(leagueId || undefined, sportLeague?.name);
 
   return (
-    <AsyncPage
-      emptyBody={`This ${sportLeagueNoun.one} does not exist or has been removed.`}
-      emptyTitle={`${upperFirst(sportLeagueNoun.one)} not found`}
-      errorBody={extractErrorMessage(leaguesQuery.error, {
-        fallback: `We could not load this ${sportLeagueNoun.one} right now.`,
-      })}
-      loadingBody={`Loading ${sportLeagueNoun.one}...`}
-      state={leaguesQuery.isLoading ? 'loading' : leaguesQuery.isError ? 'error' : sportLeague ? 'ready' : 'empty'}
-      testId={testId}
-    >
-      {sportLeague ? children(sportLeague) : null}
-    </AsyncPage>
+    <section data-testid={testId}>
+      <QueryState
+        empty={`${upperFirst(sportLeagueNoun.one)} not found.`}
+        error={extractErrorMessage(leaguesQuery.error, {
+          fallback: `We could not load this ${sportLeagueNoun.one} right now.`,
+        })}
+        isEmpty={() => !sportLeague}
+        loading={`Loading ${sportLeagueNoun.one}...`}
+        query={leaguesQuery}
+        size="tile"
+        testId={testId ? `${testId}-state` : undefined}
+      >
+        {() => (sportLeague ? children(sportLeague) : null)}
+      </QueryState>
+    </section>
   );
 }

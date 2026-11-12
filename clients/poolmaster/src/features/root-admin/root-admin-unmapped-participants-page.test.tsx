@@ -212,7 +212,7 @@ describe('RootAdminUnmappedParticipantsPage', () => {
     renderPage(MAP_PATH);
 
     expect(
-      await screen.findByText('This competitor is already mapped, or the provider no longer reports them.'),
+      await screen.findByText('Nothing to map: this competitor is already mapped, or the provider no longer reports them.'),
     ).toBeInTheDocument();
     expect(screen.queryByTestId('root-admin-unmapped-participant-map-save')).not.toBeInTheDocument();
   });

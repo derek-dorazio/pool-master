@@ -3,7 +3,6 @@ import { UserRound } from 'lucide-react';
 import { useParams } from 'react-router';
 import { listParticipantProviderMappings } from '@/lib/api';
 import {
-  AsyncPage,
   LinkButton,
   PageHeader,
   QueryState,
@@ -17,12 +16,11 @@ import {
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import type { ParticipantDto, ParticipantProviderMappingDto } from '@/lib/api';
-import { useManageBreadcrumbOverride, useManagePageOwnsHeading } from './manage-breadcrumb-context';
+import { useManageBreadcrumbOverride } from './manage-breadcrumb-context';
 import { participantStatusLabel, participantStatusTone } from './sport-admin-utils';
 import { buildSportParticipantPath } from './manage-navigation';
 import { useParticipantQuery } from './use-sport-catalog';
 import { useManagedSport } from './use-managed-sport';
-import { upperFirst } from '@/lib/upper-first';
 
 function ParticipantMappingsSection({ participantId }: { participantId: string }) {
   const { participant } = useManagedSport().definition.vocabulary;
@@ -135,29 +133,21 @@ export function RootAdminParticipantHomePage() {
   const playerQuery = useParticipantQuery(participantId);
   const player = playerQuery.data;
 
-  useManagePageOwnsHeading();
   useManageBreadcrumbOverride(participantId || undefined, player?.name);
 
-  const pageState = playerQuery.isLoading
-    ? 'loading'
-    : playerQuery.isError
-      ? 'error'
-      : participantId === '' || !player
-        ? 'empty'
-        : 'ready';
-
   return (
-    <AsyncPage
-      emptyBody={`This ${participant.one} does not exist or has been removed.`}
-      emptyTitle={`${upperFirst(participant.one)} not found`}
-      errorBody={extractErrorMessage(playerQuery.error, {
-        fallback: `We could not load this ${participant.one} right now.`,
-      })}
-      loadingBody={`Loading ${participant.one}...`}
-      state={pageState}
-      testId="root-admin-participant-home-page"
-    >
-      {player ? <ParticipantHome player={player} /> : null}
-    </AsyncPage>
+    <section data-testid="root-admin-participant-home-page">
+      <QueryState
+        error={extractErrorMessage(playerQuery.error, {
+          fallback: `We could not load this ${participant.one} right now.`,
+        })}
+        loading={`Loading ${participant.one}...`}
+        query={playerQuery}
+        size="tile"
+        testId="root-admin-participant-home"
+      >
+        {(loaded) => <ParticipantHome player={loaded} />}
+      </QueryState>
+    </section>
   );
 }

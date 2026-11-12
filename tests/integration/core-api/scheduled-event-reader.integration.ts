@@ -69,7 +69,7 @@ describe('ScheduledEventReader — live scores', () => {
     await createEvent('scheduled-with-field', { status: 'SCHEDULED', withField: true });
     await createEvent('completed-with-field', { status: 'COMPLETED', withField: true });
 
-    const events = await reader().listEventsForFeed({ sport: Sport.GOLF, feed: 'EVENTLIVESCORES', now });
+    const events = await reader().listLiveScoreEvents({ sport: Sport.GOLF, now });
 
     expect(externalIds(events)).toEqual(['live-with-field']);
   });
@@ -78,7 +78,7 @@ describe('ScheduledEventReader — live scores', () => {
     await createEvent('ours', { status: 'IN_PROGRESS', withField: true });
     await createEvent('theirs', { status: 'IN_PROGRESS', providerId: 'TEST_PROVIDER', withField: true });
 
-    const events = await reader().listEventsForFeed({ sport: Sport.GOLF, feed: 'EVENTLIVESCORES', now });
+    const events = await reader().listLiveScoreEvents({ sport: Sport.GOLF, now });
 
     expect(externalIds(events)).toEqual(['ours']);
   });
@@ -87,9 +87,52 @@ describe('ScheduledEventReader — live scores', () => {
     await createEvent('orphan', { status: 'IN_PROGRESS', withField: true });
 
     const events = await createScheduledEventReader({ prisma: getAppPrisma(), registry: registryWith(null) })
-      .listEventsForFeed({ sport: Sport.GOLF, feed: 'EVENTLIVESCORES', now });
+      .listLiveScoreEvents({ sport: Sport.GOLF, now });
 
     expect(externalIds(events)).toEqual([]);
+  });
+});
+
+describe('ScheduledEventReader — play under way and notifications (#1499)', () => {
+  it('reads a golf event as in play since its latest started round while that round runs, with when its provider last notified about it', async () => {
+    const notifiedAt = new Date('2026-04-26T21:00:00.000Z');
+    const event = await createEvent('golf-round-2', { status: 'IN_PROGRESS', withField: true, lastProviderNotificationAt: notifiedAt });
+    const roundTwoStart = new Date('2026-04-26T12:00:00.000Z');
+    await getPrisma().sportEventRound.createMany({
+      data: [
+        { sportEventId: event.id, roundNumber: 1, scheduledDate: new Date('2026-04-25T12:00:00.000Z'), scheduledEndAt: new Date('2026-04-26T00:00:00.000Z') },
+        { sportEventId: event.id, roundNumber: 2, scheduledDate: roundTwoStart, scheduledEndAt: new Date('2026-04-27T00:00:00.000Z') },
+        { sportEventId: event.id, roundNumber: 3, scheduledDate: new Date('2026-04-27T12:00:00.000Z'), scheduledEndAt: new Date('2026-04-28T00:00:00.000Z') },
+      ],
+    });
+
+    const [listed] = await reader().listLiveScoreEvents({ sport: Sport.GOLF, now });
+
+    expect(listed).toEqual({ providerId: PROVIDER, externalId: 'golf-round-2', playedInRounds: true, playUnderwaySince: roundTwoStart, lastProviderNotificationAt: notifiedAt });
+  });
+
+  it('reads a game event as in play since its earliest-scheduled match in progress, and not in play between its matches', async () => {
+    const provider = fakeSportDataProvider({ providerId: PROVIDER, sportsCovered: [Sport.AMERICAN_FOOTBALL] });
+    const playing = await createEvent('nfl-week-live', { sport: Sport.AMERICAN_FOOTBALL, status: 'IN_PROGRESS', withField: true });
+    const between = await createEvent('nfl-week-between', { sport: Sport.AMERICAN_FOOTBALL, status: 'IN_PROGRESS', withField: true });
+    const early = new Date('2026-04-26T17:00:00.000Z');
+    for (const [event, matches] of [
+      [playing, [{ status: 'COMPLETED', scheduledDate: new Date('2026-04-26T13:00:00.000Z') }, { status: 'IN_PROGRESS', scheduledDate: early }, { status: 'IN_PROGRESS', scheduledDate: new Date('2026-04-26T20:00:00.000Z') }]],
+      [between, [{ status: 'COMPLETED', scheduledDate: new Date('2026-04-26T13:00:00.000Z') }, { status: 'SCHEDULED', scheduledDate: new Date('2026-04-27T00:00:00.000Z') }]],
+    ] as const) {
+      const round = await getPrisma().sportEventRound.create({ data: { sportEventId: event.id, roundNumber: 1, scheduledDate: new Date('2026-04-26T12:00:00.000Z') } });
+      await getPrisma().sportEventMatch.createMany({
+        data: matches.map((match, index) => ({ sportEventId: event.id, sportEventRoundId: round.id, matchNumber: index + 1, isNeutralSite: false, ...match })),
+      });
+    }
+
+    const listed = await reader(provider).listLiveScoreEvents({ sport: Sport.AMERICAN_FOOTBALL, now });
+
+    expect(listed).toEqual(expect.arrayContaining([
+      expect.objectContaining({ externalId: 'nfl-week-live', playUnderwaySince: early, lastProviderNotificationAt: null }),
+      expect.objectContaining({ externalId: 'nfl-week-between', playUnderwaySince: null }),
+    ]));
+    expect(listed).toHaveLength(2);
   });
 });
 
@@ -182,11 +225,11 @@ describe('ScheduledEventReader — two providers serving the sport', () => {
     await createEvent('shared-id', { status: 'IN_PROGRESS', withField: true });
     await createEvent('shared-id', { status: 'IN_PROGRESS', providerId: OTHER, withField: true });
 
-    const events = await twoProviders().listEventsForFeed({ sport: Sport.GOLF, feed: 'EVENTLIVESCORES', now });
+    const events = await twoProviders().listLiveScoreEvents({ sport: Sport.GOLF, now });
 
     expect(events).toEqual(expect.arrayContaining([
-      { providerId: PROVIDER, externalId: 'shared-id' },
-      { providerId: OTHER, externalId: 'shared-id' },
+      expect.objectContaining({ providerId: PROVIDER, externalId: 'shared-id' }),
+      expect.objectContaining({ providerId: OTHER, externalId: 'shared-id' }),
     ]));
     expect(events).toHaveLength(2);
   });

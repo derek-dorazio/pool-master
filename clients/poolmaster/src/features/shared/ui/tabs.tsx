@@ -1,6 +1,7 @@
 import * as TabsPrimitive from "@radix-ui/react-tabs";
 import type { ComponentPropsWithoutRef } from "react";
 import { cn } from "./class-names";
+import { radioGroupKeyboard } from "./radio-group-keys";
 
 export const Tabs = TabsPrimitive.Root;
 
@@ -56,11 +57,13 @@ export function SegmentedControl({
   options,
   value,
 }: SegmentedControlProps) {
+  const keyboard = radioGroupKeyboard(options, value, onChange);
   return (
     <div
       aria-label={ariaLabel}
       className="inline-flex max-w-full flex-wrap rounded-2xl border border-border bg-background p-1"
       role="radiogroup"
+      {...keyboard.group}
     >
       {options.map((option) => (
         <button
@@ -76,6 +79,7 @@ export function SegmentedControl({
           key={option.value}
           onClick={() => onChange(option.value)}
           role="radio"
+          tabIndex={keyboard.tabIndexFor(option.value)}
           type="button"
         >
           {option.label}

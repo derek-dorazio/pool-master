@@ -12,14 +12,12 @@
  * (a `:eventId` / `:participantId` UUID) for the loaded entity's name. The layout
  * only knows static labels; the child page knows the name.
  *
- * An entity's home page shows its own `PageHeader`, so it tells the layout to leave out
- * the page title and keep only the trail (`useManagePageOwnsHeading`).
+ * Every page shows its own `PageHeader` (#1620); the layout draws only the trail.
  */
 import { createContext, useContext, useEffect } from "react";
 
 export type ManageBreadcrumbContextValue = {
   setOverride: (segment: string, label: string | null | undefined) => void;
-  setPageOwnsHeading: (ownsHeading: boolean) => void;
 };
 
 export const ManageBreadcrumbContext =
@@ -42,20 +40,4 @@ export function useManageBreadcrumbOverride(
       context.setOverride(segment, null);
     };
   }, [context, segment, label]);
-}
-
-export function useManagePageOwnsHeading() {
-  const context = useContext(ManageBreadcrumbContext);
-
-  useEffect(() => {
-    if (!context) {
-      return;
-    }
-
-    context.setPageOwnsHeading(true);
-
-    return () => {
-      context.setPageOwnsHeading(false);
-    };
-  }, [context]);
 }

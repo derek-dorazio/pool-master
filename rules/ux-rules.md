@@ -88,8 +88,7 @@ Use those conventions as the starting point, but bias toward a consumer app:
   - No description line under a dialog's title unless it says what will happen
     ("Sam Lee will no longer be an owner of Incubus").
   - The `poolmaster/no-raw-modal` ESLint rule fails feature code that renders
-    the raw `Modal` or Radix's dialog root; root admin's two remaining files are
-    listed in `eslint.config.js` until #1620 rebuilds them.
+    the raw `Modal` or Radix's dialog root; only `shared/ui` draws them.
 - **Settings sections: see it, then Edit** (#1597). A page of someone's settings
   (My account; league settings as they move over) shows every setting as it
   stands, never behind a dialog: a `SettingsSection` per group, its rows
@@ -324,8 +323,8 @@ administration area (root admin included), reusing the same shared components.
    Commissioner tools (`ToolsArea`) is a slim navy band naming the area, the
    league and the way back, then its tools as one row of `PageTabs` on every
    width, with no side menu; a tool's sub-pages keep its tab lit. Manage, the
-   root admin area, still has its header and side menu (`AdminAreaLayout`) until
-   it moves to the same frame. Each page in an area opens with one `PageHeader`
+   root admin area, uses the same frame, with a second row of one tab per sport
+   under Sports. Each page in an area opens with one `PageHeader`
    (a `FormPage` brings its own); an entity's landing page shows the entity's
    icon in it. A page never adds a second header or "Back to" link of its own;
    the trail leads back up.
@@ -373,7 +372,12 @@ administration area (root admin included), reusing the same shared components.
    button. Quick actions that need no page of their own sit in a `RowActionsMenu`
    ("⋯") in `DataGrid`'s `rowActions` column, pinned to the right edge so a phone
    reaches it without scrolling sideways; a destructive one confirms with `ConfirmDialog` and
-   ends with a toast. A row with no quick actions shows no "⋯".
+   ends with a toast. A row with no quick actions shows no "⋯". A manage list's
+   views (Active / History, Pending / Expired), each with its count, sit with its
+   search in one header inside the grid's card (`DataGrid`'s `views`), a filter of
+   one view (History's season) beside it (`views.end`); the page's
+   main action stays in its `PageHeader`, and the views are never a second row of
+   `PageTabs` under the area's own.
 8. **Summary first.** A landing page leads with what needs the member now (the
    next contest to enter, with its cutoff), then live standings, then their own
    squad.

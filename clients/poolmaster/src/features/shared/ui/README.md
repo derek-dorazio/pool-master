@@ -43,8 +43,7 @@ The shared UI layer is split into three levels:
    which carries its own Show password eye button; never hand-type
    `type="password"` on an `Input`.
 2. **Templates** compose primitives into repeated page or modal workflows, such
-   as `ManagementListPage`, `EntityDetailPage`, `FormModal`, and
-   `ConfirmDialog`.
+   as `FormModal` and `ConfirmDialog`.
 3. **Feature pages** own product-specific data fetching, mutations, copy, and
    business rules. They should compose primitives and templates instead of
    repeating page chrome or modal footers.
@@ -75,18 +74,24 @@ itself; `poolmaster/no-inline-display-format` enforces it
 
 Use page templates when a page matches an existing workflow shape:
 
-- `ManagementListPage` for admin list screens backed by `DataGrid`.
+- An admin list is no template: a `PageHeader` (with the search box, or one
+  action and the grid's own search), then `DataGrid`, with `QueryState` for its
+  loading and error states. A manage list with views (Active / History, Pending /
+  Expired) passes them to the grid's `views`: a `ViewFilter` with counts at the
+  left of a header inside the grid's card and the search at its right, never a
+  second row of `PageTabs` or a `SegmentedControl` above the grid.
 - `StatusPage` for a page that is only a status: not found, a crash, a dead or
   expired link, or the done or confirm step after a link from an email. A
   symbol (`kind`), a title, one plain line and one primary action, centred in
   the 8px card; a failed try's `Notice` goes in as children above the action.
-- `EntityDetailPage` for profile/entity details with a summary above, details
-  on the left and less frequent actions on the right.
-- `FormEditorSection` for repeated editable configuration sections with
-  consistent title, errors, and footer actions.
+- A page that waits on a read is no template either: its `PageHeader` stays put
+  and `QueryState` (`size="tile"`) stands in for the body while it loads or fails.
 - `PublicInviteJoinPage` for public invitation or join surfaces.
 
 `DataGrid` takes an optional `search` (one box matching every text column),
+`views` (a `ViewFilter` in the card's header, with `end` for a filter of the
+chosen view beside it, and a `status` that stands in for the table while the
+chosen view loads or fails),
 `pageSize` (rows per page, with a Previous/Next pager once there is more than
 one page) and `showColumnFilters` (on by default). A list that can grow to
 hundreds of rows uses `search` and `pageSize` (`rules/ux-rules.md` §12). A list
@@ -94,7 +99,7 @@ that is not a table pages through `Pager`, the same Previous/Next control.
 
 League pages and administration areas use the pieces named in
 `rules/ux-rules.md` §12 *League Pages and Commissioner Tools*: `LeagueMenu`,
-`AdminAreaLayout`, `PageHeader`, a `SettingsSection` of `SettingsRow`s for
+`ToolsArea`, `PageHeader`, a `SettingsSection` of `SettingsRow`s for
 settings, "see it, then Edit": label left and value right, one Edit in the title
 opening the group's `FormModal`, and a `Switch` in a row for a setting that saves
 the moment it is flipped (pages not yet moved over use a `SectionCard` of
@@ -110,10 +115,11 @@ send the version the draft came from and offer the newer one on a conflict.
 never opens the raw `Modal`: every dialog is one of the four types under
 *Modal Templates*.
 
-Commissioner tools frames its pages with `ToolsArea`: a slim navy band naming
-the area, the league and the way back, then the tools as one row of link
-`PageTabs`. Manage keeps `AdminAreaLayout` until it moves to the same frame. A
-`FormPage` opens with its own `PageHeader`.
+Commissioner tools and Manage frame their pages with `ToolsArea`: a slim navy
+band naming the area, what it acts on and the way back, then the tools as one
+row of link `PageTabs`, with an optional `subTabs` second row for the open
+tool's own choices (Manage's sports). A `FormPage` opens with its own
+`PageHeader`.
 
 Every page starts with one `PageHeader`: an optional `breadcrumbs` line, its title
 straight on the page (never in a card) with an optional `titleAside` such as a
@@ -133,7 +139,8 @@ filter that changes every tab or the whole page, such as a season or a sport, is
 tab is scrolled fully into view on open and whenever it changes, and an edge fades
 only while more tabs sit beyond it. A page that reads one year at a time picks it
 with `YearPicker`, the `FilterPicker` labelled "Season": in `tabsEnd` on a page with
-tabs, else at the end of its section's title row. A
+tabs, beside the view it narrows when a `DataGrid`'s `views` hold it (`views.end`, as
+Contests' History), else at the end of its section's title row. A
 `SegmentedControl` is only for choosing a value inside a form or panel, never for
 switching a page's views. A search box in the header feeds a `DataGrid` through
 its `searchTerm`.
@@ -211,8 +218,9 @@ Use modal templates when the modal follows one of the common workflows:
   `confirmationInput` for type-to-confirm, and `error` for why the last attempt
   failed (a red `Notice` above the buttons; the dialog stays open).
 - `PickerModal` to choose an item from a list.
-- `ReadOnlyDetailModal` to look only: payloads and metadata, or (`size="sm"`) a
-  sentence on why an action isn't available.
+- `ReadOnlyDetailModal` to look only: payloads and metadata, (`size="sm"`) a
+  sentence on why an action isn't available, or (`size="xl"`, `isFullScreenOnPhone`)
+  a whole page shown unboxed, such as a pick screen's preview.
 
 Modals should use the templates for predictable footer ordering, pending state,
 scroll behavior, and error placement. Add a new template only when a workflow

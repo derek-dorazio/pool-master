@@ -9,7 +9,7 @@ import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import { describeEntry, matchNoun, ReseedAction, reseededRounds, reseedErrorMessages, roundStarted, unfinishedBefore } from './bracket-copy';
-import type { BracketContext } from './bracket-match-row';
+import type { BracketContext } from './bracket-match-write';
 import { useSportLeaguesQuery } from './use-sport-catalog';
 import { upperFirst } from '@/lib/upper-first';
 
