@@ -50,7 +50,7 @@ the one people read.
 | How a provider sync works end to end: registration rows, triggers, the write path and each league's reader | [`docs/LIVE-SPORTS-DATA-SYNC.md`](docs/LIVE-SPORTS-DATA-SYNC.md) |
 | The backend modules | [`packages/README.md`](packages/README.md) |
 | The web app | [`clients/poolmaster/README.md`](clients/poolmaster/README.md) |
-| Deploying, and Terraform state hygiene | [`infrastructure/terraform/README.md`](infrastructure/terraform/README.md). The promotion model: QA deploys on every push to `main`; staging and prod are a manual `workflow_dispatch` of `deploy.yml` promoting an immutable QA image tag |
+| Deploying, and Terraform state hygiene | [`infrastructure/terraform/README.md`](infrastructure/terraform/README.md). The promotion model: QA deploys when someone runs CI by hand on `main` (pushes to `main` test but do not deploy); staging and prod are a manual `workflow_dispatch` of `deploy.yml` promoting an immutable QA image tag |
 | The live API | `/apidoc` on any running backend |
 
 ## License

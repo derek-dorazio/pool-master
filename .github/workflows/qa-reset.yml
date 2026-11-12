@@ -135,7 +135,7 @@ jobs:
             echo ""
             echo "QA is wiped, migrated to this image's migrations, and has its fixture users."
             echo ""
-            echo "Migrations gate the rollout, so the failing main commit's \`deploy-qa\` was"
-            echo "skipped and QA is still running the previous release. Re-run that run's failed"
-            echo "jobs to roll the new release out."
+            echo "QA is still running the previous release. Deploy current main with"
+            echo "Actions -> CI -> Run workflow on \`main\`, or re-run the failed jobs of the deploy"
+            echo "run whose migrate step failed."
           } >> $GITHUB_STEP_SUMMARY

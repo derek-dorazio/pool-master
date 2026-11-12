@@ -1208,6 +1208,8 @@ model Participant {
   leagueAffiliations     ParticipantLeagueAffiliation[]
 
   @@index([sportId, status])
+  /// The provider name match (#1537): a sync's unmapped participants, looked up by sport and name.
+  @@index([sportId, name])
   /// Trigram indexes serve the participant search across sports, a substring match on each column (#1180).
   @@index([name(ops: raw("gin_trgm_ops"))], type: Gin, map: "participants_name_trgm_idx")
   @@index([firstName(ops: raw("gin_trgm_ops"))], type: Gin, map: "participants_first_name_trgm_idx")

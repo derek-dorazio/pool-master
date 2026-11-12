@@ -51,9 +51,10 @@ domain areas.
 
 For a true model change, in order:
 
-1. Prisma schema + migration — its timestamp prefix must be one no other migration uses
-   (`rules:check:migration-timestamps`). If it collides, rename the new one; never rename
-   a migration already on `main`, because environments record applied migrations by name.
+1. Prisma schema + migration — its timestamp prefix must sort after main's latest and be one
+   no other migration uses (`rules:check:migration-timestamps`). If it collides or sorts
+   early, rename the new one; never rename a migration already on `main`, because
+   environments record applied migrations by name.
 2. Shared domain types
 3. DTOs (`packages/shared/dto/`)
 4. Mappers

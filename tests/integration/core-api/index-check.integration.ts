@@ -8,8 +8,13 @@
  * index could serve a read the planner walked is tested on fixed plans, since on test-sized tables
  * which plan Postgres picks depends on the statistics other files leave.
  */
+import { randomUUID } from 'node:crypto';
 import type { Prisma } from '@prisma/client';
-import { cleanupTestData, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
+import { Sport } from '@poolmaster/shared/domain';
+import { IngestionPersistence } from '../../../packages/core-api/src/modules/ingestion/persistence/ingestion-persistence';
+import type { SportEventDetail } from '../../../packages/core-api/src/modules/ingestion/core/provider-interface';
+import { cleanupTestData, getAppPrisma, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
+import { recordStatements, statementParams } from '../statement-log';
 import {
   describeUnindexedScans,
   findUnindexedScans,
@@ -289,5 +294,67 @@ describe('missing-index check on fixed plans: whether another index could serve 
     expect(findWholeScans(indexScan('users_pkey', 'users', { Filter: '((email ~~* $1) OR ((timezone)::text = $2))' }), INDEXES))
       .toEqual([{ table: 'users', how: 'walking every entry of users_pkey and filtering' }]);
     expect(findWholeScans(indexScan('users_pkey', 'users', { Filter: '((email ~~* $1) AND ((timezone)::text = $2))' }), INDEXES)).toEqual([]);
+  });
+});
+
+/** Every node of a plan, the plan's own first. */
+function nodesOf(plan: PlanNode): PlanNode[] {
+  return [plan, ...(plan.Plans ?? []).flatMap(nodesOf)];
+}
+
+describe('the provider name match\'s read of participants', () => {
+  // On empty tables the (sport_id, status) and (sport_id, name) indexes cost the same, so this
+  // plans against a sport with a roster and fresh statistics, as production has. It plans the read
+  // the sync actually sends, with its values, so a change to that read is planned as it now is.
+  it('reads a sport\'s participants by sport and name together through the (sport_id, name) index once the sport has a roster', async () => {
+    const prisma = getPrisma();
+    const sport = await prisma.sport.upsert({
+      where: { sport: Sport.BASKETBALL },
+      create: { sport: Sport.BASKETBALL, participantType: 'TEAM', tournamentFormat: 'MATCHES' },
+      update: {},
+    });
+    const tag = randomUUID().slice(0, 8);
+    const names = Array.from({ length: 400 }, (_, index) => `Team ${tag} ${String(index)}`);
+    await prisma.participant.createMany({ data: names.map((name) => ({ sportId: sport.id, name, participantType: 'TEAM' })) });
+    // A feed naming three of them, linked to no event on the site: the sync matches the teams by name and stops.
+    const feed: SportEventDetail = {
+      externalId: `index-check-${tag}`,
+      providerId: 'balldontlie',
+      sport: Sport.BASKETBALL,
+      name: 'Index check',
+      startDate: new Date('2027-03-01T00:00:00.000Z'),
+      status: 'SCHEDULED',
+      fieldLocked: false,
+      metadata: {},
+      participants: names.slice(0, 3).map((name, index) => ({
+        externalId: `index-check-${tag}-${String(index)}`, providerId: 'balldontlie', sport: Sport.BASKETBALL, name, active: true, metadata: {},
+      })),
+    };
+
+    let plan: PlanNode;
+    try {
+      await prisma.$executeRawUnsafe('ANALYZE participants');
+      const { statements } = await recordStatements(() => new IngestionPersistence(getAppPrisma()).persistEventDetailWithDiagnostics(feed));
+      const nameMatch = statements.filter((statement) => statement.sql.includes('FROM "public"."participants" WHERE') && statement.sql.includes('"name" IN ('));
+      expect(nameMatch).toHaveLength(1);
+      const values = statementParams(nameMatch[0]).map((value) => `'${String(value).replace(/'/g, "''")}'`).join(', ');
+      const name = `name_match_${tag}`;
+      plan = await prisma.$transaction(async (tx) => {
+        await tx.$executeRawUnsafe('SET LOCAL enable_seqscan = off');
+        await tx.$executeRawUnsafe(`PREPARE ${name} AS ${nameMatch[0].sql}`);
+        const [row] = await tx.$queryRawUnsafe<Array<{ 'QUERY PLAN': Array<{ Plan: PlanNode }> }>>(`EXPLAIN (FORMAT JSON) EXECUTE ${name}(${values})`);
+        await tx.$executeRawUnsafe(`DEALLOCATE ${name}`);
+        return row['QUERY PLAN'][0].Plan;
+      });
+    } finally {
+      // Leave the shared database's rows and statistics as they were found.
+      await prisma.participantProviderMapping.deleteMany({ where: { externalId: { startsWith: `index-check-${tag}-` } } });
+      await prisma.participant.deleteMany({ where: { name: { in: names } } });
+      await prisma.$executeRawUnsafe('ANALYZE participants');
+    }
+
+    const reads = nodesOf(plan).filter((node) => node['Index Name'] !== undefined).map((node) => [node['Index Name'], node['Index Cond']]);
+    expect(reads).toContainEqual(['participants_sport_id_name_idx', expect.stringMatching(/sport_id = .*name = ANY/)]);
+    expect(reads.map(([index]) => index)).not.toContain('participants_sport_id_status_idx');
   });
 });

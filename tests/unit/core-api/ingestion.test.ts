@@ -7,6 +7,7 @@
 import { ProviderRegistry } from '../../../packages/core-api/src/modules/ingestion/core/provider-registry';
 import { IngestionScheduler } from '../../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';
 import type { IngestionCallbacks } from '../../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';
+import { emptySyncWriteDiagnostics } from '../../../packages/core-api/src/modules/ingestion/core/sync-write-diagnostics';
 import type {
   SportDataProvider,
 } from '../../../packages/core-api/src/modules/ingestion/core/provider-interface';
@@ -38,7 +39,7 @@ function createMockProvider(overrides: Partial<SportDataProvider> = {}): SportDa
 
 function createMockCallbacks(overrides: Partial<IngestionCallbacks> = {}): IngestionCallbacks {
   return {
-    onEventDetail: jest.fn().mockResolvedValue(undefined),
+    onEventDetail: jest.fn().mockResolvedValue({ writeDiagnostics: emptySyncWriteDiagnostics(), unlinkedRankedParticipants: [] }),
     onLiveScores: jest.fn().mockResolvedValue(emptyLiveScorePersistenceResult()),
     ...overrides,
   };

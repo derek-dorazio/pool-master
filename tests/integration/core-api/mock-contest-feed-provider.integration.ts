@@ -746,7 +746,7 @@ describe('mock contest feed provider event-first verification', () => {
       getPerSportConfig: async () => syncVerificationConfig,
     };
     const scheduler = new IngestionScheduler(registry, {
-      onEventDetail: async (detail) => (await persistence.persistEventDetailWithDiagnostics(detail)).writeDiagnostics,
+      onEventDetail: (detail) => persistence.persistEventDetailWithDiagnostics(detail),
       onLiveScores: async () => emptyLiveScorePersistenceResult(),
     }, undefined, {
       configReader,
@@ -899,7 +899,7 @@ describe('mock contest feed provider event-first verification', () => {
     const syncRunLedger = new ProviderSyncRunLedger(new PrismaProviderSyncRunRepository(getAppPrisma()));
     const eventReader = createScheduledEventReader({ prisma: getAppPrisma(), registry });
     const scheduler = new IngestionScheduler(registry, {
-      onEventDetail: async (detail) => (await persistence.persistEventDetailWithDiagnostics(detail)).writeDiagnostics,
+      onEventDetail: (detail) => persistence.persistEventDetailWithDiagnostics(detail),
       onLiveScores: async (result, providerIdForResult) =>
         publishLiveScoreUpdate(result, { prisma, providerId: providerIdForResult, scoringFamilyForEvent }),
     }, undefined, {
@@ -1153,7 +1153,7 @@ describe('mock contest feed provider event-first verification', () => {
 
     const persistence = new IngestionPersistence(getAppPrisma());
     const scheduler = new IngestionScheduler(registry, {
-      onEventDetail: async (detail) => (await persistence.persistEventDetailWithDiagnostics(detail)).writeDiagnostics,
+      onEventDetail: (detail) => persistence.persistEventDetailWithDiagnostics(detail),
       onLiveScores: async () => emptyLiveScorePersistenceResult(),
     });
 
