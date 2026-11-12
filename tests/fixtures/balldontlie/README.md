@@ -5,8 +5,8 @@ adapter was built before any account existed, so everything here comes from the 
 published OpenAPI document, not from recorded traffic.
 
 - `openapi/pga.yml`, `openapi/nfl.yml`, `openapi/ncaab.yml`, `openapi/ncaaw.yml`,
-  `openapi/nba.yml`, `openapi/epl.yml` and `openapi/fifa.yml` are the vendor's PGA TOUR, NFL,
-  NCAA men's and women's basketball, NBA, Premier League and FIFA World Cup documents, each vendored unchanged below a three-line header that
+  `openapi/nba.yml`, `openapi/mlb.yml`, `openapi/epl.yml` and `openapi/fifa.yml` are the vendor's PGA TOUR, NFL,
+  NCAA men's and women's basketball, NBA, MLB, Premier League and FIFA World Cup documents, each vendored unchanged below a three-line header that
   names its source, date and hash. `npm run balldontlie:contract-check` says when the live
   document differs; `-- --update-spec` refreshes the copy, and the contract tests then
   show whether anything the adapter reads moved.
@@ -48,6 +48,11 @@ published OpenAPI document, not from recorded traffic.
   edition part way through its round of 16, with a shoot-out final, a live, a scheduled and an
   `unknown` match and a quarter-final with one side to be decided; and four nations. Every one
   must fit the document (`fifa-world-cup-contract.test.ts`).
+- `mlb/*.json` are written to the MLB document's schemas, which give no response examples: the
+  2025 postseason as all eleven series of that year's bracket, twelve teams from the Wild Card
+  Series to a World Series the Dodgers won four games to three, each series' games in a made-up
+  order and score; the 2026 postseason just begun, with a final, a live, a scheduled and an
+  `unknown` game; and the twelve teams. Every one must fit the document (`mlb-contract.test.ts`).
 
 ## Assumptions to confirm against the real API
 
@@ -126,6 +131,19 @@ The first things to check once a key exists, each read by `npm run balldontlie:c
   set only when a shoot-out was taken.
 - FIFA: a nation's `name` is the name the site's World Cup teams are loaded under ("United
   States", "Netherlands"); one the vendor names otherwise is added beside the site's.
+
+- MLB: `postseason=true` returns the Wild Card Series to the World Series and nothing else (no
+  tiebreaker game). `--game-event mlb-2025-postseason` prints the game count (11 series, 30 to
+  53 games), and a postseason is called complete only once its World Series has a side at four
+  wins.
+- MLB: a game's `id`, `season`, `date` and both teams' `id` and `display_name` are always sent,
+  though the document requires none of them; a game missing one fails the sync with the field
+  named. A side's score is `home_team_data.runs`; before the first pitch there is none.
+- MLB: a team's `display_name` is the name the site's MLB teams are loaded under ("Los Angeles
+  Dodgers"); one the vendor names otherwise is added beside the site's.
+- MLB: `/mlb/v1/teams` may list sides that are no MLB club (All-Star teams, say) with a league
+  the document does not list; the adapter reads `league` and `division` as any string and keeps
+  only the American and National League clubs. Count the teams the contract check prints: 30.
 
 When an account exists, replace or add fixtures with recorded responses and keep the
 doc-example files: the pair shows where the vendor's document and its API disagree.

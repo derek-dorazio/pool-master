@@ -84,7 +84,7 @@ describe('BalldontlieAdapter (PGA TOUR)', () => {
     restore = harness.restore;
     expect(harness.adapter.providerId).toBe('balldontlie');
     expect(harness.adapter.providerName).toBe('BALLDONTLIE');
-    expect(harness.adapter.sportsCovered).toEqual([Sport.GOLF, Sport.AMERICAN_FOOTBALL, Sport.BASKETBALL, Sport.SOCCER]);
+    expect(harness.adapter.sportsCovered).toEqual([Sport.GOLF, Sport.AMERICAN_FOOTBALL, Sport.BASKETBALL, Sport.SOCCER, Sport.BASEBALL]);
   });
 
   describe('getUpcomingEvents', () => {
@@ -136,7 +136,7 @@ describe('BalldontlieAdapter (PGA TOUR)', () => {
       const harness = setup();
       restore = harness.restore;
 
-      expect(await harness.adapter.getUpcomingEvents(Sport.HOCKEY)).toEqual([]);
+      expect(await harness.adapter.getUpcomingEvents(Sport.TENNIS)).toEqual([]);
       expect(harness.api.requests).toEqual([]);
     });
   });
@@ -222,7 +222,7 @@ describe('BalldontlieAdapter (PGA TOUR)', () => {
     it('answers no participants for a sport it does not cover', async () => {
       const harness = setup();
       restore = harness.restore;
-      expect(await harness.adapter.getParticipants(Sport.HOCKEY)).toEqual([]);
+      expect(await harness.adapter.getParticipants(Sport.TENNIS)).toEqual([]);
     });
   });
 

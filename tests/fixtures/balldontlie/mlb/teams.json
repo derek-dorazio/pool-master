@@ -1,0 +1,136 @@
+{
+  "data": [
+    {
+      "id": 14,
+      "slug": "toronto-blue-jays",
+      "abbreviation": "TOR",
+      "display_name": "Toronto Blue Jays",
+      "short_display_name": "Jays",
+      "name": "Jays",
+      "location": "Toronto Blue",
+      "league": "American",
+      "division": "East"
+    },
+    {
+      "id": 25,
+      "slug": "seattle-mariners",
+      "abbreviation": "SEA",
+      "display_name": "Seattle Mariners",
+      "short_display_name": "Mariners",
+      "name": "Mariners",
+      "location": "Seattle",
+      "league": "American",
+      "division": "West"
+    },
+    {
+      "id": 10,
+      "slug": "new-york-yankees",
+      "abbreviation": "NYY",
+      "display_name": "New York Yankees",
+      "short_display_name": "Yankees",
+      "name": "Yankees",
+      "location": "New York",
+      "league": "American",
+      "division": "East"
+    },
+    {
+      "id": 2,
+      "slug": "boston-red-sox",
+      "abbreviation": "BOS",
+      "display_name": "Boston Red Sox",
+      "short_display_name": "Sox",
+      "name": "Sox",
+      "location": "Boston Red",
+      "league": "American",
+      "division": "East"
+    },
+    {
+      "id": 7,
+      "slug": "detroit-tigers",
+      "abbreviation": "DET",
+      "display_name": "Detroit Tigers",
+      "short_display_name": "Tigers",
+      "name": "Tigers",
+      "location": "Detroit",
+      "league": "American",
+      "division": "Central"
+    },
+    {
+      "id": 6,
+      "slug": "cleveland-guardians",
+      "abbreviation": "CLE",
+      "display_name": "Cleveland Guardians",
+      "short_display_name": "Guardians",
+      "name": "Guardians",
+      "location": "Cleveland",
+      "league": "American",
+      "division": "Central"
+    },
+    {
+      "id": 19,
+      "slug": "milwaukee-brewers",
+      "abbreviation": "MIL",
+      "display_name": "Milwaukee Brewers",
+      "short_display_name": "Brewers",
+      "name": "Brewers",
+      "location": "Milwaukee",
+      "league": "National",
+      "division": "Central"
+    },
+    {
+      "id": 22,
+      "slug": "philadelphia-phillies",
+      "abbreviation": "PHI",
+      "display_name": "Philadelphia Phillies",
+      "short_display_name": "Phillies",
+      "name": "Phillies",
+      "location": "Philadelphia",
+      "league": "National",
+      "division": "East"
+    },
+    {
+      "id": 16,
+      "slug": "chicago-cubs",
+      "abbreviation": "CHC",
+      "display_name": "Chicago Cubs",
+      "short_display_name": "Cubs",
+      "name": "Cubs",
+      "location": "Chicago",
+      "league": "National",
+      "division": "Central"
+    },
+    {
+      "id": 24,
+      "slug": "san-diego-padres",
+      "abbreviation": "SD",
+      "display_name": "San Diego Padres",
+      "short_display_name": "Padres",
+      "name": "Padres",
+      "location": "San Diego",
+      "league": "National",
+      "division": "West"
+    },
+    {
+      "id": 18,
+      "slug": "los-angeles-dodgers",
+      "abbreviation": "LAD",
+      "display_name": "Los Angeles Dodgers",
+      "short_display_name": "Dodgers",
+      "name": "Dodgers",
+      "location": "Los Angeles",
+      "league": "National",
+      "division": "West"
+    },
+    {
+      "id": 17,
+      "slug": "cincinnati-reds",
+      "abbreviation": "CIN",
+      "display_name": "Cincinnati Reds",
+      "short_display_name": "Reds",
+      "name": "Reds",
+      "location": "Cincinnati",
+      "league": "National",
+      "division": "Central"
+    }
+  ]
+}
