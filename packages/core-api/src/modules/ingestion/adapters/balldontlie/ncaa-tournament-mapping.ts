@@ -183,8 +183,8 @@ export function toNcaaFieldParticipants(league: NcaaTournamentLeague, games: rea
 
 /**
  * Each bracket game's teams, state and score, for the GAME live-score category: every game from
- * the round of 64 on whose two teams are decided. A game a First Four winner plays names that
- * team as the play-in place's (`playInWinnerTeamExternalId`), the place it fills. A game whose
+ * the round of 64 on whose two teams are decided. A First Four winner's round of 64 game names
+ * that team as the play-in place's (`playInWinnerTeamExternalId`), the place it fills. A game whose
  * state the vendor calls `unknown` is left out.
  */
 export function toNcaaGameScoreUpdates(league: NcaaTournamentLeague, games: readonly NcaaBracketGame[]): GameScoreUpdate[] {
@@ -203,7 +203,8 @@ export function toNcaaGameScoreUpdates(league: NcaaTournamentLeague, games: read
     if (required(game.round, path, gameName(game), 'round') <= league.firstFourRound) return [];
     const state = GAME_STATE_BY_STATUS[game.status_state];
     const started = hasStarted(state);
-    const playInWinner = [home, away].find((team) => playInWinners.has(team.id));
+    // Only its round of 64 game: in a later round the place is long filled and the winner is a team like any other.
+    const playInWinner = game.round === league.firstFourRound + 1 ? [home, away].find((team) => playInWinners.has(team.id)) : undefined;
     return [{
       externalGameId: String(required(game.game_id, path, 'a bracket game with both teams', 'game_id')),
       homeTeamExternalId: ncaaTeamExternalId(league, home.id),

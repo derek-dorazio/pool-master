@@ -159,7 +159,7 @@ describe('NCAA men\'s tournament game scores', () => {
     }]);
   });
 
-  it('names an away First Four winner too, and none while its First Four game is not final, has no score or is level', () => {
+  it('names an away First Four winner too, and none in a later round or while its First Four game is not final, has no score or is level', () => {
     const ncStateWon: NcaaBracketGame = { ...firstFour2025, home_team: { ...firstFour2025.home_team, score: 59 }, away_team: { ...firstFour2025.away_team, score: 68 } };
     const ncStateInRoundOf64: NcaaBracketGame = { ...duke2025, home_team: firstFour2025.away_team };
     expect(toNcaaGameScoreUpdates(NCAA_MEN, [ncStateWon, ncStateInRoundOf64])[0]).toMatchObject({ playInWinnerTeamExternalId: 'ncaab-team-152' });
@@ -172,6 +172,8 @@ describe('NCAA men\'s tournament game scores', () => {
       { ...firstFour2025, away_team: { ...firstFour2025.away_team, score: 68 } },
       { ...firstFour2025, away_team: null },
     ];
+    const texasInRoundOf32: NcaaBracketGame = { ...texasInRoundOf64, game_id: 401856520, round: 3 };
+    expect(toNcaaGameScoreUpdates(NCAA_MEN, [firstFour2025, texasInRoundOf32])[0]).not.toHaveProperty('playInWinnerTeamExternalId');
     for (const firstFour of notWon) {
       expect(toNcaaGameScoreUpdates(NCAA_MEN, [firstFour, texasInRoundOf64])[0]).not.toHaveProperty('playInWinnerTeamExternalId');
     }
