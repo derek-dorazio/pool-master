@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { findAddedCollisions, timestampPrefix } from './check-migration-timestamps.mjs';
+import { findAddedBeforeBase, findAddedCollisions, timestampPrefix } from './check-migration-timestamps.mjs';
 
 // #266: #259 and #264 both landed a migration stamped 20260930140000.
 const onMain = [
@@ -58,5 +58,43 @@ describe('check-migration-timestamps (#266)', () => {
     assert.deepEqual(findAddedCollisions({ added, known: [...onMain, ...added, ...landedSince] }), [
       { prefix: '20261001090000', names: ['20261001090000_mine', '20261001090000_theirs'] },
     ]);
+  });
+});
+
+// #1670: #1668 first added 20271117000600_set_pga_tour_match_keyword after main had gained
+// 20271118000000_add_provider_event_sync_job_type, and the check passed.
+describe('check-migration-timestamps: an added migration dated before the base\'s latest (#1670)', () => {
+  const base = [
+    '20271117000500_set_nba_clutch_card_match_keywords',
+    '20271118000000_add_provider_event_sync_job_type',
+    '20271118001000_add_sport_league_dedupe_key',
+  ];
+
+  it('fails an added migration dated before the base\'s latest, naming it and the base\'s latest', () => {
+    assert.deepEqual(findAddedBeforeBase({ added: ['20271117000600_set_pga_tour_match_keyword'], base }), [
+      { name: '20271117000600_set_pga_tour_match_keyword', latest: '20271118001000_add_sport_league_dedupe_key' },
+    ]);
+  });
+
+  it('passes an added migration dated after the base\'s latest', () => {
+    assert.deepEqual(findAddedBeforeBase({ added: ['20271118002000_set_pga_tour_match_keyword'], base }), []);
+  });
+
+  it('leaves an added migration sharing the base\'s latest timestamp to the duplicate check, which still fails it', () => {
+    const added = ['20271118001000_mine'];
+    assert.deepEqual(findAddedBeforeBase({ added, base }), []);
+    assert.deepEqual(findAddedCollisions({ added, known: [...base, ...added] }), [
+      { prefix: '20271118001000', names: ['20271118001000_add_sport_league_dedupe_key', '20271118001000_mine'] },
+    ]);
+  });
+
+  it('fails only the added migrations dated too early, when a change adds several', () => {
+    const added = ['20271117000600_early', '20271118003000_late'];
+    assert.deepEqual(findAddedBeforeBase({ added, base }).map((each) => each.name), ['20271117000600_early']);
+  });
+
+  it('passes anything added against a base with no migrations, and ignores a name with no timestamp', () => {
+    assert.deepEqual(findAddedBeforeBase({ added: ['20200101000000_first'], base: [] }), []);
+    assert.deepEqual(findAddedBeforeBase({ added: ['migration_lock.toml'], base }), []);
   });
 });

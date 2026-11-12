@@ -107,8 +107,10 @@ on QA that is not over: load that series' test seed or its real schedule with th
   change, and commit the new image.
 - **Changing a slug.** Never. Make the old page inactive and point its `redirect_to_page_id` at
   the new one, in a later migration.
-- **A migration timestamp another branch also took.** Two migrations on the same timestamp
-  break main once both merge. Check the open PRs' migrations, and trial-merge main before merge.
+- **A migration timestamp another branch also took, or one main has passed.** Two migrations on
+  the same timestamp break main once both merge, and one dated before main's latest runs in a
+  different order on a fresh database. Check the open PRs' migrations, and trial-merge main
+  before merge (`npm run rules:check:migration-timestamps` catches both).
 - **Testing a card in a chat that saw the link before.** Chat apps cache a link's card. Add
   `?t=1` to see the new one.
 - **Offers missing on QA.** An offer is left out while its series has no edition that is not
