@@ -85,12 +85,15 @@ function publish(externalEventId: string, games: StatLineGameUpdate[]) {
   );
 }
 
-/** Each stored line of the event as [participant round's entry, game, status, completed?, {stat: value}]. */
+/**
+ * Each stored line of the event as [participant round's entry, game, status, completed?, {stat: value}],
+ * by game then player name: a sync inserts a game's lines in one statement, so they share a created time.
+ */
 async function storedLines(sportEventId: string) {
   const rounds = await getPrisma().sportEventParticipantRound.findMany({
     where: { sportEventRound: { sportEventId } },
     include: { sportEventRound: true, statLines: true },
-    orderBy: [{ sportEventRound: { roundNumber: 'asc' } }, { createdAt: 'asc' }],
+    orderBy: [{ sportEventRound: { roundNumber: 'asc' } }, { sportEventParticipant: { participant: { name: 'asc' } } }],
   });
   return rounds.map((round) => [
     round.sportEventParticipantId,

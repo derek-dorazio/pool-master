@@ -1,7 +1,7 @@
 /**
  * The reads of a best-of-series playoffs (#1496), shared by every league whose playoffs are
  * series: each season's postseason as an event, its teams, every team of the league, and the
- * postseason's game scores. A league supplies its two reads, already normalized; this does the
+ * postseason's game scores. A league supplies its reads, already normalized; this does the
  * rest through `series-playoffs.ts`.
  *
  * A postseason's scores are every one of its games on each sync, never only the latest: the GAME
@@ -36,22 +36,35 @@ import {
 /** A league's own reads, normalized. */
 export interface PlayoffsSource {
   league: PlayoffsLeague;
-  /** Every postseason game of a season. */
+  /**
+   * A season's postseason games as the league's games endpoint returns them for its postseason
+   * query. The reader keeps only the games marked as that season's postseason, so an endpoint
+   * that ignores a filter cannot pass a regular season or another season off as the playoffs.
+   */
   games(season: number): Promise<PlayoffGame[]>;
   /** Every team of the league. */
   teams(): Promise<PlayoffTeam[]>;
-  /** The lines of the players who played these games (#1497). */
+}
+
+/** A league whose playoff rounds are Clutch Card events (#1497): its box scores and rosters too. */
+export interface PlayoffRoundsSource extends PlayoffsSource {
+  /** The lines of the players who played these games. */
   statLines(gameIds: readonly number[]): Promise<PlayoffStatLine[]>;
-  /** These teams' active players, of at least one team (#1497). */
+  /** These teams' active players, of at least one team. */
   players(teamIds: readonly number[]): Promise<PlayoffPlayer[]>;
 }
 
 /** A range spanning more seasons than this reads the current and next season instead of every one. */
 const MAX_SEASONS_READ = 3;
 
+/**
+ * A league's playoffs as one event a season. A league whose rounds are Clutch Card events reads
+ * them through `PlayoffRoundsReader`; one without box scores yet (the NHL's) lists no round, since
+ * it could not answer for one.
+ */
 export class PlayoffsReader {
   constructor(
-    private readonly source: PlayoffsSource,
+    protected readonly source: PlayoffsSource,
     private readonly now: () => number,
   ) {}
 
@@ -63,18 +76,15 @@ export class PlayoffsReader {
   async upcomingEvents(dateRange?: DateRange): Promise<SportEvent[]> {
     const games: PlayoffGame[] = [];
     for (const season of this.seasonsFor(dateRange)) {
-      games.push(...await this.source.games(season));
+      games.push(...await this.postseasonGames(season));
     }
-    // Each season's playoffs, then each round it has reached, a round being a Clutch Card's event (#1497).
-    const seasons = [...new Set(games.map((game) => game.season))];
-    const rounds = seasons.flatMap((season) => toPlayoffRoundEvents(this.source.league, season, games.filter((game) => game.season === season)));
-    return [...toPlayoffsEvents(this.source.league, games), ...rounds]
+    return [...toPlayoffsEvents(this.source.league, games), ...this.roundEvents(games)]
       .filter((event) => !dateRange || (event.startDate >= dateRange.from && event.startDate <= dateRange.to));
   }
 
   /** A season's playoffs with the teams in them; null when the vendor has no postseason game yet. */
   async eventDetails(season: number): Promise<SportEventDetail | null> {
-    const games = await this.source.games(season);
+    const games = await this.postseasonGames(season);
     if (games.length === 0) return null;
     const participants = toPlayoffsFieldParticipants(this.source.league, games);
     return { ...toPlayoffsEvent(this.source.league, season, games, participants.length), participants };
@@ -87,8 +97,46 @@ export class PlayoffsReader {
 
   /** Every game of a season's postseason, with its teams, state and score. */
   async liveScores(season: number): Promise<LiveScoreResult> {
-    const games = await this.source.games(season);
+    const games = await this.postseasonGames(season);
     return { category: 'GAME', externalEventId: playoffsScopeId(this.source.league, season), games: toPlayoffsGameScoreUpdates(this.source.league, games) };
+  }
+
+  /** The rounds the games have reached as events of their own: none for a league without round reads. */
+  protected roundEvents(_games: readonly PlayoffGame[]): SportEvent[] {
+    return [];
+  }
+
+  /** The season's games the vendor marks as its postseason, whatever the query's filters did. */
+  protected async postseasonGames(season: number): Promise<PlayoffGame[]> {
+    return (await this.source.games(season)).filter((game) => game.postseason && game.season === season);
+  }
+
+  private seasonsFor(dateRange?: DateRange): number[] {
+    const { playoffYearOffset, seasonRolloverMonth } = this.source.league;
+    if (dateRange) {
+      const first = dateRange.from.getUTCFullYear() - playoffYearOffset;
+      const count = dateRange.to.getUTCFullYear() - playoffYearOffset - first + 1;
+      if (count <= MAX_SEASONS_READ) return Array.from({ length: count }, (_, index) => first + index);
+    }
+    const today = new Date(this.now());
+    const current = today.getUTCMonth() >= seasonRolloverMonth ? today.getUTCFullYear() : today.getUTCFullYear() - 1;
+    return [current, current + 1];
+  }
+}
+
+/** A league's playoffs and each round of them as a Clutch Card's event (#1497). */
+export class PlayoffRoundsReader extends PlayoffsReader {
+  constructor(
+    protected override readonly source: PlayoffRoundsSource,
+    now: () => number,
+  ) {
+    super(source, now);
+  }
+
+  /** Each season's rounds the games have reached. */
+  protected override roundEvents(games: readonly PlayoffGame[]): SportEvent[] {
+    const seasons = [...new Set(games.map((game) => game.season))];
+    return seasons.flatMap((season) => toPlayoffRoundEvents(this.source.league, season, games.filter((game) => game.season === season)));
   }
 
   /**
@@ -119,18 +167,6 @@ export class PlayoffsReader {
   }
 
   private async roundSeries(season: number, round: number) {
-    return playoffSeries(await this.source.games(season)).filter((each) => each.round === round);
-  }
-
-  private seasonsFor(dateRange?: DateRange): number[] {
-    const { playoffYearOffset, seasonRolloverMonth } = this.source.league;
-    if (dateRange) {
-      const first = dateRange.from.getUTCFullYear() - playoffYearOffset;
-      const count = dateRange.to.getUTCFullYear() - playoffYearOffset - first + 1;
-      if (count <= MAX_SEASONS_READ) return Array.from({ length: count }, (_, index) => first + index);
-    }
-    const today = new Date(this.now());
-    const current = today.getUTCMonth() >= seasonRolloverMonth ? today.getUTCFullYear() : today.getUTCFullYear() - 1;
-    return [current, current + 1];
+    return playoffSeries(await this.postseasonGames(season)).filter((each) => each.round === round);
   }
 }

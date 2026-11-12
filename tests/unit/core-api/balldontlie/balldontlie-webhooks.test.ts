@@ -11,6 +11,7 @@ import { parseWorldCupScope } from '../../../../packages/core-api/src/modules/in
 import { parseNcaaTournamentScope } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/ncaa-tournament-mapping';
 import { parseNflScope } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/nfl-mapping';
 import { NBA_PLAYOFFS } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/nba-mapping';
+import { NHL_PLAYOFFS } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/nhl-mapping';
 import { parsePlayoffRoundScope } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/series-playoff-rounds';
 import { parsePlayoffsScope } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/series-playoffs';
 import {
@@ -87,6 +88,7 @@ describe('reading BALLDONTLIE webhook notifications (#1498)', () => {
     expect(BALLDONTLIE_WEBHOOK_EVENT_TYPES).toEqual(expect.arrayContaining([
       'nfl.game.started', 'nfl.game.period_ended', 'nfl.game.ended',
       'ncaab.game.ended', 'ncaaw.game.ended',
+      'nhl.game.started', 'nhl.game.period_ended', 'nhl.game.ended',
       'epl.game.started', 'epl.game.halftime', 'epl.game.ended',
       'worldcup.game.ended',
       'pga.tournament.started', 'pga.tournament.round_started', 'pga.player.round_completed', 'pga.tournament.ended',
@@ -97,12 +99,13 @@ describe('reading BALLDONTLIE webhook notifications (#1498)', () => {
   });
 
   it('names each league\'s events by the prefix its reader\'s event ids really start with', () => {
-    const { nfl, nba, ncaab, ncaaw, epl, worldcup } = BALLDONTLIE_WEBHOOK_GAME_LEAGUES;
+    const { nfl, nba, ncaab, ncaaw, nhl, epl, worldcup } = BALLDONTLIE_WEBHOOK_GAME_LEAGUES;
     expect(parsePlayoffsScope(NBA_PLAYOFFS, `${nba.eventIdPrefix}2025-postseason`)).toBe(2025);
     expect(parsePlayoffRoundScope(NBA_PLAYOFFS, `${nba.eventIdPrefix}2025-postseason-round-1`)).not.toBeNull();
     expect(parseNflScope(`${nfl.eventIdPrefix}2026-week-11`)).not.toBeNull();
     expect(parseNcaaTournamentScope(`${ncaab.eventIdPrefix}2025-tournament`)?.league.key).toBe('ncaab');
     expect(parseNcaaTournamentScope(`${ncaaw.eventIdPrefix}2025-tournament`)?.league.key).toBe('ncaaw');
+    expect(parsePlayoffsScope(NHL_PLAYOFFS, `${nhl.eventIdPrefix}2025-postseason`)).toBe(2025);
     expect(parseEplScope(`${epl.eventIdPrefix}2026-matchweek-11`)).not.toBeNull();
     expect(parseWorldCupScope(`${worldcup.eventIdPrefix}2026-knockout`)).not.toBeNull();
   });

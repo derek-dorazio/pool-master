@@ -22,6 +22,10 @@
  * (`nba-2025-postseason-round-4`, the NBA Finals), its teams' active players, and its games' box
  * scores in the STAT_LINE category.
  *
+ * NHL (#1496, `nhl-mapping.ts` through the same shared reader): each season's playoffs as an
+ * event (`nhl-2025-postseason`), its teams, and every playoff game's score in the GAME category,
+ * each round a best of seven.
+ *
  * Premier League (#1496, `epl-reader.ts`): each season's matchweeks as events
  * (`epl-2026-matchweek-11`), their teams, and their matches' scores in the GAME category.
  *
@@ -51,9 +55,10 @@ import { ProviderPayloadRecorder } from '../provider-payload-recorder';
 import { NCAA_MEN, NCAA_WOMEN, parseNcaaTournamentScope, type NcaaTournamentLeague } from './ncaa-tournament-mapping';
 import { NcaaTournamentReader } from './ncaa-tournament-reader';
 import { NBA_PLAYOFFS, nbaPlayoffsSource } from './nba-mapping';
+import { NHL_PLAYOFFS, nhlPlayoffsSource } from './nhl-mapping';
 import { parsePlayoffRoundScope } from './series-playoff-rounds';
 import { parsePlayoffsScope } from './series-playoffs';
-import { PlayoffsReader } from './series-playoffs-reader';
+import { PlayoffRoundsReader, PlayoffsReader } from './series-playoffs-reader';
 import { parseEplScope } from './epl-mapping';
 import { EplReader } from './epl-reader';
 import { parseWorldCupScope } from './fifa-world-cup-mapping';
@@ -121,7 +126,8 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
   private readonly payloads = new ProviderPayloadRecorder('balldontlie.request');
   private readonly client: BalldontlieClient;
   private readonly nfl: NflReader;
-  private readonly nba: PlayoffsReader;
+  private readonly nba: PlayoffRoundsReader;
+  private readonly nhl: PlayoffsReader;
   private readonly epl: EplReader;
   private readonly worldCup: WorldCupReader;
   /** Each NCAA tournament league's reads, by its key. */
@@ -132,7 +138,8 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
   constructor(options: BalldontlieAdapterOptions) {
     this.client = new BalldontlieClient({ ...options, payloads: this.payloads });
     this.nfl = new NflReader(this.client, options.now ?? Date.now);
-    this.nba = new PlayoffsReader(nbaPlayoffsSource(this.client), options.now ?? Date.now);
+    this.nba = new PlayoffRoundsReader(nbaPlayoffsSource(this.client), options.now ?? Date.now);
+    this.nhl = new PlayoffsReader(nhlPlayoffsSource(this.client), options.now ?? Date.now);
     this.epl = new EplReader(this.client, options.now ?? Date.now);
     this.worldCup = new WorldCupReader(this.client);
     this.ncaa = {
@@ -156,6 +163,7 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
         events: async (dateRange) => (await Promise.all([this.epl.upcomingEvents(dateRange), this.worldCup.upcomingEvents(dateRange)])).flat(),
         participants: async () => (await Promise.all([this.epl.teams(), this.worldCup.teams()])).flat(),
       }],
+      [Sport.HOCKEY, { events: (dateRange) => this.nhl.upcomingEvents(dateRange), participants: () => this.nhl.teams() }],
     ]);
     this.sportsCovered = [...this.leagues.keys()];
   }
@@ -191,7 +199,7 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
         || (event.startDate >= dateRange.from && event.startDate <= dateRange.to));
   }
 
-  /** The tournament, NFL scope, NCAA tournament, NBA playoffs, Premier League matchweek or World Cup bracket with its field; null when the vendor has no such event. */
+  /** The tournament, NFL scope, NCAA tournament, NBA or NHL playoffs, Premier League matchweek or World Cup bracket with its field; null when the vendor has no such event. */
   async getEventDetails(eventId: string): Promise<SportEventDetail | null> {
     const scope = parseNflScope(eventId);
     if (scope) {
@@ -208,6 +216,10 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
     const nbaSeason = parsePlayoffsScope(NBA_PLAYOFFS, eventId);
     if (nbaSeason !== null) {
       return this.nba.eventDetails(nbaSeason);
+    }
+    const nhlSeason = parsePlayoffsScope(NHL_PLAYOFFS, eventId);
+    if (nhlSeason !== null) {
+      return this.nhl.eventDetails(nhlSeason);
     }
     const eplScope = parseEplScope(eventId);
     if (eplScope) {
@@ -231,7 +243,7 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
     return { ...toSportEvent(tournament, participants.length), participants };
   }
 
-  /** Every active PGA TOUR golfer, every NFL team, every Division I men's and women's basketball team and NBA team, or the Premier League's and the World Cup's teams; none for a sport the adapter does not cover. */
+  /** Every active PGA TOUR golfer, every NFL team, every Division I men's and women's basketball team and NBA team, every NHL team, or the Premier League's and the World Cup's teams; none for a sport the adapter does not cover. */
   async getParticipants(sport: Sport): Promise<ProviderParticipant[]> {
     return await this.leagues.get(sport)?.participants() ?? [];
   }
@@ -246,7 +258,7 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
   }
 
   /**
-   * An NFL scope's, an NCAA tournament's, an NBA playoffs', a Premier League matchweek's or a World Cup bracket's games in the GAME category, or every started round of every golfer in a
+   * An NFL scope's, an NCAA tournament's, an NBA or NHL playoffs', a Premier League matchweek's or a World Cup bracket's games in the GAME category, or every started round of every golfer in a
    * stroke-play tournament. A tournament id the vendor does not know, or a tournament of another
    * format, fails the sync rather than returning nothing.
    */
@@ -266,6 +278,10 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
     const nbaSeason = parsePlayoffsScope(NBA_PLAYOFFS, eventId);
     if (nbaSeason !== null) {
       return this.nba.liveScores(nbaSeason);
+    }
+    const nhlSeason = parsePlayoffsScope(NHL_PLAYOFFS, eventId);
+    if (nhlSeason !== null) {
+      return this.nhl.liveScores(nhlSeason);
     }
     const eplScope = parseEplScope(eventId);
     if (eplScope) {

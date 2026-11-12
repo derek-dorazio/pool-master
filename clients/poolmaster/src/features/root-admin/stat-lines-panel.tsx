@@ -16,6 +16,7 @@ import {
   type StatLineDraft,
   type StatLineGridRow,
 } from './stat-line-grid';
+import { ScoreSyncNotice } from './score-sync-notice';
 import { useRowCorrections, type RowDrafts } from './use-row-corrections';
 import { useSportEventFieldQuery } from './use-sport-event';
 
@@ -115,6 +116,8 @@ function statLineColumns(composite: SportComposite) {
  * player in the field. The box scores are loaded with the event's sport data file; here an admin
  * checks them and corrects one player's line at a time. A save sends the player's whole line for
  * the game, so clearing every stat removes it. Every contest on the event rescores from the lines.
+ * An event linked to a provider has its box scores synced, and a sync replaces a corrected line
+ * (#1497), so the panel says so.
  */
 export function StatLinesPanel({ event }: { event: SportEventDto }) {
   const eventId = event.id;
@@ -169,6 +172,7 @@ export function StatLinesPanel({ event }: { event: SportEventDto }) {
 
   return (
     <div className="space-y-6" data-testid={`stat-lines-panel-${eventId}`}>
+      <ScoreSyncNotice event={event} scores="Box scores for this event" testId="root-admin-stat-lines-sync-alert" />
       {gameOptions.length > 0 ? (
         <SegmentedControl aria-label="Game" onChange={(value) => setGame(Number(value))} options={gameOptions} value={String(game)} />
       ) : (

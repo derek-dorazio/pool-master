@@ -1,0 +1,127 @@
+{
+  "data": [
+    {
+      "id": 2025030111,
+      "season": 2025,
+      "game_date": "2026-04-18",
+      "start_time_utc": "2026-04-18T23:00:00Z",
+      "home_team": {
+        "id": 3,
+        "full_name": "Carolina Hurricanes",
+        "tricode": "CAR",
+        "conference_name": "Eastern",
+        "division_name": "Metropolitan",
+        "season": 2025
+      },
+      "away_team": {
+        "id": 6,
+        "full_name": "Ottawa Senators",
+        "tricode": "OTT",
+        "conference_name": "Eastern",
+        "division_name": "Atlantic",
+        "season": 2025
+      },
+      "home_score": 3,
+      "away_score": 2,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 4,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2025030121,
+      "season": 2025,
+      "game_date": "2026-04-19",
+      "start_time_utc": "2026-04-19T19:00:00Z",
+      "home_team": {
+        "id": 11,
+        "full_name": "Dallas Stars",
+        "tricode": "DAL",
+        "conference_name": "Western",
+        "division_name": "Central",
+        "season": 2025
+      },
+      "away_team": {
+        "id": 14,
+        "full_name": "Minnesota Wild",
+        "tricode": "MIN",
+        "conference_name": "Western",
+        "division_name": "Central",
+        "season": 2025
+      },
+      "home_score": 1,
+      "away_score": 1,
+      "game_state": "LIVE",
+      "status_state": "in_progress",
+      "period": 2,
+      "time_remaining": "08:12",
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2025030131,
+      "season": 2025,
+      "game_date": "2026-04-20",
+      "start_time_utc": null,
+      "home_team": {
+        "id": 15,
+        "full_name": "Edmonton Oilers",
+        "tricode": "EDM",
+        "conference_name": "Western",
+        "division_name": "Pacific",
+        "season": 2025
+      },
+      "away_team": {
+        "id": 16,
+        "full_name": "Los Angeles Kings",
+        "tricode": "LAK",
+        "conference_name": "Western",
+        "division_name": "Pacific",
+        "season": 2025
+      },
+      "home_score": null,
+      "away_score": null,
+      "game_state": "FUT",
+      "status_state": "scheduled",
+      "period": null,
+      "time_remaining": null,
+      "in_intermission": null,
+      "postseason": true
+    },
+    {
+      "id": 2025030141,
+      "season": 2025,
+      "game_date": "2026-04-20",
+      "start_time_utc": null,
+      "home_team": {
+        "id": 1,
+        "full_name": "Washington Capitals",
+        "tricode": "WSH",
+        "conference_name": "Eastern",
+        "division_name": "Metropolitan",
+        "season": 2025
+      },
+      "away_team": {
+        "id": 2,
+        "full_name": "Montréal Canadiens",
+        "tricode": "MTL",
+        "conference_name": "Eastern",
+        "division_name": "Atlantic",
+        "season": 2025
+      },
+      "home_score": 0,
+      "away_score": 0,
+      "game_state": null,
+      "status_state": "unknown",
+      "period": null,
+      "time_remaining": null,
+      "in_intermission": null,
+      "postseason": true
+    }
+  ],
+  "meta": {
+    "per_page": 100
+  }
+}

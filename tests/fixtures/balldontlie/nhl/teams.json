@@ -1,0 +1,143 @@
+{
+  "data": [
+    {
+      "id": 1,
+      "full_name": "Washington Capitals",
+      "tricode": "WSH",
+      "conference_name": "Eastern",
+      "division_name": "Metropolitan",
+      "season": 2024
+    },
+    {
+      "id": 2,
+      "full_name": "Montréal Canadiens",
+      "tricode": "MTL",
+      "conference_name": "Eastern",
+      "division_name": "Atlantic",
+      "season": 2024
+    },
+    {
+      "id": 3,
+      "full_name": "Carolina Hurricanes",
+      "tricode": "CAR",
+      "conference_name": "Eastern",
+      "division_name": "Metropolitan",
+      "season": 2024
+    },
+    {
+      "id": 4,
+      "full_name": "New Jersey Devils",
+      "tricode": "NJD",
+      "conference_name": "Eastern",
+      "division_name": "Metropolitan",
+      "season": 2024
+    },
+    {
+      "id": 5,
+      "full_name": "Toronto Maple Leafs",
+      "tricode": "TOR",
+      "conference_name": "Eastern",
+      "division_name": "Atlantic",
+      "season": 2024
+    },
+    {
+      "id": 6,
+      "full_name": "Ottawa Senators",
+      "tricode": "OTT",
+      "conference_name": "Eastern",
+      "division_name": "Atlantic",
+      "season": 2024
+    },
+    {
+      "id": 7,
+      "full_name": "Florida Panthers",
+      "tricode": "FLA",
+      "conference_name": "Eastern",
+      "division_name": "Atlantic",
+      "season": 2024
+    },
+    {
+      "id": 8,
+      "full_name": "Tampa Bay Lightning",
+      "tricode": "TBL",
+      "conference_name": "Eastern",
+      "division_name": "Atlantic",
+      "season": 2024
+    },
+    {
+      "id": 9,
+      "full_name": "Winnipeg Jets",
+      "tricode": "WPG",
+      "conference_name": "Western",
+      "division_name": "Central",
+      "season": 2024
+    },
+    {
+      "id": 10,
+      "full_name": "St. Louis Blues",
+      "tricode": "STL",
+      "conference_name": "Western",
+      "division_name": "Central",
+      "season": 2024
+    },
+    {
+      "id": 11,
+      "full_name": "Dallas Stars",
+      "tricode": "DAL",
+      "conference_name": "Western",
+      "division_name": "Central",
+      "season": 2024
+    },
+    {
+      "id": 12,
+      "full_name": "Colorado Avalanche",
+      "tricode": "COL",
+      "conference_name": "Western",
+      "division_name": "Central",
+      "season": 2024
+    },
+    {
+      "id": 13,
+      "full_name": "Vegas Golden Knights",
+      "tricode": "VGK",
+      "conference_name": "Western",
+      "division_name": "Pacific",
+      "season": 2024
+    },
+    {
+      "id": 14,
+      "full_name": "Minnesota Wild",
+      "tricode": "MIN",
+      "conference_name": "Western",
+      "division_name": "Central",
+      "season": 2024
+    },
+    {
+      "id": 15,
+      "full_name": "Edmonton Oilers",
+      "tricode": "EDM",
+      "conference_name": "Western",
+      "division_name": "Pacific",
+      "season": 2024
+    },
+    {
+      "id": 16,
+      "full_name": "Los Angeles Kings",
+      "tricode": "LAK",
+      "conference_name": "Western",
+      "division_name": "Pacific",
+      "season": 2024
+    },
+    {
+      "id": 45,
+      "full_name": "Arizona Coyotes",
+      "tricode": "ARI",
+      "conference_name": null,
+      "division_name": null,
+      "season": 2023
+    }
+  ],
+  "meta": {
+    "per_page": 100
+  }
+}
