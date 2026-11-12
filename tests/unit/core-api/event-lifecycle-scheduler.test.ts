@@ -17,7 +17,7 @@
  *   - One event's failure does not stop the sweep from processing the rest.
  */
 import type { SportEvent } from '@poolmaster/shared/domain';
-import { EventLifecycleScheduler } from '../../../packages/core-api/src/modules/events/event-lifecycle-scheduler';
+import { EventLifecycleScheduler, LONG_HOLD_MS } from '../../../packages/core-api/src/modules/events/event-lifecycle-scheduler';
 import { InMemorySportEvents } from '../../support/in-memory-sport-events';
 import { fakeLogger } from '../../support/fake-logger';
 import { heldElsewhere, heldHere } from '../../support/job-locks';
@@ -418,7 +418,19 @@ describe('EventLifecycleScheduler — a game\'s stat lines still live (#1660)', 
     await scheduler.runSweep();
 
     expect(eventLifecycleService.applySportEventStatusTransition).not.toHaveBeenCalled();
-    expect(logger.info).toHaveBeenCalledWith({ action: 'eventLifecycle.completionHeld', data: { sportEventId: 'clutch-1' } }, expect.any(String));
+    expect(logger.info).toHaveBeenCalledWith({ action: 'eventLifecycle.completionHeld', data: { sportEventId: 'clutch-1', heldMs: 60 * 60 * 1000 } }, expect.any(String));
+    expect(logger.warn).not.toHaveBeenCalled();
+  });
+
+  it('warns, rather than logs, a hold that has run six hours past the event\'s scheduled end, a game the feed may never call final', async () => {
+    const { sportEvents, rounds, statLines } = await finalGameOver('IN_PROGRESS');
+    const logger = fakeLogger();
+    const scheduler = new EventLifecycleScheduler({ sportEvents, rounds, statLines, eventLifecycleService: lifecycle(), jobLock: heldHere(), logger, now: () => new Date(ended.getTime() + LONG_HOLD_MS) });
+
+    await scheduler.runSweep();
+
+    expect(logger.warn).toHaveBeenCalledWith({ action: 'eventLifecycle.completionHeld', data: { sportEventId: 'clutch-1', heldMs: LONG_HOLD_MS } }, expect.any(String));
+    expect(logger.info).not.toHaveBeenCalled();
   });
 
   it('completes the event on the first sweep after the line is completed', async () => {

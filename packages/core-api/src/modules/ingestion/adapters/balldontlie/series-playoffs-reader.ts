@@ -99,7 +99,7 @@ export class PlayoffsReader {
     const series = await this.roundSeries(season, round);
     if (series.length === 0) return null;
     const teamIds = [...new Set(series.flatMap((each) => [each.games[0].home.id, each.games[0].away.id]))];
-    const participants = (await this.source.players(teamIds)).map((player) => toPlayoffPlayerParticipant(this.source.league, player));
+    const participants = (await this.source.players(teamIds)).map((player) => toPlayoffPlayerParticipant(this.source.league, round, player));
     return { ...toPlayoffRoundEvent(this.source.league, season, round, series, participants.length), participants };
   }
 

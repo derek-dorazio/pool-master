@@ -9,7 +9,14 @@
  * round 1 winner, so its series is still round 2. Two teams meet in one series a postseason.
  *
  * A Clutch Card's game N is each of the round's series' Game N: the series' games in the order
- * they start. A round's scope id is the event's externalId (`nba-2025-postseason-round-4`).
+ * they start, so a game the league reschedules ahead of one already played (a weather delay in
+ * MLB or the NHL) renumbers the games after it. A round's scope id is the event's externalId
+ * (`nba-2025-postseason-round-4`).
+ *
+ * A round's event and its players carry the round's name as their tour ("NBA Finals"), not the
+ * league's: a sport league finds its events, and the stars it already holds, by the tour equal to
+ * its match keyword, so the NBA's bracket league keeps only the season's playoffs and each Clutch
+ * Card league its own round.
  */
 
 import { seriesWinsNeeded, type SportStat } from '@poolmaster/shared/domain';
@@ -104,7 +111,7 @@ export function toPlayoffRoundEvent(league: PlayoffsLeague, season: number, roun
     status,
     participantCount,
     fieldLocked: status !== 'SCHEDULED' && status !== 'POSTPONED',
-    metadata: { tour: league.tour, season, round },
+    metadata: { tour: name, season, round },
   };
 }
 
@@ -138,13 +145,14 @@ export function toPlayoffRoundBoxScores(league: PlayoffsLeague, series: readonly
   }));
 }
 
-export function toPlayoffPlayerParticipant(league: PlayoffsLeague, player: PlayoffPlayer): ProviderParticipant {
+/** A player on a round's field, under the round's tour, so he links to the star its league already holds. */
+export function toPlayoffPlayerParticipant(league: PlayoffsLeague, round: number, player: PlayoffPlayer): ProviderParticipant {
   return {
     externalId: playoffsPlayerExternalId(league, player.id),
     providerId: BALLDONTLIE_PROVIDER_ID,
     sport: league.sport,
     name: player.name,
     active: true,
-    metadata: { ...player.metadata, tour: league.tour },
+    metadata: { ...player.metadata, tour: league.rounds[round - 1].name },
   };
 }

@@ -58,7 +58,9 @@ The target:
      is not a mapped star is left out. A live game's lines are stored in progress, and the sync
      is authoritative over an admin's line correction. Each playoff round of a series league is
      an event of its own (`nba-2025-postseason-round-4`, the NBA Finals), its field the round's
-     teams' active players. The vendor names no round, so a series' round is its depth in the
+     teams' active players. A round and its players carry the round's name as their tour, and
+     the Clutch Card leagues are keyed to it, so the NBA league imports only the season's
+     playoffs and a star links to the one its league already holds. The vendor names no round, so a series' round is its depth in the
      bracket: 1 past the later of its two teams' previous series, a bye counting as none, which
      places MLB's seeded teams in round 2. An event holding a live game's line is not completed
      by the lifecycle sweep until that line is final (#1660).

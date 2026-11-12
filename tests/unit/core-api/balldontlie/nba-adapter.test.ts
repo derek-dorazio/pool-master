@@ -1,6 +1,9 @@
 import { z } from 'zod';
 import { ProviderGameState, Sport } from '../../../../packages/shared/domain';
 import { BalldontlieAdapter } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/balldontlie-adapter';
+import { EventScoreSourceService } from '../../../../packages/core-api/src/modules/events/event-score-source-service';
+import { registryWith } from '../../../support/fake-sport-data-provider';
+import { asPrismaClient } from '../../../support/prisma-double';
 import { createFakeBalldontlie, pagedRoute, type FakeBalldontlie, type FakeRoute } from '../../../support/balldontlie-fake-api';
 import { readBalldontlieFixture } from '../../../support/balldontlie-vendor-spec';
 
@@ -95,8 +98,8 @@ describe('BalldontlieAdapter (NBA playoffs)', () => {
       expect(events.map((event) => [event.externalId, event.name, event.status, event.metadata])).toEqual([
         ['nba-2024-postseason', 'NBA Playoffs', 'COMPLETED', { tour: 'NBA', season: 2024 }],
         ['nba-2025-postseason', 'NBA Playoffs', 'IN_PROGRESS', { tour: 'NBA', season: 2025 }],
-        ['nba-2024-postseason-round-1', 'NBA First Round', 'IN_PROGRESS', { tour: 'NBA', season: 2024, round: 1 }],
-        ['nba-2025-postseason-round-1', 'NBA First Round', 'IN_PROGRESS', { tour: 'NBA', season: 2025, round: 1 }],
+        ['nba-2024-postseason-round-1', 'NBA First Round', 'IN_PROGRESS', { tour: 'NBA First Round', season: 2024, round: 1 }],
+        ['nba-2025-postseason-round-1', 'NBA First Round', 'IN_PROGRESS', { tour: 'NBA First Round', season: 2025, round: 1 }],
       ]);
       expect(requestLine(harness.api)).toEqual([
         '/nba/v1/games?seasons[]=2024&season_type=playoffs&per_page=100',
@@ -254,7 +257,7 @@ describe('BalldontlieAdapter (NBA playoffs)', () => {
       expect(seasonsRead(harness.api)).toEqual(['2023']);
     });
 
-    it('gives the Finals with both teams\' active players as its field, in one roster read for the two teams', async () => {
+    it('gives the Finals with both teams\' active players as its field under the round\'s tour, so they link to the NBA Finals league\'s stars, in one roster read for the two teams', async () => {
       const harness = setup();
       restore = harness.restore;
 
@@ -265,14 +268,14 @@ describe('BalldontlieAdapter (NBA playoffs)', () => {
         name: 'NBA Finals',
         startDate: new Date('2024-06-03T23:30:00.000Z'),
         participantCount: 5,
-        metadata: { tour: 'NBA', season: 2023, round: 4 },
+        metadata: { tour: 'NBA Finals', season: 2023, round: 4 },
       });
       expect(detail?.participants.map((player) => [player.externalId, player.name, player.metadata])).toEqual([
-        ['nba-player-132', 'Luka Doncic', { position: 'G', team: 'Dallas Mavericks', tour: 'NBA' }],
-        ['nba-player-3202', 'Jayson Tatum', { position: 'F', team: 'Boston Celtics', tour: 'NBA' }],
-        ['nba-player-3547', 'Jaylen Brown', { position: 'G', team: 'Boston Celtics', tour: 'NBA' }],
-        ['nba-player-56677', 'Kyrie Irving', { position: 'G', team: 'Dallas Mavericks', tour: 'NBA' }],
-        ['nba-player-666786', 'Neemias Queta', { position: 'C', team: 'Boston Celtics', tour: 'NBA' }],
+        ['nba-player-132', 'Luka Doncic', { position: 'G', team: 'Dallas Mavericks', tour: 'NBA Finals' }],
+        ['nba-player-3202', 'Jayson Tatum', { position: 'F', team: 'Boston Celtics', tour: 'NBA Finals' }],
+        ['nba-player-3547', 'Jaylen Brown', { position: 'G', team: 'Boston Celtics', tour: 'NBA Finals' }],
+        ['nba-player-56677', 'Kyrie Irving', { position: 'G', team: 'Dallas Mavericks', tour: 'NBA Finals' }],
+        ['nba-player-666786', 'Neemias Queta', { position: 'C', team: 'Boston Celtics', tour: 'NBA Finals' }],
       ]);
       expect(requestLine(harness.api)).toEqual([
         '/nba/v1/games?seasons[]=2023&season_type=playoffs&per_page=100',
@@ -287,6 +290,21 @@ describe('BalldontlieAdapter (NBA playoffs)', () => {
       await harness.adapter.getEventDetails('nba-2023-postseason-round-3');
 
       expect(requestLine(harness.api)[1]).toMatch(/^\/nba\/v1\/players\/active\?(team_ids\[\]=\d+&){4}per_page=100$/);
+    });
+
+    it.each([
+      ['NBA', ['nba-2023-postseason']],
+      ['NBA Finals', ['nba-2023-postseason-round-4']],
+      ['NBA Conference Finals', ['nba-2023-postseason-round-3']],
+    ])('imports into the sport league keyed %s, by tour, only its own events of the year', async (matchKeyword, expected) => {
+      const harness = setup();
+      restore = harness.restore;
+      const prisma = { sportLeague: { findUnique: jest.fn().mockResolvedValue({ id: 'league', name: matchKeyword, matchKeyword, sport: { sport: Sport.BASKETBALL } }) } };
+      const service = new EventScoreSourceService(asPrismaClient(prisma), registryWith(harness.adapter));
+
+      const events = await service.listTourEventsForYear('balldontlie', 'league', 2024);
+
+      expect(events.map((event) => event.externalId)).toEqual(expected);
     });
 
     it('gives nothing for a round no series has reached, without reading a roster', async () => {

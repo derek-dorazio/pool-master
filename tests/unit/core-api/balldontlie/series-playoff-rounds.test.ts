@@ -103,7 +103,7 @@ describe('playoffSeries game order', () => {
 });
 
 describe('toPlayoffRoundEvent', () => {
-  it('spans the round\'s games and carries its name, tour, season and round, in progress while it is short of series', () => {
+  it('spans the round\'s games and carries its name, as its tour too, its season and round, in progress while it is short of series', () => {
     const semis = playoffSeries(semifinals()).filter((each) => each.round === 1);
 
     const event = toPlayoffRoundEvent(LEAGUE, 2025, 1, semis.slice(0, 1), 10);
@@ -118,7 +118,7 @@ describe('toPlayoffRoundEvent', () => {
       status: 'IN_PROGRESS',
       participantCount: 10,
       fieldLocked: true,
-      metadata: { tour: 'TST', season: 2025, round: 1 },
+      metadata: { tour: 'Test Semifinals', season: 2025, round: 1 },
     });
   });
 
@@ -186,14 +186,14 @@ describe('toPlayoffRoundBoxScores', () => {
 });
 
 describe('toPlayoffPlayerParticipant', () => {
-  it('names a player by the league\'s prefixed id, keeping the league\'s facts about him and its tour', () => {
-    expect(toPlayoffPlayerParticipant(LEAGUE, { id: 42, name: 'Sam Shooter', metadata: { position: 'G' } })).toEqual({
+  it('names a player by the league\'s prefixed id, keeping the league\'s facts about him, under the round\'s name as tour', () => {
+    expect(toPlayoffPlayerParticipant(LEAGUE, 2, { id: 42, name: 'Sam Shooter', metadata: { position: 'G' } })).toEqual({
       externalId: 'tst-player-42',
       providerId: 'balldontlie',
       sport: Sport.BASKETBALL,
       name: 'Sam Shooter',
       active: true,
-      metadata: { position: 'G', tour: 'TST' },
+      metadata: { position: 'G', tour: 'Test Final' },
     });
   });
 });

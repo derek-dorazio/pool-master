@@ -109,7 +109,9 @@ The first things to check once a key exists, each read by `npm run balldontlie:c
 - NBA: a game names no round, so the adapter works a series' round out from the bracket: a team's
   first series is round 1 and each later one is one past the later of its two teams' previous
   series. A season's games must therefore be read whole; a fixture holding one series reads as
-  round 1. `--game-event nba-2025-postseason-round-4` reads the Finals' box scores.
+  round 1. A round's event and players carry the round's name as `metadata.tour` ("NBA
+  Finals"), the match keyword of the Clutch Card league it belongs to.
+  `--game-event nba-2025-postseason-round-4` reads the Finals' box scores.
 - NBA: `/nba/v1/stats` lists a player who did not get in with zero or empty `min`; the adapter
   gives him no line. A played row missing `pts`, `reb` or `ast` fails the sync with the player
   named. The document names no plan tier for stats or active players; confirm the plan in use
