@@ -29,7 +29,13 @@ The shared UI layer is split into three levels:
    `SimpleTable` built from its parts (`density="compact"` inside a card,
    `surface="inverse"` on a navy panel, `isHighlighted` for the viewer's row,
    `numeric` for figures); an upload preview is an `UploadPreviewTable`; a
-   table that needs search or sorting is a `DataGrid`. Copy to clipboard is a
+   table that needs search or sorting is a `DataGrid`. Labels beside their values are a
+   `FactList` (`layout="inline"` by default; `"inset"` under a row that opened
+   it; `"columns"` for a few facts side by side, stacking on a phone;
+   `density="compact"` in a popover or peek card), never a hand-built `<dl>`;
+   a page's headline numbers are a `MetricGrid` instead, and rows with columns
+   of their own a `SimpleTable`. Requirements met or not are a `CheckList`
+   (missing first, `surface="inverse"` on a navy panel). Copy to clipboard is a
    `CopyButton` (`iconOnly` in a tight spot), which says Copied, shows an inline
    error when the browser refuses and logs it; feature code never calls
    `navigator.clipboard` itself. A password box is a `PasswordInput`,
@@ -146,7 +152,9 @@ as `value`, one badge or action as `aside`; `to` makes the whole row a link, and
 a `SectionEmpty` italic line; `padded` gives forms, charts or metric grids the
 card's padding (`SectionBody` is that padded block on its own, beside rows, and
 `SectionNote` a muted line about the data inside it). `bare` keeps the title and rule without the box, and
-`tone="danger"` is a danger zone. The parts own their type and colours: pass
+`tone="danger"` is a danger zone. A section the league's plan leaves out is a
+`LockedSection`: the same title in the same place, a lock, one line naming the plan
+that includes it, and a "See plans" footer link. The parts own their type and colours: pass
 content, never text classes, and add a variant here for a new look. Don't
 hand-build a heading inside a `Tile`. A section inside another section's padded
 body titles itself one level down (`headingLevel={4}` under a level 3). Data is

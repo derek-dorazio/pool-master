@@ -83,6 +83,17 @@ Use those conventions as the starting point, but bias toward a consumer app:
   - list tiles
   - settings/manage pages
   - full league detail/home panels
+- Labels beside values, facts, checks and tables each have one shared part:
+  - **`FactList`** for label/value pairs about one thing: an entry's status
+    facts, a peek card, a plan's usage, a pick's breakdown. `inline` (label
+    left, value right) by default, `inset` under a row that opened it,
+    `columns` for a few side-by-side facts that stack on a phone.
+  - **`MetricGrid`** for a page's few headline numbers as big-figure tiles.
+  - **`SimpleTable`** (or `DataGrid` with search or sorting) when each row is
+    a thing of its own with several columns, such as an entry's picks.
+  - **`CheckList`** for requirements met or not: what is missing first at
+    full contrast, then what is done, dimmed.
+  Never a hand-built `<dl>`, a check/cross `<ul>` or a `grid-cols-[…]` table.
 - Prefer card/list/tile layouts for consumer league browsing before reaching
   for tables. A list that can run to hundreds of rows (teams, owners, standings)
   is the exception: §12 rule 7.
@@ -402,6 +413,12 @@ administration area (root admin included), reusing the same shared components.
     colour classes, and a new look is a variant of the shared part. Long page
     content such as Owners uses the same title as a `bare` section, and a
     danger zone is the same card with `tone="danger"`.
+
+    A section the league's plan doesn't include stays in its place with its
+    own title, as a `LockedSection`: a lock, one line naming the lowest plan
+    that includes it ("Included with Premium."), and a "See plans" footer link
+    to the league's plan page. It is never hidden, and never a sentence on why
+    the plan leaves it out.
 
     Data is never a raw `ul`/`li`/`ol` (#1590). Anything that is a row (a
     name, maybe a fact line, a figure or an action: a contest's events, a

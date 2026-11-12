@@ -23,6 +23,8 @@ export function ExpandableRow({
   label,
   look = "row",
   onToggle,
+  rowClassName,
+  rowTestId,
   summary,
   testId,
   toggleTestId,
@@ -37,6 +39,13 @@ export function ExpandableRow({
   /** `row` is a plain section row; `bar` is the shaded bar that heads a leaderboard entry. */
   look?: ExpandableRowLook;
   onToggle?: () => void;
+  /**
+   * Layout for the clickable row alone, not its breakdown: such as keeping it pinned at the
+   * visible width inside a board that scrolls sideways. Never type styles.
+   */
+  rowClassName?: string;
+  /** The clickable row's test id; `<testId>-row` when left out. */
+  rowTestId?: string;
   /** What the row shows open or closed: its name, facts and figure. */
   summary: ReactNode;
   testId?: string;
@@ -60,7 +69,9 @@ export function ExpandableRow({
           "relative flex items-center gap-3 px-4 transition hover:bg-row-hover",
           look === "bar" ? "bg-muted py-3" : "py-2",
           isOpen ? "border-b border-border" : undefined,
+          rowClassName,
         )}
+        data-testid={rowTestId ?? (testId ? `${testId}-row` : undefined)}
       >
         <button
           aria-controls={panelId}

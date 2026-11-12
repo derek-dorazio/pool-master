@@ -11,7 +11,7 @@ import { useAuth } from '@/features/auth/auth-context';
 import { syncLeagueCaches } from '@/features/leagues/league-cache';
 import { buildLeagueAdminPath } from '@/features/leagues/league-routing';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
-import { Notice, Button, Chip, ErrorState, formatCount, formatDateDisplay, formatNumber, HelpTip, LoadingState, PageHeader, SectionBody, SectionCard, SectionNote, SectionRow, SectionRows, useDisplayPreferences } from '@/features/shared/ui';
+import { Notice, Button, Chip, ErrorState, FactList, formatCount, formatDateDisplay, formatNumber, HelpTip, LoadingState, PageHeader, SectionBody, SectionCard, SectionNote, SectionRow, SectionRows, useDisplayPreferences } from '@/features/shared/ui';
 import { FeatureList } from './feature-list';
 import { FeatureMark } from './feature-mark';
 import { PlanCards } from './plan-cards';
@@ -223,46 +223,39 @@ function YourLeagueNow({
   ) ?? null;
   return (
     <SectionCard headingLevel={3} padded testId="league-plan-now" title="Your league now">
-      <dl className="grid gap-3 text-sm sm:grid-cols-3">
-        <div>
-          <dt className="text-muted-foreground">Plan</dt>
-          <dd className="font-semibold text-foreground" data-testid="league-plan-now-plan">{LEAGUE_PLAN_LABEL[current.plan]}</dd>
-        </div>
-        {usage ? (
-          <>
-            <div>
-              <dt className="text-muted-foreground">{`Sports leagues in ${usage.seasonYear}`}</dt>
-              <dd className="text-foreground" data-testid="league-plan-now-sport-leagues">
-                <span className="font-semibold">{formatUse(usage.sportLeagueIds.length, current.caps[PlanCap.SPORTS_LEAGUES_PER_YEAR], locale)}</span>
-                {usage.sportLeagueIds.length ? (
-                  <span className="block text-muted-foreground">
-                    {usage.sportLeagueIds.map((id) => sportLeagueNames.get(id) ?? 'A sports league').join(', ')}
-                  </span>
-                ) : null}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-muted-foreground">Biggest open contest</dt>
-              <dd className="text-foreground" data-testid="league-plan-now-entries">
-                {fullest ? (
-                  <>
-                    <span className="font-semibold">{`${formatUse(fullest.entryCount, current.caps[PlanCap.ENTRIES_PER_CONTEST], locale)} entries`}</span>
-                    <span className="block text-muted-foreground">{fullest.name}</span>
-                  </>
-                ) : 'No contest is taking entries'}
-              </dd>
-            </div>
-          </>
-        ) : isError ? (
-          <div className="sm:col-span-2">
-            <ErrorState body="We couldn't load what the league uses now." onRetry={onRetry} size="plain" testId="league-plan-now-error" />
-          </div>
-        ) : (
-          <div className="sm:col-span-2">
-            <LoadingState body="Loading what the league uses..." size="plain" testId="league-plan-now-loading" />
-          </div>
-        )}
-      </dl>
+      <FactList
+        facts={[
+          { id: 'plan', label: 'Plan', testId: 'league-plan-now-plan', value: LEAGUE_PLAN_LABEL[current.plan] },
+          ...(usage
+            ? [
+                {
+                  id: 'sport-leagues',
+                  label: `Sports leagues in ${usage.seasonYear}`,
+                  testId: 'league-plan-now-sport-leagues',
+                  value: formatUse(usage.sportLeagueIds.length, current.caps[PlanCap.SPORTS_LEAGUES_PER_YEAR], locale),
+                  detail: usage.sportLeagueIds.length
+                    ? usage.sportLeagueIds.map((id) => sportLeagueNames.get(id) ?? 'A sports league').join(', ')
+                    : undefined,
+                },
+                {
+                  id: 'entries',
+                  label: 'Biggest open contest',
+                  testId: 'league-plan-now-entries',
+                  value: fullest
+                    ? `${formatUse(fullest.entryCount, current.caps[PlanCap.ENTRIES_PER_CONTEST], locale)} entries`
+                    : 'No contest is taking entries',
+                  detail: fullest?.name,
+                },
+              ]
+            : []),
+        ]}
+        layout="columns"
+      />
+      {usage ? null : isError ? (
+        <ErrorState body="We couldn't load what the league uses now." onRetry={onRetry} size="plain" testId="league-plan-now-error" />
+      ) : (
+        <LoadingState body="Loading what the league uses..." size="plain" testId="league-plan-now-loading" />
+      )}
     </SectionCard>
   );
 }
