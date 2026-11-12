@@ -6,8 +6,8 @@ import { buildContestLandingPath, buildLeaguePath } from '@/features/leagues/lea
 import { DateDisplay, QueryState, SectionCard, SectionRow, SectionRows, formatMoneyCents, useDisplayPreferences } from '@/features/shared/ui';
 import { useLeaguePaymentsQuery, useMyPaymentsQuery } from './use-payments-queries';
 
-const LEAGUE_DESCRIPTION = 'Every payment made in this league. While payments are off, expanding a contest is free and shows here as $0.';
-const MINE_DESCRIPTION = 'What you have paid in your leagues. While payments are off, expanding a contest is free and shows here as $0.';
+const LEAGUE_DESCRIPTION = 'Every payment made in this league. Contest expansions are free for now and show as $0.';
+const MINE_DESCRIPTION = 'What you have paid in your leagues. Contest expansions are free for now and show as $0.';
 
 /** One payment row: what it was for (linking to its contest or league), when and who, and how much. */
 function PaymentLine({

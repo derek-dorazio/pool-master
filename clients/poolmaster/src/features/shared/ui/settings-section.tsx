@@ -37,6 +37,8 @@ export function SettingsSection({ children, editTestId, help, onEdit, testId, ti
       <SettingsRows testId={testId ? `${testId}-rows` : undefined}>{children}</SettingsRows>
     </InlineSettingsRowsContext.Provider>
   );
+  // Two calls, not `tone={tone}`: SectionCard's props are a union in which only the danger tone
+  // may leave out its title, so TypeScript cannot pick a branch from a `tone` that may be either.
   return tone === "danger" ? (
     <SectionCard help={help} testId={testId} title={title} tone="danger" trailing={trailing}>{rows}</SectionCard>
   ) : (
