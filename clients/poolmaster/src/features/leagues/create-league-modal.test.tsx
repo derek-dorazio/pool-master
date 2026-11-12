@@ -277,12 +277,12 @@ describe('pool-master-rop.23: CreateLeagueModal generated DTO fixtures', () => {
     fireEvent.change(screen.getByTestId('create-league-code'), { target: { value: 'big dawgs' } });
 
     const address = await screen.findByTestId('create-league-address-link');
-    expect(address).toHaveTextContent(`${window.location.host}/league/BIGDAWGS`);
+    expect(address).toHaveTextContent(`${window.location.host}/league/bigdawgs`);
     expect(address).toHaveAttribute('aria-disabled', 'true');
     expect(screen.queryByRole('link')).not.toBeInTheDocument();
 
     fireEvent.change(screen.getByTestId('create-league-code'), { target: { value: 'BIGDAWGS2' } });
-    expect(await screen.findByTestId('create-league-address-link')).toHaveTextContent('/league/BIGDAWGS2');
+    expect(await screen.findByTestId('create-league-address-link')).toHaveTextContent('/league/bigdawgs2');
   });
 
   it('shows a taken web address as an error under the field, not as a save error, and clears it once the address changes', async () => {

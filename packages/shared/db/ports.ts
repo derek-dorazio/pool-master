@@ -195,6 +195,12 @@ export interface LeaguePlanChange {
   changeReason: LeaguePlanChangeReason;
 }
 
+/**
+ * What a league update may change. The league code is its web address and never changes after
+ * creation (the create dialog says so), so it is left out, as are the identity and timestamps.
+ */
+export type LeagueUpdates = Partial<Omit<League, 'id' | 'leagueCode' | 'createdAt' | 'updatedAt'>>;
+
 export interface LeagueRepository {
   findById(id: string): Promise<League | null>;
   /** The leagues named, in no particular order; an id with no league is left out (#1255). */
@@ -234,7 +240,7 @@ export interface LeagueRepository {
    * league muted and event emails per event, from the database defaults.
    */
   create(league: Omit<League, 'id' | 'createdAt' | 'updatedAt' | 'cupPointsScale' | 'cupCustomPoints' | 'hallOfLameVisible' | 'plan' | 'planRenewsAt' | 'mutedSportLeagueIds' | 'eventEmailDelivery'>): Promise<League>;
-  update(id: string, updates: Partial<League>): Promise<League>;
+  update(id: string, updates: LeagueUpdates): Promise<League>;
 
   /**
    * Moves the league to `change.toPlan` and logs who moved it from which plan (#945), in one

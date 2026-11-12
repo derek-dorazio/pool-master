@@ -520,7 +520,7 @@ describe('Joining a team as a co-owner from an invite link', () => {
   it.each([
     ['EXPIRED', 'This invitation has expired', 'Ask the commissioner for a new one.'],
     ['REVOKED', 'This invitation was withdrawn', 'Ask the commissioner for a new one.'],
-    ['ACCEPTED', 'This invitation was already used', 'Sign in to reach the league.'],
+    ['ACCEPTED', 'This invitation was already used', 'Open your leagues to reach it.'],
   ] as const)('shows a signed-in viewer a dead-link page for a %s team invite, with no join button', async (status, title, body) => {
     signIn();
     getTeamOwnerInvitationPreviewMock.mockResolvedValue(preview(status));

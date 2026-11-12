@@ -19,7 +19,7 @@ export type UnusableInvitation = {
 const UNUSABLE_INVITATIONS: Record<Exclude<InvitationPreviewStatus, 'PENDING'>, UnusableInvitation> = {
   EXPIRED: { kind: 'expired', title: 'This invitation has expired', body: 'Ask the commissioner for a new one.' },
   REVOKED: { kind: 'expired', title: 'This invitation was withdrawn', body: 'Ask the commissioner for a new one.' },
-  ACCEPTED: { kind: 'expired', title: 'This invitation was already used', body: 'Sign in to reach the league.' },
+  ACCEPTED: { kind: 'expired', title: 'This invitation was already used', body: 'Open your leagues to reach it.' },
 };
 
 /** An invite code the server doesn't know: mistyped, or cut short when it was copied. */

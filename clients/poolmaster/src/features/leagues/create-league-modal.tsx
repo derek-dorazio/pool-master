@@ -267,7 +267,7 @@ export function CreateLeagueModal({
             />
           </FormField>
           {leagueCode ? (
-            <WebAddressBox isLive={false} testId="create-league-address" url={buildLeagueWebAddress(leagueCode)} />
+            <WebAddressBox isLive={false} notLiveHint="Opens once the league is created" testId="create-league-address" url={buildLeagueWebAddress(leagueCode)} />
           ) : null}
         </div>
 

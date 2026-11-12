@@ -343,7 +343,7 @@ describe('Joining a league from an invite link', () => {
   it.each([
     ['EXPIRED', 'This invitation has expired', 'Ask the commissioner for a new one.'],
     ['REVOKED', 'This invitation was withdrawn', 'Ask the commissioner for a new one.'],
-    ['ACCEPTED', 'This invitation was already used', 'Sign in to reach the league.'],
+    ['ACCEPTED', 'This invitation was already used', 'Open your leagues to reach it.'],
   ] as const)('shows a dead-link page for a %s invitation and offers no join button', async (status, title, body) => {
     signIn();
     getInvitationPreviewMock.mockResolvedValue(apiSuccess(getInvitationPreviewData(buildInvitationPreview({ status }))));

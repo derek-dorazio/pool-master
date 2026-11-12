@@ -10,6 +10,8 @@ type WebAddressBoxProps = {
    * looks like a link but does not open, since it would show a missing page; Copy still works.
    */
   isLive: boolean;
+  /** Why the address doesn't open yet, shown on hover while it isn't live. */
+  notLiveHint?: string;
   testId?: string;
 };
 
@@ -23,7 +25,7 @@ function displayAddress(url: string) {
  * once it is live, beside a Copy button. Clearly louder than a field's helper text, because the
  * address is what the reader came for.
  */
-export function WebAddressBox({ isLive, testId, url }: WebAddressBoxProps) {
+export function WebAddressBox({ isLive, notLiveHint, testId, url }: WebAddressBoxProps) {
   const address = displayAddress(url);
   return (
     <Tile
@@ -49,7 +51,7 @@ export function WebAddressBox({ isLive, testId, url }: WebAddressBoxProps) {
           <span
             aria-disabled="true"
             data-testid={testId ? `${testId}-link` : undefined}
-            title="Opens once the league is created"
+            title={notLiveHint}
           >
             {address}
           </span>

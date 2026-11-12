@@ -27,6 +27,16 @@ describe("WebAddressBox", () => {
     expect(address).toHaveClass("underline", "font-bold");
   });
 
+  it("shows the caller's reason on hover while the address isn't live, and none once it is", () => {
+    const { rerender } = render(
+      <WebAddressBox isLive={false} notLiveHint="Opens once it exists" testId="address" url="https://example.com/league/new" />,
+    );
+    expect(screen.getByTestId("address-link")).toHaveAttribute("title", "Opens once it exists");
+
+    rerender(<WebAddressBox isLive notLiveHint="Opens once it exists" testId="address" url="https://example.com/league/new" />);
+    expect(screen.getByTestId("address-link")).not.toHaveAttribute("title");
+  });
+
   it("copies the full address, https:// included, live or not", async () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
     vi.stubGlobal("navigator", { clipboard: { writeText } });

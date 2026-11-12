@@ -249,7 +249,7 @@ describe('League settings', () => {
     const general = within(await screen.findByTestId('league-settings-general'));
     expect(general.getByText('Big Dawgs')).toBeInTheDocument();
     expect(general.getByText('A test league')).toBeInTheDocument();
-    expect(general.getByText(`${window.location.host}/league/BIGDAWGS`)).toBeInTheDocument();
+    expect(general.getByText(`${window.location.host}/league/bigdawgs`)).toBeInTheDocument();
     expect(await general.findByText('Casey Commissioner')).toBeInTheDocument();
     expect(general.queryByText('Morgan Member')).not.toBeInTheDocument();
     expect(general.getByRole('link', { name: 'Edit' })).toHaveAttribute('href', '/league/BIGDAWGS/admin?edit=general');
@@ -290,8 +290,8 @@ describe('League settings', () => {
 
     const row = within(await screen.findByTestId('league-settings-web-address'));
     expect(row.getByText('League web address')).toBeInTheDocument();
-    const link = row.getByRole('link', { name: /\/league\/BIGDAWGS$/ });
-    expect(link).toHaveAttribute('href', `${window.location.origin}/league/BIGDAWGS`);
+    const link = row.getByRole('link', { name: /\/league\/bigdawgs$/ });
+    expect(link).toHaveAttribute('href', `${window.location.origin}/league/bigdawgs`);
     expect(link).toHaveAttribute('target', '_blank');
     expect(row.getByRole('button', { name: 'Copy' })).toBeInTheDocument();
   });
@@ -384,9 +384,9 @@ describe('League settings', () => {
     const confirm = dialog.getByRole('button', { name: 'Delete league' });
     expect(confirm).toBeDisabled();
 
-    fireEvent.change(dialog.getByLabelText('League code'), { target: { value: 'BIGDOGS' } });
+    fireEvent.change(dialog.getByLabelText('Type BIGDAWGS'), { target: { value: 'BIGDOGS' } });
     expect(confirm).toBeDisabled();
-    fireEvent.change(dialog.getByLabelText('League code'), { target: { value: '  bigdawgs ' } });
+    fireEvent.change(dialog.getByLabelText('Type BIGDAWGS'), { target: { value: '  bigdawgs ' } });
     expect(confirm).toBeEnabled();
 
     fireEvent.click(confirm);
@@ -406,7 +406,7 @@ describe('League settings', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: 'Delete league' }));
     const dialog = within(await screen.findByRole('dialog', { name: 'Delete league' }));
-    fireEvent.change(dialog.getByLabelText('League code'), { target: { value: 'BIGDAWGS' } });
+    fireEvent.change(dialog.getByLabelText('Type BIGDAWGS'), { target: { value: 'BIGDAWGS' } });
     fireEvent.click(dialog.getByRole('button', { name: 'Delete league' }));
 
     expect(await screen.findByTestId('manage-leagues-page')).toBeInTheDocument();
@@ -422,7 +422,7 @@ describe('League settings', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: 'Delete league' }));
     const dialog = within(await screen.findByRole('dialog', { name: 'Delete league' }));
-    fireEvent.change(dialog.getByLabelText('League code'), { target: { value: 'BIGDAWGS' } });
+    fireEvent.change(dialog.getByLabelText('Type BIGDAWGS'), { target: { value: 'BIGDAWGS' } });
     fireEvent.click(dialog.getByRole('button', { name: 'Delete league' }));
 
     expect(await dialog.findByText('Delete unavailable')).toBeInTheDocument();
@@ -1283,7 +1283,7 @@ describe('League settings delete and the leagues list', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: 'Delete league' }));
     const dialog = within(await screen.findByRole('dialog', { name: 'Delete league' }));
-    fireEvent.change(dialog.getByLabelText('League code'), { target: { value: 'BIGDAWGS' } });
+    fireEvent.change(dialog.getByLabelText('Type BIGDAWGS'), { target: { value: 'BIGDAWGS' } });
     fireEvent.click(dialog.getByRole('button', { name: 'Delete league' }));
 
     await screen.findByTestId('welcome-page');

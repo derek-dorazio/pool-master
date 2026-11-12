@@ -38,6 +38,7 @@ import { EditEventEmailsPage } from '@/features/leagues/edit-event-emails-page';
 import { LeaguePlanEditRedirect, LeaguePlanPage } from '@/features/plans/league-plan-page';
 import { EditContestCupWeightPage } from '@/features/contests/edit-contest-cup-weight-page';
 import { LeagueHomePage } from '@/features/leagues/league-home-page';
+import { CanonicalLeagueCode } from '@/features/leagues/canonical-league-code';
 import { LeagueSettingsPage } from '@/features/leagues/league-settings-page';
 import { WelcomePage } from '@/features/leagues/leagues-page';
 import { RootAdminContentConfigurationDetailPage } from '@/features/root-admin/root-admin-content-configuration-detail-page';
@@ -178,7 +179,7 @@ export const router = createBrowserRouter([
           },
           {
             path: 'league/:leagueCode',
-            element: <LeagueHomePage />,
+            element: <CanonicalLeagueCode><LeagueHomePage /></CanonicalLeagueCode>,
           },
           {
             path: 'league/:leagueCode/admin',

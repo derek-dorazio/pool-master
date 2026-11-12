@@ -73,6 +73,7 @@ export type {
   UserSearch,
   UserSearchFilters,
   UserUpdate,
+  LeagueUpdates,
 } from './ports';
 export type {
   PlatformRuntimeConfigRepository,
