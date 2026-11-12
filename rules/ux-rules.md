@@ -120,6 +120,10 @@ Use those conventions as the starting point, but bias toward a consumer app:
     a thing of its own with several columns, such as an entry's picks.
   - **`CheckList`** for requirements met or not: what is missing first at
     full contrast, then what is done, dimmed.
+  - **`StageTrack`** for where something is in a fixed run of stages, such as
+    a contest's Set up › Open › Live › Final: done stages green with a check,
+    the current one gold and numbered. A status badge for the same thing names
+    the same stage.
   Never a hand-built `<dl>`, a check/cross `<ul>` or a `grid-cols-[…]` table.
 - Prefer card/list/tile layouts for consumer league browsing before reaching
   for tables. A list that can run to hundreds of rows (teams, owners, standings)

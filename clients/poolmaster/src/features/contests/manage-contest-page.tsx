@@ -46,7 +46,7 @@ import {
   Text,
 } from '@/features/shared/ui';
 import { coversOneEvent, firstContestEvent } from './contest-events';
-import { ContestStatusBadge } from './contest-status-badge';
+import { ContestStageBadge } from './contest-status-badge';
 import { ContestStatusCard } from './contest-status-card';
 import { DeleteContestDialog } from './delete-contest-dialog';
 import { secondChanceRoundName } from './bracket-start-round';
@@ -185,13 +185,12 @@ export function ManageContestPage() {
       <PageHeader
         icon={<Trophy aria-hidden size={22} />}
         meta={(
-          <>
-            <ContestStatusBadge status={contest.status} />
-            <span data-testid="manage-contest-event">
-              {event.name} · Starts <DateDisplay tone="inherit" value={event.startDate} />
-            </span>
-          </>
+          <span data-testid="manage-contest-event">
+            {event.name} · Starts <DateDisplay tone="inherit" value={event.startDate} />
+          </span>
         )}
+        // The stage the lifecycle panel's track shows as current.
+        status={<ContestStageBadge data-testid="manage-contest-stage" status={contest.status} />}
         title={contest.name}
         testId="manage-contest-identity"
       />

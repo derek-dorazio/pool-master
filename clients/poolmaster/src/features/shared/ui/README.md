@@ -35,7 +35,8 @@ The shared UI layer is split into three levels:
    `density="compact"` in a popover or peek card), never a hand-built `<dl>`;
    a page's headline numbers are a `MetricGrid` instead, and rows with columns
    of their own a `SimpleTable`. Requirements met or not are a `CheckList`
-   (missing first, `surface="inverse"` on a navy panel). Copy to clipboard is a
+   (missing first, `surface="inverse"` on a navy panel); a fixed run of stages is a
+   `StageTrack` (`surface="inverse"` on a navy panel). Copy to clipboard is a
    `CopyButton` (`iconOnly` in a tight spot), which says Copied, shows an inline
    error when the browser refuses and logs it; feature code never calls
    `navigator.clipboard` itself. A password box is a `PasswordInput`,
